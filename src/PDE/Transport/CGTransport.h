@@ -362,7 +362,7 @@ class Transport {
     //!    all components in this PDE system
     //! \param[in] t Physical time
     //! \param[in] deltat Time step size
-    //! \param[in] side Pair of side set ID and node IDs on the side set
+    //! \param[in] ss Pair of side set ID and node IDs on the side set
     //! \param[in] coord Mesh node coordinates
     //! \return Vector of pairs of bool and boundary condition value associated
     //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
@@ -372,7 +372,7 @@ class Transport {
     std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
     dirbc( tk::real t,
            tk::real deltat,
-           const std::pair< const int, std::vector< std::size_t > >& side,
+           const std::pair< const int, std::vector< std::size_t > >& ss,
            const std::array< std::vector< tk::real >, 3 >& coord ) const
     {
       using tag::param; using tag::transport; using tag::bcdir;
@@ -385,8 +385,8 @@ class Transport {
         const auto& y = coord[1];
         const auto& z = coord[2];
         for (const auto& b : ubc[m_c])
-          if (std::stoi(b) == side.first)
-            for (auto n : side.second) {
+          if (std::stoi(b) == ss.first)
+            for (auto n : ss.second) {
               Assert( x.size() > n, "Indexing out of coordinate array" );
               auto s =
                 Problem::solinc( m_c, m_ncomp, x[n], y[n], z[n], t, deltat );

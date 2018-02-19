@@ -150,13 +150,13 @@ class PDEStack {
     //!   template argument Factory specifies which factory we search in. The
     //!   template argument PDE specifies the "base" PDE type that the
     //!   instantiated "child" PDE class object is used polymorphically with.
-    //! \param[in] factory Factory in which to search PDE in
+    //! \param[in] f Factory in which to search PDE in
     //! \param[in] eq The unique partial differential equation key whose object
     //!   to instantiate.
     //! \param[in,out] cnt Counter, a std::map, that counts all instantiated
     //!   partial differential equations by type.
     template< class EqTag, class Factory, class PDE >
-    PDE createPDE( const Factory& factory,
+    PDE createPDE( const Factory& f,
                    ctr::PDEType eq,
                    std::map< ctr::PDEType, ncomp_t >& cnt ) const
     {
@@ -173,8 +173,8 @@ class PDEStack {
         ctr::PDEKey key{ eq,
           g_inputdeck.get< tag::param, EqTag, tag::physics >()[c],
           g_inputdeck.get< tag::param, EqTag, tag::problem >()[c] };
-        const auto it = factory.find( key );
-        Assert( it != end( factory ),
+        const auto it = f.find( key );
+        Assert( it != end( f ),
                 "Can't find PDE with key('" +
                   ctr::PDE().name( key.get< tag::pde >() ) + "', '" +
                   ctr::Physics().name( key.get< tag::physics >() ) + "', '" +
