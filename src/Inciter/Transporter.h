@@ -426,28 +426,14 @@ class Transporter : public CBase_Transporter {
 
     //! Non-reduction target for receiving progress report on flattening mesh
     void peflattened() { m_progReorder.inc<0>(); }
+    //! Non-reduction target for receiving progress report on node ID query
+    void pequery() { m_progReorder.inc<1>(); }
     //! Non-reduction target for receiving progress report on node ID mask
-    void pemask() { m_progReorder.inc<1>(); }
+    void pemask() { m_progReorder.inc<2>(); }
     //! Non-reduction target for receiving progress report on reordering mesh
-    void pereordered() { m_progReorder.inc<2>(); }
+    void pereordered() { m_progReorder.inc<3>(); }
     //! Non-reduction target for receiving progress report on computing bounds
-    void pebounds() { m_progReorder.inc<3>(); }
-
-    //! Non-reduction target for receiving progress report on establishing comms
-    void pecomfinal() { m_progSetup.inc<0>(); }
-    //! Non-reduction target for receiving progress report on matching BCs
-    void chbcmatched() { m_progSetup.inc<1>(); }
-    //! Non-reduction target for receiving progress report on computing BCs
-    void pebccomplete() { m_progSetup.inc<2>(); }
-
-    //! Non-reduction target for receiving progress report on computing the RHS
-    void chrhs() { m_progStep.inc<0>(); }
-    //! Non-reduction target for receiving progress report on solving the system
-    void pesolve() { m_progStep.inc<1>(); }
-    //! Non-reduction target for receiving progress report on limiting
-    void chlim() { m_progStep.inc<2>(); }
-    //! Non-reduction target for receiving progress report on tracking particles
-    void chtrack() { m_progStep.inc<3>(); }
+    void pebounds() { m_progReorder.inc<4>(); }
 
     //! \brief Reduction target indicating that the communication has been
     //!    established among PEs
@@ -520,11 +506,7 @@ class Transporter : public CBase_Transporter {
     // Progress object for task "Creating partitioners and reading mesh graph"
     tk::Progress< 1 > m_progGraph;
     // Progress object for task "Reordering mesh"
-    tk::Progress< 4 > m_progReorder;
-    // Progress object for task "Computing row IDs, querying BCs, ..."
-    tk::Progress< 3 > m_progSetup;
-    // Progress object for sub-tasks of a time step
-    tk::Progress< 4 > m_progStep;
+    tk::Progress< 5 > m_progReorder;
 
     //! Create linear solver group
     void createSolver();

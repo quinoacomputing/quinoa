@@ -67,12 +67,8 @@ Transporter::Transporter() :
   m_progGraph( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
                {{ "g" }}, {{ CkNumPes() }} ),
   m_progReorder( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-                 {{ "f", "m", "r", "b" }},
-                 {{ CkNumPes(), CkNumPes(), CkNumPes(), CkNumPes() }} ),
-  m_progSetup( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-               {{ "r", "m", "b" }} ),
-  m_progStep( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-              {{ "r", "s", "l", "p" }} )
+                 {{ "f", "q", "m", "r", "b" }},
+                 {{ CkNumPes(), CkNumPes(), CkNumPes(), CkNumPes(), CkNumPes() }} )
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
@@ -195,7 +191,7 @@ Transporter::createPartitioner()
 // *****************************************************************************
 {
   // Create mesh partitioner Charm++ chare group and start partitioning mesh
-  m_progGraph.start( "Creating partitioners and reading mesh graph" );
+  m_progGraph.start( "Creating partitioners and reading mesh ..." );
 
   // Start timing mesh read
   m_timer[ TimerTag::MESHREAD ];
@@ -204,11 +200,9 @@ Transporter::createPartitioner()
   tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
 
   // Read in side sets associated to mesh node IDs from file
-  m_print.diag( "Reading side sets" );
   auto sidenodes = er.readSidesets();
 
   // Read side sets for boundary faces
-  m_print.diag( "Reading side set faces" );
   std::map< int, std::vector< std::size_t > > bface;
   std::size_t nbfac = 0;
 
@@ -220,7 +214,6 @@ Transporter::createPartitioner()
 
   // Read triangle boundary-face connectivity
   if (scheme == ctr::SchemeType::DG) {
-    m_print.diag( "Reading side set faces" );
     nbfac = er.readSidesetFaces( bface );
     er.readFaces( nbfac, nodemap, triinpoel );
   }
@@ -381,7 +374,7 @@ Transporter::part()
 {
   const auto& timer = tk::cref_find( m_timer, TimerTag::MESHREAD );
   m_print.diag( "Mesh read time: " + std::to_string(timer.dsec()) + " sec" );
-  m_progPart.start( "Partitioning and distributing mesh" );
+  m_progPart.start( "Partitioning and distributing mesh ..." );
   // signal to runtime system that all workers are ready for mesh partitioning
   part_complete();
 }
@@ -395,7 +388,7 @@ Transporter::distributed()
 // *****************************************************************************
 {
   m_progPart.end();
-  m_progReorder.start( "Reordering mesh" );
+  m_progReorder.start( "Reordering mesh ..." );
   m_partitioner.flatten();
 }
 

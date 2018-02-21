@@ -45,8 +45,8 @@ module partitioner {
       entry void stdCost( tk::real av );
       entry void gather();
       entry void query( int pe,
-                        const std::set< std::size_t >& nodes,
-                        const tk::UnsMesh::Edges& edges );
+                        const std::vector< std::size_t >& nodes,
+                        const std::vector< std::size_t >& edges );
       entry void mask( int pe,
                        const std::unordered_map< std::size_t,
                                                  std::vector< int > >& cn,
