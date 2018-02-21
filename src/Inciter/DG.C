@@ -36,9 +36,14 @@ DG::DG( const CProxy_Discretization& disc,
         const FaceData& fd ) :
   m_itf( 0 ),
   m_disc( disc ),
-  m_u( m_disc[thisIndex].ckLocal()->Inpoel().size()/4,
+  m_fd( fd ),
+  m_nelem( m_disc[thisIndex].ckLocal()->Inpoel().size()/4 ),
+  m_u( m_nelem,
        g_inputdeck.get< tag::component >().nprop() ),
-  m_vol( 0.0 )
+  m_vol( 0.0 ),
+  m_lhs( m_nelem, 0.0 ),
+  m_rhs( m_nelem,
+         g_inputdeck.get< tag::component >().nprop() )
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
@@ -85,14 +90,18 @@ DG::setup( tk::real v )
   // Output fields metadata to output file
   d->writeElemMeta();
 
+  // Compute left-hand side of discrete PDEs
+  lhs();
+
   // zero initial solution vector
   // ...
 
-  std::size_t nnpe(4);
-  std::size_t nelem = d->Inpoel().size()/nnpe;
-
   // Set initial conditions for all PDEs
-  for (std::size_t e=0; e<nelem; ++e)
+  m_ax = 1.0;
+  m_ay = 1.0;
+  m_az = 0.0;
+
+  for (std::size_t e=0; e<m_nelem; ++e)
   {
     auto xcc = m_geoElem(e,1,0);
     auto ycc = m_geoElem(e,2,0);
@@ -118,7 +127,7 @@ DG::setup( tk::real v )
 void
 DG::dt()
 // *****************************************************************************
-// Comppute time step size
+// Compute time step size
 // *****************************************************************************
 {
   tk::real mindt = std::numeric_limits< tk::real >::max();
@@ -227,9 +236,115 @@ DG::out()
 }
 
 void
+DG::lhs()
+// *****************************************************************************
+// Compute left-hand side of discrete transport equations
+// *****************************************************************************
+{
+  for (std::size_t e=0; e<m_nelem; ++e)
+  {
+    m_lhs[e] = m_geoElem(e,0,0);
+  }
+}
+
+void
 DG::rhs()
 // *****************************************************************************
-// Compute right-hand side of transport equations
+// Compute right-hand side of discrete transport equations
+// *****************************************************************************
+{
+  auto& esuf = m_fd.Esuf();
+  auto& belem = m_fd.Belem();
+  auto& triinp = m_fd.Inpofa();
+
+  // initialize rhs as zero
+  for (std::size_t e=0; e<m_nelem; ++e)
+  {
+    m_rhs(e,0,0) = 0.0;
+  }
+
+  // compute internal surface flux integrals
+  for (auto f=m_fd.Nbfac(); f<m_fd.Ntfac(); ++f)
+  {
+    std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+    std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+
+    auto farea = m_geoFace(f,0,0);
+
+    std::vector< tk::real > fn { m_geoFace(f,1,0),
+                                 m_geoFace(f,2,0),
+                                 m_geoFace(f,3,0) };
+
+    // need to use tk::Fields::extract() here somehow
+    std::vector< tk::real > ul { m_u(el,0,0) };
+    std::vector< tk::real > ur { m_u(er,0,0) };
+
+    //--- upwind fluxes
+    auto flux = upwindFlux(ul, ur, fn);
+    
+    m_rhs(el,0,0) -= farea * flux[0];
+    m_rhs(er,0,0) += farea * flux[0];
+  }
+
+  // compute boundary surface flux integrals
+  for (std::size_t f=0; f<m_fd.Nbfac(); ++f)
+  {
+    std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+
+    auto farea = m_geoFace(f,0,0);
+
+    //CkPrintf("(%d/%d) : %d  || ", f, m_fd.Nbfac(), el);
+    //CkPrintf("triinpo : %d,  %d,  %d \n", triinp[3*f], triinp[3*f+1], triinp[3*f+2] );
+
+    std::vector< tk::real > fn { m_geoFace(f,1,0),
+                                 m_geoFace(f,2,0),
+                                 m_geoFace(f,3,0) };
+
+    // need to use tk::Fields::extract() here somehow
+    std::vector< tk::real > ul { m_u(el,0,0) };
+    std::vector< tk::real > ur { 0.0 };
+
+    //--- upwind fluxes
+    auto flux = upwindFlux(ul, ur, fn);
+    
+    m_rhs(el,0,0) -= farea * flux[0];
+  }
+}
+
+std::vector< tk::real >
+DG::upwindFlux( std::vector< tk::real > ul,
+                std::vector< tk::real > ur,
+                std::vector< tk::real > fn )
+// *****************************************************************************
+// Riemann solver using upwind method
+//! \param[in] ul Left unknown/state vector
+//! \param[in] ur Right unknown/state vector
+//! \param[in] fn Face unit normal vector
+//! \return Riemann solution using upwind method
+// *****************************************************************************
+{
+    std::vector< tk::real > flux(ul.size(),0);
+
+    // wave speed
+    tk::real swave = m_ax*fn[0] + m_ay*fn[1] + m_az*fn[2];
+
+    // upwinding
+    if (swave > 0.0)
+    {
+      flux[0] = swave * ul[0];
+    }
+    else
+    {
+      flux[0] = swave * ur[0];
+    }
+
+    return flux;
+}
+
+void
+DG::tstep()
+// *****************************************************************************
+// Explicit time-stepping using forward Euler to discretize time-derivative
 // *****************************************************************************
 {
 }
@@ -246,8 +361,11 @@ DG::advance( tk::real newdt )
   // Set new time step size
   d->setdt( newdt );
 
-  // Compute rhs for next time step, solve/advance system, ...
+  // Compute rhs for next time step
   rhs();
+
+  // Advance solution/time-stepping
+  tstep();
 
   // Prepare for next time step
   next();
