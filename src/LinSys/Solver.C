@@ -654,7 +654,6 @@ Solver::addbc( CkReductionMsg* msg )
   PUP::fromMem creator( msg->getData() );
   creator | m_bc;
   delete msg;
-  //if (m_feedback) m_host.pebccomplete();    // send progress report to host
   m_nchbc = 0;
   bc_complete();  bc_complete();
 }
@@ -1030,11 +1029,6 @@ Solver::solve()
 // *****************************************************************************
 {
   m_solver.solve( m_A, m_b, m_x );
-
-  // send progress report to host
-  //if (m_feedback) m_host.pesolve();
-
-  //solve_complete();
   updateSol();
 }
 

@@ -169,8 +169,8 @@ class Partitioner : public CBase_Partitioner {
     //! \brief Query our global node IDs and edges by other PEs so they know if
     //!   they are to receive IDs for those from during reordering
     void query( int p,
-                const std::set< std::size_t >& nodes,
-                const tk::UnsMesh::Edges& edges ) const;
+                const std::vector< std::size_t >& nodes,
+                const std::vector< std::size_t >& edges );
 
     //! Receive mask of to-be-received global mesh node IDs
     void mask( int p,
@@ -213,12 +213,17 @@ class Partitioner : public CBase_Partitioner {
     //!   computing global mesh node ID offsets for each PE rquired for node
     //!   reordering later
     std::size_t m_noffset;
+    //! \brief Counter for number of queries for global mesh node IDs
+    //! \details This counts the number of queries received while
+    //!   gathering the node IDs that need to be received (instead of uniquely
+    //!   assigned) by each PE
+    std::size_t m_nquery;
     //! \brief Counter for number of masks of to-be-received global mesh node
     //!   IDs received
     //! \details This counts the to-be-received node ID masks received while
     //!   gathering the node IDs that need to be received (instead of uniquely
     //!   assigned) by each PE
-    std::size_t m_nquery;
+    std::size_t m_nmask;
     //! Tetrtahedron element connectivity of our chunk of the mesh
     std::vector< std::size_t > m_tetinpoel;
     //! Global element IDs we read (our chunk of the mesh)

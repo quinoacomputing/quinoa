@@ -56,7 +56,7 @@ class Progress {
    //!   descriptive of all the sub-tasks we are responsible for. I.e., this
    //!   is usually a list of multiple sub-tasks happening at the same time.
    void start( const std::string& msg ) {
-     m_print.diag( msg );
+     m_print.diagstart( msg );
      m_progress_size = 0;
    }
 
@@ -101,6 +101,7 @@ class Progress {
      m_finished = true;
      m_done = m_max;
      report();
+     m_print.diagend( "done" );
    }
 
   private:
