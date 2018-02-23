@@ -20,6 +20,18 @@
 
 namespace tk {
 
+//! Const array defining the node ordering convention for a tetrahedron cell
+//! \details This two-dimensional array stores the naming/ordering convention of
+//!   the node indices of a tetrahedron (tet) element. The dimensions are 4x3 as
+//!   a tetrahedron has a total of 4 nodes and each (triangle) face has 3 nodes.
+//!   Thus the array below associates tet node 0 with nodes {1,2,3}, tet node 1
+//!   with {2,0,3}, tet node 2 with {3,0,1}, and tet node 3 with {0,2,1}. Note
+//!   that not only these mappings are important, but also the order of the
+//!   nodes within the triplets as this specific order also defines the outwards
+//!   normal of each face.
+const std::array< std::array< std::size_t, 3 >, 4 >
+  lpofa{{ {{1,2,3}}, {{2,0,3}}, {{3,0,1}}, {{0,2,1}} }};
+
 //! Generate derived data structure, elements surrounding points
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
 genEsup( const std::vector< std::size_t >& inpoel, std::size_t nnpe );
