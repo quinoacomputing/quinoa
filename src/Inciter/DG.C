@@ -40,6 +40,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_nelem( m_disc[thisIndex].ckLocal()->Inpoel().size()/4 ),
   m_u( m_nelem,
        g_inputdeck.get< tag::component >().nprop() ),
+  m_un( m_nelem,
+        g_inputdeck.get< tag::component >().nprop() ),
   m_vol( 0.0 ),
   m_lhs( m_nelem, 0.0 ),
   m_rhs( m_nelem,
@@ -97,8 +99,8 @@ DG::setup( tk::real v )
   // ...
 
   // Set initial conditions for all PDEs
-  m_ax = 1.0;
-  m_ay = 1.0;
+  m_ax = 0.1;
+  m_ay = 0.1;
   m_az = 0.0;
 
   for (std::size_t e=0; e<m_nelem; ++e)
@@ -111,10 +113,10 @@ DG::setup( tk::real v )
     tk::real u = 1.0 * exp( -((xcc-0.25)*(xcc-0.25) 
                             + (ycc-0.25)*(ycc-0.25))/(2.0 * 0.005) );
     m_u(e,0,0) = u; // scalar
+    m_un(e,0,0) = u; // scalar
   }
 
   // Set initial conditions for all PDEs
-  std::cout << "DG::init: " << g_dgpde.size() << '\n';
   for (const auto& eq : g_dgpde) eq.initialize( d->Coord(), m_u, d->T() );
 
   // Output initial conditions to file (regardless of whether it was requested)
@@ -254,14 +256,10 @@ DG::rhs()
 // *****************************************************************************
 {
   auto& esuf = m_fd.Esuf();
-  auto& belem = m_fd.Belem();
-  auto& triinp = m_fd.Inpofa();
+  auto& bface = m_fd.Bface();
 
-  // initialize rhs as zero
-  for (std::size_t e=0; e<m_nelem; ++e)
-  {
-    m_rhs(e,0,0) = 0.0;
-  }
+  // set rhs to zero
+  m_rhs.fill(0.0);
 
   // compute internal surface flux integrals
   for (auto f=m_fd.Nbfac(); f<m_fd.Ntfac(); ++f)
@@ -287,27 +285,92 @@ DG::rhs()
   }
 
   // compute boundary surface flux integrals
-  for (std::size_t f=0; f<m_fd.Nbfac(); ++f)
+
+  // symmetry boundary condition
+  auto bc = bface.find(1);
+
+  if (bc != bface.end())
   {
-    std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+    for (const auto& f : bc->second)
+    {
+      std::size_t el = static_cast< std::size_t >(esuf[2*f]);
 
-    auto farea = m_geoFace(f,0,0);
+      Assert( esuf[2*f+1] == -1,
+              "outside boundary element not -1" );
 
-    //CkPrintf("(%d/%d) : %d  || ", f, m_fd.Nbfac(), el);
-    //CkPrintf("triinpo : %d,  %d,  %d \n", triinp[3*f], triinp[3*f+1], triinp[3*f+2] );
+      auto farea = m_geoFace(f,0,0);
 
-    std::vector< tk::real > fn { m_geoFace(f,1,0),
-                                 m_geoFace(f,2,0),
-                                 m_geoFace(f,3,0) };
+      std::vector< tk::real > fn { m_geoFace(f,1,0),
+                                   m_geoFace(f,2,0),
+                                   m_geoFace(f,3,0) };
 
-    // need to use tk::Fields::extract() here somehow
-    std::vector< tk::real > ul { m_u(el,0,0) };
-    std::vector< tk::real > ur { 0.0 };
+      // need to use tk::Fields::extract() here?
+      std::vector< tk::real > ul { m_u(el,0,0) };
+      std::vector< tk::real > ur { ul[0] };
 
-    //--- upwind fluxes
-    auto flux = upwindFlux(ul, ur, fn);
-    
-    m_rhs(el,0,0) -= farea * flux[0];
+      //--- upwind fluxes
+      auto flux = upwindFlux(ul, ur, fn);
+      
+      m_rhs(el,0,0) -= farea * flux[0];
+    }
+  }
+
+  // inlet boundary condition
+  bc = bface.find(2);
+
+  if (bc != bface.end())
+  {
+    for (const auto& f : bc->second)
+    {
+      std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+
+      Assert( esuf[2*f+1] == -1,
+              "outside boundary element not -1" );
+
+      auto farea = m_geoFace(f,0,0);
+
+      std::vector< tk::real > fn { m_geoFace(f,1,0),
+                                   m_geoFace(f,2,0),
+                                   m_geoFace(f,3,0) };
+
+      // need to use tk::Fields::extract() here?
+      std::vector< tk::real > ul { m_u(el,0,0) };
+      std::vector< tk::real > ur { 0.0 };
+
+      //--- upwind fluxes
+      auto flux = upwindFlux(ul, ur, fn);
+      
+      m_rhs(el,0,0) -= farea * flux[0];
+    }
+  }
+
+  // outlet boundary condition
+  bc = bface.find(3);
+
+  if (bc != bface.end())
+  {
+    for (const auto& f : bc->second)
+    {
+      std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+
+      Assert( esuf[2*f+1] == -1,
+              "outside boundary element not -1" );
+
+      auto farea = m_geoFace(f,0,0);
+
+      std::vector< tk::real > fn { m_geoFace(f,1,0),
+                                   m_geoFace(f,2,0),
+                                   m_geoFace(f,3,0) };
+
+      // need to use tk::Fields::extract() here?
+      std::vector< tk::real > ul { m_u(el,0,0) };
+      std::vector< tk::real > ur { ul[0] };
+
+      //--- upwind fluxes
+      auto flux = upwindFlux(ul, ur, fn);
+      
+      m_rhs(el,0,0) -= farea * flux[0];
+    }
   }
 }
 
@@ -333,20 +396,33 @@ DG::upwindFlux( std::vector< tk::real > ul,
     {
       flux[0] = swave * ul[0];
     }
-    else
+    else if (swave < 0.0)
     {
       flux[0] = swave * ur[0];
+    }
+    else
+    {
+      flux[0] = 0.0;
     }
 
     return flux;
 }
 
 void
-DG::tstep()
+DG::tstep( tk::real dt )
 // *****************************************************************************
 // Explicit time-stepping using forward Euler to discretize time-derivative
 // *****************************************************************************
 {
+  for (std::size_t e=0; e<m_nelem; ++e)
+  {
+    m_u(e,0,0) = m_un(e,0,0) + dt/m_lhs[e] * m_rhs(e,0,0);
+  }
+
+  for (std::size_t e=0; e<m_nelem; ++e)
+  {
+    m_un(e,0,0) = m_u(e,0,0);
+  }
 }
 
 void
@@ -365,7 +441,7 @@ DG::advance( tk::real newdt )
   rhs();
 
   // Advance solution/time-stepping
-  tstep();
+  tstep( newdt );
 
   // Prepare for next time step
   next();
@@ -382,14 +458,14 @@ DG::next()
   // Output field data to file
   out();
   // Compute diagnostics, e.g., residuals
-  auto diag = diagnostics();
+  //auto diag = diagnostics();
   // Increase number of iterations and physical time
   d->next();
   // Output one-liner status report
   d->status();
 
   // Evaluate whether to continue with next step
-  if (!diag) eval();
+  /*if (!diag)*/ eval();
 }
 
 void

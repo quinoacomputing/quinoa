@@ -122,8 +122,7 @@ class Partitioner : public CBase_Partitioner {
                  const Scheme& scheme,
                  std::size_t nbfac,
                  const std::map< int, std::vector< std::size_t > >& bface,
-                 const std::vector< std::size_t >& triinpoel,
-                 const std::vector< std::size_t >& nodemap );
+                 const std::vector< std::size_t >& triinpoel );
 
     //! Partition the computational mesh
     void partition( int nchare );
@@ -337,12 +336,6 @@ class Partitioner : public CBase_Partitioner {
     std::map< int, std::vector< std::size_t > > m_bface;
     //! \brief Boundary face-node connectivity.
     std::vector< std::size_t > m_triinpoel;
-    //! \brief Local-global node-ID map.
-    //! \details The node-map is required to get the "Exodus-global" node-IDs
-    //!   from the "Exodus-internal" node-IDs, which are returned from the exodus
-    //!   APIs. The node-IDs in the exodus file are referred to as the 
-    //!   "Exodus-global" node-IDs or "fileIDs" in Quinoa.
-    std::vector< std::size_t > m_nodemap;
 
     //! Read our contiguously-numbered chunk of the mesh graph from file
     void readGraph( tk::ExodusIIMeshReader& er );

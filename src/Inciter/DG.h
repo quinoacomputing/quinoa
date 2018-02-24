@@ -64,6 +64,7 @@ class DG : public CBase_DG {
       p | m_fd;
       p | m_nelem;
       p | m_u;
+      p | m_un;
       p | m_vol;
       p | m_geoFace;
       p | m_geoElem;
@@ -90,6 +91,8 @@ class DG : public CBase_DG {
     std::size_t m_nelem;
     //! Vector of unknown/solution average over each mesh element
     tk::Fields m_u;
+    //! Vector of unknown at previous time-step
+    tk::Fields m_un;
     //! Total mesh volume
     tk::real m_vol;
     //! Face geometry
@@ -123,7 +126,7 @@ class DG : public CBase_DG {
                                         std::vector< tk::real > fn );
 
     //! Time stepping
-    void tstep();
+    void tstep( tk::real dt );
 
     //! Prepare for next step
     void next();

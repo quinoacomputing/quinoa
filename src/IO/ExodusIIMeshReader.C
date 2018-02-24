@@ -379,13 +379,10 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
 
 void
 ExodusIIMeshReader::readFaces( std::size_t nbfac,
-                               const std::vector< std::size_t >& node_map,
                                std::vector< std::size_t >& conn )
 // *****************************************************************************
 //  Read face connectivity of a number of boundary faces from ExodusII file
 //! \param[in] nbfac Number of boundary faces
-//! \param[in] node_map Vector mapping the local Exodus node-IDs to global
-//!            node-IDs
 //! \param[inout] conn Connectivity vector to push to
 //! \details This function reads-in the total number of boundary faces 
 //!   also called triangle-elements in the EXO2 file, and their connectivity.
@@ -406,7 +403,7 @@ ExodusIIMeshReader::readFaces( std::size_t nbfac,
     count = f*nnpf;
     for (std::size_t i=0; i<nnpf; ++i)
     {
-      conn.push_back( node_map[ l_triinpoel[count+i] ] );
+      conn.push_back( l_triinpoel[count+i] );
     }
   }
 }
