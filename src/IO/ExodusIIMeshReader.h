@@ -78,7 +78,7 @@ class ExodusIIMeshReader {
 
     //! Read coordinates of a number of mesh nodes from ExodusII file
     std::array< std::vector< tk::real >, 3 >
-    readNodes( const std::array< std::size_t, 2 >& ext ) const;
+    readNodes( const std::vector< std::size_t >& gid ) const;
 
     //! Read element block IDs from file
     std::size_t readElemBlockIDs();

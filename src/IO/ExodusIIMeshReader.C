@@ -140,24 +140,20 @@ ExodusIIMeshReader::readAllNodes( UnsMesh& mesh ) const
 }
 
 std::array< std::vector< tk::real >, 3 >
-ExodusIIMeshReader::readNodes( const std::array< std::size_t, 2 >& ext ) const
+ExodusIIMeshReader::readNodes( const std::vector< std::size_t >& gid ) const
 // *****************************************************************************
 //  Read coordinates of a number of mesh nodes from ExodusII file
-//! \param[in] ext Extents of element ids whose connectivity to read, both
-//!   inclusive
+//! \param[in] gid Node IDs whose coordinates to read
 //! \return Mesh node coordinates
 // *****************************************************************************
 {
-  auto num = ext[1] - ext[0] + 1;
-  std::vector< tk::real > px( num ), py( num ), pz( num );
+  std::vector< tk::real > px( gid.size() ), py( gid.size() ), pz( gid.size() );
 
-  ErrChk(
-    ex_get_partial_coord(
-      m_inFile, static_cast<int64_t>(ext[0])+1, static_cast<int64_t>(num),
-      px.data(), py.data(), pz.data() ) == 0,
-      "Failed to read coordinates of nodes [" + std::to_string(ext[0]) +
-      "..." + std::to_string(ext[1]) + "] from ExodusII file: " +
-      m_filename );
+  std::size_t i=0;
+  for (auto g : gid) {
+    readNode( g, i, px, py, pz );
+    ++i;
+  }
 
   return {{ std::move(px), std::move(py), std::move(pz) }};
 }

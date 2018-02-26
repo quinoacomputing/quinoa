@@ -607,13 +607,12 @@ Partitioner::computeCentroids( tk::ExodusIIMeshReader& er )
 //! \param[in] er ExodusII mesh reader
 // *****************************************************************************
 {
-  // Construct unique global mesh point indices of our chunk
-  auto gid = m_tetinpoel;
-  tk::unique( gid );
+  auto el = tk::global2local( m_tetinpoel );
+  const auto& gid = std::get< 1 >( el );
+  const auto& lid = std::get< 2 >( el );
 
   // Read node coordinates of our chunk of the mesh elements from file
-  auto ext = tk::extents( gid );
-  auto coord = er.readNodes( ext );
+  auto coord = er.readNodes( gid );
   const auto& x = std::get< 0 >( coord );
   const auto& y = std::get< 1 >( coord );
   const auto& z = std::get< 2 >( coord );
@@ -629,10 +628,10 @@ Partitioner::computeCentroids( tk::ExodusIIMeshReader& er )
 
   // Compute element centroids for our chunk of the mesh elements
   for (std::size_t e=0; e<num; ++e) {
-    auto A = m_tetinpoel[e*4+0] - ext[0];
-    auto B = m_tetinpoel[e*4+1] - ext[0];
-    auto C = m_tetinpoel[e*4+2] - ext[0];
-    auto D = m_tetinpoel[e*4+3] - ext[0];
+    auto A = tk::cref_find( lid, m_tetinpoel[e*4+0] );
+    auto B = tk::cref_find( lid, m_tetinpoel[e*4+1] );
+    auto C = tk::cref_find( lid, m_tetinpoel[e*4+2] );
+    auto D = tk::cref_find( lid, m_tetinpoel[e*4+3] );
     cx[e] = (x[A] + x[B] + x[C] + x[D]) / 4.0;
     cy[e] = (y[A] + y[B] + y[C] + y[D]) / 4.0;
     cz[e] = (z[A] + z[B] + z[C] + z[D]) / 4.0;
