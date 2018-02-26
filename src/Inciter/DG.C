@@ -39,12 +39,10 @@ DG::DG( const CProxy_Discretization& disc,
   m_fd( fd ),
   m_u( m_disc[thisIndex].ckLocal()->Inpoel().size()/4,
        g_inputdeck.get< tag::component >().nprop() ),
-  m_un( m_disc[thisIndex].ckLocal()->Inpoel().size()/4,
-        g_inputdeck.get< tag::component >().nprop() ),
+  m_un( m_u.nunk(), m_u.nprop() ),
   m_vol( 0.0 ),
   m_lhs( m_disc[thisIndex].ckLocal()->Inpoel().size()/4, 0.0 ),
-  m_rhs( m_disc[thisIndex].ckLocal()->Inpoel().size()/4,
-         g_inputdeck.get< tag::component >().nprop() )
+  m_rhs( m_u.nunk(), m_u.nprop() )
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
