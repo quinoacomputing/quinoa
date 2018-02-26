@@ -824,8 +824,9 @@ genNbfacTet( std::size_t tnbfac,
 //!   in the entire mesh.
 //! \param[in] bface_complete Map of boundary-face lists mapped to corresponding 
 //!   side set ids for the entire mesh.
-//! \param[in] lid Map of global renumbered node-IDs to local renumbered
-//!   node-IDs
+//! \param[in] lid Mapping between the node indices used in the smaller inpoel
+//!   connectivity (a subset of the entire triinpoel_complete connectivity),
+//!   e.g., after mesh partitioning.
 //! \param[inout] triinpoel Interconnectivity of points and boundary-face in
 //!   this mesh-partition.
 //! \param[inout] bface Map of boundary-face lists mapped to corresponding 
@@ -901,11 +902,7 @@ genNbfacTet( std::size_t tnbfac,
           auto ip = triinpoel_complete[icoun+i];
 
           // find local renumbered node-id to store in triinpoel
-          auto nd = lid.find( ip );
-          if (nd != end(lid))
-          {
-            triinpoel.push_back( nd->second );
-          }
+          triinpoel.push_back( tk::cref_find(lid,ip) );
         }
 
         bface[ss.first].push_back(nbfac);

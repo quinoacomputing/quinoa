@@ -62,7 +62,6 @@ class DG : public CBase_DG {
       p | m_itf;
       p | m_disc;
       p | m_fd;
-      p | m_nelem;
       p | m_u;
       p | m_un;
       p | m_vol;
@@ -87,8 +86,6 @@ class DG : public CBase_DG {
     CProxy_Discretization m_disc;
     //! Face data
     FaceData m_fd;
-    //! Total number of elements in this chunk
-    std::size_t m_nelem;
     //! Vector of unknown/solution average over each mesh element
     tk::Fields m_u;
     //! Vector of unknown at previous time-step
@@ -123,10 +120,10 @@ class DG : public CBase_DG {
     //! Upwind fluxes
     std::vector< tk::real > upwindFlux( std::vector< tk::real > ul,
                                         std::vector< tk::real > ur,
-                                        std::vector< tk::real > fn );
+                                        std::array< tk::real, 3 > fn );
 
     //! Time stepping
-    void tstep( tk::real dt );
+    void solve( tk::real dt );
 
     //! Prepare for next step
     void next();

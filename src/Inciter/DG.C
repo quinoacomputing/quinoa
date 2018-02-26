@@ -37,14 +37,13 @@ DG::DG( const CProxy_Discretization& disc,
   m_itf( 0 ),
   m_disc( disc ),
   m_fd( fd ),
-  m_nelem( m_disc[thisIndex].ckLocal()->Inpoel().size()/4 ),
-  m_u( m_nelem,
+  m_u( m_disc[thisIndex].ckLocal()->Inpoel().size()/4,
        g_inputdeck.get< tag::component >().nprop() ),
-  m_un( m_nelem,
+  m_un( m_disc[thisIndex].ckLocal()->Inpoel().size()/4,
         g_inputdeck.get< tag::component >().nprop() ),
   m_vol( 0.0 ),
-  m_lhs( m_nelem, 0.0 ),
-  m_rhs( m_nelem,
+  m_lhs( m_disc[thisIndex].ckLocal()->Inpoel().size()/4, 0.0 ),
+  m_rhs( m_disc[thisIndex].ckLocal()->Inpoel().size()/4,
          g_inputdeck.get< tag::component >().nprop() )
 // *****************************************************************************
 //  Constructor
@@ -103,7 +102,9 @@ DG::setup( tk::real v )
   m_ay = 0.1;
   m_az = 0.0;
 
-  for (std::size_t e=0; e<m_nelem; ++e)
+  std::size_t nelem = m_u.nunk();
+
+  for (std::size_t e=0; e<nelem; ++e)
   {
     auto xcc = m_geoElem(e,1,0);
     auto ycc = m_geoElem(e,2,0);
@@ -243,7 +244,9 @@ DG::lhs()
 // Compute left-hand side of discrete transport equations
 // *****************************************************************************
 {
-  for (std::size_t e=0; e<m_nelem; ++e)
+  std::size_t nelem = m_u.nunk();
+
+  for (std::size_t e=0; e<nelem; ++e)
   {
     m_lhs[e] = m_geoElem(e,0,0);
   }
@@ -269,9 +272,9 @@ DG::rhs()
 
     auto farea = m_geoFace(f,0,0);
 
-    std::vector< tk::real > fn { m_geoFace(f,1,0),
-                                 m_geoFace(f,2,0),
-                                 m_geoFace(f,3,0) };
+    std::array< tk::real, 3 > fn {{ m_geoFace(f,1,0),
+                                    m_geoFace(f,2,0),
+                                    m_geoFace(f,3,0) }};
 
     // need to use tk::Fields::extract() here somehow
     std::vector< tk::real > ul { m_u(el,0,0) };
@@ -300,9 +303,9 @@ DG::rhs()
 
       auto farea = m_geoFace(f,0,0);
 
-      std::vector< tk::real > fn { m_geoFace(f,1,0),
-                                   m_geoFace(f,2,0),
-                                   m_geoFace(f,3,0) };
+      std::array< tk::real, 3 > fn {{ m_geoFace(f,1,0),
+                                      m_geoFace(f,2,0),
+                                      m_geoFace(f,3,0) }};
 
       // need to use tk::Fields::extract() here?
       std::vector< tk::real > ul { m_u(el,0,0) };
@@ -329,9 +332,9 @@ DG::rhs()
 
       auto farea = m_geoFace(f,0,0);
 
-      std::vector< tk::real > fn { m_geoFace(f,1,0),
-                                   m_geoFace(f,2,0),
-                                   m_geoFace(f,3,0) };
+      std::array< tk::real, 3 > fn {{ m_geoFace(f,1,0),
+                                      m_geoFace(f,2,0),
+                                      m_geoFace(f,3,0) }};
 
       // need to use tk::Fields::extract() here?
       std::vector< tk::real > ul { m_u(el,0,0) };
@@ -358,9 +361,9 @@ DG::rhs()
 
       auto farea = m_geoFace(f,0,0);
 
-      std::vector< tk::real > fn { m_geoFace(f,1,0),
-                                   m_geoFace(f,2,0),
-                                   m_geoFace(f,3,0) };
+      std::array< tk::real, 3 > fn {{ m_geoFace(f,1,0),
+                                      m_geoFace(f,2,0),
+                                      m_geoFace(f,3,0) }};
 
       // need to use tk::Fields::extract() here?
       std::vector< tk::real > ul { m_u(el,0,0) };
@@ -377,7 +380,7 @@ DG::rhs()
 std::vector< tk::real >
 DG::upwindFlux( std::vector< tk::real > ul,
                 std::vector< tk::real > ur,
-                std::vector< tk::real > fn )
+                std::array< tk::real, 3 > fn )
 // *****************************************************************************
 // Riemann solver using upwind method
 //! \param[in] ul Left unknown/state vector
@@ -392,37 +395,28 @@ DG::upwindFlux( std::vector< tk::real > ul,
     tk::real swave = m_ax*fn[0] + m_ay*fn[1] + m_az*fn[2];
 
     // upwinding
-    if (swave > 0.0)
-    {
-      flux[0] = swave * ul[0];
-    }
-    else if (swave < 0.0)
-    {
-      flux[0] = swave * ur[0];
-    }
-    else
-    {
-      flux[0] = 0.0;
-    }
+    tk::real splus  = 0.5 * (swave + fabs(swave));
+    tk::real sminus = 0.5 * (swave - fabs(swave));
+
+    flux[0] = splus * ul[0] + sminus * ur[0];
 
     return flux;
 }
 
 void
-DG::tstep( tk::real dt )
+DG::solve( tk::real dt )
 // *****************************************************************************
 // Explicit time-stepping using forward Euler to discretize time-derivative
 // *****************************************************************************
 {
-  for (std::size_t e=0; e<m_nelem; ++e)
+  std::size_t nelem = m_u.nunk();
+
+  for (std::size_t e=0; e<nelem; ++e)
   {
     m_u(e,0,0) = m_un(e,0,0) + dt/m_lhs[e] * m_rhs(e,0,0);
   }
 
-  for (std::size_t e=0; e<m_nelem; ++e)
-  {
-    m_un(e,0,0) = m_u(e,0,0);
-  }
+  m_un = m_u;
 }
 
 void
@@ -441,7 +435,7 @@ DG::advance( tk::real newdt )
   rhs();
 
   // Advance solution/time-stepping
-  tstep( newdt );
+  solve( newdt );
 
   // Prepare for next time step
   next();
