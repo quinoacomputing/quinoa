@@ -123,7 +123,7 @@ class DG : public CBase_DG {
                                         std::array< tk::real, 3 > fn );
 
     //! Time stepping
-    void solve( tk::real dt );
+    void solve( tk::real deltat );
 
     //! Prepare for next step
     void next();

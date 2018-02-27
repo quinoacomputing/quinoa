@@ -402,7 +402,7 @@ DG::upwindFlux( std::vector< tk::real > ul,
 }
 
 void
-DG::solve( tk::real dt )
+DG::solve( tk::real deltat )
 // *****************************************************************************
 // Explicit time-stepping using forward Euler to discretize time-derivative
 // *****************************************************************************
@@ -411,7 +411,7 @@ DG::solve( tk::real dt )
 
   for (std::size_t e=0; e<nelem; ++e)
   {
-    m_u(e,0,0) = m_un(e,0,0) + dt/m_lhs[e] * m_rhs(e,0,0);
+    m_u(e,0,0) = m_un(e,0,0) + deltat/m_lhs[e] * m_rhs(e,0,0);
   }
 
   m_un = m_u;
