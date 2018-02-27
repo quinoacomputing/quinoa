@@ -31,15 +31,16 @@ namespace inciter {
 //!   627-665.
 class TransportProblemSlotCyl {
 
-  private:
+  public:
     //! Evaluate analytical solution at (x,y,t) for all components
+    //! \param[in] ncomp Number of components in this transport equation system
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] t Time where to evaluate the solution
     //! \return Values of all components evaluated at (x,y,t)
     static std::vector< tk::real >
-    solution( tk::ctr::ncomp_type ncomp,
-              tk::real x, tk::real y, tk::real t )
+    solution( ncomp_t, ncomp_t ncomp,
+              tk::real x, tk::real y, tk::real, tk::real t )
     {
       using std::sin; using std::cos;
       std::vector< tk::real > s( ncomp, 0.0 );
@@ -102,49 +103,25 @@ class TransportProblemSlotCyl {
 
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
+    //! \param[in] ncomp Number of components in this transport equation system
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] t Time where to evaluate the solution increment starting from
     //! \param[in] dt Time increment at which evaluate the solution increment to
     //! \return Increment in values of all components evaluated at (x,y,t+dt)
     static std::vector< tk::real >
-    solinc( tk::ctr::ncomp_type ncomp,
-            tk::real x, tk::real y, tk::real t, tk::real dt )
+    solinc( ncomp_t, ncomp_t ncomp, tk::real x, tk::real y, tk::real,
+            tk::real t, tk::real dt )
     {
-      auto st1 = solution( ncomp, x, y, t );
-      auto st2 = solution( ncomp, x, y, t+dt );
+      auto st1 = solution( 0, ncomp, x, y, 0.0, t );
+      auto st2 = solution( 0, ncomp, x, y, 0.0, t+dt );
       std::transform( begin(st1), end(st1), begin(st2), begin(st2),
                       []( tk::real s, tk::real& d ){ return d -= s; } );
       return st2;
     }
 
-  public:
     //! Do error checking on PDE parameters
-    static void errchk( tk::ctr::ncomp_type, tk::ctr::ncomp_type ) {}
-
-    //! Set initial conditions for Zalesak's slotted cylinder case
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in,out] unk Array of unknowns
-    //! \param[in] ncomp Number of components in this transport equation
-    //! \param[in] offset System offset specifying the position of the system of
-    //!   PDEs among other systems
-    //! \param[in] t Physical time
-    static void init( const std::array< std::vector< tk::real >, 3 >& coord,
-                      tk::Fields& unk,
-                      tk::ctr::ncomp_type,
-                      tk::ctr::ncomp_type ncomp,
-                      tk::ctr::ncomp_type offset,
-                      tk::real t )
-    {
-      Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      for (ncomp_t i=0; i<x.size(); ++i) {
-        const auto s = solution( ncomp, x[i], y[i], t );
-        for (ncomp_t c=0; c<ncomp; ++c)
-          unk(i,c,offset) = s[c];
-      }
-    }
+    static void errchk( ncomp_t, ncomp_t ) {}
 
     //! \brief Query all side set IDs the user has configured for all components
     //!   in this PDE system
@@ -154,50 +131,6 @@ class TransportProblemSlotCyl {
       for (const auto& s : g_inputdeck.get< param, transport, bcdir >())
         for (const auto& i : s)
           conf.insert( std::stoi(i) );
-    }
-
-    //! \brief Query Dirichlet boundary condition value on a given side set for
-    //!    all components in this PDE system
-    //! \param[in] e Equation system index, i.e., which compressible
-    //!   flow equation system we operate on among the systems of PDEs
-    //! \param[in] ncomp Number of components in this transport equation
-    //! \param[in] t Physical time
-    //! \param[in] deltat Time step size
-    //! \param[in] side Pair of side set ID and node IDs on the side set
-    //! \param[in] coord Mesh node coordinates
-    //! \return Vector of pairs of bool and boundary condition value associated
-    //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
-    //!   that instead of the actual boundary condition value, we return the
-    //!   increment between t+dt and t, since that is what the solution requires
-    //!   as we solve for the soution increments and not the solution itself.
-    static std::unordered_map< std::size_t,
-                               std::vector< std::pair< bool, tk::real > > >
-    dirbc( tk::ctr::ncomp_type e,
-           tk::ctr::ncomp_type ncomp,
-           tk::real t,
-           tk::real deltat,
-           const std::pair< const int, std::vector< std::size_t > >& side,
-           const std::array< std::vector< tk::real >, 3 >& coord )
-    {
-      using tag::param; using tag::transport; using tag::bcdir;
-      using NodeBC = std::vector< std::pair< bool, tk::real > >;
-      std::unordered_map< std::size_t, NodeBC > bc;
-      const auto& ubc = g_inputdeck.get< param, transport, bcdir >();
-      if (!ubc.empty()) {
-        Assert( ubc.size() > e, "Indexing out of Dirichlet BC eq-vector" );
-        const auto& x = coord[0];
-        const auto& y = coord[1];
-        for (const auto& b : ubc[e])
-          if (std::stoi(b) == side.first)
-            for (auto n : side.second) {
-              Assert( x.size() > n, "Indexing out of coordinate array" );
-              auto s = solinc( ncomp, x[n], y[n], t, deltat );
-              auto& nbc = bc[n] = NodeBC( ncomp );
-              for (ncomp_t c=0; c<ncomp; ++c)
-                nbc[c] = { true, s[c] };
-            }
-      }
-      return bc;
     }
 
     //! Assign prescribed velocity at a point
@@ -210,27 +143,13 @@ class TransportProblemSlotCyl {
     prescribedVelocity( tk::real x,
                         tk::real y,
                         tk::real,
-                        tk::ctr::ncomp_type,
-                        tk::ctr::ncomp_type ncomp )
+                        ncomp_t,
+                        ncomp_t ncomp )
     {
       std::vector< std::array< tk::real, 3 > > vel( ncomp );
       for (ncomp_t c=0; c<ncomp; ++c)
         vel[c] = {{ 0.5-y, x-0.5, 0.0 }};
       return vel;
-    }
-
-    //! Return the velocity field at cell nodes
-    //! \return Array of the four values of the three velocity coordinates
-    static std::array< std::array< tk::real, 4 >, 3 >
-    velocity( const tk::Fields&,
-              const std::array< std::vector< tk::real >, 3 >& coord,
-              const std::array< std::size_t, 4 >& N )
-    {
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      return {{ {{ 0.5-y[N[0]], 0.5-y[N[1]], 0.5-y[N[2]], 0.5-y[N[3]] }},
-                {{ x[N[0]]-0.5, x[N[1]]-0.5, x[N[2]]-0.5, x[N[3]]-0.5 }},
-                {{ 0.0,         0.0,         0.0,         0.0 }} }};
     }
 
     static ctr::ProblemType type() noexcept

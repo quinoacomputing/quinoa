@@ -34,8 +34,7 @@ Partitioner::Partitioner(
   const Scheme& scheme,
   std::size_t nbfac,
   const std::map< int, std::vector< std::size_t > >& bface,
-  const std::vector< std::size_t >& triinpoel,
-  const std::vector< std::size_t >& nodemap ) :
+  const std::vector< std::size_t >& triinpoel ) :
   m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6] ),
   m_host( host ),
   m_solver( solver ),
@@ -47,6 +46,7 @@ Partitioner::Partitioner(
   m_start( 0 ),
   m_noffset( 0 ),
   m_nquery( 0 ),
+  m_nmask( 0 ),
   m_tetinpoel(),
   m_gelemid(),
   m_centroid(),
@@ -71,8 +71,7 @@ Partitioner::Partitioner(
   m_msumed(),
   m_nbfac( nbfac ),
   m_bface( bface ),
-  m_triinpoel( triinpoel ),
-  m_nodemap( nodemap )
+  m_triinpoel( triinpoel )
 // *****************************************************************************
 //  Constructor
 //! \param[in] cb Charm++ callbacks
@@ -83,8 +82,6 @@ Partitioner::Partitioner(
 //! \param[in] nbfac Total number of boundary faces
 //! \param[in] bface Face lists mapped to side set ids
 //! \param[in] triinpoel Interconnectivity of points and boundary-face
-//! \param[in] nodemap Vector mapping the local Exodus node-IDs to global Exodus
-//!            node-IDs
 // *****************************************************************************
 {
   tk::ExodusIIMeshReader
@@ -118,8 +115,8 @@ Partitioner::partition( int nchare )
                                              nchare );
 
   // send progress report to host
-  //if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-  //  m_host.pepartitioned();
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+    m_host.pepartitioned();
 
   Assert( che.size() == m_gelemid.size(), "Size of ownership array does "
           "not equal the number of mesh graph elements" );
@@ -259,8 +256,8 @@ Partitioner::flatten()
 // *****************************************************************************
 {
   // Optionally refine mesh if requested
-  const auto ir = g_inputdeck.get< tag::selected, tag::initialamr >();
-  if (ir == ctr::InitialAMRType::UNIFORM) refine();
+  const auto ir = g_inputdeck.get< tag::amr, tag::init >();
+  if (ir == ctr::AMRInitialType::UNIFORM) refine();
 
   // Make sure we are not fed garbage
   Assert( m_chinpoel.size() ==
@@ -359,13 +356,25 @@ Partitioner::gather()
 //  assign) during reordering
 // *****************************************************************************
 {
-  thisProxy.query( CkMyPe(), m_nodeset, m_edgeset );
+  // Copy out sets to vectors and send them as such since the receiving side
+  // does not search in them
+  std::vector< std::size_t > nodes( begin(m_nodeset), end(m_nodeset) );
+  std::vector< std::size_t > edges( m_edgeset.size() * 2 );
+
+  std::size_t i=0;
+  for (const auto& e : m_edgeset) {
+    edges[ 2*i+0 ] = e[0];
+    edges[ 2*i+1 ] = e[1];
+    ++i;
+  }
+
+  thisProxy.query( CkMyPe(), nodes, edges );
 }
 
 void
 Partitioner::query( int p,
-                    const std::set< std::size_t >& nodes,
-                    const tk::UnsMesh::Edges& edges ) const
+                    const std::vector< std::size_t >& nodes,
+                    const std::vector< std::size_t >& edges )
 // *****************************************************************************
 //  Query our global node IDs and edges by other PEs so they know if they are to
 //  receive IDs for those from during reordering
@@ -391,14 +400,21 @@ Partitioner::query( int p,
     }
   }
   tk::UnsMesh::EdgeChares ce;
-  for (auto j : edges) {
-    const auto it = m_edgeset.find( j );
+  for (std::size_t j=0; j<edges.size()/2; ++j) {
+  tk::UnsMesh::Edge e{{ edges[2*j+0], edges[2*j+1] }};
+    const auto it = m_edgeset.find( e );
     if (it != end(m_edgeset)) {
-      const auto& c = tk::cref_find( m_edgechares, j );
-      auto& chares = ce[j];
+      const auto& c = tk::cref_find( m_edgechares, e );
+      auto& chares = ce[e];
       chares.insert( end(chares), begin(c), end(c) );
     }
   }
+
+  // when we have heard from all PEs, send progress report to host
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() &&
+       ++m_nquery == static_cast<std::size_t>(CkNumPes()) )
+    m_host.pequery();
+
   thisProxy[ p ].mask( CkMyPe(), cn, ce );
 }
 
@@ -457,7 +473,7 @@ Partitioner::mask(
     for (const auto& h : ce) ed.insert( h.first );
   }
 
-  if (++m_nquery == static_cast<std::size_t>(CkNumPes())) {
+  if (++m_nmask == static_cast<std::size_t>(CkNumPes())) {
     // Make sure we have received all we need
     Assert( m_ncomm.size() == static_cast<std::size_t>(CkMyPe()),
             "Communication map size on PE " +
@@ -504,8 +520,8 @@ Partitioner::mask(
     for (const auto& e : m_ecommunication) erecv += e.second.size();
 
     // send progress report to host
-    //if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    //  m_host.pemask();
+    if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+      m_host.pemask();
 
     // Compute number of mesh node IDs we will assign IDs to
     auto nuniq = m_nodeset.size() - nrecv + m_edgeset.size() - erecv;
@@ -540,8 +556,8 @@ Partitioner::readGraph( tk::ExodusIIMeshReader& er )
   std::iota( begin(m_gelemid), end(m_gelemid), from );
 
   // send progress report to host
-  //if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-  //  m_host.pegraph();
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+    m_host.pegraph();
 
   uint64_t nelem = m_gelemid.size();
   contribute( sizeof(uint64_t), &nelem, CkReduction::sum_int,
@@ -674,8 +690,8 @@ Partitioner::distribute(
     thisProxy[ p.first ].add( CkMyPe(), p.second );
 
   // send progress report to host
-  //if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-  //  m_host.pedistributed();
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+    m_host.pedistributed();
 
   if (m_npe == 0) contribute( m_cb.get< tag::distributed >() );
 }
@@ -1119,8 +1135,8 @@ Partitioner::reordered()
       m_nodeset.insert( i );
 
   // send progress report to host
-  //if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-  //  m_host.pereordered();
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+    m_host.pereordered();
 
   // Compute lower and upper bounds of reordered node IDs our PE operates on
   bounds();
@@ -1185,8 +1201,8 @@ Partitioner::create()
 // *****************************************************************************
 {
   // send progress report to host
-  //if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-  //  m_host.pebounds();
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+    m_host.pebounds();
 
   // Initiate asynchronous reduction across all Partitioner objects computing
   // the average communication cost of merging the linear system
@@ -1270,8 +1286,15 @@ Partitioner::createWorkers()
     // Make sure (bound) base is already created and accessible
     Assert( m_scheme.get()[cid].ckLocal() != nullptr, "About to pass nullptr" );
 
+    // Reorder the triinpoel
+    for(auto& i : m_triinpoel)
+    {
+      auto n = m_linnodes.find(i);
+      if (n != end(m_linnodes)) i = n->second;
+    }
+
     // Face data class
-    FaceData fd(tk::cref_find(m_chinpoel,cid), m_nbfac, m_bface, m_triinpoel, m_nodemap);
+    FaceData fd(tk::cref_find(m_chinpoel,cid), m_nbfac, m_bface, m_triinpoel);
 
     // Create worker array element
     m_scheme.insert( cid, m_scheme.get(), m_solver, fd, CkMyPe() );

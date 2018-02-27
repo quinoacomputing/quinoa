@@ -13,11 +13,11 @@
 
 #include "BoundaryConditions.h"
 #include "SystemComponents.h"
-#include "PDE.h"
+#include "CGPDE.h"
 
 namespace inciter {
 
-extern std::vector< PDE > g_pdes;
+extern std::vector< CGPDE > g_cgpde;
 
 }
 
@@ -153,8 +153,8 @@ BoundaryConditions::match( tk::ctr::ncomp_type ncomp,
 
   for (const auto& s : sidenodes) {
     std::size_t c = 0;
-    for (std::size_t eq=0; eq<g_pdes.size(); ++eq) {
-      auto eqbc = g_pdes[eq].dirbc( t, dt, s, coord );
+    for (std::size_t eq=0; eq<g_cgpde.size(); ++eq) {
+      auto eqbc = g_cgpde[eq].dirbc( t, dt, s, coord );
       for (const auto& n : eqbc) {
         auto id = n.first;                      // BC node ID
         const auto& bcs = n.second;             // BCs

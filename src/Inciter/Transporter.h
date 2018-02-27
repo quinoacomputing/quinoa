@@ -358,6 +358,14 @@ namespace inciter {
 //! Transporter drives the time integration of transport equations
 class Transporter : public CBase_Transporter {
 
+  private:
+    //! Indices for progress report on mesh graph
+    enum ProgGraph{ GRAPH=0 };
+    //! Indices for progress report on mesh partitioning
+    enum ProgPart{ PART=0, DIST };
+    //! Indices for progress report on mesh reordering
+    enum ProgReord{ FLAT=0, QUERY, MASK, REORD, BOUND };
+
   public:
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -417,37 +425,23 @@ class Transporter : public CBase_Transporter {
     void coord();
 
     //! Non-reduction target for receiving progress report on reading mesh graph
-    void pegraph() { m_progGraph.inc<0>(); }
+    void pegraph() { m_progGraph.inc< GRAPH >(); }
 
     //! Non-reduction target for receiving progress report on partitioning mesh
-    void pepartitioned() { m_progPart.inc<0>(); }
+    void pepartitioned() { m_progPart.inc< PART >(); }
     //! Non-reduction target for receiving progress report on distributing mesh
-    void pedistributed() { m_progPart.inc<1>(); }
+    void pedistributed() { m_progPart.inc< DIST >(); }
 
     //! Non-reduction target for receiving progress report on flattening mesh
-    void peflattened() { m_progReorder.inc<0>(); }
+    void peflattened() { m_progReorder.inc< FLAT >(); }
+    //! Non-reduction target for receiving progress report on node ID query
+    void pequery() { m_progReorder.inc< QUERY >(); }
     //! Non-reduction target for receiving progress report on node ID mask
-    void pemask() { m_progReorder.inc<1>(); }
+    void pemask() { m_progReorder.inc< MASK >(); }
     //! Non-reduction target for receiving progress report on reordering mesh
-    void pereordered() { m_progReorder.inc<2>(); }
+    void pereordered() { m_progReorder.inc< REORD >(); }
     //! Non-reduction target for receiving progress report on computing bounds
-    void pebounds() { m_progReorder.inc<3>(); }
-
-    //! Non-reduction target for receiving progress report on establishing comms
-    void pecomfinal() { m_progSetup.inc<0>(); }
-    //! Non-reduction target for receiving progress report on matching BCs
-    void chbcmatched() { m_progSetup.inc<1>(); }
-    //! Non-reduction target for receiving progress report on computing BCs
-    void pebccomplete() { m_progSetup.inc<2>(); }
-
-    //! Non-reduction target for receiving progress report on computing the RHS
-    void chrhs() { m_progStep.inc<0>(); }
-    //! Non-reduction target for receiving progress report on solving the system
-    void pesolve() { m_progStep.inc<1>(); }
-    //! Non-reduction target for receiving progress report on limiting
-    void chlim() { m_progStep.inc<2>(); }
-    //! Non-reduction target for receiving progress report on tracking particles
-    void chtrack() { m_progStep.inc<3>(); }
+    void pebounds() { m_progReorder.inc< BOUND >(); }
 
     //! \brief Reduction target indicating that the communication has been
     //!    established among PEs
@@ -520,11 +514,7 @@ class Transporter : public CBase_Transporter {
     // Progress object for task "Creating partitioners and reading mesh graph"
     tk::Progress< 1 > m_progGraph;
     // Progress object for task "Reordering mesh"
-    tk::Progress< 4 > m_progReorder;
-    // Progress object for task "Computing row IDs, querying BCs, ..."
-    tk::Progress< 3 > m_progSetup;
-    // Progress object for sub-tasks of a time step
-    tk::Progress< 4 > m_progStep;
+    tk::Progress< 5 > m_progReorder;
 
     //! Create linear solver group
     void createSolver();

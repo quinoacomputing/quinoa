@@ -1,16 +1,17 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Transport/Physics/AdvDiff.h
+  \file      src/PDE/Transport/Physics/CGAdvDiff.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Physics configurations for advection-diffusion
-  \details   This file defines a Physics policy class for the scalar transport
-     equations, defined in PDE/Transport/Transport.h. The class defined here is
-     used to configure the behavior of Transport. See PDE/Transport/Physics.h
-     for general requirements on Physics policy classes for Transport.
+  \brief     Physics policy for advection-diffusion using continuous Galerkin
+  \details   This file defines a Physics policy class for scalar transport using
+     continuous Galerkin discretization, defined in PDE/Transport/CGTransport.h.
+     The class defined here is used to configure the behavior of CGTransport.
+     See PDE/Transport/Physics/CG.h for general requirements on Physics policy
+     classes for CGTransport.
 */
 // *****************************************************************************
-#ifndef TransportPhysicsAdvDiff_h
-#define TransportPhysicsAdvDiff_h
+#ifndef TransportPhysicsCGAdvDiff_h
+#define TransportPhysicsCGAdvDiff_h
 
 #include <limits>
 
@@ -18,8 +19,9 @@
 #include "Inciter/Options/Physics.h"
 
 namespace inciter {
+namespace cg {
 
-//! Transport equation system of PDEs problem: advection + diffusion
+//! Physics policy for advection-diffusion using continuous Galerkin
 class TransportPhysicsAdvDiff {
 
   public:
@@ -89,6 +91,7 @@ class TransportPhysicsAdvDiff {
     { return ctr::PhysicsType::ADVDIFF; }
 };
 
+} // cg::
 } // inciter::
 
-#endif // TransportPhysicsAdvDiff_h
+#endif // TransportPhysicsCGAdvDiff_h

@@ -41,7 +41,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
-extern std::vector< PDE > g_pdes;
+extern std::vector< CGPDE > g_cgpde;
 
 }
 
@@ -67,12 +67,8 @@ Transporter::Transporter() :
   m_progGraph( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
                {{ "g" }}, {{ CkNumPes() }} ),
   m_progReorder( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-                 {{ "f", "m", "r", "b" }},
-                 {{ CkNumPes(), CkNumPes(), CkNumPes(), CkNumPes() }} ),
-  m_progSetup( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-               {{ "r", "m", "b" }} ),
-  m_progStep( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-              {{ "r", "s", "l", "p" }} )
+                 {{ "f", "q", "m", "r", "b" }},
+                 {{ CkNumPes(), CkNumPes(), CkNumPes(), CkNumPes(), CkNumPes() }} )
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
@@ -195,7 +191,7 @@ Transporter::createPartitioner()
 // *****************************************************************************
 {
   // Create mesh partitioner Charm++ chare group and start partitioning mesh
-  m_progGraph.start( "Creating partitioners and reading mesh graph" );
+  m_progGraph.start( "Creating partitioners and reading mesh ..." );
 
   // Start timing mesh read
   m_timer[ TimerTag::MESHREAD ];
@@ -204,31 +200,25 @@ Transporter::createPartitioner()
   tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
 
   // Read in side sets associated to mesh node IDs from file
-  m_print.diag( "Reading side sets" );
   auto sidenodes = er.readSidesets();
 
   // Read side sets for boundary faces
-  m_print.diag( "Reading side set faces" );
   std::map< int, std::vector< std::size_t > > bface;
   std::size_t nbfac = 0;
 
   std::vector< std::size_t > triinpoel;
   const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
 
-  // Read local to global node-ID map from file
-  auto nodemap = er.readNodemap();
-
   // Read triangle boundary-face connectivity
   if (scheme == ctr::SchemeType::DG) {
-    m_print.diag( "Reading side set faces" );
     nbfac = er.readSidesetFaces( bface );
-    er.readFaces( nbfac, nodemap, triinpoel );
+    er.readFaces( nbfac, triinpoel );
   }
 
   // Verify that side sets to which boundary conditions are assigned by user
   // exist in mesh file
   std::unordered_set< int > conf;
-  for (const auto& eq : g_pdes) eq.side( conf );
+  for (const auto& eq : g_cgpde) eq.side( conf );
   for (auto i : conf)
   {
     if (sidenodes.find(i) == end(sidenodes)) {
@@ -255,7 +245,7 @@ Transporter::createPartitioner()
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
     CProxy_Partitioner::ckNew( cbp, thisProxy, m_solver, m_bc, m_scheme,
-                               nbfac, bface, triinpoel, nodemap );
+                               nbfac, bface, triinpoel );
 }
 
 void
@@ -271,7 +261,7 @@ Transporter::diagHeader()
 
   // Collect variables names for integral/diagnostics output
   std::vector< std::string > var;
-  for (const auto& eq : g_pdes) {
+  for (const auto& eq : g_cgpde) {
     auto o = eq.names();
     var.insert( end(var), begin(o), end(o) );
   }
@@ -333,8 +323,8 @@ Transporter::load( uint64_t nelem )
   m_print.item( "Number of nodes", m_npoin );
 
   // Print out info on load distribution
-  const auto ir = g_inputdeck.get< tag::selected, tag::initialamr >();
-  if (ir == ctr::InitialAMRType::UNIFORM)
+  const auto ir = g_inputdeck.get< tag::amr, tag::init >();
+  if (ir == ctr::AMRInitialType::UNIFORM)
     m_print.section( "Load distribution (before initial mesh refinement)" );
   else
     m_print.section( "Load distribution" );
@@ -354,12 +344,18 @@ Transporter::load( uint64_t nelem )
   m_print.Item< tk::ctr::PartitioningAlgorithm,
                 tag::selected, tag::partitioner >();
 
-  // Print out mesh refinement configuration and new mesh statistics
-  if (ir == ctr::InitialAMRType::UNIFORM) {
-    m_print.section( "Mesh refinement" );
-    m_print.Item< ctr::InitialAMR, tag::selected, tag::initialamr >();
-    m_print.item( "Final number of tetrahedra",
-      std::to_string(nelem*8) + " (8*" + std::to_string(nelem) + ')' );
+  // Print out adaptive mesh refinement configuration
+  const auto amr = g_inputdeck.get< tag::amr, tag::amr >();
+  if (amr) {
+    m_print.section( "Adaptive mesh refinement (AMR)" );
+    m_print.Item< ctr::AMRInitial, tag::amr, tag::init >();
+    m_print.Item< ctr::AMRError, tag::amr, tag::error >();
+    // Print out initially refined  mesh statistics
+    if (ir == ctr::AMRInitialType::UNIFORM) {
+      m_print.section( "Initial mesh refinement" );
+      m_print.item( "Final number of tetrahedra",
+        std::to_string(nelem*8) + " (8*" + std::to_string(nelem) + ')' );
+    }
   }
 
   m_print.endsubsection();
@@ -375,7 +371,7 @@ Transporter::part()
 {
   const auto& timer = tk::cref_find( m_timer, TimerTag::MESHREAD );
   m_print.diag( "Mesh read time: " + std::to_string(timer.dsec()) + " sec" );
-  m_progPart.start( "Partitioning and distributing mesh" );
+  m_progPart.start( "Partitioning and distributing mesh ..." );
   // signal to runtime system that all workers are ready for mesh partitioning
   part_complete();
 }
@@ -389,7 +385,7 @@ Transporter::distributed()
 // *****************************************************************************
 {
   m_progPart.end();
-  m_progReorder.start( "Reordering mesh" );
+  m_progReorder.start( "Reordering mesh ..." );
   m_partitioner.flatten();
 }
 

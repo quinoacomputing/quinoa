@@ -26,28 +26,21 @@ class CompFlowProblemUserDefined {
 
   public:
 
-    //! Set initial conditions
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in,out] unk Array of unknowns
-    //! \param[in] offset System offset specifying the position of the system of
-    //!   PDEs among other systems
-    static void init( const std::array< std::vector< tk::real >, 3 >& coord,
-                      const std::vector< std::size_t >&,
-                      tk::Fields& unk,
-                      tk::ctr::ncomp_type,
-                      tk::ctr::ncomp_type offset,
-                      tk::real )
+    //! Evaluate initial condition solution at (x,y,z,t) for all components
+    //! \return Values of all components evaluated at (x,y,z,t)
+    static std::array< tk::real, 5 >
+    solution( tk::ctr::ncomp_type, tk::real, tk::real, tk::real, tk::real ) {
+      return {{ 1.0, 0.0, 0.0, 1.0, 293.0 }};
+    }
+
+    //! \brief Evaluate the increment from t to t+dt of the analytical solution
+    //!   at (x,y,z) for all components
+    //! \return Increment in values of all components: all zero for now
+    static std::array< tk::real, 5 >
+    solinc( tk::ctr::ncomp_type,
+            tk::real, tk::real, tk::real, tk::real, tk::real )
     {
-      Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
-      const auto& x = coord[0];
-      for (ncomp_t i=0; i<x.size(); ++i) {
-        // domain points
-        unk(i,0,offset) = 1.0;        // density
-        unk(i,1,offset) = 0.0;        // density * velocity
-        unk(i,2,offset) = 0.0;
-        unk(i,3,offset) = 1.0;
-        unk(i,4,offset) = 293.0;      // density * specific total energy
-      }
+      return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
     }
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
@@ -78,45 +71,6 @@ class CompFlowProblemUserDefined {
       using tag::param; using tag::compflow; using tag::bcdir;
       for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
         conf.insert( std::stoi(s[0]) );
-    }
-
-//     //! \brief Query Dirichlet boundary condition value on a given side set for
-//     //!    all components in this PDE system
-//     //! \param[in] sideset Side set ID
-//     //! \return Vector of pairs of bool and BC value for all components
-//     static std::vector< std::pair< bool, tk::real > >
-//     dirbc( int sideset ) {
-//       using tag::param; using tag::compflow; using tag::bcdir;
-//       std::vector< std::pair< bool, tk::real > > b( 5, { false, 0.0 } );
-//       for (const auto& s : g_inputdeck.get< param, compflow, bcdir >()) {
-//         Assert( s.size() == 3, "Side set vector size incorrect" );
-//         if (std::stoi(s[0]) == sideset)
-//           b[ static_cast<std::size_t>(std::stol(s[1])-1) ] =
-//             { true, std::atof(s[2].c_str()) };
-//       }
-//       return b;
-//     }
-
-    //! \brief Query Dirichlet boundary condition value on a given side set for
-    //!    all components in this PDE system
-    //! \return Vector of pairs of bool and boundary condition value associated
-    //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
-    //!   that instead of the actual boundary condition value, we return the
-    //!   increment between t+dt and t, since that is what the solution requires
-    //!   as we solve for the soution increments and not the solution itself.
-    static std::unordered_map< std::size_t,
-                               std::vector< std::pair< bool, tk::real > > >
-    dirbc( tk::ctr::ncomp_type,
-           tk::real,
-           tk::real,
-           const std::pair< const int, std::vector< std::size_t > >&,
-           const std::array< std::vector< tk::real >, 3 >& )
-    {
-      using tag::param; using tag::compflow; using tag::bcdir;
-      using NodeBC = std::vector< std::pair< bool, tk::real > >;
-      std::unordered_map< std::size_t, NodeBC > bc;
-      // TODO: include functionality from above dirbc() commented
-      return bc;
     }
 
     //! Return field output going to file

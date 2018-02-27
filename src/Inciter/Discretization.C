@@ -16,7 +16,7 @@
 #include "ExodusIIMeshWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "Inciter/Options/Scheme.h"
-#include "PDE.h"
+#include "CGPDE.h"
 #include "Print.h"
 
 #ifdef HAS_ROOT
@@ -26,7 +26,7 @@
 namespace inciter {
 
 static CkReduction::reducerType PDFMerger;
-extern std::vector< PDE > g_pdes;
+extern std::vector< CGPDE > g_cgpde;
 extern ctr::InputDeck g_inputdeck;
 
 } // inciter::
@@ -493,7 +493,7 @@ Discretization::writeNodeMeta() const
 
       // Collect nodal field output names from all PDEs
       std::vector< std::string > names;
-      for (const auto& eq : g_pdes) {
+      for (const auto& eq : g_cgpde) {
         auto n = eq.fieldNames();
         names.insert( end(names), begin(n), end(n) );
       }
@@ -510,7 +510,7 @@ Discretization::writeNodeMeta() const
 
       // Collect nodal field output names from all PDEs
       std::vector< std::string > names;
-      for (const auto& eq : g_pdes) {
+      for (const auto& eq : g_cgpde) {
         auto n = eq.fieldNames();
         names.insert( end(names), begin(n), end(n) );
       }
@@ -535,7 +535,7 @@ Discretization::writeElemMeta() const
 
     // Collect elemental field output names from all PDEs
     std::vector< std::string > names {{ "scalar" }};
-    //for (const auto& eq : g_pdes) {
+    //for (const auto& eq : g_cgpde) {
     //  auto n = eq.fieldNames();
     //  names.insert( end(names), begin(n), end(n) );
     //}

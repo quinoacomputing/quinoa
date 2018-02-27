@@ -42,17 +42,10 @@ module transporter {
       entry void pedistributed();
 
       entry void peflattened();
+      entry void pequery();
       entry void pemask();
       entry void pereordered();
       entry void pebounds();
-
-      entry void pecomfinal();
-      entry void chbcmatched();
-      entry void pebccomplete();
-
-      entry void chrhs();
-      entry void pesolve();
-      entry void chlim();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".

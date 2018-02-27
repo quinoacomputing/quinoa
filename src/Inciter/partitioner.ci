@@ -28,8 +28,7 @@ module partitioner {
         const Scheme& scheme,
         std::size_t nbfac,
         const std::map< int, std::vector< std::size_t > >& bface,
-        const std::vector< std::size_t >& triinpoel,
-        const std::vector< std::size_t >& nodemap );
+        const std::vector< std::size_t >& triinpoel );
       entry void partition( int nchare );
       entry void add( int frompe,
             const std::unordered_map< int, std::vector< std::size_t > >& elem );
@@ -45,8 +44,8 @@ module partitioner {
       entry void stdCost( tk::real av );
       entry void gather();
       entry void query( int pe,
-                        const std::set< std::size_t >& nodes,
-                        const tk::UnsMesh::Edges& edges );
+                        const std::vector< std::size_t >& nodes,
+                        const std::vector< std::size_t >& edges );
       entry void mask( int pe,
                        const std::unordered_map< std::size_t,
                                                  std::vector< int > >& cn,

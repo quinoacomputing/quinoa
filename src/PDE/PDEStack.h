@@ -27,7 +27,8 @@
 #include "Keywords.h"
 #include "Exception.h"
 #include "Factory.h"
-#include "PDE.h"
+#include "CGPDE.h"
+#include "DGPDE.h"
 #include "Inciter/Options/PDE.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
@@ -37,10 +38,15 @@ extern ctr::InputDeck g_inputdeck;
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
-//! \brief Partial differential equation factory: keys associated to their
-//!   constructors
-using PDEFactory =
-  std::map< ctr::PDEKey, std::function< PDE(const ncomp_t&) > >;
+//! \brief Factory for PDEs using continuous Galerkin discretization storing
+//!   keys associated to their constructors
+using CGFactory =
+  std::map< ctr::PDEKey, std::function< CGPDE(const ncomp_t&) > >;
+
+//! \brief Factory for PDEs using discontinuous Galerkin discretization storing
+//!   keys associated to their constructors
+using DGFactory =
+  std::map< ctr::PDEKey, std::function< DGPDE(const ncomp_t&) > >;
 
 //! \brief Partial differential equations stack
 class PDEStack {
@@ -49,13 +55,15 @@ class PDEStack {
     //! Constructor: register partial differential equations into factory
     explicit PDEStack();
 
-    //! Instantiate selected partial differential equations
-    std::vector< PDE > selected() const;
+    //! Instantiate selected PDEs using continuous Galerkin discretization
+    std::vector< CGPDE > selectedCG() const;
 
-    //! \brief Constant accessor to partial differential equation factory
-    //! \return Constant reference to the internal partial differential equation
-    //!   factory
-    const PDEFactory& factory() const { return m_factory; }
+    //! Instantiate selected PDEs using discontinuous Galerkin discretization
+    std::vector< DGPDE > selectedDG() const;
+
+    //! Constant accessor to CGPDE factory
+    //! \return Constant reference to the CGPDE factory
+    const CGFactory& factory() const { return m_cgfactory; }
 
     //! Return info on selected partial differential equations
     std::vector< std::vector< std::pair< std::string, std::string > > > info()
@@ -73,15 +81,23 @@ class PDEStack {
     //!   policies. The purpose of template template is to simplify client code
     //!   as that will not have to specify the template arguments of the
     //!   template argument (the policies of Eq), since we can figure it out
-    //!   here. See also http://stackoverflow.com/a/214900
-    template< template< class, class > class Eq >
+    //!   here. See also http://stackoverflow.com/a/214900. The template
+    //!   argument Eq specifies a "child" class that is used polymorphically
+    //!   with a "base" class modeling a concept defined in the base. The base
+    //!   is given by the template argument PDE. The template argument Factory
+    //!   specifies which factory to store the registered and configured child
+    //1   PDE.
+    template< template< class, class > class Eq, class Factory, class PDE >
     struct registerPDE {
       //! Need to store the reference to factory we are registering into
-      PDEFactory& factory;
+      Factory& factory;
       //! Need to store which differential equation we are registering
       const ctr::PDEType type;
       //! Constructor, also count number of unique equation types registered
-      explicit registerPDE( PDEFactory& f,
+      //! \param[in,out] f Factory into which to register PDE
+      //! \param[in] t Enum selecting PDE type, Control/Inciter/Options/PDE.h
+      //! \param[in] eqTypes Equation type counters
+      explicit registerPDE( Factory& f,
                             ctr::PDEType t,
                             std::set< ctr::PDEType >& eqTypes ) :
         factory( f ), type( t ) { eqTypes.insert( t ); }
@@ -101,17 +117,49 @@ class PDEStack {
       }
     };
 
+    //! Wrapper of registerPDE specialized for registering CG PDEs
+    //! \details The sole reason for this functor is to simplify client-code
+    //!   calling registerPDE specialized to CG PDEs
+    template< template< class, class > class Eq >
+    struct registerCG : registerPDE< Eq, CGFactory, CGPDE > {
+      //! Delegate constructor to base and specialize to CG
+      //! \param[in] stack Host class to access factory and counters
+      //! \param[in] t Enum selecting PDE type, Control/Inciter/Options/PDE.h
+      explicit registerCG( PDEStack* const stack, ctr::PDEType t ) :
+        registerPDE< Eq, CGFactory, CGPDE >
+                   ( stack->m_cgfactory, t, stack->m_eqTypes ) {}
+    };
+
+    //! Wrapper of registerPDE specialized for registering DG PDEs
+    //! \details The sole reason for this functor is to simplify client-code
+    //!   calling registerPDE specialized to DG PDEs
+    template< template< class, class > class Eq >
+    struct registerDG : registerPDE< Eq, DGFactory, DGPDE > {
+      //! Delegate constructor to base and specialize to CG
+      //! \param[in] stack Host class to access factory and counters
+      //! \param[in] t Enum selecting PDE type, Control/Inciter/Options/PDE.h
+      explicit registerDG( PDEStack* const stack, ctr::PDEType t ) :
+        registerPDE< Eq, DGFactory, DGPDE >
+                   ( stack->m_dgfactory, t, stack->m_eqTypes ) {}
+    };
+
     //! \brief Instantiate a partial differential equation
     //! \details The template argument, EqTag, is used to find the given
     //!   partial differential equation in the input deck, the hierarchical data
-    //!   filled during control file parsing, containing user input.
+    //!   filled during control file parsing, containing user input. The
+    //!   template argument Factory specifies which factory we search in. The
+    //!   template argument PDE specifies the "base" PDE type that the
+    //!   instantiated "child" PDE class object is used polymorphically with.
+    //! \param[in] f Factory in which to search PDE in
     //! \param[in] eq The unique partial differential equation key whose object
     //!   to instantiate.
     //! \param[in,out] cnt Counter, a std::map, that counts all instantiated
     //!   partial differential equations by type.
-    template< class EqTag >
-    PDE createPDE( ctr::PDEType eq, std::map< ctr::PDEType, ncomp_t >& cnt )
-    const {
+    template< class EqTag, class Factory, class PDE >
+    PDE createPDE( const Factory& f,
+                   ctr::PDEType eq,
+                   std::map< ctr::PDEType, ncomp_t >& cnt ) const
+    {
       auto c = ++cnt[ eq ];   // count eqs
       --c;                    // used to index vectors starting with 0
       Assert( c < (g_inputdeck.get< tag::component, EqTag >().size()),
@@ -125,10 +173,39 @@ class PDEStack {
         ctr::PDEKey key{ eq,
           g_inputdeck.get< tag::param, EqTag, tag::physics >()[c],
           g_inputdeck.get< tag::param, EqTag, tag::problem >()[c] };
-        const auto it = m_factory.find( key );
-        Assert( it != end( m_factory ), "Can't find PDE in factory" );
+        const auto it = f.find( key );
+        Assert( it != end( f ),
+                "Can't find PDE with key('" +
+                  ctr::PDE().name( key.get< tag::pde >() ) + "', '" +
+                  ctr::Physics().name( key.get< tag::physics >() ) + "', '" +
+                  ctr::Problem().name( key.get< tag::problem >() ) +
+                  + "') in factory" );
         return it->second( c );    // instantiate and return PDE object
       } else Throw ( "Can't create PDE with zero components" );
+    }
+
+    //! Wrapper of createPDE specialized for registering CG PDEs
+    //! \param[in] t Enum selecting PDE type, Control/Inciter/Options/PDE.h
+    //! \param[in,out] cnt Counter, a std::map, that counts all instantiated
+    //!   partial differential equations by type.
+    //! \details The sole reason for this function is to simplify client-code
+    //!   calling createPDE specialized to CG PDEs
+    template< class EqTag >
+    CGPDE createCG( ctr::PDEType t, std::map< ctr::PDEType, ncomp_t >& cnt )
+    const {
+      return createPDE< EqTag, CGFactory, CGPDE >( m_cgfactory, t, cnt );
+    }
+
+    //! Wrapper of createPDE specialized for registering DG PDEs
+    //! \param[in] t Enum selecting PDE type, Control/Inciter/Options/PDE.h
+    //! \param[in,out] cnt Counter, a std::map, that counts all instantiated
+    //!   partial differential equations by type.
+    //! \details The sole reason for this function is to simplify client-code
+    //!   calling createPDE specialized to DG PDEs
+    template< class EqTag >
+    DGPDE createDG( ctr::PDEType t, std::map< ctr::PDEType, ncomp_t >& cnt )
+    const {
+      return createPDE< EqTag, DGFactory, DGPDE >( m_dgfactory, t, cnt );
     }
 
     /** @name Configuration-querying functions for PDEs */
@@ -152,8 +229,14 @@ class PDEStack {
       return s.str();
     }
 
-    PDEFactory m_factory;            //!< Partial differential equations factory
-    std::set< ctr::PDEType > m_eqTypes;   //!< Count number of equation types
+    //! \brief Partial differential equations factory for those PDEs that use
+    //!   continuous Galerkin discretization
+    CGFactory m_cgfactory;
+    //! \brief Partial differential equations factory for those PDEs that use
+    //!   discontinuous Galerkin discretization
+    DGFactory m_dgfactory;
+    //! Counters for equation types
+    std::set< ctr::PDEType > m_eqTypes;
 };
 
 } // inciter::

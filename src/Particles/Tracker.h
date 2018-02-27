@@ -22,7 +22,6 @@
 #include "Particles.h"
 #include "DerivedData.h"
 #include "ParticleWriter.h"
-#include "PDE.h"
 #include "ContainerUtil.h"
 #include "PUPUtil.h"
 
