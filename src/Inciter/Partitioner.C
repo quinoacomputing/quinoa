@@ -36,8 +36,7 @@ Partitioner::Partitioner(
   const Scheme& scheme,
   std::size_t nbfac,
   const std::map< int, std::vector< std::size_t > >& bface,
-  const std::vector< std::size_t >& triinpoel,
-  const std::vector< std::size_t >& nodemap ) :
+  const std::vector< std::size_t >& triinpoel ) :
   m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6] ),
   m_host( host ),
   m_solver( solver ),
@@ -74,8 +73,7 @@ Partitioner::Partitioner(
   m_msumed(),
   m_nbfac( nbfac ),
   m_bface( bface ),
-  m_triinpoel( triinpoel ),
-  m_nodemap( nodemap )
+  m_triinpoel( triinpoel )
 // *****************************************************************************
 //  Constructor
 //! \param[in] cb Charm++ callbacks
@@ -86,8 +84,6 @@ Partitioner::Partitioner(
 //! \param[in] nbfac Total number of boundary faces
 //! \param[in] bface Face lists mapped to side set ids
 //! \param[in] triinpoel Interconnectivity of points and boundary-face
-//! \param[in] nodemap Vector mapping the local Exodus node-IDs to global Exodus
-//!            node-IDs
 // *****************************************************************************
 {
   tk::ExodusIIMeshReader
@@ -1388,8 +1384,15 @@ Partitioner::createWorkers()
     // Make sure (bound) base is already created and accessible
     Assert( m_scheme.get()[cid].ckLocal() != nullptr, "About to pass nullptr" );
 
+    // Reorder the triinpoel
+    for(auto& i : m_triinpoel)
+    {
+      auto n = m_linnodes.find(i);
+      if (n != end(m_linnodes)) i = n->second;
+    }
+
     // Face data class
-    FaceData fd(tk::cref_find(m_chinpoel,cid), m_nbfac, m_bface, m_triinpoel, m_nodemap);
+    FaceData fd(tk::cref_find(m_chinpoel,cid), m_nbfac, m_bface, m_triinpoel);
 
     // Create worker array element
     m_scheme.insert( cid, m_scheme.get(), m_solver, fd, CkMyPe() );

@@ -61,10 +61,17 @@ class DG : public CBase_DG {
       CBase_DG::pup(p);
       p | m_itf;
       p | m_disc;
+      p | m_fd;
       p | m_u;
+      p | m_un;
       p | m_vol;
       p | m_geoFace;
       p | m_geoElem;
+      p | m_ax;
+      p | m_ay;
+      p | m_az;
+      p | m_lhs;
+      p | m_rhs;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -77,14 +84,26 @@ class DG : public CBase_DG {
     uint64_t m_itf;
     //! Discretization proxy
     CProxy_Discretization m_disc;
+    //! Face data
+    FaceData m_fd;
     //! Vector of unknown/solution average over each mesh element
     tk::Fields m_u;
+    //! Vector of unknown at previous time-step
+    tk::Fields m_un;
     //! Total mesh volume
     tk::real m_vol;
     //! Face geometry
     tk::Fields m_geoFace;
     //! Element geometry
     tk::Fields m_geoElem;
+    //! advection velocity x, y and z components
+    tk::real m_ax;
+    tk::real m_ay;
+    tk::real m_az;
+    //! Left-hand side mass-matrix which is a diagonal matrix
+    std::vector< tk::real > m_lhs;
+    //! Vector of right-hand side
+    tk::Fields m_rhs;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -92,8 +111,19 @@ class DG : public CBase_DG {
       return m_disc[ thisIndex ].ckLocal();
     }
 
+    //! Compute left hand side
+    void lhs();
+
     //! Compute right hand side
     void rhs();
+
+    //! Upwind fluxes
+    std::vector< tk::real > upwindFlux( std::vector< tk::real > ul,
+                                        std::vector< tk::real > ur,
+                                        std::array< tk::real, 3 > fn );
+
+    //! Time stepping
+    void solve( tk::real deltat );
 
     //! Prepare for next step
     void next();

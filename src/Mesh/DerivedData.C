@@ -810,6 +810,7 @@ genNbfacTet( std::size_t tnbfac,
              const std::vector< std::size_t >& inpoel,
              const std::vector< std::size_t >& triinpoel_complete,
              const std::map< int, std::vector< std::size_t > >& bface_complete,
+             const std::unordered_map< std::size_t, std::size_t >& lid,
              std::vector< std::size_t >& triinpoel,
              std::map< int, std::vector< std::size_t > >& bface )
 // *****************************************************************************
@@ -823,6 +824,9 @@ genNbfacTet( std::size_t tnbfac,
 //!   in the entire mesh.
 //! \param[in] bface_complete Map of boundary-face lists mapped to corresponding 
 //!   side set ids for the entire mesh.
+//! \param[in] lid Mapping between the node indices used in the smaller inpoel
+//!   connectivity (a subset of the entire triinpoel_complete connectivity),
+//!   e.g., after mesh partitioning.
 //! \param[inout] triinpoel Interconnectivity of points and boundary-face in
 //!   this mesh-partition.
 //! \param[inout] bface Map of boundary-face lists mapped to corresponding 
@@ -893,9 +897,13 @@ genNbfacTet( std::size_t tnbfac,
       if (tag == nnpf)
       // this is a boundary face
       {
-        triinpoel.push_back( triinpoel_complete[icoun] );
-        triinpoel.push_back( triinpoel_complete[icoun+1] );
-        triinpoel.push_back( triinpoel_complete[icoun+2] );
+        for (std::size_t i=0; i<nnpf; ++i)
+        {
+          auto ip = triinpoel_complete[icoun+i];
+
+          // find local renumbered node-id to store in triinpoel
+          triinpoel.push_back( tk::cref_find(lid,ip) );
+        }
 
         bface[ss.first].push_back(nbfac);
         ++nbfac;
@@ -1146,7 +1154,7 @@ genInpofaTet( std::size_t ntfac,
 //! \param[in] inpoel Element-node connectivity.
 //! \param[in] triinpoel Face-node connectivity.
 //! \param[in] esuelTet Elements surrounding elements.
-//! \return Elements surrounding faces. The unsigned integer vector gives the
+//! \return Points surrounding faces. The unsigned integer vector gives the
 //!   elements to the left and to the right of each face in the mesh.
 // *****************************************************************************
 {
@@ -1198,10 +1206,9 @@ genInpofaTet( std::size_t ntfac,
   for (std::size_t f=0; f<nbfac; ++f)
   {
     icoun = nnpf * f;
-    for(std::size_t i=0; i<nnpf ; ++i)
-    {
-      inpofa[icoun+i] = triinpoel[icoun+i];
-    }
+    inpofa[icoun+0] = triinpoel[icoun+2];
+    inpofa[icoun+1] = triinpoel[icoun+1];
+    inpofa[icoun+2] = triinpoel[icoun+0];
   }
   }
 
@@ -1211,8 +1218,6 @@ genInpofaTet( std::size_t ntfac,
 std::vector< std::size_t >
 genBelemTet( std::size_t nbfac,
               const std::vector< std::size_t >& inpofa,
-              const std::vector< std::size_t >& nodemap,
-              const std::vector< std::size_t >& gid,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& esup )
 // *****************************************************************************
@@ -1220,10 +1225,6 @@ genBelemTet( std::size_t nbfac,
 //   their faces with the domain boundary (host elements).
 //! \param[in] nbfac Number of boundary faces.
 //! \param[in] inpofa Face-node connectivity.
-//! \param[in] node_map Vector mapping the local Exodus node-IDs to global
-//!            Exodus node-IDs
-//! \param[in] gid Vector mapping the local renumbered node-IDs to local Exodus
-//!            node-IDs
 //! \param[in] esup Elements surrounding points as linked lists, see tk::genEsup
 //! \return Host elements or boundary elements. The unsigned integer vector
 //!   gives the elements to the left of each boundary face in the mesh.
@@ -1250,20 +1251,9 @@ genBelemTet( std::size_t nbfac,
     {
       auto gp = inpofa[nnpf*f + lp];
 
-      // 1. find the Exodus-local node ID for gp
-      auto it = std::find (nodemap.begin(), nodemap.end(), gp);
-      if (it == nodemap.end()) { continue; }
-      auto lgp = static_cast< std::size_t >(it-nodemap.begin());
-
-      // 2. find the renumbered node ID for lgp,
-      //    this is the local node id that esup uses
-      auto ip = std::find (gid.begin(), gid.end(), lgp);
-      Assert( ip != gid.end(), "gid map pointing to nothing!" );
-      auto rgp = static_cast< std::size_t >(ip-gid.begin());
-
-      Assert( rgp < esup.second.size(), "Indexing out of esup2" );
+      Assert( gp < esup.second.size(), "Indexing out of esup2" );
       // loop over elements surrounding this node
-      for (auto i=esup.second[rgp]+1; i<=esup.second[rgp+1]; ++i)
+      for (auto i=esup.second[gp]+1; i<=esup.second[gp+1]; ++i)
       {
         // form element-cluster vector
         elemcluster.push_back(esup.first[i]);

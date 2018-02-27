@@ -2515,6 +2515,22 @@ void DerivedData_object::test< 65 >() {
                                                  11,  6,  5,
                                                  11,  5,  1 };
 
+  std::unordered_map< std::size_t, std::size_t > lid {
+          { {0}, {0} },
+          { {1}, {1} },
+          { {2}, {2} },
+          { {3}, {3} },
+          { {4}, {4} },
+          { {5}, {5} },
+          { {6}, {6} },
+          { {7}, {7} },
+          { {8}, {8} },
+          { {9}, {9} },
+          { {10}, {10} },
+          { {11}, {11} },
+          { {12}, {12} },
+          { {13}, {13} } };
+
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
   tk::shiftToZero( t_triinpoel );
@@ -2522,7 +2538,7 @@ void DerivedData_object::test< 65 >() {
 
   std::vector< std::size_t > triinpoel;
 
-  auto nbfac = tk::genNbfacTet( tnbfac, inpoel, t_triinpoel, t_bface,
+  auto nbfac = tk::genNbfacTet( tnbfac, inpoel, t_triinpoel, t_bface, lid,
                                 triinpoel, bface );
 
   ensure_equals( "number of boundary-faces is incorrect",
@@ -3019,54 +3035,54 @@ void DerivedData_object::test< 67 >() {
   };
 
   // Read boundary face-node connectivity
-  std::vector< std::size_t > triinpoel {  9,  1, 24,
-                                         12,  1,  9,
-                                         24,  1, 20,
-                                         20,  1, 12,
-                                         20, 12, 23,
-                                         13, 24, 20,
-                                         13, 20,  5,
-                                          5, 20, 23,
-                                         13,  5, 16,
-                                          5, 23, 16,
-                                         19, 23, 12,
-                                         17, 24, 13,
-                                         21, 12,  9,
-                                         22, 13, 16,
-                                         17,  9, 24,
-                                         19, 16, 23,
-                                         17, 13,  6,
-                                          6, 13, 14,
-                                         12, 21,  4,
-                                          4, 19, 12,
-                                         10, 21,  9,
-                                          9, 17,  2,
-                                          9,  2, 10,
-                                         16, 19,  8,
-                                         16,  8, 15,
-                                         13, 22, 14,
-                                         22, 16, 15,
-                                         17,  6, 14,
-                                         19,  4, 25,
-                                          8, 19, 15,
-                                          2, 17, 10,
-                                         17, 14, 26,
-                                         25,  4, 11,
-                                         11,  4, 21,
-                                         19, 25, 15,
-                                         10, 17, 26,
-                                         11, 21, 10,
-                                          7, 22, 15,
-                                          7, 14, 22,
-                                         18, 15, 25,
-                                         18, 25, 11,
-                                         11, 10,  3,
-                                         10, 26, 18,
-                                         26, 14,  7,
-                                          7, 15, 18,
-                                         18, 11,  3,
-                                         10, 18,  3,
-                                         26,  7, 18 };
+  std::vector< std::size_t > triinpoel { 24,  1,  9,
+                                          9,  1, 12,
+                                         20,  1, 24,
+                                         12,  1, 20,
+                                         23, 12, 20,
+                                         20, 24, 13,
+                                          5, 20, 13,
+                                         23, 20,  5,
+                                         16,  5, 13,
+                                         16, 23,  5,
+                                         12, 23, 19,
+                                         13, 24, 17,
+                                          9, 12, 21,
+                                         16, 13, 22,
+                                         24,  9, 17,
+                                         23, 16, 19,
+                                          6, 13, 17,
+                                         14, 13,  6,
+                                          4, 21, 12,
+                                         12, 19,  4,
+                                          9, 21, 10,
+                                          2, 17,  9,
+                                         10,  2,  9,
+                                          8, 19, 16,
+                                         15,  8, 16,
+                                         14, 22, 13,
+                                         15, 16, 22,
+                                         14,  6, 17,
+                                         25,  4, 19,
+                                         15, 19,  8,
+                                         10, 17,  2,
+                                         26, 14, 17,
+                                         11,  4, 25,
+                                         21,  4, 11,
+                                         15, 25, 19,
+                                         26, 17, 10,
+                                         10, 21, 11,
+                                         15, 22,  7,
+                                         22, 14,  7,
+                                         25, 15, 18,
+                                         11, 25, 18,
+                                          3, 10, 11,
+                                         18, 26, 10,
+                                          7, 14, 26,
+                                         18, 15,  7,
+                                          3, 11, 18,
+                                          3, 18, 10,
+                                         18,  7, 26 };
 
   // Shift node IDs to start from zero
   tk::shiftToZero( triinpoel );
@@ -3353,12 +3369,6 @@ void DerivedData_object::test< 68 >() {
                                             13,
                                             10 };
 
-  std::vector< std::size_t > nodemap { 0, 1, 2,  3,  4,  5,  6, 
-                                       7, 8, 9, 10, 11, 12, 13 };
-
-  std::vector< std::size_t > gid { 0, 1, 2,  3,  4,  5,  6, 
-                                   7, 8, 9, 10, 11, 12, 13 };
-
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
   tk::shiftToZero( triinpoel );
@@ -3367,7 +3377,7 @@ void DerivedData_object::test< 68 >() {
   auto esuel = tk::genEsuelTet( inpoel, esup );
   auto ntfac = tk::genNtfac( 4, nbfac, esuel );
   auto inpofa = tk::genInpofaTet( ntfac, nbfac, inpoel, triinpoel, esuel );
-  auto belem = tk::genBelemTet( nbfac, inpofa, nodemap, gid, esup );
+  auto belem = tk::genBelemTet( nbfac, inpofa, esup );
 
   ensure_equals( "total number of entries in belem is incorrect",
                  belem.size(), correct_belem.size() );

@@ -24,8 +24,7 @@ FaceData::FaceData(
   const std::vector< std::size_t >& conn,
   std::size_t nbfac_complete,
   const std::map< int, std::vector< std::size_t > >& bface_complete,
-  const std::vector< std::size_t >& triinpoel_complete,
-  const std::vector< std::size_t >& nodemap )
+  const std::vector< std::size_t >& triinpoel_complete )
 // *****************************************************************************
 //  Constructor
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
@@ -48,30 +47,28 @@ FaceData::FaceData(
     auto el = tk::global2local( conn );   // fills inpoel, m_gid, m_lid
     auto inpoel = std::get< 0 >( el );
     auto gid = std::get< 1 >( el );
+    auto lid = std::get< 2 >( el );
 
-    // Derived face data computations that require zero-based inpoel, esup
     auto esup = tk::genEsup(inpoel,4);
     m_esuel = tk::genEsuelTet( inpoel, esup );
 
     auto l_inpoel = inpoel;
 
-    // Mapping inpoel from local node ids to Exodus-global node ids
+    // Mapping inpoel from local renumbered ids to global renumbered node ids
     for (std::size_t e=0; e<inpoel.size()/4; ++e)
     {
-            inpoel[4*e]   = nodemap[ gid[ l_inpoel[4*e]   ] ];
-            inpoel[4*e+1] = nodemap[ gid[ l_inpoel[4*e+1] ] ];
-            inpoel[4*e+2] = nodemap[ gid[ l_inpoel[4*e+2] ] ];
-            inpoel[4*e+3] = nodemap[ gid[ l_inpoel[4*e+3] ] ];
+      inpoel[4*e]   = gid[ l_inpoel[4*e]   ];
+      inpoel[4*e+1] = gid[ l_inpoel[4*e+1] ];
+      inpoel[4*e+2] = gid[ l_inpoel[4*e+2] ];
+      inpoel[4*e+3] = gid[ l_inpoel[4*e+3] ];
     }
 
-    // Derived face data computations that require Exodus-global node ids
-    // in inpoel, esup
     m_nbfac = tk::genNbfacTet( nbfac_complete, inpoel, triinpoel_complete,
-                               bface_complete, m_triinpoel, m_bface );
+                               bface_complete, lid, m_triinpoel, m_bface );
     m_ntfac = tk::genNtfac( 4, m_nbfac, m_esuel );
-    m_inpofa = tk::genInpofaTet( m_ntfac, m_nbfac, inpoel, m_triinpoel,
+    m_inpofa = tk::genInpofaTet( m_ntfac, m_nbfac, l_inpoel, m_triinpoel,
                                  m_esuel );
-    m_belem =  tk::genBelemTet( m_nbfac, m_inpofa, nodemap, gid, esup );
+    m_belem =  tk::genBelemTet( m_nbfac, m_inpofa, esup );
     m_esuf = tk::genEsuf( 4, m_ntfac, m_nbfac, m_belem, m_esuel );
 
     Assert( m_belem.size() == m_nbfac,
