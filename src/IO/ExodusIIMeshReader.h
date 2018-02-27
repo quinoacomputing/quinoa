@@ -90,7 +90,6 @@ class ExodusIIMeshReader {
 
     //! Read face connectivity of a number boundary faces from file
     void readFaces( std::size_t nbfac,
-                    const std::vector< std::size_t >& nodemap,
                     std::vector< std::size_t >& conn );
 
     //! Read local to global node-ID map

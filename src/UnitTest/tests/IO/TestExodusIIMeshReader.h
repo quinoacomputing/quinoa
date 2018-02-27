@@ -1550,34 +1550,34 @@ void ExodusIIMeshReader_object::test< 5 >() {
 
   // Read boundary face-node connectivity
   std::vector< std::size_t > triinpoel;
-  auto nodemap = er.readNodemap();
-  er.readFaces( nbfac, nodemap, triinpoel );
+  er.readFaces( nbfac, triinpoel );
 
   // Generate correct solution for face-node connectivity
-  std::vector< int > correct_triinpoel {  2,  9,  3,
-                                          1,  9,  2,
-                                          3,  9,  4,
-                                          1,  4,  9,
-                                          7, 10,  6,
-                                          6, 10,  5,
-                                          8, 10,  7,
-                                         10,  8,  5,
-                                          6, 11,  2,
-                                          2, 11,  1,
-                                         11,  6,  5,
-                                         11,  5,  1,
-                                          3, 12,  2,
-                                         12,  6,  2,
-                                          7, 12,  3,
-                                         12,  7,  6,
-                                         13,  7,  3,
-                                          4, 13,  3,
-                                         13,  8,  7,
-                                          8, 13,  4,
-                                          5,  8, 14,
-                                          1,  5, 14,
-                                          4, 14,  8, 
-                                          1, 14,  4 };
+  std::vector< int > correct_triinpoel {   1,  2,  3,
+                                           4,  2,  1,
+                                           3,  2,  5,
+                                           4,  5,  2,
+                                           6,  7,  8,
+                                           8,  7,  9,
+                                          10,  7,  6,
+                                           7, 10,  9,
+                                           8, 11,  1,
+                                           1, 11,  4,
+                                          11,  8,  9,
+                                          11,  9,  4,
+                                           3, 12,  1,
+                                          12,  8,  1,
+                                           6, 12,  3,
+                                          12,  6,  8,
+                                          13,  6,  3,
+                                           5, 13,  3,
+                                          13, 10,  6,
+                                          10, 13,  5,
+                                           9, 10, 14,
+                                           4,  9, 14,
+                                           5, 14, 10,
+                                           4, 14,  5 };
+
 
   ensure_equals( "total number of entries in inpofa is incorrect",
                  triinpoel.size(), correct_triinpoel.size() );
@@ -1599,12 +1599,37 @@ void ExodusIIMeshReader_object::test< 6 >() {
     std::vector< std::size_t > triinpoel;
     std::string infile( REGRESSION_DIR "/meshconv/gmsh_output/box_24_ss1.exo" );
     tk::ExodusIIMeshReader er( infile );
-    auto nodemap = er.readNodemap();
-    er.readFaces( 0, nodemap, triinpoel );
+    er.readFaces( 0, triinpoel );
     fail( "should throw exception" );
   }
   catch ( tk::Exception& ) {
     // exception thrown, test ok
+  }
+}
+
+//! Read node-map
+template<> template<>
+void ExodusIIMeshReader_object::test< 7 >() {
+  set_test_name( "read the node-map" );
+
+  // Read in mesh from file
+  std::string infile( REGRESSION_DIR
+                      "/meshconv/gmsh_output/box_24_ss1.exo" );
+  tk::ExodusIIMeshReader er( infile );
+
+  auto nodemap = er.readNodemap();
+
+  // Generate correct solution for face-node connectivity
+  std::vector< std::size_t > correct_nodemap
+              { 2, 9, 3, 1, 4, 7, 10, 6, 5, 8, 11, 12, 13, 14};
+
+  ensure_equals( "total number of entries in inpofa is incorrect",
+                 nodemap.size(), correct_nodemap.size() );
+
+  for(std::size_t i=0 ; i<nodemap.size(); ++i)
+  {
+          ensure_equals("incorrect entry " + std::to_string(i) + " in nodemap",
+                          nodemap[i], correct_nodemap[i]-1);
   }
 }
 

@@ -36,9 +36,13 @@ DG::DG( const CProxy_Discretization& disc,
         const FaceData& fd ) :
   m_itf( 0 ),
   m_disc( disc ),
+  m_fd( fd ),
   m_u( m_disc[thisIndex].ckLocal()->Inpoel().size()/4,
        g_inputdeck.get< tag::component >().nprop() ),
-  m_vol( 0.0 )
+  m_un( m_u.nunk(), m_u.nprop() ),
+  m_vol( 0.0 ),
+  m_lhs( m_disc[thisIndex].ckLocal()->Inpoel().size()/4, 0.0 ),
+  m_rhs( m_u.nunk(), m_u.nprop() )
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
@@ -85,13 +89,19 @@ DG::setup( tk::real v )
   // Output fields metadata to output file
   d->writeElemMeta();
 
+  // Compute left-hand side of discrete PDEs
+  lhs();
+
   // zero initial solution vector
   // ...
 
-  std::size_t nnpe(4);
-  std::size_t nelem = d->Inpoel().size()/nnpe;
-
   // Set initial conditions for all PDEs
+  m_ax = 0.1;
+  m_ay = 0.1;
+  m_az = 0.0;
+
+  std::size_t nelem = m_u.nunk();
+
   for (std::size_t e=0; e<nelem; ++e)
   {
     auto xcc = m_geoElem(e,1,0);
@@ -102,10 +112,10 @@ DG::setup( tk::real v )
     tk::real u = 1.0 * exp( -((xcc-0.25)*(xcc-0.25) 
                             + (ycc-0.25)*(ycc-0.25))/(2.0 * 0.005) );
     m_u(e,0,0) = u; // scalar
+    m_un(e,0,0) = u; // scalar
   }
 
   // Set initial conditions for all PDEs
-  std::cout << "DG::init: " << g_dgpde.size() << '\n';
   for (const auto& eq : g_dgpde) eq.initialize( d->Coord(), m_u, d->T() );
 
   // Output initial conditions to file (regardless of whether it was requested)
@@ -118,7 +128,7 @@ DG::setup( tk::real v )
 void
 DG::dt()
 // *****************************************************************************
-// Comppute time step size
+// Compute time step size
 // *****************************************************************************
 {
   tk::real mindt = std::numeric_limits< tk::real >::max();
@@ -227,11 +237,184 @@ DG::out()
 }
 
 void
-DG::rhs()
+DG::lhs()
 // *****************************************************************************
-// Compute right-hand side of transport equations
+// Compute left-hand side of discrete transport equations
 // *****************************************************************************
 {
+  std::size_t nelem = m_u.nunk();
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    m_lhs[e] = m_geoElem(e,0,0);
+  }
+}
+
+void
+DG::rhs()
+// *****************************************************************************
+// Compute right-hand side of discrete transport equations
+// *****************************************************************************
+{
+  auto& esuf = m_fd.Esuf();
+  auto& bface = m_fd.Bface();
+
+  // set rhs to zero
+  m_rhs.fill(0.0);
+
+  // compute internal surface flux integrals
+  for (auto f=m_fd.Nbfac(); f<m_fd.Ntfac(); ++f)
+  {
+    std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+    std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+
+    auto farea = m_geoFace(f,0,0);
+
+    std::array< tk::real, 3 > fn {{ m_geoFace(f,1,0),
+                                    m_geoFace(f,2,0),
+                                    m_geoFace(f,3,0) }};
+
+    // need to use tk::Fields::extract() here somehow
+    std::vector< tk::real > ul { m_u(el,0,0) };
+    std::vector< tk::real > ur { m_u(er,0,0) };
+
+    //--- upwind fluxes
+    auto flux = upwindFlux(ul, ur, fn);
+    
+    m_rhs(el,0,0) -= farea * flux[0];
+    m_rhs(er,0,0) += farea * flux[0];
+  }
+
+  // compute boundary surface flux integrals
+
+  // symmetry boundary condition
+  auto bc = bface.find(1);
+
+  if (bc != bface.end())
+  {
+    for (const auto& f : bc->second)
+    {
+      std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+
+      Assert( esuf[2*f+1] == -1,
+              "outside boundary element not -1" );
+
+      auto farea = m_geoFace(f,0,0);
+
+      std::array< tk::real, 3 > fn {{ m_geoFace(f,1,0),
+                                      m_geoFace(f,2,0),
+                                      m_geoFace(f,3,0) }};
+
+      // need to use tk::Fields::extract() here?
+      std::vector< tk::real > ul { m_u(el,0,0) };
+      std::vector< tk::real > ur { ul[0] };
+
+      //--- upwind fluxes
+      auto flux = upwindFlux(ul, ur, fn);
+      
+      m_rhs(el,0,0) -= farea * flux[0];
+    }
+  }
+
+  // inlet boundary condition
+  bc = bface.find(2);
+
+  if (bc != bface.end())
+  {
+    for (const auto& f : bc->second)
+    {
+      std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+
+      Assert( esuf[2*f+1] == -1,
+              "outside boundary element not -1" );
+
+      auto farea = m_geoFace(f,0,0);
+
+      std::array< tk::real, 3 > fn {{ m_geoFace(f,1,0),
+                                      m_geoFace(f,2,0),
+                                      m_geoFace(f,3,0) }};
+
+      // need to use tk::Fields::extract() here?
+      std::vector< tk::real > ul { m_u(el,0,0) };
+      std::vector< tk::real > ur { 0.0 };
+
+      //--- upwind fluxes
+      auto flux = upwindFlux(ul, ur, fn);
+      
+      m_rhs(el,0,0) -= farea * flux[0];
+    }
+  }
+
+  // outlet boundary condition
+  bc = bface.find(3);
+
+  if (bc != bface.end())
+  {
+    for (const auto& f : bc->second)
+    {
+      std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+
+      Assert( esuf[2*f+1] == -1,
+              "outside boundary element not -1" );
+
+      auto farea = m_geoFace(f,0,0);
+
+      std::array< tk::real, 3 > fn {{ m_geoFace(f,1,0),
+                                      m_geoFace(f,2,0),
+                                      m_geoFace(f,3,0) }};
+
+      // need to use tk::Fields::extract() here?
+      std::vector< tk::real > ul { m_u(el,0,0) };
+      std::vector< tk::real > ur { ul[0] };
+
+      //--- upwind fluxes
+      auto flux = upwindFlux(ul, ur, fn);
+      
+      m_rhs(el,0,0) -= farea * flux[0];
+    }
+  }
+}
+
+std::vector< tk::real >
+DG::upwindFlux( std::vector< tk::real > ul,
+                std::vector< tk::real > ur,
+                std::array< tk::real, 3 > fn )
+// *****************************************************************************
+// Riemann solver using upwind method
+//! \param[in] ul Left unknown/state vector
+//! \param[in] ur Right unknown/state vector
+//! \param[in] fn Face unit normal vector
+//! \return Riemann solution using upwind method
+// *****************************************************************************
+{
+    std::vector< tk::real > flux(ul.size(),0);
+
+    // wave speed
+    tk::real swave = m_ax*fn[0] + m_ay*fn[1] + m_az*fn[2];
+
+    // upwinding
+    tk::real splus  = 0.5 * (swave + fabs(swave));
+    tk::real sminus = 0.5 * (swave - fabs(swave));
+
+    flux[0] = splus * ul[0] + sminus * ur[0];
+
+    return flux;
+}
+
+void
+DG::solve( tk::real deltat )
+// *****************************************************************************
+// Explicit time-stepping using forward Euler to discretize time-derivative
+// *****************************************************************************
+{
+  std::size_t nelem = m_u.nunk();
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    m_u(e,0,0) = m_un(e,0,0) + deltat/m_lhs[e] * m_rhs(e,0,0);
+  }
+
+  m_un = m_u;
 }
 
 void
@@ -246,8 +429,11 @@ DG::advance( tk::real newdt )
   // Set new time step size
   d->setdt( newdt );
 
-  // Compute rhs for next time step, solve/advance system, ...
+  // Compute rhs for next time step
   rhs();
+
+  // Advance solution/time-stepping
+  solve( newdt );
 
   // Prepare for next time step
   next();
@@ -264,14 +450,14 @@ DG::next()
   // Output field data to file
   out();
   // Compute diagnostics, e.g., residuals
-  auto diag = diagnostics();
+  //auto diag = diagnostics();
   // Increase number of iterations and physical time
   d->next();
   // Output one-liner status report
   d->status();
 
   // Evaluate whether to continue with next step
-  if (!diag) eval();
+  /*if (!diag)*/ eval();
 }
 
 void
