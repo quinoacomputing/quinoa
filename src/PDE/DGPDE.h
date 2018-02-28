@@ -25,6 +25,7 @@
 #include "Types.h"
 #include "Make_unique.h"
 #include "Fields.h"
+#include "FaceData.h"
 
 namespace inciter {
 
@@ -73,29 +74,23 @@ class DGPDE {
               std::move( x( std::forward<Args>(args)... ) ) ) ) {}
 
     //! Public interface to setting the initial conditions for the diff eq
-    void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
+    void initialize( const tk::Fields& geoElem,
                      tk::Fields& unk,
                      tk::real t ) const
-    { self->initialize( coord, unk, t ); }
+    { self->initialize( geoElem, unk, t ); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
-    void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
-              const std::vector< std::size_t >& inpoel,
-              const std::pair< std::vector< std::size_t >,
-                               std::vector< std::size_t > >& psup,
-              tk::Fields& lhsd,
-              tk::Fields& lhso ) const
-    { self->lhs( coord, inpoel, psup, lhsd, lhso ); }
+    void lhs( const tk::Fields& geoElem,
+              tk::Fields& lhs ) const
+    { self->lhs( geoElem, lhs ); }
 
     //! Public interface to computing the right-hand side vector for the diff eq
     void rhs( tk::real t,
-              tk::real deltat,
-              const std::array< std::vector< tk::real >, 3 >& coord,
-              const std::vector< std::size_t >& inpoel,
+              const tk::Fields& geoFace,
+              const inciter::FaceData& fd,
               const tk::Fields& U,
-              tk::Fields& Ue,
               tk::Fields& R ) const
-    { self->rhs( t, deltat, coord, inpoel, U, Ue, R ); }
+    { self->rhs( t, geoFace, fd, U, R ); }
 
     //! Public interface for computing the minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -126,10 +121,10 @@ class DGPDE {
     std::vector< std::vector< tk::real > > fieldOutput(
       tk::real t,
       tk::real V,
-      const std::array< std::vector< tk::real >, 3 >& coord,
+      const tk::Fields& geoElem,
       const std::vector< tk::real >& v,
       tk::Fields& U ) const
-    { return self->fieldOutput( t, V, coord, v, U ); }
+    { return self->fieldOutput( t, V, geoElem, v, U ); }
 
     //! Copy assignment
     DGPDE& operator=( const DGPDE& x )
@@ -149,20 +144,15 @@ class DGPDE {
       Concept( const Concept& ) = default;
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
-      virtual void initialize( const std::array< std::vector< tk::real >, 3 >&,
+      virtual void initialize( const tk::Fields&,
                                tk::Fields&,
                                tk::real ) const = 0;
-      virtual void lhs( const std::array< std::vector< tk::real >, 3 >&,
-                        const std::vector< std::size_t >&,
-                        const std::pair< std::vector< std::size_t >,
-                                         std::vector< std::size_t > >&,
-                        tk::Fields&, tk::Fields& ) const = 0;
+      virtual void lhs( const tk::Fields&,
+                        tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
-                        tk::real,
-                        const std::array< std::vector< tk::real >, 3 >&,
-                        const std::vector< std::size_t >&,
                         const tk::Fields&,
-                        tk::Fields&,
+                        const inciter::FaceData&,
+                        const tk::Fields&,
                         tk::Fields& ) const = 0;
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
                            const std::vector< std::size_t >&,
@@ -179,7 +169,7 @@ class DGPDE {
       virtual std::vector< std::vector< tk::real > > fieldOutput(
         tk::real,
         tk::real,
-        const std::array< std::vector< tk::real >, 3 >&,
+        const tk::Fields&,
         const std::vector< tk::real >&,
         tk::Fields& ) const = 0;
     };
@@ -190,24 +180,19 @@ class DGPDE {
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
-      void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
+      void initialize( const tk::Fields& geoElem,
                        tk::Fields& unk,
                        tk::real t )
-      const override { data.initialize( coord, unk, t ); }
-      void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
-                const std::vector< std::size_t >& inpoel,
-                const std::pair< std::vector< std::size_t >,
-                                 std::vector< std::size_t > >& psup,
-                tk::Fields& lhsd, tk::Fields& lhso ) const override
-      { data.lhs( coord, inpoel, psup, lhsd, lhso ); }
+      const override { data.initialize( geoElem, unk, t ); }
+      void lhs( const tk::Fields& geoElem,
+                tk::Fields& lhs ) const override
+      { data.lhs( geoElem, lhs ); }
       void rhs( tk::real t,
-                tk::real deltat,
-                const std::array< std::vector< tk::real >, 3 >& coord,
-                const std::vector< std::size_t >& inpoel,
+                const tk::Fields& geoFace,
+                const inciter::FaceData& fd,
                 const tk::Fields& U,
-                tk::Fields& Ue,
                 tk::Fields& R ) const override
-      { data.rhs( t, deltat, coord, inpoel, U, Ue, R ); }
+      { data.rhs( t, geoFace, fd, U, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override
@@ -227,10 +212,10 @@ class DGPDE {
       std::vector< std::vector< tk::real > > fieldOutput(
         tk::real t,
         tk::real V,
-        const std::array< std::vector< tk::real >, 3 >& coord,
+        const tk::Fields& geoElem,
         const std::vector< tk::real >& v,
         tk::Fields& U ) const override
-      { return data.fieldOutput( t, V, coord, v, U ); }
+      { return data.fieldOutput( t, V, geoElem, v, U ); }
       T data;
     };
 
