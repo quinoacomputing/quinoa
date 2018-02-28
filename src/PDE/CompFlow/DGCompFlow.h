@@ -159,17 +159,17 @@ class CompFlow {
     //! \param[in] t Physical time
     //! \param[in] V Total mesh volume
     //! \param[in] geoElem Element geometry array
-    //! \param[in] v Nodal mesh volumes
     //! \param[in,out] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
                  tk::real V,
                  const tk::Fields& geoElem,
-                 const std::vector< tk::real >& v,
                  tk::Fields& U ) const
     {
       std::array< std::vector< tk::real >, 3 > coord;
+      std::vector< tk::real > v;
+      v        = geoElem.extract(0,0);
       coord[0] = geoElem.extract(1,0);
       coord[1] = geoElem.extract(2,0);
       coord[2] = geoElem.extract(3,0);

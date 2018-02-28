@@ -156,7 +156,12 @@ DG::writeFields( tk::real time )
 
   // Collect element field output
   std::vector< std::vector< tk::real > > elemfields;
-  elemfields.push_back( m_u.extract(0,0) );
+  auto u = m_u;   // make a copy as eq::output() may overwrite its arg
+  for (const auto& eq : g_dgpde)
+  {
+    auto o = eq.fieldOutput( time, m_vol, m_geoElem, u );
+    elemfields.insert( end(elemfields), begin(o), end(o) );
+  }
 
   // Create ExodusII writer
   tk::ExodusIIMeshWriter ew( d->OutFilename(), tk::ExoWriter::OPEN );

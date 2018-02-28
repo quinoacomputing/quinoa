@@ -359,9 +359,7 @@ class Transport {
 
     //! Return field output going to file
     //! \param[in] t Physical time
-    //! \param[in] V Total mesh volume
     //! \param[in] geoElem Element geometry array
-    //! \param[in] v Nodal volumes
     //! \param[in,out] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     //! \details This functions should be written in conjunction with names(),
@@ -369,17 +367,16 @@ class Transport {
     //! \note U is overwritten
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
-                 tk::real V,
+                 tk::real /*V*/,
                  const tk::Fields& geoElem,
-                 const std::vector< tk::real >& v,
                  tk::Fields& U ) const
     {
       std::vector< std::vector< tk::real > > out;
       // will output numerical solution for all components
-      auto E = U;
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );
       // evaluate analytic solution at time t
+      auto E = U;
       initialize( geoElem, E, t );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
@@ -388,10 +385,8 @@ class Transport {
       for (ncomp_t c=0; c<m_ncomp; ++c) {
         auto u = U.extract( c, m_offset );
         auto e = E.extract( c, m_offset );
-        Assert( u.size() == e.size(), "Size mismatch" );
-        Assert( u.size() == v.size(), "Size mismatch" );
         for (std::size_t i=0; i<u.size(); ++i)
-          e[i] = std::pow( e[i] - u[i], 2.0 ) * v[i] / V;
+          e[i] = std::pow( e[i] - u[i], 2.0 ) * geoElem(i,0,0);
         out.push_back( e );
       }
       return out;

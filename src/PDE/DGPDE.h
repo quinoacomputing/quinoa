@@ -122,9 +122,8 @@ class DGPDE {
       tk::real t,
       tk::real V,
       const tk::Fields& geoElem,
-      const std::vector< tk::real >& v,
       tk::Fields& U ) const
-    { return self->fieldOutput( t, V, geoElem, v, U ); }
+    { return self->fieldOutput( t, V, geoElem, U ); }
 
     //! Copy assignment
     DGPDE& operator=( const DGPDE& x )
@@ -170,7 +169,6 @@ class DGPDE {
         tk::real,
         tk::real,
         const tk::Fields&,
-        const std::vector< tk::real >&,
         tk::Fields& ) const = 0;
     };
 
@@ -213,9 +211,8 @@ class DGPDE {
         tk::real t,
         tk::real V,
         const tk::Fields& geoElem,
-        const std::vector< tk::real >& v,
         tk::Fields& U ) const override
-      { return data.fieldOutput( t, V, geoElem, v, U ); }
+      { return data.fieldOutput( t, V, geoElem, U ); }
       T data;
     };
 

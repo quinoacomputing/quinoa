@@ -17,6 +17,7 @@
 #include "Inciter/InputDeck/InputDeck.h"
 #include "Inciter/Options/Scheme.h"
 #include "CGPDE.h"
+#include "DGPDE.h"
 #include "Print.h"
 
 #ifdef HAS_ROOT
@@ -27,6 +28,7 @@ namespace inciter {
 
 static CkReduction::reducerType PDFMerger;
 extern std::vector< CGPDE > g_cgpde;
+extern std::vector< DGPDE > g_dgpde;
 extern ctr::InputDeck g_inputdeck;
 
 } // inciter::
@@ -534,11 +536,11 @@ Discretization::writeElemMeta() const
     tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
 
     // Collect elemental field output names from all PDEs
-    std::vector< std::string > names {{ "scalar" }};
-    //for (const auto& eq : g_cgpde) {
-    //  auto n = eq.fieldNames();
-    //  names.insert( end(names), begin(n), end(n) );
-    //}
+    std::vector< std::string > names;
+    for (const auto& eq : g_dgpde) {
+      auto n = eq.fieldNames();
+      names.insert( end(names), begin(n), end(n) );
+    }
 
     // Write element field names
     ew.writeElemVarNames( names );
