@@ -31,9 +31,28 @@ namespace inciter {
 class DG : public CBase_DG {
 
   public:
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wunused-parameter"
+      #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    #elif defined(STRICT_GNUC)
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wunused-parameter"
+      #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    #elif defined(__INTEL_COMPILER)
+      #pragma warning( push )
+      #pragma warning( disable: 1478 )
+    #endif
     // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
     // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
     DG_SDAG_CODE
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #elif defined(STRICT_GNUC)
+      #pragma GCC diagnostic pop
+    #elif defined(__INTEL_COMPILER)
+      #pragma warning( pop )
+    #endif
 
     //! Constructor
     explicit DG( const CProxy_Discretization& disc,
