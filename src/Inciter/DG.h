@@ -31,6 +31,10 @@ namespace inciter {
 class DG : public CBase_DG {
 
   public:
+    // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
+    // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+    DG_SDAG_CODE
+
     //! Constructor
     explicit DG( const CProxy_Discretization& disc,
                  const tk::CProxy_Solver& solver,
@@ -38,6 +42,9 @@ class DG : public CBase_DG {
 
     //! Migrate constructor
     explicit DG( CkMigrateMessage* ) {}
+
+    //! Receive adjacency
+    void comadj( int fromch, const std::vector< std::size_t >& elems );
 
     //! Configure Charm++ reduction types for concatenating BC nodelists
     static void registerReducers();
@@ -80,6 +87,9 @@ class DG : public CBase_DG {
     //@}
 
   private:
+    tk::CProxy_Solver m_solver;
+    //! Counter for adjacency communication
+    std::size_t m_nadj;
     //! Field output iteration count
     uint64_t m_itf;
     //! Discretization proxy
@@ -104,12 +114,16 @@ class DG : public CBase_DG {
     std::vector< tk::real > m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
+    //! Adjacency/communication map among chares storing tet ids on the chare-boundary
+    std::unordered_map< int, std::vector< std::size_t > > m_msum_el;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
       Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
       return m_disc[ thisIndex ].ckLocal();
     }
+
+    void adj();
 
     //! Compute left hand side
     void lhs();

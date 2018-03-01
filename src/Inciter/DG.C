@@ -34,6 +34,8 @@ using inciter::DG;
 DG::DG( const CProxy_Discretization& disc,
         const tk::CProxy_Solver& solver,
         const FaceData& fd ) :
+  m_solver( solver ),
+  m_nadj( 0 ),
   m_itf( 0 ),
   m_disc( disc ),
   m_fd( fd ),
@@ -47,16 +49,79 @@ DG::DG( const CProxy_Discretization& disc,
 //  Constructor
 // *****************************************************************************
 {
-  // Signal the runtime system that the workers have been created
-  solver.ckLocalBranch()->created();
+  // Activate SDAG waits for setup
+  wait4adj();
 
   auto d = Disc();
+
+  // Convert vectors to sets inside d->Msum()
+  std::unordered_map< int, std::unordered_set< std::size_t > > msum_set;
+  for (const auto& n : d->Msum())
+    msum_set[ n.first ].insert( n.second.cbegin(), n.second.cend() );
+
+  std::unordered_map< int, std::vector< std::size_t > > msum_el;
+  for (const auto& n : msum_set) {
+    auto& belem = fd.Belem();
+    for (std::size_t e=0; e<belem.size(); ++e) {
+      int counter = 0;
+      for (int en=0; en<4; ++en) {
+        auto i = n.second.find( d->Inpoel()[ e*4+en ] );
+        if (i != end(n.second)) ++counter;
+      }
+      if (counter == 3) msum_el[ n.first ].push_back( e );
+    }
+  }
+
+  Assert( msum_el.size() == d->Msum().size(), "Msum_node and msum_el size must equal" );
+
+  ownadj_complete();
+
+  // Send adjacency to fellow workers (if any)
+  if (d->Msum().empty())
+    comadj_complete();
+  else
+    for (const auto& n : msum_el)
+      thisProxy[ n.first ].comadj( thisIndex, n.second );
 
   // Compute face geometry
   m_geoFace = tk::genGeoFaceTri(fd.Ntfac(), fd.Inpofa(), d->Coord());
 
   // Compute element geometry
   m_geoElem = tk::genGeoElemTet(d->Inpoel(), d->Coord());
+}
+
+void
+DG::comadj( int fromch, const std::vector< std::size_t >& elems )
+// *****************************************************************************
+// ...
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  auto& elemlist = m_msum_el[ fromch ];
+  elemlist.insert( end(elemlist), elems.cbegin(), elems.cend() );
+
+  if (++m_nadj == d->Msum().size()) comadj_complete();
+}
+
+void
+DG::adj()
+// *****************************************************************************
+// ...
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  std::cout << "\nAdj:";
+  for (const auto& c : m_msum_el) {
+    std::cout << thisIndex << ": " << c.first << ": ";
+    for (auto e : c.second) std::cout << e << ' ';
+  }
+  std::cout << '\n';
+
+  // Signal the runtime system that all workers have received their adjacency
+  //contribute( CkCallback( CkReductionTarget(Transporter,comfinal), d->Tr() ) );
+  m_solver.ckLocalBranch()->created();
 }
 
 void
