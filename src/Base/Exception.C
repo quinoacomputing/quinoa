@@ -38,11 +38,6 @@ Exception::Exception( std::string&& message,
 //! \see Assert, ErrChk, Throw
 // *****************************************************************************
 try :
-#ifdef NDEBUG
-  m_trace( false ),
-#else
-  m_trace( true ),
-#endif
   m_file( std::move(file) ),
   m_func( std::move(function) ),
   m_line( std::move(line) ),
@@ -55,24 +50,24 @@ try :
   std::stringstream s;
   s << m_message << std::endl;
   if (line) {
-    s << ">>> Exception in " << m_file << ":" << m_line << ": " << m_func;
+    s << ">>> Exception at " << m_file << ":" << m_line << ": " << m_func;
   } else {
     s << ">>> No file:line:func information from exception";
   }
   m_message = s.str();
 
   // Save call-trace
-  if (m_trace) saveTrace();
+  saveTrace();
 
 } // Catch std::exception
   catch (exception& se) {
     // Emit warning and continue
-    printf( "RUNTIME ERROR in Exception constructor: %s\n", se.what() );
+    fprintf( stderr, "RUNTIME ERROR in Exception constructor: %s\n", se.what() );
   }
   // Catch uncaught exceptions
   catch (...) {
     // Emit warning and continue
-    printf( "UNKNOWN EXCEPTION in Exception constructor\n" );
+    fprintf( stderr, "UNKNOWN EXCEPTION in Exception constructor\n" );
   }
 
 Exception::~Exception() noexcept
@@ -83,7 +78,7 @@ Exception::~Exception() noexcept
 // *****************************************************************************
 {
   // allocated by execinfo.h's backtrace_symbols() in Exception::saveTrace()
-  if (m_trace) free(m_symbolList);
+  free(m_symbolList);
 }
 
 void
@@ -100,7 +95,7 @@ Exception::saveTrace() noexcept
   m_addrLength = backtrace(m_addrList, sizeof(m_addrList)/sizeof(void*));
 
   if (m_addrLength == 0)
-    printf(">>> Call stack is empty, possibly corrupt.\n");
+    fprintf( stderr, ">>> Call stack is empty, possibly corrupt.\n" );
 
   // Resolve addresses into strings containing "filename(function+address)"
   m_symbolList = backtrace_symbols(m_addrList, m_addrLength);
@@ -153,15 +148,17 @@ Exception::echoTrace() noexcept
 
       if (status == 0) {
         funcname = ret; // use possibly realloc()-ed string
-        printf(">>> %s : %s+%s\n", m_symbolList[i], funcname, begin_offset);
+        fprintf( stderr, ">>> %s : %s+%s\n", m_symbolList[i], funcname,
+                         begin_offset );
       } else {
         // Demangling failed. Output function name as a C function with no
         // arguments
-        printf(">>> %s : %s()+%s\n", m_symbolList[i], begin_name, begin_offset);
+        fprintf( stderr, ">>> %s : %s()+%s\n", m_symbolList[i], begin_name,
+                         begin_offset);
       }
     } else {
       // Couldn't parse the line? Print the whole line
-      printf(">>> %s\n", m_symbolList[i]);
+      fprintf( stderr, ">>> %s\n", m_symbolList[i] );
     }
   }
 
@@ -177,17 +174,9 @@ Exception::handleException() noexcept
 //!   throws exceptions.
 // *****************************************************************************
 {
-  printf("\n>>> Error: %s\n", what());
-
-  if (m_trace) {
-    printf( ">>>\n>>> ===== "
-            "CALL TRACE: (turn off: CMAKE_BUILD_TYPE=RELEASE) "
-            "=====\n>>>\n" );
-    echoTrace();
-    printf( ">>>\n>>> ===== "
-            "END OF CALL TRACE (turn off: CMAKE_BUILD_TYPE=RELEASE) "
-            "=====\n>>>\n" );
-  }
+  fprintf( stderr, ">>>\n>>> =========== CALL TRACE ===========\n>>>\n" );
+  echoTrace();
+  fprintf( stderr, ">>>\n>>> ======= END OF CALL TRACE ========\n>>>\n" );
  
   return tk::ErrCode::FAILURE;
 }

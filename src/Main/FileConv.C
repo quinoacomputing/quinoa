@@ -62,6 +62,7 @@ class Main : public CBase_Main {
     //! \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
     Main( CkArgMsg* msg )
     try :
+      m_signal( tk::setSignalHandlers() ),
       m_cmdline(),
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
@@ -116,6 +117,7 @@ class Main : public CBase_Main {
     { for (const auto& t : s) timestamp( t.first, t.second ); }
 
   private:
+    int m_signal;                               //!< Used to set signal handlers
     fileconv::ctr::CmdLine m_cmdline;           //!< Command line
     fileconv::CmdLineParser m_cmdParser;        //!< Command line parser
     tk::Print m_print;                          //!< Pretty printer
