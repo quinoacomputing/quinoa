@@ -55,13 +55,17 @@ signalHandler( int signum )
     case SIGFPE:  name = "SIGFPE";   break;
   }
 
+  // Echo what signal is caught
   if ( name )
-     fprintf( stderr, "Caught signal %d (%s)\n", signum, name );
+    fprintf( stderr, "Caught signal %d (%s)\n", signum, name );
   else
-     fprintf( stderr, "Caught signal %d\n", signum );
+    fprintf( stderr, "Caught signal %d\n", signum );
 
-  // Handle signal as exceptions
-  tk::processExceptionCharm();
+  // Get and display backtrace
+  tk::Exception("signal").handleException();
+
+  // Tell the runtime system to exit with a message
+  CkAbort( "Signal caught" );
 }
 
 int
