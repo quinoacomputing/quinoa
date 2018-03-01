@@ -64,7 +64,7 @@ DG::DG( const CProxy_Discretization& disc,
     auto& belem = fd.Belem();
     for (std::size_t e=0; e<belem.size(); ++e) {
       int counter = 0;
-      for (int en=0; en<4; ++en) {
+      for (std::size_t en=0; en<4; ++en) {
         auto i = n.second.find( d->Inpoel()[ e*4+en ] );
         if (i != end(n.second)) ++counter;
       }
@@ -110,8 +110,6 @@ DG::adj()
 // ...
 // *****************************************************************************
 {
-  auto d = Disc();
-
   std::cout << "\nAdj:";
   for (const auto& c : m_msum_el) {
     std::cout << thisIndex << ": " << c.first << ": ";
