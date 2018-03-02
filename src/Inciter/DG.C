@@ -49,39 +49,67 @@ DG::DG( const CProxy_Discretization& disc,
 //  Constructor
 // *****************************************************************************
 {
-  // Activate SDAG waits for setup
+  // Activate SDAG waits for face adjacency map calculation
   wait4adj();
 
   auto d = Disc();
 
-  // Convert vectors to sets inside d->Msum()
+  // Convert vectors to sets from inside node adjacency map, d->Msum()
   std::unordered_map< int, std::unordered_set< std::size_t > > msum_set;
   for (const auto& n : d->Msum())
     msum_set[ n.first ].insert( n.second.cbegin(), n.second.cend() );
 
+  // Collect tet ids associated to fellow chares adjacent to chare boundaries
   std::unordered_map< int, std::vector< std::size_t > > msum_el;
+  auto& belem = fd.Belem();
   for (const auto& n : msum_set) {
-    auto& belem = fd.Belem();
     for (std::size_t e=0; e<belem.size(); ++e) {
       int counter = 0;
       for (std::size_t en=0; en<4; ++en) {
         auto i = n.second.find( d->Inpoel()[ e*4+en ] );
         if (i != end(n.second)) ++counter;
       }
+      // if tet has at least 3 nodes on the chare boundary, it shares a face
       if (counter == 3) msum_el[ n.first ].push_back( e );
     }
   }
 
-  Assert( msum_el.size() == d->Msum().size(), "Msum_node and msum_el size must equal" );
+  // Note that while the face adjacency map is derived from the node adjacency
+  // map, the size of the face adjacency communication map (msum_el computed
+  // above) does not necessarily equal to the node adjacency map (d->Msum()),
+  // because while a node can be shared at a single corner or along an edge, but
+  // that does not necessarily share a face as well. So the chares we
+  // communicate with across faces are not necessarily the same as the chares we
+  // would communicate nodes with.
+  //
+  // Since the sizes of the node and face adjacency maps are not the same,
+  // simply sending the tet ids adjacent to chare boundaries would be okay, but
+  // the receiving size would not necessarily know how many chares it must
+  // receive tet ids from. To solve this problem we send to chares that which we
+  // share at least a single node, which is the size of the node adjacency map,
+  // d->Msum(), but we either send a tet id list which share faces on the chare
+  // boundary or an empty elem list if there is not a single tet that shares a
+  // face with the destination chare (only single nodes or edges). The
+  // assumption here is, of course, that the size of the face adjacency map is
+  // always smaller than or equal to that of the node adjacency map. Since the
+  // receive side already knows how many fellow chares it must receive shared
+  // node ids from, we can use that to detect completion of the number of
+  // receives. This simplifies the communication pattern and code for a small
+  // price of sending a few approximately empty messages (for those chare
+  // boundaries that only share individual nodes but not faces).
 
   ownadj_complete();
 
-  // Send adjacency to fellow workers (if any)
+  // Send tet ids adjacent to chare boundaries to fellow workers (if any)
   if (d->Msum().empty())
     comadj_complete();
   else
-    for (const auto& n : msum_el)
-      thisProxy[ n.first ].comadj( thisIndex, n.second );
+    for (const auto& c : d->Msum()) {
+      decltype(msum_el)::mapped_type elems;
+      auto e = msum_el.find( c.first );
+      if (e != end(msum_el)) elems = std::move( e->second );
+      thisProxy[ c.first ].comadj( thisIndex, elems );
+    }
 
   // Compute face geometry
   m_geoFace = tk::genGeoFaceTri(fd.Ntfac(), fd.Inpofa(), d->Coord());
@@ -93,13 +121,16 @@ DG::DG( const CProxy_Discretization& disc,
 void
 DG::comadj( int fromch, const std::vector< std::size_t >& elems )
 // *****************************************************************************
-// ...
+// Receive tet ids on chare boundaries from fellow chare
 // *****************************************************************************
 {
   auto d = Disc();
 
-  auto& elemlist = m_msum_el[ fromch ];
-  elemlist.insert( end(elemlist), elems.cbegin(), elems.cend() );
+  // Store tets sharing a face with our mesh chunk categorized by fellow chares
+  if (!elems.empty()) {
+    auto& elemlist = m_msum_el[ fromch ];
+    elemlist.insert( end(elemlist), elems.cbegin(), elems.cend() );
+  }
 
   if (++m_nadj == d->Msum().size()) comadj_complete();
 }
@@ -107,7 +138,7 @@ DG::comadj( int fromch, const std::vector< std::size_t >& elems )
 void
 DG::adj()
 // *****************************************************************************
-// ...
+// Continue after face adjacency communication map is complete
 // *****************************************************************************
 {
   std::cout << "\nAdj:";

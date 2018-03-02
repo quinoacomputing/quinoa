@@ -107,7 +107,7 @@ class DG : public CBase_DG {
 
   private:
     tk::CProxy_Solver m_solver;
-    //! Counter for adjacency communication
+    //! Counter for face adjacency communication map
     std::size_t m_nadj;
     //! Field output iteration count
     uint64_t m_itf;
@@ -134,6 +134,8 @@ class DG : public CBase_DG {
     //! Vector of right-hand side
     tk::Fields m_rhs;
     //! Adjacency/communication map among chares storing tet ids on the chare-boundary
+    //! \details This map associates a list of tet element ids that share a face
+    //!    with our mesh chunk, to a fellow chare id
     std::unordered_map< int, std::vector< std::size_t > > m_msum_el;
 
     //! Access bound Discretization class pointer
