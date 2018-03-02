@@ -42,10 +42,10 @@ class CompFlow {
     explicit CompFlow( ncomp_t ) : m_offset( 0 ) {}
 
     //! Initalize the compressible flow equations, prepare for time integration
-//     //! \param[in] coord Mesh node coordinates
+//     //! \param[in] geoElem Element geometry array
 //     //! \param[in,out] unk Array of unknowns
 //     //! \param[in] t Physical time
-    void initialize( const std::array< std::vector< tk::real >, 3 >& /*coord*/,
+    void initialize( const tk::Fields& /*geoElem*/,
                      tk::Fields& /*unk*/,
                      tk::real /*t*/ ) const
     {
@@ -55,42 +55,26 @@ class CompFlow {
       // node-based example.
     }
 
-    //! Compute the left hand side sparse matrix
-//     //! \param[in] coord Mesh node coordinates
+    //! Compute the left hand side block-diagonal mass matrix
+//     //! \param[in] geoElem Element geometry array
 //     //! \param[in] inpoel Mesh element connectivity
 //     //! \param[in] psup Linked lists storing IDs of points surrounding points
-//     //! \param[in,out] lhsd Diagonal of the sparse matrix storing nonzeros
-//     //! \param[in,out] lhso Off-diagonal of the sparse matrix storing nonzeros
-    //! \details Sparse matrix storing the nonzero matrix values at rows and
-    //!   columns given by psup. The format is similar to compressed row
-    //!   storage, but the diagonal and off-diagonal data are stored in separate
-    //!   vectors. For the off-diagonal data the local row and column indices,
-    //!   at which values are nonzero, are stored by psup (psup1 and psup2,
-    //!   where psup2 holds the indices at which psup1 holds the point ids
-    //!   surrounding points, see also tk::genPsup()). Note that the number of
-    //!   mesh points (our chunk) npoin = psup.second.size()-1.
-    void lhs( const std::array< std::vector< tk::real >, 3 >& /*coord*/,
-              const std::vector< std::size_t >& /*inpoel*/,
-              const std::pair< std::vector< std::size_t >,
-                               std::vector< std::size_t > >& /*psup*/,
-              tk::Fields& /*lhsd*/,
-              tk::Fields& /*lhso*/ ) const
+//     //! \param[in,out] lhs Left-hand side block-diagonal mass matrix
+    void lhs( const tk::Fields& /*geoElem*/,
+              tk::Fields& /*lhs*/ ) const
     {
     }
 
     //! Compute right hand side
 //     //! \param[in] t Physical time
-//     //! \param[in] deltat Size of time step
-//     //! \param[in] coord Mesh node coordinates
-//     //! \param[in] inpoel Mesh element connectivity
+//     //! \param[in] geoElem Element geometry array
+//     //! \param[in] fd Face connectivity data object
 //     //! \param[in] U Solution vector at recent time step
 //     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real /*t*/,
-              tk::real /*deltat*/,
-              const std::array< std::vector< tk::real >, 3 >& /*coord*/,
-              const std::vector< std::size_t >& /*inpoel*/,
+              const tk::Fields& /*geoElem*/,
+              const inciter::FaceData& /*fd*/,
               const tk::Fields& /*U*/,
-              tk::Fields& /*Ue*/,
               tk::Fields& /*R*/ ) const
     {
     }
@@ -174,17 +158,24 @@ class CompFlow {
     //! Return field output going to file
     //! \param[in] t Physical time
     //! \param[in] V Total mesh volume
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in] v Nodal mesh volumes
+    //! \param[in] geoElem Element geometry array
     //! \param[in,out] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
                  tk::real V,
-                 const std::array< std::vector< tk::real >, 3 >& coord,
-                 const std::vector< tk::real >& v,
+                 const tk::Fields& geoElem,
                  tk::Fields& U ) const
-    { return Problem::fieldOutput( 0, m_offset, t, V, v, coord, U ); }
+    {
+      std::array< std::vector< tk::real >, 3 > coord;
+      std::vector< tk::real > v;
+      v        = geoElem.extract(0,0);
+      coord[0] = geoElem.extract(1,0);
+      coord[1] = geoElem.extract(2,0);
+      coord[2] = geoElem.extract(3,0);
+
+      return Problem::fieldOutput( 0, m_offset, t, V, v, coord, U );
+    }
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
