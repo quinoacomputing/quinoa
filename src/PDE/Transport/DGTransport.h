@@ -77,16 +77,15 @@ class Transport {
 
     //! Compute the left hand side mass matrix
     //! \param[in] geoElem Element geometry array
-    //! \param[in,out] lhs Block diagonal mass matrix matrix
-    void lhs( const tk::Fields& geoElem,
-              tk::Fields& lhs ) const
+    //! \param[in,out] l Block diagonal mass matrix matrix
+    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
     {
       std::size_t nelem = geoElem.nunk();
 
       for (std::size_t e=0; e<nelem; ++e)
       {
         for (ncomp_t c=0; c<m_ncomp; ++c)
-          lhs(e, c, m_offset) = geoElem(e,0,0);
+          l(e, c, m_offset) = geoElem(e,0,0);
       }
     }
 

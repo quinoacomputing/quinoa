@@ -80,9 +80,8 @@ class DGPDE {
     { self->initialize( geoElem, unk, t ); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
-    void lhs( const tk::Fields& geoElem,
-              tk::Fields& lhs ) const
-    { self->lhs( geoElem, lhs ); }
+    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
+    { self->lhs( geoElem, l ); }
 
     //! Public interface to computing the right-hand side vector for the diff eq
     void rhs( tk::real t,
@@ -146,8 +145,7 @@ class DGPDE {
       virtual void initialize( const tk::Fields&,
                                tk::Fields&,
                                tk::real ) const = 0;
-      virtual void lhs( const tk::Fields&,
-                        tk::Fields& ) const = 0;
+      virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
                         const tk::Fields&,
                         const inciter::FaceData&,
@@ -182,9 +180,8 @@ class DGPDE {
                        tk::Fields& unk,
                        tk::real t )
       const override { data.initialize( geoElem, unk, t ); }
-      void lhs( const tk::Fields& geoElem,
-                tk::Fields& lhs ) const override
-      { data.lhs( geoElem, lhs ); }
+      void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
+      { data.lhs( geoElem, l ); }
       void rhs( tk::real t,
                 const tk::Fields& geoFace,
                 const inciter::FaceData& fd,
