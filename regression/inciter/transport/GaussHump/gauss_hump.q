@@ -2,7 +2,7 @@
 # This is a comment
 # Keywords are case-sensitive
 
-title "Zalesak's slotted cylinder"
+title "Advection of 2D Gaussian hump"
 
 inciter
 

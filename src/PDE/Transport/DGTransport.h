@@ -85,7 +85,8 @@ class Transport {
 
       for (std::size_t e=0; e<nelem; ++e)
       {
-        lhs(e,0,0) = geoElem(e,0,0);
+        for (ncomp_t c=0; c<m_ncomp; ++c)
+          lhs(e, c, m_offset) = geoElem(e,0,0);
       }
     }
 
@@ -136,8 +137,8 @@ class Transport {
 
         for (ncomp_t c=0; c<m_ncomp; ++c)
         {
-          R(el,c,0) -= farea * flux[c];
-          R(er,c,0) += farea * flux[c];
+          R(el, c, m_offset) -= farea * flux[c];
+          R(er, c, m_offset) += farea * flux[c];
         }
       }
 
@@ -173,7 +174,7 @@ class Transport {
 
           for (ncomp_t c=0; c<m_ncomp; ++c)
           {
-            R(el,c,0) -= farea * flux[c];
+            R(el, c, m_offset) -= farea * flux[c];
           }
         }
       }
@@ -208,7 +209,7 @@ class Transport {
 
           for (ncomp_t c=0; c<m_ncomp; ++c)
           {
-            R(el,c,0) -= farea * flux[c];
+            R(el, c, m_offset) -= farea * flux[c];
           }
         }
       }
@@ -243,7 +244,7 @@ class Transport {
 
           for (ncomp_t c=0; c<m_ncomp; ++c)
           {
-            R(el,c,0) -= farea * flux[c];
+            R(el, c, m_offset) -= farea * flux[c];
           }
         }
       }

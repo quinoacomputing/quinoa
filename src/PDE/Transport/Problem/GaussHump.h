@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/Transport/Problem/GaussHump.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Problem configuration for transport equations
   \details   This file defines a Problem policy class for the scalar transport
     equation, defined in PDE/Transport/Transport.h. See
@@ -37,15 +37,14 @@ class TransportProblemGaussHump {
     solution( ncomp_t, ncomp_t ncomp,
               tk::real x, tk::real y, tk::real, tk::real t )
     {
-      tk::real ax = 0.1;
-      tk::real ay = 0.1;
+      const auto vel = prescribedVelocity( x, y, 0.0, ncomp, ncomp );
 
       std::vector< tk::real > s( ncomp, 0.0 );
       for (ncomp_t c=0; c<ncomp; ++c) 
       {
         // center of the hump
-        auto x0 = 0.25 + ax*t;
-        auto y0 = 0.25 + ay*t;
+        auto x0 = 0.25 + vel[c][0]*t;
+        auto y0 = 0.25 + vel[c][1]*t;
 
         // hump
         s[c] = 1.0 * exp( -((x-x0)*(x-x0)

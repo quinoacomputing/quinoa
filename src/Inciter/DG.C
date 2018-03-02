@@ -97,7 +97,7 @@ DG::setup( tk::real v )
 
   // Set initial conditions for all PDEs
   for (const auto& eq : g_dgpde) eq.initialize( m_geoElem, m_u,  d->T() );
-  for (const auto& eq : g_dgpde) eq.initialize( m_geoElem, m_un, d->T() );
+  m_un = m_u;
 
   // Output initial conditions to file (regardless of whether it was requested)
   if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( d->T() );
@@ -251,12 +251,7 @@ DG::solve( tk::real deltat )
 // Explicit time-stepping using forward Euler to discretize time-derivative
 // *****************************************************************************
 {
-  std::size_t nelem = m_u.nunk();
-
-  for (std::size_t e=0; e<nelem; ++e)
-  {
-    m_u(e,0,0) = m_un(e,0,0) + deltat/m_lhs(e,0,0) * m_rhs(e,0,0);
-  }
+  m_u = m_un + deltat * m_rhs/m_lhs;
 
   m_un = m_u;
 }

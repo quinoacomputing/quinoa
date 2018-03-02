@@ -2907,7 +2907,7 @@ struct slot_cyl_info {
 using slot_cyl = keyword< slot_cyl_info, TAOCPP_PEGTL_STRING("slot_cyl") >;
 
 struct gauss_hump_info {
-  using code = Code< Z >;
+  using code = Code< G >;
   static std::string name() { return "Advection of 2D Gaussian hump"; }
   static std::string shortDescription() { return
     "Select advection of 2D Gaussian hump test problem"; }
