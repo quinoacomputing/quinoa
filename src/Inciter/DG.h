@@ -144,6 +144,7 @@ class DG : public CBase_DG {
       return m_disc[ thisIndex ].ckLocal();
     }
 
+    //! Continue after face adjacency communication map is complete
     void adj();
 
     //! Compute left hand side
