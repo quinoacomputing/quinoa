@@ -45,12 +45,14 @@
 
 #include "Problem/ShearDiff.h"
 #include "Problem/SlotCyl.h"
+#include "Problem/GaussHump.h"
 
 namespace inciter {
 
 //! List of all Transport Problem policies (defined in the includes above)
 using TransportProblems = boost::mpl::vector< TransportProblemShearDiff
                                             , TransportProblemSlotCyl
+                                            , TransportProblemGaussHump
                                             >;
 
 } // inciter::

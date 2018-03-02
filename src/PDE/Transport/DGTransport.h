@@ -54,59 +54,240 @@ class Transport {
     }
 
     //! Initalize the transport equations using problem policy
-//     //! \param[in] coord Mesh node coordinates
-//     //! \param[in,out] unk Array of unknowns
-//     //! \param[in] t Physical time
-    void initialize( const std::array< std::vector< tk::real >, 3 >& /*coord*/,
-                     tk::Fields& /*unk*/,
-                     tk::real /*t*/ ) const
+    //! \param[in] geoElem Element geometry array
+    //! \param[in,out] unk Array of unknowns
+    //! \param[in] t Physical time
+    void initialize( const tk::Fields& geoElem,
+                     tk::Fields& unk,
+                     tk::real t ) const
     {
-      // Call Problem::solution() in a loop over all elements assigning the
-      // initial conditions for cell centers. See cg::Transport::initialize()
-      // for an example for a loop over all nodes using the node coordinates.
-      // Instead of coord, we probably want to pass in a const-ref to
-      // DG::m_geoElem and work with the cell centroid coordinates.
-      std::cout << "type: " <<
-        std::to_string( static_cast< uint8_t >( Problem::type() )) << '\n';
+      std::size_t nelem = unk.nunk();
+
+      for (std::size_t e=0; e<nelem; ++e)
+      {
+        auto xcc = geoElem(e,1,0);
+        auto ycc = geoElem(e,2,0);
+        auto zcc = geoElem(e,3,0);
+
+        const auto s = Problem::solution( m_c, m_ncomp, xcc, ycc, zcc, t );
+        for (ncomp_t c=0; c<m_ncomp; ++c)
+          unk(e, c, m_offset)   = s[c];
+      }
     }
 
-    //! Compute the left hand side sparse matrix
-//     //! \param[in] coord Mesh node coordinates
-//     //! \param[in] inpoel Mesh element connectivity
-//     //! \param[in] psup Linked lists storing IDs of points surrounding points
-//     //! \param[in,out] lhsd Diagonal of the sparse matrix storing nonzeros
-//     //! \param[in,out] lhso Off-diagonal of the sparse matrix storing nonzeros
-    //! \details Sparse matrix storing the nonzero matrix values at rows and
-    //!   columns given by psup. The format is similar to compressed row
-    //!   storage, but the diagonal and off-diagonal data are stored in separate
-    //!   vectors. For the off-diagonal data the local row and column indices,
-    //!   at which values are nonzero, are stored by psup (psup1 and psup2,
-    //!   where psup2 holds the indices at which psup1 holds the point ids
-    //!   surrounding points, see also tk::genPsup()). Note that the number of
-    //!   mesh points (our chunk) npoin = psup.second.size()-1.
-    void lhs( const std::array< std::vector< tk::real >, 3 >& /*coord*/,
-              const std::vector< std::size_t >& /*inpoel*/,
-              const std::pair< std::vector< std::size_t >,
-                               std::vector< std::size_t > >& /*psup*/,
-              tk::Fields& /*lhsd*/,
-              tk::Fields& /*lhso*/ ) const
+    //! Compute the left hand side mass matrix
+    //! \param[in] geoElem Element geometry array
+    //! \param[in,out] l Block diagonal mass matrix matrix
+    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
     {
+      std::size_t nelem = geoElem.nunk();
+
+      for (std::size_t e=0; e<nelem; ++e)
+      {
+        for (ncomp_t c=0; c<m_ncomp; ++c)
+          l(e, c, m_offset) = geoElem(e,0,0);
+      }
     }
 
     //! Compute right hand side
-//     //! \param[in] deltat Size of time step
-//     //! \param[in] coord Mesh node coordinates
-//     //! \param[in] inpoel Mesh element connectivity
-//     //! \param[in] U Solution vector at recent time step
-//     //! \param[in,out] R Right-hand side vector computed
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real,
-              tk::real /*deltat*/,
-              const std::array< std::vector< tk::real >, 3 >& /*coord*/,
-              const std::vector< std::size_t >& /*inpoel*/,
-              const tk::Fields& /*U*/,
-              tk::Fields& /*Ue*/,
-              tk::Fields& /*R*/ ) const
+              const tk::Fields& geoFace,
+              const inciter::FaceData& fd,
+              const tk::Fields& U,
+              tk::Fields& R ) const
     {
+      Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
+              "vector and right-hand side at recent time step incorrect" );
+      Assert( U.nprop() == m_ncomp && R.nprop() == m_ncomp,
+              "Number of components in solution and right-hand side vector " 
+              "must equal "+ std::to_string(m_ncomp) );
+
+      auto& esuf = fd.Esuf();
+      auto& bface = fd.Bface();
+
+      // set rhs to zero
+      R.fill(0.0);
+
+      // compute internal surface flux integrals
+      for (auto f=fd.Nbfac(); f<fd.Ntfac(); ++f)
+      {
+        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+        std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+
+        auto farea = geoFace(f,0,0);
+
+        std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
+                                        geoFace(f,2,0),
+                                        geoFace(f,3,0) }};
+
+        auto xc = geoFace(f,4,0);
+        auto yc = geoFace(f,5,0);
+        auto zc = geoFace(f,6,0);
+
+        auto ul = U.extract(el);
+        auto ur = U.extract(er);
+
+        //--- upwind fluxes
+        auto flux = upwindFlux(xc, yc, zc, ul, ur, fn);
+
+        for (ncomp_t c=0; c<m_ncomp; ++c)
+        {
+          R(el, c, m_offset) -= farea * flux[c];
+          R(er, c, m_offset) += farea * flux[c];
+        }
+      }
+
+      // compute boundary surface flux integrals
+
+      // symmetry boundary condition
+      auto bc = bface.find(1);
+
+      if (bc != bface.end())
+      {
+        for (const auto& f : bc->second)
+        {
+          std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+
+          Assert( esuf[2*f+1] == -1,
+                  "outside boundary element not -1" );
+
+          auto farea = geoFace(f,0,0);
+
+          std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
+                                          geoFace(f,2,0),
+                                          geoFace(f,3,0) }};
+
+          auto xc = geoFace(f,4,0);
+          auto yc = geoFace(f,5,0);
+          auto zc = geoFace(f,6,0);
+
+          auto ul = U.extract(el);
+          auto ur = U.extract(el);
+
+          //--- upwind fluxes
+          auto flux = upwindFlux(xc, yc, zc, ul, ur, fn);
+
+          for (ncomp_t c=0; c<m_ncomp; ++c)
+          {
+            R(el, c, m_offset) -= farea * flux[c];
+          }
+        }
+      }
+
+      // inlet boundary condition
+      bc = bface.find(2);
+
+      if (bc != bface.end())
+      {
+        for (const auto& f : bc->second)
+        {
+          std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+
+          Assert( esuf[2*f+1] == -1,
+                  "outside boundary element not -1" );
+
+          auto farea = geoFace(f,0,0);
+
+          std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
+                                          geoFace(f,2,0),
+                                          geoFace(f,3,0) }};
+
+          auto xc = geoFace(f,4,0);
+          auto yc = geoFace(f,5,0);
+          auto zc = geoFace(f,6,0);
+
+          auto ul = U.extract(el);
+          std::vector< tk::real > ur(ul.size(),0);
+
+          //--- upwind fluxes
+          auto flux = upwindFlux(xc, yc, zc, ul, ur, fn);
+
+          for (ncomp_t c=0; c<m_ncomp; ++c)
+          {
+            R(el, c, m_offset) -= farea * flux[c];
+          }
+        }
+      }
+
+      // outlet boundary condition
+      bc = bface.find(3);
+
+      if (bc != bface.end())
+      {
+        for (const auto& f : bc->second)
+        {
+          std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+
+          Assert( esuf[2*f+1] == -1,
+                  "outside boundary element not -1" );
+
+          auto farea = geoFace(f,0,0);
+
+          std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
+                                          geoFace(f,2,0),
+                                          geoFace(f,3,0) }};
+
+          auto xc = geoFace(f,4,0);
+          auto yc = geoFace(f,5,0);
+          auto zc = geoFace(f,6,0);
+
+          auto ul = U.extract(el);
+          auto ur = U.extract(el);
+
+          //--- upwind fluxes
+          auto flux = upwindFlux(xc, yc, zc, ul, ur, fn);
+
+          for (ncomp_t c=0; c<m_ncomp; ++c)
+          {
+            R(el, c, m_offset) -= farea * flux[c];
+          }
+        }
+      }
+    }
+
+    std::vector< tk::real >
+    upwindFlux( tk::real xc,
+                tk::real yc, 
+                tk::real zc,
+                std::vector< tk::real > ul,
+                std::vector< tk::real > ur,
+                std::array< tk::real, 3 > fn ) const
+    // *****************************************************************************
+    // Riemann solver using upwind method
+    //! \param[in] xc X coordinate at which to assign advection velocity
+    //! \param[in] yc Y coordinate at which to assign advection velocity
+    //! \param[in] zc Z coordinate at which to assign advection velocity
+    //! \param[in] ul Left unknown/state vector
+    //! \param[in] ur Right unknown/state vector
+    //! \param[in] fn Face unit normal vector
+    //! \return Riemann solution using upwind method
+    // *****************************************************************************
+    {
+        std::vector< tk::real > flux(ul.size(),0);
+
+        const auto vel = Problem::prescribedVelocity( xc, yc, zc, m_c, m_ncomp );
+    
+        for(ncomp_t c=0; c<m_ncomp; ++c)
+        {
+          auto ax = vel[c][0];
+          auto ay = vel[c][1];
+          auto az = vel[c][2];
+
+          // wave speed
+          tk::real swave = ax*fn[0] + ay*fn[1] + az*fn[2];
+    
+          // upwinding
+          tk::real splus  = 0.5 * (swave + fabs(swave));
+          tk::real sminus = 0.5 * (swave - fabs(swave));
+    
+          flux[c] = splus * ul[c] + sminus * ur[c];
+        }
+    
+        return flux;
     }
 
     //! Compute the minimum time step size
@@ -178,9 +359,7 @@ class Transport {
 
     //! Return field output going to file
     //! \param[in] t Physical time
-    //! \param[in] V Total mesh volume
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in] v Nodal volumes
+    //! \param[in] geoElem Element geometry array
     //! \param[in,out] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     //! \details This functions should be written in conjunction with names(),
@@ -188,29 +367,26 @@ class Transport {
     //! \note U is overwritten
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
-                 tk::real V,
-                 const std::array< std::vector< tk::real >, 3 >& coord,
-                 const std::vector< tk::real >& v,
+                 tk::real /*V*/,
+                 const tk::Fields& geoElem,
                  tk::Fields& U ) const
     {
       std::vector< std::vector< tk::real > > out;
       // will output numerical solution for all components
-      auto E = U;
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );
       // evaluate analytic solution at time t
-      initialize( coord, U, t );
+      auto E = U;
+      initialize( geoElem, E, t );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
-        out.push_back( U.extract( c, m_offset ) );
+        out.push_back( E.extract( c, m_offset ) );
       // will output error for all components
       for (ncomp_t c=0; c<m_ncomp; ++c) {
         auto u = U.extract( c, m_offset );
         auto e = E.extract( c, m_offset );
-        Assert( u.size() == e.size(), "Size mismatch" );
-        Assert( u.size() == v.size(), "Size mismatch" );
         for (std::size_t i=0; i<u.size(); ++i)
-          e[i] = std::pow( e[i] - u[i], 2.0 ) * v[i] / V;
+          e[i] = std::pow( e[i] - u[i], 2.0 ) * geoElem(i,0,0);
         out.push_back( e );
       }
       return out;

@@ -67,9 +67,6 @@ class DG : public CBase_DG {
       p | m_vol;
       p | m_geoFace;
       p | m_geoElem;
-      p | m_ax;
-      p | m_ay;
-      p | m_az;
       p | m_lhs;
       p | m_rhs;
     }
@@ -96,12 +93,8 @@ class DG : public CBase_DG {
     tk::Fields m_geoFace;
     //! Element geometry
     tk::Fields m_geoElem;
-    //! advection velocity x, y and z components
-    tk::real m_ax;
-    tk::real m_ay;
-    tk::real m_az;
     //! Left-hand side mass-matrix which is a diagonal matrix
-    std::vector< tk::real > m_lhs;
+    tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
 
@@ -116,11 +109,6 @@ class DG : public CBase_DG {
 
     //! Compute right hand side
     void rhs();
-
-    //! Upwind fluxes
-    std::vector< tk::real > upwindFlux( std::vector< tk::real > ul,
-                                        std::vector< tk::real > ur,
-                                        std::array< tk::real, 3 > fn );
 
     //! Time stepping
     void solve( tk::real deltat );

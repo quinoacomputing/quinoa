@@ -2906,6 +2906,22 @@ struct slot_cyl_info {
 };
 using slot_cyl = keyword< slot_cyl_info, TAOCPP_PEGTL_STRING("slot_cyl") >;
 
+struct gauss_hump_info {
+  using code = Code< G >;
+  static std::string name() { return "Advection of 2D Gaussian hump"; }
+  static std::string shortDescription() { return
+    "Select advection of 2D Gaussian hump test problem"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the advection of 2D Gaussian hump test
+    problem. The initial and boundary conditions are specified to set up the
+    test problem suitable to exercise and test the advection
+    terms of the scalar transport equation. Example: "problem gauss_hump".)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using gauss_hump = keyword< gauss_hump_info, TAOCPP_PEGTL_STRING("gauss_hump") >;
+
 struct vortical_flow_info {
   using code = Code< V >;
   static std::string name() { return "Vortical flow"; }
@@ -3004,6 +3020,7 @@ struct problem_info {
       return '\'' + user_defined::string() + "\' | \'"
                   + shear_diff::string() + "\' | \'"
                   + slot_cyl::string() + "\' | \'"
+                  + gauss_hump::string() + "\' | \'"
                   + vortical_flow::string() + "\' | \'"
                   + nl_energy_growth::string() + "\' | \'"
                   + rayleigh_taylor::string() + "\' | \'"
