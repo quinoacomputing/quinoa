@@ -979,11 +979,6 @@ genEsuelTet( const std::vector< std::size_t >& inpoel,
   std::vector< std::size_t > lhelp(nnpf,0),
                              lpoin(npoin,0);
 
-  // array storing the naming conventions for a tet
-  // this is the local points on face array
-  std::array< std::array< std::size_t, 3 >, 4 >
-     lpofa{{ {{1,2,3}}, {{2,0,3}}, {{3,0,1}}, {{0,2,1}} }};
-
   for (std::size_t e=0; e<nelem; ++e)
   {
     auto mark = nnpe*e;
@@ -1182,11 +1177,6 @@ genInpofaTet( std::size_t ntfac,
   auto nelem = inpoel.size()/nnpe;
 
   inpofa.resize(nnpf*ntfac);
-
-  // array storing the naming conventions for a tet
-  // this is the local points on face array
-  std::array< std::array< std::size_t, 3 >, 4 >
-     lpofa{{ {{1,2,3}}, {{2,0,3}}, {{3,0,1}}, {{0,2,1}} }};
 
   // counters for number of internal and boundary faces
   std::size_t icoun(nnpf*nbfac);

@@ -15,6 +15,7 @@
 #include "DGPDE.h"
 #include "Solver.h"
 #include "DiagReducer.h"
+#include "DerivedData.h"
 #include "Diagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "ExodusIIMeshWriter.h"
@@ -61,16 +62,25 @@ DG::DG( const CProxy_Discretization& disc,
 
   // Collect tet ids associated to fellow chares adjacent to chare boundaries
   std::unordered_map< int, std::vector< std::size_t > > msum_el;
-  auto& belem = fd.Belem();
+  const auto& inpoel = d->Inpoel();
+  const auto& gid = d->Gid();
+  auto esup = tk::genEsup( inpoel, 4 );
+  auto esuel = tk::genEsuelTet( inpoel, esup );
   for (const auto& n : msum_set) {
-    for (std::size_t e=0; e<belem.size(); ++e) {
-      int counter = 0;
-      for (std::size_t en=0; en<4; ++en) {
-        auto i = n.second.find( d->Inpoel()[ e*4+en ] );
-        if (i != end(n.second)) ++counter;
+    for (std::size_t e=0; e<esuel.size()/4; ++e) {
+      auto mark = e*4;
+      for (std::size_t f=0; f<4; ++f) {
+        if (esuel[mark+f] == -1) {
+          auto A = gid[ inpoel[ mark + tk::lpofa[f][0] ] ];
+          auto B = gid[ inpoel[ mark + tk::lpofa[f][1] ] ];
+          auto C = gid[ inpoel[ mark + tk::lpofa[f][2] ] ];
+          auto i = n.second.find( A );
+          auto j = n.second.find( B );
+          auto k = n.second.find( C );
+          if ( i != end(n.second) && j != end(n.second) && k != end(n.second) )
+            msum_el[ n.first ].push_back( e );
+        }
       }
-      // if tet has at least 3 nodes on the chare boundary, it shares a face
-      if (counter == 3) msum_el[ n.first ].push_back( e );
     }
   }
 
