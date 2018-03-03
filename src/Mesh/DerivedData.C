@@ -937,20 +937,17 @@ genEsuelTet( const std::vector< std::size_t >& inpoel,
 //! \return Vector storing elements surrounding elements
 //! \warning It is not okay to call this function with an empty container for
 //!   inpoel or esup.first or esup.second; it will throw an exception.
-//! \details The data generated here is stored in a single vector,
-//!   with length nfpe * nelem. Note however, that nelem is not explicitly
-//!   provided, but calculated from inpoel. For boundary elements, at the
-//!   boundary face, this esuelTet stores value -1 indicating that this is
-//!   outside the domain. The convention for numbering the
-//!   local faces in the tet is very important in generating the inpofa array
-//!   later. The convention used here is that the face opposite to
-//!   local node 1 is numbered 1 and so on for the other 3 nodes.
-//!   Thus function is specific to tetrahedra, which is reflected in the fact
-//!   that nnpe and nfpe are being set in the function rather than being input
-//!   arguments.
-//!   To find out the number of elements, _nelem_, the size of the mesh
-//!   connectivity vector, _inpoel_, can be devided by the number of nodes per
-//!   elements, _nnpe_:
+//! \details The data generated here is stored in a single vector, with length
+//!   nfpe * nelem. Note however, that nelem is not explicitly provided, but
+//!   calculated from inpoel. For boundary elements, at the boundary face, this
+//!   esuelTet stores value -1 indicating that this is outside the domain. The
+//!   convention for numbering the local face (triangle) connectivity is very
+//!   important, e.g., in generating the inpofa array later. This node ordering
+//!   convention is stored in tk::lpofa. Thus function is specific to
+//!   tetrahedra, which is reflected in the fact that nnpe and nfpe are being
+//!   set here in the function rather than being input arguments. To find out
+//!   the number of elements, _nelem_, the size of the mesh connectivity vector,
+//!   _inpoel_, can be devided by the number of nodes per elements, _nnpe_:
 //!   \code{.cpp}
 //!     auto nelem = inpoel.size()/nnpe;
 //!   \endcode
