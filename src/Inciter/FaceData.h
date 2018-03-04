@@ -8,14 +8,27 @@
 #ifndef FaceData_h
 #define FaceData_h
 
+#include <vector>
+#include <tuple>
+#include <unordered_map>
+
+#include "Types.h"
 #include "PUPUtil.h"
 
 namespace inciter {
 
-//! \brief FaceData class holding face-connectivity data useful
-//!   to DG discretization
-class FaceData
-{
+//! Data associated to a tetrahedron cell id used to comunicate across faces
+using GhostData =
+    std::unordered_map< std::size_t, // tet id
+                        std::tuple<
+                          // 3 node ids for potentially multiple faces
+                          std::vector< std::size_t >,
+                          // elem geometry, see tk::genGeoElemTet()
+                          std::vector< tk::real > > >;
+
+//! FaceData class holding face-connectivity data useful for DG discretization
+class FaceData {
+
   public:
     //! Empty constructor for Charm++
     explicit FaceData() {}

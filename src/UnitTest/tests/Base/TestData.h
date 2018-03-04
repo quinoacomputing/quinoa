@@ -1659,8 +1659,7 @@ void Data_object::test< 37 >() {
   p.push_back( {0.2, 0.3} );
 
   ensure_equals( "nunk after <UnkEqComp>::push_back() incorrect", p.nunk(), 4 );
-  ensure_equals( "nprop after <UnkEqComp>::push_back() incorrect",
-                 p.nprop(), 2 );
+  ensure_equals( "nprop after <UnkEqComp>::push_back() incorrect", p.nprop(), 2 );
 
   using unittest::veceq;
 
@@ -1676,9 +1675,47 @@ void Data_object::test< 37 >() {
   // tk::Data::push_back() unimplemented with EqCompUnk data layout
 }
 
-//! Test tk::Data::rm()
+//! Test tk::Data::enlarge()
 template<> template<>
 void Data_object::test< 38 >() {
+  set_test_name( "enlarge" );
+
+  // Test with UnkEqComp data layout
+  tk::Data< tk::UnkEqComp > p( 3, 2 );
+  p(0,0,0) = 1.0;  p(0,1,0) = 2.0;
+  p(1,0,0) = 3.0;  p(1,1,0) = 4.0;
+  p(2,0,0) = 5.0;  p(2,1,0) = 6.0;
+
+  // Enlarge by 4*2 (nprop=2 stays constant)
+  p.enlarge( 4 );
+
+  ensure_equals( "nunk after <UnkEqComp>::enlarge() incorrect", p.nunk(), 7 );
+  ensure_equals( "nprop after <UnkEqComp>::enlarge() incorrect", p.nprop(), 2 );
+
+  using unittest::veceq;
+
+  veceq( "<UnkEqComp>::enlarge() at 0 incorrect",
+         std::vector< tk::real >{ 1.0, 2.0 }, p[0] );
+  veceq( "<UnkEqComp>::enlarge() at 1 incorrect",
+         std::vector< tk::real >{ 3.0, 4.0 }, p[1] );
+  veceq( "<UnkEqComp>::enlarge() at 2 incorrect",
+         std::vector< tk::real >{ 5.0, 6.0 }, p[2] );
+
+  veceq( "<UnkEqComp>::enlarge() at 3 incorrect",
+         std::vector< tk::real >{ 0.0, 0.0 }, p[3] );
+  veceq( "<UnkEqComp>::enlarge() at 4 incorrect",
+         std::vector< tk::real >{ 0.0, 0.0 }, p[4] );
+  veceq( "<UnkEqComp>::enlarge() at 5 incorrect",
+         std::vector< tk::real >{ 0.0, 0.0 }, p[5] );
+  veceq( "<UnkEqComp>::enlarge() at 6 incorrect",
+         std::vector< tk::real >{ 0.0, 0.0 }, p[6] );
+
+  // tk::Data::enlarge() unimplemented with EqCompUnk data layout
+}
+
+//! Test tk::Data::rm()
+template<> template<>
+void Data_object::test< 39 >() {
   set_test_name( "rm" );
 
   // Test with UnkEqComp data layout with a single component

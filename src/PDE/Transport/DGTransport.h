@@ -61,6 +61,7 @@ class Transport {
                      tk::Fields& unk,
                      tk::real t ) const
     {
+      Assert( geoElem.nunk() == unk.nunk(), "Size mismatch" );
       std::size_t nelem = unk.nunk();
 
       for (std::size_t e=0; e<nelem; ++e)
@@ -80,6 +81,7 @@ class Transport {
     //! \param[in,out] l Block diagonal mass matrix matrix
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
     {
+      Assert( geoElem.nunk() == l.nunk(), "Size mismatch" );
       std::size_t nelem = geoElem.nunk();
 
       for (std::size_t e=0; e<nelem; ++e)
@@ -371,6 +373,7 @@ class Transport {
                  const tk::Fields& geoElem,
                  tk::Fields& U ) const
     {
+      Assert( geoElem.nunk() == U.nunk(), "Size mismatch" );
       std::vector< std::vector< tk::real > > out;
       // will output numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)

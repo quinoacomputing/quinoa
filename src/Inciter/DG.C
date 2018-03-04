@@ -10,6 +10,8 @@
 */
 // *****************************************************************************
 
+#include <algorithm>
+
 #include "DG.h"
 #include "Discretization.h"
 #include "DGPDE.h"
@@ -44,62 +46,84 @@ DG::DG( const CProxy_Discretization& disc,
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_vol( 0.0 ),
+  m_geoFace( tk::genGeoFaceTri( fd.Ntfac(), fd.Inpofa(),
+                                m_disc[thisIndex].ckLocal()->Coord()) ),
+  m_geoElem( tk::genGeoElemTet( m_disc[thisIndex].ckLocal()->Inpoel(),
+                                m_disc[thisIndex].ckLocal()->Coord() ) ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
-  m_rhs( m_u.nunk(), m_u.nprop() )
+  m_rhs( m_u.nunk(), m_u.nprop() ),
+  m_msumset( msumset() ),
+  m_ghost()
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
 {
-  // Activate SDAG waits for face adjacency map calculation
+  // Activate SDAG waits for face adjacency map (ghost data) calculation
   wait4adj();
 
   auto d = Disc();
 
-  // Convert vectors to sets from inside node adjacency map, d->Msum()
-  std::unordered_map< int, std::unordered_set< std::size_t > > msum_set;
-  for (const auto& n : d->Msum())
-    msum_set[ n.first ].insert( n.second.cbegin(), n.second.cend() );
+//std::cout << thisIndex << "c: " << m_geoElem.nunk() << '\n';
 
-  // Collect tet ids associated to fellow chares adjacent to chare boundaries
-  std::unordered_map< int, std::vector< std::size_t > > msum_el;
+  // Collect tet ids, their face connectivity (3 global node IDs for potentially
+  // mulitple faces on the chare boundary), and their elem geometry data (see
+  // GhostData) associated to fellow chares adjacent to chare boundaries. Once
+  // received by fellow chares, these tets will become known as ghost elements.
+  std::unordered_map< int, GhostData > msum_el;
   const auto& inpoel = d->Inpoel();
   const auto& gid = d->Gid();
   auto esup = tk::genEsup( inpoel, 4 );
   auto esuel = tk::genEsuelTet( inpoel, esup );
-  for (const auto& n : msum_set) {
-    for (std::size_t e=0; e<esuel.size()/4; ++e) {
+  for (const auto& n : m_msumset) {  // for all neighbor chares
+    for (std::size_t e=0; e<esuel.size()/4; ++e) {  // for all cells in our chunk
       auto mark = e*4;
-      for (std::size_t f=0; f<4; ++f) {
-        if (esuel[mark+f] == -1) {
+      for (std::size_t f=0; f<4; ++f) {  // for all cell faces
+        if (esuel[mark+f] == -1) {  // if face has no tet on the other side
+          // get global node IDs of face
           auto A = gid[ inpoel[ mark + tk::lpofa[f][0] ] ];
           auto B = gid[ inpoel[ mark + tk::lpofa[f][1] ] ];
           auto C = gid[ inpoel[ mark + tk::lpofa[f][2] ] ];
           auto i = n.second.find( A );
           auto j = n.second.find( B );
           auto k = n.second.find( C );
-          if ( i != end(n.second) && j != end(n.second) && k != end(n.second) )
-            msum_el[ n.first ].push_back( e );
+          // if all face nodes are on chare boundary
+          if ( i != end(n.second) && j != end(n.second) && k != end(n.second) ) {
+            // will store ghost associated to neighbor chare
+            auto& ghost = msum_el[ n.first ];
+            // store tet id adjacent to chare boundary as key for ghost data
+            auto& tuple = ghost[ e ];
+            // if e has not yet been encountered, store geometry (only once)
+            auto& nodes = std::get< 0 >( tuple );
+            if (nodes.empty()) std::get< 1 >( tuple ) = m_geoElem[ e ];
+            // (always) store face node IDs on chare boundary, even if we have e
+            nodes.push_back( A );
+            nodes.push_back( B );
+            nodes.push_back( C );
+          }
         }
       }
     }
   }
 
+  ownadj_complete();
+
   // Note that while the face adjacency map is derived from the node adjacency
   // map, the size of the face adjacency communication map (msum_el computed
   // above) does not necessarily equal to the node adjacency map (d->Msum()),
-  // because while a node can be shared at a single corner or along an edge, but
-  // that does not necessarily share a face as well. So the chares we
-  // communicate with across faces are not necessarily the same as the chares we
-  // would communicate nodes with.
+  // because while a node can be shared at a single corner or along an edge,
+  // that does not necessarily share a face as well (in other words, shared
+  // nodes or edges can exist that are not part of a shared face). So the chares
+  // we communicate with across faces are not necessarily the same as the chares
+  // we would communicate nodes with.
   //
   // Since the sizes of the node and face adjacency maps are not the same,
   // simply sending the tet ids adjacent to chare boundaries would be okay, but
   // the receiving size would not necessarily know how many chares it must
   // receive tet ids from. To solve this problem we send to chares that which we
   // share at least a single node, which is the size of the node adjacency map,
-  // d->Msum(), but we either send a tet id list which share faces on the chare
-  // boundary or an empty elem list if there is not a single tet that shares a
-  // face with the destination chare (only single nodes or edges). The
+  // d->Msum(), but we either send a list of ghosts which share faces on the
+  // chare boundary or an empty ghost list if there is not a single tet that
+  // shares a face with the destination chare (only single nodes or edges). The
   // assumption here is, of course, that the size of the face adjacency map is
   // always smaller than or equal to that of the node adjacency map. Since the
   // receive side already knows how many fellow chares it must receive shared
@@ -108,38 +132,63 @@ DG::DG( const CProxy_Discretization& disc,
   // price of sending a few approximately empty messages (for those chare
   // boundaries that only share individual nodes but not faces).
 
-  ownadj_complete();
-
-  // Send tet ids adjacent to chare boundaries to fellow workers (if any)
+  // Send ghost data adjacent to chare boundaries to fellow workers (if any)
   if (d->Msum().empty())
     comadj_complete();
   else
     for (const auto& c : d->Msum()) {
-      decltype(msum_el)::mapped_type elems;
+      decltype(msum_el)::mapped_type ghost;
       auto e = msum_el.find( c.first );
-      if (e != end(msum_el)) elems = std::move( e->second );
-      thisProxy[ c.first ].comadj( thisIndex, elems );
+      if (e != end(msum_el)) ghost = std::move( e->second );
+      thisProxy[ c.first ].comadj( thisIndex, ghost );
     }
-
-  // Compute face geometry
-  m_geoFace = tk::genGeoFaceTri(fd.Ntfac(), fd.Inpofa(), d->Coord());
-
-  // Compute element geometry
-  m_geoElem = tk::genGeoElemTet(d->Inpoel(), d->Coord());
 }
 
-void
-DG::comadj( int fromch, const std::vector< std::size_t >& elems )
+std::unordered_map< int, std::unordered_set< std::size_t > >
+DG::msumset() const
 // *****************************************************************************
-// Receive tet ids on chare boundaries from fellow chare
+// Convert vectors to sets inside node adjacency map, Discretization::m_msum
 // *****************************************************************************
 {
   auto d = Disc();
 
-  // Store tets sharing a face with our mesh chunk categorized by fellow chares
-  if (!elems.empty()) {
-    auto& elemlist = m_msum_el[ fromch ];
-    elemlist.insert( end(elemlist), elems.cbegin(), elems.cend() );
+  std::unordered_map< int, std::unordered_set< std::size_t > > m;
+  for (const auto& n : d->Msum())
+    m[ n.first ].insert( n.second.cbegin(), n.second.cend() );
+
+  return m;
+}
+
+void
+DG::comadj( int fromch, const GhostData& ghost )
+// *****************************************************************************
+// Receive ghost data on chare boundaries from fellow chare
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Store ghosts sharing a face with our mesh chunk categorized by fellow chares
+  auto ghostcnt = m_u.nunk();    // will start new local cell ids from
+  for (const auto& g : ghost) {  // loop over incoming ghost data
+    auto e = g.first;  // (ghost) tet id on the other side of chare boundary
+    const auto& nodes = std::get< 0 >( g.second );  // node IDs of face(s)
+    const auto& geo = std::get< 1 >( g.second );    // ghost elem geometry data
+    Assert( nodes.size() % 3 == 0, "Face node IDs must be triplets" );
+    Assert( geo.size() == m_geoElem.nprop(), "Ghost geometry size mismatch" );
+    for (std::size_t n=0; n<nodes.size()/3; ++n) {  // face(s) of ghost e
+      auto A = nodes[ n*3+0 ];  // global node IDs of face on chare boundary
+      auto B = nodes[ n*3+1 ];
+      auto C = nodes[ n*3+2 ];
+      // must find face(A,B,C) in nodelist of chare-boundary adjacent to fromch
+      const auto& nl = tk::cref_find( m_msumset, fromch );// nodelist with fromch
+      Assert( nl.find(A)!=end(nl) && nl.find(B)!=end(nl) && nl.find(C)!=end(nl),
+              "Ghost face not found on receiving end" );
+      // if ghost tet id not yet encountered on boundary with fromch
+      if ( m_ghost.find(e) == end(m_ghost) ) {
+        m_ghost[e] = ghostcnt++;  // assign new local tet id to remote ghost id
+        m_geoElem.push_back( geo );  // store ghost elem geometry
+      }
+    }
   }
 
   if (++m_nadj == d->Msum().size()) comadj_complete();
@@ -148,18 +197,24 @@ DG::comadj( int fromch, const std::vector< std::size_t >& elems )
 void
 DG::adj()
 // *****************************************************************************
-// Continue after face adjacency communication map is complete
+// Continue after face adjacency communication map is complete on this chare
 // *****************************************************************************
 {
-  std::cout << "\nAdj:";
-  for (const auto& c : m_msum_el) {
-    std::cout << thisIndex << ": " << c.first << ": ";
-    for (auto e : c.second) std::cout << e << ' ';
-  }
-  std::cout << '\n';
+//   std::cout << "\nGhosts on " << thisIndex << " (remote:local): ";
+//   for (const auto& g : m_ghost) std::cout << g.first << ":" << g.second << ' ';
+//   std::cout << '\n';
+
+//std::cout << thisIndex << "b: " << m_geoElem.nunk() << ", " << m_ghost.size() << '\n';
+
+  // Enlarge lhs, rhs, and solution to accommodate ghost cells on chare boundaries
+  m_u.enlarge( m_ghost.size() );
+  m_un.enlarge( m_ghost.size() );
+  m_lhs.enlarge( m_ghost.size() );
+  m_rhs.enlarge( m_ghost.size() );
+
+//std::cout << thisIndex << "a: " << m_geoElem.nunk() << ", " << m_lhs.nunk() << '\n';
 
   // Signal the runtime system that all workers have received their adjacency
-  //contribute( CkCallback( CkReductionTarget(Transporter,comfinal), d->Tr() ) );
   m_solver.ckLocalBranch()->created();
 }
 
@@ -263,8 +318,9 @@ DG::writeFields( tk::real time )
   auto u = m_u;   // make a copy as eq::output() may overwrite its arg
   for (const auto& eq : g_dgpde)
   {
-    auto o = eq.fieldOutput( time, m_vol, m_geoElem, u );
-    elemfields.insert( end(elemfields), begin(o), end(o) );
+    auto output = eq.fieldOutput( time, m_vol, m_geoElem, u );
+    for (auto& o : output) o.resize( o.size()-m_ghost.size() );
+    elemfields.insert( end(elemfields), begin(output), end(output) );
   }
 
   // Create ExodusII writer

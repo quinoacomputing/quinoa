@@ -62,8 +62,8 @@ class DG : public CBase_DG {
     //! Migrate constructor
     explicit DG( CkMigrateMessage* ) {}
 
-    //! Receive adjacency
-    void comadj( int fromch, const std::vector< std::size_t >& elems );
+    //! Receive ghost data on chare boundaries from fellow chare
+    void comadj( int fromch, const GhostData& ghost );
 
     //! Configure Charm++ reduction types for concatenating BC nodelists
     static void registerReducers();
@@ -95,6 +95,8 @@ class DG : public CBase_DG {
       p | m_geoElem;
       p | m_lhs;
       p | m_rhs;
+      p | m_msumset;
+      p | m_ghost;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -126,10 +128,16 @@ class DG : public CBase_DG {
     tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
-    //! Adjacency/communication map among chares storing tet ids on the chare-boundary
-    //! \details This map associates a list of tet element ids that share a face
-    //!    with our mesh chunk, to a fellow chare id
-    std::unordered_map< int, std::vector< std::size_t > > m_msum_el;
+    //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
+    //!    worker chares associated to their chare IDs
+    //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
+    //!   points. This is the same data as in Discretization::m_msum, but the
+    //!   nodelist is stored as a set.
+    std::unordered_map< int, std::unordered_set< std::size_t > > m_msumset;
+    //! Local element id associated to ghost remote id
+    //! \details This map associates the local element id (map value) to the
+    //!    (remote) element id of the ghost (map key).
+    std::unordered_map< std::size_t, std::size_t > m_ghost;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -137,7 +145,10 @@ class DG : public CBase_DG {
       return m_disc[ thisIndex ].ckLocal();
     }
 
-    //! Continue after face adjacency communication map is complete
+    //! Convert vectors to sets inside node adjacency map, Discretization::m_msum
+    std::unordered_map< int, std::unordered_set< std::size_t > > msumset() const;
+
+    //! Continue after face adjacency communication map is complete on this chare
     void adj();
 
     //! Compute left hand side
