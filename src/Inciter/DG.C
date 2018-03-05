@@ -53,7 +53,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_msumset( msumset() ),
-  m_ghost()
+  m_ghost(),
+  m_chBndFace()
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
@@ -63,6 +64,50 @@ DG::DG( const CProxy_Discretization& disc,
 
   auto d = Disc();
 
+  const auto& gid = d->Gid();
+  const auto& inpoel = d->Inpoel();
+  const auto& inpofa = fd.Inpofa();
+  auto esup = tk::genEsup( inpoel, 4 );
+  auto esuel = tk::genEsuelTet( inpoel, esup );
+
+  // Invert inpofa to enable searching for faces based on (global) node triplets
+  Assert( inpofa.size() % 3 == 0, "Inpofa must contain triplets" );
+  Faces faces;
+  for (std::size_t f=0; f<inpofa.size()/3; ++f) {
+    auto A = gid[ inpofa[f*3+0] ];
+    auto B = gid[ inpofa[f*3+1] ];
+    auto C = gid[ inpofa[f*3+2] ];
+    faces.insert( {{{A,B,C}}} );
+  }
+
+  // At this point faces should have a set of node-id-triplets (faces) of
+  // internal faces and physical boundary faces but not chare boundary faces.
+
+  // Build map associating face id to (global) node ID triplets on chare boundary
+  auto facecnt = faces.size();  // will start new face IDs from
+  for (std::size_t e=0; e<esuel.size()/4; ++e) {
+    auto mark = e*4;
+    for (std::size_t f=0; f<4; ++f) {
+      if (esuel[mark+f] == -1) {
+        auto A = gid[ inpoel[ mark + tk::lpofa[f][0] ] ];
+        auto B = gid[ inpoel[ mark + tk::lpofa[f][1] ] ];
+        auto C = gid[ inpoel[ mark + tk::lpofa[f][2] ] ];
+        // if does not yet exist, assign new face ID on chare boundary
+        NodeTriplet t{{ A, B, C }};
+        if (faces.find( t ) != end(faces)) m_chBndFace[ t ] = facecnt++;
+      }
+    }
+  }
+
+  // At this point m_chBndFace should have new (local) face IDs assigned to
+  // node-triplets (faces) only along our chare-boundary.
+
+  std::cout << thisIndex << "fn: ";
+  for (const auto& f : faces)
+    std::cout << f[0] << ',' << f[1] << ',' << f[2] << ' ';
+  std::cout << '\n';
+
+
 //std::cout << thisIndex << "c: " << m_geoElem.nunk() << '\n';
 
   // Collect tet ids, their face connectivity (3 global node IDs for potentially
@@ -70,10 +115,6 @@ DG::DG( const CProxy_Discretization& disc,
   // GhostData) associated to fellow chares adjacent to chare boundaries. Once
   // received by fellow chares, these tets will become known as ghost elements.
   std::unordered_map< int, GhostData > msum_el;
-  const auto& inpoel = d->Inpoel();
-  const auto& gid = d->Gid();
-  auto esup = tk::genEsup( inpoel, 4 );
-  auto esuel = tk::genEsuelTet( inpoel, esup );
   for (const auto& n : m_msumset) {  // for all neighbor chares
     for (std::size_t e=0; e<esuel.size()/4; ++e) {  // for all cells in our chunk
       auto mark = e*4;
@@ -99,6 +140,12 @@ DG::DG( const CProxy_Discretization& disc,
             nodes.push_back( A );
             nodes.push_back( B );
             nodes.push_back( C );
+            // The search below should succeed, because we are looking for node
+            // triplets (faces) along our chare boundary and m_chBndFace should
+            // contain all faces along our chare boundary (adjacent to all
+            // chares we communicate with). However, this is not the case.
+            auto bf = m_chBndFace.find( {{A,B,C}} );
+            if (bf == end(m_chBndFace)) std::cout << A << ',' << B << ',' << C << " not found on sending chare " << thisIndex << '\n';
           }
         }
       }
@@ -183,6 +230,15 @@ DG::comadj( int fromch, const GhostData& ghost )
       const auto& nl = tk::cref_find( m_msumset, fromch );// nodelist with fromch
       Assert( nl.find(A)!=end(nl) && nl.find(B)!=end(nl) && nl.find(C)!=end(nl),
               "Ghost face not found on receiving end" );
+      // add new tet as element surrounding face(A,B,C)
+      // The search below should succeed, because we are looking for node
+      // triplets (faces) along our chare boundary and m_chBndFace should
+      // contain all faces along our chare boundary (adjacent to all chares we
+      // communicate with). However, this is not the case.
+      auto bf = m_chBndFace.find( {{A,B,C}} );
+      if (bf == end(m_chBndFace)) std::cout << A << ',' << B << ',' << C << " not found on receiving chare " << thisIndex << '\n';
+      //auto f = tk::cref_find( m_chBndFace, {{A,B,C}} );
+      //m_fd.Esuf()
       // if ghost tet id not yet encountered on boundary with fromch
       if ( m_ghost.find(e) == end(m_ghost) ) {
         m_ghost[e] = ghostcnt++;  // assign new local tet id to remote ghost id

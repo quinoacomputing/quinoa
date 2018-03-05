@@ -1055,23 +1055,21 @@ genNtfac( std::size_t nfpe,
 
   std::size_t nifac = 0;
 
-  if (nbfac > 0)
-  {
-
-  // loop through elements surrounding elements to find number of internal faces
-  for (std::size_t e=0; e<nelem; ++e)
-  {
-    for (std::size_t ip=nfpe*e; ip<nfpe*(e+1); ++ip)
+  if (nbfac > 0) {
+    // loop through elements surrounding elements to find number of internal faces
+    for (std::size_t e=0; e<nelem; ++e)
     {
-      if (esuelTet[ip] != -1)
+      for (std::size_t ip=nfpe*e; ip<nfpe*(e+1); ++ip)
       {
-        if ( e<static_cast< std::size_t >(esuelTet[ip]) )
+        if (esuelTet[ip] != -1)
         {
-          ++nifac;
+          if ( e<static_cast< std::size_t >(esuelTet[ip]) )
+          {
+            ++nifac;
+          }
         }
       }
     }
-  }
   }
 
   return nifac + nbfac;
@@ -1105,37 +1103,32 @@ genEsuf( std::size_t nfpe,
 
   std::vector< int > esuf(2*ntfac);
 
-  if (nbfac > 0)
-  {
+  if (nbfac > 0) {
+    // counters for number of internal and boundary faces
+    std::size_t icoun(2*nbfac), bcoun(0);
 
-  // counters for number of internal and boundary faces
-  std::size_t icoun(2*nbfac), bcoun(0);
-
-  // loop to get face-element connectivity for internal faces
-  for (std::size_t e=0; e<nelem; ++e)
-  {
-    for (std::size_t ip=nfpe*e; ip<nfpe*(e+1); ++ip)
-    {
-      auto jelem = esuelTet[ip];
-      if (jelem != -1)
-      {
-        if ( e < static_cast< std::size_t >(jelem) )
+    // loop to get face-element connectivity for internal faces
+    for (std::size_t e=0; e<nelem; ++e) {
+      for (std::size_t ip=nfpe*e; ip<nfpe*(e+1); ++ip) {
+        auto jelem = esuelTet[ip];
+        if (jelem != -1)
         {
-          esuf[icoun] = static_cast< int >(e);
-          esuf[icoun+1] = static_cast< int >(jelem);
-          icoun = icoun + 2;
+          if ( e < static_cast< std::size_t >(jelem) )
+          {
+            esuf[icoun] = static_cast< int >(e);
+            esuf[icoun+1] = static_cast< int >(jelem);
+            icoun = icoun + 2;
+          }
         }
       }
     }
-  }
 
-  bcoun = 0;
-  for (auto ie : belem)
-  {
-    esuf[bcoun] = static_cast< int >(ie);
-    esuf[bcoun+1] = -1;  // outside domain
-    bcoun = bcoun + 2;
-  }
+    bcoun = 0;
+    for (auto ie : belem) {
+      esuf[bcoun] = static_cast< int >(ie);
+      esuf[bcoun+1] = -1;  // outside domain
+      bcoun = bcoun + 2;
+    }
   }
 
   return esuf;

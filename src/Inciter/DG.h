@@ -18,7 +18,9 @@
 #ifndef DG_h
 #define DG_h
 
-#include <vector>
+#include <array>
+#include <unordered_set>
+#include <unordered_map>
 
 #include "DerivedData.h"
 #include "FaceData.h"
@@ -97,6 +99,7 @@ class DG : public CBase_DG {
       p | m_rhs;
       p | m_msumset;
       p | m_ghost;
+      p | m_chBndFace;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -105,6 +108,21 @@ class DG : public CBase_DG {
     //@}
 
   private:
+    //! Node ID triplet denoting a tetrahedron face
+    using NodeTriplet = std::array< std::size_t, 3 >;
+    // Hash functor for NodeTriplet
+    struct TripletHasher {
+      std::size_t operator()( const NodeTriplet& key ) const {
+        return std::hash< std::size_t >()( key[0] ) ^
+               std::hash< std::size_t >()( key[1] ) ^
+               std::hash< std::size_t >()( key[2] );
+      }
+    };
+    //! Node ID triplets representing a tetrahedron face
+    using Faces = std::unordered_set< NodeTriplet, TripletHasher >;
+    //! Tetrahedron face ID associated to node ID triplet
+    using FaceIDs = std::unordered_map< NodeTriplet, std::size_t, TripletHasher >;
+
     tk::CProxy_Solver m_solver;
     //! Counter for face adjacency communication map
     std::size_t m_nadj;
@@ -138,6 +156,8 @@ class DG : public CBase_DG {
     //! \details This map associates the local element id (map value) to the
     //!    (remote) element id of the ghost (map key).
     std::unordered_map< std::size_t, std::size_t > m_ghost;
+    //! ...
+    FaceIDs m_chBndFace;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
