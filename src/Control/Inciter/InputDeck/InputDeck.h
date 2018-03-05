@@ -133,7 +133,8 @@ class InputDeck :
                                        kw::scheme,
                                        kw::matcg,
                                        kw::diagcg,
-                                       kw::dg >;
+                                       kw::dg,
+                                       kw::gauss_hump >;
 
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
