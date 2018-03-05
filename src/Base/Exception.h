@@ -105,7 +105,6 @@ class Exception : public std::exception {
     //! Demangle and Echo call trace
     void echoTrace() noexcept;
 
-    const bool m_trace;         //!< True if to also echo trace
     const std::string m_file;   //!< Source file where exception is occurred
     const std::string m_func;   //!< Function name where exception is occurred
     const unsigned int m_line;  //!< Source line where exception is occurred
