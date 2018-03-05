@@ -92,9 +92,9 @@ DG::DG( const CProxy_Discretization& disc,
         auto A = gid[ inpoel[ mark + tk::lpofa[f][0] ] ];
         auto B = gid[ inpoel[ mark + tk::lpofa[f][1] ] ];
         auto C = gid[ inpoel[ mark + tk::lpofa[f][2] ] ];
-        // if does not yet exist, assign new face ID on chare boundary
+        // if does not exist in inpofa, assign new face ID on chare boundary
         NodeTriplet t{{ A, B, C }};
-        if (faces.find( t ) != end(faces)) m_chBndFace[ t ] = facecnt++;
+        if (faces.find( t ) == end(faces)) m_chBndFace[ t ] = facecnt++;
       }
     }
   }
@@ -102,9 +102,9 @@ DG::DG( const CProxy_Discretization& disc,
   // At this point m_chBndFace should have new (local) face IDs assigned to
   // node-triplets (faces) only along our chare-boundary.
 
-  std::cout << thisIndex << "fn: ";
-  for (const auto& f : faces)
-    std::cout << f[0] << ',' << f[1] << ',' << f[2] << ' ';
+  std::cout << thisIndex << "bndface: ";
+  for (const auto& f : m_chBndFace)
+    std::cout << f.first[0] << ',' << f.first[1] << ',' << f.first[2] << ' ';
   std::cout << '\n';
 
 
