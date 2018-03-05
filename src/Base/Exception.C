@@ -15,6 +15,7 @@
 #include <cxxabi.h>
 #include <execinfo.h>
 
+#include "QuinoaConfig.h"
 #include "Exception.h"
 
 using tk::Exception;
@@ -91,14 +92,14 @@ Exception::saveTrace() noexcept
 //!   Requires stdio.h, execinfo.h.
 // *****************************************************************************
 {
+#ifndef HOST_OS_ALPINE
   // Retrieve current stack addresses
   m_addrLength = backtrace(m_addrList, sizeof(m_addrList)/sizeof(void*));
-
-  if (m_addrLength == 0)
-    fprintf( stderr, ">>> Call stack is empty, possibly corrupt.\n" );
+#endif
 
   // Resolve addresses into strings containing "filename(function+address)"
-  m_symbolList = backtrace_symbols(m_addrList, m_addrLength);
+  if (m_addrLength > 0)
+    m_symbolList = backtrace_symbols(m_addrList, m_addrLength);
 }
 
 void
@@ -174,9 +175,11 @@ Exception::handleException() noexcept
 //!   throws exceptions.
 // *****************************************************************************
 {
-  fprintf( stderr, ">>>\n>>> =========== CALL TRACE ===========\n>>>\n" );
-  echoTrace();
-  fprintf( stderr, ">>>\n>>> ======= END OF CALL TRACE ========\n>>>\n" );
+  if (m_addrLength > 0) {
+    fprintf( stderr, ">>>\n>>> =========== CALL TRACE ===========\n>>>\n" );
+    echoTrace();
+    fprintf( stderr, ">>>\n>>> ======= END OF CALL TRACE ========\n>>>\n" );
+  }
  
   return tk::ErrCode::FAILURE;
 }
