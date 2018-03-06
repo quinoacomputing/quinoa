@@ -93,7 +93,9 @@ Exception::saveTrace() noexcept
 // *****************************************************************************
 {
 #ifndef HOST_OS_ALPINE
-  // Retrieve current stack addresses
+  // Retrieve current stack addresses. For some reason backtrace() segfaults on
+  // alpine linux, so calling it is disabled on alpine. If m_addrLength is zero
+  // backtrace is disabled.
   m_addrLength = backtrace(m_addrList, sizeof(m_addrList)/sizeof(void*));
 #endif
 
