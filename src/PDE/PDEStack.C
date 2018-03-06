@@ -231,26 +231,56 @@ PDEStack::infoTransport( std::map< ctr::PDEType, ncomp_t >& cnt ) const
   std::vector< std::pair< std::string, std::string > > nfo;
 
   nfo.emplace_back( ctr::PDE().name( ctr::PDEType::TRANSPORT ), "" );
+
   nfo.emplace_back( "problem", ctr::Problem().name(
     g_inputdeck.get< tag::param, tag::transport, tag::problem >()[c] ) );
+
   nfo.emplace_back( "start offset in unknowns array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::transport >(c) ) );
+
   auto ncomp = g_inputdeck.get< tag::component >().get< tag::transport >()[c];
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
   const auto& diff =
      g_inputdeck.get< tag::param, tag::transport, tag::diffusivity >();
   if (diff.size() > c)
     nfo.emplace_back( "coeff diffusivity [" + std::to_string( ncomp ) + "]",
                        parameters( diff[c] ) );
+
   const auto& u0 = g_inputdeck.get< tag::param, tag::transport, tag::u0 >();
   if (u0.size() > c)
     nfo.emplace_back( "coeff u0 [" + std::to_string( ncomp ) + "]",
                        parameters( u0[c] ) );
+
   const auto& lambda =
     g_inputdeck.get< tag::param, tag::transport, tag::lambda >();
   if (lambda.size() > c)
     nfo.emplace_back( "coeff lambda [" + std::to_string( ncomp ) + "]",
       parameters( lambda[c] ) );
+
+  const auto& bcdir =
+    g_inputdeck.get< tag::param, tag::transport, tag::bcdir >();
+  if (bcdir.size() > c)
+    nfo.emplace_back( "Dirichlet boundary [" + std::to_string( ncomp ) + "]",
+      parameters( bcdir[c] ) );
+
+  const auto& bcsym =
+    g_inputdeck.get< tag::param, tag::transport, tag::bcsym >();
+  if (bcsym.size() > c)
+    nfo.emplace_back( "Symmetry boundary [" + std::to_string( ncomp ) + "]",
+      parameters( bcsym[c] ) );
+
+  const auto& bcinlet =
+    g_inputdeck.get< tag::param, tag::transport, tag::bcinlet >();
+  if (bcinlet.size() > c)
+    nfo.emplace_back( "Inlet boundary [" + std::to_string( ncomp ) + "]",
+      parameters( bcinlet[c] ) );
+
+  const auto& bcoutlet =
+    g_inputdeck.get< tag::param, tag::transport, tag::bcoutlet >();
+  if (bcoutlet.size() > c)
+    nfo.emplace_back( "Outlet boundary [" + std::to_string( ncomp ) + "]",
+      parameters( bcoutlet[c] ) );
 
   return nfo;
 }

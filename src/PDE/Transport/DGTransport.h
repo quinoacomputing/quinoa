@@ -49,6 +49,12 @@ class Transport {
         g_inputdeck.get< tag::component >().get< tag::transport >().at(c) ),
       m_offset(
         g_inputdeck.get< tag::component >().offset< tag::transport >(c) )
+//       m_bcsym(
+//         g_inputdeck.get< tag::param, tag::transport, tag::bcsym >().at(c) ),
+//       m_bcinlet(
+//         g_inputdeck.get< tag::param, tag::transport, tag::bcinlet >().at(c) ),
+//       m_bcoutlet(
+//         g_inputdeck.get< tag::param, tag::transport, tag::bcoutlet >().at(c) )
     {
       Problem::errchk( m_c, m_ncomp );
     }
@@ -117,25 +123,15 @@ class Transport {
       {
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
         std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
-
         auto farea = geoFace(f,0,0);
-
-        std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
-                                        geoFace(f,2,0),
-                                        geoFace(f,3,0) }};
-
-        auto xc = geoFace(f,4,0);
-        auto yc = geoFace(f,5,0);
-        auto zc = geoFace(f,6,0);
 
         auto ul = U.extract(el);
         auto ur = U.extract(er);
 
         //--- upwind fluxes
-        auto flux = upwindFlux(xc, yc, zc, ul, ur, fn);
+        auto flux = upwindFlux( f, geoFace, ul, ur );
 
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-        {
+        for (ncomp_t c=0; c<m_ncomp; ++c) {
           R(el, c, m_offset) -= farea * flux[c];
           R(er, c, m_offset) += farea * flux[c];
         }
@@ -151,30 +147,17 @@ class Transport {
         for (const auto& f : bc->second)
         {
           std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-
-          Assert( esuf[2*f+1] == -1,
-                  "outside boundary element not -1" );
-
+          Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
           auto farea = geoFace(f,0,0);
-
-          std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
-                                          geoFace(f,2,0),
-                                          geoFace(f,3,0) }};
-
-          auto xc = geoFace(f,4,0);
-          auto yc = geoFace(f,5,0);
-          auto zc = geoFace(f,6,0);
 
           auto ul = U.extract(el);
           auto ur = U.extract(el);
 
           //--- upwind fluxes
-          auto flux = upwindFlux(xc, yc, zc, ul, ur, fn);
+          auto flux = upwindFlux( f, geoFace, ul, ur );
 
           for (ncomp_t c=0; c<m_ncomp; ++c)
-          {
             R(el, c, m_offset) -= farea * flux[c];
-          }
         }
       }
 
@@ -186,30 +169,17 @@ class Transport {
         for (const auto& f : bc->second)
         {
           std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-
-          Assert( esuf[2*f+1] == -1,
-                  "outside boundary element not -1" );
-
+          Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
           auto farea = geoFace(f,0,0);
-
-          std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
-                                          geoFace(f,2,0),
-                                          geoFace(f,3,0) }};
-
-          auto xc = geoFace(f,4,0);
-          auto yc = geoFace(f,5,0);
-          auto zc = geoFace(f,6,0);
 
           auto ul = U.extract(el);
           std::vector< tk::real > ur(ul.size(),0);
 
           //--- upwind fluxes
-          auto flux = upwindFlux(xc, yc, zc, ul, ur, fn);
+          auto flux = upwindFlux( f, geoFace, ul, ur );
 
           for (ncomp_t c=0; c<m_ncomp; ++c)
-          {
             R(el, c, m_offset) -= farea * flux[c];
-          }
         }
       }
 
@@ -221,73 +191,19 @@ class Transport {
         for (const auto& f : bc->second)
         {
           std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-
-          Assert( esuf[2*f+1] == -1,
-                  "outside boundary element not -1" );
-
+          Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
           auto farea = geoFace(f,0,0);
-
-          std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
-                                          geoFace(f,2,0),
-                                          geoFace(f,3,0) }};
-
-          auto xc = geoFace(f,4,0);
-          auto yc = geoFace(f,5,0);
-          auto zc = geoFace(f,6,0);
 
           auto ul = U.extract(el);
           auto ur = U.extract(el);
 
           //--- upwind fluxes
-          auto flux = upwindFlux(xc, yc, zc, ul, ur, fn);
+          auto flux = upwindFlux( f, geoFace, ul, ur );
 
           for (ncomp_t c=0; c<m_ncomp; ++c)
-          {
             R(el, c, m_offset) -= farea * flux[c];
-          }
         }
       }
-    }
-
-    std::vector< tk::real >
-    upwindFlux( tk::real xc,
-                tk::real yc, 
-                tk::real zc,
-                std::vector< tk::real > ul,
-                std::vector< tk::real > ur,
-                std::array< tk::real, 3 > fn ) const
-    // *****************************************************************************
-    // Riemann solver using upwind method
-    //! \param[in] xc X coordinate at which to assign advection velocity
-    //! \param[in] yc Y coordinate at which to assign advection velocity
-    //! \param[in] zc Z coordinate at which to assign advection velocity
-    //! \param[in] ul Left unknown/state vector
-    //! \param[in] ur Right unknown/state vector
-    //! \param[in] fn Face unit normal vector
-    //! \return Riemann solution using upwind method
-    // *****************************************************************************
-    {
-        std::vector< tk::real > flux(ul.size(),0);
-
-        const auto vel = Problem::prescribedVelocity( xc, yc, zc, m_c, m_ncomp );
-    
-        for(ncomp_t c=0; c<m_ncomp; ++c)
-        {
-          auto ax = vel[c][0];
-          auto ay = vel[c][1];
-          auto az = vel[c][2];
-
-          // wave speed
-          tk::real swave = ax*fn[0] + ay*fn[1] + az*fn[2];
-    
-          // upwinding
-          tk::real splus  = 0.5 * (swave + fabs(swave));
-          tk::real sminus = 0.5 * (swave - fabs(swave));
-    
-          flux[c] = splus * ul[c] + sminus * ur[c];
-        }
-    
-        return flux;
     }
 
     //! Compute the minimum time step size
@@ -408,6 +324,77 @@ class Transport {
     const ncomp_t m_c;                  //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     const ncomp_t m_offset;             //!< Offset this PDE operates from
+    const std::vector< kw::sideset::info::expect::type > m_bcsym;
+    const std::vector< kw::sideset::info::expect::type > m_bcinlet;
+    const std::vector< kw::sideset::info::expect::type > m_bcoutlet;
+
+    //! Riemann solver using upwind method
+    //! \param[in] ul Left unknown/state vector
+    //! \param[in] ur Right unknown/state vector
+    //! \return Riemann solution using upwind method
+    std::vector< tk::real >
+    upwindFlux( std::size_t f,
+                const tk::Fields& geoFace,
+                std::vector< tk::real > ul,
+                std::vector< tk::real > ur ) const
+    {
+      std::vector< tk::real > flux(ul.size(),0);
+
+      auto xc = geoFace(f,4,0);
+      auto yc = geoFace(f,5,0);
+      auto zc = geoFace(f,6,0);
+
+      std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
+                                      geoFace(f,2,0),
+                                      geoFace(f,3,0) }};
+
+      const auto vel = Problem::prescribedVelocity( xc, yc, zc, m_c, m_ncomp );
+    
+      for(ncomp_t c=0; c<m_ncomp; ++c)
+      {
+        auto ax = vel[c][0];
+        auto ay = vel[c][1];
+        auto az = vel[c][2];
+
+        // wave speed
+        tk::real swave = ax*fn[0] + ay*fn[1] + az*fn[2];
+    
+        // upwinding
+        tk::real splus  = 0.5 * (swave + fabs(swave));
+        tk::real sminus = 0.5 * (swave - fabs(swave));
+    
+        flux[c] = splus * ul[c] + sminus * ur[c];
+      }
+    
+      return flux;
+    }
+
+//     void surfInt( std::size_t sideset, const tk::Fields& geoFace ) {
+// 
+//       auto state = [&]( std::size_t f ){
+//         auto e = static_cast< std::size_t >(esuf[2*f]);
+//         Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
+//         auto farea = geoFace(f,0,0);
+// 
+//         auto xc = geoFace(f,4,0);
+//         auto yc = geoFace(f,5,0);
+//         auto zc = geoFace(f,6,0);
+// 
+//       for (auto f : faces) {
+// 
+//         auto ul = U.extract(e);
+//         auto ur = U.extract(e);
+// 
+//         //--- upwind fluxes
+//         auto flux = upwindFlux( xc, yc, zc, ul, ur,
+//                       {{ geoFace(f,1,0),geoFace(f,2,0), geoFace(f,3,0) }} );
+// 
+//         for (ncomp_t c=0; c<m_ncomp; ++c) {
+//           R(e, c, m_offset) -= farea * flux[c];
+//         }
+//       }
+//     }
+
 };
 
 } // dg::
