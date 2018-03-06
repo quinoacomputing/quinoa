@@ -92,9 +92,26 @@ DG::DG( const CProxy_Discretization& disc,
         auto A = gid[ inpoel[ mark + tk::lpofa[f][0] ] ];
         auto B = gid[ inpoel[ mark + tk::lpofa[f][1] ] ];
         auto C = gid[ inpoel[ mark + tk::lpofa[f][2] ] ];
+
         // if does not exist in inpofa, assign new face ID on chare boundary
         NodeTriplet t{{ A, B, C }};
-        if (faces.find( t ) == end(faces)) m_chBndFace[ t ] = facecnt++;
+        if (faces.find( t ) == end(faces)) {
+          m_chBndFace[ t ] = facecnt++;
+
+          // Attempt to find t on one of our chare boundaries based on msum_set
+          bool found = false;
+          for (const auto& n : m_msumset) {  // for all neighbor chares
+            auto i = n.second.find( A );
+            auto j = n.second.find( B );
+            auto k = n.second.find( C );
+            // if all face nodes are on chare boundary
+            if ( i != end(n.second) && j != end(n.second) && k != end(n.second) )
+             found = true;
+          }
+          Assert( found, "Not in msum_set: " + std::to_string(t[0]) + ',' +
+                    std::to_string(t[1]) + ',' + std::to_string(t[2]) + '\n' );
+        }
+
       }
     }
   }
@@ -202,6 +219,12 @@ DG::msumset() const
   std::unordered_map< int, std::unordered_set< std::size_t > > m;
   for (const auto& n : d->Msum())
     m[ n.first ].insert( n.second.cbegin(), n.second.cend() );
+
+  std::cout << thisIndex << "msum_set: ";
+  for (const auto& n : m_msumset)
+    for (auto i : n.second)
+      std::cout << i << ' ';
+  std::cout << '\n';
 
   return m;
 }
