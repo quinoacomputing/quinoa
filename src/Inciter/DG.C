@@ -98,31 +98,35 @@ DG::DG( const CProxy_Discretization& disc,
         if (faces.find( t ) == end(faces)) {
           m_chBndFace[ t ] = facecnt++;
 
-          // Attempt to find t on one of our chare boundaries based on msum_set
-          bool found = false;
-          for (const auto& n : m_msumset) {  // for all neighbor chares
-            auto i = n.second.find( A );
-            auto j = n.second.find( B );
-            auto k = n.second.find( C );
-            // if all face nodes are on chare boundary
-            if ( i != end(n.second) && j != end(n.second) && k != end(n.second) )
-             found = true;
-          }
-          Assert( found, "Not in msum_set: " + std::to_string(t[0]) + ',' +
-                    std::to_string(t[1]) + ',' + std::to_string(t[2]) + '\n' );
+//  std::cout << thisIndex << ": {" << A << ',' << B << ',' << C << '}'  << '\n';
+
+//           // Attempt to find t on one of our chare boundaries based on msum_set
+//           bool found = false;
+//           for (const auto& n : m_msumset) {  // for all neighbor chares
+//             auto i = n.second.find( A );
+//             auto j = n.second.find( B );
+//             auto k = n.second.find( C );
+//             // if all face nodes are on chare boundary
+//             if ( i != end(n.second) && j != end(n.second) && k != end(n.second) )
+//              found = true;
+//           }
+//           Assert( found, "Not in msum_set: " + std::to_string(t[0]) + ',' +
+//                     std::to_string(t[1]) + ',' + std::to_string(t[2]) + '\n' );
         }
 
       }
     }
   }
 
+//  std::cout << thisIndex << ": " << facecnt-faces.size() << '\n';
+
   // At this point m_chBndFace should have new (local) face IDs assigned to
   // node-triplets (faces) only along our chare-boundary.
 
-  std::cout << thisIndex << "bndface: ";
-  for (const auto& f : m_chBndFace)
-    std::cout << f.first[0] << ',' << f.first[1] << ',' << f.first[2] << ' ';
-  std::cout << '\n';
+//   std::cout << thisIndex << "bndface: ";
+//   for (const auto& f : m_chBndFace)
+//     std::cout << f.first[0] << ',' << f.first[1] << ',' << f.first[2] << ' ';
+//   std::cout << '\n';
 
 
 //std::cout << thisIndex << "c: " << m_geoElem.nunk() << '\n';
