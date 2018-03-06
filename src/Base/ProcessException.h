@@ -18,6 +18,12 @@
 
 namespace tk {
 
+//! Signal handler for multiple signals, SIGABRT, SIGSEGV, etc.
+void signalHandler( int signum );
+
+//! Set signal handlers for multiple signals, SIGABRT, SIGSEGV, etc
+int setSignalHandlers();
+
 //! Process an exception from the Charm++ runtime system
 void processExceptionCharm();
 

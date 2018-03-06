@@ -30,6 +30,9 @@ namespace tk {
 
 // Compile-time options
 
+// Host OS
+#cmakedefine HOST_OS_ALPINE
+
 // Data layout for particle data
 #cmakedefine PARTICLE_DATA_LAYOUT_AS_PARTICLE_MAJOR
 #cmakedefine PARTICLE_DATA_LAYOUT_AS_EQUATION_MAJOR
