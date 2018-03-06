@@ -36,7 +36,7 @@ void Exception_object::test< 1 >() {
   tk::Exception e( "msg", "file", "func", 12 );
   ensure_equals( "get exception message",
                  std::string( e.what() ),
-                 std::string( "msg\n>>> Exception in file:12: func" ) );
+                 std::string( "msg\n>>> Exception at file:12: func" ) );
 }
 
 //! Test constructor without line number info

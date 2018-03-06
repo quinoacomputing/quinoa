@@ -75,6 +75,14 @@ include(TargetArch)
 target_architecture(ARCH)
 message(STATUS "Target architecture: ${ARCH}")
 
+# Detect operating system type and version
+include(DetectOS)
+detect_os()
+message(STATUS "Detected OS: ${HOST_OS}")
+if(HOST_OS MATCHES "alpine")
+  set(HOST_OS_ALPINE true)
+endif()
+
 # If not specified on the command-line, set default third-party libraries
 # directory based on cmake-supplied compiler ID
 if (NOT TPL_DIR)
