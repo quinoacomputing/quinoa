@@ -31,9 +31,9 @@ class BC : public tk::Toggle< BCType > {
 
   public:
     // List valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::sym
-                                       , kw::inlet
-                                       , kw::outlet
+    using keywords = boost::mpl::vector< kw::bc_sym
+                                       , kw::bc_inlet
+                                       , kw::bc_outlet
                                        >;
 
     //! Constructor: pass associations references to base, which will handle
