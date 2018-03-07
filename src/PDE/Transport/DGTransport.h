@@ -248,7 +248,7 @@ class Transport {
     const std::vector< kw::sideset::info::expect::type > m_bcinlet;
     const std::vector< kw::sideset::info::expect::type > m_bcoutlet;
 
-    //! \brief State policy class cproviding the left and right state of a face
+    //! \brief State policy class providing the left and right state of a face
     //!   at symmetric boundaries
     struct Sym {
       static std::array< std::vector< tk::real >, 2 >
@@ -257,7 +257,7 @@ class Transport {
       }
     };
 
-    //! \brief State policy class cproviding the left and right state of a face
+    //! \brief State policy class providing the left and right state of a face
     //!   at inlet boundaries
     struct Inlet {
       static std::array< std::vector< tk::real >, 2 >
@@ -269,7 +269,7 @@ class Transport {
       }
     };
 
-    //! \brief State policy class cproviding the left and right state of a face
+    //! \brief State policy class providing the left and right state of a face
     //!   at outlet boundaries
     struct Outlet {
       static std::array< std::vector< tk::real >, 2 >
