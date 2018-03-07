@@ -40,6 +40,21 @@ class Transport {
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
+    using bcconf_t = kw::sideset::info::expect::type;
+
+    //! Extract BC configuration ignoring if BC not specified
+    //! \note A more preferable way of catching errors such as this function
+    //!   hides is during parsing, so that we don't even get here if BCs are not
+    //!   correctly specified. For now we simply ignore if BCs are not
+    //!   specified by allowing empty BC vectors from the user input.
+    template< typename bctag >
+    std::vector< bcconf_t >
+    config( ncomp_t c ) {
+      std::vector< bcconf_t > bc;
+      const auto& v = g_inputdeck.get< tag::param, tag::transport, bctag >();
+      if (v.size() > c) bc = v[c];
+      return bc;
+    }
 
   public:
     //! Constructor
@@ -50,12 +65,9 @@ class Transport {
         g_inputdeck.get< tag::component >().get< tag::transport >().at(c) ),
       m_offset(
         g_inputdeck.get< tag::component >().offset< tag::transport >(c) ),
-      m_bcsym(
-        g_inputdeck.get< tag::param, tag::transport, tag::bcsym >().at(c) ),
-      m_bcinlet(
-        g_inputdeck.get< tag::param, tag::transport, tag::bcinlet >().at(c) ),
-      m_bcoutlet(
-        g_inputdeck.get< tag::param, tag::transport, tag::bcoutlet >().at(c) )
+      m_bcsym( config< tag::bcsym >( c ) ),
+      m_bcinlet( config< tag::bcinlet >( c ) ),
+      m_bcoutlet( config< tag::bcoutlet >( c ) )
     {
       Problem::errchk( m_c, m_ncomp );
     }
@@ -244,9 +256,12 @@ class Transport {
     const ncomp_t m_c;                  //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     const ncomp_t m_offset;             //!< Offset this PDE operates from
-    const std::vector< kw::sideset::info::expect::type > m_bcsym;
-    const std::vector< kw::sideset::info::expect::type > m_bcinlet;
-    const std::vector< kw::sideset::info::expect::type > m_bcoutlet;
+    //! Symmetry BC configuration
+    const std::vector< bcconf_t > m_bcsym;
+    //! Inlet BC configuration
+    const std::vector< bcconf_t > m_bcinlet;
+    //! Outlet BC configuration
+    const std::vector< bcconf_t > m_bcoutlet;
 
     //! \brief State policy class providing the left and right state of a face
     //!   at symmetric boundaries
