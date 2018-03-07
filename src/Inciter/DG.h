@@ -109,19 +109,29 @@ class DG : public CBase_DG {
 
   private:
     //! Node ID triplet denoting a tetrahedron face
-    using NodeTriplet = std::array< std::size_t, 3 >;
-    // Hash functor for NodeTriplet
+    using Triplet = std::array< std::size_t, 3 >;
+    // Hash functor for node Triplet
     struct TripletHasher {
-      std::size_t operator()( const NodeTriplet& key ) const {
+      std::size_t operator()( const Triplet& key ) const {
         return std::hash< std::size_t >()( key[0] ) ^
                std::hash< std::size_t >()( key[1] ) ^
                std::hash< std::size_t >()( key[2] );
       }
     };
+   //! \brief Key-equal function for node triplet in which the order matters but
+   //!   not the positions
+    struct TripletEq {
+      bool operator()( const Triplet& l, const Triplet& r ) const {
+        return (l[0] == r[0] && l[1] == r[1] && l[2] == r[2]) ||
+               (l[0] == r[1] && l[1] == r[2] && l[2] == r[0]) ||
+               (l[0] == r[2] && l[1] == r[0] && l[2] == r[1]);
+      }
+    };
     //! Node ID triplets representing a tetrahedron face
-    using Faces = std::unordered_set< NodeTriplet, TripletHasher >;
+    using Faces = std::unordered_set< Triplet, TripletHasher, TripletEq >;
     //! Tetrahedron face ID associated to node ID triplet
-    using FaceIDs = std::unordered_map< NodeTriplet, std::size_t, TripletHasher >;
+    using FaceIDs =
+      std::unordered_map< Triplet, std::size_t, TripletHasher, TripletEq >;
 
     tk::CProxy_Solver m_solver;
     //! Counter for face adjacency communication map

@@ -70,21 +70,41 @@ DG::DG( const CProxy_Discretization& disc,
   auto esup = tk::genEsup( inpoel, 4 );
   auto esuel = tk::genEsuelTet( inpoel, esup );
 
+  // Lambda to check if node triplet is on one of our chare's boundary
+  auto in_sumset = [&]( const Triplet& t ) -> bool {
+    bool found = false;
+    for (const auto& n : m_msumset) {  // for all neighbor chares
+      auto i = n.second.find( t[0] );
+      auto j = n.second.find( t[1] );
+      auto k = n.second.find( t[2] );
+      // if all face nodes are on this chare boundary
+      if ( i != end(n.second) && j != end(n.second) && k != end(n.second) )
+       found = true;
+    }
+    return found;
+  };
+
   // Invert inpofa to enable searching for faces based on (global) node triplets
   Assert( inpofa.size() % 3 == 0, "Inpofa must contain triplets" );
-  Faces faces;
+  Faces ibfaces;        // will store internal + physical boundary faces
   for (std::size_t f=0; f<inpofa.size()/3; ++f) {
     auto A = gid[ inpofa[f*3+0] ];
     auto B = gid[ inpofa[f*3+1] ];
     auto C = gid[ inpofa[f*3+2] ];
-    faces.insert( {{{A,B,C}}} );
+
+    std::cout << thisIndex << " (" << f << "/" << inpofa.size()/3 << ")" << A << ", " << B << ", " << C << '\n';
+    //Assert( !in_sumset( {{A,B,C}} ), "In msum_set: " +
+    //        std::to_string(A) + ',' + std::to_string(B) + ',' +
+    //        std::to_string(C) );
+
+    ibfaces.insert( {{{A,B,C}}} );
   }
 
-  // At this point faces should have a set of node-id-triplets (faces) of
-  // internal faces and physical boundary faces but not chare boundary faces.
+  // At this point ibfaces has node-id-triplets (faces) on the internal
+  // chare-domain and on physical boundary but not on chare boundaries.
 
   // Build map associating face id to (global) node ID triplets on chare boundary
-  auto facecnt = faces.size();  // will start new face IDs from
+  auto facecnt = ibfaces.size();  // will start new chare-boundary face IDs from
   for (std::size_t e=0; e<esuel.size()/4; ++e) {
     auto mark = e*4;
     for (std::size_t f=0; f<4; ++f) {
@@ -94,47 +114,40 @@ DG::DG( const CProxy_Discretization& disc,
         auto C = gid[ inpoel[ mark + tk::lpofa[f][2] ] ];
 
         // if does not exist in inpofa, assign new face ID on chare boundary
-        NodeTriplet t{{ A, B, C }};
-        if (faces.find( t ) == end(faces)) {
+        Triplet t{{ A, B, C }};
+        if (ibfaces.find( t ) == end(ibfaces)) {
           m_chBndFace[ t ] = facecnt++;
-
-//  std::cout << thisIndex << ": {" << A << ',' << B << ',' << C << '}'  << '\n';
-
-//           // Attempt to find t on one of our chare boundaries based on msum_set
-//           bool found = false;
-//           for (const auto& n : m_msumset) {  // for all neighbor chares
-//             auto i = n.second.find( A );
-//             auto j = n.second.find( B );
-//             auto k = n.second.find( C );
-//             // if all face nodes are on chare boundary
-//             if ( i != end(n.second) && j != end(n.second) && k != end(n.second) )
-//              found = true;
-//           }
-//           Assert( found, "Not in msum_set: " + std::to_string(t[0]) + ',' +
-//                     std::to_string(t[1]) + ',' + std::to_string(t[2]) + '\n' );
+          std::cout << thisIndex << " chbnd (" << f << ")" << A << ", " << B << ", " << C << '\n';
+          Assert( in_sumset( {{A,B,C}} ), "Not in msum_set: " +
+                  std::to_string(A) + ',' + std::to_string(B) + ',' +
+                  std::to_string(C) );
+        } else {
+          //std::cout << "Found! (" << f << ")" << A << ", " << B << ", " << C << '\n';
         }
 
       }
     }
   }
 
-//  std::cout << thisIndex << ": " << facecnt-faces.size() << '\n';
+//  std::cout << thisIndex << ": " << facecnt-ibfaces.size() << '\n';
 
-  // At this point m_chBndFace should have new (local) face IDs assigned to
-  // node-triplets (faces) only along our chare-boundary.
+  // At this point m_chBndFace has new (local) face IDs (value) assigned to
+  // node-triplets (faces, key) only along our chare-boundary (for all chares we
+  // commuication with).
 
-//   std::cout << thisIndex << "bndface: ";
-//   for (const auto& f : m_chBndFace)
-//     std::cout << f.first[0] << ',' << f.first[1] << ',' << f.first[2] << ' ';
-//   std::cout << '\n';
+  std::cout << thisIndex << " bndface: ";
+  for (const auto& f : m_chBndFace)
+    std::cout << f.first[0] << ',' << f.first[1] << ',' << f.first[2] << ' ';
+  std::cout << '\n';
 
 
 //std::cout << thisIndex << "c: " << m_geoElem.nunk() << '\n';
 
-  // Collect tet ids, their face connectivity (3 global node IDs for potentially
-  // mulitple faces on the chare boundary), and their elem geometry data (see
-  // GhostData) associated to fellow chares adjacent to chare boundaries. Once
-  // received by fellow chares, these tets will become known as ghost elements.
+  // Collect tet ids, their face connectivity (given by 3 global node IDs, each
+  // triplet for potentially mulitple faces on the chare boundary), and their
+  // elem geometry data (see GhostData) associated to fellow chares adjacent to
+  // chare boundaries. Once received by fellow chares, these tets will become
+  // known as ghost elements.
   std::unordered_map< int, GhostData > msum_el;
   for (const auto& n : m_msumset) {  // for all neighbor chares
     for (std::size_t e=0; e<esuel.size()/4; ++e) {  // for all cells in our chunk
@@ -148,8 +161,9 @@ DG::DG( const CProxy_Discretization& disc,
           auto i = n.second.find( A );
           auto j = n.second.find( B );
           auto k = n.second.find( C );
-          // if all face nodes are on chare boundary
-          if ( i != end(n.second) && j != end(n.second) && k != end(n.second) ) {
+          // if all face nodes are on this chare boundary
+          if ( i != end(n.second) && j != end(n.second) && k != end(n.second) ) { //&&
+               //ibfaces.find({{A,B,C}}) == end(ibfaces) ) {
             // will store ghost associated to neighbor chare
             auto& ghost = msum_el[ n.first ];
             // store tet id adjacent to chare boundary as key for ghost data
@@ -157,7 +171,7 @@ DG::DG( const CProxy_Discretization& disc,
             // if e has not yet been encountered, store geometry (only once)
             auto& nodes = std::get< 0 >( tuple );
             if (nodes.empty()) std::get< 1 >( tuple ) = m_geoElem[ e ];
-            // (always) store face node IDs on chare boundary, even if we have e
+            // (always) store face node IDs on chare boundary, even if e stored
             nodes.push_back( A );
             nodes.push_back( B );
             nodes.push_back( C );
@@ -262,8 +276,8 @@ DG::comadj( int fromch, const GhostData& ghost )
       // triplets (faces) along our chare boundary and m_chBndFace should
       // contain all faces along our chare boundary (adjacent to all chares we
       // communicate with). However, this is not the case.
-      auto bf = m_chBndFace.find( {{A,B,C}} );
-      if (bf == end(m_chBndFace)) std::cout << A << ',' << B << ',' << C << " not found on receiving chare " << thisIndex << '\n';
+      //auto bf = m_chBndFace.find( {{A,B,C}} );
+      //if (bf == end(m_chBndFace)) std::cout << A << ',' << B << ',' << C << " not found on receiving chare " << thisIndex << '\n';
       //auto f = tk::cref_find( m_chBndFace, {{A,B,C}} );
       //m_fd.Esuf()
       // if ghost tet id not yet encountered on boundary with fromch
