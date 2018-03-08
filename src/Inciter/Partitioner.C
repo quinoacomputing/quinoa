@@ -544,6 +544,7 @@ Partitioner::computeCentroids( tk::ExodusIIMeshReader& er )
 // *****************************************************************************
 //  Compute element centroid coordinates
 //! \param[in] er ExodusII mesh reader
+//! \note This function reads
 // *****************************************************************************
 {
   auto el = tk::global2local( m_tetinpoel );
@@ -742,7 +743,8 @@ Partitioner::reorder()
   // also count up the reordered nodes, which also serves as the new node
   // id.
   for (auto p : m_nodeset)
-    if (ownnode(p)) m_linnodes[ p ] = m_start++;
+    if (ownnode(p))
+      m_linnodes[ p ] = m_start++;
 
   // Reorder our chunk of the mesh edges by looping through all of our edges
   // (resulting from initial uniform refinement of our chunk of the mesh
@@ -1059,10 +1061,8 @@ Partitioner::reordered()
   // associated to chare IDs (outer key).
   for (const auto& c : m_chinpoel) {
     auto& nodes = m_chfilenodes[ c.first ];
-    for (auto p : c.second) {
-      auto n = m_linnodes.find(p);
-      if (n != end(m_linnodes)) nodes[ n->second ] = p;
-    }
+    for (auto p : c.second)
+      nodes[ tk::cref_find(m_linnodes,p) ] = p;
   }
 
   // Update node IDs of edges, i.e., the map values
@@ -1144,22 +1144,18 @@ Partitioner::reordered()
 
   } else {
 
-    // Update chare-categorized element connectivities with the reordered
-    // node IDs
+    // Update chare-categorized elem connectivities with the reordered node IDs
     for (auto& c : m_chinpoel)
-      for (auto& p : c.second) {
-        auto n = m_linnodes.find(p);
-        if (n != end(m_linnodes)) p = n->second;
-      }
+      for (auto& p : c.second)
+         p = tk::cref_find( m_linnodes, p );
 
-    // Update chare-categorized mesh nodes surrounding our mesh chunk with
-    // the reordered node IDs
+    // Update chare-categorized mesh chare-nodes comma map with the reordered
+    // node IDs
     for (auto& c : m_msum)
       for (auto& s : c.second) {
         decltype(s.second) n;
         for (auto p : s.second) {
-          auto it = m_linnodes.find(p);
-          if (it != end(m_linnodes)) n.insert( it->second );
+          n.insert( tk::cref_find( m_linnodes, p ) );
         }
         s.second = std::move( n );
       }
