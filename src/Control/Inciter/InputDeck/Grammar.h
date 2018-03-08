@@ -321,20 +321,20 @@ namespace deck {
                                     eq,
                                     param > {};
 
-  //! Dirichlet boundary conditions block
-  template< class eq, class param >
-  struct bc_dirichlet :
-           pegtl::if_must<
-             tk::grm::readkw< use< kw::bc_dirichlet >::pegtl_string >,
-             tk::grm::block<
-               use< kw::end >,
-               tk::grm::parameter_vector< use,
-                                          use< kw::sideset >,
-                                          tk::grm::Store_back_back,
-                                          tk::grm::start_vector,
-                                          tk::grm::check_vector,
-                                          eq,
-                                          param > > > {};
+  //! Boundary conditions block
+  template< class keyword, class eq, class param >
+  struct bc :
+         pegtl::if_must<
+           tk::grm::readkw< typename use< keyword >::pegtl_string >,
+           tk::grm::block<
+             use< kw::end >,
+             tk::grm::parameter_vector< use,
+                                        use< kw::sideset >,
+                                        tk::grm::Store_back_back,
+                                        tk::grm::start_vector,
+                                        tk::grm::check_vector,
+                                        eq,
+                                        param > > > {};
 
   //! initial conditions block for compressible flow
   template< class eq, class param >
@@ -406,7 +406,10 @@ namespace deck {
                            pde_parameter_vector< kw::pde_u0,
                                                  tag::transport,
                                                  tag::u0 >,
-                           bc_dirichlet< tag::transport, tag::bcdir > >,
+                           bc< kw::bc_dirichlet, tag::transport, tag::bcdir >,
+                           bc< kw::bc_sym, tag::transport, tag::bcsym >,
+                           bc< kw::bc_inlet, tag::transport, tag::bcinlet >,
+                           bc< kw::bc_outlet, tag::transport, tag::bcoutlet > >,
            check_errors< tag::transport, tk::grm::check_transport > > {};
 
   //! compressible flow
@@ -437,7 +440,10 @@ namespace deck {
                            parameter< tag::compflow, kw::pde_r0, tag::r0 >,
                            parameter< tag::compflow, kw::pde_ce, tag::ce >,
                            parameter< tag::compflow, kw::pde_kappa, tag::kappa >,
-                           bc_dirichlet< tag::compflow, tag::bcdir > >,
+                           bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
+                           bc< kw::bc_sym, tag::compflow, tag::bcsym >,
+                           bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
+                           bc< kw::bc_outlet, tag::compflow, tag::bcoutlet > >,
            check_errors< tag::compflow, tk::grm::check_compflow > > {};
 
   //! partitioning ... end block

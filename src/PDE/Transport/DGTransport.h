@@ -20,6 +20,7 @@
 #include "Macro.h"
 #include "Exception.h"
 #include "Vector.h"
+#include "Inciter/Options/BC.h"
 
 namespace inciter {
 
@@ -39,6 +40,24 @@ class Transport {
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
+    using bcconf_t = kw::sideset::info::expect::type;
+
+    //! Extract BC configuration ignoring if BC not specified
+    //! \param[in] c Equation system index (among multiple systems configured)
+    //! \return Vector of BC config of type bcconf_t used to apply BCs for all
+    //!   scalar components this Transport eq system is configred for
+    //! \note A more preferable way of catching errors such as this function
+    //!   hides is during parsing, so that we don't even get here if BCs are not
+    //!   correctly specified. For now we simply ignore if BCs are not
+    //!   specified by allowing empty BC vectors from the user input.
+    template< typename bctag >
+    std::vector< bcconf_t >
+    config( ncomp_t c ) {
+      std::vector< bcconf_t > bc;
+      const auto& v = g_inputdeck.get< tag::param, tag::transport, bctag >();
+      if (v.size() > c) bc = v[c];
+      return bc;
+    }
 
   public:
     //! Constructor
@@ -48,7 +67,10 @@ class Transport {
       m_ncomp(
         g_inputdeck.get< tag::component >().get< tag::transport >().at(c) ),
       m_offset(
-        g_inputdeck.get< tag::component >().offset< tag::transport >(c) )
+        g_inputdeck.get< tag::component >().offset< tag::transport >(c) ),
+      m_bcsym( config< tag::bcsym >( c ) ),
+      m_bcinlet( config< tag::bcinlet >( c ) ),
+      m_bcoutlet( config< tag::bcoutlet >( c ) )
     {
       Problem::errchk( m_c, m_ncomp );
     }
@@ -117,25 +139,12 @@ class Transport {
       {
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
         std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
-
         auto farea = geoFace(f,0,0);
 
-        std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
-                                        geoFace(f,2,0),
-                                        geoFace(f,3,0) }};
-
-        auto xc = geoFace(f,4,0);
-        auto yc = geoFace(f,5,0);
-        auto zc = geoFace(f,6,0);
-
-        auto ul = U.extract(el);
-        auto ur = U.extract(er);
-
         //--- upwind fluxes
-        auto flux = upwindFlux(xc, yc, zc, ul, ur, fn);
+        auto flux = upwindFlux( f, geoFace, {{U.extract(el), U.extract(er)}} );
 
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-        {
+        for (ncomp_t c=0; c<m_ncomp; ++c) {
           R(el, c, m_offset) -= farea * flux[c];
           R(er, c, m_offset) += farea * flux[c];
         }
@@ -143,151 +152,21 @@ class Transport {
 
       // compute boundary surface flux integrals
 
-      // symmetry boundary condition
-      auto bc = bface.find(1);
-
-      if (bc != bface.end())
-      {
-        for (const auto& f : bc->second)
-        {
-          std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-
-          Assert( esuf[2*f+1] == -1,
-                  "outside boundary element not -1" );
-
-          auto farea = geoFace(f,0,0);
-
-          std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
-                                          geoFace(f,2,0),
-                                          geoFace(f,3,0) }};
-
-          auto xc = geoFace(f,4,0);
-          auto yc = geoFace(f,5,0);
-          auto zc = geoFace(f,6,0);
-
-          auto ul = U.extract(el);
-          auto ur = U.extract(el);
-
-          //--- upwind fluxes
-          auto flux = upwindFlux(xc, yc, zc, ul, ur, fn);
-
-          for (ncomp_t c=0; c<m_ncomp; ++c)
-          {
-            R(el, c, m_offset) -= farea * flux[c];
-          }
-        }
+      for (const auto& s : m_bcsym) {      // for all sidesets where sym bc is set
+        auto bc = bface.find( std::stoi(s) );  // find faces for sym bc side set
+        if (bc != end(bface))
+          surfInt< Sym >( bc->second, esuf, geoFace, U, R );
       }
-
-      // inlet boundary condition
-      bc = bface.find(2);
-
-      if (bc != bface.end())
-      {
-        for (const auto& f : bc->second)
-        {
-          std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-
-          Assert( esuf[2*f+1] == -1,
-                  "outside boundary element not -1" );
-
-          auto farea = geoFace(f,0,0);
-
-          std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
-                                          geoFace(f,2,0),
-                                          geoFace(f,3,0) }};
-
-          auto xc = geoFace(f,4,0);
-          auto yc = geoFace(f,5,0);
-          auto zc = geoFace(f,6,0);
-
-          auto ul = U.extract(el);
-          std::vector< tk::real > ur(ul.size(),0);
-
-          //--- upwind fluxes
-          auto flux = upwindFlux(xc, yc, zc, ul, ur, fn);
-
-          for (ncomp_t c=0; c<m_ncomp; ++c)
-          {
-            R(el, c, m_offset) -= farea * flux[c];
-          }
-        }
+      for (const auto& s : m_bcinlet) {    // for all sidesets where inlet bc is set
+        auto bc = bface.find( std::stoi(s) );  // find faces for inlet bc side set
+        if (bc != end(bface))
+          surfInt< Inlet > ( bc->second, esuf, geoFace, U, R );
       }
-
-      // outlet boundary condition
-      bc = bface.find(3);
-
-      if (bc != bface.end())
-      {
-        for (const auto& f : bc->second)
-        {
-          std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-
-          Assert( esuf[2*f+1] == -1,
-                  "outside boundary element not -1" );
-
-          auto farea = geoFace(f,0,0);
-
-          std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
-                                          geoFace(f,2,0),
-                                          geoFace(f,3,0) }};
-
-          auto xc = geoFace(f,4,0);
-          auto yc = geoFace(f,5,0);
-          auto zc = geoFace(f,6,0);
-
-          auto ul = U.extract(el);
-          auto ur = U.extract(el);
-
-          //--- upwind fluxes
-          auto flux = upwindFlux(xc, yc, zc, ul, ur, fn);
-
-          for (ncomp_t c=0; c<m_ncomp; ++c)
-          {
-            R(el, c, m_offset) -= farea * flux[c];
-          }
-        }
+      for (const auto& s : m_bcoutlet) {   // for all sidesets where outlet bc is set
+        auto bc = bface.find( std::stoi(s) );  // find faces for outlet bc side set
+        if (bc != end(bface))
+          surfInt< Outlet >( bc->second, esuf, geoFace, U, R );
       }
-    }
-
-    std::vector< tk::real >
-    upwindFlux( tk::real xc,
-                tk::real yc, 
-                tk::real zc,
-                std::vector< tk::real > ul,
-                std::vector< tk::real > ur,
-                std::array< tk::real, 3 > fn ) const
-    // *****************************************************************************
-    // Riemann solver using upwind method
-    //! \param[in] xc X coordinate at which to assign advection velocity
-    //! \param[in] yc Y coordinate at which to assign advection velocity
-    //! \param[in] zc Z coordinate at which to assign advection velocity
-    //! \param[in] ul Left unknown/state vector
-    //! \param[in] ur Right unknown/state vector
-    //! \param[in] fn Face unit normal vector
-    //! \return Riemann solution using upwind method
-    // *****************************************************************************
-    {
-        std::vector< tk::real > flux(ul.size(),0);
-
-        const auto vel = Problem::prescribedVelocity( xc, yc, zc, m_c, m_ncomp );
-    
-        for(ncomp_t c=0; c<m_ncomp; ++c)
-        {
-          auto ax = vel[c][0];
-          auto ay = vel[c][1];
-          auto az = vel[c][2];
-
-          // wave speed
-          tk::real swave = ax*fn[0] + ay*fn[1] + az*fn[2];
-    
-          // upwinding
-          tk::real splus  = 0.5 * (swave + fabs(swave));
-          tk::real sminus = 0.5 * (swave - fabs(swave));
-    
-          flux[c] = splus * ul[c] + sminus * ur[c];
-        }
-    
-        return flux;
     }
 
     //! Compute the minimum time step size
@@ -308,34 +187,6 @@ class Transport {
     //! \param[in,out] conf Set of unique side set IDs to add to
     void side( std::unordered_set< int >& conf ) const
     { Problem::side( conf ); }
-
-    //! \brief Query Dirichlet boundary condition value on a given side set for
-    //!    all components in this PDE system
-//     //! \param[in] t Physical time
-//     //! \param[in] deltat Time step size
-//     //! \param[in] sides Pair of side set ID and face IDs on the side set
-//     //! \param[in] coord Mesh face coordinates
-    //! \return Vector of pairs of bool and boundary condition value associated
-    //!   to mesh face IDs at which Dirichlet boundary conditions are set. Note
-    //!   that instead of the actual boundary condition value, we return the
-    //!   increment between t+dt and t, since that is what the solution requires
-    //!   as we solve for the soution increments and not the solution itself.
-    std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
-    dirbc( tk::real /*t*/,
-           tk::real /*deltat*/,
-           const std::pair< const int, std::vector< std::size_t > >& /*sides*/,
-           const std::array< std::vector< tk::real >, 3 >& /*coord*/ ) const
-    {
-      // Call Problem::solinc() within a search for all face centers of a side
-      // set given in sides (key=setid, value=faceids). See
-      // cg::Transport::dirbc() for an example search for all nodes of a side
-      // set given in sides (key=setid, value=nodeids). Instead of coord, we
-      // probably want to pass in a const-ref to DG::m_geoFace and work with the
-      // face centroid coordinates.
-      using FaceBC = std::vector< std::pair< bool, tk::real > >;
-      std::unordered_map< std::size_t, FaceBC > bc;
-      return bc;
-    }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
@@ -408,6 +259,112 @@ class Transport {
     const ncomp_t m_c;                  //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     const ncomp_t m_offset;             //!< Offset this PDE operates from
+    //! Symmetry BC configuration
+    const std::vector< bcconf_t > m_bcsym;
+    //! Inlet BC configuration
+    const std::vector< bcconf_t > m_bcinlet;
+    //! Outlet BC configuration
+    const std::vector< bcconf_t > m_bcoutlet;
+
+    //! \brief State policy class providing the left and right state of a face
+    //!   at symmetric boundaries
+    struct Sym {
+      static std::array< std::vector< tk::real >, 2 >
+      LR( const tk::Fields& U, std::size_t e ) {
+        return {{ U.extract( e ), U.extract( e ) }};
+      }
+    };
+
+    //! \brief State policy class providing the left and right state of a face
+    //!   at inlet boundaries
+    struct Inlet {
+      static std::array< std::vector< tk::real >, 2 >
+      LR( const tk::Fields& U, std::size_t e ) {
+        auto ul = U.extract( e );
+        auto ur = ul;
+        std::fill( begin(ur), end(ur), 0.0 );
+        return {{ std::move(ul), std::move(ur) }};
+      }
+    };
+
+    //! \brief State policy class providing the left and right state of a face
+    //!   at outlet boundaries
+    struct Outlet {
+      static std::array< std::vector< tk::real >, 2 >
+      LR( const tk::Fields& U, std::size_t e ) {
+        return {{ U.extract( e ), U.extract( e ) }};
+      }
+    };
+
+    //! Compute boundary surface integral
+    //! \param[in] faces FAce IDs at which to compute surface integral
+    //! \param[in] esuf Elements surrounding face, see tk::genEsuf()
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] R Right-hand side vector computed
+    //! \tparam State Policy class providing the left and right state at
+    //!   boundaries by its member function State::LR()
+    template< class State >
+    void surfInt( const std::vector< std::size_t >& faces,
+                  const std::vector< int >& esuf,
+                  const tk::Fields& geoFace,
+                  const tk::Fields& U,
+                  tk::Fields& R ) const
+    {
+      for (const auto& f : faces) {
+        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+        Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
+        auto farea = geoFace(f,0,0);
+
+        //--- upwind fluxes
+        auto flux = upwindFlux( f, geoFace, State::LR(U,el) );
+
+        for (ncomp_t c=0; c<m_ncomp; ++c)
+          R(el, c, m_offset) -= farea * flux[c];
+      }
+    }
+
+    //! Riemann solver using upwind method
+    //! \param[in] f Face ID
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] u Left and right unknown/state vector
+    //! \return Riemann solution using upwind method
+    std::vector< tk::real >
+    upwindFlux( std::size_t f,
+                const tk::Fields& geoFace,
+                const std::array< std::vector< tk::real >, 2 >& u ) const
+    {
+      std::vector< tk::real > flux( u[0].size(), 0 );
+
+      auto xc = geoFace(f,4,0);
+      auto yc = geoFace(f,5,0);
+      auto zc = geoFace(f,6,0);
+
+      std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
+                                      geoFace(f,2,0),
+                                      geoFace(f,3,0) }};
+
+      const auto vel = Problem::prescribedVelocity( xc, yc, zc, m_c, m_ncomp );
+    
+      for(ncomp_t c=0; c<m_ncomp; ++c)
+      {
+        auto ax = vel[c][0];
+        auto ay = vel[c][1];
+        auto az = vel[c][2];
+
+        // wave speed
+        tk::real swave = ax*fn[0] + ay*fn[1] + az*fn[2];
+    
+        // upwinding
+        tk::real splus  = 0.5 * (swave + fabs(swave));
+        tk::real sminus = 0.5 * (swave - fabs(swave));
+    
+        flux[c] = splus * u[0][c] + sminus * u[1][c];
+      }
+    
+      return flux;
+    }
+
 };
 
 } // dg::
