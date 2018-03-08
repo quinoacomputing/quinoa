@@ -3412,14 +3412,66 @@ struct bc_dirichlet_info {
   static std::string longDescription() { return
     R"(This keyword is used to introduce an bc_dirichlet ... end block, used to
     specify the configuration for setting Dirichlet boundary conditions for a
-    partial differential equation. Keywords allowed in an bc_dirichlet ... end
+    partial differential equation. Keywords allowed in a bc_dirichlet ... end
     block: )" + std::string("\'")
     + sideset::string() + "\'. "
     + R"(For an example bc_dirichlet ... end block, see
       doc/html/inicter_example_shear.html.)";
   }
 };
-using bc_dirichlet = keyword< bc_dirichlet_info, TAOCPP_PEGTL_STRING("bc_dirichlet") >;
+using bc_dirichlet =
+  keyword< bc_dirichlet_info, TAOCPP_PEGTL_STRING("bc_dirichlet") >;
+
+struct bc_sym_info {
+  static std::string name() { return "Symmetry boundary condition"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing symmetry boundary conditions"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an bc_sym ... end block, used to
+    specify the configuration for setting symmetry boundary conditions for a
+    partial differential equation. Keywords allowed in a bc_sym ... end
+    block: )" + std::string("\'")
+    + sideset::string() + "\'. "
+    + R"(For an example bc_sym ... end block, see
+      doc/html/inicter_example_gausshump.html.)";
+  }
+};
+using bc_sym =
+  keyword< bc_sym_info, TAOCPP_PEGTL_STRING("bc_sym") >;
+
+struct bc_inlet_info {
+  static std::string name() { return "Inlet boundary condition"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing inlet boundary conditions"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an bc_inlet ... end block, used to
+    specify the configuration for setting inlet boundary conditions for a
+    partial differential equation. Keywords allowed in a bc_inlet ... end
+    block: )" + std::string("\'")
+    + sideset::string() + "\'. "
+    + R"(For an example bc_inlet ... end block, see
+      doc/html/inicter_example_gausshump.html.)";
+  }
+};
+using bc_inlet =
+  keyword< bc_inlet_info, TAOCPP_PEGTL_STRING("bc_inlet") >;
+
+struct bc_outlet_info {
+  static std::string name() { return "Inlet boundary condition"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing outlet boundary conditions"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an bc_outlet ... end block, used to
+    specify the configuration for setting outlet boundary conditions for a
+    partial differential equation. Keywords allowed in a bc_outlet ... end
+    block: )" + std::string("\'")
+    + sideset::string() + "\'. "
+    + R"(For an example bc_outlet ... end block, see
+      doc/html/inicter_example_gausshump.html.)";
+  }
+};
+using bc_outlet =
+  keyword< bc_outlet_info, TAOCPP_PEGTL_STRING("bc_outlet") >;
 
 struct id_info {
   static std::string name() { return "id"; }

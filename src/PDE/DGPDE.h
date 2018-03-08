@@ -101,15 +101,6 @@ class DGPDE {
     //!   configured for all components of a PDE system
     void side( std::unordered_set< int >& conf ) const { self->side( conf ); }
 
-    //! \brief Public interface for querying Dirichlet boundary condition values
-    //!  set by the user on a given side set for all components in a PDE system
-    std::unordered_map< std::size_t,  std::vector< std::pair<bool,tk::real> > >
-    dirbc( tk::real t,
-           tk::real deltat,
-           const std::pair< const int, std::vector< std::size_t > >& sides,
-           const std::array< std::vector< tk::real >, 3 >& coord ) const
-    { return self->dirbc( t, deltat, sides, coord ); }
-
     //! Public interface to returning field output labels
     std::vector< std::string > fieldNames() const { return self->fieldNames(); }
 
@@ -155,12 +146,6 @@ class DGPDE {
                            const std::vector< std::size_t >&,
                            const tk::Fields& ) const = 0;
       virtual void side( std::unordered_set< int >& conf ) const = 0;
-      virtual
-      std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
-      dirbc( tk::real,
-             tk::real,
-             const std::pair< const int, std::vector< std::size_t > >&,
-             const std::array< std::vector< tk::real >, 3 >& ) const = 0;
       virtual std::vector< std::string > fieldNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > fieldOutput(
@@ -194,12 +179,6 @@ class DGPDE {
       { return data.dt( coord, inpoel, U ); }
       void side( std::unordered_set< int >& conf ) const override
       { data.side( conf ); }
-      std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
-      dirbc( tk::real t,
-             tk::real deltat,
-             const std::pair< const int, std::vector< std::size_t > >& sides,
-             const std::array< std::vector< tk::real >, 3 >& coord ) const
-        override { return data.dirbc( t, deltat, sides, coord ); }
       std::vector< std::string > fieldNames() const override
       { return data.fieldNames(); }
       std::vector< std::string > names() const override

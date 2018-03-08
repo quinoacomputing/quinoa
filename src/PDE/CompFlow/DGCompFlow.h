@@ -121,35 +121,6 @@ class CompFlow {
     void side( std::unordered_set< int >& conf ) const
     { Problem::side( conf ); }
 
-    //! \brief Query Dirichlet boundary condition value on a given side set for
-    //!    all components in this PDE system
-//     //! \param[in] t Physical time
-//     //! \param[in] deltat Time step size
-//     //! \param[in] sides Pair of side set ID and face IDs on the side set
-//     //! \param[in] coord Mesh face coordinates
-    //! \return Vector of pairs of bool and boundary condition value associated
-    //!   to mesh face IDs at which Dirichlet boundary conditions are set. Note
-    //!   that instead of the actual boundary condition value, we return the
-    //!   increment between t+dt and t, since that is what the solution requires
-    //!   as we solve for the soution increments and not the solution itself.
-    std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
-    dirbc( tk::real /*t*/,
-           tk::real /*deltat*/,
-           const std::pair< const int, std::vector< std::size_t > >& /*sides*/,
-           const std::array< std::vector< tk::real >, 3 >& /*coord*/ ) const
-    {
-      // Call Problem::solinc() within a search for all face centers of a side
-      // set given in sides (key=setid, value=faceids). See
-      // cg::CompFlow::dirbc() for an example search for all nodes of a side
-      // set given in sides (key=setid, value=nodeids). Instead of coord, we
-      // probably want to pass in a const-ref to DG::m_geoFace and work with the
-      // face centroid coordinates.
-      using tag::param; using tag::compflow; using tag::bcdir;
-      using FaceBC = std::vector< std::pair< bool, tk::real > >;
-      std::unordered_map< std::size_t, FaceBC > bc;
-      return bc;
-    }
-
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     std::vector< std::string > fieldNames() const
