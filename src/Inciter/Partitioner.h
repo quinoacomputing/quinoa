@@ -167,14 +167,11 @@ class Partitioner : public CBase_Partitioner {
 
     //! \brief Query our global node IDs and edges by other PEs so they know if
     //!   they are to receive IDs for those from during reordering
-    void query( int p,
-                const std::vector< std::size_t >& nodes,
-                const std::vector< std::size_t >& edges );
+    void query( int p, const std::vector< std::size_t >& nodes );
 
     //! Receive mask of to-be-received global mesh node IDs
-    void mask( int p,
-               const std::unordered_map< std::size_t, std::vector< int > >& cn,
-               const tk::UnsMesh::EdgeChares& ce );
+    void mask( int p, const std::unordered_map< std::size_t,
+                              std::vector< int > >& cn );
 
     //! Create worker chare array elements on this PE
     void createWorkers();
@@ -296,10 +293,10 @@ class Partitioner : public CBase_Partitioner {
     //! Communication cost of linear system merging for our PE
     tk::real m_cost;
     //! \brief Map associating a set of chare IDs to old (as in file) global
-    //!   mesh node IDs
+    //!   mesh node IDs on the chare boundaries
     //! \details Note that a single global mesh ID can be associated to multiple
     //!   chare IDs as multiple chares can contribute to a single mesh node.
-    std::unordered_map< std::size_t, std::vector< int > > m_nodechares;
+    std::unordered_map< std::size_t, std::vector< int > > m_bnodechares;
     //! \brief Map associating a set of chare IDs to edges given by two old
     //!   global mesh node IDs (old as in file)
     //! \details Note that a single edge can be associated to multiple chare IDs

@@ -67,7 +67,7 @@ Partitioner::Partitioner(
   m_chfilenodes(),
   m_chedgenodes(),
   m_cost( 0.0 ),
-  m_nodechares(),
+  m_bnodechares(),
   m_edgechares(),
   m_msum(),
   m_msumed(),
@@ -117,8 +117,7 @@ Partitioner::partition( int nchare )
                                              nchare );
 
   // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_host.pepartitioned();
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pepartitioned();
 
   Assert( che.size() == m_gelemid.size(), "Size of ownership array does "
           "not equal the number of mesh graph elements" );
@@ -267,19 +266,10 @@ Partitioner::flatten()
           "Global mesh nodes ids associated to chares on PE " +
           std::to_string( CkMyPe() ) + " is incomplete" );
 
-  // Collect chare IDs we own associated to old global mesh node IDs
-  for (const auto& c : m_chinpoel)
-    for (auto p : c.second)
-      m_nodechares[p].push_back( c.first );
-
-  // Make chare IDs (associated to old global mesh node IDs) unique
-  for (auto& c : m_nodechares) tk::unique( c.second );
-
   // Collect chare IDs we own associated to edges
   for (const auto& c : m_chedgenodes)
     for (const auto& e : c.second)
       m_edgechares[ e.first ].push_back( c.first );
-
   // Make chare IDs (associated to edges) unique
   for (auto& c : m_edgechares) tk::unique( c.second );
 
@@ -293,9 +283,34 @@ Partitioner::flatten()
     for (const auto& e : c.second)
       m_edgeset.insert( e.first );
 
+  // Find chare-boundary nodes of all chares on this PE
+  for (const auto& c : m_chinpoel) {    // for all chare connectivities
+    // generate local ids and connectivity from global connectivity
+    auto el = tk::global2local( c.second );
+    const auto& inpoel = std::get< 0 >( el );   // local connectivity
+    const auto& gid = std::get< 1 >( el );      // local->global node ids
+    auto esup = tk::genEsup( inpoel, 4 );       // elements surrounding points
+    auto esuel = tk::genEsuelTet( inpoel, esup ); // elems surrounding elements
+    // collect chare boundary nodes
+    for (std::size_t e=0; e<esuel.size()/4; ++e) {
+      auto mark = e*4;
+      for (std::size_t f=0; f<4; ++f) {
+        if (esuel[mark+f] == -1) {
+          auto A = gid[ inpoel[ mark+tk::lpofa[f][0] ] ];
+          auto B = gid[ inpoel[ mark+tk::lpofa[f][1] ] ];
+          auto C = gid[ inpoel[ mark+tk::lpofa[f][2] ] ];
+          m_bnodechares[ A ].push_back( c.first );
+          m_bnodechares[ B ].push_back( c.first );
+          m_bnodechares[ C ].push_back( c.first );
+        }
+      }
+    }
+  }
+  // Make node chare lists unique
+  for (auto& n : m_bnodechares) tk::unique( n.second );
+
   // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_host.peflattened();
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.peflattened();
 
   // Signal host that we are ready for computing the communication map,
   // required for parallel distributed global mesh node reordering
@@ -358,61 +373,25 @@ Partitioner::gather()
 //  assign) during reordering
 // *****************************************************************************
 {
-  // Find chare-boundary nodes and edges of all chares on this PE
+  // Exctract boundary chare nodes to vector
+  std::vector< std::size_t > bnodes( m_bnodechares.size() );
+  std::size_t i = 0;
+  for (const auto& n : m_bnodechares) bnodes[ i++ ] = n.first;
 
-  std::vector< std::size_t > nodes;     // chare boundary nodes on this PE
-  tk::UnsMesh::Edges edgeset;           // chare boundary edges on this PE
+  // Send chare boundary nodes to all PEs in a broadcast fashion
+  thisProxy.query( CkMyPe(), bnodes );
 
-  for (const auto& c : m_chinpoel) {
-    auto el = tk::global2local( c.second );
-    const auto& inpoel = std::get< 0 >( el );
-    const auto& gid = std::get< 1 >( el );
-    auto esup = tk::genEsup( inpoel, 4 );
-    auto esuel = tk::genEsuelTet( inpoel, esup );
-    // collect chare boundary nodes and edges
-    for (std::size_t e=0; e<esuel.size()/4; ++e) {
-      auto mark = e*4;
-      for (std::size_t f=0; f<4; ++f) {
-        if (esuel[mark+f] == -1) {
-          auto A = gid[ inpoel[ mark + tk::lpofa[f][0] ] ];
-          auto B = gid[ inpoel[ mark + tk::lpofa[f][1] ] ];
-          auto C = gid[ inpoel[ mark + tk::lpofa[f][2] ] ];
-          nodes.push_back( A );
-          nodes.push_back( B );
-          nodes.push_back( C );
-          edgeset.insert( {{{A,B}}} );
-          edgeset.insert( {{{B,C}}} );
-          edgeset.insert( {{{A,C}}} );
-        }
-      }
-    }
-  }
-  tk::unique( nodes );
-
-  // Copy out edge set to a vector and send them as such since the receiving
-  // side does not search in it
-  std::vector< std::size_t > edges( edgeset.size() * 2 );
-
-  std::size_t i=0;
-  for (const auto& e : edgeset) {
-    edges[ 2*i+0 ] = e[0];
-    edges[ 2*i+1 ] = e[1];
-    ++i;
-  }
-
-  thisProxy.query( CkMyPe(), nodes, edges );
+  // send progress report to host
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pegather();
 }
 
 void
-Partitioner::query( int p,
-                    const std::vector< std::size_t >& nodes,
-                    const std::vector< std::size_t >& edges )
+Partitioner::query( int p, const std::vector< std::size_t >& bnodes )
 // *****************************************************************************
-//  Query our global node IDs and edges by other PEs so they know if they are to
-//  receive IDs for those from during reordering
+//  Query our global node IDs by other PEs so they know if they are to receive
+//  IDs for those from during reordering
 //! \param[in] p Querying PE
 //! \param[in] nodes List of global mesh node IDs to query
-//! \param[in] edges List of edges to query
 //! \details Note that every PE calls this function in a broadcast fashion,
 //!   including our own. However, to compute the correct result, this would
 //!   only be necessary for PEs whose ID is higher than ours. However, the
@@ -423,21 +402,11 @@ Partitioner::query( int p,
 // *****************************************************************************
 {
   std::unordered_map< std::size_t, std::vector< int > > cn;
-  for (auto j : nodes) {
+  for (auto j : bnodes) {
     const auto it = m_nodeset.find( j );
     if (it != end(m_nodeset)) {
-      const auto& c = tk::cref_find( m_nodechares, j );
+      const auto& c = tk::cref_find( m_bnodechares, j );
       auto& chares = cn[j];
-      chares.insert( end(chares), begin(c), end(c) );
-    }
-  }
-  tk::UnsMesh::EdgeChares ce;
-  for (std::size_t j=0; j<edges.size()/2; ++j) {
-  tk::UnsMesh::Edge e{{ edges[2*j+0], edges[2*j+1] }};
-    const auto it = m_edgeset.find( e );
-    if (it != end(m_edgeset)) {
-      const auto& c = tk::cref_find( m_edgechares, e );
-      auto& chares = ce[e];
       chares.insert( end(chares), begin(c), end(c) );
     }
   }
@@ -447,21 +416,18 @@ Partitioner::query( int p,
        ++m_nquery == static_cast<std::size_t>(CkNumPes()) )
     m_host.pequery();
 
-  thisProxy[ p ].mask( CkMyPe(), cn, ce );
+  thisProxy[ p ].mask( CkMyPe(), cn );
 }
 
 void
 Partitioner::mask(
   int p,
-  const std::unordered_map< std::size_t, std::vector< int > >& cn,
-  const tk::UnsMesh::EdgeChares& ce )
+  const std::unordered_map< std::size_t, std::vector< int > >& cn )
 // *****************************************************************************
 //  Receive mask of to-be-received global mesh node IDs
 //! \param[in] p The PE uniquely assigns the node IDs marked listed in ch
 //! \param[in] cn Vector containing the set of potentially multiple chare
 //!   IDs that we own (i.e., contribute to) for all of our node IDs.
-//! \param[in] ce Map associating a vector of chare IDs to edges (at which
-//!   we added nodes during initial mesh refinement)
 //! \details Note that every PE will call this function, since query() was
 //!   called in a broadcast fashion and query() answers to every PE once.
 //!   This is more efficient than calling only the PEs from which we would
@@ -469,10 +435,15 @@ Partitioner::mask(
 //!   interesting from PEs with lower IDs than ours.
 // *****************************************************************************
 {
-  // Store the old global mesh node IDs associated to chare IDs bordering
+  // Store the old global mesh node IDs associated to chare IDs bordering the
+  // mesh chunk held by and associated to chare IDs we own. This loop computes
+  // m_msum, a symmetric chare-node communication map, that associates (in its
+  // inner map) a unique set of global node IDs to areceiving chare ID, both
+  // associated (in its outer map) to a sending chare ID.
+
   // the mesh chunk held by and associated to chare IDs we own
   for (const auto& h : cn) {
-    const auto& chares = tk::ref_find( m_nodechares, h.first );
+    const auto& chares = tk::ref_find( m_bnodechares, h.first );
     for (auto c : chares) {           // surrounded chares
       auto& sch = m_msum[c];
       for (auto s : h.second)         // surrounding chares
@@ -480,38 +451,28 @@ Partitioner::mask(
     }
   }
 
-  // Store the edges associated to chare IDs bordering the mesh chunk held
-  // by and associated to chare IDs we own
-  for (const auto& h : ce) {
-    const auto& chares = tk::ref_find( m_edgechares, h.first );
-    for (auto c : chares) {           // surrounded chares
-      auto& sch = m_msumed[c];
-      for (auto s : h.second)         // surrounding chares
-        if (s != c) sch[ s ].insert( h.first );
-    }
-  }
+  // Associate global mesh node IDs to lower PEs we will need to receive from
+  // during node reordering. The choice of associated container is std::map,
+  // which is ordered (vs. unordered, hash-map). This is required by the
+  // following operation that makes the mesh node IDs unique in the
+  // communication map. (We are called in an unordered fashion, so we need to
+  // collect from all PEs and then we need to make the node IDs unique, keeping
+  // only the lowest PEs a node ID is associated with.) Note that m_ncomm is an
+  // asymmetric PE-node communication map, associating a set of unique global
+  // node IDs to PE IDs from which we (this PE) will need to receive newly
+  // assigned node IDs during global mesh node reordering. This map is
+  // asymmetric, beacuse of the agreement of the reordering that if a mesh node
+  // is shared by multiple PEs, the PE with the lowest ID gets to assign a new
+  // ID to it and all others must receive it instead of assigning it.
 
-  // Associate global mesh node IDs to lower PEs we will need to receive
-  // from during node reordering. The choice of associated container is
-  // std::map, which is ordered (vs. unordered, hash-map). This is required
-  // by the following operation that makes the mesh node IDs unique in the
-  // communication map. (We are called in an unordered fashion, so we need
-  // to collect from all PEs and then we need to make the node IDs unique,
-  // keeping only the lowest PEs a node ID is associated with.)
   if (p < CkMyPe()) {
     auto& id = m_ncomm[ p ];
     for (const auto& h : cn) id.insert( h.first );
-    auto& ed = m_ecomm[ p ];
-    for (const auto& h : ce) ed.insert( h.first );
   }
 
   if (++m_nmask == static_cast<std::size_t>(CkNumPes())) {
     // Make sure we have received all we need
     Assert( m_ncomm.size() == static_cast<std::size_t>(CkMyPe()),
-            "Communication map size on PE " +
-            std::to_string(CkMyPe()) + " must equal " +
-            std::to_string(CkMyPe()) );
-    Assert( m_ecomm.size() == static_cast<std::size_t>(CkMyPe()),
             "Communication map size on PE " +
             std::to_string(CkMyPe()) + " must equal " +
             std::to_string(CkMyPe()) );
@@ -527,33 +488,17 @@ Partitioner::mask(
         }
       if (n.empty()) m_ncommunication.erase( c->first );
     }
-    for (auto c=m_ecomm.cbegin(); c!=m_ecomm.cend(); ++c) {
-      auto& e = m_ecommunication[ c->first ];
-      for (const auto& j : c->second)
-        if (std::none_of( m_ecomm.cbegin(), c,
-             [ &j ]( const typename decltype(m_ecomm)::value_type& s )
-             { return s.second.find(j) != end(s.second); } )) {
-          e.insert(j);
-        }
-      if (e.empty()) m_ecommunication.erase( c->first );
-    }
     // Free storage of temporary communication map used to receive global
     // mesh node IDs as it is no longer needed once the final communication
     // map is generated.
     tk::destroy( m_ncomm );
-    // Free storage of temporary communication map used to receive global
-    // mesh edge-node IDs as it is no longer needed once the final
-    // communication map is generated.
-    tk::destroy( m_ecomm );
     // Count up total number of nodes and (nodes associated to edges) we
     // will need receive during reordering
     std::size_t nrecv = 0, erecv = 0;
     for (const auto& u : m_ncommunication) nrecv += u.second.size();
-    for (const auto& e : m_ecommunication) erecv += e.second.size();
 
     // send progress report to host
-    if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-      m_host.pemask();
+    if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pemask();
 
     // Compute number of mesh node IDs we will assign IDs to
     auto nuniq = m_nodeset.size() - nrecv + m_edgeset.size() - erecv;
@@ -588,8 +533,7 @@ Partitioner::readGraph( tk::ExodusIIMeshReader& er )
   std::iota( begin(m_gelemid), end(m_gelemid), from );
 
   // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_host.pegraph();
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pegraph();
 
   uint64_t nelem = m_gelemid.size();
   contribute( sizeof(uint64_t), &nelem, CkReduction::sum_int,
@@ -721,8 +665,7 @@ Partitioner::distribute(
     thisProxy[ p.first ].add( CkMyPe(), p.second );
 
   // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_host.pedistributed();
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pedistributed();
 
   if (m_npe == 0) contribute( m_cb.get< tag::distributed >() );
 }
@@ -1109,7 +1052,7 @@ Partitioner::reordered()
 
   // Free memory used by maps associating a list of chare IDs to old (as in
   // file) global mesh node IDs and to edges as no longer needed.
-  tk::destroy( m_nodechares );
+  tk::destroy( m_bnodechares );
   tk::destroy( m_edgechares );
 
   // Construct maps associating old node IDs (as in file) to new node IDs
@@ -1232,8 +1175,7 @@ Partitioner::reordered()
       m_nodeset.insert( i );
 
   // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_host.pereordered();
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pereordered();
 
   // Compute lower and upper bounds of reordered node IDs our PE operates on
   bounds();
@@ -1298,8 +1240,7 @@ Partitioner::create()
 // *****************************************************************************
 {
   // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_host.pebounds();
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pebounds();
 
   // Initiate asynchronous reduction across all Partitioner objects computing
   // the average communication cost of merging the linear system
@@ -1356,9 +1297,6 @@ Partitioner::createDiscWorkers()
   // Free map storing new node IDs associated to edges categorized by chares
   // owned as no linger needed after creating workers.
   tk::destroy( m_chedgenodes );
-  // Free storage of map associating a set of chare IDs to old global mesh
-  // node IDs as it is no longer needed after creating the workers.
-  tk::destroy( m_nodechares );
   // Free storage of global mesh node IDs associated to chare IDs bordering
   // the mesh chunk held by and associated to chare IDs we own as it is no
   // longer needed after creating the workers.

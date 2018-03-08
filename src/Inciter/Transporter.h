@@ -364,7 +364,7 @@ class Transporter : public CBase_Transporter {
     //! Indices for progress report on mesh partitioning
     enum ProgPart{ PART=0, DIST };
     //! Indices for progress report on mesh reordering
-    enum ProgReord{ FLAT=0, QUERY, MASK, REORD, BOUND };
+    enum ProgReord{ FLAT=0, GATHER, QUERY, MASK, REORD, BOUND };
 
   public:
     #if defined(__clang__)
@@ -434,6 +434,8 @@ class Transporter : public CBase_Transporter {
 
     //! Non-reduction target for receiving progress report on flattening mesh
     void peflattened() { m_progReorder.inc< FLAT >(); }
+    //! Non-reduction target for receiving progress report on node ID gather
+    void pegather() { m_progReorder.inc< GATHER >(); }
     //! Non-reduction target for receiving progress report on node ID query
     void pequery() { m_progReorder.inc< QUERY >(); }
     //! Non-reduction target for receiving progress report on node ID mask
@@ -514,7 +516,7 @@ class Transporter : public CBase_Transporter {
     // Progress object for task "Creating partitioners and reading mesh graph"
     tk::Progress< 1 > m_progGraph;
     // Progress object for task "Reordering mesh"
-    tk::Progress< 5 > m_progReorder;
+    tk::Progress< 6 > m_progReorder;
 
     //! Create linear solver group
     void createSolver();

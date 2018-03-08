@@ -42,6 +42,7 @@ module transporter {
       entry void pedistributed();
 
       entry void peflattened();
+      entry void pegather();
       entry void pequery();
       entry void pemask();
       entry void pereordered();

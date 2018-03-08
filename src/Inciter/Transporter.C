@@ -67,8 +67,9 @@ Transporter::Transporter() :
   m_progGraph( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
                {{ "g" }}, {{ CkNumPes() }} ),
   m_progReorder( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-                 {{ "f", "q", "m", "r", "b" }},
-                 {{ CkNumPes(), CkNumPes(), CkNumPes(), CkNumPes(), CkNumPes() }} )
+                 {{ "f", "g", "q", "m", "r", "b" }},
+                 {{ CkNumPes(), CkNumPes(), CkNumPes(), CkNumPes(),
+                    CkNumPes(), CkNumPes() }} )
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
