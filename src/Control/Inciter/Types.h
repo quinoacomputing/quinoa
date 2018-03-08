@@ -100,6 +100,12 @@ using TransportPDEParameters = tk::tuple::tagged_tuple<
   tag::u0,          std::vector< std::vector<
                       kw::pde_u0::info::expect::type > >,
   tag::bcdir,       std::vector< std::vector<
+                       kw::sideset::info::expect::type > >,
+  tag::bcsym,       std::vector< std::vector<
+                       kw::sideset::info::expect::type > >,
+  tag::bcinlet,     std::vector< std::vector<
+                       kw::sideset::info::expect::type > >,
+  tag::bcoutlet,    std::vector< std::vector<
                        kw::sideset::info::expect::type > >
 >;
 
@@ -108,6 +114,12 @@ using CompFlowPDEParameters = tk::tuple::tagged_tuple<
   tag::physics,      std::vector< PhysicsType >,
   tag::problem,      std::vector< ProblemType >,
   tag::bcdir,        std::vector< std::vector<
+                       kw::sideset::info::expect::type > >,
+  tag::bcsym,       std::vector< std::vector<
+                       kw::sideset::info::expect::type > >,
+  tag::bcinlet,     std::vector< std::vector<
+                       kw::sideset::info::expect::type > >,
+  tag::bcoutlet,    std::vector< std::vector<
                        kw::sideset::info::expect::type > >,
   //! Parameter vector (for specific, e.g., verification, problems)
   tag::alpha,        std::vector< kw::pde_alpha::info::expect::type >,
