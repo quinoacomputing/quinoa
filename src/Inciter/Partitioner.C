@@ -92,8 +92,7 @@ Partitioner::Partitioner(
   // Read our contiguously-numbered chunk of the mesh graph from file
   readGraph( er );
 
-  // If a geometric partitioner is selected, compute element centroid
-  // coordinates
+  // If a geometric partitioner is selected, compute element centroid coords
   const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
   if ( tk::ctr::PartitioningAlgorithm().geometric(alg) )
     computeCentroids( er );
