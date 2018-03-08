@@ -1149,7 +1149,7 @@ Partitioner::reordered()
       for (auto& p : c.second)
          p = tk::cref_find( m_linnodes, p );
 
-    // Update chare-categorized mesh chare-nodes comma map with the reordered
+    // Update chare-categorized mesh chare-nodes comm map with the reordered
     // node IDs
     for (auto& c : m_msum)
       for (auto& s : c.second) {
