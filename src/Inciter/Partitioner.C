@@ -37,7 +37,7 @@ Partitioner::Partitioner(
   std::size_t nbfac,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::vector< std::size_t >& triinpoel ) :
-  m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6] ),
+  m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6], cb[7] ),
   m_host( host ),
   m_solver( solver ),
   m_bc( bc ),
@@ -92,12 +92,15 @@ Partitioner::Partitioner(
   // Read our contiguously-numbered chunk of the mesh graph from file
   readGraph( er );
 
+  // Optionally refine mesh if requested
+  refine();
+
   // If a geometric partitioner is selected, compute element centroid coords
   const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
   if ( tk::ctr::PartitioningAlgorithm().geometric(alg) )
-    computeCentroids( er );
+    computeCentroids( er );     // reads mesh node coords but throws them away
   else
-    contribute( m_cb.get< tag::part >() );
+    contribute( m_cb.get< tag::centroid >() );
 }
 
 void
@@ -255,10 +258,6 @@ Partitioner::flatten()
 //!   longer categorized by (or associated to) chares.
 // *****************************************************************************
 {
-  // Optionally refine mesh if requested
-  const auto ir = g_inputdeck.get< tag::amr, tag::init >();
-  if (ir == ctr::AMRInitialType::UNIFORM) refine();
-
   // Make sure we are not fed garbage
   Assert( m_chinpoel.size() ==
             static_cast< std::size_t >( chareDistribution()[1] ),
@@ -577,7 +576,7 @@ Partitioner::computeCentroids( tk::ExodusIIMeshReader& er )
     cz[e] = (z[A] + z[B] + z[C] + z[D]) / 4.0;
   }
 
-  contribute( m_cb.get< tag::part >() );
+  contribute( m_cb.get< tag::centroid >() );
 }
 
 std::unordered_map< int, std::vector< std::size_t > >
@@ -971,68 +970,18 @@ Partitioner::generate_compact_inpoel()
 // }
 
 
-//! Uniformly refine our mesh replacing each tetrahedron with 8 new ones
-void Partitioner::refine() {
-  // Concatenate mesh connectivities of our chares
-  tk::destroy( m_tetinpoel );
-  std::size_t nn = 0;
-  for (const auto& c : m_chinpoel) nn += c.second.size();
-  m_tetinpoel.resize( nn );
-  nn = 0;
-  for (const auto& c : m_chinpoel)
-    for (auto i : c.second)
-      m_tetinpoel[ nn++ ] = i;
-  // Generate unique edges (nodes connected to nodes)
-  auto minmax = std::minmax_element( begin(m_tetinpoel), end(m_tetinpoel) );
-  std::array< std::size_t, 2 > ext{{ *minmax.first, *minmax.second }};
-  for (auto& i : m_tetinpoel) i -= ext[0];  // shift to zero-based node IDs
-  auto esup = tk::genEsup( m_tetinpoel, 4 );
-  for (auto& i : m_tetinpoel) i += ext[0];  // shift back node IDs
-  auto nnode = ext[1] - ext[0] + 1;
-  std::unordered_map< std::size_t, std::unordered_set< std::size_t > > star;
-  for (std::size_t j=0; j<nnode; ++j)
-    for (std::size_t i=esup.second[j]+1; i<=esup.second[j+1]; ++i )
-      for (std::size_t n=0; n<4; ++n) {
-        auto p = ext[0] + j;
-        auto q = m_tetinpoel[ esup.first[i] * 4 + n ];
-        if (p < q) star[p].insert( q );
-        if (p > q) star[q].insert( p );
-      }
-  tk::destroy( m_tetinpoel );
-  // Starting node ID (on all PEs) while assigning new edge-nodes
-  nnode = tk::ExodusIIMeshReader( g_inputdeck.get< tag::cmd, tag::io,
-                                    tag::input >() ).readHeader();
-  // Add new edge-nodes
-  tk::UnsMesh::EdgeNodes edgenodes;
-  for (const auto& s : star)
-    for (auto q : s.second)
-      edgenodes[ {{ s.first, q }} ] = nnode++;
-  // Generate maps associating new node IDs (as in producing
-  // contiguous-row-id linear system contributions)to edges (a pair of old
-  // node IDs) in tk::UnsMesh::EdgeNodes maps, associated to and categorized
-  // by chares. Note that the new edge-node IDs assigned here will be
-  // overwritten with globally unique node IDs after reordering.
-  for (const auto& conn : m_chinpoel) {
-    auto& en = m_chedgenodes[ conn.first ];
-    for (std::size_t e=0; e<conn.second.size()/4; ++e) {
-      const auto A = conn.second[e*4+0];
-      const auto B = conn.second[e*4+1];
-      const auto C = conn.second[e*4+2];
-      const auto D = conn.second[e*4+3];
-      const auto AB = tk::cref_find( edgenodes, {{ A,B }} );
-      const auto AC = tk::cref_find( edgenodes, {{ A,C }} );
-      const auto AD = tk::cref_find( edgenodes, {{ A,D }} );
-      const auto BC = tk::cref_find( edgenodes, {{ B,C }} );
-      const auto BD = tk::cref_find( edgenodes, {{ B,D }} );
-      const auto CD = tk::cref_find( edgenodes, {{ C,D }} );
-      en[ {{A,B}} ] = AB;
-      en[ {{A,C}} ] = AC;
-      en[ {{A,D}} ] = AD;
-      en[ {{B,C}} ] = BC;
-      en[ {{B,D}} ] = BD;
-      en[ {{C,D}} ] = CD;
-    }
+void
+Partitioner::refine()
+// *****************************************************************************
+// Optionally refine mesh if requested by user
+// *****************************************************************************
+{
+  const auto ir = g_inputdeck.get< tag::amr, tag::init >();
+  if (ir == ctr::AMRInitialType::UNIFORM) {
+    // ...
   }
+
+  contribute( m_cb.get< tag::refined >() );
 }
 
 

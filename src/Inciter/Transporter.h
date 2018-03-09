@@ -28,14 +28,18 @@
       Load [ label="Load"
               tooltip="Load is computed"
               URL="\ref inciter::Transporter::load"];
-      PartSetup [ label="PartSetup"
-              tooltip="Prerequsites done for mesh partitioning"
-              URL="\ref inciter::Transporter::part"];
+      Centroid [ label="Centroid"
+              tooltip="Cell centroids have been computed"
+              URL="\ref inciter::Transporter::centroid"];
+      Refined [ label="Refined"
+              tooltip="Mesh has been optionally initially refined"
+              URL="\ref inciter::Transporter::refined"];
       Part [ label="Part"
               tooltip="Partition mesh"
               URL="\ref inciter::Partitioner::partition"];
       Load -> Part [ style="solid" ];
-      PartSetup -> Part [ style="solid" ];
+      Centroid -> Part [ style="solid" ];
+      Refined -> Part [ style="solid" ];
       MinStat [ label="MinStat"
               tooltip="chares contribute to minimum mesh cell statistics"
               URL="\ref inciter::Discretization::stat"];
@@ -393,15 +397,17 @@ class Transporter : public CBase_Transporter {
     //! Constructor
     explicit Transporter();
 
-    //! \brief Reduction target indicating that all Partitioner chare groups
-    //!   have finished reading their part of the computational mesh graph and
-    //!   we are ready to compute the computational load
+    //! Mesh graph read complete on all PEs
+    //! \note Reduction target
     void load( uint64_t nelem );
 
-    //! \brief Reduction target indicating that all Partitioner chare groups
-    //!   have finished setting up the necessary data structures for
-    //!   partitioning the computational mesh and we are ready for partitioning
-    void part();
+    //! Mesh cell centroids have been computed on all PEs
+    //! \note Reduction target
+    void centroid();
+
+    //! Mesh has been (optionally) refined on all PEs
+    //! \note Reduction target
+    void refined();
 
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished distributing its global mesh node IDs and they are ready

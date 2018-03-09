@@ -179,7 +179,8 @@ class Partitioner : public CBase_Partitioner {
   private:
     //! Charm++ callbacks associated to compile-time tags
     tk::tuple::tagged_tuple<
-        tag::part,        CkCallback
+        tag::refined,     CkCallback
+      , tag::centroid,    CkCallback
       , tag::distributed, CkCallback
       , tag::flattened,   CkCallback
       , tag::load,        CkCallback

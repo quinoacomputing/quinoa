@@ -234,7 +234,8 @@ Transporter::createPartitioner()
 
   // Create partitioner callbacks
   std::vector< CkCallback > cbp {{
-      CkCallback( CkReductionTarget(Transporter,part), thisProxy )
+      CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,centroid), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,load), thisProxy )
@@ -363,7 +364,7 @@ Transporter::load( uint64_t nelem )
 }
 
 void
-Transporter::part()
+Transporter::centroid()
 // *****************************************************************************
 // Reduction target indicating that all Partitioner chare groups have finished
 // setting up the necessary data structures for partitioning the computational
@@ -374,7 +375,16 @@ Transporter::part()
   m_print.diag( "Mesh read time: " + std::to_string(timer.dsec()) + " sec" );
   m_progPart.start( "Partitioning and distributing mesh ..." );
   // signal to runtime system that all workers are ready for mesh partitioning
-  part_complete();
+  centroid_complete();
+}
+
+void
+Transporter::refined()
+// *****************************************************************************
+// ...
+// *****************************************************************************
+{
+  refine_complete();
 }
 
 void
