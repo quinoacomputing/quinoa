@@ -99,6 +99,8 @@ Partitioner::Partitioner(
     computeCentroids( er );
   else
     contribute( m_cb.get< tag::part >() );
+
+  IGNORE(m_nbfac);
 }
 
 void
@@ -1383,19 +1385,46 @@ Partitioner::createWorkers()
     // Make sure (bound) base is already created and accessible
     Assert( m_scheme.get()[cid].ckLocal() != nullptr, "About to pass nullptr" );
 
-    // Reorder the triinpoel
-    for(auto& i : m_triinpoel)
+    // Extract chunk-relevant triinpoel, bface and nbfac and reorder triinpoel
+    std::vector< std::size_t > chtriinpoel;
+    std::map< int, std::vector< std::size_t > > chbface;
+    std::size_t chnbfac(0),nnpf(3);
+
+    for (const auto& ss : m_bface)
     {
-      auto n = m_linnodes.find(i);
-      if (n != end(m_linnodes)) i = n->second;
+      for (auto f : ss.second)
+      {
+        std::size_t count(0);
+        for (std::size_t i=0; i<nnpf; ++i)
+        {
+          auto n = m_linnodes.find( m_triinpoel[nnpf*f + i] );
+          if (n != end(m_linnodes)) ++count;
+        }
+
+        if (count == nnpf)
+        // this boundary face is present on this chunk
+        {
+          for (std::size_t i=0; i<nnpf; ++i)
+          {
+            auto n = m_linnodes.find( m_triinpoel[nnpf*f + i] );
+            chtriinpoel.push_back( n->second );
+          }
+
+          chbface[ss.first].push_back(chnbfac);
+          ++chnbfac;
+        }
+      }
     }
 
     // Face data class
-    FaceData fd(tk::cref_find(m_chinpoel,cid), m_nbfac, m_bface, m_triinpoel);
+    FaceData fd(tk::cref_find(m_chinpoel,cid), chnbfac, chbface, chtriinpoel);
 
     // Create worker array element
     m_scheme.insert( cid, m_scheme.get(), m_solver, fd, CkMyPe() );
   }
+
+  tk::destroy( m_bface );
+  tk::destroy( m_triinpoel );
 }
 
 #include "NoWarning/partitioner.def.h"

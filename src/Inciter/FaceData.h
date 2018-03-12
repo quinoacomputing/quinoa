@@ -37,9 +37,9 @@ class FaceData {
     explicit
       FaceData(
         const std::vector< std::size_t >& conn,
-        std::size_t nbfac_complete,
+        std::size_t nbfac,
         const std::map< int, std::vector< std::size_t > >& bface,
-        const std::vector< std::size_t >& triinpoel_complete );
+        const std::vector< std::size_t >& triinpoel );
 
     /** @name Accessors
       * */
@@ -74,12 +74,12 @@ class FaceData {
     //@}
 
   private:
+    //! Number of boundary faces
+    std::size_t m_nbfac;
     //! Boundary faces side-set information
     std::map< int, std::vector< std::size_t > > m_bface;
     //! Boundary face-node connectivity
     std::vector< std::size_t > m_triinpoel;
-    //! Number of boundary faces
-    std::size_t m_nbfac;
     //! Elements surrounding elements
     std::vector< int > m_esuel;
     //! Rotal number of faces

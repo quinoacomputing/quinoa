@@ -92,7 +92,7 @@ DG::DG( const CProxy_Discretization& disc,
     auto B = gid[ inpofa[f*3+1] ];
     auto C = gid[ inpofa[f*3+2] ];
 
-    std::cout << thisIndex << " (" << f << "/" << inpofa.size()/3 << ")" << A << ", " << B << ", " << C << '\n';
+    //std::cout << thisIndex << " (" << f << "/" << inpofa.size()/3 << ")" << A << ", " << B << ", " << C << '\n';
     //Assert( !in_sumset( {{A,B,C}} ), "In msum_set: " +
     //        std::to_string(A) + ',' + std::to_string(B) + ',' +
     //        std::to_string(C) );
@@ -129,16 +129,16 @@ DG::DG( const CProxy_Discretization& disc,
     }
   }
 
-//  std::cout << thisIndex << ": " << facecnt-ibfaces.size() << '\n';
+  std::cout << thisIndex << ": Chare faces: " << facecnt-ibfaces.size() << '\n';
 
   // At this point m_chBndFace has new (local) face IDs (value) assigned to
   // node-triplets (faces, key) only along our chare-boundary (for all chares we
   // commuication with).
 
-  std::cout << thisIndex << " bndface: ";
-  for (const auto& f : m_chBndFace)
-    std::cout << f.first[0] << ',' << f.first[1] << ',' << f.first[2] << ' ';
-  std::cout << '\n';
+//  std::cout << thisIndex << " bndface: ";
+//  for (const auto& f : m_chBndFace)
+//    std::cout << f.first[0] << ',' << f.first[1] << ',' << f.first[2] << ' ';
+//  std::cout << '\n';
 
 
 //std::cout << thisIndex << "c: " << m_geoElem.nunk() << '\n';
@@ -163,7 +163,7 @@ DG::DG( const CProxy_Discretization& disc,
           auto k = n.second.find( C );
           // if all face nodes are on this chare boundary
           if ( i != end(n.second) && j != end(n.second) && k != end(n.second) ) { //&&
-               //ibfaces.find({{A,B,C}}) == end(ibfaces) ) {
+               //ibfaces.find({{A,B,C}}) == end(ibfaces) )
             // will store ghost associated to neighbor chare
             auto& ghost = msum_el[ n.first ];
             // store tet id adjacent to chare boundary as key for ghost data

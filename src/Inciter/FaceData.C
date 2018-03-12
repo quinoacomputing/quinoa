@@ -22,19 +22,22 @@ using inciter::FaceData;
 
 FaceData::FaceData(
   const std::vector< std::size_t >& conn,
-  std::size_t nbfac_complete,
-  const std::map< int, std::vector< std::size_t > >& bface_complete,
-  const std::vector< std::size_t >& triinpoel_complete )
+  std::size_t nbfac,
+  const std::map< int, std::vector< std::size_t > >& bface,
+  const std::vector< std::size_t >& triinpoel ) :
+  m_nbfac( nbfac ),
+  m_bface( bface ),
+  m_triinpoel( triinpoel )
 // *****************************************************************************
 //  Constructor
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
 //!   mesh chunk we operate on
-//! \param[in] nbfac_complete Total number of boundary-faces (triangles) in 
-//!   the entire mesh
-//! \param[in] bface_complete Map of boundary-face lists mapped to corresponding 
-//!   side set ids for the entire mesh
-//! \param[in] triinpoel_complete Interconnectivity of points and 
-//!   boundary-face in the entire mesh
+//! \param[in] nbfac Total number of boundary-faces (triangles) in this mesh
+//!   chunk
+//! \param[in] bface Map of boundary-face lists mapped to corresponding 
+//!   side set ids for this mesh chunk
+//! \param[in] triinpoel Interconnectivity of points and boundary-face in this
+//!   mesh chunk
 //! \details This class is created per chare-worker in 
 //!   Partitioner::createWorkers(). This is done so that Discretization will 
 //!   not hold all this data unnecessarily, viz. for MatCG and DiagCG, where 
@@ -46,27 +49,33 @@ FaceData::FaceData(
 
     auto el = tk::global2local( conn );   // fills inpoel, m_gid, m_lid
     auto inpoel = std::get< 0 >( el );
-    auto gid = std::get< 1 >( el );
     auto lid = std::get< 2 >( el );
 
     auto esup = tk::genEsup(inpoel,4);
     m_esuel = tk::genEsuelTet( inpoel, esup );
 
-    auto l_inpoel = inpoel;
-
-    // Mapping inpoel from local renumbered ids to global renumbered node ids
-    for (std::size_t e=0; e<inpoel.size()/4; ++e)
+    for (std::size_t f=0; f<m_nbfac; ++f)
     {
-      inpoel[4*e]   = gid[ l_inpoel[4*e]   ];
-      inpoel[4*e+1] = gid[ l_inpoel[4*e+1] ];
-      inpoel[4*e+2] = gid[ l_inpoel[4*e+2] ];
-      inpoel[4*e+3] = gid[ l_inpoel[4*e+3] ];
+      std::cout << "triinp  (" << f << "/" << m_nbfac << ") : ";
+      for (std::size_t i=0; i<3; ++i)
+      {
+        std::cout << m_triinpoel[3*f+i] << ", ";
+      }
+      std::cout << "\n";
     }
 
-    m_nbfac = tk::genNbfacTet( nbfac_complete, inpoel, triinpoel_complete,
-                               bface_complete, lid, m_triinpoel, m_bface );
+    // Mapping m_triinpoel from global renumbered ids to local renumbered ids
+    for (std::size_t f=0; f<m_nbfac; ++f)
+    {
+      for (std::size_t i=0; i<3; ++i)
+      {
+        auto ip = m_triinpoel[3*f+i];
+        m_triinpoel[3*f+i] = tk::cref_find(lid,ip);
+      }
+    }
+
     m_ntfac = tk::genNtfac( 4, m_nbfac, m_esuel );
-    m_inpofa = tk::genInpofaTet( m_ntfac, m_nbfac, l_inpoel, m_triinpoel,
+    m_inpofa = tk::genInpofaTet( m_ntfac, m_nbfac, inpoel, m_triinpoel,
                                  m_esuel );
     m_belem =  tk::genBelemTet( m_nbfac, m_inpofa, esup );
     m_esuf = tk::genEsuf( 4, m_ntfac, m_nbfac, m_belem, m_esuel );
