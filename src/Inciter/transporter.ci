@@ -18,8 +18,8 @@ module transporter {
     chare Transporter {
       entry Transporter();
       entry [reductiontarget] void load( uint64_t nelem );
-      entry [reductiontarget] void centroid();
       entry [reductiontarget] void refined();
+      entry [reductiontarget] void centroid();
       entry [reductiontarget] void distributed();
       entry [reductiontarget] void flattened();
       entry [reductiontarget] void coord();
@@ -37,7 +37,9 @@ module transporter {
       entry [reductiontarget] void next();
       entry [reductiontarget] void finish();
 
-      entry void pegraph();
+      entry void peread();
+      entry void perefined();
+      entry void pecentroid();
 
       entry void pepartitioned();
       entry void pedistributed();
@@ -64,19 +66,19 @@ module transporter {
       // -------------------------------
       // Control flow is from left to right and top to bottom.
       //
-      // Only when all of (1) reading the mesh graph afrom file, (2) (optional)
-      // initial mesh reinfment has been completed, and (3) the cell centroids
-      // have been computed (if a geometric partitioner has been configured),
-      // the computational load can be computed.. More details in 66d35608.
+      // Only when all of (1) reading the mesh from file, (2) (optional) initial
+      // mesh reinfment has been completed, and (3) the cell centroids have been
+      // computed (if a geometric partitioner has been configured), the
+      // mesh partitioning can be started.
       //
       // MinStat, MaxStat, SumStat, and PdfStat denote different global
       // reductions used to compute mesh cell statistics. Only when all of these
       // are and setting up the communication buffers have been completed will
       // they be echoed to screen at once, denoted by Stat.
 
-      entry void wait4part() {
+      entry void wait4mesh() {
         when load_complete(), centroid_complete(), refine_complete()
-          serial "part" { m_partitioner.partition( m_nchare ); } };
+          serial "mesh" { partition(); } };
 
       entry void wait4stat() {
         when minstat_complete(), maxstat_complete(), sumstat_complete(),

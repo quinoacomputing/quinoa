@@ -9,6 +9,7 @@ add_library(Inciter
             Transporter.C
             Partitioner.C
             FaceData.C
+            MeshReader.C
             Discretization.C
             MatCG.C
             DiagCG.C

@@ -225,6 +225,8 @@ class Partitioner : public CBase_Partitioner {
     std::vector< std::size_t > m_tetinpoel;
     //! Global element IDs we read (our chunk of the mesh)
     std::vector< long > m_gelemid;
+    //! Coordinates of mesh nodes of out chunk of the mesh
+    std::array< std::vector< tk::real >, 3 > m_coord;
     //! Element centroid coordinates of our chunk of the mesh
     std::array< std::vector< tk::real >, 3 > m_centroid;
     //! Total number of chares across all PEs
@@ -335,11 +337,9 @@ class Partitioner : public CBase_Partitioner {
     //! \brief Boundary face-node connectivity.
     std::vector< std::size_t > m_triinpoel;
 
-    //! Read our contiguously-numbered chunk of the mesh graph from file
-    void readGraph( tk::ExodusIIMeshReader& er );
-
     //! Compute element centroid coordinates
-    void computeCentroids( tk::ExodusIIMeshReader& er );
+    void computeCentroids(
+      const std::unordered_map< std::size_t, std::size_t >& lid );
 
     //! Construct global mesh node ids for each chare
     std::unordered_map< int, std::vector< std::size_t > >
@@ -365,7 +365,8 @@ class Partitioner : public CBase_Partitioner {
     void generate_compact_inpoel();
 
     //! Uniformly refine our mesh replacing each tetrahedron with 8 new ones
-    void refine();
+    void refine( const std::vector< std::size_t >& inpoel,
+                 const std::vector< std::size_t >& gid );
 
     //! Compute final result of reordering
     void reordered();

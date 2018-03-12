@@ -19,6 +19,9 @@
 #include "DerivedData.h"
 #include "Reorder.h"
 #include "Inciter/Options/Scheme.h"
+#include "AMR/mesh_adapter.h"
+#include "MeshReader.h"
+#include "ExodusIIMeshWriter.h"
 
 namespace inciter {
 
@@ -51,6 +54,7 @@ Partitioner::Partitioner(
   m_nmask( 0 ),
   m_tetinpoel(),
   m_gelemid(),
+  m_coord(),
   m_centroid(),
   m_nchare( 0 ),
   m_lower( 0 ),
@@ -86,21 +90,36 @@ Partitioner::Partitioner(
 //! \param[in] triinpoel Interconnectivity of points and boundary-face
 // *****************************************************************************
 {
-  tk::ExodusIIMeshReader
-    er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+  // Create mesh reader
+  MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >(),
+                 static_cast< std::size_t >( CkNumPes() ),
+                 static_cast< std::size_t >( CkMyPe() ) );
 
-  // Read our contiguously-numbered chunk of the mesh graph from file
-  readGraph( er );
+  // Read our chunk of the mesh graph from file
+  mr.readGraph(  m_gelemid, m_tetinpoel );
+
+  // Send progress report to host
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.peread();
+
+  // Sum number of elements across all PEs (will define total load)
+  uint64_t nelem = m_gelemid.size();
+  contribute( sizeof(uint64_t), &nelem, CkReduction::sum_int,
+              m_cb.get< tag::load >() );
+
+  // Compute local from global mesh data
+  auto el = tk::global2local( m_tetinpoel );
+  const auto& inp = std::get< 0 >( el );        // Local mesh connectivity
+  const auto& gid = std::get< 1 >( el );        // Local->global node IDs
+  const auto& lid = std::get< 2 >( el );        // Global->local node IDs
+
+  // Read our chunk of the mesh node coordinates from file
+  m_coord = mr.readCoords( gid );
 
   // Optionally refine mesh if requested
-  refine();
+  refine( inp, gid );
 
-  // If a geometric partitioner is selected, compute element centroid coords
-  const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
-  if ( tk::ctr::PartitioningAlgorithm().geometric(alg) )
-    computeCentroids( er );     // reads mesh node coords but throws them away
-  else
-    contribute( m_cb.get< tag::centroid >() );
+  // Compute cell centroids if a geometric partitioner is selected
+  computeCentroids( lid );
 }
 
 void
@@ -507,73 +526,39 @@ Partitioner::mask(
 }
 
 void
-Partitioner::readGraph( tk::ExodusIIMeshReader& er )
-// *****************************************************************************
-//  Read our contiguously-numbered chunk of the mesh graph from file
-//! \param[in] er ExodusII mesh reader
-// *****************************************************************************
-{
-  // Get number of mesh points and number of tetrahedron elements in file
-  er.readElemBlockIDs();
-  auto nel = er.nelem( tk::ExoElemType::TET );
-
-  // Read our contiguously-numbered chunk of tetrahedron element
-  // connectivity from file and also generate and store the list of global
-  // element indices for our chunk of the mesh
-  auto npes = static_cast< std::size_t >( CkNumPes() );
-  auto mype = static_cast< std::size_t >( CkMyPe() );
-  auto chunk = nel / npes;
-  auto from = mype * chunk;
-  auto till = from + chunk;
-  if (mype == npes-1) till += nel % npes;
-  er.readElements( {{from, till-1}}, tk::ExoElemType::TET, m_tetinpoel );
-  m_gelemid.resize( till-from );
-  std::iota( begin(m_gelemid), end(m_gelemid), from );
-
-  // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pegraph();
-
-  uint64_t nelem = m_gelemid.size();
-  contribute( sizeof(uint64_t), &nelem, CkReduction::sum_int,
-              m_cb.get< tag::load >() );
-}
-
-void
-Partitioner::computeCentroids( tk::ExodusIIMeshReader& er )
+Partitioner::computeCentroids(
+  const std::unordered_map< std::size_t, std::size_t >& lid )
 // *****************************************************************************
 //  Compute element centroid coordinates
-//! \param[in] er ExodusII mesh reader
-//! \note This function reads
+//! \param[in] lid Map from global to local node IDs for our chunk of the mesh
 // *****************************************************************************
 {
-  auto el = tk::global2local( m_tetinpoel );
-  const auto& gid = std::get< 1 >( el );
-  const auto& lid = std::get< 2 >( el );
+  const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
 
-  // Read node coordinates of our chunk of the mesh elements from file
-  auto coord = er.readNodes( gid );
-  const auto& x = std::get< 0 >( coord );
-  const auto& y = std::get< 1 >( coord );
-  const auto& z = std::get< 2 >( coord );
-
-  // Make room for element centroid coordinates
-  auto& cx = m_centroid[0];
-  auto& cy = m_centroid[1];
-  auto& cz = m_centroid[2];
-  auto num = m_tetinpoel.size()/4;
-  cx.resize( num );
-  cy.resize( num );
-  cz.resize( num );
-
-  // Compute element centroids for our chunk of the mesh elements
-  for (std::size_t e=0; e<num; ++e) {
-    auto A = tk::cref_find( lid, m_tetinpoel[e*4+0] );
-    auto B = tk::cref_find( lid, m_tetinpoel[e*4+1] );
-    auto C = tk::cref_find( lid, m_tetinpoel[e*4+2] );
-    auto D = tk::cref_find( lid, m_tetinpoel[e*4+3] );
-    cx[e] = (x[A] + x[B] + x[C] + x[D]) / 4.0;
-    cy[e] = (y[A] + y[B] + y[C] + y[D]) / 4.0;
-    cz[e] = (z[A] + z[B] + z[C] + z[D]) / 4.0;
+  if ( tk::ctr::PartitioningAlgorithm().geometric(alg) ) {
+    const auto& x = std::get< 0 >( m_coord );
+    const auto& y = std::get< 1 >( m_coord );
+    const auto& z = std::get< 2 >( m_coord );
+  
+    // Make room for element centroid coordinates
+    auto& cx = m_centroid[0];
+    auto& cy = m_centroid[1];
+    auto& cz = m_centroid[2];
+    auto num = m_tetinpoel.size()/4;
+    cx.resize( num );
+    cy.resize( num );
+    cz.resize( num );
+  
+    // Compute element centroids for our chunk of the mesh elements
+    for (std::size_t e=0; e<num; ++e) {
+      auto A = tk::cref_find( lid, m_tetinpoel[e*4+0] );
+      auto B = tk::cref_find( lid, m_tetinpoel[e*4+1] );
+      auto C = tk::cref_find( lid, m_tetinpoel[e*4+2] );
+      auto D = tk::cref_find( lid, m_tetinpoel[e*4+3] );
+      cx[e] = (x[A] + x[B] + x[C] + x[D]) / 4.0;
+      cy[e] = (y[A] + y[B] + y[C] + y[D]) / 4.0;
+      cz[e] = (z[A] + z[B] + z[C] + z[D]) / 4.0;
+    }
   }
 
   contribute( m_cb.get< tag::centroid >() );
@@ -971,15 +956,82 @@ Partitioner::generate_compact_inpoel()
 
 
 void
-Partitioner::refine()
+Partitioner::refine( const std::vector< std::size_t >& inpoel,
+                     const std::vector< std::size_t >& gid )
 // *****************************************************************************
 // Optionally refine mesh if requested by user
 // *****************************************************************************
 {
   const auto ir = g_inputdeck.get< tag::amr, tag::init >();
   if (ir == ctr::AMRInitialType::UNIFORM) {
-    // ...
+
+    AMR::mesh_adapter_t refiner( m_tetinpoel );
+    refiner.uniform_refinement();
+    auto refined_tetinpoel = refiner.tet_store.get_active_inpoel();
+
+    std::cout << CkMyPe() << ":c: ";
+    for (auto p : m_tetinpoel) std::cout << p << ' ';
+    std::cout << '\n';
+
+    std::cout << CkMyPe() << ":rc: ";
+    for (auto p : refined_tetinpoel) std::cout << p << ' ';
+    std::cout << '\n';
+
+    // find number of nodes in mesh chunk
+    auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
+    Assert( *minmax.first == 0, "node ids should start from zero" );
+    auto npoin = *minmax.second + 1;
+
+    //auto minmax = std::minmax_element( begin(m_tetinpoel), end(m_tetinpoel) );
+    //std::array< std::size_t, 2 > ext{{ *minmax.first, *minmax.second }};
+    //for (auto& i : m_tetinpoel) i -= ext[0];  // shift to zero-based node IDs
+    auto esup = tk::genEsup( inpoel, 4 );
+    auto edsup = tk::genEdsup( inpoel, 4, esup );
+    //for (auto& i : m_tetinpoel) i += ext[0];  // shift back node IDs
+    //auto nnode = ext[1] - ext[0] + 1;
+
+    auto refined_coord = m_coord;
+    auto& x = refined_coord[0];
+    auto& y = refined_coord[1];
+    auto& z = refined_coord[2];
+
+    auto refined_minmax =
+      std::minmax_element( begin(refined_tetinpoel), end(refined_tetinpoel) );
+    Assert( *refined_minmax.first == 0, "node ids should start from zero" );
+    auto refined_npoin = *refined_minmax.second + 1;
+
+    x.resize( refined_npoin );
+    y.resize( refined_npoin );
+    z.resize( refined_npoin );
+
+    std::cout << CkMyPe() << ": npoin:" << npoin << " -> " << refined_npoin << ": ";
+    for (std::size_t p=0; p<npoin; ++p) {
+      auto a = p;
+      auto A = gid[ p ];
+      for (auto i=edsup.second[p]+1; i<=edsup.second[p+1]; ++i) {
+        // edge: p < edsup.first[i]
+        auto b = edsup.first[i];
+        auto B = gid[ edsup.first[i] ];
+        auto e = refiner.node_connectivity.find( A, B );
+        if (e > 0) {
+          Assert( e < x.size(), "Indexing out of refined_coord" );
+          x[e] = (x[a]+x[b])/2.0;
+          y[e] = (y[a]+y[b])/2.0;
+          z[e] = (z[a]+z[b])/2.0;
+          std::cout << A << "." << B << ":" << e << ' ';
+        }
+      }
+    }
+    std::cout << '\n';
+
+    tk::UnsMesh refmesh( refined_tetinpoel, x, y, z );
+    tk::ExodusIIMeshWriter mr( "refmesh.exo", tk::ExoWriter::CREATE );
+    mr.writeMesh( refmesh );
+
   }
+
+  // send progress report to host
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.perefined();
 
   contribute( m_cb.get< tag::refined >() );
 }
