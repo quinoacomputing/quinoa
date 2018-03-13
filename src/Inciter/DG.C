@@ -100,19 +100,19 @@ DG::DG( const CProxy_Discretization& disc,
     auto B = gid[ inpofa[f*3+1] ];
     auto C = gid[ inpofa[f*3+2] ];
 
-    std::cout << thisIndex << " inpofa " << A << ", " << B << ", " << C << ": "
-              << x[ inpofa[f*3+0] ] << ", "
-              << y[ inpofa[f*3+0] ] << ", "
-              << z[ inpofa[f*3+0] ] << "  "
-              << x[ inpofa[f*3+1] ] << ", "
-              << y[ inpofa[f*3+1] ] << ", "
-              << z[ inpofa[f*3+1] ] << "  "
-              << x[ inpofa[f*3+2] ] << ", "
-              << y[ inpofa[f*3+2] ] << ", "
-              << z[ inpofa[f*3+2] ] << '\n';
-    Assert( !in_sumset( {{A,B,C}} ), "Face incorrectly in msum_set: " +
-            std::to_string(A) + ',' + std::to_string(B) + ',' +
-            std::to_string(C) + " on chare " + std::to_string(thisIndex) );
+//     std::cout << thisIndex << " inpofa " << A << ", " << B << ", " << C << ":\n";
+//               << x[ inpofa[f*3+0] ] << ", "
+//               << y[ inpofa[f*3+0] ] << ", "
+//               << z[ inpofa[f*3+0] ] << "  "
+//               << x[ inpofa[f*3+1] ] << ", "
+//               << y[ inpofa[f*3+1] ] << ", "
+//               << z[ inpofa[f*3+1] ] << "  "
+//               << x[ inpofa[f*3+2] ] << ", "
+//               << y[ inpofa[f*3+2] ] << ", "
+//               << z[ inpofa[f*3+2] ] << '\n';
+//     Assert( !in_sumset( {{A,B,C}} ), "Face incorrectly in msum_set: " +
+//             std::to_string(A) + ',' + std::to_string(B) + ',' +
+//             std::to_string(C) + " on chare " + std::to_string(thisIndex) );
 
     ibfaces.insert( {{{A,B,C}}} );
   }
@@ -255,7 +255,7 @@ DG::msumset( const std::vector< std::size_t >& inpofa ) const
   for (const auto& n : d->Msum())
     m[ n.first ].insert( n.second.cbegin(), n.second.cend() );
 
-  std::cout << thisIndex << "msum_set: ";
+  std::cout << thisIndex << " msum_set: ";
   for (const auto& n : m_msumset)
     for (auto i : n.second)
       std::cout << i << ' ';

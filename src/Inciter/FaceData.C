@@ -56,15 +56,15 @@ FaceData::FaceData(
     auto esup = tk::genEsup(inpoel,4);
     m_esuel = tk::genEsuelTet( inpoel, esup );
 
-    for (std::size_t f=0; f<m_nbfac; ++f)
-    {
-      std::cout << CkMyPe() << " triinp  (" << f << "/" << m_nbfac << ") : ";
-      for (std::size_t i=0; i<3; ++i)
-      {
-        std::cout << m_triinpoel[3*f+i] << ", ";
-      }
-      std::cout << "\n";
-    }
+//     for (std::size_t f=0; f<m_nbfac; ++f)
+//     {
+//       std::cout << CkMyPe() << " triinp  (" << f << "/" << m_nbfac << ") : ";
+//       for (std::size_t i=0; i<3; ++i)
+//       {
+//         std::cout << m_triinpoel[3*f+i] << ", ";
+//       }
+//       std::cout << "\n";
+//     }
 
     // Mapping m_triinpoel from global renumbered ids to local renumbered ids
     for (auto& i : m_triinpoel) i = tk::cref_find(lid,i);

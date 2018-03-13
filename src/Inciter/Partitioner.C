@@ -1354,7 +1354,7 @@ Partitioner::createDiscWorkers()
   tk::destroy( m_edgeset );
   // Free maps associating old node IDs to new node IDs categorized by
   // chares as it is no longer needed after creating the workers.
-  tk::destroy( m_chfilenodes );
+  //tk::destroy( m_chfilenodes );
   // Free map storing new node IDs associated to edges categorized by chares
   // owned as no linger needed after creating workers.
   tk::destroy( m_chedgenodes );
@@ -1379,13 +1379,24 @@ Partitioner::createWorkers()
 {
   auto dist = chareDistribution();
 
+  // Prepare data to pass to each worker chare
   for (int c=0; c<dist[1]; ++c) {
+
     // Compute chare ID
     auto cid = CkMyPe() * dist[0] + c;
+
     // Make sure (bound) base is already created and accessible
     Assert( m_scheme.get()[cid].ckLocal() != nullptr, "About to pass nullptr" );
 
-    // Extract chunk-relevant triinpoel, bface and nbfac and reorder triinpoel
+    // Find mesh connectivity for this chare (new ids)
+    auto chinpoel = tk::cref_find( m_chinpoel, cid );
+
+    // Generate new-to-file node id map for this chare
+    decltype(m_linnodes) chlinnodes;
+    const auto& chfilenodes = tk::cref_find( m_chfilenodes, cid );
+    for (auto i : chinpoel) chlinnodes[ tk::cref_find(chfilenodes,i) ] = i;
+
+    // Extract chare triinpoel, bface, and nbfac
     std::vector< std::size_t > chtriinpoel;
     std::map< int, std::vector< std::size_t > > chbface;
     std::size_t chnbfac(0),nnpf(3);
@@ -1398,8 +1409,8 @@ Partitioner::createWorkers()
         std::array< std::size_t, 3 > tbface;
         for (std::size_t i=0; i<nnpf; ++i)
         {
-          auto n = m_linnodes.find( m_triinpoel[nnpf*f + i] );
-          if (n != end(m_linnodes))
+          auto n = chlinnodes.find( m_triinpoel[nnpf*f + i] );
+          if (n != end(chlinnodes))
           {
             tbface[i] = n->second;
             ++count;
@@ -1418,8 +1429,10 @@ Partitioner::createWorkers()
       }
     }
 
+    std::cout << CkMyPe() << ": " << cid << ": " << chtriinpoel.size() << '\n';
+
     // Face data class
-    FaceData fd(tk::cref_find(m_chinpoel,cid), chnbfac, chbface, chtriinpoel);
+    FaceData fd( chinpoel, chnbfac, chbface, chtriinpoel );
 
     // Create worker array element
     m_scheme.insert( cid, m_scheme.get(), m_solver, fd, CkMyPe() );
