@@ -65,14 +65,7 @@ FaceData::FaceData(
     }
 
     // Mapping m_triinpoel from global renumbered ids to local renumbered ids
-    for (std::size_t f=0; f<m_nbfac; ++f)
-    {
-      for (std::size_t i=0; i<3; ++i)
-      {
-        auto ip = m_triinpoel[3*f+i];
-        m_triinpoel[3*f+i] = tk::cref_find(lid,ip);
-      }
-    }
+    for (auto& i : m_triinpoel) i = tk::cref_find(lid,i);
 
     m_ntfac = tk::genNtfac( 4, m_nbfac, m_esuel );
     m_inpofa = tk::genInpofaTet( m_ntfac, m_nbfac, inpoel, m_triinpoel,
