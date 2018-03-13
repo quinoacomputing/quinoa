@@ -118,13 +118,13 @@ class DG : public CBase_DG {
                std::hash< std::size_t >()( key[2] );
       }
     };
-   //! \brief Key-equal function for node triplet in which the order matters but
-   //!   not the positions
+   //! \brief Key-equal function for node triplet in which neither the order nor
+   //!   the positions matter
     struct TripletEq {
       bool operator()( const Triplet& l, const Triplet& r ) const {
-        return (l[0] == r[0] && l[1] == r[1] && l[2] == r[2]) ||
-               (l[0] == r[1] && l[1] == r[2] && l[2] == r[0]) ||
-               (l[0] == r[2] && l[1] == r[0] && l[2] == r[1]);
+        return (l[0] == r[0] || l[0] == r[1] || l[0] == r[2]) &&
+               (l[1] == r[0] || l[1] == r[1] || l[1] == r[2]) &&
+               (l[2] == r[0] || l[2] == r[1] || l[2] == r[2]);
       }
     };
     //! Node ID triplets representing a tetrahedron face
@@ -177,7 +177,7 @@ class DG : public CBase_DG {
 
     //! ...
     std::unordered_map< int, std::unordered_set< std::size_t > >
-    msumset( const std::vector< std::size_t >& inpofa ) const;
+    msumset() const;
 
     //! Continue after face adjacency communication map is complete on this chare
     void adj();

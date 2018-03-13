@@ -1425,7 +1425,7 @@ Partitioner::createWorkers()
       }
     }
 
-    std::cout << CkMyPe() << ": " << cid << ": " << chtriinpoel.size() << '\n';
+    //std::cout << CkMyPe() << ": " << cid << ": " << chtriinpoel.size() << '\n';
 
     // Face data class
     FaceData fd( chinpoel, chnbfac, chbface, chtriinpoel );
