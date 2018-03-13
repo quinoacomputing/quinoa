@@ -1389,6 +1389,7 @@ Partitioner::createWorkers()
     std::vector< std::size_t > chtriinpoel;
     std::map< int, std::vector< std::size_t > > chbface;
     std::size_t chnbfac(0),nnpf(3);
+    std::array< std::size_t, 3 > tbface;
 
     for (const auto& ss : m_bface)
     {
@@ -1398,17 +1399,18 @@ Partitioner::createWorkers()
         for (std::size_t i=0; i<nnpf; ++i)
         {
           auto n = m_linnodes.find( m_triinpoel[nnpf*f + i] );
-          if (n != end(m_linnodes)) ++count;
+          if (n != end(m_linnodes))
+          {
+            tbface[i] = n->second;
+            ++count;
+          }
         }
 
         if (count == nnpf)
         // this boundary face is present on this chunk
         {
           for (std::size_t i=0; i<nnpf; ++i)
-          {
-            auto n = m_linnodes.find( m_triinpoel[nnpf*f + i] );
-            chtriinpoel.push_back( n->second );
-          }
+            chtriinpoel.push_back( tbface[i] );
 
           chbface[ss.first].push_back(chnbfac);
           ++chnbfac;
