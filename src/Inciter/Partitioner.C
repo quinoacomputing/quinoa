@@ -21,6 +21,7 @@
 #include "Inciter/Options/Scheme.h"
 #include "AMR/mesh_adapter.h"
 #include "MeshReader.h"
+#include "Around.h"
 #include "ExodusIIMeshWriter.h"
 
 namespace inciter {
@@ -965,70 +966,80 @@ Partitioner::refine( const std::vector< std::size_t >& inpoel,
   const auto ir = g_inputdeck.get< tag::amr, tag::init >();
   if (ir == ctr::AMRInitialType::UNIFORM) {
 
-    AMR::mesh_adapter_t refiner( m_tetinpoel );
-    refiner.uniform_refinement();
-    auto refined_tetinpoel = refiner.tet_store.get_active_inpoel();
+    auto orig_inpoel = inpoel;
+    auto orig_coord = m_coord;
 
-    std::cout << CkMyPe() << ":c: ";
-    for (auto p : m_tetinpoel) std::cout << p << ' ';
-    std::cout << '\n';
+    AMR::mesh_adapter_t refiner( orig_inpoel );
 
-    std::cout << CkMyPe() << ":rc: ";
-    for (auto p : refined_tetinpoel) std::cout << p << ' ';
-    std::cout << '\n';
+    for (std::size_t level=0; level<4; ++level) {
 
-    // find number of nodes in mesh chunk
-    auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
-    Assert( *minmax.first == 0, "node ids should start from zero" );
-    auto npoin = *minmax.second + 1;
+      refiner.uniform_refinement();
+      auto refined_inpoel = refiner.tet_store.get_active_inpoel();
 
-    //auto minmax = std::minmax_element( begin(m_tetinpoel), end(m_tetinpoel) );
-    //std::array< std::size_t, 2 > ext{{ *minmax.first, *minmax.second }};
-    //for (auto& i : m_tetinpoel) i -= ext[0];  // shift to zero-based node IDs
-    auto esup = tk::genEsup( inpoel, 4 );
-    auto edsup = tk::genEdsup( inpoel, 4, esup );
-    //for (auto& i : m_tetinpoel) i += ext[0];  // shift back node IDs
-    //auto nnode = ext[1] - ext[0] + 1;
+//       std::cout << CkMyPe() << ":c: ";
+//       for (auto p : orig_inpoel) std::cout << p << ' ';
+//       std::cout << '\n';
+//       std::cout << CkMyPe() << ":rc: ";
+//       for (auto p : refined_inpoel) std::cout << p << ' ';
+//       std::cout << '\n';
 
-    auto refined_coord = m_coord;
-    auto& x = refined_coord[0];
-    auto& y = refined_coord[1];
-    auto& z = refined_coord[2];
+      // find number of nodes in old mesh
+      auto minmax = std::minmax_element( begin(orig_inpoel), end(orig_inpoel) );
+      Assert( *minmax.first == 0, "node ids should start from zero" );
+      auto npoin = *minmax.second + 1;
 
-    auto refined_minmax =
-      std::minmax_element( begin(refined_tetinpoel), end(refined_tetinpoel) );
-    Assert( *refined_minmax.first == 0, "node ids should start from zero" );
-    auto refined_npoin = *refined_minmax.second + 1;
+      // generate edges surrounding points in old mesh
+      auto esup = tk::genEsup( orig_inpoel, 4 );
+      auto psup = tk::genPsup( orig_inpoel, 4, esup );
 
-    x.resize( refined_npoin );
-    y.resize( refined_npoin );
-    z.resize( refined_npoin );
+      auto refined_coord = orig_coord;
+      auto& x = refined_coord[0];
+      auto& y = refined_coord[1];
+      auto& z = refined_coord[2];
 
-    std::cout << CkMyPe() << ": npoin:" << npoin << " -> " << refined_npoin << ": ";
-    for (std::size_t p=0; p<npoin; ++p) {
-      auto a = p;
-      auto A = gid[ p ];
-      for (auto i=edsup.second[p]+1; i<=edsup.second[p+1]; ++i) {
-        // edge: p < edsup.first[i]
-        auto b = edsup.first[i];
-        auto B = gid[ edsup.first[i] ];
-        auto e = refiner.node_connectivity.find( A, B );
-        if (e > 0) {
-          Assert( e < x.size(), "Indexing out of refined_coord" );
-          x[e] = (x[a]+x[b])/2.0;
-          y[e] = (y[a]+y[b])/2.0;
-          z[e] = (z[a]+z[b])/2.0;
-          std::cout << A << "." << B << ":" << e << ' ';
+      auto refined_minmax =
+        std::minmax_element( begin(refined_inpoel), end(refined_inpoel) );
+      Assert( *refined_minmax.first == 0, "node ids should start from zero" );
+      auto refined_npoin = *refined_minmax.second + 1;
+
+      x.resize( refined_npoin );
+      y.resize( refined_npoin );
+      z.resize( refined_npoin );
+
+      // generate coordinates for newly added nodes
+      //std::cout << CkMyPe() << ": npoin:" << npoin << " -> " << refined_npoin << ": ";
+      for (std::size_t p=0; p<npoin; ++p)
+        for (auto q : tk::Around(psup,p)) {
+          auto e = refiner.node_connectivity.find( p, q );
+          if (e > 0) {
+            auto E = static_cast< std::size_t >( e );
+            Assert( E < x.size(), "Indexing out of refined_coord" );
+            x[E] = (x[p]+x[q])/2.0;
+            y[E] = (y[p]+y[q])/2.0;
+            z[E] = (z[p]+z[q])/2.0;
+          } else std::cout << level << ": " << e << ':' << p << "." << q << ' ';
         }
-      }
-    }
-    std::cout << '\n';
+      //std::cout << '\n';
 
-    tk::UnsMesh refmesh( refined_tetinpoel, x, y, z );
-    tk::ExodusIIMeshWriter mr( "refmesh.exo", tk::ExoWriter::CREATE );
-    mr.writeMesh( refmesh );
+//       // reorder new mesh
+//       const auto refined_psup =
+//         tk::genPsup( refined_inpoel, 4, tk::genEsup( refined_inpoel, 4 ) );
+//       auto map = tk::renumber( refined_psup );
+//       tk::remap( refined_inpoel, map );
+//       tk::remap( x, map );
+//       tk::remap( y, map );
+//       tk::remap( z, map );
 
-  }
+      tk::UnsMesh refmesh( refined_inpoel, x, y, z );
+      tk::ExodusIIMeshWriter mr( "refmesh." + std::to_string(level) + ".exo",
+                                 tk::ExoWriter::CREATE );
+      mr.writeMesh( refmesh );
+
+      orig_inpoel = refined_inpoel;
+      orig_coord = refined_coord;
+
+    } // level
+  } // if enable uniform
 
   // send progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.perefined();

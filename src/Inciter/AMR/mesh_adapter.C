@@ -17,14 +17,15 @@ namespace AMR {
         init_node_store(m_x, m_y, m_z, graph_size);
         //init(); // TODO: This also needs to call init if you want node support to work
     }
-
-    void mesh_adapter_t::init(const std::vector<size_t>& tetinpoel, size_t num_nodes) {
+    AMR::refinement_t
+    mesh_adapter_t::init(const std::vector<size_t>& tetinpoel, size_t num_nodes) {
         node_connectivity.fill_initial_nodes(num_nodes);
 
-        refiner = new AMR::refinement_t(&tet_store, &node_connectivity);
+        auto ref = AMR::refinement_t(tet_store, node_connectivity);
 
         consume_tets(tetinpoel);
         tet_store.generate_edges();
+        return ref;
     }
 
     // This would be a candidate for a nice design pattern with runtime
@@ -252,13 +253,13 @@ namespace AMR {
                 switch(tet_store.marked_refinements.get(tet_id))
                 {
                     case AMR::Refinement_Case::one_to_two:
-                        refiner->refine_one_to_two(tet_id);
+                        refiner.refine_one_to_two(tet_id);
                         break;
                     case AMR::Refinement_Case::one_to_four:
-                        refiner->refine_one_to_four(tet_id);
+                        refiner.refine_one_to_four(tet_id);
                         break;
                     case AMR::Refinement_Case::one_to_eight:
-                        refiner->refine_one_to_eight(tet_id);
+                        refiner.refine_one_to_eight(tet_id);
                         break;
                     case AMR::Refinement_Case::two_to_eight:
                         parent_id = tet_store.get_parent_id(tet_id);
@@ -289,18 +290,18 @@ namespace AMR {
 
             if (element.num_children == 2)
             {
-                refiner->derefine_two_to_one(i);
+                refiner.derefine_two_to_one(i);
             }
             else if (element.num_children == 4)
             {
-                refiner->derefine_four_to_one(i);
+                refiner.derefine_four_to_one(i);
             }
             else {
                 std::cout << "num children " << element.num_children << std::endl;
                 Assert(0, "Invalid number of children");
             }
 
-            refiner->refine_one_to_eight(i);
+            refiner.refine_one_to_eight(i);
             tet_store.unset_marked_children(i); // FIXME: This will not work well in parallel
             element.refinement_case = AMR::Refinement_Case::one_to_eight;
         }
@@ -397,7 +398,7 @@ namespace AMR {
                     tet_store.edge_store.mark_for_refinement(key);
                 }
 
-                //refiner->refine_one_to_four(tet_id, face_list[face_refine_id],
+                //refiner.refine_one_to_four(tet_id, face_list[face_refine_id],
                 //opposite_id);
                 tet_store.mark_one_to_four(tet_id);
             }
@@ -405,7 +406,7 @@ namespace AMR {
             // Activate all edges
             // Accept as a 1:8 refinement"
             else {
-                //refiner->refine_one_to_eight(tet_id);
+                //refiner.refine_one_to_eight(tet_id);
                 tet_store.mark_edges_for_refinement(tet_id);
                 tet_store.mark_one_to_eight(tet_id);
             }
@@ -417,7 +418,7 @@ namespace AMR {
         // Accept as a 1:8 refinement"
         else if (num_to_refine > 3)
         {
-            //refiner->refine_one_to_eight(tet_id);
+            //refiner.refine_one_to_eight(tet_id);
             tet_store.mark_one_to_eight(tet_id);
         }
     }
@@ -534,7 +535,7 @@ namespace AMR {
                 tet_store.edge_store.mark_for_refinement(key);
             }
 
-            //refiner->refine_one_to_four(tet_id, face_list[face_refine_id], opposite_id);
+            //refiner.refine_one_to_four(tet_id, face_list[face_refine_id], opposite_id);
             tet_store.mark_one_to_four(tet_id);
         }
 

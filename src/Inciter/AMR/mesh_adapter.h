@@ -21,11 +21,13 @@ class mesh_adapter_t {
 
   public:
     //! Constructor
-    mesh_adapter_t( const std::vector< std::size_t >& inpoel ) {
+    mesh_adapter_t( const std::vector< std::size_t >& inpoel ) :
+      refiner( init( inpoel, npoin(inpoel) ) ) {}
+
+    std::size_t npoin( const std::vector< std::size_t >& inpoel ) {
       auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
       Assert( *minmax.first == 0, "node ids should start from zero" );
-      auto npoin = *minmax.second + 1;
-      init( inpoel, npoin );
+      return *minmax.second + 1;
     }
 
     // TODO: Set these in a better way
@@ -38,11 +40,11 @@ class mesh_adapter_t {
     // for coord type stuff
     AMR::node_store_t node_store;
 
-    AMR::refinement_t *refiner;
+    AMR::refinement_t refiner;
 
     void init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t* graph_size);
     void init_with_nodes(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t* graph_size);
-    void init(const std::vector<size_t>& tetinpoel, size_t num_nodes);
+    AMR::refinement_t init(const std::vector<size_t>& tetinpoel, size_t num_nodes);
 
     void consume_tets(const std::vector<std::size_t>& tetinpoel );
 
