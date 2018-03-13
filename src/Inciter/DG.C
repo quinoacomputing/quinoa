@@ -21,6 +21,7 @@
 #include "Diagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "ExodusIIMeshWriter.h"
+#include "ExodusIIMeshReader.h"         // NOT NEEDED
 
 namespace inciter {
 
@@ -52,7 +53,7 @@ DG::DG( const CProxy_Discretization& disc,
                                 m_disc[thisIndex].ckLocal()->Coord() ) ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
-  m_msumset( msumset() ),
+  m_msumset( msumset( fd.Inpofa() ) ),
   m_ghost(),
   m_chBndFace()
 // *****************************************************************************
@@ -69,6 +70,13 @@ DG::DG( const CProxy_Discretization& disc,
   const auto& inpofa = fd.Inpofa();
   auto esup = tk::genEsup( inpoel, 4 );
   auto esuel = tk::genEsuelTet( inpoel, esup );
+
+  tk::ExodusIIMeshReader
+    er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+  auto coord = er.readNodes( gid );
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
 
   // Lambda to check if node triplet is on one of our chare's boundary
   auto in_sumset = [&]( const Triplet& t ) -> bool {
@@ -92,10 +100,19 @@ DG::DG( const CProxy_Discretization& disc,
     auto B = gid[ inpofa[f*3+1] ];
     auto C = gid[ inpofa[f*3+2] ];
 
-    //std::cout << thisIndex << " (" << f << "/" << inpofa.size()/3 << ")" << A << ", " << B << ", " << C << '\n';
-    //Assert( !in_sumset( {{A,B,C}} ), "In msum_set: " +
-    //        std::to_string(A) + ',' + std::to_string(B) + ',' +
-    //        std::to_string(C) );
+    std::cout << thisIndex << " inpofa " << A << ", " << B << ", " << C << ": "
+              << x[ inpofa[f*3+0] ] << ", "
+              << y[ inpofa[f*3+0] ] << ", "
+              << z[ inpofa[f*3+0] ] << "  "
+              << x[ inpofa[f*3+1] ] << ", "
+              << y[ inpofa[f*3+1] ] << ", "
+              << z[ inpofa[f*3+1] ] << "  "
+              << x[ inpofa[f*3+2] ] << ", "
+              << y[ inpofa[f*3+2] ] << ", "
+              << z[ inpofa[f*3+2] ] << '\n';
+    Assert( !in_sumset( {{A,B,C}} ), "Face incorrectly in msum_set: " +
+            std::to_string(A) + ',' + std::to_string(B) + ',' +
+            std::to_string(C) + " on chare " + std::to_string(thisIndex) );
 
     ibfaces.insert( {{{A,B,C}}} );
   }
@@ -117,7 +134,7 @@ DG::DG( const CProxy_Discretization& disc,
         Triplet t{{ A, B, C }};
         if (ibfaces.find( t ) == end(ibfaces)) {
           m_chBndFace[ t ] = facecnt++;
-          std::cout << thisIndex << " chbnd (" << f << ")" << A << ", " << B << ", " << C << '\n';
+          //std::cout << thisIndex << " chbnd (" << f << ")" << A << ", " << B << ", " << C << '\n';
           Assert( in_sumset( {{A,B,C}} ), "Not in msum_set: " +
                   std::to_string(A) + ',' + std::to_string(B) + ',' +
                   std::to_string(C) );
@@ -227,9 +244,9 @@ DG::DG( const CProxy_Discretization& disc,
 }
 
 std::unordered_map< int, std::unordered_set< std::size_t > >
-DG::msumset() const
+DG::msumset( const std::vector< std::size_t >& inpofa ) const
 // *****************************************************************************
-// Convert vectors to sets inside node adjacency map, Discretization::m_msum
+// ...
 // *****************************************************************************
 {
   auto d = Disc();

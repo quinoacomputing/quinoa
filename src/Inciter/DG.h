@@ -175,8 +175,9 @@ class DG : public CBase_DG {
       return m_disc[ thisIndex ].ckLocal();
     }
 
-    //! Convert vectors to sets inside node adjacency map, Discretization::m_msum
-    std::unordered_map< int, std::unordered_set< std::size_t > > msumset() const;
+    //! ...
+    std::unordered_map< int, std::unordered_set< std::size_t > >
+    msumset( const std::vector< std::size_t >& inpofa ) const;
 
     //! Continue after face adjacency communication map is complete on this chare
     void adj();

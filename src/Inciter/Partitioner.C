@@ -1389,13 +1389,13 @@ Partitioner::createWorkers()
     std::vector< std::size_t > chtriinpoel;
     std::map< int, std::vector< std::size_t > > chbface;
     std::size_t chnbfac(0),nnpf(3);
-    std::array< std::size_t, 3 > tbface;
 
     for (const auto& ss : m_bface)
     {
       for (auto f : ss.second)
       {
         std::size_t count(0);
+        std::array< std::size_t, 3 > tbface;
         for (std::size_t i=0; i<nnpf; ++i)
         {
           auto n = m_linnodes.find( m_triinpoel[nnpf*f + i] );
