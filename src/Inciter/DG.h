@@ -12,7 +12,36 @@
     and does the same: initializes and advances a number of PDE systems in time.
 
     The implementation uses the Charm++ runtime system and is fully
-    asynchronous, overlapping computation and communication.
+    asynchronous, overlapping computation and communication. The algorithm
+    utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
+    overview of the algorithm structure and how it interfaces with Charm++ is
+    discussed in the Charm++ interface file src/Inciter/diagcg.ci.
+
+    #### Call graph ####
+    The following is a directed acyclic graph (DAG) that outlines the
+    asynchronous algorithm implemented in this class The detailed discussion of
+    the algorithm is given in the Charm++ interface file transporter.ci. On the
+    DAG orange fills denote global synchronization points that contain or
+    eventually lead to global reductions. Dashed lines are potential shortcuts
+    that allow jumping over some of the task-graph under some circumstances or
+    optional code paths (taken, e.g., only in DEBUG mode). See the detailed
+    discussion in dg.ci.
+    \dot
+    digraph "DG SDAG" {
+      rankdir="LR";
+      node [shape=record, fontname=Helvetica, fontsize=10];
+      OwnGhost [ label="OwnGhost"
+               tooltip="own ghost data computed"
+               URL="\ref inciter::DG::setupGhost"];
+      ReqGhost [ label="ReqGhost"
+               tooltip="all of ghost data have been requested from us"
+               URL="\ref inciter::DG::reqGhost"];
+      OwnGhost -> sendGhost [ style="solid" ];
+      ReqGhost -> sendGhost [ style="solid" ];
+    }
+    \enddot
+    \include Inciter/dg.ci
+
 */
 // *****************************************************************************
 #ifndef DG_h
@@ -64,8 +93,17 @@ class DG : public CBase_DG {
     //! Migrate constructor
     explicit DG( CkMigrateMessage* ) {}
 
+    //! Receive unique set of faces we potentially share with/from another chare
+    void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
+
     //! Receive ghost data on chare boundaries from fellow chare
-    void comadj( int fromch, const GhostData& ghost );
+    void comGhost( int fromch, const GhostData& ghost );
+
+    //! Receive requests for ghost data
+    void reqGhost( int fromch );
+
+    //! Send all of our ghost data to fellow chares
+    void sendGhost();
 
     //! Configure Charm++ reduction types for concatenating BC nodelists
     static void registerReducers();
@@ -87,6 +125,9 @@ class DG : public CBase_DG {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
       CBase_DG::pup(p);
+      p | m_solver;
+      p | m_nfac;
+      p | m_nadj;
       p | m_itf;
       p | m_disc;
       p | m_fd;
@@ -97,9 +138,15 @@ class DG : public CBase_DG {
       p | m_geoElem;
       p | m_lhs;
       p | m_rhs;
+      p | m_facecnt;
       p | m_msumset;
+      p | m_esuelTet;
+      p | m_ipface;
+      p | m_potBndFace;
+      p | m_bndFace;
+      p | m_ghostData;
+      p | m_ghostReq;
       p | m_ghost;
-      p | m_chBndFace;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -108,33 +155,21 @@ class DG : public CBase_DG {
     //@}
 
   private:
-    //! Node ID triplet denoting a tetrahedron face
-    using Triplet = std::array< std::size_t, 3 >;
-    // Hash functor for node Triplet
-    struct TripletHasher {
-      std::size_t operator()( const Triplet& key ) const {
-        return std::hash< std::size_t >()( key[0] ) ^
-               std::hash< std::size_t >()( key[1] ) ^
-               std::hash< std::size_t >()( key[2] );
-      }
-    };
-   //! \brief Key-equal function for node triplet in which neither the order nor
-   //!   the positions matter
-    struct TripletEq {
-      bool operator()( const Triplet& l, const Triplet& r ) const {
-        return (l[0] == r[0] || l[0] == r[1] || l[0] == r[2]) &&
-               (l[1] == r[0] || l[1] == r[1] || l[1] == r[2]) &&
-               (l[2] == r[0] || l[2] == r[1] || l[2] == r[2]);
-      }
-    };
-    //! Node ID triplets representing a tetrahedron face
-    using Faces = std::unordered_set< Triplet, TripletHasher, TripletEq >;
-    //! Tetrahedron face ID associated to node ID triplet
+    //! Face IDs associated to global node IDs of the face for each chare
+    //! \details The this maps stores tetrahedron cell faces and their
+    //!   associated local face IDs. A face is given by 3 global node IDs in
+    //!   Face. Then all of this data is grouped by chares (outer key) we
+    //!   communicated with along chare boundary faces.
     using FaceIDs =
-      std::unordered_map< Triplet, std::size_t, TripletHasher, TripletEq >;
+      std::unordered_map< int,  // chare ID faces shared with
+        std::unordered_map< tk::UnsMesh::Face,  // 3 global node IDs
+                            std::size_t,        // local face ID
+                            tk::UnsMesh::FaceHasher,
+                            tk::UnsMesh::FaceEq > >;
 
     tk::CProxy_Solver m_solver;
     //! Counter for face adjacency communication map
+    std::size_t m_nfac;
     std::size_t m_nadj;
     //! Field output iteration count
     uint64_t m_itf;
@@ -156,18 +191,40 @@ class DG : public CBase_DG {
     tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
+    //! Counter for chare-boundary face local IDs
+    std::size_t m_facecnt;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!    worker chares associated to their chare IDs
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
     //!   points. This is the same data as in Discretization::m_msum, but the
     //!   nodelist is stored as a set.
     std::unordered_map< int, std::unordered_set< std::size_t > > m_msumset;
+    //! Elements surrounding elements with -1 at boundaries, see genEsuelTet()
+    std::vector< int > m_esuelTet;
+    //! Internal + physical boundary faces
+    tk::UnsMesh::FaceSet m_ipface;
+    //! Faces associated to chares we potentially share boundary faces with
+    //! \details Compared to m_bndFace, this map stores a set of unique faces we
+    //!   only potentially share with fellow chares. This is because this data
+    //!   structure is derived from the the chare-node adjacency map and ths can
+    //!   be considered as an intermediate results towards m_bndFace, which only
+    //!   stores the faces (associated to chares) we actually need to
+    //!   communicate with.
+    std::unordered_map< int, tk::UnsMesh::FaceSet > m_potBndFace;
+    //! Face IDs associated to global node IDs of the face for each chare
+    //! \details Compared to m_potBndFace, this map stores those faces we
+    //!   actually share faces with (through which we need to communicate
+    //!   later). Also, this maps stores not only the unique faces associated to
+    //!   fellow chares, but also a newly assigned local face ID.
+    FaceIDs m_bndFace;
+    //! Ghost data associated to chare IDs we communicate with
+    std::unordered_map< int, GhostData > m_ghostData;
+    //! Chare IDs requesting ghost data
+    std::vector< int > m_ghostReq;
     //! Local element id associated to ghost remote id
     //! \details This map associates the local element id (map value) to the
     //!    (remote) element id of the ghost (map key).
     std::unordered_map< std::size_t, std::size_t > m_ghost;
-    //! ...
-    FaceIDs m_chBndFace;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -175,7 +232,13 @@ class DG : public CBase_DG {
       return m_disc[ thisIndex ].ckLocal();
     }
 
-    //! ...
+    //! Find chare for face (given by 3 global node IDs
+    int findchare( const tk::UnsMesh::Face& t );
+
+    //! Setup own ghost data on this chare
+    void setupGhost();
+
+    //! Convert chare-node adjacency map to hold sets instead of vectors
     std::unordered_map< int, std::unordered_set< std::size_t > >
     msumset() const;
 

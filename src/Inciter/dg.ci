@@ -25,7 +25,9 @@ module dg {
       entry DG( const CProxy_Discretization& disc,
                 const tk::CProxy_Solver& solver,
                 const FaceData& fd );
-      entry void comadj( int fromch, const GhostData& ghost );
+      entry void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
+      entry void comGhost( int fromch, const GhostData& ghost );
+      entry void reqGhost( int fromch );
       initnode void registerReducers();      
       entry void setup( tk::real v );
       entry void dt();
@@ -37,7 +39,6 @@ module dg {
 
       // High-level overview of the dependency and asynchronous call structure
       // ---------------------------------------------------------------------
-      // ...
       //
       // Directed Acyclic Graph (DAG):
       // -----------------------------
@@ -47,12 +48,17 @@ module dg {
       // Interpretation of the above DAG
       // -------------------------------
       // Control flow is from left to right and top to bottom.
+      //
+      // If every chare we communicate with has requested ghost data from us, we
+      // may fulfill the requests, but only if we have already setup our ghost
+      // data.
 
-      entry void wait4adj() {
-        when ownadj_complete(), comadj_complete() serial "adj" { adj(); } };
+      entry void wait4ghost() {
+        when ownghost_complete(), reqghost_complete() serial "ghost"
+        { sendGhost(); } };
 
-      entry void ownadj_complete();
-      entry void comadj_complete();
+      entry void ownghost_complete();
+      entry void reqghost_complete();
     };
 
   } // inciter::

@@ -21,7 +21,6 @@
 #include "Diagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "ExodusIIMeshWriter.h"
-#include "ExodusIIMeshReader.h"         // NOT NEEDED
 
 namespace inciter {
 
@@ -39,6 +38,7 @@ DG::DG( const CProxy_Discretization& disc,
         const tk::CProxy_Solver& solver,
         const FaceData& fd ) :
   m_solver( solver ),
+  m_nfac( 0 ),
   m_nadj( 0 ),
   m_itf( 0 ),
   m_disc( disc ),
@@ -53,200 +53,108 @@ DG::DG( const CProxy_Discretization& disc,
                                 m_disc[thisIndex].ckLocal()->Coord() ) ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
+  m_facecnt( fd.Inpofa().size()/3 ),
   m_msumset( msumset() ),
-  m_ghost(),
-  m_chBndFace()
+  m_esuelTet( tk::genEsuelTet( m_disc[thisIndex].ckLocal()->Inpoel(),
+                tk::genEsup( m_disc[thisIndex].ckLocal()->Inpoel(), 4 ) ) ),
+  m_ipface(),
+  m_potBndFace(),
+  m_bndFace(),
+  m_ghostData(),
+  m_ghostReq(),
+  m_ghost()
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
 {
   // Activate SDAG waits for face adjacency map (ghost data) calculation
-  wait4adj();
+  wait4ghost();
 
   auto d = Disc();
 
   const auto& gid = d->Gid();
   const auto& inpoel = d->Inpoel();
   const auto& inpofa = fd.Inpofa();
-  auto esup = tk::genEsup( inpoel, 4 );
-  auto esuel = tk::genEsuelTet( inpoel, esup );
-
-//   tk::ExodusIIMeshReader
-//     er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
-//   auto coord = er.readNodes( gid );
-//   const auto& x = coord[0];
-//   const auto& y = coord[1];
-//   const auto& z = coord[2];
 
   // Invert inpofa to enable searching for faces based on (global) node triplets
   Assert( inpofa.size() % 3 == 0, "Inpofa must contain triplets" );
-  Faces ibfaces;        // will store internal + physical boundary faces
-  for (std::size_t f=0; f<inpofa.size()/3; ++f) {
-    auto A = gid[ inpofa[f*3+0] ];
-    auto B = gid[ inpofa[f*3+1] ];
-    auto C = gid[ inpofa[f*3+2] ];
+  for (std::size_t f=0; f<inpofa.size()/3; ++f)
+    m_ipface.insert( {{{ gid[ inpofa[f*3+0] ],
+                         gid[ inpofa[f*3+1] ],
+                         gid[ inpofa[f*3+2] ] }}} );
 
-//     std::cout << thisIndex << " inpofa " << A << ", " << B << ", " << C << ":\n";
-//               << x[ inpofa[f*3+0] ] << ", "
-//               << y[ inpofa[f*3+0] ] << ", "
-//               << z[ inpofa[f*3+0] ] << "  "
-//               << x[ inpofa[f*3+1] ] << ", "
-//               << y[ inpofa[f*3+1] ] << ", "
-//               << z[ inpofa[f*3+1] ] << "  "
-//               << x[ inpofa[f*3+2] ] << ", "
-//               << y[ inpofa[f*3+2] ] << ", "
-//               << z[ inpofa[f*3+2] ] << '\n';
-//     Assert( !in_sumset( {{A,B,C}} ), "Face incorrectly in msum_set: " +
-//             std::to_string(A) + ',' + std::to_string(B) + ',' +
-//             std::to_string(C) + " on chare " + std::to_string(thisIndex) );
+  // At this point m_ipface has node-id-triplets (faces) on the internal
+  // chare-domain and on the physical boundary but not on chare boundaries,
+  // hence the name internal + physical boundary faces.
 
-    ibfaces.insert( {{{A,B,C}}} );
-  }
-
-  // At this point ibfaces has node-id-triplets (faces) on the internal
-  // chare-domain and on physical boundary but not on chare boundaries.
-
-  // Lambda to check if node triplet is on one of our chare's boundary
-  auto on_any_chbnd = [&]( const Triplet& t ) -> bool {
-    bool found = false;
+  // Lambda to find the boundary chare for a face (given by 3 global node IDs)
+  auto facechare = [&]( const tk::UnsMesh::Face& t ) -> int {
     for (const auto& n : m_msumset) {  // for all neighbor chares
-      // if all face nodes (in t) are on this chare boundary and (t is not an
-      // internal face or on a phsyical boundary), the face is on this chare
-      // boundary
       if ( n.second.find(t[0]) != end(n.second) &&
            n.second.find(t[1]) != end(n.second) &&
-           n.second.find(t[2]) != end(n.second) &&
-           ibfaces.find({{t[0],t[1],t[2]}}) == end(ibfaces) )
-       found = true;
+           n.second.find(t[2]) != end(n.second) )
+       return n.first;
     }
-    return found;
+    Throw( "Face not found on chare-node communication map" );
   };
 
-  // Build map associating face id to (global) node ID triplets on chare boundary
-  auto facecnt = ibfaces.size();  // will start new chare-boundary face IDs from
-  for (std::size_t e=0; e<esuel.size()/4; ++e) {
+  // Build a set of faces (each face given by 3 global node IDs) associated to
+  // chares we potentially share boundary faces with
+  for (std::size_t e=0; e<m_esuelTet.size()/4; ++e) {   // for all our tets
     auto mark = e*4;
-    for (std::size_t f=0; f<4; ++f) {
-      if (esuel[mark+f] == -1) {
-        auto A = gid[ inpoel[ mark + tk::lpofa[f][0] ] ];
-        auto B = gid[ inpoel[ mark + tk::lpofa[f][1] ] ];
-        auto C = gid[ inpoel[ mark + tk::lpofa[f][2] ] ];
-
-        // if does not exist in inpofa, assign new face ID on chare boundary
-        Triplet t{{ A, B, C }};
-        //if (ibfaces.find( t ) == end(ibfaces)) {
-        if (on_any_chbnd( t )) {
-          m_chBndFace[ t ] = facecnt++;
-          //std::cout << thisIndex << " chbnd (" << f << ")" << A << ", " << B << ", " << C << '\n';
-        } else {
-          //std::cout << "Found! (" << f << ")" << A << ", " << B << ", " << C << '\n';
-        }
-
+    for (std::size_t f=0; f<4; ++f)     // for all tet faces
+      if (m_esuelTet[mark+f] == -1) {   // if face has no outside-neighbor tet
+        tk::UnsMesh::Face t {{ gid[ inpoel[ mark + tk::lpofa[f][0] ] ],
+                               gid[ inpoel[ mark + tk::lpofa[f][1] ] ],
+                               gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
+        // if does not exist in ipface, store as a potential chare-boundary face
+        // associated to neighbor chare
+        if (m_ipface.find(t) == end(m_ipface))
+          m_potBndFace[ facechare(t) ].insert( t );
       }
-    }
   }
 
-  //std::cout << thisIndex << ": Chare faces: " << facecnt-ibfaces.size() << '\n';
-
-  // At this point m_chBndFace has new (local) face IDs (value) assigned to
-  // node-triplets (faces, key) only along our chare-boundary (for all chares we
-  // commuication with).
-
- std::cout << thisIndex << " bndface: ";
- for (const auto& f : m_chBndFace)
-   std::cout << f.first[0] << ',' << f.first[1] << ',' << f.first[2] << ' ';
- std::cout << '\n';
-
-
-//std::cout << thisIndex << "c: " << m_geoElem.nunk() << '\n';
-
-  // Collect tet ids, their face connectivity (given by 3 global node IDs, each
-  // triplet for potentially mulitple faces on the chare boundary), and their
-  // elem geometry data (see GhostData) associated to fellow chares adjacent to
-  // chare boundaries. Once received by fellow chares, these tets will become
-  // known as ghost elements.
-  std::unordered_map< int, GhostData > msum_el;
-  for (const auto& n : m_msumset) {  // for all neighbor chares
-    for (std::size_t e=0; e<esuel.size()/4; ++e) {  // for all cells in our chunk
-      auto mark = e*4;
-      for (std::size_t f=0; f<4; ++f) {  // for all cell faces
-        if (esuel[mark+f] == -1) {  // if face has no tet on the other side
-          // get global node IDs of face
-          auto A = gid[ inpoel[ mark + tk::lpofa[f][0] ] ];
-          auto B = gid[ inpoel[ mark + tk::lpofa[f][1] ] ];
-          auto C = gid[ inpoel[ mark + tk::lpofa[f][2] ] ];
-          auto i = n.second.find( A );
-          auto j = n.second.find( B );
-          auto k = n.second.find( C );
-          // if all face nodes are on this chare boundary
-          if ( i != end(n.second) && j != end(n.second) && k != end(n.second) &&
-               ibfaces.find({{A,B,C}}) == end(ibfaces) ) {
-            // will store ghost associated to neighbor chare
-            auto& ghost = msum_el[ n.first ];
-            // store tet id adjacent to chare boundary as key for ghost data
-            auto& tuple = ghost[ e ];
-            // if e has not yet been encountered, store geometry (only once)
-            auto& nodes = std::get< 0 >( tuple );
-            if (nodes.empty()) std::get< 1 >( tuple ) = m_geoElem[ e ];
-            // (always) store face node IDs on chare boundary, even if e stored
-            nodes.push_back( A );
-            nodes.push_back( B );
-            nodes.push_back( C );
-            // The search below should succeed, because we are looking for node
-            // triplets (faces) along our chare boundary and m_chBndFace should
-            // contain all faces along our chare boundary (adjacent to all
-            // chares we communicate with). However, this is not the case.
-            auto bf = m_chBndFace.find( {{A,B,C}} );
-            if (bf == end(m_chBndFace)) std::cout << A << ',' << B << ',' << C << " not found on sending chare " << thisIndex << '\n';
-          }
-        }
-      }
-    }
-  }
-
-  ownadj_complete();
-
-  // Note that while the face adjacency map is derived from the node adjacency
-  // map, the size of the face adjacency communication map (msum_el computed
-  // above) does not necessarily equal to the node adjacency map (d->Msum()),
-  // because while a node can be shared at a single corner or along an edge,
-  // that does not necessarily share a face as well (in other words, shared
-  // nodes or edges can exist that are not part of a shared face). So the chares
-  // we communicate with across faces are not necessarily the same as the chares
-  // we would communicate nodes with.
+  // Note that while the (potential) boundary-face adjacency map (m_potBndFace)
+  // is derived from the node adjacency map (m_msumset), their sizes is not
+  // necessarily the same. This is because while a node can be shared at a
+  // single corner or along an edge, that does not necessarily share a face as
+  // well (in other words, shared nodes or edges can exist that are not part of
+  // a shared face). So the chares we communicate with across faces are not
+  // necessarily the same as the chares we would communicate nodes with.
   //
-  // Since the sizes of the node and face adjacency maps are not the same,
-  // simply sending the tet ids adjacent to chare boundaries would be okay, but
-  // the receiving size would not necessarily know how many chares it must
-  // receive tet ids from. To solve this problem we send to chares that which we
-  // share at least a single node, which is the size of the node adjacency map,
-  // d->Msum(), but we either send a list of ghosts which share faces on the
-  // chare boundary or an empty ghost list if there is not a single tet that
-  // shares a face with the destination chare (only single nodes or edges). The
-  // assumption here is, of course, that the size of the face adjacency map is
-  // always smaller than or equal to that of the node adjacency map. Since the
-  // receive side already knows how many fellow chares it must receive shared
-  // node ids from, we can use that to detect completion of the number of
-  // receives. This simplifies the communication pattern and code for a small
-  // price of sending a few approximately empty messages (for those chare
-  // boundaries that only share individual nodes but not faces).
+  // Since the sizes of the node and face adjacency maps are not the same, while
+  // sending the faces on chare boundaries would be okay, however, the receiver
+  // would not necessarily know how many chares it must receive from. To solve
+  // this problem we send to chares which we share at least a single node with,
+  // i.e., rely on the node-adjacency map, but we either send a set of faces
+  // which do share faces on the chare boundary or an empty set if there is not
+  // a single face that shares a face with the destination chare (only single
+  // nodes or edges). The assumption here is, of course, that the size of the
+  // face adjacency map is always smaller than or equal to that of the node
+  // adjacency map, which is always true. Since the receive side already knows
+  // how many fellow chares it must receive shared node ids from, we use that to
+  // detect completion of the number of receives in comfac(). This simplifies
+  // the communication pattern and code for a small price of sending a few empty
+  // sets (for those chare boundaries that only share individual nodes but not
+  // faces).
 
-  // Send ghost data adjacent to chare boundaries to fellow workers (if any)
-  if (d->Msum().empty())
-    comadj_complete();
+  // Send sets of faces adjacent to chare boundaries to fellow workers (if any)
+  if (m_msumset.empty())        // in serial, skip setting up ghosts altogether
+    adj();
   else
-    for (const auto& c : d->Msum()) {
-      decltype(msum_el)::mapped_type ghost;
-      auto e = msum_el.find( c.first );
-      if (e != end(msum_el)) ghost = std::move( e->second );
-      thisProxy[ c.first ].comadj( thisIndex, ghost );
+    for (const auto& c : m_msumset) {   // for all chares we share nodes with
+      decltype(m_potBndFace)::mapped_type fs;      // will store face set
+      auto f = m_potBndFace.find( c.first );       // find face set for chare
+      if (f != end(m_potBndFace)) fs = std::move( f->second ); // if found, send
+      thisProxy[ c.first ].comfac( thisIndex, fs );
     }
 }
 
 std::unordered_map< int, std::unordered_set< std::size_t > >
 DG::msumset() const
 // *****************************************************************************
-// ...
+// Convert chare-node adjacency map to hold sets instead of vectors
+//! \return Chare-node adjacency map that holds sets instead of vectors
 // *****************************************************************************
 {
   auto d = Disc();
@@ -255,24 +163,153 @@ DG::msumset() const
   for (const auto& n : d->Msum())
     m[ n.first ].insert( n.second.cbegin(), n.second.cend() );
 
-//   std::cout << thisIndex << " msum_set: ";
-//   for (const auto& n : m_msumset)
-//     for (auto i : n.second)
-//       std::cout << i << ' ';
-//   std::cout << '\n';
-
   return m;
 }
 
 void
-DG::comadj( int fromch, const GhostData& ghost )
+DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
+// *****************************************************************************
+// Receive unique set of faces we potentially share with/from another chare
+// *****************************************************************************
+{
+  // Attempt to find sender chare among chares we potentially share faces with.
+  // Note that it is feasible that a sender chare called us but we do not have a
+  // set of faces associated to that chare. This can happen if we only share a
+  // single node or an edge but note a face with that chare.
+  auto b = m_potBndFace.find( fromch );
+  if (b != end(m_potBndFace)) {
+    auto& bndface = m_bndFace[ fromch ];  // will associate to sender chare
+    // try to find incoming faces among our faces we potentially share with
+    // fromch, if found, generate and assign new local ID to face (associated to
+    // sender chare)
+    for (const auto& t : infaces) {
+      if (b->second.find(t) != end(b->second))
+        bndface[ t ] = m_facecnt++;
+    }
+    // if at this point we have not found any face among our faces we
+    // potentially share with fromch, there is no need to keep an empty set of
+    // faces associated to fromch as we only share nodes or edges with it, but
+    // not faces
+    if (bndface.empty()) m_bndFace.erase( fromch );
+  }
+
+  if (++m_nfac == m_msumset.size()) {
+    // At this point m_bndFace is complete on this PE. This means that
+    // starting from the sets of faces we potentially share with fellow chares
+    // (m_potBndFace), we now only have those faces we actually share faces with
+    // (through which we need to communicate later). Also, m_bndFace not only
+    // has the unique faces associated to fellow chares, but also a newly
+    // assigned local face ID. We continue by starting setting up ghost data.
+    setupGhost();
+    // Besides setting up our own ghost data, we also issue requests (for ghost
+    // data) to those chares which we share faces with.
+    for (const auto& cf : m_bndFace)
+      thisProxy[ cf.first ].reqGhost( thisIndex );
+  }
+}
+
+void
+DG::setupGhost()
+// *****************************************************************************
+// Setup own ghost data on this chare
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto& gid = d->Gid();
+  const auto& inpoel = d->Inpoel();
+
+  // Collect tet ids, their face connectivity (given by 3 global node IDs, each
+  // triplet for potentially mulitple faces on the chare boundary), and their
+  // elem geometry data (see GhostData) associated to fellow chares adjacent to
+  // chare boundaries. Once received by fellow chares, these tets will become
+  // known as ghost elements and their data as ghost data.
+  for (std::size_t e=0; e<m_esuelTet.size()/4; ++e) {  // for all our tets
+    auto mark = e*4;
+    for (std::size_t f=0; f<4; ++f) {  // for all cell faces
+      if (m_esuelTet[mark+f] == -1) {  // if face has no outside-neighbor tet
+        auto A = gid[ inpoel[ mark + tk::lpofa[f][0] ] ];
+        auto B = gid[ inpoel[ mark + tk::lpofa[f][1] ] ];
+        auto C = gid[ inpoel[ mark + tk::lpofa[f][2] ] ];
+        auto c = findchare( {{A,B,C}} );
+        // It is possible that we do not find the chare for this face. We are
+        // looping through all of our tets and interrogating all faces that do
+        // not have neighboring tets but we only care about chare-boundary faces
+        // here as only those need ghost data. (m_esuelTet may also contain
+        // physical boundary faces.)
+        if (c > -1) {
+          // Will store ghost data associated to neighbor chare
+          auto& ghost = m_ghostData[ c ];
+          // Store tet id adjacent to chare boundary as key for ghost data
+          auto& tuple = ghost[ e ];
+          // If tetid e has not yet been encountered, store geometry (only once)
+          auto& nodes = std::get< 0 >( tuple );
+          if (nodes.empty()) std::get< 1 >( tuple ) = m_geoElem[ e ];
+          // (Always) store face node IDs on chare boundary, even if tetid e has
+          // already been stored. Thus we store potentially multiple faces along
+          // the same chare-boundary. This happens, e.g., when the boundary
+          // between chares is zig-zaggy enough to have 2 or even 3 faces of the
+          // same tet.
+          nodes.push_back( A );
+          nodes.push_back( B );
+          nodes.push_back( C );
+        }
+      }
+    }
+  }
+
+  // If our own ghost data is empty, we do not expect to requests, otherwise
+  // tell the runtime system that we have finished setting up our ghost data.
+  if (m_ghostData.empty()) adj(); else ownghost_complete();
+}
+
+void
+DG::reqGhost( int fromch )
+// *****************************************************************************
+// Receive requests for ghost data
+// *****************************************************************************
+{
+  // Buffer up requestor chare IDs
+  m_ghostReq.push_back( fromch );
+
+  // If every chare we communicate with has requested ghost data from us, we may
+  // fulfill the requests, but only if we have already setup our ghost data.
+  if (m_ghostReq.size() == m_bndFace.size()) reqghost_complete();
+}
+
+void
+DG::sendGhost()
+// *****************************************************************************
+// Send all of our ghost data to fellow chares
+// *****************************************************************************
+{
+  for (const auto& c : m_ghostData)
+    thisProxy[ c.first ].comGhost( thisIndex, c.second );
+}
+
+int
+DG::findchare( const tk::UnsMesh::Face& t )
+// *****************************************************************************
+// Find chare for face (given by 3 global node IDs
+//! \return chare ID if found, -1 if not
+// *****************************************************************************
+{
+  for (const auto& cf : m_bndFace)
+    if (cf.second.find(t) != end(cf.second))
+      return cf.first;
+  return -1;
+}
+
+void
+DG::comGhost( int fromch, const GhostData& ghost )
 // *****************************************************************************
 // Receive ghost data on chare boundaries from fellow chare
 // *****************************************************************************
 {
-  auto d = Disc();
+  // nodelist with fromch, currently only used for an assert
+  const auto& nl = tk::cref_find( m_msumset, fromch );
+  IGNORE(nl);
 
-  // Store ghosts sharing a face with our mesh chunk categorized by fellow chares
+  // Store ghost data coming from chare
   auto ghostcnt = m_u.nunk();    // will start new local cell ids from
   for (const auto& g : ghost) {  // loop over incoming ghost data
     auto e = g.first;  // (ghost) tet id on the other side of chare boundary
@@ -285,18 +322,13 @@ DG::comadj( int fromch, const GhostData& ghost )
       auto B = nodes[ n*3+1 ];
       auto C = nodes[ n*3+2 ];
       // must find face(A,B,C) in nodelist of chare-boundary adjacent to fromch
-      const auto& nl = tk::cref_find( m_msumset, fromch );// nodelist with fromch
       Assert( nl.find(A)!=end(nl) && nl.find(B)!=end(nl) && nl.find(C)!=end(nl),
-              "Ghost face not found on receiving end" );
-      // add new tet as element surrounding face(A,B,C)
-      // The search below should succeed, because we are looking for node
-      // triplets (faces) along our chare boundary and m_chBndFace should
-      // contain all faces along our chare boundary (adjacent to all chares we
-      // communicate with). However, this is not the case.
-      auto bf = m_chBndFace.find( {{A,B,C}} );
-      if (bf == end(m_chBndFace)) std::cout << A << ',' << B << ',' << C << " not found on receiving chare " << thisIndex << '\n';
-      //auto f = tk::cref_find( m_chBndFace, {{A,B,C}} );
-      //m_fd.Esuf()
+           "Ghost face not found in chare-node adjacency map on receiving end" );
+      // must find face(A,B,C) in boundary-face adjacency map
+      auto c = findchare({{A,B,C}});
+      IGNORE(c);
+      Assert( c > -1, "Ghost face not found in boundary-face adjacency map on "
+                      "receiving end" );
       // if ghost tet id not yet encountered on boundary with fromch
       if ( m_ghost.find(e) == end(m_ghost) ) {
         m_ghost[e] = ghostcnt++;  // assign new local tet id to remote ghost id
@@ -305,7 +337,7 @@ DG::comadj( int fromch, const GhostData& ghost )
     }
   }
 
-  if (++m_nadj == d->Msum().size()) comadj_complete();
+  if (++m_nadj == m_bndFace.size()) adj();
 }
 
 void
