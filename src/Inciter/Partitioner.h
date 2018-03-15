@@ -365,8 +365,7 @@ class Partitioner : public CBase_Partitioner {
     void generate_compact_inpoel();
 
     //! Uniformly refine our mesh replacing each tetrahedron with 8 new ones
-    void refine( const std::vector< std::size_t >& inpoel,
-                 const std::vector< std::size_t >& gid );
+    void refine( const std::vector< std::size_t >& inpoel );
 
     //! Compute final result of reordering
     void reordered();

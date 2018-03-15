@@ -117,7 +117,7 @@ Partitioner::Partitioner(
   m_coord = mr.readCoords( gid );
 
   // Optionally refine mesh if requested
-  refine( inp, gid );
+  refine( inp );
 
   // Compute cell centroids if a geometric partitioner is selected
   computeCentroids( lid );
@@ -957,8 +957,7 @@ Partitioner::generate_compact_inpoel()
 
 
 void
-Partitioner::refine( const std::vector< std::size_t >& inpoel,
-                     const std::vector< std::size_t >& gid )
+Partitioner::refine( const std::vector< std::size_t >& inpoel )
 // *****************************************************************************
 // Optionally refine mesh if requested by user
 // *****************************************************************************
