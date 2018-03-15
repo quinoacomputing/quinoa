@@ -964,14 +964,14 @@ Partitioner::refine( const std::vector< std::size_t >& inpoel,
 // *****************************************************************************
 {
   const auto ir = g_inputdeck.get< tag::amr, tag::init >();
-  if (ir == ctr::AMRInitialType::UNIFORM) {
+  if (!ir.empty()) {
 
     auto orig_inpoel = inpoel;
     auto orig_coord = m_coord;
 
     AMR::mesh_adapter_t refiner( orig_inpoel );
 
-    for (std::size_t level=0; level<4; ++level) {
+    for (std::size_t level=0; level<2; ++level) {
 
       refiner.uniform_refinement();
       auto refined_inpoel = refiner.tet_store.get_active_inpoel();

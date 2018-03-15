@@ -488,10 +488,15 @@ namespace deck {
            tk::grm::block< use< kw::end >,
                            tk::grm::process<
                              use< kw::amr_initial >,
-                             tk::grm::store_inciter_option<
-                               ctr::AMRInitial,
-                               tag::amr, tag::init >,
+                             tk::grm::store_back_option< use,
+                                                         ctr::AMRInitial,
+                                                         tag::amr,
+                                                         tag::init >,
                              pegtl::alpha >,
+                           tk::grm::process<
+                             use< kw::amr_uniform_levels >,
+                             tk::grm::Store< tag::amr, tag::levels >,
+                             pegtl::digit >,
                            tk::grm::process<
                              use< kw::amr_error >,
                              tk::grm::store_inciter_option<

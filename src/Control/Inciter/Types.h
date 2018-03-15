@@ -41,9 +41,10 @@ using selects = tk::tuple::tagged_tuple<
 
 //! Adaptive-mesh refinement options
 using amr = tk::tuple::tagged_tuple<
-  tag::amr,          bool,                 //!< AMR on/off
-  tag::init,         AMRInitialType,       //!< Initial AMR type
-  tag::error,        AMRErrorType          //!< Error estimator for AMR
+  tag::amr,    bool,                             //!< AMR on/off
+  tag::init,   std::vector< AMRInitialType >,    //!< List of initial AMR types
+  tag::levels, unsigned int,                     //!< Initial uniform levels
+  tag::error,  AMRErrorType                      //!< Error estimator for AMR
 >;
 
 //! Discretization parameters storage

@@ -9,7 +9,6 @@ add_library(Inciter
             Transporter.C
             Partitioner.C
             FaceData.C
-            MeshReader.C
             Discretization.C
             MatCG.C
             DiagCG.C
@@ -19,6 +18,7 @@ add_library(Inciter
             DiagReducer.C
             Diagnostics.C
             BoundaryConditions.C
+            MeshReader.C
 )
 
 add_library(MeshRefinement

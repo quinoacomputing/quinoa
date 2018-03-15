@@ -366,7 +366,7 @@ Transporter::partition()
 
   // Print out info on load distribution
   const auto ir = g_inputdeck.get< tag::amr, tag::init >();
-  if (ir == ctr::AMRInitialType::UNIFORM)
+  if (!ir.empty())
     m_print.section( "Load distribution (before initial mesh refinement)" );
   else
     m_print.section( "Load distribution" );
@@ -390,13 +390,15 @@ Transporter::partition()
   const auto amr = g_inputdeck.get< tag::amr, tag::amr >();
   if (amr) {
     m_print.section( "Adaptive mesh refinement (AMR)" );
-    m_print.Item< ctr::AMRInitial, tag::amr, tag::init >();
+    m_print.ItemVec< ctr::AMRInitial >
+                   ( g_inputdeck.get< tag::amr, tag::init >() );
+    m_print.item( "Initial uniform levels",
+                  g_inputdeck.get< tag::amr, tag::levels >() );
     m_print.Item< ctr::AMRError, tag::amr, tag::error >();
     // Print out initially refined  mesh statistics
-    if (ir == ctr::AMRInitialType::UNIFORM) {
+    if (!ir.empty()) {
       m_print.section( "Initial mesh refinement" );
-      m_print.item( "Final number of tetrahedra",
-        std::to_string(m_nelem*8) + " (8*" + std::to_string(m_nelem) + ')' );
+      m_print.item( "Final number of tetrahedra", "..." );
     }
   }
 
