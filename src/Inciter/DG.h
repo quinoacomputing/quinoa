@@ -15,7 +15,7 @@
     asynchronous, overlapping computation and communication. The algorithm
     utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
     overview of the algorithm structure and how it interfaces with Charm++ is
-    discussed in the Charm++ interface file src/Inciter/diagcg.ci.
+    discussed in the Charm++ interface file src/Inciter/dg.ci.
 
     #### Call graph ####
     The following is a directed acyclic graph (DAG) that outlines the
