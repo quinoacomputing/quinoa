@@ -392,8 +392,6 @@ Transporter::partition()
     m_print.section( "Adaptive mesh refinement (AMR)" );
     m_print.ItemVec< ctr::AMRInitial >
                    ( g_inputdeck.get< tag::amr, tag::init >() );
-    m_print.item( "Initial uniform levels",
-                  g_inputdeck.get< tag::amr, tag::levels >() );
     m_print.Item< ctr::AMRError, tag::amr, tag::error >();
     // Print out initially refined  mesh statistics
     if (!ir.empty()) {

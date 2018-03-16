@@ -494,10 +494,6 @@ namespace deck {
                                                          tag::init >,
                              pegtl::alpha >,
                            tk::grm::process<
-                             use< kw::amr_uniform_levels >,
-                             tk::grm::Store< tag::amr, tag::levels >,
-                             pegtl::digit >,
-                           tk::grm::process<
                              use< kw::amr_error >,
                              tk::grm::store_inciter_option<
                                ctr::AMRError,

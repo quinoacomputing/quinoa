@@ -3720,9 +3720,7 @@ struct amr_initial_info {
     that happens before t = 0. Example: initial uniform initial ic inital
     uniform, which yiedls an initial uniform refinement, followed by a
     refinement based on the numerical error computed based on the initial
-    conditions, followed by another step of unfirom refinement. The number of
-    levels in the uniform refinement step(s) is controlled by the keyword
-    'uniform_levels' whose default is 1.)"; }
+    conditions, followed by another step of unfirom refinement.)"; }
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
@@ -3732,23 +3730,6 @@ struct amr_initial_info {
   };
 };
 using amr_initial = keyword< amr_initial_info, TAOCPP_PEGTL_STRING("initial") >;
-
-struct amr_uniform_levels_info {
-  static std::string name() { return "uniform_levels"; }
-  static std::string shortDescription() { return
-    "Select the number of levels for uniform initial mesh refinement"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to set the number levels used for uniform initial
-    mesh refinement.)"; }
-  struct expect {
-    using type = unsigned int;
-    static constexpr type lower = 1;
-    static std::string description() { return "uint"; }
-    static std::string choices() { return "positive integer"; }
-  };
-};
-using amr_uniform_levels =
-  keyword< amr_uniform_levels_info, TAOCPP_PEGTL_STRING("uniform_levels") >;
 
 struct amr_jump_info {
   static std::string name() { return "jump"; }
