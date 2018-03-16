@@ -441,7 +441,77 @@ DG::dt()
 
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-              CkCallback(CkReductionTarget(DG,advance), thisProxy) );
+              CkCallback(CkReductionTarget(DG,commGhostData), thisProxy) );
+}
+
+void
+DG::commGhostData( tk::real newdt )
+// *****************************************************************************
+// Communication step to send chare-boundary ghost data to neighboring chares
+// *****************************************************************************
+{
+  if (!m_ghostData.empty())
+  {
+    for(const auto& n : m_ghostData)
+    {
+      std::vector< std::size_t > geid;
+      std::vector< std::vector< tk::real > > gd;
+      for(const auto& i : n.second)
+      {
+        geid.push_back( i.first );
+        gd.push_back( m_u[i.first] );
+      }
+      thisProxy[ n.first ].comrhs( geid, gd );
+    }
+  }
+
+  advance( newdt );
+}
+
+void
+DG::comrhs(const std::vector< std::size_t >& geid,
+           const std::vector< std::vector< tk::real > >& V)
+// *****************************************************************************
+//  Receive chare-boundary ghost data from neighboring chares
+//! \param[in] geid Global element IDs of the ghost element for which we receive
+//!   data
+//! \param[in] V Ghost element data
+//! \details This function receives contributions to m_u, m_geoElem.
+// *****************************************************************************
+{
+  Assert( V.size() == geid.size(), "Size mismatch in DG::comrhs()" );
+
+  for (std::size_t i=0; i<geid.size(); ++i)
+  {
+    auto leid = tk::cref_find( m_ghost, geid[i] );
+    Assert( leid < m_u.nunk(), "Indexing out of bounds in DG::comrhs()" );
+    for (std::size_t c=0; c<m_u.nprop(); ++c)
+    {
+      m_u(leid, c, 0) = V[i][c];
+    }
+  }
+}
+
+void
+DG::advance( tk::real newdt )
+// *****************************************************************************
+// Advance equations to next time step
+//! \param[in] newdt Size of this new time step
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Set new time step size
+  d->setdt( newdt );
+
+  // Compute rhs for next time step
+  rhs();
+
+  // Advance solution/time-stepping
+  solve( newdt );
+
+  // Prepare for next time step
+  next();
 }
 
 void
@@ -560,28 +630,6 @@ DG::solve( tk::real deltat )
   m_u = m_un + deltat * m_rhs/m_lhs;
 
   m_un = m_u;
-}
-
-void
-DG::advance( tk::real newdt )
-// *****************************************************************************
-// Advance equations to next time step
-//! \param[in] newdt Size of this new time step
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Set new time step size
-  d->setdt( newdt );
-
-  // Compute rhs for next time step
-  rhs();
-
-  // Advance solution/time-stepping
-  solve( newdt );
-
-  // Prepare for next time step
-  next();
 }
 
 void

@@ -32,7 +32,9 @@ module dg {
       entry void setup( tk::real v );
       entry void dt();
       entry void eval();
-      entry [reductiontarget] void advance( tk::real newdt );
+      entry void comrhs(const std::vector< std::size_t >& geid,
+                        const std::vector< std::vector< tk::real > >& V);
+      entry [reductiontarget] void commGhostData( tk::real newdt );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".

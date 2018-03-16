@@ -114,8 +114,12 @@ class DG : public CBase_DG {
     //! Compute time step size
     void dt();
 
-    //! Advance equations to next time step
-    void advance( tk::real newdt );
+    //! Send chare-boundary ghost data to neighboring chares
+    void commGhostData( tk::real newdt );
+
+    //! Receive chare-boundary ghost data from neighboring chares
+    void comrhs(const std::vector< std::size_t >& geid,
+                const std::vector< std::vector< tk::real > >& V);
 
     //! Evaluate whether to continue with next step
     void eval();
@@ -244,6 +248,9 @@ class DG : public CBase_DG {
 
     //! Continue after face adjacency communication map is complete on this chare
     void adj();
+
+    //! Advance equations to next time step
+    void advance( tk::real newdt );
 
     //! Compute left hand side
     void lhs();
