@@ -111,6 +111,7 @@ using TransportPDEParameters = tk::tuple::tagged_tuple<
 
 //! Compressible flow equation parameters storage
 using CompFlowPDEParameters = tk::tuple::tagged_tuple<
+  tag::depvar,       std::vector< char >,
   tag::physics,      std::vector< PhysicsType >,
   tag::problem,      std::vector< ProblemType >,
   tag::bcdir,        std::vector< std::vector<

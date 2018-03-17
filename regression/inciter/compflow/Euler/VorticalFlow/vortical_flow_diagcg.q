@@ -20,6 +20,7 @@ inciter
 
   compflow
 
+    depvar c
     physics euler
     problem vortical_flow
 

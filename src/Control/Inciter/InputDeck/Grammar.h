@@ -110,7 +110,7 @@ namespace grm {
       // Error out if no dependent variable has been selected
       auto& depvar = stack.template get< tag::param, eq, tag::depvar >();
       if (depvar.empty() || depvar.size() != neq.get< eq >())
-        depvar.push_back( 'c' );
+        Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
       // If no number of components has been selected, default to 1
       auto& ncomp = stack.template get< tag::component, eq >();
       if (ncomp.empty() || ncomp.size() != neq.get< eq >())
@@ -157,6 +157,10 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       using inciter::deck::neq;
+      // Error out if no dependent variable has been selected
+      auto& depvar = stack.template get< tag::param, eq, tag::depvar >();
+      if (depvar.empty() || depvar.size() != neq.get< eq >())
+        Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
       // Set number of components to 5 (mass, 3 x mom, energy)
       stack.template get< tag::component, eq >().push_back( 5 );
       // If physics type is not given, default to 'euler'
@@ -427,6 +431,9 @@ namespace deck {
                                             ctr::Problem,
                                             tag::compflow,
                                             tag::problem >,
+                          tk::grm::depvar< use,
+                                           tag::compflow,
+                                           tag::depvar >,
                            //ic_compflow< tag::compflow, tag::ic > >,
                            material_properties< tag::compflow >,
                            parameter< tag::compflow, kw::npar, tag::npar,
