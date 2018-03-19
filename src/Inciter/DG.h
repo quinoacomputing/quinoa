@@ -151,6 +151,7 @@ class DG : public CBase_DG {
       p | m_ghostData;
       p | m_ghostReq;
       p | m_ghost;
+      p | m_esuf;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -229,6 +230,8 @@ class DG : public CBase_DG {
     //! \details This map associates the local element id (map value) to the
     //!    (remote) element id of the ghost (map key).
     std::unordered_map< std::size_t, std::size_t > m_ghost;
+    //! Element surrounding faces
+    std::vector< int > m_esuf;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

@@ -76,6 +76,8 @@ DG::DG( const CProxy_Discretization& disc,
   const auto& inpoel = d->Inpoel();
   const auto& inpofa = fd.Inpofa();
 
+  m_esuf = fd.Esuf();
+
   // Invert inpofa to enable searching for faces based on (global) node triplets
   Assert( inpofa.size() % 3 == 0, "Inpofa must contain triplets" );
   for (std::size_t f=0; f<inpofa.size()/3; ++f)
@@ -357,6 +359,50 @@ DG::adj()
   m_un.enlarge( m_ghost.size() );
   m_lhs.enlarge( m_ghost.size() );
   m_rhs.enlarge( m_ghost.size() );
+
+  std::vector< int > esufch;
+  esufch.resize(2*m_facecnt - m_esuf.size());
+
+  if (!m_ghostData.empty())
+  {
+    for (const auto& n : m_bndFace)
+    {
+      auto igd = m_ghostData.find( n.first );
+      if ( igd != end(m_ghostData) )
+      {
+        const auto& ngd = igd->second;
+        for (const auto& i : ngd)
+        {
+          // tet-id adjacent to chare-face
+          auto e = i.first;
+          // node-ids of chare-face(s)
+          const auto& nodes = std::get< 0 >( i.second );
+          Assert( nodes.size() % 3 == 0, "Face node IDs must be triplets" );
+          for (std::size_t in=0; in<nodes.size(); ++in)
+          {
+            auto A = nodes[ in*3+0 ];
+            auto B = nodes[ in*3+1 ];
+            auto C = nodes[ in*3+2 ];
+            const std::array< std::size_t, 3 >& t = {{A, B, C}};
+
+            // find if this node-triplet exists on the current m_bndFace
+            auto it = n.second.find(t);
+            if ( it != end(n.second) )
+            {
+              // a matching face in m_ghostData and m_bndFace is found
+              // now esufch can be updated
+              auto f = it->second - m_esuf.size()/2;
+
+              esufch[2*f + 0] = static_cast< int >(e);
+              esufch[2*f + 1] = static_cast< int >(m_ghost[e]);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  m_esuf.insert( std::end(m_esuf), std::begin(esufch), std::end(esufch) );
 
 //std::cout << thisIndex << "a: " << m_geoElem.nunk() << ", " << m_lhs.nunk() << '\n';
 
