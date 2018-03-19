@@ -30,8 +30,7 @@ Integrator::Integrator( CProxy_Distributor& hostproxy,
   m_collproxy( collproxy ),
   m_particles( npar, g_inputdeck.get< tag::component >().nprop() ),
   m_stat( m_particles,
-          g_inputdeck.get< tag::component >().offsetmap( 
-            g_inputdeck.depvars() ),
+          g_inputdeck.get< tag::component >().offsetmap( g_inputdeck ),
           g_inputdeck.get< tag::stat >(),
           g_inputdeck.get< tag::pdf >(),
           g_inputdeck.get< tag::discr, tag::binsize >() )

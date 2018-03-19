@@ -79,6 +79,8 @@ namespace grm {
     EXISTS,             //!< Variable already used
     NODEPVAR,           //!< Dependent variable has not been specified
     NOSUCHDEPVAR,       //!< Dependent variable has not been previously selected
+    NOSUCHCOMPONENT,    //!< No such scalar component
+    POSITIVECOMPONENT,  //!< Scalar component must be positive
     NOTALPHA,           //!< Variable must be alphanumeric
     NOTERMS,            //!< Statistic need a variable
     ODDSPIKES,          //!< Incomplete spikes block
@@ -134,11 +136,21 @@ namespace grm {
       "here is appropriate, but in order to use this keyword in this context, "
       "the option must be selected upstream." },
     { MsgKey::EXISTS, "Dependent variable already used." },
-    { MsgKey::NOSUCHDEPVAR, "Dependent variable not selected. To request a "
-      "statistic or PDF involving this variable, or use this variable as a "
-      "coefficients policy variable, an equation must be specified "
+    { MsgKey::NOSUCHDEPVAR, "Dependent variable not selected upstream in the "
+      "input file. To request a statistic or PDF involving this variable, use "
+      "this variable as a coefficients policy variable, or use this variable as "
+      "a refinement variable, an equation must be specified "
       "upstream in the control file assigning this variable to an "
       "equation to be integrated using the depvar keyword." },
+    { MsgKey::NOSUCHCOMPONENT, "Scalar component, used in conjunction with "
+      "dependent variable, does not exist in the preceeding block. This happens "
+      "when referring to a scalar component of a multi-component system of "
+      "equations that has less than the number of total components than the one "
+      "specified. Note that numbering components starts from 1 and their "
+      "maximum value is the number specified by the 'ncomp' keyword, if "
+      "applicable for the equation block the component specification refers "
+      "to." },
+    { MsgKey::POSITIVECOMPONENT, "Scalar component must be positive." },
     { MsgKey::NOTALPHA, "Variable not alphanumeric." },
     { MsgKey::HEIGHTSPIKES, "The sum of all spike heights given in the "
       "spike...end block does not add up to unity. A spike...end block "
@@ -1044,7 +1056,8 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       // field ID numbers start at 0
       auto f = stack.template convert< long >( in.string() ) - 1;
-      Assert( f>=0, "Field value must be non-negative in tk::grm::save_field" );
+      if (f < 0)
+        Message< Stack, ERROR, MsgKey::POSITIVECOMPONENT >( stack, in );
       field = static_cast< ncomp_t >( f );
     }
   };

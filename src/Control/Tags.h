@@ -111,6 +111,7 @@ struct theta {};
 struct mu {};
 struct timescale {};
 struct depvar {};
+struct refvar {};
 struct virtualization {};
 struct omega {};
 struct slm {};

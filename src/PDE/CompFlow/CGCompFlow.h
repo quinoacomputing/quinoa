@@ -39,7 +39,15 @@ class CompFlow {
 
   public:
     //! \brief Constructor
-    explicit CompFlow( ncomp_t ) : m_offset( 0 ) {}
+    explicit CompFlow( ncomp_t c ) :
+      m_c( c ),
+      m_ncomp(
+        g_inputdeck.get< tag::component >().get< tag::compflow >().at(c) ),
+      m_offset(
+        g_inputdeck.get< tag::component >().offset< tag::compflow >(c) )
+    {
+       Assert( m_ncomp == 5, "Number of CompFlow PDE components must be 5" );
+    }
 
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in] coord Mesh node coordinates
@@ -55,7 +63,7 @@ class CompFlow {
       const auto& z = coord[2];
       // set initial and boundary conditions using problem policy
       for (ncomp_t i=0; i<coord[0].size(); ++i) {
-        const auto s = Problem::solution( 0, x[i], y[i], z[i], t );
+        const auto s = Problem::solution( m_c, x[i], y[i], z[i], t );
         unk(i,0,m_offset) = s[0]; // rho
         unk(i,1,m_offset) = s[1]; // rho * u
         unk(i,2,m_offset) = s[2]; // rho * v
@@ -167,12 +175,9 @@ class CompFlow {
     {
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
-      Assert( R.nunk() == coord[0].size() && R.nprop() == 5,
+      Assert( R.nunk() == coord[0].size(),
               "Number of unknowns and/or number of components in right-hand "
               "side vector incorrect" );
-      Assert( U.nprop() == 5,
-              "Number of components in solution vector must be 5" );
-      Assert( R.nprop() == 5, "Number of components in rhs must be 5" );
 
       const auto& x = coord[0];
       const auto& y = coord[1];
@@ -242,10 +247,10 @@ class CompFlow {
 
         // add (optional) source to all equations
         std::array< std::array< tk::real, 5 >, 4 > s{{
-          Problem::src( 0, x[N[0]], y[N[0]], z[N[0]], t ),
-          Problem::src( 0, x[N[1]], y[N[1]], z[N[1]], t ),
-          Problem::src( 0, x[N[2]], y[N[2]], z[N[2]], t ),
-          Problem::src( 0, x[N[3]], y[N[3]], z[N[3]], t ) }};
+          Problem::src( m_c, x[N[0]], y[N[0]], z[N[0]], t ),
+          Problem::src( m_c, x[N[1]], y[N[1]], z[N[1]], t ),
+          Problem::src( m_c, x[N[2]], y[N[2]], z[N[2]], t ),
+          Problem::src( m_c, x[N[3]], y[N[3]], z[N[3]], t ) }};
         for (std::size_t c=0; c<5; ++c)
           for (std::size_t a=0; a<4; ++a)
             Ue.var(ue[c],e) += d/4.0 * s[a][c];
@@ -464,7 +469,7 @@ class CompFlow {
                  const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< tk::real >& v,
                  tk::Fields& U ) const
-    { return Problem::fieldOutput( 0, m_offset, t, V, v, coord, U ); }
+    { return Problem::fieldOutput( m_c, m_offset, t, V, v, coord, U ); }
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
@@ -472,6 +477,8 @@ class CompFlow {
     { return Problem::names(); }
 
   private:
+    const ncomp_t m_c;                  //!< Equation system index
+    const ncomp_t m_ncomp;              //!< Number of components in this PDE
     const ncomp_t m_offset;             //!< Offset PDE operates from
 };
 
