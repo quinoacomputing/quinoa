@@ -87,9 +87,10 @@ class DGPDE {
     void rhs( tk::real t,
               const tk::Fields& geoFace,
               const inciter::FaceData& fd,
+              const std::vector< int >& esuf,
               const tk::Fields& U,
               tk::Fields& R ) const
-    { self->rhs( t, geoFace, fd, U, R ); }
+    { self->rhs( t, geoFace, fd, esuf, U, R ); }
 
     //! Public interface for computing the minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -140,6 +141,7 @@ class DGPDE {
       virtual void rhs( tk::real,
                         const tk::Fields&,
                         const inciter::FaceData&,
+                        const std::vector< int >&,
                         const tk::Fields&,
                         tk::Fields& ) const = 0;
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
@@ -170,9 +172,10 @@ class DGPDE {
       void rhs( tk::real t,
                 const tk::Fields& geoFace,
                 const inciter::FaceData& fd,
+                const std::vector< int >& esuf,
                 const tk::Fields& U,
                 tk::Fields& R ) const override
-      { data.rhs( t, geoFace, fd, U, R ); }
+      { data.rhs( t, geoFace, fd, esuf, U, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override

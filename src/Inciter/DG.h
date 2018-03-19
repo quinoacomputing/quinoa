@@ -143,6 +143,7 @@ class DG : public CBase_DG {
       p | m_lhs;
       p | m_rhs;
       p | m_facecnt;
+      p | m_nchGhost;
       p | m_msumset;
       p | m_esuelTet;
       p | m_ipface;
@@ -198,6 +199,8 @@ class DG : public CBase_DG {
     tk::Fields m_rhs;
     //! Counter for chare-boundary face local IDs
     std::size_t m_facecnt;
+    //! Counter for chare-face ghosts for this mesh chunk
+    std::size_t m_nchGhost;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!    worker chares associated to their chare IDs
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
@@ -226,10 +229,16 @@ class DG : public CBase_DG {
     std::unordered_map< int, GhostData > m_ghostData;
     //! Chare IDs requesting ghost data
     std::vector< int > m_ghostReq;
-    //! Local element id associated to ghost remote id
-    //! \details This map associates the local element id (map value) to the
-    //!    (remote) element id of the ghost (map key).
-    std::unordered_map< std::size_t, std::size_t > m_ghost;
+    //! Local element id associated to ghost remote id charewise
+    //! \details This map associates the local element id (inner map value) to
+    //!    the (remote) element id of the ghost (inner map key) based on the
+    //!    chare id (outer map key) this remote element lies in.
+    std::map< int, std::unordered_map< std::size_t, std::size_t > > m_ghost;
+    //! Local element id (map key) associated to the node-triplet of chare-faces
+    std::unordered_map< tk::UnsMesh::Face,  // 3 global node IDs
+                        std::size_t,        // local element/tet ID
+                        tk::UnsMesh::FaceHasher,
+                        tk::UnsMesh::FaceEq > m_localChareTet;
     //! Element surrounding faces
     std::vector< int > m_esuf;
 
@@ -251,6 +260,21 @@ class DG : public CBase_DG {
 
     //! Continue after face adjacency communication map is complete on this chare
     void adj();
+
+    //! \brief Fill the elements surrounding face data structure with the
+    //!    chare-face information
+    //! \details This function updates the incomplete m_esuf so that the left
+    //!   and  right element id is filled in. Prior to this function being
+    //!   called, m_esuf does not have face-element connectivity for chare faces
+    //!   but only for physical boundaries and internal faces which are not chare 
+    //!   faces. The chare-face nodes from m_bndFace are matched with those in
+    //!   m_ghostData to obtain the remote element id of the ghost. Then, this
+    //!   id is mapped to the local tet id using m_ghost, which is required to 
+    //!   be stored as the right element in m_esuf. The left element is obtained
+    //!   from m_localChareTet. The face numbering is such that it
+    //!   stores the connectivity, first for the physical boundary faces,
+    //!   followed by the internal faces, then followed by the chare faces.
+    void fillEsuf();
 
     //! Advance equations to next time step
     void advance( tk::real newdt );

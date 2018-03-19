@@ -54,6 +54,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_facecnt( fd.Inpofa().size()/3 ),
+  m_nchGhost( 0 ),
   m_msumset( msumset() ),
   m_esuelTet( tk::genEsuelTet( m_disc[thisIndex].ckLocal()->Inpoel(),
                 tk::genEsup( m_disc[thisIndex].ckLocal()->Inpoel(), 4 ) ) ),
@@ -185,8 +186,10 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
     // fromch, if found, generate and assign new local ID to face (associated to
     // sender chare)
     for (const auto& t : infaces) {
-      if (b->second.find(t) != end(b->second))
+      if (b->second.find(t) != end(b->second)){
         bndface[ t ] = m_facecnt++;
+        std::cout << fromch << " : " << m_facecnt-m_fd.Ntfac() << "\n";
+      }
     }
     // if at this point we have not found any face among our faces we
     // potentially share with fromch, there is no need to keep an empty set of
@@ -243,6 +246,7 @@ DG::setupGhost()
           auto& ghost = m_ghostData[ c ];
           // Store tet id adjacent to chare boundary as key for ghost data
           auto& tuple = ghost[ e ];
+          m_localChareTet[ {{A,B,C}} ] = e;
           // If tetid e has not yet been encountered, store geometry (only once)
           auto& nodes = std::get< 0 >( tuple );
           if (nodes.empty()) std::get< 1 >( tuple ) = m_geoElem[ e ];
@@ -332,8 +336,9 @@ DG::comGhost( int fromch, const GhostData& ghost )
       Assert( c > -1, "Ghost face not found in boundary-face adjacency map on "
                       "receiving end" );
       // if ghost tet id not yet encountered on boundary with fromch
-      if ( m_ghost.find(e) == end(m_ghost) ) {
-        m_ghost[e] = ghostcnt++;  // assign new local tet id to remote ghost id
+      auto& ghostelem = m_ghost[fromch];
+      if ( ghostelem.find(e) == end(ghostelem) ) {
+        ghostelem[e] = ghostcnt++;  // assign new local tet id to remote ghost id
         m_geoElem.push_back( geo );  // store ghost elem geometry
       }
     }
@@ -352,62 +357,73 @@ DG::adj()
 //   for (const auto& g : m_ghost) std::cout << g.first << ":" << g.second << ' ';
 //   std::cout << '\n';
 
-//std::cout << thisIndex << "b: " << m_geoElem.nunk() << ", " << m_ghost.size() << '\n';
-
-  // Enlarge lhs, rhs, and solution to accommodate ghost cells on chare boundaries
-  m_u.enlarge( m_ghost.size() );
-  m_un.enlarge( m_ghost.size() );
-  m_lhs.enlarge( m_ghost.size() );
-  m_rhs.enlarge( m_ghost.size() );
-
-  std::vector< int > esufch;
-  esufch.resize(2*m_facecnt - m_esuf.size());
-
-  if (!m_ghostData.empty())
+  for (const auto& n : m_ghost)
   {
-    for (const auto& n : m_bndFace)
-    {
-      auto igd = m_ghostData.find( n.first );
-      if ( igd != end(m_ghostData) )
-      {
-        const auto& ngd = igd->second;
-        for (const auto& i : ngd)
-        {
-          // tet-id adjacent to chare-face
-          auto e = i.first;
-          // node-ids of chare-face(s)
-          const auto& nodes = std::get< 0 >( i.second );
-          Assert( nodes.size() % 3 == 0, "Face node IDs must be triplets" );
-          for (std::size_t in=0; in<nodes.size(); ++in)
-          {
-            auto A = nodes[ in*3+0 ];
-            auto B = nodes[ in*3+1 ];
-            auto C = nodes[ in*3+2 ];
-            const std::array< std::size_t, 3 >& t = {{A, B, C}};
-
-            // find if this node-triplet exists on the current m_bndFace
-            auto it = n.second.find(t);
-            if ( it != end(n.second) )
-            {
-              // a matching face in m_ghostData and m_bndFace is found
-              // now esufch can be updated
-              auto f = it->second - m_esuf.size()/2;
-
-              esufch[2*f + 0] = static_cast< int >(e);
-              esufch[2*f + 1] = static_cast< int >(m_ghost[e]);
-            }
-          }
-        }
-      }
-    }
+    m_nchGhost += n.second.size();
   }
 
-  m_esuf.insert( std::end(m_esuf), std::begin(esufch), std::end(esufch) );
+  std::cout << thisIndex 
+            << "b: " << m_facecnt-m_fd.Ntfac() 
+            << ", " << m_nchGhost << '\n';
+
+  // Enlarge lhs, rhs, and solution to accommodate ghost cells on chare boundaries
+  m_u.enlarge( m_nchGhost );
+  m_un.enlarge( m_nchGhost );
+  m_lhs.enlarge( m_nchGhost );
+  m_rhs.enlarge( m_nchGhost );
+
+  fillEsuf();
 
 //std::cout << thisIndex << "a: " << m_geoElem.nunk() << ", " << m_lhs.nunk() << '\n';
 
   // Signal the runtime system that all workers have received their adjacency
   m_solver.ckLocalBranch()->created();
+}
+
+void
+DG::fillEsuf()
+// *****************************************************************************
+// Fill the Esuf data structure with the chare-face information
+// *****************************************************************************
+{
+  m_esuf.resize( 2*m_facecnt );
+
+  for (const auto& n : m_bndFace)
+  {
+    auto igd = m_ghostData.find( n.first );
+    if ( igd != end(m_ghostData) )
+    {
+      const auto& ngd = igd->second;
+      for (const auto& i : ngd)
+      {
+        // tet-id adjacent to chare-face
+        auto e = i.first;
+        // node-ids of chare-face(s)
+        const auto& nodes = std::get< 0 >( i.second );
+        Assert( nodes.size() % 3 == 0, "Face node IDs must be triplets" );
+        for (std::size_t in=0; in<nodes.size(); ++in)
+        {
+          auto A = nodes[ in*3+0 ];
+          auto B = nodes[ in*3+1 ];
+          auto C = nodes[ in*3+2 ];
+          const std::array< std::size_t, 3 > t = {{A, B, C}};
+
+          // find if this node-triplet exists on the current m_bndFace
+          auto it = n.second.find(t);
+          if ( it != end(n.second) )
+          {
+            // a matching face in m_ghostData and m_bndFace is found
+            // now esufch can be updated
+            auto f = it->second;
+            const auto& gch = tk::cref_find( m_ghost, n.first );
+
+            m_esuf[ 2*f+0 ] = static_cast< int >( tk::cref_find(m_localChareTet, t) );
+            m_esuf[ 2*f+1 ] = static_cast< int >( tk::cref_find(gch, e) );
+          }
+        }
+      }
+    }
+  }
 }
 
 void
@@ -529,11 +545,18 @@ DG::comrhs(const std::vector< std::size_t >& geid,
 
   for (std::size_t i=0; i<geid.size(); ++i)
   {
-    auto leid = tk::cref_find( m_ghost, geid[i] );
-    Assert( leid < m_u.nunk(), "Indexing out of bounds in DG::comrhs()" );
-    for (std::size_t c=0; c<m_u.nprop(); ++c)
+    for (const auto& n : m_ghost)
     {
-      m_u(leid, c, 0) = V[i][c];
+      auto leit = n.second.find( geid[i] );
+      if ( leit != end(n.second) )
+      {
+        auto leid = leit->second;
+        Assert( leid < m_u.nunk(), "Indexing out of bounds in DG::comrhs()" );
+        for (std::size_t c=0; c<m_u.nprop(); ++c)
+        {
+          m_u(leid, c, 0) = V[i][c];
+        }
+      }
     }
   }
 }
@@ -581,7 +604,7 @@ DG::writeFields( tk::real time )
   for (const auto& eq : g_dgpde)
   {
     auto output = eq.fieldOutput( time, m_vol, m_geoElem, u );
-    for (auto& o : output) o.resize( o.size()-m_ghost.size() );
+    for (auto& o : output) o.resize( o.size()-m_nchGhost );
     elemfields.insert( end(elemfields), begin(output), end(output) );
   }
 
@@ -664,7 +687,7 @@ DG::rhs()
   auto d = Disc();
 
   for (const auto& eq : g_dgpde)
-    eq.rhs( d->T(), m_geoFace, m_fd, m_u, m_rhs );
+    eq.rhs( d->T(), m_geoFace, m_fd, m_esuf, m_u, m_rhs );
 }
 
 void
