@@ -148,7 +148,7 @@ DG::DG( const CProxy_Discretization& disc,
     for (const auto& c : m_msumset) {   // for all chares we share nodes with
       decltype(m_potBndFace)::mapped_type fs;      // will store face set
       auto f = m_potBndFace.find( c.first );       // find face set for chare
-      if (f != end(m_potBndFace)) fs = std::move( f->second ); // if found, send
+      if (f != end(m_potBndFace)) fs = f->second; // if found, send
       thisProxy[ c.first ].comfac( thisIndex, fs );
     }
 }
@@ -186,10 +186,8 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
     // fromch, if found, generate and assign new local ID to face (associated to
     // sender chare)
     for (const auto& t : infaces) {
-      if (b->second.find(t) != end(b->second)){
+      if (b->second.find(t) != end(b->second))
         bndface[ t ] = m_facecnt++;
-        std::cout << fromch << " : " << m_facecnt-m_fd.Ntfac() << "\n";
-      }
     }
     // if at this point we have not found any face among our faces we
     // potentially share with fromch, there is no need to keep an empty set of
@@ -311,6 +309,8 @@ DG::comGhost( int fromch, const GhostData& ghost )
 // Receive ghost data on chare boundaries from fellow chare
 // *****************************************************************************
 {
+  m_esuf.resize( 2*m_facecnt, -1 );
+
   // nodelist with fromch, currently only used for an assert
   const auto& nl = tk::cref_find( m_msumset, fromch );
   IGNORE(nl);
@@ -342,9 +342,58 @@ DG::comGhost( int fromch, const GhostData& ghost )
         m_geoElem.push_back( geo );  // store ghost elem geometry
       }
     }
+
+    // filling up esuf using the remote-tet-id 'e'
+    fillEsuf(fromch, e, nodes);
   }
 
   if (++m_nadj == m_bndFace.size()) adj();
+}
+
+void
+DG::fillEsuf(int fromch,
+             std::size_t e,
+             const std::vector< std::size_t >& nodes)
+// *****************************************************************************
+// Fill the Esuf data structure with the chare-face information
+// *****************************************************************************
+{
+  const auto& chf = tk::cref_find(m_bndFace, fromch);
+  Assert( nodes.size() % 3 == 0, "Face node IDs must be triplets" );
+  for (std::size_t in=0; in<nodes.size(); ++in)
+  {
+    auto A = nodes[ in*3+0 ];
+    auto B = nodes[ in*3+1 ];
+    auto C = nodes[ in*3+2 ];
+    const std::array< std::size_t, 3 > t = {{A, B, C}};
+
+    // find if this node-triplet exists on the current m_bndFace
+    auto it = chf.find(t);
+    if ( it != end(chf) )
+    {
+      // a matching face in m_ghostData and m_bndFace is found
+      // now esufch can be updated
+      auto f = it->second;
+      const auto& gch = tk::cref_find( m_ghost, fromch );
+
+      //auto igch = m_ghost.find(fromch);
+      //if (igch == end(m_ghost))
+      //    std::cout << thisIndex<<": Face not found in gch: "<< '\n';
+
+      //auto ier = gch.find(e);
+      //if (ier == end(gch))
+      //    std::cout << thisIndex<<": ier not found"<<"\n";
+
+      //auto iel = m_localChareTet.find(t);
+      //if (iel == end(m_localChareTet))
+      //    std::cout << thisIndex<<": iel not found"<<"\n";
+
+      m_esuf[ 2*f+0 ] = static_cast< int >( tk::cref_find(m_localChareTet, t) );
+      m_esuf[ 2*f+1 ] = static_cast< int >( tk::cref_find(gch, e) );
+
+      //std::cout << thisIndex<<" : (f:"<<f<<") el:"<<m_esuf[2*f]<<"  er:"<<m_esuf[2*f+1]<<"\n";
+    }
+  }
 }
 
 void
@@ -357,14 +406,22 @@ DG::adj()
 //   for (const auto& g : m_ghost) std::cout << g.first << ":" << g.second << ' ';
 //   std::cout << '\n';
 
+  // These asserts ensure that all the appropriate m_esuf entries are filled
+  for (std::size_t f=0; f<m_facecnt; ++f)
+  {
+    Assert( m_esuf[ 2*f ] > -1, "Left element in esuf cannot be physical " 
+            "ghost" );
+
+    if (f >= m_fd.Nbfac())
+      Assert( m_esuf[ 2*f+1 ] > -1, "Right element in esuf for internal/chare "
+              "faces cannot be a ghost" );
+  }
+
+  // Get the total number of chare-ghost elements
   for (const auto& n : m_ghost)
   {
     m_nchGhost += n.second.size();
   }
-
-  std::cout << thisIndex 
-            << "b: " << m_facecnt-m_fd.Ntfac() 
-            << ", " << m_nchGhost << '\n';
 
   // Enlarge lhs, rhs, and solution to accommodate ghost cells on chare boundaries
   m_u.enlarge( m_nchGhost );
@@ -372,58 +429,10 @@ DG::adj()
   m_lhs.enlarge( m_nchGhost );
   m_rhs.enlarge( m_nchGhost );
 
-  fillEsuf();
-
 //std::cout << thisIndex << "a: " << m_geoElem.nunk() << ", " << m_lhs.nunk() << '\n';
 
   // Signal the runtime system that all workers have received their adjacency
   m_solver.ckLocalBranch()->created();
-}
-
-void
-DG::fillEsuf()
-// *****************************************************************************
-// Fill the Esuf data structure with the chare-face information
-// *****************************************************************************
-{
-  m_esuf.resize( 2*m_facecnt );
-
-  for (const auto& n : m_bndFace)
-  {
-    auto igd = m_ghostData.find( n.first );
-    if ( igd != end(m_ghostData) )
-    {
-      const auto& ngd = igd->second;
-      for (const auto& i : ngd)
-      {
-        // tet-id adjacent to chare-face
-        auto e = i.first;
-        // node-ids of chare-face(s)
-        const auto& nodes = std::get< 0 >( i.second );
-        Assert( nodes.size() % 3 == 0, "Face node IDs must be triplets" );
-        for (std::size_t in=0; in<nodes.size(); ++in)
-        {
-          auto A = nodes[ in*3+0 ];
-          auto B = nodes[ in*3+1 ];
-          auto C = nodes[ in*3+2 ];
-          const std::array< std::size_t, 3 > t = {{A, B, C}};
-
-          // find if this node-triplet exists on the current m_bndFace
-          auto it = n.second.find(t);
-          if ( it != end(n.second) )
-          {
-            // a matching face in m_ghostData and m_bndFace is found
-            // now esufch can be updated
-            auto f = it->second;
-            const auto& gch = tk::cref_find( m_ghost, n.first );
-
-            m_esuf[ 2*f+0 ] = static_cast< int >( tk::cref_find(m_localChareTet, t) );
-            m_esuf[ 2*f+1 ] = static_cast< int >( tk::cref_find(gch, e) );
-          }
-        }
-      }
-    }
-  }
 }
 
 void
@@ -455,6 +464,8 @@ DG::setup( tk::real v )
   d->writeMesh();
   // Output fields metadata to output file
   d->writeElemMeta();
+
+  Assert( m_geoElem.nunk() == m_lhs.nunk(), "Size mismatch in DG::setup()" );
 
   // Compute left-hand side of discrete PDEs
   lhs();

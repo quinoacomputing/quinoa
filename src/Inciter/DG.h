@@ -274,7 +274,10 @@ class DG : public CBase_DG {
     //!   from m_localChareTet. The face numbering is such that it
     //!   stores the connectivity, first for the physical boundary faces,
     //!   followed by the internal faces, then followed by the chare faces.
-    void fillEsuf();
+    void
+    fillEsuf(int fromch,
+             std::size_t e,
+             const std::vector< std::size_t >& nodes);
 
     //! Advance equations to next time step
     void advance( tk::real newdt );

@@ -137,7 +137,7 @@ class Transport {
       R.fill(0.0);
 
       // compute internal surface flux integrals
-      for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
+      for (auto f=fd.Nbfac(); f<fd.Ntfac(); ++f)
       {
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
         std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
