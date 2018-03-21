@@ -217,8 +217,12 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
   }
 
   if (++m_nfac == m_msumset.size()) {
-    for (const auto& c : m_msumset)     // for all chares we share nodes with
-      thisProxy[ c.first ].ready4ghost();
+    if (m_msumset.empty()) {
+      bndface_complete();
+      reqghost_complete();
+    } else
+      for (const auto& c : m_msumset)     // for all chares we share nodes with
+        thisProxy[ c.first ].ready4ghost();
     // At this point m_bndFace is complete on this PE. This means that
     // starting from the sets of faces we potentially share with fellow chares
     // (m_potBndFace), we now only have those faces we actually share faces with
