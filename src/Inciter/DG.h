@@ -183,8 +183,10 @@ class DG : public CBase_DG {
     tk::CProxy_Solver m_solver;
     //! Counter for face adjacency communication map
     std::size_t m_nfac;
-    std::size_t m_nadj;
+    //! Counter for signaling that all receivers are ready ghost data
     std::size_t m_nbnd;
+    //! Counter for signaling that all ghost data have been received
+    std::size_t m_nadj;
     //! Field output iteration count
     uint64_t m_itf;
     //! Discretization proxy
@@ -242,12 +244,7 @@ class DG : public CBase_DG {
     //!    the (remote) element id of the ghost (inner map key) based on the
     //!    chare id (outer map key) this remote element lies in.
     std::map< int, std::unordered_map< std::size_t, std::size_t > > m_ghost;
-    //! Local element id (map key) associated to the node-triplet of chare-faces
-    std::unordered_map< tk::UnsMesh::Face,  // 3 global node IDs
-                        std::size_t,        // local element/tet ID
-                        tk::UnsMesh::FaceHasher,
-                        tk::UnsMesh::FaceEq > m_localChareTet;
-    //! Element surrounding faces
+    //! Elements surrounding faces
     std::vector< int > m_esuf;
 
     //! Access bound Discretization class pointer
