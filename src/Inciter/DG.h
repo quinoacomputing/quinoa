@@ -169,7 +169,7 @@ class DG : public CBase_DG {
     using FaceIDs =
       std::unordered_map< int,  // chare ID faces shared with
         std::unordered_map< tk::UnsMesh::Face,  // 3 global node IDs
-                            std::size_t,        // local face ID
+                            std::array< std::size_t, 2 >, // local face & tet ID
                             tk::UnsMesh::FaceHasher,
                             tk::UnsMesh::FaceEq > >;
 

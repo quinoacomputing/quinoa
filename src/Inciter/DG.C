@@ -185,15 +185,34 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
     // try to find incoming faces among our faces we potentially share with
     // fromch, if found, generate and assign new local ID to face (associated to
     // sender chare)
-    for (const auto& t : infaces) {
+    for (const auto& t : infaces)
       if (b->second.find(t) != end(b->second))
-        bndface[ t ] = m_facecnt++;
-    }
+        bndface[t][0] = m_facecnt++;
     // if at this point we have not found any face among our faces we
     // potentially share with fromch, there is no need to keep an empty set of
     // faces associated to fromch as we only share nodes or edges with it, but
     // not faces
     if (bndface.empty()) m_bndFace.erase( fromch );
+  }
+
+  auto d = Disc();
+  const auto& gid = d->Gid();
+  const auto& inpoel = d->Inpoel();
+  for (std::size_t e=0; e<m_esuelTet.size()/4; ++e) {  // for all our tets
+    auto mark = e*4;
+    for (std::size_t f=0; f<4; ++f) {  // for all cell faces
+      if (m_esuelTet[mark+f] == -1) {  // if face has no outside-neighbor tet
+        auto A = gid[ inpoel[ mark + tk::lpofa[f][0] ] ];
+        auto B = gid[ inpoel[ mark + tk::lpofa[f][1] ] ];
+        auto C = gid[ inpoel[ mark + tk::lpofa[f][2] ] ];
+        auto c = findchare( {{A,B,C}} );
+        if (c > -1) {
+          auto& bndface = tk::ref_find( m_bndFace, c );
+          auto& face = tk::ref_find( bndface, {{A,B,C}} );
+          face[1] = e;
+        }
+      }
+    }
   }
 
   if (++m_nfac == m_msumset.size()) {
@@ -205,9 +224,14 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
     // assigned local face ID. We continue by starting setting up ghost data.
     setupGhost();
     // Besides setting up our own ghost data, we also issue requests (for ghost
-    // data) to those chares which we share faces with.
-    for (const auto& cf : m_bndFace)
-      thisProxy[ cf.first ].reqGhost( thisIndex );
+    // data) to those chares which we share faces with. Note that similar to
+    // comfac() we are calling reqGhost() by going through msumset instead,
+    // which may send requests to those chare we do not share faces with. This
+    // is so that we can test for completing by querying the size of the already
+    // complete msumset in reqGhost. Requests in sendGhost will only be
+    // fullfilled based on m_ghostData.
+    for (const auto& c : m_msumset)     // for all chares we share nodes with
+      thisProxy[ c.first ].reqGhost( thisIndex );
   }
 }
 
@@ -244,7 +268,6 @@ DG::setupGhost()
           auto& ghost = m_ghostData[ c ];
           // Store tet id adjacent to chare boundary as key for ghost data
           auto& tuple = ghost[ e ];
-          m_localChareTet[ {{A,B,C}} ] = e;
           // If tetid e has not yet been encountered, store geometry (only once)
           auto& nodes = std::get< 0 >( tuple );
           if (nodes.empty()) std::get< 1 >( tuple ) = m_geoElem[ e ];
@@ -261,8 +284,8 @@ DG::setupGhost()
     }
   }
 
-  // If our own ghost data is empty, we do not expect to requests, otherwise
-  // tell the runtime system that we have finished setting up our ghost data.
+  // If our own ghost data is empty, we do not expect requests, otherwise tell
+  // the runtime system that we have finished setting up our ghost data.
   if (m_ghostData.empty()) adj(); else ownghost_complete();
 }
 
@@ -277,7 +300,7 @@ DG::reqGhost( int fromch )
 
   // If every chare we communicate with has requested ghost data from us, we may
   // fulfill the requests, but only if we have already setup our ghost data.
-  if (m_ghostReq.size() == m_bndFace.size()) reqghost_complete();
+  if (m_ghostReq.size() == m_msumset.size()) reqghost_complete();
 }
 
 void
@@ -309,8 +332,6 @@ DG::comGhost( int fromch, const GhostData& ghost )
 // Receive ghost data on chare boundaries from fellow chare
 // *****************************************************************************
 {
-  m_esuf.resize( 2*m_facecnt, -1 );
-
   // nodelist with fromch, currently only used for an assert
   const auto& nl = tk::cref_find( m_msumset, fromch );
   IGNORE(nl);
@@ -338,9 +359,10 @@ DG::comGhost( int fromch, const GhostData& ghost )
       // if ghost tet id not yet encountered on boundary with fromch
       auto& ghostelem = m_ghost[fromch];
       if ( ghostelem.find(e) == end(ghostelem) ) {
-        ghostelem[e] = ghostcnt++;  // assign new local tet id to remote ghost id
+        ghostelem[e] = ghostcnt++; // assign new local tet id to remote ghost id
         m_geoElem.push_back( geo );  // store ghost elem geometry
       }
+      Assert( ghostcnt - m_u.nunk() == ghostelem.size(), "Size mismatch" );
     }
 
     // filling up esuf using the remote-tet-id 'e'
@@ -358,9 +380,11 @@ DG::fillEsuf(int fromch,
 // Fill the Esuf data structure with the chare-face information
 // *****************************************************************************
 {
+  m_esuf.resize( 2*m_facecnt, -1 );
+
   const auto& chf = tk::cref_find(m_bndFace, fromch);
   Assert( nodes.size() % 3 == 0, "Face node IDs must be triplets" );
-  for (std::size_t in=0; in<nodes.size(); ++in)
+  for (std::size_t in=0; in<nodes.size()/3; ++in)
   {
     auto A = nodes[ in*3+0 ];
     auto B = nodes[ in*3+1 ];
@@ -388,8 +412,9 @@ DG::fillEsuf(int fromch,
       //if (iel == end(m_localChareTet))
       //    std::cout << thisIndex<<": iel not found"<<"\n";
 
-      m_esuf[ 2*f+0 ] = static_cast< int >( tk::cref_find(m_localChareTet, t) );
-      m_esuf[ 2*f+1 ] = static_cast< int >( tk::cref_find(gch, e) );
+      Assert( 2*f[0]+1 < m_esuf.size(), "Indexing out of esuf" );
+      m_esuf[ 2*f[0]+0 ] = static_cast< int >( f[1] );
+      m_esuf[ 2*f[0]+1 ] = static_cast< int >( tk::cref_find(gch, e) );
 
       //std::cout << thisIndex<<" : (f:"<<f<<") el:"<<m_esuf[2*f]<<"  er:"<<m_esuf[2*f+1]<<"\n";
     }
@@ -429,7 +454,7 @@ DG::adj()
   m_lhs.enlarge( m_nchGhost );
   m_rhs.enlarge( m_nchGhost );
 
-//std::cout << thisIndex << "a: " << m_geoElem.nunk() << ", " << m_lhs.nunk() << '\n';
+std::cout << thisIndex << "a: " << m_geoElem.nunk() << ", " << m_lhs.nunk() << '\n';
 
   // Signal the runtime system that all workers have received their adjacency
   m_solver.ckLocalBranch()->created();
