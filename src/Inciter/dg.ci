@@ -28,6 +28,7 @@ module dg {
       entry void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
       entry void comGhost( int fromch, const GhostData& ghost );
       entry void reqGhost( int fromch );
+      entry void ready4ghost();
       initnode void registerReducers();      
       entry void setup( tk::real v );
       entry void dt();
@@ -56,11 +57,12 @@ module dg {
       // data.
 
       entry void wait4ghost() {
-        when ownghost_complete(), reqghost_complete() serial "ghost"
-        { sendGhost(); } };
+        when ownghost_complete(), reqghost_complete(), bndface_complete()
+          serial "ghost" { sendGhost(); } };
 
       entry void ownghost_complete();
       entry void reqghost_complete();
+      entry void bndface_complete();
     };
 
   } // inciter::

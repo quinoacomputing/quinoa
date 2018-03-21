@@ -102,6 +102,8 @@ class DG : public CBase_DG {
     //! Receive requests for ghost data
     void reqGhost( int fromch );
 
+    void ready4ghost();
+
     //! Send all of our ghost data to fellow chares
     void sendGhost();
 
@@ -177,6 +179,7 @@ class DG : public CBase_DG {
     //! Counter for face adjacency communication map
     std::size_t m_nfac;
     std::size_t m_nadj;
+    std::size_t m_nbnd;
     //! Field output iteration count
     uint64_t m_itf;
     //! Discretization proxy
@@ -275,9 +278,10 @@ class DG : public CBase_DG {
     //!   stores the connectivity, first for the physical boundary faces,
     //!   followed by the internal faces, then followed by the chare faces.
     void
-    fillEsuf(int fromch,
-             std::size_t e,
-             const std::vector< std::size_t >& nodes);
+    fillEsuf( int fromch,
+              std::size_t e,
+              const tk::UnsMesh::Face& t,              
+              const std::unordered_map< std::size_t, std::size_t >& ghostelem );
 
     //! Advance equations to next time step
     void advance( tk::real newdt );
