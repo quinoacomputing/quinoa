@@ -52,8 +52,10 @@ module dg {
       // -------------------------------
       // Control flow is from left to right and top to bottom.
       //
-      // If every chare we communicate with has requested ghost data from us, we
-      // may fulfill the requests, but only if we have already setup our ghost
+      // If (1) we have computed our own ghost data in setupGhost(), AND (2)
+      // every chare we communicate with has requested ghost data from us, AND
+      // (3) every chare that we communicate with has completed its own face
+      // data structure (m_bndFace), we fulfill the requests and send out ghost
       // data.
 
       entry void wait4ghost() {

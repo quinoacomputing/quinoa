@@ -36,8 +36,12 @@
       ReqGhost [ label="ReqGhost"
                tooltip="all of ghost data have been requested from us"
                URL="\ref inciter::DG::reqGhost"];
+      Ready4Ghost [ label="Ready4Ghost"
+          tooltip="all of our fellow chares are ready for us sending ghost data"
+                    URL="\ref inciter::DG::ready4ghost"];
       OwnGhost -> sendGhost [ style="solid" ];
       ReqGhost -> sendGhost [ style="solid" ];
+      Ready4Ghost -> sendGhost [ style="solid" ];
     }
     \enddot
     \include Inciter/dg.ci
@@ -102,6 +106,7 @@ class DG : public CBase_DG {
     //! Receive requests for ghost data
     void reqGhost( int fromch );
 
+    //! Caller signals that it is ready for ghost data
     void ready4ghost();
 
     //! Send all of our ghost data to fellow chares
@@ -261,7 +266,7 @@ class DG : public CBase_DG {
     std::unordered_map< int, std::unordered_set< std::size_t > >
     msumset() const;
 
-    //! Continue after face adjacency communication map is complete on this chare
+    //! Continue after face adjacency communication map completed on this chare
     void adj();
 
     //! \brief Fill the elements surrounding face data structure with the
