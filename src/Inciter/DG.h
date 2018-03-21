@@ -285,6 +285,9 @@ class DG : public CBase_DG {
               const tk::UnsMesh::Face& t,              
               const std::unordered_map< std::size_t, std::size_t >& ghostelem );
 
+    //! Fill the face geometry data structure with the chare-face geometry
+    void fillGeoFace();
+
     //! Advance equations to next time step
     void advance( tk::real newdt );
 

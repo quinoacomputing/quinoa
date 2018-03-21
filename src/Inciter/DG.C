@@ -442,9 +442,45 @@ DG::adj()
        Assert( m_esuf[ 2*f+1 ] > -1, "Right element in esuf for internal/chare "
                "faces cannot be a ghost" );
    }
+
+   fillGeoFace();
+
+   tk::destroy( m_potBndFace );
+   tk::destroy( m_ipface );
  
    // Signal the runtime system that all workers have received their adjacency
    m_solver.ckLocalBranch()->created();
+}
+
+void
+DG::fillGeoFace()
+// *****************************************************************************
+// Fill the Face-geometry data structure with the chare-face geometry
+// *****************************************************************************
+{
+  auto d = Disc();
+  auto coord = d->Coord();
+  auto lid = d->Lid();
+
+  m_geoFace.enlarge( (m_facecnt-m_fd.Inpofa().size()/3) );
+
+  for (const auto& ch : m_bndFace)
+  {
+    for (const auto& f : ch.second)
+    {
+      auto A = tk::cref_find(lid, f.first[2]);
+      auto B = tk::cref_find(lid, f.first[1]);
+      auto C = tk::cref_find(lid, f.first[0]);
+      auto fa = f.second[0];
+
+      auto geochf = tk::calculateGeoFaceTri({{coord[0][A], coord[0][B], coord[0][C]}},
+                                            {{coord[1][A], coord[1][B], coord[1][C]}},
+                                            {{coord[2][A], coord[2][B], coord[2][C]}} );
+
+      for (std::size_t i=0; i<7; ++i)
+        m_geoFace(fa,i,0) = geochf(0,i,0);
+    }
+  }
 }
 
 void
