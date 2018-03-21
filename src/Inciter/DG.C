@@ -217,12 +217,8 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
   }
 
   if (++m_nfac == m_msumset.size()) {
-    if (m_msumset.empty()) {
-      bndface_complete();
-      reqghost_complete();
-    } else
-      for (const auto& c : m_msumset)     // for all chares we share nodes with
-        thisProxy[ c.first ].ready4ghost();
+    for (const auto& c : m_msumset)     // for all chares we share nodes with
+      thisProxy[ c.first ].ready4ghost();
     // At this point m_bndFace is complete on this PE. This means that
     // starting from the sets of faces we potentially share with fellow chares
     // (m_potBndFace), we now only have those faces we actually share faces with
@@ -245,7 +241,7 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
 void
 DG::ready4ghost()
 // *****************************************************************************
-// ...
+// Calls bndface_complete only if all receiving chares have called this function
 // *****************************************************************************
 {
   if (++m_nbnd == m_msumset.size()) bndface_complete();
@@ -390,8 +386,7 @@ DG::comGhost( int fromch, const GhostData& ghost )
 
   // Signal the runtime system that all workers have received their adjacency
   if (++m_nadj == m_bndFace.size()) {
-    //adj();
-    m_solver.ckLocalBranch()->created();
+    adj();
   }
 }
 
@@ -415,10 +410,6 @@ DG::fillEsuf(int fromch,
     // now esufch can be updated
     auto f = it->second;
 
-    //auto iel = m_localChareTet.find(t);
-    //if (iel == end(m_localChareTet))
-    //    std::cout << thisIndex<<": iel not found"<<"\n";
-
     Assert( 2*f[0]+1 < m_esuf.size(), "Indexing out of esuf" );
     m_esuf[ 2*f[0]+0 ] = static_cast< int >( f[1] );
     m_esuf[ 2*f[0]+1 ] = static_cast< int >( tk::cref_find(ghostelem,e) );
@@ -435,17 +426,17 @@ DG::adj()
 // //   for (const auto& g : m_ghost) std::cout << g.first << ":" << g.second << ' ';
 // //   std::cout << '\n';
 // 
-//   // These asserts ensure that all the appropriate m_esuf entries are filled
-//   for (std::size_t f=0; f<m_facecnt; ++f)
-//   {
-//     Assert( m_esuf[ 2*f ] > -1, "Left element in esuf cannot be physical " 
-//             "ghost" );
-// 
-//     if (f >= m_fd.Nbfac())
-//       Assert( m_esuf[ 2*f+1 ] > -1, "Right element in esuf for internal/chare "
-//               "faces cannot be a ghost" );
-//   }
-// 
+   // These asserts ensure that all the appropriate m_esuf entries are filled
+   for (std::size_t f=0; f<m_facecnt; ++f)
+   {
+     Assert( m_esuf[ 2*f ] > -1, "Left element in esuf cannot be physical " 
+             "ghost" );
+ 
+     if (f >= m_fd.Nbfac())
+       Assert( m_esuf[ 2*f+1 ] > -1, "Right element in esuf for internal/chare "
+               "faces cannot be a ghost" );
+   }
+ 
 //   // Get the total number of chare-ghost elements
 //   for (const auto& n : m_ghost)
 //   {
@@ -457,13 +448,9 @@ DG::adj()
 //   m_un.enlarge( m_nchGhost );
 //   m_lhs.enlarge( m_nchGhost );
 //   m_rhs.enlarge( m_nchGhost );
-// 
-// // if (m_geoElem.nunk() != m_lhs.nunk())
-// //   std::cout << thisIndex << "a: " << m_geoElem.nunk() << ", " << m_lhs.nunk() << '\n';
-//   Assert( m_geoElem.nunk() == m_lhs.nunk(), "Size mismatch in DG::adj()" );
-// 
-//   // Signal the runtime system that all workers have received their adjacency
-//   m_solver.ckLocalBranch()->created();
+ 
+   // Signal the runtime system that all workers have received their adjacency
+   m_solver.ckLocalBranch()->created();
 }
 
 void
