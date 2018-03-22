@@ -128,7 +128,6 @@ class InputDeck :
                                        kw::amr_initial,
                                        kw::amr_uniform,
                                        kw::amr_initial_conditions,
-                                       kw::amr_uniform_levels,
                                        kw::amr_error,
                                        kw::amr_jump,
                                        kw::amr_hessian,
