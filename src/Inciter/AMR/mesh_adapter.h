@@ -1,6 +1,8 @@
 #ifndef QUINOA_MESH_ADAPTER_H
 #define QUINOA_MESH_ADAPTER_H
 
+#include "DerivedData.h"
+
 #include "AMR_types.h"
 #include "util.h"
 #include "id_generator.h"
@@ -22,13 +24,7 @@ class mesh_adapter_t {
   public:
     //! Constructor
     mesh_adapter_t( const std::vector< std::size_t >& inpoel ) :
-      refiner( init( inpoel, npoin(inpoel) ) ) {}
-
-    std::size_t npoin( const std::vector< std::size_t >& inpoel ) {
-      auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
-      Assert( *minmax.first == 0, "node ids should start from zero" );
-      return *minmax.second + 1;
-    }
+      refiner( init( inpoel, tk::npoin(inpoel) ) ) {}
 
     // TODO: Set these in a better way
     const real_t derefinement_cut_off = 0.2;
