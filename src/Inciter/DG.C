@@ -188,7 +188,7 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
     // sender chare)
     for (const auto& t : infaces)
       if (b->second.find(t) != end(b->second))
-        bndface[t][0] = m_facecnt++;
+        bndface[t][0] = m_facecnt++;    // assign new local face ID
     // if at this point we have not found any face among our faces we
     // potentially share with fromch, there is no need to keep an empty set of
     // faces associated to fromch as we only share nodes or edges with it, but
@@ -210,7 +210,7 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
         if (c > -1) {
           auto& bndface = tk::ref_find( m_bndFace, c );
           auto& face = tk::ref_find( bndface, {{A,B,C}} );
-          face[1] = e;
+          face[1] = e;  // store (local) inner tet ID adjacent to face
         }
       }
     }
@@ -390,21 +390,43 @@ DG::fillEsuf(int fromch,
              const tk::UnsMesh::Face& t,
              const std::unordered_map< std::size_t, std::size_t >& ghostelem )
 // *****************************************************************************
-// Fill the Esuf data structure with the chare-face information
+// Extend and fill elements surrounding faces by ghost entries
+//! \param[in] fromch Caller chare ID
+//! \param[in] e (ghost) tet id on the other side of chare boundary
+//! \param[in] t Face (given by 3 global node IDs) on the chare boundary
+//! \param[in] ghostelem Map of local tet ids associated to remote/ghost tet ids
+//!   for ghost tets adjacent to the chare boundary with fromch only
+//! \details This function extends and fills in the elements surrounding faces
+//!   data structure (m_esuf) so that the left and  right element id is filled
+//!   in correctly on chare boundaries to contain the correct inner tet id and
+//!   the local tet id for the outer (ghost) tet, both adjacent to the given
+//1   chare-face boundary. Prior to this function, this data structure does not
+//!   have yet face-element connectivity adjacent to chare-boundary faces, only
+//!   for physical boundaries and internal faces that are not on the chare
+//!   boundary (this latter purely as a result of mesh partitioning). The global
+//!   node IDs of face nodes, obtained from m_bndFace, are matched with the
+//!   incoming ghost data (in arg ghostelem) to obtain the remote element id of
+//!   the ghost. The remote element id of the ghost is stored in a location that
+//!   is local to our own m_esuf. The face numbering is such that m_esuf
+//!   stores the element-face connectivity first for the physical-boundary faces,
+//!   followed by that of the internal faces, followed by the chare-boundary
+//!   faces. As a result, m_esuf can be used by physics algorithms in exactly
+//!   the same way as would be used in serial. In serial, of course, this data
+//!   structure is not extended at the end by the chare-boundaries.
 // *****************************************************************************
 {
   m_esuf.resize( 2*m_facecnt, -1 );
 
-  const auto& chf = tk::cref_find(m_bndFace, fromch);
+  // find face-id data structure for sender chare id
+  const auto& chf = tk::cref_find( m_bndFace, fromch );
+  // find face (given by 3 global node IDs) among faces shared with fromch
+  const auto& f = tk::cref_find( chf, t );  // get local face & inner tet id
 
-  // find if this node-triplet exists on the current m_bndFace
-  auto it = chf.find(t);
-  if ( it != end(chf) ) {
-    auto f = it->second;
-    Assert( 2*f[0]+1 < m_esuf.size(), "Indexing out of esuf" );
-    m_esuf[ 2*f[0]+0 ] = static_cast< int >( f[1] );
-    m_esuf[ 2*f[0]+1 ] = static_cast< int >( tk::cref_find(ghostelem,e) );
-  }
+  Assert( 2*f[0]+1 < m_esuf.size(), "Indexing out of esuf" );
+  // put in inner tet id
+  m_esuf[ 2*f[0]+0 ] = static_cast< int >( f[1] );
+  // put in local id for outer/ghost tet
+  m_esuf[ 2*f[0]+1 ] = static_cast< int >( tk::cref_find(ghostelem,e) );
 }
 
 void
@@ -437,7 +459,7 @@ DG::adj()
 void
 DG::fillGeoFace()
 // *****************************************************************************
-// Fill the Face-geometry data structure with the chare-face geometry
+// Fill the face-geometry data structure along chare-boundary faces
 // *****************************************************************************
 {
   auto d = Disc();
@@ -447,22 +469,18 @@ DG::fillGeoFace()
   m_geoFace.enlarge( (m_facecnt-m_fd.Inpofa().size()/3) );
 
   for (const auto& ch : m_bndFace)
-  {
-    for (const auto& f : ch.second)
-    {
-      auto A = tk::cref_find(lid, f.first[2]);
-      auto B = tk::cref_find(lid, f.first[1]);
-      auto C = tk::cref_find(lid, f.first[0]);
+    for (const auto& f : ch.second) {
+      auto A = tk::cref_find( lid, f.first[2] );
+      auto B = tk::cref_find( lid, f.first[1] );
+      auto C = tk::cref_find( lid, f.first[0] );
       auto fa = f.second[0];
-
-      auto geochf = tk::calculateGeoFaceTri({{coord[0][A], coord[0][B], coord[0][C]}},
-                                            {{coord[1][A], coord[1][B], coord[1][C]}},
-                                            {{coord[2][A], coord[2][B], coord[2][C]}} );
+      auto geochf = tk::geoFaceTri( {{coord[0][A], coord[0][B], coord[0][C]}},
+                                    {{coord[1][A], coord[1][B], coord[1][C]}},
+                                    {{coord[2][A], coord[2][B], coord[2][C]}} );
 
       for (std::size_t i=0; i<7; ++i)
         m_geoFace(fa,i,0) = geochf(0,i,0);
     }
-  }
 }
 
 void

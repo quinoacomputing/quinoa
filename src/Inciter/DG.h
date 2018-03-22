@@ -179,7 +179,7 @@ class DG : public CBase_DG {
     std::size_t m_nfac;
     //! Counter for signaling that all ghost data have been received
     std::size_t m_nadj;
-    //! Counter for signaling that we have received all rhs contributions to rhs
+    //! Counter for signaling that we have received all contributions to rhs
     std::size_t m_nrhs;
     //! Field output iteration count
     uint64_t m_itf;
@@ -262,19 +262,7 @@ class DG : public CBase_DG {
     //! Continue after face adjacency communication map completed on this chare
     void adj();
 
-    //! \brief Fill the elements surrounding face data structure with the
-    //!    chare-face information
-    //! \details This function updates the incomplete m_esuf so that the left
-    //!   and  right element id is filled in. Prior to this function being
-    //!   called, m_esuf does not have face-element connectivity for chare faces
-    //!   but only for physical boundaries and internal faces which are not chare 
-    //!   faces. The chare-face nodes from m_bndFace are matched with those in
-    //!   m_ghostData to obtain the remote element id of the ghost. Then, this
-    //!   id is mapped to the local tet id using m_ghost, which is required to 
-    //!   be stored as the right element in m_esuf. The left element is obtained
-    //!   from m_localChareTet. The face numbering is such that it
-    //!   stores the connectivity, first for the physical boundary faces,
-    //!   followed by the internal faces, then followed by the chare faces.
+    //! Fill the elements surrounding faces, extended by ghost entries
     void
     fillEsuf( int fromch,
               std::size_t e,

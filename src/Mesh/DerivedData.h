@@ -137,12 +137,11 @@ genGeoFaceTri( std::size_t ntfac,
                const std::vector< std::size_t >& inpofa,
                const tk::UnsMesh::Coords& coord );
 
-//! brief Calculate geometry details of the face comprised of
-//!   the three vertices, whose x,y and z coords are provided
+//! Compute geometry of the face given by three vertices
 tk::Fields
-calculateGeoFaceTri( const std::array< tk::real, 3 >& x,
-                     const std::array< tk::real, 3 >& y,
-                     const std::array< tk::real, 3 >& z );
+geoFaceTri( const std::array< tk::real, 3 >& x,
+            const std::array< tk::real, 3 >& y,
+            const std::array< tk::real, 3 >& z );
 
 //! Generate derived data structure, element geometry
 tk::Fields

@@ -1332,9 +1332,9 @@ genGeoFaceTri( std::size_t ntfac,
     yp3 = coord[1][ip3];
     zp3 = coord[2][ip3];
 
-    auto geoif = calculateGeoFaceTri( {{xp1, xp2, xp3}},
-                                      {{yp1, yp2, yp3}},
-                                      {{zp1, zp2, zp3}} );
+    auto geoif = geoFaceTri( {{xp1, xp2, xp3}},
+                             {{yp1, yp2, yp3}},
+                             {{zp1, zp2, zp3}} );
 
     for (std::size_t i=0; i<7; ++i)
       geoFace(f,i,0) = geoif(0,i,0);
@@ -1344,12 +1344,11 @@ genGeoFaceTri( std::size_t ntfac,
 }
 
 tk::Fields
-calculateGeoFaceTri( const std::array< tk::real, 3 >& x,
-                     const std::array< tk::real, 3 >& y,
-                     const std::array< tk::real, 3 >& z )
+geoFaceTri( const std::array< tk::real, 3 >& x,
+            const std::array< tk::real, 3 >& y,
+            const std::array< tk::real, 3 >& z )
 // *****************************************************************************
-//  Calculate geometry details of the triangular face comprised of the three
-//   vertices, whose x,y and z coords are provided.
+//! Compute geometry of the face given by three vertices
 //! \param[in] x x-coordinates of the three vertices of the triangular face.
 //! \param[in] y y-coordinates of the three vertices of the triangular face.
 //! \param[in] z z-coordinates of the three vertices of the triangular face.
