@@ -24,6 +24,7 @@
 #include "Around.h"
 #include "ExodusIIMeshWriter.h"
 #include "CGPDE.h"
+#include "AMR/Error.h"
 
 namespace inciter {
 
@@ -977,7 +978,7 @@ Partitioner::refine( const std::vector< std::size_t >& inpoel )
     // create refinement object
     AMR::mesh_adapter_t refiner( orig_inpoel );
 
-    for (std::size_t level=0; level<2; ++level) {
+    for (std::size_t level=0; level<0; ++level) {
 
       // do uniform refinement
       refiner.uniform_refinement();
@@ -1062,31 +1063,41 @@ Partitioner::refine( const std::vector< std::size_t >& inpoel )
     auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
     tk::Fields u( orig_coord[0].size(),
                   g_inputdeck.get< tag::component >().nprop() );
-    for (const auto& eq : g_cgpde) eq.initialize( orig_coord, u, t0 );
-
-    const std::vector< edge_t > edge;
-    const std::vector< real_t > crit;
-    refiner.error_refinement( edge, crit );
-    refined_inpoel = refiner.tet_store.get_active_inpoel();
+    //for (const auto& eq : g_cgpde) eq.initialize( orig_coord, u, t0 );
+    // put in jump at x=0.5
+    for (std::size_t i=0; i<u.nunk(); ++i)
+       if (orig_coord[0][i] > 0.5) u(i,0,0) = 0.0; else u(i,0,0) = 1.0;
 
     // find number of nodes in old mesh
-    auto minmax = std::minmax_element( begin(orig_inpoel), end(orig_inpoel) );
-    Assert( *minmax.first == 0, "node ids should start from zero" );
-    auto npoin = *minmax.second + 1;
+    auto npoin = tk::npoin(orig_inpoel);
 
     // generate edges surrounding points in old mesh
     auto esup = tk::genEsup( orig_inpoel, 4 );
     auto psup = tk::genPsup( orig_inpoel, 4, esup );
+
+    std::vector< edge_t > edge;
+    std::vector< real_t > crit;
+
+    // Compute errors in initial condition
+    AMR::Error error;
+    for (std::size_t p=0; p<npoin; ++p)
+      for (auto q : tk::Around(psup,p)) {
+         edge_t e(p,q);
+         edge.push_back( e );
+         auto c = error.scalar( u, e, 0, orig_coord, orig_inpoel, esup,
+                                inciter::ctr::AMRErrorType::JUMP );
+         crit.push_back( c );
+       }
+
+    refiner.error_refinement( edge, crit );
+    refined_inpoel = refiner.tet_store.get_active_inpoel();
 
     refined_coord = orig_coord;
     auto& x = refined_coord[0];
     auto& y = refined_coord[1];
     auto& z = refined_coord[2];
 
-    auto refined_minmax =
-      std::minmax_element( begin(refined_inpoel), end(refined_inpoel) );
-    Assert( *refined_minmax.first == 0, "node ids should start from zero" );
-    auto refined_npoin = *refined_minmax.second + 1;
+    auto refined_npoin = tk::npoin(refined_inpoel);
 
     x.resize( refined_npoin );
     y.resize( refined_npoin );

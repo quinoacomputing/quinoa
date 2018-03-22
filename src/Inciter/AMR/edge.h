@@ -42,11 +42,11 @@ class edge_t {
           return (data < rhs.get_data());
         }
 
-        size_t first()
+        size_t first() const
         {
             return data.first;
         }
-        size_t second()
+        size_t second() const
         {
             return data.second;
         }
