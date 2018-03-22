@@ -20,7 +20,7 @@ namespace ctr {
 
 //! Initial AMR types
 enum class AMRInitialType : uint8_t { UNIFORM
-                                    , IC };
+                                    , INITIAL_CONDITIONS };
 
 //! Pack/Unpack AMRInitialType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, AMRInitialType& e )
@@ -32,7 +32,7 @@ class AMRInitial : public tk::Toggle< AMRInitialType > {
   public:
     //! Valid expected choices to make them also available at compile-time
     using keywords = boost::mpl::vector< kw::amr_uniform
-                                       , kw::amr_ic >;
+                                       , kw::amr_initial_conditions >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
@@ -43,10 +43,12 @@ class AMRInitial : public tk::Toggle< AMRInitialType > {
         "Initial refinement typelist",
         //! Enums -> names
         { { AMRInitialType::UNIFORM, kw::amr_uniform::name() },
-          { AMRInitialType::IC, kw::amr_ic::name() } },
+          { AMRInitialType::INITIAL_CONDITIONS,
+            kw::amr_initial_conditions::name() } },
         //! keywords -> Enums
         { { kw::amr_uniform::string(), AMRInitialType::UNIFORM },
-          { kw::amr_ic::string(), AMRInitialType::IC } } )
+          { kw::amr_initial_conditions::string(),
+            AMRInitialType::INITIAL_CONDITIONS } } )
     {
        boost::mpl::for_each< keywords >( assertPolicyCodes() );
     }
@@ -77,7 +79,8 @@ class AMRInitial : public tk::Toggle< AMRInitialType > {
     //! Enums -> policy code
     std::map< AMRInitialType, std::string > policy {
         { AMRInitialType::UNIFORM, *kw::amr_uniform::code() }
-      , { AMRInitialType::IC, *kw::amr_ic::code() }
+      , { AMRInitialType::INITIAL_CONDITIONS,
+          *kw::amr_initial_conditions::code() }
     };
 };
 

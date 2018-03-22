@@ -3700,7 +3700,7 @@ struct amr_uniform_info {
 };
 using amr_uniform = keyword< amr_uniform_info, TAOCPP_PEGTL_STRING("uniform") >;
 
-struct amr_ic_info {
+struct amr_initial_conditions_info {
   using code = Code< i >;
   static std::string name() { return "ic"; }
   static std::string shortDescription() { return
@@ -3709,7 +3709,8 @@ struct amr_ic_info {
     R"(This keyword is used to select initial-conditions-based initial mesh
        refinement.)"; }
 };
-using amr_ic = keyword< amr_ic_info, TAOCPP_PEGTL_STRING("ic") >;
+using amr_initial_conditions =
+  keyword< amr_initial_conditions_info, TAOCPP_PEGTL_STRING("ic") >;
 
 struct amr_initial_info {
   static std::string name() { return "initial refinement"; }
@@ -3727,7 +3728,7 @@ struct amr_initial_info {
     static std::string description() { return "string"; }
     static std::string choices() {
       return '\'' + amr_uniform::string() + "\' | \'"
-                  + amr_ic::string() + '\'';
+                  + amr_initial_conditions::string() + '\'';
     }
   };
 };
