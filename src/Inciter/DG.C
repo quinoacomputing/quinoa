@@ -41,6 +41,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_nfac( 0 ),
   m_nbnd( 0 ),
   m_nadj( 0 ),
+  m_nrhs( 0 ),
   m_itf( 0 ),
   m_disc( disc ),
   m_fd( fd ),
@@ -64,7 +65,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_bndFace(),
   m_ghostData(),
   m_ghostReq(),
-  m_ghost()
+  m_ghost(),
+  m_dt( 0 )
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
@@ -538,7 +540,7 @@ DG::dt()
 // Compute time step size
 // *****************************************************************************
 {
-  tk::real mindt = std::numeric_limits< tk::real >::max();
+  m_dt = std::numeric_limits< tk::real >::max();
 
   auto const_dt = g_inputdeck.get< tag::discr, tag::dt >();
   auto def_const_dt = g_inputdeck_defaults.get< tag::discr, tag::dt >();
@@ -547,32 +549,24 @@ DG::dt()
   // use constant dt if configured
   if (std::abs(const_dt - def_const_dt) > eps) {
 
-    mindt = const_dt;
+    m_dt = const_dt;
 
   } else {      // compute dt based on CFL
 
     // find the minimum dt across all PDEs integrated
     // ...
-    mindt = 0.1;        // stub for now to overwrite numeric_limits::max
+    m_dt = 0.1;        // stub for now to overwrite numeric_limits::max
 
     // Scale smallest dt with CFL coefficient
-    mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
+    m_dt *= g_inputdeck.get< tag::discr, tag::cfl >();
 
   }
 
-  // Contribute to minimum dt across all chares the advance to next step
-  contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-              CkCallback(CkReductionTarget(DG,commGhostData), thisProxy) );
-}
-
-void
-DG::commGhostData( tk::real newdt )
-// *****************************************************************************
-// Communication step to send chare-boundary ghost data to neighboring chares
-// *****************************************************************************
-{
-  if (!m_ghostData.empty())
-  {
+  if (m_ghostData.empty()) {
+    // Contribute to minimum dt across all chares the advance to next step
+    contribute( sizeof(tk::real), &m_dt, CkReduction::min_double,
+                CkCallback(CkReductionTarget(DG,advance), thisProxy) );
+  } else
     for(const auto& n : m_ghostData)
     {
       std::vector< std::size_t > geid;
@@ -582,16 +576,14 @@ DG::commGhostData( tk::real newdt )
         geid.push_back( i.first );
         gd.push_back( m_u[i.first] );
       }
-      thisProxy[ n.first ].comrhs( geid, gd );
+      thisProxy[ n.first ].comrhs( thisIndex, geid, gd );
     }
-  }
-
-  advance( newdt );
 }
 
 void
-DG::comrhs(const std::vector< std::size_t >& geid,
-           const std::vector< std::vector< tk::real > >& V)
+DG::comrhs( int fromch,
+            const std::vector< std::size_t >& geid,
+            const std::vector< std::vector< tk::real > >& V )
 // *****************************************************************************
 //  Receive chare-boundary ghost data from neighboring chares
 //! \param[in] geid Global element IDs of the ghost element for which we receive
@@ -602,21 +594,19 @@ DG::comrhs(const std::vector< std::size_t >& geid,
 {
   Assert( V.size() == geid.size(), "Size mismatch in DG::comrhs()" );
 
-  for (std::size_t i=0; i<geid.size(); ++i)
-  {
-    for (const auto& n : m_ghost)
-    {
-      auto leit = n.second.find( geid[i] );
-      if ( leit != end(n.second) )
-      {
-        auto leid = leit->second;
-        Assert( leid < m_u.nunk(), "Indexing out of bounds in DG::comrhs()" );
-        for (std::size_t c=0; c<m_u.nprop(); ++c)
-        {
-          m_u(leid, c, 0) = V[i][c];
-        }
-      }
-    }
+  for (std::size_t i=0; i<geid.size(); ++i) {
+    const auto& n = tk::cref_find( m_ghost, fromch );
+    auto j = tk::cref_find( n, geid[i] );
+    Assert( j < m_u.nunk(), "Indexing out of bounds in DG::comrhs()" );
+    for (std::size_t c=0; c<m_u.nprop(); ++c)
+      m_u(j, c, 0) = V[i][c];
+  }
+
+  if (++m_nrhs == m_ghostData.size()) {
+    m_nrhs = 0;
+    // Contribute to minimum dt across all chares the advance to next step
+    contribute( sizeof(tk::real), &m_dt, CkReduction::min_double,
+                CkCallback(CkReductionTarget(DG,advance), thisProxy) );
   }
 }
 

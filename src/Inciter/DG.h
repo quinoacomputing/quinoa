@@ -121,15 +121,16 @@ class DG : public CBase_DG {
     //! Compute time step size
     void dt();
 
-    //! Send chare-boundary ghost data to neighboring chares
-    void commGhostData( tk::real newdt );
-
     //! Receive chare-boundary ghost data from neighboring chares
-    void comrhs(const std::vector< std::size_t >& geid,
-                const std::vector< std::vector< tk::real > >& V);
+    void comrhs( int fromch,
+                 const std::vector< std::size_t >& geid,
+                 const std::vector< std::vector< tk::real > >& V );
 
     //! Evaluate whether to continue with next step
     void eval();
+
+    //! Advance equations to next time step
+    void advance( tk::real newdt );
 
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -187,6 +188,7 @@ class DG : public CBase_DG {
     std::size_t m_nbnd;
     //! Counter for signaling that all ghost data have been received
     std::size_t m_nadj;
+    std::size_t m_nrhs;
     //! Field output iteration count
     uint64_t m_itf;
     //! Discretization proxy
@@ -246,6 +248,7 @@ class DG : public CBase_DG {
     std::map< int, std::unordered_map< std::size_t, std::size_t > > m_ghost;
     //! Elements surrounding faces
     std::vector< int > m_esuf;
+    tk::real m_dt;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -287,9 +290,6 @@ class DG : public CBase_DG {
 
     //! Fill the face geometry data structure with the chare-face geometry
     void fillGeoFace();
-
-    //! Advance equations to next time step
-    void advance( tk::real newdt );
 
     //! Compute left hand side
     void lhs();
