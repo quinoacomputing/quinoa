@@ -32,6 +32,10 @@ namespace tk {
 const std::array< std::array< std::size_t, 3 >, 4 >
   lpofa{{ {{1,2,3}}, {{2,0,3}}, {{3,0,1}}, {{0,2,1}} }};
 
+//! Compute number of points (nodes) in mesh from connectivity
+std::size_t
+npoin( const std::vector< std::size_t >& inpoel );
+
 //! Generate derived data structure, elements surrounding points
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
 genEsup( const std::vector< std::size_t >& inpoel, std::size_t nnpe );
