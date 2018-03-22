@@ -36,12 +36,8 @@
       ReqGhost [ label="ReqGhost"
                tooltip="all of ghost data have been requested from us"
                URL="\ref inciter::DG::reqGhost"];
-      Ready4Ghost [ label="Ready4Ghost"
-          tooltip="all of our fellow chares are ready for us sending ghost data"
-                    URL="\ref inciter::DG::ready4ghost"];
       OwnGhost -> sendGhost [ style="solid" ];
       ReqGhost -> sendGhost [ style="solid" ];
-      Ready4Ghost -> sendGhost [ style="solid" ];
     }
     \enddot
     \include Inciter/dg.ci
@@ -91,8 +87,8 @@ class DG : public CBase_DG {
 
     //! Constructor
     explicit DG( const CProxy_Discretization& disc,
-                 const tk::CProxy_Solver& solver,
-                 const FaceData& fd );
+                 const tk::CProxy_Solver&,
+                 const FaceData& );
 
     //! Migrate constructor
     explicit DG( CkMigrateMessage* ) {}
@@ -105,9 +101,6 @@ class DG : public CBase_DG {
 
     //! Receive requests for ghost data
     void reqGhost( int fromch );
-
-    //! Caller signals that it is ready for ghost data
-    void ready4ghost();
 
     //! Send all of our ghost data to fellow chares
     void sendGhost();
@@ -137,10 +130,11 @@ class DG : public CBase_DG {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
       CBase_DG::pup(p);
-      p | m_solver;
       p | m_nfac;
       p | m_nadj;
+      p | m_nrhs;
       p | m_itf;
+      p | m_dt;
       p | m_disc;
       p | m_fd;
       p | m_u;
@@ -181,16 +175,16 @@ class DG : public CBase_DG {
                             tk::UnsMesh::FaceHasher,
                             tk::UnsMesh::FaceEq > >;
 
-    tk::CProxy_Solver m_solver;
     //! Counter for face adjacency communication map
     std::size_t m_nfac;
-    //! Counter for signaling that all receivers are ready ghost data
-    std::size_t m_nbnd;
     //! Counter for signaling that all ghost data have been received
     std::size_t m_nadj;
+    //! Counter for signaling that we have received all rhs contributions to rhs
     std::size_t m_nrhs;
     //! Field output iteration count
     uint64_t m_itf;
+    //! Time step size
+    tk::real m_dt;
     //! Discretization proxy
     CProxy_Discretization m_disc;
     //! Face data
@@ -248,7 +242,6 @@ class DG : public CBase_DG {
     std::map< int, std::unordered_map< std::size_t, std::size_t > > m_ghost;
     //! Elements surrounding faces
     std::vector< int > m_esuf;
-    tk::real m_dt;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

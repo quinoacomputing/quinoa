@@ -35,14 +35,13 @@ static CkReduction::reducerType DiagMerger;
 using inciter::DG;
 
 DG::DG( const CProxy_Discretization& disc,
-        const tk::CProxy_Solver& solver,
+        const tk::CProxy_Solver&,
         const FaceData& fd ) :
-  m_solver( solver ),
   m_nfac( 0 ),
-  m_nbnd( 0 ),
   m_nadj( 0 ),
   m_nrhs( 0 ),
   m_itf( 0 ),
+  m_dt( 0 ),
   m_disc( disc ),
   m_fd( fd ),
   m_u( m_disc[thisIndex].ckLocal()->Inpoel().size()/4,
@@ -65,8 +64,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_bndFace(),
   m_ghostData(),
   m_ghostReq(),
-  m_ghost(),
-  m_dt( 0 )
+  m_ghost()
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
@@ -221,11 +219,6 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
   // if we have heard from all fellow chares that we share at least a single
   // node, edge, or face with
   if (++m_nfac == m_msumset.size()) {
-    // Inform all chares we share at least a single node, edge, or face that we
-    // are read for computing and communicating ghost data across our chare
-    // boundaries. (This call signals that our m_bndFace is complete.)
-    for (const auto& c : m_msumset)     // for all chares we share nodes with
-      thisProxy[ c.first ].ready4ghost();
     // At this point m_bndFace is complete on this PE. This means that
     // starting from the sets of faces we potentially share with fellow chares
     // (m_potBndFace), we now only have those faces we actually share faces with
@@ -243,20 +236,6 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
     for (const auto& c : m_msumset)     // for all chares we share nodes with
       thisProxy[ c.first ].reqGhost( thisIndex );
   }
-}
-
-void
-DG::ready4ghost()
-// *****************************************************************************
-// Caller signals that it is ready for ghost data
-//! \details This function is called by those fellow chares that we share at
-//!   least a single node or edge (not necessarily a face) with. It is called by
-//!   the caller when m_bndFace is complete on the caller chare. In here we make
-//!   sure we only continue if we have have heard from all chares we communicate
-//!   with.
-// *****************************************************************************
-{
-  if (++m_nbnd == m_msumset.size()) bndface_complete();
 }
 
 void
@@ -451,7 +430,8 @@ DG::adj()
    tk::destroy( m_ipface );
  
    // Signal the runtime system that all workers have received their adjacency
-   m_solver.ckLocalBranch()->created();
+   auto d = Disc();
+   d->contribute(CkCallback(CkReductionTarget(Transporter,comfinal), d->Tr()));
 }
 
 void

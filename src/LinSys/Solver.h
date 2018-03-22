@@ -344,6 +344,7 @@ class Solver : public CBase_Solver {
     > m_cb;
     std::size_t m_ncomp;       //!< Number of scalar components per unknown
     std::size_t m_nchare;      //!< Number of chares contributing to my PE
+    std::size_t m_ncomm;       //!< Number of chares finished commaps on my PE
     std::size_t m_nperow;      //!< Number of fellow PEs to send row ids to
     std::size_t m_nchbc;       //!< Number of chares we received bcs from
     std::size_t m_lower;       //!< Lower index of the global rows on my PE

@@ -28,7 +28,6 @@ module dg {
       entry void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
       entry void comGhost( int fromch, const GhostData& ghost );
       entry void reqGhost( int fromch );
-      entry void ready4ghost();
       initnode void registerReducers();      
       entry void setup( tk::real v );
       entry void dt();
@@ -53,19 +52,16 @@ module dg {
       // -------------------------------
       // Control flow is from left to right and top to bottom.
       //
-      // If (1) we have computed our own ghost data in setupGhost(), AND (2)
-      // every chare we communicate with has requested ghost data from us, AND
-      // (3) every chare that we communicate with has completed its own face
-      // data structure (m_bndFace), we fulfill the requests and send out ghost
-      // data.
+      // If we have computed our own ghost data in setupGhost(), and every chare
+      // we communicate with has requested ghost data from us, we fulfill the
+      // requests and send out ghost data.
 
       entry void wait4ghost() {
-        when ownghost_complete(), reqghost_complete(), bndface_complete()
-          serial "ghost" { sendGhost(); } };
+        when ownghost_complete(), reqghost_complete() serial "ghost"
+        { sendGhost(); } };
 
       entry void ownghost_complete();
       entry void reqghost_complete();
-      entry void bndface_complete();
     };
 
   } // inciter::
