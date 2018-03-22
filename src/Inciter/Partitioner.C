@@ -23,10 +23,12 @@
 #include "MeshReader.h"
 #include "Around.h"
 #include "ExodusIIMeshWriter.h"
+#include "CGPDE.h"
 
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
+extern std::vector< CGPDE > g_cgpde;
 
 } // inciter::
 
@@ -962,18 +964,24 @@ Partitioner::refine( const std::vector< std::size_t >& inpoel )
 // Optionally refine mesh if requested by user
 // *****************************************************************************
 {
+  auto refined_inpoel = inpoel;
+  auto refined_coord = m_coord;
+
+  // uniform refinement test
   const auto ir = g_inputdeck.get< tag::amr, tag::init >();
   if (!ir.empty()) {
 
     auto orig_inpoel = inpoel;
     auto orig_coord = m_coord;
 
+    // create refinement object
     AMR::mesh_adapter_t refiner( orig_inpoel );
 
     for (std::size_t level=0; level<2; ++level) {
 
+      // do uniform refinement
       refiner.uniform_refinement();
-      auto refined_inpoel = refiner.tet_store.get_active_inpoel();
+      refined_inpoel = refiner.tet_store.get_active_inpoel();
 
 //       std::cout << CkMyPe() << ":c: ";
 //       for (auto p : orig_inpoel) std::cout << p << ' ';
@@ -991,7 +999,7 @@ Partitioner::refine( const std::vector< std::size_t >& inpoel )
       auto esup = tk::genEsup( orig_inpoel, 4 );
       auto psup = tk::genPsup( orig_inpoel, 4, esup );
 
-      auto refined_coord = orig_coord;
+      refined_coord = orig_coord;
       auto& x = refined_coord[0];
       auto& y = refined_coord[1];
       auto& z = refined_coord[2];
@@ -1039,6 +1047,69 @@ Partitioner::refine( const std::vector< std::size_t >& inpoel )
 
     } // level
   } // if enable uniform
+
+  // create refinement object
+  AMR::mesh_adapter_t refiner( refined_inpoel );
+
+  // ic-based refinement test
+  if (!ir.empty()) {
+
+    // take over mesh from uniform refinement above
+    auto orig_inpoel = refined_inpoel;
+    auto orig_coord = refined_coord;
+
+    // Set initial conditions for all PDEs (use CG for now)
+    auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
+    tk::Fields u( orig_coord[0].size(),
+                  g_inputdeck.get< tag::component >().nprop() );
+    for (const auto& eq : g_cgpde) eq.initialize( orig_coord, u, t0 );
+
+    const std::vector< edge_t > edge;
+    const std::vector< real_t > crit;
+    refiner.error_refinement( edge, crit );
+    refined_inpoel = refiner.tet_store.get_active_inpoel();
+
+    // find number of nodes in old mesh
+    auto minmax = std::minmax_element( begin(orig_inpoel), end(orig_inpoel) );
+    Assert( *minmax.first == 0, "node ids should start from zero" );
+    auto npoin = *minmax.second + 1;
+
+    // generate edges surrounding points in old mesh
+    auto esup = tk::genEsup( orig_inpoel, 4 );
+    auto psup = tk::genPsup( orig_inpoel, 4, esup );
+
+    refined_coord = orig_coord;
+    auto& x = refined_coord[0];
+    auto& y = refined_coord[1];
+    auto& z = refined_coord[2];
+
+    auto refined_minmax =
+      std::minmax_element( begin(refined_inpoel), end(refined_inpoel) );
+    Assert( *refined_minmax.first == 0, "node ids should start from zero" );
+    auto refined_npoin = *refined_minmax.second + 1;
+
+    x.resize( refined_npoin );
+    y.resize( refined_npoin );
+    z.resize( refined_npoin );
+
+    // generate coordinates for newly added nodes
+    for (std::size_t p=0; p<npoin; ++p)
+      for (auto q : tk::Around(psup,p)) {
+        auto e = refiner.node_connectivity.find( p, q );
+        if (e > 0) {
+          auto E = static_cast< std::size_t >( e );
+          Assert( E < x.size(), "Indexing out of refined_coord" );
+          x[E] = (x[p]+x[q])/2.0;
+          y[E] = (y[p]+y[q])/2.0;
+          z[E] = (z[p]+z[q])/2.0;
+        }
+      }
+
+    tk::UnsMesh refmesh( refined_inpoel, x, y, z );
+    tk::ExodusIIMeshWriter mr( "refmesh.ic.exo", tk::ExoWriter::CREATE );
+    mr.writeMesh( refmesh );
+
+  } // if enable error
 
   // send progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.perefined();

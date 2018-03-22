@@ -81,6 +81,19 @@ namespace AMR {
         perform_refinement();
     }
 
+    void mesh_adapter_t::error_refinement( const std::vector< edge_t >& edge,
+                                           const std::vector< real_t >& crit )
+    {
+       Assert( edge.size() == crit.size(), "edges and crit size mismatch" );
+       for (std::size_t e=0; e<edge.size(); e++)
+         tet_store.edge_store.get( edge[e] ).refinement_criteria = crit[e];
+
+        evaluate_error_estimate();
+        mark_refinement();
+        perform_refinement();
+    }
+
+
     /**
      * @brief Function to detect the compatibility class (1,
      * 2, or 3) based on the number of locked edges and the existence
