@@ -74,7 +74,6 @@ class CompFlow {
     void rhs( tk::real /*t*/,
               const tk::Fields& /*geoElem*/,
               const inciter::FaceData& /*fd*/,
-              const std::vector< int >& /*esuf*/,
               const tk::Fields& /*U*/,
               tk::Fields& /*R*/ ) const
     {

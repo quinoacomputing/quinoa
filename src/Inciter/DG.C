@@ -78,8 +78,6 @@ DG::DG( const CProxy_Discretization& disc,
   const auto& inpoel = d->Inpoel();
   const auto& inpofa = fd.Inpofa();
 
-  m_esuf = fd.Esuf();
-
   // Invert inpofa to enable searching for faces based on (global) node triplets
   Assert( inpofa.size() % 3 == 0, "Inpofa must contain triplets" );
   for (std::size_t f=0; f<inpofa.size()/3; ++f)
@@ -397,7 +395,7 @@ DG::fillEsuf(int fromch,
 //! \param[in] ghostelem Map of local tet ids associated to remote/ghost tet ids
 //!   for ghost tets adjacent to the chare boundary with fromch only
 //! \details This function extends and fills in the elements surrounding faces
-//!   data structure (m_esuf) so that the left and  right element id is filled
+//!   data structure (esuf) so that the left and  right element id is filled
 //!   in correctly on chare boundaries to contain the correct inner tet id and
 //!   the local tet id for the outer (ghost) tet, both adjacent to the given
 //1   chare-face boundary. Prior to this function, this data structure does not
@@ -407,26 +405,28 @@ DG::fillEsuf(int fromch,
 //!   node IDs of face nodes, obtained from m_bndFace, are matched with the
 //!   incoming ghost data (in arg ghostelem) to obtain the remote element id of
 //!   the ghost. The remote element id of the ghost is stored in a location that
-//!   is local to our own m_esuf. The face numbering is such that m_esuf
+//!   is local to our own esuf. The face numbering is such that esuf
 //!   stores the element-face connectivity first for the physical-boundary faces,
 //!   followed by that of the internal faces, followed by the chare-boundary
-//!   faces. As a result, m_esuf can be used by physics algorithms in exactly
+//!   faces. As a result, esuf can be used by physics algorithms in exactly
 //!   the same way as would be used in serial. In serial, of course, this data
 //!   structure is not extended at the end by the chare-boundaries.
 // *****************************************************************************
 {
-  m_esuf.resize( 2*m_facecnt, -1 );
+  auto& esuf = m_fd.Esuf();
+
+  esuf.resize( 2*m_facecnt, -1 );
 
   // find face-id data structure for sender chare id
   const auto& chf = tk::cref_find( m_bndFace, fromch );
   // find face (given by 3 global node IDs) among faces shared with fromch
   const auto& f = tk::cref_find( chf, t );  // get local face & inner tet id
 
-  Assert( 2*f[0]+1 < m_esuf.size(), "Indexing out of esuf" );
+  Assert( 2*f[0]+1 < esuf.size(), "Indexing out of esuf" );
   // put in inner tet id
-  m_esuf[ 2*f[0]+0 ] = static_cast< int >( f[1] );
+  esuf[ 2*f[0]+0 ] = static_cast< int >( f[1] );
   // put in local id for outer/ghost tet
-  m_esuf[ 2*f[0]+1 ] = static_cast< int >( tk::cref_find(ghostelem,e) );
+  esuf[ 2*f[0]+1 ] = static_cast< int >( tk::cref_find(ghostelem,e) );
 }
 
 void
@@ -435,25 +435,23 @@ DG::adj()
 // Continue after face adjacency communication map completed on this chare
 // *****************************************************************************
 {
-   // These asserts ensure that all the appropriate m_esuf entries are filled
-   for (std::size_t f=0; f<m_facecnt; ++f)
-   {
-     Assert( m_esuf[ 2*f ] > -1,
-             "Left element in esuf cannot be physical ghost" );
- 
-     if (f >= m_fd.Nbfac())
-       Assert( m_esuf[ 2*f+1 ] > -1, "Right element in esuf for internal/chare "
-               "faces cannot be a ghost" );
-   }
+  // These asserts ensure that all the appropriate esuf entries are filled
+  for (std::size_t f=0; f<m_facecnt; ++f) {
+    Assert( m_fd.Esuf()[2*f] > -1,
+            "Left element in esuf cannot be physical ghost" );
+    if (f >= m_fd.Nbfac())
+      Assert( m_fd.Esuf()[2*f+1] > -1,
+           "Right element in esuf for internal/chare faces cannot be a ghost" );
+  }
 
-   fillGeoFace();
+  fillGeoFace();
 
-   tk::destroy( m_potBndFace );
-   tk::destroy( m_ipface );
- 
-   // Signal the runtime system that all workers have received their adjacency
-   auto d = Disc();
-   d->contribute(CkCallback(CkReductionTarget(Transporter,comfinal), d->Tr()));
+  tk::destroy( m_potBndFace );
+  tk::destroy( m_ipface );
+
+  // Signal the runtime system that all workers have received their adjacency
+  auto d = Disc();
+  d->contribute(CkCallback(CkReductionTarget(Transporter,comfinal), d->Tr()));
 }
 
 void
@@ -734,7 +732,7 @@ DG::rhs()
   auto d = Disc();
 
   for (const auto& eq : g_dgpde)
-    eq.rhs( d->T(), m_geoFace, m_fd, m_esuf, m_u, m_rhs );
+    eq.rhs( d->T(), m_geoFace, m_fd, m_u, m_rhs );
 }
 
 void

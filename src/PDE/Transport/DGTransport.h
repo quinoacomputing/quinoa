@@ -121,7 +121,6 @@ class Transport {
     void rhs( tk::real,
               const tk::Fields& geoFace,
               const inciter::FaceData& fd,
-              const std::vector< int >& esuf,
               const tk::Fields& U,
               tk::Fields& R ) const
     {
@@ -131,7 +130,8 @@ class Transport {
               "Number of components in solution and right-hand side vector " 
               "must equal "+ std::to_string(m_ncomp) );
 
-      auto& bface = fd.Bface();
+      const auto& bface = fd.Bface();
+      const auto& esuf = fd.Esuf();
 
       // set rhs to zero
       R.fill(0.0);
