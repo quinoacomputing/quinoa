@@ -87,8 +87,8 @@ class DG : public CBase_DG {
 
     //! Constructor
     explicit DG( const CProxy_Discretization& disc,
-                 const tk::CProxy_Solver& solver,
-                 const FaceData& fd );
+                 const tk::CProxy_Solver&,
+                 const FaceData& );
 
     //! Migrate constructor
     explicit DG( CkMigrateMessage* ) {}
@@ -114,21 +114,27 @@ class DG : public CBase_DG {
     //! Compute time step size
     void dt();
 
-    //! Advance equations to next time step
-    void advance( tk::real newdt );
+    //! Receive chare-boundary ghost data from neighboring chares
+    void comrhs( int fromch,
+                 const std::vector< std::size_t >& geid,
+                 const std::vector< std::vector< tk::real > >& V );
 
     //! Evaluate whether to continue with next step
     void eval();
+
+    //! Advance equations to next time step
+    void advance( tk::real newdt );
 
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
       CBase_DG::pup(p);
-      p | m_solver;
       p | m_nfac;
       p | m_nadj;
+      p | m_nrhs;
       p | m_itf;
+      p | m_dt;
       p | m_disc;
       p | m_fd;
       p | m_u;
@@ -139,6 +145,7 @@ class DG : public CBase_DG {
       p | m_lhs;
       p | m_rhs;
       p | m_facecnt;
+      p | m_nchGhost;
       p | m_msumset;
       p | m_esuelTet;
       p | m_ipface;
@@ -163,16 +170,20 @@ class DG : public CBase_DG {
     using FaceIDs =
       std::unordered_map< int,  // chare ID faces shared with
         std::unordered_map< tk::UnsMesh::Face,  // 3 global node IDs
-                            std::size_t,        // local face ID
+                            std::array< std::size_t, 2 >, // local face & tet ID
                             tk::UnsMesh::FaceHasher,
                             tk::UnsMesh::FaceEq > >;
 
-    tk::CProxy_Solver m_solver;
     //! Counter for face adjacency communication map
     std::size_t m_nfac;
+    //! Counter for signaling that all ghost data have been received
     std::size_t m_nadj;
+    //! Counter for signaling that we have received all contributions to rhs
+    std::size_t m_nrhs;
     //! Field output iteration count
     uint64_t m_itf;
+    //! Time step size
+    tk::real m_dt;
     //! Discretization proxy
     CProxy_Discretization m_disc;
     //! Face data
@@ -193,6 +204,8 @@ class DG : public CBase_DG {
     tk::Fields m_rhs;
     //! Counter for chare-boundary face local IDs
     std::size_t m_facecnt;
+    //! Counter for chare-face ghosts for this mesh chunk
+    std::size_t m_nchGhost;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!    worker chares associated to their chare IDs
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
@@ -221,10 +234,11 @@ class DG : public CBase_DG {
     std::unordered_map< int, GhostData > m_ghostData;
     //! Chare IDs requesting ghost data
     std::vector< int > m_ghostReq;
-    //! Local element id associated to ghost remote id
-    //! \details This map associates the local element id (map value) to the
-    //!    (remote) element id of the ghost (map key).
-    std::unordered_map< std::size_t, std::size_t > m_ghost;
+    //! Local element id associated to ghost remote id charewise
+    //! \details This map associates the local element id (inner map value) to
+    //!    the (remote) element id of the ghost (inner map key) based on the
+    //!    chare id (outer map key) this remote element lies in.
+    std::map< int, std::unordered_map< std::size_t, std::size_t > > m_ghost;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -242,8 +256,18 @@ class DG : public CBase_DG {
     std::unordered_map< int, std::unordered_set< std::size_t > >
     msumset() const;
 
-    //! Continue after face adjacency communication map is complete on this chare
+    //! Continue after face adjacency communication map completed on this chare
     void adj();
+
+    //! Fill the elements surrounding faces, extended by ghost entries
+    void
+    fillEsuf( int fromch,
+              std::size_t e,
+              const tk::UnsMesh::Face& t,              
+              const std::unordered_map< std::size_t, std::size_t >& ghostelem );
+
+    //! Fill the face geometry data structure with the chare-face geometry
+    void fillGeoFace();
 
     //! Compute left hand side
     void lhs();

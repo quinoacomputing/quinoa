@@ -58,6 +58,7 @@ Solver::Solver( CProxy_SolverShadow sh,
   m_cb( cb[0], cb[1], cb[2] ),
   m_ncomp( n ),
   m_nchare( 0 ),
+  m_ncomm( 0 ),
   m_nperow( 0 ),
   m_nchbc( 0 ),
   m_lower( 0 ),
@@ -278,7 +279,10 @@ Solver::created()
 // Signal the runtime system that the workers have been created
 // *****************************************************************************
 {
-  contribute( m_cb.get< tag::com >() );
+  if (++m_ncomm == m_nchare) {
+    m_ncomm = 0;
+    contribute( m_cb.get< tag::com >() );
+  }
 }
 
 void

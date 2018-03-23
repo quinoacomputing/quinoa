@@ -35,12 +35,13 @@ static CkReduction::reducerType DiagMerger;
 using inciter::DG;
 
 DG::DG( const CProxy_Discretization& disc,
-        const tk::CProxy_Solver& solver,
+        const tk::CProxy_Solver&,
         const FaceData& fd ) :
-  m_solver( solver ),
   m_nfac( 0 ),
   m_nadj( 0 ),
+  m_nrhs( 0 ),
   m_itf( 0 ),
+  m_dt( 0 ),
   m_disc( disc ),
   m_fd( fd ),
   m_u( m_disc[thisIndex].ckLocal()->Inpoel().size()/4,
@@ -54,6 +55,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_facecnt( fd.Inpofa().size()/3 ),
+  m_nchGhost( 0 ),
   m_msumset( msumset() ),
   m_esuelTet( tk::genEsuelTet( m_disc[thisIndex].ckLocal()->Inpoel(),
                 tk::genEsup( m_disc[thisIndex].ckLocal()->Inpoel(), 4 ) ) ),
@@ -145,7 +147,7 @@ DG::DG( const CProxy_Discretization& disc,
     for (const auto& c : m_msumset) {   // for all chares we share nodes with
       decltype(m_potBndFace)::mapped_type fs;      // will store face set
       auto f = m_potBndFace.find( c.first );       // find face set for chare
-      if (f != end(m_potBndFace)) fs = std::move( f->second ); // if found, send
+      if (f != end(m_potBndFace)) fs = f->second; // if found, send
       thisProxy[ c.first ].comfac( thisIndex, fs );
     }
 }
@@ -182,10 +184,9 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
     // try to find incoming faces among our faces we potentially share with
     // fromch, if found, generate and assign new local ID to face (associated to
     // sender chare)
-    for (const auto& t : infaces) {
+    for (const auto& t : infaces)
       if (b->second.find(t) != end(b->second))
-        bndface[ t ] = m_facecnt++;
-    }
+        bndface[t][0] = m_facecnt++;    // assign new local face ID
     // if at this point we have not found any face among our faces we
     // potentially share with fromch, there is no need to keep an empty set of
     // faces associated to fromch as we only share nodes or edges with it, but
@@ -193,6 +194,28 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
     if (bndface.empty()) m_bndFace.erase( fromch );
   }
 
+  auto d = Disc();
+  const auto& gid = d->Gid();
+  const auto& inpoel = d->Inpoel();
+  for (std::size_t e=0; e<m_esuelTet.size()/4; ++e) {  // for all our tets
+    auto mark = e*4;
+    for (std::size_t f=0; f<4; ++f) {  // for all cell faces
+      if (m_esuelTet[mark+f] == -1) {  // if face has no outside-neighbor tet
+        auto A = gid[ inpoel[ mark + tk::lpofa[f][0] ] ];
+        auto B = gid[ inpoel[ mark + tk::lpofa[f][1] ] ];
+        auto C = gid[ inpoel[ mark + tk::lpofa[f][2] ] ];
+        auto c = findchare( {{A,B,C}} );
+        if (c > -1) {
+          auto& bndface = tk::ref_find( m_bndFace, c );
+          auto& face = tk::ref_find( bndface, {{A,B,C}} );
+          face[1] = e;  // store (local) inner tet ID adjacent to face
+        }
+      }
+    }
+  }
+
+  // if we have heard from all fellow chares that we share at least a single
+  // node, edge, or face with
   if (++m_nfac == m_msumset.size()) {
     // At this point m_bndFace is complete on this PE. This means that
     // starting from the sets of faces we potentially share with fellow chares
@@ -202,9 +225,14 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
     // assigned local face ID. We continue by starting setting up ghost data.
     setupGhost();
     // Besides setting up our own ghost data, we also issue requests (for ghost
-    // data) to those chares which we share faces with.
-    for (const auto& cf : m_bndFace)
-      thisProxy[ cf.first ].reqGhost( thisIndex );
+    // data) to those chares which we share faces with. Note that similar to
+    // comfac() we are calling reqGhost() by going through msumset instead,
+    // which may send requests to those chare we do not share faces with. This
+    // is so that we can test for completing by querying the size of the already
+    // complete msumset in reqGhost. Requests in sendGhost will only be
+    // fullfilled based on m_ghostData.
+    for (const auto& c : m_msumset)     // for all chares we share nodes with
+      thisProxy[ c.first ].reqGhost( thisIndex );
   }
 }
 
@@ -257,15 +285,14 @@ DG::setupGhost()
     }
   }
 
-  // If our own ghost data is empty, we do not expect to requests, otherwise
-  // tell the runtime system that we have finished setting up our ghost data.
-  if (m_ghostData.empty()) adj(); else ownghost_complete();
+  ownghost_complete();
 }
 
 void
 DG::reqGhost( int fromch )
 // *****************************************************************************
 // Receive requests for ghost data
+//! \param[in] fromch Caller chare ID
 // *****************************************************************************
 {
   // Buffer up requestor chare IDs
@@ -273,7 +300,7 @@ DG::reqGhost( int fromch )
 
   // If every chare we communicate with has requested ghost data from us, we may
   // fulfill the requests, but only if we have already setup our ghost data.
-  if (m_ghostReq.size() == m_bndFace.size()) reqghost_complete();
+  if (m_ghostReq.size() == m_msumset.size()) reqghost_complete();
 }
 
 void
@@ -290,6 +317,7 @@ int
 DG::findchare( const tk::UnsMesh::Face& t )
 // *****************************************************************************
 // Find chare for face (given by 3 global node IDs
+//! \param[in] t Face given by three global node IDs
 //! \return chare ID if found, -1 if not
 // *****************************************************************************
 {
@@ -303,11 +331,15 @@ void
 DG::comGhost( int fromch, const GhostData& ghost )
 // *****************************************************************************
 // Receive ghost data on chare boundaries from fellow chare
+//! \param[in] fromch Caller chare ID
+//! \param[in] ghost Ghost data, see Inciter/FaceData.h for the type
 // *****************************************************************************
 {
   // nodelist with fromch, currently only used for an assert
   const auto& nl = tk::cref_find( m_msumset, fromch );
   IGNORE(nl);
+
+  auto& ghostelem = m_ghost[fromch];
 
   // Store ghost data coming from chare
   auto ghostcnt = m_u.nunk();    // will start new local cell ids from
@@ -318,50 +350,135 @@ DG::comGhost( int fromch, const GhostData& ghost )
     Assert( nodes.size() % 3 == 0, "Face node IDs must be triplets" );
     Assert( geo.size() == m_geoElem.nprop(), "Ghost geometry size mismatch" );
     for (std::size_t n=0; n<nodes.size()/3; ++n) {  // face(s) of ghost e
-      auto A = nodes[ n*3+0 ];  // global node IDs of face on chare boundary
-      auto B = nodes[ n*3+1 ];
-      auto C = nodes[ n*3+2 ];
-      // must find face(A,B,C) in nodelist of chare-boundary adjacent to fromch
-      Assert( nl.find(A)!=end(nl) && nl.find(B)!=end(nl) && nl.find(C)!=end(nl),
+      // node IDs of face on chare boundary
+      tk::UnsMesh::Face t{{ nodes[n*3+0], nodes[n*3+1], nodes[n*3+2] }};
+      // must find t in nodelist of chare-boundary adjacent to fromch
+      Assert( nl.find(t[0]) != end(nl) &&
+              nl.find(t[1]) != end(nl) &&
+              nl.find(t[2]) != end(nl),
            "Ghost face not found in chare-node adjacency map on receiving end" );
       // must find face(A,B,C) in boundary-face adjacency map
-      auto c = findchare({{A,B,C}});
+      auto c = findchare(t);
       IGNORE(c);
       Assert( c > -1, "Ghost face not found in boundary-face adjacency map on "
                       "receiving end" );
       // if ghost tet id not yet encountered on boundary with fromch
-      if ( m_ghost.find(e) == end(m_ghost) ) {
-        m_ghost[e] = ghostcnt++;  // assign new local tet id to remote ghost id
-        m_geoElem.push_back( geo );  // store ghost elem geometry
+      if ( ghostelem.find(e) == end(ghostelem) ) {
+        ghostelem[e] = ghostcnt++; // assign new local tet id to remote ghost id
+        m_geoElem.push_back( geo );// store ghost elem geometry
+        m_un.enlarge( 1 );         // enlarge solution vectors, lhs, rhs
+        m_u.enlarge( 1 );
+        m_lhs.enlarge( 1 );
+        m_rhs.enlarge( 1 );
+        ++m_nchGhost;              // increase number of ghosts on this chare
       }
+      fillEsuf( fromch, e, t, ghostelem );
     }
   }
 
-  if (++m_nadj == m_bndFace.size()) adj();
+  // Signal the runtime system that all workers have received their adjacency
+  if (++m_nadj == m_bndFace.size()) {
+    adj();
+  }
+}
+
+void
+DG::fillEsuf(int fromch,
+             std::size_t e,
+             const tk::UnsMesh::Face& t,
+             const std::unordered_map< std::size_t, std::size_t >& ghostelem )
+// *****************************************************************************
+// Extend and fill elements surrounding faces by ghost entries
+//! \param[in] fromch Caller chare ID
+//! \param[in] e (ghost) tet id on the other side of chare boundary
+//! \param[in] t Face (given by 3 global node IDs) on the chare boundary
+//! \param[in] ghostelem Map of local tet ids associated to remote/ghost tet ids
+//!   for ghost tets adjacent to the chare boundary with fromch only
+//! \details This function extends and fills in the elements surrounding faces
+//!   data structure (esuf) so that the left and  right element id is filled
+//!   in correctly on chare boundaries to contain the correct inner tet id and
+//!   the local tet id for the outer (ghost) tet, both adjacent to the given
+//1   chare-face boundary. Prior to this function, this data structure does not
+//!   have yet face-element connectivity adjacent to chare-boundary faces, only
+//!   for physical boundaries and internal faces that are not on the chare
+//!   boundary (this latter purely as a result of mesh partitioning). The global
+//!   node IDs of face nodes, obtained from m_bndFace, are matched with the
+//!   incoming ghost data (in arg ghostelem) to obtain the remote element id of
+//!   the ghost. The remote element id of the ghost is stored in a location that
+//!   is local to our own esuf. The face numbering is such that esuf
+//!   stores the element-face connectivity first for the physical-boundary faces,
+//!   followed by that of the internal faces, followed by the chare-boundary
+//!   faces. As a result, esuf can be used by physics algorithms in exactly
+//!   the same way as would be used in serial. In serial, of course, this data
+//!   structure is not extended at the end by the chare-boundaries.
+// *****************************************************************************
+{
+  auto& esuf = m_fd.Esuf();
+
+  esuf.resize( 2*m_facecnt, -1 );
+
+  // find face-id data structure for sender chare id
+  const auto& chf = tk::cref_find( m_bndFace, fromch );
+  // find face (given by 3 global node IDs) among faces shared with fromch
+  const auto& f = tk::cref_find( chf, t );  // get local face & inner tet id
+
+  Assert( 2*f[0]+1 < esuf.size(), "Indexing out of esuf" );
+  // put in inner tet id
+  esuf[ 2*f[0]+0 ] = static_cast< int >( f[1] );
+  // put in local id for outer/ghost tet
+  esuf[ 2*f[0]+1 ] = static_cast< int >( tk::cref_find(ghostelem,e) );
 }
 
 void
 DG::adj()
 // *****************************************************************************
-// Continue after face adjacency communication map is complete on this chare
+// Continue after face adjacency communication map completed on this chare
 // *****************************************************************************
 {
-//   std::cout << "\nGhosts on " << thisIndex << " (remote:local): ";
-//   for (const auto& g : m_ghost) std::cout << g.first << ":" << g.second << ' ';
-//   std::cout << '\n';
+  // These asserts ensure that all the appropriate esuf entries are filled
+  for (std::size_t f=0; f<m_facecnt; ++f) {
+    Assert( m_fd.Esuf()[2*f] > -1,
+            "Left element in esuf cannot be physical ghost" );
+    if (f >= m_fd.Nbfac())
+      Assert( m_fd.Esuf()[2*f+1] > -1,
+           "Right element in esuf for internal/chare faces cannot be a ghost" );
+  }
 
-//std::cout << thisIndex << "b: " << m_geoElem.nunk() << ", " << m_ghost.size() << '\n';
+  fillGeoFace();
 
-  // Enlarge lhs, rhs, and solution to accommodate ghost cells on chare boundaries
-  m_u.enlarge( m_ghost.size() );
-  m_un.enlarge( m_ghost.size() );
-  m_lhs.enlarge( m_ghost.size() );
-  m_rhs.enlarge( m_ghost.size() );
-
-//std::cout << thisIndex << "a: " << m_geoElem.nunk() << ", " << m_lhs.nunk() << '\n';
+  tk::destroy( m_potBndFace );
+  tk::destroy( m_ipface );
 
   // Signal the runtime system that all workers have received their adjacency
-  m_solver.ckLocalBranch()->created();
+  auto d = Disc();
+  d->contribute(CkCallback(CkReductionTarget(Transporter,comfinal), d->Tr()));
+}
+
+void
+DG::fillGeoFace()
+// *****************************************************************************
+// Fill the face-geometry data structure along chare-boundary faces
+// *****************************************************************************
+{
+  auto d = Disc();
+  auto coord = d->Coord();
+  auto lid = d->Lid();
+
+  m_geoFace.enlarge( (m_facecnt-m_fd.Inpofa().size()/3) );
+
+  for (const auto& ch : m_bndFace)
+    for (const auto& f : ch.second) {
+      auto A = tk::cref_find( lid, f.first[2] );
+      auto B = tk::cref_find( lid, f.first[1] );
+      auto C = tk::cref_find( lid, f.first[0] );
+      auto fa = f.second[0];
+      auto geochf = tk::geoFaceTri( {{coord[0][A], coord[0][B], coord[0][C]}},
+                                    {{coord[1][A], coord[1][B], coord[1][C]}},
+                                    {{coord[2][A], coord[2][B], coord[2][C]}} );
+
+      for (std::size_t i=0; i<7; ++i)
+        m_geoFace(fa,i,0) = geochf(0,i,0);
+    }
 }
 
 void
@@ -394,6 +511,8 @@ DG::setup( tk::real v )
   // Output fields metadata to output file
   d->writeElemMeta();
 
+  Assert( m_geoElem.nunk() == m_lhs.nunk(), "Size mismatch in DG::setup()" );
+
   // Compute left-hand side of discrete PDEs
   lhs();
 
@@ -417,7 +536,7 @@ DG::dt()
 // Compute time step size
 // *****************************************************************************
 {
-  tk::real mindt = std::numeric_limits< tk::real >::max();
+  m_dt = std::numeric_limits< tk::real >::max();
 
   auto const_dt = g_inputdeck.get< tag::discr, tag::dt >();
   auto def_const_dt = g_inputdeck_defaults.get< tag::discr, tag::dt >();
@@ -426,22 +545,87 @@ DG::dt()
   // use constant dt if configured
   if (std::abs(const_dt - def_const_dt) > eps) {
 
-    mindt = const_dt;
+    m_dt = const_dt;
 
   } else {      // compute dt based on CFL
 
     // find the minimum dt across all PDEs integrated
     // ...
-    mindt = 0.1;        // stub for now to overwrite numeric_limits::max
+    m_dt = 0.1;        // stub for now to overwrite numeric_limits::max
 
     // Scale smallest dt with CFL coefficient
-    mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
+    m_dt *= g_inputdeck.get< tag::discr, tag::cfl >();
 
   }
 
-  // Contribute to minimum dt across all chares the advance to next step
-  contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-              CkCallback(CkReductionTarget(DG,advance), thisProxy) );
+  if (m_ghostData.empty()) {
+    // Contribute to minimum dt across all chares the advance to next step
+    contribute( sizeof(tk::real), &m_dt, CkReduction::min_double,
+                CkCallback(CkReductionTarget(DG,advance), thisProxy) );
+  } else
+    for(const auto& n : m_ghostData)
+    {
+      std::vector< std::size_t > geid;
+      std::vector< std::vector< tk::real > > gd;
+      for(const auto& i : n.second)
+      {
+        geid.push_back( i.first );
+        gd.push_back( m_u[i.first] );
+      }
+      thisProxy[ n.first ].comrhs( thisIndex, geid, gd );
+    }
+}
+
+void
+DG::comrhs( int fromch,
+            const std::vector< std::size_t >& geid,
+            const std::vector< std::vector< tk::real > >& V )
+// *****************************************************************************
+//  Receive chare-boundary ghost data from neighboring chares
+//! \param[in] geid Global element IDs of the ghost element for which we receive
+//!   data
+//! \param[in] V Ghost element data
+//! \details This function receives contributions to m_u, m_geoElem.
+// *****************************************************************************
+{
+  Assert( V.size() == geid.size(), "Size mismatch in DG::comrhs()" );
+
+  for (std::size_t i=0; i<geid.size(); ++i) {
+    const auto& n = tk::cref_find( m_ghost, fromch );
+    auto j = tk::cref_find( n, geid[i] );
+    Assert( j < m_u.nunk(), "Indexing out of bounds in DG::comrhs()" );
+    for (std::size_t c=0; c<m_u.nprop(); ++c)
+      m_u(j, c, 0) = V[i][c];
+  }
+
+  if (++m_nrhs == m_ghostData.size()) {
+    m_nrhs = 0;
+    // Contribute to minimum dt across all chares the advance to next step
+    contribute( sizeof(tk::real), &m_dt, CkReduction::min_double,
+                CkCallback(CkReductionTarget(DG,advance), thisProxy) );
+  }
+}
+
+void
+DG::advance( tk::real newdt )
+// *****************************************************************************
+// Advance equations to next time step
+//! \param[in] newdt Size of this new time step
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Set new time step size
+  d->setdt( newdt );
+
+  // Compute rhs for next time step
+  rhs();
+
+  // Advance solution/time-stepping
+  solve( newdt );
+
+  // Prepare for next time step
+  next();
 }
 
 void
@@ -465,7 +649,7 @@ DG::writeFields( tk::real time )
   for (const auto& eq : g_dgpde)
   {
     auto output = eq.fieldOutput( time, m_vol, m_geoElem, u );
-    for (auto& o : output) o.resize( o.size()-m_ghost.size() );
+    for (auto& o : output) o.resize( o.size()-m_nchGhost );
     elemfields.insert( end(elemfields), begin(output), end(output) );
   }
 
@@ -560,28 +744,6 @@ DG::solve( tk::real deltat )
   m_u = m_un + deltat * m_rhs/m_lhs;
 
   m_un = m_u;
-}
-
-void
-DG::advance( tk::real newdt )
-// *****************************************************************************
-// Advance equations to next time step
-//! \param[in] newdt Size of this new time step
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Set new time step size
-  d->setdt( newdt );
-
-  // Compute rhs for next time step
-  rhs();
-
-  // Advance solution/time-stepping
-  solve( newdt );
-
-  // Prepare for next time step
-  next();
 }
 
 void

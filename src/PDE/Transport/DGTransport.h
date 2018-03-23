@@ -130,14 +130,14 @@ class Transport {
               "Number of components in solution and right-hand side vector " 
               "must equal "+ std::to_string(m_ncomp) );
 
-      auto& esuf = fd.Esuf();
-      auto& bface = fd.Bface();
+      const auto& bface = fd.Bface();
+      const auto& esuf = fd.Esuf();
 
       // set rhs to zero
       R.fill(0.0);
 
       // compute internal surface flux integrals
-      for (auto f=fd.Nbfac(); f<fd.Ntfac(); ++f)
+      for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
       {
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
         std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);

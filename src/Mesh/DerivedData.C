@@ -1313,12 +1313,7 @@ genGeoFaceTri( std::size_t ntfac,
     std::size_t ip1, ip2, ip3;
     tk::real xp1, yp1, zp1,
              xp2, yp2, zp2,
-             xp3, yp3, zp3,
-             ax, ay, az,
-             bx, by, bz,
-             nx, ny, nz,
-             sidea, sideb, sidec,
-             semip, farea;
+             xp3, yp3, zp3;
 
     // get area
     ip1 = inpofa[nnpf*f];
@@ -1337,53 +1332,100 @@ genGeoFaceTri( std::size_t ntfac,
     yp3 = coord[1][ip3];
     zp3 = coord[2][ip3];
 
-    sidea = sqrt( (xp2-xp1)*(xp2-xp1)
-                + (yp2-yp1)*(yp2-yp1)
-                + (zp2-zp1)*(zp2-zp1) );
+    auto geoif = geoFaceTri( {{xp1, xp2, xp3}},
+                             {{yp1, yp2, yp3}},
+                             {{zp1, zp2, zp3}} );
 
-    sideb = sqrt( (xp3-xp2)*(xp3-xp2)
-                + (yp3-yp2)*(yp3-yp2)
-                + (zp3-zp2)*(zp3-zp2) );
-
-    sidec = sqrt( (xp1-xp3)*(xp1-xp3)
-                + (yp1-yp3)*(yp1-yp3)
-                + (zp1-zp3)*(zp1-zp3) );
-
-    semip = 0.5 * (sidea + sideb + sidec);
-
-    farea = sqrt( semip
-                * (semip-sidea)
-                * (semip-sideb)
-                * (semip-sidec) );
-
-    geoFace(f,0,0) = farea;
-
-    // get unit normal to face
-    ax = xp2 - xp1;
-    ay = yp2 - yp1;
-    az = zp2 - zp1;
-
-    bx = xp3 - xp1;
-    by = yp3 - yp1;
-    bz = zp3 - zp1;
-
-    nx =   ay*bz - az*by;
-    ny = -(ax*bz - az*bx);
-    nz =   ax*by - ay*bx;
-
-    farea = sqrt(nx*nx + ny*ny + nz*nz);
-
-    geoFace(f,1,0) = nx/farea;
-    geoFace(f,2,0) = ny/farea;
-    geoFace(f,3,0) = nz/farea;
-
-    // get centroid
-    geoFace(f,4,0) = (xp1+xp2+xp3)/3.0;
-    geoFace(f,5,0) = (yp1+yp2+yp3)/3.0;
-    geoFace(f,6,0) = (zp1+zp2+zp3)/3.0;
+    for (std::size_t i=0; i<7; ++i)
+      geoFace(f,i,0) = geoif(0,i,0);
   }
 
   return geoFace;
+}
+
+tk::Fields
+geoFaceTri( const std::array< tk::real, 3 >& x,
+            const std::array< tk::real, 3 >& y,
+            const std::array< tk::real, 3 >& z )
+// *****************************************************************************
+//! Compute geometry of the face given by three vertices
+//! \param[in] x x-coordinates of the three vertices of the triangular face.
+//! \param[in] y y-coordinates of the three vertices of the triangular face.
+//! \param[in] z z-coordinates of the three vertices of the triangular face.
+//! \return Face geometry information. This includes face area, unit normal
+//!   pointing outward of the element to the left of the face, and face
+//!   centroid coordinates.
+// *****************************************************************************
+{
+  tk::Fields geoiFace( 1, 7 );
+
+  tk::real xp1, yp1, zp1,
+           xp2, yp2, zp2,
+           xp3, yp3, zp3,
+           ax, ay, az,
+           bx, by, bz,
+           nx, ny, nz,
+           sidea, sideb, sidec,
+           semip, farea;
+
+  xp1 = x[0];
+  xp2 = x[1];
+  xp3 = x[2];
+
+  yp1 = y[0];
+  yp2 = y[1];
+  yp3 = y[2];
+
+  zp1 = z[0];
+  zp2 = z[1];
+  zp3 = z[2];
+
+  sidea = sqrt( (xp2-xp1)*(xp2-xp1)
+              + (yp2-yp1)*(yp2-yp1)
+              + (zp2-zp1)*(zp2-zp1) );
+
+  sideb = sqrt( (xp3-xp2)*(xp3-xp2)
+              + (yp3-yp2)*(yp3-yp2)
+              + (zp3-zp2)*(zp3-zp2) );
+
+  sidec = sqrt( (xp1-xp3)*(xp1-xp3)
+              + (yp1-yp3)*(yp1-yp3)
+              + (zp1-zp3)*(zp1-zp3) );
+
+  semip = 0.5 * (sidea + sideb + sidec);
+
+  farea = sqrt( semip
+              * (semip-sidea)
+              * (semip-sideb)
+              * (semip-sidec) );
+
+  geoiFace(0,0,0) = farea;
+
+  // get unit normal to face
+  ax = xp2 - xp1;
+  ay = yp2 - yp1;
+  az = zp2 - zp1;
+
+  bx = xp3 - xp1;
+  by = yp3 - yp1;
+  bz = zp3 - zp1;
+
+  nx =   ay*bz - az*by;
+  ny = -(ax*bz - az*bx);
+  nz =   ax*by - ay*bx;
+
+  farea = sqrt(nx*nx + ny*ny + nz*nz);
+
+  geoiFace(0,1,0) = nx/farea;
+  geoiFace(0,2,0) = ny/farea;
+  geoiFace(0,3,0) = nz/farea;
+
+  // get centroid
+  geoiFace(0,4,0) = (xp1+xp2+xp3)/3.0;
+  geoiFace(0,5,0) = (yp1+yp2+yp3)/3.0;
+  geoiFace(0,6,0) = (zp1+zp2+zp3)/3.0;
+
+  return geoiFace;
 }
         
 tk::Fields

@@ -32,6 +32,9 @@ module dg {
       entry void setup( tk::real v );
       entry void dt();
       entry void eval();
+      entry void comrhs( int fromch,
+                         const std::vector< std::size_t >& geid,
+                         const std::vector< std::vector< tk::real > >& V );
       entry [reductiontarget] void advance( tk::real newdt );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
@@ -49,9 +52,9 @@ module dg {
       // -------------------------------
       // Control flow is from left to right and top to bottom.
       //
-      // If every chare we communicate with has requested ghost data from us, we
-      // may fulfill the requests, but only if we have already setup our ghost
-      // data.
+      // If we have computed our own ghost data in setupGhost(), and every chare
+      // we communicate with has requested ghost data from us, we fulfill the
+      // requests and send out ghost data.
 
       entry void wait4ghost() {
         when ownghost_complete(), reqghost_complete() serial "ghost"

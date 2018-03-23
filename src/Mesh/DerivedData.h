@@ -137,6 +137,12 @@ genGeoFaceTri( std::size_t ntfac,
                const std::vector< std::size_t >& inpofa,
                const tk::UnsMesh::Coords& coord );
 
+//! Compute geometry of the face given by three vertices
+tk::Fields
+geoFaceTri( const std::array< tk::real, 3 >& x,
+            const std::array< tk::real, 3 >& y,
+            const std::array< tk::real, 3 >& z );
+
 //! Generate derived data structure, element geometry
 tk::Fields
 genGeoElemTet( const std::vector< std::size_t >& inpoel,

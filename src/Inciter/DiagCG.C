@@ -48,7 +48,7 @@ using inciter::DiagCG;
 
 DiagCG::DiagCG( const CProxy_Discretization& disc,
                 const tk::CProxy_Solver& solver,
-                const FaceData& fd ) :
+                const FaceData& ) :
   m_itf( 0 ),
   m_nsol( 0 ),
   m_nlhs( 0 ),
@@ -94,7 +94,6 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 
   // Signal the runtime system that the workers have been created
   solver.ckLocalBranch()->created();
-  IGNORE( fd );
 }
 
 void
