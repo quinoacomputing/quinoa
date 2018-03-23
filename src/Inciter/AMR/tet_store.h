@@ -31,6 +31,7 @@ namespace AMR {
             std::vector< std::size_t > active_tetinpoel;
             std::set< std::size_t > active_nodes;
 
+            std::vector< std::size_t > active_id_mapping;
             // TODO: I'd like this on the stack, but still pass an initial val
             AMR::id_generator_t id_generator;
 
@@ -355,6 +356,28 @@ namespace AMR {
                 }
 
                 return cell_type_list;
+            }
+
+            /**
+             * @brief The function gives a way to go back from active_inpoel to
+             * real AMR id
+             *
+             * @return A vector which hold the AMR ids of the active inpoel
+             */
+            std::vector< std::size_t >& get_active_id_mapping()
+            {
+                active_id_mapping.clear();
+
+                for (const auto& kv : tets)
+                {
+                    size_t element_id = kv.first;
+
+                    if (is_active( element_id )) {
+                        active_id_mapping.push_back( element_id );
+                    }
+                }
+
+                return active_id_mapping;
             }
 
             /**

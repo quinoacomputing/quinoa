@@ -43,13 +43,10 @@ module partitioner {
       entry void lower( std::size_t low );
       entry void stdCost( tk::real av );
       entry void gather();
-      entry void query( int pe,
-                        const std::vector< std::size_t >& nodes,
-                        const std::vector< std::size_t >& edges );
+      entry void query( int pe, const std::vector< std::size_t >& nodes );
       entry void mask( int pe,
                        const std::unordered_map< std::size_t,
-                                                 std::vector< int > >& cn,
-                       tk::UnsMesh::EdgeChares& ce );
+                                                 std::vector< int > >& cn );
       entry void createWorkers();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/

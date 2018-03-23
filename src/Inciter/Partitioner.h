@@ -167,14 +167,11 @@ class Partitioner : public CBase_Partitioner {
 
     //! \brief Query our global node IDs and edges by other PEs so they know if
     //!   they are to receive IDs for those from during reordering
-    void query( int p,
-                const std::vector< std::size_t >& nodes,
-                const std::vector< std::size_t >& edges );
+    void query( int p, const std::vector< std::size_t >& nodes );
 
     //! Receive mask of to-be-received global mesh node IDs
-    void mask( int p,
-               const std::unordered_map< std::size_t, std::vector< int > >& cn,
-               const tk::UnsMesh::EdgeChares& ce );
+    void mask( int p, const std::unordered_map< std::size_t,
+                              std::vector< int > >& cn );
 
     //! Create worker chare array elements on this PE
     void createWorkers();
@@ -182,7 +179,8 @@ class Partitioner : public CBase_Partitioner {
   private:
     //! Charm++ callbacks associated to compile-time tags
     tk::tuple::tagged_tuple<
-        tag::part,        CkCallback
+        tag::refined,     CkCallback
+      , tag::centroid,    CkCallback
       , tag::distributed, CkCallback
       , tag::flattened,   CkCallback
       , tag::load,        CkCallback
@@ -227,6 +225,8 @@ class Partitioner : public CBase_Partitioner {
     std::vector< std::size_t > m_tetinpoel;
     //! Global element IDs we read (our chunk of the mesh)
     std::vector< long > m_gelemid;
+    //! Coordinates of mesh nodes of out chunk of the mesh
+    std::array< std::vector< tk::real >, 3 > m_coord;
     //! Element centroid coordinates of our chunk of the mesh
     std::array< std::vector< tk::real >, 3 > m_centroid;
     //! Total number of chares across all PEs
@@ -296,10 +296,10 @@ class Partitioner : public CBase_Partitioner {
     //! Communication cost of linear system merging for our PE
     tk::real m_cost;
     //! \brief Map associating a set of chare IDs to old (as in file) global
-    //!   mesh node IDs
+    //!   mesh node IDs on the chare boundaries
     //! \details Note that a single global mesh ID can be associated to multiple
     //!   chare IDs as multiple chares can contribute to a single mesh node.
-    std::unordered_map< std::size_t, std::vector< int > > m_nodechares;
+    std::unordered_map< std::size_t, std::vector< int > > m_bnodechares;
     //! \brief Map associating a set of chare IDs to edges given by two old
     //!   global mesh node IDs (old as in file)
     //! \details Note that a single edge can be associated to multiple chare IDs
@@ -337,11 +337,9 @@ class Partitioner : public CBase_Partitioner {
     //! \brief Boundary face-node connectivity.
     std::vector< std::size_t > m_triinpoel;
 
-    //! Read our contiguously-numbered chunk of the mesh graph from file
-    void readGraph( tk::ExodusIIMeshReader& er );
-
     //! Compute element centroid coordinates
-    void computeCentroids( tk::ExodusIIMeshReader& er );
+    void computeCentroids(
+      const std::unordered_map< std::size_t, std::size_t >& lid );
 
     //! Construct global mesh node ids for each chare
     std::unordered_map< int, std::vector< std::size_t > >
@@ -367,7 +365,7 @@ class Partitioner : public CBase_Partitioner {
     void generate_compact_inpoel();
 
     //! Uniformly refine our mesh replacing each tetrahedron with 8 new ones
-    void refine();
+    void refine( const std::vector< std::size_t >& inpoel );
 
     //! Compute final result of reordering
     void reordered();

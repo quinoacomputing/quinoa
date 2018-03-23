@@ -28,14 +28,18 @@
       Load [ label="Load"
               tooltip="Load is computed"
               URL="\ref inciter::Transporter::load"];
-      PartSetup [ label="PartSetup"
-              tooltip="Prerequsites done for mesh partitioning"
-              URL="\ref inciter::Transporter::part"];
+      Centroid [ label="Centroid"
+              tooltip="Cell centroids have been computed"
+              URL="\ref inciter::Transporter::centroid"];
+      Refined [ label="Refined"
+              tooltip="Mesh has been optionally initially refined"
+              URL="\ref inciter::Transporter::refined"];
       Part [ label="Part"
               tooltip="Partition mesh"
               URL="\ref inciter::Partitioner::partition"];
       Load -> Part [ style="solid" ];
-      PartSetup -> Part [ style="solid" ];
+      Centroid -> Part [ style="solid" ];
+      Refined -> Part [ style="solid" ];
       MinStat [ label="MinStat"
               tooltip="chares contribute to minimum mesh cell statistics"
               URL="\ref inciter::Discretization::stat"];
@@ -359,12 +363,12 @@ namespace inciter {
 class Transporter : public CBase_Transporter {
 
   private:
-    //! Indices for progress report on mesh graph
-    enum ProgGraph{ GRAPH=0 };
+    //! Indices for progress report on mesh read (and prep for partitioning)
+    enum ProgMesh{ READ=0, REFINE, CENTROID };
     //! Indices for progress report on mesh partitioning
     enum ProgPart{ PART=0, DIST };
     //! Indices for progress report on mesh reordering
-    enum ProgReord{ FLAT=0, QUERY, MASK, REORD, BOUND };
+    enum ProgReord{ FLAT=0, GATHER, QUERY, MASK, REORD, BOUND };
 
   public:
     #if defined(__clang__)
@@ -393,15 +397,15 @@ class Transporter : public CBase_Transporter {
     //! Constructor
     explicit Transporter();
 
-    //! \brief Reduction target indicating that all Partitioner chare groups
-    //!   have finished reading their part of the computational mesh graph and
-    //!   we are ready to compute the computational load
+    //! Reduction target indicating that the mesh has been read from file
     void load( uint64_t nelem );
 
-    //! \brief Reduction target indicating that all Partitioner chare groups
-    //!   have finished setting up the necessary data structures for
-    //!   partitioning the computational mesh and we are ready for partitioning
-    void part();
+    //! \brief Reduction target indicating that optional initial mesh refinement
+    //!   has been completed on all PEs
+    void refined();
+
+    //! Reduction target indicating that centroids have been computed all PEs
+    void centroid();
 
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished distributing its global mesh node IDs and they are ready
@@ -424,8 +428,12 @@ class Transporter : public CBase_Transporter {
     //!   workers to read their mesh coordinates
     void coord();
 
-    //! Non-reduction target for receiving progress report on reading mesh graph
-    void pegraph() { m_progGraph.inc< GRAPH >(); }
+    //! Non-reduction target for receiving progress report on reading mesh
+    void peread() { m_progMesh.inc< READ >(); }
+    //! Non-reduction target for receiving progress report on mesh refinement
+    void perefined() { m_progMesh.inc< REFINE >(); }
+    //! Non-reduction target for receiving progress report on mesh centroids
+    void pecentroid() { m_progMesh.inc< CENTROID >(); }
 
     //! Non-reduction target for receiving progress report on partitioning mesh
     void pepartitioned() { m_progPart.inc< PART >(); }
@@ -434,6 +442,8 @@ class Transporter : public CBase_Transporter {
 
     //! Non-reduction target for receiving progress report on flattening mesh
     void peflattened() { m_progReorder.inc< FLAT >(); }
+    //! Non-reduction target for receiving progress report on node ID gather
+    void pegather() { m_progReorder.inc< GATHER >(); }
     //! Non-reduction target for receiving progress report on node ID query
     void pequery() { m_progReorder.inc< QUERY >(); }
     //! Non-reduction target for receiving progress report on node ID mask
@@ -486,6 +496,9 @@ class Transporter : public CBase_Transporter {
   private:
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of worker chares
+    uint64_t m_nelem;                    //!< Total number of mesh elements
+    uint64_t m_chunksize;                //!< Number of elements per PE
+    uint64_t m_remainder;                //!< Number elements added to last PE
     tk::CProxy_Solver m_solver;          //!< Linear system solver group proxy
     CProxy_BoundaryConditions m_bc;      //!< Boundary conditions group proxy
     Scheme m_scheme;                     //!< Discretization scheme
@@ -503,24 +516,28 @@ class Transporter : public CBase_Transporter {
     //! Average mesh statistics
     std::array< tk::real, 2 > m_avgstat;
     //! Timer tags
-    enum class TimerTag { MESHREAD };
+    enum class TimerTag { MESH_PREP=0 };
     //! Timers
     std::map< TimerTag, tk::Timer > m_timer;
     //! \brief Aggregate 'old' (as in file) node ID list at which Solver
     //!   sets boundary conditions, see also Partitioner.h
     std::vector< std::size_t > m_linsysbc;
+    //! \brief Progress object for task "Creating partitioners, reading, and
+    //!    optionally refining mesh"
+    tk::Progress< 3 > m_progMesh;
     // Progress object for task "Partitioning and distributing mesh"
     tk::Progress< 2 > m_progPart;
-    // Progress object for task "Creating partitioners and reading mesh graph"
-    tk::Progress< 1 > m_progGraph;
     // Progress object for task "Reordering mesh"
-    tk::Progress< 5 > m_progReorder;
+    tk::Progress< 6 > m_progReorder;
 
     //! Create linear solver group
     void createSolver();
 
     //! Create mesh partitioner and boundary condition object group
     void createPartitioner();
+
+    //! Start partitioning the mesh
+    void partition();
 
     //! Configure and write diagnostics file header
     void diagHeader();

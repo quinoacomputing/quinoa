@@ -3140,7 +3140,6 @@ struct linf_info {
 using linf = keyword< linf_info, TAOCPP_PEGTL_STRING("linf") >;
 
 struct error_info {
-  using code = Code< h >;
   static std::string name() { return "error"; }
   static std::string shortDescription() { return "Select an error norm"; }
   static std::string longDescription() { return
@@ -3692,6 +3691,7 @@ struct partitioning_info {
 using partitioning = keyword< partitioning_info, TAOCPP_PEGTL_STRING("partitioning") >;
 
 struct amr_uniform_info {
+  using code = Code< u >;
   static std::string name() { return "uniform"; }
   static std::string shortDescription() { return
     "Select uniform initial mesh refinement"; }
@@ -3700,22 +3700,56 @@ struct amr_uniform_info {
 };
 using amr_uniform = keyword< amr_uniform_info, TAOCPP_PEGTL_STRING("uniform") >;
 
+struct amr_initial_conditions_info {
+  using code = Code< i >;
+  static std::string name() { return "ic"; }
+  static std::string shortDescription() { return
+    "Select initial-conditions-based initial mesh refinement"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select initial-conditions-based initial mesh
+       refinement.)"; }
+};
+using amr_initial_conditions =
+  keyword< amr_initial_conditions_info, TAOCPP_PEGTL_STRING("ic") >;
+
 struct amr_initial_info {
   static std::string name() { return "initial refinement"; }
   static std::string shortDescription() { return
     "Configure initial mesh refinement (before t=0)"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the type of initial mesh refinement that
-    happens before t = 0. At this time, only uniform initial mehs refinement is
-    supported.)"; }
+    R"(This keyword is used to add to a list of initial mesh refinement types
+    that happens before t = 0. Example: initial uniform initial ic inital
+    uniform, which yiedls an initial uniform refinement, followed by a
+    refinement based on the numerical error computed based on the initial
+    conditions, followed by another step of unfirom refinement. The number of
+    levels in the uniform refinement step(s) is controlled by the keyword
+    'uniform_levels' whose default is 1.)"; }
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
-      return '\'' + amr_uniform::string() + '\'';
+      return '\'' + amr_uniform::string() + "\' | \'"
+                  + amr_initial_conditions::string() + '\'';
     }
   };
 };
 using amr_initial = keyword< amr_initial_info, TAOCPP_PEGTL_STRING("initial") >;
+
+struct amr_uniform_levels_info {
+  static std::string name() { return "uniform_levels"; }
+  static std::string shortDescription() { return
+    "Select the number of levels for uniform initial mesh refinement"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to set the number levels used for uniform initial
+    mesh refinement.)"; }
+  struct expect {
+    using type = unsigned int;
+    static constexpr type lower = 1;
+    static std::string description() { return "uint"; }
+    static std::string choices() { return "positive integer"; }
+  };
+};
+using amr_uniform_levels =
+  keyword< amr_uniform_levels_info, TAOCPP_PEGTL_STRING("uniform_levels") >;
 
 struct amr_jump_info {
   static std::string name() { return "jump"; }
