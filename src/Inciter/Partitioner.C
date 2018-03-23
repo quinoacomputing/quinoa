@@ -19,6 +19,10 @@
 #include "DerivedData.h"
 #include "Reorder.h"
 #include "Inciter/Options/Scheme.h"
+#include "AMR/mesh_adapter.h"
+#include "MeshReader.h"
+#include "Around.h"
+#include "ExodusIIMeshWriter.h"
 
 namespace inciter {
 
@@ -34,10 +38,9 @@ Partitioner::Partitioner(
   const tk::CProxy_Solver& solver,
   const CProxy_BoundaryConditions& bc,
   const Scheme& scheme,
-  std::size_t nbfac,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::vector< std::size_t >& triinpoel ) :
-  m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6] ),
+  m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6], cb[7] ),
   m_host( host ),
   m_solver( solver ),
   m_bc( bc ),
@@ -51,6 +54,7 @@ Partitioner::Partitioner(
   m_nmask( 0 ),
   m_tetinpoel(),
   m_gelemid(),
+  m_coord(),
   m_centroid(),
   m_nchare( 0 ),
   m_lower( 0 ),
@@ -67,11 +71,10 @@ Partitioner::Partitioner(
   m_chfilenodes(),
   m_chedgenodes(),
   m_cost( 0.0 ),
-  m_nodechares(),
+  m_bnodechares(),
   m_edgechares(),
   m_msum(),
   m_msumed(),
-  m_nbfac( nbfac ),
   m_bface( bface ),
   m_triinpoel( triinpoel )
 // *****************************************************************************
@@ -81,26 +84,40 @@ Partitioner::Partitioner(
 //! \param[in] solver Linear system solver proxy
 //! \param[in] bc Boundary conditions group proxy
 //! \param[in] scheme Discretization scheme
-//! \param[in] nbfac Total number of boundary faces
 //! \param[in] bface Face lists mapped to side set ids
 //! \param[in] triinpoel Interconnectivity of points and boundary-face
 // *****************************************************************************
 {
-  tk::ExodusIIMeshReader
-    er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+  // Create mesh reader
+  MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >(),
+                 static_cast< std::size_t >( CkNumPes() ),
+                 static_cast< std::size_t >( CkMyPe() ) );
 
-  // Read our contiguously-numbered chunk of the mesh graph from file
-  readGraph( er );
+  // Read our chunk of the mesh graph from file
+  mr.readGraph(  m_gelemid, m_tetinpoel );
 
-  // If a geometric partitioner is selected, compute element centroid
-  // coordinates
-  const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
-  if ( tk::ctr::PartitioningAlgorithm().geometric(alg) )
-    computeCentroids( er );
-  else
-    contribute( m_cb.get< tag::part >() );
+  // Send progress report to host
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.peread();
 
-  IGNORE(m_nbfac);
+  // Sum number of elements across all PEs (will define total load)
+  uint64_t nelem = m_gelemid.size();
+  contribute( sizeof(uint64_t), &nelem, CkReduction::sum_int,
+              m_cb.get< tag::load >() );
+
+  // Compute local from global mesh data
+  auto el = tk::global2local( m_tetinpoel );
+  const auto& inp = std::get< 0 >( el );        // Local mesh connectivity
+  const auto& gid = std::get< 1 >( el );        // Local->global node IDs
+  const auto& lid = std::get< 2 >( el );        // Global->local node IDs
+
+  // Read our chunk of the mesh node coordinates from file
+  m_coord = mr.readCoords( gid );
+
+  // Optionally refine mesh if requested
+  refine( inp );
+
+  // Compute cell centroids if a geometric partitioner is selected
+  computeCentroids( lid );
 }
 
 void
@@ -119,8 +136,7 @@ Partitioner::partition( int nchare )
                                              nchare );
 
   // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_host.pepartitioned();
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pepartitioned();
 
   Assert( che.size() == m_gelemid.size(), "Size of ownership array does "
           "not equal the number of mesh graph elements" );
@@ -259,29 +275,16 @@ Partitioner::flatten()
 //!   longer categorized by (or associated to) chares.
 // *****************************************************************************
 {
-  // Optionally refine mesh if requested
-  const auto ir = g_inputdeck.get< tag::amr, tag::init >();
-  if (ir == ctr::AMRInitialType::UNIFORM) refine();
-
   // Make sure we are not fed garbage
   Assert( m_chinpoel.size() ==
             static_cast< std::size_t >( chareDistribution()[1] ),
           "Global mesh nodes ids associated to chares on PE " +
           std::to_string( CkMyPe() ) + " is incomplete" );
 
-  // Collect chare IDs we own associated to old global mesh node IDs
-  for (const auto& c : m_chinpoel)
-    for (auto p : c.second)
-      m_nodechares[p].push_back( c.first );
-
-  // Make chare IDs (associated to old global mesh node IDs) unique
-  for (auto& c : m_nodechares) tk::unique( c.second );
-
   // Collect chare IDs we own associated to edges
   for (const auto& c : m_chedgenodes)
     for (const auto& e : c.second)
       m_edgechares[ e.first ].push_back( c.first );
-
   // Make chare IDs (associated to edges) unique
   for (auto& c : m_edgechares) tk::unique( c.second );
 
@@ -295,9 +298,34 @@ Partitioner::flatten()
     for (const auto& e : c.second)
       m_edgeset.insert( e.first );
 
+  // Find chare-boundary nodes of all chares on this PE
+  for (const auto& c : m_chinpoel) {    // for all chare connectivities
+    // generate local ids and connectivity from global connectivity
+    auto el = tk::global2local( c.second );
+    const auto& inpoel = std::get< 0 >( el );   // local connectivity
+    const auto& gid = std::get< 1 >( el );      // local->global node ids
+    auto esup = tk::genEsup( inpoel, 4 );       // elements surrounding points
+    auto esuel = tk::genEsuelTet( inpoel, esup ); // elems surrounding elements
+    // collect chare boundary nodes
+    for (std::size_t e=0; e<esuel.size()/4; ++e) {
+      auto mark = e*4;
+      for (std::size_t f=0; f<4; ++f) {
+        if (esuel[mark+f] == -1) {
+          auto A = gid[ inpoel[ mark+tk::lpofa[f][0] ] ];
+          auto B = gid[ inpoel[ mark+tk::lpofa[f][1] ] ];
+          auto C = gid[ inpoel[ mark+tk::lpofa[f][2] ] ];
+          m_bnodechares[ A ].push_back( c.first );
+          m_bnodechares[ B ].push_back( c.first );
+          m_bnodechares[ C ].push_back( c.first );
+        }
+      }
+    }
+  }
+  // Make node chare lists unique
+  for (auto& n : m_bnodechares) tk::unique( n.second );
+
   // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_host.peflattened();
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.peflattened();
 
   // Signal host that we are ready for computing the communication map,
   // required for parallel distributed global mesh node reordering
@@ -360,61 +388,25 @@ Partitioner::gather()
 //  assign) during reordering
 // *****************************************************************************
 {
-  // Find chare-boundary nodes and edges of all chares on this PE
+  // Exctract boundary chare nodes to vector
+  std::vector< std::size_t > bnodes( m_bnodechares.size() );
+  std::size_t i = 0;
+  for (const auto& n : m_bnodechares) bnodes[ i++ ] = n.first;
 
-  std::vector< std::size_t > nodes;     // chare boundary nodes on this PE
-  tk::UnsMesh::Edges edgeset;           // chare boundary edges on this PE
+  // Send chare boundary nodes to all PEs in a broadcast fashion
+  thisProxy.query( CkMyPe(), bnodes );
 
-  for (const auto& c : m_chinpoel) {
-    auto el = tk::global2local( c.second );
-    const auto& inpoel = std::get< 0 >( el );
-    const auto& gid = std::get< 1 >( el );
-    auto esup = tk::genEsup( inpoel, 4 );
-    auto esuel = tk::genEsuelTet( inpoel, esup );
-    // collect chare boundary nodes and edges
-    for (std::size_t e=0; e<esuel.size()/4; ++e) {
-      auto mark = e*4;
-      for (std::size_t f=0; f<4; ++f) {
-        if (esuel[mark+f] == -1) {
-          auto A = gid[ inpoel[ mark + tk::lpofa[f][0] ] ];
-          auto B = gid[ inpoel[ mark + tk::lpofa[f][1] ] ];
-          auto C = gid[ inpoel[ mark + tk::lpofa[f][2] ] ];
-          nodes.push_back( A );
-          nodes.push_back( B );
-          nodes.push_back( C );
-          edgeset.insert( {{{A,B}}} );
-          edgeset.insert( {{{B,C}}} );
-          edgeset.insert( {{{A,C}}} );
-        }
-      }
-    }
-  }
-  tk::unique( nodes );
-
-  // Copy out edge set to a vector and send them as such since the receiving
-  // side does not search in it
-  std::vector< std::size_t > edges( edgeset.size() * 2 );
-
-  std::size_t i=0;
-  for (const auto& e : edgeset) {
-    edges[ 2*i+0 ] = e[0];
-    edges[ 2*i+1 ] = e[1];
-    ++i;
-  }
-
-  thisProxy.query( CkMyPe(), nodes, edges );
+  // send progress report to host
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pegather();
 }
 
 void
-Partitioner::query( int p,
-                    const std::vector< std::size_t >& nodes,
-                    const std::vector< std::size_t >& edges )
+Partitioner::query( int p, const std::vector< std::size_t >& bnodes )
 // *****************************************************************************
-//  Query our global node IDs and edges by other PEs so they know if they are to
-//  receive IDs for those from during reordering
+//  Query our global node IDs by other PEs so they know if they are to receive
+//  IDs for those from during reordering
 //! \param[in] p Querying PE
 //! \param[in] nodes List of global mesh node IDs to query
-//! \param[in] edges List of edges to query
 //! \details Note that every PE calls this function in a broadcast fashion,
 //!   including our own. However, to compute the correct result, this would
 //!   only be necessary for PEs whose ID is higher than ours. However, the
@@ -425,21 +417,11 @@ Partitioner::query( int p,
 // *****************************************************************************
 {
   std::unordered_map< std::size_t, std::vector< int > > cn;
-  for (auto j : nodes) {
+  for (auto j : bnodes) {
     const auto it = m_nodeset.find( j );
     if (it != end(m_nodeset)) {
-      const auto& c = tk::cref_find( m_nodechares, j );
+      const auto& c = tk::cref_find( m_bnodechares, j );
       auto& chares = cn[j];
-      chares.insert( end(chares), begin(c), end(c) );
-    }
-  }
-  tk::UnsMesh::EdgeChares ce;
-  for (std::size_t j=0; j<edges.size()/2; ++j) {
-  tk::UnsMesh::Edge e{{ edges[2*j+0], edges[2*j+1] }};
-    const auto it = m_edgeset.find( e );
-    if (it != end(m_edgeset)) {
-      const auto& c = tk::cref_find( m_edgechares, e );
-      auto& chares = ce[e];
       chares.insert( end(chares), begin(c), end(c) );
     }
   }
@@ -449,21 +431,18 @@ Partitioner::query( int p,
        ++m_nquery == static_cast<std::size_t>(CkNumPes()) )
     m_host.pequery();
 
-  thisProxy[ p ].mask( CkMyPe(), cn, ce );
+  thisProxy[ p ].mask( CkMyPe(), cn );
 }
 
 void
 Partitioner::mask(
   int p,
-  const std::unordered_map< std::size_t, std::vector< int > >& cn,
-  const tk::UnsMesh::EdgeChares& ce )
+  const std::unordered_map< std::size_t, std::vector< int > >& cn )
 // *****************************************************************************
 //  Receive mask of to-be-received global mesh node IDs
 //! \param[in] p The PE uniquely assigns the node IDs marked listed in ch
 //! \param[in] cn Vector containing the set of potentially multiple chare
 //!   IDs that we own (i.e., contribute to) for all of our node IDs.
-//! \param[in] ce Map associating a vector of chare IDs to edges (at which
-//!   we added nodes during initial mesh refinement)
 //! \details Note that every PE will call this function, since query() was
 //!   called in a broadcast fashion and query() answers to every PE once.
 //!   This is more efficient than calling only the PEs from which we would
@@ -471,10 +450,15 @@ Partitioner::mask(
 //!   interesting from PEs with lower IDs than ours.
 // *****************************************************************************
 {
-  // Store the old global mesh node IDs associated to chare IDs bordering
+  // Store the old global mesh node IDs associated to chare IDs bordering the
+  // mesh chunk held by and associated to chare IDs we own. This loop computes
+  // m_msum, a symmetric chare-node communication map, that associates (in its
+  // inner map) a unique set of global node IDs to areceiving chare ID, both
+  // associated (in its outer map) to a sending chare ID.
+
   // the mesh chunk held by and associated to chare IDs we own
   for (const auto& h : cn) {
-    const auto& chares = tk::ref_find( m_nodechares, h.first );
+    const auto& chares = tk::ref_find( m_bnodechares, h.first );
     for (auto c : chares) {           // surrounded chares
       auto& sch = m_msum[c];
       for (auto s : h.second)         // surrounding chares
@@ -482,38 +466,28 @@ Partitioner::mask(
     }
   }
 
-  // Store the edges associated to chare IDs bordering the mesh chunk held
-  // by and associated to chare IDs we own
-  for (const auto& h : ce) {
-    const auto& chares = tk::ref_find( m_edgechares, h.first );
-    for (auto c : chares) {           // surrounded chares
-      auto& sch = m_msumed[c];
-      for (auto s : h.second)         // surrounding chares
-        if (s != c) sch[ s ].insert( h.first );
-    }
-  }
+  // Associate global mesh node IDs to lower PEs we will need to receive from
+  // during node reordering. The choice of associated container is std::map,
+  // which is ordered (vs. unordered, hash-map). This is required by the
+  // following operation that makes the mesh node IDs unique in the
+  // communication map. (We are called in an unordered fashion, so we need to
+  // collect from all PEs and then we need to make the node IDs unique, keeping
+  // only the lowest PEs a node ID is associated with.) Note that m_ncomm is an
+  // asymmetric PE-node communication map, associating a set of unique global
+  // node IDs to PE IDs from which we (this PE) will need to receive newly
+  // assigned node IDs during global mesh node reordering. This map is
+  // asymmetric, beacuse of the agreement of the reordering that if a mesh node
+  // is shared by multiple PEs, the PE with the lowest ID gets to assign a new
+  // ID to it and all others must receive it instead of assigning it.
 
-  // Associate global mesh node IDs to lower PEs we will need to receive
-  // from during node reordering. The choice of associated container is
-  // std::map, which is ordered (vs. unordered, hash-map). This is required
-  // by the following operation that makes the mesh node IDs unique in the
-  // communication map. (We are called in an unordered fashion, so we need
-  // to collect from all PEs and then we need to make the node IDs unique,
-  // keeping only the lowest PEs a node ID is associated with.)
   if (p < CkMyPe()) {
     auto& id = m_ncomm[ p ];
     for (const auto& h : cn) id.insert( h.first );
-    auto& ed = m_ecomm[ p ];
-    for (const auto& h : ce) ed.insert( h.first );
   }
 
   if (++m_nmask == static_cast<std::size_t>(CkNumPes())) {
     // Make sure we have received all we need
     Assert( m_ncomm.size() == static_cast<std::size_t>(CkMyPe()),
-            "Communication map size on PE " +
-            std::to_string(CkMyPe()) + " must equal " +
-            std::to_string(CkMyPe()) );
-    Assert( m_ecomm.size() == static_cast<std::size_t>(CkMyPe()),
             "Communication map size on PE " +
             std::to_string(CkMyPe()) + " must equal " +
             std::to_string(CkMyPe()) );
@@ -529,33 +503,17 @@ Partitioner::mask(
         }
       if (n.empty()) m_ncommunication.erase( c->first );
     }
-    for (auto c=m_ecomm.cbegin(); c!=m_ecomm.cend(); ++c) {
-      auto& e = m_ecommunication[ c->first ];
-      for (const auto& j : c->second)
-        if (std::none_of( m_ecomm.cbegin(), c,
-             [ &j ]( const typename decltype(m_ecomm)::value_type& s )
-             { return s.second.find(j) != end(s.second); } )) {
-          e.insert(j);
-        }
-      if (e.empty()) m_ecommunication.erase( c->first );
-    }
     // Free storage of temporary communication map used to receive global
     // mesh node IDs as it is no longer needed once the final communication
     // map is generated.
     tk::destroy( m_ncomm );
-    // Free storage of temporary communication map used to receive global
-    // mesh edge-node IDs as it is no longer needed once the final
-    // communication map is generated.
-    tk::destroy( m_ecomm );
     // Count up total number of nodes and (nodes associated to edges) we
     // will need receive during reordering
     std::size_t nrecv = 0, erecv = 0;
     for (const auto& u : m_ncommunication) nrecv += u.second.size();
-    for (const auto& e : m_ecommunication) erecv += e.second.size();
 
     // send progress report to host
-    if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-      m_host.pemask();
+    if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pemask();
 
     // Compute number of mesh node IDs we will assign IDs to
     auto nuniq = m_nodeset.size() - nrecv + m_edgeset.size() - erecv;
@@ -566,77 +524,42 @@ Partitioner::mask(
 }
 
 void
-Partitioner::readGraph( tk::ExodusIIMeshReader& er )
-// *****************************************************************************
-//  Read our contiguously-numbered chunk of the mesh graph from file
-//! \param[in] er ExodusII mesh reader
-// *****************************************************************************
-{
-  // Get number of mesh points and number of tetrahedron elements in file
-  er.readElemBlockIDs();
-  auto nel = er.nelem( tk::ExoElemType::TET );
-
-  // Read our contiguously-numbered chunk of tetrahedron element
-  // connectivity from file and also generate and store the list of global
-  // element indices for our chunk of the mesh
-  auto npes = static_cast< std::size_t >( CkNumPes() );
-  auto mype = static_cast< std::size_t >( CkMyPe() );
-  auto chunk = nel / npes;
-  auto from = mype * chunk;
-  auto till = from + chunk;
-  if (mype == npes-1) till += nel % npes;
-  er.readElements( {{from, till-1}}, tk::ExoElemType::TET, m_tetinpoel );
-  m_gelemid.resize( till-from );
-  std::iota( begin(m_gelemid), end(m_gelemid), from );
-
-  // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_host.pegraph();
-
-  uint64_t nelem = m_gelemid.size();
-  contribute( sizeof(uint64_t), &nelem, CkReduction::sum_int,
-              m_cb.get< tag::load >() );
-}
-
-void
-Partitioner::computeCentroids( tk::ExodusIIMeshReader& er )
+Partitioner::computeCentroids(
+  const std::unordered_map< std::size_t, std::size_t >& lid )
 // *****************************************************************************
 //  Compute element centroid coordinates
-//! \param[in] er ExodusII mesh reader
-//! \note This function reads
+//! \param[in] lid Map from global to local node IDs for our chunk of the mesh
 // *****************************************************************************
 {
-  auto el = tk::global2local( m_tetinpoel );
-  const auto& gid = std::get< 1 >( el );
-  const auto& lid = std::get< 2 >( el );
+  const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
 
-  // Read node coordinates of our chunk of the mesh elements from file
-  auto coord = er.readNodes( gid );
-  const auto& x = std::get< 0 >( coord );
-  const auto& y = std::get< 1 >( coord );
-  const auto& z = std::get< 2 >( coord );
-
-  // Make room for element centroid coordinates
-  auto& cx = m_centroid[0];
-  auto& cy = m_centroid[1];
-  auto& cz = m_centroid[2];
-  auto num = m_tetinpoel.size()/4;
-  cx.resize( num );
-  cy.resize( num );
-  cz.resize( num );
-
-  // Compute element centroids for our chunk of the mesh elements
-  for (std::size_t e=0; e<num; ++e) {
-    auto A = tk::cref_find( lid, m_tetinpoel[e*4+0] );
-    auto B = tk::cref_find( lid, m_tetinpoel[e*4+1] );
-    auto C = tk::cref_find( lid, m_tetinpoel[e*4+2] );
-    auto D = tk::cref_find( lid, m_tetinpoel[e*4+3] );
-    cx[e] = (x[A] + x[B] + x[C] + x[D]) / 4.0;
-    cy[e] = (y[A] + y[B] + y[C] + y[D]) / 4.0;
-    cz[e] = (z[A] + z[B] + z[C] + z[D]) / 4.0;
+  if ( tk::ctr::PartitioningAlgorithm().geometric(alg) ) {
+    const auto& x = std::get< 0 >( m_coord );
+    const auto& y = std::get< 1 >( m_coord );
+    const auto& z = std::get< 2 >( m_coord );
+  
+    // Make room for element centroid coordinates
+    auto& cx = m_centroid[0];
+    auto& cy = m_centroid[1];
+    auto& cz = m_centroid[2];
+    auto num = m_tetinpoel.size()/4;
+    cx.resize( num );
+    cy.resize( num );
+    cz.resize( num );
+  
+    // Compute element centroids for our chunk of the mesh elements
+    for (std::size_t e=0; e<num; ++e) {
+      auto A = tk::cref_find( lid, m_tetinpoel[e*4+0] );
+      auto B = tk::cref_find( lid, m_tetinpoel[e*4+1] );
+      auto C = tk::cref_find( lid, m_tetinpoel[e*4+2] );
+      auto D = tk::cref_find( lid, m_tetinpoel[e*4+3] );
+      cx[e] = (x[A] + x[B] + x[C] + x[D]) / 4.0;
+      cy[e] = (y[A] + y[B] + y[C] + y[D]) / 4.0;
+      cz[e] = (z[A] + z[B] + z[C] + z[D]) / 4.0;
+    }
   }
 
-  contribute( m_cb.get< tag::part >() );
+  contribute( m_cb.get< tag::centroid >() );
 }
 
 std::unordered_map< int, std::vector< std::size_t > >
@@ -724,8 +647,7 @@ Partitioner::distribute(
     thisProxy[ p.first ].add( CkMyPe(), p.second );
 
   // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_host.pedistributed();
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pedistributed();
 
   if (m_npe == 0) contribute( m_cb.get< tag::distributed >() );
 }
@@ -1031,68 +953,94 @@ Partitioner::generate_compact_inpoel()
 // }
 
 
-//! Uniformly refine our mesh replacing each tetrahedron with 8 new ones
-void Partitioner::refine() {
-  // Concatenate mesh connectivities of our chares
-  tk::destroy( m_tetinpoel );
-  std::size_t nn = 0;
-  for (const auto& c : m_chinpoel) nn += c.second.size();
-  m_tetinpoel.resize( nn );
-  nn = 0;
-  for (const auto& c : m_chinpoel)
-    for (auto i : c.second)
-      m_tetinpoel[ nn++ ] = i;
-  // Generate unique edges (nodes connected to nodes)
-  auto minmax = std::minmax_element( begin(m_tetinpoel), end(m_tetinpoel) );
-  std::array< std::size_t, 2 > ext{{ *minmax.first, *minmax.second }};
-  for (auto& i : m_tetinpoel) i -= ext[0];  // shift to zero-based node IDs
-  auto esup = tk::genEsup( m_tetinpoel, 4 );
-  for (auto& i : m_tetinpoel) i += ext[0];  // shift back node IDs
-  auto nnode = ext[1] - ext[0] + 1;
-  std::unordered_map< std::size_t, std::unordered_set< std::size_t > > star;
-  for (std::size_t j=0; j<nnode; ++j)
-    for (std::size_t i=esup.second[j]+1; i<=esup.second[j+1]; ++i )
-      for (std::size_t n=0; n<4; ++n) {
-        auto p = ext[0] + j;
-        auto q = m_tetinpoel[ esup.first[i] * 4 + n ];
-        if (p < q) star[p].insert( q );
-        if (p > q) star[q].insert( p );
-      }
-  tk::destroy( m_tetinpoel );
-  // Starting node ID (on all PEs) while assigning new edge-nodes
-  nnode = tk::ExodusIIMeshReader( g_inputdeck.get< tag::cmd, tag::io,
-                                    tag::input >() ).readHeader();
-  // Add new edge-nodes
-  tk::UnsMesh::EdgeNodes edgenodes;
-  for (const auto& s : star)
-    for (auto q : s.second)
-      edgenodes[ {{ s.first, q }} ] = nnode++;
-  // Generate maps associating new node IDs (as in producing
-  // contiguous-row-id linear system contributions)to edges (a pair of old
-  // node IDs) in tk::UnsMesh::EdgeNodes maps, associated to and categorized
-  // by chares. Note that the new edge-node IDs assigned here will be
-  // overwritten with globally unique node IDs after reordering.
-  for (const auto& conn : m_chinpoel) {
-    auto& en = m_chedgenodes[ conn.first ];
-    for (std::size_t e=0; e<conn.second.size()/4; ++e) {
-      const auto A = conn.second[e*4+0];
-      const auto B = conn.second[e*4+1];
-      const auto C = conn.second[e*4+2];
-      const auto D = conn.second[e*4+3];
-      const auto AB = tk::cref_find( edgenodes, {{ A,B }} );
-      const auto AC = tk::cref_find( edgenodes, {{ A,C }} );
-      const auto AD = tk::cref_find( edgenodes, {{ A,D }} );
-      const auto BC = tk::cref_find( edgenodes, {{ B,C }} );
-      const auto BD = tk::cref_find( edgenodes, {{ B,D }} );
-      const auto CD = tk::cref_find( edgenodes, {{ C,D }} );
-      en[ {{A,B}} ] = AB;
-      en[ {{A,C}} ] = AC;
-      en[ {{A,D}} ] = AD;
-      en[ {{B,C}} ] = BC;
-      en[ {{B,D}} ] = BD;
-      en[ {{C,D}} ] = CD;
-    }
-  }
+void
+Partitioner::refine( const std::vector< std::size_t >& inpoel )
+// *****************************************************************************
+// Optionally refine mesh if requested by user
+// *****************************************************************************
+{
+  const auto ir = g_inputdeck.get< tag::amr, tag::init >();
+  if (!ir.empty()) {
+
+    auto orig_inpoel = inpoel;
+    auto orig_coord = m_coord;
+
+    AMR::mesh_adapter_t refiner( orig_inpoel );
+
+    for (std::size_t level=0; level<2; ++level) {
+
+      refiner.uniform_refinement();
+      auto refined_inpoel = refiner.tet_store.get_active_inpoel();
+
+//       std::cout << CkMyPe() << ":c: ";
+//       for (auto p : orig_inpoel) std::cout << p << ' ';
+//       std::cout << '\n';
+//       std::cout << CkMyPe() << ":rc: ";
+//       for (auto p : refined_inpoel) std::cout << p << ' ';
+//       std::cout << '\n';
+
+      // find number of nodes in old mesh
+      auto minmax = std::minmax_element( begin(orig_inpoel), end(orig_inpoel) );
+      Assert( *minmax.first == 0, "node ids should start from zero" );
+      auto npoin = *minmax.second + 1;
+
+      // generate edges surrounding points in old mesh
+      auto esup = tk::genEsup( orig_inpoel, 4 );
+      auto psup = tk::genPsup( orig_inpoel, 4, esup );
+
+      auto refined_coord = orig_coord;
+      auto& x = refined_coord[0];
+      auto& y = refined_coord[1];
+      auto& z = refined_coord[2];
+
+      auto refined_minmax =
+        std::minmax_element( begin(refined_inpoel), end(refined_inpoel) );
+      Assert( *refined_minmax.first == 0, "node ids should start from zero" );
+      auto refined_npoin = *refined_minmax.second + 1;
+
+      x.resize( refined_npoin );
+      y.resize( refined_npoin );
+      z.resize( refined_npoin );
+
+      // generate coordinates for newly added nodes
+      //std::cout << CkMyPe() << ": npoin:" << npoin << " -> " << refined_npoin << ": ";
+      for (std::size_t p=0; p<npoin; ++p)
+        for (auto q : tk::Around(psup,p)) {
+          auto e = refiner.node_connectivity.find( p, q );
+          if (e > 0) {
+            auto E = static_cast< std::size_t >( e );
+            Assert( E < x.size(), "Indexing out of refined_coord" );
+            x[E] = (x[p]+x[q])/2.0;
+            y[E] = (y[p]+y[q])/2.0;
+            z[E] = (z[p]+z[q])/2.0;
+          } else std::cout << level << ": " << e << ':' << p << "." << q << ' ';
+        }
+      //std::cout << '\n';
+
+//       // reorder new mesh
+//       const auto refined_psup =
+//         tk::genPsup( refined_inpoel, 4, tk::genEsup( refined_inpoel, 4 ) );
+//       auto map = tk::renumber( refined_psup );
+//       tk::remap( refined_inpoel, map );
+//       tk::remap( x, map );
+//       tk::remap( y, map );
+//       tk::remap( z, map );
+
+      tk::UnsMesh refmesh( refined_inpoel, x, y, z );
+      tk::ExodusIIMeshWriter mr( "refmesh." + std::to_string(level) + ".exo",
+                                 tk::ExoWriter::CREATE );
+      mr.writeMesh( refmesh );
+
+      orig_inpoel = refined_inpoel;
+      orig_coord = refined_coord;
+
+    } // level
+  } // if enable uniform
+
+  // send progress report to host
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.perefined();
+
+  contribute( m_cb.get< tag::refined >() );
 }
 
 
@@ -1113,7 +1061,7 @@ Partitioner::reordered()
 
   // Free memory used by maps associating a list of chare IDs to old (as in
   // file) global mesh node IDs and to edges as no longer needed.
-  tk::destroy( m_nodechares );
+  tk::destroy( m_bnodechares );
   tk::destroy( m_edgechares );
 
   // Construct maps associating old node IDs (as in file) to new node IDs
@@ -1230,8 +1178,7 @@ Partitioner::reordered()
       m_nodeset.insert( i );
 
   // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_host.pereordered();
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pereordered();
 
   // Compute lower and upper bounds of reordered node IDs our PE operates on
   bounds();
@@ -1296,8 +1243,7 @@ Partitioner::create()
 // *****************************************************************************
 {
   // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_host.pebounds();
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pebounds();
 
   // Initiate asynchronous reduction across all Partitioner objects computing
   // the average communication cost of merging the linear system
@@ -1354,9 +1300,6 @@ Partitioner::createDiscWorkers()
   // Free map storing new node IDs associated to edges categorized by chares
   // owned as no linger needed after creating workers.
   tk::destroy( m_chedgenodes );
-  // Free storage of map associating a set of chare IDs to old global mesh
-  // node IDs as it is no longer needed after creating the workers.
-  tk::destroy( m_nodechares );
   // Free storage of global mesh node IDs associated to chare IDs bordering
   // the mesh chunk held by and associated to chare IDs we own as it is no
   // longer needed after creating the workers.

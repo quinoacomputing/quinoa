@@ -24,6 +24,19 @@
 
 namespace tk {
 
+std::size_t
+npoin( const std::vector< std::size_t >& inpoel )
+// *****************************************************************************
+// Compute number of points (nodes) in mesh from connectivity
+//! \param[in] inpoel Inteconnectivity of points and elements. These are the
+//! \return Number of mesh points (nodes)
+// *****************************************************************************
+{
+  auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
+  Assert( *minmax.first == 0, "node ids should start from zero" );
+  return *minmax.second + 1;
+}
+
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
 genEsup( const std::vector< std::size_t >& inpoel, std::size_t nnpe )
 // *****************************************************************************

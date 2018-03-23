@@ -127,6 +127,8 @@ class InputDeck :
                                        kw::amr,
                                        kw::amr_initial,
                                        kw::amr_uniform,
+                                       kw::amr_initial_conditions,
+                                       kw::amr_uniform_levels,
                                        kw::amr_error,
                                        kw::amr_jump,
                                        kw::amr_hessian,
@@ -160,7 +162,7 @@ class InputDeck :
       set< tag::selected, tag::filetype >( tk::ctr::FieldFileType::EXODUSII );
       // Default AMR settings
       set< tag::amr, tag::amr >( false );
-      set< tag::amr, tag::init >( AMRInitialType::NONE );
+      set< tag::amr, tag::levels >( 1 );
       set< tag::amr, tag::error >( AMRErrorType::JUMP );
       // Default discretization scheme
       set< tag::selected, tag::scheme >( SchemeType::MatCG );
