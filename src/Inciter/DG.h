@@ -88,7 +88,7 @@ class DG : public CBase_DG {
     //! Constructor
     explicit DG( const CProxy_Discretization& disc,
                  const tk::CProxy_Solver&,
-                 const FaceData& );
+                 const FaceData& fd );
 
     //! Migrate constructor
     explicit DG( CkMigrateMessage* ) {}
@@ -117,7 +117,7 @@ class DG : public CBase_DG {
     //! Receive chare-boundary ghost data from neighboring chares
     void comrhs( int fromch,
                  const std::vector< std::size_t >& geid,
-                 const std::vector< std::vector< tk::real > >& V );
+                 const std::vector< std::vector< tk::real > >& u );
 
     //! Evaluate whether to continue with next step
     void eval();
@@ -130,11 +130,10 @@ class DG : public CBase_DG {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
       CBase_DG::pup(p);
-      p | m_nfac;
+      p | m_ncomfac;
       p | m_nadj;
       p | m_nrhs;
       p | m_itf;
-      p | m_dt;
       p | m_disc;
       p | m_fd;
       p | m_u;
@@ -144,8 +143,8 @@ class DG : public CBase_DG {
       p | m_geoElem;
       p | m_lhs;
       p | m_rhs;
-      p | m_facecnt;
-      p | m_nchGhost;
+      p | m_nfac;
+      p | m_nunk;
       p | m_msumset;
       p | m_esuelTet;
       p | m_ipface;
@@ -175,15 +174,13 @@ class DG : public CBase_DG {
                             tk::UnsMesh::FaceEq > >;
 
     //! Counter for face adjacency communication map
-    std::size_t m_nfac;
+    std::size_t m_ncomfac;
     //! Counter for signaling that all ghost data have been received
     std::size_t m_nadj;
     //! Counter for signaling that we have received all contributions to rhs
     std::size_t m_nrhs;
     //! Field output iteration count
     uint64_t m_itf;
-    //! Time step size
-    tk::real m_dt;
     //! Discretization proxy
     CProxy_Discretization m_disc;
     //! Face data
@@ -202,10 +199,10 @@ class DG : public CBase_DG {
     tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
-    //! Counter for chare-boundary face local IDs
-    std::size_t m_facecnt;
-    //! Counter for chare-face ghosts for this mesh chunk
-    std::size_t m_nchGhost;
+    //! Counter for number of faces on this chare (including chare boundaries)
+    std::size_t m_nfac;
+    //! Counter for number of unknowns on this chare (including ghosts)
+    std::size_t m_nunk;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!    worker chares associated to their chare IDs
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
@@ -261,10 +258,7 @@ class DG : public CBase_DG {
 
     //! Fill the elements surrounding faces, extended by ghost entries
     void
-    fillEsuf( int fromch,
-              std::size_t e,
-              const tk::UnsMesh::Face& t,              
-              const std::unordered_map< std::size_t, std::size_t >& ghostelem );
+    fillEsuf( int fromch, const tk::UnsMesh::Face& t, std::size_t ghostid );
 
     //! Fill the face geometry data structure with the chare-face geometry
     void fillGeoFace();
@@ -272,15 +266,9 @@ class DG : public CBase_DG {
     //! Compute left hand side
     void lhs();
 
-    //! Compute right hand side
-    void rhs();
+    //! Compute right hand side and solve system
+    void solve();
 
-    //! Time stepping
-    void solve( tk::real deltat );
-
-    //! Prepare for next step
-    void next();
- 
     //! Output mesh and particle fields to files
     void out();
 

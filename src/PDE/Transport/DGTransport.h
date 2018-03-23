@@ -94,7 +94,7 @@ class Transport {
 
         const auto s = Problem::solution( m_c, m_ncomp, xcc, ycc, zcc, t );
         for (ncomp_t c=0; c<m_ncomp; ++c)
-          unk(e, c, m_offset)   = s[c];
+          unk(e, c, m_offset) = s[c];
       }
     }
 
@@ -153,19 +153,18 @@ class Transport {
       }
 
       // compute boundary surface flux integrals
-
-      for (const auto& s : m_bcsym) {      // for all sidesets where sym bc is set
-        auto bc = bface.find( std::stoi(s) );  // find faces for sym bc side set
+      for (const auto& s : m_bcsym) {    // for all symbc sidesets
+        auto bc = bface.find( std::stoi(s) );  // faces for sym bc side set
         if (bc != end(bface))
           surfInt< Sym >( bc->second, esuf, geoFace, U, R );
       }
-      for (const auto& s : m_bcinlet) {    // for all sidesets where inlet bc is set
-        auto bc = bface.find( std::stoi(s) );  // find faces for inlet bc side set
+      for (const auto& s : m_bcinlet) {  // for all inlet bc sidesets
+        auto bc = bface.find( std::stoi(s) );// faces for inlet bc side set
         if (bc != end(bface))
           surfInt< Inlet > ( bc->second, esuf, geoFace, U, R );
       }
-      for (const auto& s : m_bcoutlet) {   // for all sidesets where outlet bc is set
-        auto bc = bface.find( std::stoi(s) );  // find faces for outlet bc side set
+      for (const auto& s : m_bcoutlet) {// for all outlet bc sidesets
+        auto bc = bface.find( std::stoi(s) );// faces for outlet bc side set
         if (bc != end(bface))
           surfInt< Outlet >( bc->second, esuf, geoFace, U, R );
       }

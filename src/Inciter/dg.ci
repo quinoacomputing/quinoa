@@ -23,7 +23,7 @@ module dg {
 
     array [1D] DG {
       entry DG( const CProxy_Discretization& disc,
-                const tk::CProxy_Solver& solver,
+                const tk::CProxy_Solver&,
                 const FaceData& fd );
       entry void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
       entry void comGhost( int fromch, const GhostData& ghost );
@@ -34,7 +34,7 @@ module dg {
       entry void eval();
       entry void comrhs( int fromch,
                          const std::vector< std::size_t >& geid,
-                         const std::vector< std::vector< tk::real > >& V );
+                         const std::vector< std::vector< tk::real > >& u );
       entry [reductiontarget] void advance( tk::real newdt );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/

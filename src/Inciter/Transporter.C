@@ -501,7 +501,6 @@ Transporter::comfinal()
   // Tell the runtime system that every PE is done with dynamically inserting
   // Discretization worker (MatCG, DiagCG, DG, ...) chare array elements
   m_scheme.doneInserting< tag::bcast >();
-
   com_complete();
 }
 
