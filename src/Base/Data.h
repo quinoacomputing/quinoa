@@ -362,7 +362,9 @@ class Data {
 
     //! Resize data store by multiple elements initialized to 0.0
     //! \param[in] count Resize store to contain count elements
-    void resize( std::size_t count ) { resize( count, int2type< Layout >() ); }
+    //! \param[in] value Value to initialize new data with
+    void resize( std::size_t count, tk::real value = 0.0 )
+    { resize( count, value, int2type< Layout >() ); }
 
     //! Remove a number of unknowns
     //! \param[in] unknown Set of indices of unknowns to remove
@@ -518,10 +520,11 @@ class Data {
 
     //! Resize data store by multiple elements initialized to 0.0
     //! \param[in] newsize Resize store to contain newsize elements
+    //! \param[in] value Value to initialize new data with
     //! \note Only the UnkEqComp overload is provided as this operation would be
     //!   too inefficient with the EqCompUnk data layout.
-    void resize( std::size_t newsize, int2type< UnkEqComp > ) {
-      m_vec.resize( newsize * m_nprop, 0.0 );
+    void resize( std::size_t newsize, tk::real value, int2type< UnkEqComp > ) {
+      m_vec.resize( newsize * m_nprop, value );
       m_nunk = newsize;
     }
 

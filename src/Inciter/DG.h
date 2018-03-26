@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/DG.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     DG advances a system of PDEs with the discontinuous Galerkin scheme
   \details   DG advances a system of partial differential equations (PDEs) using
     discontinuous Galerkin (DG) finite element (FE) spatial discretization (on
@@ -100,7 +100,7 @@ class DG : public CBase_DG {
     void comGhost( int fromch, const GhostData& ghost );
 
     //! Receive requests for ghost data
-    void reqGhost( int fromch );
+    void reqGhost();
 
     //! Send all of our ghost data to fellow chares
     void sendGhost();
@@ -115,9 +115,12 @@ class DG : public CBase_DG {
     void dt();
 
     //! Receive chare-boundary ghost data from neighboring chares
-    void comrhs( int fromch,
-                 const std::vector< std::size_t >& geid,
+    void comsol( int fromch,
+                 const std::vector< std::size_t >& tetid,
                  const std::vector< std::vector< tk::real > >& u );
+
+    //! Acknowledge receipt and storage of solution ghost data on receiver chare
+    //void storedsol();
 
     //! Evaluate whether to continue with next step
     void eval();
@@ -132,7 +135,8 @@ class DG : public CBase_DG {
       CBase_DG::pup(p);
       p | m_ncomfac;
       p | m_nadj;
-      p | m_nrhs;
+      p | m_nrecvsol;
+      p | m_nstorsol;
       p | m_itf;
       p | m_disc;
       p | m_fd;
@@ -175,10 +179,12 @@ class DG : public CBase_DG {
 
     //! Counter for face adjacency communication map
     std::size_t m_ncomfac;
-    //! Counter for signaling that all ghost data have been received
+    //! Counter signaling that all ghost data have been received
     std::size_t m_nadj;
-    //! Counter for signaling that we have received all contributions to rhs
-    std::size_t m_nrhs;
+    //! Counter signaling that we have received all our solution ghost data
+    std::size_t m_nrecvsol;
+    //! Counter signaling that fellow chares stored all our solution ghost data
+    std::size_t m_nstorsol;
     //! Field output iteration count
     uint64_t m_itf;
     //! Discretization proxy
@@ -229,13 +235,15 @@ class DG : public CBase_DG {
     FaceIDs m_bndFace;
     //! Ghost data associated to chare IDs we communicate with
     std::unordered_map< int, GhostData > m_ghostData;
-    //! Chare IDs requesting ghost data
-    std::vector< int > m_ghostReq;
+    //! Number of chares requesting ghost data
+    std::size_t m_ghostReq;
     //! Local element id associated to ghost remote id charewise
     //! \details This map associates the local element id (inner map value) to
     //!    the (remote) element id of the ghost (inner map key) based on the
     //!    chare id (outer map key) this remote element lies in.
     std::map< int, std::unordered_map< std::size_t, std::size_t > > m_ghost;
+
+    std::set< std::size_t > gh, rgh;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -256,12 +264,12 @@ class DG : public CBase_DG {
     //! Continue after face adjacency communication map completed on this chare
     void adj();
 
-    //! Fill the elements surrounding faces, extended by ghost entries
-    void
-    fillEsuf( int fromch, const tk::UnsMesh::Face& t, std::size_t ghostid );
+    //! Fill elements surrounding a face along chare boundary
+    void addEsuf( const std::array< std::size_t, 2 >& id, std::size_t ghostid );
 
-    //! Fill the face geometry data structure with the chare-face geometry
-    void fillGeoFace();
+    //! Fill face geometry data along chare boundary
+    void addGeoFace( const tk::UnsMesh::Face& t,
+                     const std::array< std::size_t, 2 >& id );
 
     //! Compute left hand side
     void lhs();
