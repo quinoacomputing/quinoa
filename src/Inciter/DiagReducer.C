@@ -10,7 +10,8 @@
 #include "DiagReducer.h"
 #include "Make_unique.h"
 #include "ContainerUtil.h"
-#include "Diagnostics.h"
+#include "NodeDiagnostics.h"
+#include "ElemDiagnostics.h"
 
 namespace tk {
 

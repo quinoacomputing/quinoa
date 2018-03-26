@@ -16,7 +16,8 @@ add_library(Inciter
             FluxCorrector.C
             DistFCT.C
             DiagReducer.C
-            Diagnostics.C
+            NodeDiagnostics.C
+            ElemDiagnostics.C
             BoundaryConditions.C
             MeshReader.C
 )

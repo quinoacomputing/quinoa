@@ -54,6 +54,7 @@
 
 #include "DerivedData.h"
 #include "FaceData.h"
+#include "ElemDiagnostics.h"
 
 #include "NoWarning/dg.decl.h"
 
@@ -92,7 +93,7 @@ class DG : public CBase_DG {
                  const FaceData& fd );
 
     //! Migrate constructor
-    explicit DG( CkMigrateMessage* ) {}
+    explicit DG( CkMigrateMessage* ) : m_diag( *Disc() ) {}
 
     //! Receive unique set of faces we potentially share with/from another chare
     void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
@@ -235,6 +236,8 @@ class DG : public CBase_DG {
     std::set< std::size_t > m_exptGhost;
     //! Received ghost tet ids (used only in DEBUG)
     std::set< std::size_t > m_recvGhost;
+    //! Diagnostics object
+    ElemDiagnostics m_diag;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -277,8 +280,8 @@ class DG : public CBase_DG {
     //! Output mesh and particle fields to files
     void out();
 
-    //! Compute diagnostics, e.g., residuals
-    bool diagnostics();
+    ////! Compute diagnostics, e.g., residuals
+    //bool diagnostics();
 
     //! Output mesh-based fields to file
     void writeFields( tk::real time );

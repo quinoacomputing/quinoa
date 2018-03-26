@@ -1,14 +1,14 @@
 // *****************************************************************************
 /*!
-  \file      src/Inciter/Diagnostics.h
+  \file      src/Inciter/NodeDiagnostics.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Diagnostics class for collecting diagnostics
-  \details   Diagnostics class for collecting diagnostics, e.g., residuals, and
-    various norms of errors while solving partial differential equations.
+  \brief     NodeDiagnostics class for collecting diagnostics
+  \details   NodeDiagnostics class for collecting diagnostics, e.g., residuals,
+    and various norms of errors while solving partial differential equations.
 */
 // *****************************************************************************
-#ifndef Diagnostics_h
-#define Diagnostics_h
+#ifndef NodeDiagnostics_h
+#define NodeDiagnostics_h
 
 #include <unordered_set>
 
@@ -20,7 +20,7 @@ namespace inciter {
 //! Number of entries in diagnostics vector (of vectors), see compute()
 const std::size_t NUMDIAG = 6;
 
-//! Diagnostics labels
+//! NodeDiagnostics labels
 enum Diag { L2SOL=0,    //!< L2 norm of numerical solution
             L2ERR,      //!< L2 norm of numerical-analytic solution
             LINFERR,    //!< L_inf norm of numerical-analytic solution
@@ -28,12 +28,12 @@ enum Diag { L2SOL=0,    //!< L2 norm of numerical solution
             TIME,       //!< Physical time
             DT };       //!< Time step size
 
-//! Diagnostics class used to compute diagnostics while integrating PDEs
-class Diagnostics {
+//! NodeDiagnostics class used to compute diagnostics while integrating PDEs
+class NodeDiagnostics {
 
   public:
     //! Constructor
-    explicit Diagnostics( const Discretization& d );
+    explicit NodeDiagnostics( const Discretization& d );
 
     //! Configure Charm++ custom reduction types initiated from this class
     static void registerReducers();
@@ -50,7 +50,7 @@ class Diagnostics {
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \param[in,out] d Diagnostics object reference
-    friend void operator|( PUP::er& p, Diagnostics& d ) { d.pup(p); }
+    friend void operator|( PUP::er& p, NodeDiagnostics& d ) { d.pup(p); }
     //@}
 
   private:
@@ -63,4 +63,4 @@ class Diagnostics {
 
 } // inciter::
 
-#endif // Diagnostics_h
+#endif // NodeDiagnostics_h

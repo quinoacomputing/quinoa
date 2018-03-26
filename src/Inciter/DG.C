@@ -19,7 +19,6 @@
 #include "Solver.h"
 #include "DiagReducer.h"
 #include "DerivedData.h"
-#include "Diagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "ExodusIIMeshWriter.h"
 
@@ -66,6 +65,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_ghost(),
   m_exptGhost(),
   m_recvGhost()
+  m_diag( *Disc() )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -641,7 +641,7 @@ DG::registerReducers()
 //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
 // *****************************************************************************
 {
-  DiagMerger = CkReduction::addReducer( tk::mergeDiag );
+  ElemDiagnostics::registerReducers();
 }
 
 void
@@ -810,31 +810,6 @@ DG::writeFields( tk::real time )
   d->writeElemSolution( ew, m_itf, elemfields );
 }
 
-bool
-DG::diagnostics()
-// *****************************************************************************
-// Compute diagnostics, e.g., residuals
-//! \return True if diagnostics have been computed
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  const auto ncomp = g_inputdeck.get< tag::component >().nprop();
-
-  std::vector< std::vector< tk::real > >
-    diag( NUMDIAG, std::vector< tk::real >( ncomp, 0.0 ) );
-
-  // Compute diagnostics
-  // ...
-
-  // Contribute to diagnostics across all PEs
-  auto stream = tk::serialize( diag );
-  contribute( stream.first, stream.second.get(), DiagMerger,
-    CkCallback(CkIndex_Transporter::diagnostics(nullptr), d->Tr()) );
-
-  return true;
-}
-
 void
 DG::out()
 // *****************************************************************************
@@ -891,14 +866,14 @@ DG::solve()
   // Output field data to file
   out();
   // Compute diagnostics, e.g., residuals
-  //auto diag = diagnostics();
+  auto diag = m_diag.compute( *d, m_nchGhost, m_geoElem, m_u );
   // Increase number of iterations and physical time
   d->next();
   // Output one-liner status report
   d->status();
 
   // Evaluate whether to continue with next step
-  /*if (!diag)*/ eval();
+  if (!diag) eval();
 }
 
 void

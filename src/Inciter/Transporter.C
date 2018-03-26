@@ -29,7 +29,8 @@
 #include "LoadDistributor.h"
 #include "ExodusIIMeshReader.h"
 #include "Inciter/InputDeck/InputDeck.h"
-#include "Diagnostics.h"
+#include "NodeDiagnostics.h"
+#include "ElemDiagnostics.h"
 #include "DiagWriter.h"
 
 #include "NoWarning/inciter.decl.h"

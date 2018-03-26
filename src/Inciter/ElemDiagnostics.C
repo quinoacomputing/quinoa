@@ -1,15 +1,17 @@
 // *****************************************************************************
 /*!
-  \file      src/Inciter/Diagnostics.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Diagnostics class for collecting diagnostics
-  \details   Diagnostics class for collecting diagnostics, e.g., residuals, and
-    various norms of errors while solving partial differential equations.
+  \file      src/Inciter/ElemDiagnostics.C
+  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \brief     ElemDiagnostics class for collecting element diagnostics
+  \details   ElemDiagnostics class for collecting element diagnostics, e.g.,
+    residuals, and various norms of errors while solving partial differential
+    equations.
 */
 // *****************************************************************************
 
-#include "CGPDE.h"
-#include "Diagnostics.h"
+#include "DGPDE.h"
+#include "ElemDiagnostics.h"
+#include "NodeDiagnostics.h"
 #include "DiagReducer.h"
 #include "Discretization.h"
 #include "Inciter/InputDeck/InputDeck.h"
@@ -17,31 +19,24 @@
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
-extern std::vector< CGPDE > g_cgpde;
+extern std::vector< DGPDE > g_dgpde;
 
 static CkReduction::reducerType DiagMerger;
 
 } // inciter::
 
-using inciter::Diagnostics;
+using inciter::ElemDiagnostics;
 
-Diagnostics::Diagnostics( const Discretization& d )
+ElemDiagnostics::ElemDiagnostics( const Discretization& d )
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc.
 //! \param[in] d Discretization proxy to read from
 // *****************************************************************************
 {
-  // Store the local IDs of those mesh nodes to which we contribute but do not
-  // own, i.e., slave nodes. Ownership here is defined by having a lower chare
-  // ID than any other chare that also contributes to the node.
-  for (const auto& c : d.Msum())        // for all chares that neighbor our mesh
-    if (d.thisIndex > c.first)          // if our chare ID is larger than theirs
-      for (auto i : c.second)           // store local ID in set
-        m_slave.insert( tk::cref_find( d.Lid(), i ) );
 }
 
 void
-Diagnostics::registerReducers()
+ElemDiagnostics::registerReducers()
 // *****************************************************************************
 //  Configure Charm++ reduction types
 //! \details This routine is supposed to be called from a Charm++ nodeinit
@@ -56,10 +51,14 @@ Diagnostics::registerReducers()
 }
 
 bool
-Diagnostics::compute( Discretization& d, const tk::Fields& u )
+ElemDiagnostics::compute( Discretization& d,
+                          const std::size_t nchGhost,
+                          const tk::Fields& geoElem,
+                          const tk::Fields& u )
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc.
 //! \param[in] d Discretization proxy to read from
+//! \param[in] geoElem Element geometry
 //! \param[in] u Current solution vector
 //! \return True if diagnostics have been computed
 // *****************************************************************************
@@ -88,8 +87,8 @@ Diagnostics::compute( Discretization& d, const tk::Fields& u )
     // able to compute an error based on some "analytical" solution, which is
     // really the initial condition.
     auto a = u;
-    for (const auto& eq : g_cgpde)
-      eq.initialize( d.Coord(), a, d.T()+d.Dt() );
+    for (const auto& eq : g_dgpde)
+      eq.initialize( geoElem, a, d.T()+d.Dt() );
 
     // Prepare for computing diagnostics. Diagnostics are defined as some norm,
     // .e.g., L2 norm, of a quantity, computed in mesh nodes, A, as ||A||_2 =
@@ -106,24 +105,23 @@ Diagnostics::compute( Discretization& d, const tk::Fields& u )
     // 1: L2-norm of all scalar components of the numerical-analytic solution
     // 2: Linf-norm of all scalar components of the numerical-analytic solution
     std::vector< std::vector< tk::real > >
-      diag( NUMDIAG, std::vector< tk::real >( u.nprop(), 0.0 ) );
+      diag( NUMELEMDIAG, std::vector< tk::real >( u.nprop(), 0.0 ) );
 
     // Put in norms sweeping our mesh chunk
-    for (std::size_t i=0; i<u.nunk(); ++i)
-      if (m_slave.find(i) == end(m_slave)) {    // ignore non-owned nodes
-        // Compute sum for L2 norm of the numerical solution
-        for (std::size_t c=0; c<u.nprop(); ++c)
-          diag[L2SOL][c] += u(i,c,0) * u(i,c,0) * d.Vol()[i];
-        // Compute sum for L2 norm of the numerical-analytic solution
-        for (std::size_t c=0; c<u.nprop(); ++c)
-          diag[L2ERR][c] +=
-            (u(i,c,0)-a(i,c,0)) * (u(i,c,0)-a(i,c,0)) * d.Vol()[i];
-        // Compute max for Linf norm of the numerical-analytic solution
-        for (std::size_t c=0; c<u.nprop(); ++c) {
-          auto err = std::abs( u(i,c,0) - a(i,c,0) );
-          if (err > diag[LINFERR][c]) diag[LINFERR][c] = err;
-        }
+    for (std::size_t i=0; i<u.nunk()-nchGhost; ++i) {
+      // Compute sum for L2 norm of the numerical solution
+      for (std::size_t c=0; c<u.nprop(); ++c)
+        diag[L2SOL][c] += u(i,c,0) * u(i,c,0) * geoElem(i,0,0);
+      // Compute sum for L2 norm of the numerical-analytic solution
+      for (std::size_t c=0; c<u.nprop(); ++c)
+        diag[L2ERR][c] +=
+          (u(i,c,0)-a(i,c,0)) * (u(i,c,0)-a(i,c,0)) * geoElem(i,0,0);
+      // Compute max for Linf norm of the numerical-analytic solution
+      for (std::size_t c=0; c<u.nprop(); ++c) {
+        auto err = std::abs( u(i,c,0) - a(i,c,0) );
+        if (err > diag[LINFERR][c]) diag[LINFERR][c] = err;
       }
+    }
 
     // Append diagnostics vector with metadata on the current time step
     // 3: Current iteration count (only the first entry is used)
