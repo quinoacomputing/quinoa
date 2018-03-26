@@ -59,7 +59,6 @@ DG::DG( const CProxy_Discretization& disc,
   m_msumset( msumset() ),
   m_esuelTet( tk::genEsuelTet( m_disc[thisIndex].ckLocal()->Inpoel(),
                 tk::genEsup( m_disc[thisIndex].ckLocal()->Inpoel(), 4 ) ) ),
-  m_ipface(),
   m_potBndFace(),
   m_bndFace(),
   m_ghostData(),
@@ -81,13 +80,14 @@ DG::DG( const CProxy_Discretization& disc,
   const auto& inpofa = fd.Inpofa();
 
   // Invert inpofa to enable searching for faces based on (global) node triplets
+  tk::UnsMesh::FaceSet ipface;  // internal + physical boundary faces
   Assert( inpofa.size() % 3 == 0, "Inpofa must contain triplets" );
   for (std::size_t f=0; f<inpofa.size()/3; ++f)
-    m_ipface.insert( {{{ gid[ inpofa[f*3+0] ],
-                         gid[ inpofa[f*3+1] ],
-                         gid[ inpofa[f*3+2] ] }}} );
+    ipface.insert( {{{ gid[ inpofa[f*3+0] ],
+                       gid[ inpofa[f*3+1] ],
+                       gid[ inpofa[f*3+2] ] }}} );
 
-  // At this point m_ipface has node-id-triplets (faces) on the internal
+  // At this point ipface has node-id-triplets (faces) on the internal
   // chare-domain and on the physical boundary but not on chare boundaries,
   // hence the name internal + physical boundary faces.
 
@@ -108,15 +108,20 @@ DG::DG( const CProxy_Discretization& disc,
     auto mark = e*4;
     for (std::size_t f=0; f<4; ++f)     // for all tet faces
       if (m_esuelTet[mark+f] == -1) {   // if face has no outside-neighbor tet
-        tk::UnsMesh::Face t {{ gid[ inpoel[ mark + tk::lpofa[f][0] ] ],
-                               gid[ inpoel[ mark + tk::lpofa[f][1] ] ],
-                               gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
+        tk::UnsMesh::Face t{{ gid[ inpoel[ mark + tk::lpofa[f][0] ] ],
+                              gid[ inpoel[ mark + tk::lpofa[f][1] ] ],
+                              gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
         // if does not exist in ipface, store as a potential chare-boundary face
         // associated to neighbor chare
-        if (m_ipface.find(t) == end(m_ipface))
+        if (ipface.find(t) == end(ipface))
           m_potBndFace[ facechare(t) ].insert( t );
       }
   }
+
+  // Basic error checking on potential-boundary-face map
+  Assert( m_potBndFace.find( thisIndex ) == m_potBndFace.cend(),
+          "Potential-face-communication map should not contain data for own "
+          "chare ID" );
 
   // Note that while the (potential) boundary-face adjacency map (m_potBndFace)
   // is derived from the node adjacency map (m_msumset), their sizes is not
@@ -167,6 +172,9 @@ DG::msumset() const
   for (const auto& n : d->Msum())
     m[ n.first ].insert( n.second.cbegin(), n.second.cend() );
 
+  Assert( m.find( thisIndex ) == m.cend(),
+          "Chare-node adjacency map should not contain data for own chare ID" );
+
   return m;
 }
 
@@ -196,36 +204,45 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
     if (bndface.empty()) m_bndFace.erase( fromch );
   }
 
-  // Store (local) tet ID adjacent to our chare boundary from the inside
-  auto d = Disc();
-  const auto& gid = d->Gid();
-  const auto& inpoel = d->Inpoel();
-  for (std::size_t e=0; e<m_esuelTet.size()/4; ++e) {  // for all our tets
-    auto mark = e*4;
-    for (std::size_t f=0; f<4; ++f) {  // for all cell faces
-      if (m_esuelTet[mark+f] == -1) {  // if face has no outside-neighbor tet
-        auto A = gid[ inpoel[ mark + tk::lpofa[f][0] ] ];
-        auto B = gid[ inpoel[ mark + tk::lpofa[f][1] ] ];
-        auto C = gid[ inpoel[ mark + tk::lpofa[f][2] ] ];
-        auto c = findchare( {{A,B,C}} );
-        if (c > -1) {
-          auto& bndface = tk::ref_find( m_bndFace, c );
-          auto& face = tk::ref_find( bndface, {{A,B,C}} );
-          face[1] = e;  // store (local) inner tet ID adjacent to face
-        }
-      }
-    }
-  }
-
   // if we have heard from all fellow chares that we share at least a single
   // node, edge, or face with
   if (++m_ncomfac == m_msumset.size()) {
-    // At this point m_bndFace is complete on this PE. This means that
-    // starting from the sets of faces we potentially share with fellow chares
+
+    // Basic error checking on chare-boundary-face map
+    Assert( m_bndFace.find( thisIndex ) == m_bndFace.cend(),
+            "Face-communication map should not contain data for own chare ID" );
+
+    // Store (local) tet ID adjacent to our chare boundary from the inside
+    auto d = Disc();
+    const auto& gid = d->Gid();
+    const auto& inpoel = d->Inpoel();
+    for (std::size_t e=0; e<m_esuelTet.size()/4; ++e) {  // for all our tets
+      auto mark = e*4;
+      for (std::size_t f=0; f<4; ++f) {  // for all cell faces
+        if (m_esuelTet[mark+f] == -1) {  // if face has no outside-neighbor tet
+          tk::UnsMesh::Face t{{ gid[ inpoel[ mark + tk::lpofa[f][0] ] ],
+                                gid[ inpoel[ mark + tk::lpofa[f][1] ] ],
+                                gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
+          auto c = findchare( t );
+          if (c > -1) {
+            auto& bndface = tk::ref_find( m_bndFace, c );
+            auto& face = tk::ref_find( bndface, t );
+            face[1] = e;  // store (local) inner tet ID adjacent to face
+          }
+        }
+      }
+    }
+
+    // Free memory for intermediate data used to set up boundary-face comm map
+    tk::destroy( m_potBndFace );
+
+    // At this point m_bndFace is complete on this PE. This means that starting
+    // from the sets of faces we potentially share with fellow chares
     // (m_potBndFace), we now only have those faces we actually share faces with
     // (through which we need to communicate later). Also, m_bndFace not only
     // has the unique faces associated to fellow chares, but also a newly
-    // assigned local face ID. We continue by starting setting up ghost data.
+    // assigned local face ID as well as the local id of the inner tet adjacent
+    // to the face. Continue by starting setting up ghost data
     setupGhost();
     // Besides setting up our own ghost data, we also issue requests (for ghost
     // data) to those chares which we share faces with. Note that similar to
@@ -263,10 +280,10 @@ DG::setupGhost()
     auto mark = e*4;
     for (std::size_t f=0; f<4; ++f) {  // for all cell faces
       if (m_esuelTet[mark+f] == -1) {  // if face has no outside-neighbor tet
-        auto A = gid[ inpoel[ mark + tk::lpofa[f][0] ] ];
-        auto B = gid[ inpoel[ mark + tk::lpofa[f][1] ] ];
-        auto C = gid[ inpoel[ mark + tk::lpofa[f][2] ] ];
-        auto c = findchare( {{A,B,C}} );
+        tk::UnsMesh::Face t{{ gid[ inpoel[ mark + tk::lpofa[f][0] ] ],
+                              gid[ inpoel[ mark + tk::lpofa[f][1] ] ],
+                              gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
+        auto c = findchare( t );
         // It is possible that we do not find the chare for this face. We are
         // looping through all of our tets and interrogating all faces that do
         // not have neighboring tets but we only care about chare-boundary faces
@@ -285,13 +302,34 @@ DG::setupGhost()
           // the same chare-boundary. This happens, e.g., when the boundary
           // between chares is zig-zaggy enough to have 2 or even 3 faces of the
           // same tet.
-          nodes.push_back( A );
-          nodes.push_back( B );
-          nodes.push_back( C );
+          nodes.push_back( t[0] );
+          nodes.push_back( t[1] );
+          nodes.push_back( t[2] );
+          Assert( nodes.size() < 13, "Overflow of faces/tet to send" );
         }
       }
     }
   }
+
+  // Basic error checking on local ghost data
+  Assert( m_ghostData.find( thisIndex ) == m_ghostData.cend(),
+          "Chare-node adjacency map should not contain data for own chare ID" );
+
+  // More in-depth error checking on local ghost data
+  for (const auto& c : m_ghostData)
+    for (const auto& t : c.second) {
+      IGNORE(t);
+      Assert( !std::get< 0 >( t.second ).empty(),
+              "Emtpy face vector in ghost data" );
+      Assert( std::get< 0 >( t.second ).size() % 3 == 0,
+              "Face node IDs must be triplets" );
+      Assert( std::get< 0 >( t.second ).size() <= 4*3,    // <= 4*3 (4*numfaces)
+              "Max number of faces for a single ghost tet is 4" );
+      Assert( !std::get< 1 >( t.second ).empty(),
+              "No elem geometry data for ghost" );
+      Assert( std::get< 1 >( t.second ).size() == m_geoElem.nprop(),
+              "Elem geometry data for ghost must be for single tet" );
+    }
 
   ownghost_complete();
 }
@@ -320,9 +358,10 @@ DG::sendGhost()
 int
 DG::findchare( const tk::UnsMesh::Face& t )
 // *****************************************************************************
-// Find chare for face (given by 3 global node IDs
+// Find any chare for face (given by 3 global node IDs)
 //! \param[in] t Face given by three global node IDs
-//! \return chare ID if found, -1 if not
+//! \return chare ID if found among any of the chares we communication along
+//!   faces with, -1 if not
 // *****************************************************************************
 {
   for (const auto& cf : m_bndFace)
@@ -351,7 +390,7 @@ DG::comGhost( int fromch, const GhostData& ghost )
     const auto& nodes = std::get< 0 >( g.second );  // node IDs of face(s)
     const auto& geo = std::get< 1 >( g.second );    // ghost elem geometry data
     Assert( nodes.size() % 3 == 0, "Face node IDs must be triplets" );
-    Assert( nodes.size() < 5*3 == 0, "Too many face node ID triplets" );
+    Assert( nodes.size() <= 4*3, "Overflow of faces/tet received" );
     Assert( geo.size() % 4 == 0, "Ghost geometry size mismathc" );
     Assert( geo.size() == m_geoElem.nprop(), "Ghost geometry number mismatch" );
     for (std::size_t n=0; n<nodes.size()/3; ++n) {  // face(s) of ghost e
@@ -362,9 +401,10 @@ DG::comGhost( int fromch, const GhostData& ghost )
               nl.find(t[1]) != end(nl) &&
               nl.find(t[2]) != end(nl),
            "Ghost face not found in chare-node adjacency map on receiving end" );
-      // must find face(A,B,C) in boundary-face adjacency map
-      Assert( findchare(t) > -1, "Ghost face not found in boundary-face "
-                                 "adjacency map on receiving end" ); 
+      // must find face(A,B,C) in boundary-face adjacency map for fromch
+      Assert( tk::cref_find(m_bndFace,fromch).find( t ) !=
+              tk::cref_find(m_bndFace,fromch).cend(), "Ghost face not "
+              "found in boundary-face adjacency map on receiving end" );
       // find local face & tet ids for t
       auto id = tk::cref_find( tk::cref_find(m_bndFace,fromch), t );
       // compute face geometry for chare-boundary face
@@ -383,7 +423,7 @@ DG::comGhost( int fromch, const GhostData& ghost )
   }
 
   // Signal the runtime system that all workers have received their adjacency
-  if (++m_nadj == m_bndFace.size()) adj();
+  if (++m_nadj == m_ghostData.size()) adj();
 }
 
 void
@@ -479,6 +519,11 @@ DG::adj()
   // Ensure that we also have the all geometry data (including thos of ghosts)
   Assert( m_geoElem.nunk() == m_u.nunk(), "GeoElem unknowns size mismatch" );
 
+  // Basic error checking on ghost tet ID map
+  Assert( m_ghost.find( thisIndex ) == m_ghost.cend(),
+          "Ghost id map should not contain data for own chare ID" );
+
+  // Ghost tet IDs expected
   for (const auto& c : m_ghost)
     for (const auto& g : c.second)
       gh.insert( g.second );
@@ -486,10 +531,6 @@ DG::adj()
 //   std::cout << thisIndex << ": ";
 //   for (auto g : gh) std::cout << g << ' ';
 //   std::cout << '\n';
-
-  // Intermediate data used for communication no longer needed
-  tk::destroy( m_potBndFace );
-  tk::destroy( m_ipface );
 
   // Signal the runtime system that all workers have received their adjacency
   auto d = Disc();
@@ -526,6 +567,7 @@ DG::setup( tk::real v )
   // Output fields metadata to output file
   d->writeElemMeta();
 
+  // Basic error checking on element geometry data size
   Assert( m_geoElem.nunk() == m_lhs.nunk(), "Size mismatch in DG::setup()" );
 
   // Compute left-hand side of discrete PDEs
@@ -596,7 +638,7 @@ DG::advance( tk::real newdt )
   // communicate solution ghost  data (if any)
   if (m_ghostData.empty())
     solve();
-  else {
+  else
     for(const auto& n : m_ghostData) {
       std::vector< std::size_t > tetid;
       std::vector< std::vector< tk::real > > u;
@@ -607,9 +649,6 @@ DG::advance( tk::real newdt )
       }
       thisProxy[ n.first ].comsol( thisIndex, tetid, u );
     }
-    //d->contribute( CkCallback(CkReductionTarget(Transporter,send), d->Tr()) );
-    //storsol_complete();
-  }
 }
 
 void
@@ -634,7 +673,7 @@ DG::comsol( int fromch,
     auto j = tk::cref_find( n, tetid[i] );
     Assert( j >= m_esuelTet.size()/4, "Receiving solution non-ghost data" );
     Assert( j < m_u.nunk(), "Indexing out of bounds in DG::comsol()" );
-    rgh.insert( j );
+    rgh.insert( j );    // ghost IDs received
     for (std::size_t c=0; c<m_u.nprop(); ++c)
       m_u(j,c,0) = u[i][c];
   }
@@ -642,25 +681,11 @@ DG::comsol( int fromch,
   // if we have received all solution ghost contributions from those chares we
   // communicate along chare-boundary faces with, tell the runtime system
   if (++m_nrecvsol == m_ghostData.size()) {
-    Assert( gh == rgh, "Ghost tet mismatch" );
+    Assert( gh == rgh, "Expected/received ghost tet id mismatch" );
     m_nrecvsol = 0;
     solve();
-    //contribute( CkCallback(CkReductionTarget(Transporter,recv), Disc()->Tr()) );
-    //recvsol_complete();
   }
 }
-
-// void
-// DG::storedsol()
-// // *****************************************************************************
-// // Acknowledge receipt and storage of solution ghost data on receiver chare
-// // *****************************************************************************
-// {
-//   if (++m_nstorsol == m_ghostData.size()) {
-//     m_nstorsol = 0;
-//     storsol_complete();
-//   }
-// }
 
 void
 DG::writeFields( tk::real time )

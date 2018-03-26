@@ -151,7 +151,6 @@ class DG : public CBase_DG {
       p | m_nunk;
       p | m_msumset;
       p | m_esuelTet;
-      p | m_ipface;
       p | m_potBndFace;
       p | m_bndFace;
       p | m_ghostData;
@@ -165,17 +164,15 @@ class DG : public CBase_DG {
     //@}
 
   private:
-    //! Face IDs associated to global node IDs of the face for each chare
-    //! \details The this maps stores tetrahedron cell faces and their
-    //!   associated local face IDs. A face is given by 3 global node IDs in
-    //!   Face. Then all of this data is grouped by chares (outer key) we
-    //!   communicated with along chare boundary faces.
-    using FaceIDs =
-      std::unordered_map< int,  // chare ID faces shared with
-        std::unordered_map< tk::UnsMesh::Face,  // 3 global node IDs
-                            std::array< std::size_t, 2 >, // local face & tet ID
-                            tk::UnsMesh::FaceHasher,
-                            tk::UnsMesh::FaceEq > >;
+    //! Local face & tet IDs associated to 3 global node IDs
+    //! \details The this maps stores tetrahedron cell faces (map key) and their
+    //!   associated local face ID and inner local tet id adjacent to the face
+    //!   (map value). A face is given by 3 global node IDs.
+    using FaceMap =
+      std::unordered_map< tk::UnsMesh::Face,  // 3 global node IDs
+                          std::array< std::size_t, 2 >, // local face & tet ID
+                          tk::UnsMesh::FaceHasher,
+                          tk::UnsMesh::FaceEq >;
 
     //! Counter for face adjacency communication map
     std::size_t m_ncomfac;
@@ -217,8 +214,6 @@ class DG : public CBase_DG {
     std::unordered_map< int, std::unordered_set< std::size_t > > m_msumset;
     //! Elements surrounding elements with -1 at boundaries, see genEsuelTet()
     std::vector< int > m_esuelTet;
-    //! Internal + physical boundary faces
-    tk::UnsMesh::FaceSet m_ipface;
     //! Faces associated to chares we potentially share boundary faces with
     //! \details Compared to m_bndFace, this map stores a set of unique faces we
     //!   only potentially share with fellow chares. This is because this data
@@ -227,12 +222,13 @@ class DG : public CBase_DG {
     //!   stores the faces (associated to chares) we actually need to
     //!   communicate with.
     std::unordered_map< int, tk::UnsMesh::FaceSet > m_potBndFace;
-    //! Face IDs associated to global node IDs of the face for each chare
+    //! Face * tet IDs associated to global node IDs of the face for each chare
     //! \details Compared to m_potBndFace, this map stores those faces we
     //!   actually share faces with (through which we need to communicate
     //!   later). Also, this maps stores not only the unique faces associated to
-    //!   fellow chares, but also a newly assigned local face ID.
-    FaceIDs m_bndFace;
+    //!   fellow chares, but also a newly assigned local face ID and adjacent
+    //!   local tet ID.
+    std::unordered_map< int, FaceMap > m_bndFace;
     //! Ghost data associated to chare IDs we communicate with
     std::unordered_map< int, GhostData > m_ghostData;
     //! Number of chares requesting ghost data
@@ -241,7 +237,8 @@ class DG : public CBase_DG {
     //! \details This map associates the local element id (inner map value) to
     //!    the (remote) element id of the ghost (inner map key) based on the
     //!    chare id (outer map key) this remote element lies in.
-    std::map< int, std::unordered_map< std::size_t, std::size_t > > m_ghost;
+    std::unordered_map< int,
+      std::unordered_map< std::size_t, std::size_t > > m_ghost;
 
     std::set< std::size_t > gh, rgh;
 
@@ -251,7 +248,7 @@ class DG : public CBase_DG {
       return m_disc[ thisIndex ].ckLocal();
     }
 
-    //! Find chare for face (given by 3 global node IDs
+    //! Find any chare for face (given by 3 global node IDs)
     int findchare( const tk::UnsMesh::Face& t );
 
     //! Setup own ghost data on this chare
