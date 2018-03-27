@@ -63,6 +63,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_bndFace(),
   m_ghostData(),
   m_ghostReq( 0 ),
+  m_expTotbface( 0 ),
   m_ghost()
 // *****************************************************************************
 //  Constructor
@@ -108,6 +109,7 @@ DG::DG( const CProxy_Discretization& disc,
     auto mark = e*4;
     for (std::size_t f=0; f<4; ++f)     // for all tet faces
       if (m_esuelTet[mark+f] == -1) {   // if face has no outside-neighbor tet
+        ++m_expTotbface;
         tk::UnsMesh::Face t{{ gid[ inpoel[ mark + tk::lpofa[f][0] ] ],
                               gid[ inpoel[ mark + tk::lpofa[f][1] ] ],
                               gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
@@ -210,6 +212,15 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
   // if we have heard from all fellow chares that we share at least a single
   // node, edge, or face with
   if (++m_ncomfac == m_msumset.size()) {
+
+    // Ensure the -1 entries in m_esuelTet are equal to the number of entries
+    // in m_bndFace + m_nbfac
+    std::size_t bcount(m_fd.Nbfac());
+    for (const auto& ich : m_bndFace)
+      bcount += ich.second.size();
+
+    std::cout <<thisIndex<<" | found: "<<bcount<<"/"<<m_expTotbface<<"\n";
+    Assert( bcount == m_expTotbface, "Incorrect # of entries in m_bndFace" );
 
     // Basic error checking on chare-boundary-face map
     Assert( m_bndFace.find( thisIndex ) == m_bndFace.cend(),
