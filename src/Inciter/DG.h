@@ -222,7 +222,7 @@ class DG : public CBase_DG {
     //!   stores the faces (associated to chares) we actually need to
     //!   communicate with.
     std::unordered_map< int, tk::UnsMesh::FaceSet > m_potBndFace;
-    //! Face * tet IDs associated to global node IDs of the face for each chare
+    //! Face & tet IDs associated to global node IDs of the face for each chare
     //! \details Compared to m_potBndFace, this map stores those faces we
     //!   actually share faces with (through which we need to communicate
     //!   later). Also, this maps stores not only the unique faces associated to
