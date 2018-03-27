@@ -155,6 +155,7 @@ class DG : public CBase_DG {
       p | m_bndFace;
       p | m_ghostData;
       p | m_ghostReq;
+      p | m_expTotbface;
       p | m_ghost;
     }
     //! \brief Pack/Unpack serialize operator|
@@ -233,6 +234,7 @@ class DG : public CBase_DG {
     std::unordered_map< int, GhostData > m_ghostData;
     //! Number of chares requesting ghost data
     std::size_t m_ghostReq;
+    std::size_t m_expTotbface;
     //! Local element id associated to ghost remote id charewise
     //! \details This map associates the local element id (inner map value) to
     //!    the (remote) element id of the ghost (inner map key) based on the
