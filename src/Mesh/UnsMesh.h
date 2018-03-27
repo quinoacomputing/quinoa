@@ -62,12 +62,17 @@ class UnsMesh {
                std::hash< std::size_t >()( key[2] );
       }
     };
-    //! Key-equal function for node triplet (Face)
+    //! Key-equal function for node triplet (Face) where order also matters
+    //! \details The fact the node ordering matters means that not only the left
+    //!   and right hand sides must contains the same exact ids but the ordering
+    //!   must also match. For example face {A,B,C} is considered equal to face
+    //!   {C,A,B} as well as {B,C,A} bot not any other combination of the same
+    //!   these same ids.
     struct FaceEq {
       bool operator()( const Face& l, const Face& r ) const {
-        return (l[0] == r[0] || l[0] == r[1] || l[0] == r[2]) &&
-               (l[1] == r[0] || l[1] == r[1] || l[1] == r[2]) &&
-               (l[2] == r[0] || l[2] == r[1] || l[2] == r[2]);
+        return (l[0] == r[0] && l[1] == r[1] && l[2] == r[2]) ||
+               (l[2] == r[0] && l[0] == r[1] && l[1] == r[2]) ||
+               (l[1] == r[0] && l[2] == r[1] && l[0] == r[2]);
       }
     };
     //! Unique set of node ID triplets representing unique tetrahedron faces
