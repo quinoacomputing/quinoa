@@ -208,13 +208,10 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
     auto& bndface = m_bndFace[ fromch ];  // will associate to sender chare
     // Try to find incoming faces among our faces we potentially share with
     // fromch. If found, generate and assign new local ID to face, associated to
-    // sender chare. Note that the order of the node IDs of each face is
-    // reversed as these faces are received.
-    for (const auto& t : infaces) {
-      tk::UnsMesh::Face r{{ t[0], t[2], t[1] }};
-      if (b->second.find(r) != end(b->second))
-        bndface[r][0] = m_nfac++;    // assign new local face ID
-    }
+    // sender chare.
+    for (const auto& t : infaces)
+      if (b->second.find(t) != end(b->second))
+        bndface[t][0] = m_nfac++;    // assign new local face ID
     // if at this point we have not found any face among our faces we
     // potentially share with fromch, there is no need to keep an empty set of
     // faces associated to fromch as we only share nodes or edges with it, but
@@ -427,8 +424,8 @@ DG::comGhost( int fromch, const GhostData& ghost )
     Assert( geo.size() % 4 == 0, "Ghost geometry size mismathc" );
     Assert( geo.size() == m_geoElem.nprop(), "Ghost geometry number mismatch" );
     for (std::size_t n=0; n<nodes.size()/3; ++n) {  // face(s) of ghost e
-      // node IDs of face on chare boundary (reverse order as it is received)
-      tk::UnsMesh::Face t{{ nodes[n*3+0], nodes[n*3+2], nodes[n*3+1] }};
+      // node IDs of face on chare boundary
+      tk::UnsMesh::Face t{{ nodes[n*3+0], nodes[n*3+1], nodes[n*3+2] }};
       // must find t in nodelist of chare-boundary adjacent to fromch
       Assert( nl.find(t[0]) != end(nl) &&
               nl.find(t[1]) != end(nl) &&
@@ -507,9 +504,9 @@ DG::addGeoFace( const tk::UnsMesh::Face& t,
   auto lid = d->Lid();
 
   // get global node IDs reversing order to get outward-pointing normal
-  auto A = tk::cref_find( lid, t[0] );
+  auto A = tk::cref_find( lid, t[2] );
   auto B = tk::cref_find( lid, t[1] );
-  auto C = tk::cref_find( lid, t[2] );
+  auto C = tk::cref_find( lid, t[0] );
   auto geochf = tk::geoFaceTri( {{coord[0][A], coord[0][B], coord[0][C]}},
                                 {{coord[1][A], coord[1][B], coord[1][C]}},
                                 {{coord[2][A], coord[2][B], coord[2][C]}} );
