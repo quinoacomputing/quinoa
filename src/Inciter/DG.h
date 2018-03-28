@@ -157,6 +157,7 @@ class DG : public CBase_DG {
       p | m_ghostReq;
       p | m_expTotbface;
       p | m_ghost;
+      p | m_ipface;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -222,7 +223,7 @@ class DG : public CBase_DG {
     //!   be considered as an intermediate results towards m_bndFace, which only
     //!   stores the faces (associated to chares) we actually need to
     //!   communicate with.
-    std::unordered_map< int, tk::UnsMesh::FaceSet > m_potBndFace;
+    tk::UnsMesh::FaceSet m_potBndFace;
     //! Face * tet IDs associated to global node IDs of the face for each chare
     //! \details Compared to m_potBndFace, this map stores those faces we
     //!   actually share faces with (through which we need to communicate
@@ -235,6 +236,7 @@ class DG : public CBase_DG {
     //! Number of chares requesting ghost data
     std::size_t m_ghostReq;
     std::size_t m_expTotbface;
+    tk::UnsMesh::FaceSet m_ipface;  // internal + physical boundary faces
     //! Local element id associated to ghost remote id charewise
     //! \details This map associates the local element id (inner map value) to
     //!    the (remote) element id of the ghost (inner map key) based on the
