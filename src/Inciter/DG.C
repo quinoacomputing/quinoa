@@ -103,6 +103,8 @@ DG::DG( const CProxy_Discretization& disc,
     Throw( "Face not found on chare-node communication map" );
   };
 
+  const auto& coord = d->Coord();
+
   // Build a set of faces (each face given by 3 global node IDs) associated to
   // chares we potentially share boundary faces with
   for (std::size_t e=0; e<m_esuelTet.size()/4; ++e) {   // for all our tets
@@ -115,8 +117,19 @@ DG::DG( const CProxy_Discretization& disc,
                               gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
         // if does not exist in ipface, store as a potential chare-boundary face
         // associated to neighbor chare
-        if (ipface.find(t) == end(ipface))
+        if (ipface.find(t) == end(ipface)){
           m_potBndFace[ facechare(t) ].insert( t );
+          std::cout<<thisIndex<<" potential chface:"<< "\n"
+              <<"   "<<t[0]<<"("<<coord[0][ inpoel[mark + tk::lpofa[f][0]] ]
+                          <<", "<<coord[1][ inpoel[mark + tk::lpofa[f][0]] ]
+                          <<", "<<coord[2][ inpoel[mark + tk::lpofa[f][0]] ]<<")"<<"\n"
+              <<"   "<<t[1]<<"("<<coord[0][ inpoel[mark + tk::lpofa[f][1]] ]
+                          <<", "<<coord[1][ inpoel[mark + tk::lpofa[f][1]] ]
+                          <<", "<<coord[2][ inpoel[mark + tk::lpofa[f][1]] ]<<")"<<"\n"
+              <<"   "<<t[2]<<"("<<coord[0][ inpoel[mark + tk::lpofa[f][2]] ]
+                          <<", "<<coord[1][ inpoel[mark + tk::lpofa[f][2]] ]
+                          <<", "<<coord[2][ inpoel[mark + tk::lpofa[f][2]] ]<<")"<<"\n";
+        }
       }
   }
 
@@ -216,11 +229,17 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
     // Ensure the -1 entries in m_esuelTet are equal to the number of entries
     // in m_bndFace + m_nbfac
     std::size_t bcount(m_fd.Nbfac());
-    for (const auto& ich : m_bndFace)
+    for (const auto& ich : m_bndFace) {
       bcount += ich.second.size();
+      for (const auto& ifa : ich.second) {
+        const auto& trip = ifa.first;
+        std::cout<<thisIndex<<" m_bndFace entry:"
+            <<" | "<<trip[0]<<", "<<trip[1]<<", "<<trip[2]<<"\n";
+      }
+    }
 
     std::cout <<thisIndex<<" | found: "<<bcount<<"/"<<m_expTotbface<<"\n";
-    Assert( bcount == m_expTotbface, "Incorrect # of entries in m_bndFace" );
+    //Assert( bcount == m_expTotbface, "Incorrect # of entries in m_bndFace" );
 
     // Basic error checking on chare-boundary-face map
     Assert( m_bndFace.find( thisIndex ) == m_bndFace.cend(),
@@ -523,6 +542,29 @@ DG::adj()
       Assert( i.first < m_esuelTet.size()/4, "Sender contains ghost tet id " );
       IGNORE(i);
     }
+
+  // Error checking on enlarged geoFace by checking the sum of all the
+  // face-normals for the physical and chare boundary faces. This sum
+  // should be equal to zero for a closed domain.
+  tk::real sumx(0), sumy(0), sumz(0);
+  for (std::size_t f=0; f<m_fd.Nbfac(); ++f) {
+      sumx += m_geoFace(f,1,0);
+      sumy += m_geoFace(f,2,0);
+      sumz += m_geoFace(f,3,0);
+  }
+  for (std::size_t f=m_fd.Nbfac(); f<m_fd.Esuf().size()/2; ++f) {
+      sumx += m_geoFace(f,1,0);
+      sumy += m_geoFace(f,2,0);
+      sumz += m_geoFace(f,3,0);
+  }
+
+  std::cout <<thisIndex<<" ** | sum of face-normals: x: "<<sumx
+                                                 <<" y: "<<sumy
+                                                 <<" z: "<<sumz<<"\n";
+
+  Assert(sumx<1.0e-10, "x-component of sum of face normals on mesh-chunk not zero");
+  Assert(sumy<1.0e-10, "y-component of sum of face normals on mesh-chunk not zero");
+  Assert(sumz<1.0e-10, "z-component of sum of face normals on mesh-chunk not zero");
 
   // Resize solution vectors, lhs, and rhs by the number of ghost tets
   m_u.resize( m_nunk );
