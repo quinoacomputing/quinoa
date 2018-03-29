@@ -27,7 +27,7 @@ static CkReduction::reducerType DiagMerger;
 
 using inciter::ElemDiagnostics;
 
-ElemDiagnostics::ElemDiagnostics( const Discretization& d )
+ElemDiagnostics::ElemDiagnostics( const Discretization& /*d*/ )
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc.
 //! \param[in] d Discretization proxy to read from
@@ -58,6 +58,7 @@ ElemDiagnostics::compute( Discretization& d,
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc.
 //! \param[in] d Discretization proxy to read from
+//! \param[in] nchGhost Number of chare boundary ghost elements
 //! \param[in] geoElem Element geometry
 //! \param[in] u Current solution vector
 //! \return True if diagnostics have been computed

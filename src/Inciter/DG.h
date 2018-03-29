@@ -157,6 +157,8 @@ class DG : public CBase_DG {
       p | m_ghost;
       p | m_exptGhost;
       p | m_recvGhost;
+      p | m_nchGhost;
+      //p | m_diag;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -236,6 +238,7 @@ class DG : public CBase_DG {
     std::set< std::size_t > m_exptGhost;
     //! Received ghost tet ids (used only in DEBUG)
     std::set< std::size_t > m_recvGhost;
+    std::size_t m_nchGhost;
     //! Diagnostics object
     ElemDiagnostics m_diag;
 

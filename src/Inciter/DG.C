@@ -28,8 +28,6 @@ extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< DGPDE > g_dgpde;
 
-static CkReduction::reducerType DiagMerger;
-
 } // inciter::
 
 using inciter::DG;
@@ -65,6 +63,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_ghost(),
   m_exptGhost(),
   m_recvGhost()
+  m_nchGhost( 0 ),
   m_diag( *Disc() )
 // *****************************************************************************
 //  Constructor
@@ -603,6 +602,8 @@ DG::adj()
 
   // Perform leak test on face geometry data structure enlarged by ghosts
   Assert( !leakyAdjacency(), "Face adjacency leaky" );
+
+  m_nchGhost = m_nunk - m_u.nunk();
 
   // Resize solution vectors, lhs, and rhs by the number of ghost tets
   m_u.resize( m_nunk );

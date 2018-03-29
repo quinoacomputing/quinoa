@@ -32,8 +32,14 @@ inciter
     end
   end
 
+  diagnostics
+    interval  2
+    format    scientific
+    error l2
+  end
+
   plotvar
-    interval 50
+    interval 100
   end
 
 end
