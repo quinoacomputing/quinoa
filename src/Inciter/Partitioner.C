@@ -1381,26 +1381,6 @@ Partitioner::createWorkers()
             }
           }
         }
-
-        //for (std::size_t i=0; i<nnpf; ++i)
-        //{
-        //  auto n = chlinnodes.find( m_triinpoel[nnpf*f + i] );
-        //  if (n != end(chlinnodes))
-        //  {
-        //    tbface[i] = n->second;
-        //    ++count;
-        //  }
-        //}
-
-        //if (count == nnpf)
-        //// this boundary face is present on this chunk
-        //{
-        //  for (std::size_t i=0; i<nnpf; ++i)
-        //    chtriinpoel.push_back( tbface[i] );
-
-        //  chbface[ss.first].push_back(chnbfac);
-        //  ++chnbfac;
-        //}
       }
     }
 
