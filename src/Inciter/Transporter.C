@@ -244,7 +244,7 @@ Transporter::createPartitioner()
   m_timer[ TimerTag::MESH_PREP ];
 
   // Create mesh partitioner Charm++ chare group and start preparing mesh
-  m_progMesh.start( "Preparing mesh (read, refine, centroids) ..." );
+  m_progMesh.start( "Preparing mesh (read, optional refine, centroids) ..." );
 
   // Create mesh partitioner Charm++ chare group
   m_partitioner =

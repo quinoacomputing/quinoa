@@ -360,9 +360,11 @@ class Data {
     void push_back( const std::vector< tk::real >& prop )
     { return push_back( prop, int2type< Layout >() ); }
 
-    //! Resize data store by multiple elements initialized to 0.0
-    //! \param[in] count Resize store to contain count elements
-    //! \param[in] value Value to initialize new data with
+    //! Resize data store to contain 'count' elements
+    //! \param[in] count Resize store to contain 'count' elements
+    //! \param[in] value Value to initialize new data with (default: 0.0)
+    //! \note This works for both shrinking and enlarging, as this simply
+    //!   translates to std::vector::resize().
     void resize( std::size_t count, tk::real value = 0.0 )
     { resize( count, value, int2type< Layout >() ); }
 
@@ -518,14 +520,16 @@ class Data {
       for (ncomp_t i=0; i<m_nprop; ++i) operator()( u, i, 0 ) = prop[i];
     }
 
-    //! Resize data store by multiple elements initialized to 0.0
-    //! \param[in] newsize Resize store to contain newsize elements
+    //! Resize data store to contain 'count' elements
+    //! \param[in] count Resize store to contain 'count' elements
     //! \param[in] value Value to initialize new data with
     //! \note Only the UnkEqComp overload is provided as this operation would be
     //!   too inefficient with the EqCompUnk data layout.
-    void resize( std::size_t newsize, tk::real value, int2type< UnkEqComp > ) {
-      m_vec.resize( newsize * m_nprop, value );
-      m_nunk = newsize;
+    //! \note This works for both shrinking and enlarging, as this simply
+    //!   translates to std::vector::resize().
+    void resize( std::size_t count, tk::real value, int2type< UnkEqComp > ) {
+      m_vec.resize( count * m_nprop, value );
+      m_nunk = count;
     }
 
     // Overloads for the name-queries of data lauouts

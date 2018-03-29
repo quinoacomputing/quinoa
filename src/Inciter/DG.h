@@ -48,6 +48,7 @@
 #define DG_h
 
 #include <array>
+#include <set>
 #include <unordered_set>
 #include <unordered_map>
 
@@ -119,9 +120,6 @@ class DG : public CBase_DG {
                  const std::vector< std::size_t >& tetid,
                  const std::vector< std::vector< tk::real > >& u );
 
-    //! Acknowledge receipt and storage of solution ghost data on receiver chare
-    //void storedsol();
-
     //! Evaluate whether to continue with next step
     void eval();
 
@@ -136,7 +134,6 @@ class DG : public CBase_DG {
       p | m_ncomfac;
       p | m_nadj;
       p | m_nrecvsol;
-      p | m_nstorsol;
       p | m_itf;
       p | m_disc;
       p | m_fd;
@@ -151,13 +148,14 @@ class DG : public CBase_DG {
       p | m_nunk;
       p | m_msumset;
       p | m_esuelTet;
-      p | m_potBndFace;
+      p | m_ipface;
       p | m_bndFace;
       p | m_ghostData;
       p | m_ghostReq;
       p | m_expChbface;
       p | m_ghost;
-      p | m_ipface;
+      p | egh;  // ONLY FOR DEBUGGING
+      p | rgh;  // ONLY FOR DEBUGGING
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -182,8 +180,6 @@ class DG : public CBase_DG {
     std::size_t m_nadj;
     //! Counter signaling that we have received all our solution ghost data
     std::size_t m_nrecvsol;
-    //! Counter signaling that fellow chares stored all our solution ghost data
-    std::size_t m_nstorsol;
     //! Field output iteration count
     uint64_t m_itf;
     //! Discretization proxy
@@ -216,18 +212,10 @@ class DG : public CBase_DG {
     std::unordered_map< int, std::unordered_set< std::size_t > > m_msumset;
     //! Elements surrounding elements with -1 at boundaries, see genEsuelTet()
     std::vector< int > m_esuelTet;
-    //! All the faces we potentially share with neighboring cells
-    //! \details Compared to m_bndFace, this map stores a set of unique faces we
-    //!   only potentially share with fellow chares. This is because this data
-    //!   structure is derived from the the chare-node adjacency map and ths can
-    //!   be considered as an intermediate results towards m_bndFace, which only
-    //!   stores the faces (associated to chares) we actually need to
-    //!   communicate with.
-    tk::UnsMesh::FaceSet m_potBndFace;
+    //! Internal + physical boundary faces
+    tk::UnsMesh::FaceSet m_ipface;
     //! Face * tet IDs associated to global node IDs of the face for each chare
-    //! \details Compared to m_potBndFace, this map stores those faces we
-    //!   actually share faces with (through which we need to communicate
-    //!   later). Also, this maps stores not only the unique faces associated to
+    //! \details This maps stores not only the unique faces associated to
     //!   fellow chares, but also a newly assigned local face ID and adjacent
     //!   local tet ID.
     std::unordered_map< int, FaceMap > m_bndFace;
@@ -235,8 +223,8 @@ class DG : public CBase_DG {
     std::unordered_map< int, GhostData > m_ghostData;
     //! Number of chares requesting ghost data
     std::size_t m_ghostReq;
+    //! Expected number of boundary faces (ONLY FOR DEBUGGING)
     std::size_t m_expChbface;
-    tk::UnsMesh::FaceSet m_ipface;  // internal + physical boundary faces
     //! Local element id associated to ghost remote id charewise
     //! \details This map associates the local element id (inner map value) to
     //!    the (remote) element id of the ghost (inner map key) based on the
@@ -244,13 +232,20 @@ class DG : public CBase_DG {
     std::unordered_map< int,
       std::unordered_map< std::size_t, std::size_t > > m_ghost;
 
-    std::set< std::size_t > gh, rgh;
+    //! Expected/received ghost tet ids (ONLY FOR DEBUGGING)
+    std::set< std::size_t > egh, rgh;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
       Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
       return m_disc[ thisIndex ].ckLocal();
     }
+
+    //! Perform leak test on mesh partition
+    bool leakyPartition();
+
+    //! Perform leak test on chare-boundary faces
+    bool leakyAdjacency();
 
     //! Find any chare for face (given by 3 global node IDs)
     int findchare( const tk::UnsMesh::Face& t );

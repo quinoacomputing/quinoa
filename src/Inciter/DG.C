@@ -11,6 +11,7 @@
 // *****************************************************************************
 
 #include <algorithm>
+#include <numeric>
 
 #include "DG.h"
 #include "Discretization.h"
@@ -40,7 +41,6 @@ DG::DG( const CProxy_Discretization& disc,
   m_ncomfac( 0 ),
   m_nadj( 0 ),
   m_nrecvsol( 0 ),
-  m_nstorsol( 0 ),
   m_itf( 0 ),
   m_disc( disc ),
   m_fd( fd ),
@@ -59,7 +59,6 @@ DG::DG( const CProxy_Discretization& disc,
   m_msumset( msumset() ),
   m_esuelTet( tk::genEsuelTet( m_disc[thisIndex].ckLocal()->Inpoel(),
                 tk::genEsup( m_disc[thisIndex].ckLocal()->Inpoel(), 4 ) ) ),
-  m_potBndFace(),
   m_bndFace(),
   m_ghostData(),
   m_ghostReq( 0 ),
@@ -71,6 +70,9 @@ DG::DG( const CProxy_Discretization& disc,
 //! \param[in] Face data structures
 // *****************************************************************************
 {
+  // Perform leak test on mesh partition
+  Assert( !leakyPartition(), "Mesh partition leaky" );
+
   // Activate SDAG waits for face adjacency map (ghost data) calculation
   wait4ghost();
 
@@ -91,52 +93,32 @@ DG::DG( const CProxy_Discretization& disc,
   // chare-domain and on the physical boundary but not on chare boundaries,
   // hence the name internal + physical boundary faces.
 
-  const auto& coord = d->Coord();
-
-  tk::real sumx(0), sumy(0), sumz(0);
-
   // Build a set of faces (each face given by 3 global node IDs) associated to
-  // chares we potentially share boundary faces with
+  // chares we potentially share boundary faces with.
+  tk::UnsMesh::FaceSet potbndface;
   for (std::size_t e=0; e<m_esuelTet.size()/4; ++e) {   // for all our tets
     auto mark = e*4;
     for (std::size_t f=0; f<4; ++f)     // for all tet faces
       if (m_esuelTet[mark+f] == -1) {   // if face has no outside-neighbor tet
+        // if does not exist in among the internal and physical boundary faces,
+        // store as a potential chare-boundary face
         tk::UnsMesh::Face t{{ gid[ inpoel[ mark + tk::lpofa[f][0] ] ],
                               gid[ inpoel[ mark + tk::lpofa[f][1] ] ],
                               gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
-
-        auto A = inpoel[ mark + tk::lpofa[f][0] ];
-        auto B = inpoel[ mark + tk::lpofa[f][1] ];
-        auto C = inpoel[ mark + tk::lpofa[f][2] ];
-
-        auto geoface_tmp = tk::geoFaceTri( {{coord[0][A], coord[0][B], coord[0][C]}},
-                                           {{coord[1][A], coord[1][B], coord[1][C]}},
-                                           {{coord[2][A], coord[2][B], coord[2][C]}} );
-
-        sumx += geoface_tmp(0,0,0)* geoface_tmp(0,1,0);
-        sumy += geoface_tmp(0,0,0)* geoface_tmp(0,2,0);
-        sumz += geoface_tmp(0,0,0)* geoface_tmp(0,3,0);
-
-        // if does not exist in ipface, store as a potential chare-boundary face
-        if (m_ipface.find(t) == end(m_ipface)){
-          ++m_expChbface;
-
-          m_potBndFace.insert( t );
+        if (m_ipface.find(t) == end(m_ipface)) {
+          ++m_expChbface;       // sum up expected number of boundary faces
+          potbndface.insert( t );
         }
       }
   }
 
-  Assert(sumx<1.0e-12, "x-component of surface-integral of face normals in ctor not zero");
-  Assert(sumy<1.0e-12, "y-component of surface-integral of face normals in ctor not zero");
-  Assert(sumz<1.0e-12, "z-component of surface-integral of face normals in ctor not zero");
-
-  // Note that while the (potential) boundary-face adjacency map (m_potBndFace)
-  // is derived from the node adjacency map (m_msumset), their sizes is not
-  // necessarily the same. This is because while a node can be shared at a
-  // single corner or along an edge, that does not necessarily share a face as
-  // well (in other words, shared nodes or edges can exist that are not part of
-  // a shared face). So the chares we communicate with across faces are not
-  // necessarily the same as the chares we would communicate nodes with.
+  // In the following we assume that the size of the (potential) boundary-face
+  // adjacency map above does not necessarily equal the node adjacency map
+  // (m_msumset). This is because while a node can be shared at a single corner
+  // or along an edge, that does not necessarily share a face as well (in other
+  // words, shared nodes or edges can exist that are not part of a shared face).
+  // So the chares we communicate with across faces are not necessarily the same
+  // as the chares we would communicate nodes with.
   //
   // Since the sizes of the node and face adjacency maps are not the same, while
   // sending the faces on chare boundaries would be okay, however, the receiver
@@ -159,8 +141,90 @@ DG::DG( const CProxy_Discretization& disc,
     adj();
   else
     for (const auto& c : m_msumset) {   // for all chares we share nodes with
-      thisProxy[ c.first ].comfac( thisIndex, m_potBndFace );
+      thisProxy[ c.first ].comfac( thisIndex, potbndface );
     }
+}
+
+bool
+DG::leakyPartition()
+// *****************************************************************************
+// Perform leak-test on mesh partition
+//! \details This function computes a surface integral over the boundary of the
+//!   incoming mesh partition. A non-zero vector result indicates a leak, e.g.,
+//!   a hole in the partition, which indicates an error upstream of this code,
+//!   either in the mesh geometry, mesh partitioning, or in the data structures
+//!   that represent faces.
+//! \return True if partition leaks.
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto& inpoel = d->Inpoel();
+  const auto& coord = d->Coord();
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  // Storage for surface integral over our mesh partition
+  std::array< tk::real, 3 > s{{ 0.0, 0.0, 0.0}};
+
+  for (std::size_t e=0; e<m_esuelTet.size()/4; ++e) {   // for all our tets
+    auto mark = e*4;
+    for (std::size_t f=0; f<4; ++f)     // for all tet faces
+      if (m_esuelTet[mark+f] == -1) {   // if face has no outside-neighbor tet
+        // 3 local node IDs of face
+        auto A = inpoel[ mark + tk::lpofa[f][0] ];
+        auto B = inpoel[ mark + tk::lpofa[f][1] ];
+        auto C = inpoel[ mark + tk::lpofa[f][2] ];
+        // Compute geometry data for face
+        auto geoface = tk::geoFaceTri( {{x[A], x[B], x[C]}},
+                                       {{y[A], y[B], y[C]}},
+                                       {{z[A], z[B], z[C]}} );
+        // Sum up face area * face unit-normal
+        s[0] += geoface(0,0,0) * geoface(0,1,0);
+        s[1] += geoface(0,0,0) * geoface(0,2,0);
+        s[2] += geoface(0,0,0) * geoface(0,3,0);
+      }
+  }
+
+  auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
+  return std::abs(s[0]) > eps || std::abs(s[1]) > eps || std::abs(s[2]) > eps;
+}
+
+bool
+DG::leakyAdjacency()
+// *****************************************************************************
+// Perform leak-test on chare boundary faces
+//! \details This function computes a surface integral over the boundary of the
+//!   faces after the face adjacency communication map is completed.. A non-zero
+//!   vector result indicates a leak, e.g., a hole in the partition (covered by
+//!   the faces of the face adjacency communication map), which indicates an
+//!   error upstream in code setting up the face communication data structures.
+//! \note Compared to leakyPartition() this function performs the leak-test on
+//!   the face geometry data structure enlarged by ghost faces on this partition
+//!   by computing a discrete surface integral considering the physical and
+//!   chare boundary faces, which should be equal to zero for a closed domain.
+//! \return True if partition leaks.
+// *****************************************************************************
+{
+  // Storage for surface integral over our chunk of the adjacency
+  std::array< tk::real, 3 > s{{ 0.0, 0.0, 0.0}};
+
+  // physical boundary faces
+  for (std::size_t f=0; f<m_fd.Nbfac(); ++f) {
+    s[0] += m_geoFace(f,0,0) * m_geoFace(f,1,0);
+    s[1] += m_geoFace(f,0,0) * m_geoFace(f,2,0);
+    s[2] += m_geoFace(f,0,0) * m_geoFace(f,3,0);
+  }
+
+  // chare-boundary faces
+  for (std::size_t f=m_fd.Ntfac(); f<m_fd.Esuf().size()/2; ++f) {
+    s[0] += m_geoFace(f,0,0) * m_geoFace(f,1,0);
+    s[1] += m_geoFace(f,0,0) * m_geoFace(f,2,0);
+    s[2] += m_geoFace(f,0,0) * m_geoFace(f,3,0);
+  }
+
+  auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
+  return std::abs(s[0]) > eps || std::abs(s[1]) > eps || std::abs(s[2]) > eps;
 }
 
 std::unordered_map< int, std::unordered_set< std::size_t > >
@@ -193,9 +257,9 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
   // set of faces associated to that chare. This can happen if we only share a
   // single node or an edge but note a face with that chare.
   auto& bndface = m_bndFace[ fromch ];  // will associate to sender chare
-  // Try to find incoming faces among our faces we potentially share with
-  // neighboring chares. If found, generate and assign new local ID to face,
-  // associated to sender chare.
+  // Try to find incoming faces on our chare boundary with other chares. If
+  // found, generate and assign new local ID to face, associated to sender
+  // chare.
   auto d = Disc();
   const auto& gid = d->Gid();
   const auto& inpoel = d->Inpoel();
@@ -206,33 +270,32 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
         tk::UnsMesh::Face t{{ gid[ inpoel[ mark + tk::lpofa[f][0] ] ],
                               gid[ inpoel[ mark + tk::lpofa[f][1] ] ],
                               gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
-
-        if ( infaces.find(t) != end(infaces)
-             && m_ipface.find(t) == end(m_ipface) )
+        // if found among the incoming faces and if not one of our internal nor
+        // physical boundary faces
+        if ( infaces.find(t) != end(infaces) &&
+             m_ipface.find(t) == end(m_ipface) )
           bndface[t][0] = m_nfac++;    // assign new local face ID
       }
     }
   }
-  // if at this point we have not found any face among our faces we
-  // potentially share with fromch, there is no need to keep an empty set of
-  // faces associated to fromch as we only share nodes or edges with it, but
-  // not faces
+  // If at this point we have not found any face among our faces we potentially
+  // share with fromch, there is no need to keep an empty set of faces
+  // associated to fromch as we only share nodes or edges with it, but not
+  // faces.
   if (bndface.empty()) m_bndFace.erase( fromch );
 
   // if we have heard from all fellow chares that we share at least a single
   // node, edge, or face with
   if (++m_ncomfac == m_msumset.size()) {
 
-    // Ensure the -1 entries in m_esuelTet are equal to the number of entries
-    // in m_bndFace + m_nbfac
-    std::size_t bcount(0);
-    for (const auto& ich : m_bndFace) {
-      bcount += ich.second.size();
-    }
-
-    // Check if expected number of chare-faces match with actual number of 
-    // chare faces detected
-    Assert( bcount == m_expChbface, "Incorrect # of entries in m_bndFace" );
+    // Error checking on the number of expected vs received/found chare-boundary
+    // faces
+    Assert( m_expChbface ==
+             std::accumulate( m_bndFace.cbegin(), m_bndFace.cend(),
+               std::size_t(0),
+               []( std::size_t acc, const decltype(m_bndFace)::value_type& b )
+                 { return acc + b.second.size(); } ),
+            "Expected and received number of boundary faces mismatch" );
 
     // Basic error checking on chare-boundary-face map
     Assert( m_bndFace.find( thisIndex ) == m_bndFace.cend(),
@@ -256,16 +319,13 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
       }
     }
 
-    // Free memory for intermediate data used to set up boundary-face comm map
-    tk::destroy( m_potBndFace );
-
     // At this point m_bndFace is complete on this PE. This means that starting
-    // from the sets of faces we potentially share with fellow chares
-    // (m_potBndFace), we now only have those faces we actually share faces with
-    // (through which we need to communicate later). Also, m_bndFace not only
-    // has the unique faces associated to fellow chares, but also a newly
-    // assigned local face ID as well as the local id of the inner tet adjacent
-    // to the face. Continue by starting setting up ghost data
+    // from the sets of faces we potentially share with fellow chares we now
+    // only have those faces we actually share faces with (through which we need
+    // to communicate later). Also, m_bndFace not only has the unique faces
+    // associated to fellow chares, but also a newly assigned local face ID as
+    // well as the local id of the inner tet adjacent to the face. Continue by
+    // starting setting up ghost data
     setupGhost();
     // Besides setting up our own ghost data, we also issue requests (for ghost
     // data) to those chares which we share faces with. Note that similar to
@@ -328,7 +388,7 @@ DG::setupGhost()
           nodes.push_back( t[0] );
           nodes.push_back( t[1] );
           nodes.push_back( t[2] );
-          Assert( nodes.size() < 13, "Overflow of faces/tet to send" );
+          Assert( nodes.size() <= 4*3, "Overflow of faces/tet to send" );
         }
       }
     }
@@ -383,8 +443,8 @@ DG::findchare( const tk::UnsMesh::Face& t )
 // *****************************************************************************
 // Find any chare for face (given by 3 global node IDs)
 //! \param[in] t Face given by three global node IDs
-//! \return chare ID if found among any of the chares we communication along
-//!   faces with, -1 if not
+//! \return Chare ID if found among any of the chares we communicate along
+//!   faces with, -1 if the face cannot be found.
 // *****************************************************************************
 {
   for (const auto& cf : m_bndFace)
@@ -414,7 +474,7 @@ DG::comGhost( int fromch, const GhostData& ghost )
     const auto& geo = std::get< 1 >( g.second );    // ghost elem geometry data
     Assert( nodes.size() % 3 == 0, "Face node IDs must be triplets" );
     Assert( nodes.size() <= 4*3, "Overflow of faces/tet received" );
-    Assert( geo.size() % 4 == 0, "Ghost geometry size mismathc" );
+    Assert( geo.size() % 4 == 0, "Ghost geometry size mismatch" );
     Assert( geo.size() == m_geoElem.nprop(), "Ghost geometry number mismatch" );
     for (std::size_t n=0; n<nodes.size()/3; ++n) {  // face(s) of ghost e
       // node IDs of face on chare boundary
@@ -533,24 +593,8 @@ DG::adj()
       IGNORE(i);
     }
 
-  // Error checking on enlarged geoFace by checking the discrete surface
-  // integral of the face-normals for the physical and chare boundary faces.
-  // This sum should be equal to zero for a closed domain.
-  tk::real sumx(0), sumy(0), sumz(0);
-  for (std::size_t f=0; f<m_fd.Nbfac(); ++f) {
-      sumx += m_geoFace(f,0,0) * m_geoFace(f,1,0);
-      sumy += m_geoFace(f,0,0) * m_geoFace(f,2,0);
-      sumz += m_geoFace(f,0,0) * m_geoFace(f,3,0);
-  }
-  for (std::size_t f=m_fd.Ntfac(); f<m_fd.Esuf().size()/2; ++f) {
-      sumx += m_geoFace(f,0,0) * m_geoFace(f,1,0);
-      sumy += m_geoFace(f,0,0) * m_geoFace(f,2,0);
-      sumz += m_geoFace(f,0,0) * m_geoFace(f,3,0);
-  }
-
-  Assert(sumx<1.0e-12, "x-component of surface-integral of face normals in DG::adj() not zero");
-  Assert(sumy<1.0e-12, "y-component of surface-integral of face normals in DG::adj() not zero");
-  Assert(sumz<1.0e-12, "z-component of surface-integral of face normals in DG::adj() not zero");
+  // Perform leak test on face geometry data structure enlarged by ghosts
+  Assert( !leakyAdjacency(), "Face adjacency leaky" );
 
   // Resize solution vectors, lhs, and rhs by the number of ghost tets
   m_u.resize( m_nunk );
@@ -568,7 +612,7 @@ DG::adj()
   // Ghost tet IDs expected
   for (const auto& c : m_ghost)
     for (const auto& g : c.second)
-      gh.insert( g.second );
+      egh.insert( g.second );
 
   // Signal the runtime system that all workers have received their adjacency
   auto d = Disc();
@@ -650,10 +694,6 @@ DG::dt()
 
   }
 
-  // Activate SDAG waits for time step
-  //wait4sol();
-  //storsol_complete();
-
   rgh.clear();
 
   // Contribute to minimum dt across all chares then advance to next step
@@ -705,8 +745,6 @@ DG::comsol( int fromch,
   // Find local-to-ghost tet id map for sender chare
   const auto& n = tk::cref_find( m_ghost, fromch );
 
-//std::cout << thisIndex << " com, it=" << Disc()->It() << '\n';
-
   for (std::size_t i=0; i<tetid.size(); ++i) {
     auto j = tk::cref_find( n, tetid[i] );
     Assert( j >= m_esuelTet.size()/4, "Receiving solution non-ghost data" );
@@ -719,7 +757,7 @@ DG::comsol( int fromch,
   // if we have received all solution ghost contributions from those chares we
   // communicate along chare-boundary faces with, tell the runtime system
   if (++m_nrecvsol == m_ghostData.size()) {
-    Assert( gh == rgh, "Expected/received ghost tet id mismatch" );
+    Assert( egh == rgh, "Expected/received ghost tet id mismatch" );
     m_nrecvsol = 0;
     solve();
   }
@@ -828,8 +866,6 @@ DG::solve()
 {
   auto d = Disc();
 
-//std::cout << thisIndex << " sol, it=" << Disc()->It() << '\n';
-
   for (const auto& eq : g_dgpde)
     eq.rhs( d->T(), m_geoFace, m_fd, m_u, m_rhs );
 
@@ -866,7 +902,6 @@ DG::eval()
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep)
     dt();
-    //contribute( CkCallback( CkReductionTarget(Transporter,dt), d->Tr() ) );
   else
     contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
 }
