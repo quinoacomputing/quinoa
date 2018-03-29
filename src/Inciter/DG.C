@@ -118,7 +118,6 @@ DG::DG( const CProxy_Discretization& disc,
         sumz += geoface_tmp(0,0,0)* geoface_tmp(0,3,0);
 
         // if does not exist in ipface, store as a potential chare-boundary face
-        // associated to neighbor chare
         if (m_ipface.find(t) == end(m_ipface)){
           ++m_expChbface;
 
@@ -195,8 +194,8 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
   // single node or an edge but note a face with that chare.
   auto& bndface = m_bndFace[ fromch ];  // will associate to sender chare
   // Try to find incoming faces among our faces we potentially share with
-  // fromch. If found, generate and assign new local ID to face, associated to
-  // sender chare.
+  // neighboring chares. If found, generate and assign new local ID to face,
+  // associated to sender chare.
   auto d = Disc();
   const auto& gid = d->Gid();
   const auto& inpoel = d->Inpoel();
@@ -231,7 +230,8 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
       bcount += ich.second.size();
     }
 
-    //std::cout <<thisIndex<<" | found: "<<bcount<<"/"<<m_expChbface<<"\n";
+    // Check if expected number of chare-faces match with actual number of 
+    // chare faces detected
     Assert( bcount == m_expChbface, "Incorrect # of entries in m_bndFace" );
 
     // Basic error checking on chare-boundary-face map
@@ -533,9 +533,9 @@ DG::adj()
       IGNORE(i);
     }
 
-  // Error checking on enlarged geoFace by checking the sum of all the
-  // face-normals for the physical and chare boundary faces. This sum
-  // should be equal to zero for a closed domain.
+  // Error checking on enlarged geoFace by checking the discrete surface
+  // integral of the face-normals for the physical and chare boundary faces.
+  // This sum should be equal to zero for a closed domain.
   tk::real sumx(0), sumy(0), sumz(0);
   for (std::size_t f=0; f<m_fd.Nbfac(); ++f) {
       sumx += m_geoFace(f,0,0) * m_geoFace(f,1,0);
@@ -569,10 +569,6 @@ DG::adj()
   for (const auto& c : m_ghost)
     for (const auto& g : c.second)
       gh.insert( g.second );
-
-//   std::cout << thisIndex << ": ";
-//   for (auto g : gh) std::cout << g << ' ';
-//   std::cout << '\n';
 
   // Signal the runtime system that all workers have received their adjacency
   auto d = Disc();

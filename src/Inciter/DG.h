@@ -216,7 +216,7 @@ class DG : public CBase_DG {
     std::unordered_map< int, std::unordered_set< std::size_t > > m_msumset;
     //! Elements surrounding elements with -1 at boundaries, see genEsuelTet()
     std::vector< int > m_esuelTet;
-    //! Faces associated to chares we potentially share boundary faces with
+    //! All the faces we potentially share with neighboring cells
     //! \details Compared to m_bndFace, this map stores a set of unique faces we
     //!   only potentially share with fellow chares. This is because this data
     //!   structure is derived from the the chare-node adjacency map and ths can
