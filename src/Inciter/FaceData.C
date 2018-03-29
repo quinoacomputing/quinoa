@@ -7,6 +7,8 @@
 */
 // *****************************************************************************
 
+#include <numeric>
+
 #include "Reorder.h"
 #include "DerivedData.h"
 #include "Inciter/InputDeck/InputDeck.h"
@@ -22,18 +24,13 @@ using inciter::FaceData;
 
 FaceData::FaceData(
   const std::vector< std::size_t >& conn,
-  std::size_t nbfac,
   const std::map< int, std::vector< std::size_t > >& bface,
-  const std::vector< std::size_t >& triinpoel ) :
-  m_nbfac( nbfac ),
-  m_bface( bface ),
-  m_triinpoel( triinpoel )
+  const std::vector< std::size_t >& triinpoel )
+  : m_bface( bface ), m_triinpoel( triinpoel )
 // *****************************************************************************
 //  Constructor
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
 //!   mesh chunk we operate on
-//! \param[in] nbfac Total number of boundary-faces (triangles) in this mesh
-//!   chunk
 //! \param[in] bface Map of boundary-face lists mapped to corresponding 
 //!   side set ids for this mesh chunk
 //! \param[in] triinpoel Interconnectivity of points and boundary-face in this
@@ -57,21 +54,26 @@ FaceData::FaceData(
     // Mapping m_triinpoel from global renumbered ids to local renumbered ids
     for (auto& i : m_triinpoel) i = tk::cref_find(lid,i);
 
-    m_ntfac = tk::genNtfac( 4, m_nbfac, m_esuel );
-    m_inpofa = tk::genInpofaTet( m_ntfac, m_nbfac, inpoel, m_triinpoel,
-                                 m_esuel );
-    m_belem =  tk::genBelemTet( m_nbfac, m_inpofa, esup );
-    m_esuf = tk::genEsuf( 4, m_ntfac, m_nbfac, m_belem, m_esuel );
+    auto nbfac = numBndFaces();
 
-    Assert( m_belem.size() == m_nbfac,
+    m_ntfac = tk::genNtfac( 4, nbfac, m_esuel );
+    m_inpofa = tk::genInpofaTet( m_ntfac, nbfac, inpoel, m_triinpoel, m_esuel );
+    m_belem =  tk::genBelemTet( nbfac, m_inpofa, esup );
+    m_esuf = tk::genEsuf( 4, m_ntfac, nbfac, m_belem, m_esuel );
+
+    Assert( m_belem.size() == nbfac,
             "Number of boundary-elements and number of boundary-faces unequal" );
   }
 }
 
-// void
-// FaceData::test()
-// // *****************************************************************************
-// // test member function
-// // *****************************************************************************
-// {
-// }
+std::size_t
+FaceData::numBndFaces() const
+// *****************************************************************************
+// Compute total number of physical boundary faces (across all side sets)
+//! \return Total number of physical boundary faces (across all side sets)
+// *****************************************************************************
+{
+  return std::accumulate( m_bface.cbegin(), m_bface.cend(), std::size_t(0),
+           [&]( std::size_t acc, const decltype(m_bface)::value_type& b )
+              { return acc + b.second.size(); } );
+}

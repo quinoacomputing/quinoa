@@ -35,18 +35,16 @@ class FaceData {
 
     //! Constructor
     explicit
-      FaceData(
-        const std::vector< std::size_t >& conn,
-        std::size_t nbfac,
-        const std::map< int, std::vector< std::size_t > >& bface,
-        const std::vector< std::size_t >& triinpoel );
+      FaceData( const std::vector< std::size_t >& conn,
+                const std::map< int, std::vector< std::size_t > >& bface,
+                const std::vector< std::size_t >& triinpoel );
 
     /** @name Accessors
       * */
     ///@{
     const std::map< int, std::vector< std::size_t > >& Bface() const
     { return m_bface; }
-    std::size_t Nbfac() const { return m_nbfac; }
+    std::size_t Nbfac() const { return numBndFaces(); }
     const std::vector< int >& Esuel() const { return m_esuel; }
     std::size_t Ntfac() const { return m_ntfac; }
     const std::vector< std::size_t >& Inpofa() const { return m_inpofa; }
@@ -61,7 +59,6 @@ class FaceData {
     void pup( PUP::er &p ) {
       p | m_bface;
       p | m_triinpoel;
-      p | m_nbfac;
       p | m_esuel;
       p | m_ntfac;
       p | m_inpofa;
@@ -75,8 +72,6 @@ class FaceData {
     //@}
 
   private:
-    //! Number of boundary faces
-    std::size_t m_nbfac;
     //! Boundary faces side-set information
     std::map< int, std::vector< std::size_t > > m_bface;
     //! Boundary face-node connectivity
@@ -91,6 +86,9 @@ class FaceData {
     std::vector< std::size_t > m_belem;
     //! Element surrounding faces
     std::vector< int > m_esuf;
+
+    //! Compute total number of physical boundary faces (across all side sets)
+    std::size_t numBndFaces() const;
 };
 
 } // inciter::

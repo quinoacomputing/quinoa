@@ -23,6 +23,7 @@
 #include "MeshReader.h"
 #include "Around.h"
 #include "ExodusIIMeshWriter.h"
+#include "UnsMesh.h"
 
 namespace inciter {
 
@@ -1318,76 +1319,58 @@ Partitioner::createWorkers()
 {
   auto dist = chareDistribution();
 
-  // Prepare data to pass to each worker chare
+  // Prepare data to pass to and put in a request to create worker chares
   for (int c=0; c<dist[1]; ++c) {
 
-    // Compute chare ID
+    // Compute chare ID (linear distribution across PEs)
     auto cid = CkMyPe() * dist[0] + c;
 
-    // Make sure (bound) base is already created and accessible
-    Assert( m_scheme.get()[cid].ckLocal() != nullptr, "About to pass nullptr" );
-
-    // Find mesh connectivity for this chare (new ids)
+    // Find mesh connectivity for this chare (with new global ids)
     auto chinpoel = tk::cref_find( m_chinpoel, cid );
 
-    // Generate new-to-file node id map for this chare
-    decltype(m_linnodes) chlinnodes;
+    // Generate map associating new(value) to file(key) node ids for this chare
+    decltype(m_linnodes) newnodes;
     const auto& chfilenodes = tk::cref_find( m_chfilenodes, cid );
-    for (auto i : chinpoel) chlinnodes[ tk::cref_find(chfilenodes,i) ] = i;
+    for (auto i : chinpoel) newnodes[ tk::cref_find(chfilenodes,i) ] = i;
 
-    // Extract chare triinpoel, bface, and nbfac
+    // Generate face set for this chare for potentially faster searches
+    tk::UnsMesh::FaceSet faceset;
+    for (std::size_t e=0; e<chinpoel.size()/4; ++e) { // for all tets in chare
+      auto mark = e*4;
+      for (std::size_t f=0; f<4; ++f) // for all tet faces
+        faceset.insert( {{{ chinpoel[ mark + tk::lpofa[f][0] ],
+                            chinpoel[ mark + tk::lpofa[f][1] ],
+                            chinpoel[ mark + tk::lpofa[f][2] ] }}} );
+    }
+  
+    // Generate input face data for class FaceData
     std::vector< std::size_t > chtriinpoel;
     std::map< int, std::vector< std::size_t > > chbface;
-    std::size_t chnbfac(0),nnpf(3);
+    std::size_t cnt = 0;
 
-    for (const auto& ss : m_bface)
-    {
-      for (auto f : ss.second)
-      {
-        std::size_t count(0);
-        std::array< std::size_t, 3 > tbface;
-        for (std::size_t i=0; i<nnpf; ++i)
-        {
-          auto n = chlinnodes.find( m_triinpoel[nnpf*f + i] );
-          if (n != end(chlinnodes))
-          {
-            tbface[i] = n->second;
-            ++count;
-          }
-        }
-
-        // store tbface in a set for comparison
-        std::set< std::size_t > tbfset (tbface.begin(), tbface.end());
-
-        if (count == nnpf)
-        for (std::size_t e=0; e<chinpoel.size()/4; ++e) {   // for all our tets
-          auto mark = e*4;
-          for (std::size_t ef=0; ef<4; ++ef) {   // for all tet faces
-            std::array< std::size_t, 3 > t{{ chinpoel[ mark + tk::lpofa[ef][0] ],
-                                             chinpoel[ mark + tk::lpofa[ef][1] ],
-                                             chinpoel[ mark + tk::lpofa[ef][2] ] }};
-
-            // store t in a set for comparison
-            std::set< std::size_t > tset (t.begin(), t.end());
-
-            if (tset == tbfset) {
-            // this boundary face is present on this chunk
-              for (std::size_t i=0; i<nnpf; ++i)
-                chtriinpoel.push_back( tbface[i] );
-
-              chbface[ss.first].push_back(chnbfac);
-              ++chnbfac;
-              break;
-            }
+    for (const auto& ss : m_bface)  // for all phsyical boundaries (sidesets)
+      for (auto f : ss.second) {    // for all faces on this physical boundary
+        auto f1 = newnodes.find( m_triinpoel[f*3+0] );
+        auto f2 = newnodes.find( m_triinpoel[f*3+1] );
+        auto f3 = newnodes.find( m_triinpoel[f*3+2] );
+        // if all 3 nodes of the physical boundary face are on this chare
+        if (f1 != end(newnodes) && f2 != end(newnodes) && f3 != end(newnodes)) {
+          std::array< std::size_t, 3 > t{{f1->second, f2->second, f3->second}};
+          // if this boundary face is on this chare
+          if (faceset.find(t) != end(faceset)) {
+            // store face connectivity with new (global) node ids of this chare
+            for (std::size_t i=0; i<3; ++i) chtriinpoel.push_back( t[i] );
+            // store physical boundary face id associated to sideset id
+            chbface[ ss.first ].push_back( cnt++ );
           }
         }
       }
-    }
-
-    //std::cout << CkMyPe() << ": " << cid << ": " << chtriinpoel.size() << '\n';
 
     // Face data class
-    FaceData fd( chinpoel, chnbfac, chbface, chtriinpoel );
+    FaceData fd( chinpoel, chbface, chtriinpoel );
+
+    // Make sure (bound) base is already created and accessible
+    Assert( m_scheme.get()[cid].ckLocal() != nullptr, "About to pass nullptr" );
 
     // Create worker array element
     m_scheme.insert( cid, m_scheme.get(), m_solver, fd, CkMyPe() );
