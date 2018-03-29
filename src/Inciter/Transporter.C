@@ -244,7 +244,7 @@ Transporter::createPartitioner()
   m_timer[ TimerTag::MESH_PREP ];
 
   // Create mesh partitioner Charm++ chare group and start preparing mesh
-  m_progMesh.start( "Preparing mesh (read, refine, centroids) ..." );
+  m_progMesh.start( "Preparing mesh (read, optional refine, centroids) ..." );
 
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
@@ -501,7 +501,6 @@ Transporter::comfinal()
   // Tell the runtime system that every PE is done with dynamically inserting
   // Discretization worker (MatCG, DiagCG, DG, ...) chare array elements
   m_scheme.doneInserting< tag::bcast >();
-
   com_complete();
 }
 

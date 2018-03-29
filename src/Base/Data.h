@@ -360,9 +360,13 @@ class Data {
     void push_back( const std::vector< tk::real >& prop )
     { return push_back( prop, int2type< Layout >() ); }
 
-    //! Enlarge data store by multiple elements initialized to 0.0
-    //! \param[in] by Grow store by this many unknowns * m_nprop
-    void enlarge( std::size_t by ) { enlarge( by, int2type< Layout >() ); }
+    //! Resize data store to contain 'count' elements
+    //! \param[in] count Resize store to contain 'count' elements
+    //! \param[in] value Value to initialize new data with (default: 0.0)
+    //! \note This works for both shrinking and enlarging, as this simply
+    //!   translates to std::vector::resize().
+    void resize( std::size_t count, tk::real value = 0.0 )
+    { resize( count, value, int2type< Layout >() ); }
 
     //! Remove a number of unknowns
     //! \param[in] unknown Set of indices of unknowns to remove
@@ -516,14 +520,16 @@ class Data {
       for (ncomp_t i=0; i<m_nprop; ++i) operator()( u, i, 0 ) = prop[i];
     }
 
-    //! Enlarge data store by multiple elements initialized to 0.0
-    //! \param[in] by Grow store by this many unknowns * m_nprop
+    //! Resize data store to contain 'count' elements
+    //! \param[in] count Resize store to contain 'count' elements
+    //! \param[in] value Value to initialize new data with
     //! \note Only the UnkEqComp overload is provided as this operation would be
     //!   too inefficient with the EqCompUnk data layout.
-    void enlarge( std::size_t by, int2type< UnkEqComp > ) {
-      auto newsize = m_nunk + by;
-      m_vec.resize( newsize * m_nprop, 0.0 );
-      m_nunk = newsize;
+    //! \note This works for both shrinking and enlarging, as this simply
+    //!   translates to std::vector::resize().
+    void resize( std::size_t count, tk::real value, int2type< UnkEqComp > ) {
+      m_vec.resize( count * m_nprop, value );
+      m_nunk = count;
     }
 
     // Overloads for the name-queries of data lauouts

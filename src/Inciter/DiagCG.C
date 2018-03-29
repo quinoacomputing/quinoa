@@ -593,7 +593,7 @@ DiagCG::next( const tk::Fields& a )
   // Output field data to file
   out();
   // Compute diagnostics, e.g., residuals
- auto diag =  m_diag.compute( *d, m_u );
+  auto diag =  m_diag.compute( *d, m_u );
   // Increase number of iterations and physical time
   d->next();
   // Output one-liner status report

@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/DG.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     DG advances a system of PDEs with the discontinuous Galerkin scheme
   \details   DG advances a system of partial differential equations (PDEs) using
     discontinuous Galerkin (DG) finite element (FE) spatial discretization (on
@@ -48,6 +48,7 @@
 #define DG_h
 
 #include <array>
+#include <set>
 #include <unordered_set>
 #include <unordered_map>
 
@@ -88,7 +89,7 @@ class DG : public CBase_DG {
     //! Constructor
     explicit DG( const CProxy_Discretization& disc,
                  const tk::CProxy_Solver&,
-                 const FaceData& );
+                 const FaceData& fd );
 
     //! Migrate constructor
     explicit DG( CkMigrateMessage* ) {}
@@ -100,7 +101,7 @@ class DG : public CBase_DG {
     void comGhost( int fromch, const GhostData& ghost );
 
     //! Receive requests for ghost data
-    void reqGhost( int fromch );
+    void reqGhost();
 
     //! Send all of our ghost data to fellow chares
     void sendGhost();
@@ -115,9 +116,9 @@ class DG : public CBase_DG {
     void dt();
 
     //! Receive chare-boundary ghost data from neighboring chares
-    void comrhs( int fromch,
-                 const std::vector< std::size_t >& geid,
-                 const std::vector< std::vector< tk::real > >& V );
+    void comsol( int fromch,
+                 const std::vector< std::size_t >& tetid,
+                 const std::vector< std::vector< tk::real > >& u );
 
     //! Evaluate whether to continue with next step
     void eval();
@@ -130,11 +131,10 @@ class DG : public CBase_DG {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
       CBase_DG::pup(p);
-      p | m_nfac;
+      p | m_ncomfac;
       p | m_nadj;
-      p | m_nrhs;
+      p | m_nrecvsol;
       p | m_itf;
-      p | m_dt;
       p | m_disc;
       p | m_fd;
       p | m_u;
@@ -144,16 +144,18 @@ class DG : public CBase_DG {
       p | m_geoElem;
       p | m_lhs;
       p | m_rhs;
-      p | m_facecnt;
-      p | m_nchGhost;
+      p | m_nfac;
+      p | m_nunk;
       p | m_msumset;
       p | m_esuelTet;
       p | m_ipface;
-      p | m_potBndFace;
       p | m_bndFace;
       p | m_ghostData;
       p | m_ghostReq;
+      p | m_expChbface;
       p | m_ghost;
+      p | egh;  // ONLY FOR DEBUGGING
+      p | rgh;  // ONLY FOR DEBUGGING
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -162,28 +164,24 @@ class DG : public CBase_DG {
     //@}
 
   private:
-    //! Face IDs associated to global node IDs of the face for each chare
-    //! \details The this maps stores tetrahedron cell faces and their
-    //!   associated local face IDs. A face is given by 3 global node IDs in
-    //!   Face. Then all of this data is grouped by chares (outer key) we
-    //!   communicated with along chare boundary faces.
-    using FaceIDs =
-      std::unordered_map< int,  // chare ID faces shared with
-        std::unordered_map< tk::UnsMesh::Face,  // 3 global node IDs
-                            std::array< std::size_t, 2 >, // local face & tet ID
-                            tk::UnsMesh::FaceHasher,
-                            tk::UnsMesh::FaceEq > >;
+    //! Local face & tet IDs associated to 3 global node IDs
+    //! \details The this maps stores tetrahedron cell faces (map key) and their
+    //!   associated local face ID and inner local tet id adjacent to the face
+    //!   (map value). A face is given by 3 global node IDs.
+    using FaceMap =
+      std::unordered_map< tk::UnsMesh::Face,  // 3 global node IDs
+                          std::array< std::size_t, 2 >, // local face & tet ID
+                          tk::UnsMesh::FaceHasher,
+                          tk::UnsMesh::FaceEq >;
 
     //! Counter for face adjacency communication map
-    std::size_t m_nfac;
-    //! Counter for signaling that all ghost data have been received
+    std::size_t m_ncomfac;
+    //! Counter signaling that all ghost data have been received
     std::size_t m_nadj;
-    //! Counter for signaling that we have received all contributions to rhs
-    std::size_t m_nrhs;
+    //! Counter signaling that we have received all our solution ghost data
+    std::size_t m_nrecvsol;
     //! Field output iteration count
     uint64_t m_itf;
-    //! Time step size
-    tk::real m_dt;
     //! Discretization proxy
     CProxy_Discretization m_disc;
     //! Face data
@@ -202,10 +200,10 @@ class DG : public CBase_DG {
     tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
-    //! Counter for chare-boundary face local IDs
-    std::size_t m_facecnt;
-    //! Counter for chare-face ghosts for this mesh chunk
-    std::size_t m_nchGhost;
+    //! Counter for number of faces on this chare (including chare boundaries)
+    std::size_t m_nfac;
+    //! Counter for number of unknowns on this chare (including ghosts)
+    std::size_t m_nunk;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!    worker chares associated to their chare IDs
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
@@ -216,29 +214,26 @@ class DG : public CBase_DG {
     std::vector< int > m_esuelTet;
     //! Internal + physical boundary faces
     tk::UnsMesh::FaceSet m_ipface;
-    //! Faces associated to chares we potentially share boundary faces with
-    //! \details Compared to m_bndFace, this map stores a set of unique faces we
-    //!   only potentially share with fellow chares. This is because this data
-    //!   structure is derived from the the chare-node adjacency map and ths can
-    //!   be considered as an intermediate results towards m_bndFace, which only
-    //!   stores the faces (associated to chares) we actually need to
-    //!   communicate with.
-    std::unordered_map< int, tk::UnsMesh::FaceSet > m_potBndFace;
-    //! Face IDs associated to global node IDs of the face for each chare
-    //! \details Compared to m_potBndFace, this map stores those faces we
-    //!   actually share faces with (through which we need to communicate
-    //!   later). Also, this maps stores not only the unique faces associated to
-    //!   fellow chares, but also a newly assigned local face ID.
-    FaceIDs m_bndFace;
+    //! Face * tet IDs associated to global node IDs of the face for each chare
+    //! \details This maps stores not only the unique faces associated to
+    //!   fellow chares, but also a newly assigned local face ID and adjacent
+    //!   local tet ID.
+    std::unordered_map< int, FaceMap > m_bndFace;
     //! Ghost data associated to chare IDs we communicate with
     std::unordered_map< int, GhostData > m_ghostData;
-    //! Chare IDs requesting ghost data
-    std::vector< int > m_ghostReq;
+    //! Number of chares requesting ghost data
+    std::size_t m_ghostReq;
+    //! Expected number of boundary faces (ONLY FOR DEBUGGING)
+    std::size_t m_expChbface;
     //! Local element id associated to ghost remote id charewise
     //! \details This map associates the local element id (inner map value) to
     //!    the (remote) element id of the ghost (inner map key) based on the
     //!    chare id (outer map key) this remote element lies in.
-    std::map< int, std::unordered_map< std::size_t, std::size_t > > m_ghost;
+    std::unordered_map< int,
+      std::unordered_map< std::size_t, std::size_t > > m_ghost;
+
+    //! Expected/received ghost tet ids (ONLY FOR DEBUGGING)
+    std::set< std::size_t > egh, rgh;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -246,7 +241,13 @@ class DG : public CBase_DG {
       return m_disc[ thisIndex ].ckLocal();
     }
 
-    //! Find chare for face (given by 3 global node IDs
+    //! Perform leak test on mesh partition
+    bool leakyPartition();
+
+    //! Perform leak test on chare-boundary faces
+    bool leakyAdjacency();
+
+    //! Find any chare for face (given by 3 global node IDs)
     int findchare( const tk::UnsMesh::Face& t );
 
     //! Setup own ghost data on this chare
@@ -259,28 +260,19 @@ class DG : public CBase_DG {
     //! Continue after face adjacency communication map completed on this chare
     void adj();
 
-    //! Fill the elements surrounding faces, extended by ghost entries
-    void
-    fillEsuf( int fromch,
-              std::size_t e,
-              const tk::UnsMesh::Face& t,              
-              const std::unordered_map< std::size_t, std::size_t >& ghostelem );
+    //! Fill elements surrounding a face along chare boundary
+    void addEsuf( const std::array< std::size_t, 2 >& id, std::size_t ghostid );
 
-    //! Fill the face geometry data structure with the chare-face geometry
-    void fillGeoFace();
+    //! Fill face geometry data along chare boundary
+    void addGeoFace( const tk::UnsMesh::Face& t,
+                     const std::array< std::size_t, 2 >& id );
 
     //! Compute left hand side
     void lhs();
 
-    //! Compute right hand side
-    void rhs();
+    //! Compute right hand side and solve system
+    void solve();
 
-    //! Time stepping
-    void solve( tk::real deltat );
-
-    //! Prepare for next step
-    void next();
- 
     //! Output mesh and particle fields to files
     void out();
 

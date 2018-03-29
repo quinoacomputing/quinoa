@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/dg.ci
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for the discontinuous Galerkin scheme
   \details   Charm++ module interface file for the discontinuous Galerking
              scheme.
@@ -23,18 +23,18 @@ module dg {
 
     array [1D] DG {
       entry DG( const CProxy_Discretization& disc,
-                const tk::CProxy_Solver& solver,
+                const tk::CProxy_Solver&,
                 const FaceData& fd );
       entry void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
       entry void comGhost( int fromch, const GhostData& ghost );
-      entry void reqGhost( int fromch );
+      entry void reqGhost();
       initnode void registerReducers();      
       entry void setup( tk::real v );
       entry void dt();
       entry void eval();
-      entry void comrhs( int fromch,
-                         const std::vector< std::size_t >& geid,
-                         const std::vector< std::vector< tk::real > >& V );
+      entry void comsol( int fromch,
+                         const std::vector< std::size_t >& tetid,
+                         const std::vector< std::vector< tk::real > >& u );
       entry [reductiontarget] void advance( tk::real newdt );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
