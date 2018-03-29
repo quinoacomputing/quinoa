@@ -155,7 +155,7 @@ class DG : public CBase_DG {
       p | m_bndFace;
       p | m_ghostData;
       p | m_ghostReq;
-      p | m_expTotbface;
+      p | m_expChbface;
       p | m_ghost;
       p | m_ipface;
     }
@@ -235,7 +235,7 @@ class DG : public CBase_DG {
     std::unordered_map< int, GhostData > m_ghostData;
     //! Number of chares requesting ghost data
     std::size_t m_ghostReq;
-    std::size_t m_expTotbface;
+    std::size_t m_expChbface;
     tk::UnsMesh::FaceSet m_ipface;  // internal + physical boundary faces
     //! Local element id associated to ghost remote id charewise
     //! \details This map associates the local element id (inner map value) to

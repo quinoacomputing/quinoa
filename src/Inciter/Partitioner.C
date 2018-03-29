@@ -1356,15 +1356,51 @@ Partitioner::createWorkers()
           }
         }
 
-        if (count == nnpf)
-        // this boundary face is present on this chunk
-        {
-          for (std::size_t i=0; i<nnpf; ++i)
-            chtriinpoel.push_back( tbface[i] );
+        // store tbface in a set for comparison
+        std::set< std::size_t > tbfset (tbface.begin(), tbface.end());
 
-          chbface[ss.first].push_back(chnbfac);
-          ++chnbfac;
+        if (count == nnpf)
+        for (std::size_t e=0; e<chinpoel.size()/4; ++e) {   // for all our tets
+          auto mark = e*4;
+          for (std::size_t ef=0; ef<4; ++ef) {   // for all tet faces
+            std::array< std::size_t, 3 > t{{ chinpoel[ mark + tk::lpofa[ef][0] ],
+                                             chinpoel[ mark + tk::lpofa[ef][1] ],
+                                             chinpoel[ mark + tk::lpofa[ef][2] ] }};
+
+            // store t in a set for comparison
+            std::set< std::size_t > tset (t.begin(), t.end());
+
+            if (tset == tbfset) {
+            // this boundary face is present on this chunk
+              for (std::size_t i=0; i<nnpf; ++i)
+                chtriinpoel.push_back( tbface[i] );
+
+              chbface[ss.first].push_back(chnbfac);
+              ++chnbfac;
+              break;
+            }
+          }
         }
+
+        //for (std::size_t i=0; i<nnpf; ++i)
+        //{
+        //  auto n = chlinnodes.find( m_triinpoel[nnpf*f + i] );
+        //  if (n != end(chlinnodes))
+        //  {
+        //    tbface[i] = n->second;
+        //    ++count;
+        //  }
+        //}
+
+        //if (count == nnpf)
+        //// this boundary face is present on this chunk
+        //{
+        //  for (std::size_t i=0; i<nnpf; ++i)
+        //    chtriinpoel.push_back( tbface[i] );
+
+        //  chbface[ss.first].push_back(chnbfac);
+        //  ++chnbfac;
+        //}
       }
     }
 

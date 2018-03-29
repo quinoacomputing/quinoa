@@ -63,7 +63,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_bndFace(),
   m_ghostData(),
   m_ghostReq( 0 ),
-  m_expTotbface( 0 ),
+  m_expChbface( 0 ),
   m_ghost()
 // *****************************************************************************
 //  Constructor
@@ -106,7 +106,6 @@ DG::DG( const CProxy_Discretization& disc,
 
   const auto& coord = d->Coord();
 
-  std::size_t chfac(0);
   tk::real sumx(0), sumy(0), sumz(0);
 
   // Build a set of faces (each face given by 3 global node IDs) associated to
@@ -115,7 +114,6 @@ DG::DG( const CProxy_Discretization& disc,
     auto mark = e*4;
     for (std::size_t f=0; f<4; ++f)     // for all tet faces
       if (m_esuelTet[mark+f] == -1) {   // if face has no outside-neighbor tet
-        ++m_expTotbface;
         tk::UnsMesh::Face t{{ gid[ inpoel[ mark + tk::lpofa[f][0] ] ],
                               gid[ inpoel[ mark + tk::lpofa[f][1] ] ],
                               gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
@@ -135,30 +133,34 @@ DG::DG( const CProxy_Discretization& disc,
         // if does not exist in ipface, store as a potential chare-boundary face
         // associated to neighbor chare
         if (m_ipface.find(t) == end(m_ipface)){
-          ++chfac;
+          ++m_expChbface;
 
           //** auto chares = facechare(t);
           //** for (auto c : chares) {
           m_potBndFace.insert( t );
-          std::cout<<thisIndex<<" potential chface: // "
-              <<"   "<<t[0]<<"("<<coord[0][ inpoel[mark + tk::lpofa[f][0]] ]
-                          <<", "<<coord[1][ inpoel[mark + tk::lpofa[f][0]] ]
-                          <<", "<<coord[2][ inpoel[mark + tk::lpofa[f][0]] ]<<")"
-              <<"   "<<t[1]<<"("<<coord[0][ inpoel[mark + tk::lpofa[f][1]] ]
-                          <<", "<<coord[1][ inpoel[mark + tk::lpofa[f][1]] ]
-                          <<", "<<coord[2][ inpoel[mark + tk::lpofa[f][1]] ]<<")"
-              <<"   "<<t[2]<<"("<<coord[0][ inpoel[mark + tk::lpofa[f][2]] ]
-                          <<", "<<coord[1][ inpoel[mark + tk::lpofa[f][2]] ]
-                          <<", "<<coord[2][ inpoel[mark + tk::lpofa[f][2]] ]<<")"<<"\n";
-          //** }
+          //std::cout<<thisIndex<<" potential chface: // "
+          //    <<"   "<<t[0]<<"("<<coord[0][ inpoel[mark + tk::lpofa[f][0]] ]
+          //                <<", "<<coord[1][ inpoel[mark + tk::lpofa[f][0]] ]
+          //                <<", "<<coord[2][ inpoel[mark + tk::lpofa[f][0]] ]<<")"
+          //    <<"   "<<t[1]<<"("<<coord[0][ inpoel[mark + tk::lpofa[f][1]] ]
+          //                <<", "<<coord[1][ inpoel[mark + tk::lpofa[f][1]] ]
+          //                <<", "<<coord[2][ inpoel[mark + tk::lpofa[f][1]] ]<<")"
+          //    <<"   "<<t[2]<<"("<<coord[0][ inpoel[mark + tk::lpofa[f][2]] ]
+          //                <<", "<<coord[1][ inpoel[mark + tk::lpofa[f][2]] ]
+          //                <<", "<<coord[2][ inpoel[mark + tk::lpofa[f][2]] ]<<")"<<"\n";
+          ////** }
         }
       }
   }
 
-  std::cout <<thisIndex<<" ** CTOR ("<<chfac<<"+"<<fd.Nbfac()<<
-              ") | sum of face-normals: x: "<<sumx
-                                    <<" y: "<<sumy
-                                    <<" z: "<<sumz<<"\n";
+  //std::cout <<thisIndex<<" ** CTOR ("<<m_expChbface<<"+"<<fd.Nbfac()<<
+  //            ") | sum of face-normals: x: "<<sumx
+  //                                  <<" y: "<<sumy
+  //                                  <<" z: "<<sumz<<"\n";
+
+  Assert(sumx<1.0e-12, "x-component of surface-integral of face normals in ctor not zero");
+  Assert(sumy<1.0e-12, "y-component of surface-integral of face normals in ctor not zero");
+  Assert(sumz<1.0e-12, "z-component of surface-integral of face normals in ctor not zero");
 
   // Basic error checking on potential-boundary-face map
   //** Assert( m_potBndFace.find( thisIndex ) == m_potBndFace.cend(),
@@ -268,19 +270,18 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
 
     // Ensure the -1 entries in m_esuelTet are equal to the number of entries
     // in m_bndFace + m_nbfac
-    std::size_t bcount(m_fd.Nbfac());
+    std::size_t bcount(0);
     for (const auto& ich : m_bndFace) {
       bcount += ich.second.size();
-      for (const auto& ifa : ich.second) {
-        const auto& trip = ifa.first;
-        std::cout<<thisIndex<<" m_bndFace entry:"
-            <<" | "<<trip[0]<<", "<<trip[1]<<", "<<trip[2]<<"\n";
-      }
+      //for (const auto& ifa : ich.second) {
+      //  const auto& trip = ifa.first;
+      //  std::cout<<thisIndex<<"/"<<ich.first<<" m_bndFace entry:"
+      //      <<" | "<<trip[0]<<", "<<trip[1]<<", "<<trip[2]<<"\n";
+      //}
     }
 
-    std::cout <<thisIndex<<" | found: "<<bcount<<"/"<<m_expTotbface<<
-              " ("<<bcount-m_fd.Nbfac()<<"/"<<m_expTotbface-m_fd.Nbfac()<<")"<<"\n";
-    //Assert( bcount == m_expTotbface, "Incorrect # of entries in m_bndFace" );
+    //std::cout <<thisIndex<<" | found: "<<bcount<<"/"<<m_expChbface<<"\n";
+    Assert( bcount == m_expChbface, "Incorrect # of entries in m_bndFace" );
 
     // Basic error checking on chare-boundary-face map
     Assert( m_bndFace.find( thisIndex ) == m_bndFace.cend(),
@@ -596,13 +597,13 @@ DG::adj()
       sumz += m_geoFace(f,0,0) * m_geoFace(f,3,0);
   }
 
-  std::cout <<thisIndex<<" ** | sum of face-normals: x: "<<sumx
-                                                 <<" y: "<<sumy
-                                                 <<" z: "<<sumz<<"\n";
+  //std::cout <<thisIndex<<" ** | sum of face-normals: x: "<<sumx
+  //                                               <<" y: "<<sumy
+  //                                               <<" z: "<<sumz<<"\n";
 
-  //Assert(sumx<1.0e-10, "x-component of sum of face normals on mesh-chunk not zero");
-  //Assert(sumy<1.0e-10, "y-component of sum of face normals on mesh-chunk not zero");
-  //Assert(sumz<1.0e-10, "z-component of sum of face normals on mesh-chunk not zero");
+  Assert(sumx<1.0e-12, "x-component of surface-integral of face normals in DG::adj() not zero");
+  Assert(sumy<1.0e-12, "y-component of surface-integral of face normals in DG::adj() not zero");
+  Assert(sumz<1.0e-12, "z-component of surface-integral of face normals in DG::adj() not zero");
 
   // Resize solution vectors, lhs, and rhs by the number of ghost tets
   m_u.resize( m_nunk );
