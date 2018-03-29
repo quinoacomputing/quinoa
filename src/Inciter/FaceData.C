@@ -74,6 +74,6 @@ FaceData::numBndFaces() const
 // *****************************************************************************
 {
   return std::accumulate( m_bface.cbegin(), m_bface.cend(), std::size_t(0),
-           [&]( std::size_t acc, const decltype(m_bface)::value_type& b )
+           []( std::size_t acc, const decltype(m_bface)::value_type& b )
               { return acc + b.second.size(); } );
 }
