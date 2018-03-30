@@ -133,7 +133,7 @@ class DG : public CBase_DG {
       CBase_DG::pup(p);
       p | m_ncomfac;
       p | m_nadj;
-      p | m_nrecvsol;
+      p | m_nsol;
       p | m_itf;
       p | m_disc;
       p | m_fd;
@@ -152,7 +152,7 @@ class DG : public CBase_DG {
       p | m_bndFace;
       p | m_ghostData;
       p | m_ghostReq;
-      p | m_expChbface;
+      p | m_exptNbface;
       p | m_ghost;
       p | m_exptGhost;
       p | m_recvGhost;
@@ -165,7 +165,7 @@ class DG : public CBase_DG {
 
   private:
     //! Local face & tet IDs associated to 3 global node IDs
-    //! \details The this maps stores tetrahedron cell faces (map key) and their
+    //! \details This map stores tetrahedron cell faces (map key) and their
     //!   associated local face ID and inner local tet id adjacent to the face
     //!   (map value). A face is given by 3 global node IDs.
     using FaceMap =
@@ -179,7 +179,7 @@ class DG : public CBase_DG {
     //! Counter signaling that all ghost data have been received
     std::size_t m_nadj;
     //! Counter signaling that we have received all our solution ghost data
-    std::size_t m_nrecvsol;
+    std::size_t m_nsol;
     //! Field output iteration count
     uint64_t m_itf;
     //! Discretization proxy
@@ -212,7 +212,7 @@ class DG : public CBase_DG {
     std::unordered_map< int, std::unordered_set< std::size_t > > m_msumset;
     //! Elements surrounding elements with -1 at boundaries, see genEsuelTet()
     std::vector< int > m_esuelTet;
-    //! Internal + physical boundary faces
+    //! Internal + physical boundary faces (inverse of inpofa)
     tk::UnsMesh::FaceSet m_ipface;
     //! Face * tet IDs associated to global node IDs of the face for each chare
     //! \details This maps stores not only the unique faces associated to
@@ -223,8 +223,8 @@ class DG : public CBase_DG {
     std::unordered_map< int, GhostData > m_ghostData;
     //! Number of chares requesting ghost data
     std::size_t m_ghostReq;
-    //! Expected number of boundary faces (ONLY FOR DEBUGGING)
-    std::size_t m_expChbface;
+    //! Expected number of boundary faces (used only in DEBUG)
+    std::size_t m_exptNbface;
     //! Local element id associated to ghost remote id charewise
     //! \details This map associates the local element id (inner map value) to
     //!    the (remote) element id of the ghost (inner map key) based on the

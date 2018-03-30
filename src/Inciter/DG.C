@@ -40,7 +40,7 @@ DG::DG( const CProxy_Discretization& disc,
         const FaceData& fd ) :
   m_ncomfac( 0 ),
   m_nadj( 0 ),
-  m_nrecvsol( 0 ),
+  m_nsol( 0 ),
   m_itf( 0 ),
   m_disc( disc ),
   m_fd( fd ),
@@ -62,7 +62,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_bndFace(),
   m_ghostData(),
   m_ghostReq( 0 ),
-  m_expChbface( 0 ),
+  m_exptNbface( 0 ),
   m_ghost(),
   m_exptGhost(),
   m_recvGhost()
@@ -108,7 +108,7 @@ DG::DG( const CProxy_Discretization& disc,
                               gid[ inpoel[ mark + tk::lpofa[f][1] ] ],
                               gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
         if (m_ipface.find(t) == end(m_ipface)) {
-          ++m_expChbface;       // sum up expected number of boundary faces
+          Assert( ++m_exptNbface, "Sum up expected number of boundary faces" );
           potbndface.insert( t );
         }
       }
@@ -290,9 +290,11 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
   // node, edge, or face with
   if (++m_ncomfac == m_msumset.size()) {
 
+    tk::destroy(m_ipface);
+
     // Error checking on the number of expected vs received/found chare-boundary
     // faces
-    Assert( m_expChbface ==
+    Assert( m_exptNbface ==
              std::accumulate( m_bndFace.cbegin(), m_bndFace.cend(),
                std::size_t(0),
                []( std::size_t acc, const decltype(m_bndFace)::value_type& b )
@@ -578,6 +580,8 @@ DG::adj()
 //!    on this chare.
 // *****************************************************************************
 {
+  tk::destroy(m_bndFace);
+
   // Ensure that all elements surrounding faces (are correct) including those at
   // chare boundaries
   for (std::size_t f=0; f<m_nfac; ++f) {
@@ -643,6 +647,8 @@ DG::setup( tk::real v )
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
+  tk::destroy(m_msumset);
+
   auto d = Disc();
 
   // Store total mesh volume
@@ -758,11 +764,11 @@ DG::comsol( int fromch,
 
   // if we have received all solution ghost contributions from those chares we
   // communicate along chare-boundary faces with, solve the system
-  if (++m_nrecvsol == m_ghostData.size()) {
+  if (++m_nsol == m_ghostData.size()) {
     Assert( m_exptGhost == m_recvGhost,
             "Expected/received ghost tet id mismatch" );
     m_recvGhost.clear();
-    m_nrecvsol = 0;
+    m_nsol = 0;
     solve();
   }
 }
