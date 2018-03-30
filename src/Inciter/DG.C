@@ -62,7 +62,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_exptNbface( 0 ),
   m_ghost(),
   m_exptGhost(),
-  m_recvGhost()
+  m_recvGhost(),
   m_nchGhost( 0 ),
   m_diag( *Disc() )
 // *****************************************************************************
