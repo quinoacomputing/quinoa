@@ -63,6 +63,9 @@ class UnsMesh {
       }
     };
     //! Key-equal function for node triplet (Face)
+    //! \note This requires all 3 node IDs be present in both the left and right
+    //!   hand side but ignores ordering. For example, for A,B,C it will match
+    //!   B,A,C, C,B,A, etc.
     struct FaceEq {
       bool operator()( const Face& l, const Face& r ) const {
         return (l[0] == r[0] || l[0] == r[1] || l[0] == r[2]) &&
