@@ -617,9 +617,11 @@ DG::adj()
 
   // Store expected ghost tet IDs
   for (const auto& c : m_ghost)
-    for (const auto& g : c.second)
+    for (const auto& g : c.second) {
+      IGNORE(g);
       Assert( m_exptGhost.insert( g.second ).second,
               "Failed to store local tetid as exptected ghost id" );
+    }
 
   // Signal the runtime system that all workers have received their adjacency
   auto d = Disc();
