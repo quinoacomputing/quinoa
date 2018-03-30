@@ -158,7 +158,7 @@ class DG : public CBase_DG {
       p | m_exptGhost;
       p | m_recvGhost;
       p | m_nchGhost;
-      //p | m_diag;
+      p | m_diag;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -282,9 +282,6 @@ class DG : public CBase_DG {
 
     //! Output mesh and particle fields to files
     void out();
-
-    ////! Compute diagnostics, e.g., residuals
-    //bool diagnostics();
 
     //! Output mesh-based fields to file
     void writeFields( tk::real time );

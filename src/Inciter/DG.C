@@ -19,6 +19,7 @@
 #include "Solver.h"
 #include "DiagReducer.h"
 #include "DerivedData.h"
+#include "ElemDiagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "ExodusIIMeshWriter.h"
 

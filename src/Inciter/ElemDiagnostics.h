@@ -36,17 +36,15 @@ class ElemDiagnostics {
                   const tk::Fields& geoElem,
                   const tk::Fields& u );
 
-    /////@{
-    ////! \brief Pack/Unpack serialize member function
-    ////! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //void pup( PUP::er &p ) {
-    //  p | m_geoElem;
-    //}
-    ////! \brief Pack/Unpack serialize operator|
-    ////! \param[in,out] p Charm++'s PUP::er serializer object reference
-    ////! \param[in,out] d Diagnostics object reference
-    //friend void operator|( PUP::er& p, ElemDiagnostics& d ) { d.pup(p); }
-    ////@}
+    ///@{
+    //! \brief Pack/Unpack serialize member function
+//    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    void pup( PUP::er &/*p*/ ) {}
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] d Diagnostics object reference
+    friend void operator|( PUP::er& p, ElemDiagnostics& d ) { d.pup(p); }
+    //@}
 };
 
 } // inciter::
