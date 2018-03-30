@@ -289,9 +289,9 @@ class Scheme : public SchemeBase {
     }
 
     //////  proxy.eval(...)
-    //! function to call the dt entry method of an array proxy (broadcast)
+    //! function to call the eval entry method of an array proxy (broadcast)
     //! \param[in] args arguments to member function (entry method) to be called
-    //! \details this function calls the dt member function of a chare array
+    //! \details this function calls the eval member function of a chare array
     //!   proxy and thus equivalent to proxy.eval(...), specifying a
     //!   non-default last argument.
     template< class Op, typename... Args, typename std::enable_if<
@@ -301,10 +301,10 @@ class Scheme : public SchemeBase {
                             proxy );
     }
     //////  proxy[x].eval(...)
-    //! Function to call the dt entry method of an element proxy (p2p)
+    //! Function to call the eval entry method of an element proxy (p2p)
     //! \param[in] x Chare array element index
     //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the dt member function of a chare array
+    //! \details This function calls the eval member function of a chare array
     //!   element proxy and thus equivalent to proxy[x].eval(...), specifying a
     //!   non-default last argument.
     template< typename Op, typename... Args, typename std::enable_if<

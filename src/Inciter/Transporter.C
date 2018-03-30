@@ -202,14 +202,13 @@ Transporter::createPartitioner()
 
   // Read side sets for boundary faces
   std::map< int, std::vector< std::size_t > > bface;
-  std::size_t nbfac = 0;
 
   std::vector< std::size_t > triinpoel;
   const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
 
   // Read triangle boundary-face connectivity
   if (scheme == ctr::SchemeType::DG) {
-    nbfac = er.readSidesetFaces( bface );
+    auto nbfac = er.readSidesetFaces( bface );
     er.readFaces( nbfac, triinpoel );
   }
 
@@ -245,12 +244,12 @@ Transporter::createPartitioner()
   m_timer[ TimerTag::MESH_PREP ];
 
   // Create mesh partitioner Charm++ chare group and start preparing mesh
-  m_progMesh.start( "Preparing mesh (read, refine, centroids) ..." );
+  m_progMesh.start( "Preparing mesh (read, optional refine, centroids) ..." );
 
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
     CProxy_Partitioner::ckNew( cbp, thisProxy, m_solver, m_bc, m_scheme,
-                               nbfac, bface, triinpoel );
+                               bface, triinpoel );
 }
 
 void
@@ -502,7 +501,6 @@ Transporter::comfinal()
   // Tell the runtime system that every PE is done with dynamically inserting
   // Discretization worker (MatCG, DiagCG, DG, ...) chare array elements
   m_scheme.doneInserting< tag::bcast >();
-
   com_complete();
 }
 

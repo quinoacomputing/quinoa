@@ -83,6 +83,7 @@ class Transport {
                      tk::Fields& unk,
                      tk::real t ) const
     {
+      Assert( geoElem.nunk() == unk.nunk(), "Size mismatch" );
       std::size_t nelem = unk.nunk();
 
       for (std::size_t e=0; e<nelem; ++e)
@@ -93,7 +94,7 @@ class Transport {
 
         const auto s = Problem::solution( m_c, m_ncomp, xcc, ycc, zcc, t );
         for (ncomp_t c=0; c<m_ncomp; ++c)
-          unk(e, c, m_offset)   = s[c];
+          unk(e, c, m_offset) = s[c];
       }
     }
 
@@ -102,6 +103,7 @@ class Transport {
     //! \param[in,out] l Block diagonal mass matrix matrix
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
     {
+      Assert( geoElem.nunk() == l.nunk(), "Size mismatch" );
       std::size_t nelem = geoElem.nunk();
 
       for (std::size_t e=0; e<nelem; ++e)
@@ -128,14 +130,14 @@ class Transport {
               "Number of components in solution and right-hand side vector " 
               "must equal "+ std::to_string(m_ncomp) );
 
-      auto& esuf = fd.Esuf();
-      auto& bface = fd.Bface();
+      const auto& bface = fd.Bface();
+      const auto& esuf = fd.Esuf();
 
       // set rhs to zero
       R.fill(0.0);
 
       // compute internal surface flux integrals
-      for (auto f=fd.Nbfac(); f<fd.Ntfac(); ++f)
+      for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
       {
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
         std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
@@ -151,19 +153,18 @@ class Transport {
       }
 
       // compute boundary surface flux integrals
-
-      for (const auto& s : m_bcsym) {      // for all sidesets where sym bc is set
-        auto bc = bface.find( std::stoi(s) );  // find faces for sym bc side set
+      for (const auto& s : m_bcsym) {    // for all symbc sidesets
+        auto bc = bface.find( std::stoi(s) );  // faces for sym bc side set
         if (bc != end(bface))
           surfInt< Sym >( bc->second, esuf, geoFace, U, R );
       }
-      for (const auto& s : m_bcinlet) {    // for all sidesets where inlet bc is set
-        auto bc = bface.find( std::stoi(s) );  // find faces for inlet bc side set
+      for (const auto& s : m_bcinlet) {  // for all inlet bc sidesets
+        auto bc = bface.find( std::stoi(s) );// faces for inlet bc side set
         if (bc != end(bface))
           surfInt< Inlet > ( bc->second, esuf, geoFace, U, R );
       }
-      for (const auto& s : m_bcoutlet) {   // for all sidesets where outlet bc is set
-        auto bc = bface.find( std::stoi(s) );  // find faces for outlet bc side set
+      for (const auto& s : m_bcoutlet) {// for all outlet bc sidesets
+        auto bc = bface.find( std::stoi(s) );// faces for outlet bc side set
         if (bc != end(bface))
           surfInt< Outlet >( bc->second, esuf, geoFace, U, R );
       }
@@ -222,6 +223,7 @@ class Transport {
                  const tk::Fields& geoElem,
                  tk::Fields& U ) const
     {
+      Assert( geoElem.nunk() == U.nunk(), "Size mismatch" );
       std::vector< std::vector< tk::real > > out;
       // will output numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)

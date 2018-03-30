@@ -23,6 +23,7 @@
 #include "MeshReader.h"
 #include "Around.h"
 #include "ExodusIIMeshWriter.h"
+#include "UnsMesh.h"
 
 namespace inciter {
 
@@ -38,7 +39,6 @@ Partitioner::Partitioner(
   const tk::CProxy_Solver& solver,
   const CProxy_BoundaryConditions& bc,
   const Scheme& scheme,
-  std::size_t nbfac,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::vector< std::size_t >& triinpoel ) :
   m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6], cb[7] ),
@@ -76,7 +76,6 @@ Partitioner::Partitioner(
   m_edgechares(),
   m_msum(),
   m_msumed(),
-  m_nbfac( nbfac ),
   m_bface( bface ),
   m_triinpoel( triinpoel )
 // *****************************************************************************
@@ -86,7 +85,6 @@ Partitioner::Partitioner(
 //! \param[in] solver Linear system solver proxy
 //! \param[in] bc Boundary conditions group proxy
 //! \param[in] scheme Discretization scheme
-//! \param[in] nbfac Total number of boundary faces
 //! \param[in] bface Face lists mapped to side set ids
 //! \param[in] triinpoel Interconnectivity of points and boundary-face
 // *****************************************************************************
@@ -1299,7 +1297,7 @@ Partitioner::createDiscWorkers()
   tk::destroy( m_edgeset );
   // Free maps associating old node IDs to new node IDs categorized by
   // chares as it is no longer needed after creating the workers.
-  tk::destroy( m_chfilenodes );
+  //tk::destroy( m_chfilenodes );
   // Free map storing new node IDs associated to edges categorized by chares
   // owned as no linger needed after creating workers.
   tk::destroy( m_chedgenodes );
@@ -1321,25 +1319,65 @@ Partitioner::createWorkers()
 {
   auto dist = chareDistribution();
 
+  // Prepare data to pass to and put in a request to create worker chares
   for (int c=0; c<dist[1]; ++c) {
-    // Compute chare ID
-    auto cid = CkMyPe() * dist[0] + c;
-    // Make sure (bound) base is already created and accessible
-    Assert( m_scheme.get()[cid].ckLocal() != nullptr, "About to pass nullptr" );
 
-    // Reorder the triinpoel
-    for(auto& i : m_triinpoel)
-    {
-      auto n = m_linnodes.find(i);
-      if (n != end(m_linnodes)) i = n->second;
+    // Compute chare ID (linear distribution across PEs)
+    auto cid = CkMyPe() * dist[0] + c;
+
+    // Find mesh connectivity for this chare (with new global ids)
+    auto chinpoel = tk::cref_find( m_chinpoel, cid );
+
+    // Generate map associating new(value) to file(key) node ids for this chare
+    decltype(m_linnodes) newnodes;
+    const auto& chfilenodes = tk::cref_find( m_chfilenodes, cid );
+    for (auto i : chinpoel) newnodes[ tk::cref_find(chfilenodes,i) ] = i;
+
+    // Generate face set for this chare for potentially faster searches
+    tk::UnsMesh::FaceSet faceset;
+    for (std::size_t e=0; e<chinpoel.size()/4; ++e) { // for all tets in chare
+      auto mark = e*4;
+      for (std::size_t f=0; f<4; ++f) // for all tet faces
+        faceset.insert( {{{ chinpoel[ mark + tk::lpofa[f][0] ],
+                            chinpoel[ mark + tk::lpofa[f][1] ],
+                            chinpoel[ mark + tk::lpofa[f][2] ] }}} );
     }
+  
+    // Generate input face data for class FaceData
+    std::vector< std::size_t > chtriinpoel;
+    std::unordered_map< int, std::vector< std::size_t > > chbface;
+    std::size_t cnt = 0;
+
+    for (const auto& ss : m_bface)  // for all phsyical boundaries (sidesets)
+      for (auto f : ss.second) {    // for all faces on this physical boundary
+        auto f1 = newnodes.find( m_triinpoel[f*3+0] );
+        auto f2 = newnodes.find( m_triinpoel[f*3+1] );
+        auto f3 = newnodes.find( m_triinpoel[f*3+2] );
+        // if all 3 nodes of the physical boundary face are on this chare
+        if (f1 != end(newnodes) && f2 != end(newnodes) && f3 != end(newnodes)) {
+          std::array< std::size_t, 3 > t{{f1->second, f2->second, f3->second}};
+          // if this boundary face is on this chare
+          if (faceset.find(t) != end(faceset)) {
+            // store face connectivity with new (global) node ids of this chare
+            for (std::size_t i=0; i<3; ++i) chtriinpoel.push_back( t[i] );
+            // store physical boundary face id associated to sideset id
+            chbface[ ss.first ].push_back( cnt++ );
+          }
+        }
+      }
 
     // Face data class
-    FaceData fd(tk::cref_find(m_chinpoel,cid), m_nbfac, m_bface, m_triinpoel);
+    FaceData fd( chinpoel, chbface, chtriinpoel );
+
+    // Make sure (bound) base is already created and accessible
+    Assert( m_scheme.get()[cid].ckLocal() != nullptr, "About to pass nullptr" );
 
     // Create worker array element
     m_scheme.insert( cid, m_scheme.get(), m_solver, fd, CkMyPe() );
   }
+
+  tk::destroy( m_bface );
+  tk::destroy( m_triinpoel );
 }
 
 #include "NoWarning/partitioner.def.h"

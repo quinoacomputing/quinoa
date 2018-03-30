@@ -26,7 +26,6 @@ module partitioner {
         const tk::CProxy_Solver& solver,
         const CProxy_BoundaryConditions& bc,
         const Scheme& scheme,
-        std::size_t nbfac,
         const std::map< int, std::vector< std::size_t > >& bface,
         const std::vector< std::size_t >& triinpoel );
       entry void partition( int nchare );

@@ -48,7 +48,7 @@ using inciter::DiagCG;
 
 DiagCG::DiagCG( const CProxy_Discretization& disc,
                 const tk::CProxy_Solver& solver,
-                const FaceData& fd ) :
+                const FaceData& ) :
   m_itf( 0 ),
   m_nsol( 0 ),
   m_nlhs( 0 ),
@@ -94,7 +94,6 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 
   // Signal the runtime system that the workers have been created
   solver.ckLocalBranch()->created();
-  IGNORE( fd );
 }
 
 void
@@ -594,7 +593,7 @@ DiagCG::next( const tk::Fields& a )
   // Output field data to file
   out();
   // Compute diagnostics, e.g., residuals
- auto diag =  m_diag.compute( *d, m_u );
+  auto diag =  m_diag.compute( *d, m_u );
   // Increase number of iterations and physical time
   d->next();
   // Output one-liner status report
