@@ -19,12 +19,13 @@ namespace inciter {
 
 //! Data associated to a tetrahedron cell id used to comunicate across faces
 using GhostData =
-    std::unordered_map< std::size_t, // tet id
-                        std::tuple<
-                          // 3 node ids for potentially multiple faces
-                          std::vector< std::size_t >,
-                          // elem geometry, see tk::genGeoElemTet()
-                          std::vector< tk::real > > >;
+  std::unordered_map< std::size_t, // tet id
+                      std::tuple<
+                        // 3 node ids for potentially multiple faces
+                        std::vector< std::size_t >,
+                        // elem geometry, see tk::genGeoElemTet()
+                        std::vector< tk::real > > >;
+
 
 //! FaceData class holding face-connectivity data useful for DG discretization
 class FaceData {
@@ -36,13 +37,13 @@ class FaceData {
     //! Constructor
     explicit
       FaceData( const std::vector< std::size_t >& conn,
-                const std::map< int, std::vector< std::size_t > >& bface,
+                const std::unordered_map< int, std::vector< std::size_t > >& bface,
                 const std::vector< std::size_t >& triinpoel );
 
     /** @name Accessors
       * */
     ///@{
-    const std::map< int, std::vector< std::size_t > >& Bface() const
+    const std::unordered_map< int, std::vector< std::size_t > >& Bface() const
     { return m_bface; }
     std::size_t Nbfac() const { return numBndFaces(); }
     const std::vector< int >& Esuel() const { return m_esuel; }
@@ -73,7 +74,7 @@ class FaceData {
 
   private:
     //! Boundary faces side-set information
-    std::map< int, std::vector< std::size_t > > m_bface;
+    std::unordered_map< int, std::vector< std::size_t > > m_bface;
     //! Boundary face-node connectivity
     std::vector< std::size_t > m_triinpoel;
     //! Elements surrounding elements

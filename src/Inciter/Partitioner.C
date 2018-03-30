@@ -1345,7 +1345,7 @@ Partitioner::createWorkers()
   
     // Generate input face data for class FaceData
     std::vector< std::size_t > chtriinpoel;
-    std::map< int, std::vector< std::size_t > > chbface;
+    std::unordered_map< int, std::vector< std::size_t > > chbface;
     std::size_t cnt = 0;
 
     for (const auto& ss : m_bface)  // for all phsyical boundaries (sidesets)
