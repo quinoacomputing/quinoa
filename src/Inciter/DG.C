@@ -115,28 +115,27 @@ DG::DG( const CProxy_Discretization& disc,
   }
 
   // In the following we assume that the size of the (potential) boundary-face
-  // adjacency map above does not necessarily equal the node adjacency map
-  // (m_msumset). This is because while a node can be shared at a single corner
-  // or along an edge, that does not necessarily share a face as well (in other
-  // words, shared nodes or edges can exist that are not part of a shared face).
-  // So the chares we communicate with across faces are not necessarily the same
-  // as the chares we would communicate nodes with.
+  // adjacency map above does not necessarily equal to that of the node
+  // adjacency map (m_msumset). This is because while a node can be shared at a
+  // single corner or along an edge, that does not necessarily share a face as
+  // well (in other words, shared nodes or edges can exist that are not part of
+  // a shared face). So the chares we communicate with across faces are not
+  // necessarily the same as the chares we would communicate nodes with.
   //
   // Since the sizes of the node and face adjacency maps are not the same, while
   // sending the faces on chare boundaries would be okay, however, the receiver
   // would not necessarily know how many chares it must receive from. To solve
   // this problem we send to chares which we share at least a single node with,
-  // i.e., rely on the node-adjacency map, but we either send a set of faces
-  // which do share faces on the chare boundary or an empty set if there is not
-  // a single face that shares a face with the destination chare (only single
-  // nodes or edges). The assumption here is, of course, that the size of the
-  // face adjacency map is always smaller than or equal to that of the node
-  // adjacency map, which is always true. Since the receive side already knows
-  // how many fellow chares it must receive shared node ids from, we use that to
-  // detect completion of the number of receives in comfac(). This simplifies
-  // the communication pattern and code for a small price of sending a few empty
-  // sets (for those chare boundaries that only share individual nodes but not
-  // faces).
+  // i.e., rely on the node-adjacency map. Note that to all chares we share at
+  // least a single node with we send all our potential chare-boundary faces.
+  // This is the same list of faces to all chares we send.
+  //
+  // Another underlying assumption here is, of course, that the size of the face
+  // adjacency map is always smaller than or equal to that of the node adjacency
+  // map, which is always true. Since the receive side already knows how many
+  // fellow chares it must receive shared node ids from, we use that to detect
+  // completion of the number of receives in comfac(). This simplifies the
+  // communication pattern and code.
 
   // Send sets of faces adjacent to chare boundaries to fellow workers (if any)
   if (m_msumset.empty())        // in serial, skip setting up ghosts altogether
@@ -156,7 +155,7 @@ DG::leakyPartition()
 //!   a hole in the partition, which indicates an error upstream of this code,
 //!   either in the mesh geometry, mesh partitioning, or in the data structures
 //!   that represent faces.
-//! \return True if partition leaks.
+//! \return True if our chare partition leaks.
 // *****************************************************************************
 {
   auto d = Disc();
@@ -200,12 +199,13 @@ DG::leakyAdjacency()
 //!   faces after the face adjacency communication map is completed.. A non-zero
 //!   vector result indicates a leak, e.g., a hole in the partition (covered by
 //!   the faces of the face adjacency communication map), which indicates an
-//!   error upstream in code setting up the face communication data structures.
+//!   error upstream in the code that sets up the face communication data
+//!   structures.
 //! \note Compared to leakyPartition() this function performs the leak-test on
 //!   the face geometry data structure enlarged by ghost faces on this partition
 //!   by computing a discrete surface integral considering the physical and
 //!   chare boundary faces, which should be equal to zero for a closed domain.
-//! \return True if partition leaks.
+//! \return True if our chare face adjacency leaks.
 // *****************************************************************************
 {
   // Storage for surface integral over our chunk of the adjacency
@@ -251,7 +251,9 @@ DG::msumset() const
 void
 DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
 // *****************************************************************************
-// Receive unique set of faces we potentially share with/from another chare
+//  Receive unique set of faces we potentially share with/from another chare
+//! \param[in] fromch Sender chare id
+//! \param[in] infaces Unique set of faces we potentially share with fromch
 // *****************************************************************************
 {
   // Attempt to find sender chare among chares we potentially share faces with.
@@ -359,7 +361,7 @@ DG::setupGhost()
   m_geoFace.resize( m_nfac, 0.0 );
 
   // Collect tet ids, their face connectivity (given by 3 global node IDs, each
-  // triplet for potentially mulitple faces on the chare boundary), and their
+  // triplet for potentially multiple faces on the chare boundary), and their
   // elem geometry data (see GhostData) associated to fellow chares adjacent to
   // chare boundaries. Once received by fellow chares, these tets will become
   // known as ghost elements and their data as ghost data.
@@ -488,7 +490,7 @@ DG::comGhost( int fromch, const GhostData& ghost )
               nl.find(t[1]) != end(nl) &&
               nl.find(t[2]) != end(nl),
            "Ghost face not found in chare-node adjacency map on receiving end" );
-      // must find face(A,B,C) in boundary-face adjacency map for fromch
+      // must find face in boundary-face adjacency map for fromch
       Assert( tk::cref_find(m_bndFace,fromch).find( t ) !=
               tk::cref_find(m_bndFace,fromch).cend(), "Ghost face not "
               "found in boundary-face adjacency map on receiving end" );
@@ -520,7 +522,7 @@ DG::addEsuf( const std::array< std::size_t, 2 >& id, std::size_t ghostid )
 //! \param[in] id Local face and (inner) tet id adjacent to it
 //! \param[in] ghostid Local ID for ghost tet
 //! \details This function extends and fills in the elements surrounding faces
-//!   data structure (esuf) so that the left and  right element id is filled
+//!   data structure (esuf) so that the left and right element id is filled
 //!   in correctly on chare boundaries to contain the correct inner tet id and
 //!   the local tet id for the outer (ghost) tet, both adjacent to the given
 //1   chare-face boundary. Prior to this function, this data structure does not
@@ -608,7 +610,7 @@ DG::adj()
   m_lhs.resize( m_nunk );
   m_rhs.resize( m_nunk );
 
-  // Ensure that we also have the all geometry data (including thos of ghosts)
+  // Ensure that we also have all the geometry data (including those of ghosts)
   Assert( m_geoElem.nunk() == m_u.nunk(), "GeoElem unknowns size mismatch" );
 
   // Basic error checking on ghost tet ID map
