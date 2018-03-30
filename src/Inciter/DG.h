@@ -154,8 +154,8 @@ class DG : public CBase_DG {
       p | m_ghostReq;
       p | m_expChbface;
       p | m_ghost;
-      p | egh;  // ONLY FOR DEBUGGING
-      p | rgh;  // ONLY FOR DEBUGGING
+      p | m_exptGhost;
+      p | m_recvGhost;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -231,9 +231,10 @@ class DG : public CBase_DG {
     //!    chare id (outer map key) this remote element lies in.
     std::unordered_map< int,
       std::unordered_map< std::size_t, std::size_t > > m_ghost;
-
-    //! Expected/received ghost tet ids (ONLY FOR DEBUGGING)
-    std::set< std::size_t > egh, rgh;
+    //! Expected ghost tet ids (used only in DEBUG)
+    std::set< std::size_t > m_exptGhost;
+    //! Received ghost tet ids (used only in DEBUG)
+    std::set< std::size_t > m_recvGhost;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

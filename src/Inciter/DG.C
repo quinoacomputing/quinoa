@@ -63,7 +63,9 @@ DG::DG( const CProxy_Discretization& disc,
   m_ghostData(),
   m_ghostReq( 0 ),
   m_expChbface( 0 ),
-  m_ghost()
+  m_ghost(),
+  m_exptGhost(),
+  m_recvGhost()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -609,10 +611,11 @@ DG::adj()
   Assert( m_ghost.find( thisIndex ) == m_ghost.cend(),
           "Ghost id map should not contain data for own chare ID" );
 
-  // Ghost tet IDs expected
+  // Store expected ghost tet IDs
   for (const auto& c : m_ghost)
     for (const auto& g : c.second)
-      egh.insert( g.second );
+      Assert( m_exptGhost.insert( g.second ).second,
+              "Failed to store local tetid as exptected ghost id" );
 
   // Signal the runtime system that all workers have received their adjacency
   auto d = Disc();
@@ -694,8 +697,6 @@ DG::dt()
 
   }
 
-  rgh.clear();
-
   // Contribute to minimum dt across all chares then advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
               CkCallback(CkReductionTarget(DG,advance), thisProxy) );
@@ -749,15 +750,18 @@ DG::comsol( int fromch,
     auto j = tk::cref_find( n, tetid[i] );
     Assert( j >= m_esuelTet.size()/4, "Receiving solution non-ghost data" );
     Assert( j < m_u.nunk(), "Indexing out of bounds in DG::comsol()" );
-    rgh.insert( j );    // ghost IDs received
+    Assert( m_recvGhost.insert( j ).second,
+            "Failed to store local tetid of received ghost tetid" );
     for (std::size_t c=0; c<m_u.nprop(); ++c)
       m_u(j,c,0) = u[i][c];
   }
 
   // if we have received all solution ghost contributions from those chares we
-  // communicate along chare-boundary faces with, tell the runtime system
+  // communicate along chare-boundary faces with, solve the system
   if (++m_nrecvsol == m_ghostData.size()) {
-    Assert( egh == rgh, "Expected/received ghost tet id mismatch" );
+    Assert( m_exptGhost == m_recvGhost,
+            "Expected/received ghost tet id mismatch" );
+    m_recvGhost.clear();
     m_nrecvsol = 0;
     solve();
   }
