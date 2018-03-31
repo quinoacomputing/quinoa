@@ -14,19 +14,14 @@
 
 #include "Discretization.h"
 #include "PUPUtil.h"
+#include "Diagnostics.h"
 
 namespace inciter {
-
-//! Number of entries in diagnostics vector (of vectors), see compute()
-const std::size_t NUMELEMDIAG = 6;
 
 //! ElemDiagnostics class used to compute diagnostics while integrating PDEs
 class ElemDiagnostics {
 
   public:
-    //! Constructor
-    explicit ElemDiagnostics();
-
     //! Configure Charm++ custom reduction types initiated from this class
     static void registerReducers();
 
@@ -38,8 +33,7 @@ class ElemDiagnostics {
 
     ///@{
     //! \brief Pack/Unpack serialize member function
-//    //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &/*p*/ ) {}
+    void pup( PUP::er& ) {}
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \param[in,out] d Diagnostics object reference

@@ -53,7 +53,7 @@ NodeDiagnostics::registerReducers()
 //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
 // *****************************************************************************
 {
-  DiagMerger = CkReduction::addReducer( tk::mergeDiag );
+  DiagMerger = CkReduction::addReducer( mergeDiag );
 }
 
 bool
@@ -135,7 +135,7 @@ NodeDiagnostics::compute( Discretization& d, const tk::Fields& u )
     diag[DT][0] = d.Dt();
 
     // Contribute to diagnostics
-    auto stream = tk::serialize( diag );
+    auto stream = serialize( diag );
     d.contribute( stream.first, stream.second.get(), DiagMerger,
       CkCallback(CkIndex_Transporter::diagnostics(nullptr), d.Tr()) );
 

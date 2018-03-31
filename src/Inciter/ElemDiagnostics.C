@@ -11,7 +11,6 @@
 
 #include "DGPDE.h"
 #include "ElemDiagnostics.h"
-#include "NodeDiagnostics.h"
 #include "DiagReducer.h"
 #include "Discretization.h"
 #include "Inciter/InputDeck/InputDeck.h"
@@ -27,13 +26,6 @@ static CkReduction::reducerType DiagMerger;
 
 using inciter::ElemDiagnostics;
 
-ElemDiagnostics::ElemDiagnostics()
-// *****************************************************************************
-//  Compute diagnostics, e.g., residuals, norms of errors, etc.
-// *****************************************************************************
-{
-}
-
 void
 ElemDiagnostics::registerReducers()
 // *****************************************************************************
@@ -46,7 +38,7 @@ ElemDiagnostics::registerReducers()
 //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
 // *****************************************************************************
 {
-  DiagMerger = CkReduction::addReducer( tk::mergeDiag );
+  DiagMerger = CkReduction::addReducer( mergeDiag );
 }
 
 bool
@@ -105,7 +97,7 @@ ElemDiagnostics::compute( Discretization& d,
     // 1: L2-norm of all scalar components of the numerical-analytic solution
     // 2: Linf-norm of all scalar components of the numerical-analytic solution
     std::vector< std::vector< tk::real > >
-      diag( NUMELEMDIAG, std::vector< tk::real >( u.nprop(), 0.0 ) );
+      diag( NUMDIAG, std::vector< tk::real >( u.nprop(), 0.0 ) );
 
     // Put in norms sweeping our mesh chunk
     for (std::size_t i=0; i<u.nunk()-nchGhost; ++i) {
@@ -132,7 +124,7 @@ ElemDiagnostics::compute( Discretization& d,
     diag[DT][0] = d.Dt();
 
     // Contribute to diagnostics
-    auto stream = tk::serialize( diag );
+    auto stream = serialize( diag );
     d.contribute( stream.first, stream.second.get(), DiagMerger,
       CkCallback(CkIndex_Transporter::diagnostics(nullptr), d.Tr()) );
 
