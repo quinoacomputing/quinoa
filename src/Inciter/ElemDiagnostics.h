@@ -25,7 +25,7 @@ class ElemDiagnostics {
 
   public:
     //! Constructor
-    explicit ElemDiagnostics( const Discretization& /*d*/ );
+    explicit ElemDiagnostics();
 
     //! Configure Charm++ custom reduction types initiated from this class
     static void registerReducers();

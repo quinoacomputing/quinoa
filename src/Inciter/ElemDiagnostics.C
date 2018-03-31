@@ -27,10 +27,9 @@ static CkReduction::reducerType DiagMerger;
 
 using inciter::ElemDiagnostics;
 
-ElemDiagnostics::ElemDiagnostics( const Discretization& /*d*/ )
+ElemDiagnostics::ElemDiagnostics()
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc.
-//! \param[in] d Discretization proxy to read from
 // *****************************************************************************
 {
 }

@@ -65,7 +65,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_exptGhost(),
   m_recvGhost(),
   m_nchGhost( 0 ),
-  m_diag( *Disc() )
+  m_diag()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy

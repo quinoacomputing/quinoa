@@ -93,7 +93,7 @@ class DG : public CBase_DG {
                  const FaceData& fd );
 
     //! Migrate constructor
-    explicit DG( CkMigrateMessage* ) : m_diag( *Disc() ) {}
+    explicit DG( CkMigrateMessage* ) {}
 
     //! Receive unique set of faces we potentially share with/from another chare
     void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
