@@ -38,6 +38,14 @@
                URL="\ref inciter::DG::reqGhost"];
       OwnGhost -> sendGhost [ style="solid" ];
       ReqGhost -> sendGhost [ style="solid" ];
+      OwnSol [ label="OwnSol"
+               tooltip="own solution/unknown data computed"
+               URL="\ref inciter::DG::advance"];
+      ComSol [ label="ComSol"
+               tooltip="communicated (ghost) solution/unknown data received"
+               URL="\ref inciter::DG::comsol"];
+      OwnSol -> Solve [ style="solid" ];
+      ComSol -> Solve [ style="solid" ];
     }
     \enddot
     \include Inciter/dg.ci
