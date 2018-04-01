@@ -60,8 +60,13 @@ module dg {
         when ownghost_complete(), reqghost_complete() serial "ghost"
         { sendGhost(); } };
 
+      entry void wait4sol() {
+        when ownsol_complete(), comsol_complete() serial "sol" { solve(); } };
+
       entry void ownghost_complete();
       entry void reqghost_complete();
+      entry void ownsol_complete();
+      entry void comsol_complete();
     };
 
   } // inciter::

@@ -677,6 +677,9 @@ DG::setup( tk::real v )
   // Output initial conditions to file (regardless of whether it was requested)
   if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( d->T() );
 
+  // Start timer measuring time stepping wall clock time
+  d->Timer().zero();
+
   // Start time stepping
   dt();
 }
@@ -709,6 +712,9 @@ DG::dt()
 
   }
 
+  // Enable SDAG wait for building the solution vector
+  wait4sol();
+
   // Contribute to minimum dt across all chares then advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
               CkCallback(CkReductionTarget(DG,advance), thisProxy) );
@@ -726,9 +732,9 @@ DG::advance( tk::real newdt )
   // Set new time step size
   d->setdt( newdt );
 
-  // communicate solution ghost  data (if any)
+  // communicate solution ghost data (if any)
   if (m_ghostData.empty())
-    solve();
+    comsol_complete();
   else
     for(const auto& n : m_ghostData) {
       std::vector< std::size_t > tetid;
@@ -740,6 +746,8 @@ DG::advance( tk::real newdt )
       }
       thisProxy[ n.first ].comsol( thisIndex, tetid, u );
     }
+
+  ownsol_complete();
 }
 
 void
@@ -775,7 +783,7 @@ DG::comsol( int fromch,
             "Expected/received ghost tet id mismatch" );
     m_recvGhost.clear();
     m_nsol = 0;
-    solve();
+    comsol_complete();
   }
 }
 
