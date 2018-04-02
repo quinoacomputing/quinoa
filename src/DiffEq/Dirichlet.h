@@ -26,7 +26,7 @@
     \f]
     To keep the invariant distribution Dirichlet, the above constraint on the
     coefficients must be satisfied. For more details on the Dirichlet SDE, see
-    http://dx.doi.org/10.1155/2013/842981.
+    https://doi.org/10.1155/2013/842981.
 */
 // *****************************************************************************
 #ifndef Dirichlet_h

@@ -46,7 +46,7 @@
     function](http://en.wikipedia.org/wiki/Gamma_function). To keep the
     invariant distribution generalized Dirichlet, the above set of constraints
     on the coefficients must be satisfied. For more details on the generalized
-    Dirichlet SDE, see http://dx.doi.org/10.1063/1.4822416.
+    Dirichlet SDE, see https://doi.org/10.1063/1.4822416.
 */
 // *****************************************************************************
 #ifndef GeneralizedDirichlet_h

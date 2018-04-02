@@ -61,7 +61,7 @@ Currently, the following differential equations are implemented:
 
  1. <B>Beta</B> - A system of SDEs, with linear drift and quadratic diagonal
  diffusion, whose invariant is the joint beta distribution. For more details
- on the beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](http://doi.org/10.1080/14685248.2010.510843).
+ on the beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](https://doi.org/10.1080/14685248.2010.510843).
 
    - For a short overview of the equation and its implementation, see
      DiffEq/Beta.h.
@@ -86,7 +86,7 @@ Currently, the following differential equations are implemented:
    - For coefficients policies, see DiffEq/OrnsteinUhlenbeckCoeffPolicy.h.
 
  4. <B>Dirichlet</B> - A system of SDEs, whose invariant is the Dirichlet
- distribution. For more details on the Dirichlet SDE, see [Bakosi, Ristorcelli, A Stochastic Diffusion Process for the Dirichlet Distribution, Int. J. Stoch. Anal., 2013](http://dx.doi.org/10.1155/2013/842981).
+ distribution. For more details on the Dirichlet SDE, see [Bakosi, Ristorcelli, A Stochastic Diffusion Process for the Dirichlet Distribution, Int. J. Stoch. Anal., 2013](https://doi.org/10.1155/2013/842981).
 
    - For a short overview of the equation and its implementation, see
      DiffEq/Dirichlet.h.
@@ -95,7 +95,7 @@ Currently, the following differential equations are implemented:
 
  5. <B>Generalized Dirichlet</B> - A system of SDEs, whose invariant is Lochner's
  generalized Dirichlet distribution. For more details on the generalized
- Dirichlet SDE, see [Bakosi, Ristorcelli, A Stochastic Diffusion Process for Lochner's generalized Dirichlet distribution, J. Math. Phys., 2013](http://dx.doi.org/10.1063/1.4822416).
+ Dirichlet SDE, see [Bakosi, Ristorcelli, A Stochastic Diffusion Process for Lochner's generalized Dirichlet distribution, J. Math. Phys., 2013](https://doi.org/10.1063/1.4822416).
 
    - For a short overview of the equation and its the implementation, see
      DiffEq/GeneralizedDirichlet.h.
@@ -131,7 +131,7 @@ Currently, the following differential equations are implemented:
  The number-fraction beta SDE is based on the beta SDE, additionally computing
  two more stochastic variables that are functions of the beta variables
  integrated, assuming that the beta variables are number, or mole-, fractions.
- For more details on the beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](http://doi.org/10.1080/14685248.2010.510843).
+ For more details on the beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](https://doi.org/10.1080/14685248.2010.510843).
 
    - For a short overview of the equation and its implementation, see
      DiffEq/NumberFractionBeta.h.
@@ -143,7 +143,7 @@ Currently, the following differential equations are implemented:
  The mass-fraction beta SDE is based on the beta SDE, additionally computing
  two more stochastic variables that are functions of the beta variables
  integrated, assuming that the beta variables are mass-fractions. For more
- details on the beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](http://doi.org/10.1080/14685248.2010.510843).
+ details on the beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](https://doi.org/10.1080/14685248.2010.510843).
 
    - For a short overview of the equation and its implementation, see
      DiffEq/MassFractionBeta.h.
@@ -157,7 +157,7 @@ Currently, the following differential equations are implemented:
  turbulent mixing process, and (2) additionally computing two more stochastic
  variables that are functions of the beta variables integrated, assuming that
  the beta variables are number, or mole-, fractions. For more details on the
- beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](http://doi.org/10.1080/14685248.2010.510843).
+ beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](https://doi.org/10.1080/14685248.2010.510843).
 
    - For a short overview of the equation and its implementation, see
      DiffEq/MixNumberFractionBeta.h.
@@ -171,7 +171,7 @@ Currently, the following differential equations are implemented:
  turbulent mixing process, and (2) additionally computing two more stochastic
  variables that are functions of the beta variables integrated, assuming that
  the beta variables are mass-fractions. For more details on the beta SDE, see
- [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](http://doi.org/10.1080/14685248.2010.510843).
+ [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](https://doi.org/10.1080/14685248.2010.510843).
 
    - For a short overview of the equation and its implementation, see
      DiffEq/MixMassFractionBeta.h.
