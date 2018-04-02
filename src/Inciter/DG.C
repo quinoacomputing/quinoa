@@ -64,7 +64,6 @@ DG::DG( const CProxy_Discretization& disc,
   m_ghost(),
   m_exptGhost(),
   m_recvGhost(),
-  m_nchGhost( 0 ),
   m_diag()
 // *****************************************************************************
 //  Constructor
@@ -604,8 +603,6 @@ DG::adj()
   // Perform leak test on face geometry data structure enlarged by ghosts
   Assert( !leakyAdjacency(), "Face adjacency leaky" );
 
-  m_nchGhost = m_nunk - m_u.nunk();
-
   // Resize solution vectors, lhs, and rhs by the number of ghost tets
   m_u.resize( m_nunk );
   m_un.resize( m_nunk );
@@ -876,7 +873,7 @@ DG::solve()
   // Output field data to file
   out();
   // Compute diagnostics, e.g., residuals
-  auto diag = m_diag.compute( *d, m_nchGhost, m_geoElem, m_u );
+  auto diag = m_diag.compute( *d, m_u.nunk()-m_esuelTet.size()/4, m_geoElem, m_u );
   // Increase number of iterations and physical time
   d->next();
   // Output one-liner status report
