@@ -608,7 +608,7 @@ struct rngsse_gm19_info {
     method based on parallel evolution of an ensemble of transformations of
     a two-dimensional torus, provided by the RNGSSE2 random number generator
     library. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_gm19 = keyword< rngsse_gm19_info, TAOCPP_PEGTL_STRING("rngsse_gm19") >;
@@ -622,7 +622,7 @@ struct rngsse_gm29_info {
     on parallel evolution of an ensemble of transformations of a
     two-dimensional torus, provided by the RNGSSE2 random number generator
     library. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_gm29 = keyword< rngsse_gm29_info, TAOCPP_PEGTL_STRING("rngsse_gm29") >;
@@ -636,7 +636,7 @@ struct rngsse_gm31_info {
     on parallel evolution of an ensemble of transformations of a
     two-dimensional torus, provided by the RNGSSE2 random number generator
     library. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_gm31 = keyword< rngsse_gm31_info, TAOCPP_PEGTL_STRING("rngsse_gm31") >;
@@ -650,7 +650,7 @@ struct rngsse_gm55_info {
     on parallel evolution of an ensemble of transformations of a
     two-dimensional torus, provided by the RNGSSE2 random number generator
     library. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_gm55 = keyword< rngsse_gm55_info, TAOCPP_PEGTL_STRING("rngsse_gm55") >;
@@ -664,7 +664,7 @@ struct rngsse_gm61_info {
     on parallel evolution of an ensemble of transformations of a
     two-dimensional torus, provided by the RNGSSE2 random number generator
     library. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_gm61 = keyword< rngsse_gm61_info, TAOCPP_PEGTL_STRING("rngsse_gm61") >;
@@ -678,7 +678,7 @@ struct rngsse_gq581_info {
     on parallel evolution of an ensemble of transformations of a
     two-dimensional torus, provided by the RNGSSE2 random number generator
     library. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_gq581 =
@@ -693,7 +693,7 @@ struct rngsse_gq583_info {
     on parallel evolution of an ensemble of transformations of a
     two-dimensional torus, provided by the RNGSS2 random number generator
     library. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_gq583 =
@@ -708,7 +708,7 @@ struct rngsse_gq584_info {
     on parallel evolution of an ensemble of transformations of a
     two-dimensional torus, provided by the RNGSSE2 random number generator
     library. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_gq584 =
@@ -721,7 +721,7 @@ struct rngsse_mt19937_info {
   static std::string longDescription() { return
     R"(This keyword is used to select the MT19937 generator, a Mersenne Twister
     generator, provided by the RNGSSE2 random number generator library. For
-    more info on RNGSSE see http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    more info on RNGSSE see https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_mt19937 =
@@ -734,7 +734,7 @@ struct rngsse_lfsr113_info {
   static std::string longDescription() { return
     R"(This keyword is used to select the LFSR113 generator, provided by the
     RNGSSE2 random number generator library. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_lfsr113 =
@@ -748,7 +748,7 @@ struct rngsse_mrg32k3a_info {
     R"(This keyword is used to select the MRG32K3A generator, a combined
     multiple recursive random number generator with two components of order
     3, provided by the RNGSS2 random number generator library. For more info
-    on RNGSSE see http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    on RNGSSE see https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_mrg32k3a =
@@ -762,7 +762,7 @@ struct seq_short_info {
     R"(This keyword is used to select the short sequence length used by the
     RNGSSE2 random number generator library. Valid options are 'short',
     'medium', and 'long'. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using seq_short = keyword< seq_short_info, TAOCPP_PEGTL_STRING("short") >;
@@ -775,7 +775,7 @@ struct seq_med_info {
     R"(This keyword is used to select the medium sequence length used by the
     RNGSSE2 random number generator library. Valid options are 'short',
     'medium', and 'long'. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using seq_med = keyword< seq_med_info, TAOCPP_PEGTL_STRING("medium") >;
@@ -788,7 +788,7 @@ struct seq_long_info {
     R"(This keyword is used to select the medium sequence length used by the
     RNGSSE2 random number generator library. Valid options are 'short',
     'medium', and 'long'. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using seq_long = keyword< seq_long_info, TAOCPP_PEGTL_STRING("long") >;
@@ -801,7 +801,7 @@ struct seqlen_info {
     R"(This keyword is used to select a random number generator sequence length,
     used by the RNGSSE2 random number generator library. Valid options are
     'short', 'medium', and 'long'. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
   struct expect {
     static std::string description() { return "string"; }
@@ -2002,7 +2002,7 @@ struct dirichlet_info {
     R"(This keyword is used to introduce a dirichlet ... end block, used to
     specify the configuration of a system of stochastic differential
     equations (SDEs), whose invariant is the Dirichlet distribution. For more
-    details on the Dirichlet SDE, see http://dx.doi.org/10.1155/2013/842981.
+    details on the Dirichlet SDE, see https://doi.org/10.1155/2013/842981.
     Keywords allowed in a dirichlet ... end block: )" + std::string("\'")
     + depvar::string()+ "\', \'"
     + ncomp::string() + "\', \'"
@@ -2027,7 +2027,7 @@ struct gendir_info {
     block, used to specify the configuration of a system of stochastic
     differential equations (SDEs), whose invariant is Lochner's generalized
     Dirichlet distribution. For more details on the generalized Dirichlet
-    SDE, see http://dx.doi.org/10.1063/1.4822416. Keywords allowed in a gendir
+    SDE, see https://doi.org/10.1063/1.4822416. Keywords allowed in a gendir
     ... end block: )" + std::string("\'")
     + depvar::string()+ "\', \'"
     + ncomp::string() + "\', \'"
@@ -2102,7 +2102,7 @@ struct beta_info {
     the configuration of a system of stochastic differential equations (SDEs),
     with linear drift and quadratic diagonal diffusion, whose invariant is the
     joint beta distribution. For more details on the beta SDE, see
-    http://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
+    https://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
     allowed in a beta ... end block: )" + std::string("\'")
     + depvar::string()+ "\', \'"
     + ncomp::string() + "\', \'"
@@ -2133,7 +2133,7 @@ struct numfracbeta_info {
     beta SDE, then the number-fraction beta SDE additionally governs rho(X) and
     V(X), where both rho and V are random variables, computed by rho(X) = rho2
     ( 1 - r' X ), and V(X) = 1 / [ rho2 ( 1 - r'X ) ]. For more details on the
-    beta SDE, see http://doi.org/10.1080/14685248.2010.510843 and
+    beta SDE, see https://doi.org/10.1080/14685248.2010.510843 and
     src/DiffEq/Beta.h. Keywords allowed in a numfracbeta ... end block: )"
     + std::string("\'")
     + depvar::string()+ "\', \'"
@@ -2167,7 +2167,7 @@ struct massfracbeta_info {
     beta SDE, then the mass-fraction beta SDE additionally governs rho(Y) and
     V(Y), where both rho and V are random variables, computed by rho(Y) = rho2 /
     ( 1 + r Y ), and V(Y) = ( 1 + r Y ) / rho2. For more details on the beta
-    SDE, see http://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h.
+    SDE, see https://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h.
     Keywords allowed in a massfracbeta ... end block: )"
     + std::string("\'")
     + depvar::string()+ "\', \'"
@@ -2209,7 +2209,7 @@ struct mixnumfracbeta_info {
     random variables computed besides, X, and they are rho(X) and V(X). For more
     detail on the number-fraction beta SDE, see the help on keyword
     'numfracbeta'. For more details on the beta SDE, see
-    http://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
+    https://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
     allowed in a mixnumfracbeta ... end block: )"
     + std::string("\'")
     + depvar::string()+ "\', \'"
@@ -2252,7 +2252,7 @@ struct mixmassfracbeta_info {
     random variables computed besides, Y, and they are rho(Y) and V(Y). For more
     detail on the mass-fraction beta SDE, see the help on keyword
     'massfracbeta'. For more details on the beta SDE, see
-    http://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
+    https://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
     allowed in a mixmassfracbeta ... end block: )"
     + std::string("\'")
     + depvar::string()+ "\', \'"
