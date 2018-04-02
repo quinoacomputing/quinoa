@@ -432,6 +432,7 @@ namespace AMR {
         else if (num_to_refine > 3)
         {
             //refiner.refine_one_to_eight(tet_id);
+            tet_store.mark_edges_for_refinement(tet_id);
             tet_store.mark_one_to_eight(tet_id);
         }
     }
