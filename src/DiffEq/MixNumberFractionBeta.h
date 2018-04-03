@@ -39,7 +39,7 @@
     [Wiener process](http://en.wikipedia.org/wiki/Wiener_process) with
     independent increments. The invariant distribution is the joint beta
     distribution. This system of SDEs consists of N independent equations. For
-    more on the beta SDE, see http://dx.doi.org/10.1080/14685248.2010.510843.
+    more on the beta SDE, see https://doi.org/10.1080/14685248.2010.510843.
 
     Similar to the number-fraction beta SDE (DiffEq/NumberFractionBeta.h), in
     addition to integrating the above SDE, there are two additional functions

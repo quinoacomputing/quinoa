@@ -4,7 +4,7 @@
 
 This example runs [walker](walker_doc.html) to integrate the beta SDE (see
 DiffEq/Beta.h) using constant coefficients. For more detail on the beta SDE, see
-http://dx.doi.org/10.1080/14685248.2010.510843.
+https://doi.org/10.1080/14685248.2010.510843.
 
 \section walker_example_beta_control Control file
 
