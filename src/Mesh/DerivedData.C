@@ -1068,23 +1068,21 @@ genNtfac( std::size_t nfpe,
 
   std::size_t nifac = 0;
 
-  if (nbfac > 0)
-  {
-
-  // loop through elements surrounding elements to find number of internal faces
-  for (std::size_t e=0; e<nelem; ++e)
-  {
-    for (std::size_t ip=nfpe*e; ip<nfpe*(e+1); ++ip)
+  if (nbfac > 0) {
+    // loop through elements surrounding elements to find number of internal faces
+    for (std::size_t e=0; e<nelem; ++e)
     {
-      if (esuelTet[ip] != -1)
+      for (std::size_t ip=nfpe*e; ip<nfpe*(e+1); ++ip)
       {
-        if ( e<static_cast< std::size_t >(esuelTet[ip]) )
+        if (esuelTet[ip] != -1)
         {
-          ++nifac;
+          if ( e<static_cast< std::size_t >(esuelTet[ip]) )
+          {
+            ++nifac;
+          }
         }
       }
     }
-  }
   }
 
   return nifac + nbfac;
@@ -1118,37 +1116,32 @@ genEsuf( std::size_t nfpe,
 
   std::vector< int > esuf(2*ntfac);
 
-  if (nbfac > 0)
-  {
+  if (nbfac > 0) {
+    // counters for number of internal and boundary faces
+    std::size_t icoun(2*nbfac), bcoun(0);
 
-  // counters for number of internal and boundary faces
-  std::size_t icoun(2*nbfac), bcoun(0);
-
-  // loop to get face-element connectivity for internal faces
-  for (std::size_t e=0; e<nelem; ++e)
-  {
-    for (std::size_t ip=nfpe*e; ip<nfpe*(e+1); ++ip)
-    {
-      auto jelem = esuelTet[ip];
-      if (jelem != -1)
-      {
-        if ( e < static_cast< std::size_t >(jelem) )
+    // loop to get face-element connectivity for internal faces
+    for (std::size_t e=0; e<nelem; ++e) {
+      for (std::size_t ip=nfpe*e; ip<nfpe*(e+1); ++ip) {
+        auto jelem = esuelTet[ip];
+        if (jelem != -1)
         {
-          esuf[icoun] = static_cast< int >(e);
-          esuf[icoun+1] = static_cast< int >(jelem);
-          icoun = icoun + 2;
+          if ( e < static_cast< std::size_t >(jelem) )
+          {
+            esuf[icoun] = static_cast< int >(e);
+            esuf[icoun+1] = static_cast< int >(jelem);
+            icoun = icoun + 2;
+          }
         }
       }
     }
-  }
 
-  bcoun = 0;
-  for (auto ie : belem)
-  {
-    esuf[bcoun] = static_cast< int >(ie);
-    esuf[bcoun+1] = -1;  // outside domain
-    bcoun = bcoun + 2;
-  }
+    bcoun = 0;
+    for (auto ie : belem) {
+      esuf[bcoun] = static_cast< int >(ie);
+      esuf[bcoun+1] = -1;  // outside domain
+      bcoun = bcoun + 2;
+    }
   }
 
   return esuf;
@@ -1175,54 +1168,53 @@ genInpofaTet( std::size_t ntfac,
 
   if (nbfac > 0)
   {
+    // set tetrahedron geometry
+    std::size_t nnpe(4), nfpe(4), nnpf(3);
 
-  // set tetrahedron geometry
-  std::size_t nnpe(4), nfpe(4), nnpf(3);
+    Assert( esuelTet.size()%nfpe == 0,
+                    "Size of esuelTet must be divisible by nfpe" );
+    Assert( inpoel.size()%nnpe == 0,
+                    "Size of inpoel must be divisible by nnpe" );
 
-  Assert( esuelTet.size()%nfpe == 0,
-                  "Size of esuelTet must be divisible by nfpe" );
-  Assert( inpoel.size()%nnpe == 0,
-                  "Size of inpoel must be divisible by nnpe" );
+    auto nelem = inpoel.size()/nnpe;
 
-  auto nelem = inpoel.size()/nnpe;
+    inpofa.resize(nnpf*ntfac);
 
-  inpofa.resize(nnpf*ntfac);
+    // counters for number of internal and boundary faces
+    std::size_t icoun(nnpf*nbfac);
+    std::size_t mark(0);
 
-  // counters for number of internal and boundary faces
-  std::size_t icoun(nnpf*nbfac);
-  std::size_t mark(0);
-
-  // loop over elems to get nodes on faces
-  // this fills the interior face-node connectivity part
-  for (std::size_t e=0; e<nelem; ++e)
-  {
-    mark = nnpe*e;
-    for (std::size_t f=0; f<nfpe ; ++f)
+    // loop over elems to get nodes on faces
+    // this fills the interior face-node connectivity part
+    for (std::size_t e=0; e<nelem; ++e)
     {
-      auto ip = nfpe*e + f;
-      auto jelem = esuelTet[ip];
-      if (jelem != -1)
+      mark = nnpe*e;
+      for (std::size_t f=0; f<nfpe ; ++f)
       {
-        if ( e < static_cast< std::size_t >(jelem) )
+        auto ip = nfpe*e + f;
+        auto jelem = esuelTet[ip];
+        if (jelem != -1)
         {
-          inpofa[icoun]   = inpoel[mark+lpofa[f][0]];
-          inpofa[icoun+1] = inpoel[mark+lpofa[f][1]];
-          inpofa[icoun+2] = inpoel[mark+lpofa[f][2]];
-          icoun = icoun + nnpf;
+          if ( e < static_cast< std::size_t >(jelem) )
+          {
+            inpofa[icoun]   = inpoel[mark+lpofa[f][0]];
+            inpofa[icoun+1] = inpoel[mark+lpofa[f][1]];
+            inpofa[icoun+2] = inpoel[mark+lpofa[f][2]];
+            icoun = icoun + nnpf;
+          }
         }
       }
     }
-  }
 
-  // this fills the boundary face-node connectivity part
-  // consistent with triinpoel
-  for (std::size_t f=0; f<nbfac; ++f)
-  {
-    icoun = nnpf * f;
-    inpofa[icoun+0] = triinpoel[icoun+2];
-    inpofa[icoun+1] = triinpoel[icoun+1];
-    inpofa[icoun+2] = triinpoel[icoun+0];
-  }
+    // this fills the boundary face-node connectivity part
+    // consistent with triinpoel
+    for (std::size_t f=0; f<nbfac; ++f)
+    {
+      icoun = nnpf * f;
+      inpofa[icoun+0] = triinpoel[icoun+2];
+      inpofa[icoun+1] = triinpoel[icoun+1];
+      inpofa[icoun+2] = triinpoel[icoun+0];
+    }
   }
 
   return inpofa;
@@ -1334,12 +1326,7 @@ genGeoFaceTri( std::size_t ntfac,
     std::size_t ip1, ip2, ip3;
     tk::real xp1, yp1, zp1,
              xp2, yp2, zp2,
-             xp3, yp3, zp3,
-             ax, ay, az,
-             bx, by, bz,
-             nx, ny, nz,
-             sidea, sideb, sidec,
-             semip, farea;
+             xp3, yp3, zp3;
 
     // get area
     ip1 = inpofa[nnpf*f];
@@ -1358,53 +1345,100 @@ genGeoFaceTri( std::size_t ntfac,
     yp3 = coord[1][ip3];
     zp3 = coord[2][ip3];
 
-    sidea = sqrt( (xp2-xp1)*(xp2-xp1)
-                + (yp2-yp1)*(yp2-yp1)
-                + (zp2-zp1)*(zp2-zp1) );
+    auto geoif = geoFaceTri( {{xp1, xp2, xp3}},
+                             {{yp1, yp2, yp3}},
+                             {{zp1, zp2, zp3}} );
 
-    sideb = sqrt( (xp3-xp2)*(xp3-xp2)
-                + (yp3-yp2)*(yp3-yp2)
-                + (zp3-zp2)*(zp3-zp2) );
-
-    sidec = sqrt( (xp1-xp3)*(xp1-xp3)
-                + (yp1-yp3)*(yp1-yp3)
-                + (zp1-zp3)*(zp1-zp3) );
-
-    semip = 0.5 * (sidea + sideb + sidec);
-
-    farea = sqrt( semip
-                * (semip-sidea)
-                * (semip-sideb)
-                * (semip-sidec) );
-
-    geoFace(f,0,0) = farea;
-
-    // get unit normal to face
-    ax = xp2 - xp1;
-    ay = yp2 - yp1;
-    az = zp2 - zp1;
-
-    bx = xp3 - xp1;
-    by = yp3 - yp1;
-    bz = zp3 - zp1;
-
-    nx =   ay*bz - az*by;
-    ny = -(ax*bz - az*bx);
-    nz =   ax*by - ay*bx;
-
-    farea = sqrt(nx*nx + ny*ny + nz*nz);
-
-    geoFace(f,1,0) = nx/farea;
-    geoFace(f,2,0) = ny/farea;
-    geoFace(f,3,0) = nz/farea;
-
-    // get centroid
-    geoFace(f,4,0) = (xp1+xp2+xp3)/3.0;
-    geoFace(f,5,0) = (yp1+yp2+yp3)/3.0;
-    geoFace(f,6,0) = (zp1+zp2+zp3)/3.0;
+    for (std::size_t i=0; i<7; ++i)
+      geoFace(f,i,0) = geoif(0,i,0);
   }
 
   return geoFace;
+}
+
+tk::Fields
+geoFaceTri( const std::array< tk::real, 3 >& x,
+            const std::array< tk::real, 3 >& y,
+            const std::array< tk::real, 3 >& z )
+// *****************************************************************************
+//! Compute geometry of the face given by three vertices
+//! \param[in] x x-coordinates of the three vertices of the triangular face.
+//! \param[in] y y-coordinates of the three vertices of the triangular face.
+//! \param[in] z z-coordinates of the three vertices of the triangular face.
+//! \return Face geometry information. This includes face area, unit normal
+//!   pointing outward of the element to the left of the face, and face
+//!   centroid coordinates.
+// *****************************************************************************
+{
+  tk::Fields geoiFace( 1, 7 );
+
+  tk::real xp1, yp1, zp1,
+           xp2, yp2, zp2,
+           xp3, yp3, zp3,
+           ax, ay, az,
+           bx, by, bz,
+           nx, ny, nz,
+           sidea, sideb, sidec,
+           semip, farea;
+
+  xp1 = x[0];
+  xp2 = x[1];
+  xp3 = x[2];
+
+  yp1 = y[0];
+  yp2 = y[1];
+  yp3 = y[2];
+
+  zp1 = z[0];
+  zp2 = z[1];
+  zp3 = z[2];
+
+  sidea = sqrt( (xp2-xp1)*(xp2-xp1)
+              + (yp2-yp1)*(yp2-yp1)
+              + (zp2-zp1)*(zp2-zp1) );
+
+  sideb = sqrt( (xp3-xp2)*(xp3-xp2)
+              + (yp3-yp2)*(yp3-yp2)
+              + (zp3-zp2)*(zp3-zp2) );
+
+  sidec = sqrt( (xp1-xp3)*(xp1-xp3)
+              + (yp1-yp3)*(yp1-yp3)
+              + (zp1-zp3)*(zp1-zp3) );
+
+  semip = 0.5 * (sidea + sideb + sidec);
+
+  farea = sqrt( semip
+              * (semip-sidea)
+              * (semip-sideb)
+              * (semip-sidec) );
+
+  geoiFace(0,0,0) = farea;
+
+  // get unit normal to face
+  ax = xp2 - xp1;
+  ay = yp2 - yp1;
+  az = zp2 - zp1;
+
+  bx = xp3 - xp1;
+  by = yp3 - yp1;
+  bz = zp3 - zp1;
+
+  nx =   ay*bz - az*by;
+  ny = -(ax*bz - az*bx);
+  nz =   ax*by - ay*bx;
+
+  farea = sqrt(nx*nx + ny*ny + nz*nz);
+
+  geoiFace(0,1,0) = nx/farea;
+  geoiFace(0,2,0) = ny/farea;
+  geoiFace(0,3,0) = nz/farea;
+
+  // get centroid
+  geoiFace(0,4,0) = (xp1+xp2+xp3)/3.0;
+  geoiFace(0,5,0) = (yp1+yp2+yp3)/3.0;
+  geoiFace(0,6,0) = (zp1+zp2+zp3)/3.0;
+
+  return geoiFace;
 }
         
 tk::Fields

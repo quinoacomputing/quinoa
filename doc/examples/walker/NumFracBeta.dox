@@ -7,7 +7,7 @@ beta SDE (see DiffEq/NumberFractionBeta.h) using constant coefficients. The
 number-fraction beta SDE is based on the beta SDE, additionally computing two
 more stochastic variables that are functions of the beta variables integrated.
 For more detail on the beta SDE, see
-http://dx.doi.org/10.1080/14685248.2010.510843.
+https://doi.org/10.1080/14685248.2010.510843.
 
 \section walker_example_numfracbeta_control Control file
 
