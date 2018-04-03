@@ -111,6 +111,7 @@ class MatCG : public CBase_MatCG {
       p | m_nlsol;
       p | m_disc;
       p | m_solver;
+      p | m_side;
       p | m_u;
       p | m_ul;
       p | m_du;
