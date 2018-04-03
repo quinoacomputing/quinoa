@@ -135,7 +135,7 @@ class DiagCG : public CBase_DiagCG {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
-    explicit DiagCG( CkMigrateMessage* ) : m_diag( *Disc() ) {}
+    explicit DiagCG( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -194,6 +194,7 @@ class DiagCG : public CBase_DiagCG {
       p | m_lhs;
       p | m_rhs;
       p | m_dif;
+      p | m_bc;
       p | m_lhsc;
       p | m_rhsc;
       p | m_difc;

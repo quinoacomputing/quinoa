@@ -65,7 +65,7 @@ MatCG::MatCG( const CProxy_Discretization& disc,
   m_lhsd( m_disc[thisIndex].ckLocal()->Psup().second.size()-1, m_u.nprop() ),
   m_lhso( m_disc[thisIndex].ckLocal()->Psup().first.size(), m_u.nprop() ),
   m_vol( 0.0 ),
-  m_diag( *Disc() )
+  m_diag()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
