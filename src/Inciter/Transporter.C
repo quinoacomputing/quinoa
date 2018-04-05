@@ -423,6 +423,10 @@ Transporter::distributed()
 // *****************************************************************************
 {
   m_progPart.end();
+
+std::cout << "abort before flatten()\n";
+mainProxy.finalize();
+
   m_progReorder.start( "Reordering mesh (flatten, gather, query, mask, "
                        "reorder, bounds) ... " );
   m_partitioner.flatten();
@@ -494,9 +498,6 @@ Transporter::coord()
   auto sch = g_inputdeck.get< tag::selected, tag::scheme >();
   if (sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG)
     m_scheme.doneDistFCTInserting< tag::bcast >();
-
-std::cout << "exit before coord()\n";
-mainProxy.finalize();
 
   m_scheme.coord< tag::bcast >();
 }

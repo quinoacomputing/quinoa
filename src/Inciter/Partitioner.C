@@ -245,7 +245,7 @@ void
 Partitioner::add( int frompe,
   const std::unordered_map< int, std::vector< std::size_t > >& n )
 // *****************************************************************************
-//! Receive mesh node IDs associated to chares we own
+//! Receive mesh node IDs (as connectivities) associated to chares we own
 //! \param[in] n Mesh node indices associated to chare IDs
 //! \param[in] frompe PE call coming from
 // *****************************************************************************
@@ -621,7 +621,7 @@ void
 Partitioner::distribute(
   std::unordered_map< int, std::vector< std::size_t > >&& n )
 // *****************************************************************************
-//  Distribute global mesh node IDs to their owner PEs
+//  Distribute global mesh node IDs (as connectivities) to their owner PEs
 //! \param[in] n Global mesh node IDs connecting elements associated to
 //!   chare IDs on this PE resulting from partitioning the mesh elements.
 //!   Note that this data is moved in.
