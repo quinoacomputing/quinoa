@@ -129,6 +129,15 @@ Transporter::Transporter() :
              std::numeric_limits< tk::real >::epsilon())
     m_print.item( "CFL coefficient", cfl );
 
+  // Print out adaptive mesh refinement configuration
+  const auto amr = g_inputdeck.get< tag::amr, tag::amr >();
+  if (amr) {
+    m_print.section( "Adaptive mesh refinement (AMR)" );
+    m_print.ItemVec< ctr::AMRInitial >
+                   ( g_inputdeck.get< tag::amr, tag::init >() );
+    m_print.Item< ctr::AMRError, tag::amr, tag::error >();
+  }
+
   // If the desired max number of time steps is larger than zero, and the
   // termination time is larger than the initial time, and the constant time
   // step size (if that is used) is smaller than the duration of the time to be
@@ -485,6 +494,9 @@ Transporter::coord()
   auto sch = g_inputdeck.get< tag::selected, tag::scheme >();
   if (sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG)
     m_scheme.doneDistFCTInserting< tag::bcast >();
+
+std::cout << "exit before coord()\n";
+mainProxy.finalize();
 
   m_scheme.coord< tag::bcast >();
 }

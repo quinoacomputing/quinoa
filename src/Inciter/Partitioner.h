@@ -221,11 +221,12 @@ class Partitioner : public CBase_Partitioner {
     //!   assigned) by each PE
     std::size_t m_nmask;
     //! Tetrtahedron element connectivity of our chunk of the mesh
-    std::vector< std::size_t > m_tetinpoel;
+    //! \details With global node IDs.
+    std::vector< std::size_t > m_ginpoel;
+    //! Coordinates of mesh nodes of our chunk of the mesh
+    tk::UnsMesh::Coords m_coord;
     //! Global element IDs we read (our chunk of the mesh)
     std::vector< long > m_gelemid;
-    //! Coordinates of mesh nodes of out chunk of the mesh
-    std::array< std::vector< tk::real >, 3 > m_coord;
     //! Element centroid coordinates of our chunk of the mesh
     std::array< std::vector< tk::real >, 3 > m_centroid;
     //! Total number of chares across all PEs
@@ -357,11 +358,18 @@ class Partitioner : public CBase_Partitioner {
     //! Associate new node IDs to old ones and return them to the requestor(s)
     void prepare();
 
-    //! Generate compact mesh connectivity
-    void generate_compact_inpoel();
-
     //! Uniformly refine our mesh replacing each tetrahedron with 8 new ones
-    void refine( const std::vector< std::size_t >& inpoel );
+    void refine( std::unordered_map< std::size_t, std::size_t >& lid );
+
+    //! Do uniform refinement
+    void uniformRefine( std::unordered_map< std::size_t, std::size_t >& lid );
+
+    //! Do error-based refinement
+    void errorRefine( std::unordered_map< std::size_t, std::size_t >& lid );
+
+    //! Update mesh after refinement
+    void updateMesh( AMR::mesh_adapter_t& refiner,
+                     std::unordered_map< std::size_t, std::size_t >& lid );
 
     //! Compute final result of reordering
     void reordered();

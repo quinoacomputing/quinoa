@@ -123,7 +123,7 @@ class UnsMesh {
     //! \brief Constructor copying over element connectivity and array of point
     //!   coordinates
     explicit UnsMesh( const std::vector< std::size_t >& tetinp,
-                      const std::array< std::vector< real >, 3 >& coord ) :
+                      const Coords& coord ) :
       m_graphsize( graphsize( tetinp ) ),
       m_lininpoel(), m_triinpoel(),
       m_tetinpoel( tetinp ),
@@ -154,8 +154,7 @@ class UnsMesh {
 
     //! \brief Constructor swallowing element connectivity and array of point
     //!   coordinates
-    explicit UnsMesh( std::vector< std::size_t >&& tetinp,
-                      std::array< std::vector< real >, 3 >&& coord ) :
+    explicit UnsMesh( std::vector< std::size_t >&& tetinp, Coords&& coord ) :
       m_graphsize( graphsize( tetinp ) ),
       m_lininpoel(), m_triinpoel(),
       m_tetinpoel( std::move(tetinp) ),
