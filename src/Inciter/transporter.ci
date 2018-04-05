@@ -17,10 +17,8 @@ module transporter {
 
     chare Transporter {
       entry Transporter();
-      entry [reductiontarget] void load( uint64_t nelem );
-      entry [reductiontarget] void refined();
-      entry [reductiontarget] void centroid();
       entry [reductiontarget] void distributed();
+      entry [reductiontarget] void refined( uint64_t nelem );
       entry [reductiontarget] void flattened();
       entry [reductiontarget] void coord();
       entry [reductiontarget] void comfinal();
@@ -76,17 +74,10 @@ module transporter {
       // are and setting up the communication buffers have been completed will
       // they be echoed to screen at once, denoted by Stat.
 
-      entry void wait4mesh() {
-        when load_complete(), centroid_complete(), refine_complete()
-          serial "mesh" { partition(); } };
-
       entry void wait4stat() {
         when minstat_complete(), maxstat_complete(), sumstat_complete(),
              pdfstat_complete(), com_complete() serial "stat" { stat(); } };
 
-      entry void load_complete();
-      entry void centroid_complete();
-      entry void refine_complete();
       entry void minstat_complete();
       entry void maxstat_complete();
       entry void sumstat_complete();

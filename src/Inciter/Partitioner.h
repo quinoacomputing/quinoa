@@ -141,12 +141,19 @@ class Partitioner : public CBase_Partitioner {
     //! Receive new global node IDs associated to edge-nodes
     void neworder( const tk::UnsMesh::EdgeNodes& ed );
 
-    //! Receive mesh node IDs (as connectivities) associated to chares we own
+    //! Receive mesh node IDs (connectivities) associated to chares we own
     void add( int frompe,
               const std::unordered_map< int, std::vector< std::size_t > >& n );
 
+    void addRef( int frompe, const std::vector< std::size_t >& n );
+
     //! Acknowledge received node IDs
     void recv();
+
+    void recvRef();
+
+    //! Uniformly refine our mesh replacing each tetrahedron with 8 new ones
+    void refine();
 
     //! Prepare owned mesh node IDs for reordering
     void flatten();
@@ -176,11 +183,9 @@ class Partitioner : public CBase_Partitioner {
   private:
     //! Charm++ callbacks associated to compile-time tags
     tk::tuple::tagged_tuple<
-        tag::refined,     CkCallback
-      , tag::centroid,    CkCallback
-      , tag::distributed, CkCallback
+        tag::distributed, CkCallback
+      , tag::refined,     CkCallback
       , tag::flattened,   CkCallback
-      , tag::load,        CkCallback
       , tag::avecost,     CkCallback
       , tag::stdcost,     CkCallback
       , tag::coord,       CkCallback
@@ -195,6 +200,8 @@ class Partitioner : public CBase_Partitioner {
     Scheme m_scheme;
     //! Number of fellow PEs to send elem IDs to
     std::size_t m_npe;
+    std::size_t m_npeRef;
+    std::vector< ctr::AMRInitialType > m_initref;
     //! Queue of requested node IDs from PEs
     std::vector< std::pair< int, std::unordered_set<std::size_t> > > m_reqNodes;
     //! Queue of requested edge-node IDs from PEs
@@ -218,15 +225,18 @@ class Partitioner : public CBase_Partitioner {
     //!   gathering the node IDs that need to be received (instead of uniquely
     //!   assigned) by each PE
     std::size_t m_nmask;
-    //! Tetrtahedron element connectivity of our chunk of the mesh
-    //! \details With global node IDs.
+    //! Tetrtahedron element connectivity of our chunk of the mesh (global ids)
+    //! \details This one is the authoritative one outside of initial mesh
+    //!   refinement.
     std::vector< std::size_t > m_ginpoel;
+    //! Tetrtahedron element connectivity of our chunk of the mesh (global ids)
+    //! \details This one is used during communication after mesh partitioning
+    //!   before an initial mesh refinement step.
+    std::vector< std::size_t > m_rinpoel;
     //! Coordinates of mesh nodes of our chunk of the mesh
     tk::UnsMesh::Coords m_coord;
     //! Global element IDs we read (our chunk of the mesh)
     std::vector< long > m_gelemid;
-    //! Element centroid coordinates of our chunk of the mesh
-    std::array< std::vector< tk::real >, 3 > m_centroid;
     //! Total number of chares across all PEs
     int m_nchare;
     //! Lower bound of node IDs our PE operates on after reordering
@@ -332,20 +342,27 @@ class Partitioner : public CBase_Partitioner {
     //! \brief Boundary face-node connectivity.
     std::vector< std::size_t > m_triinpoel;
 
+    //! Partition the mesh before a (potential) refinement step
+    void partref();
+
     //! Compute element centroid coordinates
-    void computeCentroids(
-      const std::unordered_map< std::size_t, std::size_t >& lid );
+    std::array< std::vector< tk::real >, 3 >
+    centroids( const std::vector< std::size_t >& inpoel );
 
     //! Construct global mesh node ids for each chare
     std::unordered_map< int, std::vector< std::size_t > >
-    chareNodes( const std::vector< std::size_t >& che ) const;
+    chareNodes( const std::vector< std::size_t >& che,
+                const std::vector< std::size_t >& inpoel ) const;
 
-    //! Distribute global mesh node IDs (as connectivity) to their owner PEs
+    //! Distribute global mesh node IDs (connectivities) to their owner PEs
     void distribute( std::unordered_map< int,
                        std::vector< std::size_t > >&& n );
 
-    //! Compute chare distribution
-    std::array< int, 2 > chareDistribution() const;
+    void distributeRef( std::unordered_map< int,
+                       std::vector< std::size_t > >&& n );
+
+    //! Compute chare (partition) distribution
+    std::array< int, 2 > distribution( int npart ) const;
 
     //! Reorder global mesh node IDs
     void reorder();
@@ -356,18 +373,14 @@ class Partitioner : public CBase_Partitioner {
     //! Associate new node IDs to old ones and return them to the requestor(s)
     void prepare();
 
-    //! Uniformly refine our mesh replacing each tetrahedron with 8 new ones
-    void refine( std::unordered_map< std::size_t, std::size_t >& lid );
-
     //! Do uniform refinement
-    void uniformRefine( std::unordered_map< std::size_t, std::size_t >& lid );
+    void uniformRefine();
 
     //! Do error-based refinement
-    void errorRefine( std::unordered_map< std::size_t, std::size_t >& lid );
+    void errorRefine();
 
     //! Update mesh after refinement
-    void updateMesh( AMR::mesh_adapter_t& refiner,
-                     std::unordered_map< std::size_t, std::size_t >& lid );
+    void updateMesh( AMR::mesh_adapter_t& refiner );
 
     //! Compute final result of reordering
     void reordered();

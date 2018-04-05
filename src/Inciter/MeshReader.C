@@ -15,18 +15,15 @@
 using inciter::MeshReader;
 
 void
-MeshReader::readGraph( std::vector< long >& gelemid,
-                       std::vector< std::size_t >& ginpoel )
+MeshReader::readGraph( std::vector< std::size_t >& ginpoel, int n, int m )
 // *****************************************************************************
 //  Read our chunk of the mesh graph (connectivity) from file
-//! \param[in,out] gelemid Vector to generate tetrtahedron element IDs of our
-//!   chunk of the mesh into
+//! \param[in] n Total number of PEs
+//! \param[in] m This PE
 //! \param[in,out] ginpoel Vector to read tetrtahedron element connectivity of
 //!    our chunk of the mesh into
 // *****************************************************************************
 {
-  Assert( gelemid.empty(), "Global element ID vector not empty" );
-
   // Get number of mesh points and number of tetrahedron elements in file
   m_er.readElemBlockIDs();
   auto nel = m_er.nelem( tk::ExoElemType::TET );
@@ -36,17 +33,15 @@ MeshReader::readGraph( std::vector< long >& gelemid,
   // element indices for our chunk of the mesh
 
   // Compute extents of element IDs of our mesh chunk to read
-  auto chunk = nel / m_npes;
-  auto from = m_mype * chunk;
+  auto npes = static_cast< std::size_t >( n );
+  auto mype = static_cast< std::size_t >( m );
+  auto chunk = nel / npes;
+  auto from = mype * chunk;
   auto till = from + chunk;
-  if (m_mype == m_npes-1) till += nel % m_npes;
+  if (mype == npes-1) till += nel % npes;
 
   // Read tetrahedron connectivity between from and till
   m_er.readElements( {{from, till-1}}, tk::ExoElemType::TET, ginpoel );
-
-  // Generate global element IDs
-  gelemid.resize( till-from );
-  std::iota( begin(gelemid), end(gelemid), from );
 }
 
 std::array< std::vector< tk::real >, 3 >

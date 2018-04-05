@@ -15,6 +15,8 @@
 */
 // *****************************************************************************
 
+#include <algorithm>
+
 #include "Partitioner.h"
 #include "DerivedData.h"
 #include "Reorder.h"
@@ -45,12 +47,14 @@ Partitioner::Partitioner(
   const Scheme& scheme,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::vector< std::size_t >& triinpoel ) :
-  m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6], cb[7] ),
+  m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5] ),
   m_host( host ),
   m_solver( solver ),
   m_bc( bc ),
   m_scheme( scheme ),
   m_npe( 0 ),
+  m_npeRef( 0 ),
+  m_initref(),
   m_reqNodes(),
   m_reqEdges(),
   m_start( 0 ),
@@ -58,9 +62,9 @@ Partitioner::Partitioner(
   m_nquery( 0 ),
   m_nmask( 0 ),
   m_ginpoel(),
+  m_rinpoel(),
   m_coord(),
   m_gelemid(),
-  m_centroid(),
   m_nchare( 0 ),
   m_lower( 0 ),
   m_upper( 0 ),
@@ -94,35 +98,58 @@ Partitioner::Partitioner(
 // *****************************************************************************
 {
   // Create mesh reader
-  MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >(),
-                 static_cast< std::size_t >( CkNumPes() ),
-                 static_cast< std::size_t >( CkMyPe() ) );
+  MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
   // Read our chunk of the mesh graph from file
-  mr.readGraph( m_gelemid, m_ginpoel );
+  mr.readGraph( m_ginpoel, CkNumPes(), CkMyPe() );
 
-  // Send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.peread();
-
-  // Sum number of elements across all PEs (will define total load)
-  uint64_t nelem = m_gelemid.size();
-  contribute( sizeof(uint64_t), &nelem, CkReduction::sum_int,
-              m_cb.get< tag::load >() );
-
-  // Compute local from global mesh data
+  // Compute local data from global mesh graph (connectivity)
   auto el = tk::global2local( m_ginpoel );
-  //const auto& inpoel = std::get< 0 >( el );     // Local mesh connectivity
   const auto& gid = std::get< 1 >( el );        // Local->global node IDs
-  auto& lid = std::get< 2 >( el );        // Global->local node IDs
 
   // Read our chunk of the mesh node coordinates from file
   m_coord = mr.readCoords( gid );
 
-  // Optionally refine mesh if requested
-  refine( lid );
+  // Send progress report to host
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.peread();
 
-  // Compute cell centroids if a geometric partitioner is selected
-  computeCentroids( lid );
+  // Store initial mesh refinement type list in reverse order
+  m_initref = g_inputdeck.get< tag::amr, tag::init >();
+  std::reverse( begin(m_initref), end(m_initref) );
+
+  // Partition the mesh before a (potential) initial refinement step
+  partref();
+}
+
+void
+Partitioner::partref()
+// *****************************************************************************
+//  Partition the mesh before an initial refinement step
+//! \details This function calls the mesh partitioner to partition (or
+//!   re-partition) the (current) mesh as a first step for an initial mesh
+//!   refinement step. The number of partitions always equals the numher of PEs.
+// *****************************************************************************
+{
+  m_rinpoel = std::move( m_ginpoel );
+
+  m_gelemid.clear();
+  m_gelemid.resize( m_rinpoel.size()/4 );
+  std::iota( begin(m_gelemid), end(m_gelemid), 0 );
+
+  // Compute local from global mesh data
+  auto el = tk::global2local( m_rinpoel );
+  const auto& inpoel = std::get< 0 >( el );     // Local mesh connectivity
+
+  // Partition the mesh using Zoltan
+  const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
+  const auto che =
+    tk::zoltan::geomPartMesh( alg, centroids(inpoel), m_gelemid, CkNumPes() );
+
+  Assert( che.size() == m_gelemid.size(), "Size of ownership array after mesh "
+          "partitioning does not equal the number of mesh graph elements" );
+
+  // Construct global mesh node ids for each chare and distribute
+  distributeRef( chareNodes( che, m_rinpoel ) );
 }
 
 void
@@ -133,26 +160,25 @@ Partitioner::partition( int nchare )
 // *****************************************************************************
 {
   m_nchare = nchare;
-  const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
-  const auto che = tk::zoltan::geomPartMesh( alg,
-                                             m_centroid,
-                                             m_gelemid,
-                                             m_ginpoel.size()/4,
-                                             nchare );
-
-  // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pepartitioned();
-
-  Assert( che.size() == m_gelemid.size(), "Size of ownership array does "
-          "not equal the number of mesh graph elements" );
-
-  // Construct global mesh node ids for each chare and distribute
-  distribute( chareNodes(che) );
-
-  // Free storage of element connectivity, element centroids, and element
-  // IDs as they are no longer needed after the mesh partitioning.
-  tk::destroy( m_gelemid );
-  tk::destroy( m_centroid );
+//   const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
+//   const auto che = tk::zoltan::geomPartMesh( alg,
+//                                              m_centroid,
+//                                              m_gelemid,
+//                                              nchare );
+// 
+//   // send progress report to host
+//   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pepartitioned();
+// 
+//   Assert( che.size() == m_gelemid.size(), "Size of ownership array after mesh "
+//           "partitioning does not equal the number of mesh graph elements" );
+// 
+//   // Construct global mesh node ids for each chare and distribute
+//   distribute( chareNodes(che) );
+// 
+//   // Free storage of element connectivity, element centroids, and element
+//   // IDs as they are no longer needed after the mesh partitioning.
+//   tk::destroy( m_gelemid );
+//   tk::destroy( m_centroid );
 }
 
 void
@@ -245,7 +271,7 @@ void
 Partitioner::add( int frompe,
   const std::unordered_map< int, std::vector< std::size_t > >& n )
 // *****************************************************************************
-//! Receive mesh node IDs (as connectivities) associated to chares we own
+//! Receive mesh node IDs (connectivities) associated to chares we own
 //! \param[in] n Mesh node indices associated to chare IDs
 //! \param[in] frompe PE call coming from
 // *****************************************************************************
@@ -267,7 +293,35 @@ Partitioner::recv()
 //  Acknowledge received node IDs
 // *****************************************************************************
 {
-  if (--m_npe == 0) contribute( m_cb.get< tag::distributed >() );
+  if (--m_npe == 0) {
+    contribute( m_cb.get< tag::distributed >() );
+    if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+      m_host.pedistributed();
+  }
+}
+
+void
+Partitioner::addRef( int frompe, const std::vector< std::size_t >& n )
+// *****************************************************************************
+//! Receive mesh node IDs (connectivities) associated to chares we own
+//! \param[in] n Mesh connectivity
+//! \param[in] frompe PE call coming from
+// *****************************************************************************
+{
+  m_ginpoel.insert( end(m_ginpoel), begin(n), end(n) );
+
+  // Acknowledge receipt
+  thisProxy[ frompe ].recvRef();
+}
+
+void
+Partitioner::recvRef()
+// *****************************************************************************
+//  Acknowledge received node IDs
+// *****************************************************************************
+{
+  // When all our nodes are received this PE has distributed its parts
+  if (--m_npeRef == 0) contribute( m_cb.get< tag::distributed >() );
 }
 
 void
@@ -282,7 +336,7 @@ Partitioner::flatten()
 {
   // Make sure we are not fed garbage
   Assert( m_chinpoel.size() ==
-            static_cast< std::size_t >( chareDistribution()[1] ),
+            static_cast< std::size_t >( distribution(m_nchare)[1] ),
           "Global mesh nodes ids associated to chares on PE " +
           std::to_string( CkMyPe() ) + " is incomplete" );
 
@@ -528,52 +582,51 @@ Partitioner::mask(
   }
 }
 
-void
-Partitioner::computeCentroids(
-  const std::unordered_map< std::size_t, std::size_t >& lid )
+std::array< std::vector< tk::real >, 3 >
+Partitioner::centroids( const std::vector< std::size_t >& inpoel )
 // *****************************************************************************
 //  Compute element centroid coordinates
-//! \param[in] lid Map from global to local node IDs for our chunk of the mesh
+//! \param[in] inpoel Mesh connectivity with local ids
+//! \return Centroids for all cells on this PE
 // *****************************************************************************
 {
-  const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
+  const auto& x = std::get< 0 >( m_coord );
+  const auto& y = std::get< 1 >( m_coord );
+  const auto& z = std::get< 2 >( m_coord );
 
-  if ( tk::ctr::PartitioningAlgorithm().geometric(alg) ) {
-    const auto& x = std::get< 0 >( m_coord );
-    const auto& y = std::get< 1 >( m_coord );
-    const auto& z = std::get< 2 >( m_coord );
-  
-    // Make room for element centroid coordinates
-    auto& cx = m_centroid[0];
-    auto& cy = m_centroid[1];
-    auto& cz = m_centroid[2];
-    auto num = m_ginpoel.size()/4;
-    cx.resize( num );
-    cy.resize( num );
-    cz.resize( num );
-  
-    // Compute element centroids for our chunk of the mesh elements
-    for (std::size_t e=0; e<num; ++e) {
-      auto A = tk::cref_find( lid, m_ginpoel[e*4+0] );
-      auto B = tk::cref_find( lid, m_ginpoel[e*4+1] );
-      auto C = tk::cref_find( lid, m_ginpoel[e*4+2] );
-      auto D = tk::cref_find( lid, m_ginpoel[e*4+3] );
-      cx[e] = (x[A] + x[B] + x[C] + x[D]) / 4.0;
-      cy[e] = (y[A] + y[B] + y[C] + y[D]) / 4.0;
-      cz[e] = (z[A] + z[B] + z[C] + z[D]) / 4.0;
-    }
+  // Make room for element centroid coordinates
+  std::array< std::vector< tk::real >, 3 > cent;
+  auto& cx = cent[0];
+  auto& cy = cent[1];
+  auto& cz = cent[2];
+  auto num = inpoel.size()/4;
+  cx.resize( num );
+  cy.resize( num );
+  cz.resize( num );
+
+  // Compute element centroids for our chunk of the mesh elements
+  for (std::size_t e=0; e<num; ++e) {
+    auto A = inpoel[e*4+0];
+    auto B = inpoel[e*4+1];
+    auto C = inpoel[e*4+2];
+    auto D = inpoel[e*4+3];
+    cx[e] = (x[A] + x[B] + x[C] + x[D]) / 4.0;
+    cy[e] = (y[A] + y[B] + y[C] + y[D]) / 4.0;
+    cz[e] = (z[A] + z[B] + z[C] + z[D]) / 4.0;
   }
 
-  contribute( m_cb.get< tag::centroid >() );
+  return cent;
 }
 
 std::unordered_map< int, std::vector< std::size_t > >
-Partitioner::chareNodes( const std::vector< std::size_t >& che ) const
+Partitioner::chareNodes( const std::vector< std::size_t >& che,
+                         const std::vector< std::size_t >& inpoel ) const
 // *****************************************************************************
 //  Construct global mesh node ids for each chare
 //! \param[in] che Chares of elements: array of chare ownership IDs mapping
 //!   graph elements to Charm++ chares. Size: number of elements in the
 //!   chunk of the mesh graph on this PE.
+//! \param[in] inpoel Mesh connectivity to distribute elemets from
 //! \return Vector of global mesh node ids connecting elements owned by each
 //!   chare on this PE
 //! \note The chare IDs, as keys in the map constructed here, are simply the
@@ -583,14 +636,14 @@ Partitioner::chareNodes( const std::vector< std::size_t >& che ) const
 {
   Assert( che.size() == m_gelemid.size(), "The size of the global element "
           "index and the chare element arrays must equal" );
-  Assert( che.size() == m_ginpoel.size()/4, "The size of the mesh "
+  Assert( che.size() == inpoel.size()/4, "The size of the mesh "
           "connectivity / 4 and the chare element arrays must equal" );
 
   // Categorize global mesh node ids of elements by chares
   std::unordered_map< int, std::vector< std::size_t > > nodes;
   for (std::size_t e=0; e<che.size(); ++e) {
     auto& c = nodes[ static_cast<int>(che[e]) ];
-    for (std::size_t n=0; n<4; ++n) c.push_back( m_ginpoel[e*4+n] );
+    for (std::size_t n=0; n<4; ++n) c.push_back( inpoel[e*4+n] );
   }
 
   // Make sure all PEs have chares assigned
@@ -621,13 +674,13 @@ void
 Partitioner::distribute(
   std::unordered_map< int, std::vector< std::size_t > >&& n )
 // *****************************************************************************
-//  Distribute global mesh node IDs (as connectivities) to their owner PEs
+//  Distribute global mesh node IDs (connectivities) to their owner PEs
 //! \param[in] n Global mesh node IDs connecting elements associated to
 //!   chare IDs on this PE resulting from partitioning the mesh elements.
 //!   Note that this data is moved in.
 // *****************************************************************************
 {
-  auto dist = chareDistribution();
+  auto dist = distribution( m_nchare );
 
   for (int c=0; c<dist[1]; ++c) {
     auto chid = CkMyPe() * dist[0] + c;   // compute owned chare ID
@@ -647,20 +700,48 @@ Partitioner::distribute(
   for (auto&& c : n) exp[ pe(c.first) ].insert( std::move(c) );
 
   // Export chare IDs and node IDs we do not own to fellow PEs
-  m_npe = exp.size();
-  for (const auto& p : exp)
-    thisProxy[ p.first ].add( CkMyPe(), p.second );
+  if (exp.empty()) {
+    contribute( m_cb.get< tag::distributed >() );
+    // send progress report to host
+    if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+      m_host.pedistributed();
+  } else
+     for (const auto& p : exp)
+       thisProxy[ p.first ].add( CkMyPe(), p.second );
+}
 
-  // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pedistributed();
+void
+Partitioner::distributeRef(
+  std::unordered_map< int, std::vector< std::size_t > >&& n )
+// *****************************************************************************
+//  Distribute global mesh node IDs (connectivities) to their owner PEs
+//! \param[in] n Global mesh node IDs connecting elements associated to
+//!   chare IDs on this PE resulting from partitioning the mesh elements.
+//!   Note that this data is moved in.
+// *****************************************************************************
+{
+  // Store own mesh connectivity
+  auto i = n.find( CkMyPe() );
+  if (i != end(n)) {
+    m_ginpoel.insert( end(m_ginpoel), begin(i->second), end(i->second) );
+    n.erase( i );
+  } else Throw( "No elements are assigned to PE" );
 
-  if (m_npe == 0) contribute( m_cb.get< tag::distributed >() );
+  // Export connectivities to other PEs
+  if (n.empty())
+    contribute( m_cb.get< tag::distributed >() );
+  else {
+    m_npeRef = n.size();
+    for (const auto& p : n)
+      thisProxy[ p.first ].addRef( CkMyPe(), p.second );
+  }
 }
 
 std::array< int, 2 >
-Partitioner::chareDistribution() const
+Partitioner::distribution( int npart ) const
 // *****************************************************************************
-//  Compute chare distribution
+//  Compute chare (partition) distribution
+//! \param[in] npart Total number of chares (partitions) to distribute
 //! \return Chunksize, i.e., number of chares per all PEs except the last
 //!   one, and the number of chares for my PE
 //! \details Chare ids are distributed to PEs in a linear continguous order
@@ -672,9 +753,9 @@ Partitioner::chareDistribution() const
 //!   to the Charm++ chare IDs each PE owns.
 // *****************************************************************************
 {
-  auto chunksize = m_nchare / CkNumPes();
+  auto chunksize = npart / CkNumPes();
   auto mynchare = chunksize;
-  if (CkMyPe() == CkNumPes()-1) mynchare += m_nchare % CkNumPes();
+  if (CkMyPe() == CkNumPes()-1) mynchare += npart % CkNumPes();
   return {{ chunksize, mynchare }};
 }
 
@@ -806,58 +887,81 @@ Partitioner::prepare()
 }
 
 void
-Partitioner::refine( std::unordered_map< std::size_t, std::size_t >& lid )
+Partitioner::refine()
 // *****************************************************************************
 // Optionally refine mesh if requested by user
 // *****************************************************************************
 {
-  if (g_inputdeck.get< tag::amr, tag::amr >()) {        // if AMR is enabled
-    // Refine mesh based on list of refinement types given by user
-    std::size_t level = 0;
-    for (auto r : g_inputdeck.get< tag::amr, tag::init >()) {
-      if (r == ctr::AMRInitialType::UNIFORM)
-        uniformRefine( lid );
-      else if (r == ctr::AMRInitialType::INITIAL_CONDITIONS)
-        errorRefine( lid );
-      else Throw( "Initial AMR type not implemented" );
+  // refine ...
 
-      tk::UnsMesh refmesh( m_ginpoel, m_coord );
-      tk::ExodusIIMeshWriter mr( "refmesh." + std::to_string(level++) + ".exo",
-                                 tk::ExoWriter::CREATE );
-      mr.writeMesh( refmesh );
-    }
+  std::cout << CkMyPe() << " ref step finished " << m_initref.size() << "\n";
+
+  // remove initial mesh refinement step from list
+  if (!m_initref.empty()) m_initref.pop_back();
+
+
+  auto el = tk::global2local( m_ginpoel );
+  const auto& inpoel = std::get< 0 >( el );     // Local mesh connectivity
+  const auto& gid = std::get< 1 >( el );        // Local->global node IDs
+
+  MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+  m_coord = mr.readCoords( gid );
+
+  // Output mesh after initial refinement step
+  auto initref = g_inputdeck.get< tag::amr, tag::init >();
+  auto level = initref.size() - m_initref.size();
+  tk::UnsMesh refmesh( inpoel, m_coord );
+  tk::ExodusIIMeshWriter mw( "initref." + std::to_string(level) + '.' +
+                               std::to_string(CkMyPe()),
+                             tk::ExoWriter::CREATE );
+  mw.writeMesh( refmesh );
+
+
+  if (!m_initref.empty())       // Continue to next initial refinement step
+    partref();
+  else {                        // Finish list of initial mesh refinement steps
+    // Compute final number of cells across whole problem
+    auto nelem = m_ginpoel.size()/4;
+    contribute( sizeof(uint64_t), &nelem, CkReduction::sum_int,
+                m_cb.get< tag::refined >() );
   }
 
-  // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.perefined();
-
-  contribute( m_cb.get< tag::refined >() );
+//   if (g_inputdeck.get< tag::amr, tag::amr >()) {        // if AMR is enabled
+//     // Refine mesh based on list of refinement types given by user
+//     std::size_t level = 0;
+//     for (auto r : g_inputdeck.get< tag::amr, tag::init >()) {
+//       if (r == ctr::AMRInitialType::UNIFORM)
+//         uniformRefine();
+//       else if (r == ctr::AMRInitialType::INITIAL_CONDITIONS)
+//         errorRefine();
+//       else Throw( "Initial AMR type not implemented" );
+// 
+//     }
+//   }
 }
 
 void
-Partitioner::uniformRefine(
-  std::unordered_map< std::size_t, std::size_t >& lid )
+Partitioner::uniformRefine()
 // *****************************************************************************
 // ...
 // *****************************************************************************
 {
-  AMR::mesh_adapter_t refiner( m_ginpoel );
+  AMR::mesh_adapter_t refiner( m_rinpoel );
 
   // Do uniform refinement
   refiner.uniform_refinement();
 
   // Update mesh coordinates and connectivity
-  updateMesh( refiner, lid );
+  updateMesh( refiner );
 }
 
 void
-Partitioner::errorRefine(
-  std::unordered_map< std::size_t, std::size_t >& lid )
+Partitioner::errorRefine()
 // *****************************************************************************
 // ...
 // *****************************************************************************
 {
-  AMR::mesh_adapter_t refiner( m_ginpoel );
+  AMR::mesh_adapter_t refiner( m_rinpoel );
 
   auto& x = m_coord[0];
 
@@ -871,10 +975,10 @@ Partitioner::errorRefine(
      if (x[i] > 0.5) u(i,0,0) = 0.0; else u(i,0,0) = 1.0;
 
   // Find number of nodes in old mesh
-  auto npoin = tk::npoin( m_ginpoel );
+  auto npoin = tk::npoin( m_rinpoel );
   // Generate edges surrounding points in old mesh
-  auto esup = tk::genEsup( m_ginpoel, 4 );
-  auto psup = tk::genPsup( m_ginpoel, 4, esup );
+  auto esup = tk::genEsup( m_rinpoel, 4 );
+  auto psup = tk::genPsup( m_rinpoel, 4, esup );
 
   std::vector< edge_t > edge;
   std::vector< real_t > crit;
@@ -885,7 +989,7 @@ Partitioner::errorRefine(
     for (auto q : tk::Around(psup,p)) {
        edge_t e(p,q);
        edge.push_back( e );
-       auto c = error.scalar( u, e, 0, m_coord, m_ginpoel, esup,
+       auto c = error.scalar( u, e, 0, m_coord, m_rinpoel, esup,
                               g_inputdeck.get< tag::amr, tag::error >() );
        crit.push_back( c );
      }
@@ -894,12 +998,11 @@ Partitioner::errorRefine(
   refiner.error_refinement( edge, crit );
 
   // Update mesh coordinates and connectivity
-  updateMesh( refiner, lid );
+  updateMesh( refiner );
 }
 
 void
-Partitioner::updateMesh( AMR::mesh_adapter_t& refiner,
-                         std::unordered_map< std::size_t, std::size_t >& lid )
+Partitioner::updateMesh( AMR::mesh_adapter_t& refiner )
 // *****************************************************************************
 // ...
 // *****************************************************************************
@@ -908,7 +1011,7 @@ Partitioner::updateMesh( AMR::mesh_adapter_t& refiner,
   const auto& refinpoel = refiner.tet_store.get_active_inpoel();
   Assert( refinpoel.size()%4 == 0, "Inconsistent refined mesh connectivity" );
 
-  std::unordered_set< std::size_t > old( m_ginpoel.cbegin(), m_ginpoel.cend() );
+  std::unordered_set< std::size_t > old( m_rinpoel.cbegin(), m_rinpoel.cend() );
   std::unordered_set< std::size_t > ref( refinpoel.cbegin(), refinpoel.cend() );
 
 //   std::size_t npoin = 0;
@@ -949,7 +1052,6 @@ std::cout << '\n';
       x[r] = (x[p[0]] + x[p[1]])/2.0;
       y[r] = (y[p[0]] + y[p[1]])/2.0;
       z[r] = (z[p[0]] + z[p[1]])/2.0;
-      lid[r] = r;
     }
     auto i = prem.find(p);
     if (i != end(prem)) {
@@ -965,7 +1067,7 @@ std::cout << "switch: " << r << ", " << i->second << '\n';
   std::iota( begin(m_gelemid), end(m_gelemid), 0 );
 
   // Update mesh connectivity
-  m_ginpoel = refinpoel;
+  m_rinpoel = refinpoel;
 }
 
 void
@@ -1196,7 +1298,7 @@ Partitioner::createDiscWorkers()
 //!   operate on.
 // *****************************************************************************
 {
-  auto dist = chareDistribution();
+  auto dist = distribution( m_nchare );
 
   for (int c=0; c<dist[1]; ++c) {
     // Compute chare ID
@@ -1240,7 +1342,7 @@ Partitioner::createWorkers()
 //!   operate on.
 // *****************************************************************************
 {
-  auto dist = chareDistribution();
+  auto dist = distribution( m_nchare );
 
   // Prepare data to pass to and put in a request to create worker chares
   for (int c=0; c<dist[1]; ++c) {
