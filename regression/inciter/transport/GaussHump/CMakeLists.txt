@@ -79,26 +79,26 @@ add_regression_test(gauss_hump_u0.5 ${INCITER_EXECUTABLE}
 
 add_regression_test(gauss_hump_u0.5_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES gauss_hump_migr.q unitsquare_01_3.6k.exo diag_migr.std
+                    INPUTFILES gauss_hump.q unitsquare_01_3.6k.exo diag.std
                                exodiff.cfg
-                               gauss_hump_pe4_u0.5_migr.std.exo.0
-                               gauss_hump_pe4_u0.5_migr.std.exo.1
-                               gauss_hump_pe4_u0.5_migr.std.exo.2
-                               gauss_hump_pe4_u0.5_migr.std.exo.3
-                               gauss_hump_pe4_u0.5_migr.std.exo.4
-                               gauss_hump_pe4_u0.5_migr.std.exo.5
-                               gauss_hump_pe4_u0.5_migr.std.exo.6
-                               gauss_hump_pe4_u0.5_migr.std.exo.7
-                               ARGS -c gauss_hump_migr.q -i unitsquare_01_3.6k.exo -v -u 0.5
-                                    +balancer RandCentLB +LBPeriod 0.5 +LBDebug 2
-                    BIN_BASELINE gauss_hump_pe4_u0.5_migr.std.exo.0
-                                 gauss_hump_pe4_u0.5_migr.std.exo.1
-                                 gauss_hump_pe4_u0.5_migr.std.exo.2
-                                 gauss_hump_pe4_u0.5_migr.std.exo.3
-                                 gauss_hump_pe4_u0.5_migr.std.exo.4
-                                 gauss_hump_pe4_u0.5_migr.std.exo.5
-                                 gauss_hump_pe4_u0.5_migr.std.exo.6
-                                 gauss_hump_pe4_u0.5_migr.std.exo.7
+                               gauss_hump_pe4_u0.5.std.exo.0
+                               gauss_hump_pe4_u0.5.std.exo.1
+                               gauss_hump_pe4_u0.5.std.exo.2
+                               gauss_hump_pe4_u0.5.std.exo.3
+                               gauss_hump_pe4_u0.5.std.exo.4
+                               gauss_hump_pe4_u0.5.std.exo.5
+                               gauss_hump_pe4_u0.5.std.exo.6
+                               gauss_hump_pe4_u0.5.std.exo.7
+                    ARGS -c gauss_hump.q -i unitsquare_01_3.6k.exo -v -u 0.5
+                         +balancer RandCentLB +LBPeriod 0.5 +LBDebug 2
+                    BIN_BASELINE gauss_hump_pe4_u0.5.std.exo.0
+                                 gauss_hump_pe4_u0.5.std.exo.1
+                                 gauss_hump_pe4_u0.5.std.exo.2
+                                 gauss_hump_pe4_u0.5.std.exo.3
+                                 gauss_hump_pe4_u0.5.std.exo.4
+                                 gauss_hump_pe4_u0.5.std.exo.5
+                                 gauss_hump_pe4_u0.5.std.exo.6
+                                 gauss_hump_pe4_u0.5.std.exo.7
                     BIN_RESULT out.0
                                out.1
                                out.2
@@ -109,6 +109,6 @@ add_regression_test(gauss_hump_u0.5_migr ${INCITER_EXECUTABLE}
                                out.7
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
-                    TEXT_BASELINE diag_migr.std
+                    TEXT_BASELINE diag.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
