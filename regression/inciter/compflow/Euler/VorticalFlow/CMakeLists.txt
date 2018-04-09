@@ -109,3 +109,34 @@ add_regression_test(compflow_euler_vorticalflow_diagcg_u0.5 ${INCITER_EXECUTABLE
                     TEXT_BASELINE diag_diagcg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg)
+
+# Parallel + virtualization + migration
+
+add_regression_test(compflow_euler_vorticalflow_diagcg_u0.5_migr ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES vortical_flow_diagcg.q unitcube_1k.exo
+                               diag_diagcg.std exodiff.cfg
+                               vortical_flow_diagcg_pe4_u0.5.std.exo.0
+                               vortical_flow_diagcg_pe4_u0.5.std.exo.1
+                               vortical_flow_diagcg_pe4_u0.5.std.exo.2
+                               vortical_flow_diagcg_pe4_u0.5.std.exo.3
+                               vortical_flow_diagcg_pe4_u0.5.std.exo.4
+                               vortical_flow_diagcg_pe4_u0.5.std.exo.5
+                               vortical_flow_diagcg_pe4_u0.5.std.exo.6
+                               vortical_flow_diagcg_pe4_u0.5.std.exo.7
+                    ARGS -c vortical_flow_diagcg.q -i unitcube_1k.exo -v -u 0.5
+                         +balancer RandCentLB +LBPeriod 0.5 +LBDebug 2 +cs
+                    BIN_BASELINE vortical_flow_diagcg_pe4_u0.5.std.exo.0
+                                 vortical_flow_diagcg_pe4_u0.5.std.exo.1
+                                 vortical_flow_diagcg_pe4_u0.5.std.exo.2
+                                 vortical_flow_diagcg_pe4_u0.5.std.exo.3
+                                 vortical_flow_diagcg_pe4_u0.5.std.exo.4
+                                 vortical_flow_diagcg_pe4_u0.5.std.exo.5
+                                 vortical_flow_diagcg_pe4_u0.5.std.exo.6
+                                 vortical_flow_diagcg_pe4_u0.5.std.exo.7
+                    BIN_RESULT out.0 out.1 out.2 out.3 out.4 out.5 out.6 out.7
+                    BIN_DIFF_PROG_ARGS -m
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    TEXT_BASELINE diag_diagcg.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg)
