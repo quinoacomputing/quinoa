@@ -121,7 +121,7 @@ Exception::echoTrace() noexcept
   // Iterate over the returned symbol lines. skip the first two, these are the
   // addresses of Exception::saveTrace() and the Exception constructor
   for (int i=2; i<m_addrLength; ++i) {
-    char *begin_name = 0, *begin_offset = 0, *end_offset = 0;
+    char *begin_name = nullptr, *begin_offset = nullptr, *end_offset = nullptr;
 
     // Find parentheses and +address offset surrounding the mangled name:
     // ./module(function+0x15c) [0x8048a6d]
