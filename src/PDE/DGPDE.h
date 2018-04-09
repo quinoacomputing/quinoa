@@ -86,10 +86,11 @@ class DGPDE {
     //! Public interface to computing the right-hand side vector for the diff eq
     void rhs( tk::real t,
               const tk::Fields& geoFace,
+              const tk::Fields& geoElem,
               const inciter::FaceData& fd,
               const tk::Fields& U,
               tk::Fields& R ) const
-    { self->rhs( t, geoFace, fd, U, R ); }
+    { self->rhs( t, geoFace, geoElem, fd, U, R ); }
 
     //! Public interface for computing the minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -139,6 +140,7 @@ class DGPDE {
       virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
                         const tk::Fields&,
+                        const tk::Fields&,
                         const inciter::FaceData&,
                         const tk::Fields&,
                         tk::Fields& ) const = 0;
@@ -169,10 +171,11 @@ class DGPDE {
       { data.lhs( geoElem, l ); }
       void rhs( tk::real t,
                 const tk::Fields& geoFace,
+                const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
                 const tk::Fields& U,
                 tk::Fields& R ) const override
-      { data.rhs( t, geoFace, fd, U, R ); }
+      { data.rhs( t, geoFace, geoElem, fd, U, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override

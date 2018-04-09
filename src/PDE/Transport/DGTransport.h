@@ -100,7 +100,7 @@ class Transport {
 
     //! Compute the left hand side mass matrix
     //! \param[in] geoElem Element geometry array
-    //! \param[in,out] l Block diagonal mass matrix matrix
+    //! \param[in,out] l Block diagonal mass matrix
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
     {
       Assert( geoElem.nunk() == l.nunk(), "Size mismatch" );
@@ -120,6 +120,7 @@ class Transport {
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real,
               const tk::Fields& geoFace,
+              const tk::Fields&,
               const inciter::FaceData& fd,
               const tk::Fields& U,
               tk::Fields& R ) const
