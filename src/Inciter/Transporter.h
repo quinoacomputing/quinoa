@@ -533,6 +533,17 @@ class Transporter : public CBase_Transporter {
 
     //! Echo diagnostics on mesh statistics
     void stat();
+
+    //! Query variable names for all equation systems to be integrated
+    //! \param[in] eq Equation system whose variable names to query
+    //! \param[in,out] var Vector of strings to which we append the variable
+    //!   names for this equation. We append as many strings as many scalar
+    //!   variables are in the equation system given by eq.
+    template< class Eq >
+    void varnames( const Eq& eq, std::vector< std::string >& var ) {
+      auto o = eq.names();
+      var.insert( end(var), begin(o), end(o) );
+    }
 };
 
 } // inciter::

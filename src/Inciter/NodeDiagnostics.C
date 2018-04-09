@@ -1,15 +1,16 @@
 // *****************************************************************************
 /*!
-  \file      src/Inciter/Diagnostics.C
+  \file      src/Inciter/NodeDiagnostics.C
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Diagnostics class for collecting diagnostics
-  \details   Diagnostics class for collecting diagnostics, e.g., residuals, and
-    various norms of errors while solving partial differential equations.
+  \brief     NodeDiagnostics class for collecting nodal diagnostics
+  \details   NodeDiagnostics class for collecting nodal diagnostics, e.g.,
+    residuals, and various norms of errors while solving partial differential
+    equations.
 */
 // *****************************************************************************
 
 #include "CGPDE.h"
-#include "Diagnostics.h"
+#include "NodeDiagnostics.h"
 #include "DiagReducer.h"
 #include "Discretization.h"
 #include "Inciter/InputDeck/InputDeck.h"
@@ -23,9 +24,9 @@ static CkReduction::reducerType DiagMerger;
 
 } // inciter::
 
-using inciter::Diagnostics;
+using inciter::NodeDiagnostics;
 
-Diagnostics::Diagnostics( const Discretization& d )
+NodeDiagnostics::NodeDiagnostics( const Discretization& d )
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc.
 //! \param[in] d Discretization proxy to read from
@@ -41,7 +42,7 @@ Diagnostics::Diagnostics( const Discretization& d )
 }
 
 void
-Diagnostics::registerReducers()
+NodeDiagnostics::registerReducers()
 // *****************************************************************************
 //  Configure Charm++ reduction types
 //! \details This routine is supposed to be called from a Charm++ nodeinit
@@ -52,11 +53,11 @@ Diagnostics::registerReducers()
 //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
 // *****************************************************************************
 {
-  DiagMerger = CkReduction::addReducer( tk::mergeDiag );
+  DiagMerger = CkReduction::addReducer( mergeDiag );
 }
 
 bool
-Diagnostics::compute( Discretization& d, const tk::Fields& u )
+NodeDiagnostics::compute( Discretization& d, const tk::Fields& u )
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc.
 //! \param[in] d Discretization proxy to read from
@@ -134,7 +135,7 @@ Diagnostics::compute( Discretization& d, const tk::Fields& u )
     diag[DT][0] = d.Dt();
 
     // Contribute to diagnostics
-    auto stream = tk::serialize( diag );
+    auto stream = serialize( diag );
     d.contribute( stream.first, stream.second.get(), DiagMerger,
       CkCallback(CkIndex_Transporter::diagnostics(nullptr), d.Tr()) );
 

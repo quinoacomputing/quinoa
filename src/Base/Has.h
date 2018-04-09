@@ -21,7 +21,7 @@ struct HasTypedefProxy {
     template<typename C> static yes test(typename C::Proxy*);
     template<typename C> static no  test(...);
   public:
-    static const bool value = sizeof(test<T>(0)) == sizeof(yes);
+    static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
 };
 
 //! \brief Detect if T defines type "alias"
@@ -34,7 +34,7 @@ struct HasTypedefAlias {
     template<typename C> static yes test(typename C::alias*);
     template<typename C> static no  test(...);
   public:
-    static const bool value = sizeof(test<T>(0)) == sizeof(yes);
+    static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
 };
 
 //! \brief Detect if T defines type "code"
@@ -47,7 +47,7 @@ struct HasTypedefCode {
     template<typename C> static yes test(typename C::code*);
     template<typename C> static no  test(...);
   public:
-    static const bool value = sizeof(test<T>(0)) == sizeof(yes);
+    static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
 };
 
 //! \brief Detect if T defines type "expect::type"
@@ -60,7 +60,7 @@ struct HasTypedefExpectType {
     template<typename C> static yes test(typename C::expect::type*);
     template<typename C> static no  test(...);
   public:
-    static const bool value = sizeof(test<T>(0)) == sizeof(yes);
+    static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
 };
 
 //! \brief Detect if T defines function "expect::description"
@@ -73,7 +73,7 @@ struct HasFunctionExpectDescription {
     template<typename C> static yes test(decltype(&C::expect::description));
     template<typename C> static no  test(...);
   public:
-    static const bool value = sizeof(test<T>(0)) == sizeof(yes);
+    static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
 };
 
 //! \brief Detect if T defines function "expect::choices"
@@ -86,7 +86,7 @@ struct HasFunctionExpectChoices {
     template<typename C> static yes test(decltype(&C::expect::choices));
     template<typename C> static no  test(...);
   public:
-    static const bool value = sizeof(test<T>(0)) == sizeof(yes);
+    static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
 };
 
 } // tk::

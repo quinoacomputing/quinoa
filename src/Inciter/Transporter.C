@@ -29,7 +29,8 @@
 #include "LoadDistributor.h"
 #include "ExodusIIMeshReader.h"
 #include "Inciter/InputDeck/InputDeck.h"
-#include "Diagnostics.h"
+#include "NodeDiagnostics.h"
+#include "ElemDiagnostics.h"
 #include "DiagWriter.h"
 
 #include "NoWarning/inciter.decl.h"
@@ -42,6 +43,7 @@ namespace inciter {
 extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< CGPDE > g_cgpde;
+extern std::vector< DGPDE > g_dgpde;
 
 }
 
@@ -281,10 +283,12 @@ Transporter::diagHeader()
 
   // Collect variables names for integral/diagnostics output
   std::vector< std::string > var;
-  for (const auto& eq : g_cgpde) {
-    auto o = eq.names();
-    var.insert( end(var), begin(o), end(o) );
-  }
+  const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
+  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG)
+    for (const auto& eq : g_cgpde) varnames( eq, var );
+  else if (scheme == ctr::SchemeType::DG)
+    for (const auto& eq : g_dgpde) varnames( eq, var );
+  else Throw( "Diagnostics header not handled for discretization scheme" );
 
   const tk::ctr::Error opt;
   auto nv = var.size();

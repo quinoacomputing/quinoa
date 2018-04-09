@@ -12,7 +12,7 @@
 #include "ContainerUtil.h"
 #include "Diagnostics.h"
 
-namespace tk {
+namespace inciter {
 
 std::pair< int, std::unique_ptr<char[]> >
 serialize( const std::vector< std::vector< tk::real > >& d )
@@ -72,12 +72,12 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
               "Size mismatch during diagnostics aggregation" );
     // Apply diagnostics aggregation policy, see also Solver::updateDiag()
     // Sum for L2 normal of the numerical solution for all scalar components
-    for (std::size_t i=0; i<v[0].size(); ++i) v[0][i] += w[0][i];
+    for (std::size_t i=0; i<v[L2SOL].size(); ++i) v[L2SOL][i] += w[L2SOL][i];
     // Sum for the L2 norm of the numerical - analytical solution for all comps
-    for (std::size_t i=0; i<v[1].size(); ++i) v[1][i] += w[1][i];
+    for (std::size_t i=0; i<v[L2ERR].size(); ++i) v[L2ERR][i] += w[L2ERR][i];
     // Max for the Linf norm of the numerical - analytical solution for all comp
-    for (std::size_t i=0; i<v[2].size(); ++i)
-      if (w[2][i] > v[2][i]) v[2][i] = w[2][i];
+    for (std::size_t i=0; i<v[LINFERR].size(); ++i)
+      if (w[LINFERR][i] > v[LINFERR][i]) v[LINFERR][i] = w[LINFERR][i];
     // Copy the rest
     for (std::size_t j=3; j<v.size(); ++j)
       for (std::size_t i=0; i<v[j].size(); ++i)
@@ -85,10 +85,10 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
   }
 
   // Serialize concatenated diagnostics vector to raw stream
-  auto stream = tk::serialize( v );
+  auto stream = serialize( v );
 
   // Forward serialized diagnostics
   return CkReductionMsg::buildNew( stream.first, stream.second.get() );
 }
 
-} // tk::
+} // inciter::

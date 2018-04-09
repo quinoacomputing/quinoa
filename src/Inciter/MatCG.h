@@ -36,7 +36,7 @@
 #include "DerivedData.h"
 #include "VectorReducer.h"
 #include "FluxCorrector.h"
-#include "Diagnostics.h"
+#include "NodeDiagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "FaceData.h"
 
@@ -158,7 +158,7 @@ class MatCG : public CBase_MatCG {
     //! Total mesh volume
     tk::real m_vol;
     //! Diagnostics object
-    Diagnostics m_diag;
+    NodeDiagnostics m_diag;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

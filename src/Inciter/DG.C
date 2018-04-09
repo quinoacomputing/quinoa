@@ -19,7 +19,7 @@
 #include "Solver.h"
 #include "DiagReducer.h"
 #include "DerivedData.h"
-#include "Diagnostics.h"
+#include "ElemDiagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "ExodusIIMeshWriter.h"
 
@@ -28,8 +28,6 @@ namespace inciter {
 extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< DGPDE > g_dgpde;
-
-static CkReduction::reducerType DiagMerger;
 
 } // inciter::
 
@@ -65,7 +63,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_exptNbface( 0 ),
   m_ghost(),
   m_exptGhost(),
-  m_recvGhost()
+  m_recvGhost(),
+  m_diag()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -641,7 +640,7 @@ DG::registerReducers()
 //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
 // *****************************************************************************
 {
-  DiagMerger = CkReduction::addReducer( tk::mergeDiag );
+  ElemDiagnostics::registerReducers();
 }
 
 void
@@ -675,6 +674,9 @@ DG::setup( tk::real v )
   // Output initial conditions to file (regardless of whether it was requested)
   if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( d->T() );
 
+  // Start timer measuring time stepping wall clock time
+  d->Timer().zero();
+
   // Start time stepping
   dt();
 }
@@ -707,6 +709,9 @@ DG::dt()
 
   }
 
+  // Enable SDAG wait for building the solution vector
+  wait4sol();
+
   // Contribute to minimum dt across all chares then advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
               CkCallback(CkReductionTarget(DG,advance), thisProxy) );
@@ -724,9 +729,9 @@ DG::advance( tk::real newdt )
   // Set new time step size
   d->setdt( newdt );
 
-  // communicate solution ghost  data (if any)
+  // communicate solution ghost data (if any)
   if (m_ghostData.empty())
-    solve();
+    comsol_complete();
   else
     for(const auto& n : m_ghostData) {
       std::vector< std::size_t > tetid;
@@ -738,6 +743,8 @@ DG::advance( tk::real newdt )
       }
       thisProxy[ n.first ].comsol( thisIndex, tetid, u );
     }
+
+  ownsol_complete();
 }
 
 void
@@ -773,7 +780,7 @@ DG::comsol( int fromch,
             "Expected/received ghost tet id mismatch" );
     m_recvGhost.clear();
     m_nsol = 0;
-    solve();
+    comsol_complete();
   }
 }
 
@@ -808,31 +815,6 @@ DG::writeFields( tk::real time )
   ew.writeTimeStamp( m_itf, time );
   // Write node fields to file
   d->writeElemSolution( ew, m_itf, elemfields );
-}
-
-bool
-DG::diagnostics()
-// *****************************************************************************
-// Compute diagnostics, e.g., residuals
-//! \return True if diagnostics have been computed
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  const auto ncomp = g_inputdeck.get< tag::component >().nprop();
-
-  std::vector< std::vector< tk::real > >
-    diag( NUMDIAG, std::vector< tk::real >( ncomp, 0.0 ) );
-
-  // Compute diagnostics
-  // ...
-
-  // Contribute to diagnostics across all PEs
-  auto stream = tk::serialize( diag );
-  contribute( stream.first, stream.second.get(), DiagMerger,
-    CkCallback(CkIndex_Transporter::diagnostics(nullptr), d->Tr()) );
-
-  return true;
 }
 
 void
@@ -891,14 +873,14 @@ DG::solve()
   // Output field data to file
   out();
   // Compute diagnostics, e.g., residuals
-  //auto diag = diagnostics();
+  auto diag = m_diag.compute( *d, m_u.nunk()-m_esuelTet.size()/4, m_geoElem, m_u );
   // Increase number of iterations and physical time
   d->next();
   // Output one-liner status report
   d->status();
 
   // Evaluate whether to continue with next step
-  /*if (!diag)*/ eval();
+  if (!diag) eval();
 }
 
 void

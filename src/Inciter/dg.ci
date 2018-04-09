@@ -55,13 +55,22 @@ module dg {
       // If we have computed our own ghost data in setupGhost(), and every chare
       // we communicate with has requested ghost data from us, we fulfill the
       // requests and send out ghost data.
+      //
+      // We only perform solution of the linear system if both the own and
+      // communicated (ghost) portion of the unknown/solution vector are
+      // complete.
 
       entry void wait4ghost() {
         when ownghost_complete(), reqghost_complete() serial "ghost"
         { sendGhost(); } };
 
+      entry void wait4sol() {
+        when ownsol_complete(), comsol_complete() serial "sol" { solve(); } };
+
       entry void ownghost_complete();
       entry void reqghost_complete();
+      entry void ownsol_complete();
+      entry void comsol_complete();
     };
 
   } // inciter::

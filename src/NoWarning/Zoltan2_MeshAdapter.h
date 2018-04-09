@@ -36,6 +36,10 @@
   #pragma clang diagnostic ignored "-Wfloat-equal"
   #pragma clang diagnostic ignored "-Wundefined-func-template"
   #pragma clang diagnostic ignored "-Wundefined-var-template"
+  #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+  #pragma clang diagnostic ignored "-Wunused-template"
+  #pragma clang diagnostic ignored "-Wcast-qual"
+  #pragma clang diagnostic ignored "-Wshadow"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wredundant-decls"

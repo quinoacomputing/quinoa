@@ -38,6 +38,14 @@
                URL="\ref inciter::DG::reqGhost"];
       OwnGhost -> sendGhost [ style="solid" ];
       ReqGhost -> sendGhost [ style="solid" ];
+      OwnSol [ label="OwnSol"
+               tooltip="own solution/unknown data computed"
+               URL="\ref inciter::DG::advance"];
+      ComSol [ label="ComSol"
+               tooltip="communicated (ghost) solution/unknown data received"
+               URL="\ref inciter::DG::comsol"];
+      OwnSol -> Solve [ style="solid" ];
+      ComSol -> Solve [ style="solid" ];
     }
     \enddot
     \include Inciter/dg.ci
@@ -54,6 +62,7 @@
 
 #include "DerivedData.h"
 #include "FaceData.h"
+#include "ElemDiagnostics.h"
 
 #include "NoWarning/dg.decl.h"
 
@@ -156,6 +165,7 @@ class DG : public CBase_DG {
       p | m_ghost;
       p | m_exptGhost;
       p | m_recvGhost;
+      p | m_diag;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -235,6 +245,8 @@ class DG : public CBase_DG {
     std::set< std::size_t > m_exptGhost;
     //! Received ghost tet ids (used only in DEBUG)
     std::set< std::size_t > m_recvGhost;
+    //! Diagnostics object
+    ElemDiagnostics m_diag;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -276,9 +288,6 @@ class DG : public CBase_DG {
 
     //! Output mesh and particle fields to files
     void out();
-
-    //! Compute diagnostics, e.g., residuals
-    bool diagnostics();
 
     //! Output mesh-based fields to file
     void writeFields( tk::real time );

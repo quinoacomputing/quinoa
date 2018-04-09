@@ -15,7 +15,7 @@
 
 #include "Types.h"
 
-namespace tk {
+namespace inciter {
 
 //! Serialize std::vector to raw memory stream
 std::pair< int, std::unique_ptr<char[]> >
@@ -25,6 +25,6 @@ serialize( const std::vector< std::vector< tk::real > >& d );
 CkReductionMsg*
 mergeDiag( int nmsg, CkReductionMsg **msgs );
 
-} // tk::
+} // inciter::
 
 #endif // DiagReducer_h

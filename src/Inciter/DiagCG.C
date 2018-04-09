@@ -107,7 +107,7 @@ DiagCG::registerReducers()
 //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
 // *****************************************************************************
 {
-  Diagnostics::registerReducers();
+  NodeDiagnostics::registerReducers();
 }
 
 void
