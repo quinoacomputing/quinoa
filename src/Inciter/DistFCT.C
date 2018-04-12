@@ -18,6 +18,7 @@
 #include "QuinoaConfig.h"
 #include "ContainerUtil.h"
 #include "DistFCT.h"
+#include "Variant.h"
 
 namespace inciter {
 

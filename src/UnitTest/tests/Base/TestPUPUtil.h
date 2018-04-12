@@ -597,11 +597,11 @@ class Migrated : public CBase_Migrated {
       // Generate error message with expected and actual value in case if fail
       std::string expected = "[ " + std::to_string(value) + " ]";
       std::string actual = "[ " +
-        std::to_string( boost::get< int >( m_variant.get() ) ) + " ]";
+        std::to_string( boost::get< int >( m_variant ) ) + " ]";
       // Evaluate test
       ensure_equals( "tk::Variant<int,double>(int) different after migrated:"
                      " expected `" + expected + "` actual `" + actual + "`",
-                     boost::get< int >( m_variant.get() ), value );
+                     boost::get< int >( m_variant ), value );
     } catch ( const failure& ex ) {
       tr.result = ex.result();
       tr.exception_typeid = ex.type();
@@ -638,11 +638,11 @@ class Migrated : public CBase_Migrated {
       // Generate error message with expected and actual value in case if fail
       std::string expected = "[ " + std::to_string(value) + " ]";
       std::string actual = "[ " +
-        std::to_string( boost::get< double >( m_variant.get() ) ) + " ]";
+        std::to_string( boost::get< double >( m_variant ) ) + " ]";
       // Evaluate test
       ensure_equals( "rk::Variant<int,double>(double) different after "
                      "migrated: expected `" + expected + "` actual `" + actual +
-                     "`", boost::get< double >( m_variant.get() ), value,
+                     "`", boost::get< double >( m_variant ), value,
                      1.0e-15 );
     } catch ( const failure& ex ) {
       tr.result = ex.result();
