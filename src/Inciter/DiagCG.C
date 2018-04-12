@@ -70,7 +70,7 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_rhsc(),
   m_difc(),
   m_vol( 0.0 ),
-  m_diag( *Disc() )
+  m_diag()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -465,7 +465,7 @@ DiagCG::correctBC( const tk::Fields& a )
              return false;
           }
       }
-  }
+    }
 
   return true;
 }

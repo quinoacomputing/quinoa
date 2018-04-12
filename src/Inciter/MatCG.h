@@ -65,7 +65,7 @@ class MatCG : public CBase_MatCG {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
-    explicit MatCG( CkMigrateMessage* ) : m_diag( *Disc() ) {}
+    explicit MatCG( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -111,6 +111,7 @@ class MatCG : public CBase_MatCG {
       p | m_nlsol;
       p | m_disc;
       p | m_solver;
+      p | m_side;
       p | m_u;
       p | m_ul;
       p | m_du;

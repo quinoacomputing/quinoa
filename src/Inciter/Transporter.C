@@ -712,7 +712,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
                      std::ios_base::app );
   dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
 
-  // Evaluate whther to continue with next step
+  // Evaluate whether to continue with next step
   m_scheme.eval< tag::bcast >();
 }
 
