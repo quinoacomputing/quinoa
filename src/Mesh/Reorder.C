@@ -183,6 +183,8 @@ global2local( const std::vector< std::size_t >& ginpoel )
   std::vector< std::size_t > inpoel;
   for (auto p : ginpoel) inpoel.push_back( tk::cref_find( lid, p ) );
 
+  Assert( gid.size() == lid.size(), "Size mismatch" );
+
   // Return element connectivty with local node IDs
   return std::make_tuple( inpoel, gid, lid );
 }

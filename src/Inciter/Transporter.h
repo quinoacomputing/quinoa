@@ -397,7 +397,17 @@ class Transporter : public CBase_Transporter {
     //! Constructor
     explicit Transporter();
 
+    //! \brief Reduction target signaling that all PEs have desitrbuted their
+    //!   mesh after partitioning
     void distributed();
+
+   //! \brief Reduction target indicating that all PEs have distributed their
+   //!   mesh-boundary edges
+    void edged();
+
+    //! \brief Reduction target indicating that all PEs have distributed their
+    //!   newly added node IDs shared among multiple PEs
+    void matched();
 
     void refined( uint64_t nelem );
 

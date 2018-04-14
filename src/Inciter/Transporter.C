@@ -239,9 +239,11 @@ Transporter::createPartitioner()
   // Create boundary conditions Charm++ chare group
   m_bc = inciter::CProxy_BoundaryConditions::ckNew( sidenodes );
 
-  // Create partitioner callbacks
+  // Create partitioner callbacks (order matters)
   std::vector< CkCallback > cbp {{
       CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,edged), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,matched), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,aveCost), thisProxy )
@@ -264,10 +266,31 @@ Transporter::createPartitioner()
 void
 Transporter::distributed()
 // *****************************************************************************
-// ..
+// Reduction target signaling that all PEs have desitrbuted their mesh after
+// partitioning
+// *****************************************************************************
+{
+  m_partitioner.edge();
+}
+
+void
+Transporter::edged()
+// *****************************************************************************
+// Reduction target indicating that all PEs have distributed their mesh-boundary
+// edges
 // *****************************************************************************
 {
   m_partitioner.refine();
+}
+
+void
+Transporter::matched()
+// *****************************************************************************
+// Reduction target indicating that all PEs have distributed their newly added
+// node IDs shared among multiple PEs
+// *****************************************************************************
+{
+  m_partitioner.nextref();
 }
 
 void

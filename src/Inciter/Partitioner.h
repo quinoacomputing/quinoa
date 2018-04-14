@@ -145,7 +145,9 @@ class Partitioner : public CBase_Partitioner {
     void add( int frompe,
               const std::unordered_map< int, std::vector< std::size_t > >& n );
 
-    void addRef( int frompe, const std::vector< std::size_t >& n );
+    void addRef( int frompe,
+                 const std::vector< std::size_t >& inpoel,
+                 const tk::UnsMesh::CoordsMap& cm );
 
     //! Acknowledge received node IDs
     void recv();
@@ -154,6 +156,25 @@ class Partitioner : public CBase_Partitioner {
 
     //! Uniformly refine our mesh replacing each tetrahedron with 8 new ones
     void refine();
+
+    //! Generate boundary edges and send them to PEs we communicate with
+    void edge();
+
+    //! Receive boundary edges from fellow PEs
+    void addedges( int frompe, const tk::UnsMesh::Edges& ed );
+
+    //! Acknowledge received boundary edges
+    void edged();
+
+    //! Receive newly added mesh node IDs on our PE boundary
+    void match( int frompe, const tk::UnsMesh::EdgeNodeCoord& ed );
+
+    //! \brief Acknowledge received newly added node IDs to edges shared among
+    //!   multiple PEs
+    void matched();
+
+    //! Decide wether to continue with another step of initial mesh refinement
+    void nextref();
 
     //! Prepare owned mesh node IDs for reordering
     void flatten();
@@ -184,6 +205,8 @@ class Partitioner : public CBase_Partitioner {
     //! Charm++ callbacks associated to compile-time tags
     tk::tuple::tagged_tuple<
         tag::distributed, CkCallback
+      , tag::edge,        CkCallback
+      , tag::match,       CkCallback
       , tag::refined,     CkCallback
       , tag::flattened,   CkCallback
       , tag::avecost,     CkCallback
@@ -200,8 +223,32 @@ class Partitioner : public CBase_Partitioner {
     Scheme m_scheme;
     //! Number of fellow PEs to send elem IDs to
     std::size_t m_npe;
+    //! Counter during distribution of mesh during initial mesh refinement
     std::size_t m_npeRef;
+    //! PEs we communicate with during initial mesh refinement
+    std::unordered_set< int > m_pe;
+    //! Initial mesh refinement type list (in reverse order)
     std::vector< ctr::AMRInitialType > m_initref;
+    //! \brief Elements of the mesh chunk we operate on
+    //! \details The first vector is the element connectivity (local IDs), the
+    //!   second vector is the global node IDs of owned elements, while the
+    //!   third one is a map of global->local node IDs.
+    std::tuple< std::vector< std::size_t >,
+                std::vector< std::size_t >,
+                std::unordered_map< std::size_t, std::size_t > > m_el;
+    //! Alias to element connectivity with local node IDs in m_el
+    std::vector< std::size_t >& m_inpoel = std::get< 0 >( m_el );
+    //! Alias to global node IDs of owned elements in m_el
+    std::vector< std::size_t >& m_gid = std::get< 1 >( m_el );
+    //! \brief Alias to local node IDs associated to the global ones of owned
+    //!    elements in m_el
+    std::unordered_map< std::size_t, std::size_t >& m_lid = std::get< 2 >( m_el );
+    //! \brief Map associating the global node IDs (and for now, also the
+    //!   coordinates) of a node added to an edge during initial mesh refinement
+    tk::UnsMesh::EdgeNodeCoord m_edgenode;
+    //! \brief Unique set of edges of mesh chunk going to PEs on PE boundaries
+    //!   before an initial mesh refinement step
+    std::unordered_map< int, tk::UnsMesh::Edges > m_bndEdges;
     //! Queue of requested node IDs from PEs
     std::vector< std::pair< int, std::unordered_set<std::size_t> > > m_reqNodes;
     //! Queue of requested edge-node IDs from PEs
@@ -235,6 +282,8 @@ class Partitioner : public CBase_Partitioner {
     std::vector< std::size_t > m_rinpoel;
     //! Coordinates of mesh nodes of our chunk of the mesh
     tk::UnsMesh::Coords m_coord;
+    //! Coordinates associated to global node IDs of our mesh chunk
+    tk::UnsMesh::CoordsMap m_coordmap;
     //! Global element IDs we read (our chunk of the mesh)
     std::vector< long > m_gelemid;
     //! Total number of chares across all PEs
@@ -303,10 +352,10 @@ class Partitioner : public CBase_Partitioner {
     std::unordered_map< int, tk::UnsMesh::EdgeNodes > m_chedgenodes;
     //! Communication cost of linear system merging for our PE
     tk::real m_cost;
-    //! \brief Map associating a set of chare IDs to old (as in file) global
+    //! \brief Map associating a list of chare IDs to old (as in file) global
     //!   mesh node IDs on the chare boundaries
-    //! \details Note that a single global mesh ID can be associated to multiple
-    //!   chare IDs as multiple chares can contribute to a single mesh node.
+    //! \details Note that a single global mesh node ID can be associated to
+    //!   multiple chare IDs as multiple chares can contribute to a single node.
     std::unordered_map< std::size_t, std::vector< int > > m_bnodechares;
     //! \brief Map associating a set of chare IDs to edges given by two old
     //!   global mesh node IDs (old as in file)
@@ -347,19 +396,21 @@ class Partitioner : public CBase_Partitioner {
 
     //! Compute element centroid coordinates
     std::array< std::vector< tk::real >, 3 >
-    centroids( const std::vector< std::size_t >& inpoel );
+    centroids( const std::vector< std::size_t >& inpoel,
+               const tk::UnsMesh::Coords& coord );
 
-    //! Construct global mesh node ids for each chare
+    //!  Categorize mesh elements (given by their gobal node IDs) by target
     std::unordered_map< int, std::vector< std::size_t > >
-    chareNodes( const std::vector< std::size_t >& che,
+    categorize( const std::vector< std::size_t >& che,
                 const std::vector< std::size_t >& inpoel ) const;
 
     //! Distribute global mesh node IDs (connectivities) to their owner PEs
     void distribute( std::unordered_map< int,
                        std::vector< std::size_t > >&& n );
 
-    void distributeRef( std::unordered_map< int,
-                       std::vector< std::size_t > >&& n );
+    //! Distribute mesh cells to their PEs during initial mesh refinement
+    void distributeRef(
+           std::unordered_map< int, std::vector< std::size_t > >&& elems );
 
     //! Compute chare (partition) distribution
     std::array< int, 2 > distribution( int npart ) const;
@@ -373,10 +424,10 @@ class Partitioner : public CBase_Partitioner {
     //! Associate new node IDs to old ones and return them to the requestor(s)
     void prepare();
 
-    //! Do uniform refinement
+    //! Do uniform mesh refinement
     void uniformRefine();
 
-    //! Do error-based refinement
+    //! Do error-based mesh refinement
     void errorRefine();
 
     //! Update mesh after refinement

@@ -18,6 +18,8 @@ module transporter {
     chare Transporter {
       entry Transporter();
       entry [reductiontarget] void distributed();
+      entry [reductiontarget] void edged();
+      entry [reductiontarget] void matched();
       entry [reductiontarget] void refined( uint64_t nelem );
       entry [reductiontarget] void flattened();
       entry [reductiontarget] void coord();

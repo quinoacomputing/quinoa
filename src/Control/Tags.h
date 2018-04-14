@@ -164,6 +164,8 @@ struct k {};
 struct com {};
 struct coord {};
 struct distributed {};
+struct edge {};
+struct match {};
 struct flattened {};
 struct load {};
 struct bcast {};

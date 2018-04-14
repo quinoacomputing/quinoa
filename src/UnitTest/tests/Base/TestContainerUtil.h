@@ -38,9 +38,36 @@ static ContainerUtil_group ContainerUtil( "Base/ContainerUtil" );
 
 //! Test definitions for group
 
-//! Test unique making the elements of a container unique
+//! Test cunique making the elements of a container unique (on copy)
 template<> template<>
 void ContainerUtil_object::test< 1 >() {
+  set_test_name( "cunique" );
+
+  // std::vector
+  std::vector< int > v{{ 1, 1, 2, 6, -2, 3, 5, 5 }},
+                     correct{{ -2, 1, 2, 3, 5, 6 }};
+  auto v1 = tk::cunique( v );
+  ensure( "make vector (c)unique incorrect", v1 == correct );
+
+  // std::string
+  std::string s( "blahblah" );
+  auto s1 = tk::cunique( s );
+  ensure( "make string (c)unique incorrect", s1 == "abhl" );
+
+  // std::vector< std::vector< tk::ctr::Term > >
+  std::vector< std::vector< tk::ctr::Term > > p{ tk::ctr::mean('c',1),
+                                                 tk::ctr::variance('y',2),
+                                                 tk::ctr::variance('y',2),
+                                                 tk::ctr::variance('y',2) };
+  std::vector< std::vector< tk::ctr::Term > > c{ tk::ctr::mean('c',1),
+                                                 tk::ctr::variance('y',2) };
+  auto p1 = tk::cunique( p );
+  ensure( "make vector<vector<tk::ctr::Term>> (c)unique incorrect", p1 == c );
+}
+
+//! Test unique making the elements of a container unique
+template<> template<>
+void ContainerUtil_object::test< 2 >() {
   set_test_name( "unique" );
 
   // std::vector
@@ -67,7 +94,7 @@ void ContainerUtil_object::test< 1 >() {
 
 //! Test cref_find returning a const-ref to value found for key in map
 template<> template<>
-void ContainerUtil_object::test< 2 >() {
+void ContainerUtil_object::test< 3 >() {
   set_test_name( "[c]ref_find" );
 
   std::map< int, std::string > m{ {1,"one"}, {2,"two"} };
@@ -93,7 +120,7 @@ void ContainerUtil_object::test< 2 >() {
 
 //! Test vector extents
 template<> template<>
-void ContainerUtil_object::test< 3 >() {
+void ContainerUtil_object::test< 4 >() {
   set_test_name( "vector extents" );
 
   std::vector< int > v{{ 1, 1, 2, 6, -2, 3, 5, 5 }};
@@ -108,7 +135,7 @@ void ContainerUtil_object::test< 3 >() {
 
 //! Test associative container (value) extents
 template<> template<>
-void ContainerUtil_object::test< 4 >() {
+void ContainerUtil_object::test< 5 >() {
   set_test_name( "[hash]map value extents" );
 
   std::map< int, tk::real > m{ {1,34.2}, {2,12.3}, {4,-3.0} };
@@ -124,7 +151,7 @@ void ContainerUtil_object::test< 4 >() {
 
 //! Test operator += adding values of a std::vector to another one
 template<> template<>
-void ContainerUtil_object::test< 5 >() {
+void ContainerUtil_object::test< 6 >() {
   set_test_name( "operator+=" );
 
   using tk::operator+=;
@@ -229,7 +256,7 @@ void ContainerUtil_object::test< 5 >() {
 
 //! Test keyEqual()
 template<> template<>
-void ContainerUtil_object::test< 6 >() {
+void ContainerUtil_object::test< 7 >() {
   set_test_name( "keyEqual" );
 
   // Test if keys are equal
@@ -256,7 +283,7 @@ void ContainerUtil_object::test< 6 >() {
 
 //! Test sumsize()
 template<> template<>
-void ContainerUtil_object::test< 7 >() {
+void ContainerUtil_object::test< 8 >() {
   set_test_name( "sumsize" );
 
   // Test sum of the sizes of a vector of vectors
@@ -266,7 +293,7 @@ void ContainerUtil_object::test< 7 >() {
 
 //! Test destroy()
 template<> template<>
-void ContainerUtil_object::test< 8 >() {
+void ContainerUtil_object::test< 9 >() {
   set_test_name( "destroy" );
 
   // Test destroying a vector of vectors

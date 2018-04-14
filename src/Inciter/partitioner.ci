@@ -31,10 +31,18 @@ module partitioner {
       entry void partition( int nchare );
       entry void add( int frompe,
             const std::unordered_map< int, std::vector< std::size_t > >& elem );
-      entry void addRef( int frompe, const std::vector< std::size_t >& n );
+      entry void addRef( int frompe,
+                         const std::vector< std::size_t >& inpoel,
+                         const tk::UnsMesh::CoordsMap& cm );
       entry void recv();
       entry void recvRef();
+      entry void edge();
+      entry void addedges( int frompe, const tk::UnsMesh::Edges& ed );
+      entry void edged();
       entry void refine();
+      entry void match( int frompe, const tk::UnsMesh::EdgeNodeCoord& en );
+      entry void matched();
+      entry void nextref();
       entry void flatten();
       entry void offset( int pe, std::size_t u );
       entry void request( int pe, const std::unordered_set< std::size_t >& nd );

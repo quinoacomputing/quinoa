@@ -329,8 +329,8 @@ namespace AMR {
         // Clean up dead edges
         // clean_up_dead_edges(); // Nothing get's marked as "dead" atm?
 
-        std::cout << "Total Edges : " << tet_store.edge_store.size() << std::endl;
-        std::cout << "Total Tets : " << tet_store.size() << std::endl;
+        //std::cout << "Total Edges : " << tet_store.edge_store.size() << std::endl;
+        //std::cout << "Total Tets : " << tet_store.size() << std::endl;
         //std::cout << "Total Nodes : " << m_x.size() << std::endl;
 
         tet_store.print_node_types();
