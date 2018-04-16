@@ -56,7 +56,7 @@ class UnsMesh {
                                            std::vector< int >,
                                            EdgeHash,
                                            EdgeEq >;
-    //! Map associating the coordinates of a node to an edge
+    //! Map associating the ID and the coordinates of a node to an edge
     using EdgeNodeCoord =
        std::unordered_map< Edge,
                            std::tuple< std::size_t, real, real, real >,
@@ -64,7 +64,7 @@ class UnsMesh {
                            EdgeEq >;
 
     //! Unique set of edges
-    using Edges = std::unordered_set< Edge, EdgeHash, EdgeEq >;
+    using EdgeSet = std::unordered_set< Edge, EdgeHash, EdgeEq >;
 
     //! Node ID triplet denoting a tetrahedron face
     using Face = std::array< std::size_t, 3 >;
