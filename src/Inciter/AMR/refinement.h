@@ -246,12 +246,12 @@ namespace AMR {
                 size_t C = face_ids[2];
                 size_t D = opposite_id;
 
-                std::cout <<
-                    " A " << A <<
-                    " B " << B <<
-                    " C " << C <<
-                    " D " << D <<
-                    std::endl;
+//                 std::cout <<
+//                     " A " << A <<
+//                     " B " << B <<
+//                     " C " << C <<
+//                     " D " << D <<
+//                     std::endl;
 
                 // Make new nodes
                 //coordinate_t AB_mid = node_connectivity.find_mid_point(A, B);

@@ -401,14 +401,12 @@ class Transporter : public CBase_Transporter {
     //!   mesh after partitioning
     void distributed();
 
-   //! \brief Reduction target indicating that all PEs have distributed their
-   //!   mesh-boundary edges
-    void edged();
-
     //! \brief Reduction target indicating that all PEs have distributed their
-    //!   newly added node IDs shared among multiple PEs
+    //!   newly added node IDs shared along the boundary with other PEs
     void matched();
 
+    //! \brief Reduction target indicating that initial mesh refinement has
+    //!   been completed on all PEs
     void refined( uint64_t nelem );
 
     //! \brief Reduction target indicating that all Partitioner chare groups

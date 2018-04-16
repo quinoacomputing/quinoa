@@ -242,7 +242,6 @@ Transporter::createPartitioner()
   // Create partitioner callbacks (order matters)
   std::vector< CkCallback > cbp {{
       CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,edged), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,matched), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
@@ -270,17 +269,7 @@ Transporter::distributed()
 // partitioning
 // *****************************************************************************
 {
-  m_partitioner.edge();
-}
-
-void
-Transporter::edged()
-// *****************************************************************************
-// Reduction target indicating that all PEs have distributed their mesh-boundary
-// edges
-// *****************************************************************************
-{
-  m_partitioner.refine();
+  m_partitioner.bndEdges();
 }
 
 void
@@ -338,10 +327,8 @@ Transporter::diagHeader()
 void
 Transporter::refined( uint64_t nelem )
 // *****************************************************************************
-// Reduction target indicating that the mesh has been read from file
-//! \details At this point all Partitioner chare groups have finished reading
-//!   their part of the computational mesh and we are ready to compute the
-//!   computational load
+// Reduction target indicating that initial mesh refinement has been completed
+// on all PEs
 //! \param[in] nelem Total number of mesh elements (summed across all PEs)
 // *****************************************************************************
 {

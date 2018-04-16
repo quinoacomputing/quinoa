@@ -152,26 +152,21 @@ class Partitioner : public CBase_Partitioner {
     //! Acknowledge received node IDs
     void recv();
 
+    //! Acknowledge received mesh chunk and its and nodes
     void recvRef();
 
-    //! Uniformly refine our mesh replacing each tetrahedron with 8 new ones
-    void refine();
+    //! Generate boundary edges and send them to all PEs
+    void bndEdges();
 
-    //! Generate boundary edges and send them to PEs we communicate with
-    void edge();
-
-    //! Receive boundary edges from fellow PEs
-    void addedges( int frompe, const tk::UnsMesh::Edges& ed );
-
-    //! Acknowledge received boundary edges
-    void edged();
+    //! Receive boundary edges from all PEs (including this one)
+    void addBndEdges( int frompe, const tk::UnsMesh::Edges& ed );
 
     //! Receive newly added mesh node IDs on our PE boundary
-    void match( int frompe, const tk::UnsMesh::EdgeNodeCoord& ed );
+    void addRefBndEdges( int frompe, const tk::UnsMesh::EdgeNodeCoord& ed );
 
     //! \brief Acknowledge received newly added node IDs to edges shared among
     //!   multiple PEs
-    void matched();
+    void recvRefBndEdges();
 
     //! Decide wether to continue with another step of initial mesh refinement
     void nextref();
@@ -205,8 +200,7 @@ class Partitioner : public CBase_Partitioner {
     //! Charm++ callbacks associated to compile-time tags
     tk::tuple::tagged_tuple<
         tag::distributed, CkCallback
-      , tag::edge,        CkCallback
-      , tag::match,       CkCallback
+      , tag::matched,     CkCallback
       , tag::refined,     CkCallback
       , tag::flattened,   CkCallback
       , tag::avecost,     CkCallback
@@ -221,11 +215,18 @@ class Partitioner : public CBase_Partitioner {
     CProxy_BoundaryConditions m_bc;
     //! Discretization scheme
     Scheme m_scheme;
+    //! Number of PEs this PE needs to send a mesh chunk after partitioning
+    std::size_t m_npeDist;
     //! Number of fellow PEs to send elem IDs to
     std::size_t m_npe;
     //! Counter during distribution of mesh during initial mesh refinement
-    std::size_t m_npeRef;
-    //! PEs we communicate with during initial mesh refinement
+    std::size_t m_ndist;
+    //! \brief Counter during distribution of PE-boundary edges during initial
+    //!   mesh refinement
+    std::size_t m_nedge;
+    //! Counter during distribution of newly added nodes to PE-boundary edges
+    std::size_t m_nref;
+    //! PEs we share at least a single edge with
     std::unordered_set< int > m_pe;
     //! Initial mesh refinement type list (in reverse order)
     std::vector< ctr::AMRInitialType > m_initref;
@@ -246,9 +247,13 @@ class Partitioner : public CBase_Partitioner {
     //! \brief Map associating the global node IDs (and for now, also the
     //!   coordinates) of a node added to an edge during initial mesh refinement
     tk::UnsMesh::EdgeNodeCoord m_edgenode;
-    //! \brief Unique set of edges of mesh chunk going to PEs on PE boundaries
-    //!   before an initial mesh refinement step
+    //! \brief Unique set of boundary edges associated to (all) PEs
     std::unordered_map< int, tk::UnsMesh::Edges > m_bndEdges;
+    //! \brief Map associating the global node IDs (and for now, also the
+    //!   coordinates) of a node added to an edge during initial mesh refinement
+    //!   associated to a(nother) PE this data is shared with (along a shared
+    //!   edge)
+    std::unordered_map< int, tk::UnsMesh::EdgeNodeCoord > m_edgeNodeCoord;
     //! Queue of requested node IDs from PEs
     std::vector< std::pair< int, std::unordered_set<std::size_t> > > m_reqNodes;
     //! Queue of requested edge-node IDs from PEs
@@ -412,6 +417,9 @@ class Partitioner : public CBase_Partitioner {
     void distributeRef(
            std::unordered_map< int, std::vector< std::size_t > >&& elems );
 
+    //! Optionally refine mesh
+    void refine();
+
     //! Compute chare (partition) distribution
     std::array< int, 2 > distribution( int npart ) const;
 
@@ -429,6 +437,9 @@ class Partitioner : public CBase_Partitioner {
 
     //! Do error-based mesh refinement
     void errorRefine();
+
+    //! Do mesh refinement correcting PE-boundary edges
+    void correctRefine( const tk::UnsMesh::Edges& extra );
 
     //! Update mesh after refinement
     void updateMesh( AMR::mesh_adapter_t& refiner );

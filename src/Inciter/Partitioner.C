@@ -47,13 +47,16 @@ Partitioner::Partitioner(
   const Scheme& scheme,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::vector< std::size_t >& triinpoel ) :
-  m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6], cb[7] ),
+  m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6] ),
   m_host( host ),
   m_solver( solver ),
   m_bc( bc ),
   m_scheme( scheme ),
+  m_npeDist( 0 ),
   m_npe( 0 ),
-  m_npeRef( 0 ),
+  m_ndist( 0 ),
+  m_nedge( 0 ),
+  m_nref( 0 ),
   m_pe(),
   m_initref(),
   m_el(),
@@ -108,7 +111,7 @@ Partitioner::Partitioner(
   // Read our chunk of the mesh graph from file
   mr.readGraph( m_ginpoel, CkNumPes(), CkMyPe() );
 
-  // Compute local data from global mesh connectivity (m_inpoel, m_gid, m_gid)
+  // Compute local data from global mesh connectivity (m_inpoel, m_gid, m_lid)
   m_el = tk::global2local( m_ginpoel );
 
   // Read our chunk of the mesh node coordinates from file
@@ -158,17 +161,15 @@ Partitioner::partref()
           "elements) after mesh partitioning does not equal the number of mesh "
           "graph elements" );
 
-  // Prepare for mesh refinement after re-shuffling of elements to PEs
-  m_pe.clear();
+  // Prepare for a step of initial mesh refinement
   m_bndEdges.clear();
+  m_pe.clear();
+  m_edgeNodeCoord.clear();
   m_edgenode.clear();
-  // Categorize mesh elements (given by their gobal node IDs) by target PE
-  auto elems = categorize( pel, m_rinpoel );
-  // Construct set of PEs we communicate with during initial mesh refinement
-  for (const auto& c : elems) m_pe.insert( c.first );
-  m_pe.erase( CkMyPe() );
-  // Distribute mesh cells to their PEs based on mesh partitioning
-  distributeRef( std::move(elems) );
+
+  // Categorize mesh elements (given by their gobal node IDs) by target PE and
+  // distribute to their PEs based on mesh partitioning.
+  distributeRef( categorize( pel, m_rinpoel ) );
 }
 
 void
@@ -346,14 +347,10 @@ Partitioner::addRef( int frompe,
 void
 Partitioner::recvRef()
 // *****************************************************************************
-//  Acknowledge received mesh and node IDs
+//  Acknowledge received mesh chunk and its nodes
 // *****************************************************************************
 {
-  // When all our mesh chunks are received, this PE has distributed its parts.
-  if (++m_npeRef == m_pe.size()) {
-    m_npeRef = 0;
-    contribute( m_cb.get< tag::distributed >() );
-  }
+  if (++m_ndist == m_npeDist) contribute( m_cb.get< tag::distributed >() );
 }
 
 void
@@ -775,12 +772,17 @@ Partitioner::distributeRef(
     elems.erase( i );
   } else Throw( "No elements are assigned to PE" );
 
+  m_nedge = 0;
+
   // Export connectivities to other PEs
   if (elems.empty())
     contribute( m_cb.get< tag::distributed >() );
-  else
+  else {
+    m_ndist = 0;
+    m_npeDist = elems.size();
     for (const auto& p : elems)
       thisProxy[ p.first ].addRef( CkMyPe(), p.second, coordmap( p.second ) );
+  }
 }
 
 std::array< int, 2 >
@@ -933,9 +935,9 @@ Partitioner::prepare()
 }
 
 void
-Partitioner::edge()
+Partitioner::bndEdges()
 // *****************************************************************************
-// Generate boundary edges and send them to PEs we communicate with
+// Generate boundary edges and send them to all PEs
 //! \details This step happens when the mesh chunk on this PE has been
 //!   distributed after partitioning during an initial mesh refinement step. At
 //!   this point we have a contiguous chunk of the mesh on this PE as
@@ -944,7 +946,7 @@ Partitioner::edge()
 //!   agreed on a refinement that yields a conforming mesh across PE boundaries.
 // *****************************************************************************
 {
-  // Compute local data from global mesh connectivity (m_inpoel, m_gid, m_gid)
+  // Compute local data from global mesh connectivity (m_inpoel, m_gid, m_lid)
   m_el = tk::global2local( m_ginpoel );
 
   // Generate boundary edges of our mesh chunk
@@ -961,22 +963,21 @@ Partitioner::edge()
         bnded.insert( {{{A,B}}} );
         bnded.insert( {{{B,C}}} );
         bnded.insert( {{{C,A}}} );
+        Assert( m_lid.find( A ) != end(m_lid), "Local node ID not found" );
+        Assert( m_lid.find( B ) != end(m_lid), "Local node ID not found" );
+        Assert( m_lid.find( C ) != end(m_lid), "Local node ID not found" );
       }
     }
   }
 
-  // Export boundary edges to other PEs
-  if (m_pe.empty())
-    contribute( m_cb.get< tag::edge >() );    
-  else
-    for (auto p : m_pe)
-      thisProxy[ p ].addedges( CkMyPe(), bnded );
+  // Export boundary edges to all PEs
+  thisProxy.addBndEdges( CkMyPe(), bnded );
 }
 
 void
-Partitioner::addedges( int frompe, const tk::UnsMesh::Edges& ed )
+Partitioner::addBndEdges( int frompe, const tk::UnsMesh::Edges& ed )
 // *****************************************************************************
-//! Receive boundary edges from PEs we communicate with
+//! Receive boundary edges from all PEs (including this one)
 //! \param[in] frompe PE call coming from
 //! \param[in] ed Edges on frompe's boundary (with global node IDs)
 // *****************************************************************************
@@ -984,19 +985,18 @@ Partitioner::addedges( int frompe, const tk::UnsMesh::Edges& ed )
   // Store incoming boundary edges
   m_bndEdges[ frompe ].insert( begin(ed), end(ed) );
 
-  // Acknowledge receipt of mesh-boundary edges
-  thisProxy[ frompe ].edged();
-}
+  if (++m_nedge == static_cast<std::size_t>(CkNumPes())) {
 
-void
-Partitioner::edged()
-// *****************************************************************************
-//  Acknowledge received boundary edges
-// *****************************************************************************
-{
-  if (++m_npeRef == m_pe.size()) {
-    m_npeRef = 0;
-    contribute( m_cb.get< tag::edge >() );
+    // Compute unique set of PEs that share at least a single edge with this PE
+    const auto& ownedges = tk::cref_find( m_bndEdges, CkMyPe() );
+    for (const auto& p : m_bndEdges)    // for all PEs
+      if (p.first != CkMyPe())          // for all PEs other than this PE
+        for (const auto& e : p.second)  // for all boundary edge
+          if (ownedges.find(e) != end(ownedges))
+            m_pe.insert( p.first );
+
+    m_nref = 0;
+    refine();
   }
 }
 
@@ -1005,14 +1005,12 @@ Partitioner::refine()
 // *****************************************************************************
 //  Optionally refine mesh
 //! \details This is a single step in a potentially multiple-entry list of
-//!   initial adaptive mesh refinement steps. Distribution of the boundary edges
-//!   has preceded this step, so that boundary edges (shared by multiple PEs)
-//!   can agree on a refinement that yields a conforming mesh across PE
+//!   initial adaptive mesh refinement steps. Distribution of the PE-boundary
+//!   edges has preceded this step, so that boundary edges (shared by multiple
+//!   PEs) can agree on a refinement that yields a conforming mesh across PE
 //!   boundaries.
 // *****************************************************************************
 {
-  Assert( m_bndEdges.size() == m_pe.size(), "Size mismatch" );
-
   // Convert node coordinates associated to global node IDs to a flat vector
   auto npoin = m_coordmap.size();
   Assert( m_gid.size() == npoin, "Size mismatch" );
@@ -1038,97 +1036,66 @@ Partitioner::refine()
                              tk::ExoWriter::CREATE );
   mw.writeMesh( refmesh );
 
+  for (const auto& e : tk::cref_find(m_bndEdges,CkMyPe()))
+    Assert( m_lid.find( e[0] ) != end( m_lid ) &&
+            m_lid.find( e[1] ) != end( m_lid ),
+            "Boundary edge not found before refinement" );
+
   // Refine mesh based on next initial refinement type
-  std::cout << CkMyPe() << " ref start " << level << '\n';
+  //std::cout << CkMyPe() << " ref start " << level << '\n';
   auto r = m_initref.back();    // consume (reversed) list from back
   if (r == ctr::AMRInitialType::UNIFORM)
     uniformRefine();
   else if (r == ctr::AMRInitialType::INITIAL_CONDITIONS)
     errorRefine();
   else Throw( "Initial AMR type not implemented" );
-  std::cout << CkMyPe() << " ref finish " << level << '\n';
+  //std::cout << CkMyPe() << " ref finish " << level << '\n';
 
-  // Update mesh connectivity with new global node ids
-  m_ginpoel = m_inpoel;
-  Assert( tk::cunique(m_ginpoel).size() == m_coord[0].size(), "Size mismatch" );
-  for (auto& i : m_ginpoel) i = m_gid[i];
+  for (const auto& e : tk::cref_find(m_bndEdges,CkMyPe()))
+    Assert( m_lid.find( e[0] ) != end( m_lid ) &&
+            m_lid.find( e[1] ) != end( m_lid ),
+            "Boundary edge not found after refinement" );
 
   // Export added nodes on our mesh chunk boundary to other PEs
   if (m_pe.empty())
-    contribute( m_cb.get< tag::match >() );
+    contribute( m_cb.get< tag::matched >() );
   else
-    for (auto p : m_pe) {       // for all PEs we communicate with
-      // for all boundary edges shared with p, find out if we have added a new
-      // node, and if so, export parents->(newid,coords) to p
+    for (auto p : m_pe) {       // for all PEs we share at least an edge with
+      // For all boundary edges of PE p, find out if we have added a new
+      // node to it, and if so, export parents->(newid,coords) to p.
       tk::UnsMesh::EdgeNodeCoord exp;
-      for (auto e : tk::cref_find(m_bndEdges,p)) {
+      for (const auto& e : tk::cref_find(m_bndEdges,p)) {
         auto i = m_edgenode.find(e);
-        if (i != end(m_edgenode)) {
-          exp[e] = i->second;
-          //std::cout << CkMyPe() << " assigned: " << e[0] << ',' << e[1] << ':' << std::get<0>(i->second) << '>' << std::get<1>(i->second) << ',' << std::get<2>(i->second) << ',' << std::get<3>(i->second) << '\n';
-        }
+        if (i != end(m_edgenode)) exp[ e ] = i->second;
       }
-      thisProxy[ p ].match( CkMyPe(), exp );
+      thisProxy[ p ].addRefBndEdges( CkMyPe(), exp );
     }
 }
 
 void
-Partitioner::match( int frompe, const tk::UnsMesh::EdgeNodeCoord& ed )
+Partitioner::addRefBndEdges( int frompe, const tk::UnsMesh::EdgeNodeCoord& ed )
 // *****************************************************************************
 //! Receive newly added mesh node IDs on our PE boundary
 //! \param[in] frompe PE call coming from
 //! \param[in] ed Newly added node IDs associated to parent nodes on PE boundary
 //! \details Receive newly added global node IDs and coordinates associated to
-//!   global parent IDs of edges on our mesh chunk boundary. For now, we only
-//!   ensure that the same global node ID has been assigned all PEs sharing the
-//!   incoming edges and that the new nodes have the same coordinates generated
-//!   by potentially multiple PEs sharing the edge.
+//!   global parent IDs of edges on our mesh chunk boundary.
 // *****************************************************************************
 {
-  for (const auto& e : ed) {              // for all incoming edges
-    auto i = m_edgenode.find( e.first );  // find edge with given parent ids
-    if (i != end(m_edgenode)) {           // found same added node on edge
-      // locally assigned added node coordinates: i->second
-      // remotely assigned added node coordinates: e.second
-      //std::cout << CkMyPe() << " matching: " << e.first[0] << ',' << e.first[1] << ':' << std::get<0>(e.second) << '>' << std::get<1>(e.second) << ',' << std::get<2>(e.second) << ',' << std::get<3>(e.second) << " v " << std::get<0>(i->second) << '>' << std::get<1>(i->second) << ',' << std::get<2>(i->second) << ',' << std::get<3>(i->second) << '\n';
-
-      auto l = i->second;
-      auto li = std::get<0>(l);
-      auto lx = std::get<1>(l);
-      auto ly = std::get<2>(l);
-      auto lz = std::get<3>(l);
-
-      auto r = e.second;
-      auto ri = std::get<0>(r);
-      auto rx = std::get<1>(r);
-      auto ry = std::get<2>(r);
-      auto rz = std::get<3>(r);
-
-      Assert( li == ri, "Remotely and locally assigned global ids mismatch" );
-      Assert( std::abs(lx - rx) < std::numeric_limits<tk::real>::epsilon() &&
-              std::abs(ly - ry) < std::numeric_limits<tk::real>::epsilon() &&
-              std::abs(lz - rz) < std::numeric_limits<tk::real>::epsilon(),
-              "Remote and local added node coordinates mismatch" );
-    }
-  }
-
-  // Acknowledge receipt of mesh and being with matching
-  thisProxy[ frompe ].matched();
+  // Save to buffer categorized by sender PE
+  m_edgeNodeCoord[ frompe ] = ed;
+  // Acknowledge receipt of PE-boundary edges to sender
+  thisProxy[ frompe ].recvRefBndEdges();
 }
 
 void
-Partitioner::matched()
+Partitioner::recvRefBndEdges()
 // *****************************************************************************
 //  Acknowledge received newly added node IDs to edges shared among multiple PEs
 // *****************************************************************************
 {
-  // When all our mesh chunks are received, this PE has finished its matching
-  if (++m_npeRef == m_pe.size()) {
-    m_npeRef = 0;
-    contribute( m_cb.get< tag::match >() );
-  }
+  if (++m_nref == m_pe.size()) contribute( m_cb.get< tag::matched >() );
 }
-
 
 void
 Partitioner::nextref()
@@ -1136,20 +1103,71 @@ Partitioner::nextref()
 // Decide wether to continue with another step of initial mesh refinement
 // *****************************************************************************
 {
-  //auto initref = g_inputdeck.get< tag::amr, tag::init >();
-  //auto level = initref.size() - m_initref.size();
-  //std::cout << CkMyPe() << " matched " << level << "\n";
+  // Storage for edges that still need a new node to yield a conforming mesh
+  tk::UnsMesh::Edges extra;
+
+  // For now, we only ensure that the same global node ID has been assigned all
+  // PEs sharing the incoming edges and that the new nodes have the same
+  // coordinates generated by potentially multiple PEs sharing the edge.
+  for (const auto& p : m_edgeNodeCoord) {
+    for (const auto& e : p.second) {        // for all edges from PE p.first
+      auto i = m_edgenode.find( e.first );  // find edge with given parent ids
+      if (i != end(m_edgenode)) {           // found same added node on edge
+        // locally assigned added node ID and coordinates: i->second
+        // remotely assigned added node ID and coordinates: e.second
+        auto l = i->second;
+        auto li = std::get<0>(l);
+        auto lx = std::get<1>(l);
+        auto ly = std::get<2>(l);
+        auto lz = std::get<3>(l);
+        auto r = e.second;
+        auto ri = std::get<0>(r);
+        auto rx = std::get<1>(r);
+        auto ry = std::get<2>(r);
+        auto rz = std::get<3>(r);
+        // Ensure global IDs of newly added nodes are the same
+        Assert( li == ri, "Remotely and locally assigned global ids mismatch" );
+        // Ensure coordinates are the same
+        Assert( std::abs(lx - rx) < std::numeric_limits<tk::real>::epsilon() &&
+                std::abs(ly - ry) < std::numeric_limits<tk::real>::epsilon() &&
+                std::abs(lz - rz) < std::numeric_limits<tk::real>::epsilon(),
+                "Remote and local added node coordinates mismatch" );
+      } else {  // remote added node on edge but we did not
+        Assert( m_bndEdges.find( CkMyPe() )->second.find( e.first ) !=
+                m_bndEdges.find( CkMyPe() )->second.end(),
+                "Local node IDs of boundary edge not found" );
+        // Save edge (given by parent node IDs) to which the remote PE has added a
+        // new node but we did not. Will need to correct mesh so it conforms
+        // across PEs.
+        extra.insert( {{ tk::cref_find( m_lid, e.first[0] ),
+                         tk::cref_find( m_lid, e.first[1] ) }} );
+      }
+    }
+  }
+
+  // Correct PE-boundary edges
+  correctRefine( extra );
 
   // Remove initial mesh refinement step from list
   if (!m_initref.empty()) m_initref.pop_back();
 
   if (!m_initref.empty())       // Continue to next initial refinement step
+
     partref();
+
   else {                        // Finish list of initial mesh refinement steps
+
+    // Output final mesh after initial mesh refinement
+    tk::UnsMesh refmesh( m_inpoel, m_coord );
+    tk::ExodusIIMeshWriter mw( "initref.final." + std::to_string(CkMyPe()),
+                               tk::ExoWriter::CREATE );
+    mw.writeMesh( refmesh );
+
     // Compute final number of cells across whole problem
     auto nelem = m_ginpoel.size()/4;
     contribute( sizeof(uint64_t), &nelem, CkReduction::sum_int,
                 m_cb.get< tag::refined >() );
+
   }
 }
 
@@ -1214,6 +1232,30 @@ Partitioner::errorRefine()
 
   // Update mesh coordinates and connectivity
   updateMesh( refiner );
+}
+
+void
+Partitioner::correctRefine( const tk::UnsMesh::Edges& extra )
+// *****************************************************************************
+// Do mesh refinement correcting PE-boundary edges
+//! \param[in] Unique set of edges that need a new edge
+// *****************************************************************************
+{
+  if (!extra.empty()) {
+    // Instantiate mesh refiner
+    AMR::mesh_adapter_t refiner( m_inpoel );
+  
+    // Generate list of edges that need to be corrected
+    std::vector< edge_t > edge;
+    for (const auto& e : extra) edge.push_back( edge_t(e[0],e[1]) );
+    std::vector< real_t > crit( edge.size(), 1.0 );
+  
+    // Do refinement including edges that need to be corrected
+    refiner.error_refinement( edge, crit );
+  
+    // Update mesh coordinates and connectivity
+    updateMesh( refiner );
+  }
 }
 
 void
@@ -1289,8 +1331,13 @@ Partitioner::updateMesh( AMR::mesh_adapter_t& refiner )
 //     }
   }
 
-  // Update mesh connectivity
+  // Update mesh connectivity with local node IDs
   m_inpoel = refinpoel;
+
+  // Update mesh connectivity with new global node ids
+  m_ginpoel = m_inpoel;
+  Assert( tk::cunique(m_ginpoel).size() == m_coord[0].size(), "Size mismatch" );
+  for (auto& i : m_ginpoel) i = m_gid[i];
 }
 
 void
