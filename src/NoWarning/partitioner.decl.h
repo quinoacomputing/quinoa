@@ -17,6 +17,7 @@
   #pragma clang diagnostic ignored "-Wold-style-cast"
   #pragma clang diagnostic ignored "-Wextra-semi"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
+  #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"

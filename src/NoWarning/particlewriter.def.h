@@ -22,6 +22,7 @@
   #pragma clang diagnostic ignored "-Wreorder"
   #pragma clang diagnostic ignored "-Wundef"
   #pragma clang diagnostic ignored "-Wunused-variable"
+  #pragma clang diagnostic ignored "-Wcast-qual"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
