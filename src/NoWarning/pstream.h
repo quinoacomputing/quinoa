@@ -20,6 +20,7 @@
   #pragma clang diagnostic ignored "-Wabstract-vbase-init"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
   #pragma clang diagnostic ignored "-Wconversion"
+  #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wshadow"

@@ -23,6 +23,8 @@
   #pragma clang diagnostic ignored "-Wunused-variable"
   #pragma clang diagnostic ignored "-Wunused-parameter"
   #pragma clang diagnostic ignored "-Wundef"
+  #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+  #pragma clang diagnostic ignored "-Wcast-qual"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wshadow"

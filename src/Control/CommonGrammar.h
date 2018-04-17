@@ -329,6 +329,10 @@ namespace grm {
     #pragma GCC diagnostic pop
   #endif
 
+  #if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-template"
+  #endif
   //! \brief Put option (i.e., a tk::Toggle) in grammar state (or stack) at a
   //!   position given by tags
   //! \details This function is used to store an option (an object deriving from
@@ -377,6 +381,9 @@ namespace grm {
     // is not in the keywords pool of the grammar
     boost::mpl::for_each< typename Option::keywords >( is_keyword< use >() );
   }
+  #if defined(__clang__)
+    #pragma clang diagnostic pop
+  #endif
 
   // Common PEGTL actions (PEGTL actions reused by multiple grammars)
 

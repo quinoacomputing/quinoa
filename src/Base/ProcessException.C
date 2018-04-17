@@ -37,7 +37,7 @@ signalHandler( int signum )
 //!    SIGABRT is generated when the program calls the abort() function, such as
 //!            when an assert() triggers
 //!    SIGSEGV is generated when the program makes an illegal memory access, such
-//!            as reading unaligned memory, dereferencing a NULL pointer, reading
+//!            as reading unaligned memory, dereferencing a null pointer, reading
 //!            memory out of bounds etc.
 //!     SIGILL is generated when the program tries to execute a malformed
 //!            instruction. This happens when the execution pointer starts reading
@@ -47,7 +47,7 @@ signalHandler( int signum )
 // *****************************************************************************
 {
   // associate each signal with a signal name string.
-  const char* name = NULL;
+  const char* name = nullptr;
   switch( signum ) {
     case SIGABRT: name = "SIGABRT";  break;
     case SIGSEGV: name = "SIGSEGV";  break;
