@@ -57,6 +57,8 @@ compiler:
 
 matrix:
   exclude:
+  - env: DISTRO=gentoo COVERAGE=ON
+    compiler: clang
   - env: DISTRO=alpine SONARQUBE=ON COVERAGE=ON RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
     compiler: clang
   - env: DISTRO=alpine-rndq RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
