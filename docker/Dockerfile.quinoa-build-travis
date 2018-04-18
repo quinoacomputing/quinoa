@@ -45,8 +45,8 @@ RUN cmake \
     ../src
 RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} make VERBOSE=1 -j2
 RUN ccache -s
-RUN ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v
-RUN ctest --output-on-failure -j2 -LE "(stringent|extreme)"
+RUN if [ -z "${SONARQUBE}" ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v; fi
+RUN if [ -z "${SONARQUBE}" ]; then ctest --output-on-failure -j2 -LE "(stringent|extreme)"; fi
 RUN make install DESTDIR=${PWD}
 RUN make doc
 RUN cd .. && if [ ${COVERAGE} ]; then \
