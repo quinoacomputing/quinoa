@@ -1,7 +1,7 @@
 ################################################################################
 #
 # \file      cmake/test_runner.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
 # \brief     Regression test runner using the cmake scripting language
 #
 ################################################################################
@@ -31,6 +31,7 @@ string(REPLACE " " ";" TEST_EXECUTABLE_ARGS "${TEST_EXECUTABLE_ARGS}")
 message("Test runner configuration:")
 message("  TEST_NAME (name of test)                                    : ${TEST_NAME}")
 message("  WORKDIR (test run directory)                                : ${WORKDIR}")
+message("  RUNNER_REQUIRED (true if a ser/par job runner is required)  : ${RUNNER_REQUIRED}")
 message("  RUNNER (used to run parallel and serial jobs inside cmake)  : ${RUNNER}")
 message("  RUNNER_NCPUS_ARG (used to specify the number of CPUs)       : ${RUNNER_NCPUS_ARG}")
 message("  RUNNER_ARGS (parallel/serial job runner arguments)          : ${RUNNER_ARGS}")

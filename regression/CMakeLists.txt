@@ -1,4 +1,10 @@
-# Cmake code common to all regression testing
+################################################################################
+#
+# \file      src/regression/CMakeLists.txt
+# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+# \brief     Cmake code common to all regression testing
+#
+################################################################################
 
 # Quinoa cmake modules directory
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
@@ -44,8 +50,9 @@ add_subdirectory(inciter/transport/SlotCyl/asynclogic)
 add_subdirectory(inciter/transport/SlotCyl/fct)
 add_subdirectory(inciter/transport/SlotCyl/cfl)
 add_subdirectory(inciter/transport/ShearDiff)
+add_subdirectory(inciter/transport/GaussHump)
 add_subdirectory(inciter/compflow/Euler/VorticalFlow)
 add_subdirectory(inciter/compflow/Euler/TaylorGreen)
 add_subdirectory(inciter/compflow/Euler/RayleighTaylor)
 add_subdirectory(inciter/compflow/Euler/NLEnergyGrowth)
-add_subdirectory(inciter/amr/initial/uniform)
+#add_subdirectory(inciter/amr/initial/uniform)

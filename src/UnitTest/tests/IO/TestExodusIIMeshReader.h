@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/IO/TestExodusIIMeshReader.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Unit tests for the ExodusII unstructured-mesh reader
   \details   Unit tests for the ExodusII unstructured-mesh reader
 */
@@ -1527,6 +1527,110 @@ void ExodusIIMeshReader_object::test< 4 >() {
               std::equal( inpoel.cbegin(), inpoel.cend(),
                           std::next( conn5b.cbegin(), f*4 ) ) );
     }
+}
+
+//! Read side-set (boundary) connectivity
+template<> template<>
+void ExodusIIMeshReader_object::test< 5 >() {
+  set_test_name( "read side-set boundary-face connectivity" );
+
+  std::map< int, std::vector< std::size_t > > bface;
+
+  // Create unstructured-mesh object to read into
+  tk::UnsMesh inmesh;
+  // Read in mesh from file
+  std::string infile( REGRESSION_DIR
+                      "/meshconv/gmsh_output/box_24_ss1.exo" );
+  tk::ExodusIIMeshReader er( infile );
+  auto nbfac = er.readSidesetFaces( bface );
+
+  // Test if the number of boundary faces is correct
+  ensure_equals( "total number of boundary faces incorrect",
+                 nbfac, 24 );
+
+  // Read boundary face-node connectivity
+  std::vector< std::size_t > triinpoel;
+  er.readFaces( nbfac, triinpoel );
+
+  // Generate correct solution for face-node connectivity
+  std::vector< int > correct_triinpoel {   1,  2,  3,
+                                           4,  2,  1,
+                                           3,  2,  5,
+                                           4,  5,  2,
+                                           6,  7,  8,
+                                           8,  7,  9,
+                                          10,  7,  6,
+                                           7, 10,  9,
+                                           8, 11,  1,
+                                           1, 11,  4,
+                                          11,  8,  9,
+                                          11,  9,  4,
+                                           3, 12,  1,
+                                          12,  8,  1,
+                                           6, 12,  3,
+                                          12,  6,  8,
+                                          13,  6,  3,
+                                           5, 13,  3,
+                                          13, 10,  6,
+                                          10, 13,  5,
+                                           9, 10, 14,
+                                           4,  9, 14,
+                                           5, 14, 10,
+                                           4, 14,  5 };
+
+
+  ensure_equals( "total number of entries in inpofa is incorrect",
+                 triinpoel.size(), correct_triinpoel.size() );
+
+  for(std::size_t i=0 ; i<triinpoel.size(); ++i)
+  {
+          ensure_equals("incorrect entry " + std::to_string(i) + " in triinpoel",
+                          triinpoel[i], correct_triinpoel[i]-1);
+  }
+}
+
+//! Attempt to read side-set (boundary) connectivity, feeding garbage
+template<> template<>
+void ExodusIIMeshReader_object::test< 6 >() {
+  set_test_name( "boundary-face conn read throws on garbage" );
+
+  // Attempt to read boundary face-node connectivity passing nbfac=0
+  try {
+    std::vector< std::size_t > triinpoel;
+    std::string infile( REGRESSION_DIR "/meshconv/gmsh_output/box_24_ss1.exo" );
+    tk::ExodusIIMeshReader er( infile );
+    er.readFaces( 0, triinpoel );
+    fail( "should throw exception" );
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown, test ok
+  }
+}
+
+//! Read node-map
+template<> template<>
+void ExodusIIMeshReader_object::test< 7 >() {
+  set_test_name( "read the node-map" );
+
+  // Read in mesh from file
+  std::string infile( REGRESSION_DIR
+                      "/meshconv/gmsh_output/box_24_ss1.exo" );
+  tk::ExodusIIMeshReader er( infile );
+
+  auto nodemap = er.readNodemap();
+
+  // Generate correct solution for face-node connectivity
+  std::vector< std::size_t > correct_nodemap
+              { 2, 9, 3, 1, 4, 7, 10, 6, 5, 8, 11, 12, 13, 14};
+
+  ensure_equals( "total number of entries in inpofa is incorrect",
+                 nodemap.size(), correct_nodemap.size() );
+
+  for(std::size_t i=0 ; i<nodemap.size(); ++i)
+  {
+          ensure_equals("incorrect entry " + std::to_string(i) + " in nodemap",
+                          nodemap[i], correct_nodemap[i]-1);
+  }
 }
 
 } // tut::

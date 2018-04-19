@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Main/InciterPrint.C
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Inciter-specific pretty printer functionality
   \details   Inciter-specific pretty printer functionality.
 */
@@ -10,14 +10,14 @@
 #include "NoWarning/replace.h"
 #include <boost/iterator/iterator_traits.hpp>
 
-#include "PDE.h"
+#include "CGPDE.h"
 #include "InciterPrint.h"
 
 using inciter::InciterPrint;
 
 namespace inciter {
 
-extern std::vector< PDE > g_pdes;
+extern std::vector< CGPDE > g_cgpde;
 
 } // inciter::
 
@@ -51,7 +51,7 @@ InciterPrint::pdes( const std::string& t, const std::vector< std::vector<
 {
   if ( !info.empty() ) {
     std::stringstream ss;
-    ss << t << " (" << g_pdes.size() << ")";
+    ss << t << " (" << g_cgpde.size() << ")";
     section( ss.str() );
     for (std::size_t e=0; e<info.size(); ++e) {
       subsection( info[e][0].first );

@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/CompFlow/Problem.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     All problem configurations for the compressible flow equations
   \details   This file collects all Problem policy classes for the compressible
     flow equations, defined in PDE/CompFlow/CompFlow.h.
@@ -21,14 +21,17 @@
     - Must define the static function _names()_, returning the names of integral
       variables to be output to diagnostics file.
 
-    - Must define the static function _init()_, used for initialization of the
-      computed fields as well as sampling the analytical solution (if exist) at
+    - Must define the static function _solution()_, used for initialization of
+      the computed fields and/or sampling the analytical solution (if exist) at
       time t.
+
+    - Must define the static function _solinc()_, used to evaluate the increment
+      from t to t+dt of the analytic solution (if defined).
 
     - Must define the static function _src()_, used for adding source terms to
       the righ hand side.
 
-    - Must define the static function _side()_,  used to uery all side set IDs
+    - Must define the static function _side()_,  used to query all side set IDs
       the user has configured for all components.
 
     - Must define the static function _dirbc()_,  used to query Dirichlet

@@ -1,7 +1,7 @@
 ################################################################################
 #
 # \file      cmake/FindLMKL.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
 # \brief     Find the Math Kernel Library from Intel
 #
 ################################################################################
@@ -93,6 +93,12 @@ else()
   set(MKL_SEQUENTIAL_LAYER_LIBRARY "")
   set(MKL_CORE_LIBRARY "")
 
+endif()
+
+# Add MKL library path to rpath
+if(MKL_CORE_LIBRARY)
+  get_filename_component(MKL_RPATH_DIR ${MKL_CORE_LIBRARY} DIRECTORY)
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${MKL_RPATH_DIR}")
 endif()
 
 # Handle the QUIETLY and REQUIRED arguments and set MKL_FOUND to TRUE if

@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Main/MeshConv.C
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Mesh file converter Charm++ main chare
   \details   Mesh file converter Charm++ main chare. This file contains the
     definition of the Charm++ main chare, equivalent to main() in Charm++-land.
@@ -62,6 +62,7 @@ class Main : public CBase_Main {
     //! \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
     Main( CkArgMsg* msg )
     try :
+      m_signal( tk::setSignalHandlers() ),
       m_cmdline(),
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
@@ -116,6 +117,7 @@ class Main : public CBase_Main {
     { for (const auto& t : s) timestamp( t.first, t.second ); }
 
   private:
+    int m_signal;                               //!< Used to set signal handlers
     meshconv::ctr::CmdLine m_cmdline;           //!< Command line
     meshconv::CmdLineParser m_cmdParser;        //!< Command line parser
     tk::Print m_print;                          //!< Pretty printer

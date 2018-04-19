@@ -7,19 +7,27 @@ add_regression_test(shear_centered_diffonly ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES shear_diffonly.q shear_centered_12k.exo
                                exodiff.cfg shear_centered_diffonly.std.exo
+                               shear_centered_diffonly.diag.std
                     ARGS -c shear_diffonly.q -i shear_centered_12k.exo -v
                     BIN_BASELINE shear_centered_diffonly.std.exo
                     BIN_RESULT out.0
-                    BIN_DIFF_PROG_CONF exodiff.cfg)
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    TEXT_BASELINE shear_centered_diffonly.diag.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF shear.ndiff.cfg)
 
 add_regression_test(shear_centered_diffonly_nofct ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES shear_diffonly_nofct.q shear_centered_12k.exo
                                exodiff.cfg shear_centered_diffonly_nofct.std.exo
+                               shear_centered_diffonly_nofct.diag.std
                     ARGS -c shear_diffonly_nofct.q -i shear_centered_12k.exo -v
                     BIN_BASELINE shear_centered_diffonly_nofct.std.exo
                     BIN_RESULT out.0
-                    BIN_DIFF_PROG_CONF exodiff.cfg)
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    TEXT_BASELINE shear_centered_diffonly_nofct.diag.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF shear.ndiff.cfg)
 
 add_regression_test(shear_centered_advdiff ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -34,20 +42,28 @@ add_regression_test(shear_centered_advdiffshear ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES shear_advdiffshear.q shear_centered_12k.exo
                                exodiff.cfg shear_centered_advdiffshear.std.exo
+                               shear_centered_advdiffshear.diag.std
                     ARGS -c shear_advdiffshear.q -i shear_centered_12k.exo -v
                     BIN_BASELINE shear_centered_advdiffshear.std.exo
                     BIN_RESULT out.0
-                    BIN_DIFF_PROG_CONF exodiff.cfg)
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    TEXT_BASELINE shear_centered_advdiffshear.diag.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF shear.ndiff.cfg)
 
 add_regression_test(shear_centered_advdiffshear_c2 ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES shear_advdiffshear_c2.q shear_centered_12k.exo
                                exodiff_c2.cfg
+                               shear_centered_advdiffshear_c2.diag.std
                                shear_centered_advdiffshear_c2.std.exo
                     ARGS -c shear_advdiffshear_c2.q -i shear_centered_12k.exo -v
                     BIN_BASELINE shear_centered_advdiffshear_c2.std.exo
                     BIN_RESULT out.0
-                    BIN_DIFF_PROG_CONF exodiff_c2.cfg)
+                    BIN_DIFF_PROG_CONF exodiff_c2.cfg
+                    TEXT_BASELINE shear_centered_advdiffshear_c2.diag.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF shear.ndiff.cfg)
 
 
 # Parallel + no virtualization
@@ -56,6 +72,7 @@ add_regression_test(shear_centered_advdiffshear ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES shear_advdiffshear.q shear_centered_12k.exo
                                exodiff_par.cfg
+                               shear_centered_advdiffshear.diag.std
                                shear_centered_advdiffshear_pe4.std.exo.0
                                shear_centered_advdiffshear_pe4.std.exo.1
                                shear_centered_advdiffshear_pe4.std.exo.2
@@ -67,7 +84,10 @@ add_regression_test(shear_centered_advdiffshear ${INCITER_EXECUTABLE}
                                  shear_centered_advdiffshear_pe4.std.exo.3
                     BIN_RESULT out.0 out.1 out.2 out.3
                     BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff_par.cfg)
+                    BIN_DIFF_PROG_CONF exodiff_par.cfg
+                    TEXT_BASELINE shear_centered_advdiffshear.diag.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF shear.ndiff.cfg)
 
 # Parallel + virtualization
 
@@ -75,6 +95,7 @@ add_regression_test(shear_centered_advdiffshear_u0.5 ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES shear_advdiffshear.q shear_centered_12k.exo
                                exodiff_par.cfg
+                               shear_centered_advdiffshear.diag.std
                                shear_centered_advdiffshear_pe4_u0.5.std.exo.0
                                shear_centered_advdiffshear_pe4_u0.5.std.exo.1
                                shear_centered_advdiffshear_pe4_u0.5.std.exo.2
@@ -95,4 +116,7 @@ add_regression_test(shear_centered_advdiffshear_u0.5 ${INCITER_EXECUTABLE}
                                  shear_centered_advdiffshear_pe4_u0.5.std.exo.7
                     BIN_RESULT out.0 out.1 out.2 out.3 out.4 out.5 out.6 out.7
                     BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff_par.cfg)
+                    BIN_DIFF_PROG_CONF exodiff_par.cfg
+                    TEXT_BASELINE shear_centered_advdiffshear.diag.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF shear.ndiff.cfg)

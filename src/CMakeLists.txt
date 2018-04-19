@@ -1,7 +1,7 @@
 ################################################################################
 #
 # \file      src/CMakeLists.txt
-# \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
 # \brief     Build quinoa
 #
 ################################################################################
@@ -75,6 +75,14 @@ include(TargetArch)
 target_architecture(ARCH)
 message(STATUS "Target architecture: ${ARCH}")
 
+# Detect operating system type and version
+include(DetectOS)
+detect_os()
+message(STATUS "Detected OS: ${HOST_OS}")
+if(HOST_OS MATCHES "alpine")
+  set(HOST_OS_ALPINE true)
+endif()
+
 # If not specified on the command-line, set default third-party libraries
 # directory based on cmake-supplied compiler ID
 if (NOT TPL_DIR)
@@ -141,7 +149,6 @@ string(REGEX REPLACE "[\r\n]" "" BUILD_DATE "${BUILD_DATE}")
 # Set the requirement for the C++ standard
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 message(STATUS "Required language standard: C++${CMAKE_CXX_STANDARD}")
 
 # Get git revision
@@ -182,6 +189,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
   add_compiler_flag("-Wno-weak-vtables")
   add_compiler_flag("-Wno-unknown-pragmas")
   add_compiler_flag("-Wno-unused-command-line-argument")
+  add_compiler_flag("-Wno-disabled-macro-expansion")
 
   # Linker flags for clang
   set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)      # clear link flags
@@ -310,6 +318,17 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 
+  # Display all error messages (inform, warn, severe and fatal)
+  add_compiler_flag("-Minform=inform")
+  add_compiler_flag("-a")
+  add_compiler_flag("--pedantic")
+  add_compiler_flag("--display_error_number")
+
+  # ignore warning on parameter was set but never used
+  add_compiler_flag("--diag_suppress550")
+  # ignore warning on variable was declared but never referenced
+  add_compiler_flag("--diag_suppress177")
+
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
 
   # Use the C++14 standard (CMAKE_CXX_STANDARD does not set this for cray)
@@ -326,6 +345,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
   # 21: type qualifiers are meaningless in this declaration
   # 47: macro has an incompatible redefinition
   # 68: integer conversion resulted in a change of sign
+  # 82: storage class specifier is not the first specifier in the declaration
   # 111: indicated statement is not reachable
   # 186: unsigned integer is being compared to zero
   # 193: zero is used for the indicated undefined preprocessing identifier
@@ -334,6 +354,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
   # 181: argument is incompatible with the corresponding format string conversion
   # 261: access control is not specified ("private" by default)
   # 237: indicated selector expression is constant
+  # 284: a "NULL" reference is not allowed
   # 301: indicated "typedef" name has already been declared (with same type)
   # 324: duplicate friend declaration
   # 368: class template defines no constructor to initialize ...
@@ -355,7 +376,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
   # 10153: the initialization of class "Chare" will be done before that of member
   # 11749: declaration hides member
   # 11548: comparison between signed and unsigned operands
-  add_compiler_flag("-hnomessage=11709:261:12307:12489:193:826:737:997:3138:3137:7405:1418:177:181:401:11749:11548:1982:368:324:47:1:7:111:68:10153:186:550:21:237:174:7212")
+  add_compiler_flag("-hnomessage=11709:261:12307:12489:193:826:737:997:3138:3137:7405:1418:177:181:401:11749:11548:1982:368:324:47:1:7:111:68:10153:186:550:21:237:174:7212:284:82")
   add_c_compiler_flag("-hnomessage=11709:301:3137:3138:7405:193:1977")
 
 endif()
@@ -467,8 +488,6 @@ set(CMAKE_SKIP_BUILD_RPATH false)
 # (use later on when installing)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH false)
 
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-
 # Add the automatically determined parts of the RPATH
 # which point to directories outside the build tree to the install RPATH
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
@@ -477,7 +496,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
 list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
      "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
 if("${isSystemDir}" STREQUAL "-1")
-   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${CMAKE_INSTALL_PREFIX}/lib")
 endif("${isSystemDir}" STREQUAL "-1")
 
 # add a target to generate API documentation with Doxygen
@@ -581,11 +600,11 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../regression
 # Setup code coverage for unit tests
 if(CODE_COVERAGE)
   # Setup test coverage target. Make it dependend on all quinoa executables.
-  setup_target_for_coverage(unit doc/html unittest_coverage
-                            ${RUNNER}
-                            TESTRUNNER_ARGS
-                            ${RUNNER_NCPUS_ARG} ${PROCESSOR_COUNT}
-                            Main/${UNITTEST_EXECUTABLE} -v
+  setup_target_for_coverage(unit doc/html unittest_coverage ${RUNNER}
+                            TESTRUNNER_ARGS ${RUNNER_NCPUS_ARG}
+                                            ${PROCESSOR_COUNT}
+                                            ${RUNNER_ARGS}
+                                            Main/${UNITTEST_EXECUTABLE} -v
                             DEPENDS ${NONTEST_EXECUTABLES}
                                     ${UNITTEST_EXECUTABLE})
 endif()
@@ -595,9 +614,8 @@ if(CODE_COVERAGE)
   # Setup test coverage target. Make it dependend on all quinoa executables.
   setup_target_for_coverage(regression doc/html regression_coverage
                             ${CMAKE_CTEST_COMMAND}
-                            TESTRUNNER_ARGS
-                            -j${PROCESSOR_COUNT}
-                            ${REGRESSION_COVERAGE_ARGS}
+                            TESTRUNNER_ARGS -j${PROCESSOR_COUNT}
+                                            ${REGRESSION_COVERAGE_ARGS}
                             DEPENDS ${NONTEST_EXECUTABLES})
   if (REGRESSION_COVERAGE_ARGS)
     message(STATUS "Regression coverage test-runner arguments: '${REGRESSION_COVERAGE_ARGS}'")

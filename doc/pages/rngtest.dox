@@ -39,8 +39,8 @@ and a couple of Random123 RNGs are interfaced. References:
 
  - MKL: https://software.intel.com/en-us/intel-mkl
 
- - RNGSSE: http://dx.doi.org/10.1016/j.cpc.2011.03.022 and
-           http://dx.doi.org/10.1016/j.cpc.2013.04.007
+ - RNGSSE: https://doi.org/10.1016/j.cpc.2011.03.022 and
+           https://doi.org/10.1016/j.cpc.2013.04.007
 
  - Random123: http://www.thesalmons.org/john/random123/releases/latest/docs/index.html
 
@@ -291,6 +291,6 @@ in-code documentation in Main/RNGTest.C.
 <hr>
 <div><small>
 <em>Page last updated:</em> Thu 06 Apr 2017 10:43:25 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.</em>
+<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
 </small></div>
 */

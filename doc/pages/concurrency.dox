@@ -28,7 +28,7 @@ properties, which is assumed to take up the bulk of memory and the bulk of
 computation cost.
 
 We take a specific algorithmic example, discussed in more detail in
-http://dx.doi.org/10.1016/j.jcp.2008.02.024. This is a continuum-realm PDF
+https://doi.org/10.1016/j.jcp.2008.02.024. This is a continuum-realm PDF
 method for incompressible flow with elliptic relaxation. In that algorithm only
 about 5% of the computational time is spent on the two linear solvers (mean
 pressure and elliptic relaxation) and 92% on advancing the particles.  In a
@@ -90,7 +90,7 @@ i.e., updating the particles, are also required to be stored in memory. We
 examine two different algorithms, an existing one and a hypothetical one:
 
 1. __Standalone PDF method for incompressible flow with elliptic relaxation,__
-   i.e., wall-resolution, see http://dx.doi.org/10.1016/j.jcp.2008.02.024
+   i.e., wall-resolution, see https://doi.org/10.1016/j.jcp.2008.02.024
 
    The memory usage of the particle properties per cell:
 
@@ -211,6 +211,6 @@ one-to-one communication required by a geometric concurrency strategy:
 <hr>
 <div><small>
 <em>Page last updated:</em> Thu 06 Apr 2017 10:44:23 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.</em>
+<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
 </small></div>
 */

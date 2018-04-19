@@ -35,7 +35,7 @@ inciter
   end
 
   diagnostics
-    interval  1
+    interval  2
     format    scientific
     error l2
   end

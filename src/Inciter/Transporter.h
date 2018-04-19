@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Transporter.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
 
@@ -28,14 +28,18 @@
       Load [ label="Load"
               tooltip="Load is computed"
               URL="\ref inciter::Transporter::load"];
-      PartSetup [ label="PartSetup"
-              tooltip="Prerequsites done for mesh partitioning"
-              URL="\ref inciter::Transporter::part"];
+      Centroid [ label="Centroid"
+              tooltip="Cell centroids have been computed"
+              URL="\ref inciter::Transporter::centroid"];
+      Refined [ label="Refined"
+              tooltip="Mesh has been optionally initially refined"
+              URL="\ref inciter::Transporter::refined"];
       Part [ label="Part"
               tooltip="Partition mesh"
               URL="\ref inciter::Partitioner::partition"];
       Load -> Part [ style="solid" ];
-      PartSetup -> Part [ style="solid" ];
+      Centroid -> Part [ style="solid" ];
+      Refined -> Part [ style="solid" ];
       MinStat [ label="MinStat"
               tooltip="chares contribute to minimum mesh cell statistics"
               URL="\ref inciter::Discretization::stat"];
@@ -67,29 +71,29 @@
     \enddot
     \include Inciter/transporter.ci
 
-    #### Call graph documenting the interactions of Transporter, Solver, and CG ####
+    #### Call graph with the interactions of Transporter, Solver, and MatCG ####
     The following a DAG documentaion of the itneractions _among_ the classes
-    Transporter (single chare), Solver (chare group), and CG (chare array). The
-    prefixes p_, s_, t_ c_, respectively, denote Partitioner, Solver,
-    Transporter, and CG, which help identifying which class' member function the
-    label is associated with. (These prefixes only show up in the source of
-    "dot", used to generate the visual graph. Note that CG can be thought of as
-    a child that inherits from class Discretization. Both CG and Discretization
-    are Charm++ chare arrays whose elements are abound together when migrated
-    and via class Scheme they are used in a runtime polymorphic fashion. This
-    means when the prefix c is used in the DAG below, the member function might
-    be in the (base) Discretization class instead of in CG. Note that the graph
-    below is partial as it only partially contains how this hooks into
-    Partitioner.
+    Transporter (single chare), Solver (chare group), and MatCG (chare array).
+    The prefixes p_, s_, t_ c_, respectively, denote Partitioner, Solver,
+    Transporter, and MatCG, which help identifying which class' member function
+    the label is associated with. (These prefixes only show up in the source of
+    "dot", used to generate the visual graph. Note that MatMatCG can be thought
+    of as a child that inherits from class Discretization. Both MatCG and
+    Discretization are Charm++ chare arrays whose elements are abound together
+    when migrated and via class Scheme they are used in a runtime polymorphic
+    fashion. This means when the prefix c is used in the DAG below, the member
+    function might be in the (base) Discretization class instead of in MatCG.
+    Note that the graph below is partial as it only partially contains how this
+    hooks into Partitioner.
     \dot
-    digraph "Transporter-Solver-CG SDAG" {
+    digraph "Transporter-Solver-MatCG SDAG" {
       rankdir="LR";
       node [shape=record, fontname=Helvetica, fontsize=10];
       p_dcreate [ label="Partitioner::create"
               tooltip="Partitioners create Discretization (base) workers"
               URL="\ref inciter::Partitioner::createWorkers"];
       p_ccreate [ label="Partitioner::createWorkers"
-              tooltip="Partitioners create CG (child) workers"
+              tooltip="Partitioners create MatCG (child) workers"
               URL="\ref inciter::Partitioner::createWorkers"];
       s_nchare [ label="Solver::nchare"
               tooltip="set number of worker chares expected to contribute"
@@ -103,24 +107,24 @@
       t_stat [ label="Transporter::stat"
               tooltip="output mesh statistics"
               URL="\ref inciter::Transporter::stat"];
-      c_setup [ label="CG::setup"
+      c_setup [ label="MatCG::setup"
               tooltip="workers start setting up PE communications, output mesh"
-              URL="\ref inciter::CG::setup"];
+              URL="\ref inciter::MatCG::setup"];
       s_sol [ label="Solver::sol"
               tooltip="assemble unknown/solution vector"
               URL="\ref tk::Solver:charesol"];
       s_lhs [ label="Solver::lhs"
               tooltip="assemble LHS"
               URL="\ref tk::Solver:charelhs"];
-      c_dt [ label="CG::dt"
+      c_dt [ label="MatCG::dt"
               tooltip="workers compute size of next time step"
-              URL="\ref inciter::CG::dt"];
-      c_advance [ label="CG::advance"
+              URL="\ref inciter::MatCG::dt"];
+      c_advance [ label="MatCG::advance"
               tooltip="advance to next time step"
-              URL="\ref inciter::CG::advance"];
-      c_rhs [ label="CG::rhs"
+              URL="\ref inciter::MatCG::advance"];
+      c_rhs [ label="MatCG::rhs"
               tooltip="workers compute new RHS"
-              URL="\ref inciter::CG::rhs"];
+              URL="\ref inciter::MatCG::rhs"];
       s_rhs [ label="Solver::rhs"
               tooltip="solver assemble new RHS"
               URL="\ref tk::Solver::rhs"];
@@ -130,9 +134,9 @@
       s_com [ label="Solver::charecom"
               tooltip="setup PE communication maps"
               URL="\ref tk::Solver::charecom"];
-      c_update [ label="CG::update"
+      c_update [ label="MatCG::update"
               tooltip="workers update their field data to new solution"
-              URL="\ref inciter::CG::updateLow"];
+              URL="\ref inciter::MatCG::updateLow"];
       t_diag [ label="Transporter::diag"
               tooltip="diagnostics have been output"
               URL="\ref inciter::Transporter::diagnostics"];
@@ -142,33 +146,33 @@
       t_comfinal [ label="Transporter::comfinal"
               tooltip="communication maps are complete on Trarnsporter"
               URL="\ref tk::Solver::comfinal"];
-      c_vol [ label="CG::vol"
+      c_vol [ label="MatCG::vol"
               tooltip="compute nodal mesh volumes"
-              URL="\ref tk::CG::vol"];
+              URL="\ref tk::MatCG::vol"];
       t_vol [ label="Transporter::vol"
               tooltip="nodal mesh volumes complete, start computing total volume"
               URL="\ref inicter::Transporter::vol"];
       t_start [ label="Transporter::start"
               tooltip="start time stepping"
               URL="\ref inicter::Transporter::start"];
-      c_totalvol [ label="CG::totalvol"
+      c_totalvol [ label="MatCG::totalvol"
               tooltip="compute total mesh volume"
-              URL="\ref tk::CG::totalvol"];
+              URL="\ref tk::MatCG::totalvol"];
       t_totalvol [ label="Transporter::totalvol"
               tooltip="total mesh volume computed, start with mesh stats"
               URL="\ref inicter::Transporter::totalvol"];
-      c_minstat [ label="CG::stat(min)"
+      c_minstat [ label="MatCG::stat(min)"
               tooltip="compute mesh statistics finding minima"
-              URL="\ref inciter::CG::stat"];
-      c_maxstat [ label="CG::stat(max)"
+              URL="\ref inciter::MatCG::stat"];
+      c_maxstat [ label="MatCG::stat(max)"
               tooltip="compute mesh statistics finding maxima"
-              URL="\ref inciter::CG::stat"];
-      c_sumstat [ label="CG::stat(sum)"
+              URL="\ref inciter::MatCG::stat"];
+      c_sumstat [ label="MatCG::stat(sum)"
               tooltip="compute mesh statistics finding sums"
-              URL="\ref inciter::CG::stat"];
-      c_pdfstat [ label="CG::stat(pdf)"
+              URL="\ref inciter::MatCG::stat"];
+      c_pdfstat [ label="MatCG::stat(pdf)"
               tooltip="compute mesh statistics computing PDFs"
-              URL="\ref inciter::CG::stat"];
+              URL="\ref inciter::MatCG::stat"];
       t_minstat [ label="Transporter::minstat"
               tooltip="compute mesh statistics finding global minima"
               URL="\ref inciter::Transporter::minstat"];
@@ -351,13 +355,20 @@
 #include "VectorReducer.h"
 #include "Progress.h"
 #include "Scheme.h"
-
-#include "NoWarning/cg.decl.h"
+#include "BoundaryConditions.h"
 
 namespace inciter {
 
 //! Transporter drives the time integration of transport equations
 class Transporter : public CBase_Transporter {
+
+  private:
+    //! Indices for progress report on mesh read (and prep for partitioning)
+    enum ProgMesh{ READ=0, REFINE, CENTROID };
+    //! Indices for progress report on mesh partitioning
+    enum ProgPart{ PART=0, DIST };
+    //! Indices for progress report on mesh reordering
+    enum ProgReord{ FLAT=0, GATHER, QUERY, MASK, REORD, BOUND };
 
   public:
     #if defined(__clang__)
@@ -386,15 +397,15 @@ class Transporter : public CBase_Transporter {
     //! Constructor
     explicit Transporter();
 
-    //! \brief Reduction target indicating that all Partitioner chare groups
-    //!   have finished reading their part of the computational mesh graph and
-    //!   we are ready to compute the computational load
+    //! Reduction target indicating that the mesh has been read from file
     void load( uint64_t nelem );
 
-    //! \brief Reduction target indicating that all Partitioner chare groups
-    //!   have finished setting up the necessary data structures for
-    //!   partitioning the computational mesh and we are ready for partitioning
-    void part();
+    //! \brief Reduction target indicating that optional initial mesh refinement
+    //!   has been completed on all PEs
+    void refined();
+
+    //! Reduction target indicating that centroids have been computed all PEs
+    void centroid();
 
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished distributing its global mesh node IDs and they are ready
@@ -417,42 +428,34 @@ class Transporter : public CBase_Transporter {
     //!   workers to read their mesh coordinates
     void coord();
 
-    //! Non-reduction target for receiving progress report on reading mesh graph
-    void pegraph() { m_progGraph.inc<0>(); }
+    //! Non-reduction target for receiving progress report on reading mesh
+    void peread() { m_progMesh.inc< READ >(); }
+    //! Non-reduction target for receiving progress report on mesh refinement
+    void perefined() { m_progMesh.inc< REFINE >(); }
+    //! Non-reduction target for receiving progress report on mesh centroids
+    void pecentroid() { m_progMesh.inc< CENTROID >(); }
 
     //! Non-reduction target for receiving progress report on partitioning mesh
-    void pepartitioned() { m_progPart.inc<0>(); }
+    void pepartitioned() { m_progPart.inc< PART >(); }
     //! Non-reduction target for receiving progress report on distributing mesh
-    void pedistributed() { m_progPart.inc<1>(); }
+    void pedistributed() { m_progPart.inc< DIST >(); }
 
     //! Non-reduction target for receiving progress report on flattening mesh
-    void peflattened() { m_progReorder.inc<0>(); }
+    void peflattened() { m_progReorder.inc< FLAT >(); }
+    //! Non-reduction target for receiving progress report on node ID gather
+    void pegather() { m_progReorder.inc< GATHER >(); }
+    //! Non-reduction target for receiving progress report on node ID query
+    void pequery() { m_progReorder.inc< QUERY >(); }
     //! Non-reduction target for receiving progress report on node ID mask
-    void pemask() { m_progReorder.inc<1>(); }
+    void pemask() { m_progReorder.inc< MASK >(); }
     //! Non-reduction target for receiving progress report on reordering mesh
-    void pereordered() { m_progReorder.inc<2>(); }
+    void pereordered() { m_progReorder.inc< REORD >(); }
     //! Non-reduction target for receiving progress report on computing bounds
-    void pebounds() { m_progReorder.inc<3>(); }
-
-    //! Non-reduction target for receiving progress report on establishing comms
-    void pecomfinal() { m_progSetup.inc<0>(); }
-    //! Non-reduction target for receiving progress report on matching BCs
-    void chbcmatched() { m_progSetup.inc<1>(); }
-    //! Non-reduction target for receiving progress report on computing BCs
-    void pebccomplete() { m_progSetup.inc<2>(); }
-
-    //! Non-reduction target for receiving progress report on computing the RHS
-    void chrhs() { m_progStep.inc<0>(); }
-    //! Non-reduction target for receiving progress report on solving the system
-    void pesolve() { m_progStep.inc<1>(); }
-    //! Non-reduction target for receiving progress report on limiting
-    void chlim() { m_progStep.inc<2>(); }
-    //! Non-reduction target for receiving progress report on tracking particles
-    void chtrack() { m_progStep.inc<3>(); }
+    void pebounds() { m_progReorder.inc< BOUND >(); }
 
     //! \brief Reduction target indicating that the communication has been
     //!    established among PEs
-    void comfinal() { com_complete(); }
+    void comfinal();
 
     //! Reduction target summing total mesh volume
     void totalvol( tk::real v );
@@ -481,15 +484,11 @@ class Transporter : public CBase_Transporter {
     //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );
 
-    //! Reduction target outputing diagnostics
-    void verified() { m_print.diag( "AEC verified" ); }
-
     //! Start time stepping
     void start();
 
-    //! \brief Reduction target used to synchronize PEs between linear solves of
-    //!   time steps
-    void next();
+    //! Reset linear solver for next time step
+    void next() { m_solver.next(); }
 
     //! Normal finish of time stepping
     void finish();
@@ -497,8 +496,12 @@ class Transporter : public CBase_Transporter {
   private:
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of worker chares
+    uint64_t m_nelem;                    //!< Total number of mesh elements
+    uint64_t m_chunksize;                //!< Number of elements per PE
+    uint64_t m_remainder;                //!< Number elements added to last PE
     tk::CProxy_Solver m_solver;          //!< Linear system solver group proxy
-    Scheme m_scheme;                     //!< Discretization scheme (worker)
+    CProxy_BoundaryConditions m_bc;      //!< Boundary conditions group proxy
+    Scheme m_scheme;                     //!< Discretization scheme
     CProxy_Partitioner m_partitioner;    //!< Partitioner group proxy
     //! Average communication cost of merging the linear system
     tk::real m_avcost;
@@ -513,42 +516,45 @@ class Transporter : public CBase_Transporter {
     //! Average mesh statistics
     std::array< tk::real, 2 > m_avgstat;
     //! Timer tags
-    enum class TimerTag { MESHREAD };
+    enum class TimerTag { MESH_PREP=0 };
     //! Timers
     std::map< TimerTag, tk::Timer > m_timer;
     //! \brief Aggregate 'old' (as in file) node ID list at which Solver
     //!   sets boundary conditions, see also Partitioner.h
     std::vector< std::size_t > m_linsysbc;
+    //! \brief Progress object for task "Creating partitioners, reading, and
+    //!    optionally refining mesh"
+    tk::Progress< 3 > m_progMesh;
     // Progress object for task "Partitioning and distributing mesh"
     tk::Progress< 2 > m_progPart;
-    // Progress object for task "Creating partitioners and reading mesh graph"
-    tk::Progress< 1 > m_progGraph;
     // Progress object for task "Reordering mesh"
-    tk::Progress< 4 > m_progReorder;
-    // Progress object for task "Computing row IDs, querying BCs, ..."
-    tk::Progress< 3 > m_progSetup;
-    // Progress object for sub-tasks of a time step
-    tk::Progress< 4 > m_progStep;
+    tk::Progress< 6 > m_progReorder;
 
-    //! Read side sets from mesh file
-    std::map< int, std::vector< std::size_t > > readSidesets();
+    //! Create linear solver group
+    void createSolver();
 
-    //! Read side set faces from mesh file
-    void readSidesetFaces(std::size_t& nbfac,
-                          std::map< int, std::vector< std::size_t > >& bface,
-                          std::map< int, std::vector< std::size_t > >& belem);
-
-    //! Create linear solver
-    void createSolver( const std::map< int, std::vector< std::size_t > >& ss );
-
-    //! Create mesh partitioner
+    //! Create mesh partitioner and boundary condition object group
     void createPartitioner();
+
+    //! Start partitioning the mesh
+    void partition();
 
     //! Configure and write diagnostics file header
     void diagHeader();
 
     //! Echo diagnostics on mesh statistics
     void stat();
+
+    //! Query variable names for all equation systems to be integrated
+    //! \param[in] eq Equation system whose variable names to query
+    //! \param[in,out] var Vector of strings to which we append the variable
+    //!   names for this equation. We append as many strings as many scalar
+    //!   variables are in the equation system given by eq.
+    template< class Eq >
+    void varnames( const Eq& eq, std::vector< std::string >& var ) {
+      auto o = eq.names();
+      var.insert( end(var), begin(o), end(o) );
+    }
 };
 
 } // inciter::

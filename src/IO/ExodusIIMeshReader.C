@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/ExodusIIMeshReader.C
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
      minimum functionality to interface with the ExodusII reader. It only reads
@@ -140,24 +140,20 @@ ExodusIIMeshReader::readAllNodes( UnsMesh& mesh ) const
 }
 
 std::array< std::vector< tk::real >, 3 >
-ExodusIIMeshReader::readNodes( const std::array< std::size_t, 2 >& ext ) const
+ExodusIIMeshReader::readNodes( const std::vector< std::size_t >& gid ) const
 // *****************************************************************************
 //  Read coordinates of a number of mesh nodes from ExodusII file
-//! \param[in] ext Extents of element ids whose connectivity to read, both
-//!   inclusive
+//! \param[in] gid Node IDs whose coordinates to read
 //! \return Mesh node coordinates
 // *****************************************************************************
 {
-  auto num = ext[1] - ext[0] + 1;
-  std::vector< tk::real > px( num ), py( num ), pz( num );
+  std::vector< tk::real > px( gid.size() ), py( gid.size() ), pz( gid.size() );
 
-  ErrChk(
-    ex_get_partial_coord(
-      m_inFile, static_cast<int64_t>(ext[0])+1, static_cast<int64_t>(num),
-      px.data(), py.data(), pz.data() ) == 0,
-      "Failed to read coordinates of nodes [" + std::to_string(ext[0]) +
-      "..." + std::to_string(ext[1]) + "] from ExodusII file: " +
-      m_filename );
+  std::size_t i=0;
+  for (auto g : gid) {
+    readNode( g, i, px, py, pz );
+    ++i;
+  }
 
   return {{ std::move(px), std::move(py), std::move(pz) }};
 }
@@ -366,7 +362,7 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
     std::move( begin(c), end(c), std::back_inserter(inpoel) );
   }
 
-  Assert( inpoel.size() == (ext[1]-ext[0]+1)*4,
+  Assert( inpoel.size() == (ext[1]-ext[0]+1)*m_nnpe[e],
           "Failed to read element connectivity of elements [" +
           std::to_string(ext[0]) + "..." + std::to_string(ext[1]) + ") from "
           "ExodusII file: " + m_filename );
@@ -375,6 +371,68 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
   for (auto& i : inpoel) --i;
   conn.reserve( conn.size() + inpoel.size() );
   std::move( begin(inpoel), end(inpoel), std::back_inserter(conn) );
+}
+
+void
+ExodusIIMeshReader::readFaces( std::size_t nbfac,
+                               std::vector< std::size_t >& conn )
+// *****************************************************************************
+//  Read face connectivity of a number of boundary faces from ExodusII file
+//! \param[in] nbfac Number of boundary faces
+//! \param[inout] conn Connectivity vector to push to
+//! \details This function reads-in the total number of boundary faces 
+//!   also called triangle-elements in the EXO2 file, and their connectivity.
+// *****************************************************************************
+{
+  ErrChk( nbfac > 0, "Number of boundary faces must be larger than zero" );
+
+  std::size_t nnpf(3);
+
+  // Read triangle boundary-face connectivity
+  std::vector< std::size_t > l_triinpoel;
+  readElements( {{0,nbfac-1}}, tk::ExoElemType::TRI, l_triinpoel );
+
+  std::size_t count(0);
+  // Use node_map to get the global-IDs of the face-node connectivity
+  for (std::size_t f=0; f<nbfac; ++f)
+  {
+    count = f*nnpf;
+    for (std::size_t i=0; i<nnpf; ++i)
+    {
+      conn.push_back( l_triinpoel[count+i] );
+    }
+  }
+}
+
+std::vector< std::size_t >
+ExodusIIMeshReader::readNodemap()
+// *****************************************************************************
+//  Read local to global node-ID map from ExodusII file
+//! \return node_map Vector mapping the local Exodus node-IDs to global node-IDs
+//! \details The node-map is required to get the "Exodus-global" node-IDs from
+//!   the "Exodus-internal" node-IDs, which are returned from the exodus APIs.
+//!   The node-IDs in the exodus file are referred to as the "Exodus-global"
+//!   node-IDs or "fileIDs" in Quinoa.
+// *****************************************************************************
+{
+  // Read triangle boundary-face connectivity
+  auto nnode = readElemBlockIDs();
+
+  // Create array to store node-number map
+  std::vector< int > node_map( nnode );
+
+  // Read in the node number map to map the above nodes to the global node-IDs
+  ErrChk( ex_get_id_map( m_inFile, EX_NODE_MAP, node_map.data() ) == 0,
+          "Failed to read node map length from ExodusII file: " );
+
+  std::vector< std::size_t > node_map1( nnode );
+
+  for (std::size_t i=0; i<nnode; ++i)
+  {
+          node_map1[i] = static_cast< std::size_t >(node_map[i]-1);
+  }
+
+  return node_map1;
 }
 
 std::map< int, std::vector< std::size_t > >
@@ -425,22 +483,19 @@ ExodusIIMeshReader::readSidesets()
   return side;
 }
 
-void
-ExodusIIMeshReader::readSidesetFaces(std::size_t& nbfac,
-                                     std::map< int, std::vector< std::size_t > >& bface, 
-                                     std::map< int, std::vector< std::size_t > >& belem)
+std::size_t
+ExodusIIMeshReader::readSidesetFaces(
+  std::map< int, std::vector< std::size_t > >& bface )
 // *****************************************************************************
 //  Read face list of all side sets from ExodusII file
-//  Added by Aditya K Pandare
-//! \param[out] nbfac total number of boundary faces
-//! \param[out] bface Face lists mapped to side set ids
-//! \param[out] belem Element lists mapped to side set ids
+//! \param[out] bface Face-Element lists mapped to side set ids
+//! \return Total number of boundary faces
 // *****************************************************************************
 {
-  // Read ExodusII file header (fills m_neset)
-  readHeader();
+  // Read element block ids
+  readElemBlockIDs();
 
-  nbfac = 0;
+  std::size_t nbfac = 0;
 
   if (m_neset > 0)
   {
@@ -448,6 +503,14 @@ ExodusIIMeshReader::readSidesetFaces(std::size_t& nbfac,
     std::vector< int > ids( m_neset );
     ErrChk( ex_get_ids( m_inFile, EX_SIDE_SET, ids.data() ) == 0,
             "Failed to read side set ids from ExodusII file: " + m_filename );
+
+    auto num_elem = nelem(tk::ExoElemType::TET) + nelem(tk::ExoElemType::TRI);
+    std::vector< int > elem_map( num_elem );
+
+    // Read in the element number map to map the above side-set elements to the 
+    // global element-IDs
+    ErrChk( ex_get_id_map( m_inFile, EX_ELEM_MAP, elem_map.data() ) == 0, 
+            "Failed to read elem map length from ExodusII file: " + m_filename );
 
     // Read in face list for all side sets
     for (auto i : ids)
@@ -465,19 +528,29 @@ ExodusIIMeshReader::readSidesetFaces(std::size_t& nbfac,
       Assert(nface > 0, "Number of faces = 0 in side set" + std::to_string(i));
       std::vector< int > tbface( static_cast< std::size_t >( nface ) );
       std::vector< int > tbelem( static_cast< std::size_t >( nface ) );
+      std::vector< int > gbelem( static_cast< std::size_t >( nface ) );
 
       // Read in face and element list for side set i
-      ErrChk( ex_get_set( m_inFile, EX_SIDE_SET, i, tbelem.data(), tbface.data() ) == 0, 
-              "Failed to read side set " + std::to_string(i) + " face/elem list "
-              "length from ExodusII file: " + m_filename );
+      ErrChk( ex_get_set( m_inFile, EX_SIDE_SET, i, tbelem.data(),
+                          tbface.data() ) == 0,
+              "Failed to read side set " + std::to_string(i) + " face/elem list"
+              " length from ExodusII file: " + m_filename );
+
+      // Use elem_map to get the global-IDs of the boundary elements
+      std::size_t icount = 0;
+      for (auto& n : tbelem)
+      {
+              gbelem[icount] = elem_map[ static_cast< std::size_t >( n-1 ) ];
+              icount++;
+      }
 
       // Store 0-based face ID list as std::size_t vector instead of ints
-      auto& list1 = bface[ i ];
-      for (auto&& n : tbface) list1.push_back( static_cast<std::size_t>(n-1) );
-      auto& list2 = belem[ i ];
-      for (auto&& n : tbelem) list2.push_back( static_cast<std::size_t>(n-1) );
+      auto& list2 = bface[ i ];
+      for (auto&& n : gbelem) list2.push_back( static_cast<std::size_t>(n-1) );
     }
   }
+
+  return nbfac;
 }
 
 std::size_t

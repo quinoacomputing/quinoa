@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Tags.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.
 */
@@ -65,9 +65,10 @@ struct hydrotimescales {};
 struct hydroproductions {};
 struct diffeq {};
 struct pde {};
+struct amr {};
+struct levels {};
 struct partitioner {};
 struct scheme {};
-struct initialamr {};
 struct initpolicy {};
 struct coeffpolicy {};
 struct montecarlo {};
@@ -79,7 +80,9 @@ struct cfl {};
 struct fct {};
 struct ctau {};
 struct npar {};
+struct refined {};
 struct part {};
+struct centroid {};
 struct ncomp {};
 struct tty {};
 struct dump {};
@@ -151,6 +154,9 @@ struct physics {};
 struct diffusivity {};
 struct u0 {};
 struct bcdir {};
+struct bcsym {};
+struct bcinlet {};
+struct bcoutlet {};
 struct material {};
 struct id {};
 struct cv {};

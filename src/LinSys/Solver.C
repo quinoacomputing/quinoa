@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/LinSys/Solver.C
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
     assemble the left hand side matrix (lhs), the right hand side (rhs) vector,
@@ -25,14 +25,12 @@
 #include "ContainerUtil.h"
 #include "VectorReducer.h"
 #include "HashMapReducer.h"
-#include "DiagReducer.h"
 
 #include "Solver.h"
 
 namespace tk {
 
 static CkReduction::reducerType BCMapMerger;
-static CkReduction::reducerType DiagMerger;
 
 }
 
@@ -54,18 +52,20 @@ using tk::Solver;
 
 Solver::Solver( CProxy_SolverShadow sh,
                 const std::vector< CkCallback >& cb,
-                const std::map< int, std::vector< std::size_t > >& s,
                 std::size_t n,
                 bool /*feedback*/ ) :
   m_shadow( sh ),
   m_cb( cb[0], cb[1], cb[2] ),
-  m_side( s ),
   m_ncomp( n ),
   m_nchare( 0 ),
+  m_ncomm( 0 ),
   m_nperow( 0 ),
   m_nchbc( 0 ),
   m_lower( 0 ),
   m_upper( 0 ),
+  m_it( 0 ),
+  m_t( 0.0 ),
+  m_dt( 0.0 ),
   //m_feedback( feedback ),
   m_myworker(),
   m_rowimport(),
@@ -74,14 +74,12 @@ Solver::Solver( CProxy_SolverShadow sh,
   m_rhsimport(),
   m_lowrhsimport(),
   m_lowlhsimport(),
-  m_diagimport(),
   m_row(),
   m_sol(),
   m_lhs(),
   m_rhs(),
   m_lowrhs(),
   m_lowlhs(),
-  m_diag(),
   m_x(),
   m_A(),
   m_b(),
@@ -129,7 +127,6 @@ Solver::registerReducers()
   BCMapMerger = CkReduction::addReducer(
                   tk::mergeHashMap< std::size_t,
                     std::vector< std::pair< bool, tk::real > > > );
-  DiagMerger = CkReduction::addReducer( tk::mergeDiag );
 }
 
 void
@@ -185,8 +182,6 @@ Solver::next()
   m_hypreRhs.clear();
   m_rhs.clear();
 
-  m_diagimport.clear();
-  m_diag.clear();
   m_bc.clear();
 
   lowlhs_complete();
@@ -214,7 +209,7 @@ Solver::nchare( int n )
 }
 
 void
-Solver::charecom( const inciter::CProxy_CG& worker,
+Solver::charecom( const inciter::CProxy_MatCG& worker,
                   int fromch,
                   const std::vector< std::size_t >& row )
 // *****************************************************************************
@@ -284,7 +279,10 @@ Solver::created()
 // Signal the runtime system that the workers have been created
 // *****************************************************************************
 {
-  contribute( m_cb.get< tag::com >() );
+  if (++m_ncomm == m_nchare) {
+    m_ncomm = 0;
+    contribute( m_cb.get< tag::com >() );
+  }
 }
 
 void
@@ -660,75 +658,8 @@ Solver::addbc( CkReductionMsg* msg )
   PUP::fromMem creator( msg->getData() );
   creator | m_bc;
   delete msg;
-  //if (m_feedback) m_host.pebccomplete();    // send progress report to host
   m_nchbc = 0;
   bc_complete();  bc_complete();
-}
-
-void
-Solver::charediag( int fromch,
-                   const std::vector< std::size_t >& gid,
-                   const Fields& u,
-                   const Fields& a,
-                   const std::vector< tk::real >& v )
-// *****************************************************************************
-//  Chares contribute their numerical and analytical solutions nonzero values
-//  for computing diagnostics
-//! \param[in] fromch Charm chare array index contribution coming from
-//! \param[in] gid Global row indices of the vector contributed
-//! \param[in] u Portion of the numerical unknown/solution vector
-//! \param[in] a Portion of the analytical solution vector
-//! \param[in] v Vector of nodal volumes
-//! \note This function does not have to be declared as a Charm++ entry
-//!   method since it is always called by chares on the same PE.
-// *****************************************************************************
-{
-  Assert( gid.size() == u.nunk(),
-          "Size of numerical solution and row ID vectors must equal" );
-
-  // Store numerical and analytical solution vector nonzero values owned and
-  // pack those to be exported, also build import map used to test for
-  // completion
-  std::map< int, std::map< std::size_t,
-                   std::vector< std::vector< tk::real > > > > exp;
-
-  for (std::size_t i=0; i<gid.size(); ++i)
-    if (gid[i] >= m_lower && gid[i] < m_upper) {    // if own
-      m_diagimport[ fromch ].push_back( gid[i] );
-      updateDiag( gid[i], u[i], a[i], v[i] );
-    } else
-      exp[ pe(gid[i]) ][ gid[i] ] =
-        {{ u[i], a[i], std::vector<tk::real>(1,v[i]) }};
-
-  // Export non-owned vector values to fellow branches that own them
-  for (const auto& p : exp) {
-    auto tope = static_cast< int >( p.first );
-    thisProxy[ tope ].adddiag( fromch, p.second );
-  }
-
-  if (diagcomplete()) diagnostics();
-}
-
-void
-Solver::adddiag( int fromch,
-                 std::map< std::size_t,
-                   std::vector< std::vector< tk::real > > >& solution )
-// *****************************************************************************
-//  Receive numerical and analytical solution vector nonzeros from fellow group
-//  branches for computing diagnostics
-//! \param[in] fromch Charm chare array index contribution coming from
-//! \param[in] solution Portion of the solution vector contributed,
-//!   containing global row indices and values for all components of the
-//!   numerical and analytical solutions (if available)
-// *****************************************************************************
-{
-  for (auto&& r : solution) {
-    m_diagimport[ fromch ].push_back( r.first );
-    updateDiag( r.first, std::move(r.second[0]), std::move(r.second[1]),
-                r.second[2][0] );
-  }
-
-  if (diagcomplete()) diagnostics();
 }
 
 int
@@ -1102,11 +1033,6 @@ Solver::solve()
 // *****************************************************************************
 {
   m_solver.solve( m_A, m_b, m_x );
-
-  // send progress report to host
-  //if (m_feedback) m_host.pesolve();
-
-  //solve_complete();
   updateSol();
 }
 
@@ -1148,9 +1074,11 @@ Solver::lowsolve()
       for (std::size_t i=0; i<m_ncomp; ++i)
         if (n.second[i].first) l[i] = 1.0;
       // rhs (set to zero instead of the solution increment at Dirichlet
-      // BCs, because for the low order solution we solve for L = R + D,
-      // where L is the lumped mass matrix, R is the high order RHS, and D
-      // is mass diffusion, and R already has the Dirichlet BC set)
+      // BCs, because for the low order solution the right hand side is the sum
+      // of the high order right hand side and mass diffusion, so the low order
+      // system is L = R + D, where L is the lumped mass matrix, R is the high
+      // order RHS, and D is mass diffusion, and R already has the Dirichlet BC
+      // set)
       auto& r = tk::ref_find( m_lowrhs, n.first );
       for (std::size_t i=0; i<m_ncomp; ++i)
         if (n.second[i].first) r[i] = 0.0;
@@ -1192,83 +1120,6 @@ Solver::lowsolve()
 
   //lowsolve_complete();
   updateLowSol();
-}
-
-void
-Solver::updateDiag( std::size_t row,
-                    std::vector< tk::real >&& u,
-                    std::vector< tk::real >&& a,
-                    tk::real v )
-// *****************************************************************************
-//  Update diagnostics vector
-//! \param[in] row Global row index of the diagnostics vector to update
-//! \param[in] u Numerical solution vector for all components
-//! \param[in] a Analytical solution vector for all components
-//! \param[in] v Nodal volume
-//! \details This function is used to update the vector of diagnostics that
-//!   collects (across PEs) the numerical solution, the analytical solution,
-//!   and the nodal volumes at nodes. This involves communication across PEs
-//!   and can be called for rows with first contributions or subsequent
-//!   contributions to rows which already hold partial data. The correct
-//!   policy for updates across PEs (i.e., at nodes that are shared across
-//!   PEs) is: overwrite the numerical and analytical solutions and summing
-//!   nodal volumes.
-// *****************************************************************************
-{
-  auto& d = m_diag[ row ];
-
-  if (d.size() != 3) {
-    d.resize( 2, std::vector<tk::real>(m_ncomp,0.0) );
-    d.resize( 3, std::vector<tk::real>(1,0.0) );
-  }
-
-  d[0] = std::move( u );    // overwrite numerical solution
-  d[1] = std::move( a );    // overwrite analytical solution
-  d[2][0] += v;             // sum nodal volume
-}
-
-void
-Solver::diagnostics()
-// *****************************************************************************
-//  Compute diagnostics (residuals) and contribute them back to host
-//! \details Diagnostics: L2 norm for all components.
-//! \see For info, see e.g., inciter::CG::diagnostics().
-// *****************************************************************************
-{
-  Assert( diagcomplete(),
-          "Values of distributed solution vector (for diagnostics) on PE " +
-          std::to_string( CkMyPe() ) + " is incomplete" );
-
-  std::vector< std::vector< tk::real > >
-    diag( 3, std::vector< tk::real >( m_ncomp, 0.0 ) );
-
-  for (const auto& s : m_diag) {
-    Assert( s.second.size() == 3, "Size of diagnostics vector must be 3" );
-    auto row = s.first;
-
-    if (row >= m_lower && row < m_upper) {    // only if own
-      const auto& u = s.second[0];    // numerical solution (all components)
-      const auto& a = s.second[1];    // analytical solution (all components)
-      auto v = s.second[2][0];        // nodal volume
-
-      // Compute L2 norm of the numerical solution
-      for (std::size_t c=0; c<m_ncomp; ++c)
-        diag[0][c] += u[c] * u[c] * v;
-      // Compute L2 norm of the numerical - analytical solution
-      for (std::size_t c=0; c<m_ncomp; ++c)
-        diag[1][c] += (u[c]-a[c]) * (u[c]-a[c]) * v;
-      // Compute Linf norm of the numerical - analytical solution
-      for (std::size_t c=0; c<m_ncomp; ++c) {
-        auto err = std::abs( u[c] - a[c] );
-        if (err > diag[2][c]) diag[2][c] = err;
-      }
-    }
-  }
-
-  // Contribute to diagnostics across all PEs
-  auto stream = tk::serialize( diag );
-  contribute( stream.first, stream.second.get(), DiagMerger,
-              m_cb.get< tag::diag >() );
 }
 
 #include "NoWarning/solver.def.h"

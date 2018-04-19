@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Main/FileConvDriver.C
-  \author    A. Pakki
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     File converter driver
   \details   File converter driver.
@@ -29,7 +28,6 @@ FileConvDriver::FileConvDriver( const tk::Print&,
 //  Constructor
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
-//! \author A. Pakki
 // *****************************************************************************
 {
   // Save input file name
@@ -42,7 +40,6 @@ void
 FileConvDriver::execute() const
 // *****************************************************************************
 //  Execute: Convert the file layout
-//! \author A. Pakki
 // *****************************************************************************
 {
 

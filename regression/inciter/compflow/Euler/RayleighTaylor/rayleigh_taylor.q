@@ -46,7 +46,7 @@ inciter
     interval  1
     format    scientific
     error l2
-    #error linf
+    error linf
   end
 
 end

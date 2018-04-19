@@ -1,7 +1,7 @@
 ################################################################################
 #
 # \file      cmake/FindHypre.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
 # \brief     Find the Hypre library from LLNL
 #
 ################################################################################
@@ -28,7 +28,7 @@ function(_HYPRE_GET_VERSION _OUT_ver _version_hdr)
   if(_contents)
     string(REGEX REPLACE "\"" "" _cont "${_contents}")
     string(REGEX REPLACE ".*#define HYPRE_RELEASE_VERSION[ \t]+([0-9.]+).*" "\\1" ${_OUT_ver} "${_cont}")
-    if(NOT ${_OUT_major} MATCHES "[0-9]+")
+    if(NOT ${${_OUT_ver}} MATCHES "[0-9]+")
         message(FATAL_ERROR "Version parsing failed for HYPRE_RELEASE_VERSION in ${_version_hdr}!")
     endif()
     set(${_OUT_ver} ${${_OUT_ver}} PARENT_SCOPE)

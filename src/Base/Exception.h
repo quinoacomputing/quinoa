@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Exception.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Exception class declaration
   \details   Exception class declaration. The basic functionality provided by
     the Exception class is to facilitate printing out a message, together with
@@ -105,7 +105,6 @@ class Exception : public std::exception {
     //! Demangle and Echo call trace
     void echoTrace() noexcept;
 
-    const bool m_trace;         //!< True if to also echo trace
     const std::string m_file;   //!< Source file where exception is occurred
     const std::string m_func;   //!< Function name where exception is occurred
     const unsigned int m_line;  //!< Source line where exception is occurred

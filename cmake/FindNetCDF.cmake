@@ -1,7 +1,7 @@
 ################################################################################
 #
 # \file      cmake/FindLNetCDF.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
 # \brief     Find NetCDF
 #
 ################################################################################
@@ -41,20 +41,26 @@ if (NETCDF_INCLUDES AND NETCDF_LIBRARIES)
 endif (NETCDF_INCLUDES AND NETCDF_LIBRARIES)
 
 find_path (NETCDF_INCLUDES netcdf_par.h
-           HINTS ${NETCDF_ROOT}/include
-                 ${NETCDF_DIR}/include
-                 $ENV{NETCDF_DIR}/include)
+           HINTS ${NETCDF_ROOT}
+                 ${NETCDF_DIR}
+                 $ENV{NETCDF_DIR}
+                 ${CMAKE_INSTALL_PREFIX}
+            PATH_SUFFIXES include)
 
 if(NOT BUILD_SHARED_LIBS)
   find_library (NETCDF_LIBRARIES_C NAMES libnetcdf.a
-                HINTS ${NETCDF_ROOT}/lib
-                      ${NETCDF_DIR}/lib
-                      $ENV{NETCDF_DIR}/lib)
+                HINTS ${NETCDF_ROOT}
+                      ${NETCDF_DIR}
+                      $ENV{NETCDF_DIR}
+                      ${CMAKE_INSTALL_PREFIX}
+                PATH_SUFFIXES lib lib64)
 else()
   find_library (NETCDF_LIBRARIES_C NAMES netcdf
-                HINTS ${NETCDF_ROOT}/lib
-                      ${NETCDF_DIR}/lib
-                      $ENV{NETCDF_DIR}/lib)
+                HINTS ${NETCDF_ROOT}
+                      ${NETCDF_DIR}
+                      $ENV{NETCDF_DIR}
+                      ${CMAKE_INSTALL_PREFIX}
+                PATH_SUFFIXES lib lib64)
 endif()
 mark_as_advanced(NETCDF_LIBRARIES_C)
 
@@ -90,7 +96,7 @@ else()
   NetCDF_check_interface (F90 netcdf.mod  netcdff)
 endif()
 
-set (NETCDF_LIBRARIES "${NetCDF_libs}" CACHE STRING "All NetCDF libraries required for interface level")
+set (NETCDF_LIBRARIES ${NetCDF_libs})
 
 # handle the QUIETLY and REQUIRED arguments and set NETCDF_FOUND to TRUE if
 # all listed variables are TRUE

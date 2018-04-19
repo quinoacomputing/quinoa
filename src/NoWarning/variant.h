@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/NoWarning/variant.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Include boost/variant.hpp with turning off specific compiler
              warnings
 */
@@ -22,6 +22,7 @@
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+  #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
 
 #include <boost/variant.hpp>

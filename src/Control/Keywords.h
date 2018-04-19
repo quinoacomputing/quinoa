@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Keywords.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
     of command-line argument parsers as well as input, i.e., control, file
@@ -608,7 +608,7 @@ struct rngsse_gm19_info {
     method based on parallel evolution of an ensemble of transformations of
     a two-dimensional torus, provided by the RNGSSE2 random number generator
     library. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_gm19 = keyword< rngsse_gm19_info, TAOCPP_PEGTL_STRING("rngsse_gm19") >;
@@ -622,7 +622,7 @@ struct rngsse_gm29_info {
     on parallel evolution of an ensemble of transformations of a
     two-dimensional torus, provided by the RNGSSE2 random number generator
     library. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_gm29 = keyword< rngsse_gm29_info, TAOCPP_PEGTL_STRING("rngsse_gm29") >;
@@ -636,7 +636,7 @@ struct rngsse_gm31_info {
     on parallel evolution of an ensemble of transformations of a
     two-dimensional torus, provided by the RNGSSE2 random number generator
     library. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_gm31 = keyword< rngsse_gm31_info, TAOCPP_PEGTL_STRING("rngsse_gm31") >;
@@ -650,7 +650,7 @@ struct rngsse_gm55_info {
     on parallel evolution of an ensemble of transformations of a
     two-dimensional torus, provided by the RNGSSE2 random number generator
     library. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_gm55 = keyword< rngsse_gm55_info, TAOCPP_PEGTL_STRING("rngsse_gm55") >;
@@ -664,7 +664,7 @@ struct rngsse_gm61_info {
     on parallel evolution of an ensemble of transformations of a
     two-dimensional torus, provided by the RNGSSE2 random number generator
     library. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_gm61 = keyword< rngsse_gm61_info, TAOCPP_PEGTL_STRING("rngsse_gm61") >;
@@ -678,7 +678,7 @@ struct rngsse_gq581_info {
     on parallel evolution of an ensemble of transformations of a
     two-dimensional torus, provided by the RNGSSE2 random number generator
     library. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_gq581 =
@@ -693,7 +693,7 @@ struct rngsse_gq583_info {
     on parallel evolution of an ensemble of transformations of a
     two-dimensional torus, provided by the RNGSS2 random number generator
     library. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_gq583 =
@@ -708,7 +708,7 @@ struct rngsse_gq584_info {
     on parallel evolution of an ensemble of transformations of a
     two-dimensional torus, provided by the RNGSSE2 random number generator
     library. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_gq584 =
@@ -721,7 +721,7 @@ struct rngsse_mt19937_info {
   static std::string longDescription() { return
     R"(This keyword is used to select the MT19937 generator, a Mersenne Twister
     generator, provided by the RNGSSE2 random number generator library. For
-    more info on RNGSSE see http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    more info on RNGSSE see https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_mt19937 =
@@ -734,7 +734,7 @@ struct rngsse_lfsr113_info {
   static std::string longDescription() { return
     R"(This keyword is used to select the LFSR113 generator, provided by the
     RNGSSE2 random number generator library. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_lfsr113 =
@@ -748,7 +748,7 @@ struct rngsse_mrg32k3a_info {
     R"(This keyword is used to select the MRG32K3A generator, a combined
     multiple recursive random number generator with two components of order
     3, provided by the RNGSS2 random number generator library. For more info
-    on RNGSSE see http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    on RNGSSE see https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using rngsse_mrg32k3a =
@@ -762,7 +762,7 @@ struct seq_short_info {
     R"(This keyword is used to select the short sequence length used by the
     RNGSSE2 random number generator library. Valid options are 'short',
     'medium', and 'long'. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using seq_short = keyword< seq_short_info, TAOCPP_PEGTL_STRING("short") >;
@@ -775,7 +775,7 @@ struct seq_med_info {
     R"(This keyword is used to select the medium sequence length used by the
     RNGSSE2 random number generator library. Valid options are 'short',
     'medium', and 'long'. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using seq_med = keyword< seq_med_info, TAOCPP_PEGTL_STRING("medium") >;
@@ -788,7 +788,7 @@ struct seq_long_info {
     R"(This keyword is used to select the medium sequence length used by the
     RNGSSE2 random number generator library. Valid options are 'short',
     'medium', and 'long'. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
 using seq_long = keyword< seq_long_info, TAOCPP_PEGTL_STRING("long") >;
@@ -801,7 +801,7 @@ struct seqlen_info {
     R"(This keyword is used to select a random number generator sequence length,
     used by the RNGSSE2 random number generator library. Valid options are
     'short', 'medium', and 'long'. For more info on RNGSSE see
-    http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
+    https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
   struct expect {
     static std::string description() { return "string"; }
@@ -2002,7 +2002,7 @@ struct dirichlet_info {
     R"(This keyword is used to introduce a dirichlet ... end block, used to
     specify the configuration of a system of stochastic differential
     equations (SDEs), whose invariant is the Dirichlet distribution. For more
-    details on the Dirichlet SDE, see http://dx.doi.org/10.1155/2013/842981.
+    details on the Dirichlet SDE, see https://doi.org/10.1155/2013/842981.
     Keywords allowed in a dirichlet ... end block: )" + std::string("\'")
     + depvar::string()+ "\', \'"
     + ncomp::string() + "\', \'"
@@ -2027,7 +2027,7 @@ struct gendir_info {
     block, used to specify the configuration of a system of stochastic
     differential equations (SDEs), whose invariant is Lochner's generalized
     Dirichlet distribution. For more details on the generalized Dirichlet
-    SDE, see http://dx.doi.org/10.1063/1.4822416. Keywords allowed in a gendir
+    SDE, see https://doi.org/10.1063/1.4822416. Keywords allowed in a gendir
     ... end block: )" + std::string("\'")
     + depvar::string()+ "\', \'"
     + ncomp::string() + "\', \'"
@@ -2102,7 +2102,7 @@ struct beta_info {
     the configuration of a system of stochastic differential equations (SDEs),
     with linear drift and quadratic diagonal diffusion, whose invariant is the
     joint beta distribution. For more details on the beta SDE, see
-    http://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
+    https://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
     allowed in a beta ... end block: )" + std::string("\'")
     + depvar::string()+ "\', \'"
     + ncomp::string() + "\', \'"
@@ -2133,7 +2133,7 @@ struct numfracbeta_info {
     beta SDE, then the number-fraction beta SDE additionally governs rho(X) and
     V(X), where both rho and V are random variables, computed by rho(X) = rho2
     ( 1 - r' X ), and V(X) = 1 / [ rho2 ( 1 - r'X ) ]. For more details on the
-    beta SDE, see http://doi.org/10.1080/14685248.2010.510843 and
+    beta SDE, see https://doi.org/10.1080/14685248.2010.510843 and
     src/DiffEq/Beta.h. Keywords allowed in a numfracbeta ... end block: )"
     + std::string("\'")
     + depvar::string()+ "\', \'"
@@ -2167,7 +2167,7 @@ struct massfracbeta_info {
     beta SDE, then the mass-fraction beta SDE additionally governs rho(Y) and
     V(Y), where both rho and V are random variables, computed by rho(Y) = rho2 /
     ( 1 + r Y ), and V(Y) = ( 1 + r Y ) / rho2. For more details on the beta
-    SDE, see http://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h.
+    SDE, see https://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h.
     Keywords allowed in a massfracbeta ... end block: )"
     + std::string("\'")
     + depvar::string()+ "\', \'"
@@ -2209,7 +2209,7 @@ struct mixnumfracbeta_info {
     random variables computed besides, X, and they are rho(X) and V(X). For more
     detail on the number-fraction beta SDE, see the help on keyword
     'numfracbeta'. For more details on the beta SDE, see
-    http://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
+    https://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
     allowed in a mixnumfracbeta ... end block: )"
     + std::string("\'")
     + depvar::string()+ "\', \'"
@@ -2252,7 +2252,7 @@ struct mixmassfracbeta_info {
     random variables computed besides, Y, and they are rho(Y) and V(Y). For more
     detail on the mass-fraction beta SDE, see the help on keyword
     'massfracbeta'. For more details on the beta SDE, see
-    http://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
+    https://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
     allowed in a mixmassfracbeta ... end block: )"
     + std::string("\'")
     + depvar::string()+ "\', \'"
@@ -2906,6 +2906,22 @@ struct slot_cyl_info {
 };
 using slot_cyl = keyword< slot_cyl_info, TAOCPP_PEGTL_STRING("slot_cyl") >;
 
+struct gauss_hump_info {
+  using code = Code< G >;
+  static std::string name() { return "Advection of 2D Gaussian hump"; }
+  static std::string shortDescription() { return
+    "Select advection of 2D Gaussian hump test problem"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the advection of 2D Gaussian hump test
+    problem. The initial and boundary conditions are specified to set up the
+    test problem suitable to exercise and test the advection
+    terms of the scalar transport equation. Example: "problem gauss_hump".)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using gauss_hump = keyword< gauss_hump_info, TAOCPP_PEGTL_STRING("gauss_hump") >;
+
 struct vortical_flow_info {
   using code = Code< V >;
   static std::string name() { return "Vortical flow"; }
@@ -3004,6 +3020,7 @@ struct problem_info {
       return '\'' + user_defined::string() + "\' | \'"
                   + shear_diff::string() + "\' | \'"
                   + slot_cyl::string() + "\' | \'"
+                  + gauss_hump::string() + "\' | \'"
                   + vortical_flow::string() + "\' | \'"
                   + nl_energy_growth::string() + "\' | \'"
                   + rayleigh_taylor::string() + "\' | \'"
@@ -3123,7 +3140,6 @@ struct linf_info {
 using linf = keyword< linf_info, TAOCPP_PEGTL_STRING("linf") >;
 
 struct error_info {
-  using code = Code< h >;
   static std::string name() { return "error"; }
   static std::string shortDescription() { return "Select an error norm"; }
   static std::string longDescription() { return
@@ -3395,14 +3411,66 @@ struct bc_dirichlet_info {
   static std::string longDescription() { return
     R"(This keyword is used to introduce an bc_dirichlet ... end block, used to
     specify the configuration for setting Dirichlet boundary conditions for a
-    partial differential equation. Keywords allowed in an bc_dirichlet ... end
+    partial differential equation. Keywords allowed in a bc_dirichlet ... end
     block: )" + std::string("\'")
     + sideset::string() + "\'. "
     + R"(For an example bc_dirichlet ... end block, see
       doc/html/inicter_example_shear.html.)";
   }
 };
-using bc_dirichlet = keyword< bc_dirichlet_info, TAOCPP_PEGTL_STRING("bc_dirichlet") >;
+using bc_dirichlet =
+  keyword< bc_dirichlet_info, TAOCPP_PEGTL_STRING("bc_dirichlet") >;
+
+struct bc_sym_info {
+  static std::string name() { return "Symmetry boundary condition"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing symmetry boundary conditions"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an bc_sym ... end block, used to
+    specify the configuration for setting symmetry boundary conditions for a
+    partial differential equation. Keywords allowed in a bc_sym ... end
+    block: )" + std::string("\'")
+    + sideset::string() + "\'. "
+    + R"(For an example bc_sym ... end block, see
+      doc/html/inicter_example_gausshump.html.)";
+  }
+};
+using bc_sym =
+  keyword< bc_sym_info, TAOCPP_PEGTL_STRING("bc_sym") >;
+
+struct bc_inlet_info {
+  static std::string name() { return "Inlet boundary condition"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing inlet boundary conditions"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an bc_inlet ... end block, used to
+    specify the configuration for setting inlet boundary conditions for a
+    partial differential equation. Keywords allowed in a bc_inlet ... end
+    block: )" + std::string("\'")
+    + sideset::string() + "\'. "
+    + R"(For an example bc_inlet ... end block, see
+      doc/html/inicter_example_gausshump.html.)";
+  }
+};
+using bc_inlet =
+  keyword< bc_inlet_info, TAOCPP_PEGTL_STRING("bc_inlet") >;
+
+struct bc_outlet_info {
+  static std::string name() { return "Inlet boundary condition"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing outlet boundary conditions"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an bc_outlet ... end block, used to
+    specify the configuration for setting outlet boundary conditions for a
+    partial differential equation. Keywords allowed in a bc_outlet ... end
+    block: )" + std::string("\'")
+    + sideset::string() + "\'. "
+    + R"(For an example bc_outlet ... end block, see
+      doc/html/inicter_example_gausshump.html.)";
+  }
+};
+using bc_outlet =
+  keyword< bc_outlet_info, TAOCPP_PEGTL_STRING("bc_outlet") >;
 
 struct id_info {
   static std::string name() { return "id"; }
@@ -3623,6 +3691,7 @@ struct partitioning_info {
 using partitioning = keyword< partitioning_info, TAOCPP_PEGTL_STRING("partitioning") >;
 
 struct amr_uniform_info {
+  using code = Code< u >;
   static std::string name() { return "uniform"; }
   static std::string shortDescription() { return
     "Select uniform initial mesh refinement"; }
@@ -3631,22 +3700,99 @@ struct amr_uniform_info {
 };
 using amr_uniform = keyword< amr_uniform_info, TAOCPP_PEGTL_STRING("uniform") >;
 
+struct amr_initial_conditions_info {
+  using code = Code< i >;
+  static std::string name() { return "ic"; }
+  static std::string shortDescription() { return
+    "Select initial-conditions-based initial mesh refinement"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select initial-conditions-based initial mesh
+       refinement.)"; }
+};
+using amr_initial_conditions =
+  keyword< amr_initial_conditions_info, TAOCPP_PEGTL_STRING("ic") >;
+
 struct amr_initial_info {
   static std::string name() { return "initial refinement"; }
   static std::string shortDescription() { return
     "Configure initial mesh refinement (before t=0)"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the type of initial mesh refinement that
-    happens before t = 0. At this time, only uniform initial mehs refinement is
-    supported.)"; }
+    R"(This keyword is used to add to a list of initial mesh refinement types
+    that happens before t = 0. Example: initial uniform initial ic inital
+    uniform, which yiedls an initial uniform refinement, followed by a
+    refinement based on the numerical error computed based on the initial
+    conditions, followed by another step of unfirom refinement. The number of
+    levels in the uniform refinement step(s) is controlled by the keyword
+    'uniform_levels' whose default is 1.)"; }
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
-      return '\'' + amr_uniform::string() + '\'';
+      return '\'' + amr_uniform::string() + "\' | \'"
+                  + amr_initial_conditions::string() + '\'';
     }
   };
 };
 using amr_initial = keyword< amr_initial_info, TAOCPP_PEGTL_STRING("initial") >;
+
+struct amr_uniform_levels_info {
+  static std::string name() { return "uniform_levels"; }
+  static std::string shortDescription() { return
+    "Select the number of levels for uniform initial mesh refinement"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to set the number levels used for uniform initial
+    mesh refinement.)"; }
+  struct expect {
+    using type = unsigned int;
+    static constexpr type lower = 1;
+    static std::string description() { return "uint"; }
+    static std::string choices() { return "positive integer"; }
+  };
+};
+using amr_uniform_levels =
+  keyword< amr_uniform_levels_info, TAOCPP_PEGTL_STRING("uniform_levels") >;
+
+struct amr_jump_info {
+  static std::string name() { return "jump"; }
+  static std::string shortDescription() { return
+    "Error estimation based on the jump in the solution normalized by solution";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the jump-based error indicator for
+    solution-adaptive mesh refinement. The error is estimated by computing the
+    magnitude of the jump in the solution value normalized by the solution
+    value.)"; }
+};
+using amr_jump =
+  keyword< amr_jump_info, TAOCPP_PEGTL_STRING("jump") >;
+
+struct amr_hessian_info {
+  static std::string name() { return "Hessian"; }
+  static std::string shortDescription() { return
+    "Error estimation based on the Hessian normalized by solution value"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Hessian-based error indicator for
+    solution-adaptive mesh refinement. The error is estimated by computing the
+    Hessian (2nd derivative matrix) of the solution normalized by sum of the
+    absolute values of the gradients at edges-end points.)"; }
+};
+using amr_hessian = keyword< amr_hessian_info, TAOCPP_PEGTL_STRING("hessian") >;
+
+struct amr_error_info {
+  static std::string name() { return "error type"; }
+  static std::string shortDescription() { return
+    "Configure the error type for solution-adaptive mesh refinement"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the algorithm used to estimate the error
+    for solution-adaptive mesh refinement.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + amr_jump::string() + "\' | \'"
+                  + amr_hessian::string() + '\'';
+    }
+  };
+};
+using amr_error = keyword< amr_error_info, TAOCPP_PEGTL_STRING("error") >;
 
 struct amr_info {
   static std::string name() { return "AMR"; }
@@ -3661,17 +3807,38 @@ struct amr_info {
 };
 using amr = keyword< amr_info, TAOCPP_PEGTL_STRING("amr") >;
 
-struct cg_info {
-  static std::string name() { return "continuous Galerkin + Lax-Wendroff"; }
-  static std::string shortDescription() { return
-    "Select continuous Galerkin discretization"; }
+struct matcg_info {
+  static std::string name()
+  { return "consistent-mass continuous Galerkin + Lax-Wendroff"; }
+  static std::string shortDescription() { return "Select continuous Galerkin "
+    "discretization + Lax Wendroff with a matrix solver"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the continuous Galerkin (CG) spatial
-    discretiztaion used in inciter. Selecting CG also selects the Lax-Wendroff
-    scheme for time discretization. See
+    R"(This keyword is used to select the consistent-mass continuous Galerkin
+    (CG) finite element spatial discretiztaion used in inciter. CG is combined
+    with a Lax-Wendroff scheme for time discretization and flux-corrected
+    transport (FCT) for treating discontinuous solutions. This option selects
+    the scheme that stores the left-hand side matrix as a compressed sparse row
+    (CSR) storage consistent-mass matrix and uses a linear solver. See
     Control/Inciter/Options/Scheme.h for other valid options.)"; }
 };
-using cg = keyword< cg_info, TAOCPP_PEGTL_STRING("cg") >;
+using matcg = keyword< matcg_info, TAOCPP_PEGTL_STRING("matcg") >;
+
+struct diagcg_info {
+  static std::string name()
+  { return "lumped-mass continuous Galerkin + Lax-Wendroff"; }
+  static std::string shortDescription() { return "Select continuous Galerkin "
+    "discretization + Lax Wendroff with a lumped mass matrix as the left hand "
+    "side matrix"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the lumped-mass continuous Galerkin (CG)
+    finite element spatial discretiztaion used in inciter. CG is combined with a
+    Lax-Wendroff scheme for time discretization and flux-corrected transport
+    (FCT) for treating discontinuous solutions. This option selects the scheme
+    that stores the left-hand side matrix lumped, i.e., only the diagonal
+    elements stored and thus does not require a linear solver. See
+    Control/Inciter/Options/Scheme.h for other valid options.)"; }
+};
+using diagcg = keyword< diagcg_info, TAOCPP_PEGTL_STRING("diagcg") >;
 
 struct dg_info {
   static std::string name() { return "discontinuous Galerkin + Runge-Kutta"; }
@@ -3696,7 +3863,8 @@ struct scheme_info {
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
-      return '\'' + cg::string() + "\' | \'"
+      return '\'' + matcg::string() + "\' | \'"
+                  + diagcg::string() + "\' | \'"
                   + dg::string() + '\'';
     }
   };
@@ -3710,10 +3878,10 @@ struct fct_info {
   static std::string longDescription() { return
     R"(This keyword can be used to turn on/off flux-corrected transport (FCT).
     Note that FCT is only used in conjunction with continuous Galerkin finite
-    element discretization, configured by 'scheme cg' and it has no effect when
-    the discontinuous Galerkin (DG) scheme is used, configured by 'scheme
-    dg'. Also note that even if FCT is turnedd off, it is still performed, only
-    its result is not applied.)"; }
+    element discretization, configured by schemes matcg or diagcg and it has no
+    effect when the discontinuous Galerkin (DG) scheme is used, configured by
+    'scheme dg'. Also note that even if FCT is turned off, it is still
+    performed, only its result is not applied.)"; }
   struct expect {
     using type = bool;
     static std::string description() { return "string"; }

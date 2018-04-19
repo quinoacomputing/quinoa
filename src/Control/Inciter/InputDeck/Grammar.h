@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
   Expression Grammar Template Library (PEGTL) to create the grammar and the
@@ -259,6 +259,17 @@ namespace grm {
     }
   };
 
+  //! Rule used to trigger action
+  struct enable_amr : pegtl::success {};
+  //! Enable adaptive mesh refinement (AMR)
+  template<>
+  struct action< enable_amr > {
+    template< typename Input, typename Stack >
+    static void apply( const Input&, Stack& stack ) {
+      stack.template get< tag::amr, tag::amr >() = true;
+    }
+  };
+
 } // ::grm
 } // ::tk
 
@@ -310,20 +321,20 @@ namespace deck {
                                     eq,
                                     param > {};
 
-  //! Dirichlet boundary conditions block
-  template< class eq, class param >
-  struct bc_dirichlet :
-           pegtl::if_must<
-             tk::grm::readkw< use< kw::bc_dirichlet >::pegtl_string >,
-             tk::grm::block<
-               use< kw::end >,
-               tk::grm::parameter_vector< use,
-                                          use< kw::sideset >,
-                                          tk::grm::Store_back_back,
-                                          tk::grm::start_vector,
-                                          tk::grm::check_vector,
-                                          eq,
-                                          param > > > {};
+  //! Boundary conditions block
+  template< class keyword, class eq, class param >
+  struct bc :
+         pegtl::if_must<
+           tk::grm::readkw< typename use< keyword >::pegtl_string >,
+           tk::grm::block<
+             use< kw::end >,
+             tk::grm::parameter_vector< use,
+                                        use< kw::sideset >,
+                                        tk::grm::Store_back_back,
+                                        tk::grm::start_vector,
+                                        tk::grm::check_vector,
+                                        eq,
+                                        param > > > {};
 
   //! initial conditions block for compressible flow
   template< class eq, class param >
@@ -395,7 +406,10 @@ namespace deck {
                            pde_parameter_vector< kw::pde_u0,
                                                  tag::transport,
                                                  tag::u0 >,
-                           bc_dirichlet< tag::transport, tag::bcdir > >,
+                           bc< kw::bc_dirichlet, tag::transport, tag::bcdir >,
+                           bc< kw::bc_sym, tag::transport, tag::bcsym >,
+                           bc< kw::bc_inlet, tag::transport, tag::bcinlet >,
+                           bc< kw::bc_outlet, tag::transport, tag::bcoutlet > >,
            check_errors< tag::transport, tk::grm::check_transport > > {};
 
   //! compressible flow
@@ -426,7 +440,10 @@ namespace deck {
                            parameter< tag::compflow, kw::pde_r0, tag::r0 >,
                            parameter< tag::compflow, kw::pde_ce, tag::ce >,
                            parameter< tag::compflow, kw::pde_kappa, tag::kappa >,
-                           bc_dirichlet< tag::compflow, tag::bcdir > >,
+                           bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
+                           bc< kw::bc_sym, tag::compflow, tag::bcsym >,
+                           bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
+                           bc< kw::bc_outlet, tag::compflow, tag::bcoutlet > >,
            check_errors< tag::compflow, tk::grm::check_compflow > > {};
 
   //! partitioning ... end block
@@ -467,13 +484,24 @@ namespace deck {
   struct amr :
          pegtl::if_must<
            tk::grm::readkw< use< kw::amr >::pegtl_string >,
+           tk::grm::enable_amr, // enable AMR if amr...end block encountered
            tk::grm::block< use< kw::end >,
                            tk::grm::process<
                              use< kw::amr_initial >,
+                             tk::grm::store_back_option< use,
+                                                         ctr::AMRInitial,
+                                                         tag::amr,
+                                                         tag::init >,
+                             pegtl::alpha >,
+                           tk::grm::process<
+                             use< kw::amr_uniform_levels >,
+                             tk::grm::Store< tag::amr, tag::levels >,
+                             pegtl::digit >,
+                           tk::grm::process<
+                             use< kw::amr_error >,
                              tk::grm::store_inciter_option<
-                               ctr::InitialAMR,
-                               tag::selected,
-                               tag::initialamr >,
+                               ctr::AMRError,
+                               tag::amr, tag::error >,
                              pegtl::alpha > > > {};
 
   //! plotvar ... end block

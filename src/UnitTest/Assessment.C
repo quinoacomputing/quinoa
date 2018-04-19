@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/Assessment.C
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Unit test suite assessment
   \details   Unit test suite assessment.
 */
@@ -85,7 +85,7 @@ assess( const tk::Print& print,
                 " tests total: " + warn + skip + excp + fail );
   }
 
-  return nfail || nexcp ? false : true;
+  return (nfail || nexcp) ? false : true;
 }
 
 } // unittest::

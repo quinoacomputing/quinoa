@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/MixNumberFractionBeta.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     System of mix number-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs) with linear drift and quadratic diagonal
@@ -39,7 +39,7 @@
     [Wiener process](http://en.wikipedia.org/wiki/Wiener_process) with
     independent increments. The invariant distribution is the joint beta
     distribution. This system of SDEs consists of N independent equations. For
-    more on the beta SDE, see http://dx.doi.org/10.1080/14685248.2010.510843.
+    more on the beta SDE, see https://doi.org/10.1080/14685248.2010.510843.
 
     Similar to the number-fraction beta SDE (DiffEq/NumberFractionBeta.h), in
     addition to integrating the above SDE, there are two additional functions

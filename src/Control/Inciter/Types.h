@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/Types.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of
     the agged tuple that stores heteroegeneous objects in a hierarchical way.
@@ -18,7 +18,8 @@
 #include "Inciter/Options/PDE.h"
 #include "Inciter/Options/Problem.h"
 #include "Inciter/Options/Scheme.h"
-#include "Inciter/Options/InitialAMR.h"
+#include "Inciter/Options/AMRInitial.h"
+#include "Inciter/Options/AMRError.h"
 #include "Options/PartitioningAlgorithm.h"
 #include "Options/TxtFloatFormat.h"
 #include "Options/FieldFile.h"
@@ -35,8 +36,15 @@ using selects = tk::tuple::tagged_tuple<
   tag::pde,          std::vector< ctr::PDEType >,       //!< Partial diff eqs
   tag::partitioner,  tk::ctr::PartitioningAlgorithmType,//!< Mesh partitioner
   tag::filetype,     tk::ctr::FieldFileType,         //!< Field output file type
-  tag::initialamr,   InitialAMRType,          //!< Initial AMR type
   tag::scheme,       inciter::ctr::SchemeType //!< Spatial discretization scheme
+>;
+
+//! Adaptive-mesh refinement options
+using amr = tk::tuple::tagged_tuple<
+  tag::amr,    bool,                             //!< AMR on/off
+  tag::init,   std::vector< AMRInitialType >,    //!< List of initial AMR types
+  tag::levels, unsigned int,                     //!< Initial uniform levels
+  tag::error,  AMRErrorType                      //!< Error estimator for AMR
 >;
 
 //! Discretization parameters storage
@@ -93,6 +101,12 @@ using TransportPDEParameters = tk::tuple::tagged_tuple<
   tag::u0,          std::vector< std::vector<
                       kw::pde_u0::info::expect::type > >,
   tag::bcdir,       std::vector< std::vector<
+                       kw::sideset::info::expect::type > >,
+  tag::bcsym,       std::vector< std::vector<
+                       kw::sideset::info::expect::type > >,
+  tag::bcinlet,     std::vector< std::vector<
+                       kw::sideset::info::expect::type > >,
+  tag::bcoutlet,    std::vector< std::vector<
                        kw::sideset::info::expect::type > >
 >;
 
@@ -101,6 +115,12 @@ using CompFlowPDEParameters = tk::tuple::tagged_tuple<
   tag::physics,      std::vector< PhysicsType >,
   tag::problem,      std::vector< ProblemType >,
   tag::bcdir,        std::vector< std::vector<
+                       kw::sideset::info::expect::type > >,
+  tag::bcsym,       std::vector< std::vector<
+                       kw::sideset::info::expect::type > >,
+  tag::bcinlet,     std::vector< std::vector<
+                       kw::sideset::info::expect::type > >,
+  tag::bcoutlet,    std::vector< std::vector<
                        kw::sideset::info::expect::type > >,
   //! Parameter vector (for specific, e.g., verification, problems)
   tag::alpha,        std::vector< kw::pde_alpha::info::expect::type >,

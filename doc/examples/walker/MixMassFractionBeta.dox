@@ -8,7 +8,7 @@ mass-fraction beta SDE is based on the beta SDE, (1) additionally computing two
 more stochastic variables that are functions of the beta variables integrated,
 and (2) the coefficients _b_ and _kappa_ are specified via functions that
 constrain the beta SDE to be consistent with the turbulent mixing process. For
-more detail on the beta SDE, see http://dx.doi.org/10.1080/14685248.2010.510843.
+more detail on the beta SDE, see https://doi.org/10.1080/14685248.2010.510843.
 
 \section walker_example_mixmassfracbeta_control Control file
 
@@ -599,6 +599,6 @@ r = 9.0; plot "stat.txt" u 2:41 w l t "<rv^2>", "" u 2:(-r*r*$28/(1.0+r*$9/$8)*(
 <hr>
 <div><small>
 <em>Page last updated:</em> Tue 04 Aug 2015 10:52:14 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.</em>
+<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
 </small></div>
 */

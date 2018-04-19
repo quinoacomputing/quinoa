@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Partitioner.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
 
@@ -75,6 +75,7 @@
 #include "DerivedData.h"
 #include "UnsMesh.h"
 #include "AMR/mesh_adapter.h"
+#include "FaceData.h"
 
 #include "NoWarning/partitioner.decl.h"
 
@@ -116,11 +117,11 @@ class Partitioner : public CBase_Partitioner {
     //! Constructor
     Partitioner( const std::vector< CkCallback >& cb,
                  const CProxy_Transporter& host,
-                 const Scheme& scheme,
                  const tk::CProxy_Solver& solver,
-                 std::size_t nbfac,
+                 const CProxy_BoundaryConditions& bc,
+                 const Scheme& scheme,
                  const std::map< int, std::vector< std::size_t > >& bface,
-                 const std::map< int, std::vector< std::size_t > >& belem );
+                 const std::vector< std::size_t >& triinpoel );
 
     //! Partition the computational mesh
     void partition( int nchare );
@@ -165,14 +166,11 @@ class Partitioner : public CBase_Partitioner {
 
     //! \brief Query our global node IDs and edges by other PEs so they know if
     //!   they are to receive IDs for those from during reordering
-    void query( int p,
-                const std::set< std::size_t >& nodes,
-                const tk::UnsMesh::Edges& edges ) const;
+    void query( int p, const std::vector< std::size_t >& nodes );
 
     //! Receive mask of to-be-received global mesh node IDs
-    void mask( int p,
-               const std::unordered_map< std::size_t, std::vector< int > >& cn,
-               const tk::UnsMesh::EdgeChares& ce );
+    void mask( int p, const std::unordered_map< std::size_t,
+                              std::vector< int > >& cn );
 
     //! Create worker chare array elements on this PE
     void createWorkers();
@@ -180,7 +178,8 @@ class Partitioner : public CBase_Partitioner {
   private:
     //! Charm++ callbacks associated to compile-time tags
     tk::tuple::tagged_tuple<
-        tag::part,        CkCallback
+        tag::refined,     CkCallback
+      , tag::centroid,    CkCallback
       , tag::distributed, CkCallback
       , tag::flattened,   CkCallback
       , tag::load,        CkCallback
@@ -190,10 +189,12 @@ class Partitioner : public CBase_Partitioner {
     > m_cb;
     //! Host proxy
     CProxy_Transporter m_host;
-    //! Discretization scheme
-    Scheme m_scheme;
     //! Linear system solver proxy
     tk::CProxy_Solver m_solver;
+    //! Boundary conditions proxy
+    CProxy_BoundaryConditions m_bc;
+    //! Discretization scheme
+    Scheme m_scheme;
     //! Number of fellow PEs to send elem IDs to
     std::size_t m_npe;
     //! Queue of requested node IDs from PEs
@@ -208,16 +209,23 @@ class Partitioner : public CBase_Partitioner {
     //!   computing global mesh node ID offsets for each PE rquired for node
     //!   reordering later
     std::size_t m_noffset;
+    //! \brief Counter for number of queries for global mesh node IDs
+    //! \details This counts the number of queries received while
+    //!   gathering the node IDs that need to be received (instead of uniquely
+    //!   assigned) by each PE
+    std::size_t m_nquery;
     //! \brief Counter for number of masks of to-be-received global mesh node
     //!   IDs received
     //! \details This counts the to-be-received node ID masks received while
     //!   gathering the node IDs that need to be received (instead of uniquely
     //!   assigned) by each PE
-    std::size_t m_nquery;
+    std::size_t m_nmask;
     //! Tetrtahedron element connectivity of our chunk of the mesh
     std::vector< std::size_t > m_tetinpoel;
     //! Global element IDs we read (our chunk of the mesh)
     std::vector< long > m_gelemid;
+    //! Coordinates of mesh nodes of out chunk of the mesh
+    std::array< std::vector< tk::real >, 3 > m_coord;
     //! Element centroid coordinates of our chunk of the mesh
     std::array< std::vector< tk::real >, 3 > m_centroid;
     //! Total number of chares across all PEs
@@ -282,15 +290,15 @@ class Partitioner : public CBase_Partitioner {
     //!   contiguous-row-id linear system contributions) to edges (a pair of old
     //!   node IDs, as in file) associated to chare IDs (outer key) for only
     //!   the nodes newly added as a result of initial uniform refinement.
-    //! \note Used for looking up boundary conditions, see, e.g., CG::bc()
+    //! \note Used for looking up boundary conditions
     std::unordered_map< int, tk::UnsMesh::EdgeNodes > m_chedgenodes;
     //! Communication cost of linear system merging for our PE
     tk::real m_cost;
     //! \brief Map associating a set of chare IDs to old (as in file) global
-    //!   mesh node IDs
+    //!   mesh node IDs on the chare boundaries
     //! \details Note that a single global mesh ID can be associated to multiple
     //!   chare IDs as multiple chares can contribute to a single mesh node.
-    std::unordered_map< std::size_t, std::vector< int > > m_nodechares;
+    std::unordered_map< std::size_t, std::vector< int > > m_bnodechares;
     //! \brief Map associating a set of chare IDs to edges given by two old
     //!   global mesh node IDs (old as in file)
     //! \details Note that a single edge can be associated to multiple chare IDs
@@ -319,22 +327,15 @@ class Partitioner : public CBase_Partitioner {
     //!   which the chares will need to communicate) during time stepping.
     std::unordered_map< int,
       std::unordered_map< int, tk::UnsMesh::Edges > > m_msumed;
-    //! \brief Total number of Boundary faces.
-    //!   m_nbfac is the total number of boundary faces in all side-sets.
-    std::size_t m_nbfac;
     //! \brief Boundary face list from side-sets.
     //!   m_bface is the list of boundary faces in the side-sets.
     std::map< int, std::vector< std::size_t > > m_bface;
-    //! \brief Boundary element list from side-sets.
-    //!   m_belem is the list of boundary elements corresponding to the 
-    //!   boundary face number in m_bface.
-    std::map< int, std::vector< std::size_t > > m_belem;
-
-    //! Read our contiguously-numbered chunk of the mesh graph from file
-    void readGraph( tk::ExodusIIMeshReader& er );
+    //! \brief Boundary face-node connectivity.
+    std::vector< std::size_t > m_triinpoel;
 
     //! Compute element centroid coordinates
-    void computeCentroids( tk::ExodusIIMeshReader& er );
+    void computeCentroids(
+      const std::unordered_map< std::size_t, std::size_t >& lid );
 
     //! Construct global mesh node ids for each chare
     std::unordered_map< int, std::vector< std::size_t > >
@@ -360,7 +361,7 @@ class Partitioner : public CBase_Partitioner {
     void generate_compact_inpoel();
 
     //! Uniformly refine our mesh replacing each tetrahedron with 8 new ones
-    void refine();
+    void refine( const std::vector< std::size_t >& inpoel );
 
     //! Compute final result of reordering
     void reordered();

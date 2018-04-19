@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/GeneralizedDirichlet.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Lochner's generalized Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs) whose invariant is Lochner's [generalized
@@ -46,7 +46,7 @@
     function](http://en.wikipedia.org/wiki/Gamma_function). To keep the
     invariant distribution generalized Dirichlet, the above set of constraints
     on the coefficients must be satisfied. For more details on the generalized
-    Dirichlet SDE, see http://dx.doi.org/10.1063/1.4822416.
+    Dirichlet SDE, see https://doi.org/10.1063/1.4822416.
 */
 // *****************************************************************************
 #ifndef GeneralizedDirichlet_h

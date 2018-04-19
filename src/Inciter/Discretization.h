@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Discretization.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \details   Data and functionality common to all discretization schemes
      The Discretization class contains data and functionality common to all
      discretization schemes.
@@ -35,16 +35,15 @@ class Discretization : public CBase_Discretization {
     //! Constructor
     explicit
       Discretization(
+        const CProxy_DistFCT& fctproxy,
         const CProxy_Transporter& transporter,
+        const CProxy_BoundaryConditions& bc,
         const std::vector< std::size_t >& conn,
         const std::unordered_map< int,
                 std::unordered_set< std::size_t > >& msum,
         const std::unordered_map< std::size_t, std::size_t >& filenodes,
         const tk::UnsMesh::EdgeNodes& edgenodes,
-        int nchare,
-        std::size_t nbfac,
-        const std::map< int, std::vector< std::size_t > >& bface,
-        const std::map< int, std::vector< std::size_t > >& belem );
+        int nchare );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -82,9 +81,9 @@ class Discretization : public CBase_Discretization {
     const std::vector< std::size_t >& Gid() const { return m_gid; }
     std::vector< std::size_t >& Gid() { return m_gid; }
 
-    const std::unordered_map< std::size_t, std::size_t > & Lid() const
+    const std::unordered_map< std::size_t, std::size_t >& Lid() const
     { return m_lid; }
-    std::unordered_map< std::size_t, std::size_t > & Lid() { return m_lid; }
+    std::unordered_map< std::size_t, std::size_t >& Lid() { return m_lid; }
 
     const std::vector< std::size_t >& Inpoel() const { return m_inpoel; }
     std::vector< std::size_t >& Inpoel() { return m_inpoel; }
@@ -99,14 +98,23 @@ class Discretization : public CBase_Discretization {
     tk::real T() const { return m_t; }
     uint64_t It() const { return m_it; }
 
+    const tk::Timer& Timer() const { return m_timer; }
+    tk::Timer& Timer() { return m_timer; }
+
     tk::real LastFieldWriteTime() const { return m_lastFieldWriteTime; }
     tk::real& LastFieldWriteTime() { return m_lastFieldWriteTime; }
 
-    std::size_t Nchare() const { return m_nchare; }
-    std::size_t& Nchare() { return m_nchare; }
-
     const CProxy_Transporter& Tr() const { return m_transporter; }
     CProxy_Transporter& Tr() { return m_transporter; }
+
+    //! Access boundary conditions group local branch pointer
+    BoundaryConditions* BC() { return m_bc.ckLocalBranch(); }
+
+    //! Access bound DistFCT class pointer
+    DistFCT* FCT() const {
+      Assert(m_fct[ thisIndex ].ckLocal() != nullptr, "DistFCT ckLocal() null");
+      return m_fct[ thisIndex ].ckLocal();
+    }
 
     const std::unordered_map< std::size_t, std::size_t >& Filenodes() const
     { return m_filenodes; }
@@ -129,29 +137,30 @@ class Discretization : public CBase_Discretization {
     Psup() const { return m_psup; }
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > >&
     Psup() { return m_psup; }
-
-    //! added by Aditya KP
-    const std::size_t& Nbfac() { return m_nbfac; } 
-    const std::size_t& Ntfac() { return m_ntfac; } 
-    const std::vector< int > & Esuf()  { return m_esuf; }
-    const std::vector< std::size_t > & Inpofa()  { return m_inpofa; }
     //@}
 
     //! Output chare element blocks to output file
     void writeMesh();
 
     //! Output mesh-based fields metadata to file
-    void writeMeta() const;
+    void writeNodeMeta() const;
+
+    //! Output mesh-based element fields metadata to file
+    void writeElemMeta() const;
 
     //! Output solution to file
-    void writeSolution( const tk::ExodusIIMeshWriter& ew,
+    void writeNodeSolution( const tk::ExodusIIMeshWriter& ew,
                         uint64_t it,
                         const std::vector< std::vector< tk::real > >& u ) const;
     #ifdef HAS_ROOT
-    void writeSolution( const tk::RootMeshWriter& rmw,
+    void writeNodeSolution( const tk::RootMeshWriter& rmw,
                         uint64_t it,
                         const std::vector< std::vector< tk::real > >& u ) const;
     #endif
+    void writeElemSolution( const tk::ExodusIIMeshWriter& ew,
+                            uint64_t it,
+                            const std::vector< std::vector< tk::real > >& u )
+                          const;
 
     //! Set time step size
     void setdt( tk::real newdt );
@@ -172,9 +181,10 @@ class Discretization : public CBase_Discretization {
       p | m_dt;
       p | m_lastFieldWriteTime;
       p | m_nvol;
-      p | m_nchare;
       p | m_outFilename;
+      p | m_fct;
       p | m_transporter;
+      p | m_bc;
       p | m_filenodes;
       p | m_edgenodes;
       p | m_el;
@@ -190,11 +200,7 @@ class Discretization : public CBase_Discretization {
       p | m_vol;
       p | m_volc;
       p | m_bid;
-      p | m_nbfac;
-      p | m_esuel;
-      p | m_ntfac;
-      p | m_esuf;
-      p | m_inpofa;
+      p | m_timer;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -203,8 +209,6 @@ class Discretization : public CBase_Discretization {
     //@}
 
   private:
-    using NodeBC = std::vector< std::pair< bool, tk::real > >;
-
     //! Iteration count
     uint64_t m_it;
      //! Physical time
@@ -216,18 +220,16 @@ class Discretization : public CBase_Discretization {
     //! \brief Number of chares from which we received nodal volume
     //!   contributions on chare boundaries
     std::size_t m_nvol;
-    //! Total number of Discretization chares
-    std::size_t m_nchare;
     //! Output filename
     std::string m_outFilename;
+    //! Distributed FCT proxy
+    CProxy_DistFCT m_fct;
     //! Transporter proxy
     CProxy_Transporter m_transporter;
-    //! \brief Map associating old node IDs (as in file) to new node IDs (as in
-    //!   producing contiguous-row-id linear system contributions)
+    //! Boundary conditions proxy
+    CProxy_BoundaryConditions m_bc;
+    //! Map associating file node IDs to local node IDs
     std::unordered_map< std::size_t, std::size_t > m_filenodes;
-    //! \brief Map associating local node IDs to side set IDs for all side sets
-    //!   read from mesh file (not only those the user sets BCs on)
-    std::map< int, std::vector< std::size_t > > m_side;
     //! \brief Maps associating node node IDs to edges (a pair of old node IDs)
     //!   for only the nodes newly added as a result of initial uniform
     //!   refinement.
@@ -240,13 +242,13 @@ class Discretization : public CBase_Discretization {
     std::tuple< std::vector< std::size_t >,
                 std::vector< std::size_t >,
                 std::unordered_map< std::size_t, std::size_t > > m_el;
-    //! Alias to element connectivity in m_el
-    std::vector< std::size_t > m_inpoel = std::get< 0 >( m_el );
-    //! Alias to global node IDs of owned elements in m_el
-    std::vector< std::size_t > m_gid = std::get< 1 >( m_el );
+    //! Alias to element connectivity
+    std::vector< std::size_t >& m_inpoel = std::get< 0 >( m_el );
+    //! Alias to global node IDs of owned elements
+    std::vector< std::size_t >& m_gid = std::get< 1 >( m_el );
     //! \brief Alias to local node ids associated to the global ones of owned
-    //!    elements in m_el
-    std::unordered_map< std::size_t, std::size_t > m_lid = std::get< 2 >( m_el );
+    //!    elements
+    std::unordered_map< std::size_t, std::size_t >& m_lid = std::get< 2 >( m_el );
     //! Mesh point coordinates
     tk::UnsMesh::Coords m_coord;
     //! Points surrounding points of our chunk of the mesh
@@ -278,20 +280,6 @@ class Discretization : public CBase_Discretization {
     std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Timer measuring a time step
     tk::Timer m_timer;
-
-    //! number of boundary faces
-    std::size_t m_nbfac;
-    //! boundary faces side-set information
-    const std::map< int, std::vector< std::size_t > > m_bface;
-    const std::map< int, std::vector< std::size_t > > m_belem;
-    //! elements surrounding elements
-    std::vector< int > m_esuel;
-    //! total number of faces
-    std::size_t m_ntfac;
-    //! element surrounding faces
-    std::vector< int > m_esuf;
-    //! face-node connectivity
-    std::vector< std::size_t > m_inpofa;
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();

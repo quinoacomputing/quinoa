@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Base/ProcessException.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Process an exception definition
   \details   This file contains the definition of processing an exception.
     Logically, it would make sense to put this into Exception.C, however,
@@ -17,6 +17,12 @@
 #define ProcessException_h
 
 namespace tk {
+
+//! Signal handler for multiple signals, SIGABRT, SIGSEGV, etc.
+void signalHandler( int signum );
+
+//! Set signal handlers for multiple signals, SIGABRT, SIGSEGV, etc
+int setSignalHandlers();
 
 //! Process an exception from the Charm++ runtime system
 void processExceptionCharm();

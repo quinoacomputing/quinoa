@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestException.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Exception.h
   \details   Unit tests for Base/Exception.h
 */
@@ -36,7 +36,7 @@ void Exception_object::test< 1 >() {
   tk::Exception e( "msg", "file", "func", 12 );
   ensure_equals( "get exception message",
                  std::string( e.what() ),
-                 std::string( "msg\n>>> Exception in file:12: func" ) );
+                 std::string( "msg\n>>> Exception at file:12: func" ) );
 }
 
 //! Test constructor without line number info

@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Scheme.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Generic forwarding interface to discretization proxies
   \details   This file defines a generic interface to discretization proxies.
 
@@ -32,7 +32,7 @@
 
     \code{.cpp}
       // Instantiate a Scheme object
-      Scheme s( ctr::SchemeType::CG );  // see Control/Inciter/Options/Scheme.h
+      Scheme s( ctr::SchemeType::DG );  // see Control/Inciter/Options/Scheme.h
 
       // Call a member function entry method in broadcast fashion
       s.coord< tag::bcast >( ... );     // equivalent to proxy.coord( ... );
@@ -216,24 +216,9 @@ class Scheme : public SchemeBase {
     //! \details This function calls the insert member function of a chare array
     //!   element discproxy and thus equivalent to discproxy[x].insert(...),
     //!   using the last argument as default.
-    template< typename Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::elem >::value, int >::type = 0,
-      typename std::enable_if< sizeof...(Args) == 10, int >::type = 0 >
+    template< typename... Args >
     void discInsert( const CkArrayIndex1D& x, Args&&... args ) {
-      discproxy[x].insert( std::forward<Args>(args)..., nullptr );
-    }
-    //////  discproxy[x].insert(...,CkEntryOptions)
-    //! Function to call the insert entry method of an element discproxy (p2p)
-    //! \param[in] x Chare array element index
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the insert member function of a chare array
-    //!   element discproxy and thus equivalent to discproxy[x].insert(...),
-    //!   specifying a non-default last argument.
-    template< typename Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::elem >::value, int >::type = 1,
-      typename std::enable_if< sizeof...(Args) == 11, int >::type = 0 >
-    void discInsert( const CkArrayIndex1D& x, Args&&... args ) {
-      discproxy[x].insert( std::forward<Args>(args)... );
+      discproxy[x].insert( fctproxy, std::forward<Args>(args)... );
     }
 
     //////  discproxy.doneInserting(...)
@@ -248,18 +233,18 @@ class Scheme : public SchemeBase {
     void doneDiscInserting( Args&&... args ) {
       discproxy.doneInserting( std::forward<Args>(args)... );
     }
-    //////  discproxy[x].doneInserting(...)
-    //! \brief Function to call the doneInserting entry method of an element
-    //!   discproxy (p2p)
-    //! \param[in] x Chare array element index
+
+    //////  fctcproxy.doneInserting(...)
+    //! \brief Function to call the doneInserting entry method of an array
+    //!   fctproxy (broadcast)
     //! \param[in] args Arguments to member function (entry method) to be called
     //! \details This function calls the doneInserting member function of a
-    //!   chare array element discproxy and thus equivalent to
-    //!   discproxy[x].doneInserting(...)..
-    template< typename Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::elem >::value, int >::type = 0 >
-    void doneDiscInserting( const CkArrayIndex1D& x, Args&&... args ) {
-      discproxy[x].doneInserting( std::forward<Args>(args)... );
+    //!   chare array fctproxy and thus equivalent to
+    //!   fctproxy.doneInserting(...).
+    template< class Op, typename... Args, typename std::enable_if<
+      std::is_same< Op, tag::bcast >::value, int >::type = 0 >
+    void doneDistFCTInserting( Args&&... args ) {
+      fctproxy.doneInserting( std::forward<Args>(args)... );
     }
 
     // Calls to proxy, specific to a particular discretization
@@ -270,55 +255,10 @@ class Scheme : public SchemeBase {
     //! \details This function calls the setup member function of a chare array
     //!   proxy and thus equivalent to proxy.setup(...), using the last argument
     //!   as default.
-    template< class Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::bcast >::value, int >::type = 0,
-      typename std::enable_if< sizeof...(Args) == 1, int >::type = 0 >
-    void setup( Args&&... args ) {
-      boost::apply_visitor( call_setup<Args...,std::nullptr_t>(
-        std::forward< Args >( args )..., nullptr ), proxy );
-    }
-    //////  proxy.setup(...,CkEntryOptions)
-    //! function to call the setup entry method of an array proxy (broadcast)
-    //! \param[in] args arguments to member function (entry method) to be called
-    //! \details this function calls the setup member function of a chare array
-    //!   proxy and thus equivalent to proxy.setup(...), specifying a
-    //!   non-default last argument.
-    template< class Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::bcast >::value, int >::type = 0,
-      typename std::enable_if< sizeof...(Args) == 2, int >::type = 0 >
+    template< typename... Args >
     void setup( Args&&... args ) {
       boost::apply_visitor( call_setup<Args...>( std::forward<Args>(args)... ),
                             proxy );
-    }
-    //////  proxy[x].setup(...)
-    //! Function to call the setup entry method of an element proxy (p2p)
-    //! \param[in] x Chare array element index
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the setup member function of a chare array
-    //!   element proxy and thus equivalent to proxy[x].setup(...), using the
-    //!   last argument as default.
-    template< typename Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::elem >::value, int >::type = 0,
-      typename std::enable_if< sizeof...(Args) == 1, int >::type = 0 >
-    void setup( const CkArrayIndex1D& x, Args&&... args ) {
-      auto e = element( x );
-      boost::apply_visitor( call_setup<Args...,std::nullptr_t>(
-        std::forward<Args>(args)...,nullptr), e );
-    }
-    //////  proxy[x].setup(...,CkEntryOptions)
-    //! Function to call the setup entry method of an element proxy (p2p)
-    //! \param[in] x Chare array element index
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the setup member function of a chare array
-    //!   element proxy and thus equivalent to proxy[x].setup(...), specifying a
-    //!   non-default last argument.
-    template< typename Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::elem >::value, int >::type = 0,
-      typename std::enable_if< sizeof...(Args) == 2, int >::type = 0 >
-    void setup( const CkArrayIndex1D& x, Args&&... args ) {
-      auto e = element( x );
-      boost::apply_visitor( call_setup<Args...>( std::forward<Args>(args)... ),
-                            e );
     }
 
     //////  proxy.dt(...)
@@ -343,8 +283,35 @@ class Scheme : public SchemeBase {
     template< typename Op, typename... Args, typename std::enable_if<
       std::is_same< Op, tag::elem >::value, int >::type = 0 >
     void dt( const CkArrayIndex1D& x, Args&&... args ) {
-      auto e = element( x );
+      auto e = tk::element< ProxyElem >( proxy, x );
       boost::apply_visitor( call_dt<Args...>( std::forward<Args>(args)... ),
+                            e );
+    }
+
+    //////  proxy.eval(...)
+    //! function to call the eval entry method of an array proxy (broadcast)
+    //! \param[in] args arguments to member function (entry method) to be called
+    //! \details this function calls the eval member function of a chare array
+    //!   proxy and thus equivalent to proxy.eval(...), specifying a
+    //!   non-default last argument.
+    template< class Op, typename... Args, typename std::enable_if<
+      std::is_same< Op, tag::bcast >::value, int >::type = 0 >
+    void eval( Args&&... args ) {
+      boost::apply_visitor( call_eval<Args...>( std::forward<Args>(args)... ),
+                            proxy );
+    }
+    //////  proxy[x].eval(...)
+    //! Function to call the eval entry method of an element proxy (p2p)
+    //! \param[in] x Chare array element index
+    //! \param[in] args Arguments to member function (entry method) to be called
+    //! \details This function calls the eval member function of a chare array
+    //!   element proxy and thus equivalent to proxy[x].eval(...), specifying a
+    //!   non-default last argument.
+    template< typename Op, typename... Args, typename std::enable_if<
+      std::is_same< Op, tag::elem >::value, int >::type = 0 >
+    void eval( const CkArrayIndex1D& x, Args&&... args ) {
+      auto e = tk::element< ProxyElem >( proxy, x );
+      boost::apply_visitor( call_eval<Args...>( std::forward<Args>(args)... ),
                             e );
     }
 
@@ -355,26 +322,9 @@ class Scheme : public SchemeBase {
     //! \details This function calls the insert member function of a chare array
     //!   element proxy and thus equivalent to proxy[x].insert(...), using the
     //!   last argument as default.
-    template< typename Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::elem >::value, int >::type = 0,
-      typename std::enable_if< sizeof...(Args) == 3, int >::type = 0 >
+    template< typename... Args >
     void insert( const CkArrayIndex1D& x, Args&&... args ) {
-      auto e = element( x );
-      boost::apply_visitor( call_insert<Args...,std::nullptr_t>(
-        std::forward<Args>(args)...,nullptr), e );
-    }
-    //////  proxy[x].insert(...,CkEntryOptions)
-    //! Function to call the insert entry method of an element proxy (p2p)
-    //! \param[in] x Chare array element index
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the insert member function of a chare array
-    //!   element proxy and thus equivalent to proxy[x].insert(...), specifying
-    //!   a non-default last argument.
-    template< typename Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::elem >::value, int >::type = 1,
-      typename std::enable_if< sizeof...(Args) == 4, int >::type = 0 >
-    void insert( const CkArrayIndex1D& x, Args&&... args ) {
-      auto e = element( x );
+      auto e = tk::element< ProxyElem >( proxy, x );
       boost::apply_visitor( call_insert<Args...>( std::forward<Args>(args)... ),
                             e );
     }
@@ -390,21 +340,6 @@ class Scheme : public SchemeBase {
     void doneInserting( Args&&... args ) {
       boost::apply_visitor(
         call_doneInserting<Args...>( std::forward<Args>(args)... ), proxy );
-    }
-    //////  proxy[x].doneInserting(...)
-    //! \brief Function to call the doneInserting entry method of an element
-    //!   proxy (p2p)
-    //! \param[in] x Chare array element index
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the doneInserting member function of a
-    //!   chare array element proxy and thus equivalent to
-    //!   proxy[x].doneInserting(...)..
-    template< typename Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::elem >::value, int >::type = 0 >
-    void doneInserting( const CkArrayIndex1D& x, Args&&... args ) {
-      auto e = element( x );
-      boost::apply_visitor(
-        call_doneInserting<Args...>( std::forward<Args>(args)... ), e );
     }
 
   private:
@@ -489,6 +424,27 @@ class Scheme : public SchemeBase {
       template< typename P, typename... Args >
       static void invoke( P& p, Args&&... args ) {
         p.dt( std::forward<Args>(args)... );
+      }
+    };
+
+   //! Functor to call the chare entry method 'eval'
+   //! \details This class is intended to be used in conjunction with variant
+   //!   and boost::visitor. The template argument types are the types of the
+   //!   arguments to entry method to be invoked behind the variant holding a
+   //!   Charm++ proxy.
+   //! \see The base class Call for the definition of operator().
+   template< typename... As >
+    struct call_eval : Call< call_eval<As...>, As... > {
+      using Base = Call< call_eval<As...>, As... >;
+      using Base::Base; // inherit base constructors
+      //! Invoke the entry method
+      //! \param[in,out] p Proxy behind which the entry method is called
+      //! \param[in] args Function arguments passed to entry method
+      //! \details P is the proxy type, Args are the types of the arguments of
+      //!   the entry method to be called.
+      template< typename P, typename... Args >
+      static void invoke( P& p, Args&&... args ) {
+        p.eval( std::forward<Args>(args)... );
       }
     };
 

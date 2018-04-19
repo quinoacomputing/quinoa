@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Main/InciterPrint.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Inciter-specific pretty printer functionality
   \details   Inciter-specific pretty printer functionality.
 */
@@ -45,6 +45,16 @@ class InciterPrint : public tk::Print {
       m_stream << m_item_name_value_fmt
                   % m_item_indent % opt.group()
                   % opt.name( g_inputdeck.get< tags... >() );
+    }
+
+    //! Print list of codes of vector-valued option
+    //! \param[in] v Vector of option types (enums) whose code vector to print
+    template< typename Option, typename T >
+    void ItemVec( const std::vector< T >& v ) const {
+      Option opt;
+      std::string codes;
+      for (auto e : v) codes += opt.code(e);
+      item( opt.group(), codes );
     }
 
     // Helper class for compact output of PDE policies

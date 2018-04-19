@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Discretization.C
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \details   Data and functionality common to all discretization schemes
   \see       Discretization.h and Discretization.C for more info.
 */
@@ -15,7 +15,9 @@
 #include "ExodusIIMeshReader.h"
 #include "ExodusIIMeshWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
-#include "PDE.h"
+#include "Inciter/Options/Scheme.h"
+#include "CGPDE.h"
+#include "DGPDE.h"
 #include "Print.h"
 
 #ifdef HAS_ROOT
@@ -25,7 +27,8 @@
 namespace inciter {
 
 static CkReduction::reducerType PDFMerger;
-extern std::vector< PDE > g_pdes;
+extern std::vector< CGPDE > g_cgpde;
+extern std::vector< DGPDE > g_dgpde;
 extern ctr::InputDeck g_inputdeck;
 
 } // inciter::
@@ -33,21 +36,19 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::Discretization;
 
 Discretization::Discretization(
+  const CProxy_DistFCT& fctproxy,
   const CProxy_Transporter& transporter,
+  const CProxy_BoundaryConditions& bc,
   const std::vector< std::size_t >& conn,
   const std::unordered_map< int, std::unordered_set< std::size_t > >& msum,
   const std::unordered_map< std::size_t, std::size_t >& filenodes,
   const tk::UnsMesh::EdgeNodes& edgenodes,
-  int nchare,
-  std::size_t nbfac,
-  const std::map< int, std::vector< std::size_t > >& bface,
-  const std::map< int, std::vector< std::size_t > >& belem ) :
+  int nchare ) :
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_lastFieldWriteTime( -1.0 ),
   m_nvol( 0 ),
-  m_nchare( static_cast< std::size_t >( nchare ) ),
   m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + '.' +
                  std::to_string( thisIndex )
                  #ifdef HAS_ROOT
@@ -55,7 +56,9 @@ Discretization::Discretization(
                      tk::ctr::FieldFileType::ROOT ? ".root" : "")
                  #endif
                 ),
+  m_fct( fctproxy ),
   m_transporter( transporter ),
+  m_bc( bc ),
   m_filenodes( filenodes ),
   m_edgenodes( edgenodes ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
@@ -65,27 +68,11 @@ Discretization::Discretization(
   m_vol( m_gid.size(), 0.0 ),
   m_volc(),
   m_bid(),
-  m_timer(),
-  m_nbfac( nbfac ),
-  m_bface( bface ),
-  m_belem( belem ),
-  m_esuel( tk::genEsuelTet( m_inpoel, 
-                            tk::genEsup(m_inpoel,4) ) ),
-  m_ntfac( tk::genNtfac( 4,
-                         m_nbfac,
-                         m_esuel ) ),
-  m_esuf( tk::genEsuf( 4,
-                       m_ntfac, 
-                       m_nbfac, 
-                       m_belem,
-                       m_esuel ) ),
-  m_inpofa( tk::genInpofaTet( m_ntfac, 
-                              m_nbfac, 
-                              m_inpoel, 
-                              m_esuel ) )
+  m_timer()
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy
+//! \param[in] fctproxy Distributed FCT proxy
 //! \param[in] solver Linear system solver (Solver) proxy
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
 //! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
@@ -125,6 +112,16 @@ Discretization::Discretization(
 
   // Allocate receive buffer for nodal volumes
   m_volc.resize( m_bid.size(), 0.0 );
+
+  // Insert DistFCT chare array element if FCT is needed. Note that even if FCT
+  // is configured false in the input deck, at this point, we still need the FCT
+  // object as FCT is still being performed, only its results are ignored. See
+  // also, e.g., MatCG::next().
+  const auto sch = g_inputdeck.get< tag::selected, tag::scheme >();
+  const auto nprop = g_inputdeck.get< tag::component >().nprop();
+  if ((sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG))
+    m_fct[ thisIndex ].insert( m_transporter, nchare, m_gid.size(), nprop,
+                               m_msum, m_bid, m_lid, m_inpoel, CkMyPe() );
 }
 
 void
@@ -432,7 +429,7 @@ Discretization::writeMesh()
 }
 
 void
-Discretization::writeSolution(
+Discretization::writeNodeSolution(
   const tk::ExodusIIMeshWriter& ew,
   uint64_t it,
   const std::vector< std::vector< tk::real > >& u ) const
@@ -449,7 +446,7 @@ Discretization::writeSolution(
 
 #ifdef HAS_ROOT
 void
-Discretization::writeSolution(
+Discretization::writeNodeSolution(
   const tk::RootMeshWriter& rmw,
   uint64_t it,
   const std::vector< std::vector< tk::real > >& u ) const
@@ -458,7 +455,6 @@ Discretization::writeSolution(
 //! \param[in] rmw Root mesh-based writer object
 //! \param[in] it Iteration count
 //! \param[in] u Vector of fields to write to file
-//! \author A. Pakki
 // *****************************************************************************
 {
   int varid = 0;
@@ -467,7 +463,23 @@ Discretization::writeSolution(
 #endif
 
 void
-Discretization::writeMeta() const
+Discretization::writeElemSolution(
+  const tk::ExodusIIMeshWriter& ew,
+  uint64_t it,
+  const std::vector< std::vector< tk::real > >& u ) const
+// *****************************************************************************
+// Output solution to file
+//! \param[in] ew ExodusII mesh-based writer object
+//! \param[in] it Iteration count
+//! \param[in] u Vector of element fields to write to file
+// *****************************************************************************
+{
+  int varid = 0;
+  for (const auto& f : u) ew.writeElemScalar( it, ++varid, f );
+}
+
+void
+Discretization::writeNodeMeta() const
 // *****************************************************************************
 // Output mesh-based fields metadata to file
 // *****************************************************************************
@@ -483,7 +495,7 @@ Discretization::writeMeta() const
 
       // Collect nodal field output names from all PDEs
       std::vector< std::string > names;
-      for (const auto& eq : g_pdes) {
+      for (const auto& eq : g_cgpde) {
         auto n = eq.fieldNames();
         names.insert( end(names), begin(n), end(n) );
       }
@@ -500,7 +512,7 @@ Discretization::writeMeta() const
 
       // Collect nodal field output names from all PDEs
       std::vector< std::string > names;
-      for (const auto& eq : g_pdes) {
+      for (const auto& eq : g_cgpde) {
         auto n = eq.fieldNames();
         names.insert( end(names), begin(n), end(n) );
       }
@@ -509,6 +521,29 @@ Discretization::writeMeta() const
       ew.writeNodeVarNames( names );
     }
 
+  }
+}
+
+void
+Discretization::writeElemMeta() const
+// *****************************************************************************
+// Output mesh-based element fields metadata to file
+// *****************************************************************************
+{
+  if (!g_inputdeck.get< tag::cmd, tag::benchmark >())
+  {
+    // Create ExodusII writer
+    tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
+
+    // Collect elemental field output names from all PDEs
+    std::vector< std::string > names;
+    for (const auto& eq : g_dgpde) {
+      auto n = eq.fieldNames();
+      names.insert( end(names), begin(n), end(n) );
+    }
+
+    // Write element field names
+    ew.writeElemVarNames( names );
   }
 }
 
@@ -542,6 +577,7 @@ Discretization::status()
 // Output one-liner status report
 // *****************************************************************************
 {
+  // Query after how many time steps user wants TTY dump
   const auto tty = g_inputdeck.get< tag::interval, tag::tty >();
 
   if (thisIndex==0 && !(m_it%tty)) {

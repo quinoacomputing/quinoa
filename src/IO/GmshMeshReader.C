@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/GmshMeshReader.C
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition. Currently, this class supports
     line, triangle, tetrahedron, and point Gmsh element types.
@@ -16,7 +16,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <iostream>     // NOT NEEDED
 
 #include "QEndian.h"
 #include "UnsMesh.h"
