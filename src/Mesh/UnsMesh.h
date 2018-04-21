@@ -29,7 +29,8 @@ class UnsMesh {
 
   public:
     using Coords = std::array< std::vector< real >, 3 >;
-    using CoordsMap = std::unordered_map< std::size_t, std::array< real, 3 > >;
+    using Coord = std::array< real, 3 >;
+    using CoordMap = std::unordered_map< std::size_t, Coord >;
 
     //! Edge: IDs of two end-points
     using Edge = std::array< std::size_t, 2 >;

@@ -40,9 +40,9 @@ Discretization::Discretization(
   const CProxy_Transporter& transporter,
   const CProxy_BoundaryConditions& bc,
   const std::vector< std::size_t >& conn,
+  const tk::UnsMesh::CoordMap& coordmap,
   const std::unordered_map< int, std::unordered_set< std::size_t > >& msum,
   const std::unordered_map< std::size_t, std::size_t >& filenodes,
-  const tk::UnsMesh::EdgeNodes& edgenodes,
   int nchare ) :
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
@@ -60,9 +60,8 @@ Discretization::Discretization(
   m_transporter( transporter ),
   m_bc( bc ),
   m_filenodes( filenodes ),
-  m_edgenodes( edgenodes ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
-  m_coord(),
+  m_coord( setCoord( coordmap ) ),
   m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
   m_v( m_gid.size(), 0.0 ),
   m_vol( m_gid.size(), 0.0 ),
@@ -75,14 +74,11 @@ Discretization::Discretization(
 //! \param[in] fctproxy Distributed FCT proxy
 //! \param[in] solver Linear system solver (Solver) proxy
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
+//! \param[in] coordmap Coordinates of mesh nodes and their global IDs
 //! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
 //!   mesh chunk we operate on
 //! \param[in] filenodes Map associating old node IDs (as in file) to new node
 //!   IDs (as in producing contiguous-row-id linear system contributions)
-//! \param[in] edgenodes Map associating new node IDs ('new' as in producing
-//!   contiguous-row-id linear system contributions) to edges (a pair of old
-//!   node IDs ('old' as in file). These 'new' node IDs are the ones newly
-//!   added during inital uniform mesh refinement.
 //! \param[in] nchare Total number of Discretization chares
 //! \details "Contiguous-row-id" here means that the numbering of the mesh nodes
 //!   (which corresponds to rows in the linear system) are (approximately)
@@ -139,20 +135,28 @@ Discretization::registerReducers()
   PDFMerger = CkReduction::addReducer( tk::mergeUniPDFs );
 }
 
-void
-Discretization::coord()
+tk::UnsMesh::Coords
+Discretization::setCoord( const tk::UnsMesh::CoordMap& coordmap )
 // *****************************************************************************
-//  Read mesh node coordinates and optionally add new edge-nodes in case of
-//  initial uniform refinement
+// ...
 // *****************************************************************************
 {
-  // Read coordinates of nodes of the mesh chunk we operate on
-  readCoords();
-  // Add coordinates of mesh nodes newly generated to edge-mid points during
-  // initial refinement
-  addEdgeNodeCoords();
-  // Compute mesh cell volumes
-  vol();
+  Assert( coordmap.size() == m_gid.size(), "Size mismatch" );
+  Assert( coordmap.size() == m_lid.size(), "Size mismatch" );
+
+  tk::UnsMesh::Coords coord;
+  coord[0].resize( coordmap.size() );
+  coord[1].resize( coordmap.size() );
+  coord[2].resize( coordmap.size() );
+
+  for (const auto& p : coordmap) {
+    auto i = tk::cref_find( m_lid, p.first );
+    coord[0][i] = p.second[0];
+    coord[1][i] = p.second[1];
+    coord[2][i] = p.second[2];
+  }
+
+  return coord;
 }
 
 void
@@ -331,72 +335,6 @@ Discretization::stat()
   CkCallback cb( CkIndex_Transporter::pdfstat(nullptr), m_transporter );
   // Contribute serialized PDF of partial sums to host via Charm++ reduction
   contribute( stream.first, stream.second.get(), PDFMerger, cb );
-}
-
-void
-Discretization::readCoords()
-// *****************************************************************************
-//  Read coordinates of mesh nodes from file
-// *****************************************************************************
-{
-  tk::ExodusIIMeshReader
-    er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
-
-  auto nnode = er.readHeader();
-
-  auto& x = m_coord[0];
-  auto& y = m_coord[1];
-  auto& z = m_coord[2];
-
-  auto nn = m_lid.size();
-  x.resize( nn );
-  y.resize( nn );
-  z.resize( nn );
-
-  for (auto p : m_gid) {
-    auto n = m_filenodes.find(p);
-    if (n != end(m_filenodes) && n->second < nnode)
-      er.readNode( n->second, tk::cref_find(m_lid,n->first), x, y, z );
-  }
-}
-
-void
-Discretization::addEdgeNodeCoords()
-// *****************************************************************************
-//  Add coordinates of mesh nodes newly generated to edge-mid points during
-//  initial refinement
-// *****************************************************************************
-{
-  if (m_edgenodes.empty()) return;
-
-  auto& x = m_coord[0];
-  auto& y = m_coord[1];
-  auto& z = m_coord[2];
-  Assert( x.size() == y.size() && x.size() == z.size(), "Size mismatch" );
-
-  // Lambda to add coordinates for a single new node on an edge
-  auto addnode = [ this, &x, &y, &z ]
-                 ( const decltype(m_edgenodes)::value_type& e )
-  {
-    auto p = tk::cref_find( m_lid, e.first[0] );
-    auto q = tk::cref_find( m_lid, e.first[1] );
-    auto i = tk::cref_find( m_lid, e.second );
-    Assert( p < x.size(), "Discretization chare " + std::to_string(thisIndex) +
-                          " indexing out of bounds: " + std::to_string(p)
-                          + " must be lower than " + std::to_string(x.size()) );
-    Assert( q < x.size(), "Discretization chare " + std::to_string(thisIndex) +
-                          " indexing out of bounds: " + std::to_string(q)
-                          + " must be lower than " + std::to_string(x.size()) );
-    Assert( i < x.size(), "Discretization chare " + std::to_string(thisIndex) +
-                          " indexing out of bounds: " + std::to_string(i)
-                          + " must be lower than " + std::to_string(x.size()) );
-    x[i] = (x[p]+x[q])/2.0;
-    y[i] = (y[p]+y[q])/2.0;
-    z[i] = (z[p]+z[q])/2.0;
-  };
-
-  // add new nodes
-  for (const auto& e : m_edgenodes) addnode( e );
 }
 
 void

@@ -171,6 +171,18 @@ std::size_t sumsize( const Container& c ) {
 }
 
 // *****************************************************************************
+//! Compute the sum of the sizes of the values of an associative container
+//! \param[in] c Container of containers
+//! \return Sum of the sizes of the values of the associative container
+// *****************************************************************************
+template< class Map >
+std::size_t sumvalsize( const Map& c ) {
+  std::size_t sum = 0;
+  for (const auto& s : c) sum += s.second.size();
+  return sum;
+}
+
+// *****************************************************************************
 //! Free memory of a container
 //! \param[in] c Container defining a swap() member function
 //! \details See http://stackoverflow.com/a/10465032 as to why this is done with

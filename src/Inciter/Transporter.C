@@ -241,9 +241,10 @@ Transporter::createPartitioner()
 
   // Create partitioner callbacks (order matters)
   std::vector< CkCallback > cbp {{
-      CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
+      CkCallback( CkReductionTarget(Transporter,refdistributed), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,matched), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,aveCost), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,stdCost), thisProxy )
@@ -263,7 +264,7 @@ Transporter::createPartitioner()
 }
 
 void
-Transporter::distributed()
+Transporter::refdistributed()
 // *****************************************************************************
 // Reduction target signaling that all PEs have desitrbuted their mesh after
 // partitioning
@@ -346,14 +347,11 @@ Transporter::refined( uint64_t nelem )
   if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG)
     m_solver.nchare( m_nchare );
 
-std::cout << "abort before flatten()\n";
-mainProxy.finalize();
+  m_progReorder.start( "Reordering mesh (flatten, gather, query, mask, "
+                       "reorder, bounds) ... " );
 
-//   m_progReorder.start( "Reordering mesh (flatten, gather, query, mask, "
-//                        "reorder, bounds) ... " );
-  m_partitioner.flatten();
+  partition();
 }
-
 
 void
 Transporter::partition()
@@ -395,7 +393,17 @@ Transporter::partition()
   m_print.endsubsection();
 
   m_progPart.start( "Partitioning and distributing mesh ..." );
-  m_partitioner.partition( m_nchare );
+  m_partitioner.partchare( m_nchare );
+}
+
+void
+Transporter::distributed()
+// *****************************************************************************
+// Reduction target signaling that all PEs have desitrbuted their mesh after
+// partitioning (after potential initial mesh refinement)
+// *****************************************************************************
+{
+  m_partitioner.flatten();
 }
 
 void
@@ -465,7 +473,7 @@ Transporter::coord()
   if (sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG)
     m_scheme.doneDistFCTInserting< tag::bcast >();
 
-  m_scheme.coord< tag::bcast >();
+  m_scheme.vol< tag::bcast >();
 }
 
 void

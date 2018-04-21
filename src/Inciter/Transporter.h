@@ -399,7 +399,7 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target signaling that all PEs have desitrbuted their
     //!   mesh after partitioning
-    void distributed();
+    void refdistributed();
 
     //! \brief Reduction target indicating that all PEs have distributed their
     //!   newly added node IDs shared along the boundary with other PEs
@@ -408,6 +408,10 @@ class Transporter : public CBase_Transporter {
     //! \brief Reduction target indicating that initial mesh refinement has
     //!   been completed on all PEs
     void refined( uint64_t nelem );
+
+    //! \brief Reduction target signaling that all PEs have desitrbuted their
+    //!   mesh after partitioning (after potential initial mesh refinement)
+    void distributed();
 
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished flattening its global mesh node IDs and they are ready

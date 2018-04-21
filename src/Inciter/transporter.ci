@@ -17,6 +17,7 @@ module transporter {
 
     chare Transporter {
       entry Transporter();
+      entry [reductiontarget] void refdistributed();
       entry [reductiontarget] void distributed();
       entry [reductiontarget] void matched();
       entry [reductiontarget] void refined( uint64_t nelem );
