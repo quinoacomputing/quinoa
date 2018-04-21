@@ -290,8 +290,6 @@ class Partitioner : public CBase_Partitioner {
     tk::UnsMesh::Coords m_coord;
     //! Coordinates associated to global node IDs of our mesh chunk
     tk::UnsMesh::CoordMap m_coordmap;
-    //! Global element IDs we read (our chunk of the mesh)
-    std::vector< long > m_gelemid;
     //! Total number of chares across all PEs
     int m_nchare;
     //! Lower bound of node IDs our PE operates on after reordering
@@ -381,6 +379,9 @@ class Partitioner : public CBase_Partitioner {
 
     //! Optionally refine mesh
     void refine();
+
+    //! Finish initiel mesh refinement
+    void finishref();
 
     //! Compute chare (partition) distribution
     std::array< int, 2 > distribution( int npart ) const;

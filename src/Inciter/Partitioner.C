@@ -72,7 +72,6 @@ Partitioner::Partitioner(
   m_rinpoel(),
   m_coord(),
   m_coordmap(),
-  m_gelemid(),
   m_nchare( 0 ),
   m_lower( 0 ),
   m_upper( 0 ),
@@ -119,8 +118,10 @@ Partitioner::Partitioner(
   m_initref = g_inputdeck.get< tag::amr, tag::init >();
   std::reverse( begin(m_initref), end(m_initref) );
 
-  // Partition the mesh before a (potential) initial refinement step
-  partref();
+  if (!g_inputdeck.get< tag::amr, tag::init >().empty())
+    partref();          // if initial mesh refinement configured, partition
+  else
+    finishref();        // if not, continue
 }
 
 void
@@ -138,18 +139,17 @@ Partitioner::partref()
   m_rinpoel = std::move( m_ginpoel );
 
   // Generate element IDs for Zoltan
-  m_gelemid.clear();
-  m_gelemid.resize( m_rinpoel.size()/4 );
-  std::iota( begin(m_gelemid), end(m_gelemid), 0 );
+  std::vector< long > gelemid( m_rinpoel.size()/4 );
+  std::iota( begin(gelemid), end(gelemid), 0 );
 
   // Partition the mesh using Zoltan to number of PEs parts
   const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
   const auto pel = tk::zoltan::geomPartMesh( alg,
                                              centroids( m_inpoel, m_coord ),
-                                             m_gelemid,
+                                             gelemid,
                                              CkNumPes() );
 
-  Assert( pel.size() == m_gelemid.size(), "Size of ownership array (PE of "
+  Assert( pel.size() == gelemid.size(), "Size of ownership array (PE of "
           "elements) after mesh partitioning does not equal the number of mesh "
           "graph elements" );
 
@@ -180,21 +180,20 @@ Partitioner::partchare( int nchare )
           "Number of chares must not be lower than the number of PEs" );
 
   // Generate element IDs for Zoltan
-  m_gelemid.clear();
-  m_gelemid.resize( m_ginpoel.size()/4 );
-  std::iota( begin(m_gelemid), end(m_gelemid), 0 );
+  std::vector< long > gelemid( m_ginpoel.size()/4 );
+  std::iota( begin(gelemid), end(gelemid), 0 );
 
   m_nchare = nchare;
   const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
   const auto che = tk::zoltan::geomPartMesh( alg,
                                              centroids( m_inpoel, m_coord ),
-                                             m_gelemid,
+                                             gelemid,
                                              nchare );
 
   // send progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pepartitioned();
 
-  Assert( che.size() == m_gelemid.size(), "Size of ownership array (chare ID "
+  Assert( che.size() == gelemid.size(), "Size of ownership array (chare ID "
           "of elements) after mesh partitioning does not equal the number of "
           "mesh graph elements" );
 
@@ -203,8 +202,6 @@ Partitioner::partchare( int nchare )
   // Categorize mesh elements (given by their gobal node IDs) by target chare
   // and distribute to their PEs based on mesh partitioning.
   distributeCh( categorize( che, m_ginpoel ) );
-
-  tk::destroy( m_gelemid );
 }
 
 void
@@ -647,7 +644,6 @@ Partitioner::categorize( const std::vector< std::size_t >& target,
 //!   target (chare or PE)
 // *****************************************************************************
 {
-  Assert( target.size() == m_gelemid.size(), "Size mismatch" );
   Assert( target.size() == inpoel.size()/4, "Size mismatch");
 
   // Categorize global mesh node ids of elements by target
@@ -994,6 +990,7 @@ Partitioner::refine()
 
   // Query user input for initial mesh refinement type list
   auto initref = g_inputdeck.get< tag::amr, tag::init >();
+  Assert( !initref.empty(), "No initial mesh refinement steps configured" );
   // Determine which level this is
   auto level = initref.size() - m_initref.size();
 
@@ -1142,11 +1139,25 @@ Partitioner::nextref()
     tk::ExodusIIMeshWriter mw( "initref.final." + std::to_string(CkMyPe()),
                                tk::ExoWriter::CREATE );
     mw.writeMesh( refmesh );
-    // Compute final number of cells across whole problem
-    auto nelem = m_ginpoel.size()/4;
-    contribute( sizeof(uint64_t), &nelem, CkReduction::sum_int,
-                m_cb.get< tag::refined >() );
+    // Finish initial mesh refinement
+    finishref();
   }
+}
+
+void
+Partitioner::finishref()
+// *****************************************************************************
+// Finish initial mesh refinement
+//! \details This function is called as after initial mesh refinement has
+//!   finished. If initial mesh reifnement was not configured by the user, this
+//!   is the point where we continue after the constructor, by computing the
+//!   total number of elements across the whole problem.
+// *****************************************************************************
+{
+  // Compute final number of cells across whole problem
+  auto nelem = m_ginpoel.size()/4;
+  contribute( sizeof(uint64_t), &nelem, CkReduction::sum_int,
+              m_cb.get< tag::refined >() );
 }
 
 void
