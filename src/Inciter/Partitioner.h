@@ -312,8 +312,10 @@ class Partitioner : public CBase_Partitioner {
     //! \brief Unique global node IDs chares on our PE will contribute to in a
     //!   linear system
     std::set< std::size_t > m_nodeset;
-    //! Chare ID (value) associated to global mesh node IDs (key)
-    std::unordered_map< std::size_t, int > m_nodech;
+    //! Chare IDs (value) associated to global mesh node IDs (key)
+    //! \details Multiple chares can contribute to a single node, hence vector
+    //!   for map value.
+    std::unordered_map< std::size_t, std::vector< int > > m_nodech;
     //! \brief Map associating new node IDs (as in producing contiguous-row-id
     //!   linear system contributions) as map-values to old node IDs (as in
     //!   file) as map-keys

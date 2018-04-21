@@ -256,15 +256,18 @@ Partitioner::neworder( const std::unordered_map< std::size_t,
 {
   // Signal to the runtime system that we have participated in reordering
   participated_complete();
+
   // Store new node IDs associated to old ones, and node coordinates associated
-  // to new node IDs
+  // to new node IDs. Since multiple chares can contribute to a single node, we
+  // store such shared node coordinates for all chares that contribute.
   for (const auto& p : nodes) {
     auto id = std::get< 0 >( p.second );
     auto coord = std::get< 1 >( p.second );
     m_linnodes[ p.first ] = id;
-    m_chcoordmap[ tk::cref_find(m_nodech,p.first) ].emplace(
-      std::move(id), std::move(coord) );
+    for (auto c : tk::cref_find(m_nodech,p.first))
+      m_chcoordmap[ c ].emplace( id, coord );
   }
+
   // If all our nodes have new IDs assigned, reorder complete on this PE
   if (m_linnodes.size() == m_nodeset.size()) reordered();
 }
@@ -366,7 +369,7 @@ Partitioner::flatten()
   for (const auto& c : m_chinpoel)
     for (auto i : c.second) {
       m_nodeset.insert( i );
-      m_nodech[ i ] = c.first;
+      m_nodech[ i ].push_back( c.first );
     }
 
   m_chcoordmap.clear();
@@ -837,12 +840,15 @@ Partitioner::reorder()
   // IDs. We test if this PE is to assign a new ID to a node ID, and if so, we
   // assign a new ID, i.e., reorder, by constructing a map associating new to
   // old IDs. We also count up the reordered nodes, which also serves as the new
-  // node id.
+  // node id. Also, we store the coordinates associated to the new node ID for
+  // each chare on this PE. Since multiple chares can contribute to a single
+  // node, we store such shared node coordinates for all chares that contribute.
   for (auto p : m_nodeset)
     if (ownnode(p)) {
       m_linnodes[ p ] = m_start;
-      m_chcoordmap[ tk::cref_find(m_nodech,p) ].emplace(
-        m_start, tk::cref_find(m_coordmap,p) );
+      auto coord = tk::cref_find( m_coordmap, p );
+      for (auto c : tk::cref_find(m_nodech,p))
+        m_chcoordmap[ c ].emplace( m_start, coord );
       ++m_start;
     }
 
