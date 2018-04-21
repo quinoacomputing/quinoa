@@ -1316,7 +1316,7 @@ Partitioner::updateMesh( AMR::mesh_adapter_t& refiner )
       Assert( g >= old.size(), "Hashed id overwriting old id" );
       m_gid[r] = g;
       m_lid[g] = r;
-      m_coordmap.insert( {g, {x[r], y[r], z[r]}} );
+      m_coordmap.insert( {g, {{x[r], y[r], z[r]}}} );
       m_edgenode[ gp ] = std::make_tuple( g, x[r], y[r], z[r] );
     }
 //     auto i = prem.find(p);

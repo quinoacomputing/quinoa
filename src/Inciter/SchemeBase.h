@@ -140,9 +140,7 @@ class SchemeBase {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
-      auto v = tk::Variant< CProxy_MatCG, CProxy_DiagCG, CProxy_DG >( proxy );
-      p | v;
-      proxy = v.get();
+      p | proxy;
       p | discproxy;
       p | fctproxy;
     }

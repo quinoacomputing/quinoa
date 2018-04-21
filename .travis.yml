@@ -22,7 +22,6 @@ script:
   - sed -i "1s/gentoo/${DISTRO}${TAG}/" ${HOME}/docker/Dockerfile.quinoa-build-travis
   - cd ../../
   - mv -v ${TRAVIS_REPO_SLUG} $HOME/docker/quinoa
-  - cp -r $HOME/.ccache ${HOME}/docker/ccache
   - cp -r $HOME/.sonar ${HOME}/docker/sonar
   - docker build --build-arg CXXFLAGS=${WERROR:+-Werror}
                 --build-arg COVERAGE=${COVERAGE}
@@ -35,9 +34,7 @@ script:
                 --build-arg TRAVIS_TAG=${TRAVIS_TAG} --build-arg TRAVIS_REPO_SLUG=${TRAVIS_REPO_SLUG}
                 --build-arg TRAVIS_COMMIT=${TRAVIS_COMMIT}
                 -t ${TRAVIS_REPO_SLUG}:${DISTRO}${TAG} -f ${HOME}/docker/Dockerfile.quinoa-build-travis ${HOME}/docker/ &&
-    rm -rf ${HOME}/.ccache &&
     CON=$(docker run -d ${TRAVIS_REPO_SLUG}:${DISTRO}${TAG} /bin/bash) &&
-    docker cp ${CON}:/home/quinoa/.ccache ${HOME}/ &&
     docker cp ${CON}:/home/quinoa/.sonar ${HOME}/
 
 after_success:
@@ -47,7 +44,6 @@ after_success:
     fi
 
 cache:
-  ccache: true
   directories:
     - $HOME/.sonar
 
@@ -57,6 +53,8 @@ compiler:
 
 matrix:
   exclude:
+  - env: DISTRO=gentoo COVERAGE=ON
+    compiler: clang
   - env: DISTRO=alpine SONARQUBE=ON COVERAGE=ON RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
     compiler: clang
   - env: DISTRO=alpine-rndq RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
