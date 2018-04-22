@@ -3,7 +3,7 @@
 
 # Virtualization = 0
 
-add_regression_test(initial_uniform_amr ${INCITER_EXECUTABLE}
+add_regression_test(amr_initial_uniform1step ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
                                exodiff.cfg slot_cyl_pe1_u0.0.std.exo
@@ -15,7 +15,7 @@ add_regression_test(initial_uniform_amr ${INCITER_EXECUTABLE}
 
 # Parallel, no virtualization
 
-add_regression_test(initial_uniform_amr ${INCITER_EXECUTABLE}
+add_regression_test(amr_initial_uniform1step ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
                                exodiff.cfg
@@ -37,7 +37,7 @@ add_regression_test(initial_uniform_amr ${INCITER_EXECUTABLE}
 
 # Parallel, virtualization = 0.5
 
-add_regression_test(initial_uniform_amr_u0.5 ${INCITER_EXECUTABLE}
+add_regression_test(amr_initial_uniform1step_u0.5 ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
                                exodiff.cfg
