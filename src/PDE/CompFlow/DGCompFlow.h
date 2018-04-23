@@ -141,7 +141,7 @@ class CompFlow {
         auto farea = geoFace(f,0,0);
 
         // Fluxes
-        auto flux = centralDiffFlux( f, geoFace, {{U.extract(el), U.extract(er)}} );
+        auto flux = numericalFluxFunc( f, geoFace, {{U.extract(el), U.extract(er)}} );
 
         for (ncomp_t c=0; c<5; ++c) {
           R(el, c, m_offset) -= farea * flux[c];
@@ -299,83 +299,183 @@ class CompFlow {
         auto zc = geoFace(f,6,0);
 
         //--- fluxes
-        auto flux = centralDiffFlux( f, geoFace, State::LR(U,el,xc,yc,zc,t) );
+        auto flux = numericalFluxFunc( f, geoFace, State::LR(U,el,xc,yc,zc,t) );
 
         for (ncomp_t c=0; c<5; ++c)
           R(el, c, m_offset) -= farea * flux[c];
       }
     }
 
-    //! Riemann solver using central difference method
+    //! HLLC approximate Riemann solver
     //! \param[in] f Face ID
     //! \param[in] geoFace Face geometry array
     //! \param[in] u Left and right unknown/state vector
     //! \return Riemann solution using central difference method
     std::vector< tk::real >
-    centralDiffFlux( std::size_t f,
+    numericalFluxFunc( std::size_t f,
                      const tk::Fields& geoFace,
                      const std::array< std::vector< tk::real >, 2 >& u )
                    const
     {
-      std::vector< tk::real > flux( u[0].size(), 0 ),
-                              fluxl( u[0].size(), 0 ),
-                              fluxr( u[0].size(), 0 );
+      std::vector< tk::real > flux( u[0].size(), 0 );
 
       std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
                                       geoFace(f,2,0),
                                       geoFace(f,3,0) }};
 
-      // Face-normal velocities
-      auto ul = u[0][1]/u[0][0];
-      auto vl = u[0][2]/u[0][0];
-      auto wl = u[0][3]/u[0][0];
-
-      tk::real vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
-
-      auto ur = u[1][1]/u[1][0];
-      auto vr = u[1][2]/u[1][0];
-      auto wr = u[1][3]/u[1][0];
-
-      tk::real vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
-
       // ratio of specific heats
       auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
 
-      // Pressures
+      // Primitive variables
+      auto rhol = u[0][0];
+      auto rhor = u[1][0];
+
       auto pl = (g-1.0)*(u[0][4] - (u[0][1]*u[0][1] +
                                     u[0][2]*u[0][2] +
-                                    u[0][3]*u[0][3]) / (2.0*u[0][0]));
+                                    u[0][3]*u[0][3]) / (2.0*rhol));
 
       auto pr = (g-1.0)*(u[1][4] - (u[1][1]*u[1][1] +
                                     u[1][2]*u[1][2] +
-                                    u[1][3]*u[1][3]) / (2.0*u[1][0]));
+                                    u[1][3]*u[1][3]) / (2.0*rhor));
 
-      auto al = sqrt(g * pl / u[0][0]);
-      auto ar = sqrt(g * pr / u[1][0]);
+      auto al = sqrt(g * pl / rhol);
+      auto ar = sqrt(g * pr / rhor);
 
-      // Flux functions
-      fluxl[0] = u[0][0] * vnl;
-      fluxl[1] = u[0][1] * vnl + pl*fn[0];
-      fluxl[2] = u[0][2] * vnl + pl*fn[1];
-      fluxl[3] = u[0][3] * vnl + pl*fn[2];
-      fluxl[4] = ( u[0][4] + pl ) * vnl;
+      // Face-normal velocities
+      auto ul = u[0][1]/rhol;
+      auto vl = u[0][2]/rhol;
+      auto wl = u[0][3]/rhol;
 
-      fluxr[0] = u[1][0] * vnr;
-      fluxr[1] = u[1][1] * vnr + pr*fn[0];
-      fluxr[2] = u[1][2] * vnr + pr*fn[1];
-      fluxr[3] = u[1][3] * vnr + pr*fn[2];
-      fluxr[4] = ( u[1][4] + pr ) * vnr;
+      tk::real vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
 
-      auto lambda = fmax(al,ar) + fmax(fabs(vnl),fabs(vnr));
-    
-      // Numerical flux function
-      for(ncomp_t c=0; c<5; ++c)
-      {
-        flux[c] = 0.5 * ( fluxl[c] + fluxr[c]
-                         - lambda * (u[1][c] - u[0][c]) );
+      auto ur = u[1][1]/rhor;
+      auto vr = u[1][2]/rhor;
+      auto wr = u[1][3]/rhor;
+
+      tk::real vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
+
+      // Roe-averaged variables
+      auto rlr = sqrt(rhor/rhol);
+      auto rlr1 = 1.0 + rlr;
+
+      auto vnroe = (vnr*rlr + vnl)/rlr1 ;
+      auto aroe = (ar*rlr + al)/rlr1 ;
+
+      // Signal velocities
+      auto Sl = fmin(vnl-al, vnroe-aroe);
+      auto Sr = fmax(vnr+ar, vnroe+aroe);
+      auto Sm = ( rhor*vnr*(Sr-vnr) - rhol*vnl*(Sl-vnl) + pl-pr )
+               /( rhor*(Sr-vnr) - rhol*(Sl-vnl) );
+
+      // Middle-zone (star) variables
+      auto pStar = rhol*(vnl-Sl)*(vnl-Sm) + pl;
+      auto uStar = u;
+
+      uStar[0][0] = (Sl-vnl) * rhol/ (Sl-Sm);
+      uStar[0][1] = ((Sl-vnl) * u[0][1] + (pStar-pl)*fn[0]) / (Sl-Sm);
+      uStar[0][2] = ((Sl-vnl) * u[0][2] + (pStar-pl)*fn[1]) / (Sl-Sm);
+      uStar[0][3] = ((Sl-vnl) * u[0][3] + (pStar-pl)*fn[2]) / (Sl-Sm);
+      uStar[0][4] = ((Sl-vnl) * u[0][4] - pl*vnl + pStar*Sm) / (Sl-Sm);
+
+      uStar[1][0] = (Sr-vnr) * rhor/ (Sr-Sm);
+      uStar[1][1] = ((Sr-vnr) * u[1][1] + (pStar-pr)*fn[0]) / (Sr-Sm);
+      uStar[1][2] = ((Sr-vnr) * u[1][2] + (pStar-pr)*fn[1]) / (Sr-Sm);
+      uStar[1][3] = ((Sr-vnr) * u[1][3] + (pStar-pr)*fn[2]) / (Sr-Sm);
+      uStar[1][4] = ((Sr-vnr) * u[1][4] - pr*vnr + pStar*Sm) / (Sr-Sm);
+
+      // Numerical fluxes
+      if (Sl > 0.0) {
+        flux[0] = u[0][0] * vnl;
+        flux[1] = u[0][1] * vnl + pl*fn[0];
+        flux[2] = u[0][2] * vnl + pl*fn[1];
+        flux[3] = u[0][3] * vnl + pl*fn[2];
+        flux[4] = ( u[0][4] + pl ) * vnl;
       }
-    
+      else if (Sl <= 0.0 && Sm > 0.0) {
+        flux[0] = uStar[0][0] * Sm;
+        flux[1] = uStar[0][1] * Sm + pStar*fn[0];
+        flux[2] = uStar[0][2] * Sm + pStar*fn[1];
+        flux[3] = uStar[0][3] * Sm + pStar*fn[2];
+        flux[4] = ( uStar[0][4] + pStar ) * Sm;
+      }
+      else if (Sm <= 0.0 && Sr >= 0.0) {
+        flux[0] = uStar[1][0] * Sm;
+        flux[1] = uStar[1][1] * Sm + pStar*fn[0];
+        flux[2] = uStar[1][2] * Sm + pStar*fn[1];
+        flux[3] = uStar[1][3] * Sm + pStar*fn[2];
+        flux[4] = ( uStar[1][4] + pStar ) * Sm;
+      }
+      else {
+        flux[0] = u[1][0] * vnr;
+        flux[1] = u[1][1] * vnr + pr*fn[0];
+        flux[2] = u[1][2] * vnr + pr*fn[1];
+        flux[3] = u[1][3] * vnr + pr*fn[2];
+        flux[4] = ( u[1][4] + pr ) * vnr;
+      }
+
       return flux;
+
+
+      //// Lax-Friedrichs flux function
+
+      //std::vector< tk::real > flux( u[0].size(), 0 );
+      //                        fluxl( u[0].size(), 0 ),
+      //                        fluxr( u[0].size(), 0 );
+
+      //// ratio of specific heats
+      //auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
+
+      //// Primitive variables
+      //auto rhol = u[0][0];
+      //auto rhor = u[1][0];
+
+      //auto pl = (g-1.0)*(u[0][4] - (u[0][1]*u[0][1] +
+      //                              u[0][2]*u[0][2] +
+      //                              u[0][3]*u[0][3]) / (2.0*rhol));
+
+      //auto pr = (g-1.0)*(u[1][4] - (u[1][1]*u[1][1] +
+      //                              u[1][2]*u[1][2] +
+      //                              u[1][3]*u[1][3]) / (2.0*rhor));
+
+      //auto al = sqrt(g * pl / rhol);
+      //auto ar = sqrt(g * pr / rhor);
+
+      //// Face-normal velocities
+      //auto ul = u[0][1]/rhol;
+      //auto vl = u[0][2]/rhol;
+      //auto wl = u[0][3]/rhol;
+
+      //tk::real vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
+
+      //auto ur = u[1][1]/rhor;
+      //auto vr = u[1][2]/rhor;
+      //auto wr = u[1][3]/rhor;
+
+      //tk::real vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
+
+      //// Flux functions
+      //fluxl[0] = u[0][0] * vnl;
+      //fluxl[1] = u[0][1] * vnl + pl*fn[0];
+      //fluxl[2] = u[0][2] * vnl + pl*fn[1];
+      //fluxl[3] = u[0][3] * vnl + pl*fn[2];
+      //fluxl[4] = ( u[0][4] + pl ) * vnl;
+
+      //fluxr[0] = u[1][0] * vnr;
+      //fluxr[1] = u[1][1] * vnr + pr*fn[0];
+      //fluxr[2] = u[1][2] * vnr + pr*fn[1];
+      //fluxr[3] = u[1][3] * vnr + pr*fn[2];
+      //fluxr[4] = ( u[1][4] + pr ) * vnr;
+
+      //auto lambda = fmax(al,ar) + fmax(fabs(vnl),fabs(vnr));
+    
+      //// Numerical flux function
+      //for(ncomp_t c=0; c<5; ++c)
+      //{
+      //  flux[c] = 0.5 * ( fluxl[c] + fluxr[c]
+      //                   - lambda * (u[1][c] - u[0][c]) );
+      //}
+    
+      //return flux;
     }
 };
 
