@@ -45,7 +45,7 @@ class Transport {
     //! Extract BC configuration ignoring if BC not specified
     //! \param[in] c Equation system index (among multiple systems configured)
     //! \return Vector of BC config of type bcconf_t used to apply BCs for all
-    //!   scalar components this Transport eq system is configred for
+    //!   scalar components this Transport eq system is configured for
     //! \note A more preferable way of catching errors such as this function
     //!   hides is during parsing, so that we don't even get here if BCs are not
     //!   correctly specified. For now we simply ignore if BCs are not
@@ -100,7 +100,7 @@ class Transport {
 
     //! Compute the left hand side mass matrix
     //! \param[in] geoElem Element geometry array
-    //! \param[in,out] l Block diagonal mass matrix matrix
+    //! \param[in,out] l Block diagonal mass matrix
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
     {
       Assert( geoElem.nunk() == l.nunk(), "Size mismatch" );
@@ -120,6 +120,7 @@ class Transport {
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real,
               const tk::Fields& geoFace,
+              const tk::Fields&,
               const inciter::FaceData& fd,
               const tk::Fields& U,
               tk::Fields& R ) const

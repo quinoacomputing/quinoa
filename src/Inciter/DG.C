@@ -863,7 +863,7 @@ DG::solve()
   auto d = Disc();
 
   for (const auto& eq : g_dgpde)
-    eq.rhs( d->T(), m_geoFace, m_fd, m_u, m_rhs );
+    eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, m_u, m_rhs );
 
   // Explicit time-stepping using forward Euler to discretize time-derivative
   //m_u = m_un + d->Dt() * m_rhs/m_lhs;
