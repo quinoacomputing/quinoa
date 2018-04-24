@@ -139,6 +139,7 @@ class InputDeck :
                                        kw::bc_sym,
                                        kw::bc_inlet,
                                        kw::bc_outlet,
+                                       kw::bc_extrapolate,
                                        kw::gauss_hump >;
 
     //! \brief Constructor: set defaults

@@ -61,7 +61,9 @@ class CompFlow {
     //! \brief Constructor
     explicit CompFlow( ncomp_t c ) :
       m_offset( g_inputdeck.get< tag::component >().offset< tag::compflow >(c) ),
-      m_bcdir( config< tag::bcdir >( c ) )
+      m_bcdir( config< tag::bcdir >( c ) ),
+      m_bcsym( config< tag::bcsym >( c ) ),
+      m_bcextrapolate( config< tag::bcextrapolate >( c ) )
     {}
 
     //! Initalize the compressible flow equations, prepare for time integration
@@ -155,6 +157,11 @@ class CompFlow {
         if (bc != end(bface))
           surfInt< Dir >( bc->second, esuf, geoFace, U, R, t );
       }
+      for (const auto& s : m_bcsym) {    // for all symbc sidesets
+        auto bc = bface.find( std::stoi(s) );  // faces for sym bc side set
+        if (bc != end(bface))
+          surfInt< Sym >( bc->second, esuf, geoFace, U, R, t );
+      }
 
       for (std::size_t e=0; e<geoElem.nunk(); ++e) {
         auto vole = geoElem(e,0,0);
@@ -245,6 +252,10 @@ class CompFlow {
     const ncomp_t m_offset;             //!< Offset PDE operates from
     //! Dirichlet BC configuration
     const std::vector< bcconf_t > m_bcdir;
+    //! Symmetric BC configuration
+    const std::vector< bcconf_t > m_bcsym;
+    //! Extrapolation BC configuration
+    const std::vector< bcconf_t > m_bcextrapolate;
 
     //! \brief State policy class providing the left and right state of a face
     //!   at symmetric boundaries

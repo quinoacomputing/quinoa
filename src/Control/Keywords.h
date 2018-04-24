@@ -3472,6 +3472,23 @@ struct bc_outlet_info {
 using bc_outlet =
   keyword< bc_outlet_info, TAOCPP_PEGTL_STRING("bc_outlet") >;
 
+struct bc_extrapolate_info {
+  static std::string name() { return "Extrapolation boundary condition"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing Extrapolation boundary conditions"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a bc_extrapolate ... end block, used to
+    specify the configuration for setting extrapolation boundary conditions for a
+    partial differential equation. Keywords allowed in a bc_extrapolate ... end
+    block: )" + std::string("\'")
+    + sideset::string() + "\'. "
+    + R"(For an example bc_extrapolate ... end block, see
+      doc/html/inciter_example_gausshump.html.)";
+  }
+};
+using bc_extrapolate =
+  keyword< bc_extrapolate_info, TAOCPP_PEGTL_STRING("bc_extrapolate") >;
+
 struct id_info {
   static std::string name() { return "id"; }
   static std::string shortDescription() { return "ID"; }

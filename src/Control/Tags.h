@@ -157,6 +157,7 @@ struct bcdir {};
 struct bcsym {};
 struct bcinlet {};
 struct bcoutlet {};
+struct bcextrapolate {};
 struct material {};
 struct id {};
 struct cv {};

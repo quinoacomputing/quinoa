@@ -122,6 +122,8 @@ using CompFlowPDEParameters = tk::tuple::tagged_tuple<
                        kw::sideset::info::expect::type > >,
   tag::bcoutlet,    std::vector< std::vector<
                        kw::sideset::info::expect::type > >,
+  tag::bcextrapolate, std::vector< std::vector<
+                         kw::sideset::info::expect::type > >,
   //! Parameter vector (for specific, e.g., verification, problems)
   tag::alpha,        std::vector< kw::pde_alpha::info::expect::type >,
   //! Parameter vector (for specific, e.g., verification, problems)
