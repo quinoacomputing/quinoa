@@ -107,7 +107,9 @@ using TransportPDEParameters = tk::tuple::tagged_tuple<
   tag::bcinlet,     std::vector< std::vector<
                        kw::sideset::info::expect::type > >,
   tag::bcoutlet,    std::vector< std::vector<
-                       kw::sideset::info::expect::type > >
+                       kw::sideset::info::expect::type > >,
+  tag::bcextrapolate, std::vector< std::vector<
+                         kw::sideset::info::expect::type > >
 >;
 
 //! Compressible flow equation parameters storage
