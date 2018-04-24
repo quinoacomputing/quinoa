@@ -41,7 +41,7 @@ class CompFlow {
     //! Extract BC configuration ignoring if BC not specified
     //! \param[in] c Equation system index (among multiple systems configured)
     //! \return Vector of BC config of type bcconf_t used to apply BCs for all
-    //!   scalar components this Transport eq system is configred for
+    //!   scalar components this Euler eq system is configured for
     //! \note A more preferable way of catching errors such as this function
     //!   hides is during parsing, so that we don't even get here if BCs are not
     //!   correctly specified. For now we simply ignore if BCs are not
@@ -60,7 +60,7 @@ class CompFlow {
   public:
     //! \brief Constructor
     explicit CompFlow( ncomp_t c ) :
-      m_offset( 0 ),
+      m_offset( g_inputdeck.get< tag::component >().offset< tag::compflow >(c) ),
       m_bcdir( config< tag::bcdir >( c ) )
     {}
 
