@@ -720,7 +720,7 @@ Partitioner::distributePe(
     m_coordmap.insert( begin(cm), end(cm) );
     // remove our mesh chunk from list (the rest will be exported)
     elems.erase( i );
-  } else Throw( "No elements are assigned to PE" );
+  }
 
   m_nedge = 0;
 
@@ -917,6 +917,8 @@ Partitioner::bndEdges()
 //!   agreed on a refinement that yields a conforming mesh across PE boundaries.
 // *****************************************************************************
 {
+  Assert( !m_ginpoel.empty(), "No elements are assigned to PE" );
+
   // Compute local data from global mesh connectivity (m_inpoel, m_gid, m_lid)
   m_el = tk::global2local( m_ginpoel );
 
