@@ -162,7 +162,7 @@ Partitioner::partref()
 
   // Categorize mesh elements (given by their gobal node IDs) by target PE and
   // distribute to their PEs based on mesh partitioning.
-  distributePE( categorize( pel, m_rinpoel ) );
+  distributePe( categorize( pel, m_rinpoel ) );
 }
 
 void
@@ -702,7 +702,7 @@ Partitioner::coordmap( const std::vector< std::size_t >& inpoel )
 }
 
 void
-Partitioner::distributePE(
+Partitioner::distributePe(
   std::unordered_map< int, std::vector< std::size_t > >&& elems )
 // *****************************************************************************
 // Distribute mesh to their PEs during initial mesh refinement

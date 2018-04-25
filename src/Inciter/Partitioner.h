@@ -372,7 +372,7 @@ class Partitioner : public CBase_Partitioner {
     tk::UnsMesh::CoordMap coordmap( const std::vector< std::size_t >& inpoel );
 
     //! Distribute mesh to their PEs during initial mesh refinement
-    void distributePE(
+    void distributePe(
            std::unordered_map< int, std::vector< std::size_t > >&& elems );
 
     //! Distribute mesh to their owner PEs after initial mesh refinement
