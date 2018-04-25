@@ -1269,11 +1269,18 @@ Partitioner::nodeinit( std::size_t npoin,
     for (const auto& eq : g_dgpde) eq.initialize( geoElem, ue, t0 );
 
     // Transfer initial conditions from cells to nodes
-    using tk::operator+=;
-    for (std::size_t p=0; p<npoin; ++p) {
+    for (std::size_t p=0; p<npoin; ++p) {       // for all mesh nodes on this PE
       std::vector< tk::real > up( nprop, 0.0 );
-      for (auto e : tk::Around(esup,p)) up += ue[e];
-      for (std::size_t c=0; c<nprop; ++c) u(p,c,0) = up[c];
+      tk::real vol = 0.0;
+      for (auto e : tk::Around(esup,p)) {       // for all cells around node p
+        // compute nodal volume: every element contributes their volume / 4
+        vol += geoElem(e,0,0) / 4.0;
+        // sum cell value to node weighed by cell volume / 4
+        for (std::size_t c=0; c<nprop; ++c)
+          up[c] += ue[e][c] * geoElem(e,0,0) / 4.0;
+      }
+      // store nodal value
+      for (std::size_t c=0; c<nprop; ++c) u(p,c,0) = up[c] / vol;
     }
 
   } else Throw( "Nodal initialization not handled for discretization scheme" );
