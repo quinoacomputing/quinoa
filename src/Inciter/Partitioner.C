@@ -1205,19 +1205,30 @@ Partitioner::errorRefine()
   // Evaluate initial conditions at mesh nodes
   auto u = nodeinit( npoin, esup );
 
+  // Get the indices (in the system of systems) of refinement variables and the
+  // error indicator configured
+  const auto& refidx = g_inputdeck.get< tag::amr, tag::id >();
+  auto errtype = g_inputdeck.get< tag::amr, tag::error >();
+
+  // Compute errors in ICs and define refinement criteria for edges
   std::vector< edge_t > edge;
   std::vector< real_t > crit;
-
-  // Compute errors in initial condition and define refinement critera for edges
   AMR::Error error;
-  for (std::size_t p=0; p<npoin; ++p)
-    for (auto q : tk::Around(psup,p)) {
+  for (std::size_t p=0; p<npoin; ++p)   // for all mesh nodes on this PE
+    for (auto q : tk::Around(psup,p)) { // for all nodes surrounding p
+       tk::real cmax = 0.0;
        edge_t e(p,q);
-       edge.push_back( e );
-       auto c = error.scalar( u, e, 0, m_coord, m_inpoel, esup,
-                              g_inputdeck.get< tag::amr, tag::error >() );
-       crit.push_back( c );
+       for (auto i : refidx) {          // for all refinement variables
+         auto c = error.scalar( u, e, i, m_coord, m_inpoel, esup, errtype );
+         if (c > cmax) cmax = c;        // find max error at edge
+       }
+       if (cmax > 0.0) {         // if nonzero error, will pass edge to refiner
+         edge.push_back( e );
+         crit.push_back( cmax );
+       }
      }
+
+  Assert( edge.size() == crit.size(), "Size mismatch" );
 
   // Do error-based refinement
   refiner.error_refinement( edge, crit );

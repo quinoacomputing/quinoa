@@ -3762,7 +3762,7 @@ struct amr_refvar_info {
     static std::string description() { return "list of strings"; }
   };
 };
-using amr_refvar = keyword< amr_initial_info, TAOCPP_PEGTL_STRING("refvar") >;
+using amr_refvar = keyword< amr_refvar_info, TAOCPP_PEGTL_STRING("refvar") >;
 
 struct amr_jump_info {
   static std::string name() { return "jump"; }

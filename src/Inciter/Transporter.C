@@ -137,6 +137,8 @@ Transporter::Transporter() :
     m_print.section( "Adaptive mesh refinement (AMR)" );
     m_print.ItemVec< ctr::AMRInitial >
                    ( g_inputdeck.get< tag::amr, tag::init >() );
+    m_print.refvar( g_inputdeck.get< tag::amr, tag::refvar >(),
+                    g_inputdeck.get< tag::amr, tag::id >() );
     m_print.Item< ctr::AMRError, tag::amr, tag::error >();
   }
 
