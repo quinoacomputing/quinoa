@@ -409,6 +409,11 @@ class Partitioner : public CBase_Partitioner {
     //! Update mesh after refinement
     void updateMesh( AMR::mesh_adapter_t& refiner );
 
+    //! Evaluate initial conditions (IC) at mesh nodes
+    tk::Fields nodeinit( std::size_t npoin,
+                         const std::pair< std::vector< std::size_t >,
+                                          std::vector< std::size_t > >& esup );
+
     //! Compute final result of reordering
     void reordered();
 

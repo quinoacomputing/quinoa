@@ -25,15 +25,18 @@
 #include "Around.h"
 #include "ExodusIIMeshWriter.h"
 #include "CGPDE.h"
+#include "DGPDE.h"
 #include "AMR/Error.h"
 #include "Inciter/Options/Scheme.h"
 #include "Inciter/Options/AMRInitial.h"
 #include "UnsMesh.h"
+#include "ContainerUtil.h"
 
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern std::vector< CGPDE > g_cgpde;
+extern std::vector< DGPDE > g_dgpde;
 
 } // inciter::
 
@@ -1193,23 +1196,14 @@ Partitioner::errorRefine()
   // Instantiate mesh refiner
   AMR::mesh_adapter_t refiner( m_inpoel );
 
-  auto& x = m_coord[0];
-
-  // Set initial conditions for all PDEs (use CG for now)
-  auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
-  tk::Fields u( x.size(), g_inputdeck.get< tag::component >().nprop() );
-
-  for (const auto& eq : g_cgpde) eq.initialize( m_coord, u, t0 );
-
-//   // hard-code jump at x=0.5 for now
-//   for (std::size_t i=0; i<u.nunk(); ++i)
-//     if (x[i] > 0.5) u(i,0,0) = 0.0; else u(i,0,0) = 1.0;
-
   // Find number of nodes in old mesh
   auto npoin = tk::npoin( m_inpoel );
   // Generate edges surrounding points in old mesh
   auto esup = tk::genEsup( m_inpoel, 4 );
   auto psup = tk::genPsup( m_inpoel, 4, esup );
+
+  // Evaluate initial conditions at mesh nodes
+  auto u = nodeinit( npoin, esup );
 
   std::vector< edge_t > edge;
   std::vector< real_t > crit;
@@ -1230,6 +1224,53 @@ Partitioner::errorRefine()
 
   // Update mesh coordinates and connectivity
   updateMesh( refiner );
+}
+
+tk::Fields
+Partitioner::nodeinit( std::size_t npoin,
+                       const std::pair< std::vector< std::size_t >,
+                          std::vector< std::size_t > >& esup )
+// *****************************************************************************
+// Evaluate initial conditions (IC) at mesh nodes
+//! \param[in] npoin Number points in mesh (on this PE)
+//! \param[in] esup Elements surrounding points as linked lists, see tk::genEsup
+//! \return Initial conditions (evaluated at t0) at nodes
+// *****************************************************************************
+{
+  auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
+  auto nprop = g_inputdeck.get< tag::component >().nprop();
+
+  // Will store nodal ICs
+  tk::Fields u( m_coord[0].size(), nprop );
+
+  // Evaluate ICs differently depending on nodal or cell-centered discretization
+  const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
+  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG) {
+
+    // Node-centered: evaluate ICs for all scalar components integrated
+    for (const auto& eq : g_cgpde) eq.initialize( m_coord, u, t0 );
+
+  } else if (scheme == ctr::SchemeType::DG) {
+
+    // Initialize cell-centered unknowns
+    tk::Fields ue( m_inpoel.size()/4, nprop );
+    auto geoElem = tk::genGeoElemTet( m_inpoel, m_coord );
+    for (const auto& eq : g_dgpde) eq.initialize( geoElem, ue, t0 );
+
+    // Transfer initial conditions from cells to nodes
+    using tk::operator+=;
+    for (std::size_t p=0; p<npoin; ++p) {
+      std::vector< tk::real > up( nprop, 0.0 );
+      for (auto e : tk::Around(esup,p)) up += ue[e];
+      for (std::size_t c=0; c<nprop; ++c) u(p,c,0) = up[c];
+    }
+
+  } else Throw( "Nodal initialization not handled for discretization scheme" );
+
+  Assert( u.nunk() == m_coord[0].size(), "Size mismatch" );
+  Assert( u.nprop() == nprop, "Size mismatch" );
+
+  return u;
 }
 
 void
