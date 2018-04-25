@@ -284,23 +284,19 @@ namespace AMR {
                 //  of the news nodes, and the old corner
                 //  FIXME: How to find that near corner programatically?
 
-                // Hard coded solution
-                // A AC AB D
-                // AC AB BC D
-                // AC BC C D
-                // AB B BC D
+                // WARNING: The order here is tighly coupled with the order in face ID (and not well documented)
 
                 size_t num_children = 4;
                 child_id_list_t child = generate_child_ids(tet_id, num_children);
 
                 // Outsides
-                tet_store.add(child[0], AB , AC, A, D, Refinement_Case::one_to_four, tet_id);
-                tet_store.add(child[2], BC, C,  AC, D, Refinement_Case::one_to_four, tet_id);
-                tet_store.add(child[3], B, BC,  AB, D, Refinement_Case::one_to_four, tet_id);
+                tet_store.add(child[0], D,  A,  AC, AB, Refinement_Case::one_to_four, tet_id);
+                tet_store.add(child[2], AC, BC, C,  D, Refinement_Case::one_to_four, tet_id);
+                tet_store.add(child[3], AB, BC, B,  D, Refinement_Case::one_to_four, tet_id);
 
                 // Center
                 size_t center_id = child[1]; // 1 to preserve Jacobian order
-                tet_store.add(center_id, AB, BC, AC, D, Refinement_Case::one_to_four, tet_id);
+                tet_store.add(center_id, AC, AB, BC, D, Refinement_Case::one_to_four, tet_id);
 
                 tet_store.add_center(center_id);
 
