@@ -1361,10 +1361,10 @@ namespace grm {
   struct control :
          process< keyword, Store< tags... >, kw_type > {};
 
-  //! \brief Match discretization control parameter
-  template< typename keyword, typename Tag >
-  struct discr :
-         control< keyword, pegtl::digit, tag::discr, Tag > {};
+  //! Match discretization control parameter
+  template< template< class > class use, typename keyword, typename Tag >
+  struct discrparam :
+         control< use< keyword >, pegtl::digit, tag::discr, Tag > {};
 
   //! \brief Match component control parameter
   template< typename keyword, typename Tag >

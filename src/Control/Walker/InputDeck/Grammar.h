@@ -259,10 +259,10 @@ namespace deck {
 
   //! Discretization parameters
   struct discretization_parameters :
-         pegtl::sor< tk::grm::discr< use< kw::npar >, tag::npar >,
-                     tk::grm::discr< use< kw::nstep >, tag::nstep >,
-                     tk::grm::discr< use< kw::term >, tag::term >,
-                     tk::grm::discr< use< kw::dt >, tag::dt >,
+         pegtl::sor< tk::grm::discrparam< use, kw::npar, tag::npar >,
+                     tk::grm::discrparam< use, kw::nstep, tag::nstep >,
+                     tk::grm::discrparam< use, kw::term, tag::term >,
+                     tk::grm::discrparam< use, kw::dt, tag::dt >,
                      tk::grm::interval< use< kw::ttyi >, tag::tty > > {};
 
   //! rngs

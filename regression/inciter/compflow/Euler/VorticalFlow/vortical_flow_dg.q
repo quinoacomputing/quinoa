@@ -9,10 +9,7 @@ inciter
   nstep 100   # Max number of time steps
   dt   1.0e-4 # Time step size
   ttyi 5      # TTY output interval
-
-  discretization
-    scheme dg
-  end
+  scheme dg
 
   compflow
 

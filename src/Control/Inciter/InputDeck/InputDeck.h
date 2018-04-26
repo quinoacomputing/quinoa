@@ -122,8 +122,7 @@ class InputDeck :
                                        kw::error,
                                        kw::l2,
                                        kw::linf >;
-    using keywords5 = boost::mpl::set< kw::discretization,
-                                       kw::fct,
+    using keywords5 = boost::mpl::set< kw::fct,
                                        kw::amr,
                                        kw::amr_initial,
                                        kw::amr_uniform,
@@ -140,6 +139,9 @@ class InputDeck :
                                        kw::bc_inlet,
                                        kw::bc_outlet,
                                        kw::gauss_hump >;
+    using keywords6 = boost::mpl::set< kw::flux,
+                                       kw::laxfriedrichs,
+                                       kw::hllc >;
 
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
@@ -158,14 +160,14 @@ class InputDeck :
       set< tag::discr, tag::cfl >( 0.0 );
       set< tag::discr, tag::fct >( true );
       set< tag::discr, tag::ctau >( 1.0 );
+      set< tag::discr, tag::scheme >( SchemeType::MatCG );
+      set< tag::discr, tag::flux >( FluxType::HLLC );
       // Default field output file type
       set< tag::selected, tag::filetype >( tk::ctr::FieldFileType::EXODUSII );
       // Default AMR settings
       set< tag::amr, tag::amr >( false );
       set< tag::amr, tag::levels >( 1 );
       set< tag::amr, tag::error >( AMRErrorType::JUMP );
-      // Default discretization scheme
-      set< tag::selected, tag::scheme >( SchemeType::MatCG );
       // Default txt floating-point output precision in digits
       set< tag::prec, tag::diag >( std::cout.precision() );
       // Default intervals
@@ -179,6 +181,7 @@ class InputDeck :
       boost::mpl::for_each< keywords3 >( ctrinfoFill );
       boost::mpl::for_each< keywords4 >( ctrinfoFill );
       boost::mpl::for_each< keywords5 >( ctrinfoFill );
+      boost::mpl::for_each< keywords6 >( ctrinfoFill );
     }
 
     /** @name Pack/Unpack: Serialize InputDeck object for Charm++ */

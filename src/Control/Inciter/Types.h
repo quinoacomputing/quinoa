@@ -18,6 +18,7 @@
 #include "Inciter/Options/PDE.h"
 #include "Inciter/Options/Problem.h"
 #include "Inciter/Options/Scheme.h"
+#include "Inciter/Options/Flux.h"
 #include "Inciter/Options/AMRInitial.h"
 #include "Inciter/Options/AMRError.h"
 #include "Options/PartitioningAlgorithm.h"
@@ -33,10 +34,9 @@ using namespace tao;
 
 //! Storage of selected options
 using selects = tk::tuple::tagged_tuple<
-  tag::pde,          std::vector< ctr::PDEType >,       //!< Partial diff eqs
-  tag::partitioner,  tk::ctr::PartitioningAlgorithmType,//!< Mesh partitioner
-  tag::filetype,     tk::ctr::FieldFileType,         //!< Field output file type
-  tag::scheme,       inciter::ctr::SchemeType //!< Spatial discretization scheme
+  tag::pde,         std::vector< ctr::PDEType >,       //!< Partial diff eqs
+  tag::partitioner, tk::ctr::PartitioningAlgorithmType,//!< Mesh partitioner
+  tag::filetype,    tk::ctr::FieldFileType           //!< Field output file type
 >;
 
 //! Adaptive-mesh refinement options
@@ -55,7 +55,9 @@ using discretization = tk::tuple::tagged_tuple<
   tag::dt,     kw::dt::info::expect::type,    //!< Size of time step
   tag::cfl,    kw::cfl::info::expect::type,   //!< CFL coefficient
   tag::fct,    bool,                          //!< FCT on/off
-  tag::ctau,   kw::ctau::info::expect::type   //!< FCT mass diffisivity
+  tag::ctau,   kw::ctau::info::expect::type,  //!< FCT mass diffisivity
+  tag::scheme, inciter::ctr::SchemeType,      //!< Spatial discretization type
+  tag::flux,   inciter::ctr::FluxType         //!< Flux function type
 >;
 
 //! ASCII output floating-point precision in digits

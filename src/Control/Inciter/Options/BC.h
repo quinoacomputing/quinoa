@@ -39,7 +39,7 @@ class BC : public tk::Toggle< BCType > {
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit BC() :
-      tk::Toggle< BCType >( "Partial differential equation",
+      tk::Toggle< BCType >( "Boundary condition",
         //! Enums -> names
         { { BCType::SYM, kw::bc_sym::name() },
           { BCType::INLET, kw::bc_inlet::name() },

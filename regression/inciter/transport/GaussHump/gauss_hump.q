@@ -10,10 +10,7 @@ inciter
   dt   1.0e-3 # Time step size
   ttyi 50     # TTY output interval
   ctau 1.0    # FCT mass diffusivity
-
-  discretization
-    scheme dg
-  end
+  scheme dg
 
   transport
     physics advection

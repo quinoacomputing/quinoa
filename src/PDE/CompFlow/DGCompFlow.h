@@ -313,9 +313,8 @@ class CompFlow {
     //! \return Riemann solution using central difference method
     std::vector< tk::real >
     numericalFluxFunc( std::size_t f,
-                     const tk::Fields& geoFace,
-                     const std::array< std::vector< tk::real >, 2 >& u )
-                   const
+                       const tk::Fields& geoFace,
+                       const std::array< std::vector< tk::real >, 2 >& u ) const
     {
       std::vector< tk::real > flux( u[0].size(), 0 );
 
