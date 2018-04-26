@@ -127,35 +127,29 @@ class CompFlow {
               "Number of components in solution and right-hand side vector " 
               "must equal "+ std::to_string(5) );
 
-      const auto& bface = fd.Bface();
-      const auto& esuf = fd.Esuf();
-
       // set rhs to zero
       R.fill(0.0);
 
-      // compute internal surface flux integrals
-      for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
-      {
-        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-        std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
-        auto farea = geoFace(f,0,0);
+      auto flux = g_inputdeck.get< tag::discr, tag::flux >();
+      if (flux == ctr::FluxType::HLLC) {
 
-        // Fluxes
-        auto flux = numericalFluxFunc( f, geoFace, {{U.extract(el), U.extract(er)}} );
+        using Flux = HLLC;
+        // compute internal surface flux integrals
+        intIntegral< Flux >( fd, geoFace, U, R );
+        // compute boundary surface flux integrals
+        bndIntegral< Dir, Flux >( m_bcdir, fd, geoFace, t, U, R );
 
-        for (ncomp_t c=0; c<5; ++c) {
-          R(el, c, m_offset) -= farea * flux[c];
-          R(er, c, m_offset) += farea * flux[c];
-        }
-      }
+      } else if (flux == ctr::FluxType::LaxFriedrichs) {
 
-      // compute boundary surface flux integrals
-      for (const auto& s : m_bcdir) {    // for all dirbc sidesets
-        auto bc = bface.find( std::stoi(s) );  // faces for dir bc side set
-        if (bc != end(bface))
-          surfInt< Dir >( bc->second, esuf, geoFace, U, R, t );
-      }
+        using Flux = LaxFriedrichs;
+        // compute internal surface flux integrals
+        intIntegral< Flux >( fd, geoFace, U, R );
+        // compute boundary surface flux integrals
+        bndIntegral< Dir, Flux >( m_bcdir, fd, geoFace, t, U, R );
 
+      } else Throw( "Flux type not implemented" );
+
+      // Add source term to right hand side
       for (std::size_t e=0; e<geoElem.nunk(); ++e) {
         auto vole = geoElem(e,0,0);
         auto xc = geoElem(e,1,0);
@@ -273,22 +267,24 @@ class CompFlow {
       }
     };
 
-    //! Compute boundary surface integral
+    //! Compute boundary surface integral for a number of faces
     //! \param[in] faces Face IDs at which to compute surface integral
     //! \param[in] esuf Elements surrounding face, see tk::genEsuf()
     //! \param[in] geoFace Face geometry array
+    //! \param[in] t Physical time
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
-    //! \param[in] t Physical time
     //! \tparam State Policy class providing the left and right state at
     //!   boundaries by its member function State::LR()
-    template< class State >
+    //! \tparam Flux Policy class providing the numerical flux function by its
+    //!   member function Flux::Flux()
+    template< class State, class Flux >
     void surfInt( const std::vector< std::size_t >& faces,
                   const std::vector< int >& esuf,
                   const tk::Fields& geoFace,
+                  tk::real t,
                   const tk::Fields& U,
-                  tk::Fields& R,
-                  tk::real t ) const
+                  tk::Fields& R ) const
     {
       for (const auto& f : faces) {
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
@@ -299,183 +295,284 @@ class CompFlow {
         auto zc = geoFace(f,6,0);
 
         //--- fluxes
-        auto flux = numericalFluxFunc( f, geoFace, State::LR(U,el,xc,yc,zc,t) );
+        auto flux =
+          numericalFluxFunc< Flux >( f, geoFace, State::LR(U,el,xc,yc,zc,t) );
 
         for (ncomp_t c=0; c<5; ++c)
           R(el, c, m_offset) -= farea * flux[c];
       }
     }
 
+    //! Compute boundary surface flux integrals for a given boundary type
+    //! \tparam BCType Specifies the type of boundary condition to apply
+    //! \tparam Flux Policy class providing the numerical flux function by its
+    //!   member function Flux::Flux()
+    //! \param bcconfig BC configuration vector for multiple side sets
+    //! \param[in] fd Face connectivity data object
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] t Physical time
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] R Right-hand side vector computed
+    template< class BCType, class Flux >
+    void
+    bndIntegral( const std::vector< bcconf_t >& bcconfig,
+                 const inciter::FaceData& fd,
+                 const tk::Fields& geoFace,
+                 tk::real t,
+                 const tk::Fields& U,
+                 tk::Fields& R ) const
+    {
+      const auto& bface = fd.Bface();
+      const auto& esuf = fd.Esuf();
+
+      for (const auto& s : bcconfig) {       // for all bc sidesets
+        auto bc = bface.find( std::stoi(s) );// faces for side set
+        if (bc != end(bface))
+          surfInt< BCType, Flux >( bc->second, esuf, geoFace, t, U, R );
+      }
+    }
+
+    //! Compute internal surface flux integrals
+    //! \tparam Flux Policy class providing the numerical flux function by its
+    //!   member function Flux::Flux()
+    //! \param[in] fd Face connectivity data object
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] R Right-hand side vector computed
+    template< class Flux >
+    void
+    intIntegral( const inciter::FaceData& fd,
+                 const tk::Fields& geoFace,
+                 const tk::Fields& U,
+                 tk::Fields& R ) const
+    {
+      const auto& esuf = fd.Esuf();
+
+      // compute internal surface flux integrals
+      for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
+      {
+        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+        std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+        auto farea = geoFace(f,0,0);
+
+        // Fluxes
+        auto flux = numericalFluxFunc< Flux >
+                      ( f, geoFace, {{U.extract(el), U.extract(er)}} );
+
+        for (ncomp_t c=0; c<5; ++c) {
+          R(el, c, m_offset) -= farea * flux[c];
+          R(er, c, m_offset) += farea * flux[c];
+        }
+      }
+    }
+
     //! HLLC approximate Riemann solver
+    //! \details This is a policy class providing a flux function used in
+    //!   concjunction with the numericalFluxFunc template.
+    struct HLLC {
+      //! HLLC approximate Riemann solver flux function
+      //! \param[in] f Face ID
+      //! \param[in] geoFace Face geometry array
+      //! \param[in] u Left and right unknown/state vector
+      //! \return Riemann solution using central difference method
+      static std::vector< tk::real >
+      Flux( std::size_t f,
+            const tk::Fields& geoFace,
+            const std::array< std::vector< tk::real >, 2 >& u )
+      {
+        std::vector< tk::real > flux( u[0].size(), 0 );
+
+        std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
+                                        geoFace(f,2,0),
+                                        geoFace(f,3,0) }};
+
+        // ratio of specific heats
+        auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
+
+        // Primitive variables
+        auto rhol = u[0][0];
+        auto rhor = u[1][0];
+
+        auto pl = (g-1.0)*(u[0][4] - (u[0][1]*u[0][1] +
+                                      u[0][2]*u[0][2] +
+                                      u[0][3]*u[0][3]) / (2.0*rhol));
+
+        auto pr = (g-1.0)*(u[1][4] - (u[1][1]*u[1][1] +
+                                      u[1][2]*u[1][2] +
+                                      u[1][3]*u[1][3]) / (2.0*rhor));
+
+        auto al = sqrt(g * pl / rhol);
+        auto ar = sqrt(g * pr / rhor);
+
+        // Face-normal velocities
+        auto ul = u[0][1]/rhol;
+        auto vl = u[0][2]/rhol;
+        auto wl = u[0][3]/rhol;
+
+        tk::real vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
+
+        auto ur = u[1][1]/rhor;
+        auto vr = u[1][2]/rhor;
+        auto wr = u[1][3]/rhor;
+
+        tk::real vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
+
+        // Roe-averaged variables
+        auto rlr = sqrt(rhor/rhol);
+        auto rlr1 = 1.0 + rlr;
+
+        auto vnroe = (vnr*rlr + vnl)/rlr1 ;
+        auto aroe = (ar*rlr + al)/rlr1 ;
+
+        // Signal velocities
+        auto Sl = fmin(vnl-al, vnroe-aroe);
+        auto Sr = fmax(vnr+ar, vnroe+aroe);
+        auto Sm = ( rhor*vnr*(Sr-vnr) - rhol*vnl*(Sl-vnl) + pl-pr )
+                 /( rhor*(Sr-vnr) - rhol*(Sl-vnl) );
+
+        // Middle-zone (star) variables
+        auto pStar = rhol*(vnl-Sl)*(vnl-Sm) + pl;
+        auto uStar = u;
+
+        uStar[0][0] = (Sl-vnl) * rhol/ (Sl-Sm);
+        uStar[0][1] = ((Sl-vnl) * u[0][1] + (pStar-pl)*fn[0]) / (Sl-Sm);
+        uStar[0][2] = ((Sl-vnl) * u[0][2] + (pStar-pl)*fn[1]) / (Sl-Sm);
+        uStar[0][3] = ((Sl-vnl) * u[0][3] + (pStar-pl)*fn[2]) / (Sl-Sm);
+        uStar[0][4] = ((Sl-vnl) * u[0][4] - pl*vnl + pStar*Sm) / (Sl-Sm);
+
+        uStar[1][0] = (Sr-vnr) * rhor/ (Sr-Sm);
+        uStar[1][1] = ((Sr-vnr) * u[1][1] + (pStar-pr)*fn[0]) / (Sr-Sm);
+        uStar[1][2] = ((Sr-vnr) * u[1][2] + (pStar-pr)*fn[1]) / (Sr-Sm);
+        uStar[1][3] = ((Sr-vnr) * u[1][3] + (pStar-pr)*fn[2]) / (Sr-Sm);
+        uStar[1][4] = ((Sr-vnr) * u[1][4] - pr*vnr + pStar*Sm) / (Sr-Sm);
+
+        // Numerical fluxes
+        if (Sl > 0.0) {
+          flux[0] = u[0][0] * vnl;
+          flux[1] = u[0][1] * vnl + pl*fn[0];
+          flux[2] = u[0][2] * vnl + pl*fn[1];
+          flux[3] = u[0][3] * vnl + pl*fn[2];
+          flux[4] = ( u[0][4] + pl ) * vnl;
+        }
+        else if (Sl <= 0.0 && Sm > 0.0) {
+          flux[0] = uStar[0][0] * Sm;
+          flux[1] = uStar[0][1] * Sm + pStar*fn[0];
+          flux[2] = uStar[0][2] * Sm + pStar*fn[1];
+          flux[3] = uStar[0][3] * Sm + pStar*fn[2];
+          flux[4] = ( uStar[0][4] + pStar ) * Sm;
+        }
+        else if (Sm <= 0.0 && Sr >= 0.0) {
+          flux[0] = uStar[1][0] * Sm;
+          flux[1] = uStar[1][1] * Sm + pStar*fn[0];
+          flux[2] = uStar[1][2] * Sm + pStar*fn[1];
+          flux[3] = uStar[1][3] * Sm + pStar*fn[2];
+          flux[4] = ( uStar[1][4] + pStar ) * Sm;
+        }
+        else {
+          flux[0] = u[1][0] * vnr;
+          flux[1] = u[1][1] * vnr + pr*fn[0];
+          flux[2] = u[1][2] * vnr + pr*fn[1];
+          flux[3] = u[1][3] * vnr + pr*fn[2];
+          flux[4] = ( u[1][4] + pr ) * vnr;
+        }
+
+        return flux;
+      }
+    };
+
+    //! Lax-Friedrichs approximate Riemann solver
+    //! \details This is a policy class providing a flux function used in
+    //!   concjunction with the numericalFluxFunc template.
+    struct LaxFriedrichs {
+      //! Lax-Friedrichs approximate Riemann solver flux function
+      //! \param[in] f Face ID
+      //! \param[in] geoFace Face geometry array
+      //! \param[in] u Left and right unknown/state vector
+      //! \return Riemann solution using central difference method
+      static std::vector< tk::real >
+      Flux( std::size_t f,
+            const tk::Fields& geoFace,
+            const std::array< std::vector< tk::real >, 2 >& u )
+      {
+        std::vector< tk::real >  flux( u[0].size(), 0.0 ),
+                                fluxl( u[0].size(), 0.0 ),
+                                fluxr( u[0].size(), 0.0 );
+
+        std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
+                                        geoFace(f,2,0),
+                                        geoFace(f,3,0) }};
+
+        // ratio of specific heats
+        auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
+
+        // Primitive variables
+        auto rhol = u[0][0];
+        auto rhor = u[1][0];
+
+        auto pl = (g-1.0)*(u[0][4] - (u[0][1]*u[0][1] +
+                                      u[0][2]*u[0][2] +
+                                      u[0][3]*u[0][3]) / (2.0*rhol));
+
+        auto pr = (g-1.0)*(u[1][4] - (u[1][1]*u[1][1] +
+                                      u[1][2]*u[1][2] +
+                                      u[1][3]*u[1][3]) / (2.0*rhor));
+
+        auto al = sqrt(g * pl / rhol);
+        auto ar = sqrt(g * pr / rhor);
+
+        // Face-normal velocities
+        auto ul = u[0][1]/rhol;
+        auto vl = u[0][2]/rhol;
+        auto wl = u[0][3]/rhol;
+
+        tk::real vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
+
+        auto ur = u[1][1]/rhor;
+        auto vr = u[1][2]/rhor;
+        auto wr = u[1][3]/rhor;
+
+        tk::real vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
+
+        // Flux functions
+        fluxl[0] = u[0][0] * vnl;
+        fluxl[1] = u[0][1] * vnl + pl*fn[0];
+        fluxl[2] = u[0][2] * vnl + pl*fn[1];
+        fluxl[3] = u[0][3] * vnl + pl*fn[2];
+        fluxl[4] = ( u[0][4] + pl ) * vnl;
+
+        fluxr[0] = u[1][0] * vnr;
+        fluxr[1] = u[1][1] * vnr + pr*fn[0];
+        fluxr[2] = u[1][2] * vnr + pr*fn[1];
+        fluxr[3] = u[1][3] * vnr + pr*fn[2];
+        fluxr[4] = ( u[1][4] + pr ) * vnr;
+
+        auto lambda = fmax(al,ar) + fmax(fabs(vnl),fabs(vnr));
+
+        // Numerical flux function
+        for(ncomp_t c=0; c<5; ++c)
+        {
+          flux[c] = 0.5 * ( fluxl[c] + fluxr[c]
+                           - lambda * (u[1][c] - u[0][c]) );
+        }
+
+        return flux;
+      }
+    };
+
+    //! Dispatcher template for computing the numerical flux
+    //! \tparam FluxFunc Policy class used to select the flux function. It must
+    //!   define a static member function Flux with the correct function
+    //!   signature.
     //! \param[in] f Face ID
     //! \param[in] geoFace Face geometry array
     //! \param[in] u Left and right unknown/state vector
     //! \return Riemann solution using central difference method
+    template< class FluxFunc >
     std::vector< tk::real >
     numericalFluxFunc( std::size_t f,
                        const tk::Fields& geoFace,
                        const std::array< std::vector< tk::real >, 2 >& u ) const
-    {
-      std::vector< tk::real > flux( u[0].size(), 0 );
-
-      std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
-                                      geoFace(f,2,0),
-                                      geoFace(f,3,0) }};
-
-      // ratio of specific heats
-      auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
-
-      // Primitive variables
-      auto rhol = u[0][0];
-      auto rhor = u[1][0];
-
-      auto pl = (g-1.0)*(u[0][4] - (u[0][1]*u[0][1] +
-                                    u[0][2]*u[0][2] +
-                                    u[0][3]*u[0][3]) / (2.0*rhol));
-
-      auto pr = (g-1.0)*(u[1][4] - (u[1][1]*u[1][1] +
-                                    u[1][2]*u[1][2] +
-                                    u[1][3]*u[1][3]) / (2.0*rhor));
-
-      auto al = sqrt(g * pl / rhol);
-      auto ar = sqrt(g * pr / rhor);
-
-      // Face-normal velocities
-      auto ul = u[0][1]/rhol;
-      auto vl = u[0][2]/rhol;
-      auto wl = u[0][3]/rhol;
-
-      tk::real vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
-
-      auto ur = u[1][1]/rhor;
-      auto vr = u[1][2]/rhor;
-      auto wr = u[1][3]/rhor;
-
-      tk::real vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
-
-      // Roe-averaged variables
-      auto rlr = sqrt(rhor/rhol);
-      auto rlr1 = 1.0 + rlr;
-
-      auto vnroe = (vnr*rlr + vnl)/rlr1 ;
-      auto aroe = (ar*rlr + al)/rlr1 ;
-
-      // Signal velocities
-      auto Sl = fmin(vnl-al, vnroe-aroe);
-      auto Sr = fmax(vnr+ar, vnroe+aroe);
-      auto Sm = ( rhor*vnr*(Sr-vnr) - rhol*vnl*(Sl-vnl) + pl-pr )
-               /( rhor*(Sr-vnr) - rhol*(Sl-vnl) );
-
-      // Middle-zone (star) variables
-      auto pStar = rhol*(vnl-Sl)*(vnl-Sm) + pl;
-      auto uStar = u;
-
-      uStar[0][0] = (Sl-vnl) * rhol/ (Sl-Sm);
-      uStar[0][1] = ((Sl-vnl) * u[0][1] + (pStar-pl)*fn[0]) / (Sl-Sm);
-      uStar[0][2] = ((Sl-vnl) * u[0][2] + (pStar-pl)*fn[1]) / (Sl-Sm);
-      uStar[0][3] = ((Sl-vnl) * u[0][3] + (pStar-pl)*fn[2]) / (Sl-Sm);
-      uStar[0][4] = ((Sl-vnl) * u[0][4] - pl*vnl + pStar*Sm) / (Sl-Sm);
-
-      uStar[1][0] = (Sr-vnr) * rhor/ (Sr-Sm);
-      uStar[1][1] = ((Sr-vnr) * u[1][1] + (pStar-pr)*fn[0]) / (Sr-Sm);
-      uStar[1][2] = ((Sr-vnr) * u[1][2] + (pStar-pr)*fn[1]) / (Sr-Sm);
-      uStar[1][3] = ((Sr-vnr) * u[1][3] + (pStar-pr)*fn[2]) / (Sr-Sm);
-      uStar[1][4] = ((Sr-vnr) * u[1][4] - pr*vnr + pStar*Sm) / (Sr-Sm);
-
-      // Numerical fluxes
-      if (Sl > 0.0) {
-        flux[0] = u[0][0] * vnl;
-        flux[1] = u[0][1] * vnl + pl*fn[0];
-        flux[2] = u[0][2] * vnl + pl*fn[1];
-        flux[3] = u[0][3] * vnl + pl*fn[2];
-        flux[4] = ( u[0][4] + pl ) * vnl;
-      }
-      else if (Sl <= 0.0 && Sm > 0.0) {
-        flux[0] = uStar[0][0] * Sm;
-        flux[1] = uStar[0][1] * Sm + pStar*fn[0];
-        flux[2] = uStar[0][2] * Sm + pStar*fn[1];
-        flux[3] = uStar[0][3] * Sm + pStar*fn[2];
-        flux[4] = ( uStar[0][4] + pStar ) * Sm;
-      }
-      else if (Sm <= 0.0 && Sr >= 0.0) {
-        flux[0] = uStar[1][0] * Sm;
-        flux[1] = uStar[1][1] * Sm + pStar*fn[0];
-        flux[2] = uStar[1][2] * Sm + pStar*fn[1];
-        flux[3] = uStar[1][3] * Sm + pStar*fn[2];
-        flux[4] = ( uStar[1][4] + pStar ) * Sm;
-      }
-      else {
-        flux[0] = u[1][0] * vnr;
-        flux[1] = u[1][1] * vnr + pr*fn[0];
-        flux[2] = u[1][2] * vnr + pr*fn[1];
-        flux[3] = u[1][3] * vnr + pr*fn[2];
-        flux[4] = ( u[1][4] + pr ) * vnr;
-      }
-
-      return flux;
-
-
-      //// Lax-Friedrichs flux function
-
-      //std::vector< tk::real > flux( u[0].size(), 0 );
-      //                        fluxl( u[0].size(), 0 ),
-      //                        fluxr( u[0].size(), 0 );
-
-      //// ratio of specific heats
-      //auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
-
-      //// Primitive variables
-      //auto rhol = u[0][0];
-      //auto rhor = u[1][0];
-
-      //auto pl = (g-1.0)*(u[0][4] - (u[0][1]*u[0][1] +
-      //                              u[0][2]*u[0][2] +
-      //                              u[0][3]*u[0][3]) / (2.0*rhol));
-
-      //auto pr = (g-1.0)*(u[1][4] - (u[1][1]*u[1][1] +
-      //                              u[1][2]*u[1][2] +
-      //                              u[1][3]*u[1][3]) / (2.0*rhor));
-
-      //auto al = sqrt(g * pl / rhol);
-      //auto ar = sqrt(g * pr / rhor);
-
-      //// Face-normal velocities
-      //auto ul = u[0][1]/rhol;
-      //auto vl = u[0][2]/rhol;
-      //auto wl = u[0][3]/rhol;
-
-      //tk::real vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
-
-      //auto ur = u[1][1]/rhor;
-      //auto vr = u[1][2]/rhor;
-      //auto wr = u[1][3]/rhor;
-
-      //tk::real vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
-
-      //// Flux functions
-      //fluxl[0] = u[0][0] * vnl;
-      //fluxl[1] = u[0][1] * vnl + pl*fn[0];
-      //fluxl[2] = u[0][2] * vnl + pl*fn[1];
-      //fluxl[3] = u[0][3] * vnl + pl*fn[2];
-      //fluxl[4] = ( u[0][4] + pl ) * vnl;
-
-      //fluxr[0] = u[1][0] * vnr;
-      //fluxr[1] = u[1][1] * vnr + pr*fn[0];
-      //fluxr[2] = u[1][2] * vnr + pr*fn[1];
-      //fluxr[3] = u[1][3] * vnr + pr*fn[2];
-      //fluxr[4] = ( u[1][4] + pr ) * vnr;
-
-      //auto lambda = fmax(al,ar) + fmax(fabs(vnl),fabs(vnr));
-    
-      //// Numerical flux function
-      //for(ncomp_t c=0; c<5; ++c)
-      //{
-      //  flux[c] = 0.5 * ( fluxl[c] + fluxr[c]
-      //                   - lambda * (u[1][c] - u[0][c]) );
-      //}
-    
-      //return flux;
-    }
+    { return FluxFunc::Flux( f, geoFace, u ); }
 };
 
 } // dg::
