@@ -162,8 +162,8 @@ class CompFlow {
         if (bc != end(bface))
           surfInt< Sym >( bc->second, esuf, geoFace, U, R, t );
       }
-      for (const auto& s : m_bcextrapolate) {    // for all dirbc sidesets
-        auto bc = bface.find( std::stoi(s) );  // faces for dir bc side set
+      for (const auto& s : m_bcextrapolate) {    // for all extrapolatebc sidesets
+        auto bc = bface.find( std::stoi(s) );  // faces for extrapolate bc side set
         if (bc != end(bface))
           surfInt< Extrapolate >( bc->second, esuf, geoFace, U, R, t );
       }

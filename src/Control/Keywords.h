@@ -3005,7 +3005,7 @@ using taylor_green =
   keyword< taylor_green_info, TAOCPP_PEGTL_STRING("taylor_green") >;
 
 struct sod_shocktube_info {
-  using code = Code< V >;
+  using code = Code< H >;
   static std::string name() { return "Sod shock-tube"; }
   static std::string shortDescription() { return
     "Select the Sod shock-tube test problem "; }

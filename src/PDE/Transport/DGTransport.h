@@ -68,7 +68,7 @@ class Transport {
         g_inputdeck.get< tag::component >().get< tag::transport >().at(c) ),
       m_offset(
         g_inputdeck.get< tag::component >().offset< tag::transport >(c) ),
-      m_bcsym( config< tag::bcsym >( c ) ),
+      m_bcextrapolate( config< tag::bcextrapolate >( c ) ),
       m_bcinlet( config< tag::bcinlet >( c ) ),
       m_bcoutlet( config< tag::bcoutlet >( c ) )
     {
@@ -154,10 +154,10 @@ class Transport {
       }
 
       // compute boundary surface flux integrals
-      for (const auto& s : m_bcsym) {    // for all symbc sidesets
-        auto bc = bface.find( std::stoi(s) );  // faces for sym bc side set
+      for (const auto& s : m_bcextrapolate) {    // for all extrapolatebc sidesets
+        auto bc = bface.find( std::stoi(s) );  // faces for extrapolate bc side set
         if (bc != end(bface))
-          surfInt< Sym >( bc->second, esuf, geoFace, U, R );
+          surfInt< Extrapolate >( bc->second, esuf, geoFace, U, R );
       }
       for (const auto& s : m_bcinlet) {  // for all inlet bc sidesets
         auto bc = bface.find( std::stoi(s) );// faces for inlet bc side set
@@ -262,16 +262,16 @@ class Transport {
     const ncomp_t m_c;                  //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     const ncomp_t m_offset;             //!< Offset this PDE operates from
-    //! Symmetry BC configuration
-    const std::vector< bcconf_t > m_bcsym;
+    //! Extrapolation BC configuration
+    const std::vector< bcconf_t > m_bcextrapolate;
     //! Inlet BC configuration
     const std::vector< bcconf_t > m_bcinlet;
     //! Outlet BC configuration
     const std::vector< bcconf_t > m_bcoutlet;
 
     //! \brief State policy class providing the left and right state of a face
-    //!   at symmetric boundaries
-    struct Sym {
+    //!   at extrapolation boundaries
+    struct Extrapolate {
       static std::array< std::vector< tk::real >, 2 >
       LR( const tk::Fields& U, std::size_t e ) {
         return {{ U.extract( e ), U.extract( e ) }};
