@@ -3004,6 +3004,26 @@ struct taylor_green_info {
 using taylor_green =
   keyword< taylor_green_info, TAOCPP_PEGTL_STRING("taylor_green") >;
 
+struct sod_shocktube_info {
+  using code = Code< H >;
+  static std::string name() { return "Sod shock-tube"; }
+  static std::string shortDescription() { return
+    "Select the Sod shock-tube test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Sod shock-tube test problem. The
+    purpose of this test problem is to test the correctness of the
+    approximate Riemann solver and its shock and interface capturing
+    capabilities. Example: "problem sod_shocktube". For more details, see
+    G. A. Sod, "A Survey of Several Finite Difference Methods for Systems of
+    Nonlinear Hyperbolic Conservation Laws", J. Comput. Phys., 27 (1978)
+    1–31.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using sod_shocktube =
+  keyword< sod_shocktube_info, TAOCPP_PEGTL_STRING("sod_shocktube") >;
+
 struct problem_info {
   using code = Code< r >;
   static std::string name() { return "Test problem"; }
@@ -3024,7 +3044,8 @@ struct problem_info {
                   + vortical_flow::string() + "\' | \'"
                   + nl_energy_growth::string() + "\' | \'"
                   + rayleigh_taylor::string() + "\' | \'"
-                  + taylor_green::string() + '\'';
+                  + taylor_green::string() + "\' | \'"
+                  + sod_shocktube::string() + '\'';
     }
   };
 };
@@ -3471,6 +3492,23 @@ struct bc_outlet_info {
 };
 using bc_outlet =
   keyword< bc_outlet_info, TAOCPP_PEGTL_STRING("bc_outlet") >;
+
+struct bc_extrapolate_info {
+  static std::string name() { return "Extrapolation boundary condition"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing Extrapolation boundary conditions"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a bc_extrapolate ... end block, used to
+    specify the configuration for setting extrapolation boundary conditions for a
+    partial differential equation. Keywords allowed in a bc_extrapolate ... end
+    block: )" + std::string("\'")
+    + sideset::string() + "\'. "
+    + R"(For an example bc_extrapolate ... end block, see
+      doc/html/inciter_example_gausshump.html.)";
+  }
+};
+using bc_extrapolate =
+  keyword< bc_extrapolate_info, TAOCPP_PEGTL_STRING("bc_extrapolate") >;
 
 struct id_info {
   static std::string name() { return "id"; }

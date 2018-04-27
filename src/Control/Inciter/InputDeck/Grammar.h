@@ -426,7 +426,9 @@ namespace deck {
                            bc< kw::bc_dirichlet, tag::transport, tag::bcdir >,
                            bc< kw::bc_sym, tag::transport, tag::bcsym >,
                            bc< kw::bc_inlet, tag::transport, tag::bcinlet >,
-                           bc< kw::bc_outlet, tag::transport, tag::bcoutlet > >,
+                           bc< kw::bc_outlet, tag::transport, tag::bcoutlet >,
+                           bc< kw::bc_extrapolate, tag::transport,
+                               tag::bcextrapolate > >,
            check_errors< tag::transport, tk::grm::check_transport > > {};
 
   //! compressible flow
@@ -460,7 +462,9 @@ namespace deck {
                            bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
                            bc< kw::bc_sym, tag::compflow, tag::bcsym >,
                            bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
-                           bc< kw::bc_outlet, tag::compflow, tag::bcoutlet > >,
+                           bc< kw::bc_outlet, tag::compflow, tag::bcoutlet >,
+                           bc< kw::bc_extrapolate, tag::compflow,
+                               tag::bcextrapolate > >,
            check_errors< tag::compflow, tk::grm::check_compflow > > {};
 
   //! partitioning ... end block

@@ -51,8 +51,6 @@ class CompFlow {
     config( ncomp_t c ) {
       std::vector< bcconf_t > bc;
       const auto& v = g_inputdeck.get< tag::param, tag::compflow, bctag >();
-      ErrChk( !v.empty(), "Boundary conditions not set in control file for DG " 
-              "CompFlow" );
       if (v.size() > c) bc = v[c];
       return bc;
     }
@@ -61,7 +59,11 @@ class CompFlow {
     //! \brief Constructor
     explicit CompFlow( ncomp_t c ) :
       m_offset( g_inputdeck.get< tag::component >().offset< tag::compflow >(c) ),
-      m_bcdir( config< tag::bcdir >( c ) )
+      m_bcdir( config< tag::bcdir >( c ) ),
+      m_bcsym( config< tag::bcsym >( c ) ),
+      m_bcextrapolate( config< tag::bcextrapolate >( c ) )
+      //ErrChk( !m_bcdir.empty() || !m_bcsym.empty() || !m_bcextrapolate.empty(),
+      //        "Boundary conditions not set in control file for DG CompFlow" );
     {}
 
     //! Initalize the compressible flow equations, prepare for time integration
@@ -138,6 +140,9 @@ class CompFlow {
         intIntegral< Flux >( fd, geoFace, U, R );
         // compute boundary surface flux integrals
         bndIntegral< Dir, Flux >( m_bcdir, fd, geoFace, t, U, R );
+        bndIntegral< Sym, Flux >( m_bcsym, fd, geoFace, t, U, R );
+        bndIntegral< Extrapolate, Flux >
+                  ( m_bcextrapolate, fd, geoFace, t, U, R );
 
       } else if (flux == ctr::FluxType::LaxFriedrichs) {
 
@@ -146,6 +151,9 @@ class CompFlow {
         intIntegral< Flux >( fd, geoFace, U, R );
         // compute boundary surface flux integrals
         bndIntegral< Dir, Flux >( m_bcdir, fd, geoFace, t, U, R );
+        bndIntegral< Sym, Flux >( m_bcsym, fd, geoFace, t, U, R );
+        bndIntegral< Extrapolate, Flux >
+                  ( m_bcextrapolate, fd, geoFace, t, U, R );
 
       } else Throw( "Flux type not implemented" );
 
@@ -239,17 +247,10 @@ class CompFlow {
     const ncomp_t m_offset;             //!< Offset PDE operates from
     //! Dirichlet BC configuration
     const std::vector< bcconf_t > m_bcdir;
-
-    //! \brief State policy class providing the left and right state of a face
-    //!   at symmetric boundaries
-    struct Sym {
-      static std::array< std::vector< tk::real >, 2 >
-      LR( const tk::Fields& U, std::size_t e,
-          tk::real /*xc*/, tk::real /*yc*/, tk::real /*zc*/,
-          tk::real /*t*/ ) {
-        return {{ U.extract( e ), U.extract( e ) }};
-      }
-    };
+    //! Symmetric BC configuration
+    const std::vector< bcconf_t > m_bcsym;
+    //! Extrapolation BC configuration
+    const std::vector< bcconf_t > m_bcextrapolate;
 
     //! \brief State policy class providing the left and right state of a face
     //!   at Dirichlet boundaries
@@ -257,6 +258,7 @@ class CompFlow {
       static std::array< std::vector< tk::real >, 2 >
       LR( const tk::Fields& U, std::size_t e,
           tk::real xc, tk::real yc, tk::real zc,
+          std::array< tk::real, 3 > /*fn*/,
           tk::real t ) {
         auto ul = U.extract( e );
         auto ur = ul;
@@ -264,6 +266,48 @@ class CompFlow {
         for (ncomp_t c=0; c<5; ++c)
           ur[c] = urbc[c];
         return {{ std::move(ul), std::move(ur) }};
+      }
+    };
+
+    //! \brief State policy class providing the left and right state of a face
+    //!   at symmetric boundaries
+    struct Sym {
+      static std::array< std::vector< tk::real >, 2 >
+      LR( const tk::Fields& U, std::size_t e,
+          tk::real /*xc*/, tk::real /*yc*/, tk::real /*zc*/,
+          std::array< tk::real, 3 > fn,
+          tk::real /*t*/ ) {
+        auto ul = U.extract( e );
+        auto ur = ul;
+        // Internal cell velocity components
+        auto v1l = ul[1]/ul[0];
+        auto v2l = ul[2]/ul[0];
+        auto v3l = ul[3]/ul[0];
+        // Normal component of velocity
+        auto vnl = v1l*fn[0] + v2l*fn[1] + v3l*fn[2];
+        // Ghost state velocity components
+        auto v1r = v1l - 2.0*vnl*fn[0];
+        auto v2r = v2l - 2.0*vnl*fn[1];
+        auto v3r = v3l - 2.0*vnl*fn[2];
+        // Boundary condition
+        ur[0] = ul[0];
+        ur[1] = ur[0] * v1r;
+        ur[2] = ur[0] * v2r;
+        ur[3] = ur[0] * v3r;
+        ur[4] = ul[4];
+        return {{ std::move(ul), std::move(ur) }};
+      }
+    };
+
+    //! \brief State policy class providing the left and right state of a face
+    //!   at extrapolation boundaries
+    struct Extrapolate {
+      static std::array< std::vector< tk::real >, 2 >
+      LR( const tk::Fields& U, std::size_t e,
+          tk::real /*xc*/, tk::real /*yc*/, tk::real /*zc*/,
+          std::array< tk::real, 3 > /*fn*/,
+          tk::real /*t*/ ) {
+        return {{ U.extract( e ), U.extract( e ) }};
       }
     };
 
@@ -293,10 +337,13 @@ class CompFlow {
         auto xc = geoFace(f,4,0);
         auto yc = geoFace(f,5,0);
         auto zc = geoFace(f,6,0);
+        std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
+                                        geoFace(f,2,0),
+                                        geoFace(f,3,0) }};
 
         //--- fluxes
-        auto flux =
-          numericalFluxFunc< Flux >( f, geoFace, State::LR(U,el,xc,yc,zc,t) );
+        auto flux = numericalFluxFunc< Flux >
+                      ( f, geoFace, State::LR(U,el,xc,yc,zc,fn,t) );
 
         for (ncomp_t c=0; c<5; ++c)
           R(el, c, m_offset) -= farea * flux[c];

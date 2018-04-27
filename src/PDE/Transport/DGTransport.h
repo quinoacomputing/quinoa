@@ -68,7 +68,7 @@ class Transport {
         g_inputdeck.get< tag::component >().get< tag::transport >().at(c) ),
       m_offset(
         g_inputdeck.get< tag::component >().offset< tag::transport >(c) ),
-      m_bcsym( config< tag::bcsym >( c ) ),
+      m_bcextrapolate( config< tag::bcextrapolate >( c ) ),
       m_bcinlet( config< tag::bcinlet >( c ) ),
       m_bcoutlet( config< tag::bcoutlet >( c ) )
     {
@@ -154,7 +154,7 @@ class Transport {
       }
 
       // compute boundary surface flux integrals
-      bndIntegral< Sym >( m_bcsym, bface, esuf, geoFace, U, R );
+      bndIntegral< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, U, R );
       bndIntegral< Inlet >( m_bcinlet, bface, esuf, geoFace, U, R );
       bndIntegral< Outlet >( m_bcoutlet, bface, esuf, geoFace, U, R );
     }
@@ -250,16 +250,16 @@ class Transport {
     const ncomp_t m_c;                  //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     const ncomp_t m_offset;             //!< Offset this PDE operates from
-    //! Symmetry BC configuration
-    const std::vector< bcconf_t > m_bcsym;
+    //! Extrapolation BC configuration
+    const std::vector< bcconf_t > m_bcextrapolate;
     //! Inlet BC configuration
     const std::vector< bcconf_t > m_bcinlet;
     //! Outlet BC configuration
     const std::vector< bcconf_t > m_bcoutlet;
 
     //! \brief State policy class providing the left and right state of a face
-    //!   at symmetric boundaries
-    struct Sym {
+    //!   at extrapolation boundaries
+    struct Extrapolate {
       static std::array< std::vector< tk::real >, 2 >
       LR( const tk::Fields& U, std::size_t e ) {
         return {{ U.extract( e ), U.extract( e ) }};

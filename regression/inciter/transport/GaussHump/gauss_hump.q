@@ -18,7 +18,7 @@ inciter
     ncomp 1
     depvar c
 
-    bc_sym
+    bc_extrapolate
       sideset 1 end
     end
     bc_inlet

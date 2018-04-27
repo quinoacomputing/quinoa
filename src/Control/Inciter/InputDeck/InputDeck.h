@@ -134,14 +134,16 @@ class InputDeck :
                                        kw::scheme,
                                        kw::matcg,
                                        kw::diagcg,
-                                       kw::dg,
+                                       kw::dg >;
+    using keywords6 = boost::mpl::set< kw::flux,
+                                       kw::laxfriedrichs,
+                                       kw::hllc,
                                        kw::bc_sym,
                                        kw::bc_inlet,
                                        kw::bc_outlet,
-                                       kw::gauss_hump >;
-    using keywords6 = boost::mpl::set< kw::flux,
-                                       kw::laxfriedrichs,
-                                       kw::hllc >;
+                                       kw::bc_extrapolate,
+                                       kw::gauss_hump,
+                                       kw::sod_shocktube >;
 
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line

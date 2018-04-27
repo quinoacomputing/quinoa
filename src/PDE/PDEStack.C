@@ -282,6 +282,12 @@ PDEStack::infoTransport( std::map< ctr::PDEType, ncomp_t >& cnt ) const
     nfo.emplace_back( "Outlet boundary [" + std::to_string( ncomp ) + "]",
       parameters( bcoutlet[c] ) );
 
+  const auto& bcextrapolate =
+    g_inputdeck.get< tag::param, tag::transport, tag::bcextrapolate >();
+  if (bcextrapolate.size() > c)
+    nfo.emplace_back( "Symmetry boundary [" + std::to_string( ncomp ) + "]",
+      parameters( bcextrapolate[c] ) );
+
   return nfo;
 }
 
