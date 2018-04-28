@@ -562,7 +562,6 @@ class Print {
     //! Print FileConv header. Text ASCII Art Generator used for executable
     //! names: http://patorjk.com/software/taag, Picture ASCII Art Generator
     //! used for converting the logo text "Quinoa": http://picascii.com.
-    //! \author J. Bakosi
     template< Style s = VERBOSE >
     void headerFileConv() const {
       stream<s>() << R"(

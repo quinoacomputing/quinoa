@@ -47,7 +47,7 @@ struct Factory_common {
   //! For testing boost::value_factory (runtime polymorphism using value
   //! semantics). The struct below uses runtime polymorphism without client-side
   //! inheritance: inheritance is confined to the internals of the struct below,
-  //! inivisble to client-code. The struct exclusively deals with ownership
+  //! invisible to client-code. The struct exclusively deals with ownership
   //! enabling client-side value semantics. Credit goes to Sean Parent at Adobe:
   //! https://github.com/sean-parent/sean-parent.github.com/wiki/
   //! Papers-and-Presentations
@@ -362,7 +362,7 @@ void Factory_object::test< 12 >() {
 //! semantics) with Charm++ children. Not in Factory_common so Charm++ can find
 //! it. The struct below uses runtime polymorphism without client-side
 //! inheritance: inheritance is confined to the internals of the struct below,
-//! inivisble to client-code. The struct exclusively deals with ownership
+//! invisible to client-code. The struct exclusively deals with ownership
 //! enabling client-side value semantics. Credit goes to Sean Parent at Adobe:
 //! https://github.com/sean-parent/sean-parent.github.com/wiki/
 //! Papers-and-Presentations
