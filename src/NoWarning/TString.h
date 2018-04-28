@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/NoWarning/TString.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Include <Root>/TString.h with turning off specific compiler warnings
 */
 // *****************************************************************************

@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/FileConv/CmdLine/Parser.C
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     FileConv's command line parser
   \details   This file defines the command-line argument parser for the file 
 	     converter, FileConv.
@@ -47,7 +46,6 @@ CmdLineParser::CmdLineParser( int argc,
 //! \param[in] argv C-style character array of character arrays
 //! \param[in] print Pretty printer
 //! \param[inout] cmdline Command-line stack where data is stored from parsing
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   // Create CmdLine (a tagged tuple) to store parsed input
