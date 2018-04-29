@@ -82,9 +82,9 @@ class CompFlow {
     //! \return Riemann solver factory
     RiemannFactory RiemannSolvers() {
       namespace mpl = boost::mpl;
-      using RiemannSolvers = mpl::vector< HLLC, LaxFriedrichs >;
+      using RiemannSolverList = mpl::vector< HLLC, LaxFriedrichs >;
       RiemannFactory r;
-      mpl::for_each< RiemannSolvers >( registerRiemannSolver( r ) );
+      mpl::for_each< RiemannSolverList >( registerRiemannSolver( r ) );
       return r;
     }
 
