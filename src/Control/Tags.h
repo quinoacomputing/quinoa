@@ -171,6 +171,7 @@ struct bcast {};
 struct elem {};
 struct avecost {};
 struct stdcost {};
+struct flux {};
 
 struct BirthdaySpacings {};
 struct Collision {};

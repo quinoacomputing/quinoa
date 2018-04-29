@@ -57,7 +57,7 @@ Transporter::Transporter() :
   m_remainder( 0 ),
   m_solver(),
   m_bc(),
-  m_scheme( g_inputdeck.get< tag::selected, tag::scheme >() ),
+  m_scheme( g_inputdeck.get< tag::discr, tag::scheme >() ),
   m_partitioner(),
   m_avcost( 0.0 ),
   m_V( 0.0 ),
@@ -108,17 +108,19 @@ Transporter::Transporter() :
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto constdt = g_inputdeck.get< tag::discr, tag::dt >();
   const auto cfl = g_inputdeck.get< tag::discr, tag::cfl >();
-  const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
 
   // Print discretization parameters
   m_print.section( "Discretization parameters" );
-  m_print.Item< ctr::Scheme, tag::selected, tag::scheme >();
+  m_print.Item< ctr::Scheme, tag::discr, tag::scheme >();
   if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG) {
     auto fct = g_inputdeck.get< tag::discr, tag::fct >();
     m_print.item( "Flux-corrected transport (FCT)", fct );
     if (fct)
       m_print.item( "FCT mass diffusion coeff",
                     g_inputdeck.get< tag::discr, tag::ctau >() );
+  } else if (scheme == ctr::SchemeType::DG) {
+    m_print.Item< ctr::Flux, tag::discr, tag::flux >();
   }
   m_print.item( "Number of time steps", nstep );
   m_print.item( "Start time", t0 );
@@ -206,7 +208,7 @@ Transporter::createPartitioner()
   std::map< int, std::vector< std::size_t > > bface;
 
   std::vector< std::size_t > triinpoel;
-  const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
 
   // Read triangle boundary-face connectivity
   if (scheme == ctr::SchemeType::DG) {
@@ -267,7 +269,7 @@ Transporter::diagHeader()
 
   // Collect variables names for integral/diagnostics output
   std::vector< std::string > var;
-  const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG)
     for (const auto& eq : g_cgpde) varnames( eq, var );
   else if (scheme == ctr::SchemeType::DG)
@@ -319,7 +321,7 @@ Transporter::load( uint64_t nelem )
   load_complete();
 
   // Send total number of chares to all linear solver PEs, if they exist
-  const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG)
     m_solver.nchare( m_nchare );
 }
@@ -488,7 +490,7 @@ Transporter::coord()
 
   // Tell the runtime system that every PE is done with dynamically inserting
   // Discretization chare array elements
-  auto sch = g_inputdeck.get< tag::selected, tag::scheme >();
+  auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
   if (sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG)
     m_scheme.doneDistFCTInserting< tag::bcast >();
 

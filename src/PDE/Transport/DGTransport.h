@@ -154,21 +154,9 @@ class Transport {
       }
 
       // compute boundary surface flux integrals
-      for (const auto& s : m_bcextrapolate) {    // for all extrapolatebc sidesets
-        auto bc = bface.find( std::stoi(s) );  // faces for extrapolate bc side set
-        if (bc != end(bface))
-          surfInt< Extrapolate >( bc->second, esuf, geoFace, U, R );
-      }
-      for (const auto& s : m_bcinlet) {  // for all inlet bc sidesets
-        auto bc = bface.find( std::stoi(s) );// faces for inlet bc side set
-        if (bc != end(bface))
-          surfInt< Inlet > ( bc->second, esuf, geoFace, U, R );
-      }
-      for (const auto& s : m_bcoutlet) {// for all outlet bc sidesets
-        auto bc = bface.find( std::stoi(s) );// faces for outlet bc side set
-        if (bc != end(bface))
-          surfInt< Outlet >( bc->second, esuf, geoFace, U, R );
-      }
+      bndIntegral< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, U, R );
+      bndIntegral< Inlet >( m_bcinlet, bface, esuf, geoFace, U, R );
+      bndIntegral< Outlet >( m_bcoutlet, bface, esuf, geoFace, U, R );
     }
 
     //! Compute the minimum time step size
@@ -299,8 +287,8 @@ class Transport {
       }
     };
 
-    //! Compute boundary surface integral
-    //! \param[in] faces FAce IDs at which to compute surface integral
+    //! Compute boundary surface integral for a number of faces
+    //! \param[in] faces Face IDs at which to compute surface integral
     //! \param[in] esuf Elements surrounding face, see tk::genEsuf()
     //! \param[in] geoFace Face geometry array
     //! \param[in] U Solution vector at recent time step
@@ -324,6 +312,31 @@ class Transport {
 
         for (ncomp_t c=0; c<m_ncomp; ++c)
           R(el, c, m_offset) -= farea * flux[c];
+      }
+    }
+
+    //! Compute boundary surface flux integrals for a given boundary type
+    //! \tparam BCType Specifies the type of boundary condition to apply
+    //! \param bcconfig BC configuration vector for multiple side sets
+    //! \param[in] bface Boundary faces side-set information
+    //! \param[in] esuf Elements surrounding faces
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] R Right-hand side vector computed
+    template< class BCType >
+    void
+    bndIntegral( const std::vector< bcconf_t >& bcconfig,
+                 const std::unordered_map< int,
+                   std::vector< std::size_t > >& bface,
+                 const std::vector< int >& esuf,
+                 const tk::Fields& geoFace,
+                 const tk::Fields& U,
+                 tk::Fields& R ) const
+    {
+      for (const auto& s : bcconfig) {       // for all bc sidesets
+        auto bc = bface.find( std::stoi(s) );// faces for side set
+        if (bc != end(bface))
+          surfInt< BCType >( bc->second, esuf, geoFace, U, R );
       }
     }
 

@@ -2,30 +2,32 @@
 # This is a comment
 # Keywords are case-sensitive
 
-title "Sod shock-tube"
+title "Vortical flow"
 
 inciter
 
   nstep 100   # Max number of time steps
-  dt   2.0e-3 # Time step size
-  ttyi 10     # TTY output interval
+  dt   1.0e-4 # Time step size
+  ttyi 5      # TTY output interval
   scheme dg
+  flux laxfriedrichs
 
   compflow
 
     physics euler
-    problem sod_shocktube
+    problem vortical_flow
+
+    alpha 0.1
+    beta 1.0
+    p0 10.0
 
     material
       id 1
-      gamma 1.4 # ratio of specific heats
+      gamma 1.66666666666667 # =5/3 ratio of specific heats
     end
 
-    bc_extrapolate
-      sideset 1 3 end
-    end
-    bc_sym
-      sideset 2 4 5 6 end
+    bc_dirichlet
+      sideset 1 2 3 4 5 6 end
     end
 
   end
@@ -37,7 +39,7 @@ inciter
   end
 
   plotvar
-    interval 20
+    interval 10
   end
 
 end

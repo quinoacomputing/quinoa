@@ -71,7 +71,7 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
 {
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
   auto ctau = g_inputdeck.get< tag::discr, tag::ctau >();
-  auto sch = g_inputdeck.get< tag::selected, tag::scheme >();
+  auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
 
   Assert( vol.size() == coord[0].size(), "Nodal volume vector size mismatch" );
   Assert( m_aec.nunk() == inpoel.size() && m_aec.nprop() == ncomp,

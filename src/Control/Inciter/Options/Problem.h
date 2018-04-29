@@ -55,7 +55,7 @@ class Problem : public tk::Toggle< ProblemType > {
     explicit Problem() :
       tk::Toggle< ProblemType >(
         //! Group, i.e., options, name
-        "Test problem",
+        kw::problem::name(),
         //! Enums -> names
         { { ProblemType::USER_DEFINED, kw::user_defined::name() },
           { ProblemType::SHEAR_DIFF, kw::shear_diff::name() },

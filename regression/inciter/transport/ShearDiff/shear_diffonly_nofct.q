@@ -12,9 +12,7 @@ inciter
   cfl 0.5
   ttyi 1      # TTY output interval
 
-  discretization
-    fct false
-  end
+  fct false
 
   transport
     physics advdiff
