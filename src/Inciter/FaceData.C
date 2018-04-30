@@ -42,7 +42,7 @@ FaceData::FaceData(
 //!   chosen.
 // *****************************************************************************
 {
-  if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::DG) {
+  if (g_inputdeck.get< tag::discr, tag::scheme >() == ctr::SchemeType::DG) {
 
     auto el = tk::global2local( conn );   // fills inpoel, m_gid, m_lid
     auto inpoel = std::get< 0 >( el );

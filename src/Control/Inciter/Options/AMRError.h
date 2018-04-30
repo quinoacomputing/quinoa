@@ -39,7 +39,7 @@ class AMRError : public tk::Toggle< AMRErrorType > {
     explicit AMRError() :
       tk::Toggle< AMRErrorType >(
         //! Group, i.e., options, name
-        "Error estimator",
+        kw::amr_error::name(),
         //! Enums -> names
         { { AMRErrorType::JUMP, kw::amr_jump::name() },
           { AMRErrorType::HESSIAN, kw::amr_hessian::name() } },

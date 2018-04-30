@@ -1257,7 +1257,7 @@ Partitioner::create()
   createDiscWorkers();
 
   // Broadcast our bounds of global node IDs to all matrix solvers
-  const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG)
     m_solver.bounds( CkMyPe(), m_lower, m_upper );
   else // if no MatCG, no matrix solver, continue

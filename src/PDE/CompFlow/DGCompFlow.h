@@ -15,9 +15,16 @@
 #include <unordered_set>
 #include <unordered_map>
 
+#include <boost/mpl/vector.hpp>
+#include "NoWarning/for_each.h"
+
 #include "Macro.h"
 #include "Exception.h"
 #include "Vector.h"
+#include "ContainerUtil.h"
+#include "RiemannSolver.h"
+#include "Riemann/HLLC.h"
+#include "Riemann/LaxFriedrichs.h"
 
 namespace inciter {
 
@@ -38,6 +45,49 @@ class CompFlow {
     using ncomp_t = kw::ncomp::info::expect::type;
     using bcconf_t = kw::sideset::info::expect::type;
 
+    //! Factory for Riemann solvers
+    //! \details This factory is used to store the constructors as a
+    //!   std::function of specific Riemann solvers that can be invoked at a
+    //!   later time compared to the point where the map is populated. The key
+    //!   is an enum, uniquely idenfitying a specific Riemann solver. The value
+    //!   is std::function storing a constructor to be invoked. The type of
+    //!   object stored in std::function is a generic (base) class constructor,
+    //!   which provides a polymorphyic interface (overridable functions) that
+    //!   specific (child) Riemann solvers override.
+    using RiemannFactory =
+      std::map< ctr::FluxType, std::function< RiemannSolver() > >;
+
+    //! Register a Riemann solver into the Riemann solver factory
+    struct registerRiemannSolver {
+      //! Factory to which to register the Riemann solver
+      RiemannFactory& factory;
+      //! Constructor
+      //! \param[in] f Factory
+      registerRiemannSolver( RiemannFactory& f ) : factory( f ) {}
+      //! \brief Function call operator templated on the type that implements
+      //!   a specific Riemann solver
+      template< typename U > void operator()( U ) {
+         // Function object holding the (default) constructor to be called later
+         // without bound arguments, since all specific Riemann solvers'
+         // constructors are compiler-generated (default) constructors, and thus
+         // taking no arguments.
+         std::function< U() > c = boost::value_factory< U >();
+         // Associate constructor function object to flux type in factory
+         factory.emplace( U::type(),
+           boost::bind(boost::value_factory< RiemannSolver >(), std::move(c)) );
+      }
+    };
+
+    // Register all supported Riemann solvers into a factory
+    //! \return Riemann solver factory
+    RiemannFactory RiemannSolvers() {
+      namespace mpl = boost::mpl;
+      using RiemannSolverList = mpl::vector< HLLC, LaxFriedrichs >;
+      RiemannFactory r;
+      mpl::for_each< RiemannSolverList >( registerRiemannSolver( r ) );
+      return r;
+    }
+
     //! Extract BC configuration ignoring if BC not specified
     //! \param[in] c Equation system index (among multiple systems configured)
     //! \return Vector of BC config of type bcconf_t used to apply BCs for all
@@ -56,9 +106,11 @@ class CompFlow {
     }
 
   public:
-    //! \brief Constructor
+    //! Constructor
     explicit CompFlow( ncomp_t c ) :
       m_offset( g_inputdeck.get< tag::component >().offset< tag::compflow >(c) ),
+      m_riemann( tk::cref_find( RiemannSolvers(),
+                   g_inputdeck.get< tag::discr, tag::flux >() ) ),
       m_bcdir( config< tag::bcdir >( c ) ),
       m_bcsym( config< tag::bcsym >( c ) ),
       m_bcextrapolate( config< tag::bcextrapolate >( c ) )
@@ -129,11 +181,10 @@ class CompFlow {
               "Number of components in solution and right-hand side vector " 
               "must equal "+ std::to_string(5) );
 
-      const auto& bface = fd.Bface();
-      const auto& esuf = fd.Esuf();
-
       // set rhs to zero
       R.fill(0.0);
+
+      const auto& esuf = fd.Esuf();
 
       // compute internal surface flux integrals
       for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
@@ -142,8 +193,8 @@ class CompFlow {
         std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
         auto farea = geoFace(f,0,0);
 
-        // Fluxes
-        auto flux = numericalFluxFunc( f, geoFace, {{U.extract(el), U.extract(er)}} );
+        auto flux =
+          m_riemann.flux( f, geoFace, {{U.extract(el), U.extract(er)}} );
 
         for (ncomp_t c=0; c<5; ++c) {
           R(el, c, m_offset) -= farea * flux[c];
@@ -152,22 +203,11 @@ class CompFlow {
       }
 
       // compute boundary surface flux integrals
-      for (const auto& s : m_bcdir) {    // for all dirbc sidesets
-        auto bc = bface.find( std::stoi(s) );  // faces for dir bc side set
-        if (bc != end(bface))
-          surfInt< Dir >( bc->second, esuf, geoFace, U, R, t );
-      }
-      for (const auto& s : m_bcsym) {    // for all symbc sidesets
-        auto bc = bface.find( std::stoi(s) );  // faces for sym bc side set
-        if (bc != end(bface))
-          surfInt< Sym >( bc->second, esuf, geoFace, U, R, t );
-      }
-      for (const auto& s : m_bcextrapolate) {    // for all extrapolatebc sidesets
-        auto bc = bface.find( std::stoi(s) );  // faces for extrapolate bc side set
-        if (bc != end(bface))
-          surfInt< Extrapolate >( bc->second, esuf, geoFace, U, R, t );
-      }
+      bndIntegral< Dir >( m_bcdir, fd, geoFace, t, U, R );
+      bndIntegral< Sym >( m_bcsym, fd, geoFace, t, U, R );
+      bndIntegral< Extrapolate >( m_bcextrapolate, fd, geoFace, t, U, R );
 
+      // Add source term to right hand side
       for (std::size_t e=0; e<geoElem.nunk(); ++e) {
         auto vole = geoElem(e,0,0);
         auto xc = geoElem(e,1,0);
@@ -254,7 +294,10 @@ class CompFlow {
     { return Problem::names(); }
 
   private:
-    const ncomp_t m_offset;             //!< Offset PDE operates from
+    //! Offset PDE operates from
+    const ncomp_t m_offset;
+    //! Riemann solver
+    RiemannSolver m_riemann;
     //! Dirichlet BC configuration
     const std::vector< bcconf_t > m_bcdir;
     //! Symmetric BC configuration
@@ -321,22 +364,22 @@ class CompFlow {
       }
     };
 
-    //! Compute boundary surface integral
+    //! Compute boundary surface integral for a number of faces
     //! \param[in] faces Face IDs at which to compute surface integral
     //! \param[in] esuf Elements surrounding face, see tk::genEsuf()
     //! \param[in] geoFace Face geometry array
+    //! \param[in] t Physical time
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
-    //! \param[in] t Physical time
     //! \tparam State Policy class providing the left and right state at
     //!   boundaries by its member function State::LR()
     template< class State >
     void surfInt( const std::vector< std::size_t >& faces,
                   const std::vector< int >& esuf,
                   const tk::Fields& geoFace,
+                  tk::real t,
                   const tk::Fields& U,
-                  tk::Fields& R,
-                  tk::real t ) const
+                  tk::Fields& R ) const
     {
       for (const auto& f : faces) {
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
@@ -350,183 +393,38 @@ class CompFlow {
                                         geoFace(f,3,0) }};
 
         //--- fluxes
-        auto flux = numericalFluxFunc( f, geoFace, State::LR(U,el,xc,yc,zc,fn,t) );
+        auto flux = m_riemann.flux( f, geoFace, State::LR(U,el,xc,yc,zc,fn,t) );
 
         for (ncomp_t c=0; c<5; ++c)
           R(el, c, m_offset) -= farea * flux[c];
       }
     }
 
-    //! HLLC approximate Riemann solver
-    //! \param[in] f Face ID
+    //! Compute boundary surface flux integrals for a given boundary type
+    //! \tparam BCType Specifies the type of boundary condition to apply
+    //! \param bcconfig BC configuration vector for multiple side sets
+    //! \param[in] fd Face connectivity data object
     //! \param[in] geoFace Face geometry array
-    //! \param[in] u Left and right unknown/state vector
-    //! \return Riemann solution using central difference method
-    std::vector< tk::real >
-    numericalFluxFunc( std::size_t f,
-                     const tk::Fields& geoFace,
-                     const std::array< std::vector< tk::real >, 2 >& u )
-                   const
+    //! \param[in] t Physical time
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] R Right-hand side vector computed
+    template< class BCType >
+    void
+    bndIntegral( const std::vector< bcconf_t >& bcconfig,
+                 const inciter::FaceData& fd,
+                 const tk::Fields& geoFace,
+                 tk::real t,
+                 const tk::Fields& U,
+                 tk::Fields& R ) const
     {
-      std::vector< tk::real > flux( u[0].size(), 0 );
+      const auto& bface = fd.Bface();
+      const auto& esuf = fd.Esuf();
 
-      std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
-                                      geoFace(f,2,0),
-                                      geoFace(f,3,0) }};
-
-      // ratio of specific heats
-      auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
-
-      // Primitive variables
-      auto rhol = u[0][0];
-      auto rhor = u[1][0];
-
-      auto pl = (g-1.0)*(u[0][4] - (u[0][1]*u[0][1] +
-                                    u[0][2]*u[0][2] +
-                                    u[0][3]*u[0][3]) / (2.0*rhol));
-
-      auto pr = (g-1.0)*(u[1][4] - (u[1][1]*u[1][1] +
-                                    u[1][2]*u[1][2] +
-                                    u[1][3]*u[1][3]) / (2.0*rhor));
-
-      auto al = sqrt(g * pl / rhol);
-      auto ar = sqrt(g * pr / rhor);
-
-      // Face-normal velocities
-      auto ul = u[0][1]/rhol;
-      auto vl = u[0][2]/rhol;
-      auto wl = u[0][3]/rhol;
-
-      tk::real vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
-
-      auto ur = u[1][1]/rhor;
-      auto vr = u[1][2]/rhor;
-      auto wr = u[1][3]/rhor;
-
-      tk::real vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
-
-      // Roe-averaged variables
-      auto rlr = sqrt(rhor/rhol);
-      auto rlr1 = 1.0 + rlr;
-
-      auto vnroe = (vnr*rlr + vnl)/rlr1 ;
-      auto aroe = (ar*rlr + al)/rlr1 ;
-
-      // Signal velocities
-      auto Sl = fmin(vnl-al, vnroe-aroe);
-      auto Sr = fmax(vnr+ar, vnroe+aroe);
-      auto Sm = ( rhor*vnr*(Sr-vnr) - rhol*vnl*(Sl-vnl) + pl-pr )
-               /( rhor*(Sr-vnr) - rhol*(Sl-vnl) );
-
-      // Middle-zone (star) variables
-      auto pStar = rhol*(vnl-Sl)*(vnl-Sm) + pl;
-      auto uStar = u;
-
-      uStar[0][0] = (Sl-vnl) * rhol/ (Sl-Sm);
-      uStar[0][1] = ((Sl-vnl) * u[0][1] + (pStar-pl)*fn[0]) / (Sl-Sm);
-      uStar[0][2] = ((Sl-vnl) * u[0][2] + (pStar-pl)*fn[1]) / (Sl-Sm);
-      uStar[0][3] = ((Sl-vnl) * u[0][3] + (pStar-pl)*fn[2]) / (Sl-Sm);
-      uStar[0][4] = ((Sl-vnl) * u[0][4] - pl*vnl + pStar*Sm) / (Sl-Sm);
-
-      uStar[1][0] = (Sr-vnr) * rhor/ (Sr-Sm);
-      uStar[1][1] = ((Sr-vnr) * u[1][1] + (pStar-pr)*fn[0]) / (Sr-Sm);
-      uStar[1][2] = ((Sr-vnr) * u[1][2] + (pStar-pr)*fn[1]) / (Sr-Sm);
-      uStar[1][3] = ((Sr-vnr) * u[1][3] + (pStar-pr)*fn[2]) / (Sr-Sm);
-      uStar[1][4] = ((Sr-vnr) * u[1][4] - pr*vnr + pStar*Sm) / (Sr-Sm);
-
-      // Numerical fluxes
-      if (Sl > 0.0) {
-        flux[0] = u[0][0] * vnl;
-        flux[1] = u[0][1] * vnl + pl*fn[0];
-        flux[2] = u[0][2] * vnl + pl*fn[1];
-        flux[3] = u[0][3] * vnl + pl*fn[2];
-        flux[4] = ( u[0][4] + pl ) * vnl;
+      for (const auto& s : bcconfig) {       // for all bc sidesets
+        auto bc = bface.find( std::stoi(s) );// faces for side set
+        if (bc != end(bface))
+          surfInt< BCType >( bc->second, esuf, geoFace, t, U, R );
       }
-      else if (Sl <= 0.0 && Sm > 0.0) {
-        flux[0] = uStar[0][0] * Sm;
-        flux[1] = uStar[0][1] * Sm + pStar*fn[0];
-        flux[2] = uStar[0][2] * Sm + pStar*fn[1];
-        flux[3] = uStar[0][3] * Sm + pStar*fn[2];
-        flux[4] = ( uStar[0][4] + pStar ) * Sm;
-      }
-      else if (Sm <= 0.0 && Sr >= 0.0) {
-        flux[0] = uStar[1][0] * Sm;
-        flux[1] = uStar[1][1] * Sm + pStar*fn[0];
-        flux[2] = uStar[1][2] * Sm + pStar*fn[1];
-        flux[3] = uStar[1][3] * Sm + pStar*fn[2];
-        flux[4] = ( uStar[1][4] + pStar ) * Sm;
-      }
-      else {
-        flux[0] = u[1][0] * vnr;
-        flux[1] = u[1][1] * vnr + pr*fn[0];
-        flux[2] = u[1][2] * vnr + pr*fn[1];
-        flux[3] = u[1][3] * vnr + pr*fn[2];
-        flux[4] = ( u[1][4] + pr ) * vnr;
-      }
-
-      return flux;
-
-
-      //// Lax-Friedrichs flux function
-
-      //std::vector< tk::real > flux( u[0].size(), 0 );
-      //                        fluxl( u[0].size(), 0 ),
-      //                        fluxr( u[0].size(), 0 );
-
-      //// ratio of specific heats
-      //auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
-
-      //// Primitive variables
-      //auto rhol = u[0][0];
-      //auto rhor = u[1][0];
-
-      //auto pl = (g-1.0)*(u[0][4] - (u[0][1]*u[0][1] +
-      //                              u[0][2]*u[0][2] +
-      //                              u[0][3]*u[0][3]) / (2.0*rhol));
-
-      //auto pr = (g-1.0)*(u[1][4] - (u[1][1]*u[1][1] +
-      //                              u[1][2]*u[1][2] +
-      //                              u[1][3]*u[1][3]) / (2.0*rhor));
-
-      //auto al = sqrt(g * pl / rhol);
-      //auto ar = sqrt(g * pr / rhor);
-
-      //// Face-normal velocities
-      //auto ul = u[0][1]/rhol;
-      //auto vl = u[0][2]/rhol;
-      //auto wl = u[0][3]/rhol;
-
-      //tk::real vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
-
-      //auto ur = u[1][1]/rhor;
-      //auto vr = u[1][2]/rhor;
-      //auto wr = u[1][3]/rhor;
-
-      //tk::real vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
-
-      //// Flux functions
-      //fluxl[0] = u[0][0] * vnl;
-      //fluxl[1] = u[0][1] * vnl + pl*fn[0];
-      //fluxl[2] = u[0][2] * vnl + pl*fn[1];
-      //fluxl[3] = u[0][3] * vnl + pl*fn[2];
-      //fluxl[4] = ( u[0][4] + pl ) * vnl;
-
-      //fluxr[0] = u[1][0] * vnr;
-      //fluxr[1] = u[1][1] * vnr + pr*fn[0];
-      //fluxr[2] = u[1][2] * vnr + pr*fn[1];
-      //fluxr[3] = u[1][3] * vnr + pr*fn[2];
-      //fluxr[4] = ( u[1][4] + pr ) * vnr;
-
-      //auto lambda = fmax(al,ar) + fmax(fabs(vnl),fabs(vnr));
-    
-      //// Numerical flux function
-      //for(ncomp_t c=0; c<5; ++c)
-      //{
-      //  flux[c] = 0.5 * ( fluxl[c] + fluxr[c]
-      //                   - lambda * (u[1][c] - u[0][c]) );
-      //}
-    
-      //return flux;
     }
 };
 

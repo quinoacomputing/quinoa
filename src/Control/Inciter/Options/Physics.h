@@ -45,7 +45,7 @@ class Physics : public tk::Toggle< PhysicsType > {
     explicit Physics() :
       tk::Toggle< PhysicsType >(
         //! Group, i.e., options, name
-        "Physics configuration",
+        kw::physics::name(),
         //! Enums -> names (if defined, policy codes, if not, name)
         { { PhysicsType::ADVECTION, kw::advection::name() },
           { PhysicsType::ADVDIFF, kw::advdiff::name() },

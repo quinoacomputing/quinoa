@@ -43,7 +43,7 @@ class Scheme : public tk::Toggle< SchemeType > {
     explicit Scheme() :
       tk::Toggle< SchemeType >(
         //! Group, i.e., options, name
-        "Discretization scheme",
+        kw::scheme::name(),
         //! Enums -> names (if defined, policy codes, if not, name)
         { { SchemeType::MatCG, kw::matcg::name() },
           { SchemeType::DiagCG, kw::diagcg::name() },

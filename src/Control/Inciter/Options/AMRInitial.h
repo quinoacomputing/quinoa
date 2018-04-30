@@ -40,7 +40,7 @@ class AMRInitial : public tk::Toggle< AMRInitialType > {
     explicit AMRInitial() :
       tk::Toggle< AMRInitialType >(
         //! Group, i.e., options, name
-        "Initial refinement typelist",
+        kw::amr_initial::name(),
         //! Enums -> names
         { { AMRInitialType::UNIFORM, kw::amr_uniform::name() },
           { AMRInitialType::INITIAL_CONDITIONS,
