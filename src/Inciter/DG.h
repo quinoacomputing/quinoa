@@ -166,6 +166,8 @@ class DG : public CBase_DG {
       p | m_exptGhost;
       p | m_recvGhost;
       p | m_diag;
+      p | m_stage;
+      p | m_rkcoef;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -247,6 +249,10 @@ class DG : public CBase_DG {
     std::set< std::size_t > m_recvGhost;
     //! Diagnostics object
     ElemDiagnostics m_diag;
+    //! RK-stage counter
+    std::size_t m_stage;
+    //! RK coefficients
+    std::array< std::array< tk::real, 3 >, 2 > m_rkcoef;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

@@ -64,13 +64,23 @@ DG::DG( const CProxy_Discretization& disc,
   m_ghost(),
   m_exptGhost(),
   m_recvGhost(),
-  m_diag()
+  m_diag(),
+  m_stage( 0 ),
+  m_rkcoef()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
 //! \param[in] Face data structures
 // *****************************************************************************
 {
+  m_rkcoef[0][0] = 0.0;
+  m_rkcoef[0][1] = 3.0/4.0;
+  m_rkcoef[0][2] = 1.0/3.0;
+
+  m_rkcoef[1][0] = 1.0;
+  m_rkcoef[1][1] = 1.0/4.0;
+  m_rkcoef[1][2] = 2.0/3.0;
+
   // Perform leak test on mesh partition
   Assert( !leakyPartition(), "Mesh partition leaky" );
 
@@ -865,22 +875,31 @@ DG::solve()
   for (const auto& eq : g_dgpde)
     eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, m_u, m_rhs );
 
-  // Explicit time-stepping using forward Euler to discretize time-derivative
-  //m_u = m_un + d->Dt() * m_rhs/m_lhs;
-  //m_un = m_u;
-  m_u += d->Dt() * m_rhs/m_lhs;
+  // Explicit time-stepping using RK3 to discretize time-derivative
+  m_u =  m_rkcoef[0][m_stage] * m_un
+       + m_rkcoef[1][m_stage] * ( m_u + d->Dt() * m_rhs/m_lhs );
 
-  // Output field data to file
-  out();
-  // Compute diagnostics, e.g., residuals
-  auto diag = m_diag.compute( *d, m_u.nunk()-m_esuelTet.size()/4, m_geoElem, m_u );
-  // Increase number of iterations and physical time
-  d->next();
-  // Output one-liner status report
-  d->status();
+  // Increment RK-stage counter
+  ++m_stage;
 
-  // Evaluate whether to continue with next step
-  if (!diag) eval();
+  if (m_stage == 3) {
+    // Output field data to file
+    out();
+    // Compute diagnostics, e.g., residuals
+    auto diag = m_diag.compute( *d, m_u.nunk()-m_esuelTet.size()/4, m_geoElem, m_u );
+    // Increase number of iterations and physical time
+    d->next();
+    // Output one-liner status report
+    d->status();
+    // Update Un
+    m_un = m_u;
+
+    // Evaluate whether to continue with next step
+    if (!diag) eval();
+  }
+  else
+    // Continue with next stage
+    eval();
 }
 
 void
@@ -895,11 +914,19 @@ DG::eval()
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
 
-  // If neither max iterations nor max time reached, continue, otherwise finish
-  if (std::fabs(d->T()-term) > eps && d->It() < nstep)
+  // If RK stages not complete, continue with dt(), otherwise assess computation
+  // completion criteria
+  if (m_stage < 3) 
     dt();
-  else
-    contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
+  else {
+    // Reset RK-stage counter
+    m_stage = 0;
+    // If neither max iterations nor max time reached, continue, otherwise finish
+    if (std::fabs(d->T()-term) > eps && d->It() < nstep)
+      dt();
+    else
+      contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
+  }
 }
 
 #include "NoWarning/dg.def.h"
