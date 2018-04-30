@@ -59,6 +59,7 @@
   #pragma warning( disable: 181 )
   #pragma warning( disable: 1720 )
   #pragma warning( disable: 1125 )
+  #pragma warning( disable: 2282 )
 #endif
 
 #include "../LinSys/solver.decl.h"
