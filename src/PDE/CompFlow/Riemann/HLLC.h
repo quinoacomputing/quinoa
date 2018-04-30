@@ -31,7 +31,7 @@ struct HLLC {
         const tk::Fields& geoFace,
         const std::array< std::vector< tk::real >, 2 >& u ) const
   {
-    std::vector< tk::real > flux( u[0].size(), 0 );
+    std::vector< tk::real > flx( u[0].size(), 0 );
 
     std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
                                     geoFace(f,2,0),
@@ -99,35 +99,35 @@ struct HLLC {
 
     // Numerical fluxes
     if (Sl > 0.0) {
-      flux[0] = u[0][0] * vnl;
-      flux[1] = u[0][1] * vnl + pl*fn[0];
-      flux[2] = u[0][2] * vnl + pl*fn[1];
-      flux[3] = u[0][3] * vnl + pl*fn[2];
-      flux[4] = ( u[0][4] + pl ) * vnl;
+      flx[0] = u[0][0] * vnl;
+      flx[1] = u[0][1] * vnl + pl*fn[0];
+      flx[2] = u[0][2] * vnl + pl*fn[1];
+      flx[3] = u[0][3] * vnl + pl*fn[2];
+      flx[4] = ( u[0][4] + pl ) * vnl;
     }
     else if (Sl <= 0.0 && Sm > 0.0) {
-      flux[0] = uStar[0][0] * Sm;
-      flux[1] = uStar[0][1] * Sm + pStar*fn[0];
-      flux[2] = uStar[0][2] * Sm + pStar*fn[1];
-      flux[3] = uStar[0][3] * Sm + pStar*fn[2];
-      flux[4] = ( uStar[0][4] + pStar ) * Sm;
+      flx[0] = uStar[0][0] * Sm;
+      flx[1] = uStar[0][1] * Sm + pStar*fn[0];
+      flx[2] = uStar[0][2] * Sm + pStar*fn[1];
+      flx[3] = uStar[0][3] * Sm + pStar*fn[2];
+      flx[4] = ( uStar[0][4] + pStar ) * Sm;
     }
     else if (Sm <= 0.0 && Sr >= 0.0) {
-      flux[0] = uStar[1][0] * Sm;
-      flux[1] = uStar[1][1] * Sm + pStar*fn[0];
-      flux[2] = uStar[1][2] * Sm + pStar*fn[1];
-      flux[3] = uStar[1][3] * Sm + pStar*fn[2];
-      flux[4] = ( uStar[1][4] + pStar ) * Sm;
+      flx[0] = uStar[1][0] * Sm;
+      flx[1] = uStar[1][1] * Sm + pStar*fn[0];
+      flx[2] = uStar[1][2] * Sm + pStar*fn[1];
+      flx[3] = uStar[1][3] * Sm + pStar*fn[2];
+      flx[4] = ( uStar[1][4] + pStar ) * Sm;
     }
     else {
-      flux[0] = u[1][0] * vnr;
-      flux[1] = u[1][1] * vnr + pr*fn[0];
-      flux[2] = u[1][2] * vnr + pr*fn[1];
-      flux[3] = u[1][3] * vnr + pr*fn[2];
-      flux[4] = ( u[1][4] + pr ) * vnr;
+      flx[0] = u[1][0] * vnr;
+      flx[1] = u[1][1] * vnr + pr*fn[0];
+      flx[2] = u[1][2] * vnr + pr*fn[1];
+      flx[3] = u[1][3] * vnr + pr*fn[2];
+      flx[4] = ( u[1][4] + pr ) * vnr;
     }
 
-    return flux;
+    return flx;
   }
 
   //! Flux type accessor

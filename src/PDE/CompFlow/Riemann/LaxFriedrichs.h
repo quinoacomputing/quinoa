@@ -30,7 +30,7 @@ struct LaxFriedrichs {
         const tk::Fields& geoFace,
         const std::array< std::vector< tk::real >, 2 >& u ) const
   {
-    std::vector< tk::real >  flux( u[0].size(), 0.0 ),
+    std::vector< tk::real >  flx( u[0].size(), 0.0 ),
                             fluxl( u[0].size(), 0.0 ),
                             fluxr( u[0].size(), 0.0 );
 
@@ -87,11 +87,11 @@ struct LaxFriedrichs {
     // Numerical flux function
     for(ncomp_t c=0; c<5; ++c)
     {
-      flux[c] = 0.5 * ( fluxl[c] + fluxr[c]
+      flx[c] = 0.5 * ( fluxl[c] + fluxr[c]
                        - lambda * (u[1][c] - u[0][c]) );
     }
 
-    return flux;
+    return flx;
   }
 
   //! Flux type accessor
