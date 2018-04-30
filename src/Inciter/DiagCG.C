@@ -133,7 +133,7 @@ DiagCG::setup( tk::real v )
   for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
 
   // Activate SDAG waits for setup
-  wait4setup();
+  thisProxy[ thisIndex ].wait4setup();
 
   // Output initial conditions to file (regardless of whether it was requested)
   if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( d->T() );
@@ -569,7 +569,7 @@ DiagCG::advance( tk::real newdt )
   d->FCT()->next();
 
   // Actiavate SDAG waits for time step
-  wait4rhs();
+  thisProxy[ thisIndex ].wait4rhs();
 
   // Compute rhs for next time step
   rhs();

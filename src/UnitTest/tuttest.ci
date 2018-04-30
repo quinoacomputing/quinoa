@@ -25,7 +25,7 @@ module tuttest {
 
     template< class Proxy >
     chare TUTTest {
-      entry TUTTest( Proxy& proxy, const std::string& groupname, int test );
+      entry TUTTest( Proxy&& proxy, const std::string& groupname, int test );
     }
 
   } // unittest::

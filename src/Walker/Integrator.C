@@ -23,8 +23,8 @@ extern std::vector< DiffEq > g_diffeqs;
 
 using walker::Integrator;
 
-Integrator::Integrator( CProxy_Distributor& hostproxy,
-                        CProxy_Collector& collproxy,
+Integrator::Integrator( CProxy_Distributor hostproxy,
+                        CProxy_Collector collproxy,
                         uint64_t npar ) :
   m_hostproxy( hostproxy ),
   m_collproxy( collproxy ),

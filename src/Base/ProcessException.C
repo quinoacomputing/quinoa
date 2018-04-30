@@ -27,7 +27,7 @@
 
 namespace tk {
 
-void
+[[noreturn]] void
 signalHandler( int signum )
 // *****************************************************************************
 // Signal handler for multiple signals, SIGABRT, SIGSEGV, etc.
@@ -83,7 +83,7 @@ setSignalHandlers()
   return 0;
 }
 
-void
+[[noreturn]] void
 processExceptionCharm()
 // *****************************************************************************
 //  Process an exception from the Charm++ runtime system

@@ -16,7 +16,7 @@ module collector {
   namespace walker {
 
     group Collector {
-      entry Collector( CProxy_Distributor& hostproxy );
+      entry Collector( CProxy_Distributor hostproxy );
       initnode void registerPDFMerger();
     }
 

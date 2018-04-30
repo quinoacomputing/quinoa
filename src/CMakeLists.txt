@@ -230,7 +230,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Winvalid-pch")
   add_compiler_flag("-Wmissing-field-initializers")
   add_compiler_flag("-Wmissing-format-attribute")
-  add_compiler_flag("-Wmissing-include-dirs")
   add_compiler_flag("-Wmissing-noreturn")
   add_compiler_flag("-Wpacked")
   add_compiler_flag("-Wpointer-arith")
@@ -528,7 +527,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${RNGTEST_SRC_DIR}
                     ${QUINOA_SOURCE_DIR}/Statistics
                     ${QUINOA_SOURCE_DIR}/UnitTest
-                    ${MPI_CXX_INCLUDE_PATH}
+                    ${MPI_CXX_INCLUDE_DIRS}
                     ${MKL_INCLUDE_DIRS}
                     ${HDF5_INCLUDE_DIRS}
                     ${HYPRE_INCLUDE_DIRS}

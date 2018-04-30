@@ -15,8 +15,8 @@ module integrator {
   namespace walker {
 
     array [1D] Integrator {
-      entry Integrator( CProxy_Distributor& hostproxy,
-                        CProxy_Collector& collproxy,
+      entry Integrator( CProxy_Distributor hostproxy,
+                        CProxy_Collector collproxy,
                         uint64_t npar );
       entry void setup( tk::real dt,
                         tk::real t,

@@ -140,8 +140,8 @@ Transporter::Transporter() :
   if ( nstep != 0 && term > t0 && constdt < term-t0 ) {
 
     // Enable SDAG waits
-    wait4mesh();
-    wait4stat();
+    thisProxy.wait4mesh();
+    thisProxy.wait4stat();
 
     // Print I/O filenames
     m_print.section( "Output filenames" );
