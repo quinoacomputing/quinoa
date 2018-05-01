@@ -32,8 +32,8 @@ ARG COMMIT
 RUN apk update && apk add libtool autoconf automake bash m4 file git cmake gfortran gcc g++ make perl grep boost-dev zlib-dev libexecinfo-dev
 
 # Install OpenMPI
-ADD https://www.open-mpi.org/software/ompi/v1.10/downloads/openmpi-1.10.7.tar.bz2 /install/
-RUN cd /install/ && tar xjf openmpi-1.10.7.tar.bz2 && cd openmpi-1.10.7 && ./configure --enable-static --disable-shared --enable-contrib-no-build=vt --prefix=/opt/openmpi && make -sj$(grep -c processor /proc/cpuinfo) install
+ADD https://www.open-mpi.org/software/ompi/v2.0/downloads/openmpi-2.0.2.tar.gz /openmpi/
+RUN cd /install/ && tar xjf openmpi-2.0.2.tar.gz && cd openmpi-2.0.2 && ./configure --enable-static --disable-shared --enable-contrib-no-build=vt --prefix=/opt/openmpi && make -sj$(grep -c processor /proc/cpuinfo) install
 ENV PATH /opt/openmpi/bin:$PATH
 ENV LD_LIBRARY_PATH /opt/openmpi/lib:$LD_LIBRARY_PATH
 ENV MANPATH /opt/openmpi/share/man:$MANPATH
