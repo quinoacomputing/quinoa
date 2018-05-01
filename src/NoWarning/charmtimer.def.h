@@ -16,9 +16,12 @@
   #pragma clang diagnostic ignored "-Wold-style-cast"
   #pragma clang diagnostic ignored "-Wsign-conversion"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
+  #pragma clang diagnostic ignored "-Wunused-variable"
+  #pragma clang diagnostic ignored "-Wcast-qual"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
+  #pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
 
 #include "../UnitTest/charmtimer.def.h"

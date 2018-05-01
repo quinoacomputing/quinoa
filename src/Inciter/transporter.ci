@@ -18,7 +18,8 @@ module transporter {
     chare Transporter {
       entry Transporter();
       entry [reductiontarget] void load( uint64_t nelem );
-      entry [reductiontarget] void part();
+      entry [reductiontarget] void refined();
+      entry [reductiontarget] void centroid();
       entry [reductiontarget] void distributed();
       entry [reductiontarget] void flattened();
       entry [reductiontarget] void coord();
@@ -36,23 +37,19 @@ module transporter {
       entry [reductiontarget] void next();
       entry [reductiontarget] void finish();
 
-      entry void pegraph();
+      entry void peread();
+      entry void perefined();
+      entry void pecentroid();
 
       entry void pepartitioned();
       entry void pedistributed();
 
       entry void peflattened();
+      entry void pegather();
+      entry void pequery();
       entry void pemask();
       entry void pereordered();
       entry void pebounds();
-
-      entry void pecomfinal();
-      entry void chbcmatched();
-      entry void pebccomplete();
-
-      entry void chrhs();
-      entry void pesolve();
-      entry void chlim();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -69,25 +66,27 @@ module transporter {
       // -------------------------------
       // Control flow is from left to right and top to bottom.
       //
-      // Only when the mesh cells are read in from file, the computational load
-      // can be computed in load(), and only when everything is setup for mesh
-      // partitioning, can mesh partitioning start, by calling
-      // Partitioner::partition(). More details in 66d35608.
+      // Only when all of (1) reading the mesh from file, (2) (optional) initial
+      // mesh reinfment has been completed, and (3) the cell centroids have been
+      // computed (if a geometric partitioner has been configured), the
+      // mesh partitioning can be started.
       //
       // MinStat, MaxStat, SumStat, and PdfStat denote different global
       // reductions used to compute mesh cell statistics. Only when all of these
-      // are completed will they be echoed to screen at once, denoted by Stat.
+      // are and setting up the communication buffers have been completed will
+      // they be echoed to screen at once, denoted by Stat.
 
-      entry void wait4part() {
-        when load_complete(), part_complete() serial "part" {
-          m_partitioner.partition( m_nchare ); } };
+      entry void wait4mesh() {
+        when load_complete(), centroid_complete(), refine_complete()
+          serial "mesh" { partition(); } };
 
       entry void wait4stat() {
         when minstat_complete(), maxstat_complete(), sumstat_complete(),
              pdfstat_complete(), com_complete() serial "stat" { stat(); } };
 
       entry void load_complete();
-      entry void part_complete();
+      entry void centroid_complete();
+      entry void refine_complete();
       entry void minstat_complete();
       entry void maxstat_complete();
       entry void sumstat_complete();

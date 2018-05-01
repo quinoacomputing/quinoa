@@ -90,6 +90,8 @@ const int MAX_TESTS_IN_GROUP = 80;
 
 #include "tests/Mesh/TestDerivedData.h"
 #include "tests/Mesh/TestReorder.h"
+#include "tests/Mesh/TestGradients.h"
+#include "tests/Mesh/TestAround.h"
 
 #include "tests/RNG/TestRNG.h"
 #ifdef HAS_MKL
@@ -110,6 +112,7 @@ const int MAX_TESTS_IN_GROUP = 80;
 #endif
 
 #include "tests/Inciter/TestScheme.h"
+#include "tests/Inciter/AMR/TestError.h"
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
@@ -198,6 +201,7 @@ class Main : public CBase_Main {
     //! \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
     Main( CkArgMsg* msg )
     try :
+      m_signal( tk::setSignalHandlers() ),
       m_helped( false ),
       m_cmdline(),
       // Parse command line into m_cmdline using default simple pretty printer
@@ -253,6 +257,7 @@ class Main : public CBase_Main {
     }
 
   private:
+    int m_signal;                               //!< Used to set signal handlers
     bool m_helped;      //!< Indicates if help was requested on the command line
     unittest::ctr::CmdLine m_cmdline;                   //!< Command line
     unittest::CmdLineParser m_cmdParser;                //!< Command line parser

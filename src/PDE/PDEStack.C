@@ -19,31 +19,36 @@
 #include "SystemComponents.h"
 #include "Inciter/Options/Problem.h"
 
-#include "Transport/Transport.h"
-#include "Transport/Physics.h"
+#include "Transport/CGTransport.h"
+#include "Transport/DGTransport.h"
+#include "Transport/Physics/CG.h"
+#include "Transport/Physics/DG.h"
 #include "Transport/Problem.h"
 
-#include "CompFlow/CompFlow.h"
-#include "CompFlow/Physics.h"
+#include "CompFlow/CGCompFlow.h"
+#include "CompFlow/DGCompFlow.h"
+#include "CompFlow/Physics/CG.h"
+#include "CompFlow/Physics/DG.h"
 #include "CompFlow/Problem.h"
 
 using inciter::PDEStack;
 
-PDEStack::PDEStack() : m_factory(), m_eqTypes()
+PDEStack::PDEStack() : m_cgfactory(), m_dgfactory(), m_eqTypes()
 // *****************************************************************************
 //  Constructor: register all partial differential equations into factory
 //! \details This constructor consists of several blocks, each registering a
-//!   potentially large number of entries in the partial differential equation
-//!   factory, m_factory, which is of type inciter::PDEFactory, a std::map. At
-//!   this time, each type of partial differential equation can be configured to
-//!   use a unique _problem policy_. (More types of policies will most likely
-//!   come in the future.) Policy classes are template arguments to the partial
-//!   differential equation classes and influence their behavior in a different
-//!   way, abstracting away certain functions, e.g., how to set problem-specific
-//!   initial and/or boundary conditions and how to update their coefficients
-//!   during time integration. For more information on policy-based design, see
-//!   http://en.wikipedia.org/wiki/Policy-based_design. This abstraction allows
-//!   [separation of concerns](http://en.wikipedia.org/wiki/Separation_of_concerns).
+//!   potentially large number of entries in a partial differential equation
+//!   factory, a standard associative container. At this time, each type of
+//!   partial differential equation can be configured to use a unique _physics
+//!   policy_ and a unique _problem policy_. (More types of policies might be
+//!   introduced in the future.) Policy classes are template arguments to the
+//!   partial differential equation classes and influence their behavior in a
+//!   different way, abstracting away certain functions, e.g., how to set
+//!   problem-specific initial and/or boundary conditions and how to update
+//!   their coefficients during time integration. For more information on
+//!   policy-based design, see http://en.wikipedia.org/wiki/Policy-based_design.
+//!   This abstraction allows [separation of concerns]
+//!   (http://en.wikipedia.org/wiki/Separation_of_concerns).
 //!
 //!   Since the functionality of the policies are orthogonal to each other,
 //!   i.e., they do not depend on each other or their host (the partial
@@ -72,7 +77,7 @@ PDEStack::PDEStack() : m_factory(), m_eqTypes()
 //!   relationship is more of a _models a_-type, which simplifies client-code
 //!   and allows for the benfits of runtime inheritance with value-semantics
 //!   which is less error prone and easier to read. See more about the
-//!   _models-a_ relationship and its implementation in PDE/PDE.h.
+//!   _models-a_ relationship and its implementation in, e.g., PDE/CGPDE.h.
 //!
 //!   The design discussed above allows the registration, instantiation, and
 //!   use of the partial differential equations to be generic, which eliminates
@@ -99,37 +104,90 @@ PDEStack::PDEStack() : m_factory(), m_eqTypes()
 {
   namespace mpl = boost::mpl;
 
-  // Transport PDE
-  // Construct vector of vectors for all possible policies for PDE
-  using TransportPolicies = mpl::vector< TransportPhysics, TransportProblems >;
-  // Register PDE for all combinations of policies
-  mpl::cartesian_product< TransportPolicies >(
-    registerPDE< Transport >( m_factory, ctr::PDEType::TRANSPORT, m_eqTypes ) );
+  // Register PDEs using continuous Galerkin discretization
 
-  // Compressible flow system of PDEs
-  // Construct vector of vectors for all possible policies for PDE
-  using CompFlowPolicies = mpl::vector< CompFlowPhysics, CompFlowProblems >;
-  // Register PDE for all combinations of policies
-  mpl::cartesian_product< CompFlowPolicies >(
-    registerPDE< CompFlow >( m_factory, ctr::PDEType::COMPFLOW, m_eqTypes ) );
+  // Transport PDEs
+  // Construct vector of vectors for all possible policies
+  using CGTransportPolicies =
+    mpl::vector< cg::TransportPhysics, TransportProblems >;
+  // Register PDEs for all combinations of policies
+  mpl::cartesian_product< CGTransportPolicies >(
+    registerCG< cg::Transport >( this, ctr::PDEType::TRANSPORT ) );
+
+  // Compressible flow PDEs
+  // Construct vector of vectors for all possible policies
+  using CGCompFlowPolicies =
+    mpl::vector< cg::CompFlowPhysics, CompFlowProblems >;
+  // Register PDEs for all combinations of policies
+  mpl::cartesian_product< CGCompFlowPolicies >(
+    registerCG< cg::CompFlow >( this, ctr::PDEType::COMPFLOW ) );
+
+  // Register PDEs using discontinuous Galerkin discretization
+
+  // Transport PDEs
+  // Construct vector of vectors for all possible policies
+  using DGTransportPolicies =
+    mpl::vector< dg::TransportPhysics, TransportProblems >;
+  // Register PDEs for all combinations of policies
+  mpl::cartesian_product< DGTransportPolicies >(
+    registerDG< dg::Transport >( this, ctr::PDEType::TRANSPORT ) );
+
+  // Compressible flow DGPDEs
+  // Construct vector of vectors for all possible policies
+  using DGCompFlowPolicies =
+    mpl::vector< dg::CompFlowPhysics, CompFlowProblems >;
+  // Register PDEs for all combinations of policies
+  mpl::cartesian_product< DGCompFlowPolicies >(
+    registerDG< dg::CompFlow >( this, ctr::PDEType::COMPFLOW ) );
 }
 
-std::vector< inciter::PDE >
-PDEStack::selected() const
+std::vector< inciter::CGPDE >
+PDEStack::selectedCG() const
 // *****************************************************************************
-//  Instantiate all selected partial differential equations
+//  Instantiate all selected PDEs using continuous Galerkin discretization
 //! \return std::vector of instantiated partial differential equation objects
 // *****************************************************************************
 {
   std::map< ctr::PDEType, ncomp_t > cnt;    // count PDEs per type
-  std::vector< PDE > pdes;                      // will store instantiated PDEs
+  std::vector< CGPDE > pdes;                // will store instantiated PDEs
 
-  for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
-    if (d == ctr::PDEType::TRANSPORT)
-      pdes.push_back( createPDE< tag::transport >( d, cnt ) );
-    else if (d == ctr::PDEType::COMPFLOW)
-      pdes.push_back( createPDE< tag::compflow >( d, cnt ) );
-    else Throw( "Can't find selected PDE" );
+  auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
+  if (sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG) {
+
+    for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
+      if (d == ctr::PDEType::TRANSPORT)
+        pdes.push_back( createCG< tag::transport >( d, cnt ) );
+      else if (d == ctr::PDEType::COMPFLOW)
+        pdes.push_back( createCG< tag::compflow >( d, cnt ) );
+      else Throw( "Can't find selected CGPDE" );
+    }
+
+  }
+
+  return pdes;
+}
+
+std::vector< inciter::DGPDE >
+PDEStack::selectedDG() const
+// *****************************************************************************
+//  Instantiate all selected PDEs using discontinuous Galerkin discretization
+//! \return std::vector of instantiated partial differential equation objects
+// *****************************************************************************
+{
+  std::map< ctr::PDEType, ncomp_t > cnt;    // count PDEs per type
+  std::vector< DGPDE > pdes;                // will store instantiated PDEs
+
+  auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
+  if (sch == ctr::SchemeType::DG) {
+
+    for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
+      if (d == ctr::PDEType::TRANSPORT)
+        pdes.push_back( createDG< tag::transport >( d, cnt ) );
+      else if (d == ctr::PDEType::COMPFLOW)
+        pdes.push_back( createDG< tag::compflow >( d, cnt ) );
+      else Throw( "Can't find selected DGPDE" );
+    }
+
   }
 
   return pdes;
@@ -173,26 +231,62 @@ PDEStack::infoTransport( std::map< ctr::PDEType, ncomp_t >& cnt ) const
   std::vector< std::pair< std::string, std::string > > nfo;
 
   nfo.emplace_back( ctr::PDE().name( ctr::PDEType::TRANSPORT ), "" );
+
   nfo.emplace_back( "problem", ctr::Problem().name(
     g_inputdeck.get< tag::param, tag::transport, tag::problem >()[c] ) );
+
   nfo.emplace_back( "start offset in unknowns array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::transport >(c) ) );
+
   auto ncomp = g_inputdeck.get< tag::component >().get< tag::transport >()[c];
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
   const auto& diff =
      g_inputdeck.get< tag::param, tag::transport, tag::diffusivity >();
   if (diff.size() > c)
     nfo.emplace_back( "coeff diffusivity [" + std::to_string( ncomp ) + "]",
                        parameters( diff[c] ) );
+
   const auto& u0 = g_inputdeck.get< tag::param, tag::transport, tag::u0 >();
   if (u0.size() > c)
     nfo.emplace_back( "coeff u0 [" + std::to_string( ncomp ) + "]",
                        parameters( u0[c] ) );
+
   const auto& lambda =
     g_inputdeck.get< tag::param, tag::transport, tag::lambda >();
   if (lambda.size() > c)
     nfo.emplace_back( "coeff lambda [" + std::to_string( ncomp ) + "]",
       parameters( lambda[c] ) );
+
+  const auto& bcdir =
+    g_inputdeck.get< tag::param, tag::transport, tag::bcdir >();
+  if (bcdir.size() > c)
+    nfo.emplace_back( "Dirichlet boundary [" + std::to_string( ncomp ) + "]",
+      parameters( bcdir[c] ) );
+
+  const auto& bcsym =
+    g_inputdeck.get< tag::param, tag::transport, tag::bcsym >();
+  if (bcsym.size() > c)
+    nfo.emplace_back( "Symmetry boundary [" + std::to_string( ncomp ) + "]",
+      parameters( bcsym[c] ) );
+
+  const auto& bcinlet =
+    g_inputdeck.get< tag::param, tag::transport, tag::bcinlet >();
+  if (bcinlet.size() > c)
+    nfo.emplace_back( "Inlet boundary [" + std::to_string( ncomp ) + "]",
+      parameters( bcinlet[c] ) );
+
+  const auto& bcoutlet =
+    g_inputdeck.get< tag::param, tag::transport, tag::bcoutlet >();
+  if (bcoutlet.size() > c)
+    nfo.emplace_back( "Outlet boundary [" + std::to_string( ncomp ) + "]",
+      parameters( bcoutlet[c] ) );
+
+  const auto& bcextrapolate =
+    g_inputdeck.get< tag::param, tag::transport, tag::bcextrapolate >();
+  if (bcextrapolate.size() > c)
+    nfo.emplace_back( "Symmetry boundary [" + std::to_string( ncomp ) + "]",
+      parameters( bcextrapolate[c] ) );
 
   return nfo;
 }

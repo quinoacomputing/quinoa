@@ -1,16 +1,18 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/CompFlow/Physics/Euler.h
+  \file      src/PDE/CompFlow/Physics/DGEuler.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Physics configuration for the Euler equation
-  \details   This file defines a Physics policy class for the compressible flow
-     equations, defined in PDE/CompFlow/CompFlow.h. The class defined here is
-     used to configure the behavior of CompFlow. See PDE/CompFlow/Physics.h
-     for general requirements on Physics policy classes for CompFlow.
+  \brief     Physics policy for the Euler equation using continuous Galerkin
+  \details   This file defines a Physics policy class for the compressible
+    single-material inviscid flow equations using continuous Galerkin
+    discretization, defined in PDE/CompFlow/DGCompFlow.h. The class defined here
+    is used to configure the behavior of DGCompFlow. See
+    PDE/CompFlow/Physics/DG.h for general requirements on Physics policy classes
+    for DGCompFlow.
 */
 // *****************************************************************************
-#ifndef CompFlowPhysicsEuler_h
-#define CompFlowPhysicsEuler_h
+#ifndef CompFlowPhysicsDGEuler_h
+#define CompFlowPhysicsDGEuler_h
 
 #include <array>
 #include <limits>
@@ -21,6 +23,8 @@
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
+
+namespace dg {
 
 //! CompFlow system of PDEs problem: Euler (inviscid flow)
 //! \details This class is a no-op, consistent with no additional physics needed
@@ -65,6 +69,8 @@ class CompFlowPhysicsEuler {
     { return ctr::PhysicsType::EULER; }
 };
 
+} // dg::
+
 } // inciter::
 
-#endif // CompFlowPhysicsEuler_h
+#endif // CompFlowPhysicsDGEuler_h

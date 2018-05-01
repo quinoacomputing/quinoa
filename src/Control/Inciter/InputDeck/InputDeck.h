@@ -34,6 +34,7 @@ class InputDeck :
   public tk::Control< // tag           type
                       tag::title,      kw::title::info::expect::type,
                       tag::selected,   selects,
+                      tag::amr,        amr,
                       tag::discr,      discretization,
                       tag::prec,       precision,
                       tag::flformat,   floatformat,
@@ -113,9 +114,6 @@ class InputDeck :
                                        kw::pde_ce,
                                        kw::pde_kappa,
                                        kw::pde_r0,
-                                       kw::amr,
-                                       kw::amr_initial,
-                                       kw::amr_uniform,
                                        kw::rayleigh_taylor,
                                        kw::taylor_green,
                                        kw::filetype,
@@ -124,12 +122,28 @@ class InputDeck :
                                        kw::error,
                                        kw::l2,
                                        kw::linf >;
-    using keywords5 = boost::mpl::set< kw::discretization,
-                                       kw::fct,
+    using keywords5 = boost::mpl::set< kw::fct,
+                                       kw::amr,
+                                       kw::amr_initial,
+                                       kw::amr_uniform,
+                                       kw::amr_initial_conditions,
+                                       kw::amr_uniform_levels,
+                                       kw::amr_error,
+                                       kw::amr_jump,
+                                       kw::amr_hessian,
                                        kw::scheme,
                                        kw::matcg,
                                        kw::diagcg,
                                        kw::dg >;
+    using keywords6 = boost::mpl::set< kw::flux,
+                                       kw::laxfriedrichs,
+                                       kw::hllc,
+                                       kw::bc_sym,
+                                       kw::bc_inlet,
+                                       kw::bc_outlet,
+                                       kw::bc_extrapolate,
+                                       kw::gauss_hump,
+                                       kw::sod_shocktube >;
 
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
@@ -148,12 +162,14 @@ class InputDeck :
       set< tag::discr, tag::cfl >( 0.0 );
       set< tag::discr, tag::fct >( true );
       set< tag::discr, tag::ctau >( 1.0 );
+      set< tag::discr, tag::scheme >( SchemeType::MatCG );
+      set< tag::discr, tag::flux >( FluxType::HLLC );
       // Default field output file type
       set< tag::selected, tag::filetype >( tk::ctr::FieldFileType::EXODUSII );
       // Default AMR settings
-      set< tag::selected, tag::initialamr >( InitialAMRType::NONE );
-      // Default discretization scheme
-      set< tag::selected, tag::scheme >( SchemeType::MatCG );
+      set< tag::amr, tag::amr >( false );
+      set< tag::amr, tag::levels >( 1 );
+      set< tag::amr, tag::error >( AMRErrorType::JUMP );
       // Default txt floating-point output precision in digits
       set< tag::prec, tag::diag >( std::cout.precision() );
       // Default intervals
@@ -167,6 +183,7 @@ class InputDeck :
       boost::mpl::for_each< keywords3 >( ctrinfoFill );
       boost::mpl::for_each< keywords4 >( ctrinfoFill );
       boost::mpl::for_each< keywords5 >( ctrinfoFill );
+      boost::mpl::for_each< keywords6 >( ctrinfoFill );
     }
 
     /** @name Pack/Unpack: Serialize InputDeck object for Charm++ */
@@ -176,6 +193,7 @@ class InputDeck :
     void pup( PUP::er& p ) {
       tk::Control< tag::title,      kw::title::info::expect::type,
                    tag::selected,   selects,
+                   tag::amr,        amr,
                    tag::discr,      discretization,
                    tag::prec,       precision,
                    tag::flformat,   floatformat,

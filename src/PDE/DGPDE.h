@@ -1,42 +1,43 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/PDE.h
+  \file      src/PDE/DGPDE.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Partial differential equation
-  \details   This file defines a generic partial differential equation class.
+  \brief     Partial differential equation base for discontinuous Galerkin PDEs
+  \details   This file defines a generic partial differential equation (PDE)
+    class for PDEs that use discontinuous Galerkin spatial discretization.
     The class uses runtime polymorphism without client-side inheritance:
-    inheritance is confined to the internals of the class, inivisble to
+    inheritance is confined to the internals of the class, invisible to
     client-code. The class exclusively deals with ownership enabling client-side
     value semantics. Credit goes to Sean Parent at Adobe:
     https://github.com/sean-parent/sean-parent.github.com/wiki/
     Papers-and-Presentations.
 */
 // *****************************************************************************
-#ifndef PDE_h
-#define PDE_h
+#ifndef DGPDE_h
+#define DGPDE_h
 
 #include <array>
 #include <string>
 #include <vector>
-#include <functional>
 #include <unordered_set>
 #include <unordered_map>
 
 #include "Types.h"
 #include "Make_unique.h"
 #include "Fields.h"
+#include "FaceData.h"
 
 namespace inciter {
 
-//! \brief Partial differential equation
+//! \brief Partial differential equation base for discontinuous Galerkin PDEs
 //! \details This class uses runtime polymorphism without client-side
 //!   inheritance: inheritance is confined to the internals of the this class,
-//!   inivisble to client-code. The class exclusively deals with ownership
+//!   invisible to client-code. The class exclusively deals with ownership
 //!   enabling client-side value semantics. Credit goes to Sean Parent at Adobe:
 //!   https://github.com/sean-parent/sean-parent.github.com/wiki/
-//!   Papers-and-Presentations. For example client code that models a PDE,
+//!   Papers-and-Presentations. For example client code that models a DGPDE,
 //!   see inciter::CompFlow.
-class PDE {
+class DGPDE {
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
@@ -46,7 +47,7 @@ class PDE {
     //! \details The object of class T comes pre-constructed.
     //! \param[in] x Instantiated object of type T given by the template
     //!   argument.
-    template< typename T > explicit PDE( T x ) :
+    template< typename T > explicit DGPDE( T x ) :
       self( tk::make_unique< Model<T> >( std::move(x) ) ) {}
 
     //! \brief Constructor taking a function pointer to a constructor of an
@@ -68,35 +69,28 @@ class PDE {
     //!    Concept.
     //! \param[in] args Zero or more constructor arguments
     template< typename T, typename...Args >
-    explicit PDE( std::function<T(Args...)> x, Args&&... args ) :
+    explicit DGPDE( std::function<T(Args...)> x, Args&&... args ) :
       self( tk::make_unique< Model<T> >(
               std::move( x( std::forward<Args>(args)... ) ) ) ) {}
 
     //! Public interface to setting the initial conditions for the diff eq
-    void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
+    void initialize( const tk::Fields& geoElem,
                      tk::Fields& unk,
-                     tk::real t,
-                     const std::vector< std::size_t >& gid ) const
-    { self->initialize( coord, unk, t, gid ); }
+                     tk::real t ) const
+    { self->initialize( geoElem, unk, t ); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
-    void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
-              const std::vector< std::size_t >& inpoel,
-              const std::pair< std::vector< std::size_t >,
-                               std::vector< std::size_t > >& psup,
-              tk::Fields& lhsd,
-              tk::Fields& lhso ) const
-    { self->lhs( coord, inpoel, psup, lhsd, lhso ); }
+    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
+    { self->lhs( geoElem, l ); }
 
     //! Public interface to computing the right-hand side vector for the diff eq
     void rhs( tk::real t,
-              tk::real deltat,
-              const std::array< std::vector< tk::real >, 3 >& coord,
-              const std::vector< std::size_t >& inpoel,
+              const tk::Fields& geoFace,
+              const tk::Fields& geoElem,
+              const inciter::FaceData& fd,
               const tk::Fields& U,
-              tk::Fields& Ue,
               tk::Fields& R ) const
-    { self->rhs( t, deltat, coord, inpoel, U, Ue, R ); }
+    { self->rhs( t, geoFace, geoElem, fd, U, R ); }
 
     //! Public interface for computing the minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -104,25 +98,9 @@ class PDE {
                  const tk::Fields& U ) const
     { return self->dt( coord, inpoel, U ); }
 
-    //! Public interface for computing the transport velocity at nodes
-    std::array< std::array< tk::real, 4 >, 3 >
-    velocity( const tk::Fields& U,
-              const std::array< std::vector< tk::real >, 3 >& coord,
-              const std::array< std::size_t, 4 >& N ) const
-    { return self->velocity( U, coord, N ); }
-
     //! \brief Public interface for collecting all side set IDs the user has
     //!   configured for all components of a PDE system
     void side( std::unordered_set< int >& conf ) const { self->side( conf ); }
-
-    //! \brief Public interface for querying Dirichlet boundary condition values
-    //!  set by the user on a given side set for all components in a PDE system
-    std::unordered_map< std::size_t,  std::vector< std::pair<bool,tk::real> > >
-    dirbc( tk::real t,
-           tk::real deltat,
-           const std::pair< const int, std::vector< std::size_t > >& sides,
-           const std::array< std::vector< tk::real >, 3 >& coord ) const
-    { return self->dirbc( t, deltat, sides, coord ); }
 
     //! Public interface to returning field output labels
     std::vector< std::string > fieldNames() const { return self->fieldNames(); }
@@ -134,20 +112,19 @@ class PDE {
     std::vector< std::vector< tk::real > > fieldOutput(
       tk::real t,
       tk::real V,
-      const std::array< std::vector< tk::real >, 3 >& coord,
-      const std::vector< tk::real >& v,
+      const tk::Fields& geoElem,
       tk::Fields& U ) const
-    { return self->fieldOutput( t, V, coord, v, U ); }
+    { return self->fieldOutput( t, V, geoElem, U ); }
 
     //! Copy assignment
-    PDE& operator=( const PDE& x )
-    { PDE tmp(x); *this = std::move(tmp); return *this; }
+    DGPDE& operator=( const DGPDE& x )
+    { DGPDE tmp(x); *this = std::move(tmp); return *this; }
     //! Copy constructor
-    PDE( const PDE& x ) : self( x.self->copy() ) {}
+    DGPDE( const DGPDE& x ) : self( x.self->copy() ) {}
     //! Move assignment
-    PDE& operator=( PDE&& ) noexcept = default;
+    DGPDE& operator=( DGPDE&& ) noexcept = default;
     //! Move constructor
-    PDE( PDE&& ) noexcept = default;
+    DGPDE( DGPDE&& ) noexcept = default;
 
   private:
     //! \brief Concept is a pure virtual base class specifying the requirements
@@ -157,43 +134,26 @@ class PDE {
       Concept( const Concept& ) = default;
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
-      virtual void initialize( const std::array< std::vector< tk::real >, 3 >&,
+      virtual void initialize( const tk::Fields&,
                                tk::Fields&,
-                               tk::real,
-                               const std::vector< std::size_t >& ) const = 0;
-      virtual void lhs( const std::array< std::vector< tk::real >, 3 >&,
-                        const std::vector< std::size_t >&,
-                        const std::pair< std::vector< std::size_t >,
-                                         std::vector< std::size_t > >&,
-                        tk::Fields&, tk::Fields& ) const = 0;
+                               tk::real ) const = 0;
+      virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
-                        tk::real,
-                        const std::array< std::vector< tk::real >, 3 >&,
-                        const std::vector< std::size_t >&,
                         const tk::Fields&,
-                        tk::Fields&,
+                        const tk::Fields&,
+                        const inciter::FaceData&,
+                        const tk::Fields&,
                         tk::Fields& ) const = 0;
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
                            const std::vector< std::size_t >&,
                            const tk::Fields& ) const = 0;
-      virtual std::array< std::array< tk::real, 4 >, 3 > velocity(
-        const tk::Fields&,
-        const std::array< std::vector< tk::real >, 3 >&,
-        const std::array< std::size_t, 4 >&  ) const = 0;
       virtual void side( std::unordered_set< int >& conf ) const = 0;
-      virtual
-      std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
-      dirbc( tk::real,
-             tk::real,
-             const std::pair< const int, std::vector< std::size_t > >&,
-             const std::array< std::vector< tk::real >, 3 >& ) const = 0;
       virtual std::vector< std::string > fieldNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > fieldOutput(
         tk::real,
         tk::real,
-        const std::array< std::vector< tk::real >, 3 >&,
-        const std::vector< tk::real >&,
+        const tk::Fields&,
         tk::Fields& ) const = 0;
     };
 
@@ -203,42 +163,25 @@ class PDE {
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
-      void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
+      void initialize( const tk::Fields& geoElem,
                        tk::Fields& unk,
-                       tk::real t,
-                       const std::vector< std::size_t >& gid )
-      const override { data.initialize( coord, unk, t, gid ); }
-      void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
-                const std::vector< std::size_t >& inpoel,
-                const std::pair< std::vector< std::size_t >,
-                                 std::vector< std::size_t > >& psup,
-                tk::Fields& lhsd, tk::Fields& lhso ) const override
-      { data.lhs( coord, inpoel, psup, lhsd, lhso ); }
+                       tk::real t )
+      const override { data.initialize( geoElem, unk, t ); }
+      void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
+      { data.lhs( geoElem, l ); }
       void rhs( tk::real t,
-                tk::real deltat,
-                const std::array< std::vector< tk::real >, 3 >& coord,
-                const std::vector< std::size_t >& inpoel,
+                const tk::Fields& geoFace,
+                const tk::Fields& geoElem,
+                const inciter::FaceData& fd,
                 const tk::Fields& U,
-                tk::Fields& Ue,
                 tk::Fields& R ) const override
-      { data.rhs( t, deltat, coord, inpoel, U, Ue, R ); }
+      { data.rhs( t, geoFace, geoElem, fd, U, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override
       { return data.dt( coord, inpoel, U ); }
-      std::array< std::array< tk::real, 4 >, 3 > velocity(
-        const tk::Fields& U,
-        const std::array< std::vector< tk::real >, 3 >& coord,
-        const std::array< std::size_t, 4 >& N  ) const override
-      { return data.velocity( U, coord, N ); }
       void side( std::unordered_set< int >& conf ) const override
       { data.side( conf ); }
-      std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
-      dirbc( tk::real t,
-             tk::real deltat,
-             const std::pair< const int, std::vector< std::size_t > >& sides,
-             const std::array< std::vector< tk::real >, 3 >& coord ) const
-        override { return data.dirbc( t, deltat, sides, coord ); }
       std::vector< std::string > fieldNames() const override
       { return data.fieldNames(); }
       std::vector< std::string > names() const override
@@ -246,10 +189,9 @@ class PDE {
       std::vector< std::vector< tk::real > > fieldOutput(
         tk::real t,
         tk::real V,
-        const std::array< std::vector< tk::real >, 3 >& coord,
-        const std::vector< tk::real >& v,
+        const tk::Fields& geoElem,
         tk::Fields& U ) const override
-      { return data.fieldOutput( t, V, coord, v, U ); }
+      { return data.fieldOutput( t, V, geoElem, U ); }
       T data;
     };
 
@@ -258,4 +200,4 @@ class PDE {
 
 } // inciter::
 
-#endif // PDE_h
+#endif // DGPDE_h

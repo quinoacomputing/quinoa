@@ -16,11 +16,17 @@ add_library(Inciter
             FluxCorrector.C
             DistFCT.C
             DiagReducer.C
-            Diagnostics.C
+            NodeDiagnostics.C
+            ElemDiagnostics.C
             BoundaryConditions.C
+            MeshReader.C
+)
+
+add_library(MeshRefinement
             AMR/mesh_adapter.C
             AMR/util.C
             AMR/edge.C
+            AMR/Error.C
 )
 
 addCharmModule( "transporter" "Inciter" )
@@ -55,9 +61,17 @@ add_dependencies( "Inciter" "solverCharmModule" )
 add_dependencies( "transporterCharmModule" "partitionerCharmModule" )
 
 set_target_properties(Inciter PROPERTIES LIBRARY_OUTPUT_NAME quinoa_inciter)
+set_target_properties(MeshRefinement PROPERTIES LIBRARY_OUTPUT_NAME
+                      quinoa_mesh_refinement)
 
 INSTALL(TARGETS Inciter
-  	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
-  	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
- 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+)
+
+INSTALL(TARGETS MeshRefinement
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )

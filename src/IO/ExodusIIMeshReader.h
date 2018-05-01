@@ -78,7 +78,7 @@ class ExodusIIMeshReader {
 
     //! Read coordinates of a number of mesh nodes from ExodusII file
     std::array< std::vector< tk::real >, 3 >
-    readNodes( const std::array< std::size_t, 2 >& ext ) const;
+    readNodes( const std::vector< std::size_t >& gid ) const;
 
     //! Read element block IDs from file
     std::size_t readElemBlockIDs();
@@ -91,6 +91,9 @@ class ExodusIIMeshReader {
     //! Read face connectivity of a number boundary faces from file
     void readFaces( std::size_t nbfac,
                     std::vector< std::size_t >& conn );
+
+    //! Read local to global node-ID map
+    std::vector< std::size_t > readNodemap();
 
     //! Read node list of all side sets from ExodusII file
     std::map< int, std::vector< std::size_t > > readSidesets();

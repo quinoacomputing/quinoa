@@ -1,16 +1,17 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Transport/Physics/Advection.h
+  \file      src/PDE/Transport/Physics/DGAdvection.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Physics configurations for advection
-  \details   This file defines a Physics policy class for the scalar transport
-     equations, defined in PDE/Transport/Transport.h. The class defined here is
-     used to configure the behavior of Transport. See PDE/Transport/Physics.h
-     for general requirements on Physics policy classes for Transport.
+  \brief     Physics policy for advection using continuous Galerkin (no-op)
+  \details   This file defines a Physics policy class for scalar transport using
+     discontinuous Galerkin discretization, defined in
+     PDE/Transport/DGTransport.h. The class defined here is used to configure
+     the behavior of DGTransport. See PDE/Transport/Physics/DG.h for general
+     requirements on Physics policy classes for DGTransport.
 */
 // *****************************************************************************
-#ifndef TransportPhysicsAdvection_h
-#define TransportPhysicsAdvection_h
+#ifndef TransportPhysicsDGAdvection_h
+#define TransportPhysicsDGAdvection_h
 
 #include <limits>
 
@@ -18,8 +19,9 @@
 #include "Inciter/Options/Physics.h"
 
 namespace inciter {
+namespace dg {
 
-//! Transport equation system of PDEs problem: advection
+//! Physics policy for advection using continuous Galerkin (no-op)
 //! \details This class is a no-op, consistent with no additional physics needed
 //!   to make the basic implementation in Transport the advection equation.
 class TransportPhysicsAdvection {
@@ -52,6 +54,7 @@ class TransportPhysicsAdvection {
     { return ctr::PhysicsType::ADVECTION; }
 };
 
+} // dg::
 } // inciter::
 
-#endif // TransportPhysicsAdvection_h
+#endif // TransportPhysicsDGAdvection_h

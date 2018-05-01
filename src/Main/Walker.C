@@ -171,6 +171,7 @@ class Main : public CBase_Main {
     //! \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
     Main( CkArgMsg* msg )
     try :
+      m_signal( tk::setSignalHandlers() ),
       m_cmdline(),
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
@@ -226,11 +227,12 @@ class Main : public CBase_Main {
     }
 
   private:
-    walker::ctr::CmdLine m_cmdline;                   //!< Command line
-    walker::CmdLineParser m_cmdParser;                //!< Command line parser
-    walker::WalkerPrint m_print;                      //!< Pretty printer
-    walker::WalkerDriver m_driver;                    //!< Driver
-    std::vector< tk::Timer > m_timer;                 //!< Timers
+    int m_signal;                               //!< Used to set signal handlers
+    walker::ctr::CmdLine m_cmdline;             //!< Command line
+    walker::CmdLineParser m_cmdParser;          //!< Command line parser
+    walker::WalkerPrint m_print;                //!< Pretty printer
+    walker::WalkerDriver m_driver;              //!< Driver
+    std::vector< tk::Timer > m_timer;           //!< Timers
 
     //! Time stamps in h:m:s with labels
     std::vector< std::pair< std::string, tk::Timer::Watch > > m_timestamp;

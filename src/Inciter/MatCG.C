@@ -27,7 +27,7 @@
 #include "ExodusIIMeshWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "DerivedData.h"
-#include "PDE.h"
+#include "CGPDE.h"
 #include "Discretization.h"
 #include "DistFCT.h"
 #include "DiagReducer.h"
@@ -41,7 +41,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
-extern std::vector< PDE > g_pdes;
+extern std::vector< CGPDE > g_cgpde;
 
 } // inciter::
 
@@ -49,7 +49,7 @@ using inciter::MatCG;
 
 MatCG::MatCG( const CProxy_Discretization& disc,
               const tk::CProxy_Solver& solver,
-              const FaceData& fd ) :
+              const FaceData& ) :
   m_itf( 0 ),
   m_nhsol( 0 ),
   m_nlsol( 0 ),
@@ -76,7 +76,6 @@ MatCG::MatCG( const CProxy_Discretization& disc,
 
   // Send off global row IDs to linear system solver
   m_solver.ckLocalBranch()->charecom( thisProxy, thisIndex, d->Gid() );
-  IGNORE( fd );
 }
 
 void
@@ -90,7 +89,7 @@ MatCG::registerReducers()
 //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
 // *****************************************************************************
 {
-  Diagnostics::registerReducers();
+  NodeDiagnostics::registerReducers();
 }
 
 void
@@ -109,7 +108,7 @@ MatCG::setup( tk::real v )
   // Output chare mesh to file
   d->writeMesh();
   // Output fields metadata to output file
-  d->writeMeta();
+  d->writeNodeMeta();
 
   // Compute left-hand side of PDEs
   lhs();
@@ -118,8 +117,7 @@ MatCG::setup( tk::real v )
   m_du.fill( 0.0 );
 
   // Set initial conditions for all PDEs
-  for (const auto& eq : g_pdes)
-    eq.initialize( d->Coord(), m_u, d->T(), d->Gid() );
+  for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
 
   // Send off initial guess for assembly
   m_solver.ckLocalBranch()->charesol( thisIndex, d->Gid(), m_du );
@@ -156,7 +154,7 @@ MatCG::dt()
   } else {      // compute dt based on CFL
 
     // find the minimum dt across all PDEs integrated
-    for (const auto& eq : g_pdes) {
+    for (const auto& eq : g_cgpde) {
       auto eqdt = eq.dt( d->Coord(), d->Inpoel(), m_u );
       if (eqdt < mindt) mindt = eqdt;
     }
@@ -180,7 +178,7 @@ MatCG::lhs()
   auto d = Disc();
 
   // Compute left-hand side matrix for all equations
-  for (const auto& eq : g_pdes)
+  for (const auto& eq : g_cgpde)
     eq.lhs( d->Coord(), d->Inpoel(), d->Psup(), m_lhsd, m_lhso );
 
   // Send off left hand side for assembly
@@ -203,7 +201,7 @@ MatCG::rhs()
 
   // Compute right-hand side and query Dirichlet BCs for all equations
   tk::Fields r( d->Gid().size(), g_inputdeck.get< tag::component >().nprop() );
-  for (const auto& eq : g_pdes)
+  for (const auto& eq : g_cgpde)
     eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_u, m_ue, r );
 
   // Query and match user-specified boundary conditions to side sets
@@ -369,7 +367,7 @@ MatCG::writeFields( tk::real time )
   auto nodefields = [&]() {
     auto u = m_u;   // make a copy as eq::output() may overwrite its arg
     std::vector< std::vector< tk::real > > output;
-    for (const auto& eq : g_pdes) {
+    for (const auto& eq : g_cgpde) {
       auto o = eq.fieldOutput( time, m_vol, d->Coord(), d->V(), u );
       output.insert( end(output), begin(o), end(o) );
     }
@@ -386,7 +384,7 @@ MatCG::writeFields( tk::real time )
     // Write time stamp
     rmw.writeTimeStamp( m_itf, time );
     // Write node fields to file
-    d->writeSolution( rmw, m_itf, nodefields() );
+    d->writeNodeSolution( rmw, m_itf, nodefields() );
 
   } else
   #endif
@@ -397,7 +395,7 @@ MatCG::writeFields( tk::real time )
     // Write time stamp
     ew.writeTimeStamp( m_itf, time );
     // Write node fields to file
-    d->writeSolution( ew, m_itf, nodefields() );
+    d->writeNodeSolution( ew, m_itf, nodefields() );
 
   }
 }

@@ -85,7 +85,7 @@ assess( const tk::Print& print,
                 " tests total: " + warn + skip + excp + fail );
   }
 
-  return nfail || nexcp ? false : true;
+  return (nfail || nexcp) ? false : true;
 }
 
 } // unittest::

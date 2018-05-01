@@ -18,6 +18,7 @@
 #include "QuinoaConfig.h"
 #include "ContainerUtil.h"
 #include "DistFCT.h"
+#include "Variant.h"
 
 namespace inciter {
 
@@ -112,10 +113,10 @@ DistFCT::next()
 // *****************************************************************************
 {
   #ifndef NDEBUG
-  wait4ver();
+  thisProxy[ thisIndex ].wait4ver();
   #endif
-  wait4fct();
-  wait4app();
+  thisProxy[ thisIndex ].wait4fct();
+  thisProxy[ thisIndex ].wait4app();
 
   // Initialize FCT data structures for new time step
   m_p.fill( 0.0 );

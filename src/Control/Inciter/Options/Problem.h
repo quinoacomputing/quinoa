@@ -26,7 +26,9 @@ enum class ProblemType : uint8_t { USER_DEFINED=0,
                                    NL_ENERGY_GROWTH,
                                    RAYLEIGH_TAYLOR,
                                    TAYLOR_GREEN,
-                                   SLOT_CYL };
+                                   SLOT_CYL,
+                                   GAUSS_HUMP,
+                                   SOD_SHOCKTUBE };
 
 //! Pack/Unpack ProblemType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, ProblemType& e ) { PUP::pup( p, e ); }
@@ -43,6 +45,8 @@ class Problem : public tk::Toggle< ProblemType > {
                                        , kw::rayleigh_taylor
                                        , kw::taylor_green
                                        , kw::slot_cyl
+                                       , kw::gauss_hump
+                                       , kw::sod_shocktube
                                        >;
 
     //! \brief Options constructor
@@ -51,7 +55,7 @@ class Problem : public tk::Toggle< ProblemType > {
     explicit Problem() :
       tk::Toggle< ProblemType >(
         //! Group, i.e., options, name
-        "Test problem",
+        kw::problem::name(),
         //! Enums -> names
         { { ProblemType::USER_DEFINED, kw::user_defined::name() },
           { ProblemType::SHEAR_DIFF, kw::shear_diff::name() },
@@ -59,7 +63,9 @@ class Problem : public tk::Toggle< ProblemType > {
           { ProblemType::NL_ENERGY_GROWTH, kw::nl_energy_growth::name() },
           { ProblemType::RAYLEIGH_TAYLOR, kw::rayleigh_taylor::name() },
           { ProblemType::TAYLOR_GREEN, kw::taylor_green::name() },
-          { ProblemType::SLOT_CYL, kw::slot_cyl::name() } },
+          { ProblemType::SLOT_CYL, kw::slot_cyl::name() },
+          { ProblemType::GAUSS_HUMP, kw::gauss_hump::name() },
+          { ProblemType::SOD_SHOCKTUBE, kw::sod_shocktube::name() } },
         //! keywords -> Enums
         { { kw::user_defined::string(), ProblemType::USER_DEFINED },
           { kw::shear_diff::string(), ProblemType::SHEAR_DIFF },
@@ -67,7 +73,9 @@ class Problem : public tk::Toggle< ProblemType > {
           { kw::nl_energy_growth::string(), ProblemType::NL_ENERGY_GROWTH },
           { kw::rayleigh_taylor::string(), ProblemType::RAYLEIGH_TAYLOR },
           { kw::taylor_green::string(), ProblemType::TAYLOR_GREEN },
-          { kw::slot_cyl::string(), ProblemType::SLOT_CYL } } )
+          { kw::slot_cyl::string(), ProblemType::SLOT_CYL },
+          { kw::gauss_hump::string(), ProblemType::GAUSS_HUMP },
+          { kw::sod_shocktube::string(), ProblemType::SOD_SHOCKTUBE } } )
     {
        boost::mpl::for_each< keywords >( assertPolicyCodes() );
     }
@@ -104,6 +112,8 @@ class Problem : public tk::Toggle< ProblemType > {
       , { ProblemType::RAYLEIGH_TAYLOR, *kw::rayleigh_taylor::code() }      
       , { ProblemType::TAYLOR_GREEN, *kw::taylor_green::code() }      
       , { ProblemType::SLOT_CYL, *kw::slot_cyl::code() }
+      , { ProblemType::GAUSS_HUMP, *kw::gauss_hump::code() }
+      , { ProblemType::SOD_SHOCKTUBE, *kw::sod_shocktube::code() }
     };
 };
 

@@ -19,14 +19,14 @@ namespace AMR {
             const size_t MIN_REFINEMENT_LEVEL = DEFAULT_REFINEMENT_LEVEL;
 
             // TODO: Tidy up edge store references here
-            tet_store_t* tet_store;
-            node_connectivity_t* node_connectivity;
+            tet_store_t& tet_store;
+            node_connectivity_t& node_connectivity;
 
         public:
 
             const size_t MAX_REFINEMENT_LEVEL = 4;
 
-            refinement_t(tet_store_t* ts, node_connectivity_t* ns) : tet_store(ts), node_connectivity(ns)
+            refinement_t(tet_store_t& ts, node_connectivity_t& ns) : tet_store(ts), node_connectivity(ns)
             {
             }
 
@@ -34,7 +34,7 @@ namespace AMR {
             child_id_list_t generate_child_ids(size_t parent_id, size_t count = MAX_CHILDREN)
             {
                 //return morton_id_generator_t::get_children_ids(parent_id);
-                return tet_store->generate_child_ids(parent_id, count);
+                return tet_store.generate_child_ids(parent_id, count);
             }
 
             /**
@@ -47,7 +47,7 @@ namespace AMR {
              */
             bool check_allowed_refinement(size_t tet_id)
             {
-                Refinement_State& master_element = tet_store->data(tet_id);
+                Refinement_State& master_element = tet_store.data(tet_id);
 
                 // These asserts mean we never actually try refine a 1:2 or 1:4
                 Assert(
@@ -60,7 +60,7 @@ namespace AMR {
                     "Trying to refine a 1:4 (not allowed)"
                 );
 
-                Assert( tet_store->is_active(tet_id), "ID is not active" );
+                Assert( tet_store.is_active(tet_id), "ID is not active" );
 
                 // Check this won't take us past the max refinement level
                 if (master_element.refinement_level >= MAX_REFINEMENT_LEVEL)
@@ -81,7 +81,7 @@ namespace AMR {
              */
             void refine_one_to_two(size_t tet_id)
             {
-                edge_list_t edge_list = tet_store->generate_edge_keys(tet_id);
+                edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
                 node_pair_t nodes = find_single_refinement_nodes(edge_list);
                 refine_one_to_two( tet_id, nodes[0], nodes[1]);
             }
@@ -105,9 +105,9 @@ namespace AMR {
 
                 if (!check_allowed_refinement(tet_id)) return;
 
-                tet_t original_tet = tet_store->get(tet_id);
+                tet_t original_tet = tet_store.get(tet_id);
 
-                size_t new_node_id = node_connectivity->add( edge_node_A_id, edge_node_B_id );
+                size_t new_node_id = node_connectivity.add( edge_node_A_id, edge_node_B_id );
 
                 /// Split existing tet into two new tets
 
@@ -132,7 +132,7 @@ namespace AMR {
                 // Now, update the edge list
 
                 // Generate edges for split
-                tet_store->edge_store.split(edge_node_A_id, edge_node_B_id, new_node_id,
+                tet_store.edge_store.split(edge_node_A_id, edge_node_B_id, new_node_id,
                         Edge_Lock_Case::intermediate);
 
                 child_id_list_t child_list = generate_child_ids(tet_id, 2);
@@ -142,7 +142,7 @@ namespace AMR {
 
                 // Add the two new tets to the system
                 size_t new_tet_id = first_child_id;
-                tet_store->add(
+                tet_store.add(
                         first_child_id,
                         new_tet1,
                         Refinement_Case::one_to_two,
@@ -150,7 +150,7 @@ namespace AMR {
                 );
 
                 size_t new_tet_id2 = second_child_id;
-                tet_store->add(
+                tet_store.add(
                         second_child_id,
                         new_tet2,
                         Refinement_Case::one_to_two,
@@ -160,7 +160,7 @@ namespace AMR {
                 // This call is only needed to add a single edge, from the new
                 // node to the node on the normal to that face, but avoids
                 // directly calculating which nodes that is
-                tet_store->generate_edges(new_tet_id);
+                tet_store.generate_edges(new_tet_id);
 
                 // Currently we lock one per tet, around the split node. We
                 // also need to lock the two "arms" which come out from it
@@ -168,7 +168,7 @@ namespace AMR {
                 lock_edges_from_node(new_tet_id2, new_node_id, Edge_Lock_Case::intermediate);
 
                 // Deactivate parent tet?
-                tet_store->deactivate(tet_id);
+                tet_store.deactivate(tet_id);
             }
 
             /**
@@ -181,7 +181,7 @@ namespace AMR {
             {
                 //bool face_refine = false;
                 size_t face_refine_id = 0; // FIXME: Does this need a better default
-                face_list_t face_list = tet_store->generate_face_lists(tet_id);
+                face_list_t face_list = tet_store.generate_face_lists(tet_id);
 
                 // Iterate over each face
                 for (size_t face = 0; face < NUM_TET_FACES; face++)
@@ -195,14 +195,14 @@ namespace AMR {
                     for (size_t k = 0; k < NUM_FACE_NODES; k++)
                     {
                         edge_t edge = face_edge_list[k];
-                        if (tet_store->edge_store.get(edge).needs_refining == true)
+                        if (tet_store.edge_store.get(edge).needs_refining == true)
                         {
                             num_face_refine_edges++;
                         }
 
                         // Check for locked edges
                             // This case only cares about faces with no locks
-                        if (tet_store->edge_store.lock_case(edge) != Edge_Lock_Case::unlocked)
+                        if (tet_store.edge_store.lock_case(edge) != Edge_Lock_Case::unlocked)
                         {
                             // Abort this face
                             num_face_refine_edges = 0;
@@ -216,7 +216,7 @@ namespace AMR {
                     }
                 }
 
-                tet_t tet = tet_store->get(tet_id);
+                tet_t tet = tet_store.get(tet_id);
                 size_t opposite_offset = AMR::node_connectivity_t::face_list_opposite(face_list, face_refine_id);
                 size_t opposite_id = tet[opposite_offset];
 
@@ -254,30 +254,30 @@ namespace AMR {
                     std::endl;
 
                 // Make new nodes
-                //coordinate_t AB_mid = node_connectivity->find_mid_point(A, B);
-                size_t AB = node_connectivity->add(A,B);
+                //coordinate_t AB_mid = node_connectivity.find_mid_point(A, B);
+                size_t AB = node_connectivity.add(A,B);
 
-                //coordinate_t AC_mid = node_connectivity->find_mid_point(A, C);
-                size_t AC = node_connectivity->add(A,C);
+                //coordinate_t AC_mid = node_connectivity.find_mid_point(A, C);
+                size_t AC = node_connectivity.add(A,C);
 
-                //coordinate_t BC_mid = node_connectivity->find_mid_point(B, C);
-                size_t BC = node_connectivity->add(B,C);
+                //coordinate_t BC_mid = node_connectivity.find_mid_point(B, C);
+                size_t BC = node_connectivity.add(B,C);
 
                 // Use nodes to update edges
                 // All added edges will be locked due to containing intermediate points
                 // Split Outer face  edges
-                tet_store->edge_store.split(A, C, AC, Edge_Lock_Case::intermediate);
-                tet_store->edge_store.split(A, B, AB, Edge_Lock_Case::intermediate);
-                tet_store->edge_store.split(B, C, BC, Edge_Lock_Case::intermediate);
+                tet_store.edge_store.split(A, C, AC, Edge_Lock_Case::intermediate);
+                tet_store.edge_store.split(A, B, AB, Edge_Lock_Case::intermediate);
+                tet_store.edge_store.split(B, C, BC, Edge_Lock_Case::intermediate);
 
                 // Connect D to intermediate points
-                tet_store->edge_store.generate(D, AC, Edge_Lock_Case::intermediate);
-                tet_store->edge_store.generate(D, BC, Edge_Lock_Case::intermediate);
-                tet_store->edge_store.generate(D, AB, Edge_Lock_Case::intermediate);
+                tet_store.edge_store.generate(D, AC, Edge_Lock_Case::intermediate);
+                tet_store.edge_store.generate(D, BC, Edge_Lock_Case::intermediate);
+                tet_store.edge_store.generate(D, AB, Edge_Lock_Case::intermediate);
                 // Connect inner edges
-                tet_store->edge_store.generate(AC, BC, Edge_Lock_Case::intermediate);
-                tet_store->edge_store.generate(AC, AB, Edge_Lock_Case::intermediate);
-                tet_store->edge_store.generate(AB, BC, Edge_Lock_Case::intermediate);
+                tet_store.edge_store.generate(AC, BC, Edge_Lock_Case::intermediate);
+                tet_store.edge_store.generate(AC, AB, Edge_Lock_Case::intermediate);
+                tet_store.edge_store.generate(AB, BC, Edge_Lock_Case::intermediate);
 
                 // Make new Tets
                 //  This is just the node opposite the face plus each pair
@@ -294,17 +294,17 @@ namespace AMR {
                 child_id_list_t child = generate_child_ids(tet_id, num_children);
 
                 // Outsides
-                tet_store->add(child[0], AB , AC, A, D, Refinement_Case::one_to_four, tet_id);
-                tet_store->add(child[2], BC, C,  AC, D, Refinement_Case::one_to_four, tet_id);
-                tet_store->add(child[3], B, BC,  AB, D, Refinement_Case::one_to_four, tet_id);
+                tet_store.add(child[0], AB , AC, A, D, Refinement_Case::one_to_four, tet_id);
+                tet_store.add(child[2], BC, C,  AC, D, Refinement_Case::one_to_four, tet_id);
+                tet_store.add(child[3], B, BC,  AB, D, Refinement_Case::one_to_four, tet_id);
 
                 // Center
                 size_t center_id = child[1]; // 1 to preserve Jacobian order
-                tet_store->add(center_id, AB, BC, AC, D, Refinement_Case::one_to_four, tet_id);
+                tet_store.add(center_id, AB, BC, AC, D, Refinement_Case::one_to_four, tet_id);
 
-                tet_store->add_center(center_id);
+                tet_store.add_center(center_id);
 
-                tet_store->deactivate(tet_id);
+                tet_store.deactivate(tet_id);
 
             }
 
@@ -328,7 +328,7 @@ namespace AMR {
                 // The loop would just be i=0..4, j=i..4
                 //
 
-                tet_t tet = tet_store->get(tet_id);
+                tet_t tet = tet_store.get(tet_id);
 
                 size_t A = tet[0];
                 size_t B = tet[1];
@@ -337,57 +337,57 @@ namespace AMR {
 
                 // Generate pairs of nodes (i.e edges)
                 // Hard coding for now, can swap out for loop
-                //coordinate_t AB_mid = node_connectivity->find_mid_point(A,B);
-                size_t AB = node_connectivity->add(A,B);
+                //coordinate_t AB_mid = node_connectivity.find_mid_point(A,B);
+                size_t AB = node_connectivity.add(A,B);
 
-                //coordinate_t AC_mid = node_connectivity->find_mid_point(A,C);
-                size_t AC = node_connectivity->add(A,C);
+                //coordinate_t AC_mid = node_connectivity.find_mid_point(A,C);
+                size_t AC = node_connectivity.add(A,C);
 
-                //coordinate_t AD_mid = node_connectivity->find_mid_point(A,D);
-                size_t AD = node_connectivity->add(A,D);
+                //coordinate_t AD_mid = node_connectivity.find_mid_point(A,D);
+                size_t AD = node_connectivity.add(A,D);
 
-                //coordinate_t BC_mid = node_connectivity->find_mid_point(B,C);
-                size_t BC = node_connectivity->add(B,C);
+                //coordinate_t BC_mid = node_connectivity.find_mid_point(B,C);
+                size_t BC = node_connectivity.add(B,C);
 
-                //coordinate_t BD_mid = node_connectivity->find_mid_point(B,D);
-                size_t BD = node_connectivity->add(B,D);
+                //coordinate_t BD_mid = node_connectivity.find_mid_point(B,D);
+                size_t BD = node_connectivity.add(B,D);
 
-                //coordinate_t CD_mid = node_connectivity->find_mid_point(C,D);
-                size_t CD = node_connectivity->add(C,D);
+                //coordinate_t CD_mid = node_connectivity.find_mid_point(C,D);
+                size_t CD = node_connectivity.add(C,D);
 
                 // Update edges
 
                 //Split all outer edges
-                tet_store->edge_store.split(A, C, AC, Edge_Lock_Case::unlocked);
-                tet_store->edge_store.split(A, B, AB, Edge_Lock_Case::unlocked);
-                tet_store->edge_store.split(A, D, AD, Edge_Lock_Case::unlocked);
-                tet_store->edge_store.split(B, C, BC, Edge_Lock_Case::unlocked);
-                tet_store->edge_store.split(B, D, BD, Edge_Lock_Case::unlocked);
-                tet_store->edge_store.split(C, D, CD, Edge_Lock_Case::unlocked);
+                tet_store.edge_store.split(A, C, AC, Edge_Lock_Case::unlocked);
+                tet_store.edge_store.split(A, B, AB, Edge_Lock_Case::unlocked);
+                tet_store.edge_store.split(A, D, AD, Edge_Lock_Case::unlocked);
+                tet_store.edge_store.split(B, C, BC, Edge_Lock_Case::unlocked);
+                tet_store.edge_store.split(B, D, BD, Edge_Lock_Case::unlocked);
+                tet_store.edge_store.split(C, D, CD, Edge_Lock_Case::unlocked);
 
                 // Outside edges for face ABC
-                tet_store->edge_store.generate(AC, BC, Edge_Lock_Case::unlocked);
-                tet_store->edge_store.generate(AC, AB, Edge_Lock_Case::unlocked);
-                tet_store->edge_store.generate(AB, BC, Edge_Lock_Case::unlocked);
+                tet_store.edge_store.generate(AC, BC, Edge_Lock_Case::unlocked);
+                tet_store.edge_store.generate(AC, AB, Edge_Lock_Case::unlocked);
+                tet_store.edge_store.generate(AB, BC, Edge_Lock_Case::unlocked);
 
                 // Outside edges for face ACD
-                tet_store->edge_store.generate(AC, AD, Edge_Lock_Case::unlocked);
-                tet_store->edge_store.generate(AD, CD, Edge_Lock_Case::unlocked);
-                tet_store->edge_store.generate(AC, CD, Edge_Lock_Case::unlocked);
+                tet_store.edge_store.generate(AC, AD, Edge_Lock_Case::unlocked);
+                tet_store.edge_store.generate(AD, CD, Edge_Lock_Case::unlocked);
+                tet_store.edge_store.generate(AC, CD, Edge_Lock_Case::unlocked);
 
                 // Outside edges for face BCD
-                tet_store->edge_store.generate(BD, CD, Edge_Lock_Case::unlocked);
-                tet_store->edge_store.generate(BD, BC, Edge_Lock_Case::unlocked);
-                tet_store->edge_store.generate(CD, BC, Edge_Lock_Case::unlocked);
+                tet_store.edge_store.generate(BD, CD, Edge_Lock_Case::unlocked);
+                tet_store.edge_store.generate(BD, BC, Edge_Lock_Case::unlocked);
+                tet_store.edge_store.generate(CD, BC, Edge_Lock_Case::unlocked);
 
                 // Outside edges for face ABD
-                tet_store->edge_store.generate(AD, BD, Edge_Lock_Case::unlocked);
-                tet_store->edge_store.generate(AB, AD, Edge_Lock_Case::unlocked);
-                tet_store->edge_store.generate(AB, BD, Edge_Lock_Case::unlocked);
+                tet_store.edge_store.generate(AD, BD, Edge_Lock_Case::unlocked);
+                tet_store.edge_store.generate(AB, AD, Edge_Lock_Case::unlocked);
+                tet_store.edge_store.generate(AB, BD, Edge_Lock_Case::unlocked);
 
                 // Interior Edges
-                tet_store->edge_store.generate(AC, BD, Edge_Lock_Case::unlocked);
-                tet_store->edge_store.generate(CD, AD, Edge_Lock_Case::unlocked);
+                tet_store.edge_store.generate(AC, BD, Edge_Lock_Case::unlocked);
+                tet_store.edge_store.generate(CD, AD, Edge_Lock_Case::unlocked);
 
                 // Add the new tets
                 //
@@ -408,17 +408,17 @@ namespace AMR {
                 child_id_list_t child = generate_child_ids(tet_id);
 
                 // This order should give a positive Jacobian
-                tet_store->add(child[0], A, AB, AC, AD, Refinement_Case::one_to_eight, tet_id);
-                tet_store->add(child[1], B, BC, AB, BD, Refinement_Case::one_to_eight, tet_id);
-                tet_store->add(child[2], C, AC, BC, CD, Refinement_Case::one_to_eight, tet_id);
-                tet_store->add(child[3], D, AD, CD, BD, Refinement_Case::one_to_eight, tet_id);
+                tet_store.add(child[0], A, AB, AC, AD, Refinement_Case::one_to_eight, tet_id);
+                tet_store.add(child[1], B, BC, AB, BD, Refinement_Case::one_to_eight, tet_id);
+                tet_store.add(child[2], C, AC, BC, CD, Refinement_Case::one_to_eight, tet_id);
+                tet_store.add(child[3], D, AD, CD, BD, Refinement_Case::one_to_eight, tet_id);
 
-                tet_store->add(child[4], BC, CD, AC, BD, Refinement_Case::one_to_eight, tet_id);
-                tet_store->add(child[5], AB, BD, AC, AD, Refinement_Case::one_to_eight, tet_id);
-                tet_store->add(child[6], AB, BC, AC, BD, Refinement_Case::one_to_eight, tet_id);
-                tet_store->add(child[7], AC, BD, CD, AD, Refinement_Case::one_to_eight, tet_id);
+                tet_store.add(child[4], BC, CD, AC, BD, Refinement_Case::one_to_eight, tet_id);
+                tet_store.add(child[5], AB, BD, AC, AD, Refinement_Case::one_to_eight, tet_id);
+                tet_store.add(child[6], AB, BC, AC, BD, Refinement_Case::one_to_eight, tet_id);
+                tet_store.add(child[7], AC, BD, CD, AD, Refinement_Case::one_to_eight, tet_id);
 
-                tet_store->deactivate(tet_id);
+                tet_store.deactivate(tet_id);
 
             }
 
@@ -468,7 +468,7 @@ namespace AMR {
              */
             size_t tet_id_to_node_id(size_t tet, size_t element) {
                 Assert( element < NUM_TET_NODES, "Indexing greater than tet bounds");
-                return tet_store->get(tet)[element];
+                return tet_store.get(tet)[element];
             }
 
             /**
@@ -489,7 +489,7 @@ namespace AMR {
                 {
                     edge_t edge = edge_list[k];
 
-                    if (tet_store->edge_store.get(edge).needs_refining == true)
+                    if (tet_store.edge_store.get(edge).needs_refining == true)
                     {
                         returned_nodes[0] = edge.first();
                         returned_nodes[1] = edge.second();
@@ -510,7 +510,7 @@ namespace AMR {
             )
             {
                 // Iterate over edges of of tet
-                edge_list_t edge_list = tet_store->generate_edge_keys(tet_id);
+                edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
                 for (size_t k = 0; k < NUM_TET_EDGES; k++)
                 {
                     // If it contains that node id, mark it using lock_case
@@ -520,7 +520,7 @@ namespace AMR {
                     size_t edge_node_B_id = edge.second();
 
                     if ((edge_node_A_id == node_id) || (edge_node_B_id == node_id)) {
-                        tet_store->edge_store.get(edge).lock_case = lock_case;
+                        tet_store.edge_store.get(edge).lock_case = lock_case;
                     }
                 }
             }
@@ -535,10 +535,10 @@ namespace AMR {
             void derefine_children(size_t parent_id)
             {
                 // For a given tet_id, find and delete its children
-                Refinement_State& parent = tet_store->data(parent_id);
+                Refinement_State& parent = tet_store.data(parent_id);
                 for (auto c : parent.children)
                 {
-                    tet_store->erase(c);
+                    tet_store.erase(c);
                     parent.num_children--; // Could directly set to 0
                 }
                 parent.children.clear();
@@ -553,7 +553,7 @@ namespace AMR {
             void generic_derefine(size_t parent_id)
             {
                 derefine_children(parent_id);
-                tet_store->activate(parent_id);
+                tet_store.activate(parent_id);
             }
 
             // TODO: Document This.
@@ -577,12 +577,12 @@ namespace AMR {
 
                 // Delete the center edges
                     // If edge isn't in the parent, delete it? Is there a better way?
-                edge_list_t parent_edges = tet_store->generate_edge_keys(parent_id);
+                edge_list_t parent_edges = tet_store.generate_edge_keys(parent_id);
 
-                Refinement_State& parent = tet_store->data(parent_id);
+                Refinement_State& parent = tet_store.data(parent_id);
                 for (auto c : parent.children)
                 {
-                    edge_list_t child_edges = tet_store->generate_edge_keys(c);
+                    edge_list_t child_edges = tet_store.generate_edge_keys(c);
                     delete_non_matching_edges( child_edges, parent_edges);
                 }
             }
@@ -615,7 +615,7 @@ namespace AMR {
              */
             void delete_intermediates_of_children(size_t parent_id)
             {
-                Refinement_State& parent = tet_store->data(parent_id);
+                Refinement_State& parent = tet_store.data(parent_id);
                 for (auto c : parent.children)
                 {
                     delete_intermediates(c);
@@ -631,15 +631,15 @@ namespace AMR {
              */
             void delete_intermediates(size_t tet_id)
             {
-                edge_list_t edge_list = tet_store->generate_edge_keys(tet_id);
+                edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
                 for (size_t k = 0; k < NUM_TET_EDGES; k++)
                 {
                     edge_t edge = edge_list[k];
                     // accept this code may try delete an edge which has already gone
-                    if (tet_store->edge_store.exists(edge)) {
-                        if (tet_store->edge_store.get(edge).lock_case == Edge_Lock_Case::intermediate)
+                    if (tet_store.edge_store.exists(edge)) {
+                        if (tet_store.edge_store.get(edge).lock_case == Edge_Lock_Case::intermediate)
                         {
-                            tet_store->edge_store.erase(edge);
+                            tet_store.edge_store.erase(edge);
                         }
                     }
                 }
@@ -676,7 +676,7 @@ namespace AMR {
                     if (!found_it)
                     {
                         // Delete it
-                        tet_store->edge_store.erase(search_key);
+                        tet_store.edge_store.erase(search_key);
                     }
                 }
             }
@@ -692,7 +692,7 @@ namespace AMR {
              */
             bool check_allowed_derefinement(size_t tet_id)
             {
-                Refinement_State& master_element = tet_store->data(tet_id);
+                Refinement_State& master_element = tet_store.data(tet_id);
 
                 // Check this won't take us past the max refinement level
                 if (master_element.refinement_level <= MIN_REFINEMENT_LEVEL)

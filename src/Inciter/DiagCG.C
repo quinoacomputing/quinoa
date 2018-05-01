@@ -26,7 +26,7 @@
 #include "ExodusIIMeshWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "DerivedData.h"
-#include "PDE.h"
+#include "CGPDE.h"
 #include "Discretization.h"
 #include "DistFCT.h"
 #include "DiagReducer.h"
@@ -40,7 +40,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
-extern std::vector< PDE > g_pdes;
+extern std::vector< CGPDE > g_cgpde;
 
 } // inciter::
 
@@ -48,7 +48,7 @@ using inciter::DiagCG;
 
 DiagCG::DiagCG( const CProxy_Discretization& disc,
                 const tk::CProxy_Solver& solver,
-                const FaceData& fd ) :
+                const FaceData& ) :
   m_itf( 0 ),
   m_nsol( 0 ),
   m_nlhs( 0 ),
@@ -94,7 +94,6 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 
   // Signal the runtime system that the workers have been created
   solver.ckLocalBranch()->created();
-  IGNORE( fd );
 }
 
 void
@@ -108,7 +107,7 @@ DiagCG::registerReducers()
 //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
 // *****************************************************************************
 {
-  Diagnostics::registerReducers();
+  NodeDiagnostics::registerReducers();
 }
 
 void
@@ -125,17 +124,16 @@ DiagCG::setup( tk::real v )
   // Output chare mesh to file
   d->writeMesh();
   // Output fields metadata to output file
-  d->writeMeta();
+  d->writeNodeMeta();
 
   // Compute left-hand side of PDEs
   lhs();
 
   // Set initial conditions for all PDEs
-  for (const auto& eq : g_pdes)
-    eq.initialize( d->Coord(), m_u, d->T(), d->Gid() );
+  for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
 
   // Activate SDAG waits for setup
-  wait4setup();
+  thisProxy[ thisIndex ].wait4setup();
 
   // Output initial conditions to file (regardless of whether it was requested)
   if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( d->T() );
@@ -243,7 +241,7 @@ DiagCG::dt()
   } else {      // compute dt based on CFL
 
     // find the minimum dt across all PDEs integrated
-    for (const auto& eq : g_pdes) {
+    for (const auto& eq : g_cgpde) {
       auto eqdt = eq.dt( d->Coord(), d->Inpoel(), m_u );
       if (eqdt < mindt) mindt = eqdt;
     }
@@ -267,7 +265,7 @@ DiagCG::rhs()
   auto d = Disc();
 
   // Compute right-hand side and query Dirichlet BCs for all equations
-  for (const auto& eq : g_pdes)
+  for (const auto& eq : g_cgpde)
     eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_u, m_ue, m_rhs );
 
   // Query and match user-specified boundary conditions to side sets
@@ -496,7 +494,7 @@ DiagCG::writeFields( tk::real time )
   auto nodefields = [&]() {
     auto u = m_u;   // make a copy as eq::output() may overwrite its arg
     std::vector< std::vector< tk::real > > output;
-    for (const auto& eq : g_pdes) {
+    for (const auto& eq : g_cgpde) {
       auto o = eq.fieldOutput( time, m_vol, d->Coord(), d->V(), u );
       output.insert( end(output), begin(o), end(o) );
     }
@@ -513,7 +511,7 @@ DiagCG::writeFields( tk::real time )
     // Write time stamp
     rmw.writeTimeStamp( m_itf, time );
     // Write node fields to file
-    d->writeSolution( rmw, m_itf, nodefields() );
+    d->writeNodeSolution( rmw, m_itf, nodefields() );
 
   } else
   #endif
@@ -524,7 +522,7 @@ DiagCG::writeFields( tk::real time )
     // Write time stamp
     ew.writeTimeStamp( m_itf, time );
     // Write node fields to file
-    d->writeSolution( ew, m_itf, nodefields() );
+    d->writeNodeSolution( ew, m_itf, nodefields() );
 
   }
 }
@@ -571,7 +569,7 @@ DiagCG::advance( tk::real newdt )
   d->FCT()->next();
 
   // Actiavate SDAG waits for time step
-  wait4rhs();
+  thisProxy[ thisIndex ].wait4rhs();
 
   // Compute rhs for next time step
   rhs();
@@ -595,7 +593,7 @@ DiagCG::next( const tk::Fields& a )
   // Output field data to file
   out();
   // Compute diagnostics, e.g., residuals
- auto diag =  m_diag.compute( *d, m_u );
+  auto diag =  m_diag.compute( *d, m_u );
   // Increase number of iterations and physical time
   d->next();
   // Output one-liner status report

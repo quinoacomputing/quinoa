@@ -19,7 +19,7 @@
 
 namespace tk {
  
-#define VERSION                      "@MAJOR_VER@.@MINOR_VER@ (C@LACC@)"
+#define QUINOA_VERSION               "@MAJOR_VER@.@MINOR_VER@ (C@LACC@)"
 #define GIT_COMMIT                   "@GIT_SHA1@"
 #define MPI_COMPILER                 "@MPI_COMPILER@"
 #define COMPILER                     "@COMPILER@"
@@ -29,6 +29,9 @@ namespace tk {
 #define REGRESSION_DIR               "@REGRESSION_DIR@"
 
 // Compile-time options
+
+// Host OS
+#cmakedefine HOST_OS_ALPINE
 
 // Data layout for particle data
 #cmakedefine PARTICLE_DATA_LAYOUT_AS_PARTICLE_MAJOR

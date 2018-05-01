@@ -9,9 +9,10 @@
 #ifndef test_MigratedTypes_h
 #define test_MigratedTypes_h
 
+#include "NoWarning/variant.h"
+
 #include "PUPUtil.h"
 #include "TaggedTuple.h"
-#include "Variant.h"
 
 //! Unit test declarations and definitions
 namespace tut {
@@ -41,7 +42,7 @@ using BoostOptionalInt = boost::optional< int >;
 using TaggedTuple = tk::tuple::tagged_tuple< tag::name,  std::string,
                                              tag::age,   int,
                                              tag::email, std::string >;
-using Variant = tk::Variant< int, double >;
+using Variant = boost::variant< int, double >;
 
 //! Pack/Unpack: delegate to PUP::
 inline void operator|( PUP::er& p, Enum_default& e ) { PUP::pup( p, e ); }

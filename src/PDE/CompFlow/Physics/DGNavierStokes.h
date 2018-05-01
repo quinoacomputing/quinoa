@@ -1,16 +1,19 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/CompFlow/Physics/NavierStokes.h
+  \file      src/PDE/CompFlow/Physics/DGNavierStokes.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Physics configuration for the Navier-Stples equation
-  \details   This file defines a Physics policy class for the compressible flow
-     equations, defined in PDE/CompFlow/CompFlow.h. The class defined here is
-     used to configure the behavior of CompFlow. See PDE/CompFlow/Physics.h
-     for general requirements on Physics policy classes for CompFlow.
+  \brief     Physics policy for the Navier-Stokes equation using discontinuous
+    Galerkin
+  \details   This file defines a Physics policy class for the compressible
+    single-material viscous flow equations using discontinuous Galerkin
+    discretization, defined in PDE/CompFlow/DGCompFlow.h. The class defined here
+    is used to configure the behavior of DGCompFlow. See
+    PDE/CompFlow/Physics/DG.h for general requirements on Physics policy classes
+    for DGCompFlow.
 */
 // *****************************************************************************
-#ifndef CompFlowPhysicsNavierStokes_h
-#define CompFlowPhysicsNavierStokes_h
+#ifndef CompFlowPhysicsDGNavierStokes_h
+#define CompFlowPhysicsDGNavierStokes_h
 
 #include <array>
 #include <limits>
@@ -21,6 +24,8 @@
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
+
+namespace dg {
 
 //! CompFlow system of PDEs problem: Navier-Stokes (viscous flow)
 //! \details This class adds the viscous force contributions to the momentum and
@@ -193,7 +198,8 @@ class CompFlowPhysicsNavierStokes {
     { return ctr::PhysicsType::NAVIERSTOKES; }
 };
 
+} // dg::
 
 } // inciter::
 
-#endif // CompFlowPhysicsNavierStokes_h
+#endif // CompFlowPhysicsDGNavierStokes_h

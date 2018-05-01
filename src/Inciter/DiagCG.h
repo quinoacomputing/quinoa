@@ -83,7 +83,7 @@
 #include "DerivedData.h"
 #include "VectorReducer.h"
 #include "FluxCorrector.h"
-#include "Diagnostics.h"
+#include "NodeDiagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "FaceData.h"
 
@@ -127,8 +127,8 @@ class DiagCG : public CBase_DiagCG {
 
     //! Constructor
     explicit DiagCG( const CProxy_Discretization& disc,
-                     const tk::CProxy_Solver& solver,
-                     const FaceData& fd );
+                     const tk::CProxy_Solver&,
+                     const FaceData& );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -254,7 +254,7 @@ class DiagCG : public CBase_DiagCG {
     //! Total mesh volume
     tk::real m_vol;
     //! Diagnostics object
-    Diagnostics m_diag;
+    NodeDiagnostics m_diag;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

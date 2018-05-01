@@ -16,7 +16,8 @@
 #include "ExodusIIMeshWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "Inciter/Options/Scheme.h"
-#include "PDE.h"
+#include "CGPDE.h"
+#include "DGPDE.h"
 #include "Print.h"
 
 #ifdef HAS_ROOT
@@ -26,7 +27,8 @@
 namespace inciter {
 
 static CkReduction::reducerType PDFMerger;
-extern std::vector< PDE > g_pdes;
+extern std::vector< CGPDE > g_cgpde;
+extern std::vector< DGPDE > g_dgpde;
 extern ctr::InputDeck g_inputdeck;
 
 } // inciter::
@@ -115,7 +117,7 @@ Discretization::Discretization(
   // is configured false in the input deck, at this point, we still need the FCT
   // object as FCT is still being performed, only its results are ignored. See
   // also, e.g., MatCG::next().
-  const auto sch = g_inputdeck.get< tag::selected, tag::scheme >();
+  const auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
   const auto nprop = g_inputdeck.get< tag::component >().nprop();
   if ((sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG))
     m_fct[ thisIndex ].insert( m_transporter, nchare, m_gid.size(), nprop,
@@ -427,7 +429,7 @@ Discretization::writeMesh()
 }
 
 void
-Discretization::writeSolution(
+Discretization::writeNodeSolution(
   const tk::ExodusIIMeshWriter& ew,
   uint64_t it,
   const std::vector< std::vector< tk::real > >& u ) const
@@ -444,7 +446,7 @@ Discretization::writeSolution(
 
 #ifdef HAS_ROOT
 void
-Discretization::writeSolution(
+Discretization::writeNodeSolution(
   const tk::RootMeshWriter& rmw,
   uint64_t it,
   const std::vector< std::vector< tk::real > >& u ) const
@@ -461,7 +463,23 @@ Discretization::writeSolution(
 #endif
 
 void
-Discretization::writeMeta() const
+Discretization::writeElemSolution(
+  const tk::ExodusIIMeshWriter& ew,
+  uint64_t it,
+  const std::vector< std::vector< tk::real > >& u ) const
+// *****************************************************************************
+// Output solution to file
+//! \param[in] ew ExodusII mesh-based writer object
+//! \param[in] it Iteration count
+//! \param[in] u Vector of element fields to write to file
+// *****************************************************************************
+{
+  int varid = 0;
+  for (const auto& f : u) ew.writeElemScalar( it, ++varid, f );
+}
+
+void
+Discretization::writeNodeMeta() const
 // *****************************************************************************
 // Output mesh-based fields metadata to file
 // *****************************************************************************
@@ -477,7 +495,7 @@ Discretization::writeMeta() const
 
       // Collect nodal field output names from all PDEs
       std::vector< std::string > names;
-      for (const auto& eq : g_pdes) {
+      for (const auto& eq : g_cgpde) {
         auto n = eq.fieldNames();
         names.insert( end(names), begin(n), end(n) );
       }
@@ -494,7 +512,7 @@ Discretization::writeMeta() const
 
       // Collect nodal field output names from all PDEs
       std::vector< std::string > names;
-      for (const auto& eq : g_pdes) {
+      for (const auto& eq : g_cgpde) {
         auto n = eq.fieldNames();
         names.insert( end(names), begin(n), end(n) );
       }
@@ -503,6 +521,29 @@ Discretization::writeMeta() const
       ew.writeNodeVarNames( names );
     }
 
+  }
+}
+
+void
+Discretization::writeElemMeta() const
+// *****************************************************************************
+// Output mesh-based element fields metadata to file
+// *****************************************************************************
+{
+  if (!g_inputdeck.get< tag::cmd, tag::benchmark >())
+  {
+    // Create ExodusII writer
+    tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
+
+    // Collect elemental field output names from all PDEs
+    std::vector< std::string > names;
+    for (const auto& eq : g_dgpde) {
+      auto n = eq.fieldNames();
+      names.insert( end(names), begin(n), end(n) );
+    }
+
+    // Write element field names
+    ew.writeElemVarNames( names );
   }
 }
 

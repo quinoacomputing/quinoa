@@ -19,7 +19,8 @@
 #include "QuinoaConfig.h"
 #include "Timer.h"
 #include "Exception.h"
-#include "PDE.h"
+#include "CGPDE.h"
+#include "DGPDE.h"
 #include "PDEStack.h"
 #include "ProcessException.h"
 #include "InciterPrint.h"
@@ -70,32 +71,59 @@ ctr::InputDeck g_inputdeck_defaults;
 //!   system distributes it to all PEs during initialization. Once distributed,
 //!   the object does not change.
 ctr::InputDeck g_inputdeck;
-//! Partial differential equations selected by user
+//! Partial differential equations using continuous Galerkin selected by user
 //! \details This vector is in global scope, because it holds polymorphic
 //!   objects, and thus must be distributed to all PEs during initialization.
 //!   Once distributed by the runtime system, the objects do not change.
-std::vector< PDE > g_pdes;
+std::vector< CGPDE > g_cgpde;
+//! Partial differential equations using discontinuous Galerkin selected by user
+//! \details This vector is in global scope, because it holds polymorphic
+//!   objects, and thus must be distributed to all PEs during initialization.
+//!   Once distributed by the runtime system, the objects do not change.
+std::vector< DGPDE > g_dgpde;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
 #endif
 
-//! Pack/Unpack selected partial differential equations. This Pack/Unpack method
-//! (re-)creates the PDE factory since it needs to (re-)bind function
-//! pointers on different processing elements. Therefore we circumvent Charm's
-//! usual pack/unpack for this type, and thus sizing does not make sense: sizing
-//! is a no-op. We could initialize the factory in InciterDriver's constructor
-//! and let this function re-create the stack only when unpacking, but that
-//! leads to repeating the same code twice: once in InciterDriver's constructor,
-//! once here. Another option is to use this pack/unpack routine to both
-//! initially create (when packing) and to re-create (when unpacking) the
-//! factory, which eliminates the need for pre-creating the object in
-//! InciterDriver's constructor and therefore eliminates the repeated code. This
-//! explains the guard for sizing: the code below is called for packing only (in
-//! serial) and packing and unpacking (in parallel).
+//! \brief Pack/Unpack selected partial differential equations using continuous
+//!   Galerkin discretization.
+//! \details This Pack/Unpack method (re-)creates the PDE factory since it needs
+//!   to (re-)bind function pointers on different processing elements. Therefore
+//!   we circumvent Charm's usual pack/unpack for this type, and thus sizing
+//!   does not make sense: sizing is a no-op. We could initialize the factory in
+//!   InciterDriver's constructor and let this function re-create the stack only
+//!   when unpacking, but that leads to repeating the same code twice: once in
+//!   InciterDriver's constructor, once here. Another option is to use this
+//!   pack/unpack routine to both initially create (when packing) and to
+//!   re-create (when unpacking) the factory, which eliminates the need for
+//!   pre-creating the object in InciterDriver's constructor and therefore
+//!   eliminates the repeated code. This explains the guard for sizing: the code
+//!   below is called for packing only (in serial) and packing and unpacking (in
+//!   parallel).
 inline
-void operator|( PUP::er& p, std::vector< PDE >& eqs ) {
-  if (!p.isSizing()) eqs = PDEStack().selected();
+void operator|( PUP::er& p, std::vector< CGPDE >& eqs ) {
+  if (!p.isSizing()) eqs = PDEStack().selectedCG();
+}
+
+//! \brief Pack/Unpack selected partial differential equations using
+//!   discontinuous Galerkin discretization.
+//! \details This Pack/Unpack method (re-)creates the PDE factory since it needs
+//!   to (re-)bind function pointers on different processing elements. Therefore
+//!   we circumvent Charm's usual pack/unpack for this type, and thus sizing
+//!   does not make sense: sizing is a no-op. We could initialize the factory in
+//!   InciterDriver's constructor and let this function re-create the stack only
+//!   when unpacking, but that leads to repeating the same code twice: once in
+//!   InciterDriver's constructor, once here. Another option is to use this
+//!   pack/unpack routine to both initially create (when packing) and to
+//!   re-create (when unpacking) the factory, which eliminates the need for
+//!   pre-creating the object in InciterDriver's constructor and therefore
+//!   eliminates the repeated code. This explains the guard for sizing: the code
+//!   below is called for packing only (in serial) and packing and unpacking (in
+//!   parallel).
+inline
+void operator|( PUP::er& p, std::vector< DGPDE >& eqs ) {
+  if (!p.isSizing()) eqs = PDEStack().selectedDG();
 }
 
 } // inciter::
@@ -130,6 +158,7 @@ class Main : public CBase_Main {
     //! \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
     Main( CkArgMsg* msg )
     try :
+      m_signal( tk::setSignalHandlers() ),
       m_cmdline(),
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
@@ -179,6 +208,7 @@ class Main : public CBase_Main {
     }
 
   private:
+    int m_signal;                               //!< Used to set signal handlers
     inciter::ctr::CmdLine m_cmdline;            //!< Command line
     inciter::CmdLineParser m_cmdParser;         //!< Command line parser
     inciter::InciterPrint m_print;              //!< Pretty printer

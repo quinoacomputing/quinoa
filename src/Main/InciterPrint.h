@@ -47,6 +47,16 @@ class InciterPrint : public tk::Print {
                   % opt.name( g_inputdeck.get< tags... >() );
     }
 
+    //! Print list of codes of vector-valued option
+    //! \param[in] v Vector of option types (enums) whose code vector to print
+    template< typename Option, typename T >
+    void ItemVec( const std::vector< T >& v ) const {
+      Option opt;
+      std::string codes;
+      for (auto e : v) codes += opt.code(e);
+      item( opt.group(), codes );
+    }
+
     // Helper class for compact output of PDE policies
     class Policies {
       public:

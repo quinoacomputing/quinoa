@@ -38,6 +38,8 @@
   #pragma clang diagnostic ignored "-Wdeprecated"
   #pragma clang diagnostic ignored "-Wundefined-func-template"
   #pragma clang diagnostic ignored "-Wunused-private-field"
+  #pragma clang diagnostic ignored "-Woverloaded-virtual"
+  #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -48,10 +50,12 @@
   #pragma GCC diagnostic ignored "-Wfloat-equal"
   #pragma GCC diagnostic ignored "-Wextra"
   #pragma GCC diagnostic ignored "-Wpedantic"
+  #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 181 )
   #pragma warning( disable: 1720 )
+  #pragma warning( disable: 1125 )
 #endif
 
 #include "../Inciter/dg.decl.h"

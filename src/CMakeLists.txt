@@ -75,6 +75,14 @@ include(TargetArch)
 target_architecture(ARCH)
 message(STATUS "Target architecture: ${ARCH}")
 
+# Detect operating system type and version
+include(DetectOS)
+detect_os()
+message(STATUS "Detected OS: ${HOST_OS}")
+if(HOST_OS MATCHES "alpine")
+  set(HOST_OS_ALPINE true)
+endif()
+
 # If not specified on the command-line, set default third-party libraries
 # directory based on cmake-supplied compiler ID
 if (NOT TPL_DIR)
@@ -222,7 +230,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Winvalid-pch")
   add_compiler_flag("-Wmissing-field-initializers")
   add_compiler_flag("-Wmissing-format-attribute")
-  add_compiler_flag("-Wmissing-include-dirs")
   add_compiler_flag("-Wmissing-noreturn")
   add_compiler_flag("-Wpacked")
   add_compiler_flag("-Wpointer-arith")
@@ -520,7 +527,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${RNGTEST_SRC_DIR}
                     ${QUINOA_SOURCE_DIR}/Statistics
                     ${QUINOA_SOURCE_DIR}/UnitTest
-                    ${MPI_CXX_INCLUDE_PATH}
+                    ${MPI_CXX_INCLUDE_DIRS}
                     ${MKL_INCLUDE_DIRS}
                     ${HDF5_INCLUDE_DIRS}
                     ${HYPRE_INCLUDE_DIRS}
@@ -592,11 +599,11 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../regression
 # Setup code coverage for unit tests
 if(CODE_COVERAGE)
   # Setup test coverage target. Make it dependend on all quinoa executables.
-  setup_target_for_coverage(unit doc/html unittest_coverage
-                            ${RUNNER}
-                            TESTRUNNER_ARGS
-                            ${RUNNER_NCPUS_ARG} ${PROCESSOR_COUNT}
-                            Main/${UNITTEST_EXECUTABLE} -v
+  setup_target_for_coverage(unit doc/html unittest_coverage ${RUNNER}
+                            TESTRUNNER_ARGS ${RUNNER_NCPUS_ARG}
+                                            ${PROCESSOR_COUNT}
+                                            ${RUNNER_ARGS}
+                                            Main/${UNITTEST_EXECUTABLE} -v
                             DEPENDS ${NONTEST_EXECUTABLES}
                                     ${UNITTEST_EXECUTABLE})
 endif()
@@ -606,9 +613,8 @@ if(CODE_COVERAGE)
   # Setup test coverage target. Make it dependend on all quinoa executables.
   setup_target_for_coverage(regression doc/html regression_coverage
                             ${CMAKE_CTEST_COMMAND}
-                            TESTRUNNER_ARGS
-                            -j${PROCESSOR_COUNT}
-                            ${REGRESSION_COVERAGE_ARGS}
+                            TESTRUNNER_ARGS -j${PROCESSOR_COUNT}
+                                            ${REGRESSION_COVERAGE_ARGS}
                             DEPENDS ${NONTEST_EXECUTABLES})
   if (REGRESSION_COVERAGE_ARGS)
     message(STATUS "Regression coverage test-runner arguments: '${REGRESSION_COVERAGE_ARGS}'")

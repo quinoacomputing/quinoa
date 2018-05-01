@@ -28,14 +28,18 @@
       Load [ label="Load"
               tooltip="Load is computed"
               URL="\ref inciter::Transporter::load"];
-      PartSetup [ label="PartSetup"
-              tooltip="Prerequsites done for mesh partitioning"
-              URL="\ref inciter::Transporter::part"];
+      Centroid [ label="Centroid"
+              tooltip="Cell centroids have been computed"
+              URL="\ref inciter::Transporter::centroid"];
+      Refined [ label="Refined"
+              tooltip="Mesh has been optionally initially refined"
+              URL="\ref inciter::Transporter::refined"];
       Part [ label="Part"
               tooltip="Partition mesh"
               URL="\ref inciter::Partitioner::partition"];
       Load -> Part [ style="solid" ];
-      PartSetup -> Part [ style="solid" ];
+      Centroid -> Part [ style="solid" ];
+      Refined -> Part [ style="solid" ];
       MinStat [ label="MinStat"
               tooltip="chares contribute to minimum mesh cell statistics"
               URL="\ref inciter::Discretization::stat"];
@@ -358,6 +362,14 @@ namespace inciter {
 //! Transporter drives the time integration of transport equations
 class Transporter : public CBase_Transporter {
 
+  private:
+    //! Indices for progress report on mesh read (and prep for partitioning)
+    enum ProgMesh{ READ=0, REFINE, CENTROID };
+    //! Indices for progress report on mesh partitioning
+    enum ProgPart{ PART=0, DIST };
+    //! Indices for progress report on mesh reordering
+    enum ProgReord{ FLAT=0, GATHER, QUERY, MASK, REORD, BOUND };
+
   public:
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -385,15 +397,15 @@ class Transporter : public CBase_Transporter {
     //! Constructor
     explicit Transporter();
 
-    //! \brief Reduction target indicating that all Partitioner chare groups
-    //!   have finished reading their part of the computational mesh graph and
-    //!   we are ready to compute the computational load
+    //! Reduction target indicating that the mesh has been read from file
     void load( uint64_t nelem );
 
-    //! \brief Reduction target indicating that all Partitioner chare groups
-    //!   have finished setting up the necessary data structures for
-    //!   partitioning the computational mesh and we are ready for partitioning
-    void part();
+    //! \brief Reduction target indicating that optional initial mesh refinement
+    //!   has been completed on all PEs
+    void refined();
+
+    //! Reduction target indicating that centroids have been computed all PEs
+    void centroid();
 
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished distributing its global mesh node IDs and they are ready
@@ -416,38 +428,30 @@ class Transporter : public CBase_Transporter {
     //!   workers to read their mesh coordinates
     void coord();
 
-    //! Non-reduction target for receiving progress report on reading mesh graph
-    void pegraph() { m_progGraph.inc<0>(); }
+    //! Non-reduction target for receiving progress report on reading mesh
+    void peread() { m_progMesh.inc< READ >(); }
+    //! Non-reduction target for receiving progress report on mesh refinement
+    void perefined() { m_progMesh.inc< REFINE >(); }
+    //! Non-reduction target for receiving progress report on mesh centroids
+    void pecentroid() { m_progMesh.inc< CENTROID >(); }
 
     //! Non-reduction target for receiving progress report on partitioning mesh
-    void pepartitioned() { m_progPart.inc<0>(); }
+    void pepartitioned() { m_progPart.inc< PART >(); }
     //! Non-reduction target for receiving progress report on distributing mesh
-    void pedistributed() { m_progPart.inc<1>(); }
+    void pedistributed() { m_progPart.inc< DIST >(); }
 
     //! Non-reduction target for receiving progress report on flattening mesh
-    void peflattened() { m_progReorder.inc<0>(); }
+    void peflattened() { m_progReorder.inc< FLAT >(); }
+    //! Non-reduction target for receiving progress report on node ID gather
+    void pegather() { m_progReorder.inc< GATHER >(); }
+    //! Non-reduction target for receiving progress report on node ID query
+    void pequery() { m_progReorder.inc< QUERY >(); }
     //! Non-reduction target for receiving progress report on node ID mask
-    void pemask() { m_progReorder.inc<1>(); }
+    void pemask() { m_progReorder.inc< MASK >(); }
     //! Non-reduction target for receiving progress report on reordering mesh
-    void pereordered() { m_progReorder.inc<2>(); }
+    void pereordered() { m_progReorder.inc< REORD >(); }
     //! Non-reduction target for receiving progress report on computing bounds
-    void pebounds() { m_progReorder.inc<3>(); }
-
-    //! Non-reduction target for receiving progress report on establishing comms
-    void pecomfinal() { m_progSetup.inc<0>(); }
-    //! Non-reduction target for receiving progress report on matching BCs
-    void chbcmatched() { m_progSetup.inc<1>(); }
-    //! Non-reduction target for receiving progress report on computing BCs
-    void pebccomplete() { m_progSetup.inc<2>(); }
-
-    //! Non-reduction target for receiving progress report on computing the RHS
-    void chrhs() { m_progStep.inc<0>(); }
-    //! Non-reduction target for receiving progress report on solving the system
-    void pesolve() { m_progStep.inc<1>(); }
-    //! Non-reduction target for receiving progress report on limiting
-    void chlim() { m_progStep.inc<2>(); }
-    //! Non-reduction target for receiving progress report on tracking particles
-    void chtrack() { m_progStep.inc<3>(); }
+    void pebounds() { m_progReorder.inc< BOUND >(); }
 
     //! \brief Reduction target indicating that the communication has been
     //!    established among PEs
@@ -492,6 +496,9 @@ class Transporter : public CBase_Transporter {
   private:
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of worker chares
+    uint64_t m_nelem;                    //!< Total number of mesh elements
+    uint64_t m_chunksize;                //!< Number of elements per PE
+    uint64_t m_remainder;                //!< Number elements added to last PE
     tk::CProxy_Solver m_solver;          //!< Linear system solver group proxy
     CProxy_BoundaryConditions m_bc;      //!< Boundary conditions group proxy
     Scheme m_scheme;                     //!< Discretization scheme
@@ -509,22 +516,19 @@ class Transporter : public CBase_Transporter {
     //! Average mesh statistics
     std::array< tk::real, 2 > m_avgstat;
     //! Timer tags
-    enum class TimerTag { MESHREAD };
+    enum class TimerTag { MESH_PREP=0 };
     //! Timers
     std::map< TimerTag, tk::Timer > m_timer;
     //! \brief Aggregate 'old' (as in file) node ID list at which Solver
     //!   sets boundary conditions, see also Partitioner.h
     std::vector< std::size_t > m_linsysbc;
+    //! \brief Progress object for task "Creating partitioners, reading, and
+    //!    optionally refining mesh"
+    tk::Progress< 3 > m_progMesh;
     // Progress object for task "Partitioning and distributing mesh"
     tk::Progress< 2 > m_progPart;
-    // Progress object for task "Creating partitioners and reading mesh graph"
-    tk::Progress< 1 > m_progGraph;
     // Progress object for task "Reordering mesh"
-    tk::Progress< 4 > m_progReorder;
-    // Progress object for task "Computing row IDs, querying BCs, ..."
-    tk::Progress< 3 > m_progSetup;
-    // Progress object for sub-tasks of a time step
-    tk::Progress< 4 > m_progStep;
+    tk::Progress< 6 > m_progReorder;
 
     //! Create linear solver group
     void createSolver();
@@ -532,11 +536,25 @@ class Transporter : public CBase_Transporter {
     //! Create mesh partitioner and boundary condition object group
     void createPartitioner();
 
+    //! Start partitioning the mesh
+    void partition();
+
     //! Configure and write diagnostics file header
     void diagHeader();
 
     //! Echo diagnostics on mesh statistics
     void stat();
+
+    //! Query variable names for all equation systems to be integrated
+    //! \param[in] eq Equation system whose variable names to query
+    //! \param[in,out] var Vector of strings to which we append the variable
+    //!   names for this equation. We append as many strings as many scalar
+    //!   variables are in the equation system given by eq.
+    template< class Eq >
+    void varnames( const Eq& eq, std::vector< std::string >& var ) {
+      auto o = eq.names();
+      var.insert( end(var), begin(o), end(o) );
+    }
 };
 
 } // inciter::

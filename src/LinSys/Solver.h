@@ -342,16 +342,17 @@ class Solver : public CBase_Solver {
       , tag::coord, CkCallback
       , tag::diag,  CkCallback
     > m_cb;
-    std::size_t m_ncomp;        //!< Number of scalar components per unknown
-    std::size_t m_nchare;       //!< Number of chares contributing to my PE
-    std::size_t m_nperow;       //!< Number of fellow PEs to send row ids to
-    std::size_t m_nchbc;        //!< Number of chares we received bcs from
-    std::size_t m_lower;        //!< Lower index of the global rows on my PE
-    std::size_t m_upper;        //!< Upper index of the global rows on my PE
+    std::size_t m_ncomp;       //!< Number of scalar components per unknown
+    std::size_t m_nchare;      //!< Number of chares contributing to my PE
+    std::size_t m_ncomm;       //!< Number of chares finished commaps on my PE
+    std::size_t m_nperow;      //!< Number of fellow PEs to send row ids to
+    std::size_t m_nchbc;       //!< Number of chares we received bcs from
+    std::size_t m_lower;       //!< Lower index of the global rows on my PE
+    std::size_t m_upper;       //!< Upper index of the global rows on my PE
     uint64_t m_it;             //!< Iteration count (original in Discretization)
     tk::real m_t;              //!< Physical time (original in Discretization)
     tk::real m_dt;             //!< Time step size (original in Discretization)
-    //bool m_feedback;            //!< Whether to send sub-task feedback to host
+    bool m_feedback;           //!< Whether to send sub-task feedback to host
     //! Ids of workers on my PE
     std::vector< int > m_myworker;
     //! \brief Import map associating a list of global row ids to a worker chare

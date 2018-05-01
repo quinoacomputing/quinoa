@@ -41,7 +41,7 @@ static std::string workdir()
 {
   char cwd[1024];
 
-  if ( getcwd(cwd, sizeof(cwd)) != NULL )
+  if ( getcwd(cwd, sizeof(cwd)) != nullptr )
     return std::string( cwd );
   else
     Throw( "Error from POSIX API's getcwd()" );
@@ -57,7 +57,7 @@ static std::string curtime()
   char* c_time_string;
 
   // Obtain current time as seconds elapsed since the Epoch
-  current_time = time( NULL );
+  current_time = time( nullptr );
 
   if (current_time == static_cast<time_t>(-1))
     Throw( "Failure to compute the current time" );
@@ -65,7 +65,7 @@ static std::string curtime()
   // Convert to local time format
   c_time_string = ctime(&current_time);
 
-  if (c_time_string == NULL)
+  if (c_time_string == nullptr)
     Throw( "Failure to convert the current time" );
 
   // Convert to std::string and remove trailing newline
@@ -110,7 +110,7 @@ static void echoBuildEnv( const Print& print, const std::string& executable )
   print.section( "Build environment" );
   print.item( "Hostname", BUILD_HOSTNAME );
   print.item( "Executable", executable );
-  print.item( "Version", VERSION );
+  print.item( "Version", QUINOA_VERSION );
   if (std::string(GIT_COMMIT).find("NOTFOUND") == std::string::npos)
     print.item( "Revision SHA1", GIT_COMMIT );
   print.item( "CMake build type", BUILD_TYPE );

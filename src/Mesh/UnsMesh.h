@@ -52,6 +52,30 @@ class UnsMesh {
     //! Unique set of edges
     using Edges = std::unordered_set< Edge, EdgeHash, EdgeEq >;
 
+    //! Node ID triplet denoting a tetrahedron face
+    using Face = std::array< std::size_t, 3 >;
+    // Hash functor for node triplet (Face)
+    struct FaceHasher {
+      std::size_t operator()( const Face& key ) const {
+        return std::hash< std::size_t >()( key[0] ) ^
+               std::hash< std::size_t >()( key[1] ) ^
+               std::hash< std::size_t >()( key[2] );
+      }
+    };
+    //! Key-equal function for node triplet (Face)
+    //! \note This requires all 3 node IDs be present in both the left and right
+    //!   hand side but ignores ordering. For example, for A,B,C it will match
+    //!   B,A,C, C,B,A, etc.
+    struct FaceEq {
+      bool operator()( const Face& l, const Face& r ) const {
+        return (l[0] == r[0] || l[0] == r[1] || l[0] == r[2]) &&
+               (l[1] == r[0] || l[1] == r[1] || l[1] == r[2]) &&
+               (l[2] == r[0] || l[2] == r[1] || l[2] == r[2]);
+      }
+    };
+    //! Unique set of node ID triplets representing unique tetrahedron faces
+    using FaceSet = std::unordered_set< Face, FaceHasher, FaceEq >;
+
     /** @name Constructors */
     ///@{
     //! Constructor without initializing anything

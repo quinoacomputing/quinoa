@@ -26,7 +26,6 @@ module partitioner {
         const tk::CProxy_Solver& solver,
         const CProxy_BoundaryConditions& bc,
         const Scheme& scheme,
-        std::size_t nbfac,
         const std::map< int, std::vector< std::size_t > >& bface,
         const std::vector< std::size_t >& triinpoel );
       entry void partition( int nchare );
@@ -43,13 +42,10 @@ module partitioner {
       entry void lower( std::size_t low );
       entry void stdCost( tk::real av );
       entry void gather();
-      entry void query( int pe,
-                        const std::set< std::size_t >& nodes,
-                        const tk::UnsMesh::Edges& edges );
+      entry void query( int pe, const std::vector< std::size_t >& nodes );
       entry void mask( int pe,
                        const std::unordered_map< std::size_t,
-                                                 std::vector< int > >& cn,
-                       tk::UnsMesh::EdgeChares& ce );
+                                                 std::vector< int > >& cn );
       entry void createWorkers();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/

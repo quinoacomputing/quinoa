@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/dg.ci
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for the discontinuous Galerkin scheme
   \details   Charm++ module interface file for the discontinuous Galerking
              scheme.
@@ -23,13 +23,54 @@ module dg {
 
     array [1D] DG {
       entry DG( const CProxy_Discretization& disc,
-                const tk::CProxy_Solver& solver,
+                const tk::CProxy_Solver&,
                 const FaceData& fd );
+      entry void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
+      entry void comGhost( int fromch, const GhostData& ghost );
+      entry void reqGhost();
       initnode void registerReducers();      
       entry void setup( tk::real v );
       entry void dt();
       entry void eval();
+      entry void comsol( int fromch,
+                         const std::vector< std::size_t >& tetid,
+                         const std::vector< std::vector< tk::real > >& u );
       entry [reductiontarget] void advance( tk::real newdt );
+
+      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+      // High-level overview of the dependency and asynchronous call structure
+      // ---------------------------------------------------------------------
+      //
+      // Directed Acyclic Graph (DAG):
+      // -----------------------------
+      //
+      // See src/Inciter/DG.h.
+      //
+      // Interpretation of the above DAG
+      // -------------------------------
+      // Control flow is from left to right and top to bottom.
+      //
+      // If we have computed our own ghost data in setupGhost(), and every chare
+      // we communicate with has requested ghost data from us, we fulfill the
+      // requests and send out ghost data.
+      //
+      // We only perform solution of the linear system if both the own and
+      // communicated (ghost) portion of the unknown/solution vector are
+      // complete.
+
+      entry void wait4ghost() {
+        when ownghost_complete(), reqghost_complete() serial "ghost"
+        { sendGhost(); } };
+
+      entry void wait4sol() {
+        when ownsol_complete(), comsol_complete() serial "sol" { solve(); } };
+
+      entry void ownghost_complete();
+      entry void reqghost_complete();
+      entry void ownsol_complete();
+      entry void comsol_complete();
     };
 
   } // inciter::
