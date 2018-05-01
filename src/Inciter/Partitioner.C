@@ -295,7 +295,7 @@ Partitioner::addChMesh( int frompe,
     // Store coordinates associated to global node IDs. The send side also
     // writes to this, so concat.
     const auto& coord = std::get< 1 >( c.second );
-    Assert( tk::cunique(mesh).size() == coord.size(), "Size mismatch" );
+    Assert( tk::uniquecopy(mesh).size() == coord.size(), "Size mismatch" );
     m_coordmap.insert( begin(coord), end(coord) );
   }
 
@@ -326,7 +326,7 @@ Partitioner::addPeMesh( int frompe,
 //! \param[in] cm Coordinates associated to global node IDs
 // *****************************************************************************
 {
-  Assert( tk::cunique(inpoel).size() == cm.size(), "Size mismatch" );
+  Assert( tk::uniquecopy(inpoel).size() == cm.size(), "Size mismatch" );
 
   // Store mesh connectivity. The send side also writes to this, so concat.
   m_ginpoel.insert( end(m_ginpoel), begin(inpoel), end(inpoel) );
@@ -605,7 +605,7 @@ Partitioner::centroids( const std::vector< std::size_t >& inpoel,
 //! \return Centroids for all cells on this PE
 // *****************************************************************************
 {
-  Assert( tk::cunique(inpoel).size() == coord[0].size(), "Size mismatch" );
+  Assert( tk::uniquecopy(inpoel).size() == coord[0].size(), "Size mismatch" );
 
   const auto& x = coord[0];
   const auto& y = coord[1];
@@ -688,7 +688,7 @@ Partitioner::coordmap( const std::vector< std::size_t >& inpoel )
 {
   tk::UnsMesh::CoordMap map;
 
-  for (auto g : tk::cunique(inpoel)) {
+  for (auto g : tk::uniquecopy(inpoel)) {
      auto i = tk::cref_find( m_lid, g );
      auto& c = map[g];
      c[0] = m_coord[0][i];
@@ -696,7 +696,7 @@ Partitioner::coordmap( const std::vector< std::size_t >& inpoel )
      c[2] = m_coord[2][i];
   }
 
-  Assert( tk::cunique(inpoel).size() == map.size(), "Size mismatch" );
+  Assert( tk::uniquecopy(inpoel).size() == map.size(), "Size mismatch" );
 
   return map;
 }
@@ -1333,7 +1333,8 @@ Partitioner::updateMesh( AMR::mesh_adapter_t& refiner )
 
   // Update mesh connectivity with new global node ids
   m_ginpoel = m_inpoel;
-  Assert( tk::cunique(m_ginpoel).size() == m_coord[0].size(), "Size mismatch" );
+  Assert( tk::uniquecopy(m_ginpoel).size() == m_coord[0].size(),
+          "Size mismatch" );
   for (auto& i : m_ginpoel) i = m_gid[i];
 }
 

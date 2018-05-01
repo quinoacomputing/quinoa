@@ -203,13 +203,13 @@ positiveJacobians( const std::vector< std::size_t >& inpoel,
   Assert( !inpoel.empty(), "Mesh connectivity empty" );
   Assert( inpoel.size() % 4 == 0,
           "Mesh connectivity size must be divisible by 4 " );
-  Assert( tk::cunique(inpoel).size() == coord[0].size(), "Number of unique "
+  Assert( tk::uniquecopy(inpoel).size() == coord[0].size(), "Number of unique "
           "nodes in mesh connectivity must equal the number of nodes to which "
           "coordinates have been supplied" );
-  Assert( tk::cunique(inpoel).size() == coord[1].size(), "Number of unique "
+  Assert( tk::uniquecopy(inpoel).size() == coord[1].size(), "Number of unique "
           "nodes in mesh connectivity must equal the number of nodes to which "
           "coordinates have been supplied" );
-  Assert( tk::cunique(inpoel).size() == coord[2].size(), "Number of unique "
+  Assert( tk::uniquecopy(inpoel).size() == coord[2].size(), "Number of unique "
           "nodes in mesh connectivity must equal the number of nodes to which "
           "coordinates have been supplied" );
   Assert( *std::minmax_element( begin(inpoel), end(inpoel) ).first == 0,

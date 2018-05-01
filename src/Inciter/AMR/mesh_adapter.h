@@ -47,7 +47,7 @@ class mesh_adapter_t {
     void evaluate_error_estimate();
     void uniform_refinement();
     void error_refinement( const std::vector< edge_t >& edge,
-                           const std::vector< real_t >& crit );
+                           const std::vector< real_t >& criteria );
 
     int detect_compatibility(int num_locked_edges,
             AMR::Refinement_Case refinement_case);
