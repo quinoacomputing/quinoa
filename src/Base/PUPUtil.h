@@ -55,48 +55,6 @@ inline void pup( PUP::er& p, E& e ) {
   #pragma GCC diagnostic pop
 #endif
 
-//////////////////// Serialize std::tuple ////////////////////
-
-//! PUP_tuple_impl: specialization for empty std::tuple
-template< std::size_t I = 0, typename... Tp >
-typename std::enable_if< I == sizeof...(Tp), void >::type
-pup_tuple_impl( PUP::er&, std::tuple< Tp... >& ) {}
-//! PUP_tuple_impl: specialization for non-empty std::tuple
-template< std::size_t I = 0, typename... Tp >
-typename std::enable_if< I < sizeof...(Tp), void >::type
-pup_tuple_impl( PUP::er& p, std::tuple< Tp... >& t ) {
-  p | std::get<I>(t);
-  pup_tuple_impl< I + 1, Tp... >( p, t );
-}
-//! Pack/Unpack std::tuple.
-//! \param[in] p Charm++'s pack/unpack object
-//! \param[in] t std::tuple to pack/unpack
-template< typename... Ts >
-inline void pup( PUP::er& p, std::tuple< Ts... >& t ) {
-  if (p.isUnpacking()) t = std::tuple< Ts... >();
-  pup_tuple_impl( p, t );
-}
-//! Pack/Unpack std::tuple.
-//! \param[in] p Charm++'s pack/unpack object
-//! \param[in] t std::tuple to pack/unpack
-template< typename... Ts >
-inline void operator|( PUP::er& p, std::tuple< Ts... >& t ) { pup( p, t ); }
-
-//////////////////// Serialize std::array ////////////////////
-
-//! Pack/Unpack std::array.
-//! \param[in] p Charm++'s pack/unpack object
-//! \param[in] a std::array< T, N > of arbitrary type T to pack/unpack
-template< class T, std::size_t N >
-inline void pup( PUP::er& p, std::array< T, N >& a ) {
-  for (std::size_t s=0; s<N; ++s) p | a[s];
-}
-//! Pack/Unpack std::array.
-//! \param[in] p Charm++'s pack/unpack object
-//! \param[in] a std::array< T, N > of arbitrary type T to pack/unpack
-template< class T, std::size_t N >
-inline void operator|( PUP::er& p, std::array< T, N >& a ) { pup( p, a ); }
-
 //////////////////// Serialize std::unordered_map ////////////////////
 
 //! Pack/Unpack std::unordered_map.

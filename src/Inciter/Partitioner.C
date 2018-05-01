@@ -683,9 +683,9 @@ Partitioner::reorder()
   // Activate SDAG waits for having requests arrive from other PEs for some
   // of our node IDs; and for computing/receiving lower and upper bounds of
   // global node IDs our PE operates on after reordering
-  wait4prep();
-  wait4bounds();
-  wait4reorder();
+  thisProxy[ CkMyPe() ].wait4prep();
+  thisProxy[ CkMyPe() ].wait4bounds();
+  thisProxy[ CkMyPe() ].wait4reorder();
 
   // In serial signal to the runtime system that we have participated in
   // reordering. This is required here because this is only triggered if
@@ -794,7 +794,8 @@ Partitioner::prepare()
 
   tk::destroy( m_reqEdges ); // Clear queue of requests just fulfilled
 
-  wait4prep();      // Re-enable SDAG wait for preparing new node requests
+  // Re-enable SDAG wait for preparing new node requests
+  thisProxy[ CkMyPe() ].wait4prep();
 
   // Re-enable trigger signaling that reordering of owned node IDs are
   // complete right away
