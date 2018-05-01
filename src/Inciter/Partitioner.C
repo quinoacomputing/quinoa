@@ -814,8 +814,8 @@ Partitioner::reorder()
   // Activate SDAG waits for having requests arrive from other PEs for some
   // of our node IDs; and for computing/receiving lower and upper bounds of
   // global node IDs our PE operates on after reordering
-  wait4prep();
-  wait4bounds();
+  thisProxy[ CkMyPe() ].wait4prep();
+  thisProxy[ CkMyPe() ].wait4bounds();
 
   // In serial signal to the runtime system that we have participated in
   // reordering. This is required here because this is only triggered if
@@ -898,7 +898,8 @@ Partitioner::prepare()
 
   tk::destroy( m_reqNodes ); // Clear queue of requests just fulfilled
 
-  wait4prep();      // Re-enable SDAG wait for preparing new node requests
+  // Re-enable SDAG wait for preparing new node requests
+  thisProxy[ CkMyPe() ].wait4prep();
 
   // Re-enable trigger signaling that reordering of owned node IDs are
   // complete right away
@@ -1452,7 +1453,7 @@ Partitioner::create()
   createDiscWorkers();
 
   // Broadcast our bounds of global node IDs to all matrix solvers
-  const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG)
     m_solver.bounds( CkMyPe(), m_lower, m_upper );
   else // if no MatCG, no matrix solver, continue

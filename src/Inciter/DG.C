@@ -75,7 +75,7 @@ DG::DG( const CProxy_Discretization& disc,
   Assert( !leakyPartition(), "Mesh partition leaky" );
 
   // Activate SDAG waits for face adjacency map (ghost data) calculation
-  wait4ghost();
+  thisProxy[ thisIndex ].wait4ghost();
 
   auto d = Disc();
 
@@ -706,7 +706,7 @@ DG::dt()
   }
 
   // Enable SDAG wait for building the solution vector
-  wait4sol();
+  thisProxy[ thisIndex ].wait4sol();
 
   // Contribute to minimum dt across all chares then advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,

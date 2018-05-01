@@ -158,6 +158,7 @@ struct bcdir {};
 struct bcsym {};
 struct bcinlet {};
 struct bcoutlet {};
+struct bcextrapolate {};
 struct material {};
 struct id {};
 struct cv {};
@@ -172,6 +173,7 @@ struct bcast {};
 struct elem {};
 struct avecost {};
 struct stdcost {};
+struct flux {};
 
 struct BirthdaySpacings {};
 struct Collision {};

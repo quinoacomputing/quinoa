@@ -43,8 +43,8 @@ class Integrator : public CBase_Integrator {
 
   public:
     //! Constructor
-    explicit Integrator( CProxy_Distributor& hostproxy,
-                         CProxy_Collector& collproxy,
+    explicit Integrator( CProxy_Distributor hostproxy,
+                         CProxy_Collector collproxy,
                          uint64_t npar );
 
     //! Migrate constructor

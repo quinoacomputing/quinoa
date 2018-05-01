@@ -113,7 +113,7 @@ Discretization::Discretization(
   // is configured false in the input deck, at this point, we still need the FCT
   // object as FCT is still being performed, only its results are ignored. See
   // also, e.g., MatCG::next().
-  const auto sch = g_inputdeck.get< tag::selected, tag::scheme >();
+  const auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
   const auto nprop = g_inputdeck.get< tag::component >().nprop();
   if ((sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG))
     m_fct[ thisIndex ].insert( m_transporter, nchare, m_gid.size(), nprop,

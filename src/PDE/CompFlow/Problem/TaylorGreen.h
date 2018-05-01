@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/CompFlowProblem/TaylorGreen.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Problem configuration for the compressible flow equations
   \details   This file defines a policy class for the compressible flow
     equations, defined in PDE/CompFlow/CompFlow.h. See PDE/CompFlow/Problems.h
@@ -211,7 +211,7 @@ class CompFlowProblemTaylorGreen {
 
       std::vector< tk::real > P( r.size(), 0.0 );
       for (std::size_t i=0; i<P.size(); ++i)
-        P[i] = (g-1.0)*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0/r[i]);
+        P[i] = (g-1.0)*r[i]*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
       out.push_back( P );
       out.push_back( Pa );
 

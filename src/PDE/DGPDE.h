@@ -6,7 +6,7 @@
   \details   This file defines a generic partial differential equation (PDE)
     class for PDEs that use discontinuous Galerkin spatial discretization.
     The class uses runtime polymorphism without client-side inheritance:
-    inheritance is confined to the internals of the class, inivisble to
+    inheritance is confined to the internals of the class, invisible to
     client-code. The class exclusively deals with ownership enabling client-side
     value semantics. Credit goes to Sean Parent at Adobe:
     https://github.com/sean-parent/sean-parent.github.com/wiki/
@@ -32,7 +32,7 @@ namespace inciter {
 //! \brief Partial differential equation base for discontinuous Galerkin PDEs
 //! \details This class uses runtime polymorphism without client-side
 //!   inheritance: inheritance is confined to the internals of the this class,
-//!   inivisble to client-code. The class exclusively deals with ownership
+//!   invisible to client-code. The class exclusively deals with ownership
 //!   enabling client-side value semantics. Credit goes to Sean Parent at Adobe:
 //!   https://github.com/sean-parent/sean-parent.github.com/wiki/
 //!   Papers-and-Presentations. For example client code that models a DGPDE,

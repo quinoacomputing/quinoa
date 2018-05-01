@@ -5,7 +5,7 @@
   \brief     Random number generator test harness
   \details   This file defines a generic random number generator test harness
     class. The class uses runtime polymorphism without client-side inheritance:
-    inheritance is confined to the internals of the class, inivisble to
+    inheritance is confined to the internals of the class, invisible to
     client-code. The class exclusively deals with ownership enabling client-side
     value semantics. Credit goes to Sean Parent at Adobe:
     https://github.com/sean-parent/
@@ -29,7 +29,7 @@ namespace rngtest {
 //! \brief Battery
 //! \details This class uses runtime polymorphism without client-side
 //!   inheritance: inheritance is confined to the internals of the this class,
-//!   inivisble to client-code. The class exclusively deals with ownership
+//!   invisible to client-code. The class exclusively deals with ownership
 //!   enabling client-side value semantics. Credit goes to Sean Parent at Adobe:
 //!   https://github.com/sean-parent/sean-parent.github.com/wiki/
 //!   Papers-and-Presentations. For example client code that models a Battery,

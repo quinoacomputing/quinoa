@@ -29,7 +29,7 @@ class TUTTest : public CBase_TUTTest< Proxy > {
     //! \param[in] proxy Host proxy to call back to after test has been run
     //! \param[in] groupname Name of the group the test belongs to
     //! \param[in] t Test number on test group
-    explicit TUTTest( Proxy& proxy, const std::string& groupname, int t ) {
+    explicit TUTTest( Proxy&& proxy, const std::string& groupname, int t ) {
       tut::test_result tr;
       g_runner.get().run_test( groupname, t, tr );
       proxy.evaluate( { tr.group, tr.name, std::to_string(tr.result),
