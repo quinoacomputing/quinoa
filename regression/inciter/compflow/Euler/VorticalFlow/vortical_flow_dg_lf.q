@@ -16,6 +16,7 @@ inciter
 
     physics euler
     problem vortical_flow
+    depvar u
 
     alpha 0.1
     beta 1.0
