@@ -899,7 +899,7 @@ DG::eval()
   if (std::fabs(d->T()-term) > eps && d->It() < nstep)
     dt();
   else
-    contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
+    d->contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));
 }
 
 #include "NoWarning/dg.def.h"
