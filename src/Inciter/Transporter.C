@@ -320,10 +320,8 @@ Transporter::load( uint64_t nelem )
   // signal to runtime system that m_nchare is set
   load_complete();
 
-  // Send total number of chares to all linear solver PEs, if they exist
-  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG)
-    m_solver.nchare( m_nchare );
+  // Send total number of chares to all linear solver PEs
+  m_solver.nchare( m_nchare );
 }
 
 void
