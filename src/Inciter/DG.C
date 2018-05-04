@@ -66,22 +66,14 @@ DG::DG( const CProxy_Discretization& disc,
   m_exptGhost(),
   m_recvGhost(),
   m_diag(),
-  m_stage( 0 ),
-  m_rkcoef()
+  m_stage( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
+//! \param[in] solver Linear system solver (Solver) proxy
 //! \param[in] Face data structures
 // *****************************************************************************
 {
-  m_rkcoef[0][0] = 0.0;
-  m_rkcoef[0][1] = 3.0/4.0;
-  m_rkcoef[0][2] = 1.0/3.0;
-
-  m_rkcoef[1][0] = 1.0;
-  m_rkcoef[1][1] = 1.0/4.0;
-  m_rkcoef[1][2] = 2.0/3.0;
-
   // Perform leak test on mesh partition
   Assert( !leakyPartition(), "Mesh partition leaky" );
 
