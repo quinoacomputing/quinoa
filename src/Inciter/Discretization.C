@@ -73,7 +73,6 @@ Discretization::Discretization(
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy
 //! \param[in] fctproxy Distributed FCT proxy
-//! \param[in] solver Linear system solver (Solver) proxy
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
 //! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
 //!   mesh chunk we operate on

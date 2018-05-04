@@ -34,8 +34,9 @@ extern std::vector< DGPDE > g_dgpde;
 using inciter::DG;
 
 DG::DG( const CProxy_Discretization& disc,
-        const tk::CProxy_Solver&,
+        const tk::CProxy_Solver& solver,
         const FaceData& fd ) :
+  m_solver( solver ),
   m_ncomfac( 0 ),
   m_nadj( 0 ),
   m_nsol( 0 ),
@@ -635,8 +636,7 @@ DG::adj()
     }
 
   // Signal the runtime system that all workers have received their adjacency
-  auto d = Disc();
-  d->contribute(CkCallback(CkReductionTarget(Transporter,comfinal), d->Tr()));
+  m_solver.ckLocalBranch()->created();
 }
 
 void
@@ -925,7 +925,7 @@ DG::eval()
     if (std::fabs(d->T()-term) > eps && d->It() < nstep)
       dt();
     else
-      contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
+      contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));
   }
 }
 

@@ -38,6 +38,7 @@
   #pragma clang diagnostic ignored "-Wundefined-func-template"
   #pragma clang diagnostic ignored "-Wcomma"
   #pragma clang diagnostic ignored "-Wmissing-noreturn"
+  #pragma clang diagnostic ignored "-Woverloaded-virtual"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
