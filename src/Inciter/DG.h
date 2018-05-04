@@ -255,7 +255,8 @@ class DG : public CBase_DG {
     //! Runge-Kutta stage counter
     std::size_t m_stage;
     //! Runge-Kutta coefficients
-    std::array< std::array< tk::real, 3 >, 2 > m_rkcoef;
+    std::array< std::array< tk::real, 3 >, 2 >
+      m_rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
