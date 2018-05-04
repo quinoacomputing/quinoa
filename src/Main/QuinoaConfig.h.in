@@ -10,6 +10,8 @@
 #ifndef QuinoaConfig_h
 #define QuinoaConfig_h
 
+#include <string>
+
 #define INCITER_EXECUTABLE           "@INCITER_EXECUTABLE@"
 #define RNGTEST_EXECUTABLE           "@RNGTEST_EXECUTABLE@"
 #define UNITTEST_EXECUTABLE          "@UNITTEST_EXECUTABLE@"
@@ -46,6 +48,9 @@ namespace tk {
 #cmakedefine HAS_RNGSSE2
 #cmakedefine HAS_TESTU01
 #cmakedefine HAS_ROOT
+
+//! Query git commit sha1
+std::string  commit();
 
 } // tk::
 

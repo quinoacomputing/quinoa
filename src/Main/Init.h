@@ -111,8 +111,9 @@ static void echoBuildEnv( const Print& print, const std::string& executable )
   print.item( "Hostname", BUILD_HOSTNAME );
   print.item( "Executable", executable );
   print.item( "Version", QUINOA_VERSION );
-  if (std::string(GIT_COMMIT).find("NOTFOUND") == std::string::npos)
-    print.item( "Revision SHA1", GIT_COMMIT );
+  auto sha1 = commit();
+  if (sha1.find("NOTFOUND") == std::string::npos)
+    print.item( "Revision SHA1", sha1 );
   print.item( "CMake build type", BUILD_TYPE );
 
 #ifdef NDEBUG
