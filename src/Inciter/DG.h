@@ -249,9 +249,9 @@ class DG : public CBase_DG {
     std::set< std::size_t > m_recvGhost;
     //! Diagnostics object
     ElemDiagnostics m_diag;
-    //! RK-stage counter
+    //! Runge-Kutta stage counter
     std::size_t m_stage;
-    //! RK coefficients
+    //! Runge-Kutta coefficients
     std::array< std::array< tk::real, 3 >, 2 > m_rkcoef;
 
     //! Access bound Discretization class pointer

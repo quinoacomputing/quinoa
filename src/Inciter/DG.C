@@ -879,7 +879,7 @@ DG::solve()
   m_u =  m_rkcoef[0][m_stage] * m_un
        + m_rkcoef[1][m_stage] * ( m_u + d->Dt() * m_rhs/m_lhs );
 
-  // Increment RK-stage counter
+  // Increment Runge-Kutta stage counter
   ++m_stage;
 
   if (m_stage == 3) {
@@ -914,12 +914,12 @@ DG::eval()
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
 
-  // If RK stages not complete, continue with dt(), otherwise assess computation
-  // completion criteria
+  // If Runge-Kutta stages not complete, continue with dt(), otherwise assess
+  // computation completion criteria
   if (m_stage < 3) 
     dt();
   else {
-    // Reset RK-stage counter
+    // Reset Runge-Kutta stage counter
     m_stage = 0;
     // If neither max iterations nor max time reached, continue, otherwise finish
     if (std::fabs(d->T()-term) > eps && d->It() < nstep)
