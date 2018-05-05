@@ -18,7 +18,7 @@ STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
 include(ConfigExecutable)
 
 # Configure configuration library
-add_library(Config QuinoaConfig.C)
+add_library(Config ${PROJECT_BINARY_DIR}/QuinoaConfig.C)
 
 set_target_properties(Config PROPERTIES LIBRARY_OUTPUT_NAME quinoa_config)
 
