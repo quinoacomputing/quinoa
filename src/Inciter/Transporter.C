@@ -531,64 +531,47 @@ Transporter::totalvol( tk::real v )
 }
 
 void
-Transporter::minstat( tk::real* d, std::size_t n )
+Transporter::minstat( tk::real d0, tk::real d1 )
 // *****************************************************************************
 // Reduction target yielding minimum mesh statistcs across all workers
-//! \param[in] d Minimum mesh statistics collected over all chares
-//! \param[in] n Size of data behind d
+//! \param[in] d0 Minimum mesh statistics collected over all chares
+//! \param[in] d1 Minimum mesh statistics collected over all chares
 // *****************************************************************************
 {
-  #ifdef NDEBUG
-  IGNORE(n);
-  #endif
-
-  Assert( n == m_minstat.size(),
-          "Size of min(stat) must be " + std::to_string(m_minstat.size()) );
-
-  m_minstat[0] = d[0];  // minimum edge length
-  m_minstat[1] = d[1];  // minimum cell volume cubic root
+  m_minstat[0] = d0;  // minimum edge length
+  m_minstat[1] = d1;  // minimum cell volume cubic root
 
   minstat_complete();
 }
 
 void
-Transporter::maxstat( tk::real* d, std::size_t n )
+Transporter::maxstat( tk::real d0, tk::real d1 )
 // *****************************************************************************
 // Reduction target yielding the maximum mesh statistics across all workers
-//! \param[in] d Maximum mesh statistics collected over all chares
+//! \param[in] d0 Maximum mesh statistics collected over all chares
+//! \param[in] d1 Maximum mesh statistics collected over all chares
 //! \param[in] n Size of data behind d
 // *****************************************************************************
 {
-  #ifdef NDEBUG
-  IGNORE(n);
-  #endif
-
-  Assert( n == m_maxstat.size(),
-          "Size of max(stat) must be " + std::to_string(m_maxstat.size()) );
-
-  m_maxstat[0] = d[0];  // maximum edge length
-  m_maxstat[1] = d[1];  // maximum cell volume cubic root
+  m_maxstat[0] = d0;  // maximum edge length
+  m_maxstat[1] = d1;  // maximum cell volume cubic root
 
   maxstat_complete();
 }
 
 void
-Transporter::sumstat( tk::real* d, std::size_t n )
+Transporter::sumstat( tk::real d0, tk::real d1, tk::real d2, tk::real d3 )
 // *****************************************************************************
 // Reduction target yielding the sum mesh statistics across all workers
-//! \param[in] d Sum mesh statistics collected over all chares
+//! \param[in] d0 Sum mesh statistics collected over all chares
+//! \param[in] d1 Sum mesh statistics collected over all chares
+//! \param[in] d2 Sum mesh statistics collected over all chares
+//! \param[in] d3 Sum mesh statistics collected over all chares
 //! \param[in] n Size of data behind d
 // *****************************************************************************
 {
-  #ifdef NDEBUG
-  IGNORE(n);
-  #endif
-
-  Assert( n == 2*m_avgstat.size(),
-          "Size of sum(stat) must be " + std::to_string(2*m_avgstat.size()) );
-
-  m_avgstat[0] = d[1] / d[0];      // average edge length
-  m_avgstat[1] = d[3] / d[2];      // average cell volume cubic root
+  m_avgstat[0] = d1 / d0;      // average edge length
+  m_avgstat[1] = d3 / d2;      // average cell volume cubic root
 
   sumstat_complete();
 }

@@ -466,15 +466,15 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target yielding the minimum mesh statistics across
     //!   all workers
-    void minstat( tk::real* d, std::size_t n );
+    void minstat( tk::real d0, tk::real d1 );
 
     //! \brief Reduction target yielding the maximum mesh statistics across
     //!   all workers
-    void maxstat( tk::real* d, std::size_t n );
+    void maxstat( tk::real d0, tk::real d1 );
 
     //! \brief Reduction target yielding the sum of mesh statistics across
     //!   all workers
-    void sumstat( tk::real* d, std::size_t n );
+    void sumstat( tk::real d0, tk::real d1, tk::real d2, tk::real d3 );
 
     //! \brief Reduction target yielding PDF of mesh statistics across all
     //!    workers
