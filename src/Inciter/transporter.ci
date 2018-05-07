@@ -26,9 +26,10 @@ module transporter {
       entry [reductiontarget] void comfinal();
       entry [reductiontarget] void totalvol( tk::real v );
       entry [reductiontarget] void vol();
-      entry [reductiontarget] void minstat( tk::real d[n], std::size_t n );
-      entry [reductiontarget] void maxstat( tk::real d[n], std::size_t n );
-      entry [reductiontarget] void sumstat( tk::real d[n], std::size_t n );
+      entry [reductiontarget] void minstat( tk::real d0, tk::real d1 );
+      entry [reductiontarget] void maxstat( tk::real d0, tk::real d1 );
+      entry [reductiontarget] void sumstat( tk::real d0, tk::real d1,
+                                            tk::real d2, tk::real d3 );
       entry [reductiontarget] void pdfstat( CkReductionMsg* msg );
       entry [reductiontarget] void aveCost( tk::real c );
       entry [reductiontarget] void stdCost( tk::real c );
