@@ -34,8 +34,9 @@ extern std::vector< DGPDE > g_dgpde;
 using inciter::DG;
 
 DG::DG( const CProxy_Discretization& disc,
-        const tk::CProxy_Solver&,
+        const tk::CProxy_Solver& solver,
         const FaceData& fd ) :
+  m_solver( solver ),
   m_ncomfac( 0 ),
   m_nadj( 0 ),
   m_nsol( 0 ),
@@ -64,10 +65,12 @@ DG::DG( const CProxy_Discretization& disc,
   m_ghost(),
   m_exptGhost(),
   m_recvGhost(),
-  m_diag()
+  m_diag(),
+  m_stage( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
+//! \param[in] solver Linear system solver (Solver) proxy
 //! \param[in] Face data structures
 // *****************************************************************************
 {
@@ -625,8 +628,7 @@ DG::adj()
     }
 
   // Signal the runtime system that all workers have received their adjacency
-  auto d = Disc();
-  d->contribute(CkCallback(CkReductionTarget(Transporter,comfinal), d->Tr()));
+  m_solver.ckLocalBranch()->created();
 }
 
 void
@@ -865,22 +867,31 @@ DG::solve()
   for (const auto& eq : g_dgpde)
     eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, m_u, m_rhs );
 
-  // Explicit time-stepping using forward Euler to discretize time-derivative
-  //m_u = m_un + d->Dt() * m_rhs/m_lhs;
-  //m_un = m_u;
-  m_u += d->Dt() * m_rhs/m_lhs;
+  // Explicit time-stepping using RK3 to discretize time-derivative
+  m_u =  m_rkcoef[0][m_stage] * m_un
+       + m_rkcoef[1][m_stage] * ( m_u + d->Dt() * m_rhs/m_lhs );
 
-  // Output field data to file
-  out();
-  // Compute diagnostics, e.g., residuals
-  auto diag = m_diag.compute( *d, m_u.nunk()-m_esuelTet.size()/4, m_geoElem, m_u );
-  // Increase number of iterations and physical time
-  d->next();
-  // Output one-liner status report
-  d->status();
+  // Increment Runge-Kutta stage counter
+  ++m_stage;
 
-  // Evaluate whether to continue with next step
-  if (!diag) eval();
+  if (m_stage == 3) {
+    // Output field data to file
+    out();
+    // Compute diagnostics, e.g., residuals
+    auto diag = m_diag.compute( *d, m_u.nunk()-m_esuelTet.size()/4, m_geoElem, m_u );
+    // Increase number of iterations and physical time
+    d->next();
+    // Output one-liner status report
+    d->status();
+    // Update Un
+    m_un = m_u;
+
+    // Evaluate whether to continue with next step
+    if (!diag) eval();
+  }
+  else
+    // Continue with next stage
+    eval();
 }
 
 void
@@ -895,11 +906,19 @@ DG::eval()
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
 
-  // If neither max iterations nor max time reached, continue, otherwise finish
-  if (std::fabs(d->T()-term) > eps && d->It() < nstep)
+  // If Runge-Kutta stages not complete, continue with dt(), otherwise assess
+  // computation completion criteria
+  if (m_stage < 3) 
     dt();
-  else
-    d->contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));
+  else {
+    // Reset Runge-Kutta stage counter
+    m_stage = 0;
+    // If neither max iterations nor max time reached, continue, otherwise finish
+    if (std::fabs(d->T()-term) > eps && d->It() < nstep)
+      dt();
+    else
+      contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));
+  }
 }
 
 #include "NoWarning/dg.def.h"
