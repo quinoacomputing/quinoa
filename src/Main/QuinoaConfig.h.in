@@ -46,6 +46,15 @@ namespace tk {
 #cmakedefine HAS_RNGSSE2
 #cmakedefine HAS_TESTU01
 #cmakedefine HAS_ROOT
+#cmakedefine HAS_BACKWARD
+
+// Backward-cpp config
+#cmakedefine01 BACKWARD_HAS_UNWIND
+#cmakedefine01 BACKWARD_HAS_BACKTRACE
+#cmakedefine01 BACKWARD_HAS_BACKTRACE_SYMBOL
+#cmakedefine01 BACKWARD_HAS_DW
+#cmakedefine01 BACKWARD_HAS_BFD
+#cmakedefine01 BACKWARD_HAS_DWARF
 
 } // tk::
 

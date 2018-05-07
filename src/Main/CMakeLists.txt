@@ -48,6 +48,7 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${HDF5_HL_LIBRARIES}      # only for static link
                       ${HDF5_C_LIBRARIES}
                       ${AEC_LIBRARIES}          # only for static link
+                      ${BACKWARD_LIBRARIES}
 )
 
 # Add custom dependencies for UnitTest's main Charm++ module
@@ -90,6 +91,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${HDF5_HL_LIBRARIES}      # only for static link
                       ${HDF5_C_LIBRARIES}
                       ${AEC_LIBRARIES}          # only for static link
+                      ${BACKWARD_LIBRARIES}
 )
 
 # Add custom dependencies for Inciter's main Charm++ module
@@ -117,6 +119,7 @@ if (HAS_TESTU01)
                         ${MKL_CORE_LIBRARY}
                         ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                         ${RNGSSE2_LIBRARIES}
+                        ${BACKWARD_LIBRARIES}
   )
 
   # Add custom dependencies for RNGTest's main Charm++ module
@@ -145,6 +148,7 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       ${HDF5_HL_LIBRARIES}      # only for static link
                       ${HDF5_C_LIBRARIES}
                       ${AEC_LIBRARIES}          # only for static link
+                      ${BACKWARD_LIBRARIES}
 )
 
 # Add custom dependencies for MeshConv's main Charm++ module
@@ -180,6 +184,7 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       ${HDF5_HL_LIBRARIES}      # only for static link
                       ${HDF5_C_LIBRARIES}
                       ${AEC_LIBRARIES}          # only for static link
+                      ${BACKWARD_LIBRARIES}
 )
 
 # Add custom dependencies for Walker's main Charm++ module
@@ -204,6 +209,7 @@ if (HAS_ROOT)
 	                ${SEACASExodus_LIBRARIES}
 	                ${ROOT_LIBRARIES}
 		        ${NETCDF_LIBRARIES}       # only for static link
+                        ${BACKWARD_LIBRARIES}
   )
 
   # Add custom dependencies for FileConv's main Charm++ module
