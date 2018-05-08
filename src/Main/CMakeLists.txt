@@ -17,6 +17,17 @@ STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
 
 include(ConfigExecutable)
 
+# Configure configuration library
+add_library(Config ${PROJECT_BINARY_DIR}/QuinoaConfig.C)
+
+set_target_properties(Config PROPERTIES LIBRARY_OUTPUT_NAME quinoa_config)
+
+INSTALL(TARGETS Config
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+)
+
 ## UnitTest executable ########################################################
 add_executable(${UNITTEST_EXECUTABLE}
                UnitTestDriver.C
@@ -27,6 +38,7 @@ config_executable(${UNITTEST_EXECUTABLE})
 
 target_link_libraries(${UNITTEST_EXECUTABLE}
                       Base
+                      Config
                       MeshIO
                       Mesh
                       RNG
@@ -70,6 +82,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       LoadBalance
                       LinSys
                       Base
+                      Config
                       IO
                       MeshIO
                       Mesh
@@ -113,6 +126,7 @@ if (HAS_TESTU01)
                         RNGTest
                         RNGTestControl
                         Base
+                        Config
                         ${TESTU01_LIBRARIES}
                         ${MKL_INTERFACE_LIBRARY}
                         ${MKL_SEQUENTIAL_LAYER_LIBRARY}
@@ -140,6 +154,7 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       Mesh
                       MeshConvControl
                       Base
+                      Config
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${H5PART_LIBRARIES}
@@ -171,6 +186,7 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       IO
                       WalkerControl
                       Base
+                      Config
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${LAPACKE_LIBRARIES}      # only if MKL not found
@@ -205,6 +221,7 @@ if (HAS_ROOT)
 			Mesh
                         FileConvControl
                         Base
+                        Config
 			${PUGIXML_LIBRARIES}
 	                ${SEACASExodus_LIBRARIES}
 	                ${ROOT_LIBRARIES}

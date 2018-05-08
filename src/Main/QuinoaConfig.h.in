@@ -2,32 +2,20 @@
 /*!
   \file      src/Main/QuinoaConfig.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     CMake header input file with information to be passed to cmake
-  \details   CMake header input file with information to be passed to cmake. See
-    also src/CMakeLists.txt.
+  \brief     Quinoa configuration macros imported from cmake
+  \details   Quinoa configuration macros inported from cmake. As opposed to
+    Main/QuinoaConfig.C, this file imports cmake variables that are used during
+    compile time.
+  \see       src/CMakeListst.txt
  */
 // *****************************************************************************
 #ifndef QuinoaConfig_h
 #define QuinoaConfig_h
 
-#define INCITER_EXECUTABLE           "@INCITER_EXECUTABLE@"
-#define RNGTEST_EXECUTABLE           "@RNGTEST_EXECUTABLE@"
-#define UNITTEST_EXECUTABLE          "@UNITTEST_EXECUTABLE@"
-#define MESHCONV_EXECUTABLE          "@MESHCONV_EXECUTABLE@"
-#define FILECONV_EXECUTABLE          "@FILECONV_EXECUTABLE@"
-#define WALKER_EXECUTABLE            "@WALKER_EXECUTABLE@"
+#include <string>
 
 namespace tk {
  
-#define QUINOA_VERSION               "@MAJOR_VER@.@MINOR_VER@ (C@LACC@)"
-#define GIT_COMMIT                   "@GIT_SHA1@"
-#define MPI_COMPILER                 "@MPI_COMPILER@"
-#define COMPILER                     "@COMPILER@"
-#define BUILD_HOSTNAME               "@HOSTNAME@"
-#define BUILD_TYPE                   "@BUILD_TYPE@"
-#define BUILD_DATE                   "@BUILD_DATE@"
-#define REGRESSION_DIR               "@REGRESSION_DIR@"
-
 // Compile-time options
 
 // Host OS
@@ -37,7 +25,7 @@ namespace tk {
 #cmakedefine PARTICLE_DATA_LAYOUT_AS_PARTICLE_MAJOR
 #cmakedefine PARTICLE_DATA_LAYOUT_AS_EQUATION_MAJOR
 
-// Data layout for mesh node data
+// Data layout for mesh data
 #cmakedefine FIELD_DATA_LAYOUT_AS_FIELD_MAJOR
 #cmakedefine FIELD_DATA_LAYOUT_AS_EQUATION_MAJOR
 
@@ -55,6 +43,24 @@ namespace tk {
 #cmakedefine01 BACKWARD_HAS_DW
 #cmakedefine01 BACKWARD_HAS_BFD
 #cmakedefine01 BACKWARD_HAS_DWARF
+
+// Accessor declarations as strings of configuration values imported from cmake
+
+std::string unittest_executable();
+std::string inciter_executable();
+std::string rngtest_executable();
+std::string meshconv_executable();
+std::string walker_executable();
+std::string fileconv_executable();
+
+std::string quinoa_version();
+std::string git_commit();
+std::string mpi_compiler();
+std::string compiler();
+std::string build_hostname();
+std::string build_type();
+std::string build_date();
+std::string regression_dir();
 
 } // tk::
 

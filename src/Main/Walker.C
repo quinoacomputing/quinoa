@@ -182,7 +182,7 @@ class Main : public CBase_Main {
                         ( msg->argc, msg->argv,
                           m_cmdline,
                           tk::HeaderType::WALKER,
-                          WALKER_EXECUTABLE,
+                          tk::walker_executable(),
                           m_print ) ),
       m_timer(1),       // start new timer measuring the total runtime
       m_timestamp()
