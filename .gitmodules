@@ -1,0 +1,6 @@
+[submodule "tpl"]
+	path = tpl
+	url = ../../quinoacomputing/quinoa-tpl.git
+[submodule "quinoa-tpl"]
+	path = quinoa-tpl
+	url = ../../quinoacomputing/quinoa-tpl.git
