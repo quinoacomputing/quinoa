@@ -17,7 +17,7 @@
 #include <unordered_set>
 #include <unordered_map>
 
-#include "boost/functional/hash.hpp"
+#include "NoWarning/hash.h"
 
 #include "Types.h"
 #include "ContainerUtil.h"

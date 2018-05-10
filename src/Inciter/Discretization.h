@@ -63,7 +63,7 @@ class Discretization : public CBase_Discretization {
 
     //! Collect nodal volumes across chare boundaries
     void comvol( const std::vector< std::size_t >& gid,
-                 const std::vector< tk::real >& vol );
+                 const std::vector< tk::real >& nodevol );
 
     //! Sum mesh volumes and contribute own mesh volume to total volume
     void totalvol();
