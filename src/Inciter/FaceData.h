@@ -14,6 +14,7 @@
 
 #include "Types.h"
 #include "PUPUtil.h"
+#include "ContainerUtil.h"
 
 namespace inciter {
 
@@ -45,7 +46,7 @@ class FaceData {
     ///@{
     const std::unordered_map< int, std::vector< std::size_t > >& Bface() const
     { return m_bface; }
-    std::size_t Nbfac() const { return numBndFaces(); }
+    std::size_t Nbfac() const { return tk::sumvalsize( m_bface ); }
     const std::vector< int >& Esuel() const { return m_esuel; }
     std::size_t Ntfac() const { return m_ntfac; }
     const std::vector< std::size_t >& Inpofa() const { return m_inpofa; }
@@ -87,9 +88,6 @@ class FaceData {
     std::vector< std::size_t > m_belem;
     //! Element surrounding faces
     std::vector< int > m_esuf;
-
-    //! Compute total number of physical boundary faces (across all side sets)
-    std::size_t numBndFaces() const;
 };
 
 } // inciter::

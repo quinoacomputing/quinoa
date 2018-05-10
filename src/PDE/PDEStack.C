@@ -232,6 +232,9 @@ PDEStack::infoTransport( std::map< ctr::PDEType, ncomp_t >& cnt ) const
 
   nfo.emplace_back( ctr::PDE().name( ctr::PDEType::TRANSPORT ), "" );
 
+  nfo.emplace_back( "dependent variable", std::string( 1,
+    g_inputdeck.get< tag::param, tag::transport, tag::depvar >()[c] ) );
+
   nfo.emplace_back( "problem", ctr::Problem().name(
     g_inputdeck.get< tag::param, tag::transport, tag::problem >()[c] ) );
 
@@ -306,16 +309,25 @@ PDEStack::infoCompFlow( std::map< ctr::PDEType, ncomp_t >& cnt ) const
   std::vector< std::pair< std::string, std::string > > nfo;
 
   nfo.emplace_back( ctr::PDE().name( ctr::PDEType::COMPFLOW ), "" );
+
+  nfo.emplace_back( "dependent variable", std::string( 1,
+    g_inputdeck.get< tag::param, tag::compflow, tag::depvar >()[c] ) );
+
   nfo.emplace_back( "physics", ctr::Physics().name(
     g_inputdeck.get< tag::param, tag::compflow, tag::physics >()[c] ) );
+
   nfo.emplace_back( "problem", ctr::Problem().name(
     g_inputdeck.get< tag::param, tag::compflow, tag::problem >()[c] ) );
+
   nfo.emplace_back( "start offset in unknowns array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::compflow >(c) ) );
+
   auto ncomp = g_inputdeck.get< tag::component >().get< tag::compflow >()[c];
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
   nfo.emplace_back( "material id", parameters(
     g_inputdeck.get< tag::param, tag::compflow, tag::id >() ) );
+
   nfo.emplace_back( "ratio of specific heats", parameters(
     g_inputdeck.get< tag::param, tag::compflow, tag::gamma >() ) );
 

@@ -13,8 +13,11 @@
 #include <vector>
 #include <array>
 #include <memory>
+#include <tuple>
 #include <unordered_set>
 #include <unordered_map>
+
+#include "NoWarning/hash.h"
 
 #include "Types.h"
 #include "ContainerUtil.h"
@@ -26,14 +29,18 @@ class UnsMesh {
 
   public:
     using Coords = std::array< std::vector< real >, 3 >;
+    using Coord = std::array< real, 3 >;
+    using CoordMap = std::unordered_map< std::size_t, Coord >;
 
     //! Edge: IDs of two end-points
     using Edge = std::array< std::size_t, 2 >;
     //! Hash functor for Edge (node end-point order does not matter)
     struct EdgeHash {
       std::size_t operator()( const Edge& key ) const {
-        return std::hash< std::size_t >()( key[0] ) ^
-               std::hash< std::size_t >()( key[1] );
+        std::size_t seed = 0;
+        boost::hash_combine( seed, key[0] );
+        boost::hash_combine( seed, key[1] );
+        return seed;
       }
     };
     //! Key-equal function for Edge (node end-point order does not matter)
@@ -43,14 +50,22 @@ class UnsMesh {
                (left[0] == right[1] && left[1] == right[0]);
       }
     };
-    //! Map associating IDs of mesh nodes to edges
+    //! Map associating IDs of node IDs to an edge
     using EdgeNodes = std::unordered_map< Edge, std::size_t, EdgeHash, EdgeEq >;
+    //! Map associating a list of chares to an edge
     using EdgeChares = std::unordered_map< Edge,
                                            std::vector< int >,
                                            EdgeHash,
                                            EdgeEq >;
+    //! Map associating the ID and the coordinates of a node to an edge
+    using EdgeNodeCoord =
+       std::unordered_map< Edge,
+                           std::tuple< std::size_t, real, real, real >,
+                           EdgeHash,
+                           EdgeEq >;
+
     //! Unique set of edges
-    using Edges = std::unordered_set< Edge, EdgeHash, EdgeEq >;
+    using EdgeSet = std::unordered_set< Edge, EdgeHash, EdgeEq >;
 
     //! Node ID triplet denoting a tetrahedron face
     using Face = std::array< std::size_t, 3 >;
@@ -123,7 +138,7 @@ class UnsMesh {
     //! \brief Constructor copying over element connectivity and array of point
     //!   coordinates
     explicit UnsMesh( const std::vector< std::size_t >& tetinp,
-                      const std::array< std::vector< real >, 3 >& coord ) :
+                      const Coords& coord ) :
       m_graphsize( graphsize( tetinp ) ),
       m_lininpoel(), m_triinpoel(),
       m_tetinpoel( tetinp ),
@@ -154,8 +169,7 @@ class UnsMesh {
 
     //! \brief Constructor swallowing element connectivity and array of point
     //!   coordinates
-    explicit UnsMesh( std::vector< std::size_t >&& tetinp,
-                      std::array< std::vector< real >, 3 >&& coord ) :
+    explicit UnsMesh( std::vector< std::size_t >&& tetinp, Coords&& coord ) :
       m_graphsize( graphsize( tetinp ) ),
       m_lininpoel(), m_triinpoel(),
       m_tetinpoel( std::move(tetinp) ),

@@ -81,6 +81,19 @@ namespace AMR {
         perform_refinement();
     }
 
+    void mesh_adapter_t::error_refinement( const std::vector< edge_t >& edge,
+                                           const std::vector< real_t >& crit )
+    {
+       Assert( edge.size() == crit.size(), "edges and crit size mismatch" );
+       for (std::size_t e=0; e<edge.size(); e++)
+         tet_store.edge_store.get( edge[e] ).refinement_criteria = crit[e];
+
+        evaluate_error_estimate();
+        mark_refinement();
+        perform_refinement();
+    }
+
+
     /**
      * @brief Function to detect the compatibility class (1,
      * 2, or 3) based on the number of locked edges and the existence
@@ -316,8 +329,8 @@ namespace AMR {
         // Clean up dead edges
         // clean_up_dead_edges(); // Nothing get's marked as "dead" atm?
 
-        std::cout << "Total Edges : " << tet_store.edge_store.size() << std::endl;
-        std::cout << "Total Tets : " << tet_store.size() << std::endl;
+        //std::cout << "Total Edges : " << tet_store.edge_store.size() << std::endl;
+        //std::cout << "Total Tets : " << tet_store.size() << std::endl;
         //std::cout << "Total Nodes : " << m_x.size() << std::endl;
 
         tet_store.print_node_types();
@@ -419,6 +432,7 @@ namespace AMR {
         else if (num_to_refine > 3)
         {
             //refiner.refine_one_to_eight(tet_id);
+            tet_store.mark_edges_for_refinement(tet_id);
             tet_store.mark_one_to_eight(tet_id);
         }
     }

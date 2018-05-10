@@ -30,7 +30,6 @@ std::vector< std::size_t >
 geomPartMesh( tk::ctr::PartitioningAlgorithmType algorithm,
               const std::array< std::vector< tk::real >, 3 >& elemcoord,
               const std::vector< long >& elemid,
-              std::size_t nelem,
               int npart );
 
 } // zoltan::

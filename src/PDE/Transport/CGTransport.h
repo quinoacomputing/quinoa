@@ -175,13 +175,8 @@ class Transport {
       using tag::transport;
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
-      Assert( R.nunk() == coord[0].size() && R.nprop() == m_ncomp,
-              "Number of unknowns and/or number of components in right-hand "
-              "side vector incorrect" );
-      Assert( U.nprop() == m_ncomp, "Number of components in solution vector "
-              "must equal " + std::to_string(m_ncomp) );
-      Assert( R.nprop() == m_ncomp, "Number of components in rhs must equal " +
-              std::to_string(m_ncomp) );
+      Assert( R.nunk() == coord[0].size(),
+              "Number of unknowns in right-hand side vector incorrect" );
 
       const auto& x = coord[0];
       const auto& y = coord[1];

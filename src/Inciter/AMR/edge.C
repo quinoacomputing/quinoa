@@ -4,6 +4,6 @@
 // member
 std::ostream& operator<<(std::ostream& os, const edge_t& e)
 {
-    os << e.data.first << "-" << e.data.second;
+    os << e.data[0] << "-" << e.data[1];
     return os;
 }

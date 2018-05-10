@@ -39,10 +39,10 @@ class Discretization : public CBase_Discretization {
         const CProxy_Transporter& transporter,
         const CProxy_BoundaryConditions& bc,
         const std::vector< std::size_t >& conn,
+        const tk::UnsMesh::CoordMap& coordmap,
         const std::unordered_map< int,
                 std::unordered_set< std::size_t > >& msum,
         const std::unordered_map< std::size_t, std::size_t >& filenodes,
-        const tk::UnsMesh::EdgeNodes& edgenodes,
         int nchare );
 
     #if defined(__clang__)
@@ -58,13 +58,12 @@ class Discretization : public CBase_Discretization {
     //! Configure Charm++ reduction types
     static void registerReducers();
 
-    //! \brief Read mesh node coordinates and optionally add new edge-nodes in
-    //!   case of initial uniform refinement
-    void coord();
+    //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
+    void vol();
 
     //! Collect nodal volumes across chare boundaries
     void comvol( const std::vector< std::size_t >& gid,
-                 const std::vector< tk::real >& vol );
+                 const std::vector< tk::real >& nodevol );
 
     //! Sum mesh volumes and contribute own mesh volume to total volume
     void totalvol();
@@ -186,7 +185,6 @@ class Discretization : public CBase_Discretization {
       p | m_transporter;
       p | m_bc;
       p | m_filenodes;
-      p | m_edgenodes;
       p | m_el;
       if (p.isUnpacking()) {
         m_inpoel = std::get< 0 >( m_el );
@@ -230,10 +228,6 @@ class Discretization : public CBase_Discretization {
     CProxy_BoundaryConditions m_bc;
     //! Map associating file node IDs to local node IDs
     std::unordered_map< std::size_t, std::size_t > m_filenodes;
-    //! \brief Maps associating node node IDs to edges (a pair of old node IDs)
-    //!   for only the nodes newly added as a result of initial uniform
-    //!   refinement.
-    tk::UnsMesh::EdgeNodes m_edgenodes;
     //! \brief Elements of the mesh chunk we operate on
     //! \details Initialized by the constructor. The first vector is the element
     //!   connectivity (local IDs), the second vector is the global node IDs of
@@ -281,15 +275,7 @@ class Discretization : public CBase_Discretization {
     //! Timer measuring a time step
     tk::Timer m_timer;
 
-    //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
-    void vol();
-
-    //! Read coordinates of mesh nodes given
-    void readCoords();
-
-    //! \brief Add coordinates of mesh nodes newly generated to edge-mid points
-    //!    during initial refinement
-    void addEdgeNodeCoords();
+    tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );
 };
 
 } // inciter::

@@ -54,7 +54,7 @@ FaceData::FaceData(
     // Mapping m_triinpoel from global renumbered ids to local renumbered ids
     for (auto& i : m_triinpoel) i = tk::cref_find(lid,i);
 
-    auto nbfac = numBndFaces();
+    auto nbfac = tk::sumvalsize( m_bface );
 
     m_ntfac = tk::genNtfac( 4, nbfac, m_esuel );
     m_inpofa = tk::genInpofaTet( m_ntfac, nbfac, inpoel, m_triinpoel, m_esuel );
@@ -64,16 +64,4 @@ FaceData::FaceData(
     Assert( m_belem.size() == nbfac,
             "Number of boundary-elements and number of boundary-faces unequal" );
   }
-}
-
-std::size_t
-FaceData::numBndFaces() const
-// *****************************************************************************
-// Compute total number of physical boundary faces (across all side sets)
-//! \return Total number of physical boundary faces (across all side sets)
-// *****************************************************************************
-{
-  return std::accumulate( m_bface.cbegin(), m_bface.cend(), std::size_t(0),
-           []( std::size_t acc, const decltype(m_bface)::value_type& b )
-              { return acc + b.second.size(); } );
 }

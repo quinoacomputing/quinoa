@@ -16,6 +16,7 @@
 
 #include "CommonGrammar.h"
 #include "Keywords.h"
+#include "ContainerUtil.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
@@ -71,32 +72,6 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< class eq > struct check_inciter_eq : pegtl::success {};
-  //! \brief Do general error checking on the differential equation block
-  //! \details This is error checking that all equation types must satisfy. For
-  //!   more specific equations, such as compressible flow, a more specialized
-  //!   equation checker does and can do better error checking.
-  template< class eq >
-  struct action< check_inciter_eq< eq > > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      using inciter::deck::neq;
-      // Error out if no dependent variable has been selected
-      const auto& depvar = stack.template get< tag::param, eq, tag::depvar >();
-      if (depvar.empty() || depvar.size() != neq.get< eq >())
-        Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
-      // Error out if no number of components has been selected
-      const auto& ncomp = stack.template get< tag::component, eq >();
-      if (ncomp.empty() || ncomp.size() != neq.get< eq >())
-        Message< Stack, ERROR, MsgKey::NONCOMP >( stack, in );
-      // Error out if no test problem has been selected
-      const auto& problem = stack.template get< tag::param, eq, tag::problem >();
-      if (problem.empty() || problem.size() != neq.get< eq >())
-        Message< Stack, ERROR, MsgKey::NOINIT >( stack, in );
-    }
-  };
-
-  //! Rule used to trigger action
   template< class eq > struct check_transport : pegtl::success {};
   //! \brief Set defaults and do error checking on the transport equation block
   //! \details This is error checking that only the transport equation block
@@ -111,7 +86,7 @@ namespace grm {
       // Error out if no dependent variable has been selected
       auto& depvar = stack.template get< tag::param, eq, tag::depvar >();
       if (depvar.empty() || depvar.size() != neq.get< eq >())
-        depvar.push_back( 'c' );
+        Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
       // If no number of components has been selected, default to 1
       auto& ncomp = stack.template get< tag::component, eq >();
       if (ncomp.empty() || ncomp.size() != neq.get< eq >())
@@ -158,6 +133,10 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       using inciter::deck::neq;
+      // Error out if no dependent variable has been selected
+      auto& depvar = stack.template get< tag::param, eq, tag::depvar >();
+      if (depvar.empty() || depvar.size() != neq.get< eq >())
+        Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
       // Set number of components to 5 (mass, 3 x mom, energy)
       stack.template get< tag::component, eq >().push_back( 5 );
       // If physics type is not given, default to 'euler'
@@ -268,6 +247,48 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input&, Stack& stack ) {
       stack.template get< tag::amr, tag::amr >() = true;
+    }
+  };
+
+  //! Rule used to trigger action
+  struct compute_refvar_idx : pegtl::success {};
+  //! Compute indices of refinement variables
+  //! \details This functor computes the indices in the unknown vector for all
+  //!   refinement variables in the system of systems of dependent variables
+  //!   after the refvar...end block has been parsed in the amr...end block.
+  //!   After basic error checking, the vector at stack.get<tag::amr,tag::id>()
+  //!   is filled.
+  template<>
+  struct action< compute_refvar_idx > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      // reference variables just parsed by refvar...end block
+      const auto& refvar = stack.template get< tag::amr, tag::refvar >();
+      // get ncomponents object from this input deck
+      const auto& ncomps = stack.template get< tag::component >();
+      // compute offset map associating offsets to dependent variables
+      auto offsetmap = ncomps.offsetmap( stack );
+      // compute number of components associated to dependent variabels
+      auto ncompmap = ncomps.ncompmap( stack );
+      // reference variable index vector to fill
+      auto& refidx = stack.template get< tag::amr, tag::id >();
+      // Compute indices for all refvars
+      for (const auto& v : refvar) {    // for all reference variables parsed
+        // depvar is the first char of a refvar
+        auto depvar = v[0];
+        // the field ID is optional and is the rest of the depvar string
+        std::size_t f = (v.size()>1 ? std::stoul(v.substr(1)) : 1) - 1;
+        // field ID must be less than or equal to the number of scalar
+        // components configured for the eq system for this dependent variable
+        if (f >= tk::cref_find( ncompmap, depvar ))
+          Message< Stack, ERROR, MsgKey::NOSUCHCOMPONENT >( stack, in );
+        // get offset for depvar
+        auto eqsys_offset = tk::cref_find( offsetmap, depvar );
+        // the index is the eq offset + field ID
+        auto idx = eqsys_offset + f;
+        // save refvar index in system of all systems
+        refidx.push_back( idx );
+      }
     }
   };
 
@@ -409,9 +430,9 @@ namespace deck {
                                             ctr::Problem,
                                             tag::transport,
                                             tag::problem >,
-                          tk::grm::depvar< use,
-                                           tag::transport,
-                                           tag::depvar >,
+                           tk::grm::depvar< use,
+                                            tag::transport,
+                                            tag::depvar >,
                            tk::grm::component< use< kw::ncomp >,
                                                tag::transport >,
                            pde_parameter_vector< kw::pde_diffusivity,
@@ -446,6 +467,9 @@ namespace deck {
                                             ctr::Problem,
                                             tag::compflow,
                                             tag::problem >,
+                           tk::grm::depvar< use,
+                                            tag::compflow,
+                                            tag::depvar >,
                            //ic_compflow< tag::compflow, tag::ic > >,
                            material_properties< tag::compflow >,
                            parameter< tag::compflow, kw::npar, tag::npar,
@@ -484,12 +508,24 @@ namespace deck {
   struct equations :
          pegtl::sor< transport, compflow > {};
 
+  //! refinement variable(s) (refvar) ... end block
+  struct refvars :
+         pegtl::if_must<
+           tk::grm::vector< kw::amr_refvar,
+                            tk::grm::match_depvar<
+                              tk::grm::Store_back< tag::amr, tag::refvar > >,
+                            use< kw::end >,
+                            tk::grm::check_vector< tag::amr, tag::refvar >,
+                            tk::grm::fieldvar< pegtl::alpha > >,
+           tk::grm::compute_refvar_idx > {};
+
   //! adaptive mesh refinement (AMR) amr...end block
   struct amr :
          pegtl::if_must<
            tk::grm::readkw< use< kw::amr >::pegtl_string >,
            tk::grm::enable_amr, // enable AMR if amr...end block encountered
            tk::grm::block< use< kw::end >,
+                           refvars,
                            tk::grm::process<
                              use< kw::amr_initial >,
                              tk::grm::store_back_option< use,
@@ -497,10 +533,6 @@ namespace deck {
                                                          tag::amr,
                                                          tag::init >,
                              pegtl::alpha >,
-                           tk::grm::process<
-                             use< kw::amr_uniform_levels >,
-                             tk::grm::Store< tag::amr, tag::levels >,
-                             pegtl::digit >,
                            tk::grm::process<
                              use< kw::amr_error >,
                              tk::grm::store_inciter_option<

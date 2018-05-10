@@ -40,29 +40,6 @@ class InputDeck :
                       tag::pdf,        std::vector< tk::ctr::Probability >,
                       tag::error,      std::vector< std::string > > {
 
-  private:
-    //! Function object for extracting dependent variable vectors from
-    //! components
-    struct depvar {
-      //! Need to store reference to host class whose data we operate on
-      const InputDeck* const m_host;
-      //! Internal reference to the vector of vectors that will hold the
-      //! extracted dependent variables for all equations
-      std::vector< std::vector< char > >& m_vars;
-      //! Constructor: store host object pointer and the reference to the
-      //! container storing the dependent variables letters.
-      depvar( const InputDeck* const host,
-              std::vector< std::vector< char > >& vars ) :
-        m_host( host ), m_vars( vars ) {}
-      //! Functional call operator templated on the type that adds all dependent
-      //! variables (stored in a vector) for type U. (There can be multiple
-      //! systems of the same equation type, differentiated by a different
-      //! dependen:t variable.)
-      template< typename U > void operator()( U ) {
-        m_vars.push_back( m_host->get< tag::param, U, tag::depvar >() );
-      }
-    };
-
   public:
     //! \brief Walker input deck keywords
     //! \details Since there are more than 20 and boost::mpl only allows maxium
@@ -270,13 +247,6 @@ class InputDeck :
       for (const auto& bs : get< tag::discr, tag::binsize >())
         if (bs.size() == d) ++n;
       return n;
-    }
-
-    //! Extract vector of vector of dependent variables from components
-    std::vector< std::vector< char > > depvars() const {
-      std::vector< std::vector< char > > vars;
-      boost::mpl::for_each< ncomps::tags >( depvar( this, vars ) );
-      return vars;
     }
 
     //! Query if there are any statistics or PDFs to estimate

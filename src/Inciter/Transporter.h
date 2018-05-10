@@ -397,19 +397,20 @@ class Transporter : public CBase_Transporter {
     //! Constructor
     explicit Transporter();
 
-    //! Reduction target indicating that the mesh has been read from file
-    void load( uint64_t nelem );
+    //! \brief Reduction target signaling that all PEs have desitrbuted their
+    //!   mesh after partitioning
+    void refdistributed();
 
-    //! \brief Reduction target indicating that optional initial mesh refinement
-    //!   has been completed on all PEs
-    void refined();
+    //! \brief Reduction target indicating that all PEs have distributed their
+    //!   newly added node IDs shared along the boundary with other PEs
+    void matched();
 
-    //! Reduction target indicating that centroids have been computed all PEs
-    void centroid();
+    //! \brief Reduction target indicating that initial mesh refinement has
+    //!   been completed on all PEs
+    void refined( uint64_t nelem );
 
-    //! \brief Reduction target indicating that all Partitioner chare groups
-    //!   have finished distributing its global mesh node IDs and they are ready
-    //!   for preparing (flattening) their owned mesh node IDs for reordering
+    //! \brief Reduction target signaling that all PEs have desitrbuted their
+    //!   mesh after partitioning (after potential initial mesh refinement)
     void distributed();
 
     //! \brief Reduction target indicating that all Partitioner chare groups
