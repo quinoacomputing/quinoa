@@ -73,7 +73,7 @@ class Main : public CBase_Main {
                         ( msg->argc, msg->argv,
                           m_cmdline,
                           tk::HeaderType::MESHCONV,
-                          MESHCONV_EXECUTABLE,
+                          tk::meshconv_executable(),
                           m_print ) ),
       m_timer(1),       // Start new timer measuring the total runtime
       m_timestamp()

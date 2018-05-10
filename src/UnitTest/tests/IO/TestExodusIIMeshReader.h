@@ -1395,7 +1395,7 @@ void ExodusIIMeshReader_object::test< 1 >() {
   // Create unstructured-mesh object to read into
   tk::UnsMesh inmesh;
   // Read in mesh from file
-  std::string infile( REGRESSION_DIR"/meshconv/gmsh_output/box_24.exo" );
+  std::string infile( tk::regression_dir()+"/meshconv/gmsh_output/box_24.exo" );
   tk::ExodusIIMeshReader er( infile );
   er.readMesh( inmesh );
 
@@ -1427,7 +1427,7 @@ void ExodusIIMeshReader_object::test< 2 >() {
   // Create unstructured-mesh object to read into
   tk::UnsMesh inmesh;
   // Read in mesh from file
-  std::string infile( REGRESSION_DIR
+  std::string infile( tk::regression_dir() +
                       "/meshconv/exo_output/shear_5blocks_coarse.exo" );
   tk::ExodusIIMeshReader er( infile );
   er.readMesh( inmesh );
@@ -1471,7 +1471,7 @@ void ExodusIIMeshReader_object::test< 3 >() {
   set_test_name( "read part of single-block tet-mesh graph" );
 
   // Read part of mesh from file
-  std::string infile( REGRESSION_DIR"/meshconv/gmsh_output/box_24.exo" );
+  std::string infile( tk::regression_dir()+"/meshconv/gmsh_output/box_24.exo" );
   tk::ExodusIIMeshReader er( infile );
   er.readElemBlockIDs();
 
@@ -1495,7 +1495,7 @@ void ExodusIIMeshReader_object::test< 4 >() {
   set_test_name( "read part of multi-block tet-mesh graph" );
 
   // Read part of mesh from file
-  std::string infile( REGRESSION_DIR
+  std::string infile( tk::regression_dir() +
                       "/meshconv/exo_output/shear_5blocks_coarse.exo" );
   tk::ExodusIIMeshReader er( infile );
   er.readElemBlockIDs();
@@ -1539,7 +1539,7 @@ void ExodusIIMeshReader_object::test< 5 >() {
   // Create unstructured-mesh object to read into
   tk::UnsMesh inmesh;
   // Read in mesh from file
-  std::string infile( REGRESSION_DIR
+  std::string infile( tk::regression_dir() +
                       "/meshconv/gmsh_output/box_24_ss1.exo" );
   tk::ExodusIIMeshReader er( infile );
   auto nbfac = er.readSidesetFaces( bface );
@@ -1597,7 +1597,8 @@ void ExodusIIMeshReader_object::test< 6 >() {
   // Attempt to read boundary face-node connectivity passing nbfac=0
   try {
     std::vector< std::size_t > triinpoel;
-    std::string infile( REGRESSION_DIR "/meshconv/gmsh_output/box_24_ss1.exo" );
+    std::string infile( tk::regression_dir() +
+                        "/meshconv/gmsh_output/box_24_ss1.exo" );
     tk::ExodusIIMeshReader er( infile );
     er.readFaces( 0, triinpoel );
     fail( "should throw exception" );
@@ -1613,7 +1614,7 @@ void ExodusIIMeshReader_object::test< 7 >() {
   set_test_name( "read the node-map" );
 
   // Read in mesh from file
-  std::string infile( REGRESSION_DIR
+  std::string infile( tk::regression_dir() +
                       "/meshconv/gmsh_output/box_24_ss1.exo" );
   tk::ExodusIIMeshReader er( infile );
 

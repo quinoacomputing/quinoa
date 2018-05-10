@@ -213,7 +213,7 @@ class Main : public CBase_Main {
                         ( msg->argc, msg->argv,
                           m_cmdline,
                           tk::HeaderType::UNITTEST,
-                          UNITTEST_EXECUTABLE,
+                          tk::meshconv_executable(),
                           m_print ) ),
       m_timer(1), // Start new timer measuring the serial+Charm++ runtime
       m_timestamp()
@@ -338,14 +338,14 @@ int main( int argc, char **argv ) {
     // Print out help on all command-line arguments if help was requested
     const auto helpcmd = cmdline.get< tag::help >();
     if (peid == 0 && helpcmd)
-      print.help< tk::QUIET >( UNITTEST_EXECUTABLE,
+      print.help< tk::QUIET >( tk::unittest_executable(),
                                cmdline.get< tag::cmdinfo >(),
                                "Command-line Parameters:", "-" );
 
     // Print out verbose help for a single keyword if requested
     const auto helpkw = cmdline.get< tag::helpkw >();
     if (peid == 0 && !helpkw.keyword.empty())
-      print.helpkw< tk::QUIET >( UNITTEST_EXECUTABLE, helpkw );
+      print.helpkw< tk::QUIET >( tk::unittest_executable(), helpkw );
 
     // Immediately exit if any help was output
     if (helpcmd || !helpkw.keyword.empty()) stop( mpipass );
