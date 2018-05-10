@@ -68,6 +68,8 @@
 #ifndef SystemComponents_h
 #define SystemComponents_h
 
+#include <vector>
+
 #include "NoWarning/for_each.h"
 #include <boost/mpl/remove.hpp>
 #include <boost/mpl/at.hpp>
@@ -76,6 +78,7 @@
 #include "TaggedTuple.h"
 #include "StatCtr.h"
 #include "Keywords.h"
+#include "Tags.h"
 
 namespace tk {
 //! Toolkit control, general purpose user input to internal data transfer
@@ -84,16 +87,29 @@ namespace ctr {
 //! Inherit type of number of components from keyword 'ncomp'
 using ncomp_type = kw::ncomp::info::expect::type;
 
-//! \brief Map associating a dependent variable of a differential equation to
-//!   its offset in its data array storing its dependent variables
-//! \details We use a case-insensitive character comparison functor for the
+//! \brief Map associating offsets to dependent variables for systems
+//! \details This map associates offsets of systems of differential !
+//!   equations in a larger data array storing dependent variables for all
+//!   scalar components of a system of systems. These offsets are where a
+//!   particular system starts and their field (or component) ids then can be
+//!   used to access an individual scalar component based on theses offsets.
+//! \note We use a case-insensitive character comparison functor for the
 //!   offset map, since the keys (dependent variables) in the offset map are
 //!   only used to indicate the equation's dependent variable, however, queries
 //!   (using std::map's member function, find) can be fired up for both ordinary
-//!   and central moments (which are denoted by upper and lower case,
-//!   characters, respectively) for which the offset (for the same dependent
-//!   variable) should be the same.
+//!   and central moments of dependent variables (which are denoted by upper and
+//!   lower case, characters, respectively) for which the offset (for the same
+//!   dependent variable) should be the same.
 using OffsetMap = std::map< char, ncomp_type, CaseInsensitiveCharLess >;
+
+//! \brief Map associating number of scalar components to dependent variables
+//!   for systems
+//! \details This map associates the number of properties (scalar components)
+//!   of systems of differential equations for all scalar components of a
+//!   system of systems.
+//! \note We use a case-insensitive character comparison functor to be
+//!   consistent with OffsetMap.
+using NcompMap = std::map< char, ncomp_type, CaseInsensitiveCharLess >;
 
 //! \brief Number of components storage
 //! \details All this trickery with boost::mpl allows the code below to be
@@ -189,6 +205,49 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
       }
     };
 
+    //! Function object for creating offset map: std::map< depvar, offset >
+    template< class InputDeck >
+    struct genOffsetMap {
+      //! Reference to input deck to operate on
+      const InputDeck& deck;
+      //! Internal reference to map we build
+      OffsetMap& map;
+      //! Constructor: store reference to input deck and offset map
+      genOffsetMap( const InputDeck& d, OffsetMap& m ) : deck( d ), map( m ) {}
+      //! \brief Functional call operator templated on the type that computes
+      //!   the offset map for type U.
+      //! \details There can be multiple systems of the same equation type,
+      //!   differentiated by a different dependent variable.
+      template< typename U > void operator()( U ) const {
+        const auto& depvar = deck.template get< tag::param, U, tag::depvar >();
+        ncomp_type c = 0;
+        const auto& ncomps = deck.template get< tag::component >();
+        for (auto v : depvar) map[ v ] = ncomps.template offset< U >( c++ );
+      }
+    };
+
+    //! \brief Function object for creating number of properties (scalar
+    //!   components) map: std::map< depvar, offset >
+    template< class InputDeck >
+    struct genNcompMap {
+      //! Reference to input deck to operate on
+      const InputDeck& deck;
+      //! Internal reference to map we build
+      NcompMap& map;
+      //! Constructor: store reference to input deck and offset map
+      genNcompMap( const InputDeck& d, NcompMap& m ) : deck( d ), map( m ) {}
+      //! \brief Functional call operator templated on the type that computes
+      //!   the number of properties (scalar components) map for type U.
+      //! \details There can be multiple systems of the same equation type,
+      //!   differentiated by a different dependent variable.
+      template< typename U > void operator()( U ) const {
+        const auto& depvar = deck.template get< tag::param, U, tag::depvar >();
+        const auto& ncomps = deck.template get< tag::component >();
+        ncomp_type c = 0;
+        for (auto v : depvar) map[ v ] = ncomps.template get< U >().at( c++ );
+      }
+    };
+
   public:
     //! Default constructor: set defaults to zero for all number of components
     ncomponents() { boost::mpl::for_each< tags >( zero( this ) ); }
@@ -209,20 +268,25 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
       return n;
     }
 
+    //! Compute map of offsets associated to dependent variables
+    //! \param[in] deck Input deck to operate on
     //! \return Map of offsets associated to dependent variables
-    //! \param[in] depvars Vector of vectors of dependent variables
-    OffsetMap offsetmap( const std::vector< std::vector< char > >& depvars )
-    const {
-      OffsetMap o;
-      // This is now simple, as the heavy lifting has already been done by
-      // extracting the dependent variables to a vector of vectors that is
-      // passed in. Note that for now, we simply assign linearly increasing
-      // offsets. This may be changed in the future if/when we decide to
-      // implement a user-configurable order of the data layout for the various
-      // equations.
-      ncomp_type c = 0;
-      for (const auto& vec : depvars) for (const auto& v : vec) o[ v ] = c++;
-      return o;
+    template< class InputDeck >
+    OffsetMap offsetmap( const InputDeck& deck ) const {
+      OffsetMap map;
+      boost::mpl::for_each< tags >( genOffsetMap< InputDeck >( deck, map ) );
+      return map;
+    }
+
+    //! \brief Compute map of number of properties (scalar components)
+    //!   associated to dependent variables
+    //! \param[in] deck Input deck to operate on
+    //! \return Map of number of properties associated to dependent variables
+    template< class InputDeck >
+    NcompMap ncompmap( const InputDeck& deck ) const {
+      NcompMap map;
+      boost::mpl::for_each< tags >( genNcompMap< InputDeck >( deck, map ) );
+      return map;
     }
 };
 

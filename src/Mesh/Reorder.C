@@ -16,6 +16,7 @@
 #include "Reorder.h"
 #include "Exception.h"
 #include "ContainerUtil.h"
+#include "Vector.h"
 
 namespace tk {
 
@@ -183,8 +184,53 @@ global2local( const std::vector< std::size_t >& ginpoel )
   std::vector< std::size_t > inpoel;
   for (auto p : ginpoel) inpoel.push_back( tk::cref_find( lid, p ) );
 
+  Assert( gid.size() == lid.size(), "Size mismatch" );
+
   // Return element connectivty with local node IDs
   return std::make_tuple( inpoel, gid, lid );
+}
+
+bool
+positiveJacobians( const std::vector< std::size_t >& inpoel,
+                   const std::array< std::vector< real >, 3 >& coord )
+// *****************************************************************************
+// Test for positivity of the Jacobian for all cells in mesh
+//! \param[in] inpoel Element connectivity (zero-based, i.e., local if parallel)
+//! \param[in] coord Node coordinates
+//! \return True of all Jacboians are positive
+// *****************************************************************************
+{
+  Assert( !inpoel.empty(), "Mesh connectivity empty" );
+  Assert( inpoel.size() % 4 == 0,
+          "Mesh connectivity size must be divisible by 4 " );
+  Assert( tk::uniquecopy(inpoel).size() == coord[0].size(), "Number of unique "
+          "nodes in mesh connectivity must equal the number of nodes to which "
+          "coordinates have been supplied" );
+  Assert( tk::uniquecopy(inpoel).size() == coord[1].size(), "Number of unique "
+          "nodes in mesh connectivity must equal the number of nodes to which "
+          "coordinates have been supplied" );
+  Assert( tk::uniquecopy(inpoel).size() == coord[2].size(), "Number of unique "
+          "nodes in mesh connectivity must equal the number of nodes to which "
+          "coordinates have been supplied" );
+  Assert( *std::minmax_element( begin(inpoel), end(inpoel) ).first == 0,
+          "node ids should start from zero" );
+
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+    const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
+                                           inpoel[e*4+2], inpoel[e*4+3] }};
+    // compute element Jacobi determinant / (5/120) = element volume * 4
+    const std::array< tk::real, 3 >
+      ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+      ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+      da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+    if (tk::triple( ba, ca, da ) < 0) return false;
+ }
+
+ return true;
 }
 
 } // tk::

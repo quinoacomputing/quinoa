@@ -179,7 +179,7 @@ const
 //! \param[inout] elclass Count element class ids in file
 //! \param[in] nnpe Number of nodes per element for block
 //! \param[in] eltype String describing element type
-//! \param[in] inpoel Element connectivity.
+//! \param[in] inpoel Element connectivity
 // *****************************************************************************
 {
   if (inpoel.empty()) return;

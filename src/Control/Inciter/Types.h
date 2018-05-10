@@ -43,7 +43,8 @@ using selects = tk::tuple::tagged_tuple<
 using amr = tk::tuple::tagged_tuple<
   tag::amr,    bool,                             //!< AMR on/off
   tag::init,   std::vector< AMRInitialType >,    //!< List of initial AMR types
-  tag::levels, unsigned int,                     //!< Initial uniform levels
+  tag::refvar, std::vector< std::string >,       //!< List of refinement vars
+  tag::id,     std::vector< std::size_t >,       //!< List of refvar indices
   tag::error,  AMRErrorType                      //!< Error estimator for AMR
 >;
 
@@ -116,6 +117,7 @@ using TransportPDEParameters = tk::tuple::tagged_tuple<
 
 //! Compressible flow equation parameters storage
 using CompFlowPDEParameters = tk::tuple::tagged_tuple<
+  tag::depvar,       std::vector< char >,
   tag::physics,      std::vector< PhysicsType >,
   tag::problem,      std::vector< ProblemType >,
   tag::bcdir,        std::vector< std::vector<

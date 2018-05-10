@@ -3390,25 +3390,6 @@ struct ctau_info {
 };
 using ctau = keyword< ctau_info, TAOCPP_PEGTL_STRING("ctau") >;
 
-struct transport_info {
-  static std::string name() { return "Transport"; }
-  static std::string shortDescription() { return
-    "Start configuration block for an transport equation"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce an transport ... end block, used to
-    specify the configuration for a transport equation type. Keywords allowed
-    in an transport ... end block: )" + std::string("\'")
-    + problem::string() + "\', \'"
-    + physics::string() + "\', \'"
-    + pde_diffusivity::string() + "\', \'"
-    + pde_lambda::string() + "\', \'"
-    + pde_u0::string() + "\'. "
-    + R"(For an example transport ... end block, see
-      doc/html/inicter_example_transport.html.)";
-  }
-};
-using transport = keyword< transport_info, TAOCPP_PEGTL_STRING("transport") >;
-
 struct sideset_info {
   static std::string name() { return "sideset"; }
   static std::string shortDescription() { return
@@ -3492,6 +3473,31 @@ struct bc_outlet_info {
 };
 using bc_outlet =
   keyword< bc_outlet_info, TAOCPP_PEGTL_STRING("bc_outlet") >;
+
+struct transport_info {
+  static std::string name() { return "Transport"; }
+  static std::string shortDescription() { return
+    "Start configuration block for an transport equation"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an transport ... end block, used to
+    specify the configuration for a transport equation type. Keywords allowed
+    in an transport ... end block: )" + std::string("\'")
+    + depvar::string()+ "\', \'"
+    + ncomp::string() + "\', \'"
+    + problem::string() + "\', \'"
+    + physics::string() + "\', \'"
+    + pde_diffusivity::string() + "\', \'"
+    + pde_lambda::string() + "\', \'"
+    + bc_dirichlet::string() + "\', \'"
+    + bc_sym::string() + "\', \'"
+    + bc_inlet::string() + "\', \'"
+    + bc_outlet::string() + "\', \'"
+    + pde_u0::string() + "\'. "
+    + R"(For an example transport ... end block, see
+      doc/html/inicter_example_transport.html.)";
+  }
+};
+using transport = keyword< transport_info, TAOCPP_PEGTL_STRING("transport") >;
 
 struct bc_extrapolate_info {
   static std::string name() { return "Extrapolation boundary condition"; }
@@ -3628,7 +3634,9 @@ struct compflow_info {
     specify the configuration for a system of partial differential equations,
     governing compressible fluid flow. Keywords allowed in an compflow ... end
     block: )" + std::string("\'")
-    + problem::string() + "\'."
+    + depvar::string()+ "\', \'"
+    + problem::string() + "\', \'"
+    + physics::string() + "\', \'"
     + R"(For an example compflow ... end block, see
       doc/html/inicter_example_compflow.html.)";
   }
@@ -3753,15 +3761,13 @@ using amr_initial_conditions =
 struct amr_initial_info {
   static std::string name() { return "Initial refinement"; }
   static std::string shortDescription() { return
-    "Configure initial mesh refinement (before t=0)"; }
+    "Configure initial mesh refinement (before time stepping)"; }
   static std::string longDescription() { return
     R"(This keyword is used to add to a list of initial mesh refinement types
     that happens before t = 0. Example: initial uniform initial ic inital
     uniform, which yiedls an initial uniform refinement, followed by a
     refinement based on the numerical error computed based on the initial
-    conditions, followed by another step of unfirom refinement. The number of
-    levels in the uniform refinement step(s) is controlled by the keyword
-    'uniform_levels' whose default is 1.)"; }
+    conditions, followed by another step of unfirom refinement.)"; }
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
@@ -3772,22 +3778,29 @@ struct amr_initial_info {
 };
 using amr_initial = keyword< amr_initial_info, TAOCPP_PEGTL_STRING("initial") >;
 
-struct amr_uniform_levels_info {
-  static std::string name() { return "uniform_levels"; }
+struct amr_refvar_info {
+  static std::string name() { return "refinement variable(s)"; }
   static std::string shortDescription() { return
-    "Select the number of levels for uniform initial mesh refinement"; }
+    "Configure dependent variables used for adaptive mesh refinement"; }
   static std::string longDescription() { return
-    R"(This keyword is used to set the number levels used for uniform initial
-    mesh refinement.)"; }
+    R"(This keyword is used to configured a list of dependent variables that
+    trigger adaptive mesh refinement based on estimating their numerical error.
+    These refinement variables are used for both initial (i.e., before time
+    stepping) mesh refinement as well as during time stepping. Only previously
+    (i.e., earlier in the input file) selected dependent variables can be
+    configured as refinement variables. Dependent variables are required to be
+    defined in all equation system configuration blocks, e.g., transport ...
+    end, by using the 'depvar' keyword. Example: transport depvar c end amr
+    refvar c end end. Selecting a particular scalar component in a system is
+    done by appending the equation number to the refvar: Example: transport
+    depvar q ncomp 3 end amr refvar q1 q2 end end, which configures two
+    refinement variables: the first and third scalar component of the previously
+    configured transport equation system.)"; }
   struct expect {
-    using type = unsigned int;
-    static constexpr type lower = 1;
-    static std::string description() { return "uint"; }
-    static std::string choices() { return "positive integer"; }
+    static std::string description() { return "list of strings"; }
   };
 };
-using amr_uniform_levels =
-  keyword< amr_uniform_levels_info, TAOCPP_PEGTL_STRING("uniform_levels") >;
+using amr_refvar = keyword< amr_initial_info, TAOCPP_PEGTL_STRING("refvar") >;
 
 struct amr_jump_info {
   static std::string name() { return "jump"; }

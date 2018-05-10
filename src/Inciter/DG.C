@@ -298,11 +298,7 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
 
     // Error checking on the number of expected vs received/found chare-boundary
     // faces
-    Assert( m_exptNbface ==
-             std::accumulate( m_bndFace.cbegin(), m_bndFace.cend(),
-               std::size_t(0),
-               []( std::size_t acc, const decltype(m_bndFace)::value_type& b )
-                 { return acc + b.second.size(); } ),
+    Assert( m_exptNbface == tk::sumvalsize(m_bndFace), 
             "Expected and received number of boundary faces mismatch" );
 
     // Basic error checking on chare-boundary-face map

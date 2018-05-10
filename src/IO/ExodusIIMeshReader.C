@@ -150,10 +150,7 @@ ExodusIIMeshReader::readNodes( const std::vector< std::size_t >& gid ) const
   std::vector< tk::real > px( gid.size() ), py( gid.size() ), pz( gid.size() );
 
   std::size_t i=0;
-  for (auto g : gid) {
-    readNode( g, i, px, py, pz );
-    ++i;
-  }
+  for (auto g : gid) readNode( g, i++, px, py, pz );
 
   return {{ std::move(px), std::move(py), std::move(pz) }};
 }
