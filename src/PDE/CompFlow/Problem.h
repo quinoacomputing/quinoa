@@ -55,6 +55,7 @@
 #include "Problem/NLEnergyGrowth.h"
 #include "Problem/RayleighTaylor.h"
 #include "Problem/TaylorGreen.h"
+#include "Problem/SodShocktube.h"
 
 namespace inciter {
 
@@ -63,7 +64,8 @@ using CompFlowProblems = boost::mpl::vector< CompFlowProblemUserDefined
                                            , CompFlowProblemVorticalFlow
                                            , CompFlowProblemNLEnergyGrowth
                                            , CompFlowProblemRayleighTaylor
-                                           , CompFlowProblemTaylorGreen >;
+                                           , CompFlowProblemTaylorGreen
+                                           , CompFlowProblemSodShocktube >;
 
 } // inciter::
 

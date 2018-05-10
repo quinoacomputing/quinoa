@@ -103,14 +103,14 @@ Solver::Solver( CProxy_SolverShadow sh,
 // *****************************************************************************
 {
   // Activate SDAG waits
-  wait4nchare();
-  wait4lhsbc();
-  wait4rhsbc();
-  wait4hypresol();
-  wait4hyprelhs();
-  wait4hyprerhs();
-  wait4asm();
-  wait4low();
+  thisProxy[ CkMyPe() ].wait4nchare();
+  thisProxy[ CkMyPe() ].wait4lhsbc();
+  thisProxy[ CkMyPe() ].wait4rhsbc();
+  thisProxy[ CkMyPe() ].wait4hypresol();
+  thisProxy[ CkMyPe() ].wait4hyprelhs();
+  thisProxy[ CkMyPe() ].wait4hyprerhs();
+  thisProxy[ CkMyPe() ].wait4asm();
+  thisProxy[ CkMyPe() ].wait4low();
 }
 
 void
@@ -171,10 +171,10 @@ Solver::next()
 //! \details Re-enable SDAG waits for rebuilding the right-hand side vector only
 // *****************************************************************************
 {
-  wait4rhsbc();
-  wait4hyprerhs();
-  wait4asm();
-  wait4low();
+  thisProxy[ CkMyPe() ].wait4rhsbc();
+  thisProxy[ CkMyPe() ].wait4hyprerhs();
+  thisProxy[ CkMyPe() ].wait4asm();
+  thisProxy[ CkMyPe() ].wait4low();
 
   m_rhsimport.clear();
   m_lowrhsimport.clear();

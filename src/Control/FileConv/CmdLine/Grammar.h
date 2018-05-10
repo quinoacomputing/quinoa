@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/FileConv/CmdLine/Grammar.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     FileConv's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
   Expression Grammar Template Library (PEGTL) to create the grammar and the
@@ -22,7 +21,6 @@ namespace cmd {
   using namespace tao;
 
   //! \brief Specialization of tk::grm::use for FileConv's command line parser
-  //! \author J. Bakosi
   template< typename keyword >
   using use = tk::grm::use< keyword, ctr::CmdLine::keywords >;
 

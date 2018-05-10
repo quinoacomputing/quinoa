@@ -169,7 +169,7 @@ class Main : public CBase_Main {
                         ( msg->argc, msg->argv,
                           m_cmdline,
                           tk::HeaderType::INCITER,
-                          INCITER_EXECUTABLE,
+                          tk::inciter_executable(),
                           m_print ) ),
       // Start new timer measuring the total runtime
       m_timer(1),

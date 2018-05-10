@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Main/FileConv.C
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     File file converter Charm++ main chare
   \details   File file converter Charm++ main chare. This file contains the
     definition of the Charm++ main chare, equivalent to main() in Charm++-land.
@@ -73,7 +73,7 @@ class Main : public CBase_Main {
                         ( msg->argc, msg->argv,
                           m_cmdline,
 			  tk::HeaderType::FILECONV,
-			  FILECONV_EXECUTABLE,
+			  tk::fileconv_executable(),
 			  m_print ) ),
       m_timer(1),       // Start new timer measuring the total runtime
       m_timestamp()

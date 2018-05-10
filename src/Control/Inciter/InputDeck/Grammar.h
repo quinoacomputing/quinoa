@@ -34,7 +34,8 @@ namespace deck {
                             ctr::InputDeck::keywords2,
                             ctr::InputDeck::keywords3,
                             ctr::InputDeck::keywords4,
-                            ctr::InputDeck::keywords5 >;
+                            ctr::InputDeck::keywords5,
+                            ctr::InputDeck::keywords6 >;
 
   // Inciter's InputDeck state
 
@@ -321,15 +322,31 @@ namespace deck {
            // do error checking on this block
            eqchecker< eq > > {};
 
+  //! Match discretization option
+  template< template< class > class use, class keyword, class Option,
+            class Tag >
+  struct discroption :
+         tk::grm::process< use< keyword >,
+                           tk::grm::store_inciter_option<
+                             Option, tag::discr, Tag >,
+                           pegtl::alpha > {};
+
   //! Discretization parameters
-  struct discretization_parameters :
-         pegtl::sor< tk::grm::discr< use< kw::nstep >, tag::nstep >,
-                     tk::grm::discr< use< kw::term >, tag::term >,
-                     tk::grm::discr< use< kw::t0 >, tag::t0 >,
-                     tk::grm::discr< use< kw::dt >, tag::dt >,
-                     tk::grm::discr< use< kw::cfl >, tag::cfl >,
-                     tk::grm::discr< use< kw::ctau >, tag::ctau >,
-                     tk::grm::interval< use< kw::ttyi >, tag::tty > > {};
+  struct discretization :
+         pegtl::sor<
+           tk::grm::discrparam< use, kw::nstep, tag::nstep >,
+           tk::grm::discrparam< use, kw::term, tag::term >,
+           tk::grm::discrparam< use, kw::t0, tag::t0 >,
+           tk::grm::discrparam< use, kw::dt, tag::dt >,
+           tk::grm::discrparam< use, kw::cfl, tag::cfl >,
+           tk::grm::discrparam< use, kw::ctau, tag::ctau >,
+           tk::grm::process< use< kw::fct >, 
+                             tk::grm::Store< tag::discr, tag::fct >,
+                             pegtl::alpha >,
+           tk::grm::interval< kw::ttyi, tag::tty >,
+           discroption< use, kw::scheme, inciter::ctr::Scheme, tag::scheme >,
+           discroption< use, kw::flux, inciter::ctr::Flux, tag::flux >
+         > {};
 
   //! PDE parameter vector
   template< class keyword, class eq, class param >
@@ -430,7 +447,9 @@ namespace deck {
                            bc< kw::bc_dirichlet, tag::transport, tag::bcdir >,
                            bc< kw::bc_sym, tag::transport, tag::bcsym >,
                            bc< kw::bc_inlet, tag::transport, tag::bcinlet >,
-                           bc< kw::bc_outlet, tag::transport, tag::bcoutlet > >,
+                           bc< kw::bc_outlet, tag::transport, tag::bcoutlet >,
+                           bc< kw::bc_extrapolate, tag::transport,
+                               tag::bcextrapolate > >,
            check_errors< tag::transport, tk::grm::check_transport > > {};
 
   //! compressible flow
@@ -467,7 +486,9 @@ namespace deck {
                            bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
                            bc< kw::bc_sym, tag::compflow, tag::bcsym >,
                            bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
-                           bc< kw::bc_outlet, tag::compflow, tag::bcoutlet > >,
+                           bc< kw::bc_outlet, tag::compflow, tag::bcoutlet >,
+                           bc< kw::bc_extrapolate, tag::compflow,
+                               tag::bcextrapolate > >,
            check_errors< tag::compflow, tk::grm::check_compflow > > {};
 
   //! partitioning ... end block
@@ -481,23 +502,6 @@ namespace deck {
                                tk::ctr::PartitioningAlgorithm,
                                tag::selected,
                                tag::partitioner >,
-                             pegtl::alpha > > > {};
-
-  //! discretization ... end block
-  struct discretization :
-         pegtl::if_must<
-           tk::grm::readkw< use< kw::discretization >::pegtl_string >,
-           tk::grm::block< use< kw::end >,
-                           tk::grm::process<
-                             use< kw::scheme >,
-                             tk::grm::store_inciter_option<
-                               inciter::ctr::Scheme,
-                               tag::selected,
-                               tag::scheme >,
-                             pegtl::alpha >,
-                           tk::grm::process<
-                             use< kw::fct >,
-                             tk::grm::Store< tag::discr, tag::fct >,
                              pegtl::alpha > > > {};
 
   //! equation types
@@ -557,11 +561,10 @@ namespace deck {
            pegtl::sor<
              pegtl::seq< tk::grm::block<
                            use< kw::end >,
-                           discretization_parameters,
+                           discretization,
                            equations,
                            amr,
                            partitioning,
-                           discretization,
                            plotvar,
                            tk::grm::diagnostics<
                              use,

@@ -3004,9 +3004,29 @@ struct taylor_green_info {
 using taylor_green =
   keyword< taylor_green_info, TAOCPP_PEGTL_STRING("taylor_green") >;
 
+struct sod_shocktube_info {
+  using code = Code< H >;
+  static std::string name() { return "Sod shock-tube"; }
+  static std::string shortDescription() { return
+    "Select the Sod shock-tube test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Sod shock-tube test problem. The
+    purpose of this test problem is to test the correctness of the
+    approximate Riemann solver and its shock and interface capturing
+    capabilities. Example: "problem sod_shocktube". For more details, see
+    G. A. Sod, "A Survey of Several Finite Difference Methods for Systems of
+    Nonlinear Hyperbolic Conservation Laws", J. Comput. Phys., 27 (1978)
+    1–31.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using sod_shocktube =
+  keyword< sod_shocktube_info, TAOCPP_PEGTL_STRING("sod_shocktube") >;
+
 struct problem_info {
   using code = Code< r >;
-  static std::string name() { return "problem"; }
+  static std::string name() { return "Test problem"; }
   static std::string shortDescription() { return
     "Specify problem configuration for a partial differential equation solver";
   }
@@ -3024,7 +3044,8 @@ struct problem_info {
                   + vortical_flow::string() + "\' | \'"
                   + nl_energy_growth::string() + "\' | \'"
                   + rayleigh_taylor::string() + "\' | \'"
-                  + taylor_green::string() + '\'';
+                  + taylor_green::string() + "\' | \'"
+                  + sod_shocktube::string() + '\'';
     }
   };
 };
@@ -3093,7 +3114,7 @@ using advdiff = keyword< advdiff_info, TAOCPP_PEGTL_STRING("advdiff") >;
 
 struct physics_info {
   using code = Code< h >;
-  static std::string name() { return "physics configuration"; }
+  static std::string name() { return "Physics configuration"; }
   static std::string shortDescription() { return
     "Specify the physics configuration for a system of PDEs"; }
   static std::string longDescription() { return
@@ -3478,6 +3499,23 @@ struct transport_info {
 };
 using transport = keyword< transport_info, TAOCPP_PEGTL_STRING("transport") >;
 
+struct bc_extrapolate_info {
+  static std::string name() { return "Extrapolation boundary condition"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing Extrapolation boundary conditions"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a bc_extrapolate ... end block, used to
+    specify the configuration for setting extrapolation boundary conditions for a
+    partial differential equation. Keywords allowed in a bc_extrapolate ... end
+    block: )" + std::string("\'")
+    + sideset::string() + "\'. "
+    + R"(For an example bc_extrapolate ... end block, see
+      doc/html/inciter_example_gausshump.html.)";
+  }
+};
+using bc_extrapolate =
+  keyword< bc_extrapolate_info, TAOCPP_PEGTL_STRING("bc_extrapolate") >;
+
 struct id_info {
   static std::string name() { return "id"; }
   static std::string shortDescription() { return "ID"; }
@@ -3721,7 +3759,7 @@ using amr_initial_conditions =
   keyword< amr_initial_conditions_info, TAOCPP_PEGTL_STRING("ic") >;
 
 struct amr_initial_info {
-  static std::string name() { return "initial refinement"; }
+  static std::string name() { return "Initial refinement"; }
   static std::string shortDescription() { return
     "Configure initial mesh refinement (before time stepping)"; }
   static std::string longDescription() { return
@@ -3791,7 +3829,7 @@ struct amr_hessian_info {
 using amr_hessian = keyword< amr_hessian_info, TAOCPP_PEGTL_STRING("hessian") >;
 
 struct amr_error_info {
-  static std::string name() { return "error type"; }
+  static std::string name() { return "Error estimator"; }
   static std::string shortDescription() { return
     "Configure the error type for solution-adaptive mesh refinement"; }
   static std::string longDescription() { return
@@ -3866,7 +3904,7 @@ struct dg_info {
 using dg = keyword< dg_info, TAOCPP_PEGTL_STRING("dg") >;
 
 struct scheme_info {
-  static std::string name() { return "scheme"; }
+  static std::string name() { return "Discretization scheme"; }
   static std::string shortDescription() { return
     "Select discretization scheme"; }
   static std::string longDescription() { return
@@ -3883,6 +3921,48 @@ struct scheme_info {
   };
 };
 using scheme = keyword< scheme_info, TAOCPP_PEGTL_STRING("scheme") >;
+
+struct laxfriedrichs_info {
+  static std::string name() { return "Lax-Friedrichs"; }
+  static std::string shortDescription() { return
+    "Select Lax-Friedrichs flux function"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Lax-Friedrichs flux function used for
+    discontinuous Galerkin (DG) spatial discretiztaion used in inciter. See
+    Control/Inciter/Options/Flux.h for other valid options.)"; }
+};
+using laxfriedrichs =
+  keyword< laxfriedrichs_info, TAOCPP_PEGTL_STRING("laxfriedrichs") >;
+
+struct hllc_info {
+  static std::string name() { return "HLLC"; }
+  static std::string shortDescription() { return
+    "Select the Harten-Lax-van Leer-Contact (HLLC) flux function"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Harten-Lax-van Leer-Contact flux
+    function used for discontinuous Galerkin (DG) spatial discretiztaion
+    used in inciter. See Control/Inciter/Options/Flux.h for other valid
+    options.)"; }
+};
+using hllc = keyword< hllc_info, TAOCPP_PEGTL_STRING("hllc") >;
+
+struct flux_info {
+  static std::string name() { return "Flux function"; }
+  static std::string shortDescription() { return
+    "Select flux function"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select a fllux function, used for
+    discontinuous Galerkin (DG) spatial discretiztaion used in inciter. See
+    Control/Inciter/Options/Flux.h for valid options.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + laxfriedrichs::string() + "\' | \'"
+                  + hllc::string() + '\'';
+    }
+  };
+};
+using flux = keyword< flux_info, TAOCPP_PEGTL_STRING("flux") >;
 
 struct fct_info {
   static std::string name() { return "Flux-corrected transport"; }
@@ -3902,21 +3982,6 @@ struct fct_info {
   };
 };
 using fct = keyword< fct_info, TAOCPP_PEGTL_STRING("fct") >;
-
-struct discretization_info {
-  static std::string name() { return "discretization"; }
-  static std::string shortDescription() { return
-    "Start configuration block for discretization scheme"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce a discretization ... end block, used to
-    configure the spatial discretization. Keywords allowed in a discretization
-    ... end block: )" + std::string("\'")
-    + fct::string() + "\' | \'"
-    + scheme::string() + "\'.";
-  }
-};
-using discretization =
-  keyword< discretization_info, TAOCPP_PEGTL_STRING("discretization") >;
 
 ////////// NOT YET FULLY DOCUMENTED //////////
 

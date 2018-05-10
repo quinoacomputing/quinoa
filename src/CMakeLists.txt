@@ -64,10 +64,9 @@ endif()
 # Convert CMAKE_BUILD_TYPE
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 
-# Set build type (will become compiler define in Main/QuinoaConfig.h)
+# Set build type (will be exported to the source)
 set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
-# Query regression tests direcetory (will become compiler define in
-# Main/QuinoaConfig.h)
+# Query regression tests directory (will be exported to the source)
 set(REGRESSION_DIR "${PROJECT_SOURCE_DIR}/../regression")
 
 # Query target architecture
@@ -230,7 +229,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Winvalid-pch")
   add_compiler_flag("-Wmissing-field-initializers")
   add_compiler_flag("-Wmissing-format-attribute")
-  add_compiler_flag("-Wmissing-include-dirs")
   add_compiler_flag("-Wmissing-noreturn")
   add_compiler_flag("-Wpacked")
   add_compiler_flag("-Wpointer-arith")
@@ -470,12 +468,11 @@ set(EXECUTABLES ${INCITER_EXECUTABLE}
                 ${UNITTEST_EXECUTABLE}
                 ${FILECONV_EXECUTABLE})
 
-# Make sure that the config file is in the search path
-# Configure a header file to pass info to the code
-configure_file(
-  "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.h.in"
-  "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.h"
-)
+# Configure cmake variable to pass to the code
+configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.h.in"
+                "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.h" )
+configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.C.in"
+                "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.C" )
 
 # Remove build hostname from cmake cache
 unset(HOSTNAME CACHE)
@@ -528,6 +525,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${RNGTEST_SRC_DIR}
                     ${QUINOA_SOURCE_DIR}/Statistics
                     ${QUINOA_SOURCE_DIR}/UnitTest
+                    ${MPI_CXX_INCLUDE_DIRS}
                     ${MPI_CXX_INCLUDE_PATH}
                     ${MKL_INCLUDE_DIRS}
                     ${HDF5_INCLUDE_DIRS}

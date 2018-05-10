@@ -72,7 +72,6 @@ Discretization::Discretization(
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy
 //! \param[in] fctproxy Distributed FCT proxy
-//! \param[in] solver Linear system solver (Solver) proxy
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
 //! \param[in] coordmap Coordinates of mesh nodes and their global IDs
 //! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
@@ -113,7 +112,7 @@ Discretization::Discretization(
   // is configured false in the input deck, at this point, we still need the FCT
   // object as FCT is still being performed, only its results are ignored. See
   // also, e.g., MatCG::next().
-  const auto sch = g_inputdeck.get< tag::selected, tag::scheme >();
+  const auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
   const auto nprop = g_inputdeck.get< tag::component >().nprop();
   if ((sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG))
     m_fct[ thisIndex ].insert( m_transporter, nchare, m_gid.size(), nprop,
@@ -275,9 +274,9 @@ Discretization::stat()
 
   auto MIN = -std::numeric_limits< tk::real >::max();
   auto MAX = std::numeric_limits< tk::real >::max();
-  std::array< tk::real, 2 > min = {{ MAX, MAX }};
-  std::array< tk::real, 2 > max = {{ MIN, MIN }};
-  std::array< tk::real, 4 > sum{{ 0.0, 0.0, 0.0, 0.0 }};
+  std::vector< tk::real > min{ MAX, MAX };
+  std::vector< tk::real > max{ MIN, MIN };
+  std::vector< tk::real > sum{ 0.0, 0.0, 0.0, 0.0 };
   tk::UniPDF edgePDF( 1e-4 );
   tk::UniPDF volPDF( 1e-4 );
 
@@ -321,11 +320,11 @@ Discretization::stat()
   }
 
   // Contribute to mesh statistics across all Discretization chares
-  contribute( min.size()*sizeof(tk::real), min.data(), CkReduction::min_double,
+  contribute( min, CkReduction::min_double,
     CkCallback(CkReductionTarget(Transporter,minstat), m_transporter) );
-  contribute( max.size()*sizeof(tk::real), max.data(), CkReduction::max_double,
+  contribute( max, CkReduction::max_double,
     CkCallback(CkReductionTarget(Transporter,maxstat), m_transporter) );
-  contribute( sum.size()*sizeof(tk::real), sum.data(), CkReduction::sum_double,
+  contribute( sum, CkReduction::sum_double,
     CkCallback(CkReductionTarget(Transporter,sumstat), m_transporter) );
 
   // Serialize PDFs to raw stream

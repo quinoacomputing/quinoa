@@ -342,6 +342,18 @@ class Scheme : public SchemeBase {
         call_doneInserting<Args...>( std::forward<Args>(args)... ), proxy );
     }
 
+    ///@{
+    //! \brief Pack/Unpack serialize member function
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    void pup( PUP::er &p ) {
+      SchemeBase::pup( p );
+    }
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] s Scheme object reference
+    friend void operator|( PUP::er& p, Scheme& s ) { s.pup(p); }
+    //@}
+
   private:
    //! Functor to call the chare entry method 'setup'
    //! \details This class is intended to be used in conjunction with variant
@@ -447,18 +459,6 @@ class Scheme : public SchemeBase {
         p.eval( std::forward<Args>(args)... );
       }
     };
-
-    ///@{
-    //! \brief Pack/Unpack serialize member function
-    //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &p ) {
-      SchemeBase::pup( p );
-    }
-    //! \brief Pack/Unpack serialize operator|
-    //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \param[in,out] s Scheme object reference
-    friend void operator|( PUP::er& p, Scheme& s ) { s.pup(p); }
-    //@}
 };
 
 } // inciter::
