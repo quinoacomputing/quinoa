@@ -35,7 +35,7 @@ unique( Container& c )
 
 template< class Container >
 Container
-cunique( const Container& src )
+uniquecopy( const Container& src )
 // *****************************************************************************
 //! Make elements of container unique (on a copy, leaving the source as is)
 //! \param[in] src Container

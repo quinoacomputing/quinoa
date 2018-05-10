@@ -38,20 +38,20 @@ static ContainerUtil_group ContainerUtil( "Base/ContainerUtil" );
 
 //! Test definitions for group
 
-//! Test cunique making the elements of a container unique (on copy)
+//! Test uniquecopy making the elements of a container unique (on copy)
 template<> template<>
 void ContainerUtil_object::test< 1 >() {
-  set_test_name( "cunique" );
+  set_test_name( "uniquecopy" );
 
   // std::vector
   std::vector< int > v{{ 1, 1, 2, 6, -2, 3, 5, 5 }},
                      correct{{ -2, 1, 2, 3, 5, 6 }};
-  auto v1 = tk::cunique( v );
+  auto v1 = tk::uniquecopy( v );
   ensure( "make vector (c)unique incorrect", v1 == correct );
 
   // std::string
   std::string s( "blahblah" );
-  auto s1 = tk::cunique( s );
+  auto s1 = tk::uniquecopy( s );
   ensure( "make string (c)unique incorrect", s1 == "abhl" );
 
   // std::vector< std::vector< tk::ctr::Term > >
@@ -61,7 +61,7 @@ void ContainerUtil_object::test< 1 >() {
                                                  tk::ctr::variance('y',2) };
   std::vector< std::vector< tk::ctr::Term > > c{ tk::ctr::mean('c',1),
                                                  tk::ctr::variance('y',2) };
-  auto p1 = tk::cunique( p );
+  auto p1 = tk::uniquecopy( p );
   ensure( "make vector<vector<tk::ctr::Term>> (c)unique incorrect", p1 == c );
 }
 
