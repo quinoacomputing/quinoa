@@ -249,7 +249,6 @@ Transporter::createPartitioner()
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,reordered), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,aveCost), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,stdCost), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,coord), thisProxy )
@@ -417,15 +416,6 @@ Transporter::flattened()
 // *****************************************************************************
 {
   m_partitioner.gather();
-}
-
-void
-Transporter::reordered()
-// *****************************************************************************
-// ...
-// *****************************************************************************
-{
-  m_partitioner.reordered();
 }
 
 void

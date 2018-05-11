@@ -208,7 +208,6 @@ class Partitioner : public CBase_Partitioner {
       , tag::refined,        CkCallback
       , tag::distributed,    CkCallback
       , tag::flattened,      CkCallback
-      , tag::reorder,        CkCallback
       , tag::avecost,        CkCallback
       , tag::stdcost,        CkCallback
       , tag::coord,          CkCallback

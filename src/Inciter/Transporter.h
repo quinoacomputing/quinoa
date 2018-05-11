@@ -418,8 +418,6 @@ class Transporter : public CBase_Transporter {
     //!   for computing the communication maps required for node ID reordering
     void flattened();
 
-    void reordered();
-
     //! Reduction target estimating the average communication cost among all PEs
     void aveCost( tk::real c );
 
