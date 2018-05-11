@@ -39,6 +39,7 @@ FIND_PATH(BACKWARD_INCLUDE_DIR
 # Look for the cmake configuration file
 FIND_PATH(BACKWARD_CMAKE_CONFIG_DIR
           NAMES BackwardConfig.cmake
+          PATH_SUFFIXES lib/backward
           HINTS ${BACKWARD_ROOT} $ENV{BACKWARD_ROOT})
 
 set(BACKWARD_INCLUDE_DIRS ${BACKWARD_INCLUDE_DIR})
