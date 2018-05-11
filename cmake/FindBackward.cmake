@@ -34,6 +34,7 @@ endif()
 # Look for the header file
 FIND_PATH(BACKWARD_INCLUDE_DIR
           NAMES backward.hpp
+          PATH_SUFFIXES include
           HINTS ${BACKWARD_ROOT} $ENV{BACKWARD_ROOT})
 
 # Look for the cmake configuration file
