@@ -19,7 +19,7 @@
 #include "Exception.h"
 
 #ifdef HAS_BACKWARD
-  #include "backward.hpp"
+  #include "NoWarning/backward.h"
 #endif
 
 using tk::Exception;

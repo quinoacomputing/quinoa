@@ -79,6 +79,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       PDE
                       InciterControl
                       Inciter
+                      MeshRefinement
                       LoadBalance
                       LinSys
                       Base
@@ -87,7 +88,6 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       MeshIO
                       Mesh
                       Statistics
-                      MeshRefinement
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${HYPRE_LIBRARIES}

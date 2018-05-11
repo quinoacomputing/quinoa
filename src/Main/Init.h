@@ -118,10 +118,8 @@ static void echoBuildEnv( const Print& print, const std::string& executable )
 
 #ifdef NDEBUG
   print.item( "Asserts", "off (turn on: CMAKE_BUILD_TYPE=DEBUG)" );
-  print.item( "Exception trace", "off (turn on: CMAKE_BUILD_TYPE=DEBUG)" );
 #else
   print.item( "Asserts", "on (turn off: CMAKE_BUILD_TYPE=RELEASE)" );
-  print.item( "Exception trace", "on (turn off: CMAKE_BUILD_TYPE=RELEASE)" );
 #endif
 
   print.item( "MPI C++ wrapper", mpi_compiler() );
