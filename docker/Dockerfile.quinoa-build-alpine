@@ -33,7 +33,7 @@ RUN apk update && apk add libtool autoconf automake bash m4 file git cmake gfort
 
 # Install OpenMPI
 ADD https://www.open-mpi.org/software/ompi/v2.0/downloads/openmpi-2.0.2.tar.gz /openmpi/
-RUN cd /openmpi/ && tar xzf openmpi-2.0.2.tar.gz && cd openmpi-2.0.2 && ./configure --disable-shared --enable-static --enable-mpi-cxx --without-hwloc --prefix=/opt/openmpi && make -sj$(grep -c processor /proc/cpuinfo) install
+RUN cd /openmpi/ && tar xzf openmpi-2.0.2.tar.gz && cd openmpi-2.0.2 && ./configure --disable-shared --enable-static --enable-mpi-cxx --prefix=/opt/openmpi && make -sj$(grep -c processor /proc/cpuinfo) install
 ENV PATH /opt/openmpi/bin:$PATH
 ENV LD_LIBRARY_PATH /opt/openmpi/lib:$LD_LIBRARY_PATH
 RUN rm -rf /openmpi
