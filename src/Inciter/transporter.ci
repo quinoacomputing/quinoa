@@ -22,6 +22,7 @@ module transporter {
       entry [reductiontarget] void matched();
       entry [reductiontarget] void refined( uint64_t nelem );
       entry [reductiontarget] void flattened();
+      entry [reductiontarget] void reordered();
       entry [reductiontarget] void coord();
       entry [reductiontarget] void comfinal();
       entry [reductiontarget] void totalvol( tk::real v );

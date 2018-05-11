@@ -50,7 +50,7 @@ Partitioner::Partitioner(
   const Scheme& scheme,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::vector< std::size_t >& triinpoel ) :
-  m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6], cb[7] ),
+  m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6], cb[7], cb[8] ),
   m_host( host ),
   m_solver( solver ),
   m_bc( bc ),
@@ -272,7 +272,8 @@ Partitioner::neworder( const std::unordered_map< std::size_t,
   }
 
   // If all our nodes have new IDs assigned, reorder complete on this PE
-  if (m_linnodes.size() == m_nodeset.size()) reordered();
+  if (m_linnodes.size() == m_nodeset.size())
+    contribute( m_cb.get< tag::reorder >() );
 }
 
 void
@@ -859,7 +860,8 @@ Partitioner::reorder()
   reorderowned_complete();
 
   // If all our nodes have new IDs assigned, reordering complete on this PE
-  if (m_linnodes.size() == m_nodeset.size()) reordered();
+  if (m_linnodes.size() == m_nodeset.size())
+    contribute( m_cb.get< tag::reorder >() );
 }
 
 int

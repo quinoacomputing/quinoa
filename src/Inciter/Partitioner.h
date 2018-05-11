@@ -194,6 +194,9 @@ class Partitioner : public CBase_Partitioner {
     void mask( int p, const std::unordered_map< std::size_t,
                               std::vector< int > >& cn );
 
+    //! Compute final result of reordering
+    void reordered();
+
     //! Create worker chare array elements on this PE
     void createWorkers();
 
@@ -205,6 +208,7 @@ class Partitioner : public CBase_Partitioner {
       , tag::refined,        CkCallback
       , tag::distributed,    CkCallback
       , tag::flattened,      CkCallback
+      , tag::reorder,        CkCallback
       , tag::avecost,        CkCallback
       , tag::stdcost,        CkCallback
       , tag::coord,          CkCallback
@@ -413,9 +417,6 @@ class Partitioner : public CBase_Partitioner {
     tk::Fields nodeinit( std::size_t npoin,
                          const std::pair< std::vector< std::size_t >,
                                           std::vector< std::size_t > >& esup );
-
-    //! Compute final result of reordering
-    void reordered();
 
     //! Compute lower and upper bounds of reordered node IDs our PE operates on
     void bounds();
