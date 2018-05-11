@@ -19,7 +19,7 @@
 #
 #  set(BACKWARD_ROOT "/path/to/custom/backward-cpp") # prefer over system
 #  find_package(Backward)
-#  if(BACKWARDCPP_FOUND)
+#  if(BackwardCpp_FOUND)
 #    list(APPEND CMAKE_MODULE_PATH "${BACKWARDCPP_CMAKE_CONFIG_DIRS}")
 #    include(BackwardConfig)
 #    include_directories( ${BACKWARDCPP_INCLUDE_DIRS} )

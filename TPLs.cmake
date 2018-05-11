@@ -153,7 +153,7 @@ if(BackwardCpp_FOUND)
   message(STATUS "Backward-cpp config: ${BACKWARD_DEFINITIONS}")
   message(STATUS "Backward-cpp libraries: ${BACKWARD_LIBRARIES}")
 else()
-  set(BACKWARD_INCLUDE_DIRS "")
+  set(BACKWARDCPP_INCLUDE_DIRS "")
   set(BACKWARD_LIBRARIES "")
 endif()
 
