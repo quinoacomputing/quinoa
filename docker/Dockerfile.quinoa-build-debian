@@ -44,7 +44,7 @@ CMD ["/bin/sh"]
 # Clone quinoa
 RUN git clone --recursive https://github.com/quinoacomputing/quinoa.git
 # Checkout commit to be tested
-RUN cd quinoa && git checkout $COMMIT
+RUN cd quinoa && git checkout $COMMIT && git submodule update --recursive && git submodule status --recursive
 # Build TPLs
 RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake .. && make -sj$(grep -c processor /proc/cpuinfo)
 # Build & test
