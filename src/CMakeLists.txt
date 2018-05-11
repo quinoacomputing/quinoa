@@ -546,6 +546,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${TPL_INCLUDE_DIR}
                     ${CHARM_INCLUDE_DIRS}
                     ${RNGTEST_BIN_DIR}
+                    ${BACKWARD_INCLUDE_DIRS}
                     ${PROJECT_BINARY_DIR}/LoadBalance   # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Walker        # for Charm++ modules
