@@ -119,7 +119,7 @@ namespace grm {
     CHARMARG };         //!< Argument inteded for the Charm++ runtime system
 
   //! Associate parser errors to error messages
-  static const std::map< MsgKey, std::string > message( {
+  static const std::map< MsgKey, std::string > message{
     { MsgKey::KEYWORD, "Unknown keyword or keyword unrecognized in this "
       "block." },
     { MsgKey::MOMENT, "Unknown term in moment." },
@@ -274,7 +274,7 @@ namespace grm {
       "charmrun, then Charm++ does not understand it either. See the Charm++ "
       "manual at http://charm.cs.illinois.edu/manuals/html/charm++/"
       "manual.html." }
-  } );
+  };
 
   //! \brief Parser error and warning message handler.
   //! \details This function is used to associated and dispatch an error or a
