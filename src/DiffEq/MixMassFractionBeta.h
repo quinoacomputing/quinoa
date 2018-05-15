@@ -43,10 +43,10 @@
 
     In addition to integrating the above SDE, there are two additional functions
     of \f$ Y_\alpha \f$ are computed as
-    \f[ \begin{align}
+    \f[ \begin{aligned}
       \rho(Y_\alpha) & = \frac{ \rho_{2\alpha} }{ 1 + r_\alpha Y_\alpha } \\
       V(Y_\alpha) & = \frac{1}{ \rho(Y_\alpha) }
-    \end{align} \f]
+    \end{aligned} \f]
     These equations compute the instantaneous mixture density, \f$ \rho \f$, and
     instantaneous specific volume, \f$ V_\alpha \f$, for equation \f$ \alpha \f$
     in the system. These quantities are used in binary mixing of

@@ -23,7 +23,7 @@
     Dirichlet distribution,
     \f[
        \newcommand{\bv}[1]{{\mbox{$\mathbf{#1}$}}}
-       \mathscr{G}(\bv{Y},\bv{\alpha},\bv{\beta}) =
+       G(\bv{Y},\bv{\alpha},\bv{\beta}) =
        \prod_{i=1}^K\frac{\Gamma(\alpha_i+\beta_i)}{\Gamma(\alpha_i)
        \Gamma(\beta_i)}Y_i^{\alpha_i-1} \mathcal{Y}_i^{\gamma_i} \qquad
        \mathrm{with} \qquad \mathcal{Y}_i = 1-\sum_{k=1}^i Y_k,
