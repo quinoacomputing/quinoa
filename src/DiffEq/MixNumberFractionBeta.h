@@ -44,10 +44,10 @@
     Similar to the number-fraction beta SDE (DiffEq/NumberFractionBeta.h), in
     addition to integrating the above SDE, there are two additional functions
     of \f$ X_\alpha \f$ are computed as
-    \f[ \begin{align}
+    \f[ \begin{aligned}
       \rho(X_\alpha) & = \rho_{2\alpha} ( 1 - r'_\alpha X_\alpha ) \\
       V(X_\alpha) & = \frac{1}{ \rho_{2\alpha} ( 1 - r'_\alpha X_\alpha ) }
-    \end{align} \f]
+    \end{aligned} \f]
     These equations compute the instantaneous mixture density, \f$ \rho \f$, and
     instantaneous specific volume, \f$ V_\alpha \f$, for equation \f$ \alpha \f$
     in the system. These quantities are used in binary mixing of

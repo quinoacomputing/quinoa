@@ -224,6 +224,7 @@ class DistFCT : public CBase_DistFCT {
               const tk::Fields& dUl,
               const SchemeProxy& scheme );
 
+    /** @name Pack/unpack (Charm++ serialization) routines */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -255,7 +256,7 @@ class DistFCT : public CBase_DistFCT {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \param[in,out] i DistFCT object reference
     friend void operator|( PUP::er& p, DistFCT& i ) { i.pup(p); }
-    //@}
+    ///@}
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
