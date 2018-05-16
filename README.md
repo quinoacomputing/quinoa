@@ -19,31 +19,23 @@ Quinoa consists of the following tools:
 Build
 =====
 
-1. Install prerequisites
+- Install prerequisites: _Debian/Ubuntu linux_ (line 1: required, line 2: recommended)
 
-- Debian/Ubuntu linux: (line 1: required, line 2: recommended)
+       apt-get install cmake gfortran gcc g++ openmpi-bin libopenmpi-dev
+       apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
 
-```
-apt-get install cmake gfortran gcc g++ openmpi-bin libopenmpi-dev
-apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
-```
+- Install prerequisites: _Mac OS X_ (line 1: required, line 2: recommended)
 
-- Mac OS X: (line 1: required, line 2: recommended)
+       port install cmake openmpi-clang38 && port select clang mp-clang-3.8 && port select mpi openmpi-clang38-fortran
+       port install gmsh pugixml lapack boost
 
-```
-port install cmake openmpi-clang38 && port select clang mp-clang-3.8 && port select mpi openmpi-clang38-fortran
-port install gmsh pugixml lapack boost
-```
+- Clone, build third-party libraries, build & test
 
-2. Clone, build third-party libraries, build & test
+       git clone --recursive https://github.com/quinoacomputing/quinoa.git; cd quinoa
+       mkdir tpl/build; cd tpl/build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 ..; make; cd -
+       mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src; make; ../script/run_tests.sh
 
-```
-git clone --recursive https://github.com/quinoacomputing/quinoa.git; cd quinoa
-mkdir tpl/build; cd tpl/build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 ..; make; cd -
-mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src; make; ../script/run_tests.sh
-```
-
-All executables will be in <tt>quinoa/build/Main</tt>
+All executables will be under `build/Main/`.
 
 Authors
 =======
@@ -61,7 +53,8 @@ Authors
 Resources
 =========
 
-- Source code --- https://github.com/quinoacomputing/quinoa
+- Releases -- https://github.com/quinoacomputing/quinoa/releases
+- Source --- https://github.com/quinoacomputing/quinoa
 - License --- https://github.com/quinoacomputing/quinoa/blob/master/LICENSE
 - Documentation --- http://quinoacomputing.github.io/index.html
 - Manifesto --- http://quinoacomputing.github.io/why.html
