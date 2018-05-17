@@ -197,7 +197,7 @@ positiveJacobians( const std::vector< std::size_t >& inpoel,
 // Test for positivity of the Jacobian for all cells in mesh
 //! \param[in] inpoel Element connectivity (zero-based, i.e., local if parallel)
 //! \param[in] coord Node coordinates
-//! \return True of all Jacboians are positive
+//! \return True if Jacobians of all mesh cells are positive
 // *****************************************************************************
 {
   Assert( !inpoel.empty(), "Mesh connectivity empty" );

@@ -61,7 +61,6 @@ Transporter::Transporter() :
   m_partitioner(),
   m_avcost( 0.0 ),
   m_V( 0.0 ),
-  m_npoin( 0 ),
   m_minstat( {{ 0.0, 0.0 }} ),
   m_maxstat( {{ 0.0, 0.0 }} ),
   m_avgstat( {{ 0.0, 0.0 }} ),
@@ -367,10 +366,12 @@ Transporter::partition()
 
   // Print out mesh graph stats
   m_print.section( "Input mesh graph statistics" );
-  m_print.item( "Number of tetrahedra", m_nelem );
   tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
-  m_npoin = er.readHeader();
-  m_print.item( "Number of nodes", m_npoin );
+  auto npoin = er.readHeader();
+  er.readElemBlockIDs();
+  auto nelem = er.nelem( tk::ExoElemType::TET );
+  m_print.item( "Number of tetrahedra", nelem );
+  m_print.item( "Number of nodes", npoin );
 
   // Print out info on load distribution
   m_print.section( "Load distribution" );
