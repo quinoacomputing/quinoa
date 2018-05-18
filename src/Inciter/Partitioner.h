@@ -169,8 +169,8 @@ class Partitioner : public CBase_Partitioner {
     //!   multiple PEs
     void recvRefBndEdges();
 
-    //! Decide wether to continue with another step of initial mesh refinement
-    void nextref();
+    //! ...
+    void correctref();
 
     //! Prepare owned mesh node IDs for reordering
     void flatten();
@@ -193,9 +193,6 @@ class Partitioner : public CBase_Partitioner {
     //! Receive mask of to-be-received global mesh node IDs
     void mask( int p, const std::unordered_map< std::size_t,
                               std::vector< int > >& cn );
-
-    //! Compute final result of reordering
-    void reordered();
 
     //! Create worker chare array elements on this PE
     void createWorkers();
@@ -254,7 +251,7 @@ class Partitioner : public CBase_Partitioner {
     //! \brief Map associating the global IDs and the coordinates of a node
     //!   added to an edge during initial mesh refinement
     tk::UnsMesh::EdgeNodeCoord m_edgenode;
-    //! \brief Unique set of boundary edges associated to (all) PEs
+    //! Unique set of boundary edges associated to PEs we share edges with
     std::unordered_map< int, tk::UnsMesh::EdgeSet > m_bndEdges;
     //! \brief Map associating the global IDs and the coordinates of a node
     //!   added to an edge during initial mesh refinement associated to
@@ -416,6 +413,12 @@ class Partitioner : public CBase_Partitioner {
     tk::Fields nodeinit( std::size_t npoin,
                          const std::pair< std::vector< std::size_t >,
                                           std::vector< std::size_t > >& esup );
+
+    //! Decide wether to continue with another step of initial mesh refinement
+    void nextref();
+
+    //! Compute final result of reordering
+    void reordered();
 
     //! Compute lower and upper bounds of reordered node IDs our PE operates on
     void bounds();

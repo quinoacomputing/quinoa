@@ -283,7 +283,7 @@ Transporter::matched()
 // node IDs shared among multiple PEs
 // *****************************************************************************
 {
-  m_partitioner.nextref();
+  m_partitioner.correctref();
 }
 
 void

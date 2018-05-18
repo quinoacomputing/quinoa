@@ -1083,16 +1083,10 @@ Partitioner::recvRefBndEdges()
 }
 
 void
-Partitioner::nextref()
+Partitioner::correctref()
 // *****************************************************************************
-// Decide wether to continue with another step of initial mesh refinement
-//! \details At this point the mesh has been refined and all PEs have received
-//!   a map associating the global IDs and the coordinates of a node added to
-//!   an edge during initial mesh refinement associated to all other PEs the
-//!   edges are shared with. Now the mesh is corrected so that it conforms
-//!   across PE-boundaries by tagging those edges for refinement that have been
-//!   refined by at least a PE. This concludes this initial mesh refinement
-//!   step, and we continue if there are more steps configured by the user.
+// ...
+//! \details ...
 // *****************************************************************************
 {
   // Storage for edges that still need a new node to yield a conforming mesh
@@ -1137,9 +1131,47 @@ Partitioner::nextref()
       }
     }
 
-  // Correct PE-boundary edges
-  correctRefine( extra );
+  // Correct PE-boundary edges if any
+  if (!extra.empty()) {
 
+    // Query user input for initial mesh refinement type list
+    auto initref = g_inputdeck.get< tag::amr, tag::init >();
+    // Determine which level this is
+    auto level = initref.size() - m_initref.size();
+    std::cout << CkMyPe() << " correct ref " << level << '\n';
+
+    correctRefine( extra );
+    m_edgeNodeCoord.clear();
+
+    m_nref = 0;
+    for (auto p : m_pe) {       // for all PEs we share at least an edge with
+      // For all boundary edges of PE p, find out if we have added a new
+      // node to it, and if so, export parents->(newid,coords) to p.
+      tk::UnsMesh::EdgeNodeCoord exp;
+      for (const auto& e : tk::cref_find(m_bndEdges,p)) {
+        auto i = m_edgenode.find(e);
+        if (i != end(m_edgenode)) exp[ e ] = i->second;
+      }
+      thisProxy[ p ].addRefBndEdges( CkMyPe(), exp );
+    }
+
+  } else nextref();
+}
+
+  
+void
+Partitioner::nextref()
+// *****************************************************************************
+// Decide wether to continue with another step of initial mesh refinement
+//! \details At this point the mesh has been refined and all PEs have received
+//!   a map associating the global IDs and the coordinates of a node added to
+//!   an edge during initial mesh refinement associated to all other PEs the
+//!   edges are shared with. Now the mesh is corrected so that it conforms
+//!   across PE-boundaries by tagging those edges for refinement that have been
+//!   refined by at least a PE. This concludes this initial mesh refinement
+//!   step, and we continue if there are more steps configured by the user.
+// *****************************************************************************
+{
   // Remove initial mesh refinement step from list
   if (!m_initref.empty()) m_initref.pop_back();
 
