@@ -256,7 +256,7 @@ class Partitioner : public CBase_Partitioner {
     //! \brief Map associating the global IDs and the coordinates of a node
     //!   added to an edge during initial mesh refinement associated to
     //!   a(nother) PE the edge is shared with
-    std::unordered_map< int, tk::UnsMesh::EdgeNodeCoord > m_edgeNodeCoord;
+    std::unordered_map< int, tk::UnsMesh::EdgeNodeCoord > m_edgenodePe;
     //! Queue of requested node IDs from PEs
     std::vector< std::pair< int, std::unordered_set<std::size_t> > > m_reqNodes;
     //! \brief Starting global mesh node ID for node reordering on this PE

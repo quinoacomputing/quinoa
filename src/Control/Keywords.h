@@ -3759,7 +3759,7 @@ using amr_initial_conditions =
   keyword< amr_initial_conditions_info, TAOCPP_PEGTL_STRING("ic") >;
 
 struct amr_initial_info {
-  static std::string name() { return "Initial refinement"; }
+  static std::string name() { return "Initial refinement typelist"; }
   static std::string shortDescription() { return
     "Configure initial mesh refinement (before time stepping)"; }
   static std::string longDescription() { return

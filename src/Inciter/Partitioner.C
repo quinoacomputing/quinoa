@@ -65,7 +65,7 @@ Partitioner::Partitioner(
   m_el(),
   m_edgenode(),
   m_bndEdges(),
-  m_edgeNodeCoord(),
+  m_edgenodePe(),
   m_reqNodes(),
   m_start( 0 ),
   m_noffset( 0 ),
@@ -159,7 +159,7 @@ Partitioner::partref()
   // Prepare for a step of initial mesh refinement
   m_bndEdges.clear();
   m_pe.clear();
-  m_edgeNodeCoord.clear();
+  m_edgenodePe.clear();
   m_edgenode.clear();
   m_coordmap.clear();
 
@@ -971,7 +971,6 @@ Partitioner::addBndEdges( int frompe, const tk::UnsMesh::EdgeSet& ed )
           if (ownedges.find(e) != end(ownedges))
             m_pe.insert( p.first );
 
-    m_nref = 0;
     refine();
   }
 }
@@ -1044,7 +1043,8 @@ Partitioner::refine()
   // Export added nodes on our mesh chunk boundary to other PEs
   if (m_pe.empty())
     contribute( m_cb.get< tag::matched >() );
-  else
+  else {
+    m_nref = 0;
     for (auto p : m_pe) {       // for all PEs we share at least an edge with
       // For all boundary edges of PE p, find out if we have added a new
       // node to it, and if so, export parents->(newid,coords) to p.
@@ -1055,6 +1055,7 @@ Partitioner::refine()
       }
       thisProxy[ p ].addRefBndEdges( CkMyPe(), exp );
     }
+  }
 }
 
 void
@@ -1067,8 +1068,8 @@ Partitioner::addRefBndEdges( int frompe, const tk::UnsMesh::EdgeNodeCoord& ed )
 //!   global parent IDs of edges on our mesh chunk boundary.
 // *****************************************************************************
 {
-  // Save to buffer categorized by sender PE
-  m_edgeNodeCoord[ frompe ] = ed;
+  // Save/augment buffer of edge-node (IDs and coords) categorized by sender PE
+  m_edgenodePe[ frompe ].insert( begin(ed), end(ed) );
   // Acknowledge receipt of PE-boundary edges to sender
   thisProxy[ frompe ].recvRefBndEdges();
 }
@@ -1102,7 +1103,7 @@ Partitioner::correctref()
   // refined ones, we need to correct the mesh to make it conforming since the
   // edge has been refined by the remote PE. We collect these extra edges, and
   // run a correction refinement.
-  for (const auto& p : m_edgeNodeCoord)     // for all PEs we share edges with
+  for (const auto& p : m_edgenodePe)        // for all PEs we share edges with
     for (const auto& e : p.second) {        // for all refined edges on p.first
       auto i = m_edgenode.find( e.first );  // find refined edge given parents
       if (i != end(m_edgenode)) {           // found same added node on edge
@@ -1140,8 +1141,8 @@ Partitioner::correctref()
     auto level = initref.size() - m_initref.size();
     std::cout << CkMyPe() << " correct ref " << level << '\n';
 
+    // Refine mesh triggered by newly added nodes on PE-boundary by other PEs
     correctRefine( extra );
-    m_edgeNodeCoord.clear();
 
     m_nref = 0;
     for (auto p : m_pe) {       // for all PEs we share at least an edge with
