@@ -432,6 +432,11 @@ class Partitioner : public CBase_Partitioner {
 
     //! Compute communication cost of linear system merging for our PE
     tk::real cost( std::size_t l, std::size_t u );
+
+    //! Test for positivity of the Jacobian for all cells in multiple meshes
+    bool positiveJacobians(
+      const std::unordered_map< int, std::vector< std::size_t > > chinpoel,
+      const tk::UnsMesh::CoordMap& coordmap );
 };
 
 } // inciter::

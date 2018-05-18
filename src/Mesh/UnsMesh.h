@@ -17,7 +17,7 @@
 #include <unordered_set>
 #include <unordered_map>
 
-#include "NoWarning/hash.h"
+#include "NoWarning/sip_hash.h"
 
 #include "Types.h"
 #include "ContainerUtil.h"
@@ -37,10 +37,9 @@ class UnsMesh {
     //! Hash functor for Edge (node end-point order does not matter)
     struct EdgeHash {
       std::size_t operator()( const Edge& key ) const {
-        std::size_t seed = 0;
-        boost::hash_combine( seed, key[0] );
-        boost::hash_combine( seed, key[1] );
-        return seed;
+        const highwayhash::HH_U64 key2[2] HH_ALIGNAS(16) = {key[0], key[1]};
+        char in[8] = {1};
+        return highwayhash::SipHash( key2, in, 8 );
       }
     };
     //! Key-equal function for Edge (node end-point order does not matter)
