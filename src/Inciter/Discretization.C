@@ -38,7 +38,6 @@ using inciter::Discretization;
 Discretization::Discretization(
   const CProxy_DistFCT& fctproxy,
   const CProxy_Transporter& transporter,
-  const CProxy_BoundaryConditions& bc,
   const std::vector< std::size_t >& conn,
   const tk::UnsMesh::CoordMap& coordmap,
   const std::unordered_map< int, std::unordered_set< std::size_t > >& msum,
@@ -58,7 +57,6 @@ Discretization::Discretization(
                 ),
   m_fct( fctproxy ),
   m_transporter( transporter ),
-  m_bc( bc ),
   m_filenodes( filenodes ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
   m_coord( setCoord( coordmap ) ),

@@ -118,7 +118,6 @@ class Partitioner : public CBase_Partitioner {
     Partitioner( const std::vector< CkCallback >& cb,
                  const CProxy_Transporter& host,
                  const tk::CProxy_Solver& solver,
-                 const CProxy_BoundaryConditions& bc,
                  const Scheme& scheme,
                  const std::map< int, std::vector< std::size_t > >& bface,
                  const std::vector< std::size_t >& triinpoel );
@@ -213,8 +212,6 @@ class Partitioner : public CBase_Partitioner {
     CProxy_Transporter m_host;
     //! Linear system solver proxy
     tk::CProxy_Solver m_solver;
-    //! Boundary conditions proxy
-    CProxy_BoundaryConditions m_bc;
     //! Discretization scheme
     Scheme m_scheme;
     //! Number of PEs this PE needs to send a mesh chunk after partitioning

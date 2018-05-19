@@ -11,8 +11,6 @@ module transporter {
 
   include "Types.h";
 
-  extern module boundaryconditions;
-
   namespace inciter {
 
     chare Transporter {

@@ -46,14 +46,12 @@ Partitioner::Partitioner(
   const std::vector< CkCallback >& cb,
   const CProxy_Transporter& host,
   const tk::CProxy_Solver& solver,
-  const CProxy_BoundaryConditions& bc,
   const Scheme& scheme,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::vector< std::size_t >& triinpoel ) :
   m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6], cb[7] ),
   m_host( host ),
   m_solver( solver ),
-  m_bc( bc ),
   m_scheme( scheme ),
   m_npeDist( 0 ),
   m_npe( 0 ),
@@ -1616,8 +1614,11 @@ Partitioner::createDiscWorkers()
     // Guard those searches that operate on empty containers in serial
     typename decltype(m_msum)::mapped_type msum;
     if (!m_msum.empty()) msum = tk::cref_find( m_msum, cid );
-    // Create worker array element
-    m_scheme.discInsert( cid, m_host, m_bc, tk::cref_find(m_chinpoel,cid),
+    // Create worker array element using Charm++ dynamic chare array element
+    // insertion: 1st arg: chare id, last arg: PE chare is created on, middle
+    // args: Discretization ctor args. See also Charm++ manual, Sec. "Dynamic
+    // Insertion".
+    m_scheme.discInsert( cid, m_host, tk::cref_find(m_chinpoel,cid),
       tk::cref_find(m_chcoordmap,cid), msum, tk::cref_find(m_chfilenodes,cid),
       m_nchare, CkMyPe() );
   }
@@ -1667,36 +1668,50 @@ Partitioner::createWorkers()
                             chinpoel[ mark + tk::lpofa[f][2] ] }}} );
     }
   
-    // Generate input face data for class FaceData
+    // Generate boundary face and node ids (after mesh node reordering)
     std::vector< std::size_t > chtriinpoel;
     std::unordered_map< int, std::vector< std::size_t > > chbface;
+    std::map< int, std::vector< std::size_t > > chbnode;
     std::size_t cnt = 0;
 
     for (const auto& ss : m_bface)  // for all phsyical boundaries (sidesets)
       for (auto f : ss.second) {    // for all faces on this physical boundary
+        // attempt to find face nodes on this chare
         auto f1 = newnodes.find( m_triinpoel[f*3+0] );
         auto f2 = newnodes.find( m_triinpoel[f*3+1] );
         auto f3 = newnodes.find( m_triinpoel[f*3+2] );
+        // if face node on this chare, assign its new (global) id to side set
+        auto& n = chbnode[ ss.first ];
+        if (f1 != end(newnodes)) n.push_back( f1->second );
+        if (f2 != end(newnodes)) n.push_back( f2->second );
+        if (f3 != end(newnodes)) n.push_back( f3->second );
         // if all 3 nodes of the physical boundary face are on this chare
         if (f1 != end(newnodes) && f2 != end(newnodes) && f3 != end(newnodes)) {
+          // Create face with new node ids (after mesh node reordering)
           std::array< std::size_t, 3 > t{{f1->second, f2->second, f3->second}};
           // if this boundary face is on this chare
           if (faceset.find(t) != end(faceset)) {
             // store face connectivity with new (global) node ids of this chare
-            for (std::size_t i=0; i<3; ++i) chtriinpoel.push_back( t[i] );
-            // store physical boundary face id associated to sideset id
+            chtriinpoel.insert( end(chtriinpoel), begin(t), end(t) );
+            // generate/store physical boundary face id associated to sideset id
             chbface[ ss.first ].push_back( cnt++ );
           }
         }
       }
 
+    // Make boundary node IDs unique for each physical boundary (side set)
+    for (auto& s : chbnode) tk::unique( s.second );
+
     // Face data class
-    FaceData fd( chinpoel, chbface, chtriinpoel );
+    FaceData fd( chinpoel, chbface, chbnode, chtriinpoel );
 
     // Make sure (bound) base is already created and accessible
     Assert( m_scheme.get()[cid].ckLocal() != nullptr, "About to pass nullptr" );
 
-    // Create worker array element
+    // Create worker array element using Charm++ dynamic chare array element
+    // insertion: 1st arg: chare id, last arg: PE chare is created on, middle
+    // args: Discretization's child ctor args. See also Charm++ manual, Sec.
+    // "Dynamic Insertion".
     m_scheme.insert( cid, m_scheme.get(), m_solver, fd, CkMyPe() );
   }
 

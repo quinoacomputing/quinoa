@@ -24,7 +24,6 @@ module partitioner {
         const std::vector< CkCallback >& cb,
         const CProxy_Transporter& host,
         const tk::CProxy_Solver& solver,
-        const CProxy_BoundaryConditions& bc,
         const Scheme& scheme,
         const std::map< int, std::vector< std::size_t > >& bface,
         const std::vector< std::size_t >& triinpoel );

@@ -1592,20 +1592,15 @@ void ExodusIIMeshReader_object::test< 5 >() {
 //! Attempt to read side-set (boundary) connectivity, feeding garbage
 template<> template<>
 void ExodusIIMeshReader_object::test< 6 >() {
-  set_test_name( "boundary-face conn read throws on garbage" );
+  set_test_name( "boundary-face conn read graceful on garbage" );
 
   // Attempt to read boundary face-node connectivity passing nbfac=0
-  try {
-    std::vector< std::size_t > triinpoel;
-    std::string infile( tk::regression_dir() +
-                        "/meshconv/gmsh_output/box_24_ss1.exo" );
-    tk::ExodusIIMeshReader er( infile );
-    er.readFaces( 0, triinpoel );
-    fail( "should throw exception" );
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown, test ok
-  }
+  std::vector< std::size_t > triinpoel;
+  std::string infile( tk::regression_dir() +
+                      "/meshconv/gmsh_output/box_24_ss1.exo" );
+  tk::ExodusIIMeshReader er( infile );
+  er.readFaces( 0, triinpoel );
+  // If any of the above throws, it will trigger 'test thrown'
 }
 
 //! Read node-map
@@ -1628,10 +1623,8 @@ void ExodusIIMeshReader_object::test< 7 >() {
                  nodemap.size(), correct_nodemap.size() );
 
   for(std::size_t i=0 ; i<nodemap.size(); ++i)
-  {
-          ensure_equals("incorrect entry " + std::to_string(i) + " in nodemap",
-                          nodemap[i], correct_nodemap[i]-1);
-  }
+    ensure_equals( "incorrect entry " + std::to_string(i) + " in nodemap",
+                   nodemap[i], correct_nodemap[i]-1 );
 }
 
 } // tut::

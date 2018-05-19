@@ -37,7 +37,6 @@ class Discretization : public CBase_Discretization {
       Discretization(
         const CProxy_DistFCT& fctproxy,
         const CProxy_Transporter& transporter,
-        const CProxy_BoundaryConditions& bc,
         const std::vector< std::size_t >& conn,
         const tk::UnsMesh::CoordMap& coordmap,
         const std::unordered_map< int,
@@ -105,9 +104,6 @@ class Discretization : public CBase_Discretization {
 
     const CProxy_Transporter& Tr() const { return m_transporter; }
     CProxy_Transporter& Tr() { return m_transporter; }
-
-    //! Access boundary conditions group local branch pointer
-    BoundaryConditions* BC() { return m_bc.ckLocalBranch(); }
 
     //! Access bound DistFCT class pointer
     DistFCT* FCT() const {
@@ -183,7 +179,6 @@ class Discretization : public CBase_Discretization {
       p | m_outFilename;
       p | m_fct;
       p | m_transporter;
-      p | m_bc;
       p | m_filenodes;
       p | m_el;
       if (p.isUnpacking()) {
@@ -224,8 +219,6 @@ class Discretization : public CBase_Discretization {
     CProxy_DistFCT m_fct;
     //! Transporter proxy
     CProxy_Transporter m_transporter;
-    //! Boundary conditions proxy
-    CProxy_BoundaryConditions m_bc;
     //! Map associating file node IDs to local node IDs
     std::unordered_map< std::size_t, std::size_t > m_filenodes;
     //! \brief Elements of the mesh chunk we operate on

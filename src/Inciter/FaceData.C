@@ -25,13 +25,16 @@ using inciter::FaceData;
 FaceData::FaceData(
   const std::vector< std::size_t >& conn,
   const std::unordered_map< int, std::vector< std::size_t > >& bface,
+  const std::map< int, std::vector< std::size_t > >& bnode,
   const std::vector< std::size_t >& triinpoel )
-  : m_bface( bface ), m_triinpoel( triinpoel )
+  : m_bface( bface ), m_bnode( bnode ), m_triinpoel( triinpoel )
 // *****************************************************************************
 //  Constructor
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
 //!   mesh chunk we operate on
 //! \param[in] bface Map of boundary-face lists mapped to corresponding 
+//!   side set ids for this mesh chunk
+//! \param[in] bnode Map of boundary-node lists mapped to corresponding 
 //!   side set ids for this mesh chunk
 //! \param[in] triinpoel Interconnectivity of points and boundary-face in this
 //!   mesh chunk

@@ -56,7 +56,6 @@ Transporter::Transporter() :
   m_chunksize( 0 ),
   m_remainder( 0 ),
   m_solver(),
-  m_bc(),
   m_scheme( g_inputdeck.get< tag::discr, tag::scheme >() ),
   m_partitioner(),
   m_avcost( 0.0 ),
@@ -210,36 +209,21 @@ Transporter::createPartitioner()
   // Create ExodusII reader for reading side sets from file.
   tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
 
-  // Read in side sets associated to mesh node IDs from file
-  auto sidenodes = er.readSidesets();
-
   // Read side sets for boundary faces
   std::map< int, std::vector< std::size_t > > bface;
 
   std::vector< std::size_t > triinpoel;
-  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+  //const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
 
   // Read triangle boundary-face connectivity
-  if (scheme == ctr::SchemeType::DG) {
+  //if (scheme == ctr::SchemeType::DG) {
     auto nbfac = er.readSidesetFaces( bface );
     er.readFaces( nbfac, triinpoel );
-  }
+  //}
 
-  // Verify that side sets to which boundary conditions are assigned by user
-  // exist in mesh file
-  std::unordered_set< int > conf;
-  for (const auto& eq : g_cgpde) eq.side( conf );
-  for (auto i : conf)
-  {
-    if (sidenodes.find(i) == end(sidenodes)) {
-      m_print.diag( "WARNING: Boundary conditions specified on side set " +
-        std::to_string(i) + " which does not exist in mesh file" );
-      break;
-    }
-  }
-
-  // Create boundary conditions Charm++ chare group
-  m_bc = inciter::CProxy_BoundaryConditions::ckNew( sidenodes );
+  // Verify boundarty condition (BC) side sets used exist in mesh file
+  verifyBCsExist( g_cgpde, er );
+  verifyBCsExist( g_dgpde, er );
 
   // Create partitioner callbacks (order matters)
   std::vector< CkCallback > cbp {{
@@ -261,8 +245,8 @@ Transporter::createPartitioner()
 
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
-    CProxy_Partitioner::ckNew( cbp, thisProxy, m_solver, m_bc, m_scheme,
-                               bface, triinpoel );
+    CProxy_Partitioner::ckNew( cbp, thisProxy, m_solver, m_scheme, bface,
+                               triinpoel );
 }
 
 void
