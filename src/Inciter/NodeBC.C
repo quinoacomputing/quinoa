@@ -138,6 +138,7 @@ match( tk::ctr::ncomp_type ncomp,
                        [ ncomp ]( const decltype(dirbc)::value_type& n ){
                         return n.second.size() == ncomp; } ),
           "Size of NodeBC vector incorrect" );
+  IGNORE( ncomp );
  
   return dirbc;
 }
