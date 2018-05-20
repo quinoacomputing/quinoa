@@ -206,20 +206,14 @@ Transporter::createPartitioner()
 // Create mesh partitioner AND boundary conditions group
 // *****************************************************************************
 {
-  // Create ExodusII reader for reading side sets from file.
+  // Create ExodusII reader for reading side sets from file
   tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
 
-  // Read side sets for boundary faces
+  // Read side sets and boundary-face connectivity on physical boundaries
   std::map< int, std::vector< std::size_t > > bface;
-
   std::vector< std::size_t > triinpoel;
-  //const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-
-  // Read triangle boundary-face connectivity
-  //if (scheme == ctr::SchemeType::DG) {
-    auto nbfac = er.readSidesetFaces( bface );
-    er.readFaces( nbfac, triinpoel );
-  //}
+  auto nbfac = er.readSidesetFaces( bface );
+  er.readFaces( nbfac, triinpoel );
 
   // Verify boundarty condition (BC) side sets used exist in mesh file
   verifyBCsExist( g_cgpde, er );
