@@ -12,8 +12,8 @@ env:
   matrix:
 #    - DISTRO=gentoo DOCKERHUB=true WERROR=on
 #    - DISTRO=gentoo COVERAGE=ON
-    - DISTRO=alpine SONARQUBE=ON COVERAGE=ON RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
-    - DISTRO=alpine-rndq RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
+    - DISTRO=alpine SONARQUBE=ON COVERAGE=ON WERROR=on RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
+    - DISTRO=alpine-rndq WERROR=on RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
 
 script:
   - rm -rf tpl
@@ -55,9 +55,9 @@ matrix:
   exclude:
   - env: DISTRO=gentoo COVERAGE=ON
     compiler: clang
-  - env: DISTRO=alpine SONARQUBE=ON COVERAGE=ON RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
+  - env: DISTRO=alpine SONARQUBE=ON COVERAGE=ON WERROR=on RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
     compiler: clang
-  - env: DISTRO=alpine-rndq RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
+  - env: DISTRO=alpine-rndq WERROR=on RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
     compiler: clang
 
 notifications:
