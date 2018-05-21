@@ -71,7 +71,7 @@ Resources
 - Sonarqube --- https://sonarqube.com/organizations/quinoacomputing
 - Analytics --- https://www.openhub.net/p/quinoacomputing
 - Cite --- https://zenodo.org/badge/latestdoi/38454430
-- CLA --- https://www.clahub.com/agreements/quinoacomputing/quinoa
+- Contributing --- https://www.clahub.com/agreements/quinoacomputing/quinoa
 
 License
 =======
