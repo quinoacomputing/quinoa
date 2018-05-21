@@ -3,6 +3,8 @@ Quinoa
 
 _Adaptive computational fluid dynamics_
 
+![](quinoa.svg")
+
 Quinoa is a set of computational tools that enables research and numerical analysis in fluid dynamics. At this time it is a test-bed to experiment with various algorithms using fully asynchronous runtime systems.
 
 Organization
@@ -56,6 +58,7 @@ Resources
 - Releases -- https://github.com/quinoacomputing/quinoa/releases
 - Source --- https://github.com/quinoacomputing/quinoa
 - License --- https://github.com/quinoacomputing/quinoa/blob/master/LICENSE
+- Papers --  http://quinoacomputing.github.io/papers.html
 - Documentation --- http://quinoacomputing.github.io/index.html
 - Manifesto --- http://quinoacomputing.github.io/why.html
 - Roadmap --- https://github.com/quinoacomputing/quinoa/issues
