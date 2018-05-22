@@ -157,4 +157,8 @@ else()
   set(BACKWARD_LIBRARIES "")
 endif()
 
+#### Configure HighwayHash
+set(HIGHWAYHASH_ROOT ${TPL_DIR}) # prefer ours
+find_package(HighwayHash REQUIRED)
+
 message(STATUS "------------------------------------------")

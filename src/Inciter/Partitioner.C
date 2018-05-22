@@ -280,7 +280,7 @@ Partitioner::addChMesh( int frompe,
 // *****************************************************************************
 //  Receive mesh associated to chares we own after refinement
 //! \param[in] frompe PE call coming from
-//! \param[in] mesh Map associating mesh connectivities with global node indices
+//! \param[in] cmesh Map associating mesh connectivities to global node ids
 //!   and node coordinates for mesh chunks we are assigned by the partitioner
 // *****************************************************************************
 {
@@ -288,7 +288,7 @@ Partitioner::addChMesh( int frompe,
   for (const auto& c : chmesh) {
     Assert( pe(c.first) == CkMyPe(), "PE " + std::to_string(CkMyPe()) +
             " received a mesh whose chare it does not own" );
-    // The send also writers to this so append/concat
+    // The send side also writes to this so append/concat
     auto& inpoel = m_chinpoel[ c.first ];
     const auto& mesh = std::get< 0 >( c.second );
     inpoel.insert( end(inpoel), begin(mesh), end(mesh) );
@@ -358,6 +358,10 @@ Partitioner::flatten()
 //!   longer categorized by (or associated to) chares.
 // *****************************************************************************
 {
+  // Make sure all cells of all chare meshes have non-negative Jacobians
+  Assert( positiveJacobians( m_chinpoel, m_coordmap ),
+          "Chare-partitioned mesh cell Jacobian non-positive" );
+
   // Make sure we are not fed garbage
   Assert( m_chinpoel.size() ==
             static_cast< std::size_t >( distribution(m_nchare)[1] ),
@@ -406,6 +410,45 @@ Partitioner::flatten()
   // Signal host that we are ready for computing the communication map,
   // required for parallel distributed global mesh node reordering
   contribute( m_cb.get< tag::flattened >() );
+}
+
+
+bool
+Partitioner::positiveJacobians(
+  const std::unordered_map< int, std::vector< std::size_t > > chinpoel,
+  const tk::UnsMesh::CoordMap& coordmap )
+// *****************************************************************************
+// Test for positivity of the Jacobian for all cells in multiple meshes
+//! \param[in] chinpoel Connectivities of multiple meshes assigned to their
+//!   chare IDs
+//! \param[in] coordmap Coordinates associated to global node IDs of of all
+//!   meshes passed in
+//! \return True if Jacobians of all cells of all meshes are positive
+// *****************************************************************************
+{
+  for (const auto& i : chinpoel) {      // for all meshes passed in
+    // generate local ids and connectivity from global connectivity
+    auto el = tk::global2local( i.second );
+    const auto& inpoel = std::get< 0 >( el );   // local connectivity
+    const auto& lid = std::get< 2 >( el );      // global->local node ids
+    auto np = tk::npoin( inpoel );
+    tk::UnsMesh::Coords coord;
+    coord[0].resize( np );
+    coord[1].resize( np );
+    coord[2].resize( np );
+    for (const auto& c : coordmap) {
+      auto p = lid.find( c.first );
+      if (p != lid.end()) {
+        Assert( p->second < np, "Indexing out of coord vector" );
+        coord[0][p->second] = c.second[0];
+        coord[1][p->second] = c.second[1];
+        coord[2][p->second] = c.second[2];
+      }
+    }
+    if (!tk::positiveJacobians( inpoel, coord )) return false;
+  }
+
+  return true;
 }
 
 void
@@ -684,6 +727,8 @@ Partitioner::coordmap( const std::vector< std::size_t >& inpoel )
 // *****************************************************************************
 // Extract coordinates associated to global nodes of a mesh chunk
 //! \param[in] inpoel Mesh connectivity
+//! \return Map storing the coordinates of unique nodes associated to global
+//!    node IDs in mesh given by inpoel
 // *****************************************************************************
 {
   tk::UnsMesh::CoordMap map;
@@ -751,7 +796,8 @@ Partitioner::distributeCh(
     auto chid = CkMyPe() * dist[0] + c;   // compute owned chare ID
     const auto it = elems.find( chid );   // attempt to find its nodes
     if (it != end(elems)) {               // if found
-      m_chinpoel.insert( *it );           // move over owned key-value pairs
+      auto& inp = m_chinpoel[ chid ];     // store own mesh
+      inp.insert( end(inp), begin(it->second), end(it->second) );
       auto cm = coordmap( it->second );   // extract node coordinates 
       m_coordmap.insert( begin(cm), end(cm) );  // concatenate node coords
       elems.erase( it );                  // remove chare ID and nodes
@@ -1034,7 +1080,7 @@ Partitioner::refine()
 
   // Ensure valid mesh after refinement
   Assert( tk::positiveJacobians( m_inpoel, m_coord ),
-          "Refined mesh Jacobian non-positive" );
+          "Refined mesh cell Jacobian non-positive" );
 
   // Export added nodes on our mesh chunk boundary to other PEs
   if (m_pe.empty())
@@ -1125,8 +1171,8 @@ Partitioner::nextref()
                 m_bndEdges.find( CkMyPe() )->second.end(),
                 "Local node IDs of boundary edge not found" );
         // Save edge (given by parent global node IDs) to which the remote PE
-        // has added a new node but we did not. Will need to correct mesh so it
-        // conforms across PEs.
+        // has added a new node but we did not. Will need to correct the mesh so
+        // it conforms across PEs.
         extra.insert( {{ { tk::cref_find( m_lid, e.first[0] ),
                            tk::cref_find( m_lid, e.first[1] ) } }} );
       }
@@ -1309,12 +1355,10 @@ Partitioner::updateMesh( AMR::mesh_adapter_t& refiner )
       y[r] = (y[p[0]] + y[p[1]])/2.0;
       z[r] = (z[p[0]] + z[p[1]])/2.0;
       decltype(p) gp{{ m_gid[p[0]], m_gid[p[1]] }}; // global parent ids
-      //auto g = ( std::hash< std::size_t >()( gp[0] ) ^
-      //           std::hash< std::size_t >()( gp[1] ) ) + 10000;
-      //auto g = tk::UnsMesh::EdgeHash()( gp ) + 10000;
-      //std::cout << CkMyPe() << " hash: " << gp[0] << ',' << gp[1] << ": " << tk::UnsMesh::EdgeHash()( gp ) << '\n';
-      auto g = tk::UnsMesh::EdgeHash()( gp );
+      auto g = tk::UnsMesh::EdgeHash()( gp );   // generate new global IDs
       Assert( g >= old.size(), "Hashed id overwriting old id" );
+      Assert( m_coordmap.find(g) == end(m_coordmap),
+              "Hash collision: ID already exist" );
       m_gid[r] = g;
       m_lid[g] = r;
       m_coordmap.insert( {g, {{x[r], y[r], z[r]}}} );
