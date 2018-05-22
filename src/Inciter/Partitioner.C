@@ -417,13 +417,13 @@ Partitioner::flatten()
 bool
 Partitioner::positiveJacobians(
   const std::unordered_map< int, std::vector< std::size_t > > chinpoel,
-  const tk::UnsMesh::CoordMap& coordmap )
+  const tk::UnsMesh::CoordMap& cm )
 // *****************************************************************************
 // Test for positivity of the Jacobian for all cells in multiple meshes
 //! \param[in] chinpoel Connectivities of multiple meshes assigned to their
 //!   chare IDs
-//! \param[in] coordmap Coordinates associated to global node IDs of of all
-//!   meshes passed in
+//! \param[in] cm Coordinates associated to global node IDs of of all meshes
+//!   passed in
 //! \return True if Jacobians of all cells of all meshes are positive
 // *****************************************************************************
 {
@@ -437,7 +437,7 @@ Partitioner::positiveJacobians(
     coord[0].resize( np );
     coord[1].resize( np );
     coord[2].resize( np );
-    for (const auto& c : coordmap) {
+    for (const auto& c : cm) {
       auto p = lid.find( c.first );
       if (p != lid.end()) {
         Assert( p->second < np, "Indexing out of coord vector" );

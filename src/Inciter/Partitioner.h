@@ -433,7 +433,7 @@ class Partitioner : public CBase_Partitioner {
     //! Test for positivity of the Jacobian for all cells in multiple meshes
     bool positiveJacobians(
       const std::unordered_map< int, std::vector< std::size_t > > chinpoel,
-      const tk::UnsMesh::CoordMap& coordmap );
+      const tk::UnsMesh::CoordMap& cm );
 };
 
 } // inciter::
