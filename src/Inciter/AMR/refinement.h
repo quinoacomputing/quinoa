@@ -290,9 +290,9 @@ namespace AMR {
                 child_id_list_t child = generate_child_ids(tet_id, num_children);
 
                 // Outsides
-                tet_store.add(child[0], D,  A,  AC, AB, Refinement_Case::one_to_four, tet_id);
+                tet_store.add(child[0], A,  AB, AC, D, Refinement_Case::one_to_four, tet_id);
                 tet_store.add(child[2], AC, BC, C,  D, Refinement_Case::one_to_four, tet_id);
-                tet_store.add(child[3], AB, BC, B,  D, Refinement_Case::one_to_four, tet_id);
+                tet_store.add(child[3], AB, B,  BC, D, Refinement_Case::one_to_four, tet_id);
 
                 // Center
                 size_t center_id = child[1]; // 1 to preserve Jacobian order
