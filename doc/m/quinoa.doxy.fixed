@@ -238,7 +238,17 @@ TAB_SIZE               = 2
 # "Side Effects:". You can put \n's in the value part of an alias to insert
 # newlines.
 
-ALIASES                = 
+ALIASES = \
+    "m_div{1}=" \
+    "m_enddiv=" \
+    "m_span{1}=" \
+    "m_endspan=" \
+    "m_class{1}=" \
+    "m_footernavigation=" \
+    "m_examplenavigation{2}" \
+    "m_keywords{1}=" \
+    "m_keyword{3}=" \
+    "m_enum_values_as_keywords="
 
 # This tag can be used to specify a number of word-keyword mappings (TCL only).
 # A mapping has the form "name=value". For example adding "class=itcl::class"
@@ -764,6 +774,7 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT                  = \
+  /home/jbakosi/code/quinoa/src/../doc/pages/mainpage.dox \
   /home/jbakosi/code/quinoa/src/../doc/pages/why.dox \
   /home/jbakosi/code/quinoa/src/../doc/pages/workflow.dox \
   /home/jbakosi/code/quinoa/src/../doc/pages/inciter.dox \
@@ -1002,7 +1013,7 @@ FILTER_SOURCE_PATTERNS =
 # (index.html). This can be useful if you have a project on for instance GitHub
 # and want to reuse the introduction page also for the doxygen output.
 
-USE_MDFILE_AS_MAINPAGE = README.md
+USE_MDFILE_AS_MAINPAGE =
 
 #---------------------------------------------------------------------------
 # Configuration options related to source browsing
