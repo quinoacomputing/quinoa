@@ -1,5 +1,5 @@
 /*!
-  \page      inciter_doc Inciter
+  \page      inciter_main Inciter
 
 @m_div{m-col-m-5 m-right-m}
 <img src="inciter.svg"/>
@@ -19,32 +19,12 @@ software design is fully asynchronous and it exhibits perfect, i.e., 100%
 efficiency, [strong
 scaling](https://en.wikipedia.org/wiki/Scalability#Weak_versus_strong_scaling).
 
-Help on command-line parameters
--------------------------------
+@section inciter_equations Equations solved
 
-As usual, use the \a -h command-line parameter to get on-screen help from an
-executable. Example output, excluding Charm++ command-line parameters:
-\code{.py}
-$ inciter -h
-inciter Command-line Parameters:
-       -c, --control     string Specify the control file name [REQUIRED]
-          -h, --help            Display one-liner help on all command-line arguments
-       -f, --helpctr            Display one-liner help on all control file keywords
-        -H, --helpkw     string Display verbose help on a single keyword
-         -i, --input     string Specify the input file
-        -o, --output     string Specify the output file
-       -v, --verbose            Select verbose screen output
--u, --virtualization       real Set degree of virtualization
-\endcode
 
-Equations solved
-----------------
-
-\htmlonly
-<a href="https://quinoacomputing.github.io/inciter_scaling.png">
-<img src="https://quinoacomputing.github.io/inciter_scaling.png" align="right" width="30%" background=transparent>
-</a>
-\endhtmlonly
+@m_div{m-col-m-4 m-right-m}
+<img src="inciter_scaling.png"/>
+@m_enddiv
 
 Currently, Inciter can solve a system of linear [advection-diffusion
 equations](https://en.wikipedia.org/wiki/Convection%E2%80%93diffusion_equation).
@@ -61,7 +41,7 @@ during setup (left side) as well as during the 10 two-stage time-steps.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 22 May 2018 10:58:46 PM MDT
+<em>Page last updated:</em> Wed 23 May 2018 05:13:21 AM MDT
 <em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
 </small></div>
 */

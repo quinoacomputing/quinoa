@@ -4,8 +4,7 @@
 This page collects peer-reviewed journal papers related to the algorithms
 implemented in Quinoa. The papers are grouped by executables.
 
-Walker
-------
+@section papers_walker Walker
 
 - J. Bakosi, J.R. Ristorcelli, **[Diffusion Processes Satisfying a Conservation Law Constraint](http://dx.doi.org/10.1155/2014/603692)**, International Journal of Stochastic Analysis, 2014, Article ID 603692, 2014.
 
@@ -51,7 +50,7 @@ equation whose invariant is beta can be found in
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sun 20 May 2018 08:44:01 PM MDT
+<em>Page last updated:</em> Wed 23 May 2018 05:40:02 AM MDT
 <em>Copyright 2016-2018, Los Alamos National Security, LLC.</em>
 </small></div>
 */

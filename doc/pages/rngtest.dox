@@ -1,6 +1,11 @@
 /*!
-  \page      rngtest_doc RNGTest: Random number generator test suite
-  <img src="https://quinoacomputing.github.io/rngtest.svg" align="right" width="40%" background=transparent>
+  \page      rngtest_main RGNTest
+
+@m_div{m-col-m-5 m-right-m}
+<img src="rngtest.svg"/>
+@m_enddiv
+
+_Random number generators test suite ranking quality and computational cost_
 
 RNGTest is a fully asynchronous distributed-memory-parallel test harness to
 subject random number generators to stringent statistical tests enabling
@@ -290,7 +295,7 @@ in-code documentation in Main/RNGTest.C.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 06 Apr 2017 10:43:25 AM MDT
+<em>Page last updated:</em> Wed 23 May 2018 05:58:59 AM MDT
 <em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
 </small></div>
 */

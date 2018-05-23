@@ -1,6 +1,11 @@
 /*!
-  \page      walker_doc Walker: Random walker for stochastic differential equations
-  <img src="https://quinoacomputing.github.io/walker.svg" align="right" width="40%" background=transparent>
+  \page      walker_main Walker
+
+@m_div{m-col-m-5 m-right-m}
+<img src="walker.svg"/>
+@m_enddiv
+
+_Time-integrator for stochastic differential equations_
 
 Walker is a fully asynchronous distributed-memory-parallel numerical integrator
 for stochastic differential equations (SDE). It can be used to analyze and
@@ -30,7 +35,8 @@ Walker uses the [Charm++](http://charm.cs.illinois.edu) runtime system to run
 concurrently, either on a single machine or a networked set of computers. The
 software design is fully asynchronous, yielding 100% CPU utilization at all
 times, and it exhibits perfect, i.e., 100% efficiency, weak scaling with
-\f$3\!\times\!10^{12}\f$ particles up to 24K CPU cores, the most tested, see [d5304e78](https://github.com/quinoacomputing/quinoa/commit/d5304e78).
+\f$3\!\times\!10^{12}\f$ particles up to 24K CPU cores, the most tested, see
+[d5304e78](https://github.com/quinoacomputing/quinoa/commit/d5304e78).
 
 Examples
 --------
@@ -180,7 +186,7 @@ Currently, the following differential equations are implemented:
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 06 Apr 2017 10:45:11 AM MDT
+<em>Page last updated:</em> Wed 23 May 2018 05:55:26 AM MDT
 <em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
 </small></div>
 */

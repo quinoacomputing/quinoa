@@ -18,15 +18,53 @@ at our @ref why page and at http://charm.cs.illinois.edu/why/.
 
 Quinoa consists of the following tools:
 
-  - @ref inciter_doc --- Partial differential equations solver for complex domains
-  - [walker](http://quinoacomputing.github.io/walker_doc.html) -
-    Time-integrator for stochastic differential equations
-  - [rngtest](http://quinoacomputing.github.io/rngtest_doc.html) -
-    Random number generators test suite ranking quality and computational cost
+  - @ref walker_main --- Time-integrator for stochastic differential equations
+
+    _Walker_ is a mathematical tool to analyze and design the behavior of
+stochastic differential equations. It allows the estimation of arbitrary coupled
+@ref statistics_output "statistics" and probability density functions as they
+evolve in time and is used for the design of
+@ref papers_walker "statistical moment approximations" for turbulent flows.
+
+  - @ref inciter_main --- Partial differential equations solver for complex
+    domains
+
+    _Inciter_ is an overdecomposition-aware finite element field solver for
+partial differential equations using 3D unstructured grids. Inciter is used to
+research asynchronous mesh-based algorithms for fluid dynamics and to experiment
+with coupling asynchronous to bulk-synchronous parallel code. We currently work
+on a simple Navier-Stokes solver for ideal single-material compressible gases,
+and solution-adaptive mesh refinement, which enables dynamically concentrating
+compute resources to regions with interesting physics. Combining these features
+we plan to explore how to scale such high-load-imbalance simulations,
+representative of large production multiphysics codes, to large problems on
+large computers using Charm++.
+
+  - @ref rngtest_main --- Random number generators test suite ranking quality
+    and computational cost
+
+    _RNGTest_ is a test harness to subject random number generators to stringent
+statistical tests, enabling quantitative ranking with respect to their quality
+and computational cost. Multiple generators are supported from Intel's
+[Math Kernel Library](https://software.intel.com/en-us/intel-mkl),
+[RNGSSE](https://doi.org/10.1016/j.cpc.2013.04.007), and
+[Random123](http://www.thesalmons.org/john/random123/releases/latest/docs/index.html).
+
   - [unittest](http://quinoacomputing.github.io/unittest_doc.html) -
     Unit test suite
+
+    _UnitTest_ is a unit test harness, capable of testing serial, synchronous,
+and asynchronous functions.
+
   - [meshconv](http://quinoacomputing.github.io/meshconv_doc.html) -
     Mesh file converter
+
+    _MeshConv_ is a mesh file converter that can be used to convert 3D
+tetrahedron meshes from and to either of the following formats:
+[Gmsh](http://www.geuz.org/gmsh),
+[Netgen](http://sourceforge.net/apps/mediawiki/netgen-mesher),
+[ExodusII](http://sourceforge.net/projects/exodusii), and
+[HyperMesh](http://www.altairhyperworks.com/product/HyperMesh).
 
 @section mainpage-build Build
 
