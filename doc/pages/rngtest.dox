@@ -1,5 +1,5 @@
 /*!
-  \page      rngtest_main RGNTest
+  \page      rngtest_main RNGTest
 
 @m_div{m-col-m-5 m-right-m}
 <img src="rngtest.svg"/>
@@ -295,7 +295,7 @@ in-code documentation in Main/RNGTest.C.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Wed 23 May 2018 05:58:59 AM MDT
+<em>Page last updated:</em> Wed 23 May 2018 08:47:41 PM MDT
 <em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
 </small></div>
 */

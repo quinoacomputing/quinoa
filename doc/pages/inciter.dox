@@ -1,47 +1,46 @@
 /*!
   \page      inciter_main Inciter
 
-@m_div{m-col-m-5 m-right-m}
+@m_div{m-col-m-6 m-right-m}
 <img src="inciter.svg"/>
 @m_enddiv
 
 _Partial differential equations solver for complex domains_
 
-Inciter is a fully asynchronous distributed-memory-parallel finite element field
-solver for partial differential equations using 3D unstructured grids. It is
-used to research asynchronous mesh-based algorithms using overdecomposition and
-to experiment with coupling asynchronous and bulk-synchronous parallel code
-using widely used libraries.
+Inciter is an overdecomposition-aware finite element field solver for partial
+differential equations using 3D unstructured grids. Inciter is used to research
+asynchronous mesh-based algorithms for fluid dynamics and to experiment with
+coupling asynchronous to bulk-synchronous parallel code. We currently work on a
+simple Navier-Stokes solver for ideal single-material compressible gases, and
+solution-adaptive mesh (_h_-)refinement, which enables dynamically concentrating
+compute resources to regions with interesting physics. The equations are
+discretized using continuous and discontinuous Galerkin finite element methods
+and our near-term plan also includes solution-adaptive varying of the degree of
+the local approximation polynomial, _p_-refinement. Combining these features we
+plan to explore how to scale such high-load-imbalance simulations,
+representative of large production multiphysics codes, to large problems on
+large computers using Charm++.
 
-Inciter uses the [Charm++](http://charm.cs.illinois.edu) runtime system to run
-concurrently, either on a single machine or a networked set of computers. The
-software design is fully asynchronous and it exhibits perfect, i.e., 100%
-efficiency, [strong
-scaling](https://en.wikipedia.org/wiki/Scalability#Weak_versus_strong_scaling).
+Inciter uses the [Charm++](http://charmplusplus.org/) runtime system to run
+concurrently either on a single machine or a networked set of computers. The
+software design is asynchronous, yielding 100% efficiency, [strong scaling](https://en.wikipedia.org/wiki/Scalability#Weak_versus_strong_scaling).
 
-@section inciter_equations Equations solved
+Inciter has parallel I/O, domain decomposition using
+[Zoltan2](http://www.cs.sandia.gov/zoltan), flux-corrected transport,
+asynchronous linear system assembly, and solves the distributed linear system
+using [hypre](http://computation.llnl.gov/project/linear_solvers/software.php).
 
-
-@m_div{m-col-m-4 m-right-m}
+@m_div{m-col-m-10 m-center-m}
 <img src="inciter_scaling.png"/>
+This figure quantifies the excellent scalability of the inciter prototype,
+integrating the advection-diffusion scalar transport equation for 10 time steps
+using a 76M-cell tetrahedron mesh _including setup and I/O_, using up to 4K CPU
+cores. The insert depicts the CPU utilization from Charm++'s performance
+analysis tool, [Projections](http://charmplusplus.org/tools), showing excellent
+resource usage during setup (left side) as well as during the 10 two-stage
+time-steps.
 @m_enddiv
 
-Currently, Inciter can solve a system of linear [advection-diffusion
-equations](https://en.wikipedia.org/wiki/Convection%E2%80%93diffusion_equation).
-It has parallel I/O, graph-based domain decomposition using
-[Zoltan2](http://www.cs.sandia.gov/zoltan), asynchronous linear system assembly,
-and solves the distributed linear system using
-[hypre](http://computation.llnl.gov/project/linear_solvers/software.php). The
-figure on the right quantifies the excellent scalability of this prototype,
-taking 10 time steps with a 76M-cell tetrahedron mesh including setup and I/O,
-up to 4K CPU cores, the most tested. The insert depicts the CPU utilization from
-Charm++'s performance analysis tool,
-[Projections](http://charmplusplus.org/tools), showing excellent resource usage
-during setup (left side) as well as during the 10 two-stage time-steps.
-
-<hr>
-<div><small>
-<em>Page last updated:</em> Wed 23 May 2018 05:13:21 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
+@section inciter_ex Examples
+\subpage inciter_examples
 */

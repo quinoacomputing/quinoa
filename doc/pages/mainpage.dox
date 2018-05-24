@@ -14,7 +14,7 @@ across many computers. Our goal is the efficient use of resources even for
 problems with _a priori_ unknown and heterogeneous load distribution. Read more
 at our @ref why page and at http://charm.cs.illinois.edu/why/.
 
-@section mainpage-organization Organization
+@section mainpage-tools Tools
 
 Quinoa consists of the following tools:
 
@@ -29,16 +29,14 @@ evolve in time and is used for the design of
   - @ref inciter_main --- Partial differential equations solver for complex
     domains
 
-    _Inciter_ is an overdecomposition-aware finite element field solver for
-partial differential equations using 3D unstructured grids. Inciter is used to
-research asynchronous mesh-based algorithms for fluid dynamics and to experiment
-with coupling asynchronous to bulk-synchronous parallel code. We currently work
-on a simple Navier-Stokes solver for ideal single-material compressible gases,
-and solution-adaptive mesh refinement, which enables dynamically concentrating
-compute resources to regions with interesting physics. Combining these features
-we plan to explore how to scale such high-load-imbalance simulations,
-representative of large production multiphysics codes, to large problems on
-large computers using Charm++.
+    _Inciter_ is a fully asynchronous distributed-memory-parallel flow solver
+using 3D unstructured grids. We are working on continuous and discontinuous
+Galerkin finite element methods, adaptive mesh-, and polynominal-degree
+refinement, enabling dynamically concentrating compute resources to regions with
+interesting physics. Our goal is to explore how to scale such
+high-load-imbalance simulations, representative of large production multiphysics
+codes, to large problems on large computers using Charm++'s automatic load
+balancing capabilities.
 
   - @ref rngtest_main --- Random number generators test suite ranking quality
     and computational cost

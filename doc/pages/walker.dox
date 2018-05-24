@@ -1,192 +1,165 @@
 /*!
   \page      walker_main Walker
 
-@m_div{m-col-m-5 m-right-m}
+@m_div{m-col-m-6 m-right-m}
 <img src="walker.svg"/>
 @m_enddiv
 
 _Time-integrator for stochastic differential equations_
 
-Walker is a fully asynchronous distributed-memory-parallel numerical integrator
-for stochastic differential equations (SDE). It can be used to analyze and
-design the evolution of fluctuating variables and their statistics in state
-space and time.  Walker can compute time evolutions of arbitrary numbers of
-variables governed by an arbitrary number of coupled SDE systems of different
-types. It allows the estimation of arbitrary coupled statistics and probability
-density functions.
+Walker is a numerical integrator for stochastic differential equations (SDE). It
+can be used to analyze and design the evolution of fluctuating variables and
+their statistics in state space and time. Walker can compute time evolutions of
+multiple variables governed by coupled SDE systems of different types. It allows
+the estimation of arbitrary coupled statistics and probability density
+functions.
 
-Walker is useful for designing statistical moment approximations. If the
+Walker can be used to desing statistical moment approximations. If the
 approximate shape of the probability distribution for a fluctuating variable is
-known, its governing SDE can, in some cases, be derived. Numerically integrating
-this governing equation, Walker allows extracting arbitrary statistics which can
-be used to test and verify hypotheses on functional forms of statistics as a
-function of other statistics. This enables, e.g., developing statistical moment
-models for turbulent flows where higher order statistics must be expressed in
-terms of lower order statistics based on some approximation.
+known (or can be usefully assumed), its governing SDE can, in some cases, be
+derived. Numerically integrating this governing equation, Walker allows
+extracting arbitrary statistics which can be used to test and verify hypotheses
+of functional forms of statistics as a function of other statistics. This
+enables, e.g., developing statistical moment approximations for turbulent flows
+where higher order statistics must be expressed in terms of lower order
+statistics based on some approximation.
 
-Walker is also useful for designing approximations for probability density
+Walker can also be used to design approximations for probability density
 functions of fluctuating variables. If reasonable assumptions on probability
 distributions of some key variables of a process can be made, Walker can be used
 to integrate their governing equations and design parameterizations of those
-governing equations based on arbitrary statistics extracted from the computed
+governing equations based on statistics extracted from the computed
 distributions.
 
-Walker uses the [Charm++](http://charm.cs.illinois.edu) runtime system to run
-concurrently, either on a single machine or a networked set of computers. The
-software design is fully asynchronous, yielding 100% CPU utilization at all
-times, and it exhibits perfect, i.e., 100% efficiency, weak scaling with
-\f$3\!\times\!10^{12}\f$ particles up to 24K CPU cores, the most tested, see
+Walker uses the [Charm++](http://charmplusplus.org/) runtime system to run
+concurrently either on a single machine or a networked set of computers. The
+software design is asynchronous, yielding 100% CPU utilization at all times, and
+it exhibits 100% efficiency weak scaling with \f$3\!\times\!10^{12}\f$ particles
+up to 24K CPU cores, the most tested, see
 [d5304e78](https://github.com/quinoacomputing/quinoa/commit/d5304e78).
 
-Examples
---------
-\subpage walker_examples
-
-Help on command-line parameters
--------------------------------
-
-As usual, use the \a -h command-line parameter to get on-screen help from an
-executable. Example output, excluding Charm++ command-line parameters:
-\code{.py}
-$ walker -h
-walker Command-line Parameters:
-       -c, --control     string Specify the control file name [REQUIRED]
-          -h, --help            Display one-liner help on all command-line arguments
-       -f, --helpctr            Display one-liner help on all control file keywords
-        -H, --helpkw     string Display verbose help on a single keyword
-           -p, --pdf     string Specify the name of the PDF output file
-          -s, --stat     string Specify the name of the statistical moments output file
-       -v, --verbose            Select verbose screen output
--u, --virtualization       real Set degree of virtualization
-\endcode
-
-Differential equations
-----------------------
+@section walker_equations Differential equations
 
 Currently, the following differential equations are implemented:
 
- 1. <B>Beta</B> - A system of SDEs, with linear drift and quadratic diagonal
- diffusion, whose invariant is the joint beta distribution. For more details
- on the beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](https://doi.org/10.1080/14685248.2010.510843).
+1. __Beta__ --- A system of SDEs, with linear drift and quadratic diagonal
+diffusion, whose invariant is the joint beta distribution. For more details on
+the beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](https://doi.org/10.1080/14685248.2010.510843).
 
    - For a short overview of the equation and its implementation, see
      DiffEq/Beta.h.
    - For initialization policies, see DiffEq/InitPolicy.h.
    - For coefficients policies, see DiffEq/BetaCoeffPolicy.h.
 
- 2. <B>Diagonal Ornstein-Uhlenbeck</B> - A system of SDEs with linear drift and
- constant diagonal diffusion, whose invariant is the joint normal
- distribution.
+2. __Diagonal Ornstein-Uhlenbeck__ --- A system of SDEs with linear drift and
+constant diagonal diffusion, whose invariant is the joint normal distribution.
 
    - For a short overview of the equation and its implementation, see
      DiffEq/DiagOrnsteinUhlenbeck.h.
    - For initialization policies, see DiffEq/InitPolicy.h.
    - For coefficients policies, see DiffEq/DiagOrnsteinUhlenbeckCoeffPolicy.h.
 
- 3. <B>Ornstein-Uhlenbeck</B> - A system of SDEs with linear drift and constant
- diffusion, whose invariant is the joint normal distribution.
+3. __Ornstein-Uhlenbeck__ --- A system of SDEs with linear drift and constant
+diffusion, whose invariant is the joint normal distribution.
 
    - For a short overview of the equation and its implementation, see
      DiffEq/OrnsteinUhlenbeck.h.
    - For initialization policies, see DiffEq/InitPolicy.h.
    - For coefficients policies, see DiffEq/OrnsteinUhlenbeckCoeffPolicy.h.
 
- 4. <B>Dirichlet</B> - A system of SDEs, whose invariant is the Dirichlet
- distribution. For more details on the Dirichlet SDE, see [Bakosi, Ristorcelli, A Stochastic Diffusion Process for the Dirichlet Distribution, Int. J. Stoch. Anal., 2013](https://doi.org/10.1155/2013/842981).
+4. __Dirichlet__ --- A system of SDEs, whose invariant is the Dirichlet
+distribution. For more details on the Dirichlet SDE, see [Bakosi, Ristorcelli, A Stochastic Diffusion Process for the Dirichlet Distribution, Int. J. Stoch. Anal., 2013](https://doi.org/10.1155/2013/842981).
 
    - For a short overview of the equation and its implementation, see
      DiffEq/Dirichlet.h.
    - For initialization policies, see DiffEq/InitPolicy.h.
    - For coefficients policies, see DiffEq/DirichletCoeffPolicy.h.
 
- 5. <B>Generalized Dirichlet</B> - A system of SDEs, whose invariant is Lochner's
- generalized Dirichlet distribution. For more details on the generalized
- Dirichlet SDE, see [Bakosi, Ristorcelli, A Stochastic Diffusion Process for Lochner's generalized Dirichlet distribution, J. Math. Phys., 2013](https://doi.org/10.1063/1.4822416).
+5. __Generalized Dirichlet__ --- A system of SDEs, whose invariant is Lochner's
+generalized Dirichlet distribution. For more details on the generalized
+Dirichlet SDE, see [Bakosi, Ristorcelli, A Stochastic Diffusion Process for Lochner's generalized Dirichlet distribution, J. Math. Phys., 2013](https://doi.org/10.1063/1.4822416).
 
    - For a short overview of the equation and its the implementation, see
      DiffEq/GeneralizedDirichlet.h.
    - For initialization policies, see DiffEq/InitPolicy.h.
    - For coefficients policies, see DiffEq/GeneralizedDirichletCoeffPolicy.h.
 
- 6. <B>Gamma</B> - A system of SDEs, with linear drift and linear diagonal
- diffusion, whose invariant is the joint gamma distribution.
+6. __Gamma__ --- A system of SDEs, with linear drift and linear diagonal
+diffusion, whose invariant is the joint gamma distribution.
 
    - For a short overview of the equation and its implementation, see
      DiffEq/Gamma.h.
    - For initialization policies, see DiffEq/InitPolicy.h.
    - For coefficients policies, see DiffEq/GammaCoeffPolicy.h.
 
- 7. <B>Skew-normal</B> - A system of SDEs, whose invariant is the joint
- skew-normal distribution. For more details on the skew-normal distribution,
- see [Azzalini, Dalla Valle, The Multivariate Skew-Normal Distribution](http://www.jstor.org/stable/2337278).
+7. __Skew-normal__ --- A system of SDEs, whose invariant is the joint
+skew-normal distribution. For more details on the skew-normal distribution, see
+[Azzalini, Dalla Valle, The Multivariate Skew-Normal Distribution](http://www.jstor.org/stable/2337278).
 
    - For a short overview of the equation and its implementation, see
      see DiffEq/SkewNormal.h.
    - For initialization policies, see DiffEq/InitPolicy.h.
    - For coefficients policies, see DiffEq/SkewNormalCoeffPolicy.h.
 
- 8. <B>Wright-Fisher</B> - A system of SDEs, whose invariant is the Dirichlet
- distribution. For more details on the Wright-Fisher SDE, see [Steinrucken, et al., An explicit transition density expansion for a multi-allelic Wright–Fisher diffusion with general diploid selection, Theor. Popul. Biol., 2013](http://www.sciencedirect.com/science/article/pii/S0040580912001013).
+8. __Wright-Fisher__ --- A system of SDEs, whose invariant is the Dirichlet
+distribution. For more details on the Wright-Fisher SDE, see [Steinrucken, et al., An explicit transition density expansion for a multi-allelic Wright–Fisher diffusion with general diploid selection, Theor. Popul. Biol., 2013](http://www.sciencedirect.com/science/article/pii/S0040580912001013).
 
    - For the implementation, see DiffEq/WrightFisher.h.
    - For initialization policies, see DiffEq/InitPolicy.h.
    - For coefficients policies, see DiffEq/WrightFisherCoeffPolicy.h.
 
- 9. <B>Number-fraction beta</B> - A system of SDEs, with linear drift and
- quadratic diagonal diffusion, whose invariant is the joint beta distribution.
- The number-fraction beta SDE is based on the beta SDE, additionally computing
- two more stochastic variables that are functions of the beta variables
- integrated, assuming that the beta variables are number, or mole-, fractions.
- For more details on the beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](https://doi.org/10.1080/14685248.2010.510843).
+9. __Number-fraction beta__ --- A system of SDEs, with linear drift and
+quadratic diagonal diffusion, whose invariant is the joint beta distribution.
+The number-fraction beta SDE is based on the beta SDE, additionally computing
+two more stochastic variables that are functions of the beta variables
+integrated, assuming that the beta variables are number, or mole-, fractions.
+For more details on the beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](https://doi.org/10.1080/14685248.2010.510843).
 
    - For a short overview of the equation and its implementation, see
      DiffEq/NumberFractionBeta.h.
    - For initialization policies, see DiffEq/InitPolicy.h.
    - For coefficients policies, see DiffEq/NumberFractionBetaCoeffPolicy.h.
 
- 10. <B>Mass-fraction beta</B> - A system of SDEs, with linear drift and
- quadratic diagonal diffusion, whose invariant is the joint beta distribution.
- The mass-fraction beta SDE is based on the beta SDE, additionally computing
- two more stochastic variables that are functions of the beta variables
- integrated, assuming that the beta variables are mass-fractions. For more
- details on the beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](https://doi.org/10.1080/14685248.2010.510843).
+10. __Mass-fraction beta__ --- A system of SDEs, with linear drift and quadratic
+diagonal diffusion, whose invariant is the joint beta distribution.  The
+mass-fraction beta SDE is based on the beta SDE, additionally computing two more
+stochastic variables that are functions of the beta variables integrated,
+assuming that the beta variables are mass-fractions. For more details on the
+beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](https://doi.org/10.1080/14685248.2010.510843).
 
    - For a short overview of the equation and its implementation, see
      DiffEq/MassFractionBeta.h.
    - For initialization policies, see DiffEq/InitPolicy.h.
    - For coefficients policies, see DiffEq/MassFractionBetaCoeffPolicy.h.
 
- 11. <B>Mix number-fraction beta</B> - A system of SDEs, with linear drift and
- quadratic diagonal diffusion, whose invariant is the joint beta distribution.
- The mix number-fraction beta SDE is based on the beta SDE, with the following
- differences: (1) the SDE coefficients are specified consistent with the binary
- turbulent mixing process, and (2) additionally computing two more stochastic
- variables that are functions of the beta variables integrated, assuming that
- the beta variables are number, or mole-, fractions. For more details on the
- beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](https://doi.org/10.1080/14685248.2010.510843).
+11. __Mix number-fraction beta__ --- A system of SDEs, with linear drift and
+quadratic diagonal diffusion, whose invariant is the joint beta distribution.
+The mix number-fraction beta SDE is based on the beta SDE, with the following
+differences: (1) the SDE coefficients are specified consistent with the binary
+turbulent mixing process, and (2) additionally computing two more stochastic
+variables that are functions of the beta variables integrated, assuming that the
+beta variables are number, or mole-, fractions. For more details on the beta
+SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](https://doi.org/10.1080/14685248.2010.510843).
 
    - For a short overview of the equation and its implementation, see
      DiffEq/MixNumberFractionBeta.h.
    - For initialization policies, see DiffEq/InitPolicy.h.
    - For coefficients policies, see DiffEq/MixNumberFractionBetaCoeffPolicy.h.
 
- 12. <B>Mix mass-fraction beta</B> - A system of SDEs, with linear drift and
- quadratic diagonal diffusion, whose invariant is the joint beta distribution.
- The mix mass-fraction beta SDE is based on the beta SDE, with the following
- differences: (1) the SDE coefficients are specified consistent with the binary
- turbulent mixing process, and (2) additionally computing two more stochastic
- variables that are functions of the beta variables integrated, assuming that
- the beta variables are mass-fractions. For more details on the beta SDE, see
- [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](https://doi.org/10.1080/14685248.2010.510843).
+12. __Mix mass-fraction beta__ --- A system of SDEs, with linear drift and
+quadratic diagonal diffusion, whose invariant is the joint beta distribution.
+The mix mass-fraction beta SDE is based on the beta SDE, with the following
+differences: (1) the SDE coefficients are specified consistent with the binary
+turbulent mixing process, and (2) additionally computing two more stochastic
+variables that are functions of the beta variables integrated, assuming that the
+beta variables are mass-fractions. For more details on the beta SDE, see
+[Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](https://doi.org/10.1080/14685248.2010.510843).
 
    - For a short overview of the equation and its implementation, see
      DiffEq/MixMassFractionBeta.h.
    - For initialization policies, see DiffEq/InitPolicy.h.
    - For coefficients policies, see DiffEq/MixMassFractionBetaCoeffPolicy.h.
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Wed 23 May 2018 05:55:26 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
+@section walker_ex Examples
+\subpage walker_examples
 */
