@@ -43,7 +43,7 @@ balancing capabilities.
 
     _RNGTest_ is a test harness to subject random number generators to stringent
 statistical tests, enabling quantitative ranking with respect to their quality
-and computational cost. Multiple generators are supported from Intel's
+and computational cost. Multiple generators can be tested from Intel's
 [Math Kernel Library](https://software.intel.com/en-us/intel-mkl),
 [RNGSSE](https://doi.org/10.1016/j.cpc.2013.04.007), and
 [Random123](http://www.thesalmons.org/john/random123/releases/latest/docs/index.html).

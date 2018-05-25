@@ -780,6 +780,7 @@ INPUT                  = \
   /home/jbakosi/code/quinoa/src/../doc/pages/inciter.dox \
   /home/jbakosi/code/quinoa/src/../doc/pages/walker.dox \
   /home/jbakosi/code/quinoa/src/../doc/pages/rngtest.dox \
+  /home/jbakosi/code/quinoa/src/../doc/pages/rngtest_design.dox \
   /home/jbakosi/code/quinoa/src/../doc/pages/unittest.dox \
   /home/jbakosi/code/quinoa/src/../doc/pages/meshconv.dox \
   /home/jbakosi/code/quinoa/src/../doc/pages/algorithm.dox \
