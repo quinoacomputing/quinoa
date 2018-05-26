@@ -346,10 +346,9 @@ class Partitioner : public CBase_Partitioner {
     //!   chares will need to communicate) during time stepping.
     std::unordered_map< int,
       std::unordered_map< int, std::unordered_set< std::size_t > > > m_msum;
-    //! \brief Boundary face list from side-sets.
-    //!   m_bface is the list of boundary faces in the side-sets.
+    //! List of boundary faces associated to side-set IDs
     std::map< int, std::vector< std::size_t > > m_bface;
-    //! \brief Boundary face-node connectivity.
+    //! Boundary face-node connectivity
     std::vector< std::size_t > m_triinpoel;
 
     //! Partition the mesh before a (potential) refinement step
@@ -405,6 +404,16 @@ class Partitioner : public CBase_Partitioner {
 
     //! Update mesh after refinement
     void updateMesh( AMR::mesh_adapter_t& refiner );
+
+    //! Update volume mesh after mesh refinement
+    void updateVolumeMesh( AMR::mesh_adapter_t& refiner,
+                           const std::unordered_set< std::size_t >& old,
+                           const std::unordered_set< std::size_t >& ref );
+
+    //! Update boundary data structures after mesh refinement
+    void updateBoundaryMesh( AMR::mesh_adapter_t& refiner,
+                             const std::unordered_set< std::size_t >& old,
+                             const std::unordered_set< std::size_t >& ref );
 
     //! Evaluate initial conditions (IC) at mesh nodes
     tk::Fields nodeinit( std::size_t npoin,

@@ -1064,14 +1064,12 @@ Partitioner::refine()
   }
 
   // Refine mesh based on next initial refinement type
-  //std::cout << CkMyPe() << " ref start " << level << '\n';
   auto r = m_initref.back();    // consume (reversed) list from back
   if (r == ctr::AMRInitialType::UNIFORM)
     uniformRefine();
   else if (r == ctr::AMRInitialType::INITIAL_CONDITIONS)
     errorRefine();
   else Throw( "Initial AMR type not implemented" );
-  std::cout << CkMyPe() << " ref finish " << level << '\n';
 
   for (const auto& e : tk::cref_find(m_bndEdges,CkMyPe())) {
     IGNORE(e);
@@ -1179,12 +1177,6 @@ Partitioner::correctref()
   // Correct PE-boundary edges if any
   if (!extra.empty()) {
 
-    // Query user input for initial mesh refinement type list
-    auto initref = g_inputdeck.get< tag::amr, tag::init >();
-    // Determine which level this is
-    auto level = initref.size() - m_initref.size();
-    std::cout << CkMyPe() << " correct ref " << level << '\n';
-
     // Refine mesh triggered by newly added nodes on PE-boundary by other PEs
     correctRefine( extra );
 
@@ -1203,7 +1195,6 @@ Partitioner::correctref()
   } else nextref();
 }
 
-  
 void
 Partitioner::nextref()
 // *****************************************************************************
@@ -1373,7 +1364,7 @@ void
 Partitioner::correctRefine( const tk::UnsMesh::EdgeSet& extra )
 // *****************************************************************************
 // Do mesh refinement correcting PE-boundary edges
-//! \param[in] Unique set of edges that need a new edge
+//! \param[in] extra Unique set of edges that need a new edge
 // *****************************************************************************
 {
   if (!extra.empty()) {
@@ -1397,73 +1388,20 @@ void
 Partitioner::updateMesh( AMR::mesh_adapter_t& refiner )
 // *****************************************************************************
 // Update mesh after refinement
+//! \param[in] refiner Mesh refiner (AMR) object
 // *****************************************************************************
 {
   // Get refined mesh connectivity
   const auto& refinpoel = refiner.tet_store.get_active_inpoel();
   Assert( refinpoel.size()%4 == 0, "Inconsistent refined mesh connectivity" );
 
+  // Generate unique node lists of old and refined mesh using local ids
   std::unordered_set< std::size_t > old( m_inpoel.cbegin(), m_inpoel.cend() );
   std::unordered_set< std::size_t > ref( refinpoel.cbegin(), refinpoel.cend() );
 
-//   std::size_t npoin = 0;
-//   for (auto r : rid) if (oid.find(r) != end(oid)) ++npoin;
+  updateVolumeMesh( refiner, old, ref );
 
-  auto npoin = ref.size();
-
-  auto& x = m_coord[0];
-  auto& y = m_coord[1];
-  auto& z = m_coord[2];
-
-  x.resize( npoin );
-  y.resize( npoin );
-  z.resize( npoin );
-  m_gid.resize( npoin );
-
-//   tk::UnsMesh::EdgeNodes prem;  // parents of removed child
-//   for (auto o : old)
-//     if (ref.find(o) == end(ref))
-//       prem[ refiner.node_connectivity.get(o) ] = o;
-
-// std::cout << "old: ";
-// for (auto p : old) std::cout << p << ' ';
-// std::cout << '\n';
-// std::cout << "ref: ";
-// for (auto p : ref) std::cout << p << ' ';
-// std::cout << '\n';
-
-// std::cout << "prem: ";
-// for (const auto& p : prem)
-//   std::cout << p.first[0] << ',' << p.first[1] << ':' << p.second << ' ';
-// std::cout << '\n';
-
-  for (auto r : ref) {
-    if (old.find(r) == end(old)) {
-      auto p = refiner.node_connectivity.get( r );
-      Assert( old.find(p[0]) != end(old) && old.find(p[1]) != end(old),
-              "Parent(s) not in old mesh" );
-      Assert( r >= old.size(), "Attempting to overwrite node with added one" );
-      x[r] = (x[p[0]] + x[p[1]])/2.0;
-      y[r] = (y[p[0]] + y[p[1]])/2.0;
-      z[r] = (z[p[0]] + z[p[1]])/2.0;
-      decltype(p) gp{{ m_gid[p[0]], m_gid[p[1]] }}; // global parent ids
-      auto g = tk::UnsMesh::EdgeHash()( gp );   // generate new global IDs
-      Assert( g >= old.size(), "Hashed id overwriting old id" );
-      Assert( m_coordmap.find(g) == end(m_coordmap),
-              "Hash collision: ID already exist" );
-      m_gid[r] = g;
-      m_lid[g] = r;
-      m_coordmap.insert( {g, {{x[r], y[r], z[r]}}} );
-      m_edgenode[ gp ] = std::make_tuple( g, x[r], y[r], z[r] );
-    }
-//     auto i = prem.find(p);
-//     if (i != end(prem)) {
-// std::cout << "switch: " << r << ", " << i->second << '\n';
-//       x[r] = x[ i->second ];
-//       y[r] = y[ i->second ];
-//       z[r] = z[ i->second ];
-//     }
-  }
+  updateBoundaryMesh( refiner, old, ref );
 
   // Update mesh connectivity with local node IDs
   m_inpoel = refinpoel;
@@ -1473,6 +1411,217 @@ Partitioner::updateMesh( AMR::mesh_adapter_t& refiner )
   Assert( tk::uniquecopy(m_ginpoel).size() == m_coord[0].size(),
           "Size mismatch" );
   for (auto& i : m_ginpoel) i = m_gid[i];
+}
+
+void
+Partitioner::updateVolumeMesh( AMR::mesh_adapter_t& refiner,
+                               const std::unordered_set< std::size_t >& old,
+                               const std::unordered_set< std::size_t >& ref )
+// *****************************************************************************
+//  Update volume mesh after mesh refinement
+//! \param[in] refiner Mesh refiner (AMR) object
+//! \param[in] old Unique nodes of the old (unrefined) mesh using local ids
+//! \param[in] ref Unique nodes of the refined mesh using local ids
+// *****************************************************************************
+{
+  auto& x = m_coord[0];
+  auto& y = m_coord[1];
+  auto& z = m_coord[2];
+
+  // Resize node coordinate storage to accommodate refined mesh nodes
+  auto npoin = ref.size();
+  x.resize( npoin );
+  y.resize( npoin );
+  z.resize( npoin );
+  m_gid.resize( npoin );
+
+  // Generate coordinates and ids to newly added nodes after refinement step
+  for (auto r : ref) {               // for all unique nodes of the refined mesh
+    if (old.find(r) == end(old)) {   // if node is newly added (in this step)
+      // get (local) parent ids of newly added node
+      auto p = refiner.node_connectivity.get( r );
+      Assert( old.find(p[0]) != end(old) && old.find(p[1]) != end(old),
+              "Parent(s) not in old mesh" );
+      Assert( r >= old.size(), "Attempting to overwrite node with added one" );
+      // generate coordinates for newly added node
+      x[r] = (x[p[0]] + x[p[1]])/2.0;
+      y[r] = (y[p[0]] + y[p[1]])/2.0;
+      z[r] = (z[p[0]] + z[p[1]])/2.0;
+      decltype(p) gp{{ m_gid[p[0]], m_gid[p[1]] }}; // global parent ids
+      // generate new global ID for newly added node
+      auto g = tk::UnsMesh::EdgeHash()( gp );
+      // ensure newly generated node id has not yet been used
+      Assert( g >= old.size(), "Hashed id overwriting old id" );
+      Assert( m_coordmap.find(g) == end(m_coordmap),
+              "Hash collision: ID already exist" );
+      // assign new global ids to local->global and to global->local maps
+      m_gid[r] = g;
+      m_lid[g] = r;
+      // assign new coordinates to new global node id
+      m_coordmap.insert( {g, {{x[r], y[r], z[r]}}} );
+      // assign new coordinates and new global node id to global parent id pair
+      m_edgenode[ gp ] = std::make_tuple( g, x[r], y[r], z[r] );
+    }
+  }
+}
+
+void
+Partitioner::updateBoundaryMesh( AMR::mesh_adapter_t& refiner,
+                                 const std::unordered_set< std::size_t >& old,
+                                 const std::unordered_set< std::size_t >& ref )
+// *****************************************************************************
+// Update boundary data structures after mesh refinement
+//! \param[in] refiner Mesh refiner (AMR) object
+//! \param[in] old Unique nodes of the old (unrefined) mesh using local ids
+//! \param[in] ref Unique nodes of the refined mesh using local ids
+// *****************************************************************************
+{
+  IGNORE(ref);  // to avoid compiler warning when asserts are optimized away
+
+  using Face = tk::UnsMesh::Face;
+
+  // Will associate a pair of side set id and adjacent tet id to a boundary
+  // triangle face
+  using BndFaces = std::unordered_map< Face,
+                                       std::pair< int, std::size_t >,
+                                       tk::UnsMesh::FaceHasher,
+                                       tk::UnsMesh::FaceEq >;
+
+  // Generate data structure that associates the pair of side set id and
+  // adjacent tet id to a boundary triangle face for all boundary faces. After
+  // this loop we will have all tets adjacent to boundary faces, where the
+  // "boundary" includes all physical boundaries (where the user may assign
+  // boundary conditions via side sets from the mesh file) as well as
+  // PE-boundaries due to domain decomposition.
+  BndFaces bnd;
+  auto oldesuel = tk::genEsuelTet( m_inpoel, tk::genEsup(m_inpoel,4) );
+  for (std::size_t e=0; e<oldesuel.size()/4; ++e) {     // for tets on this PE
+    auto mark = e*4;
+    for (std::size_t f=0; f<4; ++f) {
+      if (oldesuel[mark+f] == -1) {  // if a face does not have an adjacent  tet
+        Face t{{ m_gid[ m_inpoel[ mark+tk::lpofa[f][0] ] ],
+                 m_gid[ m_inpoel[ mark+tk::lpofa[f][1] ] ],
+                 m_gid[ m_inpoel[ mark+tk::lpofa[f][2] ] ] }};
+        // associate tet id adjacent to boundary face to boundary face, at this
+        // point we fill in -1 for the side set id, since we don't know it yet
+        bnd[t] = {-1,e};
+      }
+    }
+  }
+
+  // Assign side set ids to faces on the physical boundary only
+  for (const auto& ss : m_bface)  // for all phsyical boundaries (sidesets)
+    for (auto f : ss.second) {    // for all faces on this physical boundary
+      Face t{{ m_triinpoel[f*3+0], m_triinpoel[f*3+1], m_triinpoel[f*3+2] }};
+      auto cf = bnd.find( t );
+      if (cf != end(bnd)) cf->second.first = ss.first;
+    }
+
+  // Remove PE-boundary faces (to which the above loop did not assign a set id)
+  auto bndcopy = bnd;
+  for (const auto& f : bndcopy) if (f.second.first == -1) bnd.erase( f.first );
+  tk::destroy( bndcopy );
+
+  // Now in bnd we have a pair of side set ids of all tet ids that are adjacent
+  // to all physical boundary faces that are associated to a side set in the
+  // mesh file and only along faces on the physical boundary and not along faces
+  // on the PE-boundary.
+
+  // storage for boundary faces associated to side-set IDs of the refined mesh
+  decltype(m_bface) bface;              // will become m_bface
+  // storage for boundary faces-node connectivity of the refined mesh
+  decltype(m_triinpoel) triinpoel;      // will become m_triinpoel
+  // face id counter
+  std::size_t facecnt = 0;
+
+  // Lambda to associate a boundary face and connectivity to a side set.
+  // Parameter 's' is the list of faces (ids) to add new face to. Parameter 'f'
+  // is the triangle face connecttivity to add.
+  auto addBndFace = [ &facecnt, &triinpoel ]
+                    ( std::vector< std::size_t >& s, const Face& f )
+  {
+    s.push_back( facecnt++ );
+    triinpoel.push_back( f[0] );
+    triinpoel.push_back( f[1] );
+    triinpoel.push_back( f[2] );
+  };
+
+  // Lambda to find the nodes of the parent face of a child face. Parameter
+  // 'face' denotes the node ids of the child face whose parent face we are
+  // looking for. This search may find 3 of 4 parent nodes, depending on whether
+  // the child shares or does not share a face with the parent tet,
+  // respectively.
+  auto parentFace = [ &old, &refiner ]( const Face& face ){
+    std::unordered_set< std::size_t > s;// will store nodes of parent face
+    for (auto n : face) {               // for all 3 nodes of the face
+      if (old.find(n) != end(old))      // if child node found in old mesh,
+        s.insert( n );                  // that node is also in the parent face
+      else {                            // if child node is a newly added one
+        auto p = refiner.node_connectivity.get( n );  // find its parent nodes
+        s.insert( begin(p), end(p) );                 // and store both uniquely
+      }
+    }
+    // Ensure all parent nodes are part of the old (unrefined) mesh
+    Assert( std::all_of( begin(s), end(s), [ &old ]( std::size_t j ){
+                           return old.find(j) != end(old); } ),
+            "Old mesh nodes not in old mesh" );
+    // Return unique set of nodes of the parent face of child face
+    return s;
+  };
+
+  // Ggenerate boundary face data structures after refinement step
+  for (const auto& f : bnd) {
+    // construct face of old mesh boundary face using local ids
+    Face oldface{{ tk::cref_find( m_lid, f.first[0] ),
+                   tk::cref_find( m_lid, f.first[1] ),
+                   tk::cref_find( m_lid, f.first[2] ) }};
+    // will associate to side set id of old (unrefined) mesh boundary face
+    auto& side = bface[ f.second.first ];
+    // query number of children of boundary tet adjacent to boundary face
+    auto nc = refiner.tet_store.data( f.second.second ).num_children;
+    if (nc == 0) {      // if boundary tet is not refined, add its boundary face
+      addBndFace( side, f.first );
+    } else {            // if boundary tet is refined
+      const auto& tets = refiner.tet_store.tets;
+      for (decltype(nc) i=0; i<nc; ++i ) {      // for all child tets
+        // get child tet id
+        auto childtet = refiner.tet_store.get_child_id( f.second.second, i );
+        auto ct = tets.find( childtet );
+        Assert( ct != end(tets), "Child tet not found" );
+        // ensure all nodes of child tet are in refined mesh
+        Assert( ref.find(ct->second[0]) != end(ref) &&
+                ref.find(ct->second[1]) != end(ref) &&
+                ref.find(ct->second[2]) != end(ref) &&
+                ref.find(ct->second[3]) != end(ref),
+                "Boundary tet child tet node id not found in refined mesh" );
+        // get nodes of child tet
+        auto A = ct->second[0];
+        auto B = ct->second[1];
+        auto C = ct->second[2];
+        auto D = ct->second[3];
+        // form all 4 faces of child tet
+        std::array<Face, 4> face{{{{A,C,B}}, {{A,B,D}}, {{A,D,C}}, {{B,C,D}}}};
+        for (const auto& rf : face) {   // for all faces of child tet
+          // find nodes of the parent face of child face
+          auto parfac = parentFace( rf );
+          // if the child shares a face with its parent and all 3 nodes of the
+          // parent face of the child's face are the same, the child face is on
+          // the same boundary as the parent face
+          if ( parfac.size() == 3 &&
+               parfac.find(oldface[0]) != end(parfac) &&
+               parfac.find(oldface[1]) != end(parfac) &&
+               parfac.find(oldface[2]) != end(parfac) )
+          {
+            addBndFace( side, {m_gid[rf[0]], m_gid[rf[1]], m_gid[rf[2]]} );
+          }
+        }
+      }
+    }
+  }
+
+  // Update boundary face data structures
+  m_bface = std::move(bface);
+  m_triinpoel = std::move(triinpoel);
 }
 
 void

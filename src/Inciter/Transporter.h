@@ -575,8 +575,8 @@ class Transporter : public CBase_Transporter {
       auto sidenodes = er.readSidesets();
       for (auto i : conf) {
         if (sidenodes.find(i) == end(sidenodes)) {
-          m_print.diag( "WARNING: Boundary conditions specified on side set " +
-            std::to_string(i) + " which does not exist in mesh file" );
+          Throw( "WARNING: Boundary conditions specified on side set " +
+                 std::to_string(i) + " which does not exist in mesh file" );
           break;
         }
       }
