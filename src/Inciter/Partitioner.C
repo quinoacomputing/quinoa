@@ -1364,7 +1364,7 @@ void
 Partitioner::correctRefine( const tk::UnsMesh::EdgeSet& extra )
 // *****************************************************************************
 // Do mesh refinement correcting PE-boundary edges
-//! \param[in] extra Unique set of edges that need a new edge
+//! \param[in] extra Unique set of edges that need a new node on PE boundaries
 // *****************************************************************************
 {
   if (!extra.empty()) {
@@ -1548,7 +1548,7 @@ Partitioner::updateBoundaryMesh( AMR::mesh_adapter_t& refiner,
 
   // Lambda to find the nodes of the parent face of a child face. Parameter
   // 'face' denotes the node ids of the child face whose parent face we are
-  // looking for. This search may find 3 of 4 parent nodes, depending on whether
+  // looking for. This search may find 3 or 4 parent nodes, depending on whether
   // the child shares or does not share a face with the parent tet,
   // respectively.
   auto parentFace = [ &old, &refiner ]( const Face& face ){
@@ -1569,7 +1569,7 @@ Partitioner::updateBoundaryMesh( AMR::mesh_adapter_t& refiner,
     return s;
   };
 
-  // Ggenerate boundary face data structures after refinement step
+  // Generate boundary face data structures after refinement step
   for (const auto& f : bnd) {
     // construct face of old mesh boundary face using local ids
     Face oldface{{ tk::cref_find( m_lid, f.first[0] ),
@@ -1593,7 +1593,7 @@ Partitioner::updateBoundaryMesh( AMR::mesh_adapter_t& refiner,
                 ref.find(ct->second[1]) != end(ref) &&
                 ref.find(ct->second[2]) != end(ref) &&
                 ref.find(ct->second[3]) != end(ref),
-                "Boundary tet child tet node id not found in refined mesh" );
+                "Boundary child tet node id not found in refined mesh" );
         // get nodes of child tet
         auto A = ct->second[0];
         auto B = ct->second[1];
