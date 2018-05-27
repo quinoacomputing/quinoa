@@ -4,7 +4,7 @@
 <img src="quinoa.svg"/>
 @m_enddiv
 
-_Adaptive computational fluid dynamics_
+__Adaptive computational fluid dynamics__
 
 Quinoa is a set of computational tools that enables research and numerical
 analysis in fluid dynamics. We employ asynchronous programming using the
@@ -18,7 +18,8 @@ at our @ref why page and at http://charm.cs.illinois.edu/why/.
 
 Quinoa consists of the following tools:
 
-  - @ref walker_main --- Time-integrator for stochastic differential equations
+  - @ref walker_main --- __Time-integrator for stochastic differential
+    equations__
 
     _Walker_ is a mathematical tool to analyze and design the behavior of
 stochastic differential equations. It allows the estimation of arbitrary coupled
@@ -26,20 +27,18 @@ stochastic differential equations. It allows the estimation of arbitrary coupled
 evolve in time and is used for the design of
 @ref papers_walker "statistical moment approximations" for turbulent flows.
 
-  - @ref inciter_main --- Partial differential equations solver for complex
-    domains
+  - @ref inciter_main --- __Navier-Stokes solver for complex domains__
 
     _Inciter_ is a fully asynchronous distributed-memory-parallel flow solver
 using 3D unstructured grids. We are working on continuous and discontinuous
-Galerkin finite element methods, adaptive mesh-, and polynominal-degree
+Galerkin finite element methods, adaptive mesh-, and polynomial-degree
 refinement, enabling dynamically concentrating compute resources to regions with
 interesting physics. Our goal is to explore how to scale such
 high-load-imbalance simulations, representative of large production multiphysics
 codes, to large problems on large computers using Charm++'s automatic load
 balancing capabilities.
 
-  - @ref rngtest_main --- Random number generators test suite ranking quality
-    and computational cost
+  - @ref rngtest_main --- __Random number generators test suite__
 
     _RNGTest_ is a test harness to subject random number generators to stringent
 statistical tests, enabling quantitative ranking with respect to their quality
@@ -48,11 +47,11 @@ and computational cost. Multiple generators can be tested from Intel's
 [RNGSSE](https://doi.org/10.1016/j.cpc.2013.04.007), and
 [Random123](http://www.thesalmons.org/john/random123/releases/latest/docs/index.html).
 
-  - [unittest](http://quinoacomputing.github.io/unittest_doc.html) -
-    Unit test suite
+  - @ref unittest_main --- __Test suite for synchronous and asynchronous
+    functions__
 
-    _UnitTest_ is a unit test harness, capable of testing serial, synchronous,
-and asynchronous functions.
+    _UnitTest_ is a test harness, capable of testing synchronous (e.g., MPI),
+and asynchronous (e.g., Charm++) functions.
 
   - [meshconv](http://quinoacomputing.github.io/meshconv_doc.html) -
     Mesh file converter

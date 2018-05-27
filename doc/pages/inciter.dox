@@ -2,10 +2,10 @@
   \page      inciter_main Inciter
 
 @m_div{m-col-m-6 m-right-m}
-<img src="inciter.svg"/>
+<img src="inciter_white.svg"/>
 @m_enddiv
 
-_Partial differential equations solver for complex domains_
+__Navier-Stokes solver for complex domains__
 
 Inciter is an overdecomposition-aware finite element field solver for partial
 differential equations using 3D unstructured grids. Inciter is used to research

@@ -2,10 +2,10 @@
   \page      walker_main Walker
 
 @m_div{m-col-m-6 m-right-m}
-<img src="walker.svg"/>
+<img src="walker_white.svg"/>
 @m_enddiv
 
-_Time-integrator for stochastic differential equations_
+__Time-integrator for stochastic differential equations__
 
 Walker is a numerical integrator for stochastic differential equations (SDE). It
 can be used to analyze and design the evolution of fluctuating variables and

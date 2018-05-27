@@ -2,10 +2,10 @@
   \page      rngtest_main RNGTest
 
 @m_div{m-col-m-6 m-right-m}
-<img src="rngtest.svg"/>
+<img src="rngtest_white.svg"/>
 @m_enddiv
 
-_Random number generators test suite ranking quality and computational cost_
+__Random number generators test suite__
 
 RNGTest is a test harness to subject random number generators (RNG) to stringent
 statistical tests, enabling quantitative ranking with respect to their quality
