@@ -1,37 +1,22 @@
 /*!
-  \page      meshconv_doc MeshConv: Mesh file converter
-  <img src="https://quinoacomputing.github.io/meshconv.svg" align="right" width="40%" background=transparent>
+  \page      meshconv_main MeshConv
 
-Meshconv is a mesh file converter. It can be used to convert 3D tetrahedron
+@m_div{m-col-m-6 m-right-m}
+<img src="meshconv_white.svg"/>
+@m_enddiv
+
+__Tetrahedron-mesh converter__
+
+Meshconv is a mesh file converter. It can be used to convert tetrahedron
 meshes from and to either of the following formats:
 
   - Gmsh, http://www.geuz.org/gmsh
   - Netgen, http://sourceforge.net/apps/mediawiki/netgen-mesher
   - ExodusII, https://github.com/trilinos/Trilinos/tree/master/packages/seacas
   - HyperMesh, http://www.altairhyperworks.com/product/HyperMesh
+  - ASC, used in [Jacob Waltz](https://www.researchgate.net/scientific-contributions/2014382994_Jacob_Waltz)'s _Chicoma_ code
 
 Similar to the rest of Quinoa, meshconv also uses the Charm++ runtime system,
 however, meshconv is currently not parallelized.
 
-Help on command-line parameters
--------------------------------
-
-As usual, use the \a -h command-line parameter to get on-screen help from an
-executable. Example output, excluding Charm++ command-line parameters:
-\code{.py}
-$ meshconv -h
-meshconv Command-line Parameters:
-          -h, --help            Display one-liner help on all command-line arguments
-        -H, --helpkw     string Display verbose help on a single keyword
-         -i, --input     string Specify the input file
-        -o, --output     string Specify the output file
-       -r, --reorder     string Reorder mesh nodes
-       -v, --verbose            Select verbose screen output
-\endcode
-
-<hr>
-<div><small>
-<em>Page last updated:</em> Mon 10 Apr 2017 11:21:19 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */

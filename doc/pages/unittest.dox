@@ -7,8 +7,10 @@
 
 __Test suite for synchronous and asynchronous functions__
 
-UnitTest is an asynchronous distributed-memory-parallel [unit test](http://en.wikipedia.org/wiki/Unit_testing) harness, capable of testing
-synchronous (e.g., MPI), and asynchronous (e.g., Charm++) functions.
+UnitTest is an asynchronous distributed-memory-parallel [unit
+test](http://en.wikipedia.org/wiki/Unit_testing) harness, capable of testing
+serial, synchronous (e.g., MPI) parallel, and asynchronous (e.g., Charm++)
+parallel functions.
 
 UnitTest uses the [Charm++](http://charm.cs.illinois.edu) runtime system to run
 the tests concurrently, either on a single machine or a networked set of

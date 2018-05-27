@@ -50,18 +50,18 @@ and computational cost. Multiple generators can be tested from Intel's
   - @ref unittest_main --- __Test suite for synchronous and asynchronous
     functions__
 
-    _UnitTest_ is a test harness, capable of testing synchronous (e.g., MPI),
-and asynchronous (e.g., Charm++) functions.
+    _UnitTest_ is an asynchronous distributed-memory-parallel test harness,
+capable of testing serial, synchronous (e.g., MPI) parallel, and asynchronous
+parallel (e.g., Charm++) functions.
 
-  - [meshconv](http://quinoacomputing.github.io/meshconv_doc.html) -
-    Mesh file converter
+  - @ref meshconv_main --- __Tetrahedron-mesh converter__
 
-    _MeshConv_ is a mesh file converter that can be used to convert 3D
-tetrahedron meshes from and to either of the following formats:
+    _MeshConv_ is a mesh file converter that can be used to convert tetrahedron
+meshes from and to either of the following formats:
 [Gmsh](http://www.geuz.org/gmsh),
 [Netgen](http://sourceforge.net/apps/mediawiki/netgen-mesher),
-[ExodusII](http://sourceforge.net/projects/exodusii), and
-[HyperMesh](http://www.altairhyperworks.com/product/HyperMesh).
+[ExodusII](http://sourceforge.net/projects/exodusii),
+[HyperMesh](http://www.altairhyperworks.com/product/HyperMesh), and ASC used in [Jacob Waltz](https://www.researchgate.net/scientific-contributions/2014382994_Jacob_Waltz)'s _Chicoma_ code.
 
 @section mainpage-build Build
 
