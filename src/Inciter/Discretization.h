@@ -41,7 +41,6 @@ class Discretization : public CBase_Discretization {
         const tk::UnsMesh::CoordMap& coordmap,
         const std::unordered_map< int,
                 std::unordered_set< std::size_t > >& msum,
-        const std::unordered_map< std::size_t, std::size_t >& filenodes,
         int nchare );
 
     #if defined(__clang__)
@@ -111,11 +110,6 @@ class Discretization : public CBase_Discretization {
       return m_fct[ thisIndex ].ckLocal();
     }
 
-    const std::unordered_map< std::size_t, std::size_t >& Filenodes() const
-    { return m_filenodes; }
-    std::unordered_map< std::size_t, std::size_t >& Filenodes()
-    { return m_filenodes; }
-
     const std::unordered_map< std::size_t, std::size_t >& Bid() const
     { return m_bid; }
     std::unordered_map< std::size_t, std::size_t >& Bid() { return m_bid; }
@@ -179,7 +173,6 @@ class Discretization : public CBase_Discretization {
       p | m_outFilename;
       p | m_fct;
       p | m_transporter;
-      p | m_filenodes;
       p | m_el;
       if (p.isUnpacking()) {
         m_inpoel = std::get< 0 >( m_el );
@@ -219,8 +212,6 @@ class Discretization : public CBase_Discretization {
     CProxy_DistFCT m_fct;
     //! Transporter proxy
     CProxy_Transporter m_transporter;
-    //! Map associating file node IDs to local node IDs
-    std::unordered_map< std::size_t, std::size_t > m_filenodes;
     //! \brief Elements of the mesh chunk we operate on
     //! \details Initialized by the constructor. The first vector is the element
     //!   connectivity (local IDs), the second vector is the global node IDs of

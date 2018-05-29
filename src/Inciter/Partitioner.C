@@ -1768,8 +1768,7 @@ Partitioner::createDiscWorkers()
     // args: Discretization ctor args. See also Charm++ manual, Sec. "Dynamic
     // Insertion".
     m_scheme.discInsert( cid, m_host, tk::cref_find(m_chinpoel,cid),
-      tk::cref_find(m_chcoordmap,cid), msum, tk::cref_find(m_chfilenodes,cid),
-      m_nchare, CkMyPe() );
+      tk::cref_find(m_chcoordmap,cid), msum, m_nchare, CkMyPe() );
   }
 
   // Free storage for unique global mesh nodes chares on our PE will
