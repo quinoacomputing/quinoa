@@ -14,7 +14,7 @@ multiple variables governed by coupled SDE systems of different types. It allows
 the estimation of arbitrary coupled statistics and probability density
 functions.
 
-Walker can be used to desing statistical moment approximations. If the
+Walker can be used to design statistical moment approximations. If the
 approximate shape of the probability distribution for a fluctuating variable is
 known (or can be usefully assumed), its governing SDE can, in some cases, be
 derived. Numerically integrating this governing equation, Walker allows

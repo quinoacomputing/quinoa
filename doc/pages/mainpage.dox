@@ -1,6 +1,6 @@
 /** @mainpage Quinoa
 
-@m_div{m-col-m-4 m-right-m}
+@m_div{m-col-t-4 m-right-t}
 <img src="quinoa.svg"/>
 @m_enddiv
 
@@ -9,16 +9,19 @@ __Adaptive computational fluid dynamics__
 Quinoa is a set of computational tools that enables research and numerical
 analysis in fluid dynamics. Using the [Charm++](http://charmplusplus.org/)
 runtime system, we employ _asynchronous_ (or non-blocking) parallel programming
-and decompose computational problems into a large number of work units (that
-may be more than the available number of processors) which enables _arbitrary
-overlap_ of parallel communication, computation, and input/output. The runtime
+and decompose computational problems into a large number of work units (that may
+be more than the available number of processors) which enables _arbitrary
+overlap_ of parallel computation, communication, input, and output. The runtime
 system _dynamically_ and _automatically_ homogenizes computational load across
-the simulation distributed across many computers. Our goal is the efficient use
-of resources even for problems with _a priori_ unknown and heterogeneous load
-distribution. Read more at our @ref why page and at
-http://charm.cs.illinois.edu/why/.
+the simulation distributed across many computers.
 
-@section mainpage-tools Tools
+Our ultimate goal is to simulate large, interesting (i.e., complex and
+practically useful) multiphysics problems with a production-quality code that is
+extensible and maintainable, using hardware resources efficiently even for
+problems with _a priori_ unknown and heterogeneous load distribution that can
+also dynamically change in time. Read more at our @ref why page.
+
+@section mainpage_tools Tools
 
 Quinoa consists of the following tools:
 
@@ -26,48 +29,47 @@ Quinoa consists of the following tools:
     equations__
 
     _Walker_ is a mathematical tool to analyze and design the behavior of
-stochastic differential equations. It allows the estimation of arbitrary coupled
-@ref statistics_output "statistics" and probability density functions as they
-evolve in time and is used for the design of
-@ref papers_walker "statistical moment approximations" for turbulent flows.
+    stochastic differential equations. It allows the estimation of arbitrary
+    coupled @ref statistics_output "statistics" and probability density
+    functions as they evolve in time and is used for the design of @ref
+    papers_walker "statistical moment approximations" for turbulent flows.
 
   - @ref inciter_main --- __Navier-Stokes solver for complex domains__
 
     _Inciter_ is a fully asynchronous distributed-memory-parallel flow solver
-using 3D unstructured grids. We are working on continuous and discontinuous
-Galerkin finite element methods, adaptive mesh-, and polynomial-degree
-refinement, enabling dynamically concentrating compute resources to regions with
-interesting physics. Our goal is to explore how to scale such
-high-load-imbalance simulations, representative of large production multiphysics
-codes, to large problems on large computers using Charm++'s automatic load
-balancing capabilities.
+    for complex engineering geometries. We are working on a compressible-flow
+    solver using continuous and discontinuous Galerkin finite element methods,
+    and solution-adaptive mesh-, and polynomial-degree refinement, enabling
+    dynamically concentrating compute resources to regions with interesting
+    physics.
 
   - @ref rngtest_main --- __Random number generators test suite__
 
     _RNGTest_ is a test harness to subject random number generators to stringent
-statistical tests, enabling quantitative ranking with respect to their quality
-and computational cost. Multiple generators can be tested from Intel's
-[Math Kernel Library](https://software.intel.com/en-us/intel-mkl),
-[RNGSSE](https://doi.org/10.1016/j.cpc.2013.04.007), and
-[Random123](http://www.thesalmons.org/john/random123/releases/latest/docs/index.html).
+    statistical tests, enabling quantitative ranking with respect to their
+    quality and computational cost. Multiple generators can be tested from
+    Intel's [Math Kernel Library](https://software.intel.com/en-us/intel-mkl),
+    [RNGSSE](https://doi.org/10.1016/j.cpc.2013.04.007), and
+    [Random123](http://www.thesalmons.org/john/random123/releases/latest/docs/index.html).
 
   - @ref unittest_main --- __Test suite for synchronous and asynchronous
     functions__
 
     _UnitTest_ is an asynchronous distributed-memory-parallel test harness,
-capable of testing serial, synchronous (e.g., MPI) parallel, and asynchronous
-parallel (e.g., Charm++) functions.
+    capable of testing serial, synchronous (e.g., MPI) parallel, and
+    asynchronous parallel (e.g., Charm++) functions.
 
   - @ref meshconv_main --- __Tetrahedron-mesh converter__
 
     _MeshConv_ is a mesh file converter that can be used to convert tetrahedron
-meshes from and to either of the following formats:
-[Gmsh](http://www.geuz.org/gmsh),
-[Netgen](http://sourceforge.net/apps/mediawiki/netgen-mesher),
-[ExodusII](http://sourceforge.net/projects/exodusii),
-[HyperMesh](http://www.altairhyperworks.com/product/HyperMesh), and ASC used in [Jacob Waltz](https://www.researchgate.net/scientific-contributions/2014382994_Jacob_Waltz)'s _Chicoma_ code.
+    meshes from and to either of the following formats:
+    [Gmsh](http://www.geuz.org/gmsh),
+    [Netgen](http://sourceforge.net/apps/mediawiki/netgen-mesher),
+    [ExodusII](http://sourceforge.net/projects/exodusii),
+    [HyperMesh](http://www.altairhyperworks.com/product/HyperMesh), and
+    ASC used in [Jacob Waltz](https://www.researchgate.net/scientific-contributions/2014382994_Jacob_Waltz)'s _Chicoma_ code.
 
-@section mainpage-build Build
+@section mainpage_build Build
 
 - Install prerequisites: _Debian/Ubuntu linux_ (line 1: required, line 2: recommended)
 
@@ -87,7 +89,7 @@ meshes from and to either of the following formats:
 
 All executables will be under `build/Main/`.
 
-@section mainpage-authors Authors
+@section mainpage_authors Authors
 
 (in chronological order of contribution)
 
@@ -100,28 +102,28 @@ All executables will be under `build/Main/`.
 7. [Bob Bird](https://github.com/rfbird)
 8. [Aditya Pandare](https://github.com/adityakpandare)
 
-@section mainpage-resources Resources
+@section mainpage_resources Resources
 
 - Releases --- https://github.com/quinoacomputing/quinoa/releases
 - Source --- https://github.com/quinoacomputing/quinoa
+- Contributing --- https://www.clahub.com/agreements/quinoacomputing/quinoa
 - License --- https://github.com/quinoacomputing/quinoa/blob/master/LICENSE
-- Papers ---  http://quinoacomputing.github.io/papers.html
-- Documentation --- http://quinoacomputing.github.io/index.html
-- Manifesto --- http://quinoacomputing.github.io/why.html
+- Third-party licenses --- https://quinoacomputing.org/licenses
+- Documentation --- https://quinoacomputing.org
+- Philsophy --- https://quinoacomputing.org/why
+- Papers --- https://quinoacomputing.org/papers
 - Roadmap --- https://github.com/quinoacomputing/quinoa/issues
+- Doxygen --- https://quinoacomputing.org
+- Gcov --- https://quinoacomputing.org/coverage
+- CppCheck --- https://quinoacomputing.org/cppcheck
 - Docker --- https://hub.docker.com/r/quinoacomputing
 - Travis --- https://travis-ci.org/quinoacomputing/quinoa
 - Codecov --- https://codecov.io/gh/quinoacomputing/quinoa/commits
-- Gcov --- http://quinoacomputing.github.io/coverage.html
-- CppCheck --- http://quinoacomputing.github.io/cppcheck/index.html
-- Doxygen --- http://quinoacomputing.github.io
 - Sonarqube --- https://sonarqube.com/organizations/quinoacomputing
-- Analytics --- https://www.openhub.net/p/quinoacomputing
+- Analytics --- http://www.openhub.net/p/quinoacomputing
 - Cite --- https://zenodo.org/badge/latestdoi/38454430
-- Contributing --- https://www.clahub.com/agreements/quinoacomputing/quinoa
 
-
-@section mainpage-license License
+@section mainpage_license License
 
 > Copyright (c) 2016-2018, Los Alamos National Security, LLC
 > All rights reserved.
