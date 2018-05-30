@@ -35,6 +35,7 @@
 #include "OrnsteinUhlenbeck.h"
 #include "SkewNormal.h"
 #include "WrightFisher.h"
+#include "Langevin.h"
 
 #include "BetaCoeffPolicy.h"
 #include "DiagOrnsteinUhlenbeckCoeffPolicy.h"
@@ -48,6 +49,7 @@
 #include "OrnsteinUhlenbeckCoeffPolicy.h"
 #include "SkewNormalCoeffPolicy.h"
 #include "WrightFisherCoeffPolicy.h"
+#include "LangevinCoeffPolicy.h"
 
 using walker::DiffEqStack;
 
@@ -223,6 +225,15 @@ DiffEqStack::DiffEqStack() : m_factory(), m_eqTypes()
   // Register SDE for all combinations of policies
   mpl::cartesian_product< GammaPolicies >(
     registerDiffEq< Gamma >( m_factory, ctr::DiffEqType::GAMMA, m_eqTypes ) );
+
+  // Langevin SDE
+  // Construct vector of vectors for all possible policies for SDE
+  using LangevinPolicies = mpl::vector< InitPolicies, LangevinCoeffPolicies >;
+  // Register SDE for all combinations of policies
+  mpl::cartesian_product< LangevinPolicies >(
+    registerDiffEq< Langevin >
+                  ( m_factory, ctr::DiffEqType::LANGEVIN, m_eqTypes ) );
+
 }
 
 std::vector< walker::DiffEq >
@@ -260,6 +271,8 @@ DiffEqStack::selected() const
       diffeqs.push_back( createDiffEq< tag::skewnormal >( d, cnt ) );
     else if (d == ctr::DiffEqType::GAMMA)
       diffeqs.push_back( createDiffEq< tag::gamma >( d, cnt ) );
+    else if (d == ctr::DiffEqType::LANGEVIN)
+      diffeqs.push_back( createDiffEq< tag::langevin >( d, cnt ) );
     else Throw( "Can't find selected DiffEq" );
   }
 
@@ -281,31 +294,10 @@ DiffEqStack::tables() const
   for (const auto& d : g_inputdeck.get< tag::selected, tag::diffeq >()) {
     std::pair< std::vector< std::string >, std::vector< tk::Table > > t;
 
-    if (d == ctr::DiffEqType::DIRICHLET)
-      t = createTables< tag::dirichlet >( d, cnt );
-    else if (d == ctr::DiffEqType::GENDIR)
-      t = createTables< tag::gendir >( d, cnt );
-    else if (d == ctr::DiffEqType::WRIGHTFISHER)
-      t = createTables< tag::wrightfisher >( d, cnt );
-    else if (d == ctr::DiffEqType::OU)
-      t = createTables< tag::ou >( d, cnt );
-    else if (d == ctr::DiffEqType::DIAG_OU)
-      t = createTables< tag::diagou >( d, cnt );
-    else if (d == ctr::DiffEqType::BETA)
-      t = createTables< tag::beta >( d, cnt );
-    else if (d == ctr::DiffEqType::NUMFRACBETA)
-      t = createTables< tag::numfracbeta >( d, cnt );
-    else if (d == ctr::DiffEqType::MASSFRACBETA)
-      t = createTables< tag::massfracbeta >( d, cnt );
-    else if (d == ctr::DiffEqType::MIXNUMFRACBETA)
-      t = createTables< tag::mixnumfracbeta >( d, cnt );
-    else if (d == ctr::DiffEqType::MIXMASSFRACBETA)
+    if (d == ctr::DiffEqType::MIXMASSFRACBETA)
       t = createTables< tag::mixmassfracbeta >( d, cnt );
-    else if (d == ctr::DiffEqType::SKEWNORMAL)
-      t = createTables< tag::skewnormal >( d, cnt );
-    else if (d == ctr::DiffEqType::GAMMA)
-      t = createTables< tag::gamma >( d, cnt );
-    else Throw( "Can't find selected DiffEq" );
+    else if (d == ctr::DiffEqType::LANGEVIN)
+      t = createTables< tag::langevin >( d, cnt );
 
     nam.insert( end(nam), begin(t.first), end(t.first) );
     tab.insert( end(tab), begin(t.second), end(t.second) );
@@ -351,6 +343,8 @@ DiffEqStack::info() const
       nfo.emplace_back( infoSkewNormal( cnt ) );
     else if (d == ctr::DiffEqType::GAMMA)
       nfo.emplace_back( infoGamma( cnt ) );
+    else if (d == ctr::DiffEqType::LANGEVIN)
+      nfo.emplace_back( infoLangevin( cnt ) );
     else Throw( "Can't find selected DiffEq" );
   }
 
@@ -831,7 +825,7 @@ const
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name( cp ) );
   auto ncomp =
     g_inputdeck.get< tag::component >().get< tag::mixmassfracbeta >()[c] / 4;
-  if (cp == ctr::CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY) {
+  if (cp == ctr::CoeffPolicyType::HYDROTIMESCALE) {
     nfo.emplace_back(
       "inverse hydro time scales [" + std::to_string( ncomp ) + "]",
       options( ctr::HydroTimeScales(),
@@ -976,3 +970,51 @@ DiffEqStack::infoGamma( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
 
   return nfo;
 }
+
+std::vector< std::pair< std::string, std::string > >
+DiffEqStack::infoLangevin( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
+// *****************************************************************************
+//  Return information on the Langevin SDE
+//! \param[inout] cnt std::map of counters for all differential equation types
+//! \return vector of string pairs describing the SDE configuration
+// *****************************************************************************
+{
+  auto c = ++cnt[ ctr::DiffEqType::LANGEVIN ];       // count eqs
+  --c;  // used to index vectors starting with 0
+
+  std::vector< std::pair< std::string, std::string > > nfo;
+
+  nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::LANGEVIN ), "" );
+  nfo.emplace_back( "kind", "stochastic" );
+  nfo.emplace_back( "dependent variable", std::string( 1,
+    g_inputdeck.get< tag::param, tag::langevin, tag::depvar >()[c] ) );
+  nfo.emplace_back( "initialization policy", ctr::InitPolicy().name(
+    g_inputdeck.get< tag::param, tag::langevin, tag::initpolicy >()[c] ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::langevin >()[c];
+  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+  auto cp = g_inputdeck.get< tag::param, tag::langevin, tag::coeffpolicy >()[c];
+  nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name( cp ) );
+  if (cp == ctr::CoeffPolicyType::HYDROTIMESCALE) {
+    nfo.emplace_back(
+      "inverse hydro time scale",
+      options( ctr::HydroTimeScales(),
+               g_inputdeck.get< tag::param,
+                                tag::langevin,
+                                tag::hydrotimescales >().at(c) ) );
+    nfo.emplace_back(
+      "production/dissipation",
+      options( ctr::HydroProductions(),
+               g_inputdeck.get< tag::param,
+                                tag::langevin,
+                                tag::hydroproductions >().at(c) ) );
+  }
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::langevin >(c) ) );
+  nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
+    g_inputdeck.get< tag::param, tag::langevin, tag::rng >()[c] ) );
+  nfo.emplace_back( "coeff C0", std::to_string(
+    g_inputdeck.get< tag::param, tag::langevin, tag::c0 >().at(c) ) );
+
+  return nfo;
+}
+

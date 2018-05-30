@@ -33,7 +33,8 @@ enum class DiffEqType : uint8_t { NO_DIFFEQ=0,
                                   MIXMASSFRACBETA,
                                   DIRICHLET,
                                   GENDIR,
-                                  WRIGHTFISHER };
+                                  WRIGHTFISHER,
+                                  LANGEVIN };
 
 //! Pack/Unpack: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, DiffEqType& e ) { PUP::pup( p, e ); }
@@ -61,6 +62,7 @@ class DiffEq : public tk::Toggle< DiffEqType > {
                                        , kw::dirichlet
                                        , kw::gendir
                                        , kw::wrightfisher
+                                       , kw::langevin
                                        >;
 
     //! Constructor: pass associations references to base, which will handle
@@ -80,7 +82,8 @@ class DiffEq : public tk::Toggle< DiffEqType > {
           { DiffEqType::MIXMASSFRACBETA, kw::mixmassfracbeta::name() },
           { DiffEqType::DIRICHLET, kw::dirichlet::name() },
           { DiffEqType::GENDIR, kw::gendir::name() },
-          { DiffEqType::WRIGHTFISHER, kw::wrightfisher::name() } },
+          { DiffEqType::WRIGHTFISHER, kw::wrightfisher::name() },
+          { DiffEqType::LANGEVIN, kw::langevin::name() } },
         //! keywords -> Enums
         { { "no_diffeq", DiffEqType::NO_DIFFEQ },
           { kw::ornstein_uhlenbeck::string(), DiffEqType::OU },
@@ -94,7 +97,8 @@ class DiffEq : public tk::Toggle< DiffEqType > {
           { kw::mixmassfracbeta::string(), DiffEqType::MIXMASSFRACBETA },
           { kw::dirichlet::string(), DiffEqType::DIRICHLET },
           { kw::gendir::string(), DiffEqType::GENDIR },
-          { kw::wrightfisher::string(), DiffEqType::WRIGHTFISHER } } ) {}
+          { kw::wrightfisher::string(), DiffEqType::WRIGHTFISHER },
+          { kw::langevin::string(), DiffEqType::LANGEVIN } } ) {}
 };
 
 } // ctr::

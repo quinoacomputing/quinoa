@@ -47,6 +47,7 @@ struct dirichlet {};
 struct gendir {};
 struct wrightfisher {};
 struct p0 {};
+struct langevin {};
 struct beta {};
 struct betax {};
 struct betay {};

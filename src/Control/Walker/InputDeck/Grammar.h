@@ -59,6 +59,7 @@ namespace deck {
                                   tag::diagou,          std::size_t,
                                   tag::skewnormal,      std::size_t,
                                   tag::gamma,           std::size_t,
+                                  tag::langevin,        std::size_t,
                                   tag::beta,            std::size_t,
                                   tag::numfracbeta,     std::size_t,
                                   tag::massfracbeta,    std::size_t,
@@ -132,24 +133,20 @@ namespace grm {
   //! \brief Do error checking of a vector (required for a block)
   //! \details This functor can be used to verify the correct size of an already
   //!   existing vector, specified by the user in a given block. The vector is
-  //!   required to have a specific size: ncomp/4, i.e., the number of
-  //!   components in a block divided by four. This specific value is the only
-  //!   way this is used at this time, thus the hard-coding of ncomp/4. However,
-  //!   this could be abstracted away via a template argument if needed.
+  //!   required to be non-empty.
   //! \note This functor does not check existence of a vector. If the vector
   //!   does not even exist, it will throw an exception in DEBUG mode, while in
   //!   RELEASE mode it will attempt to access unallocated memory yielding a
   //!   segfault. The existence of the vector should be checked by
   //!   check_vector_exists first.
-  template< class eq, class vec >
+  template< class eq, class vec  >
   struct action< check_vector_size< eq, vec > > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       const auto& vv = stack.template get< tag::param, eq, vec >();
       Assert( !vv.empty(), "Vector of vectors checked must not be empty" );
       const auto& v = vv.back();
-      const auto& ncomp = stack.template get< tag::component, eq >().back();
-      if (v.empty() || v.size() != ncomp/4)
+      if (v.empty())
         Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
     }
   };
@@ -223,6 +220,23 @@ namespace grm {
           Message< Stack, ERROR, MsgKey::NOBETA >( stack, in );
       }
 
+    }
+  };
+
+  //! Rule used to trigger action
+  struct langevin_defaults : pegtl::success {};
+  //! \brief Set defaults for the Langevin model
+  template<>
+  struct action< langevin_defaults > {
+    template< typename Input, typename Stack >
+    static void apply( const Input&, Stack& stack ) {
+      using walker::deck::neq;
+      // Set number of components: always 3 velocity components
+      auto& ncomp = stack.template get< tag::component, tag::langevin >();
+      ncomp.push_back( 3 );
+      // Set C0 = 2.1 if not specified
+      auto& C0 = stack.template get< tag::param, tag::langevin, tag::c0 >();
+      if (C0.size() != neq.get< tag::langevin >()) C0.push_back( 2.1 );
     }
   };
 
@@ -846,6 +860,55 @@ namespace deck {
                                                  tag::omega > >,
            check_errors< tag::wrightfisher > > {};
 
+  //! Langevin SDE
+  struct langevin :
+         pegtl::if_must<
+           scan_sde< use< kw::langevin >, tag::langevin >,
+           tk::grm::langevin_defaults,
+           tk::grm::block< use< kw::end >,
+                           tk::grm::depvar< use,
+                                            tag::langevin,
+                                            tag::depvar >,
+                           tk::grm::rng< use,
+                                         use< kw::rng >,
+                                         tk::ctr::RNG,
+                                         tag::langevin,
+                                         tag::rng >,
+                           tk::grm::policy< use,
+                                            use< kw::init >,
+                                            ctr::InitPolicy,
+                                            tag::langevin,
+                                            tag::initpolicy >,
+                           tk::grm::policy< use,
+                                            use< kw::coeff >,
+                                            ctr::CoeffPolicy,
+                                            tag::langevin,
+                                            tag::coeffpolicy >,
+                           sde_option_vector< ctr::HydroTimeScales,
+                                              kw::hydrotimescales,
+                                              tag::langevin,
+                                              tag::hydrotimescales,
+                                              tk::grm::check_vector_size >,
+                           sde_option_vector< ctr::HydroProductions,
+                                              kw::hydroproductions,
+                                              tag::langevin,
+                                              tag::hydroproductions,
+                                              tk::grm::check_vector_size >,
+                           tk::grm::process<
+                             use< kw::sde_c0 >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::langevin,
+                                                  tag::c0 > > >,
+           check_errors< tag::langevin,
+                         tk::grm::check_vector_exists<
+                           tag::langevin,
+                           tag::hydrotimescales,
+                           tk::grm::MsgKey::HYDROTIMESCALES >,
+                         tk::grm::check_vector_exists<
+                           tag::langevin,
+                           tag::hydroproductions,
+                           tk::grm::MsgKey::HYDROPRODUCTIONS > > > {};
+
   //! stochastic differential equations
   struct sde :
          pegtl::sor< dirichlet,
@@ -859,7 +922,8 @@ namespace deck {
                      numfracbeta,
                      massfracbeta,
                      mixnumfracbeta,
-                     mixmassfracbeta > {};
+                     mixmassfracbeta,
+                     langevin > {};
 
   //! 'walker' block
   struct walker :
