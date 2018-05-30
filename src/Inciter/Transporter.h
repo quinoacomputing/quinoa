@@ -508,8 +508,6 @@ class Transporter : public CBase_Transporter {
     tk::real m_avcost;
      //! Total mesh volume
     tk::real m_V;
-    //! Total number of mesh nodes
-    std::size_t m_npoin;
     //! Minimum mesh statistics
     std::array< tk::real, 2 > m_minstat;
     //! Maximum mesh statistics
