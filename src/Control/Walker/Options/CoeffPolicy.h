@@ -24,7 +24,7 @@ enum class CoeffPolicyType : uint8_t { CONSTANT=0
                                      , DECAY
                                      , HOMOGENEOUS_DECAY
                                      , MONTE_CARLO_HOMOGENEOUS_DECAY
-                                     , HYDROTIMESCALE_HOMOGENEOUS_DECAY
+                                     , HYDROTIMESCALE
                                      };
 
 //! Pack/Unpack CoeffPolicyType: forward overload to generic enum class packer
@@ -55,16 +55,14 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
           { CoeffPolicyType::HOMOGENEOUS_DECAY, kw::homdecay::name() },
           { CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY,
             kw::montecarlo_homdecay::name() },
-          { CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY,
-            kw::hydrotimescale::name() } },
+          { CoeffPolicyType::HYDROTIMESCALE, kw::hydrotimescale::name() } },
         //! keywords -> Enums
         {  { kw::constant::string(), CoeffPolicyType::CONSTANT },
            { kw::decay::string(), CoeffPolicyType::DECAY },
            { kw::homdecay::string(), CoeffPolicyType::HOMOGENEOUS_DECAY },
            { kw::montecarlo_homdecay::string(),
              CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY },
-           { kw::hydrotimescale::string(),
-             CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY } } )
+           { kw::hydrotimescale::string(), CoeffPolicyType::HYDROTIMESCALE } } )
     {
        boost::mpl::for_each< keywords >( assertPolicyCodes() );
     }
@@ -99,8 +97,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
       , { CoeffPolicyType::HOMOGENEOUS_DECAY, *kw::homdecay::code() }
       , { CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY,
           *kw::montecarlo_homdecay::code() }
-      , { CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY,
-          *kw::hydrotimescale::code() }
+      , { CoeffPolicyType::HYDROTIMESCALE, *kw::hydrotimescale::code() }
     };
 
 };

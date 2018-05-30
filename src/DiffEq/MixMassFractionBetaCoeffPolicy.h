@@ -268,7 +268,6 @@ class MixMassFracBetaCoeffHomDecay {
       //   r = R - <R>, density fluctuation about its mean,
       // <Y> = mean mass fraction,
       // <R> = mean density,
-      //std::vector< tk::real > M{ 0.5, 0.012, 0.98, 0.37, 0.9 };
       for (ncomp_t c=0; c<ncomp; ++c) {
         tk::real m = lookup( mean(depvar,c), moments );            // <Y>
         tk::real v = lookup( variance(depvar,c), moments );        // <y^2>
@@ -306,7 +305,7 @@ class MixMassFracBetaCoeffHomDecay {
     }
 };
 
-//! \brief Mix mass-fraction beta SDE Monte Carlo homogneous decay coefficients
+//! \brief Mix mass-fraction beta SDE Monte Carlo homogenous decay coefficients
 //!   policy
 //! \details User-defined parameters b' and kappa' are constants in time and
 //!   ensure decay in the evolution of <y^2>. Additionally, S is constrained to
@@ -432,20 +431,21 @@ class MixMassFracBetaCoeffMonteCarloHomDecay {
     }
 };
 
-//! \brief Mix mass-fraction beta SDE homogneous decay coefficients policy with
-//!   DNS hydrodynamics time scale
+//! \brief Mix mass-fraction beta SDE coefficients policy with DNS hydrodynamics
+//!   time scale
 //! \details User-defined parameters b' and kappa' are functions of an
 //!   externally, e.g., DNS-, provided hydrodynamics time scale ensuring decay
 //!   in the evolution of <y^2>. Additionally, S is constrained to
-//!   make d<rho>/dt = 0, where <rho> = rho_2/(1+rY).
+//!   make d<rho>/dt = 0, where <rho> = rho_2/(1+rY). Additionally,
+//!   we pull in a hydrodynamic timescale from an external function.
 //! \see kw::hydrotimescale_info
-class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
+class MixMassFracBetaCoeffHydroTimeScale {
 
     using ncomp_t = kw::ncomp::info::expect::type;
 
   public:
     //! Constructor: initialize coefficients
-    MixMassFracBetaCoeffHydroTimeScaleHomDecay(
+    MixMassFracBetaCoeffHydroTimeScale(
       ncomp_t ncomp,
       const std::vector< kw::sde_bprime::info::expect::type >& bprime_,
       const std::vector< kw::sde_S::info::expect::type >& S_,
@@ -483,7 +483,7 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
 
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept
-    { return ctr::CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY; }
+    { return ctr::CoeffPolicyType::HYDROTIMESCALE; }
 
     //! \brief Update coefficients b', kappa', and S
     //! \details This where the mix mass-fraction beta SDE is made consistent
@@ -522,8 +522,6 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
       //   r = R - <R>, density fluctuation about its mean,
       // <Y> = mean mass fraction,
       // <R> = mean density,
-      //std::vector< tk::real > M{ 0.5, 0.012, 0.98, 0.37, 0.9 };
-      // Sample hydrodynamics timescale at time t
       for (ncomp_t c=0; c<ncomp; ++c) {
 
         const tk::ctr::Term Y( static_cast<char>(std::toupper(depvar)),
@@ -543,130 +541,31 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         tk::real ry = lookup( RY, moments );                       // <RY>
         const auto dscorr = tk::ctr::Product( { s1, s2 } );
         tk::real ds = -lookup( dscorr, moments );                  // b = -<rv>
-
-        //tk::real m = lookup( mean(depvar,c), moments );            // <Y>
-        //tk::real v = lookup( variance(depvar,c), moments );        // <y^2>
         tk::real d = lookup( mean(depvar,c+ncomp), moments );      // <R>
         tk::real d2 = lookup( variance(depvar,c+ncomp), moments ); // <r^2>
         tk::real d3 = lookup( cen3(depvar,c+ncomp), moments );     // <r^3>
-
         tk::real yt = ry/d;
 
+        // Sample hydrodynamics timescale and prod/diss at time t
         auto ts = hydrotimescale( t, hts[c] );  // eps/k
         auto pe = hydroproduction( t, hp[c] );  // P/eps = (dk/dt+eps)/eps
 
         tk::real a = r[c]/(1.0+r[c]*yt);
-        //tk::real n = 1.0;
         tk::real bnm = a*a*yt*(1.0-yt);
-        //tk::real vnm = m*(1.0-m);
         tk::real thetab = 1.0 - ds/bnm;
-        //tk::real thetay = 1.0 - v/vnm;
-        //tk::real dnm = d*d * r[c]*r[c]/(1.0+r[c]) * yt*(1.0-yt);
-        //tk::real thetar = 1.0 - d2/dnm;
-        //tk::real A = 0.15;
-
-        //tk::real mix = 1.0;
-        //tk::real mix = (1.0-theta) / (2.0-theta) * theta;
-        //tk::real mix = (1.0-theta) / (2.0-theta) * theta/2.0/(2.0-theta);
-        //tk::real mix = 1.0/(2.0*(2.0-theta));
-        //tk::real mix = yt*(1.0-yt)/(1.0+r[c]*yt)/(1.0+r[c]*yt);
-        //tk::real mix = 1.0/(1.0+r[c]*yt);
-        //tk::real mix = (1.0+r[c]*yt);//* std::pow(theta,0.5);
-        // latest: tk::real mix = 1.0+r[c]*yt;
-
-        //tk::real f = 1.0;
-        //tk::real f = 1.0 / (1.0+r[c]);
-        //tk::real f = std::pow(theta,0.5);
-        //tk::real f = (1.0+A)*theta/(1.0+30.0*A*theta);
-        //tk::real f = 1.0 / ( 1.0 + std::pow(pe-1.0,2.0)*std::sqrt(d2/d/d) );
-        tk::real f2 = 1.0 / std::pow(1.0 + std::pow(pe-1.0,2.0)*std::pow(ds,0.25),0.5);
-        tk::real f3 = 1.0 / std::pow(1.0 + std::pow(pe-1.0,2.0)*std::pow(ds,0.25),0.5);
-        //tk::real f = std::pow(1.0 / std::sqrt( 1.0 + std::pow(pe-1.0,2.0) ), 2.0);
-        //tk::real f = theta / std::sqrt( 1.0 + std::pow(pe-1.0,2.0) );
-        //tk::real f = std::pow(theta,0.5) / std::sqrt( 1.0 + std::pow(pe-1.0,2.0) );
-        // latest: tk::real f = 1.0 / (1.0+r[c]) / std::pow( 1.0 + std::pow(pe-1.0,2.0), 0.5 );
-        //tk::real f = std::pow( 1.0 + S[c]*sqrt(d2/d/d)*std::pow(pe-1.0,2.0), -0.5 );
-        //tk::real f = std::pow( 1.0 + std::pow(pe-1.0,2.0), -0.5 );
-
-        //if (m_it == 0) m_s.push_back( f );
-
-        //b[c] = bprime[c] * (1.0 - v/m/(1.0-m)) * ts;
-        //b[c] = bprime[c] * std::pow(1.0 - ds/(a*a)/yt/(1.0-yt),n) * ts;
-        //b[c] = bprime[c] * std::pow(1.0 - 2.0*ds/(ds+bnm),n) * ts;
-        //b[c] = bprime[c] * std::pow(theta,n) * ts;
-        //b[c] = bprime[c] * (1.0+A)/(1.0+A*theta)*theta * ts;
-        // latest: b[c] = bprime[c] * f * mix * ts;
-
-        //k[c] = kprime[c] * v * ts;
-        //k[c] = kprime[c] * ds * std::pow(1.0 - ds/(a*a)/yt/(1.0-yt),n) * ts;
-        //k[c] = kprime[c] * ds * std::pow(theta,n) * ts;
-        //k[c] = kprime[c] * ds * (1.0+A)/(1.0+A*theta)*theta * ts;
-        // latest: k[c] = kprime[c] * ds * f * mix * ts;
-
-        // current baseline:
-        //k[c] = kprime[c] * (1+r[c]*yt)/(1.0+r[c]) * ts * f * ds;
-
-        //k[c] = kprime[c] * (1+r[c]*yt)/(1.0+r[c]) * ts * f * v;
-        //tk::real ebnm = r[c]*r[c]/(1.0+r[c])*yt*(1.0-yt);
-        //tk::real G0 = (1.0 + 3.0*r[c] - 2.0*(2.0+r[c])*r[c]*yt)
-        //               / (1.0+r[c]*yt) / (1.0+r[c]*yt) * ebnm;
-        //b[c] = ( 2.0*(1.0+ebnm)/(1.0+1.0+ebnm)/m_s[c]
-        //b[c] = ( 2.0*bprime[c]/(1.0+1.0+ebnm)/m_s[c]
-        //         -2.0*kprime[c]*G0/(1.0+1.0+ebnm) ) *
-        //         (1.0+r[c]*yt)/(1.0+r[c]) * ts * f;
-        //b[c] = bprime[c] * (1.0+r[c]*yt)/(1.0+r[c]) * ts * f * std::pow(theta,S[c])
-        //b[c] = (2.0*thetab + bprime[c]*std::pow(ds/bnm,m_s[c])) * (1.0+r[c]*yt)/(1.0+r[c]) * ts * f;
-        //b[c] = (2.0*thetay + bprime[c]*std::pow(v/vnm,m_s[c])) * (1.0+r[c]*yt)/(1.0+r[c]) * ts * f;
-
-        //b[c] = bprime[c] * (1.0+r[c]*yt)/(1.0+r[c]) * ts * f;   // base
-        //b[c] = bprime[c] * (1.0+thetab) * (1.0+r[c]*yt)/(1.0+r[c])  * ts * f;
-        //b[c] = bprime[c] * (1.0+thetab) * (1.0+r[c]*yt)/(1.0+r[c]) / (1.0 + d2/d/d + d2/d/d/ds) * ts * f;
-        //b[c] = bprime[c] * (1.0+thetab+thetab*(1.0-thetab)*3.0) * (1.0+r[c]*yt)/(1.0+r[c]) * ts * f;
-        //b[c] = bprime[c] * (1.0+thetar+thetar*(1.0-thetar)*3.0) * (1.0+r[c]*yt)/(1.0+r[c]) * ts * f;
-        //b[c] = bprime[c] * (1.0+thetar+thetar*(1.0-thetar)*3.0) * (1.0+r[c]*yt)/(1.0+r[c]) / (1.0 + d2/d/d + d2/d/d/ds) * ts * f;
-        //b[c] = bprime[c] * (1.0+thetar+thetar*(1.0-thetar)*std::pow((1.0+r[c]*yt)/(1.0+r[c]),0.25)) * (1.0+r[c]*yt)/(1.0+r[c]) / (1.0 + d2/d/d + d2/d/d/ds) * ts * f;
-        //b[c] = bprime[c] * (1.0+r[c]*yt)/(1.0+r[c]) / (1.0 + d2/d/d + d2/d/d/ds) * ts * f;
-
-        //A = thetar + m_s[c] * thetar*(1.0-thetar) * (1.0+r[c]*yt)/(1.0+r[c]);
-        //b[c] = bprime[c] * (1.0+A*f) * (1.0+r[c]*yt)/(1.0+r[c]) / (1.0 + d2/d/d + d2/d/d/ds) * ts;
-
-        // current baseline:
-        //tk::real beta2 = m_s[c];
-        //tk::real beta1 = bprime[c] / (1.0 + d2/d/d + d2/d/d/ds) *
-        //                 (1.0 + thetab*f + beta2*thetab*(1.0-thetab)*f);
-        //b[c] = beta1 * (1.0+r[c]*yt)/(1.0+r[c]) * ts;
-
-        // cleanup current baseline:
-        //tk::real beta3 = m_s[c];
+        tk::real f2 =
+          1.0 / std::pow(1.0 + std::pow(pe-1.0,2.0)*std::pow(ds,0.25),0.5);
         tk::real b1 = m_s[0];
         tk::real b2 = m_s[1];
         tk::real b3 = m_s[2];
-        //tk::real beta3 = b1 + b3 * std::pow(1.0+d2/d/d,2.0) / (1.0 + d2/d/d/ds + d2/d/d);
-        //tk::real beta3 = b1 + b3 * /*ds/(d2/d/d) **/ std::pow(d2/d/d + d2/d/d/ds,2.0);
-        //tk::real beta3 = b1 + b3 * ds/(d2/d/d) * (1.0+d2/d/d) / (1.0 + ds);
-        //tk::real beta3 = b1; // + b3 * (ds*(1.0+ds))/(1.0 + d2/d/d)/(d2/d/d);
-        //tk::real beta3 = b1 * d2/d/d/ds; // / (1.0+ds);
-        //tk::real beta3 = b1 * (1.0+d2/d/d) * d2/d/d/ds / (1.0+ds);
-        //tk::real beta3 = b1 * (1.0+d2/d/d) / (1.0+d2/d/d+d2/d/d/ds);
-        //tk::real beta3 = b1 * (d2/d/d/ds) / (1.0+ds) * (1.0+d2/d/d);
-        //tk::real beta3 = b1 * d2/d/d/ds / (1.0+ds) / (1.0 + d2/d/d + d2/d/d/ds) * (1.0+d2/d/d);
-        //tk::real beta2 = 1.0 / (1.0+ds);
         tk::real eta = d2/d/d/ds;
-        // test moment model for density variance:
-        //tk::real chi = (std::pow(1.0-m,3.0) + std::pow(m,3.0))/m/(1.0-m);
-        //tk::real Sk = 0;
-        //eta = (1.0 - Sk*std::pow(ds,0.5) + (2.0+chi)*ds) / std::pow(1.0+ds,2.0);
         tk::real beta2 = b2*(1.0+eta*ds);
-        //tk::real beta3 = b1*b3 * d2/d/d/ds / (1.0+ds) * (1.0+r[c])/(1.0+r[c]*yt);
-        //tk::real beta3 = b1*b3 * (1.0+ds)/(1.0+d2/d/d) * (1.0+r[c])/(1.0+r[c]*yt);
         tk::real Thetap = thetab*0.5*(1.0+eta/(1.0+eta*ds));
-        //tk::real Thetap = thetab*eta/(1.0+ds);
-        tk::real beta3 = b3*(1.0+eta*ds); //*2.0*(1.0+eta*ds)/(1.0+eta*ds+eta); /** (1.0+d2/d/d) * (1.0+r[c])/(1.0+r[c]*yt) */;
+        tk::real beta3 = b3*(1.0+eta*ds);
         tk::real beta10 = b1 * (1.0+ds)/(1.0+eta*ds); //* 0.5*(1.0+d2/d/d+d2/d/d/ds);
         tk::real beta1 = bprime[c] * 2.0/(1.0+eta+eta*ds) *
-                         (beta10 + beta2*Thetap*f2 + beta3*Thetap*(1.0-Thetap)*f3);
+                         (beta10 + beta2*Thetap*f2 + beta3*Thetap*(1.0-Thetap)*f2);
         b[c] = beta1 * ts;
-        // cleanup of current baseline:
         k[c] = kprime[c] * beta1 * ts * ds * ds;
 
         tk::real R = 1.0 + d2/d/d;
@@ -707,7 +606,7 @@ using MixMassFracBetaCoeffPolicies =
   boost::mpl::vector< MixMassFracBetaCoeffDecay
                     , MixMassFracBetaCoeffHomDecay
                     , MixMassFracBetaCoeffMonteCarloHomDecay
-                    , MixMassFracBetaCoeffHydroTimeScaleHomDecay >;
+                    , MixMassFracBetaCoeffHydroTimeScale >;
 
 } // walker::
 

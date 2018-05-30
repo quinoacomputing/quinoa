@@ -310,6 +310,21 @@ using MixMassFractionBetaParameters = tk::tuple::tagged_tuple<
   tag::coeffpolicy,     std::vector< ctr::CoeffPolicyType >
 >;
 
+//! Langevin parameters storage
+using LangevinParameters = tk::tuple::tagged_tuple<
+  tag::depvar,          std::vector< char >,
+  tag::c0,              std::vector< kw::sde_c0::info::expect::type >,
+  tag::rng,             std::vector< tk::ctr::RNGType >,
+  tag::initpolicy,      std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy,     std::vector< ctr::CoeffPolicyType >,
+  tag::spike,           std::vector< std::vector< std::vector <
+                          kw::spike::info::expect::type > > >,
+  tag::betapdf,         std::vector< std::vector< std::vector <
+                          kw::betapdf::info::expect::type > > >,
+  tag::hydrotimescales, std::vector< std::vector< ctr::HydroTimeScalesType > >,
+  tag::hydroproductions,std::vector< std::vector< ctr::HydroProductionsType > >
+>;
+
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
   #ifdef HAS_MKL
@@ -328,7 +343,8 @@ using parameters = tk::tuple::tagged_tuple<
   tag::numfracbeta,     NumberFractionBetaParameters,
   tag::massfracbeta,    MassFractionBetaParameters,
   tag::mixnumfracbeta,  MixNumberFractionBetaParameters,
-  tag::mixmassfracbeta, MixMassFractionBetaParameters
+  tag::mixmassfracbeta, MixMassFractionBetaParameters,
+  tag::langevin,        LangevinParameters
 >;
 
 } // ctr::
