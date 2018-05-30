@@ -11,9 +11,9 @@ analysis in fluid dynamics. Using the [Charm++](http://charmplusplus.org/)
 runtime system, we employ _asynchronous_ (or non-blocking) parallel programming
 and decompose computational problems into a large number of work units (that may
 be more than the available number of processors) which enables _arbitrary
-overlap_ of parallel computation, communication, input, and output. The runtime
-system _dynamically_ and _automatically_ homogenizes computational load across
-the simulation distributed across many computers.
+overlap_ of parallel computation, communication, input, and output. Then the
+runtime system _dynamically_ and _automatically_ homogenizes computational load
+across the simulation distributed across many computers.
 
 Our ultimate goal is to simulate large, interesting (i.e., complex and
 practically useful) multiphysics problems with a production-quality code that is

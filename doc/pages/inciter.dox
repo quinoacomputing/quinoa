@@ -19,11 +19,7 @@ and our near-term plan also includes solution-adaptive varying of the degree of
 the local approximation polynomial, _p_-refinement. Combining these features we
 plan to explore how to scale such high-load-imbalance simulations,
 representative of large production multiphysics codes, to large problems on
-large computers using Charm++.
-
-Inciter uses the [Charm++](http://charmplusplus.org/) runtime system to run
-concurrently either on a single machine or a networked set of computers. The
-software design is asynchronous, yielding 100% efficiency, [strong scaling](https://en.wikipedia.org/wiki/Scalability#Weak_versus_strong_scaling).
+large computers using Charm++'s automatic load balancing capabilities.
 
 Inciter has parallel I/O, domain decomposition using
 [Zoltan2](http://www.cs.sandia.gov/zoltan), flux-corrected transport,

@@ -107,12 +107,12 @@ as well as hardware (e.g., dynamic processor frequency scaling). The runtime
 system also migrates data and work-units if it notices (via sensors, cache
 monitors, etc.) that a compute node is about to fail. If a node fails without a
 warning, the application can be restarted from a previously saved checkpoint.
-Since overdecomposition is done without direct reference to physical processors,
-the application can be restarted using a number of processors different than
-that of the checkpoint was saved with. Resiliency is provided by the runtime
-system transparent to the application and can save millions of cycles since jobs
-have to be restarted less frequently due to hardware failure. Read more on
-[power, reliability, and
+Since work decomposition and parallel programming are done without direct
+reference to physical processors, the application can be restarted using a
+number of processors different than that of the checkpoint was saved with.
+Resiliency is provided by the runtime system transparent to the application and
+can save millions of cycles since jobs have to be restarted less frequently due
+to hardware failure. Read more on [power, reliability, and
 performance](http://charm.cs.illinois.edu/newPapers/16-12/paper.pdf) from the
 developers of Charm++.
 
@@ -170,7 +170,7 @@ Quinoa's main language of choice is C++ for the following reasons.
 
  - It provides a portable [standard
    library](http://en.wikipedia.org/wiki/C%2B%2B_Standard_Library) with
-   [guaranteed algorithmic complexity](http://www.sgi.com/tech/stl/complexity.html)
+   [guaranteed algorithmic complexity](https://github.com/alyssaq/stl-complexities)
 
 [Modern C++](http://herbsutter.com/elements-of-modern-c-style/) provides great
 flexibility and enables the expert programmer to implement capability to
