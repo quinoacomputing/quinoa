@@ -179,6 +179,39 @@ hardware resources efficiently, yielding production quality code that is
 extensible, maintainable, and thus sustainable.
 
 @m_div{m-col-t-4 m-col-m-2 m-right-t}
+<img src="chart.svg"/>
+@m_enddiv
+
+@section priorities Priorities for writing code
+
+Here are our coding guidelines, listed most important first:
+
+1. __Correctness__ --
+Correct results, resilience against errors, fault tolerance.
+
+2. __Performance__ --
+Maximize FLOPS, minimize communication.
+
+3. __Power consumption__ --
+Minimize power required for given performance.
+
+4. __Maintainability, easy to read and use__ --
+Maximize code-reuse.
+
+5. __Easy to write__ --
+Optimize code for being read even at the expense of making code harder to write.
+
+Some mechanism, preferably the runtime system with some help from the
+application, should monitor the first three aspects and dynamically influence
+the algorithm. This requires runtime introspection, which must be designed into
+the algorithms from the outset.
+
+Quinoa uses the [Charm++](http://charm.cs.illinois.edu) runtime system capable
+of runtime introspection. Charm++ facilitates task-based parallelism, automatic
+load balancing through network-migration of objects, and enables coping with
+hardware heterogeneity and system failure.
+
+@m_div{m-col-t-4 m-col-m-2 m-right-t}
 <img src="nicubunu-Tools.svg"/>
 @m_enddiv
 

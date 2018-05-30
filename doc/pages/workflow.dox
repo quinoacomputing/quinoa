@@ -1,12 +1,7 @@
 /*!
   \page      workflow Workflow
 
- We follow the development model described at
+We roughly follow the development model described at
 http://nvie.com/posts/a-successful-git-branching-model.
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Fri 28 Jul 2017 04:48:58 PM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */
