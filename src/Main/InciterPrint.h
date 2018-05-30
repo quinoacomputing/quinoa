@@ -144,6 +144,9 @@ class InciterPrint : public tk::Print {
     void refvar( const std::vector< std::string >& refvar,
                  const std::vector< std::size_t >& refidx );
 
+    //! Print initial mesh refinement edge-node pairs
+    void initref( const std::vector< std::size_t >& edgenodes );
+
   private:
     //! Return partial differential equation name
     //! \param[in] key Equation key

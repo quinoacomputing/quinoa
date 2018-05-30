@@ -292,6 +292,24 @@ namespace grm {
     }
   };
 
+  //! Rule used to trigger action
+  struct check_amr_errors : pegtl::success {};
+  //! \brief Set defaults and do error checking on the transport equation block
+  //! \details This is error checking that only the transport equation block
+  //!   must satisfy. Besides error checking we also set defaults here as
+  //!   this block is called when parsing of a transport...end block has
+  //!   just finished.
+  template<>
+  struct action< check_amr_errors > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      // Error out if initref list is not divisible by 2
+      auto& initref = stack.template get< tag::amr, tag::edge >();
+      if (initref.size() % 2 == 1)
+        Message< Stack, ERROR, MsgKey::INITREFODD >( stack, in );
+    }
+  };
+
 } // ::grm
 } // ::tk
 
@@ -343,7 +361,7 @@ namespace deck {
            tk::grm::process< use< kw::fct >, 
                              tk::grm::Store< tag::discr, tag::fct >,
                              pegtl::alpha >,
-           tk::grm::interval< kw::ttyi, tag::tty >,
+           tk::grm::interval< use< kw::ttyi >, tag::tty >,
            discroption< use, kw::scheme, inciter::ctr::Scheme, tag::scheme >,
            discroption< use, kw::flux, inciter::ctr::Flux, tag::flux >
          > {};
@@ -373,6 +391,13 @@ namespace deck {
                                         tk::grm::check_vector,
                                         eq,
                                         param > > > {};
+
+  //! initref ... end block
+  struct initref :
+         tk::grm::vector< use< kw::amr_initref >,
+                          tk::grm::Store_back< tag::amr, tag::edge >,
+                          use< kw::end >,
+                          tk::grm::check_vector< tag::amr, tag::edge > > {};
 
   //! initial conditions block for compressible flow
   template< class eq, class param >
@@ -511,7 +536,7 @@ namespace deck {
   //! refinement variable(s) (refvar) ... end block
   struct refvars :
          pegtl::if_must<
-           tk::grm::vector< kw::amr_refvar,
+           tk::grm::vector< use< kw::amr_refvar >,
                             tk::grm::match_depvar<
                               tk::grm::Store_back< tag::amr, tag::refvar > >,
                             use< kw::end >,
@@ -526,6 +551,7 @@ namespace deck {
            tk::grm::enable_amr, // enable AMR if amr...end block encountered
            tk::grm::block< use< kw::end >,
                            refvars,
+                           initref,
                            tk::grm::process<
                              use< kw::amr_initial >,
                              tk::grm::store_back_option< use,
@@ -538,7 +564,8 @@ namespace deck {
                              tk::grm::store_inciter_option<
                                ctr::AMRError,
                                tag::amr, tag::error >,
-                             pegtl::alpha > > > {};
+                             pegtl::alpha > >,
+           tk::grm::check_amr_errors > {};
 
   //! plotvar ... end block
   struct plotvar :

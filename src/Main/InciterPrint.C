@@ -78,3 +78,17 @@ void InciterPrint::refvar( const std::vector< std::string >& refvar,
    name[0] = static_cast< char >( std::toupper( name[0] ) );
    item( name, c );
 }
+
+void InciterPrint::initref( const std::vector< std::size_t >& edgenodes )
+// *****************************************************************************
+// Print initial mesh refinement edge-node pairs
+// *****************************************************************************
+{
+   if (edgenodes.empty()) return;
+
+   std::string c;
+   for (auto i : edgenodes) c += std::to_string(i) + ' ';
+   auto name = kw::amr_initref::name();
+   name[0] = static_cast< char >( std::toupper( name[0] ) );
+   item( name, c );
+}

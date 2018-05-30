@@ -116,6 +116,7 @@ namespace grm {
     WRONGSIZE,          //!< Size of parameter vector incorrect
     HYDROTIMESCALES,    //!< Missing required hydrotimescales vector
     HYDROPRODUCTIONS,   //!< Missing required hydroproductions vector
+    INITREFODD,         //!< AMR initref vector size is odd (must be even)
     CHARMARG };         //!< Argument inteded for the Charm++ runtime system
 
   //! Associate parser errors to error messages
@@ -268,6 +269,10 @@ namespace grm {
       "Specification of a 'hydrotimescales' vector missing." },
     { MsgKey::HYDROPRODUCTIONS, "Error in the preceding line or block. "
       "Specification of a 'hydroproductions' vector missing." },
+    { MsgKey::INITREFODD, "Error in the preceding line or block. "
+      "The number of edge-nodes, marking edges as pairs of nodes, used for "
+      "explicit tagging of edges for initial mesh refineoment is odd (it must "
+      "be even)." },
     { MsgKey::CHARMARG, "Arguments starting with '+' are assumed to be inteded "
       "for the Charm++ runtime system. Did you forget to prefix the command "
       "line with charmrun? If this warning persists even after running with "

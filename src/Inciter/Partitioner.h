@@ -399,6 +399,9 @@ class Partitioner : public CBase_Partitioner {
     //! Do error-based mesh refinement
     void errorRefine();
 
+    //! Do mesh refinement based on user explicitly tagging edges
+    void userRefine();
+
     //! Do mesh refinement correcting PE-boundary edges
     void correctRefine( const tk::UnsMesh::EdgeSet& extra );
 

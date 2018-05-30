@@ -45,7 +45,9 @@ using amr = tk::tuple::tagged_tuple<
   tag::init,   std::vector< AMRInitialType >,    //!< List of initial AMR types
   tag::refvar, std::vector< std::string >,       //!< List of refinement vars
   tag::id,     std::vector< std::size_t >,       //!< List of refvar indices
-  tag::error,  AMRErrorType                      //!< Error estimator for AMR
+  tag::error,  AMRErrorType,                     //!< Error estimator for AMR
+  //! List of edges-node pairs
+  tag::edge,   std::vector< kw::amr_initref::info::expect::type >
 >;
 
 //! Discretization parameters storage

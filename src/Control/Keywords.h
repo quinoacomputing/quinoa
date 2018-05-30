@@ -3844,6 +3844,25 @@ struct amr_refvar_info {
 };
 using amr_refvar = keyword< amr_refvar_info, TAOCPP_PEGTL_STRING("refvar") >;
 
+struct amr_initref_info {
+  static std::string name() { return "initial refinement edge-nodes"; }
+  static std::string shortDescription() { return
+    "Configure edge-node pairs for initial refinement"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to configure a list of edges that are explicitly
+    tagged for initial refinement during setup in inciter. The keyword
+    introduces an initref ... end block within an amr ... end block and must
+    contain a list of integer pairs, i.e., the number of ids must be even,
+    denoting the end-points of the nodes (=edge) which should be tagged for
+    refinement.)"; }
+  struct expect {
+    using type = std::size_t;
+    static constexpr type lower = 0;
+    static std::string description() { return "pairs of integers"; }
+  };
+};
+using amr_initref = keyword< amr_initref_info, TAOCPP_PEGTL_STRING("initref") >;
+
 struct amr_jump_info {
   static std::string name() { return "jump"; }
   static std::string shortDescription() { return

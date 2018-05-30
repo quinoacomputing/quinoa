@@ -119,7 +119,8 @@ Partitioner::Partitioner(
   m_initref = g_inputdeck.get< tag::amr, tag::init >();
   std::reverse( begin(m_initref), end(m_initref) );
 
-  if (!g_inputdeck.get< tag::amr, tag::init >().empty())
+  if ( !g_inputdeck.get< tag::amr, tag::init >().empty() ||
+       !g_inputdeck.get< tag::amr, tag::edge >().empty() )
     partref();          // if initial mesh refinement configured, partition
   else
     finishref();        // if not, continue
@@ -1045,7 +1046,6 @@ Partitioner::refine()
 
   // Query user input for initial mesh refinement type list
   auto initref = g_inputdeck.get< tag::amr, tag::init >();
-  Assert( !initref.empty(), "No initial mesh refinement steps configured" );
   // Determine which level this is
   auto level = initref.size() - m_initref.size();
 
@@ -1064,12 +1064,17 @@ Partitioner::refine()
   }
 
   // Refine mesh based on next initial refinement type
-  auto r = m_initref.back();    // consume (reversed) list from back
-  if (r == ctr::AMRInitialType::UNIFORM)
-    uniformRefine();
-  else if (r == ctr::AMRInitialType::INITIAL_CONDITIONS)
-    errorRefine();
-  else Throw( "Initial AMR type not implemented" );
+  if (!m_initref.empty()) {
+    auto r = m_initref.back();    // consume (reversed) list from back
+    if (r == ctr::AMRInitialType::UNIFORM)
+      uniformRefine();
+    else if (r == ctr::AMRInitialType::INITIAL_CONDITIONS)
+      errorRefine();
+    else Throw( "Initial AMR type not implemented" );
+  }
+
+  // Additionally refine mesh based on user explicitly tagging edges
+  userRefine();
 
   for (const auto& e : tk::cref_find(m_bndEdges,CkMyPe())) {
     IGNORE(e);
@@ -1296,6 +1301,48 @@ Partitioner::errorRefine()
          crit.push_back( cmax );
        }
      }
+
+  Assert( edge.size() == crit.size(), "Size mismatch" );
+
+  // Do error-based refinement
+  refiner.error_refinement( edge, crit );
+
+  // Update mesh coordinates and connectivity
+  updateMesh( refiner );
+}
+
+void
+Partitioner::userRefine()
+// *****************************************************************************
+// Do mesh refinement based on user explicitly tagging edges
+// *****************************************************************************
+{
+  // Instantiate mesh refiner
+  AMR::mesh_adapter_t refiner( m_inpoel );
+
+  // Find number of nodes in old mesh
+  auto npoin = tk::npoin( m_inpoel );
+  // Generate edges surrounding points in old mesh
+  auto esup = tk::genEsup( m_inpoel, 4 );
+  auto psup = tk::genPsup( m_inpoel, 4, esup );
+
+  // Get user-defined node-pairs (edges) to tag for refinement
+  const auto& edgenodelist = g_inputdeck.get< tag::amr, tag::edge >();
+  tk::UnsMesh::EdgeSet edgeset;
+  for (std::size_t i=0; i<edgenodelist.size()/2; ++i)
+    edgeset.insert( {{ edgenodelist[i*2+0], edgenodelist[i*2+1] }} );
+
+  // Compute errors in ICs and define refinement criteria for edges
+  std::vector< edge_t > edge;
+  std::vector< real_t > crit;
+  for (std::size_t p=0; p<npoin; ++p)        // for all mesh nodes on this PE
+    for (auto q : tk::Around(psup,p)) {      // for all nodes surrounding p
+      tk::UnsMesh::Edge e{{p,q}};
+      if (edgeset.find(e) != end(edgeset)) { // tag edge if on user's list
+        edge.push_back( edge_t(e[0],e[1]) );
+        crit.push_back( 1.0 );
+      }
+    }
 
   Assert( edge.size() == crit.size(), "Size mismatch" );
 
