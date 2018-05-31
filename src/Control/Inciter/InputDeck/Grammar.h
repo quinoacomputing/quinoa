@@ -294,10 +294,10 @@ namespace grm {
 
   //! Rule used to trigger action
   struct check_amr_errors : pegtl::success {};
-  //! \brief Set defaults and do error checking on the transport equation block
-  //! \details This is error checking that only the transport equation block
-  //!   must satisfy. Besides error checking we also set defaults here as
-  //!   this block is called when parsing of a transport...end block has
+  //! Do error checking for the amr...end block
+  //! \details This is error checking that only the amr...end block
+  //!   must satisfy. Besides error checking this can also set defaults
+  //!   as this block is called when parsing of a amr...end block has
   //!   just finished.
   template<>
   struct action< check_amr_errors > {
