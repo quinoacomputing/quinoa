@@ -191,11 +191,57 @@ struct InitBeta {
   { return ctr::InitPolicyType::JOINTBETA; }
 };
 
+//! Gaussian initialization policy: generate samples from a joint Gaussian PDF
+struct InitGaussian {
+
+  //! Initialize particle properties (zero)
+  template< class eq >
+  static void init( const ctr::InputDeck& deck,
+                    const tk::RNG& rng,
+                    int stream,
+                    tk::Particles& particles,
+                    tk::ctr::ncomp_type e,
+                    tk::ctr::ncomp_type ncomp,
+                    tk::ctr::ncomp_type offset )
+  {
+    using ncomp_t = kw::ncomp::info::expect::type;
+
+    const auto& gaussian =
+      deck.template get< tag::param, eq, tag::gaussian >().at(e);
+
+    // use only the first ncomp gaussian if there are more than the equation is
+    // configured for
+    const ncomp_t size = std::min( ncomp, gaussian.size() );
+
+    for (ncomp_t c=0; c<size; ++c) {
+      // get vector of gaussian pdf parameters for component c
+      const auto& gc = gaussian[c];
+
+      for (ncomp_t s=0; s<gc.size(); s+=2) {
+        // generate Gaussian random numbers for all particles using parameters
+        for (ncomp_t p=0; p<particles.nunk(); ++p) {
+          auto& par = particles( p, c, offset );
+          // sample from Gaussian with zero mean and unit variance
+          rng.gaussian( stream, 1, &par );
+          // scale to given mean and variance
+          par = par * sqrt(gc[s+1]) + gc[s];
+        }
+      }
+    }
+
+  }
+
+  static ctr::InitPolicyType type() noexcept
+  { return ctr::InitPolicyType::JOINTGAUSSIAN; }
+};
+
 //! List of all initialization policies
 using InitPolicies = boost::mpl::vector< InitRaw
                                        , InitZero
                                        , InitDelta
-                                       , InitBeta >;
+                                       , InitBeta
+                                       , InitGaussian
+                                       >;
 
 } // walker::
 

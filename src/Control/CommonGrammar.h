@@ -88,6 +88,7 @@ namespace grm {
     NODELTA,            //!< No icdelta...end block when initpolicy = jointdelta
     NOBETA,             //!< No icbeta...end block when initpolicy = jointbeta
     WRONGBETAPDF,       //!< Wrong number of parameters configuring a beta pdf
+    WRONGGAUSSIAN,      //!< Wrong number of parameters configuring a Gaussian
     NONCOMP,            //!< No number of components selected
     NORNG,              //!< No RNG selected
     NODT,               //!< No time-step-size policy selected
@@ -204,6 +205,9 @@ namespace grm {
     { MsgKey::WRONGBETAPDF, "Wrong number of beta distribution parameters. A "
       "beta distribution must be configured by exactly four real numbers in a "
       "betapdf...end block." },
+    { MsgKey::WRONGGAUSSIAN, "Wrong number of Gaussian distribution "
+      "parameters. A Gaussian distribution must be configured by exactly 2 "
+      "real numbers in a gaussian...end block." },
     { MsgKey::NOTERMS, "Statistic requires at least one variable." },
     { MsgKey::NOSAMPLES, "PDF requires at least one sample space variable." },
     { MsgKey::INVALIDSAMPLESPACE, "PDF sample space specification incorrect. A "
@@ -992,6 +996,23 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  template< class eq, class param > struct check_gaussians : pegtl::success {};
+  //! Check if the Gaussian PDF parameter vector specifications are correct
+  //! \details Gaussian vectors are used to configure univariate Gaussian
+  //!   distributions.
+  template< class eq, class param >
+  struct action< check_gaussians< eq, param > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      const auto& gaussian =
+        stack.template get< tag::param, eq, param >().back().back();
+      // Error out if the number parameters is not two
+      if (gaussian.size() != 2)
+        Message< Stack, ERROR, MsgKey::WRONGGAUSSIAN >( stack, in );
+    }
+  };
+
+  //! Rule used to trigger action
   struct check_expectation : pegtl::success {};
   //! \brief Check if there is at least one variable in expectation
   template<>
@@ -1471,11 +1492,11 @@ namespace grm {
             typename eq,
             typename param >
   struct parameter_vector :
-         act< vector< keyword,
-                      store< tag::param, eq, param >,
-                      use< kw::end >,
-                      start< tag::param, eq, param > >,
-              check< eq, param > > {};
+         pegtl::if_must< vector< keyword,
+                                 store< tag::param, eq, param >,
+                                 use< kw::end >,
+                                 start< tag::param, eq, param > >,
+                         check< eq, param > > {};
 
   //! \brief Match equation/model option vector
   //! \details This structure is used to match a keyword ... end block that
