@@ -88,7 +88,8 @@ namespace grm {
     NODELTA,            //!< No icdelta...end block when initpolicy = jointdelta
     NOBETA,             //!< No icbeta...end block when initpolicy = jointbeta
     WRONGBETAPDF,       //!< Wrong number of parameters configuring a beta pdf
-    WRONGGAUSSIAN,      //!< Wrong number of parameters configuring a Gaussian
+    WRONGGAUSSIAN,      //!< Wrong number of parameters configuring a PDF
+    NEGATIVEVAR,        //!< Negative variance given configuring a Gaussian
     NONCOMP,            //!< No number of components selected
     NORNG,              //!< No RNG selected
     NODT,               //!< No time-step-size policy selected
@@ -208,6 +209,8 @@ namespace grm {
     { MsgKey::WRONGGAUSSIAN, "Wrong number of Gaussian distribution "
       "parameters. A Gaussian distribution must be configured by exactly 2 "
       "real numbers in a gaussian...end block." },
+    { MsgKey::NEGATIVEVAR, "Negative variance specified configuring a "
+      " probabililty distribution." },
     { MsgKey::NOTERMS, "Statistic requires at least one variable." },
     { MsgKey::NOSAMPLES, "PDF requires at least one sample space variable." },
     { MsgKey::INVALIDSAMPLESPACE, "PDF sample space specification incorrect. A "
@@ -1009,6 +1012,9 @@ namespace grm {
       // Error out if the number parameters is not two
       if (gaussian.size() != 2)
         Message< Stack, ERROR, MsgKey::WRONGGAUSSIAN >( stack, in );
+      // Error out if the specified variance is negative
+      if (gaussian.back() < 0.0)
+        Message< Stack, ERROR, MsgKey::NEGATIVEVAR >( stack, in );
     }
   };
 
