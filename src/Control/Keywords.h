@@ -1230,6 +1230,30 @@ struct jointdelta_info {
 };
 using jointdelta = keyword< jointdelta_info, TAOCPP_PEGTL_STRING("jointdelta") >;
 
+struct jointgaussian_info {
+  using code = Code< G >;
+  static std::string name() { return "Gaussian"; }
+  static std::string shortDescription() { return
+    "Select the joint Gaussian initialization policy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the joint Gaussian initialization policy.
+    The initialization policy is used to specify how the initial conditions are
+    set at t = 0 before time-integration. Example: "init zero", which selects
+    zero initialization policy, which puts zeros in memory. Note that this
+    option may behave differently depending on the particular equation or
+    physical model. For an example, see tk::InitPolicies in
+    DiffEq/InitPolicy.h for valid options.) The joint Gaussian initialization
+    policy can be used to prescribe a joint Gaussian (joint Gaussian) on the
+    sample space with given variances. Example: "init jointgaussian" - select
+    (joint) Gaussian init-policy, "Gaussian 0.1 0.3 0.8 0.7 end" - prescribe two
+    Gaussians with mean 0.1 and variance 0.3, and with mean 0.8 and 0.7,
+    respectively. Note that the means can be any realy number while the
+    variances mustbe positive. No correlations between the Gaussians (as the
+    initial conditions) are supported.)"; }
+};
+using jointgaussian =
+  keyword< jointgaussian_info, TAOCPP_PEGTL_STRING("jointgaussian") >;
+
 struct jointbeta_info {
   using code = Code< B >;
   static std::string name() { return "beta"; }
@@ -1359,12 +1383,12 @@ using montecarlo_homdecay =
 
 struct hydrotimescale_info {
   using code = Code< T >;
-  static std::string name() { return "hydro-timescale homogeneous decay"; }
+  static std::string name() { return "hydro-timescale"; }
   static std::string shortDescription() { return
-    "Select hydro-timescale homogeneous decay coefficients policy"; }
+    "Select hydro-timescale coefficients policy"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the hydrodynamics-timescale homogeneous
-    decay coefficients policy. This policy (or model) is used to constrain a
+    R"(This keyword is used to select the hydrodynamics-timescale
+    coefficients policy. This policy (or model) is used to constrain a
     beta stochastic differential equation (SDE) so that its variance, <y^2>,
     always decays and its mean, <R> = rho2/(1+r<RY>/<R>), where Y = <Y> + y,
     does not change in time. Note that R = rho2/(1+rY). This policy is similar
@@ -1683,6 +1707,21 @@ struct sde_omega_info {
 };
 using sde_omega = keyword< sde_omega_info, TAOCPP_PEGTL_STRING("omega") >;
 
+struct sde_c0_info {
+  static std::string name() { return "C0"; }
+  static std::string shortDescription() { return
+    R"(Set Langevin SDE parameter C0)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a real number used to parameterize the
+    Langevin model for the fluctuating velocity in homogeneous variable-density
+    turbulence. Example: "C0 2.1".)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using sde_c0 = keyword< sde_c0_info,  TAOCPP_PEGTL_STRING("C0") >;
+
 struct sde_b_info {
   static std::string name() { return "b"; }
   static std::string shortDescription() { return
@@ -1912,6 +1951,23 @@ struct betapdf_info {
 };
 using betapdf = keyword< betapdf_info, TAOCPP_PEGTL_STRING("betapdf") >;
 
+struct gaussian_info {
+  static std::string name() { return "Gaussian"; }
+  static std::string shortDescription() { return
+    R"(Configure a Gaussian distribution)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the configuration of Gaussian
+    distributions for the jointgaussian initialization policy. The configuration
+    is given by two real numbers inside a gaussian...end block. Example:
+    "gaussian 0.2 0.3 end", which specifies a Gaussian distribution with 0.2
+    mean and 0.3 variance. See also the help on keyword icgaussian.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "2 reals"; }
+  };
+};
+using gaussian = keyword< gaussian_info, TAOCPP_PEGTL_STRING("gaussian") >;
+
 struct icbeta_info {
   static std::string name() { return "icbeta"; }
   static std::string shortDescription() { return
@@ -1925,6 +1981,20 @@ struct icbeta_info {
     jointbeta and betapdf.)"; }
 };
 using icbeta = keyword< icbeta_info, TAOCPP_PEGTL_STRING("icbeta") >;
+
+struct icgaussian_info {
+  static std::string name() { return "icgaussian"; }
+  static std::string shortDescription() { return R"(Introduce an
+    icgaussian...end block used to configure Gaussian distributions)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an icgaussian...end block in which
+    Gaussian distributions are configured for the jointgaussian initialization
+    policy.  Example: "init jointgaussian" - select jointgaussian
+    init-policy,"icgaussian gaussian 0.2 0.3 end end" - prescribes a univariate
+    Gaussian distribution with 0.2 mean and 0.3 variance. See also the help on
+    keyword jointgaussian and gaussian.)"; }
+};
+using icgaussian = keyword< icgaussian_info, TAOCPP_PEGTL_STRING("icgaussian") >;
 
 struct ic_info {
   static std::string name() { return "ic"; }
@@ -2229,49 +2299,6 @@ struct mixnumfracbeta_info {
 using mixnumfracbeta =
   keyword< mixnumfracbeta_info, TAOCPP_PEGTL_STRING("mixnumfracbeta") >;
 
-struct mixmassfracbeta_info {
-  static std::string name() { return "Mix mass-fraction beta"; }
-  static std::string shortDescription() { return
-    "Introduce the mixmassfracbeta SDE input block"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce a mixmassfracbeta ... end block, used
-    to specify the configuration of a system of mix mass-fraction beta SDEs, a
-    system of stochastic differential equations (SDEs), whose solution is the
-    joint beta distribution and in which the usual beta SDE parameters b and
-    kappa are specified via functions that constrain the beta SDE to be
-    consistent with the turbulent mixing process. The mix mass-fraction beta
-    SDE is similar to the mass-fraction beta SDE, only the process is made
-    consistent with the no-mix and fully mixed limits via the specification of
-    the SDE coefficients b and kappa. As in the mass-fraction beta SDE, Y is
-    governed by the beta SDE and two additional stochastic variables are
-    computed. However, in the mix mass-fraction beta SDE the parameters b and
-    kappa are given by b = Theta * b' and kappa = kappa' * <y^2>, where Theta =
-    1 - <y^2> / [ <Y> ( 1 - <Y> ], the fluctuation about the mean, <Y>, is
-    defined as usual: y = Y - <Y>, and b' and kappa' are user-specified
-    constants. Similar to the mass-fraction beta SDE, there two additional
-    random variables computed besides, Y, and they are rho(Y) and V(Y). For more
-    detail on the mass-fraction beta SDE, see the help on keyword
-    'massfracbeta'. For more details on the beta SDE, see
-    https://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
-    allowed in a mixmassfracbeta ... end block: )"
-    + std::string("\'")
-    + depvar::string()+ "\', \'"
-    + ncomp::string() + "\', \'"
-    + rng::string() + "\', \'"
-    + init::string() + "\', \'"
-    + coeff::string() + "\', \'"
-    + sde_bprime::string() + "\', \'"
-    + sde_S::string() + "\', \'"
-    + sde_kappaprime::string() + "\', \'"
-    + sde_rho2::string() + "\', \'"
-    + sde_r::string() + "\'. "
-    + R"(For an example mixmassfracbeta ... end block, see
-      doc/html/walker_example_mixmassfracbeta.html.)";
-  }
-};
-using mixmassfracbeta =
-  keyword< mixmassfracbeta_info, TAOCPP_PEGTL_STRING("mixmassfracbeta") >;
-
 struct eq_A005H_info {
   static std::string name() { return "eq_A005H"; }
   static std::string shortDescription() { return "Select inverse equilibrium "
@@ -2539,6 +2566,76 @@ struct hydroproductions_info {
 };
 using hydroproductions =
   keyword< hydroproductions_info, TAOCPP_PEGTL_STRING("hydroproductions") >;
+
+struct mixmassfracbeta_info {
+  static std::string name() { return "Mix mass-fraction beta"; }
+  static std::string shortDescription() { return
+    "Introduce the mixmassfracbeta SDE input block"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a mixmassfracbeta ... end block, used
+    to specify the configuration of a system of mix mass-fraction beta SDEs, a
+    system of stochastic differential equations (SDEs), whose solution is the
+    joint beta distribution and in which the usual beta SDE parameters b and
+    kappa are specified via functions that constrain the beta SDE to be
+    consistent with the turbulent mixing process. The mix mass-fraction beta
+    SDE is similar to the mass-fraction beta SDE, only the process is made
+    consistent with the no-mix and fully mixed limits via the specification of
+    the SDE coefficients b and kappa. As in the mass-fraction beta SDE, Y is
+    governed by the beta SDE and two additional stochastic variables are
+    computed. However, in the mix mass-fraction beta SDE the parameters b and
+    kappa are given by b = Theta * b' and kappa = kappa' * <y^2>, where Theta =
+    1 - <y^2> / [ <Y> ( 1 - <Y> ], the fluctuation about the mean, <Y>, is
+    defined as usual: y = Y - <Y>, and b' and kappa' are user-specified
+    constants. Similar to the mass-fraction beta SDE, there two additional
+    random variables computed besides, Y, and they are rho(Y) and V(Y). For more
+    detail on the mass-fraction beta SDE, see the help on keyword
+    'massfracbeta'. For more details on the beta SDE, see
+    https://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
+    allowed in a mixmassfracbeta ... end block: )"
+    + std::string("\'")
+    + depvar::string()+ "\', \'"
+    + ncomp::string() + "\', \'"
+    + rng::string() + "\', \'"
+    + init::string() + "\', \'"
+    + coeff::string() + "\', \'"
+    + sde_bprime::string() + "\', \'"
+    + sde_S::string() + "\', \'"
+    + sde_kappaprime::string() + "\', \'"
+    + sde_rho2::string() + "\', \'"
+    + hydrotimescales::string() + "\', \'"
+    + hydroproductions::string() + "\', \'"
+    + sde_r::string() + "\'. "
+    + R"(For an example mixmassfracbeta ... end block, see
+      doc/html/walker_example_mixmassfracbeta.html.)";
+  }
+};
+using mixmassfracbeta =
+  keyword< mixmassfracbeta_info, TAOCPP_PEGTL_STRING("mixmassfracbeta") >;
+
+struct langevin_info {
+  static std::string name() { return "Langevin"; }
+  static std::string shortDescription() { return
+    "Introduce the Langevin equation input block"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a langevin ... end block, used to
+    specify the configuration of a system of stochastic differential equations
+    (SDEs), governed by the Langevin model for the fluctuating velocity in
+    homogeneous variable-density turbulence. For more details on this Langevin
+    model, see https://doi.org/10.1080/14685248.2011.554419 and
+    src/DiffEq/Langevin.h. Keywords allowed in a langevin ... end block: )" +
+    std::string("\'")
+    + depvar::string()+ "\', \'"
+    + rng::string() + "\', \'"
+    + init::string() + "\', \'"
+    + coeff::string() + "\', \'"
+    + hydrotimescales::string() + "\', \'"
+    + hydroproductions::string() + "\', \'"
+    + sde_c0::string() + "\'. "
+    + R"(For an example langevin ... end block, see
+      doc/html/walker_example_langevin.html.)";
+  }
+};
+using langevin = keyword< langevin_info, TAOCPP_PEGTL_STRING("langevin") >;
 
 struct gamma_info {
   static std::string name() { return "Gamma"; }
@@ -4123,7 +4220,6 @@ using ndensity = keyword<undefined_info,  TAOCPP_PEGTL_STRING("ndensity") >;
 using nvelocity = keyword<undefined_info,  TAOCPP_PEGTL_STRING("nvelocity") >;
 using nscalar = keyword<undefined_info,  TAOCPP_PEGTL_STRING("nscalar") >;
 using nfreq = keyword<undefined_info,  TAOCPP_PEGTL_STRING("nfreq") >;
-using SLM_C0 = keyword<undefined_info,  TAOCPP_PEGTL_STRING("C0") >;
 using freq_gamma_C1 = keyword<undefined_info,  TAOCPP_PEGTL_STRING("C1") >;
 using freq_gamma_C2 = keyword<undefined_info,  TAOCPP_PEGTL_STRING("C2") >;
 using freq_gamma_C3 = keyword<undefined_info,  TAOCPP_PEGTL_STRING("C3") >;

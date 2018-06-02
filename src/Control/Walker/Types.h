@@ -91,6 +91,8 @@ using DirichletParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gaussian,    std::vector< std::vector< std::vector <
+                      kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -111,6 +113,8 @@ using GenDirichletParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gaussian,    std::vector< std::vector< std::vector <
+                      kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -125,6 +129,8 @@ using WrightFisherParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gaussian,    std::vector< std::vector< std::vector <
+                      kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -143,6 +149,8 @@ using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gaussian,    std::vector< std::vector< std::vector <
+                      kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -161,6 +169,8 @@ using DiagOrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gaussian,    std::vector< std::vector< std::vector <
+                      kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -179,6 +189,8 @@ using SkewNormalParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gaussian,    std::vector< std::vector< std::vector <
+                      kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -197,6 +209,8 @@ using GammaParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gaussian,    std::vector< std::vector< std::vector <
+                      kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -215,6 +229,8 @@ using BetaParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gaussian,    std::vector< std::vector< std::vector <
+                      kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -237,6 +253,8 @@ using NumberFractionBetaParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gaussian,    std::vector< std::vector< std::vector <
+                      kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -259,6 +277,8 @@ using MassFractionBetaParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gaussian,    std::vector< std::vector< std::vector <
+                      kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -281,6 +301,8 @@ using MixNumberFractionBetaParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gaussian,    std::vector< std::vector< std::vector <
+                      kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -303,11 +325,30 @@ using MixMassFractionBetaParameters = tk::tuple::tagged_tuple<
                           kw::spike::info::expect::type > > >,
   tag::betapdf,         std::vector< std::vector< std::vector <
                           kw::betapdf::info::expect::type > > >,
+  tag::gaussian,    std::vector< std::vector< std::vector <
+                      kw::gaussian::info::expect::type > > >,
   tag::hydrotimescales, std::vector< std::vector< ctr::HydroTimeScalesType > >,
   tag::hydroproductions,std::vector< std::vector< ctr::HydroProductionsType > >,
   tag::rng,             std::vector< tk::ctr::RNGType >,
   tag::initpolicy,      std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy,     std::vector< ctr::CoeffPolicyType >
+>;
+
+//! Langevin parameters storage
+using LangevinParameters = tk::tuple::tagged_tuple<
+  tag::depvar,          std::vector< char >,
+  tag::c0,              std::vector< kw::sde_c0::info::expect::type >,
+  tag::rng,             std::vector< tk::ctr::RNGType >,
+  tag::initpolicy,      std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy,     std::vector< ctr::CoeffPolicyType >,
+  tag::spike,           std::vector< std::vector< std::vector <
+                          kw::spike::info::expect::type > > >,
+  tag::betapdf,         std::vector< std::vector< std::vector <
+                          kw::betapdf::info::expect::type > > >,
+  tag::gaussian,        std::vector< std::vector< std::vector <
+                          kw::gaussian::info::expect::type > > >,
+  tag::hydrotimescales, std::vector< std::vector< ctr::HydroTimeScalesType > >,
+  tag::hydroproductions,std::vector< std::vector< ctr::HydroProductionsType > >
 >;
 
 //! Parameters storage
@@ -328,7 +369,8 @@ using parameters = tk::tuple::tagged_tuple<
   tag::numfracbeta,     NumberFractionBetaParameters,
   tag::massfracbeta,    MassFractionBetaParameters,
   tag::mixnumfracbeta,  MixNumberFractionBetaParameters,
-  tag::mixmassfracbeta, MixMassFractionBetaParameters
+  tag::mixmassfracbeta, MixMassFractionBetaParameters,
+  tag::langevin,        LangevinParameters
 >;
 
 } // ctr::

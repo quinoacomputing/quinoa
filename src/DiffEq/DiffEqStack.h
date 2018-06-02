@@ -133,7 +133,15 @@ class DiffEqStack {
           g_inputdeck.get< tag::param, EqTag, tag::initpolicy >()[c],
           g_inputdeck.get< tag::param, EqTag, tag::coeffpolicy >()[c] };
         const auto it = m_factory.find( key );
-        Assert( it != end( m_factory ), "Can't find eq in factory" );
+        Assert( it != end( m_factory ),
+                "Can't find eq '" + ctr::DiffEq().name( eq ) +
+                "' in DiffEq factory with initialization policy '" +
+                ctr::InitPolicy().name(
+                  g_inputdeck.get< tag::param, EqTag, tag::initpolicy >()[c] ) +
+                "' and coefficient policy '" +
+                ctr::CoeffPolicy().name(
+                  g_inputdeck.get< tag::param, EqTag, tag::coeffpolicy >()[c] )
+                + "'" );
         // instantiate and return diff eq object
         return it->second( c );
       } else Throw ( "Can't create DiffEq with zero independent variables" );
@@ -165,27 +173,30 @@ class DiffEqStack {
       --c;                    // used to index vectors starting with 0
       std::vector< tk::Table > tab;
       std::vector< std::string > nam;
-      if ( g_inputdeck.get< tag::component, EqTag >()[c] ) {
-        // find out if coefficients policy uses tables and return them if so
-        if (g_inputdeck.get< tag::param, EqTag, tag::coeffpolicy >()[c] ==
-              ctr::CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY)
-        {
-          const auto& hts = g_inputdeck.get< tag::param,
-                                             tag::mixmassfracbeta,
-                                             tag::hydrotimescales >().at(c);
-          ctr::HydroTimeScales ot;
-          for (auto t : hts) tab.push_back( ot.table(t) );
-          for (auto t : hts) nam.push_back( ot.name(t) );
-
-          const auto& hp = g_inputdeck.get< tag::param,
-                                            tag::mixmassfracbeta,
-                                            tag::hydroproductions >().at(c);
-          ctr::HydroProductions op;
-          for (auto t : hp) tab.push_back( op.table(t) );
-          for (auto t : hp) nam.push_back( op.name(t) );
-
-        }
-      } else Throw ( "DiffEq with zero independent variables" );
+      const auto& ncompeq = g_inputdeck.get< tag::component, EqTag >();
+      if (!ncompeq.empty()) {
+        if ( g_inputdeck.get< tag::component, EqTag >()[c] ) {
+          // find out if coefficients policy uses tables and return them if so
+          if (g_inputdeck.get< tag::param, EqTag, tag::coeffpolicy >()[c] ==
+                ctr::CoeffPolicyType::HYDROTIMESCALE)
+          {
+            const auto& hts = g_inputdeck.get< tag::param,
+                                               EqTag,
+                                               tag::hydrotimescales >().at(c);
+            ctr::HydroTimeScales ot;
+            for (auto t : hts) tab.push_back( ot.table(t) );
+            for (auto t : hts) nam.push_back( ot.name(t) );
+  
+            const auto& hp = g_inputdeck.get< tag::param,
+                                              EqTag,
+                                              tag::hydroproductions >().at(c);
+            ctr::HydroProductions op;
+            for (auto t : hp) tab.push_back( op.table(t) );
+            for (auto t : hp) nam.push_back( op.name(t) );
+  
+          }
+        } else Throw ( "DiffEq with zero independent variables" );
+      }
       return { nam, tab };
     }
 
@@ -226,6 +237,9 @@ class DiffEqStack {
     //! Get information on Gamma SDE
     std::vector< std::pair< std::string, std::string > >
     infoGamma( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
+    //! Get information on Langevin SDE
+    std::vector< std::pair< std::string, std::string > >
+    infoLangevin( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
     ///@}
 
     //! \brief Convert and return values from vector as string

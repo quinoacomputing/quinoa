@@ -59,6 +59,7 @@ namespace deck {
                                   tag::diagou,          std::size_t,
                                   tag::skewnormal,      std::size_t,
                                   tag::gamma,           std::size_t,
+                                  tag::langevin,        std::size_t,
                                   tag::beta,            std::size_t,
                                   tag::numfracbeta,     std::size_t,
                                   tag::massfracbeta,    std::size_t,
@@ -132,24 +133,20 @@ namespace grm {
   //! \brief Do error checking of a vector (required for a block)
   //! \details This functor can be used to verify the correct size of an already
   //!   existing vector, specified by the user in a given block. The vector is
-  //!   required to have a specific size: ncomp/4, i.e., the number of
-  //!   components in a block divided by four. This specific value is the only
-  //!   way this is used at this time, thus the hard-coding of ncomp/4. However,
-  //!   this could be abstracted away via a template argument if needed.
+  //!   required to be non-empty.
   //! \note This functor does not check existence of a vector. If the vector
   //!   does not even exist, it will throw an exception in DEBUG mode, while in
   //!   RELEASE mode it will attempt to access unallocated memory yielding a
   //!   segfault. The existence of the vector should be checked by
   //!   check_vector_exists first.
-  template< class eq, class vec >
+  template< class eq, class vec  >
   struct action< check_vector_size< eq, vec > > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       const auto& vv = stack.template get< tag::param, eq, vec >();
       Assert( !vv.empty(), "Vector of vectors checked must not be empty" );
       const auto& v = vv.back();
-      const auto& ncomp = stack.template get< tag::component, eq >().back();
-      if (v.empty() || v.size() != ncomp/4)
+      if (v.empty())
         Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
     }
   };
@@ -226,6 +223,23 @@ namespace grm {
     }
   };
 
+  //! Rule used to trigger action
+  struct langevin_defaults : pegtl::success {};
+  //! \brief Set defaults for the Langevin model
+  template<>
+  struct action< langevin_defaults > {
+    template< typename Input, typename Stack >
+    static void apply( const Input&, Stack& stack ) {
+      using walker::deck::neq;
+      // Set number of components: always 3 velocity components
+      auto& ncomp = stack.template get< tag::component, tag::langevin >();
+      ncomp.push_back( 3 );
+      // Set C0 = 2.1 if not specified
+      auto& C0 = stack.template get< tag::param, tag::langevin, tag::c0 >();
+      if (C0.size() != neq.get< tag::langevin >()) C0.push_back( 2.1 );
+    }
+  };
+
 } // ::grm
 } // ::tk
 
@@ -255,7 +269,12 @@ namespace deck {
                         // potential jointbeta initpolicy
                         tk::grm::start_vector< tag::param,
                                                eq,
-                                               tag::betapdf > > {};
+                                               tag::betapdf >,
+                        // start new vector or vectors of beta parameters for a
+                        // potential jointgaussian initpolicy
+                        tk::grm::start_vector< tag::param,
+                                               eq,
+                                               tag::gaussian > > {};
 
   //! Discretization parameters
   struct discretization_parameters :
@@ -313,6 +332,22 @@ namespace deck {
                              tk::grm::check_betapdfs,
                              eq,
                              tag::betapdf > > > {};
+
+  //! scan icgaussian ... end block
+  template< class eq >
+  struct icgaussian :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::icgaussian >::pegtl_string >,
+           // parse a gaussian ... end block (there can be multiple)
+           tk::grm::block< use< kw::end >,
+                           tk::grm::parameter_vector<
+                             use,
+                             use< kw::gaussian >,
+                             tk::grm::Store_back_back_back,
+                             tk::grm::start_vector_back,
+                             tk::grm::check_gaussians,
+                             eq,
+                             tag::gaussian > > > {};
 
   //! Error checks after an equation ... end block has been parsed
   template< class eq, class... extra_checks  >
@@ -378,6 +413,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::diagou >,
                            icbeta< tag::diagou >,
+                           icgaussian< tag::diagou >,
                            sde_parameter_vector< kw::sde_sigmasq,
                                                  tag::diagou,
                                                  tag::sigmasq >,
@@ -416,6 +452,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::ou >,
                            icbeta< tag::ou >,
+                           icgaussian< tag::ou >,
                            sde_parameter_vector< kw::sde_sigmasq,
                                                  tag::ou,
                                                  tag::sigmasq >,
@@ -454,6 +491,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::skewnormal >,
                            icbeta< tag::skewnormal >,
+                           icgaussian< tag::skewnormal >,
                            sde_parameter_vector< kw::sde_T,
                                                  tag::skewnormal,
                                                  tag::timescale >,
@@ -492,6 +530,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::beta >,
                            icbeta< tag::beta >,
+                           icgaussian< tag::beta >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::beta,
                                                  tag::b >,
@@ -530,6 +569,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::numfracbeta >,
                            icbeta< tag::numfracbeta >,
+                           icgaussian< tag::numfracbeta >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::numfracbeta,
                                                  tag::b >,
@@ -574,6 +614,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::massfracbeta >,
                            icbeta< tag::massfracbeta >,
+                           icgaussian< tag::massfracbeta >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::massfracbeta,
                                                  tag::b >,
@@ -618,6 +659,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::mixnumfracbeta >,
                            icbeta< tag::mixnumfracbeta >,
+                           icgaussian< tag::mixnumfracbeta >,
                            sde_parameter_vector< kw::sde_bprime,
                                                  tag::mixnumfracbeta,
                                                  tag::bprime >,
@@ -662,6 +704,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::mixmassfracbeta >,
                            icbeta< tag::mixmassfracbeta >,
+                           icgaussian< tag::mixmassfracbeta >,
                            sde_option_vector< ctr::HydroTimeScales,
                                               kw::hydrotimescales,
                                               tag::mixmassfracbeta,
@@ -724,6 +767,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::gamma >,
                            icbeta< tag::gamma >,
+                           icgaussian< tag::gamma >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::gamma,
                                                  tag::b >,
@@ -762,6 +806,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::dirichlet >,
                            icbeta< tag::dirichlet >,
+                           icgaussian< tag::dirichlet >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::dirichlet,
                                                  tag::b >,
@@ -800,6 +845,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::gendir >,
                            icbeta< tag::gendir >,
+                           icgaussian< tag::gendir >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::gendir,
                                                  tag::b >,
@@ -841,10 +887,63 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::wrightfisher >,
                            icbeta< tag::wrightfisher >,
+                           icgaussian< tag::wrightfisher >,
                            sde_parameter_vector< kw::sde_omega,
                                                  tag::wrightfisher,
                                                  tag::omega > >,
            check_errors< tag::wrightfisher > > {};
+
+  //! Langevin SDE
+  struct langevin :
+         pegtl::if_must<
+           scan_sde< use< kw::langevin >, tag::langevin >,
+           tk::grm::langevin_defaults,
+           tk::grm::block< use< kw::end >,
+                           tk::grm::depvar< use,
+                                            tag::langevin,
+                                            tag::depvar >,
+                           tk::grm::rng< use,
+                                         use< kw::rng >,
+                                         tk::ctr::RNG,
+                                         tag::langevin,
+                                         tag::rng >,
+                           tk::grm::policy< use,
+                                            use< kw::init >,
+                                            ctr::InitPolicy,
+                                            tag::langevin,
+                                            tag::initpolicy >,
+                           tk::grm::policy< use,
+                                            use< kw::coeff >,
+                                            ctr::CoeffPolicy,
+                                            tag::langevin,
+                                            tag::coeffpolicy >,
+                           icdelta< tag::langevin >,
+                           icbeta< tag::langevin >,
+                           icgaussian< tag::langevin >,
+                           sde_option_vector< ctr::HydroTimeScales,
+                                              kw::hydrotimescales,
+                                              tag::langevin,
+                                              tag::hydrotimescales,
+                                              tk::grm::check_vector_size >,
+                           sde_option_vector< ctr::HydroProductions,
+                                              kw::hydroproductions,
+                                              tag::langevin,
+                                              tag::hydroproductions,
+                                              tk::grm::check_vector_size >,
+                           tk::grm::process<
+                             use< kw::sde_c0 >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::langevin,
+                                                  tag::c0 > > >,
+           check_errors< tag::langevin,
+                         tk::grm::check_vector_exists<
+                           tag::langevin,
+                           tag::hydrotimescales,
+                           tk::grm::MsgKey::HYDROTIMESCALES >,
+                         tk::grm::check_vector_exists<
+                           tag::langevin,
+                           tag::hydroproductions,
+                           tk::grm::MsgKey::HYDROPRODUCTIONS > > > {};
 
   //! stochastic differential equations
   struct sde :
@@ -859,7 +958,8 @@ namespace deck {
                      numfracbeta,
                      massfracbeta,
                      mixnumfracbeta,
-                     mixmassfracbeta > {};
+                     mixmassfracbeta,
+                     langevin > {};
 
   //! 'walker' block
   struct walker :
