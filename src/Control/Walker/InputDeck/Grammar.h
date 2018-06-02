@@ -269,7 +269,12 @@ namespace deck {
                         // potential jointbeta initpolicy
                         tk::grm::start_vector< tag::param,
                                                eq,
-                                               tag::betapdf > > {};
+                                               tag::betapdf >,
+                        // start new vector or vectors of beta parameters for a
+                        // potential jointgaussian initpolicy
+                        tk::grm::start_vector< tag::param,
+                                               eq,
+                                               tag::gaussian > > {};
 
   //! Discretization parameters
   struct discretization_parameters :
@@ -327,6 +332,22 @@ namespace deck {
                              tk::grm::check_betapdfs,
                              eq,
                              tag::betapdf > > > {};
+
+  //! scan icgaussian ... end block
+  template< class eq >
+  struct icgaussian :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::icgaussian >::pegtl_string >,
+           // parse a gaussian ... end block (there can be multiple)
+           tk::grm::block< use< kw::end >,
+                           tk::grm::parameter_vector<
+                             use,
+                             use< kw::gaussian >,
+                             tk::grm::Store_back_back_back,
+                             tk::grm::start_vector_back,
+                             tk::grm::check_gaussians,
+                             eq,
+                             tag::gaussian > > > {};
 
   //! Error checks after an equation ... end block has been parsed
   template< class eq, class... extra_checks  >
@@ -392,6 +413,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::diagou >,
                            icbeta< tag::diagou >,
+                           icgaussian< tag::diagou >,
                            sde_parameter_vector< kw::sde_sigmasq,
                                                  tag::diagou,
                                                  tag::sigmasq >,
@@ -430,6 +452,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::ou >,
                            icbeta< tag::ou >,
+                           icgaussian< tag::ou >,
                            sde_parameter_vector< kw::sde_sigmasq,
                                                  tag::ou,
                                                  tag::sigmasq >,
@@ -468,6 +491,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::skewnormal >,
                            icbeta< tag::skewnormal >,
+                           icgaussian< tag::skewnormal >,
                            sde_parameter_vector< kw::sde_T,
                                                  tag::skewnormal,
                                                  tag::timescale >,
@@ -506,6 +530,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::beta >,
                            icbeta< tag::beta >,
+                           icgaussian< tag::beta >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::beta,
                                                  tag::b >,
@@ -544,6 +569,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::numfracbeta >,
                            icbeta< tag::numfracbeta >,
+                           icgaussian< tag::numfracbeta >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::numfracbeta,
                                                  tag::b >,
@@ -588,6 +614,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::massfracbeta >,
                            icbeta< tag::massfracbeta >,
+                           icgaussian< tag::massfracbeta >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::massfracbeta,
                                                  tag::b >,
@@ -632,6 +659,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::mixnumfracbeta >,
                            icbeta< tag::mixnumfracbeta >,
+                           icgaussian< tag::mixnumfracbeta >,
                            sde_parameter_vector< kw::sde_bprime,
                                                  tag::mixnumfracbeta,
                                                  tag::bprime >,
@@ -676,6 +704,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::mixmassfracbeta >,
                            icbeta< tag::mixmassfracbeta >,
+                           icgaussian< tag::mixmassfracbeta >,
                            sde_option_vector< ctr::HydroTimeScales,
                                               kw::hydrotimescales,
                                               tag::mixmassfracbeta,
@@ -738,6 +767,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::gamma >,
                            icbeta< tag::gamma >,
+                           icgaussian< tag::gamma >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::gamma,
                                                  tag::b >,
@@ -776,6 +806,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::dirichlet >,
                            icbeta< tag::dirichlet >,
+                           icgaussian< tag::dirichlet >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::dirichlet,
                                                  tag::b >,
@@ -814,6 +845,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::gendir >,
                            icbeta< tag::gendir >,
+                           icgaussian< tag::gendir >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::gendir,
                                                  tag::b >,
@@ -855,6 +887,7 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::wrightfisher >,
                            icbeta< tag::wrightfisher >,
+                           icgaussian< tag::wrightfisher >,
                            sde_parameter_vector< kw::sde_omega,
                                                  tag::wrightfisher,
                                                  tag::omega > >,
@@ -884,6 +917,9 @@ namespace deck {
                                             ctr::CoeffPolicy,
                                             tag::langevin,
                                             tag::coeffpolicy >,
+                           icdelta< tag::langevin >,
+                           icbeta< tag::langevin >,
+                           icgaussian< tag::langevin >,
                            sde_option_vector< ctr::HydroTimeScales,
                                               kw::hydrotimescales,
                                               tag::langevin,

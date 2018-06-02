@@ -112,17 +112,19 @@ CProxy_Distributor g_DistributorProxy;
 //! parallel).
 inline
 void operator|( PUP::er& p, std::map< tk::ctr::RawRNGType, tk::RNG >& rng ) {
-  if (!p.isSizing()) {
-    tk::RNGStack stack(
-      #ifdef HAS_MKL
-      g_inputdeck.get< tag::param, tag::rngmkl >(),
-      #endif
-      #ifdef HAS_RNGSSE2
-      g_inputdeck.get< tag::param, tag::rngsse >(),
-      #endif
-      g_inputdeck.get< tag::param, tag::rng123 >() );
-    rng = stack.selected( g_inputdeck.get< tag::selected, tag::rng >() );
-  }
+  try {
+    if (!p.isSizing()) {
+      tk::RNGStack stack(
+        #ifdef HAS_MKL
+        g_inputdeck.get< tag::param, tag::rngmkl >(),
+        #endif
+        #ifdef HAS_RNGSSE2
+        g_inputdeck.get< tag::param, tag::rngsse >(),
+        #endif
+        g_inputdeck.get< tag::param, tag::rng123 >() );
+      rng = stack.selected( g_inputdeck.get< tag::selected, tag::rng >() );
+    }
+  } catch (...) { tk::processExceptionCharm(); }
 }
 
 //! Pack/Unpack selected differential equations. This Pack/Unpack method
@@ -140,7 +142,9 @@ void operator|( PUP::er& p, std::map< tk::ctr::RawRNGType, tk::RNG >& rng ) {
 //! serial) and packing and unpacking (in parallel).
 inline
 void operator|( PUP::er& p, std::vector< DiffEq >& eqs ) {
-  if (!p.isSizing()) eqs = DiffEqStack().selected();
+  try {
+    if (!p.isSizing()) eqs = DiffEqStack().selected();
+  } catch (...) { tk::processExceptionCharm(); }
 }
 
 } // walker::
