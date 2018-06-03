@@ -14,6 +14,33 @@ multiple variables governed by coupled SDE systems of different types. It allows
 the estimation of arbitrary coupled statistics and probability density
 functions.
 
+In a nutshell, walker solves the following Fokker-Planck equation
+
+\f[
+\newcommand{\bv}[1]{{\mbox{\boldmath$#1$}}}
+    \frac{\partial}{\partial t}F(\bv{Y},t) = - \sum_{\alpha=1}^N
+    \frac{\partial}{\partial Y_\alpha}\big[ A_\alpha(\bv{Y},t) F(\bv{Y},t)
+    \big] + \frac{1}{2} \sum_{\alpha=1}^N \sum_{\beta=1}^N
+    \frac{\partial^2}{\partial Y_\alpha \partial
+    Y_\beta}\big[B_{\alpha\beta}(\bv{Y},t)F(\bv{Y},t)\big]
+\f]
+
+which is equivalent to the following system of SDEs
+
+\f[
+\newcommand{\bv}[1]{{\mbox{\boldmath$#1$}}}
+    \mathrm{d}Y_\alpha(t) = A_\alpha(\bv{Y},t)\mathrm{d}t + \sum_{\beta=1}^N
+    b_{\alpha\beta}(\bv{Y},t)\mathrm{d}W_\beta(t), \qquad \alpha = 1,\dots,N,
+    \qquad B_{\alpha\beta} = b_{\alpha\gamma}b_{\gamma\beta}
+\f]
+
+Here \f$F({\mbox{\boldmath$Y$}},t)\f$ is the joint probability distribution of
+\f$N\f$ variables \f$Y_\alpha\f$ of the sample space. The drift, \f$A_\alpha\f$,
+and diffusion, \f$B_{\alpha\beta}\f$, functions can be defined in any way as
+long as the diffision is positive semi-definite. Walker discretizes and
+numerically solves the system of SDEs using a large number of particles and can
+estimate arbitrary statistics and distributions as they evolve in time.
+
 Walker can be used to design statistical moment approximations. If the
 approximate shape of the probability distribution for a fluctuating variable is
 known (or can be usefully assumed), its governing SDE can, in some cases, be

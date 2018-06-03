@@ -2,7 +2,8 @@
   \page      why Philosophy
 
 This page describes our core software engineering values and explains why we are
-motivated to work on this project. If you agree, contact as via
+motivated to work on this project. If you agree and would like to contribute to
+or use these tools, contact us via
 [GitHub](https://github.com/quinoacomputing/quinoa),
 [Email](mailto:quinoa@lanl.gov) or
 [Gitter](https://gitter.im/quinoacomputing/quinoa), and join us!
@@ -15,14 +16,13 @@ motivated to work on this project. If you agree, contact as via
 
 Our target machines are the largest
 [distributed-memory](https://en.wikipedia.org/wiki/Distributed_memory) computers
-in the world with millions of compute cores. Due to [unprecedented hardware
-complexity](https://herbsutter.com/welcome-to-the-jungle) and features such as
-[deep memory hierarchies](https://en.wikipedia.org/wiki/Memory_hierarchy) and
-[dynamic frequency
-scaling](https://en.wikipedia.org/wiki/Dynamic_frequency_scaling), we must
-assume _a priori_ unknown and inhomogeneous computational load and performance
-among parts of the system that can also dynamically change in time.  To
-efficiently use these resources our programming paradigm must allow
+in the world with potentially millions of compute cores. Due to [unprecedented
+hardware complexity](https://herbsutter.com/welcome-to-the-jungle) and features
+such as [deep memory hierarchies](https://en.wikipedia.org/wiki/Memory_hierarchy)
+and [dynamic frequency scaling](https://en.wikipedia.org/wiki/Dynamic_frequency_scaling), we
+must assume _a priori_ unknown and inhomogeneous computational load and
+performance among parts of the system that can also dynamically change in time.
+To efficiently use these resources our programming paradigm must allow
 _asynchronous_ parallel execution. This enables overlapping computation,
 communication, input, and output. Asynchronous programming constitutes a major
 paradigm shift compared to the more traditional bulk-synchronous approach,

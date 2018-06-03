@@ -29,10 +29,12 @@ Quinoa consists of the following tools:
     equations__
 
     _Walker_ is a mathematical tool to analyze and design the behavior of
-    stochastic differential equations. It allows the estimation of arbitrary
-    coupled @ref statistics_output "statistics" and probability density
-    functions as they evolve in time and is used for the design of @ref
-    papers_walker "statistical moment approximations" for turbulent flows.
+    stochastic differential equations. Solving a multivariate
+    [Fokker-Planck equation](https://en.wikipedia.org/wiki/Fokker%E2%80%93Planck_equation),
+    it allows the estimation of arbitrary coupled @ref statistics_output
+    "statistics" and probability distributions as they evolve in time and
+    is used for the design of @ref papers_walker "statistical moment approximations"
+    for turbulent flows.
 
   - @ref inciter_main --- __Navier-Stokes solver for complex domains__
 
