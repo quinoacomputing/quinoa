@@ -117,10 +117,10 @@ performance](http://charm.cs.illinois.edu/newPapers/16-12/paper.pdf) from the
 developers of Charm++.
 
 @m_div{m-col-t-4 m-col-m-2 m-right-t}
-<img src="techie-arsitek.svg"/>
+<img src="tornado-41952.svg"/>
 @m_enddiv
 
-@section outsource Advanced computer science outsourced to experts
+@section pfe Stand on the shoulder of giants
 
 Hardware complexity is increasing. Simultaneously satisfying all the different
 requirements enumerated here inevitably increases software complexity.
@@ -134,12 +134,15 @@ complex software must be outsourced to subject-matter experts.
 
 Quinoa's goal is to provide simulation software for scientific and engineering
 purposes. This involves numerically solving the differential and integral
-equations of mathematical physics. Advanced computer science, such as
-computational load decomposition, dynamic load balancing, object migration,
-networking, parallel input and output, random number generation, hashing, etc.,
-are outsourced to those who make a career out them. Quinoa uses a number of @ref
-licenses "third-party libraries" and application developers closely collaborate
-with subject-matter experts.
+equations of mathematical physics. We cannot claim to be experts in all
+ingredients required, therefore highly specialized components, e.g., advanced
+computer science, such as load decomposition, dynamic load balancing, object
+migration, low level hardware-specific networking, parallel input and output,
+random number generation, hashing, etc., are outsourced to those who make a
+career out them. We subscribe to the
+[proudly found elsewhere](https://youtu.be/jNNz9poyKJs)
+paradigm, instead of the _not invented here_ stance. Accordingly, Quinoa uses a
+number of @ref licenses "third-party libraries".
 
 @m_div{m-col-t-4 m-col-m-2 m-right-t}
 <img src="celticknot1.svg"/>
