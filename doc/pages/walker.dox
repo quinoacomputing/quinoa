@@ -14,7 +14,9 @@ multiple variables governed by coupled SDE systems of different types. It allows
 the estimation of arbitrary coupled statistics and probability density
 functions.
 
-In a nutshell, walker solves the following Fokker-Planck equation
+In a nutshell, walker solves the Fokker-Planck equation
+
+@m_class{m-show-m}
 
 \f[
 \newcommand{\bv}[1]{{\mbox{\boldmath$#1$}}}
@@ -25,7 +27,22 @@ In a nutshell, walker solves the following Fokker-Planck equation
     Y_\beta}\big[B_{\alpha\beta}(\bv{Y},t)F(\bv{Y},t)\big]
 \f]
 
-which is equivalent to the following system of SDEs
+@m_class{m-hide-m}
+
+\f[
+\newcommand{\bv}[1]{{\mbox{\boldmath$#1$}}}
+  \begin{split}
+    \frac{\partial}{\partial t}F(\bv{Y},t) = - \sum_{\alpha=1}^N
+    \frac{\partial}{\partial Y_\alpha}\big[ A_\alpha(\bv{Y},t) F(\bv{Y},t)
+    \big] \\ + \frac{1}{2} \sum_{\alpha=1}^N \sum_{\beta=1}^N
+    \frac{\partial^2}{\partial Y_\alpha \partial
+    Y_\beta}\big[B_{\alpha\beta}(\bv{Y},t)F(\bv{Y},t)\big]
+  \end{split}
+\f]
+
+which is equivalent to the system of SDEs
+
+@m_class{m-show-m}
 
 \f[
 \newcommand{\bv}[1]{{\mbox{\boldmath$#1$}}}
@@ -34,7 +51,20 @@ which is equivalent to the following system of SDEs
     \qquad B_{\alpha\beta} = b_{\alpha\gamma}b_{\gamma\beta}
 \f]
 
-Here \f$F({\mbox{\boldmath$Y$}},t)\f$ is the joint probability distribution of
+@m_class{m-hide-m}
+
+\f[
+\newcommand{\bv}[1]{{\mbox{\boldmath$#1$}}}
+  \begin{split}
+    \mathrm{d}Y_\alpha(t) = A_\alpha(\bv{Y},t)\mathrm{d}t + \sum_{\beta=1}^N
+    b_{\alpha\beta}(\bv{Y},t)\mathrm{d}W_\beta(t), \\ \alpha = 1,\dots,N,
+    \qquad B_{\alpha\beta} = b_{\alpha\gamma}b_{\gamma\beta}
+  \end{split}
+\f]
+
+Here \f$\mathrm{d}{\mbox{\boldmath$W$}}(t)\f$ is a vector-valued isotropic
+[Wiener process](https://en.wikipedia.org/wiki/Wiener_process) and
+\f$F({\mbox{\boldmath$Y$}},t)\f$ is the joint probability distribution of
 \f$N\f$ variables \f$Y_\alpha\f$ of the sample space. The drift, \f$A_\alpha\f$,
 and diffusion, \f$B_{\alpha\beta}\f$, functions can be defined in any way as
 long as the diffision is positive semi-definite. Walker discretizes and

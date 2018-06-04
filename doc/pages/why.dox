@@ -18,9 +18,9 @@ Our target machines are the largest
 [distributed-memory](https://en.wikipedia.org/wiki/Distributed_memory) computers
 in the world with potentially millions of compute cores. Due to [unprecedented
 hardware complexity](https://herbsutter.com/welcome-to-the-jungle) and features
-such as [deep memory hierarchies](https://en.wikipedia.org/wiki/Memory_hierarchy)
-and [dynamic frequency scaling](https://en.wikipedia.org/wiki/Dynamic_frequency_scaling), we
-must assume _a priori_ unknown and inhomogeneous computational load and
+such as [deep memory hierarchies](https://en.wikipedia.org/wiki/Memory_hierarchy) and
+[dynamic frequency scaling](https://en.wikipedia.org/wiki/Dynamic_frequency_scaling),
+we must assume _a priori_ unknown and inhomogeneous computational load and
 performance among parts of the system that can also dynamically change in time.
 To efficiently use these resources our programming paradigm must allow
 _asynchronous_ parallel execution. This enables overlapping computation,
@@ -34,10 +34,10 @@ asynchronous programming. For most computational codes this deeply affects the
 programming style as well as the optimal data layout and algorithm structure
 which therefore would require a complete rewrite.
 
-Quinoa was started from scratch, instead of modifying an existing code, to
-provide full freedom in exercising the asynchronous paradigm. The code is built
-on the [Charm++](http://charm.cs.illinois.edu) runtime system and family of
-libraries. Instead of message passing, Charm++ is founded on the
+Quinoa was started from scratch, instead of modifying an existing code, to allow
+full freedom in exercising the asynchronous paradigm and any Charm++ feature.
+The code is built on the [Charm++](http://charm.cs.illinois.edu) runtime system
+and family of libraries. Instead of message passing, Charm++ is founded on the
 migratable-objects programming model and supported by an adaptive runtime
 system. In Charm++ data and work-units interact via asynchronous function calls
 enabling fully asynchronous programming. Asynchronous programming can be used to
