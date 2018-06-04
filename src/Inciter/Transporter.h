@@ -402,7 +402,7 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target indicating that all PEs have distributed their
     //!   newly added node IDs shared along the boundary with other PEs
-    void matched();
+    void matched( std::size_t extra );
 
     //! \brief Reduction target indicating that initial mesh refinement has
     //!   been completed on all PEs

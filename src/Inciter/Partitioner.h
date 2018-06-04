@@ -168,8 +168,11 @@ class Partitioner : public CBase_Partitioner {
     //!   multiple PEs
     void recvRefBndEdges();
 
-    //! ...
+    //! Correct refinement to arrive at a conforming mesh across PE boundaries
     void correctref();
+
+    //! Decide wether to continue with another step of initial mesh refinement
+    void nextref();
 
     //! Prepare owned mesh node IDs for reordering
     void flatten();
@@ -227,6 +230,7 @@ class Partitioner : public CBase_Partitioner {
     std::size_t m_nedge;
     //! Counter during distribution of newly added nodes to PE-boundary edges
     std::size_t m_nref;
+    std::size_t m_extra;
     //! PEs we share at least a single edge with during initial mesh refinement
     std::unordered_set< int > m_pe;
     //! Initial mesh refinement type list (in reverse order)
@@ -419,9 +423,6 @@ class Partitioner : public CBase_Partitioner {
     tk::Fields nodeinit( std::size_t npoin,
                          const std::pair< std::vector< std::size_t >,
                                           std::vector< std::size_t > >& esup );
-
-    //! Decide wether to continue with another step of initial mesh refinement
-    void nextref();
 
     //! Compute final result of reordering
     void reordered();
