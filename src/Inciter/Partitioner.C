@@ -144,6 +144,15 @@ Partitioner::partref()
   std::vector< long > gelemid( m_rinpoel.size()/4 );
   std::iota( begin(gelemid), end(gelemid), 0 );
 
+{auto initref = g_inputdeck.get< tag::amr, tag::init >();
+auto level = initref.size() - m_initref.size();
+tk::UnsMesh rm( m_inpoel, m_coord );
+tk::ExodusIIMeshWriter mwr( "initref.partref." + std::to_string(level) + '.' +
+                             std::to_string(CkMyPe()),
+                            tk::ExoWriter::CREATE );
+
+mwr.writeMesh( rm );}
+
   // Partition the mesh using Zoltan to number of PEs parts
   const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
   const auto pel = tk::zoltan::geomPartMesh( alg,
@@ -1002,6 +1011,28 @@ Partitioner::bndEdges()
   // Compute local data from global mesh connectivity (m_inpoel, m_gid, m_lid)
   m_el = tk::global2local( m_ginpoel );
 
+  // Convert node coordinates associated to global node IDs to a flat vector
+  auto npoin = m_coordmap.size();
+  Assert( m_gid.size() == npoin, "Size mismatch" );
+  m_coord[0].resize( npoin );
+  m_coord[1].resize( npoin );
+  m_coord[2].resize( npoin );
+  for (const auto& c : m_coordmap) {
+    auto i = tk::cref_find( m_lid, c.first );
+    Assert( i < npoin, "Indexing out of coordinate map" );
+    m_coord[0][i] = c.second[0];
+    m_coord[1][i] = c.second[1];
+    m_coord[2][i] = c.second[2];
+  }
+
+{auto initref = g_inputdeck.get< tag::amr, tag::init >();
+auto level = initref.size() - m_initref.size();
+tk::UnsMesh rm( m_inpoel, m_coord );
+tk::ExodusIIMeshWriter mwr( "initref.bndEdges." + std::to_string(level) + '.' +
+                             std::to_string(CkMyPe()),
+                            tk::ExoWriter::CREATE );
+
+mwr.writeMesh( rm );}
   // Generate boundary edges of our mesh chunk
   tk::UnsMesh::EdgeSet bnded;
   auto esup = tk::genEsup( m_inpoel, 4 );         // elements surrounding points
