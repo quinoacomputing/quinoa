@@ -100,7 +100,8 @@ match( tk::ctr::ncomp_type ncomp,
   // implementation, every side set applies the BC to the common node in
   // question, successively overwriting the BC applied by the previous side set.
   // Effectively, the BC corresponding to the last side set ID is applied to the
-  // common node.
+  // common node. Since sidenodes is an ordered map, the side set with a larger
+  // id wins if a node belongs to multiple side sets.
 
   // Lambda to convert global to local node ids of a list of nodes
   auto local = [ &lid ]( const std::vector< std::size_t >& gnodes ){
