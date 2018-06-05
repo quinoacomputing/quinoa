@@ -133,7 +133,15 @@ class DiffEqStack {
           g_inputdeck.get< tag::param, EqTag, tag::initpolicy >()[c],
           g_inputdeck.get< tag::param, EqTag, tag::coeffpolicy >()[c] };
         const auto it = m_factory.find( key );
-        Assert( it != end( m_factory ), "Can't find eq in factory" );
+        Assert( it != end( m_factory ),
+                "Can't find eq '" + ctr::DiffEq().name( eq ) +
+                "' in DiffEq factory with initialization policy '" +
+                ctr::InitPolicy().name(
+                  g_inputdeck.get< tag::param, EqTag, tag::initpolicy >()[c] ) +
+                "' and coefficient policy '" +
+                ctr::CoeffPolicy().name(
+                  g_inputdeck.get< tag::param, EqTag, tag::coeffpolicy >()[c] )
+                + "'" );
         // instantiate and return diff eq object
         return it->second( c );
       } else Throw ( "Can't create DiffEq with zero independent variables" );

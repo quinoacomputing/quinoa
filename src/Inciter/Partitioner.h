@@ -168,8 +168,11 @@ class Partitioner : public CBase_Partitioner {
     //!   multiple PEs
     void recvRefBndEdges();
 
-    //! ...
+    //! Correct refinement to arrive at a conforming mesh across PE boundaries
     void correctref();
+
+    //! Decide wether to continue with another step of initial mesh refinement
+    void nextref();
 
     //! Prepare owned mesh node IDs for reordering
     void flatten();
@@ -227,6 +230,7 @@ class Partitioner : public CBase_Partitioner {
     std::size_t m_nedge;
     //! Counter during distribution of newly added nodes to PE-boundary edges
     std::size_t m_nref;
+    std::size_t m_extra;
     //! PEs we share at least a single edge with during initial mesh refinement
     std::unordered_set< int > m_pe;
     //! Initial mesh refinement type list (in reverse order)
@@ -248,7 +252,7 @@ class Partitioner : public CBase_Partitioner {
     //! \brief Map associating the global IDs and the coordinates of a node
     //!   added to an edge during initial mesh refinement
     tk::UnsMesh::EdgeNodeCoord m_edgenode;
-    //! Unique set of boundary edges associated to PEs we share edges with
+    //! Unique set of boundary edges associated to PEs we share these edges with
     std::unordered_map< int, tk::UnsMesh::EdgeSet > m_bndEdges;
     //! \brief Map associating the global IDs and the coordinates of a node
     //!   added to an edge during initial mesh refinement associated to
@@ -276,13 +280,7 @@ class Partitioner : public CBase_Partitioner {
     //!   assigned) by each PE
     std::size_t m_nmask;
     //! Tetrtahedron element connectivity of our chunk of the mesh (global ids)
-    //! \details This one is the authoritative one outside of initial mesh
-    //!   refinement.
     std::vector< std::size_t > m_ginpoel;
-    //! Tetrtahedron element connectivity of our chunk of the mesh (global ids)
-    //! \details This one is used during communication after mesh partitioning
-    //!   before an initial mesh refinement step.
-    std::vector< std::size_t > m_rinpoel;
     //! Coordinates of mesh nodes of our chunk of the mesh
     tk::UnsMesh::Coords m_coord;
     //! Coordinates associated to global node IDs of our mesh chunk
@@ -422,9 +420,6 @@ class Partitioner : public CBase_Partitioner {
     tk::Fields nodeinit( std::size_t npoin,
                          const std::pair< std::vector< std::size_t >,
                                           std::vector< std::size_t > >& esup );
-
-    //! Decide wether to continue with another step of initial mesh refinement
-    void nextref();
 
     //! Compute final result of reordering
     void reordered();

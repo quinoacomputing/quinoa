@@ -58,6 +58,7 @@ Partitioner::Partitioner(
   m_ndist( 0 ),
   m_nedge( 0 ),
   m_nref( 0 ),
+  m_extra( 1 ),
   m_pe(),
   m_initref(),
   m_el(),
@@ -70,7 +71,6 @@ Partitioner::Partitioner(
   m_nquery( 0 ),
   m_nmask( 0 ),
   m_ginpoel(),
-  m_rinpoel(),
   m_coord(),
   m_coordmap(),
   m_nchare( 0 ),
@@ -135,14 +135,18 @@ Partitioner::partref()
 //!   refinement step. The number of partitions always equals the numher of PEs.
 // *****************************************************************************
 {
-  // Move mesh connectivity to under a new name. This also clears the original
-  // one. The new one (rinpoel) is treated during communication as a source, and
-  // the old one (ginpoel) will serve as the destination for the new one.
-  m_rinpoel = std::move( m_ginpoel );
-
   // Generate element IDs for Zoltan
-  std::vector< long > gelemid( m_rinpoel.size()/4 );
+  std::vector< long > gelemid( m_inpoel.size()/4 );
   std::iota( begin(gelemid), end(gelemid), 0 );
+
+{auto initref = g_inputdeck.get< tag::amr, tag::init >();
+auto level = initref.size() - m_initref.size();
+tk::UnsMesh rm( m_inpoel, m_coord );
+tk::ExodusIIMeshWriter mwr( "initref.partref." + std::to_string(level) + '.' +
+                             std::to_string(CkMyPe()),
+                            tk::ExoWriter::CREATE );
+
+mwr.writeMesh( rm );}
 
   // Partition the mesh using Zoltan to number of PEs parts
   const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
@@ -156,15 +160,18 @@ Partitioner::partref()
           "graph elements" );
 
   // Prepare for a step of initial mesh refinement
+  m_extra = 1;
   m_bndEdges.clear();
   m_pe.clear();
   m_edgenodePe.clear();
   m_edgenode.clear();
   m_coordmap.clear();
+  auto g = m_ginpoel;
+  m_ginpoel.clear();
 
   // Categorize mesh elements (given by their gobal node IDs) by target PE and
   // distribute to their PEs based on mesh partitioning.
-  distributePe( categorize( pel, m_rinpoel ) );
+  distributePe( categorize( pel, g ) );
 }
 
 void
@@ -185,6 +192,12 @@ Partitioner::partchare( int nchare )
   std::vector< long > gelemid( m_ginpoel.size()/4 );
   std::iota( begin(gelemid), end(gelemid), 0 );
 
+tk::UnsMesh rm( m_inpoel, m_coord );
+tk::ExodusIIMeshWriter mwr( "initref.partchare." + std::to_string(CkMyPe()),
+                            tk::ExoWriter::CREATE );
+
+mwr.writeMesh( rm );
+
   m_nchare = nchare;
   const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
   const auto che = tk::zoltan::geomPartMesh( alg,
@@ -200,6 +213,7 @@ Partitioner::partchare( int nchare )
           "mesh graph elements" );
 
   m_coordmap.clear();
+  m_chinpoel.clear();
 
   // Categorize mesh elements (given by their gobal node IDs) by target chare
   // and distribute to their PEs based on mesh partitioning.
@@ -360,6 +374,33 @@ Partitioner::flatten()
 //!   longer categorized by (or associated to) chares.
 // *****************************************************************************
 {
+  std::size_t l = 0;
+  for (const auto& i : m_chinpoel) {      // for all meshes passed in
+    // generate local ids and connectivity from global connectivity
+    auto el = tk::global2local( i.second );
+    const auto& inpoel = std::get< 0 >( el );   // local connectivity
+    const auto& lid = std::get< 2 >( el );      // global->local node ids
+    auto np = tk::npoin( inpoel );
+    tk::UnsMesh::Coords coord;
+    coord[0].resize( np );
+    coord[1].resize( np );
+    coord[2].resize( np );
+    for (const auto& c : m_coordmap) {
+      auto p = lid.find( c.first );
+      if (p != lid.end()) {
+        Assert( p->second < np, "Indexing out of coord vector" );
+        coord[0][p->second] = c.second[0];
+        coord[1][p->second] = c.second[1];
+        coord[2][p->second] = c.second[2];
+      }
+    }
+    tk::UnsMesh refmesh( inpoel, coord );
+    tk::ExodusIIMeshWriter mw( "initref.flatten." + std::to_string(l++) + '.' +
+                               std::to_string(CkMyPe()),
+                               tk::ExoWriter::CREATE );
+    mw.writeMesh( refmesh );
+  }
+
   // Make sure all cells of all chare meshes have non-negative Jacobians
   Assert( positiveJacobians( m_chinpoel, m_coordmap ),
           "Chare-partitioned mesh cell Jacobian non-positive" );
@@ -733,6 +774,8 @@ Partitioner::coordmap( const std::vector< std::size_t >& inpoel )
 //!    node IDs in mesh given by inpoel
 // *****************************************************************************
 {
+  Assert( inpoel.size() % 4 == 0, "Incomplete mesh connectivity" );
+
   tk::UnsMesh::CoordMap map;
 
   for (auto g : tk::uniquecopy(inpoel)) {
@@ -1012,9 +1055,9 @@ Partitioner::addBndEdges( int frompe, const tk::UnsMesh::EdgeSet& ed )
     const auto& ownedges = tk::cref_find( m_bndEdges, CkMyPe() );
     for (const auto& p : m_bndEdges)    // for all PEs
       if (p.first != CkMyPe())          // for all PEs other than this PE
-        for (const auto& e : p.second)  // for all boundary edge
+        for (const auto& e : p.second)  // for all boundary edges
           if (ownedges.find(e) != end(ownedges))
-            m_pe.insert( p.first );
+            m_pe.insert( p.first );     // if edge is shared, store its PE
 
     refine();
   }
@@ -1023,7 +1066,7 @@ Partitioner::addBndEdges( int frompe, const tk::UnsMesh::EdgeSet& ed )
 void
 Partitioner::refine()
 // *****************************************************************************
-//  Optionally refine mesh
+//  Do a single step of initial mesh refinement based on user-input
 //! \details This is a single step in a potentially multiple-entry list of
 //!   initial adaptive mesh refinement steps. Distribution of the PE-boundary
 //!   edges has preceded this step, so that boundary edges (shared by multiple
@@ -1039,6 +1082,7 @@ Partitioner::refine()
   m_coord[2].resize( npoin );
   for (const auto& c : m_coordmap) {
     auto i = tk::cref_find( m_lid, c.first );
+    Assert( i < npoin, "Indexing out of coordinate map" );
     m_coord[0][i] = c.second[0];
     m_coord[1][i] = c.second[1];
     m_coord[2][i] = c.second[2];
@@ -1051,7 +1095,7 @@ Partitioner::refine()
 
   // Output mesh before this initial refinement step
   tk::UnsMesh refmesh( m_inpoel, m_coord );
-  tk::ExodusIIMeshWriter mw( "initref." + std::to_string(level) + '.' +
+  tk::ExodusIIMeshWriter mw( "initref.b." + std::to_string(level) + '.' +
                                std::to_string(CkMyPe()),
                              tk::ExoWriter::CREATE );
   mw.writeMesh( refmesh );
@@ -1089,7 +1133,8 @@ Partitioner::refine()
 
   // Export added nodes on our mesh chunk boundary to other PEs
   if (m_pe.empty())
-    contribute( m_cb.get< tag::matched >() );
+    contribute( sizeof(std::size_t), &m_extra, CkReduction::max_int,
+                m_cb.get< tag::matched >() );
   else {
     m_nref = 0;
     for (auto p : m_pe) {       // for all PEs we share at least an edge with
@@ -1127,14 +1172,29 @@ Partitioner::recvRefBndEdges()
 //  Acknowledge received newly added node IDs to edges shared among multiple PEs
 // *****************************************************************************
 {
-  if (++m_nref == m_pe.size()) contribute( m_cb.get< tag::matched >() );
+  // When we have heard from all PEs we share at least a single edge with,
+  // contribute the number of extra edges that this mesh refinement step has
+  // found that were not refined by this PE but were refined by other PEs this
+  // PE shares the edge with. A global maximum will then be computed on the
+  // number of extra edges appearing in Transporter::matched() and that is then
+  // used to decide if a new correction step is needed. If this is called for
+  // the first time in a given initial mesh refinement step, i.e., not after a
+  // correction step, m_extra = 1 on all PEs, so a correction step is assumed
+  // to be required.
+  if (++m_nref == m_pe.size()) {
+    contribute( sizeof(std::size_t), &m_extra, CkReduction::max_int,
+                m_cb.get< tag::matched >() );
+  }
 }
 
 void
 Partitioner::correctref()
 // *****************************************************************************
-// ...
-//! \details ...
+//  Correct refinement to arrive at a conforming mesh across PE boundaries
+//! \details This function is called repeatedly until there is not a a single
+//!    edge that needs correction for the whole distributed problem to arrive at
+//!    a conforming mesh across PE boundaries during this initial mesh
+//!    refinement step.
 // *****************************************************************************
 {
   // Storage for edges that still need a new node to yield a conforming mesh
@@ -1145,11 +1205,13 @@ Partitioner::correctref()
   // PEs sharing the refined edge. This is done by searching for all edges that
   // we share with and refined by other PEs: (1) If the incoming edge is found
   // among our refined ones, we ensure the newly assigned global IDs equal
-  // (independently assigned PEs) and also that the new node coordinates equal
-  // to machine precision. (2) If the incoming edge is not found among our
-  // refined ones, we need to correct the mesh to make it conforming since the
-  // edge has been refined by the remote PE. We collect these extra edges, and
-  // run a correction refinement.
+  // (independently assigned by multiple PEs) and also that the new node
+  // coordinates equal to machine precision. (2) If the incoming edge is not
+  // found among our refined ones, we need to correct the mesh to make it
+  // conforming since the edge has been refined by the remote PE. We collect
+  // these extra edges, and run a correction refinement, whose result then
+  // needs to be communicated again as the new refinement step may introduce
+  // new edges that other PEs did not refine but are shared.
   for (const auto& p : m_edgenodePe)        // for all PEs we share edges with
     for (const auto& e : p.second) {        // for all refined edges on p.first
       auto i = m_edgenode.find( e.first );  // find refined edge given parents
@@ -1168,6 +1230,7 @@ Partitioner::correctref()
                   std::numeric_limits<tk::real>::epsilon(),
                 "Remote and local added node coordinates mismatch" );
       } else {  // remote PE added node on edge but we did not
+        // Make sure we know about this boundary-PE edge (that we did not refine)
         Assert( m_bndEdges.find( CkMyPe() )->second.find( e.first ) !=
                 m_bndEdges.find( CkMyPe() )->second.end(),
                 "Local node IDs of boundary edge not found" );
@@ -1179,12 +1242,26 @@ Partitioner::correctref()
       }
     }
 
-  // Correct PE-boundary edges if any
-  if (!extra.empty()) {
+  // Store number of extra edges on this PE which this PE did not add but was
+  // refined by another PE, so now we need to tag and refine them and propagate
+  // reconnection of neighbor cells to arrive at conforming mesh across PE
+  // boundaries.
+  m_extra = extra.size();
 
-    // Refine mesh triggered by newly added nodes on PE-boundary by other PEs
-    correctRefine( extra );
+  // Refine mesh triggered by nodes added on PE-boundary edges by other PEs
+  // PEs
+  correctRefine( extra );
 
+  // Since refining edges that we originally did not but other PEs did may
+  // result in refining new edges that may be shared along PE boundaries, we
+  // now need to communicate these edges and potentially repeat the correction
+  // step. This must happen until all PEs that share edges can agree that there
+  // are no more edges to correct. Only then this refinement step can be
+  // considered complete.
+  if (m_pe.empty())
+    contribute( sizeof(std::size_t), &m_extra, CkReduction::max_int,
+                m_cb.get< tag::matched >() );
+  else {
     m_nref = 0;
     for (auto p : m_pe) {       // for all PEs we share at least an edge with
       // For all boundary edges of PE p, find out if we have added a new
@@ -1196,8 +1273,7 @@ Partitioner::correctref()
       }
       thisProxy[ p ].addRefBndEdges( CkMyPe(), exp );
     }
-
-  } else nextref();
+  }
 }
 
 void
@@ -1480,7 +1556,7 @@ Partitioner::updateVolumeMesh( AMR::mesh_adapter_t& refiner,
   x.resize( npoin );
   y.resize( npoin );
   z.resize( npoin );
-  m_gid.resize( npoin );
+  m_gid.resize( npoin, std::numeric_limits< std::size_t >::max() );
 
   // Generate coordinates and ids to newly added nodes after refinement step
   for (auto r : ref) {               // for all unique nodes of the refined mesh
@@ -1503,13 +1579,23 @@ Partitioner::updateVolumeMesh( AMR::mesh_adapter_t& refiner,
               "Hash collision: ID already exist" );
       // assign new global ids to local->global and to global->local maps
       m_gid[r] = g;
+      Assert( m_lid.find(g) == end(m_lid),
+              "Overwriting entry global->local node ID map" );
       m_lid[g] = r;
       // assign new coordinates to new global node id
+      Assert( m_coordmap.find(g) == end(m_coordmap),
+              "Overwriting entry coordmap" );
       m_coordmap.insert( {g, {{x[r], y[r], z[r]}}} );
       // assign new coordinates and new global node id to global parent id pair
       m_edgenode[ gp ] = std::make_tuple( g, x[r], y[r], z[r] );
     }
   }
+
+  Assert( m_gid.size() == m_lid.size(), "Size mismatch" );
+
+  Assert( std::none_of( begin(m_gid), end(m_gid), [](std::size_t i){
+            return i == std::numeric_limits< std::size_t >::max(); } ),
+          "Not all local->global node IDs have been assigned" );
 }
 
 void

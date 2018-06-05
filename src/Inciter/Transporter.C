@@ -216,6 +216,10 @@ Transporter::createPartitioner()
   auto nbfac = er.readSidesetFaces( bface );
   er.readFaces( nbfac, triinpoel );
 
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+  if (scheme == ctr::SchemeType::DG)
+    Assert( nbfac > 0, "DG must have boundary faces (and side sets) defined" );
+
   // Verify boundarty condition (BC) side sets used exist in mesh file
   verifyBCsExist( g_cgpde, er );
   verifyBCsExist( g_dgpde, er );
@@ -255,13 +259,18 @@ Transporter::refdistributed()
 }
 
 void
-Transporter::matched()
+Transporter::matched( std::size_t extra )
 // *****************************************************************************
 // Reduction target indicating that all PEs have distributed their newly added
 // node IDs shared among multiple PEs
+//! \param[in] extra Max number of edges/PE collected across all PEs that still
+//!   correction due to refinement along PE boundaries
 // *****************************************************************************
 {
-  m_partitioner.correctref();
+std::cout << "max extra: " << extra << '\n';
+  // If at least a single edge on a PE still needs correction, do correction,
+  // otherwise, this initial mesh refinement step is complete
+  if (extra > 0) m_partitioner.correctref(); else m_partitioner.nextref();
 }
 
 void
