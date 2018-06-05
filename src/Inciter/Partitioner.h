@@ -280,13 +280,7 @@ class Partitioner : public CBase_Partitioner {
     //!   assigned) by each PE
     std::size_t m_nmask;
     //! Tetrtahedron element connectivity of our chunk of the mesh (global ids)
-    //! \details This one is the authoritative one outside of initial mesh
-    //!   refinement.
     std::vector< std::size_t > m_ginpoel;
-    //! Tetrtahedron element connectivity of our chunk of the mesh (global ids)
-    //! \details This one is used during communication after mesh partitioning
-    //!   before an initial mesh refinement step.
-    std::vector< std::size_t > m_rinpoel;
     //! Coordinates of mesh nodes of our chunk of the mesh
     tk::UnsMesh::Coords m_coord;
     //! Coordinates associated to global node IDs of our mesh chunk

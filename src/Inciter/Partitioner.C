@@ -71,7 +71,6 @@ Partitioner::Partitioner(
   m_nquery( 0 ),
   m_nmask( 0 ),
   m_ginpoel(),
-  m_rinpoel(),
   m_coord(),
   m_coordmap(),
   m_nchare( 0 ),
@@ -135,13 +134,8 @@ Partitioner::partref()
 //!   refinement step. The number of partitions always equals the numher of PEs.
 // *****************************************************************************
 {
-  // Move mesh connectivity to under a new name. This also clears the original
-  // one. The new one (rinpoel) is treated during communication as a source, and
-  // the old one (ginpoel) will serve as the destination for the new one.
-  m_rinpoel = std::move( m_ginpoel );
-
   // Generate element IDs for Zoltan
-  std::vector< long > gelemid( m_rinpoel.size()/4 );
+  std::vector< long > gelemid( m_inpoel.size()/4 );
   std::iota( begin(gelemid), end(gelemid), 0 );
 
 {auto initref = g_inputdeck.get< tag::amr, tag::init >();
@@ -171,11 +165,12 @@ mwr.writeMesh( rm );}
   m_edgenodePe.clear();
   m_edgenode.clear();
   m_coordmap.clear();
+  auto g = m_ginpoel;
   m_ginpoel.clear();
 
   // Categorize mesh elements (given by their gobal node IDs) by target PE and
   // distribute to their PEs based on mesh partitioning.
-  distributePe( categorize( pel, m_rinpoel ) );
+  distributePe( categorize( pel, g ) );
 }
 
 void
