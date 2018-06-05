@@ -1230,6 +1230,30 @@ struct jointdelta_info {
 };
 using jointdelta = keyword< jointdelta_info, TAOCPP_PEGTL_STRING("jointdelta") >;
 
+struct jointgaussian_info {
+  using code = Code< G >;
+  static std::string name() { return "Gaussian"; }
+  static std::string shortDescription() { return
+    "Select the joint Gaussian initialization policy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the joint Gaussian initialization policy.
+    The initialization policy is used to specify how the initial conditions are
+    set at t = 0 before time-integration. Example: "init zero", which selects
+    zero initialization policy, which puts zeros in memory. Note that this
+    option may behave differently depending on the particular equation or
+    physical model. For an example, see tk::InitPolicies in
+    DiffEq/InitPolicy.h for valid options.) The joint Gaussian initialization
+    policy can be used to prescribe a joint Gaussian (joint Gaussian) on the
+    sample space with given variances. Example: "init jointgaussian" - select
+    (joint) Gaussian init-policy, "Gaussian 0.1 0.3 0.8 0.7 end" - prescribe two
+    Gaussians with mean 0.1 and variance 0.3, and with mean 0.8 and 0.7,
+    respectively. Note that the means can be any realy number while the
+    variances mustbe positive. No correlations between the Gaussians (as the
+    initial conditions) are supported.)"; }
+};
+using jointgaussian =
+  keyword< jointgaussian_info, TAOCPP_PEGTL_STRING("jointgaussian") >;
+
 struct jointbeta_info {
   using code = Code< B >;
   static std::string name() { return "beta"; }
@@ -1927,6 +1951,23 @@ struct betapdf_info {
 };
 using betapdf = keyword< betapdf_info, TAOCPP_PEGTL_STRING("betapdf") >;
 
+struct gaussian_info {
+  static std::string name() { return "Gaussian"; }
+  static std::string shortDescription() { return
+    R"(Configure a Gaussian distribution)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the configuration of Gaussian
+    distributions for the jointgaussian initialization policy. The configuration
+    is given by two real numbers inside a gaussian...end block. Example:
+    "gaussian 0.2 0.3 end", which specifies a Gaussian distribution with 0.2
+    mean and 0.3 variance. See also the help on keyword icgaussian.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "2 reals"; }
+  };
+};
+using gaussian = keyword< gaussian_info, TAOCPP_PEGTL_STRING("gaussian") >;
+
 struct icbeta_info {
   static std::string name() { return "icbeta"; }
   static std::string shortDescription() { return
@@ -1940,6 +1981,20 @@ struct icbeta_info {
     jointbeta and betapdf.)"; }
 };
 using icbeta = keyword< icbeta_info, TAOCPP_PEGTL_STRING("icbeta") >;
+
+struct icgaussian_info {
+  static std::string name() { return "icgaussian"; }
+  static std::string shortDescription() { return R"(Introduce an
+    icgaussian...end block used to configure Gaussian distributions)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an icgaussian...end block in which
+    Gaussian distributions are configured for the jointgaussian initialization
+    policy.  Example: "init jointgaussian" - select jointgaussian
+    init-policy,"icgaussian gaussian 0.2 0.3 end end" - prescribes a univariate
+    Gaussian distribution with 0.2 mean and 0.3 variance. See also the help on
+    keyword jointgaussian and gaussian.)"; }
+};
+using icgaussian = keyword< icgaussian_info, TAOCPP_PEGTL_STRING("icgaussian") >;
 
 struct ic_info {
   static std::string name() { return "ic"; }
