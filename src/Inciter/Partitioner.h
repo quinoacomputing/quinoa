@@ -348,6 +348,11 @@ class Partitioner : public CBase_Partitioner {
     std::map< int, std::vector< std::size_t > > m_bface;
     //! Boundary face-node connectivity
     std::vector< std::size_t > m_triinpoel;
+    //! Mesh refiner object
+    AMR::mesh_adapter_t m_refiner;
+
+    //! Read mesh from file and initialize and return mesh refiner
+    AMR::mesh_adapter_t readMesh();
 
     //! Partition the mesh before a (potential) refinement step
     void partref();
@@ -401,16 +406,14 @@ class Partitioner : public CBase_Partitioner {
     void correctRefine( const tk::UnsMesh::EdgeSet& extra );
 
     //! Update mesh after refinement
-    void updateMesh( AMR::mesh_adapter_t& refiner );
+    void updateMesh();
 
     //! Update volume mesh after mesh refinement
-    void updateVolumeMesh( AMR::mesh_adapter_t& refiner,
-                           const std::unordered_set< std::size_t >& old,
+    void updateVolumeMesh( const std::unordered_set< std::size_t >& old,
                            const std::unordered_set< std::size_t >& ref );
 
     //! Update boundary data structures after mesh refinement
-    void updateBoundaryMesh( AMR::mesh_adapter_t& refiner,
-                             const std::unordered_set< std::size_t >& old,
+    void updateBoundaryMesh( const std::unordered_set< std::size_t >& old,
                              const std::unordered_set< std::size_t >& ref );
 
     //! Evaluate initial conditions (IC) at mesh nodes
