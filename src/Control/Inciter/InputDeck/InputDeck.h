@@ -130,6 +130,8 @@ class InputDeck :
                                        kw::amr_error,
                                        kw::amr_jump,
                                        kw::amr_hessian,
+                                       kw::amr_refvar,
+                                       kw::amr_initref,
                                        kw::scheme,
                                        kw::matcg,
                                        kw::diagcg,

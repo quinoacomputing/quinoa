@@ -140,6 +140,7 @@ Transporter::Transporter() :
     m_print.refvar( g_inputdeck.get< tag::amr, tag::refvar >(),
                     g_inputdeck.get< tag::amr, tag::id >() );
     m_print.Item< ctr::AMRError, tag::amr, tag::error >();
+    m_print.initref( g_inputdeck.get< tag::amr, tag::edge >() );
   }
 
   // If the desired max number of time steps is larger than zero, and the
