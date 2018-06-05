@@ -72,7 +72,7 @@ match( tk::ctr::ncomp_type ncomp,
   // BCs on side sets that share nodes or (2) because more than a single PDE
   // system assigns BCs to a given node (on different variables), the NodeBC
   // vector must be correctly stored. "Correctly" here means that the size of
-  // the NodeBC vectors must all be the same and qual to the sum of all scalar
+  // the NodeBC vectors must all be the same and equal to the sum of all scalar
   // components integrated by all PDE systems integrated. Example: single-phase
   // compressible flow (density, momentum, energy = 5) + transported scalars of
   // 10 variables -> NodeBC vector length = 15. Note that in case (1) above a
@@ -93,6 +93,14 @@ match( tk::ctr::ncomp_type ncomp,
   // will incorrectly NOT skip the space for the flow variables. In other words,
   // this only works for a single PDE system and a sytem of systems. This
   // machinery is only tested with a single system of PDEs at this point.
+  //
+  // When a particular node belongs to two or more side sets with different BCs,
+  // there is an ambiguity as to which of the multiple BCs should be applied to
+  // the node. This issue is described in case (1) above. In the current
+  // implementation, every side set applies the BC to the common node in
+  // question, successively overwriting the BC applied by the previous side set.
+  // Effectively, the BC corresponding to the last side set ID is applied to the
+  // common node.
 
   // Lambda to convert global to local node ids of a list of nodes
   auto local = [ &lid ]( const std::vector< std::size_t >& gnodes ){
