@@ -23,6 +23,7 @@ namespace ctr {
 enum class InitPolicyType : uint8_t { RAW=0,
                                       ZERO,
                                       JOINTDELTA,
+                                      JOINTGAUSSIAN,
                                       JOINTBETA };
 
 //! Pack/Unpack InitPolicyType: forward overload to generic enum class packer
@@ -36,6 +37,7 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
     using keywords = boost::mpl::vector< kw::raw
                                        , kw::zero
                                        , kw::jointdelta
+                                       , kw::jointgaussian
                                        , kw::jointbeta
                                        >;
 
@@ -50,11 +52,13 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
         { { InitPolicyType::RAW, kw::raw::name() },
           { InitPolicyType::ZERO, kw::zero::name() },
           { InitPolicyType::JOINTDELTA, kw::jointdelta::name() },
+          { InitPolicyType::JOINTGAUSSIAN, kw::jointgaussian::name() },
           { InitPolicyType::JOINTBETA, kw::jointbeta::name() } },
         //! keywords -> Enums
         { { kw::raw::string(), InitPolicyType::RAW },
           { kw::zero::string(), InitPolicyType::ZERO },
           { kw::jointdelta::string(), InitPolicyType::JOINTDELTA },
+          { kw::jointgaussian::string(), InitPolicyType::JOINTGAUSSIAN },
           { kw::jointbeta::string(), InitPolicyType::JOINTBETA } } )
     {
        boost::mpl::for_each< keywords >( assertPolicyCodes() );
@@ -88,6 +92,7 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
         { InitPolicyType::RAW, *kw::raw::code() }
       , { InitPolicyType::ZERO, *kw::zero::code() }
       , { InitPolicyType::JOINTDELTA, *kw::jointdelta::code() }
+      , { InitPolicyType::JOINTGAUSSIAN, *kw::jointgaussian::code() }
       , { InitPolicyType::JOINTBETA, *kw::jointbeta::code() }
     };
 };
