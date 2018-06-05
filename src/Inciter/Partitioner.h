@@ -252,7 +252,7 @@ class Partitioner : public CBase_Partitioner {
     //! \brief Map associating the global IDs and the coordinates of a node
     //!   added to an edge during initial mesh refinement
     tk::UnsMesh::EdgeNodeCoord m_edgenode;
-    //! Unique set of boundary edges associated to PEs we share edges with
+    //! Unique set of boundary edges associated to PEs we share these edges with
     std::unordered_map< int, tk::UnsMesh::EdgeSet > m_bndEdges;
     //! \brief Map associating the global IDs and the coordinates of a node
     //!   added to an edge during initial mesh refinement associated to

@@ -196,6 +196,12 @@ Partitioner::partchare( int nchare )
   std::vector< long > gelemid( m_ginpoel.size()/4 );
   std::iota( begin(gelemid), end(gelemid), 0 );
 
+tk::UnsMesh rm( m_inpoel, m_coord );
+tk::ExodusIIMeshWriter mwr( "initref.partchare." + std::to_string(CkMyPe()),
+                            tk::ExoWriter::CREATE );
+
+mwr.writeMesh( rm );
+
   m_nchare = nchare;
   const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
   const auto che = tk::zoltan::geomPartMesh( alg,
@@ -211,6 +217,7 @@ Partitioner::partchare( int nchare )
           "mesh graph elements" );
 
   m_coordmap.clear();
+  m_chinpoel.clear();
 
   // Categorize mesh elements (given by their gobal node IDs) by target chare
   // and distribute to their PEs based on mesh partitioning.
@@ -392,7 +399,7 @@ Partitioner::flatten()
       }
     }
     tk::UnsMesh refmesh( inpoel, coord );
-    tk::ExodusIIMeshWriter mw( "flatten." + std::to_string(l++) + '.' +
+    tk::ExodusIIMeshWriter mw( "initref.flatten." + std::to_string(l++) + '.' +
                                std::to_string(CkMyPe()),
                                tk::ExoWriter::CREATE );
     mw.writeMesh( refmesh );
@@ -1011,28 +1018,6 @@ Partitioner::bndEdges()
   // Compute local data from global mesh connectivity (m_inpoel, m_gid, m_lid)
   m_el = tk::global2local( m_ginpoel );
 
-  // Convert node coordinates associated to global node IDs to a flat vector
-  auto npoin = m_coordmap.size();
-  Assert( m_gid.size() == npoin, "Size mismatch" );
-  m_coord[0].resize( npoin );
-  m_coord[1].resize( npoin );
-  m_coord[2].resize( npoin );
-  for (const auto& c : m_coordmap) {
-    auto i = tk::cref_find( m_lid, c.first );
-    Assert( i < npoin, "Indexing out of coordinate map" );
-    m_coord[0][i] = c.second[0];
-    m_coord[1][i] = c.second[1];
-    m_coord[2][i] = c.second[2];
-  }
-
-{auto initref = g_inputdeck.get< tag::amr, tag::init >();
-auto level = initref.size() - m_initref.size();
-tk::UnsMesh rm( m_inpoel, m_coord );
-tk::ExodusIIMeshWriter mwr( "initref.bndEdges." + std::to_string(level) + '.' +
-                             std::to_string(CkMyPe()),
-                            tk::ExoWriter::CREATE );
-
-mwr.writeMesh( rm );}
   // Generate boundary edges of our mesh chunk
   tk::UnsMesh::EdgeSet bnded;
   auto esup = tk::genEsup( m_inpoel, 4 );         // elements surrounding points
@@ -1107,14 +1092,6 @@ Partitioner::refine()
     m_coord[2][i] = c.second[2];
   }
 
-{auto initref = g_inputdeck.get< tag::amr, tag::init >();
-auto level = initref.size() - m_initref.size();
-tk::UnsMesh rm( m_inpoel, m_coord );
-tk::ExodusIIMeshWriter mwr( "initref.p." + std::to_string(level) + '.' +
-                             std::to_string(CkMyPe()),
-                            tk::ExoWriter::CREATE );
-mwr.writeMesh( rm );}
-
   // Query user input for initial mesh refinement type list
   auto initref = g_inputdeck.get< tag::amr, tag::init >();
   Assert( !initref.empty(), "No initial mesh refinement steps configured" );
@@ -1142,13 +1119,6 @@ mwr.writeMesh( rm );}
   else if (r == ctr::AMRInitialType::INITIAL_CONDITIONS)
     errorRefine();
   else Throw( "Initial AMR type not implemented" );
-
-  // Output mesh after this initial refinement step
-  tk::UnsMesh refmesh_after( m_inpoel, m_coord );
-  tk::ExodusIIMeshWriter mwa( "initref.a." + std::to_string(level) + '.' +
-                                std::to_string(CkMyPe()),
-                              tk::ExoWriter::CREATE );
-  mwa.writeMesh( refmesh_after );
 
   for (const auto& e : tk::cref_find(m_bndEdges,CkMyPe())) {
     IGNORE(e);
@@ -1544,7 +1514,7 @@ Partitioner::updateVolumeMesh( AMR::mesh_adapter_t& refiner,
   x.resize( npoin );
   y.resize( npoin );
   z.resize( npoin );
-  m_gid.resize( npoin );
+  m_gid.resize( npoin, std::numeric_limits< std::size_t >::max() );
 
   // Generate coordinates and ids to newly added nodes after refinement step
   for (auto r : ref) {               // for all unique nodes of the refined mesh
@@ -1567,13 +1537,23 @@ Partitioner::updateVolumeMesh( AMR::mesh_adapter_t& refiner,
               "Hash collision: ID already exist" );
       // assign new global ids to local->global and to global->local maps
       m_gid[r] = g;
+      Assert( m_lid.find(g) == end(m_lid),
+              "Overwriting entry global->local node ID map" );
       m_lid[g] = r;
       // assign new coordinates to new global node id
+      Assert( m_coordmap.find(g) == end(m_coordmap),
+              "Overwriting entry coordmap" );
       m_coordmap.insert( {g, {{x[r], y[r], z[r]}}} );
       // assign new coordinates and new global node id to global parent id pair
       m_edgenode[ gp ] = std::make_tuple( g, x[r], y[r], z[r] );
     }
   }
+
+  Assert( m_gid.size() == m_lid.size(), "Size mismatch" );
+
+  Assert( std::none_of( begin(m_gid), end(m_gid), [](std::size_t i){
+            return i == std::numeric_limits< std::size_t >::max(); } ),
+          "Not all local->global node IDs have been assigned" );
 }
 
 void

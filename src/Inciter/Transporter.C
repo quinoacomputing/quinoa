@@ -215,6 +215,10 @@ Transporter::createPartitioner()
   auto nbfac = er.readSidesetFaces( bface );
   er.readFaces( nbfac, triinpoel );
 
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+  if (scheme == ctr::SchemeType::DG)
+    Assert( nbfac > 0, "DG must have boundary faces (and side sets) defined" );
+
   // Verify boundarty condition (BC) side sets used exist in mesh file
   verifyBCsExist( g_cgpde, er );
   verifyBCsExist( g_dgpde, er );
