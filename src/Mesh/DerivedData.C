@@ -1382,7 +1382,7 @@ normal( const std::array< tk::real, 3 >& x,
 
   auto farea = std::sqrt( nx*nx + ny*ny + nz*nz );
 
-  return { nx/farea, ny/farea, nz/farea };
+  return {{ nx/farea, ny/farea, nz/farea }};
 }
 
 tk::Fields
