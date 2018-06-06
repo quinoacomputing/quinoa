@@ -1406,7 +1406,7 @@ Partitioner::userRefine()
   const auto& edgenodelist = g_inputdeck.get< tag::amr, tag::edge >();
   tk::UnsMesh::EdgeSet edgeset;
   for (std::size_t i=0; i<edgenodelist.size()/2; ++i)
-    edgeset.insert( {{ edgenodelist[i*2+0], edgenodelist[i*2+1] }} );
+    edgeset.insert( {{ {edgenodelist[i*2+0], edgenodelist[i*2+1]} }} );
 
   // Compute errors in ICs and define refinement criteria for edges
   std::vector< edge_t > edge;
@@ -1745,7 +1745,7 @@ Partitioner::updateBoundaryMesh( AMR::mesh_adapter_t& refiner,
                parfac.find(oldface[1]) != end(parfac) &&
                parfac.find(oldface[2]) != end(parfac) )
           {
-            addBndFace( side, {m_gid[rf[0]], m_gid[rf[1]], m_gid[rf[2]]} );
+            addBndFace( side, {{m_gid[rf[0]], m_gid[rf[1]], m_gid[rf[2]]}} );
           }
         }
       }
