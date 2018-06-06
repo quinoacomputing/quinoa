@@ -377,11 +377,12 @@ ExodusIIMeshReader::readFaces( std::size_t nbfac,
 //  Read face connectivity of a number of boundary faces from ExodusII file
 //! \param[in] nbfac Number of boundary faces
 //! \param[inout] conn Connectivity vector to push to
-//! \details This function reads-in the total number of boundary faces 
+//! \details This function reads in the total number of boundary faces,
 //!   also called triangle-elements in the EXO2 file, and their connectivity.
+//! \note It is okay to call this function with zero nbfac: it will be no-op.
 // *****************************************************************************
 {
-  ErrChk( nbfac > 0, "Number of boundary faces must be larger than zero" );
+  if (nbfac == 0) return;
 
   std::size_t nnpf(3);
 

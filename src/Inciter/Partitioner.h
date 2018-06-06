@@ -118,7 +118,6 @@ class Partitioner : public CBase_Partitioner {
     Partitioner( const std::vector< CkCallback >& cb,
                  const CProxy_Transporter& host,
                  const tk::CProxy_Solver& solver,
-                 const CProxy_BoundaryConditions& bc,
                  const Scheme& scheme,
                  const std::map< int, std::vector< std::size_t > >& bface,
                  const std::vector< std::size_t >& triinpoel );
@@ -169,6 +168,9 @@ class Partitioner : public CBase_Partitioner {
     //!   multiple PEs
     void recvRefBndEdges();
 
+    //! Correct refinement to arrive at a conforming mesh across PE boundaries
+    void correctref();
+
     //! Decide wether to continue with another step of initial mesh refinement
     void nextref();
 
@@ -213,8 +215,6 @@ class Partitioner : public CBase_Partitioner {
     CProxy_Transporter m_host;
     //! Linear system solver proxy
     tk::CProxy_Solver m_solver;
-    //! Boundary conditions proxy
-    CProxy_BoundaryConditions m_bc;
     //! Discretization scheme
     Scheme m_scheme;
     //! Number of PEs this PE needs to send a mesh chunk after partitioning
@@ -230,6 +230,7 @@ class Partitioner : public CBase_Partitioner {
     std::size_t m_nedge;
     //! Counter during distribution of newly added nodes to PE-boundary edges
     std::size_t m_nref;
+    std::size_t m_extra;
     //! PEs we share at least a single edge with during initial mesh refinement
     std::unordered_set< int > m_pe;
     //! Initial mesh refinement type list (in reverse order)
@@ -251,12 +252,12 @@ class Partitioner : public CBase_Partitioner {
     //! \brief Map associating the global IDs and the coordinates of a node
     //!   added to an edge during initial mesh refinement
     tk::UnsMesh::EdgeNodeCoord m_edgenode;
-    //! \brief Unique set of boundary edges associated to (all) PEs
+    //! Unique set of boundary edges associated to PEs we share these edges with
     std::unordered_map< int, tk::UnsMesh::EdgeSet > m_bndEdges;
     //! \brief Map associating the global IDs and the coordinates of a node
     //!   added to an edge during initial mesh refinement associated to
     //!   a(nother) PE the edge is shared with
-    std::unordered_map< int, tk::UnsMesh::EdgeNodeCoord > m_edgeNodeCoord;
+    std::unordered_map< int, tk::UnsMesh::EdgeNodeCoord > m_edgenodePe;
     //! Queue of requested node IDs from PEs
     std::vector< std::pair< int, std::unordered_set<std::size_t> > > m_reqNodes;
     //! \brief Starting global mesh node ID for node reordering on this PE
@@ -279,13 +280,7 @@ class Partitioner : public CBase_Partitioner {
     //!   assigned) by each PE
     std::size_t m_nmask;
     //! Tetrtahedron element connectivity of our chunk of the mesh (global ids)
-    //! \details This one is the authoritative one outside of initial mesh
-    //!   refinement.
     std::vector< std::size_t > m_ginpoel;
-    //! Tetrtahedron element connectivity of our chunk of the mesh (global ids)
-    //! \details This one is used during communication after mesh partitioning
-    //!   before an initial mesh refinement step.
-    std::vector< std::size_t > m_rinpoel;
     //! Coordinates of mesh nodes of our chunk of the mesh
     tk::UnsMesh::Coords m_coord;
     //! Coordinates associated to global node IDs of our mesh chunk
@@ -349,10 +344,9 @@ class Partitioner : public CBase_Partitioner {
     //!   chares will need to communicate) during time stepping.
     std::unordered_map< int,
       std::unordered_map< int, std::unordered_set< std::size_t > > > m_msum;
-    //! \brief Boundary face list from side-sets.
-    //!   m_bface is the list of boundary faces in the side-sets.
+    //! List of boundary faces associated to side-set IDs
     std::map< int, std::vector< std::size_t > > m_bface;
-    //! \brief Boundary face-node connectivity.
+    //! Boundary face-node connectivity
     std::vector< std::size_t > m_triinpoel;
 
     //! Partition the mesh before a (potential) refinement step
@@ -372,7 +366,7 @@ class Partitioner : public CBase_Partitioner {
     tk::UnsMesh::CoordMap coordmap( const std::vector< std::size_t >& inpoel );
 
     //! Distribute mesh to their PEs during initial mesh refinement
-    void distributePE(
+    void distributePe(
            std::unordered_map< int, std::vector< std::size_t > >&& elems );
 
     //! Distribute mesh to their owner PEs after initial mesh refinement
@@ -403,11 +397,29 @@ class Partitioner : public CBase_Partitioner {
     //! Do error-based mesh refinement
     void errorRefine();
 
+    //! Do mesh refinement based on user explicitly tagging edges
+    void userRefine();
+
     //! Do mesh refinement correcting PE-boundary edges
     void correctRefine( const tk::UnsMesh::EdgeSet& extra );
 
     //! Update mesh after refinement
     void updateMesh( AMR::mesh_adapter_t& refiner );
+
+    //! Update volume mesh after mesh refinement
+    void updateVolumeMesh( AMR::mesh_adapter_t& refiner,
+                           const std::unordered_set< std::size_t >& old,
+                           const std::unordered_set< std::size_t >& ref );
+
+    //! Update boundary data structures after mesh refinement
+    void updateBoundaryMesh( AMR::mesh_adapter_t& refiner,
+                             const std::unordered_set< std::size_t >& old,
+                             const std::unordered_set< std::size_t >& ref );
+
+    //! Evaluate initial conditions (IC) at mesh nodes
+    tk::Fields nodeinit( std::size_t npoin,
+                         const std::pair< std::vector< std::size_t >,
+                                          std::vector< std::size_t > >& esup );
 
     //! Compute final result of reordering
     void reordered();

@@ -71,7 +71,8 @@ add_regression_test(amr_initial_uniform1step_u0.5 ${INCITER_EXECUTABLE}
 
 add_regression_test(amr_initial_uniform2steps_u0.5 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES slot_cyl_amr_uniform2steps.q unitsquare_01_955.exo
+                    INPUTFILES slot_cyl_amr_uniform2steps.q
+                               unitsquare_01_955.exo
                                exodiff.cfg
                                slot_cyl_uni2_pe4_u0.5.std.exo.0
                                slot_cyl_uni2_pe4_u0.5.std.exo.1
@@ -81,7 +82,8 @@ add_regression_test(amr_initial_uniform2steps_u0.5 ${INCITER_EXECUTABLE}
                                slot_cyl_uni2_pe4_u0.5.std.exo.5
                                slot_cyl_uni2_pe4_u0.5.std.exo.6
                                slot_cyl_uni2_pe4_u0.5.std.exo.7
-                    ARGS -c slot_cyl_amr_uniform2steps.q -i unitsquare_01_955.exo
+                    ARGS -c slot_cyl_amr_uniform2steps.q
+                         -i unitsquare_01_955.exo
                          -v -u 0.5
                     BIN_BASELINE slot_cyl_uni2_pe4_u0.5.std.exo.0
                                  slot_cyl_uni2_pe4_u0.5.std.exo.1

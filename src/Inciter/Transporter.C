@@ -56,7 +56,6 @@ Transporter::Transporter() :
   m_chunksize( 0 ),
   m_remainder( 0 ),
   m_solver(),
-  m_bc(),
   m_scheme( g_inputdeck.get< tag::discr, tag::scheme >() ),
   m_partitioner(),
   m_avcost( 0.0 ),
@@ -138,7 +137,10 @@ Transporter::Transporter() :
     m_print.section( "Adaptive mesh refinement (AMR)" );
     m_print.ItemVec< ctr::AMRInitial >
                    ( g_inputdeck.get< tag::amr, tag::init >() );
+    m_print.refvar( g_inputdeck.get< tag::amr, tag::refvar >(),
+                    g_inputdeck.get< tag::amr, tag::id >() );
     m_print.Item< ctr::AMRError, tag::amr, tag::error >();
+    m_print.initref( g_inputdeck.get< tag::amr, tag::edge >() );
   }
 
   // If the desired max number of time steps is larger than zero, and the
@@ -205,39 +207,22 @@ Transporter::createPartitioner()
 // Create mesh partitioner AND boundary conditions group
 // *****************************************************************************
 {
-  // Create ExodusII reader for reading side sets from file.
+  // Create ExodusII reader for reading side sets from file
   tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
 
-  // Read in side sets associated to mesh node IDs from file
-  auto sidenodes = er.readSidesets();
-
-  // Read side sets for boundary faces
+  // Read side sets and boundary-face connectivity on physical boundaries
   std::map< int, std::vector< std::size_t > > bface;
-
   std::vector< std::size_t > triinpoel;
+  auto nbfac = er.readSidesetFaces( bface );
+  er.readFaces( nbfac, triinpoel );
+
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+  if (scheme == ctr::SchemeType::DG)
+    Assert( nbfac > 0, "DG must have boundary faces (and side sets) defined" );
 
-  // Read triangle boundary-face connectivity
-  if (scheme == ctr::SchemeType::DG) {
-    auto nbfac = er.readSidesetFaces( bface );
-    er.readFaces( nbfac, triinpoel );
-  }
-
-  // Verify that side sets to which boundary conditions are assigned by user
-  // exist in mesh file
-  std::unordered_set< int > conf;
-  for (const auto& eq : g_cgpde) eq.side( conf );
-  for (auto i : conf)
-  {
-    if (sidenodes.find(i) == end(sidenodes)) {
-      m_print.diag( "WARNING: Boundary conditions specified on side set " +
-        std::to_string(i) + " which does not exist in mesh file" );
-      break;
-    }
-  }
-
-  // Create boundary conditions Charm++ chare group
-  m_bc = inciter::CProxy_BoundaryConditions::ckNew( sidenodes );
+  // Verify boundarty condition (BC) side sets used exist in mesh file
+  verifyBCsExist( g_cgpde, er );
+  verifyBCsExist( g_dgpde, er );
 
   // Create partitioner callbacks (order matters)
   std::vector< CkCallback > cbp {{
@@ -259,8 +244,8 @@ Transporter::createPartitioner()
 
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
-    CProxy_Partitioner::ckNew( cbp, thisProxy, m_solver, m_bc, m_scheme,
-                               bface, triinpoel );
+    CProxy_Partitioner::ckNew( cbp, thisProxy, m_solver, m_scheme, bface,
+                               triinpoel );
 }
 
 void
@@ -274,13 +259,18 @@ Transporter::refdistributed()
 }
 
 void
-Transporter::matched()
+Transporter::matched( std::size_t extra )
 // *****************************************************************************
 // Reduction target indicating that all PEs have distributed their newly added
 // node IDs shared among multiple PEs
+//! \param[in] extra Max number of edges/PE collected across all PEs that still
+//!   correction due to refinement along PE boundaries
 // *****************************************************************************
 {
-  m_partitioner.nextref();
+std::cout << "max extra: " << extra << '\n';
+  // If at least a single edge on a PE still needs correction, do correction,
+  // otherwise, this initial mesh refinement step is complete
+  if (extra > 0) m_partitioner.correctref(); else m_partitioner.nextref();
 }
 
 void

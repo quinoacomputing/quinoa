@@ -32,7 +32,6 @@ add_dependencies("UnitTest" "dgCharmModule")
 add_dependencies("UnitTest" "discretizationCharmModule")
 add_dependencies("UnitTest" "solverCharmModule")
 add_dependencies("UnitTest" "transporterCharmModule")
-add_dependencies("UnitTest" "boundaryconditionsCharmModule")
 
 # Add extra dependency of TUTSuite on charm modules testing advanced array
 # element placement using maps. This is required since TUTSuite spawns chare

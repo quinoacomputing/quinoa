@@ -38,11 +38,9 @@ using inciter::Discretization;
 Discretization::Discretization(
   const CProxy_DistFCT& fctproxy,
   const CProxy_Transporter& transporter,
-  const CProxy_BoundaryConditions& bc,
   const std::vector< std::size_t >& conn,
   const tk::UnsMesh::CoordMap& coordmap,
   const std::unordered_map< int, std::unordered_set< std::size_t > >& msum,
-  const std::unordered_map< std::size_t, std::size_t >& filenodes,
   int nchare ) :
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
@@ -58,8 +56,6 @@ Discretization::Discretization(
                 ),
   m_fct( fctproxy ),
   m_transporter( transporter ),
-  m_bc( bc ),
-  m_filenodes( filenodes ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
   m_coord( setCoord( coordmap ) ),
   m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
@@ -76,8 +72,6 @@ Discretization::Discretization(
 //! \param[in] coordmap Coordinates of mesh nodes and their global IDs
 //! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
 //!   mesh chunk we operate on
-//! \param[in] filenodes Map associating old node IDs (as in file) to new node
-//!   IDs (as in producing contiguous-row-id linear system contributions)
 //! \param[in] nchare Total number of Discretization chares
 //! \details "Contiguous-row-id" here means that the numbering of the mesh nodes
 //!   (which corresponds to rows in the linear system) are (approximately)
@@ -355,12 +349,10 @@ Discretization::writeMesh()
     } else
     #endif
     {
-
       // Create ExodusII writer
       tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
       // Write chare mesh initializing element connectivity and point coords
       ew.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
-    
     }    
   }
 }
