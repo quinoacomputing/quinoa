@@ -63,18 +63,20 @@ InciterPrint::pdes( const std::string& t, const std::vector< std::vector<
   }
 }
 
-void InciterPrint::refvar( const std::vector< std::string >& refvar,
+void InciterPrint::refvar( const std::vector< std::string >& rvar,
                            const std::vector< std::size_t >& refidx )
 // *****************************************************************************
 // Print mesh refinement variables and their indices in the unknown vector
+//! \param[in] rvar Refinement variable name list
+//! \param[in] refidx Refinement variable index (location in data array) list
 // *****************************************************************************
 {
-   Assert( refvar.size() == refidx.size(), "Size mismatch" );
+   Assert( rvar.size() == refidx.size(), "Size mismatch" );
 
    std::string c;
-   for (std::size_t i=0; i<refvar.size(); ++i)
-     c += refvar[i] + '[' + std::to_string(refidx[i]) + "] ";
-   auto name = kw::amr_refvar::name() + " & id(s)";
+   for (std::size_t i=0; i<rvar.size(); ++i)
+     c += rvar[i] + '[' + std::to_string(refidx[i]) + "] ";
+   auto name = kw::amr_rvar::name() + " & id(s)";
    name[0] = static_cast< char >( std::toupper( name[0] ) );
    item( name, c );
 }

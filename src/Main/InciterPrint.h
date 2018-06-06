@@ -141,7 +141,7 @@ class InciterPrint : public tk::Print {
                   const std::string& legend, const std::string& head ) const;
 
     //! Print mesh refinement variables and their indices in the unknown vector
-    void refvar( const std::vector< std::string >& refvar,
+    void refvar( const std::vector< std::string >& rvar,
                  const std::vector< std::size_t >& refidx );
 
     //! Print initial mesh refinement edge-node pairs
