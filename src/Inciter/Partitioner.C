@@ -1399,9 +1399,6 @@ Partitioner::userRefine()
 // Do mesh refinement based on user explicitly tagging edges
 // *****************************************************************************
 {
-  // Instantiate mesh refiner
-  AMR::mesh_adapter_t refiner( m_inpoel );
-
   // Find number of nodes in old mesh
   auto npoin = tk::npoin( m_inpoel );
   // Generate edges surrounding points in old mesh
@@ -1429,10 +1426,10 @@ Partitioner::userRefine()
   Assert( edge.size() == crit.size(), "Size mismatch" );
 
   // Do error-based refinement
-  refiner.error_refinement( edge, crit );
+  m_refiner.error_refinement( edge, crit );
 
   // Update mesh coordinates and connectivity
-  updateMesh( refiner );
+  updateMesh();
 }
 
 tk::Fields
