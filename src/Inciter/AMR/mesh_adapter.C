@@ -4,30 +4,6 @@
 
 namespace AMR {
 
-    void mesh_adapter_t::init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t* graph_size)
-    {
-        node_store.set_x(m_x);
-        node_store.set_y(m_y);
-        node_store.set_z(m_z);
-        node_store.m_graphsize = graph_size;
-    }
-
-    void mesh_adapter_t::init_with_nodes(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t* graph_size)
-    {
-        init_node_store(m_x, m_y, m_z, graph_size);
-        //init(); // TODO: This also needs to call init if you want node support to work
-    }
-    AMR::refinement_t
-    mesh_adapter_t::init(const std::vector<size_t>& tetinpoel, size_t num_nodes) {
-        node_connectivity.fill_initial_nodes(num_nodes);
-
-        auto ref = AMR::refinement_t(tet_store, node_connectivity);
-
-        consume_tets(tetinpoel);
-        tet_store.generate_edges();
-        return ref;
-    }
-
     // This would be a candidate for a nice design pattern with runtime
     // selectable functionality..
     // TODO: Document this

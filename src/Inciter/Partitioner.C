@@ -88,7 +88,8 @@ Partitioner::Partitioner(
   m_bnodechares(),
   m_msum(),
   m_bface( bface ),
-  m_triinpoel( triinpoel )
+  m_triinpoel( triinpoel ),
+  m_refiner( readMesh() )
 // *****************************************************************************
 //  Constructor
 //! \param[in] cb Charm++ callbacks
@@ -98,6 +99,27 @@ Partitioner::Partitioner(
 //! \param[in] scheme Discretization scheme
 //! \param[in] bface Face lists mapped to side set ids
 //! \param[in] triinpoel Interconnectivity of points and boundary-face
+// *****************************************************************************
+{
+  // Send progress report to host
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.peread();
+
+  // Store initial mesh refinement type list in reverse order
+  m_initref = g_inputdeck.get< tag::amr, tag::init >();
+  std::reverse( begin(m_initref), end(m_initref) );
+
+  if ( !g_inputdeck.get< tag::amr, tag::init >().empty() ||
+       !g_inputdeck.get< tag::amr, tag::edge >().empty() )
+    partref();          // if initial mesh refinement configured, partition
+  else
+    finishref();        // if not, continue
+}
+
+AMR::mesh_adapter_t
+Partitioner::readMesh()
+// *****************************************************************************
+// Read mesh from file and initialize and return mesh refiner
+//! \return Mesh refiner object
 // *****************************************************************************
 {
   // Create mesh reader
@@ -112,18 +134,8 @@ Partitioner::Partitioner(
   // Read our chunk of the mesh node coordinates from file
   m_coord = mr.readCoords( m_gid );
 
-  // Send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.peread();
-
-  // Store initial mesh refinement type list in reverse order
-  m_initref = g_inputdeck.get< tag::amr, tag::init >();
-  std::reverse( begin(m_initref), end(m_initref) );
-
-  if ( !g_inputdeck.get< tag::amr, tag::init >().empty() ||
-       !g_inputdeck.get< tag::amr, tag::edge >().empty() )
-    partref();          // if initial mesh refinement configured, partition
-  else
-    finishref();        // if not, continue
+  // Create and return mesh refiner
+  return AMR::mesh_adapter_t( m_inpoel );
 }
 
 void
@@ -1327,14 +1339,11 @@ Partitioner::uniformRefine()
 // Do uniform mesh refinement
 // *****************************************************************************
 {
-  // Instantiate mesh refiner
-  AMR::mesh_adapter_t refiner( m_inpoel );
-
   // Do uniform refinement
-  refiner.uniform_refinement();
+  m_refiner.uniform_refinement();
 
   // Update mesh coordinates and connectivity
-  updateMesh( refiner );
+  updateMesh();
 }
 
 void
@@ -1343,9 +1352,6 @@ Partitioner::errorRefine()
 // Do error-based mesh refinement
 // *****************************************************************************
 {
-  // Instantiate mesh refiner
-  AMR::mesh_adapter_t refiner( m_inpoel );
-
   // Find number of nodes in old mesh
   auto npoin = tk::npoin( m_inpoel );
   // Generate edges surrounding points in old mesh
@@ -1381,10 +1387,10 @@ Partitioner::errorRefine()
   Assert( edge.size() == crit.size(), "Size mismatch" );
 
   // Do error-based refinement
-  refiner.error_refinement( edge, crit );
+  m_refiner.error_refinement( edge, crit );
 
   // Update mesh coordinates and connectivity
-  updateMesh( refiner );
+  updateMesh();
 }
 
 void
@@ -1491,40 +1497,36 @@ Partitioner::correctRefine( const tk::UnsMesh::EdgeSet& extra )
 // *****************************************************************************
 {
   if (!extra.empty()) {
-    // Instantiate mesh refiner
-    AMR::mesh_adapter_t refiner( m_inpoel );
-  
     // Generate list of edges that need to be corrected
     std::vector< edge_t > edge;
     for (const auto& e : extra) edge.push_back( edge_t(e[0],e[1]) );
     std::vector< real_t > crit( edge.size(), 1.0 );
   
     // Do refinement including edges that need to be corrected
-    refiner.error_refinement( edge, crit );
+    m_refiner.error_refinement( edge, crit );
   
     // Update mesh coordinates and connectivity
-    updateMesh( refiner );
+    updateMesh();
   }
 }
 
 void
-Partitioner::updateMesh( AMR::mesh_adapter_t& refiner )
+Partitioner::updateMesh()
 // *****************************************************************************
 // Update mesh after refinement
-//! \param[in] refiner Mesh refiner (AMR) object
 // *****************************************************************************
 {
   // Get refined mesh connectivity
-  const auto& refinpoel = refiner.tet_store.get_active_inpoel();
+  const auto& refinpoel = m_refiner.tet_store.get_active_inpoel();
   Assert( refinpoel.size()%4 == 0, "Inconsistent refined mesh connectivity" );
 
   // Generate unique node lists of old and refined mesh using local ids
   std::unordered_set< std::size_t > old( m_inpoel.cbegin(), m_inpoel.cend() );
   std::unordered_set< std::size_t > ref( refinpoel.cbegin(), refinpoel.cend() );
 
-  updateVolumeMesh( refiner, old, ref );
+  updateVolumeMesh( old, ref );
 
-  updateBoundaryMesh( refiner, old, ref );
+  updateBoundaryMesh( old, ref );
 
   // Update mesh connectivity with local node IDs
   m_inpoel = refinpoel;
@@ -1537,12 +1539,10 @@ Partitioner::updateMesh( AMR::mesh_adapter_t& refiner )
 }
 
 void
-Partitioner::updateVolumeMesh( AMR::mesh_adapter_t& refiner,
-                               const std::unordered_set< std::size_t >& old,
+Partitioner::updateVolumeMesh( const std::unordered_set< std::size_t >& old,
                                const std::unordered_set< std::size_t >& ref )
 // *****************************************************************************
 //  Update volume mesh after mesh refinement
-//! \param[in] refiner Mesh refiner (AMR) object
 //! \param[in] old Unique nodes of the old (unrefined) mesh using local ids
 //! \param[in] ref Unique nodes of the refined mesh using local ids
 // *****************************************************************************
@@ -1562,7 +1562,7 @@ Partitioner::updateVolumeMesh( AMR::mesh_adapter_t& refiner,
   for (auto r : ref) {               // for all unique nodes of the refined mesh
     if (old.find(r) == end(old)) {   // if node is newly added (in this step)
       // get (local) parent ids of newly added node
-      auto p = refiner.node_connectivity.get( r );
+      auto p = m_refiner.node_connectivity.get( r );
       Assert( old.find(p[0]) != end(old) && old.find(p[1]) != end(old),
               "Parent(s) not in old mesh" );
       Assert( r >= old.size(), "Attempting to overwrite node with added one" );
@@ -1599,12 +1599,10 @@ Partitioner::updateVolumeMesh( AMR::mesh_adapter_t& refiner,
 }
 
 void
-Partitioner::updateBoundaryMesh( AMR::mesh_adapter_t& refiner,
-                                 const std::unordered_set< std::size_t >& old,
+Partitioner::updateBoundaryMesh( const std::unordered_set< std::size_t >& old,
                                  const std::unordered_set< std::size_t >& ref )
 // *****************************************************************************
 // Update boundary data structures after mesh refinement
-//! \param[in] refiner Mesh refiner (AMR) object
 //! \param[in] old Unique nodes of the old (unrefined) mesh using local ids
 //! \param[in] ref Unique nodes of the refined mesh using local ids
 // *****************************************************************************
@@ -1684,14 +1682,15 @@ Partitioner::updateBoundaryMesh( AMR::mesh_adapter_t& refiner,
   // looking for. This search may find 3 or 4 parent nodes, depending on whether
   // the child shares or does not share a face with the parent tet,
   // respectively.
-  auto parentFace = [ &old, &refiner ]( const Face& face ){
+  auto parentFace = [ &old, this ]( const Face& face ){
     std::unordered_set< std::size_t > s;// will store nodes of parent face
     for (auto n : face) {               // for all 3 nodes of the face
       if (old.find(n) != end(old))      // if child node found in old mesh,
         s.insert( n );                  // that node is also in the parent face
       else {                            // if child node is a newly added one
-        auto p = refiner.node_connectivity.get( n );  // find its parent nodes
-        s.insert( begin(p), end(p) );                 // and store both uniquely
+        // find its parent nodes and store both uniquely
+        auto p = this->m_refiner.node_connectivity.get( n );
+        s.insert( begin(p), end(p) );
       }
     }
     // Ensure all parent nodes are part of the old (unrefined) mesh
@@ -1711,14 +1710,14 @@ Partitioner::updateBoundaryMesh( AMR::mesh_adapter_t& refiner,
     // will associate to side set id of old (unrefined) mesh boundary face
     auto& side = bface[ f.second.first ];
     // query number of children of boundary tet adjacent to boundary face
-    auto nc = refiner.tet_store.data( f.second.second ).num_children;
+    auto nc = m_refiner.tet_store.data( f.second.second ).num_children;
     if (nc == 0) {      // if boundary tet is not refined, add its boundary face
       addBndFace( side, f.first );
     } else {            // if boundary tet is refined
-      const auto& tets = refiner.tet_store.tets;
+      const auto& tets = m_refiner.tet_store.tets;
       for (decltype(nc) i=0; i<nc; ++i ) {      // for all child tets
         // get child tet id
-        auto childtet = refiner.tet_store.get_child_id( f.second.second, i );
+        auto childtet = m_refiner.tet_store.get_child_id( f.second.second, i );
         auto ct = tets.find( childtet );
         Assert( ct != end(tets), "Child tet not found" );
         // ensure all nodes of child tet are in refined mesh

@@ -15,91 +15,91 @@ add_regression_test(amr_initial_uniform1step ${INCITER_EXECUTABLE}
 
 # Parallel, no virtualization
 
-add_regression_test(amr_initial_uniform1step ${INCITER_EXECUTABLE}
-                    NUMPES 4
-                    INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
-                               exodiff.cfg
-                               slot_cyl_pe4_u0.0.std.exo.0
-                               slot_cyl_pe4_u0.0.std.exo.1
-                               slot_cyl_pe4_u0.0.std.exo.2
-                               slot_cyl_pe4_u0.0.std.exo.3
-                    ARGS -c slot_cyl_amr.q -i unitsquare_01_955.exo -v
-                    BIN_BASELINE slot_cyl_pe4_u0.0.std.exo.0
-                                 slot_cyl_pe4_u0.0.std.exo.1
-                                 slot_cyl_pe4_u0.0.std.exo.2
-                                 slot_cyl_pe4_u0.0.std.exo.3
-                    BIN_RESULT out.0
-                               out.1
-                               out.2
-                               out.3
-                    BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff.cfg)
-
-# Parallel, virtualization = 0.5
-
-add_regression_test(amr_initial_uniform1step_u0.5 ${INCITER_EXECUTABLE}
-                    NUMPES 4
-                    INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
-                               exodiff.cfg
-                               slot_cyl_pe4_u0.5.std.exo.0
-                               slot_cyl_pe4_u0.5.std.exo.1
-                               slot_cyl_pe4_u0.5.std.exo.2
-                               slot_cyl_pe4_u0.5.std.exo.3
-                               slot_cyl_pe4_u0.5.std.exo.4
-                               slot_cyl_pe4_u0.5.std.exo.5
-                               slot_cyl_pe4_u0.5.std.exo.6
-                               slot_cyl_pe4_u0.5.std.exo.7
-                    ARGS -c slot_cyl_amr.q -i unitsquare_01_955.exo -v -u 0.5
-                    BIN_BASELINE slot_cyl_pe4_u0.5.std.exo.0
-                                 slot_cyl_pe4_u0.5.std.exo.1
-                                 slot_cyl_pe4_u0.5.std.exo.2
-                                 slot_cyl_pe4_u0.5.std.exo.3
-                                 slot_cyl_pe4_u0.5.std.exo.4
-                                 slot_cyl_pe4_u0.5.std.exo.5
-                                 slot_cyl_pe4_u0.5.std.exo.6
-                                 slot_cyl_pe4_u0.5.std.exo.7
-                    BIN_RESULT out.0
-                               out.1
-                               out.2
-                               out.3
-                               out.4
-                               out.5
-                               out.6
-                               out.7
-                    BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff.cfg)
-
-add_regression_test(amr_initial_uniform2steps_u0.5 ${INCITER_EXECUTABLE}
-                    NUMPES 4
-                    INPUTFILES slot_cyl_amr_uniform2steps.q
-                               unitsquare_01_955.exo
-                               exodiff.cfg
-                               slot_cyl_uni2_pe4_u0.5.std.exo.0
-                               slot_cyl_uni2_pe4_u0.5.std.exo.1
-                               slot_cyl_uni2_pe4_u0.5.std.exo.2
-                               slot_cyl_uni2_pe4_u0.5.std.exo.3
-                               slot_cyl_uni2_pe4_u0.5.std.exo.4
-                               slot_cyl_uni2_pe4_u0.5.std.exo.5
-                               slot_cyl_uni2_pe4_u0.5.std.exo.6
-                               slot_cyl_uni2_pe4_u0.5.std.exo.7
-                    ARGS -c slot_cyl_amr_uniform2steps.q
-                         -i unitsquare_01_955.exo
-                         -v -u 0.5
-                    BIN_BASELINE slot_cyl_uni2_pe4_u0.5.std.exo.0
-                                 slot_cyl_uni2_pe4_u0.5.std.exo.1
-                                 slot_cyl_uni2_pe4_u0.5.std.exo.2
-                                 slot_cyl_uni2_pe4_u0.5.std.exo.3
-                                 slot_cyl_uni2_pe4_u0.5.std.exo.4
-                                 slot_cyl_uni2_pe4_u0.5.std.exo.5
-                                 slot_cyl_uni2_pe4_u0.5.std.exo.6
-                                 slot_cyl_uni2_pe4_u0.5.std.exo.7
-                    BIN_RESULT out.0
-                               out.1
-                               out.2
-                               out.3
-                               out.4
-                               out.5
-                               out.6
-                               out.7
-                    BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff.cfg)
+#add_regression_test(amr_initial_uniform1step ${INCITER_EXECUTABLE}
+#                    NUMPES 4
+#                    INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
+#                               exodiff.cfg
+#                               slot_cyl_pe4_u0.0.std.exo.0
+#                               slot_cyl_pe4_u0.0.std.exo.1
+#                               slot_cyl_pe4_u0.0.std.exo.2
+#                               slot_cyl_pe4_u0.0.std.exo.3
+#                    ARGS -c slot_cyl_amr.q -i unitsquare_01_955.exo -v
+#                    BIN_BASELINE slot_cyl_pe4_u0.0.std.exo.0
+#                                 slot_cyl_pe4_u0.0.std.exo.1
+#                                 slot_cyl_pe4_u0.0.std.exo.2
+#                                 slot_cyl_pe4_u0.0.std.exo.3
+#                    BIN_RESULT out.0
+#                               out.1
+#                               out.2
+#                               out.3
+#                    BIN_DIFF_PROG_ARGS -m
+#                    BIN_DIFF_PROG_CONF exodiff.cfg)
+#
+## Parallel, virtualization = 0.5
+#
+#add_regression_test(amr_initial_uniform1step_u0.5 ${INCITER_EXECUTABLE}
+#                    NUMPES 4
+#                    INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
+#                               exodiff.cfg
+#                               slot_cyl_pe4_u0.5.std.exo.0
+#                               slot_cyl_pe4_u0.5.std.exo.1
+#                               slot_cyl_pe4_u0.5.std.exo.2
+#                               slot_cyl_pe4_u0.5.std.exo.3
+#                               slot_cyl_pe4_u0.5.std.exo.4
+#                               slot_cyl_pe4_u0.5.std.exo.5
+#                               slot_cyl_pe4_u0.5.std.exo.6
+#                               slot_cyl_pe4_u0.5.std.exo.7
+#                    ARGS -c slot_cyl_amr.q -i unitsquare_01_955.exo -v -u 0.5
+#                    BIN_BASELINE slot_cyl_pe4_u0.5.std.exo.0
+#                                 slot_cyl_pe4_u0.5.std.exo.1
+#                                 slot_cyl_pe4_u0.5.std.exo.2
+#                                 slot_cyl_pe4_u0.5.std.exo.3
+#                                 slot_cyl_pe4_u0.5.std.exo.4
+#                                 slot_cyl_pe4_u0.5.std.exo.5
+#                                 slot_cyl_pe4_u0.5.std.exo.6
+#                                 slot_cyl_pe4_u0.5.std.exo.7
+#                    BIN_RESULT out.0
+#                               out.1
+#                               out.2
+#                               out.3
+#                               out.4
+#                               out.5
+#                               out.6
+#                               out.7
+#                    BIN_DIFF_PROG_ARGS -m
+#                    BIN_DIFF_PROG_CONF exodiff.cfg)
+#
+#add_regression_test(amr_initial_uniform2steps_u0.5 ${INCITER_EXECUTABLE}
+#                    NUMPES 4
+#                    INPUTFILES slot_cyl_amr_uniform2steps.q
+#                               unitsquare_01_955.exo
+#                               exodiff.cfg
+#                               slot_cyl_uni2_pe4_u0.5.std.exo.0
+#                               slot_cyl_uni2_pe4_u0.5.std.exo.1
+#                               slot_cyl_uni2_pe4_u0.5.std.exo.2
+#                               slot_cyl_uni2_pe4_u0.5.std.exo.3
+#                               slot_cyl_uni2_pe4_u0.5.std.exo.4
+#                               slot_cyl_uni2_pe4_u0.5.std.exo.5
+#                               slot_cyl_uni2_pe4_u0.5.std.exo.6
+#                               slot_cyl_uni2_pe4_u0.5.std.exo.7
+#                    ARGS -c slot_cyl_amr_uniform2steps.q
+#                         -i unitsquare_01_955.exo
+#                         -v -u 0.5
+#                    BIN_BASELINE slot_cyl_uni2_pe4_u0.5.std.exo.0
+#                                 slot_cyl_uni2_pe4_u0.5.std.exo.1
+#                                 slot_cyl_uni2_pe4_u0.5.std.exo.2
+#                                 slot_cyl_uni2_pe4_u0.5.std.exo.3
+#                                 slot_cyl_uni2_pe4_u0.5.std.exo.4
+#                                 slot_cyl_uni2_pe4_u0.5.std.exo.5
+#                                 slot_cyl_uni2_pe4_u0.5.std.exo.6
+#                                 slot_cyl_uni2_pe4_u0.5.std.exo.7
+#                    BIN_RESULT out.0
+#                               out.1
+#                               out.2
+#                               out.3
+#                               out.4
+#                               out.5
+#                               out.6
+#                               out.7
+#                    BIN_DIFF_PROG_ARGS -m
+#                    BIN_DIFF_PROG_CONF exodiff.cfg)
