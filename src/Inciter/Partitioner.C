@@ -151,15 +151,6 @@ Partitioner::partref()
   std::vector< long > gelemid( m_inpoel.size()/4 );
   std::iota( begin(gelemid), end(gelemid), 0 );
 
-{auto initref = g_inputdeck.get< tag::amr, tag::init >();
-auto level = initref.size() - m_initref.size();
-tk::UnsMesh rm( m_inpoel, m_coord );
-tk::ExodusIIMeshWriter mwr( "initref.partref." + std::to_string(level) + '.' +
-                             std::to_string(CkMyPe()),
-                            tk::ExoWriter::CREATE );
-
-mwr.writeMesh( rm );}
-
   // Partition the mesh using Zoltan to number of PEs parts
   const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
   const auto pel = tk::zoltan::geomPartMesh( alg,
@@ -203,12 +194,6 @@ Partitioner::partchare( int nchare )
   // Generate element IDs for Zoltan
   std::vector< long > gelemid( m_ginpoel.size()/4 );
   std::iota( begin(gelemid), end(gelemid), 0 );
-
-tk::UnsMesh rm( m_inpoel, m_coord );
-tk::ExodusIIMeshWriter mwr( "initref.partchare." + std::to_string(CkMyPe()),
-                            tk::ExoWriter::CREATE );
-
-mwr.writeMesh( rm );
 
   m_nchare = nchare;
   const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
@@ -386,33 +371,6 @@ Partitioner::flatten()
 //!   longer categorized by (or associated to) chares.
 // *****************************************************************************
 {
-  std::size_t l = 0;
-  for (const auto& i : m_chinpoel) {      // for all meshes passed in
-    // generate local ids and connectivity from global connectivity
-    auto el = tk::global2local( i.second );
-    const auto& inpoel = std::get< 0 >( el );   // local connectivity
-    const auto& lid = std::get< 2 >( el );      // global->local node ids
-    auto np = tk::npoin( inpoel );
-    tk::UnsMesh::Coords coord;
-    coord[0].resize( np );
-    coord[1].resize( np );
-    coord[2].resize( np );
-    for (const auto& c : m_coordmap) {
-      auto p = lid.find( c.first );
-      if (p != lid.end()) {
-        Assert( p->second < np, "Indexing out of coord vector" );
-        coord[0][p->second] = c.second[0];
-        coord[1][p->second] = c.second[1];
-        coord[2][p->second] = c.second[2];
-      }
-    }
-    tk::UnsMesh refmesh( inpoel, coord );
-    tk::ExodusIIMeshWriter mw( "initref.flatten." + std::to_string(l++) + '.' +
-                               std::to_string(CkMyPe()),
-                               tk::ExoWriter::CREATE );
-    mw.writeMesh( refmesh );
-  }
-
   // Make sure all cells of all chare meshes have non-negative Jacobians
   Assert( positiveJacobians( m_chinpoel, m_coordmap ),
           "Chare-partitioned mesh cell Jacobian non-positive" );
@@ -1099,18 +1057,6 @@ Partitioner::refine()
     m_coord[1][i] = c.second[1];
     m_coord[2][i] = c.second[2];
   }
-
-  // Query user input for initial mesh refinement type list
-  auto initref = g_inputdeck.get< tag::amr, tag::init >();
-  // Determine which level this is
-  auto level = initref.size() - m_initref.size();
-
-  // Output mesh before this initial refinement step
-  tk::UnsMesh refmesh( m_inpoel, m_coord );
-  tk::ExodusIIMeshWriter mw( "initref.b." + std::to_string(level) + '.' +
-                               std::to_string(CkMyPe()),
-                             tk::ExoWriter::CREATE );
-  mw.writeMesh( refmesh );
 
   for (const auto& e : tk::cref_find(m_bndEdges,CkMyPe())) {
     IGNORE(e);
