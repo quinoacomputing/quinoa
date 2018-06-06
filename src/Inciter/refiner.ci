@@ -1,0 +1,21 @@
+// *****************************************************************************
+/*!
+  \file      src/Inciter/refiner.ci
+  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \brief     Charm++ module interface file for mesh refiner
+  \details   Charm++ module interface file for mesh refiner.
+  \see       Refiner.h and Refiner.C for more info.
+*/
+// *****************************************************************************
+
+module refiner {
+
+  namespace inciter {
+
+    array [1D] Refiner {
+      entry Refiner();
+    };
+
+  } // inciter::
+
+}

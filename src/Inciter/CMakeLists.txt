@@ -10,6 +10,7 @@ add_library(Inciter
             Partitioner.C
             FaceData.C
             Discretization.C
+            Refiner.C
             MatCG.C
             DiagCG.C
             DG.C
@@ -32,6 +33,7 @@ add_library(MeshRefinement
 addCharmModule( "transporter" "Inciter" )
 addCharmModule( "partitioner" "Inciter" )
 addCharmModule( "discretization" "Inciter" )
+addCharmModule( "refiner" "Inciter" )
 addCharmModule( "matcg" "Inciter" )
 addCharmModule( "diagcg" "Inciter" )
 addCharmModule( "distfct" "Inciter" )
