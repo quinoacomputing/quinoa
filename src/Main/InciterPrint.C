@@ -76,7 +76,7 @@ void InciterPrint::refvar( const std::vector< std::string >& rvar,
    std::string c;
    for (std::size_t i=0; i<rvar.size(); ++i)
      c += rvar[i] + '[' + std::to_string(refidx[i]) + "] ";
-   auto name = kw::amr_rvar::name() + " & id(s)";
+   auto name = kw::amr_refvar::name() + " & id(s)";
    name[0] = static_cast< char >( std::toupper( name[0] ) );
    item( name, c );
 }
