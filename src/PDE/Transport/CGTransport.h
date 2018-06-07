@@ -357,14 +357,14 @@ class Transport {
     //!    all components in this PDE system
     //! \param[in] t Physical time
     //! \param[in] deltat Time step size
-    //! \param[in] ss Pair of side set ID and node IDs on the side set
+    //! \param[in] ss Pair of side set ID and list of node IDs on the side set
     //! \param[in] coord Mesh node coordinates
     //! \return Vector of pairs of bool and boundary condition value associated
     //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
     //!   that instead of the actual boundary condition value, we return the
     //!   increment between t+dt and t, since that is what the solution requires
     //!   as we solve for the soution increments and not the solution itself.
-    std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
+    std::map< std::size_t, std::vector< std::pair<bool,tk::real> > >
     dirbc( tk::real t,
            tk::real deltat,
            const std::pair< const int, std::vector< std::size_t > >& ss,
@@ -372,7 +372,7 @@ class Transport {
     {
       using tag::param; using tag::transport; using tag::bcdir;
       using NodeBC = std::vector< std::pair< bool, tk::real > >;
-      std::unordered_map< std::size_t, NodeBC > bc;
+      std::map< std::size_t, NodeBC > bc;
       const auto& ubc = g_inputdeck.get< param, transport, bcdir >();
       if (!ubc.empty()) {
         Assert( ubc.size() > m_c, "Indexing out of Dirichlet BC eq-vector" );

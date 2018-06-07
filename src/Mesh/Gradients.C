@@ -11,6 +11,7 @@
 #include "Exception.h"
 #include "Gradients.h"
 #include "Vector.h"
+#include "Around.h"
 
 namespace tk {
 
@@ -45,11 +46,7 @@ nodegrad( std::size_t node,
   tk::real vol = 0.0;
 
   // loop over cells surrounding mesh node
-  for (auto k=esup.second[node]+1; k<=esup.second[node+1]; ++k) {
-
-     // access element id
-     auto e = esup.first[k];
-
+  for (auto e : tk::Around(esup,node)) {
      // access node IDs
      const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
                                             inpoel[e*4+2], inpoel[e*4+3] }};
@@ -121,11 +118,7 @@ edgegrad( std::size_t edge,
   tk::real vol = 0.0;
 
   // loop over cells surrounding mesh edge
-  for (auto k=esued.second[edge]+1; k<=esued.second[edge+1]; ++k) {
-
-     // access element id
-     auto e = esued.first[k];
-
+  for (auto e : tk::Around(esued,edge)) {
      // access node IDs
      const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
                                             inpoel[e*4+2], inpoel[e*4+3] }};

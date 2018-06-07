@@ -98,9 +98,6 @@ class MatCG : public CBase_MatCG {
     //! Evaluate whether to continue with next step
     void eval();
 
-    //! Verify that solution does not change at Dirichlet boundary conditions
-    bool correctBC( const tk::Fields& a );
-
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -111,6 +108,7 @@ class MatCG : public CBase_MatCG {
       p | m_nlsol;
       p | m_disc;
       p | m_solver;
+      p | m_fd;
       p | m_u;
       p | m_ul;
       p | m_du;
@@ -140,9 +138,8 @@ class MatCG : public CBase_MatCG {
     CProxy_Discretization m_disc;
     //! Linear system merger and solver proxy
     tk::CProxy_Solver m_solver;
-    //! \brief Map associating local node IDs to side set IDs for all side sets
-    //!   read from mesh file (not only those the user sets BCs on)
-    std::map< int, std::vector< std::size_t > > m_side;
+    //! Face data
+    FaceData m_fd;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
     //! Unknown/solution vector at mesh nodes (low orderd)

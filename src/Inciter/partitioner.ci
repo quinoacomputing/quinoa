@@ -24,7 +24,6 @@ module partitioner {
         const std::vector< CkCallback >& cb,
         const CProxy_Transporter& host,
         const tk::CProxy_Solver& solver,
-        const CProxy_BoundaryConditions& bc,
         const Scheme& scheme,
         const std::map< int, std::vector< std::size_t > >& bface,
         const std::vector< std::size_t >& triinpoel );
@@ -43,6 +42,7 @@ module partitioner {
       entry void addRefBndEdges( int frompe,
                                  const tk::UnsMesh::EdgeNodeCoord& en );
       entry void recvRefBndEdges();
+      entry void correctref();
       entry void nextref();
       entry void flatten();
       entry void offset( int pe, std::size_t u );

@@ -132,15 +132,6 @@ class DistFCT : public CBase_DistFCT {
       const tk::Fields& A;
     };
   
-    //! Functor to call the correctBC() member function behind SchemeProxy
-    struct correctBC : boost::static_visitor< bool > {
-      correctBC( const tk::Fields& a ) : A(a) {}
-      template< typename P >
-        bool operator()( const P& p ) const
-        { return p.ckLocal()->correctBC( A ); }
-      const tk::Fields& A;
-    };
-
   public:
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -315,9 +306,6 @@ class DistFCT : public CBase_DistFCT {
 
     //! Apply limited antidiffusive element contributions
     void apply();
-
-    //! Verify that solution does not change at Dirichlet boundary conditions
-    bool verifyBC();
 };
 
 } // inciter::

@@ -128,7 +128,7 @@ class DiagCG : public CBase_DiagCG {
     //! Constructor
     explicit DiagCG( const CProxy_Discretization& disc,
                      const tk::CProxy_Solver&,
-                     const FaceData& );
+                     const FaceData& fd );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -164,9 +164,6 @@ class DiagCG : public CBase_DiagCG {
     void comdif( const std::vector< std::size_t >& gid,
                  const std::vector< std::vector< tk::real > >& D );
 
-    //! Verify that solution does not change at Dirichlet boundary conditions
-    bool correctBC( const tk::Fields& a );
-
     //! Prepare for next step    
     void next( const tk::Fields& a );
 
@@ -185,7 +182,7 @@ class DiagCG : public CBase_DiagCG {
       p | m_ndif;
       p | m_disc;
       p | m_solver;
-      p | m_side;
+      p | m_fd;
       p | m_u;
       p | m_ul;
       p | m_du;
@@ -223,8 +220,8 @@ class DiagCG : public CBase_DiagCG {
     CProxy_Discretization m_disc;
     //! Linear system merger and solver proxy
     tk::CProxy_Solver m_solver;
-    //! Map associating local node IDs to side set IDs
-    std::map< int, std::vector< std::size_t > > m_side;
+    //! Face data
+    FaceData m_fd;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
     //! Unknown/solution vector at mesh nodes (low orderd)

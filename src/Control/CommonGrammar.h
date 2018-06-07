@@ -122,6 +122,7 @@ namespace grm {
     VELOCITY_DEPVAR,    //!< Missing required velocity model dependent variable
     POSITION_MISSING,   //!< Missing required position model
     VELOCITY_MISSING,   //!< Missing required velocity model
+    INITREFODD,         //!< AMR initref vector size is odd (must be even)
     CHARMARG };         //!< Argument inteded for the Charm++ runtime system
 
   //! Associate parser errors to error messages
@@ -291,6 +292,10 @@ namespace grm {
       "e.g., position." },
     { MsgKey::POSITION_MISSING, "Specification for a position model missing." },
     { MsgKey::VELOCITY_MISSING, "Specification for a velocity model missing." },
+    { MsgKey::INITREFODD, "Error in the preceding line or block. "
+      "The number of edge-nodes, marking edges as pairs of nodes, used for "
+      "explicit tagging of edges for initial mesh refineoment is odd (it must "
+      "be even)." },
     { MsgKey::CHARMARG, "Arguments starting with '+' are assumed to be inteded "
       "for the Charm++ runtime system. Did you forget to prefix the command "
       "line with charmrun? If this warning persists even after running with "

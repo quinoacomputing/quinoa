@@ -164,6 +164,7 @@ struct bcoutlet {};
 struct bcextrapolate {};
 struct material {};
 struct id {};
+struct edge {};
 struct cv {};
 struct k {};
 struct com {};

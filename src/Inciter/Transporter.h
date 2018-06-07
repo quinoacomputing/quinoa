@@ -355,7 +355,6 @@
 #include "VectorReducer.h"
 #include "Progress.h"
 #include "Scheme.h"
-#include "BoundaryConditions.h"
 
 namespace inciter {
 
@@ -403,7 +402,7 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target indicating that all PEs have distributed their
     //!   newly added node IDs shared along the boundary with other PEs
-    void matched();
+    void matched( std::size_t extra );
 
     //! \brief Reduction target indicating that initial mesh refinement has
     //!   been completed on all PEs
@@ -501,7 +500,6 @@ class Transporter : public CBase_Transporter {
     uint64_t m_chunksize;                //!< Number of elements per PE
     uint64_t m_remainder;                //!< Number elements added to last PE
     tk::CProxy_Solver m_solver;          //!< Linear system solver group proxy
-    CProxy_BoundaryConditions m_bc;      //!< Boundary conditions group proxy
     Scheme m_scheme;                     //!< Discretization scheme
     CProxy_Partitioner m_partitioner;    //!< Partitioner group proxy
     //! Average communication cost of merging the linear system
@@ -553,6 +551,35 @@ class Transporter : public CBase_Transporter {
     void varnames( const Eq& eq, std::vector< std::string >& var ) {
       auto o = eq.names();
       var.insert( end(var), begin(o), end(o) );
+    }
+
+    //! Verify boundarty condition (BC) side sets used exist in mesh file
+    //! \details This function verifies that the side sets to which boundary
+    //!   conditions B(C) are assigned by the user in the input file all exist
+    //!   in the mesh file and warns if at least one does not.
+    //! \tparam Eq Equation type, e.g., CG, DG, we are using to solver PDEs
+    //! \param[in] pde List of PDE system solved
+    //! \param[in,out] er ExodusII mesh reader object
+    //! \note Failure here is not an error, bot only a wanring, i.e., the user
+    //!   must check the screen output for this warning. Would this be more user
+    //!   friendly to make it an error, i.e., abort with an error message?
+    //! \note If the input vector is empty, no checking is done.
+    template< class Eq >
+    void verifyBCsExist( const std::vector< Eq >& pde,
+                         tk::ExodusIIMeshReader& er )
+    {
+      // Query BC assigned to all side sets for all PDEs
+      std::unordered_set< int > conf;
+      for (const auto& eq : pde) eq.side( conf );
+      // Read in side sets associated to mesh node IDs from file
+      auto sidenodes = er.readSidesets();
+      for (auto i : conf) {
+        if (sidenodes.find(i) == end(sidenodes)) {
+          Throw( "WARNING: Boundary conditions specified on side set " +
+                 std::to_string(i) + " which does not exist in mesh file" );
+          break;
+        }
+      }
     }
 };
 
