@@ -76,6 +76,7 @@
 #include "UnsMesh.h"
 #include "FaceData.h"
 #include "Refiner.h"
+#include "Callback.h"
 
 #include "NoWarning/partitioner.decl.h"
 
@@ -115,7 +116,8 @@ class Partitioner : public CBase_Partitioner {
 
   public:
     //! Constructor
-    Partitioner( const std::vector< CkCallback >& cb,
+    Partitioner( const tk::PartitionerCallback& cbp,
+                 const tk::RefinerCallback& cbr,
                  const CProxy_Transporter& host,
                  const tk::CProxy_Solver& solver,
                  const CProxy_Refiner& refiner,
@@ -156,6 +158,9 @@ class Partitioner : public CBase_Partitioner {
     //! Prepare owned mesh node IDs for reordering
     void flatten();
 
+    //! Optionally start refining the mesh
+    void refine();
+
     //! Receive lower bound of node IDs our PE operates on after reordering
     void lower( std::size_t low );
 
@@ -179,15 +184,10 @@ class Partitioner : public CBase_Partitioner {
     void createWorkers();
 
   private:
-    //! Charm++ callbacks associated to compile-time tags
-    tk::tuple::tagged_tuple<
-        tag::load,           CkCallback
-      , tag::distributed,    CkCallback
-      , tag::flattened,      CkCallback
-      , tag::avecost,        CkCallback
-      , tag::stdcost,        CkCallback
-      , tag::coord,          CkCallback
-    > m_cb;
+    //! Charm++ callbacks associated to compile-time tags for partitioner
+    tk::PartitionerCallback m_cbp;
+    //! Charm++ callbacks associated to compile-time tags for refiner
+    tk::RefinerCallback m_cbr;
     //! Host proxy
     CProxy_Transporter m_host;
     //! Linear system solver proxy

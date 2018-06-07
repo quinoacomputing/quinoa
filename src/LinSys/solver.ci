@@ -10,13 +10,15 @@
 
 module solver {
 
+  include "Callback.h";
+
   namespace tk {
 
     group SolverShadow { entry SolverShadow(); };
 
     group Solver {
       entry Solver( CProxy_SolverShadow sh,
-                    const std::vector< CkCallback >& cb,
+                    const SolverCallback& cb,
                     std::size_t ncomp,
                     bool feedback );
       entry void nchare( int n );

@@ -407,9 +407,14 @@ class Transporter : public CBase_Transporter {
     //! Reduction target: the mesh has been read from file on all PEs
     void load( uint64_t nelem );
 
-    //! \brief Reduction target signaling that all PEs have desitrbuted their
-    //!   mesh after partitioning (after potential initial mesh refinement)
+    //! Reduction target: all PEs have distrbuted their mesh after partitioning
     void distributed();
+
+    //! Reduction target: all PEs have created the mesh refiners
+    void created();
+
+    //! Reduction target: all PEs have optionally refined their mesh
+    void refined();
 
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished flattening its global mesh node IDs and they are ready
@@ -501,6 +506,7 @@ class Transporter : public CBase_Transporter {
     tk::CProxy_Solver m_solver;          //!< Linear system solver group proxy
     Scheme m_scheme;                     //!< Discretization scheme
     CProxy_Partitioner m_partitioner;    //!< Partitioner group proxy
+    CProxy_Refiner m_refiner;            //!< Mesh refiner array proxy
     //! Average communication cost of merging the linear system
     tk::real m_avcost;
      //! Total mesh volume

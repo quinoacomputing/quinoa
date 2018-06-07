@@ -10,6 +10,7 @@
 #include <algorithm>
 
 #include "Refiner.h"
+#include "Reorder.h"
 #include "AMR/mesh_adapter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "CGPDE.h"
@@ -25,17 +26,22 @@ extern std::vector< DGPDE > g_dgpde;
 
 using inciter::Refiner;
 
-Refiner::Refiner() :
+Refiner::Refiner( const CProxy_Transporter& transporter,
+                  const tk::RefinerCallback& cbr,
+                  const std::vector< std::size_t >& ginpoel,
+                  const tk::UnsMesh::CoordMap& coordmap ) :
+  m_host( transporter ),
+  m_cbr( cbr ),
+  m_el( tk::global2local( ginpoel ) ),     // fills m_inpoel, m_gid, m_lid
 //   m_nedge( 0 ),
 //   m_nref( 0 ),
 //   m_extra( 1 ),
-  m_initref()
+  m_initref( g_inputdeck.get< tag::amr, tag::init >() )
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
 {
-  // Store initial mesh refinement type list in reverse order
-  m_initref = g_inputdeck.get< tag::amr, tag::init >();
+  // Reverse initial mesh refinement type list (will pop from back)
   std::reverse( begin(m_initref), end(m_initref) );
 
 //   if ( !g_inputdeck.get< tag::amr, tag::init >().empty() ||

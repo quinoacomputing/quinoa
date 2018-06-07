@@ -212,7 +212,7 @@ class Solver : public CBase_Solver {
   public:
     //! Constructor
     Solver( CProxy_SolverShadow sh,
-            const std::vector< CkCallback >& cb,
+            const SolverCallback& cb,
             std::size_t n,
             bool /*feedback*/ );
 
@@ -336,12 +336,7 @@ class Solver : public CBase_Solver {
 
   private:
     CProxy_SolverShadow m_shadow;
-    //! Charm++ reduction callbacks associated to compile-time tags
-    tk::tuple::tagged_tuple<
-        tag::com,   CkCallback
-      , tag::coord, CkCallback
-      , tag::diag,  CkCallback
-    > m_cb;
+    SolverCallback m_cb;        //!< Charm++ associated to compile-time tags
     std::size_t m_ncomp;       //!< Number of scalar components per unknown
     std::size_t m_nchare;      //!< Number of chares contributing to my PE
     std::size_t m_ncomm;       //!< Number of chares finished commaps on my PE

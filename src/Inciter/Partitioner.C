@@ -30,6 +30,7 @@
 #include "Inciter/Options/AMRInitial.h"
 #include "UnsMesh.h"
 #include "ContainerUtil.h"
+#include "Callback.h"
 
 namespace inciter {
 
@@ -42,14 +43,16 @@ extern std::vector< DGPDE > g_dgpde;
 using inciter::Partitioner;
 
 Partitioner::Partitioner(
-  const std::vector< CkCallback >& cb,
+  const tk::PartitionerCallback& cbp,
+  const tk::RefinerCallback& cbr,
   const CProxy_Transporter& host,
   const tk::CProxy_Solver& solver,
   const CProxy_Refiner& refiner,
   const Scheme& scheme,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::vector< std::size_t >& triinpoel ) :
-  m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5] ),
+  m_cbp( cbp ),
+  m_cbr( cbr ),
   m_host( host ),
   m_solver( solver ),
   m_refiner( refiner ),
@@ -109,7 +112,7 @@ Partitioner::Partitioner(
  // Compute number of cells across whole problem
   auto nelem = m_ginpoel.size()/4;
   contribute( sizeof(uint64_t), &nelem, CkReduction::sum_int,
-              m_cb.get< tag::load >() );
+              m_cbp.get< tag::load >() );
 }
 
 void
@@ -143,7 +146,7 @@ Partitioner::partition( int nchare )
           "of elements) after mesh partitioning does not equal the number of "
           "mesh graph elements" );
 
-  m_coordmap.clear();
+  m_chcoordmap.clear();
   m_chinpoel.clear();
 
   // Categorize mesh elements (given by their gobal node IDs) by target chare
@@ -243,7 +246,8 @@ Partitioner::addMesh( int frompe,
     // writes to this, so concat.
     const auto& coord = std::get< 1 >( c.second );
     Assert( tk::uniquecopy(mesh).size() == coord.size(), "Size mismatch" );
-    m_coordmap.insert( begin(coord), end(coord) );
+    auto& chcm = m_chcoordmap[ c.first ];  // store node coordinates per chare
+    chcm.insert( begin(coord), end(coord) );  // concatenate node coords
   }
 
   thisProxy[ frompe ].recvMesh();
@@ -257,8 +261,30 @@ Partitioner::recvMesh()
 {
   if (--m_ndist == 0) {
     if (g_inputdeck.get< tag::cmd, tag::feedback >()) m_host.pedistributed();
-    contribute( m_cb.get< tag::distributed >() );
+    contribute( m_cbp.get< tag::distributed >() );
   }
+}
+
+void
+Partitioner::refine()
+// *****************************************************************************
+// Optionally start refining the mesh
+// *****************************************************************************
+{
+  auto dist = distribution( m_nchare );
+
+  for (int c=0; c<dist[1]; ++c) {
+    // compute chare ID
+    auto cid = CkMyPe() * dist[0] + c;
+    // create refiner Charm++ chare array element using dynamic insertion
+    m_refiner[ cid ].insert( m_host,
+                             m_cbr,
+                             tk::cref_find(m_chinpoel,cid),
+                             tk::cref_find(m_chcoordmap,cid),
+                             CkMyPe() );
+  }
+
+  contribute( m_cbp.get< tag::created >() );
 }
 
 void
@@ -283,11 +309,14 @@ Partitioner::flatten()
 
   // Flatten node IDs of elements our chares operate on and associate global
   // node ID to chare IDs.
-  for (const auto& c : m_chinpoel)
-    for (auto i : c.second) {
-      m_nodeset.insert( i );
-      m_nodech[ i ].push_back( c.first );
-    }
+  for (const auto& c : m_chinpoel) {
+    m_nodeset.insert( begin(c.second), end(c.second) );
+    for (auto i : c.second) m_nodech[ i ].push_back( c.first );
+  }
+
+  // Flatten coordinate map
+  for (const auto& c : m_chcoordmap)
+    m_coordmap.insert( begin(c.second), end(c.second) );
 
   m_chcoordmap.clear();
 
@@ -322,7 +351,7 @@ Partitioner::flatten()
 
   // Signal host that we are ready for computing the communication map,
   // required for parallel distributed global mesh node reordering
-  contribute( m_cb.get< tag::flattened >() );
+  contribute( m_cbp.get< tag::flattened >() );
 }
 
 
@@ -387,7 +416,7 @@ Partitioner::stdCost( tk::real av )
 {
   tk::real var = (m_cost-av)*(m_cost-av);
   contribute( sizeof(tk::real), &var, CkReduction::sum_double,
-              m_cb.get< tag::stdcost >() );
+              m_cbp.get< tag::stdcost >() );
 }
 
 tk::real
@@ -679,8 +708,9 @@ Partitioner::distribute(
     if (it != end(elems)) {               // if found
       auto& inp = m_chinpoel[ chid ];     // store own mesh
       inp.insert( end(inp), begin(it->second), end(it->second) );
+      auto& chcm = m_chcoordmap[ chid ];         // store own node coordinates
       auto cm = coordmap( it->second );   // extract node coordinates 
-      m_coordmap.insert( begin(cm), end(cm) );  // concatenate node coords
+      chcm.insert( begin(cm), end(cm) );  // concatenate node coords
       elems.erase( it );                  // remove chare ID and nodes
     }
     Assert( elems.find(chid) == end(elems), "Not all owned node IDs stored" );
@@ -699,7 +729,7 @@ Partitioner::distribute(
 
   // Export chare IDs and mesh we do not own to fellow PEs
   if (exp.empty()) {
-    contribute( m_cb.get< tag::distributed >() );
+    contribute( m_cbp.get< tag::distributed >() );
     // send progress report to host
     if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
       m_host.pedistributed();
@@ -940,7 +970,7 @@ Partitioner::create()
   // the average communication cost of merging the linear system
   m_cost = cost( m_lower, m_upper );
   contribute( sizeof(tk::real), &m_cost, CkReduction::sum_double,
-              m_cb.get< tag::avecost >() );
+              m_cbp.get< tag::avecost >() );
 
   // Create worker chare array elements
   createDiscWorkers();
@@ -950,7 +980,7 @@ Partitioner::create()
   if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG)
     m_solver.bounds( CkMyPe(), m_lower, m_upper );
   else // if no MatCG, no matrix solver, continue
-    contribute( m_cb.get< tag::coord >() );
+    contribute( m_cbp.get< tag::coord >() );
 }
 
 void

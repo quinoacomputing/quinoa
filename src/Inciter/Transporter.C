@@ -32,6 +32,7 @@
 #include "NodeDiagnostics.h"
 #include "ElemDiagnostics.h"
 #include "DiagWriter.h"
+#include "Callback.h"
 
 #include "NoWarning/inciter.decl.h"
 #include "NoWarning/partitioner.decl.h"
@@ -58,6 +59,7 @@ Transporter::Transporter() :
   m_solver(),
   m_scheme( g_inputdeck.get< tag::discr, tag::scheme >() ),
   m_partitioner(),
+  m_refiner(),
   m_avcost( 0.0 ),
   m_V( 0.0 ),
   m_minstat( {{ 0.0, 0.0 }} ),
@@ -187,11 +189,10 @@ Transporter::createSolver()
 // *****************************************************************************
 {
   // Create linear system solver callbacks
-  std::vector< CkCallback > cbs {{
+  tk::SolverCallback cbs{
       CkCallback( CkReductionTarget(Transporter,comfinal), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,coord), thisProxy )
-    , CkCallback( CkIndex_Transporter::diagnostics(nullptr), thisProxy )
-  }};
+  };
 
   // Create linear system solver Charm++ chare group
   m_solver = tk::CProxy_Solver::
@@ -225,14 +226,21 @@ Transporter::createPartitioner()
   verifyBCsExist( g_dgpde, er );
 
   // Create partitioner callbacks (order matters)
-  std::vector< CkCallback > cbp {{
+  tk::PartitionerCallback cbp {
       CkCallback( CkReductionTarget(Transporter,load), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,created), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,aveCost), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,stdCost), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,coord), thisProxy )
-  }};
+  };
+
+  // Create refiner callbacks (order matters)
+  tk::RefinerCallback cbr {
+      CkCallback( CkReductionTarget(Transporter,matched), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
+  };
 
   // Start timer measuring preparation of the mesh for partitioning
   m_timer[ TimerTag::MESH_READ ];
@@ -240,21 +248,32 @@ Transporter::createPartitioner()
   // Create mesh partitioner Charm++ chare group and start preparing mesh
   m_progMesh.start( "Reading mesh ..." );
 
+  // Create empty mesh refiner Chare chare array
+  m_refiner = CProxy_Refiner::ckNew();
+
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
-    CProxy_Partitioner::ckNew( cbp, thisProxy, m_solver,
-                               CProxy_Refiner::ckNew(),
+    CProxy_Partitioner::ckNew( cbp, cbr, thisProxy, m_solver, m_refiner,
                                m_scheme, bface, triinpoel );
 }
 
 void
-Transporter::refdistributed()
+Transporter::distributed()
 // *****************************************************************************
-// Reduction target signaling that all PEs have desitrbuted their mesh after
-// partitioning
+// Reduction target: all PEs have distrbuted their mesh after partitioning
 // *****************************************************************************
 {
-  //m_partitioner.bndEdges();
+  m_partitioner.refine();
+}
+
+void
+Transporter::created()
+// *****************************************************************************
+// Reduction target: all PEs have created the mesh refiners
+// *****************************************************************************
+{
+  m_refiner.doneInserting();
+  refined();    // shortcut refinement for now
 }
 
 void
@@ -270,6 +289,15 @@ std::cout << "max extra: " << extra << '\n';
   // If at least a single edge on a PE still needs correction, do correction,
   // otherwise, this initial mesh refinement step is complete
   //if (extra > 0) m_partitioner.correctref(); else m_partitioner.nextref();
+}
+
+void
+Transporter::refined()
+// *****************************************************************************
+// Reduction target: all PEs have refined their mesh
+// *****************************************************************************
+{
+  m_partitioner.flatten();
 }
 
 void
@@ -373,16 +401,6 @@ Transporter::load( uint64_t nelem )
 //   m_progReorder.start( "Reordering mesh (flatten, gather, query, mask, "
 //                        "reorder, bounds) ... " );
 // 
-
-void
-Transporter::distributed()
-// *****************************************************************************
-// Reduction target signaling that all PEs have desitrbuted their mesh after
-// partitioning (after potential initial mesh refinement)
-// *****************************************************************************
-{
-  m_partitioner.flatten();
-}
 
 void
 Transporter::flattened()

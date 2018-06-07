@@ -51,11 +51,11 @@ tk::SolverShadow::SolverShadow()
 using tk::Solver;
 
 Solver::Solver( CProxy_SolverShadow sh,
-                const std::vector< CkCallback >& cb,
+                const SolverCallback& cb,
                 std::size_t n,
                 bool /*feedback*/ ) :
   m_shadow( sh ),
-  m_cb( cb[0], cb[1], cb[2] ),
+  m_cb( cb ),
   m_ncomp( n ),
   m_nchare( 0 ),
   m_ncomm( 0 ),

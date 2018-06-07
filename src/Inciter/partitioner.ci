@@ -14,6 +14,7 @@ module partitioner {
   include "UnsMesh.h";
   include "Scheme.h";
   include "FaceData.h";
+  include "Callback.h";
 
   extern module transporter;
   extern module refiner;
@@ -22,7 +23,8 @@ module partitioner {
 
     group Partitioner {
       entry Partitioner(
-        const std::vector< CkCallback >& cb,
+        const tk::PartitionerCallback& cbp,
+        const tk::RefinerCallback& cbr,
         const CProxy_Transporter& host,
         const tk::CProxy_Solver& solver,
         const CProxy_Refiner& refiner,
@@ -36,6 +38,7 @@ module partitioner {
                                     tk::UnsMesh::CoordMap > >& chmesh );
       entry void recvMesh();
       entry void flatten();
+      entry void refine();
       entry void offset( int pe, std::size_t u );
       entry void request( int pe, const std::unordered_set< std::size_t >& nd );
       entry void neworder( const std::unordered_map< std::size_t,

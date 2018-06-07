@@ -168,6 +168,7 @@ struct cv {};
 struct k {};
 struct com {};
 struct coord {};
+struct created {};
 struct refdistributed {};
 struct distributed {};
 struct flattened {};
