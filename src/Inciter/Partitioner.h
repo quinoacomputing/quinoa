@@ -74,8 +74,8 @@
 #include "Solver.h"
 #include "DerivedData.h"
 #include "UnsMesh.h"
-#include "AMR/mesh_adapter.h"
 #include "FaceData.h"
+#include "Refiner.h"
 
 #include "NoWarning/partitioner.decl.h"
 
@@ -118,12 +118,13 @@ class Partitioner : public CBase_Partitioner {
     Partitioner( const std::vector< CkCallback >& cb,
                  const CProxy_Transporter& host,
                  const tk::CProxy_Solver& solver,
+                 const CProxy_Refiner& refiner,
                  const Scheme& scheme,
                  const std::map< int, std::vector< std::size_t > >& bface,
                  const std::vector< std::size_t >& triinpoel );
 
     //! Partition the computational mesh into a number of chares
-    void partchare( int nchare );
+    void partition( int nchare );
 
     //! Receive number of uniquely assigned global mesh node IDs from lower PEs
     void offset( int p, std::size_t u );
@@ -144,35 +145,13 @@ class Partitioner : public CBase_Partitioner {
                     const tk::UnsMesh::CoordMap& cm );
 
     //! Receive mesh associated to chares we own after refinement
-    void addChMesh( int frompe,
-                    const std::unordered_map< int,
-                            std::tuple< std::vector< std::size_t >,
+    void addMesh( int frompe,
+                  const std::unordered_map< int,
+                          std::tuple< std::vector< std::size_t >,
                             tk::UnsMesh::CoordMap > >& chmesh );
 
-    //! Acknowledge received mesh chunk and its nodes during initial refinement
-    void recvPeMesh();
-
     //! Acknowledge received mesh after initial mesh refinement
-    void recvChMesh();
-
-    //! Generate boundary edges and send them to all PEs
-    void bndEdges();
-
-    //! Receive boundary edges from all PEs (including this one)
-    void addBndEdges( int frompe, const tk::UnsMesh::EdgeSet& ed );
-
-    //! Receive newly added mesh node IDs on our PE boundary
-    void addRefBndEdges( int frompe, const tk::UnsMesh::EdgeNodeCoord& ed );
-
-    //! \brief Acknowledge received newly added node IDs to edges shared among
-    //!   multiple PEs
-    void recvRefBndEdges();
-
-    //! Correct refinement to arrive at a conforming mesh across PE boundaries
-    void correctref();
-
-    //! Decide wether to continue with another step of initial mesh refinement
-    void nextref();
+    void recvMesh();
 
     //! Prepare owned mesh node IDs for reordering
     void flatten();
@@ -202,9 +181,7 @@ class Partitioner : public CBase_Partitioner {
   private:
     //! Charm++ callbacks associated to compile-time tags
     tk::tuple::tagged_tuple<
-        tag::refdistributed, CkCallback
-      , tag::matched,        CkCallback
-      , tag::refined,        CkCallback
+        tag::load,           CkCallback
       , tag::distributed,    CkCallback
       , tag::flattened,      CkCallback
       , tag::avecost,        CkCallback
@@ -215,26 +192,10 @@ class Partitioner : public CBase_Partitioner {
     CProxy_Transporter m_host;
     //! Linear system solver proxy
     tk::CProxy_Solver m_solver;
+    //! Mesh refiner proxy
+    CProxy_Refiner m_refiner;
     //! Discretization scheme
     Scheme m_scheme;
-    //! Number of PEs this PE needs to send a mesh chunk after partitioning
-    //! \details This is during initial mesh refinement.
-    std::size_t m_npeDist;
-    //! Number of PEs this PE needs to send a mesh chunk after partitioning
-    //! \details This is after initial mesh refinement.
-    std::size_t m_npe;
-    //! Counter during distribution of mesh during initial mesh refinement
-    std::size_t m_ndist;
-    //! \brief Counter during distribution of PE-boundary edges during initial
-    //!   mesh refinement
-    std::size_t m_nedge;
-    //! Counter during distribution of newly added nodes to PE-boundary edges
-    std::size_t m_nref;
-    std::size_t m_extra;
-    //! PEs we share at least a single edge with during initial mesh refinement
-    std::unordered_set< int > m_pe;
-    //! Initial mesh refinement type list (in reverse order)
-    std::vector< ctr::AMRInitialType > m_initref;
     //! \brief Elements of the mesh chunk we operate on
     //! \details The first vector is the element connectivity (local IDs), the
     //!   second vector is the global node IDs of owned elements, while the
@@ -249,20 +210,13 @@ class Partitioner : public CBase_Partitioner {
     //! \brief Alias to local node IDs associated to the global ones of owned
     //!    elements in m_el
     std::unordered_map< std::size_t, std::size_t >& m_lid = std::get<2>( m_el );
-    //! \brief Map associating the global IDs and the coordinates of a node
-    //!   added to an edge during initial mesh refinement
-    tk::UnsMesh::EdgeNodeCoord m_edgenode;
-    //! Unique set of boundary edges associated to PEs we share these edges with
-    std::unordered_map< int, tk::UnsMesh::EdgeSet > m_bndEdges;
-    //! \brief Map associating the global IDs and the coordinates of a node
-    //!   added to an edge during initial mesh refinement associated to
-    //!   a(nother) PE the edge is shared with
-    std::unordered_map< int, tk::UnsMesh::EdgeNodeCoord > m_edgenodePe;
     //! Queue of requested node IDs from PEs
     std::vector< std::pair< int, std::unordered_set<std::size_t> > > m_reqNodes;
     //! \brief Starting global mesh node ID for node reordering on this PE
     //!   during mesh node reordering
     std::size_t m_start;
+    //! Counter during mesh distribution
+    std::size_t m_ndist;
     //! \brief Counter for number of offsets
     //! \details This counts the to-be-received node IDs received while
     //!   computing global mesh node ID offsets for each PE rquired for node
@@ -348,14 +302,6 @@ class Partitioner : public CBase_Partitioner {
     std::map< int, std::vector< std::size_t > > m_bface;
     //! Boundary face-node connectivity
     std::vector< std::size_t > m_triinpoel;
-    //! Mesh refiner object
-    AMR::mesh_adapter_t m_refiner;
-
-    //! Read mesh from file and initialize and return mesh refiner
-    AMR::mesh_adapter_t readMesh();
-
-    //! Partition the mesh before a (potential) refinement step
-    void partref();
 
     //! Compute element centroid coordinates
     std::array< std::vector< tk::real >, 3 >
@@ -370,22 +316,17 @@ class Partitioner : public CBase_Partitioner {
     //! Extract coordinates associated to global nodes of a mesh chunk
     tk::UnsMesh::CoordMap coordmap( const std::vector< std::size_t >& inpoel );
 
-    //! Distribute mesh to their PEs during initial mesh refinement
-    void distributePe(
+    //! Distribute mesh to target PEs after mesh partitioning
+    void distribute(
            std::unordered_map< int, std::vector< std::size_t > >&& elems );
-
-    //! Distribute mesh to their owner PEs after initial mesh refinement
-    void distributeCh(
-           std::unordered_map< int, std::vector< std::size_t > >&& elems );
-
-    //! Optionally refine mesh
-    void refine();
-
-    //! Finish initiel mesh refinement
-    void finishref();
 
     //! Compute chare (partition) distribution
     std::array< int, 2 > distribution( int npart ) const;
+
+    //! Test for positivity of the Jacobian for all cells in multiple meshes
+    bool positiveJacobians(
+      const std::unordered_map< int, std::vector< std::size_t > >& chinpoel,
+      const tk::UnsMesh::CoordMap& cm );
 
     //! Reorder global mesh node IDs
     void reorder();
@@ -395,34 +336,6 @@ class Partitioner : public CBase_Partitioner {
 
     //! Associate new node IDs to old ones and return them to the requestor(s)
     void prepare();
-
-    //! Do uniform mesh refinement
-    void uniformRefine();
-
-    //! Do error-based mesh refinement
-    void errorRefine();
-
-    //! Do mesh refinement based on user explicitly tagging edges
-    void userRefine();
-
-    //! Do mesh refinement correcting PE-boundary edges
-    void correctRefine( const tk::UnsMesh::EdgeSet& extra );
-
-    //! Update mesh after refinement
-    void updateMesh();
-
-    //! Update volume mesh after mesh refinement
-    void updateVolumeMesh( const std::unordered_set< std::size_t >& old,
-                           const std::unordered_set< std::size_t >& ref );
-
-    //! Update boundary data structures after mesh refinement
-    void updateBoundaryMesh( const std::unordered_set< std::size_t >& old,
-                             const std::unordered_set< std::size_t >& ref );
-
-    //! Evaluate initial conditions (IC) at mesh nodes
-    tk::Fields nodeinit( std::size_t npoin,
-                         const std::pair< std::vector< std::size_t >,
-                                          std::vector< std::size_t > >& esup );
 
     //! Compute final result of reordering
     void reordered();
@@ -439,11 +352,6 @@ class Partitioner : public CBase_Partitioner {
 
     //! Compute communication cost of linear system merging for our PE
     tk::real cost( std::size_t l, std::size_t u );
-
-    //! Test for positivity of the Jacobian for all cells in multiple meshes
-    bool positiveJacobians(
-      const std::unordered_map< int, std::vector< std::size_t > > chinpoel,
-      const tk::UnsMesh::CoordMap& cm );
 };
 
 } // inciter::

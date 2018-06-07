@@ -10,6 +10,7 @@
 #define InciterAMRInitialOptions_h
 
 #include "NoWarning/vector.h"
+#include "NoWarning/for_each.h"
 
 #include "Toggle.h"
 #include "Keywords.h"

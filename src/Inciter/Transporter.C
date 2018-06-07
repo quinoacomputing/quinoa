@@ -226,9 +226,7 @@ Transporter::createPartitioner()
 
   // Create partitioner callbacks (order matters)
   std::vector< CkCallback > cbp {{
-      CkCallback( CkReductionTarget(Transporter,refdistributed), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,matched), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
+      CkCallback( CkReductionTarget(Transporter,load), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,aveCost), thisProxy )
@@ -237,15 +235,16 @@ Transporter::createPartitioner()
   }};
 
   // Start timer measuring preparation of the mesh for partitioning
-  m_timer[ TimerTag::MESH_PREP ];
+  m_timer[ TimerTag::MESH_READ ];
 
   // Create mesh partitioner Charm++ chare group and start preparing mesh
-  m_progMesh.start( "Preparing mesh ..." );
+  m_progMesh.start( "Reading mesh ..." );
 
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
-    CProxy_Partitioner::ckNew( cbp, thisProxy, m_solver, m_scheme, bface,
-                               triinpoel );
+    CProxy_Partitioner::ckNew( cbp, thisProxy, m_solver,
+                               CProxy_Refiner::ckNew(),
+                               m_scheme, bface, triinpoel );
 }
 
 void
@@ -255,7 +254,7 @@ Transporter::refdistributed()
 // partitioning
 // *****************************************************************************
 {
-  m_partitioner.bndEdges();
+  //m_partitioner.bndEdges();
 }
 
 void
@@ -270,7 +269,7 @@ Transporter::matched( std::size_t extra )
 std::cout << "max extra: " << extra << '\n';
   // If at least a single edge on a PE still needs correction, do correction,
   // otherwise, this initial mesh refinement step is complete
-  if (extra > 0) m_partitioner.correctref(); else m_partitioner.nextref();
+  //if (extra > 0) m_partitioner.correctref(); else m_partitioner.nextref();
 }
 
 void
@@ -316,10 +315,9 @@ Transporter::diagHeader()
 }
 
 void
-Transporter::refined( uint64_t nelem )
+Transporter::load( uint64_t nelem )
 // *****************************************************************************
-// Reduction target indicating that initial mesh refinement has been completed
-// on all PEs
+// Reduction target: the mesh has been read from file on all PEs
 //! \param[in] nelem Total number of mesh elements (summed across all PEs)
 // *****************************************************************************
 {
@@ -335,31 +333,16 @@ Transporter::refined( uint64_t nelem )
   // Send total number of chares to all linear solver PEs
   m_solver.nchare( m_nchare );
 
-  m_progReorder.start( "Reordering mesh (flatten, gather, query, mask, "
-                       "reorder, bounds) ... " );
-
-  partition();
-}
-
-void
-Transporter::partition()
-// *****************************************************************************
-// Start partitioning the mesh
-// *****************************************************************************
-{
   m_progMesh.end();
 
   // Start timer measuring preparation of the mesh for partitioning
-  const auto& timer = tk::cref_find( m_timer, TimerTag::MESH_PREP );
-  m_print.diag( "Mesh preparation time: " + std::to_string( timer.dsec() ) +
-                " sec" );
+  const auto& timer = tk::cref_find( m_timer, TimerTag::MESH_READ );
+  m_print.diag( "Mesh read time: " + std::to_string( timer.dsec() ) + " sec" );
 
   // Print out mesh graph stats
   m_print.section( "Input mesh graph statistics" );
   tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
   auto npoin = er.readHeader();
-  er.readElemBlockIDs();
-  auto nelem = er.nelem( tk::ExoElemType::TET );
   m_print.item( "Number of tetrahedra", nelem );
   m_print.item( "Number of nodes", npoin );
 
@@ -383,8 +366,13 @@ Transporter::partition()
   m_print.endsubsection();
 
   m_progPart.start( "Partitioning and distributing mesh ..." );
-  m_partitioner.partchare( m_nchare );
+  m_partitioner.partition( m_nchare );
 }
+
+// 
+//   m_progReorder.start( "Reordering mesh (flatten, gather, query, mask, "
+//                        "reorder, bounds) ... " );
+// 
 
 void
 Transporter::distributed()

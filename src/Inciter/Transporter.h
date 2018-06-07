@@ -404,9 +404,8 @@ class Transporter : public CBase_Transporter {
     //!   newly added node IDs shared along the boundary with other PEs
     void matched( std::size_t extra );
 
-    //! \brief Reduction target indicating that initial mesh refinement has
-    //!   been completed on all PEs
-    void refined( uint64_t nelem );
+    //! Reduction target: the mesh has been read from file on all PEs
+    void load( uint64_t nelem );
 
     //! \brief Reduction target signaling that all PEs have desitrbuted their
     //!   mesh after partitioning (after potential initial mesh refinement)
@@ -513,7 +512,7 @@ class Transporter : public CBase_Transporter {
     //! Average mesh statistics
     std::array< tk::real, 2 > m_avgstat;
     //! Timer tags
-    enum class TimerTag { MESH_PREP=0 };
+    enum class TimerTag { MESH_READ=0 };
     //! Timers
     std::map< TimerTag, tk::Timer > m_timer;
     //! \brief Aggregate 'old' (as in file) node ID list at which Solver

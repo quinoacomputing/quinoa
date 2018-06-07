@@ -16,6 +16,7 @@ module partitioner {
   include "FaceData.h";
 
   extern module transporter;
+  extern module refiner;
 
   namespace inciter {
 
@@ -24,26 +25,16 @@ module partitioner {
         const std::vector< CkCallback >& cb,
         const CProxy_Transporter& host,
         const tk::CProxy_Solver& solver,
+        const CProxy_Refiner& refiner,
         const Scheme& scheme,
         const std::map< int, std::vector< std::size_t > >& bface,
         const std::vector< std::size_t >& triinpoel );
-      entry void partchare( int nchare );
-      entry void addPeMesh( int frompe,
-                            const std::vector< std::size_t >& inpoel,
-                            const tk::UnsMesh::CoordMap& cm );
-      entry void addChMesh( int frompe,
-                            const std::unordered_map< int,
-                                    std::tuple< std::vector< std::size_t >,
+      entry void partition( int nchare );
+      entry void addMesh( int frompe,
+                          const std::unordered_map< int,
+                                  std::tuple< std::vector< std::size_t >,
                                     tk::UnsMesh::CoordMap > >& chmesh );
-      entry void recvPeMesh();
-      entry void recvChMesh();
-      entry void bndEdges();
-      entry void addBndEdges( int frompe, const tk::UnsMesh::EdgeSet& ed );
-      entry void addRefBndEdges( int frompe,
-                                 const tk::UnsMesh::EdgeNodeCoord& en );
-      entry void recvRefBndEdges();
-      entry void correctref();
-      entry void nextref();
+      entry void recvMesh();
       entry void flatten();
       entry void offset( int pe, std::size_t u );
       entry void request( int pe, const std::unordered_set< std::size_t >& nd );
