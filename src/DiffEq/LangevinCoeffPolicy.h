@@ -44,16 +44,75 @@
 
 namespace walker {
 
+//! Langevin equation coefficients policy with prescribed mean shear
+//! \details C0 is user-defined and we prescibe a hard-coded mean shear in the x
+//!   direction
+//! \see kw::hydrotimescale_info
+class ConstShear {
+
+  public:
+    //! Constructor: initialize coefficients
+    ConstShear( kw::sde_c0::info::expect::type C0_,
+                kw::sde_c0::info::expect::type& C0 )
+    {
+      C0 = C0_;
+    }
+
+    //! Coefficients policy type accessor
+    static ctr::CoeffPolicyType type() noexcept
+    { return ctr::CoeffPolicyType::CONST_SHEAR; }
+
+    //! Update the model coefficients (prescribing shear)
+    //! \details Update the dissipation rate (eps) and G_{ij} based on the
+    //!   turbulent kinetic energy (k) and a prescribed shear
+    void update( char depvar,
+                 const std::map< tk::ctr::Product, tk::real >& moments,
+                 const tk::Table&,
+                 kw::sde_c0::info::expect::type C0,
+                 tk::real,
+                 tk::real& eps,
+                 std::array< tk::real, 9 >& G ) const
+    {
+      using tk::ctr::lookup;
+      using tk::ctr::variance;
+
+      // Extract diagonal of the Reynolds stress
+      const auto R11 = variance( depvar, 0 );
+      const auto R22 = variance( depvar, 1 );
+      const auto R33 = variance( depvar, 2 );
+      // compute turbulent kinetic energy
+      tk::real k = ( lookup(R11,moments) +
+                     lookup(R22,moments) +
+                     lookup(R33,moments) ) / 2.0;
+
+      // compute turbulent kinetic energy dissipation rate, assume shear S = 1.0
+      eps = k/2.36;
+
+      // update drift tensor based on the simplified Langevin model
+      G.fill( 0.0 );
+      G[0] = G[4] = G[8] = -(0.5+0.75*C0) * eps/k;
+    }
+
+    //! Update mean velocity based on particle position (prescribing shear)
+    void update( const std::array< tk::real, 3 >& X,
+                 std::array< tk::real, 3 >& U ) const
+    {
+      // Assume shear S = 1
+      U[0] = X[1];
+      U[1] = U[2] = 0.0;
+    }
+};
+
 //! Langevin equation coefficients policy with DNS hydrodynamics time scale
 //! \details C0 is user-defined and we pull in a hydrodynamic timescale from an
 //!   external function (from DNS).
 //! \see kw::hydrotimescale_info
-class LangevinCoeffHydroTimeScale {
+class HydroTimeScale {
 
   public:
     //! Constructor: initialize coefficients
-    LangevinCoeffHydroTimeScale( kw::sde_c0::info::expect::type C0_,
-                                 kw::sde_c0::info::expect::type& C0 )
+    HydroTimeScale( kw::sde_c0::info::expect::type C0_,
+                    kw::sde_c0::info::expect::type& C0 )
     {
       C0 = C0_;
     }
@@ -62,7 +121,7 @@ class LangevinCoeffHydroTimeScale {
     static ctr::CoeffPolicyType type() noexcept
     { return ctr::CoeffPolicyType::HYDROTIMESCALE; }
 
-    //! \brief Update the dissipation rate (eps)
+    //! \brief Update the model coefficients
     //! \details Update the dissipation rate (eps) based on eps/k (from DNS) and
     //!    the turbulent kinetic energy (k) (from the SDE)
     void update( char depvar,
@@ -74,24 +133,17 @@ class LangevinCoeffHydroTimeScale {
                  std::array< tk::real, 9 >& G ) const
     {
       using tk::ctr::lookup;
-      using tk::ctr::mean;
-
-      const tk::ctr::Term u1( static_cast<char>(std::toupper(depvar)),
-                              0, tk::ctr::Moment::CENTRAL );
-      const tk::ctr::Term u2( static_cast<char>(std::toupper(depvar)),
-                              1, tk::ctr::Moment::CENTRAL );
-      const tk::ctr::Term u3( static_cast<char>(std::toupper(depvar)),
-                              2, tk::ctr::Moment::CENTRAL );
+      using tk::ctr::variance;
 
       // Extract diagonal of the Reynolds stress
-      const auto R11 = tk::ctr::Product( {u1,u1} );
-      const auto R22 = tk::ctr::Product( {u2,u2} );
-      const auto R33 = tk::ctr::Product( {u3,u3} );
+      const auto R11 = variance( depvar, 0 );
+      const auto R22 = variance( depvar, 1 );
+      const auto R33 = variance( depvar, 2 );
       // compute turbulent kinetic energy
       tk::real k = ( lookup(R11,moments) +
                      lookup(R22,moments) +
                      lookup(R33,moments) ) / 2.0;
- 
+
       // Sample hydrodynamics timescale and prod/diss at time t
       auto ts = hydrotimescale( t, hts );  // eps/k
 
@@ -100,8 +152,12 @@ class LangevinCoeffHydroTimeScale {
 
       // update drift tensor based on the simplified Langevin model
       G.fill( 0.0 );
-      G[0] = G[4] = G[8] = -(1.0/2.0 + 3.0/4.0*C0) * ts;
+      G[0] = G[4] = G[8] = -(0.5+0.75*C0) * ts;
     }
+
+    //! Update mean velocity velocity (no-op)
+    void update( const std::array< tk::real, 3 >&,
+                 std::array< tk::real, 3 >& ) const {}
 
     //! Sample the inverse hydrodynamics time scale at time t
     //! \param[in] t Time at which to sample inverse hydrodynamics time scale
@@ -111,9 +167,10 @@ class LangevinCoeffHydroTimeScale {
     { return tk::sample( t, ts ); }
 };
 
-//! List of all beta's coefficients policies
-using LangevinCoeffPolicies =
-  boost::mpl::vector< LangevinCoeffHydroTimeScale >;
+//! List of all Langevin's coefficients policies
+using LangevinCoeffPolicies = boost::mpl::vector< ConstShear
+                                                , HydroTimeScale
+                                                >;
 
 } // walker::
 

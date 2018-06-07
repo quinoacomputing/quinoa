@@ -55,19 +55,15 @@ class Langevin {
         g_inputdeck.get< tag::component >().get< tag::langevin >().at(c) ),
       m_offset(
         g_inputdeck.get< tag::component >().offset< tag::langevin >(c) ),
+      m_position_offset(
+        g_inputdeck.get< tag::param, tag::langevin, tag::id >().at(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, tag::langevin, tag::rng >().at(c) ) ) ),
       m_c0(),
       m_g(),
-      m_U( {{ tk::ctr::Product( {
-                tk::ctr::Term( static_cast<char>(std::toupper(m_depvar)),
-                               0, tk::ctr::Moment::ORDINARY ) } ),
-              tk::ctr::Product( {
-                tk::ctr::Term( static_cast<char>(std::toupper(m_depvar)),
-                             1, tk::ctr::Moment::ORDINARY ) } ),
-              tk::ctr::Product( {
-                tk::ctr::Term( static_cast<char>(std::toupper(m_depvar)),
-                             1, tk::ctr::Moment::ORDINARY ) } ) }} ),
+      m_U( {{ tk::ctr::mean( m_depvar, 0 ),
+              tk::ctr::mean( m_depvar, 1 ),
+              tk::ctr::mean( m_depvar, 2 ) }} ),
       coeff( g_inputdeck.get< tag::param, tag::langevin, tag::c0 >().at(c),
              m_c0 )
     {
@@ -106,7 +102,7 @@ class Langevin {
     {
       using tk::ctr::lookup;
 
-      // Update SDE coefficients
+      // Update coefficients
       tk::real eps = 0.0;
       coeff.update( m_depvar, moments, m_hts, m_c0, t, eps, m_g );
 
@@ -120,19 +116,25 @@ class Langevin {
         // Generate Gaussian random numbers with zero mean and unit variance
         std::vector< tk::real > dW( m_ncomp );
         m_rng.gaussian( stream, m_ncomp, dW.data() );
-
-        // Advance all m_ncomp scalars
+        // Access particle position
+        tk::real Xp = particles( p, 0, m_position_offset );
+        tk::real Yp = particles( p, 1, m_position_offset );
+        tk::real Zp = particles( p, 2, m_position_offset );
+        // Advance all velocity components
         tk::real& Up = particles( p, 0, m_offset );
         tk::real& Vp = particles( p, 1, m_offset );
         tk::real& Wp = particles( p, 2, m_offset );
+
+        coeff.update( {{Xp,Yp,Zp}}, U );
+
         tk::real d = m_c0 * eps * dt;
         d = (d > 0.0 ? std::sqrt(d) : 0.0);
-        Up += (m_g[0]*(Up-U[0]) + m_g[1]*(Vp-U[1]) + m_g[2]*(Wp-U[2]))*dt +
-              d*dW[0];
-        Vp += (m_g[3]*(Up-U[0]) + m_g[4]*(Vp-U[1]) + m_g[5]*(Wp-U[2]))*dt +
-              d*dW[1];
-        Wp += (m_g[6]*(Up-U[0]) + m_g[7]*(Vp-U[1]) + m_g[8]*(Wp-U[2]))*dt +
-              d*dW[2];
+        tk::real u = Up - U[0];
+        tk::real v = Vp - U[1];
+        tk::real w = Wp - U[2];
+        Up += (m_g[0]*u + m_g[1]*v + m_g[2]*w)*dt + d*dW[0];
+        Vp += (m_g[3]*u + m_g[4]*v + m_g[5]*w)*dt + d*dW[1];
+        Wp += (m_g[6]*u + m_g[7]*v + m_g[8]*w)*dt + d*dW[2];
       }
     }
 
@@ -141,6 +143,7 @@ class Langevin {
     const char m_depvar;                //!< Dependent variable
     const ncomp_t m_ncomp;              //!< Number of components
     const ncomp_t m_offset;             //!< Offset SDE operates from
+    const ncomp_t m_position_offset;    //!< Offset for coupled position eq
     const tk::RNG& m_rng;               //!< Random number generator
 
     //! Selected inverse hydrodynamics time scale (if used)

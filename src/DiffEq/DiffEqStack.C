@@ -36,6 +36,7 @@
 #include "SkewNormal.h"
 #include "WrightFisher.h"
 #include "Langevin.h"
+#include "Position.h"
 
 #include "BetaCoeffPolicy.h"
 #include "DiagOrnsteinUhlenbeckCoeffPolicy.h"
@@ -50,6 +51,7 @@
 #include "SkewNormalCoeffPolicy.h"
 #include "WrightFisherCoeffPolicy.h"
 #include "LangevinCoeffPolicy.h"
+#include "PositionCoeffPolicy.h"
 
 using walker::DiffEqStack;
 
@@ -234,6 +236,13 @@ DiffEqStack::DiffEqStack() : m_factory(), m_eqTypes()
     registerDiffEq< Langevin >
                   ( m_factory, ctr::DiffEqType::LANGEVIN, m_eqTypes ) );
 
+  // Position equation
+  // Construct vector of vectors for all possible policies for equation
+  using PositionPolicies = mpl::vector< InitPolicies, PositionCoeffPolicies >;
+  // Register SDE for all combinations of policies
+  mpl::cartesian_product< PositionPolicies >(
+    registerDiffEq< Position >
+                  ( m_factory, ctr::DiffEqType::POSITION, m_eqTypes ) );
 }
 
 std::vector< walker::DiffEq >
@@ -273,6 +282,8 @@ DiffEqStack::selected() const
       diffeqs.push_back( createDiffEq< tag::gamma >( d, cnt ) );
     else if (d == ctr::DiffEqType::LANGEVIN)
       diffeqs.push_back( createDiffEq< tag::langevin >( d, cnt ) );
+    else if (d == ctr::DiffEqType::POSITION)
+      diffeqs.push_back( createDiffEq< tag::position >( d, cnt ) );
     else Throw( "Can't find selected DiffEq" );
   }
 
@@ -345,6 +356,8 @@ DiffEqStack::info() const
       nfo.emplace_back( infoGamma( cnt ) );
     else if (d == ctr::DiffEqType::LANGEVIN)
       nfo.emplace_back( infoLangevin( cnt ) );
+    else if (d == ctr::DiffEqType::POSITION)
+      nfo.emplace_back( infoPosition( cnt ) );
     else Throw( "Can't find selected DiffEq" );
   }
 
@@ -1010,10 +1023,49 @@ DiffEqStack::infoLangevin( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
   }
   nfo.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::langevin >(c) ) );
+  nfo.emplace_back( "coupled position depvar", std::string( 1,
+    g_inputdeck.get< tag::param, tag::langevin, tag::position >()[c] ) );
+  nfo.emplace_back( "coupled position depvar offset", std::to_string(
+    g_inputdeck.get< tag::param, tag::langevin, tag::id >()[c] ) );
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::langevin, tag::rng >()[c] ) );
   nfo.emplace_back( "coeff C0", std::to_string(
     g_inputdeck.get< tag::param, tag::langevin, tag::c0 >().at(c) ) );
+
+  return nfo;
+}
+
+std::vector< std::pair< std::string, std::string > >
+DiffEqStack::infoPosition( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
+// *****************************************************************************
+//  Return information on the Langevin SDE
+//! \param[inout] cnt std::map of counters for all differential equation types
+//! \return vector of string pairs describing the SDE configuration
+// *****************************************************************************
+{
+  auto c = ++cnt[ ctr::DiffEqType::POSITION ];       // count eqs
+  --c;  // used to index vectors starting with 0
+
+  std::vector< std::pair< std::string, std::string > > nfo;
+
+  nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::POSITION ), "" );
+  nfo.emplace_back( "kind", "deterministic" );
+  nfo.emplace_back( "dependent variable", std::string( 1,
+    g_inputdeck.get< tag::param, tag::position, tag::depvar >()[c] ) );
+  nfo.emplace_back( "initialization policy", ctr::InitPolicy().name(
+    g_inputdeck.get< tag::param, tag::position, tag::initpolicy >()[c] ) );
+  nfo.emplace_back( "number of components", std::to_string(
+    g_inputdeck.get< tag::component >().get< tag::position >()[c] ) );
+  nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
+    g_inputdeck.get< tag::param, tag::position, tag::coeffpolicy >()[c] ) );
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::position >(c) ) );
+  nfo.emplace_back( "coupled velocity depvar", std::string( 1,
+    g_inputdeck.get< tag::param, tag::position, tag::velocity >()[c] ) );
+  nfo.emplace_back( "coupled velocity depvar offset", std::to_string(
+    g_inputdeck.get< tag::param, tag::position, tag::id >()[c] ) );
+  nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
+    g_inputdeck.get< tag::param, tag::position, tag::rng >()[c] ) );
 
   return nfo;
 }

@@ -73,6 +73,8 @@ FileParser::diagnostics( const tk::Print& print,
     std::string underline;                   //!< underline
     std::vector< std::string > msg;          //!< error or warning messages
     ErroneousLine() : dlnum(0), parsed(), underline(), msg() {}
+    ErroneousLine( const std::string& m ) :
+      dlnum(0), parsed(), underline(), msg({{m}}) {}
   };
 
   Reader id( m_filename );        // file reader for extracting erroneous lines
@@ -81,7 +83,6 @@ FileParser::diagnostics( const tk::Print& print,
 
   // Underline errors and warnings
   for (const auto& e : messages) {
-
     // decide if error or warning
     char underchar = ' ';
     if (e.find( "Error" ) != std::string::npos) { err = true; underchar = '^'; }
@@ -134,7 +135,7 @@ FileParser::diagnostics( const tk::Print& print,
         // underline error and warning differently
         for (auto i=sloc; i<cnum; ++i) l.underline[i] = underchar;
       }
-    }
+    } else lines.emplace( 0, ErroneousLine(e) );
   }
 
   // Output errors and warnings underlined to quiet stream and message

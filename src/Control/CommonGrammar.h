@@ -118,6 +118,10 @@ namespace grm {
     WRONGSIZE,          //!< Size of parameter vector incorrect
     HYDROTIMESCALES,    //!< Missing required hydrotimescales vector
     HYDROPRODUCTIONS,   //!< Missing required hydroproductions vector
+    POSITION_DEPVAR,    //!< Missing required position model dependent variable
+    VELOCITY_DEPVAR,    //!< Missing required velocity model dependent variable
+    POSITION_MISSING,   //!< Missing required position model
+    VELOCITY_MISSING,   //!< Missing required velocity model
     CHARMARG };         //!< Argument inteded for the Charm++ runtime system
 
   //! Associate parser errors to error messages
@@ -141,9 +145,9 @@ namespace grm {
     { MsgKey::NOSUCHDEPVAR, "Dependent variable not selected upstream in the "
       "input file. To request a statistic or PDF involving this variable, use "
       "this variable as a coefficients policy variable, or use this variable as "
-      "a refinement variable, an equation must be specified "
-      "upstream in the control file assigning this variable to an "
-      "equation to be integrated using the depvar keyword." },
+      "a refinement variable, or use a dependent variable in any way, an "
+      "equation must be specified upstream in the control file assigning this "
+      "variable to an equation to be integrated using the depvar keyword." },
     { MsgKey::NOSUCHCOMPONENT, "Scalar component, used in conjunction with "
       "dependent variable, does not exist in the preceeding block. This happens "
       "when referring to a scalar component of a multi-component system of "
@@ -275,6 +279,18 @@ namespace grm {
       "Specification of a 'hydrotimescales' vector missing." },
     { MsgKey::HYDROPRODUCTIONS, "Error in the preceding line or block. "
       "Specification of a 'hydroproductions' vector missing." },
+    { MsgKey::POSITION_DEPVAR, "Error in the preceding line or block. "
+      "Specification of a dependent variable, configured as a coupled position "
+      "model, is missing. Specify a dependent variable in an equation block "
+      "as, e.g., depvar x, then use 'position x' within the block in question, "
+      "e.g., langevin." },
+    { MsgKey::VELOCITY_DEPVAR, "Error in the preceding line or block. "
+      "Specification of a dependent variable, configured as a coupled velocity "
+      "model, is missing. Specify a dependent variable in an equation block "
+      "as, e.g., depvar u, then use 'velocity u' within the block in question, "
+      "e.g., position." },
+    { MsgKey::POSITION_MISSING, "Specification for a position model missing." },
+    { MsgKey::VELOCITY_MISSING, "Specification for a velocity model missing." },
     { MsgKey::CHARMARG, "Arguments starting with '+' are assumed to be inteded "
       "for the Charm++ runtime system. Did you forget to prefix the command "
       "line with charmrun? If this warning persists even after running with "

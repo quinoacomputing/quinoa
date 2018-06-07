@@ -350,6 +350,7 @@ mean( char var, kw::ncomp::info::expect::type c ) {
   tk::ctr::Term m( static_cast<char>(std::toupper(var)), c, Moment::ORDINARY );
   return tk::ctr::Product( { m } );
 }
+
 //! Construct variance
 //! \param[in] var Variable
 //! \param[in] c Component number
@@ -360,6 +361,7 @@ variance( char var, kw::ncomp::info::expect::type c ) {
   tk::ctr::Term f( static_cast<char>(std::tolower(var)), c, Moment::CENTRAL );
   return tk::ctr::Product( { f, f } );
 }
+
 //! Construct third central moment
 //! \param[in] var Variable
 //! \param[in] c Component number

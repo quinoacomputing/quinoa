@@ -25,6 +25,8 @@ enum class CoeffPolicyType : uint8_t { CONSTANT=0
                                      , HOMOGENEOUS_DECAY
                                      , MONTE_CARLO_HOMOGENEOUS_DECAY
                                      , HYDROTIMESCALE
+                                     , CONST_SHEAR
+                                     , INSTANTANEOUS_VELOCITY
                                      };
 
 //! Pack/Unpack CoeffPolicyType: forward overload to generic enum class packer
@@ -40,6 +42,8 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
                                        , kw::homdecay
                                        , kw::montecarlo_homdecay
                                        , kw::hydrotimescale
+                                       , kw::const_shear
+                                       , kw::instantaneous_velocity
                                        >;
 
     //! \brief Options constructor
@@ -55,14 +59,20 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
           { CoeffPolicyType::HOMOGENEOUS_DECAY, kw::homdecay::name() },
           { CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY,
             kw::montecarlo_homdecay::name() },
-          { CoeffPolicyType::HYDROTIMESCALE, kw::hydrotimescale::name() } },
+          { CoeffPolicyType::HYDROTIMESCALE, kw::hydrotimescale::name() },
+          { CoeffPolicyType::CONST_SHEAR, kw::const_shear::name() },
+          { CoeffPolicyType::INSTANTANEOUS_VELOCITY,
+            kw::instantaneous_velocity::name() } },
         //! keywords -> Enums
         {  { kw::constant::string(), CoeffPolicyType::CONSTANT },
            { kw::decay::string(), CoeffPolicyType::DECAY },
            { kw::homdecay::string(), CoeffPolicyType::HOMOGENEOUS_DECAY },
            { kw::montecarlo_homdecay::string(),
              CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY },
-           { kw::hydrotimescale::string(), CoeffPolicyType::HYDROTIMESCALE } } )
+           { kw::hydrotimescale::string(), CoeffPolicyType::HYDROTIMESCALE },
+           { kw::const_shear::string(), CoeffPolicyType::CONST_SHEAR },
+           { kw::instantaneous_velocity::string(),
+             CoeffPolicyType::INSTANTANEOUS_VELOCITY } } )
     {
        boost::mpl::for_each< keywords >( assertPolicyCodes() );
     }
@@ -98,6 +108,9 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
       , { CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY,
           *kw::montecarlo_homdecay::code() }
       , { CoeffPolicyType::HYDROTIMESCALE, *kw::hydrotimescale::code() }
+      , { CoeffPolicyType::CONST_SHEAR, *kw::const_shear::code() }
+      , { CoeffPolicyType::INSTANTANEOUS_VELOCITY,
+          *kw::instantaneous_velocity::code() }
     };
 
 };

@@ -240,6 +240,9 @@ class DiffEqStack {
     //! Get information on Langevin SDE
     std::vector< std::pair< std::string, std::string > >
     infoLangevin( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
+    //! Get information on position eq
+    std::vector< std::pair< std::string, std::string > >
+    infoPosition( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
     ///@}
 
     //! \brief Convert and return values from vector as string

@@ -30,6 +30,7 @@ using ncomps = tk::ctr::ncomponents<
  , tag::mixnumfracbeta,  std::vector< tk::ctr::ncomp_type >
  , tag::mixmassfracbeta, std::vector< tk::ctr::ncomp_type >
  , tag::langevin,        std::vector< tk::ctr::ncomp_type >
+ , tag::position,        std::vector< tk::ctr::ncomp_type >
 >;
 
 } // ctr::

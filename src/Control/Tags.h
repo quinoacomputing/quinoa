@@ -123,6 +123,7 @@ struct diagou {};
 struct ou {};
 struct skewnormal {};
 struct position {};
+struct velocity {};
 struct mass {};
 struct hydro {};
 struct energy {};

@@ -61,22 +61,13 @@ struct InitRaw {
 
   //! Initialize particle properties
   template< class eq >
-  static void init( const ctr::InputDeck& deck,
-                    const tk::RNG& rng,
-                    int stream,
-                    tk::Particles& particles,
-                    tk::ctr::ncomp_type e,
-                    tk::ctr::ncomp_type ncomp,
-                    tk::ctr::ncomp_type offset )
-  {
-    IGNORE( deck );
-    IGNORE( rng );
-    IGNORE( stream );
-    IGNORE( particles );
-    IGNORE( e );
-    IGNORE( ncomp );
-    IGNORE( offset );
-  }
+  static void init( const ctr::InputDeck&,
+                    const tk::RNG&,
+                    int,
+                    tk::Particles&,
+                    tk::ctr::ncomp_type,
+                    tk::ctr::ncomp_type,
+                    tk::ctr::ncomp_type ) {}
 
   static ctr::InitPolicyType type() noexcept
   { return ctr::InitPolicyType::RAW; }
@@ -87,20 +78,14 @@ struct InitZero {
 
   //! Initialize particle properties
   template< class eq >
-  static void init( const ctr::InputDeck& deck,
-                    const tk::RNG& rng,
-                    int stream,
+  static void init( const ctr::InputDeck&,
+                    const tk::RNG&,
+                    int,
                     tk::Particles& particles,
-                    tk::ctr::ncomp_type e,
-                    tk::ctr::ncomp_type ncomp,
-                    tk::ctr::ncomp_type offset )
+                    tk::ctr::ncomp_type,
+                    tk::ctr::ncomp_type,
+                    tk::ctr::ncomp_type )
   {
-    IGNORE( deck );
-    IGNORE( rng );
-    IGNORE( stream );
-    IGNORE( e );
-    IGNORE( ncomp );
-    IGNORE( offset );
     particles.fill( 0.0 );
   }
 
@@ -114,15 +99,13 @@ struct InitDelta {
   //! Initialize particle properties
   template< class eq >
   static void init( const ctr::InputDeck& deck,
-                    const tk::RNG& rng,
-                    int stream,
+                    const tk::RNG&,
+                    int,
                     tk::Particles& particles,
                     tk::ctr::ncomp_type e,
                     tk::ctr::ncomp_type ncomp,
                     tk::ctr::ncomp_type offset )
   {
-    IGNORE( rng );
-    IGNORE( stream );
     using ncomp_t = kw::ncomp::info::expect::type;
 
     const auto& spike = deck.template get< tag::param, eq, tag::spike >().at(e);

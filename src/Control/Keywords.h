@@ -1408,6 +1408,38 @@ struct hydrotimescale_info {
 using hydrotimescale =
   keyword< hydrotimescale_info, TAOCPP_PEGTL_STRING("hydrotimescale") >;
 
+struct const_shear_info {
+  using code = Code< S >;
+  static std::string name() { return "prescribed constant shear"; }
+  static std::string shortDescription() { return
+    "Select constant shear coefficients policy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the prescribed constant shear
+    coefficients policy, used to compute a homogeneous free shear flow using the
+    Langevin model. This policy (or model) prescribes a constant mean shear in
+    the y direction and computes the dissipation of turbulent kinetic energy
+    specifically for this flow. The flow is a fully developed homogeneous
+    turbulent shear flow with a uniform mean velocity gradient in one direction
+    (y) and the mean flow is in predominantly in the x direction. The flow is
+    considered to be far from solid boundaries. See Pope, S.B. (2000). Turbulent
+    flows (Cambridge: Cambridge University Press).)"; }
+};
+using const_shear =
+  keyword< const_shear_info, TAOCPP_PEGTL_STRING("const_shear") >;
+
+struct instantaneous_velocity_info {
+  using code = Code< V >;
+  static std::string name() { return "instantaneous velocity"; }
+  static std::string shortDescription() { return
+    "Select the instantaneous velocity coefficients policy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the instantaneous velocity coefficients
+    policy, used to update Lagrangian particle position.)"; }
+};
+using instantaneous_velocity =
+  keyword< instantaneous_velocity_info,
+  TAOCPP_PEGTL_STRING("instantaneous_velocity") >;
+
 struct coeff_info {
   using code = Code< c >;
   static std::string name() { return "coeficients fpolicy"; }
@@ -2636,6 +2668,28 @@ struct langevin_info {
   }
 };
 using langevin = keyword< langevin_info, TAOCPP_PEGTL_STRING("langevin") >;
+
+struct position_info {
+  static std::string name() { return "position"; }
+  static std::string shortDescription() { return
+    "Introduce the (particle) position equation input block"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a position ... end block, used to
+    specify the configuration of a system of deterministic or stochastic
+    differential equations, governing particle positions usually in conjunction
+    with velocity model, e.g, the Langevin, model. Note that the random number
+    generator r123_philox is automatically put on the list as a selected RNG if
+    no RNG is selected. Keywords allowed in a position ... end block: )" +
+    std::string("\'")
+    + depvar::string()+ "\', \'"
+    + rng::string() + "\', \'"
+    + init::string() + "\', \'"
+    + coeff::string() + "\', \'"
+    + R"(For an example position ... end block, see
+      doc/html/walker_example_position.html.)";
+  }
+};
+using position = keyword< position_info, TAOCPP_PEGTL_STRING("position") >;
 
 struct gamma_info {
   static std::string name() { return "Gamma"; }
@@ -4201,42 +4255,6 @@ struct undefined_info {
   static std::string shortDescription() { return "undefined"; }
   static std::string longDescription() { return "Undefined."; }
 };
-
-using dmpi = keyword<undefined_info,  TAOCPP_PEGTL_STRING("dmpi") >;
-using glbi = keyword<undefined_info,  TAOCPP_PEGTL_STRING("glbi") >;
-using glob = keyword<undefined_info, TAOCPP_PEGTL_STRING("glob") >;
-using pos_inviscid = keyword<undefined_info,  TAOCPP_PEGTL_STRING("pos_inviscid") >;
-using pos_viscous = keyword<undefined_info,  TAOCPP_PEGTL_STRING("pos_viscous") >;
-using mass_beta = keyword<undefined_info,  TAOCPP_PEGTL_STRING("mass_beta") >;
-using hydro_slm = keyword<undefined_info,  TAOCPP_PEGTL_STRING("hydro_slm") >;
-using hydro_glm = keyword<undefined_info,  TAOCPP_PEGTL_STRING("hydro_glm") >;
-using mixrate_gamma = keyword<undefined_info,  TAOCPP_PEGTL_STRING("mixrate_gamma") >;
-using freq_gamma = keyword<undefined_info,  TAOCPP_PEGTL_STRING("freq_gamma") >;
-using position = keyword<undefined_info,  TAOCPP_PEGTL_STRING("position") >;
-using hydro = keyword<undefined_info,  TAOCPP_PEGTL_STRING("hydro") >;
-using mix = keyword<undefined_info,  TAOCPP_PEGTL_STRING("mix") >;
-using nposition = keyword<undefined_info,  TAOCPP_PEGTL_STRING("nposition") >;
-using ndensity = keyword<undefined_info,  TAOCPP_PEGTL_STRING("ndensity") >;
-using nvelocity = keyword<undefined_info,  TAOCPP_PEGTL_STRING("nvelocity") >;
-using nscalar = keyword<undefined_info,  TAOCPP_PEGTL_STRING("nscalar") >;
-using nfreq = keyword<undefined_info,  TAOCPP_PEGTL_STRING("nfreq") >;
-using freq_gamma_C1 = keyword<undefined_info,  TAOCPP_PEGTL_STRING("C1") >;
-using freq_gamma_C2 = keyword<undefined_info,  TAOCPP_PEGTL_STRING("C2") >;
-using freq_gamma_C3 = keyword<undefined_info,  TAOCPP_PEGTL_STRING("C3") >;
-using freq_gamma_C4 = keyword<undefined_info,  TAOCPP_PEGTL_STRING("C4") >;
-using Beta_At = keyword<undefined_info,  TAOCPP_PEGTL_STRING("At") >;
-using transported_scalar = keyword<undefined_info,  TAOCPP_PEGTL_STRING("Y") >;
-using transported_scalar_fluctuation = keyword<undefined_info,  TAOCPP_PEGTL_STRING("y") >;
-using velocity_x = keyword<undefined_info,  TAOCPP_PEGTL_STRING("U") >;
-using velocity_fluctuation_x = keyword<undefined_info,  TAOCPP_PEGTL_STRING("u") >;
-using velocity_y = keyword<undefined_info,  TAOCPP_PEGTL_STRING("V") >;
-using velocity_fluctuation_y = keyword<undefined_info,  TAOCPP_PEGTL_STRING("v") >;
-using velocity_z = keyword<undefined_info,  TAOCPP_PEGTL_STRING("W") >;
-using velocity_fluctuation_z = keyword<undefined_info,  TAOCPP_PEGTL_STRING("w") >;
-using pressure = keyword<undefined_info,  TAOCPP_PEGTL_STRING("P") >;
-using pressure_fluctuation = keyword<undefined_info,  TAOCPP_PEGTL_STRING("p") >;
-using density = keyword<undefined_info,  TAOCPP_PEGTL_STRING("R") >;
-using density_fluctuation = keyword<undefined_info,  TAOCPP_PEGTL_STRING("r") >;
 
 } // kw::
 

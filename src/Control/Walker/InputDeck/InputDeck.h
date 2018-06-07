@@ -109,6 +109,10 @@ class InputDeck :
                                      #endif
                                      , kw::r123_threefry
                                      , kw::r123_philox
+                                     , kw::const_shear
+                                     , kw::position
+                                     , kw::velocity
+                                     , kw::instantaneous_velocity
                                      >;
     using keywords4 = boost::mpl::set< kw::seed
                                      #ifdef HAS_MKL

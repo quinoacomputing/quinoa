@@ -338,6 +338,8 @@ using MixMassFractionBetaParameters = tk::tuple::tagged_tuple<
 using LangevinParameters = tk::tuple::tagged_tuple<
   tag::depvar,          std::vector< char >,
   tag::c0,              std::vector< kw::sde_c0::info::expect::type >,
+  tag::position,        std::vector< char >,
+  tag::id,              std::vector< std::size_t >,
   tag::rng,             std::vector< tk::ctr::RNGType >,
   tag::initpolicy,      std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy,     std::vector< ctr::CoeffPolicyType >,
@@ -349,6 +351,22 @@ using LangevinParameters = tk::tuple::tagged_tuple<
                           kw::gaussian::info::expect::type > > >,
   tag::hydrotimescales, std::vector< std::vector< ctr::HydroTimeScalesType > >,
   tag::hydroproductions,std::vector< std::vector< ctr::HydroProductionsType > >
+>;
+
+//! Position parameters storage
+using PositionParameters = tk::tuple::tagged_tuple<
+  tag::depvar,          std::vector< char >,
+  tag::velocity,        std::vector< char >,
+  tag::id,              std::vector< std::size_t >,
+  tag::rng,             std::vector< tk::ctr::RNGType >,
+  tag::initpolicy,      std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy,     std::vector< ctr::CoeffPolicyType >,
+  tag::spike,           std::vector< std::vector< std::vector <
+                          kw::spike::info::expect::type > > >,
+  tag::betapdf,         std::vector< std::vector< std::vector <
+                          kw::betapdf::info::expect::type > > >,
+  tag::gaussian,        std::vector< std::vector< std::vector <
+                          kw::gaussian::info::expect::type > > >
 >;
 
 //! Parameters storage
@@ -370,7 +388,8 @@ using parameters = tk::tuple::tagged_tuple<
   tag::massfracbeta,    MassFractionBetaParameters,
   tag::mixnumfracbeta,  MixNumberFractionBetaParameters,
   tag::mixmassfracbeta, MixMassFractionBetaParameters,
-  tag::langevin,        LangevinParameters
+  tag::langevin,        LangevinParameters,
+  tag::position,        PositionParameters
 >;
 
 } // ctr::

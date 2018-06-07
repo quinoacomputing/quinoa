@@ -60,6 +60,7 @@ namespace deck {
                                   tag::skewnormal,      std::size_t,
                                   tag::gamma,           std::size_t,
                                   tag::langevin,        std::size_t,
+                                  tag::position,        std::size_t,
                                   tag::beta,            std::size_t,
                                   tag::numfracbeta,     std::size_t,
                                   tag::massfracbeta,    std::size_t,
@@ -224,6 +225,78 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  struct check_langevin : pegtl::success {};
+  //! \brief Do error checking on the Langevin eq block
+  template<>
+  struct action< check_langevin > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using walker::deck::neq;
+      if (neq.get< tag::langevin >() > 0) {
+        //! Error out if a velocity model is configured without a position model
+        if (neq.get< tag::position >() == 0) {
+          stack.template push_back< tag::error >
+            ( std::string("Parser error: ") +
+              tk::cref_find( message, MsgKey::POSITION_MISSING ) );
+        } else {
+          // get coupled position eq configuration
+          const auto& pos =
+            stack.template get< tag::param, tag::langevin, tag::position >();
+          if (pos.empty())
+            // Error out if coupled position model eq depvar is not selected
+            Message< Stack, ERROR, MsgKey::POSITION_DEPVAR >( stack, in );
+          else { // find offset (local eq system index among systems) for depvar
+            // get ncomponents object from this input deck
+            const auto& ncomps = stack.template get< tag::component >();
+            // compute offset map associating offsets to dependent variables
+            auto offsetmap = ncomps.offsetmap( stack );
+            // get and save offsets for all depvars for velocity eqs configured
+            for (auto p : pos)
+              stack.template get< tag::param, tag::langevin, tag::id >().
+                push_back( tk::cref_find( offsetmap, p ) );
+          }
+        }
+      }
+    }
+  };
+
+  //! Rule used to trigger action
+  struct check_position : pegtl::success {};
+  //! \brief Do error checking on the position eq block
+  template<>
+  struct action< check_position > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using walker::deck::neq;
+      if (neq.get< tag::position >() > 0) {
+        //! Error out if a position model is configured without a velocity model
+        if (neq.get< tag::langevin >() == 0) {
+          stack.template push_back< tag::error >
+            ( std::string("Parser error: ") +
+              tk::cref_find( message, MsgKey::VELOCITY_MISSING ) );
+        } else {
+          // get coupled velocity eq configuration
+          const auto& vel =
+            stack.template get< tag::param, tag::position, tag::velocity >();
+          if (vel.empty())
+            // Error out if coupled velocity model eq depvar is not selected
+            Message< Stack, ERROR, MsgKey::VELOCITY_DEPVAR >( stack, in );
+          else { // find offset (local eq system index among systems) for depvar
+            // get ncomponents object from this input deck
+            const auto& ncomps = stack.template get< tag::component >();
+            // compute offset map associating offsets to dependent variables
+            auto offsetmap = ncomps.offsetmap( stack );
+            // get and save offsets for all depvars for position eqs configured
+            for (auto v : vel)
+              stack.template get< tag::param, tag::position, tag::id >().
+                push_back( tk::cref_find( offsetmap, v ) );
+          }
+        }
+      }
+    }
+  };
+
+  //! Rule used to trigger action
   struct langevin_defaults : pegtl::success {};
   //! \brief Set defaults for the Langevin model
   template<>
@@ -237,6 +310,31 @@ namespace grm {
       // Set C0 = 2.1 if not specified
       auto& C0 = stack.template get< tag::param, tag::langevin, tag::c0 >();
       if (C0.size() != neq.get< tag::langevin >()) C0.push_back( 2.1 );
+    }
+  };
+
+  //! Rule used to trigger action
+  struct position_defaults : pegtl::success {};
+  //! \brief Set defaults for all Lagrangian particle position models
+  template<>
+  struct action< position_defaults > {
+    template< typename Input, typename Stack >
+    static void apply( const Input&, Stack& stack ) {
+      using walker::deck::neq;
+      // Set number of components: always 3 position components
+      auto& ncomp = stack.template get< tag::component, tag::position >();
+      ncomp.push_back( 3 );
+      // Set RNG if no RNG has been selected (not all position models use this,
+      // so don't impose on the user to define one). Pick a Random123 generator,
+      // as that is always available.
+      auto& rngs = stack.template get< tag::selected, tag::rng >();
+      auto& rng = stack.template get< tag::param, tag::position, tag::rng >();
+      if (rng.empty() || rng.size() != neq.get< tag::position >()) {
+        // add RNG to the list of selected RNGs (as it has been parsed)
+        rngs.push_back( tk::ctr::RNG().value( kw::r123_philox::string() ) );
+        // select RNG for position equation (as it has been parsed)
+        rng.push_back( tk::ctr::RNGType::R123_PHILOX );
+      }
     }
   };
 
@@ -934,16 +1032,49 @@ namespace deck {
                              use< kw::sde_c0 >,
                              tk::grm::Store_back< tag::param,
                                                   tag::langevin,
-                                                  tag::c0 > > >,
-           check_errors< tag::langevin,
-                         tk::grm::check_vector_exists<
-                           tag::langevin,
-                           tag::hydrotimescales,
-                           tk::grm::MsgKey::HYDROTIMESCALES >,
-                         tk::grm::check_vector_exists<
-                           tag::langevin,
-                           tag::hydroproductions,
-                           tk::grm::MsgKey::HYDROPRODUCTIONS > > > {};
+                                                  tag::c0 > >,
+                           tk::grm::process<
+                             use< kw::position >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::langevin,
+                                                  tag::position >,
+                             pegtl::alpha > >,
+           check_errors< tag::langevin > > {};
+
+  //! position equation
+  struct position :
+         pegtl::if_must<
+           scan_sde< use< kw::position >, tag::position >,
+           tk::grm::position_defaults,
+           tk::grm::block< use< kw::end >,
+                           tk::grm::depvar< use,
+                                            tag::position,
+                                            tag::depvar >,
+                           tk::grm::rng< use,
+                                         use< kw::rng >,
+                                         tk::ctr::RNG,
+                                         tag::position,
+                                         tag::rng >,
+                           tk::grm::policy< use,
+                                            use< kw::init >,
+                                            ctr::InitPolicy,
+                                            tag::position,
+                                            tag::initpolicy >,
+                           tk::grm::policy< use,
+                                            use< kw::coeff >,
+                                            ctr::CoeffPolicy,
+                                            tag::position,
+                                            tag::coeffpolicy >,
+                           icdelta< tag::position >,
+                           icbeta< tag::position >,
+                           icgaussian< tag::position >,
+                           tk::grm::process<
+                             use< kw::velocity >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::position,
+                                                  tag::velocity >,
+                             pegtl::alpha > >,
+           check_errors< tag::position > > {};
 
   //! stochastic differential equations
   struct sde :
@@ -959,22 +1090,27 @@ namespace deck {
                      massfracbeta,
                      mixnumfracbeta,
                      mixmassfracbeta,
+                     position,
                      langevin > {};
+
 
   //! 'walker' block
   struct walker :
          pegtl::if_must<
            tk::grm::readkw< use< kw::walker >::pegtl_string >,
            pegtl::sor<
-             tk::grm::block<
-               use< kw::end >,
-               discretization_parameters,
-               sde,
-               tk::grm::rngblock< use, rngs >,
-               tk::grm::statistics< use, tk::grm::store_walker_option >,
-               tk::grm::pdfs< use, tk::grm::store_walker_option > >,
-               tk::grm::msg< tk::grm::MsgType::ERROR,
-                             tk::grm::MsgKey::UNFINISHED > > > {};
+             pegtl::seq<
+               tk::grm::block<
+                 use< kw::end >,
+                 discretization_parameters,
+                 sde,
+                 tk::grm::rngblock< use, rngs >,
+                 tk::grm::statistics< use, tk::grm::store_walker_option >,
+                 tk::grm::pdfs< use, tk::grm::store_walker_option > >,
+               tk::grm::check_langevin,
+               tk::grm::check_position >,
+           tk::grm::msg< tk::grm::MsgType::ERROR,
+                         tk::grm::MsgKey::UNFINISHED > > > {};
 
   //! main keywords
   struct keywords :
