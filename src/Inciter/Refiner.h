@@ -39,10 +39,27 @@ class Refiner : public CBase_Refiner {
                       const tk::RefinerCallback& cbr,
                       const std::vector< std::size_t >& ginpoel,
                       const tk::UnsMesh::CoordMap& coordmap,
+                      const std::map< int, std::vector< std::size_t > >& bface,
+                      const std::vector< std::size_t >& triinpoel,
                       int nchare );
 
+    //! Configure Charm++ reduction types
+    static void registerReducers();
+
     //! Receive boundary edges from all PEs (including this one)
-    void addBndEdges( int fromch, const tk::UnsMesh::EdgeSet& ed );
+    void addBndEdges( CkReductionMsg* msg );
+
+    //! Receive newly added mesh node IDs on our chare boundary
+    void addRefBndEdges( int fromch, const tk::UnsMesh::EdgeNodeCoord& ed );
+
+    //! Acknowledge received newly added nodes shared with other chares
+    void recvRefBndEdges();
+
+    //! Correct refinement to arrive at conforming mesh across chare boundaries
+    void correctref();
+
+    //! Decide wether to continue with another step of mesh refinement
+    void nextref();
 
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -54,6 +71,8 @@ class Refiner : public CBase_Refiner {
       p | m_ginpoel;
       p | m_coord;
       p | m_coordmap;
+      p | m_bface;
+      p | m_triinpoel;
       p | m_nchare;
       p | m_el;
       if (p.isUnpacking()) {
@@ -88,6 +107,10 @@ class Refiner : public CBase_Refiner {
     tk::UnsMesh::Coords m_coord;
     //! Coordinates associated to global node IDs of our mesh chunk
     tk::UnsMesh::CoordMap m_coordmap;
+    //! List of boundary faces associated to side-set IDs
+    std::map< int, std::vector< std::size_t > > m_bface;
+    //! Boundary face-node connectivity
+    std::vector< std::size_t > m_triinpoel;
     //! Total number of refiner chares
     int m_nchare;
     //! Elements of the mesh chunk we operate on
@@ -133,50 +156,39 @@ class Refiner : public CBase_Refiner {
     //! Refine mesh
     void refine();
 
-//     //! Receive newly added mesh node IDs on our PE boundary
-//     void addRefBndEdges( int frompe, const tk::UnsMesh::EdgeNodeCoord& ed );
-// 
-//     //! \brief Acknowledge received newly added node IDs to edges shared among
-//     //!   multiple PEs
-//     void recvRefBndEdges();
-// 
-//     //! Correct refinement to arrive at a conforming mesh across PE boundaries
-//     void correctref();
-// 
-//     //! Decide wether to continue with another step of initial mesh refinement
-//     void nextref();
-// 
-//     //! Finish initiel mesh refinement
-//     void finishref();
-// 
-//     //! Do uniform mesh refinement
-//     void uniformRefine();
-// 
-//     //! Do error-based mesh refinement
-//     void errorRefine();
-// 
-//     //! Do mesh refinement based on user explicitly tagging edges
-//     void userRefine();
-// 
-//     //! Do mesh refinement correcting PE-boundary edges
-//     void correctRefine( const tk::UnsMesh::EdgeSet& extra );
-// 
-//     //! Update mesh after refinement
-//     void updateMesh();
-// 
-//     //! Update volume mesh after mesh refinement
-//     void updateVolumeMesh( const std::unordered_set< std::size_t >& old,
-//                            const std::unordered_set< std::size_t >& ref );
-// 
-//     //! Update boundary data structures after mesh refinement
-//     void updateBoundaryMesh( const std::unordered_set< std::size_t >& old,
-//                              const std::unordered_set< std::size_t >& ref );
-// 
-//     //! Evaluate initial conditions (IC) at mesh nodes
-//     tk::Fields nodeinit( std::size_t npoin,
-//                          const std::pair< std::vector< std::size_t >,
-//                                           std::vector< std::size_t > >& esup );
-// 
+    //! Communicate refined edges after a refinement step
+    void comExtra();
+
+    //! Finish initiel mesh refinement
+    void finish();
+
+    //! Do uniform mesh refinement
+    void uniformRefine();
+
+    //! Do error-based mesh refinement
+    void errorRefine();
+
+    //! Do mesh refinement based on user explicitly tagging edges
+    void userRefine();
+
+    //! Do mesh refinement correcting PE-boundary edges
+    void correctRefine( const tk::UnsMesh::EdgeSet& extra );
+
+    //! Update mesh after refinement
+    void updateMesh();
+
+    //! Update volume mesh after mesh refinement
+    void updateVolumeMesh( const std::unordered_set< std::size_t >& old,
+                           const std::unordered_set< std::size_t >& ref );
+
+    //! Update boundary data structures after mesh refinement
+    void updateBoundaryMesh( const std::unordered_set< std::size_t >& old,
+                             const std::unordered_set< std::size_t >& ref );
+
+    //! Evaluate initial conditions (IC) at mesh nodes
+    tk::Fields nodeinit( std::size_t npoin,
+                         const std::pair< std::vector< std::size_t >,
+                                          std::vector< std::size_t > >& esup );
 };
 
 } // inciter::

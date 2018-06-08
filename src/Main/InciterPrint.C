@@ -81,7 +81,7 @@ void InciterPrint::refvar( const std::vector< std::string >& rvar,
    item( name, c );
 }
 
-void InciterPrint::initref( const std::vector< std::size_t >& edgenodes )
+void InciterPrint::edgeref( const std::vector< std::size_t >& edgenodes )
 // *****************************************************************************
 // Print initial mesh refinement edge-node pairs
 // *****************************************************************************

@@ -169,6 +169,7 @@ class InputDeck :
       set< tag::selected, tag::filetype >( tk::ctr::FieldFileType::EXODUSII );
       // Default AMR settings
       set< tag::amr, tag::amr >( false );
+      set< tag::amr, tag::initamr >( false );
       set< tag::amr, tag::error >( AMRErrorType::JUMP );
       // Default txt floating-point output precision in digits
       set< tag::prec, tag::diag >( std::cout.precision() );

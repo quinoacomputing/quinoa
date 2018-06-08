@@ -394,14 +394,6 @@ class Transporter : public CBase_Transporter {
     //! Constructor
     explicit Transporter();
 
-    //! \brief Reduction target signaling that all PEs have desitrbuted their
-    //!   mesh after partitioning
-    void refdistributed();
-
-    //! \brief Reduction target indicating that all PEs have distributed their
-    //!   newly added node IDs shared along the boundary with other PEs
-    void matched( std::size_t extra );
-
     //! Reduction target: the mesh has been read from file on all PEs
     void load( uint64_t nelem );
 
@@ -411,8 +403,12 @@ class Transporter : public CBase_Transporter {
     //! Reduction target: all PEs have created the mesh refiners
     void created();
 
+    //! \brief Reduction target: all mesh refiner chares have distributed their
+    //!   newly added node IDs that are shared among chares
+    void matched( std::size_t extra );
+
     //! Reduction target: all PEs have optionally refined their mesh
-    void refined();
+    void refined( std::size_t nelem );
 
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished flattening its global mesh node IDs and they are ready

@@ -15,11 +15,11 @@ module transporter {
 
     chare Transporter {
       entry Transporter();
+      entry [reductiontarget] void load( uint64_t nelem );
       entry [reductiontarget] void distributed();
       entry [reductiontarget] void created();
-      entry [reductiontarget] void refined();
       entry [reductiontarget] void matched( std::size_t extra );
-      entry [reductiontarget] void load( uint64_t nelem );
+      entry [reductiontarget] void refined( std::size_t nelem );
       entry [reductiontarget] void flattened();
       entry [reductiontarget] void coord();
       entry [reductiontarget] void comfinal();

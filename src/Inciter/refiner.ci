@@ -17,13 +17,16 @@ module refiner {
                      const tk::RefinerCallback& cbr,                        
                      const std::vector< std::size_t >& ginpoel,
                      const tk::UnsMesh::CoordMap& coordmap,
+                     const std::map< int, std::vector< std::size_t > >& bface,
+                     const std::vector< std::size_t >& triinpoel,
                      int nchare );
-      entry void addBndEdges( int fromch, const tk::UnsMesh::EdgeSet& ed );
-//       entry void addRefBndEdges( int frompe,
-//                                  const tk::UnsMesh::EdgeNodeCoord& en );
-//       entry void recvRefBndEdges();
-//       entry void correctref();
-//       entry void nextref();
+      initnode void registerReducers();      
+      entry [reductiontarget] void addBndEdges( CkReductionMsg* msg );
+      entry void addRefBndEdges( int fromch,
+                                 const tk::UnsMesh::EdgeNodeCoord& en );
+      entry void recvRefBndEdges();
+      entry void correctref();
+      entry void nextref();
     };
 
   } // inciter::

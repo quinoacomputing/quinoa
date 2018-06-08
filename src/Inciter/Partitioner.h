@@ -155,6 +155,12 @@ class Partitioner : public CBase_Partitioner {
     //! Acknowledge received mesh after initial mesh refinement
     void recvMesh();
 
+    void updateVolumeMesh( int fromch,
+                           const std::vector< std::size_t >& inpoel,
+                           const tk::UnsMesh::CoordMap& coordmap );
+
+    void updateBoundaryMesh( CkReductionMsg* msg );
+
     //! Prepare owned mesh node IDs for reordering
     void flatten();
 

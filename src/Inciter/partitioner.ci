@@ -37,6 +37,10 @@ module partitioner {
                                   std::tuple< std::vector< std::size_t >,
                                     tk::UnsMesh::CoordMap > >& chmesh );
       entry void recvMesh();
+      entry void updateVolumeMesh( int fromch,
+                                   const std::vector< std::size_t >& inpoel,
+                                   const tk::UnsMesh::CoordMap& coordmap );
+      entry [reductiontarget] void updateBoundaryMesh( CkReductionMsg* msg );
       entry void flatten();
       entry void refine();
       entry void offset( int pe, std::size_t u );

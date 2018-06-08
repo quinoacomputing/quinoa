@@ -136,7 +136,6 @@ Partitioner::partition( int nchare )
                                              gelemid,
                                              nchare );
 
-  // send progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pepartitioned();
 
   Assert( che.size() == gelemid.size(), "Size of ownership array (chare ID "
@@ -258,7 +257,7 @@ Partitioner::recvMesh()
 {
   if (--m_ndist == 0) {
     if (g_inputdeck.get< tag::cmd, tag::feedback >()) m_host.pedistributed();
-    contribute( m_cbp.get< tag::distributed >() );
+    refine();
   }
 }
 
@@ -270,6 +269,9 @@ Partitioner::refine()
 {
   auto dist = distribution( m_nchare );
 
+  //m_cbr.get< tag::update >() =
+  //  CkCallback( CkIndex_Partitioner::updateBoundaryMesh(nullptr), thisProxy );
+
   for (int c=0; c<dist[1]; ++c) {
     // compute chare ID
     auto cid = CkMyPe() * dist[0] + c;
@@ -278,11 +280,47 @@ Partitioner::refine()
                              m_cbr,
                              tk::cref_find(m_chinpoel,cid),
                              tk::cref_find(m_chcoordmap,cid),
+                             m_bface,
+                             m_triinpoel,
                              m_nchare,
                              CkMyPe() );
   }
 
+  //m_chinpoel.clear();
+  //m_chcoordmap.clear();
+  //m_bface.clear();
+  //m_triinpoel.clear();
+
   contribute( m_cbp.get< tag::created >() );
+}
+
+void
+Partitioner::updateVolumeMesh( int fromch,
+                               const std::vector< std::size_t >& inpoel,
+                               const tk::UnsMesh::CoordMap& coordmap )
+// *****************************************************************************
+// ...
+// *****************************************************************************
+{
+  m_chinpoel[ fromch ] = inpoel;
+  m_chcoordmap[ fromch ] = coordmap;
+
+  if (m_chinpoel.size() == static_cast<std::size_t>(m_nchare)) {
+    // Compute final number of cells across whole problem
+    auto nelem = tk::sumvalsize( m_chinpoel );
+    contribute( sizeof(uint64_t), &nelem, CkReduction::sum_ulong,
+                m_cbp.get< tag::refined >() );
+  }
+}
+
+void
+Partitioner::updateBoundaryMesh( CkReductionMsg* /* msg*/ )
+// *****************************************************************************
+// ...
+// *****************************************************************************
+{
+//   m_bface.insert( begin{bface), end(bface) );
+//   m_triinpoel.insert( end(triinpoel), begin(triinpoel), end(triinpoel) );
 }
 
 void
@@ -344,7 +382,6 @@ Partitioner::flatten()
   // Make node chare lists unique
   for (auto& n : m_bnodechares) tk::unique( n.second );
 
-  // send progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.peflattened();
 
   // Signal host that we are ready for computing the communication map,
@@ -455,7 +492,6 @@ Partitioner::gather()
   // Send chare boundary nodes to all PEs in a broadcast fashion
   thisProxy.query( CkMyPe(), bnodes );
 
-  // send progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pegather();
 }
 
@@ -485,7 +521,6 @@ Partitioner::query( int p, const std::vector< std::size_t >& bnodes )
     }
   }
 
-  // when we have heard from all PEs, send progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() &&
        ++m_nquery == static_cast<std::size_t>(CkNumPes()) )
     m_host.pequery();
@@ -567,7 +602,6 @@ Partitioner::mask( int p, const std::unordered_map< std::size_t,
     std::size_t nrecv = 0;
     for (const auto& u : m_ncommunication) nrecv += u.second.size();
 
-    // send progress report to host
     if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pemask();
 
     // Compute number of mesh node IDs we will assign IDs to
@@ -727,10 +761,8 @@ Partitioner::distribute(
 
   // Export chare IDs and mesh we do not own to fellow PEs
   if (exp.empty()) {
-    contribute( m_cbp.get< tag::distributed >() );
-    // send progress report to host
-    if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-      m_host.pedistributed();
+    if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pedistributed();
+    refine();
   } else {
      m_ndist = exp.size();
      for (const auto& p : exp)
@@ -904,7 +936,6 @@ Partitioner::reordered()
     for (auto i : c.second)
       m_nodeset.insert( i );
 
-  // send progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pereordered();
 
   // Compute lower and upper bounds of reordered node IDs our PE operates on
@@ -961,7 +992,6 @@ Partitioner::create()
 // they will operate on
 // *****************************************************************************
 {
-  // send progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pebounds();
 
   // Initiate asynchronous reduction across all Partitioner objects computing

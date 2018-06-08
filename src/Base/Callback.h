@@ -20,6 +20,7 @@ using PartitionerCallback =
   tk::tuple::tagged_tuple< tag::load,           CkCallback
                          , tag::distributed,    CkCallback
                          , tag::created,        CkCallback
+                         , tag::refined,        CkCallback
                          , tag::flattened,      CkCallback
                          , tag::avecost,        CkCallback
                          , tag::stdcost,        CkCallback
@@ -29,6 +30,7 @@ using PartitionerCallback =
 using RefinerCallback =
   tk::tuple::tagged_tuple< tag::matched,        CkCallback
                          , tag::refined,        CkCallback
+                         //, tag::update,         CkCallback
                          >;
 
 using SolverCallback =

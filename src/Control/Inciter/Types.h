@@ -41,13 +41,14 @@ using selects = tk::tuple::tagged_tuple<
 
 //! Adaptive-mesh refinement options
 using amr = tk::tuple::tagged_tuple<
-  tag::amr,    bool,                             //!< AMR on/off
-  tag::init,   std::vector< AMRInitialType >,    //!< List of initial AMR types
-  tag::refvar, std::vector< std::string >,       //!< List of refinement vars
-  tag::id,     std::vector< std::size_t >,       //!< List of refvar indices
-  tag::error,  AMRErrorType,                     //!< Error estimator for AMR
+  tag::amr,     bool,                             //!< AMR on/off
+  tag::initamr, bool,                             //!< Initial AMR on/off
+  tag::init,    std::vector< AMRInitialType >,    //!< List of initial AMR types
+  tag::refvar,  std::vector< std::string >,       //!< List of refinement vars
+  tag::id,      std::vector< std::size_t >,       //!< List of refvar indices
+  tag::error,   AMRErrorType,                     //!< Error estimator for AMR
   //! List of edges-node pairs
-  tag::edge,   std::vector< kw::amr_initref::info::expect::type >
+  tag::edge,    std::vector< kw::amr_initref::info::expect::type >
 >;
 
 //! Discretization parameters storage

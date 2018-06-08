@@ -303,10 +303,21 @@ namespace grm {
   struct action< check_amr_errors > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
+      // Error out if refvar size does not equal refidx size
+      Assert( (stack.template get< tag::amr, tag::refvar >().size() ==
+               stack.template get< tag::amr, tag::id >().size()),
+              "The size of refvar and refidx vectors must equal" );
       // Error out if initref list is not divisible by 2
-      auto& initref = stack.template get< tag::amr, tag::edge >();
-      if (initref.size() % 2 == 1)
+      const auto& edgeref = stack.template get< tag::amr, tag::edge >();
+      if (edgeref.size() % 2 == 1)
         Message< Stack, ERROR, MsgKey::INITREFODD >( stack, in );
+      // Set initial AMR (on/off) if either the initial refinement type list or
+      // an edge list is configured
+      Assert( (stack.template get< tag::amr, tag::initamr >() == false),
+              "InitAMR switch must be false by default" );
+      const auto& initref = stack.template get< tag::amr, tag::init >();
+      if (!initref.empty() || !edgeref.empty())
+        stack.template get< tag::amr, tag::initamr >() = true;
     }
   };
 

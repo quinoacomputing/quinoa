@@ -137,12 +137,16 @@ Transporter::Transporter() :
   const auto amr = g_inputdeck.get< tag::amr, tag::amr >();
   if (amr) {
     m_print.section( "Adaptive mesh refinement (AMR)" );
-    m_print.ItemVec< ctr::AMRInitial >
-                   ( g_inputdeck.get< tag::amr, tag::init >() );
     m_print.refvar( g_inputdeck.get< tag::amr, tag::refvar >(),
                     g_inputdeck.get< tag::amr, tag::id >() );
     m_print.Item< ctr::AMRError, tag::amr, tag::error >();
-    m_print.initref( g_inputdeck.get< tag::amr, tag::edge >() );
+    auto initamr = g_inputdeck.get< tag::amr, tag::initamr >();
+    m_print.item( "Initial AMR", initamr );
+    if (initamr) {
+      m_print.ItemVec< ctr::AMRInitial >
+                     ( g_inputdeck.get< tag::amr, tag::init >() );
+      m_print.edgeref( g_inputdeck.get< tag::amr, tag::edge >() );
+    }
   }
 
   // If the desired max number of time steps is larger than zero, and the
@@ -230,6 +234,7 @@ Transporter::createPartitioner()
       CkCallback( CkReductionTarget(Transporter,load), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,created), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,aveCost), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,stdCost), thisProxy )
@@ -287,24 +292,22 @@ Transporter::load( uint64_t nelem )
   m_print.item( "Number of tetrahedra", nelem );
   m_print.item( "Number of nodes", npoin );
 
+  // Print out mesh partitioning configuration
+  m_print.section( "Mesh partitioning" );
+  m_print.Item< tk::ctr::PartitioningAlgorithm,
+                tag::selected, tag::partitioner >();
+
   // Print out info on load distribution
-  m_print.section( "Initial load distribution" );
+  m_print.section( "Load distribution" );
   m_print.item( "Virtualization [0.0...1.0]",
                 g_inputdeck.get< tag::cmd, tag::virtualization >() );
-  m_print.item( "Load (number of tetrahedra)", m_nelem );
+  m_print.item( "Initial number of tetrahedra", m_nelem );
   m_print.item( "Number of processing elements", CkNumPes() );
   m_print.item( "Number of work units",
                 std::to_string( m_nchare ) + " (" +
                 std::to_string( m_nchare-1 ) + "*" +
                 std::to_string( m_chunksize ) + "+" +
                 std::to_string( m_chunksize+m_remainder ) + ')' );
-
-  // Print out mesh partitioning configuration
-  m_print.section( "Mesh partitioning" );
-  m_print.Item< tk::ctr::PartitioningAlgorithm,
-                tag::selected, tag::partitioner >();
-
-  m_print.endsubsection();
 
   m_progMesh.start( "Preparing mesh", {{ CkNumPes(), CkNumPes(), m_nchare }} );
 
@@ -332,27 +335,36 @@ Transporter::created()
 void
 Transporter::matched( std::size_t extra )
 // *****************************************************************************
-// Reduction target indicating that all PEs have distributed their newly added
-// node IDs shared among multiple PEs
-//! \param[in] extra Max number of edges/PE collected across all PEs that still
-//!   correction due to refinement along PE boundaries
+// Reduction target: all mesh refiner chares have distributed their newly added
+// node IDs that are shared among chares
+//! \param[in] extra Max number of edges/chare collected across all chares that
+//!   correction due to refinement along chare boundaries
 // *****************************************************************************
 {
-std::cout << "max extra: " << extra << '\n';
-  // If at least a single edge on a PE still needs correction, do correction,
+//std::cout << "max extra: " << extra << '\n';
+  // If at least a single edge on a chare still needs correction, do correction,
   // otherwise, this initial mesh refinement step is complete
-  //if (extra > 0) m_partitioner.correctref(); else m_partitioner.nextref();
+  if (extra > 0) m_refiner.correctref(); else m_refiner.nextref();
 }
 
 void
-Transporter::refined()
+Transporter::refined( std::size_t nelem )
 // *****************************************************************************
 // Reduction target: all PEs have refined their mesh
+//! \param[in] Total number of elements across the whole problem
 // *****************************************************************************
 {
   m_progMesh.end();
-  m_partitioner.flatten();
+
+  if (g_inputdeck.get< tag::amr, tag::initamr >()) {
+    m_nelem = nelem;
+    m_print.item( "Final number of tetrahedra", m_nelem );
+  }
+
+  m_print.endsubsection();
+
   m_progReorder.start( "Reordering mesh" );
+  m_partitioner.flatten();
 }
 
 void
