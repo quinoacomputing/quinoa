@@ -3,15 +3,15 @@
 
 # Virtualization = 0
 
-add_regression_test(amr_initial_uniform1step ${INCITER_EXECUTABLE}
-                    NUMPES 1
-                    INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
-                               exodiff.cfg slot_cyl_pe1_u0.0.std.exo
-                    ARGS -c slot_cyl_amr.q -i unitsquare_01_955.exo -v
-                    BIN_BASELINE slot_cyl_pe1_u0.0.std.exo
-                    BIN_RESULT out.0
-                    BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff.cfg)
+#add_regression_test(amr_initial_uniform1step ${INCITER_EXECUTABLE}
+#                    NUMPES 1
+#                    INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
+#                               exodiff.cfg slot_cyl_pe1_u0.0.std.exo
+#                    ARGS -c slot_cyl_amr.q -i unitsquare_01_955.exo -v
+#                    BIN_BASELINE slot_cyl_pe1_u0.0.std.exo
+#                    BIN_RESULT out.0
+#                    BIN_DIFF_PROG_ARGS -m
+#                    BIN_DIFF_PROG_CONF exodiff.cfg)
 
 # Parallel, no virtualization
 
