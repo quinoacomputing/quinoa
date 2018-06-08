@@ -37,12 +37,9 @@ module transporter {
       entry [reductiontarget] void next();
       entry [reductiontarget] void finish();
 
-      entry void peread();
-      entry void perefined();
-      entry void pecentroid();
-
       entry void pepartitioned();
       entry void pedistributed();
+      entry void chrefined();
 
       entry void peflattened();
       entry void pegather();

@@ -7,6 +7,7 @@
 */
 // *****************************************************************************
 
+#include <vector>
 #include <algorithm>
 
 #include "Refiner.h"
@@ -15,6 +16,8 @@
 #include "Inciter/InputDeck/InputDeck.h"
 #include "CGPDE.h"
 #include "DGPDE.h"
+#include "DerivedData.h"
+#include "UnsMesh.h"
 
 namespace inciter {
 
@@ -29,187 +32,133 @@ using inciter::Refiner;
 Refiner::Refiner( const CProxy_Transporter& transporter,
                   const tk::RefinerCallback& cbr,
                   const std::vector< std::size_t >& ginpoel,
-                  const tk::UnsMesh::CoordMap& coordmap ) :
+                  const tk::UnsMesh::CoordMap& coordmap,
+                  int nchare ) :
   m_host( transporter ),
   m_cbr( cbr ),
+  m_ginpoel( ginpoel ),
+  m_coordmap( coordmap ),
+  m_nchare( nchare ),
   m_el( tk::global2local( ginpoel ) ),     // fills m_inpoel, m_gid, m_lid
-//   m_nedge( 0 ),
-//   m_nref( 0 ),
-//   m_extra( 1 ),
-  m_initref( g_inputdeck.get< tag::amr, tag::init >() )
+  m_initref( g_inputdeck.get< tag::amr, tag::init >() ),
+  m_refiner( m_inpoel ),
+  m_nedge( 0 ),
+  m_nref( 0 ),
+  m_extra( 1 ),
+  m_ch(),
+  m_edgenode(),
+  m_edgenodeCh(),
+  m_bndEdges()
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
 {
+  Assert( !m_ginpoel.empty(), "No elements assigned to refiner chare" );
+
   // Reverse initial mesh refinement type list (will pop from back)
   std::reverse( begin(m_initref), end(m_initref) );
 
-//   if ( !g_inputdeck.get< tag::amr, tag::init >().empty() ||
-//        !g_inputdeck.get< tag::amr, tag::edge >().empty() )
-//     partref();          // if initial mesh refinement configured, partition
-//   else
-//     finishref();        // if not, continue
+  // If initial mesh refinement is configured by the user, by specifying an
+  // initial mesh refinement type list or if in adge list is given, in the
+  // amr...end block, start initial mesh refinement.
+  if ( !g_inputdeck.get< tag::amr, tag::init >().empty() ||
+       !g_inputdeck.get< tag::amr, tag::edge >().empty() )
+    start();
+  else
+    contribute( m_cbr.get< tag::refined >() );
 }
 
-// void
-// Partitioner::partref()
-// // *****************************************************************************
-// //  Partition the mesh to NumPes partitions (before an initial refinement step)
-// //! \details This function calls the mesh partitioner to partition (or
-// //!   re-partition) the (current) mesh as a first step for an initial mesh
-// //!   refinement step. The number of partitions always equals the numher of PEs.
-// // *****************************************************************************
-// {
-//   // Generate element IDs for Zoltan
-//   std::vector< long > gelemid( m_inpoel.size()/4 );
-//   std::iota( begin(gelemid), end(gelemid), 0 );
-// 
-//   // Partition the mesh using Zoltan to number of PEs parts
-//   const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
-//   const auto pel = tk::zoltan::geomPartMesh( alg,
-//                                              centroids( m_inpoel, m_coord ),
-//                                              gelemid,
-//                                              CkNumPes() );
-// 
-//   Assert( pel.size() == gelemid.size(), "Size of ownership array (PE of "
-//           "elements) after mesh partitioning does not equal the number of mesh "
-//           "graph elements" );
-// 
-//   // Prepare for a step of initial mesh refinement
-//   m_extra = 1;
-//   m_bndEdges.clear();
-//   m_pe.clear();
-//   m_edgenodePe.clear();
-//   m_edgenode.clear();
-//   m_coordmap.clear();
-//   auto g = m_ginpoel;
-//   m_ginpoel.clear();
-// 
-//   // Categorize mesh elements (given by their gobal node IDs) by target PE and
-//   // distribute to their PEs based on mesh partitioning.
-//   distributePe( categorize( pel, g ) );
-// }
-// 
-// void
-// Partitioner::distributePe(
-//   std::unordered_map< int, std::vector< std::size_t > >&& elems )
-// // *****************************************************************************
-// // Distribute mesh to their PEs during initial mesh refinement
-// //! \param[in] elems Mesh cells (with global node IDs) categorized by target PEs
-// // *****************************************************************************
-// {
-//   // Store own mesh connectivity
-//   auto i = elems.find( CkMyPe() );
-//   if (i != end(elems)) {
-//     // Store our mesh chunk. The receive side also writes to this, so concat.
-//     m_ginpoel.insert( end(m_ginpoel), begin(i->second), end(i->second) );
-//     // store coordinates associated to global nodes of our mesh chunk
-//     auto cm = coordmap( i->second );
-//     // the receive side also writes to this, so concatenate
-//     m_coordmap.insert( begin(cm), end(cm) );
-//     // remove our mesh chunk from list (the rest will be exported)
-//     elems.erase( i );
-//   }
-// 
-//   m_nedge = 0;
-// 
-//   // Export connectivities to other PEs
-//   if (elems.empty())
-//     contribute( m_cb.get< tag::refdistributed >() );
-//   else {
-//     m_ndist = 0;
-//     m_npeDist = elems.size();
-//     for (const auto& p : elems)
-//       thisProxy[ p.first ].addPeMesh( CkMyPe(), p.second, coordmap(p.second) );
-//   }
-// }
+void
+Refiner::start()
+// *****************************************************************************
+// Prepare for next step of mesh refinement
+// *****************************************************************************
+{
+  m_extra = 1;  // assume at least a single step of correction is needed
+  m_bndEdges.clear();
+  m_ch.clear();
+  m_edgenodeCh.clear();
+  m_edgenode.clear();
 
-// void
-// Partitioner::recvPeMesh()
-// // *****************************************************************************
-// //  Acknowledge received mesh chunk and its nodes
-// // *****************************************************************************
-// {
-//   if (++m_ndist == m_npeDist) contribute( m_cb.get< tag::refdistributed >() );
-// }
-// 
-// void
-// Partitioner::bndEdges()
-// // *****************************************************************************
-// // Generate boundary edges and send them to all PEs
-// //! \details This step happens when the mesh chunk on this PE has been
-// //!   distributed after partitioning during an initial mesh refinement step. At
-// //!   this point we have a contiguous chunk of the mesh on this PE as
-// //!   determined by the partitioner. The next step is to extract the edges on
-// //!   the boundary only. The boundary edges (shared by multiple PEs) will be
-// //!   agreed on a refinement that yields a conforming mesh across PE boundaries.
-// // *****************************************************************************
-// {
-//   Assert( !m_ginpoel.empty(), "No elements are assigned to PE" );
-// 
-//   // Compute local data from global mesh connectivity (m_inpoel, m_gid, m_lid)
-//   m_el = tk::global2local( m_ginpoel );
-// 
-//   // Generate boundary edges of our mesh chunk
-//   tk::UnsMesh::EdgeSet bnded;
-//   auto esup = tk::genEsup( m_inpoel, 4 );         // elements surrounding points
-//   auto esuel = tk::genEsuelTet( m_inpoel, esup ); // elems surrounding elements
-//   for (std::size_t e=0; e<esuel.size()/4; ++e) {
-//     auto mark = e*4;
-//     for (std::size_t f=0; f<4; ++f) {
-//       if (esuel[mark+f] == -1) {
-//         auto A = m_gid[ m_inpoel[ mark+tk::lpofa[f][0] ] ];
-//         auto B = m_gid[ m_inpoel[ mark+tk::lpofa[f][1] ] ];
-//         auto C = m_gid[ m_inpoel[ mark+tk::lpofa[f][2] ] ];
-//         bnded.insert( {{{A,B}}} );
-//         bnded.insert( {{{B,C}}} );
-//         bnded.insert( {{{C,A}}} );
-//         Assert( m_lid.find( A ) != end(m_lid), "Local node ID not found" );
-//         Assert( m_lid.find( B ) != end(m_lid), "Local node ID not found" );
-//         Assert( m_lid.find( C ) != end(m_lid), "Local node ID not found" );
-//       }
-//     }
-//   }
-// 
-//   // Export boundary edges to all PEs
-//   thisProxy.addBndEdges( CkMyPe(), bnded );
-// }
-// 
-// void
-// Partitioner::addBndEdges( int frompe, const tk::UnsMesh::EdgeSet& ed )
-// // *****************************************************************************
-// //! Receive boundary edges from all PEs (including this one)
-// //! \param[in] frompe PE call coming from
-// //! \param[in] ed Edges on frompe's boundary (with global node IDs)
-// // *****************************************************************************
-// {
-//   // Store incoming boundary edges
-//   m_bndEdges[ frompe ].insert( begin(ed), end(ed) );
-// 
-//   if (++m_nedge == static_cast<std::size_t>(CkNumPes())) {
-//     // Compute unique set of PEs that share at least a single edge with this PE
-//     const auto& ownedges = tk::cref_find( m_bndEdges, CkMyPe() );
-//     for (const auto& p : m_bndEdges)    // for all PEs
-//       if (p.first != CkMyPe())          // for all PEs other than this PE
-//         for (const auto& e : p.second)  // for all boundary edges
-//           if (ownedges.find(e) != end(ownedges))
-//             m_pe.insert( p.first );     // if edge is shared, store its PE
-// 
-//     refine();
-//   }
-// }
-// 
-// void
-// Partitioner::refine()
-// // *****************************************************************************
-// //  Do a single step of initial mesh refinement based on user-input
-// //! \details This is a single step in a potentially multiple-entry list of
-// //!   initial adaptive mesh refinement steps. Distribution of the PE-boundary
-// //!   edges has preceded this step, so that boundary edges (shared by multiple
-// //!   PEs) can agree on a refinement that yields a conforming mesh across PE
-// //!   boundaries.
-// // *****************************************************************************
-// {
+  // Generate boundary edges
+  bndEdges();
+}
+
+void
+Refiner::bndEdges()
+// *****************************************************************************
+// Generate boundary edges and send them to all chares
+//! \details Extract edges on the boundary only. The boundary edges (shared by
+//!   multiple chares) will be agreed on a refinement that yields a conforming
+//!   mesh across chares boundaries.
+// *****************************************************************************
+{
+  // (Re-)compute local from global mesh data (m_inpoel, m_gid, m_lid)
+  m_el = tk::global2local( m_ginpoel );
+
+  // Generate boundary edges of our mesh chunk
+  tk::UnsMesh::EdgeSet bnded;
+  auto esup = tk::genEsup( m_inpoel, 4 );         // elements surrounding points
+  auto esuel = tk::genEsuelTet( m_inpoel, esup ); // elems surrounding elements
+  for (std::size_t e=0; e<esuel.size()/4; ++e) {
+    auto mark = e*4;
+    for (std::size_t f=0; f<4; ++f) {
+      if (esuel[mark+f] == -1) {
+        auto A = m_gid[ m_inpoel[ mark+tk::lpofa[f][0] ] ];
+        auto B = m_gid[ m_inpoel[ mark+tk::lpofa[f][1] ] ];
+        auto C = m_gid[ m_inpoel[ mark+tk::lpofa[f][2] ] ];
+        bnded.insert( {{{A,B}}} );
+        bnded.insert( {{{B,C}}} );
+        bnded.insert( {{{C,A}}} );
+        Assert( m_lid.find( A ) != end(m_lid), "Local node ID not found" );
+        Assert( m_lid.find( B ) != end(m_lid), "Local node ID not found" );
+        Assert( m_lid.find( C ) != end(m_lid), "Local node ID not found" );
+      }
+    }
+  }
+
+  // Export boundary edges to all refiner chares
+  thisProxy.addBndEdges( thisIndex, bnded );
+}
+
+void
+Refiner::addBndEdges( int fromch, const tk::UnsMesh::EdgeSet& ed )
+// *****************************************************************************
+//! Receive boundary edges from all refiner chares (including this one)
+//! \param[in] fromch Chare call coming from
+//! \param[in] ed Edges on fromch's boundary (with global node IDs)
+// *****************************************************************************
+{
+  // Store incoming boundary edges
+  m_bndEdges[ fromch ].insert( begin(ed), end(ed) );
+
+  if (++m_nedge == m_nchare) {
+    // Compute unique set of chares that share at least a single edge with us
+    const auto& ownedges = tk::cref_find( m_bndEdges, CkMyPe() );
+    for (const auto& p : m_bndEdges)    // for all chares
+      if (p.first != CkMyPe())          // for all chares other than this one
+        for (const auto& e : p.second)  // for all boundary edges
+          if (ownedges.find(e) != end(ownedges))
+            m_ch.insert( p.first );     // if edge is shared, store its PE
+
+    refine();
+  }
+}
+
+void
+Refiner::refine()
+// *****************************************************************************
+//  Do a single step of initial mesh refinement based on user-input
+//! \details This is a single step in a potentially multiple-entry list of
+//!   initial adaptive mesh refinement steps. Distribution of the PE-boundary
+//!   edges has preceded this step, so that boundary edges (shared by multiple
+//!   PEs) can agree on a refinement that yields a conforming mesh across PE
+//!   boundaries.
+// *****************************************************************************
+{
+  if (g_inputdeck.get< tag::cmd, tag::feedback >()) m_host.chrefined();
+  contribute( m_cbr.get< tag::refined >() );    // shortcut for now
+
 //   // Convert node coordinates associated to global node IDs to a flat vector
 //   auto npoin = m_coordmap.size();
 //   Assert( m_gid.size() == npoin, "Size mismatch" );
@@ -272,10 +221,10 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 //       thisProxy[ p ].addRefBndEdges( CkMyPe(), exp );
 //     }
 //   }
-// }
-// 
+}
+
 // void
-// Partitioner::addRefBndEdges( int frompe, const tk::UnsMesh::EdgeNodeCoord& ed )
+// Refiner::addRefBndEdges( int frompe, const tk::UnsMesh::EdgeNodeCoord& ed )
 // // *****************************************************************************
 // //! Receive newly added mesh node IDs on our PE boundary
 // //! \param[in] frompe PE call coming from
@@ -291,7 +240,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 // }
 // 
 // void
-// Partitioner::recvRefBndEdges()
+// Refiner::recvRefBndEdges()
 // // *****************************************************************************
 // //  Acknowledge received newly added node IDs to edges shared among multiple PEs
 // // *****************************************************************************
@@ -312,7 +261,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 // }
 // 
 // void
-// Partitioner::correctref()
+// Refiner::correctref()
 // // *****************************************************************************
 // //  Correct refinement to arrive at a conforming mesh across PE boundaries
 // //! \details This function is called repeatedly until there is not a a single
@@ -401,7 +350,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 // }
 // 
 // void
-// Partitioner::nextref()
+// Refiner::nextref()
 // // *****************************************************************************
 // // Decide wether to continue with another step of initial mesh refinement
 // //! \details At this point the mesh has been refined and all PEs have received
@@ -430,7 +379,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 // }
 // 
 // void
-// Partitioner::finishref()
+// Refiner::finishref()
 // // *****************************************************************************
 // // Finish initial mesh refinement
 // //! \details This function is called as after initial mesh refinement has
@@ -446,7 +395,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 // }
 // 
 // void
-// Partitioner::uniformRefine()
+// Refiner::uniformRefine()
 // // *****************************************************************************
 // // Do uniform mesh refinement
 // // *****************************************************************************
@@ -459,7 +408,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 // }
 // 
 // void
-// Partitioner::errorRefine()
+// Refiner::errorRefine()
 // // *****************************************************************************
 // // Do error-based mesh refinement
 // // *****************************************************************************
@@ -506,7 +455,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 // }
 // 
 // void
-// Partitioner::userRefine()
+// Refiner::userRefine()
 // // *****************************************************************************
 // // Do mesh refinement based on user explicitly tagging edges
 // // *****************************************************************************
@@ -545,7 +494,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 // }
 // 
 // tk::Fields
-// Partitioner::nodeinit( std::size_t npoin,
+// Refiner::nodeinit( std::size_t npoin,
 //                        const std::pair< std::vector< std::size_t >,
 //                           std::vector< std::size_t > >& esup )
 // // *****************************************************************************
@@ -599,7 +548,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 // }
 // 
 // void
-// Partitioner::correctRefine( const tk::UnsMesh::EdgeSet& extra )
+// Refiner::correctRefine( const tk::UnsMesh::EdgeSet& extra )
 // // *****************************************************************************
 // // Do mesh refinement correcting PE-boundary edges
 // //! \param[in] extra Unique set of edges that need a new node on PE boundaries
@@ -620,7 +569,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 // }
 // 
 // void
-// Partitioner::updateMesh()
+// Refiner::updateMesh()
 // // *****************************************************************************
 // // Update mesh after refinement
 // // *****************************************************************************
@@ -648,7 +597,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 // }
 // 
 // void
-// Partitioner::updateVolumeMesh( const std::unordered_set< std::size_t >& old,
+// Refiner::updateVolumeMesh( const std::unordered_set< std::size_t >& old,
 //                                const std::unordered_set< std::size_t >& ref )
 // // *****************************************************************************
 // //  Update volume mesh after mesh refinement
@@ -708,7 +657,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 // }
 // 
 // void
-// Partitioner::updateBoundaryMesh( const std::unordered_set< std::size_t >& old,
+// Refiner::updateBoundaryMesh( const std::unordered_set< std::size_t >& old,
 //                                  const std::unordered_set< std::size_t >& ref )
 // // *****************************************************************************
 // // Update boundary data structures after mesh refinement

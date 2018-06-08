@@ -16,9 +16,9 @@ module refiner {
       entry Refiner( const CProxy_Transporter& transporter,
                      const tk::RefinerCallback& cbr,                        
                      const std::vector< std::size_t >& ginpoel,
-                     const tk::UnsMesh::CoordMap& coordmap );
-//       entry void bndEdges();
-//       entry void addBndEdges( int frompe, const tk::UnsMesh::EdgeSet& ed );
+                     const tk::UnsMesh::CoordMap& coordmap,
+                     int nchare );
+      entry void addBndEdges( int fromch, const tk::UnsMesh::EdgeSet& ed );
 //       entry void addRefBndEdges( int frompe,
 //                                  const tk::UnsMesh::EdgeNodeCoord& en );
 //       entry void recvRefBndEdges();

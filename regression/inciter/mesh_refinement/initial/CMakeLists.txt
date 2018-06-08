@@ -12,7 +12,7 @@
 #                    BIN_RESULT out.0
 #                    BIN_DIFF_PROG_ARGS -m
 #                    BIN_DIFF_PROG_CONF exodiff.cfg)
-
+#
 # Parallel, no virtualization
 
 #add_regression_test(amr_initial_uniform1step ${INCITER_EXECUTABLE}

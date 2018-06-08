@@ -363,11 +363,9 @@ class Transporter : public CBase_Transporter {
 
   private:
     //! Indices for progress report on mesh read (and prep for partitioning)
-    enum ProgMesh{ READ=0, REFINE, CENTROID };
-    //! Indices for progress report on mesh partitioning
-    enum ProgPart{ PART=0, DIST };
+    enum ProgMesh{ PART=0, DIST, REFINE };
     //! Indices for progress report on mesh reordering
-    enum ProgReord{ FLAT=0, GATHER, QUERY, MASK, REORD, BOUND };
+    enum ProgReorder{ FLAT=0, GATHER, QUERY, MASK, REORD, BOUND };
 
   public:
     #if defined(__clang__)
@@ -432,17 +430,12 @@ class Transporter : public CBase_Transporter {
     //!   workers to read their mesh coordinates
     void coord();
 
-    //! Non-reduction target for receiving progress report on reading mesh
-    void peread() { m_progMesh.inc< READ >(); }
-    //! Non-reduction target for receiving progress report on mesh refinement
-    void perefined() { m_progMesh.inc< REFINE >(); }
-    //! Non-reduction target for receiving progress report on mesh centroids
-    void pecentroid() { m_progMesh.inc< CENTROID >(); }
-
     //! Non-reduction target for receiving progress report on partitioning mesh
-    void pepartitioned() { m_progPart.inc< PART >(); }
+    void pepartitioned() { m_progMesh.inc< PART >(); }
     //! Non-reduction target for receiving progress report on distributing mesh
-    void pedistributed() { m_progPart.inc< DIST >(); }
+    void pedistributed() { m_progMesh.inc< DIST >(); }
+    //! Non-reduction target for receiving progress report on mesh refinement
+    void chrefined() { m_progMesh.inc< REFINE >(); }
 
     //! Non-reduction target for receiving progress report on flattening mesh
     void peflattened() { m_progReorder.inc< FLAT >(); }
@@ -524,11 +517,8 @@ class Transporter : public CBase_Transporter {
     //! \brief Aggregate 'old' (as in file) node ID list at which Solver
     //!   sets boundary conditions, see also Partitioner.h
     std::vector< std::size_t > m_linsysbc;
-    //! \brief Progress object for task "Creating partitioners, reading, and
-    //!    optionally refining mesh"
+    //! Progress object for preparing mesh
     tk::Progress< 3 > m_progMesh;
-    // Progress object for task "Partitioning and distributing mesh"
-    tk::Progress< 2 > m_progPart;
     // Progress object for task "Reordering mesh"
     tk::Progress< 6 > m_progReorder;
 

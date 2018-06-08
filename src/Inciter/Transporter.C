@@ -68,11 +68,11 @@ Transporter::Transporter() :
   m_timer(),
   m_linsysbc(),
   m_progMesh( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-               {{ "r", "f", "c" }}, {{ CkNumPes(), CkNumPes(), CkNumPes() }} ),
-  m_progPart( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-              {{ "p", "d" }}, {{ CkNumPes(), CkNumPes() }} ),
+              {{ "p", "d", "r" }},
+              {{ "partition", "distribute", "refine" }} ),
   m_progReorder( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
                  {{ "f", "g", "q", "m", "r", "b" }},
+                 {{ "flatten", "gather", "query", "mask", "reorder", "bounds"}},
                  {{ CkNumPes(), CkNumPes(), CkNumPes(), CkNumPes(),
                     CkNumPes(), CkNumPes() }} )
 // *****************************************************************************
@@ -246,7 +246,7 @@ Transporter::createPartitioner()
   m_timer[ TimerTag::MESH_READ ];
 
   // Create mesh partitioner Charm++ chare group and start preparing mesh
-  m_progMesh.start( "Reading mesh ..." );
+  m_print.diag( "Reading mesh" );
 
   // Create empty mesh refiner Chare chare array
   m_refiner = CProxy_Refiner::ckNew();
@@ -255,6 +255,60 @@ Transporter::createPartitioner()
   m_partitioner =
     CProxy_Partitioner::ckNew( cbp, cbr, thisProxy, m_solver, m_refiner,
                                m_scheme, bface, triinpoel );
+}
+
+void
+Transporter::load( uint64_t nelem )
+// *****************************************************************************
+// Reduction target: the mesh has been read from file on all PEs
+//! \param[in] nelem Total number of mesh elements (summed across all PEs)
+// *****************************************************************************
+{
+  m_nelem = nelem;
+
+  // Compute load distribution given total work (nelem) and user-specified
+  // virtualization
+  m_nchare = static_cast<int>(
+               tk::linearLoadDistributor(
+                 g_inputdeck.get< tag::cmd, tag::virtualization >(),
+                 nelem, CkNumPes(), m_chunksize, m_remainder ) );
+
+  // Send total number of chares to all linear solver PEs
+  m_solver.nchare( m_nchare );
+
+  // Start timer measuring preparation of the mesh for partitioning
+  const auto& timer = tk::cref_find( m_timer, TimerTag::MESH_READ );
+  m_print.diag( "Mesh read time: " + std::to_string( timer.dsec() ) + " sec" );
+
+  // Print out mesh graph stats
+  m_print.section( "Input mesh graph statistics" );
+  tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
+  auto npoin = er.readHeader();
+  m_print.item( "Number of tetrahedra", nelem );
+  m_print.item( "Number of nodes", npoin );
+
+  // Print out info on load distribution
+  m_print.section( "Initial load distribution" );
+  m_print.item( "Virtualization [0.0...1.0]",
+                g_inputdeck.get< tag::cmd, tag::virtualization >() );
+  m_print.item( "Load (number of tetrahedra)", m_nelem );
+  m_print.item( "Number of processing elements", CkNumPes() );
+  m_print.item( "Number of work units",
+                std::to_string( m_nchare ) + " (" +
+                std::to_string( m_nchare-1 ) + "*" +
+                std::to_string( m_chunksize ) + "+" +
+                std::to_string( m_chunksize+m_remainder ) + ')' );
+
+  // Print out mesh partitioning configuration
+  m_print.section( "Mesh partitioning" );
+  m_print.Item< tk::ctr::PartitioningAlgorithm,
+                tag::selected, tag::partitioner >();
+
+  m_print.endsubsection();
+
+  m_progMesh.start( "Preparing mesh", {{ CkNumPes(), CkNumPes(), m_nchare }} );
+
+  m_partitioner.partition( m_nchare );
 }
 
 void
@@ -273,7 +327,6 @@ Transporter::created()
 // *****************************************************************************
 {
   m_refiner.doneInserting();
-  refined();    // shortcut refinement for now
 }
 
 void
@@ -297,7 +350,9 @@ Transporter::refined()
 // Reduction target: all PEs have refined their mesh
 // *****************************************************************************
 {
+  m_progMesh.end();
   m_partitioner.flatten();
+  m_progReorder.start( "Reordering mesh" );
 }
 
 void
@@ -341,66 +396,6 @@ Transporter::diagHeader()
   // Write diagnostics header
   dw.header( d );
 }
-
-void
-Transporter::load( uint64_t nelem )
-// *****************************************************************************
-// Reduction target: the mesh has been read from file on all PEs
-//! \param[in] nelem Total number of mesh elements (summed across all PEs)
-// *****************************************************************************
-{
-  m_nelem = nelem;
-
-  // Compute load distribution given total work (nelem) and user-specified
-  // virtualization
-  m_nchare = static_cast<int>(
-               tk::linearLoadDistributor(
-                 g_inputdeck.get< tag::cmd, tag::virtualization >(),
-                 nelem, CkNumPes(), m_chunksize, m_remainder ) );
-
-  // Send total number of chares to all linear solver PEs
-  m_solver.nchare( m_nchare );
-
-  m_progMesh.end();
-
-  // Start timer measuring preparation of the mesh for partitioning
-  const auto& timer = tk::cref_find( m_timer, TimerTag::MESH_READ );
-  m_print.diag( "Mesh read time: " + std::to_string( timer.dsec() ) + " sec" );
-
-  // Print out mesh graph stats
-  m_print.section( "Input mesh graph statistics" );
-  tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
-  auto npoin = er.readHeader();
-  m_print.item( "Number of tetrahedra", nelem );
-  m_print.item( "Number of nodes", npoin );
-
-  // Print out info on load distribution
-  m_print.section( "Load distribution" );
-  m_print.item( "Virtualization [0.0...1.0]",
-                g_inputdeck.get< tag::cmd, tag::virtualization >() );
-  m_print.item( "Load (number of tetrahedra)", m_nelem );
-  m_print.item( "Number of processing elements", CkNumPes() );
-  m_print.item( "Number of work units",
-                std::to_string( m_nchare ) + " (" +
-                std::to_string( m_nchare-1 ) + "*" +
-                std::to_string( m_chunksize ) + "+" +
-                std::to_string( m_chunksize+m_remainder ) + ')' );
-
-  // Print out mesh partitioning configuration
-  m_print.section( "Initial mesh partitioning" );
-  m_print.Item< tk::ctr::PartitioningAlgorithm,
-                tag::selected, tag::partitioner >();
-
-  m_print.endsubsection();
-
-  m_progPart.start( "Partitioning and distributing mesh ..." );
-  m_partitioner.partition( m_nchare );
-}
-
-// 
-//   m_progReorder.start( "Reordering mesh (flatten, gather, query, mask, "
-//                        "reorder, bounds) ... " );
-// 
 
 void
 Transporter::flattened()

@@ -16,12 +16,14 @@
 #define Refiner_h
 
 #include <vector>
+#include <unordered_map>
 
 #include "AMR/mesh_adapter.h"
 #include "Inciter/Options/AMRInitial.h"
 #include "TaggedTuple.h"
 #include "Tags.h"
 #include "Callback.h"
+#include "UnsMesh.h"
 
 #include "NoWarning/transporter.decl.h"
 #include "NoWarning/refiner.decl.h"
@@ -36,7 +38,11 @@ class Refiner : public CBase_Refiner {
     explicit Refiner( const CProxy_Transporter& transporter,
                       const tk::RefinerCallback& cbr,
                       const std::vector< std::size_t >& ginpoel,
-                      const tk::UnsMesh::CoordMap& coordmap );
+                      const tk::UnsMesh::CoordMap& coordmap,
+                      int nchare );
+
+    //! Receive boundary edges from all PEs (including this one)
+    void addBndEdges( int fromch, const tk::UnsMesh::EdgeSet& ed );
 
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -45,6 +51,10 @@ class Refiner : public CBase_Refiner {
       CBase_Refiner::pup(p);
       p | m_host;
       p | m_cbr;
+      p | m_ginpoel;
+      p | m_coord;
+      p | m_coordmap;
+      p | m_nchare;
       p | m_el;
       if (p.isUnpacking()) {
         m_inpoel = std::get< 0 >( m_el );
@@ -52,6 +62,14 @@ class Refiner : public CBase_Refiner {
         m_lid = std::get< 2 >( m_el );
       }
       p | m_initref;
+      //p | m_refiner;
+      p | m_nedge;
+      p | m_nref;
+      p | m_extra;
+      p | m_ch;
+      p | m_edgenode;
+      p | m_edgenodeCh;
+      p | m_bndEdges;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -64,6 +82,14 @@ class Refiner : public CBase_Refiner {
     CProxy_Transporter m_host;
     //! Charm++ callbacks associated to compile-time tags for refiner
     tk::RefinerCallback m_cbr;
+    //! Tetrtahedron element connectivity of our chunk of the mesh (global ids)
+    std::vector< std::size_t > m_ginpoel;
+    //! Coordinates of mesh nodes of our chunk of the mesh
+    tk::UnsMesh::Coords m_coord;
+    //! Coordinates associated to global node IDs of our mesh chunk
+    tk::UnsMesh::CoordMap m_coordmap;
+    //! Total number of refiner chares
+    int m_nchare;
     //! Elements of the mesh chunk we operate on
     //! \details The first vector is the element connectivity (local IDs), the
     //!   second vector is the global node IDs of owned elements, while the
@@ -80,34 +106,33 @@ class Refiner : public CBase_Refiner {
     std::unordered_map< std::size_t, std::size_t >& m_lid = std::get<2>( m_el );
     //! Initial mesh refinement type list (in reverse order)
     std::vector< ctr::AMRInitialType > m_initref;
+    //! Mesh refiner (library) object
+    AMR::mesh_adapter_t m_refiner;
+    //! Counter during distribution of chare-boundary edges
+    int m_nedge;
+    //! Counter during distribution of newly added nodes to chare-boundary edges
+    std::size_t m_nref;
+    //! Number of chare-boundary newly added nodes that need correction
+    std::size_t m_extra;
+    //! Chares we share at least a single edge with
+    std::unordered_set< int > m_ch;
+    //! Map associating global IDs and coordinates of a node added to an edge
+    tk::UnsMesh::EdgeNodeCoord m_edgenode;
+    //! \brief Map associating global IDs and coordinates of a node added to an
+    //!   edge associated to another chare the edge is shared with
+    std::unordered_map< int, tk::UnsMesh::EdgeNodeCoord > m_edgenodeCh;
+    //! Boundary edges associated to chares we share these edges with
+    std::unordered_map< int, tk::UnsMesh::EdgeSet > m_bndEdges;
 
-//     //! Mesh refiner object
-//     AMR::mesh_adapter_t m_refiner;
-//     //! \brief Counter during distribution of PE-boundary edges during initial
-//     //!   mesh refinement
-//     std::size_t m_nedge;
-//     //! Counter during distribution of newly added nodes to PE-boundary edges
-//     std::size_t m_nref;
-//     std::size_t m_extra;
-//     //! PEs we share at least a single edge with during initial mesh refinement
-//     std::unordered_set< int > m_pe;
-//     //! \brief Map associating the global IDs and the coordinates of a node
-//     //!   added to an edge during initial mesh refinement
-//     tk::UnsMesh::EdgeNodeCoord m_edgenode;
-//     //! Unique set of boundary edges associated to PEs we share these edges with
-//     std::unordered_map< int, tk::UnsMesh::EdgeSet > m_bndEdges;
-//     //! \brief Map associating the global IDs and the coordinates of a node
-//     //!   added to an edge during initial mesh refinement associated to
-//     //!   a(nother) PE the edge is shared with
-//     std::unordered_map< int, tk::UnsMesh::EdgeNodeCoord > m_edgenodePe;
-// 
+    //! Prepare for next step of mesh refinement
+    void start();
 
-//     //! Generate boundary edges and send them to all PEs
-//     void bndEdges();
-// 
-//     //! Receive boundary edges from all PEs (including this one)
-//     void addBndEdges( int frompe, const tk::UnsMesh::EdgeSet& ed );
-// 
+    //! Generate boundary edges and send them to all chares
+    void bndEdges();
+
+    //! Refine mesh
+    void refine();
+
 //     //! Receive newly added mesh node IDs on our PE boundary
 //     void addRefBndEdges( int frompe, const tk::UnsMesh::EdgeNodeCoord& ed );
 // 
@@ -120,12 +145,6 @@ class Refiner : public CBase_Refiner {
 // 
 //     //! Decide wether to continue with another step of initial mesh refinement
 //     void nextref();
-// 
-//     //! Partition the mesh before a (potential) refinement step
-//     void partref();
-// 
-//     //! Optionally refine mesh
-//     void refine();
 // 
 //     //! Finish initiel mesh refinement
 //     void finishref();

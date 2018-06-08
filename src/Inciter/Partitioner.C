@@ -106,10 +106,7 @@ Partitioner::Partitioner(
   // Read our chunk of the mesh node coordinates from file
   m_coord = mr.readCoords( m_gid );
 
-  // Send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.peread();
-
- // Compute number of cells across whole problem
+  // Compute number of cells across whole problem
   auto nelem = m_ginpoel.size()/4;
   contribute( sizeof(uint64_t), &nelem, CkReduction::sum_int,
               m_cbp.get< tag::load >() );
@@ -281,6 +278,7 @@ Partitioner::refine()
                              m_cbr,
                              tk::cref_find(m_chinpoel,cid),
                              tk::cref_find(m_chcoordmap,cid),
+                             m_nchare,
                              CkMyPe() );
   }
 
