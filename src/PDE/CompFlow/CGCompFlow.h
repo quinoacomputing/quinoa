@@ -424,7 +424,7 @@ class CompFlow {
     //!   that instead of the actual boundary condition value, we return the
     //!   increment between t+dt and t, since that is what the solution requires
     //!   as we solve for the soution increments and not the solution itself.
-    std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
+    std::map< std::size_t, std::vector< std::pair<bool,tk::real> > >
     dirbc( tk::real t,
            tk::real deltat,
            const std::pair< const int, std::vector< std::size_t > >& ss,
@@ -432,7 +432,7 @@ class CompFlow {
     {
       using tag::param; using tag::compflow; using tag::bcdir;
       using NodeBC = std::vector< std::pair< bool, tk::real > >;
-      std::unordered_map< std::size_t, NodeBC > bc;
+      std::map< std::size_t, NodeBC > bc;
       const auto& ubc = g_inputdeck.get< param, compflow, bcdir >();
       if (!ubc.empty()) {
         Assert( ubc.size() > 0, "Indexing out of Dirichlet BC eq-vector" );

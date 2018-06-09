@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <tuple>
+#include <map>
 #include <unordered_map>
 
 #include "Types.h"
@@ -37,15 +38,18 @@ class FaceData {
 
     //! Constructor
     explicit
-      FaceData( const std::vector< std::size_t >& conn,
-                const std::unordered_map< int, std::vector< std::size_t > >& bface,
-                const std::vector< std::size_t >& triinpoel );
+    FaceData(const std::vector< std::size_t >& conn,
+             const std::unordered_map< int, std::vector< std::size_t > >& bface,
+             const std::map< int, std::vector< std::size_t > >& bnode,
+             const std::vector< std::size_t >& triinpoel);
 
     /** @name Accessors
       * */
     ///@{
     const std::unordered_map< int, std::vector< std::size_t > >& Bface() const
     { return m_bface; }
+    const std::map< int, std::vector< std::size_t > >& Bnode() const
+    { return m_bnode; }
     std::size_t Nbfac() const { return tk::sumvalsize( m_bface ); }
     const std::vector< int >& Esuel() const { return m_esuel; }
     std::size_t Ntfac() const { return m_ntfac; }
@@ -55,11 +59,14 @@ class FaceData {
     std::vector< int >& Esuf() { return m_esuf; }
     //@}
 
+    /** @name Charm++ pack/unpack (serialization) routines
+      * */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
       p | m_bface;
+      p | m_bnode;
       p | m_triinpoel;
       p | m_esuel;
       p | m_ntfac;
@@ -76,6 +83,8 @@ class FaceData {
   private:
     //! Boundary faces side-set information
     std::unordered_map< int, std::vector< std::size_t > > m_bface;
+    //! Boundary nodes side-set information
+    std::map< int, std::vector< std::size_t > > m_bnode;
     //! Boundary face-node connectivity
     std::vector< std::size_t > m_triinpoel;
     //! Elements surrounding elements

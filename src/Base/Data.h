@@ -355,6 +355,20 @@ class Data {
     Data< Layout > operator/ ( const Data< Layout >& rhs )
     const { return Data< Layout >( *this ) /= rhs; }
 
+    //! Compound operator/= dividing all items by a scalar
+    //! \param[in] rhs Scalar to divide with
+    //! \return Reference to ourselves after division
+    Data< Layout >& operator/= ( tk::real rhs ) {
+      for (auto& v : m_vec) v /= rhs;
+      return *this;
+    }
+    //! Operator / dividing all items by a scalar
+    //! \param[in] rhs Scalar to divide with
+    //! \return Copy of Data object after rhs has been divided by
+    //! \details Implemented in terms of compound operator/=
+    Data< Layout > operator/ ( tk::real rhs )
+    const { return Data< Layout >( *this ) /= rhs; }
+
     //! Add new unknown at the end of the container
     //! \param[in] prop Vector of properties to initialize the new unknown with
     void push_back( const std::vector< tk::real >& prop )

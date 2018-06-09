@@ -31,7 +31,7 @@
 #include "Discretization.h"
 #include "DistFCT.h"
 #include "DiagReducer.h"
-#include "BoundaryConditions.h"
+#include "NodeBC.h"
 
 #ifdef HAS_ROOT
   #include "RootMeshWriter.h"
@@ -49,13 +49,13 @@ using inciter::MatCG;
 
 MatCG::MatCG( const CProxy_Discretization& disc,
               const tk::CProxy_Solver& solver,
-              const FaceData& ) :
+              const FaceData& fd ) :
   m_itf( 0 ),
   m_nhsol( 0 ),
   m_nlsol( 0 ),
   m_disc( disc ),
   m_solver( solver ),
-  m_side( Disc()->BC()->sideNodes( Disc()->Filenodes(), Disc()->Lid() ) ),
+  m_fd( fd ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_ul( m_u.nunk(), m_u.nprop() ),
@@ -225,8 +225,8 @@ MatCG::bc()
   auto d = Disc();
 
   // Match user-specified boundary conditions to side sets
-  auto dirbc = d->BC()->match( m_u.nprop(), d->T(), d->Dt(), d->Coord(),
-                               d->Gid(), m_side );
+  auto dirbc = match( m_u.nprop(), d->T(), d->Dt(), d->Coord(),
+                      d->Gid(), d->Lid(), m_fd.Bnode() );
 
   // Send off BCs to Solver for aggregation
   m_solver.ckLocalBranch()->charebc( dirbc );
@@ -295,52 +295,6 @@ MatCG::updateSol( const std::vector< std::size_t >& gid,
     m_nhsol = 0;
     d->FCT()->aec( *d, m_du, m_u, m_solver.ckLocalBranch()->dirbc() );
   }
-}
-
-bool
-MatCG::correctBC( const tk::Fields& a )
-// *****************************************************************************
-//  Verify that the change in the solution at those nodes where Dirichlet
-//  boundary conditions are set is exactly the amount the BCs prescribe
-//! \param[in] a Limited antidiffusive element contributions
-//! \return True if the solution is correct at Dirichlet boundary condition
-//!   nodes
-// *****************************************************************************
-{
-  auto& dirbc = m_solver.ckLocalBranch()->dirbc();
-
-  if (dirbc.empty()) return true;
-
-  auto d = Disc();
-
-  // We loop through the map that associates a vector of local node IDs to side
-  // set IDs for all side sets read from mesh file. Then for each side set for
-  // all mesh nodes on a given side set we attempt to find the global node ID
-  // in dirbc, which stores only those nodes (and BC settings) at which the
-  // user has configured Dirichlet BCs to be set. Then for all scalar
-  // components of all system of systems of PDEs integrated if a BC is to be
-  // set for a given component, we compute the low order solution increment +
-  // the anti-diffusive element contributions, which is the current solution
-  // increment (to be used to update the solution at time n) at that node. This
-  // solution increment must equal the BC prescribed at the given node as we
-  // solve for solution increments. If not, the BCs are not set correctly,
-  // which is an error.
-  for (const auto& s : m_side)
-    for (auto i : s.second) {
-      auto u = dirbc.find( d->Gid()[i] );
-      if (u != end(dirbc)) {
-        const auto& b = u->second;
-        Assert( b.size() == m_u.nprop(), "Size mismatch" );
-        for (std::size_t c=0; c<b.size(); ++c)
-          if ( b[c].first &&
-               std::abs( m_dul(i,c,0) + a(i,c,0) - b[c].second ) >
-                 std::numeric_limits< tk::real >::epsilon() ) {
-             return false;
-          }
-      }
-  }
-
-  return true;
 }
 
 void
@@ -452,13 +406,19 @@ MatCG::next( const tk::Fields& a )
 //! \param[in] a Limited antidiffusive element contributions
 // *****************************************************************************
 {
+  auto d = Disc();
+
+  // Verify that the change in the solution at those nodes where Dirichlet
+  // boundary conditions are set is exactly the amount the BCs prescribe
+  Assert( correctBC( a, m_dul, m_fd.Bnode(),
+                     m_solver.ckLocalBranch()->dirbc(), d->Lid() ),
+          "Dirichlet boundary condition incorrect" );
+
   // Apply limited antidiffusive element contributions to low order solution
   if (g_inputdeck.get< tag::discr, tag::fct >())
     m_u = m_ul + a;
   else
     m_u = m_u + m_du;
-
-  auto d = Disc();
 
   // Output field data to file
   out();

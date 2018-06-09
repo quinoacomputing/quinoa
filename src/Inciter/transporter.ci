@@ -11,15 +11,13 @@ module transporter {
 
   include "Types.h";
 
-  extern module boundaryconditions;
-
   namespace inciter {
 
     chare Transporter {
       entry Transporter();
       entry [reductiontarget] void refdistributed();
       entry [reductiontarget] void distributed();
-      entry [reductiontarget] void matched();
+      entry [reductiontarget] void matched( std::size_t extra );
       entry [reductiontarget] void refined( uint64_t nelem );
       entry [reductiontarget] void flattened();
       entry [reductiontarget] void coord();
