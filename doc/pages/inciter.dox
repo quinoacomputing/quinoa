@@ -7,34 +7,89 @@
 
 __Navier-Stokes solver for complex domains__
 
-Inciter is an overdecomposition-aware finite element field solver for partial
-differential equations using 3D unstructured grids. Inciter is used to research
-asynchronous mesh-based algorithms for fluid dynamics and to experiment with
-coupling asynchronous to bulk-synchronous parallel code. We currently work on a
-simple Navier-Stokes solver for ideal single-material compressible gases, and
-solution-adaptive mesh (_h_-)refinement, which enables dynamically concentrating
-compute resources to regions with interesting physics. The equations are
-discretized using continuous and discontinuous Galerkin finite element methods
-and our near-term plan also includes solution-adaptive varying of the degree of
-the local approximation polynomial, _p_-refinement. Combining these features we
-plan to explore how to scale such high-load-imbalance simulations,
-representative of large production multiphysics codes, to large problems on
-large computers using Charm++'s automatic load balancing capabilities.
+Inciter is a fully asynchronous distributed-memory-parallel fluid solver for
+complex engineering geometries. Computational domains of arbitrary shapes are
+discretized into tetrahedron elements and decomposed into small chunks assigned
+to different CPUs. The number of chunks may be more than the number of CPUs
+allowing _overdecomposition_. The solution along partition boundaries, that
+exists on multiple processing elements, is made consistent with _asynchronous_
+communication which enables overlapping parallel computation, communication,
+input, and output (I/O).
 
-Inciter has parallel I/O, domain decomposition using
-[Zoltan2](http://www.cs.sandia.gov/zoltan), flux-corrected transport,
-asynchronous linear system assembly, and solves the distributed linear system
-using [hypre](http://computation.llnl.gov/project/linear_solvers/software.php).
+Inciter is used to research asynchronous algorithms for fluid dynamics and to
+experiment with coupling asynchronous to bulk-synchronous parallel code, e.g.,
+Charm++ code to MPI-only libraries. We are working on a
+[Navier-Stokes](https://en.wikipedia.org/wiki/Navier%E2%80%93Stokes_equations)
+solver for compressible gases. The equations governing the conservation of mass,
+momentum, and energy are discretized using continuous and discontinuous Galerkin
+finite element methods. We are implementing solution-adaptive mesh-, and
+polynomial-degree refinement to enable dynamically concentrating compute
+resources to regions with interesting phenomena such as vortices or large
+gradients. Combining these features we are exploring how to scale such
+high-load-imbalance simulations, representative of production multiphysics
+codes, to large problems on large computers using Charm++'s automatic load
+balancing capabilities.
+
+@section inciter_performance Performance
+
+The figures below quantify different aspects of the computational performance of
+inciter.
+
+@subsection inciter_scaling Strong scaling
 
 @m_div{m-col-m-10 m-center-m}
 <img src="inciter_scaling.png"/>
-This figure quantifies the excellent scalability of the inciter prototype,
-integrating the advection-diffusion scalar transport equation for 10 time steps
-using a 76M-cell tetrahedron mesh _including setup and I/O_, using up to 4K CPU
-cores. The insert depicts the CPU utilization from Charm++'s performance
+This figure quantifies the excellent scalability of inciter, integrating the
+advection-diffusion scalar transport equation for 10 time steps using a
+76-million-cell mesh, where the timing included measuring setup as well as
+reading the mesh and periodically outputting the solution, using approximately 4
+thousand CPUs. The insert depicts the CPU utilization from Charm++'s performance
 analysis tool, [Projections](http://charmplusplus.org/tools), showing excellent
 resource usage during setup (left side) as well as during the 10 two-stage
 time-steps.
+@m_enddiv
+
+@subsection inciter_overdecomposition Effects of overdecomposition
+
+The figures below demonstrate typical effects of overdecomposition, partitioning
+the computational domain into _more_ work units than the number of available
+processors. The leftmost side of the figures corresponds to the case where the
+number of work units (_chares_) equal the number of CPUs -- this is labelled as
+"classic MPI", as this is how distributed-memory-parallel codes are
+traditionally used with the MPI (message passing) paradigm. As the problem is
+decomposed into more partitions, the chunks become smaller but require more
+communication as the boundary/domain element ratio increases. Smaller chunks,
+however, are faster to migrate to other CPUs if needed and fit better into local
+processor cache. (Note that migration was not enabled for these examples.) As a
+result the problem can be computed a lot faster, in this case, approximately
+__50 times(!) faster__. Though finding such sweet spots require experimentation
+and certainly depends on the problem, problem size, and hardware configuration,
+the interesting point is that such a large performance gain is possible simply
+by allowing overdecomposition without the use of multiple software abstractions,
+e.g., MPI + threading. All of this code is written using a single and high-level
+parallel computing abstraction: Charm++ _without_ explicit message passing code.
+
+@m_div{m-col-m-10 m-center-m}
+<img src="inciter_virtualization.png"/>
+Total runtime, simply measured by the Unix _time_ utility, including setup and
+I/O, of integrating the coupled governing equations of mass, momentum, and
+energy for an ideal gas, using a continuous Galerkin finite element method. The
+times are normalized and compared to the leftmost (_classic MPI_) data. As
+expected, using just a few more partitions per CPU results in a performance
+degradation as more communication is required. However, further increasing the
+degree of overdecomposition to about 5 times the number of CPUs yields an
+excellent speedup of over __10x(!)__ due to better cache utilization and overlap
+of computation and communication.
+@m_enddiv
+
+@m_div{m-col-m-10 m-center-m}
+<img src="inciter_virtualization_nosetup.png"/>
+This figure depicts another manifestation of the effect of overdecomposition:
+compared to the previous figure, here we only measured the time required to
+advance the equations without setup and I/O, which is usually the dominant
+fraction of large scientific computations. The performance gain during time
+stepping is even larger, reaching almost __50 times(!)__ compared to the
+original run without overdecomposition.
 @m_enddiv
 
 @section inciter_ex Examples

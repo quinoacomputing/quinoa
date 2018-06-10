@@ -88,17 +88,19 @@ to integrate their governing equations and design parameterizations of those
 governing equations based on statistics extracted from the computed
 distributions.
 
+@section walker_performance Performance
+
 Walker uses the [Charm++](http://charmplusplus.org/) runtime system to run
 concurrently either on a single machine or a networked set of computers. The
 software design is asynchronous, yielding 100% CPU utilization at all times, and
-it exhibits 100% efficiency weak scaling with \f$3\!\times\!10^{12}\f$ particles
-up to 24K CPU cores, the most tested, see
+it exhibits 100% efficiency weak scaling with up to 3 trillion
+(\f$3\!\times\!10^{12}\f$) particles up to 24K CPU cores, see also
 [d5304e78](https://github.com/quinoacomputing/quinoa/commit/d5304e78).
 
 @m_div{m-col-m-10 m-center-m}
 <img src="walker_weak.png"/>
 This figure quantifies the excellent scalability of walker, integrating up to 3
-billion particles and aggregating data across all CPUs for estimating various
+trillion particles and aggregating data across all CPUs for estimating various
 statistics and probability distributions.
 @m_enddiv
 

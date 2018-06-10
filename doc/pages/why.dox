@@ -98,8 +98,9 @@ strengths of Charm++ at http://charm.cs.uiuc.edu/why.
 
 Nothing is more important than code that works as advertised with no surprises.
 We strive for writing testable code as well as writing tests that cover the code
-to the maximum degree possible. Code coverage is quantified using two
-independent tools: [codecov.io](https://codecov.io) and
+to the maximum degree possible. Code coverage, the percentage of lines of code
+tested compared to all the code, is quantified using two independent tools:
+[codecov.io](https://codecov.io) and
 [gcov](https://gcc.gnu.org/onlinedocs/gcc/Gcov.html). Untested code is assumed
 to be incorrect until proven otherwise.  Only with extensive [positive and
 negative](http://www.dwheeler.com/essays/heartbleed.html) testing can developers
@@ -246,7 +247,7 @@ Optimize code for being read even at the expense of making code harder to write.
 Some mechanism, preferably the runtime system with some help from the
 application, should monitor the first three aspects and dynamically influence
 the algorithm. This requires runtime introspection, which must be designed into
-the algorithms from the outset.
+the algorithms at the outset.
 
 Quinoa uses the [Charm++](http://charm.cs.illinois.edu) runtime system capable
 of runtime introspection. Charm++ facilitates task-based parallelism, automatic
@@ -261,12 +262,11 @@ hardware heterogeneity and system failure.
 
 Due to software complexity the most expensive resource in implementing,
 maintaining, and extending compute capability is the developer's time. In a
-successful project programmer productivity must be highly regarded and actively
-maintained. Besides a comfortable work environment and an inspiring and
-motivating culture, this involves the freedom to use the best and most versatile
-software engineering tools available. Only by using the latest and greatest
-tools are code reuse, extensibility, maintainability, and thus productivity
-maximized.
+successful project programmer productivity is highly regarded and actively
+maintained. Besides an inspiring and motivating culture, this involves the
+freedom to use the right software abstraction for the job at hand using the best
+and most versatile tools available. Only by using the latest and greatest tools
+are code reuse, extensibility, maintainability, and thus productivity maximized.
 
 Quinoa is developed using the latest compiler technology and software
 engineering tools. We believe developers of a computational physics code must be
@@ -286,14 +286,14 @@ extend the code in a productive manner, and tailor functionality to their or
 their customer's needs.
 
 User input in Quinoa is restricted to command-line arguments and simple-to-read
-text files. The input grammar is versatile and extensible. Parsing (but not our
+text files. The input grammar is versatile and extensible. Parsing (but not the
 grammar) is outsourced to a library written by experts in that field. Error
 messages are friendly and often suggest a solution. Documentation of
 command-line and input file keywords is directly accessible at the user's
 fingertips, obtained via command-line arguments (@code{.shell}-h@endcode,
 @code{.shell}-H@endcode). New keywords, reflecting new features, are made
-impossible to add without proper in-code documentation. Simulation result
-output is highly customizable.
+impossible to add without proper in-code documentation. Simulation result output
+is highly customizable.
 
 @m_div{m-col-t-4 m-col-m-2 m-right-t}
 <img src="document.svg"/>
@@ -329,7 +329,7 @@ device](http://mcss.mosra.cz/doxygen/#features), including
 
 @section fun Fun to work on
 
-We believe _all the above_ are equally important in order to make this project
-fun to work on. None of the above can be an afterthought: they must all be
-simultaneously considered at all times and from the outset.
+We believe _all the above_ are important in order to make this project fun to
+work on. Consequently, none of the above can be an afterthought: they must all
+be simultaneously considered at all times and at the outset.
 */
