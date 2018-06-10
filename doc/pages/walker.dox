@@ -73,13 +73,13 @@ estimate arbitrary statistics and distributions as they evolve in time.
 
 Walker can be used to design statistical moment approximations. If the
 approximate shape of the probability distribution for a fluctuating variable is
-known (or can be usefully assumed), its governing SDE can, in some cases, be
-derived. Numerically integrating this governing equation, Walker allows
-extracting arbitrary statistics which can be used to test and verify hypotheses
-of functional forms of statistics as a function of other statistics. This
-enables, e.g., developing statistical moment approximations for turbulent flows
-where higher order statistics must be expressed in terms of lower order
-statistics based on some approximation.
+known (or can be usefully @ref papers_walker "assumed"), its governing SDE can,
+in some cases, be derived. Numerically integrating this governing equation,
+Walker allows extracting arbitrary statistics which can be used to test and
+verify hypotheses of functional forms of statistics as a function of other
+statistics. This enables, e.g., developing statistical moment approximations for
+turbulent flows where higher order statistics must be expressed in terms of
+lower order statistics based on some approximation.
 
 Walker can also be used to design approximations for probability density
 functions of fluctuating variables. If reasonable assumptions on probability
@@ -95,9 +95,16 @@ it exhibits 100% efficiency weak scaling with \f$3\!\times\!10^{12}\f$ particles
 up to 24K CPU cores, the most tested, see
 [d5304e78](https://github.com/quinoacomputing/quinoa/commit/d5304e78).
 
+@m_div{m-col-m-10 m-center-m}
+<img src="walker_weak.png"/>
+This figure quantifies the excellent scalability of walker, integrating up to 3
+billion particles and aggregating data across all CPUs for estimating various
+statistics and probability distributions.
+@m_enddiv
+
 @section walker_equations Differential equations
 
-Currently, the following differential equations are implemented:
+The following differential equations are implemented:
 
 1. __Beta__ --- A system of SDEs, with linear drift and quadratic diagonal
 diffusion, whose invariant is the joint beta distribution. For more details on

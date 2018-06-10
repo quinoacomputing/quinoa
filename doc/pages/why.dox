@@ -2,7 +2,38 @@
   \page      why Philosophy
 
 This page describes our core software engineering values and explains why we are
-motivated to work on this project. If you agree and would like to contribute to
+motivated to work on this project. Here is the TL;DR version:
+
+@m_div{m-col-t-4 m-right-t}
+<img src="quinoa.svg"/>
+@m_enddiv
+
+@section goals Goals
+
+We strive to
+
+ - __Simulate practically useful__ and large engineering problems, with a
+
+ - __Production-quality__ code that is documented, tested, extensible, and
+   maintainable, with
+
+ - __Economic__ use of hardware resources, even with _a priori_ unknown and
+   heterogeneous load distribution that dynamically changes during computation,
+   and even on heterogeneous hardware whose components' performance dynamically
+   changes during computation, featuring
+
+ - __Asynchronous__ parallel communication by default, to free the computation
+   from the undue influence of external factors, such as an artificially imposed
+   clock or waiting for slower processing elements,
+
+ - __Dynamic__ load balancing, to enable coping with _a priori_ unknown load due
+   to either hardware heterogeneities or adaptive algorithms, and
+
+ - __Automatic__ object migration, to free the application of hopelessly
+   intertwining physics, algorithms, and complex load balancing code, to ensure
+   sustainability.
+
+If you agree and would like to contribute to
 or use these tools, contact us via
 [GitHub](https://github.com/quinoacomputing/quinoa),
 [Email](mailto:quinoa@lanl.gov) or
@@ -18,13 +49,21 @@ Our target machines are the largest
 [distributed-memory](https://en.wikipedia.org/wiki/Distributed_memory) computers
 in the world with potentially millions of compute cores. Due to [unprecedented
 hardware complexity](https://herbsutter.com/welcome-to-the-jungle) and features
-such as [deep memory hierarchies](https://en.wikipedia.org/wiki/Memory_hierarchy) and
-[dynamic frequency scaling](https://en.wikipedia.org/wiki/Dynamic_frequency_scaling),
-we must assume _a priori_ unknown and inhomogeneous computational load and
+such as [deep memory
+hierarchies](https://en.wikipedia.org/wiki/Memory_hierarchy) and [dynamic
+frequency scaling](https://en.wikipedia.org/wiki/Dynamic_frequency_scaling), we
+must assume _a priori_ unknown and inhomogeneous computational load and
 performance among parts of the system that can also dynamically change in time.
-To efficiently use these resources our programming paradigm must allow
-_asynchronous_ parallel execution. This enables overlapping computation,
-communication, input, and output. Asynchronous programming constitutes a major
+As large problems are partitioned into smaller chunks, information along
+partition boundaries, that exist on multiple processing elements, must be made
+consistent, which requires communication. To efficiently use resources our
+programming paradigm must allow _asynchronous_ parallel execution and
+communication. Using [asynchronous
+communication](https://en.wikipedia.org/wiki/Asynchronous_communication) data is
+not transmitted at regular intervals and the transmitter and receiver do not
+have to be synchronized. Compared to synchronized (or blocking) communication,
+such asynchronous communication enables overlapping computation, communication,
+input, and output. However, asynchronous programming constitutes a major
 paradigm shift compared to the more traditional bulk-synchronous approach,
 widely applied for large-scale scientific computing, e.g., using [message
 passing](https://en.wikipedia.org/wiki/Message_passing_in_computer_clusters).
@@ -35,15 +74,15 @@ programming style as well as the optimal data layout and algorithm structure
 which therefore would require a complete rewrite.
 
 Quinoa was started from scratch, instead of modifying an existing code, to allow
-full freedom in exercising the asynchronous paradigm and any Charm++ feature.
-The code is built on the [Charm++](http://charm.cs.illinois.edu) runtime system
-and family of libraries. Instead of message passing, Charm++ is founded on the
-migratable-objects programming model and supported by an adaptive runtime
-system. In Charm++ data and work-units interact via asynchronous function calls
-enabling fully asynchronous programming. Asynchronous programming can be used to
-specify task-parallelism as well as data parallelism in a single application
-using a single abstraction. The interacting objects may reside on the same or on
-a networked compute node and may migrate from one to another during computation.
+full freedom in exercising the asynchronous paradigm. The code is built on the
+[Charm++](http://charm.cs.illinois.edu) runtime system and family of libraries.
+Instead of message passing, Charm++ is founded on the migratable-objects
+programming model and supported by an adaptive runtime system. In Charm++ data
+and work-units interact via asynchronous function calls enabling fully
+asynchronous programming. Asynchronous programming can be used to specify
+task-parallelism as well as data parallelism in a single application using a
+single abstraction. The interacting objects may reside on the same or on a
+networked compute node and may migrate from one to another during computation.
 Object migration is transparent to the application and carried out by the
 runtime system based on real-time load and hardware measurement, but if needed
 can be influenced by the application. Charm++ is mature, it has been actively
@@ -120,7 +159,7 @@ developers of Charm++.
 <img src="tornado-41952.svg"/>
 @m_enddiv
 
-@section pfe Stand on the shoulder of giants
+@section pfe Stand on the shoulders of giants
 
 Hardware complexity is increasing. Simultaneously satisfying all the different
 requirements enumerated here inevitably increases software complexity.
@@ -162,8 +201,8 @@ Quinoa's main language of choice is C++ for the following reasons.
  - It is statically typed, resulting in earlier error detection, more reliable
    algorithms, and compiled code that executes quicker.
 
- - It supports @ref layout "data abstraction", enabling the representation of
-   non-trivial concepts.
+ - It supports @ref layout "data abstraction" and enables the representation of
+   [non-trivial concepts](https://en.wikipedia.org/wiki/Design_Patterns).
 
  - It allows programming using more than one programming style, each to its best
    effect; as such it supports @ref genEsup() "procedural",
@@ -247,36 +286,40 @@ extend the code in a productive manner, and tailor functionality to their or
 their customer's needs.
 
 User input in Quinoa is restricted to command-line arguments and simple-to-read
-text files. The input grammar is versatile and extensible. Parsing is outsourced
-to a library written by experts in that field. Error messages are friendly and
-often suggest a solution. Documentation of command-line and input file keywords
-is directly accessible at the user's fingertips, obtained via command-line
-arguments (@code{.shell}-h@endcode, @code{.shell}-H@endcode). New keywords,
-reflecting new features, are made impossible to add without proper in-code
-documentation. Simulation result output is highly customizable.
+text files. The input grammar is versatile and extensible. Parsing (but not our
+grammar) is outsourced to a library written by experts in that field. Error
+messages are friendly and often suggest a solution. Documentation of
+command-line and input file keywords is directly accessible at the user's
+fingertips, obtained via command-line arguments (@code{.shell}-h@endcode,
+@code{.shell}-H@endcode). New keywords, reflecting new features, are made
+impossible to add without proper in-code documentation. Simulation result
+output is highly customizable.
 
 @m_div{m-col-t-4 m-col-m-2 m-right-t}
 <img src="document.svg"/>
 @m_enddiv
 
-\section documented Well documented
+\section documented Well documented and easy to document
 Undocumented code is considered legacy code and a major impediment to progress
 and productivity.
 
 Quinoa is well-documented for developers, users, administrators as well as
 auditors. This includes documentation for
- - theory
- - software requirements, specification, design, implementation, and interfaces
- - verification and validation
- - user examples
- - source code control history
- - team collaboration documentation and archive
- - code correctness and quality
- - legal issues
+ - theory,
+ - software requirements, specification, design, implementation, and interfaces,
+ - verification and validation,
+ - user examples,
+ - source code control history,
+ - team collaboration documentation and archive,
+ - code correctness and quality,
+ - legal issues.
 
-All documentation is accessible at a single point of entry via any web browser
-with no separate documents to open or print. The documentation is searchable,
-indexable, and looks great on any device, including
+All documentation is accessible via a web browser featuring an
+[expertly-designed
+search](http://blog.magnum.graphics/meta/implementing-a-fast-doxygen-search/)
+capability, with no large separate documents to open or print. Documentation is
+added via editing the source itself and [looks great on any
+device](http://mcss.mosra.cz/doxygen/#features), including
 [figures](walker_example_ou.html#walker_example_ou_pdf) and
 [math](_generalized_dirichlet_8h.html#details).
 
@@ -286,8 +329,7 @@ indexable, and looks great on any device, including
 
 @section fun Fun to work on
 
-We believe all the above are equally important in order to make this project fun
-to work on. None of the above can be an afterthought: they must all be
+We believe _all the above_ are equally important in order to make this project
+fun to work on. None of the above can be an afterthought: they must all be
 simultaneously considered at all times and from the outset.
-
 */
