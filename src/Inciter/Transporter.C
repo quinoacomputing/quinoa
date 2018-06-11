@@ -216,6 +216,10 @@ Transporter::createPartitioner()
   auto nbfac = er.readSidesetFaces( bface );
   er.readFaces( nbfac, triinpoel );
 
+  // Read in node lists of side sets from file if no triangle faces in file
+  std::map< int, std::vector< std::size_t > > sidenodes;
+  if (nbfac == 0) sidenodes = er.readSidesets();
+
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   if (scheme == ctr::SchemeType::DG)
     Assert( nbfac > 0, "DG must have boundary faces (and side sets) defined" );
@@ -245,7 +249,7 @@ Transporter::createPartitioner()
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
     CProxy_Partitioner::ckNew( cbp, thisProxy, m_solver, m_scheme, bface,
-                               triinpoel );
+                               triinpoel, sidenodes );
 }
 
 void

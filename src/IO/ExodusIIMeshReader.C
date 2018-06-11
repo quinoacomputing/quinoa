@@ -382,7 +382,11 @@ ExodusIIMeshReader::readFaces( std::size_t nbfac,
 //! \note It is okay to call this function with zero nbfac: it will be no-op.
 // *****************************************************************************
 {
+  // Return if no boundary faces in file
   if (nbfac == 0) return;
+
+  // Return if no triangle elements in file
+  if (nelem(tk::ExoElemType::TRI) == 0) return;
 
   std::size_t nnpf(3);
 
@@ -495,7 +499,18 @@ ExodusIIMeshReader::readSidesetFaces(
 
   std::size_t nbfac = 0;
 
-  if (m_neset > 0)
+  // Note that the number of boundary faces, computed by the algorithm below,
+  // may result in a positive nbfac even if the number of triangle elements in
+  // the file is zero. This can be a result of a partially-saved mesh which
+  // contains tetrahedron elements and side sets (and associated nodes) but not
+  // triangle element connectivity. Here we shortcut this by testing on not only
+  // positive number of element sets but also requiring triangle face
+  // connectivity in the file. If either of these is not satisfied, we leave
+  // nbfac = 0. The nodes associated to side sets in that case can still be read
+  // out from the file via readSideSets() and this is still usable if the
+  // triangle connectivity is not required.
+
+  if (m_neset > 0 && nelem(tk::ExoElemType::TRI) > 0)
   {
     // Read all side set ids from file
     std::vector< int > ids( m_neset );
