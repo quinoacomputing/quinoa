@@ -73,7 +73,7 @@ module solver {
 
       entry void wait4nchare() {
         when nchare_complete(), bounds_complete() serial "nchare" {
-          contribute( m_cb.get< tag::coord >() ); } };
+          contribute( m_cb.get< tag::disccreated >() ); } };
 
       entry void wait4lhsbc() {
         when lhs_complete(), bc_complete() serial "lhsbc" { lhsbc(); } };

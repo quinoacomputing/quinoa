@@ -39,14 +39,14 @@ class FaceData {
     //! Constructor
     explicit
     FaceData(const std::vector< std::size_t >& conn,
-             const std::unordered_map< int, std::vector< std::size_t > >& bface,
+             const std::map< int, std::vector< std::size_t > >& bface,
              const std::map< int, std::vector< std::size_t > >& bnode,
              const std::vector< std::size_t >& triinpoel);
 
     /** @name Accessors
       * */
     ///@{
-    const std::unordered_map< int, std::vector< std::size_t > >& Bface() const
+    const std::map< int, std::vector< std::size_t > >& Bface() const
     { return m_bface; }
     const std::map< int, std::vector< std::size_t > >& Bnode() const
     { return m_bnode; }
@@ -82,7 +82,7 @@ class FaceData {
 
   private:
     //! Boundary faces side-set information
-    std::unordered_map< int, std::vector< std::size_t > > m_bface;
+    std::map< int, std::vector< std::size_t > > m_bface;
     //! Boundary nodes side-set information
     std::map< int, std::vector< std::size_t > > m_bnode;
     //! Boundary face-node connectivity

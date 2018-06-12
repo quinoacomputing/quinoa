@@ -17,11 +17,14 @@ module transporter {
       entry Transporter();
       entry [reductiontarget] void load( uint64_t nelem );
       entry [reductiontarget] void distributed();
-      entry [reductiontarget] void created();
+      entry [reductiontarget] void refinserted();
+      entry [reductiontarget] void discinserted();
+      entry [reductiontarget] void disccreated();
+      entry [reductiontarget] void workinserted();
       entry [reductiontarget] void matched( std::size_t extra );
-      entry [reductiontarget] void refined( std::size_t nelem );
+      entry [reductiontarget] void refined( std::size_t nelem,
+                                            std::size_t npoin );
       entry [reductiontarget] void flattened();
-      entry [reductiontarget] void coord();
       entry [reductiontarget] void comfinal();
       entry [reductiontarget] void totalvol( tk::real v );
       entry [reductiontarget] void vol();
@@ -40,13 +43,11 @@ module transporter {
       entry void pepartitioned();
       entry void pedistributed();
       entry void chrefined();
-
-      entry void peflattened();
-      entry void pegather();
-      entry void pequery();
-      entry void pemask();
-      entry void pereordered();
-      entry void pebounds();
+      entry void chbnd();
+      entry void chquery();
+      entry void chmask();
+      entry void chreordered();
+      entry void chbounds();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".

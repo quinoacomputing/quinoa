@@ -36,14 +36,22 @@ static CkReduction::reducerType BndEdgeMerger;
 using inciter::Refiner;
 
 Refiner::Refiner( const CProxy_Transporter& transporter,
+                  const CProxy_Sorter& sorter,
+                  const tk::CProxy_Solver& solver,
+                  const Scheme& scheme,                
                   const tk::RefinerCallback& cbr,
+                  const tk::SorterCallback& cbs,
                   const std::vector< std::size_t >& ginpoel,
                   const tk::UnsMesh::CoordMap& coordmap,
                   const std::map< int, std::vector< std::size_t > >& bface,
                   const std::vector< std::size_t >& triinpoel,
                   int nchare ) :
   m_host( transporter ),
+  m_sorter( sorter ),
+  m_solver( solver ),
+  m_scheme( scheme ),
   m_cbr( cbr ),
+  m_cbs( cbs ),
   m_ginpoel( ginpoel ),
   m_coordmap( coordmap ),
   m_bface( bface ),
@@ -188,8 +196,6 @@ Refiner::refine()
 //!   chare boundaries.
 // *****************************************************************************
 {
-  if (g_inputdeck.get< tag::cmd, tag::feedback >()) m_host.chrefined();
-
   // Convert node coordinates associated to global node IDs to a flat vector
   auto npoin = m_coordmap.size();
   Assert( m_gid.size() == npoin, "Size mismatch" );
@@ -248,7 +254,7 @@ Refiner::comExtra()
 {
   // Export added nodes on our mesh chunk boundary to other chares (in serial)
   if (m_ch.empty())
-    contribute( sizeof(std::size_t), &m_extra, CkReduction::max_int,
+    contribute( sizeof(std::size_t), &m_extra, CkReduction::max_ulong,
                 m_cbr.get< tag::matched >() );
   else {
     m_nref = 0;
@@ -299,7 +305,7 @@ Refiner::recvRefBndEdges()
   // correction step, m_extra=1 on all chares, so a correction step is assumed
   // to be required.
   if (++m_nref == m_ch.size()) {
-    contribute( sizeof(std::size_t), &m_extra, CkReduction::max_int,
+    contribute( sizeof(std::size_t), &m_extra, CkReduction::max_ulong,
                 m_cbr.get< tag::matched >() );
   }
 }
@@ -412,15 +418,15 @@ Refiner::finish()
 //!   total number of elements across the whole problem.
 // *****************************************************************************
 {
-  //contribute(m_partitioner.ckLocalBranch()->
-  //  updateMesh( thisIndex, m_inpoel, m_coordmap );
+  if (g_inputdeck.get< tag::cmd, tag::feedback >()) m_host.chrefined();
 
-// m_bface, m_triinpoel );
-  
+  // create sorter Charm++ chare array elements using dynamic insertion
+  m_sorter[ thisIndex ].insert( m_host, m_solver, m_cbs, m_scheme, m_ginpoel,
+    m_coordmap, m_bface, m_triinpoel, m_nchare, CkMyPe() );
+ 
   // Compute final number of cells across whole problem
-  auto nelem = m_ginpoel.size()/4;
-  contribute( sizeof(uint64_t), &nelem, CkReduction::sum_ulong,
-              m_cbr.get< tag::refined >() );
+  std::vector< std::uint64_t > mesh{ m_ginpoel.size()/4, m_coord[0].size() };
+  contribute( mesh, CkReduction::sum_ulong, m_cbr.get< tag::refined >() );
 }
 
 void

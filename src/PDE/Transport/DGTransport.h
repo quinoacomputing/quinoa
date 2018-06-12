@@ -15,7 +15,7 @@
 #include <limits>
 #include <cmath>
 #include <unordered_set>
-#include <unordered_map>
+#include <map>
 
 #include "Macro.h"
 #include "Exception.h"
@@ -326,8 +326,7 @@ class Transport {
     template< class BCType >
     void
     bndIntegral( const std::vector< bcconf_t >& bcconfig,
-                 const std::unordered_map< int,
-                   std::vector< std::size_t > >& bface,
+                 const std::map< int, std::vector< std::size_t > >& bface,
                  const std::vector< int >& esuf,
                  const tk::Fields& geoFace,
                  const tk::Fields& U,

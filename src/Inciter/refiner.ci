@@ -10,11 +10,20 @@
 
 module refiner {
 
+  include "Scheme.h";
+
+  extern module sorter;
+  extern module solver;
+
   namespace inciter {
 
     array [1D] Refiner {
       entry Refiner( const CProxy_Transporter& transporter,
-                     const tk::RefinerCallback& cbr,                        
+                     const CProxy_Sorter& sorter,
+                     const tk::CProxy_Solver& solver,
+                     const Scheme& scheme,
+                     const tk::RefinerCallback& cbr,
+                     const tk::SorterCallback& cbs,
                      const std::vector< std::size_t >& ginpoel,
                      const tk::UnsMesh::CoordMap& coordmap,
                      const std::map< int, std::vector< std::size_t > >& bface,

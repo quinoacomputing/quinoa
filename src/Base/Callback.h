@@ -19,23 +19,27 @@ namespace tk {
 using PartitionerCallback =
   tk::tuple::tagged_tuple< tag::load,           CkCallback
                          , tag::distributed,    CkCallback
-                         , tag::created,        CkCallback
+                         , tag::refinserted,    CkCallback
                          , tag::refined,        CkCallback
                          , tag::flattened,      CkCallback
                          , tag::avecost,        CkCallback
                          , tag::stdcost,        CkCallback
-                         , tag::coord,          CkCallback
                          >;
 
 using RefinerCallback =
   tk::tuple::tagged_tuple< tag::matched,        CkCallback
                          , tag::refined,        CkCallback
-                         //, tag::update,         CkCallback
                          >;
 
 using SolverCallback =
   tk::tuple::tagged_tuple< tag::com,            CkCallback
-                         , tag::coord,          CkCallback
+                         , tag::disccreated,    CkCallback
+                         >;
+
+using SorterCallback =
+  tk::tuple::tagged_tuple< tag::flattened,      CkCallback
+                         , tag::discinserted,   CkCallback
+                         , tag::workinserted,   CkCallback
                          >;
 
 } // tk::

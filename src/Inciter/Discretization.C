@@ -111,6 +111,9 @@ Discretization::Discretization(
   if ((sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG))
     m_fct[ thisIndex ].insert( m_transporter, nchare, m_gid.size(), nprop,
                                m_msum, m_bid, m_lid, m_inpoel, CkMyPe() );
+
+  contribute( CkCallback(CkReductionTarget(Transporter,disccreated),
+              m_transporter) );
 }
 
 void

@@ -24,7 +24,7 @@ using inciter::FaceData;
 
 FaceData::FaceData(
   const std::vector< std::size_t >& conn,
-  const std::unordered_map< int, std::vector< std::size_t > >& bface,
+  const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& bnode,
   const std::vector< std::size_t >& triinpoel )
   : m_bface( bface ), m_bnode( bnode ), m_triinpoel( triinpoel )

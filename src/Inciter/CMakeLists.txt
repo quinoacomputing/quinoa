@@ -11,6 +11,7 @@ add_library(Inciter
             FaceData.C
             Discretization.C
             Refiner.C
+            Sorter.C
             MatCG.C
             DiagCG.C
             DG.C
@@ -34,6 +35,7 @@ addCharmModule( "transporter" "Inciter" )
 addCharmModule( "partitioner" "Inciter" )
 addCharmModule( "discretization" "Inciter" )
 addCharmModule( "refiner" "Inciter" )
+addCharmModule( "sorter" "Inciter" )
 addCharmModule( "matcg" "Inciter" )
 addCharmModule( "diagcg" "Inciter" )
 addCharmModule( "distfct" "Inciter" )

@@ -362,10 +362,8 @@ namespace inciter {
 class Transporter : public CBase_Transporter {
 
   private:
-    //! Indices for progress report on mesh read (and prep for partitioning)
-    enum ProgMesh{ PART=0, DIST, REFINE };
-    //! Indices for progress report on mesh reordering
-    enum ProgReorder{ FLAT=0, GATHER, QUERY, MASK, REORD, BOUND };
+    //! Indices for progress report on mesh preparation
+    enum ProgMesh{ PART=0, DIST, REFINE, BND, QUERY, MASK, REORD, BOUND };
 
   public:
     #if defined(__clang__)
@@ -401,14 +399,17 @@ class Transporter : public CBase_Transporter {
     void distributed();
 
     //! Reduction target: all PEs have created the mesh refiners
-    void created();
+    void refinserted();
+    void discinserted();
+    void disccreated();
+    void workinserted();
 
     //! \brief Reduction target: all mesh refiner chares have distributed their
     //!   newly added node IDs that are shared among chares
     void matched( std::size_t extra );
 
     //! Reduction target: all PEs have optionally refined their mesh
-    void refined( std::size_t nelem );
+    void refined( std::size_t nelem, std::size_t npoin );
 
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished flattening its global mesh node IDs and they are ready
@@ -422,29 +423,22 @@ class Transporter : public CBase_Transporter {
     //!   communication cost among all PEs
     void stdCost( tk::real c );
 
-    //! \brief Reduction target indicating that all chare groups are ready for
-    //!   workers to read their mesh coordinates
-    void coord();
-
     //! Non-reduction target for receiving progress report on partitioning mesh
     void pepartitioned() { m_progMesh.inc< PART >(); }
     //! Non-reduction target for receiving progress report on distributing mesh
     void pedistributed() { m_progMesh.inc< DIST >(); }
     //! Non-reduction target for receiving progress report on mesh refinement
     void chrefined() { m_progMesh.inc< REFINE >(); }
-
     //! Non-reduction target for receiving progress report on flattening mesh
-    void peflattened() { m_progReorder.inc< FLAT >(); }
-    //! Non-reduction target for receiving progress report on node ID gather
-    void pegather() { m_progReorder.inc< GATHER >(); }
+    void chbnd() { m_progMesh.inc< BND >(); }
     //! Non-reduction target for receiving progress report on node ID query
-    void pequery() { m_progReorder.inc< QUERY >(); }
+    void chquery() { m_progMesh.inc< QUERY >(); }
     //! Non-reduction target for receiving progress report on node ID mask
-    void pemask() { m_progReorder.inc< MASK >(); }
+    void chmask() { m_progMesh.inc< MASK >(); }
     //! Non-reduction target for receiving progress report on reordering mesh
-    void pereordered() { m_progReorder.inc< REORD >(); }
+    void chreordered() { m_progMesh.inc< REORD >(); }
     //! Non-reduction target for receiving progress report on computing bounds
-    void pebounds() { m_progReorder.inc< BOUND >(); }
+    void chbounds() { m_progMesh.inc< BOUND >(); }
 
     //! \brief Reduction target indicating that the communication has been
     //!    established among PEs
@@ -489,13 +483,15 @@ class Transporter : public CBase_Transporter {
   private:
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of worker chares
-    uint64_t m_nelem;                    //!< Total number of mesh elements
     uint64_t m_chunksize;                //!< Number of elements per PE
     uint64_t m_remainder;                //!< Number elements added to last PE
     tk::CProxy_Solver m_solver;          //!< Linear system solver group proxy
     Scheme m_scheme;                     //!< Discretization scheme
     CProxy_Partitioner m_partitioner;    //!< Partitioner group proxy
     CProxy_Refiner m_refiner;            //!< Mesh refiner array proxy
+    CProxy_Sorter m_sorter;              //!< Mesh sorter array proxy
+    std::size_t m_nelem;                 //!< Number mesh elements
+    std::size_t m_npoin;                 //!< Number mesh points
     //! Average communication cost of merging the linear system
     tk::real m_avcost;
      //! Total mesh volume
@@ -514,9 +510,7 @@ class Transporter : public CBase_Transporter {
     //!   sets boundary conditions, see also Partitioner.h
     std::vector< std::size_t > m_linsysbc;
     //! Progress object for preparing mesh
-    tk::Progress< 3 > m_progMesh;
-    // Progress object for task "Reordering mesh"
-    tk::Progress< 6 > m_progReorder;
+    tk::Progress< 8 > m_progMesh;
 
     //! Create linear solver group
     void createSolver();

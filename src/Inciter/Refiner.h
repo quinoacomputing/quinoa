@@ -36,7 +36,11 @@ class Refiner : public CBase_Refiner {
   public:
     //! Constructor
     explicit Refiner( const CProxy_Transporter& transporter,
+                      const CProxy_Sorter& sorter,
+                      const tk::CProxy_Solver& solver,
+                      const Scheme& scheme,
                       const tk::RefinerCallback& cbr,
+                      const tk::SorterCallback& cbs,
                       const std::vector< std::size_t >& ginpoel,
                       const tk::UnsMesh::CoordMap& coordmap,
                       const std::map< int, std::vector< std::size_t > >& bface,
@@ -68,6 +72,7 @@ class Refiner : public CBase_Refiner {
       CBase_Refiner::pup(p);
       p | m_host;
       p | m_cbr;
+      p | m_cbs;
       p | m_ginpoel;
       p | m_coord;
       p | m_coordmap;
@@ -99,8 +104,16 @@ class Refiner : public CBase_Refiner {
   private:
     //! Host proxy
     CProxy_Transporter m_host;
+    //! Mesh sorter proxy
+    CProxy_Sorter m_sorter;
+    //! Linear soilver proxy
+    tk::CProxy_Solver m_solver;
+    //! Discretization scheme
+    Scheme m_scheme;
     //! Charm++ callbacks associated to compile-time tags for refiner
     tk::RefinerCallback m_cbr;
+    //! Charm++ callbacks associated to compile-time tags for sorter
+    tk::SorterCallback m_cbs;
     //! Tetrtahedron element connectivity of our chunk of the mesh (global ids)
     std::vector< std::size_t > m_ginpoel;
     //! Coordinates of mesh nodes of our chunk of the mesh

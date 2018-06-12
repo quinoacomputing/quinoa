@@ -53,13 +53,15 @@ using inciter::Transporter;
 Transporter::Transporter() :
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_nchare( 0 ),
-  m_nelem( 0 ),
   m_chunksize( 0 ),
   m_remainder( 0 ),
   m_solver(),
   m_scheme( g_inputdeck.get< tag::discr, tag::scheme >() ),
   m_partitioner(),
   m_refiner(),
+  m_sorter(),
+  m_nelem( 0 ),
+  m_npoin( 0 ),
   m_avcost( 0.0 ),
   m_V( 0.0 ),
   m_minstat( {{ 0.0, 0.0 }} ),
@@ -68,13 +70,9 @@ Transporter::Transporter() :
   m_timer(),
   m_linsysbc(),
   m_progMesh( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-              {{ "p", "d", "r" }},
-              {{ "partition", "distribute", "refine" }} ),
-  m_progReorder( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-                 {{ "f", "g", "q", "m", "r", "b" }},
-                 {{ "flatten", "gather", "query", "mask", "reorder", "bounds"}},
-                 {{ CkNumPes(), CkNumPes(), CkNumPes(), CkNumPes(),
-                    CkNumPes(), CkNumPes() }} )
+              {{ "p", "d", "r", "b", "q", "m", "r", "b" }},
+              {{ "partition", "distribute", "refine", "bnd", "query", "mask",
+                  "reorder", "bounds"}} )
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
@@ -195,7 +193,7 @@ Transporter::createSolver()
   // Create linear system solver callbacks
   tk::SolverCallback cbs{
       CkCallback( CkReductionTarget(Transporter,comfinal), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,coord), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,disccreated), thisProxy )
   };
 
   // Create linear system solver Charm++ chare group
@@ -233,12 +231,11 @@ Transporter::createPartitioner()
   tk::PartitionerCallback cbp {
       CkCallback( CkReductionTarget(Transporter,load), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,created), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,refinserted), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,aveCost), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,stdCost), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,coord), thisProxy )
   };
 
   // Create refiner callbacks (order matters)
@@ -247,19 +244,28 @@ Transporter::createPartitioner()
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
   };
 
+  // Create sorter callbacks (order matters)
+  tk::SorterCallback cbs {
+      CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,discinserted), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,workinserted), thisProxy )
+  };
   // Start timer measuring preparation of the mesh for partitioning
   m_timer[ TimerTag::MESH_READ ];
 
   // Create mesh partitioner Charm++ chare group and start preparing mesh
   m_print.diag( "Reading mesh" );
 
+  // Create empty mesh sorter Chare chare array
+  m_sorter = CProxy_Sorter::ckNew();
+
   // Create empty mesh refiner Chare chare array
   m_refiner = CProxy_Refiner::ckNew();
 
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
-    CProxy_Partitioner::ckNew( cbp, cbr, thisProxy, m_solver, m_refiner,
-                               m_scheme, bface, triinpoel );
+    CProxy_Partitioner::ckNew( cbp, cbr, cbs, thisProxy, m_solver, m_refiner,
+                               m_sorter, m_scheme, bface, triinpoel );
 }
 
 void
@@ -269,8 +275,6 @@ Transporter::load( uint64_t nelem )
 //! \param[in] nelem Total number of mesh elements (summed across all PEs)
 // *****************************************************************************
 {
-  m_nelem = nelem;
-
   // Compute load distribution given total work (nelem) and user-specified
   // virtualization
   m_nchare = static_cast<int>(
@@ -298,10 +302,10 @@ Transporter::load( uint64_t nelem )
                 tag::selected, tag::partitioner >();
 
   // Print out info on load distribution
-  m_print.section( "Load distribution" );
+  m_print.section( "Initial load distribution" );
   m_print.item( "Virtualization [0.0...1.0]",
                 g_inputdeck.get< tag::cmd, tag::virtualization >() );
-  m_print.item( "Initial number of tetrahedra", m_nelem );
+  m_print.item( "Number of tetrahedra", nelem );
   m_print.item( "Number of processing elements", CkNumPes() );
   m_print.item( "Number of work units",
                 std::to_string( m_nchare ) + " (" +
@@ -309,7 +313,10 @@ Transporter::load( uint64_t nelem )
                 std::to_string( m_chunksize ) + "+" +
                 std::to_string( m_chunksize+m_remainder ) + ')' );
 
-  m_progMesh.start( "Preparing mesh", {{ CkNumPes(), CkNumPes(), m_nchare }} );
+  m_print.endsubsection();
+
+  m_progMesh.start( "Preparing mesh", {{ CkNumPes(), CkNumPes(), m_nchare,
+    m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
 
   m_partitioner.partition( m_nchare );
 }
@@ -324,7 +331,7 @@ Transporter::distributed()
 }
 
 void
-Transporter::created()
+Transporter::refinserted()
 // *****************************************************************************
 // Reduction target: all PEs have created the mesh refiners
 // *****************************************************************************
@@ -348,23 +355,59 @@ Transporter::matched( std::size_t extra )
 }
 
 void
-Transporter::refined( std::size_t nelem )
+Transporter::refined( std::size_t nelem, std::size_t npoin )
 // *****************************************************************************
 // Reduction target: all PEs have refined their mesh
-//! \param[in] Total number of elements across the whole problem
+//! \param[in] nelem Total number of elements in mesh across the whole problem
+//! \param[in] npoin Total number of points in mesh across the whole problem
+// *****************************************************************************
+{
+  m_sorter.doneInserting();
+
+  m_nelem = nelem;
+  m_npoin = npoin;
+}
+
+void
+Transporter::discinserted()
+// *****************************************************************************
+// ...
+// *****************************************************************************
+{
+  m_scheme.doneDiscInserting< tag::bcast >();
+}
+
+void
+Transporter::disccreated()
+// *****************************************************************************
+// ...
 // *****************************************************************************
 {
   m_progMesh.end();
 
   if (g_inputdeck.get< tag::amr, tag::initamr >()) {
-    m_nelem = nelem;
-    m_print.item( "Final number of tetrahedra", m_nelem );
+    m_print.section( "Refined mesh graph statistics" );
+    m_print.item( "Number of tetrahedra", m_nelem );
+    m_print.item( "Number of nodes", m_npoin );
+    m_print.endsubsection();
   }
 
-  m_print.endsubsection();
+  m_sorter.createWorkers();
 
-  m_progReorder.start( "Reordering mesh" );
-  m_partitioner.flatten();
+  auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
+  if (sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG)
+    m_scheme.doneDistFCTInserting< tag::bcast >();
+
+  m_scheme.vol< tag::bcast >();
+}
+
+void
+Transporter::workinserted()
+// *****************************************************************************
+// ...
+// *****************************************************************************
+{
+  m_scheme.doneInserting< tag::bcast >();
 }
 
 void
@@ -417,7 +460,7 @@ Transporter::flattened()
 // communication maps required for node ID reordering
 // *****************************************************************************
 {
-  m_partitioner.gather();
+  //m_sorter.gather();
 }
 
 void
@@ -433,11 +476,9 @@ Transporter::aveCost( tk::real c )
 //!   by stdCost(), gives an idea on the expected load imbalance.
 // *****************************************************************************
 {
-  m_progReorder.end();
-
   // Compute average and broadcast it back to all partitioners (PEs)
-  m_avcost = c / CkNumPes();
-  m_partitioner.stdCost( m_avcost );
+  //m_avcost = c / CkNumPes();
+  //m_partitioner.stdCost( m_avcost );
 }
 
 void
@@ -460,35 +501,12 @@ Transporter::stdCost( tk::real c )
 }
 
 void
-Transporter::coord()
-// *****************************************************************************
-// Reduction target indicating that all chare groups are ready for workers to
-// start reading their mesh node coordinates
-// *****************************************************************************
-{
-  // Tell the runtime system that every PE is done with dynamically inserting
-  // Discretization chare array elements
-  m_scheme.doneDiscInserting< tag::bcast >();
-
-  // Tell the runtime system that every PE is done with dynamically inserting
-  // Discretization chare array elements
-  auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG)
-    m_scheme.doneDistFCTInserting< tag::bcast >();
-
-  m_scheme.vol< tag::bcast >();
-}
-
-void
 Transporter::comfinal()
 // *****************************************************************************
 // Reduction target indicating that the communication has been established among
 // PEs
 // *****************************************************************************
 {
-  // Tell the runtime system that every PE is done with dynamically inserting
-  // Discretization worker (MatCG, DiagCG, DG, ...) chare array elements
-  m_scheme.doneInserting< tag::bcast >();
   com_complete();
 }
 
@@ -510,7 +528,6 @@ Transporter::totalvol( tk::real v )
 // *****************************************************************************
 {
   m_V = v;
-  m_partitioner.createWorkers();  // create "derived" workers (e.g., DG)
   m_scheme.stat< tag::bcast >();
 }
 

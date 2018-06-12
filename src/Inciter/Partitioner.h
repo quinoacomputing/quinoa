@@ -75,6 +75,7 @@
 #include "DerivedData.h"
 #include "UnsMesh.h"
 #include "FaceData.h"
+#include "Sorter.h"
 #include "Refiner.h"
 #include "Callback.h"
 
@@ -118,9 +119,11 @@ class Partitioner : public CBase_Partitioner {
     //! Constructor
     Partitioner( const tk::PartitionerCallback& cbp,
                  const tk::RefinerCallback& cbr,
+                 const tk::SorterCallback& cbs,
                  const CProxy_Transporter& host,
                  const tk::CProxy_Solver& solver,
                  const CProxy_Refiner& refiner,
+                 const CProxy_Sorter& sorter,
                  const Scheme& scheme,
                  const std::map< int, std::vector< std::size_t > >& bface,
                  const std::vector< std::size_t >& triinpoel );
@@ -155,51 +158,24 @@ class Partitioner : public CBase_Partitioner {
     //! Acknowledge received mesh after initial mesh refinement
     void recvMesh();
 
-    void updateVolumeMesh( int fromch,
-                           const std::vector< std::size_t >& inpoel,
-                           const tk::UnsMesh::CoordMap& coordmap );
-
-    void updateBoundaryMesh( CkReductionMsg* msg );
-
-    //! Prepare owned mesh node IDs for reordering
-    void flatten();
-
     //! Optionally start refining the mesh
     void refine();
-
-    //! Receive lower bound of node IDs our PE operates on after reordering
-    void lower( std::size_t low );
-
-    //! \brief Compute the variance of the communication cost of merging the
-    //!   linear system
-    void stdCost( tk::real av );
-
-    //! \brief Start gathering global node IDs this PE will need to receive
-    //!   (instead of assign) during reordering
-    void gather();
-
-    //! \brief Query our global node IDs and edges by other PEs so they know if
-    //!   they are to receive IDs for those from during reordering
-    void query( int p, const std::vector< std::size_t >& nodes );
-
-    //! Receive mask of to-be-received global mesh node IDs
-    void mask( int p, const std::unordered_map< std::size_t,
-                              std::vector< int > >& cn );
-
-    //! Create worker chare array elements on this PE
-    void createWorkers();
 
   private:
     //! Charm++ callbacks associated to compile-time tags for partitioner
     tk::PartitionerCallback m_cbp;
     //! Charm++ callbacks associated to compile-time tags for refiner
     tk::RefinerCallback m_cbr;
+    //! Charm++ callbacks associated to compile-time tags for sorter
+    tk::SorterCallback m_cbs;
     //! Host proxy
     CProxy_Transporter m_host;
     //! Linear system solver proxy
     tk::CProxy_Solver m_solver;
     //! Mesh refiner proxy
     CProxy_Refiner m_refiner;
+    //! Mesh sorter proxy
+    CProxy_Sorter m_sorter;
     //! Discretization scheme
     Scheme m_scheme;
     //! \brief Elements of the mesh chunk we operate on
@@ -247,26 +223,6 @@ class Partitioner : public CBase_Partitioner {
     tk::UnsMesh::CoordMap m_coordmap;
     //! Total number of chares across all PEs
     int m_nchare;
-    //! Lower bound of node IDs our PE operates on after reordering
-    std::size_t m_lower;
-    //! Upper bound of node IDs our PE operates on after reordering
-    std::size_t m_upper;
-    //! \brief Temporary communication map used to receive global mesh node IDs
-    //! \details This map, on each PE, associates the list of global mesh point
-    //!   indices to fellow PE IDs from which we will receive new node IDs (as
-    //!   in producing contiguous-row-id linear system contributions) during
-    //!   reordering.
-    std::map< int, std::unordered_set< std::size_t > > m_ncomm;
-    //! \brief Communication map used for distributed mesh node reordering
-    //! \details This map, on each PE, associates the list of global mesh point
-    //!   indices to fellow PE IDs from which we will receive new node IDs (as
-    //!   in producing contiguous-row-id linear system contributions) during
-    //!   reordering. Only data that will be received from PEs with a lower
-    //!   index are stored.
-    std::unordered_map< int, std::unordered_set<std::size_t> > m_ncommunication;
-    //! \brief Unique global node IDs chares on our PE will contribute to in a
-    //!   linear system
-    std::set< std::size_t > m_nodeset;
     //! Chare IDs (value) associated to global mesh node IDs (key)
     //! \details Multiple chares can contribute to a single node, hence vector
     //!   for map value.
@@ -329,32 +285,8 @@ class Partitioner : public CBase_Partitioner {
     //! Compute chare (partition) distribution
     std::array< int, 2 > distribution( int npart ) const;
 
-    //! Test for positivity of the Jacobian for all cells in multiple meshes
-    bool positiveJacobians(
-      const std::unordered_map< int, std::vector< std::size_t > >& chinpoel,
-      const tk::UnsMesh::CoordMap& cm );
-
-    //! Reorder global mesh node IDs
-    void reorder();
-
     //! Return processing element for chare id
     int pe( int id ) const;
-
-    //! Associate new node IDs to old ones and return them to the requestor(s)
-    void prepare();
-
-    //! Compute final result of reordering
-    void reordered();
-
-    //! Compute lower and upper bounds of reordered node IDs our PE operates on
-    void bounds();
-
-    //! \brief Create chare array elements on this PE and assign the global mesh
-    //!   element IDs they will operate on
-    void create();
-
-    //! Create Discretization chare array elements on this PE
-    void createDiscWorkers();
 
     //! Compute communication cost of linear system merging for our PE
     tk::real cost( std::size_t l, std::size_t u );
