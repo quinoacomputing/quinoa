@@ -576,6 +576,8 @@ Sorter::createWorkers()
   std::map< int, std::vector< std::size_t > > bnode;
 //   std::size_t cnt = 0;
 
+std::cout << thisIndex << " s: " << m_triinpoel.size() << '\n';
+
   for (const auto& ss : m_bface)  // for all phsyical boundaries (sidesets)
     for (auto f : ss.second) {    // for all faces on this physical boundary
       // attempt to find face nodes on this chare

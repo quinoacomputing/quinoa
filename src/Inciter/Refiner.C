@@ -62,7 +62,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_refiner( m_inpoel ),
   m_nedge( 0 ),
   m_nref( 0 ),
-  m_extra( 1 ),
+  m_extra( 0 ),
   m_ch(),
   m_edgenode(),
   m_edgenodeCh(),
@@ -495,37 +495,40 @@ Refiner::userRefine()
 // Do mesh refinement based on user explicitly tagging edges
 // *****************************************************************************
 {
-  // Find number of nodes in old mesh
-  auto npoin = tk::npoin( m_inpoel );
-  // Generate edges surrounding points in old mesh
-  auto esup = tk::genEsup( m_inpoel, 4 );
-  auto psup = tk::genPsup( m_inpoel, 4, esup );
-
   // Get user-defined node-pairs (edges) to tag for refinement
   const auto& edgenodelist = g_inputdeck.get< tag::amr, tag::edge >();
-  tk::UnsMesh::EdgeSet edgeset;
-  for (std::size_t i=0; i<edgenodelist.size()/2; ++i)
-    edgeset.insert( {{ {edgenodelist[i*2+0], edgenodelist[i*2+1]} }} );
 
-  // Compute errors in ICs and define refinement criteria for edges
-  std::vector< edge_t > edge;
-  std::vector< real_t > crit;
-  for (std::size_t p=0; p<npoin; ++p)        // for all mesh nodes on this chare
-    for (auto q : tk::Around(psup,p)) {      // for all nodes surrounding p
-      tk::UnsMesh::Edge e{{p,q}};
-      if (edgeset.find(e) != end(edgeset)) { // tag edge if on user's list
-        edge.push_back( edge_t(e[0],e[1]) );
-        crit.push_back( 1.0 );
+  if (!edgenodelist.empty()) {  // if user explicitly tagged edges
+    // Find number of nodes in old mesh
+    auto npoin = tk::npoin( m_inpoel );
+    // Generate edges surrounding points in old mesh
+    auto esup = tk::genEsup( m_inpoel, 4 );
+    auto psup = tk::genPsup( m_inpoel, 4, esup );
+
+    tk::UnsMesh::EdgeSet edgeset;
+    for (std::size_t i=0; i<edgenodelist.size()/2; ++i)
+      edgeset.insert( {{ {edgenodelist[i*2+0], edgenodelist[i*2+1]} }} );
+
+    // Compute errors in ICs and define refinement criteria for edges
+    std::vector< edge_t > edge;
+    std::vector< real_t > crit;
+    for (std::size_t p=0; p<npoin; ++p)        // for all mesh nodes on this chare
+      for (auto q : tk::Around(psup,p)) {      // for all nodes surrounding p
+        tk::UnsMesh::Edge e{{p,q}};
+        if (edgeset.find(e) != end(edgeset)) { // tag edge if on user's list
+          edge.push_back( edge_t(e[0],e[1]) );
+          crit.push_back( 1.0 );
+        }
       }
-    }
 
-  Assert( edge.size() == crit.size(), "Size mismatch" );
+    Assert( edge.size() == crit.size(), "Size mismatch" );
 
-  // Do error-based refinement
-  m_refiner.error_refinement( edge, crit );
+    // Do error-based refinement
+    m_refiner.error_refinement( edge, crit );
 
-  // Update mesh coordinates and connectivity
-  updateMesh();
+    // Update mesh coordinates and connectivity
+    updateMesh();
+  }
 }
 
 tk::Fields
@@ -633,7 +636,7 @@ Refiner::updateMesh()
 
 void
 Refiner::updateVolumeMesh( const std::unordered_set< std::size_t >& old,
-                               const std::unordered_set< std::size_t >& ref )
+                           const std::unordered_set< std::size_t >& ref )
 // *****************************************************************************
 //  Update volume mesh after mesh refinement
 //! \param[in] old Unique nodes of the old (unrefined) mesh using local ids
@@ -693,7 +696,7 @@ Refiner::updateVolumeMesh( const std::unordered_set< std::size_t >& old,
 
 void
 Refiner::updateBoundaryMesh( const std::unordered_set< std::size_t >& old,
-                                 const std::unordered_set< std::size_t >& ref )
+                             const std::unordered_set< std::size_t >& ref )
 // *****************************************************************************
 // Update boundary data structures after mesh refinement
 //! \param[in] old Unique nodes of the old (unrefined) mesh using local ids
@@ -847,6 +850,8 @@ Refiner::updateBoundaryMesh( const std::unordered_set< std::size_t >& old,
   // Update boundary face data structures
   m_bface = std::move(bface);
   m_triinpoel = std::move(triinpoel);
+
+std::cout << thisIndex << " r: " << m_triinpoel.size() << '\n';
 }
 
 #include "NoWarning/refiner.def.h"
