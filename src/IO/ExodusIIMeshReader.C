@@ -71,6 +71,7 @@ ExodusIIMeshReader::readMesh( UnsMesh& mesh )
   readHeader( mesh );
   readAllElements( mesh );
   readAllNodes( mesh );
+  readAllSidesets( mesh );
 }
 
 void
@@ -171,6 +172,11 @@ ExodusIIMeshReader::readElemBlockIDs()
   ErrChk( ex_get_ids( m_inFile, EX_ELEM_BLOCK, eid.data()) == 0,
           "Failed to read element block ids from ExodusII file: " +
           m_filename );
+
+  m_nel.clear();
+  m_nel.resize( m_nnpe.size() );
+  m_eidt.clear();
+  m_eidt.resize( m_nnpe.size() );
 
   // Fill element block ID vector
   for (auto id : eid) {
@@ -371,6 +377,17 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
 }
 
 void
+ExodusIIMeshReader::readAllSidesets( UnsMesh& mesh )
+// *****************************************************************************
+// Read all side sets and associated face connectivity
+//! \param[inout] mesh Unstructured mesh object to store side sets in
+// *****************************************************************************
+{
+  auto nbfac = readSidesetFaces( mesh.sidetet(), mesh.faceid() );
+  readFaces( nbfac, mesh.triinpoel() );
+}
+
+void
 ExodusIIMeshReader::readFaces( std::size_t nbfac,
                                std::vector< std::size_t >& conn )
 // *****************************************************************************
@@ -385,14 +402,15 @@ ExodusIIMeshReader::readFaces( std::size_t nbfac,
   // Return if no boundary faces in file
   if (nbfac == 0) return;
 
-  // Return if no triangle elements in file
+  // Return quietly if no triangle elements in file
   if (nelem(tk::ExoElemType::TRI) == 0) return;
 
   std::size_t nnpf(3);
 
-  // Read triangle boundary-face connectivity
+  // Read triangle boundary-face connectivity (all the triangle element block)
   std::vector< std::size_t > l_triinpoel;
-  readElements( {{0,nbfac-1}}, tk::ExoElemType::TRI, l_triinpoel );
+  readElements( {{0,nelem(tk::ExoElemType::TRI)-1}}, tk::ExoElemType::TRI,
+                l_triinpoel );
 
   std::size_t count(0);
   // Use node_map to get the global-IDs of the face-node connectivity
@@ -487,10 +505,12 @@ ExodusIIMeshReader::readSidesets()
 
 std::size_t
 ExodusIIMeshReader::readSidesetFaces(
-  std::map< int, std::vector< std::size_t > >& bface )
+  std::map< int, std::vector< std::size_t > >& bface,
+  std::map< int, std::vector< int > >& faceid )
 // *****************************************************************************
 //  Read face list of all side sets from ExodusII file
-//! \param[out] bface Face-Element lists mapped to side set ids
+//! \param[in,out] bface Face-Element lists mapped to side set ids
+//! \param[in,out] faceid Side set side lists associated to side set ids
 //! \return Total number of boundary faces
 // *****************************************************************************
 {
@@ -503,14 +523,16 @@ ExodusIIMeshReader::readSidesetFaces(
   // may result in a positive nbfac even if the number of triangle elements in
   // the file is zero. This can be a result of a partially-saved mesh which
   // contains tetrahedron elements and side sets (and associated nodes) but not
-  // triangle element connectivity. Here we shortcut this by testing on not only
-  // positive number of element sets but also requiring triangle face
-  // connectivity in the file. If either of these is not satisfied, we leave
-  // nbfac = 0. The nodes associated to side sets in that case can still be read
-  // out from the file via readSideSets() and this is still usable if the
-  // triangle connectivity is not required.
+  // triangle element connectivity. We let this pass For the mesh converter
+  // (meshconv) which can read an ExodusII file (using this function) without
+  // triangles and if it is missing, it will generate it and save it into its
+  // output exodus file (if its output is exodus). However, other executables
+  // (such as inciter), that also use this function, which require side sets,
+  // the algorithm below will process the side sets, return a positive nbfac if
+  // side sets exists in the file, but the existence of a triangle element block
+  // must be additionally error-checked.
 
-  if (m_neset > 0 && nelem(tk::ExoElemType::TRI) > 0)
+  if (m_neset > 0)
   {
     // Read all side set ids from file
     std::vector< int > ids( m_neset );
@@ -539,13 +561,14 @@ ExodusIIMeshReader::readSidesetFaces(
       nbfac += static_cast< std::size_t >(nface);
 
       Assert(nface > 0, "Number of faces = 0 in side set" + std::to_string(i));
-      std::vector< int > tbface( static_cast< std::size_t >( nface ) );
       std::vector< int > tbelem( static_cast< std::size_t >( nface ) );
       std::vector< int > gbelem( static_cast< std::size_t >( nface ) );
+      auto& faces = faceid[i];
+      faces.resize( static_cast< std::size_t >( nface ) );
 
       // Read in face and element list for side set i
       ErrChk( ex_get_set( m_inFile, EX_SIDE_SET, i, tbelem.data(),
-                          tbface.data() ) == 0,
+                          faces.data() ) == 0,
               "Failed to read side set " + std::to_string(i) + " face/elem list"
               " length from ExodusII file: " + m_filename );
 

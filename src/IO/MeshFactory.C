@@ -150,6 +150,32 @@ writeUnsMesh( const tk::Print& print,
 
   tk::Timer t;
 
+  // If mesh has tetrahedra but no triangles, generate triangle connectivity
+  if (!mesh.tetinpoel().empty() && mesh.triinpoel().empty()) {
+    print.diagstart( "Generating missing surface mesh ..." );
+
+    const auto& inpoel = mesh.tetinpoel();        // get tet connectivity
+    auto esup = tk::genEsup( inpoel, 4 );         // elements surrounding points
+    auto esuel = tk::genEsuelTet( inpoel, esup ); // elems surrounding elements
+    auto& triinpoel = mesh.triinpoel();
+    // collect boundary faces
+    for (std::size_t e=0; e<esuel.size()/4; ++e) {
+      auto mark = e*4;
+      for (std::size_t f=0; f<4; ++f) {
+        if (esuel[mark+f] == -1) {
+          // extract triangle element connectivity from tetrahedron
+          triinpoel.push_back( inpoel[ mark+tk::lpofa[f][0] ] );
+          triinpoel.push_back( inpoel[ mark+tk::lpofa[f][1] ] );
+          triinpoel.push_back( inpoel[ mark+tk::lpofa[f][2] ] );
+        }
+      }
+    }
+
+    print.diagend( "done" );
+    times.emplace_back( "Generate surface mesh", t.dsec() );
+    t.zero();
+  }
+
   if (reorder) {
     print.diagstart( "Reordering mesh nodes ..." );
 

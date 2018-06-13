@@ -120,8 +120,7 @@ class Partitioner : public CBase_Partitioner {
                  const tk::CProxy_Solver& solver,
                  const Scheme& scheme,
                  const std::map< int, std::vector< std::size_t > >& bface,
-                 const std::vector< std::size_t >& triinpoel,
-                 const std::map< int, std::vector< std::size_t > >& sidenodes );
+                 const std::vector< std::size_t >& triinpoel );
 
     //! Partition the computational mesh into a number of chares
     void partchare( int nchare );
@@ -349,8 +348,6 @@ class Partitioner : public CBase_Partitioner {
     std::map< int, std::vector< std::size_t > > m_bface;
     //! Boundary face-node connectivity
     std::vector< std::size_t > m_triinpoel;
-    //! Node lists mapped to side set ids
-    std::map< int, std::vector< std::size_t > > m_sidenodes;
 
     //! Partition the mesh before a (potential) refinement step
     void partref();
