@@ -21,6 +21,7 @@ module sorter {
                     const tk::UnsMesh::CoordMap& coordmap,
                     const std::map< int, std::vector< std::size_t > >& bface,
                     const std::vector< std::size_t >& triinpoel,
+                    const std::map< int, std::vector< std::size_t > >& bnode,
                     int nchare );
       entry void query( int fromch, const std::vector< std::size_t >& nodes );
       entry void mask( int fromch, const std::vector< std::size_t >& found );

@@ -8,7 +8,6 @@
 */
 // *****************************************************************************
 
-#include <iostream>     // NOT NEEDED
 #include <vector>
 #include <map>
 #include <unordered_map>
@@ -49,10 +48,10 @@ match( tk::ctr::ncomp_type ncomp,
 //!   list of elements). This function queries Dirichlet boundary condition
 //!   values from all PDEs in the system of systems of PDEs integrated at the
 //!   node lists associated to side set IDs, given by sidenodes. Each
-//!   PDE system returns a BC data structure which is then returned. Note that
-//!   the BC mesh nodes that this function results in, stored in dirbc, only
-//!   contains those nodes that are supplied via sidenodes, i.e., in parallel
-//!   only a part of the mesh is worked on.
+//!   PDE system returns a BC data structure. Note that the BC mesh nodes that
+//!   this function results in, stored in dirbc, only contains those nodes that
+//!   are supplied via sidenodes, i.e., in parallel only a part of the mesh is
+//!   worked on.
 // *****************************************************************************
 {
   using inciter::g_cgpde;
@@ -190,8 +189,7 @@ correctBC( const tk::Fields& a,
            std::abs( dul(l,c,0) + a(l,c,0) - b[c].second ) >
              std::numeric_limits< tk::real >::epsilon() )
       {
-         std::cout << "BC incorrect: " << n.first << "\n";
-         return true; //false;
+         return false;
       }
     }
   }

@@ -45,6 +45,7 @@ class Refiner : public CBase_Refiner {
                       const tk::UnsMesh::CoordMap& coordmap,
                       const std::map< int, std::vector< std::size_t > >& bface,
                       const std::vector< std::size_t >& triinpoel,
+                      const std::map< int, std::vector< std::size_t > >& bnode,
                       int nchare );
 
     //! Configure Charm++ reduction types
@@ -78,6 +79,7 @@ class Refiner : public CBase_Refiner {
       p | m_coordmap;
       p | m_bface;
       p | m_triinpoel;
+      p | m_bnode;
       p | m_nchare;
       p | m_el;
       if (p.isUnpacking()) {
@@ -102,6 +104,13 @@ class Refiner : public CBase_Refiner {
     //@}
 
   private:
+    //! \brief Used to associate a pair of side set id and adjacent tet id to a
+    //!   boundary triangle face
+    using BndFaces = std::unordered_map< tk::UnsMesh::Face,
+                                         std::pair< int, std::size_t >,
+                                         tk::UnsMesh::FaceHasher,
+                                         tk::UnsMesh::FaceEq >;
+
     //! Host proxy
     CProxy_Transporter m_host;
     //! Mesh sorter proxy
@@ -124,6 +133,8 @@ class Refiner : public CBase_Refiner {
     std::map< int, std::vector< std::size_t > > m_bface;
     //! Boundary face-node connectivity
     std::vector< std::size_t > m_triinpoel;
+    //! List of boundary nodes associated to side-set IDs
+    std::map< int, std::vector< std::size_t > > m_bnode;
     //! Total number of refiner chares
     int m_nchare;
     //! Elements of the mesh chunk we operate on
@@ -191,12 +202,25 @@ class Refiner : public CBase_Refiner {
     void updateMesh();
 
     //! Update volume mesh after mesh refinement
-    void updateVolumeMesh( const std::unordered_set< std::size_t >& old,
-                           const std::unordered_set< std::size_t >& ref );
+    void updateVolMesh( const std::unordered_set< std::size_t >& old,
+                        const std::unordered_set< std::size_t >& ref );
 
     //! Update boundary data structures after mesh refinement
-    void updateBoundaryMesh( const std::unordered_set< std::size_t >& old,
-                             const std::unordered_set< std::size_t >& ref );
+    void updateBndMesh( const std::unordered_set< std::size_t >& old,
+                        const std::unordered_set< std::size_t >& ref );
+
+    //! Generate boundary data structures after mesh refinement
+    BndFaces boundary();
+
+    //! Regenerate boundary faces after mesh refinement step
+    void updateBndFaces( const std::unordered_set< std::size_t >& old,
+                         const std::unordered_set< std::size_t >& ref,
+                         const BndFaces& bnd );
+
+    //! Regenerate boundary nodes after mesh refinement step
+    void updateBndNodes( const std::unordered_set< std::size_t >& old,
+                         const std::unordered_set< std::size_t >& ref,
+                         const BndFaces& bnd );
 
     //! Evaluate initial conditions (IC) at mesh nodes
     tk::Fields nodeinit( std::size_t npoin,

@@ -21,10 +21,9 @@
   #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
-//   #pragma GCC diagnostic ignored "-Wunused-variable"
-//   #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
-//   #pragma GCC diagnostic ignored "-Wunused-parameter"
-//   #pragma GCC diagnostic ignored "-Wcast-qual"
+  #pragma GCC diagnostic ignored "-Wunused-variable"
+  #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+  #pragma GCC diagnostic ignored "-Wcast-qual"
 #endif
 
 #include "../Inciter/sorter.def.h"

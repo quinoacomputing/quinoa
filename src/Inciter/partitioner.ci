@@ -32,7 +32,8 @@ module partitioner {
         const CProxy_Sorter& sorter,
         const Scheme& scheme,
         const std::map< int, std::vector< std::size_t > >& bface,
-        const std::vector< std::size_t >& triinpoel );
+        const std::vector< std::size_t >& triinpoel,
+        const std::map< int, std::vector< std::size_t > >& bnode );
       entry void partition( int nchare );
       entry void addMesh( int frompe,
                           const std::unordered_map< int,

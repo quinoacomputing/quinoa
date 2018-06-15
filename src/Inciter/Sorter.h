@@ -41,6 +41,7 @@ class Sorter : public CBase_Sorter {
                      const tk::UnsMesh::CoordMap& coordmap,
                      const std::map< int, std::vector< std::size_t > >& bface,
                      const std::vector< std::size_t >& triinpoel,
+                     const std::map< int, std::vector< std::size_t > >& bnode,
                      int nchare );
 
     //! Create worker chare array elements on this PE
@@ -95,6 +96,8 @@ class Sorter : public CBase_Sorter {
     std::map< int, std::vector< std::size_t > > m_bface;
     //! Boundary face-node connectivity
     std::vector< std::size_t > m_triinpoel;
+    //! List of boundary nodes associated to side-set IDs
+    std::map< int, std::vector< std::size_t > > m_bnode;
     //! Total number of sorter chares
     int m_nchare;
     //! Unique global node IDs chares on our PE will contribute to

@@ -213,15 +213,21 @@ Transporter::createPartitioner()
   // Create ExodusII reader for reading side sets from file
   tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
 
-  // Read side sets and boundary-face connectivity on physical boundaries
   std::map< int, std::vector< std::size_t > > bface;
   std::vector< std::size_t > triinpoel;
-  auto nbfac = er.readSidesetFaces( bface );
-  er.readFaces( nbfac, triinpoel );
+  std::map< int, std::vector< std::size_t > > bnode;
 
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (scheme == ctr::SchemeType::DG)
+  if (scheme == ctr::SchemeType::DG) {
+    // Read boundary-face connectivity on side sets
+    auto nbfac = er.readSidesetFaces( bface );
+    er.readFaces( nbfac, triinpoel );
     Assert( nbfac > 0, "DG must have boundary faces (and side sets) defined" );
+  } else {
+    // Read node lists on side sets
+    bnode = er.readSidesets();
+    // Note that it is okay bnode to be empty if no boundary conditions needed
+  }
 
   // Verify boundarty condition (BC) side sets used exist in mesh file
   verifyBCsExist( g_cgpde, er );
@@ -265,7 +271,7 @@ Transporter::createPartitioner()
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
     CProxy_Partitioner::ckNew( cbp, cbr, cbs, thisProxy, m_solver, m_refiner,
-                               m_sorter, m_scheme, bface, triinpoel );
+                               m_sorter, m_scheme, bface, triinpoel, bnode );
 }
 
 void

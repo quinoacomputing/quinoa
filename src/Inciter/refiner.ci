@@ -28,6 +28,7 @@ module refiner {
                      const tk::UnsMesh::CoordMap& coordmap,
                      const std::map< int, std::vector< std::size_t > >& bface,
                      const std::vector< std::size_t >& triinpoel,
+                     const std::map< int, std::vector< std::size_t > >& bnode,
                      int nchare );
       initnode void registerReducers();      
       entry [reductiontarget] void addBndEdges( CkReductionMsg* msg );

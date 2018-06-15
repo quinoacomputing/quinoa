@@ -126,7 +126,8 @@ class Partitioner : public CBase_Partitioner {
                  const CProxy_Sorter& sorter,
                  const Scheme& scheme,
                  const std::map< int, std::vector< std::size_t > >& bface,
-                 const std::vector< std::size_t >& triinpoel );
+                 const std::vector< std::size_t >& triinpoel,
+                 const std::map< int, std::vector< std::size_t > >& bnode );
 
     //! Partition the computational mesh into a number of chares
     void partition( int nchare );
@@ -264,6 +265,8 @@ class Partitioner : public CBase_Partitioner {
     std::map< int, std::vector< std::size_t > > m_bface;
     //! Boundary face-node connectivity
     std::vector< std::size_t > m_triinpoel;
+    //! List of boundary nodes associated to side-set IDs
+    std::map< int, std::vector< std::size_t > > m_bnode;
 
     //! Compute element centroid coordinates
     std::array< std::vector< tk::real >, 3 >

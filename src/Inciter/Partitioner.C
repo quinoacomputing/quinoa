@@ -52,7 +52,8 @@ Partitioner::Partitioner(
   const CProxy_Sorter& sorter,
   const Scheme& scheme,
   const std::map< int, std::vector< std::size_t > >& bface,
-  const std::vector< std::size_t >& triinpoel ) :
+  const std::vector< std::size_t >& triinpoel,
+  const std::map< int, std::vector< std::size_t > >& bnode ) :
   m_cbp( cbp ),
   m_cbr( cbr ),
   m_cbs( cbs ),
@@ -76,7 +77,8 @@ Partitioner::Partitioner(
   m_chcoordmap(),
   m_bnodechares(),
   m_bface( bface ),
-  m_triinpoel( triinpoel )
+  m_triinpoel( triinpoel ),
+  m_bnode( bnode )
 // *****************************************************************************
 //  Constructor
 //! \param[in] cb Charm++ callbacks
@@ -229,6 +231,7 @@ Partitioner::refine()
                              tk::cref_find(m_chcoordmap,cid),
                              m_bface,
                              m_triinpoel,
+                             m_bnode,
                              m_nchare,
                              CkMyPe() );
   }
