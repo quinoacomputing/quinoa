@@ -1,93 +1,102 @@
 /*!
-  \page      diffeq Differential equations
+  \page      diffeq Deterministic and stochastic differential equations in walker
 
-General requirements
---------------------
+This page collects some notes on the requirements and software design of the main
+ingredient of @ref walker, the differential equations classes.
+
+@section diffeq_req General requirements
+
 Numerical time integration of ordinary and stochastic differential equations
 (ODEs, SDEs) is probably the single most important ingredient of a
 continuum-realm particle-solver. This must be:
- - High-performance
- - Easy to maintain
+ - High-performance,
+ - Easy to maintain,
  - The design must scale well with adding new functionality, i.e., adding new
    equations and/or new models for already implemented equations should
-   require as little code as possible
+   require as little code as possible,
  - Should easily accommodate various advancement algorithms on different
-   hardware end/or using various parallelization strategies
+   hardware end/or using various parallelization strategies.
 
 There should be a possibility to quickly prototype a new equation, e.g., in a
 test-bed class. This would be used to:
- - Verify its invariant PDF
- - Explore the behavior of its statistics
- - Integrate multiple variables (coupled or non-coupled)
+ - Verify its invariant probability density function (PDF),
+ - Explore the behavior of its statistics,
+ - Integrate multiple variables (coupled or non-coupled).
 
 Questions:
- - Should a base class hold a single RNG used by all specific (derived) SDEs or
-   different SDEs should be able to instantiate and use their own (possibly
-   different) RNGs? _Currently, each derived SDE may access its own RNG, but the
-   user must configure it so. See also [RNGs input](rngs_input.html)._
+ - Should a base class hold a single random number generation (RNG) used by all
+   specific (derived) SDEs or different SDEs should be able to instantiate and
+   use their own (possibly different) RNGs?
 
-Requirements on a generic differential equation base class
-----------------------------------------------------------
-ODEs and SDEs should inherit at least from one base class (if a multiple-policy
-design is adopted) that should have generic data and member functions, which
-facilitates code-reuse.
+@m_div{m-block m-right-m m-note}
+Currently, each derived SDE may access its own RNG, but the user must configure
+it so. See also a more detailed page on @ref rngs_input.
+@m_enddiv
 
-The base class should work for both N = 1 or N > 1, i.e., single-variate or
+@section diffeq_reqbase Requirements on a generic differential equation base class
+
+ODEs and SDEs should inherit from a base class (if a multiple-policy design is
+adopted) that should have generic data and member functions, which facilitates
+code-reuse.
+
+The base class should work for both _N_ = 1 or _N_ > 1, i.e., single-variate or
 multi-variate equation classes.
 
 The differential equation base class should have pure virtual interfaces for:
- - Setting initial conditions on the particles at t = 0, e.g., initialize()
- - Advancing the particles in time, e.g., advance()
+ - Setting initial conditions on the particles at _t_ = 0, e.g.,
+   @code{.shell}initialize()@endcode
+ - Advancing the particles in time, e.g., @code{.shell}advance()@endcode
 
-Possible policies of a differential eqiation base class
--------------------------------------------------------
-Specific equation types (e.g., Ornstein-Uhlenbeck, Dirichlet, skew-normal, etc),
-should derive from the base class, forwarding base class policies, i.e., a
+@section diffeq_policies Possible policies of a differential equation base class
+
+Specific equation types (e.g., Ornstein-Uhlenbeck, Dirichlet, skew-normal, etc.),
+should derive from a base class, forwarding base class policies, i.e., a
 specific SDE class should not hard-code any base class policy.
 
 Specific SDE classes may have their own policies (specific to the given SDE).
 
-### Initialization policy
+@subsection diffeq_initpolicy Initialization policy
 
-Specifies how the initialization of the particles happen at t = 0. Possible
+Specifies how the initialization of the particles happen at _t_ = 0. Possible
 initialization policies:
  - Do nothing: leave memory associated to particle data uninitialized
  - Zero: zero particle properties
  - Fill with one given constant: single-delta-spike PDF
  - Fill with different constants given per variable
- - Sample from given PDF, N = 1
- - Sample from different PDF given per variable, N > 1 (independent)
- - Sample from given JPDF, N > 1 (possibly non-independent)
+ - Sample from given PDF, _N_ = 1
+ - Sample from different PDF given per variable, _N_ > 1 (independent)
+ - Sample from given JPDF, _N_ > 1 (possibly non-independent)
  - Pre-cycle properties using a given equation and its constant coefficients
    for:
    + a given time period
    + a given number of time steps
    + until convergence is reached for given statistics and convergence criteria
 
-### Coefficients policy
+@subsection diffeq_coeffpolicy Coefficients policy
 
-Specifies how the differential equation coefficients, e.g., b, S, and kappa for
+Specifies how the differential equation coefficients, e.g., _b_, _S_, and
+\f$\kappa\f$ for
 the Dirichlet SDE, are used by the equation. Possible coefficients policies:
- - Constant: initialized once, used for all t > 0
- - Functional: advance() algorithm queries coefficients at every update via
-   coefficients-policy functions, e.g., b(time, various statistics)
+ - _Constant:_ initialized once, used for all _t_ > 0
+ - _Functional:_ @code{.shell}advance()@endcode algorithm queries coefficients
+   at every update via coefficients-policy functions, e.g., time, various
+   statistics
 
-### Time-integration policy
+@subsection diffeq_timeint Time-integration policy
 
 Specifies what time-integrator to use when advancing particles. Possible
 time-integration policies:
  - Euler-Maruyama
  - Milstein
  - Runge-Kutta (with various orders)
- - Various other explicit and implicit integrators, see Kloeden & Platen
+ - Various other explicit and implicit integrators, see [Kloeden &
+   Platen](https://www.springer.com/us/book/9783540540625)
 
 Questions
----------
  - What new requirements and constraints does spatial inhomogeneity entail?
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Wed 01 Jul 2015 02:20:41 PM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
+@m_div{m-block m-right-m m-note}
+Most of the above is implemented under src/DiffEq/, with the forward Euler
+(Euler-Maruyama) time integration scheme.
+@m_enddiv
 */

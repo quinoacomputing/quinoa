@@ -5,10 +5,10 @@ The strategy chosen for concurrency is probably the most decisive factor
 affecting performance of a large-scale simulation. It is close to impossible to
 pick a single concurrency strategy that is optimal for all the tools and the
 types of physics (i.e., the different equation-sets implemented), algorithms,
-and problems. So here, we merely collect the main features of various
-algorithms from the viewpoint of concurrency from the viewpoint of a particle
-solver. Due to the many factors affecting performance, no ranking is attempted
-among the approaches.
+and problems. So here, we merely collect the main features of various algorithms
+from the viewpoint of concurrency from the viewpoint of a particle solver, e.g.,
+@ref walker. Due to the many factors affecting performance, no ranking is
+attempted among the approaches.
 
 @section all2all All-to-all stats
 
