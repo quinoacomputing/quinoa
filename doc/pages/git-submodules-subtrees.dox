@@ -1,0 +1,105 @@
+/*!
+  \page      git_submodules_subtrees Third-party libraries and external tools using git submodules and subtrees
+
+Quinoa uses git _submodules_ as well as git _subtrees_ to pull in third-party
+libraries (TPLs) and auxiliary tools. This allows easy update to a TPL's (or
+tool's) new or custom version, record all TPLs' and tools' histories (including
+branches and tags), and also allows contributing fixes upstream, all within git.
+There are some differences between git's submodule and subtree functionality
+each with its own pros and cons. This page explains how to use git submodules
+and subtrees in Quinoa.
+
+@section tpl_vs_tool TPLs and tools
+
+An important distinction between TPLs and tools is that TPLs are libraries whose
+source we directly use, e.g., via include files and/or (static and dynamic)
+linking, while from a tool we do not include source code nor link its object
+files, only build it and use it as a separate executable. To learn more about
+TPLs and tools, check out the page on @ref licenses.
+
+@section git_subtree Git subtree for sharing cmake code
+
+Currently there is a single git subtree in quinoa and is used to reuse/share
+cmake code between two repositories
+
+ - https://github.com/quinoacomputing/quinoa under directory
+   [cmake/](https://github.com/quinoacomputing/quinoa/tree/master/cmake), and
+
+ - https://github.com/quinoacomputing/quinoa-tpl under directory
+   [cmake/](https://github.com/quinoacomputing/quinoa-tpl/tree/master/cmake), and
+
+Both of the above git repositories are setup to pull in the cmake code from the
+https://github.com/quinoacomputing/cmake-modules repository, in quinoa as a
+subtree, in the TPL repository as a submodule.
+
+@subsection git_subtree_pull Pull changes from the cmake repository
+
+To pull in the latest updates from the cmake repository (from its branch _master_)
+into the quinoa repository, do
+
+@code{.shell}
+git fetch cmake
+git subtree pull --prefix=cmake cmake master --squash
+@endcode
+
+@subsection git_subtree_push Push changes to the cmake repository
+
+If you have committed changes in the quinoa repository under the cmake subtree
+directory @code{.shell}cmake/@endcode, here is how you push the changes upstream
+to the cmake git repository.
+
+- Verify the changes you are about to push by examining the diff output:
+
+@code{.shell}
+git diff cmake/master master:cmake
+@endcode
+
+- If you are happy with the diff, push the changes upstream (to the _master_
+branch of the cmake repository):
+
+@code{.shell}
+git subtree push --prefix=cmake cmake master
+@endcode
+
+@subsection subtree_info Useful links on git subtree
+ - https://hpc.uni.lu/blog/2014/understanding-git-subtree
+ - http://getlevelten.com/blog/tom-mccracken/smarter-drupal-projects-projects-management-git-subtree
+ - https://github.com/git/git/blob/master/contrib/subtree/git-subtree.txt
+ - http://blogs.atlassian.com/2013/05/alternatives-to-git-submodule-git-subtree
+ - http://www.codeproject.com/Articles/562949/ManagingplusNestedplusLibrariesplusUsingplustheplu
+
+@section git_submodule Git submodule for incorporating TPLs
+
+To ease and automate building the @ref licenses "third-party libraries" that are
+not always available on a system, we maintain a [git
+repository](https://github.com/quinoacomputing/quinoa-tpl) that consists of a
+list of git submodules pointing to the libraries. Check the @ref mainpage_build
+"Build section of the main page" for a list of libraries that _may_ be installed
+by your operating system's package manager, which then can accelerate and ease
+installing the TPLs.
+
+When you do a clone of quinoa
+
+@code{.shell}
+git clone --recurse-submodules https://github.com/quinoacomputing/quinoa.git
+@endcode
+
+all submodules are cloned and initialized. This is probably the simplest way to
+clone the code with all dependencies, however it is not necessarily the quickest
+to work with, since git operations will take longer when submodules are present
+and most developers will only need the submodules once (to build and install the
+TPLs).
+
+Another way of cloning (and working with) quinoa is to _not_ clone the
+submodules, but work with the git repositories for quinoa, cmake, and
+the TPLs separately. Since the cmake code and the TPLs are much less frequently
+updated compared to the code in quinoa, the TPLs can be cloned, built, and
+forgotten about. This approach, however, will require the specification of the
+@code{.shell}-DTPL_DIR=<path-to-installed-tpls>@endcode command line argument to
+quinoa's cmake command. This way, the quinoa repository, which still has the
+cmake directory as a git subtree, is kept minimal, and thus git operations,
+e.g., switching branches, stashing, are quicker. This can be especially useful
+on large HPC machines where the large parallel file systems are shared among
+many users who may be doing heavy I/O. Another option is to _deinitialize_ the
+submodules once not needed if they were recursively cloned and initialized.
+*/

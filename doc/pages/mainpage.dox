@@ -85,24 +85,26 @@ Quinoa consists of the following tools:
 
 - Clone, build third-party libraries, build & test
 
-       git clone --recursive https://github.com/quinoacomputing/quinoa.git; cd quinoa
+       git clone --recurse-submodules https://github.com/quinoacomputing/quinoa.git; cd quinoa
        mkdir tpl/build; cd tpl/build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 ..; make; cd -
        mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src; make; ../script/run_tests.sh
 
-All executables will be under `build/Main/`.
+All executables will be under `build/Main/`. Read more about other ways of
+cloning and working with quinoa's repositories on the page detailing @ref
+git_submodules_subtrees.
 
 @section mainpage_authors Authors
 
 (in chronological order of contribution)
 
-1. [Jozsef Bakosi](https://github.com/jbakosi), 2012--
-2. [Francisco Gonzalez](https://github.com/franjgonzalez), 2016
-3. [Brandon Rogers](https://github.com/brog2610), 2016
-4. [Christoph Junghans](https://github.com/junghans), 2017--
-5. [Robert Pavel](https://github.com/rspavel), 2017
-6. [Aditya Pakki](https://github.com/adityapakki), 2017
-7. [Bob Bird](https://github.com/rfbird), 2017--
-8. [Aditya Pandare](https://github.com/adityakpandare), 2017--
+1. [Jozsef Bakosi](https://github.com/jbakosi)
+2. [Francisco Gonzalez](https://github.com/franjgonzalez)
+3. [Brandon Rogers](https://github.com/brog2610)
+4. [Christoph Junghans](https://github.com/junghans)
+5. [Robert Pavel](https://github.com/rspavel)
+6. [Aditya Pakki](https://github.com/adityapakki)
+7. [Bob Bird](https://github.com/rfbird)
+8. [Aditya Pandare](https://github.com/adityakpandare)
 
 @section mainpage_resources Resources
 
@@ -110,9 +112,12 @@ All executables will be under `build/Main/`.
 - Source --- https://github.com/quinoacomputing/quinoa
 - Contributing --- https://www.clahub.com/agreements/quinoacomputing/quinoa
 - License --- https://github.com/quinoacomputing/quinoa/blob/master/LICENSE
-- Third-party licenses --- https://quinoacomputing.org/licenses
+- Third-party libraries and licenses --- https://quinoacomputing.org/licenses
 - Documentation --- https://quinoacomputing.org
-- Philsophy --- https://quinoacomputing.org/why
+- Web --- https://quinoacomputing.org
+- Email --- mailto:quinoa@lanl.gov
+- Gitter --- https://gitter.im/quinoacomputing/quinoa
+- Philosophy --- https://quinoacomputing.org/why
 - Papers --- https://quinoacomputing.org/papers
 - Roadmap --- https://github.com/quinoacomputing/quinoa/issues
 - Doxygen --- https://quinoacomputing.org
