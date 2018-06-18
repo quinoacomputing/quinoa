@@ -1,135 +1,156 @@
 /*!
   \page      licenses Third-party libraries, compilers, and tools
-  \tableofcontents
 
-Here are the links to full verbatim texts of the licenses of all third-party
-libraries (TPLs), and the list of compilers and tools used by Quinoa. The [TPL
-sources](https://github.com/quinoacomputing/quinoa/blob/master/tpl/src) as well as the
-[tools sources](https://github.com/quinoacomputing/quinoa/blob/master/tool/src) are part
-of the distribution. While the Quinoa executables link to TPLs, they do not link
-to the tools.
+@tableofcontents
+
+This page collects links to full verbatim texts of the licenses of all third-party
+libraries (TPLs), and the list of compilers and tools used by Quinoa.
+
+@section licenses_tpl_vs_tool TPLs and external tools
+
+An important distinction between TPLs and tools is that TPLs are libraries whose
+source we directly use, e.g., via include files and/or (static and dynamic)
+linking, while from a tool we do not include source code nor link its object
+files, only build it and use it as a separate (external) executable.
 
 \section tpl_licenses Third-party libraries
 
 \subsection charm_license 1. The Charm++ Parallel Programming System
   - Required
   - Web: http://charm.cs.illinois.edu
-  - License: \subpage Charm_license
+  - License: @subpage Charm_license
 
 \subsection pegtl_license 2. The Parsing Expression Grammar Template Library
   - Required
   - Web: https://github.com/taocpp/PEGTL
-  - License: \subpage PEGTL_license
+  - License: @subpage PEGTL_license
 
 \subsection tut_license 3. C++ Template Unit Test Framework
   - Required
   - Web: http://mrzechonek.github.io/tut-framework
-  - License: \subpage TUT_license
+  - License: @subpage TUT_license
 
 \subsection boost_license 4. Boost C++ libraries
   - Required
   - Web: http://www.boost.org
-  - License: \subpage Boost_license
+  - License: @subpage Boost_license
 
 \subsection cartesian_product_license 5. Cartesian product, a Boost MPL algorithm
   - Required
   - Web: http://tinyurl.com/55wdww
-  - License: \subpage Cartesian_Product_license
+  - License: @subpage Cartesian_Product_license
 
 \subsection pstreams_license 6. PStreams for POSIX process Control
   - Required
   - Web: http://pstreams.sourceforge.net/
-  - License: \subpage PStreams_license
+  - License: @subpage PStreams_license
 
 \subsection hdf5_license 7. The HDF5 data model
   - Required
   - Web: http://www.hdfgroup.org/HDF5
-  - License: \subpage HDF5_license
+  - License: @subpage HDF5_license
 
 \subsection netcdf_license 8. The NetCDF data model
   - Required
   - Web: http://www.unidata.ucar.edu/downloads/netcdf/index.jsp
-  - License: \subpage NetCDF_license
+  - License: @subpage NetCDF_license
 
 \subsection seacas_license 9. SEACAS for storing data for finite element analyses
   - Required
   - Web: https://github.com/trilinos/Trilinos/tree/master/packages/seacas
-  - License: \subpage SEACAS_license
+  - License: @subpage SEACAS_license
 
 \subsection zoltan_license 10. Zoltan for static load balancing
   - Required
   - Web: http://www.cs.sandia.gov/Zoltan/Zoltan.html
-  - License: \subpage Zoltan_license
+  - License: @subpage Zoltan_license
 
 \subsection hypre_license 11. Hypre for linear solvers and preconditioners
   - Required
   - Web: https://computation.llnl.gov/projects/hypre-scalable-linear-solvers-multigrid-methods
-  - License: \subpage Hypre_license
+  - License: @subpage Hypre_license
 
 \subsection rngsselib_license 12. RNGSSELIB for random number generation
   - Optional
   - Web: http://cpc.cs.qub.ac.uk/summaries/AEIT_v2_0.html
-  - License: \subpage RNGSSELIB_license
+  - License: @subpage RNGSSELIB_license
 
 \subsection testu01_license 13. TestU01 for statistical testing of random number generators
   - Required
   - Web: http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
-  - License: \subpage TestU01_license
+  - License: @subpage TestU01_license
 
 \subsection pugixml_license 14. PugiXML for XML format reading and writing
   - Required
   - Web: http://pugixml.org/
-  - License: \subpage PugiXML_license
+  - License: @subpage PugiXML_license
 
 \subsection blas_license 15. BLAS for basic linear algebra
   - Required
   - Web: http://www.netlib.org/blas
-  - License: \subpage BLAS_license
+  - License: @subpage BLAS_license
 
 \subsection lapack_license 16. LAPACK for linear algebra
   - Required
   - Web: http://www.netlib.org/lapack
-  - License: \subpage LAPACK_license
+  - License: @subpage LAPACK_license
 
 \subsection aec_license 17. AEC for adaptive entropy coding
   - Required
   - Web: https://gitlab.dkrz.de/k202009/libaec
-  - License: \subpage AEC_license
+  - License: @subpage AEC_license
 
 \subsection libstdcpp_license 18. Libstdc++ for standard C++ containers and algorithms
   - Either libc++ or libstdc++ required
   - Web: https://gcc.gnu.org/libstdc++
-  - License: \subpage LibStdCPP_license
+  - License: @subpage LibStdCPP_license
 
 \subsection libcpp_license 19. Libc++ for standard C++ containers and algorithms
   - Either libc++ or libstdc++ required
   - Web: http://libcxx.llvm.org
-  - License: \subpage LibCPP_license
+  - License: @subpage LibCPP_license
 
 \subsection musllibc_license 20. Musl-libc for standard C library
   - Either Optional
   - Web: https://www.musl-libc.org
-  - License: \subpage Musllibc_license
+  - License: @subpage Musllibc_license
 
 \subsection openmpi_license 21. OpenMPI for the message passing interface
   - Required
   - Web: http://www.open-mpi.org
-  - License: \subpage OpenMPI_license
+  - License: @subpage OpenMPI_license
 
 \subsection mkl_license 22. Intel Math Kernel Library for BLAS/LAPACK and random number generation
   - Optional
   - Web: https://software.intel.com/en-us/intel-mkl
-  - License: \subpage MKL_license
+  - License: @subpage MKL_license
 
 \subsection h5part_license 23. H5Part for saving particle data to files
   - Required
   - Web: http://vis.lbl.gov/Research/H5Part
-  - License: \subpage H5Part_license
+  - License: @subpage H5Part_license
 
 \subsection random123_license 24. Random123 for random number generation
   - Required
   - Web: http://www.thesalmons.org/john/random123/releases/latest/docs/index.html
-  - License: \subpage Random123_license
+  - License: @subpage Random123_license
+
+\subsection backwardcpp_license 25. BackwardCpp for generating backtraces
+  - Optional
+  - Web: https://github.com/bombela/backward-cpp
+  - License: @subpage BackwardCpp_license
+
+\subsection highwayhash_license 26. HighwayHash for generating hashes
+  - Required
+  - Web: https://github.com/google/highwayhash
+  - License: @subpage HighwayHash_license
+
+\subsection root_license 27. ROOT for saving field data for data analysis
+  - Optional
+  - Web: https://root.cern.ch
+  - License: @subpage ROOT_license
+
+
 
 \section compiler_web Compilers
 
@@ -141,6 +162,8 @@ to the tools.
 
 \subsection intel_web 3. Intel C++ compiler
   - Web https://software.intel.com/en-us/c-compilers
+
+
 
 \section tools_web Tools
 
@@ -168,9 +191,7 @@ to the tools.
 \subsection numdiff_web 8. Numdiff for comparison of text files with numerical content
   - Web: http://svn.cern.ch/guest/madx/trunk/madX/tools/numdiff
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Sat 16 Jun 2018 01:02:31 PM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
+\subsection mcss_web 9. M.CSS for improving on Doxygen output
+  - Web: http://mcss.mosra.cz/doxygen
+
 */

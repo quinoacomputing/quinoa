@@ -1,6 +1,8 @@
 /*!
   \page      layout Large-data memory layout for equation systems
 
+@tableofcontents
+
 This page discusses the requirements, design, implementation, and verification
 of a data container with zero-cost compile-time-configurable memory layout for
 storing a 3-dimensional array of real values. The three dimensions are
@@ -35,7 +37,7 @@ governed by a third equation (e.g., energy), etc. Here the first letter denotes
 a physical quantity, while the second is the particle number or mesh entity
 index. If the algorithm advances the properties at the unknowns one equation at
 a time, data in memory is accessed by having to jump a distance that corresponds
-to the number of scalar physical variables per particle or mesh field. In the
+to the number of scalar physical variables per particle or mesh entity. In the
 example, the update will have to jump as \f$x1, x2, x3, \dots\f$ are updated.
 
 2. __Property-major__, in which the same type of physical properties are close
@@ -54,24 +56,24 @@ stored.
 A property-major storage, case 2 above, seems to be the most efficient at first
 sight, as it stores data, as it is read and written by the equation algorithms,
 contiguously. However, data access is contiguous only if the particle properties
-(or data stored at mesh field IDs) are independent, i.e., if there is no
-coupling among the equations. Unfortunately, this is rarely the case, at least
-not for fluid dynamics or any computational physics problem that is interesting
-enough. For example in a Lagrangian particle code, position is used by the
-velocity update, and velocity is required by the energy update. The same is true
-for a mesh-based solver, where the physical variables are coupled, i.e., their
-update needs other physical variables at the same mesh field (and possibly
-others). Depending on the physical approximation, density (or mass) may be
-required for all equations. The stronger the equations are coupled the more
-very-far-reads are required for a given update with a property-major data
-layout. These far-reads are potentially almost always cache misses, as the
-property-major storage stores the physical variables for the same particle or
-mesh field very far in memory, e.g., the distance between \f$x1\f$ and \f$y1\f$
-is the number of particles or mesh fields. While the unknown-major storage, case
-1 above, inherently stores data non-contiguously, the distance between
-properties of a single particle (or a single mesh field) is relatively small,
-i.e., the number of properties, which may incur less cache misses as several
-particles (or nodes) but all of their properties could fit into cache.
+(or data stored at mesh entities) are independent, i.e., if there is no coupling
+among the equations. Unfortunately, this is rarely the case, at least not for
+fluid dynamics or any computational physics problem that is interesting enough.
+For example in a Lagrangian particle code, velocity is used by the position
+update, and velocity is required by the energy update. The same is true for a
+mesh-based solver, where the physical variables are coupled, i.e., their update
+needs other physical variables at the same mesh entity (and usually that of the
+neighbors). Depending on the physical approximation, density (or mass) may be
+required for all equations. The stronger the equations are coupled, the more
+far-reads are required for a given update with a property-major data layout.
+These far-reads are practically always cache misses, as the property-major
+storage stores the physical variables for the same particle or mesh entity very
+far in memory, e.g., the distance between \f$x1\f$ and \f$y1\f$ is the number of
+particles or mesh entities. While the unknown-major storage, case 1 above,
+inherently stores data non-contiguously, the distance between properties of a
+single particle (or a single mesh entity) is relatively small, i.e., the number
+of properties, which may incur less cache misses as several particles (or nodes)
+but all of their physical properties at the same unknown could fit into cache.
 
 Assuming strong coupling among the variables, the unknown-major storage will be
 favored, but it would be nice if the design allowed for both layouts, so
@@ -104,25 +106,24 @@ template arguments are problematic:
     (unknown-, and property-major), code duplication should not be too much of
     an issue. However, the implementation of unknown-property data access must
     be absolutely zero run-time cost. This means the selection must be at
-    compile-time and the element access must be absolutely invisible to the
-    derived equation classes. In other words, there must be no re-implementation
-    of a time-integrator for an equation just because the data access is
-    different.
+    compile-time and the element access must be absolutely invisible to client
+    code. In other words, there must be no re-implementation of a
+    time-integrator for an equation just because the data access is different.
 
 @section layout_kokkos Assessment of the Kokkos library that offers a similar choice
 
 Since the first implementation of the configurable data layout, described below,
 the Kokkos library, https://github.com/kokkos/kokkos , from Sandia National
 Labs, has been released. Kokkos appears to have all the requirements described
-here, and a lot more. It does have compile-time configurable data layouts,
-@code{.cpp}views@endcode, for the purpose of optimal data access on various
-compute devices, such as multi-core CPUs, many-core accelerators, and Graphics
-Processing Units. Kokkos appears to provide an excellent abstraction for data
-layout abstraction.  However, Kokkos provides a lot more than just data layout
-abstraction: it can generate low level code for various devices using its
-configurable views. The currently available Kokkos back-ends are OpenMP,
-pthreads, and CUDA. Thus Kokkos provides abstractions for on-node, i.e.,
-shared-memory, parallelism. While Kokkos has been successfully used in Charm++
+here, and many more other features. It does have compile-time configurable data
+layouts, @code{.cpp}views@endcode, for the purpose of optimal data access on
+various compute devices, such as multi-core CPUs, many-core accelerators, and
+Graphics Processing Units. Kokkos appears to provide an excellent abstraction
+for data layout abstraction.  However, Kokkos provides a lot more functionality
+than just data layout abstraction, e.g., it can generate low level code for
+various devices using its configurable views. The currently available Kokkos
+back-ends are OpenMP, pthreads, and CUDA. Thus Kokkos provides abstractions for
+shared-memory parallelism. While Kokkos has been successfully used in Charm++
 code, at this point (Jan 2016) we opt for _not_ adopting Kokkos' views and keep
 our original data layout abstractions, discussed below. The reasons:
 
@@ -151,14 +152,15 @@ a way that is invisible to client code? __Yes.__ See below.
 Zero-cost is achieved via type-based compile-time polymorphism. This is
 controlled via a cmake variable.
 
-The particle (or mesh field) data is a logically 3-dimensional array that stores
-the particle properties (or nodal unknowns).
+The particle (or mesh entity) data is a logically 3-dimensional array that
+stores the particle properties or unknowns at mesh entities, e.g., faces, cell
+centers, nodes, etc.
 
 For clarity, the discussion below will use the expression "particle" for a
 particle-code and will not specifically mention mesh-based unknowns, stored at
 the nodes, elements, faces, etc., of a computational mesh. The former is for a
 particle-code, the latter is for a mesh-code. The data layout discussion is
-independent of whether particles or mesh field (nodes, cells, etc.) are used,
+independent of whether particles or mesh entities (nodes, cells, etc.) are used,
 and accordingly both @ref walker_main and @ref inciter_main uses the same
 implementation.
 
@@ -185,7 +187,7 @@ Access is based on the 3 coordinates: _particle_ (or _unknown_), _component_,
 and _offset_. _Particle_ is the particle index, component denotes the given
 component of a vector equation, e.g., velocity has 3 components, a
 multi-material turbulent mix model governed by the Dirichlet SDE has \f$K=N-1\f$
-scalars (components), and _offset is determined by the relative position of the
+scalars (components), and _offset_ is determined by the relative position of the
 given equation compared to the other equations. Using these 3 coordinates the
 index calculations for the above 3 cases are:
 
@@ -194,7 +196,7 @@ index calculations for the above 3 cases are:
          baseptr + particle*nprop + offset + component
 
 where _nprop_ is the total number of particle properties, e.g., 3 positions, 3
-velocities, 5 scalars -> nprop = 11.
+velocities, 5 scalars \f$\to\f$ nprop = 11.
 
     3. EqCompPar: [ equation ] [ component ] [ particle ]
 
@@ -253,7 +255,7 @@ class Data {
    }
    inline
    tk::real& access( int particle, int property, int2type<PropertyMajor> ) {
-     // This is the same for now, not callsed, irrelevant in zero-cost-test
+     // This is the same for now, not called, irrelevant in zero-cost-test
      return *(m_ptr + particle*m_nprop + m_offset + property);
    }
 
@@ -282,7 +284,6 @@ constructor (client code):
 Data< Layout > d( particles, m_nprop, m_offset );
 Model::aa = d( 34, 3 );
 Model::bb = *(m_particles + 34*m_nprop + m_offset + 3);
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 @endcode
 
 Add to @code{.cpp}Model@endcode:
@@ -315,7 +316,7 @@ with @code{.sh}clang -g -S -mllvm --x86-asm-syntax=intel@endcode, gnu and intel
 generate very similar code:
 
 @code{.asm}
-     .loc    143 42 20  ; <quinoa>/src/SDE/Dirichlet.h:42:20
+     .loc    143 42 20  ; <quinoa>/src/DiffEq/Dirichlet.h:42:20
 .Ltmp27038:
      lea     RDI, QWORD PTR [RBP - 56]
      mov     ESI, 34
@@ -329,7 +330,7 @@ generate very similar code:
      movsd   XMM0, QWORD PTR [RAX]
      mov     RCX, QWORD PTR [RBP - 64] # 8-byte Reload
      movsd   QWORD PTR [RCX + 8], XMM0
-     .loc    143 43 0    # <quinoa>/src/SDE/Dirichlet.h:43:0
+     .loc    143 43 0    ; <quinoa>/src/DiffEq/Dirichlet.h:43:0
      mov     RDX, QWORD PTR [RCX + 32]
      imul    ESI, DWORD PTR [RCX + 48], 34
      movsxd  RDI, ESI
@@ -388,10 +389,10 @@ of the assignments of @code{.cpp}aa@endcode (line 42) and @code{.cpp}bb@endcode
 and intel generate very similar optimized code:
 
 @code{.asm}
-     .loc    144 42 20  ; <quinoa>/src/SDE/Dirichlet.h:42:20
+     .loc    144 42 20  ; <quinoa>/src/DiffEq/Dirichlet.h:42:20
      movsd   XMM0, QWORD PTR [R14 + 8*RAX + 24]
      movsd   QWORD PTR [R13 + 8], XMM0
-     .loc    144 43 0    ; <quinoa>/src/SDE/Dirichlet.h:43:0
+     .loc    144 43 0    ; <quinoa>/src/DiffEq/Dirichlet.h:43:0
      mov     RCX, QWORD PTR [R13 + 32]
      movsd   XMM0, QWORD PTR [RCX + 8*RAX + 24]
      movsd   QWORD PTR [R13 + 16], XMM0
@@ -419,7 +420,7 @@ arithmetic, i.e., line 42 costs the same as line 43.
 This section documents the benchmark of the implementation of the compile-time
 configurable data-access policy discussed above. The implementation is via a
 thin data-access interface with zero run-time cost, no code-duplication, and in
-a way that is invisible to derived equation classes.
+a way that is invisible to client code.
 
 @subsection layout_input Quinoa::Walker input file used for the benchmark
 

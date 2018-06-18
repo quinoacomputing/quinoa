@@ -14,20 +14,17 @@ implemented in Quinoa. The papers are grouped by executables.
   statistical representations of _N_ non-negative continuous fluctuating variables
   satisfying a conservation principle. A practical example is _N_ material mass
   fractions (that must always sum to unity) in a turbulent multi-material flow.
-  Example model equations that satisfy such constraints are the
-  [beta](DiffEq/Beta.h), [Dirichlet](DiffEq/Dirichlet.h.), and [generalized
-  Dirichlet](DiffEq/GeneralizedDirichlet.h) stochastic differential equations
-  implemented in [walker](walker_doc.html).
+  Example model equations that satisfy such constraints are implemented in
+  walker::Beta, walker::Dirichlet, and walker::GeneralizedDirichlet.
 
 - @m_div{m-text m-strong}
   J. Bakosi, J.R. Ristorcelli, **[A stochastic diffusion process for Lochner's generalized Dirichlet distribution](http://dx.doi.org/10.1063/1.4822416)**, Journal of Mathematical Physics, *54*(10), 2013.
   @m_enddiv
 
   This paper develops a system of stochastic differential equations whose
-  statistically stationary solution is [the generalized Dirichlet
-  distribution](https://en.wikipedia.org/wiki/Generalized_Dirichlet_distribution).
-  The system is implemented in DiffEq/GeneralizedDirichlet.h in
-  [walker](walker_doc.html).
+  statistically stationary solution is the [generalized
+  Dirichlet](https://en.wikipedia.org/wiki/Generalized_Dirichlet_distribution)
+  distribution. The system is implemented in walker::GeneralizedDirichlet.
 
 - @m_div{m-text m-strong}
   J. Bakosi, J.R. Ristorcelli, **[A stochastic diffusion process for the Dirichlet distribution](http://dx.doi.org/10.1155/2013/842981)**, International Journal of Stochastic Analysis, 2013, Article ID 842981, 2013.
@@ -36,7 +33,7 @@ implemented in Quinoa. The papers are grouped by executables.
   This paper develops a system of stochastic differential equations whose
   statistically stationary solution is the [Dirichlet
   distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution). The system
-  is implemented in DiffEq/Dirichlet.h in [walker](walker_doc.html).
+  is implemented in walker::Dirichlet.
 
 - @m_div{m-text m-strong}
   J. Bakosi, J.R. Ristorcelli, **[Exploring the beta distribution in variable-density turbulent mixing](http://dx.doi.org/10.1080/14685248.2010.510843)**, Journal of Turbulence, *11*(37) 2010.
@@ -48,12 +45,9 @@ implemented in Quinoa. The papers are grouped by executables.
   turbulence and sets the stage for developing a probability density function
   model that can be useful for simulations of turbulent flows in which exactly
   computing all relevant spatial and temporal scales is not computationally
-  effective. Implementations of various version of the stochastic differential
-  equation whose invariant is beta can be found in
-  - DiffEq/Beta.h,
-  - DiffEq/NumberFractionBeta.h,
-  - DiffEq/MassFractionBeta.h,
-  - DiffEq/MixNumberFractionBeta.h, and
-  - DiffEq/MixMassFractionBeta.h.
+  economical. Implementations of various versions of the stochastic differential
+  equation whose invariant is beta can be found in walker::Beta,
+  walker::NumberFractionBeta, walker::MassFractionBeta,
+  walker::MixNumberFractionBeta, and walker::MixMassFractionBeta.
 
 */

@@ -837,6 +837,9 @@ INPUT                  = \
   /home/jbakosi/code/quinoa/src/../doc/licenses/OpenMPI_license.dox \
   /home/jbakosi/code/quinoa/src/../doc/licenses/MKL_license.dox \
   /home/jbakosi/code/quinoa/src/../doc/licenses/Random123_license.dox \
+  /home/jbakosi/code/quinoa/src/../doc/licenses/BackwardCpp_license.dox \
+  /home/jbakosi/code/quinoa/src/../doc/licenses/HighwayHash_license.dox \
+  /home/jbakosi/code/quinoa/src/../doc/licenses/ROOT_license.dox \
   . \
   /home/jbakosi/code/quinoa/src/../README.md \
   /home/jbakosi/code/quinoa/src/../src/ \
