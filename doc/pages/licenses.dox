@@ -150,7 +150,7 @@ files, only build it and use it as a separate (external) executable.
   - Web: https://root.cern.ch
   - License: @subpage ROOT_license
 
-
+<hr>
 
 \section compiler_web Compilers
 
@@ -163,7 +163,7 @@ files, only build it and use it as a separate (external) executable.
 \subsection intel_web 3. Intel C++ compiler
   - Web https://software.intel.com/en-us/c-compilers
 
-
+<hr>
 
 \section tools_web Tools
 
