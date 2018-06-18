@@ -574,7 +574,7 @@ Sorter::createWorkers()
   for (auto& s : chbnode) tk::unique( s.second );
 
 
-  // Generate set of alll mesh faces
+  // Generate set of all mesh faces
   tk::UnsMesh::FaceSet faceset;
   for (std::size_t e=0; e<m_ginpoel.size()/4; ++e) { // for all tets
     auto mark = e*4;
@@ -584,12 +584,12 @@ Sorter::createWorkers()
                           m_ginpoel[ mark + tk::lpofa[f][2] ] }}} );
   }
 
-  // Generate boundary face and node ids (after mesh node reordering)
+  // Extract our (this chare's) portion of the boundary faces
   decltype(m_bface) chbface;
   decltype(m_triinpoel) chtriinpoel;
   std::size_t cnt = 0;
 
-  // ...
+  // Generate boundary 
   for (const auto& ss : m_bface)  // for all phsyical boundaries (sidesets)
     for (auto f : ss.second) {    // for all faces on this physical boundary
       // attempt to find face nodes on this chare

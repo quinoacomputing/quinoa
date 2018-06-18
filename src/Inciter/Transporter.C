@@ -216,12 +216,13 @@ Transporter::createPartitioner()
   std::map< int, std::vector< std::size_t > > bface;
   std::vector< std::size_t > triinpoel;
   std::map< int, std::vector< std::size_t > > bnode;
+  std::map< int, std::vector< int > > faceid;
 
   // Read boundary (side set) data from input file
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   if (scheme == ctr::SchemeType::DG) {
     // Read boundary-face connectivity on side sets
-    auto nbfac = er.readSidesetFaces( bface );
+    auto nbfac = er.readSidesetFaces( bface, faceid );
     er.readFaces( nbfac, triinpoel );
     Assert( nbfac > 0, "DG must have boundary faces (and side sets) defined" );
   } else {
