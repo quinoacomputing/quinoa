@@ -227,11 +227,11 @@ Partitioner::refine()
                              m_scheme,
                              m_cbr,
                              m_cbs,
-                             tk::cref_find(m_chinpoel,cid),
-                             tk::cref_find(m_chcoordmap,cid),
-                             m_bface,
-                             m_triinpoel,
-                             m_bnode,
+                             tk::cref_find(m_chinpoel,cid),     // chare mesh
+                             tk::cref_find(m_chcoordmap,cid),   // chare mesh
+                             m_bface,           // whole mesh
+                             m_triinpoel,       // whole mesh
+                             m_bnode,           // whole mesh
                              m_nchare,
                              CkMyPe() );
   }

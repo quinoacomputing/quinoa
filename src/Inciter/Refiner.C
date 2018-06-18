@@ -880,14 +880,14 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
             // find nodes of the parent face of child face
             auto parfac = parentFace( rf );
             // if the child shares a face with its parent and all 3 nodes of the
-            // parent face of the child's face are the same, the child face is on
-            // the same boundary as the parent face
+            // parent face of the child's face are the same, the child face is
+            // on the same boundary as the parent face
             if ( parfac.size() == 3 &&
                  parfac.find(oldface[0]) != end(parfac) &&
                  parfac.find(oldface[1]) != end(parfac) &&
                  parfac.find(oldface[2]) != end(parfac) )
             {
-              addBndFace( sideface, {{m_gid[rf[0]],m_gid[rf[1]],m_gid[rf[2]]}} );
+              addBndFace(sideface, {{m_gid[rf[2]],m_gid[rf[1]],m_gid[rf[0]]}});
             }
           }
         }

@@ -217,6 +217,7 @@ Transporter::createPartitioner()
   std::vector< std::size_t > triinpoel;
   std::map< int, std::vector< std::size_t > > bnode;
 
+  // Read boundary (side set) data from input file
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   if (scheme == ctr::SchemeType::DG) {
     // Read boundary-face connectivity on side sets
@@ -256,6 +257,7 @@ Transporter::createPartitioner()
     , CkCallback( CkReductionTarget(Transporter,discinserted), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,workinserted), thisProxy )
   };
+
   // Start timer measuring preparation of the mesh for partitioning
   m_timer[ TimerTag::MESH_READ ];
 

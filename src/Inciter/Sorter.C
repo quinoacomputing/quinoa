@@ -559,65 +559,61 @@ Sorter::createWorkers()
 //   const auto& chfilenodes = tk::cref_find( m_chfilenodes, cid );
 //   for (auto i : chinpoel) newnodes[ tk::cref_find(chfilenodes,i) ] = i;
 
-//   // Generate set of alll mesh faces
-//   tk::UnsMesh::FaceSet faceset;
-//   for (std::size_t e=0; e<m_ginpoel.size()/4; ++e) { // for all tets
-//     auto mark = e*4;
-//     for (std::size_t f=0; f<4; ++f) // for all tet faces
-//       faceset.insert( {{{ m_ginpoel[ mark + tk::lpofa[f][0] ],
-//                           m_ginpoel[ mark + tk::lpofa[f][1] ],
-//                           m_ginpoel[ mark + tk::lpofa[f][2] ] }}} );
-//   }
 
-  // Generate boundary face and node ids (after mesh node reordering)
-//   std::vector< std::size_t > chtriinpoel;
-//   std::unordered_map< int, std::vector< std::size_t > > chbface;
-//   std::size_t cnt = 0;
-
-  // Extract our portion of the boundary node lists
-  decltype(m_bnode) bnode;
+  // Extract our (this chare's) portion of the boundary node lists
+  decltype(m_bnode) chbnode;
   for (const auto& s : m_bnode) {
-    auto& n = bnode[ s.first ];
+    auto& n = chbnode[ s.first ];
     for (auto p : s.second) {
       if (m_nodeset.find(p) != end(m_nodeset))
         n.push_back( p );
     }
   }
 
-//   for (const auto& ss : m_bface)  // for all phsyical boundaries (sidesets)
-//     for (auto f : ss.second) {    // for all faces on this physical boundary
-//       // attempt to find face nodes on this chare
-//       tk::UnsMesh::Face t{{ m_triinpoel[f*3+0],
-//                             m_triinpoel[f*3+1],
-//                             m_triinpoel[f*3+2] }};
-//       auto f1 = m_nodeset.find( t[0] );
-//       auto f2 = m_nodeset.find( t[1] );
-//       auto f3 = m_nodeset.find( t[2] );
-//       // if face node on this chare, assign to side set
-//       auto& n = bnode[ ss.first ];
-//       if (f1 != end(m_nodeset)) n.push_back( t[0] );
-//       if (f2 != end(m_nodeset)) n.push_back( t[1] );
-//       if (f3 != end(m_nodeset)) n.push_back( t[2] );
-// 
-// //       // if all 3 nodes of the physical boundary face are on this chare
-// //       if (f1 != end(newnodes) && f2 != end(newnodes) && f3 != end(newnodes)) {
-// //         // Create face with new node ids (after mesh node reordering)
-// //         std::array< std::size_t, 3 > t{{f1->second, f2->second, f3->second}};
-// //         // if this boundary face is on this chare
-// //         if (faceset.find(t) != end(faceset)) {
-// //           // store face connectivity with new (global) node ids of this chare
-// //           chtriinpoel.insert( end(chtriinpoel), begin(t), end(t) );
-// //           // generate/store physical boundary face id associated to sideset id
-// //           chbface[ ss.first ].push_back( cnt++ );
-// //         }
-// //       }
-//     }
+  // Make boundary node IDs unique for each physical boundary (side set)
+  for (auto& s : chbnode) tk::unique( s.second );
 
-//   // Make boundary node IDs unique for each physical boundary (side set)
-//   for (auto& s : bnode) tk::unique( s.second );
-//
-  // Face data class
-  FaceData fd( m_ginpoel, m_bface, bnode, m_triinpoel );
+
+  // Generate set of alll mesh faces
+  tk::UnsMesh::FaceSet faceset;
+  for (std::size_t e=0; e<m_ginpoel.size()/4; ++e) { // for all tets
+    auto mark = e*4;
+    for (std::size_t f=0; f<4; ++f) // for all tet faces
+      faceset.insert( {{{ m_ginpoel[ mark + tk::lpofa[f][0] ],
+                          m_ginpoel[ mark + tk::lpofa[f][1] ],
+                          m_ginpoel[ mark + tk::lpofa[f][2] ] }}} );
+  }
+
+  // Generate boundary face and node ids (after mesh node reordering)
+  decltype(m_bface) chbface;
+  decltype(m_triinpoel) chtriinpoel;
+  std::size_t cnt = 0;
+
+  // ...
+  for (const auto& ss : m_bface)  // for all phsyical boundaries (sidesets)
+    for (auto f : ss.second) {    // for all faces on this physical boundary
+      // attempt to find face nodes on this chare
+      tk::UnsMesh::Face t{{ m_triinpoel[f*3+0],
+                            m_triinpoel[f*3+1],
+                            m_triinpoel[f*3+2] }};
+      auto f1 = m_nodeset.find( t[0] );
+      auto f2 = m_nodeset.find( t[1] );
+      auto f3 = m_nodeset.find( t[2] );
+      // if all 3 nodes of the physical boundary face are on this chare
+      if (f1 != end(m_nodeset) && f2 != end(m_nodeset) && f3 != end(m_nodeset))
+      {
+        // if this boundary face is on this chare
+        if (faceset.find(t) != end(faceset)) {
+          // store face connectivity with new (global) node ids of this chare
+          chtriinpoel.insert( end(chtriinpoel), begin(t), end(t) );
+          // generate/store physical boundary face id associated to sideset id
+          chbface[ ss.first ].push_back( cnt++ );
+        }
+      }
+    }
+
+  // Create face data
+  FaceData fd( m_ginpoel, chbface, chbnode, chtriinpoel );
 
   // Make sure (bound) base is already created and accessible
   Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
