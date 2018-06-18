@@ -227,8 +227,6 @@ DG::leakyAdjacency()
     s[2] += m_geoFace(f,0,0) * m_geoFace(f,3,0);
   }
 
-std::cout << "adj: " << s[0] << ", " << s[1] << ", " << s[2] << '\n';
-
   auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
   return std::abs(s[0]) > eps || std::abs(s[1]) > eps || std::abs(s[2]) > eps;
 }
