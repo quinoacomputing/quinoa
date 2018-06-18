@@ -2431,7 +2431,8 @@ void DerivedData_object::test< 65 >() {
   std::string infile( tk::regression_dir() +
                       "/meshconv/gmsh_output/box_24_ss1.exo" );
   tk::ExodusIIMeshReader er( infile );
-  auto tnbfac = er.readSidesetFaces( t_bface );
+  std::map< int, std::vector< int > > faceid;
+  auto tnbfac = er.readSidesetFaces( t_bface, faceid );
 
   // Test if the number of boundary faces is correct
   ensure_equals( "total number of boundary faces incorrect",
@@ -3285,7 +3286,8 @@ void DerivedData_object::test< 68 >() {
   std::string infile( tk::regression_dir() +
                       "/meshconv/gmsh_output/box_24_ss1.exo" );
   tk::ExodusIIMeshReader er( infile );
-  auto nbfac = er.readSidesetFaces( bface );
+  std::map< int, std::vector< int > > faceid;
+  auto nbfac = er.readSidesetFaces( bface, faceid );
 
   // Test if the number of boundary faces is correct
   ensure_equals( "total number of boundary faces incorrect",

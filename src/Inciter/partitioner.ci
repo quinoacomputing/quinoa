@@ -26,8 +26,7 @@ module partitioner {
         const tk::CProxy_Solver& solver,
         const Scheme& scheme,
         const std::map< int, std::vector< std::size_t > >& bface,
-        const std::vector< std::size_t >& triinpoel,
-        const std::map< int, std::vector< std::size_t > >& sidenodes );
+        const std::vector< std::size_t >& triinpoel );
       entry void partchare( int nchare );
       entry void addPeMesh( int frompe,
                             const std::vector< std::size_t >& inpoel,

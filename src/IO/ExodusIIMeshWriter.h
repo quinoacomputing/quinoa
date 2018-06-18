@@ -86,6 +86,9 @@ class ExodusIIMeshWriter {
     //! Write element conectivity to ExodusII file
     void writeElements( const UnsMesh& mesh ) const;
 
+    //! Write side sets and their face connectivity to ExodusII file
+    void writeSidesets( const UnsMesh& mesh ) const;
+
     const std::string m_filename;          //!< File name
     int m_outFile;                         //!< ExodusII file handle
 };

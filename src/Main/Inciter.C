@@ -103,7 +103,9 @@ std::vector< DGPDE > g_dgpde;
 //!   parallel).
 inline
 void operator|( PUP::er& p, std::vector< CGPDE >& eqs ) {
-  if (!p.isSizing()) eqs = PDEStack().selectedCG();
+  try {
+    if (!p.isSizing()) eqs = PDEStack().selectedCG();
+  } catch (...) { tk::processExceptionCharm(); }
 }
 
 //! \brief Pack/Unpack selected partial differential equations using
@@ -123,7 +125,9 @@ void operator|( PUP::er& p, std::vector< CGPDE >& eqs ) {
 //!   parallel).
 inline
 void operator|( PUP::er& p, std::vector< DGPDE >& eqs ) {
-  if (!p.isSizing()) eqs = PDEStack().selectedDG();
+  try {
+    if (!p.isSizing()) eqs = PDEStack().selectedDG();
+  } catch (...) { tk::processExceptionCharm(); }
 }
 
 } // inciter::
@@ -157,7 +161,7 @@ class Main : public CBase_Main {
     //!   by calling Charm++'s CkExit(), shutting down the runtime system.
     //! \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
     Main( CkArgMsg* msg )
-    /*try*/ :
+    try :
       m_signal( tk::setSignalHandlers() ),
       m_cmdline(),
       // Parse command line into m_cmdline using default simple pretty printer
@@ -184,25 +188,25 @@ class Main : public CBase_Main {
       CProxy_execute::ckNew();
       // Start new timer measuring the migration of global-scope data
       m_timer.emplace_back();
-    } //catch (...) { tk::processExceptionCharm(); }
+    } catch (...) { tk::processExceptionCharm(); }
 
     //! Execute driver created and initialized by constructor
     void execute() {
-      //try {
+      try {
         m_timestamp.emplace_back("Migrate global-scope data", m_timer[1].hms());
         m_driver.execute();
-      //} catch (...) { tk::processExceptionCharm(); }
+      } catch (...) { tk::processExceptionCharm(); }
     }
 
     //! Normal exit point
     void finalize() {
-      //try {
+      try {
         if (!m_timer.empty()) {
           m_timestamp.emplace_back( "Total runtime", m_timer[0].hms() );
           m_print.time( "Timers (h:m:s)", m_timestamp );
           m_print.endpart();
         }
-      //} catch (...) { tk::processExceptionCharm(); }
+      } catch (...) { tk::processExceptionCharm(); }
       // Tell the Charm++ runtime system to exit
       CkExit();
     }

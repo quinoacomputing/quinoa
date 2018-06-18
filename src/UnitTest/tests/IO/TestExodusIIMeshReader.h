@@ -1542,7 +1542,9 @@ void ExodusIIMeshReader_object::test< 5 >() {
   std::string infile( tk::regression_dir() +
                       "/meshconv/gmsh_output/box_24_ss1.exo" );
   tk::ExodusIIMeshReader er( infile );
-  auto nbfac = er.readSidesetFaces( bface );
+  
+  std::map< int, std::vector< int > > faceid;
+  auto nbfac = er.readSidesetFaces( bface, faceid );
 
   // Test if the number of boundary faces is correct
   ensure_equals( "total number of boundary faces incorrect",
