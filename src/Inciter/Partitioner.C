@@ -48,8 +48,7 @@ Partitioner::Partitioner(
   const tk::CProxy_Solver& solver,
   const Scheme& scheme,
   const std::map< int, std::vector< std::size_t > >& bface,
-  const std::vector< std::size_t >& triinpoel,
-  const std::map< int, std::vector< std::size_t > >& sidenodes ) :
+  const std::vector< std::size_t >& triinpoel ) :
   m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6], cb[7] ),
   m_host( host ),
   m_solver( solver ),
@@ -89,8 +88,7 @@ Partitioner::Partitioner(
   m_bnodechares(),
   m_msum(),
   m_bface( bface ),
-  m_triinpoel( triinpoel ),
-  m_sidenodes( sidenodes )
+  m_triinpoel( triinpoel )
 // *****************************************************************************
 //  Constructor
 //! \param[in] cb Charm++ callbacks
@@ -100,7 +98,6 @@ Partitioner::Partitioner(
 //! \param[in] scheme Discretization scheme
 //! \param[in] bface Face lists mapped to side set ids
 //! \param[in] triinpoel Interconnectivity of points and boundary-face
-//! \param[in] sidenodes Node lists mapped to side set ids
 // *****************************************************************************
 {
   // Create mesh reader
@@ -1981,16 +1978,6 @@ Partitioner::createWorkers()
             chbface[ ss.first ].push_back( cnt++ );
           }
         }
-      }
-
-    // If there were no triangle element connectivity in the mesh file, the
-    // above loop will leave chbnode empty. In that case we fill it up based on
-    // m_sidenodes, read in via ExodusIIMeshReader::readSideSets().
-    for (const auto& ss : m_sidenodes)// for all phsyical boundaries (sidesets)
-      for (auto f : ss.second) {
-        auto n = newnodes.find( f );  // search for (file) node on this chare
-        if (n != end(newnodes))
-          chbnode[ ss.first ].push_back( n->second );  // store new id
       }
 
     // Make boundary node IDs unique for each physical boundary (side set)
