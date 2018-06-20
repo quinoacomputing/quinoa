@@ -181,15 +181,18 @@ correctBC( const tk::Fields& a,
 // *****************************************************************************
 {
   for (const auto& n : bc) {
-    auto l = tk::cref_find( lid, n.first );
-    const auto& b = n.second;
-    Assert( b.size() == dul.nprop(), "Size mismatch" );
-    for (std::size_t c=0; c<b.size(); ++c) {
-      if ( b[c].first &&
-           std::abs( dul(l,c,0) + a(l,c,0) - b[c].second ) >
-             std::numeric_limits< tk::real >::epsilon() )
-      {
-         return false;
+    auto k = lid.find(n.first);
+    if (k!=end(lid)) {
+      auto l = k->second;
+      const auto& b = n.second;
+      Assert( b.size() == dul.nprop(), "Size mismatch" );
+      for (std::size_t c=0; c<b.size(); ++c) {
+        if ( b[c].first &&
+             std::abs( dul(l,c,0) + a(l,c,0) - b[c].second ) >
+               std::numeric_limits< tk::real >::epsilon() )
+        {
+           return false;
+        }
       }
     }
   }

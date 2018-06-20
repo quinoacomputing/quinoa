@@ -215,9 +215,9 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  struct check_dt : pegtl::success {};
-  //! \brief Do error checking on setting the time step calculation policy
-  template<> struct action< check_dt > {
+  struct check_inciter : pegtl::success {};
+  //! \brief Do error checking on the inciter block
+  template<> struct action< check_inciter > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       using inciter::deck::neq;
@@ -236,6 +236,10 @@ namespace grm {
           std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
             std::numeric_limits< tk::real >::epsilon() )
         Message< Stack, WARNING, MsgKey::MULDT >( stack, in );
+      // if MatCG is configured, turn on reordering
+      if (stack.template get< tag::discr, tag::scheme >() ==
+           inciter::ctr::SchemeType::MatCG)
+        stack.template get< tag::discr, tag::reorder >() = true;
     }
   };
 
@@ -371,6 +375,9 @@ namespace deck {
            tk::grm::discrparam< use, kw::ctau, tag::ctau >,
            tk::grm::process< use< kw::fct >, 
                              tk::grm::Store< tag::discr, tag::fct >,
+                             pegtl::alpha >,
+           tk::grm::process< use< kw::reorder >,
+                             tk::grm::Store< tag::discr, tag::reorder >,
                              pegtl::alpha >,
            tk::grm::interval< use< kw::ttyi >, tag::tty >,
            discroption< use, kw::scheme, inciter::ctr::Scheme, tag::scheme >,
@@ -607,7 +614,7 @@ namespace deck {
                            tk::grm::diagnostics<
                              use,
                              tk::grm::store_inciter_option > >,
-                         tk::grm::check_dt >,
+                         tk::grm::check_inciter >,
             tk::grm::msg< tk::grm::MsgType::ERROR,
                           tk::grm::MsgKey::UNFINISHED > > > {};
 

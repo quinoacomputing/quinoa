@@ -26,8 +26,8 @@ FaceData::FaceData(
   const std::vector< std::size_t >& ginpoel,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& bnode,
-  const std::vector< std::size_t >& triinpoel )
-  : m_bface( bface ), m_bnode( bnode ), m_triinpoel( triinpoel )
+  std::vector< std::size_t >& triinpoel )
+  : m_bface( bface ), m_bnode( bnode )
 // *****************************************************************************
 //  Constructor
 //! \param[in] ginpoel Mesh element connectivity owned (global IDs) mesh chunk
@@ -54,13 +54,13 @@ FaceData::FaceData(
     auto esup = tk::genEsup(inpoel,4);
     m_esuel = tk::genEsuelTet( inpoel, esup );
 
-    // Mapping m_triinpoel from global renumbered ids to local renumbered ids
-    for (auto& i : m_triinpoel) i = tk::cref_find(lid,i);
+    // Map face connectivity from global to local ids
+    for (auto& i : triinpoel) i = tk::cref_find(lid,i);
 
     auto nbfac = tk::sumvalsize( m_bface );
 
     m_ntfac = tk::genNtfac( 4, nbfac, m_esuel );
-    m_inpofa = tk::genInpofaTet( m_ntfac, nbfac, inpoel, m_triinpoel, m_esuel );
+    m_inpofa = tk::genInpofaTet( m_ntfac, nbfac, inpoel, triinpoel, m_esuel );
     m_belem =  tk::genBelemTet( nbfac, m_inpofa, esup );
     m_esuf = tk::genEsuf( 4, m_ntfac, nbfac, m_belem, m_esuel );
 

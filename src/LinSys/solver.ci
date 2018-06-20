@@ -23,7 +23,7 @@ module solver {
                     bool feedback );
       entry void nchare( int n );
       initnode void registerReducers();
-      entry void bounds( int pe, std::size_t lower, std::size_t upper );
+      entry void pebounds( int p, std::size_t lower, std::size_t upper );
       entry void next();
       entry void addrow( int fromch,
                          int frompe,
@@ -71,10 +71,6 @@ module solver {
       // multple messages, thus they have to be triggered multiple times. See
       // https://lists.cs.illinois.edu/lists/arc/charm/2016-09/msg00002.html.
 
-      entry void wait4nchare() {
-        when nchare_complete(), bounds_complete() serial "nchare" {
-          contribute( m_cb.get< tag::disccreated >() ); } };
-
       entry void wait4lhsbc() {
         when lhs_complete(), bc_complete() serial "lhsbc" { lhsbc(); } };
       entry void wait4rhsbc() {
@@ -94,8 +90,6 @@ module solver {
         when rhsbc_complete(), lowlhs_complete(), lowrhs_complete()
           serial "low" { lowsolve(); } };
 
-      entry void nchare_complete();
-      entry void bounds_complete();
       entry void bc_complete();
       entry void rhsbc_complete();
       entry void hyprerow_complete();

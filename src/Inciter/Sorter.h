@@ -31,6 +31,29 @@ namespace inciter {
 //! Mesh sorter for global distributed mesh node reordering
 class Sorter : public CBase_Sorter {
 
+  #if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
+    #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+  #elif defined(STRICT_GNUC)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wunused-parameter"
+    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  #elif defined(__INTEL_COMPILER)
+    #pragma warning( push )
+    #pragma warning( disable: 1478 )
+  #endif
+  // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
+  // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+  Sorter_SDAG_CODE
+  #if defined(__clang__)
+    #pragma clang diagnostic pop
+  #elif defined(STRICT_GNUC)
+    #pragma GCC diagnostic pop
+  #elif defined(__INTEL_COMPILER)
+    #pragma warning( pop )
+  #endif
+
   public:
     //! Constructor
     explicit Sorter( const CProxy_Transporter& transporter,
@@ -50,15 +73,25 @@ class Sorter : public CBase_Sorter {
     //! Query mesh nodes to identify if they are shared
     void query( int fromch, const std::vector< std::size_t >& nodes );
 
-    //! Receive mesh node IDs found on sender chare
-    void mask( int fromch, const std::vector< std::size_t >& found );
+    //! Receive mesh node IDs (and setup chare communication map)
+    void comm( int fromch, const std::vector< std::size_t >& found );
 
-//     //! Reduction target estimating the average communication cost among all PEs
-//     void aveCost( tk::real c );
-// 
-//     //! \brief Reduction target estimating the standard deviation of the
-//     //!   communication cost among all PEs
-//     void stdCost( tk::real c );
+    //! \brief Receive number of uniquely assigned global mesh node IDs from
+    //!   chares with lower indices
+    void offset( int c, std::size_t u );
+
+    //! Request new global node IDs for old node IDs
+    void request( int c, const std::unordered_set< std::size_t >& nd );
+
+    //! Receive lower bound of node IDs our PE operates on after reordering
+    void lower( std::size_t low );
+
+    //! Receive new (reordered) global node IDs and coordinates
+    void neworder( const std::unordered_map< std::size_t,
+           std::tuple< std::size_t, tk::UnsMesh::Coord > >& nodes );
+
+    //! Create Discretization chare array elements on this PE
+    void createDiscWorkers();
 
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -66,12 +99,27 @@ class Sorter : public CBase_Sorter {
     void pup( PUP::er &p ) {
       CBase_Sorter::pup(p);
       p | m_host;
+      p | m_solver;
       p | m_cbs;
+      p | m_scheme;
       p | m_ginpoel;
       p | m_coordmap;
       p | m_bface;
       p | m_triinpoel;
+      p | m_bnode;
       p | m_nchare;
+      p | m_nodeset;
+      p | m_nquery;
+      p | m_ncom;
+      p | m_noffset;
+      p | m_msum;
+      p | m_reordcomm;
+      p | m_start;
+      p | m_newnodes;
+      p | m_newcoordmap;
+      p | m_reqnodes;
+      p | m_lower;
+      p | m_upper;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -102,59 +150,54 @@ class Sorter : public CBase_Sorter {
     int m_nchare;
     //! Unique global node IDs chares on our PE will contribute to
     std::set< std::size_t > m_nodeset;
-    //! ...
+    //! Counter for the number of chares queried chare boundary nodes
     int m_nquery;
-    //! ...
-    int m_nmask;
-    //! ...
-    std::unordered_map< int, std::unordered_set< std::size_t > > m_msum;
-//     //! Lower bound of node IDs our PE operates on after reordering
-//     std::size_t m_lower;
-//     //! Upper bound of node IDs our PE operates on after reordering
-//     std::size_t m_upper;
-    //! \brief Temporary communication map used to receive global mesh node IDs
-    //! \details This map, on each PE, associates the list of global mesh point
-    //!   indices to fellow PE IDs from which we will receive new node IDs (as
-    //!   in producing contiguous-row-id linear system contributions) during
-    //!   reordering.
-    std::map< int, std::unordered_set< std::size_t > > m_ncomm;
+    //! Counter for the number of chares from which boundary nodes received from
+    int m_ncom;
+    //! \brief Counter for the number of chares from which this chare has
+    //!   received node reordering offsets from
+    int m_noffset;
+    //! \brief Symmetric communication map associating global mesh node IDs to
+    //!    chare IDs this chare shares the node IDs with
+    std::map< int, std::unordered_set< std::size_t > > m_msum;
     //! \brief Communication map used for distributed mesh node reordering
-    //! \details This map, on each PE, associates the list of global mesh point
-    //!   indices to fellow PE IDs from which we will receive new node IDs (as
-    //!   in producing contiguous-row-id linear system contributions) during
-    //!   reordering. Only data that will be received from PEs with a lower
-    //!   index are stored.
-    std::unordered_map< int, std::unordered_set<std::size_t> > m_ncommunication;
+    //! \details This map associates the list of global mesh point
+    //!   indices to fellow chare IDs from which this chare receives new node IDs
+    //!   during reordering. Only data that will be received from chares with a
+    //!   lower index are stored, thus this is an asymmetric communication map.
+    std::unordered_map< int, std::unordered_set< std::size_t > > m_reordcomm;
+    //! \brief Starting global mesh node ID for node reordering on this chare
+    //!   during mesh node reordering
+    std::size_t m_start;
+    //! Map associating new node IDs (value) to old node IDs (key)
+    std::unordered_map< std::size_t, std::size_t > m_newnodes;
+    //! Coordinates associated to global (new) node IDs during reordering
+    tk::UnsMesh::CoordMap m_newcoordmap;
+    //! Queue of requested node IDs from chares
+    std::vector< std::pair< int, std::unordered_set<std::size_t> > > m_reqnodes;
+    //! Lower bound of node IDs this chare contributes to in a linear system
+    std::size_t m_lower;
+    //! Upper bound of node IDs this chare contributes to in a linear system
+    std::size_t m_upper;
 
-//     //! Receive lower bound of node IDs our PE operates on after reordering
-//     void lower( std::size_t low );
-// 
-//     //! \brief Compute the variance of the communication cost of merging the
-//     //!   linear system
-//     void stdCost( tk::real av );
-// 
-// 
-//     //! Reorder global mesh node IDs
-//     void reorder();
-// 
-//     //! Return processing element for chare id
-//     int pe( int id ) const;
-// 
-//     //! Associate new node IDs to old ones and return them to the requestor(s)
-//     void prepare();
-// 
-//     //! Compute final result of reordering
-//     void reordered();
-// 
-//     //! Compute lower and upper bounds of reordered node IDs our PE operates on
-//     void bounds();
+    //! Start preparing for mesh node reordering in parallel
+    void mask();
+
+    //! Reorder global mesh node IDs
+    void reorder();
+
+    //! Associate new node IDs to old ones and return them to the requestor(s)
+    void prepare();
+
+    //! Compute final result of reordering
+    void finish();
+
+    //! Compute lower and upper bounds of reordered node IDs our PE operates on
+    void bounds();
 
     //! \brief Create chare array elements on this PE and assign the global mesh
     //!   element IDs they will operate on
     void create();
-
-    //! Create Discretization chare array elements on this PE
-    void createDiscWorkers();
 };
 
 } // inciter::

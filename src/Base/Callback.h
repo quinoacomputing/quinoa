@@ -22,8 +22,6 @@ using PartitionerCallback =
                          , tag::refinserted,    CkCallback
                          , tag::refined,        CkCallback
                          , tag::flattened,      CkCallback
-                         , tag::avecost,        CkCallback
-                         , tag::stdcost,        CkCallback
                          >;
 
 using RefinerCallback =
@@ -32,7 +30,9 @@ using RefinerCallback =
                          >;
 
 using SolverCallback =
-  tk::tuple::tagged_tuple< tag::com,            CkCallback
+  tk::tuple::tagged_tuple< tag::nchare,         CkCallback
+                         , tag::bounds,         CkCallback
+                         , tag::com,            CkCallback
                          , tag::disccreated,    CkCallback
                          >;
 

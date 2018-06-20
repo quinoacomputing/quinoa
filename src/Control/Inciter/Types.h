@@ -59,6 +59,7 @@ using discretization = tk::tuple::tagged_tuple<
   tag::dt,     kw::dt::info::expect::type,    //!< Size of time step
   tag::cfl,    kw::cfl::info::expect::type,   //!< CFL coefficient
   tag::fct,    bool,                          //!< FCT on/off
+  tag::reorder,bool,                          //!< reordering on/off
   tag::ctau,   kw::ctau::info::expect::type,  //!< FCT mass diffisivity
   tag::scheme, inciter::ctr::SchemeType,      //!< Spatial discretization type
   tag::flux,   inciter::ctr::FluxType         //!< Flux function type

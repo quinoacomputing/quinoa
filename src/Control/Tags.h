@@ -34,6 +34,8 @@ struct error {};
 struct pdf {};
 struct ordpdf {};
 struct cenpdf {};
+struct nchare {};
+struct bounds {};
 struct filetype {};
 struct pdfpolicy {};
 struct pdfctr {};

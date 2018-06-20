@@ -120,6 +120,8 @@ Transporter::Transporter() :
   } else if (scheme == ctr::SchemeType::DG) {
     m_print.Item< ctr::Flux, tag::discr, tag::flux >();
   }
+  m_print.item( "PE-locality mesh reordering",
+                g_inputdeck.get< tag::discr, tag::reorder >() );
   m_print.item( "Number of time steps", nstep );
   m_print.item( "Start time", t0 );
   m_print.item( "Terminate time", term );
@@ -192,7 +194,9 @@ Transporter::createSolver()
 {
   // Create linear system solver callbacks
   tk::SolverCallback cbs{
-      CkCallback( CkReductionTarget(Transporter,comfinal), thisProxy )
+      CkCallback( CkReductionTarget(Transporter,nchare), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,bounds), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,comfinal), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,disccreated), thisProxy )
   };
 
@@ -242,8 +246,6 @@ Transporter::createPartitioner()
     , CkCallback( CkReductionTarget(Transporter,refinserted), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,aveCost), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,stdCost), thisProxy )
   };
 
   // Create refiner callbacks (order matters)
@@ -326,7 +328,15 @@ Transporter::load( uint64_t nelem )
 
   m_progMesh.start( "Preparing mesh", {{ CkNumPes(), CkNumPes(), m_nchare,
     m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
+}
 
+void
+Transporter::nchare()
+// *****************************************************************************
+// Reduction target: Reduction target: all Solver (PEs) have computed the number
+// of chares they will recieve contributions from during linear solution
+// *****************************************************************************
+{
   m_partitioner.partition( m_nchare );
 }
 
@@ -378,9 +388,18 @@ Transporter::refined( std::size_t nelem, std::size_t npoin )
 }
 
 void
+Transporter::bounds()
+// *****************************************************************************
+// Reduction target: all Solver (PEs) have computed their row bounds
+// *****************************************************************************
+{
+  m_sorter.createDiscWorkers();
+}
+
+void
 Transporter::discinserted()
 // *****************************************************************************
-// ...
+// Reduction target: all Discretization chares have been inserted
 // *****************************************************************************
 {
   m_scheme.doneDiscInserting< tag::bcast >();
@@ -389,7 +408,7 @@ Transporter::discinserted()
 void
 Transporter::disccreated()
 // *****************************************************************************
-// ...
+// Reduction target: all Discretization constructors have been called
 // *****************************************************************************
 {
   m_progMesh.end();
@@ -413,7 +432,8 @@ Transporter::disccreated()
 void
 Transporter::workinserted()
 // *****************************************************************************
-// ...
+// Reduction target: all worker (drevied discretization) chares have been
+// inserted
 // *****************************************************************************
 {
   m_scheme.doneInserting< tag::bcast >();
@@ -470,43 +490,6 @@ Transporter::flattened()
 // *****************************************************************************
 {
   //m_sorter.gather();
-}
-
-void
-Transporter::aveCost( tk::real c )
-// *****************************************************************************
-// Reduction target estimating the average communication among all PEs
-//! \param[in] c Communication cost summed across all PEs. The cost associated
-//!   to a PE is a real number between 0 and 1, defined as the number of mesh
-//!   points the PE does not own, i.e., needs to send to some other PE, divided
-//!   by the total number of points the PE contributes to. The lower the better.
-//! \details The average, computed here, gives an idea of the average
-//!   communication cost across all PEs, while the standard deviation, computed
-//!   by stdCost(), gives an idea on the expected load imbalance.
-// *****************************************************************************
-{
-  // Compute average and broadcast it back to all partitioners (PEs)
-  //m_avcost = c / CkNumPes();
-  //m_partitioner.stdCost( m_avcost );
-}
-
-void
-Transporter::stdCost( tk::real c )
-// *****************************************************************************
-// Reduction target estimating the standard deviation of the communication cost
-// acrosss all PEs
-//! \param[in] c Sum of the squares of the communication cost minus the average,
-//!   summed across all PEs. The cost associated to a PE is a real number
-//!   between 0 and 1, defined as the number of mesh points the PE does not own,
-//!   i.e., needs to send to some other PE, divided by the total number of
-//!   points the PE contributes to. The lower the better.
-//! \details The average, computed by avCost(), gives an idea of the average
-//!   communication cost across all PEs, while the standard deviation, computed
-//!   here, gives an idea on the expected load imbalance.
-// *****************************************************************************
-{
-  m_print.diag( "Communication cost: avg = " + std::to_string( m_avcost ) +
-                ", std = " + std::to_string( std::sqrt( c/CkNumPes() ) ) );
 }
 
 void

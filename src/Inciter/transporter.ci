@@ -16,6 +16,8 @@ module transporter {
     chare Transporter {
       entry Transporter();
       entry [reductiontarget] void load( uint64_t nelem );
+      entry [reductiontarget] void nchare();
+      entry [reductiontarget] void bounds();
       entry [reductiontarget] void distributed();
       entry [reductiontarget] void refinserted();
       entry [reductiontarget] void discinserted();
@@ -33,8 +35,6 @@ module transporter {
       entry [reductiontarget] void sumstat( tk::real d0, tk::real d1,
                                             tk::real d2, tk::real d3 );
       entry [reductiontarget] void pdfstat( CkReductionMsg* msg );
-      entry [reductiontarget] void aveCost( tk::real c );
-      entry [reductiontarget] void stdCost( tk::real c );
       entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
       entry [reductiontarget] void start();
       entry [reductiontarget] void next();
@@ -51,28 +51,6 @@ module transporter {
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
-
-      // High-level overview of the dependency and asynchronous call structure
-      // ---------------------------------------------------------------------
-      //
-      // Directed Acyclic Graph (DAG):
-      // -----------------------------
-      //
-      // See src/Inciter/Transporter.h.
-      //
-      // Interpretation of the above DAG
-      // -------------------------------
-      // Control flow is from left to right and top to bottom.
-      //
-      // Only when all of (1) reading the mesh from file, (2) (optional) initial
-      // mesh reinfment has been completed, and (3) the cell centroids have been
-      // computed (if a geometric partitioner has been configured), the
-      // mesh partitioning can be started.
-      //
-      // MinStat, MaxStat, SumStat, and PdfStat denote different global
-      // reductions used to compute mesh cell statistics. Only when all of these
-      // are and setting up the communication buffers have been completed will
-      // they be echoed to screen at once, denoted by Stat.
 
       entry void wait4stat() {
         when minstat_complete(), maxstat_complete(), sumstat_complete(),

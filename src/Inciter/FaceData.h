@@ -38,10 +38,10 @@ class FaceData {
 
     //! Constructor
     explicit
-    FaceData(const std::vector< std::size_t >& ginpoel,
-             const std::map< int, std::vector< std::size_t > >& bface,
-             const std::map< int, std::vector< std::size_t > >& bnode,
-             const std::vector< std::size_t >& triinpoel);
+    FaceData( const std::vector< std::size_t >& ginpoel,
+              const std::map< int, std::vector< std::size_t > >& bface,
+              const std::map< int, std::vector< std::size_t > >& bnode,
+              std::vector< std::size_t >& triinpoel );
 
     /** @name Accessors
       * */
@@ -67,7 +67,6 @@ class FaceData {
     void pup( PUP::er &p ) {
       p | m_bface;
       p | m_bnode;
-      p | m_triinpoel;
       p | m_esuel;
       p | m_ntfac;
       p | m_inpofa;
@@ -85,8 +84,6 @@ class FaceData {
     std::map< int, std::vector< std::size_t > > m_bface;
     //! Boundary nodes side-set information
     std::map< int, std::vector< std::size_t > > m_bnode;
-    //! Boundary face-node connectivity
-    std::vector< std::size_t > m_triinpoel;
     //! Elements surrounding elements
     std::vector< int > m_esuel;
     //! Rotal number of faces
