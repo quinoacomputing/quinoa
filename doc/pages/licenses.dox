@@ -139,6 +139,11 @@ files, only build it and use it as a separate (external) executable.
   - Optional
   - Web: https://github.com/bombela/backward-cpp
   - License: @subpage BackwardCpp_license
+  - Possible dependencies of BackWardCpp and their licenses:
+       + [GNU/binuitls](http://www.gnu.org/software/binutils) (GPL)
+       + [elfutils](https://sourceware.org/elfutils/) (GPLv2+/LGPLv3+)
+       + [libdwarf](https://sourceforge.net/projects/libdwarf/) (BSD/LGPLv2/GPLv2)
+       + [libelf](http://www.mr511.de/software/english.html) (LGPL)
 
 \subsection highwayhash_license 26. HighwayHash for generating hashes
   - Required
@@ -149,6 +154,11 @@ files, only build it and use it as a separate (external) executable.
   - Optional
   - Web: https://root.cern.ch
   - License: @subpage ROOT_license
+
+\subsection omega_h_license 28. Omega_h for reading large tetrahedron meshes in parallel
+  - Optional
+  - Web: https://github.com/ibaned/omega_h
+  - License: @subpage Omega_h_license
 
 <hr>
 
@@ -161,7 +171,10 @@ files, only build it and use it as a separate (external) executable.
   - Web: https://gcc.gnu.org
 
 \subsection intel_web 3. Intel C++ compiler
-  - Web https://software.intel.com/en-us/c-compilers
+  - Web: https://software.intel.com/en-us/c-compilers
+
+\subsection cray_web 4. Cray C++ compiler
+  - Web: https://pubs.cray.com/content/S-2179/8.7/cray-c-and-c++-reference-manual
 
 <hr>
 
