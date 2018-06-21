@@ -100,8 +100,6 @@ class Transporter : public CBase_Transporter {
     void pepartitioned() { m_progMesh.inc< PART >(); }
     //! Non-reduction target for receiving progress report on distributing mesh
     void pedistributed() { m_progMesh.inc< DIST >(); }
-    //! Non-reduction target for receiving progress report on mesh refinement
-    void chrefined() { m_progMesh.inc< REFINE >(); }
     //! Non-reduction target for receiving progress report on flattening mesh
     void chbnd() { m_progMesh.inc< BND >(); }
     //! Non-reduction target for receiving progress report on node ID query

@@ -326,7 +326,12 @@ Transporter::load( uint64_t nelem )
 
   m_print.endsubsection();
 
-  m_progMesh.start( "Preparing mesh", {{ CkNumPes(), CkNumPes(), m_nchare,
+  // Query number of initial mesh refinement steps
+  int nref = 0;
+  if (g_inputdeck.get< tag::amr, tag::initamr >())
+    nref = static_cast<int>( g_inputdeck.get< tag::amr, tag::init >().size() );
+
+  m_progMesh.start( "Preparing mesh", {{ CkNumPes(), CkNumPes(), nref,
     m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
 }
 
@@ -370,7 +375,12 @@ Transporter::matched( std::size_t extra )
 //std::cout << "max extra: " << extra << '\n';
   // If at least a single edge on a chare still needs correction, do correction,
   // otherwise, this initial mesh refinement step is complete
-  if (extra > 0) m_refiner.correctref(); else m_refiner.nextref();
+  if (extra > 0)
+    m_refiner.correctref();
+  else {
+    m_progMesh.inc< REFINE >();
+    m_refiner.nextref();
+  }
 }
 
 void

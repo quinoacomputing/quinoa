@@ -89,7 +89,6 @@ class Refiner : public CBase_Refiner {
       }
       p | m_initref;
       //p | m_refiner;
-      p | m_nedge;
       p | m_nref;
       p | m_extra;
       p | m_ch;
@@ -155,8 +154,6 @@ class Refiner : public CBase_Refiner {
     std::vector< ctr::AMRInitialType > m_initref;
     //! Mesh refiner (library) object
     AMR::mesh_adapter_t m_refiner;
-    //! Counter during distribution of chare-boundary edges
-    int m_nedge;
     //! Counter during distribution of newly added nodes to chare-boundary edges
     std::size_t m_nref;
     //! Number of chare-boundary newly added nodes that need correction

@@ -62,7 +62,6 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_el( tk::global2local( ginpoel ) ),     // fills m_inpoel, m_gid, m_lid
   m_initref( g_inputdeck.get< tag::amr, tag::init >() ),
   m_refiner( m_inpoel ),
-  m_nedge( 0 ),
   m_nref( 0 ),
   m_extra( 0 ),
   m_ch(),
@@ -115,7 +114,7 @@ Refiner::start()
           "Neither initial mesh refinement type list nor user-defined "
           "edge list given" );
 
-  m_extra = 1;  // assume at least a single step of correction is needed
+  m_extra = 0;  // assume at least a single step of correction is needed
   m_bndEdges.clear();
   m_ch.clear();
   m_edgenodeCh.clear();
@@ -134,9 +133,6 @@ Refiner::bndEdges()
 //!   mesh across chares boundaries.
 // *****************************************************************************
 {
-  // (Re-)compute local from global mesh data (m_inpoel, m_gid, m_lid)
-  m_el = tk::global2local( m_ginpoel );
-
   // Generate boundary edges of our mesh chunk
   tk::UnsMesh::EdgeSet bnded;
   auto esup = tk::genEsup( m_inpoel, 4 );         // elements surrounding points
@@ -224,6 +220,13 @@ Refiner::refine()
             m_lid.find( e[1] ) != end( m_lid ),
             "Boundary edge not found before refinement" );
   }
+
+//std::cout << thisIndex << ": " << m_inpoel.size() << '\n';
+
+tk::UnsMesh refmesh( m_inpoel, m_coord );
+tk::ExodusIIMeshWriter mw( "initref.b." + std::to_string(thisIndex),
+                           tk::ExoWriter::CREATE );
+mw.writeMesh( refmesh );
 
   // Refine mesh based on next initial refinement type
   if (!m_initref.empty()) {
@@ -426,8 +429,6 @@ Refiner::finish()
 //!   total number of elements across the whole problem.
 // *****************************************************************************
 {
-  if (g_inputdeck.get< tag::cmd, tag::feedback >()) m_host.chrefined();
-
   // create sorter Charm++ chare array elements using dynamic insertion
   m_sorter[ thisIndex ].insert( m_host, m_solver, m_cbs, m_scheme, m_ginpoel,
     m_coordmap, m_bface, m_triinpoel, m_bnode, m_nchare, CkMyPe() );
