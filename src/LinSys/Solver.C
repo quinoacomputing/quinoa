@@ -124,8 +124,8 @@ Solver::registerReducers()
 // *****************************************************************************
 {
   BCMapMerger = CkReduction::addReducer(
-                  tk::mergeHashMap< std::size_t,
-                    std::vector< std::pair< bool, tk::real > > > );
+                    tk::mergeHashMap< decltype(m_bc)::key_type,
+                                      decltype(m_bc)::mapped_type > );
 }
 
 void
