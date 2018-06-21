@@ -339,7 +339,9 @@ using LangevinParameters = tk::tuple::tagged_tuple<
   tag::depvar,          std::vector< char >,
   tag::c0,              std::vector< kw::sde_c0::info::expect::type >,
   tag::position,        std::vector< char >,
-  tag::id,              std::vector< std::size_t >,
+  tag::position_id,     std::vector< std::size_t >,
+  tag::dissipation,     std::vector< char >,
+  tag::dissipation_id,  std::vector< std::size_t >,
   tag::rng,             std::vector< tk::ctr::RNGType >,
   tag::initpolicy,      std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy,     std::vector< ctr::CoeffPolicyType >,
@@ -357,7 +359,23 @@ using LangevinParameters = tk::tuple::tagged_tuple<
 using PositionParameters = tk::tuple::tagged_tuple<
   tag::depvar,          std::vector< char >,
   tag::velocity,        std::vector< char >,
-  tag::id,              std::vector< std::size_t >,
+  tag::velocity_id,     std::vector< std::size_t >,
+  tag::rng,             std::vector< tk::ctr::RNGType >,
+  tag::initpolicy,      std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy,     std::vector< ctr::CoeffPolicyType >,
+  tag::spike,           std::vector< std::vector< std::vector <
+                          kw::spike::info::expect::type > > >,
+  tag::betapdf,         std::vector< std::vector< std::vector <
+                          kw::betapdf::info::expect::type > > >,
+  tag::gaussian,        std::vector< std::vector< std::vector <
+                          kw::gaussian::info::expect::type > > >
+>;
+
+//! Dissipation parameters storage
+using DissipationParameters = tk::tuple::tagged_tuple<
+  tag::depvar,          std::vector< char >,
+  tag::velocity,        std::vector< char >,
+  tag::velocity_id,     std::vector< std::size_t >,
   tag::rng,             std::vector< tk::ctr::RNGType >,
   tag::initpolicy,      std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy,     std::vector< ctr::CoeffPolicyType >,
@@ -388,8 +406,9 @@ using parameters = tk::tuple::tagged_tuple<
   tag::massfracbeta,    MassFractionBetaParameters,
   tag::mixnumfracbeta,  MixNumberFractionBetaParameters,
   tag::mixmassfracbeta, MixMassFractionBetaParameters,
-  tag::langevin,        LangevinParameters,
-  tag::position,        PositionParameters
+  tag::velocity,        LangevinParameters,
+  tag::position,        PositionParameters,
+  tag::dissipation,     DissipationParameters
 >;
 
 } // ctr::

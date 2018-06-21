@@ -35,7 +35,8 @@ enum class DiffEqType : uint8_t { NO_DIFFEQ=0,
                                   GENDIR,
                                   WRIGHTFISHER,
                                   POSITION,
-                                  LANGEVIN };
+                                  DISSIPATION,
+                                  VELOCITY };
 
 //! Pack/Unpack: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, DiffEqType& e ) { PUP::pup( p, e ); }
@@ -64,7 +65,8 @@ class DiffEq : public tk::Toggle< DiffEqType > {
                                        , kw::gendir
                                        , kw::wrightfisher
                                        , kw::position
-                                       , kw::langevin
+                                       , kw::dissipation
+                                       , kw::velocity
                                        >;
 
     //! Constructor: pass associations references to base, which will handle
@@ -86,7 +88,8 @@ class DiffEq : public tk::Toggle< DiffEqType > {
           { DiffEqType::GENDIR, kw::gendir::name() },
           { DiffEqType::WRIGHTFISHER, kw::wrightfisher::name() },
           { DiffEqType::POSITION, kw::position::name() },
-          { DiffEqType::LANGEVIN, kw::langevin::name() } },
+          { DiffEqType::DISSIPATION, kw::dissipation::name() },
+          { DiffEqType::VELOCITY, kw::velocity::name() } },
         //! keywords -> Enums
         { { "no_diffeq", DiffEqType::NO_DIFFEQ },
           { kw::ornstein_uhlenbeck::string(), DiffEqType::OU },
@@ -102,7 +105,8 @@ class DiffEq : public tk::Toggle< DiffEqType > {
           { kw::gendir::string(), DiffEqType::GENDIR },
           { kw::wrightfisher::string(), DiffEqType::WRIGHTFISHER },
           { kw::position::string(), DiffEqType::POSITION },
-          { kw::langevin::string(), DiffEqType::LANGEVIN } } ) {}
+          { kw::dissipation::string(), DiffEqType::DISSIPATION },
+          { kw::velocity::string(), DiffEqType::VELOCITY } } ) {}
 };
 
 } // ctr::

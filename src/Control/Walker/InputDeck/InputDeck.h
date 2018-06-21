@@ -173,10 +173,10 @@ class InputDeck :
                                      , kw::jointgaussian
                                      , kw::icbeta
                                      , kw::betapdf
-                                     , kw::langevin
                                      , kw::sde_c0
                                      , kw::icgaussian
                                      , kw::gaussian
+                                     , kw::dissipation
                                      >;
     using keywords7 = boost::mpl::set< kw::hydrotimescales
                                      , kw::hydroproductions

@@ -35,8 +35,9 @@
 #include "OrnsteinUhlenbeck.h"
 #include "SkewNormal.h"
 #include "WrightFisher.h"
-#include "Langevin.h"
+#include "Velocity.h"
 #include "Position.h"
+#include "Dissipation.h"
 
 #include "BetaCoeffPolicy.h"
 #include "DiagOrnsteinUhlenbeckCoeffPolicy.h"
@@ -50,8 +51,9 @@
 #include "OrnsteinUhlenbeckCoeffPolicy.h"
 #include "SkewNormalCoeffPolicy.h"
 #include "WrightFisherCoeffPolicy.h"
-#include "LangevinCoeffPolicy.h"
+#include "VelocityCoeffPolicy.h"
 #include "PositionCoeffPolicy.h"
+#include "DissipationCoeffPolicy.h"
 
 using walker::DiffEqStack;
 
@@ -228,13 +230,13 @@ DiffEqStack::DiffEqStack() : m_factory(), m_eqTypes()
   mpl::cartesian_product< GammaPolicies >(
     registerDiffEq< Gamma >( m_factory, ctr::DiffEqType::GAMMA, m_eqTypes ) );
 
-  // Langevin SDE
+  // Velocity SDE
   // Construct vector of vectors for all possible policies for SDE
-  using LangevinPolicies = mpl::vector< InitPolicies, LangevinCoeffPolicies >;
+  using VelocityPolicies = mpl::vector< InitPolicies, VelocityCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< LangevinPolicies >(
-    registerDiffEq< Langevin >
-                  ( m_factory, ctr::DiffEqType::LANGEVIN, m_eqTypes ) );
+  mpl::cartesian_product< VelocityPolicies >(
+    registerDiffEq< Velocity >
+                  ( m_factory, ctr::DiffEqType::VELOCITY, m_eqTypes ) );
 
   // Position equation
   // Construct vector of vectors for all possible policies for equation
@@ -243,6 +245,15 @@ DiffEqStack::DiffEqStack() : m_factory(), m_eqTypes()
   mpl::cartesian_product< PositionPolicies >(
     registerDiffEq< Position >
                   ( m_factory, ctr::DiffEqType::POSITION, m_eqTypes ) );
+
+  // Dissipation equation
+  // Construct vector of vectors for all possible policies for equation
+  using DissipationPolicies =
+    mpl::vector< InitPolicies, DissipationCoeffPolicies >;
+  // Register SDE for all combinations of policies
+  mpl::cartesian_product< DissipationPolicies >(
+    registerDiffEq< Dissipation >
+                  ( m_factory, ctr::DiffEqType::DISSIPATION, m_eqTypes ) );
 }
 
 std::vector< walker::DiffEq >
@@ -280,10 +291,12 @@ DiffEqStack::selected() const
       diffeqs.push_back( createDiffEq< tag::skewnormal >( d, cnt ) );
     else if (d == ctr::DiffEqType::GAMMA)
       diffeqs.push_back( createDiffEq< tag::gamma >( d, cnt ) );
-    else if (d == ctr::DiffEqType::LANGEVIN)
-      diffeqs.push_back( createDiffEq< tag::langevin >( d, cnt ) );
+    else if (d == ctr::DiffEqType::VELOCITY)
+      diffeqs.push_back( createDiffEq< tag::velocity >( d, cnt ) );
     else if (d == ctr::DiffEqType::POSITION)
       diffeqs.push_back( createDiffEq< tag::position >( d, cnt ) );
+    else if (d == ctr::DiffEqType::DISSIPATION)
+      diffeqs.push_back( createDiffEq< tag::dissipation >( d, cnt ) );
     else Throw( "Can't find selected DiffEq" );
   }
 
@@ -307,8 +320,8 @@ DiffEqStack::tables() const
 
     if (d == ctr::DiffEqType::MIXMASSFRACBETA)
       t = createTables< tag::mixmassfracbeta >( d, cnt );
-    else if (d == ctr::DiffEqType::LANGEVIN)
-      t = createTables< tag::langevin >( d, cnt );
+    else if (d == ctr::DiffEqType::VELOCITY)
+      t = createTables< tag::velocity >( d, cnt );
 
     nam.insert( end(nam), begin(t.first), end(t.first) );
     tab.insert( end(tab), begin(t.second), end(t.second) );
@@ -354,10 +367,12 @@ DiffEqStack::info() const
       nfo.emplace_back( infoSkewNormal( cnt ) );
     else if (d == ctr::DiffEqType::GAMMA)
       nfo.emplace_back( infoGamma( cnt ) );
-    else if (d == ctr::DiffEqType::LANGEVIN)
-      nfo.emplace_back( infoLangevin( cnt ) );
+    else if (d == ctr::DiffEqType::VELOCITY)
+      nfo.emplace_back( infoVelocity( cnt ) );
     else if (d == ctr::DiffEqType::POSITION)
       nfo.emplace_back( infoPosition( cnt ) );
+    else if (d == ctr::DiffEqType::DISSIPATION)
+      nfo.emplace_back( infoDissipation( cnt ) );
     else Throw( "Can't find selected DiffEq" );
   }
 
@@ -985,52 +1000,56 @@ DiffEqStack::infoGamma( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
 }
 
 std::vector< std::pair< std::string, std::string > >
-DiffEqStack::infoLangevin( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
+DiffEqStack::infoVelocity( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
 // *****************************************************************************
-//  Return information on the Langevin SDE
+//  Return information on the velocity SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
 //! \return vector of string pairs describing the SDE configuration
 // *****************************************************************************
 {
-  auto c = ++cnt[ ctr::DiffEqType::LANGEVIN ];       // count eqs
+  auto c = ++cnt[ ctr::DiffEqType::VELOCITY ];       // count eqs
   --c;  // used to index vectors starting with 0
 
   std::vector< std::pair< std::string, std::string > > nfo;
 
-  nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::LANGEVIN ), "" );
+  nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::VELOCITY ), "" );
   nfo.emplace_back( "kind", "stochastic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
-    g_inputdeck.get< tag::param, tag::langevin, tag::depvar >()[c] ) );
+    g_inputdeck.get< tag::param, tag::velocity, tag::depvar >()[c] ) );
   nfo.emplace_back( "initialization policy", ctr::InitPolicy().name(
-    g_inputdeck.get< tag::param, tag::langevin, tag::initpolicy >()[c] ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::langevin >()[c];
+    g_inputdeck.get< tag::param, tag::velocity, tag::initpolicy >()[c] ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::velocity >()[c];
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
-  auto cp = g_inputdeck.get< tag::param, tag::langevin, tag::coeffpolicy >()[c];
+  auto cp = g_inputdeck.get< tag::param, tag::velocity, tag::coeffpolicy >()[c];
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name( cp ) );
   if (cp == ctr::CoeffPolicyType::HYDROTIMESCALE) {
     nfo.emplace_back(
       "inverse hydro time scale",
       options( ctr::HydroTimeScales(),
                g_inputdeck.get< tag::param,
-                                tag::langevin,
+                                tag::velocity,
                                 tag::hydrotimescales >().at(c) ) );
     nfo.emplace_back(
       "production/dissipation",
       options( ctr::HydroProductions(),
                g_inputdeck.get< tag::param,
-                                tag::langevin,
+                                tag::velocity,
                                 tag::hydroproductions >().at(c) ) );
   }
   nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::langevin >(c) ) );
+    g_inputdeck.get< tag::component >().offset< tag::velocity >(c) ) );
   nfo.emplace_back( "coupled position depvar", std::string( 1,
-    g_inputdeck.get< tag::param, tag::langevin, tag::position >()[c] ) );
+    g_inputdeck.get< tag::param, tag::velocity, tag::position >()[c] ) );
   nfo.emplace_back( "coupled position depvar offset", std::to_string(
-    g_inputdeck.get< tag::param, tag::langevin, tag::id >()[c] ) );
+    g_inputdeck.get< tag::param, tag::velocity, tag::position_id >()[c] ) );
+  nfo.emplace_back( "coupled dissipation depvar", std::string( 1,
+    g_inputdeck.get< tag::param, tag::velocity, tag::dissipation >()[c] ) );
+  nfo.emplace_back( "coupled dissipation depv offs", std::to_string(
+    g_inputdeck.get< tag::param, tag::velocity, tag::dissipation_id >()[c] ) );
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
-    g_inputdeck.get< tag::param, tag::langevin, tag::rng >()[c] ) );
+    g_inputdeck.get< tag::param, tag::velocity, tag::rng >()[c] ) );
   nfo.emplace_back( "coeff C0", std::to_string(
-    g_inputdeck.get< tag::param, tag::langevin, tag::c0 >().at(c) ) );
+    g_inputdeck.get< tag::param, tag::velocity, tag::c0 >().at(c) ) );
 
   return nfo;
 }
@@ -1038,7 +1057,7 @@ DiffEqStack::infoLangevin( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
 std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoPosition( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
 // *****************************************************************************
-//  Return information on the Langevin SDE
+//  Return information on the position eq
 //! \param[inout] cnt std::map of counters for all differential equation types
 //! \return vector of string pairs describing the SDE configuration
 // *****************************************************************************
@@ -1063,10 +1082,44 @@ DiffEqStack::infoPosition( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
   nfo.emplace_back( "coupled velocity depvar", std::string( 1,
     g_inputdeck.get< tag::param, tag::position, tag::velocity >()[c] ) );
   nfo.emplace_back( "coupled velocity depvar offset", std::to_string(
-    g_inputdeck.get< tag::param, tag::position, tag::id >()[c] ) );
+    g_inputdeck.get< tag::param, tag::position, tag::velocity_id >()[c] ) );
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::position, tag::rng >()[c] ) );
 
   return nfo;
 }
 
+std::vector< std::pair< std::string, std::string > >
+DiffEqStack::infoDissipation( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
+// *****************************************************************************
+//  Return information on the dissipation eq
+//! \param[inout] cnt std::map of counters for all differential equation types
+//! \return vector of string pairs describing the SDE configuration
+// *****************************************************************************
+{
+  auto c = ++cnt[ ctr::DiffEqType::DISSIPATION ];       // count eqs
+  --c;  // used to index vectors starting with 0
+
+  std::vector< std::pair< std::string, std::string > > nfo;
+
+  nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::DISSIPATION ), "" );
+  nfo.emplace_back( "kind", "stochastic" );
+  nfo.emplace_back( "dependent variable", std::string( 1,
+    g_inputdeck.get< tag::param, tag::dissipation, tag::depvar >()[c] ) );
+  nfo.emplace_back( "initialization policy", ctr::InitPolicy().name(
+    g_inputdeck.get< tag::param, tag::dissipation, tag::initpolicy >()[c] ) );
+  nfo.emplace_back( "number of components", std::to_string(
+    g_inputdeck.get< tag::component >().get< tag::dissipation >()[c] ) );
+  nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
+    g_inputdeck.get< tag::param, tag::dissipation, tag::coeffpolicy >()[c] ) );
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::dissipation >(c) ) );
+  nfo.emplace_back( "coupled velocity depvar", std::string( 1,
+    g_inputdeck.get< tag::param, tag::dissipation, tag::velocity >()[c] ) );
+  nfo.emplace_back( "coupled velocity depvar offset", std::to_string(
+    g_inputdeck.get< tag::param, tag::dissipation, tag::velocity_id >()[c] ) );
+  nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
+    g_inputdeck.get< tag::param, tag::dissipation, tag::rng >()[c] ) );
+
+  return nfo;
+}

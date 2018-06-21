@@ -59,8 +59,9 @@ namespace deck {
                                   tag::diagou,          std::size_t,
                                   tag::skewnormal,      std::size_t,
                                   tag::gamma,           std::size_t,
-                                  tag::langevin,        std::size_t,
+                                  tag::velocity,        std::size_t,
                                   tag::position,        std::size_t,
+                                  tag::dissipation,     std::size_t,
                                   tag::beta,            std::size_t,
                                   tag::numfracbeta,     std::size_t,
                                   tag::massfracbeta,    std::size_t,
@@ -224,39 +225,58 @@ namespace grm {
     }
   };
 
+  //! Do error checking on eq coupled to another eq and compute depvar id
+  //! \tparam eq Equation tag of equation
+  //! \tparam coupledeq Equation tag of equation coupled to eq
+  //! \tparam id Equation offsets tag for coupled equation
+  //! \tparam depvar Error message key to use on missing coupled depvar
+  //! \param[in] in Parser input
+  //! \param[in,out] stack Grammar stack to wrok with
+  //! \param[in] missing Error message key to use on missing coupled equation 
+  template< typename eq, typename coupledeq, typename id, MsgKey depvar,
+            typename Input, typename Stack >
+  static void check_coupled( const Input& in, Stack& stack, MsgKey missing )
+  {
+    using walker::deck::neq;
+    // Error out if a <eq> model is configured without a <coupledeq> model
+    if (neq.get< coupledeq >() == 0) {
+      stack.template push_back< tag::error >
+        ( std::string("Parser error: ") + tk::cref_find( message, missing ) );
+    } else {
+      // get coupled position eq configuration
+      const auto& ceq = stack.template get< tag::param, eq, coupledeq >();
+      if (ceq.empty())
+        // Error out if coupled <coupledeq> model eq depvar is not selected
+        Message< Stack, ERROR, depvar >( stack, in );
+      else { // find offset (local eq system index among systems) for depvar
+        // get ncomponents object from this input deck
+        const auto& ncomps = stack.template get< tag::component >();
+        // compute offset map associating offsets to dependent variables
+        auto offsetmap = ncomps.offsetmap( stack );
+        // get and save offsets for all depvars for velocity eqs configured
+        for (auto p : ceq)
+          stack.template
+            get< tag::param, eq, id >().
+              push_back( tk::cref_find( offsetmap, p ) );
+      }
+    }
+  }
+
   //! Rule used to trigger action
-  struct check_langevin : pegtl::success {};
-  //! \brief Do error checking on the Langevin eq block
+  struct check_velocity : pegtl::success {};
+  //! \brief Do error checking on the velocity eq block
   template<>
-  struct action< check_langevin > {
+  struct action< check_velocity > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-      using walker::deck::neq;
-      if (neq.get< tag::langevin >() > 0) {
-        //! Error out if a velocity model is configured without a position model
-        if (neq.get< tag::position >() == 0) {
-          stack.template push_back< tag::error >
-            ( std::string("Parser error: ") +
-              tk::cref_find( message, MsgKey::POSITION_MISSING ) );
-        } else {
-          // get coupled position eq configuration
-          const auto& pos =
-            stack.template get< tag::param, tag::langevin, tag::position >();
-          if (pos.empty())
-            // Error out if coupled position model eq depvar is not selected
-            Message< Stack, ERROR, MsgKey::POSITION_DEPVAR >( stack, in );
-          else { // find offset (local eq system index among systems) for depvar
-            // get ncomponents object from this input deck
-            const auto& ncomps = stack.template get< tag::component >();
-            // compute offset map associating offsets to dependent variables
-            auto offsetmap = ncomps.offsetmap( stack );
-            // get and save offsets for all depvars for velocity eqs configured
-            for (auto p : pos)
-              stack.template get< tag::param, tag::langevin, tag::id >().
-                push_back( tk::cref_find( offsetmap, p ) );
-          }
-        }
-      }
+      // Ensure a coupled position model is configured
+      check_coupled< tag::velocity,
+          tag::position, tag::position_id, MsgKey::POSITION_DEPVAR >
+        ( in, stack, MsgKey::POSITION_MISSING );
+      // Ensure a coupled dissipation model is configured
+      check_coupled< tag::velocity,
+          tag::dissipation, tag::dissipation_id, MsgKey::DISSIPATION_DEPVAR >
+        ( in, stack, MsgKey::DISSIPATION_MISSING );
     }
   };
 
@@ -267,49 +287,41 @@ namespace grm {
   struct action< check_position > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-      using walker::deck::neq;
-      if (neq.get< tag::position >() > 0) {
-        //! Error out if a position model is configured without a velocity model
-        if (neq.get< tag::langevin >() == 0) {
-          stack.template push_back< tag::error >
-            ( std::string("Parser error: ") +
-              tk::cref_find( message, MsgKey::VELOCITY_MISSING ) );
-        } else {
-          // get coupled velocity eq configuration
-          const auto& vel =
-            stack.template get< tag::param, tag::position, tag::velocity >();
-          if (vel.empty())
-            // Error out if coupled velocity model eq depvar is not selected
-            Message< Stack, ERROR, MsgKey::VELOCITY_DEPVAR >( stack, in );
-          else { // find offset (local eq system index among systems) for depvar
-            // get ncomponents object from this input deck
-            const auto& ncomps = stack.template get< tag::component >();
-            // compute offset map associating offsets to dependent variables
-            auto offsetmap = ncomps.offsetmap( stack );
-            // get and save offsets for all depvars for position eqs configured
-            for (auto v : vel)
-              stack.template get< tag::param, tag::position, tag::id >().
-                push_back( tk::cref_find( offsetmap, v ) );
-          }
-        }
-      }
+      // Ensure a coupled velocity model is configured
+      check_coupled< tag::position,
+          tag::velocity, tag::velocity_id, MsgKey::VELOCITY_DEPVAR >
+        ( in, stack, MsgKey::VELOCITY_MISSING );
     }
   };
 
   //! Rule used to trigger action
-  struct langevin_defaults : pegtl::success {};
-  //! \brief Set defaults for the Langevin model
+  struct check_dissipation : pegtl::success {};
+  //! \brief Do error checking on the dissipation eq block
   template<>
-  struct action< langevin_defaults > {
+  struct action< check_dissipation > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      // Ensure a coupled velocity model is configured
+      check_coupled< tag::dissipation,
+          tag::velocity, tag::velocity_id, MsgKey::VELOCITY_DEPVAR >
+        ( in, stack, MsgKey::VELOCITY_MISSING );
+    }
+  };
+
+  //! Rule used to trigger action
+  struct velocity_defaults : pegtl::success {};
+  //! \brief Set defaults for the velocity model
+  template<>
+  struct action< velocity_defaults > {
     template< typename Input, typename Stack >
     static void apply( const Input&, Stack& stack ) {
       using walker::deck::neq;
       // Set number of components: always 3 velocity components
-      auto& ncomp = stack.template get< tag::component, tag::langevin >();
+      auto& ncomp = stack.template get< tag::component, tag::velocity >();
       ncomp.push_back( 3 );
       // Set C0 = 2.1 if not specified
-      auto& C0 = stack.template get< tag::param, tag::langevin, tag::c0 >();
-      if (C0.size() != neq.get< tag::langevin >()) C0.push_back( 2.1 );
+      auto& C0 = stack.template get< tag::param, tag::velocity, tag::c0 >();
+      if (C0.size() != neq.get< tag::velocity >()) C0.push_back( 2.1 );
     }
   };
 
@@ -335,6 +347,20 @@ namespace grm {
         // select RNG for position equation (as it has been parsed)
         rng.push_back( tk::ctr::RNGType::R123_PHILOX );
       }
+    }
+  };
+
+  //! Rule used to trigger action
+  struct dissipation_defaults : pegtl::success {};
+  //! \brief Set defaults for all Lagrangian particle dissipation models
+  template<>
+  struct action< dissipation_defaults > {
+    template< typename Input, typename Stack >
+    static void apply( const Input&, Stack& stack ) {
+      using walker::deck::neq;
+      // Set number of components: always 1 dissipation component
+      auto& ncomp = stack.template get< tag::component, tag::dissipation >();
+      ncomp.push_back( 1 );
     }
   };
 
@@ -991,55 +1017,61 @@ namespace deck {
                                                  tag::omega > >,
            check_errors< tag::wrightfisher > > {};
 
-  //! Langevin SDE
-  struct langevin :
+  //! Velocity SDE
+  struct velocity :
          pegtl::if_must<
-           scan_sde< use< kw::langevin >, tag::langevin >,
-           tk::grm::langevin_defaults,
+           scan_sde< use< kw::velocity >, tag::velocity >,
+           tk::grm::velocity_defaults,
            tk::grm::block< use< kw::end >,
                            tk::grm::depvar< use,
-                                            tag::langevin,
+                                            tag::velocity,
                                             tag::depvar >,
                            tk::grm::rng< use,
                                          use< kw::rng >,
                                          tk::ctr::RNG,
-                                         tag::langevin,
+                                         tag::velocity,
                                          tag::rng >,
                            tk::grm::policy< use,
                                             use< kw::init >,
                                             ctr::InitPolicy,
-                                            tag::langevin,
+                                            tag::velocity,
                                             tag::initpolicy >,
                            tk::grm::policy< use,
                                             use< kw::coeff >,
                                             ctr::CoeffPolicy,
-                                            tag::langevin,
+                                            tag::velocity,
                                             tag::coeffpolicy >,
-                           icdelta< tag::langevin >,
-                           icbeta< tag::langevin >,
-                           icgaussian< tag::langevin >,
+                           icdelta< tag::velocity >,
+                           icbeta< tag::velocity >,
+                           icgaussian< tag::velocity >,
                            sde_option_vector< ctr::HydroTimeScales,
                                               kw::hydrotimescales,
-                                              tag::langevin,
+                                              tag::velocity,
                                               tag::hydrotimescales,
                                               tk::grm::check_vector_size >,
                            sde_option_vector< ctr::HydroProductions,
                                               kw::hydroproductions,
-                                              tag::langevin,
+                                              tag::velocity,
                                               tag::hydroproductions,
                                               tk::grm::check_vector_size >,
                            tk::grm::process<
                              use< kw::sde_c0 >,
                              tk::grm::Store_back< tag::param,
-                                                  tag::langevin,
+                                                  tag::velocity,
                                                   tag::c0 > >,
                            tk::grm::process<
                              use< kw::position >,
                              tk::grm::Store_back< tag::param,
-                                                  tag::langevin,
+                                                  tag::velocity,
                                                   tag::position >,
+                             pegtl::alpha >,
+                           tk::grm::process<
+                             use< kw::dissipation >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::velocity,
+                                                  tag::dissipation >,
                              pegtl::alpha > >,
-           check_errors< tag::langevin > > {};
+           check_errors< tag::velocity > > {};
 
   //! position equation
   struct position :
@@ -1076,6 +1108,41 @@ namespace deck {
                              pegtl::alpha > >,
            check_errors< tag::position > > {};
 
+  //! dissipation equation
+  struct dissipation :
+         pegtl::if_must<
+           scan_sde< use< kw::dissipation >, tag::dissipation >,
+           tk::grm::dissipation_defaults,
+           tk::grm::block< use< kw::end >,
+                           tk::grm::depvar< use,
+                                            tag::dissipation,
+                                            tag::depvar >,
+                           tk::grm::rng< use,
+                                         use< kw::rng >,
+                                         tk::ctr::RNG,
+                                         tag::dissipation,
+                                         tag::rng >,
+                           tk::grm::policy< use,
+                                            use< kw::init >,
+                                            ctr::InitPolicy,
+                                            tag::dissipation,
+                                            tag::initpolicy >,
+                           tk::grm::policy< use,
+                                            use< kw::coeff >,
+                                            ctr::CoeffPolicy,
+                                            tag::dissipation,
+                                            tag::coeffpolicy >,
+                           icdelta< tag::dissipation >,
+                           icbeta< tag::dissipation >,
+                           icgaussian< tag::dissipation >,
+                           tk::grm::process<
+                             use< kw::velocity >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::dissipation,
+                                                  tag::velocity >,
+                             pegtl::alpha > >,
+           check_errors< tag::dissipation > > {};
+
   //! stochastic differential equations
   struct sde :
          pegtl::sor< dirichlet,
@@ -1091,7 +1158,8 @@ namespace deck {
                      mixnumfracbeta,
                      mixmassfracbeta,
                      position,
-                     langevin > {};
+                     dissipation,
+                     velocity > {};
 
 
   //! 'walker' block
@@ -1107,8 +1175,9 @@ namespace deck {
                  tk::grm::rngblock< use, rngs >,
                  tk::grm::statistics< use, tk::grm::store_walker_option >,
                  tk::grm::pdfs< use, tk::grm::store_walker_option > >,
-               tk::grm::check_langevin,
-               tk::grm::check_position >,
+               tk::grm::check_velocity,
+               tk::grm::check_position,
+               tk::grm::check_dissipation >,
            tk::grm::msg< tk::grm::MsgType::ERROR,
                          tk::grm::MsgKey::UNFINISHED > > > {};
 

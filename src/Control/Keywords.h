@@ -2644,31 +2644,6 @@ struct mixmassfracbeta_info {
 using mixmassfracbeta =
   keyword< mixmassfracbeta_info, TAOCPP_PEGTL_STRING("mixmassfracbeta") >;
 
-struct langevin_info {
-  static std::string name() { return "Langevin"; }
-  static std::string shortDescription() { return
-    "Introduce the Langevin equation input block"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce a langevin ... end block, used to
-    specify the configuration of a system of stochastic differential equations
-    (SDEs), governed by the Langevin model for the fluctuating velocity in
-    homogeneous variable-density turbulence. For more details on this Langevin
-    model, see https://doi.org/10.1080/14685248.2011.554419 and
-    src/DiffEq/Langevin.h. Keywords allowed in a langevin ... end block: )" +
-    std::string("\'")
-    + depvar::string()+ "\', \'"
-    + rng::string() + "\', \'"
-    + init::string() + "\', \'"
-    + coeff::string() + "\', \'"
-    + hydrotimescales::string() + "\', \'"
-    + hydroproductions::string() + "\', \'"
-    + sde_c0::string() + "\'. "
-    + R"(For an example langevin ... end block, see
-      doc/html/walker_example_langevin.html.)";
-  }
-};
-using langevin = keyword< langevin_info, TAOCPP_PEGTL_STRING("langevin") >;
-
 struct position_info {
   static std::string name() { return "position"; }
   static std::string shortDescription() { return
@@ -2685,11 +2660,64 @@ struct position_info {
     + rng::string() + "\', \'"
     + init::string() + "\', \'"
     + coeff::string() + "\', \'"
+    + "velocity" + "\', \'"
     + R"(For an example position ... end block, see
       doc/html/walker_example_position.html.)";
   }
 };
 using position = keyword< position_info, TAOCPP_PEGTL_STRING("position") >;
+
+struct dissipation_info {
+  static std::string name() { return "dissipation"; }
+  static std::string shortDescription() { return
+    "Introduce the (particle) dissipation equation input block"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a dissipation ... end block, used to
+    specify the configuration of a system of deterministic or stochastic
+    differential equations, governing a particle quantity that models the
+    dissipation rate of turbulent kinetic energy, used to coupled to particle
+    velocity model, e.g, the Langevin, model. Note that the random number
+    generator r123_philox is automatically put on the list as a selected RNG if
+    no RNG is selected. Keywords allowed in a dissipation ... end block: )" +
+    std::string("\'")
+    + depvar::string()+ "\', \'"
+    + rng::string() + "\', \'"
+    + init::string() + "\', \'"
+    + coeff::string() + "\', \'"
+    + "velocity" + "\', \'"
+    + R"(For an example dissipation ... end block, see
+      doc/html/walker_example_dissipation.html.)";
+  }
+};
+using dissipation =
+  keyword< dissipation_info, TAOCPP_PEGTL_STRING("dissipation") >;
+
+struct velocity_info {
+  static std::string name() { return "velocity"; }
+  static std::string shortDescription() { return
+    "Introduce the velocity equation input block"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a velocity ... end block, used to
+    specify the configuration of a system of stochastic differential equations
+    (SDEs), governed by the Langevin model for the fluctuating velocity in
+    homogeneous variable-density turbulence. For more details on this Langevin
+    model, see https://doi.org/10.1080/14685248.2011.554419 and
+    src/DiffEq/Velocity.h. Keywords allowed in a velocity ... end block: )" +
+    std::string("\'")
+    + depvar::string()+ "\', \'"
+    + rng::string() + "\', \'"
+    + init::string() + "\', \'"
+    + coeff::string() + "\', \'"
+    + hydrotimescales::string() + "\', \'"
+    + hydroproductions::string() + "\', \'"
+    + sde_c0::string() + "\'. "
+    + position::string() + "\', \'"
+    + dissipation::string() + "\', \'"
+    + R"(For an example velocity ... end block, see
+      doc/html/walker_example_velocity.html.)";
+  }
+};
+using velocity = keyword< velocity_info, TAOCPP_PEGTL_STRING("velocity") >;
 
 struct gamma_info {
   static std::string name() { return "Gamma"; }
@@ -3761,7 +3789,7 @@ struct material_info {
 };
 using material = keyword< material_info, TAOCPP_PEGTL_STRING("material") >;
 
-struct velocity_info {
+struct velocityic_info {
   static std::string name() { return "velocity"; }
   static std::string shortDescription() { return
     "Specify velocity initial conditions";
@@ -3774,7 +3802,7 @@ struct velocity_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using velocity = keyword< velocity_info, TAOCPP_PEGTL_STRING("velocity") >;
+using velocityic = keyword< velocityic_info, TAOCPP_PEGTL_STRING("velocity") >;
 
 struct compflow_info {
   static std::string name() { return "Compressible flow"; }

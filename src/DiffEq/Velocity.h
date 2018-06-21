@@ -1,8 +1,8 @@
 // *****************************************************************************
 /*!
-  \file      src/DiffEq/Langevin.h
+  \file      src/DiffEq/Velocity.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
-  \brief     A Langevin model for velocity in variable-density turbulence
+  \brief     A model for velocity in variable-density turbulence
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs) to model the fluctuating velocity components
     in homogeneous variable-density turbulence. This model is an extension of
@@ -11,15 +11,15 @@
     lines of https://doi.org/10.1080/14685248.2011.554419.
 */
 // *****************************************************************************
-#ifndef Langevin_h
-#define Langevin_h
+#ifndef Velocity_h
+#define Velocity_h
 
 #include <array>
 #include <vector>
 #include <cmath>
 
 #include "InitPolicy.h"
-#include "LangevinCoeffPolicy.h"
+#include "VelocityCoeffPolicy.h"
 #include "RNG.h"
 #include "Particles.h"
 #include "SystemComponents.h"
@@ -29,13 +29,13 @@ namespace walker {
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 
-//! \brief Langevin SDE used polymorphically with DiffEq
+//! \brief Velocity SDE used polymorphically with DiffEq
 //! \details The template arguments specify policies and are used to configure
 //!   the behavior of the class. The policies are:
 //!   - Init - initialization policy, see DiffEq/InitPolicy.h
-//!   - Coefficients - coefficients policy, see DiffEq/LangevinCoeffPolicy.h
+//!   - Coefficients - coefficients policy, see DiffEq/VelocityCoeffPolicy.h
 template< class Init, class Coefficients >
-class Langevin {
+class Velocity {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
@@ -47,35 +47,35 @@ class Langevin {
     //!   index specifies which beta SDE system to instantiate. The index
     //!   corresponds to the order in which the beta ... end blocks are given
     //!   the control file.
-    explicit Langevin( ncomp_t c ) :
+    explicit Velocity( ncomp_t c ) :
       m_c( c ),
       m_depvar(
-        g_inputdeck.get< tag::param, tag::langevin, tag::depvar >().at(c) ),
+        g_inputdeck.get< tag::param, tag::velocity, tag::depvar >().at(c) ),
       m_ncomp(
-        g_inputdeck.get< tag::component >().get< tag::langevin >().at(c) ),
+        g_inputdeck.get< tag::component >().get< tag::velocity >().at(c) ),
       m_offset(
-        g_inputdeck.get< tag::component >().offset< tag::langevin >(c) ),
+        g_inputdeck.get< tag::component >().offset< tag::velocity >(c) ),
       m_position_offset(
-        g_inputdeck.get< tag::param, tag::langevin, tag::id >().at(c) ),
+        g_inputdeck.get< tag::param, tag::velocity, tag::position_id >().at(c)),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::langevin, tag::rng >().at(c) ) ) ),
+        g_inputdeck.get< tag::param, tag::velocity, tag::rng >().at(c) ) ) ),
       m_c0(),
       m_g(),
       m_U( {{ tk::ctr::mean( m_depvar, 0 ),
               tk::ctr::mean( m_depvar, 1 ),
               tk::ctr::mean( m_depvar, 2 ) }} ),
-      coeff( g_inputdeck.get< tag::param, tag::langevin, tag::c0 >().at(c),
+      coeff( g_inputdeck.get< tag::param, tag::velocity, tag::c0 >().at(c),
              m_c0 )
     {
-      Assert( m_ncomp == 3, "Langevin eq number of components must be 3" );
+      Assert( m_ncomp == 3, "Velocity eq number of components must be 3" );
       // Populate inverse hydrodynamics time scales extracted from DNS
       if ( Coefficients::type() == ctr::CoeffPolicyType::HYDROTIMESCALE ) {
         // Configure inverse hydrodyanmics time scale from DNS
         const auto& hts = g_inputdeck.get< tag::param,
-                                           tag::langevin,
+                                           tag::velocity,
                                            tag::hydrotimescales >().at(c);
         Assert( hts.size() == 1,
-                "Langevin eq Hydrotimescales vector size must be 1" );
+                "Velocity eq Hydrotimescales vector size must be 1" );
         m_hts = ctr::HydroTimeScales().table( hts[0] );
       }
     }
@@ -86,7 +86,7 @@ class Langevin {
     void initialize( int stream, tk::Particles& particles ) {
       //! Set initial conditions using initialization policy
       Init::template
-        init< tag::langevin >
+        init< tag::velocity >
             ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
     }
 
@@ -148,7 +148,7 @@ class Langevin {
 
     //! Selected inverse hydrodynamics time scale (if used)
     //! \details This is only used if the coefficients policy is
-    //!   LangevinCoeffHydroTimeScale. See constructor.
+    //!   VelocityCoeffHydroTimeScale. See constructor.
     tk::Table m_hts;
 
     //! Coefficients
@@ -164,4 +164,4 @@ class Langevin {
 
 } // walker::
 
-#endif // Langevin_h
+#endif // Velocity_h

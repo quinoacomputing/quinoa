@@ -1,13 +1,13 @@
 // *****************************************************************************
 /*!
-  \file      src/DiffEq/LangevinCoeffPolicy.h
+  \file      src/DiffEq/VelocityCoeffPolicy.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
-  \brief     Langevin equation coefficients policies
-  \details   This file defines coefficients policy classes for the Langevin
+  \brief     Velocity equation coefficients policies
+  \details   This file defines coefficients policy classes for the velocity
      equation for the fluctuating velocity in variable-density turbulence,
-     defined in DiffEq/Langevin.h.
+     defined in DiffEq/Velocity.h.
 
-    General requirements on Langevin equation coefficients policy classes:
+    General requirements on velocity equation coefficients policy classes:
 
     - Must define a _constructor_, which is used to initialize the SDE
       coefficient, C0. Required signature:
@@ -17,7 +17,7 @@
           kw::sde_c0::info::expect::type& C0 )
       \endcode
       where
-      - C0_ denote a real value used to initialize the Langevin system.
+      - C0_ denote a real value used to initialize the velocity system.
       - The reference C0 is to be initialized based on C0_.
 
     - Must define the static function _type()_, returning the enum value of the
@@ -31,8 +31,8 @@
       class, collecting all possible options for coefficients policies.
 */
 // *****************************************************************************
-#ifndef LangevinCoeffPolicy_h
-#define LangevinCoeffPolicy_h
+#ifndef VelocityCoeffPolicy_h
+#define VelocityCoeffPolicy_h
 
 #include <array>
 
@@ -44,7 +44,7 @@
 
 namespace walker {
 
-//! Langevin equation coefficients policy with prescribed mean shear
+//! Velocity equation coefficients policy with prescribed mean shear
 //! \details C0 is user-defined and we prescibe a hard-coded mean shear in the x
 //!   direction
 //! \see kw::hydrotimescale_info
@@ -103,7 +103,7 @@ class ConstShear {
     }
 };
 
-//! Langevin equation coefficients policy with DNS hydrodynamics time scale
+//! Velocity equation coefficients policy with DNS hydrodynamics time scale
 //! \details C0 is user-defined and we pull in a hydrodynamic timescale from an
 //!   external function (from DNS).
 //! \see kw::hydrotimescale_info
@@ -167,11 +167,11 @@ class HydroTimeScale {
     { return tk::sample( t, ts ); }
 };
 
-//! List of all Langevin's coefficients policies
-using LangevinCoeffPolicies = boost::mpl::vector< ConstShear
+//! List of all Velocity's coefficients policies
+using VelocityCoeffPolicies = boost::mpl::vector< ConstShear
                                                 , HydroTimeScale
                                                 >;
 
 } // walker::
 
-#endif // LangevinCoeffPolicy_h
+#endif // VelocityCoeffPolicy_h
