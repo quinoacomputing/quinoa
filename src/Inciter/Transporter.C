@@ -213,12 +213,16 @@ Transporter::createPartitioner()
   // Read side sets and boundary-face connectivity on physical boundaries
   std::map< int, std::vector< std::size_t > > bface;
   std::vector< std::size_t > triinpoel;
-  auto nbfac = er.readSidesetFaces( bface );
+  std::map< int, std::vector< int > > faceid;
+  auto nbfac = er.readSidesetFaces( bface, faceid );
   er.readFaces( nbfac, triinpoel );
 
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (scheme == ctr::SchemeType::DG)
-    Assert( nbfac > 0, "DG must have boundary faces (and side sets) defined" );
+  if (scheme == ctr::SchemeType::DG) {
+    ErrChk( nbfac > 0, "Input mesh must have element side sets defined " );
+    ErrChk( er.nelem(tk::ExoElemType::TRI) > 0, "Input mesh must have boundary "
+            "face connectivity (triangle element block) defined" );
+  }
 
   // Verify boundarty condition (BC) side sets used exist in mesh file
   verifyBCsExist( g_cgpde, er );

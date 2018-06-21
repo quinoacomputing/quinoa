@@ -14,6 +14,7 @@
 #include <array>
 #include <memory>
 #include <tuple>
+#include <map>
 #include <unordered_set>
 #include <unordered_map>
 
@@ -234,6 +235,27 @@ class UnsMesh {
     std::vector< std::size_t >& tetinpoel() noexcept { return m_tetinpoel; }
     ///@}
 
+    /** @name Side set accessors */
+    ///@{
+    const std::map< int, std::vector< std::size_t > >& sidetet() const noexcept
+    { return m_sidetet; }
+    std::map< int, std::vector< std::size_t > >& sidetet() noexcept
+    { return m_sidetet; }
+    ///@}
+
+    /** @name Face-element map accessors */
+    ///@{
+    const std::vector< int >& elem_map() const noexcept { return m_elem_map; }
+    std::vector< int >& elem_map() noexcept { return m_elem_map; }
+    ///@}
+
+    /** @name Side set face id accessors */
+    ///@{
+    const std::map< int, std::vector< int > >& faceid() const noexcept
+    { return m_faceid; }
+    std::map< int, std::vector< int > >& faceid() noexcept { return m_faceid; }
+    ///@}
+
   private:
     //! Number of nodes
     //! \details Stores the size (number of nodes) of the mesh graph.
@@ -252,6 +274,21 @@ class UnsMesh {
     std::vector< real > m_x;
     std::vector< real > m_y;
     std::vector< real > m_z;
+
+    //! Side sets storing tet ids adjacent to side sets
+    //! \details This stores lists of tet IDs adjacent to faces associated to
+    //1   side set IDs.
+    //! \note This is what ExodusII calls side set elem list.
+    std::map< int, std::vector< std::size_t > > m_sidetet;
+
+    //! Map used to associate faces to elements
+    //! \note This is what ExodusII calls id_map.
+    std::vector< int > m_elem_map;
+
+    //! \brief Sides of faces used to define which face of a tetrahedron is
+    //!   aligned with a triangle element (1...4) associated to side set id.
+    //! \note This is what ExodusII calls side set side list.
+    std::map< int, std::vector< int > > m_faceid;
 
     //! Compute and return number of unique nodes in element connectivity
     //! \param[in] inpoel Element connectivity
