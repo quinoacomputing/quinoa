@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/IO/MeshReader.h
+  \file      src/Inciter/MeshReader.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Mesh reader class for inciter connecting to various readers
   \details   Mesh reader ckass for inciter connecting to various lower level
