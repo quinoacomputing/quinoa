@@ -91,6 +91,8 @@ using DirichletParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gamma,       std::vector< std::vector< std::vector <
+                      kw::gammapdf::info::expect::type > > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
@@ -113,6 +115,8 @@ using GenDirichletParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gamma,       std::vector< std::vector< std::vector <
+                      kw::gammapdf::info::expect::type > > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
@@ -129,6 +133,8 @@ using WrightFisherParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gamma,       std::vector< std::vector< std::vector <
+                      kw::gammapdf::info::expect::type > > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
@@ -149,6 +155,8 @@ using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gamma,       std::vector< std::vector< std::vector <
+                      kw::gammapdf::info::expect::type > > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
@@ -169,6 +177,8 @@ using DiagOrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gamma,       std::vector< std::vector< std::vector <
+                      kw::gammapdf::info::expect::type > > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
@@ -189,6 +199,8 @@ using SkewNormalParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gamma,       std::vector< std::vector< std::vector <
+                      kw::gammapdf::info::expect::type > > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
@@ -209,6 +221,8 @@ using GammaParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gamma,       std::vector< std::vector< std::vector <
+                      kw::gammapdf::info::expect::type > > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
@@ -229,6 +243,8 @@ using BetaParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gamma,       std::vector< std::vector< std::vector <
+                      kw::gammapdf::info::expect::type > > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
@@ -253,6 +269,8 @@ using NumberFractionBetaParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gamma,       std::vector< std::vector< std::vector <
+                      kw::gammapdf::info::expect::type > > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
@@ -277,6 +295,8 @@ using MassFractionBetaParameters = tk::tuple::tagged_tuple<
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gamma,       std::vector< std::vector< std::vector <
+                      kw::gammapdf::info::expect::type > > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
@@ -291,16 +311,18 @@ using MixNumberFractionBetaParameters = tk::tuple::tagged_tuple<
                       kw::sde_bprime::info::expect::type > >,
   tag::S,           std::vector< std::vector<
                       kw::sde_S::info::expect::type > >,
-  tag::kappaprime, std::vector< std::vector<
+  tag::kappaprime,  std::vector< std::vector<
                       kw::sde_kappaprime::info::expect::type > >,
-  tag::rho2,       std::vector< std::vector<
+  tag::rho2,        std::vector< std::vector<
                       kw::sde_rho2::info::expect::type > >,
-  tag::rcomma,     std::vector< std::vector<
+  tag::rcomma,      std::vector< std::vector<
                       kw::sde_rcomma::info::expect::type > >,
-  tag::spike,      std::vector< std::vector< std::vector <
+  tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
+  tag::gamma,       std::vector< std::vector< std::vector <
+                      kw::gammapdf::info::expect::type > > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
@@ -312,21 +334,23 @@ using MixNumberFractionBetaParameters = tk::tuple::tagged_tuple<
 using MixMassFractionBetaParameters = tk::tuple::tagged_tuple<
   tag::depvar,          std::vector< char >,
   tag::bprime,          std::vector< std::vector<
-                          kw::sde_bprime::info::expect::type > >,
+                         kw::sde_bprime::info::expect::type > >,
   tag::S,               std::vector< std::vector<
-                          kw::sde_S::info::expect::type > >,
-  tag::kappaprime,     std::vector< std::vector<
+                         kw::sde_S::info::expect::type > >,
+  tag::kappaprime,      std::vector< std::vector<
                           kw::sde_kappaprime::info::expect::type > >,
-  tag::rho2,           std::vector< std::vector<
+  tag::rho2,            std::vector< std::vector<
                           kw::sde_rho2::info::expect::type > >,
-  tag::r,              std::vector< std::vector<
+  tag::r,               std::vector< std::vector<
                           kw::sde_r::info::expect::type > >,
-  tag::spike,          std::vector< std::vector< std::vector <
+  tag::spike,           std::vector< std::vector< std::vector <
                           kw::spike::info::expect::type > > >,
   tag::betapdf,         std::vector< std::vector< std::vector <
                           kw::betapdf::info::expect::type > > >,
-  tag::gaussian,    std::vector< std::vector< std::vector <
-                      kw::gaussian::info::expect::type > > >,
+  tag::gamma,           std::vector< std::vector< std::vector <
+                          kw::gammapdf::info::expect::type > > >,
+  tag::gaussian,        std::vector< std::vector< std::vector <
+                          kw::gaussian::info::expect::type > > >,
   tag::hydrotimescales, std::vector< std::vector< ctr::HydroTimeScalesType > >,
   tag::hydroproductions,std::vector< std::vector< ctr::HydroProductionsType > >,
   tag::rng,             std::vector< tk::ctr::RNGType >,
@@ -349,6 +373,8 @@ using LangevinParameters = tk::tuple::tagged_tuple<
                           kw::spike::info::expect::type > > >,
   tag::betapdf,         std::vector< std::vector< std::vector <
                           kw::betapdf::info::expect::type > > >,
+  tag::gamma,           std::vector< std::vector< std::vector <
+                          kw::gammapdf::info::expect::type > > >,
   tag::gaussian,        std::vector< std::vector< std::vector <
                           kw::gaussian::info::expect::type > > >,
   tag::hydrotimescales, std::vector< std::vector< ctr::HydroTimeScalesType > >,
@@ -367,6 +393,8 @@ using PositionParameters = tk::tuple::tagged_tuple<
                           kw::spike::info::expect::type > > >,
   tag::betapdf,         std::vector< std::vector< std::vector <
                           kw::betapdf::info::expect::type > > >,
+  tag::gamma,           std::vector< std::vector< std::vector <
+                          kw::gammapdf::info::expect::type > > >,
   tag::gaussian,        std::vector< std::vector< std::vector <
                           kw::gaussian::info::expect::type > > >
 >;
@@ -383,6 +411,8 @@ using DissipationParameters = tk::tuple::tagged_tuple<
                           kw::spike::info::expect::type > > >,
   tag::betapdf,         std::vector< std::vector< std::vector <
                           kw::betapdf::info::expect::type > > >,
+  tag::gamma,           std::vector< std::vector< std::vector <
+                          kw::gammapdf::info::expect::type > > >,
   tag::gaussian,        std::vector< std::vector< std::vector <
                           kw::gaussian::info::expect::type > > >
 >;

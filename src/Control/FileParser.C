@@ -135,7 +135,7 @@ FileParser::diagnostics( const tk::Print& print,
         // underline error and warning differently
         for (auto i=sloc; i<cnum; ++i) l.underline[i] = underchar;
       }
-    } else lines.emplace( 0, ErroneousLine(e) );
+    } else if (!e.empty()) lines.emplace( 0, ErroneousLine(e) );
   }
 
   // Output errors and warnings underlined to quiet stream and message

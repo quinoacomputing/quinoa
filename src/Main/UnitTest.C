@@ -82,6 +82,7 @@ const int MAX_TESTS_IN_GROUP = 80;
   #include "tests/Control/Options/TestMKLUniformMethod.h"
   #include "tests/Control/Options/TestMKLGaussianMethod.h"
   #include "tests/Control/Options/TestMKLBetaMethod.h"
+  #include "tests/Control/Options/TestMKLGammaMethod.h"
 #endif
 #include "tests/Control/Options/TestRNG.h"
 

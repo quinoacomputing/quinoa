@@ -72,7 +72,7 @@ namespace grm {
     PREMATURE,          //!< Premature end of line
     UNSUPPORTED,        //!< Option not supported
     NOOPTION,           //!< Option does not exist
-    NOINIT,             //!< No initialization policy selected
+    NOINIT,             //!< No (or too many) initialization policy selected
     NOPROBLEM,          //!< No test problem type selected
     NOCOEFF,            //!< No coefficients policy selected
     NOTSELECTED,        //!< Option not selected upstream
@@ -87,9 +87,11 @@ namespace grm {
     HEIGHTSPIKES,       //!< Height-sum of spikes does not add up to unity
     NODELTA,            //!< No icdelta...end block when initpolicy = jointdelta
     NOBETA,             //!< No icbeta...end block when initpolicy = jointbeta
+    NOGAMMA,            //!< No icgamma...end block when initpolicy = jointgamma
     WRONGBETAPDF,       //!< Wrong number of parameters configuring a beta pdf
+    WRONGGAMMAPDF,      //!< Wrong number of parameters configuring a gamma pdf
     WRONGGAUSSIAN,      //!< Wrong number of parameters configuring a PDF
-    NEGATIVEVAR,        //!< Negative variance given configuring a Gaussian
+    NEGATIVEPARAM,      //!< Negative variance given configuring a Gaussian
     NONCOMP,            //!< No number of components selected
     NORNG,              //!< No RNG selected
     NODT,               //!< No time-step-size policy selected
@@ -184,8 +186,9 @@ namespace grm {
       "constant or 'cfl' to set an adaptive time step size calculation policy. "
       "Setting 'cfl' and 'dt' are mutually exclusive. If both 'cfl' and 'dt' "
       "are set, 'dt' wins." },
-    { MsgKey::NOINIT, "No initialization policy has been specified within the "
-      "block preceding this position. This is mandatory for the preceding "
+    { MsgKey::NOINIT, "No (or too many) initialization policy (or policies) "
+      "has been specified within the block preceding this position. An "
+      "initialization policy (and only one) is mandatory for the preceding "
       "block. Use the keyword 'init' to specify an initialization policy." },
     { MsgKey::NOPROBLEM, "No test problem has been specified within the "
       "block preceding this position. This is mandatory for the preceding "
@@ -205,6 +208,12 @@ namespace grm {
       "initpolicy is selected. Pick an initpolicy different than jointbeta "
       "(using keyword 'init') or specify at least a single betapdf...end block "
       "(within a icbeta...end block)." },
+    { MsgKey::NOGAMMA, "No gamma...end block with at least a single "
+      "gammapdf...end block has been specified within the block preceding this "
+      "position. This is mandatory for the preceding block if jointgamma "
+      "initpolicy is selected. Pick an initpolicy different than jointgamma "
+      "(using keyword 'init') or specify at least a single gammapdf...end block "
+      "(within a icgamma...end block)." },
     { MsgKey::ODDSPIKES, "Incomplete spike...end block has been specified "
       "within the  block preceding this position. A spike...end block "
       "must contain an even number of real numbers, where every odd one is the "
@@ -213,11 +222,14 @@ namespace grm {
     { MsgKey::WRONGBETAPDF, "Wrong number of beta distribution parameters. A "
       "beta distribution must be configured by exactly four real numbers in a "
       "betapdf...end block." },
+    { MsgKey::WRONGGAMMAPDF, "Wrong number of gamma distribution parameters. A "
+      "gamma distribution must be configured by exactly two real numbers in a "
+      "gammapdf...end block." },
     { MsgKey::WRONGGAUSSIAN, "Wrong number of Gaussian distribution "
       "parameters. A Gaussian distribution must be configured by exactly 2 "
       "real numbers in a gaussian...end block." },
-    { MsgKey::NEGATIVEVAR, "Negative variance specified configuring a "
-      " probabililty distribution." },
+    { MsgKey::NEGATIVEPARAM, "Negative distribution parameter (e.g., variance, "
+      "shape, scale) specified configuring a probabililty distribution." },
     { MsgKey::NOTERMS, "Statistic requires at least one variable." },
     { MsgKey::NOSAMPLES, "PDF requires at least one sample space variable." },
     { MsgKey::INVALIDSAMPLESPACE, "PDF sample space specification incorrect. A "
@@ -1029,6 +1041,26 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  template< class eq, class param > struct check_gammapdfs : pegtl::success {};
+  //! \brief Check if the gammapdf parameter vector specifications are correct
+  //! \details gammapdf vectors are used to configure univariate gamma
+  //!   distributions.
+  template< class eq, class param >
+  struct action< check_gammapdfs< eq, param > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      const auto& gamma =
+        stack.template get< tag::param, eq, param >().back().back();
+      // Error out if the number parameters is not two
+      if (gamma.size() != 2)
+        Message< Stack, ERROR, MsgKey::WRONGGAMMAPDF >( stack, in );
+      // Error out if the specified shape or scale parameter negative
+      if (gamma[0] < 0.0 || gamma[1] < 0.0)
+        Message< Stack, ERROR, MsgKey::NEGATIVEPARAM >( stack, in );
+    }
+  };
+
+  //! Rule used to trigger action
   template< class eq, class param > struct check_gaussians : pegtl::success {};
   //! Check if the Gaussian PDF parameter vector specifications are correct
   //! \details Gaussian vectors are used to configure univariate Gaussian
@@ -1044,7 +1076,7 @@ namespace grm {
         Message< Stack, ERROR, MsgKey::WRONGGAUSSIAN >( stack, in );
       // Error out if the specified variance is negative
       if (gaussian.back() < 0.0)
-        Message< Stack, ERROR, MsgKey::NEGATIVEVAR >( stack, in );
+        Message< Stack, ERROR, MsgKey::NEGATIVEPARAM >( stack, in );
     }
   };
 

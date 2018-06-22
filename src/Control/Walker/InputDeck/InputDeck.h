@@ -177,6 +177,7 @@ class InputDeck :
                                      , kw::icgaussian
                                      , kw::gaussian
                                      , kw::dissipation
+                                     , kw::jointgamma
                                      >;
     using keywords7 = boost::mpl::set< kw::hydrotimescales
                                      , kw::hydroproductions
@@ -199,6 +200,13 @@ class InputDeck :
                                      , kw::prod_A075S
                                      , kw::prod_A075L
                                      >;
+    using keywords8 = boost::mpl::set< kw::gnorm
+                                     , kw::gnorm_accurate
+                                     , kw::gamma_method
+                                     , kw::icgamma
+                                     , kw::gammapdf
+                                     >;
+
 
     //! \brief Constructor: set all defaults
     //! \param[in] cl Previously parsed and store command line
@@ -231,6 +239,7 @@ class InputDeck :
       boost::mpl::for_each< keywords5 >( ctrinfoFill );
       boost::mpl::for_each< keywords6 >( ctrinfoFill );
       boost::mpl::for_each< keywords7 >( ctrinfoFill );
+      boost::mpl::for_each< keywords8 >( ctrinfoFill );
     }
 
     //! Extract moment names of requested statistics

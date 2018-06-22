@@ -248,8 +248,7 @@ struct mkl_mcg31_info {
   static std::string longDescription() { return
     R"(This keyword is used to select 'VSL_BRNG_MCG31', a 31-bit multiplicative
     congruential random number generator, provided by Intel's Math Kernel
-    Library (MKL). For more info on MKL see https://software.intel.com/en-us/
-    articles/intel-math-kernel-library-documentation.)";
+    Library (MKL). For more info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
 using mkl_mcg31 = keyword< mkl_mcg31_info, TAOCPP_PEGTL_STRING("mkl_mcg31") >;
@@ -261,8 +260,7 @@ struct mkl_r250_info {
   static std::string longDescription() { return
     R"(This keyword is used to select 'VSL_BRNG_R250', a generalized feedback
     shift register random number generator, provided by Intel's Math Kernel
-    Library (MKL). For more info on MKL see https://software.intel.com/en-us/
-    articles/intel-math-kernel-library-documentation.)";
+    Library (MKL). For more info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
 using mkl_r250 = keyword< mkl_r250_info, TAOCPP_PEGTL_STRING("mkl_r250") >;
@@ -275,8 +273,7 @@ struct mkl_mrg32k3a_info {
     R"(This keyword is used to select 'VSL_BRNG_MRG32K3A', a combined multiple
     recursive random number generator with two components of order 3,
     provided by Intel's Math Kernel Library (MKL). For more info on MKL see
-    https://software.intel.com/en-us/articles/intel-math-kernel-library-
-    documentation.)";
+    https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
 using mkl_mrg32k3a =
@@ -289,8 +286,7 @@ struct mkl_mcg59_info {
   static std::string longDescription() { return
     R"(This keyword is used to select 'VSL_BRNG_MCG59', a 59-bit multiplicative
     congruential random number generator, provided by Intel's Math Kernel
-    Library (MKL). For more info on MKL see https://software.intel.com/en-us/
-    articles/intel-math-kernel-library-documentation.)";
+    Library (MKL). For more info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
 
@@ -303,8 +299,7 @@ struct mkl_wh_info {
   static std::string longDescription() { return
     R"(This keyword is used to select 'VSL_BRNG_WH', a set of 273 Wichmann-Hill
     combined multiplicative congruential random number generators, provided
-    by Intel's Math Kernel Library (MKL). For more info on MKL see https://
-    software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
+    by Intel's Math Kernel Library (MKL). For more info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
 using mkl_wh = keyword< mkl_wh_info, TAOCPP_PEGTL_STRING("mkl_wh") >;
@@ -316,8 +311,7 @@ struct mkl_mt19937_info {
   static std::string longDescription() { return
     R"(This keyword is used to select 'VSL_BRNG_MT19937', a Mersenne Twister
     pseudorandom number generator, provided by Intel's Math Kernel Library
-    (MKL). For more info on MKL see https://software.intel.com/en-us/articles/
-    intel-math-kernel-library-documentation.)";
+    (MKL). For more info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
 using mkl_mt19937 =
@@ -330,8 +324,7 @@ struct mkl_mt2203_info {
   static std::string longDescription() { return
     R"(This keyword is used to select 'VSL_BRNG_MT2203', a set of 6024 Mersenne
     Twister pseudorandom number generators, available in Intel's Math Kernel
-    Library (MKL). For more info on MKL see https://software.intel.com/en-us/
-    articles/intel-math-kernel-library-documentation.)";
+    Library (MKL). For more info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
 using mkl_mt2203 = keyword< mkl_mt2203_info, TAOCPP_PEGTL_STRING("mkl_mt2203") >;
@@ -343,8 +336,7 @@ struct mkl_sfmt19937_info {
   static std::string longDescription() { return
     R"(This keyword is used to select 'VSL_BRNG_SFMT19937', a SIMD-oriented Fast
     Mersenne Twister pseudorandom number generator, provided by Intel's Math
-    Kernel Library (MKL). For more info on MKL see https://software.intel.com/
-    en-us/articles/intel-math-kernel-library-documentation.)";
+    Kernel Library (MKL). For more info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
 using mkl_sfmt19937 =
@@ -358,8 +350,7 @@ struct mkl_sobol_info {
     R"(This keyword is used to select 'VSL_BRNG_SOBOL', a 32-bit Gray code-based
     random number generator, producing low-discrepancy sequences for
     dimensions 1 .le. s .le. 40 with available user-defined dimensions, provided
-    by Intel's Math Kernel Library (MKL). For more info on MKL see https://
-    software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
+    by Intel's Math Kernel Library (MKL). For more info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
 using mkl_sobol = keyword< mkl_sobol_info, TAOCPP_PEGTL_STRING("mkl_sobol") >;
@@ -373,8 +364,7 @@ struct mkl_niederr_info {
     code-based random number generator, producing low-discrepancy sequences
     for dimensions 1 .le. s .le. 318 with available user-defined dimensions,
     provided by Intel's Math Kernel Library (MKL). For more info on MKL see
-    https://software.intel.com/en-us/articles/intel-math-kernel-library-
-    documentation.)";
+    https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
 using mkl_niederr = keyword< mkl_niederr_info, TAOCPP_PEGTL_STRING("mkl_niederr") >;
@@ -386,8 +376,7 @@ struct mkl_iabstract_info {
   static std::string longDescription() { return
     R"(This keyword is used to select 'VSL_BRNG_IABSTRACT', an abstract random
     number generator for integer arrays, provided by Intel's Math Kernel
-    Library (MKL). For more info on MKL see https://software.intel.com/en-us/
-    articles/intel-math-kernel-library-documentation.)";
+    Library (MKL). For more info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
 using mkl_iabstract =
@@ -400,8 +389,7 @@ struct mkl_dabstract_info {
   static std::string longDescription() { return
     R"(This keyword is used to select 'VSL_BRNG_DABSTRACT', an abstract random
     number generator for double-precision floating-point arrays, provided by
-    Intel's Math Kernel Library (MKL). For more info on MKL see https://
-    software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
+    Intel's Math Kernel Library (MKL). For more info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
 using mkl_dabstract =
@@ -414,8 +402,7 @@ struct mkl_sabstract_info {
   static std::string longDescription() { return
     R"(This keyword is used to select 'VSL_BRNG_SABSTRACT', an abstract random
     number generator for single-precision floating-point arrays, provided by
-    Intel's Math Kernel Library (MKL). For more info on MKL see https://
-    software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
+    Intel's Math Kernel Library (MKL). For more info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
 using mkl_sabstract =
@@ -428,8 +415,7 @@ struct mkl_nondeterm_info {
   static std::string longDescription() { return
     R"(This keyword is used to select 'VSL_BRNG_NONDETERM', a non-deterministic
     random number generator, provided by Intel's Math Kernel Library (MKL).
-    For more info on MKL see https://software.intel.com/en-us/articles/intel-
-    math-kernel-library-documentation.)";
+    For more info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
 using mkl_nondeterm =
@@ -443,8 +429,7 @@ struct standard_info {
     R"(This keyword is used to select the standard method used to generate
     uniform random numbers using the Intel Math Kernel Library (MKL) random
     number generators. Valid options are 'standard' and 'accurate'. For more
-    info on MKL see https://software.intel.com/en-us/articles/intel-math-
-    kernel-library-documentation.)";
+    info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
 using standard = keyword< standard_info, TAOCPP_PEGTL_STRING("standard") >;
@@ -457,8 +442,7 @@ struct accurate_info {
     R"(This keyword is used to select the accurate method used to generate
     uniform random numbers using the Intel Math Kernel Library (MKL) random
     number generators. Valid options are 'standard' and 'accurate'. For more
-    info on MKL see https://software.intel.com/en-us/articles/intel-math-
-    kernel-library-documentation.)";
+    info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
 using accurate = keyword< accurate_info, TAOCPP_PEGTL_STRING("accurate") >;
@@ -471,8 +455,7 @@ struct uniform_method_info {
     R"(This keyword is used to specify the method used to generate uniform
     random numbers using the Intel Math Kernel Library (MKL) random number
     generators. Valid options are 'standard' and 'accurate'. For more info on
-    MKL see https://software.intel.com/en-us/articles/intel-math-kernel-
-    library-documentation.)";
+    MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
   struct expect {
     static std::string description() { return "string"; }
@@ -493,8 +476,7 @@ struct boxmuller_info {
     R"(This keyword is used to select the Box-Muller method used to generate
     Gaussian random numbers using the Intel Math Kernel Library (MKL) random
     random number generators. Valid options are 'boxmuller', 'boxmuller2',
-    and 'icdf'. For more info on MKL see https://software.intel.com/en-us/
-    articles/intel-math-kernel-library-documentation.)";
+    and 'icdf'. For more info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
 using boxmuller = keyword< boxmuller_info, TAOCPP_PEGTL_STRING("boxmuller") >;
@@ -506,8 +488,7 @@ struct boxmuller2_info {
   static std::string longDescription() { return
     R"(This keyword is used to specify the Box-Muller 2 method used to generate
     Gaussian random numbers using the Intel Math Kernel Library (MKL) random
-    number generators. For more info on MKL see https://software.intel.com/
-    en-us/articles/intel-math-kernel-library-documentation.)";
+    number generators. For more info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
 using boxmuller2 = keyword< boxmuller2_info, TAOCPP_PEGTL_STRING("boxmuller2") >;
@@ -520,8 +501,7 @@ struct icdf_info {
     R"(This keyword is used to specify the inverse cumulative distribution
     function (ICDF) method used to generate Gaussian random numbers using the
     Intel Math Kernel Library (MKL) random number generators. For more info
-    on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-
-    library-documentation.)";
+    on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
 using icdf = keyword< icdf_info, TAOCPP_PEGTL_STRING("icdf") >;
@@ -534,8 +514,7 @@ struct gaussian_method_info {
     R"(This keyword is used to specify the method used to generate Gaussian
     random numbers using the Intel Math Kernel Library (MKL) random number
     generators. Valid options are 'boxmuller', 'boxmuller2', and 'icdf'. For
-    more info on MKL see https://software.intel.com/en-us/articles/intel-math-
-    kernel-library-documentation.)";
+    more info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
   struct expect {
     static std::string description() { return "string"; }
@@ -557,8 +536,7 @@ struct cja_info {
     R"(This keyword is used to select the Cheng-Johnk-Atkinson method used to
     generate beta random numbers using the Intel Math Kernel Library (MKL)
     random number generators. For more info on MKL see
-    https://software.intel.com/en-us/
-    articles/intel-math-kernel-library-documentation.)";
+    https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
 using cja = keyword< cja_info, TAOCPP_PEGTL_STRING("cja") >;
@@ -571,11 +549,11 @@ struct cja_accurate_info {
     R"(This keyword is used to select the accurate version of the
     Cheng-Johnk-Atkinson method used to generate beta random numbers using the
     Intel Math Kernel Library (MKL) random number generators. For more info on
-    MKL see https://software.intel.com/en-us/
-    articles/intel-math-kernel-library-documentation.)";
+    MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
-using cja_accurate = keyword< cja_accurate_info, TAOCPP_PEGTL_STRING("cja_accurate") >;
+using cja_accurate =
+  keyword< cja_accurate_info, TAOCPP_PEGTL_STRING("cja_accurate") >;
 
 struct beta_method_info {
   static std::string name() { return "Beta method"; }
@@ -585,8 +563,7 @@ struct beta_method_info {
     R"(This keyword is used to specify the method used to generate beta
     random numbers using the Intel Math Kernel Library (MKL) random number
     generators. Valid options are 'cja' and 'cja_accurate'. For
-    more info on MKL see https://software.intel.com/en-us/articles/intel-math-
-    kernel-library-documentation.)";
+    more info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
   struct expect {
     static std::string description() { return "string"; }
@@ -598,6 +575,54 @@ struct beta_method_info {
 };
 using beta_method =
   keyword< beta_method_info, TAOCPP_PEGTL_STRING("beta_method") >;
+
+struct gnorm_info {
+  static std::string name() { return "GNORM"; }
+  static std::string shortDescription() { return
+   "Select the GNORM (see MKL doc) algorithm for sampling a gamma"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the GNORM method used to
+    generate gamma random numbers using the Intel Math Kernel Library (MKL)
+    random number generators. For more info on MKL see
+    https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
+  }
+};
+using gnorm = keyword< gnorm_info, TAOCPP_PEGTL_STRING("gnorm") >;
+
+struct gnorm_accurate_info {
+  static std::string name() { return "GNORM accurate"; }
+  static std::string shortDescription() { return
+   "Select the accurate GNORM (see MKL doc) algorithm for sampling a gamma"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the accurate version of the
+    GNORM method used to generate gamma random numbers using the
+    Intel Math Kernel Library (MKL) random number generators. For more info on
+    MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
+  }
+};
+using gnorm_accurate =
+  keyword< gnorm_accurate_info, TAOCPP_PEGTL_STRING("gnorm_accurate") >;
+
+struct gamma_method_info {
+  static std::string name() { return "Gamma method"; }
+  static std::string shortDescription() { return
+    "Select an Intel MKL gamma RNG method"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the method used to generate gamma
+    random numbers using the Intel Math Kernel Library (MKL) random number
+    generators. Valid options are 'gnorm' and 'gnorm_accurate'. For
+    more info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
+  }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + gnorm::string() + "\' | \'"
+                  + gnorm_accurate::string() + '\'';
+    }
+  };
+};
+using gamma_method =
+  keyword< gamma_method_info, TAOCPP_PEGTL_STRING("gamma_method") >;
 
 struct rngsse_gm19_info {
   static std::string name() { return "RNGSSE GM19"; }
@@ -611,7 +636,8 @@ struct rngsse_gm19_info {
     https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
-using rngsse_gm19 = keyword< rngsse_gm19_info, TAOCPP_PEGTL_STRING("rngsse_gm19") >;
+using rngsse_gm19 =
+  keyword< rngsse_gm19_info, TAOCPP_PEGTL_STRING("rngsse_gm19") >;
 
 struct rngsse_gm29_info {
   static std::string name() { return "RNGSSE GM29"; }
@@ -625,7 +651,8 @@ struct rngsse_gm29_info {
     https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
-using rngsse_gm29 = keyword< rngsse_gm29_info, TAOCPP_PEGTL_STRING("rngsse_gm29") >;
+using rngsse_gm29 =
+  keyword< rngsse_gm29_info, TAOCPP_PEGTL_STRING("rngsse_gm29") >;
 
 struct rngsse_gm31_info {
   static std::string name() { return "RNGSSE GM31"; }
@@ -639,7 +666,8 @@ struct rngsse_gm31_info {
     https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
-using rngsse_gm31 = keyword< rngsse_gm31_info, TAOCPP_PEGTL_STRING("rngsse_gm31") >;
+using rngsse_gm31 =
+  keyword< rngsse_gm31_info, TAOCPP_PEGTL_STRING("rngsse_gm31") >;
 
 struct rngsse_gm55_info {
   static std::string name() { return "RNGSSE GM55"; }
@@ -653,7 +681,8 @@ struct rngsse_gm55_info {
     https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
-using rngsse_gm55 = keyword< rngsse_gm55_info, TAOCPP_PEGTL_STRING("rngsse_gm55") >;
+using rngsse_gm55 =
+  keyword< rngsse_gm55_info, TAOCPP_PEGTL_STRING("rngsse_gm55") >;
 
 struct rngsse_gm61_info {
   static std::string name() { return "RNGSSE GM61"; }
@@ -667,7 +696,8 @@ struct rngsse_gm61_info {
     https://doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
-using rngsse_gm61 = keyword< rngsse_gm61_info, TAOCPP_PEGTL_STRING("rngsse_gm61") >;
+using rngsse_gm61 =
+  keyword< rngsse_gm61_info, TAOCPP_PEGTL_STRING("rngsse_gm61") >;
 
 struct rngsse_gq581_info {
   static std::string name() { return "RNGSSE GQ58.1"; }
@@ -1245,10 +1275,10 @@ struct jointgaussian_info {
     DiffEq/InitPolicy.h for valid options.) The joint Gaussian initialization
     policy can be used to prescribe a joint Gaussian (joint Gaussian) on the
     sample space with given variances. Example: "init jointgaussian" - select
-    (joint) Gaussian init-policy, "Gaussian 0.1 0.3 0.8 0.7 end" - prescribe two
+    (joint) Gaussian init-policy, "gaussian 0.1 0.3 0.8 0.7 end" - prescribe two
     Gaussians with mean 0.1 and variance 0.3, and with mean 0.8 and 0.7,
-    respectively. Note that the means can be any realy number while the
-    variances mustbe positive. No correlations between the Gaussians (as the
+    respectively. Note that the means can be any real number while the
+    variances must be positive. No correlations between the Gaussians (as the
     initial conditions) are supported.)"; }
 };
 using jointgaussian =
@@ -1274,6 +1304,32 @@ struct jointbeta_info {
 };
 using jointbeta = keyword< jointbeta_info, TAOCPP_PEGTL_STRING("jointbeta") >;
 
+struct jointgamma_info {
+  using code = Code< A >;
+  static std::string name() { return "gamma"; }
+  static std::string shortDescription() { return
+    "Select the joint gamma initialization policy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the joint gamma initialization policy.
+    The initialization policy is used to specify how the initial conditions are
+    set at t = 0 before time-integration. Example: "init zero", which selects
+    zero initialization policy, which puts zeros in memory. Note that this
+    option may behave differently depending on the particular equation or
+    physical model. For an example, see tk::InitPolicies in
+    DiffEq/InitPolicy.h for valid options.) The joint gamma initialization
+    policy can be used to prescribe a joint gamma distribution on the
+    sample space with given shape and scale parameters. Example: "init
+    jointgamma" - select the (joint) gamma init-policy, "gammapdf 0.1 0.3
+    end" - prescribe a gamma distribution with shape 0.1 and scale 0.3
+    parameters, respectively. Note that both shape and scale
+    must be positive. Multiple independent gamma PDFs can be specified and the
+    they will be used for the different scalar components configured for the
+    equation. No correlations between the gamma distributions (as the
+    initial conditions) are supported.)"; }
+};
+using jointgamma =
+  keyword< jointgamma_info, TAOCPP_PEGTL_STRING("jointgamma") >;
+
 struct init_info {
   using code = Code< i >;
   static std::string name() { return "initialization policy"; }
@@ -1293,7 +1349,8 @@ struct init_info {
       return '\'' + raw::string() + "\' | \'"
                   + zero::string() + "\' | \'"
                   + jointdelta::string() + "\' | \'"
-                  + jointbeta::string() + '\'';
+                  + jointbeta::string() + "\' | \'"
+                  + jointgamma::string() + '\'';
     }
   };
 };
@@ -2027,6 +2084,39 @@ struct icgaussian_info {
     keyword jointgaussian and gaussian.)"; }
 };
 using icgaussian = keyword< icgaussian_info, TAOCPP_PEGTL_STRING("icgaussian") >;
+
+struct gammapdf_info {
+  static std::string name() { return "gammapdf"; }
+  static std::string shortDescription() { return
+    R"(Configure a gamma distribution)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the configuration of gamma distributions
+    for the gamma initialization policy. The configuration is given by two
+    real numbers inside a gammapdf...end block. Example: "gammapdf 0.2 0.3
+    end", which specifies a univariate gamma distribution with shape and scale
+    parameters 0.2 and 0.3, respectively. See also the help on keyword
+    icgamma.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "2 reals"; }
+  };
+};
+using gammapdf = keyword< gammapdf_info, TAOCPP_PEGTL_STRING("gammapdf") >;
+
+struct icgamma_info {
+  static std::string name() { return "icgamma"; }
+  static std::string shortDescription() { return R"(Introduce an icgamma...end
+    block used to configure gamma distributions)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an icgamma...end block in which gamma
+    distributions are configured for the gamma initialization policy. Example:
+    "init jointgamma" - select gamma init-policy,"icgamma gammapdf 0.2 0.3
+    end end" - prescribe a univariate gamma distribution with shape and scale
+    parameters 0.2 and 0.3, respectively. See also the help on keyword
+    jointgamma and gammapdf.)"; }
+};
+using icgamma = keyword< icgamma_info, TAOCPP_PEGTL_STRING("icgamma") >;
+
 
 struct ic_info {
   static std::string name() { return "ic"; }

@@ -21,6 +21,7 @@ struct uniform_method {};
 struct gaussian_method {};
 struct gaussian {};
 struct beta_method {};
+struct gamma_method {};
 struct rng {};
 struct rngmkl {};
 struct rngsse {};

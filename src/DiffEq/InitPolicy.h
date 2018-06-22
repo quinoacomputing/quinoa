@@ -218,12 +218,50 @@ struct InitGaussian {
   { return ctr::InitPolicyType::JOINTGAUSSIAN; }
 };
 
+//! Gamma initialization policy: generate samples from a joint gamma PDF
+struct InitGamma {
+
+  //! Initialize particle properties (zero)
+  template< class eq >
+  static void init( const ctr::InputDeck& deck,
+                    const tk::RNG& rng,
+                    int stream,
+                    tk::Particles& particles,
+                    tk::ctr::ncomp_type e,
+                    tk::ctr::ncomp_type ncomp,
+                    tk::ctr::ncomp_type offset )
+  {
+    using ncomp_t = kw::ncomp::info::expect::type;
+
+    const auto& gamma =
+      deck.template get< tag::param, eq, tag::gamma >().at(e);
+
+    // use only the first ncomp gamma if there are more than the equation is
+    // configured for
+    const ncomp_t size = std::min( ncomp, gamma.size() );
+
+    for (ncomp_t c=0; c<size; ++c) {
+      // get vector of gamma pdf parameters for component c
+      const auto& gc = gamma[c];
+      // generate gamma random numbers for all particles using parameters in gc
+      for (ncomp_t s=0; s<gc.size(); s+=2)
+        for (ncomp_t p=0; p<particles.nunk(); ++p)
+          rng.gamma( stream, 1, gc[s], gc[s+1], &particles( p, c, offset ) );
+    }
+
+  }
+
+  static ctr::InitPolicyType type() noexcept
+  { return ctr::InitPolicyType::JOINTGAMMA; }
+};
+
 //! List of all initialization policies
 using InitPolicies = boost::mpl::vector< InitRaw
                                        , InitZero
                                        , InitDelta
                                        , InitBeta
                                        , InitGaussian
+                                       , InitGamma
                                        >;
 
 } // walker::

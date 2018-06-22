@@ -89,6 +89,9 @@ class InputDeck : public tk::Control<
                                      >;
     using keywords3 = boost::mpl::set< kw::r123_threefry
                                      , kw::r123_philox
+                                     , kw::gamma_method
+                                     , kw::gnorm
+                                     , kw::gnorm_accurate
                                      >;
 
 
