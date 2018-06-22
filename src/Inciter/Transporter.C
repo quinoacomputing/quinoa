@@ -141,10 +141,11 @@ Transporter::Transporter() :
                     g_inputdeck.get< tag::amr, tag::id >() );
     m_print.Item< ctr::AMRError, tag::amr, tag::error >();
     auto initamr = g_inputdeck.get< tag::amr, tag::initamr >();
-    m_print.item( "Initial AMR", initamr );
+    m_print.item( "Initial refinement", initamr );
     if (initamr) {
-      m_print.ItemVec< ctr::AMRInitial >
-                     ( g_inputdeck.get< tag::amr, tag::init >() );
+      const auto& initref = g_inputdeck.get< tag::amr, tag::init >();
+      m_print.item( "Initial refinement steps", initref.size() );
+      m_print.ItemVec< ctr::AMRInitial >( initref );
       m_print.edgeref( g_inputdeck.get< tag::amr, tag::edge >() );
     }
   }

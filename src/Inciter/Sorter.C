@@ -62,6 +62,14 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
 //! \param[in] triinpoel Interconnectivity of points and boundary-face
 // *****************************************************************************
 {
+  // Ensure boundary face ids will not index out of face connectivity
+  Assert( std::all_of( begin(m_bface), end(m_bface),
+            [&](const decltype(m_bface)::value_type& s)
+            { return std::all_of( begin(s.second), end(s.second),
+                                  [&](decltype(s.second)::value_type f)
+                                  { return f*3+2 < m_triinpoel.size(); } ); } ),
+          "Boundary face data structures inconsistent" );
+
   // Find chare-boundary nodes
   std::vector< std::size_t > chbnode;
   auto el = tk::global2local( ginpoel );      // generate local mesh data
@@ -467,6 +475,14 @@ Sorter::createWorkers()
   decltype(m_triinpoel) chtriinpoel;
   std::size_t cnt = 0;
 
+// std::cout << thisIndex << " ns: " << m_newnodes.size() << '\n';
+// 
+// std::cout << thisIndex << " fs: " << m_bface.size() << ": ";
+// for (const auto& s : m_bface) std::cout << s.first << '>' << s.second.size() << ' ';
+// std::cout << '\n';
+// 
+// std::cout << thisIndex << " ts: " << m_triinpoel.size() << '\n';
+
   // Generate boundary 
   for (const auto& ss : m_bface)  // for all phsyical boundaries (sidesets)
     for (auto f : ss.second) {    // for all faces on this physical boundary
@@ -487,6 +503,14 @@ Sorter::createWorkers()
         }
       }
     }
+
+std::cout << thisIndex << " n: " << chbnode.size() << ": ";
+for (const auto& s : chbnode) std::cout << s.first << '>' << s.second.size() << ' ';
+std::cout << '\n';
+
+std::cout << thisIndex << " f: " << chbface.size() << ": ";
+for (const auto& s : chbface) std::cout << s.first << '>' << s.second.size() << ' ';
+std::cout << ", t: " << chtriinpoel.size() << '\n';
 
   // Create face data
   FaceData fd( m_ginpoel, chbface, chbnode, chtriinpoel );

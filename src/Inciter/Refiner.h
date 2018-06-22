@@ -75,18 +75,18 @@ class Refiner : public CBase_Refiner {
       p | m_cbr;
       p | m_cbs;
       p | m_ginpoel;
-      p | m_coord;
-      p | m_coordmap;
-      p | m_bface;
-      p | m_triinpoel;
-      p | m_bnode;
-      p | m_nchare;
       p | m_el;
       if (p.isUnpacking()) {
         m_inpoel = std::get< 0 >( m_el );
         m_gid = std::get< 1 >( m_el );
         m_lid = std::get< 2 >( m_el );
       }
+      p | m_coordmap;
+      p | m_coord;
+      p | m_bface;
+      p | m_triinpoel;
+      p | m_bnode;
+      p | m_nchare;
       p | m_initref;
       //p | m_refiner;
       p | m_nref;
@@ -124,18 +124,6 @@ class Refiner : public CBase_Refiner {
     tk::SorterCallback m_cbs;
     //! Tetrtahedron element connectivity of our chunk of the mesh (global ids)
     std::vector< std::size_t > m_ginpoel;
-    //! Coordinates of mesh nodes of our chunk of the mesh
-    tk::UnsMesh::Coords m_coord;
-    //! Coordinates associated to global node IDs of our mesh chunk
-    tk::UnsMesh::CoordMap m_coordmap;
-    //! List of boundary faces associated to side-set IDs
-    std::map< int, std::vector< std::size_t > > m_bface;
-    //! Boundary face-node connectivity
-    std::vector< std::size_t > m_triinpoel;
-    //! List of boundary nodes associated to side-set IDs
-    std::map< int, std::vector< std::size_t > > m_bnode;
-    //! Total number of refiner chares
-    int m_nchare;
     //! Elements of the mesh chunk we operate on
     //! \details The first vector is the element connectivity (local IDs), the
     //!   second vector is the global node IDs of owned elements, while the
@@ -150,6 +138,18 @@ class Refiner : public CBase_Refiner {
     //! \brief Alias to local node IDs associated to the global ones of owned
     //!    elements in m_el
     std::unordered_map< std::size_t, std::size_t >& m_lid = std::get<2>( m_el );
+    //! Coordinates associated to global node IDs of our mesh chunk
+    tk::UnsMesh::CoordMap m_coordmap;
+    //! Coordinates of mesh nodes of our chunk of the mesh
+    tk::UnsMesh::Coords m_coord;
+    //! List of boundary faces associated to side-set IDs
+    std::map< int, std::vector< std::size_t > > m_bface;
+    //! Boundary face-node connectivity
+    std::vector< std::size_t > m_triinpoel;
+    //! List of boundary nodes associated to side-set IDs
+    std::map< int, std::vector< std::size_t > > m_bnode;
+    //! Total number of refiner chares
+    int m_nchare;
     //! Initial mesh refinement type list (in reverse order)
     std::vector< ctr::AMRInitialType > m_initref;
     //! Mesh refiner (library) object
@@ -168,6 +168,9 @@ class Refiner : public CBase_Refiner {
     //! Boundary edges associated to chares we share these edges with
     std::unordered_map< int, tk::UnsMesh::EdgeSet > m_bndEdges;
 
+    //! Generate flat coordinate data from coordinate map
+    tk::UnsMesh::Coords flatcoord( const tk::UnsMesh::CoordMap& coordmap );
+
     //! Prepare for next step of mesh refinement
     void start();
 
@@ -184,38 +187,43 @@ class Refiner : public CBase_Refiner {
     void finish();
 
     //! Do uniform mesh refinement
-    void uniformRefine();
+    void uniformRefine( AMR::mesh_adapter_t& refiner );
 
     //! Do error-based mesh refinement
-    void errorRefine();
+    void errorRefine( AMR::mesh_adapter_t& refiner );
 
     //! Do mesh refinement based on user explicitly tagging edges
-    void userRefine();
+    void userRefine( AMR::mesh_adapter_t& refiner );
 
     //! Do mesh refinement correcting PE-boundary edges
-    void correctRefine( const tk::UnsMesh::EdgeSet& extra );
+    void correctRefine( AMR::mesh_adapter_t& refiner,
+                        const tk::UnsMesh::EdgeSet& extra );
 
     //! Update mesh after refinement
-    void updateMesh();
+    void updateMesh( AMR::mesh_adapter_t& refiner );
 
     //! Update volume mesh after mesh refinement
-    void updateVolMesh( const std::unordered_set< std::size_t >& old,
+    void updateVolMesh( AMR::mesh_adapter_t& refiner,
+                        const std::unordered_set< std::size_t >& old,
                         const std::unordered_set< std::size_t >& ref );
 
     //! Update boundary data structures after mesh refinement
-    void updateBndMesh( const std::unordered_set< std::size_t >& old,
+    void updateBndMesh( AMR::mesh_adapter_t& refiner,
+                        const std::unordered_set< std::size_t >& old,
                         const std::unordered_set< std::size_t >& ref );
 
     //! Generate boundary data structures after mesh refinement
     BndFaces boundary();
 
     //! Regenerate boundary faces after mesh refinement step
-    void updateBndFaces( const std::unordered_set< std::size_t >& old,
+    void updateBndFaces( AMR::mesh_adapter_t& refiner,
+                         const std::unordered_set< std::size_t >& old,
                          const std::unordered_set< std::size_t >& ref,
                          const BndFaces& bnd );
 
     //! Regenerate boundary nodes after mesh refinement step
-    void updateBndNodes( const std::unordered_set< std::size_t >& old,
+    void updateBndNodes( AMR::mesh_adapter_t& refiner,
+                         const std::unordered_set< std::size_t >& old,
                          const std::unordered_set< std::size_t >& ref,
                          const BndFaces& bnd );
 
