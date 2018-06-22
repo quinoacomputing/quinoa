@@ -205,6 +205,10 @@ class InputDeck :
                                      , kw::gamma_method
                                      , kw::icgamma
                                      , kw::gammapdf
+                                     , kw::sde_c3
+                                     , kw::sde_c4
+                                     , kw::sde_com1
+                                     , kw::sde_com2
                                      >;
 
 

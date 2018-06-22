@@ -40,11 +40,11 @@ class Dissipation {
 
   public:
     //! \brief Constructor
-    //! \param[in] c Index specifying which system of beta SDEs to construct.
-    //!   There can be multiple beta ... end blocks in a control file. This
-    //!   index specifies which beta SDE system to instantiate. The index
-    //!   corresponds to the order in which the beta ... end blocks are given
-    //!   the control file.
+    //! \param[in] c Index specifying which system of dissipation SDEs to
+    //!   construct. There can be multiple dissipation ... end blocks in a
+    //!   control file. This index specifies which dissipation SDE system to
+    //!   instantiate. The index corresponds to the order in which the
+    //!   dissipation ... end blocks are given the control file.
     explicit Dissipation( ncomp_t c ) :
       m_c( c ),
       m_depvar(
@@ -56,7 +56,13 @@ class Dissipation {
       m_velocity_offset( g_inputdeck.get< tag::param, tag::dissipation,
                                           tag::velocity_id >().at(c)),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::dissipation, tag::rng >().at(c) ) ) )
+        g_inputdeck.get< tag::param, tag::dissipation, tag::rng >().at(c) ) ) ),
+      m_coeff(
+        g_inputdeck.get< tag::param, tag::dissipation, tag::c3 >().at(c),
+        g_inputdeck.get< tag::param, tag::dissipation, tag::c4 >().at(c),
+        g_inputdeck.get< tag::param, tag::dissipation, tag::com1 >().at(c),
+        g_inputdeck.get< tag::param, tag::dissipation, tag::com2 >().at(c),
+        m_c3, m_c4, m_com1, m_com2 )
     {
       Assert( m_ncomp == 1, "Dissipation eq number of components must be 1" );
     }
@@ -71,7 +77,7 @@ class Dissipation {
             ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
     }
 
-    //! \brief Advance particles according to the system of beta SDEs
+    //! \brief Advance particles according to the dissipation SDE
     //! \param[in,out] particles Array of particle properties
     //! \param[in] dt Time step size
     void advance( tk::Particles& particles,
@@ -88,7 +94,8 @@ class Dissipation {
         tk::real Wp = particles( p, 2, m_velocity_offset );
         // Advance all particle frequency
         tk::real& Op = particles( p, 0, m_offset );
-        //Op += Op*dt;
+//         Op += (-C3*o1e[e]*(parfreq[p]-o1e[e]) - Som*o1e[e]*parfreq[p])*dt +	// (-C3<om>(om-<om>)-S<om>om)dt
+// 	 sqrt(2.0*C3*C4*o1e[e]*o1e[e]*parfreq[p]*dt)*gsl_ran_ugaussian(rng);  // sqrt(2*C3*C4*<om>^2*om)*dW''
       }
     }
 
@@ -99,6 +106,15 @@ class Dissipation {
     const ncomp_t m_offset;             //!< Offset SDE operates from
     const ncomp_t m_velocity_offset;    //!< Offset for coupled velocity eq
     const tk::RNG& m_rng;               //!< Random number generator
+
+    //! Coefficients policy
+    Coefficients m_coeff;
+
+    // Model coefficients
+    tk::real m_c3;
+    tk::real m_c4;
+    tk::real m_com1;
+    tk::real m_com2;
 };
 
 } // walker::

@@ -11,7 +11,15 @@
     - Must define a _constructor_, which is used to initialize the SDE
       coefficient, C0. Required signature:
       \code{.cpp}
-        CoeffPolicyName();
+        CoeffPolicyName(
+          kw::sde_c3::info::expect::type c3_,
+          kw::sde_c4::info::expect::type c4_,
+          kw::sde_com1::info::expect::type com1_,
+          kw::sde_com2::info::expect::type com2_,
+          kw::sde_c3::info::expect::type& c3,
+          kw::sde_c4::info::expect::type& c4,
+          kw::sde_com1::info::expect::type& com1,
+          kw::sde_com2::info::expect::type& com2 )
       \endcode
 
     - Must define the static function _type()_, returning the enum value of the
@@ -39,11 +47,25 @@
 namespace walker {
 
 //! Dissipation equation coefficients policy
-class DissipationCoeffConstant {
+class DissipationCoeffConst {
 
   public:
     //! Constructor: initialize coefficients
-    DissipationCoeffConstant() {}
+    DissipationCoeffConst(
+      kw::sde_c3::info::expect::type c3_,
+      kw::sde_c4::info::expect::type c4_,
+      kw::sde_com1::info::expect::type com1_,
+      kw::sde_com2::info::expect::type com2_,
+      kw::sde_c3::info::expect::type& c3,
+      kw::sde_c4::info::expect::type& c4,
+      kw::sde_com1::info::expect::type& com1,
+      kw::sde_com2::info::expect::type& com2 )
+    {
+      c3 = c3_;
+      c4 = c4_;
+      com1 = com1_;
+      com2 = com2_;
+    }
 
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept
@@ -51,7 +73,7 @@ class DissipationCoeffConstant {
 };
 
 //! List of all dissipation eq coefficients policies
-using DissipationCoeffPolicies = boost::mpl::vector< DissipationCoeffConstant
+using DissipationCoeffPolicies = boost::mpl::vector< DissipationCoeffConst
                                                    >;
 
 } // walker::

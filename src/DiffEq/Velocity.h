@@ -64,8 +64,8 @@ class Velocity {
       m_U( {{ tk::ctr::mean( m_depvar, 0 ),
               tk::ctr::mean( m_depvar, 1 ),
               tk::ctr::mean( m_depvar, 2 ) }} ),
-      coeff( g_inputdeck.get< tag::param, tag::velocity, tag::c0 >().at(c),
-             m_c0 )
+      m_coeff( g_inputdeck.get< tag::param, tag::velocity, tag::c0 >().at(c),
+               m_c0 )
     {
       Assert( m_ncomp == 3, "Velocity eq number of components must be 3" );
       // Populate inverse hydrodynamics time scales extracted from DNS
@@ -104,7 +104,7 @@ class Velocity {
 
       // Update coefficients
       tk::real eps = 0.0;
-      coeff.update( m_depvar, moments, m_hts, m_c0, t, eps, m_g );
+      m_coeff.update( m_depvar, moments, m_hts, m_c0, t, eps, m_g );
 
       // Access mean velocity
       std::array< tk::real, 3 > U{{ lookup(m_U[0],moments),
@@ -125,7 +125,7 @@ class Velocity {
         tk::real& Vp = particles( p, 1, m_offset );
         tk::real& Wp = particles( p, 2, m_offset );
 
-        coeff.update( {{Xp,Yp,Zp}}, U );
+        m_coeff.update( {{Xp,Yp,Zp}}, U );
 
         tk::real d = m_c0 * eps * dt;
         d = (d > 0.0 ? std::sqrt(d) : 0.0);
@@ -159,7 +159,7 @@ class Velocity {
     std::array< tk::ctr::Product, 3 > m_U;
 
     //! Coefficients policy
-    Coefficients coeff;
+    Coefficients m_coeff;
 };
 
 } // walker::

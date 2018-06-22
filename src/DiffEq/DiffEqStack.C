@@ -1120,6 +1120,14 @@ DiffEqStack::infoDissipation( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
     g_inputdeck.get< tag::param, tag::dissipation, tag::velocity_id >()[c] ) );
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::dissipation, tag::rng >()[c] ) );
+  nfo.emplace_back( "coeff C3", std::to_string(
+    g_inputdeck.get< tag::param, tag::dissipation, tag::c3 >().at(c) ) );
+  nfo.emplace_back( "coeff C4", std::to_string(
+    g_inputdeck.get< tag::param, tag::dissipation, tag::c4 >().at(c) ) );
+  nfo.emplace_back( "coeff COM1", std::to_string(
+    g_inputdeck.get< tag::param, tag::dissipation, tag::com1 >().at(c) ) );
+  nfo.emplace_back( "coeff COM2", std::to_string(
+    g_inputdeck.get< tag::param, tag::dissipation, tag::com2 >().at(c) ) );
 
   return nfo;
 }

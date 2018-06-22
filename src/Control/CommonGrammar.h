@@ -101,17 +101,17 @@ namespace grm {
     MALFORMEDSAMPLE,    //!< PDF sample space variable specification incorrect
     INVALIDBINSIZE,     //!< PDF sample space bin size specification incorrect
     INVALIDEXTENT,      //!< PDF sample space extent specification incorrect
-    EXTENTLOWER,        //!< PDF sample space extent-pair in non-increasing order
+    EXTENTLOWER,        //!< PDF sample space extents in non-increasing order
     NOBINS,             //!< PDF sample space bin size required
     ZEROBINSIZE,        //!< PDF sample space bin size incorrect
     MAXSAMPLES,         //!< PDF sample space dimension too large
     MAXBINSIZES,        //!< PDF sample space bin sizes too many
     MAXEXTENTS,         //!< PDF sample space extent-pairs too many
-    BINSIZES,           //!< PDF sample space variables unequal to number of bins
+    BINSIZES,           //!< PDF sample space vars unequal to number of bins
     PDF,                //!< PDF specification syntax error
     PDFEXISTS,          //!< PDF identifier already defined
     BADPRECISION,       //!< Floating point precision specification incorrect
-    PRECISIONBOUNDS,    //!< Floating point precision specification out of bounds
+    PRECISIONBOUNDS,    //!< Floating point precision spec out of bounds
     UNFINISHED,         //!< Unfinished block
     VORTICAL_UNFINISHED,//!< Vortical flow problem configuration unfinished
     ENERGY_UNFINISHED,  //!< Nonlinear energy growth problem config unfinished

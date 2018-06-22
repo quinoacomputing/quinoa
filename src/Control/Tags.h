@@ -108,6 +108,8 @@ struct c1 {};
 struct c2 {};
 struct c3 {};
 struct c4 {};
+struct com1 {};
+struct com2 {};
 struct lambda {};
 struct sigmasq {};
 struct theta {};

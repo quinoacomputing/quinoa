@@ -280,6 +280,7 @@ namespace grm {
   struct action< check_velocity > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
+      using walker::deck::neq;
       // Ensure a coupled position model is configured
       check_coupled< tag::velocity,
           tag::position, tag::position_id, MsgKey::POSITION_DEPVAR >
@@ -288,6 +289,9 @@ namespace grm {
       check_coupled< tag::velocity,
           tag::dissipation, tag::dissipation_id, MsgKey::DISSIPATION_DEPVAR >
         ( in, stack, MsgKey::DISSIPATION_MISSING );
+      // Set C0 = 2.1 if not specified
+      auto& C0 = stack.template get< tag::param, tag::velocity, tag::c0 >();
+      if (C0.size() != neq.get< tag::velocity >()) C0.push_back( 2.1 );
     }
   };
 
@@ -312,10 +316,25 @@ namespace grm {
   struct action< check_dissipation > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
+      using walker::deck::neq;
       // Ensure a coupled velocity model is configured
       check_coupled< tag::dissipation,
           tag::velocity, tag::velocity_id, MsgKey::VELOCITY_DEPVAR >
         ( in, stack, MsgKey::VELOCITY_MISSING );
+      // Set C3 if not specified
+      auto& C3 = stack.template get< tag::param, tag::dissipation, tag::c3 >();
+      if (C3.size() != neq.get< tag::dissipation >()) C3.push_back( 1.0 );
+      // Set C4 if not specified
+      auto& C4 = stack.template get< tag::param, tag::dissipation, tag::c4 >();
+      if (C4.size() != neq.get< tag::dissipation >()) C4.push_back( 0.25 );
+      // Set COM1 if not specified
+      auto& COM1 =
+        stack.template get< tag::param, tag::dissipation, tag::com1 >();
+      if (COM1.size() != neq.get< tag::dissipation >()) COM1.push_back( 0.44 );
+      // Set COM2 if not specified
+      auto& COM2 =
+        stack.template get< tag::param, tag::dissipation, tag::com2 >();
+      if (COM2.size() != neq.get< tag::dissipation >()) COM2.push_back( 0.9 );
     }
   };
 
@@ -326,13 +345,9 @@ namespace grm {
   struct action< velocity_defaults > {
     template< typename Input, typename Stack >
     static void apply( const Input&, Stack& stack ) {
-      using walker::deck::neq;
       // Set number of components: always 3 velocity components
       auto& ncomp = stack.template get< tag::component, tag::velocity >();
       ncomp.push_back( 3 );
-      // Set C0 = 2.1 if not specified
-      auto& C0 = stack.template get< tag::param, tag::velocity, tag::c0 >();
-      if (C0.size() != neq.get< tag::velocity >()) C0.push_back( 2.1 );
     }
   };
 
@@ -368,7 +383,6 @@ namespace grm {
   struct action< dissipation_defaults > {
     template< typename Input, typename Stack >
     static void apply( const Input&, Stack& stack ) {
-      using walker::deck::neq;
       // Set number of components: always 1 dissipation component
       auto& ncomp = stack.template get< tag::component, tag::dissipation >();
       ncomp.push_back( 1 );
@@ -1178,6 +1192,26 @@ namespace deck {
                                             ctr::CoeffPolicy,
                                             tag::dissipation,
                                             tag::coeffpolicy >,
+                           tk::grm::process<
+                             use< kw::sde_c3 >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::dissipation,
+                                                  tag::c3 > >,
+                           tk::grm::process<
+                             use< kw::sde_c4 >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::dissipation,
+                                                  tag::c4 > >,
+                           tk::grm::process<
+                             use< kw::sde_com1 >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::dissipation,
+                                                  tag::com1 > >,
+                           tk::grm::process<
+                             use< kw::sde_com2 >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::dissipation,
+                                                  tag::com2 > >,
                            icdelta< tag::dissipation >,
                            icbeta< tag::dissipation >,
                            icgamma< tag::dissipation >,

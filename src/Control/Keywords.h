@@ -1811,6 +1811,70 @@ struct sde_c0_info {
 };
 using sde_c0 = keyword< sde_c0_info,  TAOCPP_PEGTL_STRING("C0") >;
 
+struct sde_c3_info {
+  static std::string name() { return "C3"; }
+  static std::string shortDescription() { return
+    R"(Set gamma (dissipation) SDE parameter C3)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a real number used to parameterize the
+    gamma distribution dissipation (turbulence frequency) model for particles
+    Example: "C3 1.0".)"; }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using sde_c3 = keyword< sde_c3_info,  TAOCPP_PEGTL_STRING("C3") >;
+
+struct sde_c4_info {
+  static std::string name() { return "C4"; }
+  static std::string shortDescription() { return
+    R"(Set gamma (dissipation) SDE parameter C4)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a real number used to parameterize the
+    gamma distribution dissipation (turbulence frequency) model for particles
+    Example: "C4 0.25".)"; }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using sde_c4 = keyword< sde_c4_info,  TAOCPP_PEGTL_STRING("C4") >;
+
+struct sde_com1_info {
+  static std::string name() { return "COM1"; }
+  static std::string shortDescription() { return
+    R"(Set gamma (dissipation) SDE parameter COM1)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a real number used to parameterize the
+    gamma distribution dissipation (turbulence frequency) model for particles
+    Example: "COM1 0.44".)"; }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using sde_com1 = keyword< sde_com1_info,  TAOCPP_PEGTL_STRING("COM1") >;
+
+struct sde_com2_info {
+  static std::string name() { return "COM2"; }
+  static std::string shortDescription() { return
+    R"(Set gamma (dissipation) SDE parameter COM2)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a real number used to parameterize the
+    gamma distribution dissipation (turbulence frequency) model for particles
+    Example: "COM2 0.9".)"; }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using sde_com2 = keyword< sde_com2_info,  TAOCPP_PEGTL_STRING("COM2") >;
+
 struct sde_b_info {
   static std::string name() { return "b"; }
   static std::string shortDescription() { return
