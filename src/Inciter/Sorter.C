@@ -475,14 +475,6 @@ Sorter::createWorkers()
   decltype(m_triinpoel) chtriinpoel;
   std::size_t cnt = 0;
 
-// std::cout << thisIndex << " ns: " << m_newnodes.size() << '\n';
-// 
-// std::cout << thisIndex << " fs: " << m_bface.size() << ": ";
-// for (const auto& s : m_bface) std::cout << s.first << '>' << s.second.size() << ' ';
-// std::cout << '\n';
-// 
-// std::cout << thisIndex << " ts: " << m_triinpoel.size() << '\n';
-
   // Generate boundary 
   for (const auto& ss : m_bface)  // for all phsyical boundaries (sidesets)
     for (auto f : ss.second) {    // for all faces on this physical boundary
@@ -503,14 +495,6 @@ Sorter::createWorkers()
         }
       }
     }
-
-std::cout << thisIndex << " n: " << chbnode.size() << ": ";
-for (const auto& s : chbnode) std::cout << s.first << '>' << s.second.size() << ' ';
-std::cout << '\n';
-
-std::cout << thisIndex << " f: " << chbface.size() << ": ";
-for (const auto& s : chbface) std::cout << s.first << '>' << s.second.size() << ' ';
-std::cout << ", t: " << chtriinpoel.size() << '\n';
 
   // Create face data
   FaceData fd( m_ginpoel, chbface, chbnode, chtriinpoel );

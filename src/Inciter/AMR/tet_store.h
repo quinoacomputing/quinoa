@@ -31,12 +31,12 @@ namespace AMR {
             std::vector< std::size_t > active_tetinpoel;
             std::set< std::size_t > active_nodes;
 
+            std::vector< std::size_t > active_id_mapping;
             // TODO: I'd like this on the stack, but still pass an initial val
             AMR::id_generator_t id_generator;
 
         public:
             // Public so it can be trivially grabbed for looping over.
-            std::vector< std::size_t > active_id_mapping;
             // TODO: implement iterators at some point..
             tet_list_t tets;
             AMR::edge_store_t edge_store;
