@@ -15,7 +15,7 @@ automatically updated whenever the
 updated. To learn more about why we have different branches, read
 http://nvie.com/posts/a-successful-git-branching-model.
 
-\section debug_coverage Debug
+@section debug_coverage Debug
 - <a href="Debug/unittest_coverage/index.html"
 target="_blank">Unit test coverage report (Debug)</a>
 
@@ -28,7 +28,7 @@ target="_blank">Full test coverage report (Debug)</a>
 - <a href="Debug/cppcheck/index.html"
 target="_blank">Cppcheck static analysis report (Debug)</a>
 
-\section release_coverage Release
+@section release_coverage Release
 - <a href="Release/unittest_coverage/index.html"
 target="_blank">Unit test coverage report (Release)</a>
 
