@@ -53,6 +53,8 @@ class Dissipation {
         g_inputdeck.get< tag::component >().get< tag::dissipation >().at(c) ),
       m_offset(
         g_inputdeck.get< tag::component >().offset< tag::dissipation >(c) ),
+      m_velocity_depvar(
+        g_inputdeck.get< tag::param, tag::dissipation, tag::velocity >().at(c)),
       m_velocity_offset( g_inputdeck.get< tag::param, tag::dissipation,
                                           tag::velocity_id >().at(c)),
       m_rng( g_rng.at( tk::ctr::raw(
@@ -62,7 +64,13 @@ class Dissipation {
         g_inputdeck.get< tag::param, tag::dissipation, tag::c4 >().at(c),
         g_inputdeck.get< tag::param, tag::dissipation, tag::com1 >().at(c),
         g_inputdeck.get< tag::param, tag::dissipation, tag::com2 >().at(c),
-        m_c3, m_c4, m_com1, m_com2 )
+        m_c3, m_c4, m_com1, m_com2 ),
+      m_O( tk::ctr::mean( m_depvar, 0 ) ),
+      m_R( {{ tk::ctr::variance( m_velocity_depvar, 0 ),
+              tk::ctr::variance( m_velocity_depvar, 1 ),
+              tk::ctr::variance( m_velocity_depvar, 2 ),
+              tk::ctr::covariance( m_velocity_depvar, 0, m_velocity_depvar, 1 )
+           }} )
     {
       Assert( m_ncomp == 1, "Dissipation eq number of components must be 1" );
     }
@@ -79,23 +87,42 @@ class Dissipation {
 
     //! \brief Advance particles according to the dissipation SDE
     //! \param[in,out] particles Array of particle properties
+    //! \param[in] stream Thread (or more precisely stream) ID
     //! \param[in] dt Time step size
+    //! \param[in] moments Map of statistical moments
     void advance( tk::Particles& particles,
-                  int,
+                  int stream,
                   tk::real dt,
                   tk::real,
-                  const std::map< tk::ctr::Product, tk::real >& )
+                  const std::map< tk::ctr::Product, tk::real >& moments )
     {
+      using tk::ctr::lookup;
+
+      // Access mean turbulence frequency
+      tk::real O = lookup( m_O, moments );
+
+      // Compute turbulent kinetic energy
+      tk::real k = ( lookup(m_R[0],moments) +
+                     lookup(m_R[1],moments) +
+                     lookup(m_R[2],moments) ) / 2.0;
+
+      // Production of turbulent kinetic energy
+      tk::real S = 1.0; // prescribed shear
+      tk::real P = -lookup(m_R[3],moments)*S;
+
+      // Source for turbulent frequency
+      tk::real Som = m_com2 - m_com1*P/(O*k);
+
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
-        // Access particle velocity
-        tk::real Up = particles( p, 0, m_velocity_offset );
-        tk::real Vp = particles( p, 1, m_velocity_offset );
-        tk::real Wp = particles( p, 2, m_velocity_offset );
-        // Advance all particle frequency
+        // Generate a Gaussian random number with zero mean and unit variance
+        tk::real dW;
+        m_rng.gaussian( stream, m_ncomp, &dW );
+        // Advance particle frequency
         tk::real& Op = particles( p, 0, m_offset );
-//         Op += (-C3*o1e[e]*(parfreq[p]-o1e[e]) - Som*o1e[e]*parfreq[p])*dt +	// (-C3<om>(om-<om>)-S<om>om)dt
-// 	 sqrt(2.0*C3*C4*o1e[e]*o1e[e]*parfreq[p]*dt)*gsl_ran_ugaussian(rng);  // sqrt(2*C3*C4*<om>^2*om)*dW''
+        tk::real d = 2.0*m_c3*m_c4*O*O*Op*dt;
+        d = (d > 0.0 ? std::sqrt(d) : 0.0);
+        Op += (-m_c3*(Op-O) - Som*Op)*O*dt + d*dW;
       }
     }
 
@@ -104,7 +131,8 @@ class Dissipation {
     const char m_depvar;                //!< Dependent variable
     const ncomp_t m_ncomp;              //!< Number of components
     const ncomp_t m_offset;             //!< Offset SDE operates from
-    const ncomp_t m_velocity_offset;    //!< Offset for coupled velocity eq
+    const char m_velocity_depvar;       //!< Coupled velocity dependent variable
+    const ncomp_t m_velocity_offset;    //!< Offset of coupled velocity eq
     const tk::RNG& m_rng;               //!< Random number generator
 
     //! Coefficients policy
@@ -115,6 +143,11 @@ class Dissipation {
     tk::real m_c4;
     tk::real m_com1;
     tk::real m_com2;
+
+    //! tk::Product used to access the mean of turbulence frequency
+    tk::ctr::Product m_O;
+    //! Array of tk::Product used to access the the Reynolds stress
+    std::array< tk::ctr::Product, 4 > m_R;
 };
 
 } // walker::

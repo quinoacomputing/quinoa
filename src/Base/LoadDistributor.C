@@ -69,6 +69,8 @@ linearLoadDistributor( tk::real virtualization,
   // Compute work unit size based on the linear formula above
   chunksize = static_cast< uint64_t >( (1.0 - n) * virtualization + n );
 
+  Assert( load > chunksize, "Load must be larger than chunksize" );
+
   // Compute number of work units with size computed ignoring remainder
   uint64_t nchare = load / chunksize;
 

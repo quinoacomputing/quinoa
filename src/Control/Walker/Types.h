@@ -358,8 +358,8 @@ using MixMassFractionBetaParameters = tk::tuple::tagged_tuple<
   tag::coeffpolicy,     std::vector< ctr::CoeffPolicyType >
 >;
 
-//! Langevin parameters storage
-using LangevinParameters = tk::tuple::tagged_tuple<
+//! Velocity parameters storage
+using VelocityParameters = tk::tuple::tagged_tuple<
   tag::depvar,          std::vector< char >,
   tag::c0,              std::vector< kw::sde_c0::info::expect::type >,
   tag::position,        std::vector< char >,
@@ -440,7 +440,7 @@ using parameters = tk::tuple::tagged_tuple<
   tag::massfracbeta,    MassFractionBetaParameters,
   tag::mixnumfracbeta,  MixNumberFractionBetaParameters,
   tag::mixmassfracbeta, MixMassFractionBetaParameters,
-  tag::velocity,        LangevinParameters,
+  tag::velocity,        VelocityParameters,
   tag::position,        PositionParameters,
   tag::dissipation,     DissipationParameters
 >;

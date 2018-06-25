@@ -66,6 +66,7 @@ class ConstShear {
     //! \details Update the dissipation rate (eps) and G_{ij} based on the
     //!   turbulent kinetic energy (k) and a prescribed shear
     void update( char depvar,
+                 char dissipation_depvar,
                  const std::map< tk::ctr::Product, tk::real >& moments,
                  const tk::Table&,
                  kw::sde_c0::info::expect::type C0,
@@ -74,6 +75,7 @@ class ConstShear {
                  std::array< tk::real, 9 >& G ) const
     {
       using tk::ctr::lookup;
+      using tk::ctr::mean;
       using tk::ctr::variance;
 
       // Extract diagonal of the Reynolds stress
@@ -85,21 +87,15 @@ class ConstShear {
                      lookup(R22,moments) +
                      lookup(R33,moments) ) / 2.0;
 
-      // compute turbulent kinetic energy dissipation rate, assume shear S = 1.0
-      eps = k/2.36;
+      // Access mean turbulence frequency
+      tk::real O = lookup( mean(dissipation_depvar,0), moments );
+
+      // compute turbulent kinetic energy dissipation rate
+      eps = O*k;
 
       // update drift tensor based on the simplified Langevin model
       G.fill( 0.0 );
-      G[0] = G[4] = G[8] = -(0.5+0.75*C0) * eps/k;
-    }
-
-    //! Update mean velocity based on particle position (prescribing shear)
-    void update( const std::array< tk::real, 3 >& X,
-                 std::array< tk::real, 3 >& U ) const
-    {
-      // Assume shear S = 1
-      U[0] = X[1];
-      U[1] = U[2] = 0.0;
+      G[0] = G[4] = G[8] = -(0.5+0.75*C0) * O;
     }
 };
 
@@ -125,6 +121,7 @@ class HydroTimeScale {
     //! \details Update the dissipation rate (eps) based on eps/k (from DNS) and
     //!    the turbulent kinetic energy (k) (from the SDE)
     void update( char depvar,
+                 char,
                  const std::map< tk::ctr::Product, tk::real >& moments,
                  const tk::Table& hts,
                  kw::sde_c0::info::expect::type C0,
@@ -154,10 +151,6 @@ class HydroTimeScale {
       G.fill( 0.0 );
       G[0] = G[4] = G[8] = -(0.5+0.75*C0) * ts;
     }
-
-    //! Update mean velocity velocity (no-op)
-    void update( const std::array< tk::real, 3 >&,
-                 std::array< tk::real, 3 >& ) const {}
 
     //! Sample the inverse hydrodynamics time scale at time t
     //! \param[in] t Time at which to sample inverse hydrodynamics time scale
