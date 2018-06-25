@@ -2,64 +2,83 @@
   \page      rngs_input Random number generators input
 
 This page discusses how to configure random number generators (RNG) in a
-control file.
+@ref walker_main or @ref rngtest_main control/input file.
 
-### Requirements
+@section Requirements
 
-  - Any control file setup that needs one or more RNGs must contain an \e rngs
-    \a ... \a end block. This is used to enable and configure one or more RNGs.
+  - Any control file setup that needs one or more RNGs must contain an
+    @code{.bash}rngs...end@endcode block. This is used to enable and configure
+    one or more RNGs.
 
-  - The \e rngs \a ... \a end block must appear before any reference to an RNG.
+  - The @code{.bash}rngs...end@endcode block must appear before any reference to
+    an RNG.
 
-  - The \e rngs \a ... \a end block consists of a list of \a rngname \a ... \a
-    end block, where \a rngname is the name of the RNG to be enabled and
-    configured. Currently, three different libraries are interfaced: MKL,
-    RNGSSE, and Random123. The first part of \a rngname is the library, \a mkl
-    or \a rngsse, or \a r123, followed by an underscore, '_', followed by the
-    name of the particular RNGfrom the given library.
+  - The @code{.bash}rngs...end@endcode block consists of a list of
+    @code{.bash}<rngname>...end@endcode blocks, where
+    @code{.bash}<rngname>@endcode is a placeholder for the name of the RNG to be
+    enabled and configured. Currently, three different libraries are interfaced:
+    Intel's [Math Kernel Library](https://software.intel.com/en-us/intel-mkl)
+    (MKL), [RNGSSE](https://doi.org/10.1016/j.cpc.2013.04.007), and
+    [Random123](http://www.thesalmons.org/john/random123/releases/latest/docs/index.html). See also the page on @ref rngtest_main. The first part of
+    @code{.bash}<rngname>@endcode is the library, @code{.bash}mkl@endcode,
+    @code{.bash}rngsse@endcode, or @code{.bash}r123@endcode, followed by an
+    underscore, @code{.bash}_@endcode, followed by the name of the particular
+    RNG from the given library.
 
-  - Each \a rngname \a ... \a end block expects a different syntax, dependening
-    on what options are available for (and interfaced with) the given RNG.
+  - Each @code{.bash}<rngname>...end@endcode block expects a different syntax,
+    dependening on what options are available for (and interfaced with) the
+    given RNG.
 
-### Configuration of the MKL VSL RNGs
+@section mkl_conf Configuration of MKL VSL RNGs
 
-All RNGs provided by Intel's Math Kernel Library (MKL) can be configured to be
-initialized using a user-specified \a seed, use a user-specified \a
-uniform_method, a user-specified \a gaussian_method, and user-specified \a
-beta_method. For more details on the available options for these control-file
-keywords, see the on-screen help from the executable, e.g.,
+All RNGs provided by MKL can be configured to be initialized using a
+user-specified @code{.shell}seed,@endcode and use a user-specified
+@code{.shell}uniform_method@endcode, @code{.shell}gaussian_method@endcode,
+@code{.shell}beta_method@endcode, and @code{.shell}gamma_method@endcode. For
+more details on the available options for these keywords, see the on-screen help
+from the executable, e.g.,
 
-\code{.py}
-  $ walker -H uniform_method
-\endcode
+@code{.shell}
+walker -H uniform_method
+@endcode
 
-\note MKL is optional.
+@note MKL is optional. All features in Quinoa can be exercised if MKL is not
+available.
 
-### Configuration of the RNGSSE RNGs
+@warning Not all MKL RNGs support generating random numbers in parallel. Only
+@code{.bash}mkl_mcg31@endcode, @code{.bash}mkl_mcg59@endcode, and
+@code{.bash}mkl_wh@endcode have leapfrog support and this will support
+generating random numbers from independent streams, required to run in parallel.
+
+@section rngsse_conf Configuration of RNGSSE RNGs
 
 All RNGs provided by the RNGSSE library can be configured to be initialized
-using a user-specified sequence length by the \a seqlen keyword. For more
-details on the available options for the \a seqlen control-file keyword, see the
-on-screen help from the executable, e.g.,
+using a user-specified sequence length by the @code{.shell}seqlen@endcode
+keyword. For more details on the available options for the
+@code{.shell}seqlen@endcode keyword, see the on-screen help from the executable,
+e.g.,
 
-\code{.py}
-  $ walker -H seqlen
-\endcode
+@code{.shell}
+walker -H seqlen
+@endcode
 
-\note Not all RNGSSE RNGs support all types of seqence lengths. See
+@warning Not all RNGSSE RNGs support all types of seqence lengths. See
 tk::ctr::RNG::support for details.
 
-\note RNGSSE2 is optional.
+@note RNGSSE2 is optional. All features in Quinoa can be exercised if RNGSSE2 is
+not available.
 
-### Configuration of the Random123 RNGs
+@section r123_conf Configuration of Random123 RNGs
 
-The RNGs provided by the Random123 library that are hooked up are ThreeFry and
-Philox. They can be configured to be initialized using a user-specified seed \a
-seed keyword.
+The RNGs provided by the Random123 library that are hooked up are _ThreeFry_ and
+_Philox_. They can be configured to be initialized using a user-specified seed
+@code{.shell}seed@endcode keyword.
 
-### Example control file section for random number generators input
+@section rng_example Configuring random number generators
 
-\code{.py}
+Here is an example control file block configuring multiple generators.
+
+@code{.bash}
   rngs
     mkl_mcg59
       seed 2134
@@ -78,10 +97,4 @@ seed keyword.
     r123_threefry end
   end
 \endcode
-
-<hr>
-<div><small>
-<em>Page last updated:</em> Fri 13 Jan 2017 12:08:52 PM MST
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */
