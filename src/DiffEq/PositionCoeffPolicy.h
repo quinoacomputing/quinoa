@@ -9,10 +9,11 @@
     General requirements on position equation coefficients policy classes:
 
     - Must define a _constructor_, which is used to initialize the SDE
-      coefficient, C0. Required signature:
+      coefficients. Required signature:
       \code{.cpp}
-        CoeffPolicyName();
+        CoeffPolicyName( std::array< tk::real, 9 >& dU );
       \endcode
+      where _dU_ is an optionally prescribed mean velocity gradient.
 
     - Must define the static function _type()_, returning the enum value of the
       policy option. Example:
@@ -38,20 +39,39 @@
 
 namespace walker {
 
-//! Position equation coefficients policy
-class InstantaneousVelocity {
+//! Position equation coefficients policy given by the instantaneous velocity
+class Position_InstantaneousVelocity {
 
   public:
-    //! Constructor: initialize coefficients
-    InstantaneousVelocity() {}
+    //! Constructor
+    Position_InstantaneousVelocity( std::array< tk::real, 9 >& ) {}
 
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept
     { return ctr::CoeffPolicyType::INSTANTANEOUS_VELOCITY; }
 };
 
+//! \brief Position equation coefficients policy using a prescribed constant
+//!   mean velocity gradient for homogeneous shear flow
+class Position_ConstShear {
+
+  public:
+    //! Constructor: prescribe mean shear as dU/dy = 1.0
+    //! \param[in,out] dU Prescribed mean velocity gradient
+    Position_ConstShear( std::array< tk::real, 9 >& dU ) {
+      dU = {{ 0.0, 1.0, 0.0,
+              0.0, 0.0, 0.0,
+              0.0, 0.0, 0.0 }};
+    }
+
+    //! Coefficients policy type accessor
+    static ctr::CoeffPolicyType type() noexcept
+    { return ctr::CoeffPolicyType::CONST_SHEAR; }
+};
+
 //! List of all position eq coefficients policies
-using PositionCoeffPolicies = boost::mpl::vector< InstantaneousVelocity
+using PositionCoeffPolicies = boost::mpl::vector< Position_InstantaneousVelocity
+                                                , Position_ConstShear
                                                 >;
 
 } // walker::

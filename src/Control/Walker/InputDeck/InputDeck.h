@@ -209,6 +209,9 @@ class InputDeck :
                                      , kw::sde_c4
                                      , kw::sde_com1
                                      , kw::sde_com2
+                                     , kw::fullvar
+                                     , kw::fluctuation
+                                     , kw::solve
                                      >;
 
 

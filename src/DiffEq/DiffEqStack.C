@@ -1022,6 +1022,8 @@ DiffEqStack::infoVelocity( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
   auto cp = g_inputdeck.get< tag::param, tag::velocity, tag::coeffpolicy >()[c];
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name( cp ) );
+  auto solve = g_inputdeck.get< tag::param, tag::velocity, tag::solve >()[c];
+  nfo.emplace_back( "solve for", ctr::Depvar().name( solve ) );
   if (cp == ctr::CoeffPolicyType::HYDROTIMESCALE) {
     nfo.emplace_back(
       "inverse hydro time scale",
@@ -1077,6 +1079,8 @@ DiffEqStack::infoPosition( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
     g_inputdeck.get< tag::component >().get< tag::position >()[c] ) );
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::position, tag::coeffpolicy >()[c] ) );
+  auto solve = g_inputdeck.get< tag::param, tag::position, tag::solve >()[c];
+  nfo.emplace_back( "solve for", ctr::Depvar().name( solve ) );
   nfo.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::position >(c) ) );
   nfo.emplace_back( "coupled velocity depvar", std::string( 1,

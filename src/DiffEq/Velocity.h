@@ -55,21 +55,23 @@ class Velocity {
         g_inputdeck.get< tag::component >().get< tag::velocity >().at(c) ),
       m_offset(
         g_inputdeck.get< tag::component >().offset< tag::velocity >(c) ),
-      m_position_offset(
-        g_inputdeck.get< tag::param, tag::velocity, tag::position_id >().at(c)),
       m_dissipation_depvar(
         g_inputdeck.get< tag::param, tag::velocity, tag::dissipation >().at(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, tag::velocity, tag::rng >().at(c) ) ) ),
+      m_solve(g_inputdeck.get< tag::param, tag::velocity, tag::solve >().at(c)),
       m_U( {{ tk::ctr::mean( m_depvar, 0 ),
               tk::ctr::mean( m_depvar, 1 ),
               tk::ctr::mean( m_depvar, 2 ) }} ),
       m_c0(),
-      m_g(),
+      m_G(),
       m_coeff( g_inputdeck.get< tag::param, tag::velocity, tag::c0 >().at(c),
-               m_c0 )
+               m_c0,
+               m_dU )
     {
       Assert( m_ncomp == 3, "Velocity eq number of components must be 3" );
+      // Zero prescribed mean velocity gradient if full variable is solved for
+      if (m_solve == ctr::DepvarType::FULLVAR) m_dU.fill( 0.0 );
       // Populate inverse hydrodynamics time scales extracted from DNS
       if ( Coefficients::type() == ctr::CoeffPolicyType::HYDROTIMESCALE ) {
         // Configure inverse hydrodyanmics time scale from DNS
@@ -102,17 +104,22 @@ class Velocity {
                   tk::real t,
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
-      using tk::ctr::lookup;
-
       // Update coefficients
       tk::real eps = 0.0;
-      m_coeff.update( m_depvar, m_dissipation_depvar, moments, m_hts, m_c0, t,
-                      eps, m_g );
+      m_coeff.update( m_depvar, m_dissipation_depvar, moments, m_hts, m_solve,
+                      m_c0, t, eps, m_G );
 
-      // Access mean velocity
-      std::array< tk::real, 3 > U{{ lookup(m_U[0],moments),
-                                    lookup(m_U[1],moments),
-                                    lookup(m_U[2],moments) }};
+      // Access mean velocity (if needed)
+      std::array< tk::real, 3 > U{{ 0.0, 0.0, 0.0 }};
+      if (m_solve == ctr::DepvarType::FULLVAR) {
+        using tk::ctr::lookup;
+        U[0] = lookup( m_U[0], moments );
+        U[1] = lookup( m_U[1], moments );
+        U[2] = lookup( m_U[2], moments );
+      }
+
+      // Modify G with the mean velocity gradient
+      for (std::size_t i=0; i<9; ++i) m_G[i] -= m_dU[i];
 
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
@@ -120,17 +127,20 @@ class Velocity {
         std::vector< tk::real > dW( m_ncomp );
         m_rng.gaussian( stream, m_ncomp, dW.data() );
         // Acces particle velocity
-        std::array< const tk::real*, 3 > Up{{ particles.cptr( 0, m_offset ),
-                                              particles.cptr( 1, m_offset ),
-                                              particles.cptr( 2, m_offset ) }};
+        tk::real& Up = particles( p, 0, m_offset );
+        tk::real& Vp = particles( p, 1, m_offset );
+        tk::real& Wp = particles( p, 2, m_offset );
+        // Compute diffusion
         tk::real d = m_c0 * eps * dt;
         d = (d > 0.0 ? std::sqrt(d) : 0.0);
-        tk::real u = particles.var(Up[0],p) - U[0];
-        tk::real v = particles.var(Up[1],p) - U[1];
-        tk::real w = particles.var(Up[2],p) - U[2];
-        particles.var(Up[0],p) += (m_g[0]*u + m_g[1]*v + m_g[2]*w)*dt + d*dW[0];
-        particles.var(Up[1],p) += (m_g[3]*u + m_g[4]*v + m_g[5]*w)*dt + d*dW[1];
-        particles.var(Up[2],p) += (m_g[6]*u + m_g[7]*v + m_g[8]*w)*dt + d*dW[2];
+        // Compute velocity fluctuation
+        tk::real u = Up - U[0];
+        tk::real v = Vp - U[1];
+        tk::real w = Wp - U[2];
+        // Update particle velocity
+        Up += (m_G[0]*u + m_G[1]*v + m_G[2]*w)*dt + d*dW[0];
+        Vp += (m_G[3]*u + m_G[4]*v + m_G[5]*w)*dt + d*dW[1];
+        Wp += (m_G[6]*u + m_G[7]*v + m_G[8]*w)*dt + d*dW[2];
       }
     }
 
@@ -139,9 +149,9 @@ class Velocity {
     const char m_depvar;                //!< Dependent variable
     const ncomp_t m_ncomp;              //!< Number of components
     const ncomp_t m_offset;             //!< Offset SDE operates from
-    const ncomp_t m_position_offset;    //!< Offset of coupled position eq
     const char m_dissipation_depvar;    //!< Depvar of coupled dissipation eq
     const tk::RNG& m_rng;               //!< Random number generator
+    const ctr::DepvarType m_solve;      //!< Depndent variable to solve for
     //! Array of tk::ctr::Product used to access the mean velocity
     const std::array< tk::ctr::Product, 3 > m_U;
 
@@ -152,10 +162,13 @@ class Velocity {
 
     //! Coefficients
     kw::sde_c0::info::expect::type m_c0;
-    std::array< tk::real, 9 > m_g;
+    std::array< tk::real, 9 > m_G;
 
     //! Coefficients policy
     Coefficients m_coeff;
+
+    //! (Optionally) prescribed mean velocity gradient
+    std::array< tk::real, 9 > m_dU;
 };
 
 } // walker::

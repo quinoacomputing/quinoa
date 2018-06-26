@@ -289,6 +289,11 @@ namespace grm {
       check_coupled< tag::velocity,
           tag::dissipation, tag::dissipation_id, MsgKey::DISSIPATION_DEPVAR >
         ( in, stack, MsgKey::DISSIPATION_MISSING );
+      // Error out if no dependent variable to solve for was selected
+      const auto& solve =
+        stack.template get< tag::param, tag::velocity, tag::solve >();
+      if (solve.size() != neq.get< tag::velocity >())
+        Message< Stack, ERROR, MsgKey::NOSOLVE >( stack, in );
       // Set C0 = 2.1 if not specified
       auto& C0 = stack.template get< tag::param, tag::velocity, tag::c0 >();
       if (C0.size() != neq.get< tag::velocity >()) C0.push_back( 2.1 );
@@ -302,10 +307,16 @@ namespace grm {
   struct action< check_position > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
+      using walker::deck::neq;
       // Ensure a coupled velocity model is configured
       check_coupled< tag::position,
           tag::velocity, tag::velocity_id, MsgKey::VELOCITY_DEPVAR >
         ( in, stack, MsgKey::VELOCITY_MISSING );
+      // Error out if no dependent variable to solve for was selected
+      const auto& solve =
+        stack.template get< tag::param, tag::position, tag::solve >();
+      if (solve.size() != neq.get< tag::position >())
+        Message< Stack, ERROR, MsgKey::NOSOLVE >( stack, in );
     }
   };
 
@@ -1099,6 +1110,11 @@ namespace deck {
                                             ctr::CoeffPolicy,
                                             tag::velocity,
                                             tag::coeffpolicy >,
+                           tk::grm::policy< use,
+                                            use< kw::solve >,
+                                            ctr::Depvar,
+                                            tag::velocity,
+                                            tag::solve >,
                            icdelta< tag::velocity >,
                            icbeta< tag::velocity >,
                            icgamma< tag::velocity >,
@@ -1156,6 +1172,11 @@ namespace deck {
                                             ctr::CoeffPolicy,
                                             tag::position,
                                             tag::coeffpolicy >,
+                           tk::grm::policy< use,
+                                            use< kw::solve >,
+                                            ctr::Depvar,
+                                            tag::position,
+                                            tag::solve >,
                            icdelta< tag::position >,
                            icbeta< tag::position >,
                            icgamma< tag::position >,

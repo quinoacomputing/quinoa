@@ -101,14 +101,25 @@ class Dissipation {
       // Access mean turbulence frequency
       tk::real O = lookup( m_O, moments );
 
+      tk::ctr::Term u( static_cast<char>(std::toupper(m_velocity_depvar)), 0,
+                       tk::ctr::Moment::ORDINARY );
+      tk::ctr::Term v( static_cast<char>(std::toupper(m_velocity_depvar)), 1,
+                       tk::ctr::Moment::ORDINARY );
+      tk::ctr::Term w( static_cast<char>(std::toupper(m_velocity_depvar)), 2,
+                       tk::ctr::Moment::ORDINARY );
+      auto r11 = tk::ctr::Product( { u, u } );
+      auto r22 = tk::ctr::Product( { v, v } );
+      auto r33 = tk::ctr::Product( { w, w } );
+      auto r12 = tk::ctr::Product( { u, v } );
+
       // Compute turbulent kinetic energy
-      tk::real k = ( lookup(m_R[0],moments) +
-                     lookup(m_R[1],moments) +
-                     lookup(m_R[2],moments) ) / 2.0;
+      tk::real k = ( lookup(r11,moments) +
+                     lookup(r22,moments) +
+                     lookup(r33,moments) ) / 2.0;
 
       // Production of turbulent kinetic energy
       tk::real S = 1.0; // prescribed shear
-      tk::real P = -lookup(m_R[3],moments)*S;
+      tk::real P = -lookup(r12,moments)*S;
 
       // Source for turbulent frequency
       tk::real Som = m_com2 - m_com1*P/(O*k);

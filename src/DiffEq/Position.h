@@ -55,8 +55,14 @@ class Position {
       m_velocity_offset(
         g_inputdeck.get< tag::param, tag::position, tag::velocity_id >().at(c)),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::position, tag::rng >().at(c) ) ) )
+        g_inputdeck.get< tag::param, tag::position, tag::rng >().at(c) ) ) ),
+      m_coeff( m_dU )
     {
+      // Zero prescribed mean velocity gradient if full variable is solved for
+      if (g_inputdeck.get< tag::param, tag::position, tag::solve >().at(c) ==
+            ctr::DepvarType::FULLVAR) {
+        m_dU.fill( 0.0 );
+      }
       Assert( m_ncomp == 3, "Position eq number of components must be 3" );
     }
 
@@ -82,16 +88,17 @@ class Position {
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Access particle velocity
-        tk::real Up = particles( p, 0, m_velocity_offset );
-        tk::real Vp = particles( p, 1, m_velocity_offset );
-        tk::real Wp = particles( p, 2, m_velocity_offset );
+        tk::real u = particles( p, 0, m_velocity_offset );
+        tk::real v = particles( p, 1, m_velocity_offset );
+        tk::real w = particles( p, 2, m_velocity_offset );
         // Advance all particle positions
         tk::real& Xp = particles( p, 0, m_offset );
         tk::real& Yp = particles( p, 1, m_offset );
         tk::real& Zp = particles( p, 2, m_offset );
-        Xp += Up*dt;
-        Yp += Vp*dt;
-        Zp += Wp*dt;
+        // Advance particle position
+        Xp += (m_dU[0]*Xp + m_dU[1]*Yp + m_dU[2]*Zp + u)*dt;
+        Yp += (m_dU[3]*Xp + m_dU[4]*Yp + m_dU[5]*Zp + v)*dt;
+        Zp += (m_dU[6]*Xp + m_dU[7]*Yp + m_dU[8]*Zp + w)*dt;
       }
     }
 
@@ -102,6 +109,12 @@ class Position {
     const ncomp_t m_offset;             //!< Offset SDE operates from
     const ncomp_t m_velocity_offset;    //!< Offset for coupled velocity eq
     const tk::RNG& m_rng;               //!< Random number generator
+
+    //! Coefficients policy
+    Coefficients m_coeff;
+
+    //! (Optionally) prescribed mean velocity gradient
+    std::array< tk::real, 9 > m_dU;
 };
 
 } // walker::

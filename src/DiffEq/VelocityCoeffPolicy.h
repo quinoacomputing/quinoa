@@ -14,11 +14,36 @@
       \code{.cpp}
         CoeffPolicyName(
           kw::sde_c0::info::expect::type C0_,
-          kw::sde_c0::info::expect::type& C0 )
+          kw::sde_c0::info::expect::type& C0,
+          std::array< tk::real, 9 >& dU )
       \endcode
       where
-      - C0_ denote a real value used to initialize the velocity system.
+      - C0_ denotes a real value used to initialize the velocity system.
       - The reference C0 is to be initialized based on C0_.
+      - _dU_ is an optionally prescribed mean velocity gradient.
+
+    - Must define the function _update()_, called from Velocity::advance(),
+      updating the model coefficients.
+      Required signature:
+      \code{.cpp}
+        void update( char depvar,
+                     char dissipation_depvar,
+                     const std::map< tk::ctr::Product, tk::real >& moments,
+                     const tk::Table& hts,
+                     ctr::DepvarType solve,
+                     kw::sde_c0::info::expect::type C0,
+                     tk::real t,
+                     tk::real& eps,
+                     std::array< tk::real, 9 >& G ) const
+      \endcode
+      where _depvar_ is the dependent variable of the velocity equation,
+      _dissipation_depvar_ is the dependent variable of the coupled dissipation
+      equation, _moments_ if the map of computed statistical moments, _hts_ is
+      a ctr::Table containing the inverse hydrodynamic timescale, _solve_ is the
+      the lable of the dependent variable to solve for (full variable or
+      fluctuation), _C0_ is the Langevin eq constat to use, _t_ is the physical
+      time, _eps_ is the dissipation rate of turbulent kinetic energy to update,
+      and _G_ is the G_{ij} tensor in the Langevin model to update.
 
     - Must define the static function _type()_, returning the enum value of the
       policy option. Example:
@@ -48,14 +73,21 @@ namespace walker {
 //! \details C0 is user-defined and we prescibe a hard-coded mean shear in the x
 //!   direction
 //! \see kw::hydrotimescale_info
-class ConstShear {
+class Velocity_ConstShear {
 
   public:
     //! Constructor: initialize coefficients
-    ConstShear( kw::sde_c0::info::expect::type C0_,
-                kw::sde_c0::info::expect::type& C0 )
+    //! \param[in] C0_ Value of C0 parameter in the Langevin model
+    //! \param[in,out] C0 Value of to set the C0 parameter in the Langevin model
+    //! \param[in,out] dU Prescribed mean velocity gradient1
+    Velocity_ConstShear( kw::sde_c0::info::expect::type C0_,
+                         kw::sde_c0::info::expect::type& C0,
+                         std::array< tk::real, 9 >& dU )
     {
       C0 = C0_;
+      dU = {{ 0.0, 1.0, 0.0,
+              0.0, 0.0, 0.0,
+              0.0, 0.0, 0.0 }};
     }
 
     //! Coefficients policy type accessor
@@ -64,11 +96,12 @@ class ConstShear {
 
     //! Update the model coefficients (prescribing shear)
     //! \details Update the dissipation rate (eps) and G_{ij} based on the
-    //!   turbulent kinetic energy (k) and a prescribed shear
+    //!   turbulent kinetic energy (k) for a prescribed honmogeneous shear flow.
     void update( char depvar,
                  char dissipation_depvar,
                  const std::map< tk::ctr::Product, tk::real >& moments,
                  const tk::Table&,
+                 ctr::DepvarType solve,
                  kw::sde_c0::info::expect::type C0,
                  tk::real,
                  tk::real& eps,
@@ -76,16 +109,37 @@ class ConstShear {
     {
       using tk::ctr::lookup;
       using tk::ctr::mean;
-      using tk::ctr::variance;
+      using tk::ctr::Product;
 
       // Extract diagonal of the Reynolds stress
-      const auto R11 = variance( depvar, 0 );
-      const auto R22 = variance( depvar, 1 );
-      const auto R33 = variance( depvar, 2 );
+      Product r11, r22, r33;
+      if (solve == ctr::DepvarType::FULLVAR) {
+
+        using tk::ctr::variance;
+        r11 = variance( depvar, 0 );
+        r22 = variance( depvar, 1 );
+        r33 = variance( depvar, 2 );
+
+      } else if (solve == ctr::DepvarType::FLUCTUATION) {
+
+        // Since we are solving for the fluctuating velocity, the "ordinary"
+        // moments, e.g., <U1U1>, are really central moments, i.e., <u1u1>.
+        using tk::ctr::Term;
+        using tk::ctr::Moment;
+        auto d = static_cast< char >( std::toupper( depvar ) );
+        Term u( d, 0, Moment::ORDINARY );
+        Term v( d, 1, Moment::ORDINARY );
+        Term w( d, 2, Moment::ORDINARY );
+        r11 = tk::ctr::Product( { u, u } );
+        r22 = tk::ctr::Product( { v, v } );
+        r33 = tk::ctr::Product( { w, w } );
+
+      } else Throw( "Depvar type not implemented" );
+
       // compute turbulent kinetic energy
-      tk::real k = ( lookup(R11,moments) +
-                     lookup(R22,moments) +
-                     lookup(R33,moments) ) / 2.0;
+      tk::real k = ( lookup(r11,moments) +
+                     lookup(r22,moments) +
+                     lookup(r33,moments) ) / 2.0;
 
       // Access mean turbulence frequency
       tk::real O = lookup( mean(dissipation_depvar,0), moments );
@@ -103,12 +157,15 @@ class ConstShear {
 //! \details C0 is user-defined and we pull in a hydrodynamic timescale from an
 //!   external function (from DNS).
 //! \see kw::hydrotimescale_info
-class HydroTimeScale {
+class Velocity_HydroTimeScale {
 
   public:
     //! Constructor: initialize coefficients
-    HydroTimeScale( kw::sde_c0::info::expect::type C0_,
-                    kw::sde_c0::info::expect::type& C0 )
+    //! \param[in] C0_ Value of C0 parameter in the Langevin model
+    //! \param[in,out] C0 Value of to set the C0 parameter in the Langevin model
+    Velocity_HydroTimeScale( kw::sde_c0::info::expect::type C0_,
+                             kw::sde_c0::info::expect::type& C0,
+                             std::array< tk::real, 9 >& )
     {
       C0 = C0_;
     }
@@ -124,6 +181,7 @@ class HydroTimeScale {
                  char,
                  const std::map< tk::ctr::Product, tk::real >& moments,
                  const tk::Table& hts,
+                 ctr::DepvarType,
                  kw::sde_c0::info::expect::type C0,
                  tk::real t,
                  tk::real& eps,
@@ -161,8 +219,8 @@ class HydroTimeScale {
 };
 
 //! List of all Velocity's coefficients policies
-using VelocityCoeffPolicies = boost::mpl::vector< ConstShear
-                                                , HydroTimeScale
+using VelocityCoeffPolicies = boost::mpl::vector< Velocity_HydroTimeScale
+                                                , Velocity_ConstShear
                                                 >;
 
 } // walker::

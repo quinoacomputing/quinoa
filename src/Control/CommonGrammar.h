@@ -78,6 +78,7 @@ namespace grm {
     NOTSELECTED,        //!< Option not selected upstream
     EXISTS,             //!< Variable already used
     NODEPVAR,           //!< Dependent variable has not been specified
+    NOSOLVE,            //!< Dependent variable to solve for has not been spec'd
     NOSUCHDEPVAR,       //!< Dependent variable has not been previously selected
     NOSUCHCOMPONENT,    //!< No such scalar component
     POSITIVECOMPONENT,  //!< Scalar component must be positive
@@ -172,6 +173,10 @@ namespace grm {
     { MsgKey::NODEPVAR, "Dependent variable not specified within the block "
       "preceding this position. This is mandatory for the preceding block. Use "
       "the keyword 'depvar' to specify the dependent variable." },
+    { MsgKey::NOSOLVE, "Dependent variable to solve for not specified within "
+      "the block preceding this position. This is mandatory for the preceding "
+      "block. Use the keyword 'solve' to specify the type of the dependent "
+      "variable to solve for." },
     { MsgKey::NONCOMP, "The number of components has not been specified in the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'ncomp' to specify the number of components." },

@@ -141,6 +141,7 @@ struct interval {};
 struct cmd {};
 struct param {};
 struct init {};
+struct solve {};
 struct chare {};
 struct battery {};
 struct generator {};

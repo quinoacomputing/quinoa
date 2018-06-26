@@ -2798,6 +2798,55 @@ struct mixmassfracbeta_info {
 using mixmassfracbeta =
   keyword< mixmassfracbeta_info, TAOCPP_PEGTL_STRING("mixmassfracbeta") >;
 
+struct fullvar_info {
+  static std::string name() { return "full variable"; }
+  static std::string shortDescription() { return
+    "Select full variable (as the dependent variable) to solve for"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the full random (instantaneous) variable
+    as what quantity to solve for, i.e., use as the dependent variable, in,
+    e.g., a position or velocity model for a stochastic particle. This
+    configures how statistics must be interpreted.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using fullvar = keyword< fullvar_info, TAOCPP_PEGTL_STRING("fullvar") >;
+
+struct fluctuation_info {
+  static std::string name() { return "fluctuation"; }
+  static std::string shortDescription() { return
+    "Select fluctuation (as the dependent variable) to solve for"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the fluctuation of a random variable as
+    what quantity to solve for, i.e., use asthe dependent variable, e.g., in a
+    position or velocity model for a stochastic particle. This configures how
+    statistics must be interpreted.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using fluctuation =
+  keyword< fluctuation_info, TAOCPP_PEGTL_STRING("fluctuation") >;
+
+struct solve_info {
+  static std::string name() { return "solve for"; }
+  static std::string shortDescription() { return
+    "Select dependent variable to solve for"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select an the quantity (the dependent variable)
+    to solve for in walker's position and/or velocity model. This configures how
+    statistics must be interpreted.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + fullvar::string() + "\' | \'"
+                  + fluctuation::string() + '\'';
+    }
+  };
+};
+using solve = keyword< solve_info, TAOCPP_PEGTL_STRING("solve") >;
+
 struct position_info {
   static std::string name() { return "position"; }
   static std::string shortDescription() { return
