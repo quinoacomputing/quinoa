@@ -841,7 +841,6 @@ INPUT                  = \
   /home/jbakosi/code/quinoa/src/../doc/licenses/ROOT_license.dox \
   /home/jbakosi/code/quinoa/src/../doc/licenses/Omega_h_license.dox \
   . \
-  /home/jbakosi/code/quinoa/src/../README.md \
   /home/jbakosi/code/quinoa/src/../src/ \
   /home/jbakosi/code/quinoa/src/../script/
 
