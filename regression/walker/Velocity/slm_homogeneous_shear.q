@@ -15,7 +15,7 @@ walker
 
   rngs
     rngsse_gm55 end
-    mkl_mcg59 end
+    r123_philox end
   end
 
   position      # configure a position equation
@@ -61,7 +61,7 @@ walker
     #COM1 0.44  # optional
     #COM2 0.9   # optional
     #rng rngsse_gm55
-    rng mkl_mcg59
+    rng r123_philox
   end
 
   statistics
