@@ -1,8 +1,8 @@
 /*!
   \page      rngs_input Random number generators input
 
-This page discusses how to configure random number generators (RNG) in a
-@ref walker_main or @ref rngtest_main control/input file.
+This page discusses how to configure random number generators (RNG) in @ref
+walker_main and @ref rngtest_main.
 
 @section Requirements
 
@@ -26,15 +26,16 @@ This page discusses how to configure random number generators (RNG) in a
     RNG from the given library.
 
   - Each @code{.bash}<rngname>...end@endcode block expects a different syntax,
-    dependening on what options are available for (and interfaced with) the
-    given RNG.
+    depending on what options are available for (and interfaced with) the given
+    RNG.
 
 @section mkl_conf Configuration of MKL VSL RNGs
 
 All RNGs provided by MKL can be configured to be initialized using a
-user-specified @code{.shell}seed,@endcode and use a user-specified
+user-specified @code{.shell}seed@endcode, and use a user-specified
 @code{.shell}uniform_method@endcode, @code{.shell}gaussian_method@endcode,
-@code{.shell}beta_method@endcode, and @code{.shell}gamma_method@endcode. For
+@code{.shell}beta_method@endcode, and @code{.shell}gamma_method@endcode, each
+used to control the algorithm used for the various distribution generators. For
 more details on the available options for these keywords, see the on-screen help
 from the executable, e.g.,
 
@@ -47,8 +48,8 @@ available.
 
 @warning Not all MKL RNGs support generating random numbers in parallel. Only
 @code{.bash}mkl_mcg31@endcode, @code{.bash}mkl_mcg59@endcode, and
-@code{.bash}mkl_wh@endcode have leapfrog support and this will support
-generating random numbers from independent streams, required to run in parallel.
+@code{.bash}mkl_wh@endcode have leapfrog support and thus will support
+generating random numbers from independent streams.
 
 @section rngsse_conf Configuration of RNGSSE RNGs
 
@@ -62,17 +63,24 @@ e.g.,
 walker -H seqlen
 @endcode
 
-@warning Not all RNGSSE RNGs support all types of seqence lengths. See
-tk::ctr::RNG::support for details.
+@m_div{m-block m-success}
+All RNGSSE2 RNGs support sampling in parallel.
+@m_enddiv
 
 @note RNGSSE2 is optional. All features in Quinoa can be exercised if RNGSSE2 is
 not available.
+
+@warning Not all RNGSSE RNGs support all types of seqence lengths. See tk::ctr::RNG::support for details.
 
 @section r123_conf Configuration of Random123 RNGs
 
 The RNGs provided by the Random123 library that are hooked up are _ThreeFry_ and
 _Philox_. They can be configured to be initialized using a user-specified seed
-@code{.shell}seed@endcode keyword.
+with the @code{.shell}seed@endcode keyword.
+
+@m_div{m-block m-success}
+All Random123 RNGs support sampling in parallel.
+@m_enddiv
 
 @section rng_example Configuring random number generators
 
