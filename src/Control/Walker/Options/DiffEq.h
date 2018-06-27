@@ -34,7 +34,9 @@ enum class DiffEqType : uint8_t { NO_DIFFEQ=0,
                                   DIRICHLET,
                                   GENDIR,
                                   WRIGHTFISHER,
-                                  LANGEVIN };
+                                  POSITION,
+                                  DISSIPATION,
+                                  VELOCITY };
 
 //! Pack/Unpack: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, DiffEqType& e ) { PUP::pup( p, e ); }
@@ -62,7 +64,9 @@ class DiffEq : public tk::Toggle< DiffEqType > {
                                        , kw::dirichlet
                                        , kw::gendir
                                        , kw::wrightfisher
-                                       , kw::langevin
+                                       , kw::position
+                                       , kw::dissipation
+                                       , kw::velocity
                                        >;
 
     //! Constructor: pass associations references to base, which will handle
@@ -83,7 +87,9 @@ class DiffEq : public tk::Toggle< DiffEqType > {
           { DiffEqType::DIRICHLET, kw::dirichlet::name() },
           { DiffEqType::GENDIR, kw::gendir::name() },
           { DiffEqType::WRIGHTFISHER, kw::wrightfisher::name() },
-          { DiffEqType::LANGEVIN, kw::langevin::name() } },
+          { DiffEqType::POSITION, kw::position::name() },
+          { DiffEqType::DISSIPATION, kw::dissipation::name() },
+          { DiffEqType::VELOCITY, kw::velocity::name() } },
         //! keywords -> Enums
         { { "no_diffeq", DiffEqType::NO_DIFFEQ },
           { kw::ornstein_uhlenbeck::string(), DiffEqType::OU },
@@ -98,7 +104,9 @@ class DiffEq : public tk::Toggle< DiffEqType > {
           { kw::dirichlet::string(), DiffEqType::DIRICHLET },
           { kw::gendir::string(), DiffEqType::GENDIR },
           { kw::wrightfisher::string(), DiffEqType::WRIGHTFISHER },
-          { kw::langevin::string(), DiffEqType::LANGEVIN } } ) {}
+          { kw::position::string(), DiffEqType::POSITION },
+          { kw::dissipation::string(), DiffEqType::DISSIPATION },
+          { kw::velocity::string(), DiffEqType::VELOCITY } } ) {}
 };
 
 } // ctr::

@@ -72,12 +72,13 @@ namespace grm {
     PREMATURE,          //!< Premature end of line
     UNSUPPORTED,        //!< Option not supported
     NOOPTION,           //!< Option does not exist
-    NOINIT,             //!< No initialization policy selected
+    NOINIT,             //!< No (or too many) initialization policy selected
     NOPROBLEM,          //!< No test problem type selected
     NOCOEFF,            //!< No coefficients policy selected
     NOTSELECTED,        //!< Option not selected upstream
     EXISTS,             //!< Variable already used
     NODEPVAR,           //!< Dependent variable has not been specified
+    NOSOLVE,            //!< Dependent variable to solve for has not been spec'd
     NOSUCHDEPVAR,       //!< Dependent variable has not been previously selected
     NOSUCHCOMPONENT,    //!< No such scalar component
     POSITIVECOMPONENT,  //!< Scalar component must be positive
@@ -87,9 +88,11 @@ namespace grm {
     HEIGHTSPIKES,       //!< Height-sum of spikes does not add up to unity
     NODELTA,            //!< No icdelta...end block when initpolicy = jointdelta
     NOBETA,             //!< No icbeta...end block when initpolicy = jointbeta
+    NOGAMMA,            //!< No icgamma...end block when initpolicy = jointgamma
     WRONGBETAPDF,       //!< Wrong number of parameters configuring a beta pdf
+    WRONGGAMMAPDF,      //!< Wrong number of parameters configuring a gamma pdf
     WRONGGAUSSIAN,      //!< Wrong number of parameters configuring a PDF
-    NEGATIVEVAR,        //!< Negative variance given configuring a Gaussian
+    NEGATIVEPARAM,      //!< Negative variance given configuring a Gaussian
     NONCOMP,            //!< No number of components selected
     NORNG,              //!< No RNG selected
     NODT,               //!< No time-step-size policy selected
@@ -99,17 +102,17 @@ namespace grm {
     MALFORMEDSAMPLE,    //!< PDF sample space variable specification incorrect
     INVALIDBINSIZE,     //!< PDF sample space bin size specification incorrect
     INVALIDEXTENT,      //!< PDF sample space extent specification incorrect
-    EXTENTLOWER,        //!< PDF sample space extent-pair in non-increasing order
+    EXTENTLOWER,        //!< PDF sample space extents in non-increasing order
     NOBINS,             //!< PDF sample space bin size required
     ZEROBINSIZE,        //!< PDF sample space bin size incorrect
     MAXSAMPLES,         //!< PDF sample space dimension too large
     MAXBINSIZES,        //!< PDF sample space bin sizes too many
     MAXEXTENTS,         //!< PDF sample space extent-pairs too many
-    BINSIZES,           //!< PDF sample space variables unequal to number of bins
+    BINSIZES,           //!< PDF sample space vars unequal to number of bins
     PDF,                //!< PDF specification syntax error
     PDFEXISTS,          //!< PDF identifier already defined
     BADPRECISION,       //!< Floating point precision specification incorrect
-    PRECISIONBOUNDS,    //!< Floating point precision specification out of bounds
+    PRECISIONBOUNDS,    //!< Floating point precision spec out of bounds
     UNFINISHED,         //!< Unfinished block
     VORTICAL_UNFINISHED,//!< Vortical flow problem configuration unfinished
     ENERGY_UNFINISHED,  //!< Nonlinear energy growth problem config unfinished
@@ -118,6 +121,12 @@ namespace grm {
     WRONGSIZE,          //!< Size of parameter vector incorrect
     HYDROTIMESCALES,    //!< Missing required hydrotimescales vector
     HYDROPRODUCTIONS,   //!< Missing required hydroproductions vector
+    POSITION_DEPVAR,    //!< Missing required position model dependent variable
+    VELOCITY_DEPVAR,    //!< Missing required velocity model dependent variable
+    DISSIPATION_DEPVAR, //!< Missing required dissipation model dependent var
+    POSITION_MISSING,   //!< Missing required position model
+    VELOCITY_MISSING,   //!< Missing required velocity model
+    DISSIPATION_MISSING,//!< Missing required dissipation model
     INITREFODD,         //!< AMR initref vector size is odd (must be even)
     CHARMARG };         //!< Argument inteded for the Charm++ runtime system
 
@@ -142,9 +151,9 @@ namespace grm {
     { MsgKey::NOSUCHDEPVAR, "Dependent variable not selected upstream in the "
       "input file. To request a statistic or PDF involving this variable, use "
       "this variable as a coefficients policy variable, or use this variable as "
-      "a refinement variable, an equation must be specified "
-      "upstream in the control file assigning this variable to an "
-      "equation to be integrated using the depvar keyword." },
+      "a refinement variable, or use a dependent variable in any way, an "
+      "equation must be specified upstream in the control file assigning this "
+      "variable to an equation to be integrated using the depvar keyword." },
     { MsgKey::NOSUCHCOMPONENT, "Scalar component, used in conjunction with "
       "dependent variable, does not exist in the preceeding block. This happens "
       "when referring to a scalar component of a multi-component system of "
@@ -164,6 +173,10 @@ namespace grm {
     { MsgKey::NODEPVAR, "Dependent variable not specified within the block "
       "preceding this position. This is mandatory for the preceding block. Use "
       "the keyword 'depvar' to specify the dependent variable." },
+    { MsgKey::NOSOLVE, "Dependent variable to solve for not specified within "
+      "the block preceding this position. This is mandatory for the preceding "
+      "block. Use the keyword 'solve' to specify the type of the dependent "
+      "variable to solve for." },
     { MsgKey::NONCOMP, "The number of components has not been specified in the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'ncomp' to specify the number of components." },
@@ -178,8 +191,9 @@ namespace grm {
       "constant or 'cfl' to set an adaptive time step size calculation policy. "
       "Setting 'cfl' and 'dt' are mutually exclusive. If both 'cfl' and 'dt' "
       "are set, 'dt' wins." },
-    { MsgKey::NOINIT, "No initialization policy has been specified within the "
-      "block preceding this position. This is mandatory for the preceding "
+    { MsgKey::NOINIT, "No (or too many) initialization policy (or policies) "
+      "has been specified within the block preceding this position. An "
+      "initialization policy (and only one) is mandatory for the preceding "
       "block. Use the keyword 'init' to specify an initialization policy." },
     { MsgKey::NOPROBLEM, "No test problem has been specified within the "
       "block preceding this position. This is mandatory for the preceding "
@@ -199,6 +213,12 @@ namespace grm {
       "initpolicy is selected. Pick an initpolicy different than jointbeta "
       "(using keyword 'init') or specify at least a single betapdf...end block "
       "(within a icbeta...end block)." },
+    { MsgKey::NOGAMMA, "No gamma...end block with at least a single "
+      "gammapdf...end block has been specified within the block preceding this "
+      "position. This is mandatory for the preceding block if jointgamma "
+      "initpolicy is selected. Pick an initpolicy different than jointgamma "
+      "(using keyword 'init') or specify at least a single gammapdf...end block "
+      "(within a icgamma...end block)." },
     { MsgKey::ODDSPIKES, "Incomplete spike...end block has been specified "
       "within the  block preceding this position. A spike...end block "
       "must contain an even number of real numbers, where every odd one is the "
@@ -207,11 +227,14 @@ namespace grm {
     { MsgKey::WRONGBETAPDF, "Wrong number of beta distribution parameters. A "
       "beta distribution must be configured by exactly four real numbers in a "
       "betapdf...end block." },
+    { MsgKey::WRONGGAMMAPDF, "Wrong number of gamma distribution parameters. A "
+      "gamma distribution must be configured by exactly two real numbers in a "
+      "gammapdf...end block." },
     { MsgKey::WRONGGAUSSIAN, "Wrong number of Gaussian distribution "
       "parameters. A Gaussian distribution must be configured by exactly 2 "
       "real numbers in a gaussian...end block." },
-    { MsgKey::NEGATIVEVAR, "Negative variance specified configuring a "
-      " probabililty distribution." },
+    { MsgKey::NEGATIVEPARAM, "Negative distribution parameter (e.g., variance, "
+      "shape, scale) specified configuring a probabililty distribution." },
     { MsgKey::NOTERMS, "Statistic requires at least one variable." },
     { MsgKey::NOSAMPLES, "PDF requires at least one sample space variable." },
     { MsgKey::INVALIDSAMPLESPACE, "PDF sample space specification incorrect. A "
@@ -276,6 +299,25 @@ namespace grm {
       "Specification of a 'hydrotimescales' vector missing." },
     { MsgKey::HYDROPRODUCTIONS, "Error in the preceding line or block. "
       "Specification of a 'hydroproductions' vector missing." },
+    { MsgKey::POSITION_DEPVAR, "Error in the preceding line or block. "
+      "Specification of a dependent variable, configured as a coupled position "
+      "model, is missing. Specify a dependent variable in an equation block "
+      "as, e.g., depvar x, then use 'position x' within the block in question, "
+      "e.g., velocity." },
+    { MsgKey::DISSIPATION_DEPVAR, "Error in the preceding line or block. "
+      "Specification of a dependent variable, configured as a coupled "
+      "dissipation model, is missing. Specify a dependent variable in an "
+      "equation block as, e.g., depvar x, then use 'dissipation x' within the "
+      "block in question, e.g., velocity." },
+    { MsgKey::VELOCITY_DEPVAR, "Error in the preceding line or block. "
+      "Specification of a dependent variable, configured as a coupled velocity "
+      "model, is missing. Specify a dependent variable in an equation block "
+      "as, e.g., depvar u, then use 'velocity u' within the block in question, "
+      "e.g., position." },
+    { MsgKey::POSITION_MISSING, "Specification for a position model missing." },
+    { MsgKey::VELOCITY_MISSING, "Specification for a velocity model missing." },
+    { MsgKey::DISSIPATION_MISSING,
+      "Specification for a dissipation model missing." },
     { MsgKey::INITREFODD, "Error in the preceding line or block. "
       "The number of edge-nodes, marking edges as pairs of nodes, used for "
       "explicit tagging of edges for initial mesh refineoment is odd (it must "
@@ -1004,6 +1046,26 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  template< class eq, class param > struct check_gammapdfs : pegtl::success {};
+  //! \brief Check if the gammapdf parameter vector specifications are correct
+  //! \details gammapdf vectors are used to configure univariate gamma
+  //!   distributions.
+  template< class eq, class param >
+  struct action< check_gammapdfs< eq, param > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      const auto& gamma =
+        stack.template get< tag::param, eq, param >().back().back();
+      // Error out if the number parameters is not two
+      if (gamma.size() != 2)
+        Message< Stack, ERROR, MsgKey::WRONGGAMMAPDF >( stack, in );
+      // Error out if the specified shape or scale parameter negative
+      if (gamma[0] < 0.0 || gamma[1] < 0.0)
+        Message< Stack, ERROR, MsgKey::NEGATIVEPARAM >( stack, in );
+    }
+  };
+
+  //! Rule used to trigger action
   template< class eq, class param > struct check_gaussians : pegtl::success {};
   //! Check if the Gaussian PDF parameter vector specifications are correct
   //! \details Gaussian vectors are used to configure univariate Gaussian
@@ -1019,7 +1081,7 @@ namespace grm {
         Message< Stack, ERROR, MsgKey::WRONGGAUSSIAN >( stack, in );
       // Error out if the specified variance is negative
       if (gaussian.back() < 0.0)
-        Message< Stack, ERROR, MsgKey::NEGATIVEVAR >( stack, in );
+        Message< Stack, ERROR, MsgKey::NEGATIVEPARAM >( stack, in );
     }
   };
 

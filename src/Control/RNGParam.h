@@ -19,6 +19,7 @@
   #include "Options/MKLUniformMethod.h"
   #include "Options/MKLGaussianMethod.h"
   #include "Options/MKLBetaMethod.h"
+  #include "Options/MKLGammaMethod.h"
 #endif
 
 namespace tk {
@@ -45,7 +46,8 @@ using RNGMKLParam = tk::tuple::tagged_tuple<
   tag::seed,            kw::seed::info::expect::type, //!< seed
   tag::uniform_method,  MKLUniformMethodType,         //!< uniform method type
   tag::gaussian_method, MKLGaussianMethodType,        //!< Gaussian method type
-  tag::beta_method,     MKLBetaMethodType             //!< beta method type
+  tag::beta_method,     MKLBetaMethodType,            //!< beta method type
+  tag::gamma_method,    MKLGammaMethodType            //!< gamma method type
 >;
 //! MKL RNG parameters bundle associating RNG types and their parameters
 using RNGMKLParameters = std::map< RNGType, RNGMKLParam >;

@@ -34,6 +34,7 @@ add_subdirectory(walker/Gamma)
 add_subdirectory(walker/NumFracBeta)
 add_subdirectory(walker/MassFracBeta)
 add_subdirectory(walker/MixMassFracBeta)
+add_subdirectory(walker/Velocity)
 
 # RNGTest regression tests
 if(HAS_TESTU01)

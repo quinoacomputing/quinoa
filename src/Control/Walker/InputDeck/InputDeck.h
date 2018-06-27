@@ -109,6 +109,10 @@ class InputDeck :
                                      #endif
                                      , kw::r123_threefry
                                      , kw::r123_philox
+                                     , kw::const_shear
+                                     , kw::position
+                                     , kw::velocity
+                                     , kw::instantaneous_velocity
                                      >;
     using keywords4 = boost::mpl::set< kw::seed
                                      #ifdef HAS_MKL
@@ -169,10 +173,11 @@ class InputDeck :
                                      , kw::jointgaussian
                                      , kw::icbeta
                                      , kw::betapdf
-                                     , kw::langevin
                                      , kw::sde_c0
                                      , kw::icgaussian
                                      , kw::gaussian
+                                     , kw::dissipation
+                                     , kw::jointgamma
                                      >;
     using keywords7 = boost::mpl::set< kw::hydrotimescales
                                      , kw::hydroproductions
@@ -195,6 +200,23 @@ class InputDeck :
                                      , kw::prod_A075S
                                      , kw::prod_A075L
                                      >;
+    using keywords8 = boost::mpl::set< kw::gnorm
+                                     , kw::gnorm_accurate
+                                     , kw::gamma_method
+                                     , kw::icgamma
+                                     , kw::gammapdf
+                                     , kw::sde_c3
+                                     , kw::sde_c4
+                                     , kw::sde_com1
+                                     , kw::sde_com2
+                                     , kw::fullvar
+                                     , kw::fluctuation
+                                     , kw::solve
+                                     , kw::variant
+                                     , kw::slm
+                                     , kw::glm
+                                     >;
+
 
     //! \brief Constructor: set all defaults
     //! \param[in] cl Previously parsed and store command line
@@ -227,6 +249,7 @@ class InputDeck :
       boost::mpl::for_each< keywords5 >( ctrinfoFill );
       boost::mpl::for_each< keywords6 >( ctrinfoFill );
       boost::mpl::for_each< keywords7 >( ctrinfoFill );
+      boost::mpl::for_each< keywords8 >( ctrinfoFill );
     }
 
     //! Extract moment names of requested statistics
