@@ -66,8 +66,8 @@ class UnsMesh {
       //! Function call operator computing hash of node IDs
       //! \param[in] p Array of node IDs of element primitive
       //! \return Unique hash value for the same array of node IDs
-      //! \note The order of the nodes do not matter: the IDs are sorted before
-      //!   the hash is computed.
+      //! \note The order of the nodes does not matter: the IDs are sorted
+      //!   before the hash is computed.
       std::size_t operator()( const std::array< std::size_t, N >& p ) const {
         using highwayhash::SipHash;
         Shaper< N > shaper;
@@ -86,8 +86,8 @@ class UnsMesh {
       //! \param[in] l Left element primitive given by array of node IDs
       //! \param[in] r Right element primitive given by array of node IDs
       //! \return True if l = r, false otherwise
-      //! \note The order of the nodes do not matter: the IDs are sorted before
-      //!   the primitives, given by the node IDs, is computed.
+      //! \note The order of the nodes does not matter: the IDs are sorted
+      //!   before the primitives, given by the node IDs, is computed.
       bool operator()( const std::array< std::size_t, N >& l,
                        const std::array< std::size_t, N >& r ) const
       {
