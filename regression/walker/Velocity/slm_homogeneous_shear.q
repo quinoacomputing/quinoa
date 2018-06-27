@@ -14,7 +14,6 @@ walker
   ttyi  1    # TTY output interval
 
   rngs
-    rngsse_gm55 end
     r123_philox end
   end
 
@@ -45,7 +44,7 @@ walker
     end
     #C0 2.1     # optional
     coeff const_shear
-    rng rngsse_gm55
+    rng r123_philox
   end
 
   dissipation
@@ -60,7 +59,6 @@ walker
     #C4 0.25    # optional
     #COM1 0.44  # optional
     #COM2 0.9   # optional
-    #rng rngsse_gm55
     rng r123_philox
   end
 
