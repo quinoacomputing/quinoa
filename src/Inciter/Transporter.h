@@ -29,7 +29,7 @@ class Transporter : public CBase_Transporter {
 
   private:
     //! Indices for progress report on mesh preparation
-    enum ProgMesh{ PART=0, DIST, REFINE, BND, QUERY, MASK, REORD, BOUND };
+    enum ProgMesh{ PART=0, DIST, REFINE, BND, COMM, MASK, REORD, BOUND };
 
   public:
     #if defined(__clang__)
@@ -102,8 +102,8 @@ class Transporter : public CBase_Transporter {
     void pedistributed() { m_progMesh.inc< DIST >(); }
     //! Non-reduction target for receiving progress report on flattening mesh
     void chbnd() { m_progMesh.inc< BND >(); }
-    //! Non-reduction target for receiving progress report on node ID query
-    void chquery() { m_progMesh.inc< QUERY >(); }
+    //! Non-reduction target for receiving progress report on node ID comm map
+    void chcomm() { m_progMesh.inc< COMM >(); }
     //! Non-reduction target for receiving progress report on node ID mask
     void chmask() { m_progMesh.inc< MASK >(); }
     //! Non-reduction target for receiving progress report on reordering mesh

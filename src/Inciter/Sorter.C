@@ -15,10 +15,13 @@
 #include "DerivedData.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "Solver.h"
+#include "HashMapReducer.h"
 
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
+
+static CkReduction::reducerType BndNodeMerger;
 
 } // inciter::
 
@@ -45,8 +48,6 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
   m_bnode( bnode ),
   m_nchare( nchare ),
   m_nodeset( begin(ginpoel), end(ginpoel) ),
-  m_nquery( 0 ),
-  m_ncom( 0 ),
   m_noffset( 0 ),
   m_msum(),
   m_reordcomm(),
@@ -90,61 +91,65 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
   // Make boundary nodes unique
   tk::unique( chbnode );
 
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chbnd();
+  if (g_inputdeck.get< tag::cmd, tag::feedback >()) m_host.chbnd();
 
-  // Send chare boundary nodes to all fellow chares in a broadcast fashion
-  thisProxy.query( thisIndex, chbnode );
+  // Aggregate boundary nodes across all Sorter chares
+  std::unordered_map< int, std::vector< std::size_t > >
+    bnd{{ thisIndex, std::move(chbnode) }};
+  auto stream = tk::serialize( bnd );
+  contribute( stream.first, stream.second.get(), BndNodeMerger,
+    CkCallback(CkIndex_Sorter::comm(nullptr),thisProxy) );
 }
 
 void
-Sorter::query( int fromch, const std::vector< std::size_t >& bnodes )
+Sorter::registerReducers()
 // *****************************************************************************
-//  Query mesh nodes to identify if they are shared
-//! \param[in] fromch Querying chare
-//! \param[in] bnodes List of global mesh node IDs to query
-//! \details Note that every chare calls this function in a broadcast fashion,
-//!   including our own.
+//  Configure Charm++ reduction types
+//! \details Since this is a [nodeinit] routine, the runtime system executes the
+//!   routine exactly once on every logical node early on in the Charm++ init
+//!   sequence. Must be static as it is called without an object. See also:
+//!   Section "Initializations at Program Startup" at in the Charm++ manual
+//!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
 // *****************************************************************************
 {
-  std::vector< std::size_t > found;
-  for (auto j : bnodes) {
-    const auto it = m_nodeset.find( j );
-    if (it != end(m_nodeset)) found.push_back( j );
-  }
-
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() && ++m_nquery == m_nchare )
-    m_host.chquery();
-
-  // Return nodes found to sender
-  thisProxy[ fromch ].comm( thisIndex, found );
+  BndNodeMerger = CkReduction::addReducer(
+                    tk::mergeHashMap< int, std::vector< std::size_t > > );
 }
 
 void
-Sorter::comm( int fromch, const std::vector< std::size_t >& found )
+Sorter::comm( CkReductionMsg* msg )
 // *****************************************************************************
-//  Receive mesh node IDs (and setup chare-node communication map)
+//  Receive aggregated chare boundary nodes associated to chares
 //! \param[in] c The chare call comes from
 //! \param[in] found Mesh nodes shared with chare fromch
-//! \details Note that every chare will call this function, since query() was
-//!   called in a broadcast fashion and query() answers to every chare once.
-//!   This is because before query() we do not yet know which chare we share at
-//!   least a single mesh node with.
+//! \details This is a reduction target receiving the aggregated chare boundary
+//!    nodes associated to chare IDs across the whole problem. Here we setup
+//!    the chare-node communication map.
 // *****************************************************************************
 {
+  if (g_inputdeck.get< tag::cmd, tag::feedback >()) m_host.chcomm();
+
+   // Unpack final result of aggregating boundary nodes associated to chares
+   std::unordered_map< int, std::vector< std::size_t > > bnd;
+   PUP::fromMem creator( msg->getData() );
+   creator | bnd;
+   delete msg;
+
   // Store the global mesh node IDs associated to chare IDs bordering our mesh
   // chunk. This loop computes m_msum, a symmetric chare-node communication map,
   // that associates a unique set of global node IDs to chare IDs we share these
   // nodes with.
-  if (fromch != thisIndex) m_msum[ fromch ].insert( begin(found), end(found) );
+   for (const auto& c : bnd)
+     if (c.first != thisIndex)
+       for (auto i : c.second) {
+         const auto it = m_nodeset.find( i );
+         if (it != end(m_nodeset)) m_msum[ c.first ].insert( i );
+       }
 
-  // Once we have heard from all chares (including ourselves), continue with
-  // mesh node reordering if configured
-  if (++m_ncom == m_nchare) {
-    if (g_inputdeck.get< tag::discr, tag::reorder >())
-      mask();   // continue with mesh node reordering if requested (or required)
-    else
-      create(); // skip mesh node reordering
-   }
+  if (g_inputdeck.get< tag::discr, tag::reorder >())
+    mask();   // continue with mesh node reordering if requested (or required)
+  else
+    create(); // skip mesh node reordering
 }
 
 void
@@ -408,7 +413,7 @@ Sorter::create()
 // they will operate on
 // *****************************************************************************
 {
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chbounds();
+  if (g_inputdeck.get< tag::cmd, tag::feedback >()) m_host.chbounds();
 
   if ( g_inputdeck.get< tag::discr, tag::scheme >() == ctr::SchemeType::MatCG)
     // broadcast this chare's bounds of global node IDs to matrix solvers
