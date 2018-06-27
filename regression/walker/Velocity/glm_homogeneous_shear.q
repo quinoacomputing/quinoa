@@ -76,7 +76,7 @@ walker
   end
 
   pdfs
-    interval  1
+    interval  10
     filetype  txt
     policy    multiple
     centering elem
