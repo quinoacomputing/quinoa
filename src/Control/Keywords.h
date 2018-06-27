@@ -2847,6 +2847,48 @@ struct solve_info {
 };
 using solve = keyword< solve_info, TAOCPP_PEGTL_STRING("solve") >;
 
+struct slm_info {
+  static std::string name() { return "slm"; }
+  static std::string shortDescription() { return
+    "Select the simplified Langevin model (SLM) for the velocity PDF model"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the simplified Langevin model (SLM) for
+    the Lagrangian velocity in turbulent flows.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using slm = keyword< slm_info, TAOCPP_PEGTL_STRING("slm") >;
+
+struct glm_info {
+  static std::string name() { return "glm"; }
+  static std::string shortDescription() { return
+    "Select the generalized Langevin model for the velocity PDF model"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the generalized Langevin model for the
+    Lagrangian velocity in turbulent flows.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using glm = keyword< glm_info, TAOCPP_PEGTL_STRING("glm") >;
+
+struct variant_info {
+  static std::string name() { return "variant"; }
+  static std::string shortDescription() { return
+    "Select velocity PDF model variant"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the velocity PDF model variant.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + slm::string() + "\' | \'"
+                  + glm::string() + '\'';
+    }
+  };
+};
+using variant = keyword< variant_info, TAOCPP_PEGTL_STRING("variant") >;
+
 struct position_info {
   static std::string name() { return "position"; }
   static std::string shortDescription() { return

@@ -212,6 +212,9 @@ class InputDeck :
                                      , kw::fullvar
                                      , kw::fluctuation
                                      , kw::solve
+                                     , kw::variant
+                                     , kw::slm
+                                     , kw::glm
                                      >;
 
 

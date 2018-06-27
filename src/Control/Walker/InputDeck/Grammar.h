@@ -297,6 +297,11 @@ namespace grm {
       // Set C0 = 2.1 if not specified
       auto& C0 = stack.template get< tag::param, tag::velocity, tag::c0 >();
       if (C0.size() != neq.get< tag::velocity >()) C0.push_back( 2.1 );
+      // Set SLM if not specified
+      auto& variant =
+        stack.template get< tag::param, tag::velocity, tag::variant >();
+      if (variant.size() != neq.get< tag::velocity >())
+        variant.push_back( walker::ctr::VelocityVariantType::SLM );
     }
   };
 
@@ -1115,6 +1120,11 @@ namespace deck {
                                             ctr::Depvar,
                                             tag::velocity,
                                             tag::solve >,
+                           tk::grm::policy< use,
+                                            use< kw::variant >,
+                                            ctr::VelocityVariant,
+                                            tag::velocity,
+                                            tag::variant >,
                            icdelta< tag::velocity >,
                            icbeta< tag::velocity >,
                            icgamma< tag::velocity >,

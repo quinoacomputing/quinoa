@@ -127,6 +127,7 @@ struct skewnormal {};
 struct position {};
 struct dissipation {};
 struct velocity {};
+struct variant {};
 struct mass {};
 struct hydro {};
 struct energy {};

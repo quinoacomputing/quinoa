@@ -1022,8 +1022,16 @@ DiffEqStack::infoVelocity( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
   auto cp = g_inputdeck.get< tag::param, tag::velocity, tag::coeffpolicy >()[c];
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name( cp ) );
+
   auto solve = g_inputdeck.get< tag::param, tag::velocity, tag::solve >()[c];
-  nfo.emplace_back( "solve for", ctr::Depvar().name( solve ) );
+  auto depvar = ctr::Depvar();
+  nfo.emplace_back( depvar.group(), depvar.name(solve) );
+
+  auto variant =
+    g_inputdeck.get< tag::param, tag::velocity, tag::variant >()[c];
+  auto velocity = ctr::VelocityVariant();
+  nfo.emplace_back( velocity.group(), velocity.name(variant) );
+
   if (cp == ctr::CoeffPolicyType::HYDROTIMESCALE) {
     nfo.emplace_back(
       "inverse hydro time scale",

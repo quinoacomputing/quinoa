@@ -63,6 +63,8 @@ class Velocity {
       m_U( {{ tk::ctr::mean( m_depvar, 0 ),
               tk::ctr::mean( m_depvar, 1 ),
               tk::ctr::mean( m_depvar, 2 ) }} ),
+      m_variant(
+       g_inputdeck.get< tag::param, tag::velocity, tag::variant >().at(c) ),
       m_c0(),
       m_G(),
       m_coeff( g_inputdeck.get< tag::param, tag::velocity, tag::c0 >().at(c),
@@ -107,7 +109,7 @@ class Velocity {
       // Update coefficients
       tk::real eps = 0.0;
       m_coeff.update( m_depvar, m_dissipation_depvar, moments, m_hts, m_solve,
-                      m_c0, t, eps, m_G );
+                      m_variant, m_c0, t, eps, m_G );
 
       // Access mean velocity (if needed)
       std::array< tk::real, 3 > U{{ 0.0, 0.0, 0.0 }};
@@ -154,6 +156,8 @@ class Velocity {
     const ctr::DepvarType m_solve;      //!< Depndent variable to solve for
     //! Array of tk::ctr::Product used to access the mean velocity
     const std::array< tk::ctr::Product, 3 > m_U;
+    //! Velocity model variant
+    const ctr::VelocityVariantType m_variant;
 
     //! Selected inverse hydrodynamics time scale (if used)
     //! \details This is only used if the coefficients policy is

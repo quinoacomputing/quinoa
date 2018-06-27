@@ -31,6 +31,7 @@
                      const std::map< tk::ctr::Product, tk::real >& moments,
                      const tk::Table& hts,
                      ctr::DepvarType solve,
+                     ctr::VelocityVariantType variant,
                      kw::sde_c0::info::expect::type C0,
                      tk::real t,
                      tk::real& eps,
@@ -39,11 +40,12 @@
       where _depvar_ is the dependent variable of the velocity equation,
       _dissipation_depvar_ is the dependent variable of the coupled dissipation
       equation, _moments_ if the map of computed statistical moments, _hts_ is
-      a ctr::Table containing the inverse hydrodynamic timescale, _solve_ is the
-      the lable of the dependent variable to solve for (full variable or
-      fluctuation), _C0_ is the Langevin eq constat to use, _t_ is the physical
-      time, _eps_ is the dissipation rate of turbulent kinetic energy to update,
-      and _G_ is the G_{ij} tensor in the Langevin model to update.
+      a ctr::Table containing the inverse hydrodynamic timescale, _variant_ is
+      the velocity model variant, _solve_ is the the lable of the dependent
+      variable to solve for (full variable or fluctuation), _C0_ is the Langevin
+      eq constat to use, _t_ is the physical time, _eps_ is the dissipation rate
+      of turbulent kinetic energy to update, and _G_ is the G_{ij} tensor in the
+      Langevin model to update.
 
     - Must define the static function _type()_, returning the enum value of the
       policy option. Example:
@@ -69,6 +71,78 @@
 
 namespace walker {
 
+//! Calculate the 2nd order tensor Gij based on the simplified Langevin model
+//! \param[in] hts Inverse hydrodynamics time scale, e.g., eps/k
+//! \param[in] C0 Coefficient C0 in SLM
+//! \return Tensor Gij computed based on the simplified Langevin model
+static inline std::array< tk::real, 9 >
+slm( tk::real hts, tk::real C0 ) {
+
+  std::array< tk::real, 9 > G;
+  G.fill( 0.0 );
+  G[0] = G[4] = G[8] = -(0.5+0.75*C0) * hts;
+
+  return G;
+}
+
+//! Calculate the 2nd order tensor Gij based on the generalized Langevin model
+//! \param[in] hts Inverse hydrodynamics time scale, e.g., eps/k
+//! \param[in] C0 Coefficient C0 in SLM
+//! \param[in] rs Reynolds stress
+//! \param[in] dU Mean velocity gradient
+//! \return Tensor Gij computed based on the simplified Langevin model
+static inline std::array< tk::real, 9 >
+glm( tk::real hts,
+     tk::real C0,
+     const std::array< tk::real, 6 >& rs,
+     const std::array< tk::real, 9 >& dU )
+{
+  // Generalized Langevion model coefficients
+  std::array< tk::real, 2 > ALPHA{{ -(0.5 + 0.75*C0), 3.7 }};
+  std::array< tk::real, 3 > BETA{{ -0.2, 0.8, -0.2 }};
+  std::array< tk::real, 6 > GAMMA{{ -1.28, 3.01, -2.18, 0.0, 4.29, -3.09 }};
+
+  // Compute Reynolds stress anisotropy
+  tk::real tr = rs[0] + rs[1] + rs[2];
+  std::array< tk::real, 9 > b{{ rs[0]/tr-1.0/3.0,
+                                rs[3]/tr,
+                                rs[4]/tr,
+                                rs[3]/tr,
+                                rs[1]/tr-1.0/3.0,
+                                rs[5]/tr,
+                                rs[4]/tr,
+                                rs[5]/tr,
+                                rs[2]/tr-1.0/3.0 }};
+  // Compute Gij
+  std::array< tk::real, 9 > G;
+  G.fill( 0.0 );
+  for (std::size_t i=0; i<3; ++i ) {
+    // to main diagonal: hts * ALPHA1 * delta_ij + BETA1 * deltaij * d<Ul>/dxl
+    G[i*3+i] += hts*ALPHA[0] + BETA[0]*(dU[0] + dU[4] + dU[8]);
+    // to main diagonal: GAMMA1 * deltaij * bml * d<Um>/dxl
+    tk::real dtmp = 0.0;
+    for (std::size_t m=0; m<3; ++m)
+      for (std::size_t l=0; l<3; ++l )
+         dtmp += b[m*3+l]*dU[m*3+l];
+    G[i*3+i] += GAMMA[0]*dtmp;
+    // to main and off-diagonal
+    for (std::size_t j=0; j<3; ++j) {
+      G[i*3+j] += hts*ALPHA[1]*b[i*3+j] +  // eps/k * ALPHA2 * bij
+                  BETA[1]*dU[i*3+j] +      // BETA2 * d<Ui>/dj
+                  BETA[2]*dU[j*3+i] +      // BETA3 * d<Uj>/di
+                  // GAMMA4 * bij * d<Ul>/dxl
+                  GAMMA[3]*b[i*3+j]*(dU[0] + dU[4] + dU[8]);
+      for (std::size_t l=0; l<3; ++l)
+        G[i*3+j] += GAMMA[1]*b[j*3+l]*dU[i*3+l] + // GAMMA2 * bjl * d<Ui>/dxl
+                    GAMMA[2]*b[j*3+l]*dU[l*3+i] + // GAMMA3 * bjl * d<Ul>/dxi
+                    GAMMA[4]*b[i*3+l]*dU[l*3+j] + // GAMMA5 * bil * d<Ul>/dxj
+                    GAMMA[5]*b[i*3+l]*dU[j*3+l];  // GAMMA6 * bil * d<Uj>/dxl
+    }
+  }
+
+  return G;
+}
+
 //! Velocity equation coefficients policy with prescribed mean shear
 //! \details C0 is user-defined and we prescibe a hard-coded mean shear in the x
 //!   direction
@@ -82,12 +156,13 @@ class Velocity_ConstShear {
     //! \param[in,out] dU Prescribed mean velocity gradient1
     Velocity_ConstShear( kw::sde_c0::info::expect::type C0_,
                          kw::sde_c0::info::expect::type& C0,
-                         std::array< tk::real, 9 >& dU )
+                         std::array< tk::real, 9 >& dU ) :
+      m_dU( {{ 0.0, 1.0, 0.0,
+               0.0, 0.0, 0.0,
+               0.0, 0.0, 0.0 }} )
     {
       C0 = C0_;
-      dU = {{ 0.0, 1.0, 0.0,
-              0.0, 0.0, 0.0,
-              0.0, 0.0, 0.0 }};
+      dU = m_dU;
     }
 
     //! Coefficients policy type accessor
@@ -102,6 +177,7 @@ class Velocity_ConstShear {
                  const std::map< tk::ctr::Product, tk::real >& moments,
                  const tk::Table&,
                  ctr::DepvarType solve,
+                 ctr::VelocityVariantType variant,
                  kw::sde_c0::info::expect::type C0,
                  tk::real,
                  tk::real& eps,
@@ -112,13 +188,17 @@ class Velocity_ConstShear {
       using tk::ctr::Product;
 
       // Extract diagonal of the Reynolds stress
-      Product r11, r22, r33;
+      Product r11, r22, r33, r12, r13, r23;
       if (solve == ctr::DepvarType::FULLVAR) {
 
         using tk::ctr::variance;
+        using tk::ctr::covariance;
         r11 = variance( depvar, 0 );
         r22 = variance( depvar, 1 );
         r33 = variance( depvar, 2 );
+        r12 = covariance( depvar, 0, depvar, 1 );
+        r13 = covariance( depvar, 0, depvar, 2 );
+        r23 = covariance( depvar, 1, depvar, 2 );
 
       } else if (solve == ctr::DepvarType::FLUCTUATION) {
 
@@ -133,13 +213,22 @@ class Velocity_ConstShear {
         r11 = tk::ctr::Product( { u, u } );
         r22 = tk::ctr::Product( { v, v } );
         r33 = tk::ctr::Product( { w, w } );
+        r12 = tk::ctr::Product( { u, v } );
+        r13 = tk::ctr::Product( { u, w } );
+        r23 = tk::ctr::Product( { v, w } );
 
       } else Throw( "Depvar type not implemented" );
 
-      // compute turbulent kinetic energy
-      tk::real k = ( lookup(r11,moments) +
-                     lookup(r22,moments) +
-                     lookup(r33,moments) ) / 2.0;
+      // Compute nonzero components of the Reynolds stress
+      std::array< tk::real, 6 > rs{{ lookup(r11,moments),
+                                     lookup(r22,moments),
+                                     lookup(r33,moments),
+                                     lookup(r12,moments),
+                                     lookup(r13,moments),
+                                     lookup(r23,moments) }};
+
+      // Compute turbulent kinetic energy
+      tk::real k = (rs[0] + rs[1] + rs[2]) / 2.0;
 
       // Access mean turbulence frequency
       tk::real O = lookup( mean(dissipation_depvar,0), moments );
@@ -147,10 +236,17 @@ class Velocity_ConstShear {
       // compute turbulent kinetic energy dissipation rate
       eps = O*k;
 
-      // update drift tensor based on the simplified Langevin model
-      G.fill( 0.0 );
-      G[0] = G[4] = G[8] = -(0.5+0.75*C0) * O;
+      // update drift tensor based on the Langevin model variant configured
+      if (variant == ctr::VelocityVariantType::SLM)     // simplified
+        G = slm( O, C0 );
+      else if (variant == ctr::VelocityVariantType::GLM)// generalized
+        G = glm( O, C0, rs, m_dU );
+      else Throw( "Velocity variant type not implemented" );
     }
+
+  private:
+    //! Mean velocity gradient prescribed for simpled 1D homogeneous shear
+    std::array< tk::real, 9 > m_dU;
 };
 
 //! Velocity equation coefficients policy with DNS hydrodynamics time scale
@@ -182,6 +278,7 @@ class Velocity_HydroTimeScale {
                  const std::map< tk::ctr::Product, tk::real >& moments,
                  const tk::Table& hts,
                  ctr::DepvarType,
+                 ctr::VelocityVariantType,
                  kw::sde_c0::info::expect::type C0,
                  tk::real t,
                  tk::real& eps,

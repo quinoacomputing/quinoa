@@ -25,6 +25,7 @@
 #include "Options/PDFCentering.h"
 #include "Options/TxtFloatFormat.h"
 #include "Options/Depvar.h"
+#include "Options/VelocityVariant.h"
 #include "Options/RNG.h"
 #include "QuinoaConfig.h"
 
@@ -371,6 +372,7 @@ using VelocityParameters = tk::tuple::tagged_tuple<
   tag::initpolicy,      std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy,     std::vector< ctr::CoeffPolicyType >,
   tag::solve,           std::vector< ctr::DepvarType >,
+  tag::variant,         std::vector< ctr::VelocityVariantType >,
   tag::spike,           std::vector< std::vector< std::vector <
                           kw::spike::info::expect::type > > >,
   tag::betapdf,         std::vector< std::vector< std::vector <

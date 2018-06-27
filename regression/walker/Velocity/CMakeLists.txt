@@ -44,3 +44,36 @@ add_regression_test(Velocity_SLM_HomogeneousShear_u0.9 ${WALKER_EXECUTABLE}
                     TEXT_RESULT stat.txt
                     TEXT_DIFF_PROG_CONF velocity.ndiff.cfg
                     LABELS verification)
+
+add_regression_test(Velocity_GLM_HomogeneousShear ${WALKER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES glm_homogeneous_shear.q
+                               glm_homogeneous_shear.stat.txt.std
+                               velocity.ndiff.cfg
+                    ARGS -c glm_homogeneous_shear.q -v
+                    TEXT_BASELINE glm_homogeneous_shear.stat.txt.std
+                    TEXT_RESULT stat.txt
+                    TEXT_DIFF_PROG_CONF velocity.ndiff.cfg
+                    LABELS verification)
+
+add_regression_test(Velocity_GLM_HomogeneousShear ${WALKER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES glm_homogeneous_shear.q
+                               glm_homogeneous_shear.stat.txt.std
+                               velocity.ndiff.cfg
+                    ARGS -c glm_homogeneous_shear.q -v
+                    TEXT_BASELINE glm_homogeneous_shear.stat.txt.std
+                    TEXT_RESULT stat.txt
+                    TEXT_DIFF_PROG_CONF velocity.ndiff.cfg
+                    LABELS verification)
+
+add_regression_test(Velocity_GLM_HomogeneousShear_u0.9 ${WALKER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES glm_homogeneous_shear.q
+                               glm_homogeneous_shear.stat.txt.std
+                               velocity.ndiff.cfg
+                    ARGS -c glm_homogeneous_shear.q -v -u 0.9
+                    TEXT_BASELINE glm_homogeneous_shear.stat.txt.std
+                    TEXT_RESULT stat.txt
+                    TEXT_DIFF_PROG_CONF velocity.ndiff.cfg
+                    LABELS verification)
