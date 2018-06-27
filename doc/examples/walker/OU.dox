@@ -1,13 +1,12 @@
 /*!
   \page      walker_example_ou Walker: Integrating the Ornstein-Uhlenbeck SDE
-  \tableofcontents
 
-This example runs [walker](walker_doc.html) to integrate the Ornstein-Uhlenbeck
-SDE (see DiffEq/OrnsteinUhlenbeck.h) using constant coefficients.
+This example runs @ref walker_main to integrate the Ornstein-Uhlenbeck SDE (see
+DiffEq/OrnsteinUhlenbeck.h) using constant coefficients.
 
-\section walker_example_ou_control Control file
+@section walker_example_ou_control Control file
 
-\verbatim
+@code{.bash}
 title "Example problem"
 
 walker
@@ -57,14 +56,14 @@ walker
     f2( r1 r2 : 2.0e-1 2.0e-1 ) #; -2 2 -2 2 )
   end
 end
-\endverbatim
+@endcode
 
-\section walker_example_ou_run Example run on 4 CPUs
-\verbatim
+@section walker_example_ou_run Example run on 4 CPUs
+@code{.bash}
 ./charmrun +p4 Main/walker -v -c ../../tmp/ou.q -u 0.9
-\endverbatim
+@endcode
 
-\section walker_example_ou_output Output
+@section walker_example_ou_output Output
 \verbatim
 Running on 4 processors:  Main/walker -v -c ../../tmp/ou.q -u 0.9
 charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 4  Main/walker -v -c ../../tmp/ou.q -u 0.9
@@ -236,33 +235,34 @@ Charm++> cpu topology info is gathered in 0.000 seconds.
 
 
 [Partition 0][Node 0] End of program
-\endverbatim
+@endverbatim
 
-\section walker_example_ou_moments Estimated moments
+@section walker_example_ou_moments Estimated moments
 
 Left -- time evolution of the means and the means of the invariant distribution,
 right -- time evolution of the components of the covariance matrix and those of
 the invariant.
 
-<img src="https://quinoacomputing.github.io/ou_means.svg" align="left" width="50%" background=transparent>
-<img src="https://quinoacomputing.github.io/ou_cov.svg" align="right" width="50%" background=transparent>
+@m_div{m-col-m-6 m-left-m}
+<img src="ou_means.svg"/>
+@m_enddiv
+@m_div{m-col-m-6 m-right-m}
+<img src="ou_cov.svg"/>
+@m_enddiv
 
 Gnuplot commands to reproduce the above plots:
-\verbatim
+@code{.shell}
 plot "stat.txt" u 2:3 w l t "<R1>", "stat.txt" u 2:4 w l t "<R2>", "stat.txt" u 2:5 w l t "<R3>", 0 lt 1, 0.5 lt 2, 1.0 lt 3
 plot "stat.txt" u 2:6 w l t "<r1r1>", "stat.txt" u 2:7 w l t "<r1r2>", "stat.txt" u 2:8 w l t "<r1r3>", "stat.txt" u 2:9 w l t "<r2r2>", "stat.txt" u 2:10 w l t "<r2r3>", "stat.txt" u 2:11 w l t "<r3r3>", 4.0/2 lt 1, 2.5/3 lt 2, 1.1/4 lt 3, 32.0/4 lt 4, 5.6/5 lt 5, 23.0/6 lt 6
-\endverbatim
+@endcode
 
-\section walker_example_ou_pdf Estimated bivariate PDF
+@section walker_example_ou_pdf Estimated bivariate PDF
 
 Example visualization of the estimated bivariate PDF at the final time step
 using [gmsh](http://www.geuz.org/gmsh).
 
-<img src="https://quinoacomputing.github.io/ou_pdf.svg" align="center" width="75%" background=transparent>
+@m_div{m-col-m-9 m-center-m}
+<img src="ou_pdf.svg"/>
+@m_enddiv
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Thu 06 Apr 2017 10:46:30 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */
