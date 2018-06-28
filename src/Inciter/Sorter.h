@@ -67,14 +67,14 @@ class Sorter : public CBase_Sorter {
                      const std::map< int, std::vector< std::size_t > >& bnode,
                      int nchare );
 
+    //! Configure Charm++ reduction types
+    static void registerReducers();
+
     //! Create worker chare array elements on this PE
     void createWorkers();
 
-    //! Query mesh nodes to identify if they are shared
-    void query( int fromch, const std::vector< std::size_t >& nodes );
-
-    //! Receive mesh node IDs (and setup chare communication map)
-    void comm( int fromch, const std::vector< std::size_t >& found );
+    //! Receive aggregated chare boundary nodes associated to chares
+    void comm( CkReductionMsg* msg );
 
     //! \brief Receive number of uniquely assigned global mesh node IDs from
     //!   chares with lower indices
@@ -109,8 +109,6 @@ class Sorter : public CBase_Sorter {
       p | m_bnode;
       p | m_nchare;
       p | m_nodeset;
-      p | m_nquery;
-      p | m_ncom;
       p | m_noffset;
       p | m_msum;
       p | m_reordcomm;
@@ -150,10 +148,6 @@ class Sorter : public CBase_Sorter {
     int m_nchare;
     //! Unique global node IDs chares on our PE will contribute to
     std::set< std::size_t > m_nodeset;
-    //! Counter for the number of chares queried chare boundary nodes
-    int m_nquery;
-    //! Counter for the number of chares from which boundary nodes received from
-    int m_ncom;
     //! \brief Counter for the number of chares from which this chare has
     //!   received node reordering offsets from
     int m_noffset;

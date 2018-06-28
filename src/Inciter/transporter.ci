@@ -43,7 +43,7 @@ module transporter {
       entry void pepartitioned();
       entry void pedistributed();
       entry void chbnd();
-      entry void chquery();
+      entry void chcomm();
       entry void chmask();
       entry void chreordered();
       entry void chbounds();

@@ -70,8 +70,8 @@ Transporter::Transporter() :
   m_timer(),
   m_linsysbc(),
   m_progMesh( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-              {{ "p", "d", "r", "b", "q", "m", "r", "b" }},
-              {{ "partition", "distribute", "refine", "bnd", "query", "mask",
+              {{ "p", "d", "r", "b", "c", "m", "r", "b" }},
+              {{ "partition", "distribute", "refine", "bnd", "comm", "mask",
                   "reorder", "bounds"}} )
 // *****************************************************************************
 //  Constructor

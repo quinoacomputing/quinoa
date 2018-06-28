@@ -104,7 +104,7 @@ Partitioner::Partitioner(
 
   // Compute number of cells across whole problem
   auto nelem = m_ginpoel.size()/4;
-  contribute( sizeof(uint64_t), &nelem, CkReduction::sum_int,
+  contribute( sizeof(uint64_t), &nelem, CkReduction::sum_ulong,
               m_cbp.get< tag::load >() );
 }
 

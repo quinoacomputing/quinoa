@@ -23,8 +23,8 @@ module sorter {
                     const std::vector< std::size_t >& triinpoel,
                     const std::map< int, std::vector< std::size_t > >& bnode,
                     int nchare );
-      entry void query( int fromch, const std::vector< std::size_t >& nodes );
-      entry void comm( int fromch, const std::vector< std::size_t >& found );
+      initnode void registerReducers();
+      entry [reductiontarget] void comm( CkReductionMsg* msg );
       entry void offset( int c, std::size_t u );
       entry void request( int c, const std::unordered_set< std::size_t >& nd );
       entry void neworder( const std::unordered_map< std::size_t,
