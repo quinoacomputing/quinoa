@@ -22,7 +22,6 @@
 #include "Reorder.h"
 #include "MeshReader.h"
 #include "Around.h"
-#include "ExodusIIMeshWriter.h"
 #include "CGPDE.h"
 #include "DGPDE.h"
 #include "AMR/Error.h"
@@ -91,7 +90,7 @@ Partitioner::Partitioner(
 // *****************************************************************************
 {
   // Create mesh reader
-  MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+  tk::MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
   // Read our chunk of the mesh graph from file
   mr.readGraph( m_ginpoel, CkNumPes(), CkMyPe() );

@@ -9,6 +9,7 @@
 
 #include <string>
 #include <stdexcept>
+#include <fstream>
 
 #include "MeshFactory.h"
 #include "Exception.h"
@@ -19,6 +20,7 @@
 #include "ExodusIIMeshReader.h"
 #include "HyperMeshReader.h"
 #include "ASCMeshReader.h"
+#include "Omega_h_MeshReader.h"
 #include "NetgenMeshWriter.h"
 #include "GmshMeshWriter.h"
 #include "ExodusIIMeshWriter.h"
@@ -27,7 +29,7 @@
 
 namespace tk {
 
-MeshReader
+MeshReaderType
 detectInput( const std::string& filename )
 // *****************************************************************************
 //  Detect input mesh file type
@@ -35,18 +37,38 @@ detectInput( const std::string& filename )
 //! \return enum specifying the mesh reader type
 // *****************************************************************************
 {
+  std::ifstream inFile;
+
+  // Check if file exists, throw exception if it does not
+  inFile.open( filename, std::ifstream::in );
+  ErrChk( inFile.good(), "Failed to open file: " + filename );
+
+  // Attempt to read a character, throw if it fails
+  // It is curious that on some systems opening a directory instead of a file
+  // with the above ifstream::open() call does not set the failbit. Thus we get
+  // here fine, so we try to read a character from it. If the read fails, we
+  // assume it is a directory and assume that it is in Omega_h osh file format.
+  // Read more at: http://stackoverflow.com/questions/9591036/
+  // ifstream-open-doesnt-set-error-bits-when-argument-is-a-directory.
+  inFile.get();
+  if (!inFile.good()) return MeshReaderType::OMEGA_H;
+
+  // Close it
+  inFile.close();
+  ErrChk( !inFile.fail(), "Failed to close file: " + filename );
+
   // Get first three letters from input file
   std::string s( Reader( filename ).firstline().substr(0,4) );
 
   if ( s.find("$Me") != std::string::npos ) {
-    return MeshReader::GMSH;
+    return MeshReaderType::GMSH;
   } else if ( s.find("CDF") != std::string::npos ||
               s.find("HDF") != std::string::npos ) {
-    return MeshReader::EXODUSII;
+    return MeshReaderType::EXODUSII;
   } else if ( s.find("<?x") != std::string::npos ) {
-    return MeshReader::HYPER;
+    return MeshReaderType::HYPER;
   } else if ( s.find("*nd") != std::string::npos ) {
-    return MeshReader::ASC;
+    return MeshReaderType::ASC;
   } else {
     try {
       std::stoi(s);    // try to convert to an integer
@@ -58,11 +80,11 @@ detectInput( const std::string& filename )
     // thrown by std::stoi(), but a three-digit integer will always fit into int
 
     // if we got here, the above string-to-integer conversion succeeded
-    return MeshReader::NETGEN;
+    return MeshReaderType::NETGEN;
   }
 }
 
-MeshWriter
+MeshWriterType
 pickOutput( const std::string& filename )
 // *****************************************************************************
 //  Determine output mesh file type
@@ -75,11 +97,11 @@ pickOutput( const std::string& filename )
   std::string ext( fn.substr(fn.find_last_of(".") + 1) );
 
   if ( ext == "msh" ) {
-    return MeshWriter::GMSH;
+    return MeshWriterType::GMSH;
   } else if ( ext == "exo" || ext == "h5" ) {
-    return MeshWriter::EXODUSII;
+    return MeshWriterType::EXODUSII;
   } else if ( ext == "mesh" ) {
-    return MeshWriter::NETGEN;
+    return MeshWriterType::NETGEN;
   } else {
     Throw( "Output mesh file type could not be determined from extension of "
            "filename '" + filename + "'; valid extensions are: "
@@ -111,15 +133,15 @@ readUnsMesh( const tk::Print& print,
 
   const auto meshtype = detectInput( filename );
 
-  if (meshtype == MeshReader::GMSH)
+  if (meshtype == MeshReaderType::GMSH)
     GmshMeshReader( filename ).readMesh( mesh );
-  else if (meshtype == MeshReader::NETGEN)
+  else if (meshtype == MeshReaderType::NETGEN)
     NetgenMeshReader( filename ).readMesh( mesh );
-  else if (meshtype == MeshReader::EXODUSII)
+  else if (meshtype == MeshReaderType::EXODUSII)
     ExodusIIMeshReader( filename ).readMesh( mesh );
-  else if (meshtype == MeshReader::ASC)
+  else if (meshtype == MeshReaderType::ASC)
     ASCMeshReader( filename ).readMesh( mesh );
-  else if (meshtype == MeshReader::HYPER)
+  else if (meshtype == MeshReaderType::HYPER)
     HyperMeshReader( filename ).readMesh( mesh );
 
   timestamp = std::make_pair( "Read mesh from file", t.dsec() );
@@ -212,11 +234,11 @@ writeUnsMesh( const tk::Print& print,
 
   const auto meshtype = pickOutput( filename );
 
-  if (meshtype == MeshWriter::GMSH)
+  if (meshtype == MeshWriterType::GMSH)
     GmshMeshWriter( filename ).writeMesh( mesh );
-  else if (meshtype == MeshWriter::NETGEN)
+  else if (meshtype == MeshWriterType::NETGEN)
     NetgenMeshWriter( filename ).writeMesh( mesh );
-  else if (meshtype== MeshWriter::EXODUSII)
+  else if (meshtype== MeshWriterType::EXODUSII)
     ExodusIIMeshWriter( filename, ExoWriter::CREATE ).writeMesh( mesh );
 
   print.diagend( "done" );
