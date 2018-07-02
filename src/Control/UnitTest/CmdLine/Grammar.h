@@ -49,9 +49,14 @@ namespace cmd {
          tk::grm::process_cmd< use< kw::group >,
                                tk::grm::Store< tag::group > > {};
 
+  //! Match help on control file keywords
+  struct quiescence :
+         tk::grm::process_cmd_switch< use< kw::quiescence >,
+                                      tag::quiescence > {};
+
   //! \brief Match all command line keywords
   struct keywords :
-         pegtl::sor< verbose, help, helpkw, group > {};
+         pegtl::sor< verbose, help, helpkw, group, quiescence> {};
 
   //! \brief Grammar entry point: parse keywords until end of string
   struct read_string :

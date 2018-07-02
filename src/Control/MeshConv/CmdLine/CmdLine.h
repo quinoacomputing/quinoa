@@ -32,16 +32,17 @@ namespace ctr {
 //! \see Base/TaggedTuple.h
 //! \see Control/MeshConv/Types.h
 class CmdLine :
-  public tk::Control< // tag        type
-                      tag::io,      ios,
-                      tag::verbose, bool,
-                      tag::reorder, bool,
-                      tag::help,    bool,
-                      tag::helpctr, bool,
-                      tag::cmdinfo, tk::ctr::HelpFactory,
-                      tag::ctrinfo, tk::ctr::HelpFactory,
-                      tag::helpkw,  tk::ctr::HelpKw,
-                      tag::error,   std::vector< std::string > > {
+  public tk::Control< // tag           type
+                      tag::io,         ios,
+                      tag::verbose,    bool,
+                      tag::reorder,    bool,
+                      tag::help,       bool,
+                      tag::helpctr,    bool,
+                      tag::quiescence, bool,
+                      tag::cmdinfo,    tk::ctr::HelpFactory,
+                      tag::ctrinfo,    tk::ctr::HelpFactory,
+                      tag::helpkw,     tk::ctr::HelpKw,
+                      tag::error,      std::vector< std::string > > {
   public:
     //! \brief MeshConv command-line keywords
     //! \see tk::grm::use and its documentation
@@ -51,6 +52,7 @@ class CmdLine :
                                     , kw::input
                                     , kw::output
                                     , kw::reorder
+                                    , kw::quiescence
                                     >;
 
     //! \brief Constructor: set defaults.
@@ -71,15 +73,16 @@ class CmdLine :
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er& p ) {
-      tk::Control< tag::io,       ios,
-                   tag::verbose,  bool,
-                   tag::reorder,  bool,
-                   tag::help,     bool,
-                   tag::helpctr,  bool,
-                   tag::cmdinfo,  tk::ctr::HelpFactory,
-                   tag::ctrinfo,  tk::ctr::HelpFactory,
-                   tag::helpkw,   tk::ctr::HelpKw,
-                   tag::error,    std::vector< std::string > >::pup(p);
+      tk::Control< tag::io,         ios,
+                   tag::verbose,    bool,
+                   tag::reorder,    bool,
+                   tag::help,       bool,
+                   tag::helpctr,    bool,
+                   tag::quiescence, bool,
+                   tag::cmdinfo,    tk::ctr::HelpFactory,
+                   tag::ctrinfo,    tk::ctr::HelpFactory,
+                   tag::helpkw,     tk::ctr::HelpKw,
+                   tag::error,      std::vector< std::string > >::pup(p);
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

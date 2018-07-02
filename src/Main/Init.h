@@ -127,13 +127,15 @@ static void echoBuildEnv( const Print& print, const std::string& executable )
   print.item( "Build date", build_date() );
 }
 
-static void echoRunEnv( const Print& print, int argc, char** argv, bool verbose )
+static void echoRunEnv( const Print& print, int argc, char** argv,
+                        bool verbose, bool quiescence )
 // *****************************************************************************
 //! \brief Echo runtime environment
 //! \param[in] print Pretty printer
 //! \param[in] argc Number of command-line arguments to executable
 //! \param[in] argv C-style string array to command-line arguments to executable
 //! \param[in] verbose True for verbose screen-output
+//! \param[in] quiescence True if quiescence detection is enabled
 // *****************************************************************************
 {
   print.section( "Run-time environment" );
@@ -152,7 +154,8 @@ static void echoRunEnv( const Print& print, int argc, char** argv, bool verbose 
   }
   print << "'\n";
 
-  print.item( "Output", verbose ? "verbose (quiet: omit -v)" : "quiet" );
+  print.item( "Screen output", verbose ? "verbose (quiet: omit -v)" : "quiet" );
+  print.item( "Quiescence detection", quiescence ? "on" : "off (on: -q)" );
 }
 
 //! \brief Generic Main() used for all executables for code-reuse and a uniform
@@ -189,7 +192,8 @@ Driver Main( int argc, char* argv[],
   // Build environment
   echoBuildEnv( print, executable );
   // Runtime environment
-  echoRunEnv( print, argc, argv, cmdline.template get< tag::verbose >() );
+  echoRunEnv( print, argc, argv, cmdline.template get< tag::verbose >(),
+              cmdline.template get< tag::quiescence >() );
 
   // Create and return driver
   return Driver( print, cmdline );
