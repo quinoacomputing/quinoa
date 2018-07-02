@@ -56,7 +56,7 @@ namespace cmd {
 
   //! \brief Match all command line keywords
   struct keywords :
-         pegtl::sor< verbose, help, helpkw, group, quiescence> {};
+         pegtl::sor< verbose, help, helpkw, group, quiescence > {};
 
   //! \brief Grammar entry point: parse keywords until end of string
   struct read_string :
