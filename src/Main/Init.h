@@ -155,7 +155,7 @@ static void echoRunEnv( const Print& print, int argc, char** argv,
   print << "'\n";
 
   print.item( "Screen output", verbose ? "verbose (quiet: omit -v)" : "quiet" );
-  print.item( "Quiescence detection", quiescence ? "on" : "off (on: -q)" );
+  print.item( "Quiescence detection", quiescence ? "on" : "off" );
 }
 
 //! \brief Generic Main() used for all executables for code-reuse and a uniform

@@ -49,7 +49,7 @@ else
   RUNNER_NCPUS_ARG=+p
 fi
 # Run unit test suite
-${RUNNER} ${RUNNER_NCPUS_ARG} ${NUMPES} ${RUNNER_ARGS} $PWD/Main/unittest -v
+${RUNNER} ${RUNNER_NCPUS_ARG} ${NUMPES} ${RUNNER_ARGS} $PWD/Main/unittest -v -q
 
 # Run regression test suite (skip 'extreme' tests that would run very long)
 ctest -j$NUMPES --output-on-failure -LE extreme
