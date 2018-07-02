@@ -80,7 +80,7 @@ class Transporter : public CBase_Transporter {
     //! Reduction target: all Discretization constructors have been called
     void disccreated();
 
-    //! \brief Reduction target: all worker (drevied discretization) chares have
+    //! \brief Reduction target: all worker (derived discretization) chares have
     //!   been inserted
     void workinserted();
 
