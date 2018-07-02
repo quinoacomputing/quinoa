@@ -58,7 +58,9 @@ class ExodusIIMeshReader {
     void readGraph( UnsMesh& mesh );
 
     //! Read our chunk of the mesh graph (connectivity) from file
-    void readGraph( std::vector< std::size_t >& ginpoel, int n, int m );
+    //! \details Total number of PEs defaults to 1 for a single-CPU read, this
+    //!    PE defaults to 0 for a single-CPU read.
+    void readGraph( std::vector< std::size_t >& ginpoel, int n = 1, int m = 0 );
 
     //! Read coordinates of a number of mesh nodes from ExodusII file
     std::array< std::vector< tk::real >, 3 >

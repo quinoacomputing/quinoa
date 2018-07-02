@@ -88,6 +88,7 @@ const int MAX_TESTS_IN_GROUP = 80;
 
 #include "tests/IO/TestMesh.h"
 #include "tests/IO/TestExodusIIMeshReader.h"
+#include "tests/IO/TestMeshReader.h"
 
 #include "tests/Mesh/TestDerivedData.h"
 #include "tests/Mesh/TestReorder.h"

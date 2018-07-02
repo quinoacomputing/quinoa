@@ -192,7 +192,8 @@ struct RNG_common {
   //! \param[in] r RNG to test
   template< class rng >
   static void test_copy_assignment( const rng& r ) {
-    auto v = r;
+    rng v( r );
+    v = r;
     test_gaussian( r );         // test that source of copy still works
     test_gaussian( v );         // test that the copy works
   }

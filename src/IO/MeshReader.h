@@ -50,7 +50,9 @@ class MeshReader {
     }
 
     //! Public interface to read our chunk of the mesh graph from file
-    void readGraph( std::vector< std::size_t >& ginpoel, int n, int m )
+    //! \details Total number of PEs defaults to 1 for a single-CPU read, this
+    //!    PE defaults to 0 for a single-CPU read.
+    void readGraph( std::vector< std::size_t >& ginpoel, int n=1, int m=0 )
     { self->readGraph( ginpoel, n, m ); }
 
     //! Public interface to read coordinates of mesh nodes from file

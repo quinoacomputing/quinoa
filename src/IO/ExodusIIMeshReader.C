@@ -90,19 +90,18 @@ ExodusIIMeshReader::readGraph( std::vector< std::size_t >& ginpoel,
                                int n, int m )
 // *****************************************************************************
 //  Read a chunk of the mesh graph (connectivity) from ExodusII file
-//! \param[in] n Total number of PEs
-//! \param[in] m This PE
+//! \param[in] n Total number of PEs (default n = 1, for a single-CPU read)
+//! \param[in] m This PE (default m = 0, for a single-CPU read)
 //! \param[in,out] ginpoel Vector to read tetrtahedron element connectivity of
 //!    our chunk of the mesh into
 // *****************************************************************************
 {
-  // Get number of mesh points and number of tetrahedron elements in file
-  readElemBlockIDs();
-  auto nel = nelem( tk::ExoElemType::TET );
+  Assert( m < n, "Invalid input: PE id must be lower than NumPEs" );
 
-  // Read our contiguously-numbered chunk of tetrahedron element
-  // connectivity from file and also generate and store the list of global
-  // element indices for our chunk of the mesh
+  // Read info on element blocks from ExodusII file
+  readElemBlockIDs();
+  // Get number of number of tetrahedron elements in file
+  auto nel = nelem( tk::ExoElemType::TET );
 
   // Compute extents of element IDs of our mesh chunk to read
   auto npes = static_cast< std::size_t >( n );
