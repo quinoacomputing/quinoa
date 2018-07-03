@@ -81,28 +81,14 @@ class ExodusIIMeshReader {
     std::map< int, std::vector< std::size_t > > readSidesets();
 
     //! Read coordinates of a single mesh node from ExodusII file
-    //! \param[in] fid Node id in file whose coordinates to read
-    //! \param[in] mid Node id in memory to which to put new cordinates
-    //! \param[in,out] x Vector of x coordinates to push to
-    //! \param[in,out] y Vector of y coordinates to push to
-    //! \param[in,out] z Vector of z coordinates to push to
     void readNode( std::size_t fid,
                    std::size_t mid,
                    std::vector< tk::real >& x,
                    std::vector< tk::real >& y,
-                   std::vector< tk::real >& z ) const
-    {
-      Assert( x.size() == y.size() && x.size() == z.size(), "Size mismatch" );
-      Assert( mid < x.size() && mid < y.size() && mid < z.size(),
-              "Indexing out of bounds" );
-      readNode( fid, x[mid], y[mid], z[mid] );
-    }
+                   std::vector< tk::real >& z ) const;
 
     //! Read coordinates of a single mesh node from ExodusII file
-    //! \param[in] id Node id whose coordinates to read
-    //! \param[in,out] coord Array of x, y, and z coordinates
-    void readNode( std::size_t id, std::array< tk::real, 3 >& coord ) const
-    { readNode( id, coord[0], coord[1], coord[2] ); }
+    void readNode( std::size_t id, std::array< tk::real, 3 >& coord ) const;
 
     //! Read coordinates of a number of mesh nodes from ExodusII file
     std::array< std::vector< tk::real >, 3 >
@@ -207,14 +193,8 @@ class ExodusIIMeshReader {
     void readHeader( UnsMesh& mesh );
 
     //! Read coordinates of a single mesh node from file
-    void readNode( std::size_t id, tk::real& x, tk::real& y, tk::real& z ) const
-    {
-      ErrChk(
-        ex_get_partial_coord( m_inFile, static_cast<int64_t>(id)+1, 1,
-                              &x, &y, &z ) == 0,
-        "Failed to read coordinates of node " + std::to_string(id) +
-        " from ExodusII file: " + m_filename );
-    }
+    void readNode( std::size_t id, tk::real& x, tk::real& y, tk::real& z )
+    const;
 
     //! Read all node coordinates from ExodusII file
     void readAllNodes( UnsMesh& mesh ) const;
