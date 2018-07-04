@@ -12,11 +12,11 @@
 #include <map>
 #include <vector>
 #include <array>
-
-//#include "Omega_h_library.hpp"
+#include <unordered_map>
 
 #include "Types.h"
 #include "Exception.h"
+#include "UnsMesh.h"
 
 namespace tk {
 
@@ -31,15 +31,15 @@ class Omega_h_MeshReader {
     explicit Omega_h_MeshReader( const std::string& filename )
       : m_filename( filename ) {}
 
-    //! Public interface to read our chunk of the mesh graph from Omega h file
-    void readGraph( std::vector< std::size_t >& ginpoel, int n, int m );
-
-    //! Read header from Omega h file
-    std::size_t readHeader();
-
-    //! Read coordinates of a number of mesh nodes from Omega h file
-    std::array< std::vector< tk::real >, 3 >
-    readCoords( const std::vector< std::size_t >& gid ) const;
+    //! Read part of the mesh (graph and coords) from Omega_h file
+    //! \details Total number of PEs defaults to 1 for a single-CPU read, this
+    //!    PE defaults to 0 for a single-CPU read.
+    void readMeshPart( std::vector< std::size_t >& ginpoel,
+                       std::vector< std::size_t >& inpoel,
+                       std::vector< std::size_t >& gid,
+                       std::unordered_map< std::size_t, std::size_t >& lid,
+                       tk::UnsMesh::Coords& coord,
+                       int n=1, int m=0 );
 
     //! Read face list of all side sets from Omega h file
     std::size_t

@@ -282,10 +282,11 @@ Transporter::createPartitioner()
 }
 
 void
-Transporter::load( uint64_t nelem )
+Transporter::load( uint64_t nelem, uint64_t npoin )
 // *****************************************************************************
 // Reduction target: the mesh has been read from file on all PEs
 //! \param[in] nelem Total number of mesh elements (summed across all PEs)
+//! \param[in] npoin Total number of mesh points (summed across all PEs)
 // *****************************************************************************
 {
   // Compute load distribution given total work (nelem) and user-specified
@@ -304,8 +305,6 @@ Transporter::load( uint64_t nelem )
 
   // Print out mesh graph stats
   m_print.section( "Input mesh graph statistics" );
-  tk::MeshReader mr(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
-  auto npoin = mr.readHeader();
   m_print.item( "Number of tetrahedra", nelem );
   m_print.item( "Number of nodes", npoin );
 

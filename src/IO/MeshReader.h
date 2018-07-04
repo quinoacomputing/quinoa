@@ -49,19 +49,16 @@ class MeshReader {
       } else Throw( "Mesh type not implemented" );
     }
 
-    //! Public interface to read our chunk of the mesh graph from file
+    //! Public interface to read part of the mesh (graph and coords) from file
     //! \details Total number of PEs defaults to 1 for a single-CPU read, this
     //!    PE defaults to 0 for a single-CPU read.
-    void readGraph( std::vector< std::size_t >& ginpoel, int n=1, int m=0 )
-    { self->readGraph( ginpoel, n, m ); }
-
-    //! Public interface to read coordinates of mesh nodes from file
-    std::array< std::vector< real >, 3 >
-    readCoords( const std::vector< std::size_t >& gid ) const
-    { return self->readCoords( gid ); }
-
-    //! Public interface to read header from mesh file
-    std::size_t readHeader() { return self->readHeader(); }
+    void readMeshPart( std::vector< std::size_t >& ginpoel,
+                       std::vector< std::size_t >& inpoel,
+                       std::vector< std::size_t >& gid,
+                       std::unordered_map< std::size_t, std::size_t >& lid,
+                       tk::UnsMesh::Coords& coord, 
+                       int n=1, int m=0 )
+    { self->readMeshPart( ginpoel, inpoel, gid, lid, coord, n, m ); }
 
     //! Public interface to read face list of side sets from mesh file
     std::size_t
@@ -95,10 +92,13 @@ class MeshReader {
       Concept( const Concept& ) = default;
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
-      virtual void readGraph( std::vector< std::size_t>&, int, int ) = 0;
-      virtual std::array< std::vector< real >, 3 >
-        readCoords( const std::vector< std::size_t >& ) const = 0;
-      virtual std::size_t readHeader() = 0;
+      virtual void readMeshPart(
+                     std::vector< std::size_t >&,
+                     std::vector< std::size_t >&,
+                     std::vector< std::size_t >&,
+                     std::unordered_map< std::size_t, std::size_t >&,
+                     tk::UnsMesh::Coords&,
+                     int, int ) = 0;
       virtual std::size_t
         readSidesetFaces( std::map< int, std::vector< std::size_t > >&,
                           std::map< int, std::vector< int > >& ) = 0;
@@ -113,12 +113,13 @@ class MeshReader {
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
-      void readGraph( std::vector< std::size_t >& ginpoel, int n, int m )
-        override { data.readGraph( ginpoel, n, m ); }
-      std::array< std::vector< real >, 3 >
-        readCoords( const std::vector< std::size_t >& gid ) const override
-        { return data.readCoords( gid ); }
-      std::size_t readHeader() override { return data.readHeader(); }
+      void readMeshPart( std::vector< std::size_t >& ginpoel,
+                         std::vector< std::size_t >& inpoel,
+                         std::vector< std::size_t >& gid,
+                         std::unordered_map< std::size_t, std::size_t >& lid,
+                         tk::UnsMesh::Coords& coord, 
+                         int n, int m ) override
+        { data.readMeshPart( ginpoel, inpoel, gid, lid, coord, n, m ); }
       std::size_t
         readSidesetFaces( std::map< int, std::vector< std::size_t > >& belem,
                           std::map< int, std::vector< int > >& faceid )

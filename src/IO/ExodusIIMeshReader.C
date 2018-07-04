@@ -86,24 +86,40 @@ ExodusIIMeshReader::readGraph( UnsMesh& mesh )
 }
 
 void
-ExodusIIMeshReader::readGraph( std::vector< std::size_t >& ginpoel,
-                               int n, int m )
+ExodusIIMeshReader::readMeshPart(
+  std::vector< std::size_t >& ginpoel,
+  std::vector< std::size_t >& inpoel,
+  std::vector< std::size_t >& gid,
+  std::unordered_map< std::size_t, std::size_t >& lid,
+  tk::UnsMesh::Coords& coord,
+  int n, int m )
 // *****************************************************************************
-//  Read a chunk of the mesh graph (connectivity) from ExodusII file
+//  Read a part of the mesh (graph and coordinates) from ExodusII file
+//! \param[in,out] ginpoel Container to store element connectivity of this PE's
+//!   chunk of the mesh (global ids)
+//! \param[in,out] inpoel Container to store element connectivity with local
+//!   node IDs of this PE's mesh chunk
+//! \param[in,out] gid Container to store global node IDs of elements of this
+//!   PE's mesh chunk
+//! \param[in,out] lid Container to store global->local node IDs of elements of
+//!   this PE's mesh chunk
+//! \param[in,out] coord Container to store coordinates of mesh nodes of this
+//!   PE's mesh chunk
 //! \param[in] n Total number of PEs (default n = 1, for a single-CPU read)
 //! \param[in] m This PE (default m = 0, for a single-CPU read)
-//! \param[in,out] ginpoel Vector to read tetrtahedron element connectivity of
-//!    our chunk of the mesh into
 // *****************************************************************************
 {
   Assert( m < n, "Invalid input: PE id must be lower than NumPEs" );
+  Assert( ginpoel.empty() && inpoel.empty() && gid.empty() && lid.empty() &&
+          coord[0].empty() && coord[1].empty() && coord[2].empty(),
+          "Containers to store mesh must be empty" );
 
   // Read info on element blocks from ExodusII file
   readElemBlockIDs();
   // Get number of number of tetrahedron elements in file
   auto nel = nelem( tk::ExoElemType::TET );
 
-  // Compute extents of element IDs of our mesh chunk to read
+  // Compute extents of element IDs of this PE's mesh chunk to read
   auto npes = static_cast< std::size_t >( n );
   auto mype = static_cast< std::size_t >( m );
   auto chunk = nel / npes;
@@ -113,6 +129,12 @@ ExodusIIMeshReader::readGraph( std::vector< std::size_t >& ginpoel,
 
   // Read tetrahedron connectivity between from and till
   readElements( {{from, till-1}}, tk::ExoElemType::TET, ginpoel );
+
+  // Compute local data from global mesh connectivity
+  std::tie( inpoel, gid, lid ) = tk::global2local( ginpoel );
+
+  // Read this PE's chunk of the mesh node coordinates from file
+  coord = readCoords( gid );
 }
 
 std::array< std::vector< tk::real >, 3 >

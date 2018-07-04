@@ -59,7 +59,7 @@ class Transporter : public CBase_Transporter {
     explicit Transporter();
 
     //! Reduction target: the mesh has been read from file on all PEs
-    void load( uint64_t nelem );
+    void load( uint64_t nelem, uint64_t npoin );
 
     //! \brief Reduction target: all Solver (PEs) have computed the number of
     //!   chares they will recieve contributions from during linear solution

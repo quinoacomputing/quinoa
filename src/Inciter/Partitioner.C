@@ -61,15 +61,17 @@ Partitioner::Partitioner(
   m_refiner( refiner ),
   m_sorter( sorter ),
   m_scheme( scheme ),
-  m_el(),
+  m_ginpoel(),
+  m_coord(),
+  m_inpoel(),
+  m_gid(),
+  m_lid(),
   m_reqNodes(),
   m_start( 0 ),
   m_ndist( 0 ),
   m_noffset( 0 ),
   m_nquery( 0 ),
   m_nmask( 0 ),
-  m_ginpoel(),
-  m_coord(),
   m_coordmap(),
   m_nchare( 0 ),
   m_chinpoel(),
@@ -92,19 +94,14 @@ Partitioner::Partitioner(
   // Create mesh reader
   tk::MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
-  // Read our chunk of the mesh graph from file
-  mr.readGraph( m_ginpoel, CkNumPes(), CkMyPe() );
-
-  // Compute local data from global mesh connectivity (m_inpoel, m_gid, m_lid)
-  m_el = tk::global2local( m_ginpoel );
-
-  // Read our chunk of the mesh node coordinates from file
-  m_coord = mr.readCoords( m_gid );
+  // Read this PE's chunk of the mesh (graph and coords) from file
+  mr.readMeshPart( m_ginpoel, m_inpoel, m_gid, m_lid, m_coord,
+                   CkNumPes(), CkMyPe() );
 
   // Compute number of cells across whole problem
-  auto nelem = m_ginpoel.size()/4;
-  contribute( sizeof(uint64_t), &nelem, CkReduction::sum_ulong,
-              m_cbp.get< tag::load >() );
+  std::vector< std::size_t > meshsize{{ m_ginpoel.size()/4,
+                                        m_coord[0].size() }};
+  contribute( meshsize, CkReduction::sum_ulong, m_cbp.get< tag::load >() );
 }
 
 void

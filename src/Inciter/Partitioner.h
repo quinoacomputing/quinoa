@@ -130,20 +130,17 @@ class Partitioner : public CBase_Partitioner {
     CProxy_Sorter m_sorter;
     //! Discretization scheme
     Scheme m_scheme;
-    //! \brief Elements of the mesh chunk we operate on
-    //! \details The first vector is the element connectivity (local IDs), the
-    //!   second vector is the global node IDs of owned elements, while the
-    //!   third one is a map of global->local node IDs.
-    std::tuple< std::vector< std::size_t >,
-                std::vector< std::size_t >,
-                std::unordered_map< std::size_t, std::size_t > > m_el;
-    //! Alias to element connectivity with local node IDs in m_el
-    std::vector< std::size_t >& m_inpoel = std::get<0>( m_el );
-    //! Alias to global node IDs of owned elements in m_el
-    std::vector< std::size_t >& m_gid = std::get<1>( m_el );
-    //! \brief Alias to local node IDs associated to the global ones of owned
-    //!    elements in m_el
-    std::unordered_map< std::size_t, std::size_t >& m_lid = std::get<2>( m_el );
+    //! Element connectivity of this PE's chunk of the mesh (global ids)
+    std::vector< std::size_t > m_ginpoel;
+    //! Coordinates of mesh nodes of this PE's mesh chunk
+    tk::UnsMesh::Coords m_coord;
+    //! Element connectivity with local node IDs of this PE's mesh chunk
+    std::vector< std::size_t > m_inpoel;
+    //! Global node IDs of elements of this PE's mesh chunk
+    std::vector< std::size_t > m_gid;
+    //! Global->local node IDs of elements of this PE's mesh chunk
+    //! \details Key: global node id, value: local node id
+    std::unordered_map< std::size_t, std::size_t > m_lid;
     //! Queue of requested node IDs from PEs
     std::vector< std::pair< int, std::unordered_set<std::size_t> > > m_reqNodes;
     //! \brief Starting global mesh node ID for node reordering on this PE
@@ -167,10 +164,6 @@ class Partitioner : public CBase_Partitioner {
     //!   gathering the node IDs that need to be received (instead of uniquely
     //!   assigned) by each PE
     std::size_t m_nmask;
-    //! Tetrtahedron element connectivity of our chunk of the mesh (global ids)
-    std::vector< std::size_t > m_ginpoel;
-    //! Coordinates of mesh nodes of our chunk of the mesh
-    tk::UnsMesh::Coords m_coord;
     //! Coordinates associated to global node IDs of our mesh chunk
     tk::UnsMesh::CoordMap m_coordmap;
     //! Total number of chares across all PEs

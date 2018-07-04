@@ -82,8 +82,10 @@ struct MeshReader_common {
   //! \param[in,out] mr MeshReader object to verify
   void verifyTets( tk::MeshReader& mr ) {
     // Read mesh graph in serial
-    std::vector< std::size_t > inpoel;
-    mr.readGraph( inpoel );
+    std::vector< std::size_t > ginpoel, inpoel, gid;
+    std::unordered_map< std::size_t, std::size_t > lid;
+    tk::UnsMesh::Coords coord;
+    mr.readMeshPart( ginpoel, inpoel, gid, lid, coord );
 
     // Test if the number of elements is correct
     ensure_equals( "number of elements incorrect",
@@ -91,10 +93,6 @@ struct MeshReader_common {
 
     // Test if the mesh element connectivity is correct
     ensure( "element connectivity incorrect", inpoel == box24_inpoel );
-
-    // Read all mesh node coordinates
-    auto gid = tk::uniquecopy( inpoel );
-    auto coord = mr.readCoords( gid );
 
     // Test if the number of coordinates is correct
     ensure_equals( "number of x coordinates incorrect",
@@ -114,10 +112,6 @@ struct MeshReader_common {
     ensure( "nodes' x coordinates incorrect", coord[0] == x );
     ensure( "nodes' y coordinates incorrect", coord[1] == y );
     ensure( "nodes' z coordinates incorrect", coord[2] == z );
-
-    // Test number of nodes returned by member function readHeader()
-    ensure( "number of nodes returned by readHeader() incorrect",
-            mr.readHeader() == 14 );
   }
 
   //! Verify MeshReader by invoking various member functions yielding triangles

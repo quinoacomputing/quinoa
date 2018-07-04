@@ -7,51 +7,87 @@
 */
 // *****************************************************************************
 
-//#include "Omega_h_library.hpp"
-
-#include "Omega_h_MeshReader.h"
+#include <Omega_h_file.hpp>
+#include <Omega_h_library.hpp>
 
 #include "Macro.h"
+#include "Omega_h_MeshReader.h"
+#include "Reorder.h"
 
 using tk::Omega_h_MeshReader;
 
 void
-Omega_h_MeshReader::readGraph( std::vector< std::size_t >& ginpoel,
-                               int n, int m )
+Omega_h_MeshReader::readMeshPart(
+  std::vector< std::size_t >& ginpoel,
+  std::vector< std::size_t >& inpoel,
+  std::vector< std::size_t >& gid,
+  std::unordered_map< std::size_t, std::size_t >& lid,
+  tk::UnsMesh::Coords& coord,
+  int n, int m )
 // *****************************************************************************
-//  Read a chunk of the mesh graph (connectivity) from Omega h file
-//! \param[in] n Total number of PEs
-//! \param[in] m This PE
-//! \param[in,out] ginpoel Vector to read tetrtahedron element connectivity of
-//!    our chunk of the mesh into
+//  Read a part of the mesh (graph and coordinates) from Omega_h file
+//! \param[in,out] ginpoel Container to store element connectivity of this PE's
+//!   chunk of the mesh (global ids)
+//! \param[in,out] inpoel Container to store element connectivity with local
+//!   node IDs of this PE's mesh chunk
+//! \param[in,out] gid Container to store global node IDs of elements of this
+//!   PE's mesh chunk
+//! \param[in,out] lid Container to store global->local node IDs of elements of
+//!   this PE's mesh chunk
+//! \param[in,out] coord Container to store coordinates of mesh nodes of this
+//!   PE's mesh chunk
+//! \param[in] n Total number of PEs (default n = 1, for a single-CPU read)
+//! \param[in] m This PE (default m = 0, for a single-CPU read)
 // *****************************************************************************
 {
-IGNORE(ginpoel);
 IGNORE(n);
 IGNORE(m);
-}
+  Assert( m < n, "Invalid input: PE id must be lower than NumPEs" );
+  Assert( ginpoel.empty() && inpoel.empty() && gid.empty() && lid.empty() &&
+          coord[0].empty() && coord[1].empty() && coord[2].empty(),
+          "Containers to store mesh must be empty" );
 
-std::size_t
-Omega_h_MeshReader::readHeader()
-// *****************************************************************************
-//  Read header from Omega_h
-//! \return Number of nodes in mesh
-// *****************************************************************************
-{
-  return 0;
-}
+  auto lib = Omega_h::Library();
+  Omega_h::Mesh mesh( &lib );
 
-std::array< std::vector< tk::real >, 3 >
-Omega_h_MeshReader::readCoords( const std::vector< std::size_t >& gid ) const
-// *****************************************************************************
-//  Read coordinates of a number of mesh nodes from Omega h file
-//! \param[in] gid Global node IDs whose coordinates to read
-//! \return Vector of node coordinates read from file
-// *****************************************************************************
-{
-IGNORE(gid);
-  std::array< std::vector< tk::real >, 3 > coords;
-  return coords;
+  // Read mesh
+  Omega_h::binary::read( m_filename, lib.world(), &mesh );
+
+  // Extract connectivity from Omega_h's mesh object
+  auto ntets = mesh.nelems();
+  ginpoel.resize( static_cast< std::size_t >( ntets ) * 4 );
+  auto o_inpoel = mesh.ask_elem_verts();
+  auto o_gid = mesh.globals( Omega_h::VERT );
+  for (int i=0; i<ntets; ++i)
+    for (int j=0; j<4; ++j) {
+      auto I = static_cast< std::size_t >( i );
+      auto J = static_cast< std::size_t >( j );
+      ginpoel[ I*4+J ] = static_cast<std::size_t>( o_gid[ o_inpoel[i*4+j] ] );
+    }
+
+  // Extract node coordinates from Omega_h's mesh object
+  auto o_coord = mesh.coords();
+
+  // Extract number of vertices from Omega_h's mesh object
+  auto nnode = static_cast< std::size_t >( mesh.nverts() );
+
+  // Extract node coordinates from Omega_h's mesh object
+  auto& x = coord[0];
+  auto& y = coord[1];
+  auto& z = coord[2];
+  x.resize( nnode );
+  y.resize( nnode );
+  z.resize( nnode );
+
+  for (std::size_t I=0; I<nnode; ++I) {
+    auto i = static_cast< int >( I );
+    x[I] = o_coord[ i*3+0 ];
+    y[I] = o_coord[ i*3+1 ];
+    z[I] = o_coord[ i*3+2 ];
+  }
+
+  // Compute local data from global mesh connectivity
+  std::tie( inpoel, gid, lid ) = tk::global2local( ginpoel );
 }
 
 std::size_t

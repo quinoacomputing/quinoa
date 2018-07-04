@@ -20,10 +20,9 @@
 
 #include "Types.h"
 #include "Exception.h"
+#include "UnsMesh.h"
 
 namespace tk {
-
-class UnsMesh;
 
 //! \brief Supported ExodusII mesh cell types
 //! \details This the order in which ExodusIIMeshReader::m_eid stores the
@@ -57,17 +56,19 @@ class ExodusIIMeshReader {
     //! Read only connectivity graph from file
     void readGraph( UnsMesh& mesh );
 
-    //! Read our chunk of the mesh graph (connectivity) from file
+    //! Read part of the mesh (graph and coords) from file
     //! \details Total number of PEs defaults to 1 for a single-CPU read, this
     //!    PE defaults to 0 for a single-CPU read.
-    void readGraph( std::vector< std::size_t >& ginpoel, int n = 1, int m = 0 );
+    void readMeshPart( std::vector< std::size_t >& ginpoel,
+                       std::vector< std::size_t >& inpoel,
+                       std::vector< std::size_t >& gid,
+                       std::unordered_map< std::size_t, std::size_t >& lid,
+                       tk::UnsMesh::Coords& coord,
+                       int n=1, int m=0 );
 
     //! Read coordinates of a number of mesh nodes from ExodusII file
     std::array< std::vector< tk::real >, 3 >
     readCoords( const std::vector< std::size_t >& gid ) const;
-
-    //! Read ExodusII header without setting mesh size
-    std::size_t readHeader();
 
     //! Read face list of all side sets from ExodusII file
     std::size_t
@@ -188,6 +189,9 @@ class ExodusIIMeshReader {
     std::vector< std::vector< int > > m_eidt;
     //! Number of elements in blocks for each elem type enum
     std::vector< std::vector< std::size_t > > m_nel;
+
+    //! Read ExodusII header without setting mesh size
+    std::size_t readHeader();
 
     //! Read ExodusII header with setting mesh size
     void readHeader( UnsMesh& mesh );
