@@ -1646,7 +1646,7 @@ void ExodusIIMeshReader_object::test< 8 >() {
   // Test error checking emulating serial read
 
   try {
-    // Attempt to read mesh graph passing larger PE id than the number of PEs
+    // Attempt to read mesh passing larger PE id than the number of PEs
     er.readMeshPart( ginpoel, inpoel, gid, lid, coord, 1, 2 );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
@@ -1658,7 +1658,7 @@ void ExodusIIMeshReader_object::test< 8 >() {
   }
 
   try {
-    // Attempt to read mesh graph passing PE id equal to the number of PEs
+    // Attempt to read mesh passing PE id equal to the number of PEs
     er.readMeshPart( ginpoel, inpoel, gid, lid, coord, 1, 1 );
 
     #ifndef NDEBUG
@@ -1673,7 +1673,7 @@ void ExodusIIMeshReader_object::test< 8 >() {
   // Test error checking emulating parallel read
 
   try {
-    // Attempt to read mesh graph passing larger PE id than the number of PEs
+    // Attempt to read mesh passing larger PE id than the number of PEs
     er.readMeshPart( ginpoel, inpoel, gid, lid, coord, 2, 3 );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
@@ -1685,8 +1685,78 @@ void ExodusIIMeshReader_object::test< 8 >() {
   }
 
   try {
-    // Attempt to read mesh graph passing PE id equal to the number of PEs
+    // Attempt to read mesh passing PE id equal to the number of PEs
     er.readMeshPart( ginpoel, inpoel, gid, lid, coord, 2, 2 );
+
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    // Attempt to read mesh passing non-empty container
+    decltype(ginpoel) i{ 0 };
+    er.readMeshPart( i, inpoel, gid, lid, coord );
+
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    // Attempt to read mesh passing non-empty container
+    decltype(inpoel) i{ 0 };
+    er.readMeshPart( ginpoel, i, gid, lid, coord );
+
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    // Attempt to read mesh passing non-empty container
+    decltype(gid) g{ 0 };
+    er.readMeshPart( ginpoel, inpoel, g, lid, coord );
+
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    // Attempt to read mesh passing non-empty container
+    decltype(lid) l{{ 0, 1 }};
+    er.readMeshPart( ginpoel, inpoel, gid, l, coord );
+
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    // Attempt to read mesh passing non-empty container
+    decltype(coord) c{{ {0.0}, {0.0}, {0.0} }};
+    er.readMeshPart( ginpoel, inpoel, gid, lid, c );
 
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
