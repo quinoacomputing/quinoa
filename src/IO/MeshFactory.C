@@ -20,12 +20,15 @@
 #include "ExodusIIMeshReader.h"
 #include "HyperMeshReader.h"
 #include "ASCMeshReader.h"
-#include "Omega_h_MeshReader.h"
 #include "NetgenMeshWriter.h"
 #include "GmshMeshWriter.h"
 #include "ExodusIIMeshWriter.h"
 #include "DerivedData.h"
 #include "Reorder.h"
+
+#ifdef HAS_OMEGA_H
+  #include "Omega_h_MeshReader.h"
+#endif
 
 namespace tk {
 
