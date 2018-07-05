@@ -98,6 +98,13 @@ Partitioner::Partitioner(
   mr.readMeshPart( m_ginpoel, m_inpoel, m_gid, m_lid, m_coord,
                    CkNumPes(), CkMyPe() );
 
+// std::cout << CkMyPe() << ": ginpoel: " << m_ginpoel.size()
+//            << ", inpoel: " << m_inpoel.size()
+//            << ", gid: " << m_gid.size()
+//            << ", lid: " << m_lid.size()
+//            << ", coord: " << m_coord[0].size()
+//            << '\n';
+
   // Compute number of cells across whole problem
   std::vector< std::size_t > meshsize{{ m_ginpoel.size()/4,
                                         m_coord[0].size() }};

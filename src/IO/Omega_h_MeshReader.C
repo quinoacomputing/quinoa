@@ -38,20 +38,27 @@ Omega_h_MeshReader::readMeshPart(
 //!   PE's mesh chunk
 //! \param[in] n Total number of PEs (default n = 1, for a single-CPU read)
 //! \param[in] m This PE (default m = 0, for a single-CPU read)
+//! \note The last two integer arguments are unused. They are needed because
+//!   this function can be used via a polymorphic interface via a base class,
+//!   see tk::MeshReader, and other specialized mesh readers, e.g.,
+//!   tk::ExodusIIMeshReader, use these arguments. Here we require the Omega_h
+//!   input mesh to be pre-partitioned, with Omega_h's osh_part tool, into the
+//!   number of partitions that is equal to the number of PEs this fuinction is
+//!   called on in parallel.
 // *****************************************************************************
 {
-IGNORE(n);
-IGNORE(m);
+  IGNORE( n );  // Avoid compiler warning on unused arguments in RELEASE mode
+  IGNORE( m );
   Assert( m < n, "Invalid input: PE id must be lower than NumPEs" );
   Assert( ginpoel.empty() && inpoel.empty() && gid.empty() && lid.empty() &&
           coord[0].empty() && coord[1].empty() && coord[2].empty(),
           "Containers to store mesh must be empty" );
 
-  auto lib = Omega_h::Library();
-  Omega_h::Mesh mesh( &lib );
+  // Create Omega_h library instance
+  auto lib = Omega_h::Library( nullptr, nullptr, MPI_COMM_WORLD );
 
   // Read mesh
-  Omega_h::binary::read( m_filename, lib.world(), &mesh );
+  auto mesh = Omega_h::binary::read( m_filename, &lib );
 
   // Extract connectivity from Omega_h's mesh object
   auto ntets = mesh.nelems();
