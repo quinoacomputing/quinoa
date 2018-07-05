@@ -92,7 +92,7 @@ ExodusIIMeshReader::readMeshPart(
   std::vector< std::size_t >& gid,
   std::unordered_map< std::size_t, std::size_t >& lid,
   tk::UnsMesh::Coords& coord,
-  int n, int m )
+  int numpes, int mype )
 // *****************************************************************************
 //  Read a part of the mesh (graph and coordinates) from ExodusII file
 //! \param[in,out] ginpoel Container to store element connectivity of this PE's
@@ -105,11 +105,11 @@ ExodusIIMeshReader::readMeshPart(
 //!   this PE's mesh chunk
 //! \param[in,out] coord Container to store coordinates of mesh nodes of this
 //!   PE's mesh chunk
-//! \param[in] n Total number of PEs (default n = 1, for a single-CPU read)
-//! \param[in] m This PE (default m = 0, for a single-CPU read)
+//! \param[in] numpes Total number of PEs (default n = 1, for a single-CPU read)
+//! \param[in] mype This PE (default m = 0, for a single-CPU read)
 // *****************************************************************************
 {
-  Assert( m < n, "Invalid input: PE id must be lower than NumPEs" );
+  Assert( mype < numpes, "Invalid input: PE id must be lower than NumPEs" );
   Assert( ginpoel.empty() && inpoel.empty() && gid.empty() && lid.empty() &&
           coord[0].empty() && coord[1].empty() && coord[2].empty(),
           "Containers to store mesh must be empty" );
@@ -120,12 +120,12 @@ ExodusIIMeshReader::readMeshPart(
   auto nel = nelem( tk::ExoElemType::TET );
 
   // Compute extents of element IDs of this PE's mesh chunk to read
-  auto npes = static_cast< std::size_t >( n );
-  auto mype = static_cast< std::size_t >( m );
+  auto npes = static_cast< std::size_t >( numpes );
+  auto pe = static_cast< std::size_t >( mype );
   auto chunk = nel / npes;
-  auto from = mype * chunk;
+  auto from = pe * chunk;
   auto till = from + chunk;
-  if (mype == npes-1) till += nel % npes;
+  if (pe == npes-1) till += nel % npes;
 
   // Read tetrahedron connectivity between from and till
   readElements( {{from, till-1}}, tk::ExoElemType::TET, ginpoel );

@@ -7,12 +7,15 @@
 */
 // *****************************************************************************
 
+#include <sstream>
+
 #include <Omega_h_file.hpp>
 #include <Omega_h_library.hpp>
 
 #include "Macro.h"
 #include "Omega_h_MeshReader.h"
 #include "Reorder.h"
+#include "Reader.h"
 
 using tk::Omega_h_MeshReader;
 
@@ -23,7 +26,7 @@ Omega_h_MeshReader::readMeshPart(
   std::vector< std::size_t >& gid,
   std::unordered_map< std::size_t, std::size_t >& lid,
   tk::UnsMesh::Coords& coord,
-  int n, int m )
+  int numpes, int mype )
 // *****************************************************************************
 //  Read a part of the mesh (graph and coordinates) from Omega_h file
 //! \param[in,out] ginpoel Container to store element connectivity of this PE's
@@ -36,8 +39,8 @@ Omega_h_MeshReader::readMeshPart(
 //!   this PE's mesh chunk
 //! \param[in,out] coord Container to store coordinates of mesh nodes of this
 //!   PE's mesh chunk
-//! \param[in] n Total number of PEs (default n = 1, for a single-CPU read)
-//! \param[in] m This PE (default m = 0, for a single-CPU read)
+//! \param[in] numpes Total number of PEs (default n = 1, for a single-CPU read)
+//! \param[in] mype This PE (default m = 0, for a single-CPU read)
 //! \note The last two integer arguments are unused. They are needed because
 //!   this function can be used via a polymorphic interface via a base class,
 //!   see tk::MeshReader, and other specialized mesh readers, e.g.,
@@ -47,18 +50,38 @@ Omega_h_MeshReader::readMeshPart(
 //!   called on in parallel.
 // *****************************************************************************
 {
-  IGNORE( n );  // Avoid compiler warning on unused arguments in RELEASE mode
-  IGNORE( m );
-  Assert( m < n, "Invalid input: PE id must be lower than NumPEs" );
+  IGNORE( mype );       // Avoid compiler warning in Release mode
+  Assert( mype < numpes, "Invalid input: PE id must be lower than NumPEs" );
   Assert( ginpoel.empty() && inpoel.empty() && gid.empty() && lid.empty() &&
           coord[0].empty() && coord[1].empty() && coord[2].empty(),
           "Containers to store mesh must be empty" );
+
+  // Find out how many partitions the Omega_h mesh was saved with
+  tk::Reader n( m_filename + "/nparts" );
+  std::stringstream ss( n.firstline() );
+  int nparts = 0;
+  ss >> nparts;
+
+  if (numpes < nparts)
+    Throw( "The Omega_h mesh reader only supports NumPEs >= nparts, where "
+           "nparts is the number of partitions the mesh is partitioned into. "
+           "Also note that NumPEs must be a power of 2 if NumPEs > nparts." );
 
   // Create Omega_h library instance
   auto lib = Omega_h::Library( nullptr, nullptr, MPI_COMM_WORLD );
 
   // Read mesh
   auto mesh = Omega_h::binary::read( m_filename, &lib );
+
+  // Lambda to check if int is a power of two
+  auto isPowerOfTwo = []( int x ) { return (x != 0) && ((x & (x - 1)) == 0); };
+
+  if (nparts != numpes) {
+    if (!isPowerOfTwo(numpes))
+      Throw( "The Omega_h mesh reader only supports NumPEs of power of 2" );
+    else
+      mesh.balance();
+  }
 
   // Extract connectivity from Omega_h's mesh object
   auto ntets = mesh.nelems();

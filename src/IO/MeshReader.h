@@ -62,8 +62,8 @@ class MeshReader {
                        std::vector< std::size_t >& gid,
                        std::unordered_map< std::size_t, std::size_t >& lid,
                        tk::UnsMesh::Coords& coord, 
-                       int n=1, int m=0 )
-    { self->readMeshPart( ginpoel, inpoel, gid, lid, coord, n, m ); }
+                       int numpes=1, int mype=0 )
+    { self->readMeshPart( ginpoel, inpoel, gid, lid, coord, numpes, mype ); }
 
     //! Public interface to read face list of side sets from mesh file
     std::size_t
@@ -123,8 +123,8 @@ class MeshReader {
                          std::vector< std::size_t >& gid,
                          std::unordered_map< std::size_t, std::size_t >& lid,
                          tk::UnsMesh::Coords& coord, 
-                         int n, int m ) override
-        { data.readMeshPart( ginpoel, inpoel, gid, lid, coord, n, m ); }
+                         int numpes, int mype ) override
+        { data.readMeshPart( ginpoel, inpoel, gid, lid, coord, numpes, mype ); }
       std::size_t
         readSidesetFaces( std::map< int, std::vector< std::size_t > >& belem,
                           std::map< int, std::vector< int > >& faceid )

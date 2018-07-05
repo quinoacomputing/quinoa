@@ -1771,7 +1771,7 @@ void ExodusIIMeshReader_object::test< 8 >() {
 //! Test readMeshPart on simple mesh
 template<> template<>
 void ExodusIIMeshReader_object::test< 9 >() {
-  set_test_name( "readMeshPart on simple mesh" );
+  set_test_name( "serial readMeshPart on simple mesh" );
 
   // Will use this mesh from the regression test suite
   std::string infile( tk::regression_dir()+"/meshconv/gmsh_output/box_24.exo" );

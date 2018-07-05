@@ -64,7 +64,7 @@ class ExodusIIMeshReader {
                        std::vector< std::size_t >& gid,
                        std::unordered_map< std::size_t, std::size_t >& lid,
                        tk::UnsMesh::Coords& coord,
-                       int n=1, int m=0 );
+                       int numpes=1, int mype=0 );
 
     //! Read coordinates of a number of mesh nodes from ExodusII file
     std::array< std::vector< tk::real >, 3 >
