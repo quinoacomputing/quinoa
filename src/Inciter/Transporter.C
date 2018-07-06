@@ -443,7 +443,7 @@ Transporter::disccreated()
 void
 Transporter::workinserted()
 // *****************************************************************************
-// Reduction target: all worker (drevied discretization) chares have been
+// Reduction target: all worker (derived discretization) chares have been
 // inserted
 // *****************************************************************************
 {
