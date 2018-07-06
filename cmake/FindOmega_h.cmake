@@ -1,7 +1,7 @@
 ################################################################################
 #
 # \file      cmake/FindOmega_h.cmake
-# \copyright 2018, Los Alamos National Security, LLC.
+# \copyright 2016-2018, Los Alamos National Security, LLC.
 # \brief     Find the Omega_h library
 #
 ################################################################################
