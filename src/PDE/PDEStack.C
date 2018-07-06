@@ -12,12 +12,11 @@
 */
 // *****************************************************************************
 
-#include "NoWarning/cartesian_product.h"
-
 #include "PDEStack.h"
 #include "Tags.h"
 #include "SystemComponents.h"
 #include "Inciter/Options/Problem.h"
+#include "CartesianProduct.h"
 
 #include "Transport/CGTransport.h"
 #include "Transport/DGTransport.h"
@@ -83,43 +82,49 @@ PDEStack::PDEStack() : m_cgfactory(), m_dgfactory(), m_eqTypes()
 //!   use of the partial differential equations to be generic, which eliminates
 //!   a lot of boiler-plate code and makes client-code uniform.
 //!
-//!   _Details of registration using mpl::cartesian_product:_
+//!   _Details of registration using brigand::for_each and
+//!   tk::cartesian_product:_
 //!
-//!   The template argument to mpl::cartesian_product requires a sequence of
-//!   sequences of types. We use vector of vectors of types, listing all
-//!   possible policies. The constructor argument to mpl::cartesian_product is a
-//!   functor that is to be applied to all combinations. mpl::cartesian_product
-//!   will then create all possible combinations of these types and call the
-//!   user-supplied functor with each type of the created sequence as a template
-//!   parameter. The user-supplied functor here is registerPDE, which, i.e.,
-//!   its constructor call, needs a single template argument, a class templated
-//!   on policy classes. This is the partial differential equation class to be
-//!   configured by selecting policies and to be registered. The arguments to
-//!   registerPDE's constructor are the factory, the enum denoting the
-//!   differential equation type, and a reference to a variable of type
-//!   std::set< ctr::PDEType >, which is only used internally to PDEStack
-//!   for counting up the number of unique differential equation types
-//!   registered, used for diagnostics purposes.
+//!   The template argument to brigand::for_each, as used below, requires a
+//!   list of list of types. We use brigand::list of brigand::list of types,
+//!   listing all possible policies, where the inner list must have exactly two
+//!   types, as the list of lists is constructed from two lists using the
+//!   cartesian product, and the length of the outer list (the list of lists) is
+//!   arbitrary. The constructor argument to brigand::for_each is a functor that
+//!   is to be applied to all members of the outer list. tk::cartesian_product
+//!   will create all possible combinations of these types and call the functor
+//!   with each type of the created sequence as a template parameter. The
+//!   functor here inherits from registerPDE, which, i.e., its constructor call,
+//!   needs a single template argument, a class templated on policy classes.
+//!   This is the partial differential equation class to be configured by
+//!   selecting policies and to be registered. The arguments to registerPDE's
+//!   constructor are the factory, the enum denoting the differential equation
+//!   type, and a reference to a variable of type std::set< ctr::PDEType >,
+//!   which is only used internally to PDEStack for counting up the number of
+//!   unique differential equation types registered, used for diagnostics
+//!   purposes.
 // *****************************************************************************
 {
   namespace mpl = boost::mpl;
+
 
   // Register PDEs using continuous Galerkin discretization
 
   // Transport PDEs
   // Construct vector of vectors for all possible policies
   using CGTransportPolicies =
-    mpl::vector< cg::TransportPhysics, TransportProblems >;
+    tk::cartesian_product< cg::TransportPhysics, TransportProblems >;
   // Register PDEs for all combinations of policies
-  mpl::cartesian_product< CGTransportPolicies >(
+  brigand::for_each< CGTransportPolicies >(
     registerCG< cg::Transport >( this, ctr::PDEType::TRANSPORT ) );
+
 
   // Compressible flow PDEs
   // Construct vector of vectors for all possible policies
   using CGCompFlowPolicies =
-    mpl::vector< cg::CompFlowPhysics, CompFlowProblems >;
+    tk::cartesian_product< cg::CompFlowPhysics, CompFlowProblems >;
   // Register PDEs for all combinations of policies
-  mpl::cartesian_product< CGCompFlowPolicies >(
+  brigand::for_each< CGCompFlowPolicies >(
     registerCG< cg::CompFlow >( this, ctr::PDEType::COMPFLOW ) );
 
   // Register PDEs using discontinuous Galerkin discretization
@@ -127,17 +132,17 @@ PDEStack::PDEStack() : m_cgfactory(), m_dgfactory(), m_eqTypes()
   // Transport PDEs
   // Construct vector of vectors for all possible policies
   using DGTransportPolicies =
-    mpl::vector< dg::TransportPhysics, TransportProblems >;
+    tk::cartesian_product< dg::TransportPhysics, TransportProblems >;
   // Register PDEs for all combinations of policies
-  mpl::cartesian_product< DGTransportPolicies >(
+  brigand::for_each< DGTransportPolicies >(
     registerDG< dg::Transport >( this, ctr::PDEType::TRANSPORT ) );
 
   // Compressible flow DGPDEs
   // Construct vector of vectors for all possible policies
   using DGCompFlowPolicies =
-    mpl::vector< dg::CompFlowPhysics, CompFlowProblems >;
+    tk::cartesian_product< dg::CompFlowPhysics, CompFlowProblems >;
   // Register PDEs for all combinations of policies
-  mpl::cartesian_product< DGCompFlowPolicies >(
+  brigand::for_each< DGCompFlowPolicies >(
     registerDG< dg::CompFlow >( this, ctr::PDEType::COMPFLOW ) );
 }
 

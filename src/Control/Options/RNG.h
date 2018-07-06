@@ -11,8 +11,8 @@
 
 #include <map>
 
-#include <boost/mpl/vector.hpp>
-#include <boost/mpl/joint_view.hpp>
+#include <brigand/sequences/list.hpp>
+#include <brigand/sequences/append.hpp>
 
 #include "QuinoaConfig.h"
 
@@ -89,49 +89,48 @@ class RNG : public tk::Toggle< RNGType > {
 
   private:
     //! Valid expected choices to make them also available at compile-time
-    using keywordsMKL = boost::mpl::vector<
-                                          #ifdef HAS_MKL
-                                            kw::mkl_mcg31
-                                          , kw::mkl_r250
-                                          , kw::mkl_mrg32k3a
-                                          , kw::mkl_mcg59
-                                          , kw::mkl_wh
-                                          , kw::mkl_mt19937
-                                          , kw::mkl_mt2203
-                                          , kw::mkl_sfmt19937
-                                          , kw::mkl_sobol
-                                          , kw::mkl_niederr
-                                          //, kw::mkl_iabstract
-                                          //, kw::mkl_dabstract
-                                          //, kw::mkl_sabstract
-                                          , kw::mkl_nondeterm
-                                          #endif
-                                          >;
-    using keywordsRNGSSE2 = boost::mpl::vector<
-                                              #ifdef HAS_RNGSSE2
-                                                kw::rngsse_gm19
-                                              , kw::rngsse_gm29
-                                              , kw::rngsse_gm31
-                                              , kw::rngsse_gm55
-                                              , kw::rngsse_gm61
-                                              , kw::rngsse_gq581
-                                              , kw::rngsse_gq583
-                                              , kw::rngsse_gq584
-                                              , kw::rngsse_mt19937
-                                              , kw::rngsse_lfsr113
-                                              , kw::rngsse_mrg32k3a
-                                              #endif
-                                              >;
-    using keywordsR123 = boost::mpl::vector< kw::r123_threefry
-                                           , kw::r123_philox >;
+    using keywordsMKL = brigand::list<
+                                     #ifdef HAS_MKL
+                                       kw::mkl_mcg31
+                                     , kw::mkl_r250
+                                     , kw::mkl_mrg32k3a
+                                     , kw::mkl_mcg59
+                                     , kw::mkl_wh
+                                     , kw::mkl_mt19937
+                                     , kw::mkl_mt2203
+                                     , kw::mkl_sfmt19937
+                                     , kw::mkl_sobol
+                                     , kw::mkl_niederr
+                                     //, kw::mkl_iabstract
+                                     //, kw::mkl_dabstract
+                                     //, kw::mkl_sabstract
+                                     , kw::mkl_nondeterm
+                                     #endif
+                                     >;
+    using keywordsRNGSSE2 = brigand::list<
+                                         #ifdef HAS_RNGSSE2
+                                           kw::rngsse_gm19
+                                         , kw::rngsse_gm29
+                                         , kw::rngsse_gm31
+                                         , kw::rngsse_gm55
+                                         , kw::rngsse_gm61
+                                         , kw::rngsse_gq581
+                                         , kw::rngsse_gq583
+                                         , kw::rngsse_gq584
+                                         , kw::rngsse_mt19937
+                                         , kw::rngsse_lfsr113
+                                         , kw::rngsse_mrg32k3a
+                                         #endif
+                                         >;
+    using keywordsR123 = brigand::list< kw::r123_threefry
+                                      , kw::r123_philox >;
 
   public:
     using ParamType = int;
     using LibType = RNGLibType;
 
-    using keywords = boost::mpl::joint_view< keywordsMKL,
-                       boost::mpl::joint_view< keywordsRNGSSE2,
-                                               keywordsR123 > >;
+    using keywords =
+      brigand::append< keywordsMKL, keywordsRNGSSE2, keywordsR123 >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which

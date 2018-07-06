@@ -12,8 +12,9 @@
 
 #include <sstream>
 
-#include <boost/mpl/or.hpp>
-#include "NoWarning/for_each.h"
+#include <brigand/algorithms/for_each.hpp>
+#include <brigand/functions/logical/or.hpp>
+#include <brigand/sequences/has_key.hpp>
 
 #include "If.h"
 #include "Exception.h"
@@ -374,15 +375,15 @@ namespace grm {
   //! \brief Compile-time test functor verifying that type U is a keyword
   //! \details This functor is used for triggering a compiler error if any of
   //!   the expected option values is not in the keywords pool of the grammar.
-  //!   It is used inside of a boost::mpl::for_each to run a compile-time loop
-  //!   over an MPL sequence, e.g., a vector, which verifies that each type in
-  //!   the vector is a valid keyword that defines the type 'pegtl_string'.
+  //!   It is used inside of a brigand::for_each to run a compile-time loop
+  //!   over an type sequence, e.g., a list, which verifies that each type in
+  //!   the list is a valid keyword that defines the type 'pegtl_string'.
   //!  \see kw::keyword in Control/Keyword.h
   //!  \see e.g. store_option
   template< template< class > class use >
   struct is_keyword {
-    template< typename U > void operator()( U ) {
-      // Attempting to define the type blow accomplishes triggering an error if
+    template< typename U > void operator()( brigand::type_<U> ) {
+      // Attempting to define the type below accomplishes triggering an error if
       // the type does not define pegtl_string. The compiler, however, does not
       // see that far, and generates a warning: unused type alias 'kw', so we
       // ignore it around this template.
@@ -445,7 +446,7 @@ namespace grm {
     }
     // trigger error at compile-time if any of the expected option values
     // is not in the keywords pool of the grammar
-    boost::mpl::for_each< typename Option::keywords >( is_keyword< use >() );
+    brigand::for_each< typename Option::keywords >( is_keyword< use >() );
   }
   #if defined(__clang__)
     #pragma clang diagnostic pop
@@ -613,7 +614,7 @@ namespace grm {
       }
       // trigger error at compile-time if any of the expected option values
       // is not in the keywords pool of the grammar
-      boost::mpl::for_each< typename Option::keywords >( is_keyword< use >() );
+      brigand::for_each< typename Option::keywords >( is_keyword< use >() );
     }
   };
 
@@ -646,7 +647,7 @@ namespace grm {
       }
       // trigger error at compile-time if any of the expected option values
       // is not in the keywords pool of the grammar
-      boost::mpl::for_each< typename Option::keywords >( is_keyword< use >() );
+      brigand::for_each< typename Option::keywords >( is_keyword< use >() );
     }
   };
 
@@ -712,7 +713,7 @@ namespace grm {
                   ( key, Option().value(in.string()) );
       // trigger error at compile-time if any of the expected option values
       // is not in the keywords pool of the grammar
-      boost::mpl::for_each< typename Option::keywords >( is_keyword< use >() );
+      brigand::for_each< typename Option::keywords >( is_keyword< use >() );
     }
   };
 
@@ -1669,21 +1670,11 @@ namespace grm {
   //!   inherit from base class 'char'. In that case, simply add the new keyword
   //!   into one of the pools of keywords corresponding to the given grammar.
   //!   The rationale behind this wrapper is to force the developer to maintain
-  //!   the keywords pool for a grammar. The pools are boost::mpl::sets and are
+  //!   the keywords pool for a grammar. The pools are brigand::set and are
   //!   used to provide help on command line arguments for a given executable.
-  //!   They allow compile-time iteration with boost::mpl::for_each or
+  //!   They allow compile-time iteration with brigand::for_each or
   //!   generating a run-time std::map associating, e.g., keywords to their help
   //!   strings.
-  //! \warning Since the default maximum number of elements in a
-  //!   boost::mpl::set is 20, and increasing this number would require custom
-  //!   boost::preprocessor-generated boost::mpl headers, which is cumbersome
-  //!   and error-prone, instead we work with several pools here that can each
-  //!   hold a maximum 20 items and use boost::mpl::or_ and boost::mpl::has_key
-  //!   to search for the keyword in either of the pools. Note that
-  //!   boost::mpl::or_ allows a maximum 5 template arguments by definition,
-  //!   i.e., max 5 OR'd pools, which corresponds to a maximum of 5x20=100
-  //!   keywords. If you need more than that, increase
-  //!   BOOST_MPL_LIMIT_METAFUNCTION_ARITY in src/CMakeLitst.txt.
   //! \warning Note that an even more elegant solution to the problem this
   //!   wrapper is intended to solve is to use a metaprogram that collects all
   //!   occurrences of the keywords in a grammar. However, that does not seem to
@@ -1697,15 +1688,10 @@ namespace grm {
   //!   on-screen help generated even though some of the keywords may not be
   //!   implemented by the given grammar. So please don't abuse and don't list
   //!   keywords in the pool only if they are implemented in the grammar.
-  //! \see For example usage with a single pool, see the template typedef
+  //! \see For example usage see the template typedef
   //!   walker::cmd::use in Control/Walker/CmdLine/Grammar.h and its keywords
   //!   pool, walker::ctr::CmdLine::keywords, in
   //!   Control/Walker/CmdLine/CmdLine.h.
-  //! \see For example usage with multiple pools, see the template typedef,
-  //!   walker::deck::use, in Control/Walker/InputDeck/Grammar.h and its
-  //!   keywords pools, walker::ctr::InputDeck::keywords1,
-  //!   walker::ctr::InputDeck::keywords2, etc., in
-  //!   Control/Walker/InputDeck/InputDeck.h.
   //! \see http://en.cppreference.com/w/cpp/types/conditional
   //! \see http://www.boost.org/doc/libs/release/libs/mpl/doc/refmanual/set.html
   //! \see http://www.boost.org/doc/libs/release/libs/mpl/doc/refmanual/has_key.html
@@ -1713,11 +1699,10 @@ namespace grm {
   //! \see http://www.boost.org/doc/libs/release/libs/mpl/doc/refmanual/limit-metafunction-arity.html
   //! TODO It still would be nice to generate a more developer-friendly
   //!    compiler error if the keyword is not in the pool.
-  template< typename keyword, typename pool, typename... pools >
+  template< typename keyword, typename pool >
   struct use :
-         std::conditional< boost::mpl::or_<
-                             boost::mpl::has_key< pool, keyword >,
-                             boost::mpl::has_key< pools, keyword >... >::value,
+         std::conditional< brigand::or_<
+                             brigand::has_key< pool, keyword > >::value,
                            keyword,
                            char >::type {};
 

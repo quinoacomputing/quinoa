@@ -9,8 +9,8 @@
 #ifndef ProblemOptions_h
 #define ProblemOptions_h
 
-#include <boost/mpl/vector.hpp>
-#include "NoWarning/for_each.h"
+#include <brigand/sequences/list.hpp>
+#include <brigand/algorithms/for_each.hpp>
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -38,16 +38,16 @@ class Problem : public tk::Toggle< ProblemType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::user_defined
-                                       , kw::shear_diff
-                                       , kw::vortical_flow
-                                       , kw::nl_energy_growth
-                                       , kw::rayleigh_taylor
-                                       , kw::taylor_green
-                                       , kw::slot_cyl
-                                       , kw::gauss_hump
-                                       , kw::sod_shocktube
-                                       >;
+    using keywords = brigand::list< kw::user_defined
+                                  , kw::shear_diff
+                                  , kw::vortical_flow
+                                  , kw::nl_energy_growth
+                                  , kw::rayleigh_taylor
+                                  , kw::taylor_green
+                                  , kw::slot_cyl
+                                  , kw::gauss_hump
+                                  , kw::sod_shocktube
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
@@ -77,7 +77,7 @@ class Problem : public tk::Toggle< ProblemType > {
           { kw::gauss_hump::string(), ProblemType::GAUSS_HUMP },
           { kw::sod_shocktube::string(), ProblemType::SOD_SHOCKTUBE } } )
     {
-       boost::mpl::for_each< keywords >( assertPolicyCodes() );
+       brigand::for_each< keywords >( assertPolicyCodes() );
     }
 
     //! \brief Return policy code based on Enum
@@ -97,7 +97,7 @@ class Problem : public tk::Toggle< ProblemType > {
     struct assertPolicyCodes {
       //! \brief Function call operator templated on the type to assert the
       //!   existence of a policy code
-      template< typename U > void operator()( U ) {
+      template< typename U > void operator()( brigand::type_<U> ) {
         static_assert( tk::HasTypedefCode< typename U::info >::value,
                        "Policy code undefined for keyword" );
       }

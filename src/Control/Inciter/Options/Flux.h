@@ -9,8 +9,7 @@
 #ifndef FluxOptions_h
 #define FluxOptions_h
 
-#include <boost/mpl/vector.hpp>
-#include "NoWarning/for_each.h"
+#include <brigand/sequences/list.hpp>
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -31,9 +30,9 @@ class Flux : public tk::Toggle< FluxType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::laxfriedrichs
-                                       , kw::hllc
-                                       >;
+    using keywords = brigand::list< kw::laxfriedrichs
+                                  , kw::hllc
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which

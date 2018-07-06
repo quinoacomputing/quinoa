@@ -41,7 +41,7 @@
 #ifndef TransportProblem_h
 #define TransportProblem_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Problem/ShearDiff.h"
 #include "Problem/SlotCyl.h"
@@ -50,10 +50,10 @@
 namespace inciter {
 
 //! List of all Transport Problem policies (defined in the includes above)
-using TransportProblems = boost::mpl::vector< TransportProblemShearDiff
-                                            , TransportProblemSlotCyl
-                                            , TransportProblemGaussHump
-                                            >;
+using TransportProblems = brigand::list< TransportProblemShearDiff
+                                       , TransportProblemSlotCyl
+                                       , TransportProblemGaussHump
+                                       >;
 
 } // inciter::
 
