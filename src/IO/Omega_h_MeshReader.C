@@ -7,8 +7,6 @@
 */
 // *****************************************************************************
 
-#include <sstream>
-
 #include <Omega_h_file.hpp>
 #include <Omega_h_library.hpp>
 
@@ -56,19 +54,16 @@ Omega_h_MeshReader::readMeshPart(
           coord[0].empty() && coord[1].empty() && coord[2].empty(),
           "Containers to store mesh must be empty" );
 
+  // Create Omega_h library instance
+  auto lib = Omega_h::Library( nullptr, nullptr, MPI_COMM_WORLD );
+
   // Find out how many partitions the Omega_h mesh was saved with
-  tk::Reader n( m_filename + "/nparts" );
-  std::stringstream ss( n.firstline() );
-  int nparts = 0;
-  ss >> nparts;
+  auto nparts = Omega_h::binary::read_nparts( m_filename, lib.world() );
 
   if (numpes < nparts)
     Throw( "The Omega_h mesh reader only supports NumPEs >= nparts, where "
            "nparts is the number of partitions the mesh is partitioned into. "
            "Also note that NumPEs must be a power of 2 if NumPEs > nparts." );
-
-  // Create Omega_h library instance
-  auto lib = Omega_h::Library( nullptr, nullptr, MPI_COMM_WORLD );
 
   // Read mesh
   auto mesh = Omega_h::binary::read( m_filename, &lib );
