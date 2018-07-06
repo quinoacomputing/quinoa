@@ -38,6 +38,7 @@ class CmdLine : public tk::Control<
                   tag::feedback,       bool,
                   tag::help,           bool,
                   tag::helpctr,        bool,
+                  tag::quiescence,     bool,
                   tag::cmdinfo,        tk::ctr::HelpFactory,
                   tag::ctrinfo,        tk::ctr::HelpFactory,
                   tag::helpkw,         tk::ctr::HelpKw,
@@ -52,6 +53,7 @@ class CmdLine : public tk::Control<
                                     , kw::virtualization
                                     , kw::help
                                     , kw::helpctr
+                                    , kw::quiescence
                                     , kw::helpkw
                                     , kw::control
                                     , kw::input
@@ -114,6 +116,7 @@ class CmdLine : public tk::Control<
                    tag::feedback,       bool,
                    tag::help,           bool,
                    tag::helpctr,        bool,
+                   tag::quiescence,     bool,
                    tag::cmdinfo,        tk::ctr::HelpFactory,
                    tag::ctrinfo,        tk::ctr::HelpFactory,
                    tag::helpkw,         tk::ctr::HelpKw,

@@ -29,6 +29,7 @@ mainmodule unittest {
     entry Main( CkArgMsg* msg );
     entry void execute();
     entry void finalize( bool worked, bool pass );
+    entry void quiescence();
   }
 
   chare execute { entry execute(); }
