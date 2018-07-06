@@ -20,8 +20,8 @@
 #include <vector>
 #include <functional>
 
-#include <boost/mpl/at.hpp>
-#include <boost/mpl/aux_/adl_barrier.hpp>
+#include "NoWarning/back.h"
+#include "NoWarning/front.h"
 
 #include "Tags.h"
 #include "Keywords.h"

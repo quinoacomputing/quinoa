@@ -12,8 +12,9 @@
 #include <limits>
 #include <iostream>
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "NoWarning/set.h"
-#include "NoWarning/for_each.h"
 
 #include "QuinoaConfig.h"
 #include "Control.h"
@@ -42,14 +43,8 @@ class InputDeck :
 
   public:
     //! \brief Walker input deck keywords
-    //! \details Since there are more than 20 and boost::mpl only allows maxium
-    //!   20 items in a set by default (and I don't want to mess with
-    //!   preprocessor-generated boost::mpl headers), the whole set is broken up
-    //!   into several sets each containing 20 keywords.
     //! \see See also tk::grm::use
-    //! \details If you add a new mpl::set, make sure you also add it to
-    //!   waker::deck::use.
-    using keywords1 = boost::mpl::set< kw::precision
+    using keywords = brigand::set< kw::precision
                                      , kw::end
                                      , kw::depvar
                                      , kw::title
@@ -69,8 +64,7 @@ class InputDeck :
                                      , kw::ncomp
                                      , kw::rng
                                      , kw::walker
-                                     >;
-    using keywords2 = boost::mpl::set< kw::init
+                                     , kw::init
                                      , kw::coeff
                                      , kw::diag_ou
                                      , kw::ornstein_uhlenbeck
@@ -90,8 +84,7 @@ class InputDeck :
                                      , kw::sde_c
                                      , kw::sde_kappa
                                      , kw::sde_omega
-                                     >;
-    using keywords3 = boost::mpl::set< kw::cja
+                                     , kw::cja
                                      , kw::cja_accurate
                                      #ifdef HAS_RNGSSE2
                                      , kw::rngsse_gm19
@@ -113,8 +106,7 @@ class InputDeck :
                                      , kw::position
                                      , kw::velocity
                                      , kw::instantaneous_velocity
-                                     >;
-    using keywords4 = boost::mpl::set< kw::seed
+                                     , kw::seed
                                      #ifdef HAS_MKL
                                      , kw::mkl_mcg31
                                      , kw::mkl_r250
@@ -136,8 +128,7 @@ class InputDeck :
                                      , kw::boxmuller2
                                      , kw::icdf
                                      #endif
-                                     >;
-    using keywords5 = boost::mpl::set< kw::constant
+                                     , kw::constant
                                      , kw::decay
                                      , kw::raw
                                      , kw::zero
@@ -157,8 +148,7 @@ class InputDeck :
                                      , kw::sde_rho2
                                      , kw::sde_rcomma
                                      , kw::icdelta
-                                     >;
-    using keywords6 = boost::mpl::set< kw::spike
+                                     , kw::spike
                                      , kw::sde_bprime
                                      , kw::sde_kappaprime
                                      , kw::mixnumfracbeta
@@ -178,8 +168,7 @@ class InputDeck :
                                      , kw::gaussian
                                      , kw::dissipation
                                      , kw::jointgamma
-                                     >;
-    using keywords7 = boost::mpl::set< kw::hydrotimescales
+                                     , kw::hydrotimescales
                                      , kw::hydroproductions
                                      , kw::eq_A005H
                                      , kw::eq_A005S
@@ -199,8 +188,7 @@ class InputDeck :
                                      , kw::prod_A075H
                                      , kw::prod_A075S
                                      , kw::prod_A075L
-                                     >;
-    using keywords8 = boost::mpl::set< kw::gnorm
+                                     , kw::gnorm
                                      , kw::gnorm_accurate
                                      , kw::gamma_method
                                      , kw::icgamma
@@ -216,7 +204,6 @@ class InputDeck :
                                      , kw::slm
                                      , kw::glm
                                      >;
-
 
     //! \brief Constructor: set all defaults
     //! \param[in] cl Previously parsed and store command line
@@ -242,14 +229,7 @@ class InputDeck :
       set< tag::stat >( std::vector< tk::ctr::Product >() );
       // Initialize help
       const auto& ctrinfoFill = tk::ctr::Info( get< tag::cmd, tag::ctrinfo >() );
-      boost::mpl::for_each< keywords1 >( ctrinfoFill );
-      boost::mpl::for_each< keywords2 >( ctrinfoFill );
-      boost::mpl::for_each< keywords3 >( ctrinfoFill );
-      boost::mpl::for_each< keywords4 >( ctrinfoFill );
-      boost::mpl::for_each< keywords5 >( ctrinfoFill );
-      boost::mpl::for_each< keywords6 >( ctrinfoFill );
-      boost::mpl::for_each< keywords7 >( ctrinfoFill );
-      boost::mpl::for_each< keywords8 >( ctrinfoFill );
+      brigand::for_each< keywords >( ctrinfoFill );
     }
 
     //! Extract moment names of requested statistics

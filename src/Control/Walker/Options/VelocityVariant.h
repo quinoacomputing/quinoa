@@ -9,8 +9,7 @@
 #ifndef VelocityVariantOptions_h
 #define VelocityVariantOptions_h
 
-#include <boost/mpl/vector.hpp>
-#include "NoWarning/for_each.h"
+#include <brigand/sequences/list.hpp>
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -33,9 +32,9 @@ class VelocityVariant : public tk::Toggle< VelocityVariantType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::slm
-                                       , kw::glm
-                                       >;
+    using keywords = brigand::list< kw::slm
+                                  , kw::glm
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which

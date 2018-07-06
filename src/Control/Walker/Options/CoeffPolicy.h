@@ -9,8 +9,8 @@
 #ifndef CoeffPolicyOptions_h
 #define CoeffPolicyOptions_h
 
-#include <boost/mpl/vector.hpp>
-#include "NoWarning/for_each.h"
+#include <brigand/sequences/list.hpp>
+#include <brigand/algorithms/for_each.hpp>
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -37,14 +37,14 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::constant
-                                       , kw::decay
-                                       , kw::homdecay
-                                       , kw::montecarlo_homdecay
-                                       , kw::hydrotimescale
-                                       , kw::const_shear
-                                       , kw::instantaneous_velocity
-                                       >;
+    using keywords = brigand::list< kw::constant
+                                  , kw::decay
+                                  , kw::homdecay
+                                  , kw::montecarlo_homdecay
+                                  , kw::hydrotimescale
+                                  , kw::const_shear
+                                  , kw::instantaneous_velocity
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
@@ -74,7 +74,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
            { kw::instantaneous_velocity::string(),
              CoeffPolicyType::INSTANTANEOUS_VELOCITY } } )
     {
-       boost::mpl::for_each< keywords >( assertPolicyCodes() );
+       brigand::for_each< keywords >( assertPolicyCodes() );
     }
 
     //! \brief Return policy code based on Enum
@@ -94,7 +94,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
     struct assertPolicyCodes {
       //! \brief Function call operator templated on the type to assert the
       //!   existence of a policy code
-      template< typename U > void operator()( U ) {
+      template< typename U > void operator()( brigand::type_<U> ) {
         static_assert( tk::HasTypedefCode< typename U::info >::value,
                        "Policy code undefined for keyword" );
       }

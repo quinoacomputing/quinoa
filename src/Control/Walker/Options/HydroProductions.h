@@ -9,8 +9,7 @@
 #ifndef HydroProductionsOptions_h
 #define HydroProductionsOptions_h
 
-#include <boost/mpl/vector.hpp>
-#include "NoWarning/for_each.h"
+#include <brigand/sequences/list.hpp>
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -42,16 +41,16 @@ class HydroProductions : public tk::Toggle< HydroProductionsType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::prod_A005H
-                                       , kw::prod_A005S
-                                       , kw::prod_A005L
-                                       , kw::prod_A05H
-                                       , kw::prod_A05S
-                                       , kw::prod_A05L
-                                       , kw::prod_A075H
-                                       , kw::prod_A075S
-                                       , kw::prod_A075L
-                                       >;
+    using keywords = brigand::list< kw::prod_A005H
+                                  , kw::prod_A005S
+                                  , kw::prod_A005L
+                                  , kw::prod_A05H
+                                  , kw::prod_A05S
+                                  , kw::prod_A05L
+                                  , kw::prod_A075H
+                                  , kw::prod_A075S
+                                  , kw::prod_A075L
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which

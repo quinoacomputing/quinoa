@@ -15,6 +15,8 @@
 #include <iomanip>
 #include <iostream>
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "NoWarning/set.h"
 
 #include "Control.h"

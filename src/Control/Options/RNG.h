@@ -12,7 +12,8 @@
 #include <map>
 
 #include <brigand/sequences/list.hpp>
-#include <brigand/sequences/append.hpp>
+
+#include "NoWarning/append.h"
 
 #include "QuinoaConfig.h"
 

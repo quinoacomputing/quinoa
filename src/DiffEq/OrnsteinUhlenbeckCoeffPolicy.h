@@ -46,7 +46,7 @@
 #ifndef OrnsteinUhlenbeckCoeffPolicy_h
 #define OrnsteinUhlenbeckCoeffPolicy_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Types.h"
 #include "Walker/Options/CoeffPolicy.h"
@@ -95,7 +95,7 @@ class OrnsteinUhlenbeckCoeffConst {
 
 //! List of all Ornstein-Uhlenbeck's coefficients policies
 using OrnsteinUhlenbeckCoeffPolicies =
-  boost::mpl::vector< OrnsteinUhlenbeckCoeffConst >;
+  brigand::list< OrnsteinUhlenbeckCoeffConst >;
 
 } // walker::
 

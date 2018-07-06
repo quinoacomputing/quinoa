@@ -45,7 +45,7 @@
 
 #include <algorithm>
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Macro.h"
 #include "Types.h"
@@ -256,13 +256,13 @@ struct InitGamma {
 };
 
 //! List of all initialization policies
-using InitPolicies = boost::mpl::vector< InitRaw
-                                       , InitZero
-                                       , InitDelta
-                                       , InitBeta
-                                       , InitGaussian
-                                       , InitGamma
-                                       >;
+using InitPolicies = brigand::list< InitRaw
+                                  , InitZero
+                                  , InitDelta
+                                  , InitBeta
+                                  , InitGaussian
+                                  , InitGamma
+                                  >;
 
 } // walker::
 

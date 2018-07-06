@@ -38,7 +38,7 @@
 
 #include <array>
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Types.h"
 #include "SystemComponents.h"
@@ -73,8 +73,7 @@ class DissipationCoeffConst {
 };
 
 //! List of all dissipation eq coefficients policies
-using DissipationCoeffPolicies = boost::mpl::vector< DissipationCoeffConst
-                                                   >;
+using DissipationCoeffPolicies = brigand::list< DissipationCoeffConst >;
 
 } // walker::
 

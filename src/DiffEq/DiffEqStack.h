@@ -14,6 +14,9 @@
 #ifndef DiffEqStack_h
 #define DiffEqStack_h
 
+#include "NoWarning/back.h"
+#include "NoWarning/front.h"
+
 #include <map>
 #include <set>
 #include <string>
@@ -23,9 +26,6 @@
 #include <ostream>
 #include <utility>
 #include <cstddef>
-
-#include <boost/mpl/at.hpp>
-#include <boost/mpl/aux_/adl_barrier.hpp>
 
 #include "Tags.h"
 #include "Keywords.h"
@@ -97,15 +97,15 @@ class DiffEqStack {
         factory( f ), type( t ) { eqTypes.insert( t ); }
       //! \brief Function call operator called by mpl::cartesian_product for
       //!   each unique sequence of policy combinations
-      template< typename U > void operator()( U ) {
-        namespace mpl = boost::mpl;
-        // Get Initialization policy: 1st type of mpl::vector U
-        using InitPolicy = typename mpl::at< U, mpl::int_<0> >::type;
-        // Get coefficients policy: 2nd type of mpl::vector U
-        using CoeffPolicy = typename mpl::at< U, mpl::int_<1> >::type;
+      template< typename U > void operator()( brigand::type_<U> ) {
+        // Get Initialization policy: first type of brigand::list U
+        using InitPolicy = typename brigand::front< U >;
+        // Get coefficients policy: last type of brigand::list U
+        using CoeffPolicy = typename brigand::back< U >;
         // Build differential equation key
         ctr::DiffEqKey key{ type, InitPolicy::type(), CoeffPolicy::type() };
-        // Register equation (with policies given by mpl::vector U) into factory
+        // Register equation (with policies given by brigand::list U) into
+        // factory
         tk::recordModelLate< DiffEq, Eq< InitPolicy, CoeffPolicy > >
                            ( factory, key, static_cast<ncomp_t>(0) );
       }

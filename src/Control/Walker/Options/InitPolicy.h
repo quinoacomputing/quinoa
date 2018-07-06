@@ -9,8 +9,8 @@
 #ifndef InitPolicyOptions_h
 #define InitPolicyOptions_h
 
-#include <boost/mpl/vector.hpp>
-#include "NoWarning/for_each.h"
+#include <brigand/sequences/list.hpp>
+#include <brigand/algorithms/for_each.hpp>
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -35,13 +35,13 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::raw
-                                       , kw::zero
-                                       , kw::jointdelta
-                                       , kw::jointgaussian
-                                       , kw::jointbeta
-                                       , kw::jointgamma
-                                       >;
+    using keywords = brigand::list< kw::raw
+                                  , kw::zero
+                                  , kw::jointdelta
+                                  , kw::jointgaussian
+                                  , kw::jointbeta
+                                  , kw::jointgamma
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
@@ -65,7 +65,7 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
           { kw::jointbeta::string(), InitPolicyType::JOINTBETA },
           { kw::jointgamma::string(), InitPolicyType::JOINTGAMMA } } )
     {
-       boost::mpl::for_each< keywords >( assertPolicyCodes() );
+       brigand::for_each< keywords >( assertPolicyCodes() );
     }
 
     //! \brief Return policy code based on Enum
@@ -85,7 +85,7 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
     struct assertPolicyCodes {
       //! \brief Function call operator templated on the type to assert the
       //!   existence of a policy code
-      template< typename U > void operator()( U ) {
+      template< typename U > void operator()( brigand::type_<U> ) {
         static_assert( tk::HasTypedefCode< typename U::info >::value,
                        "Policy code undefined for keyword" );
       }

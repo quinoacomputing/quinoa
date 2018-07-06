@@ -12,6 +12,8 @@
 */
 // *****************************************************************************
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "PDEStack.h"
 #include "Tags.h"
 #include "SystemComponents.h"
