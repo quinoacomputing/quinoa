@@ -31,6 +31,7 @@ mainmodule walker {
     entry void execute();
     entry void finalize();
     entry void timestamp( std::string label, tk::real stamp );
+    entry void quiescence();
   }
 
   chare execute { entry execute(); }

@@ -181,6 +181,9 @@ class Main : public CBase_Main {
     {
       delete msg;
       mainProxy = thisProxy;
+      // Optionally enable quiscence detection
+      if (m_cmdline.get< tag::quiescence >())
+        CkStartQD( CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
       // Fire up an asynchronous execute object, which when created at some
       // future point in time will call back to this->execute(). This is
       // necessary so that this->execute() can access already migrated
@@ -209,6 +212,11 @@ class Main : public CBase_Main {
       } catch (...) { tk::processExceptionCharm(); }
       // Tell the Charm++ runtime system to exit
       CkExit();
+    }
+
+    //! Entry method triggered when quiescence is detected
+    [[noreturn]] void quiescence() {
+      Throw( "Quiescence detected" );
     }
 
   private:

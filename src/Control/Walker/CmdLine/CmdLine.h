@@ -32,6 +32,7 @@ class CmdLine : public tk::Control<
                   tag::verbose,        bool,
                   tag::help,           bool,
                   tag::helpctr,        bool,
+                  tag::quiescence,     bool,
                   tag::cmdinfo,        tk::ctr::HelpFactory,
                   tag::ctrinfo,        tk::ctr::HelpFactory,
                   tag::helpkw,         tk::ctr::HelpKw,
@@ -47,6 +48,7 @@ class CmdLine : public tk::Control<
                                  , kw::control
                                  , kw::pdf
                                  , kw::stat
+                                 , kw::quiescence
                                  >;
 
     //! \brief Constructor: set all defaults.
@@ -97,6 +99,7 @@ class CmdLine : public tk::Control<
                    tag::verbose,        bool,
                    tag::help,           bool,
                    tag::helpctr,        bool,
+                   tag::quiescence,     bool,
                    tag::cmdinfo,        tk::ctr::HelpFactory,
                    tag::ctrinfo,        tk::ctr::HelpFactory,
                    tag::helpkw,         tk::ctr::HelpKw,

@@ -80,6 +80,9 @@ class Main : public CBase_Main {
     {
       delete msg;
       mainProxy = thisProxy;
+      // Optionally enable quiscence detection
+      if (m_cmdline.get< tag::quiescence >())
+        CkStartQD( CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
       // Fire up an asynchronous execute object, which when created at some
       // future point in time will call back to this->execute(). This is
       // necessary so that this->execute() can access already migrated
@@ -115,6 +118,11 @@ class Main : public CBase_Main {
     //! Add multiple time stamps contributing to final timers output
     void timestamp( const std::vector< std::pair< std::string, tk::real > >& s )
     { for (const auto& t : s) timestamp( t.first, t.second ); }
+
+    //! Entry method triggered when quiescence is detected
+    [[noreturn]] void quiescence() {
+      Throw( "Quiescence detected" );
+    }
 
   private:
     int m_signal;                               //!< Used to set signal handlers

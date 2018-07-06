@@ -13,6 +13,7 @@
 namespace tag {
 
 struct io {};
+struct quiescence {};
 struct input {};
 struct output {};
 struct diag {};
