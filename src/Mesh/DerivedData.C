@@ -11,6 +11,7 @@
 #include <set>
 #include <map>
 #include <iterator>
+#include <numeric>
 #include <algorithm>
 #include <type_traits>
 #include <cstddef>
@@ -1489,6 +1490,54 @@ genGeoElemTet( const std::vector< std::size_t >& inpoel,
   }
 
   return geoElem;
+}
+
+bool
+leakyPartition( const std::vector< int >& esueltet,
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord )
+// *****************************************************************************
+// Perform leak-test on mesh (partition)
+//! \param[in] esueltet Elements surrounding elements for tetrahedra, see
+//!   tk::genEsueltet()
+//! \param[in] inpoel Element connectivity
+//! \param[in] coord Node coordinates
+//! \details This function computes a surface integral over the boundary of the
+//!   incoming mesh (partition). A non-zero vector result indicates a leak, e.g.,
+//!   a hole in the mesh (partition), which indicates an error either in the
+//    mesh geometry, mesh partitioning, or in the data structures that represent
+//    faces.
+//! \return True if partition leaks.
+// *****************************************************************************
+{
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  // Storage for surface integral over our mesh partition
+  std::array< tk::real, 3 > s{{ 0.0, 0.0, 0.0}};
+
+  for (std::size_t e=0; e<esueltet.size()/4; ++e) {   // for all our tets
+    auto mark = e*4;
+    for (std::size_t f=0; f<4; ++f)     // for all tet faces
+      if (esueltet[mark+f] == -1) {     // if face has no outside-neighbor tet
+        // 3 local node IDs of face
+        auto A = inpoel[ mark + tk::lpofa[f][0] ];
+        auto B = inpoel[ mark + tk::lpofa[f][1] ];
+        auto C = inpoel[ mark + tk::lpofa[f][2] ];
+        // Compute geometry data for face
+        auto geoface = tk::geoFaceTri( {{x[A], x[B], x[C]}},
+                                       {{y[A], y[B], y[C]}},
+                                       {{z[A], z[B], z[C]}} );
+        // Sum up face area * face unit-normal
+        s[0] += geoface(0,0,0) * geoface(0,1,0);
+        s[1] += geoface(0,0,0) * geoface(0,2,0);
+        s[2] += geoface(0,0,0) * geoface(0,3,0);
+      }
+  }
+
+  auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
+  return std::abs(s[0]) > eps || std::abs(s[1]) > eps || std::abs(s[2]) > eps;
 }
 
 } // tk::

@@ -172,6 +172,7 @@ std::size_t sumsize( const Container& c ) {
 
 // *****************************************************************************
 //! Compute the sum of the sizes of the values of an associative container
+//! \tparam Map Container of containers type
 //! \param[in] c Container of containers
 //! \return Sum of the sizes of the values of the associative container
 // *****************************************************************************

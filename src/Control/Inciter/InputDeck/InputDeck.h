@@ -123,6 +123,7 @@ class InputDeck :
                                        kw::l2,
                                        kw::linf >;
     using keywords5 = boost::mpl::set< kw::fct,
+                                       kw::reorder,
                                        kw::amr,
                                        kw::amr_initial,
                                        kw::amr_uniform,
@@ -162,6 +163,7 @@ class InputDeck :
       set< tag::discr, tag::dt >( 0.0 );
       set< tag::discr, tag::cfl >( 0.0 );
       set< tag::discr, tag::fct >( true );
+      set< tag::discr, tag::reorder >( false );
       set< tag::discr, tag::ctau >( 1.0 );
       set< tag::discr, tag::scheme >( SchemeType::MatCG );
       set< tag::discr, tag::flux >( FluxType::HLLC );
@@ -169,6 +171,7 @@ class InputDeck :
       set< tag::selected, tag::filetype >( tk::ctr::FieldFileType::EXODUSII );
       // Default AMR settings
       set< tag::amr, tag::amr >( false );
+      set< tag::amr, tag::initamr >( false );
       set< tag::amr, tag::error >( AMRErrorType::JUMP );
       // Default txt floating-point output precision in digits
       set< tag::prec, tag::diag >( std::cout.precision() );

@@ -3231,19 +3231,29 @@ struct diagnostics_info {
     static std::string description() { return "string"; }
   };
 };
-using diagnostics = keyword< diagnostics_info, TAOCPP_PEGTL_STRING("diagnostics") >;
+using diagnostics =
+  keyword< diagnostics_info, TAOCPP_PEGTL_STRING("diagnostics") >;
 
 struct reorder_info {
   static std::string name() { return "reorder"; }
   static std::string shortDescription() { return "Reorder mesh nodes"; }
   static std::string longDescription() { return
-    R"(This option is used to instruct the mesh converter to not only convert
-    but also reorder the mesh nodes using the advancing front technique.)";
+    R"(This keyword is used in two different ways: (1) in meshconv as a command
+    line argument to instruct the mesh converter to not only convert but also
+    reorder the mesh nodes using the advancing front technique, and (2) in
+    inciter as a keyword in the inciter...end block as "reorder on" (or off) to
+    do (or not do) a global distributed mesh reordering across all PEs that
+    yields an approximately continous mesh node ID order as mesh partitions are
+    assigned to PEs after mesh partitioning. Reordering is optional in meshconv
+    and optional in inciter if the DiagCG or the DG discretization schemes are
+    configured and mandatory (i.e., on independent of the user setting in the
+    input file) if MatCG is configured.)";
   }
   using alias = Alias< r >;
   struct expect {
-    using type = std::string;
-    static std::string description() { return "string"; }
+    using type = bool;
+    static std::string choices() { return "true | false"; }
+    static std::string description() { return "string (on/off) in inciter"; }
   };
 };
 using reorder = keyword< reorder_info, TAOCPP_PEGTL_STRING("reorder") >;

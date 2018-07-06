@@ -1,0 +1,56 @@
+// *****************************************************************************
+/*!
+  \file      src/Inciter/sorter.ci
+  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \brief     Charm++ module interface file for mesh sorter
+  \details   Charm++ module interface file for mesh sorter.
+  \see       Sorter.h and Sorter.C for more info.
+*/
+// *****************************************************************************
+
+module sorter {
+
+  namespace inciter {
+
+    array [1D] Sorter {
+      entry Sorter( const CProxy_Transporter& transporter,
+                    const tk::CProxy_Solver& solver,
+                    const tk::SorterCallback& cbs,
+                    const Scheme& scheme,
+                    const std::vector< std::size_t >& ginpoel,
+                    const tk::UnsMesh::CoordMap& coordmap,
+                    const std::map< int, std::vector< std::size_t > >& bface,
+                    const std::vector< std::size_t >& triinpoel,
+                    const std::map< int, std::vector< std::size_t > >& bnode,
+                    int nchare );
+      initnode void registerReducers();
+      entry [reductiontarget] void comm( CkReductionMsg* msg );
+      entry void offset( int c, std::size_t u );
+      entry void request( int c, const std::unordered_set< std::size_t >& nd );
+      entry void neworder( const std::unordered_map< std::size_t,
+                       std::tuple< std::size_t, tk::UnsMesh::Coord > >& nodes );
+      entry void lower( std::size_t low );
+      entry void createDiscWorkers();
+      entry void createWorkers();
+
+      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+      entry void wait4prep() {
+        when reorderowned_complete(), nodes_requested_complete()
+        serial "prepare" { prepare(); }
+      };
+
+      entry void wait4bounds() {
+        when lower_complete(), upper_complete() serial "create" { create(); }
+      };
+
+      entry void reorderowned_complete();
+      entry void nodes_requested_complete();
+      entry void lower_complete();
+      entry void upper_complete();
+    };
+
+  } // inciter::
+
+}

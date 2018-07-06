@@ -10,6 +10,10 @@ inciter
   cfl   0.8   # CFL coefficient
   ttyi 1      # TTY output interval
 
+  partitioning
+    algorithm mj
+  end
+
   amr
     initial uniform
   end

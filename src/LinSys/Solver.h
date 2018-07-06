@@ -212,16 +212,25 @@ class Solver : public CBase_Solver {
   public:
     //! Constructor
     Solver( CProxy_SolverShadow sh,
-            const std::vector< CkCallback >& cb,
+            const SolverCallback& cb,
             std::size_t n,
             bool /*feedback*/ );
 
     //! Configure Charm++ reduction types for concatenating BC nodelists
     static void registerReducers();
 
-    //! Receive lower and upper global node IDs all PEs will operate on
-    void bounds( int p, std::size_t lower, std::size_t upper );
+    //!  Receive lower and upper global node IDs from chares
+    //! \note This is not a Charm++ entry method but public because it is called
+    //!    by chares on this PE.
+    void chbounds( std::size_t lower, std::size_t upper );
 
+    //!  Compute lower and upper bounds across all PEs
+    void pebounds( int p, std::size_t lower, std::size_t upper );
+
+    //! Compute lower and upper bounds across PEs
+    void computeBounds( int c, std::size_t lower, std::size_t upper );
+
+    //! Prepare for next step
     //! Prepare for next step
     void next();
 
@@ -336,14 +345,10 @@ class Solver : public CBase_Solver {
 
   private:
     CProxy_SolverShadow m_shadow;
-    //! Charm++ reduction callbacks associated to compile-time tags
-    tk::tuple::tagged_tuple<
-        tag::com,   CkCallback
-      , tag::coord, CkCallback
-      , tag::diag,  CkCallback
-    > m_cb;
+    SolverCallback m_cb;        //!< Charm++ associated to compile-time tags
     std::size_t m_ncomp;       //!< Number of scalar components per unknown
     std::size_t m_nchare;      //!< Number of chares contributing to my PE
+    std::size_t m_nbounds;     //!< Number of chares contributed bounds to my PE
     std::size_t m_ncomm;       //!< Number of chares finished commaps on my PE
     std::size_t m_nperow;      //!< Number of fellow PEs to send row ids to
     std::size_t m_nchbc;       //!< Number of chares we received bcs from

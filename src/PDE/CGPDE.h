@@ -110,7 +110,7 @@ class CGPDE {
 
     //! \brief Public interface for querying Dirichlet boundary condition values
     //!  set by the user on a given side set for all components in a PDE system
-    std::map< std::size_t,  std::vector< std::pair<bool,tk::real> > >
+    std::map< std::size_t, std::vector< std::pair<bool,tk::real> > >
     dirbc( tk::real t,
            tk::real deltat,
            const std::pair< const int, std::vector< std::size_t > >& sides,

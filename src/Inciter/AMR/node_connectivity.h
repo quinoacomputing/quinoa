@@ -18,14 +18,12 @@ namespace AMR {
 
         public:
 
-            //node_connectivity_t() { } // default cons
-
             /**
              * @brief Method to add initial nodes to the store
              *
              * @param initial_size Size of the list to fill to
              */
-            void fill_initial_nodes(size_t initial_size)
+            node_connectivity_t(size_t initial_size)
             {
                 for (size_t i = 0; i < initial_size; i++)
                 {
