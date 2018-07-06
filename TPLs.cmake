@@ -157,6 +157,16 @@ else()
   set(BACKWARD_LIBRARIES "")
 endif()
 
+#### Configure Omega_h
+set(OMEGA_H_ROOT ${TPL_DIR}) # prefer ours
+find_package(Omega_h)
+if(OMEGA_H_FOUND)
+  set(HAS_OMEGA_H true)  # will become compiler define in Main/QuinoaConfig.h
+else()
+  set(OMEGA_H_INCLUDE_DIRS "")
+  set(OMEGA_H_LIBRARIES "")
+endif()
+
 #### Configure HighwayHash
 set(HIGHWAYHASH_ROOT ${TPL_DIR}) # prefer ours
 find_package(HighwayHash REQUIRED)
