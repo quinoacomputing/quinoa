@@ -3124,6 +3124,22 @@ struct feedback_info {
 
 using feedback = keyword< feedback_info, TAOCPP_PEGTL_STRING("feedback") >;
 
+struct quiescence_info {
+  static std::string name() { return "quiescence"; }
+  static std::string shortDescription()
+  { return "Enable quiescence detection"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to enable the quiescence detection feature of
+       Charm++, used to catch logic errors in the asynchronous control flow,
+       resulting in deadlocks. This is useful for automated testing and
+       debugging and does have some overhead, so it is off by default.)";
+  }
+  using alias = Alias< q >;
+};
+
+using quiescence =
+  keyword< quiescence_info, TAOCPP_PEGTL_STRING("quiescence") >;
+
 struct virtualization_info {
   static std::string name() { return "virtualization"; }
   static std::string shortDescription() { return
