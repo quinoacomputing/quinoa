@@ -95,7 +95,7 @@ class DiffEqStack {
                                ctr::DiffEqType t,
                                std::set< ctr::DiffEqType >& eqTypes ) :
         factory( f ), type( t ) { eqTypes.insert( t ); }
-      //! \brief Function call operator called by mpl::cartesian_product for
+      //! \brief Function call operator called with tk::cartesian_product for
       //!   each unique sequence of policy combinations
       template< typename U > void operator()( brigand::type_<U> ) {
         // Get Initialization policy: first type of brigand::list U
