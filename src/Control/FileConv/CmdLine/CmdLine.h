@@ -13,8 +13,9 @@
 
 #include <string>
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "NoWarning/set.h"
-#include "NoWarning/for_each.h"
 
 #include "Macro.h"
 #include "Control.h"
@@ -45,13 +46,13 @@ class CmdLine :
   public:
     //! \brief FileConv command-line keywords
     //! \see tk::grm::use and its documentation
-    using keywords = boost::mpl::set< kw::verbose
-                                    , kw::help
-                                    , kw::helpkw
-                                    , kw::input
-                                    , kw::output
-                                    , kw::quiescence
-                                    >;
+    using keywords = brigand::set< kw::verbose
+                                 , kw::help
+                                 , kw::helpkw
+                                 , kw::input
+                                 , kw::output
+                                 , kw::quiescence
+                                 >;
 
     //! \brief Constructor: set defaults.
     //! \details Anything not set here is initialized by the compiler using the
@@ -62,7 +63,7 @@ class CmdLine :
     CmdLine() {
       set< tag::verbose >( false ); // Use quiet output by default
       // Initialize help: fill from own keywords
-      boost::mpl::for_each< keywords >( tk::ctr::Info( get< tag::cmdinfo >() ) );
+      brigand::for_each< keywords >( tk::ctr::Info( get< tag::cmdinfo >() ) );
     }
 
     /** @name Pack/Unpack: Serialize CmdLine object for Charm++ */
