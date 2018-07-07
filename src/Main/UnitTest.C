@@ -53,7 +53,6 @@ const int MAX_TESTS_IN_GROUP = 80;
 } // tut::
 
 // // Unit test groups to be tested. Each file defines a different test group.
-#include "tests/Base/TestCharmUtil.h"
 #include "tests/Base/TestFactory.h"
 #include "tests/Base/TestTimer.h"
 #include "tests/Base/TestPUPUtil.h"
