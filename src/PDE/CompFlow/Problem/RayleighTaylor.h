@@ -14,8 +14,6 @@
 #include <string>
 #include <unordered_set>
 
-#include <boost/mpl/vector.hpp>
-
 #include "Types.h"
 #include "Inciter/Options/Problem.h"
 

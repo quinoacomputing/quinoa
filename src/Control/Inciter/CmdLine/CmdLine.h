@@ -13,10 +13,9 @@
 
 #include <string>
 
-#include "NoWarning/set.h"
-#include "NoWarning/for_each.h"
+#include <brigand/algorithms/for_each.hpp>
 
-#include <brigand/sequences/set.hpp>
+#include "NoWarning/set.h"
 
 #include "Control.h"
 #include "HelpFactory.h"

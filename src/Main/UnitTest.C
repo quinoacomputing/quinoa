@@ -58,7 +58,6 @@ const int MAX_TESTS_IN_GROUP = 80;
 #include "tests/Base/TestPUPUtil.h"
 
 #include "tests/Base/TestFlip_map.h"
-#include "tests/Base/TestMake_list.h"
 #include "tests/Base/TestHas.h"
 #include "tests/Base/TestData.h"
 #include "tests/Base/TestPrint.h"
