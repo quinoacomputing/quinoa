@@ -15,6 +15,10 @@ env:
 #    - DISTRO=alpine SONARQUBE=ON COVERAGE=ON WERROR=on RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
 #    - DISTRO=alpine-rndq WERROR=on RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
 
+#build_type:
+#  - Debug
+#  - Release
+
 #compiler:
 #  - gcc
 #  - clang
