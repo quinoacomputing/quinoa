@@ -49,7 +49,7 @@ script:
   - export CXX=${MPICXX}
   - rm -rf tpl
   - cp -vr docker ${HOME}/docker
-  - sed -i "1s/debian/${DISTRO}/" ${HOME}/docker/Dockerfile.quinoa-build-travis
+  - sed -i "/^FROM/s/debian/${DISTRO}/" ${HOME}/docker/Dockerfile.quinoa-build-travis
   - cd ../../
   - mv -v ${TRAVIS_REPO_SLUG} $HOME/docker/quinoa
   - cp -r $HOME/.sonar ${HOME}/docker/sonar
