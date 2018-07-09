@@ -10,27 +10,41 @@ git:
 
 env:
   matrix:
-    - DISTRO=debian DOCKERHUB=true WERROR=on MPICC=mpicc MPICXX=mpicxx TPL_DIR=/home/quinoa/tpl/gnu
-    - DISTRO=debian DOCKERHUB=true WERROR=on MPICC=/opt/openmpi/bin/mpicc MPICXX=/opt/openmpi/bin/mpicxx TPL_DIR=/home/quinoa/tpl/clang
-#    - DISTRO=alpine SONARQUBE=ON COVERAGE=ON WERROR=on RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
-#    - DISTRO=alpine-rndq WERROR=on RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
-
-#build_type:
-#  - Debug
-#  - Release
-
-#compiler:
-#  - gcc
-#  - clang
-
-#matrix:
-#  exclude:
-#  - env: DISTRO=gentoo COVERAGE=ON
-#    compiler: clang
-#  - env: DISTRO=alpine SONARQUBE=ON COVERAGE=ON WERROR=on RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
-#    compiler: clang
-#  - env: DISTRO=alpine-rndq WERROR=on RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
-#    compiler: clang
+    - DISTRO=debian DOCKERHUB=true
+                    BUILD_TYPE=Debug
+                    WERROR=on
+                    MPICC=mpicc
+                    MPICXX=mpicxx
+                    TPL_DIR=/home/quinoa/tpl/gnu
+    - DISTRO=debian DOCKERHUB=true
+                    BUILD_TYPE=Release
+                    WERROR=on
+                    MPICC=mpicc
+                    MPICXX=mpicxx
+                    TPL_DIR=/home/quinoa/tpl/gnu
+    - DISTRO=debian DOCKERHUB=true
+                    BUILD_TYPE=Debug
+                    WERROR=on
+                    MPICC=/opt/openmpi/bin/mpicc
+                    MPICXX=/opt/openmpi/bin/mpicxx
+                    TPL_DIR=/home/quinoa/tpl/clang
+                    LD_LIBRARY_PATH=/opt/openmpi/clang/lib
+    - DISTRO=debian DOCKERHUB=true
+                    BUILD_TYPE=Release
+                    WERROR=on
+                    MPICC=/opt/openmpi/bin/mpicc
+                    MPICXX=/opt/openmpi/bin/mpicxx
+                    TPL_DIR=/home/quinoa/tpl/clang
+                    LD_LIBRARY_PATH=/opt/openmpi/clang/lib
+    - DISTRO=alpine DOCKERHUB=true
+                    SONARQUBE=ON
+                    COVERAGE=ON
+                    WERROR=on
+                    MPICC=mpicc
+                    MPICXX=mpicxx
+                    BUILD_TYPE=Debug
+                    RUNNER_ARGS="-mca plm isolated"
+                    TPL_DIR=/home/quinoa/tpl
 
 script:
   - export CC=${MPICC}
