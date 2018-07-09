@@ -407,7 +407,7 @@ if (NOT ARCH MATCHES "ppc64" AND
     NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
     NOT DEFINED ENV{CRAY_PRGENVINTEL})
 
-  set(RUNNER_ARGS "--bind-to none --map-by node"
+  set(RUNNER_ARGS "--bind-to none -oversubscribe"
       CACHE STRING "Arguments to pass to the parallel/serial job runner, e.g., mpirun.")
 
 endif()

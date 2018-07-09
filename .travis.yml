@@ -10,55 +10,53 @@ git:
 
 env:
   matrix:
-#    - DISTRO=gentoo DOCKERHUB=true WERROR=on
-#    - DISTRO=gentoo COVERAGE=ON
-    - DISTRO=alpine SONARQUBE=ON COVERAGE=ON WERROR=on RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
-    - DISTRO=alpine-rndq WERROR=on RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
+    - DISTRO=debian DOCKERHUB=true WERROR=on CC=mpicc CXX=mpicxx TPL_DIR=/home/quinoa/tpl/gnu
+    - DISTRO=debian DOCKERHUB=true WERROR=on CC=/opt/openmpi/bin/mpicc CXX=/opt/openmpi/bin/mpicxx TPL_DIR=/home/quinoa/tpl/clang
+#    - DISTRO=alpine SONARQUBE=ON COVERAGE=ON WERROR=on RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
+#    - DISTRO=alpine-rndq WERROR=on RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
+
+#compiler:
+#  - gcc
+#  - clang
+
+#matrix:
+#  exclude:
+#  - env: DISTRO=gentoo COVERAGE=ON
+#    compiler: clang
+#  - env: DISTRO=alpine SONARQUBE=ON COVERAGE=ON WERROR=on RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
+#    compiler: clang
+#  - env: DISTRO=alpine-rndq WERROR=on RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
+#    compiler: clang
 
 script:
   - rm -rf tpl
   - cp -vr docker ${HOME}/docker
-  - if [[ ${CC} != gcc ]]; then TAG="-${CC}"; fi
-  - sed -i "1s/gentoo/${DISTRO}${TAG}/" ${HOME}/docker/Dockerfile.quinoa-build-travis
   - cd ../../
   - mv -v ${TRAVIS_REPO_SLUG} $HOME/docker/quinoa
   - cp -r $HOME/.sonar ${HOME}/docker/sonar
   - docker build --build-arg CXXFLAGS=${WERROR:+-Werror}
-                --build-arg COVERAGE=${COVERAGE}
-                --build-arg CC=${CC} --build-arg CXX=${CXX}
-                --build-arg RUNNER_ARGS="${RUNNER_ARGS}"
-                --build-arg TPL_DIR="${TPL_DIR}"
-                --build-arg SONARQUBE=${SONARQUBE} --build-arg SONARQUBE_TOKEN=${SONARQUBE_TOKEN} --build-arg SONARQUBE_GITHUB_TOKEN=${SONARQUBE_GITHUB_TOKEN}
-                --build-arg TRAVIS_BRANCH=${TRAVIS_BRANCH} --build-arg TRAVIS_JOB_NUMBER=${TRAVIS_JOB_NUMBER}
-                --build-arg TRAVIS_PULL_REQUEST=${TRAVIS_PULL_REQUEST} --build-arg TRAVIS_JOB_ID=${TRAVIS_JOB_ID}
-                --build-arg TRAVIS_TAG=${TRAVIS_TAG} --build-arg TRAVIS_REPO_SLUG=${TRAVIS_REPO_SLUG}
-                --build-arg TRAVIS_COMMIT=${TRAVIS_COMMIT}
-                -t ${TRAVIS_REPO_SLUG}:${DISTRO}${TAG} -f ${HOME}/docker/Dockerfile.quinoa-build-travis ${HOME}/docker/ &&
-    CON=$(docker run -d ${TRAVIS_REPO_SLUG}:${DISTRO}${TAG} /bin/bash) &&
+                 --build-arg COVERAGE=${COVERAGE}
+                 --build-arg FC=${FC} --build-arg CC=${CC} --build-arg CXX=${CXX}
+                 --build-arg RUNNER_ARGS="${RUNNER_ARGS}"
+                 --build-arg TPL_DIR="${TPL_DIR}"
+                 --build-arg SONARQUBE=${SONARQUBE} --build-arg SONARQUBE_TOKEN=${SONARQUBE_TOKEN} --build-arg SONARQUBE_GITHUB_TOKEN=${SONARQUBE_GITHUB_TOKEN}
+                 --build-arg TRAVIS_BRANCH=${TRAVIS_BRANCH} --build-arg TRAVIS_JOB_NUMBER=${TRAVIS_JOB_NUMBER}
+                 --build-arg TRAVIS_PULL_REQUEST=${TRAVIS_PULL_REQUEST} --build-arg TRAVIS_JOB_ID=${TRAVIS_JOB_ID}
+                 --build-arg TRAVIS_TAG=${TRAVIS_TAG} --build-arg TRAVIS_REPO_SLUG=${TRAVIS_REPO_SLUG}
+                 --build-arg TRAVIS_COMMIT=${TRAVIS_COMMIT}
+                 -t ${TRAVIS_REPO_SLUG}:${DISTRO} -f ${HOME}/docker/Dockerfile.quinoa-build-travis ${HOME}/docker/ &&
+    CON=$(docker run -d ${TRAVIS_REPO_SLUG}:${DISTRO} /bin/bash) &&
     docker cp ${CON}:/home/quinoa/.sonar ${HOME}/
 
 after_success:
   - if [[ ${DOCKERHUB} = true && ${DOCKER_USERNAME} && ${DOCKER_PASSWORD} && ${TRAVIS_PULL_REQUEST} == false && ${TRAVIS_BRANCH} == master ]]; then
       docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
-      docker push "${TRAVIS_REPO_SLUG}:${DISTRO}${TAG}";
+      docker push "${TRAVIS_REPO_SLUG}:${DISTRO}";
     fi
 
 cache:
   directories:
     - $HOME/.sonar
-
-compiler:
-  - gcc
-  - clang
-
-matrix:
-  exclude:
-  - env: DISTRO=gentoo COVERAGE=ON
-    compiler: clang
-  - env: DISTRO=alpine SONARQUBE=ON COVERAGE=ON WERROR=on RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
-    compiler: clang
-  - env: DISTRO=alpine-rndq WERROR=on RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
-    compiler: clang
 
 notifications:
   email:
