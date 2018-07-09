@@ -1,4 +1,6 @@
-FROM quinoacomputing/buildenv:gentoo
+# vim: filetype=dockerfile:
+
+FROM quinoacomputing/buildenv:debian
 
 ARG COVERAGE
 ARG SONARQUBE
@@ -6,8 +8,6 @@ ARG SONARQUBE_TOKEN
 ARG SONARQUBE_GITHUB_TOKEN
 ARG CC
 ARG CXX
-ENV OMPI_CXX=${CXX}
-ARG CXXFLAGS
 ARG RUNNER_ARGS
 ARG TPL_DIR
 
@@ -18,7 +18,7 @@ ARG TRAVIS_BRANCH
 ARG TRAVIS_JOB_NUMBER
 ARG TRAVIS_PULL_REQUEST
 ARG TRAVIS_JOB_ID
-ARG TRAVIS_TAG
+#ARG TRAVIS_TAG
 ARG TRAVIS_REPO_SLUG
 ARG TRAVIS_COMMIT
 
@@ -41,11 +41,11 @@ RUN cmake \
     -DCMAKE_BUILD_TYPE=Release \
     ../src
 ENV CCACHE_DISABLE=true
-RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} make VERBOSE=1 -j2
-RUN if [ -z "${SONARQUBE}" ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v; fi
+RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} make -j2
+RUN if [ -z "${SONARQUBE}" ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q; fi
 RUN if [ -z "${SONARQUBE}" ]; then ctest --output-on-failure -j2 -LE "(stringent|extreme)"; fi
-RUN make install DESTDIR=${PWD}
-RUN make doc
+RUN make -j2 install DESTDIR=${PWD}
+RUN make -j2 doc
 RUN cd .. && if [ ${COVERAGE} ]; then \
   python -m coverxygen --xml-dir build/doc/xml/ --src-dir . --output doxygen.coverage.info; \
   wget -O codecov.sh https://codecov.io/bash; \
@@ -84,6 +84,6 @@ RUN cd .. && if [ ${SONARQUBE} ] && [ -n "${SONARQUBE_GITHUB_TOKEN}" ] && [ -n "
     -Dsonar.login=${SONARQUBE_TOKEN}; \
 fi
 USER root
-RUN make install
+RUN make -j2 install
 USER quinoa
 WORKDIR /home/quinoa
