@@ -171,4 +171,8 @@ endif()
 set(HIGHWAYHASH_ROOT ${TPL_DIR}) # prefer ours
 find_package(HighwayHash REQUIRED)
 
+#### Configure Brigand
+set(BRIGAND_ROOT ${TPL_DIR}) # prefer ours
+find_package(Brigand REQUIRED)
+
 message(STATUS "------------------------------------------")
