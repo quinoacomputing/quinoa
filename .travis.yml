@@ -10,41 +10,39 @@ git:
 
 env:
   matrix:
-    - DISTRO=debian DOCKERHUB=true
-                    BUILD_TYPE=Debug
+    - DISTRO=debian BUILD_TYPE=Debug
+                    TPL_DIR=/home/quinoa/tpl/gnu
                     WERROR=on
                     MPICC=mpicc
                     MPICXX=mpicxx
+                    DOCKERHUB=true
+    - DISTRO=debian BUILD_TYPE=Release
                     TPL_DIR=/home/quinoa/tpl/gnu
-    - DISTRO=debian DOCKERHUB=true
-                    BUILD_TYPE=Release
                     WERROR=on
                     MPICC=mpicc
                     MPICXX=mpicxx
-                    TPL_DIR=/home/quinoa/tpl/gnu
-    - DISTRO=debian DOCKERHUB=true
-                    BUILD_TYPE=Debug
+                    DOCKERHUB=true
+    - DISTRO=debian BUILD_TYPE=Debug
+                    TPL_DIR=/home/quinoa/tpl/clang
                     WERROR=on
                     MPICC=/opt/openmpi/bin/mpicc
                     MPICXX=/opt/openmpi/bin/mpicxx
+                    DOCKERHUB=true
+    - DISTRO=debian BUILD_TYPE=Release
                     TPL_DIR=/home/quinoa/tpl/clang
-                    LD_LIBRARY_PATH=/opt/openmpi/clang/lib
-    - DISTRO=debian DOCKERHUB=true
-                    BUILD_TYPE=Release
                     WERROR=on
                     MPICC=/opt/openmpi/bin/mpicc
                     MPICXX=/opt/openmpi/bin/mpicxx
-                    TPL_DIR=/home/quinoa/tpl/clang
-                    LD_LIBRARY_PATH=/opt/openmpi/clang/lib
-    - DISTRO=alpine DOCKERHUB=true
-                    SONARQUBE=ON
+                    DOCKERHUB=true
+    - DISTRO=alpine SONARQUBE=ON
                     COVERAGE=ON
+                    TPL_DIR=/home/quinoa/tpl
                     WERROR=on
                     MPICC=mpicc
                     MPICXX=mpicxx
                     BUILD_TYPE=Debug
                     RUNNER_ARGS="-mca plm isolated"
-                    TPL_DIR=/home/quinoa/tpl
+                    DOCKERHUB=true
 
 script:
   - export CC=${MPICC}
@@ -59,12 +57,19 @@ script:
                  --build-arg FC=${FC} --build-arg CC=${CC} --build-arg CXX=${CXX}
                  --build-arg RUNNER_ARGS="${RUNNER_ARGS}"
                  --build-arg TPL_DIR="${TPL_DIR}"
-                 --build-arg SONARQUBE=${SONARQUBE} --build-arg SONARQUBE_TOKEN=${SONARQUBE_TOKEN} --build-arg SONARQUBE_GITHUB_TOKEN=${SONARQUBE_GITHUB_TOKEN}
-                 --build-arg TRAVIS_BRANCH=${TRAVIS_BRANCH} --build-arg TRAVIS_JOB_NUMBER=${TRAVIS_JOB_NUMBER}
-                 --build-arg TRAVIS_PULL_REQUEST=${TRAVIS_PULL_REQUEST} --build-arg TRAVIS_JOB_ID=${TRAVIS_JOB_ID}
-                 --build-arg TRAVIS_TAG=${TRAVIS_TAG} --build-arg TRAVIS_REPO_SLUG=${TRAVIS_REPO_SLUG}
+                 --build-arg SONARQUBE=${SONARQUBE}
+                 --build-arg SONARQUBE_TOKEN=${SONARQUBE_TOKEN}
+                 --build-arg SONARQUBE_GITHUB_TOKEN=${SONARQUBE_GITHUB_TOKEN}
+                 --build-arg TRAVIS_BRANCH=${TRAVIS_BRANCH}
+                 --build-arg TRAVIS_JOB_NUMBER=${TRAVIS_JOB_NUMBER}
+                 --build-arg TRAVIS_PULL_REQUEST=${TRAVIS_PULL_REQUEST}
+                 --build-arg TRAVIS_JOB_ID=${TRAVIS_JOB_ID}
+                 --build-arg TRAVIS_TAG=${TRAVIS_TAG}
+                 --build-arg TRAVIS_REPO_SLUG=${TRAVIS_REPO_SLUG}
                  --build-arg TRAVIS_COMMIT=${TRAVIS_COMMIT}
-                 -t ${TRAVIS_REPO_SLUG}:${DISTRO} -f ${HOME}/docker/Dockerfile.quinoa-build-travis ${HOME}/docker/ &&
+                 -t ${TRAVIS_REPO_SLUG}:${DISTRO}
+                 -f ${HOME}/docker/Dockerfile.quinoa-build-travis
+                 ${HOME}/docker/ &&
     CON=$(docker run -d ${TRAVIS_REPO_SLUG}:${DISTRO} /bin/bash) &&
     docker cp ${CON}:/home/quinoa/.sonar ${HOME}/
 
