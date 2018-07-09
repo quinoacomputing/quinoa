@@ -127,18 +127,15 @@ if(TestU01_FOUND)
 endif()
 
 ### Root library
-set(ENABLE_ROOT OFF CACHE BOOL "Enable ROOT")
-if(ENABLE_ROOT)
-  find_package(Root COMPONENTS RIO Core Tree Hist)
-  if (Root_FOUND)
-    set(HAS_ROOT true)  # will become compiler define in Main/QuinoaConfig.h
-    # Root does not support libc++ on linux, so remove if configured
-    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-      string(FIND "${CMAKE_CXX_FLAGS}" "-stdlib=libc++" pos)
-      if (NOT "${pos}" STREQUAL "-1")
-        message(STATUS "Removing C++ compiler flag '-stdlib=libc++' as Root does not support it")
-        string(REPLACE "-stdlib=libc++" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-      endif()
+find_package(Root COMPONENTS RIO Core Tree Hist)
+if (Root_FOUND)
+  set(HAS_ROOT true)  # will become compiler define in Main/QuinoaConfig.h
+  # Root does not support libc++ on linux, so remove if configured
+  if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    string(FIND "${CMAKE_CXX_FLAGS}" "-stdlib=libc++" pos)
+    if (NOT "${pos}" STREQUAL "-1")
+      message(STATUS "Removing C++ compiler flag '-stdlib=libc++' as Root does not support it")
+      string(REPLACE "-stdlib=libc++" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     endif()
   endif()
 endif()
