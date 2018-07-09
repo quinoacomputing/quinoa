@@ -1629,6 +1629,169 @@ void ExodusIIMeshReader_object::test< 7 >() {
                    nodemap[i], correct_nodemap[i]-1 );
 }
 
+//! Test that readMeshPart throws for garbage input
+template<> template<>
+void ExodusIIMeshReader_object::test< 8 >() {
+  set_test_name( "readMeshPart correctly throws on garbage" );
+
+  // Will use this mesh from the regression test suite
+  std::string infile( tk::regression_dir()+"/meshconv/gmsh_output/box_24.exo" );
+  // Create mesh reader
+  tk::ExodusIIMeshReader er( infile );
+
+  std::vector< std::size_t > ginpoel, inpoel, gid;
+  std::unordered_map< std::size_t, std::size_t > lid;
+  tk::UnsMesh::Coords coord;
+
+  // Test error checking emulating serial read
+
+  try {
+    // Attempt to read mesh passing larger PE id than the number of PEs
+    er.readMeshPart( ginpoel, inpoel, gid, lid, coord, 1, 2 );
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    // Attempt to read mesh passing PE id equal to the number of PEs
+    er.readMeshPart( ginpoel, inpoel, gid, lid, coord, 1, 1 );
+
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  // Test error checking emulating parallel read
+
+  try {
+    // Attempt to read mesh passing larger PE id than the number of PEs
+    er.readMeshPart( ginpoel, inpoel, gid, lid, coord, 2, 3 );
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    // Attempt to read mesh passing PE id equal to the number of PEs
+    er.readMeshPart( ginpoel, inpoel, gid, lid, coord, 2, 2 );
+
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    // Attempt to read mesh passing non-empty container
+    decltype(ginpoel) i{ 0 };
+    er.readMeshPart( i, inpoel, gid, lid, coord );
+
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    // Attempt to read mesh passing non-empty container
+    decltype(inpoel) i{ 0 };
+    er.readMeshPart( ginpoel, i, gid, lid, coord );
+
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    // Attempt to read mesh passing non-empty container
+    decltype(gid) g{ 0 };
+    er.readMeshPart( ginpoel, inpoel, g, lid, coord );
+
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    // Attempt to read mesh passing non-empty container
+    decltype(lid) l{{ 0, 1 }};
+    er.readMeshPart( ginpoel, inpoel, gid, l, coord );
+
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    // Attempt to read mesh passing non-empty container
+    decltype(coord) c{{ {0.0}, {0.0}, {0.0} }};
+    er.readMeshPart( ginpoel, inpoel, gid, lid, c );
+
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+}
+
+//! Test readMeshPart on simple mesh
+template<> template<>
+void ExodusIIMeshReader_object::test< 9 >() {
+  set_test_name( "serial readMeshPart on simple mesh" );
+
+  // Will use this mesh from the regression test suite
+  std::string infile( tk::regression_dir()+"/meshconv/gmsh_output/box_24.exo" );
+  // Create mesh reader
+  tk::ExodusIIMeshReader er( infile );
+
+  // Read mesh graph (connectivity)
+  std::vector< std::size_t > ginpoel, inpoel, gid;
+  std::unordered_map< std::size_t, std::size_t > lid;
+  tk::UnsMesh::Coords coord;
+  er.readMeshPart( ginpoel, inpoel, gid, lid, coord );
+
+  // Test if the number of elements is correct
+  ensure_equals( "number of elements incorrect",
+                 inpoel.size()/4, box24_inpoel.size()/4 );
+
+  // Test if the mesh element connectivity is correct
+  ensure( "element connectivity incorrect", inpoel == box24_inpoel );
+}
+
 } // tut::
 
 #endif // test_ExodusIIMeshReader_h

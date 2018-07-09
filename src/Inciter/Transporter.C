@@ -27,7 +27,7 @@
 #include "PDFWriter.h"
 #include "ContainerUtil.h"
 #include "LoadDistributor.h"
-#include "ExodusIIMeshReader.h"
+#include "MeshReader.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "NodeDiagnostics.h"
 #include "ElemDiagnostics.h"
@@ -215,8 +215,8 @@ Transporter::createPartitioner()
 // Create mesh partitioner AND boundary conditions group
 // *****************************************************************************
 {
-  // Create ExodusII reader for reading side sets from file
-  tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
+  // Create mesh reader for reading side sets from file
+  tk::MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
   std::map< int, std::vector< std::size_t > > bface;
   std::vector< std::size_t > triinpoel;
@@ -227,18 +227,19 @@ Transporter::createPartitioner()
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   if (scheme == ctr::SchemeType::DG) {
     // Read boundary-face connectivity on side sets
-    auto nbfac = er.readSidesetFaces( bface, faceid );
-    er.readFaces( nbfac, triinpoel );
+    auto nbfac = mr.readSidesetFaces( bface, faceid );
+    mr.readFaces( nbfac, triinpoel );
+    // Note that it is NOT okay bface to be empty; boundary conditions required
     Assert( nbfac > 0, "DG must have boundary faces (and side sets) defined" );
+    // Verify boundarty condition (BC) side sets used exist in mesh file
+    verifyBCsExist( g_dgpde, bface );
   } else {
     // Read node lists on side sets
-    bnode = er.readSidesets();
+    bnode = mr.readSidesets();
+    // Verify boundarty condition (BC) side sets used exist in mesh file
+    verifyBCsExist( g_cgpde, bnode );
     // Note that it is okay bnode to be empty if no boundary conditions needed
   }
-
-  // Verify boundarty condition (BC) side sets used exist in mesh file
-  verifyBCsExist( g_cgpde, er );
-  verifyBCsExist( g_dgpde, er );
 
   // Create partitioner callbacks (order matters)
   tk::PartitionerCallback cbp {
@@ -281,10 +282,11 @@ Transporter::createPartitioner()
 }
 
 void
-Transporter::load( uint64_t nelem )
+Transporter::load( uint64_t nelem, uint64_t npoin )
 // *****************************************************************************
 // Reduction target: the mesh has been read from file on all PEs
 //! \param[in] nelem Total number of mesh elements (summed across all PEs)
+//! \param[in] npoin Total number of mesh points (summed across all PEs)
 // *****************************************************************************
 {
   // Compute load distribution given total work (nelem) and user-specified
@@ -303,8 +305,6 @@ Transporter::load( uint64_t nelem )
 
   // Print out mesh graph stats
   m_print.section( "Input mesh graph statistics" );
-  tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
-  auto npoin = er.readHeader();
   m_print.item( "Number of tetrahedra", nelem );
   m_print.item( "Number of nodes", npoin );
 

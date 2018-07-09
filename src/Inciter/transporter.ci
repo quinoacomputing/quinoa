@@ -15,7 +15,7 @@ module transporter {
 
     chare Transporter {
       entry Transporter();
-      entry [reductiontarget] void load( uint64_t nelem );
+      entry [reductiontarget] void load( uint64_t nelem, uint64_t npoin );
       entry [reductiontarget] void nchare();
       entry [reductiontarget] void bounds();
       entry [reductiontarget] void distributed();

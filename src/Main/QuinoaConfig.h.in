@@ -35,6 +35,7 @@ namespace tk {
 #cmakedefine HAS_TESTU01
 #cmakedefine HAS_ROOT
 #cmakedefine HAS_BACKWARD
+#cmakedefine HAS_OMEGA_H
 
 // Backward-cpp config
 #cmakedefine01 BACKWARD_HAS_UNWIND

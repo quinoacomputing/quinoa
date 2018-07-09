@@ -59,7 +59,7 @@ class Transporter : public CBase_Transporter {
     explicit Transporter();
 
     //! Reduction target: the mesh has been read from file on all PEs
-    void load( uint64_t nelem );
+    void load( uint64_t nelem, uint64_t npoin );
 
     //! \brief Reduction target: all Solver (PEs) have computed the number of
     //!   chares they will recieve contributions from during linear solution
@@ -215,27 +215,22 @@ class Transporter : public CBase_Transporter {
     //!   in the mesh file and warns if at least one does not.
     //! \tparam Eq Equation type, e.g., CG, DG, we are using to solver PDEs
     //! \param[in] pde List of PDE system solved
-    //! \param[in,out] er ExodusII mesh reader object
+    //! \param[in] bnd Node lists mapped to side set ids
     //! \note Failure here is not an error, bot only a wanring, i.e., the user
     //!   must check the screen output for this warning. Would this be more user
     //!   friendly to make it an error, i.e., abort with an error message?
     //! \note If the input vector is empty, no checking is done.
     template< class Eq >
-    void verifyBCsExist( const std::vector< Eq >& pde,
-                         tk::ExodusIIMeshReader& er )
+    void verifyBCsExist(const std::vector< Eq >& pde,
+                        const std::map< int, std::vector< std::size_t > >& bnd)
     {
       // Query BC assigned to all side sets for all PDEs
       std::unordered_set< int > conf;
       for (const auto& eq : pde) eq.side( conf );
-      // Read in side sets associated to mesh node IDs from file
-      auto sidenodes = er.readSidesets();
-      for (auto i : conf) {
-        if (sidenodes.find(i) == end(sidenodes)) {
+      for (auto i : conf)
+        if (bnd.find(i) == end(bnd))
           Throw( "WARNING: Boundary conditions specified on side set " +
                  std::to_string(i) + " which does not exist in mesh file" );
-          break;
-        }
-      }
     }
 };
 

@@ -61,6 +61,7 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${HDF5_C_LIBRARIES}
                       ${AEC_LIBRARIES}          # only for static link
                       ${BACKWARD_LIBRARIES}
+                      ${OMEGA_H_LIBRARIES}
 )
 
 # Add custom dependencies for UnitTest's main Charm++ module
@@ -105,6 +106,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${HDF5_C_LIBRARIES}
                       ${AEC_LIBRARIES}          # only for static link
                       ${BACKWARD_LIBRARIES}
+                      ${OMEGA_H_LIBRARIES}
 )
 
 # Add custom dependencies for Inciter's main Charm++ module
@@ -164,6 +166,7 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       ${HDF5_C_LIBRARIES}
                       ${AEC_LIBRARIES}          # only for static link
                       ${BACKWARD_LIBRARIES}
+                      ${OMEGA_H_LIBRARIES}
 )
 
 # Add custom dependencies for MeshConv's main Charm++ module
@@ -227,6 +230,7 @@ if (HAS_ROOT)
 	                ${ROOT_LIBRARIES}
 		        ${NETCDF_LIBRARIES}       # only for static link
                         ${BACKWARD_LIBRARIES}
+                        ${OMEGA_H_LIBRARIES}
   )
 
   # Add custom dependencies for FileConv's main Charm++ module
