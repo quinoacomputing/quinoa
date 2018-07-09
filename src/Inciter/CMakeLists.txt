@@ -21,7 +21,6 @@ add_library(Inciter
             NodeDiagnostics.C
             ElemDiagnostics.C
             NodeBC.C
-            MeshReader.C
 )
 
 add_library(MeshRefinement

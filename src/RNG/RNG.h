@@ -98,7 +98,7 @@ class RNG {
       virtual std::size_t nthreads() const noexcept = 0;
     };
 
-    //! Model models the Concept above by deriving from it and overriding the
+    //! \brief Model models the Concept above by deriving from it and overriding
     //! the virtual functions required by Concept
     template< typename T >
     struct Model : Concept {

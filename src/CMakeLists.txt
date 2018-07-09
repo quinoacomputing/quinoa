@@ -548,6 +548,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${RNGTEST_BIN_DIR}
                     ${BACKWARDCPP_INCLUDE_DIRS}
                     ${BRIGAND_INCLUDE_DIRS}
+                    ${OMEGA_H_INCLUDE_DIRS}
                     ${PROJECT_BINARY_DIR}/LoadBalance   # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Walker        # for Charm++ modules
