@@ -10,8 +10,8 @@ git:
 
 env:
   matrix:
-    - DISTRO=debian DOCKERHUB=true WERROR=on CC=mpicc CXX=mpicxx TPL_DIR=/home/quinoa/tpl/gnu
-    - DISTRO=debian DOCKERHUB=true WERROR=on CC=/opt/openmpi/bin/mpicc CXX=/opt/openmpi/bin/mpicxx TPL_DIR=/home/quinoa/tpl/clang
+    - DISTRO=debian DOCKERHUB=true WERROR=on MPICC=mpicc MPICXX=mpicxx TPL_DIR=/home/quinoa/tpl/gnu
+    - DISTRO=debian DOCKERHUB=true WERROR=on MPICC=/opt/openmpi/bin/mpicc MPICXX=/opt/openmpi/bin/mpicxx TPL_DIR=/home/quinoa/tpl/clang
 #    - DISTRO=alpine SONARQUBE=ON COVERAGE=ON WERROR=on RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
 #    - DISTRO=alpine-rndq WERROR=on RUNNER_ARGS="-mca plm isolated" TPL_DIR=/home/quinoa/tpl
 
@@ -33,6 +33,8 @@ env:
 #    compiler: clang
 
 script:
+  - export CC=${MPICC}
+  - export CXX=${MPICXX}
   - rm -rf tpl
   - cp -vr docker ${HOME}/docker
   - cd ../../
