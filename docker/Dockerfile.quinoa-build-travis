@@ -18,7 +18,6 @@ ARG TRAVIS_BRANCH
 ARG TRAVIS_JOB_NUMBER
 ARG TRAVIS_PULL_REQUEST
 ARG TRAVIS_JOB_ID
-#ARG TRAVIS_TAG
 ARG TRAVIS_REPO_SLUG
 ARG TRAVIS_COMMIT
 
@@ -33,12 +32,14 @@ RUN mkdir build
 
 WORKDIR build
 RUN cmake \
+    -DCMAKE_C_COMPILER=$CC \
+    -DCMAKE_CXX_COMPILER=$CXX \
+    -DCMAKE_BUILD_TYPE=Release \
     ${COVERAGE:+-DCOVERAGE=ON} \
     -DTPL_DIR="${TPL_DIR}" \
     -DLCOV=/bin/true \
     -DGENHTML=/bin/true \
     -DRUNNER_ARGS="${RUNNER_ARGS}" \
-    -DCMAKE_BUILD_TYPE=Release \
     ../src
 ENV CCACHE_DISABLE=true
 RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} make -j2
