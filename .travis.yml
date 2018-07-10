@@ -25,13 +25,13 @@ env:
                     DOCKERHUB=true
     - DISTRO=debian BUILD_TYPE=Debug
                     TPL_DIR=/home/quinoa/tpl/clang
-                    CXXFLAGS="-Wno-unknown-argument -Werror"
+                    CXXFLAGS=-Werror
                     MPICC=/opt/openmpi/bin/mpicc
                     MPICXX=/opt/openmpi/bin/mpicxx
                     DOCKERHUB=true
     - DISTRO=debian BUILD_TYPE=Release
                     TPL_DIR=/home/quinoa/tpl/clang
-                    CXXFLAGS="-Wno-unknown-argument -Werror"
+                    CXXFLAGS=-Werror
                     MPICC=/opt/openmpi/bin/mpicc
                     MPICXX=/opt/openmpi/bin/mpicxx
                     DOCKERHUB=true
