@@ -187,7 +187,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
 
   # Linker flags for clang
   set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)      # clear link flags
-  set(CMAKE_EXE_LINKER_FLAGS "-Wno-missing-prototypes -Wno-unused-parameter")
+  set(CMAKE_EXE_LINKER_FLAGS
+    "${CMAKE_EXE_LINKER_FLAGS} -Wno-missing-prototypes -Wno-unused-parameter")
 
   # Using clang on mac in release mode, use -O1, otherwise we get a runtime
   # error: auxlhs_complete() not found referenced by libquinoa_inciter.dylib
@@ -243,7 +244,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wno-int-in-bool-context")
 
   # Linker flags for gcc
-  set(CMAKE_EXE_LINKER_FLAGS "-Wno-unused-parameter")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wno-unused-parameter")
 
   # Detect compiler version
   include(DetectCXXversion)
@@ -307,7 +308,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   endif()
 
   # Linker flags for intel
-  set(CMAKE_EXE_LINKER_FLAGS "-diag-disable 869")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -diag-disable 869")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 
@@ -428,6 +429,7 @@ endif()
 # Echo compiler flags
 message(STATUS "C compiler flags: '${CMAKE_C_FLAGS}'")
 message(STATUS "C++ compiler flags: '${CMAKE_CXX_FLAGS}'")
+message(STATUS "Executable linker flags: '${CMAKE_EXE_LINKER_FLAGS}'")
 
 # Include cmake code to enable configuration for data layouts
 include(ConfigureDataLayout)
