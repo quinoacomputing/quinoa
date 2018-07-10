@@ -54,7 +54,7 @@ script:
   - cd ../../
   - mv -v ${TRAVIS_REPO_SLUG} $HOME/docker/quinoa
   - cp -r $HOME/.sonar ${HOME}/docker/sonar
-  - travis_wait docker build --build-arg CXXFLAGS="${CXXFLAGS}"
+  - docker build --build-arg CXXFLAGS="${CXXFLAGS}"
                  --build-arg COVERAGE=${COVERAGE}
                  --build-arg FC=${FC} --build-arg CC=${CC} --build-arg CXX=${CXX}
                  --build-arg RUNNER_ARGS="${RUNNER_ARGS}"
