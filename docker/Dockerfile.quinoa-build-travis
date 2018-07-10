@@ -45,11 +45,11 @@ RUN cmake \
     -DRUNNER_ARGS="${RUNNER_ARGS}" \
     ../src
 ENV CCACHE_DISABLE=true
-RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} make -j2
+RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} ninja
 RUN if [ -z "${SONARQUBE}" ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q; fi
 RUN if [ -z "${SONARQUBE}" ]; then ctest --output-on-failure -j2 -LE "(stringent|extreme)"; fi
-RUN make -j2 install DESTDIR=${PWD}
-RUN make -j2 doc
+RUN ninja install DESTDIR=${PWD}
+RUN ninja doc
 RUN cd .. && if [ ${COVERAGE} ]; then \
   python -m coverxygen --xml-dir build/doc/xml/ --src-dir . --output doxygen.coverage.info; \
   wget -O codecov.sh https://codecov.io/bash; \
@@ -88,6 +88,6 @@ RUN cd .. && if [ ${SONARQUBE} ] && [ -n "${SONARQUBE_GITHUB_TOKEN}" ] && [ -n "
     -Dsonar.login=${SONARQUBE_TOKEN}; \
 fi
 USER root
-RUN make -j2 install
+RUN ninja install
 USER quinoa
 WORKDIR /home/quinoa
