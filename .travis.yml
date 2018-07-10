@@ -12,20 +12,14 @@ git:
 env:
   matrix:
     - DISTRO=debian COMPILER=gnu BUILD_TYPE=Debug
-                    DOCKERHUB=true
     - DISTRO=debian COMPILER=gnu BUILD_TYPE=Release
-                    DOCKERHUB=true
     - DISTRO=debian COMPILER=clang BUILD_TYPE=Debug
-                    DOCKERHUB=true
     - DISTRO=debian COMPILER=clang BUILD_TYPE=Release
-                    DOCKERHUB=true
     - DISTRO=alpine COMPILER=gnu BUILD_TYPE=Debug SONARQUBE=ON COVERAGE=ON
                     RUNNER_ARGS="--bind-to none -oversubscribe -mca plm isolated"
-                    DOCKERHUB=true
     - DISTRO=alpine COMPILER=gnu BUILD_TYPE=Release
                     RUNNER_ARGS="--bind-to none -oversubscribe -mca plm isolated"
                     BUILD_SHARED_LIBS=off
-                    DOCKERHUB=true
 
 script:
   - rm -rf tpl
