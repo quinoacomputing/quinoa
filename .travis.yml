@@ -21,6 +21,10 @@ env:
                     DOCKERHUB=true
     - DISTRO=alpine COMPILER=gnu BUILD_TYPE=Debug SONARQUBE=ON COVERAGE=ON
                     DOCKERHUB=true
+    - DISTRO=alpine COMPILER=gnu BUILD_TYPE=Release
+                    RUNNER_ARGS="--bind-to none -oversubscribe -mca plm isolated"
+                    BUILD_SHARED_LIBS=off
+                    DOCKERHUB=true
 
 script:
   - rm -rf tpl
@@ -32,6 +36,7 @@ script:
   - docker build --build-arg COMPILER=${COMPILER}
                  --build-arg BUILD_TYPE=${BUILD_TYPE}
                  --build-arg RUNNER_ARGS="${RUNNER_ARGS}"
+                 --build-arg BUILD_SHARED_LIBS="${BUILD_SHARED_LIBS}"
                  --build-arg COVERAGE=${COVERAGE}
                  --build-arg SONARQUBE=${SONARQUBE}
                  --build-arg SONARQUBE_TOKEN=${SONARQUBE_TOKEN}
