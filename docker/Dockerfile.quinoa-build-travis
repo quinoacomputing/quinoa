@@ -27,6 +27,7 @@ COPY quinoa /home/quinoa/quinoa
 COPY sonar/ /home/quinoa/.sonar
 USER root
 RUN chown -R quinoa:quinoa /home/quinoa/quinoa /home/quinoa/.sonar
+RUN ldconfig
 USER quinoa
 
 WORKDIR /home/quinoa/quinoa
