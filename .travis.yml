@@ -11,54 +11,29 @@ git:
 
 env:
   matrix:
-    - DISTRO=debian BUILD_TYPE=Debug
-                    TPL_DIR=/home/quinoa/tpl/gnu
-                    CXXFLAGS=-Werror
-                    MPICC=mpicc
-                    MPICXX=mpicxx
+    - DISTRO=debian COMPILER=gnu BUILD_TYPE=Debug
                     DOCKERHUB=true
-    - DISTRO=debian BUILD_TYPE=Release
-                    TPL_DIR=/home/quinoa/tpl/gnu
-                    CXXFLAGS=-Werror
-                    MPICC=mpicc
-                    MPICXX=mpicxx
+    - DISTRO=debian COMPILER=gnu BUILD_TYPE=Release
                     DOCKERHUB=true
-    - DISTRO=debian BUILD_TYPE=Debug
-                    TPL_DIR=/home/quinoa/tpl/clang
-                    CXXFLAGS=-Werror
-                    MPICC=/opt/openmpi/bin/mpicc
-                    MPICXX=/opt/openmpi/bin/mpicxx
+    - DISTRO=debian COMPILER=clang BUILD_TYPE=Debug
                     DOCKERHUB=true
-    - DISTRO=debian BUILD_TYPE=Release
-                    TPL_DIR=/home/quinoa/tpl/clang
-                    CXXFLAGS=-Werror
-                    MPICC=/opt/openmpi/bin/mpicc
-                    MPICXX=/opt/openmpi/bin/mpicxx
+    - DISTRO=debian COMPILER=clang BUILD_TYPE=Release
                     DOCKERHUB=true
-    - DISTRO=alpine SONARQUBE=ON
-                    COVERAGE=ON
-                    TPL_DIR=/home/quinoa/tpl
-                    CXXFLAGS=-Werror
-                    MPICC=mpicc
-                    MPICXX=mpicxx
-                    BUILD_TYPE=Debug
+    - DISTRO=alpine COMPILER=gnu BUILD_TYPE=Debug SONARQUBE=ON COVERAGE=ON
                     RUNNER_ARGS="-mca plm isolated"
                     DOCKERHUB=true
 
 script:
-  - export CC=${MPICC}
-  - export CXX=${MPICXX}
   - rm -rf tpl
   - cp -vr docker ${HOME}/docker
   - sed -i "/^FROM/s/debian/${DISTRO}/" ${HOME}/docker/Dockerfile.quinoa-build-travis
   - cd ../../
   - mv -v ${TRAVIS_REPO_SLUG} $HOME/docker/quinoa
   - cp -r $HOME/.sonar ${HOME}/docker/sonar
-  - docker build --build-arg CXXFLAGS="${CXXFLAGS}"
-                 --build-arg COVERAGE=${COVERAGE}
-                 --build-arg FC=${FC} --build-arg CC=${CC} --build-arg CXX=${CXX}
+  - docker build --build-arg COMPILER=${COMPILER}
+                 --build-arg BUILD_TYPE=${BUILD_TYPE}
                  --build-arg RUNNER_ARGS="${RUNNER_ARGS}"
-                 --build-arg TPL_DIR="${TPL_DIR}"
+                 --build-arg COVERAGE=${COVERAGE}
                  --build-arg SONARQUBE=${SONARQUBE}
                  --build-arg SONARQUBE_TOKEN=${SONARQUBE_TOKEN}
                  --build-arg SONARQUBE_GITHUB_TOKEN=${SONARQUBE_GITHUB_TOKEN}

@@ -6,12 +6,9 @@ ARG COVERAGE
 ARG SONARQUBE
 ARG SONARQUBE_TOKEN
 ARG SONARQUBE_GITHUB_TOKEN
-ARG CC
-ARG CXX
-ARG CXXFLAGS
+ARG COMPILER
 ARG BUILD_TYPE
 ARG RUNNER_ARGS
-ARG TPL_DIR
 
 #for coverage
 ENV CI true
@@ -34,12 +31,12 @@ RUN mkdir build
 
 WORKDIR build
 RUN cmake \
-    -DCMAKE_C_COMPILER="${CC}" \
-    -DCMAKE_CXX_COMPILER="${CXX}" \
-    -DCMAKE_CXX_FLAGS="${CXXFLAGS}" \
+    -DCMAKE_C_COMPILER="/opt/openmpi/${COMPILER}/bin/mpicc" \
+    -DCMAKE_CXX_COMPILER="/opt/openmpi/${COMPILER}/bin/mpicxx" \
+    -DTPL_DIR="/home/quinoa/tpl/${COMPILER}" \
+    -DCMAKE_CXX_FLAGS="-Werror" \
     -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
     ${COVERAGE:+-DCOVERAGE=ON} \
-    -DTPL_DIR="${TPL_DIR}" \
     -DLCOV=/bin/true \
     -DGENHTML=/bin/true \
     -DRUNNER_ARGS="${RUNNER_ARGS}" \
@@ -54,10 +51,10 @@ RUN cd .. && if [ ${COVERAGE} ]; then \
   python -m coverxygen --xml-dir build/doc/xml/ --src-dir . --output doxygen.coverage.info; \
   wget -O codecov.sh https://codecov.io/bash; \
   bash codecov.sh -X gcov -f doxygen.coverage.info -F doxygen; \
-  if [ ${CC} = clang ]; then \
-    $HOME/.local/bin/codecov -F ${CC} --gcov-exec "llvm-cov gcov"; \
+  if [ ${COMPILER} = clang ]; then \
+    $HOME/.local/bin/codecov -F ${COMPILER} --gcov-exec "llvm-cov gcov"; \
   else \
-    $HOME/.local/bin/codecov -F ${CC}; \
+    $HOME/.local/bin/codecov -F ${COMPILER}; \
     cd build && find . -type f -name '*.gcno' -exec gcov -pb  {} + && \
     find . -type f -name '*.gcov' -not -name '*#quinoa#src*' -delete && \
     find . -type f -name '*.def.h*.gcov' -o -name '*UnitTest#tests*.gcov' -delete; \
