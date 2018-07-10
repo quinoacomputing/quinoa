@@ -19,6 +19,7 @@
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
   #pragma clang diagnostic ignored "-Wdeprecated"
   #pragma clang diagnostic ignored "-Wundef"
+  #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 522 )
