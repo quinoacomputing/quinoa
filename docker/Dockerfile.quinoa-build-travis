@@ -46,8 +46,10 @@ RUN cmake \
     ../src
 ENV CCACHE_DISABLE=true
 RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} ninja
-RUN if [ -z "${SONARQUBE}" ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q; fi
-RUN if [ -z "${SONARQUBE}" ]; then ctest --output-on-failure -j2 -LE "(stringent|extreme)"; fi
+#RUN if [ -z "${SONARQUBE}" ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q; fi
+RUN ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q
+#RUN if [ -z "${SONARQUBE}" ]; then ctest --output-on-failure -j2 -LE "(stringent|extreme)"; fi
+RUN ctest --output-on-failure -j2 -LE "(stringent|extreme)"
 RUN ninja doc
 RUN cd .. && if [ ${COVERAGE} ]; then \
   python -m coverxygen --xml-dir build/doc/xml/ --src-dir . --output doxygen.coverage.info; \

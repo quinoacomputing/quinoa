@@ -20,6 +20,7 @@ env:
     - DISTRO=debian COMPILER=clang BUILD_TYPE=Release
                     DOCKERHUB=true
     - DISTRO=alpine COMPILER=gnu BUILD_TYPE=Debug SONARQUBE=ON COVERAGE=ON
+                    RUNNER_ARGS="--bind-to none -oversubscribe -mca plm isolated"
                     DOCKERHUB=true
     - DISTRO=alpine COMPILER=gnu BUILD_TYPE=Release
                     RUNNER_ARGS="--bind-to none -oversubscribe -mca plm isolated"
