@@ -13,32 +13,32 @@ env:
   matrix:
     - DISTRO=debian BUILD_TYPE=Debug
                     TPL_DIR=/home/quinoa/tpl/gnu
-                    CXXFLAGS="-Wno-error=unused-command-line-argument;-Werror"
+                    CXXFLAGS=-Werror
                     MPICC=mpicc
                     MPICXX=mpicxx
                     DOCKERHUB=true
     - DISTRO=debian BUILD_TYPE=Release
                     TPL_DIR=/home/quinoa/tpl/gnu
-                    CXXFLAGS="-Wno-error=unused-command-line-argument;-Werror"
+                    CXXFLAGS=-Werror
                     MPICC=mpicc
                     MPICXX=mpicxx
                     DOCKERHUB=true
     - DISTRO=debian BUILD_TYPE=Debug
                     TPL_DIR=/home/quinoa/tpl/clang
-                    CXXFLAGS="-Wno-error=unused-command-line-argument;-Werror"
+                    CXXFLAGS="-Wno-error=unused-command-line-argument -Werror"
                     MPICC=/opt/openmpi/bin/mpicc
                     MPICXX=/opt/openmpi/bin/mpicxx
                     DOCKERHUB=true
     - DISTRO=debian BUILD_TYPE=Release
                     TPL_DIR=/home/quinoa/tpl/clang
-                    CXXFLAGS="-Wno-error=unused-command-line-argument;-Werror"
+                    CXXFLAGS="-Wno-error=unused-command-line-argument -Werror"
                     MPICC=/opt/openmpi/bin/mpicc
                     MPICXX=/opt/openmpi/bin/mpicxx
                     DOCKERHUB=true
     - DISTRO=alpine SONARQUBE=ON
                     COVERAGE=ON
                     TPL_DIR=/home/quinoa/tpl
-                    CXXFLAGS="-Werror"
+                    CXXFLAGS=-Werror
                     MPICC=mpicc
                     MPICXX=mpicxx
                     BUILD_TYPE=Debug
