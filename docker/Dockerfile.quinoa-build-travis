@@ -31,6 +31,7 @@ RUN mkdir build
 
 WORKDIR build
 RUN cmake \
+    -GNinja \
     -DCMAKE_C_COMPILER="/opt/openmpi/${COMPILER}/bin/mpicc" \
     -DCMAKE_CXX_COMPILER="/opt/openmpi/${COMPILER}/bin/mpicxx" \
     -DTPL_DIR="/home/quinoa/tpl/${COMPILER}" \
