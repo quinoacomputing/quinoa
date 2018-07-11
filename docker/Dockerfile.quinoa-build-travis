@@ -21,6 +21,7 @@ ARG TRAVIS_REPO_SLUG
 ARG TRAVIS_COMMIT
 
 ENV RUNNER_ARGS "--bind-to none -oversubscribe -mca plm isolated"
+ENV PATH /opt/openmpi/${COMPILER}/bin:$PATH
 
 COPY quinoa /home/quinoa/quinoa
 COPY sonar/ /home/quinoa/.sonar
@@ -32,7 +33,7 @@ WORKDIR /home/quinoa/quinoa
 RUN mkdir build
 
 WORKDIR build
-RUN export PATH=/opt/openmpi/${COMPILER}/bin:$PATH && cmake \
+RUN cmake \
     -GNinja \
     -DCMAKE_C_COMPILER=mpicc \
     -DCMAKE_CXX_COMPILER=mpicxx \
