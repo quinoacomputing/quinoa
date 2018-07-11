@@ -21,7 +21,7 @@ env:
     - COMPILER=clang BUILD=Release
     - COMPILER=clang BUILD=Release SHARED_LIBS=off
 
-    - COMPILER=gnu BUILD=Debug SONARQUBE=ON COVERAGE=ON
+    - COMPILER=gnu BUILD=Debug SONARQUBE=ON
 
 script:
   - export DISTRO=alpine
@@ -33,7 +33,6 @@ script:
   - docker build --build-arg COMPILER=${COMPILER}
                  --build-arg BUILD=${BUILD}
                  --build-arg SHARED_LIBS="${SHARED_LIBS}"
-                 --build-arg COVERAGE=${COVERAGE}
                  --build-arg SONARQUBE=${SONARQUBE}
                  --build-arg SONARQUBE_TOKEN=${SONARQUBE_TOKEN}
                  --build-arg SONARQUBE_GITHUB_TOKEN=${SONARQUBE_GITHUB_TOKEN}

@@ -2,7 +2,6 @@
 
 FROM quinoacomputing/buildenv:alpine
 
-ARG COVERAGE
 ARG SONARQUBE
 ARG SONARQUBE_TOKEN
 ARG SONARQUBE_GITHUB_TOKEN
@@ -41,7 +40,7 @@ RUN cmake \
     -DCMAKE_CXX_FLAGS="-Werror -Wno-zero-as-null-pointer-constant" \
     -DCMAKE_BUILD_TYPE="${BUILD}" \
     ${SHARED_LIBS:+-DBUILD_SHARED_LIBS=$SHARED_LIBS} \
-    ${COVERAGE:+-DCOVERAGE=ON} \
+    ${SONARQUBE:+-DCOVERAGE=ON} \
     -DLCOV=/bin/true \
     -DGENHTML=/bin/true \
     -DRUNNER_ARGS="${RUNNER_ARGS}" \
@@ -50,8 +49,8 @@ ENV CCACHE_DISABLE=true
 RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} ninja
 RUN if [ -z "${SONARQUBE}" ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q; fi
 RUN if [ -z "${SONARQUBE}" ]; then ctest --output-on-failure -j2 -LE stringent -E "(.*pe[48])"; fi
-RUN ninja doc
-RUN cd .. && if [ ${COVERAGE} ]; then \
+RUN if [ -z "${SONARQUBE}" ]; then ninja doc; fi
+RUN cd .. && if [ ${SONARQUBE} ]; then \
   python -m coverxygen --xml-dir build/doc/xml/ --src-dir . --output doxygen.coverage.info; \
   wget -O codecov.sh https://codecov.io/bash; \
   bash codecov.sh -X gcov -f doxygen.coverage.info -F doxygen; \
