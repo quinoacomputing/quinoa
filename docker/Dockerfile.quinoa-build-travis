@@ -90,4 +90,5 @@ fi
 USER root
 RUN ninja install
 USER quinoa
+RUN unittest -h && inciter && rngtest && meshconv && walker
 WORKDIR /home/quinoa
