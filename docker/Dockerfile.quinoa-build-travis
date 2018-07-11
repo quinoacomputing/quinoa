@@ -19,7 +19,7 @@ ARG TRAVIS_JOB_ID
 ARG TRAVIS_REPO_SLUG
 ARG TRAVIS_COMMIT
 
-ENV RUNNER_ARGS "--bind-to none -oversubscribe -mca plm isolated"
+ENV OMPI_MCA_plm isolated
 ENV PATH /opt/openmpi/${COMPILER}/bin:$PATH
 
 COPY quinoa /home/quinoa/quinoa
@@ -43,11 +43,10 @@ RUN cmake \
     ${SONARQUBE:+-DCOVERAGE=ON} \
     -DLCOV=/bin/true \
     -DGENHTML=/bin/true \
-    -DRUNNER_ARGS="${RUNNER_ARGS}" \
     ../src
 ENV CCACHE_DISABLE=true
 RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} ninja
-RUN if [ -z "${SONARQUBE}" ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q; fi
+RUN if [ -z "${SONARQUBE}" ]; then ./charmrun +p2 Main/unittest -v -q; fi
 RUN if [ -z "${SONARQUBE}" ]; then ctest --output-on-failure -j2 -LE stringent -E "(.*pe[48])"; fi
 RUN if [ ${SONARQUBE} ]; then ninja doc; fi
 RUN cd .. && if [ ${SONARQUBE} ]; then \
