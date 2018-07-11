@@ -1,15 +1,14 @@
 # vim: filetype=dockerfile:
 
-FROM quinoacomputing/buildenv:debian
+FROM quinoacomputing/buildenv:alpine
 
 ARG COVERAGE
 ARG SONARQUBE
 ARG SONARQUBE_TOKEN
 ARG SONARQUBE_GITHUB_TOKEN
 ARG COMPILER
-ARG BUILD_TYPE
-ARG RUNNER_ARGS
-ARG BUILD_SHARED_LIBS
+ARG BUILD
+ARG SHARED_LIBS
 
 #for coverage
 ENV CI true
@@ -21,6 +20,8 @@ ARG TRAVIS_JOB_ID
 ARG TRAVIS_REPO_SLUG
 ARG TRAVIS_COMMIT
 
+ENV RUNNER_ARGS "--bind-to none -oversubscribe -mca plm isolated"
+
 COPY quinoa /home/quinoa/quinoa
 COPY sonar/ /home/quinoa/.sonar
 USER root
@@ -31,14 +32,14 @@ WORKDIR /home/quinoa/quinoa
 RUN mkdir build
 
 WORKDIR build
-RUN cmake \
+RUN export PATH=/opt/openmpi/${COMPILER}/bin:$PATH && cmake \
     -GNinja \
-    -DCMAKE_C_COMPILER="/opt/openmpi/${COMPILER}/bin/mpicc" \
-    -DCMAKE_CXX_COMPILER="/opt/openmpi/${COMPILER}/bin/mpicxx" \
-    -DTPL_DIR="/home/quinoa/tpl/${COMPILER}${BUILD_SHARED_LIBS:+-static}" \
+    -DCMAKE_C_COMPILER=mpicc \
+    -DCMAKE_CXX_COMPILER=mpicxx \
+    -DTPL_DIR="/home/quinoa/tpl/${COMPILER}${SHARED_LIBS:+-static}" \
     -DCMAKE_CXX_FLAGS="-Werror" \
-    -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
-    ${BUILD_SHARED_LIBS:+-DBUILD_SHARED_LIBS=$BUILD_SHARED_LIBS} \
+    -DCMAKE_BUILD_TYPE="${BUILD}" \
+    ${SHARED_LIBS:+-DBUILD_SHARED_LIBS=$SHARED_LIBS} \
     ${COVERAGE:+-DCOVERAGE=ON} \
     -DLCOV=/bin/true \
     -DGENHTML=/bin/true \
@@ -46,10 +47,8 @@ RUN cmake \
     ../src
 ENV CCACHE_DISABLE=true
 RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} ninja
-#RUN if [ -z "${SONARQUBE}" ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q; fi
-RUN ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q
-#RUN if [ -z "${SONARQUBE}" ]; then ctest --output-on-failure -j2 -LE "(stringent|extreme)"; fi
-RUN ctest --output-on-failure -j2 -LE "(stringent|extreme)"
+RUN if [ -z "${SONARQUBE}" ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q; fi
+RUN if [ -z "${SONARQUBE}" ]; then ctest --output-on-failure -j2 -LE "(stringent|extreme)"; fi
 RUN ninja doc
 RUN cd .. && if [ ${COVERAGE} ]; then \
   python -m coverxygen --xml-dir build/doc/xml/ --src-dir . --output doxygen.coverage.info; \

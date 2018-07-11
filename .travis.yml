@@ -11,27 +11,28 @@ git:
 
 env:
   matrix:
-    - DISTRO=debian COMPILER=gnu BUILD_TYPE=Debug
-    - DISTRO=debian COMPILER=gnu BUILD_TYPE=Release
-    - DISTRO=debian COMPILER=clang BUILD_TYPE=Debug
-    - DISTRO=debian COMPILER=clang BUILD_TYPE=Release
-    - DISTRO=alpine COMPILER=gnu BUILD_TYPE=Debug SONARQUBE=ON COVERAGE=ON
-                    RUNNER_ARGS="--bind-to none -oversubscribe -mca plm isolated"
-    - DISTRO=alpine COMPILER=gnu BUILD_TYPE=Release
-                    RUNNER_ARGS="--bind-to none -oversubscribe -mca plm isolated"
-                    BUILD_SHARED_LIBS=off
+    - COMPILER=gnu BUILD=Debug
+    - COMPILER=gnu BUILD=Debug SHARED_LIBS=off
+    - COMPILER=gnu BUILD=Release
+    - COMPILER=gnu BUILD=Release SHARED_LIBS=off
+
+    - COMPILER=clang BUILD=Debug
+    - COMPILER=clang BUILD=Debug SHARED_LIBS=off
+    - COMPILER=clang BUILD=Release
+    - COMPILER=clang BUILD=Release SHARED_LIBS=off
+
+    - COMPILER=gnu BUILD=Debug SONARQUBE=ON COVERAGE=ON
 
 script:
+  - export DISTRO=alpine
   - rm -rf tpl
   - cp -vr docker ${HOME}/docker
-  - sed -i "/^FROM/s/debian/${DISTRO}/" ${HOME}/docker/Dockerfile.quinoa-build-travis
   - cd ../../
   - mv -v ${TRAVIS_REPO_SLUG} $HOME/docker/quinoa
   - cp -r $HOME/.sonar ${HOME}/docker/sonar
   - docker build --build-arg COMPILER=${COMPILER}
-                 --build-arg BUILD_TYPE=${BUILD_TYPE}
-                 --build-arg RUNNER_ARGS="${RUNNER_ARGS}"
-                 --build-arg BUILD_SHARED_LIBS="${BUILD_SHARED_LIBS}"
+                 --build-arg BUILD=${BUILD}
+                 --build-arg SHARED_LIBS="${SHARED_LIBS}"
                  --build-arg COVERAGE=${COVERAGE}
                  --build-arg SONARQUBE=${SONARQUBE}
                  --build-arg SONARQUBE_TOKEN=${SONARQUBE_TOKEN}
@@ -48,12 +49,6 @@ script:
                  ${HOME}/docker/ &&
     CON=$(docker run -d ${TRAVIS_REPO_SLUG}:${DISTRO} /bin/bash) &&
     docker cp ${CON}:/home/quinoa/.sonar ${HOME}/
-
-after_success:
-  - if [[ ${DOCKERHUB} = true && ${DOCKER_USERNAME} && ${DOCKER_PASSWORD} && ${TRAVIS_PULL_REQUEST} == false && ${TRAVIS_BRANCH} == master ]]; then
-      docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
-      docker push "${TRAVIS_REPO_SLUG}:${DISTRO}";
-    fi
 
 cache:
   directories:
