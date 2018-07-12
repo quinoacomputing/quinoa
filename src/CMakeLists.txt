@@ -477,25 +477,29 @@ configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.C.in"
 # Remove build hostname from cmake cache
 unset(HOSTNAME CACHE)
 
-### Set RPATH so that shared libs paths stay in the binary after install ###
-# Don't skip the full RPATH for the build tree
-set(CMAKE_SKIP_BUILD_RPATH false)
+if (BUILD_SHARED_LIBS)
 
-# When building, don't use the install RPATH
-# (use later on when installing)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH false)
+  ### Set RPATH so that shared libs paths stay in the binary after install ###
+  # Don't skip the full RPATH for the build tree
+  set(CMAKE_SKIP_BUILD_RPATH false)
+  
+  # When building, don't use the install RPATH
+  # (use later on when installing)
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH false)
+  
+  # Add the automatically determined parts of the RPATH
+  # which point to directories outside the build tree to the install RPATH
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
+  
+  # the RPATH to be used when installing, but only if it's not a system directory
+  list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
+       "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" isSystemDir)
+  if("${isSystemDir}" STREQUAL "-1")
+     set(CMAKE_INSTALL_RPATH
+       "${CMAKE_INSTALL_RPATH};${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+  endif("${isSystemDir}" STREQUAL "-1")
 
-# Add the automatically determined parts of the RPATH
-# which point to directories outside the build tree to the install RPATH
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
-
-# the RPATH to be used when installing, but only if it's not a system directory
-list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
-     "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" isSystemDir)
-if("${isSystemDir}" STREQUAL "-1")
-   set(CMAKE_INSTALL_RPATH
-     "${CMAKE_INSTALL_RPATH};${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
-endif("${isSystemDir}" STREQUAL "-1")
+endif(BUILD_SHARED_LIBS)
 
 # add a target to generate API documentation with Doxygen
 find_package(Doxygen 1.8.12)
