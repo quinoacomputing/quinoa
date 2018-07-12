@@ -21,7 +21,7 @@ env:
     - COMPILER=clang BUILD=Release
     - COMPILER=clang BUILD=Release SHARED_LIBS=off
 
-    - COMPILER=gnu BUILD=Debug SONARQUBE=ON
+    - COMPILER=clang BUILD=Debug SONARQUBE=ON
 
 script:
   - export DISTRO=alpine
