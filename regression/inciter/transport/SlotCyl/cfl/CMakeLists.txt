@@ -152,7 +152,8 @@ add_regression_test(cfl_u0.5_migr ${INCITER_EXECUTABLE}
                                out.6
                                out.7
                     BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff.cfg)
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    LABLES migration)
 
 
 if (HAS_ROOT)

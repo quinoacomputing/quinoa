@@ -273,7 +273,7 @@ Transporter::createPartitioner()
   m_sorter = CProxy_Sorter::ckNew();
 
   // Create empty mesh refiner Chare chare array
-  m_refiner = CProxy_Refiner::ckNew();
+  m_refiner = CProxy_Refiner::ckNew( /*m_scheme.arrayoptions()*/ );
 
   // Create mesh partitioner Charm++ chare group
   m_partitioner =

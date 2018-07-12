@@ -165,4 +165,5 @@ add_regression_test(compflow_euler_vorticalflow_diagcg_u0.5_migr ${INCITER_EXECU
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_diagcg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg
+                    LABELS migration)

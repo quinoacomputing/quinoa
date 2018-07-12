@@ -11,11 +11,10 @@ inciter
   ttyi 10     # TTY output interval
   ctau 1.0    # FCT mass diffusivity
 
-  discretization
-    scheme diagcg
-  end
+  scheme diagcg
 
   transport
+    depvar c
     physics advection
     problem slot_cyl
   end

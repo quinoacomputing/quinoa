@@ -48,6 +48,16 @@ class Refiner : public CBase_Refiner {
                       const std::map< int, std::vector< std::size_t > >& bnode,
                       int nchare );
 
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wundefined-func-template"
+    #endif
+    //! Migrate constructor
+    explicit Refiner( CkMigrateMessage* ) : m_refiner( m_inpoel ) {}
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
+
     //! Configure Charm++ reduction types
     static void registerReducers();
 
