@@ -12,8 +12,9 @@
 #include <limits>
 #include <iostream>
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "NoWarning/set.h"
-#include "NoWarning/for_each.h"
 
 #include "QuinoaConfig.h"
 #include "Control.h"
@@ -40,39 +41,10 @@ class InputDeck :
                       tag::pdf,        std::vector< tk::ctr::Probability >,
                       tag::error,      std::vector< std::string > > {
 
-  private:
-    //! Function object for extracting dependent variable vectors from
-    //! components
-    struct depvar {
-      //! Need to store reference to host class whose data we operate on
-      const InputDeck* const m_host;
-      //! Internal reference to the vector of vectors that will hold the
-      //! extracted dependent variables for all equations
-      std::vector< std::vector< char > >& m_vars;
-      //! Constructor: store host object pointer and the reference to the
-      //! container storing the dependent variables letters.
-      depvar( const InputDeck* const host,
-              std::vector< std::vector< char > >& vars ) :
-        m_host( host ), m_vars( vars ) {}
-      //! Functional call operator templated on the type that adds all dependent
-      //! variables (stored in a vector) for type U. (There can be multiple
-      //! systems of the same equation type, differentiated by a different
-      //! dependen:t variable.)
-      template< typename U > void operator()( U ) {
-        m_vars.push_back( m_host->get< tag::param, U, tag::depvar >() );
-      }
-    };
-
   public:
     //! \brief Walker input deck keywords
-    //! \details Since there are more than 20 and boost::mpl only allows maxium
-    //!   20 items in a set by default (and I don't want to mess with
-    //!   preprocessor-generated boost::mpl headers), the whole set is broken up
-    //!   into several sets each containing 20 keywords.
     //! \see See also tk::grm::use
-    //! \details If you add a new mpl::set, make sure you also add it to
-    //!   waker::deck::use.
-    using keywords1 = boost::mpl::set< kw::precision
+    using keywords = brigand::set< kw::precision
                                      , kw::end
                                      , kw::depvar
                                      , kw::title
@@ -92,8 +64,7 @@ class InputDeck :
                                      , kw::ncomp
                                      , kw::rng
                                      , kw::walker
-                                     >;
-    using keywords2 = boost::mpl::set< kw::init
+                                     , kw::init
                                      , kw::coeff
                                      , kw::diag_ou
                                      , kw::ornstein_uhlenbeck
@@ -113,8 +84,7 @@ class InputDeck :
                                      , kw::sde_c
                                      , kw::sde_kappa
                                      , kw::sde_omega
-                                     >;
-    using keywords3 = boost::mpl::set< kw::cja
+                                     , kw::cja
                                      , kw::cja_accurate
                                      #ifdef HAS_RNGSSE2
                                      , kw::rngsse_gm19
@@ -132,8 +102,11 @@ class InputDeck :
                                      #endif
                                      , kw::r123_threefry
                                      , kw::r123_philox
-                                     >;
-    using keywords4 = boost::mpl::set< kw::seed
+                                     , kw::const_shear
+                                     , kw::position
+                                     , kw::velocity
+                                     , kw::instantaneous_velocity
+                                     , kw::seed
                                      #ifdef HAS_MKL
                                      , kw::mkl_mcg31
                                      , kw::mkl_r250
@@ -155,8 +128,7 @@ class InputDeck :
                                      , kw::boxmuller2
                                      , kw::icdf
                                      #endif
-                                     >;
-    using keywords5 = boost::mpl::set< kw::constant
+                                     , kw::constant
                                      , kw::decay
                                      , kw::raw
                                      , kw::zero
@@ -176,8 +148,7 @@ class InputDeck :
                                      , kw::sde_rho2
                                      , kw::sde_rcomma
                                      , kw::icdelta
-                                     >;
-    using keywords6 = boost::mpl::set< kw::spike
+                                     , kw::spike
                                      , kw::sde_bprime
                                      , kw::sde_kappaprime
                                      , kw::mixnumfracbeta
@@ -189,11 +160,15 @@ class InputDeck :
                                      , kw::hydrotimescale
                                      , kw::jointbeta
                                      , kw::jointdelta
-                                     , kw::jointbeta
+                                     , kw::jointgaussian
                                      , kw::icbeta
                                      , kw::betapdf
-                                     >;
-    using keywords7 = boost::mpl::set< kw::hydrotimescales
+                                     , kw::sde_c0
+                                     , kw::icgaussian
+                                     , kw::gaussian
+                                     , kw::dissipation
+                                     , kw::jointgamma
+                                     , kw::hydrotimescales
                                      , kw::hydroproductions
                                      , kw::eq_A005H
                                      , kw::eq_A005S
@@ -213,6 +188,21 @@ class InputDeck :
                                      , kw::prod_A075H
                                      , kw::prod_A075S
                                      , kw::prod_A075L
+                                     , kw::gnorm
+                                     , kw::gnorm_accurate
+                                     , kw::gamma_method
+                                     , kw::icgamma
+                                     , kw::gammapdf
+                                     , kw::sde_c3
+                                     , kw::sde_c4
+                                     , kw::sde_com1
+                                     , kw::sde_com2
+                                     , kw::fullvar
+                                     , kw::fluctuation
+                                     , kw::solve
+                                     , kw::variant
+                                     , kw::slm
+                                     , kw::glm
                                      >;
 
     //! \brief Constructor: set all defaults
@@ -239,13 +229,7 @@ class InputDeck :
       set< tag::stat >( std::vector< tk::ctr::Product >() );
       // Initialize help
       const auto& ctrinfoFill = tk::ctr::Info( get< tag::cmd, tag::ctrinfo >() );
-      boost::mpl::for_each< keywords1 >( ctrinfoFill );
-      boost::mpl::for_each< keywords2 >( ctrinfoFill );
-      boost::mpl::for_each< keywords3 >( ctrinfoFill );
-      boost::mpl::for_each< keywords4 >( ctrinfoFill );
-      boost::mpl::for_each< keywords5 >( ctrinfoFill );
-      boost::mpl::for_each< keywords6 >( ctrinfoFill );
-      boost::mpl::for_each< keywords7 >( ctrinfoFill );
+      brigand::for_each< keywords >( ctrinfoFill );
     }
 
     //! Extract moment names of requested statistics
@@ -270,13 +254,6 @@ class InputDeck :
       for (const auto& bs : get< tag::discr, tag::binsize >())
         if (bs.size() == d) ++n;
       return n;
-    }
-
-    //! Extract vector of vector of dependent variables from components
-    std::vector< std::vector< char > > depvars() const {
-      std::vector< std::vector< char > > vars;
-      boost::mpl::for_each< ncomps::tags >( depvar( this, vars ) );
-      return vars;
     }
 
     //! Query if there are any statistics or PDFs to estimate

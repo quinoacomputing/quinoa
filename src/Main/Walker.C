@@ -112,17 +112,19 @@ CProxy_Distributor g_DistributorProxy;
 //! parallel).
 inline
 void operator|( PUP::er& p, std::map< tk::ctr::RawRNGType, tk::RNG >& rng ) {
-  if (!p.isSizing()) {
-    tk::RNGStack stack(
-      #ifdef HAS_MKL
-      g_inputdeck.get< tag::param, tag::rngmkl >(),
-      #endif
-      #ifdef HAS_RNGSSE2
-      g_inputdeck.get< tag::param, tag::rngsse >(),
-      #endif
-      g_inputdeck.get< tag::param, tag::rng123 >() );
-    rng = stack.selected( g_inputdeck.get< tag::selected, tag::rng >() );
-  }
+  try {
+    if (!p.isSizing()) {
+      tk::RNGStack stack(
+        #ifdef HAS_MKL
+        g_inputdeck.get< tag::param, tag::rngmkl >(),
+        #endif
+        #ifdef HAS_RNGSSE2
+        g_inputdeck.get< tag::param, tag::rngsse >(),
+        #endif
+        g_inputdeck.get< tag::param, tag::rng123 >() );
+      rng = stack.selected( g_inputdeck.get< tag::selected, tag::rng >() );
+    }
+  } catch (...) { tk::processExceptionCharm(); }
 }
 
 //! Pack/Unpack selected differential equations. This Pack/Unpack method
@@ -140,7 +142,9 @@ void operator|( PUP::er& p, std::map< tk::ctr::RawRNGType, tk::RNG >& rng ) {
 //! serial) and packing and unpacking (in parallel).
 inline
 void operator|( PUP::er& p, std::vector< DiffEq >& eqs ) {
-  if (!p.isSizing()) eqs = DiffEqStack().selected();
+  try {
+    if (!p.isSizing()) eqs = DiffEqStack().selected();
+  } catch (...) { tk::processExceptionCharm(); }
 }
 
 } // walker::
@@ -182,13 +186,16 @@ class Main : public CBase_Main {
                         ( msg->argc, msg->argv,
                           m_cmdline,
                           tk::HeaderType::WALKER,
-                          WALKER_EXECUTABLE,
+                          tk::walker_executable(),
                           m_print ) ),
       m_timer(1),       // start new timer measuring the total runtime
       m_timestamp()
     {
       delete msg;
       mainProxy = thisProxy;
+      // Optionally enable quiscence detection
+      if (m_cmdline.get< tag::quiescence >())
+        CkStartQD( CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
       // Fire up an asynchronous execute object, which when created at some
       // future point in time will call back to this->execute(). This is
       // necessary so that this->execute() can access already migrated
@@ -224,6 +231,11 @@ class Main : public CBase_Main {
       try{
         m_timestamp.emplace_back( label, tk::hms( stamp ) );
       } catch (...) { tk::processExceptionCharm(); }
+    }
+
+    //! Entry method triggered when quiescence is detected
+    [[noreturn]] void quiescence() {
+      Throw( "Quiescence detected" );
     }
 
   private:

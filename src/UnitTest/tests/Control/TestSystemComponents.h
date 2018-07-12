@@ -9,9 +9,14 @@
 #ifndef test_SystemComponents_h
 #define test_SystemComponents_h
 
+#include <brigand/algorithms/for_each.hpp>
+#include <brigand/sequences/list.hpp>
+
 #include "NoWarning/tut.h"
 
 #include "SystemComponents.h"
+#include "TaggedTuple.h"
+#include "Tags.h"
 
 namespace tut {
 
@@ -27,7 +32,7 @@ struct SystemComponents_common {
     eq2, std::vector< tk::ctr::ncomp_type >
   >;
   // Typedef vector of all equation tags
-  using eqs = boost::mpl::vector< eq1, eq2 >;
+  using eqs = brigand::list< eq1, eq2 >;
 
   // Functor verifying the number of components
   struct testncomp {
@@ -35,7 +40,7 @@ struct SystemComponents_common {
     const std::vector< tk::ctr::ncomp_type > m_comps{ 2, 3, 3, 2 };
     std::size_t m_c;
     testncomp( const ncomps& host ) : m_host( host ), m_c( 0 ) {}
-    template< typename U > void operator()( U ) {
+    template< typename U > void operator()( brigand::type_<U> ) {
       for (const auto& c : m_host.get< U >())
         ensure_equals( "number of components for c=" + std::to_string(c),
                        c, m_comps[m_c++] );
@@ -48,7 +53,7 @@ struct SystemComponents_common {
     const std::vector< tk::ctr::ncomp_type > m_offs{ 0, 2, 5, 8 };
     std::size_t m_c;
     testoffset( const ncomps& host ) : m_host( host ), m_c( 0 ) {}
-    template< typename U > void operator()( U ) {
+    template< typename U > void operator()( brigand::type_<U> ) {
       for (std::size_t c=0; c<m_host.get< U >().size(); ++c)
         ensure_equals( "offset for c=" + std::to_string(c),
                        m_host.offset< U >(c), m_offs[m_c++] );
@@ -83,7 +88,7 @@ void SystemComponents_object::test< 1 >() {
   nc.get< eq2 >().push_back( 2 );
 
   // Test number of components of all equations
-  boost::mpl::for_each< eqs >( testncomp( nc ) );
+  brigand::for_each< eqs >( testncomp( nc ) );
 }
 
 //! Test that number of components are correct
@@ -103,7 +108,7 @@ void SystemComponents_object::test< 2 >() {
   nc.get< eq2 >().push_back( 2 );
 
   // Test offsets of all equations
-  boost::mpl::for_each< eqs >( testoffset( nc ) );
+  brigand::for_each< eqs >( testoffset( nc ) );
 }
 
 //! Test the total number of components are correct
@@ -126,10 +131,10 @@ void SystemComponents_object::test< 3 >() {
   ensure_equals( "total number of components", nc.nprop(), 10 );
 }
 
-//! Test that offsetmap builds a linear map of offsets
+//! Test that offsetmap builds a the correct map of offsets
 template<> template<>
 void SystemComponents_object::test< 4 >() {
-  set_test_name( "linear offsetmap" );
+  set_test_name( "offsetmap" );
 
   // Instantiate number of components object
   ncomps nc;
@@ -142,16 +147,84 @@ void SystemComponents_object::test< 4 >() {
   nc.get< eq2 >().push_back( 3 );
   nc.get< eq2 >().push_back( 2 );
 
-  // Create vector of vectors of dependent variables denoted by characters
-  std::vector< std::vector< char > > depvars;
-  depvars.push_back( { 'a', 'b' } );    // for the two eq1 systems
-  depvars.push_back( { 'c', 'd' } );    // for the two eq2 systems
+  // Dependent variables (as the only parameters) for two equation systems
+  using eq1_parameters = tk::tuple::tagged_tuple<
+    tag::depvar, std::vector< char >
+  >;
+  using eq2_parameters = tk::tuple::tagged_tuple<
+    tag::depvar, std::vector< char >
+  >;
 
-  // Test if offsetmap is linear
-  ensure( "linear offsetmap",
-          nc.offsetmap( depvars ) ==
-            tk::ctr::OffsetMap{ {'a',0}, {'b',1}, {'c',2}, {'d',3} } );
+  // Parameters for two equation systems
+  using parameters = tk::tuple::tagged_tuple<
+    eq1, eq1_parameters,
+    eq2, eq2_parameters
+  >;
+
+  // Crate mock input deck with two systems of eqations with dependent variables
+  tk::Control< tag::component, ncomps,
+               tag::param, parameters > deck;
+
+  // Assign ncomps to deck
+  deck.get< tag::component >() = std::move( nc );
+
+  // Assign character codes for dependent variables
+  deck.get< tag::param, eq1, tag::depvar >() = { 'a', 'b' };
+  deck.get< tag::param, eq2, tag::depvar >() = { 'c', 'd' };
+
+  // Test offsetmap in deck
+  ensure( "offsetmap",
+          deck.get< tag::component >().offsetmap( deck ) ==
+            tk::ctr::OffsetMap{ {'a',0}, {'b',2}, {'c',5}, {'d',8} } );
 }
+
+//! Test that ncompmap builds a the correct map of number of components
+template<> template<>
+void SystemComponents_object::test< 5 >() {
+  set_test_name( "ncompmap" );
+
+  // Instantiate number of components object
+  ncomps nc;
+
+  // Add a couple of systems of eq1 equations with components 2 and 3, resp.
+  nc.get< eq1 >().push_back( 2 );
+  nc.get< eq1 >().push_back( 5 );
+
+  // Add a couple of systems of eq2 equations with components 3 and 2, resp.
+  nc.get< eq2 >().push_back( 3 );
+  nc.get< eq2 >().push_back( 8 );
+
+  // Dependent variables (as the only parameters) for two equation systems
+  using eq1_parameters = tk::tuple::tagged_tuple<
+    tag::depvar, std::vector< char >
+  >;
+  using eq2_parameters = tk::tuple::tagged_tuple<
+    tag::depvar, std::vector< char >
+  >;
+
+  // Parameters for two equation systems
+  using parameters = tk::tuple::tagged_tuple<
+    eq1, eq1_parameters,
+    eq2, eq2_parameters
+  >;
+
+  // Crate mock input deck with two systems of eqations with dependent variables
+  tk::Control< tag::component, ncomps,
+               tag::param, parameters > deck;
+
+  // Assign ncomps to deck
+  deck.get< tag::component >() = std::move( nc );
+
+  // Assign character codes for dependent variables
+  deck.get< tag::param, eq1, tag::depvar >() = { 'a', 'b' };
+  deck.get< tag::param, eq2, tag::depvar >() = { 'c', 'd' };
+
+  // Test ncompmap in deck
+  ensure( "ncompmap",
+          deck.get< tag::component >().ncompmap( deck ) ==
+            tk::ctr::OffsetMap{ {'a',2}, {'b',5}, {'c',3}, {'d',8} } );
+}
+
 
 } // tut::
 

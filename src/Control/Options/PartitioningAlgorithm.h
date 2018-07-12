@@ -11,7 +11,7 @@
 
 #include <map>
 
-#include "NoWarning/vector.h"
+#include <brigand/sequences/list.hpp>
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -40,12 +40,12 @@ class PartitioningAlgorithm : public tk::Toggle< PartitioningAlgorithmType > {
     using ParamType = std::string;
 
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::rcb
-                                       , kw::rib
-                                       , kw::hsfc
-                                       , kw::mj
-                                       , kw::phg
-                                       >;
+    using keywords = brigand::list< kw::rcb
+                                  , kw::rib
+                                  , kw::hsfc
+                                  , kw::mj
+                                  , kw::phg
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which

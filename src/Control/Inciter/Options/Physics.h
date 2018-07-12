@@ -9,8 +9,8 @@
 #ifndef PhysicsOptions_h
 #define PhysicsOptions_h
 
-#include <boost/mpl/vector.hpp>
-#include "NoWarning/for_each.h"
+#include <brigand/sequences/list.hpp>
+#include <brigand/algorithms/for_each.hpp>
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -33,11 +33,11 @@ class Physics : public tk::Toggle< PhysicsType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::advection
-                                       , kw::advdiff
-                                       , kw::compflow_navierstokes
-                                       , kw::compflow_euler
-                                       >;
+    using keywords = brigand::list< kw::advection
+                                  , kw::advdiff
+                                  , kw::compflow_navierstokes
+                                  , kw::compflow_euler
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
@@ -45,7 +45,7 @@ class Physics : public tk::Toggle< PhysicsType > {
     explicit Physics() :
       tk::Toggle< PhysicsType >(
         //! Group, i.e., options, name
-        "Physics configuration",
+        kw::physics::name(),
         //! Enums -> names (if defined, policy codes, if not, name)
         { { PhysicsType::ADVECTION, kw::advection::name() },
           { PhysicsType::ADVDIFF, kw::advdiff::name() },
@@ -57,7 +57,7 @@ class Physics : public tk::Toggle< PhysicsType > {
           { kw::compflow_euler::string(), PhysicsType::EULER },
           { kw::compflow_navierstokes::string(), PhysicsType::NAVIERSTOKES } } )
     {
-       boost::mpl::for_each< keywords >( assertPolicyCodes() );
+       brigand::for_each< keywords >( assertPolicyCodes() );
     }
 
     //! \brief Return policy code based on Enum
@@ -77,7 +77,7 @@ class Physics : public tk::Toggle< PhysicsType > {
     struct assertPolicyCodes {
       //! \brief Function call operator templated on the type to assert the
       //!   existence of a policy code
-      template< typename U > void operator()( U ) {
+      template< typename U > void operator()( brigand::type_<U> ) {
         static_assert( tk::HasTypedefCode< typename U::info >::value,
                        "Policy code undefined for keyword" );
       }

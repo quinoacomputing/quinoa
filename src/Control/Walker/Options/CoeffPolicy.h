@@ -9,8 +9,8 @@
 #ifndef CoeffPolicyOptions_h
 #define CoeffPolicyOptions_h
 
-#include <boost/mpl/vector.hpp>
-#include "NoWarning/for_each.h"
+#include <brigand/sequences/list.hpp>
+#include <brigand/algorithms/for_each.hpp>
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -24,7 +24,9 @@ enum class CoeffPolicyType : uint8_t { CONSTANT=0
                                      , DECAY
                                      , HOMOGENEOUS_DECAY
                                      , MONTE_CARLO_HOMOGENEOUS_DECAY
-                                     , HYDROTIMESCALE_HOMOGENEOUS_DECAY
+                                     , HYDROTIMESCALE
+                                     , CONST_SHEAR
+                                     , INSTANTANEOUS_VELOCITY
                                      };
 
 //! Pack/Unpack CoeffPolicyType: forward overload to generic enum class packer
@@ -35,12 +37,14 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::constant
-                                       , kw::decay
-                                       , kw::homdecay
-                                       , kw::montecarlo_homdecay
-                                       , kw::hydrotimescale
-                                       >;
+    using keywords = brigand::list< kw::constant
+                                  , kw::decay
+                                  , kw::homdecay
+                                  , kw::montecarlo_homdecay
+                                  , kw::hydrotimescale
+                                  , kw::const_shear
+                                  , kw::instantaneous_velocity
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
@@ -55,18 +59,22 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
           { CoeffPolicyType::HOMOGENEOUS_DECAY, kw::homdecay::name() },
           { CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY,
             kw::montecarlo_homdecay::name() },
-          { CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY,
-            kw::hydrotimescale::name() } },
+          { CoeffPolicyType::HYDROTIMESCALE, kw::hydrotimescale::name() },
+          { CoeffPolicyType::CONST_SHEAR, kw::const_shear::name() },
+          { CoeffPolicyType::INSTANTANEOUS_VELOCITY,
+            kw::instantaneous_velocity::name() } },
         //! keywords -> Enums
         {  { kw::constant::string(), CoeffPolicyType::CONSTANT },
            { kw::decay::string(), CoeffPolicyType::DECAY },
            { kw::homdecay::string(), CoeffPolicyType::HOMOGENEOUS_DECAY },
            { kw::montecarlo_homdecay::string(),
              CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY },
-           { kw::hydrotimescale::string(),
-             CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY } } )
+           { kw::hydrotimescale::string(), CoeffPolicyType::HYDROTIMESCALE },
+           { kw::const_shear::string(), CoeffPolicyType::CONST_SHEAR },
+           { kw::instantaneous_velocity::string(),
+             CoeffPolicyType::INSTANTANEOUS_VELOCITY } } )
     {
-       boost::mpl::for_each< keywords >( assertPolicyCodes() );
+       brigand::for_each< keywords >( assertPolicyCodes() );
     }
 
     //! \brief Return policy code based on Enum
@@ -86,7 +94,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
     struct assertPolicyCodes {
       //! \brief Function call operator templated on the type to assert the
       //!   existence of a policy code
-      template< typename U > void operator()( U ) {
+      template< typename U > void operator()( brigand::type_<U> ) {
         static_assert( tk::HasTypedefCode< typename U::info >::value,
                        "Policy code undefined for keyword" );
       }
@@ -99,8 +107,10 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
       , { CoeffPolicyType::HOMOGENEOUS_DECAY, *kw::homdecay::code() }
       , { CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY,
           *kw::montecarlo_homdecay::code() }
-      , { CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY,
-          *kw::hydrotimescale::code() }
+      , { CoeffPolicyType::HYDROTIMESCALE, *kw::hydrotimescale::code() }
+      , { CoeffPolicyType::CONST_SHEAR, *kw::const_shear::code() }
+      , { CoeffPolicyType::INSTANTANEOUS_VELOCITY,
+          *kw::instantaneous_velocity::code() }
     };
 
 };

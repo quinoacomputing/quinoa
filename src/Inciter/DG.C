@@ -34,8 +34,9 @@ extern std::vector< DGPDE > g_dgpde;
 using inciter::DG;
 
 DG::DG( const CProxy_Discretization& disc,
-        const tk::CProxy_Solver&,
+        const tk::CProxy_Solver& solver,
         const FaceData& fd ) :
+  m_solver( solver ),
   m_ncomfac( 0 ),
   m_nadj( 0 ),
   m_nsol( 0 ),
@@ -64,24 +65,27 @@ DG::DG( const CProxy_Discretization& disc,
   m_ghost(),
   m_exptGhost(),
   m_recvGhost(),
-  m_diag()
+  m_diag(),
+  m_stage( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
+//! \param[in] solver Linear system solver (Solver) proxy
 //! \param[in] Face data structures
 // *****************************************************************************
 {
-  // Perform leak test on mesh partition
-  Assert( !leakyPartition(), "Mesh partition leaky" );
-
-  // Activate SDAG waits for face adjacency map (ghost data) calculation
-  wait4ghost();
-
   auto d = Disc();
 
   const auto& gid = d->Gid();
   const auto& inpoel = d->Inpoel();
   const auto& inpofa = fd.Inpofa();
+
+  // Perform leak test on mesh partition
+  Assert( !tk::leakyPartition( m_esuelTet, inpoel, d->Coord()),
+          "Mesh partition leaky" );
+
+  // Activate SDAG waits for face adjacency map (ghost data) calculation
+  thisProxy[ thisIndex ].wait4ghost();
 
   // Invert inpofa to enable searching for faces based on (global) node triplets
   Assert( inpofa.size() % 3 == 0, "Inpofa must contain triplets" );
@@ -146,51 +150,6 @@ DG::DG( const CProxy_Discretization& disc,
 }
 
 bool
-DG::leakyPartition()
-// *****************************************************************************
-// Perform leak-test on mesh partition
-//! \details This function computes a surface integral over the boundary of the
-//!   incoming mesh partition. A non-zero vector result indicates a leak, e.g.,
-//!   a hole in the partition, which indicates an error upstream of this code,
-//!   either in the mesh geometry, mesh partitioning, or in the data structures
-//!   that represent faces.
-//! \return True if our chare partition leaks.
-// *****************************************************************************
-{
-  auto d = Disc();
-  const auto& inpoel = d->Inpoel();
-  const auto& coord = d->Coord();
-  const auto& x = coord[0];
-  const auto& y = coord[1];
-  const auto& z = coord[2];
-
-  // Storage for surface integral over our mesh partition
-  std::array< tk::real, 3 > s{{ 0.0, 0.0, 0.0}};
-
-  for (std::size_t e=0; e<m_esuelTet.size()/4; ++e) {   // for all our tets
-    auto mark = e*4;
-    for (std::size_t f=0; f<4; ++f)     // for all tet faces
-      if (m_esuelTet[mark+f] == -1) {   // if face has no outside-neighbor tet
-        // 3 local node IDs of face
-        auto A = inpoel[ mark + tk::lpofa[f][0] ];
-        auto B = inpoel[ mark + tk::lpofa[f][1] ];
-        auto C = inpoel[ mark + tk::lpofa[f][2] ];
-        // Compute geometry data for face
-        auto geoface = tk::geoFaceTri( {{x[A], x[B], x[C]}},
-                                       {{y[A], y[B], y[C]}},
-                                       {{z[A], z[B], z[C]}} );
-        // Sum up face area * face unit-normal
-        s[0] += geoface(0,0,0) * geoface(0,1,0);
-        s[1] += geoface(0,0,0) * geoface(0,2,0);
-        s[2] += geoface(0,0,0) * geoface(0,3,0);
-      }
-  }
-
-  auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
-  return std::abs(s[0]) > eps || std::abs(s[1]) > eps || std::abs(s[2]) > eps;
-}
-
-bool
 DG::leakyAdjacency()
 // *****************************************************************************
 // Perform leak-test on chare boundary faces
@@ -200,10 +159,11 @@ DG::leakyAdjacency()
 //!   the faces of the face adjacency communication map), which indicates an
 //!   error upstream in the code that sets up the face communication data
 //!   structures.
-//! \note Compared to leakyPartition() this function performs the leak-test on
-//!   the face geometry data structure enlarged by ghost faces on this partition
-//!   by computing a discrete surface integral considering the physical and
-//!   chare boundary faces, which should be equal to zero for a closed domain.
+//! \note Compared to tk::leakyPartition() this function performs the leak-test
+//!   on the face geometry data structure enlarged by ghost faces on this
+//!   partition by computing a discrete surface integral considering the
+//!   physical and chare boundary faces, which should be equal to zero for a
+//!   closed domain.
 //! \return True if our chare face adjacency leaks.
 // *****************************************************************************
 {
@@ -295,11 +255,7 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
 
     // Error checking on the number of expected vs received/found chare-boundary
     // faces
-    Assert( m_exptNbface ==
-             std::accumulate( m_bndFace.cbegin(), m_bndFace.cend(),
-               std::size_t(0),
-               []( std::size_t acc, const decltype(m_bndFace)::value_type& b )
-                 { return acc + b.second.size(); } ),
+    Assert( m_exptNbface == tk::sumvalsize(m_bndFace), 
             "Expected and received number of boundary faces mismatch" );
 
     // Basic error checking on chare-boundary-face map
@@ -625,8 +581,7 @@ DG::adj()
     }
 
   // Signal the runtime system that all workers have received their adjacency
-  auto d = Disc();
-  d->contribute(CkCallback(CkReductionTarget(Transporter,comfinal), d->Tr()));
+  m_solver.ckLocalBranch()->created();
 }
 
 void
@@ -710,7 +665,7 @@ DG::dt()
   }
 
   // Enable SDAG wait for building the solution vector
-  wait4sol();
+  thisProxy[ thisIndex ].wait4sol();
 
   // Contribute to minimum dt across all chares then advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
@@ -863,24 +818,33 @@ DG::solve()
   auto d = Disc();
 
   for (const auto& eq : g_dgpde)
-    eq.rhs( d->T(), m_geoFace, m_fd, m_u, m_rhs );
+    eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, m_u, m_rhs );
 
-  // Explicit time-stepping using forward Euler to discretize time-derivative
-  //m_u = m_un + d->Dt() * m_rhs/m_lhs;
-  //m_un = m_u;
-  m_u += d->Dt() * m_rhs/m_lhs;
+  // Explicit time-stepping using RK3 to discretize time-derivative
+  m_u =  m_rkcoef[0][m_stage] * m_un
+       + m_rkcoef[1][m_stage] * ( m_u + d->Dt() * m_rhs/m_lhs );
 
-  // Output field data to file
-  out();
-  // Compute diagnostics, e.g., residuals
-  auto diag = m_diag.compute( *d, m_u.nunk()-m_esuelTet.size()/4, m_geoElem, m_u );
-  // Increase number of iterations and physical time
-  d->next();
-  // Output one-liner status report
-  d->status();
+  // Increment Runge-Kutta stage counter
+  ++m_stage;
 
-  // Evaluate whether to continue with next step
-  if (!diag) eval();
+  if (m_stage == 3) {
+    // Output field data to file
+    out();
+    // Compute diagnostics, e.g., residuals
+    auto diag = m_diag.compute( *d, m_u.nunk()-m_esuelTet.size()/4, m_geoElem, m_u );
+    // Increase number of iterations and physical time
+    d->next();
+    // Output one-liner status report
+    d->status();
+    // Update Un
+    m_un = m_u;
+
+    // Evaluate whether to continue with next step
+    if (!diag) eval();
+  }
+  else
+    // Continue with next stage
+    eval();
 }
 
 void
@@ -895,11 +859,19 @@ DG::eval()
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
 
-  // If neither max iterations nor max time reached, continue, otherwise finish
-  if (std::fabs(d->T()-term) > eps && d->It() < nstep)
+  // If Runge-Kutta stages not complete, continue with dt(), otherwise assess
+  // computation completion criteria
+  if (m_stage < 3) 
     dt();
-  else
-    contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
+  else {
+    // Reset Runge-Kutta stage counter
+    m_stage = 0;
+    // If neither max iterations nor max time reached, continue, otherwise finish
+    if (std::fabs(d->T()-term) > eps && d->It() < nstep)
+      dt();
+    else
+      contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));
+  }
 }
 
 #include "NoWarning/dg.def.h"

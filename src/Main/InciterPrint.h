@@ -12,8 +12,9 @@
 #include <iostream>
 #include <string>
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "NoWarning/format.h"
-#include "NoWarning/for_each.h"
 
 #include "Print.h"
 #include "ContainerUtil.h"
@@ -111,10 +112,10 @@ class InciterPrint : public tk::Print {
                        "Policy code undefined for keyword" );
         raw( m_item_indent + " * " + *kw::physics::code() + ": "
                            + kw::physics::name() + ":\n" );
-        boost::mpl::for_each< ctr::Physics::keywords >( echoPolicies( this ) );
+        brigand::for_each< ctr::Physics::keywords >( echoPolicies( this ) );
         raw( m_item_indent + " * " + *kw::problem::code() + ": "
                            + kw::problem::name() + ":\n" );
-        boost::mpl::for_each< ctr::Problem::keywords >( echoPolicies( this ) );
+        brigand::for_each< ctr::Problem::keywords >( echoPolicies( this ) );
         raw( '\n' );
         // extract eqname and supported policies for output
         const auto h = ctr::Physics();
@@ -139,6 +140,13 @@ class InciterPrint : public tk::Print {
     //! Print time integration header
     void inthead( const std::string& t, const std::string& name,
                   const std::string& legend, const std::string& head ) const;
+
+    //! Print mesh refinement variables and their indices in the unknown vector
+    void refvar( const std::vector< std::string >& rvar,
+                 const std::vector< std::size_t >& refidx );
+
+    //! Print initial mesh refinement edge-node pairs
+    void edgeref( const std::vector< std::size_t >& edgenodes );
 
   private:
     //! Return partial differential equation name

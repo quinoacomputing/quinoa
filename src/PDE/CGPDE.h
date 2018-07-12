@@ -6,7 +6,7 @@
   \details   This file defines a generic partial differential equation (PDE)
     class for PDEs that use continuous Galerkin spatial discretization.
     The class uses runtime polymorphism without client-side inheritance:
-    inheritance is confined to the internals of the class, inivisble to
+    inheritance is confined to the internals of the class, invisible to
     client-code. The class exclusively deals with ownership enabling client-side
     value semantics. Credit goes to Sean Parent at Adobe:
     https://github.com/sean-parent/sean-parent.github.com/wiki/
@@ -32,7 +32,7 @@ namespace inciter {
 //! \brief Partial differential equation base for continuous Galerkin PDEs
 //! \details This class uses runtime polymorphism without client-side
 //!   inheritance: inheritance is confined to the internals of the this class,
-//!   inivisble to client-code. The class exclusively deals with ownership
+//!   invisible to client-code. The class exclusively deals with ownership
 //!   enabling client-side value semantics. Credit goes to Sean Parent at Adobe:
 //!   https://github.com/sean-parent/sean-parent.github.com/wiki/
 //!   Papers-and-Presentations. For example client code that models a CGPDE,
@@ -110,7 +110,7 @@ class CGPDE {
 
     //! \brief Public interface for querying Dirichlet boundary condition values
     //!  set by the user on a given side set for all components in a PDE system
-    std::unordered_map< std::size_t,  std::vector< std::pair<bool,tk::real> > >
+    std::map< std::size_t, std::vector< std::pair<bool,tk::real> > >
     dirbc( tk::real t,
            tk::real deltat,
            const std::pair< const int, std::vector< std::size_t > >& sides,
@@ -170,7 +170,7 @@ class CGPDE {
                            const tk::Fields& ) const = 0;
       virtual void side( std::unordered_set< int >& conf ) const = 0;
       virtual
-      std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
+      std::map< std::size_t, std::vector< std::pair<bool,tk::real> > >
       dirbc( tk::real,
              tk::real,
              const std::pair< const int, std::vector< std::size_t > >&,
@@ -215,7 +215,7 @@ class CGPDE {
       { return data.dt( coord, inpoel, U ); }
       void side( std::unordered_set< int >& conf ) const override
       { data.side( conf ); }
-      std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
+      std::map< std::size_t, std::vector< std::pair<bool,tk::real> > >
       dirbc( tk::real t,
              tk::real deltat,
              const std::pair< const int, std::vector< std::size_t > >& sides,

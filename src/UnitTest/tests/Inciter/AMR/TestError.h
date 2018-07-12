@@ -135,7 +135,7 @@ struct AMRError_common {
     uc.fill( 1.2 );
     // test jump error indicator on all edges
     for (std::size_t e=0; e<inpoed.size()/2; ++e) {
-      std::pair< std::size_t, std::size_t > edge{ inpoed[e*2],inpoed[e*2+1] };
+      edge_t edge{ inpoed[e*2],inpoed[e*2+1] };
       auto r = err.scalar( uc, edge, 0, coord, inpoel, esup, errtype );
       ensure_equals( "edge error of constant field incorrect", r, 0.0, pr );
     }
@@ -145,7 +145,7 @@ struct AMRError_common {
     for (std::size_t p=0; p<npoin; ++p) ux(p,0,0) = coord[0][p];
     // test jump error indicator on all edges
     for (std::size_t e=0; e<inpoed.size()/2; ++e) {
-      std::pair< std::size_t, std::size_t > edge{ inpoed[e*2],inpoed[e*2+1] };
+      edge_t edge{ inpoed[e*2],inpoed[e*2+1] };
       auto r = err.scalar( ux, edge, 0, coord, inpoel, esup, errtype );
       ensure( "edge error < 0.0", r > -pr );
       ensure( "edge error > 1.0", r < 1.0+pr );
@@ -156,7 +156,7 @@ struct AMRError_common {
     for (std::size_t p=0; p<npoin; ++p) uy(p,0,0) = coord[1][p];
     // test jump error indicator on all edges
     for (std::size_t e=0; e<inpoed.size()/2; ++e) {
-      std::pair< std::size_t, std::size_t > edge{ inpoed[e*2],inpoed[e*2+1] };
+      edge_t edge{ inpoed[e*2],inpoed[e*2+1] };
       auto r = err.scalar( uy, edge, 0, coord, inpoel, esup, errtype );
       ensure( "edge error < 0.0", r > -pr );
       ensure( "edge error > 1.0", r < 1.0+pr );
@@ -167,7 +167,7 @@ struct AMRError_common {
     for (std::size_t p=0; p<npoin; ++p) uz(p,0,0) = coord[2][p];
     // test jump error indicator on all edges
     for (std::size_t e=0; e<inpoed.size()/2; ++e) {
-      std::pair< std::size_t, std::size_t > edge{ inpoed[e*2],inpoed[e*2+1] };
+      edge_t edge{ inpoed[e*2],inpoed[e*2+1] };
       auto r = err.scalar( uz, edge, 0, coord, inpoel, esup, errtype );
       ensure( "edge error < 0.0", r > -pr );
       ensure( "edge error > 1.0", r < 1.0+pr );
@@ -182,7 +182,7 @@ struct AMRError_common {
     }
     // test jump error indicator on all edges
     for (std::size_t e=0; e<inpoed.size()/2; ++e) {
-      std::pair< std::size_t, std::size_t > edge{ inpoed[e*2],inpoed[e*2+1] };
+      edge_t edge{ inpoed[e*2],inpoed[e*2+1] };
       auto rx = err.scalar( u3, edge, 0, coord, inpoel, esup, errtype );
       ensure( "edge error < 0.0", rx > -pr );
       ensure( "edge error > 1.0", rx < 1.0+pr );
@@ -199,7 +199,7 @@ struct AMRError_common {
     for (std::size_t p=0; p<npoin; ++p) u2z(p,0,0) = coord[2][p]*coord[2][p];
     // test jump error indicator on all edges
     for (std::size_t e=0; e<inpoed.size()/2; ++e) {
-      std::pair< std::size_t, std::size_t > edge{ inpoed[e*2],inpoed[e*2+1] };
+      edge_t edge{ inpoed[e*2],inpoed[e*2+1] };
       auto r = err.scalar( u2z, edge, 0, coord, inpoel, esup, errtype );
       ensure( "edge error < 0.0", r > -pr );
       ensure( "edge error > 1.0", r < 1.0+pr );

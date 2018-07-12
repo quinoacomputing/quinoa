@@ -53,13 +53,11 @@ const int MAX_TESTS_IN_GROUP = 80;
 } // tut::
 
 // // Unit test groups to be tested. Each file defines a different test group.
-#include "tests/Base/TestCharmUtil.h"
 #include "tests/Base/TestFactory.h"
 #include "tests/Base/TestTimer.h"
 #include "tests/Base/TestPUPUtil.h"
 
 #include "tests/Base/TestFlip_map.h"
-#include "tests/Base/TestMake_list.h"
 #include "tests/Base/TestHas.h"
 #include "tests/Base/TestData.h"
 #include "tests/Base/TestPrint.h"
@@ -82,11 +80,13 @@ const int MAX_TESTS_IN_GROUP = 80;
   #include "tests/Control/Options/TestMKLUniformMethod.h"
   #include "tests/Control/Options/TestMKLGaussianMethod.h"
   #include "tests/Control/Options/TestMKLBetaMethod.h"
+  #include "tests/Control/Options/TestMKLGammaMethod.h"
 #endif
 #include "tests/Control/Options/TestRNG.h"
 
 #include "tests/IO/TestMesh.h"
 #include "tests/IO/TestExodusIIMeshReader.h"
+#include "tests/IO/TestMeshReader.h"
 
 #include "tests/Mesh/TestDerivedData.h"
 #include "tests/Mesh/TestReorder.h"
@@ -213,7 +213,7 @@ class Main : public CBase_Main {
                         ( msg->argc, msg->argv,
                           m_cmdline,
                           tk::HeaderType::UNITTEST,
-                          UNITTEST_EXECUTABLE,
+                          tk::meshconv_executable(),
                           m_print ) ),
       m_timer(1), // Start new timer measuring the serial+Charm++ runtime
       m_timestamp()
@@ -224,6 +224,9 @@ class Main : public CBase_Main {
       unittest::g_executable = msg->argv[0];
       delete msg;
       mainProxy = thisProxy;
+      // Optionally enable quiscence detection
+      if (m_cmdline.get< tag::quiescence >())
+        CkStartQD( CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
       // Fire up an asynchronous execute object, which when created at some
       // future point in time will call back to this->execute(). This is
       // necessary so that this->execute() can access already migrated
@@ -254,6 +257,11 @@ class Main : public CBase_Main {
       unittest::g_charmpass = pass;
       // Tell the Charm++ runtime system to exit
       CkExit();
+    }
+
+    //! Entry method triggered when quiescence is detected
+    [[noreturn]] void quiescence() {
+      Throw( "Quiescence detected" );
     }
 
   private:
@@ -338,14 +346,14 @@ int main( int argc, char **argv ) {
     // Print out help on all command-line arguments if help was requested
     const auto helpcmd = cmdline.get< tag::help >();
     if (peid == 0 && helpcmd)
-      print.help< tk::QUIET >( UNITTEST_EXECUTABLE,
+      print.help< tk::QUIET >( tk::unittest_executable(),
                                cmdline.get< tag::cmdinfo >(),
                                "Command-line Parameters:", "-" );
 
     // Print out verbose help for a single keyword if requested
     const auto helpkw = cmdline.get< tag::helpkw >();
     if (peid == 0 && !helpkw.keyword.empty())
-      print.helpkw< tk::QUIET >( UNITTEST_EXECUTABLE, helpkw );
+      print.helpkw< tk::QUIET >( tk::unittest_executable(), helpkw );
 
     // Immediately exit if any help was output
     if (helpcmd || !helpkw.keyword.empty()) stop( mpipass );

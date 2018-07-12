@@ -4,30 +4,6 @@
 
 namespace AMR {
 
-    void mesh_adapter_t::init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t* graph_size)
-    {
-        node_store.set_x(m_x);
-        node_store.set_y(m_y);
-        node_store.set_z(m_z);
-        node_store.m_graphsize = graph_size;
-    }
-
-    void mesh_adapter_t::init_with_nodes(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t* graph_size)
-    {
-        init_node_store(m_x, m_y, m_z, graph_size);
-        //init(); // TODO: This also needs to call init if you want node support to work
-    }
-    AMR::refinement_t
-    mesh_adapter_t::init(const std::vector<size_t>& tetinpoel, size_t num_nodes) {
-        node_connectivity.fill_initial_nodes(num_nodes);
-
-        auto ref = AMR::refinement_t(tet_store, node_connectivity);
-
-        consume_tets(tetinpoel);
-        tet_store.generate_edges();
-        return ref;
-    }
-
     // This would be a candidate for a nice design pattern with runtime
     // selectable functionality..
     // TODO: Document this
@@ -80,6 +56,19 @@ namespace AMR {
         mark_refinement();
         perform_refinement();
     }
+
+    void mesh_adapter_t::error_refinement( const std::vector< edge_t >& edge,
+                                           const std::vector< real_t >& crit )
+    {
+       Assert( edge.size() == crit.size(), "edges and crit size mismatch" );
+       for (std::size_t e=0; e<edge.size(); e++)
+         tet_store.edge_store.get( edge[e] ).refinement_criteria = crit[e];
+
+        evaluate_error_estimate();
+        mark_refinement();
+        perform_refinement();
+    }
+
 
     /**
      * @brief Function to detect the compatibility class (1,
@@ -316,8 +305,8 @@ namespace AMR {
         // Clean up dead edges
         // clean_up_dead_edges(); // Nothing get's marked as "dead" atm?
 
-        std::cout << "Total Edges : " << tet_store.edge_store.size() << std::endl;
-        std::cout << "Total Tets : " << tet_store.size() << std::endl;
+        //std::cout << "Total Edges : " << tet_store.edge_store.size() << std::endl;
+        //std::cout << "Total Tets : " << tet_store.size() << std::endl;
         //std::cout << "Total Nodes : " << m_x.size() << std::endl;
 
         tet_store.print_node_types();
@@ -419,6 +408,7 @@ namespace AMR {
         else if (num_to_refine > 3)
         {
             //refiner.refine_one_to_eight(tet_id);
+            tet_store.mark_edges_for_refinement(tet_id);
             tet_store.mark_one_to_eight(tet_id);
         }
     }

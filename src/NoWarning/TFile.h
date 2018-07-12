@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/NoWarning/TFile.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Include <Root>/TFile.h with turning off specific compiler warnings
 */
 // *****************************************************************************
@@ -20,6 +19,7 @@
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
   #pragma clang diagnostic ignored "-Wdeprecated"
   #pragma clang diagnostic ignored "-Wundef"
+  #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 522 )

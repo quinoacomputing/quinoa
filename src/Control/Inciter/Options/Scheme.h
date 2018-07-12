@@ -9,8 +9,7 @@
 #ifndef SchemeOptions_h
 #define SchemeOptions_h
 
-#include <boost/mpl/vector.hpp>
-#include "NoWarning/for_each.h"
+#include <brigand/sequences/list.hpp>
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -32,10 +31,10 @@ class Scheme : public tk::Toggle< SchemeType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::matcg
-                                       , kw::diagcg
-                                       , kw::dg
-                                       >;
+    using keywords = brigand::list< kw::matcg
+                                  , kw::diagcg
+                                  , kw::dg
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
@@ -43,7 +42,7 @@ class Scheme : public tk::Toggle< SchemeType > {
     explicit Scheme() :
       tk::Toggle< SchemeType >(
         //! Group, i.e., options, name
-        "Discretization scheme",
+        kw::scheme::name(),
         //! Enums -> names (if defined, policy codes, if not, name)
         { { SchemeType::MatCG, kw::matcg::name() },
           { SchemeType::DiagCG, kw::diagcg::name() },

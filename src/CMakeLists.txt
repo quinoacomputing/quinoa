@@ -64,16 +64,18 @@ endif()
 # Convert CMAKE_BUILD_TYPE
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 
-# Set build type (will become compiler define in Main/QuinoaConfig.h)
+# Set build type (will be exported to the source)
 set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
-# Query regression tests direcetory (will become compiler define in
-# Main/QuinoaConfig.h)
+# Query regression tests directory (will be exported to the source)
 set(REGRESSION_DIR "${PROJECT_SOURCE_DIR}/../regression")
 
 # Query target architecture
 include(TargetArch)
 target_architecture(ARCH)
 message(STATUS "Target architecture: ${ARCH}")
+
+# Echo install dir
+message(STATUS "CMAKE_INSTALL_PREFIX: " ${CMAKE_INSTALL_PREFIX})
 
 # Detect operating system type and version
 include(DetectOS)
@@ -108,11 +110,6 @@ set(MPI_COMPILER ${MPI_CXX_COMPILER})
 if(${MPI_CXX_FOUND})
   add_definitions(-DQUINOA_CONFIG_MPI_ENABLED)
 endif(${MPI_CXX_FOUND})
-
-# See documentation for tk::grm::use in src/ControlCommonGrammar.h for details
-# on why these macros are necessary for our use of BOOST::MPL.
-add_definitions(-D BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS)
-add_definitions(-D BOOST_MPL_LIMIT_METAFUNCTION_ARITY=20)
 
 # Mac OS X specifics
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -193,7 +190,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
 
   # Linker flags for clang
   set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)      # clear link flags
-  set(CMAKE_EXE_LINKER_FLAGS "-Wno-missing-prototypes -Wno-unused-parameter")
+  set(CMAKE_EXE_LINKER_FLAGS
+    "${CMAKE_EXE_LINKER_FLAGS} -Wno-missing-prototypes -Wno-unused-parameter")
 
   # Using clang on mac in release mode, use -O1, otherwise we get a runtime
   # error: auxlhs_complete() not found referenced by libquinoa_inciter.dylib
@@ -230,7 +228,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Winvalid-pch")
   add_compiler_flag("-Wmissing-field-initializers")
   add_compiler_flag("-Wmissing-format-attribute")
-  add_compiler_flag("-Wmissing-include-dirs")
   add_compiler_flag("-Wmissing-noreturn")
   add_compiler_flag("-Wpacked")
   add_compiler_flag("-Wpointer-arith")
@@ -250,7 +247,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wno-int-in-bool-context")
 
   # Linker flags for gcc
-  set(CMAKE_EXE_LINKER_FLAGS "-Wno-unused-parameter")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wno-unused-parameter")
 
   # Detect compiler version
   include(DetectCXXversion)
@@ -314,7 +311,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   endif()
 
   # Linker flags for intel
-  set(CMAKE_EXE_LINKER_FLAGS "-diag-disable 869")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -diag-disable 869")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 
@@ -409,7 +406,7 @@ if (NOT ARCH MATCHES "ppc64" AND
     NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
     NOT DEFINED ENV{CRAY_PRGENVINTEL})
 
-  set(RUNNER_ARGS "--bind-to none --map-by node"
+  set(RUNNER_ARGS "--bind-to none -oversubscribe"
       CACHE STRING "Arguments to pass to the parallel/serial job runner, e.g., mpirun.")
 
 endif()
@@ -435,6 +432,7 @@ endif()
 # Echo compiler flags
 message(STATUS "C compiler flags: '${CMAKE_C_FLAGS}'")
 message(STATUS "C++ compiler flags: '${CMAKE_CXX_FLAGS}'")
+message(STATUS "Executable linker flags: '${CMAKE_EXE_LINKER_FLAGS}'")
 
 # Include cmake code to enable configuration for data layouts
 include(ConfigureDataLayout)
@@ -470,34 +468,38 @@ set(EXECUTABLES ${INCITER_EXECUTABLE}
                 ${UNITTEST_EXECUTABLE}
                 ${FILECONV_EXECUTABLE})
 
-# Make sure that the config file is in the search path
-# Configure a header file to pass info to the code
-configure_file(
-  "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.h.in"
-  "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.h"
-)
+# Configure cmake variable to pass to the code
+configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.h.in"
+                "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.h" )
+configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.C.in"
+                "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.C" )
 
 # Remove build hostname from cmake cache
 unset(HOSTNAME CACHE)
 
-### Set RPATH so that shared libs paths stay in the binary after install ###
-# Don't skip the full RPATH for the build tree
-set(CMAKE_SKIP_BUILD_RPATH false)
+if (BUILD_SHARED_LIBS)
 
-# When building, don't use the install RPATH
-# (use later on when installing)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH false)
+  ### Set RPATH so that shared libs paths stay in the binary after install ###
+  # Don't skip the full RPATH for the build tree
+  set(CMAKE_SKIP_BUILD_RPATH false)
+  
+  # When building, don't use the install RPATH
+  # (use later on when installing)
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH false)
+  
+  # Add the automatically determined parts of the RPATH
+  # which point to directories outside the build tree to the install RPATH
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
+  
+  # the RPATH to be used when installing, but only if it's not a system directory
+  list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
+       "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" isSystemDir)
+  if("${isSystemDir}" STREQUAL "-1")
+     set(CMAKE_INSTALL_RPATH
+       "${CMAKE_INSTALL_RPATH};${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+  endif("${isSystemDir}" STREQUAL "-1")
 
-# Add the automatically determined parts of the RPATH
-# which point to directories outside the build tree to the install RPATH
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
-
-# the RPATH to be used when installing, but only if it's not a system directory
-list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
-     "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
-if("${isSystemDir}" STREQUAL "-1")
-   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${CMAKE_INSTALL_PREFIX}/lib")
-endif("${isSystemDir}" STREQUAL "-1")
+endif(BUILD_SHARED_LIBS)
 
 # add a target to generate API documentation with Doxygen
 find_package(Doxygen 1.8.12)
@@ -528,6 +530,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${RNGTEST_SRC_DIR}
                     ${QUINOA_SOURCE_DIR}/Statistics
                     ${QUINOA_SOURCE_DIR}/UnitTest
+                    ${MPI_CXX_INCLUDE_DIRS}
                     ${MPI_CXX_INCLUDE_PATH}
                     ${MKL_INCLUDE_DIRS}
                     ${HDF5_INCLUDE_DIRS}
@@ -548,6 +551,9 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${TPL_INCLUDE_DIR}
                     ${CHARM_INCLUDE_DIRS}
                     ${RNGTEST_BIN_DIR}
+                    ${BACKWARDCPP_INCLUDE_DIRS}
+                    ${BRIGAND_INCLUDE_DIRS}
+                    ${OMEGA_H_INCLUDE_DIRS}
                     ${PROJECT_BINARY_DIR}/LoadBalance   # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Walker        # for Charm++ modules

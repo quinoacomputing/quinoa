@@ -13,68 +13,103 @@
 #include <vector>
 #include <array>
 #include <memory>
+#include <tuple>
+#include <map>
 #include <unordered_set>
 #include <unordered_map>
+
+#include "NoWarning/sip_hash.h"
 
 #include "Types.h"
 #include "ContainerUtil.h"
 
 namespace tk {
 
+//! Highway hash "secret" key
+//! \note No reason for these particular numbers, taken from highwayhash tests.
+static constexpr highwayhash::HH_U64 hh_key[2] =
+  { 0x0706050403020100ULL, 0x0F0E0D0C0B0A0908ULL };
+
 //! 3D unstructured mesh class
 class UnsMesh {
 
+  private:
+    //! Union to access an C-style array of std::size_t as an array of bytes
+    //! \tparam N Number of entries to hold
+    //! \see UnsMesh::Hash
+    template< std::size_t N >
+    union Shaper {
+      char bytes[ N*sizeof(std::size_t) ];
+      std::size_t sizets[ N ];
+    };
+
   public:
     using Coords = std::array< std::vector< real >, 3 >;
+    using Coord = std::array< real, 3 >;
+    using CoordMap = std::unordered_map< std::size_t, Coord >;
 
-    //! Edge: IDs of two end-points
+    /** @name Aliases for element primitives */
+    ///@{
+    //! Edge: node IDs of two end-points
     using Edge = std::array< std::size_t, 2 >;
-    //! Hash functor for Edge (node end-point order does not matter)
-    struct EdgeHash {
-      std::size_t operator()( const Edge& key ) const {
-        return std::hash< std::size_t >()( key[0] ) ^
-               std::hash< std::size_t >()( key[1] );
-      }
-    };
-    //! Key-equal function for Edge (node end-point order does not matter)
-    struct EdgeEq {
-      bool operator()( const Edge& left, const Edge& right ) const {
-        return (left[0] == right[0] && left[1] == right[1]) ||
-               (left[0] == right[1] && left[1] == right[0]);
-      }
-    };
-    //! Map associating IDs of mesh nodes to edges
-    using EdgeNodes = std::unordered_map< Edge, std::size_t, EdgeHash, EdgeEq >;
-    using EdgeChares = std::unordered_map< Edge,
-                                           std::vector< int >,
-                                           EdgeHash,
-                                           EdgeEq >;
-    //! Unique set of edges
-    using Edges = std::unordered_set< Edge, EdgeHash, EdgeEq >;
-
-    //! Node ID triplet denoting a tetrahedron face
+    //! Face: node IDs of a triangle (tetrahedron face)
     using Face = std::array< std::size_t, 3 >;
-    // Hash functor for node triplet (Face)
-    struct FaceHasher {
-      std::size_t operator()( const Face& key ) const {
-        return std::hash< std::size_t >()( key[0] ) ^
-               std::hash< std::size_t >()( key[1] ) ^
-               std::hash< std::size_t >()( key[2] );
+    //! Tet: node IDs of a tetrahedron
+    using Tet = std::array< std::size_t, 4 >;
+    ///@}
+
+    //! Hash functor for element primitives, given by node IDs
+    //! \tparam N Number of nodes describing element primitive. E.g., Edge:2,
+    //!    Face:3, Tet:4.
+    template< std::size_t N >
+    struct Hash {
+      //! Function call operator computing hash of node IDs
+      //! \param[in] p Array of node IDs of element primitive
+      //! \return Unique hash value for the same array of node IDs
+      //! \note The order of the nodes does not matter: the IDs are sorted
+      //!   before the hash is computed.
+      std::size_t operator()( const std::array< std::size_t, N >& p ) const {
+        using highwayhash::SipHash;
+        Shaper< N > shaper;
+        for (std::size_t i=0; i<N; ++i) shaper.sizets[i] = p[i];
+        std::sort( std::begin(shaper.sizets), std::end(shaper.sizets) );
+        return SipHash( hh_key, shaper.bytes, N*sizeof(std::size_t) );
       }
     };
-    //! Key-equal function for node triplet (Face)
-    //! \note This requires all 3 node IDs be present in both the left and right
-    //!   hand side but ignores ordering. For example, for A,B,C it will match
-    //!   B,A,C, C,B,A, etc.
-    struct FaceEq {
-      bool operator()( const Face& l, const Face& r ) const {
-        return (l[0] == r[0] || l[0] == r[1] || l[0] == r[2]) &&
-               (l[1] == r[0] || l[1] == r[1] || l[1] == r[2]) &&
-               (l[2] == r[0] || l[2] == r[1] || l[2] == r[2]);
+
+    //! Comparitor functor for element primitives, given by node IDs
+    //! \tparam N Number of nodes describing element primitive. E.g., Edge:2,
+    //!    Face:3, Tet:4.
+    template< std::size_t N >
+    struct Eq {
+      //! Function call operator computing equality of element primitives
+      //! \param[in] l Left element primitive given by array of node IDs
+      //! \param[in] r Right element primitive given by array of node IDs
+      //! \return True if l = r, false otherwise
+      //! \note The order of the nodes does not matter: the IDs are sorted
+      //!   before the primitives, given by the node IDs, is computed.
+      bool operator()( const std::array< std::size_t, N >& l,
+                       const std::array< std::size_t, N >& r ) const
+      {
+        std::array< std::size_t, N > s = l, p = r;
+        std::sort( begin(s), end(s) );
+        std::sort( begin(p), end(p) );
+        return s == p;
       }
     };
-    //! Unique set of node ID triplets representing unique tetrahedron faces
-    using FaceSet = std::unordered_set< Face, FaceHasher, FaceEq >;
+
+    //! Map associating the ID and the coordinates of a node to an edge
+    using EdgeNodeCoord =
+       std::unordered_map< Edge,
+                           std::tuple< std::size_t, real, real, real >,
+                           Hash<2>,
+                           Eq<2> >;
+
+    //! Unique set of edges
+    using EdgeSet = std::unordered_set< Edge, Hash<2>, Eq<2> >;
+
+    //! Unique set of faces
+    using FaceSet = std::unordered_set< Face, Hash<3>, Eq<3> >;
 
     /** @name Constructors */
     ///@{
@@ -123,7 +158,7 @@ class UnsMesh {
     //! \brief Constructor copying over element connectivity and array of point
     //!   coordinates
     explicit UnsMesh( const std::vector< std::size_t >& tetinp,
-                      const std::array< std::vector< real >, 3 >& coord ) :
+                      const Coords& coord ) :
       m_graphsize( graphsize( tetinp ) ),
       m_lininpoel(), m_triinpoel(),
       m_tetinpoel( tetinp ),
@@ -151,11 +186,9 @@ class UnsMesh {
               "Size of tetinpoel must be divisible by 4" );
     }
 
-
     //! \brief Constructor swallowing element connectivity and array of point
     //!   coordinates
-    explicit UnsMesh( std::vector< std::size_t >&& tetinp,
-                      std::array< std::vector< real >, 3 >&& coord ) :
+    explicit UnsMesh( std::vector< std::size_t >&& tetinp, Coords&& coord ) :
       m_graphsize( graphsize( tetinp ) ),
       m_lininpoel(), m_triinpoel(),
       m_tetinpoel( std::move(tetinp) ),
@@ -221,6 +254,27 @@ class UnsMesh {
     std::vector< std::size_t >& tetinpoel() noexcept { return m_tetinpoel; }
     ///@}
 
+    /** @name Side set accessors */
+    ///@{
+    const std::map< int, std::vector< std::size_t > >& sidetet() const noexcept
+    { return m_sidetet; }
+    std::map< int, std::vector< std::size_t > >& sidetet() noexcept
+    { return m_sidetet; }
+    ///@}
+
+    /** @name Face-element map accessors */
+    ///@{
+    const std::vector< int >& elem_map() const noexcept { return m_elem_map; }
+    std::vector< int >& elem_map() noexcept { return m_elem_map; }
+    ///@}
+
+    /** @name Side set face id accessors */
+    ///@{
+    const std::map< int, std::vector< int > >& faceid() const noexcept
+    { return m_faceid; }
+    std::map< int, std::vector< int > >& faceid() noexcept { return m_faceid; }
+    ///@}
+
   private:
     //! Number of nodes
     //! \details Stores the size (number of nodes) of the mesh graph.
@@ -239,6 +293,21 @@ class UnsMesh {
     std::vector< real > m_x;
     std::vector< real > m_y;
     std::vector< real > m_z;
+
+    //! Side sets storing tet ids adjacent to side sets
+    //! \details This stores lists of tet IDs adjacent to faces associated to
+    //1   side set IDs.
+    //! \note This is what ExodusII calls side set elem list.
+    std::map< int, std::vector< std::size_t > > m_sidetet;
+
+    //! Map used to associate faces to elements
+    //! \note This is what ExodusII calls id_map.
+    std::vector< int > m_elem_map;
+
+    //! \brief Sides of faces used to define which face of a tetrahedron is
+    //!   aligned with a triangle element (1...4) associated to side set id.
+    //! \note This is what ExodusII calls side set side list.
+    std::map< int, std::vector< int > > m_faceid;
 
     //! Compute and return number of unique nodes in element connectivity
     //! \param[in] inpoel Element connectivity

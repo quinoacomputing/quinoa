@@ -99,8 +99,6 @@
 #include <unordered_set>
 #include <set>
 
-#include "Variant.h"
-
 #include "QuinoaConfig.h"
 #include "Types.h"
 #include "Fields.h"
@@ -134,15 +132,6 @@ class DistFCT : public CBase_DistFCT {
       const tk::Fields& A;
     };
   
-    //! Functor to call the correctBC() member function behind SchemeProxy
-    struct correctBC : boost::static_visitor< bool > {
-      correctBC( const tk::Fields& a ) : A(a) {}
-      template< typename P >
-        bool operator()( const P& p ) const
-        { return p.ckLocal()->correctBC( A ); }
-      const tk::Fields& A;
-    };
-
   public:
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -251,9 +240,7 @@ class DistFCT : public CBase_DistFCT {
       p | m_ul;
       p | m_dul;
       p | m_du;
-      auto v = tk::Variant< CProxy_MatCG, CProxy_DiagCG >( m_scheme );
-      p | v;
-      m_scheme = v.get();
+      p | m_scheme;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -319,9 +306,6 @@ class DistFCT : public CBase_DistFCT {
 
     //! Apply limited antidiffusive element contributions
     void apply();
-
-    //! Verify that solution does not change at Dirichlet boundary conditions
-    bool verifyBC();
 };
 
 } // inciter::

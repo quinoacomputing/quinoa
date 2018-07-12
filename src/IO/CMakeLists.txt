@@ -22,6 +22,10 @@ if (HAS_ROOT)
   set(FILE_CONVERTER FileConvWriter.C)
 endif()
 
+if (HAS_OMEGA_H)
+  set(OMEGA_H_READER Omega_h_MeshReader.C)
+endif()
+
 add_library(MeshIO
             MeshFactory.C
             GmshMeshReader.C
@@ -35,6 +39,7 @@ add_library(MeshIO
             ExodusIIMeshWriter.C
 	    ${ROOT_WRITER}
 	    ${FILE_CONVERTER}
+            ${OMEGA_H_READER}
             #SiloWriter.C
 )
 

@@ -137,27 +137,27 @@ class Scheme : public SchemeBase {
 
     // Calls to discproxy, common to all discretizations
 
-    //////  discproxy.coord(...)
-    //! \brief Function to call the coord() entry method of an array discproxy
+    //////  discproxy.vol(...)
+    //! \brief Function to call the vol() entry method of an array discproxy
     //!   (broadcast)
     //! \param[in] args Arguments to member function (entry method) to be called
     //! \details This function calls the coord member function of a chare array
-    //!   discproxy and thus equivalent to discproxy.coord(...).
+    //!   discproxy and thus equivalent to discproxy.vol(...).
     template< class Op, typename... Args, typename std::enable_if<
       std::is_same< Op, tag::bcast >::value, int >::type = 0 >
-    void coord( Args&&... args ) {
-      discproxy.coord( std::forward<Args>(args)... );
+    void vol( Args&&... args ) {
+      discproxy.vol( std::forward<Args>(args)... );
     }
-    //////  discproxy[x].coord(...)
-    //! Function to call the coord() entry method of an element discproxy (p2p)
+    //////  discproxy[x].vol(...)
+    //! Function to call the vol() entry method of an element discproxy (p2p)
     //! \param[in] x Chare array element index
     //! \param[in] args Arguments to member function (entry method) to be called
     //! \details This function calls the coord member function of a chare array
-    //!   element discproxy and thus equivalent to discproxy[x].coord(...).
+    //!   element discproxy and thus equivalent to discproxy[x].vol(...).
     template< typename Op, typename... Args, typename std::enable_if<
       std::is_same< Op, tag::elem >::value, int >::type = 0 >
-    void coord( const CkArrayIndex1D& x, Args&&... args ) {
-      discproxy[x].coord( std::forward<Args>(args)... );
+    void vol( const CkArrayIndex1D& x, Args&&... args ) {
+      discproxy[x].vol( std::forward<Args>(args)... );
     }
 
     //////  discproxy.totalvol(...)
@@ -342,6 +342,18 @@ class Scheme : public SchemeBase {
         call_doneInserting<Args...>( std::forward<Args>(args)... ), proxy );
     }
 
+    ///@{
+    //! \brief Pack/Unpack serialize member function
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    void pup( PUP::er &p ) {
+      SchemeBase::pup( p );
+    }
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] s Scheme object reference
+    friend void operator|( PUP::er& p, Scheme& s ) { s.pup(p); }
+    //@}
+
   private:
    //! Functor to call the chare entry method 'setup'
    //! \details This class is intended to be used in conjunction with variant
@@ -447,18 +459,6 @@ class Scheme : public SchemeBase {
         p.eval( std::forward<Args>(args)... );
       }
     };
-
-    ///@{
-    //! \brief Pack/Unpack serialize member function
-    //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &p ) {
-      SchemeBase::pup( p );
-    }
-    //! \brief Pack/Unpack serialize operator|
-    //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \param[in,out] s Scheme object reference
-    friend void operator|( PUP::er& p, Scheme& s ) { s.pup(p); }
-    //@}
 };
 
 } // inciter::

@@ -127,20 +127,49 @@ if(TestU01_FOUND)
 endif()
 
 ### Root library
-set(ENABLE_ROOT OFF CACHE BOOL "Enable ROOT")
-if(ENABLE_ROOT)
-  find_package(Root COMPONENTS RIO Core Tree Hist)
-  if (Root_FOUND)
-    set(HAS_ROOT true)  # will become compiler define in Main/QuinoaConfig.h
-    # Root does not support libc++ on linux, so remove if configured
-    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-      string(FIND "${CMAKE_CXX_FLAGS}" "-stdlib=libc++" pos)
-      if (NOT "${pos}" STREQUAL "-1")
-        message(STATUS "Removing C++ compiler flag '-stdlib=libc++' as Root does not support it")
-        string(REPLACE "-stdlib=libc++" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-      endif()
+find_package(Root COMPONENTS RIO Core Tree Hist)
+if (Root_FOUND)
+  set(HAS_ROOT true)  # will become compiler define in Main/QuinoaConfig.h
+  # Root does not support libc++ on linux, so remove if configured
+  if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    string(FIND "${CMAKE_CXX_FLAGS}" "-stdlib=libc++" pos)
+    if (NOT "${pos}" STREQUAL "-1")
+      message(STATUS "Removing C++ compiler flag '-stdlib=libc++' as Root does not support it")
+      string(REPLACE "-stdlib=libc++" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     endif()
   endif()
 endif()
+
+#### Configure Backward-cpp
+set(BACKWARD_ROOT ${TPL_DIR}) # prefer ours
+find_package(BackwardCpp)
+if(BACKWARDCPP_FOUND)
+  list(APPEND CMAKE_MODULE_PATH "${BACKWARDCPP_CMAKE_CONFIG_DIRS}")
+  include(BackwardConfig)
+  set(HAS_BACKWARD true)  # will become compiler define in Main/QuinoaConfig.h
+  message(STATUS "Backward-cpp config: ${BACKWARD_DEFINITIONS}")
+  message(STATUS "Backward-cpp libraries: ${BACKWARD_LIBRARIES}")
+else()
+  set(BACKWARDCPP_INCLUDE_DIRS "")
+  set(BACKWARD_LIBRARIES "")
+endif()
+
+#### Configure Omega_h
+set(OMEGA_H_ROOT ${TPL_DIR}) # prefer ours
+find_package(Omega_h)
+if(OMEGA_H_FOUND)
+  set(HAS_OMEGA_H true)  # will become compiler define in Main/QuinoaConfig.h
+else()
+  set(OMEGA_H_INCLUDE_DIRS "")
+  set(OMEGA_H_LIBRARIES "")
+endif()
+
+#### Configure HighwayHash
+set(HIGHWAYHASH_ROOT ${TPL_DIR}) # prefer ours
+find_package(HighwayHash REQUIRED)
+
+#### Configure Brigand
+set(BRIGAND_ROOT ${TPL_DIR}) # prefer ours
+find_package(Brigand REQUIRED)
 
 message(STATUS "------------------------------------------")

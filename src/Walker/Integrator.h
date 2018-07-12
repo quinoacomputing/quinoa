@@ -43,8 +43,8 @@ class Integrator : public CBase_Integrator {
 
   public:
     //! Constructor
-    explicit Integrator( CProxy_Distributor& hostproxy,
-                         CProxy_Collector& collproxy,
+    explicit Integrator( CProxy_Distributor hostproxy,
+                         CProxy_Collector collproxy,
                          uint64_t npar );
 
     //! Migrate constructor
@@ -55,8 +55,7 @@ class Integrator : public CBase_Integrator {
       m_collproxy(),
       m_particles( 0, g_inputdeck.get< tag::component >().nprop() ),
       m_stat( m_particles,
-                g_inputdeck.get< tag::component >().offsetmap( 
-                  g_inputdeck.depvars() ),
+                g_inputdeck.get< tag::component >().offsetmap( g_inputdeck ),
                 g_inputdeck.get< tag::stat >(),
                 g_inputdeck.get< tag::pdf >(),
                 g_inputdeck.get< tag::discr, tag::binsize >() ) {}

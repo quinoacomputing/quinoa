@@ -101,14 +101,12 @@ std::vector< std::size_t >
 geomPartMesh( tk::ctr::PartitioningAlgorithmType algorithm,
               const std::array< std::vector< tk::real >, 3 >& centroid,
               const std::vector< long >& elemid,
-              std::size_t nelem,
               int npart )
 // *****************************************************************************
 //  Partition mesh using Zoltan2 with a geometric partitioner, such as RCB, RIB
 //! \param[in] algorithm Partitioning algorithm type
 //! \param[in] centroid Mesh element coordinates
 //! \param[in] elemid Global mesh element ids
-//! \param[in] nelem Number of elements in mesh (on this MPI rank)
 //! \param[in] npart Number of desired graph partitions
 //! \return Array of chare ownership IDs mapping graph points to concurrent
 //!   async chares
@@ -137,7 +135,7 @@ geomPartMesh( tk::ctr::PartitioningAlgorithmType algorithm,
 
   // Create mesh adapter for Zoltan for mesh element partitioning
   using InciterZoltanAdapter = GeometricMeshElemAdapter< ZoltanTypes >;
-  InciterZoltanAdapter adapter( nelem, centroid, elemid );
+  InciterZoltanAdapter adapter( elemid.size(), centroid, elemid );
 
   // Create Zoltan2 partitioning problem using our mesh input adapter
   Zoltan2::PartitioningProblem< InciterZoltanAdapter >
@@ -150,8 +148,8 @@ geomPartMesh( tk::ctr::PartitioningAlgorithmType algorithm,
   // in our chunk of the mesh graph, i.e., the coloring or chare ids for the
   // mesh elements we operated on
   auto partlist = partitioner.getSolution().getPartListView();
-  std::vector< std::size_t > chare( nelem );
-  for (std::size_t p=0; p<nelem; ++p )
+  std::vector< std::size_t > chare( elemid.size() );
+  for (std::size_t p=0; p<elemid.size(); ++p )
     chare[p] = static_cast< std::size_t >( partlist[p] );
 
   return chare;

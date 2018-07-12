@@ -18,6 +18,7 @@
 #include "QuinoaConfig.h"
 #include "ContainerUtil.h"
 #include "DistFCT.h"
+#include "Variant.h"
 
 namespace inciter {
 
@@ -112,10 +113,10 @@ DistFCT::next()
 // *****************************************************************************
 {
   #ifndef NDEBUG
-  wait4ver();
+  thisProxy[ thisIndex ].wait4ver();
   #endif
-  wait4fct();
-  wait4app();
+  thisProxy[ thisIndex ].wait4fct();
+  thisProxy[ thisIndex ].wait4app();
 
   // Initialize FCT data structures for new time step
   m_p.fill( 0.0 );
@@ -368,23 +369,6 @@ DistFCT::verify()
   m_fluxcorrector.verify( m_nchare, m_inpoel, m_du, m_dul );
 }
 
-bool
-DistFCT::verifyBC()
-// *****************************************************************************
-//  Verify that the change in the solution at those nodes where Dirichlet
-//  boundary conditions are set is exactly the amount the BCs prescribe
-//! \return True if the solution is correct at Dirichlet boundary condition
-//!   nodes
-// *****************************************************************************
-{
-  // Call Scheme.correctBC(). The code below is equivalent to the function call
-  // m_scheme[ thisIndex ].ckLocal()->correctBC( m_a ). The call is done via
-  // a variant to facilitate calling back to chare arrays of different types,
-  // e.g., MatCG or DiagCG. See also DistFCT::SchemeProxy.
-  auto e = tk::element< ProxyElem >( m_scheme, thisIndex );
-  return boost::apply_visitor( correctBC(m_a), e );
-}
-
 void
 DistFCT::apply()
 // *****************************************************************************
@@ -397,9 +381,6 @@ DistFCT::apply()
     const auto& bac = m_ac[ b.second ];
     for (ncomp_t c=0; c<m_a.nprop(); ++c) m_a(lid,c,0) += bac[c];
   }
-
-  // Verify that solution values do not change at Dirichlet BC nodes
-  Assert( verifyBC(), "Dirichlet boundary condition incorrect" );
 
   // Prepare for next time step. The code below is equivalent to the function
   // call m_scheme[ thisIndex ].ckLocal()->next( m_a ). The call is done via a

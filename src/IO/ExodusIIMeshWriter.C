@@ -81,6 +81,7 @@ ExodusIIMeshWriter::writeMesh( const UnsMesh& mesh ) const
   writeHeader( mesh );
   writeNodes( mesh );
   writeElements( mesh );
+  writeSidesets( mesh );
 }
 
 void
@@ -99,7 +100,8 @@ ExodusIIMeshWriter::writeHeader( const UnsMesh& mesh ) const
                                          mesh.tetinpoel().size()/4 ),
                  static_cast< int64_t >( mesh.neblk() ),
                  0,     // number of node sets
-                 0 ) == 0,
+                 static_cast< int64_t >( mesh.sidetet().size() )
+               ) == 0,
     "Failed to write header to file: " + m_filename );
 }
 
@@ -164,8 +166,13 @@ ExodusIIMeshWriter::writeElements( const UnsMesh& mesh ) const
 {
   int elclass = 0;
 
-  writeElemBlock( elclass, 3, "TRIANGLES", mesh.triinpoel() );
+  // For meshes that have no triangle element block (only tetrahedra), keeping
+  // the order as tets first followed by triangles allows keeping the tet ids
+  // associated to side sets the same when adding the missing triangle elements
+  // by meshconv. Hence this order should be kept as tets first triangles next.
+
   writeElemBlock( elclass, 4, "TETRAHEDRA", mesh.tetinpoel() );
+  writeElemBlock( elclass, 3, "TRIANGLES", mesh.triinpoel() );
 }
 
 void
@@ -179,17 +186,13 @@ const
 //! \param[inout] elclass Count element class ids in file
 //! \param[in] nnpe Number of nodes per element for block
 //! \param[in] eltype String describing element type
-//! \param[in] inpoel Element connectivity.
+//! \param[in] inpoel Element connectivity
 // *****************************************************************************
 {
   if (inpoel.empty()) return;
 
   // increase number of element classes in file
   ++elclass;
-
-  // Make sure element connectivity starts with zero
-  Assert( *std::minmax_element( begin(inpoel), end(inpoel) ).first == 0,
-          "node ids should start from zero" );
 
   // Write element block information
   ErrChk(
@@ -213,6 +216,32 @@ const
                        nullptr, nullptr ) == 0,
           "Failed to write " + eltype + " element connectivity to ExodusII "
           "file: " + m_filename );
+}
+
+void
+ExodusIIMeshWriter::writeSidesets( const UnsMesh& mesh ) const
+// *****************************************************************************
+//  Write side sets and their face connectivity to ExodusII file
+//! \param[in] mesh Unstructured mesh object
+// *****************************************************************************
+{
+  // Write all side sets in mesh
+  for (const auto& s : mesh.sidetet()) {
+    // Write side set parameters
+    ErrChk( ex_put_set_param( m_outFile, EX_SIDE_SET, s.first,
+                              static_cast<int64_t>(s.second.size()), 0 ) == 0,
+      "Failed to write side set parameters to ExodusII file: " + m_filename );
+
+    // ExodusII wants 32-bit integers as IDs of tets adjacent to side set faces
+    std::vector< int > sidetet;
+    for (auto f : s.second) sidetet.push_back( static_cast<int>(f)+1 );
+
+    // Write side set data: tet ids adjacent to side set and face id relative to
+    // tet (1...4) indicating which face is aligned with the side set.
+    ErrChk( ex_put_set( m_outFile, EX_SIDE_SET, s.first, sidetet.data(),
+                        tk::cref_find( mesh.faceid(), s.first ).data() ) == 0,
+      "Failed to write side set to ExodusII file: " + m_filename );
+  }
 }
 
 void

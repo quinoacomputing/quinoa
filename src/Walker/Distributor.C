@@ -116,9 +116,9 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
     m_moments[ product ] = 0.0;
 
   // Activate SDAG-wait for estimation of ordinary statistics
-  wait4ord();
+  thisProxy.wait4ord();
   // Activate SDAG-wait for estimation of PDFs at select times
-  wait4pdf();
+  thisProxy.wait4pdf();
 
   // Create statistics merger chare group collecting chare contributions
   CProxy_Collector collproxy = CProxy_Collector::ckNew( thisProxy );
@@ -598,9 +598,9 @@ Distributor::evaluateTime()
       std::fill( begin(m_central), end(m_central), 0.0 );
 
       // Re-activate SDAG-wait for estimation of ordinary stats for next step
-      wait4ord();
+      thisProxy.wait4ord();
       // Re-activate SDAG-wait for estimation of PDFs for next step
-      wait4pdf();
+      thisProxy.wait4pdf();
     }
 
     // Continue with next time step with all integrators

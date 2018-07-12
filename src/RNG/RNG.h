@@ -5,7 +5,7 @@
   \brief     Random number generator
   \details   This file defines a generic random number generator class. The
     class uses runtime polymorphism without client-side inheritance: inheritance
-    is confined to the internals of the class, inivisble to client-code. The
+    is confined to the internals of the class, invisible to client-code. The
     class exclusively deals with ownership enabling client-side value semantics.
     Credit goes to Sean Parent at Adobe: https://github.com/sean-parent/
     sean-parent.github.com/wiki/Papers-and-Presentations.
@@ -24,7 +24,7 @@ namespace tk {
 //! \brief Random number generator
 //! \details This class uses runtime polymorphism without client-side
 //!   inheritance: inheritance is confined to the internals of the this class,
-//!   inivisble to client-code. The class exclusively deals with ownership
+//!   invisible to client-code. The class exclusively deals with ownership
 //!   enabling client-side value semantics. Credit goes to Sean Parent at Adobe:
 //!   https://github.com/sean-parent/sean-parent.github.com/wiki/
 //!   Papers-and-Presentations. For example client code that models a RNG, see
@@ -65,6 +65,10 @@ class RNG {
                double* r ) const
     { self->beta( stream, num, p, q, a, b, r ); }
 
+    //! Public interface to gamma RNG
+    void gamma( int stream, ncomp_t num, double a, double b, double* r ) const
+    { self->gamma( stream, num, a, b, r ); }
+
     //! Public interface to number of threads accessor
     std::size_t nthreads() const noexcept { return self->nthreads(); }
 
@@ -88,12 +92,13 @@ class RNG {
       virtual Concept* copy() const = 0;
       virtual void uniform( int, ncomp_t, double* ) const = 0;
       virtual void gaussian( int, ncomp_t, double* ) const = 0;
-      virtual void beta( int, ncomp_t, double, double, double, double, double* )
-      const = 0;
+      virtual void beta(int, ncomp_t, double, double, double, double, double*)
+        const = 0;
+      virtual void gamma( int, ncomp_t, double, double, double* ) const = 0;
       virtual std::size_t nthreads() const noexcept = 0;
     };
 
-    //! Model models the Concept above by deriving from it and overriding the
+    //! \brief Model models the Concept above by deriving from it and overriding
     //! the virtual functions required by Concept
     template< typename T >
     struct Model : Concept {
@@ -106,6 +111,8 @@ class RNG {
       void beta( int stream, ncomp_t num, double p, double q, double a,
                  double b, double* r ) const override
       { data.beta( stream, num, p, q, a, b, r ); }
+      void gamma( int stream, ncomp_t num, double a, double b, double* r ) const
+        override { data.gamma( stream, num, a, b, r ); }
       std::size_t nthreads() const noexcept override { return data.nthreads(); }
       T data;
     };

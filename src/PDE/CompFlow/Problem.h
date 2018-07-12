@@ -48,22 +48,24 @@
 #ifndef CompFlowProblem_h
 #define CompFlowProblem_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Problem/UserDefined.h"
 #include "Problem/VorticalFlow.h"
 #include "Problem/NLEnergyGrowth.h"
 #include "Problem/RayleighTaylor.h"
 #include "Problem/TaylorGreen.h"
+#include "Problem/SodShocktube.h"
 
 namespace inciter {
 
 //! List of all CompFlow Problem policies (defined in the includes above)
-using CompFlowProblems = boost::mpl::vector< CompFlowProblemUserDefined
-                                           , CompFlowProblemVorticalFlow
-                                           , CompFlowProblemNLEnergyGrowth
-                                           , CompFlowProblemRayleighTaylor
-                                           , CompFlowProblemTaylorGreen >;
+using CompFlowProblems = brigand::list< CompFlowProblemUserDefined
+                                      , CompFlowProblemVorticalFlow
+                                      , CompFlowProblemNLEnergyGrowth
+                                      , CompFlowProblemRayleighTaylor
+                                      , CompFlowProblemTaylorGreen
+                                      , CompFlowProblemSodShocktube >;
 
 } // inciter::
 

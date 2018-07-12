@@ -103,7 +103,9 @@ std::vector< DGPDE > g_dgpde;
 //!   parallel).
 inline
 void operator|( PUP::er& p, std::vector< CGPDE >& eqs ) {
-  if (!p.isSizing()) eqs = PDEStack().selectedCG();
+  try {
+    if (!p.isSizing()) eqs = PDEStack().selectedCG();
+  } catch (...) { tk::processExceptionCharm(); }
 }
 
 //! \brief Pack/Unpack selected partial differential equations using
@@ -123,7 +125,9 @@ void operator|( PUP::er& p, std::vector< CGPDE >& eqs ) {
 //!   parallel).
 inline
 void operator|( PUP::er& p, std::vector< DGPDE >& eqs ) {
-  if (!p.isSizing()) eqs = PDEStack().selectedDG();
+  try {
+    if (!p.isSizing()) eqs = PDEStack().selectedDG();
+  } catch (...) { tk::processExceptionCharm(); }
 }
 
 } // inciter::
@@ -169,7 +173,7 @@ class Main : public CBase_Main {
                         ( msg->argc, msg->argv,
                           m_cmdline,
                           tk::HeaderType::INCITER,
-                          INCITER_EXECUTABLE,
+                          tk::inciter_executable(),
                           m_print ) ),
       // Start new timer measuring the total runtime
       m_timer(1),
@@ -177,6 +181,9 @@ class Main : public CBase_Main {
     {
       delete msg;
       mainProxy = thisProxy;
+      // Optionally enable quiscence detection
+      if (m_cmdline.get< tag::quiescence >())
+        CkStartQD( CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
       // Fire up an asynchronous execute object, which when created at some
       // future point in time will call back to this->execute(). This is
       // necessary so that this->execute() can access already migrated
@@ -205,6 +212,11 @@ class Main : public CBase_Main {
       } catch (...) { tk::processExceptionCharm(); }
       // Tell the Charm++ runtime system to exit
       CkExit();
+    }
+
+    //! Entry method triggered when quiescence is detected
+    [[noreturn]] void quiescence() {
+      Throw( "Quiescence detected" );
     }
 
   private:

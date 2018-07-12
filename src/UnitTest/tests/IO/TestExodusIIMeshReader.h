@@ -1395,7 +1395,7 @@ void ExodusIIMeshReader_object::test< 1 >() {
   // Create unstructured-mesh object to read into
   tk::UnsMesh inmesh;
   // Read in mesh from file
-  std::string infile( REGRESSION_DIR"/meshconv/gmsh_output/box_24.exo" );
+  std::string infile( tk::regression_dir()+"/meshconv/gmsh_output/box_24.exo" );
   tk::ExodusIIMeshReader er( infile );
   er.readMesh( inmesh );
 
@@ -1427,7 +1427,7 @@ void ExodusIIMeshReader_object::test< 2 >() {
   // Create unstructured-mesh object to read into
   tk::UnsMesh inmesh;
   // Read in mesh from file
-  std::string infile( REGRESSION_DIR
+  std::string infile( tk::regression_dir() +
                       "/meshconv/exo_output/shear_5blocks_coarse.exo" );
   tk::ExodusIIMeshReader er( infile );
   er.readMesh( inmesh );
@@ -1471,7 +1471,7 @@ void ExodusIIMeshReader_object::test< 3 >() {
   set_test_name( "read part of single-block tet-mesh graph" );
 
   // Read part of mesh from file
-  std::string infile( REGRESSION_DIR"/meshconv/gmsh_output/box_24.exo" );
+  std::string infile( tk::regression_dir()+"/meshconv/gmsh_output/box_24.exo" );
   tk::ExodusIIMeshReader er( infile );
   er.readElemBlockIDs();
 
@@ -1495,7 +1495,7 @@ void ExodusIIMeshReader_object::test< 4 >() {
   set_test_name( "read part of multi-block tet-mesh graph" );
 
   // Read part of mesh from file
-  std::string infile( REGRESSION_DIR
+  std::string infile( tk::regression_dir() +
                       "/meshconv/exo_output/shear_5blocks_coarse.exo" );
   tk::ExodusIIMeshReader er( infile );
   er.readElemBlockIDs();
@@ -1539,10 +1539,12 @@ void ExodusIIMeshReader_object::test< 5 >() {
   // Create unstructured-mesh object to read into
   tk::UnsMesh inmesh;
   // Read in mesh from file
-  std::string infile( REGRESSION_DIR
+  std::string infile( tk::regression_dir() +
                       "/meshconv/gmsh_output/box_24_ss1.exo" );
   tk::ExodusIIMeshReader er( infile );
-  auto nbfac = er.readSidesetFaces( bface );
+  
+  std::map< int, std::vector< int > > faceid;
+  auto nbfac = er.readSidesetFaces( bface, faceid );
 
   // Test if the number of boundary faces is correct
   ensure_equals( "total number of boundary faces incorrect",
@@ -1592,19 +1594,15 @@ void ExodusIIMeshReader_object::test< 5 >() {
 //! Attempt to read side-set (boundary) connectivity, feeding garbage
 template<> template<>
 void ExodusIIMeshReader_object::test< 6 >() {
-  set_test_name( "boundary-face conn read throws on garbage" );
+  set_test_name( "boundary-face conn read graceful on garbage" );
 
   // Attempt to read boundary face-node connectivity passing nbfac=0
-  try {
-    std::vector< std::size_t > triinpoel;
-    std::string infile( REGRESSION_DIR "/meshconv/gmsh_output/box_24_ss1.exo" );
-    tk::ExodusIIMeshReader er( infile );
-    er.readFaces( 0, triinpoel );
-    fail( "should throw exception" );
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown, test ok
-  }
+  std::vector< std::size_t > triinpoel;
+  std::string infile( tk::regression_dir() +
+                      "/meshconv/gmsh_output/box_24_ss1.exo" );
+  tk::ExodusIIMeshReader er( infile );
+  er.readFaces( 0, triinpoel );
+  // If any of the above throws, it will trigger 'test thrown'
 }
 
 //! Read node-map
@@ -1613,7 +1611,7 @@ void ExodusIIMeshReader_object::test< 7 >() {
   set_test_name( "read the node-map" );
 
   // Read in mesh from file
-  std::string infile( REGRESSION_DIR
+  std::string infile( tk::regression_dir() +
                       "/meshconv/gmsh_output/box_24_ss1.exo" );
   tk::ExodusIIMeshReader er( infile );
 
@@ -1627,10 +1625,171 @@ void ExodusIIMeshReader_object::test< 7 >() {
                  nodemap.size(), correct_nodemap.size() );
 
   for(std::size_t i=0 ; i<nodemap.size(); ++i)
-  {
-          ensure_equals("incorrect entry " + std::to_string(i) + " in nodemap",
-                          nodemap[i], correct_nodemap[i]-1);
+    ensure_equals( "incorrect entry " + std::to_string(i) + " in nodemap",
+                   nodemap[i], correct_nodemap[i]-1 );
+}
+
+//! Test that readMeshPart throws for garbage input
+template<> template<>
+void ExodusIIMeshReader_object::test< 8 >() {
+  set_test_name( "readMeshPart correctly throws on garbage" );
+
+  // Will use this mesh from the regression test suite
+  std::string infile( tk::regression_dir()+"/meshconv/gmsh_output/box_24.exo" );
+  // Create mesh reader
+  tk::ExodusIIMeshReader er( infile );
+
+  std::vector< std::size_t > ginpoel, inpoel, gid;
+  std::unordered_map< std::size_t, std::size_t > lid;
+  tk::UnsMesh::Coords coord;
+
+  // Test error checking emulating serial read
+
+  try {
+    // Attempt to read mesh passing larger PE id than the number of PEs
+    er.readMeshPart( ginpoel, inpoel, gid, lid, coord, 1, 2 );
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
   }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    // Attempt to read mesh passing PE id equal to the number of PEs
+    er.readMeshPart( ginpoel, inpoel, gid, lid, coord, 1, 1 );
+
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  // Test error checking emulating parallel read
+
+  try {
+    // Attempt to read mesh passing larger PE id than the number of PEs
+    er.readMeshPart( ginpoel, inpoel, gid, lid, coord, 2, 3 );
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    // Attempt to read mesh passing PE id equal to the number of PEs
+    er.readMeshPart( ginpoel, inpoel, gid, lid, coord, 2, 2 );
+
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    // Attempt to read mesh passing non-empty container
+    decltype(ginpoel) i{ 0 };
+    er.readMeshPart( i, inpoel, gid, lid, coord );
+
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    // Attempt to read mesh passing non-empty container
+    decltype(inpoel) i{ 0 };
+    er.readMeshPart( ginpoel, i, gid, lid, coord );
+
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    // Attempt to read mesh passing non-empty container
+    decltype(gid) g{ 0 };
+    er.readMeshPart( ginpoel, inpoel, g, lid, coord );
+
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    // Attempt to read mesh passing non-empty container
+    decltype(lid) l{{ 0, 1 }};
+    er.readMeshPart( ginpoel, inpoel, gid, l, coord );
+
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    // Attempt to read mesh passing non-empty container
+    decltype(coord) c{{ {0.0}, {0.0}, {0.0} }};
+    er.readMeshPart( ginpoel, inpoel, gid, lid, c );
+
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+}
+
+//! Test readMeshPart on simple mesh
+template<> template<>
+void ExodusIIMeshReader_object::test< 9 >() {
+  set_test_name( "serial readMeshPart on simple mesh" );
+
+  // Will use this mesh from the regression test suite
+  std::string infile( tk::regression_dir()+"/meshconv/gmsh_output/box_24.exo" );
+  // Create mesh reader
+  tk::ExodusIIMeshReader er( infile );
+
+  // Read mesh graph (connectivity)
+  std::vector< std::size_t > ginpoel, inpoel, gid;
+  std::unordered_map< std::size_t, std::size_t > lid;
+  tk::UnsMesh::Coords coord;
+  er.readMeshPart( ginpoel, inpoel, gid, lid, coord );
+
+  // Test if the number of elements is correct
+  ensure_equals( "number of elements incorrect",
+                 inpoel.size()/4, box24_inpoel.size()/4 );
+
+  // Test if the mesh element connectivity is correct
+  ensure( "element connectivity incorrect", inpoel == box24_inpoel );
 }
 
 } // tut::

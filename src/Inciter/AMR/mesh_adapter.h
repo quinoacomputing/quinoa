@@ -24,7 +24,13 @@ class mesh_adapter_t {
   public:
     //! Constructor
     mesh_adapter_t( const std::vector< std::size_t >& inpoel ) :
-      refiner( init( inpoel, tk::npoin(inpoel) ) ) {}
+      tet_store(),
+      node_connectivity( tk::npoin(inpoel) ),
+      refiner( tet_store, node_connectivity )
+    {
+      consume_tets( inpoel );
+      tet_store.generate_edges();
+    }
 
     // TODO: Set these in a better way
     const real_t derefinement_cut_off = 0.2;
@@ -38,14 +44,12 @@ class mesh_adapter_t {
 
     AMR::refinement_t refiner;
 
-    void init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t* graph_size);
-    void init_with_nodes(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t* graph_size);
-    AMR::refinement_t init(const std::vector<size_t>& tetinpoel, size_t num_nodes);
-
     void consume_tets(const std::vector<std::size_t>& tetinpoel );
 
     void evaluate_error_estimate();
     void uniform_refinement();
+    void error_refinement( const std::vector< edge_t >& edge,
+                           const std::vector< real_t >& criteria );
 
     int detect_compatibility(int num_locked_edges,
             AMR::Refinement_Case refinement_case);

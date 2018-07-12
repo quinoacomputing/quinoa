@@ -108,33 +108,34 @@ static void echoBuildEnv( const Print& print, const std::string& executable )
 // *****************************************************************************
 {
   print.section( "Build environment" );
-  print.item( "Hostname", BUILD_HOSTNAME );
+  print.item( "Hostname", build_hostname() );
   print.item( "Executable", executable );
-  print.item( "Version", QUINOA_VERSION );
-  if (std::string(GIT_COMMIT).find("NOTFOUND") == std::string::npos)
-    print.item( "Revision SHA1", GIT_COMMIT );
-  print.item( "CMake build type", BUILD_TYPE );
+  print.item( "Version", quinoa_version() );
+  auto sha1 = git_commit();
+  if (sha1.find("NOTFOUND") == std::string::npos)
+    print.item( "Revision SHA1", sha1 );
+  print.item( "CMake build type", build_type() );
 
 #ifdef NDEBUG
   print.item( "Asserts", "off (turn on: CMAKE_BUILD_TYPE=DEBUG)" );
-  print.item( "Exception trace", "off (turn on: CMAKE_BUILD_TYPE=DEBUG)" );
 #else
   print.item( "Asserts", "on (turn off: CMAKE_BUILD_TYPE=RELEASE)" );
-  print.item( "Exception trace", "on (turn off: CMAKE_BUILD_TYPE=RELEASE)" );
 #endif
 
-  print.item( "MPI C++ wrapper", MPI_COMPILER );
-  print.item( "Underlying C++ compiler", COMPILER );
-  print.item( "Build date", BUILD_DATE );
+  print.item( "MPI C++ wrapper", mpi_compiler() );
+  print.item( "Underlying C++ compiler", compiler() );
+  print.item( "Build date", build_date() );
 }
 
-static void echoRunEnv( const Print& print, int argc, char** argv, bool verbose )
+static void echoRunEnv( const Print& print, int argc, char** argv,
+                        bool verbose, bool quiescence )
 // *****************************************************************************
 //! \brief Echo runtime environment
 //! \param[in] print Pretty printer
 //! \param[in] argc Number of command-line arguments to executable
 //! \param[in] argv C-style string array to command-line arguments to executable
 //! \param[in] verbose True for verbose screen-output
+//! \param[in] quiescence True if quiescence detection is enabled
 // *****************************************************************************
 {
   print.section( "Run-time environment" );
@@ -153,7 +154,8 @@ static void echoRunEnv( const Print& print, int argc, char** argv, bool verbose 
   }
   print << "'\n";
 
-  print.item( "Output", verbose ? "verbose (quiet: omit -v)" : "quiet" );
+  print.item( "Screen output", verbose ? "verbose (quiet: omit -v)" : "quiet" );
+  print.item( "Quiescence detection", quiescence ? "on" : "off" );
 }
 
 //! \brief Generic Main() used for all executables for code-reuse and a uniform
@@ -190,7 +192,8 @@ Driver Main( int argc, char* argv[],
   // Build environment
   echoBuildEnv( print, executable );
   // Runtime environment
-  echoRunEnv( print, argc, argv, cmdline.template get< tag::verbose >() );
+  echoRunEnv( print, argc, argv, cmdline.template get< tag::verbose >(),
+              cmdline.template get< tag::quiescence >() );
 
   // Create and return driver
   return Driver( print, cmdline );

@@ -22,7 +22,7 @@ template< class Container >
 void
 unique( Container& c )
 // *****************************************************************************
-//! Make elements of container unique
+//! Make elements of container unique (in-place, overwriting source container)
 //! \param[inout] c Container
 // *****************************************************************************
 {
@@ -31,6 +31,20 @@ unique( Container& c )
   auto d = std::distance( begin(c), it );
   Assert( d >= 0, "Distance must be non-negative in tk::unique()" );
   c.resize( static_cast< std::size_t >( d ) );
+}
+
+template< class Container >
+Container
+uniquecopy( const Container& src )
+// *****************************************************************************
+//! Make elements of container unique (on a copy, leaving the source as is)
+//! \param[in] src Container
+//! \return Container containing only unique elements compared to src
+// *****************************************************************************
+{
+  auto c = src;
+  unique( c );
+  return c;
 }
 
 template< typename Container >
@@ -131,8 +145,8 @@ operator+=( std::vector< T, Allocator >& dst,
 //!   triggering an exception in DEBUG mode.
 //! \note Operator != is used to compare the container keys.
 // *****************************************************************************
-template< class Container >
-bool keyEqual( const Container& a, const Container& b ) {
+template< class C1, class C2 >
+bool keyEqual( const C1& a, const C2& b ) {
   Assert( a.size() == b.size(), "Size mismatch comparing containers" );
   auto ia = a.cbegin();
   auto ib = b.cbegin();
@@ -153,6 +167,19 @@ template< class Container >
 std::size_t sumsize( const Container& c ) {
   std::size_t sum = 0;
   for (const auto& s : c) sum += s.size();
+  return sum;
+}
+
+// *****************************************************************************
+//! Compute the sum of the sizes of the values of an associative container
+//! \tparam Map Container of containers type
+//! \param[in] c Container of containers
+//! \return Sum of the sizes of the values of the associative container
+// *****************************************************************************
+template< class Map >
+std::size_t sumvalsize( const Map& c ) {
+  std::size_t sum = 0;
+  for (const auto& s : c) sum += s.second.size();
   return sum;
 }
 

@@ -1,15 +1,13 @@
-FROM quinoacomputing/buildenv:gentoo
+# vim: filetype=dockerfile:
 
-ARG COVERAGE
+FROM quinoacomputing/buildenv:alpine
+
 ARG SONARQUBE
 ARG SONARQUBE_TOKEN
 ARG SONARQUBE_GITHUB_TOKEN
-ARG CC
-ARG CXX
-ENV OMPI_CXX=${CXX}
-ARG CXXFLAGS
-ARG RUNNER_ARGS
-ARG TPL_DIR
+ARG COMPILER
+ARG BUILD
+ARG SHARED_LIBS
 
 #for coverage
 ENV CI true
@@ -18,45 +16,48 @@ ARG TRAVIS_BRANCH
 ARG TRAVIS_JOB_NUMBER
 ARG TRAVIS_PULL_REQUEST
 ARG TRAVIS_JOB_ID
-ARG TRAVIS_TAG
 ARG TRAVIS_REPO_SLUG
 ARG TRAVIS_COMMIT
 
-RUN rm -rf /home/quinoa/.ccache
+ENV RUNNER_ARGS "--bind-to none -oversubscribe"
+ENV OMPI_MCA_plm isolated
+ENV PATH /opt/openmpi/${COMPILER}/bin:$PATH
+
 COPY quinoa /home/quinoa/quinoa
-COPY ccache/ /home/quinoa/.ccache
 COPY sonar/ /home/quinoa/.sonar
 USER root
-RUN chown -R quinoa:quinoa /home/quinoa/quinoa /home/quinoa/.ccache /home/quinoa/.sonar
+RUN chown -R quinoa:quinoa /home/quinoa/quinoa /home/quinoa/.sonar
 USER quinoa
 
 WORKDIR /home/quinoa/quinoa
 RUN mkdir build
 
 WORKDIR build
-RUN ccache -z
 RUN cmake \
-    ${COVERAGE:+-DCOVERAGE=ON} \
-    -DTPL_DIR="${TPL_DIR}" \
+    -GNinja \
+    -DCMAKE_C_COMPILER=mpicc \
+    -DCMAKE_CXX_COMPILER=mpicxx \
+    -DTPL_DIR="/home/quinoa/tpl/${COMPILER}${SHARED_LIBS:+-static}" \
+    -DCMAKE_CXX_FLAGS="-Werror -Wno-zero-as-null-pointer-constant" \
+    -DCMAKE_BUILD_TYPE="${BUILD}" \
+    ${SHARED_LIBS:+-DBUILD_SHARED_LIBS=$SHARED_LIBS} \
+    ${SONARQUBE:+-DCOVERAGE=ON} \
     -DLCOV=/bin/true \
     -DGENHTML=/bin/true \
-    -DRUNNER_ARGS="${RUNNER_ARGS}" \
-    -DCMAKE_BUILD_TYPE=Release \
     ../src
-RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} make VERBOSE=1 -j2
-RUN ccache -s
-RUN ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v
-RUN ctest --output-on-failure -j2 -LE "(stringent|extreme)"
-RUN make install DESTDIR=${PWD}
-RUN make doc
-RUN cd .. && if [ ${COVERAGE} ]; then \
+ENV CCACHE_DISABLE=true
+RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} ninja
+RUN if [ -z "${SONARQUBE}" ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q; fi
+RUN if [ -z "${SONARQUBE}" ]; then ctest --output-on-failure -j2 -LE stringent -E "(.*pe[48])"; fi
+RUN if [ ${SONARQUBE} ]; then ninja doc; fi
+RUN cd .. && if [ ${SONARQUBE} ]; then \
   python -m coverxygen --xml-dir build/doc/xml/ --src-dir . --output doxygen.coverage.info; \
   wget -O codecov.sh https://codecov.io/bash; \
   bash codecov.sh -X gcov -f doxygen.coverage.info -F doxygen; \
-  if [ ${CC} = clang ]; then \
-    $HOME/.local/bin/codecov -F ${CC} --gcov-exec "llvm-cov gcov"; \
+  if [ ${COMPILER} = clang ]; then \
+    $HOME/.local/bin/codecov -F ${COMPILER} --gcov-exec "llvm-cov gcov"; \
   else \
-    $HOME/.local/bin/codecov -F ${CC}; \
+    $HOME/.local/bin/codecov -F ${COMPILER}; \
     cd build && find . -type f -name '*.gcno' -exec gcov -pb  {} + && \
     find . -type f -name '*.gcov' -not -name '*#quinoa#src*' -delete && \
     find . -type f -name '*.def.h*.gcov' -o -name '*UnitTest#tests*.gcov' -delete; \
@@ -87,6 +88,7 @@ RUN cd .. && if [ ${SONARQUBE} ] && [ -n "${SONARQUBE_GITHUB_TOKEN}" ] && [ -n "
     -Dsonar.login=${SONARQUBE_TOKEN}; \
 fi
 USER root
-RUN make install
+RUN ninja install
 USER quinoa
+RUN export PATH=/usr/local/bin:$PATH && unittest -h && inciter && rngtest && meshconv && walker
 WORKDIR /home/quinoa

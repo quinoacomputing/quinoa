@@ -6,7 +6,7 @@
   \details   This file defines a generic partial differential equation (PDE)
     class for PDEs that use discontinuous Galerkin spatial discretization.
     The class uses runtime polymorphism without client-side inheritance:
-    inheritance is confined to the internals of the class, inivisble to
+    inheritance is confined to the internals of the class, invisible to
     client-code. The class exclusively deals with ownership enabling client-side
     value semantics. Credit goes to Sean Parent at Adobe:
     https://github.com/sean-parent/sean-parent.github.com/wiki/
@@ -20,7 +20,6 @@
 #include <string>
 #include <vector>
 #include <unordered_set>
-#include <unordered_map>
 
 #include "Types.h"
 #include "Make_unique.h"
@@ -32,7 +31,7 @@ namespace inciter {
 //! \brief Partial differential equation base for discontinuous Galerkin PDEs
 //! \details This class uses runtime polymorphism without client-side
 //!   inheritance: inheritance is confined to the internals of the this class,
-//!   inivisble to client-code. The class exclusively deals with ownership
+//!   invisible to client-code. The class exclusively deals with ownership
 //!   enabling client-side value semantics. Credit goes to Sean Parent at Adobe:
 //!   https://github.com/sean-parent/sean-parent.github.com/wiki/
 //!   Papers-and-Presentations. For example client code that models a DGPDE,
@@ -86,10 +85,11 @@ class DGPDE {
     //! Public interface to computing the right-hand side vector for the diff eq
     void rhs( tk::real t,
               const tk::Fields& geoFace,
+              const tk::Fields& geoElem,
               const inciter::FaceData& fd,
               const tk::Fields& U,
               tk::Fields& R ) const
-    { self->rhs( t, geoFace, fd, U, R ); }
+    { self->rhs( t, geoFace, geoElem, fd, U, R ); }
 
     //! Public interface for computing the minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -139,6 +139,7 @@ class DGPDE {
       virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
                         const tk::Fields&,
+                        const tk::Fields&,
                         const inciter::FaceData&,
                         const tk::Fields&,
                         tk::Fields& ) const = 0;
@@ -169,10 +170,11 @@ class DGPDE {
       { data.lhs( geoElem, l ); }
       void rhs( tk::real t,
                 const tk::Fields& geoFace,
+                const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
                 const tk::Fields& U,
                 tk::Fields& R ) const override
-      { data.rhs( t, geoFace, fd, U, R ); }
+      { data.rhs( t, geoFace, geoElem, fd, U, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override

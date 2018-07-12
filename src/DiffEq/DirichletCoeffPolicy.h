@@ -44,7 +44,7 @@
 #ifndef DirichletCoeffPolicy_h
 #define DirichletCoeffPolicy_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Types.h"
 #include "Walker/Options/CoeffPolicy.h"
@@ -83,7 +83,7 @@ class DirichletCoeffConst {
 };
 
 //! List of all Dirichlet's coefficients policies
-using DirichletCoeffPolicies = boost::mpl::vector< DirichletCoeffConst >;
+using DirichletCoeffPolicies = brigand::list< DirichletCoeffConst >;
 
 } // walker::
 

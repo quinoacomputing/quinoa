@@ -553,12 +553,12 @@ namespace AMR {
                     }
                 }
 
-                std::cout << "Active Totals:" << std::endl;
-                std::cout << "  --> Initial = " << initial_grid << std::endl;
-                std::cout << "  --> 1:2 = " << one_to_two << std::endl;
-                std::cout << "  --> 1:4 = " << one_to_four << std::endl;
-                std::cout << "  --> 1:8 = " << one_to_eight << std::endl;
-                std::cout << "  --> other = " << other << std::endl;
+//                 std::cout << "Active Totals:" << std::endl;
+//                 std::cout << "  --> Initial = " << initial_grid << std::endl;
+//                 std::cout << "  --> 1:2 = " << one_to_two << std::endl;
+//                 std::cout << "  --> 1:4 = " << one_to_four << std::endl;
+//                 std::cout << "  --> 1:8 = " << one_to_eight << std::endl;
+//                 std::cout << "  --> other = " << other << std::endl;
             }
 
             edge_list_t generate_edge_keys(size_t tet_id)
@@ -611,18 +611,18 @@ namespace AMR {
 
                 // ABD
                 face_list[1][0] = tet[0];
-                face_list[1][1] = tet[1];
-                face_list[1][2] = tet[3];
+                face_list[1][1] = tet[3];
+                face_list[1][2] = tet[1];
 
                 // ACD
                 face_list[2][0] = tet[0];
                 face_list[2][1] = tet[2];
                 face_list[2][2] = tet[3];
 
-                // BCD
+                // BDC
                 face_list[3][0] = tet[1];
-                face_list[3][1] = tet[2];
-                face_list[3][2] = tet[3];
+                face_list[3][1] = tet[3];
+                face_list[3][2] = tet[2];
 
                 return face_list;
             }

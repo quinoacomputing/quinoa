@@ -119,8 +119,46 @@
 
 namespace tut {
 
+#if defined(STRICT_GNUC)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+#endif
+
 //! All tests in group inherited from this base
-struct Reorder_common {};
+struct Reorder_common {
+
+  // Mesh node coordinates
+  std::array< std::vector< tk::real >, 3 > tetcoord {{
+    {{ 0, 1, 1, 0, 0, 1, 1, 0, 0.5, 0.5, 0.5, 1, 0.5, 0 }},
+    {{ 0, 0, 1, 1, 0, 0, 1, 1, 0.5, 0.5, 0, 0.5, 1, 0.5 }},
+    {{ 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0.5, 0.5, 0.5, 0.5 }} }};
+
+  // Mesh connectivity for simple tetrahedron-only mesh
+  std::vector< std::size_t > tetinpoel { 12, 14,  9, 11,
+                                         10, 14, 13, 12,
+                                         14, 13, 12,  9,
+                                         10, 14, 12, 11,
+                                         1,  14,  5, 11,
+                                         7,   6, 10, 12,
+                                         14,  8,  5, 10,
+                                         8,   7, 10, 13,
+                                         7,  13,  3, 12,
+                                         1,   4, 14,  9,
+                                         13,  4,  3,  9,
+                                         3,   2, 12,  9,
+                                         4,   8, 14, 13,
+                                         6,   5, 10, 11,
+                                         1,   2,  9, 11,
+                                         2,   6, 12, 11,
+                                         6,  10, 12, 11,
+                                         2,  12,  9, 11,
+                                         5,  14, 10, 11,
+                                         14,  8, 10, 13,
+                                         13,  3, 12,  9,
+                                         7,  10, 13, 12,
+                                         14,  4, 13,  9,
+                                         14,  1,  9, 11 };
+};
 
 // Test group shortcuts
 // The 2nd template argument is the max number of tests in this group. If
@@ -216,33 +254,8 @@ template<> template<>
 void Reorder_object::test< 4 >() {
   set_test_name( "shiftToZero for tetrahedra" );
 
-  // Mesh connectivity for simple tetrahedron-only mesh
-  std::vector< std::size_t > inpoel { 12, 14,  9, 11,
-                                      10, 14, 13, 12,
-                                      14, 13, 12,  9,
-                                      10, 14, 12, 11,
-                                      1,  14,  5, 11,
-                                      7,   6, 10, 12,
-                                      14,  8,  5, 10,
-                                      8,   7, 10, 13,
-                                      7,  13,  3, 12,
-                                      1,   4, 14,  9,
-                                      13,  4,  3,  9,
-                                      3,   2, 12,  9,
-                                      4,   8, 14, 13,
-                                      6,   5, 10, 11,
-                                      1,   2,  9, 11,
-                                      2,   6, 12, 11,
-                                      6,  10, 12, 11,
-                                      2,  12,  9, 11,
-                                      5,  14, 10, 11,
-                                      14,  8, 10, 13,
-                                      13,  3, 12,  9,
-                                      7,  10, 13, 12,
-                                      14,  4, 13,  9,
-                                      14,  1,  9, 11 };
-
   // Shift node IDs to start from zero
+  auto inpoel = tetinpoel;
   tk::shiftToZero( inpoel );
 
   // Test new extents of node IDs in element connectivity
@@ -323,33 +336,8 @@ template<> template<>
 void Reorder_object::test< 6 >() {
   set_test_name( "renumber tetrahedron mesh" );
 
-  // Mesh connectivity for simple tetrahedron-only mesh
-  std::vector< std::size_t > inpoel { 12, 14,  9, 11,
-                                      10, 14, 13, 12,
-                                      14, 13, 12,  9,
-                                      10, 14, 12, 11,
-                                      1,  14,  5, 11,
-                                      7,   6, 10, 12,
-                                      14,  8,  5, 10,
-                                      8,   7, 10, 13,
-                                      7,  13,  3, 12,
-                                      1,   4, 14,  9,
-                                      13,  4,  3,  9,
-                                      3,   2, 12,  9,
-                                      4,   8, 14, 13,
-                                      6,   5, 10, 11,
-                                      1,   2,  9, 11,
-                                      2,   6, 12, 11,
-                                      6,  10, 12, 11,
-                                      2,  12,  9, 11,
-                                      5,  14, 10, 11,
-                                      14,  8, 10, 13,
-                                      13,  3, 12,  9,
-                                      7,  10, 13, 12,
-                                      14,  4, 13,  9,
-                                      14,  1,  9, 11 };
-
   // Shift node IDs to start from zero
+  auto inpoel = tetinpoel;
   tk::shiftToZero( inpoel );
 
   // Renumber triangle mesh
@@ -386,6 +374,143 @@ void Reorder_object::test< 6 >() {
   ensure( "reordered tetrahedron mesh incorrect",
           inpoel == correct_renumbered_inpoel );
 }
+
+//! Test all positive Jacbians in tetrahedron mesh
+template<> template<>
+void Reorder_object::test< 7 >() {
+  set_test_name( "all positive Jacobians" );
+
+  // Shift node IDs to start from zero
+  auto inpoel = tetinpoel;
+  tk::shiftToZero( inpoel );
+
+  ensure( "Not all Jacobians are positive",
+          tk::positiveJacobians( inpoel, tetcoord ) );
+}
+
+//! Test not all positive Jacbians in tetrahedron mesh
+template<> template<>
+void Reorder_object::test< 8 >() {
+  set_test_name( "not all positive Jacobians" );
+
+  // Shift node IDs to start from zero
+  auto inpoel = tetinpoel;
+  tk::shiftToZero( inpoel );
+
+  // Switch two vertices of a tet
+  std::swap( inpoel[4*4+0], inpoel[4*4+1] );
+
+  ensure( "All Jacobians are positive",
+          !tk::positiveJacobians( inpoel, tetcoord ) );
+}
+
+//! \brief Test if positiveJacobians throws on inpoel non-divisible by the
+//!   number of nodes per elements
+template<> template<>
+void Reorder_object::test< 9 >() {
+  set_test_name( "positiveJacobians throws on inpoel non-div nnpe" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield invalid read" );
+  #else
+  try {
+    // Partial mesh mesh connectivity
+    std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                        14,  4, 13 };
+    tk::positiveJacobians( inpoel, tetcoord );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
+}
+
+//! Test if positiveJacobians throws on empty inpoel
+template<> template<>
+void Reorder_object::test< 10 >() {
+  set_test_name( "positivaJacobians throws with empty inpoel" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
+  try {
+    std::vector< std::size_t > empty;
+    tk::positiveJacobians( empty, tetcoord );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
+}
+
+//! Test if positiveJacobians throws on empty coord
+template<> template<>
+void Reorder_object::test< 11 >() {
+  set_test_name( "positivaJacobians throws with empty coord" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
+  try {
+    decltype(tetcoord) empty;
+    tk::positiveJacobians( tetinpoel, empty );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
+}
+
+//! Test if positiveJacobians throws on unique(inpoel).size != coord.size
+template<> template<>
+void Reorder_object::test< 12 >() {
+  set_test_name( "positivaJacobians throws w inconsistent inpoel & coord" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
+  try {
+    // Shift node IDs to start from zero
+    auto inpoel = tetinpoel;
+    tk::shiftToZero( inpoel );
+    // Remove last coordinate from coord[0]
+    auto coord = tetcoord;
+    coord[0].pop_back();
+    tk::positiveJacobians( tetinpoel, coord );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
+}
+
+//! Test if positiveJacobians throws with non-zero-based inpoel
+template<> template<>
+void Reorder_object::test< 13 >() {
+  set_test_name( "positivaJacobians throws with non-zero-based inpoel" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
+  try {
+    // Do not shift node IDs to start from zero
+    auto inpoel = tetinpoel;
+    tk::positiveJacobians( inpoel, tetcoord );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
+}
+
+#if defined(STRICT_GNUC)
+  #pragma GCC diagnostic pop
+#endif
 
 } // tut::
 

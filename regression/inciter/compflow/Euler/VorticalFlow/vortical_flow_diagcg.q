@@ -9,17 +9,15 @@ inciter
   term 1.0
   ttyi 10       # TTY output interval
   cfl 0.8
+  scheme diagcg
 
   partitioning
    algorithm mj
   end
 
-  discretization
-    scheme diagcg
-  end
-
   compflow
 
+    depvar c
     physics euler
     problem vortical_flow
 

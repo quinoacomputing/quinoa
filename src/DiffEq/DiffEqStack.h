@@ -14,6 +14,9 @@
 #ifndef DiffEqStack_h
 #define DiffEqStack_h
 
+#include "NoWarning/back.h"
+#include "NoWarning/front.h"
+
 #include <map>
 #include <set>
 #include <string>
@@ -23,9 +26,6 @@
 #include <ostream>
 #include <utility>
 #include <cstddef>
-
-#include <boost/mpl/at.hpp>
-#include <boost/mpl/aux_/adl_barrier.hpp>
 
 #include "Tags.h"
 #include "Keywords.h"
@@ -95,17 +95,17 @@ class DiffEqStack {
                                ctr::DiffEqType t,
                                std::set< ctr::DiffEqType >& eqTypes ) :
         factory( f ), type( t ) { eqTypes.insert( t ); }
-      //! \brief Function call operator called by mpl::cartesian_product for
+      //! \brief Function call operator called with tk::cartesian_product for
       //!   each unique sequence of policy combinations
-      template< typename U > void operator()( U ) {
-        namespace mpl = boost::mpl;
-        // Get Initialization policy: 1st type of mpl::vector U
-        using InitPolicy = typename mpl::at< U, mpl::int_<0> >::type;
-        // Get coefficients policy: 2nd type of mpl::vector U
-        using CoeffPolicy = typename mpl::at< U, mpl::int_<1> >::type;
+      template< typename U > void operator()( brigand::type_<U> ) {
+        // Get Initialization policy: first type of brigand::list U
+        using InitPolicy = typename brigand::front< U >;
+        // Get coefficients policy: last type of brigand::list U
+        using CoeffPolicy = typename brigand::back< U >;
         // Build differential equation key
         ctr::DiffEqKey key{ type, InitPolicy::type(), CoeffPolicy::type() };
-        // Register equation (with policies given by mpl::vector U) into factory
+        // Register equation (with policies given by brigand::list U) into
+        // factory
         tk::recordModelLate< DiffEq, Eq< InitPolicy, CoeffPolicy > >
                            ( factory, key, static_cast<ncomp_t>(0) );
       }
@@ -133,7 +133,15 @@ class DiffEqStack {
           g_inputdeck.get< tag::param, EqTag, tag::initpolicy >()[c],
           g_inputdeck.get< tag::param, EqTag, tag::coeffpolicy >()[c] };
         const auto it = m_factory.find( key );
-        Assert( it != end( m_factory ), "Can't find eq in factory" );
+        Assert( it != end( m_factory ),
+                "Can't find eq '" + ctr::DiffEq().name( eq ) +
+                "' in DiffEq factory with initialization policy '" +
+                ctr::InitPolicy().name(
+                  g_inputdeck.get< tag::param, EqTag, tag::initpolicy >()[c] ) +
+                "' and coefficient policy '" +
+                ctr::CoeffPolicy().name(
+                  g_inputdeck.get< tag::param, EqTag, tag::coeffpolicy >()[c] )
+                + "'" );
         // instantiate and return diff eq object
         return it->second( c );
       } else Throw ( "Can't create DiffEq with zero independent variables" );
@@ -165,27 +173,30 @@ class DiffEqStack {
       --c;                    // used to index vectors starting with 0
       std::vector< tk::Table > tab;
       std::vector< std::string > nam;
-      if ( g_inputdeck.get< tag::component, EqTag >()[c] ) {
-        // find out if coefficients policy uses tables and return them if so
-        if (g_inputdeck.get< tag::param, EqTag, tag::coeffpolicy >()[c] ==
-              ctr::CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY)
-        {
-          const auto& hts = g_inputdeck.get< tag::param,
-                                             tag::mixmassfracbeta,
-                                             tag::hydrotimescales >().at(c);
-          ctr::HydroTimeScales ot;
-          for (auto t : hts) tab.push_back( ot.table(t) );
-          for (auto t : hts) nam.push_back( ot.name(t) );
-
-          const auto& hp = g_inputdeck.get< tag::param,
-                                            tag::mixmassfracbeta,
-                                            tag::hydroproductions >().at(c);
-          ctr::HydroProductions op;
-          for (auto t : hp) tab.push_back( op.table(t) );
-          for (auto t : hp) nam.push_back( op.name(t) );
-
-        }
-      } else Throw ( "DiffEq with zero independent variables" );
+      const auto& ncompeq = g_inputdeck.get< tag::component, EqTag >();
+      if (!ncompeq.empty()) {
+        if ( g_inputdeck.get< tag::component, EqTag >()[c] ) {
+          // find out if coefficients policy uses tables and return them if so
+          if (g_inputdeck.get< tag::param, EqTag, tag::coeffpolicy >()[c] ==
+                ctr::CoeffPolicyType::HYDROTIMESCALE)
+          {
+            const auto& hts = g_inputdeck.get< tag::param,
+                                               EqTag,
+                                               tag::hydrotimescales >().at(c);
+            ctr::HydroTimeScales ot;
+            for (auto t : hts) tab.push_back( ot.table(t) );
+            for (auto t : hts) nam.push_back( ot.name(t) );
+  
+            const auto& hp = g_inputdeck.get< tag::param,
+                                              EqTag,
+                                              tag::hydroproductions >().at(c);
+            ctr::HydroProductions op;
+            for (auto t : hp) tab.push_back( op.table(t) );
+            for (auto t : hp) nam.push_back( op.name(t) );
+  
+          }
+        } else Throw ( "DiffEq with zero independent variables" );
+      }
       return { nam, tab };
     }
 
@@ -226,6 +237,15 @@ class DiffEqStack {
     //! Get information on Gamma SDE
     std::vector< std::pair< std::string, std::string > >
     infoGamma( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
+    //! Get information on Velocity SDE
+    std::vector< std::pair< std::string, std::string > >
+    infoVelocity( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
+    //! Get information on position eq
+    std::vector< std::pair< std::string, std::string > >
+    infoPosition( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
+    //! Get information on dissipation eq
+    std::vector< std::pair< std::string, std::string > >
+    infoDissipation( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
     ///@}
 
     //! \brief Convert and return values from vector as string

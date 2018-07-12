@@ -15,7 +15,7 @@
 #include <limits>
 #include <cmath>
 #include <unordered_set>
-#include <unordered_map>
+#include <map>
 
 #include "Macro.h"
 #include "Exception.h"
@@ -45,7 +45,7 @@ class Transport {
     //! Extract BC configuration ignoring if BC not specified
     //! \param[in] c Equation system index (among multiple systems configured)
     //! \return Vector of BC config of type bcconf_t used to apply BCs for all
-    //!   scalar components this Transport eq system is configred for
+    //!   scalar components this Transport eq system is configured for
     //! \note A more preferable way of catching errors such as this function
     //!   hides is during parsing, so that we don't even get here if BCs are not
     //!   correctly specified. For now we simply ignore if BCs are not
@@ -68,7 +68,7 @@ class Transport {
         g_inputdeck.get< tag::component >().get< tag::transport >().at(c) ),
       m_offset(
         g_inputdeck.get< tag::component >().offset< tag::transport >(c) ),
-      m_bcsym( config< tag::bcsym >( c ) ),
+      m_bcextrapolate( config< tag::bcextrapolate >( c ) ),
       m_bcinlet( config< tag::bcinlet >( c ) ),
       m_bcoutlet( config< tag::bcoutlet >( c ) )
     {
@@ -100,7 +100,7 @@ class Transport {
 
     //! Compute the left hand side mass matrix
     //! \param[in] geoElem Element geometry array
-    //! \param[in,out] l Block diagonal mass matrix matrix
+    //! \param[in,out] l Block diagonal mass matrix
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
     {
       Assert( geoElem.nunk() == l.nunk(), "Size mismatch" );
@@ -120,6 +120,7 @@ class Transport {
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real,
               const tk::Fields& geoFace,
+              const tk::Fields&,
               const inciter::FaceData& fd,
               const tk::Fields& U,
               tk::Fields& R ) const
@@ -153,21 +154,9 @@ class Transport {
       }
 
       // compute boundary surface flux integrals
-      for (const auto& s : m_bcsym) {    // for all symbc sidesets
-        auto bc = bface.find( std::stoi(s) );  // faces for sym bc side set
-        if (bc != end(bface))
-          surfInt< Sym >( bc->second, esuf, geoFace, U, R );
-      }
-      for (const auto& s : m_bcinlet) {  // for all inlet bc sidesets
-        auto bc = bface.find( std::stoi(s) );// faces for inlet bc side set
-        if (bc != end(bface))
-          surfInt< Inlet > ( bc->second, esuf, geoFace, U, R );
-      }
-      for (const auto& s : m_bcoutlet) {// for all outlet bc sidesets
-        auto bc = bface.find( std::stoi(s) );// faces for outlet bc side set
-        if (bc != end(bface))
-          surfInt< Outlet >( bc->second, esuf, geoFace, U, R );
-      }
+      bndIntegral< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, U, R );
+      bndIntegral< Inlet >( m_bcinlet, bface, esuf, geoFace, U, R );
+      bndIntegral< Outlet >( m_bcoutlet, bface, esuf, geoFace, U, R );
     }
 
     //! Compute the minimum time step size
@@ -261,16 +250,16 @@ class Transport {
     const ncomp_t m_c;                  //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     const ncomp_t m_offset;             //!< Offset this PDE operates from
-    //! Symmetry BC configuration
-    const std::vector< bcconf_t > m_bcsym;
+    //! Extrapolation BC configuration
+    const std::vector< bcconf_t > m_bcextrapolate;
     //! Inlet BC configuration
     const std::vector< bcconf_t > m_bcinlet;
     //! Outlet BC configuration
     const std::vector< bcconf_t > m_bcoutlet;
 
     //! \brief State policy class providing the left and right state of a face
-    //!   at symmetric boundaries
-    struct Sym {
+    //!   at extrapolation boundaries
+    struct Extrapolate {
       static std::array< std::vector< tk::real >, 2 >
       LR( const tk::Fields& U, std::size_t e ) {
         return {{ U.extract( e ), U.extract( e ) }};
@@ -298,8 +287,8 @@ class Transport {
       }
     };
 
-    //! Compute boundary surface integral
-    //! \param[in] faces FAce IDs at which to compute surface integral
+    //! Compute boundary surface integral for a number of faces
+    //! \param[in] faces Face IDs at which to compute surface integral
     //! \param[in] esuf Elements surrounding face, see tk::genEsuf()
     //! \param[in] geoFace Face geometry array
     //! \param[in] U Solution vector at recent time step
@@ -323,6 +312,30 @@ class Transport {
 
         for (ncomp_t c=0; c<m_ncomp; ++c)
           R(el, c, m_offset) -= farea * flux[c];
+      }
+    }
+
+    //! Compute boundary surface flux integrals for a given boundary type
+    //! \tparam BCType Specifies the type of boundary condition to apply
+    //! \param bcconfig BC configuration vector for multiple side sets
+    //! \param[in] bface Boundary faces side-set information
+    //! \param[in] esuf Elements surrounding faces
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] R Right-hand side vector computed
+    template< class BCType >
+    void
+    bndIntegral( const std::vector< bcconf_t >& bcconfig,
+                 const std::map< int, std::vector< std::size_t > >& bface,
+                 const std::vector< int >& esuf,
+                 const tk::Fields& geoFace,
+                 const tk::Fields& U,
+                 tk::Fields& R ) const
+    {
+      for (const auto& s : bcconfig) {       // for all bc sidesets
+        auto bc = bface.find( std::stoi(s) );// faces for side set
+        if (bc != end(bface))
+          surfInt< BCType >( bc->second, esuf, geoFace, U, R );
       }
     }
 

@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/NoWarning/TGraph2D.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Include <Root>/TGraph2D.h with turning off specific compiler warnings
 */
 // *****************************************************************************
@@ -14,6 +13,7 @@
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wextra-semi"
+  #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
 
 #include <TGraph2D.h>

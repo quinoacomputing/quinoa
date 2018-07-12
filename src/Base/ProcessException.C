@@ -27,7 +27,7 @@
 
 namespace tk {
 
-void
+[[noreturn]] void
 signalHandler( int signum )
 // *****************************************************************************
 // Signal handler for multiple signals, SIGABRT, SIGSEGV, etc.
@@ -62,7 +62,7 @@ signalHandler( int signum )
     fprintf( stderr, "Caught signal %d\n", signum );
 
   // Get and display backtrace
-  tk::Exception("signal").handleException();
+  tk::Exception("Signal caught").handleException();
 
   // Tell the runtime system to exit with a message
   CkAbort( "Signal caught" );
@@ -75,6 +75,12 @@ setSignalHandlers()
 //! \return Ignore, used for calling in a constructor's initializer list
 // *****************************************************************************
 {
+  // override Charm++'s terminate handler
+  std::set_terminate( [](){
+    tk::Exception("Terminate was called").handleException();
+    CkAbort( "Signal caught" );
+  } );
+
   signal( SIGABRT, tk::signalHandler );
   signal( SIGSEGV, tk::signalHandler );
   signal( SIGILL,  tk::signalHandler );
@@ -83,7 +89,7 @@ setSignalHandlers()
   return 0;
 }
 
-void
+[[noreturn]] void
 processExceptionCharm()
 // *****************************************************************************
 //  Process an exception from the Charm++ runtime system

@@ -9,7 +9,7 @@
 #ifndef WalkerDiffEqOptions_h
 #define WalkerDiffEqOptions_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "TaggedTuple.h"
 #include "Toggle.h"
@@ -33,7 +33,10 @@ enum class DiffEqType : uint8_t { NO_DIFFEQ=0,
                                   MIXMASSFRACBETA,
                                   DIRICHLET,
                                   GENDIR,
-                                  WRIGHTFISHER };
+                                  WRIGHTFISHER,
+                                  POSITION,
+                                  DISSIPATION,
+                                  VELOCITY };
 
 //! Pack/Unpack: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, DiffEqType& e ) { PUP::pup( p, e ); }
@@ -49,19 +52,22 @@ class DiffEq : public tk::Toggle< DiffEqType > {
 
   public:
     // List valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::ornstein_uhlenbeck
-                                       , kw::diag_ou
-                                       , kw::skewnormal
-                                       , kw::gamma
-                                       , kw::beta
-                                       , kw::numfracbeta
-                                       , kw::massfracbeta
-                                       , kw::mixnumfracbeta
-                                       , kw::mixmassfracbeta
-                                       , kw::dirichlet
-                                       , kw::gendir
-                                       , kw::wrightfisher
-                                       >;
+    using keywords = brigand::list< kw::ornstein_uhlenbeck
+                                  , kw::diag_ou
+                                  , kw::skewnormal
+                                  , kw::gamma
+                                  , kw::beta
+                                  , kw::numfracbeta
+                                  , kw::massfracbeta
+                                  , kw::mixnumfracbeta
+                                  , kw::mixmassfracbeta
+                                  , kw::dirichlet
+                                  , kw::gendir
+                                  , kw::wrightfisher
+                                  , kw::position
+                                  , kw::dissipation
+                                  , kw::velocity
+                                  >;
 
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
@@ -80,7 +86,10 @@ class DiffEq : public tk::Toggle< DiffEqType > {
           { DiffEqType::MIXMASSFRACBETA, kw::mixmassfracbeta::name() },
           { DiffEqType::DIRICHLET, kw::dirichlet::name() },
           { DiffEqType::GENDIR, kw::gendir::name() },
-          { DiffEqType::WRIGHTFISHER, kw::wrightfisher::name() } },
+          { DiffEqType::WRIGHTFISHER, kw::wrightfisher::name() },
+          { DiffEqType::POSITION, kw::position::name() },
+          { DiffEqType::DISSIPATION, kw::dissipation::name() },
+          { DiffEqType::VELOCITY, kw::velocity::name() } },
         //! keywords -> Enums
         { { "no_diffeq", DiffEqType::NO_DIFFEQ },
           { kw::ornstein_uhlenbeck::string(), DiffEqType::OU },
@@ -94,7 +103,10 @@ class DiffEq : public tk::Toggle< DiffEqType > {
           { kw::mixmassfracbeta::string(), DiffEqType::MIXMASSFRACBETA },
           { kw::dirichlet::string(), DiffEqType::DIRICHLET },
           { kw::gendir::string(), DiffEqType::GENDIR },
-          { kw::wrightfisher::string(), DiffEqType::WRIGHTFISHER } } ) {}
+          { kw::wrightfisher::string(), DiffEqType::WRIGHTFISHER },
+          { kw::position::string(), DiffEqType::POSITION },
+          { kw::dissipation::string(), DiffEqType::DISSIPATION },
+          { kw::velocity::string(), DiffEqType::VELOCITY } } ) {}
 };
 
 } // ctr::

@@ -10,6 +10,8 @@ add_library(Inciter
             Partitioner.C
             FaceData.C
             Discretization.C
+            Refiner.C
+            Sorter.C
             MatCG.C
             DiagCG.C
             DG.C
@@ -18,8 +20,7 @@ add_library(Inciter
             DiagReducer.C
             NodeDiagnostics.C
             ElemDiagnostics.C
-            BoundaryConditions.C
-            MeshReader.C
+            NodeBC.C
 )
 
 add_library(MeshRefinement
@@ -32,11 +33,12 @@ add_library(MeshRefinement
 addCharmModule( "transporter" "Inciter" )
 addCharmModule( "partitioner" "Inciter" )
 addCharmModule( "discretization" "Inciter" )
+addCharmModule( "refiner" "Inciter" )
+addCharmModule( "sorter" "Inciter" )
 addCharmModule( "matcg" "Inciter" )
 addCharmModule( "diagcg" "Inciter" )
 addCharmModule( "distfct" "Inciter" )
 addCharmModule( "dg" "Inciter" )
-addCharmModule( "boundaryconditions" "Inciter" )
 
 # Add extra dependency of Inciter on inciterCharmModule. This is required as
 # Inciter refers to the main Charm++ proxy defined in the Charm++ module

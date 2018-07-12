@@ -227,6 +227,8 @@ function(ADD_REGRESSION_TEST test_name executable)
 
   # Construct and echo configuration for test being added
   set(msg "Add regression test ${test_name} for ${executable}")
+  # Run all regression tests with quiescence detection
+  list(APPEND ARG_ARGS "-q")
   if (ARG_ARGS)
     string(REPLACE ";" " " ARGUMENTS "${ARG_ARGS}")
     string(CONCAT msg "${msg}, args: '${ARGUMENTS}'")

@@ -138,11 +138,9 @@ class MixMassFractionBeta {
                          tag::r >().at(c),
         m_bprime, m_S, m_kprime, m_rho2, m_r, m_b, m_k )
     {
-      // Populate inverse hydrodynamics time scales extracted from DNS, as
-      // associated by the user.
-      if ( Coefficients::type() ==
-             ctr::CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY )
-      {
+      // Populate inverse hydrodynamics time scales and hydrodyanmics
+      // production/dissipation extracted from DNS
+      if ( Coefficients::type() == ctr::CoeffPolicyType::HYDROTIMESCALE ) {
         // Configure inverse hydrodyanmics time scale from DNS
         const auto& hts = g_inputdeck.get< tag::param,
                                            tag::mixmassfracbeta,
@@ -234,12 +232,12 @@ class MixMassFractionBeta {
 
     //! Selected inverse hydrodynamics time scales (if used) for each component
     //! \details This is only used if the coefficients policy is
-    //!   MixMassFracBetaCoeffHydroTimeScaleHomDecay. See constructor.
+    //!   MixMassFracBetaCoeffHydroTimeScale. See constructor.
     std::vector< tk::Table > m_hts;
 
     //! Selected hydrodynamics production/dissipation (if used) for each comp.
     //! \details This is only used if the coefficients policy is
-    //!   MixMassFracBetaCoeffHydroTimeScaleHomDecay. See constructor.
+    //!   MixMassFracBetaCoeffHydroTimeScale. See constructor.
     std::vector< tk::Table > m_hp;
 
     //! \brief Return density for mass fraction

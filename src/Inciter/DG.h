@@ -97,7 +97,7 @@ class DG : public CBase_DG {
 
     //! Constructor
     explicit DG( const CProxy_Discretization& disc,
-                 const tk::CProxy_Solver&,
+                 const tk::CProxy_Solver& solver,
                  const FaceData& fd );
 
     //! Migrate constructor
@@ -140,6 +140,7 @@ class DG : public CBase_DG {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
       CBase_DG::pup(p);
+      p | m_solver;
       p | m_ncomfac;
       p | m_nadj;
       p | m_nsol;
@@ -166,6 +167,8 @@ class DG : public CBase_DG {
       p | m_exptGhost;
       p | m_recvGhost;
       p | m_diag;
+      p | m_stage;
+      p | m_rkcoef;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -181,9 +184,11 @@ class DG : public CBase_DG {
     using FaceMap =
       std::unordered_map< tk::UnsMesh::Face,  // 3 global node IDs
                           std::array< std::size_t, 2 >, // local face & tet ID
-                          tk::UnsMesh::FaceHasher,
-                          tk::UnsMesh::FaceEq >;
+                          tk::UnsMesh::Hash<3>,
+                          tk::UnsMesh::Eq<3> >;
 
+    //! Linear system merger and solver proxy, only used to call created()
+    tk::CProxy_Solver m_solver;
     //! Counter for face adjacency communication map
     std::size_t m_ncomfac;
     //! Counter signaling that all ghost data have been received
@@ -247,6 +252,11 @@ class DG : public CBase_DG {
     std::set< std::size_t > m_recvGhost;
     //! Diagnostics object
     ElemDiagnostics m_diag;
+    //! Runge-Kutta stage counter
+    std::size_t m_stage;
+    //! Runge-Kutta coefficients
+    std::array< std::array< tk::real, 3 >, 2 >
+      m_rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

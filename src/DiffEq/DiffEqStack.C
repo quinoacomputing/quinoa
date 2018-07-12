@@ -12,7 +12,7 @@
 */
 // *****************************************************************************
 
-#include "NoWarning/cartesian_product.h"
+#include <brigand/algorithms/for_each.hpp>
 
 #include "DiffEqStack.h"
 #include "Tags.h"
@@ -22,6 +22,7 @@
 #include "Walker/Options/InitPolicy.h"
 #include "Walker/Options/HydroTimeScales.h"
 #include "Walker/Options/HydroProductions.h"
+#include "CartesianProduct.h"
 
 #include "Beta.h"
 #include "DiagOrnsteinUhlenbeck.h"
@@ -35,6 +36,9 @@
 #include "OrnsteinUhlenbeck.h"
 #include "SkewNormal.h"
 #include "WrightFisher.h"
+#include "Velocity.h"
+#include "Position.h"
+#include "Dissipation.h"
 
 #include "BetaCoeffPolicy.h"
 #include "DiagOrnsteinUhlenbeckCoeffPolicy.h"
@@ -48,6 +52,9 @@
 #include "OrnsteinUhlenbeckCoeffPolicy.h"
 #include "SkewNormalCoeffPolicy.h"
 #include "WrightFisherCoeffPolicy.h"
+#include "VelocityCoeffPolicy.h"
+#include "PositionCoeffPolicy.h"
+#include "DissipationCoeffPolicy.h"
 
 using walker::DiffEqStack;
 
@@ -100,18 +107,22 @@ DiffEqStack::DiffEqStack() : m_factory(), m_eqTypes()
 //!   use of the differential equations to be generic, which eliminates a lot of
 //!   boiler-plate code and makes client-code uniform.
 //!
-//!   _Details of registration using mpl::cartesian_product:_
+//!   _Details of registration using brigand::for_each and
+//!   tk::cartesian_product:_
 //!
-//!   The template argument to mpl::cartesian_product requires a sequence of
-//!   sequences of types. We use vector of vectors of types, listing all
-//!   possible policies. The constructor argument to mpl::cartesian_product is a
-//!   functor that is to be applied to all combinations. mpl::cartesian_product
-//!   will then create all possible combinations of these types and call the
-//!   user-supplied functor with each type of the created sequence as a template
-//!   parameter. The user-supplied functor here is registerDiffEq, which, i.e.,
-//!   its constructor call, needs a single template argument, a class templated
-//!   on policy classes. This is the differential equation class to be
-//!   configured by selecting policies and to be registered. The arguments to
+//!   The template argument to brigand::for_each, as used below, requires a
+//!   list of list of types. We use brigand::list of brigand::list of types,
+//!   listing all possible policies, where the inner list must have exactly two
+//!   types, as the list of lists is constructed from two lists using the
+//!   cartesian product, and the length of the outer list (the list of lists) is
+//!   arbitrary. The constructor argument to brigand::for_each is a functor that
+//!   is to be applied to all members of the outer list. tk::cartesian_product
+//!   will create all possible combinations of these types and call the functor
+//!   with each type of the created sequence as a template parameter. The
+//!   functor here inherits from registerDiffEq, which, i.e., its constructor
+//!   call, needs a single template argument, a class templated on policy
+//!   classes. This is the differential equation class to be configured by
+//!   selecting policies and to be registered. The arguments to
 //!   registerDiffEq's constructor are the factory, the enum denoting the
 //!   differential equation type, and a reference to a variable of type
 //!   std::set< ctr::DiffEqType >, which is only used internally to DiffEqStack
@@ -123,106 +134,136 @@ DiffEqStack::DiffEqStack() : m_factory(), m_eqTypes()
 
   // Dirichlet SDE
   // Construct vector of vectors for all possible policies for SDE
-  using DirPolicies = mpl::vector< InitPolicies, DirichletCoeffPolicies >;
+  using DirPolicies =
+    tk::cartesian_product< InitPolicies, DirichletCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< DirPolicies >(
+  brigand::for_each< DirPolicies >(
     registerDiffEq< Dirichlet >
                   ( m_factory, ctr::DiffEqType::DIRICHLET, m_eqTypes ) );
 
   // Lochner's generalized Dirichlet SDE
   // Construct vector of vectors for all possible policies for SDE
-  using GenDirPolicies = mpl::vector< InitPolicies,
-                                      GeneralizedDirichletCoeffPolicies >;
+  using GenDirPolicies =
+    tk::cartesian_product< InitPolicies, GeneralizedDirichletCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< GenDirPolicies >(
+  brigand::for_each< GenDirPolicies >(
     registerDiffEq< GeneralizedDirichlet >
                   ( m_factory, ctr::DiffEqType::GENDIR, m_eqTypes ) );
 
   // Wright-Fisher SDE
   // Construct vector of vectors for all possible policies for SDE
   using WrightFisherPolicies =
-    mpl::vector< InitPolicies, WrightFisherCoeffPolicies >;
+    tk::cartesian_product< InitPolicies, WrightFisherCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< WrightFisherPolicies >(
+  brigand::for_each< WrightFisherPolicies >(
     registerDiffEq< WrightFisher >
                   ( m_factory, ctr::DiffEqType::WRIGHTFISHER, m_eqTypes ) );
 
   // Ornstein-Uhlenbeck SDE
   // Construct vector of vectors for all possible policies for SDE
   using OrnsteinUhlenbeckPolicies =
-    mpl::vector< InitPolicies, OrnsteinUhlenbeckCoeffPolicies >;
+    tk::cartesian_product< InitPolicies, OrnsteinUhlenbeckCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< OrnsteinUhlenbeckPolicies >(
+  brigand::for_each< OrnsteinUhlenbeckPolicies >(
     registerDiffEq< OrnsteinUhlenbeck >
                   ( m_factory, ctr::DiffEqType::OU, m_eqTypes ) );
 
   // Diagonal Ornstein-Uhlenbeck SDE
   // Construct vector of vectors for all possible policies for SDE
   using DiagOrnsteinUhlenbeckPolicies =
-    mpl::vector< InitPolicies, DiagOrnsteinUhlenbeckCoeffPolicies >;
+    tk::cartesian_product< InitPolicies, DiagOrnsteinUhlenbeckCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< DiagOrnsteinUhlenbeckPolicies >(
+  brigand::for_each< DiagOrnsteinUhlenbeckPolicies >(
     registerDiffEq< DiagOrnsteinUhlenbeck >
                   ( m_factory, ctr::DiffEqType::DIAG_OU, m_eqTypes ) );
 
   // beta SDE
   // Construct vector of vectors for all possible policies for SDE
-  using BetaPolicies = mpl::vector< InitPolicies, BetaCoeffPolicies >;
+  using BetaPolicies =
+    tk::cartesian_product< InitPolicies, BetaCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< BetaPolicies >(
+  brigand::for_each< BetaPolicies >(
     registerDiffEq< Beta >( m_factory, ctr::DiffEqType::BETA, m_eqTypes ) );
 
   // Number-fraction beta SDE
   // Construct vector of vectors for all possible policies for SDE
   using NumberFractionBetaPolicies =
-    mpl::vector< InitPolicies, NumberFractionBetaCoeffPolicies >;
+    tk::cartesian_product< InitPolicies, NumberFractionBetaCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< NumberFractionBetaPolicies >(
+  brigand::for_each< NumberFractionBetaPolicies >(
     registerDiffEq< NumberFractionBeta >
                   ( m_factory, ctr::DiffEqType::NUMFRACBETA, m_eqTypes ) );
 
   // Mass-fraction beta SDE
   // Construct vector of vectors for all possible policies for SDE
   using MassFractionBetaPolicies =
-    mpl::vector< InitPolicies, MassFractionBetaCoeffPolicies >;
+    tk::cartesian_product< InitPolicies, MassFractionBetaCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< MassFractionBetaPolicies >(
+  brigand::for_each< MassFractionBetaPolicies >(
     registerDiffEq< MassFractionBeta >
                   ( m_factory, ctr::DiffEqType::MASSFRACBETA, m_eqTypes ) );
 
   // Mix number-fraction beta SDE
   // Construct vector of vectors for all possible policies for SDE
   using MixNumFracBetaPolicies =
-    mpl::vector< InitPolicies, MixNumFracBetaCoeffPolicies >;
+    tk::cartesian_product< InitPolicies, MixNumFracBetaCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< MixNumFracBetaPolicies >(
+  brigand::for_each< MixNumFracBetaPolicies >(
     registerDiffEq< MixNumberFractionBeta >
                   ( m_factory, ctr::DiffEqType::MIXNUMFRACBETA, m_eqTypes ) );
 
   // Mix mass-fraction beta SDE
   // Construct vector of vectors for all possible policies for SDE
   using MixMassFracBetaPolicies =
-    mpl::vector< InitPolicies, MixMassFracBetaCoeffPolicies >;
+    tk::cartesian_product< InitPolicies, MixMassFracBetaCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< MixMassFracBetaPolicies >(
+  brigand::for_each< MixMassFracBetaPolicies >(
     registerDiffEq< MixMassFractionBeta >
                   ( m_factory, ctr::DiffEqType::MIXMASSFRACBETA, m_eqTypes ) );
 
   // Skew-normal SDE
   // Construct vector of vectors for all possible policies for SDE
   using SkewNormalPolicies =
-    mpl::vector< InitPolicies, SkewNormalCoeffPolicies >;
+    tk::cartesian_product< InitPolicies, SkewNormalCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< SkewNormalPolicies >(
+  brigand::for_each< SkewNormalPolicies >(
     registerDiffEq< SkewNormal >
                   ( m_factory, ctr::DiffEqType::SKEWNORMAL, m_eqTypes ) );
 
   // Gamma SDE
   // Construct vector of vectors for all possible policies for SDE
-  using GammaPolicies = mpl::vector< InitPolicies, GammaCoeffPolicies >;
+  using GammaPolicies =
+    tk::cartesian_product< InitPolicies, GammaCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< GammaPolicies >(
+  brigand::for_each< GammaPolicies >(
     registerDiffEq< Gamma >( m_factory, ctr::DiffEqType::GAMMA, m_eqTypes ) );
+
+  // Velocity SDE
+  // Construct vector of vectors for all possible policies for SDE
+  using VelocityPolicies =
+    tk::cartesian_product< InitPolicies, VelocityCoeffPolicies >;
+  // Register SDE for all combinations of policies
+  brigand::for_each< VelocityPolicies >(
+    registerDiffEq< Velocity >
+                  ( m_factory, ctr::DiffEqType::VELOCITY, m_eqTypes ) );
+
+  // Position equation
+  // Construct vector of vectors for all possible policies for equation
+  using PositionPolicies =
+    tk::cartesian_product< InitPolicies, PositionCoeffPolicies >;
+  // Register SDE for all combinations of policies
+  brigand::for_each< PositionPolicies >(
+    registerDiffEq< Position >
+                  ( m_factory, ctr::DiffEqType::POSITION, m_eqTypes ) );
+
+  // Dissipation equation
+  // Construct vector of vectors for all possible policies for equation
+  using DissipationPolicies =
+    tk::cartesian_product< InitPolicies, DissipationCoeffPolicies >;
+  // Register SDE for all combinations of policies
+  brigand::for_each< DissipationPolicies >(
+    registerDiffEq< Dissipation >
+                  ( m_factory, ctr::DiffEqType::DISSIPATION, m_eqTypes ) );
 }
 
 std::vector< walker::DiffEq >
@@ -260,6 +301,12 @@ DiffEqStack::selected() const
       diffeqs.push_back( createDiffEq< tag::skewnormal >( d, cnt ) );
     else if (d == ctr::DiffEqType::GAMMA)
       diffeqs.push_back( createDiffEq< tag::gamma >( d, cnt ) );
+    else if (d == ctr::DiffEqType::VELOCITY)
+      diffeqs.push_back( createDiffEq< tag::velocity >( d, cnt ) );
+    else if (d == ctr::DiffEqType::POSITION)
+      diffeqs.push_back( createDiffEq< tag::position >( d, cnt ) );
+    else if (d == ctr::DiffEqType::DISSIPATION)
+      diffeqs.push_back( createDiffEq< tag::dissipation >( d, cnt ) );
     else Throw( "Can't find selected DiffEq" );
   }
 
@@ -281,31 +328,10 @@ DiffEqStack::tables() const
   for (const auto& d : g_inputdeck.get< tag::selected, tag::diffeq >()) {
     std::pair< std::vector< std::string >, std::vector< tk::Table > > t;
 
-    if (d == ctr::DiffEqType::DIRICHLET)
-      t = createTables< tag::dirichlet >( d, cnt );
-    else if (d == ctr::DiffEqType::GENDIR)
-      t = createTables< tag::gendir >( d, cnt );
-    else if (d == ctr::DiffEqType::WRIGHTFISHER)
-      t = createTables< tag::wrightfisher >( d, cnt );
-    else if (d == ctr::DiffEqType::OU)
-      t = createTables< tag::ou >( d, cnt );
-    else if (d == ctr::DiffEqType::DIAG_OU)
-      t = createTables< tag::diagou >( d, cnt );
-    else if (d == ctr::DiffEqType::BETA)
-      t = createTables< tag::beta >( d, cnt );
-    else if (d == ctr::DiffEqType::NUMFRACBETA)
-      t = createTables< tag::numfracbeta >( d, cnt );
-    else if (d == ctr::DiffEqType::MASSFRACBETA)
-      t = createTables< tag::massfracbeta >( d, cnt );
-    else if (d == ctr::DiffEqType::MIXNUMFRACBETA)
-      t = createTables< tag::mixnumfracbeta >( d, cnt );
-    else if (d == ctr::DiffEqType::MIXMASSFRACBETA)
+    if (d == ctr::DiffEqType::MIXMASSFRACBETA)
       t = createTables< tag::mixmassfracbeta >( d, cnt );
-    else if (d == ctr::DiffEqType::SKEWNORMAL)
-      t = createTables< tag::skewnormal >( d, cnt );
-    else if (d == ctr::DiffEqType::GAMMA)
-      t = createTables< tag::gamma >( d, cnt );
-    else Throw( "Can't find selected DiffEq" );
+    else if (d == ctr::DiffEqType::VELOCITY)
+      t = createTables< tag::velocity >( d, cnt );
 
     nam.insert( end(nam), begin(t.first), end(t.first) );
     tab.insert( end(tab), begin(t.second), end(t.second) );
@@ -351,6 +377,12 @@ DiffEqStack::info() const
       nfo.emplace_back( infoSkewNormal( cnt ) );
     else if (d == ctr::DiffEqType::GAMMA)
       nfo.emplace_back( infoGamma( cnt ) );
+    else if (d == ctr::DiffEqType::VELOCITY)
+      nfo.emplace_back( infoVelocity( cnt ) );
+    else if (d == ctr::DiffEqType::POSITION)
+      nfo.emplace_back( infoPosition( cnt ) );
+    else if (d == ctr::DiffEqType::DISSIPATION)
+      nfo.emplace_back( infoDissipation( cnt ) );
     else Throw( "Can't find selected DiffEq" );
   }
 
@@ -831,7 +863,7 @@ const
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name( cp ) );
   auto ncomp =
     g_inputdeck.get< tag::component >().get< tag::mixmassfracbeta >()[c] / 4;
-  if (cp == ctr::CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY) {
+  if (cp == ctr::CoeffPolicyType::HYDROTIMESCALE) {
     nfo.emplace_back(
       "inverse hydro time scales [" + std::to_string( ncomp ) + "]",
       options( ctr::HydroTimeScales(),
@@ -973,6 +1005,151 @@ DiffEqStack::infoGamma( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
   betapdfs(
     nfo,
     g_inputdeck.get< tag::param, tag::gamma, tag::betapdf >().at(c) );
+
+  return nfo;
+}
+
+std::vector< std::pair< std::string, std::string > >
+DiffEqStack::infoVelocity( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
+// *****************************************************************************
+//  Return information on the velocity SDE
+//! \param[inout] cnt std::map of counters for all differential equation types
+//! \return vector of string pairs describing the SDE configuration
+// *****************************************************************************
+{
+  auto c = ++cnt[ ctr::DiffEqType::VELOCITY ];       // count eqs
+  --c;  // used to index vectors starting with 0
+
+  std::vector< std::pair< std::string, std::string > > nfo;
+
+  nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::VELOCITY ), "" );
+  nfo.emplace_back( "kind", "stochastic" );
+  nfo.emplace_back( "dependent variable", std::string( 1,
+    g_inputdeck.get< tag::param, tag::velocity, tag::depvar >()[c] ) );
+  nfo.emplace_back( "initialization policy", ctr::InitPolicy().name(
+    g_inputdeck.get< tag::param, tag::velocity, tag::initpolicy >()[c] ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::velocity >()[c];
+  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+  auto cp = g_inputdeck.get< tag::param, tag::velocity, tag::coeffpolicy >()[c];
+  nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name( cp ) );
+
+  auto solve = g_inputdeck.get< tag::param, tag::velocity, tag::solve >()[c];
+  auto depvar = ctr::Depvar();
+  nfo.emplace_back( depvar.group(), depvar.name(solve) );
+
+  auto variant =
+    g_inputdeck.get< tag::param, tag::velocity, tag::variant >()[c];
+  auto velocity = ctr::VelocityVariant();
+  nfo.emplace_back( velocity.group(), velocity.name(variant) );
+
+  if (cp == ctr::CoeffPolicyType::HYDROTIMESCALE) {
+    nfo.emplace_back(
+      "inverse hydro time scale",
+      options( ctr::HydroTimeScales(),
+               g_inputdeck.get< tag::param,
+                                tag::velocity,
+                                tag::hydrotimescales >().at(c) ) );
+    nfo.emplace_back(
+      "production/dissipation",
+      options( ctr::HydroProductions(),
+               g_inputdeck.get< tag::param,
+                                tag::velocity,
+                                tag::hydroproductions >().at(c) ) );
+  }
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::velocity >(c) ) );
+  nfo.emplace_back( "coupled position depvar", std::string( 1,
+    g_inputdeck.get< tag::param, tag::velocity, tag::position >()[c] ) );
+  nfo.emplace_back( "coupled position depvar offset", std::to_string(
+    g_inputdeck.get< tag::param, tag::velocity, tag::position_id >()[c] ) );
+  nfo.emplace_back( "coupled dissipation depvar", std::string( 1,
+    g_inputdeck.get< tag::param, tag::velocity, tag::dissipation >()[c] ) );
+  nfo.emplace_back( "coupled dissipation depv offs", std::to_string(
+    g_inputdeck.get< tag::param, tag::velocity, tag::dissipation_id >()[c] ) );
+  nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
+    g_inputdeck.get< tag::param, tag::velocity, tag::rng >()[c] ) );
+  nfo.emplace_back( "coeff C0", std::to_string(
+    g_inputdeck.get< tag::param, tag::velocity, tag::c0 >().at(c) ) );
+
+  return nfo;
+}
+
+std::vector< std::pair< std::string, std::string > >
+DiffEqStack::infoPosition( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
+// *****************************************************************************
+//  Return information on the position eq
+//! \param[inout] cnt std::map of counters for all differential equation types
+//! \return vector of string pairs describing the SDE configuration
+// *****************************************************************************
+{
+  auto c = ++cnt[ ctr::DiffEqType::POSITION ];       // count eqs
+  --c;  // used to index vectors starting with 0
+
+  std::vector< std::pair< std::string, std::string > > nfo;
+
+  nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::POSITION ), "" );
+  nfo.emplace_back( "kind", "deterministic" );
+  nfo.emplace_back( "dependent variable", std::string( 1,
+    g_inputdeck.get< tag::param, tag::position, tag::depvar >()[c] ) );
+  nfo.emplace_back( "initialization policy", ctr::InitPolicy().name(
+    g_inputdeck.get< tag::param, tag::position, tag::initpolicy >()[c] ) );
+  nfo.emplace_back( "number of components", std::to_string(
+    g_inputdeck.get< tag::component >().get< tag::position >()[c] ) );
+  nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
+    g_inputdeck.get< tag::param, tag::position, tag::coeffpolicy >()[c] ) );
+  auto solve = g_inputdeck.get< tag::param, tag::position, tag::solve >()[c];
+  nfo.emplace_back( "solve for", ctr::Depvar().name( solve ) );
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::position >(c) ) );
+  nfo.emplace_back( "coupled velocity depvar", std::string( 1,
+    g_inputdeck.get< tag::param, tag::position, tag::velocity >()[c] ) );
+  nfo.emplace_back( "coupled velocity depvar offset", std::to_string(
+    g_inputdeck.get< tag::param, tag::position, tag::velocity_id >()[c] ) );
+  nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
+    g_inputdeck.get< tag::param, tag::position, tag::rng >()[c] ) );
+
+  return nfo;
+}
+
+std::vector< std::pair< std::string, std::string > >
+DiffEqStack::infoDissipation( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
+// *****************************************************************************
+//  Return information on the dissipation eq
+//! \param[inout] cnt std::map of counters for all differential equation types
+//! \return vector of string pairs describing the SDE configuration
+// *****************************************************************************
+{
+  auto c = ++cnt[ ctr::DiffEqType::DISSIPATION ];       // count eqs
+  --c;  // used to index vectors starting with 0
+
+  std::vector< std::pair< std::string, std::string > > nfo;
+
+  nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::DISSIPATION ), "" );
+  nfo.emplace_back( "kind", "stochastic" );
+  nfo.emplace_back( "dependent variable", std::string( 1,
+    g_inputdeck.get< tag::param, tag::dissipation, tag::depvar >()[c] ) );
+  nfo.emplace_back( "initialization policy", ctr::InitPolicy().name(
+    g_inputdeck.get< tag::param, tag::dissipation, tag::initpolicy >()[c] ) );
+  nfo.emplace_back( "number of components", std::to_string(
+    g_inputdeck.get< tag::component >().get< tag::dissipation >()[c] ) );
+  nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
+    g_inputdeck.get< tag::param, tag::dissipation, tag::coeffpolicy >()[c] ) );
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::dissipation >(c) ) );
+  nfo.emplace_back( "coupled velocity depvar", std::string( 1,
+    g_inputdeck.get< tag::param, tag::dissipation, tag::velocity >()[c] ) );
+  nfo.emplace_back( "coupled velocity depvar offset", std::to_string(
+    g_inputdeck.get< tag::param, tag::dissipation, tag::velocity_id >()[c] ) );
+  nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
+    g_inputdeck.get< tag::param, tag::dissipation, tag::rng >()[c] ) );
+  nfo.emplace_back( "coeff C3", std::to_string(
+    g_inputdeck.get< tag::param, tag::dissipation, tag::c3 >().at(c) ) );
+  nfo.emplace_back( "coeff C4", std::to_string(
+    g_inputdeck.get< tag::param, tag::dissipation, tag::c4 >().at(c) ) );
+  nfo.emplace_back( "coeff COM1", std::to_string(
+    g_inputdeck.get< tag::param, tag::dissipation, tag::com1 >().at(c) ) );
+  nfo.emplace_back( "coeff COM2", std::to_string(
+    g_inputdeck.get< tag::param, tag::dissipation, tag::com2 >().at(c) ) );
 
   return nfo;
 }

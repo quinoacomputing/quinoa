@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/NoWarning/TTree.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Include <Root>/TTree.h with turning off specific compiler warnings
 */
 // *****************************************************************************
@@ -17,6 +16,7 @@
   #pragma clang diagnostic ignored "-Wconversion"
   #pragma clang diagnostic ignored "-Wold-style-cast"
   #pragma clang diagnostic ignored "-Wreserved-id-macro"
+  #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 522 )
