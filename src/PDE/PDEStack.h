@@ -20,8 +20,8 @@
 #include <vector>
 #include <functional>
 
-#include <boost/mpl/at.hpp>
-#include <boost/mpl/aux_/adl_barrier.hpp>
+#include "NoWarning/back.h"
+#include "NoWarning/front.h"
 
 #include "Tags.h"
 #include "Keywords.h"
@@ -101,17 +101,17 @@ class PDEStack {
                             ctr::PDEType t,
                             std::set< ctr::PDEType >& eqTypes ) :
         factory( f ), type( t ) { eqTypes.insert( t ); }
-      //! \brief Function call operator called by mpl::cartesian_product for
+      //! \brief Function call operator called with tk::cartesian_product for
       //!   each unique sequence of policy combinations
-      template< typename U > void operator()( U ) {
-        namespace mpl = boost::mpl;
-        // Get problem policy: 1st type of mpl::vector U
-        using Physics = typename mpl::at< U, mpl::int_<0> >::type;
-        // Get problem policy: 2nd type of mpl::vector U
-        using Problem = typename mpl::at< U, mpl::int_<1> >::type;
+      template< typename U > void operator()( brigand::type_<U> ) {
+        // Get problem policy: first type of brigand::list U
+        using Physics = typename brigand::front< U >;
+        // Get problem policy: last type of brigand::list U
+        using Problem = typename brigand::back< U >;
         // Build differential equation key
         ctr::PDEKey key{ type, Physics::type(), Problem::type() };
-        // Register equation (with policies given by mpl::vector U) into factory
+        // Register equation (with policies given by brigand::list U) into
+        // factory
         tk::recordModelLate< PDE, Eq< Physics, Problem > >
                            ( factory, key, static_cast<ncomp_t>(0) );
       }

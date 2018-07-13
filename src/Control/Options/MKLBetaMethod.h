@@ -11,7 +11,7 @@
 
 #include <map>
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "NoWarning/mkl_vsl.h"
 
@@ -38,9 +38,9 @@ class MKLBetaMethod : public tk::Toggle< MKLBetaMethodType > {
     using ParamType = int;
 
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::cja
-                                       , kw::cja_accurate
-                                       >;
+    using keywords = brigand::list< kw::cja
+                                  , kw::cja_accurate
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which

@@ -44,7 +44,7 @@
 #ifndef BetaCoeffPolicy_h
 #define BetaCoeffPolicy_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Types.h"
 #include "SystemComponents.h"
@@ -84,7 +84,7 @@ class BetaCoeffConst {
 };
 
 //! List of all beta's coefficients policies
-using BetaCoeffPolicies = boost::mpl::vector< BetaCoeffConst >;
+using BetaCoeffPolicies = brigand::list< BetaCoeffConst >;
 
 } // walker::
 

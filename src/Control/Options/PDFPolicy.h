@@ -9,7 +9,7 @@
 #ifndef PDFPolicyOptions_h
 #define PDFPolicyOptions_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -32,10 +32,10 @@ class PDFPolicy : public tk::Toggle< PDFPolicyType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::overwrite
-                                       , kw::multiple
-                                       , kw::evolution
-                                       >;
+    using keywords = brigand::list< kw::overwrite
+                                  , kw::multiple
+                                  , kw::evolution
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which

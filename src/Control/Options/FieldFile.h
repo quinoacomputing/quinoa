@@ -9,7 +9,7 @@
 #ifndef FieldFileOptions_h
 #define FieldFileOptions_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "QuinoaConfig.h"
 #include "Toggle.h"
@@ -36,11 +36,11 @@ class FieldFile : public tk::Toggle< FieldFileType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::exodusii
-                                         #ifdef HAS_ROOT
-                                       , kw::root
-                                         #endif
-                                       >;
+    using keywords = brigand::list< kw::exodusii
+                                  #ifdef HAS_ROOT
+                                  , kw::root
+                                  #endif
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which

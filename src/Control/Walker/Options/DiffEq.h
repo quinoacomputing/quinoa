@@ -9,7 +9,7 @@
 #ifndef WalkerDiffEqOptions_h
 #define WalkerDiffEqOptions_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "TaggedTuple.h"
 #include "Toggle.h"
@@ -52,22 +52,22 @@ class DiffEq : public tk::Toggle< DiffEqType > {
 
   public:
     // List valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::ornstein_uhlenbeck
-                                       , kw::diag_ou
-                                       , kw::skewnormal
-                                       , kw::gamma
-                                       , kw::beta
-                                       , kw::numfracbeta
-                                       , kw::massfracbeta
-                                       , kw::mixnumfracbeta
-                                       , kw::mixmassfracbeta
-                                       , kw::dirichlet
-                                       , kw::gendir
-                                       , kw::wrightfisher
-                                       , kw::position
-                                       , kw::dissipation
-                                       , kw::velocity
-                                       >;
+    using keywords = brigand::list< kw::ornstein_uhlenbeck
+                                  , kw::diag_ou
+                                  , kw::skewnormal
+                                  , kw::gamma
+                                  , kw::beta
+                                  , kw::numfracbeta
+                                  , kw::massfracbeta
+                                  , kw::mixnumfracbeta
+                                  , kw::mixmassfracbeta
+                                  , kw::dirichlet
+                                  , kw::gendir
+                                  , kw::wrightfisher
+                                  , kw::position
+                                  , kw::dissipation
+                                  , kw::velocity
+                                  >;
 
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions

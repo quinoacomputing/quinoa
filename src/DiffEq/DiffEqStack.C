@@ -12,7 +12,7 @@
 */
 // *****************************************************************************
 
-#include "NoWarning/cartesian_product.h"
+#include <brigand/algorithms/for_each.hpp>
 
 #include "DiffEqStack.h"
 #include "Tags.h"
@@ -22,6 +22,7 @@
 #include "Walker/Options/InitPolicy.h"
 #include "Walker/Options/HydroTimeScales.h"
 #include "Walker/Options/HydroProductions.h"
+#include "CartesianProduct.h"
 
 #include "Beta.h"
 #include "DiagOrnsteinUhlenbeck.h"
@@ -106,18 +107,22 @@ DiffEqStack::DiffEqStack() : m_factory(), m_eqTypes()
 //!   use of the differential equations to be generic, which eliminates a lot of
 //!   boiler-plate code and makes client-code uniform.
 //!
-//!   _Details of registration using mpl::cartesian_product:_
+//!   _Details of registration using brigand::for_each and
+//!   tk::cartesian_product:_
 //!
-//!   The template argument to mpl::cartesian_product requires a sequence of
-//!   sequences of types. We use vector of vectors of types, listing all
-//!   possible policies. The constructor argument to mpl::cartesian_product is a
-//!   functor that is to be applied to all combinations. mpl::cartesian_product
-//!   will then create all possible combinations of these types and call the
-//!   user-supplied functor with each type of the created sequence as a template
-//!   parameter. The user-supplied functor here is registerDiffEq, which, i.e.,
-//!   its constructor call, needs a single template argument, a class templated
-//!   on policy classes. This is the differential equation class to be
-//!   configured by selecting policies and to be registered. The arguments to
+//!   The template argument to brigand::for_each, as used below, requires a
+//!   list of list of types. We use brigand::list of brigand::list of types,
+//!   listing all possible policies, where the inner list must have exactly two
+//!   types, as the list of lists is constructed from two lists using the
+//!   cartesian product, and the length of the outer list (the list of lists) is
+//!   arbitrary. The constructor argument to brigand::for_each is a functor that
+//!   is to be applied to all members of the outer list. tk::cartesian_product
+//!   will create all possible combinations of these types and call the functor
+//!   with each type of the created sequence as a template parameter. The
+//!   functor here inherits from registerDiffEq, which, i.e., its constructor
+//!   call, needs a single template argument, a class templated on policy
+//!   classes. This is the differential equation class to be configured by
+//!   selecting policies and to be registered. The arguments to
 //!   registerDiffEq's constructor are the factory, the enum denoting the
 //!   differential equation type, and a reference to a variable of type
 //!   std::set< ctr::DiffEqType >, which is only used internally to DiffEqStack
@@ -129,129 +134,134 @@ DiffEqStack::DiffEqStack() : m_factory(), m_eqTypes()
 
   // Dirichlet SDE
   // Construct vector of vectors for all possible policies for SDE
-  using DirPolicies = mpl::vector< InitPolicies, DirichletCoeffPolicies >;
+  using DirPolicies =
+    tk::cartesian_product< InitPolicies, DirichletCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< DirPolicies >(
+  brigand::for_each< DirPolicies >(
     registerDiffEq< Dirichlet >
                   ( m_factory, ctr::DiffEqType::DIRICHLET, m_eqTypes ) );
 
   // Lochner's generalized Dirichlet SDE
   // Construct vector of vectors for all possible policies for SDE
-  using GenDirPolicies = mpl::vector< InitPolicies,
-                                      GeneralizedDirichletCoeffPolicies >;
+  using GenDirPolicies =
+    tk::cartesian_product< InitPolicies, GeneralizedDirichletCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< GenDirPolicies >(
+  brigand::for_each< GenDirPolicies >(
     registerDiffEq< GeneralizedDirichlet >
                   ( m_factory, ctr::DiffEqType::GENDIR, m_eqTypes ) );
 
   // Wright-Fisher SDE
   // Construct vector of vectors for all possible policies for SDE
   using WrightFisherPolicies =
-    mpl::vector< InitPolicies, WrightFisherCoeffPolicies >;
+    tk::cartesian_product< InitPolicies, WrightFisherCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< WrightFisherPolicies >(
+  brigand::for_each< WrightFisherPolicies >(
     registerDiffEq< WrightFisher >
                   ( m_factory, ctr::DiffEqType::WRIGHTFISHER, m_eqTypes ) );
 
   // Ornstein-Uhlenbeck SDE
   // Construct vector of vectors for all possible policies for SDE
   using OrnsteinUhlenbeckPolicies =
-    mpl::vector< InitPolicies, OrnsteinUhlenbeckCoeffPolicies >;
+    tk::cartesian_product< InitPolicies, OrnsteinUhlenbeckCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< OrnsteinUhlenbeckPolicies >(
+  brigand::for_each< OrnsteinUhlenbeckPolicies >(
     registerDiffEq< OrnsteinUhlenbeck >
                   ( m_factory, ctr::DiffEqType::OU, m_eqTypes ) );
 
   // Diagonal Ornstein-Uhlenbeck SDE
   // Construct vector of vectors for all possible policies for SDE
   using DiagOrnsteinUhlenbeckPolicies =
-    mpl::vector< InitPolicies, DiagOrnsteinUhlenbeckCoeffPolicies >;
+    tk::cartesian_product< InitPolicies, DiagOrnsteinUhlenbeckCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< DiagOrnsteinUhlenbeckPolicies >(
+  brigand::for_each< DiagOrnsteinUhlenbeckPolicies >(
     registerDiffEq< DiagOrnsteinUhlenbeck >
                   ( m_factory, ctr::DiffEqType::DIAG_OU, m_eqTypes ) );
 
   // beta SDE
   // Construct vector of vectors for all possible policies for SDE
-  using BetaPolicies = mpl::vector< InitPolicies, BetaCoeffPolicies >;
+  using BetaPolicies =
+    tk::cartesian_product< InitPolicies, BetaCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< BetaPolicies >(
+  brigand::for_each< BetaPolicies >(
     registerDiffEq< Beta >( m_factory, ctr::DiffEqType::BETA, m_eqTypes ) );
 
   // Number-fraction beta SDE
   // Construct vector of vectors for all possible policies for SDE
   using NumberFractionBetaPolicies =
-    mpl::vector< InitPolicies, NumberFractionBetaCoeffPolicies >;
+    tk::cartesian_product< InitPolicies, NumberFractionBetaCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< NumberFractionBetaPolicies >(
+  brigand::for_each< NumberFractionBetaPolicies >(
     registerDiffEq< NumberFractionBeta >
                   ( m_factory, ctr::DiffEqType::NUMFRACBETA, m_eqTypes ) );
 
   // Mass-fraction beta SDE
   // Construct vector of vectors for all possible policies for SDE
   using MassFractionBetaPolicies =
-    mpl::vector< InitPolicies, MassFractionBetaCoeffPolicies >;
+    tk::cartesian_product< InitPolicies, MassFractionBetaCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< MassFractionBetaPolicies >(
+  brigand::for_each< MassFractionBetaPolicies >(
     registerDiffEq< MassFractionBeta >
                   ( m_factory, ctr::DiffEqType::MASSFRACBETA, m_eqTypes ) );
 
   // Mix number-fraction beta SDE
   // Construct vector of vectors for all possible policies for SDE
   using MixNumFracBetaPolicies =
-    mpl::vector< InitPolicies, MixNumFracBetaCoeffPolicies >;
+    tk::cartesian_product< InitPolicies, MixNumFracBetaCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< MixNumFracBetaPolicies >(
+  brigand::for_each< MixNumFracBetaPolicies >(
     registerDiffEq< MixNumberFractionBeta >
                   ( m_factory, ctr::DiffEqType::MIXNUMFRACBETA, m_eqTypes ) );
 
   // Mix mass-fraction beta SDE
   // Construct vector of vectors for all possible policies for SDE
   using MixMassFracBetaPolicies =
-    mpl::vector< InitPolicies, MixMassFracBetaCoeffPolicies >;
+    tk::cartesian_product< InitPolicies, MixMassFracBetaCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< MixMassFracBetaPolicies >(
+  brigand::for_each< MixMassFracBetaPolicies >(
     registerDiffEq< MixMassFractionBeta >
                   ( m_factory, ctr::DiffEqType::MIXMASSFRACBETA, m_eqTypes ) );
 
   // Skew-normal SDE
   // Construct vector of vectors for all possible policies for SDE
   using SkewNormalPolicies =
-    mpl::vector< InitPolicies, SkewNormalCoeffPolicies >;
+    tk::cartesian_product< InitPolicies, SkewNormalCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< SkewNormalPolicies >(
+  brigand::for_each< SkewNormalPolicies >(
     registerDiffEq< SkewNormal >
                   ( m_factory, ctr::DiffEqType::SKEWNORMAL, m_eqTypes ) );
 
   // Gamma SDE
   // Construct vector of vectors for all possible policies for SDE
-  using GammaPolicies = mpl::vector< InitPolicies, GammaCoeffPolicies >;
+  using GammaPolicies =
+    tk::cartesian_product< InitPolicies, GammaCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< GammaPolicies >(
+  brigand::for_each< GammaPolicies >(
     registerDiffEq< Gamma >( m_factory, ctr::DiffEqType::GAMMA, m_eqTypes ) );
 
   // Velocity SDE
   // Construct vector of vectors for all possible policies for SDE
-  using VelocityPolicies = mpl::vector< InitPolicies, VelocityCoeffPolicies >;
+  using VelocityPolicies =
+    tk::cartesian_product< InitPolicies, VelocityCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< VelocityPolicies >(
+  brigand::for_each< VelocityPolicies >(
     registerDiffEq< Velocity >
                   ( m_factory, ctr::DiffEqType::VELOCITY, m_eqTypes ) );
 
   // Position equation
   // Construct vector of vectors for all possible policies for equation
-  using PositionPolicies = mpl::vector< InitPolicies, PositionCoeffPolicies >;
+  using PositionPolicies =
+    tk::cartesian_product< InitPolicies, PositionCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< PositionPolicies >(
+  brigand::for_each< PositionPolicies >(
     registerDiffEq< Position >
                   ( m_factory, ctr::DiffEqType::POSITION, m_eqTypes ) );
 
   // Dissipation equation
   // Construct vector of vectors for all possible policies for equation
   using DissipationPolicies =
-    mpl::vector< InitPolicies, DissipationCoeffPolicies >;
+    tk::cartesian_product< InitPolicies, DissipationCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< DissipationPolicies >(
+  brigand::for_each< DissipationPolicies >(
     registerDiffEq< Dissipation >
                   ( m_factory, ctr::DiffEqType::DISSIPATION, m_eqTypes ) );
 }

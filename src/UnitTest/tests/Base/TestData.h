@@ -15,8 +15,6 @@
 
 #include "NoWarning/tut.h"
 
-#include <boost/mpl/at.hpp>
-
 #include "Data.h"
 #include "TUTUtil.h"
 

@@ -11,7 +11,7 @@
 
 #include <map>
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "NoWarning/mkl_vsl.h"
 
@@ -38,9 +38,9 @@ class MKLGammaMethod : public tk::Toggle< MKLGammaMethodType > {
     using ParamType = int;
 
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::gnorm
-                                       , kw::gnorm_accurate
-                                       >;
+    using keywords = brigand::list< kw::gnorm
+                                  , kw::gnorm_accurate
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which

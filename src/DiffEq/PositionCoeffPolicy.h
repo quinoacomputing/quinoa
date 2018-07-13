@@ -31,7 +31,7 @@
 
 #include <array>
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Types.h"
 #include "SystemComponents.h"
@@ -70,9 +70,9 @@ class Position_ConstShear {
 };
 
 //! List of all position eq coefficients policies
-using PositionCoeffPolicies = boost::mpl::vector< Position_InstantaneousVelocity
-                                                , Position_ConstShear
-                                                >;
+using PositionCoeffPolicies = brigand::list< Position_InstantaneousVelocity
+                                           , Position_ConstShear
+                                           >;
 
 } // walker::
 

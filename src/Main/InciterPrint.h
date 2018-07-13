@@ -12,8 +12,9 @@
 #include <iostream>
 #include <string>
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "NoWarning/format.h"
-#include "NoWarning/for_each.h"
 
 #include "Print.h"
 #include "ContainerUtil.h"
@@ -111,10 +112,10 @@ class InciterPrint : public tk::Print {
                        "Policy code undefined for keyword" );
         raw( m_item_indent + " * " + *kw::physics::code() + ": "
                            + kw::physics::name() + ":\n" );
-        boost::mpl::for_each< ctr::Physics::keywords >( echoPolicies( this ) );
+        brigand::for_each< ctr::Physics::keywords >( echoPolicies( this ) );
         raw( m_item_indent + " * " + *kw::problem::code() + ": "
                            + kw::problem::name() + ":\n" );
-        boost::mpl::for_each< ctr::Problem::keywords >( echoPolicies( this ) );
+        brigand::for_each< ctr::Problem::keywords >( echoPolicies( this ) );
         raw( '\n' );
         // extract eqname and supported policies for output
         const auto h = ctr::Physics();

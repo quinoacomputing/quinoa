@@ -9,8 +9,7 @@
 #ifndef HydroTimeScalesOptions_h
 #define HydroTimeScalesOptions_h
 
-#include <boost/mpl/vector.hpp>
-#include "NoWarning/for_each.h"
+#include <brigand/sequences/list.hpp>
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -42,16 +41,16 @@ class HydroTimeScales : public tk::Toggle< HydroTimeScalesType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::eq_A005H
-                                       , kw::eq_A005S
-                                       , kw::eq_A005L
-                                       , kw::eq_A05H
-                                       , kw::eq_A05S
-                                       , kw::eq_A05L
-                                       , kw::eq_A075H
-                                       , kw::eq_A075S
-                                       , kw::eq_A075L
-                                       >;
+    using keywords = brigand::list< kw::eq_A005H
+                                  , kw::eq_A005S
+                                  , kw::eq_A005L
+                                  , kw::eq_A05H
+                                  , kw::eq_A05S
+                                  , kw::eq_A05L
+                                  , kw::eq_A075H
+                                  , kw::eq_A075S
+                                  , kw::eq_A075L
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which

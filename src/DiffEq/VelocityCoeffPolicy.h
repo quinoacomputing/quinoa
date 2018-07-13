@@ -63,7 +63,7 @@
 
 #include <array>
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Types.h"
 #include "SystemComponents.h"
@@ -316,9 +316,9 @@ class Velocity_HydroTimeScale {
 };
 
 //! List of all Velocity's coefficients policies
-using VelocityCoeffPolicies = boost::mpl::vector< Velocity_HydroTimeScale
-                                                , Velocity_ConstShear
-                                                >;
+using VelocityCoeffPolicies = brigand::list< Velocity_HydroTimeScale
+                                           , Velocity_ConstShear
+                                           >;
 
 } // walker::
 

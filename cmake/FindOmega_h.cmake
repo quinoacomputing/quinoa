@@ -29,16 +29,19 @@ if (OMEGA_H_INCLUDE_DIRS AND OMEGA_H_LIBRARIES)
 endif()
 
 # Look for the header file
-FIND_PATH(OMEGA_H_INCLUDE_DIR NAMES Omega_h_library.hpp HINTS ${OMEGA_H_ROOT}/include
-                                                  $ENV{OMEGA_H_ROOT}/include)
+FIND_PATH(OMEGA_H_INCLUDE_DIR NAMES Omega_h_library.hpp
+                              HINTS ${OMEGA_H_ROOT}/include
+                                    $ENV{OMEGA_H_ROOT}/include)
 
 # Look for the library
 if(NOT BUILD_SHARED_LIBS)
-  FIND_LIBRARY(OMEGA_H_LIBRARY NAMES libomega_h.a HINTS ${OMEGA_H_ROOT}/lib
-                                                      $ENV{OMEGA_H_ROOT}/lib)
+  FIND_LIBRARY(OMEGA_H_LIBRARY NAMES libomega_h.a
+                               HINTS ${OMEGA_H_ROOT}/lib
+                                     $ENV{OMEGA_H_ROOT}/lib)
 else()
-  FIND_LIBRARY(OMEGA_H_LIBRARY NAMES libomega_h.so HINTS ${OMEGA_H_ROOT}/lib
-                                                 $ENV{OMEGA_H_ROOT}/lib)
+  FIND_LIBRARY(OMEGA_H_LIBRARY NAMES omega_h
+                               HINTS ${OMEGA_H_ROOT}/lib
+                                     $ENV{OMEGA_H_ROOT}/lib)
 endif()
 
 set(OMEGA_H_INCLUDE_DIRS ${OMEGA_H_INCLUDE_DIR})

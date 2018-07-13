@@ -39,16 +39,7 @@ namespace deck {
 
   //! \brief Specialization of tk::grm::use for Walker's input deck parser
   template< typename keyword >
-  using use = tk::grm::use< keyword
-                          , ctr::InputDeck::keywords1
-                          , ctr::InputDeck::keywords2
-                          , ctr::InputDeck::keywords3
-                          , ctr::InputDeck::keywords4
-                          , ctr::InputDeck::keywords5
-                          , ctr::InputDeck::keywords6
-                          , ctr::InputDeck::keywords7
-                          , ctr::InputDeck::keywords8
-                          >;
+  using use = tk::grm::use< keyword, ctr::InputDeck::keywords >;
 
   // Walker's InputDeck state
  

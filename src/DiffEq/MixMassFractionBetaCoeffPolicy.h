@@ -97,7 +97,7 @@
 #ifndef MixMassFractionBetaCoeffPolicy_h
 #define MixMassFractionBetaCoeffPolicy_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Types.h"
 #include "Table.h"
@@ -603,10 +603,10 @@ class MixMassFracBetaCoeffHydroTimeScale {
 
 //! List of all mix mass-fraction beta's coefficients policies
 using MixMassFracBetaCoeffPolicies =
-  boost::mpl::vector< MixMassFracBetaCoeffDecay
-                    , MixMassFracBetaCoeffHomDecay
-                    , MixMassFracBetaCoeffMonteCarloHomDecay
-                    , MixMassFracBetaCoeffHydroTimeScale >;
+  brigand::list< MixMassFracBetaCoeffDecay
+               , MixMassFracBetaCoeffHomDecay
+               , MixMassFracBetaCoeffMonteCarloHomDecay
+               , MixMassFracBetaCoeffHydroTimeScale >;
 
 } // walker::
 
