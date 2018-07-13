@@ -14,7 +14,7 @@ env:
     - COMPILER=gnu BUILD=Debug
     - COMPILER=gnu BUILD=Debug SHARED_LIBS=off
     - COMPILER=gnu BUILD=Release
-    - COMPILER=gnu BUILD=Release SHARED_LIBS=off
+    - COMPILER=gnu BUILD=Release SHARED_LIBS=off DOCKERHUB=true
 
     - COMPILER=clang BUILD=Debug
     - COMPILER=clang BUILD=Debug SHARED_LIBS=off
@@ -47,6 +47,12 @@ script:
                  ${HOME}/docker/ &&
     CON=$(docker run -d ${TRAVIS_REPO_SLUG}:${DISTRO} /bin/bash) &&
     docker cp ${CON}:/home/quinoa/.sonar ${HOME}/
+
+after_success:
+  - if [[ ${DOCKERHUB} = true && ${DOCKER_USERNAME} && ${DOCKER_PASSWORD} && ${TRAVIS_PULL_REQUEST} == false && ${TRAVIS_BRANCH} == master ]]; then
+      docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+      docker push "${TRAVIS_REPO_SLUG}:${DISTRO}";
+    fi
 
 cache:
   directories:
