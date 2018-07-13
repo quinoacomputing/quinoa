@@ -30,6 +30,10 @@ find_path(BRIGAND_INCLUDE_DIR NAMES brigand.hpp
                                     $ENV{BRIGAND_ROOT}/include
                               PATH_SUFFIXES brigand)
 
+# Remove last 'brigand' from path found, otherwise some compilers, e.g., gc++
+# 4.8, will not find brigand.
+get_filename_component(BRIGAND_INCLUDE_DIR ${BRIGAND_INCLUDE_DIR} DIRECTORY)
+
 set(BRIGAND_INCLUDE_DIRS ${BRIGAND_INCLUDE_DIR})
 
 # Handle the QUIETLY and REQUIRED arguments and set Brigand_FOUND to TRUE if
