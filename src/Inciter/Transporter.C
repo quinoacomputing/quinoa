@@ -218,27 +218,22 @@ Transporter::createPartitioner()
   // Create mesh reader for reading side sets from file
   tk::MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
-  std::map< int, std::vector< std::size_t > > bface;
-  std::vector< std::size_t > triinpoel;
+  std::map< int, std::vector< std::size_t > > belem;
+  std::map< int, std::vector< std::size_t > > faces;
   std::map< int, std::vector< std::size_t > > bnode;
-  std::map< int, std::vector< int > > faceid;
 
   // Read boundary (side set) data from input file
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   if (scheme == ctr::SchemeType::DG) {
     // Read boundary-face connectivity on side sets
-    auto nbfac = mr.readSidesetFaces( bface, faceid );
-    mr.readFaces( nbfac, triinpoel );
-    // Note that it is NOT okay bface to be empty; boundary conditions required
-    Assert( nbfac > 0, "DG must have boundary faces (and side sets) defined" );
+    mr.readSidesetFaces( belem, faces );
     // Verify boundarty condition (BC) side sets used exist in mesh file
-    verifyBCsExist( g_dgpde, bface );
+    verifyBCsExist( g_dgpde, belem );
   } else {
     // Read node lists on side sets
     bnode = mr.readSidesets();
     // Verify boundarty condition (BC) side sets used exist in mesh file
     verifyBCsExist( g_cgpde, bnode );
-    // Note that it is okay bnode to be empty if no boundary conditions needed
   }
 
   // Create partitioner callbacks (order matters)
@@ -278,7 +273,7 @@ Transporter::createPartitioner()
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
     CProxy_Partitioner::ckNew( cbp, cbr, cbs, thisProxy, m_solver, m_refiner,
-                               m_sorter, m_scheme, bface, triinpoel, bnode );
+                               m_sorter, m_scheme, belem, faces, bnode );
 }
 
 void

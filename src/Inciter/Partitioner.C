@@ -50,8 +50,8 @@ Partitioner::Partitioner(
   const CProxy_Refiner& refiner,
   const CProxy_Sorter& sorter,
   const Scheme& scheme,
-  const std::map< int, std::vector< std::size_t > >& bface,
-  const std::vector< std::size_t >& triinpoel,
+  const std::map< int, std::vector< std::size_t > >& belem,
+  const std::map< int, std::vector< std::size_t > >& faces,
   const std::map< int, std::vector< std::size_t > >& bnode ) :
   m_cbp( cbp ),
   m_cbr( cbr ),
@@ -77,33 +77,46 @@ Partitioner::Partitioner(
   m_chinpoel(),
   m_chcoordmap(),
   m_bnodechares(),
-  m_bface( bface ),
-  m_triinpoel( triinpoel ),
+  m_bface( belem ),
   m_bnode( bnode )
 // *****************************************************************************
 //  Constructor
-//! \param[in] cb Charm++ callbacks
+//! \param[in] cbp Charm++ callbacks for Partitioner
+//! \param[in] cbr Charm++ callbacks for Refiner
+//! \param[in] cbs Charm++ callbacks for Sorter
 //! \param[in] host Host Charm++ proxy we are being called from
 //! \param[in] solver Linear system solver proxy
-//! \param[in] bc Boundary conditions group proxy
+//! \param[in] refiner Mesh refiner proxy
+//! \param[in] sorter Mesh reordering (sorter) proxy
 //! \param[in] scheme Discretization scheme
-//! \param[in] bface Face lists mapped to side set ids
-//! \param[in] triinpoel Interconnectivity of points and boundary-face
+//! \param[in] belem File-internal elem ids of side sets
+//! \param[in] faces Elem-relative face ids of side sets
+//! \param[in] bnode Node lists of side sets
 // *****************************************************************************
 {
   // Create mesh reader
   tk::MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
   // Read this PE's chunk of the mesh (graph and coords) from file
-  mr.readMeshPart( m_ginpoel, m_inpoel, m_gid, m_lid, m_coord,
+  std::vector< size_t > triinpoel;
+  mr.readMeshPart( m_ginpoel, m_inpoel, triinpoel, m_gid, m_lid, m_coord,
                    CkNumPes(), CkMyPe() );
 
-// std::cout << CkMyPe() << ": ginpoel: " << m_ginpoel.size()
-//            << ", inpoel: " << m_inpoel.size()
-//            << ", gid: " << m_gid.size()
-//            << ", lid: " << m_lid.size()
-//            << ", coord: " << m_coord[0].size()
-//            << '\n';
+  // Compute triangle connectivity for side sets
+  m_triinpoel = mr.triinpoel( m_bface, faces, m_ginpoel, triinpoel );
+
+//   for (auto& ss : m_bface) {
+//      std::cout << ss.first << ": ";
+//      for (auto& i : ss.second) {
+//        std::cout << i << ": " << m_triinpoel[ i*3+0 ] << ' ' <<
+//                                  m_triinpoel[ i*3+1 ] << ' ' <<
+//                                  m_triinpoel[ i*3+2 ] << ", coord: " <<
+//                                  m_coord[0][ m_triinpoel[ i*3+0 ] ] << ' ' <<
+//                                  m_coord[1][ m_triinpoel[ i*3+1 ] ] << ' ' <<
+//                                  m_coord[2][ m_triinpoel[ i*3+2 ] ] << ", ";
+//      }
+//      std::cout << '\n';
+//   }
 
   // Compute number of cells across whole problem
   std::vector< std::size_t > meshsize{{ m_ginpoel.size()/4,

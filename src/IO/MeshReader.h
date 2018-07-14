@@ -59,21 +59,30 @@ class MeshReader {
     //!    PE defaults to 0 for a single-CPU read.
     void readMeshPart( std::vector< std::size_t >& ginpoel,
                        std::vector< std::size_t >& inpoel,
+                       std::vector< std::size_t >& triinpoel,
                        std::vector< std::size_t >& gid,
                        std::unordered_map< std::size_t, std::size_t >& lid,
                        tk::UnsMesh::Coords& coord, 
                        int numpes=1, int mype=0 )
-    { self->readMeshPart( ginpoel, inpoel, gid, lid, coord, numpes, mype ); }
+    { self->readMeshPart( ginpoel, inpoel, triinpoel, gid, lid, coord, numpes,
+                          mype ); }
+    //! ...
+    std::vector< std::size_t > triinpoel(
+     std::map< int, std::vector< std::size_t > >& bface,
+     const std::map< int, std::vector< std::size_t > >& faceid,
+     const std::vector< std::size_t >& ginpoel,
+     const std::vector< std::size_t >& triinpoel )
+    { return self->triinpoel( bface, faceid, ginpoel, triinpoel ); }
 
-    //! Public interface to read face list of side sets from mesh file
-    std::size_t
+    //! Public interface to side sets from mesh file
+    void
     readSidesetFaces( std::map< int, std::vector< std::size_t > >& belem,
-                      std::map< int, std::vector< int > >& faceid )
-    { return self->readSidesetFaces( belem, faceid ); }
+                      std::map< int, std::vector< std::size_t > >& faces )
+    { self->readSidesetFaces( belem, faces ); }
 
     //! Public interface to read face connectivity of boundary faces from file
-    void readFaces( std::size_t nbfac, std::vector< std::size_t >& conn )
-    { self->readFaces( nbfac, conn ); }
+    void readFaces( std::vector< std::size_t >& conn )
+    { self->readFaces( conn ); }
 
     //! Public interfaces to read node list of all side sets from mesh file
     std::map< int, std::vector< std::size_t > > readSidesets()
@@ -101,14 +110,19 @@ class MeshReader {
                      std::vector< std::size_t >&,
                      std::vector< std::size_t >&,
                      std::vector< std::size_t >&,
+                     std::vector< std::size_t >&,
                      std::unordered_map< std::size_t, std::size_t >&,
                      tk::UnsMesh::Coords&,
                      int, int ) = 0;
-      virtual std::size_t
+      virtual void
         readSidesetFaces( std::map< int, std::vector< std::size_t > >&,
-                          std::map< int, std::vector< int > >& ) = 0;
-      virtual void readFaces( std::size_t, std::vector< std::size_t >& )
-        const = 0;
+                          std::map< int, std::vector< std::size_t > >& ) = 0;
+     virtual std::vector< std::size_t >
+        triinpoel( std::map< int, std::vector< std::size_t > >&,
+                   const std::map< int, std::vector< std::size_t > >&,
+                   const std::vector< std::size_t >&,
+                   const std::vector< std::size_t >& ) = 0;
+      virtual void readFaces( std::vector< std::size_t >& ) const = 0;
       virtual std::map< int, std::vector< std::size_t > > readSidesets() = 0;
     };
 
@@ -120,17 +134,25 @@ class MeshReader {
       Concept* copy() const override { return new Model( *this ); }
       void readMeshPart( std::vector< std::size_t >& ginpoel,
                          std::vector< std::size_t >& inpoel,
+                         std::vector< std::size_t >& triinpoel,
                          std::vector< std::size_t >& gid,
                          std::unordered_map< std::size_t, std::size_t >& lid,
                          tk::UnsMesh::Coords& coord, 
                          int numpes, int mype ) override
-        { data.readMeshPart( ginpoel, inpoel, gid, lid, coord, numpes, mype ); }
-      std::size_t
+        { data.readMeshPart( ginpoel, inpoel, triinpoel, gid, lid, coord,
+                             numpes, mype ); }
+      std::vector< std::size_t > triinpoel(
+        std::map< int, std::vector< std::size_t > >& bface,
+        const std::map< int, std::vector< std::size_t > >& faceid,
+        const std::vector< std::size_t >& ginpoel,
+        const std::vector< std::size_t >& triinpoel ) override
+      { return data.triinpoel( bface, faceid, ginpoel, triinpoel ); }
+      void
         readSidesetFaces( std::map< int, std::vector< std::size_t > >& belem,
-                          std::map< int, std::vector< int > >& faceid )
-        override { return data.readSidesetFaces( belem, faceid ); }
-      void readFaces( std::size_t nbfac, std::vector< std::size_t >& conn )
-        const override { data.readFaces( nbfac, conn ); }
+                          std::map< int, std::vector< std::size_t > >& faces )
+        override { data.readSidesetFaces( belem, faces ); }
+      void readFaces( std::vector< std::size_t >& conn )
+        const override { data.readFaces( conn ); }
       std::map< int, std::vector< std::size_t > > readSidesets() override
         { return data.readSidesets(); }
       T data;

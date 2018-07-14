@@ -76,8 +76,8 @@ class Partitioner : public CBase_Partitioner {
                  const CProxy_Refiner& refiner,
                  const CProxy_Sorter& sorter,
                  const Scheme& scheme,
-                 const std::map< int, std::vector< std::size_t > >& bface,
-                 const std::vector< std::size_t >& triinpoel,
+                 const std::map< int, std::vector< std::size_t > >& belem,
+                 const std::map< int, std::vector< std::size_t > >& faces,
                  const std::map< int, std::vector< std::size_t > >& bnode );
 
     //! Partition the computational mesh into a number of chares
@@ -205,7 +205,7 @@ class Partitioner : public CBase_Partitioner {
     //!   chares will need to communicate) during time stepping.
     std::unordered_map< int,
       std::unordered_map< int, std::unordered_set< std::size_t > > > m_msum;
-    //! List of boundary faces associated to side-set IDs
+    //! Boundary face IDs associated associated to side set IDs
     std::map< int, std::vector< std::size_t > > m_bface;
     //! Boundary face-node connectivity
     std::vector< std::size_t > m_triinpoel;
