@@ -2,7 +2,7 @@
 #define AMR_id_generator_h
 
 #include <limits>
-#include "Base/Exception.h"
+#include <cassert>
 
 // TODO: make this have a base class to support multiple generator schemes
 // using the policy design pattern
@@ -10,6 +10,7 @@ namespace AMR {
 
     class id_generator_t {
         protected:
+
             size_t start_id;
 
             // Used to track which tet_id to give the next parent
@@ -23,7 +24,6 @@ namespace AMR {
                 start_id(start_tet_id),
                 next_tet_id(start_id)
             {
-                // Empty
             }
 
             /**
@@ -70,11 +70,12 @@ namespace AMR {
             // A sensible value is 2^20 (1,048,576) for big simulations, and anything
             // smaller for toy problems
             #define START_TET_ID 1024 // TODO: There must be a better way to pass a literal value
-            // const int START_TET_ID 1024 is technically uninitialized in constructor
 
             // Constructor to reset START_TET_ID on the new value
+
+                // TODO: Is there a nice way to remove this code duplication
             morton_id_generator_t() : id_generator_t(START_TET_ID) {
-                // Empty
+		        // Empty
             }
 
             /**
@@ -102,7 +103,6 @@ namespace AMR {
             {
                 child_id_list_t c;
                 c.resize(count);
-                // TODO: Should this be range based?
                 for (size_t i = 0; i < count; i++)
                 {
                     c[i] = get_child_id(parent_id, i);
@@ -122,10 +122,7 @@ namespace AMR {
             static size_t get_child_id(size_t parent_id, size_t offset)
             {
                 // Try detect overflow
-                Assert(
-                        parent_id <= get_parent_id(std::numeric_limits<size_t>::max()),
-                        "Parent id is too large to make sense"
-                      );
+                assert( parent_id <= get_parent_id(std::numeric_limits<size_t>::max()));
                 return get_child_id(parent_id) + offset;
             }
 

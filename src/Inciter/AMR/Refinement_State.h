@@ -8,7 +8,7 @@
 #include <vector>
 #include <cstddef>
 
-#include "AMR_types.h"
+#include "types.h"
 
 namespace AMR {
     // Types
@@ -18,11 +18,11 @@ namespace AMR {
     const size_t DEFAULT_NUM_CHILDREN = 0; // Default to no children
 
     // TODO: Populate this enum with the available refinement cases
-    enum class Refinement_Case { initial_grid, one_to_two, one_to_four, one_to_eight,
+    enum Refinement_Case { initial_grid = 0, one_to_two, one_to_four, one_to_eight,
         two_to_eight, four_to_eight, none };
 
-    enum class Edge_Lock_Case {unlocked, locked, intermediate, temporary};
-
+    enum Edge_Lock_Case {unlocked = 0, locked, intermediate, temporary};
+     // TODO: Make these class enums? (breaks printing)
     struct Edge_Refinement {
         size_t A;
         size_t B;
@@ -30,8 +30,9 @@ namespace AMR {
         bool needs_refining; // TODO: This could possibly be deduced implicitly
         bool needs_derefining; // TODO: Marge this with needs_refining
         bool is_dead;
-        Edge_Lock_Case lock_case;
+        Edge_Lock_Case lock_case; // TODO: Refactor this to match _ style?
 
+        // Explicit Empty Constructor
         Edge_Refinement() :
             A(0),
             B(0),
@@ -54,7 +55,7 @@ namespace AMR {
                 bool needs_derefining_in,
                 bool is_dead_in,
                 Edge_Lock_Case lock_case_in
-        ) :
+                ) :
             A(A_in),
             B(B_in),
             refinement_criteria(refinement_criteria_in),
@@ -69,8 +70,9 @@ namespace AMR {
     };
 
     //stop it being copied around?
-    class Refinement_State
-    {
+
+    class Refinement_State {
+
         public:
 
             /// Common to active and master elements
@@ -81,6 +83,12 @@ namespace AMR {
             size_t refinement_level;
             size_t child_number;
             size_t parent_id;
+
+            // Only needed for active
+            //size_t master_element_number; // TODO: Some of these can be removed?
+
+            Refinement_State() {} // TODO: Remove?
+
 
             /**
              * @brief Constructor which allows for all data fields to be explicitly

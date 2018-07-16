@@ -38,7 +38,7 @@ using inciter::Refiner;
 Refiner::Refiner( const CProxy_Transporter& transporter,
                   const CProxy_Sorter& sorter,
                   const tk::CProxy_Solver& solver,
-                  const Scheme& scheme,                
+                  const Scheme& scheme,
                   const tk::RefinerCallback& cbr,
                   const tk::SorterCallback& cbs,
                   const std::vector< std::size_t >& ginpoel,
@@ -438,7 +438,7 @@ Refiner::finish()
   // create sorter Charm++ chare array elements using dynamic insertion
   m_sorter[ thisIndex ].insert( m_host, m_solver, m_cbs, m_scheme, m_ginpoel,
     m_coordmap, m_bface, m_triinpoel, m_bnode, m_nchare, CkMyPe() );
- 
+
   // Compute final number of cells across whole problem
   std::vector< std::uint64_t > mesh{ m_ginpoel.size()/4, m_coord[0].size() };
   contribute( mesh, CkReduction::sum_ulong, m_cbr.get< tag::refined >() );
@@ -622,10 +622,10 @@ Refiner::correctRefine( const tk::UnsMesh::EdgeSet& extra )
     std::vector< edge_t > edge;
     for (const auto& e : extra) edge.push_back( edge_t(e[0],e[1]) );
     std::vector< real_t > crit( edge.size(), 1.0 );
-  
+
     // Do refinement including edges that need to be corrected
     m_refiner.error_refinement( edge, crit );
-  
+
     // Update mesh coordinates and connectivity
     updateMesh();
   }

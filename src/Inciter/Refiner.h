@@ -24,6 +24,7 @@
 #include "Tags.h"
 #include "Callback.h"
 #include "UnsMesh.h"
+#include "Base/Fields.h"
 
 #include "NoWarning/transporter.decl.h"
 #include "NoWarning/refiner.decl.h"
