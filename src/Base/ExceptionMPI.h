@@ -43,7 +43,6 @@ namespace tk {
 //!    used to detect user or runtime errors from code sections that are
 //!    executed on multiple MPI ranks. Within asynchrounous Charm++ chares, the
 //!    simpler ErrChk macro suffices.
-#ifdef QUINOA_CONFIG_MPI_ENABLED
 #define ErrChkMPI(expr, ...) \
 { \
   int err = (expr) ? 0 : 1; \
@@ -57,7 +56,6 @@ namespace tk {
   int QUINOA_ErrChkMPI_err = (expr) ? 0 : 1; \
   if ( QUINOA_ErrChkMPI_err ) Throw( __VA_ARGS__); \
 }
-#endif
 
 } // tk::
 

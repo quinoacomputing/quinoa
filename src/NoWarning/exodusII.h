@@ -23,6 +23,7 @@
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
+  #pragma GCC diagnostic ignored "-Wredundant-decls"
 #endif
 
 #include <exodusII.h>
