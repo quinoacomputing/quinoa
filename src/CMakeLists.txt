@@ -98,18 +98,55 @@ if (NOT TPL_DIR)
   endif()
 endif()
 
-# Find MPI and get its underlying compilers
-include(MPICompilers)
-get_mpi_compilers()
+# Include third-party libraries configuration
+include(TPLs)
+
+# Compilers
+# =========
+# There are two sets of compilers, given by the following CMake variables:
+#
+# 1. The underlying compiler suite
+#    UNDERLYING_C_COMPILER
+#    UNDERLYING_CXX_COMPILER
+#    UNDERLYING_Fortran_COMPILER
+#
+# 2. The MPI wrappers (of the underlying compilers)
+#    MPI_C_COMPILER
+#    MPI_CXX_COMPILER
+#    MPI_Fortran_COMPILER
+
+# Find MPI and get its underlying compilers. If a traditional MPI (e.g.,
+# OpenMPI) is used, the get_mpi_compilers cmake function uses the built-in CMake
+# functionality to find the MPI wrappers and based on the wrappers detects the
+# underyling compilers. If Charm++'s Adaptive MPI (AMPI) is used, the Charm++
+# TPL build builds Charm++ as well as AMPI and we use the AMPI wrappers to build
+# MPI libraries.
+if(NOT ENABLE_AMPI)
+  include(MPICompilers)
+  get_mpi_compilers()
+  set(LINKER_COMPILER "${CHARM_COMPILER}")
+else()
+  set(MPI_C_COMPILER "${AMPI_C_COMPILER}")
+  set(MPI_CXX_COMPILER "${AMPI_CXX_COMPILER}")
+  set(UNDERLYING_C_COMPILER "${CMAKE_C_COMPILER}")
+  set(UNDERLYING_CXX_COMPILER "${CMAKE_CXX_COMPILER}")
+  set(LINKER_COMPILER "${AMPI_CXX_COMPILER}")
+  set(MPI_CXX_INCLUDE_DIRS "")
+  MESSAGE(STATUS "MPI C compiler: " ${MPI_C_COMPILER})
+  MESSAGE(STATUS "MPI C++ compiler: " ${MPI_CXX_COMPILER})
+  MESSAGE(STATUS "Underlying C compiler: " ${UNDERLYING_C_COMPILER})
+  MESSAGE(STATUS "Underlying C++ compiler: " ${UNDERLYING_CXX_COMPILER})
+  MESSAGE(STATUS "AMPIrun: " ${AMPI_RUN})
+endif()
+
+MESSAGE(STATUS "Charmrun: " ${CHARM_RUN})
+MESSAGE(STATUS "Linker compiler: " ${LINKER_COMPILER})
+
+message(STATUS "------------------------------------------")
 
 # Set compilers
 set(COMPILER ${UNDERLYING_CXX_COMPILER})
 set(MPI_COMPILER ${MPI_CXX_COMPILER})
-
-# If we have met the mandatory MPI dependency, add a definition
-if(${MPI_CXX_FOUND})
-  add_definitions(-DQUINOA_CONFIG_MPI_ENABLED)
-endif(${MPI_CXX_FOUND})
 
 # Mac OS X specifics
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -394,8 +431,8 @@ elseif(ARCH MATCHES "ppc64")
   SET(RUNNER_ARGS "")
   SET(RUNNER_REQUIRED true)
 else()
-  SET(RUNNER "${CMAKE_BINARY_DIR}/charmrun")
-  SET(RUNNER_NCPUS_ARG "+p")
+  SET(RUNNER "${AMPI_RUN}")
+  SET(RUNNER_NCPUS_ARG "-n")
 endif()
 
 # Set default parallel/serial job runner extra arguments
@@ -406,8 +443,12 @@ if (NOT ARCH MATCHES "ppc64" AND
     NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
     NOT DEFINED ENV{CRAY_PRGENVINTEL})
 
-  set(RUNNER_ARGS "--bind-to none -oversubscribe"
-      CACHE STRING "Arguments to pass to the parallel/serial job runner, e.g., mpirun.")
+  if(ENABLE_AMPI)
+    SET(RUNNER_ARGS "")
+  else()
+    set(RUNNER_ARGS "--bind-to none -oversubscribe"
+        CACHE STRING "Arguments to pass to the parallel/serial job runner, e.g., mpirun.")
+  endif()
 
 endif()
 
@@ -419,9 +460,6 @@ message(STATUS "Parallel/serial job runner args: ${RUNNER_ARGS}")
 
 # Attempt to find tools required for code coverage analysis
 include(DetectCodeCoverage)
-
-# Include third-party libraries configuration
-include(TPLs)
 
 # Set compiler flags to perform code coverage analysis
 if(CODE_COVERAGE)
@@ -531,7 +569,6 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/Statistics
                     ${QUINOA_SOURCE_DIR}/UnitTest
                     ${MPI_CXX_INCLUDE_DIRS}
-                    ${MPI_CXX_INCLUDE_PATH}
                     ${MKL_INCLUDE_DIRS}
                     ${HDF5_INCLUDE_DIRS}
                     ${HYPRE_INCLUDE_DIRS}
