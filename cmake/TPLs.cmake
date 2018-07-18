@@ -53,7 +53,6 @@ set(PSTREAMS_ROOT ${TPL_DIR}) # prefer ours
 find_package(PStreams REQUIRED)
 
 #### Hypre
-set(HYPRE_ROOT ${TPL_DIR}) # prefer ours
 find_package(Hypre 2.9.0 REQUIRED)
 
 #### PugiXML
@@ -94,7 +93,6 @@ else()
 endif()
 
 #### H5Part
-set(H5PART_ROOT ${TPL_DIR}) # prefer ours
 find_package(H5Part REQUIRED)
 
 #### AEC (only for static link)
@@ -155,7 +153,6 @@ else()
 endif()
 
 #### Configure Omega_h
-set(OMEGA_H_ROOT ${TPL_DIR}) # prefer ours
 find_package(Omega_h)
 if(OMEGA_H_FOUND)
   set(HAS_OMEGA_H true)  # will become compiler define in Main/QuinoaConfig.h
