@@ -142,7 +142,7 @@ endif()
 MESSAGE(STATUS "Charmrun: " ${CHARM_RUN})
 MESSAGE(STATUS "Linker compiler: " ${LINKER_COMPILER})
 
-#add_definitions(-DQUINOA_CONFIG_MPI_ENABLED)
+add_definitions(-DQUINOA_CONFIG_MPI_ENABLED)
 
 # Set compilers
 set(COMPILER ${UNDERLYING_CXX_COMPILER})
