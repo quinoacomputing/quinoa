@@ -28,10 +28,15 @@ if (OMEGA_H_INCLUDE_DIRS AND OMEGA_H_LIBRARIES)
   set (Omega_h_FIND_QUIETLY TRUE)
 endif()
 
+if (OMEGA_H_ROOT)
+  set(OMEGA_H_SEARCH_OPTS NO_DEFAULT_PATH)
+endif()
+
 # Look for the header file
 FIND_PATH(OMEGA_H_INCLUDE_DIR NAMES Omega_h_library.hpp
                               HINTS ${OMEGA_H_ROOT}/include
-                                    $ENV{OMEGA_H_ROOT}/include)
+                                    $ENV{OMEGA_H_ROOT}/include
+                                    ${OMEGA_H_SEARCH_OPTS})
 
 # Look for the library
 if(NOT BUILD_SHARED_LIBS)
