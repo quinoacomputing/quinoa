@@ -22,7 +22,7 @@
 
 #include "NoWarning/charm.h"
 #include "NoWarning/mpi.h"
-//#include "NoWarning/mpi-interoperate.h"
+#include "NoWarning/mpi-interoperate.h"
 
 #include "NoWarning/tutsuite.decl.h"
 #include "NoWarning/unittest.decl.h"
@@ -312,8 +312,8 @@ int main( int argc, char **argv ) {
   MPI_Comm_size( MPI_COMM_WORLD, &numpes );
 
   // Run serial and Charm++ unit test suite
-  //CharmLibInit( MPI_COMM_WORLD, argc, argv );
-  //CharmLibExit();
+  CharmLibInit( MPI_COMM_WORLD, argc, argv );
+  CharmLibExit();
 
   bool mpipass = true;
 
