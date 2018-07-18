@@ -142,7 +142,7 @@ endif()
 MESSAGE(STATUS "Charmrun: " ${CHARM_RUN})
 MESSAGE(STATUS "Linker compiler: " ${LINKER_COMPILER})
 
-message(STATUS "------------------------------------------")
+#add_definitions(-DQUINOA_CONFIG_MPI_ENABLED)
 
 # Set compilers
 set(COMPILER ${UNDERLYING_CXX_COMPILER})
@@ -431,8 +431,8 @@ elseif(ARCH MATCHES "ppc64")
   SET(RUNNER_ARGS "")
   SET(RUNNER_REQUIRED true)
 else()
-  SET(RUNNER "${AMPI_RUN}")
-  SET(RUNNER_NCPUS_ARG "-n")
+  SET(RUNNER "${CHARM_RUN}")
+  SET(RUNNER_NCPUS_ARG "+p")
 endif()
 
 # Set default parallel/serial job runner extra arguments

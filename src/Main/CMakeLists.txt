@@ -12,7 +12,7 @@ include(charm)
 
 # Link executables with the charmc wrapper
 STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
-       "${LINKER_COMPILER} -module DistributedLB -c++ <CMAKE_CXX_COMPILER>"
+       "${LINKER_COMPILER} -memory isomalloc -module DistributedLB -c++ <CMAKE_CXX_COMPILER>"
        CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE}")
 
 include(ConfigExecutable)
