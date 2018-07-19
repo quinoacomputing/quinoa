@@ -41,9 +41,6 @@ if(Boost_FOUND)
   include_directories(${Boost_INCLUDE_DIR})
 endif()
 
-set(CARTESIAN_PRODUCT_ROOT ${TPL_DIR}) # prefer ours
-find_package(CartesianProduct REQUIRED)
-
 #### TUT
 set(TUT_ROOT ${TPL_DIR}) # prefer ours
 find_package(TUT REQUIRED)
