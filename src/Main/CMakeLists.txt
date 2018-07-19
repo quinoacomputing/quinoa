@@ -28,6 +28,10 @@ INSTALL(TARGETS Config
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
 
+if (HAS_ROOT)
+  set(ROOTMESHIO "RootMeshIO")
+endif()
+
 ## UnitTest executable ########################################################
 add_executable(${UNITTEST_EXECUTABLE}
                UnitTestDriver.C
@@ -39,7 +43,11 @@ config_executable(${UNITTEST_EXECUTABLE})
 target_link_libraries(${UNITTEST_EXECUTABLE}
                       Base
                       Config
-                      MeshIO
+                      NativeMeshIO
+                      ExodusIIMeshIO
+                      OmegaHMeshIO
+                      HyperMeshIO
+                      MeshDetect
                       Mesh
                       RNG
                       LoadBalance
@@ -53,7 +61,6 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
-                      ${ROOT_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
                       ${HDF5_C_LIBRARIES}
@@ -85,10 +92,12 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       Base
                       Config
                       IO
-                      MeshIO
+                      ExodusIIMeshIO
+                      OmegaHMeshIO
+                      ${ROOTMESHIO}
+                      MeshDetect
                       Mesh
                       Statistics
-                      ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${HYPRE_LIBRARIES}
                       ${ROOT_LIBRARIES}
@@ -150,14 +159,16 @@ add_executable(${MESHCONV_EXECUTABLE}
 config_executable(${MESHCONV_EXECUTABLE})
 
 target_link_libraries(${MESHCONV_EXECUTABLE}
-                      MeshIO
+                      NativeMeshIO
+                      ExodusIIMeshIO
+                      HyperMeshIO
+                      MeshDetect
                       Mesh
                       MeshConvControl
                       Base
                       Config
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
-                      ${ROOT_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
                       ${HDF5_C_LIBRARIES}
@@ -187,7 +198,6 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       WalkerControl
                       Base
                       Config
-                      ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${LAPACKE_LIBRARIES}      # only if MKL not found
                       ${MKL_INTERFACE_LIBRARY}
@@ -216,15 +226,15 @@ if (HAS_ROOT)
   config_executable(${FILECONV_EXECUTABLE})
 
   target_link_libraries(${FILECONV_EXECUTABLE}
-			MeshIO
-			Mesh
+                        ExodusIIMeshIO
+                        ${ROOTMESHIO}
+                        Mesh
                         FileConvControl
                         Base
                         Config
-			${PUGIXML_LIBRARIES}
-	                ${SEACASExodus_LIBRARIES}
-	                ${ROOT_LIBRARIES}
-		        ${NETCDF_LIBRARIES}       # only for static link
+                        ${SEACASExodus_LIBRARIES}
+                        ${ROOT_LIBRARIES}
+                        ${NETCDF_LIBRARIES}       # only for static link
                         ${BACKWARD_LIBRARIES}
                         ${OMEGA_H_LIBRARIES}
   )
