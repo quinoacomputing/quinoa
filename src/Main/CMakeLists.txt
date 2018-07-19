@@ -53,8 +53,7 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
-                      ${Zoltan2_LIBRARIES}
-                      ${H5PART_LIBRARIES}
+                      #${H5PART_LIBRARIES}
                       ${ROOT_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
@@ -82,6 +81,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       Inciter
                       MeshRefinement
                       LoadBalance
+                      ZoltanInterOp
                       LinSys
                       Base
                       Config
