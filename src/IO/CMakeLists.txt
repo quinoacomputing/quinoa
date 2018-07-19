@@ -6,7 +6,6 @@ add_library(IO
             PDFWriter.C
             TxtStatWriter.C
             DiagWriter.C
-            H5PartWriter.C
 )
 
 set_target_properties(IO PROPERTIES LIBRARY_OUTPUT_NAME quinoa_io)
@@ -46,6 +45,18 @@ add_library(MeshIO
 set_target_properties(MeshIO PROPERTIES LIBRARY_OUTPUT_NAME quinoa_meshio)
 
 INSTALL(TARGETS MeshIO
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+)
+
+add_library(ParticleIO
+            H5PartWriter.C)
+
+set_target_properties(ParticleIO PROPERTIES LIBRARY_OUTPUT_NAME
+                      quinoa_particleio)
+
+INSTALL(TARGETS ParticleIO
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
