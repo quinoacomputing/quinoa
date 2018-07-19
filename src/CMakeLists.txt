@@ -540,7 +540,6 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${PUGIXML_INCLUDE_DIRS}
                     ${H5PART_INCLUDE_DIRS}
                     ${TUT_INCLUDE_DIRS}
-                    ${CARTESIAN_PRODUCT_INCLUDE_DIRS}
                     ${PEGTL_INCLUDE_DIRS}
                     ${RANDOM123_INCLUDE_DIRS}
                     ${TESTU01_INCLUDE_DIRS}
