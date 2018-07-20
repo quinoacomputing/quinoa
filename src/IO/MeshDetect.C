@@ -9,6 +9,7 @@
 
 #include <string>
 #include <fstream>
+#include <stdexcept>
 
 #include "MeshDetect.h"
 #include "Exception.h"
