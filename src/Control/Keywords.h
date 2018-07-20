@@ -2758,23 +2758,23 @@ struct mixmassfracbeta_info {
   static std::string shortDescription() { return
     "Introduce the mixmassfracbeta SDE input block"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce a mixmassfracbeta ... end block, used
-    to specify the configuration of a system of mix mass-fraction beta SDEs, a
-    system of stochastic differential equations (SDEs), whose solution is the
-    joint beta distribution and in which the usual beta SDE parameters b and
-    kappa are specified via functions that constrain the beta SDE to be
-    consistent with the turbulent mixing process. The mix mass-fraction beta
-    SDE is similar to the mass-fraction beta SDE, only the process is made
-    consistent with the no-mix and fully mixed limits via the specification of
-    the SDE coefficients b and kappa. As in the mass-fraction beta SDE, Y is
-    governed by the beta SDE and two additional stochastic variables are
-    computed. However, in the mix mass-fraction beta SDE the parameters b and
-    kappa are given by b = Theta * b' and kappa = kappa' * <y^2>, where Theta =
-    1 - <y^2> / [ <Y> ( 1 - <Y> ], the fluctuation about the mean, <Y>, is
-    defined as usual: y = Y - <Y>, and b' and kappa' are user-specified
-    constants. Similar to the mass-fraction beta SDE, there two additional
-    random variables computed besides, Y, and they are rho(Y) and V(Y). For more
-    detail on the mass-fraction beta SDE, see the help on keyword
+    R"(This keyword is used in multiple ways: (1) To introduce a mixmassfracbeta
+    ... end block, used to specify the configuration of a system of mix
+    mass-fraction beta SDEs, a system of stochastic differential equations
+    (SDEs), whose solution is the joint beta distribution and in which the usual
+    beta SDE parameters b and kappa are specified via functions that constrain
+    the beta SDE to be consistent with the turbulent mixing process. The mix
+    mass-fraction beta SDE is similar to the mass-fraction beta SDE, only the
+    process is made consistent with the no-mix and fully mixed limits via the
+    specification of the SDE coefficients b and kappa. As in the mass-fraction
+    beta SDE, Y is governed by the beta SDE and two additional stochastic
+    variables are computed. However, in the mix mass-fraction beta SDE the
+    parameters b and kappa are given by b = Theta * b' and kappa = kappa' *
+    <y^2>, where Theta = 1 - <y^2> / [ <Y> ( 1 - <Y> ], the fluctuation about
+    the mean, <Y>, is defined as usual: y = Y - <Y>, and b' and kappa' are
+    user-specified constants. Similar to the mass-fraction beta SDE, there two
+    additional random variables computed besides, Y, and they are rho(Y) and
+    V(Y). For more detail on the mass-fraction beta SDE, see the help on keyword
     'massfracbeta'. For more details on the beta SDE, see
     https://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
     allowed in a mixmassfracbeta ... end block: )"
@@ -2790,9 +2790,14 @@ struct mixmassfracbeta_info {
     + sde_rho2::string() + "\', \'"
     + hydrotimescales::string() + "\', \'"
     + hydroproductions::string() + "\', \'"
+    + "velocity" + "\', \'"
+    + "dissipation" + "\', \'"
     + sde_r::string() + "\'. "
     + R"(For an example mixmassfracbeta ... end block, see
-      doc/html/walker_example_mixmassfracbeta.html.)";
+    doc/html/walker_example_mixmassfracbeta.html. (2) To specify a dependent
+    variable (by a character) used to couple a differential equation system, in
+    which the 'mixmassfracbeta' keyword appears) to another labeled by a
+    'depvar'.)";
   }
 };
 using mixmassfracbeta =
@@ -2892,14 +2897,15 @@ using variant = keyword< variant_info, TAOCPP_PEGTL_STRING("variant") >;
 struct position_info {
   static std::string name() { return "position"; }
   static std::string shortDescription() { return
-    "Introduce the (particle) position equation input block"; }
+    "Introduce the (particle) position equation input block or coupling"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce a position ... end block, used to
-    specify the configuration of a system of deterministic or stochastic
-    differential equations, governing particle positions usually in conjunction
-    with velocity model, e.g, the Langevin, model. Note that the random number
-    generator r123_philox is automatically put on the list as a selected RNG if
-    no RNG is selected. Keywords allowed in a position ... end block: )" +
+    R"(This keyword is used in different ways: (1) To introduce a position ...
+    end block, used to specify the configuration of a system of deterministic or
+    stochastic differential equations, governing particle positions usually in
+    conjunction with velocity model, e.g, the Langevin, model. Note that the
+    random number generator r123_philox is automatically put on the list as a
+    selected RNG if no RNG is selected. Keywords allowed in a position ... end
+    block: )" +
     std::string("\'")
     + depvar::string()+ "\', \'"
     + rng::string() + "\', \'"
@@ -2907,7 +2913,9 @@ struct position_info {
     + coeff::string() + "\', \'"
     + "velocity" + "\', \'"
     + R"(For an example position ... end block, see
-      doc/html/walker_example_position.html.)";
+    doc/html/walker_example_position.html. (2) To specify a dependent
+    variable (by a character) used to couple a differential equation system, in
+    which the 'position' keyword appears) to another labeled by a 'depvar'.)";
   }
 };
 using position = keyword< position_info, TAOCPP_PEGTL_STRING("position") >;
@@ -2915,15 +2923,16 @@ using position = keyword< position_info, TAOCPP_PEGTL_STRING("position") >;
 struct dissipation_info {
   static std::string name() { return "dissipation"; }
   static std::string shortDescription() { return
-    "Introduce the (particle) dissipation equation input block"; }
+    "Introduce the (particle) dissipation equation input block or coupling"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce a dissipation ... end block, used to
-    specify the configuration of a system of deterministic or stochastic
-    differential equations, governing a particle quantity that models the
-    dissipation rate of turbulent kinetic energy, used to coupled to particle
-    velocity model, e.g, the Langevin, model. Note that the random number
-    generator r123_philox is automatically put on the list as a selected RNG if
-    no RNG is selected. Keywords allowed in a dissipation ... end block: )" +
+    R"(This keyword is used in different ways: (1) To introduce a dissipation
+    ... end block, used to specify the configuration of a system of
+    deterministic or stochastic differential equations, governing a particle
+    quantity that models the dissipation rate of turbulent kinetic energy, used
+    to coupled to particle velocity model, e.g, the Langevin, model. Note that
+    the random number generator r123_philox is automatically put on the list as
+    a selected RNG if no RNG is selected. Keywords allowed in a dissipation ...
+    end block: )" +
     std::string("\'")
     + depvar::string()+ "\', \'"
     + rng::string() + "\', \'"
@@ -2931,7 +2940,9 @@ struct dissipation_info {
     + coeff::string() + "\', \'"
     + "velocity" + "\', \'"
     + R"(For an example dissipation ... end block, see
-      doc/html/walker_example_dissipation.html.)";
+    doc/html/walker_example_dissipation.html. (2) To specify a dependent
+    variable (by a character) used to couple a differential equation system, in
+    which the 'dissipation' keyword appears) to another labeled by a 'depvar'.)";
   }
 };
 using dissipation =
@@ -2940,13 +2951,14 @@ using dissipation =
 struct velocity_info {
   static std::string name() { return "velocity"; }
   static std::string shortDescription() { return
-    "Introduce the velocity equation input block"; }
+    "Introduce the velocity equation input block or coupling"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce a velocity ... end block, used to
-    specify the configuration of a system of stochastic differential equations
-    (SDEs), governed by the Langevin model for the fluctuating velocity in
-    homogeneous variable-density turbulence. For more details on this Langevin
-    model, see https://doi.org/10.1080/14685248.2011.554419 and
+    R"(This keyword is used in different ways: (1) To introduce a velocity ...
+    end block, used to specify the configuration of a system of stochastic
+    differential equations (SDEs), governed by the Langevin model for the
+    fluctuating velocity in homogeneous variable-density turbulence. For more
+    details on this Langevin model, see
+    https://doi.org/10.1080/14685248.2011.554419 and
     src/DiffEq/Velocity.h. Keywords allowed in a velocity ... end block: )" +
     std::string("\'")
     + depvar::string()+ "\', \'"
@@ -2958,8 +2970,11 @@ struct velocity_info {
     + sde_c0::string() + "\'. "
     + position::string() + "\', \'"
     + dissipation::string() + "\', \'"
+    + mixmassfracbeta::string() + "\', \'"
     + R"(For an example velocity ... end block, see
-      doc/html/walker_example_velocity.html.)";
+    doc/html/walker_example_velocity.html. (2) To specify a dependent
+    variable (by a character) used to couple a differential equation system, in
+    which the 'velocity' keyword appears) to another labeled by a 'depvar'.)";
   }
 };
 using velocity = keyword< velocity_info, TAOCPP_PEGTL_STRING("velocity") >;
