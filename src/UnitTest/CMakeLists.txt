@@ -9,12 +9,13 @@ add_library(UnitTest
             Assessment.C
             TUTSuite.C
             TUTTest.C
+            tests/TestBase.C
 )
 
 addCharmModule( "tuttest" "UnitTest" )
 addCharmModule( "tutsuite" "UnitTest" )
 addCharmModule( "charmchild" "UnitTest" )
-addCharmModule( "migrated" "UnitTest" )
+addCharmModule( "migrated_base" "UnitTest" )
 addCharmModule( "charmtimer" "UnitTest" )
 addCharmModule( "testarray" "UnitTest" )
 

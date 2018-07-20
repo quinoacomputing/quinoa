@@ -1,16 +1,15 @@
 // *****************************************************************************
 /*!
-  \file      src/UnitTest/migrated.ci
+  \file      src/UnitTest/migrated_base.ci
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for migrated test chare Migrated
-  \details   Charm++ module interface file for migrated test chare Migrated
+  \details   Charm++ module interface file for migrated test chare Migrated.
 */
 // *****************************************************************************
 
-module migrated {
+module migrated_base {
 
   include "tests/Base/MigratedTypes.h";
-  include "Scheme.h";
 
   namespace tut {
 
@@ -29,12 +28,6 @@ module migrated {
       entry Migrated( charm::TaggedTuple t );
       entry Migrated( charm::Variant v, int value );
       entry Migrated( charm::Variant v, double value );
-    }
-
-    chare Receiver {
-      entry Receiver( const inciter::Scheme& s,
-                      int expected,
-                      std::string label );
     }
 
   } // tut::

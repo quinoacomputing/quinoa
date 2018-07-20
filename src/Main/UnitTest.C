@@ -41,78 +41,52 @@
 #include "UnitTestPrint.h"
 #include "UnitTestDriver.h"
 #include "UnitTest/CmdLine/Parser.h"
+#include "TUTConfig.h"
 
-namespace tut {
+// Unit test groups to be tested. Each file defines a different test group.
 
-//! \brief Maximum number of tests in every test group to attempt to run
-//! \details If any of the unit test groups have more tests than this number,
-//!   this should be increased. All test groups included below will use this
-//!   value to override the default template argument for tut::test_group<>.
-const int MAX_TESTS_IN_GROUP = 80;
+// #include "tests/Control/TestSystemComponents.h"
+// #include "tests/Control/TestControl.h"
+// #include "tests/Control/TestFileParser.h"
+// #include "tests/Control/TestStringParser.h"
+// #include "tests/Control/TestToggle.h"
+// #ifdef HAS_MKL
+//   #include "tests/Control/Options/TestMKLUniformMethod.h"
+//   #include "tests/Control/Options/TestMKLGaussianMethod.h"
+//   #include "tests/Control/Options/TestMKLBetaMethod.h"
+//   #include "tests/Control/Options/TestMKLGammaMethod.h"
+// #endif
+// #include "tests/Control/Options/TestRNG.h"
+// 
+// #include "tests/IO/TestMesh.h"
+// #include "tests/IO/TestExodusIIMeshReader.h"
+// #include "tests/IO/TestMeshReader.h"
+// 
+// #include "tests/Mesh/TestDerivedData.h"
+// #include "tests/Mesh/TestReorder.h"
+// #include "tests/Mesh/TestGradients.h"
+// #include "tests/Mesh/TestAround.h"
+// 
+// #include "tests/RNG/TestRNG.h"
+// #ifdef HAS_MKL
+//   #include "tests/RNG/TestMKLRNG.h"
+// #endif
+// #ifdef HAS_RNGSSE2
+// #include "tests/RNG/TestRNGSSE.h"
+// #endif
+// #include "tests/RNG/TestRandom123.h"
+// 
+// #include "tests/LoadBalance/TestLoadDistributor.h"
+// #include "tests/LoadBalance/TestLinearMap.h"
+// #include "tests/LoadBalance/TestUnsMeshMap.h"
 
-} // tut::
-
-// // Unit test groups to be tested. Each file defines a different test group.
-#include "tests/Base/TestFactory.h"
-#include "tests/Base/TestTimer.h"
-#include "tests/Base/TestPUPUtil.h"
-
-#include "tests/Base/TestFlip_map.h"
-#include "tests/Base/TestHas.h"
-#include "tests/Base/TestData.h"
-#include "tests/Base/TestPrint.h"
-#include "tests/Base/TestTaggedTuple.h"
-#include "tests/Base/TestException.h"
-#include "tests/Base/TestExceptionMPI.h"
-#include "tests/Base/TestReader.h"
-#include "tests/Base/TestStrConvUtil.h"
-#include "tests/Base/TestWriter.h"
-#include "tests/Base/TestProcessControl.h"
-#include "tests/Base/TestVector.h"
-#include "tests/Base/TestContainerUtil.h"
-
-#include "tests/Control/TestSystemComponents.h"
-#include "tests/Control/TestControl.h"
-#include "tests/Control/TestFileParser.h"
-#include "tests/Control/TestStringParser.h"
-#include "tests/Control/TestToggle.h"
-#ifdef HAS_MKL
-  #include "tests/Control/Options/TestMKLUniformMethod.h"
-  #include "tests/Control/Options/TestMKLGaussianMethod.h"
-  #include "tests/Control/Options/TestMKLBetaMethod.h"
-  #include "tests/Control/Options/TestMKLGammaMethod.h"
-#endif
-#include "tests/Control/Options/TestRNG.h"
-
-#include "tests/IO/TestMesh.h"
-#include "tests/IO/TestExodusIIMeshReader.h"
-#include "tests/IO/TestMeshReader.h"
-
-#include "tests/Mesh/TestDerivedData.h"
-#include "tests/Mesh/TestReorder.h"
-#include "tests/Mesh/TestGradients.h"
-#include "tests/Mesh/TestAround.h"
-
-#include "tests/RNG/TestRNG.h"
-#ifdef HAS_MKL
-  #include "tests/RNG/TestMKLRNG.h"
-#endif
-#ifdef HAS_RNGSSE2
-#include "tests/RNG/TestRNGSSE.h"
-#endif
-#include "tests/RNG/TestRandom123.h"
-
-#include "tests/LoadBalance/TestLoadDistributor.h"
-#include "tests/LoadBalance/TestLinearMap.h"
-#include "tests/LoadBalance/TestUnsMeshMap.h"
+// #include "tests/Inciter/TestScheme.h"
+// #include "tests/Inciter/AMR/TestError.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wmissing-variable-declarations"
 #endif
-
-#include "tests/Inciter/TestScheme.h"
-#include "tests/Inciter/AMR/TestError.h"
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
@@ -433,8 +407,5 @@ int main( int argc, char **argv ) {
   stop( mpipass );
 }
 
-#include "NoWarning/charmchild.def.h"
-#include "NoWarning/charmtimer.def.h"
-#include "NoWarning/migrated.def.h"
 #include "NoWarning/testarray.def.h"
 #include "NoWarning/unittest.def.h"
