@@ -176,6 +176,7 @@ struct id {};
 struct position_id {};
 struct velocity_id {};
 struct dissipation_id {};
+struct mixmassfracbeta_id {};
 struct edge {};
 struct cv {};
 struct k {};

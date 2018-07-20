@@ -15,7 +15,7 @@
 #include <string>
 
 #include "Types.h"
-#include "MeshFactory.h"
+#include "MeshDetect.h"
 #include "Make_unique.h"
 #include "ExodusIIMeshReader.h"
 
