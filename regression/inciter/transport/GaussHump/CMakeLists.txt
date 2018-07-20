@@ -3,7 +3,7 @@
 
 # Virtualization = 0
 
-add_regression_test(gauss_hump ${INCITER_EXECUTABLE}
+add_regression_test(gauss_hump_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES gauss_hump.q unitsquare_01_3.6k.exo diag.std
                                exodiff.cfg gauss_hump.std.exo
@@ -15,7 +15,7 @@ add_regression_test(gauss_hump ${INCITER_EXECUTABLE}
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
 
-add_regression_test(gauss_hump ${INCITER_EXECUTABLE}
+add_regression_test(gauss_hump_dg ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES gauss_hump.q unitsquare_01_3.6k.exo diag.std
                                exodiff.cfg
@@ -40,7 +40,7 @@ add_regression_test(gauss_hump ${INCITER_EXECUTABLE}
 
 # Parallel + virtualization
 
-add_regression_test(gauss_hump_u0.4 ${INCITER_EXECUTABLE}
+add_regression_test(gauss_hump_dg_u0.4 ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES gauss_hump.q unitsquare_01_3.6k.exo diag.std
                                exodiff.cfg
