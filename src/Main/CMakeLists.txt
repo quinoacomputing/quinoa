@@ -32,6 +32,10 @@ if (HAS_ROOT)
   set(ROOTMESHIO "RootMeshIO")
 endif()
 
+if (HAS_OMEGA_H)
+  set(OMEGAHMESHIO "OmegaHMeshIO")
+endif()
+
 ## UnitTest executable ########################################################
 add_executable(${UNITTEST_EXECUTABLE}
                UnitTestDriver.C
@@ -45,7 +49,7 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       Config
                       NativeMeshIO
                       ExodusIIMeshIO
-                      OmegaHMeshIO
+                      ${OMEGAHMESHIO}
                       HyperMeshIO
                       MeshDetect
                       Mesh
@@ -93,7 +97,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       Config
                       IO
                       ExodusIIMeshIO
-                      OmegaHMeshIO
+                      ${OMEGAHMESHIO}
                       ${ROOTMESHIO}
                       MeshDetect
                       Mesh
