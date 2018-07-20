@@ -196,6 +196,21 @@ void destroy( Container& c ) {
   typename std::remove_reference< decltype(c) >::type().swap( c );
 }
 
+// *****************************************************************************
+//! Remove items from container based on predicate
+//! \tparam Container Type of container to remove from
+//! \tparam Predicate Type for functor defining the predicate
+//! \param items Container object to remove from
+//! \param predicate Predicate object instance to use
+// *****************************************************************************
+template< typename Container, typename Predicate >
+void erase_if( Container& items, const Predicate& predicate ) {
+  for ( auto it = items.begin(); it != items.end(); ) {
+    if ( predicate(*it) ) it = items.erase(it);
+    else ++it;
+  }
+};
+
 } // tk::
 
 #endif // ContainerUtil_h

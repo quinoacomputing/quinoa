@@ -228,12 +228,12 @@ Transporter::createPartitioner()
     // Read boundary-face connectivity on side sets
     mr.readSidesetFaces( belem, faces );
     // Verify boundarty condition (BC) side sets used exist in mesh file
-    verifyBCsExist( g_dgpde, belem );
+    matchBCs( g_dgpde, belem );
   } else {
     // Read node lists on side sets
     bnode = mr.readSidesets();
     // Verify boundarty condition (BC) side sets used exist in mesh file
-    verifyBCsExist( g_cgpde, bnode );
+    matchBCs( g_cgpde, bnode );
   }
 
   // Create partitioner callbacks (order matters)
