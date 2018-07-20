@@ -209,7 +209,7 @@ void erase_if( Container& items, const Predicate& predicate ) {
     if ( predicate(*it) ) it = items.erase(it);
     else ++it;
   }
-};
+}
 
 } // tk::
 

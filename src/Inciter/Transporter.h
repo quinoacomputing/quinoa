@@ -245,6 +245,8 @@ class Transporter : public CBase_Transporter {
       tk::erase_if( bnd, [&]( Pair& item ) {
         return sidesets_as_bc.find( item.first ) == end(sidesets_as_bc);
       });
+      // Warn on no BCs
+      if (bnd.empty()) m_print << "\n>>> WARNING: No boundary conditions set\n";
     }
 };
 
