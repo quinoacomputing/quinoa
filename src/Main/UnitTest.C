@@ -43,12 +43,6 @@
 #include "UnitTest/CmdLine/Parser.h"
 #include "TUTConfig.h"
 
-// Unit test groups to be tested. Each file defines a different test group.
-
-// #include "tests/IO/TestMesh.h"
-// #include "tests/IO/TestExodusIIMeshReader.h"
-// #include "tests/IO/TestMeshReader.h"
-// 
 // #include "tests/Mesh/TestDerivedData.h"
 // #include "tests/Mesh/TestReorder.h"
 // #include "tests/Mesh/TestGradients.h"
