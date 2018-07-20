@@ -5,10 +5,8 @@ project(LoadBalance CXX)
 include(charm)
 
 add_library(LoadBalance
-            CommMap.C
             LinearMap.C
             UnsMeshMap.C
-            ZoltanInterOp.C
 )
 
 addCharmModule( "linearmap" "LoadBalance" )
@@ -18,7 +16,19 @@ set_target_properties(LoadBalance PROPERTIES
                       LIBRARY_OUTPUT_NAME quinoa_loadbalance)
 
 INSTALL(TARGETS LoadBalance
-  	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
-  	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
- 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+)
+
+add_library(ZoltanInterOp
+            ZoltanInterOp.C)
+
+set_target_properties(ZoltanInterOp PROPERTIES
+                      LIBRARY_OUTPUT_NAME quinoa_zoltaninterop)
+
+INSTALL(TARGETS ZoltanInterOp
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
