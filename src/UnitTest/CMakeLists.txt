@@ -13,6 +13,7 @@ add_library(UnitTest
             tests/TestInciter.C
             tests/TestControl.C
             tests/TestIO.C
+            tests/TestMesh.C
 )
 
 addCharmModule( "tuttest" "UnitTest" )

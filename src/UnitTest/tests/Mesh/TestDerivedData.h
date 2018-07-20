@@ -115,6 +115,8 @@
 #include "NoWarning/tut.h"
 
 #include "DerivedData.h"
+#include "Reorder.h"
+#include "ExodusIIMeshReader.h"
 
 namespace tut {
 
