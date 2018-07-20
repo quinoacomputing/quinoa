@@ -12,6 +12,7 @@
 #include "NoWarning/tut.h"
 
 #include "FileParser.h"
+#include "Print.h"
 
 namespace unittest {
 

@@ -45,19 +45,6 @@
 
 // Unit test groups to be tested. Each file defines a different test group.
 
-// #include "tests/Control/TestSystemComponents.h"
-// #include "tests/Control/TestControl.h"
-// #include "tests/Control/TestFileParser.h"
-// #include "tests/Control/TestStringParser.h"
-// #include "tests/Control/TestToggle.h"
-// #ifdef HAS_MKL
-//   #include "tests/Control/Options/TestMKLUniformMethod.h"
-//   #include "tests/Control/Options/TestMKLGaussianMethod.h"
-//   #include "tests/Control/Options/TestMKLBetaMethod.h"
-//   #include "tests/Control/Options/TestMKLGammaMethod.h"
-// #endif
-// #include "tests/Control/Options/TestRNG.h"
-// 
 // #include "tests/IO/TestMesh.h"
 // #include "tests/IO/TestExodusIIMeshReader.h"
 // #include "tests/IO/TestMeshReader.h"
