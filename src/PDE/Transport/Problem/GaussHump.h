@@ -79,10 +79,17 @@ class TransportProblemGaussHump {
     //!   in this PDE system
     //! \param[in,out] conf Set of unique side set IDs to add to
     static void side( std::unordered_set< int >& conf ) {
-      using tag::param; using tag::transport; using tag::bcdir;
-      for (const auto& s : g_inputdeck.get< param, transport, bcdir >())
-        for (const auto& i : s)
-          conf.insert( std::stoi(i) );
+      using tag::param; using tag::transport;
+
+      for (const auto& s : g_inputdeck.get< param, transport, tag::bcinlet >())
+        for (const auto& i : s) conf.insert( std::stoi(i) );
+
+      for (const auto& s : g_inputdeck.get< param, transport, tag::bcoutlet >())
+        for (const auto& i : s) conf.insert( std::stoi(i) );
+
+      for (const auto& s : g_inputdeck.get< param, transport,
+                                            tag::bcextrapolate >())
+        for (const auto& i : s) conf.insert( std::stoi(i) );
     }
 
     //! Assign prescribed velocity at a point
