@@ -37,15 +37,10 @@
 #include "Assessment.h"
 #include "ProcessException.h"
 #include "UnitTest/CmdLine/CmdLine.h"
-#include "TestArray.h"
 #include "UnitTestPrint.h"
 #include "UnitTestDriver.h"
 #include "UnitTest/CmdLine/Parser.h"
 #include "TUTConfig.h"
-
-// #include "tests/LoadBalance/TestLoadDistributor.h"
-// #include "tests/LoadBalance/TestLinearMap.h"
-// #include "tests/LoadBalance/TestUnsMeshMap.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -371,5 +366,4 @@ int main( int argc, char **argv ) {
   stop( mpipass );
 }
 
-#include "NoWarning/testarray.def.h"
 #include "NoWarning/unittest.def.h"

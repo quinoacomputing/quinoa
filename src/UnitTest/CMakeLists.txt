@@ -15,6 +15,7 @@ add_library(UnitTest
             tests/TestIO.C
             tests/TestMesh.C
             tests/TestRNG.C
+            tests/TestLoadBalance.C
 )
 
 addCharmModule( "tuttest" "UnitTest" )
