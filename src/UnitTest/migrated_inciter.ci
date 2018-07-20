@@ -7,7 +7,7 @@
 */
 // *****************************************************************************
 
-module migrated {
+module migrated_inciter {
 
   include "Scheme.h";
 

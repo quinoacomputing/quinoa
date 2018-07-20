@@ -15,6 +15,12 @@
 
 #include "Scheme.h"
 
+namespace unittest {
+
+extern CProxy_TUTSuite g_suiteProxy;
+
+} // unittest::
+
 namespace tut {
 
 //! All tests in group inherited from this base

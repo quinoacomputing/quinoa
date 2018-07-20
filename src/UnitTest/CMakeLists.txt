@@ -10,14 +10,16 @@ add_library(UnitTest
             TUTSuite.C
             TUTTest.C
             tests/TestBase.C
+            tests/TestInciter.C
 )
 
 addCharmModule( "tuttest" "UnitTest" )
 addCharmModule( "tutsuite" "UnitTest" )
 addCharmModule( "charmchild" "UnitTest" )
-addCharmModule( "migrated_base" "UnitTest" )
 addCharmModule( "charmtimer" "UnitTest" )
 addCharmModule( "testarray" "UnitTest" )
+addCharmModule( "migrated_base" "UnitTest" )
+addCharmModule( "migrated_inciter" "UnitTest" )
 
 # Add extra dependency of UnitTest on unittestCharmModule. This is required as a
 # dependency of UnitTest, TUTSuite, refers to the main Charm++ proxy defined in
