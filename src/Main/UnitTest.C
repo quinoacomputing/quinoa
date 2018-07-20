@@ -43,15 +43,6 @@
 #include "UnitTest/CmdLine/Parser.h"
 #include "TUTConfig.h"
 
-// #include "tests/RNG/TestRNG.h"
-// #ifdef HAS_MKL
-//   #include "tests/RNG/TestMKLRNG.h"
-// #endif
-// #ifdef HAS_RNGSSE2
-// #include "tests/RNG/TestRNGSSE.h"
-// #endif
-// #include "tests/RNG/TestRandom123.h"
-// 
 // #include "tests/LoadBalance/TestLoadDistributor.h"
 // #include "tests/LoadBalance/TestLinearMap.h"
 // #include "tests/LoadBalance/TestUnsMeshMap.h"

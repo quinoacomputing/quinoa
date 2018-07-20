@@ -19,7 +19,7 @@
 #include "NoWarning/philox.h"
 
 #ifdef HAS_MKL
-  #include <mkl_vsl_types.h>
+  #include "NoWarning/mkl_vsl_types.h"
   #include "MKLRNG.h"
 #endif
 
