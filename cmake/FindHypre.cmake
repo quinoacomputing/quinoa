@@ -44,9 +44,14 @@ if(HYPRE_INCLUDE_DIRS AND HYPRE_LIBRARIES)
   set (HYPRE_FIND_QUIETLY TRUE)
 endif()
 
+if (HYPRE_ROOT)
+  set(HYPRE_SEARCH_OPTS NO_DEFAULT_PATH)
+endif()
+
 find_path(HYPRE_INCLUDE_DIR NAMES HYPRE.h
                             PATH_SUFFIXES hypre
-                            HINTS ${HYPRE_ROOT}/include)
+                            HINTS ${HYPRE_ROOT}/include
+                            ${HYPRE_SEARCH_OPTS})
 
 if(HYPRE_INCLUDE_DIR)
   _HYPRE_GET_VERSION(HYPRE_VERSION ${HYPRE_INCLUDE_DIR}/HYPRE_config.h)
