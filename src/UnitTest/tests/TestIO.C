@@ -9,8 +9,6 @@
 
 #include "TUTConfig.h"
 
-#include "NoWarning/tutsuite.decl.h"
-
 #include "tests/IO/TestMesh.h"
 #include "tests/IO/TestExodusIIMeshReader.h"
 #include "tests/IO/TestMeshReader.h"

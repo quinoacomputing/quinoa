@@ -9,8 +9,6 @@
 
 #include "TUTConfig.h"
 
-#include "NoWarning/tutsuite.decl.h"
-
 #include "tests/Inciter/TestScheme.h"
 #include "tests/Inciter/AMR/TestError.h"
 

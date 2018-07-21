@@ -17,6 +17,8 @@
 #include "Make_unique.h"
 #include "Factory.h"
 
+#include "NoWarning/tutsuite.decl.h"
+
 namespace unittest {
 
 extern CProxy_TUTSuite g_suiteProxy;

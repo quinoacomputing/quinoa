@@ -9,8 +9,6 @@
 
 #include "TUTConfig.h"
 
-#include "NoWarning/tutsuite.decl.h"
-
 #include "tests/Control/TestSystemComponents.h"
 #include "tests/Control/TestControl.h"
 #include "tests/Control/TestFileParser.h"

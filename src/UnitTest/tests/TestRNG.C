@@ -9,8 +9,6 @@
 
 #include "TUTConfig.h"
 
-#include "NoWarning/tutsuite.decl.h"
-
 #include "tests/RNG/TestRNG.h"
 
 #ifdef HAS_MKL
@@ -18,7 +16,7 @@
 #endif
 
 #ifdef HAS_RNGSSE2
-#include "tests/RNG/TestRNGSSE.h"
+  #include "tests/RNG/TestRNGSSE.h"
 #endif
 
 #include "tests/RNG/TestRandom123.h"

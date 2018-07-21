@@ -13,6 +13,8 @@
 
 #include "NoWarning/tut.h"
 
+#include "NoWarning/tutsuite.decl.h"
+
 #include "Scheme.h"
 
 namespace unittest {

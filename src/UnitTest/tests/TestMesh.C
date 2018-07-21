@@ -9,8 +9,6 @@
 
 #include "TUTConfig.h"
 
-#include "NoWarning/tutsuite.decl.h"
-
 #include "tests/Mesh/TestDerivedData.h"
 #include "tests/Mesh/TestReorder.h"
 #include "tests/Mesh/TestGradients.h"

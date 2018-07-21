@@ -9,10 +9,6 @@
 
 #include "TUTConfig.h"
 
-#include "NoWarning/tutsuite.decl.h"
-
-#include "TestArray.h"
-
 #include "tests/LoadBalance/TestLoadDistributor.h"
 #include "tests/LoadBalance/TestLinearMap.h"
 #include "tests/LoadBalance/TestUnsMeshMap.h"

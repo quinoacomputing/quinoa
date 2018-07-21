@@ -9,8 +9,6 @@
 
 #include "TUTConfig.h"
 
-#include "NoWarning/tutsuite.decl.h"
-
 #include "tests/Base/TestFactory.h"
 #include "tests/Base/TestTimer.h"
 #include "tests/Base/TestPUPUtil.h"

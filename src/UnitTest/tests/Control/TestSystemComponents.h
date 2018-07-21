@@ -17,6 +17,7 @@
 #include "SystemComponents.h"
 #include "TaggedTuple.h"
 #include "Tags.h"
+#include "Control.h"
 
 namespace tut {
 

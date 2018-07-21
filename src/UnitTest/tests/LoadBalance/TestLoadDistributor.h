@@ -12,6 +12,7 @@
 #include "NoWarning/tut.h"
 
 #include "LoadDistributor.h"
+#include "Exception.h"
 
 namespace unittest {
 
