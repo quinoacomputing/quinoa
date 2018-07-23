@@ -34,22 +34,22 @@ if (HAS_OMEGA_H)
                       BIN_RESULT out.0 out.1
                       BIN_DIFF_PROG_CONF exodiff.cfg)
 
-  # parallel with nranks > nparts
-  add_regression_test(cfl_osh ${INCITER_EXECUTABLE}
-                      NUMPES 4
-                      INPUTFILES slot_cyl_cfl.q box10_2.osh exodiff.cfg
-                                 slot_cyl_cfl_osh10_pe4.std.exo.0
-                                 slot_cyl_cfl_osh10_pe4.std.exo.1
-                                 slot_cyl_cfl_osh10_pe4.std.exo.2
-                                 slot_cyl_cfl_osh10_pe4.std.exo.3
-                      ARGS -c slot_cyl_cfl.q -i box10_2.osh -v
-                      BIN_BASELINE slot_cyl_cfl_osh10_pe4.std.exo.0
-                                   slot_cyl_cfl_osh10_pe4.std.exo.1
-                                   slot_cyl_cfl_osh10_pe4.std.exo.2
-                                   slot_cyl_cfl_osh10_pe4.std.exo.3
-                      BIN_DIFF_PROG_ARGS -m
-                      BIN_RESULT out.0 out.1 out.2 out.3
-                      BIN_DIFF_PROG_CONF exodiff.cfg)
+#  # parallel with nranks > nparts
+#  add_regression_test(cfl_osh ${INCITER_EXECUTABLE}
+#                      NUMPES 4
+#                      INPUTFILES slot_cyl_cfl.q box10_2.osh exodiff.cfg
+#                                 slot_cyl_cfl_osh10_pe4.std.exo.0
+#                                 slot_cyl_cfl_osh10_pe4.std.exo.1
+#                                 slot_cyl_cfl_osh10_pe4.std.exo.2
+#                                 slot_cyl_cfl_osh10_pe4.std.exo.3
+#                      ARGS -c slot_cyl_cfl.q -i box10_2.osh -v
+#                      BIN_BASELINE slot_cyl_cfl_osh10_pe4.std.exo.0
+#                                   slot_cyl_cfl_osh10_pe4.std.exo.1
+#                                   slot_cyl_cfl_osh10_pe4.std.exo.2
+#                                   slot_cyl_cfl_osh10_pe4.std.exo.3
+#                      BIN_DIFF_PROG_ARGS -m
+#                      BIN_RESULT out.0 out.1 out.2 out.3
+#                      BIN_DIFF_PROG_CONF exodiff.cfg)
 endif()
 
 add_regression_test(cfl ${INCITER_EXECUTABLE}
