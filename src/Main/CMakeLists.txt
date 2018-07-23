@@ -47,17 +47,18 @@ config_executable(${UNITTEST_EXECUTABLE})
 target_link_libraries(${UNITTEST_EXECUTABLE}
                       Base
                       Config
-                      NativeMeshIO
-                      ExodusIIMeshIO
-                      ${OMEGAHMESHIO}
-                      HyperMeshIO
-                      MeshDetect
-                      Mesh
                       RNG
-                      LoadBalance
                       MeshRefinement
                       UnitTest
                       UnitTestControl
+                      LoadBalance
+                      Mesh
+                      MeshDetect
+                      NativeMeshIO
+                      MeshRefinement
+                      ExodusIIMeshIO
+                      HyperMeshIO
+                      ${OMEGAHMESHIO}
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${RNGSSE2_LIBRARIES}
