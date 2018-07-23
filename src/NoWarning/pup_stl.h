@@ -31,6 +31,7 @@
   #pragma GCC diagnostic ignored "-Wunused-parameter"
   #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
   #pragma GCC diagnostic ignored "-Wshadow"
+  #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #endif
 
 #include <pup_stl.h>

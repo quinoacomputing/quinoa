@@ -9,7 +9,7 @@
 
 #include <functional>
 
-#include <boost/functional/value_factory.hpp>
+#include "NoWarning/value_factory.hpp"
 
 #include "QuinoaConfig.h"
 
