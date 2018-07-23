@@ -13,11 +13,11 @@
 
 #include <brigand/sequences/list.hpp>
 
+#include <mkl_vsl_defines.h>
+
 #include "NoWarning/append.h"
 
 #include "QuinoaConfig.h"
-
-#include "NoWarning/mkl_vsl.h"
 
 #include "Toggle.h"
 #include "Keywords.h"

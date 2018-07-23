@@ -14,11 +14,7 @@
 namespace tut {
 
 //! Charm++ chare array definition for testing arrays
-class TestArray : public CBase_TestArray {
-  public:
-    explicit TestArray() {}
-    explicit TestArray( CkMigrateMessage* ) {}
-};
+class TestArray : public CBase_TestArray {};
 
 } // tut::
 

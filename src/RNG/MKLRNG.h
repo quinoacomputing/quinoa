@@ -9,7 +9,7 @@
 #ifndef MKLRNG_h
 #define MKLRNG_h
 
-#include "NoWarning/mkl_vsl.h"
+#include <mkl_vsl.h>
 
 #include "Exception.h"
 #include "Make_unique.h"
