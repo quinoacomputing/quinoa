@@ -9,7 +9,7 @@
 
 #include <functional>
 
-#include "NoWarning/value_factory.hpp"
+#include "NoWarning/value_factory.h"
 
 #include "QuinoaConfig.h"
 
