@@ -846,6 +846,7 @@ namespace AMR {
         }
     }
 
+    /*
     void mesh_adapter_t::check_derefinement() {
         // Go over edges and check if it needs derefining
         // TODO: This could be implicit based of refinement_criteria value?
@@ -982,5 +983,6 @@ namespace AMR {
             }
         }
     }
+    */
 }
 

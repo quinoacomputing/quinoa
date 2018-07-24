@@ -662,6 +662,7 @@ namespace AMR {
             }
 
             // TODO: Document This.
+            /*
             void derefine_four_to_two(size_t parent_id)
             {
                 assert(0);
@@ -678,6 +679,7 @@ namespace AMR {
             {
                 assert(0);
             }
+            */
 
             /**
              * @brief Loop over children and delete all intermediate edges
