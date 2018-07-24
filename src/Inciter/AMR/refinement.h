@@ -171,7 +171,7 @@ namespace AMR {
                         tet_id
                 );
 
-                std::cout << "1:2 DOING REFINE OF " << tet_id << ". Adding " << child_list[0] << " and " << child_list[1] << std::endl;
+                //trace_out << "1:2 DOING REFINE OF " << tet_id << ". Adding " << child_list[0] << " and " << child_list[1] << std::endl;
 
                 // This call is only needed to add a single edge, from the new
                 // node to the node on the normal to that face, but avoids
@@ -195,7 +195,7 @@ namespace AMR {
             */
             void refine_one_to_four(size_t tet_id)
             {
-                bool face_refine = false;
+                //bool face_refine = false;
                 size_t face_refine_id = 0; // FIXME: Does this need a better default
                 face_list_t face_list = tet_store.generate_face_lists(tet_id);
 
@@ -233,7 +233,7 @@ namespace AMR {
                     if (num_face_refine_edges >= 2)
                     {
                         assert(num_face_refine_edges < 4);
-                        face_refine = true;
+                        //face_refine = true;
                         face_refine_id = face;
                         break;
                     }
@@ -294,7 +294,7 @@ namespace AMR {
                 size_t C = face_ids[2];
                 size_t D = opposite_id;
 
-                std::cout <<
+                trace_out <<
                     " A " << A <<
                     " B " << B <<
                     " C " << C <<
@@ -354,12 +354,12 @@ namespace AMR {
 
                 tet_store.deactivate(tet_id);
 
-                std::cout << "1:4 DOING REFINE OF " << tet_id << ". Adding "
-                    << child[0] << ", "
-                    << child[1] << ", "
-                    << child[2] << ", "
-                    << child[3]
-                    << std::endl;
+                //trace_out << "1:4 DOING REFINE OF " << tet_id << ". Adding "
+                    //<< child[0] << ", "
+                    //<< child[1] << ", "
+                    //<< child[2] << ", "
+                    //<< child[3]
+                    //<< std::endl;
 
             }
 
@@ -479,16 +479,16 @@ namespace AMR {
 
                 tet_store.deactivate(tet_id);
 
-                std::cout << "1:8 DOING REFINE OF " << tet_id << ". "
-                    << child[0] << ", "
-                    << child[1] << ", "
-                    << child[2] << ", "
-                    << child[3] << ", "
-                    << child[4] << ", "
-                    << child[5] << ", "
-                    << child[6] << ", "
-                    << child[7] 
-                    << std::endl;
+                //trace_out << "1:8 DOING REFINE OF " << tet_id << ". "
+                    //<< child[0] << ", "
+                    //<< child[1] << ", "
+                    //<< child[2] << ", "
+                    //<< child[3] << ", "
+                    //<< child[4] << ", "
+                    //<< child[5] << ", "
+                    //<< child[6] << ", "
+                    //<< child[7]
+                    //<< std::endl;
 
             }
 

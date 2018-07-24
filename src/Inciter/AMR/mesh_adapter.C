@@ -290,7 +290,7 @@ namespace AMR {
         // Track tets which needs to be deleted this iteration
         std::set<size_t> round_two;
 
-        std::cout << "Perform ref" << std::endl;
+        trace_out << "Perform ref" << std::endl;
 
         // Do refinements
         for (const auto& kv : tet_store.tets)

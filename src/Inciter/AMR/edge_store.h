@@ -271,6 +271,7 @@ namespace AMR {
                 }
             }
 
+            /*
             void replace(size_t old_id, size_t new_id)
             {
                 for (const auto& kv : edges)
@@ -297,6 +298,7 @@ namespace AMR {
 
                 }
             }
+            */
 
             /*
             // TODO: Document this

@@ -136,7 +136,7 @@ namespace AMR {
                     // check if already exists
                     int f = find(A,B);
                     if (f != -1) {
-                        std::cout << "Connect already exits " << A << " " << B << std::endl;
+                        trace_out << "Connect already exits " << A << " " << B << std::endl;
                         return static_cast<size_t>(f);
                     }
                 }
