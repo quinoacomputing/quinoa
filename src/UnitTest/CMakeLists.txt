@@ -5,64 +5,10 @@ project(UnitTest CXX)
 # Include function for adding Charm++ modules
 include(charm)
 
-if (HAS_MKL)
-  set(TestMKLBetaMethod "tests/Control/Options/TestMKLBetaMethod.C")
-  set(TestMKLGammaMethod "tests/Control/Options/TestMKLGammaMethod.C")
-  set(TestMKLGaussianMethod "tests/Control/Options/TestMKLGaussianMethod.C")
-  set(TestMKLUniformMethod "tests/Control/Options/TestMKLUniformMethod.C")
-  set(TestMKLRNG "tests/RNG/TestMKLRNG.C")
-endif()
-
-if(HAS_RNGSSE2)
-  set(TestRNGSSE "tests/RNG/TestRNGSSE.C")
-endif()
-
 add_library(UnitTest
             Assessment.C
             TUTSuite.C
             TUTTest.C
-            tests/Base/TestContainerUtil.C
-            tests/Base/TestData.C
-            tests/Base/TestException.C
-            tests/Base/TestExceptionMPI.C
-            tests/Base/TestFactory.C
-            tests/Base/TestFlip_map.C
-            tests/Base/TestHas.C
-            tests/Base/TestPrint.C
-            tests/Base/TestProcessControl.C
-            tests/Base/TestPUPUtil.C
-            tests/Base/TestReader.C
-            tests/Base/TestStrConvUtil.C
-            tests/Base/TestTaggedTuple.C
-            tests/Base/TestTimer.C
-            tests/Base/TestVector.C
-            tests/Base/TestWriter.C
-            ${TestMKLUniformMethod}
-            ${TestMKLGaussianMethod}
-            ${TestMKLBetaMethod}
-            ${TestMKLGammaMethod}
-            tests/Control/Options/TestRNG.C
-            tests/Control/TestControl.C
-            tests/Control/TestFileParser.C
-            tests/Control/TestStringParser.C
-            tests/Control/TestSystemComponents.C
-            tests/Control/TestToggle.C
-            tests/Inciter/TestScheme.C
-            tests/Inciter/AMR/TestError.C
-            tests/IO/TestExodusIIMeshReader.C
-            tests/IO/TestMesh.C
-            tests/IO/TestMeshReader.C
-            tests/LoadBalance/TestLinearMap.C
-            tests/LoadBalance/TestLoadDistributor.C
-            tests/LoadBalance/TestUnsMeshMap.C
-            tests/Mesh/TestAround.C
-            tests/Mesh/TestDerivedData.C
-            tests/Mesh/TestGradients.C
-            tests/Mesh/TestReorder.C
-            ${TestMKLRNG}
-            ${TestRNGSSE}
-            tests/RNG/TestRNG.C
-            tests/RNG/TestRandom123.C
 )
 
 addCharmModule( "tuttest" "UnitTest" )
