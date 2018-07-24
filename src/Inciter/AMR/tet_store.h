@@ -111,7 +111,7 @@ namespace AMR {
                 auto f = tets.find(id);
                 if (f != tets.end())
                 {
-                    trace_out << "tet " << id << " exists." << std::endl;
+                    //trace_out << "tet " << id << " exists." << std::endl;
                     return true;
                 }
                 return false;

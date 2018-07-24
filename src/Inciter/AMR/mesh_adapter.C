@@ -370,7 +370,10 @@ namespace AMR {
         //std::cout << "Total Nodes : " << m_x.size() << std::endl;
 
         trace_out << "Done ref" << std::endl;
+        node_connectivity.print();
+        node_connectivity.print();
         tet_store.print_node_types();
+        tet_store.print_tets();
         //node_connectivity.print();
     }
 
@@ -581,6 +584,10 @@ namespace AMR {
                 break;
             }
         }
+
+        // If we have locked edges, we don't want to do 1:4
+        // TODO: there is a more elegant way of expressing this
+        if (locked != 0) { face_refine = 0; }
 
         // "If nrefine = 1
         // Accept as 1:2 refinement"

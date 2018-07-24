@@ -171,6 +171,8 @@ namespace AMR {
                         tet_id
                 );
 
+                std::cout << "1:2 DOING REFINE OF " << tet_id << ". Adding " << child_list[0] << " and " << child_list[1] << std::endl;
+
                 // This call is only needed to add a single edge, from the new
                 // node to the node on the normal to that face, but avoids
                 // directly calculating which nodes that is
@@ -352,6 +354,13 @@ namespace AMR {
 
                 tet_store.deactivate(tet_id);
 
+                std::cout << "1:4 DOING REFINE OF " << tet_id << ". Adding "
+                    << child[0] << ", "
+                    << child[1] << ", "
+                    << child[2] << ", "
+                    << child[3]
+                    << std::endl;
+
             }
 
             /**
@@ -469,6 +478,17 @@ namespace AMR {
                 tet_store.add(child[7], AC, BD, CD, AD, Refinement_Case::one_to_eight, tet_id);
 
                 tet_store.deactivate(tet_id);
+
+                std::cout << "1:8 DOING REFINE OF " << tet_id << ". "
+                    << child[0] << ", "
+                    << child[1] << ", "
+                    << child[2] << ", "
+                    << child[3] << ", "
+                    << child[4] << ", "
+                    << child[5] << ", "
+                    << child[6] << ", "
+                    << child[7] 
+                    << std::endl;
 
             }
 

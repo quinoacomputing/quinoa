@@ -123,7 +123,7 @@ namespace AMR {
                 auto f = master_elements.find(id);
                 if (f != master_elements.end())
                 {
-                    trace_out << "master_elements " << id << " exists." << std::endl;
+                    //trace_out << "master_elements " << id << " exists." << std::endl;
                     return true;
                 }
                 return false;

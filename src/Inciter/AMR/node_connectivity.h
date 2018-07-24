@@ -142,6 +142,7 @@ namespace AMR {
                 }
 
                 nodes.push_back( {{std::min(A,B), std::max(A,B)}} );
+                trace_out << "Made new node " << size() -1 << std::endl;
                 //std::cout << " add " << size()-1 << " a = " <<  A << " b = " << B << std::endl;
                 return size()-1;
             }

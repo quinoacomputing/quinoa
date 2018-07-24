@@ -115,6 +115,7 @@ namespace AMR {
                 if (already_exists == -1) {
                     size_t return_node_id = add_coordinates(xc,yc,zc);
                     m_graphsize++; // TODO: how best to deal with this?
+                    trace_out << "Made new node " << return_node_id << std::endl;
                     return return_node_id;
                 }
                 else {
