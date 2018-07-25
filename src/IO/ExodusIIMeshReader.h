@@ -135,10 +135,13 @@ class ExodusIIMeshReader {
       m_nnode = x.m_nnode;
       m_neblk = x.m_neblk;
       m_neset = x.m_neset;
+      m_from = x.m_from;
+      m_till = x.m_till;
       m_blockid = x.m_blockid;
       m_blockid_by_type = x.m_blockid_by_type;
       m_nel = x.m_nel;
       m_elemblocks = x.m_elemblocks;
+      m_tri = x.m_tri;
       return *this;
     }
 
@@ -157,10 +160,13 @@ class ExodusIIMeshReader {
       m_nnode = x.m_nnode;
       m_neblk = x.m_neblk;
       m_neset = x.m_neset;
+      m_from = x.m_from;
+      m_till = x.m_till;
       m_blockid = x.m_blockid;
       m_blockid_by_type = x.m_blockid_by_type;
       m_nel = x.m_nel;
       m_elemblocks = x.m_elemblocks;
+      m_tri = x.m_tri;
       x.m_cpuwordsize = sizeof(double);
       x.m_iowordsize = sizeof(double);
       x.m_inFile = ex_open( m_filename.c_str(), EX_READ, &x.m_cpuwordsize,
@@ -169,10 +175,13 @@ class ExodusIIMeshReader {
       x.m_nnode = 0;
       x.m_neblk = 0;
       x.m_neset = 0;
+      x.m_from = 0;
+      x.m_till = 0;
       x.m_blockid.clear();
       x.m_blockid_by_type.resize( ExoNnpe.size() );
       x.m_nel.resize( ExoNnpe.size() );
       x.m_elemblocks.clear();
+      x.m_tri.clear();
       return *this;
     }
 
@@ -185,10 +194,13 @@ class ExodusIIMeshReader {
       m_nnode( 0 ),
       m_neblk( 0 ),
       m_neset( 0 ),
+      m_from( 0 ),
+      m_till( 0 ),
       m_blockid(),
       m_blockid_by_type(),
       m_nel(),
-      m_elemblocks()
+      m_elemblocks(),
+      m_tri()
     { *this = std::move(x); }
 
   private:
@@ -199,6 +211,8 @@ class ExodusIIMeshReader {
     std::size_t m_nnode;                //!< Number of nodes in file
     std::size_t m_neblk;                //!< Number of element blocks in file
     std::size_t m_neset;                //!< Number of element sets in file
+    std::size_t m_from;                 //!< Lower bound of tet ids on this PE
+    std::size_t m_till;                 //!< Upper bound of tet ids on this PE
     //! Element block IDs in the order as in the file
     std::vector< int > m_blockid;
     //! Element block IDs for each elem type
@@ -207,6 +221,8 @@ class ExodusIIMeshReader {
     std::vector< std::vector< std::size_t > > m_nel;
     //! Cell type and number of elements in blocks in the order as in the file
     std::vector< std::pair< ExoElemType, std::size_t > > m_elemblocks;
+    //! Global->local triangle element ids on this PE
+    std::unordered_map< std::size_t, std::size_t > m_tri;
 
     //! Read ExodusII header without setting mesh size
     std::size_t readHeader();

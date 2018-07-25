@@ -33,10 +33,13 @@ ExodusIIMeshReader::ExodusIIMeshReader( const std::string& filename,
   m_nnode( 0 ),
   m_neblk( 0 ),
   m_neset( 0 ),
+  m_from( 0 ),
+  m_till( 0 ),
   m_blockid(),
   m_blockid_by_type( ExoNnpe.size() ),
   m_nel( ExoNnpe.size() ),
-  m_elemblocks()
+  m_elemblocks(),
+  m_tri()
 // *****************************************************************************
 //  Constructor: open Exodus II file
 //! \param[in] filename File to open as ExodusII file
@@ -127,12 +130,12 @@ ExodusIIMeshReader::readMeshPart(
   auto npes = static_cast< std::size_t >( numpes );
   auto pe = static_cast< std::size_t >( mype );
   auto chunk = nel / npes;
-  auto from = pe * chunk;
-  auto till = from + chunk;
-  if (pe == npes-1) till += nel % npes;
+  m_from = pe * chunk;
+  m_till = m_from + chunk;
+  if (pe == npes-1) m_till += nel % npes;
 
   // Read tetrahedron connectivity between from and till
-  readElements( {{from, till-1}}, tk::ExoElemType::TET, ginpoel );
+  readElements( {{m_from, m_till-1}}, tk::ExoElemType::TET, ginpoel );
 
   // Compute local data from global mesh connectivity
   std::tie( inpoel, gid, lid ) = tk::global2local( ginpoel );
@@ -140,10 +143,35 @@ ExodusIIMeshReader::readMeshPart(
   // Read this PE's chunk of the mesh node coordinates from file
   coord = readCoords( gid );
 
-  // Read triangle element connectivity
+  // Generate set of unique faces
+  tk::UnsMesh::FaceSet faces;
+  for (std::size_t e=0; e<ginpoel.size()/4; ++e)
+    for (std::size_t f=0; f<4; ++f) {
+      const auto& tri = tk::expofa[f];
+      faces.insert( { ginpoel[ e*4+tri[0] ],
+                      ginpoel[ e*4+tri[1] ],
+                      ginpoel[ e*4+tri[2] ] } );
+    }
+
+  // Read triangle element connectivity (all triangle blocks in file)
   auto ntri = nelem( tk::ExoElemType::TRI );
-  if ( ntri !=0 )
-    readElements( {{0,ntri-1}}, tk::ExoElemType::TRI, triinpoel );
+  if ( ntri !=0 ) readElements( {{0,ntri-1}}, tk::ExoElemType::TRI, triinpoel );
+
+  // Keep triangles shared in (partially-read) tetrahedron mesh
+  std::vector< std::size_t > triinpoel_own;
+  std::size_t ltrid = 0;        // local triangle id
+  for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
+    auto i = faces.find( { triinpoel[e*3+0],
+                           triinpoel[e*3+1],
+                           triinpoel[e*3+2] } );
+    if (i != end(faces)) {
+      m_tri[e] = ltrid++;       // generate global->local triangle ids
+      triinpoel_own.push_back( triinpoel[e*3+0] );
+      triinpoel_own.push_back( triinpoel[e*3+1] );
+      triinpoel_own.push_back( triinpoel[e*3+2] );
+    }
+  }
+  triinpoel = std::move(triinpoel_own);
 }
 
 std::array< std::vector< tk::real >, 3 >
@@ -637,7 +665,7 @@ ExodusIIMeshReader::readSidesetFaces(
     ErrChk( ex_get_ids( m_inFile, EX_SIDE_SET, ids.data() ) == 0,
             "Failed to read side set ids from ExodusII file: " + m_filename );
 
-    // Read side sets from file
+    // Read all side sets from file
     for (auto i : ids) {
       int nface, nnode;
 
@@ -741,15 +769,23 @@ ExodusIIMeshReader::triinpoel(
 //! \note Must be preceded by a call to readElemBlockIDs()
 // *****************************************************************************
 {
+  Assert( !(m_from == 0 && m_till == 0),
+          "Lower and upper tetrahedron id bounds must both be zero" );
+
   // This will contain one of our final results: face (triangle) connectivity
   // for the side sets only. The difference between bnd_triinpoel and triinpoel
   // is that triinpoel is a triangle element connectivity, independent of side
   // sets, while bnd_triinpoel is a triangle connectivity only for side sets.
   std::vector< std::size_t > bnd_triinpoel;
 
+  // Storage for boundary face lists for each side set on this PE
+  std::map< int, std::vector< std::size_t > > belem_own;
+
   std::size_t f = 0;            // counts all faces
   for (auto& ss : belem) {      // for all side sets
 
+    // insert side set id into new map
+    auto& b = belem_own[ ss.first ];
     // get element-relative face ids for side set
     const auto& face = tk::cref_find( faces, ss.first );
     std::size_t s = 0;          // counts side set faces
@@ -759,26 +795,36 @@ ExodusIIMeshReader::triinpoel(
       auto r = blkRelElemId( i );
 
       // extract boundary face connectivity based on element type
+      bool localface = false;
       if (r.first == tk::ExoElemType::TRI) {
 
-        Assert( r.second < triinpoel.size()/3,
-                "Indexing out of triangle connectivity" );
-        // generate triangle (face) connectivity using global node ids
-        bnd_triinpoel.push_back( triinpoel[ r.second * 3 + 0 ] );
-        bnd_triinpoel.push_back( triinpoel[ r.second * 3 + 1 ] );
-        bnd_triinpoel.push_back( triinpoel[ r.second * 3 + 2 ] );
+        auto t = m_tri.find(r.second);
+        if (t != end(m_tri)) {  // only if triangle id exists on this PE
+          Assert( t->second < triinpoel.size()/3,
+                  "Indexing out of triangle connectivity" );
+          // generate triangle (face) connectivity using global node ids
+          bnd_triinpoel.push_back( triinpoel[ t->second*3 + 0 ] );
+          bnd_triinpoel.push_back( triinpoel[ t->second*3 + 1 ] );
+          bnd_triinpoel.push_back( triinpoel[ t->second*3 + 2 ] );
+          localface = true;
+        }
 
       } else if (r.first == tk::ExoElemType::TET) {
 
-        Assert( r.second < ginpoel.size()/4,
-                "Indexing out of tetrahedron connectivity" );
-        // get ExodusII face-node numbering for side sets, see ExodusII
-        // manual figure on "Sideset side Numbering"
-        const auto& tri = tk::expofa[ face[s] ];
-        // generate triangle (face) connectivity using global node ids
-        bnd_triinpoel.push_back( ginpoel[ r.second * 4 + tri[0] ] );
-        bnd_triinpoel.push_back( ginpoel[ r.second * 4 + tri[1] ] );
-        bnd_triinpoel.push_back( ginpoel[ r.second * 4 + tri[2] ] );
+        if (r.second >= m_from && r.second < m_till) {  // if tet is on this PE
+          auto t = r.second - m_from;
+          Assert( t < ginpoel.size()/4,
+                  "Indexing out of tetrahedron connectivity" );
+          // get ExodusII face-node numbering for side sets, see ExodusII
+          // manual figure on "Sideset side Numbering"
+          const auto& tri = tk::expofa[ face[s] ];
+          // generate triangle (face) connectivity using global node ids, note
+          // the switched node order, 0,2,1, as lpofa is different from expofa
+          bnd_triinpoel.push_back( ginpoel[ t*4 + tri[0] ] );
+          bnd_triinpoel.push_back( ginpoel[ t*4 + tri[2] ] );
+          bnd_triinpoel.push_back( ginpoel[ t*4 + tri[1] ] );
+          localface = true;
+        }
 
       }
 
@@ -786,9 +832,15 @@ ExodusIIMeshReader::triinpoel(
 
       // overwrite file-internal element id with face id for side set
       // (this is to be used to index into triinpoel)
-      i = f++;
+      //i = f++;
+      if (localface) b.push_back( f++ );
     }
+
+    // if no faces on this side set (on this PE), remove side set id
+    if (b.empty()) belem_own.erase( ss.first );
   }
+
+  belem = std::move(belem_own);
 
   return bnd_triinpoel;
 }

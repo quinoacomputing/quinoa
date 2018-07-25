@@ -105,19 +105,6 @@ Partitioner::Partitioner(
   // Compute triangle connectivity for side sets
   m_triinpoel = mr.triinpoel( m_bface, faces, m_ginpoel, triinpoel );
 
-//   for (auto& ss : m_bface) {
-//      std::cout << ss.first << ": ";
-//      for (auto& i : ss.second) {
-//        std::cout << i << ": " << m_triinpoel[ i*3+0 ] << ' ' <<
-//                                  m_triinpoel[ i*3+1 ] << ' ' <<
-//                                  m_triinpoel[ i*3+2 ] << ", coord: " <<
-//                                  m_coord[0][ m_triinpoel[ i*3+0 ] ] << ' ' <<
-//                                  m_coord[1][ m_triinpoel[ i*3+1 ] ] << ' ' <<
-//                                  m_coord[2][ m_triinpoel[ i*3+2 ] ] << ", ";
-//      }
-//      std::cout << '\n';
-//   }
-
   // Compute number of cells across whole problem
   std::vector< std::size_t > meshsize{{ m_ginpoel.size()/4,
                                         m_coord[0].size() }};
@@ -245,8 +232,8 @@ Partitioner::refine()
                              m_cbs,
                              tk::cref_find(m_chinpoel,cid),     // chare mesh
                              tk::cref_find(m_chcoordmap,cid),   // chare mesh
-                             m_bface,           // whole mesh
-                             m_triinpoel,       // whole mesh
+                             m_bface,                           // this PE
+                             m_triinpoel,                       // this PE
                              m_bnode,           // whole mesh
                              m_nchare,
                              CkMyPe() );
