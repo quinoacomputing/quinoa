@@ -111,7 +111,7 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
   for (const auto& s : m_bface) {
     auto& b = bconn[ s.first ];
     for (auto f : s.second) {
-      b.insert( {m_triinpoel[f*3+0], m_triinpoel[f*3+1], m_triinpoel[f*3+2]} );
+      b.insert({{m_triinpoel[f*3+0], m_triinpoel[f*3+1], m_triinpoel[f*3+2]}});
     } 
   }
   auto facestream = tk::serialize( bconn );
