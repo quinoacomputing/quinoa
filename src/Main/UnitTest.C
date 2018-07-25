@@ -285,6 +285,11 @@ class execute : public CBase_execute {
  public: execute() { mainProxy.execute(); }
 };
 
+#if defined(STRICT_GNUC)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wreturn-type"
+#endif
+
 //! \brief UnitTest main()
 //! \details UnitTest does have a main() function so that we can have tests
 //!   calling MPI functions. Thus we are using Charm++'s MPI-interoperation
@@ -432,6 +437,10 @@ int main( int argc, char **argv ) {
 
   stop( mpipass );
 }
+
+#if defined(STRICT_GNUC)
+  #pragma GCC diagnostic pop
+#endif
 
 #include "NoWarning/charmchild.def.h"
 #include "NoWarning/charmtimer.def.h"

@@ -403,6 +403,12 @@ DiffEqStack::infoDirichlet( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
   std::vector< std::pair< std::string, std::string > > nfo;
 
   nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::DIRICHLET ), "" );
+
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::dirichlet >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::dirichlet >()[c];
+  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
   nfo.emplace_back( "kind", "stochastic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::dirichlet, tag::depvar >()[c] ) );
@@ -410,10 +416,6 @@ DiffEqStack::infoDirichlet( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
     g_inputdeck.get< tag::param, tag::dirichlet, tag::initpolicy >()[c] ) );
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::dirichlet, tag::coeffpolicy >()[c] ) );
-  nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::dirichlet >(c) ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::dirichlet >()[c];
-  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::dirichlet, tag::rng >()[c] ) );
   nfo.emplace_back(
@@ -447,6 +449,12 @@ DiffEqStack::infoGenDir( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
   std::vector< std::pair< std::string, std::string > > nfo;
 
   nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::GENDIR ), "" );
+
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::gendir >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::gendir >()[c];
+  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
   nfo.emplace_back( "kind", "stochastic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::gendir, tag::depvar >()[c] ) );
@@ -454,10 +462,6 @@ DiffEqStack::infoGenDir( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
     g_inputdeck.get< tag::param, tag::gendir, tag::initpolicy >()[c] ) );
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::gendir, tag::coeffpolicy >()[c] ) );
-  nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::gendir >(c) ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::gendir >()[c];
-  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::gendir, tag::rng >()[c] ) );
   nfo.emplace_back(
@@ -495,6 +499,12 @@ DiffEqStack::infoWrightFisher( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
   std::vector< std::pair< std::string, std::string > > nfo;
 
   nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::WRIGHTFISHER ), "" );
+
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::wrightfisher >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::wrightfisher >()[c];
+  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
   nfo.emplace_back( "kind", "stochastic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::wrightfisher, tag::depvar >()[c] ) );
@@ -502,10 +512,6 @@ DiffEqStack::infoWrightFisher( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
     g_inputdeck.get< tag::param, tag::wrightfisher, tag::initpolicy >()[c] ) );
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::wrightfisher, tag::coeffpolicy >()[c] ) );
-  nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::wrightfisher >(c) ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::wrightfisher >()[c];
-  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::wrightfisher, tag::rng >()[c] ) );
   nfo.emplace_back(
@@ -536,6 +542,12 @@ DiffEqStack::infoOU( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
   std::vector< std::pair< std::string, std::string > > nfo;
 
   nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::OU ), "" );
+
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::ou >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::ou >()[c];
+  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
   nfo.emplace_back( "kind", "stochastic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::ou, tag::depvar >()[c] ) );
@@ -543,10 +555,6 @@ DiffEqStack::infoOU( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
     g_inputdeck.get< tag::param, tag::ou, tag::initpolicy >()[c] ) );
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::ou, tag::coeffpolicy >()[c] ) );
-  nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::ou >(c) ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::ou >()[c];
-  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::ou, tag::rng >()[c] ) );
   nfo.emplace_back(
@@ -578,6 +586,12 @@ DiffEqStack::infoDiagOU( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
   std::vector< std::pair< std::string, std::string > > nfo;
 
   nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::DIAG_OU ), "" );
+
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::diagou >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::diagou >()[c];
+  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
   nfo.emplace_back( "kind", "stochastic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::diagou, tag::depvar >()[c] ) );
@@ -585,10 +599,6 @@ DiffEqStack::infoDiagOU( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
     g_inputdeck.get< tag::param, tag::diagou, tag::initpolicy >()[c] ) );
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::diagou, tag::coeffpolicy >()[c] ) );
-  nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::diagou >(c) ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::diagou >()[c];
-  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::diagou, tag::rng >()[c] ) );
   nfo.emplace_back(
@@ -622,6 +632,12 @@ DiffEqStack::infoBeta( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
   std::vector< std::pair< std::string, std::string > > nfo;
 
   nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::BETA ), "" );
+
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::beta >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::beta >()[c];
+  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
   nfo.emplace_back( "kind", "stochastic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::beta, tag::depvar >()[c] ) );
@@ -629,10 +645,6 @@ DiffEqStack::infoBeta( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
     g_inputdeck.get< tag::param, tag::beta, tag::initpolicy >()[c] ) );
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::beta, tag::coeffpolicy >()[c] ) );
-  nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::beta >(c) ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::beta >()[c];
-  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::beta, tag::rng >()[c] ) );
   nfo.emplace_back(
@@ -668,6 +680,13 @@ const
   std::vector< std::pair< std::string, std::string > > nfo;
 
   nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::NUMFRACBETA ), "" );
+
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::numfracbeta >(c) ) );
+  auto ncomp =
+    g_inputdeck.get< tag::component >().get< tag::numfracbeta >()[c] / 3;
+  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
   nfo.emplace_back( "kind", "stochastic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::numfracbeta, tag::depvar >()[c] ) );
@@ -675,11 +694,7 @@ const
     g_inputdeck.get< tag::param, tag::numfracbeta, tag::initpolicy >()[c] ) );
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::numfracbeta, tag::coeffpolicy >()[c] ) );
-  nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::numfracbeta >(c) ) );
-  auto ncomp =
-    g_inputdeck.get< tag::component >().get< tag::numfracbeta >()[c] / 3;
-  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::numfracbeta, tag::rng >()[c] ) );
   nfo.emplace_back(
@@ -727,6 +742,13 @@ const
   std::vector< std::pair< std::string, std::string > > nfo;
 
   nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::MASSFRACBETA ), "" );
+
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::massfracbeta >(c) ) );
+  auto ncomp =
+    g_inputdeck.get< tag::component >().get< tag::massfracbeta >()[c] / 3;
+  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
   nfo.emplace_back( "kind", "stochastic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::massfracbeta, tag::depvar >()[c] ) );
@@ -734,11 +756,7 @@ const
     g_inputdeck.get< tag::param, tag::massfracbeta, tag::initpolicy >()[c] ) );
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::massfracbeta, tag::coeffpolicy >()[c] ) );
-  nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::massfracbeta >(c) ) );
-  auto ncomp =
-    g_inputdeck.get< tag::component >().get< tag::massfracbeta >()[c] / 3;
-  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::massfracbeta, tag::rng >()[c] ) );
   nfo.emplace_back(
@@ -787,6 +805,13 @@ const
 
   nfo.emplace_back(
     ctr::DiffEq().name( ctr::DiffEqType::MIXNUMFRACBETA ), "" );
+
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::mixnumfracbeta >(c) ) );
+  auto ncomp =
+    g_inputdeck.get< tag::component >().get< tag::mixnumfracbeta >()[c] / 3;
+  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
   nfo.emplace_back( "kind", "stochastic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::depvar >()[c] ) );
@@ -795,11 +820,7 @@ const
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::coeffpolicy >()[c] )
   );
-  nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::mixnumfracbeta >(c) ) );
-  auto ncomp =
-    g_inputdeck.get< tag::component >().get< tag::mixnumfracbeta >()[c] / 3;
-  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::rng >()[c] ) );
   nfo.emplace_back(
@@ -852,6 +873,44 @@ const
 
   nfo.emplace_back(
     ctr::DiffEq().name( ctr::DiffEqType::MIXMASSFRACBETA ), "" );
+
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::mixmassfracbeta >(c) ) );
+  auto ncomp =
+    g_inputdeck.get< tag::component >().get< tag::mixmassfracbeta >()[c];
+  nfo.emplace_back( "number of components",
+    std::to_string( ncomp ) + " (" + std::to_string(ncomp/4) + "*4) " );
+
+  // Optional coupled
+  const auto& coupled_velocity =
+    g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::velocity >();
+  const auto& coupled_velocity_id =
+    g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::velocity_id >();
+  Assert( coupled_velocity.size() == coupled_velocity_id.size(),
+          "Size mismatch" );
+
+  if (coupled_velocity.size() > c) {
+    nfo.emplace_back( "coupled velocity depvar", std::string( 1,
+      coupled_velocity[c] ) );
+    nfo.emplace_back( "coupled velocity depvar offset", std::to_string(
+      coupled_velocity_id[c] ) );
+  }
+
+  // Optional coupled
+  const auto& coupled_dissipation =
+    g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::dissipation >();
+  const auto& coupled_dissipation_id =
+    g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::dissipation_id >();
+  Assert( coupled_dissipation.size() == coupled_dissipation_id.size(),
+          "Size mismatch" );
+
+  if (coupled_dissipation.size() > c) {
+    nfo.emplace_back( "coupled dissipation depvar", std::string( 1,
+      coupled_dissipation[c] ) );
+    nfo.emplace_back( "coupled dissipation depvar ofs", std::to_string(
+    coupled_dissipation_id[c] ) );
+  }
+
   nfo.emplace_back( "kind", "stochastic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::depvar >()[c] ) );
@@ -861,48 +920,44 @@ const
   auto cp =
     g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::coeffpolicy >()[c];
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name( cp ) );
-  auto ncomp =
-    g_inputdeck.get< tag::component >().get< tag::mixmassfracbeta >()[c] / 4;
   if (cp == ctr::CoeffPolicyType::HYDROTIMESCALE) {
     nfo.emplace_back(
-      "inverse hydro time scales [" + std::to_string( ncomp ) + "]",
+      "inverse hydro time scales [" + std::to_string( ncomp/4 ) + "]",
       options( ctr::HydroTimeScales(),
                g_inputdeck.get< tag::param,
                                 tag::mixmassfracbeta,
                                 tag::hydrotimescales >().at(c) ) );
     nfo.emplace_back(
-      "production/dissipation [" + std::to_string( ncomp ) + "]",
+      "production/dissipation [" + std::to_string( ncomp/4 ) + "]",
       options( ctr::HydroProductions(),
                g_inputdeck.get< tag::param,
                                 tag::mixmassfracbeta,
                                 tag::hydroproductions >().at(c) ) );
   }
-  nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::mixmassfracbeta >(c) ) );
-  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::rng >()[c] ) );
   nfo.emplace_back(
-    "coeff b' [" + std::to_string( ncomp ) + "]",
+    "coeff b' [" + std::to_string( ncomp/4 ) + "]",
     parameters(
       g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::bprime >().at(c) )
   );
   nfo.emplace_back(
-    "coeff S [" + std::to_string( ncomp ) + "]",
+    "coeff S [" + std::to_string( ncomp/4 ) + "]",
     parameters(
       g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::S >().at(c) )
   );
   nfo.emplace_back(
-    "coeff kappa' [" + std::to_string( ncomp ) + "]",
+    "coeff kappa' [" + std::to_string( ncomp/4 ) + "]",
     parameters( g_inputdeck.get< tag::param,
                                  tag::mixmassfracbeta,
                                  tag::kappaprime >().at(c) ) );
   nfo.emplace_back(
-    "coeff rho2 [" + std::to_string( ncomp ) + "]",
+    "coeff rho2 [" + std::to_string( ncomp/4 ) + "]",
     parameters(
       g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::rho2 >().at(c) ) );
   nfo.emplace_back(
-    "coeff r [" + std::to_string( ncomp ) + "]",
+    "coeff r [" + std::to_string( ncomp/4 ) + "]",
     parameters(
       g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::r >().at(c) )
   );
@@ -929,6 +984,12 @@ DiffEqStack::infoSkewNormal( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
   std::vector< std::pair< std::string, std::string > > nfo;
 
   nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::SKEWNORMAL ), "" );
+
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::skewnormal >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::skewnormal >()[c];
+  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
   nfo.emplace_back( "kind", "stochastic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::skewnormal, tag::depvar >()[c] ) );
@@ -936,10 +997,6 @@ DiffEqStack::infoSkewNormal( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
     g_inputdeck.get< tag::param, tag::skewnormal, tag::initpolicy >()[c] ) );
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::skewnormal, tag::coeffpolicy >()[c] ) );
-  nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::skewnormal >(c) ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::skewnormal >()[c];
-  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::skewnormal, tag::rng >()[c] ) );
   nfo.emplace_back(
@@ -978,6 +1035,12 @@ DiffEqStack::infoGamma( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
   std::vector< std::pair< std::string, std::string > > nfo;
 
   nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::GAMMA ), "" );
+
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::gamma >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::gamma >()[c];
+  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
   nfo.emplace_back( "kind", "stochastic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::gamma, tag::depvar >()[c] ) );
@@ -985,10 +1048,6 @@ DiffEqStack::infoGamma( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
     g_inputdeck.get< tag::param, tag::gamma, tag::initpolicy >()[c] ) );
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::gamma, tag::coeffpolicy >()[c] ) );
-  nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::gamma >(c) ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::gamma >()[c];
-  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::gamma, tag::rng >()[c] ) );
   nfo.emplace_back(
@@ -1023,13 +1082,41 @@ DiffEqStack::infoVelocity( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
   std::vector< std::pair< std::string, std::string > > nfo;
 
   nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::VELOCITY ), "" );
+
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::velocity >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::velocity >()[c];
+  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
+  // Required coupled
+  nfo.emplace_back( "coupled position depvar", std::string( 1,
+    g_inputdeck.get< tag::param, tag::velocity, tag::position >()[c] ) );
+  nfo.emplace_back( "coupled position depvar offset", std::to_string(
+    g_inputdeck.get< tag::param, tag::velocity, tag::position_id >()[c] ) );
+  nfo.emplace_back( "coupled dissipation depvar", std::string( 1,
+    g_inputdeck.get< tag::param, tag::velocity, tag::dissipation >()[c] ) );
+  nfo.emplace_back( "coupled dissipation depv offs", std::to_string(
+    g_inputdeck.get< tag::param, tag::velocity, tag::dissipation_id >()[c] ) );
+
+  // Optional coupled
+  const auto& coupled_mixmassfracbeta =
+    g_inputdeck.get< tag::param, tag::velocity, tag::mixmassfracbeta >();
+  const auto& coupled_mixmassfracbeta_id =
+    g_inputdeck.get< tag::param, tag::velocity, tag::mixmassfracbeta_id >();
+  Assert( coupled_mixmassfracbeta.size() == coupled_mixmassfracbeta_id.size(),
+          "Size mismatch" );
+  if (coupled_mixmassfracbeta.size() > c) {
+    nfo.emplace_back( "coupled mixmassfracbeta depvar", std::string( 1,
+      coupled_mixmassfracbeta[c] ) );
+    nfo.emplace_back( "coupled mixmassfracbeta dv of", std::to_string(
+      coupled_mixmassfracbeta_id[c] ) );
+  }
+
   nfo.emplace_back( "kind", "stochastic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::velocity, tag::depvar >()[c] ) );
   nfo.emplace_back( "initialization policy", ctr::InitPolicy().name(
     g_inputdeck.get< tag::param, tag::velocity, tag::initpolicy >()[c] ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::velocity >()[c];
-  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
   auto cp = g_inputdeck.get< tag::param, tag::velocity, tag::coeffpolicy >()[c];
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name( cp ) );
 
@@ -1056,16 +1143,7 @@ DiffEqStack::infoVelocity( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
                                 tag::velocity,
                                 tag::hydroproductions >().at(c) ) );
   }
-  nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::velocity >(c) ) );
-  nfo.emplace_back( "coupled position depvar", std::string( 1,
-    g_inputdeck.get< tag::param, tag::velocity, tag::position >()[c] ) );
-  nfo.emplace_back( "coupled position depvar offset", std::to_string(
-    g_inputdeck.get< tag::param, tag::velocity, tag::position_id >()[c] ) );
-  nfo.emplace_back( "coupled dissipation depvar", std::string( 1,
-    g_inputdeck.get< tag::param, tag::velocity, tag::dissipation >()[c] ) );
-  nfo.emplace_back( "coupled dissipation depv offs", std::to_string(
-    g_inputdeck.get< tag::param, tag::velocity, tag::dissipation_id >()[c] ) );
+
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::velocity, tag::rng >()[c] ) );
   nfo.emplace_back( "coeff C0", std::to_string(
@@ -1088,23 +1166,28 @@ DiffEqStack::infoPosition( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
   std::vector< std::pair< std::string, std::string > > nfo;
 
   nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::POSITION ), "" );
+
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::position >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::position >()[c];
+  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
+  // Required coupled
+  nfo.emplace_back( "coupled velocity depvar", std::string( 1,
+    g_inputdeck.get< tag::param, tag::position, tag::velocity >()[c] ) );
+  nfo.emplace_back( "coupled velocity depvar offset", std::to_string(
+    g_inputdeck.get< tag::param, tag::position, tag::velocity_id >()[c] ) );
+
   nfo.emplace_back( "kind", "deterministic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::position, tag::depvar >()[c] ) );
   nfo.emplace_back( "initialization policy", ctr::InitPolicy().name(
     g_inputdeck.get< tag::param, tag::position, tag::initpolicy >()[c] ) );
-  nfo.emplace_back( "number of components", std::to_string(
-    g_inputdeck.get< tag::component >().get< tag::position >()[c] ) );
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::position, tag::coeffpolicy >()[c] ) );
   auto solve = g_inputdeck.get< tag::param, tag::position, tag::solve >()[c];
   nfo.emplace_back( "solve for", ctr::Depvar().name( solve ) );
-  nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::position >(c) ) );
-  nfo.emplace_back( "coupled velocity depvar", std::string( 1,
-    g_inputdeck.get< tag::param, tag::position, tag::velocity >()[c] ) );
-  nfo.emplace_back( "coupled velocity depvar offset", std::to_string(
-    g_inputdeck.get< tag::param, tag::position, tag::velocity_id >()[c] ) );
+
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::position, tag::rng >()[c] ) );
 
@@ -1125,21 +1208,26 @@ DiffEqStack::infoDissipation( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
   std::vector< std::pair< std::string, std::string > > nfo;
 
   nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::DISSIPATION ), "" );
+
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::dissipation >(c) ) );
+  nfo.emplace_back( "number of components", std::to_string(
+    g_inputdeck.get< tag::component >().get< tag::dissipation >()[c] ) );
+
+  // Required coupled
+  nfo.emplace_back( "coupled velocity depvar", std::string( 1,
+    g_inputdeck.get< tag::param, tag::dissipation, tag::velocity >()[c] ) );
+  nfo.emplace_back( "coupled velocity depvar offset", std::to_string(
+    g_inputdeck.get< tag::param, tag::dissipation, tag::velocity_id >()[c] ) );
+
   nfo.emplace_back( "kind", "stochastic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::dissipation, tag::depvar >()[c] ) );
   nfo.emplace_back( "initialization policy", ctr::InitPolicy().name(
     g_inputdeck.get< tag::param, tag::dissipation, tag::initpolicy >()[c] ) );
-  nfo.emplace_back( "number of components", std::to_string(
-    g_inputdeck.get< tag::component >().get< tag::dissipation >()[c] ) );
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::dissipation, tag::coeffpolicy >()[c] ) );
-  nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::dissipation >(c) ) );
-  nfo.emplace_back( "coupled velocity depvar", std::string( 1,
-    g_inputdeck.get< tag::param, tag::dissipation, tag::velocity >()[c] ) );
-  nfo.emplace_back( "coupled velocity depvar offset", std::to_string(
-    g_inputdeck.get< tag::param, tag::dissipation, tag::velocity_id >()[c] ) );
+
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::dissipation, tag::rng >()[c] ) );
   nfo.emplace_back( "coeff C3", std::to_string(
