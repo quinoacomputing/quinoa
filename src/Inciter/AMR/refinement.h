@@ -355,11 +355,11 @@ namespace AMR {
                 tet_store.deactivate(tet_id);
 
                 //trace_out << "1:4 DOING REFINE OF " << tet_id << ". Adding "
-                    //<< child[0] << ", "
-                    //<< child[1] << ", "
-                    //<< child[2] << ", "
-                    //<< child[3]
-                    //<< std::endl;
+                    // << child[0] << ", "
+                    // << child[1] << ", "
+                    // << child[2] << ", "
+                    // << child[3]
+                    // << std::endl;
 
             }
 
@@ -480,15 +480,15 @@ namespace AMR {
                 tet_store.deactivate(tet_id);
 
                 //trace_out << "1:8 DOING REFINE OF " << tet_id << ". "
-                    //<< child[0] << ", "
-                    //<< child[1] << ", "
-                    //<< child[2] << ", "
-                    //<< child[3] << ", "
-                    //<< child[4] << ", "
-                    //<< child[5] << ", "
-                    //<< child[6] << ", "
-                    //<< child[7]
-                    //<< std::endl;
+                    // << child[0] << ", "
+                    // << child[1] << ", "
+                    // << child[2] << ", "
+                    // << child[3] << ", "
+                    // << child[4] << ", "
+                    // << child[5] << ", "
+                    // << child[6] << ", "
+                    // << child[7]
+                    // << std::endl;
 
             }
 
