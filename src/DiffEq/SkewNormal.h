@@ -45,7 +45,6 @@
 #include "SkewNormalCoeffPolicy.h"
 #include "RNG.h"
 #include "Particles.h"
-#include "SystemComponents.h"
 
 namespace walker {
 

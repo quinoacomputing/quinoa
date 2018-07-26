@@ -51,7 +51,7 @@
 #include "Types.h"
 #include "Particles.h"
 #include "Walker/Options/InitPolicy.h"
-#include "SystemComponents.h"
+#include "Walker/InputDeck/InputDeck.h"
 #include "RNG.h"
 
 namespace walker {
