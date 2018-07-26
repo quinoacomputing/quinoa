@@ -53,12 +53,12 @@
 #define GeneralizedDirichlet_h
 
 #include <vector>
+#include <cmath>
 
 #include "InitPolicy.h"
 #include "GeneralizedDirichletCoeffPolicy.h"
 #include "RNG.h"
 #include "Particles.h"
-#include "SystemComponents.h"
 
 namespace walker {
 
@@ -147,7 +147,7 @@ class GeneralizedDirichlet {
         for (ncomp_t i=0; i<m_ncomp; ++i) {
           tk::real& par = particles( p, i, m_offset );
           tk::real d = m_k[i] * par * Y[m_ncomp-1] * U[i] * dt;
-          d = (d > 0.0 ? sqrt(d) : 0.0);
+          d = (d > 0.0 ? std::sqrt(d) : 0.0);
           tk::real a=0.0;
           for (ncomp_t j=i; j<m_ncomp-1; ++j) a += m_cij[k++]/Y[j];
           par += U[i]/2.0*( m_b[i]*( m_S[i]*Y[m_ncomp-1] - (1.0-m_S[i])*par ) +
