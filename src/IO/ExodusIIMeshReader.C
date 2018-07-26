@@ -148,9 +148,9 @@ ExodusIIMeshReader::readMeshPart(
   for (std::size_t e=0; e<ginpoel.size()/4; ++e)
     for (std::size_t f=0; f<4; ++f) {
       const auto& tri = tk::expofa[f];
-      faces.insert( { ginpoel[ e*4+tri[0] ],
-                      ginpoel[ e*4+tri[1] ],
-                      ginpoel[ e*4+tri[2] ] } );
+      faces.insert( {{{ ginpoel[ e*4+tri[0] ],
+                        ginpoel[ e*4+tri[1] ],
+                        ginpoel[ e*4+tri[2] ] }}} );
     }
 
   // Read triangle element connectivity (all triangle blocks in file)
@@ -161,9 +161,9 @@ ExodusIIMeshReader::readMeshPart(
   std::vector< std::size_t > triinpoel_own;
   std::size_t ltrid = 0;        // local triangle id
   for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
-    auto i = faces.find( { triinpoel[e*3+0],
-                           triinpoel[e*3+1],
-                           triinpoel[e*3+2] } );
+    auto i = faces.find( {{ triinpoel[e*3+0],
+                            triinpoel[e*3+1],
+                            triinpoel[e*3+2] }} );
     if (i != end(faces)) {
       m_tri[e] = ltrid++;       // generate global->local triangle ids
       triinpoel_own.push_back( triinpoel[e*3+0] );
