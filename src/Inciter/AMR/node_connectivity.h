@@ -152,11 +152,11 @@ namespace AMR {
              */
             void print()
             {
-                std::cout << "Connectivity" << std::endl;
-                for (size_t i = 0; i < size(); i ++)
-                {
-                    std::cout << i << ": A " << get(i)[0] << " B " << get(i)[1] << std::endl;
-                }
+//                 std::cout << "Connectivity" << std::endl;
+//                 for (size_t i = 0; i < size(); i ++)
+//                 {
+//                     std::cout << i << ": A " << get(i)[0] << " B " << get(i)[1] << std::endl;
+//                 }
             }
 
     };
