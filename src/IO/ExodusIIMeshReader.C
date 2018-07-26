@@ -75,7 +75,7 @@ ExodusIIMeshReader::readMesh( UnsMesh& mesh )
   readHeader( mesh );
   readAllElements( mesh );
   readAllNodes( mesh );
-  readAllSidesets( mesh );
+  readSidesetFaces( mesh.sidetet(), mesh.faceid() );
 }
 
 void
@@ -539,17 +539,6 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
 }
 
 void
-ExodusIIMeshReader::readAllSidesets( UnsMesh& mesh )
-// *****************************************************************************
-// Read all side sets and associated face connectivity
-//! \param[inout] mesh Unstructured mesh object to store side sets in
-// *****************************************************************************
-{
-  readSidesetFaces( mesh.sidetet(), mesh.faceid() );
-  //readFaces( mesh.triinpoel() );
-}
-
-void
 ExodusIIMeshReader::readFaces( std::vector< std::size_t >& conn ) const
 // *****************************************************************************
 //  Read face connectivity of a number of boundary faces from ExodusII file
@@ -599,7 +588,7 @@ ExodusIIMeshReader::readNodemap()
 }
 
 std::map< int, std::vector< std::size_t > >
-ExodusIIMeshReader::readSidesets()
+ExodusIIMeshReader::readSidesetNodes()
 // *****************************************************************************
 //  Read node list of all side sets from ExodusII file
 //! \return Node lists mapped to side set ids

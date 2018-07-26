@@ -136,7 +136,7 @@ struct MeshReader_common {
                    triinpoel.size()/3, 2398 );
 
     // Read node lists associated to side sets
-    auto bnode = mr.readSidesets();
+    auto bnode = mr.readSidesetNodes();
     // Test if the number of nodes is correct
     ensure_equals( "number of nodes of sidesets incorrect",
                    tk::sumvalsize(bnode), 1365 );

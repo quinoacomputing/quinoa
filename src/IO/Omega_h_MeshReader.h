@@ -51,7 +51,7 @@ class Omega_h_MeshReader {
     void readFaces( std::vector< std::size_t >& conn ) const;
 
     //! Read node list of all side sets from Omega h file
-    std::map< int, std::vector< std::size_t > > readSidesets();
+    std::map< int, std::vector< std::size_t > > readSidesetNodes();
 
     //! ...
     std::vector< std::size_t > triinpoel(

@@ -167,7 +167,7 @@ IGNORE(conn);
 }
 
 std::map< int, std::vector< std::size_t > >
-Omega_h_MeshReader::readSidesets()
+Omega_h_MeshReader::readSidesetNodes()
 // *****************************************************************************
 //  Read node list of all side sets from Omega_h file
 //! \return Node lists mapped to side set ids

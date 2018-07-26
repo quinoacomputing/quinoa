@@ -85,8 +85,8 @@ class MeshReader {
     { self->readFaces( conn ); }
 
     //! Public interfaces to read node list of all side sets from mesh file
-    std::map< int, std::vector< std::size_t > > readSidesets()
-    { return self->readSidesets(); }
+    std::map< int, std::vector< std::size_t > > readSidesetNodes()
+    { return self->readSidesetNodes(); }
 
     //! Copy assignment
     MeshReader& operator=( const MeshReader& x )
@@ -123,7 +123,8 @@ class MeshReader {
                    const std::vector< std::size_t >&,
                    const std::vector< std::size_t >& ) = 0;
       virtual void readFaces( std::vector< std::size_t >& ) const = 0;
-      virtual std::map< int, std::vector< std::size_t > > readSidesets() = 0;
+      virtual std::map< int, std::vector< std::size_t > >
+        readSidesetNodes() = 0;
     };
 
     //! \brief Model models the Concept above by deriving from it and overriding
@@ -153,8 +154,8 @@ class MeshReader {
         override { data.readSidesetFaces( belem, faces ); }
       void readFaces( std::vector< std::size_t >& conn )
         const override { data.readFaces( conn ); }
-      std::map< int, std::vector< std::size_t > > readSidesets() override
-        { return data.readSidesets(); }
+      std::map< int, std::vector< std::size_t > > readSidesetNodes() override
+        { return data.readSidesetNodes(); }
       T data;
     };
 

@@ -231,7 +231,7 @@ Transporter::createPartitioner()
     matchBCs( g_dgpde, belem );
   } else {
     // Read node lists on side sets
-    bnode = mr.readSidesets();
+    bnode = mr.readSidesetNodes();
     // Verify boundarty condition (BC) side sets used exist in mesh file
     matchBCs( g_cgpde, bnode );
   }
