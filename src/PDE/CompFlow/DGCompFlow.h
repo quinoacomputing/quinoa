@@ -25,6 +25,7 @@
 #include "RiemannSolver.h"
 #include "Riemann/HLLC.h"
 #include "Riemann/LaxFriedrichs.h"
+#include "UnsMesh.h"
 
 namespace inciter {
 
@@ -113,7 +114,8 @@ class CompFlow {
                    g_inputdeck.get< tag::discr, tag::flux >() ) ),
       m_bcdir( config< tag::bcdir >( c ) ),
       m_bcsym( config< tag::bcsym >( c ) ),
-      m_bcextrapolate( config< tag::bcextrapolate >( c ) )
+      m_bcextrapolate( config< tag::bcextrapolate >( c ) ),
+      m_ndof( 4 )
       //ErrChk( !m_bcdir.empty() || !m_bcsym.empty() || !m_bcextrapolate.empty(),
       //        "Boundary conditions not set in control file for DG CompFlow" );
     {}
@@ -156,6 +158,27 @@ class CompFlow {
       {
         for (ncomp_t c=0; c<5; ++c)
           l(e, c, m_offset) = geoElem(e,0,0);
+      }
+    }
+
+    //! Compute the left hand side P1 block-diagonal mass matrix
+    //! \param[in] geoElem Element geometry array
+    //! \param[in,out] l Block diagonal mass matrix
+    void lhsp1( const tk::Fields& geoElem, tk::Fields& l ) const
+    {
+      Assert( geoElem.nunk() == l.nunk(), "Size mismatch" );
+      std::size_t nelem = geoElem.nunk();
+
+      for (std::size_t e=0; e<nelem; ++e)
+      {
+        for (ncomp_t c=0; c<5; ++c)
+        {
+          auto mark = c*m_ndof;
+          l(e, mark,   m_offset) = geoElem(e,0,0);
+          l(e, mark+1, m_offset) = geoElem(e,0,0) / 10.0;
+          l(e, mark+2, m_offset) = geoElem(e,0,0) * 3.0/10.0;
+          l(e, mark+3, m_offset) = geoElem(e,0,0) * 3.0/5.0;
+        }
       }
     }
 
@@ -217,6 +240,26 @@ class CompFlow {
         for (ncomp_t c=0; c<5; ++c)
           R(e, c, m_offset) += vole * s[c];
       }
+    }
+
+    //! Compute P1 right hand side
+    //! \param[in] t Physical time
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] fd Face connectivity data object
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] R Right-hand side vector computed
+    void rhsp1( tk::real /*t*/,
+                const tk::Fields& /*geoFace*/,
+                const tk::Fields& /*geoElem*/,
+                const inciter::FaceData& /*fd*/,
+                const std::vector< std::size_t >& /*inpoel*/,
+                const tk::UnsMesh::Coords& /*coord*/,
+                const tk::Fields& /*U*/,
+                tk::Fields& /*R*/ ) const
+    {
     }
 
     //! Compute the minimum time step size
@@ -304,6 +347,7 @@ class CompFlow {
     const std::vector< bcconf_t > m_bcsym;
     //! Extrapolation BC configuration
     const std::vector< bcconf_t > m_bcextrapolate;
+    const uint8_t m_ndof;
 
     //! \brief State policy class providing the left and right state of a face
     //!   at Dirichlet boundaries

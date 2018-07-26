@@ -21,6 +21,7 @@
 #include "Exception.h"
 #include "Vector.h"
 #include "Inciter/Options/BC.h"
+#include "UnsMesh.h"
 
 namespace inciter {
 
@@ -70,7 +71,8 @@ class Transport {
         g_inputdeck.get< tag::component >().offset< tag::transport >(c) ),
       m_bcextrapolate( config< tag::bcextrapolate >( c ) ),
       m_bcinlet( config< tag::bcinlet >( c ) ),
-      m_bcoutlet( config< tag::bcoutlet >( c ) )
+      m_bcoutlet( config< tag::bcoutlet >( c ) ),
+      m_ndof( 4 )
     {
       Problem::errchk( m_c, m_ncomp );
     }
@@ -110,6 +112,27 @@ class Transport {
       {
         for (ncomp_t c=0; c<m_ncomp; ++c)
           l(e, c, m_offset) = geoElem(e,0,0);
+      }
+    }
+
+    //! Compute the left hand side P1 mass matrix
+    //! \param[in] geoElem Element geometry array
+    //! \param[in,out] l Block diagonal mass matrix
+    void lhsp1( const tk::Fields& geoElem, tk::Fields& l ) const
+    {
+      Assert( geoElem.nunk() == l.nunk(), "Size mismatch" );
+      std::size_t nelem = geoElem.nunk();
+
+      for (std::size_t e=0; e<nelem; ++e)
+      {
+        for (ncomp_t c=0; c<m_ncomp; ++c)
+        {
+          auto mark = c*m_ndof;
+          l(e, mark,   m_offset) = geoElem(e,0,0);
+          l(e, mark+1, m_offset) = geoElem(e,0,0) / 10.0;
+          l(e, mark+2, m_offset) = geoElem(e,0,0) * 3.0/10.0;
+          l(e, mark+3, m_offset) = geoElem(e,0,0) * 3.0/5.0;
+        }
       }
     }
 
@@ -157,6 +180,139 @@ class Transport {
       bndIntegral< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, U, R );
       bndIntegral< Inlet >( m_bcinlet, bface, esuf, geoFace, U, R );
       bndIntegral< Outlet >( m_bcoutlet, bface, esuf, geoFace, U, R );
+    }
+
+    //! Compute P1 right hand side
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] R Right-hand side vector computed
+    void rhsp1( tk::real,
+                const tk::Fields& geoFace,
+                const tk::Fields& geoElem,
+                const inciter::FaceData& fd,
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord,
+                const tk::Fields& U,
+                tk::Fields& R ) const
+    {
+      Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
+              "vector and right-hand side at recent time step incorrect" );
+      Assert( U.nprop() == m_ncomp && R.nprop() == m_ncomp,
+              "Number of components in solution and right-hand side vector " 
+              "must equal "+ std::to_string(m_ncomp) );
+
+      const auto& bface = fd.Bface();
+      const auto& esuf = fd.Esuf();
+
+      // set rhs to zero
+      R.fill(0.0);
+
+      // compute internal surface flux integrals
+      for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
+      {
+        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+        std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+        auto farea = geoFace(f,0,0);
+
+        //--- upwind fluxes
+        auto flux = upwindFlux( f, geoFace, {{U.extract(el), U.extract(er)}} );
+
+        for (ncomp_t c=0; c<m_ncomp; ++c) {
+          R(el, c, m_offset) -= farea * flux[c];
+          R(er, c, m_offset) += farea * flux[c];
+        }
+      }
+
+      // compute boundary surface flux integrals
+      bndIntegral< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, U, R );
+      bndIntegral< Inlet >( m_bcinlet, bface, esuf, geoFace, U, R );
+      bndIntegral< Outlet >( m_bcoutlet, bface, esuf, geoFace, U, R );
+
+      // arrays for quadrature points
+      std::array< std::vector< tk::real >, 3 > coordgp;
+      std::vector< tk::real > wgp; 
+
+      coordgp[0].resize(5,0);
+      coordgp[1].resize(5,0);
+      coordgp[2].resize(5,0);
+
+      wgp.resize(5,0);
+
+      GaussQuadrature( 3, coordgp, wgp );
+
+      // compute volume integrals
+      for (std::size_t e=0; e<U.nunk(); ++e)
+      {
+        auto x1 = coord[0][ inpoel[4*e]   ];
+        auto y1 = coord[1][ inpoel[4*e]   ];
+        auto z1 = coord[2][ inpoel[4*e]   ];
+
+        auto x2 = coord[0][ inpoel[4*e+1] ];
+        auto y2 = coord[1][ inpoel[4*e+1] ];
+        auto z2 = coord[2][ inpoel[4*e+1] ];
+
+        auto x3 = coord[0][ inpoel[4*e+2] ];
+        auto y3 = coord[1][ inpoel[4*e+2] ];
+        auto z3 = coord[2][ inpoel[4*e+2] ];
+
+        auto x4 = coord[0][ inpoel[4*e+3] ];
+        auto y4 = coord[1][ inpoel[4*e+3] ];
+        auto z4 = coord[2][ inpoel[4*e+3] ];
+
+        // Gaussian quadrature
+        for (std::size_t igp=0; igp<5; ++igp)
+        {
+          auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp] - 1.0;
+          auto B3 = 3.0 * coordgp[1][igp] + coordgp[2][igp] - 1.0;
+          auto B4 = 4.0 * coordgp[2][igp] - 1.0;
+
+          auto wt = wgp[igp] * geoElem(e, 0, 0);
+
+          auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp] - coordgp[2][igp];
+          auto shp2 = coordgp[0][igp];
+          auto shp3 = coordgp[1][igp];
+          auto shp4 = coordgp[2][igp];
+
+          auto xgp = x1*shp1 + x2*shp2 + x3*shp3 + x4*shp4;
+          auto ygp = y1*shp1 + y2*shp2 + y3*shp3 + y4*shp4;
+          auto zgp = z1*shp1 + z2*shp2 + z3*shp3 + z4*shp4;
+
+          auto db2dxi1 = 2.0;
+          auto db2dxi2 = 1.0;
+          auto db2dxi3 = 1.0;
+
+          auto db3dxi1 = 0.0;
+          auto db3dxi2 = 3.0;
+          auto db3dxi3 = 1.0;
+
+          auto db4dxi1 = 0.0;
+          auto db4dxi2 = 0.0;
+          auto db4dxi3 = 4.0;
+
+          const auto vel = Problem::prescribedVelocity( xgp, ygp, zgp, m_c, m_ncomp );
+
+          for (ncomp_t c=0; c<m_ncomp; ++c)
+          {
+            auto mark = c*m_ndof;
+            auto ugp =   U(e, mark,   m_offset) 
+                       + U(e, mark+1, m_offset) * B2
+                       + U(e, mark+2, m_offset) * B3
+                       + U(e, mark+3, m_offset) * B4;
+
+            auto fluxx = vel[c][0] * ugp;
+            auto fluxy = vel[c][1] * ugp;
+            auto fluxz = vel[c][2] * ugp;
+
+            R(e, mark+1, m_offset) += wt * (fluxx * db2dxi1 + fluxy * db2dxi2 + fluxz * db2dxi3);
+            R(e, mark+2, m_offset) += wt * (fluxx * db3dxi1 + fluxy * db3dxi2 + fluxz * db3dxi3);
+            R(e, mark+3, m_offset) += wt * (fluxx * db4dxi1 + fluxy * db4dxi2 + fluxz * db4dxi3);
+          }
+        }
+      }
     }
 
     //! Compute the minimum time step size
@@ -256,6 +412,7 @@ class Transport {
     const std::vector< bcconf_t > m_bcinlet;
     //! Outlet BC configuration
     const std::vector< bcconf_t > m_bcoutlet;
+    const uint8_t m_ndof;
 
     //! \brief State policy class providing the left and right state of a face
     //!   at extrapolation boundaries
@@ -378,6 +535,44 @@ class Transport {
       }
     
       return flux;
+    }
+
+    //! Gaussian quadrature points locations and weights
+    //! \param[in] ndimn Dimension of integration domain
+    //! \param[in,out] coordgp Coordinates of quadrature points
+    //! \param[in,out] wgp Weights of quadrature points
+    void
+    GaussQuadrature( uint8_t ndimn,
+                     std::array< std::vector< tk::real >, 3 >& coordgp,
+                     std::vector< tk::real >& wgp ) const
+    {
+      if (ndimn == 3)
+        {
+          coordgp[0][0] = 0.25;
+          coordgp[1][0] = 0.25;
+          coordgp[2][0] = 0.25;
+          wgp[0]        = -12.0/15.0;
+
+          coordgp[0][1] = 1.0/6.0;
+          coordgp[1][1] = 1.0/6.0;
+          coordgp[2][1] = 1.0/6.0;
+          wgp[1]        = 9.0/20.0;
+
+          coordgp[0][2] = 0.5;
+          coordgp[1][2] = 1.0/6.0;
+          coordgp[2][2] = 1.0/6.0;
+          wgp[2]        = 9.0/20.0;
+
+          coordgp[0][3] = 1.0/6.0;
+          coordgp[1][3] = 0.5;
+          coordgp[2][3] = 1.0/6.0;
+          wgp[3]        = 9.0/20.0;
+
+          coordgp[0][4] = 1.0/6.0;
+          coordgp[1][4] = 1.0/6.0;
+          coordgp[2][4] = 0.5;
+          wgp[4]        = 9.0/20.0;
+        }
     }
 
 };

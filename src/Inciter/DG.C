@@ -47,7 +47,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_itf( 0 ),
   m_fd( fd ),
   m_u( m_disc[thisIndex].ckLocal()->Inpoel().size()/4,
-       g_inputdeck.get< tag::component >().nprop() ),
+       4*g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_vol( 0.0 ),
   m_geoFace( tk::genGeoFaceTri( fd.Ntfac(), fd.Inpofa(),
@@ -69,7 +69,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_exptGhost(),
   m_recvGhost(),
   m_diag(),
-  m_stage( 0 )
+  m_stage( 0 ),
+  m_dgp( 1 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -866,7 +867,11 @@ DG::lhs()
 {
   // Compute left-hand side matrix for all equations
   for (const auto& eq : g_dgpde)
-    eq.lhs( m_geoElem, m_lhs );
+    if (m_dgp == 1)
+      eq.lhsp1( m_geoElem, m_lhs );
+    else
+      eq.lhs( m_geoElem, m_lhs );
+      
 }
 
 void
@@ -883,7 +888,11 @@ DG::solve()
   auto d = Disc();
 
   for (const auto& eq : g_dgpde)
-    eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, m_u, m_rhs );
+    if (m_dgp == 1)
+      eq.rhsp1( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(),
+                m_u, m_rhs );
+    else
+      eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, m_u, m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   m_u =  m_rkcoef[0][m_stage] * m_un

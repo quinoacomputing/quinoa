@@ -25,6 +25,7 @@
 #include "Make_unique.h"
 #include "Fields.h"
 #include "FaceData.h"
+#include "UnsMesh.h"
 
 namespace inciter {
 
@@ -82,6 +83,10 @@ class DGPDE {
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
     { self->lhs( geoElem, l ); }
 
+    //! Public interface to computing the left-hand side matrix for the diff eq
+    void lhsp1( const tk::Fields& geoElem, tk::Fields& l ) const
+    { self->lhsp1( geoElem, l ); }
+
     //! Public interface to computing the right-hand side vector for the diff eq
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -90,6 +95,17 @@ class DGPDE {
               const tk::Fields& U,
               tk::Fields& R ) const
     { self->rhs( t, geoFace, geoElem, fd, U, R ); }
+
+    //! Public interface to computing the P1 right-hand side vector
+    void rhsp1( tk::real t,
+                const tk::Fields& geoFace,
+                const tk::Fields& geoElem,
+                const inciter::FaceData& fd,
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord,
+                const tk::Fields& U,
+                tk::Fields& R ) const
+    { self->rhsp1( t, geoFace, geoElem, fd, inpoel, coord, U, R ); }
 
     //! Public interface for computing the minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -137,12 +153,21 @@ class DGPDE {
                                tk::Fields&,
                                tk::real ) const = 0;
       virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
+      virtual void lhsp1( const tk::Fields&, tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
                         const tk::Fields&,
                         const tk::Fields&,
                         const inciter::FaceData&,
                         const tk::Fields&,
                         tk::Fields& ) const = 0;
+      virtual void rhsp1( tk::real,
+                          const tk::Fields&,
+                          const tk::Fields&,
+                          const inciter::FaceData&,
+                          const std::vector< std::size_t >&,
+                          const tk::UnsMesh::Coords&,
+                          const tk::Fields&,
+                          tk::Fields& ) const = 0;
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
                            const std::vector< std::size_t >&,
                            const tk::Fields& ) const = 0;
@@ -168,6 +193,8 @@ class DGPDE {
       const override { data.initialize( geoElem, unk, t ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
+      void lhsp1( const tk::Fields& geoElem, tk::Fields& l ) const override
+      { data.lhsp1( geoElem, l ); }
       void rhs( tk::real t,
                 const tk::Fields& geoFace,
                 const tk::Fields& geoElem,
@@ -175,6 +202,15 @@ class DGPDE {
                 const tk::Fields& U,
                 tk::Fields& R ) const override
       { data.rhs( t, geoFace, geoElem, fd, U, R ); }
+      void rhsp1( tk::real t,
+                  const tk::Fields& geoFace,
+                  const tk::Fields& geoElem,
+                  const inciter::FaceData& fd,
+                  const std::vector< std::size_t >& inpoel,
+                  const tk::UnsMesh::Coords& coord,
+                  const tk::Fields& U,
+                  tk::Fields& R ) const override
+      { data.rhsp1( t, geoFace, geoElem, fd, inpoel, coord, U, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override
