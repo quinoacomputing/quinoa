@@ -22,8 +22,9 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
-static CkReduction::reducerType BndNodeMerger;
+static CkReduction::reducerType ChBndNodeMerger;
 static CkReduction::reducerType BndFaceMerger;
+static CkReduction::reducerType BndNodeMerger;
 
 } // inciter::
 
@@ -98,12 +99,12 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
   // Activate SDAG wait for receiving boundary face and node data
   thisProxy[ thisIndex ].wait4com();
 
-  // Aggregate boundary nodes across all Sorter chares
+  // Aggregate chare boundary nodes across all Sorter chares
   std::unordered_map< int, std::vector< std::size_t > >
     bnd{{ thisIndex, std::move(chbnode) }};
-  auto nodestream = tk::serialize( bnd );
-  contribute( nodestream.first, nodestream.second.get(), BndNodeMerger,
-    CkCallback(CkIndex_Sorter::comnode(nullptr),thisProxy) );
+  auto chbnodestream = tk::serialize( bnd );
+  contribute( chbnodestream.first, chbnodestream.second.get(), ChBndNodeMerger,
+    CkCallback(CkIndex_Sorter::comChBndNode(nullptr),thisProxy) );
 
   // Aggregate boundary faces (and triangle connectivity) of side sets across
   // all Sorter chares (pack to triangle connectivity set per side set first)
@@ -119,6 +120,15 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
   auto facestream = tk::serialize( bconn );
   contribute( facestream.first, facestream.second.get(), BndFaceMerger,
     CkCallback(CkIndex_Sorter::comface(nullptr),thisProxy) );
+
+  // Aggregate boundary nodes of side sets across all Sorter chares (pack to
+  // node sets per side set first)
+  std::unordered_map< int, std::unordered_set< std::size_t > > bnodeset;
+  for (const auto& s : m_bnode)
+    bnodeset[ s.first ].insert( begin(s.second), end(s.second) );
+  auto nodestream = tk::serialize( bnodeset );
+  contribute( nodestream.first, nodestream.second.get(), BndNodeMerger,
+    CkCallback(CkIndex_Sorter::comnode(nullptr),thisProxy) );
 }
 
 void
@@ -132,14 +142,16 @@ Sorter::registerReducers()
 //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
 // *****************************************************************************
 {
-  BndNodeMerger = CkReduction::addReducer(
-                    tk::mergeHashMap< int, std::vector< std::size_t > > );
+  ChBndNodeMerger = CkReduction::addReducer(
+                      tk::mergeHashMap< int, std::vector< std::size_t > > );
   BndFaceMerger = CkReduction::addReducer(
                     tk::mergeHashMap< int, tk::UnsMesh::FaceSet > );
+  BndNodeMerger = CkReduction::addReducer(
+                   tk::mergeHashMap< int, std::unordered_set< std::size_t > > );
 }
 
 void
-Sorter::comnode( CkReductionMsg* msg )
+Sorter::comChBndNode( CkReductionMsg* msg )
 // *****************************************************************************
 //  Receive aggregated chare boundary nodes associated to chares
 //! \param[in] msg Aggregated chare boundary nodes across the whole problem
@@ -164,7 +176,7 @@ Sorter::comnode( CkReductionMsg* msg )
         if (it != end(m_nodeset)) m_msum[ c.first ].insert( i );
       }
 
-  comnode_complete();
+  comchbndnode_complete();
 }
 
 void
@@ -177,7 +189,7 @@ Sorter::comface( CkReductionMsg* msg )
 //!   (and triangle connectivity) of side sets across the whole problem.
 // *****************************************************************************
 {
-  // Unpack final result of aggregating boundary nodes associated to chares
+  // Unpack final result of aggregating boundary face data associated to chares
   PUP::fromMem creator( msg->getData() );
   std::unordered_map< int, tk::UnsMesh::FaceSet > bconn;
   creator | bconn;
@@ -196,8 +208,34 @@ Sorter::comface( CkReductionMsg* msg )
        m_triinpoel.insert( end(m_triinpoel), begin(t), end(t) );
      } 
    }
- 
+
   comface_complete();
+}
+
+void
+Sorter::comnode( CkReductionMsg* msg )
+// *****************************************************************************
+//  Receive aggregated boundary nodes of side sets
+//! \param[in] msg Aggregated boundary nodes of side sets across the whole
+//!   problem
+//! \details This is a reduction target receiving the aggregated boundary nodes
+//!   of side sets across the whole problem.
+// *****************************************************************************
+{
+  // Unpack final result of aggregating boundary nodes associated to chares
+  PUP::fromMem creator( msg->getData() );
+  std::unordered_map< int, std::unordered_set< std::size_t > > bnode;
+  creator | bnode;
+  delete msg;
+
+   // Convert set to vector of nodes per side sets
+   m_bnode.clear();
+   for (const auto& s : bnode) {
+     auto& b = m_bnode[ s.first ];
+     b.insert( begin(b), begin(s.second), end(s.second) );
+   }
+
+  comnode_complete();
 }
 
 void

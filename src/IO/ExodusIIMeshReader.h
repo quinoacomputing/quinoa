@@ -110,15 +110,15 @@ class ExodusIIMeshReader {
     //! Read local to global node-ID map
     std::vector< std::size_t > readNodemap();
 
-    //!  Return number of elements in a mesh block in the ExodusII file
-    std::size_t nelem( tk::ExoElemType elemtype ) const;
-
     //! Generate triangle face connectivity for side sets
     std::vector< std::size_t > triinpoel(
       std::map< int, std::vector< std::size_t > >& belem,
       const std::map< int, std::vector< std::size_t > >& faces,
       const std::vector< std::size_t >& ginpoel,
       const std::vector< std::size_t >& triinpoel ) const;
+
+    //!  Return number of elements in a mesh block in the ExodusII file
+    std::size_t nelem( tk::ExoElemType elemtype ) const;
 
     //! Copy assignment
     ExodusIIMeshReader& operator=( const ExodusIIMeshReader& x ) {

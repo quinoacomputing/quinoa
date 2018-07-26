@@ -819,9 +819,8 @@ ExodusIIMeshReader::triinpoel(
 
       ++s;
 
-      // overwrite file-internal element id with face id for side set
-      // (this is to be used to index into triinpoel)
-      //i = f++;
+      // generate PE-local face id for side set (this is to be used to index
+      // into triinpoel)
       if (localface) b.push_back( f++ );
     }
 

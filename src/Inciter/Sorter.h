@@ -74,10 +74,13 @@ class Sorter : public CBase_Sorter {
     void createWorkers();
 
     //! Receive aggregated chare boundary nodes associated to chares
+    void comChBndNode( CkReductionMsg* msg );
+
+    //! Receive aggregated boundary nodes for side sets
     void comnode( CkReductionMsg* msg );
 
     //! \brief Receive aggregated boundary faces (and triangle connectivity)
-    //!    associated to chares
+    //!    for side sets
     void comface( CkReductionMsg* msg );
 
     //! \brief Receive number of uniquely assigned global mesh node IDs from

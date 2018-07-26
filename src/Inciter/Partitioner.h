@@ -235,8 +235,10 @@ class Partitioner : public CBase_Partitioner {
     //! Return processing element for chare id
     int pe( int id ) const;
 
-    //! Compute communication cost of linear system merging for our PE
-    tk::real cost( std::size_t l, std::size_t u );
+    //! Keep only those nodes for side sets that reside on this PE
+    void ownBndNodes(
+      const std::unordered_map< std::size_t, std::size_t >& lid,
+      std::map< int, std::vector< std::size_t > >& bnode );
 };
 
 } // inciter::

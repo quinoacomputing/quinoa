@@ -89,9 +89,9 @@ Partitioner::Partitioner(
 //! \param[in] refiner Mesh refiner proxy
 //! \param[in] sorter Mesh reordering (sorter) proxy
 //! \param[in] scheme Discretization scheme
-//! \param[in] belem File-internal elem ids of side sets
-//! \param[in] faces Elem-relative face ids of side sets
-//! \param[in] bnode Node lists of side sets
+//! \param[in] belem File-internal elem ids of side sets (whole mesh)
+//! \param[in] faces Elem-relative face ids of side sets (whole mesh)
+//! \param[in] bnode Node lists of side sets (whole mesh)
 // *****************************************************************************
 {
   // Create mesh reader
@@ -102,13 +102,43 @@ Partitioner::Partitioner(
   mr.readMeshPart( m_ginpoel, m_inpoel, triinpoel, m_gid, m_lid, m_coord,
                    CkNumPes(), CkMyPe() );
 
-  // Compute triangle connectivity for side sets
+  // Compute triangle connectivity for side sets, reduce boundary face for side
+  // sets to this PE only and to PE-local face ids
   m_triinpoel = mr.triinpoel( m_bface, faces, m_ginpoel, triinpoel );
+
+  // Reduce boundary node lists (global ids) for side sets to this PE only
+  ownBndNodes( m_lid, m_bnode );
 
   // Compute number of cells across whole problem
   std::vector< std::size_t > meshsize{{ m_ginpoel.size()/4,
                                         m_coord[0].size() }};
   contribute( meshsize, CkReduction::sum_ulong, m_cbp.get< tag::load >() );
+}
+
+void
+Partitioner::ownBndNodes(
+  const std::unordered_map< std::size_t, std::size_t >& lid,
+  std::map< int, std::vector< std::size_t > >& bnode )
+// *****************************************************************************
+// Keep only those nodes for side sets that reside on this PE
+//! \param[in] lid Global->local node IDs of elements of this PE's mesh chunk
+//! \param[in,out] bnode Global ids of nodes for side sets for whole mesh
+//! \details This function overwrites the input boundary node lists map with the
+//!    nodes that reside on the caller PE.
+// *****************************************************************************
+{
+  std::map< int, std::vector< std::size_t > > bnode_own;
+
+  for (const auto& s : bnode) {
+    auto& b = bnode_own[ s.first ];
+    for (auto n : s.second) {
+      auto i = lid.find( n );
+      if (i != end(lid)) b.push_back( n );
+    }
+    if (b.empty()) bnode_own.erase( s.first );
+  }
+
+  bnode = std::move(bnode_own);
 }
 
 void
@@ -234,7 +264,7 @@ Partitioner::refine()
                              tk::cref_find(m_chcoordmap,cid),   // chare mesh
                              m_bface,                           // this PE
                              m_triinpoel,                       // this PE
-                             m_bnode,           // whole mesh
+                             m_bnode,                           // this PE
                              m_nchare,
                              CkMyPe() );
   }

@@ -43,7 +43,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
                   const tk::SorterCallback& cbs,
                   const std::vector< std::size_t >& ginpoel,
                   const tk::UnsMesh::CoordMap& coordmap,
-                  const std::map< int, std::vector< std::size_t > >& bface,
+                  const std::map< int, std::vector< std::size_t > >& belem,
                   const std::vector< std::size_t >& triinpoel,
                   const std::map< int, std::vector< std::size_t > >& bnode,
                   int nchare ) :
@@ -57,7 +57,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_el( tk::global2local( ginpoel ) ),     // fills m_inpoel, m_gid, m_lid
   m_coordmap( coordmap ),
   m_coord( flatcoord(coordmap) ),
-  m_bface( bface ),
+  m_belem( belem ),
   m_triinpoel( triinpoel ),
   m_bnode( bnode ),
   m_nchare( nchare ),
@@ -71,8 +71,18 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_bndEdges()
 // *****************************************************************************
 //  Constructor
-//! \param[in] bface Face lists mapped to side set ids
-//! \param[in] triinpoel Interconnectivity of points and boundary-face
+//! \param[in] transporter Transporter (host) proxy
+//! \param[in] sorter Mesh reordering (sorter) proxy
+//! \param[in] solver Linear system solver proxy
+//! \param[in] scheme Discretization scheme
+//! \param[in] cbr Charm++ callbacks for Refiner
+//! \param[in] cbs Charm++ callbacks for Sorter
+//! \parampin] ginpoel Volume element connectivity with global node IDs
+//! \parampin] coordmap Mesh node coordinates associated to global node IDs
+//! \param[in] belem File-internal elem ids of side sets (caller PE)
+//! \param[in] triinpoel Triangle face connectivity with global IDs (caller PE)
+//! \param[in] bnode Node lists of side sets (caller PE)
+//! \param[in] nchare Total number of refiner chares (chare array elements)
 // *****************************************************************************
 {
   Assert( !m_ginpoel.empty(), "No elements assigned to refiner chare" );
@@ -437,7 +447,7 @@ Refiner::finish()
 {
   // create sorter Charm++ chare array elements using dynamic insertion
   m_sorter[ thisIndex ].insert( m_host, m_solver, m_cbs, m_scheme, m_ginpoel,
-    m_coordmap, m_bface, m_triinpoel, m_bnode, m_nchare, CkMyPe() );
+    m_coordmap, m_belem, m_triinpoel, m_bnode, m_nchare, CkMyPe() );
  
   // Compute final number of cells across whole problem
   std::vector< std::uint64_t > mesh{ m_ginpoel.size()/4, m_coord[0].size() };
@@ -776,10 +786,10 @@ Refiner::boundary()
   }
 
   // Assign side set ids to faces on the physical boundary only. Note that
-  // m_bface may be empty and that is okay, in that case bnd will contain data
+  // m_belem may be empty and that is okay, in that case bnd will contain data
   // on both chare as well as physical boundaries and the side set id in the map
   // value will stay at -1.
-  for (const auto& ss : m_bface)  // for all phsyical boundaries (sidesets)
+  for (const auto& ss : m_belem)  // for all phsyical boundaries (sidesets)
     for (auto f : ss.second) {    // for all faces on this physical boundary
       Face t{{ m_triinpoel[f*3+0], m_triinpoel[f*3+1], m_triinpoel[f*3+2] }};
       auto cf = bnd.find( t );
@@ -787,10 +797,10 @@ Refiner::boundary()
     }
 
   // Remove chare-boundary faces (to which the above loop did not assign set
-  // id), but only if the above loop was run, i.e., if m_bface was not empty.
+  // id), but only if the above loop was run, i.e., if m_belem was not empty.
   // This results in removing the chare-boundary faces keeping only the physical
   // boundary faces (and their associated side set id and tet id).
-  if (!m_bface.empty()) {
+  if (!m_belem.empty()) {
     auto bndcopy = bnd;
     for (const auto& f : bndcopy) if (f.second.first == -1) bnd.erase( f.first );
   }
@@ -832,7 +842,7 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
   using Face = tk::UnsMesh::Face;
 
   // storage for boundary faces associated to side-set IDs of the refined mesh
-  decltype(m_bface) bface;              // will become m_bface
+  decltype(m_belem) belem;              // will become m_belem
   // storage for boundary faces-node connectivity of the refined mesh
   decltype(m_triinpoel) triinpoel;      // will become m_triinpoel
   // face id counter
@@ -883,7 +893,7 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
                      tk::cref_find( m_lid, f.first[1] ),
                      tk::cref_find( m_lid, f.first[2] ) }};
       // will associate to side set id of old (unrefined) mesh boundary face
-      auto& sideface = bface[ f.second.first ];
+      auto& sideface = belem[ f.second.first ];
       // query number of children of boundary tet adjacent to boundary face
       auto nc = m_refiner.tet_store.data( f.second.second ).num_children;
       if (nc == 0) {    // if boundary tet is not refined, add its boundary face
@@ -927,7 +937,7 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
     }
 
   // Update boundary face data structures
-  m_bface = std::move(bface);
+  m_belem = std::move(belem);
   m_triinpoel = std::move(triinpoel);
 }
 

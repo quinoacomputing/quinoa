@@ -24,6 +24,7 @@ module sorter {
                     const std::map< int, std::vector< std::size_t > >& bnode,
                     int nchare );
       initnode void registerReducers();
+      entry [reductiontarget] void comChBndNode( CkReductionMsg* msg );
       entry [reductiontarget] void comnode( CkReductionMsg* msg );
       entry [reductiontarget] void comface( CkReductionMsg* msg );
       entry void offset( int c, std::size_t u );
@@ -38,7 +39,8 @@ module sorter {
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
       entry void wait4com() {
-        when comnode_complete(), comface_complete() serial "com" { start(); }
+        when comchbndnode_complete(), comface_complete(), comnode_complete()
+        serial "com" { start(); }
       };
 
       entry void wait4prep() {
@@ -50,6 +52,7 @@ module sorter {
         when lower_complete(), upper_complete() serial "create" { create(); }
       };
 
+      entry void comchbndnode_complete();
       entry void comnode_complete();
       entry void comface_complete();
       entry void reorderowned_complete();
