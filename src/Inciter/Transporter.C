@@ -426,6 +426,9 @@ Transporter::disccreated()
     m_print.endsubsection();
   }
 
+  m_print.diag( "Creating workers, computing nodal volumes and "
+                "communication maps" );
+
   m_sorter.createWorkers();
 
   auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
@@ -515,6 +518,8 @@ Transporter::vol()
 // computing/receiving their part of the nodal volumes
 // *****************************************************************************
 {
+  m_print.diag( "Computing total mesh volume" );
+
   m_scheme.totalvol< tag::bcast >();
 }
 
@@ -525,6 +530,8 @@ Transporter::totalvol( tk::real v )
 //! \param[in] v mesh volume
 // *****************************************************************************
 {
+  m_print.diag( "Computing mesh cell statistics" );
+
   m_V = v;
   m_scheme.stat< tag::bcast >();
 }
