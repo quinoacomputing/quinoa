@@ -15,7 +15,7 @@ ARG TRAVIS_COMMIT
 
 ENV RUNNER_ARGS="--bind-to none -oversubscribe" \
     OMPI_MCA_plm=isolated \
-    PATH /opt/openmpi/${COMPILER}/bin:$PATH
+    PATH=/opt/openmpi/${COMPILER}/bin:$PATH
 
 COPY quinoa /home/quinoa/quinoa
 COPY sonar/ /home/quinoa/.sonar
