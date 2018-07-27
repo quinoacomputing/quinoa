@@ -3,11 +3,17 @@
 
 #include <algorithm>
 
+#include "Macro.h"
 #include "tet_store.h"
 #include "node_connectivity.h"
 
 // TODO: make this have a base class to support multiple generator schemes
 // using the policy design pattern
+
+#if defined(STRICT_GNUC)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
 
 namespace AMR {
 
@@ -780,5 +786,9 @@ namespace AMR {
 
     };
 }
+
+#if defined(STRICT_GNUC)
+  #pragma GCC diagnostic pop
+#endif
 
 #endif // guard
