@@ -31,6 +31,8 @@ class Transporter : public CBase_Transporter {
   private:
     //! Indices for progress report on mesh preparation
     enum ProgMesh{ PART=0, DIST, REFINE, BND, COMM, MASK, REORD, BOUND };
+    //! Indices for progress report on workers preparation
+    enum ProgWork{ CREATE=0, BNDFACE, COMFAC, GHOST, ADJ };
 
   public:
     #if defined(__clang__)
@@ -112,6 +114,17 @@ class Transporter : public CBase_Transporter {
     //! Non-reduction target for receiving progress report on computing bounds
     void chbounds() { m_progMesh.inc< BOUND >(); }
 
+    //! Non-reduction target for receiving progress report on creating workers
+    void chcreated() { m_progWork.inc< CREATE >(); }
+    //! Non-reduction target for receiving progress report on finding bnd faces
+    void chbndface() { m_progWork.inc< BNDFACE >(); }
+    //! Non-reduction target for receiving progress report on face communication
+    void chcomfac() { m_progWork.inc< COMFAC >(); }
+    //! Non-reduction target for receiving progress report on sending ghost data
+    void chghost() { m_progWork.inc< GHOST >(); }
+    //! Non-reduction target for receiving progress report on face adjacency
+    void chadj() { m_progWork.inc< ADJ >(); }
+
     //! \brief Reduction target indicating that the communication has been
     //!    established among PEs
     void comfinal();
@@ -183,6 +196,8 @@ class Transporter : public CBase_Transporter {
     std::vector< std::size_t > m_linsysbc;
     //! Progress object for preparing mesh
     tk::Progress< 8 > m_progMesh;
+    //! Progress object for preparing workers
+    tk::Progress< 5 > m_progWork;
 
     //! Create linear solver group
     void createSolver();

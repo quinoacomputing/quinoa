@@ -614,6 +614,8 @@ Sorter::createWorkers()
   // "Dynamic Insertion".
   m_scheme.insert( thisIndex, m_scheme.get(), m_solver, fd, CkMyPe() );
 
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chcreated();
+
   contribute( m_cbs.get< tag::workinserted >() );
 }
 

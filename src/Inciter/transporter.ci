@@ -48,6 +48,12 @@ module transporter {
       entry void chreordered();
       entry void chbounds();
 
+      entry void chcreated();
+      entry void chbndface();
+      entry void chcomfac();
+      entry void chghost();
+      entry void chadj();
+
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 

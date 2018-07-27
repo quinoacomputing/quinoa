@@ -72,7 +72,10 @@ Transporter::Transporter() :
   m_progMesh( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
               {{ "p", "d", "r", "b", "c", "m", "r", "b" }},
               {{ "partition", "distribute", "refine", "bnd", "comm", "mask",
-                  "reorder", "bounds"}} )
+                  "reorder", "bounds"}} ),
+  m_progWork( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
+              {{ "c", "b", "f", "g", "a" }},
+              {{ "create", "bndface", "comfac", "ghost", "adj" }} )
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
@@ -426,8 +429,8 @@ Transporter::disccreated()
     m_print.endsubsection();
   }
 
-  m_print.diag( "Creating workers, computing nodal volumes and "
-                "communication maps" );
+  m_progWork.start( "Preparing workers",
+                    {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
 
   m_sorter.createWorkers();
 
@@ -518,8 +521,6 @@ Transporter::vol()
 // computing/receiving their part of the nodal volumes
 // *****************************************************************************
 {
-  m_print.diag( "Computing total mesh volume" );
-
   m_scheme.totalvol< tag::bcast >();
 }
 
@@ -530,8 +531,6 @@ Transporter::totalvol( tk::real v )
 //! \param[in] v mesh volume
 // *****************************************************************************
 {
-  m_print.diag( "Computing mesh cell statistics" );
-
   m_V = v;
   m_scheme.stat< tag::bcast >();
 }
@@ -615,6 +614,8 @@ Transporter::stat()
 // Echo diagnostics mesh statistics
 // *****************************************************************************
 {
+  m_progWork.end();
+
   m_print.diag( "Mesh statistics: min/max/avg(edgelength) = " +
                 std::to_string( m_minstat[0] ) + " / " +
                 std::to_string( m_maxstat[0] ) + " / " +
