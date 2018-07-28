@@ -8,20 +8,14 @@ ARG SONARQUBE_GITHUB_TOKEN
 ARG COMPILER
 ARG BUILD
 ARG SHARED_LIBS
-
-#for coverage
-ENV CI true
-ENV TRAVIS true
 ARG TRAVIS_BRANCH
-ARG TRAVIS_JOB_NUMBER
 ARG TRAVIS_PULL_REQUEST
-ARG TRAVIS_JOB_ID
 ARG TRAVIS_REPO_SLUG
 ARG TRAVIS_COMMIT
 
-ENV RUNNER_ARGS "--bind-to none -oversubscribe"
-ENV OMPI_MCA_plm isolated
-ENV PATH /opt/openmpi/${COMPILER}/bin:$PATH
+ENV RUNNER_ARGS="--bind-to none -oversubscribe" \
+    OMPI_MCA_plm=isolated \
+    PATH=/opt/openmpi/${COMPILER}/bin:$PATH
 
 COPY quinoa /home/quinoa/quinoa
 COPY sonar/ /home/quinoa/.sonar
@@ -45,7 +39,6 @@ RUN cmake \
     -DLCOV=/bin/true \
     -DGENHTML=/bin/true \
     ../src
-ENV CCACHE_DISABLE=true
 RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} ninja
 RUN if [ -z "${SONARQUBE}" ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q; fi
 RUN if [ -z "${SONARQUBE}" ]; then ctest --output-on-failure -j2 -LE stringent -E "(.*pe[48])"; fi
