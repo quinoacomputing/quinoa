@@ -43,6 +43,7 @@ script:
                  --build-arg TRAVIS_REPO_SLUG=${TRAVIS_REPO_SLUG}
                  --build-arg TRAVIS_COMMIT=${TRAVIS_COMMIT}
                  -t ${TRAVIS_REPO_SLUG}:${DISTRO}
+                 -rm=false
                  -f ${HOME}/docker/Dockerfile.quinoa-build-travis
                  ${HOME}/docker/ &&
     CON=$(docker run -d ${TRAVIS_REPO_SLUG}:${DISTRO} /bin/bash) &&
