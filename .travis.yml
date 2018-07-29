@@ -11,20 +11,52 @@ git:
 
 env:
   matrix:
-    - COMPILER=gnu BUILD=Debug
-    - COMPILER=gnu BUILD=Debug SHARED_LIBS=off
-    - COMPILER=gnu BUILD=Release
-    - COMPILER=gnu BUILD=Release SHARED_LIBS=off DOCKERHUB=true
+    - TARGET=unittest COMPILER=gnu BUILD=Debug
+    - TARGET=unittest COMPILER=gnu BUILD=Debug SHARED_LIBS=off
+    - TARGET=unittest COMPILER=gnu BUILD=Release
+    - TARGET=unittest COMPILER=gnu BUILD=Release SHARED_LIBS=off DOCKERHUB=true
+    - TARGET=unittest COMPILER=clang BUILD=Debug
+    - TARGET=unittest COMPILER=clang BUILD=Debug SHARED_LIBS=off
+    - TARGET=unittest COMPILER=clang BUILD=Release
+    - TARGET=unittest COMPILER=clang BUILD=Release SHARED_LIBS=off
 
-    - COMPILER=clang BUILD=Debug
-    - COMPILER=clang BUILD=Debug SHARED_LIBS=off
-    - COMPILER=clang BUILD=Release
-    - COMPILER=clang BUILD=Release SHARED_LIBS=off
+    - TARGET=walker COMPILER=gnu BUILD=Debug
+    - TARGET=walker COMPILER=gnu BUILD=Debug SHARED_LIBS=off
+    - TARGET=walker COMPILER=gnu BUILD=Release
+    - TARGET=walker COMPILER=gnu BUILD=Release SHARED_LIBS=off DOCKERHUB=true
+    - TARGET=walker COMPILER=clang BUILD=Debug
+    - TARGET=walker COMPILER=clang BUILD=Debug SHARED_LIBS=off
+    - TARGET=walker COMPILER=clang BUILD=Release
+    - TARGET=walker COMPILER=clang BUILD=Release SHARED_LIBS=off
 
-    - COMPILER=gnu BUILD=Release SONARQUBE=ON
-  target:
-    - TARGET=walker
-    - TARGET=inciter
+    - TARGET=inciter COMPILER=gnu BUILD=Debug
+    - TARGET=inciter COMPILER=gnu BUILD=Debug SHARED_LIBS=off
+    - TARGET=inciter COMPILER=gnu BUILD=Release
+    - TARGET=inciter COMPILER=gnu BUILD=Release SHARED_LIBS=off DOCKERHUB=true
+    - TARGET=inciter COMPILER=clang BUILD=Debug
+    - TARGET=inciter COMPILER=clang BUILD=Debug SHARED_LIBS=off
+    - TARGET=inciter COMPILER=clang BUILD=Release
+    - TARGET=inciter COMPILER=clang BUILD=Release SHARED_LIBS=off
+
+    - TARGET=rngtest COMPILER=gnu BUILD=Debug
+    - TARGET=rngtest COMPILER=gnu BUILD=Debug SHARED_LIBS=off
+    - TARGET=rngtest COMPILER=gnu BUILD=Release
+    - TARGET=rngtest COMPILER=gnu BUILD=Release SHARED_LIBS=off DOCKERHUB=true
+    - TARGET=rngtest COMPILER=clang BUILD=Debug
+    - TARGET=rngtest COMPILER=clang BUILD=Debug SHARED_LIBS=off
+    - TARGET=rngtest COMPILER=clang BUILD=Release
+    - TARGET=rngtest COMPILER=clang BUILD=Release SHARED_LIBS=off
+
+    - TARGET=meshconv COMPILER=gnu BUILD=Debug
+    - TARGET=meshconv COMPILER=gnu BUILD=Debug SHARED_LIBS=off
+    - TARGET=meshconv COMPILER=gnu BUILD=Release
+    - TARGET=meshconv COMPILER=gnu BUILD=Release SHARED_LIBS=off DOCKERHUB=true
+    - TARGET=meshconv COMPILER=clang BUILD=Debug
+    - TARGET=meshconv COMPILER=clang BUILD=Debug SHARED_LIBS=off
+    - TARGET=meshconv COMPILER=clang BUILD=Release
+    - TARGET=meshconv COMPILER=clang BUILD=Release SHARED_LIBS=off
+
+    - TARGET=all COMPILER=gnu BUILD=Release SONARQUBE=ON
 
 script:
   - export DISTRO=alpine

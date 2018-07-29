@@ -45,7 +45,7 @@ RUN cmake \
     ../src
 RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} ninja -j2 ${TARGET}
 RUN ccache -s
-RUN if [ -z "${SONARQUBE}" ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q; fi
+RUN if [ ${TARGET} = unittest ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q; fi
 RUN if [ -z "${SONARQUBE}" ]; then ctest --output-on-failure -j2 -LE stringent -R ${TARGET}; fi
 RUN if [ ${SONARQUBE} ]; then ninja -j2 doc; fi
 RUN cd .. && if [ ${SONARQUBE} ]; then \
@@ -86,7 +86,7 @@ RUN cd .. && if [ ${SONARQUBE} ] && [ -n "${SONARQUBE_GITHUB_TOKEN}" ] && [ -n "
     -Dsonar.login=${SONARQUBE_TOKEN}; \
 fi
 USER root
-RUN ninja -j2 install
+RUN if [ ${SONARQUBE} ]; then ninja -j2 install; fi
 USER quinoa
-RUN export PATH=/usr/local/bin:$PATH && unittest -h && inciter && rngtest && meshconv && walker
+RUN if [ ${SONARQUBE} ]; then export PATH=/usr/local/bin:$PATH && unittest -h && inciter && rngtest && meshconv && walker; fi
 WORKDIR /home/quinoa
