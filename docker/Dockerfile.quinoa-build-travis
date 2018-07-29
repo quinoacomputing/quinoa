@@ -15,7 +15,7 @@ ARG TRAVIS_COMMIT
 
 ENV RUNNER_ARGS="--bind-to none -oversubscribe" \
     OMPI_MCA_plm=isolated \
-    PATH=/opt/openmpi/${COMPILER}/bin:$PATH
+    PATH=/usr/lib/ccache/bin:/opt/openmpi/${COMPILER}/bin:$PATH
 
 RUN rm -rf /home/quinoa/.ccache
 COPY quinoa /home/quinoa/quinoa
