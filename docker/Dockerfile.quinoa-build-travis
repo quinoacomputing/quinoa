@@ -7,6 +7,7 @@ ARG SONARQUBE_TOKEN
 ARG SONARQUBE_GITHUB_TOKEN
 ARG COMPILER
 ARG BUILD
+ARG TARGET
 ARG SHARED_LIBS
 ARG TRAVIS_BRANCH
 ARG TRAVIS_PULL_REQUEST
@@ -42,10 +43,10 @@ RUN cmake \
     -DLCOV=/bin/true \
     -DGENHTML=/bin/true \
     ../src
-RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} ninja -j2
+RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} ninja -j2 ${TARGET}
 RUN ccache -s
 RUN if [ -z "${SONARQUBE}" ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q; fi
-RUN if [ -z "${SONARQUBE}" ]; then ctest --output-on-failure -j2 -LE stringent -E "(.*pe[48])"; fi
+RUN if [ -z "${SONARQUBE}" ]; then ctest --output-on-failure -j2 -LE stringent -R ${TARGET}; fi
 RUN if [ ${SONARQUBE} ]; then ninja -j2 doc; fi
 RUN cd .. && if [ ${SONARQUBE} ]; then \
   python -m coverxygen --xml-dir build/doc/xml/ --src-dir . --output doxygen.coverage.info; \

@@ -22,6 +22,9 @@ env:
     - COMPILER=clang BUILD=Release SHARED_LIBS=off
 
     - COMPILER=gnu BUILD=Release SONARQUBE=ON
+  target:
+    - TARGET=walker
+    - TARGET=inciter
 
 script:
   - export DISTRO=alpine
@@ -33,6 +36,7 @@ script:
   - cp -r $HOME/.sonar ${HOME}/docker/sonar
   - docker build --build-arg COMPILER=${COMPILER}
                  --build-arg BUILD=${BUILD}
+                 --build-arg TARGET=${TARGET}
                  --build-arg SHARED_LIBS="${SHARED_LIBS}"
                  --build-arg SONARQUBE=${SONARQUBE}
                  --build-arg SONARQUBE_TOKEN=${SONARQUBE_TOKEN}
