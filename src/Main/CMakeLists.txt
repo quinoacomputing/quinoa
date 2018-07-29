@@ -37,9 +37,64 @@ if (HAS_OMEGA_H)
 endif()
 
 ## UnitTest executable ########################################################
+
+if (HAS_MKL)
+  set(TestMKLBetaMethod "tests/Control/Options/TestMKLBetaMethod.C")
+  set(TestMKLGammaMethod "tests/Control/Options/TestMKLGammaMethod.C")
+  set(TestMKLGaussianMethod "tests/Control/Options/TestMKLGaussianMethod.C")
+  set(TestMKLUniformMethod "tests/Control/Options/TestMKLUniformMethod.C")
+  set(TestMKLRNG "tests/RNG/TestMKLRNG.C")
+endif()
+
+if(HAS_RNGSSE2)
+  set(TestRNGSSE "tests/RNG/TestRNGSSE.C")
+endif()
+
 add_executable(${UNITTEST_EXECUTABLE}
                UnitTestDriver.C
                UnitTest.C
+               ../UnitTest/tests/Base/TestContainerUtil.C
+               ../UnitTest/tests/Base/TestData.C
+               ../UnitTest/tests/Base/TestException.C
+               ../UnitTest/tests/Base/TestExceptionMPI.C
+               ../UnitTest/tests/Base/TestFactory.C
+               ../UnitTest/tests/Base/TestFlip_map.C
+               ../UnitTest/tests/Base/TestHas.C
+               ../UnitTest/tests/Base/TestPrint.C
+               ../UnitTest/tests/Base/TestProcessControl.C
+               ../UnitTest/tests/Base/TestPUPUtil.C
+               ../UnitTest/tests/Base/TestReader.C
+               ../UnitTest/tests/Base/TestStrConvUtil.C
+               ../UnitTest/tests/Base/TestTaggedTuple.C
+               ../UnitTest/tests/Base/TestTimer.C
+               ../UnitTest/tests/Base/TestVector.C
+               ../UnitTest/tests/Base/TestWriter.C
+               ../UnitTest/${TestMKLUniformMethod}
+               ../UnitTest/${TestMKLGaussianMethod}
+               ../UnitTest/${TestMKLBetaMethod}
+               ../UnitTest/${TestMKLGammaMethod}
+               ../UnitTest/tests/Control/Options/TestRNG.C
+               ../UnitTest/tests/Control/TestControl.C
+               ../UnitTest/tests/Control/TestFileParser.C
+               ../UnitTest/tests/Control/TestStringParser.C
+               ../UnitTest/tests/Control/TestSystemComponents.C
+               ../UnitTest/tests/Control/TestToggle.C
+               ../UnitTest/tests/Inciter/TestScheme.C
+               ../UnitTest/tests/Inciter/AMR/TestError.C
+               ../UnitTest/tests/IO/TestExodusIIMeshReader.C
+               ../UnitTest/tests/IO/TestMesh.C
+               ../UnitTest/tests/IO/TestMeshReader.C
+               ../UnitTest/tests/LoadBalance/TestLinearMap.C
+               ../UnitTest/tests/LoadBalance/TestLoadDistributor.C
+               ../UnitTest/tests/LoadBalance/TestUnsMeshMap.C
+               ../UnitTest/tests/Mesh/TestAround.C
+               ../UnitTest/tests/Mesh/TestDerivedData.C
+               ../UnitTest/tests/Mesh/TestGradients.C
+               ../UnitTest/tests/Mesh/TestReorder.C
+               ../UnitTest/${TestMKLRNG}
+               ../UnitTest/${TestRNGSSE}
+               ../UnitTest/tests/RNG/TestRNG.C
+               ../UnitTest/tests/RNG/TestRandom123.C
 )
 
 config_executable(${UNITTEST_EXECUTABLE})
@@ -47,17 +102,18 @@ config_executable(${UNITTEST_EXECUTABLE})
 target_link_libraries(${UNITTEST_EXECUTABLE}
                       Base
                       Config
-                      NativeMeshIO
-                      ExodusIIMeshIO
-                      ${OMEGAHMESHIO}
-                      HyperMeshIO
-                      MeshDetect
-                      Mesh
                       RNG
-                      LoadBalance
                       MeshRefinement
                       UnitTest
                       UnitTestControl
+                      LoadBalance
+                      Mesh
+                      MeshDetect
+                      NativeMeshIO
+                      MeshRefinement
+                      ExodusIIMeshIO
+                      HyperMeshIO
+                      ${OMEGAHMESHIO}
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${RNGSSE2_LIBRARIES}

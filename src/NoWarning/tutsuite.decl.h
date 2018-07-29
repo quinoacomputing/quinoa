@@ -12,10 +12,10 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic push
-  #pragma clang diagnostic ignored "-Wreserved-id-macro"
   #pragma clang diagnostic ignored "-Wundef"
   #pragma clang diagnostic ignored "-Wheader-hygiene"
   #pragma clang diagnostic ignored "-Wdocumentation"
+  #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
   #pragma clang diagnostic ignored "-Wold-style-cast"
   #pragma clang diagnostic ignored "-Wunused-parameter"
   #pragma clang diagnostic ignored "-Wunused-variable"
