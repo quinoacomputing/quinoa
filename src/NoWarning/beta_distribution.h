@@ -20,6 +20,7 @@
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wfloat-equal"
+  #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
 
 #include <boost/random/beta_distribution.hpp>
