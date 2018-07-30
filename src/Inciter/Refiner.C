@@ -412,19 +412,26 @@ Refiner::nextref()
 //!   are more steps configured by the user.
 // *****************************************************************************
 {
+  // Output mesh after recent step of initial mesh refinement
+  auto level = g_inputdeck.get<tag::amr, tag::init>().size() - m_initref.size();
+  tk::ExodusIIMeshWriter
+    mw( "initref." + std::to_string(level) + '.' + std::to_string(thisIndex),
+        tk::ExoWriter::CREATE );
+  // Output mesh coordinates and connectivity
+  tk::UnsMesh refmesh( m_inpoel, m_coord );
+  mw.writeMesh( refmesh );
+  // Output element-centered scalar fields on recent mesh refinement step
+  mw.writeElemVarNames( { "refinement level", "cell type" } );
+  mw.writeElemScalar( 1, 1, m_refiner.tet_store.get_refinement_level_list() );
+  mw.writeElemScalar( 1, 2, m_refiner.tet_store.get_cell_type_list() );
+
   // Remove initial mesh refinement step from list
   if (!m_initref.empty()) m_initref.pop_back();
 
   if (!m_initref.empty())       // Continue to next initial refinement step
     start();
-  else {                        // Finish mesh refinement
-    // Output final mesh after initial mesh refinement
-    tk::UnsMesh refmesh( m_inpoel, m_coord );
-    tk::ExodusIIMeshWriter mw( "initref.final." + std::to_string(thisIndex),
-                               tk::ExoWriter::CREATE );
-    mw.writeMesh( refmesh );
+  else                          // Finish mesh refinement
     finish();
-  }
 }
 
 void
