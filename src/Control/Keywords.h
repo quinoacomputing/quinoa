@@ -2758,23 +2758,23 @@ struct mixmassfracbeta_info {
   static std::string shortDescription() { return
     "Introduce the mixmassfracbeta SDE input block"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce a mixmassfracbeta ... end block, used
-    to specify the configuration of a system of mix mass-fraction beta SDEs, a
-    system of stochastic differential equations (SDEs), whose solution is the
-    joint beta distribution and in which the usual beta SDE parameters b and
-    kappa are specified via functions that constrain the beta SDE to be
-    consistent with the turbulent mixing process. The mix mass-fraction beta
-    SDE is similar to the mass-fraction beta SDE, only the process is made
-    consistent with the no-mix and fully mixed limits via the specification of
-    the SDE coefficients b and kappa. As in the mass-fraction beta SDE, Y is
-    governed by the beta SDE and two additional stochastic variables are
-    computed. However, in the mix mass-fraction beta SDE the parameters b and
-    kappa are given by b = Theta * b' and kappa = kappa' * <y^2>, where Theta =
-    1 - <y^2> / [ <Y> ( 1 - <Y> ], the fluctuation about the mean, <Y>, is
-    defined as usual: y = Y - <Y>, and b' and kappa' are user-specified
-    constants. Similar to the mass-fraction beta SDE, there two additional
-    random variables computed besides, Y, and they are rho(Y) and V(Y). For more
-    detail on the mass-fraction beta SDE, see the help on keyword
+    R"(This keyword is used in multiple ways: (1) To introduce a mixmassfracbeta
+    ... end block, used to specify the configuration of a system of mix
+    mass-fraction beta SDEs, a system of stochastic differential equations
+    (SDEs), whose solution is the joint beta distribution and in which the usual
+    beta SDE parameters b and kappa are specified via functions that constrain
+    the beta SDE to be consistent with the turbulent mixing process. The mix
+    mass-fraction beta SDE is similar to the mass-fraction beta SDE, only the
+    process is made consistent with the no-mix and fully mixed limits via the
+    specification of the SDE coefficients b and kappa. As in the mass-fraction
+    beta SDE, Y is governed by the beta SDE and two additional stochastic
+    variables are computed. However, in the mix mass-fraction beta SDE the
+    parameters b and kappa are given by b = Theta * b' and kappa = kappa' *
+    <y^2>, where Theta = 1 - <y^2> / [ <Y> ( 1 - <Y> ], the fluctuation about
+    the mean, <Y>, is defined as usual: y = Y - <Y>, and b' and kappa' are
+    user-specified constants. Similar to the mass-fraction beta SDE, there two
+    additional random variables computed besides, Y, and they are rho(Y) and
+    V(Y). For more detail on the mass-fraction beta SDE, see the help on keyword
     'massfracbeta'. For more details on the beta SDE, see
     https://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
     allowed in a mixmassfracbeta ... end block: )"
@@ -2790,9 +2790,14 @@ struct mixmassfracbeta_info {
     + sde_rho2::string() + "\', \'"
     + hydrotimescales::string() + "\', \'"
     + hydroproductions::string() + "\', \'"
+    + "velocity" + "\', \'"
+    + "dissipation" + "\', \'"
     + sde_r::string() + "\'. "
     + R"(For an example mixmassfracbeta ... end block, see
-      doc/html/walker_example_mixmassfracbeta.html.)";
+    doc/html/walker_example_mixmassfracbeta.html. (2) To specify a dependent
+    variable (by a character) used to couple a differential equation system, in
+    which the 'mixmassfracbeta' keyword appears) to another labeled by a
+    'depvar'.)";
   }
 };
 using mixmassfracbeta =
@@ -2892,14 +2897,15 @@ using variant = keyword< variant_info, TAOCPP_PEGTL_STRING("variant") >;
 struct position_info {
   static std::string name() { return "position"; }
   static std::string shortDescription() { return
-    "Introduce the (particle) position equation input block"; }
+    "Introduce the (particle) position equation input block or coupling"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce a position ... end block, used to
-    specify the configuration of a system of deterministic or stochastic
-    differential equations, governing particle positions usually in conjunction
-    with velocity model, e.g, the Langevin, model. Note that the random number
-    generator r123_philox is automatically put on the list as a selected RNG if
-    no RNG is selected. Keywords allowed in a position ... end block: )" +
+    R"(This keyword is used in different ways: (1) To introduce a position ...
+    end block, used to specify the configuration of a system of deterministic or
+    stochastic differential equations, governing particle positions usually in
+    conjunction with velocity model, e.g, the Langevin, model. Note that the
+    random number generator r123_philox is automatically put on the list as a
+    selected RNG if no RNG is selected. Keywords allowed in a position ... end
+    block: )" +
     std::string("\'")
     + depvar::string()+ "\', \'"
     + rng::string() + "\', \'"
@@ -2907,7 +2913,9 @@ struct position_info {
     + coeff::string() + "\', \'"
     + "velocity" + "\', \'"
     + R"(For an example position ... end block, see
-      doc/html/walker_example_position.html.)";
+    doc/html/walker_example_position.html. (2) To specify a dependent
+    variable (by a character) used to couple a differential equation system, in
+    which the 'position' keyword appears) to another labeled by a 'depvar'.)";
   }
 };
 using position = keyword< position_info, TAOCPP_PEGTL_STRING("position") >;
@@ -2915,15 +2923,16 @@ using position = keyword< position_info, TAOCPP_PEGTL_STRING("position") >;
 struct dissipation_info {
   static std::string name() { return "dissipation"; }
   static std::string shortDescription() { return
-    "Introduce the (particle) dissipation equation input block"; }
+    "Introduce the (particle) dissipation equation input block or coupling"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce a dissipation ... end block, used to
-    specify the configuration of a system of deterministic or stochastic
-    differential equations, governing a particle quantity that models the
-    dissipation rate of turbulent kinetic energy, used to coupled to particle
-    velocity model, e.g, the Langevin, model. Note that the random number
-    generator r123_philox is automatically put on the list as a selected RNG if
-    no RNG is selected. Keywords allowed in a dissipation ... end block: )" +
+    R"(This keyword is used in different ways: (1) To introduce a dissipation
+    ... end block, used to specify the configuration of a system of
+    deterministic or stochastic differential equations, governing a particle
+    quantity that models the dissipation rate of turbulent kinetic energy, used
+    to coupled to particle velocity model, e.g, the Langevin, model. Note that
+    the random number generator r123_philox is automatically put on the list as
+    a selected RNG if no RNG is selected. Keywords allowed in a dissipation ...
+    end block: )" +
     std::string("\'")
     + depvar::string()+ "\', \'"
     + rng::string() + "\', \'"
@@ -2931,7 +2940,9 @@ struct dissipation_info {
     + coeff::string() + "\', \'"
     + "velocity" + "\', \'"
     + R"(For an example dissipation ... end block, see
-      doc/html/walker_example_dissipation.html.)";
+    doc/html/walker_example_dissipation.html. (2) To specify a dependent
+    variable (by a character) used to couple a differential equation system, in
+    which the 'dissipation' keyword appears) to another labeled by a 'depvar'.)";
   }
 };
 using dissipation =
@@ -2940,13 +2951,14 @@ using dissipation =
 struct velocity_info {
   static std::string name() { return "velocity"; }
   static std::string shortDescription() { return
-    "Introduce the velocity equation input block"; }
+    "Introduce the velocity equation input block or coupling"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce a velocity ... end block, used to
-    specify the configuration of a system of stochastic differential equations
-    (SDEs), governed by the Langevin model for the fluctuating velocity in
-    homogeneous variable-density turbulence. For more details on this Langevin
-    model, see https://doi.org/10.1080/14685248.2011.554419 and
+    R"(This keyword is used in different ways: (1) To introduce a velocity ...
+    end block, used to specify the configuration of a system of stochastic
+    differential equations (SDEs), governed by the Langevin model for the
+    fluctuating velocity in homogeneous variable-density turbulence. For more
+    details on this Langevin model, see
+    https://doi.org/10.1080/14685248.2011.554419 and
     src/DiffEq/Velocity.h. Keywords allowed in a velocity ... end block: )" +
     std::string("\'")
     + depvar::string()+ "\', \'"
@@ -2958,8 +2970,11 @@ struct velocity_info {
     + sde_c0::string() + "\'. "
     + position::string() + "\', \'"
     + dissipation::string() + "\', \'"
+    + mixmassfracbeta::string() + "\', \'"
     + R"(For an example velocity ... end block, see
-      doc/html/walker_example_velocity.html.)";
+    doc/html/walker_example_velocity.html. (2) To specify a dependent
+    variable (by a character) used to couple a differential equation system, in
+    which the 'velocity' keyword appears) to another labeled by a 'depvar'.)";
   }
 };
 using velocity = keyword< velocity_info, TAOCPP_PEGTL_STRING("velocity") >;
@@ -4208,6 +4223,16 @@ struct amr_initial_conditions_info {
 using amr_initial_conditions =
   keyword< amr_initial_conditions_info, TAOCPP_PEGTL_STRING("ic") >;
 
+struct amr_coords_info {
+  using code = Code< c >;
+  static std::string name() { return "cooords"; }
+  static std::string shortDescription() { return
+    "Select coordinate-based initial mesh refinement"; }
+  static std::string longDescription() { return R"(This keyword is used to
+    select coordinate-based initial mesh refinement.)"; }
+};
+using amr_coords = keyword< amr_coords_info, TAOCPP_PEGTL_STRING("coords") >;
+
 struct amr_initial_info {
   static std::string name() { return "Initial refinement typelist"; }
   static std::string shortDescription() { return
@@ -4222,6 +4247,7 @@ struct amr_initial_info {
     static std::string description() { return "string"; }
     static std::string choices() {
       return '\'' + amr_uniform::string() + "\' | \'"
+                  + amr_coords::string()  + "\' | \'"
                   + amr_initial_conditions::string() + '\'';
     }
   };
@@ -4270,6 +4296,146 @@ struct amr_initref_info {
   };
 };
 using amr_initref = keyword< amr_initref_info, TAOCPP_PEGTL_STRING("initref") >;
+
+struct amr_coordref_info {
+  static std::string name() {
+    return "initial refinement with coordinate planes"; }
+  static std::string shortDescription() { return
+    "Configure initial refinement using coordinate planes"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to configure entire volumes on a given side of a
+    plane in 3D space. The keyword introduces an coordref ... end block within
+    an amr ... end block and must contain the either or multiple of the
+    following keywords: x- <real>, x+ <real>, y- <real>, y+ <real>, z- <real>,
+    z+ <real>. All edges of the input mesh will be tagged for refinement whose
+    end-points lie less than (-) or larger than (+) the real number given.
+    Example: 'x- 0.5' refines all edges whose end-point coordinates are less
+    than 0.5. Multiple specifications are understood by combining with a logical
+    AND. That is: 'x- 0.5 y+ 0.3' refines all edges whose end-point x
+    coordinates are less than 0.5 AND y coordinates are larger than 0.3.)"; }
+};
+using amr_coordref =
+  keyword< amr_coordref_info, TAOCPP_PEGTL_STRING("coordref") >;
+
+struct amr_xminus_info {
+  static std::string name() { return "initial refinement: x-"; }
+  static std::string shortDescription() { return "Configure initial refinement "
+    "for coordinates lower than an x-normal plane"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to configure a mesh refinement volume for edges
+    whose end-points are less than the x coordinate of a plane perpendicular to
+    coordinate x in 3D space. The keyword must be used in a coordref ... end
+    block within an amr ... end block with syntax 'x- <real>'. All edges of the
+    input mesh will be tagged for refinement whose end-points lie less than (-)
+    the real number given. Example: 'x- 0.5' refines all edges whose end-point
+    coordinates are less than 0.5.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using amr_xminus =
+  keyword< amr_xminus_info, TAOCPP_PEGTL_STRING("x-") >;
+
+struct amr_xplus_info {
+  static std::string name() { return "initial refinement: x+"; }
+  static std::string shortDescription() { return "Configure initial refinement "
+    "for coordinates larger than an x-normal plane"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to configure a mesh refinement volume for edges
+    whose end-points are larger than the x coordinate of a plane perpendicular
+    to coordinate x in 3D space. The keyword must be used in a coordref ... end
+    block within an amr ... end block with syntax 'x+ <real>'. All edges of the
+    input mesh will be tagged for refinement whose end-points lie larger than
+    (+) the real number given. Example: 'x+ 0.5' refines all edges whose
+    end-point coordinates are larger than 0.5.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using amr_xplus =
+  keyword< amr_xplus_info, TAOCPP_PEGTL_STRING("x+") >;
+
+struct amr_yminus_info {
+  static std::string name() { return "initial refinement: y-"; }
+  static std::string shortDescription() { return "Configure initial refinement "
+    "for coordinates lower than an y-normal plane"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to configure a mesh refinement volume for edges
+    whose end-points are less than the y coordinate of a plane perpendicular to
+    coordinate y in 3D space. The keyword must be used in a coordref ... end
+    block within an amr ... end block with syntax 'y- <real>'. All edges of the
+    input mesh will be tagged for refinement whose end-points lie less than (-)
+    the real number given. Example: 'y- 0.5' refines all edges whose end-point
+    coordinates are less than 0.5.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using amr_yminus =
+  keyword< amr_yminus_info, TAOCPP_PEGTL_STRING("y-") >;
+
+struct amr_yplus_info {
+  static std::string name() { return "initial refinement: y+"; }
+  static std::string shortDescription() { return "Configure initial refinement "
+    "for coordinates larger than an y-normal plane"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to configure a mesh refinement volume for edges
+    whose end-points are larger than the y coordinate of a plane perpendicular
+    to coordinate y in 3D space. The keyword must be used in a coordref ... end
+    block within an amr ... end block with syntax 'y+ <real>'. All edges of the
+    input mesh will be tagged for refinement whose end-points lie larger than
+    (+) the real number given. Example: 'y+ 0.5' refines all edges whose
+    end-point coordinates are larger than 0.5.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using amr_yplus =
+  keyword< amr_yplus_info, TAOCPP_PEGTL_STRING("y+") >;
+
+struct amr_zminus_info {
+  static std::string name() { return "initial refinement: z-"; }
+  static std::string shortDescription() { return "Configure initial refinement "
+    "for coordinates lower than an z-normal plane"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to configure a mesh refinement volume for edges
+    whose end-points are less than the z coordinate of a plane perpendicular to
+    coordinate z in 3D space. The keyword must be used in a coordref ... end
+    block within an amr ... end block with syntax 'z- <real>'. All edges of the
+    input mesh will be tagged for refinement whose end-points lie less than (-)
+    the real number given. Example: 'z- 0.5' refines all edges whose end-point
+    coordinates are less than 0.5.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using amr_zminus =
+  keyword< amr_zminus_info, TAOCPP_PEGTL_STRING("z-") >;
+
+struct amr_zplus_info {
+  static std::string name() { return "initial refinement: z+"; }
+  static std::string shortDescription() { return "Configure initial refinement "
+    "for coordinates larger than an z-normal plane"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to configure a mesh refinement volume for edges
+    whose end-points are larger than the z coordinate of a plane perpendicular
+    to coordinate z in 3D space. The keyword must be used in a coordref ... end
+    block within an amr ... end block with syntax 'z+ <real>'. All edges of the
+    input mesh will be tagged for refinement whose end-points lie larger than
+    (+) the real number given. Example: 'z+ 0.5' refines all edges whose
+    end-point coordinates are larger than 0.5.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using amr_zplus =
+  keyword< amr_zplus_info, TAOCPP_PEGTL_STRING("z+") >;
 
 struct amr_jump_info {
   static std::string name() { return "jump"; }

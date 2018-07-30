@@ -1,5 +1,11 @@
 #include "mesh_adapter.h"
 
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wunreachable-code"
+  #pragma clang diagnostic ignored "-Wdocumentation"
+#endif
+
 namespace AMR {
 
     void mesh_adapter_t::init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t graph_size)
@@ -989,3 +995,6 @@ namespace AMR {
     */
 }
 
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif

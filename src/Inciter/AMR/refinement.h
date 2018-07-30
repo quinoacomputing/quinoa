@@ -3,11 +3,17 @@
 
 #include <algorithm>
 
+#include "Macro.h"
 #include "tet_store.h"
 #include "node_connectivity.h"
 
 // TODO: make this have a base class to support multiple generator schemes
 // using the policy design pattern
+
+#if defined(STRICT_GNUC)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
 
 namespace AMR {
 
@@ -355,11 +361,11 @@ namespace AMR {
                 tet_store.deactivate(tet_id);
 
                 //trace_out << "1:4 DOING REFINE OF " << tet_id << ". Adding "
-                    //<< child[0] << ", "
-                    //<< child[1] << ", "
-                    //<< child[2] << ", "
-                    //<< child[3]
-                    //<< std::endl;
+                    // << child[0] << ", "
+                    // << child[1] << ", "
+                    // << child[2] << ", "
+                    // << child[3]
+                    // << std::endl;
 
             }
 
@@ -480,15 +486,15 @@ namespace AMR {
                 tet_store.deactivate(tet_id);
 
                 //trace_out << "1:8 DOING REFINE OF " << tet_id << ". "
-                    //<< child[0] << ", "
-                    //<< child[1] << ", "
-                    //<< child[2] << ", "
-                    //<< child[3] << ", "
-                    //<< child[4] << ", "
-                    //<< child[5] << ", "
-                    //<< child[6] << ", "
-                    //<< child[7]
-                    //<< std::endl;
+                    // << child[0] << ", "
+                    // << child[1] << ", "
+                    // << child[2] << ", "
+                    // << child[3] << ", "
+                    // << child[4] << ", "
+                    // << child[5] << ", "
+                    // << child[6] << ", "
+                    // << child[7]
+                    // << std::endl;
 
             }
 
@@ -780,5 +786,9 @@ namespace AMR {
 
     };
 }
+
+#if defined(STRICT_GNUC)
+  #pragma GCC diagnostic pop
+#endif
 
 #endif // guard

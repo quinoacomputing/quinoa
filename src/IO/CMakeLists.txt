@@ -6,7 +6,6 @@ add_library(IO
             PDFWriter.C
             TxtStatWriter.C
             DiagWriter.C
-            H5PartWriter.C
 )
 
 set_target_properties(IO PROPERTIES LIBRARY_OUTPUT_NAME quinoa_io)
@@ -17,35 +16,100 @@ INSTALL(TARGETS IO
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
 
-if (HAS_ROOT)
-  set(ROOT_WRITER RootMeshWriter.C)
-  set(FILE_CONVERTER FileConvWriter.C)
-endif()
-
-if (HAS_OMEGA_H)
-  set(OMEGA_H_READER Omega_h_MeshReader.C)
-endif()
-
-add_library(MeshIO
+# Native IO libraries do not require third-party libraries
+add_library(NativeMeshIO
             MeshFactory.C
             GmshMeshReader.C
             STLTxtMeshReader.C
             NetgenMeshReader.C
-            ExodusIIMeshReader.C
-            HyperMeshReader.C
             ASCMeshReader.C
             GmshMeshWriter.C
             NetgenMeshWriter.C
-            ExodusIIMeshWriter.C
-	    ${ROOT_WRITER}
-	    ${FILE_CONVERTER}
-            ${OMEGA_H_READER}
             #SiloWriter.C
 )
 
-set_target_properties(MeshIO PROPERTIES LIBRARY_OUTPUT_NAME quinoa_meshio)
+set_target_properties(NativeMeshIO PROPERTIES LIBRARY_OUTPUT_NAME
+                      quinoa_nativemeshio)
 
-INSTALL(TARGETS MeshIO
+INSTALL(TARGETS NativeMeshIO
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+)
+
+add_library(ExodusIIMeshIO
+            ExodusIIMeshReader.C
+            ExodusIIMeshWriter.C)
+
+set_target_properties(ExodusIIMeshIO PROPERTIES LIBRARY_OUTPUT_NAME
+                      quinoa_exodusiimeshio)
+
+INSTALL(TARGETS ExodusIIMeshIO
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+)
+
+if (HAS_OMEGA_H)
+  add_library(OmegaHMeshIO
+              Omega_h_MeshReader.C)
+  
+  set_target_properties(OmegaHMeshIO PROPERTIES LIBRARY_OUTPUT_NAME
+                        quinoa_omegahmeshio)
+  
+  INSTALL(TARGETS OmegaHMeshIO
+          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+  )
+endif()
+
+if (HAS_ROOT)
+  add_library(RootMeshIO
+              FileConvWriter.C
+              RootMeshWriter.C)
+  
+  set_target_properties(RootMeshIO PROPERTIES LIBRARY_OUTPUT_NAME
+                        quinoa_rootmeshio)
+  
+  INSTALL(TARGETS RootMeshIO
+          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+  )
+endif()
+
+add_library(HyperMeshIO
+            HyperMeshReader.C)
+
+set_target_properties(HyperMeshIO PROPERTIES LIBRARY_OUTPUT_NAME
+                      quinoa_hypermeshio)
+
+INSTALL(TARGETS HyperMeshIO
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+)
+
+add_library(MeshDetect
+            MeshDetect.C)
+
+set_target_properties(MeshDetect PROPERTIES LIBRARY_OUTPUT_NAME
+                      quinoa_meshdetect)
+
+INSTALL(TARGETS MeshDetect
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+)
+
+add_library(ParticleIO
+            H5PartWriter.C)
+
+set_target_properties(ParticleIO PROPERTIES LIBRARY_OUTPUT_NAME
+                      quinoa_particleio)
+
+INSTALL(TARGETS ParticleIO
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development

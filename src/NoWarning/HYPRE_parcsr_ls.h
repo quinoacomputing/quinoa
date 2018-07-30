@@ -13,7 +13,6 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic push
-  #pragma clang diagnostic ignored "-Wreserved-id-macro"
   #pragma clang diagnostic ignored "-Wold-style-cast"
   #pragma clang diagnostic ignored "-Wcast-align"
   #pragma clang diagnostic ignored "-Wdeprecated"
@@ -27,6 +26,7 @@
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
+  #pragma GCC diagnostic ignored "-Wredundant-decls"
 #endif
 
 #include <HYPRE_parcsr_ls.h>

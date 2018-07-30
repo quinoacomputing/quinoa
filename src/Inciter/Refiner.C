@@ -242,6 +242,8 @@ Refiner::refine()
       uniformRefine();
     else if (r == ctr::AMRInitialType::INITIAL_CONDITIONS)
       errorRefine();
+    else if (r == ctr::AMRInitialType::COORDINATES)
+      coordRefine();
     else Throw( "Initial AMR type not implemented" );
   }
 
@@ -531,7 +533,7 @@ Refiner::userRefine()
     for (std::size_t i=0; i<edgenodelist.size()/2; ++i)
       edgeset.insert( {{ {edgenodelist[i*2+0], edgenodelist[i*2+1]} }} );
 
-    // Compute errors in ICs and define refinement criteria for edges
+    // Tag edges the user configured
     std::vector< edge_t > edge;
     std::vector< real_t > crit;
     for (std::size_t p=0; p<npoin; ++p)        // for all mesh nodes on this chare
@@ -556,10 +558,81 @@ Refiner::userRefine()
   }
 }
 
+void
+Refiner::coordRefine()
+// *****************************************************************************
+// Do mesh refinement based on tagging edges based on end-point coordinates
+// *****************************************************************************
+{
+  // Get user-defined half-world coordinates
+  auto xminus = g_inputdeck.get< tag::amr, tag::xminus >();
+  auto xplus = g_inputdeck.get< tag::amr, tag::xplus >();
+  auto yminus = g_inputdeck.get< tag::amr, tag::yminus >();
+  auto yplus = g_inputdeck.get< tag::amr, tag::yplus >();
+  auto zminus = g_inputdeck.get< tag::amr, tag::zminus >();
+  auto zplus = g_inputdeck.get< tag::amr, tag::zplus >();
+
+  // The default is the largest representable double
+  auto rmax = std::numeric_limits< kw::amr_xminus::info::expect::type >::max();
+  auto eps =
+    std::numeric_limits< kw::amr_xminus::info::expect::type >::epsilon();
+
+  // Decide if user has configured the half-world
+  bool xm = std::abs(xminus - rmax) > eps ? true : false;
+  bool xp = std::abs(xplus - rmax) > eps ? true : false;
+  bool ym = std::abs(yminus - rmax) > eps ? true : false;
+  bool yp = std::abs(yplus - rmax) > eps ? true : false;
+  bool zm = std::abs(zminus - rmax) > eps ? true : false;
+  bool zp = std::abs(zplus - rmax) > eps ? true : false;
+
+  if (xm || xp || ym || yp || zm || zp) {       // if any half-world configured
+    // Find number of nodes in old mesh
+    auto npoin = tk::npoin( m_inpoel );
+    // Generate edges surrounding points in old mesh
+    auto esup = tk::genEsup( m_inpoel, 4 );
+    auto psup = tk::genPsup( m_inpoel, 4, esup );
+    // Get access to node coordinates
+    const auto& x = m_coord[0];
+    const auto& y = m_coord[1];
+    const auto& z = m_coord[2];
+    // Compute errors in ICs and define refinement criteria for edges
+    std::vector< edge_t > edge;
+    std::vector< real_t > crit;
+    for (std::size_t p=0; p<npoin; ++p)        // for all mesh nodes on this chare
+      for (auto q : tk::Around(psup,p)) {      // for all nodes surrounding p
+        tk::UnsMesh::Edge e{{p,q}};
+
+        bool t = true;
+        if (xm) { if (x[p]>xminus && x[q]>xminus) t = false; }
+        if (xp) { if (x[p]<xplus && x[q]<xplus) t = false; }
+        if (ym) { if (y[p]>yminus && y[q]>yminus) t = false; }
+        if (yp) { if (y[p]<yplus && y[q]<yplus) t = false; }
+        if (zm) { if (z[p]>zminus && z[q]>zminus) t = false; }
+        if (zp) { if (z[p]<zplus && z[q]<zplus) t = false; }
+
+        if (t) {
+          edge.push_back( edge_t(e[0],e[1]) );
+          crit.push_back( 1.0 );
+        }
+      }
+
+    Assert( edge.size() == crit.size(), "Size mismatch" );
+
+    // Do error-based refinement
+    m_refiner.error_refinement( edge, crit );
+
+    // Update mesh coordinates and connectivity
+    updateMesh();
+
+    // Set number of extra edges to a nonzero number, triggering correction
+    m_extra = 1;
+  }
+}
+
 tk::Fields
 Refiner::nodeinit( std::size_t npoin,
-                       const std::pair< std::vector< std::size_t >,
-                          std::vector< std::size_t > >& esup )
+                   const std::pair< std::vector< std::size_t >,
+                                    std::vector< std::size_t > >& esup )
 // *****************************************************************************
 // Evaluate initial conditions (IC) at mesh nodes
 //! \param[in] npoin Number points in mesh (on this chare)

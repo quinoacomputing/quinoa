@@ -12,7 +12,7 @@ include(charm)
 
 # Link executables with the charmc wrapper
 STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
-       "${CHARM_COMPILER} -module DistributedLB -c++ <CMAKE_CXX_COMPILER>"
+       "${LINKER_COMPILER} -module DistributedLB -c++ <CMAKE_CXX_COMPILER>"
        CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE}")
 
 include(ConfigExecutable)
@@ -28,10 +28,73 @@ INSTALL(TARGETS Config
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
 
+if (HAS_ROOT)
+  set(ROOTMESHIO "RootMeshIO")
+endif()
+
+if (HAS_OMEGA_H)
+  set(OMEGAHMESHIO "OmegaHMeshIO")
+endif()
+
 ## UnitTest executable ########################################################
+
+if (HAS_MKL)
+  set(TestMKLBetaMethod "tests/Control/Options/TestMKLBetaMethod.C")
+  set(TestMKLGammaMethod "tests/Control/Options/TestMKLGammaMethod.C")
+  set(TestMKLGaussianMethod "tests/Control/Options/TestMKLGaussianMethod.C")
+  set(TestMKLUniformMethod "tests/Control/Options/TestMKLUniformMethod.C")
+  set(TestMKLRNG "tests/RNG/TestMKLRNG.C")
+endif()
+
+if(HAS_RNGSSE2)
+  set(TestRNGSSE "tests/RNG/TestRNGSSE.C")
+endif()
+
 add_executable(${UNITTEST_EXECUTABLE}
                UnitTestDriver.C
                UnitTest.C
+               ../UnitTest/tests/Base/TestContainerUtil.C
+               ../UnitTest/tests/Base/TestData.C
+               ../UnitTest/tests/Base/TestException.C
+               ../UnitTest/tests/Base/TestExceptionMPI.C
+               ../UnitTest/tests/Base/TestFactory.C
+               ../UnitTest/tests/Base/TestFlip_map.C
+               ../UnitTest/tests/Base/TestHas.C
+               ../UnitTest/tests/Base/TestPrint.C
+               ../UnitTest/tests/Base/TestProcessControl.C
+               ../UnitTest/tests/Base/TestPUPUtil.C
+               ../UnitTest/tests/Base/TestReader.C
+               ../UnitTest/tests/Base/TestStrConvUtil.C
+               ../UnitTest/tests/Base/TestTaggedTuple.C
+               ../UnitTest/tests/Base/TestTimer.C
+               ../UnitTest/tests/Base/TestVector.C
+               ../UnitTest/tests/Base/TestWriter.C
+               ../UnitTest/${TestMKLUniformMethod}
+               ../UnitTest/${TestMKLGaussianMethod}
+               ../UnitTest/${TestMKLBetaMethod}
+               ../UnitTest/${TestMKLGammaMethod}
+               ../UnitTest/tests/Control/Options/TestRNG.C
+               ../UnitTest/tests/Control/TestControl.C
+               ../UnitTest/tests/Control/TestFileParser.C
+               ../UnitTest/tests/Control/TestStringParser.C
+               ../UnitTest/tests/Control/TestSystemComponents.C
+               ../UnitTest/tests/Control/TestToggle.C
+               ../UnitTest/tests/Inciter/TestScheme.C
+               ../UnitTest/tests/Inciter/AMR/TestError.C
+               ../UnitTest/tests/IO/TestExodusIIMeshReader.C
+               ../UnitTest/tests/IO/TestMesh.C
+               ../UnitTest/tests/IO/TestMeshReader.C
+               ../UnitTest/tests/LoadBalance/TestLinearMap.C
+               ../UnitTest/tests/LoadBalance/TestLoadDistributor.C
+               ../UnitTest/tests/LoadBalance/TestUnsMeshMap.C
+               ../UnitTest/tests/Mesh/TestAround.C
+               ../UnitTest/tests/Mesh/TestDerivedData.C
+               ../UnitTest/tests/Mesh/TestGradients.C
+               ../UnitTest/tests/Mesh/TestReorder.C
+               ../UnitTest/${TestMKLRNG}
+               ../UnitTest/${TestRNGSSE}
+               ../UnitTest/tests/RNG/TestRNG.C
+               ../UnitTest/tests/RNG/TestRandom123.C
 )
 
 config_executable(${UNITTEST_EXECUTABLE})
@@ -39,13 +102,18 @@ config_executable(${UNITTEST_EXECUTABLE})
 target_link_libraries(${UNITTEST_EXECUTABLE}
                       Base
                       Config
-                      MeshIO
-                      Mesh
                       RNG
-                      LoadBalance
                       MeshRefinement
                       UnitTest
                       UnitTestControl
+                      LoadBalance
+                      Mesh
+                      MeshDetect
+                      NativeMeshIO
+                      MeshRefinement
+                      ExodusIIMeshIO
+                      HyperMeshIO
+                      ${OMEGAHMESHIO}
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${RNGSSE2_LIBRARIES}
@@ -53,9 +121,6 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
-                      ${Zoltan2_LIBRARIES}
-                      ${H5PART_LIBRARIES}
-                      ${ROOT_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
                       ${HDF5_C_LIBRARIES}
@@ -82,14 +147,17 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       Inciter
                       MeshRefinement
                       LoadBalance
+                      ZoltanInterOp
                       LinSys
                       Base
                       Config
                       IO
-                      MeshIO
+                      ExodusIIMeshIO
+                      ${OMEGAHMESHIO}
+                      ${ROOTMESHIO}
+                      MeshDetect
                       Mesh
                       Statistics
-                      ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${HYPRE_LIBRARIES}
                       ${ROOT_LIBRARIES}
@@ -100,7 +168,6 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
-                      ${H5PART_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
                       ${HDF5_C_LIBRARIES}
@@ -152,15 +219,16 @@ add_executable(${MESHCONV_EXECUTABLE}
 config_executable(${MESHCONV_EXECUTABLE})
 
 target_link_libraries(${MESHCONV_EXECUTABLE}
-                      MeshIO
+                      NativeMeshIO
+                      ExodusIIMeshIO
+                      HyperMeshIO
+                      MeshDetect
                       Mesh
                       MeshConvControl
                       Base
                       Config
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
-                      ${H5PART_LIBRARIES}
-                      ${ROOT_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
                       ${HDF5_C_LIBRARIES}
@@ -190,7 +258,6 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       WalkerControl
                       Base
                       Config
-                      ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${LAPACKE_LIBRARIES}      # only if MKL not found
                       ${MKL_INTERFACE_LIBRARY}
@@ -198,7 +265,6 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${RNGSSE2_LIBRARIES}
-                      ${H5PART_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
                       ${HDF5_C_LIBRARIES}
@@ -220,15 +286,15 @@ if (HAS_ROOT)
   config_executable(${FILECONV_EXECUTABLE})
 
   target_link_libraries(${FILECONV_EXECUTABLE}
-			MeshIO
-			Mesh
+                        ExodusIIMeshIO
+                        ${ROOTMESHIO}
+                        Mesh
                         FileConvControl
                         Base
                         Config
-			${PUGIXML_LIBRARIES}
-	                ${SEACASExodus_LIBRARIES}
-	                ${ROOT_LIBRARIES}
-		        ${NETCDF_LIBRARIES}       # only for static link
+                        ${SEACASExodus_LIBRARIES}
+                        ${ROOT_LIBRARIES}
+                        ${NETCDF_LIBRARIES}       # only for static link
                         ${BACKWARD_LIBRARIES}
                         ${OMEGA_H_LIBRARIES}
   )

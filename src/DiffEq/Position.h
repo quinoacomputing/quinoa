@@ -12,14 +12,11 @@
 #define Position_h
 
 #include <array>
-#include <vector>
-#include <cmath>
 
 #include "InitPolicy.h"
 #include "PositionCoeffPolicy.h"
 #include "RNG.h"
 #include "Particles.h"
-#include "SystemComponents.h"
 
 namespace walker {
 
