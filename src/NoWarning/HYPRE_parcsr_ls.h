@@ -27,6 +27,7 @@
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wredundant-decls"
+  #pragma GCC diagnostic ignored "-Wcast-function-type"
 #endif
 
 #include <HYPRE_parcsr_ls.h>
