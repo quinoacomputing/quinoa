@@ -201,6 +201,9 @@ class Refiner : public CBase_Refiner {
     //! Do mesh refinement based on user explicitly tagging edges
     void userRefine();
 
+    //! Do mesh refinement based on tagging edges based on end-point coordinates
+    void coordRefine();
+
     //! Do mesh refinement correcting PE-boundary edges
     void correctRefine( const EdgeSet& extra );
 

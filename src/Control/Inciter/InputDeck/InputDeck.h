@@ -125,11 +125,19 @@ class InputDeck :
                                    kw::amr_initial,
                                    kw::amr_uniform,
                                    kw::amr_initial_conditions,
+                                   kw::amr_coords,
                                    kw::amr_error,
                                    kw::amr_jump,
                                    kw::amr_hessian,
                                    kw::amr_refvar,
                                    kw::amr_initref,
+                                   kw::amr_coordref,
+                                   kw::amr_xminus,
+                                   kw::amr_xplus,
+                                   kw::amr_yminus,
+                                   kw::amr_yplus,
+                                   kw::amr_zminus,
+                                   kw::amr_zplus,
                                    kw::scheme,
                                    kw::matcg,
                                    kw::diagcg,
@@ -170,6 +178,14 @@ class InputDeck :
       set< tag::amr, tag::amr >( false );
       set< tag::amr, tag::initamr >( false );
       set< tag::amr, tag::error >( AMRErrorType::JUMP );
+      auto rmax =
+        std::numeric_limits< kw::amr_xminus::info::expect::type >::max();
+      set< tag::amr, tag::xminus >( rmax );
+      set< tag::amr, tag::xplus >( rmax );
+      set< tag::amr, tag::yminus >( rmax );
+      set< tag::amr, tag::yplus >( rmax );
+      set< tag::amr, tag::zminus >( rmax );
+      set< tag::amr, tag::zplus >( rmax );
       // Default txt floating-point output precision in digits
       set< tag::prec, tag::diag >( std::cout.precision() );
       // Default intervals

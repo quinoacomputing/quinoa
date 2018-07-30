@@ -147,6 +147,32 @@ Transporter::Transporter() :
       m_print.item( "Initial refinement steps", initref.size() );
       m_print.ItemVec< ctr::AMRInitial >( initref );
       m_print.edgeref( g_inputdeck.get< tag::amr, tag::edge >() );
+
+      auto rmax =
+        std::numeric_limits< kw::amr_xminus::info::expect::type >::max();
+      auto eps =
+        std::numeric_limits< kw::amr_xminus::info::expect::type >::epsilon();
+     
+      auto xminus = g_inputdeck.get< tag::amr, tag::xminus >();
+      if (std::abs( xminus - rmax ) > eps)
+        m_print.item( "Initial refinement x-", xminus );
+      auto xplus = g_inputdeck.get< tag::amr, tag::xplus >();
+      if (std::abs( xplus - rmax ) > eps)
+        m_print.item( "Initial refinement x+", xplus );
+
+      auto yminus = g_inputdeck.get< tag::amr, tag::yminus >();
+      if (std::abs( yminus - rmax ) > eps)
+        m_print.item( "Initial refinement y-", yminus );
+      auto yplus = g_inputdeck.get< tag::amr, tag::yplus >();
+      if (std::abs( yplus - rmax ) > eps)
+        m_print.item( "Initial refinement y+", yplus );
+
+      auto zminus = g_inputdeck.get< tag::amr, tag::zminus >();
+      if (std::abs( zminus - rmax ) > eps)
+        m_print.item( "Initial refinement z-", zminus );
+      auto zplus = g_inputdeck.get< tag::amr, tag::zplus >();
+      if (std::abs( zplus - rmax ) > eps)
+        m_print.item( "Initial refinement z+", zplus );
     }
   }
 
