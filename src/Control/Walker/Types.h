@@ -357,7 +357,11 @@ using MixMassFractionBetaParameters = tk::tuple::tagged_tuple<
   tag::hydroproductions,std::vector< std::vector< ctr::HydroProductionsType > >,
   tag::rng,             std::vector< tk::ctr::RNGType >,
   tag::initpolicy,      std::vector< ctr::InitPolicyType >,
-  tag::coeffpolicy,     std::vector< ctr::CoeffPolicyType >
+  tag::coeffpolicy,     std::vector< ctr::CoeffPolicyType >,
+  tag::dissipation,     std::vector< char >,
+  tag::dissipation_id,  std::vector< std::size_t >,
+  tag::velocity,        std::vector< char >,
+  tag::velocity_id,     std::vector< std::size_t >
 >;
 
 //! Velocity parameters storage
@@ -368,6 +372,8 @@ using VelocityParameters = tk::tuple::tagged_tuple<
   tag::position_id,     std::vector< std::size_t >,
   tag::dissipation,     std::vector< char >,
   tag::dissipation_id,  std::vector< std::size_t >,
+  tag::mixmassfracbeta,    std::vector< char >,
+  tag::mixmassfracbeta_id, std::vector< std::size_t >,
   tag::rng,             std::vector< tk::ctr::RNGType >,
   tag::initpolicy,      std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy,     std::vector< ctr::CoeffPolicyType >,

@@ -29,7 +29,6 @@ endif()
 
 #### BLAS/LAPACK library with LAPACKE C-interface
 if (NOT MKL_FOUND)    # Prefer Intel's MKL for BLAS/LAPACK if available
-  set(LAPACKE_ROOT ${TPL_DIR}) # prefer ours
   find_package(LAPACKE REQUIRED)
 endif()
 
@@ -41,11 +40,7 @@ if(Boost_FOUND)
   include_directories(${Boost_INCLUDE_DIR})
 endif()
 
-set(CARTESIAN_PRODUCT_ROOT ${TPL_DIR}) # prefer ours
-find_package(CartesianProduct REQUIRED)
-
 #### TUT
-set(TUT_ROOT ${TPL_DIR}) # prefer ours
 find_package(TUT REQUIRED)
 
 #### PStreams
@@ -53,7 +48,6 @@ set(PSTREAMS_ROOT ${TPL_DIR}) # prefer ours
 find_package(PStreams REQUIRED)
 
 #### Hypre
-set(HYPRE_ROOT ${TPL_DIR}) # prefer ours
 find_package(Hypre 2.9.0 REQUIRED)
 
 #### PugiXML
@@ -61,15 +55,12 @@ set(PUGIXML_ROOT ${TPL_DIR}) # prefer ours
 find_package(Pugixml REQUIRED)
 
 #### PEGTL
-set(PEGTL_ROOT ${TPL_DIR}) # prefer ours
 find_package(PEGTL 2.0.0 REQUIRED)
 
 #### Random123
-set(Random123_ROOT ${TPL_DIR}) # prefer ours
 find_package(Random123 REQUIRED)
 
 #### RNGSSE2 library
-set(RNGSSE2_ROOT ${TPL_DIR}) # prefer ours
 if(ARCH MATCHES "x86")
   find_package(RNGSSE2)
 endif()
@@ -94,12 +85,10 @@ else()
 endif()
 
 #### H5Part
-set(H5PART_ROOT ${TPL_DIR}) # prefer ours
 find_package(H5Part REQUIRED)
 
 #### AEC (only for static link)
 if(NOT BUILD_SHARED_LIBS)
-  set(AEC_ROOT ${TPL_DIR}) # prefer ours
   find_package(AEC REQUIRED)
 endif()
 
@@ -155,7 +144,6 @@ else()
 endif()
 
 #### Configure Omega_h
-set(OMEGA_H_ROOT ${TPL_DIR}) # prefer ours
 find_package(Omega_h)
 if(OMEGA_H_FOUND)
   set(HAS_OMEGA_H true)  # will become compiler define in Main/QuinoaConfig.h

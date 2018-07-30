@@ -9,8 +9,8 @@
 #ifndef CartesianProduct_h
 #define CartesianProduct_h
 
-#include <brigand/algorithms/fold.hpp>
-#include <brigand/algorithms/transform.hpp>
+#include "NoWarning/fold.h"
+#include "NoWarning/transform.h"
 
 namespace tk {
 

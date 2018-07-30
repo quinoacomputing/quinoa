@@ -52,16 +52,15 @@
 #include "QuinoaConfig.h"
 
 #ifdef HAS_MKL
-  #include "NoWarning/mkl_lapacke.h"
+  #include <mkl_lapacke.h>
 #else
-  #include "NoWarning/lapacke.h"
+  #include <lapacke.h>
 #endif
 
 #include "InitPolicy.h"
 #include "OrnsteinUhlenbeckCoeffPolicy.h"
 #include "RNG.h"
 #include "Particles.h"
-#include "SystemComponents.h"
 
 namespace walker {
 

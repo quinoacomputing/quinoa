@@ -234,28 +234,32 @@ namespace grm {
   //! \tparam depvar Error message key to use on missing coupled depvar
   //! \param[in] in Parser input
   //! \param[in,out] stack Grammar stack to wrok with
-  //! \param[in] missing Error message key to use on missing coupled equation 
+  //! \param[in] missing Error message key to use on missing coupled equation if
+  //!   the coupling is required, use missing = MsgKey::OPTIONAL is the coupling
+  //!   is optional
   template< typename eq, typename coupledeq, typename id, MsgKey depvar,
             typename Input, typename Stack >
-  static void check_coupled( const Input& in, Stack& stack, MsgKey missing )
+  static void couple( const Input& in, Stack& stack, MsgKey missing )
   {
     using walker::deck::neq;
-    // Error out if a <eq> model is configured without a <coupledeq> model
-    if (neq.get< coupledeq >() == 0) {
-      stack.template push_back< tag::error >
-        ( std::string("Parser error: ") + tk::cref_find( message, missing ) );
-    } else {
-      // get coupled position eq configuration
+    if (neq.get< coupledeq >() == 0) {    // if no coupldeq block defined
+      if (missing != MsgKey::OPTIONAL) {  // if the coupling is required
+        // error out if <eq> is configured without <coupledeq> model
+        stack.template push_back< tag::error >
+          ( std::string("Parser error: ") + tk::cref_find( message, missing ) );
+      }
+    } else {    // Compute depvar id for coupled eq
+      // get coupled eq configuration
       const auto& ceq = stack.template get< tag::param, eq, coupledeq >();
-      if (ceq.empty())
-        // Error out if coupled <coupledeq> model eq depvar is not selected
+      if (ceq.empty() && missing != MsgKey::OPTIONAL) // if !coupled & !optional
+        // error out if <coupledeq> depvar is not selected
         Message< Stack, ERROR, depvar >( stack, in );
       else { // find offset (local eq system index among systems) for depvar
         // get ncomponents object from this input deck
         const auto& ncomps = stack.template get< tag::component >();
         // compute offset map associating offsets to dependent variables
         auto offsetmap = ncomps.offsetmap( stack );
-        // get and save offsets for all depvars for velocity eqs configured
+        // get and save offsets for all depvars for eqs configured
         for (auto p : ceq)
           stack.template
             get< tag::param, eq, id >().
@@ -272,27 +276,34 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       using walker::deck::neq;
-      // Ensure a coupled position model is configured
-      check_coupled< tag::velocity,
-          tag::position, tag::position_id, MsgKey::POSITION_DEPVAR >
-        ( in, stack, MsgKey::POSITION_MISSING );
-      // Ensure a coupled dissipation model is configured
-      check_coupled< tag::velocity,
-          tag::dissipation, tag::dissipation_id, MsgKey::DISSIPATION_DEPVAR >
-        ( in, stack, MsgKey::DISSIPATION_MISSING );
-      // Error out if no dependent variable to solve for was selected
-      const auto& solve =
-        stack.template get< tag::param, tag::velocity, tag::solve >();
-      if (solve.size() != neq.get< tag::velocity >())
-        Message< Stack, ERROR, MsgKey::NOSOLVE >( stack, in );
-      // Set C0 = 2.1 if not specified
-      auto& C0 = stack.template get< tag::param, tag::velocity, tag::c0 >();
-      if (C0.size() != neq.get< tag::velocity >()) C0.push_back( 2.1 );
-      // Set SLM if not specified
-      auto& variant =
-        stack.template get< tag::param, tag::velocity, tag::variant >();
-      if (variant.size() != neq.get< tag::velocity >())
-        variant.push_back( walker::ctr::VelocityVariantType::SLM );
+      // if there was a velocity eq block defined
+      if (neq.get< tag::velocity >() > 0) {
+        // Ensure a coupled position model is configured
+        couple< tag::velocity,
+            tag::position, tag::position_id, MsgKey::POSITION_DEPVAR >
+          ( in, stack, MsgKey::POSITION_MISSING );
+        // Ensure a coupled dissipation model is configured
+        couple< tag::velocity,
+            tag::dissipation, tag::dissipation_id, MsgKey::DISSIPATION_DEPVAR >
+          ( in, stack, MsgKey::DISSIPATION_MISSING );
+        // Compute equation id if a coupled mass fraction model is configured
+        couple< tag::velocity, tag::mixmassfracbeta, tag::mixmassfracbeta_id,
+                MsgKey::MIXMASSFRACBETA_DEPVAR >
+          ( in, stack, MsgKey::OPTIONAL );
+        // Error out if no dependent variable to solve for was selected
+        const auto& solve =
+          stack.template get< tag::param, tag::velocity, tag::solve >();
+        if (solve.size() != neq.get< tag::velocity >())
+          Message< Stack, ERROR, MsgKey::NOSOLVE >( stack, in );
+        // Set C0 = 2.1 if not specified
+        auto& C0 = stack.template get< tag::param, tag::velocity, tag::c0 >();
+        if (C0.size() != neq.get< tag::velocity >()) C0.push_back( 2.1 );
+        // Set SLM if not specified
+        auto& variant =
+          stack.template get< tag::param, tag::velocity, tag::variant >();
+        if (variant.size() != neq.get< tag::velocity >())
+          variant.push_back( walker::ctr::VelocityVariantType::SLM );
+      }
     }
   };
 
@@ -304,15 +315,18 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       using walker::deck::neq;
-      // Ensure a coupled velocity model is configured
-      check_coupled< tag::position,
-          tag::velocity, tag::velocity_id, MsgKey::VELOCITY_DEPVAR >
-        ( in, stack, MsgKey::VELOCITY_MISSING );
-      // Error out if no dependent variable to solve for was selected
-      const auto& solve =
-        stack.template get< tag::param, tag::position, tag::solve >();
-      if (solve.size() != neq.get< tag::position >())
-        Message< Stack, ERROR, MsgKey::NOSOLVE >( stack, in );
+      // if there was a position eq block defined
+      if (neq.get< tag::position >() > 0) {
+        // Ensure a coupled velocity model is configured
+        couple< tag::position,
+            tag::velocity, tag::velocity_id, MsgKey::VELOCITY_DEPVAR >
+          ( in, stack, MsgKey::VELOCITY_MISSING );
+        // Error out if no dependent variable to solve for was selected
+        const auto& solve =
+          stack.template get< tag::param, tag::position, tag::solve >();
+        if (solve.size() != neq.get< tag::position >())
+          Message< Stack, ERROR, MsgKey::NOSOLVE >( stack, in );
+      }
     }
   };
 
@@ -324,24 +338,49 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       using walker::deck::neq;
-      // Ensure a coupled velocity model is configured
-      check_coupled< tag::dissipation,
-          tag::velocity, tag::velocity_id, MsgKey::VELOCITY_DEPVAR >
-        ( in, stack, MsgKey::VELOCITY_MISSING );
-      // Set C3 if not specified
-      auto& C3 = stack.template get< tag::param, tag::dissipation, tag::c3 >();
-      if (C3.size() != neq.get< tag::dissipation >()) C3.push_back( 1.0 );
-      // Set C4 if not specified
-      auto& C4 = stack.template get< tag::param, tag::dissipation, tag::c4 >();
-      if (C4.size() != neq.get< tag::dissipation >()) C4.push_back( 0.25 );
-      // Set COM1 if not specified
-      auto& COM1 =
-        stack.template get< tag::param, tag::dissipation, tag::com1 >();
-      if (COM1.size() != neq.get< tag::dissipation >()) COM1.push_back( 0.44 );
-      // Set COM2 if not specified
-      auto& COM2 =
-        stack.template get< tag::param, tag::dissipation, tag::com2 >();
-      if (COM2.size() != neq.get< tag::dissipation >()) COM2.push_back( 0.9 );
+      // if there was a dissipation eq block defined
+      if (neq.get< tag::dissipation >() > 0) {
+        // Ensure a coupled velocity model is configured
+        couple< tag::dissipation,
+            tag::velocity, tag::velocity_id, MsgKey::VELOCITY_DEPVAR >
+          ( in, stack, MsgKey::VELOCITY_MISSING );
+        // Set C3 if not specified
+        auto& C3 = stack.template get< tag::param, tag::dissipation, tag::c3 >();
+        if (C3.size() != neq.get< tag::dissipation >()) C3.push_back( 1.0 );
+        // Set C4 if not specified
+        auto& C4 = stack.template get< tag::param, tag::dissipation, tag::c4 >();
+        if (C4.size() != neq.get< tag::dissipation >()) C4.push_back( 0.25 );
+        // Set COM1 if not specified
+        auto& COM1 =
+          stack.template get< tag::param, tag::dissipation, tag::com1 >();
+        if (COM1.size() != neq.get< tag::dissipation >()) COM1.push_back( 0.44 );
+        // Set COM2 if not specified
+        auto& COM2 =
+          stack.template get< tag::param, tag::dissipation, tag::com2 >();
+        if (COM2.size() != neq.get< tag::dissipation >()) COM2.push_back( 0.9 );
+      }
+    }
+  };
+
+  //! Rule used to trigger action
+  struct check_mixmassfracbeta : pegtl::success {};
+  //! \brief Do error checking on a mass fraction eq block
+  template<>
+  struct action< check_mixmassfracbeta > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using walker::deck::neq;
+      // if there was a mixmassfracbeta eq block defined
+      if (neq.get< tag::mixmassfracbeta >() > 0) {
+        // Compute equation id if a coupled velocity model is configured
+        couple< tag::mixmassfracbeta,
+            tag::velocity, tag::velocity_id, MsgKey::VELOCITY_DEPVAR >
+          ( in, stack, MsgKey::OPTIONAL );
+        // Compute equation id if a coupled dissipation model is configured
+        couple< tag::mixmassfracbeta,
+            tag::dissipation, tag::dissipation_id, MsgKey::DISSIPATION_DEPVAR >
+          ( in, stack, MsgKey::OPTIONAL );
+      }
     }
   };
 
@@ -914,7 +953,19 @@ namespace deck {
                                                  tag::rho2 >,
                            sde_parameter_vector< kw::sde_r,
                                                  tag::mixmassfracbeta,
-                                                 tag::r > >,
+                                                 tag::r >,
+                           tk::grm::process<
+                             use< kw::velocity >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::mixmassfracbeta,
+                                                  tag::velocity >,
+                             pegtl::alpha >,
+                           tk::grm::process<
+                             use< kw::dissipation >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::mixmassfracbeta,
+                                                  tag::dissipation >,
+                             pegtl::alpha > >,
            check_errors< tag::mixmassfracbeta,
                          tk::grm::check_vector_exists<
                            tag::mixmassfracbeta,
@@ -1146,6 +1197,12 @@ namespace deck {
                              tk::grm::Store_back< tag::param,
                                                   tag::velocity,
                                                   tag::dissipation >,
+                             pegtl::alpha >,
+                           tk::grm::process<
+                             use< kw::mixmassfracbeta >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::velocity,
+                                                  tag::mixmassfracbeta >,
                              pegtl::alpha > >,
            check_errors< tag::velocity > > {};
 
@@ -1280,7 +1337,8 @@ namespace deck {
                  tk::grm::pdfs< use, tk::grm::store_walker_option > >,
                tk::grm::check_velocity,
                tk::grm::check_position,
-               tk::grm::check_dissipation >,
+               tk::grm::check_dissipation,
+               tk::grm::check_mixmassfracbeta >,
            tk::grm::msg< tk::grm::MsgType::ERROR,
                          tk::grm::MsgKey::UNFINISHED > > > {};
 

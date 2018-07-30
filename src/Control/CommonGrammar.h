@@ -125,11 +125,13 @@ namespace grm {
     POSITION_DEPVAR,    //!< Missing required position model dependent variable
     VELOCITY_DEPVAR,    //!< Missing required velocity model dependent variable
     DISSIPATION_DEPVAR, //!< Missing required dissipation model dependent var
+    MIXMASSFRACBETA_DEPVAR,//!< Missing required mass fraction model dependent var
     POSITION_MISSING,   //!< Missing required position model
     VELOCITY_MISSING,   //!< Missing required velocity model
     DISSIPATION_MISSING,//!< Missing required dissipation model
     INITREFODD,         //!< AMR initref vector size is odd (must be even)
-    CHARMARG };         //!< Argument inteded for the Charm++ runtime system
+    CHARMARG,           //!< Argument inteded for the Charm++ runtime system
+    OPTIONAL };         //!< Message key used to indicate of something optional
 
   //! Associate parser errors to error messages
   static const std::map< MsgKey, std::string > message( {
@@ -310,6 +312,11 @@ namespace grm {
       "dissipation model, is missing. Specify a dependent variable in an "
       "equation block as, e.g., depvar x, then use 'dissipation x' within the "
       "block in question, e.g., velocity." },
+    { MsgKey::MIXMASSFRACBETA_DEPVAR, "Error in the preceding line or block. "
+      "Specification of a dependent variable, configured as a coupled "
+      "mass fraction model, is missing. Specify a dependent variable in an "
+      "equation block as, e.g., depvar x, then use 'massfraction x' within the "
+      "block in question, e.g., velocity." },
     { MsgKey::VELOCITY_DEPVAR, "Error in the preceding line or block. "
       "Specification of a dependent variable, configured as a coupled velocity "
       "model, is missing. Specify a dependent variable in an equation block "
@@ -328,7 +335,11 @@ namespace grm {
       "line with charmrun? If this warning persists even after running with "
       "charmrun, then Charm++ does not understand it either. See the Charm++ "
       "manual at http://charm.cs.illinois.edu/manuals/html/charm++/"
-      "manual.html." }
+      "manual.html." },
+    { MsgKey::OPTIONAL, "This is not really an error message and thus it "
+      "should not be used as one. But its key can be used to indicate "
+      "something optional (which is not an error), which in some situations is "
+      "not optional (which is an error)." }
   } );
 
   //! \brief Parser error and warning message handler.
