@@ -91,10 +91,10 @@ class TransportProblemSlotCyl {
         // cylinder
          r = std::sqrt((x-cx)*(x-cx) + (y-cy)*(y-cy)) / R0;
          const std::array< tk::real, 2 > r1{{ v1x, v1y }},
-//                                         r2{{ x-ri1x, y-ri1y }};
+                                         r2{{ x-ri1x, y-ri1y }};
          const auto d1 = (r1[0]*r2[1] - r2[0]*r1[1]) / v1;
          const std::array< tk::real, 2 > r3{{ v2x, v2y }},
-//                                         r4{{ x-ri2x, y-ri2y }};
+                                         r4{{ x-ri2x, y-ri2y }};
          const auto d2 = (r3[0]*r4[1] - r4[0]*r3[1]) / v2;
          if (r<1.0 && (d1>0.05 || d1<0.0 || d2<0.0)) s[c] = 0.6;
       }

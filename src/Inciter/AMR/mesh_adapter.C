@@ -97,7 +97,10 @@ namespace AMR {
     {
        assert( edge.size() == crit.size()); //, "edges and crit size mismatch" );
        for (std::size_t e=0; e<edge.size(); e++)
-         tet_store.edge_store.get( edge[e] ).refinement_criteria = crit[e];
+       {
+           trace_out << "Mark edge " << e << " as " << crit[e] << std::endl;
+           tet_store.edge_store.get( edge[e] ).refinement_criteria = crit[e];
+       }
 
         evaluate_error_estimate();
         mark_refinement();
