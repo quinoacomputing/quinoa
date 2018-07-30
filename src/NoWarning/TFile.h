@@ -12,7 +12,6 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic push
-  #pragma clang diagnostic ignored "-Wreserved-id-macro"
   #pragma clang diagnostic ignored "-Wold-style-cast"
   #pragma clang diagnostic ignored "-Wextra-semi"
   #pragma clang diagnostic ignored "-Wsign-conversion"

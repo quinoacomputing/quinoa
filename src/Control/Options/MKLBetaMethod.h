@@ -13,7 +13,7 @@
 
 #include <brigand/sequences/list.hpp>
 
-#include "NoWarning/mkl_vsl.h"
+#include <mkl_vsl_defines.h>
 
 #include "Toggle.h"
 #include "Keywords.h"
