@@ -29,7 +29,6 @@ endif()
 
 #### BLAS/LAPACK library with LAPACKE C-interface
 if (NOT MKL_FOUND)    # Prefer Intel's MKL for BLAS/LAPACK if available
-  set(LAPACKE_ROOT ${TPL_DIR}) # prefer ours
   find_package(LAPACKE REQUIRED)
 endif()
 
@@ -42,7 +41,6 @@ if(Boost_FOUND)
 endif()
 
 #### TUT
-set(TUT_ROOT ${TPL_DIR}) # prefer ours
 find_package(TUT REQUIRED)
 
 #### PStreams
@@ -57,15 +55,12 @@ set(PUGIXML_ROOT ${TPL_DIR}) # prefer ours
 find_package(Pugixml REQUIRED)
 
 #### PEGTL
-set(PEGTL_ROOT ${TPL_DIR}) # prefer ours
 find_package(PEGTL 2.0.0 REQUIRED)
 
 #### Random123
-set(Random123_ROOT ${TPL_DIR}) # prefer ours
 find_package(Random123 REQUIRED)
 
 #### RNGSSE2 library
-set(RNGSSE2_ROOT ${TPL_DIR}) # prefer ours
 if(ARCH MATCHES "x86")
   find_package(RNGSSE2)
 endif()
