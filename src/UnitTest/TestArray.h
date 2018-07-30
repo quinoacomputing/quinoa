@@ -9,14 +9,12 @@
 #ifndef TestArray_h
 #define TestArray_h
 
+#include "NoWarning/testarray.decl.h"
+
 namespace tut {
 
 //! Charm++ chare array definition for testing arrays
-class TestArray : public CBase_TestArray {
-  public:
-    explicit TestArray() {}
-    explicit TestArray( CkMigrateMessage* ) {}
-};
+class TestArray : public CBase_TestArray {};
 
 } // tut::
 

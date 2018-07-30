@@ -15,12 +15,12 @@
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
   #pragma clang diagnostic ignored "-Wfloat-equal"
-  #pragma clang diagnostic ignored "-Wreserved-id-macro"
   #pragma clang diagnostic ignored "-Wsign-conversion"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wfloat-equal"
+  #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
 
 #include <boost/random/beta_distribution.hpp>

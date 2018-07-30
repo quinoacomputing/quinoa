@@ -9,9 +9,11 @@
 #ifndef MKLRNG_h
 #define MKLRNG_h
 
-#include <mkl_vsl_types.h>
+#include <mkl_vsl.h>
 
 #include "Exception.h"
+#include "Make_unique.h"
+#include "Keywords.h"
 
 namespace tk {
 
