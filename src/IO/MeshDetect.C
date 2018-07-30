@@ -60,7 +60,7 @@ detectInput( const std::string& filename )
   } else {
     try {
       std::stoi(s);    // try to convert to an integer
-    } catch ( std::invalid_argument ) {
+    } catch ( const std::invalid_argument& ) {
       Throw( "Input mesh file type could not be determined from header: " +
              filename );
     }
