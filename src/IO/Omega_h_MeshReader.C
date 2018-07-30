@@ -7,7 +7,7 @@
 */
 // *****************************************************************************
 
-#include "NoWarning/Omega_h_file.h"
+#include <Omega_h_file.hpp>
 #include <Omega_h_library.hpp>
 
 #include "Macro.h"
