@@ -59,7 +59,7 @@ env:
     - TARGET=all COMPILER=gnu BUILD=Release SONARQUBE=ON
 
 script:
-  - export DISTRO=alpine
+  - export DISTRO=alpine-${COMPILER}${SHARED_LIBS:+-static}${SONARQUBE:+-sonarqube}
   - rm -rf tpl
   - cp -vr docker ${HOME}/docker
   - cd ../../
