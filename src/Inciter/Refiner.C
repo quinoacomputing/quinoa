@@ -558,8 +558,8 @@ Refiner::userRefine()
 
 tk::Fields
 Refiner::nodeinit( std::size_t npoin,
-                       const std::pair< std::vector< std::size_t >,
-                          std::vector< std::size_t > >& esup )
+                   const std::pair< std::vector< std::size_t >,
+                                    std::vector< std::size_t > >& esup )
 // *****************************************************************************
 // Evaluate initial conditions (IC) at mesh nodes
 //! \param[in] npoin Number points in mesh (on this chare)
