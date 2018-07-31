@@ -62,6 +62,7 @@ script:
   - export DISTRO=alpine-${COMPILER}${SHARED_LIBS:+-static}${SONARQUBE:+-sonarqube}
   - rm -rf tpl
   - cp -vr docker ${HOME}/docker
+  - sed -i "/^FROM/s/alpine/${DISTRO}/" ${HOME}/docker/Dockerfile.quinoa-build-travis
   - cd ../../
   - mv -v ${TRAVIS_REPO_SLUG} $HOME/docker/quinoa
   - cp -r $HOME/.ccache ${HOME}/docker/ccache
