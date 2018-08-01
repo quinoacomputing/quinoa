@@ -334,9 +334,15 @@ Discretization::stat()
 }
 
 void
-Discretization::writeMesh()
+Discretization::writeMesh(
+  const std::map< int, std::vector< std::size_t > >& bface,
+  const std::vector< std::size_t >& triinpoel )
 // *****************************************************************************
 // Output chare element blocks to file
+//! \param[in] bface Map of boundary-face lists mapped to corresponding 
+//!   side set ids for this mesh chunk
+//! \param[in] triinpoel Interconnectivity of points and boundary-face in this
+//!   mesh chunk
 // *****************************************************************************
 {
   if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
@@ -354,8 +360,27 @@ Discretization::writeMesh()
     {
       // Create ExodusII writer
       tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
+
+      // This could probably be in ExodusIIMeshWriter...
+      // Fill element-relative face ids for all side sets with 0
+      // (will use triangles as face elements for side sets)
+      std::map< int, std::vector< std::size_t > > faceid;
+      for (const auto& s : bface) faceid[s.first].resize( s.second.size(), 0 );
+      // Generate face internal Exodus element ids for all faces of all side
+      // sets
+      std::map< int, std::vector< std::size_t > > bface_exo;
+      // Start face ids from max number of tetrahedra because tet elem blocks
+      // will be written out first
+      std::size_t i = m_inpoel.size() / 4;
+      for (const auto& s : bface) {
+        auto& b = bface_exo[ s.first ];
+        b.resize( s.second.size() );
+        for (auto& t : b) t = i++;
+      }
+
       // Write chare mesh initializing element connectivity and point coords
-      ew.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
+      ew.writeMesh(
+        tk::UnsMesh( m_inpoel, m_coord, bface_exo, triinpoel, faceid ) );
     }    
   }
 }

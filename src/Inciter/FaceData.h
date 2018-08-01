@@ -50,6 +50,7 @@ class FaceData {
     { return m_bface; }
     const std::map< int, std::vector< std::size_t > >& Bnode() const
     { return m_bnode; }
+    const std::vector< std::size_t >& Triinpoel() const { return m_triinpoel; }
     std::size_t Nbfac() const { return tk::sumvalsize( m_bface ); }
     const std::vector< int >& Esuel() const { return m_esuel; }
     std::size_t Ntfac() const { return m_ntfac; }
@@ -67,6 +68,7 @@ class FaceData {
     void pup( PUP::er &p ) {
       p | m_bface;
       p | m_bnode;
+      p | m_triinpoel;
       p | m_esuel;
       p | m_ntfac;
       p | m_inpofa;
@@ -84,6 +86,8 @@ class FaceData {
     std::map< int, std::vector< std::size_t > > m_bface;
     //! Boundary nodes side-set information
     std::map< int, std::vector< std::size_t > > m_bnode;
+    //! Triangle face connecitivity
+    std::vector< std::size_t > m_triinpoel;
     //! Elements surrounding elements
     std::vector< int > m_esuel;
     //! Rotal number of faces

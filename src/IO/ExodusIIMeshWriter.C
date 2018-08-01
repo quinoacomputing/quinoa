@@ -100,7 +100,7 @@ ExodusIIMeshWriter::writeHeader( const UnsMesh& mesh ) const
                                          mesh.tetinpoel().size()/4 ),
                  static_cast< int64_t >( mesh.neblk() ),
                  0,     // number of node sets
-                 static_cast< int64_t >( mesh.sidetet().size() )
+                 static_cast< int64_t >( mesh.bface().size() )
                ) == 0,
     "Failed to write header to file: " + m_filename );
 }
@@ -194,6 +194,17 @@ const
   // increase number of element classes in file
   ++elclass;
 
+  // Compute number of edges and number of faces for triangles and tetrahedra
+  int nedge = 0, nface = 0;
+  if (nnpe == 4) {
+    nedge = 6;
+    nface = 4;
+  } else if (nnpe == 3) {
+    nedge = 3;
+    nface = 1;
+  } else Throw( "Write ExodusII element block does not support elements with "
+                + std::to_string(nnpe) + " nodes" );
+
   // Write element block information
   ErrChk(
     ex_put_block( m_outFile,            // exo file handle
@@ -202,8 +213,8 @@ const
                   eltype.c_str(),       // element block description
                   static_cast< int64_t >( inpoel.size() ) / nnpe, // nof cells
                   nnpe, // number of nodes per element
-                  6,    // number of edges per element
-                  4,    // number of faces per element
+                  nedge,// number of edges per element
+                  nface,// number of faces per element
                   0     // number of attributes per element
                 ) == 0,
     "Failed to write " + eltype + " element block to ExodusII file: " +
@@ -226,20 +237,24 @@ ExodusIIMeshWriter::writeSidesets( const UnsMesh& mesh ) const
 // *****************************************************************************
 {
   // Write all side sets in mesh
-  for (const auto& s : mesh.sidetet()) {
+  for (const auto& s : mesh.bface()) {
     // Write side set parameters
     ErrChk( ex_put_set_param( m_outFile, EX_SIDE_SET, s.first,
                               static_cast<int64_t>(s.second.size()), 0 ) == 0,
       "Failed to write side set parameters to ExodusII file: " + m_filename );
 
-    // ExodusII wants 32-bit integers as IDs of tets adjacent to side set faces
-    std::vector< int > sidetet;
-    for (auto f : s.second) sidetet.push_back( static_cast<int>(f)+1 );
+    // ExodusII wants 32-bit integers as IDs of element ids
+    std::vector< int > bface;
+    for (auto f : s.second) bface.push_back( static_cast<int>(f)+1 );
+    // ExodusII wants 32-bit integers as element-relative face IDs
+    std::vector< int > faceid;
+    for (auto f : tk::cref_find( mesh.faceid(), s.first ))
+      faceid.push_back( static_cast<int>(f)+1 );
 
     // Write side set data: tet ids adjacent to side set and face id relative to
     // tet (1...4) indicating which face is aligned with the side set.
-    ErrChk( ex_put_set( m_outFile, EX_SIDE_SET, s.first, sidetet.data(),
-                        tk::cref_find( mesh.faceid(), s.first ).data() ) == 0,
+    ErrChk( ex_put_set( m_outFile, EX_SIDE_SET, s.first, bface.data(),
+                        faceid.data() ) == 0,
       "Failed to write side set to ExodusII file: " + m_filename );
   }
 }
