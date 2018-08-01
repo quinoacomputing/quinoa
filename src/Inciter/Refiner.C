@@ -22,6 +22,7 @@
 #include "Around.h"
 #include "ExodusIIMeshWriter.h"
 #include "HashMapReducer.h"
+#include "Discretization.h"
 
 namespace inciter {
 
@@ -86,6 +87,22 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
     start();
   else
     finish();
+}
+
+void
+Refiner::sendProxy()
+// *****************************************************************************
+// Send Refiner proxy to Discretization objects
+//! \details This should be called when bound Discretization chare array
+//!   elements have already been created.
+// *****************************************************************************
+{
+  // Make sure (bound) Discretization chare is already created and accessible
+  Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
+          "About to dereference nullptr" );
+
+  // Pass Refiner Charm++ chare proxy to fellow (bound) Discretization object
+  m_scheme.get()[thisIndex].ckLocal()->setRefiner( thisProxy );
 }
 
 void

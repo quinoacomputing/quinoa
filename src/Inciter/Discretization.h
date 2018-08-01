@@ -19,6 +19,7 @@
 #include "UnsMesh.h"
 
 #include "NoWarning/discretization.decl.h"
+#include "NoWarning/refiner.decl.h"
 
 namespace tk {
   class ExodusIIMeshWriter;
@@ -57,6 +58,10 @@ class Discretization : public CBase_Discretization {
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();
+
+    //! Set Refiner Charm++ proxy
+    //! \param[in] ref Incoming refiner proxy to store
+    void setRefiner( const CProxy_Refiner& ref ) { m_refiner = ref; }
 
     //! Collect nodal volumes across chare boundaries
     void comvol( const std::vector< std::size_t >& gid,
@@ -102,6 +107,9 @@ class Discretization : public CBase_Discretization {
 
     const CProxy_Transporter& Tr() const { return m_transporter; }
     CProxy_Transporter& Tr() { return m_transporter; }
+
+   const CProxy_Refiner& Ref() const { return m_refiner; }
+   CProxy_Refiner& Ref() { return m_refiner; }
 
     //! Access bound DistFCT class pointer
     DistFCT* FCT() const {
@@ -172,6 +180,7 @@ class Discretization : public CBase_Discretization {
       p | m_outFilename;
       p | m_fct;
       p | m_transporter;
+      p | m_refiner;
       p | m_el;
       if (p.isUnpacking()) {
         m_inpoel = std::get< 0 >( m_el );
@@ -211,6 +220,8 @@ class Discretization : public CBase_Discretization {
     CProxy_DistFCT m_fct;
     //! Transporter proxy
     CProxy_Transporter m_transporter;
+    //! Mesh refiner proxy
+    CProxy_Refiner m_refiner;
     //! \brief Elements of the mesh chunk we operate on
     //! \details Initialized by the constructor. The first vector is the element
     //!   connectivity (local IDs), the second vector is the global node IDs of

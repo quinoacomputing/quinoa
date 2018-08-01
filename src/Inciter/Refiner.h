@@ -76,6 +76,9 @@ class Refiner : public CBase_Refiner {
     //! Decide wether to continue with another step of mesh refinement
     void nextref();
 
+    //! Send Refiner proxy to Discretization objects
+    void sendProxy();
+
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

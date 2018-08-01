@@ -269,11 +269,11 @@ Transporter::createPartitioner()
   // Create mesh partitioner Charm++ chare group and start preparing mesh
   m_print.diag( "Reading mesh" );
 
-  // Create empty mesh sorter Chare chare array
+  // Create empty mesh sorter chare array
   m_sorter = CProxy_Sorter::ckNew();
 
-  // Create empty mesh refiner Chare chare array
-  m_refiner = CProxy_Refiner::ckNew( /*m_scheme.arrayoptions()*/ );
+  // Create empty mesh refiner chare array (bound to workers)
+  m_refiner = CProxy_Refiner::ckNew( m_scheme.arrayoptions() );
 
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
@@ -431,6 +431,7 @@ Transporter::disccreated()
     m_print.endsubsection();
   }
 
+  m_refiner.sendProxy();
   m_sorter.createWorkers();
 
   auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
