@@ -106,7 +106,7 @@ MatCG::setup( tk::real v )
   // Store total mesh volume
   m_vol = v;
   // Output chare mesh to file
-  d->writeMesh( m_fd.Bface(), m_fd.Triinpoel() );
+  d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode() );
   // Output fields metadata to output file
   d->writeNodeMeta();
 

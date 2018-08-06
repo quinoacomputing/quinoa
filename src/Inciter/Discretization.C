@@ -337,13 +337,16 @@ Discretization::stat()
 void
 Discretization::writeMesh(
   const std::map< int, std::vector< std::size_t > >& bface,
-  const std::vector< std::size_t >& triinpoel )
+  const std::vector< std::size_t >& triinpoel,
+  const std::map< int, std::vector< std::size_t > >& bnode )
 // *****************************************************************************
 // Output chare element blocks to file
 //! \param[in] bface Map of boundary-face lists mapped to corresponding side set
 //!   ids for this mesh chunk
 //! \param[in] triinpoel Interconnectivity of points and boundary-face in this
 //!   mesh chunk
+//! \param[in] bnode Map of boundary-node lists mapped to corresponding side set
+//!   ids for this mesh chunk
 // *****************************************************************************
 {
   if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
@@ -361,11 +364,19 @@ Discretization::writeMesh(
     {
       // Create ExodusII writer
       tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
-      // Write chare mesh (don't write side sets in parallel)
-      if (m_nchare == 1)
-        ew.writeMesh( m_inpoel, m_coord, bface, triinpoel );
-      else
+      // Write chare mesh
+      if (m_nchare == 1) {
+
+        // Do not write side sets in parallel
+        const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+        if (scheme == ctr::SchemeType::DG)
+          ew.writeMesh( m_inpoel, m_coord, bface, triinpoel );
+        else
+          ew.writeMesh( m_inpoel, m_coord, bnode );
+
+      } else {
         ew.writeMesh( m_inpoel, m_coord );
+      }
     }
   }
 }

@@ -82,6 +82,7 @@ ExodusIIMeshWriter::writeMesh( const UnsMesh& mesh ) const
   writeNodes( mesh );
   writeElements( mesh );
   writeSidesets( mesh );
+  writeNodesets( mesh );
 }
 
 void
@@ -131,6 +132,21 @@ ExodusIIMeshWriter::writeMesh(
 }
 
 void
+ExodusIIMeshWriter::writeMesh(
+  const std::vector< std::size_t >& tetinp,
+  const UnsMesh::Coords& coord,
+  const std::map< int, std::vector< std::size_t > >& bnode ) const
+// *****************************************************************************
+//  Write ExodusII mesh file taking inputs to a tk::UnsMesh object
+//! \param[in] tetinp Tetrahedron element connectivity
+//! \param[in] coord Node coordinates
+//! \param[in] bnode Boundary node ids for each side set
+// *****************************************************************************
+{
+  writeMesh( tk::UnsMesh( tetinp, coord, bnode ) );
+}
+
+void
 ExodusIIMeshWriter::writeHeader( const UnsMesh& mesh ) const
 // *****************************************************************************
 //  Write ExodusII header
@@ -145,7 +161,7 @@ ExodusIIMeshWriter::writeHeader( const UnsMesh& mesh ) const
                  static_cast< int64_t >( mesh.triinpoel().size()/3 +
                                          mesh.tetinpoel().size()/4 ),
                  static_cast< int64_t >( mesh.neblk() ),
-                 0,     // number of node sets
+                 static_cast< int64_t >( mesh.bnode().size() ),
                  static_cast< int64_t >( mesh.bface().size() )
                ) == 0,
     "Failed to write header to file: " + m_filename );
@@ -282,7 +298,7 @@ ExodusIIMeshWriter::writeSidesets( const UnsMesh& mesh ) const
 //! \param[in] mesh Unstructured mesh object
 // *****************************************************************************
 {
-  // Write all side sets in mesh
+  // Write all side sets face list and connectivity in mesh
   for (const auto& s : mesh.bface()) {
     // Write side set parameters
     ErrChk( ex_put_set_param( m_outFile, EX_SIDE_SET, s.first,
@@ -297,11 +313,37 @@ ExodusIIMeshWriter::writeSidesets( const UnsMesh& mesh ) const
     for (auto f : tk::cref_find( mesh.faceid(), s.first ))
       faceid.push_back( static_cast<int>(f)+1 );
 
-    // Write side set data: tet ids adjacent to side set and face id relative to
-    // tet (1...4) indicating which face is aligned with the side set.
+    // Write side set data: ExodusII-file internal element ids adjacent to side
+    // set and face id relative to element indicating which face is aligned with
+    // the side set.
     ErrChk( ex_put_set( m_outFile, EX_SIDE_SET, s.first, bface.data(),
                         faceid.data() ) == 0,
-      "Failed to write side set to ExodusII file: " + m_filename );
+      "Failed to write side set face list to ExodusII file: " + m_filename );
+  }
+}
+
+void
+ExodusIIMeshWriter::writeNodesets( const UnsMesh& mesh ) const
+// *****************************************************************************
+//  Write side sets and their node list to ExodusII file
+//! \param[in] mesh Unstructured mesh object
+// *****************************************************************************
+{
+  // Write all side set node lists in mesh
+  for (const auto& s : mesh.bnode()) {
+    // Write side set parameters
+    ErrChk( ex_put_set_param( m_outFile, EX_NODE_SET, s.first,
+                              static_cast<int64_t>(s.second.size()), 0 ) == 0,
+      "Failed to write side set parameters to ExodusII file: " + m_filename );
+
+    // ExodusII wants 32-bit integers as IDs of node ids
+    std::vector< int > bnode;
+    for (auto n : s.second) bnode.push_back( static_cast<int>(n)+1 );
+
+    // Write side set data
+    ErrChk( ex_put_set( m_outFile, EX_NODE_SET, s.first, bnode.data(),
+                        nullptr ) == 0,
+      "Failed to write side set node list to ExodusII file: " + m_filename );
   }
 }
 

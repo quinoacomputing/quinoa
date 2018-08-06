@@ -51,6 +51,12 @@ class ExodusIIMeshWriter {
 
     //! Write ExodusII mesh file taking inputs to a tk::UnsMesh object
     void writeMesh( const std::vector< std::size_t >& tetinp,
+                    const UnsMesh::Coords& coord,
+                    const std::map< int, std::vector< std::size_t > >& bnode )
+      const;
+
+    //! Write ExodusII mesh file taking inputs to a tk::UnsMesh object
+    void writeMesh( const std::vector< std::size_t >& tetinp,
                     const UnsMesh::Coords& coord ) const;
 
     //!  Write time stamp to ExodusII file
@@ -100,6 +106,9 @@ class ExodusIIMeshWriter {
 
     //! Write side sets and their face connectivity to ExodusII file
     void writeSidesets( const UnsMesh& mesh ) const;
+
+    //! Write side sets and their node list to ExodusII file
+    void writeNodesets( const UnsMesh& mesh ) const;
 
     const std::string m_filename;          //!< File name
     int m_outFile;                         //!< ExodusII file handle

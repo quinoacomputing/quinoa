@@ -200,7 +200,7 @@ class UnsMesh {
               "Size of tetinpoel must be divisible by 4" );
     }
 
-    //! Constructor with connectivities and side sets
+    //! Constructor with connectivities and side set faces
     explicit UnsMesh(
       const std::vector< std::size_t >& tetinp,
       const Coords& coord,
@@ -217,7 +217,27 @@ class UnsMesh {
       m_bface( bface ),
       m_faceid( faceid )
     {
-      Assert( m_tetinpoel.size()%4 == 0,
+      Assert( m_tetinpoel.size() % 4 == 0,
+              "Size of tetinpoel must be divisible by 4" );
+      Assert( m_triinpoel.size() % 3 == 0,
+              "Size of triinpoel must be divisible by 3" );
+    }
+
+    //! Constructor with connectivities and side set nodes
+    explicit UnsMesh(
+      const std::vector< std::size_t >& tetinp,
+      const Coords& coord,
+      const std::map< int, std::vector< std::size_t > >& bnode ) :
+      m_graphsize( graphsize( tetinp ) ),
+      m_lininpoel(),
+      m_triinpoel(),
+      m_tetinpoel( tetinp ),
+      m_x( coord[0] ),
+      m_y( coord[1] ),
+      m_z( coord[2] ),
+      m_bnode( bnode )
+    {
+      Assert( m_tetinpoel.size() % 4 == 0,
               "Size of tetinpoel must be divisible by 4" );
     }
     ///@}
@@ -275,18 +295,12 @@ class UnsMesh {
     std::vector< std::size_t >& tetinpoel() noexcept { return m_tetinpoel; }
     ///@}
 
-    /** @name Side set accessors */
+    /** @name Side set face list accessors */
     ///@{
     const std::map< int, std::vector< std::size_t > >& bface() const noexcept
     { return m_bface; }
     std::map< int, std::vector< std::size_t > >& bface() noexcept
     { return m_bface; }
-    ///@}
-
-    /** @name Face-element map accessors */
-    ///@{
-    const std::vector< int >& elem_map() const noexcept { return m_elem_map; }
-    std::vector< int >& elem_map() noexcept { return m_elem_map; }
     ///@}
 
     /** @name Side set face id accessors */
@@ -295,6 +309,14 @@ class UnsMesh {
     { return m_faceid; }
     std::map< int, std::vector< std::size_t > >& faceid() noexcept
     { return m_faceid; }
+    ///@}
+
+    /** @name Side set node list accessors */
+    ///@{
+    const std::map< int, std::vector< std::size_t > >& bnode() const noexcept
+    { return m_bnode; }
+    std::map< int, std::vector< std::size_t > >& bnode() noexcept
+    { return m_bnode; }
     ///@}
 
   private:
@@ -322,9 +344,10 @@ class UnsMesh {
     //! \note This is what ExodusII calls side set elem list.
     std::map< int, std::vector< std::size_t > > m_bface;
 
-    //! Map used to associate faces to elements
-    //! \note This is what ExodusII calls id_map.
-    std::vector< int > m_elem_map;
+    //! Side sets storing node ids adjacent to side sets
+    //! \details This stores lists of node IDs adjacent to faces associated
+    //!   to side set IDs.
+    std::map< int, std::vector< std::size_t > > m_bnode;
 
     //! \brief Sides of faces used to define which face of an element is
     //!   adjacent to side set associated to side set id.
