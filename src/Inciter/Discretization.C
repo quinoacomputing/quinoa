@@ -339,8 +339,8 @@ Discretization::writeMesh(
   const std::vector< std::size_t >& triinpoel )
 // *****************************************************************************
 // Output chare element blocks to file
-//! \param[in] bface Map of boundary-face lists mapped to corresponding 
-//!   side set ids for this mesh chunk
+//! \param[in] bface Map of boundary-face lists mapped to corresponding side set
+//!   ids for this mesh chunk
 //! \param[in] triinpoel Interconnectivity of points and boundary-face in this
 //!   mesh chunk
 // *****************************************************************************

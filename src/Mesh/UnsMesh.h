@@ -200,8 +200,7 @@ class UnsMesh {
               "Size of tetinpoel must be divisible by 4" );
     }
 
-    //! \brief Constructor copying over element connectivity and array of point
-    //!   coordinates
+    //! Constructor with connectivities and side sets
     explicit UnsMesh(
       const std::vector< std::size_t >& tetinp,
       const Coords& coord,
