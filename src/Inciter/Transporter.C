@@ -614,6 +614,9 @@ Transporter::stat()
 // Echo diagnostics mesh statistics
 // *****************************************************************************
 {
+  // Start load balancing
+  CkStartLB();
+
   m_print.diag( "Mesh statistics: min/max/avg(edgelength) = " +
                 std::to_string( m_minstat[0] ) + " / " +
                 std::to_string( m_maxstat[0] ) + " / " +
