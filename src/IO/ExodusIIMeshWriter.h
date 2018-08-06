@@ -12,8 +12,10 @@
 #include <cstddef>
 #include <iosfwd>
 #include <vector>
+#include <map>
 
 #include "Types.h"
+#include "UnsMesh.h"
 
 namespace tk {
 
@@ -38,8 +40,14 @@ class ExodusIIMeshWriter {
     //! Destructor
     ~ExodusIIMeshWriter() noexcept;
 
-    //! Write ExodusII mesh to file
+    //! Write ExodusII mesh file taking a tk::UnsMesh object
     void writeMesh( const UnsMesh& mesh ) const;
+
+    //! Write ExodusII mesh file taking inputs to a tk::UnsMesh object
+    void writeMesh( const std::vector< std::size_t >& tetinp,
+                    const UnsMesh::Coords& coord,
+                    const std::map< int, std::vector< std::size_t > >& bface,
+                    const std::vector< std::size_t >& triinp ) const;
 
     //!  Write time stamp to ExodusII file
     void writeTimeStamp( uint64_t it, tk::real time ) const;

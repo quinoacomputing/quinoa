@@ -74,7 +74,7 @@ ExodusIIMeshWriter::~ExodusIIMeshWriter() noexcept
 void
 ExodusIIMeshWriter::writeMesh( const UnsMesh& mesh ) const
 // *****************************************************************************
-//  Write ExodusII mesh file
+//  Write ExodusII mesh file taking a tk::UnsMesh object
 //! \param[in] mesh Unstructured mesh object
 // *****************************************************************************
 {
@@ -82,6 +82,40 @@ ExodusIIMeshWriter::writeMesh( const UnsMesh& mesh ) const
   writeNodes( mesh );
   writeElements( mesh );
   writeSidesets( mesh );
+}
+
+void
+ExodusIIMeshWriter::writeMesh(
+  const std::vector< std::size_t >& tetinp,
+  const UnsMesh::Coords& coord,
+  const std::map< int, std::vector< std::size_t > >& bface,
+  const std::vector< std::size_t >& triinp ) const
+// *****************************************************************************
+//  Write ExodusII mesh file taking inputs to a tk::UnsMesh object
+//! \param[in] tetinp Tetrahedron element connectivity
+//! \param[in] coord Node coordinates
+//! \param[in] bface Boundary face ids for each side set
+//! \param[in] triinp Triangle face connectivity (for all faces in bface)
+// *****************************************************************************
+{
+  // Fill element-relative face ids for all side sets with 0
+  // (will use triangles as face elements for side sets)
+  std::map< int, std::vector< std::size_t > > faceid;
+  for (const auto& s : bface) faceid[s.first].resize( s.second.size(), 0 );
+
+  // Generate face internal Exodus element ids for all faces of all side sets
+  std::map< int, std::vector< std::size_t > > bface_exo;
+  // Start face ids from max number of tetrahedra because tet elem blocks will
+  // be written out first
+  std::size_t i = tetinp.size() / 4;
+  for (const auto& s : bface) {
+    auto& b = bface_exo[ s.first ];
+    b.resize( s.second.size() );
+    for (auto& t : b) t = i++;
+  }
+
+  // Write chare mesh initializing element connectivity and point coords
+  writeMesh( tk::UnsMesh( tetinp, coord, bface_exo, triinp, faceid ) );
 }
 
 void
