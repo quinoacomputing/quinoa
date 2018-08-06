@@ -165,6 +165,7 @@ class Discretization : public CBase_Discretization {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
       CBase_Discretization::pup(p);
+      p | m_nchare;
       p | m_it;
       p | m_t;
       p | m_dt;
@@ -195,6 +196,8 @@ class Discretization : public CBase_Discretization {
     //@}
 
   private:
+    //! Total number of Discretization chares
+    int m_nchare;
     //! Iteration count
     uint64_t m_it;
      //! Physical time

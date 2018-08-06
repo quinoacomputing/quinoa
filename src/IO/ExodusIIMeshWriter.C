@@ -85,6 +85,18 @@ ExodusIIMeshWriter::writeMesh( const UnsMesh& mesh ) const
 }
 
 void
+ExodusIIMeshWriter::writeMesh( const std::vector< std::size_t >& tetinp,
+                               const UnsMesh::Coords& coord ) const
+// *****************************************************************************
+//  Write ExodusII mesh file taking inputs to a tk::UnsMesh object
+//! \param[in] tetinp Tetrahedron element connectivity
+//! \param[in] coord Node coordinates
+// *****************************************************************************
+{
+  writeMesh( tk::UnsMesh( tetinp, coord ) );
+}
+
+void
 ExodusIIMeshWriter::writeMesh(
   const std::vector< std::size_t >& tetinp,
   const UnsMesh::Coords& coord,
@@ -114,7 +126,7 @@ ExodusIIMeshWriter::writeMesh(
     for (auto& t : b) t = i++;
   }
 
-  // Write chare mesh initializing element connectivity and point coords
+  // Write mesh
   writeMesh( tk::UnsMesh( tetinp, coord, bface_exo, triinp, faceid ) );
 }
 

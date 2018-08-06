@@ -49,6 +49,10 @@ class ExodusIIMeshWriter {
                     const std::map< int, std::vector< std::size_t > >& bface,
                     const std::vector< std::size_t >& triinp ) const;
 
+    //! Write ExodusII mesh file taking inputs to a tk::UnsMesh object
+    void writeMesh( const std::vector< std::size_t >& tetinp,
+                    const UnsMesh::Coords& coord ) const;
+
     //!  Write time stamp to ExodusII file
     void writeTimeStamp( uint64_t it, tk::real time ) const;
 

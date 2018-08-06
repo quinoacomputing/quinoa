@@ -42,6 +42,7 @@ Discretization::Discretization(
   const tk::UnsMesh::CoordMap& coordmap,
   const std::map< int, std::unordered_set< std::size_t > >& msum,
   int nchare ) :
+  m_nchare( nchare ),
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
@@ -360,8 +361,11 @@ Discretization::writeMesh(
     {
       // Create ExodusII writer
       tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
-      // Write chare mesh initializing element connectivity and point coords
-      ew.writeMesh( m_inpoel, m_coord, bface, triinpoel );
+      // Write chare mesh (don't write side sets in parallel)
+      if (m_nchare == 1)
+        ew.writeMesh( m_inpoel, m_coord, bface, triinpoel );
+      else
+        ew.writeMesh( m_inpoel, m_coord );
     }
   }
 }
