@@ -112,16 +112,6 @@ Partitioner::Partitioner(
 }
 
 void
-Partitioner::lboff()
-// *****************************************************************************
-// Turn off automatic load balancing
-// *****************************************************************************
-{
-  TurnManualLBOn();
-  contribute( m_cbp.get< tag::lboff >() );
-}
-
-void
 Partitioner::lbon()
 // *****************************************************************************
 // Turn onautomatic load balancing

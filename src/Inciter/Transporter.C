@@ -243,13 +243,11 @@ Transporter::createPartitioner()
 
   // Create partitioner callbacks (order matters)
   tk::PartitionerCallback cbp {
-      CkCallback( CkReductionTarget(Transporter,lboff), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,stat), thisProxy )
+      CkCallback( CkReductionTarget(Transporter,stat), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,load), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refinserted), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
   };
 
   // Create refiner callbacks (order matters)
@@ -260,9 +258,7 @@ Transporter::createPartitioner()
 
   // Create sorter callbacks (order matters)
   tk::SorterCallback cbs {
-      CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,bounds), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,discinserted), thisProxy )
+      CkCallback( CkReductionTarget(Transporter,discinserted), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,workinserted), thisProxy )
   };
 
@@ -407,15 +403,6 @@ Transporter::bounds()
 // Reduction target: all Solver (PEs) have computed their row bounds
 // *****************************************************************************
 {
-  m_partitioner.lboff();
-}
-
-void
-Transporter::lboff()
-// *****************************************************************************
-// Reduction target: all Partitioner (PEs) have turned their load balancer off
-// *****************************************************************************
-{
   m_sorter.createDiscWorkers();
 }
 
@@ -503,17 +490,6 @@ Transporter::diagHeader()
 
   // Write diagnostics header
   dw.header( d );
-}
-
-void
-Transporter::flattened()
-// *****************************************************************************
-// Reduction target indicating that all Partitioner chare groups have finished
-// flattening its global mesh node IDs and they are ready for computing the
-// communication maps required for node ID reordering
-// *****************************************************************************
-{
-  //m_sorter.gather();
 }
 
 void
@@ -626,7 +602,7 @@ Transporter::stat()
 // Echo diagnostics on mesh statistics
 // *****************************************************************************
 {
-  // Start load balancing
+  m_print.diag( "Start automatic load balancing" );
   CkStartLB();
 
   m_print.diag( "Mesh statistics: min/max/avg(edgelength) = " +

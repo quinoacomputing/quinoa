@@ -419,7 +419,7 @@ Sorter::create()
     // broadcast this chare's bounds of global node IDs to matrix solvers
     m_solver.ckLocalBranch()->chbounds( m_lower, m_upper );
   else // if no MatCG, no matrix solver, continue
-    contribute( m_cbs.get< tag::bounds >() );
+    createDiscWorkers();
 }
 
 void
