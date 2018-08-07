@@ -219,6 +219,7 @@ class DistFCT : public CBase_DistFCT {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
+      p | m_host;
       p | m_nhsol;
       p | m_nlsol;
       p | m_naec;
