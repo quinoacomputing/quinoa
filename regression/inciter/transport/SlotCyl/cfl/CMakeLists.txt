@@ -138,7 +138,7 @@ add_regression_test(cfl_u0.5_migr ${INCITER_EXECUTABLE}
                                slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.7
                     ARGS -c slot_cyl_cfl_diagcg.q -i unitsquare_01_3.6k.exo
                          -v -u 0.5
-                         +balancer RandCentLB +LBPeriod 1.0 +LBDebug 2 +cs
+                         +balancer RandCentLB +LBDebug 2 +cs
                     BIN_BASELINE slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.0
                                  slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.1
                                  slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.2
