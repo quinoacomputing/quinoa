@@ -174,13 +174,12 @@ class DiagCG : public CBase_DiagCG {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
+      p | m_disc;
       p | m_itf;
       p | m_nsol;
       p | m_nlhs;
       p | m_nrhs;
       p | m_ndif;
-      p | m_disc;
-      p | m_solver;
       p | m_fd;
       p | m_u;
       p | m_ul;
@@ -206,6 +205,8 @@ class DiagCG : public CBase_DiagCG {
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
 
+    //! Discretization proxy
+    CProxy_Discretization m_disc;
     //! Field output iteration count
     uint64_t m_itf;
     //! Counter for high order solution vector nodes updated
@@ -216,10 +217,6 @@ class DiagCG : public CBase_DiagCG {
     std::size_t m_nrhs;
     //! Counter for right-hand side masss-diffusion vector nodes updated
     std::size_t m_ndif;
-    //! Discretization proxy
-    CProxy_Discretization m_disc;
-    //! Linear system merger and solver proxy
-    tk::CProxy_Solver m_solver;
     //! Face data
     FaceData m_fd;
     //! Unknown/solution vector at mesh nodes

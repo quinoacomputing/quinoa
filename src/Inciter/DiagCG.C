@@ -49,12 +49,12 @@ using inciter::DiagCG;
 DiagCG::DiagCG( const CProxy_Discretization& disc,
                 const tk::CProxy_Solver& solver,
                 const FaceData& fd ) :
+  m_disc( disc ),
   m_itf( 0 ),
   m_nsol( 0 ),
   m_nlhs( 0 ),
   m_nrhs( 0 ),
   m_ndif( 0 ),
-  m_disc( disc ),
   m_fd( fd ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),

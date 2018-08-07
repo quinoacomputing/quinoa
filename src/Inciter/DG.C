@@ -36,12 +36,12 @@ using inciter::DG;
 DG::DG( const CProxy_Discretization& disc,
         const tk::CProxy_Solver& solver,
         const FaceData& fd ) :
+  m_disc( disc ),
   m_solver( solver ),
   m_ncomfac( 0 ),
   m_nadj( 0 ),
   m_nsol( 0 ),
   m_itf( 0 ),
-  m_disc( disc ),
   m_fd( fd ),
   m_u( m_disc[thisIndex].ckLocal()->Inpoel().size()/4,
        g_inputdeck.get< tag::component >().nprop() ),

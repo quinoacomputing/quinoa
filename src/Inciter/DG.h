@@ -139,12 +139,12 @@ class DG : public CBase_DG {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
+      p | m_disc;
       p | m_solver;
       p | m_ncomfac;
       p | m_nadj;
       p | m_nsol;
       p | m_itf;
-      p | m_disc;
       p | m_fd;
       p | m_u;
       p | m_un;
@@ -186,6 +186,8 @@ class DG : public CBase_DG {
                           tk::UnsMesh::Hash<3>,
                           tk::UnsMesh::Eq<3> >;
 
+    //! Discretization proxy
+    CProxy_Discretization m_disc;
     //! Linear system merger and solver proxy, only used to call created()
     tk::CProxy_Solver m_solver;
     //! Counter for face adjacency communication map
@@ -196,8 +198,6 @@ class DG : public CBase_DG {
     std::size_t m_nsol;
     //! Field output iteration count
     uint64_t m_itf;
-    //! Discretization proxy
-    CProxy_Discretization m_disc;
     //! Face data
     FaceData m_fd;
     //! Vector of unknown/solution average over each mesh element

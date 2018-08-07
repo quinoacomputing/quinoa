@@ -102,11 +102,11 @@ class MatCG : public CBase_MatCG {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
+      p | m_disc;
+      p | m_solver;
       p | m_itf;
       p | m_nhsol;
       p | m_nlsol;
-      p | m_disc;
-      p | m_solver;
       p | m_fd;
       p | m_u;
       p | m_ul;
@@ -127,16 +127,16 @@ class MatCG : public CBase_MatCG {
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
 
+    //! Discretization proxy
+    CProxy_Discretization m_disc;
+    //! Linear system merger and solver proxy
+    tk::CProxy_Solver m_solver;
     //! Field output iteration count
     uint64_t m_itf;
     //! Counter for high order solution nodes updated
     std::size_t m_nhsol;
     //! Counter for low order solution nodes updated
     std::size_t m_nlsol;
-    //! Discretization proxy
-    CProxy_Discretization m_disc;
-    //! Linear system merger and solver proxy
-    tk::CProxy_Solver m_solver;
     //! Face data
     FaceData m_fd;
     //! Unknown/solution vector at mesh nodes

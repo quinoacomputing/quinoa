@@ -50,11 +50,11 @@ using inciter::MatCG;
 MatCG::MatCG( const CProxy_Discretization& disc,
               const tk::CProxy_Solver& solver,
               const FaceData& fd ) :
+  m_disc( disc ),
+  m_solver( solver ),
   m_itf( 0 ),
   m_nhsol( 0 ),
   m_nlsol( 0 ),
-  m_disc( disc ),
-  m_solver( solver ),
   m_fd( fd ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
