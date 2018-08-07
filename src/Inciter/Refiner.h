@@ -84,6 +84,9 @@ class Refiner : public CBase_Refiner {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_host;
+      p | m_sorter;
+      p | m_solver;
+      p | m_scheme;
       p | m_cbr;
       p | m_cbs;
       p | m_ginpoel;
