@@ -35,6 +35,8 @@ module transporter {
       entry [reductiontarget] void sumstat( tk::real d0, tk::real d1,
                                             tk::real d2, tk::real d3 );
       entry [reductiontarget] void pdfstat( CkReductionMsg* msg );
+      entry [reductiontarget] void lboff();
+      entry [reductiontarget] void stat();
       entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
       entry [reductiontarget] void start();
       entry [reductiontarget] void next();
@@ -53,7 +55,8 @@ module transporter {
 
       entry void wait4stat() {
         when minstat_complete(), maxstat_complete(), sumstat_complete(),
-             pdfstat_complete(), com_complete() serial "stat" { stat(); } };
+             pdfstat_complete(), com_complete() serial "lbon"
+        { m_partitioner.lbon(); } };
 
       entry void minstat_complete();
       entry void maxstat_complete();

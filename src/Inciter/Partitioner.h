@@ -80,6 +80,12 @@ class Partitioner : public CBase_Partitioner {
                  const std::vector< std::size_t >& triinpoel,
                  const std::map< int, std::vector< std::size_t > >& bnode );
 
+    //! Turn off automatic load balancing
+    void lboff();
+
+    //! Turn on automatic load balancing
+    void lbon();
+
     //! Partition the computational mesh into a number of chares
     void partition( int nchare );
 

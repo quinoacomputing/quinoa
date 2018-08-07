@@ -30,6 +30,7 @@ struct rng123 {};
 struct seqlen {};
 struct verbose {};
 struct benchmark {};
+struct lboff {};
 struct feedback {};
 struct reorder {};
 struct error {};

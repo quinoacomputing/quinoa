@@ -17,7 +17,9 @@
 namespace tk {
 
 using PartitionerCallback =
-  tk::tuple::tagged_tuple< tag::load,           CkCallback
+  tk::tuple::tagged_tuple< tag::lboff,          CkCallback
+                         , tag::stat,           CkCallback
+                         , tag::load,           CkCallback
                          , tag::distributed,    CkCallback
                          , tag::refinserted,    CkCallback
                          , tag::refined,        CkCallback
@@ -38,6 +40,7 @@ using SolverCallback =
 
 using SorterCallback =
   tk::tuple::tagged_tuple< tag::flattened,      CkCallback
+                         , tag::bounds,         CkCallback
                          , tag::discinserted,   CkCallback
                          , tag::workinserted,   CkCallback
                          >;

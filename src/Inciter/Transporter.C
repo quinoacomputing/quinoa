@@ -243,7 +243,9 @@ Transporter::createPartitioner()
 
   // Create partitioner callbacks (order matters)
   tk::PartitionerCallback cbp {
-      CkCallback( CkReductionTarget(Transporter,load), thisProxy )
+      CkCallback( CkReductionTarget(Transporter,lboff), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,stat), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,load), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refinserted), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
@@ -259,6 +261,7 @@ Transporter::createPartitioner()
   // Create sorter callbacks (order matters)
   tk::SorterCallback cbs {
       CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,bounds), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,discinserted), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,workinserted), thisProxy )
   };
@@ -404,6 +407,16 @@ Transporter::bounds()
 // Reduction target: all Solver (PEs) have computed their row bounds
 // *****************************************************************************
 {
+  m_partitioner.lboff();
+}
+
+void
+Transporter::lboff()
+// *****************************************************************************
+// Reduction target: all Partitioner (PEs) have turned their load balancer off
+// *****************************************************************************
+{
+  m_print.diag( "Automatic load balancing off" );
   m_sorter.createDiscWorkers();
 }
 
@@ -611,9 +624,11 @@ Transporter::pdfstat( CkReductionMsg* msg )
 void
 Transporter::stat()
 // *****************************************************************************
-// Echo diagnostics mesh statistics
+// Echo diagnostics on mesh statistics
 // *****************************************************************************
 {
+  m_print.diag( "Automatic load balancing on" );
+
   // Start load balancing
   CkStartLB();
 

@@ -419,7 +419,7 @@ Sorter::create()
     // broadcast this chare's bounds of global node IDs to matrix solvers
     m_solver.ckLocalBranch()->chbounds( m_lower, m_upper );
   else // if no MatCG, no matrix solver, continue
-    createDiscWorkers();
+    contribute( m_cbs.get< tag::bounds >() );
 }
 
 void
@@ -432,9 +432,6 @@ Sorter::createDiscWorkers()
 //!   operate on.
 // *****************************************************************************
 {
-  // Turn off automatic load balancing
-  TurnManualLBOn();
-
   // Create worker array element using Charm++ dynamic chare array element
   // insertion: 1st arg: chare id, last arg: PE chare is created on, middle
   // args: Discretization ctor args. See also Charm++ manual, Sec. "Dynamic
@@ -518,9 +515,6 @@ Sorter::createWorkers()
   m_scheme.insert( thisIndex, m_scheme.get(), m_solver, fd, CkMyPe() );
 
   contribute( m_cbs.get< tag::workinserted >() );
-
-  // Turn (back) on automatic load balancing
-  TurnManualLBOff();
 }
 
 #include "NoWarning/sorter.def.h"

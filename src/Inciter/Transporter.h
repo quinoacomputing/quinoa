@@ -138,6 +138,13 @@ class Transporter : public CBase_Transporter {
     //!    workers
     void pdfstat( CkReductionMsg* msg );
 
+    //! \brief Reduction target: all Partitioner (PEs) have turned their load
+    //!    balancer off
+    void lboff();
+
+    //! Echo diagnostics on mesh statistics
+    void stat();
+
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );
@@ -194,9 +201,6 @@ class Transporter : public CBase_Transporter {
 
     //! Configure and write diagnostics file header
     void diagHeader();
-
-    //! Echo diagnostics on mesh statistics
-    void stat();
 
     //! Query variable names for all equation systems to be integrated
     //! \param[in] eq Equation system whose variable names to query

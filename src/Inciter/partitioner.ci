@@ -34,6 +34,8 @@ module partitioner {
         const std::map< int, std::vector< std::size_t > >& bface,
         const std::vector< std::size_t >& triinpoel,
         const std::map< int, std::vector< std::size_t > >& bnode );
+      entry void lboff();
+      entry void lbon();
       entry void partition( int nchare );
       entry void addMesh( int frompe,
                           const std::unordered_map< int,
