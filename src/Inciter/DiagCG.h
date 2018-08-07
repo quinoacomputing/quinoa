@@ -173,8 +173,7 @@ class DiagCG : public CBase_DiagCG {
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &p ) {
-      CBase_DiagCG::pup(p);
+    void pup( PUP::er &p ) override {
       p | m_itf;
       p | m_nsol;
       p | m_nlhs;

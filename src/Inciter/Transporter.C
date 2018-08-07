@@ -416,7 +416,6 @@ Transporter::lboff()
 // Reduction target: all Partitioner (PEs) have turned their load balancer off
 // *****************************************************************************
 {
-  m_print.diag( "Automatic load balancing off" );
   m_sorter.createDiscWorkers();
 }
 
@@ -627,8 +626,6 @@ Transporter::stat()
 // Echo diagnostics on mesh statistics
 // *****************************************************************************
 {
-  m_print.diag( "Automatic load balancing on" );
-
   // Start load balancing
   CkStartLB();
 

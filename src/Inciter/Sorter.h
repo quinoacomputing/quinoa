@@ -106,8 +106,7 @@ class Sorter : public CBase_Sorter {
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &p ) {
-      CBase_Sorter::pup(p);
+    void pup( PUP::er &p ) override {
       p | m_host;
       p | m_solver;
       p | m_cbs;

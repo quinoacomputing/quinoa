@@ -101,8 +101,7 @@ class MatCG : public CBase_MatCG {
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &p ) {
-      CBase_MatCG::pup(p);
+    void pup( PUP::er &p ) override {
       p | m_itf;
       p | m_nhsol;
       p | m_nlsol;

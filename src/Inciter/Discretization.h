@@ -170,8 +170,7 @@ class Discretization : public CBase_Discretization {
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &p ) {
-      CBase_Discretization::pup(p);
+    void pup( PUP::er &p ) override {
       p | m_it;
       p | m_t;
       p | m_dt;
