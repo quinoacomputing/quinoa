@@ -60,6 +60,9 @@ namespace inciter {
 */
 class TransportProblemShearDiff {
 
+  private:
+    using ncomp_t = tk::ctr::ncomp_type;
+
   public:
     //! Evaluate analytical solution at (x,y,z,t) for all components
     //! \param[in] e Equation system index, i.e., which transport equation
