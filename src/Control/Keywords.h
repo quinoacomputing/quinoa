@@ -4488,6 +4488,10 @@ struct amr_info {
     R"(This keyword is used to introduce the amr ... end block, used to
     configure adaptive mesh refinement. Keywords allowed
     in this block: )" + std::string("\'")
+    + amr_refvar::string() + "\' | \'"
+    + amr_error::string() + "\' | \'"
+    + amr_coordref::string() + "\' | \'"
+    + amr_initref::string() + "\' | \'"
     + amr_initial::string() + "\'.";
   }
 };
