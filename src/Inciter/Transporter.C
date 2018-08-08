@@ -243,8 +243,7 @@ Transporter::createPartitioner()
 
   // Create partitioner callbacks (order matters)
   tk::PartitionerCallback cbp {
-      CkCallback( CkReductionTarget(Transporter,stat), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,load), thisProxy )
+      CkCallback( CkReductionTarget(Transporter,load), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refinserted), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
@@ -602,7 +601,6 @@ Transporter::stat()
 // Echo diagnostics on mesh statistics
 // *****************************************************************************
 {
-  m_print.diag( "Start automatic load balancing" );
   CkStartLB();
 
   m_print.diag( "Mesh statistics: min/max/avg(edgelength) = " +

@@ -219,9 +219,6 @@ class Main : public CBase_Main {
       Throw( "Quiescence detected" );
     }
 
-    //! Turn off automatic load balancing (very early on)
-    static void lboff() { TurnManualLBOn(); }
-
   private:
     int m_signal;                               //!< Used to set signal handlers
     inciter::ctr::CmdLine m_cmdline;            //!< Command line

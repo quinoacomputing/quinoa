@@ -112,16 +112,6 @@ Partitioner::Partitioner(
 }
 
 void
-Partitioner::lbon()
-// *****************************************************************************
-// Turn onautomatic load balancing
-// *****************************************************************************
-{
-  TurnManualLBOff();
-  contribute( m_cbp.get< tag::stat >() );
-}
-
-void
 Partitioner::partition( int nchare )
 // *****************************************************************************
 //  Partition the computational mesh into a number of chares

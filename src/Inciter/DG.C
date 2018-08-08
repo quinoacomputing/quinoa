@@ -74,6 +74,9 @@ DG::DG( const CProxy_Discretization& disc,
 //! \param[in] Face data structures
 // *****************************************************************************
 {
+  // Enable migration at AtSync()
+  usesAtSync = true;
+
   auto d = Disc();
 
   const auto& gid = d->Gid();
@@ -836,6 +839,8 @@ DG::solve()
     d->next();
     // Output one-liner status report
     d->status();
+    // Migreate here if needed
+    AtSync();
     // Update Un
     m_un = m_u;
 

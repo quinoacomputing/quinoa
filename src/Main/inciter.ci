@@ -33,7 +33,6 @@ mainmodule inciter {
     entry void execute();
     entry void finalize();
     entry void quiescence();
-    initproc void lboff();
   }
 
   chare execute { entry execute(); }

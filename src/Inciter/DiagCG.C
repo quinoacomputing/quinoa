@@ -77,6 +77,9 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 //! \param[in] solver Linear system solver (Solver) proxy
 // *****************************************************************************
 {
+  // Enable migration at AtSync()
+  usesAtSync = true;
+
   auto d = Disc();
 
   // Allocate communication buffers for LHS, ICs, RHS, mass diffusion RHS
@@ -560,7 +563,8 @@ DiagCG::next( const tk::Fields& a )
   d->next();
   // Output one-liner status report
   d->status();
-
+  // Migreate here if needed
+  AtSync();
   // Evaluate whether to continue with next step
   if (!diag) eval();
 }

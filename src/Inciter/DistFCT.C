@@ -74,6 +74,9 @@ DistFCT::DistFCT( const CProxy_Transporter& host,
 //! \param[in] inpoel Mesh connectivity of our chunk of the mesh
 // *****************************************************************************
 {
+  // Enable migration at AtSync()
+  usesAtSync = true;
+
   // Allocate receive buffers for FCT
   m_pc.resize( m_bid.size() );
   for (auto& b : m_pc) b.resize( np*2 );
@@ -375,6 +378,9 @@ DistFCT::apply()
 // Apply limited antidiffusive element contributions
 // *****************************************************************************
 {
+  // Migreate here if needed
+  AtSync();
+
   // Combine own and communicated contributions to A
   for (const auto& b : m_bid) {
     auto lid = tk::cref_find( m_lid, b.first );

@@ -17,8 +17,7 @@
 namespace tk {
 
 using PartitionerCallback =
-  tk::tuple::tagged_tuple< tag::stat,           CkCallback
-                         , tag::load,           CkCallback
+  tk::tuple::tagged_tuple< tag::load,           CkCallback
                          , tag::distributed,    CkCallback
                          , tag::refinserted,    CkCallback
                          , tag::refined,        CkCallback

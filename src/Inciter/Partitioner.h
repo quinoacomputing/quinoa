@@ -83,9 +83,6 @@ class Partitioner : public CBase_Partitioner {
     //! Turn off automatic load balancing
     void lboff();
 
-    //! Turn on automatic load balancing
-    void lbon();
-
     //! Partition the computational mesh into a number of chares
     void partition( int nchare );
 
