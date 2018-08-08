@@ -6,9 +6,9 @@ title "Zalesak's slotted cylinder"
 
 inciter
 
-  nstep 250   # Max number of time steps
+  nstep 50    # Max number of time steps
   cfl   0.8   # CFL coefficient
-  ttyi 10     # TTY output interval
+  ttyi 1      # TTY output interval
   ctau 1.0    # FCT mass diffusivity
 
   scheme diagcg
