@@ -64,6 +64,23 @@ namespace AMR {
             }
 
             // TODO: Document this
+            void set_normal(size_t id, int val)
+            {
+                data(id).normal = val;
+            }
+
+            int get_is_normal(size_t id)
+            {
+                return data(id).normal;
+            }
+
+            // TODO: Document this
+            void mark_normal(size_t id)
+            {
+                set_normal(id, 1);
+            }
+
+            // TODO: Document this
             Refinement_State& data(size_t id)
             {
                 return master_elements.get(id);

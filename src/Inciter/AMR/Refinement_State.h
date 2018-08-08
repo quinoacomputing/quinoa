@@ -83,6 +83,7 @@ namespace AMR {
             size_t refinement_level;
             size_t child_number;
             size_t parent_id;
+            int normal; // TODO: make this a bool?
 
             // Only needed for active
             //size_t master_element_number; // TODO: Some of these can be removed?
@@ -117,7 +118,8 @@ namespace AMR {
                     children(children_in),
                     refinement_level(refinement_level_in),
                     child_number(child_number_in),
-                    parent_id(parent_id_in)
+                    parent_id(parent_id_in),
+                    normal(0)
             {
                 // Empty
             }
@@ -141,7 +143,8 @@ namespace AMR {
                     num_children(DEFAULT_NUM_CHILDREN), // No children by default
                     refinement_level(refinement_level_in),
                     child_number(DEFUALT_CHILD_NUMBER), // Give it default child id
-                    parent_id(parent_id_in)
+                    parent_id(parent_id_in),
+                    normal(0)
             {
                 // Set default size of children to be sensible
                 children.reserve(MAX_CHILDREN);

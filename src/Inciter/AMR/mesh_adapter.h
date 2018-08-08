@@ -53,7 +53,7 @@ namespace AMR {
                     const std::vector< real_t >& criteria );
 
             int detect_compatibility(int num_locked_edges,
-                    AMR::Refinement_Case refinement_case);
+                    AMR::Refinement_Case refinement_case, int normal=0);
 
             void mark_refinement();
             void perform_refinement();
@@ -70,6 +70,11 @@ namespace AMR {
             //std::vector< std::size_t >& get_active_inpoel();
 
             void print_tets();
+
+            void reset_intermediate_edges();
+            void update_tet_edges_lock_type(size_t tet_id, AMR::Edge_Lock_Case check, AMR::Edge_Lock_Case new_case);
+            void remove_edge_locks(int intermediate = 0);
+            void remove_normals();
 
     };
 }

@@ -123,7 +123,7 @@ namespace AMR {
      * @return The compatibility class of the current scenario
      */
     int mesh_adapter_t::detect_compatibility(int num_locked_edges,
-            AMR::Refinement_Case refinement_case)
+            AMR::Refinement_Case refinement_case, int normal)
     {
         int compatibility = 0;
 
@@ -133,7 +133,13 @@ namespace AMR {
                 (refinement_case == AMR::Refinement_Case::one_to_four)
            )
         {
-            compatibility = 3;
+            if (!normal) {
+                compatibility = 3;
+            }
+            else { // Attempt to allow for "normal" 1:4 and 1:8
+                compatibility = 2;
+            }
+
         }
         else {
             if (num_locked_edges == 0) {
@@ -217,8 +223,10 @@ namespace AMR {
 
                     // TODO: Should this be a reference?
                     AMR::Refinement_Case refinement_case = tet_store.get_refinement_case(tet_id);
+                    int normal = tet_store.get_is_normal(tet_id);
 
                     trace_out << "Checking " << tet_id <<
+                        " ref case " << refinement_case << 
                         " num ref " << num_to_refine <<
                         std::endl;
 
@@ -230,7 +238,7 @@ namespace AMR {
                         //Determine compatibility case
 
                         compatibility = detect_compatibility(num_locked_edges,
-                                refinement_case);
+                                refinement_case, normal);
 
                         // Now check num_to_refine against situations
                         if (compatibility == 1)
@@ -348,10 +356,12 @@ namespace AMR {
 
             if (element.num_children == 2)
             {
+                trace_out << "perform 2:8" << std::endl;
                 refiner.derefine_two_to_one(i);
             }
             else if (element.num_children == 4)
             {
+                trace_out << "perform 4:8" << std::endl;
                 refiner.derefine_four_to_one(i);
             }
             else {
@@ -384,6 +394,10 @@ namespace AMR {
         tet_store.print_node_types();
         tet_store.print_tets();
         //node_connectivity.print();
+
+        //reset_intermediate_edges();
+        remove_edge_locks(0);
+        remove_normals();
     }
 
     /**
@@ -836,7 +850,9 @@ namespace AMR {
                 lock_tet_edges(child);
                 trace_out << "Compat 3 locking edges of " << child << std::endl;
                 // TODO: Mark tet as "normal"
-                // This may be implicit?
+                // Here we interpret normal to mean "don't treat it like it has intermediates"
+                tet_store.mark_normal(child);
+                trace_out << "Compat 3 " << child << std::endl;
             }
         }
         else {
@@ -852,6 +868,62 @@ namespace AMR {
                 tet_store.mark_four_to_eight(tet_id);
             }
 
+        }
+    }
+
+    void mesh_adapter_t::remove_normals()
+    {
+        for (const auto& kv : tet_store.tets)
+        {
+            size_t tet_id = kv.first;
+            tet_store.set_normal(tet_id, 0);
+        }
+    }
+
+    void mesh_adapter_t::remove_edge_locks(int intermediate)
+    {
+        for (const auto& kv : tet_store.tets)
+        {
+            size_t tet_id = kv.first;
+
+            trace_out << "Process tet " << tet_id << std::endl;
+
+            // Only apply checks to tets on the active list
+            if (tet_store.is_active(tet_id)) {
+                // change it from intermediate to locked
+                update_tet_edges_lock_type(tet_id, AMR::Edge_Lock_Case::locked, AMR::Edge_Lock_Case::unlocked);
+                if (intermediate) {
+                    update_tet_edges_lock_type(tet_id, AMR::Edge_Lock_Case::intermediate, AMR::Edge_Lock_Case::unlocked);
+                }
+            }
+        }
+
+    }
+    void mesh_adapter_t::reset_intermediate_edges()
+    {
+        for (const auto& kv : tet_store.tets)
+        {
+            size_t tet_id = kv.first;
+
+            trace_out << "Process tet " << tet_id << std::endl;
+
+            // Only apply checks to tets on the active list
+            if (tet_store.is_active(tet_id)) {
+                // change it from intermediate to locked
+                update_tet_edges_lock_type(tet_id, AMR::Edge_Lock_Case::intermediate, AMR::Edge_Lock_Case::locked);
+            }
+        }
+    }
+
+    void mesh_adapter_t::update_tet_edges_lock_type(size_t tet_id, AMR::Edge_Lock_Case check, AMR::Edge_Lock_Case new_case) {
+        edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
+        for (size_t k = 0; k < NUM_TET_EDGES; k++)
+        {
+            edge_t key = edge_list[k];
+            if (tet_store.edge_store.get(key).lock_case == check)
+            {
+                tet_store.edge_store.get(key).lock_case = new_case;
+            }
         }
     }
 

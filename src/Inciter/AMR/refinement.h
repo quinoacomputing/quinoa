@@ -121,6 +121,7 @@ namespace AMR {
             )
             {
 
+                trace_out << "refine_one_to_two" << std::endl;
                 if (!check_allowed_refinement(tet_id)) return;
 
                 tet_t original_tet = tet_store.get(tet_id);
@@ -276,6 +277,7 @@ namespace AMR {
             )
             {
 
+                trace_out << "refine_one_to_four" << std::endl;
                 if (!check_allowed_refinement(tet_id)) return;
 
                 trace_out << "Refining tet_id " << tet_id <<
@@ -377,6 +379,7 @@ namespace AMR {
              */
             void refine_one_to_eight( size_t tet_id ) {
 
+                trace_out << "refine_one_to_eight" << std::endl;
                 if (!check_allowed_refinement(tet_id)) return;
 
                 // Split every edge into two
