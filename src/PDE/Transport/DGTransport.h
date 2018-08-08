@@ -168,7 +168,8 @@ class Transport {
         auto farea = geoFace(f,0,0);
 
         //--- upwind fluxes
-        auto flux = upwindFlux( f, geoFace, {{U.extract(el), U.extract(er)}} );
+        auto flux = upwindFlux( {{geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0)}},
+                                f, geoFace, {{U.extract(el), U.extract(er)}} );
 
         for (ncomp_t c=0; c<m_ncomp; ++c) {
           R(el, c, m_offset) -= farea * flux[c];
@@ -207,9 +208,23 @@ class Transport {
 
       const auto& bface = fd.Bface();
       const auto& esuf = fd.Esuf();
+      const auto& inpofa = fd.Inpofa();
 
       // set rhs to zero
       R.fill(0.0);
+
+      // arrays for quadrature points
+      std::array< std::vector< tk::real >, 3 > coordgp;
+      std::vector< tk::real > wgp; 
+
+      coordgp[0].resize(3,0);
+      coordgp[1].resize(3,0);
+      coordgp[2].resize(3,0);
+
+      wgp.resize(3,0);
+
+      // get quadrature point weights and coordinates for triangle
+      GaussQuadrature( 2, coordgp, wgp );
 
       // compute internal surface flux integrals
       for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
@@ -218,12 +233,80 @@ class Transport {
         std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
         auto farea = geoFace(f,0,0);
 
-        //--- upwind fluxes
-        auto flux = upwindFlux( f, geoFace, {{U.extract(el), U.extract(er)}} );
+        auto x1 = coord[0][ inpofa[3*f]   ];
+        auto y1 = coord[1][ inpofa[3*f]   ];
+        auto z1 = coord[2][ inpofa[3*f]   ];
 
-        for (ncomp_t c=0; c<m_ncomp; ++c) {
-          R(el, c, m_offset) -= farea * flux[c];
-          R(er, c, m_offset) += farea * flux[c];
+        auto x2 = coord[0][ inpofa[3*f+1] ];
+        auto y2 = coord[1][ inpofa[3*f+1] ];
+        auto z2 = coord[2][ inpofa[3*f+1] ];
+
+        auto x3 = coord[0][ inpofa[3*f+2] ];
+        auto y3 = coord[1][ inpofa[3*f+2] ];
+        auto z3 = coord[2][ inpofa[3*f+2] ];
+
+        // Gaussian quadrature
+        for (std::size_t igp=0; igp<3; ++igp)
+        {
+          // Barycentric coordinates for the triangular face
+          auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];
+          auto shp2 = coordgp[0][igp];
+          auto shp3 = coordgp[1][igp];
+
+          // transformation of the quadrature point from the reference/master
+          // element to physical domain, to obtain its physical (x,y,z)
+          // coordinates.
+          auto xgp = x1*shp1 + x2*shp2 + x3*shp3;
+          auto ygp = y1*shp1 + y2*shp2 + y3*shp3;
+          auto zgp = z1*shp1 + z2*shp2 + z3*shp3;
+
+          // transformation of the physical coordinates of the quadrature point
+          // to reference space for the left element to be able to compute
+          // basis functions on the left element.
+          auto B2l = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp] - 1.0;
+          auto B3l = 3.0 * coordgp[1][igp] + coordgp[2][igp] - 1.0;
+          auto B4l = 4.0 * coordgp[2][igp] - 1.0;
+
+          // transformation of the physical coordinates of the quadrature point
+          // to reference space for the right element
+          auto B2r = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp] - 1.0;
+          auto B3r = 3.0 * coordgp[1][igp] + coordgp[2][igp] - 1.0;
+          auto B4r = 4.0 * coordgp[2][igp] - 1.0;
+
+          auto wt = wgp[igp] * farea;
+
+          std::array< std::vector< tk::real >, 2 > ugp;
+          
+          for (ncomp_t c=0; c<m_ncomp; ++c)
+          {
+            auto mark = c*m_ndof;
+            ugp[0].push_back(  U(el, mark,   m_offset) 
+                             + U(el, mark+1, m_offset) * B2l
+                             + U(el, mark+2, m_offset) * B3l
+                             + U(el, mark+3, m_offset) * B4l );
+            ugp[1].push_back(  U(er, mark,   m_offset) 
+                             + U(er, mark+1, m_offset) * B2r
+                             + U(er, mark+2, m_offset) * B3r
+                             + U(er, mark+3, m_offset) * B4r );
+          }
+
+          //--- upwind fluxes
+          auto flux = upwindFlux( {{xgp, ygp, zgp}}, f, geoFace, ugp );
+
+          for (ncomp_t c=0; c<m_ncomp; ++c)
+          {
+            auto mark = c*m_ndof;
+
+            R(el, mark,   m_offset) -= wt * flux[c];
+            R(el, mark+1, m_offset) -= wt * flux[c] * B2l; 
+            R(el, mark+2, m_offset) -= wt * flux[c] * B3l;
+            R(el, mark+3, m_offset) -= wt * flux[c] * B4l;
+
+            R(er, mark,   m_offset) += wt * flux[c];
+            R(er, mark+1, m_offset) += wt * flux[c] * B2r;
+            R(er, mark+2, m_offset) += wt * flux[c] * B3r;
+            R(er, mark+3, m_offset) += wt * flux[c] * B4r;
+          }
         }
       }
 
@@ -232,16 +315,14 @@ class Transport {
       bndIntegral< Inlet >( m_bcinlet, bface, esuf, geoFace, U, R );
       bndIntegral< Outlet >( m_bcoutlet, bface, esuf, geoFace, U, R );
 
-      // arrays for quadrature points
-      std::array< std::vector< tk::real >, 3 > coordgp;
-      std::vector< tk::real > wgp; 
-
+      // resize quadrature point arrays
       coordgp[0].resize(5,0);
       coordgp[1].resize(5,0);
       coordgp[2].resize(5,0);
 
       wgp.resize(5,0);
 
+      // get quadrature point weights and coordinates for tetrahedron
       GaussQuadrature( 3, coordgp, wgp );
 
       // compute volume integrals
@@ -465,7 +546,8 @@ class Transport {
         auto farea = geoFace(f,0,0);
 
         //--- upwind fluxes
-        auto flux = upwindFlux( f, geoFace, State::LR(U,el) );
+        auto flux = upwindFlux( {{geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0)}},
+                                f, geoFace, State::LR(U,el) );
 
         for (ncomp_t c=0; c<m_ncomp; ++c)
           R(el, c, m_offset) -= farea * flux[c];
@@ -502,15 +584,16 @@ class Transport {
     //! \param[in] u Left and right unknown/state vector
     //! \return Riemann solution using upwind method
     std::vector< tk::real >
-    upwindFlux( std::size_t f,
+    upwindFlux( std::array< tk::real, 3> centcoord,
+                std::size_t f,
                 const tk::Fields& geoFace,
                 const std::array< std::vector< tk::real >, 2 >& u ) const
     {
       std::vector< tk::real > flux( u[0].size(), 0 );
 
-      auto xc = geoFace(f,4,0);
-      auto yc = geoFace(f,5,0);
-      auto zc = geoFace(f,6,0);
+      auto xc = centcoord[0];
+      auto yc = centcoord[1];
+      auto zc = centcoord[2];
 
       std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
                                       geoFace(f,2,0),
