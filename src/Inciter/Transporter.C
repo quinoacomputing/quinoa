@@ -636,6 +636,25 @@ Transporter::start()
 }
 
 void
+Transporter::next()
+// *****************************************************************************
+// Reset linear solver for next time step
+//! \note Only called if MatCG is used
+// *****************************************************************************
+{
+  m_solver.next();
+}
+
+void
+Transporter::advance( tk::real dt )
+// *****************************************************************************
+// Reduction target computing the minimum of dt
+// *****************************************************************************
+{
+  m_scheme.advance( dt );
+}
+
+void
 Transporter::diagnostics( CkReductionMsg* msg )
 // *****************************************************************************
 // Reduction target optionally collecting diagnostics, e.g., residuals

@@ -37,6 +37,7 @@ module transporter {
       entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
       entry [reductiontarget] void start();
       entry [reductiontarget] void next();
+      entry [reductiontarget] void advance( tk::real );
       entry [reductiontarget] void finish();
 
       entry void pepartitioned();

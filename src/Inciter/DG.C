@@ -671,8 +671,8 @@ DG::dt()
   thisProxy[ thisIndex ].wait4sol();
 
   // Contribute to minimum dt across all chares then advance to next step
-  contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-              CkCallback(CkReductionTarget(DG,advance), thisProxy) );
+  contribute(sizeof(tk::real), &mindt, CkReduction::min_double,
+             CkCallback(CkReductionTarget(Transporter,advance), Disc()->Tr()));
 }
 
 void

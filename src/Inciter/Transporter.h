@@ -133,10 +133,6 @@ class Transporter : public CBase_Transporter {
     //!    workers
     void pdfstat( CkReductionMsg* msg );
 
-    //! \brief Reduction target: all Partitioner (PEs) have turned their load
-    //!    balancer off
-    void lboff();
-
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );
@@ -145,7 +141,10 @@ class Transporter : public CBase_Transporter {
     void start();
 
     //! Reset linear solver for next time step
-    void next() { m_solver.next(); }
+    void next();
+
+    //! Reduction target computing minimum of dt
+    void advance( tk::real dt );
 
     //! Normal finish of time stepping
     void finish();
