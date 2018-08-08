@@ -119,43 +119,104 @@ add_regression_test(cfl_u0.5 ${INCITER_EXECUTABLE}
                                out.5
                                out.6
                                out.7
-                    BIN_DIFF_PROG_ARGS -m
+                    BIN_DIFF_PROG_ARGS -m -q
                     BIN_DIFF_PROG_CONF exodiff.cfg)
 
 # Parallel + Virtualization + Migration
 
-add_regression_test(cfl_u0.5_migr ${INCITER_EXECUTABLE}
+add_regression_test(cfl_u0.9_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slot_cyl_cfl_diagcg.q unitsquare_01_3.6k.exo
                                exodiff.cfg
-                               slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.0
-                               slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.1
-                               slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.2
-                               slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.3
-                               slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.4
-                               slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.5
-                               slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.6
-                               slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.7
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.0
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.1
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.2
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.3
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.4
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.5
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.6
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.7
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.8
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.9
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.10
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.11
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.12
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.13
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.14
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.15
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.16
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.17
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.18
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.19
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.20
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.21
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.22
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.23
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.24
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.25
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.26
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.27
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.28
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.29
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.30
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.31
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.32
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.33
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.34
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.35
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.36
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.37
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.38
+                               slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.39
                     ARGS -c slot_cyl_cfl_diagcg.q -i unitsquare_01_3.6k.exo
-                         -v -u 0.5
-                         +balancer RandCentLB +LBDebug 2 +cs
-                    BIN_BASELINE slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.0
-                                 slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.1
-                                 slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.2
-                                 slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.3
-                                 slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.4
-                                 slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.5
-                                 slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.6
-                                 slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.7
-                    BIN_RESULT out.0
-                               out.1
-                               out.2
-                               out.3
-                               out.4
-                               out.5
-                               out.6
-                               out.7
-                    BIN_DIFF_PROG_ARGS -m
+                         -v -u 0.9 +balancer RandCentLB +LBDebug 1 +cs
+                    BIN_BASELINE slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.0
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.1
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.2
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.3
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.4
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.5
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.6
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.7
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.8
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.9
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.10
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.11
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.12
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.13
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.14
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.15
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.16
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.17
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.18
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.19
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.20
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.21
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.22
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.23
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.24
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.25
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.26
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.27
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.28
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.29
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.30
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.31
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.32
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.33
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.34
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.35
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.36
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.37
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.38
+                                 slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.39
+                    BIN_RESULT out.0 out.1 out.2 out.3 out.4 out.5 out.6 out.7
+                               out.8 out.9 out.10 out.11 out.12 out.13 out.14
+                               out.15 out.16 out.17 out.18 out.19 out.20 out.21
+                               out.22 out.23 out.24 out.25 out.26 out.27 out.28
+                               out.29 out.30 out.31 out.32 out.33 out.34 out.35
+                               out.36 out.37 out.38 out.39
+                    BIN_DIFF_PROG_ARGS -m -q
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     LABELS migration)
 

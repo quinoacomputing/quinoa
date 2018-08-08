@@ -138,30 +138,96 @@ add_regression_test(compflow_euler_vorticalflow_diagcg_u0.5 ${INCITER_EXECUTABLE
 
 # Parallel + virtualization + migration
 
-add_regression_test(compflow_euler_vorticalflow_diagcg_u0.5_migr ${INCITER_EXECUTABLE}
+add_regression_test(compflow_euler_vorticalflow_diagcg_u0.9_migr
+                    ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES vortical_flow_diagcg.q unitcube_1k.exo
                                diag_diagcg.std exodiff.cfg
-                               vortical_flow_diagcg_pe4_u0.5.std.exo.0
-                               vortical_flow_diagcg_pe4_u0.5.std.exo.1
-                               vortical_flow_diagcg_pe4_u0.5.std.exo.2
-                               vortical_flow_diagcg_pe4_u0.5.std.exo.3
-                               vortical_flow_diagcg_pe4_u0.5.std.exo.4
-                               vortical_flow_diagcg_pe4_u0.5.std.exo.5
-                               vortical_flow_diagcg_pe4_u0.5.std.exo.6
-                               vortical_flow_diagcg_pe4_u0.5.std.exo.7
-                    ARGS -c vortical_flow_diagcg.q -i unitcube_1k.exo -v -u 0.5
-                         +balancer RandCentLB +LBPeriod 0.5 +LBDebug 2 +cs
-                    BIN_BASELINE vortical_flow_diagcg_pe4_u0.5.std.exo.0
-                                 vortical_flow_diagcg_pe4_u0.5.std.exo.1
-                                 vortical_flow_diagcg_pe4_u0.5.std.exo.2
-                                 vortical_flow_diagcg_pe4_u0.5.std.exo.3
-                                 vortical_flow_diagcg_pe4_u0.5.std.exo.4
-                                 vortical_flow_diagcg_pe4_u0.5.std.exo.5
-                                 vortical_flow_diagcg_pe4_u0.5.std.exo.6
-                                 vortical_flow_diagcg_pe4_u0.5.std.exo.7
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.0
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.1
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.2
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.3
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.4
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.5
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.6
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.7
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.8
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.9
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.10
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.11
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.12
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.13
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.14
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.15
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.16
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.17
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.18
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.19
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.20
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.21
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.22
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.23
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.24
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.25
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.26
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.27
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.28
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.29
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.30
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.31
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.32
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.33
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.34
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.35
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.36
+                               vortical_flow_diagcg_pe4_u0.9.std.exo.37
+                    ARGS -c vortical_flow_diagcg.q -i unitcube_1k.exo -v -u 0.9
+                         +balancer RandCentLB +LBDebug 3 +cs
+                    BIN_BASELINE vortical_flow_diagcg_pe4_u0.9.std.exo.0
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.1
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.2
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.3
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.4
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.5
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.6
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.7
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.8
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.9
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.10
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.11
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.12
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.13
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.14
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.15
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.16
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.17
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.18
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.19
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.20
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.21
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.22
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.23
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.24
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.25
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.26
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.27
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.28
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.29
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.30
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.31
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.32
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.33
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.34
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.35
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.36
+                                 vortical_flow_diagcg_pe4_u0.9.std.exo.37
                     BIN_RESULT out.0 out.1 out.2 out.3 out.4 out.5 out.6 out.7
-                    BIN_DIFF_PROG_ARGS -m
+                               out.8 out.9 out.10 out.11 out.12 out.13 out.14
+                               out.15 out.16 out.17 out.18 out.19 out.20 out.21
+                               out.22 out.23 out.24 out.25 out.26 out.27 out.28
+                               out.29 out.30 out.31 out.32 out.33 out.34 out.35
+                               out.36 out.37
+                    BIN_DIFF_PROG_ARGS -m -q
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_diagcg.std
                     TEXT_RESULT diag
