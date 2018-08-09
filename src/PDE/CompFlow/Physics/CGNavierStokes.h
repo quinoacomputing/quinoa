@@ -20,6 +20,7 @@
 
 #include "Types.h"
 #include "Inciter/Options/Physics.h"
+#include "Inciter/InputDeck/InputDeck.h"
 
 namespace inciter {
 
