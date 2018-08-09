@@ -47,7 +47,8 @@ DiffEqStack::DiffEqStack() : m_factory(), m_eqTypes()
 //!   e.g., how to set initial conditions and how to update their coefficients
 //!   during time integration. For more information on policy-based design, see
 //!   http://en.wikipedia.org/wiki/Policy-based_design. This abstraction allows
-//!   [separation of concerns](http://en.wikipedia.org/wiki/Separation_of_concerns).
+//!   [separation of concerns]
+//!   (http://en.wikipedia.org/wiki/Separation_of_concerns).
 //!
 //!   Since the functionality of the policies are orthogonal to each other,
 //!   i.e., they do not depend on each other or their host (the differential

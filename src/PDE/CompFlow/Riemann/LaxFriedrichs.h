@@ -85,7 +85,7 @@ struct LaxFriedrichs {
     auto lambda = fmax(al,ar) + fmax(fabs(vnl),fabs(vnr));
 
     // Numerical flux function
-    for(ncomp_t c=0; c<5; ++c)
+    for(tk::ctr::ncomp_type c=0; c<5; ++c)
     {
       flx[c] = 0.5 * ( fluxl[c] + fluxr[c]
                        - lambda * (u[1][c] - u[0][c]) );
