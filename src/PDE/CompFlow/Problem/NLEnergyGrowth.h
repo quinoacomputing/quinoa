@@ -26,6 +26,9 @@ namespace inciter {
 class CompFlowProblemNLEnergyGrowth {
 
   private:
+    using ncomp_t = tk::ctr::ncomp_type;
+
+  private:
     //! Compute internal energy parameter
     //! \param[in] bx Parameter betax
     //! \param[in] by Parameter betay

@@ -14,6 +14,7 @@
 
 #include "DiffEq.h"
 #include "Factory.h"
+#include "SystemComponents.h"
 #include "Walker/Options/DiffEq.h"
 
 namespace walker {

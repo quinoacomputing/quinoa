@@ -26,6 +26,9 @@ namespace inciter {
 //! Transport PDE problem: advection of two-dimensional Gaussian hump
 class TransportProblemGaussHump {
 
+  private:
+    using ncomp_t = tk::ctr::ncomp_type;
+
   public:
     //! Evaluate analytical solution at (x,y,t) for all components
     //! \param[in] ncomp Number of components in this transport equation system
