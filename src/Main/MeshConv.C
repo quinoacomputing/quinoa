@@ -22,6 +22,7 @@
 #include "MeshConv/CmdLine/CmdLine.h"
 #include "MeshConv/CmdLine/Parser.h"
 #include "ProcessException.h"
+#include "ChareState.h"
 
 #include "NoWarning/charm.h"
 #include "NoWarning/meshconv.decl.h"
@@ -34,6 +35,9 @@
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
 CProxy_Main mainProxy;
+
+//! Object collecting global chare state
+tk::ChareState g_state;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

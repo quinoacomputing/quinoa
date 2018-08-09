@@ -28,6 +28,7 @@
 #include "Inciter/CmdLine/Parser.h"
 #include "Inciter/CmdLine/CmdLine.h"
 #include "Inciter/InputDeck/InputDeck.h"
+#include "ChareState.h"
 
 #include "NoWarning/inciter.decl.h"
 
@@ -39,6 +40,9 @@
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
 CProxy_Main mainProxy;
+
+//! Chare state collector Charm++ chare group proxy
+tk::CProxy_ChareState stateProxy;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -181,6 +185,8 @@ class Main : public CBase_Main {
     {
       delete msg;
       mainProxy = thisProxy;
+      // Create chare state Charm++ chare group
+      stateProxy = tk::CProxy_ChareState::ckNew();
       // Optionally enable quiscence detection
       if (m_cmdline.get< tag::quiescence >())
         CkStartQD( CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
@@ -217,6 +223,10 @@ class Main : public CBase_Main {
     //! Entry method triggered when quiescence is detected
     [[noreturn]] void quiescence() {
       Throw( "Quiescence detected" );
+    }
+
+    //! Dump chare state
+    void dumpstate() {
     }
 
   private:

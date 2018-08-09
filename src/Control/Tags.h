@@ -196,6 +196,9 @@ struct avecost {};
 struct stdcost {};
 struct flux {};
 struct update {};
+struct ch {};
+struct it {};
+struct fn {};
 
 struct BirthdaySpacings {};
 struct Collision {};

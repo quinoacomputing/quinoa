@@ -15,8 +15,10 @@ mainmodule inciter {
   extern module matcg;
   extern module diagcg;
   extern module dg;
+  extern module charestate;
 
   readonly CProxy_Main mainProxy;
+  readonly tk::CProxy_ChareState stateProxy;
 
   namespace inciter {
 
@@ -33,6 +35,7 @@ mainmodule inciter {
     entry void execute();
     entry void finalize();
     entry void quiescence();
+    entry void dumpstate();
   }
 
   chare execute { entry execute(); }

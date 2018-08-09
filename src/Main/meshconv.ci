@@ -13,6 +13,8 @@ mainmodule meshconv {
 
   readonly CProxy_Main mainProxy;
 
+  readonly tk::ChareState g_state;
+
   mainchare Main {
     entry Main( CkArgMsg* msg );
     entry void execute();

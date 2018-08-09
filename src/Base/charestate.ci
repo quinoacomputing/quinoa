@@ -1,0 +1,21 @@
+// *****************************************************************************
+/*!
+  \file      src/Base/charestate.ci
+  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \brief     Charm++ module interface file for the chare state collector group
+  \details   Charm++ module interface file for the chare state collectory group
+             used for debugging.
+*/
+// *****************************************************************************
+
+module charestate {
+
+  namespace tk {
+
+    group ChareState {
+      entry ChareState();
+      entry void collect();
+    };
+
+  } // tk::
+}
