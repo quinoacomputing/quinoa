@@ -16,10 +16,11 @@ string(REPLACE " " ";" TEXT_RESULT "${TEXT_RESULT}")
 string(REPLACE " " ";" FILECONV_INPUT "${FILECONV_INPUT}")
 string(REPLACE " " ";" FILECONV_RESULT "${FILECONV_RESULT}")
 # Covert string to list of file names of binary baseline(s), binary result(s),
-# and binary diff program confguration file(s)
+# binary diff program argument(s), and binary diff program confguration file(s)
 string(REPLACE " " ";" BIN_BASELINE "${BIN_BASELINE}")
 string(REPLACE " " ";" BIN_RESULT "${BIN_RESULT}")
 string(REPLACE " " ";" BIN_DIFF_PROG_CONF "${BIN_DIFF_PROG_CONF}")
+string(REPLACE " " ";" BIN_DIFF_PROG_ARGS "${BIN_DIFF_PROG_ARGS}")
 # Covert string to list of postprocess program arguments
 string(REPLACE " " ";" POSTPROCESS_PROG_ARGS "${POSTPROCESS_PROG_ARGS}")
 # Covert string to list of test labels
