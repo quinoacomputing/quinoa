@@ -41,6 +41,7 @@
 #include "UnitTestDriver.h"
 #include "UnitTest/CmdLine/Parser.h"
 #include "TUTConfig.h"
+#include "ChareStateCollector.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -50,6 +51,9 @@
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
 CProxy_Main mainProxy;
+
+//! Chare state collector Charm++ chare group proxy
+tk::CProxy_ChareStateCollector stateProxy;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -157,6 +161,10 @@ class Main : public CBase_Main {
       unittest::g_executable = msg->argv[0];
       delete msg;
       mainProxy = thisProxy;
+      // If quiescence detection is on or user requested it, create chare state
+      // collector Charm++ chare group
+      if (m_cmdline.get< tag::chare >() || m_cmdline.get< tag::quiescence >())
+        stateProxy = tk::CProxy_ChareStateCollector::ckNew();
       // Optionally enable quiscence detection
       if (m_cmdline.get< tag::quiescence >())
         CkStartQD( CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
@@ -185,16 +193,47 @@ class Main : public CBase_Main {
                         m_timestamp );
           m_print.endpart();
         }
+        // Set global bool indicating whether all tests have passed
+        unittest::g_charmpass = pass;
+        // If quiescence detection is on or user requested it, collect chare
+        // state
+        if (m_cmdline.get< tag::chare >()||m_cmdline.get< tag::quiescence >())
+          stateProxy.collect( /* error = */ false,
+            CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
+        else
+          CkExit(); // tell the Charm++ runtime system to exit
       } catch (...) { tk::processExceptionCharm(); }
-      // Set global bool indicating whether all tests have passed
-      unittest::g_charmpass = pass;
-      // Tell the Charm++ runtime system to exit
-      CkExit();
     }
 
     //! Entry method triggered when quiescence is detected
-    [[noreturn]] void quiescence() {
-      Throw( "Quiescence detected" );
+    void quiescence() {
+      try {
+        stateProxy.collect( /* error= */ true,
+          CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
+      } catch (...) { tk::processExceptionCharm(); }
+    }
+
+    //! Dump chare state
+    void dumpstate( CkReductionMsg* msg ) {
+      try {
+        std::unordered_map< int, std::vector< tk::ChareState > > state;
+        PUP::fromMem creator( msg->getData() );
+        creator | state;
+        delete msg;
+        // find out if chare state collection was triggered due to an error
+        auto it = state.find( -1 );
+        bool error = it != end(state);
+        if (error) state.erase( it );
+        // pretty-print collected chare state (only if user requested it or
+        // quiescence was detected which is and indication of a logic error)
+        if (m_cmdline.get< tag::chare >() || error)
+          m_print.charestate( state );
+        // exit differently depending on how we were called
+        if (error)
+          Throw( "Quiescence detected" );
+        else
+          CkExit(); // tell the Charm++ runtime system to exit
+      } catch (...) { tk::processExceptionCharm(); }
     }
 
   private:

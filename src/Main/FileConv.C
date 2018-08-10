@@ -22,6 +22,7 @@
 #include "FileConv/CmdLine/CmdLine.h"
 #include "FileConv/CmdLine/Parser.h"
 #include "ProcessException.h"
+#include "ChareStateCollector.h"
 
 #include "NoWarning/charm.h"
 #include "NoWarning/fileconv.decl.h"
@@ -34,6 +35,9 @@
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
 CProxy_Main mainProxy;
+
+//! Chare state collector Charm++ chare group proxy
+tk::CProxy_ChareStateCollector stateProxy;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -80,6 +84,10 @@ class Main : public CBase_Main {
     {
       delete msg;
       mainProxy = thisProxy;
+      // If quiescence detection is on or user requested it, create chare state
+      // collector Charm++ chare group
+      if (m_cmdline.get< tag::chare >() || m_cmdline.get< tag::quiescence >())
+        stateProxy = tk::CProxy_ChareStateCollector::ckNew();
       // Optionally enable quiscence detection
       if (m_cmdline.get< tag::quiescence >())
         CkStartQD( CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
@@ -99,14 +107,53 @@ class Main : public CBase_Main {
       } catch (...) { tk::processExceptionCharm(); }
     }
 
+    //! Towards normal exit but collect chare state first (if any)
     void finalize() {
       try {
-        m_timestamp.emplace_back( "Total runtime", m_timer[0].hms() );
-        m_print.time( "Timers (h:m:s)", m_timestamp );
-        m_print.endpart();
+        if (!m_timer.empty()) {
+          m_timestamp.emplace_back( "Total runtime", m_timer[0].hms() );
+          m_print.time( "Timers (h:m:s)", m_timestamp );
+          m_print.endpart();
+         // If quiescence detection is on or user requested it, collect chare
+         // state
+         if (m_cmdline.get< tag::chare >()||m_cmdline.get< tag::quiescence >())
+           stateProxy.collect( /* error = */ false,
+             CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
+         else
+           CkExit(); // tell the Charm++ runtime system to exit
+        }
       } catch (...) { tk::processExceptionCharm(); }
-      // Tell the Charm++ runtime system to exit
-      CkExit();
+    }
+
+    //! Entry method triggered when quiescence is detected
+    void quiescence() {
+      try {
+        stateProxy.collect( /* error= */ true,
+          CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
+      } catch (...) { tk::processExceptionCharm(); }
+    }
+
+    //! Dump chare state
+    void dumpstate( CkReductionMsg* msg ) {
+      try {
+        std::unordered_map< int, std::vector< tk::ChareState > > state;
+        PUP::fromMem creator( msg->getData() );
+        creator | state;
+        delete msg;
+        // find out if chare state collection was triggered due to an error
+        auto it = state.find( -1 );
+        bool error = it != end(state);
+        if (error) state.erase( it );
+        // pretty-print collected chare state (only if user requested it or
+        // quiescence was detected which is and indication of a logic error)
+        if (m_cmdline.get< tag::chare >() || error)
+          m_print.charestate( state );
+        // exit differently depending on how we were called
+        if (error)
+          Throw( "Quiescence detected" );
+        else
+          CkExit(); // tell the Charm++ runtime system to exit
+      } catch (...) { tk::processExceptionCharm(); }
     }
 
     //! Add a time stamp contributing to final timers output
@@ -118,11 +165,6 @@ class Main : public CBase_Main {
     //! Add multiple time stamps contributing to final timers output
     void timestamp( const std::vector< std::pair< std::string, tk::real > >& s )
     { for (const auto& t : s) timestamp( t.first, t.second ); }
-
-    //! Entry method triggered when quiescence is detected
-    [[noreturn]] void quiescence() {
-      Throw( "Quiescence detected" );
-    }
 
   private:
     int m_signal;                               //!< Used to set signal handlers

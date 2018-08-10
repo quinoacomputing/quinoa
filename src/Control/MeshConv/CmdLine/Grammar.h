@@ -32,6 +32,11 @@ namespace cmd {
   struct verbose :
          tk::grm::process_cmd_switch< use< kw::verbose >, tag::verbose > {};
 
+  //! Match and set chare state switch
+  struct charestate :
+         tk::grm::process_cmd_switch< use< kw::charestate >,
+                                      tag::chare > {};
+
   //! brief Match and set reorder switch (i.e., reorder mesh nodes or not)
   struct reorder :
          tk::grm::process_cmd_switch< use< kw::reorder >, tag::reorder > {};
@@ -59,6 +64,7 @@ namespace cmd {
   //! \brief Match all command line keywords
   struct keywords :
          pegtl::sor< verbose,
+                     charestate,
                      reorder,
                      help,
                      helpkw,

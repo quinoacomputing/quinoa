@@ -15,10 +15,10 @@ add_library(Base
             Writer.C
             VectorReducer.C
             Table.C
-            ChareState.C
+            ChareStateCollector.C
 )
 
-addCharmModule( "charestate" "Base" )
+addCharmModule( "charestatecollector" "Base" )
 
 set_target_properties(Base PROPERTIES LIBRARY_OUTPUT_NAME quinoa_base)
 

@@ -197,8 +197,10 @@ struct stdcost {};
 struct flux {};
 struct update {};
 struct ch {};
+struct pe {};
 struct it {};
 struct fn {};
+struct time {};
 
 struct BirthdaySpacings {};
 struct Collision {};

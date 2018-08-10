@@ -22,6 +22,7 @@
 #include "ElemDiagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "ExodusIIMeshWriter.h"
+#include "ChareStateCollector.h"
 
 namespace inciter {
 
@@ -31,7 +32,7 @@ extern std::vector< DGPDE > g_dgpde;
 
 } // inciter::
 
-//extern tk::ChareState g_state;
+extern tk::CProxy_ChareStateCollector stateProxy;
 
 using inciter::DG;
 
@@ -76,11 +77,10 @@ DG::DG( const CProxy_Discretization& disc,
 //! \param[in] Face data structures
 // *****************************************************************************
 {
-std::cout << "wpe: " << CkMyPe() << '\n';
-
-  //tk::ref_find( g_state, CkMyPe() ).push_back(
-//   g_state[ CkMyPe() ].push_back(
-//     {"DG", thisIndex, Disc()->It(), "ctor"} );
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "DG" );
 
   // Enable migration at AtSync()
   usesAtSync = true;
@@ -178,10 +178,6 @@ DG::leakyAdjacency()
 //! \return True if our chare face adjacency leaks.
 // *****************************************************************************
 {
-//   //tk::ref_find( g_state, CkMyPe() ).push_back(
-//   g_state[ CkMyPe() ].push_back(
-//     {"DG", thisIndex, Disc()->It(), "leakyAdjacency"} );
-
   // Storage for surface integral over our chunk of the adjacency
   std::array< tk::real, 3 > s{{ 0.0, 0.0, 0.0}};
 
@@ -210,9 +206,6 @@ DG::msumset() const
 //! \return Chare-node adjacency map that holds sets instead of vectors
 // *****************************************************************************
 {
-//   tk::ref_find( g_state, CkMyPe() ).push_back(
-//     {"DG", thisIndex, Disc()->It(), "msumset"} );
-
   auto d = Disc();
 
   std::unordered_map< int, std::unordered_set< std::size_t > > m;
@@ -233,8 +226,10 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
 //! \param[in] infaces Unique set of faces we potentially share with fromch
 // *****************************************************************************
 {
-//   tk::ref_find( g_state, CkMyPe() ).push_back(
-//     {"DG", thisIndex, Disc()->It(), "comfac"} );
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "comfac" );
 
   // Attempt to find sender chare among chares we potentially share faces with.
   // Note that it is feasible that a sender chare called us but we do not have a
@@ -327,9 +322,6 @@ DG::setupGhost()
 // Setup own ghost data on this chare
 // *****************************************************************************
 {
-//   tk::ref_find( g_state, CkMyPe() ).push_back(
-//     {"DG", thisIndex, Disc()->It(), "setupGhost"} );
-
   auto d = Disc();
   const auto& gid = d->Gid();
   const auto& inpoel = d->Inpoel();
@@ -408,8 +400,10 @@ DG::reqGhost()
 // Receive requests for ghost data
 // *****************************************************************************
 {
-//   tk::ref_find( g_state, CkMyPe() ).push_back(
-//     {"DG", thisIndex, Disc()->It(), "reqGhost"} );
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "reqGhost" );
 
   // If every chare we communicate with has requested ghost data from us, we may
   // fulfill the requests, but only if we have already setup our ghost data.
@@ -422,8 +416,10 @@ DG::sendGhost()
 // Send all of our ghost data to fellow chares
 // *****************************************************************************
 {
-//   tk::ref_find( g_state, CkMyPe() ).push_back(
-//     {"DG", thisIndex, Disc()->It(), "sendGhost"} );
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "sendGhost" );
 
   for (const auto& c : m_ghostData)
     thisProxy[ c.first ].comGhost( thisIndex, c.second );
@@ -438,9 +434,6 @@ DG::findchare( const tk::UnsMesh::Face& t )
 //!   faces with, -1 if the face cannot be found.
 // *****************************************************************************
 {
-//   tk::ref_find( g_state, CkMyPe() ).push_back(
-//     {"DG", thisIndex, Disc()->It(), "findChare"} );
-
   for (const auto& cf : m_bndFace)
     if (cf.second.find(t) != end(cf.second))
       return cf.first;
@@ -455,8 +448,10 @@ DG::comGhost( int fromch, const GhostData& ghost )
 //! \param[in] ghost Ghost data, see Inciter/FaceData.h for the type
 // *****************************************************************************
 {
-//   tk::ref_find( g_state, CkMyPe() ).push_back(
-//     {"DG", thisIndex, Disc()->It(), "comGhost"} );
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "comGhost" );
 
   // nodelist with fromch, currently only used for an assert
   const auto& nl = tk::cref_find( m_msumset, fromch );
@@ -529,9 +524,6 @@ DG::addEsuf( const std::array< std::size_t, 2 >& id, std::size_t ghostid )
 //!   at the end by the chare-boundaries.
 // *****************************************************************************
 {
-//   tk::ref_find( g_state, CkMyPe() ).push_back(
-//     {"DG", thisIndex, Disc()->It(), "addEsuf"} );
-
   auto& esuf = m_fd.Esuf();
   Assert( 2*id[0]+1 < esuf.size(), "Indexing out of esuf" );
 
@@ -552,9 +544,6 @@ DG::addGeoFace( const tk::UnsMesh::Face& t,
 //!    boundary.
 // *****************************************************************************
 {
-//   tk::ref_find( g_state, CkMyPe() ).push_back(
-//     {"DG", thisIndex, Disc()->It(), "addGeoFace"} );
-
   auto d = Disc();
   auto coord = d->Coord();
   auto lid = d->Lid();
@@ -579,9 +568,6 @@ DG::adj()
 //!    on this chare.
 // *****************************************************************************
 {
-//   tk::ref_find( g_state, CkMyPe() ).push_back(
-//     {"DG", thisIndex, Disc()->It(), "adj"} );
-
   tk::destroy(m_bndFace);
 
   // Ensure that all elements surrounding faces (are correct) including those at
@@ -650,8 +636,10 @@ DG::setup( tk::real v )
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
-//   tk::ref_find( g_state, CkMyPe() ).push_back(
-//     {"DG", thisIndex, Disc()->It(), "setup"} );
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "setup" );
 
   tk::destroy(m_msumset);
 
@@ -690,8 +678,10 @@ DG::dt()
 // Compute time step size
 // *****************************************************************************
 {
-//   tk::ref_find( g_state, CkMyPe() ).push_back(
-//     {"DG", thisIndex, Disc()->It(), "dt"} );
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "dt" );
 
   auto mindt = std::numeric_limits< tk::real >::max();
 
@@ -730,8 +720,10 @@ DG::advance( tk::real newdt )
 //! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
-//   tk::ref_find( g_state, CkMyPe() ).push_back(
-//     {"DG", thisIndex, Disc()->It(), "advance"} );
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "advance" );
 
   auto d = Disc();
 
@@ -767,8 +759,10 @@ DG::comsol( int fromch,
 //! \details This function receives contributions to m_u from fellow chares.
 // *****************************************************************************
 {
-//   tk::ref_find( g_state, CkMyPe() ).push_back(
-//     {"DG", thisIndex, Disc()->It(), "comsol"} );
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "comsol" );
 
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comsol()" );
 
@@ -803,9 +797,6 @@ DG::writeFields( tk::real time )
 //! \param[in] time Physical time
 // *****************************************************************************
 {
-//   tk::ref_find( g_state, CkMyPe() ).push_back(
-//     {"DG", thisIndex, Disc()->It(), "writeFields"} );
-
   auto d = Disc();
 
   // Save time stamp at which the last field write happened
@@ -838,9 +829,6 @@ DG::out()
 // Output mesh field data
 // *****************************************************************************
 {
-//   tk::ref_find( g_state, CkMyPe() ).push_back(
-//     {"DG", thisIndex, Disc()->It(), "out"} );
-
   auto d = Disc();
 
   // Optionally output field and particle data
@@ -867,9 +855,6 @@ DG::lhs()
 // Compute left-hand side of discrete transport equations
 // *****************************************************************************
 {
-//   tk::ref_find( g_state, CkMyPe() ).push_back(
-//     {"DG", thisIndex, Disc()->It(), "lhs"} );
-
   // Compute left-hand side matrix for all equations
   for (const auto& eq : g_dgpde)
     eq.lhs( m_geoElem, m_lhs );
@@ -881,9 +866,6 @@ DG::solve()
 // Compute right-hand side of discrete transport equations
 // *****************************************************************************
 {
-//   tk::ref_find( g_state, CkMyPe() ).push_back(
-//     {"DG", thisIndex, Disc()->It(), "solve"} );
-
   auto d = Disc();
 
   for (const auto& eq : g_dgpde)
@@ -900,7 +882,8 @@ DG::solve()
     // Output field data to file
     out();
     // Compute diagnostics, e.g., residuals
-    auto diag = m_diag.compute( *d, m_u.nunk()-m_esuelTet.size()/4, m_geoElem, m_u );
+    auto diag =
+      m_diag.compute( *d, m_u.nunk()-m_esuelTet.size()/4, m_geoElem, m_u );
     // Increase number of iterations and physical time
     d->next();
     // Output one-liner status report
@@ -924,8 +907,10 @@ DG::eval()
 // Evaluate whether to continue with next step
 // *****************************************************************************
 {
-//   tk::ref_find( g_state, CkMyPe() ).push_back(
-//     {"DG", thisIndex, Disc()->It(), "eval"} );
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "eval" );
 
   auto d = Disc();
 

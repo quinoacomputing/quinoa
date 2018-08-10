@@ -21,6 +21,7 @@
 #include "Exception.h"
 #include "Print.h"
 #include "Tags.h"
+#include "Keywords.h"
 
 namespace tk {
 
@@ -128,7 +129,7 @@ static void echoBuildEnv( const Print& print, const std::string& executable )
 }
 
 static void echoRunEnv( const Print& print, int argc, char** argv,
-                        bool verbose, bool quiescence )
+                        bool verbose, bool quiescence, bool charestate )
 // *****************************************************************************
 //! \brief Echo runtime environment
 //! \param[in] print Pretty printer
@@ -136,6 +137,7 @@ static void echoRunEnv( const Print& print, int argc, char** argv,
 //! \param[in] argv C-style string array to command-line arguments to executable
 //! \param[in] verbose True for verbose screen-output
 //! \param[in] quiescence True if quiescence detection is enabled
+//! \param[in] charestate True if chare state collection is enabled
 // *****************************************************************************
 {
   print.section( "Run-time environment" );
@@ -154,8 +156,12 @@ static void echoRunEnv( const Print& print, int argc, char** argv,
   }
   print << "'\n";
 
-  print.item( "Screen output", verbose ? "verbose (quiet: omit -v)" : "quiet" );
-  print.item( "Quiescence detection", quiescence ? "on" : "off" );
+  print.item( "Screen output, -" + *kw::verbose::alias(),
+              verbose ? "verbose" : "quiet" );
+  print.item( "Quiescence detection, -" + *kw::quiescence::alias(),
+              quiescence ? "on" : "off" );
+  print.item( "Chare state output, -" + *kw::charestate::alias(),
+              charestate ? "on" : "off" );
 }
 
 //! \brief Generic Main() used for all executables for code-reuse and a uniform
@@ -193,7 +199,8 @@ Driver Main( int argc, char* argv[],
   echoBuildEnv( print, executable );
   // Runtime environment
   echoRunEnv( print, argc, argv, cmdline.template get< tag::verbose >(),
-              cmdline.template get< tag::quiescence >() );
+              cmdline.template get< tag::quiescence >(),
+              cmdline.template get< tag::chare >() );
 
   // Create and return driver
   return Driver( print, cmdline );
