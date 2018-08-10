@@ -50,6 +50,11 @@
   #pragma GCC diagnostic ignored "-Wunused-parameter"
   #pragma GCC diagnostic ignored "-Wfloat-equal"
   #pragma GCC diagnostic ignored "-Wparentheses"
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( push )
+  #pragma warning( disable: 181 )
+  #pragma warning( disable: 2282 )
+  #pragma warning( disable: 1125 )
 #endif
 
 #include "../Base/charestatecollector.decl.h"
@@ -58,6 +63,8 @@
   #pragma clang diagnostic pop
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( pop )
 #endif
 
 #endif // nowarning_charestatecollector_decl_h
