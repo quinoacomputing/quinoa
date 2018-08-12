@@ -24,15 +24,12 @@
 # This container does not contain proprietary software and thus the container
 # image can be publicly distributed.
 
-FROM debian:stable
+FROM debian:testing
 
 ARG COMMIT
 
 # Install system-wide prerequisites
-RUN apt-get update -y
-# if 'FROM debian:testing' append to previous line: && apt-get install -y debian-keyring debian-archive-keyring wget
-#RUN echo "deb http://ftp.us.debian.org/debian testing main \n deb http://security.debian.org testing/updates main" > /etc/apt/sources.list
-RUN apt-get update -y && apt-get install -y m4 autoconf git cmake gfortran gcc g++ gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhypre-dev zlib1g-dev libhdf5-dev libhdf5-openmpi-dev
+RUN apt-get update -y && apt-get install -y m4 autoconf git cmake gfortran gcc g++ openmpi-bin libopenmpi-dev gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhypre-dev zlib1g-dev libhdf5-dev libhdf5-openmpi-dev binutils-dev libx11-dev libxpm-dev libxft-dev libxext-dev ninja-build
 
 # Setup user
 RUN adduser --gecos "" --disabled-password quinoa
@@ -42,14 +39,15 @@ WORKDIR /home/quinoa
 CMD ["/bin/sh"]
 
 # Clone quinoa
-RUN git clone --recursive https://github.com/quinoacomputing/quinoa.git
+RUN git clone --recurse-submodules http://github.com/quinoacomputing/quinoa.git
 # Checkout commit to be tested
 RUN cd quinoa && git checkout $COMMIT
 # Update submodules
 RUN cd quinoa && git submodule update --recursive && cd tpl && git submodule init && git submodule update --recursive && cd .. && git submodule status --recursive
 # Build TPLs
-RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake .. && make -sj$(grep -c processor /proc/cpuinfo)
+RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DENABLE_ROOT=true -DENABLE_OMEGA_H=true -DCXXFLAGS="-Wno-cast-function-type -Wno-implicit-fallthrough -fpermissive -Wno-error" .. && make -sj$(grep -c processor /proc/cpuinfo)
 # Build & test
-RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS=-Werror ../src && make -sj$(grep -c processor /proc/cpuinfo) && ../script/run_tests.sh
+RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS="-Werror -Wno-cast-function-type -Wno-catch-value" -GNinja ../src
+# && ninja && ../script/run_tests.sh
 # Clean code
 RUN rm -rf /quinoa

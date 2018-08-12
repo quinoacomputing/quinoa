@@ -45,13 +45,13 @@
 
 #include <algorithm>
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Macro.h"
 #include "Types.h"
 #include "Particles.h"
 #include "Walker/Options/InitPolicy.h"
-#include "SystemComponents.h"
+#include "Walker/InputDeck/InputDeck.h"
 #include "RNG.h"
 
 namespace walker {
@@ -61,22 +61,13 @@ struct InitRaw {
 
   //! Initialize particle properties
   template< class eq >
-  static void init( const ctr::InputDeck& deck,
-                    const tk::RNG& rng,
-                    int stream,
-                    tk::Particles& particles,
-                    tk::ctr::ncomp_type e,
-                    tk::ctr::ncomp_type ncomp,
-                    tk::ctr::ncomp_type offset )
-  {
-    IGNORE( deck );
-    IGNORE( rng );
-    IGNORE( stream );
-    IGNORE( particles );
-    IGNORE( e );
-    IGNORE( ncomp );
-    IGNORE( offset );
-  }
+  static void init( const ctr::InputDeck&,
+                    const tk::RNG&,
+                    int,
+                    tk::Particles&,
+                    tk::ctr::ncomp_type,
+                    tk::ctr::ncomp_type,
+                    tk::ctr::ncomp_type ) {}
 
   static ctr::InitPolicyType type() noexcept
   { return ctr::InitPolicyType::RAW; }
@@ -87,20 +78,14 @@ struct InitZero {
 
   //! Initialize particle properties
   template< class eq >
-  static void init( const ctr::InputDeck& deck,
-                    const tk::RNG& rng,
-                    int stream,
+  static void init( const ctr::InputDeck&,
+                    const tk::RNG&,
+                    int,
                     tk::Particles& particles,
-                    tk::ctr::ncomp_type e,
-                    tk::ctr::ncomp_type ncomp,
-                    tk::ctr::ncomp_type offset )
+                    tk::ctr::ncomp_type,
+                    tk::ctr::ncomp_type,
+                    tk::ctr::ncomp_type )
   {
-    IGNORE( deck );
-    IGNORE( rng );
-    IGNORE( stream );
-    IGNORE( e );
-    IGNORE( ncomp );
-    IGNORE( offset );
     particles.fill( 0.0 );
   }
 
@@ -114,15 +99,13 @@ struct InitDelta {
   //! Initialize particle properties
   template< class eq >
   static void init( const ctr::InputDeck& deck,
-                    const tk::RNG& rng,
-                    int stream,
+                    const tk::RNG&,
+                    int,
                     tk::Particles& particles,
                     tk::ctr::ncomp_type e,
                     tk::ctr::ncomp_type ncomp,
                     tk::ctr::ncomp_type offset )
   {
-    IGNORE( rng );
-    IGNORE( stream );
     using ncomp_t = kw::ncomp::info::expect::type;
 
     const auto& spike = deck.template get< tag::param, eq, tag::spike >().at(e);
@@ -235,13 +218,51 @@ struct InitGaussian {
   { return ctr::InitPolicyType::JOINTGAUSSIAN; }
 };
 
+//! Gamma initialization policy: generate samples from a joint gamma PDF
+struct InitGamma {
+
+  //! Initialize particle properties (zero)
+  template< class eq >
+  static void init( const ctr::InputDeck& deck,
+                    const tk::RNG& rng,
+                    int stream,
+                    tk::Particles& particles,
+                    tk::ctr::ncomp_type e,
+                    tk::ctr::ncomp_type ncomp,
+                    tk::ctr::ncomp_type offset )
+  {
+    using ncomp_t = kw::ncomp::info::expect::type;
+
+    const auto& gamma =
+      deck.template get< tag::param, eq, tag::gamma >().at(e);
+
+    // use only the first ncomp gamma if there are more than the equation is
+    // configured for
+    const ncomp_t size = std::min( ncomp, gamma.size() );
+
+    for (ncomp_t c=0; c<size; ++c) {
+      // get vector of gamma pdf parameters for component c
+      const auto& gc = gamma[c];
+      // generate gamma random numbers for all particles using parameters in gc
+      for (ncomp_t s=0; s<gc.size(); s+=2)
+        for (ncomp_t p=0; p<particles.nunk(); ++p)
+          rng.gamma( stream, 1, gc[s], gc[s+1], &particles( p, c, offset ) );
+    }
+
+  }
+
+  static ctr::InitPolicyType type() noexcept
+  { return ctr::InitPolicyType::JOINTGAMMA; }
+};
+
 //! List of all initialization policies
-using InitPolicies = boost::mpl::vector< InitRaw
-                                       , InitZero
-                                       , InitDelta
-                                       , InitBeta
-                                       , InitGaussian
-                                       >;
+using InitPolicies = brigand::list< InitRaw
+                                  , InitZero
+                                  , InitDelta
+                                  , InitBeta
+                                  , InitGaussian
+                                  , InitGamma
+                                  >;
 
 } // walker::
 

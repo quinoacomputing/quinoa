@@ -15,62 +15,62 @@ namespace AMR {
     {
 
         private:
-            coord_type* m_x;
-            coord_type* m_y;
-            coord_type* m_z;
+            coord_type m_x;
+            coord_type m_y;
+            coord_type m_z;
 
-            // We really don't want people to pass this by value..
-            // (Because we store refs in here, which are consts..)
-            // NonCopyable & operator=(const NonCopyable&) = delete;
-            node_store_t(const node_store_t& c) = delete;
-            node_store_t& operator=(const node_store_t&) = delete;
+//             // We really don't want people to pass this by value..
+//             // (Because we store refs in here, which are consts..)
+//             // NonCopyable & operator=(const NonCopyable&) = delete;
+//             node_store_t(const node_store_t& c) = delete;
+//             node_store_t& operator=(const node_store_t&) = delete;
 
         public:
             // TODO: This needs to set the member variables
             node_store_t() { } // default cons
 
-            size_t* m_graphsize;
+            size_t m_graphsize;
 
-            void set_x(coord_type* x_in) { m_x = x_in; }
-            void set_y(coord_type* y_in) { m_y = y_in; }
-            void set_z(coord_type* z_in) { m_z = z_in; }
+            void set_x(coord_type x_in) { m_x = x_in; }
+            void set_y(coord_type y_in) { m_y = y_in; }
+            void set_z(coord_type z_in) { m_z = z_in; }
 
             /**
              * @brief Function to add x coordinate data
              *
              * @param xc Data to add
              */
-            void add_x(real_t xc) { m_x->push_back(xc); }
+            void add_x(real_t xc) { m_x.push_back(xc); }
 
             /**
              * @brief Function to add y coordinate data
              *
              * @param yc Data to add
              */
-            void add_y(real_t yc) { m_y->push_back(yc); }
+            void add_y(real_t yc) { m_y.push_back(yc); }
 
             /**
              * @brief Function to add z coordinate data
              *
              * @param zc data to add
              */
-            void add_z(real_t zc) { m_z->push_back(zc); }
+            void add_z(real_t zc) { m_z.push_back(zc); }
             real_t x(size_t id)
             {
-                return (*m_x)[id];
+                return m_x[id];
             }
             real_t y(size_t id)
             {
-                return (*m_y)[id];
+                return m_y[id];
             }
             real_t z(size_t id)
             {
-                return (*m_z)[id];
+                return m_z[id];
             }
 
             size_t size()
             {
-                return m_x->size();
+                return m_x.size();
             }
 
             // TODO: Document this
@@ -105,7 +105,7 @@ namespace AMR {
 
                 if (already_exists == -1) {
                     size_t return_node_id = add_coordinates(xc,yc,zc);
-                    (*m_graphsize)++; // TODO: how best to deal with this?
+                    m_graphsize++; // TODO: how best to deal with this?
                     return return_node_id;
                 }
                 else {
@@ -160,7 +160,7 @@ namespace AMR {
 
                 if (already_exists == -1) {
                     size_t return_node_id = add_coordinates(xc,yc,zc);
-                    (*m_graphsize)++; // TODO: how to deal with this?
+                    m_graphsize++; // TODO: how to deal with this?
                     return return_node_id;
                 }
                 else {

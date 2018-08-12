@@ -157,6 +157,13 @@ geoFaceTri( const std::array< tk::real, 3 >& x,
 tk::Fields
 genGeoElemTet( const std::vector< std::size_t >& inpoel,
                const tk::UnsMesh::Coords& coord );
+
+//! Perform leak-test on mesh (partition)
+bool
+leakyPartition( const std::vector< int >& esueltet,
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord );
+
 } // tk::
 
 #endif // DerivedData_h

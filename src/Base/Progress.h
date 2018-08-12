@@ -33,17 +33,18 @@ class Progress {
     //! \param[in] print Pretty printer object to use for printing progress
     //! \param[in] feedback Whether to send sub-task feedback to host    
     //! \param[in] prefix Strings to output prefixing the progress report
+    //! \param[in] legend Legend for each prefix to output at start
     //! \param[in] max Array of integers equaling the max number of items to be
     //!   expected per sub-task
-    //! \details Note that prefix and max are swallowed, i.e., moved in,
-    //!   treating them as rvalue references.
     explicit Progress( const tk::Print& print,
                        bool feedback,
                        std::array< std::string, N >&& prefix,
+                       std::array< std::string, N >&& legend,
                        std::array< int, N >&& max = std::array< int, N >() )
     : m_print( print ),
       m_feedback( feedback ),
       m_prefix( std::move(prefix) ),
+      m_legend( std::move(legend) ),
       m_finished( false ),
       m_progress_size( 0 ),
       m_max( std::move(max) )
@@ -55,8 +56,14 @@ class Progress {
    //! \param[in] msg Message to output to screen. This message should be
    //!   descriptive of all the sub-tasks we are responsible for. I.e., this
    //!   is usually a list of multiple sub-tasks happening at the same time.
+   //!   Appending to msg we also output the legend of subtasks in parentheses.
    void start( const std::string& msg ) {
-     m_print.diagstart( msg );
+     std::string legend( " (" );
+     for (const auto& l : m_legend) legend.append( l + ", " );
+     legend.pop_back();
+     legend.pop_back();
+     legend.append( ") ... " );
+     m_print.diagstart( msg + legend );
      m_progress_size = 0;
    }
 
@@ -108,6 +115,7 @@ class Progress {
     const tk::Print& m_print;   //!< Pretty printer to use for screen output
     bool m_feedback;            //!< Whether to send sub-task feedback to host
     const std::array< std::string, N > m_prefix;        //!< Sub-task prefixes
+    const std::array< std::string, N > m_legend;        //!< Sub-task legend
     bool m_finished;            //!< Whether task has finished
     std::size_t m_progress_size;//!< Size of previous progress report
     std::array< int, N > m_max; //!< Max number of items per sub-task

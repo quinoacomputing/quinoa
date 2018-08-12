@@ -14,8 +14,6 @@
 #include <string>
 #include <unordered_set>
 
-#include <boost/mpl/vector.hpp>
-
 #include "Types.h"
 #include "Inciter/Options/Problem.h"
 
@@ -26,6 +24,9 @@ namespace inciter {
 //!   equations with relevance to Inertial Confinement Fusion", Journal of
 //!   Computational Physics 267 (2014) 196-209.
 class CompFlowProblemNLEnergyGrowth {
+
+  private:
+    using ncomp_t = tk::ctr::ncomp_type;
 
   private:
     //! Compute internal energy parameter

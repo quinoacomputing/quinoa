@@ -44,7 +44,7 @@
 #ifndef SkewNormalCoeffPolicy_h
 #define SkewNormalCoeffPolicy_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Types.h"
 #include "Walker/Options/CoeffPolicy.h"
@@ -83,7 +83,7 @@ class SkewNormalCoeffConst {
 };
 
 //! List of all Skew-normal SDE's coefficients policies
-using SkewNormalCoeffPolicies = boost::mpl::vector< SkewNormalCoeffConst >;
+using SkewNormalCoeffPolicies = brigand::list< SkewNormalCoeffConst >;
 
 } // walker::
 

@@ -13,10 +13,10 @@
 #include <cmath>
 #include <algorithm>
 #include <unordered_set>
-#include <unordered_map>
+#include <map>
 
-#include <boost/mpl/vector.hpp>
-#include "NoWarning/for_each.h"
+#include <brigand/sequences/list.hpp>
+#include <brigand/algorithms/for_each.hpp>
 
 #include "Macro.h"
 #include "Exception.h"
@@ -66,7 +66,7 @@ class CompFlow {
       registerRiemannSolver( RiemannFactory& f ) : factory( f ) {}
       //! \brief Function call operator templated on the type that implements
       //!   a specific Riemann solver
-      template< typename U > void operator()( U ) {
+      template< typename U > void operator()( brigand::type_<U> ) {
          // Function object holding the (default) constructor to be called later
          // without bound arguments, since all specific Riemann solvers'
          // constructors are compiler-generated (default) constructors, and thus
@@ -82,9 +82,9 @@ class CompFlow {
     //! \return Riemann solver factory
     RiemannFactory RiemannSolvers() {
       namespace mpl = boost::mpl;
-      using RiemannSolverList = mpl::vector< HLLC, LaxFriedrichs >;
+      using RiemannSolverList = brigand::list< HLLC, LaxFriedrichs >;
       RiemannFactory r;
-      mpl::for_each< RiemannSolverList >( registerRiemannSolver( r ) );
+      brigand::for_each< RiemannSolverList >( registerRiemannSolver( r ) );
       return r;
     }
 

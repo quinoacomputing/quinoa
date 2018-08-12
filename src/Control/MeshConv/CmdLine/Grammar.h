@@ -51,12 +51,18 @@ namespace cmd {
                                tk::grm::helpkw,
                                pegtl::alnum > {};
 
+  //! Match help on control file keywords
+  struct quiescence :
+         tk::grm::process_cmd_switch< use< kw::quiescence >,
+                                      tag::quiescence > {};
+
   //! \brief Match all command line keywords
   struct keywords :
          pegtl::sor< verbose,
                      reorder,
                      help,
                      helpkw,
+                     quiescence,
                      io< use< kw::input >, tag::input >,
                      io< use< kw::output >, tag::output > > {};
 

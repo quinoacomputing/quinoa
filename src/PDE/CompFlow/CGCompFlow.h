@@ -417,7 +417,7 @@ class CompFlow {
     //!    all components in this PDE system
     //! \param[in] t Physical time
     //! \param[in] deltat Time step size
-    //! \param[in] ss Pair of side set ID and node IDs on the side set
+    //! \param[in] ss Pair of side set ID and (local) node IDs on the side set
     //! \param[in] coord Mesh node coordinates
     //! \return Vector of pairs of bool and boundary condition value associated
     //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note

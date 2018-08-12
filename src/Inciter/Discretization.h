@@ -39,8 +39,7 @@ class Discretization : public CBase_Discretization {
         const CProxy_Transporter& transporter,
         const std::vector< std::size_t >& conn,
         const tk::UnsMesh::CoordMap& coordmap,
-        const std::unordered_map< int,
-                std::unordered_set< std::size_t > >& msum,
+        const std::map< int, std::unordered_set< std::size_t > >& msum,
         int nchare );
 
     #if defined(__clang__)

@@ -9,7 +9,7 @@
 #ifndef InciterAMRErrorOptions_h
 #define InciterAMRErrorOptions_h
 
-#include "NoWarning/vector.h"
+#include <brigand/sequences/list.hpp>
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -30,8 +30,8 @@ class AMRError : public tk::Toggle< AMRErrorType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::amr_jump
-                                       , kw::amr_hessian >;
+    using keywords = brigand::list< kw::amr_jump
+                                  , kw::amr_hessian >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which

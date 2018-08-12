@@ -29,7 +29,6 @@ endif()
 
 #### BLAS/LAPACK library with LAPACKE C-interface
 if (NOT MKL_FOUND)    # Prefer Intel's MKL for BLAS/LAPACK if available
-  set(LAPACKE_ROOT ${TPL_DIR}) # prefer ours
   find_package(LAPACKE REQUIRED)
 endif()
 
@@ -41,11 +40,7 @@ if(Boost_FOUND)
   include_directories(${Boost_INCLUDE_DIR})
 endif()
 
-set(CARTESIAN_PRODUCT_ROOT ${TPL_DIR}) # prefer ours
-find_package(CartesianProduct REQUIRED)
-
 #### TUT
-set(TUT_ROOT ${TPL_DIR}) # prefer ours
 find_package(TUT REQUIRED)
 
 #### PStreams
@@ -53,7 +48,6 @@ set(PSTREAMS_ROOT ${TPL_DIR}) # prefer ours
 find_package(PStreams REQUIRED)
 
 #### Hypre
-set(HYPRE_ROOT ${TPL_DIR}) # prefer ours
 find_package(Hypre 2.9.0 REQUIRED)
 
 #### PugiXML
@@ -61,15 +55,12 @@ set(PUGIXML_ROOT ${TPL_DIR}) # prefer ours
 find_package(Pugixml REQUIRED)
 
 #### PEGTL
-set(PEGTL_ROOT ${TPL_DIR}) # prefer ours
 find_package(PEGTL 2.0.0 REQUIRED)
 
 #### Random123
-set(Random123_ROOT ${TPL_DIR}) # prefer ours
 find_package(Random123 REQUIRED)
 
 #### RNGSSE2 library
-set(RNGSSE2_ROOT ${TPL_DIR}) # prefer ours
 if(ARCH MATCHES "x86")
   find_package(RNGSSE2)
 endif()
@@ -94,12 +85,10 @@ else()
 endif()
 
 #### H5Part
-set(H5PART_ROOT ${TPL_DIR}) # prefer ours
 find_package(H5Part REQUIRED)
 
 #### AEC (only for static link)
 if(NOT BUILD_SHARED_LIBS)
-  set(AEC_ROOT ${TPL_DIR}) # prefer ours
   find_package(AEC REQUIRED)
 endif()
 
@@ -127,18 +116,15 @@ if(TestU01_FOUND)
 endif()
 
 ### Root library
-set(ENABLE_ROOT OFF CACHE BOOL "Enable ROOT")
-if(ENABLE_ROOT)
-  find_package(Root COMPONENTS RIO Core Tree Hist)
-  if (Root_FOUND)
-    set(HAS_ROOT true)  # will become compiler define in Main/QuinoaConfig.h
-    # Root does not support libc++ on linux, so remove if configured
-    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-      string(FIND "${CMAKE_CXX_FLAGS}" "-stdlib=libc++" pos)
-      if (NOT "${pos}" STREQUAL "-1")
-        message(STATUS "Removing C++ compiler flag '-stdlib=libc++' as Root does not support it")
-        string(REPLACE "-stdlib=libc++" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-      endif()
+find_package(Root COMPONENTS RIO Core Tree Hist)
+if (Root_FOUND)
+  set(HAS_ROOT true)  # will become compiler define in Main/QuinoaConfig.h
+  # Root does not support libc++ on linux, so remove if configured
+  if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    string(FIND "${CMAKE_CXX_FLAGS}" "-stdlib=libc++" pos)
+    if (NOT "${pos}" STREQUAL "-1")
+      message(STATUS "Removing C++ compiler flag '-stdlib=libc++' as Root does not support it")
+      string(REPLACE "-stdlib=libc++" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     endif()
   endif()
 endif()
@@ -157,8 +143,21 @@ else()
   set(BACKWARD_LIBRARIES "")
 endif()
 
+#### Configure Omega_h
+find_package(Omega_h)
+if(OMEGA_H_FOUND)
+  set(HAS_OMEGA_H true)  # will become compiler define in Main/QuinoaConfig.h
+else()
+  set(OMEGA_H_INCLUDE_DIRS "")
+  set(OMEGA_H_LIBRARIES "")
+endif()
+
 #### Configure HighwayHash
 set(HIGHWAYHASH_ROOT ${TPL_DIR}) # prefer ours
 find_package(HighwayHash REQUIRED)
+
+#### Configure Brigand
+set(BRIGAND_ROOT ${TPL_DIR}) # prefer ours
+find_package(Brigand REQUIRED)
 
 message(STATUS "------------------------------------------")

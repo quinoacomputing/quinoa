@@ -12,6 +12,9 @@
 
 #include <boost/optional.hpp>
 
+#include <brigand/sequences/list.hpp>
+#include <brigand/algorithms/for_each.hpp>
+
 #include "PUPUtil.h"
 #include "Factory.h"
 #include "Has.h"
@@ -25,7 +28,7 @@ namespace ctr {
 //!    for an exectuable. This struct is stored in a container that associates
 //!    keywords (used by a grammar and parser) to this struct. The container, an
 //!    runtime, std::map, is filled by the CmdLine and InputDeck objects'
-//!    constructors by one or more boost::mpl::for_each which loops through the
+//!    constructors by one or more brigand::for_each which loops through the
 //!    set of all keywords used in a grammar. The maps are stored in the CmdLine
 //!    and InputDeck objects (which are tagged tuples) and thus can be migrated
 //!    through the network, thus the Charm++ parck/unpack routines are defined.
@@ -90,7 +93,7 @@ struct Info {
   //! Constructor: store reference to map to fill
   Info( tk::ctr::HelpFactory& factory ) : m_factory( factory ) {}
   //! \brief Function call operator templated on the type that does the filling
-  template< typename U > void operator()( U ) {
+  template< typename U > void operator()( brigand::type_<U> ) {
     m_factory[ U::string() ] = { U::shortDescription(),
                                  U::longDescription(),
                                  U::alias(),

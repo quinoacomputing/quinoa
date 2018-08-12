@@ -29,7 +29,9 @@ using ncomps = tk::ctr::ncomponents<
  , tag::massfracbeta,    std::vector< tk::ctr::ncomp_type >
  , tag::mixnumfracbeta,  std::vector< tk::ctr::ncomp_type >
  , tag::mixmassfracbeta, std::vector< tk::ctr::ncomp_type >
- , tag::langevin,        std::vector< tk::ctr::ncomp_type >
+ , tag::velocity,        std::vector< tk::ctr::ncomp_type >
+ , tag::position,        std::vector< tk::ctr::ncomp_type >
+ , tag::dissipation,     std::vector< tk::ctr::ncomp_type >
 >;
 
 } // ctr::

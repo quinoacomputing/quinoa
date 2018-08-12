@@ -13,8 +13,9 @@
 
 #include <string>
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "NoWarning/set.h"
-#include "NoWarning/for_each.h"
 
 #include "Control.h"
 #include "HelpFactory.h"
@@ -27,24 +28,26 @@ namespace ctr {
 
 //! CmdLine : Control< specialized to RNGTest >, see Types.h,
 class CmdLine : public tk::Control<
-                  // tag        type
-                  tag::io,      ios,
-                  tag::verbose, bool,
-                  tag::help,    bool,
-                  tag::helpctr, bool,
-                  tag::cmdinfo, tk::ctr::HelpFactory,
-                  tag::ctrinfo, tk::ctr::HelpFactory,
-                  tag::helpkw,  tk::ctr::HelpKw,
-                  tag::error,   std::vector< std::string > > {
+                  // tag           type
+                  tag::io,         ios,
+                  tag::verbose,    bool,
+                  tag::help,       bool,
+                  tag::helpctr,    bool,
+                  tag::quiescence, bool,
+                  tag::cmdinfo,    tk::ctr::HelpFactory,
+                  tag::ctrinfo,    tk::ctr::HelpFactory,
+                  tag::helpkw,     tk::ctr::HelpKw,
+                  tag::error,      std::vector< std::string > > {
   public:
     //! RNGTest command-line keywords
     //! \see tk::grm::use and its documentation
-    using keywords = boost::mpl::set< kw::verbose
-                                    , kw::control
-                                    , kw::help
-                                    , kw::helpctr
-                                    , kw::helpkw
-                                    >;
+    using keywords = brigand::set< kw::verbose
+                                 , kw::control
+                                 , kw::help
+                                 , kw::helpctr
+                                 , kw::helpkw
+                                 , kw::quiescence
+                                 >;
 
     //! \brief Constructor: set all defaults.
     //! \param[in] ctrinfo std::map of control file keywords and their info
@@ -79,7 +82,7 @@ class CmdLine : public tk::Control<
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
       set< tag::verbose >( false ); // Use quiet output by default
       // Initialize help: fill from own keywords + add map passed in
-      boost::mpl::for_each< keywords >( tk::ctr::Info( get< tag::cmdinfo >() ) );
+      brigand::for_each< keywords >( tk::ctr::Info( get< tag::cmdinfo >() ) );
       get< tag::ctrinfo >() = std::move( ctrinfo );
     }
 
@@ -88,14 +91,15 @@ class CmdLine : public tk::Control<
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er& p ) {
-      tk::Control< tag::io,      ios,
-                   tag::verbose, bool,
-                   tag::help,    bool,
-                   tag::helpctr, bool,
-                   tag::cmdinfo, tk::ctr::HelpFactory,
-                   tag::ctrinfo, tk::ctr::HelpFactory,
-                   tag::helpkw,  tk::ctr::HelpKw,
-                   tag::error,   std::vector< std::string > >::pup(p);
+      tk::Control< tag::io,         ios,
+                   tag::verbose,    bool,
+                   tag::help,       bool,
+                   tag::helpctr,    bool,
+                   tag::quiescence, bool,
+                   tag::cmdinfo,    tk::ctr::HelpFactory,
+                   tag::ctrinfo,    tk::ctr::HelpFactory,
+                   tag::helpkw,     tk::ctr::HelpKw,
+                   tag::error,      std::vector< std::string > >::pup(p);
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

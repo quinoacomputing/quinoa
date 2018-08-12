@@ -350,6 +350,23 @@ mean( char var, kw::ncomp::info::expect::type c ) {
   tk::ctr::Term m( static_cast<char>(std::toupper(var)), c, Moment::ORDINARY );
   return tk::ctr::Product( { m } );
 }
+
+//! Construct covariance
+//! \param[in] var1 Variable 1
+//! \param[in] c1 Component number 1
+//! \param[in] var2 Variable 2
+//! \param[in] c2 Component number 2
+//! \return Constructed vector< Term > identifying the first ordinary moment
+//!   (mean) of field (component) c of variable var
+static inline Product
+covariance( char var1, kw::ncomp::info::expect::type c1,
+            char var2, kw::ncomp::info::expect::type c2 )
+{
+  tk::ctr::Term u( static_cast<char>(std::tolower(var1)), c1, Moment::CENTRAL );
+  tk::ctr::Term v( static_cast<char>(std::tolower(var2)), c2, Moment::CENTRAL );
+  return tk::ctr::Product( { u, v } );
+}
+
 //! Construct variance
 //! \param[in] var Variable
 //! \param[in] c Component number
@@ -360,6 +377,7 @@ variance( char var, kw::ncomp::info::expect::type c ) {
   tk::ctr::Term f( static_cast<char>(std::tolower(var)), c, Moment::CENTRAL );
   return tk::ctr::Product( { f, f } );
 }
+
 //! Construct third central moment
 //! \param[in] var Variable
 //! \param[in] c Component number

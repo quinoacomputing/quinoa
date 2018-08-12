@@ -18,38 +18,28 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <functional>
 
-#include <boost/mpl/at.hpp>
-#include <boost/mpl/aux_/adl_barrier.hpp>
+#include "NoWarning/back.h"
+#include "NoWarning/front.h"
 
 #include "Tags.h"
-#include "Keywords.h"
 #include "Exception.h"
 #include "Factory.h"
 #include "CGPDE.h"
 #include "DGPDE.h"
-#include "Inciter/Options/PDE.h"
+#include "PDEFactory.h"
+#include "SystemComponents.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
-using ncomp_t = kw::ncomp::info::expect::type;
-
-//! \brief Factory for PDEs using continuous Galerkin discretization storing
-//!   keys associated to their constructors
-using CGFactory =
-  std::map< ctr::PDEKey, std::function< CGPDE(const ncomp_t&) > >;
-
-//! \brief Factory for PDEs using discontinuous Galerkin discretization storing
-//!   keys associated to their constructors
-using DGFactory =
-  std::map< ctr::PDEKey, std::function< DGPDE(const ncomp_t&) > >;
-
 //! \brief Partial differential equations stack
 class PDEStack {
+
+  private:
+    using ncomp_t = tk::ctr::ncomp_type;
 
   public:
     //! Constructor: register partial differential equations into factory
@@ -74,75 +64,6 @@ class PDEStack {
     std::size_t ntypes() const { return m_eqTypes.size(); }
 
   private:
-    //! \brief Function object for registering a partial differential equation
-    //!   into the partial differential equation factory
-    //! \details This functor is repeatedly called by MPL's cartesian_product,
-    //!   sweeping all combinations of the partial differential equation
-    //!   policies. The purpose of template template is to simplify client code
-    //!   as that will not have to specify the template arguments of the
-    //!   template argument (the policies of Eq), since we can figure it out
-    //!   here. See also http://stackoverflow.com/a/214900. The template
-    //!   argument Eq specifies a "child" class that is used polymorphically
-    //!   with a "base" class modeling a concept defined in the base. The base
-    //!   is given by the template argument PDE. The template argument Factory
-    //!   specifies which factory to store the registered and configured child
-    //1   PDE.
-    template< template< class, class > class Eq, class Factory, class PDE >
-    struct registerPDE {
-      //! Need to store the reference to factory we are registering into
-      Factory& factory;
-      //! Need to store which differential equation we are registering
-      const ctr::PDEType type;
-      //! Constructor, also count number of unique equation types registered
-      //! \param[in,out] f Factory into which to register PDE
-      //! \param[in] t Enum selecting PDE type, Control/Inciter/Options/PDE.h
-      //! \param[in] eqTypes Equation type counters
-      explicit registerPDE( Factory& f,
-                            ctr::PDEType t,
-                            std::set< ctr::PDEType >& eqTypes ) :
-        factory( f ), type( t ) { eqTypes.insert( t ); }
-      //! \brief Function call operator called by mpl::cartesian_product for
-      //!   each unique sequence of policy combinations
-      template< typename U > void operator()( U ) {
-        namespace mpl = boost::mpl;
-        // Get problem policy: 1st type of mpl::vector U
-        using Physics = typename mpl::at< U, mpl::int_<0> >::type;
-        // Get problem policy: 2nd type of mpl::vector U
-        using Problem = typename mpl::at< U, mpl::int_<1> >::type;
-        // Build differential equation key
-        ctr::PDEKey key{ type, Physics::type(), Problem::type() };
-        // Register equation (with policies given by mpl::vector U) into factory
-        tk::recordModelLate< PDE, Eq< Physics, Problem > >
-                           ( factory, key, static_cast<ncomp_t>(0) );
-      }
-    };
-
-    //! Wrapper of registerPDE specialized for registering CG PDEs
-    //! \details The sole reason for this functor is to simplify client-code
-    //!   calling registerPDE specialized to CG PDEs
-    template< template< class, class > class Eq >
-    struct registerCG : registerPDE< Eq, CGFactory, CGPDE > {
-      //! Delegate constructor to base and specialize to CG
-      //! \param[in] stack Host class to access factory and counters
-      //! \param[in] t Enum selecting PDE type, Control/Inciter/Options/PDE.h
-      explicit registerCG( PDEStack* const stack, ctr::PDEType t ) :
-        registerPDE< Eq, CGFactory, CGPDE >
-                   ( stack->m_cgfactory, t, stack->m_eqTypes ) {}
-    };
-
-    //! Wrapper of registerPDE specialized for registering DG PDEs
-    //! \details The sole reason for this functor is to simplify client-code
-    //!   calling registerPDE specialized to DG PDEs
-    template< template< class, class > class Eq >
-    struct registerDG : registerPDE< Eq, DGFactory, DGPDE > {
-      //! Delegate constructor to base and specialize to CG
-      //! \param[in] stack Host class to access factory and counters
-      //! \param[in] t Enum selecting PDE type, Control/Inciter/Options/PDE.h
-      explicit registerDG( PDEStack* const stack, ctr::PDEType t ) :
-        registerPDE< Eq, DGFactory, DGPDE >
-                   ( stack->m_dgfactory, t, stack->m_eqTypes ) {}
-    };
-
     //! \brief Instantiate a partial differential equation
     //! \details The template argument, EqTag, is used to find the given
     //!   partial differential equation in the input deck, the hierarchical data
@@ -208,32 +129,9 @@ class PDEStack {
       return createPDE< EqTag, DGFactory, DGPDE >( m_dgfactory, t, cnt );
     }
 
-    /** @name Configuration-querying functions for PDEs */
-    //! Get information on the transport PDE
-    std::vector< std::pair< std::string, std::string > >
-    infoTransport( std::map< ctr::PDEType, ncomp_t >& cnt ) const;
-    //! Get information on the compressible flow PDEs
-    std::vector< std::pair< std::string, std::string > >
-    infoCompFlow( std::map< ctr::PDEType, ncomp_t >& cnt ) const;
-    ///@}
-
-    //! \brief Convert and return values from vector as string
-    //! \param[in] v Vector whose components to return as a string
-    //! \return Concatenated string of values read from a vector
-    template< typename V >
-    std::string parameters( const V& v) const {
-      std::stringstream s;
-      s << "{ ";
-      for (auto p : v) s << p << ' ';
-      s << "}";
-      return s.str();
-    }
-
-    //! \brief Partial differential equations factory for those PDEs that use
-    //!   continuous Galerkin discretization
+    //! PDE factory for continuous Galerkin discretization
     CGFactory m_cgfactory;
-    //! \brief Partial differential equations factory for those PDEs that use
-    //!   discontinuous Galerkin discretization
+    //! PDE factory for discontinuous Galerkin discretization
     DGFactory m_dgfactory;
     //! Counters for equation types
     std::set< ctr::PDEType > m_eqTypes;

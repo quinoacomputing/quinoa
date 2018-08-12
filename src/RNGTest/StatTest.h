@@ -21,7 +21,6 @@
 
 #include "Macro.h"
 #include "Make_unique.h"
-#include "CharmUtil.h"
 #include "Options/RNG.h"
 
 namespace rngtest {

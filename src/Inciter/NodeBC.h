@@ -36,7 +36,6 @@ match( tk::ctr::ncomp_type ncomp,
 bool
 correctBC( const tk::Fields& a,
            const tk::Fields& dul,
-           const std::map< int, std::vector< std::size_t > >& bnode,
            const std::unordered_map< std::size_t,
                    std::vector< std::pair< bool, tk::real > > >& bc,
            const std::unordered_map< std::size_t, std::size_t >& lid );

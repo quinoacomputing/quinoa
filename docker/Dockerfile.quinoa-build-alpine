@@ -28,12 +28,12 @@ FROM alpine:latest
 ARG COMMIT
 
 # Install system-wide prerequisites
-#RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && cat /etc/apk/repositories
-RUN apk update && apk add libtool autoconf automake bash m4 file git cmake gfortran gcc g++ make perl grep boost-dev zlib-dev libexecinfo-dev
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && cat /etc/apk/repositories
+RUN apk update && apk add patch libtool autoconf automake gfortran gcc g++ make boost-dev bash m4 file git cmake perl grep zlib-dev libexecinfo-dev doxygen ninja graphviz libelf-dev binutils-dev
 
 # Install OpenMPI
-ADD https://www.open-mpi.org/software/ompi/v2.0/downloads/openmpi-2.0.2.tar.gz /openmpi/
-RUN cd /openmpi/ && tar xzf openmpi-2.0.2.tar.gz && cd openmpi-2.0.2 && ./configure --disable-shared --enable-static --enable-mpi-cxx --prefix=/opt/openmpi && make -sj$(grep -c processor /proc/cpuinfo) install
+ADD http://download.open-mpi.org/release/open-mpi/v3.1/openmpi-3.1.1.tar.gz /openmpi/
+RUN cd /openmpi/ && tar xzf openmpi-3.1.1.tar.gz && cd openmpi-3.1.1 && ./configure --enable-shared --enable-static --prefix=/opt/openmpi && make -sj$(grep -c processor /proc/cpuinfo) install
 ENV PATH /opt/openmpi/bin:$PATH
 ENV LD_LIBRARY_PATH /opt/openmpi/lib:$LD_LIBRARY_PATH
 RUN rm -rf /openmpi
@@ -52,7 +52,7 @@ WORKDIR /home/quinoa
 CMD ["/bin/sh"]
 
 # Clone quinoa
-RUN git clone --recursive https://github.com/quinoacomputing/quinoa.git
+RUN git clone --recursive http://github.com/quinoacomputing/quinoa.git
 # Checkout commit to be tested
 RUN cd quinoa && git checkout $COMMIT
 # Update submodules
@@ -60,7 +60,7 @@ RUN cd quinoa && git submodule update --recursive && cd tpl && git submodule ini
 # Build TPLs
 RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off .. && make -sj$(grep -c processor /proc/cpuinfo)
 # Build quinoa
-RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off -DCMAKE_CXX_FLAGS=-Werror -DRUNNER_ARGS="-mca plm isolated" ../src && make -sj$(grep -c processor /proc/cpuinfo) && ../script/run_tests.sh $(grep -c processor /proc/cpuinfo) "-mca plm isolated"
+RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off -DCMAKE_CXX_FLAGS=-Werror -DRUNNER_ARGS="--bind-to none -oversubscribe -mca plm isolated" ../src && make -sj$(grep -c processor /proc/cpuinfo) && ../script/run_tests.sh $(grep -c processor /proc/cpuinfo) "--bind-to none -oversubscribe -mca plm isolated"
 
 # Ensure all executables are statically linked
 RUN cd quinoa/build && \

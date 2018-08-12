@@ -9,7 +9,7 @@
 #ifndef InciterBCOptions_h
 #define InciterBCOptions_h
 
-#include "NoWarning/vector.h"
+#include <brigand/sequences/list.hpp>
 
 #include "TaggedTuple.h"
 #include "Toggle.h"
@@ -32,11 +32,11 @@ class BC : public tk::Toggle< BCType > {
 
   public:
     // List valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::bc_sym
-                                       , kw::bc_inlet
-                                       , kw::bc_outlet
-                                       , kw::bc_extrapolate
-                                       >;
+    using keywords = brigand::list< kw::bc_sym
+                                  , kw::bc_inlet
+                                  , kw::bc_outlet
+                                  , kw::bc_extrapolate
+                                  >;
 
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions

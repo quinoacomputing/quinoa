@@ -37,82 +37,15 @@
 #include "Assessment.h"
 #include "ProcessException.h"
 #include "UnitTest/CmdLine/CmdLine.h"
-#include "TestArray.h"
 #include "UnitTestPrint.h"
 #include "UnitTestDriver.h"
 #include "UnitTest/CmdLine/Parser.h"
-
-namespace tut {
-
-//! \brief Maximum number of tests in every test group to attempt to run
-//! \details If any of the unit test groups have more tests than this number,
-//!   this should be increased. All test groups included below will use this
-//!   value to override the default template argument for tut::test_group<>.
-const int MAX_TESTS_IN_GROUP = 80;
-
-} // tut::
-
-// // Unit test groups to be tested. Each file defines a different test group.
-#include "tests/Base/TestCharmUtil.h"
-#include "tests/Base/TestFactory.h"
-#include "tests/Base/TestTimer.h"
-#include "tests/Base/TestPUPUtil.h"
-
-#include "tests/Base/TestFlip_map.h"
-#include "tests/Base/TestMake_list.h"
-#include "tests/Base/TestHas.h"
-#include "tests/Base/TestData.h"
-#include "tests/Base/TestPrint.h"
-#include "tests/Base/TestTaggedTuple.h"
-#include "tests/Base/TestException.h"
-#include "tests/Base/TestExceptionMPI.h"
-#include "tests/Base/TestReader.h"
-#include "tests/Base/TestStrConvUtil.h"
-#include "tests/Base/TestWriter.h"
-#include "tests/Base/TestProcessControl.h"
-#include "tests/Base/TestVector.h"
-#include "tests/Base/TestContainerUtil.h"
-
-#include "tests/Control/TestSystemComponents.h"
-#include "tests/Control/TestControl.h"
-#include "tests/Control/TestFileParser.h"
-#include "tests/Control/TestStringParser.h"
-#include "tests/Control/TestToggle.h"
-#ifdef HAS_MKL
-  #include "tests/Control/Options/TestMKLUniformMethod.h"
-  #include "tests/Control/Options/TestMKLGaussianMethod.h"
-  #include "tests/Control/Options/TestMKLBetaMethod.h"
-#endif
-#include "tests/Control/Options/TestRNG.h"
-
-#include "tests/IO/TestMesh.h"
-#include "tests/IO/TestExodusIIMeshReader.h"
-
-#include "tests/Mesh/TestDerivedData.h"
-#include "tests/Mesh/TestReorder.h"
-#include "tests/Mesh/TestGradients.h"
-#include "tests/Mesh/TestAround.h"
-
-#include "tests/RNG/TestRNG.h"
-#ifdef HAS_MKL
-  #include "tests/RNG/TestMKLRNG.h"
-#endif
-#ifdef HAS_RNGSSE2
-#include "tests/RNG/TestRNGSSE.h"
-#endif
-#include "tests/RNG/TestRandom123.h"
-
-#include "tests/LoadBalance/TestLoadDistributor.h"
-#include "tests/LoadBalance/TestLinearMap.h"
-#include "tests/LoadBalance/TestUnsMeshMap.h"
+#include "TUTConfig.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wmissing-variable-declarations"
 #endif
-
-#include "tests/Inciter/TestScheme.h"
-#include "tests/Inciter/AMR/TestError.h"
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
@@ -224,6 +157,9 @@ class Main : public CBase_Main {
       unittest::g_executable = msg->argv[0];
       delete msg;
       mainProxy = thisProxy;
+      // Optionally enable quiscence detection
+      if (m_cmdline.get< tag::quiescence >())
+        CkStartQD( CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
       // Fire up an asynchronous execute object, which when created at some
       // future point in time will call back to this->execute(). This is
       // necessary so that this->execute() can access already migrated
@@ -256,6 +192,11 @@ class Main : public CBase_Main {
       CkExit();
     }
 
+    //! Entry method triggered when quiescence is detected
+    [[noreturn]] void quiescence() {
+      Throw( "Quiescence detected" );
+    }
+
   private:
     int m_signal;                               //!< Used to set signal handlers
     bool m_helped;      //!< Indicates if help was requested on the command line
@@ -276,6 +217,11 @@ class Main : public CBase_Main {
 class execute : public CBase_execute {
  public: execute() { mainProxy.execute(); }
 };
+
+#if defined(STRICT_GNUC)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wreturn-type"
+#endif
 
 //! \brief UnitTest main()
 //! \details UnitTest does have a main() function so that we can have tests
@@ -425,8 +371,8 @@ int main( int argc, char **argv ) {
   stop( mpipass );
 }
 
-#include "NoWarning/charmchild.def.h"
-#include "NoWarning/charmtimer.def.h"
-#include "NoWarning/migrated.def.h"
-#include "NoWarning/testarray.def.h"
+#if defined(STRICT_GNUC)
+  #pragma GCC diagnostic pop
+#endif
+
 #include "NoWarning/unittest.def.h"

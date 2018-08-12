@@ -184,8 +184,8 @@ class DG : public CBase_DG {
     using FaceMap =
       std::unordered_map< tk::UnsMesh::Face,  // 3 global node IDs
                           std::array< std::size_t, 2 >, // local face & tet ID
-                          tk::UnsMesh::FaceHasher,
-                          tk::UnsMesh::FaceEq >;
+                          tk::UnsMesh::Hash<3>,
+                          tk::UnsMesh::Eq<3> >;
 
     //! Linear system merger and solver proxy, only used to call created()
     tk::CProxy_Solver m_solver;

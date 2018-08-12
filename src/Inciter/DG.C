@@ -74,17 +74,18 @@ DG::DG( const CProxy_Discretization& disc,
 //! \param[in] Face data structures
 // *****************************************************************************
 {
-  // Perform leak test on mesh partition
-  Assert( !leakyPartition(), "Mesh partition leaky" );
-
-  // Activate SDAG waits for face adjacency map (ghost data) calculation
-  thisProxy[ thisIndex ].wait4ghost();
-
   auto d = Disc();
 
   const auto& gid = d->Gid();
   const auto& inpoel = d->Inpoel();
   const auto& inpofa = fd.Inpofa();
+
+  // Perform leak test on mesh partition
+  Assert( !tk::leakyPartition( m_esuelTet, inpoel, d->Coord()),
+          "Mesh partition leaky" );
+
+  // Activate SDAG waits for face adjacency map (ghost data) calculation
+  thisProxy[ thisIndex ].wait4ghost();
 
   // Invert inpofa to enable searching for faces based on (global) node triplets
   Assert( inpofa.size() % 3 == 0, "Inpofa must contain triplets" );
@@ -149,51 +150,6 @@ DG::DG( const CProxy_Discretization& disc,
 }
 
 bool
-DG::leakyPartition()
-// *****************************************************************************
-// Perform leak-test on mesh partition
-//! \details This function computes a surface integral over the boundary of the
-//!   incoming mesh partition. A non-zero vector result indicates a leak, e.g.,
-//!   a hole in the partition, which indicates an error upstream of this code,
-//!   either in the mesh geometry, mesh partitioning, or in the data structures
-//!   that represent faces.
-//! \return True if our chare partition leaks.
-// *****************************************************************************
-{
-  auto d = Disc();
-  const auto& inpoel = d->Inpoel();
-  const auto& coord = d->Coord();
-  const auto& x = coord[0];
-  const auto& y = coord[1];
-  const auto& z = coord[2];
-
-  // Storage for surface integral over our mesh partition
-  std::array< tk::real, 3 > s{{ 0.0, 0.0, 0.0}};
-
-  for (std::size_t e=0; e<m_esuelTet.size()/4; ++e) {   // for all our tets
-    auto mark = e*4;
-    for (std::size_t f=0; f<4; ++f)     // for all tet faces
-      if (m_esuelTet[mark+f] == -1) {   // if face has no outside-neighbor tet
-        // 3 local node IDs of face
-        auto A = inpoel[ mark + tk::lpofa[f][0] ];
-        auto B = inpoel[ mark + tk::lpofa[f][1] ];
-        auto C = inpoel[ mark + tk::lpofa[f][2] ];
-        // Compute geometry data for face
-        auto geoface = tk::geoFaceTri( {{x[A], x[B], x[C]}},
-                                       {{y[A], y[B], y[C]}},
-                                       {{z[A], z[B], z[C]}} );
-        // Sum up face area * face unit-normal
-        s[0] += geoface(0,0,0) * geoface(0,1,0);
-        s[1] += geoface(0,0,0) * geoface(0,2,0);
-        s[2] += geoface(0,0,0) * geoface(0,3,0);
-      }
-  }
-
-  auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
-  return std::abs(s[0]) > eps || std::abs(s[1]) > eps || std::abs(s[2]) > eps;
-}
-
-bool
 DG::leakyAdjacency()
 // *****************************************************************************
 // Perform leak-test on chare boundary faces
@@ -203,10 +159,11 @@ DG::leakyAdjacency()
 //!   the faces of the face adjacency communication map), which indicates an
 //!   error upstream in the code that sets up the face communication data
 //!   structures.
-//! \note Compared to leakyPartition() this function performs the leak-test on
-//!   the face geometry data structure enlarged by ghost faces on this partition
-//!   by computing a discrete surface integral considering the physical and
-//!   chare boundary faces, which should be equal to zero for a closed domain.
+//! \note Compared to tk::leakyPartition() this function performs the leak-test
+//!   on the face geometry data structure enlarged by ghost faces on this
+//!   partition by computing a discrete surface integral considering the
+//!   physical and chare boundary faces, which should be equal to zero for a
+//!   closed domain.
 //! \return True if our chare face adjacency leaks.
 // *****************************************************************************
 {

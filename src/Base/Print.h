@@ -19,6 +19,8 @@
 #include <cmath>
 #include <array>
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "NoWarning/format.h"
 
 #include "Timer.h"
@@ -456,7 +458,7 @@ class Print {
       //! Constructor: store host object pointer
       echoPolicies( const Print* const host ) : m_host( host ) {}
       //! Function call operator templated on the type that echos a policy
-      template< typename U > void operator()( U ) {
+      template< typename U > void operator()( brigand::type_<U> ) {
         static_assert( tk::HasTypedefCode< typename U::info >::value,
                        "Policy code undefined for keyword" );
         // Print policy code - policy name

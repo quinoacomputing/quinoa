@@ -70,11 +70,11 @@
 
 #include <vector>
 
-#include "NoWarning/for_each.h"
-#include <boost/mpl/remove.hpp>
-#include <boost/mpl/at.hpp>
+#include <brigand/algorithms/for_each.hpp>
+#include <brigand/sequences/list.hpp>
 
-#include "Make_list.h"
+#include "NoWarning/remove.h"
+
 #include "TaggedTuple.h"
 #include "StatCtr.h"
 #include "Keywords.h"
@@ -121,14 +121,10 @@ using NcompMap = std::map< char, ncomp_type, CaseInsensitiveCharLess >;
 template< typename... Tags >
 class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
 
-  private:
-    //! Create mpl::list from variadic pack, storing no. of comps with types
-    using tagsncomps = typename tk::make_list< Tags... >::type;
-
   public:
     //! Remove std::vector< ncomp_type > types, i.e., keep only the tags
     using tags = typename
-      boost::mpl::remove< tagsncomps, std::vector< ncomp_type > >::type;
+      brigand::remove< brigand::list<Tags...>, std::vector<ncomp_type> >;
 
   private:
     //! Function object for zeroing all number of components
@@ -138,7 +134,7 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
       //! Constructor: store host object pointer
       zero( ncomponents* const host ) : m_host( host ) {}
       //! Function call operator templated on the type that does the zeroing
-      template< typename U > void operator()( U ) {
+      template< typename U > void operator()( brigand::type_<U> ) {
         //! Loop through and zero all elements of the vector for this system
         for (auto& c : m_host->template get< U >()) c = 0;
       }
@@ -156,7 +152,7 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
       addncomp( const ncomponents* const host, ncomp_type& nprop ) :
         m_host( host ), m_nprop( nprop = 0 ) {}
       //! Function call operator templated on the type that does the counting
-      template< typename U > void operator()( U ) {
+      template< typename U > void operator()( brigand::type_<U> ) {
         //! Loop through and add up all elements of the vector for this system
         for (const auto& c : m_host->template get< U >()) m_nprop += c;
       }
@@ -186,7 +182,7 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
         m_host( host ), m_offset( offset = 0 ), m_c( c ), m_found( false ) {}
       //! \brief Function call operator templated on the type that does the
       //!   offset calculation
-      template< typename U > void operator()( U ) {
+      template< typename U > void operator()( brigand::type_<U> ) {
         if (std::is_same< tag, U >::value) {
           // Make sure we are not trying to index beyond the length for this U
           Assert( m_host->template get<U>().size() >= m_c,
@@ -218,7 +214,7 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
       //!   the offset map for type U.
       //! \details There can be multiple systems of the same equation type,
       //!   differentiated by a different dependent variable.
-      template< typename U > void operator()( U ) const {
+      template< typename U > void operator()( brigand::type_<U> ) const {
         const auto& depvar = deck.template get< tag::param, U, tag::depvar >();
         ncomp_type c = 0;
         const auto& ncomps = deck.template get< tag::component >();
@@ -240,7 +236,7 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
       //!   the number of properties (scalar components) map for type U.
       //! \details There can be multiple systems of the same equation type,
       //!   differentiated by a different dependent variable.
-      template< typename U > void operator()( U ) const {
+      template< typename U > void operator()( brigand::type_<U> ) const {
         const auto& depvar = deck.template get< tag::param, U, tag::depvar >();
         const auto& ncomps = deck.template get< tag::component >();
         ncomp_type c = 0;
@@ -250,12 +246,12 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
 
   public:
     //! Default constructor: set defaults to zero for all number of components
-    ncomponents() { boost::mpl::for_each< tags >( zero( this ) ); }
+    ncomponents() { brigand::for_each< tags >( zero( this ) ); }
 
     //! \return Total number of components
     ncomp_type nprop() const noexcept {
       ncomp_type n;
-      boost::mpl::for_each< tags >( addncomp( this, n ) );
+      brigand::for_each< tags >( addncomp( this, n ) );
       return n;
     }
 
@@ -264,7 +260,7 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
     template< typename tag >
     ncomp_type offset( ncomp_type c ) const noexcept {
       ncomp_type n;
-      boost::mpl::for_each< tags >( addncomp4tag< tag >( this, n, c ) );
+      brigand::for_each< tags >( addncomp4tag< tag >( this, n, c ) );
       return n;
     }
 
@@ -274,7 +270,7 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
     template< class InputDeck >
     OffsetMap offsetmap( const InputDeck& deck ) const {
       OffsetMap map;
-      boost::mpl::for_each< tags >( genOffsetMap< InputDeck >( deck, map ) );
+      brigand::for_each< tags >( genOffsetMap< InputDeck >( deck, map ) );
       return map;
     }
 
@@ -285,7 +281,7 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
     template< class InputDeck >
     NcompMap ncompmap( const InputDeck& deck ) const {
       NcompMap map;
-      boost::mpl::for_each< tags >( genNcompMap< InputDeck >( deck, map ) );
+      brigand::for_each< tags >( genNcompMap< InputDeck >( deck, map ) );
       return map;
     }
 };

@@ -44,7 +44,7 @@
 #ifndef GammaCoeffPolicy_h
 #define GammaCoeffPolicy_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Types.h"
 #include "Walker/Options/CoeffPolicy.h"
@@ -83,7 +83,7 @@ class GammaCoeffConst {
 };
 
 //! List of all gamma's coefficients policies
-using GammaCoeffPolicies = boost::mpl::vector< GammaCoeffConst >;
+using GammaCoeffPolicies = brigand::list< GammaCoeffConst >;
 
 } // walker::
 

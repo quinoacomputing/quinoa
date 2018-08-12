@@ -18,26 +18,6 @@
 
 namespace tk {
 
-//! Supported mesh readers
-enum class MeshReader : uint8_t { GMSH=0,
-                                  NETGEN,
-                                  EXODUSII,
-                                  HYPER,
-                                  ASC };
-
-//! Supported mesh writers
-enum class MeshWriter : uint8_t { GMSH=0,
-                                  NETGEN,
-                                  EXODUSII };
-
-//! Detect input mesh file type
-MeshReader
-detectInput( const std::string& filename );
-
-//! Determine output mesh file type
-MeshWriter
-pickOutput( const std::string& filename );
-
 //! Read unstructured mesh from file
 UnsMesh
 readUnsMesh( const tk::Print& print,

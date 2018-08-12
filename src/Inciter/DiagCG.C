@@ -543,7 +543,7 @@ DiagCG::next( const tk::Fields& a )
 
   // Verify that the change in the solution at those nodes where Dirichlet
   // boundary conditions are set is exactly the amount the BCs prescribe
-  Assert( correctBC( a, m_dul, m_fd.Bnode(), m_bc, d->Lid() ),
+  Assert( correctBC( a, m_dul, m_bc, d->Lid() ),
           "Dirichlet boundary condition incorrect" );
 
   // Apply limited antidiffusive element contributions to low order solution

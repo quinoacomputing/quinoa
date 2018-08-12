@@ -3,9 +3,7 @@
   \file      src/IO/ExodusIIMeshReader.C
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     ExodusII mesh reader
-  \details   ExodusII mesh reader class definition. Currently, this is a bare
-     minimum functionality to interface with the ExodusII reader. It only reads
-     3D meshes and only triangle and tetrahedron elements.
+  \details   ExodusII mesh reader class definition.
 */
 // *****************************************************************************
 
@@ -29,13 +27,15 @@ ExodusIIMeshReader::ExodusIIMeshReader( const std::string& filename,
                                         int cpuwordsize,
                                         int iowordsize ) :
   m_filename( filename ),
+  m_cpuwordsize( cpuwordsize ),
+  m_iowordsize( iowordsize ),
   m_inFile( 0 ),
   m_nnode( 0 ),
   m_neblk( 0 ),
   m_neset( 0 ),
   m_eid(),
-  m_eidt( m_nnpe.size() ),
-  m_nel( m_nnpe.size() )
+  m_eidt( ExoNnpe.size() ),
+  m_nel( ExoNnpe.size() )
 // *****************************************************************************
 //  Constructor: open Exodus II file
 //! \param[in] filename File to open as ExodusII file
@@ -85,6 +85,70 @@ ExodusIIMeshReader::readGraph( UnsMesh& mesh )
   readAllElements( mesh );
 }
 
+void
+ExodusIIMeshReader::readMeshPart(
+  std::vector< std::size_t >& ginpoel,
+  std::vector< std::size_t >& inpoel,
+  std::vector< std::size_t >& gid,
+  std::unordered_map< std::size_t, std::size_t >& lid,
+  tk::UnsMesh::Coords& coord,
+  int numpes, int mype )
+// *****************************************************************************
+//  Read a part of the mesh (graph and coordinates) from ExodusII file
+//! \param[in,out] ginpoel Container to store element connectivity of this PE's
+//!   chunk of the mesh (global ids)
+//! \param[in,out] inpoel Container to store element connectivity with local
+//!   node IDs of this PE's mesh chunk
+//! \param[in,out] gid Container to store global node IDs of elements of this
+//!   PE's mesh chunk
+//! \param[in,out] lid Container to store global->local node IDs of elements of
+//!   this PE's mesh chunk
+//! \param[in,out] coord Container to store coordinates of mesh nodes of this
+//!   PE's mesh chunk
+//! \param[in] numpes Total number of PEs (default n = 1, for a single-CPU read)
+//! \param[in] mype This PE (default m = 0, for a single-CPU read)
+// *****************************************************************************
+{
+  Assert( mype < numpes, "Invalid input: PE id must be lower than NumPEs" );
+  Assert( ginpoel.empty() && inpoel.empty() && gid.empty() && lid.empty() &&
+          coord[0].empty() && coord[1].empty() && coord[2].empty(),
+          "Containers to store mesh must be empty" );
+
+  // Read info on element blocks from ExodusII file
+  readElemBlockIDs();
+  // Get number of number of tetrahedron elements in file
+  auto nel = nelem( tk::ExoElemType::TET );
+
+  // Compute extents of element IDs of this PE's mesh chunk to read
+  auto npes = static_cast< std::size_t >( numpes );
+  auto pe = static_cast< std::size_t >( mype );
+  auto chunk = nel / npes;
+  auto from = pe * chunk;
+  auto till = from + chunk;
+  if (pe == npes-1) till += nel % npes;
+
+  // Read tetrahedron connectivity between from and till
+  readElements( {{from, till-1}}, tk::ExoElemType::TET, ginpoel );
+
+  // Compute local data from global mesh connectivity
+  std::tie( inpoel, gid, lid ) = tk::global2local( ginpoel );
+
+  // Read this PE's chunk of the mesh node coordinates from file
+  coord = readCoords( gid );
+}
+
+std::array< std::vector< tk::real >, 3 >
+ExodusIIMeshReader::readCoords( const std::vector< std::size_t >& gid ) const
+// *****************************************************************************
+//  Read coordinates of a number of mesh nodes from ExodusII file
+//! \param[in] gid Global node IDs whose coordinates to read
+//! \return Vector of node coordinates read from file
+// *****************************************************************************
+{
+  // Read node coordinates from file with global node IDs given in gid
+  return readNodes( gid );
+}
+
 std::size_t
 ExodusIIMeshReader::readHeader()
 // *****************************************************************************
@@ -105,7 +169,7 @@ ExodusIIMeshReader::readHeader()
   ErrChk( neblk > 0,
           "Number of element blocks read from ExodusII file must be larger "
           "than zero" );
-  ErrChk( ndim == 3, "Need a 3D mesh from ExodusII file " + m_filename);
+  ErrChk( ndim == 3, "Need a 3D mesh from ExodusII file " + m_filename );
 
   m_neblk = static_cast< std::size_t >( neblk );
   m_neset = static_cast< std::size_t >( nelemset );
@@ -138,6 +202,60 @@ ExodusIIMeshReader::readAllNodes( UnsMesh& mesh ) const
   ErrChk( ex_get_coord( m_inFile, mesh.x().data(), mesh.y().data(),
                         mesh.z().data() ) == 0,
           "Failed to read coordinates from ExodusII file: " + m_filename );
+}
+
+void
+ExodusIIMeshReader::readNode( std::size_t fid,
+                              std::size_t mid,
+                              std::vector< tk::real >& x,
+                              std::vector< tk::real >& y,
+                              std::vector< tk::real >& z ) const
+// *****************************************************************************
+//  Read coordinates of a single mesh node from ExodusII file
+//! \param[in] fid Node id in file whose coordinates to read
+//! \param[in] mid Node id in memory to which to put new cordinates
+//! \param[in,out] x Vector of x coordinates to push to
+//! \param[in,out] y Vector of y coordinates to push to
+//! \param[in,out] z Vector of z coordinates to push to
+// *****************************************************************************
+{
+  Assert( x.size() == y.size() && x.size() == z.size(), "Size mismatch" );
+  Assert( mid < x.size() && mid < y.size() && mid < z.size(),
+          "Indexing out of bounds" );
+
+  readNode( fid, x[mid], y[mid], z[mid] );
+}
+
+void
+ExodusIIMeshReader::readNode( std::size_t id,
+                              std::array< tk::real, 3 >& coord ) const
+// *****************************************************************************
+//  Read coordinates of a single mesh node from ExodusII file
+//! \param[in] id Node id whose coordinates to read
+//! \param[in,out] coord Array of x, y, and z coordinates
+// *****************************************************************************
+{
+  readNode( id, coord[0], coord[1], coord[2] );
+}
+
+void
+ExodusIIMeshReader::readNode( std::size_t id,
+                              tk::real& x,
+                              tk::real& y,
+                              tk::real& z ) const
+// *****************************************************************************
+// Read coordinates of a single mesh node from file
+//! \param[in] id Node id whose coordinates to read
+//! \param[in,out] x X coordinate to write to
+//! \param[in,out] y Y coordinate to write to
+//! \param[in,out] z Z coordinate to write to
+// *****************************************************************************
+{
+  ErrChk(
+    ex_get_partial_coord( m_inFile, static_cast<int64_t>(id)+1, 1,
+                          &x, &y, &z ) == 0,
+    "Failed to read coordinates of node " + std::to_string(id) +
+    " from ExodusII file: " + m_filename );
 }
 
 std::array< std::vector< tk::real >, 3 >
@@ -174,9 +292,9 @@ ExodusIIMeshReader::readElemBlockIDs()
           m_filename );
 
   m_nel.clear();
-  m_nel.resize( m_nnpe.size() );
+  m_nel.resize( ExoNnpe.size() );
   m_eidt.clear();
-  m_eidt.resize( m_nnpe.size() );
+  m_eidt.resize( ExoNnpe.size() );
 
   // Fill element block ID vector
   for (auto id : eid) {
@@ -293,7 +411,7 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
           "requested cell type. Requested element ID extents: ["
           + std::to_string(ext[0]) + "..." + std::to_string(ext[1])
           + "), 'maxelements' of cell type with "
-          + std::to_string( m_nnpe[ static_cast<std::size_t>(elemtype) ] )
+          + std::to_string( ExoNnpe[ static_cast<std::size_t>(elemtype) ] )
           + " nodes per cell in file '" + m_filename + "': "
           + std::to_string( nelem( elemtype ) ) );
 
@@ -348,7 +466,7 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
   std::size_t B = 0;
   for (auto b=lo_bid; b<=hi_bid; ++b, ++B) {
     const auto& r = rext[B];
-    std::vector< int > c( (r[1]-r[0]+1) * m_nnpe[e] );
+    std::vector< int > c( (r[1]-r[0]+1) * ExoNnpe[e] );
     ErrChk( ex_get_partial_conn( m_inFile,
                                  EX_ELEM_BLOCK,
                                  bid[b],
@@ -365,7 +483,7 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
     std::move( begin(c), end(c), std::back_inserter(inpoel) );
   }
 
-  Assert( inpoel.size() == (ext[1]-ext[0]+1)*m_nnpe[e],
+  Assert( inpoel.size() == (ext[1]-ext[0]+1)*ExoNnpe[e],
           "Failed to read element connectivity of elements [" +
           std::to_string(ext[0]) + "..." + std::to_string(ext[1]) + ") from "
           "ExodusII file: " + m_filename );
@@ -389,7 +507,7 @@ ExodusIIMeshReader::readAllSidesets( UnsMesh& mesh )
 
 void
 ExodusIIMeshReader::readFaces( std::size_t nbfac,
-                               std::vector< std::size_t >& conn )
+                               std::vector< std::size_t >& conn ) const
 // *****************************************************************************
 //  Read face connectivity of a number of boundary faces from ExodusII file
 //! \param[in] nbfac Number of boundary faces

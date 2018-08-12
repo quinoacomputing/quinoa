@@ -7,7 +7,20 @@
 ################################################################################
 
 # Find the Root library from CERN
+
+#  Set ROOT_ROOT before calling find_package to a path to add an additional
+#  search path, e.g.,
 #
+#  Usage:
+#
+#  set(ROOT_ROOT "/path/to/custom/root") # prefer over system
+
+#  find_package(ROOT COMPONENTS RIO Core Tree Hist)
+#  if(ROOT_FOUND)
+#    target_link_libraries(TARGET ${ROOT_LIBRARIES})
+#  endif()
+
+
 # If already in cache, be silent
 if(ROOT_INCLUDE_DIRS AND ROOT_LIBRARIES)
   set (ROOT_FIND_QUIETLY TRUE)

@@ -54,7 +54,6 @@
 #include "DiagOrnsteinUhlenbeckCoeffPolicy.h"
 #include "RNG.h"
 #include "Particles.h"
-#include "SystemComponents.h"
 
 namespace walker {
 

@@ -17,7 +17,6 @@
 #include "NoWarning/optional.h"
 #include "NoWarning/variant.h"
 #include "NoWarning/pup_stl.h"
-#include "CharmUtil.h"
 
 //! Extensions to Charm++'s Pack/Unpack routines
 namespace PUP {

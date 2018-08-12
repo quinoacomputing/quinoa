@@ -22,7 +22,6 @@
 #include "Macro.h"
 #include "Has.h"
 #include "Make_unique.h"
-#include "CharmUtil.h"
 
 namespace rngtest {
 

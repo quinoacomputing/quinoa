@@ -40,7 +40,7 @@ Discretization::Discretization(
   const CProxy_Transporter& transporter,
   const std::vector< std::size_t >& conn,
   const tk::UnsMesh::CoordMap& coordmap,
-  const std::unordered_map< int, std::unordered_set< std::size_t > >& msum,
+  const std::map< int, std::unordered_set< std::size_t > >& msum,
   int nchare ) :
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
@@ -111,6 +111,9 @@ Discretization::Discretization(
   if ((sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG))
     m_fct[ thisIndex ].insert( m_transporter, nchare, m_gid.size(), nprop,
                                m_msum, m_bid, m_lid, m_inpoel, CkMyPe() );
+
+  contribute( CkCallback(CkReductionTarget(Transporter,disccreated),
+              m_transporter) );
 }
 
 void

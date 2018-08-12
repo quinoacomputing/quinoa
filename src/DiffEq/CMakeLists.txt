@@ -4,6 +4,21 @@ project(DiffEq CXX)
 
 add_library(DiffEq
             DiffEqStack.C
+            ConfigureDirichlet.C
+            ConfigureGeneralizedDirichlet.C
+            ConfigureWrightFisher.C
+            ConfigureOrnsteinUhlenbeck.C
+            ConfigureDiagOrnsteinUhlenbeck.C
+            ConfigureBeta.C
+            ConfigureNumberFractionBeta.C
+            ConfigureMassFractionBeta.C
+            ConfigureMixNumberFractionBeta.C
+            ConfigureMixMassFractionBeta.C
+            ConfigureGamma.C
+            ConfigureSkewNormal.C
+            ConfigureVelocity.C
+            ConfigurePosition.C
+            ConfigureDissipation.C
 )
 
 set_target_properties(DiffEq PROPERTIES LIBRARY_OUTPUT_NAME quinoa_diffeq)

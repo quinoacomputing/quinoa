@@ -14,8 +14,6 @@
 #include <string>
 #include <unordered_set>
 
-#include <boost/mpl/vector.hpp>
-
 #include "Types.h"
 #include "Inciter/Options/Problem.h"
 
@@ -27,6 +25,9 @@ namespace inciter {
 //!   Computational Physics 267 (2014) 196-209.
 class CompFlowProblemRayleighTaylor {
 
+  private:
+    using ncomp_t = tk::ctr::ncomp_type;
+
   public:
     //! Evaluate analytical solution at (x,y,z,t) for all components
     //! \param[in] e Equation system index, i.e., which compressible
@@ -37,9 +38,7 @@ class CompFlowProblemRayleighTaylor {
     //! \param[in] t Time where to evaluate the solution
     //! \return Values of all components evaluated at (x,y,z,t)
     static std::array< tk::real, 5 >
-    solution( tk::ctr::ncomp_type e,
-              tk::real x, tk::real y, tk::real z, tk::real t )
-    {
+    solution( ncomp_t e, tk::real x, tk::real y, tk::real z, tk::real t ) {
       using tag::param; using tag::compflow; using std::sin; using std::cos;
       // manufactured solution parameters
       const auto a = g_inputdeck.get< param, compflow, tag::alpha >()[e];
@@ -78,8 +77,8 @@ class CompFlowProblemRayleighTaylor {
     //! \param[in] dt Time increment at which evaluate the solution increment to
     //! \return Increment in values of all components evaluated at (x,y,z,t+dt)
     static std::array< tk::real, 5 >
-    solinc( tk::ctr::ncomp_type e,
-            tk::real x, tk::real y, tk::real z, tk::real t, tk::real dt )
+    solinc( ncomp_t e, tk::real x, tk::real y, tk::real z, tk::real t,
+            tk::real dt )
     {
       auto st1 = solution( e, x, y, z, t );
       auto st2 = solution( e, x, y, z, t+dt );
@@ -97,8 +96,7 @@ class CompFlowProblemRayleighTaylor {
     //! \param[in] t Physical time at which to evaluate the source
     //! \return Array of reals containing the source for all components
     static std::array< tk::real, 5 >
-    src( tk::ctr::ncomp_type e, tk::real x, tk::real y, tk::real z, tk::real t )
-    {
+    src( ncomp_t e, tk::real x, tk::real y, tk::real z, tk::real t ) {
       using tag::param; using tag::compflow; using std::sin; using std::cos;
 
       // manufactured solution parameters
@@ -208,8 +206,8 @@ class CompFlowProblemRayleighTaylor {
     //! \param[in] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
-    fieldOutput( tk::ctr::ncomp_type e,
-                 tk::ctr::ncomp_type offset,
+    fieldOutput( ncomp_t e,
+                 ncomp_t offset,
                  tk::real t,
                  tk::real V,
                  const std::vector< tk::real >& vol,
