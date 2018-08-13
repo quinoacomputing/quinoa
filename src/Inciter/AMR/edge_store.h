@@ -50,16 +50,16 @@ namespace AMR {
              *
              * @param A First node
              * @param B Second node
-             * @param lock_case Lock case for new edge
+             * @param lc Lock case for new edge
              */
-            void generate(size_t A, size_t B, Edge_Lock_Case lock_case)
+            void generate(size_t A, size_t B, Edge_Lock_Case lc)
             {
                 assert(A != B);
                 // Generate key
                 edge_t keyAB = nodes_to_key(A, B);
                 //Create refined edge
                 Edge_Refinement edgeAB = Edge_Refinement(A, B, 0.00, false,
-                        false, false, lock_case);
+                        false, false, lc);
                 // Add edge to store
                 add(keyAB, edgeAB);
             }
