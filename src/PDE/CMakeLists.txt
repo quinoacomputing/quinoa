@@ -4,6 +4,8 @@ project(PDE CXX)
 
 add_library(PDE
             PDEStack.C
+            ConfigureTransport.C
+            ConfigureCompFlow.C
 )
 
 set_target_properties(PDE PROPERTIES LIBRARY_OUTPUT_NAME quinoa_pde)

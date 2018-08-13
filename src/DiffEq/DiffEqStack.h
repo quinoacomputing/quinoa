@@ -14,17 +14,19 @@
 #ifndef DiffEqStack_h
 #define DiffEqStack_h
 
-#include "NoWarning/back.h"
-#include "NoWarning/front.h"
-
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
+
+#include "NoWarning/back.h"
+#include "NoWarning/front.h"
 
 #include "Tags.h"
 #include "Exception.h"
 #include "DiffEq.h"
 #include "DiffEqFactory.h"
+#include "SystemComponents.h"
 #include "Walker/InputDeck/InputDeck.h"
 
 namespace walker {
