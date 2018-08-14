@@ -12,6 +12,8 @@
 #include "TUTConfig.h"
 #include "Options/MKLGammaMethod.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -113,3 +115,5 @@ void MKLGammaMethod_object::test< 6 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

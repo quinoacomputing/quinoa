@@ -7,39 +7,37 @@ walker_main and @ref rngtest_main.
 @section Requirements
 
   - Any control file setup that needs one or more RNGs must contain an
-    @code{.bash}rngs...end@endcode block. This is used to enable and configure
+    `rngs...end` block. This is used to enable and configure
     one or more RNGs.
 
-  - The @code{.bash}rngs...end@endcode block must appear before any reference to
+  - The `rngs...end` block must appear before any reference to
     an RNG.
 
-  - The @code{.bash}rngs...end@endcode block consists of a list of
-    @code{.bash}<rngname>...end@endcode blocks, where
-    @code{.bash}<rngname>@endcode is a placeholder for the name of the RNG to be
-    enabled and configured. Currently, three different libraries are interfaced:
+  - The `rngs...end` block consists of a list of `<rngname>...end` blocks, where
+    `<rngname>` is a placeholder for the name of the RNG to be enabled and
+    configured. Currently, three different libraries are interfaced:
     Intel's [Math Kernel Library](https://software.intel.com/en-us/intel-mkl)
     (MKL), [RNGSSE](https://doi.org/10.1016/j.cpc.2013.04.007), and
-    [Random123](http://www.thesalmons.org/john/random123/releases/latest/docs/index.html). See also the page on @ref rngtest_main. The first part of
-    @code{.bash}<rngname>@endcode is the library, @code{.bash}mkl@endcode,
-    @code{.bash}rngsse@endcode, or @code{.bash}r123@endcode, followed by an
-    underscore, @code{.bash}_@endcode, followed by the name of the particular
-    RNG from the given library.
+    [Random123](http://www.thesalmons.org/john/random123/releases/latest/docs/index.html).
+    See also the page on @ref rngtest_main. The first part of `<rngname>` is
+    the library, `mkl`, `rngsse`, or `r123`, followed by an underscore, `_`,
+    followed by the name of the particular RNG from the given library.
 
-  - Each @code{.bash}<rngname>...end@endcode block expects a different syntax,
+  - Each `<rngname>...end` block expects a different syntax,
     depending on what options are available for (and interfaced with) the given
     RNG.
 
 @section mkl_conf Configuration of MKL VSL RNGs
 
 All RNGs provided by MKL can be configured to be initialized using a
-user-specified @code{.shell}seed@endcode, and use a user-specified
-@code{.shell}uniform_method@endcode, @code{.shell}gaussian_method@endcode,
-@code{.shell}beta_method@endcode, and @code{.shell}gamma_method@endcode, each
+user-specified `seed`, and use a user-specified
+`uniform_method`, `gaussian_method`,
+`beta_method`, and `gamma_method`, each
 used to control the algorithm used for the various distribution generators. For
 more details on the available options for these keywords, see the on-screen help
 from the executable, e.g.,
 
-@code{.shell}
+@code{.bash}
 walker -H uniform_method
 @endcode
 
@@ -47,19 +45,19 @@ walker -H uniform_method
 available.
 
 @warning Not all MKL RNGs support generating random numbers in parallel. Only
-@code{.bash}mkl_mcg31@endcode, @code{.bash}mkl_mcg59@endcode, and
-@code{.bash}mkl_wh@endcode have leapfrog support and thus will support
+`mkl_mcg31`, `mkl_mcg59`, and
+`mkl_wh` have leapfrog support and thus will support
 generating random numbers from independent streams.
 
 @section rngsse_conf Configuration of RNGSSE RNGs
 
 All RNGs provided by the RNGSSE library can be configured to be initialized
-using a user-specified sequence length by the @code{.shell}seqlen@endcode
+using a user-specified sequence length by the `seqlen`
 keyword. For more details on the available options for the
-@code{.shell}seqlen@endcode keyword, see the on-screen help from the executable,
+`seqlen` keyword, see the on-screen help from the executable,
 e.g.,
 
-@code{.shell}
+@code{.bash}
 walker -H seqlen
 @endcode
 
@@ -76,7 +74,7 @@ not available.
 
 The RNGs provided by the Random123 library that are hooked up are _ThreeFry_ and
 _Philox_. They can be configured to be initialized using a user-specified seed
-with the @code{.shell}seed@endcode keyword.
+with the `seed` keyword.
 
 @m_div{m-block m-success}
 All Random123 RNGs support sampling in parallel.
@@ -104,5 +102,5 @@ Here is an example control file block configuring multiple generators.
 
     r123_threefry end
   end
-\endcode
+@endcode
 */

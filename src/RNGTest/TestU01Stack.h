@@ -213,6 +213,15 @@ class TestU01Stack {
       const std::tuple<long, long, int, int, int>& xargs );
     ///@}
 
+    //! Function pointer type to use to define pointers to test runner functions
+    //! \note Abstracting the function pointer away as this, also pleases
+    //!    doxygen in client code, otherwise doxygen issues warnings, such as
+    //!    `no matching class member found for` as it fails to parse the
+    //!    function pointer correctly and fails to find a function declaration,
+    //!    which, of course, does not exist. Thanks to Vladimír Vondruš,
+    //!    author of m.css (http://mcss.mosra.cz) for the help with this.
+    template< class... Args > using FnPtr = std::vector<double>(*)( Args... );
+
     //! \brief Compile-time tag-based access to individual test wrappers.
     //! \details This tagged_tuple is practically a compile-time map that
     //!   associates tags (empty structs) to test wrappers. This is used to find
@@ -221,136 +230,136 @@ class TestU01Stack {
     tk::tuple::tagged_tuple<
 
       tag::BirthdaySpacings,                                // tag
-      std::vector< double > (*)( unif01_Gen*, sres_Poisson*,// function ptr type
-        const std::tuple<long, long, int, long, int, int>& ),
+      FnPtr< unif01_Gen*, sres_Poisson*,
+             const std::tuple<long, long, int, long, int, int>& >,
 
       tag::Collision,
-      std::vector< double > (*)( unif01_Gen*, sknuth_Res2*,
-        const std::tuple<long, long, int, long, int>& ),
+      FnPtr< unif01_Gen*, sknuth_Res2*,
+             const std::tuple<long, long, int, long, int>& >,
 
       tag::RandomWalk1,
-      std::vector< double > (*)( unif01_Gen*, swalk_Res*,
-        const std::tuple<long, long, int, int, long, long>& ),
+      FnPtr< unif01_Gen*, swalk_Res*,
+             const std::tuple<long, long, int, int, long, long>& >,
 
       tag::Gap,
-      std::vector< double > (*)( unif01_Gen*, sres_Chi2*,
-        const std::tuple<long, long, int, double, double>& ),
+      FnPtr< unif01_Gen*, sres_Chi2*,
+             const std::tuple<long, long, int, double, double>& >,
 
       tag::SimplePoker,
-      std::vector< double > (*)( unif01_Gen*, sres_Chi2*,
-        const std::tuple<long, long, int, int, int>& ),
+      FnPtr< unif01_Gen*, sres_Chi2*,
+             const std::tuple<long, long, int, int, int>& >,
 
       tag::CouponCollector,
-      std::vector< double > (*)( unif01_Gen*, sres_Chi2*,
-        const std::tuple<long, long, int, int>& ),
+      FnPtr< unif01_Gen*, sres_Chi2*,
+             const std::tuple<long, long, int, int>& >,
 
       tag::MaxOft,
-      std::vector< double > (*)( unif01_Gen*, sknuth_Res1*,
-        const std::tuple<long, long, int, int, int, int, int>& ),
+      FnPtr< unif01_Gen*, sknuth_Res1*,
+             const std::tuple<long, long, int, int, int, int, int>& >,
 
       tag::WeightDistrib,
-      std::vector< double > (*)( unif01_Gen*, sres_Chi2*,
-        const std::tuple<long, long, int, long, double, double>& ),
+      FnPtr< unif01_Gen*, sres_Chi2*,
+             const std::tuple<long, long, int, long, double, double>& >,
 
       tag::MatrixRank,
-      std::vector< double > (*)( unif01_Gen*, sres_Chi2*,
-        const std::tuple<long, long, int, int, int, int>& ),
+      FnPtr< unif01_Gen*, sres_Chi2*,
+             const std::tuple<long, long, int, int, int, int>& >,
 
       tag::HammingIndep,
-      std::vector< double > (*)( unif01_Gen*, sstring_Res*,
-        const std::tuple<long, long, int, int, int, int>& ),
+      FnPtr< unif01_Gen*, sstring_Res*,
+             const std::tuple<long, long, int, int, int, int>& >,
 
       tag::SerialOver,
-      std::vector< double > (*)( unif01_Gen*, sres_Basic*,
-        const std::tuple<long, long, int, long, int>& ),
+      FnPtr< unif01_Gen*, sres_Basic*,
+             const std::tuple<long, long, int, long, int>& >,
 
       tag::CollisionOver,
-      std::vector< double > (*)( unif01_Gen*, smarsa_Res*,
-        const std::tuple<long, long, int, long, int>& ),
+      FnPtr< unif01_Gen*, smarsa_Res*,
+             const std::tuple<long, long, int, long, int>& >,
 
       tag::ClosePairs,
-      std::vector< double > (*)( unif01_Gen*, snpair_Res*,
-        const std::tuple<long, long, int, int, int, int, int>& ),
+      FnPtr< unif01_Gen*, snpair_Res*,
+             const std::tuple<long, long, int, int, int, int, int>& >,
 
       tag::ClosePairsBitMatch,
-      std::vector< double > (*)( unif01_Gen*, snpair_Res*,
-        const std::tuple<long, long, int, int>& ),
+      FnPtr< unif01_Gen*, snpair_Res*,
+             const std::tuple<long, long, int, int>& >,
 
       tag::Run,
-      std::vector< double > (*)( unif01_Gen*, sres_Chi2*,
-        const std::tuple<long, long, int, int>& ),
+      FnPtr< unif01_Gen*, sres_Chi2*,
+             const std::tuple<long, long, int, int>& >,
 
       tag::Permutation,
-      std::vector< double > (*)( unif01_Gen*, sres_Chi2*,
-        const std::tuple<long, long, int, int>& ),
+      FnPtr< unif01_Gen*, sres_Chi2*,
+             const std::tuple<long, long, int, int>& >,
 
       tag::CollisionPermut,
-      std::vector< double > (*)( unif01_Gen*, sknuth_Res2*,
-        const std::tuple<long, long, int, int>& ),
+      FnPtr< unif01_Gen*, sknuth_Res2*,
+             const std::tuple<long, long, int, int>& >,
 
       tag::SampleProd,
-      std::vector< double > (*)( unif01_Gen*, sres_Basic*,
-        const std::tuple<long, long, int, int>& ),
+      FnPtr< unif01_Gen*, sres_Basic*,
+             const std::tuple<long, long, int, int>& >,
 
       tag::SampleMean,
-      std::vector< double > (*)( unif01_Gen*, sres_Basic*,
-        const std::tuple<long, long, int>& ),
+      FnPtr< unif01_Gen*, sres_Basic*,
+             const std::tuple<long, long, int>& >,
 
       tag::SampleCorr,
-      std::vector< double > (*)( unif01_Gen*, sres_Basic*,
-        const std::tuple<long, long, int, int>& ),
+      FnPtr< unif01_Gen*, sres_Basic*,
+             const std::tuple<long, long, int, int>& >,
 
       tag::AppearanceSpacings,
-      std::vector< double > (*)( unif01_Gen*, sres_Basic*,
-        const std::tuple<long, long, long, int, int, int>& ),
+      FnPtr< unif01_Gen*, sres_Basic*,
+             const std::tuple<long, long, long, int, int, int>& >,
 
       tag::SumCollector,
-      std::vector< double > (*)( unif01_Gen*, sres_Chi2*,
-        const std::tuple<long, long, int, double>& ),
+      FnPtr< unif01_Gen*, sres_Chi2*,
+             const std::tuple<long, long, int, double>& >,
 
       tag::Savir2,
-      std::vector< double > (*)( unif01_Gen*, sres_Chi2*,
-        const std::tuple<long, long, int, long, int>& ),
+      FnPtr< unif01_Gen*, sres_Chi2*,
+             const std::tuple<long, long, int, long, int>& >,
 
       tag::GCD,
-      std::vector< double > (*)( unif01_Gen*, smarsa_Res2*,
-        const std::tuple<long, long, int, int>& ),
+      FnPtr< unif01_Gen*, smarsa_Res2*,
+             const std::tuple<long, long, int, int>& >,
 
       tag::LinearComp,
-      std::vector< double > (*)( unif01_Gen*, scomp_Res*,
-        const std::tuple<long, long, int, int>& ),
+      FnPtr< unif01_Gen*, scomp_Res*,
+             const std::tuple<long, long, int, int>& >,
 
       tag::LempelZiv,
-      std::vector< double > (*)( unif01_Gen*, sres_Basic*,
-        const std::tuple<long, int, int, int>& ),
+      FnPtr< unif01_Gen*, sres_Basic*,
+             const std::tuple<long, int, int, int>& >,
 
       tag::Fourier3,
-      std::vector< double > (*)( unif01_Gen*, sspectral_Res*,
-        const std::tuple<long, int, int, int>& ),
+      FnPtr< unif01_Gen*, sspectral_Res*,
+             const std::tuple<long, int, int, int>& >,
 
       tag::LongestHeadRun,
-      std::vector< double > (*)( unif01_Gen*, sstring_Res2*,
-        const std::tuple<long, long, int, int, long>& ),
+      FnPtr< unif01_Gen*, sstring_Res2*,
+             const std::tuple<long, long, int, int, long>& >,
 
       tag::PeriodsInStrings,
-      std::vector< double > (*)( unif01_Gen*, sres_Chi2*,
-        const std::tuple<long, long, int, int>& ),
+      FnPtr< unif01_Gen*, sres_Chi2*,
+             const std::tuple<long, long, int, int>& >,
 
       tag::HammingWeight2,
-      std::vector< double > (*)( unif01_Gen*, sres_Basic*,
-        const std::tuple<long, long, int, int, long>& ),
+      FnPtr< unif01_Gen*, sres_Basic*,
+             const std::tuple<long, long, int, int, long>& >,
 
       tag::HammingCorr,
-      std::vector< double > (*)( unif01_Gen*, sstring_Res*,
-        const std::tuple<long, long, int, int, int>& ),
+      FnPtr< unif01_Gen*, sstring_Res*,
+             const std::tuple<long, long, int, int, int>& >,
 
       tag::StringRun,
-      std::vector< double > (*)( unif01_Gen*, sstring_Res3*,
-        const std::tuple<long, long, int, int>& ),
+      FnPtr< unif01_Gen*, sstring_Res3*,
+             const std::tuple<long, long, int, int>& >,
 
       tag::AutoCorr,
-      std::vector< double > (*)( unif01_Gen*, sres_Basic*,
-        const std::tuple<long, long, int, int, int>& )
+      FnPtr< unif01_Gen*, sres_Basic*,
+             const std::tuple<long, long, int, int, int>& >
 
     > runner {
 

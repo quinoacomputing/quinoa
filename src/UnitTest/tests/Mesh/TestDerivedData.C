@@ -117,6 +117,8 @@
 #include "Reorder.h"
 #include "ExodusIIMeshReader.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 #if defined(STRICT_GNUC)
@@ -3500,3 +3502,5 @@ void DerivedData_object::test< 70 >() {
 #endif
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

@@ -12,6 +12,8 @@
 #include "TUTConfig.h"
 #include "TaggedTuple.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -134,3 +136,5 @@ void TaggedTuple_object::test< 7 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

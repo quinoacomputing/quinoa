@@ -18,6 +18,8 @@ extern std::string g_executable;
 
 } // unittest::
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -57,3 +59,5 @@ void Writer_object::test< 2 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

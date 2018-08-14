@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/CompFlowProblem/SodShocktube.h
+  \file      src/PDE/CompFlow/Problem/SodShocktube.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Problem configuration for Sod's shock-tube
   \details   This file defines a policy class for the compressible flow

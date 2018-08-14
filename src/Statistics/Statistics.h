@@ -85,13 +85,13 @@ class Statistics {
     void accumulateOrd();
 
     //! Accumulate (i.e., only do the sum for) central moments
-    void accumulateCen( const std::vector< tk::real >& ord );
+    void accumulateCen( const std::vector< tk::real >& om );
 
     //! Accumulate (i.e., only do the sum for) ordinary PDFs
     void accumulateOrdPDF();
 
     //! Accumulate (i.e., only do the sum for) central PDFs
-    void accumulateCenPDF( const std::vector< tk::real >& ord );
+    void accumulateCenPDF( const std::vector< tk::real >& om );
 
     //! Ordinary moments accessor
     const std::vector< tk::real >& ord() const noexcept { return m_ordinary; }

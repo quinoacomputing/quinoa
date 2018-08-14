@@ -17,6 +17,8 @@
 #include "MeshReader.h"
 #include "ContainerUtil.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -266,3 +268,5 @@ void MeshReader_object::test< 6 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

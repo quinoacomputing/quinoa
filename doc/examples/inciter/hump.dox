@@ -2248,6 +2248,7 @@ the diagnostics files.
 @m_enddiv
 
 Gnuplot commands to reproduce the above plot:
+
 @code{.shell}
 plot "diag.750K" u 2:4, "diag.6M" u 2:4, "diag.48M" u 2:4
 @endcode

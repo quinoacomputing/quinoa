@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/DiffEq/ConfigureDiagOrnsteinUhlenbeckt.C
+  \file      src/DiffEq/ConfigureDiagOrnsteinUhlenbeck.C
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Register and compile configuration on the diagonal
              Ornstein-Uhlenbeck SDE
@@ -33,7 +33,7 @@ void
 registerDiagOrnsteinUhlenbeck( DiffEqFactory& f,
                                std::set< ctr::DiffEqType >& t )
 // *****************************************************************************
-// Register diagonal Ornstein-Uhlenbeckt SDE into DiffEq factory
+// Register diagonal Ornstein-Uhlenbeck SDE into DiffEq factory
 //! \param[in,out] f Differential equation factory to register to
 //! \param[in,out] t Counters for equation types registered
 // *****************************************************************************
@@ -49,7 +49,7 @@ registerDiagOrnsteinUhlenbeck( DiffEqFactory& f,
 std::vector< std::pair< std::string, std::string > >
 infoDiagOrnsteinUhlenbeck( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
 // *****************************************************************************
-//  Return information on the diagonal Ornstein-Uhlenbeckt SDE
+//  Return information on the diagonal Ornstein-Uhlenbeck SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
 //! \return vector of string pairs describing the SDE configuration
 // *****************************************************************************
