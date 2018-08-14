@@ -1,111 +1,101 @@
 /*!
   \page      inciter_example_hump Inciter: Integrating the scalar advection equation for a smooth problem
-  \tableofcontents
 
-This example runs [inciter](inciter_doc.html) to integrate the advection
-equation (see PDE/Transport.h) configured to solve only the smooth portion of
+This example runs @ref inciter_main to integrate the advection equation (see,
+e.g., PDE/Transport/CGTransport.h) configured to solve only the smooth portion of
 Zalesak's slotted cylinder (inciter::TransportProblemSlotCyl) problem.
 
-This example slightly differs from inciter_example_slot_cyl, in that the
+This example slightly differs from @ref inciter_example_slot_cyl, in that the
 non-smooth regions are commented out. This can be used to estimate the order of
 converge of the spatial and teporal discretization for smooth problems.
 
-The following modification, applied in PDE/TransportProblem.h, removes the non-smooth part of the solution from the
-slotted cylinder case:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.C}
+The following modification, applied in PDE/Transport/Problem/SlotCyl.h, removes
+the non-smooth part of the solution from the slotted cylinder case:
+@code{.C}
 class TransportProblemSlotCyl {
 
-  public:
-    //! Do error checking on PDE parameters
-    template< class eq >
-    static void errchk( tk::ctr::ncomp_type, tk::ctr::ncomp_type ) {}
+  private:
+    using ncomp_t = tk::ctr::ncomp_type;
 
-    //! Set initial conditions for Zalesak's slotted cylinder case
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in,out] unk Array of unknowns
-    //! \param[in] ncomp Number of components in this transport equation
-    //! \param[in] offset System offset specifying the position of the system of
-    //!   PDEs among other systems
-    //! \param[in] time Physical time
-    template< class eq >
-    static void init( const std::array< std::vector< tk::real >, 3 >& coord,
-                      tk::Fields& unk,
-                      tk::ctr::ncomp_type,
-                      tk::ctr::ncomp_type ncomp,
-                      tk::ctr::ncomp_type offset,
-                      tk::real time )
+  public:
+    //! Evaluate analytical solution at (x,y,t) for all components
+    //! \param[in] ncomp Number of components in this transport equation system
+    //! \param[in] x X coordinate where to evaluate the solution
+    //! \param[in] y Y coordinate where to evaluate the solution
+    //! \param[in] t Time where to evaluate the solution
+    //! \return Values of all components evaluated at (x,y,t)
+    static std::vector< tk::real >
+    solution( ncomp_t, ncomp_t ncomp,
+              tk::real x, tk::real y, tk::real, tk::real t )
     {
+      using std::sin; using std::cos;
+      std::vector< tk::real > s( ncomp, 0.0 );
       for (ncomp_t c=0; c<ncomp; ++c) {
-        auto t = time + 2.0*M_PI/ncomp * c;
+        auto T = t + 2.0*M_PI/ncomp * c;
         const tk::real R0 = 0.15;
         // center of the cone
         tk::real x0 = 0.5;
         tk::real y0 = 0.25;
         tk::real r = std::sqrt((x0-0.5)*(x0-0.5) + (y0-0.5)*(y0-0.5));
-        tk::real kx = 0.5 + r*std::sin( t );
-        tk::real ky = 0.5 - r*std::cos( t );
+        tk::real kx = 0.5 + r*sin( T );
+        tk::real ky = 0.5 - r*cos( T );
         // center of the hump
         x0 = 0.25;
         y0 = 0.5;
         r = std::sqrt((x0-0.5)*(x0-0.5) + (y0-0.5)*(y0-0.5));
-        tk::real hx = 0.5 + r*std::sin( t-M_PI/2.0 ),
-                 hy = 0.5 - r*std::cos( t-M_PI/2.0 );
+        tk::real hx = 0.5 + r*sin( T-M_PI/2.0 ),
+                 hy = 0.5 - r*cos( T-M_PI/2.0 );
         // center of the slotted cylinder
         x0 = 0.5;
         y0 = 0.75;
         r = std::sqrt((x0-0.5)*(x0-0.5) + (y0-0.5)*(y0-0.5));
-        tk::real cx = 0.5 + r*std::sin( t+M_PI ),
-                 cy = 0.5 - r*std::cos( t+M_PI );
+        tk::real cx = 0.5 + r*sin( T+M_PI ),
+                 cy = 0.5 - r*cos( T+M_PI );
         // end points of the cylinder slot
-        tk::real i1x = 0.525, i1y = cy - r*std::cos( std::asin(0.025/r) ),
+        tk::real i1x = 0.525, i1y = cy - r*cos( std::asin(0.025/r) ),
                  i2x = 0.525, i2y = 0.8,
                  i3x = 0.475, i3y = 0.8;
         // rotate end points of cylinder slot
-        tk::real ri1x = 0.5 + std::cos(t)*(i1x-0.5) - std::sin(t)*(i1y-0.5),
-                 ri1y = 0.5 + std::sin(t)*(i1x-0.5) + std::cos(t)*(i1y-0.5),
-                 ri2x = 0.5 + std::cos(t)*(i2x-0.5) - std::sin(t)*(i2y-0.5),
-                 ri2y = 0.5 + std::sin(t)*(i2x-0.5) + std::cos(t)*(i2y-0.5),
-                 ri3x = 0.5 + std::cos(t)*(i3x-0.5) - std::sin(t)*(i3y-0.5),
-                 ri3y = 0.5 + std::sin(t)*(i3x-0.5) + std::cos(t)*(i3y-0.5);
+        tk::real ri1x = 0.5 + cos(T)*(i1x-0.5) - sin(T)*(i1y-0.5),
+                 ri1y = 0.5 + sin(T)*(i1x-0.5) + cos(T)*(i1y-0.5),
+                 ri2x = 0.5 + cos(T)*(i2x-0.5) - sin(T)*(i2y-0.5),
+                 ri2y = 0.5 + sin(T)*(i2x-0.5) + cos(T)*(i2y-0.5),
+                 ri3x = 0.5 + cos(T)*(i3x-0.5) - sin(T)*(i3y-0.5),
+                 ri3y = 0.5 + sin(T)*(i3x-0.5) + cos(T)*(i3y-0.5);
         // direction of slot sides
         tk::real v1x = ri2x-ri1x, v1y = ri2y-ri1y,
                  v2x = ri3x-ri2x, v2y = ri3y-ri2y;
         // lengths of direction of slot sides vectors
         tk::real v1 = std::sqrt(v1x*v1x + v1y*v1y),
                  v2 = std::sqrt(v2x*v2x + v2y*v2y);
-        const auto& x = coord[0];
-        const auto& y = coord[1];
-        unk.fill( c, offset, 0.0 );
-        for (ncomp_t i=0; i<x.size(); ++i) {
-          // cone
-//           r = std::sqrt((x[i]-kx)*(x[i]-kx) + (y[i]-ky)*(y[i]-ky)) / R0;
-//           if (r<1.0) unk( i, c, offset ) = 0.6*(1.0-r);
-          // hump
-          r = std::sqrt((x[i]-hx)*(x[i]-hx) + (y[i]-hy)*(y[i]-hy)) / R0;
-          if (r<1.0)
-            unk( i, c, offset ) = 0.2*(1.0+std::cos(M_PI*std::min(r,1.0)));
-          // cylinder
-//           r = std::sqrt((x[i]-cx)*(x[i]-cx) + (y[i]-cy)*(y[i]-cy)) / R0;
-//           const std::array< tk::real, 2 > r1{{ v1x, v1y }},
-//                                           r2{{ x[i]-ri1x, y[i]-ri1y }};
-//           const auto d1 = (r1[0]*r2[1] - r2[0]*r1[1]) / v1;
-//           const std::array< tk::real, 2 > r3{{ v2x, v2y }},
-//                                           r4{{ x[i]-ri2x, y[i]-ri2y }};
-//           const auto d2 = (r3[0]*r4[1] - r4[0]*r3[1]) / v2;
-//           if (r<1.0 && (d1>0.05 || d1<0.0 || d2<0.0)) unk( i, c, offset ) = 0.6;
-        }
+        // cone
+//         r = std::sqrt((x-kx)*(x-kx) + (y-ky)*(y-ky)) / R0;
+//         if (r<1.0) s[c] = 0.6*(1.0-r);
+        // hump
+        r = std::sqrt((x-hx)*(x-hx) + (y-hy)*(y-hy)) / R0;
+        if (r<1.0) s[c] = 0.2*(1.0+cos(M_PI*std::min(r,1.0)));
+        // cylinder
+//         r = std::sqrt((x-cx)*(x-cx) + (y-cy)*(y-cy)) / R0;
+//         const std::array< tk::real, 2 > r1{{ v1x, v1y }},
+//                                         r2{{ x-ri1x, y-ri1y }};
+//         const auto d1 = (r1[0]*r2[1] - r2[0]*r1[1]) / v1;
+//         const std::array< tk::real, 2 > r3{{ v2x, v2y }},
+//                                         r4{{ x-ri2x, y-ri2y }};
+//         const auto d2 = (r3[0]*r4[1] - r4[0]*r3[1]) / v2;
+//         if (r<1.0 && (d1>0.05 || d1<0.0 || d2<0.0)) s[c] = 0.6;
       }
+      return s;
     }
-...
+  ...
 }
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@endcode
 
-\section inciter_example_hump_control Control file
+@section inciter_example_hump_control Control file
 
 The control file is the same as that of the slotted cylinder problem, see also
 inciter_exampl_slot_cyl.
 
-\verbatim
+@code{.bash}
 # vim: filetype=sh:
 # This is a comment
 # Keywords are case-sensitive
@@ -134,17 +124,12 @@ inciter
   end
 
 end
-\endverbatim
+@endcode
 
-\section inciter_example_hump_run Example runs on 80 CPUs
-\verbatim
-./charmrun +p80 Main/inciter -v -c slot_cyl.q -i unitcube_01_750K.exo
-./charmrun +p80 Main/inciter -v -c slot_cyl.q -i unitcube_01_6M.exo
-\endverbatim
 
-\section inciter_example_hump_output Output for three runs (750K, 6M, and 48M)
+@section inciter_example_hump_output Output for three runs (750K, 6M, and 48M)
 \verbatim
-jbakosi@lagrange:~/code/quinoa/build/gnu:vort$ ./charmrun +p36 Main/inciter -v -c slot_cyl.q -i unitcube_01_750K.exo
+$ ./charmrun +p36 Main/inciter -v -c slot_cyl.q -i unitcube_01_750K.exo
 
 Running on 36 processors:  Main/inciter -v -c slot_cyl.q -i unitcube_01_750K.exo
 charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 36  Main/inciter -v -c slot_cyl.q -i unitcube_01_750K.exo
@@ -572,9 +557,8 @@ Quinoa> Starting time stepping ...
      Total runtime                                                               : 0:0:35
 
 [Partition 0][Node 0] End of program
-jbakosi@lagrange:~/code/quinoa/build/gnu:vort$ cp diag diag.750K
-cp: overwrite 'diag.750K'? y
-jbakosi@lagrange:~/code/quinoa/build/gnu:vort$ ./charmrun +p36 Main/inciter -v -c slot_cyl.q -i unitcube_01_6M.exo
+$ cp diag diag.750K
+$ ./charmrun +p36 Main/inciter -v -c slot_cyl.q -i unitcube_01_6M.exo
 
 Running on 36 processors:  Main/inciter -v -c slot_cyl.q -i unitcube_01_6M.exo
 charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 36  Main/inciter -v -c slot_cyl.q -i unitcube_01_6M.exo
@@ -1204,9 +1188,8 @@ Quinoa> Starting time stepping ...
      Total runtime                                                               : 0:9:42
 
 [Partition 0][Node 0] End of program
-jbakosi@lagrange:~/code/quinoa/build/gnu:vort$ cp diag diag.6M
-cp: overwrite 'diag.6M'? y
-jbakosi@lagrange:~/code/quinoa/build/gnu:vort$ ./charmrun +p36 Main/inciter -v -c slot_cyl.q -i unitcube_01_48M.exo
+$ cp diag diag.6M
+$ ./charmrun +p36 Main/inciter -v -c slot_cyl.q -i unitcube_01_48M.exo
 
 Running on 36 processors:  Main/inciter -v -c slot_cyl.q -i unitcube_01_48M.exo
 charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 36  Main/inciter -v -c slot_cyl.q -i unitcube_01_48M.exo
@@ -2240,19 +2223,19 @@ Quinoa> Starting time stepping ...
      Total runtime                                                               : 2:33:54
 
 [Partition 0][Node 0] End of program
-jbakosi@lagrange:~/code/quinoa/build/gnu:vort$ cp diag diag.48M
-cp: overwrite 'diag.48M'? y
+$ cp diag diag.48M
 \endverbatim
 
-\section inciter_example_hump_fieldvis Example visualization
+@section inciter_example_hump_fieldvis Example visualization
 
-Example visualization of the 3D field data result with [ParaView](https://www.paraview.org).
+Example visualization of the 3D field data result with
+[ParaView](https://www.paraview.org).
 
-\verbatim
+@code{.bash}
 paraview out.0
-\endverbatim
+@endcode
 
-\section inciter_example_hump_error L2 errors
+@section inciter_example_hump_error L2 errors
 
 The following figure shows the time evolution of the \f$L_2\f$ error for three
 different meshes whose edge lengths are successively halved, which indicates
@@ -2260,16 +2243,13 @@ approximately second-order convergence. See also
 https://github.com/quinoacomputing/quinoa-examples/tree/master/inciter/Hump for
 the diagnostics files.
 
-<img src="https://quinoacomputing.github.io/l2.svg" align="left" width="50%" background=transparent>
+@m_div{m-col-m-10 m-center-m}
+<img src="l2.svg"/>
+@m_enddiv
 
 Gnuplot commands to reproduce the above plot:
-\verbatim
+@code{.shell}
 plot "diag.750K" u 2:4, "diag.6M" u 2:4, "diag.48M" u 2:4
-\endverbatim
+@endcode
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Fri 14 Jul 2017 09:31:44 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */

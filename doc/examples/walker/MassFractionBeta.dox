@@ -1,17 +1,16 @@
 /*!
   \page      walker_example_massfracbeta Walker: Integrating the mass-fraction beta SDE
-  \tableofcontents
 
-This example runs [walker](walker_doc.html) to integrate the mass-fraction
+This example runs @ref walker_main to integrate the mass-fraction
 beta SDE (see DiffEq/MassFractionBeta.h) using constant coefficients. The
 mass-fraction beta SDE is based on the beta SDE, additionally computing two
 more stochastic variables that are functions of the beta variables integrated.
 For more detail on the beta SDE, see
 https://doi.org/10.1080/14685248.2010.510843.
 
-\section walker_example_massfracbeta_control Control file
+@section walker_example_massfracbeta_control Control file
 
-\verbatim
+@code{.bash}
 title "Test Ray's closure ideas for <y^2> and <rho v>"
 
 walker
@@ -111,14 +110,14 @@ walker
     p5( Y5 : 1.0e-2 )
   end
 end
-\endverbatim
+@endcode
 
-\section walker_example_massfracbeta_run Example run on 8 CPUs
-\verbatim
-./charmrun +p8 Main/walker -v -c ../../tmp/massfracbeta.q -u 0.9
-\endverbatim
+@section walker_example_massfracbeta_run Example run on 8 CPUs
+@code{.bash}
+./charmrun +p8 Main/walker -v -c ../../tmp/massfracbeta.q
+@endcode
 
-\section walker_example_massfracbeta_output Output
+@section walker_example_massfracbeta_output Output
 \verbatim
 Running on 8 processors:  Main/walker -v -c massfracbeta.q
 charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 8  Main/walker -v -c massfracbeta.q
@@ -329,14 +328,14 @@ Charm++> cpu topology info is gathered in 0.002 seconds.
 [Partition 0][Node 0] End of program
 \endverbatim
 
-\section walker_example_massfracbeta_results Results
+@section walker_example_massfracbeta_results Results
 
 The rationale for these runs is to integrate the system in time, extract the
 time evolution of various statistics, and then test several different closure
 hypotheses among the statistics. Example gnuplot commands to plot and test some
 closure ideas are:
 
-\verbatim
+@code{.shell}
 # vim: filetype=gnuplot:
 
 # Nomenclature:
@@ -397,11 +396,6 @@ plot "stat.txt" u 2:(-$31) w l t "b", "stat.txt" u 2:($9**4.0*$39*(1.0+$39/9.0/9
 plot "stat.txt" u 2:(-$33) w l t "b", "stat.txt" u 2:($10**4.0*$40*(1.0+$40/9.0/9.0/$5/(1.0+$5)*(0.1**2.0/$10**4.0-1.0))) w p ps 1.0 pt 7 t "<R>^4<v^2> [1 + <v^2>/<v^2>nm * (rho_1^2rho_2^2/<R>^4 - 1) ]" # uniform
 plot "stat.txt" u 2:(-$35) w l t "b", "stat.txt" u 2:($11**4.0*$41*(1.0+$41/9.0/9.0/$6/(1.0+$6)*(0.1**2.0/$11**4.0-1.0))) w p ps 1.0 pt 7 t "<R>^4<v^2> [1 + <v^2>/<v^2>nm * (rho_1^2rho_2^2/<R>^4 - 1) ]"
 plot "stat.txt" u 2:(-$37) w l t "b", "stat.txt" u 2:($12**4.0*$42*(1.0+$42/9.0/9.0/$7/(1.0+$7)*(0.1**2.0/$12**4.0-1.0))) w p ps 1.0 pt 7 t "<R>^4<v^2> [1 + <v^2>/<v^2>nm * (rho_1^2rho_2^2/<R>^4 - 1) ]" # almost mixed
-\endverbatim
+@endcode
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Tue 04 Aug 2015 08:35:12 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */

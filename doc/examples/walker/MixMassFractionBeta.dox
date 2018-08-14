@@ -1,8 +1,7 @@
 /*!
   \page      walker_example_mixmassfracbeta Walker: Integrating the mix mass-fraction beta SDE
-  \tableofcontents
 
-This example runs [walker](walker_doc.html) to integrate the mix mass-fraction
+This example runs @ref walker_main to integrate the mix mass-fraction
 beta SDE (see DiffEq/MixMassFractionBeta.h) using constant coefficients. The mix
 mass-fraction beta SDE is based on the beta SDE, (1) additionally computing two
 more stochastic variables that are functions of the beta variables integrated,
@@ -10,9 +9,9 @@ and (2) the coefficients _b_ and _kappa_ are specified via functions that
 constrain the beta SDE to be consistent with the turbulent mixing process. For
 more detail on the beta SDE, see https://doi.org/10.1080/14685248.2010.510843.
 
-\section walker_example_mixmassfracbeta_control Control file
+@section walker_example_mixmassfracbeta_control Control file
 
-\verbatim
+@code{.bash}
 # vim: filetype=sh:
 
 title "Test evolution of some stats in mass fraction mixing"
@@ -126,14 +125,14 @@ walker
 #    p10( Y10 : 1.0e-2 )
   end
 end
-\endverbatim
+@endcode
 
-\section walker_example_mixmassfracbeta_run Example run on 8 CPUs
-\verbatim
+@section walker_example_mixmassfracbeta_run Example run on 8 CPUs
+@code{.bash}
 ./charmrun +p8 Main/walker -v -c ../../tmp/mixmassfracbeta.q -v
-\endverbatim
+@endcode
 
-\section walker_example_mixmassfracbeta_output Output
+@section walker_example_mixmassfracbeta_output Output
 \verbatim
 Running on 8 processors:  Main/walker -v -c ../../tmp/mixmassfracbeta.q
 charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 8  Main/walker -v -c ../../tmp/mixmassfracbeta.q
@@ -375,7 +374,7 @@ d:0 d:0 d:0 d:0 d:0       10  1.000000e-01  1.000000e-02  000:00:00  000:00:30  
 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 
 \endverbatim
 
-\section walker_example_mixmassfracbeta_results Results
+@section walker_example_mixmassfracbeta_results Results
 
 The rationale for these runs is to integrate the system in time, extract the
 time evolution of various statistics and PDFs, and then test if the evolution of
@@ -393,7 +392,7 @@ mixing. Example questions these simulations help answer:
  - Does the initially symmetric mass fraction PDF generate a smaller skewness
    for the low Atwood number than the large Atwood number case?
 
-\verbatim
+@code{.shell}
 # vim: filetype=gnuplot:
 
 # Nomenclature:
@@ -594,11 +593,6 @@ r = 9.0; plot "stat.txt" u 2:49 w l t "<rv^2>", "" u 2:(-r*r*$32/(1.0+r*$13/$12)
 r = 9.0; plot "stat.txt" u 2:53 w l t "<rv^2>", "" u 2:(-r*r*$34/(1.0+r*$15/$14)*(1.0-(1.0+r*$15/$14)**2.0/(1.0+r)*(1.0-$52))) w l t "<rv^2>nm light=heavy"
 # all in on plot
 r = 9.0; plot "stat.txt" u 2:41 w l t "<rv^2>", "" u 2:(-r*r*$28/(1.0+r*$9/$8)*(1.0-(1.0+r*$9/$8)**2.0/(1.0+r)*(1.0-$40))) w p pt 7 lt 1 t "<rv^2>nm light=heavy", "" u 2:45 w l lt 2 t "<rv^2>", "" u 2:(-r*r*$30/(1.0+r*$11/$10)*(1.0-(1.0+r*$11/$10)**2.0/(1.0+r)*(1.0-$44))) w p pt 7 lt 2 t "<rv^2>nm light > heavy", "" u 2:49 w l lt 3 t "<rv^2>", "" u 2:(-r*r*$32/(1.0+r*$13/$12)*(1.0-(1.0+r*$13/$12)**2.0/(1.0+r)*(1.0-$48))) w p pt 7 lt 3 t "<rv^2>nm light < heavy", "" u 2:53 w l lt 4 t "<rv^2>", "" u 2:(-r*r*$34/(1.0+r*$15/$14)*(1.0-(1.0+r*$15/$14)**2.0/(1.0+r)*(1.0-$52))) w p pt 7 lt 4 t "<rv^2>nm <r^3>(t=0) = 0"
-\endverbatim
+@endcode
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Tue 04 Aug 2015 10:52:14 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */
