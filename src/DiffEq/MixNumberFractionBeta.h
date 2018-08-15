@@ -20,11 +20,23 @@
 
     In a nutshell, the equation integrated governs a set of scalars,
     \f$0\!\le\!X_\alpha\f$, \f$\alpha\!=\!1,\dots,N\f$, as
+
+    @m_class{m-show-m}
+
     \f[
        \mathrm{d}X_\alpha(t) = \frac{b_\alpha}{2}\left(S_\alpha - X_\alpha\right)
        \mathrm{d}t + \sqrt{\kappa_\alpha X_\alpha(1-X_\alpha)}
        \mathrm{d}W_\alpha(t), \qquad \alpha=1,\dots,N
     \f]
+
+    @m_class{m-hide-m}
+
+    \f[ \begin{split}
+       \mathrm{d}X_\alpha(t) = \frac{b_\alpha}{2}\left(S_\alpha - X_\alpha\right)
+       \mathrm{d}t + \sqrt{\kappa_\alpha X_\alpha(1-X_\alpha)}
+       \mathrm{d}W_\alpha(t), \\ \alpha=1,\dots,N
+    \end{split} \f]
+
     with parameter vectors \f$b_\alpha = \Theta b'_\alpha > 0\f$, \f$
     \newcommand{\irv}[1]{\langle{#1^2}\rangle} \kappa_\alpha = \kappa' \irv{x} >
     0\f$, and \f$0 < S_\alpha < 1\f$. This is similar to DiffEq/Beta.h, but the
