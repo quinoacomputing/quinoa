@@ -168,6 +168,178 @@ The specific equation types are registered into a
 leads to generic code for configuring and using existing equation types and
 adding new ones.
 
-_Discuss CG and DG with inciter::CGPDEFactory and inciter::DGPDEFactory._
+Currently, there are two families of spatial discretizations (or _schemes_)
+implemented: _continuous_ and _discontinuous_ Galerkin (CG, DG) finite element
+methods (FEM). Correspondingly, there are two factories into which PDEs are
+registered, inciter::CGFactory and inciter::DGFactory. (These are analogous to
+tk::DiffEqFactory in @ref walker_main.)
+
+CG discretization in space is combined with a time stepping scheme that is
+equivalent to the [Lax-Wendroff (LW)](https://en.wikipedia.org/wiki/Lax%E2%80%93Wendroff_method)
+scheme adopted to the unstructured-mesh finite element context and treats
+discontinuities with flux-corrected transport (FCT).
+
+DG discretization in space is combined with Runge-Kutta time stepping.
+
+@dir src/PDE/Transport
+@brief Partial differential equations for scalar transport
+
+@details This directory contains code for discretizing a system of scalar
+transport equations. The subdirectories `Physics` and `Problem` contain various
+ways to configure scalar transport with respect to the type of physics solved
+(e.g., advection only or advection _and_ diffusion) and with respect to the
+type of problem solved (e.g., a predefined problem with an analytical solution
+for verification or a user-defined problem).
+
+@dir src/PDE/Transport/Physics
+@brief Physics configurations for scalar transport
+
+@dir src/PDE/Transport/Problem
+@brief Problem configurations for scalar transport
+
+@dir src/PDE/CompFlow
+@brief Partial differential equations for compressible flow
+
+@details This directory contains code for discretizing a system of conservation
+equations that govern compressible flow. The subdirectories `Physics` and
+`Problem` contain various ways to the compressible flow solver with respect to
+the type of physics solved (e.g., inviscid or viscous) and with respect to the
+type of problem solved (e.g., a predefined problem with an analytical solution
+for verification or a user-defined problem).
+
+@dir src/PDE/CompFlow/Physics
+@brief Physics configurations for compressible flow
+
+@dir src/PDE/CompFlow/Problem
+@brief Problem configurations for compressible flow
+
+@dir src/PDE/CompFlow/Riemann
+@brief Riemann solvers for compressible flow
+
+@dir src/RNG
+@brief Interoperation with random number generator libraries
+
+@details This directory contains code used to interface with random number
+generator (RNG) third-party libraries. It also defines a
+[factory](http://www.boost.org/doc/libs/release/libs/functional/factory),
+tk::RNGFactory, which leads to generic code for configuring and using supported
+RNGs and adding new ones.
+
+@dir src/RNGTest
+@brief Functionality specific to _RNGTest_
+
+@details This directory contains code specific to @ref rngtest_main.
+
+@see @ref rngs_input
+@see @ref rngtest_design
+@see @ref rngtest_examples
+
+@dir src/Statistics
+@brief Estimating statistical moments and probablity distributions from ensembles
+
+@details This directory contains code to estimate arbitrary statistical moments
+and discrete probability distributions from fluctuating ensembles. It also
+contains code used to aggregate distributions across a large problem
+distributed across many processing elements (PEs) in parallel, using custom
+reducers of the Charm++ runtime system.
+
+@see @ref statistics_output
+@see @ref walker_examples
+
+@dir src/Walker
+@brief Functionality specific to _Walker_
+
+@details This directory contains code specific to @ref walker_main.
+
+@see @ref diffeq
+@see @ref inhomogeneity
+@see @ref io
+@see @ref walker_examples
+
+@dir src/UnitTest
+@brief Functionality specific to _UnitTest_
+
+@details This directory contains code specific to @ref unittest_main. The
+subdirectory structure relative to `src/UnitTest/tests` mirrors that of the
+root source directory, `src`, and contain unit test definitions for the given
+subdirectories mirrored.
+
+@dir src/UnitTest/tests
+@brief Unit test root
+
+@dir src/UnitTest/tests/Base
+@brief Unit tests for subdirectory _Base_
+
+@dir src/UnitTest/tests/Control
+@brief Unit tests for subdirectory _Control_
+
+@dir src/UnitTest/tests/Control/Options
+@brief Unit tests for subdirectory _Control/Options_
+
+@dir src/UnitTest/tests/Control/Options
+@brief Unit tests for subdirectory _Control/Options_
+
+@dir src/UnitTest/tests/Inciter
+@brief Unit tests for subdirectory _Inciter_
+
+@dir src/UnitTest/tests/Inciter/AMR
+@brief Unit tests for subdirectory _Inciter/AMR_
+
+@dir src/UnitTest/tests/IO
+@brief Unit tests for subdirectory _IO_
+
+@dir src/UnitTest/tests/LoadBalance
+@brief Unit tests for subdirectory _LoadBalance_
+
+@dir src/UnitTest/tests/Mesh
+@brief Unit tests for subdirectory _Mesh_
+
+@dir src/UnitTest/tests/RNG
+@brief Unit tests for subdirectory _RNG_
+
+@dir src/Particles
+@brief Functionality related _spatial transport_ of Lagrangian particles
+
+@details This directory contains functionality specific to _spatial_ transport
+of Lagrangian particles. (_Spatial_ transport as opposed to transport in sample
+(or state) space which is in `src/DiffEq`.) This is also the place for particle
+transport across processing elements (PEs or CPUs) of a distributed problem
+running in parallel.
+
+@dir src/NoWarning
+@brief Include files turning of specific compiler warnings
+
+@dir src/Mesh
+@brief Functionality related to unstructured meshes
+
+@details This directory contains functionality used to discretize differential
+equations in 3-dimensional space. It contains functionality to
+ - store unstructured tetrahedron meshes, k::UnsMesh,
+ - compute data structures derived from the connectivity graph, DerivedData.C,
+ - helpers for iterating over derived data structures, e.g., tk::Around,
+ - reordering meshes, Reorder.C, and
+ - computing gradients, Gradients.C.
+
+This directory does _not_ contain functionality to read or write meshes, that
+is in `src/IO`.
+
+@dir src/Main
+@brief Driver routines for all executables
+
+@details This directory contains all the main() functions, and all Main Charm++
+chares for all executables. It contains
+ - the `Main` Charm++ chares in `<executable>.C`,
+ - the main Charm++ modules, `mainmodule`, in `<lower_case_executable>.ci`,
+ - drivers, `<executable>Driver.[Ch]`, instantiated from the `Main` Charm++
+   chares,
+ - executable-specific pretty-printers in `<executable>Print.[Ch]`,
+ - configuration compiler macros and values imported from cmake in
+   `QuinoaConfig.[Ch]`, and
+ - generic initialization routines reused across all executables, Init.h.
+
+In other words, this is where all execution starts for all executables.
+
+@dir src/LoadBalance
+@brief blah
 
 */
