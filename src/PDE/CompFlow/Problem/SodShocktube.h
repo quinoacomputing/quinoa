@@ -98,10 +98,14 @@ class CompFlowProblemSodShocktube {
     //!   in this PDE system
     //! \param[in,out] conf Set of unique side set IDs to add to
     static void side( std::unordered_set< int >& conf ) {
-      using tag::param; using tag::compflow; using tag::bcdir;
-      for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
-        for (const auto& i : s)
-          conf.insert( std::stoi(i) );
+      using tag::param; using tag::compflow;
+
+      for (const auto& s : g_inputdeck.get< param, compflow,
+                                            tag::bcextrapolate >())
+        for (const auto& i : s) conf.insert( std::stoi(i) );
+
+      for (const auto& s : g_inputdeck.get< param, compflow, tag::bcsym >())
+        for (const auto& i : s) conf.insert( std::stoi(i) );
     }
 
     //! Return field names to be output to file
