@@ -214,7 +214,7 @@ Sorter::comface( CkReductionMsg* msg )
      for (const auto& t : s.second) {
        b.push_back( f++ );
        m_triinpoel.insert( end(m_triinpoel), begin(t), end(t) );
-     } 
+     }
    }
 
   comface_complete();

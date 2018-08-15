@@ -64,7 +64,7 @@ class ExodusIIMeshReader {
     //!    PE defaults to 0 for a single-CPU read.
     void readMeshPart( std::vector< std::size_t >& ginpoel,
                        std::vector< std::size_t >& inpoel,
-                       std::vector< std::size_t >& triinpoel,
+                       std::vector< std::size_t >& triinp,
                        std::vector< std::size_t >& gid,
                        std::unordered_map< std::size_t, std::size_t >& lid,
                        tk::UnsMesh::Coords& coord,
@@ -115,7 +115,7 @@ class ExodusIIMeshReader {
       std::map< int, std::vector< std::size_t > >& belem,
       const std::map< int, std::vector< std::size_t > >& faces,
       const std::vector< std::size_t >& ginpoel,
-      const std::vector< std::size_t >& triinpoel ) const;
+      const std::vector< std::size_t >& triinp ) const;
 
     //!  Return number of elements in a mesh block in the ExodusII file
     std::size_t nelem( tk::ExoElemType elemtype ) const;

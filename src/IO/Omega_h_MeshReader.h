@@ -36,7 +36,7 @@ class Omega_h_MeshReader {
     //!    PE defaults to 0 for a single-CPU read.
     void readMeshPart( std::vector< std::size_t >& ginpoel,
                        std::vector< std::size_t >& inpoel,
-                       std::vector< std::size_t >& triinpoel,
+                       std::vector< std::size_t >& triinp,
                        std::vector< std::size_t >& gid,
                        std::unordered_map< std::size_t, std::size_t >& lid,
                        tk::UnsMesh::Coords& coord,
@@ -58,7 +58,7 @@ class Omega_h_MeshReader {
       std::map< int, std::vector< std::size_t > >& belem,
       const std::map< int, std::vector< std::size_t > >& faces,
       const std::vector< std::size_t >& ginpoel,
-      const std::vector< std::size_t >& triinpoel ) const;
+      const std::vector< std::size_t >& triinp ) const;
 
   private:
     const std::string m_filename;       //!< Input file name

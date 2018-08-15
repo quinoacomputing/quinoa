@@ -93,7 +93,7 @@ void
 ExodusIIMeshReader::readMeshPart(
   std::vector< std::size_t >& ginpoel,
   std::vector< std::size_t >& inpoel,
-  std::vector< std::size_t >& triinpoel,
+  std::vector< std::size_t >& triinp,
   std::vector< std::size_t >& gid,
   std::unordered_map< std::size_t, std::size_t >& lid,
   tk::UnsMesh::Coords& coord,
@@ -104,7 +104,7 @@ ExodusIIMeshReader::readMeshPart(
 //!   chunk of the mesh (global ids)
 //! \param[in,out] inpoel Container to store element connectivity with local
 //!   node IDs of this PE's mesh chunk
-//! \param[in,out] triinpoel Container to store triangle element connectivity
+//! \param[in,out] triinp Container to store triangle element connectivity
 //!   (if exists in file) with global node indices
 //! \param[in,out] gid Container to store global node IDs of elements of this
 //!   PE's mesh chunk
@@ -155,23 +155,21 @@ ExodusIIMeshReader::readMeshPart(
 
   // Read triangle element connectivity (all triangle blocks in file)
   auto ntri = nelem( tk::ExoElemType::TRI );
-  if ( ntri !=0 ) readElements( {{0,ntri-1}}, tk::ExoElemType::TRI, triinpoel );
+  if ( ntri !=0 ) readElements( {{0,ntri-1}}, tk::ExoElemType::TRI, triinp );
 
   // Keep triangles shared in (partially-read) tetrahedron mesh
-  std::vector< std::size_t > triinpoel_own;
+  std::vector< std::size_t > triinp_own;
   std::size_t ltrid = 0;        // local triangle id
-  for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
-    auto i = faces.find( {{ triinpoel[e*3+0],
-                            triinpoel[e*3+1],
-                            triinpoel[e*3+2] }} );
+  for (std::size_t e=0; e<triinp.size()/3; ++e) {
+    auto i = faces.find( {{ triinp[e*3+0], triinp[e*3+1], triinp[e*3+2] }} );
     if (i != end(faces)) {
       m_tri[e] = ltrid++;       // generate global->local triangle ids
-      triinpoel_own.push_back( triinpoel[e*3+0] );
-      triinpoel_own.push_back( triinpoel[e*3+1] );
-      triinpoel_own.push_back( triinpoel[e*3+2] );
+      triinp_own.push_back( triinp[e*3+0] );
+      triinp_own.push_back( triinp[e*3+1] );
+      triinp_own.push_back( triinp[e*3+2] );
     }
   }
-  triinpoel = std::move(triinpoel_own);
+  triinp = std::move(triinp_own);
 }
 
 std::array< std::vector< tk::real >, 3 >
@@ -740,13 +738,13 @@ ExodusIIMeshReader::triinpoel(
   std::map< int, std::vector< std::size_t > >& belem,
   const std::map< int, std::vector< std::size_t > >& faces,
   const std::vector< std::size_t >& ginpoel,
-  const std::vector< std::size_t >& triinpoel ) const
+  const std::vector< std::size_t >& triinp ) const
 // *****************************************************************************
 //  Generate triangle face connectivity for side sets
 //! \param[in,out] belem File-internal elem ids of side sets
 //! \param[in] faces Elem-relative face ids of side sets
 //! \param[in] ginpoel Tetrahedron element connectivity with global nodes
-//! \param[in] triinpoel Triangle element connectivity with global nodes
+//! \param[in] triinp Triangle element connectivity with global nodes
 //!   (if exists in file)
 //! \return Triangle face connectivity with global node IDs of side sets
 //! \details This function takes lists of file-internal element ids (in belem)
@@ -789,12 +787,12 @@ ExodusIIMeshReader::triinpoel(
 
         auto t = m_tri.find(r.second);
         if (t != end(m_tri)) {  // only if triangle id exists on this PE
-          Assert( t->second < triinpoel.size()/3,
+          Assert( t->second < triinp.size()/3,
                   "Indexing out of triangle connectivity" );
           // generate triangle (face) connectivity using global node ids
-          bnd_triinpoel.push_back( triinpoel[ t->second*3 + 0 ] );
-          bnd_triinpoel.push_back( triinpoel[ t->second*3 + 1 ] );
-          bnd_triinpoel.push_back( triinpoel[ t->second*3 + 2 ] );
+          bnd_triinpoel.push_back( triinp[ t->second*3 + 0 ] );
+          bnd_triinpoel.push_back( triinp[ t->second*3 + 1 ] );
+          bnd_triinpoel.push_back( triinp[ t->second*3 + 2 ] );
           localface = true;
         }
 
