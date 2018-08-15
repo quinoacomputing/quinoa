@@ -59,8 +59,17 @@ Omega_h_MeshReader::readMeshPart(
           coord[0].empty() && coord[1].empty() && coord[2].empty(),
           "Containers to store mesh must be empty" );
 
+  #if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wold-style-cast"
+  #endif
+
   // Create Omega_h library instance
   auto lib = Omega_h::Library( nullptr, nullptr, MPI_COMM_WORLD );
+
+  #if defined(__clang__)
+    #pragma clang diagnostic pop
+  #endif
 
   // Find out how many partitions the Omega_h mesh was saved with
   auto nparts = Omega_h::binary::read_nparts( m_filename, lib.world() );
