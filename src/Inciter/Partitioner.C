@@ -10,8 +10,7 @@
     algorithm utilizes the structured dagger (SDAG) Charm++ functionality. The
     high-level overview of the algorithm structure and how it interfaces with
     Charm++ is discussed in the Charm++ interface file
-    src/Inciter/partitioner.ci. See also src/Inciter/Partitioner.h for the
-    asynchronous call graph.
+    src/Inciter/partitioner.ci.
 */
 // *****************************************************************************
 
@@ -82,13 +81,17 @@ Partitioner::Partitioner(
   m_bnode( bnode )
 // *****************************************************************************
 //  Constructor
-//! \param[in] cb Charm++ callbacks
+//! \param[in] cbp Charm++ callbacks for Partitioner
+//! \param[in] cbr Charm++ callbacks for Refiner
+//! \param[in] cbs Charm++ callbacks for Sorter
 //! \param[in] host Host Charm++ proxy we are being called from
-//! \param[in] solver Linear system solver proxy
-//! \param[in] bc Boundary conditions group proxy
+//! \param[in] solver Linear system solver Charm++ proxy
+//! \param[in] refiner Mesh refiner Charm++ proxy
+//! \param[in] sorter Mesh reorder (sorter) Charm++ proxy
 //! \param[in] scheme Discretization scheme
 //! \param[in] bface Face lists mapped to side set ids
-//! \param[in] triinpoel Interconnectivity of points and boundary-face
+//! \param[in] triinpoel Interconnectivity of points and boundary-faces
+//! \param[in] bnode Node ids mapped to side set ids
 // *****************************************************************************
 {
   // Create mesh reader
@@ -157,7 +160,7 @@ Partitioner::addMesh( int frompe,
 // *****************************************************************************
 //  Receive mesh associated to chares we own after refinement
 //! \param[in] frompe PE call coming from
-//! \param[in] cmesh Map associating mesh connectivities to global node ids
+//! \param[in] chmesh Map associating mesh connectivities to global node ids
 //!   and node coordinates for mesh chunks we are assigned by the partitioner
 // *****************************************************************************
 {
@@ -248,7 +251,7 @@ Partitioner::centroids( const std::vector< std::size_t >& inpoel,
 // *****************************************************************************
 //  Compute element centroid coordinates
 //! \param[in] inpoel Mesh connectivity with local ids
-//! \param[ib] coord Node coordinates
+//! \param[in] coord Node coordinates
 //! \return Centroids for all cells on this PE
 // *****************************************************************************
 {

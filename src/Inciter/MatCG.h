@@ -15,12 +15,6 @@
     There are a potentially large number of MatCG Charm++ chares created by
     Transporter. Each MatCG gets a chunk of the full load (part of the mesh)
     and does the same: initializes and advances a number of PDE systems in time.
-
-    The implementation uses the Charm++ runtime system and is fully
-    asynchronous, overlapping computation and communication. The algorithm
-    utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
-    overview of the algorithm structure and how it interfaces with Charm++ is
-    discussed in the Charm++ interface file src/Inciter/matcg.ci.
 */
 // *****************************************************************************
 #ifndef MatCG_h
@@ -85,12 +79,12 @@ class MatCG : public CBase_MatCG {
     //! Update high order solution vector
     void updateSol( //solMsg* m );
                     const std::vector< std::size_t >& gid,
-                    const std::vector< tk::real >& sol );
+                    const std::vector< tk::real >& du );
 
     //! Update low order solution vector
     void updateLowSol( //solMsg* m );
                        const std::vector< std::size_t >& gid,
-                       const std::vector< tk::real >& sol );
+                       const std::vector< tk::real >& du );
 
     //! Prepare for next step
     void next( const tk::Fields& a );
@@ -98,6 +92,7 @@ class MatCG : public CBase_MatCG {
     //! Evaluate whether to continue with next step
     void eval();
 
+    /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

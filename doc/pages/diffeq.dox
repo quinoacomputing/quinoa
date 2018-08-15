@@ -44,8 +44,8 @@ multi-variate equation classes.
 
 The differential equation base class should have pure virtual interfaces for:
  - Setting initial conditions on the particles at _t_ = 0, e.g.,
-   @code{.shell}initialize()@endcode
- - Advancing the particles in time, e.g., @code{.shell}advance()@endcode
+   @code{.cpp}initialize()@endcode
+ - Advancing the particles in time, e.g., @code{.cpp}advance()@endcode
 
 @section diffeq_policies Possible policies of a differential equation base class
 
@@ -78,7 +78,7 @@ Specifies how the differential equation coefficients, e.g., _b_, _S_, and
 \f$\kappa\f$ for
 the Dirichlet SDE, are used by the equation. Possible coefficients policies:
  - _Constant:_ initialized once, used for all _t_ > 0
- - _Functional:_ @code{.shell}advance()@endcode algorithm queries coefficients
+ - _Functional:_ @code{.cpp}advance()@endcode algorithm queries coefficients
    at every update via coefficients-policy functions, e.g., time, various
    statistics
 

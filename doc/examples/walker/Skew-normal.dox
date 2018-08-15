@@ -247,7 +247,7 @@ their analytical solution (see DiffEq/SkewNormal.h).
 @m_enddiv
 
 Gnuplot commands to reproduce the above plots:
-@code{.shell}
+@code{.bash}
 plot "stat.txt" u 2:3 w l t "<M1>", "stat.txt" u 2:4 w l t "<M2>", "stat.txt" u 2:5 w l t "<m1m1>", "stat.txt" u 2:6 w l t "<m2m2>"
 plot "pdf_p1.txt" w p, "pdf_p2.txt" w p, exp(-x*x/2/0.2/0.2)*(1+erf(100.0*x/sqrt(2)))/0.2/sqrt(2*pi) lt 1, exp(-x*x/2/0.5/0.5)*(1+erf(-50.0*x/sqrt(2)))/0.5/sqrt(2*pi) lt 2
 @endcode

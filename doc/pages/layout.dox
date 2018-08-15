@@ -85,7 +85,7 @@ the data layout selection should be done at compile-, or run-time.
 
 Have looked at https://bitbucket.org/blaze-lib/blaze which implements row-, and
 column-major matrix classes based on a template argument. See, e.g.,
-@code{.shell}<blaze-1.5>/blaze/math/dense/StaticMatrix.h@endcode, which reveals
+`<blaze-1.5>/blaze/math/dense/StaticMatrix.h`, which reveals
 that the template argument (bool) @code{.cpp}SO@endcode selects between row-, or
 column-major internal storage.  Then @code{.cpp}SO@endcode is used at both
 compile-time (e.g., by the class-user, when instantiating the type of the
@@ -564,9 +564,9 @@ void advance(int p, int tid, tk::real dt) override {
 
 @subsection layout_comparison Comparison of the algorithms
 
-@code{.cmake}DEBUG@endcode mode uses @code{.shell}-O0@endcode and does not
+@code{.cmake}DEBUG@endcode mode uses @code{.bash}-O0@endcode and does not
 optimize function calls away for all of three compilers tested.
-@code{.cmake}RELEASE@endcode mode uses @code{.shell}-O3@endcode and the
+@code{.cmake}RELEASE@endcode mode uses @code{.bash}-O3@endcode and the
 abstraction is completely optimized away. However, index calculations still
 remain compared to a layout-dependent advance algorithm.
 
@@ -603,7 +603,7 @@ Total time measured in micro-seconds, run on a Lenovo laptop with Intel Core i7,
 
 - Surprisingly, the layout-agnostic access is even a tiny bit faster than the
   layout-dependent algorithm with the Intel compiler with
-  @code{.shell}-O3@endcode.
+  @code{.bash}-O3@endcode.
 
 @section layout_conclusion Conclusion
 

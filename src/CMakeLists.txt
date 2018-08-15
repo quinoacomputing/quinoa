@@ -544,12 +544,15 @@ endif(BUILD_SHARED_LIBS)
 
 # add a target to generate API documentation with Doxygen
 find_package(Doxygen 1.8.12)
+set(MCSS_DOX2HTML5 "/home/jbakosi/code/quinoa/doc/m.css/doxygen/dox2html5.py")
 if(DOXYGEN_FOUND)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.doxy
                  ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa-mcss.doxy
+                 ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa-mcss.doxy @ONLY)
   add_custom_target(doc
-                    ${DOXYGEN_EXECUTABLE}
-                    ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy
+                    ${MCSS_DOX2HTML5}
+                    ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa-mcss.doxy
                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
                     COMMENT "Documentation" VERBATIM)
   message(STATUS "Add target 'doc' to generate documentation to ./doc/html/index.html")

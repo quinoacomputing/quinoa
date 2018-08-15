@@ -16,74 +16,7 @@
     overview of the algorithm structure and how it interfaces with Charm++ is
     discussed in the Charm++ interface file src/Inciter/distfct.ci.
 
-    #### Call graph ####
-    The following is a directed acyclic graph (DAG) that outlines the
-    asynchronous algorithm implemented in this class The detailed discussion of
-    the algorithm is given in the Charm++ interface file transporter.ci, which
-    also repeats the graph below using ASCII graphics. On the DAG orange
-    fills denote global synchronization points that contain or eventually lead
-    to global reductions. Dashed lines are potential shortcuts that allow
-    jumping over some of the task-graph under some circumstances or optional
-    code paths (taken, e.g., only in DEBUG mode). See the detailed discussion in
-    distfct.ci.
-    \dot
-    digraph "DistFCT SDAG" {
-      rankdir="LR";
-      node [shape=record, fontname=Helvetica, fontsize=10];
-      Upd [ label="Upd" tooltip="update high-order solution"
-                 style="solid"
-                URL="\ref tk::Solver::updateSol"];
-      LowUpd [ label="LowUpd" tooltip="update low-order solution"
-               style="solid"
-               URL="\ref tk::Solver::updateLowol"];
-      OwnAEC [ label="OwnAEC"
-               tooltip="own contributions to the antidiffusive element
-                        contributions computed"
-               URL="\ref inciter::DistFCT::aec"];
-      ComAEC [ label="ComAEC"
-               tooltip="contributions to the antidiffusive element contributions
-                        communicated"
-               URL="\ref inciter::DistFCT::comaec"];
-      OwnALW [ label="OwnALW"
-               tooltip="own contributions to the maximum and minimum unknowns of
-                        elements surrounding nodes computed"
-               URL="\ref inciter::DistFCT::alw"];
-      ComALW [ label="ComALW"
-               tooltip="contributions to the the maximum and minimum unknowns of
-                        elements surrounding nodes communicated"
-               URL="\ref inciter::DistFCT::comalw"];
-      Ver [ label="Ver" tooltip="verify antidiffusive element contributions"
-            URL="\ref inciter::DistFCT::verify"];
-      OwnLim [ label="OwnLim"
-               tooltip="compute limited antidiffusive element contributions"
-               URL="\ref inciter::DistFCT::lim"];
-      ComLim [ label="ComLim"
-               tooltip="contributions to the limited antidiffusive element
-                        contributions communicated"
-               URL="\ref inciter::DistFCT::comlim"];
-      Apply [ label="Apply"
-              tooltip="apply limited antidiffusive element contributions"
-              URL="\ref inciter::DistFCT::limit"];
-      OwnAEC -> Ver [ style="dashed" ];
-      OwnALW -> Ver [ style="dashed" ];
-      Upd -> OwnAEC [ style="solid" ];
-      Upd -> ComEC [ style="solid" ];
-      LowUpd -> OwnALW [ style="solid" ];
-      LowUpd -> ComALW [ style="solid" ];
-      OwnAEC -> OwnLim [ style="solid" ];
-      ComAEC -> OwnLim [ style="solid" ];
-      OwnALW -> OwnLim [ style="solid" ];
-      ComALW -> OwnLim [ style="solid" ];
-      OwnAEC -> ComLim [ style="solid" ];
-      ComAEC -> ComLim [ style="solid" ];
-      OwnALW -> ComLim [ style="solid" ];
-      ComALW -> ComLim [ style="solid" ];
-      OwnLim -> Apply [ style="solid" ];
-      ComLim -> Apply [ style="solid" ];
-    }
-    \enddot
-    \include Inciter/distfct.ci
-  \see       DistFCT.[Ch] and FluxCorrector.[Ch] for more info.
+  \see DistFCT.[Ch] and FluxCorrector.[Ch] for more info.
 */
 // *****************************************************************************
 #ifndef DistFCT_h
@@ -158,8 +91,7 @@ class DistFCT : public CBase_DistFCT {
 
     //! Constructor
     explicit
-    DistFCT( const CProxy_Transporter& host,
-             int nchare,
+    DistFCT( int nchare,
              std::size_t nu,
              std::size_t np,
              const std::unordered_map< int, std::vector< std::size_t > >& msum,
@@ -252,8 +184,6 @@ class DistFCT : public CBase_DistFCT {
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
 
-    //! Transporter (host) proxy
-    CProxy_Transporter m_host;
     //! Counter for high order solution nodes updated
     std::size_t m_nhsol;
     //! Counter for low order solution nodes updated

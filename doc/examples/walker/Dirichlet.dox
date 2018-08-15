@@ -227,7 +227,7 @@ the invariant.
 @m_enddiv
 
 Gnuplot commands to reproduce the above plots:
-@code{.shell}
+@code{.bash}
 plot "stat.txt" u 2:3 w l t "<Y1>", "stat.txt" u 2:4 w l t "<Y2>", 0.5 lt 1, 0.2 lt 2
 plot "stat.txt" u 2:5 w l t "<y1y1>", "stat.txt" u 2:6 w l t "<y1y2>", "stat.txt" u 2:7 w l t "<y2y2>", 1.0/44.0 lt 1, -1.0/110 lt 2, 4.0/275.0 lt 3
 @endcode

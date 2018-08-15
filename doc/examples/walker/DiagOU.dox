@@ -238,8 +238,12 @@ Left -- time evolution of the means and the means of the invariant distribution,
 right -- time evolution of the variances and those of the invariant as well as
 the zero correlation between the two independent equations integrated.
 
-<img src="https://quinoacomputing.github.io/diagou_means.svg" align="left" width="50%" background=transparent>
-<img src="https://quinoacomputing.github.io/diagou_sec.svg" align="right" width="50%" background=transparent>
+@m_div{m-col-m-6 m-left-m}
+<img src="diagou_means.svg"/>
+@m_enddiv
+@m_div{m-col-m-6 m-right-m}
+<img src="diagou_sec.svg"/>
+@m_enddiv
 
 Gnuplot commands to reproduce the above plots:
 \verbatim

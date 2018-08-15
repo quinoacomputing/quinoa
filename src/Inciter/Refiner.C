@@ -71,8 +71,18 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_bndEdges()
 // *****************************************************************************
 //  Constructor
+//! \param[in] transporter Transporter (host) Charm++ proxy
+//! \param[in] sorter Mesh reorder (sorter) Charm++ proxy
+//! \param[in] solver Linear system solver Charm++ proxy
+//! \param[in] scheme Discretization scheme
+//! \param[in] cbr Charm++ callbacks for Refiner
+//! \param[in] cbs Charm++ callbacks for Sorter
+//! \param[in] ginpoel Mesh connectivity (this chare) using global node IDs
+//! \param[in] coordmap Mesh node coordinates (this chare) for global node IDs
 //! \param[in] bface Face lists mapped to side set ids
-//! \param[in] triinpoel Interconnectivity of points and boundary-face
+//! \param[in] triinpoel Interconnectivity of points and boundary-faces
+//! \param[in] bnode Node ids mapped to side set ids
+//! \param[in] nchare Total number of Charm++ Refiner chares
 // *****************************************************************************
 {
   Assert( !m_ginpoel.empty(), "No elements assigned to refiner chare" );

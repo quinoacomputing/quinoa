@@ -43,7 +43,7 @@ class Omega_h_MeshReader {
 
     //! Read face list of all side sets from Omega h file
     std::size_t
-    readSidesetFaces( std::map< int, std::vector< std::size_t > >& belem,
+    readSidesetFaces( std::map< int, std::vector< std::size_t > >& bface,
                       std::map< int, std::vector< int > >& faceid );
 
     //! Read face connectivity of a number boundary faces from Omega h file

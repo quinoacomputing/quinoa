@@ -78,7 +78,8 @@ class TestU01Stack {
                             std::forward<Ts>(xargs)... ) ) ) );
     }
 
-    /** @name Stack of TestU01 statistical tests wrappers */
+    /** @name Stack of TestU01 statistical tests wrappers
+      * */
     ///@{
     static std::vector< double >
     BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res,

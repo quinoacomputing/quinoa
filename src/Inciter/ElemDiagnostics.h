@@ -31,6 +31,7 @@ class ElemDiagnostics {
                   const tk::Fields& geoElem,
                   const tk::Fields& u );
 
+    /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     void pup( PUP::er& ) {}

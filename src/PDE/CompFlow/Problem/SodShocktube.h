@@ -67,6 +67,8 @@ class CompFlowProblemSodShocktube {
 
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
+    //! \param[in] e Equation system index, i.e., which compressible
+    //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] z Z coordinate where to evaluate the solution

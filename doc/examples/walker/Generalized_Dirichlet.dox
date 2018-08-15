@@ -228,7 +228,7 @@ the components of the covariance matrix and those of the invariant.
 @m_enddiv
 
 Gnuplot commands to reproduce the above plots:
-@code{.shell}
+@code{.bash}
 plot "stat.txt" u 2:3 w l t "<Y1>", "stat.txt" u 2:4 w l t "<Y2>", 5.0/12.0 lt 1, 7.0/30.0 lt 2
 plot "stat.txt" u 2:5 w l t "<y1y1>", "stat.txt" u 2:6 w l t "<y1y2>", "stat.txt" u 2:7 w l t "<y2y2>", 35.0/1872.0 lt 1, -35.0/4680 lt 2, 609.0/35100.0 lt 3
 @endcode

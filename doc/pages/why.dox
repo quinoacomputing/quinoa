@@ -290,10 +290,9 @@ text files. The input grammar is versatile and extensible. Parsing (but not the
 grammar) is outsourced to a library written by experts in that field. Error
 messages are friendly and often suggest a solution. Documentation of
 command-line and input file keywords is directly accessible at the user's
-fingertips, obtained via command-line arguments (@code{.shell}-h@endcode,
-@code{.shell}-H@endcode). New keywords, reflecting new features, are made
-impossible to add without proper in-code documentation. Simulation result output
-is highly customizable.
+fingertips, obtained via command-line arguments (`-h`, `-H`). New keywords,
+reflecting new features, are made impossible to add without proper in-code
+documentation. Simulation result output is highly customizable.
 
 @m_div{m-col-t-4 m-col-m-2 m-right-t}
 <img src="document.svg"/>

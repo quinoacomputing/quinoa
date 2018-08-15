@@ -260,7 +260,7 @@ stationary state.
 @m_enddiv
 
 Gnuplot commands to reproduce the above plots:
-@code{.shell}
+@code{.bash}
 plot "stat.txt" u 2:3 w l t "<X1>", "stat.txt" u 2:4 w l t "<X2>", "stat.txt" u 2:5 w l t "<X3>", "stat.txt" u 2:6 w l t "<X4>", "stat.txt" u 2:7 w l t "<X5>", 0.5 lt 1, 0.53846 lt 2, 0.39683 lt 4
 plot "stat.txt" u 2:8 w l t "<x1x1>", "stat.txt" u 2:13 w l t "<x2x2>", "stat.txt" u 2:17 w l t "<x3x3>", "stat.txt" u 2:20 w l t "<x4x4>", "stat.txt" u 2:22 w l t "<x5x5>", 0.20833 lt 1, 0.10805 lt 2, 0.083333 lt 3, 0.032788 lt 4, 0.014706 lt 5
 @endcode
@@ -278,7 +278,7 @@ corresponding to the statistically independent equations integrated.
 @m_enddiv
 
 Gnuplot commands to reproduce the above plots:
-@code{.shell}
+@code{.bash}
 plot [0:1] [0:4] "pdf_p1.txt", "pdf_p2.txt", "pdf_p3.txt", "pdf_p4.txt", "pdf_p5.txt", x**(0.1-1.0)*(1.0-x)**(0.1-1.0)/19.715 lt 1 t "a=0.1, b=0.1", x**(0.7-1.0)*(1.0-x)**(0.6-1.0)/2.1539 lt 2 t "a=0.7, b=0.6", x**(1.0-1.0)*(1.0-x)**(1.0-1.0)/1.0 lt 3 t "a=1.0, b=1.0", x**(2.5-1.0)*(1.0-x)**(3.8-1.0)/0.03092 lt 4 t "a=2.5, b=3.8", x**(8.0-1.0)*(1.0-x)**(8.0-1.0)/1.9425e-05 lt 5 t "a=8.0, b=8.0"
 plot [] [-0.003:0.003] "stat.txt" u 2:9 w l t "<x1x2>", "stat.txt" u 2:10 w l t "<x1x3>", "stat.txt" u 2:11 w l t "<x1x4>", "stat.txt" u 2:12 w l t "<x1x5>", "stat.txt" u 2:14 w l t "<x2x3>", "stat.txt" u 2:15 w l t "<x2x4>", "stat.txt" u 2:16 w l t "<x2x5>", "stat.txt" u 2:18 w l t "<x3x4>", "stat.txt" u 2:19 w l t "<x3x5>", "stat.txt" u 2:21 w l t "<x4x5>"
 @endcode

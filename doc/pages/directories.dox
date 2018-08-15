@@ -1,0 +1,169 @@
+/*!
+
+@dir src
+@brief Root of the source tree
+
+@dir src/Base
+@brief Basic, general, generic utilities, reused across all executables
+@details This directory contains basic, usually small, utility-like
+functionality. The classes and functions defined here are general purpose,
+usually generic, and therefore can and are heavily reused across all
+executables built by Quinoa.
+
+@dir src/Control
+@brief Command line and input file parsing and grammars for all executables
+@details This directory contains parsing-related functionality for all
+executables. It has multiple grammar definitions for command-line parsers for
+all executables and grammar definitions for input file parsers for those
+executables that take an input file.
+
+Grammars for command line parsers are in directories `<executable>/CmdLine`,
+while grammars for input file parsers are in directory
+`<executable>/InputDeck`.
+
+Files `<executable>/Components.h` store the number of scalar components for
+systems of equations integrated, by e.g., @ref walker_main or @ref
+inciter_main.
+
+CommonGrammar.h defines the smallest building blocks of all grammars. These are
+generic and reused among multiple command-line and input file grammars.
+
+Files `<executable>/Types.h` declare the individual components of a single
+hierarchical tuple used to store all information from (either command-line or
+input file) parsing for a single `<executable>`, e.g., @ref walker_main. The
+components are usually also tuples to nest multiple levels of hierarchies,
+i.e., to group related information together.
+
+Control.h defines a generic base class for all hierarchical data structures for
+the command-line or input file parser for a single `<executable>`, e.g., @ref
+inciter_main, with helper functions, used to store a variety of data parsed
+from the command line and input files.
+
+Tags.h defines empty structs that are used as labels during compile time. The
+labels are used to index into the hierarchical data structure, a tagged tuple
+(tk::tuple::tagged_tuple), that stores information during parsing.
+
+Keywords.h defines all keywords accepted by all parsers together with their
+documentation (for all executables for all types of parsers in a single place).
+
+Toggle.h defines a generic _switch_ with multiple states, from which
+specialized switches derive.
+
+Directories `Control/Options` and `<executable>/Options` define specialized
+switches, specializing a tk::Toggle. The former directory defines generic
+switches that are used in multiple executables, while the latter define those
+that are specific to a given `<executable>`, e.g., @ref unittest_main.
+
+@dir src/Control/FileConv
+@brief Types, command line parsing, and grammar for _FileConv_
+
+@dir src/Control/FileConv/CmdLine
+@brief Command line parsing and grammar for _FileConv_
+
+@dir src/Control/Inciter
+@brief Types, options, command line parsing, and grammar for _Inciter_
+
+@dir src/Control/Inciter/CmdLine
+@brief Command line parsing and grammar for _Inciter_
+
+@dir src/Control/Inciter/InputDeck
+@brief Input file parsing and grammar for _Inciter_
+
+@dir src/Control/Inciter/Options
+@brief Options for _Inciter_
+
+@dir src/Control/MeshConv
+@brief Types, command line parsing, and grammar for _MeshConv_
+
+@dir src/Control/MeshConv/CmdLine
+@brief Command line parsing and grammar for _MeshConv_
+
+@dir src/Control/Options
+@brief Options for multiple executables
+
+@dir src/Control/RNGTest
+@brief Types, options, command line parsing, and grammar for _RNGTest_
+
+@dir src/Control/RNGTest/CmdLine
+@brief Command line parsing and grammar for _RNGTest_
+
+@dir src/Control/RNGTest/InputDeck
+@brief Input file parsing and grammar for _RNGTest_
+
+@dir src/Control/RNGTest/Options
+@brief Options for _RNGTest_
+
+@dir src/Control/UnitTest
+@brief Types, command line parsing, and grammar for _UnitTest_
+
+@dir src/Control/UnitTest/CmdLine
+@brief Command line parsing and grammar for _UnitTest_
+
+@dir src/Control/Walker
+@brief Types, options, command line parsing, and grammar for _Walker_
+
+@dir src/Control/Walker/CmdLine
+@brief Command line parsing and grammar for _Walker_
+
+@dir src/Control/Walker/InputDeck
+@brief Input file parsing and grammar for _Walker_
+
+@dir src/Control/Walker/Options
+@brief Options for _Walker_
+
+├── Base
+├── Control
+│   ├── FileConv
+│   │   └── CmdLine
+│   ├── Inciter
+│   │   ├── CmdLine
+│   │   ├── InputDeck
+│   │   └── Options
+│   ├── MeshConv
+│   │   └── CmdLine
+│   ├── Options
+│   ├── RNGTest
+│   │   ├── CmdLine
+│   │   ├── InputDeck
+│   │   └── Options
+│   ├── UnitTest
+│   │   └── CmdLine
+│   └── Walker
+│       ├── CmdLine
+│       ├── InputDeck
+│       └── Options
+├── DiffEq
+├── Inciter
+│   └── AMR
+├── IO
+├── LinSys
+├── LoadBalance
+├── Main
+├── Mesh
+├── NoWarning
+├── Particles
+├── PDE
+│   ├── CompFlow
+│   │   ├── Physics
+│   │   ├── Problem
+│   │   └── Riemann
+│   └── Transport
+│       ├── Physics
+│       └── Problem
+├── RNG
+├── RNGTest
+├── Statistics
+├── UnitTest
+│   └── tests
+│       ├── Base
+│       ├── Control
+│       │   └── Options
+│       ├── Inciter
+│       │   └── AMR
+│       ├── IO
+│       ├── LoadBalance
+│       ├── Mesh
+│       └── RNG
+└── Walker
+
+*/

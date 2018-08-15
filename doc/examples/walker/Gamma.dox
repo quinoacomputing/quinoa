@@ -276,7 +276,7 @@ stationary state.
 @m_enddiv
 
 Gnuplot commands to reproduce the above plots:
-@code{.shell}
+@code{.bash}
 plot "stat.txt" u 2:3 w l t "<L1>", "stat.txt" u 2:4 w l t "<L2>", 2.0 lt 1, 4.0 lt 2
 plot "stat.txt" u 2:5 w l t "<l1l1>", "stat.txt" u 2:7 w l t "<l2l2>", 4.0 lt 1, 8.0 lt 2
 @endcode
@@ -294,7 +294,7 @@ corresponding to the statistically independent equations integrated.
 @m_enddiv
 
 Gnuplot commands to reproduce the above plots:
-@code{.shell}
+@code{.bash}
 plot "pdf_f.txt" t "k=1.0, theta=2.0", "pdf_g.txt" t "k=2.0, theta=2.0", x**(1.0-1.0)*exp(-x/2.0)/gamma(1.0)/2.0**1.0 lt 1, x**(2.0-1.0)*exp(-x/2.0)/gamma(2.0)/2.0**2.0 lt 2
 plot "stat.txt" u 2:6 w l t "<l1l2>"
 @endcode

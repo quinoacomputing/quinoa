@@ -335,7 +335,7 @@ time evolution of various statistics, and then test several different closure
 hypotheses among the statistics. Example gnuplot commands to plot and test some
 closure ideas are:
 
-@code{.shell}
+@code{.bash}
 # vim: filetype=gnuplot:
 
 # Nomenclature:

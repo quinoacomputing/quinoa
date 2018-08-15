@@ -202,6 +202,8 @@ class CompFlowProblemRayleighTaylor {
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
     //! \param[in] t Physical time
+    //! \param[in] V Total mesh volume (across the whole problem)
+    //! \param[in] vol Nodal mesh volumes
     //! \param[in] coord Mesh node coordinates
     //! \param[in] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file

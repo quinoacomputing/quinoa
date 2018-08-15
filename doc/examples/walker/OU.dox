@@ -251,7 +251,7 @@ the invariant.
 @m_enddiv
 
 Gnuplot commands to reproduce the above plots:
-@code{.shell}
+@code{.bash}
 plot "stat.txt" u 2:3 w l t "<R1>", "stat.txt" u 2:4 w l t "<R2>", "stat.txt" u 2:5 w l t "<R3>", 0 lt 1, 0.5 lt 2, 1.0 lt 3
 plot "stat.txt" u 2:6 w l t "<r1r1>", "stat.txt" u 2:7 w l t "<r1r2>", "stat.txt" u 2:8 w l t "<r1r3>", "stat.txt" u 2:9 w l t "<r2r2>", "stat.txt" u 2:10 w l t "<r2r3>", "stat.txt" u 2:11 w l t "<r3r3>", 4.0/2 lt 1, 2.5/3 lt 2, 1.1/4 lt 3, 32.0/4 lt 4, 5.6/5 lt 5, 23.0/6 lt 6
 @endcode

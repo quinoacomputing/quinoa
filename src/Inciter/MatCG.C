@@ -70,6 +70,7 @@ MatCG::MatCG( const CProxy_Discretization& disc,
 //  Constructor
 //! \param[in] disc Discretization proxy
 //! \param[in] solver Linear system solver (Solver) proxy
+//! \param[in] fd Face data structures
 // *****************************************************************************
 {
   auto d = Disc();
