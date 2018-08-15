@@ -41,6 +41,7 @@
   #pragma clang diagnostic ignored "-Wcast-qual"
   #pragma clang diagnostic ignored "-Wshadow-field"
   #pragma clang diagnostic ignored "-Wmissing-noreturn"
+  #pragma clang diagnostic ignored "-Wcomma"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wshadow"
