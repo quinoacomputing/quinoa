@@ -74,7 +74,14 @@ class Sorter : public CBase_Sorter {
     void createWorkers();
 
     //! Receive aggregated chare boundary nodes associated to chares
-    void comm( CkReductionMsg* msg );
+    void comChBndNode( CkReductionMsg* msg );
+
+    //! Receive aggregated boundary nodes for side sets
+    void comnode( CkReductionMsg* msg );
+
+    //! \brief Receive aggregated boundary faces (and triangle connectivity)
+    //!    for side sets
+    void comface( CkReductionMsg* msg );
 
     //! \brief Receive number of uniquely assigned global mesh node IDs from
     //!   chares with lower indices
@@ -173,6 +180,9 @@ class Sorter : public CBase_Sorter {
     std::size_t m_lower;
     //! Upper bound of node IDs this chare contributes to in a linear system
     std::size_t m_upper;
+
+    //! Start reordering (if user enabled it)
+    void start();
 
     //! Start preparing for mesh node reordering in parallel
     void mask();

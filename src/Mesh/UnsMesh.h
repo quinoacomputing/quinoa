@@ -270,9 +270,10 @@ class UnsMesh {
 
     /** @name Side set face id accessors */
     ///@{
-    const std::map< int, std::vector< int > >& faceid() const noexcept
+    const std::map< int, std::vector< std::size_t > >& faceid() const noexcept
     { return m_faceid; }
-    std::map< int, std::vector< int > >& faceid() noexcept { return m_faceid; }
+    std::map< int, std::vector< std::size_t > >& faceid() noexcept
+    { return m_faceid; }
     ///@}
 
   private:
@@ -307,7 +308,7 @@ class UnsMesh {
     //! \brief Sides of faces used to define which face of a tetrahedron is
     //!   aligned with a triangle element (1...4) associated to side set id.
     //! \note This is what ExodusII calls side set side list.
-    std::map< int, std::vector< int > > m_faceid;
+    std::map< int, std::vector< std::size_t > > m_faceid;
 
     //! Compute and return number of unique nodes in element connectivity
     //! \param[in] inpoel Element connectivity
