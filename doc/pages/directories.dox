@@ -1,5 +1,7 @@
 /*!
 
+This file contains high level documentation of all directories under src/.
+
 @dir src
 @brief Root of the source tree
 
@@ -12,47 +14,56 @@ executables built by Quinoa.
 
 @dir src/Control
 @brief Command line and input file parsing and grammars for all executables
+
 @details This directory contains parsing-related functionality for all
-executables. It has multiple grammar definitions for command-line parsers for
-all executables and grammar definitions for input file parsers for those
-executables that take an input file.
+executables. It has multiple grammar definitions for
+ - _command line_ parsers for all executables, in subdirectories
+   `src/Control/<executable>/CmdLine`, and
+ - _input file_ parsers for those executables that take an input file, in
+   subdirectories `src/Control/<executable>/InputDeck`.
 
-Grammars for command line parsers are in directories `<executable>/CmdLine`,
-while grammars for input file parsers are in directory
-`<executable>/InputDeck`.
+Grammar definitions are defined using the [Parsing Expression Grammar Template
+Library (PEGTL)](https://github.com/taocpp/PEGTL) according to [Parsing
+Expression Grammar (PEG)](https://en.wikipedia.org/wiki/Parsing_expression_grammar). As the PEGTL documentation describes
 
-Files `<executable>/Components.h` store the number of scalar components for
-systems of equations integrated, by e.g., @ref walker_main or @ref
-inciter_main.
+> Grammars are written as regular C++ code, created with template programming
+> (not template meta programming), i.e. nested template instantiations that
+> naturally correspond to the inductive definition of PEGs (and other
+> parser-combinator approaches).
 
-CommonGrammar.h defines the smallest building blocks of all grammars. These are
-generic and reused among multiple command-line and input file grammars.
+Grammars are thus written purely in C++ and the compiler generates the parsers
+using PEGTL.
 
-Files `<executable>/Types.h` declare the individual components of a single
-hierarchical tuple used to store all information from (either command-line or
-input file) parsing for a single `<executable>`, e.g., @ref walker_main. The
-components are usually also tuples to nest multiple levels of hierarchies,
-i.e., to group related information together.
+Files `src/Control/<executable>/Components.h` store the number of scalar
+components for systems of equations integrated, by e.g., @ref walker_main or
+@ref inciter_main.
 
-Control.h defines a generic base class for all hierarchical data structures for
-the command-line or input file parser for a single `<executable>`, e.g., @ref
-inciter_main, with helper functions, used to store a variety of data parsed
-from the command line and input files.
+CommonGrammar.h defines the smallest building blocks of all grammars. It
+contains generic functions that are reused among multiple command line and
+input file grammars.
 
-Tags.h defines empty structs that are used as labels during compile time. The
-labels are used to index into the hierarchical data structure, a tagged tuple
-(tk::tuple::tagged_tuple), that stores information during parsing.
+The _state_ (or _stack_) of the grammar is a tagged tuple
+(tk::tuple::tagged_tuple), a hierarchical heterogeneous data structure that
+stores all information parsed. Files `src/Control/<executable>/Types.h` declare
+the types of the components of a grammar's state. The components are usually
+also tuples to nest multiple levels of hierarchies, to group related
+information together.
+
+Control.h defines a generic base class, tk::Control, used as grammar states, It
+defines helper functions, used to store a variety of data parsed.
+
+Tags.h defines empty structs that are used as labels during compile time. These
+labels are used to index into tagged tuples.
 
 Keywords.h defines all keywords accepted by all parsers together with their
-documentation (for all executables for all types of parsers in a single place).
+documentation.
 
 Toggle.h defines a generic _switch_ with multiple states, from which
-specialized switches derive.
-
-Directories `Control/Options` and `<executable>/Options` define specialized
-switches, specializing a tk::Toggle. The former directory defines generic
-switches that are used in multiple executables, while the latter define those
-that are specific to a given `<executable>`, e.g., @ref unittest_main.
+specialized switches derive. Directories `src/Control/Options` and
+`<executable>/Options` define specific switches, specializing a tk::Toggle. The
+former directory defines switches that are used by multiple executables, while
+the latter define those that are specific to a given `<executable>`, e.g., @ref
+unittest_main.
 
 @dir src/Control/FileConv
 @brief Types, command line parsing, and grammar for _FileConv_
@@ -111,59 +122,52 @@ that are specific to a given `<executable>`, e.g., @ref unittest_main.
 @dir src/Control/Walker/Options
 @brief Options for _Walker_
 
-├── Base
-├── Control
-│   ├── FileConv
-│   │   └── CmdLine
-│   ├── Inciter
-│   │   ├── CmdLine
-│   │   ├── InputDeck
-│   │   └── Options
-│   ├── MeshConv
-│   │   └── CmdLine
-│   ├── Options
-│   ├── RNGTest
-│   │   ├── CmdLine
-│   │   ├── InputDeck
-│   │   └── Options
-│   ├── UnitTest
-│   │   └── CmdLine
-│   └── Walker
-│       ├── CmdLine
-│       ├── InputDeck
-│       └── Options
-├── DiffEq
-├── Inciter
-│   └── AMR
-├── IO
-├── LinSys
-├── LoadBalance
-├── Main
-├── Mesh
-├── NoWarning
-├── Particles
-├── PDE
-│   ├── CompFlow
-│   │   ├── Physics
-│   │   ├── Problem
-│   │   └── Riemann
-│   └── Transport
-│       ├── Physics
-│       └── Problem
-├── RNG
-├── RNGTest
-├── Statistics
-├── UnitTest
-│   └── tests
-│       ├── Base
-│       ├── Control
-│       │   └── Options
-│       ├── Inciter
-│       │   └── AMR
-│       ├── IO
-│       ├── LoadBalance
-│       ├── Mesh
-│       └── RNG
-└── Walker
+@dir src/DiffEq
+@brief Stochastic and deterministic (ordinary) differential equations
+
+@details This directory contains implementations of discrete time integrators
+for deterministic and stochastic _ordinary_ differential equations. (_Ordinary_
+as opposed to _partial_ differential equations in `src/PDE`). At this time, all
+of these ordinary differential equations are used exclusively by @ref
+walker_main.
+
+`Configure<eq>.[Ch]` contain functionality related to registration and querying
+user-configuration information on specific equation types.
+
+All specific equation types "inherit" from the common "base", tk::DiffEq, so
+that user-configured instances of multiple specific equations (as a potentially
+coupled system) can be integrated in a generic fashion. This is done using
+[concept-based runtime polymorphism](http://sean-parent.stlab.cc/papers-and-presentations/#value-semantics-and-concept-based-polymorphism).
+
+The specific equation types are registered into a
+[factory](http://www.boost.org/doc/libs/release/libs/functional/factory),
+walker::DiffEqFactory, which leads to generic code for configuring and using
+existing equation types and adding new ones.
+
+@see @ref diffeq
+
+@dir src/PDE
+@brief Partial differential equations
+
+@details This directory contains implementations of spatial discretizations
+for _partial_ differential equations (PDE). (_Partial_ as opposed to _ordinary_
+differential equations in `src/DiffEq`). At this time, all of these PDEs are
+used exclusively by @ref inciter_main.
+
+`Configure<eq>.[Ch]` contain functionality related to registration and querying
+user-configuration information on specific equation types.
+
+All specific equation types "inherit" from a common "base" so that
+user-configured instances of multiple specific equations (as a potentially
+coupled system) can be integrated in a generic fashion. This is done using
+[concept-based runtime
+polymorphism](http://sean-parent.stlab.cc/papers-and-presentations/#value-semantics-and-concept-based-polymorphism).
+
+The specific equation types are registered into a
+[factory](http://www.boost.org/doc/libs/release/libs/functional/factory), which
+leads to generic code for configuring and using existing equation types and
+adding new ones.
+
+_Discuss CG and DG with inciter::CGPDEFactory and inciter::DGPDEFactory._
 
 */
