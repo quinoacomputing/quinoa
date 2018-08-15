@@ -340,6 +340,57 @@ chares for all executables. It contains
 In other words, this is where all execution starts for all executables.
 
 @dir src/LoadBalance
-@brief blah
+@brief _Static_ load balancing
+
+@details This directory contains functionality specific to _static_ load
+balancing. (_Static_ because dynamic load balancing is handled by Charm++.) It
+has code
+ - to interoperate with Zoltan2, used for _initial_ mesh (graph) partitioning
+   in @ref inciter_main, ZoltanInterOp.C, and
+ - to experiment with custom Charm++ object placement (currently unused), e.g.,
+   UnsMeshMap.C.
+
+@dir src/LinSys
+@brief Linear solvers
+
+@details This directory contains functionality to interoperate with solvers for
+large, distributed linear systems as a result of spatial discretization of
+partial differential equations (PDEs). The main functionality is in Solver.C,
+which defines a Charm++ chare linear system merger group used to collect and
+assemble the left hand side matrix (lhs), the right hand side (rhs) vector, and
+the solution (unknown) vector from individual worker Charm++ chares (that hold
+the part of the computational mesh distributed across multiple CPUs, and
+discretize PDE operators). Beside collection and assembly, the system is also
+solved. The solution of the linear system is outsourced to
+[hypre](https://computation.llnl.gov/projects/hypre-scalable-linear-solvers-multigrid-methods/software).
+
+@dir src/IO
+@brief File input and output
+
+@details This directory contains functionality for reading from and writing to
+files. It has
+ - native readers and writers of specialized (usually small) data, e.g.,
+   ensemble statistics from @ref walker_main or error norms from @ref
+   inciter_main,
+ - mesh readers in various standard formats via third-party libraries, see @ref
+   meshconv_main, and
+ - a particle data writer via the [H5Part](http://vis.lbl.gov/Research/H5Part)
+   library.
+
+@dir src/Inciter
+@brief Functionality specific to _Inciter_
+
+@details This directory contains code specific to @ref inciter_main.
+
+@see @ref inciter_examples
+
+@dir src/Inciter/AMR
+@brief Adaptive mesh refinement for _Inciter_
+
+@details The adaptive mesh refinement (AMR) algorithm implemented in this directory  is specific to unstructured 3D tetrahedron meshes and closely follows
+
+- @m_div{m-text m-strong}
+  J. Walts, **[Parallel adaptive refinement for unsteady flow calculations on 3D unstructured grids](http://dx.doi.org/10.1002/fld.674)**, Int. J. Numer. Meth. Fluids, 46: 37–57. doi:10.1002/fld.674.
+  @m_enddiv
 
 */
