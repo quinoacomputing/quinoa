@@ -7,7 +7,7 @@
 */
 // *****************************************************************************
 
-#include <Omega_h_file.hpp>
+#include "NoWarning/Omega_h_file.h"
 #include <Omega_h_library.hpp>
 
 #include "Macro.h"
@@ -21,7 +21,7 @@ void
 Omega_h_MeshReader::readMeshPart(
   std::vector< std::size_t >& ginpoel,
   std::vector< std::size_t >& inpoel,
-  std::vector< std::size_t >& triinpoel,
+  std::vector< std::size_t >& triinp,
   std::vector< std::size_t >& gid,
   std::unordered_map< std::size_t, std::size_t >& lid,
   tk::UnsMesh::Coords& coord,
@@ -32,7 +32,7 @@ Omega_h_MeshReader::readMeshPart(
 //!   chunk of the mesh (global ids)
 //! \param[in,out] inpoel Container to store element connectivity with local
 //!   node IDs of this PE's mesh chunk
-//! \param[in,out] triinpoel Container to store triangle element connectivity
+//! \param[in,out] triinp Container to store triangle element connectivity
 //!   (if exists in file) with global node indices
 //! \param[in,out] gid Container to store global node IDs of elements of this
 //!   PE's mesh chunk
@@ -52,15 +52,24 @@ Omega_h_MeshReader::readMeshPart(
 // *****************************************************************************
 {
   IGNORE( mype );       // Avoid compiler warning in Release mode
-  IGNORE( triinpoel );
+  IGNORE( triinp );
 
   Assert( mype < numpes, "Invalid input: PE id must be lower than NumPEs" );
   Assert( ginpoel.empty() && inpoel.empty() && gid.empty() && lid.empty() &&
           coord[0].empty() && coord[1].empty() && coord[2].empty(),
           "Containers to store mesh must be empty" );
 
+  #if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wold-style-cast"
+  #endif
+
   // Create Omega_h library instance
   auto lib = Omega_h::Library( nullptr, nullptr, MPI_COMM_WORLD );
+
+  #if defined(__clang__)
+    #pragma clang diagnostic pop
+  #endif
 
   // Find out how many partitions the Omega_h mesh was saved with
   auto nparts = Omega_h::binary::read_nparts( m_filename, lib.world() );
@@ -126,7 +135,7 @@ Omega_h_MeshReader::triinpoel(
   std::map< int, std::vector< std::size_t > >& belem,
   const std::map< int, std::vector< std::size_t > >& faces,
   const std::vector< std::size_t >& ginpoel,
-  const std::vector< std::size_t >& triinpoel ) const
+  const std::vector< std::size_t >& triinp ) const
 // *****************************************************************************
 // ...
 //! \note Must be preceded by a call to readElemBlockIDs()
@@ -135,7 +144,7 @@ Omega_h_MeshReader::triinpoel(
   IGNORE(belem);
   IGNORE(faces);
   IGNORE(ginpoel);
-  IGNORE(triinpoel);
+  IGNORE(triinp);
   std::vector< std::size_t > bnd_triinpoel;
   return bnd_triinpoel;
 }
