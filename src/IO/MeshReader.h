@@ -59,20 +59,20 @@ class MeshReader {
     //!    PE defaults to 0 for a single-CPU read.
     void readMeshPart( std::vector< std::size_t >& ginpoel,
                        std::vector< std::size_t >& inpoel,
-                       std::vector< std::size_t >& triinpoel,
+                       std::vector< std::size_t >& triinp,
                        std::vector< std::size_t >& gid,
                        std::unordered_map< std::size_t, std::size_t >& lid,
                        tk::UnsMesh::Coords& coord, 
                        int numpes=1, int mype=0 )
-    { self->readMeshPart( ginpoel, inpoel, triinpoel, gid, lid, coord, numpes,
+    { self->readMeshPart( ginpoel, inpoel, triinp, gid, lid, coord, numpes,
                           mype ); }
     //! ...
     std::vector< std::size_t > triinpoel(
      std::map< int, std::vector< std::size_t > >& bface,
      const std::map< int, std::vector< std::size_t > >& faceid,
      const std::vector< std::size_t >& ginpoel,
-     const std::vector< std::size_t >& triinpoel )
-    { return self->triinpoel( bface, faceid, ginpoel, triinpoel ); }
+     const std::vector< std::size_t >& triinp )
+    { return self->triinpoel( bface, faceid, ginpoel, triinp ); }
 
     //! Public interface to side sets from mesh file
     void
@@ -135,19 +135,19 @@ class MeshReader {
       Concept* copy() const override { return new Model( *this ); }
       void readMeshPart( std::vector< std::size_t >& ginpoel,
                          std::vector< std::size_t >& inpoel,
-                         std::vector< std::size_t >& triinpoel,
+                         std::vector< std::size_t >& triinp,
                          std::vector< std::size_t >& gid,
                          std::unordered_map< std::size_t, std::size_t >& lid,
                          tk::UnsMesh::Coords& coord, 
                          int numpes, int mype ) override
-        { data.readMeshPart( ginpoel, inpoel, triinpoel, gid, lid, coord,
+        { data.readMeshPart( ginpoel, inpoel, triinp, gid, lid, coord,
                              numpes, mype ); }
       std::vector< std::size_t > triinpoel(
         std::map< int, std::vector< std::size_t > >& bface,
         const std::map< int, std::vector< std::size_t > >& faceid,
         const std::vector< std::size_t >& ginpoel,
-        const std::vector< std::size_t >& triinpoel ) override
-      { return data.triinpoel( bface, faceid, ginpoel, triinpoel ); }
+        const std::vector< std::size_t >& triinp ) override
+      { return data.triinpoel( bface, faceid, ginpoel, triinp ); }
       void
         readSidesetFaces( std::map< int, std::vector< std::size_t > >& belem,
                           std::map< int, std::vector< std::size_t > >& faces )
