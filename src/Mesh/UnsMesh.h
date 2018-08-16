@@ -206,7 +206,7 @@ class UnsMesh {
       const Coords& coord,
       const std::map< int, std::vector< std::size_t > >& bface,
       const std::vector< std::size_t >& triinp,
-      const std::map< int, std::vector< std::size_t > >& faceid ) :
+      const std::map< int, std::vector< std::size_t > >& fid ) :
       m_graphsize( graphsize( tetinp ) ),
       m_lininpoel(),
       m_triinpoel( triinp ),
@@ -215,7 +215,7 @@ class UnsMesh {
       m_y( coord[1] ),
       m_z( coord[2] ),
       m_bface( bface ),
-      m_faceid( faceid )
+      m_faceid( fid )
     {
       Assert( m_tetinpoel.size() % 4 == 0,
               "Size of tetinpoel must be divisible by 4" );
@@ -227,7 +227,7 @@ class UnsMesh {
     explicit UnsMesh(
       const std::vector< std::size_t >& tetinp,
       const Coords& coord,
-      const std::map< int, std::vector< std::size_t > >& bnode ) :
+      const std::map< int, std::vector< std::size_t > >& bn ) :
       m_graphsize( graphsize( tetinp ) ),
       m_lininpoel(),
       m_triinpoel(),
@@ -235,7 +235,7 @@ class UnsMesh {
       m_x( coord[0] ),
       m_y( coord[1] ),
       m_z( coord[2] ),
-      m_bnode( bnode )
+      m_bnode( bn )
     {
       Assert( m_tetinpoel.size() % 4 == 0,
               "Size of tetinpoel must be divisible by 4" );
