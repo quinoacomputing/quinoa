@@ -21,6 +21,7 @@
 #include "VectorReducer.h"
 #include "Progress.h"
 #include "Scheme.h"
+#include "ContainerUtil.h"
 
 namespace inciter {
 
@@ -30,6 +31,8 @@ class Transporter : public CBase_Transporter {
   private:
     //! Indices for progress report on mesh preparation
     enum ProgMesh{ PART=0, DIST, REFINE, BND, COMM, MASK, REORD, BOUND };
+    //! Indices for progress report on workers preparation
+    enum ProgWork{ CREATE=0, BNDFACE, COMFAC, GHOST, ADJ };
 
   public:
     #if defined(__clang__)
@@ -106,6 +109,17 @@ class Transporter : public CBase_Transporter {
     //! Non-reduction target for receiving progress report on computing bounds
     void chbounds() { m_progMesh.inc< BOUND >(); }
 
+    //! Non-reduction target for receiving progress report on creating workers
+    void chcreated() { m_progWork.inc< CREATE >(); }
+    //! Non-reduction target for receiving progress report on finding bnd faces
+    void chbndface() { m_progWork.inc< BNDFACE >(); }
+    //! Non-reduction target for receiving progress report on face communication
+    void chcomfac() { m_progWork.inc< COMFAC >(); }
+    //! Non-reduction target for receiving progress report on sending ghost data
+    void chghost() { m_progWork.inc< GHOST >(); }
+    //! Non-reduction target for receiving progress report on face adjacency
+    void chadj() { m_progWork.inc< ADJ >(); }
+
     //! \brief Reduction target indicating that the communication has been
     //!    established among PEs
     void comfinal();
@@ -180,6 +194,8 @@ class Transporter : public CBase_Transporter {
     std::vector< std::size_t > m_linsysbc;
     //! Progress object for preparing mesh
     tk::Progress< 8 > m_progMesh;
+    //! Progress object for preparing workers
+    tk::Progress< 5 > m_progWork;
 
     //! Create linear solver group
     void createSolver();
@@ -207,28 +223,44 @@ class Transporter : public CBase_Transporter {
       var.insert( end(var), begin(o), end(o) );
     }
 
-    //! Verify boundarty condition (BC) side sets used exist in mesh file
-    //! \details This function verifies that the side sets to which boundary
-    //!   conditions B(C) are assigned by the user in the input file all exist
-    //!   in the mesh file and warns if at least one does not.
-    //! \tparam Eq Equation type, e.g., CG, DG, we are using to solver PDEs
+    //! Verify boundary condition (BC) side sets used exist in mesh file
+    //! \details This function does two things: (1) it verifies that the side
+    //!   sets to which boundary conditions (BC) are assigned by the user in the
+    //!   input file all exist among the side sets read from the input mesh
+    //!   file and errors out if at least one does not, and (2) it matches the
+    //!   side set ids at which the user has configured BCs to side set ids read
+    //!   from the mesh file and removes those face and node lists associated
+    //!   to side sets that the user did not set BCs on (as they will not need
+    //!   processing further since they will not be used).
+    //! \tparam Eq Equation type, e.g., CG, DG, used to solve PDEs
     //! \param[in] pde List of PDE system solved
-    //! \param[in] bnd Node lists mapped to side set ids
-    //! \note Failure here is not an error, bot only a wanring, i.e., the user
-    //!   must check the screen output for this warning. Would this be more user
-    //!   friendly to make it an error, i.e., abort with an error message?
-    //! \note If the input vector is empty, no checking is done.
+    //! \param[in,out] bnd Node or face lists mapped to side set ids
     template< class Eq >
-    void verifyBCsExist(const std::vector< Eq >& pde,
-                        const std::map< int, std::vector< std::size_t > >& bnd)
+    void matchBCs( const std::vector< Eq >& pde,
+                   std::map< int, std::vector< std::size_t > >& bnd )
     {
-      // Query BC assigned to all side sets for all PDEs
-      std::unordered_set< int > conf;
-      for (const auto& eq : pde) eq.side( conf );
-      for (auto i : conf)
-        if (bnd.find(i) == end(bnd))
-          Throw( "WARNING: Boundary conditions specified on side set " +
-                 std::to_string(i) + " which does not exist in mesh file" );
+      // Query side set ids at which BCs assigned for all PDEs
+      std::unordered_set< int > userbc;
+      for (const auto& eq : pde) eq.side( userbc );
+      // Find user-configured side set ids among side sets read from mesh file
+      std::unordered_set< int > sidesets_as_bc;
+      for (auto i : userbc) {   // for all side sets at which BCs are assigned
+        if (bnd.find(i) != end(bnd))  // user BC found among side sets in file
+          sidesets_as_bc.insert( i );  // store side set id configured as BC
+        else {
+          m_print << "\n>>> ERROR: Boundary conditions specified on side set " +
+            std::to_string(i) + " which does not exist in mesh file";
+          finish();
+        }
+      }
+      // Remove sidesets not configured as BCs (will not process those further)
+      using Pair = std::pair< const int, std::vector< std::size_t > >;
+      tk::erase_if( bnd, [&]( Pair& item ) {
+        return sidesets_as_bc.find( item.first ) == end(sidesets_as_bc);
+      });
+      // Warn on no BCs
+      if (bnd.empty())
+        m_print << "\n>>> WARNING: No boundary conditions set\n\n";
     }
 };
 

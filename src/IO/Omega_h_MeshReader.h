@@ -36,21 +36,29 @@ class Omega_h_MeshReader {
     //!    PE defaults to 0 for a single-CPU read.
     void readMeshPart( std::vector< std::size_t >& ginpoel,
                        std::vector< std::size_t >& inpoel,
+                       std::vector< std::size_t >& triinp,
                        std::vector< std::size_t >& gid,
                        std::unordered_map< std::size_t, std::size_t >& lid,
                        tk::UnsMesh::Coords& coord,
                        int numpes=1, int mype=0 );
 
-    //! Read face list of all side sets from Omega h file
-    std::size_t
+    //! Read side sets from Omega h file
+    void
     readSidesetFaces( std::map< int, std::vector< std::size_t > >& belem,
-                      std::map< int, std::vector< int > >& faceid );
+                      std::map< int, std::vector< std::size_t > >& faces );
 
     //! Read face connectivity of a number boundary faces from Omega h file
-    void readFaces( std::size_t nbfac, std::vector< std::size_t >& conn ) const;
+    void readFaces( std::vector< std::size_t >& conn ) const;
 
     //! Read node list of all side sets from Omega h file
-    std::map< int, std::vector< std::size_t > > readSidesets();
+    std::map< int, std::vector< std::size_t > > readSidesetNodes();
+
+    //! ...
+    std::vector< std::size_t > triinpoel(
+      std::map< int, std::vector< std::size_t > >& belem,
+      const std::map< int, std::vector< std::size_t > >& faces,
+      const std::vector< std::size_t >& ginpoel,
+      const std::vector< std::size_t >& triinp ) const;
 
   private:
     const std::string m_filename;       //!< Input file name

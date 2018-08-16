@@ -72,7 +72,10 @@ Transporter::Transporter() :
   m_progMesh( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
               {{ "p", "d", "r", "b", "c", "m", "r", "b" }},
               {{ "partition", "distribute", "refine", "bnd", "comm", "mask",
-                  "reorder", "bounds"}} )
+                  "reorder", "bounds"}} ),
+  m_progWork( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
+              {{ "c", "b", "f", "g", "a" }},
+              {{ "create", "bndface", "comfac", "ghost", "adj" }} )
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
@@ -218,27 +221,22 @@ Transporter::createPartitioner()
   // Create mesh reader for reading side sets from file
   tk::MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
-  std::map< int, std::vector< std::size_t > > bface;
-  std::vector< std::size_t > triinpoel;
+  std::map< int, std::vector< std::size_t > > belem;
+  std::map< int, std::vector< std::size_t > > faces;
   std::map< int, std::vector< std::size_t > > bnode;
-  std::map< int, std::vector< int > > faceid;
 
   // Read boundary (side set) data from input file
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   if (scheme == ctr::SchemeType::DG) {
     // Read boundary-face connectivity on side sets
-    auto nbfac = mr.readSidesetFaces( bface, faceid );
-    mr.readFaces( nbfac, triinpoel );
-    // Note that it is NOT okay bface to be empty; boundary conditions required
-    Assert( nbfac > 0, "DG must have boundary faces (and side sets) defined" );
+    mr.readSidesetFaces( belem, faces );
     // Verify boundarty condition (BC) side sets used exist in mesh file
-    verifyBCsExist( g_dgpde, bface );
+    matchBCs( g_dgpde, belem );
   } else {
     // Read node lists on side sets
-    bnode = mr.readSidesets();
+    bnode = mr.readSidesetNodes();
     // Verify boundarty condition (BC) side sets used exist in mesh file
-    verifyBCsExist( g_cgpde, bnode );
-    // Note that it is okay bnode to be empty if no boundary conditions needed
+    matchBCs( g_cgpde, bnode );
   }
 
   // Create partitioner callbacks (order matters)
@@ -276,7 +274,7 @@ Transporter::createPartitioner()
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
     CProxy_Partitioner::ckNew( cbp, cbr, cbs, thisProxy, m_solver, m_refiner,
-                               m_sorter, m_scheme, bface, triinpoel, bnode );
+                               m_sorter, m_scheme, belem, faces, bnode );
 }
 
 void
@@ -430,6 +428,8 @@ Transporter::disccreated()
   }
 
   m_refiner.sendProxy();
+  m_progWork.start( "Preparing workers",
+                    {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
   m_sorter.createWorkers();
 
   auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
@@ -602,6 +602,7 @@ Transporter::stat()
 // *****************************************************************************
 {
   CkStartLB();
+  m_progWork.end();
 
   m_print.diag( "Mesh statistics: min/max/avg(edgelength) = " +
                 std::to_string( m_minstat[0] ) + " / " +

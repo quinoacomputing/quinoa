@@ -128,6 +128,8 @@ DG::DG( const CProxy_Discretization& disc,
       }
   }
 
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) d->Tr().chbndface();
+
   // In the following we assume that the size of the (potential) boundary-face
   // adjacency map above does not necessarily equal to that of the node
   // adjacency map (m_msumset). This is because while a node can be shared at a
@@ -266,6 +268,8 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
   // if we have heard from all fellow chares that we share at least a single
   // node, edge, or face with
   if (++m_ncomfac == m_msumset.size()) {
+
+    if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) d->Tr().chcomfac();
 
     tk::destroy(m_ipface);
 
@@ -423,6 +427,8 @@ DG::sendGhost()
 
   for (const auto& c : m_ghostData)
     thisProxy[ c.first ].comGhost( thisIndex, c.second );
+
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) Disc()->Tr().chghost();
 }
 
 int
@@ -568,6 +574,8 @@ DG::adj()
 //!    on this chare.
 // *****************************************************************************
 {
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) Disc()->Tr().chadj();
+
   tk::destroy(m_bndFace);
 
   // Ensure that all elements surrounding faces (are correct) including those at
@@ -648,7 +656,7 @@ DG::setup( tk::real v )
   // Store total mesh volume
   m_vol = v;
   // Output chare mesh to file
-  d->writeMesh();
+  d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode() );
   // Output fields metadata to output file
   d->writeElemMeta();
 

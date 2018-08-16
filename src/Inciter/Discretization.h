@@ -136,7 +136,9 @@ class Discretization : public CBase_Discretization {
     //@}
 
     //! Output chare element blocks to output file
-    void writeMesh();
+    void writeMesh( const std::map< int, std::vector< std::size_t > >& bface,
+                    const std::vector< std::size_t >& triinpoel,
+                    const std::map< int, std::vector< std::size_t > >& bnode );
 
     //! Output mesh-based fields metadata to file
     void writeNodeMeta() const;
@@ -171,6 +173,7 @@ class Discretization : public CBase_Discretization {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
+      p | m_nchare;
       p | m_it;
       p | m_t;
       p | m_dt;
@@ -202,6 +205,8 @@ class Discretization : public CBase_Discretization {
     //@}
 
   private:
+    //! Total number of Discretization chares
+    int m_nchare;
     //! Iteration count
     uint64_t m_it;
      //! Physical time
