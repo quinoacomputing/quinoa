@@ -11,6 +11,7 @@ add_regression_test(gauss_hump_dg ${INCITER_EXECUTABLE}
                     BIN_BASELINE gauss_hump.std.exo
                     BIN_RESULT out.0
                     BIN_DIFF_PROG_CONF exodiff.cfg
+                    BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
