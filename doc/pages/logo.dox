@@ -22,4 +22,9 @@
      make pdf
      pdf2svg txt2pdf.pdf <executable>.svg
    @endcode
+
+ - Quinoa hex color codes:
+   - blue: 1d3564
+   - dark orange: c96a00
+   - light orange: e6851c
 */
