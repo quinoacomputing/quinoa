@@ -626,13 +626,14 @@ if(DOXYGEN_FOUND AND MCSS_FOUND)
                  ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa-mcss.doxy
                  ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa-mcss.doxy @ONLY)
-  add_custom_command(OUTPUT doc/xml doc/html doc/m.math.cache
+  add_custom_command(OUTPUT xml
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
                      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy
                              ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa-mcss.doxy
-                     COMMAND ${MCSS_DOX2HTML5}
-                             ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa-mcss.doxy
+                     COMMAND ${DOXYGEN_EXECUTABLE} quinoa.doxy
+                     COMMAND ${MCSS_DOX2HTML5} --no-doxygen quinoa-mcss.doxy
                      VERBATIM USES_TERMINAL)
-  add_custom_target(doc DEPENDS doc/xml doc/html doc/m.math.cache
+  add_custom_target(doc DEPENDS xml
                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
                     COMMENT "Documentation")
   message(STATUS "Add target 'doc' to generate documentation to ./doc/html/index.html")
