@@ -75,7 +75,7 @@ ExodusIIMeshReader::readMesh( UnsMesh& mesh )
   readHeader( mesh );
   readAllElements( mesh );
   readAllNodes( mesh );
-  readSidesetFaces( mesh.sidetet(), mesh.faceid() );
+  readSidesetFaces( mesh.bface(), mesh.faceid() );
 }
 
 void
