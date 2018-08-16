@@ -630,7 +630,7 @@ if(DOXYGEN_FOUND AND MCSS_FOUND)
                      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
                      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy
                              ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa-mcss.doxy
-                     COMMAND ${DOXYGEN_EXECUTABLE} quinoa.doxy
+                     COMMAND ${DOXYGEN_EXECUTABLE} quinoa-mcss.doxy
                      COMMAND ${MCSS_DOX2HTML5} --no-doxygen quinoa-mcss.doxy
                      VERBATIM USES_TERMINAL)
   add_custom_target(doc DEPENDS xml
