@@ -108,12 +108,10 @@ include(TPLs)
 # 1. The underlying compiler suite
 #    UNDERLYING_C_COMPILER
 #    UNDERLYING_CXX_COMPILER
-#    UNDERLYING_Fortran_COMPILER
 #
 # 2. The MPI wrappers (of the underlying compilers)
 #    MPI_C_COMPILER
 #    MPI_CXX_COMPILER
-#    MPI_Fortran_COMPILER
 
 # Find MPI and get its underlying compilers. If a traditional MPI (e.g.,
 # OpenMPI) is used, the get_mpi_compilers cmake function uses the built-in CMake
