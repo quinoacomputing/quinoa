@@ -619,7 +619,7 @@ endif()
 # add a target to generate API documentation with Doxygen
 find_package(Doxygen 1.8.15)
 find_package(MCSS)
-if(DOXYGEN_FOUND AND MCSS_FOUND)
+if(DOXYGEN_FOUND AND MCSS_FOUND AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND JINJA2_FOUND AND LATEX_FOUND)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.doxy
                  ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
   add_custom_command(OUTPUT xml
