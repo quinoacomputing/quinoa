@@ -71,10 +71,10 @@ target_include_directories(UnitTestControl PUBLIC
                            ${QUINOA_SOURCE_DIR}
                            ${QUINOA_SOURCE_DIR}/Base
                            ${QUINOA_SOURCE_DIR}/Control
+                           ${PROJECT_BINARY_DIR}/../Main
                            ${PEGTL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
-                           ${OMEGA_H_INCLUDE_DIRS}
-                           ${PROJECT_BINARY_DIR}/../Main)
+                           ${OMEGA_H_INCLUDE_DIRS})
 
 set_target_properties(UnitTestControl PROPERTIES
                       LIBRARY_OUTPUT_NAME quinoa_unittestcontrol)
@@ -90,8 +90,17 @@ project(MeshConvControl CXX)
 
 add_library(MeshConvControl
             StringParser.C
-            MeshConv/CmdLine/Parser.C
-)
+            MeshConv/CmdLine/Parser.C)
+
+target_include_directories(MeshConvControl PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/IO
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${PROJECT_BINARY_DIR}/../Main
+                           ${PEGTL_INCLUDE_DIRS}
+                           ${CHARM_INCLUDE_DIRS}
+                           ${BRIGAND_INCLUDE_DIRS})
 
 set_target_properties(MeshConvControl PROPERTIES
                       LIBRARY_OUTPUT_NAME quinoa_meshconvcontrol)
