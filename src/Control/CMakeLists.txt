@@ -116,8 +116,16 @@ project(FileConvControl CXX)
 
 add_library(FileConvControl
             StringParser.C
-            FileConv/CmdLine/Parser.C
-)
+            FileConv/CmdLine/Parser.C)
+
+target_include_directories(FileConvControl PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${PROJECT_BINARY_DIR}/../Main
+                           ${PEGTL_INCLUDE_DIRS}
+                           ${CHARM_INCLUDE_DIRS}
+                           ${BRIGAND_INCLUDE_DIRS})
 
 set_target_properties(FileConvControl PROPERTIES
                       LIBRARY_OUTPUT_NAME quinoa_fileconvcontrol)

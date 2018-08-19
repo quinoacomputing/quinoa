@@ -295,8 +295,10 @@ if (HAS_ROOT)
 
   add_executable(${FILECONV_EXECUTABLE}
                  FileConvDriver.C
-                 FileConv.C
-  )
+                 FileConv.C)
+
+  target_include_directories(${FILECONV_EXECUTABLE} PUBLIC
+                             ${QUINOA_SOURCE_DIR}/IO)
 
   config_executable(${FILECONV_EXECUTABLE})
 
