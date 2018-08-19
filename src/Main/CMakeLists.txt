@@ -25,8 +25,7 @@ set_target_properties(Config PROPERTIES LIBRARY_OUTPUT_NAME quinoa_config)
 INSTALL(TARGETS Config
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-)
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
 
 if (HAS_ROOT)
   set(ROOTMESHIO "RootMeshIO")
@@ -96,8 +95,7 @@ if (ENABLE_UNITTEST)
                  ../UnitTest/${TestMKLRNG}
                  ../UnitTest/${TestRNGSSE}
                  ../UnitTest/tests/RNG/TestRNG.C
-                 ../UnitTest/tests/RNG/TestRandom123.C
-  )
+                 ../UnitTest/tests/RNG/TestRandom123.C)
 
   target_include_directories(${UNITTEST_EXECUTABLE} PUBLIC
                              ${QUINOA_SOURCE_DIR}
@@ -139,8 +137,7 @@ if (ENABLE_UNITTEST)
                         ${HDF5_C_LIBRARIES}
                         ${AEC_LIBRARIES}          # only for static link
                         ${BACKWARD_LIBRARIES}
-                        ${OMEGA_H_LIBRARIES}
-  )
+                        ${OMEGA_H_LIBRARIES})
 
   # Add custom dependencies for UnitTest's main Charm++ module
   addCharmModule( "unittest" "${UNITTEST_EXECUTABLE}" )
@@ -151,8 +148,7 @@ endif(ENABLE_UNITTEST)
 add_executable(${INCITER_EXECUTABLE}
                InciterDriver.C
                InciterPrint.C
-               Inciter.C
-)
+               Inciter.C)
 
 config_executable(${INCITER_EXECUTABLE})
 
@@ -202,6 +198,10 @@ if (HAS_TESTU01)
                  RNGPrint.C
                  RNGTest.C
   )
+
+  target_include_directories(${RNGTEST_EXECUTABLE} PUBLIC
+                             ${QUINOA_SOURCE_DIR}/RNGTest
+                             ${QUINOA_SOURCE_DIR}/Main)
 
   config_executable(${RNGTEST_EXECUTABLE})
 

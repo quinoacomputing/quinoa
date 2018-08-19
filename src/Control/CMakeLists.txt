@@ -38,8 +38,16 @@ add_library(RNGTestControl
             FileParser.C
             StringParser.C
             RNGTest/InputDeck/Parser.C
-            RNGTest/CmdLine/Parser.C
-)
+            RNGTest/CmdLine/Parser.C)
+
+target_include_directories(RNGTestControl PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${PEGTL_INCLUDE_DIRS}
+                           ${CHARM_INCLUDE_DIRS}
+                           ${BRIGAND_INCLUDE_DIRS}
+                           ${PROJECT_BINARY_DIR}/../Main)
 
 set_target_properties(RNGTestControl PROPERTIES
                       LIBRARY_OUTPUT_NAME quinoa_rngtestcontrol)
