@@ -19,7 +19,9 @@ target_include_directories(LinSys PUBLIC
                            ${PROJECT_BINARY_DIR}/../LinSys
                            ${CHARM_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
-                           ${HYPRE_INCLUDE_DIRS})
+                           ${HYPRE_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_PATH})
 
 addCharmModule( "solver" "LinSys" )
 

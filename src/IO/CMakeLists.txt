@@ -16,6 +16,8 @@ target_include_directories(IO PUBLIC
                            ${CHARM_INCLUDE_DIRS}
                            ${QUINOA_DIRS}
                            ${SEACASExodus_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_PATH}
                            ${PROJECT_BINARY_DIR}/../Main)
 
 set_target_properties(IO PROPERTIES LIBRARY_OUTPUT_NAME quinoa_io)
@@ -46,6 +48,8 @@ target_include_directories(NativeMeshIO PUBLIC
                            ${TPL_INCLUDE_DIR}
                            ${CHARM_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_PATH}
                            ${PROJECT_BINARY_DIR}/../Main)
 
 set_target_properties(NativeMeshIO PROPERTIES LIBRARY_OUTPUT_NAME
@@ -65,7 +69,9 @@ target_include_directories(ExodusIIMeshIO PUBLIC
                            ${QUINOA_SOURCE_DIR}
                            ${QUINOA_SOURCE_DIR}/Base
                            ${QUINOA_SOURCE_DIR}/Mesh
-                           ${SEACASExodus_INCLUDE_DIRS})
+                           ${SEACASExodus_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_PATH})
 
 set_target_properties(ExodusIIMeshIO PROPERTIES LIBRARY_OUTPUT_NAME
                       quinoa_exodusiimeshio)
@@ -84,7 +90,9 @@ if (HAS_OMEGA_H)
                              ${QUINOA_SOURCE_DIR}
                              ${QUINOA_SOURCE_DIR}/Base
                              ${QUINOA_SOURCE_DIR}/Mesh
-                             ${OMEGA_H_INCLUDE_DIRS})
+                             ${OMEGA_H_INCLUDE_DIRS}
+                             ${MPI_CXX_INCLUDE_DIRS}
+                             ${MPI_CXX_INCLUDE_PATH})
 
   set_target_properties(OmegaHMeshIO PROPERTIES LIBRARY_OUTPUT_NAME
                         quinoa_omegahmeshio)
@@ -101,6 +109,14 @@ if (HAS_ROOT)
               FileConvWriter.C
               RootMeshWriter.C)
   
+  target_include_directories(RootMeshIO PUBLIC
+                             ${QUINOA_SOURCE_DIR}
+                             ${QUINOA_SOURCE_DIR}/Base
+                             ${QUINOA_SOURCE_DIR}/Mesh
+                             ${SEACASExodus_INCLUDE_DIRS}
+                             ${MPI_CXX_INCLUDE_DIRS}
+                             ${MPI_CXX_INCLUDE_PATH})
+
   set_target_properties(RootMeshIO PROPERTIES LIBRARY_OUTPUT_NAME
                         quinoa_rootmeshio)
   
