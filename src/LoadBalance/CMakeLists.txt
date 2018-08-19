@@ -9,6 +9,12 @@ add_library(LoadBalance
             UnsMeshMap.C
 )
 
+target_include_directories(LoadBalance PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${PROJECT_BINARY_DIR}/../LoadBalance
+                           ${CHARM_INCLUDE_DIRS})
+
 addCharmModule( "linearmap" "LoadBalance" )
 addCharmModule( "unsmeshmap" "LoadBalance" )
 

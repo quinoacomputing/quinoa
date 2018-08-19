@@ -11,6 +11,15 @@ add_library(Mesh
             STLMesh.C
 )
 
+target_include_directories(Mesh PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${PROJECT_BINARY_DIR}/../Main
+                           ${TPL_INCLUDE_DIR}
+                           ${PEGTL_INCLUDE_DIRS}
+                           ${CHARM_INCLUDE_DIRS})
+
 set_target_properties(Mesh PROPERTIES LIBRARY_OUTPUT_NAME quinoa_mesh)
 
 INSTALL(TARGETS Mesh

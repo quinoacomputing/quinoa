@@ -51,6 +51,15 @@ add_library(UnitTestControl
             UnitTest/CmdLine/Parser.C
 )
 
+target_include_directories(UnitTestControl PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${PEGTL_INCLUDE_DIRS}
+                           ${CHARM_INCLUDE_DIRS}
+                           ${PROJECT_BINARY_DIR}/../Main
+                           ${OMEGA_H_INCLUDE_DIRS})
+
 set_target_properties(UnitTestControl PROPERTIES
                       LIBRARY_OUTPUT_NAME quinoa_unittestcontrol)
 

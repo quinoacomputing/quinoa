@@ -30,6 +30,18 @@ add_library(MeshRefinement
             AMR/Error.C
 )
 
+target_include_directories(MeshRefinement PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${QUINOA_SOURCE_DIR}/Mesh
+                           ${QUINOA_SOURCE_DIR}/Inciter
+                           ${PEGTL_INCLUDE_DIRS}
+                           ${CHARM_INCLUDE_DIRS}
+                           ${TPL_INCLUDE_DIR}
+                           ${BRIGAND_INCLUDE_DIRS}
+                           ${PROJECT_BINARY_DIR}/../Main)
+
 addCharmModule( "transporter" "Inciter" )
 addCharmModule( "partitioner" "Inciter" )
 addCharmModule( "discretization" "Inciter" )

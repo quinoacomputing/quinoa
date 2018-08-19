@@ -5,8 +5,18 @@ project(IO CXX)
 add_library(IO
             PDFWriter.C
             TxtStatWriter.C
-            DiagWriter.C
-)
+            DiagWriter.C)
+
+target_include_directories(IO PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${QUINOA_SOURCE_DIR}/Statistics
+                           ${PEGTL_INCLUDE_DIRS}
+                           ${CHARM_INCLUDE_DIRS}
+                           ${QUINOA_DIRS}
+                           ${SEACASExodus_INCLUDE_DIRS}
+                           ${PROJECT_BINARY_DIR}/../Main)
 
 set_target_properties(IO PROPERTIES LIBRARY_OUTPUT_NAME quinoa_io)
 
@@ -28,6 +38,16 @@ add_library(NativeMeshIO
             #SiloWriter.C
 )
 
+target_include_directories(NativeMeshIO PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Mesh
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${TPL_INCLUDE_DIR}
+                           ${CHARM_INCLUDE_DIRS}
+                           ${PEGTL_INCLUDE_DIRS}
+                           ${PROJECT_BINARY_DIR}/../Main)
+
 set_target_properties(NativeMeshIO PROPERTIES LIBRARY_OUTPUT_NAME
                       quinoa_nativemeshio)
 
@@ -41,6 +61,12 @@ add_library(ExodusIIMeshIO
             ExodusIIMeshReader.C
             ExodusIIMeshWriter.C)
 
+target_include_directories(ExodusIIMeshIO PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Mesh
+                           ${SEACASExodus_INCLUDE_DIRS})
+
 set_target_properties(ExodusIIMeshIO PROPERTIES LIBRARY_OUTPUT_NAME
                       quinoa_exodusiimeshio)
 
@@ -53,7 +79,13 @@ INSTALL(TARGETS ExodusIIMeshIO
 if (HAS_OMEGA_H)
   add_library(OmegaHMeshIO
               Omega_h_MeshReader.C)
-  
+
+  target_include_directories(OmegaHMeshIO PUBLIC
+                             ${QUINOA_SOURCE_DIR}
+                             ${QUINOA_SOURCE_DIR}/Base
+                             ${QUINOA_SOURCE_DIR}/Mesh
+                             ${OMEGA_H_INCLUDE_DIRS})
+
   set_target_properties(OmegaHMeshIO PROPERTIES LIBRARY_OUTPUT_NAME
                         quinoa_omegahmeshio)
   
@@ -82,6 +114,13 @@ endif()
 add_library(HyperMeshIO
             HyperMeshReader.C)
 
+target_include_directories(HyperMeshIO PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Mesh
+                           ${TPL_INCLUDE_DIR}
+                           ${PUGIXML_INCLUDE_DIRS})
+
 set_target_properties(HyperMeshIO PROPERTIES LIBRARY_OUTPUT_NAME
                       quinoa_hypermeshio)
 
@@ -93,6 +132,10 @@ INSTALL(TARGETS HyperMeshIO
 
 add_library(MeshDetect
             MeshDetect.C)
+
+target_include_directories(MeshDetect PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base)
 
 set_target_properties(MeshDetect PROPERTIES LIBRARY_OUTPUT_NAME
                       quinoa_meshdetect)
