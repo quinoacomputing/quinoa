@@ -30,6 +30,15 @@ INSTALL(TARGETS LoadBalance
 add_library(ZoltanInterOp
             ZoltanInterOp.C)
 
+target_include_directories(ZoltanInterOp PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${PROJECT_BINARY_DIR}/../Main
+                           ${PEGTL_INCLUDE_DIRS}
+                           ${CHARM_INCLUDE_DIRS}
+                           ${Zoltan2_INCLUDE_DIRS})
+
 set_target_properties(ZoltanInterOp PROPERTIES
                       LIBRARY_OUTPUT_NAME quinoa_zoltaninterop)
 
