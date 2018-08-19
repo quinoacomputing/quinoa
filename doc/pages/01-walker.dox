@@ -236,4 +236,5 @@ beta variables are mass-fractions. For more details on the beta SDE, see
  - @ref io
  - @ref rngs_input
  - @ref statistics_output
+ - @ref layout
 */
