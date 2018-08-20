@@ -169,7 +169,9 @@ target_include_directories(ParticleIO PUBLIC
                            ${QUINOA_SOURCE_DIR}
                            ${QUINOA_SOURCE_DIR}/Base
                            ${H5PART_INCLUDE_DIRS}
-                           ${HDF5_INCLUDE_DIRS})
+                           ${HDF5_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_PATH})
 
 set_target_properties(ParticleIO PROPERTIES LIBRARY_OUTPUT_NAME
                       quinoa_particleio)
