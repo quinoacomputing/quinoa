@@ -71,6 +71,7 @@ target_include_directories(UnitTestControl PUBLIC
                            ${PROJECT_BINARY_DIR}/../Main
                            ${PEGTL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
+                           ${BRIGAND_INCLUDE_DIRS}
                            ${OMEGA_H_INCLUDE_DIRS})
 
 set_target_properties(UnitTestControl PROPERTIES
