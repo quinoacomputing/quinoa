@@ -165,6 +165,12 @@ INSTALL(TARGETS MeshDetect
 add_library(ParticleIO
             H5PartWriter.C)
 
+target_include_directories(ParticleIO PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${H5PART_INCLUDE_DIRS}
+                           ${HDF5_INCLUDE_DIRS})
+
 set_target_properties(ParticleIO PROPERTIES LIBRARY_OUTPUT_NAME
                       quinoa_particleio)
 
