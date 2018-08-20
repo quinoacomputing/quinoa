@@ -143,6 +143,10 @@ endif()
 MESSAGE(STATUS "Charmrun: " ${CHARM_RUN})
 MESSAGE(STATUS "Linker compiler: " ${LINKER_COMPILER})
 
+if (EXTRA_LINK_ARGS)
+  MESSAGE(STATUS "Extra linker args (EXTRA_LINK_ARGS): ${EXTRA_LINK_ARGS}")
+endif()
+
 add_definitions(-DQUINOA_CONFIG_MPI_ENABLED)
 
 # Set compilers
