@@ -28,8 +28,7 @@ set_target_properties(InciterControl PROPERTIES
 INSTALL(TARGETS InciterControl
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-)
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
 
 #### RNGTest control ###########################################################
 project(RNGTestControl CXX)
@@ -55,8 +54,7 @@ set_target_properties(RNGTestControl PROPERTIES
 INSTALL(TARGETS RNGTestControl
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-)
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
 
 #### UnitTest control ##########################################################
 project(UnitTestControl CXX)
@@ -64,8 +62,7 @@ project(UnitTestControl CXX)
 add_library(UnitTestControl
             StringParser.C
             FileParser.C
-            UnitTest/CmdLine/Parser.C
-)
+            UnitTest/CmdLine/Parser.C)
 
 target_include_directories(UnitTestControl PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -82,8 +79,7 @@ set_target_properties(UnitTestControl PROPERTIES
 INSTALL(TARGETS UnitTestControl
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-)
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
 
 #### MeshConv control ##########################################################
 project(MeshConvControl CXX)
@@ -108,8 +104,7 @@ set_target_properties(MeshConvControl PROPERTIES
 INSTALL(TARGETS MeshConvControl
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-)
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
 
 #### FileConv control ##########################################################
 project(FileConvControl CXX)
@@ -133,16 +128,23 @@ set_target_properties(FileConvControl PROPERTIES
 INSTALL(TARGETS FileConvControl
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-)
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
 
 #### Walker control ############################################################
 add_library(WalkerControl
             FileParser.C
             StringParser.C
             Walker/InputDeck/Parser.C
-            Walker/CmdLine/Parser.C
-)
+            Walker/CmdLine/Parser.C)
+
+target_include_directories(WalkerControl PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${PROJECT_BINARY_DIR}/../Main
+                           ${PEGTL_INCLUDE_DIRS}
+                           ${CHARM_INCLUDE_DIRS}
+                           ${BRIGAND_INCLUDE_DIRS})
 
 set_target_properties(WalkerControl PROPERTIES
                       LIBRARY_OUTPUT_NAME quinoa_walkercontrol)
@@ -150,5 +152,4 @@ set_target_properties(WalkerControl PROPERTIES
 INSTALL(TARGETS WalkerControl
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-)
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)

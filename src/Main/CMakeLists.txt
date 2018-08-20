@@ -184,8 +184,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${HDF5_C_LIBRARIES}
                       ${AEC_LIBRARIES}          # only for static link
                       ${BACKWARD_LIBRARIES}
-                      ${OMEGA_H_LIBRARIES}
-)
+                      ${OMEGA_H_LIBRARIES})
 
 # Add custom dependencies for Inciter's main Charm++ module
 addCharmModule( "inciter" "${INCITER_EXECUTABLE}" )
@@ -196,8 +195,7 @@ if (HAS_TESTU01)
   add_executable(${RNGTEST_EXECUTABLE}
                  RNGTestDriver.C
                  RNGPrint.C
-                 RNGTest.C
-  )
+                 RNGTest.C)
 
   target_include_directories(${RNGTEST_EXECUTABLE} PUBLIC
                              ${QUINOA_SOURCE_DIR}/RNGTest
@@ -217,8 +215,7 @@ if (HAS_TESTU01)
                         ${MKL_CORE_LIBRARY}
                         ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                         ${RNGSSE2_LIBRARIES}
-                        ${BACKWARD_LIBRARIES}
-  )
+                        ${BACKWARD_LIBRARIES})
 
   # Add custom dependencies for RNGTest's main Charm++ module
   addCharmModule( "rngtest" "${RNGTEST_EXECUTABLE}" )
@@ -249,8 +246,7 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       ${HDF5_C_LIBRARIES}
                       ${AEC_LIBRARIES}          # only for static link
                       ${BACKWARD_LIBRARIES}
-                      ${OMEGA_H_LIBRARIES}
-)
+                      ${OMEGA_H_LIBRARIES})
 
 # Add custom dependencies for MeshConv's main Charm++ module
 addCharmModule( "meshconv" "${MESHCONV_EXECUTABLE}" )
@@ -259,8 +255,7 @@ addCharmModule( "meshconv" "${MESHCONV_EXECUTABLE}" )
 add_executable(${WALKER_EXECUTABLE}
                WalkerDriver.C
                WalkerPrint.C
-               Walker.C
-)
+               Walker.C)
 
 config_executable(${WALKER_EXECUTABLE})
 
@@ -313,8 +308,7 @@ if (HAS_ROOT)
                         ${ROOT_LIBRARIES}
                         ${NETCDF_LIBRARIES}       # only for static link
                         ${BACKWARD_LIBRARIES}
-                        ${OMEGA_H_LIBRARIES}
-  )
+                        ${OMEGA_H_LIBRARIES})
 
   # Add custom dependencies for FileConv's main Charm++ module
   addCharmModule( "fileconv" "${FILECONV_EXECUTABLE}" )
