@@ -30,6 +30,7 @@ target_include_directories(DiffEq PUBLIC
                            ${PROJECT_BINARY_DIR}/../Main
                            ${PEGTL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
+                           ${RNGSSE2_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS})
 
 set_target_properties(DiffEq PROPERTIES LIBRARY_OUTPUT_NAME quinoa_diffeq)

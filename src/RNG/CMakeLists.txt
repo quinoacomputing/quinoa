@@ -14,6 +14,7 @@ target_include_directories(RNG PUBLIC
                            ${PEGTL_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS}
                            ${TPL_INCLUDE_DIR}
+                           ${RNGSSE2_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../Main)
 
 set_target_properties(RNG PROPERTIES LIBRARY_OUTPUT_NAME quinoa_rng)
