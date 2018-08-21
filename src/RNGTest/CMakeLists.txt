@@ -23,6 +23,7 @@ target_include_directories(RNGTest PUBLIC
                            ${PROJECT_BINARY_DIR}/../RNGTest
                            ${CHARM_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
+                           ${TUT_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS})
 
 addCharmModule( "testu01" "RNGTest" )
