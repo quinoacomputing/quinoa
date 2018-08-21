@@ -9,6 +9,12 @@ add_library(LoadBalance
             UnsMeshMap.C
 )
 
+target_include_directories(LoadBalance PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${PROJECT_BINARY_DIR}/../LoadBalance
+                           ${CHARM_INCLUDE_DIRS})
+
 addCharmModule( "linearmap" "LoadBalance" )
 addCharmModule( "unsmeshmap" "LoadBalance" )
 
@@ -23,6 +29,17 @@ INSTALL(TARGETS LoadBalance
 
 add_library(ZoltanInterOp
             ZoltanInterOp.C)
+
+target_include_directories(ZoltanInterOp PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${PROJECT_BINARY_DIR}/../Main
+                           ${PEGTL_INCLUDE_DIRS}
+                           ${CHARM_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_PATH}
+                           ${Zoltan2_INCLUDE_DIRS})
 
 set_target_properties(ZoltanInterOp PROPERTIES
                       LIBRARY_OUTPUT_NAME quinoa_zoltaninterop)

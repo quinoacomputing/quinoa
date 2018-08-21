@@ -25,8 +25,7 @@ set_target_properties(Config PROPERTIES LIBRARY_OUTPUT_NAME quinoa_config)
 INSTALL(TARGETS Config
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-)
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
 
 if (HAS_ROOT)
   set(ROOTMESHIO "RootMeshIO")
@@ -94,8 +93,18 @@ add_executable(${UNITTEST_EXECUTABLE}
                ../UnitTest/${TestMKLRNG}
                ../UnitTest/${TestRNGSSE}
                ../UnitTest/tests/RNG/TestRNG.C
-               ../UnitTest/tests/RNG/TestRandom123.C
-)
+               ../UnitTest/tests/RNG/TestRandom123.C)
+
+target_include_directories(${UNITTEST_EXECUTABLE} PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/UnitTest
+                           ${QUINOA_SOURCE_DIR}/LinSys
+                           ${QUINOA_SOURCE_DIR}/LoadBalance
+                           ${QUINOA_SOURCE_DIR}/IO
+                           ${QUINOA_SOURCE_DIR}/RNG
+                           ${TUT_INCLUDE_DIRS}
+                           ${PROJECT_BINARY_DIR}/../LinSys
+                           ${PROJECT_BINARY_DIR}/../UnitTest)
 
 config_executable(${UNITTEST_EXECUTABLE})
 
@@ -126,8 +135,7 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${HDF5_C_LIBRARIES}
                       ${AEC_LIBRARIES}          # only for static link
                       ${BACKWARD_LIBRARIES}
-                      ${OMEGA_H_LIBRARIES}
-)
+                      ${OMEGA_H_LIBRARIES})
 
 # Add custom dependencies for UnitTest's main Charm++ module
 addCharmModule( "unittest" "${UNITTEST_EXECUTABLE}" )
@@ -136,8 +144,7 @@ addCharmModule( "unittest" "${UNITTEST_EXECUTABLE}" )
 add_executable(${INCITER_EXECUTABLE}
                InciterDriver.C
                InciterPrint.C
-               Inciter.C
-)
+               Inciter.C)
 
 config_executable(${INCITER_EXECUTABLE})
 
@@ -173,8 +180,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${HDF5_C_LIBRARIES}
                       ${AEC_LIBRARIES}          # only for static link
                       ${BACKWARD_LIBRARIES}
-                      ${OMEGA_H_LIBRARIES}
-)
+                      ${OMEGA_H_LIBRARIES})
 
 # Add custom dependencies for Inciter's main Charm++ module
 addCharmModule( "inciter" "${INCITER_EXECUTABLE}" )
@@ -185,8 +191,11 @@ if (HAS_TESTU01)
   add_executable(${RNGTEST_EXECUTABLE}
                  RNGTestDriver.C
                  RNGPrint.C
-                 RNGTest.C
-  )
+                 RNGTest.C)
+
+  target_include_directories(${RNGTEST_EXECUTABLE} PUBLIC
+                             ${QUINOA_SOURCE_DIR}/RNGTest
+                             ${QUINOA_SOURCE_DIR}/Main)
 
   config_executable(${RNGTEST_EXECUTABLE})
 
@@ -202,8 +211,7 @@ if (HAS_TESTU01)
                         ${MKL_CORE_LIBRARY}
                         ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                         ${RNGSSE2_LIBRARIES}
-                        ${BACKWARD_LIBRARIES}
-  )
+                        ${BACKWARD_LIBRARIES})
 
   # Add custom dependencies for RNGTest's main Charm++ module
   addCharmModule( "rngtest" "${RNGTEST_EXECUTABLE}" )
@@ -234,8 +242,7 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       ${HDF5_C_LIBRARIES}
                       ${AEC_LIBRARIES}          # only for static link
                       ${BACKWARD_LIBRARIES}
-                      ${OMEGA_H_LIBRARIES}
-)
+                      ${OMEGA_H_LIBRARIES})
 
 # Add custom dependencies for MeshConv's main Charm++ module
 addCharmModule( "meshconv" "${MESHCONV_EXECUTABLE}" )
@@ -244,8 +251,7 @@ addCharmModule( "meshconv" "${MESHCONV_EXECUTABLE}" )
 add_executable(${WALKER_EXECUTABLE}
                WalkerDriver.C
                WalkerPrint.C
-               Walker.C
-)
+               Walker.C)
 
 config_executable(${WALKER_EXECUTABLE})
 
@@ -280,8 +286,10 @@ if (HAS_ROOT)
 
   add_executable(${FILECONV_EXECUTABLE}
                  FileConvDriver.C
-                 FileConv.C
-  )
+                 FileConv.C)
+
+  target_include_directories(${FILECONV_EXECUTABLE} PUBLIC
+                             ${QUINOA_SOURCE_DIR}/IO)
 
   config_executable(${FILECONV_EXECUTABLE})
 
@@ -296,8 +304,7 @@ if (HAS_ROOT)
                         ${ROOT_LIBRARIES}
                         ${NETCDF_LIBRARIES}       # only for static link
                         ${BACKWARD_LIBRARIES}
-                        ${OMEGA_H_LIBRARIES}
-  )
+                        ${OMEGA_H_LIBRARIES})
 
   # Add custom dependencies for FileConv's main Charm++ module
   addCharmModule( "fileconv" "${FILECONV_EXECUTABLE}" )
