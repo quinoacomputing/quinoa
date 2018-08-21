@@ -48,6 +48,7 @@ target_include_directories(NativeMeshIO PUBLIC
                            ${QUINOA_SOURCE_DIR}/Control
                            ${TPL_INCLUDE_DIR}
                            ${CHARM_INCLUDE_DIRS}
+                           ${BRIGAND_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_PATH}
