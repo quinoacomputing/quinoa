@@ -12,6 +12,7 @@ target_include_directories(RNG PUBLIC
                            ${QUINOA_SOURCE_DIR}/Control
                            ${CHARM_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
+                           ${BRIGAND_INCLUDE_DIRS}
                            ${TPL_INCLUDE_DIR}
                            ${PROJECT_BINARY_DIR}/../Main)
 
