@@ -39,7 +39,8 @@ target_include_directories(ZoltanInterOp PUBLIC
                            ${CHARM_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_PATH}
-                           ${Zoltan2_INCLUDE_DIRS})
+                           ${Zoltan2_INCLUDE_DIRS}
+                           ${BRIGAND_INCLUDE_DIRS})
 
 set_target_properties(ZoltanInterOp PROPERTIES
                       LIBRARY_OUTPUT_NAME quinoa_zoltaninterop)

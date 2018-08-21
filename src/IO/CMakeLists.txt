@@ -18,6 +18,7 @@ target_include_directories(IO PUBLIC
                            ${SEACASExodus_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_PATH}
+                           ${BRIGAND_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../Main)
 
 set_target_properties(IO PROPERTIES LIBRARY_OUTPUT_NAME quinoa_io)
