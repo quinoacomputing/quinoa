@@ -68,11 +68,6 @@ if(RNGSSE2_FOUND)
   set(HAS_RNGSSE2 true)  # will become compiler define in Main/QuinoaConfig.h
 endif()
 
-# Error out if not a single RNG library has been found
-if (NOT MKL_FOUND AND NOT Random123_FOUND AND NOT RNGSSE2_FOUND)
-  message(FATAL "At least one of MKL, RNGSSE2, Random123 is required.")
-endif()
-
 ### HDF5/NetCDF (NetCDF only for static link)
 if(NOT BUILD_SHARED_LIBS)
   set(HDF5_PREFER_PARALLEL true)
@@ -82,6 +77,10 @@ if(NOT BUILD_SHARED_LIBS)
 else()
   set(HDF5_PREFER_PARALLEL true)
   find_package(HDF5 COMPONENTS C HL)
+endif()
+
+if (NOT HDF5_FOUND)
+  set(HDF5_INCLUDE_DIRS "")
 endif()
 
 #### H5Part

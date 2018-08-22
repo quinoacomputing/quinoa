@@ -62,7 +62,11 @@ else()
   set(PEGTL_VERSION 0.0.0)
 endif()
 
-set(PEGTL_INCLUDE_DIRS ${PEGTL_INCLUDE_DIR})
+if(PEGTL_INCLUDE_DIR)
+  set(PEGTL_INCLUDE_DIRS ${PEGTL_INCLUDE_DIR})
+else()
+  set(PEGTL_INCLUDE_DIRS "")
+endif()
 
 # Handle the QUIETLY and REQUIRED arguments and set PEGTL_FOUND to TRUE if
 # all listed variables are TRUE.
