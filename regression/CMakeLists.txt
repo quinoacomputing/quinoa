@@ -14,7 +14,7 @@ set(TEST_RUNNER ${CMAKE_SOURCE_DIR}/../cmake/test_runner.cmake)
 
 # Find gmsh executable
 find_program(GMSH gmsh)
-if(NOT GMSH)
+if(ENABLE_MESHCONV AND NOT GMSH)
   message(STATUS "Gmsh not found, meshconv regression tests will not be rigorous")
 endif()
 
