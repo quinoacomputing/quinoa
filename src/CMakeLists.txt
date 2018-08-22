@@ -481,18 +481,6 @@ message(STATUS "Executable linker flags: '${CMAKE_EXE_LINKER_FLAGS}'")
 # Include cmake code to enable configuration for data layouts
 include(ConfigureDataLayout)
 
-# Set names of executables
-set(INCITER_EXECUTABLE inciter)
-if (HAS_TESTU01)
-  set(RNGTEST_EXECUTABLE rngtest)
-  set(RNGTEST_SRC_DIR ${QUINOA_SOURCE_DIR}/RNGTest)
-  set(RNGTEST_BIN_DIR ${PROJECT_BINARY_DIR}/RNGTest)
-endif()
-set(MESHCONV_EXECUTABLE meshconv)
-set(WALKER_EXECUTABLE walker)
-set(UNITTEST_EXECUTABLE unittest)
-set(FILECONV_EXECUTABLE fileconv)
-
 # Create set of all executables tested. These are the executables that do
 # "interesting things", i.e., excluding unittest but keeping rngtest as that is
 # (to be) regression tested
