@@ -78,7 +78,9 @@ addCharmModule( "dg" "Inciter" )
 # Add extra dependency of Inciter on inciterCharmModule. This is required as
 # Inciter refers to the main Charm++ proxy defined in the Charm++ module
 # inciter (in Main/Inciter.C).
-add_dependencies( "Inciter" "inciterCharmModule" )
+if (ENABLE_INCITER)
+  add_dependencies( "Inciter" "inciterCharmModule" )
+endif()
 
 ## Add extra dependency of Transporter charm module on charm modules implementing
 ## advanced array element placement using maps. This is required since
@@ -90,7 +92,9 @@ add_dependencies( "Inciter" "inciterCharmModule" )
 # Add extra dependency of Inciter on Solver charm module. This is required so
 # that solver.decl.h and solver.def.h are generated before Inciter including
 # those.
-add_dependencies( "Inciter" "solverCharmModule" )
+if (ENABLE_INCITER)
+  add_dependencies( "Inciter" "solverCharmModule" )
+endif()
 
 # Add extra dependency of Transporter charm module on Partitioner charm module.
 # This is required so that Partitioner.decl.h and Partitioner.def.h are
