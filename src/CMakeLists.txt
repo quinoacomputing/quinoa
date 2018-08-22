@@ -493,9 +493,7 @@ endif()
 set(MESHCONV_EXECUTABLE meshconv)
 set(WALKER_EXECUTABLE walker)
 set(UNITTEST_EXECUTABLE unittest)
-if (HAS_ROOT)
-  set(FILECONV_EXECUTABLE fileconv)
-endif()
+set(FILECONV_EXECUTABLE fileconv)
 
 # Create set of all executables tested. These are the executables that do
 # "interesting things", i.e., excluding unittest but keeping rngtest as that is
@@ -561,23 +559,27 @@ if(DOXYGEN_FOUND)
 endif(DOXYGEN_FOUND)
 
 # Components
-add_subdirectory(Main)
-add_subdirectory(UnitTest)
 add_subdirectory(Base)
 add_subdirectory(Control)
-add_subdirectory(DiffEq)
-add_subdirectory(PDE)
-add_subdirectory(Walker)
-add_subdirectory(Inciter)
+add_subdirectory(Main)
 add_subdirectory(LoadBalance)
-add_subdirectory(LinSys)
 add_subdirectory(IO)
 add_subdirectory(Mesh)
 add_subdirectory(RNG)
-if (HAS_TESTU01)
+add_subdirectory(Statistics)
+add_subdirectory(PDE)
+add_subdirectory(Inciter)
+add_subdirectory(LinSys)
+if (ENABLE_UNITTEST)
+  add_subdirectory(UnitTest)
+endif()
+if (ENABLE_WALKER)
+  add_subdirectory(DiffEq)
+  add_subdirectory(Walker)
+endif()
+if (ENABLE_RNGTEST)
   add_subdirectory(RNGTest)
 endif()
-add_subdirectory(Statistics)
 
 # Conditionally enforce static link for all executables. This must be after all
 # add_executable() calls creating the targets for executables in EXECUTABLES.
@@ -595,7 +597,6 @@ include(CppCheck)
 enable_testing()
 
 # Include cmake code common to all regression tests
-message(STATUS "Adding regression tests ...")
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../regression
                  ${CMAKE_BINARY_DIR}/regression
                  EXCLUDE_FROM_ALL)
