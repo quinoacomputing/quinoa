@@ -37,156 +37,169 @@ endif()
 
 ## UnitTest executable ########################################################
 
-if (HAS_MKL)
-  set(TestMKLBetaMethod "tests/Control/Options/TestMKLBetaMethod.C")
-  set(TestMKLGammaMethod "tests/Control/Options/TestMKLGammaMethod.C")
-  set(TestMKLGaussianMethod "tests/Control/Options/TestMKLGaussianMethod.C")
-  set(TestMKLUniformMethod "tests/Control/Options/TestMKLUniformMethod.C")
-  set(TestMKLRNG "tests/RNG/TestMKLRNG.C")
-endif()
+if (ENABLE_UNITTEST)
 
-if(HAS_RNGSSE2)
-  set(TestRNGSSE "tests/RNG/TestRNGSSE.C")
-endif()
+  if (HAS_MKL)
+    set(TestMKLBetaMethod "tests/Control/Options/TestMKLBetaMethod.C")
+    set(TestMKLGammaMethod "tests/Control/Options/TestMKLGammaMethod.C")
+    set(TestMKLGaussianMethod "tests/Control/Options/TestMKLGaussianMethod.C")
+    set(TestMKLUniformMethod "tests/Control/Options/TestMKLUniformMethod.C")
+    set(TestMKLRNG "tests/RNG/TestMKLRNG.C")
+  endif()
 
-add_executable(${UNITTEST_EXECUTABLE}
-               UnitTestDriver.C
-               UnitTest.C
-               ../UnitTest/tests/Base/TestContainerUtil.C
-               ../UnitTest/tests/Base/TestData.C
-               ../UnitTest/tests/Base/TestException.C
-               ../UnitTest/tests/Base/TestExceptionMPI.C
-               ../UnitTest/tests/Base/TestFactory.C
-               ../UnitTest/tests/Base/TestFlip_map.C
-               ../UnitTest/tests/Base/TestHas.C
-               ../UnitTest/tests/Base/TestPrint.C
-               ../UnitTest/tests/Base/TestProcessControl.C
-               ../UnitTest/tests/Base/TestPUPUtil.C
-               ../UnitTest/tests/Base/TestReader.C
-               ../UnitTest/tests/Base/TestStrConvUtil.C
-               ../UnitTest/tests/Base/TestTaggedTuple.C
-               ../UnitTest/tests/Base/TestTimer.C
-               ../UnitTest/tests/Base/TestVector.C
-               ../UnitTest/tests/Base/TestWriter.C
-               ../UnitTest/${TestMKLUniformMethod}
-               ../UnitTest/${TestMKLGaussianMethod}
-               ../UnitTest/${TestMKLBetaMethod}
-               ../UnitTest/${TestMKLGammaMethod}
-               ../UnitTest/tests/Control/Options/TestRNG.C
-               ../UnitTest/tests/Control/TestControl.C
-               ../UnitTest/tests/Control/TestFileParser.C
-               ../UnitTest/tests/Control/TestStringParser.C
-               ../UnitTest/tests/Control/TestSystemComponents.C
-               ../UnitTest/tests/Control/TestToggle.C
-               ../UnitTest/tests/Inciter/TestScheme.C
-               ../UnitTest/tests/Inciter/AMR/TestError.C
-               ../UnitTest/tests/IO/TestExodusIIMeshReader.C
-               ../UnitTest/tests/IO/TestMesh.C
-               ../UnitTest/tests/IO/TestMeshReader.C
-               ../UnitTest/tests/LoadBalance/TestLinearMap.C
-               ../UnitTest/tests/LoadBalance/TestLoadDistributor.C
-               ../UnitTest/tests/LoadBalance/TestUnsMeshMap.C
-               ../UnitTest/tests/Mesh/TestAround.C
-               ../UnitTest/tests/Mesh/TestDerivedData.C
-               ../UnitTest/tests/Mesh/TestGradients.C
-               ../UnitTest/tests/Mesh/TestReorder.C
-               ../UnitTest/${TestMKLRNG}
-               ../UnitTest/${TestRNGSSE}
-               ../UnitTest/tests/RNG/TestRNG.C
-               ../UnitTest/tests/RNG/TestRandom123.C)
+  if(HAS_RNGSSE2)
+    set(TestRNGSSE "tests/RNG/TestRNGSSE.C")
+  endif()
 
-target_include_directories(${UNITTEST_EXECUTABLE} PUBLIC
-                           ${QUINOA_SOURCE_DIR}
-                           ${QUINOA_SOURCE_DIR}/UnitTest
-                           ${QUINOA_SOURCE_DIR}/LinSys
-                           ${QUINOA_SOURCE_DIR}/LoadBalance
-                           ${QUINOA_SOURCE_DIR}/IO
-                           ${QUINOA_SOURCE_DIR}/RNG
-                           ${TUT_INCLUDE_DIRS}
-                           ${PROJECT_BINARY_DIR}/../LinSys
-                           ${PROJECT_BINARY_DIR}/../UnitTest)
+  add_executable(${UNITTEST_EXECUTABLE}
+                 UnitTestDriver.C
+                 UnitTest.C
+                 ../UnitTest/tests/Base/TestContainerUtil.C
+                 ../UnitTest/tests/Base/TestData.C
+                 ../UnitTest/tests/Base/TestException.C
+                 ../UnitTest/tests/Base/TestExceptionMPI.C
+                 ../UnitTest/tests/Base/TestFactory.C
+                 ../UnitTest/tests/Base/TestFlip_map.C
+                 ../UnitTest/tests/Base/TestHas.C
+                 ../UnitTest/tests/Base/TestPrint.C
+                 ../UnitTest/tests/Base/TestProcessControl.C
+                 ../UnitTest/tests/Base/TestPUPUtil.C
+                 ../UnitTest/tests/Base/TestReader.C
+                 ../UnitTest/tests/Base/TestStrConvUtil.C
+                 ../UnitTest/tests/Base/TestTaggedTuple.C
+                 ../UnitTest/tests/Base/TestTimer.C
+                 ../UnitTest/tests/Base/TestVector.C
+                 ../UnitTest/tests/Base/TestWriter.C
+                 ../UnitTest/${TestMKLUniformMethod}
+                 ../UnitTest/${TestMKLGaussianMethod}
+                 ../UnitTest/${TestMKLBetaMethod}
+                 ../UnitTest/${TestMKLGammaMethod}
+                 ../UnitTest/tests/Control/Options/TestRNG.C
+                 ../UnitTest/tests/Control/TestControl.C
+                 ../UnitTest/tests/Control/TestFileParser.C
+                 ../UnitTest/tests/Control/TestStringParser.C
+                 ../UnitTest/tests/Control/TestSystemComponents.C
+                 ../UnitTest/tests/Control/TestToggle.C
+                 ../UnitTest/tests/Inciter/TestScheme.C
+                 ../UnitTest/tests/Inciter/AMR/TestError.C
+                 ../UnitTest/tests/IO/TestExodusIIMeshReader.C
+                 ../UnitTest/tests/IO/TestMesh.C
+                 ../UnitTest/tests/IO/TestMeshReader.C
+                 ../UnitTest/tests/LoadBalance/TestLinearMap.C
+                 ../UnitTest/tests/LoadBalance/TestLoadDistributor.C
+                 ../UnitTest/tests/LoadBalance/TestUnsMeshMap.C
+                 ../UnitTest/tests/Mesh/TestAround.C
+                 ../UnitTest/tests/Mesh/TestDerivedData.C
+                 ../UnitTest/tests/Mesh/TestGradients.C
+                 ../UnitTest/tests/Mesh/TestReorder.C
+                 ../UnitTest/${TestMKLRNG}
+                 ../UnitTest/${TestRNGSSE}
+                 ../UnitTest/tests/RNG/TestRNG.C
+                 ../UnitTest/tests/RNG/TestRandom123.C)
 
-config_executable(${UNITTEST_EXECUTABLE})
+  target_include_directories(${UNITTEST_EXECUTABLE} PUBLIC
+                             ${QUINOA_SOURCE_DIR}
+                             ${QUINOA_SOURCE_DIR}/UnitTest
+                             ${QUINOA_SOURCE_DIR}/LinSys
+                             ${QUINOA_SOURCE_DIR}/LoadBalance
+                             ${QUINOA_SOURCE_DIR}/IO
+                             ${QUINOA_SOURCE_DIR}/RNG
+                             ${TUT_INCLUDE_DIRS}
+                             ${PROJECT_BINARY_DIR}/../LinSys
+                             ${PROJECT_BINARY_DIR}/../UnitTest)
 
-target_link_libraries(${UNITTEST_EXECUTABLE}
-                      Base
-                      Config
-                      RNG
-                      MeshRefinement
-                      UnitTest
-                      UnitTestControl
-                      LoadBalance
-                      Mesh
-                      MeshDetect
-                      NativeMeshIO
-                      MeshRefinement
-                      ExodusIIMeshIO
-                      HyperMeshIO
-                      ${OMEGAHMESHIO}
-                      ${PUGIXML_LIBRARIES}
-                      ${SEACASExodus_LIBRARIES}
-                      ${RNGSSE2_LIBRARIES}
-                      ${MKL_INTERFACE_LIBRARY}
-                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
-                      ${MKL_CORE_LIBRARY}
-                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
-                      ${NETCDF_LIBRARIES}       # only for static link
-                      ${HDF5_HL_LIBRARIES}      # only for static link
-                      ${HDF5_C_LIBRARIES}
-                      ${AEC_LIBRARIES}          # only for static link
-                      ${BACKWARD_LIBRARIES}
-                      ${OMEGA_H_LIBRARIES})
+  config_executable(${UNITTEST_EXECUTABLE})
 
-# Add custom dependencies for UnitTest's main Charm++ module
-addCharmModule( "unittest" "${UNITTEST_EXECUTABLE}" )
+  target_link_libraries(${UNITTEST_EXECUTABLE}
+                        Base
+                        Config
+                        RNG
+                        MeshRefinement
+                        UnitTest
+                        UnitTestControl
+                        LoadBalance
+                        Mesh
+                        MeshDetect
+                        NativeMeshIO
+                        MeshRefinement
+                        ExodusIIMeshIO
+                        HyperMeshIO
+                        ${OMEGAHMESHIO}
+                        ${PUGIXML_LIBRARIES}
+                        ${SEACASExodus_LIBRARIES}
+                        ${RNGSSE2_LIBRARIES}
+                        ${MKL_INTERFACE_LIBRARY}
+                        ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                        ${MKL_CORE_LIBRARY}
+                        ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                        ${NETCDF_LIBRARIES}       # only for static link
+                        ${HDF5_HL_LIBRARIES}      # only for static link
+                        ${HDF5_C_LIBRARIES}
+                        ${AEC_LIBRARIES}          # only for static link
+                        ${BACKWARD_LIBRARIES}
+                        ${OMEGA_H_LIBRARIES})
+
+  # Add custom dependencies for UnitTest's main Charm++ module
+  addCharmModule( "unittest" "${UNITTEST_EXECUTABLE}" )
+
+else()
+  message(STATUS "(Not configured executable '${UNITTEST_EXECUTABLE}')")
+endif(ENABLE_UNITTEST)
 
 ### Inciter executable #########################################################
-add_executable(${INCITER_EXECUTABLE}
-               InciterDriver.C
-               InciterPrint.C
-               Inciter.C)
 
-config_executable(${INCITER_EXECUTABLE})
+if (ENABLE_INCITER)
 
-target_link_libraries(${INCITER_EXECUTABLE}
-                      PDE
-                      InciterControl
-                      Inciter
-                      MeshRefinement
-                      LoadBalance
-                      ZoltanInterOp
-                      LinSys
-                      Base
-                      Config
-                      IO
-                      ExodusIIMeshIO
-                      ${OMEGAHMESHIO}
-                      ${ROOTMESHIO}
-                      MeshDetect
-                      Mesh
-                      Statistics
-                      ${SEACASExodus_LIBRARIES}
-                      ${HYPRE_LIBRARIES}
-                      ${ROOT_LIBRARIES}
-                      ${Zoltan2_LIBRARIES}
-                      ${RNGSSE2_LIBRARIES}
-                      ${LAPACKE_LIBRARIES}      # only if MKL not found
-                      ${MKL_INTERFACE_LIBRARY}
-                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
-                      ${MKL_CORE_LIBRARY}
-                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
-                      ${NETCDF_LIBRARIES}       # only for static link
-                      ${HDF5_HL_LIBRARIES}      # only for static link
-                      ${HDF5_C_LIBRARIES}
-                      ${AEC_LIBRARIES}          # only for static link
-                      ${BACKWARD_LIBRARIES}
-                      ${OMEGA_H_LIBRARIES})
+  add_executable(${INCITER_EXECUTABLE}
+                 InciterDriver.C
+                 InciterPrint.C
+                 Inciter.C)
 
-# Add custom dependencies for Inciter's main Charm++ module
-addCharmModule( "inciter" "${INCITER_EXECUTABLE}" )
+  config_executable(${INCITER_EXECUTABLE})
+
+  target_link_libraries(${INCITER_EXECUTABLE}
+                        PDE
+                        InciterControl
+                        Inciter
+                        MeshRefinement
+                        LoadBalance
+                        ZoltanInterOp
+                        LinSys
+                        Base
+                        Config
+                        IO
+                        ExodusIIMeshIO
+                        ${OMEGAHMESHIO}
+                        ${ROOTMESHIO}
+                        MeshDetect
+                        Mesh
+                        Statistics
+                        ${SEACASExodus_LIBRARIES}
+                        ${HYPRE_LIBRARIES}
+                        ${ROOT_LIBRARIES}
+                        ${Zoltan2_LIBRARIES}
+                        ${RNGSSE2_LIBRARIES}
+                        ${LAPACKE_LIBRARIES}      # only if MKL not found
+                        ${MKL_INTERFACE_LIBRARY}
+                        ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                        ${MKL_CORE_LIBRARY}
+                        ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                        ${NETCDF_LIBRARIES}       # only for static link
+                        ${HDF5_HL_LIBRARIES}      # only for static link
+                        ${HDF5_C_LIBRARIES}
+                        ${AEC_LIBRARIES}          # only for static link
+                        ${BACKWARD_LIBRARIES}
+                        ${OMEGA_H_LIBRARIES})
+
+  # Add custom dependencies for Inciter's main Charm++ module
+  addCharmModule( "inciter" "${INCITER_EXECUTABLE}" )
+
+else()
+  message(STATUS "(Not configured executable '${INCITER_EXECUTABLE}')")
+endif(ENABLE_INCITER)
 
 ### RNGTest executable #########################################################
-if (HAS_TESTU01)
+if (ENABLE_RNGTEST)
 
   add_executable(${RNGTEST_EXECUTABLE}
                  RNGTestDriver.C
@@ -216,73 +229,85 @@ if (HAS_TESTU01)
   # Add custom dependencies for RNGTest's main Charm++ module
   addCharmModule( "rngtest" "${RNGTEST_EXECUTABLE}" )
 
-endif(HAS_TESTU01)
+else()
+  message(STATUS "(Not configured executable '${RNGTEST_EXECUTABLE}')")
+endif(ENABLE_RNGTEST)
 
 ### MeshConv executable ########################################################
-add_executable(${MESHCONV_EXECUTABLE}
-               MeshConvDriver.C
-               MeshConv.C
-)
+if (ENABLE_MESHCONV)
 
-config_executable(${MESHCONV_EXECUTABLE})
+  add_executable(${MESHCONV_EXECUTABLE}
+                 MeshConvDriver.C
+                 MeshConv.C)
 
-target_link_libraries(${MESHCONV_EXECUTABLE}
-                      NativeMeshIO
-                      ExodusIIMeshIO
-                      HyperMeshIO
-                      MeshDetect
-                      Mesh
-                      MeshConvControl
-                      Base
-                      Config
-                      ${PUGIXML_LIBRARIES}
-                      ${SEACASExodus_LIBRARIES}
-                      ${NETCDF_LIBRARIES}       # only for static link
-                      ${HDF5_HL_LIBRARIES}      # only for static link
-                      ${HDF5_C_LIBRARIES}
-                      ${AEC_LIBRARIES}          # only for static link
-                      ${BACKWARD_LIBRARIES}
-                      ${OMEGA_H_LIBRARIES})
+  config_executable(${MESHCONV_EXECUTABLE})
 
-# Add custom dependencies for MeshConv's main Charm++ module
-addCharmModule( "meshconv" "${MESHCONV_EXECUTABLE}" )
+  target_link_libraries(${MESHCONV_EXECUTABLE}
+                        NativeMeshIO
+                        ExodusIIMeshIO
+                        HyperMeshIO
+                        MeshDetect
+                        Mesh
+                        MeshConvControl
+                        Base
+                        Config
+                        ${PUGIXML_LIBRARIES}
+                        ${SEACASExodus_LIBRARIES}
+                        ${NETCDF_LIBRARIES}       # only for static link
+                        ${HDF5_HL_LIBRARIES}      # only for static link
+                        ${HDF5_C_LIBRARIES}
+                        ${AEC_LIBRARIES}          # only for static link
+                        ${BACKWARD_LIBRARIES}
+                        ${OMEGA_H_LIBRARIES})
+
+  # Add custom dependencies for MeshConv's main Charm++ module
+  addCharmModule( "meshconv" "${MESHCONV_EXECUTABLE}" )
+
+else()
+  message(STATUS "(Not configured executable '${MESHCONV_EXECUTABLE}')")
+endif(ENABLE_MESHCONV)
 
 ### Walker executable ##########################################################
-add_executable(${WALKER_EXECUTABLE}
-               WalkerDriver.C
-               WalkerPrint.C
-               Walker.C)
+if (ENABLE_WALKER)
 
-config_executable(${WALKER_EXECUTABLE})
+  add_executable(${WALKER_EXECUTABLE}
+                 WalkerDriver.C
+                 WalkerPrint.C
+                 Walker.C)
 
-target_link_libraries(${WALKER_EXECUTABLE}
-                      DiffEq
-                      RNG
-                      Walker
-                      Statistics
-                      IO
-                      WalkerControl
-                      Base
-                      Config
-                      ${SEACASExodus_LIBRARIES}
-                      ${LAPACKE_LIBRARIES}      # only if MKL not found
-                      ${MKL_INTERFACE_LIBRARY}
-                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
-                      ${MKL_CORE_LIBRARY}
-                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
-                      ${RNGSSE2_LIBRARIES}
-                      ${NETCDF_LIBRARIES}       # only for static link
-                      ${HDF5_HL_LIBRARIES}      # only for static link
-                      ${HDF5_C_LIBRARIES}
-                      ${AEC_LIBRARIES}          # only for static link
-                      ${BACKWARD_LIBRARIES}
-)
+  config_executable(${WALKER_EXECUTABLE})
 
-# Add custom dependencies for Walker's main Charm++ module
-addCharmModule( "walker" "${WALKER_EXECUTABLE}" )
+  target_link_libraries(${WALKER_EXECUTABLE}
+                        DiffEq
+                        RNG
+                        Walker
+                        Statistics
+                        IO
+                        WalkerControl
+                        Base
+                        Config
+                        ${SEACASExodus_LIBRARIES}
+                        ${LAPACKE_LIBRARIES}      # only if MKL not found
+                        ${MKL_INTERFACE_LIBRARY}
+                        ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                        ${MKL_CORE_LIBRARY}
+                        ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                        ${RNGSSE2_LIBRARIES}
+                        ${NETCDF_LIBRARIES}       # only for static link
+                        ${HDF5_HL_LIBRARIES}      # only for static link
+                        ${HDF5_C_LIBRARIES}
+                        ${AEC_LIBRARIES}          # only for static link
+                        ${BACKWARD_LIBRARIES})
+
+  # Add custom dependencies for Walker's main Charm++ module
+  addCharmModule( "walker" "${WALKER_EXECUTABLE}" )
+
+else()
+  message(STATUS "(Not configured executable '${WALKER_EXECUTABLE}')")
+endif(ENABLE_WALKER)
 
 ### FileConv executable ########################################################
-if (HAS_ROOT)
+if (ENABLE_FILECONV)
 
   add_executable(${FILECONV_EXECUTABLE}
                  FileConvDriver.C
@@ -309,4 +334,6 @@ if (HAS_ROOT)
   # Add custom dependencies for FileConv's main Charm++ module
   addCharmModule( "fileconv" "${FILECONV_EXECUTABLE}" )
 
-endif(HAS_ROOT)
+else()
+  message(STATUS "(Not configured executable '${FILECONV_EXECUTABLE}')")
+endif(ENABLE_FILECONV)
