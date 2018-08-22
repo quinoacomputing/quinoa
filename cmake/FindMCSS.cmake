@@ -21,6 +21,7 @@ if(MCSS_DOX2HTML5 AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND JINJA2_FOUND AND
   set (MCSS_FIND_QUIETLY TRUE)
 endif()
 
+<<<<<<< HEAD
 # Find Python 3 and prerequisites for m.css
 find_package(PythonInterp 3)
 
@@ -52,6 +53,9 @@ if (PYTHONINTERP_FOUND)
 endif()
 
 find_package(LATEX)
+=======
+find_package(PythonInterp 3.0)
+>>>>>>> split_targets
 
 FIND_PROGRAM(MCSS_DOX2HTML5 NAMES dox2html5.py
                             PATHS ${MCSS_ROOT} $ENV{MCSS_ROOT}

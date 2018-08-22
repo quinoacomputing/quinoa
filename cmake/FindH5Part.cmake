@@ -46,7 +46,12 @@ else()
                                                  $ENV{H5PART_ROOT}/lib)
 endif()
 
-set(H5PART_INCLUDE_DIRS ${H5PART_INCLUDE_DIR})
+if(H5PART_INCLUDE_DIR)
+  set(H5PART_INCLUDE_DIRS ${H5PART_INCLUDE_DIR})
+else()
+  set(H5PART_INCLUDE_DIRS "")
+endif()
+
 set(H5PART_LIBRARIES ${H5PART_LIBRARY})
 
 # Handle the QUIETLY and REQUIRED arguments and set H5PART_FOUND to TRUE if 

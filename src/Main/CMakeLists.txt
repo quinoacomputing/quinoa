@@ -142,8 +142,6 @@ if (ENABLE_UNITTEST)
   # Add custom dependencies for UnitTest's main Charm++ module
   addCharmModule( "unittest" "${UNITTEST_EXECUTABLE}" )
 
-else()
-  message(STATUS "(Not configured executable '${UNITTEST_EXECUTABLE}')")
 endif(ENABLE_UNITTEST)
 
 ### Inciter executable #########################################################
@@ -194,8 +192,6 @@ if (ENABLE_INCITER)
   # Add custom dependencies for Inciter's main Charm++ module
   addCharmModule( "inciter" "${INCITER_EXECUTABLE}" )
 
-else()
-  message(STATUS "(Not configured executable '${INCITER_EXECUTABLE}')")
 endif(ENABLE_INCITER)
 
 ### RNGTest executable #########################################################
@@ -229,8 +225,6 @@ if (ENABLE_RNGTEST)
   # Add custom dependencies for RNGTest's main Charm++ module
   addCharmModule( "rngtest" "${RNGTEST_EXECUTABLE}" )
 
-else()
-  message(STATUS "(Not configured executable '${RNGTEST_EXECUTABLE}')")
 endif(ENABLE_RNGTEST)
 
 ### MeshConv executable ########################################################
@@ -263,8 +257,6 @@ if (ENABLE_MESHCONV)
   # Add custom dependencies for MeshConv's main Charm++ module
   addCharmModule( "meshconv" "${MESHCONV_EXECUTABLE}" )
 
-else()
-  message(STATUS "(Not configured executable '${MESHCONV_EXECUTABLE}')")
 endif(ENABLE_MESHCONV)
 
 ### Walker executable ##########################################################
@@ -302,8 +294,6 @@ if (ENABLE_WALKER)
   # Add custom dependencies for Walker's main Charm++ module
   addCharmModule( "walker" "${WALKER_EXECUTABLE}" )
 
-else()
-  message(STATUS "(Not configured executable '${WALKER_EXECUTABLE}')")
 endif(ENABLE_WALKER)
 
 ### FileConv executable ########################################################
@@ -334,6 +324,4 @@ if (ENABLE_FILECONV)
   # Add custom dependencies for FileConv's main Charm++ module
   addCharmModule( "fileconv" "${FILECONV_EXECUTABLE}" )
 
-else()
-  message(STATUS "(Not configured executable '${FILECONV_EXECUTABLE}')")
 endif(ENABLE_FILECONV)

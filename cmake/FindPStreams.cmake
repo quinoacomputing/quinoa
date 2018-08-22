@@ -28,7 +28,11 @@ FIND_PATH(PSTREAMS_INCLUDE_DIR NAMES pstream.h
           PATH_SUFFIXES pstreams
           HINTS ${PSTREAMS_ROOT}/include $ENV{PSTREAMS_ROOT})
 
-set(PSTREAMS_INCLUDE_DIRS ${PSTREAMS_INCLUDE_DIR})
+if(PSTREAMS_INCLUDE_DIR)
+  set(PSTREAMS_INCLUDE_DIRS ${PSTREAMS_INCLUDE_DIR})
+else()
+  set(PSTREAMS_INCLUDE_DIRS "")
+endif()
 
 # Handle the QUIETLY and REQUIRED arguments and set PSTREAMS_FOUND to TRUE if
 # all listed variables are TRUE.
