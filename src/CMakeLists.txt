@@ -92,10 +92,11 @@ if (NOT TPL_DIR)
   set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../tpl/install/${COMP}-${ARCH})
   get_filename_component(ABS_TPL_DIR ${REL_TPL_DIR} ABSOLUTE)
   set(TPL_DIR ${ABS_TPL_DIR} CACHE STRING "Third-party libraries directory.")
-  if (EXISTS ${TPL_DIR}/include)
-    set(TPL_INCLUDE_DIR ${TPL_DIR}/include)
-    message(STATUS "Third-party library dir: " ${TPL_DIR})
-  endif()
+endif()
+
+if (EXISTS ${TPL_DIR}/include)
+  set(TPL_INCLUDE_DIR ${TPL_DIR}/include)
+  message(STATUS "Third-party library dir: " ${TPL_DIR})
 endif()
 
 # Include third-party libraries configuration
@@ -139,6 +140,10 @@ endif()
 
 MESSAGE(STATUS "Charmrun: " ${CHARM_RUN})
 MESSAGE(STATUS "Linker compiler: " ${LINKER_COMPILER})
+
+if (EXTRA_LINK_ARGS)
+  MESSAGE(STATUS "Extra linker args (EXTRA_LINK_ARGS): ${EXTRA_LINK_ARGS}")
+endif()
 
 add_definitions(-DQUINOA_CONFIG_MPI_ENABLED)
 
@@ -539,54 +544,6 @@ if (BUILD_SHARED_LIBS)
   endif("${isSystemDir}" STREQUAL "-1")
 
 endif(BUILD_SHARED_LIBS)
-
-include_directories(${QUINOA_SOURCE_DIR}
-                    ${QUINOA_SOURCE_DIR}/Base
-                    ${QUINOA_SOURCE_DIR}/Control
-                    ${QUINOA_SOURCE_DIR}/DiffEq
-                    ${QUINOA_SOURCE_DIR}/PDE
-                    ${QUINOA_SOURCE_DIR}/Walker
-                    ${QUINOA_SOURCE_DIR}/Inciter
-                    ${QUINOA_SOURCE_DIR}/LinSys
-                    ${QUINOA_SOURCE_DIR}/LoadBalance
-                    ${QUINOA_SOURCE_DIR}/IO
-                    ${QUINOA_SOURCE_DIR}/Main
-                    ${QUINOA_SOURCE_DIR}/Mesh
-                    ${QUINOA_SOURCE_DIR}/RNG
-                    ${RNGTEST_SRC_DIR}
-                    ${QUINOA_SOURCE_DIR}/Statistics
-                    ${QUINOA_SOURCE_DIR}/UnitTest
-                    ${MPI_CXX_INCLUDE_DIRS}
-                    ${MPI_CXX_INCLUDE_PATH}
-                    ${MKL_INCLUDE_DIRS}
-                    ${HDF5_INCLUDE_DIRS}
-                    ${HYPRE_INCLUDE_DIRS}
-                    ${ROOT_INCLUDE_DIRS}
-                    ${PSTREAMS_INCLUDE_DIRS}
-                    ${PUGIXML_INCLUDE_DIRS}
-                    ${H5PART_INCLUDE_DIRS}
-                    ${TUT_INCLUDE_DIRS}
-                    ${PEGTL_INCLUDE_DIRS}
-                    ${RANDOM123_INCLUDE_DIRS}
-                    ${TESTU01_INCLUDE_DIRS}
-                    ${RNGSSE2_INCLUDE_DIRS}
-                    ${LAPACKE_INCLUDE_DIRS}
-                    ${Zoltan2_INCLUDE_DIR}
-                    ${SEACASExodus_INCLUDE_DIRS}
-                    ${TPL_INCLUDE_DIR}
-                    ${CHARM_INCLUDE_DIRS}
-                    ${RNGTEST_BIN_DIR}
-                    ${BACKWARDCPP_INCLUDE_DIRS}
-                    ${BRIGAND_INCLUDE_DIRS}
-                    ${OMEGA_H_INCLUDE_DIRS}
-                    ${PROJECT_BINARY_DIR}/LoadBalance   # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/Walker        # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/Inciter       # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/UnitTest      # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/LinSys        # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/IO            # for Charm++ modules
-)
 
 # Components
 add_subdirectory(Main)

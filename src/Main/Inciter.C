@@ -132,7 +132,7 @@ void operator|( PUP::er& p, std::vector< DGPDE >& eqs ) {
 
 } // inciter::
 
-//! \brief Charm++ main chare for the shock hydroddynamics executable, inciter.
+//! \brief Charm++ main chare for the shock hydrodynamics executable, inciter.
 //! \details In inciter the Charm++ runtime system is initialized only after the
 //!   mesh has been read in, partitioned, and the necessary data structures,
 //!   e.g., communication maps, have been generated. This delayed initialization

@@ -11,8 +11,20 @@ add_library(RNGTest
             TestU01Suite.C
             SmallCrush.C
             Crush.C
-            BigCrush.C
-)
+            BigCrush.C)
+
+target_include_directories(RNGTest PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${QUINOA_SOURCE_DIR}/RNG
+                           ${QUINOA_SOURCE_DIR}/Main
+                           ${PROJECT_BINARY_DIR}/../Main
+                           ${PROJECT_BINARY_DIR}/../RNGTest
+                           ${CHARM_INCLUDE_DIRS}
+                           ${PEGTL_INCLUDE_DIRS}
+                           ${TESTU01_INCLUDE_DIRS}
+                           ${BRIGAND_INCLUDE_DIRS})
 
 addCharmModule( "testu01" "RNGTest" )
 addCharmModule( "testu01suite" "RNGTest" )

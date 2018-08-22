@@ -8,6 +8,21 @@ include(charm)
 add_library(LinSys
             Solver.C)
 
+target_include_directories(LinSys PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${QUINOA_SOURCE_DIR}/Mesh
+                           ${QUINOA_SOURCE_DIR}/Inciter
+                           ${TPL_INCLUDE_DIR}
+                           ${PROJECT_BINARY_DIR}/../Main
+                           ${PROJECT_BINARY_DIR}/../LinSys
+                           ${CHARM_INCLUDE_DIRS}
+                           ${PEGTL_INCLUDE_DIRS}
+                           ${HYPRE_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_PATH})
+
 addCharmModule( "solver" "LinSys" )
 
 # Add extra dependency of LinSys on charm modules implementing advanced array
