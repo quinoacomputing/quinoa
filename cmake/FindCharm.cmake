@@ -96,7 +96,7 @@ FIND_PATH(CHARM_INCLUDE_DIR NAMES charm.h
                                   $ENV{CHARM_ROOT}/include
                                   ${CMAKE_INSTALL_PREFIX}/charm/include
                             PATH_SUFFIXES charm)
-if(CHARM_INCLUDE_DIRS)
+if(CHARM_INCLUDE_DIR)
   set(CHARM_INCLUDE_DIRS ${CHARM_INCLUDE_DIR})
 else()
   set(CHARM_INCLUDE_DIRS "")

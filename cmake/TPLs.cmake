@@ -159,12 +159,16 @@ find_package(HighwayHash)
 set(BRIGAND_ROOT ${TPL_DIR}) # prefer ours
 find_package(Brigand)
 
+message(STATUS "------------------------------------------")
+
 # Enable individual executables based on required TPLs found
 
 if (CHARM_FOUND AND PUGIXML_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND
     HDF5_FOUND AND BRIGAND_FOUND AND TUT_FOUND AND PEGTL_FOUND)
   set(ENABLE_UNITTEST "true")
   set(UNITTEST_EXECUTABLE unittest)
+else()
+  message(STATUS "Executable 'unittest' will NOT be configured")
 endif()
 
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND HYPRE_FOUND AND
@@ -172,6 +176,8 @@ if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND HYPRE_FOUND AND
     PEGTL_FOUND AND (MKL_FOUND OR LAPACKE_FOUND))
   set(ENABLE_INCITER "true")
   set(INCITER_EXECUTABLE inciter)
+else()
+  message(STATUS "Executable 'inciter' will NOT be configured")
 endif()
 
 if (CHARM_FOUND AND TESTU01_FOUND AND BRIGAND_FOUND AND PEGTL_FOUND AND
@@ -180,12 +186,16 @@ if (CHARM_FOUND AND TESTU01_FOUND AND BRIGAND_FOUND AND PEGTL_FOUND AND
   set(RNGTEST_EXECUTABLE rngtest)
   set(RNGTEST_SRC_DIR ${QUINOA_SOURCE_DIR}/RNGTest)
   set(RNGTEST_BIN_DIR ${PROJECT_BINARY_DIR}/RNGTest)
+else()
+  message(STATUS "Executable 'rngtest' will NOT be configured")
 endif()
 
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND PEGTL_FOUND AND
     PUGIXML_FOUND AND HDF5_FOUND)
   set(ENABLE_MESHCONV "true")
   set(MESHCONV_EXECUTABLE meshconv)
+else()
+  message(STATUS "Executable 'meshconv' will NOT be configured")
 endif()
 
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND PEGTL_FOUND AND
@@ -193,12 +203,14 @@ if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND PEGTL_FOUND AND
     LAPACKE_FOUND))
   set(ENABLE_WALKER "true")
   set(WALKER_EXECUTABLE walker)
+else()
+  message(STATUS "Executable 'walker' will NOT be configured")
 endif()
 
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND ROOT_FOUND
     AND PEGTL_FOUND AND PUGIXML_FOUND AND HDF5_FOUND)
   set(ENABLE_FILECONV "true")
   set(FILECONV_EXECUTABLE fileconv)
+else()
+  message(STATUS "Executable 'fileconv' will NOT be configured")
 endif()
-
-message(STATUS "------------------------------------------")
