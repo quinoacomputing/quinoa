@@ -96,8 +96,11 @@ FIND_PATH(CHARM_INCLUDE_DIR NAMES charm.h
                                   $ENV{CHARM_ROOT}/include
                                   ${CMAKE_INSTALL_PREFIX}/charm/include
                             PATH_SUFFIXES charm)
-
-set(CHARM_INCLUDE_DIRS ${CHARM_INCLUDE_DIR})
+if(CHARM_INCLUDE_DIRS)
+  set(CHARM_INCLUDE_DIRS ${CHARM_INCLUDE_DIR})
+else()
+  set(CHARM_INCLUDE_DIRS "")
+endif()
 
 # Handle the QUIETLY and REQUIRED arguments and set CHARM_FOUND to TRUE if all
 # listed variables are TRUE
@@ -111,4 +114,3 @@ endif()
 
 MARK_AS_ADVANCED(CHARM_COMPILER CHARM_INCLUDE_DIRS CHARM_RUN ENABLE_AMPI
                  AMPI_C_COMPILER AMPI_CXX_COMPILER AMPI_RUN)
-
