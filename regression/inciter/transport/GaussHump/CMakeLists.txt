@@ -170,7 +170,7 @@ add_regression_test(gauss_hump_dg_u0.9_migr ${INCITER_EXECUTABLE}
                                out.22 out.23 out.24 out.25 out.26 out.27 out.28
                                out.29 out.30 out.31 out.32 out.33 out.34 out.35
                                out.36 out.37 out.38 out.39
-                    BIN_DIFF_PROG_ARGS -m
+                    BIN_DIFF_PROG_ARGS -m -q
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag.std
                     TEXT_RESULT diag

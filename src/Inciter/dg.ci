@@ -43,15 +43,6 @@ module dg {
       // High-level overview of the dependency and asynchronous call structure
       // ---------------------------------------------------------------------
       //
-      // Directed Acyclic Graph (DAG):
-      // -----------------------------
-      //
-      // See src/Inciter/DG.h.
-      //
-      // Interpretation of the above DAG
-      // -------------------------------
-      // Control flow is from left to right and top to bottom.
-      //
       // If we have computed our own ghost data in setupGhost(), and every chare
       // we communicate with has requested ghost data from us, we fulfill the
       // requests and send out ghost data.

@@ -273,6 +273,7 @@ class Discretization : public CBase_Discretization {
     //! Timer measuring a time step
     tk::Timer m_timer;
 
+    //! Set mesh coordinates based on coordinates map
     tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );
 };
 
