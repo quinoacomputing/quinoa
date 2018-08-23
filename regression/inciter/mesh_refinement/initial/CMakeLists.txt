@@ -1,9 +1,32 @@
 # See cmake/add_regression_test.cmake for documentation on the arguments to
 # add_regression_test().
 
+# Naming convention for AMR regression tests
+#
+# Example: amr_init_u1_trans_dg_u0.4
+#
+# Legend:
+# * amr - exercising adaptive mesh refinement (AMR)
+# * init - AMR before t=0 (initial AMR),
+#          other possibilities instead of 'init':
+#          - dt - AMR durging time stepping
+# * u1 - uniform refinement (1:8 for all tets), single step
+#        other possibilities instead of 'u':
+#        - i - initial conditions based adaptive refinement,
+#        - c - coordinate based refinement,
+#        - l - refine a list of tagged edges
+# * trans - type of physics, e.g., compflow, transport
+#           other possibilities instead of 'trans':
+#           - compflow - compressible flow
+# * dg - discontinuous Galerkin discretization scheme,
+#        other possibilities instead of 'dg':
+#        - diagcg - lumped-mass (diagonal) continuous Galerkin
+#        - matcg - continuous Galerkin with a matrix solver
+# * u0.4 - Non-zero virtualization u = 0.4
+
 # Virtualization = 0
 
-add_regression_test(amr_initial_uniform1step ${INCITER_EXECUTABLE}
+add_regression_test(amr_init_u1_trans_matcg ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
                                exodiff.cfg slot_cyl_pe1_u0.0.std.exo
@@ -11,11 +34,26 @@ add_regression_test(amr_initial_uniform1step ${INCITER_EXECUTABLE}
                     BIN_BASELINE slot_cyl_pe1_u0.0.std.exo
                     BIN_RESULT out.0
                     BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff.cfg)
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    LABELS amr)
+
+add_regression_test(amr_init_u1_compflow_dg ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES vortical_flow_dg.q unitcube_1k.exo
+                               diag_dg.std
+                               exodiff_dg.cfg vortical_flow_dg.std.exo
+                    ARGS -c vortical_flow_dg.q -i unitcube_1k.exo -v
+                    BIN_BASELINE vortical_flow_dg.std.exo
+                    BIN_RESULT out.0
+                    BIN_DIFF_PROG_CONF exodiff_dg.cfg
+                    TEXT_BASELINE diag_dg.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg
+                    LABELS amr)
 
 # Parallel, no virtualization
 
-add_regression_test(amr_initial_uniform1step ${INCITER_EXECUTABLE}
+add_regression_test(amr_init_u1_trans_matcg ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
                                exodiff.cfg
@@ -33,11 +71,12 @@ add_regression_test(amr_initial_uniform1step ${INCITER_EXECUTABLE}
                                out.2
                                out.3
                     BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff.cfg)
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    LABELS amr)
 
 # Parallel, virtualization = 0.5
 
-add_regression_test(amr_initial_uniform1step_u0.5 ${INCITER_EXECUTABLE}
+add_regression_test(amr_init_u1_trans_matcg_u0.5 ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
                                exodiff.cfg
@@ -67,9 +106,10 @@ add_regression_test(amr_initial_uniform1step_u0.5 ${INCITER_EXECUTABLE}
                                out.6
                                out.7
                     BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff.cfg)
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    LABELS amr)
 
-add_regression_test(amr_initial_uniform2steps_u0.5 ${INCITER_EXECUTABLE}
+add_regression_test(amr_init_u2_trans_matcg_u0.5 ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slot_cyl_amr_uniform2steps.q
                                unitsquare_01_955.exo
@@ -102,4 +142,5 @@ add_regression_test(amr_initial_uniform2steps_u0.5 ${INCITER_EXECUTABLE}
                                out.6
                                out.7
                     BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff.cfg)
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    LABELS amr)
