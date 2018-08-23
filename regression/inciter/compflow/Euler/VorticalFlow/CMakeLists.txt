@@ -56,6 +56,20 @@ add_regression_test(compflow_euler_vorticalflow_dg_lf ${INCITER_EXECUTABLE}
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg)
 
+add_regression_test(compflow_euler_vorticalflow_reord_dg ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES vortical_flow_reord_dg.q unitcube_1k.exo
+                               diag_dg.std
+                               exodiff_dg.cfg vortical_flow_dg.std.exo
+                    ARGS -c vortical_flow_reord_dg.q -i unitcube_1k.exo -v
+                    BIN_BASELINE vortical_flow_dg.std.exo
+                    BIN_RESULT out.0
+                    BIN_DIFF_PROG_CONF exodiff_dg.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_dg.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg)
+
 # Parallel + no virtualization
 
 add_regression_test(compflow_euler_vorticalflow ${INCITER_EXECUTABLE}
