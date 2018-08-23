@@ -14,6 +14,8 @@
 #include "TUTConfig.h"
 #include "Has.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -164,3 +166,5 @@ void Has_object::test< 12 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

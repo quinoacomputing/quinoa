@@ -1,14 +1,12 @@
 /*!
   \page      walker_example_diagou Walker: Integrating the diagonal Ornstein-Uhlenbeck SDE
-  \tableofcontents
 
-This example runs [walker](walker_doc.html) to integrate the diagonal
-Ornstein-Uhlenbeck SDE (see DiffEq/DiagOrnsteinUhlenbeck.h) using constant
-coefficients.
+This example runs @ref walker_main to integrate the diagonal Ornstein-Uhlenbeck
+SDE (see DiffEq/DiagOrnsteinUhlenbeck.h) using constant coefficients.
 
-\section walker_example_diagou_control Control file
+@section walker_example_diagou_control Control file
 
-\verbatim
+@code{.bash}
 title "Example problem"
 
 walker
@@ -48,14 +46,14 @@ walker
     f2( o1 o2 : 5.0e-2 5.0e-2 ) #; -2 2 -2 2 )
   end
 end
-\endverbatim
+@endcode
 
-\section walker_example_diagou_run Example run on 4 CPUs
-\verbatim
+@section walker_example_diagou_run Example run on 4 CPUs
+@code{.bash}
 ./charmrun +p4 Main/walker -v -c ../../tmp/test.q -u 0.9
-\endverbatim
+@endcode
 
-\section walker_example_diagou_output Output
+@section walker_example_diagou_output Output
 \verbatim
 Running on 4 processors:  Main/walker -v -c ../../tmp/diagou.q -u 0.9
 charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 4  Main/walker -v -c ../../tmp/diagou.q -u 0.9
@@ -240,8 +238,12 @@ Left -- time evolution of the means and the means of the invariant distribution,
 right -- time evolution of the variances and those of the invariant as well as
 the zero correlation between the two independent equations integrated.
 
-<img src="https://quinoacomputing.github.io/diagou_means.svg" align="left" width="50%" background=transparent>
-<img src="https://quinoacomputing.github.io/diagou_sec.svg" align="right" width="50%" background=transparent>
+@m_div{m-col-m-6 m-left-m}
+<img src="diagou_means.svg"/>
+@m_enddiv
+@m_div{m-col-m-6 m-right-m}
+<img src="diagou_sec.svg"/>
+@m_enddiv
 
 Gnuplot commands to reproduce the above plots:
 \verbatim
@@ -249,7 +251,7 @@ plot "stat.txt" u 2:3 w l t "<O1>", "stat.txt" u 2:4 w l t "<O2>", 0.0 lt 1, 1.5
 plot "stat.txt" u 2:5 w l t "<o1o1>", "stat.txt" u 2:6 w l t "<o1o2>", "stat.txt" u 2:7 w l t "<o2o2>", 0.25/2 lt 1, 0.0 lt 2, 0.5 lt 3
 \endverbatim
 
-\section walker_example_diagou_pdf Estimated bivariate PDF
+@section walker_example_diagou_pdf Estimated bivariate PDF
 
 Example ASCII bivariate PDF output.
 
@@ -294,12 +296,8 @@ Example ASCII bivariate PDF output.
 Example visualization of the estimated bivariate PDF with contour lines at the
 final time step using the command in the above input file.
 
-\image html diagou_pdf.svg
-<img src="https://quinoacomputing.github.io/diagou_pdf.svg" align="center" width="75%" background=transparent>
+@m_div{m-col-m-9 m-center-m}
+<img src="diagou_pdf.svg"/>
+@m_enddiv
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Thu 06 Apr 2017 10:47:27 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */

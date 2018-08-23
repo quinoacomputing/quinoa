@@ -97,7 +97,7 @@ edgegrad( std::size_t edge,
           ncomp_t c )
 // *****************************************************************************
 //  Compute gradient at a mesh edge
-//! \param[in] edgeEdge id at which to compute gradient
+//! \param[in] edge Edge id at which to compute gradient
 //! \param[in] coord Mesh node coordinates
 //! \param[in] inpoel Mesh element connectivity
 //! \param[in] esued Linked lists storing elements surrounding edges, see

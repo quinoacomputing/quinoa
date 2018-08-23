@@ -31,6 +31,7 @@ class NodeDiagnostics {
     //! Compute diagnostics, e.g., residuals, norms of errors, etc.
     bool compute( Discretization& d, const tk::Fields& u );
 
+    /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

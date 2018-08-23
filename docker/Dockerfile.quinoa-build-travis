@@ -46,8 +46,8 @@ RUN cmake \
 RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} ninja -j2 ${TARGET}
 RUN ccache -s
 RUN if [ ${TARGET} = unittest ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q; fi
-RUN if [ -z "${SONARQUBE}" ]; then ctest --output-on-failure -j2 -LE stringent -R ${TARGET}; fi
-RUN if [ ${SONARQUBE} ]; then ninja -j2 doc; fi
+RUN if [ -z "${SONARQUBE}" ] && [ ${TARGET} != doc ]; then ctest --output-on-failure -j2 -LE stringent -R ${TARGET}; fi
+RUN if [ ${TARGET} == doc ]; then ninja -j2 doc; fi
 RUN cd .. && if [ ${SONARQUBE} ]; then \
   python -m coverxygen --xml-dir build/doc/xml/ --src-dir . --output doxygen.coverage.info; \
   wget -O codecov.sh https://codecov.io/bash; \

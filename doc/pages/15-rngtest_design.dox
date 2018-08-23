@@ -1,95 +1,70 @@
 /*!
-  \page      rngtest_doc RNGTest: Random number generator test suite
-  <img src="https://quinoacomputing.github.io/rngtest.svg" align="right" width="40%" background=transparent>
+  \page      rngtest_design RNGTest design
 
-RNGTest is a fully asynchronous distributed-memory-parallel test harness to
-subject random number generators to stringent statistical tests enabling
-quantitative ranking with respect to generator quality and computational cost.
+This page collects some architecture details and software design notes from the
+time while RNGTest was converted from OpenMPI to Charm++ parallelism.
 
-The test suite uses the [Charm++](http://charm.cs.illinois.edu) runtime system
-to run the tests concurrently, either on a single machine or a networked set of
-computers. The software design is fully asynchronous, yielding 100% CPU
-utilization at all times, independent of the time taken by the individual tests.
+@section rngtest_design_requirements Requirements, features
 
-Examples
---------
-\subpage rngtest_examples
+@subsection rngtest_design_req_1 1. Works with current and future libraries of RNGs
 
-Help on command-line parameters
--------------------------------
-
-As usual, use the \a -h command-line parameter to get on-screen help from an
-executable. Example output, excluding Charm++ command-line parameters:
-\code{.py}
-$ rngtest -h
-rngtest Command-line Parameters:
-       -c, --control     string Specify the control file name [REQUIRED]
-          -h, --help            Display one-liner help on all command-line arguments
-       -f, --helpctr            Display one-liner help on all control file keywords
-        -H, --helpkw     string Display verbose help on a single keyword
-       -v, --verbose            Select verbose screen output
-\endcode
-
-Requirements, features
-----------------------
-
-1. __Works with current and future libraries of RNGs:__
 Currently Intel's MKL's vector statistical library (VSL) RNGs, RNGSSE's RNGs,
 and a couple of Random123 RNGs are interfaced. References:
 
- - MKL: https://software.intel.com/en-us/intel-mkl
+- MKL: https://software.intel.com/en-us/intel-mkl,
+- RNGSSE: https://doi.org/10.1016/j.cpc.2011.03.022 and
+  https://doi.org/10.1016/j.cpc.2013.04.007,
+- Random123: http://www.thesalmons.org/john/random123/releases/latest/docs/index.html
 
- - RNGSSE: https://doi.org/10.1016/j.cpc.2011.03.022 and
-           https://doi.org/10.1016/j.cpc.2013.04.007
+@m_div{m-block m-right-m m-note}
+Note that MKL and RNGSSE2 are entirely optional. If unavailable, all features
+of Quinoa can be used via Random123.
+@m_enddiv
 
- - Random123: http://www.thesalmons.org/john/random123/releases/latest/docs/index.html
+All of these libraries implement a variety of different pseudo random number
+generators and importantly, all support concurrent sampling from random number
+streams: MKL supports both block splitting and leap frogging, RNGSSE supports
+block splitting (jumping ahead and initialization of a large number of
+independent streams), and Random123 RNGs are counter-based so counters can be
+initialized and incremented differently on each rank/thread.
 
- Note that MKL and RNGSSE2 are entirely optional. If unavailable, all features
- of Quinoa can be used via Random123.
+@subsection rngtest_design_req_2 2. Works with different libraries of statistical tests
 
- All of these libraries implement a variety of different pseudo random number
- generators and importantly, all support concurrent sampling from random number
- streams: MKL supports both block splitting and leap frogging, RNGSSE supports
- block splitting (jumping ahead and initialization of a large number of
- independent streams), and Random123 RNGs are counter-based so counters can be
- initialized and incremented differently on each rank/thread.
-
-2. __Works with different libraries of statistical tests:__
-Currently TestU01's SmallCrush, Crush, and BigCrush batteries are supported and
+  Currently TestU01's SmallCrush, Crush, and BigCrush batteries are supported and
 the design allows for other libraries of statistical tests. Reference for
 TestU01: http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
 
-3. __The batteries work in parallel:__
+@subsection rngtest_design_req3 3. The batteries work in parallel
+
 The user selects a number of RNGs (with optionally specifying parameters for
 each, e.g., seed, sequence length, etc.) as well as a battery of statistical
 tests. The tests are then run concurrently. RNGs from all RNG libraries can be
 tested (and thus compared to each other) at the same time.
 
-4. __Generator quality and computational cost:__
+@subsection rngtest_design_req4 4. Generator quality and computational cost
+
 As the tests of the battery are run, the various RNGs are timed separately,
 providing a 'generator cost' ranking. The number of passed and failed tests
 provide a 'generator quality' ranking (if more than one RNGs are tested).
 
-Concurrency
------------
+@subsection rngtest_concurrency 5. Concurrency
 
 An arbitrary number of RNGs can be subjected to a single battery at a time. The
 tests are run concurrently using [Charm++](http://charm.cs.illinois.edu) on a
-single machine or across a set of machines distributed over the network.
-The software design fully asynchronous yielding 100% CPU utilization at all
-times, independnt of the time taken by the individual tests.
+single machine or across a set of machines distributed over the network.  The
+software design is fully asynchronous yielding 100% CPU utilization at all times,
+independent of the time taken by the individual tests.
 
 Concurrency via Charm++ requires serializable objects. Charm++ discourages
 pointers, function pointers, references, while encourages stateless objects (or
 objects with as little and simple state as possible).
 
-Inheritance and runtime polymorphism
-------------------------------------
+@section rngtest_design_inheritance Inheritance and runtime polymorphism
 
 While Charm++ supports migratable objects (chares) that inherit from a pure base
 class to implement runtime polymorphism via reference semantics, the current
 design of RNGTest does not rely on Charm++ to do this. Instead we use Sean
-Parent's [concept-based polymorphism](https://github.com/sean-parent/sean-parent.github.com/wiki/Papers-and-Presentations)
+Parent's [concept-based polymorphism](http://sean-parent.stlab.cc/papers-and-presentations/)
 which achieves polymorphism without client-side inheritance and enables value
 semantics. In concept-based polymorphism inheritance in confined to the
 internals of a "base" class, which, at instantiation, is initialized via a
@@ -106,17 +81,13 @@ polymorphically as a \a rngtest::Battery.
 Analogous to the relationship between classes \a rngtest::Battery and \a
 rngtest::TestU01Suite, the random number generators, available from the MKL,
 RNGSSSE, and Random123 libraries, are also used polymorphically with class
-\a tk::RNG via concept-base polymorphism.
+\a tk::RNG via concept-based polymorphism.
 
 Analogous to the relationship between \a rngtest::Battery and \a
 rngtest::TestU01Suite, individual statistical tests of TestU01 are also used
 polymorphically with the "base" class \a rngtest::StatTest.
 
-For more information on concept-based polymorphism, see for example
-https://github.com/sean-parent/sean-parent.github.com/wiki/presentations/2013-09-24-value-semantics/value-semantics.pdf
-
-Test suite and test configuration
----------------------------------
+@subsection rngtest_design_configuration Test suite and test configuration
 
 \a rngtest::TestU01Suite is configured at instantiation by selecting a TestU01
 suite, one of \a rngtest::SmallCrush, \a rngtest::Crush, or \a
@@ -138,17 +109,16 @@ As discussed above, there are three different dimensions of runtime polymorphism
 in RNGTest: (1) the RNGs, (2) the statistical tests, and (3) the test suites,
 all exercising concept-based polymorphism.
 
-Instantiation using factories
------------------------------
+@subsection rngtest_design_factories Instantiation using factories
 
 In those cases where the instantiation of the object (i.e., which object to
 instantiate) depends on user input (RNGs and test suites), polymorphism is
-facilitated by factories. Factories are std::maps (associative containers) that
+facilitated by factories. Factories are [std::map](http://en.cppreference.com/w/cpp/container/map)s (associative containers) that
 hold function objects and enable lookup based on a key, e.g., an enum based on
 user input. Function objects are essentially smart function pointers, holding
 various derived-class constructors and their constructor arguments. These
 function pointers and their arguments (i.e., how to invoke them) are stored by
-std::function, but the object is not instantiated at the time it is registered
+[std::function](https://en.cppreference.com/w/cpp/utility/functional/function), but the object is not instantiated at the time it is registered
 into the factory. The object is instantiated after a lookup (based on a key),
 after which the constructor is called thereby instantiating the derived object.
 For RNGs this map is \a tk::RNGFactory, for test suites it is \a
@@ -160,29 +130,28 @@ semantics is used in factories whenever possible. For more information on
 Boost.factory, see
 http://www.boost.org/doc/libs/release/libs/functional/factory.
 
-Instantiation without factories
--------------------------------
+@subsection rngtest_design_without_factories Instantiation without factories
 
 In the case when all registered objects have to be instantiated, there is no
 need for a factory, and the base class pointers are initialized by instantiating
-derived objects held in a vector. This is the case for statistical tests held
+derived objects held in a [std::vector](https://en.cppreference.com/w/cpp/container/vector). This is the case for statistical tests held
 by, e.g., \a TestU01Suite.
 
-Charm++ design
---------------
+@section rngtest_design_charm Charm++ design
 
 Before porting to Charm++ RNGTest used OpenMP for concurrency. The last commit
-before porting to Charm++ is [bfcab8f5](https://github.com/quinoacomputing/quinoa/commit/bfcab8f5)
-and the commit where the Charm++ port is fully functional is [c504a51b](https://github.com/quinoacomputing/quinoa/commit/c504a51b).
-Note that during Charm++ port of rngtest target quinoa does not fully build.
+before porting to Charm++ is
+[bfcab8f5](https://github.com/quinoacomputing/quinoa/commit/bfcab8f5) and the
+commit where the Charm++ port is fully functional is
+[c504a51b](https://github.com/quinoacomputing/quinoa/commit/c504a51b).  Note
+that during Charm++ port of rngtest target quinoa does not fully build.
 
 The discussion below details only _some_ of the details encountered during the
 Charm++ port of RNGTest. More documentation can be found in the source code
 itself as well as the individual (sometimes rather lenghty) commit messages
 between the two commits mentioned above.
 
-Porting to Charm++ -- preliminary considerations
-------------------------------------------------
+@subsection rngtest_design_porting Preliminary considerations
 
 The above features, facilitating polymorphism, code reuse, e.g., factories,
 etc., are certainly desirable to keep in a
@@ -193,68 +162,58 @@ of the following challenges have been identified _before_ porting to Charm++.
 
 - Global-scope trickery, especially with the polymorphic base class RNG
   pointers, is a challenge as any global-scope object in Charm++ must be
-  initialized in the main chare and must be serializable so that the Charm++
-  runtime system can migrate them across the network. This means that the vector
-  of base RNG pointers should be re-creatable after migration. This may also
-  mean that its factory must also be in global scope and migratable. How to
-  migrate std::function is a question. As it turns out Sean Parent's
-  concept-based polymorphism (discussed above) significantly simplifies runtime
-  polymorphism using Charm++: since polymorphism is kept internal to a non-chare
-  class, e.g., \a rngtest::StatTest, and the client-code can use
-  value-semantics, the "derived" class \a rngtest::TestU01 chare does not need
-  Charm++'s machinery facilitating runtime polymorphism using the PUP::able
-  framework. Though in the final design Charm++'s runtime polymorphism is not
-  used, a working example is in commit [56bdcf73](https://github.com/quinoacomputing/quinoa/commit/56bdcf73).
+initialized in the main chare and must be serializable so that the Charm++
+runtime system can migrate them across the network. This means that the vector
+of base RNG pointers should be re-creatable after migration. This may also mean
+that its factory must also be in global scope and migratable. How to migrate
+[std::function](https://en.cppreference.com/w/cpp/utility/functional/function) is a question. As it turns out Sean Parent's concept-based
+polymorphism (discussed above) significantly simplifies runtime polymorphism
+using Charm++: since polymorphism is kept internal to a non-chare class, e.g.,
+\a rngtest::StatTest, and the client-code can use value-semantics, the "derived"
+class \a rngtest::TestU01 chare does not need Charm++'s machinery facilitating
+runtime polymorphism using the PUP::able framework. Though in the final design
+Charm++'s runtime polymorphism is not used, a working example is in commit
+[56bdcf73](https://github.com/quinoacomputing/quinoa/commit/56bdcf73).
 
 - Conveniently holding references to Base is hardly an option with Charm++
   objects that should be migratable. Making Base migratable is not a viable
-  option and seems wasteful when only a small part of the data is needed by a
-  class. Passing and storing only what's needed certainly seems like a more
-  walkable route.
+option and seems wasteful when only a small part of the data is needed by a
+class. Passing and storing only what's needed certainly seems like a more
+walkable route.
 
 - All migratable objects must have as little state as possible. This is for
   reasons of code complexity (less PUP routines to write and maintain), as well
-  as computational cost (less data to migrate).
-
-- Runtime polymophism among migratable objects is possible in Charm++ via
-  abstract classes deriving from PUP::able and wrapper chares, however, as
-  mentioned above, this is not needed by the final design.
+as computational cost (less data to migrate).
 
 - Converting each statistical test in a suite seems like the most
-  straightforward to start with when porting to Charm++. However, class \a
-  rngtest::TestU01 currently holds some nontrivial state which requires custom
-  PUP routines and is also polymorphic with base \a rngtest::StatTest.
-  Furthermore, once a test was finished there should be a way to pass the
-  control flow back to the invoking suite to evaluate the just-finished test.
-  Does this require the suite be a chare object as well? (That is also
-  polymorphic and holds some nontrivially migratable state.) How much does
-  Charm++ help already with these issues? E.g., PUP routines for STL containers
-  exist, but some are not optimal and don't use the latest C++ standard. As
-  described below, most of these issues are eliminated by a careful design of
-  classes with as little state as possible.
+  straightforward to start with when porting to Charm++. However, if class \a
+rngtest::TestU01 holds nontrivial state, i.e., custom classes, they all require
+custom PUP routines and must also be polymorphic with base \a rngtest::StatTest.
+Furthermore, once a test was finished there should be a way to pass the control
+flow back to the invoking suite to evaluate the just-finished test.  Does this
+require the suite be a chare object as well? (That is also polymorphic and holds
+some nontrivially migratable state.) How much does Charm++ help already with
+these issues? E.g., PUP routines for STL containers exist, but some are not
+optimal and don't use the latest C++ standard. As described below, most of these
+issues are eliminated by a careful design of classes with as little state as
+possible.
 
-Charm++ design -- overview
---------------------------
+@subsection rngtest_design_charm_overview Design overview
 
 The Charm++ design of RNGTest relies on three interacting Charm++ modules:
 
-1. __rngtest__ -- This is rngtest's main Charm++ module, whose interface is
-defined in Main/rngtest.ci. Beside global-scope data, this file describes the
+1. __rngtest__ -- Beside global-scope data, this file describes the
 mainchare \a Main and a small helper chare, \a execute, both defined in
 Main/RNGTest.C.
 
-2. __testu01suite__ -- This is rngtest's second Charm++ module, whose interface
-is defined in RNGTest/testu01suite.ci. This file describes the chare
-\a rngtest::TestU01Suite.
+2. __testu01suite__ -- This file describes the chare \a rngtest::TestU01Suite.
 
-3. __testu01__ -- This is rngtest's third Charm++ module, whose interface is
-defined in RNGTest/testu01.ci. This file describes the chare \a
-rngtest::TestU01, which is templated on the test properties, and thus lists all
-possible template specializations, corresponding to the various statistical
-tests available in the TestU01 library.
+3. __testu01__ -- This file describes the chare \a rngtest::TestU01, which is
+templated on the test properties, and thus lists all possible template
+specializations, corresponding to the various statistical tests available in the
+TestU01 library.
 
-Charm++ design -- Global-scope data
------------------------------------
+@subsection rngtest_design_charm_global Read-only global-scope data
 
 __Background.__ In RNGTest both the RNGs and the statistical test suites are
 provided by third-party libraries. In other words, rngtest is only a glue-code
@@ -266,31 +225,25 @@ statistical test suites. Since the currently only supported set of batteries
 (TestU01) are a C library, this is done through global-scope wrappers.
 
 __Global-scope wrappers.__ The RNGs, wrapped through the base \a tk::RNG and
-children \a tk::MKLRNG, \a tk::RNGSSERNG, \a tk::Random123, are invoked via
+children \a tk::MKLRNG, \a tk::RNGSSE, \a tk::Random123, are invoked via
 concept-based runtime polymorphism (discussed above). While the RNGs are
 instantiated via \a tk::RNGFactory (discussed above), to be able to call any (or
 all) of the instantiated RNGs at the same time (to facilitate concurrency), we
-need as many wrappers as the maximum number of RNGs -- currently 25. In
-principle, this requires 25 global-scope almost identical wrappers so that we
+need as many wrappers as the maximum number of RNGs, e.g., 20+. In
+principle, this requires 20+ global-scope almost identical wrappers so that we
 can pass them into TestU01. Note that the function signature TestU01 accepts for
 an external generator is the same for all RNGs.  Templating the global-scope
 wrappers on an integer, however, allows to write the wrapper only once and let
-the compiler generate the 25 slightly different wrappers, differing only in
+the compiler generate the 20+ slightly different wrappers, differing only in
 which polymorphic RNG needs to be called by TestU01.  This requires the
 global-scope wrappers to rely on a global-scope vector (or map, see below) of
 polymorphic RNGs and a global-scope id, as the function signature TestU01
 accepts does not allow this information (which RNG I want it to call from some
 list and which parallel stream I want the next number from). The current
-solution thus holds a global-scope std::map of polymorphic \a tk::RNG objects
-(using value semantics) into which the global-scope wrappers index into (using
-an std::map::find) based on a C-style enum (integer) template argument.  This
+solution thus holds a global-scope [std::map](http://en.cppreference.com/w/cpp/container/map) of polymorphic \a tk::RNG objects
+(using value semantics) into which the global-scope wrappers index into, using
+an [std::map::find](https://en.cppreference.com/w/cpp/container/map/find) based on a C-style enum (integer) template argument.  This
 works well enabling code-reuse. See RNGTest/TestU01Wrappers.h. For more
 information on why some of this (and other) data is global-scope, see the
 in-code documentation in Main/RNGTest.C.
-
-<hr>
-<div><small>
-<em>Page last updated:</em> Thu 06 Apr 2017 10:43:25 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */

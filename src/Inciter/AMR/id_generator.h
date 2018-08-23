@@ -37,12 +37,12 @@ namespace AMR {
             }
 
             /**
-             * @brief Helper function to get the all the child ids for a given
-             * parent
+             * Helper function to get all the child ids for a given parent
              *
              * WARNING: If you don't use all the children you ask for, you may have a bad time...
              *
              * @param parent_id The id of the parent
+             * @param count Number of children
              *
              * @return The list of children ids
              */
@@ -96,6 +96,7 @@ namespace AMR {
              * parent
              *
              * @param parent_id The id of the parent
+             * @param count Number of children
              *
              * @return The list of children ids
              */

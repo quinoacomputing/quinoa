@@ -15,6 +15,8 @@
 #include "Vector.h"
 #include "Types.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -95,3 +97,5 @@ void Vector_object::test< 4 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

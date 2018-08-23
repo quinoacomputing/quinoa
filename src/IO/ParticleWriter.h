@@ -88,7 +88,7 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
     }
 
   private:
-    HostProxy m_host;
+    HostProxy m_host;              //!< Host proxy used for communication
     tk::H5PartWriter m_writer;     //!< Particle file format writer
     uint64_t m_npar;               //!< Number of particles to be written
     std::size_t m_nchare;          //!< Number of chares contributed

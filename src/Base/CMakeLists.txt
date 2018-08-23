@@ -16,6 +16,16 @@ add_library(Base
             Table.C
 )
 
+target_include_directories(Base PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${CHARM_INCLUDE_DIRS}
+                           ${PROJECT_BINARY_DIR}/../Main
+                           ${BACKWARDCPP_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_PATH}
+                           ${PSTREAMS_INCLUDE_DIRS})
+
 set_target_properties(Base PROPERTIES LIBRARY_OUTPUT_NAME quinoa_base)
 
 INSTALL(TARGETS Base

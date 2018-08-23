@@ -38,6 +38,8 @@
 #include "Random123.h"
 #include "TestRNG.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! Test group shortcuts
@@ -153,3 +155,5 @@ void RNG_object::test< 9 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

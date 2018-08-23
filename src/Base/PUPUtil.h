@@ -162,10 +162,14 @@ inline void operator|( PUP::er& p, boost::optional< T >& o ) { pup( p, o ); }
 //! Pack/Unpack helper for boost::variant
 //! \param[in,out] index Counter (location) for type in variant
 //! \param[in] send_index Target counter (location) for type in variant
+//! \param[in] p Charm++'s pack/unpack object
 //! \param[in] var boost::variant< Ts... > of arbitrary types to pack/unpack
 template <class T, class... Ts>
-char pup_helper(int& index, const int send_index, PUP::er& p,
-                boost::variant<Ts...>& var) {
+char pup_helper( int& index,
+                 const int send_index,
+                 PUP::er& p,
+                 boost::variant<Ts...>& var )
+{
   if (index == send_index) {
     if (p.isUnpacking()) {
       T t{};

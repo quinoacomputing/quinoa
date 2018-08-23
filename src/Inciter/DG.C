@@ -71,7 +71,7 @@ DG::DG( const CProxy_Discretization& disc,
 //  Constructor
 //! \param[in] disc Discretization proxy
 //! \param[in] solver Linear system solver (Solver) proxy
-//! \param[in] Face data structures
+//! \param[in] fd Face data structures
 // *****************************************************************************
 {
   auto d = Disc();
@@ -116,6 +116,8 @@ DG::DG( const CProxy_Discretization& disc,
         }
       }
   }
+
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) d->Tr().chbndface();
 
   // In the following we assume that the size of the (potential) boundary-face
   // adjacency map above does not necessarily equal to that of the node
@@ -250,6 +252,8 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
   // if we have heard from all fellow chares that we share at least a single
   // node, edge, or face with
   if (++m_ncomfac == m_msumset.size()) {
+
+    if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) d->Tr().chcomfac();
 
     tk::destroy(m_ipface);
 
@@ -397,6 +401,8 @@ DG::sendGhost()
 {
   for (const auto& c : m_ghostData)
     thisProxy[ c.first ].comGhost( thisIndex, c.second );
+
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) Disc()->Tr().chghost();
 }
 
 int
@@ -537,6 +543,8 @@ DG::adj()
 //!    on this chare.
 // *****************************************************************************
 {
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) Disc()->Tr().chadj();
+
   tk::destroy(m_bndFace);
 
   // Ensure that all elements surrounding faces (are correct) including those at
@@ -612,7 +620,7 @@ DG::setup( tk::real v )
   // Store total mesh volume
   m_vol = v;
   // Output chare mesh to file
-  d->writeMesh();
+  d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode() );
   // Output fields metadata to output file
   d->writeElemMeta();
 
@@ -708,6 +716,7 @@ DG::comsol( int fromch,
             const std::vector< std::vector< tk::real > >& u )
 // *****************************************************************************
 //  Receive chare-boundary solution ghost data from neighboring chares
+//! \param[in] fromch Sender chare id
 //! \param[in] tetid Ghost tet ids we receive solution data for
 //! \param[in] u Solution ghost data
 //! \details This function receives contributions to m_u from fellow chares.

@@ -1,0 +1,40 @@
+/*!
+  \page      inciter_design Inciter software design
+
+This page discusses the high-level software design and some implementation
+aspects of @ref inciter_main. The discussion roughly follows as exection
+happens in time, from program start to finish.
+
+@section startup 1. Startup and migration of read-only global-scope data
+
+As all other executables in Quinoa, Inciter uses the Charm++ runtime system.
+Runtime execution starts in the Charm++ `mainmodule` constructor, defined in
+Main/Inciter.C. The command line is parsed first, followed by creating a
+driver, inciter::InciterDriver. After the main chare constructor has finished,
+the runtime system initializes global scope data and migrates it to all other
+PEs, which the is considered read-only. This global-scope data are defined at
+the beginning of Main/Inciter.C in the same order as they appear in the
+companion Charm++ interface file Main/inciter.ci. This is the order in which
+these data are initialized and migrated. Global scope data is limited to such
+read-only data. It stores data initialized during parsing the command line and
+the input (control) file. The command line is parsed by
+inciter::CmdLineParser's constructor, called during the main chare's
+constructor, while the input file is parsed by inciter::InputDeckParser's
+constructor, called during InciterDriver's constructor. Note that up to this
+point execution is serial, since there is only a single main Charm++ chare.
+InciterDriver::execute() then fires up a single Charm++ chare instance of
+Transporter, called from Main::execute() after the runtime system has finished
+migrating all global-scope data. Note that InciterDriver is _not_ a Charm++
+chare, only an ordinary C++ class. Transporter is the main driver class of
+Inciter that is a Charm++ chare from which all execution happens, e.g., via
+broadcasts, and to which all execution ends up in, leading to
+Transporter::finish(), which eventually calls back to Main::finalize(), calling
+CkExit(), singaling the runtime system to exit.
+
+_Mention polymorphic global-scope data_
+
+@section setup 2. Setup
+
+...
+
+*/

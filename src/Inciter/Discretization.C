@@ -42,6 +42,7 @@ Discretization::Discretization(
   const tk::UnsMesh::CoordMap& coordmap,
   const std::map< int, std::unordered_set< std::size_t > >& msum,
   int nchare ) :
+  m_nchare( nchare ),
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
@@ -109,7 +110,7 @@ Discretization::Discretization(
   const auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
   const auto nprop = g_inputdeck.get< tag::component >().nprop();
   if ((sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG))
-    m_fct[ thisIndex ].insert( m_transporter, nchare, m_gid.size(), nprop,
+    m_fct[ thisIndex ].insert( nchare, m_gid.size(), nprop,
                                m_msum, m_bid, m_lid, m_inpoel, CkMyPe() );
 
   contribute( CkCallback(CkReductionTarget(Transporter,disccreated),
@@ -334,9 +335,18 @@ Discretization::stat()
 }
 
 void
-Discretization::writeMesh()
+Discretization::writeMesh(
+  const std::map< int, std::vector< std::size_t > >& bface,
+  const std::vector< std::size_t >& triinpoel,
+  const std::map< int, std::vector< std::size_t > >& bnode )
 // *****************************************************************************
 // Output chare element blocks to file
+//! \param[in] bface Map of boundary-face lists mapped to corresponding side set
+//!   ids for this mesh chunk
+//! \param[in] triinpoel Interconnectivity of points and boundary-face in this
+//!   mesh chunk
+//! \param[in] bnode Map of boundary-node lists mapped to corresponding side set
+//!   ids for this mesh chunk
 // *****************************************************************************
 {
   if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
@@ -354,9 +364,20 @@ Discretization::writeMesh()
     {
       // Create ExodusII writer
       tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
-      // Write chare mesh initializing element connectivity and point coords
-      ew.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
-    }    
+      // Write chare mesh
+      if (m_nchare == 1) {
+
+        // Do not write side sets in parallel
+        const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+        if (scheme == ctr::SchemeType::DG)
+          ew.writeMesh( m_inpoel, m_coord, bface, triinpoel );
+        else
+          ew.writeMesh( m_inpoel, m_coord, bnode );
+
+      } else {
+        ew.writeMesh( m_inpoel, m_coord );
+      }
+    }
   }
 }
 

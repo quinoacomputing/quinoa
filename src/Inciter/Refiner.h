@@ -44,7 +44,7 @@ class Refiner : public CBase_Refiner {
                       const tk::SorterCallback& cbs,
                       const std::vector< std::size_t >& ginpoel,
                       const tk::UnsMesh::CoordMap& coordmap,
-                      const std::map< int, std::vector< std::size_t > >& bface,
+                      const std::map< int, std::vector< std::size_t > >& belem,
                       const std::vector< std::size_t >& triinpoel,
                       const std::map< int, std::vector< std::size_t > >& bnode,
                       int nchare );
@@ -67,6 +67,7 @@ class Refiner : public CBase_Refiner {
     //! Decide wether to continue with another step of mesh refinement
     void nextref();
 
+    /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -84,7 +85,7 @@ class Refiner : public CBase_Refiner {
       }
       p | m_coordmap;
       p | m_coord;
-      p | m_bface;
+      p | m_belem;
       p | m_triinpoel;
       p | m_bnode;
       p | m_nchare;
@@ -149,7 +150,7 @@ class Refiner : public CBase_Refiner {
     //! Coordinates of mesh nodes of our chunk of the mesh
     tk::UnsMesh::Coords m_coord;
     //! List of boundary faces associated to side-set IDs
-    std::map< int, std::vector< std::size_t > > m_bface;
+    std::map< int, std::vector< std::size_t > > m_belem;
     //! Boundary face-node connectivity
     std::vector< std::size_t > m_triinpoel;
     //! List of boundary nodes associated to side-set IDs

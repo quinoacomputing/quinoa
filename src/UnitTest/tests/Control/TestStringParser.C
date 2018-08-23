@@ -12,6 +12,8 @@
 #include "TUTConfig.h"
 #include "StringParser.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -60,3 +62,5 @@ void StringParser_object::test< 2 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

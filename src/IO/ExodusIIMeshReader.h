@@ -24,16 +24,19 @@
 
 namespace tk {
 
-//! \brief Supported ExodusII mesh cell types
-//! \details This the order in which ExodusIIMeshReader::m_eid stores the
-//!   element block IDs.
+//! Supported ExodusII mesh cell types
 //! \see ExodusIIMeshReader::readElemBlockIDs()
 enum class ExoElemType : int { TET = 0, TRI = 1 };
 
-//! \brief ExodusII mesh cell number of nodes
+//! ExodusII mesh cell number of nodes
 //! \details List of number of nodes per element for different element types
 //!   supported in the order of tk::ExoElemType
 const std::array< std::size_t, 2 > ExoNnpe {{ 4, 3 }};
+
+//! ExodusII face-node numbering for tetrahedron side sets
+//! \see ExodusII manual figure on "Sideset side Numbering"
+const std::array< std::array< std::size_t, 3 >, 4 >
+  expofa{{ {{0,1,3}}, {{1,2,3}}, {{0,3,2}}, {{0,2,1}} }};
 
 //! ExodusII mesh-based data reader
 //! \details Mesh reader class facilitating reading from mesh-based field data
@@ -61,6 +64,7 @@ class ExodusIIMeshReader {
     //!    PE defaults to 0 for a single-CPU read.
     void readMeshPart( std::vector< std::size_t >& ginpoel,
                        std::vector< std::size_t >& inpoel,
+                       std::vector< std::size_t >& triinp,
                        std::vector< std::size_t >& gid,
                        std::unordered_map< std::size_t, std::size_t >& lid,
                        tk::UnsMesh::Coords& coord,
@@ -71,15 +75,15 @@ class ExodusIIMeshReader {
     readCoords( const std::vector< std::size_t >& gid ) const;
 
     //! Read face list of all side sets from ExodusII file
-    std::size_t
-    readSidesetFaces( std::map< int, std::vector< std::size_t > >& belem,
-                      std::map< int, std::vector< int > >& faceid );
+    void
+    readSidesetFaces( std::map< int, std::vector< std::size_t > >& bface,
+                      std::map< int, std::vector< std::size_t > >& faces );
 
     //! Read face connectivity of a number boundary faces from file
-    void readFaces( std::size_t nbfac, std::vector< std::size_t >& conn ) const;
+    void readFaces( std::vector< std::size_t >& conn ) const;
 
     //! Read node list of all side sets from ExodusII file
-    std::map< int, std::vector< std::size_t > > readSidesets();
+    std::map< int, std::vector< std::size_t > > readSidesetNodes();
 
     //! Read coordinates of a single mesh node from ExodusII file
     void readNode( std::size_t fid,
@@ -99,15 +103,19 @@ class ExodusIIMeshReader {
     std::size_t readElemBlockIDs();
 
     //! Read element connectivity of a number of mesh cells from file
-    void readElements( const std::array< std::size_t, 2 >& extent,
+    void readElements( const std::array< std::size_t, 2 >& ext,
                        tk::ExoElemType elemtype,
                        std::vector< std::size_t >& conn ) const;
 
-    //! Read all side sets and associated face connectivity
-    void readAllSidesets( UnsMesh& mesh );
-
     //! Read local to global node-ID map
     std::vector< std::size_t > readNodemap();
+
+    //! Generate triangle face connectivity for side sets
+    std::vector< std::size_t > triinpoel(
+      std::map< int, std::vector< std::size_t > >& belem,
+      const std::map< int, std::vector< std::size_t > >& faces,
+      const std::vector< std::size_t >& ginpoel,
+      const std::vector< std::size_t >& triinp ) const;
 
     //!  Return number of elements in a mesh block in the ExodusII file
     std::size_t nelem( tk::ExoElemType elemtype ) const;
@@ -124,9 +132,13 @@ class ExodusIIMeshReader {
       m_nnode = x.m_nnode;
       m_neblk = x.m_neblk;
       m_neset = x.m_neset;
-      m_eid = x.m_eid;
-      m_eidt = x.m_eidt;
+      m_from = x.m_from;
+      m_till = x.m_till;
+      m_blockid = x.m_blockid;
+      m_blockid_by_type = x.m_blockid_by_type;
       m_nel = x.m_nel;
+      m_elemblocks = x.m_elemblocks;
+      m_tri = x.m_tri;
       return *this;
     }
 
@@ -145,9 +157,13 @@ class ExodusIIMeshReader {
       m_nnode = x.m_nnode;
       m_neblk = x.m_neblk;
       m_neset = x.m_neset;
-      m_eid = x.m_eid;
-      m_eidt = x.m_eidt;
+      m_from = x.m_from;
+      m_till = x.m_till;
+      m_blockid = x.m_blockid;
+      m_blockid_by_type = x.m_blockid_by_type;
       m_nel = x.m_nel;
+      m_elemblocks = x.m_elemblocks;
+      m_tri = x.m_tri;
       x.m_cpuwordsize = sizeof(double);
       x.m_iowordsize = sizeof(double);
       x.m_inFile = ex_open( m_filename.c_str(), EX_READ, &x.m_cpuwordsize,
@@ -156,9 +172,13 @@ class ExodusIIMeshReader {
       x.m_nnode = 0;
       x.m_neblk = 0;
       x.m_neset = 0;
-      x.m_eid.clear();
-      x.m_eidt.resize( ExoNnpe.size() );
+      x.m_from = 0;
+      x.m_till = 0;
+      x.m_blockid.clear();
+      x.m_blockid_by_type.resize( ExoNnpe.size() );
       x.m_nel.resize( ExoNnpe.size() );
+      x.m_elemblocks.clear();
+      x.m_tri.clear();
       return *this;
     }
 
@@ -171,9 +191,13 @@ class ExodusIIMeshReader {
       m_nnode( 0 ),
       m_neblk( 0 ),
       m_neset( 0 ),
-      m_eid(),
-      m_eidt(),
-      m_nel()
+      m_from( 0 ),
+      m_till( 0 ),
+      m_blockid(),
+      m_blockid_by_type(),
+      m_nel(),
+      m_elemblocks(),
+      m_tri()
     { *this = std::move(x); }
 
   private:
@@ -184,11 +208,18 @@ class ExodusIIMeshReader {
     std::size_t m_nnode;                //!< Number of nodes in file
     std::size_t m_neblk;                //!< Number of element blocks in file
     std::size_t m_neset;                //!< Number of element sets in file
-    std::vector< int > m_eid;           //!< Element block IDs
-    //! List of element block IDs for each elem type enum
-    std::vector< std::vector< int > > m_eidt;
-    //! Number of elements in blocks for each elem type enum
+    std::size_t m_from;                 //!< Lower bound of tet ids on this PE
+    std::size_t m_till;                 //!< Upper bound of tet ids on this PE
+    //! Element block IDs in the order as in the file
+    std::vector< int > m_blockid;
+    //! Element block IDs for each elem type
+    std::vector< std::vector< int > > m_blockid_by_type;
+    //! Number of elements in blocks for each elem type
     std::vector< std::vector< std::size_t > > m_nel;
+    //! Cell type and number of elements in blocks in the order as in the file
+    std::vector< std::pair< ExoElemType, std::size_t > > m_elemblocks;
+    //! Global->local triangle element ids on this PE
+    std::unordered_map< std::size_t, std::size_t > m_tri;
 
     //! Read ExodusII header without setting mesh size
     std::size_t readHeader();
@@ -205,6 +236,10 @@ class ExodusIIMeshReader {
 
     //! Read all element blocks and mesh connectivity from ExodusII file
     void readAllElements( UnsMesh& mesh );
+
+    //! Compute element-block-relative element id and element type
+    std::pair< tk::ExoElemType, std::size_t >
+    blkRelElemId( std::size_t id ) const;
 };
 
 } // tk::

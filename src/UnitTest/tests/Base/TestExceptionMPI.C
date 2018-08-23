@@ -12,6 +12,8 @@
 #include "TUTConfig.h"
 #include "ExceptionMPI.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -133,3 +135,5 @@ void ExceptionMPI_object::test< 6 >() {
 #endif
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

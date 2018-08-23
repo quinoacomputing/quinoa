@@ -18,6 +18,8 @@
 #include "Tags.h"
 #include "Control.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! Tags for unit tests
@@ -227,3 +229,5 @@ void SystemComponents_object::test< 5 >() {
 
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

@@ -92,10 +92,11 @@ if (NOT TPL_DIR)
   set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../tpl/install/${COMP}-${ARCH})
   get_filename_component(ABS_TPL_DIR ${REL_TPL_DIR} ABSOLUTE)
   set(TPL_DIR ${ABS_TPL_DIR} CACHE STRING "Third-party libraries directory.")
-  if (EXISTS ${TPL_DIR}/include)
-    set(TPL_INCLUDE_DIR ${TPL_DIR}/include)
-    message(STATUS "Third-party library dir: " ${TPL_DIR})
-  endif()
+endif()
+
+if (EXISTS ${TPL_DIR}/include)
+  set(TPL_INCLUDE_DIR ${TPL_DIR}/include)
+  message(STATUS "Third-party library dir: " ${TPL_DIR})
 endif()
 
 # Include third-party libraries configuration
@@ -108,12 +109,10 @@ include(TPLs)
 # 1. The underlying compiler suite
 #    UNDERLYING_C_COMPILER
 #    UNDERLYING_CXX_COMPILER
-#    UNDERLYING_Fortran_COMPILER
 #
 # 2. The MPI wrappers (of the underlying compilers)
 #    MPI_C_COMPILER
 #    MPI_CXX_COMPILER
-#    MPI_Fortran_COMPILER
 
 # Find MPI and get its underlying compilers. If a traditional MPI (e.g.,
 # OpenMPI) is used, the get_mpi_compilers cmake function uses the built-in CMake
@@ -141,6 +140,10 @@ endif()
 
 MESSAGE(STATUS "Charmrun: " ${CHARM_RUN})
 MESSAGE(STATUS "Linker compiler: " ${LINKER_COMPILER})
+
+if (EXTRA_LINK_ARGS)
+  MESSAGE(STATUS "Extra linker args (EXTRA_LINK_ARGS): ${EXTRA_LINK_ARGS}")
+endif()
 
 add_definitions(-DQUINOA_CONFIG_MPI_ENABLED)
 
@@ -478,20 +481,6 @@ message(STATUS "Executable linker flags: '${CMAKE_EXE_LINKER_FLAGS}'")
 # Include cmake code to enable configuration for data layouts
 include(ConfigureDataLayout)
 
-# Set names of executables
-set(INCITER_EXECUTABLE inciter)
-if (HAS_TESTU01)
-  set(RNGTEST_EXECUTABLE rngtest)
-  set(RNGTEST_SRC_DIR ${QUINOA_SOURCE_DIR}/RNGTest)
-  set(RNGTEST_BIN_DIR ${PROJECT_BINARY_DIR}/RNGTest)
-endif()
-set(MESHCONV_EXECUTABLE meshconv)
-set(WALKER_EXECUTABLE walker)
-set(UNITTEST_EXECUTABLE unittest)
-if (HAS_ROOT)
-  set(FILECONV_EXECUTABLE fileconv)
-endif()
-
 # Create set of all executables tested. These are the executables that do
 # "interesting things", i.e., excluding unittest but keeping rngtest as that is
 # (to be) regression tested
@@ -542,85 +531,28 @@ if (BUILD_SHARED_LIBS)
 
 endif(BUILD_SHARED_LIBS)
 
-# add a target to generate API documentation with Doxygen
-find_package(Doxygen 1.8.12)
-if(DOXYGEN_FOUND)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.doxy
-                 ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
-  add_custom_target(doc
-                    ${DOXYGEN_EXECUTABLE}
-                    ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
-                    COMMENT "Documentation" VERBATIM)
-  message(STATUS "Add target 'doc' to generate documentation to ./doc/html/index.html")
-endif(DOXYGEN_FOUND)
-
-include_directories(${QUINOA_SOURCE_DIR}
-                    ${QUINOA_SOURCE_DIR}/Base
-                    ${QUINOA_SOURCE_DIR}/Control
-                    ${QUINOA_SOURCE_DIR}/DiffEq
-                    ${QUINOA_SOURCE_DIR}/PDE
-                    ${QUINOA_SOURCE_DIR}/Walker
-                    ${QUINOA_SOURCE_DIR}/Inciter
-                    ${QUINOA_SOURCE_DIR}/LinSys
-                    ${QUINOA_SOURCE_DIR}/LoadBalance
-                    ${QUINOA_SOURCE_DIR}/IO
-                    ${QUINOA_SOURCE_DIR}/Main
-                    ${QUINOA_SOURCE_DIR}/Mesh
-                    ${QUINOA_SOURCE_DIR}/RNG
-                    ${RNGTEST_SRC_DIR}
-                    ${QUINOA_SOURCE_DIR}/Statistics
-                    ${QUINOA_SOURCE_DIR}/UnitTest
-                    ${MPI_CXX_INCLUDE_DIRS}
-                    ${MPI_CXX_INCLUDE_PATH}
-                    ${MKL_INCLUDE_DIRS}
-                    ${HDF5_INCLUDE_DIRS}
-                    ${HYPRE_INCLUDE_DIRS}
-                    ${ROOT_INCLUDE_DIRS}
-                    ${PSTREAMS_INCLUDE_DIRS}
-                    ${PUGIXML_INCLUDE_DIRS}
-                    ${H5PART_INCLUDE_DIRS}
-                    ${TUT_INCLUDE_DIRS}
-                    ${PEGTL_INCLUDE_DIRS}
-                    ${RANDOM123_INCLUDE_DIRS}
-                    ${TESTU01_INCLUDE_DIRS}
-                    ${RNGSSE2_INCLUDE_DIRS}
-                    ${LAPACKE_INCLUDE_DIRS}
-                    ${Zoltan2_INCLUDE_DIR}
-                    ${SEACASExodus_INCLUDE_DIRS}
-                    ${TPL_INCLUDE_DIR}
-                    ${CHARM_INCLUDE_DIRS}
-                    ${RNGTEST_BIN_DIR}
-                    ${BACKWARDCPP_INCLUDE_DIRS}
-                    ${BRIGAND_INCLUDE_DIRS}
-                    ${OMEGA_H_INCLUDE_DIRS}
-                    ${PROJECT_BINARY_DIR}/LoadBalance   # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/Walker        # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/Inciter       # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/UnitTest      # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/LinSys        # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/IO            # for Charm++ modules
-)
-
 # Components
-add_subdirectory(Main)
-add_subdirectory(UnitTest)
 add_subdirectory(Base)
 add_subdirectory(Control)
-add_subdirectory(DiffEq)
-add_subdirectory(PDE)
-add_subdirectory(Walker)
-add_subdirectory(Inciter)
+add_subdirectory(Main)
 add_subdirectory(LoadBalance)
-add_subdirectory(LinSys)
 add_subdirectory(IO)
 add_subdirectory(Mesh)
 add_subdirectory(RNG)
-if (HAS_TESTU01)
+add_subdirectory(Statistics)
+add_subdirectory(PDE)
+add_subdirectory(Inciter)
+add_subdirectory(LinSys)
+if (ENABLE_UNITTEST)
+  add_subdirectory(UnitTest)
+endif()
+if (ENABLE_WALKER)
+  add_subdirectory(DiffEq)
+  add_subdirectory(Walker)
+endif()
+if (ENABLE_RNGTEST)
   add_subdirectory(RNGTest)
 endif()
-add_subdirectory(Statistics)
 
 # Conditionally enforce static link for all executables. This must be after all
 # add_executable() calls creating the targets for executables in EXECUTABLES.
@@ -631,6 +563,24 @@ if (NOT BUILD_SHARED_LIBS)
   endforeach()
 endif()
 
+# add a target to generate API documentation with Doxygen
+find_package(Doxygen 1.8.15)
+find_package(MCSS)
+if(DOXYGEN_FOUND AND MCSS_FOUND AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND JINJA2_FOUND AND LATEX_FOUND)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.doxy
+                 ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
+  add_custom_command(OUTPUT xml
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
+                     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy
+                     COMMAND ${DOXYGEN_EXECUTABLE} quinoa.doxy
+                     COMMAND ${MCSS_DOX2HTML5} --no-doxygen quinoa.doxy
+                     VERBATIM USES_TERMINAL)
+  add_custom_target(doc DEPENDS xml
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
+                    COMMENT "Documentation")
+  message(STATUS "Add target 'doc' to generate documentation to ./doc/html/index.html")
+endif()
+
 # Optionally enable cppcheck static analysis
 include(CppCheck)
 
@@ -638,7 +588,6 @@ include(CppCheck)
 enable_testing()
 
 # Include cmake code common to all regression tests
-message(STATUS "Adding regression tests ...")
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../regression
                  ${CMAKE_BINARY_DIR}/regression
                  EXCLUDE_FROM_ALL)

@@ -1,14 +1,13 @@
 /*!
   \page      walker_example_beta Walker: Integrating the beta SDE
-  \tableofcontents
 
-This example runs [walker](walker_doc.html) to integrate the beta SDE (see
-DiffEq/Beta.h) using constant coefficients. For more detail on the beta SDE, see
+This example runs @ref walker_main to integrate the beta SDE (see DiffEq/Beta.h)
+using constant coefficients. For more detail on the beta SDE, see
 https://doi.org/10.1080/14685248.2010.510843.
 
-\section walker_example_beta_control Control file
+@section walker_example_beta_control Control file
 
-\verbatim
+@code{.bash}
 title "Example problem"
 
 walker
@@ -59,14 +58,14 @@ walker
     p5( X5 : 2.0e-2 )
   end
 end
-\endverbatim
+@endcode
 
-\section walker_example_beta_run Example run on 4 CPUs
-\verbatim
-./charmrun +p4 Main/walker -v -c ../../tmp/beta.q -u 0.9
-\endverbatim
+@section walker_example_beta_run Example run on 4 CPUs
+@code{.bash}
+./charmrun +p4 Main/walker -v -c ../../tmp/beta.q
+@endcode
 
-\section walker_example_beta_output Output
+@section walker_example_beta_output Output
 \verbatim
 Running on 4 processors:  Main/walker -v -c ../../tmp/beta.q
 charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 4  Main/walker -v -c ../../tmp/beta.q
@@ -245,7 +244,7 @@ Charm++> cpu topology info is gathered in 0.000 seconds.
 [Partition 0][Node 0] End of program
 \endverbatim
 
-\section walker_example_beta_results Results
+@section walker_example_beta_results Results
 
 The left figure shows the time evolution of the means estimated from the
 numerical simulation together with those of the invariant distributions.  The
@@ -253,32 +252,35 @@ right figure shows the time evolution of the variances and those of the
 invariant. Both plots indicate convergence to the correct statistically
 stationary state.
 
-<img src="https://quinoacomputing.github.io/beta_mean.svg" align="left" width="50%" background=transparent>
-<img src="https://quinoacomputing.github.io/beta_var.svg" align="right" width="50%" background=transparent>
+@m_div{m-col-m-6 m-left-m}
+<img src="beta_mean.svg"/>
+@m_enddiv
+@m_div{m-col-m-6 m-right-m}
+<img src="beta_var.svg"/>
+@m_enddiv
 
 Gnuplot commands to reproduce the above plots:
-\verbatim
+@code{.bash}
 plot "stat.txt" u 2:3 w l t "<X1>", "stat.txt" u 2:4 w l t "<X2>", "stat.txt" u 2:5 w l t "<X3>", "stat.txt" u 2:6 w l t "<X4>", "stat.txt" u 2:7 w l t "<X5>", 0.5 lt 1, 0.53846 lt 2, 0.39683 lt 4
 plot "stat.txt" u 2:8 w l t "<x1x1>", "stat.txt" u 2:13 w l t "<x2x2>", "stat.txt" u 2:17 w l t "<x3x3>", "stat.txt" u 2:20 w l t "<x4x4>", "stat.txt" u 2:22 w l t "<x5x5>", 0.20833 lt 1, 0.10805 lt 2, 0.083333 lt 3, 0.032788 lt 4, 0.014706 lt 5
-\endverbatim
+@endcode
 
 The left figure shows the 5 estimated PDFs at the final step of the simulation
 together with the corresponding invariants. The right figure shows the time
 evolution of the estimated covariances indicating no correlations at all times
 corresponding to the statistically independent equations integrated.
 
-<img src="https://quinoacomputing.github.io/beta_pdf.svg" align="left" width="50%" background=transparent>
-<img src="https://quinoacomputing.github.io/beta_cov.svg" align="right" width="50%" background=transparent>
+@m_div{m-col-m-6 m-left-m}
+<img src="beta_pdf.svg"/>
+@m_enddiv
+@m_div{m-col-m-6 m-right-m}
+<img src="beta_cov.svg"/>
+@m_enddiv
 
 Gnuplot commands to reproduce the above plots:
-\verbatim
+@code{.bash}
 plot [0:1] [0:4] "pdf_p1.txt", "pdf_p2.txt", "pdf_p3.txt", "pdf_p4.txt", "pdf_p5.txt", x**(0.1-1.0)*(1.0-x)**(0.1-1.0)/19.715 lt 1 t "a=0.1, b=0.1", x**(0.7-1.0)*(1.0-x)**(0.6-1.0)/2.1539 lt 2 t "a=0.7, b=0.6", x**(1.0-1.0)*(1.0-x)**(1.0-1.0)/1.0 lt 3 t "a=1.0, b=1.0", x**(2.5-1.0)*(1.0-x)**(3.8-1.0)/0.03092 lt 4 t "a=2.5, b=3.8", x**(8.0-1.0)*(1.0-x)**(8.0-1.0)/1.9425e-05 lt 5 t "a=8.0, b=8.0"
 plot [] [-0.003:0.003] "stat.txt" u 2:9 w l t "<x1x2>", "stat.txt" u 2:10 w l t "<x1x3>", "stat.txt" u 2:11 w l t "<x1x4>", "stat.txt" u 2:12 w l t "<x1x5>", "stat.txt" u 2:14 w l t "<x2x3>", "stat.txt" u 2:15 w l t "<x2x4>", "stat.txt" u 2:16 w l t "<x2x5>", "stat.txt" u 2:18 w l t "<x3x4>", "stat.txt" u 2:19 w l t "<x3x5>", "stat.txt" u 2:21 w l t "<x4x5>"
-\endverbatim
+@endcode
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Thu 06 Apr 2017 10:46:50 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */
