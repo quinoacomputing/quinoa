@@ -19,6 +19,8 @@
 #include "ExodusIIMeshReader.h"
 #include "Reorder.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -1779,3 +1781,5 @@ void ExodusIIMeshReader_object::test< 8 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

@@ -14,6 +14,8 @@
 #include "RNGTest/Options/Battery.h"
 #include "UnitTest/CmdLine/CmdLine.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -324,3 +326,5 @@ void Print_object::test< 29 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

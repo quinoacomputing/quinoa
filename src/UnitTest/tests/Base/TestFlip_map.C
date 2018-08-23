@@ -13,6 +13,8 @@
 #include "Flip_map.h"
 #include "Types.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -56,3 +58,5 @@ void Flip_map_object::test< 2 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

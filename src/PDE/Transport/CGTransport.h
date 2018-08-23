@@ -163,6 +163,8 @@ class Transport {
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] Ue Element-centered solution vector at intermediate step
+    //!    (used here internally as a scratch array)
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real,
               tk::real deltat,

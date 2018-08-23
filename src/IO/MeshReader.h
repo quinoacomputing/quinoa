@@ -76,9 +76,9 @@ class MeshReader {
 
     //! Public interface to side sets from mesh file
     void
-    readSidesetFaces( std::map< int, std::vector< std::size_t > >& belem,
+    readSidesetFaces( std::map< int, std::vector< std::size_t > >& bface,
                       std::map< int, std::vector< std::size_t > >& faces )
-    { self->readSidesetFaces( belem, faces ); }
+    { self->readSidesetFaces( bface, faces ); }
 
     //! Public interface to read face connectivity of boundary faces from file
     void readFaces( std::vector< std::size_t >& conn )
@@ -149,9 +149,9 @@ class MeshReader {
         const std::vector< std::size_t >& triinp ) override
       { return data.triinpoel( bface, faceid, ginpoel, triinp ); }
       void
-        readSidesetFaces( std::map< int, std::vector< std::size_t > >& belem,
+        readSidesetFaces( std::map< int, std::vector< std::size_t > >& bface,
                           std::map< int, std::vector< std::size_t > >& faces )
-        override { data.readSidesetFaces( belem, faces ); }
+        override { data.readSidesetFaces( bface, faces ); }
       void readFaces( std::vector< std::size_t >& conn )
         const override { data.readFaces( conn ); }
       std::map< int, std::vector< std::size_t > > readSidesetNodes() override

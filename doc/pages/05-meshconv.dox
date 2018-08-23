@@ -1,0 +1,22 @@
+/*!
+  \page      meshconv_main MeshConv
+
+@m_div{m-col-m-6 m-right-m}
+<img src="meshconv_white.svg"/>
+@m_enddiv
+
+__Tetrahedron-mesh converter__
+
+Meshconv is a mesh file converter. It can be used to convert tetrahedron
+meshes from and to either of the following formats:
+
+  - Gmsh, http://www.geuz.org/gmsh
+  - Netgen, https://sourceforge.net/projects/netgen-mesher
+  - ExodusII, https://github.com/gsjaardema/seacas
+  - HyperMesh, http://www.altairhyperworks.com/product/HyperMesh
+  - ASC, used in [Jacob Waltz](https://www.researchgate.net/scientific-contributions/2014382994_Jacob_Waltz)'s _Chicoma_ code
+
+Similar to the rest of Quinoa, meshconv also uses the Charm++ runtime system,
+however, meshconv is currently not parallelized.
+
+*/

@@ -65,8 +65,6 @@ class Timer {
     }
 
     //! Query time in second since the constructor call.
-    //! \return Time elapsed between start and stop as hours, minutes, and
-    //! seconds, as a Watch struct.
     Watch hms() const;
 
     //! Estimate time for accomplishment

@@ -28,7 +28,7 @@ class FileParser {
 
     //! \brief Echo errors accumulated during parsing
     void diagnostics( const tk::Print& print,
-                      const std::vector< std::string >& errors );
+                      const std::vector< std::string >& messages );
 
     const std::string m_filename;             //!< Name of file to parse
 };

@@ -15,7 +15,7 @@
 namespace tk {
 
 //! Cartesian product of two brigand lists
-//! \see <brigand>/test/apply.cpp
+//! \see brigand_source/test/apply.cpp
 template< class li, class lo >
 using cartesian_product = brigand::reverse_fold<brigand::list<li, lo>, brigand::list<brigand::list<>>, brigand::bind<brigand::join, brigand::bind<brigand::transform, brigand::_2, brigand::defer<brigand::bind<brigand::join, brigand::bind<brigand::transform, brigand::parent<brigand::_1>, brigand::defer<brigand::bind<brigand::list, brigand::bind<brigand::push_front, brigand::_1, brigand::parent<brigand::_1>>>>>>>>>>;
 

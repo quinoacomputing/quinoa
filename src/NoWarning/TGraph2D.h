@@ -2,7 +2,8 @@
 /*!
   \file      src/NoWarning/TGraph2D.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
-  \brief     Include <Root>/TGraph2D.h with turning off specific compiler warnings
+  \brief     Include Root's TGraph2D.h with turning off specific compiler
+             warnings
 */
 // *****************************************************************************
 #ifndef nowarning_TGraph2D_h

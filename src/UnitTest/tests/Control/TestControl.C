@@ -13,6 +13,8 @@
 #include "Control.h"
 #include "Types.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! Tags for unit tests
@@ -398,3 +400,5 @@ void Control_object::test< 14 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

@@ -116,6 +116,8 @@
 #include "Reorder.h"
 #include "DerivedData.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 #if defined(STRICT_GNUC)
@@ -512,3 +514,5 @@ void Reorder_object::test< 13 >() {
 #endif
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

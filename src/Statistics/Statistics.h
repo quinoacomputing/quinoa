@@ -13,10 +13,11 @@
 
     - Upper-case letters denote a full random variable, e.g., X
 
-    - Lower-case letters denote a fluctuation about the mean, i.e., x = X - <X>
+    - Lower-case letters denote a fluctuation about the mean, i.e.,
+      x = X - \<X\>
 
     - Letters can be augmented by a field ID, i.e., X2 is the full variable of
-      the second component of the vector X, while x1 = X1 - <X1> is the
+      the second component of the vector X, while x1 = X1 - \<X1\> is the
       fluctuation about the mean of the first component of vector X.
 
     - If the field ID is unspecified, it defaults to the first field, i.e.,
@@ -25,23 +26,23 @@
     - Statistical moments of arbitrary-length products can be computed.
 
       Examples:
-      - <X> - mean,
-      - <xx> - variance,
-      - <xxx> - third central moment,
-      - <xy> - covariance of X and Y,
-      - <x1y2> - covariance of the first component of vector X and the second
+      - \<X\> - mean,
+      - \<xx\> - variance,
+      - \<xxx\> - third central moment,
+      - \<xy\> - covariance of X and Y,
+      - \<x1y2\> - covariance of the first component of vector X and the second
         component of vector Y
 
     - In general, arbitrary-length products can be estimated that make up a
       statistical moment, using any number and combinations of upper and
-      lower-case letters and their field IDs < [A-Za-z][1-9] ... >.
+      lower-case letters and their field IDs \< [A-Za-z][1-9] ... \>.
 
     - A statistical moment is ordinary if and only if all of its terms are
       ordinary. A central moment has at least one term that is central, i.e., a
       fluctuation about its mean.
 
-      - Examples of ordinary moments: <X>, <XX>, <XYZ>, etc.
-      - Examples of central moments: <x1x2>, <Xy>, <XYz>, etc.
+      - Examples of ordinary moments: \<X\>, \<XX\>, \<XYZ\>, etc.
+      - Examples of central moments: \<x1x2\>, \<Xy\>, \<XYz\>, etc.
 
     - Estimation of the PDFs can be done using either ordinary or central sample
       space variables.
@@ -50,8 +51,10 @@
       - p(X) denotes the univariate PDF of the full variable X,
       - f(x1,x2) denotes the bivariate joint PDF of the fluctuations of the
         variables x1 and x2 about their respective means,
-      - g(X,y,Z2) denotes the trivariate joint PDF of variables X, y = Y - <Y>,
-        and Z2.
+      - g(X,y,Z2) denotes the trivariate joint PDF of variables X,
+        y = Y - \<Y\>, and Z2.
+
+  \see @ref statistics_output
 */
 // *****************************************************************************
 #ifndef Statistics_h
@@ -85,13 +88,13 @@ class Statistics {
     void accumulateOrd();
 
     //! Accumulate (i.e., only do the sum for) central moments
-    void accumulateCen( const std::vector< tk::real >& ord );
+    void accumulateCen( const std::vector< tk::real >& om );
 
     //! Accumulate (i.e., only do the sum for) ordinary PDFs
     void accumulateOrdPDF();
 
     //! Accumulate (i.e., only do the sum for) central PDFs
-    void accumulateCenPDF( const std::vector< tk::real >& ord );
+    void accumulateCenPDF( const std::vector< tk::real >& om );
 
     //! Ordinary moments accessor
     const std::vector< tk::real >& ord() const noexcept { return m_ordinary; }

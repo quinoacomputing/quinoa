@@ -19,6 +19,8 @@ extern std::string g_executable;
 
 } // unittest::
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -84,5 +86,7 @@ void LinearMap_object::test< 3 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT
 
 #include "NoWarning/testarray.def.h"

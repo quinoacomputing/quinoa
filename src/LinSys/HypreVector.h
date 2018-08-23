@@ -61,7 +61,7 @@ class HypreVector {
 
     //! Print out vector to file (for debugging)
     //! \param[in] filename Base file name
-    //! \details The files names will be <filename>.XXXXX, where XXXXX is the
+    //! \details The files names will be filename.XXXXX, where XXXXX is the
     //!   processor id.
     void print( const std::string& filename )
     { HYPRE_IJVectorPrint( m_v, filename.c_str() ); }

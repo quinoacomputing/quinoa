@@ -66,6 +66,7 @@ class Refiner : public CBase_Refiner {
     //! Decide wether to continue with another step of mesh refinement
     void nextref();
 
+    /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

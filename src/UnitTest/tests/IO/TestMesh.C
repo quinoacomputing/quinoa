@@ -21,6 +21,8 @@
 #include "NetgenMeshWriter.h"
 #include "NetgenMeshReader.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -208,3 +210,5 @@ void Mesh_object::test< 4 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

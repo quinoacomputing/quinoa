@@ -132,7 +132,7 @@ Omega_h_MeshReader::readMeshPart(
 
 std::vector< std::size_t >
 Omega_h_MeshReader::triinpoel(
-  std::map< int, std::vector< std::size_t > >& belem,
+  std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& faces,
   const std::vector< std::size_t >& ginpoel,
   const std::vector< std::size_t >& triinp ) const
@@ -141,7 +141,7 @@ Omega_h_MeshReader::triinpoel(
 //! \note Must be preceded by a call to readElemBlockIDs()
 // *****************************************************************************
 {
-  IGNORE(belem);
+  IGNORE(bface);
   IGNORE(faces);
   IGNORE(ginpoel);
   IGNORE(triinp);
@@ -151,15 +151,15 @@ Omega_h_MeshReader::triinpoel(
 
 void
 Omega_h_MeshReader::readSidesetFaces(
-  std::map< int, std::vector< std::size_t > >& belem,
+  std::map< int, std::vector< std::size_t > >& bface,
   std::map< int, std::vector< std::size_t > >& faces )
 // *****************************************************************************
 //  Read side sets from Omega_h file
-//! \param[in,out] belem Elem ids of side sets to read into
+//! \param[in,out] bface Elem ids of side sets to read into
 //! \param[in,out] faces Elem-relative face ids of tets of side sets
 // *****************************************************************************
 {
-IGNORE(belem);
+IGNORE(bface);
 IGNORE(faces);
 }
 
@@ -167,7 +167,7 @@ void
 Omega_h_MeshReader::readFaces( std::vector< std::size_t >& conn ) const
 // *****************************************************************************
 //  Read face connectivity of a number of boundary faces from Omega_h file
-//! \param[inout] conn Connectivity vector to push to
+//! \param[in,out] conn Connectivity vector to push to
 //! \details This function reads in the total number of boundary faces,
 //!   also called triangle-elements, and their connectivity.
 // *****************************************************************************

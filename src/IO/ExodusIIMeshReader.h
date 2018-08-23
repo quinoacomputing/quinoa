@@ -76,7 +76,7 @@ class ExodusIIMeshReader {
 
     //! Read face list of all side sets from ExodusII file
     void
-    readSidesetFaces( std::map< int, std::vector< std::size_t > >& belem,
+    readSidesetFaces( std::map< int, std::vector< std::size_t > >& bface,
                       std::map< int, std::vector< std::size_t > >& faces );
 
     //! Read face connectivity of a number boundary faces from file
@@ -103,7 +103,7 @@ class ExodusIIMeshReader {
     std::size_t readElemBlockIDs();
 
     //! Read element connectivity of a number of mesh cells from file
-    void readElements( const std::array< std::size_t, 2 >& extent,
+    void readElements( const std::array< std::size_t, 2 >& ext,
                        tk::ExoElemType elemtype,
                        std::vector< std::size_t >& conn ) const;
 

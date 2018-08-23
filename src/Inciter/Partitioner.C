@@ -10,8 +10,7 @@
     algorithm utilizes the structured dagger (SDAG) Charm++ functionality. The
     high-level overview of the algorithm structure and how it interfaces with
     Charm++ is discussed in the Charm++ interface file
-    src/Inciter/partitioner.ci. See also src/Inciter/Partitioner.h for the
-    asynchronous call graph.
+    src/Inciter/partitioner.ci.
 */
 // *****************************************************************************
 
@@ -187,7 +186,7 @@ Partitioner::addMesh( int frompe,
 // *****************************************************************************
 //  Receive mesh associated to chares we own after refinement
 //! \param[in] frompe PE call coming from
-//! \param[in] cmesh Map associating mesh connectivities to global node ids
+//! \param[in] chmesh Map associating mesh connectivities to global node ids
 //!   and node coordinates for mesh chunks we are assigned by the partitioner
 // *****************************************************************************
 {
@@ -278,7 +277,7 @@ Partitioner::centroids( const std::vector< std::size_t >& inpoel,
 // *****************************************************************************
 //  Compute element centroid coordinates
 //! \param[in] inpoel Mesh connectivity with local ids
-//! \param[ib] coord Node coordinates
+//! \param[in] coord Node coordinates
 //! \return Centroids for all cells on this PE
 // *****************************************************************************
 {

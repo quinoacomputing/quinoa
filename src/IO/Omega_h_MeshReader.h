@@ -42,9 +42,9 @@ class Omega_h_MeshReader {
                        tk::UnsMesh::Coords& coord,
                        int numpes=1, int mype=0 );
 
-    //! Read side sets from Omega h file
+    //! Read face list of all side sets from Omega h file
     void
-    readSidesetFaces( std::map< int, std::vector< std::size_t > >& belem,
+    readSidesetFaces( std::map< int, std::vector< std::size_t > >& bface,
                       std::map< int, std::vector< std::size_t > >& faces );
 
     //! Read face connectivity of a number boundary faces from Omega h file
