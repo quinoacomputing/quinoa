@@ -199,8 +199,7 @@ else() # Test command ran successfully, attempt to do diffs
                            -f ${conf} ${baseline} ${result})
       string(REPLACE ";" " " bin_diff_command_string "${bin_diff_command}")
       message("\nRunning binary diff command: '${bin_diff_command_string}'\n")
-      execute_process(COMMAND ${bin_diff_command} RESULT_VARIABLE ERROR
-                      ERROR_QUIET)
+      execute_process(COMMAND ${bin_diff_command} RESULT_VARIABLE ERROR)
       # Check return value from binary diff command
       if(ERROR)
         message(FATAL_ERROR "Binary diff returned error code: '${bin_diff_command_string}' returned error code: ${ERROR}")
