@@ -53,7 +53,7 @@ class RNGStack {
   private:
    #ifdef HAS_MKL
    //! Register MKL RNGs into factory
-   void regMKL( int nstream, const ctr::RNGMKLParameters& mklparam );
+   void regMKL( int nstream, const ctr::RNGMKLParameters& param );
    #endif
 
    #ifdef HAS_RNGSSE2

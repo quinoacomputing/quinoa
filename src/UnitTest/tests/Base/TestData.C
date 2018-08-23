@@ -17,6 +17,8 @@
 #include "Data.h"
 #include "TUTUtil.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -1882,3 +1884,5 @@ void Data_object::test< 41 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

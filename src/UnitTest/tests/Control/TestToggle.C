@@ -12,6 +12,8 @@
 #include "TUTConfig.h"
 #include "Toggle.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -227,3 +229,5 @@ void Toggle_object::test< 12 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

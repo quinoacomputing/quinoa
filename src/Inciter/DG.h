@@ -16,40 +16,6 @@
     utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
     overview of the algorithm structure and how it interfaces with Charm++ is
     discussed in the Charm++ interface file src/Inciter/dg.ci.
-
-    #### Call graph ####
-    The following is a directed acyclic graph (DAG) that outlines the
-    asynchronous algorithm implemented in this class The detailed discussion of
-    the algorithm is given in the Charm++ interface file transporter.ci. On the
-    DAG orange fills denote global synchronization points that contain or
-    eventually lead to global reductions. Dashed lines are potential shortcuts
-    that allow jumping over some of the task-graph under some circumstances or
-    optional code paths (taken, e.g., only in DEBUG mode). See the detailed
-    discussion in dg.ci.
-    \dot
-    digraph "DG SDAG" {
-      rankdir="LR";
-      node [shape=record, fontname=Helvetica, fontsize=10];
-      OwnGhost [ label="OwnGhost"
-               tooltip="own ghost data computed"
-               URL="\ref inciter::DG::setupGhost"];
-      ReqGhost [ label="ReqGhost"
-               tooltip="all of ghost data have been requested from us"
-               URL="\ref inciter::DG::reqGhost"];
-      OwnGhost -> sendGhost [ style="solid" ];
-      ReqGhost -> sendGhost [ style="solid" ];
-      OwnSol [ label="OwnSol"
-               tooltip="own solution/unknown data computed"
-               URL="\ref inciter::DG::advance"];
-      ComSol [ label="ComSol"
-               tooltip="communicated (ghost) solution/unknown data received"
-               URL="\ref inciter::DG::comsol"];
-      OwnSol -> Solve [ style="solid" ];
-      ComSol -> Solve [ style="solid" ];
-    }
-    \enddot
-    \include Inciter/dg.ci
-
 */
 // *****************************************************************************
 #ifndef DG_h
@@ -135,6 +101,7 @@ class DG : public CBase_DG {
     //! Advance equations to next time step
     void advance( tk::real newdt );
 
+    /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

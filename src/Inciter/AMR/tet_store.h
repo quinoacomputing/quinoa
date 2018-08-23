@@ -121,6 +121,7 @@ namespace AMR {
             /**
              * @brief Function to store a tet from a list of nodes
              *
+             * @param id The ID of the tetrahedron to insert
              * @param nodes The node ids which make up the tet
              */
             void store_tet(size_t id, tet_t nodes)
@@ -142,6 +143,7 @@ namespace AMR {
              * @brief Convenience function to store a tet without first building
              * a list
              *
+             * @param id The ID of the tetrahedron to store
              * @param first First Node
              * @param second Second Node
              * @param third Third Node
@@ -181,6 +183,7 @@ namespace AMR {
              * @brief Convenience function to add a tet to the master_elements
              * and active_elements store
              *
+             * @param id The ID of the tetrahedron to add
              * @param nodes A list of the nodes which form th etet
              * @param refinement_case The refinement case which caused this tet
              * to be generated

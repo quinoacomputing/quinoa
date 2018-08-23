@@ -109,12 +109,10 @@ include(TPLs)
 # 1. The underlying compiler suite
 #    UNDERLYING_C_COMPILER
 #    UNDERLYING_CXX_COMPILER
-#    UNDERLYING_Fortran_COMPILER
 #
 # 2. The MPI wrappers (of the underlying compilers)
 #    MPI_C_COMPILER
 #    MPI_CXX_COMPILER
-#    MPI_Fortran_COMPILER
 
 # Find MPI and get its underlying compilers. If a traditional MPI (e.g.,
 # OpenMPI) is used, the get_mpi_compilers cmake function uses the built-in CMake
@@ -533,19 +531,6 @@ if (BUILD_SHARED_LIBS)
 
 endif(BUILD_SHARED_LIBS)
 
-# add a target to generate API documentation with Doxygen
-find_package(Doxygen 1.8.12)
-if(DOXYGEN_FOUND)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.doxy
-                 ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
-  add_custom_target(doc
-                    ${DOXYGEN_EXECUTABLE}
-                    ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
-                    COMMENT "Documentation" VERBATIM)
-  message(STATUS "Add target 'doc' to generate documentation to ./doc/html/index.html")
-endif(DOXYGEN_FOUND)
-
 # Components
 add_subdirectory(Base)
 add_subdirectory(Control)
@@ -576,6 +561,24 @@ if (NOT BUILD_SHARED_LIBS)
     set_property(TARGET ${exe} PROPERTY LINK_SEARCH_START_STATIC 1)
     set_property(TARGET ${exe} PROPERTY LINK_SEARCH_END_STATIC 1)
   endforeach()
+endif()
+
+# add a target to generate API documentation with Doxygen
+find_package(Doxygen 1.8.15)
+find_package(MCSS)
+if(DOXYGEN_FOUND AND MCSS_FOUND AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND JINJA2_FOUND AND LATEX_FOUND)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.doxy
+                 ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
+  add_custom_command(OUTPUT xml
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
+                     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy
+                     COMMAND ${DOXYGEN_EXECUTABLE} quinoa.doxy
+                     COMMAND ${MCSS_DOX2HTML5} --no-doxygen quinoa.doxy
+                     VERBATIM USES_TERMINAL)
+  add_custom_target(doc DEPENDS xml
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
+                    COMMENT "Documentation")
+  message(STATUS "Add target 'doc' to generate documentation to ./doc/html/index.html")
 endif()
 
 # Optionally enable cppcheck static analysis

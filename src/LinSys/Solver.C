@@ -41,9 +41,8 @@ tk::SolverShadow::SolverShadow()
 //!   different from Solver to avoid the runtime error "mis-matched client
 //!   callbacks in reduction messages". Why the constructor definition is not
 //!   defined in the class definition? To avoid the compiler warning: "warning:
-//!   instantiation of function 'CBaseT1<Group,
-//!   tk::CProxy_SolverShadow>::virtual_pup' required here, but no definition is
-//!   available [-Wundefined-func-template]".
+//!   instantiation of function virtual_pup from CBaseT1 required here, but no
+//!   definition is available [-Wundefined-func-template]".
 // *****************************************************************************
 {
 }
@@ -52,8 +51,7 @@ using tk::Solver;
 
 Solver::Solver( CProxy_SolverShadow sh,
                 const SolverCallback& cb,
-                std::size_t n,
-                bool /*feedback*/ ) :
+                std::size_t n ) :
   m_shadow( sh ),
   m_cb( cb ),
   m_ncomp( n ),
@@ -97,8 +95,9 @@ Solver::Solver( CProxy_SolverShadow sh,
   m_bca()
 // *****************************************************************************
 //  Constructor
-//! \param[in] cb Charm++ callbacks
-//! \param[in] s Mesh node IDs mapped to side set ids
+//! \param[in] sh Solver "shadow" Charm++ chare group proxy for starting
+//!   reductions at the same time as other reductions from Charm++ chare Solver
+//! \param[in] cb Charm++ callbacks for Solver
 //! \param[in] n Total number of scalar components in the linear system
 // *****************************************************************************
 {

@@ -1,14 +1,13 @@
 /*!
   \page      inciter_example_shear Inciter: Integrating the scalar advection-diffusion equation
-  \tableofcontents
 
-This example runs [inciter](inciter_doc.html) to integrate the
-advection-diffusion equation (see PDE/Transport.h) configured to solve the
+This example runs @ref inciter_main to integrate the advection-diffusion
+equation (see e.g., PDE/Transport/CGTransport.h) configured to solve the
 shear-diffusion (inciter::TransportProblemShearDiff) problem.
 
-\section inciter_example_shear_control Control file
+@section inciter_example_shear_control Control file
 
-\verbatim
+@code{.bash}
 # vim: filetype=sh:
 # This is a comment
 # Keywords are case-sensitive
@@ -38,14 +37,14 @@ inciter
   end
 
 end
-\endverbatim
+@endcode
 
-\section inciter_example_shear_run Example run on 80 CPUs
-\verbatim
+@section inciter_example_shear_run Example run on 80 CPUs
+@code{.bash}
 ./charmrun +p80 Main/inciter -v -c shear.q -i shear_centered_190k.exo
-\endverbatim
+@endcode
 
-\section inciter_example_shear_output Output
+@section inciter_example_shear_output Output
 \verbatim
 Running on 80 processors:  Main/inciter -v -c shear.q -i shear_centered_190k.exo
 charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 80  Main/inciter -v -c shear.q -i shear_centered_190k.exo
@@ -881,17 +880,13 @@ Quinoa> Starting time stepping ...
 [Partition 0][Node 0] End of program
 \endverbatim
 
-\section inciter_example_shear_fieldvis Example visualization
+@section inciter_example_shear_fieldvis Example visualization
 
-Example visualization of the 3D field data result with [ParaView](https://www.paraview.org).
+Example visualization of the 3D field data result with
+[ParaView](https://www.paraview.org).
 
-\verbatim
+@code{.bash}
 paraview out.0
-\endverbatim
+@endcode
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Fri 14 Jul 2017 09:31:26 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */

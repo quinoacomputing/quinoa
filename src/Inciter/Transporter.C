@@ -208,8 +208,7 @@ Transporter::createSolver()
   m_solver = tk::CProxy_Solver::
                ckNew( tk::CProxy_SolverShadow::ckNew(),
                       cbs,
-                      g_inputdeck.get< tag::component >().nprop(),
-                      g_inputdeck.get< tag::cmd, tag::feedback >() );
+                      g_inputdeck.get< tag::component >().nprop() );
 }
 
 void
@@ -555,7 +554,6 @@ Transporter::maxstat( tk::real d0, tk::real d1 )
 // Reduction target yielding the maximum mesh statistics across all workers
 //! \param[in] d0 Maximum mesh statistics collected over all chares
 //! \param[in] d1 Maximum mesh statistics collected over all chares
-//! \param[in] n Size of data behind d
 // *****************************************************************************
 {
   m_maxstat[0] = d0;  // maximum edge length
@@ -572,7 +570,6 @@ Transporter::sumstat( tk::real d0, tk::real d1, tk::real d2, tk::real d3 )
 //! \param[in] d1 Sum mesh statistics collected over all chares
 //! \param[in] d2 Sum mesh statistics collected over all chares
 //! \param[in] d3 Sum mesh statistics collected over all chares
-//! \param[in] n Size of data behind d
 // *****************************************************************************
 {
   m_avgstat[0] = d1 / d0;      // average edge length

@@ -23,6 +23,8 @@ extern CProxy_TUTSuite g_suiteProxy;
 
 } // unittest::
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -229,5 +231,7 @@ void Timer_object::test< 8 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT
 
 #include "NoWarning/charmtimer.def.h"

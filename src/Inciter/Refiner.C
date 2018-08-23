@@ -77,8 +77,8 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 //! \param[in] scheme Discretization scheme
 //! \param[in] cbr Charm++ callbacks for Refiner
 //! \param[in] cbs Charm++ callbacks for Sorter
-//! \parampin] ginpoel Volume element connectivity with global node IDs
-//! \parampin] coordmap Mesh node coordinates associated to global node IDs
+//! \param[in] ginpoel Mesh connectivity (this chare) using global node IDs
+//! \param[in] coordmap Mesh node coordinates (this chare) for global node IDs
 //! \param[in] belem File-internal elem ids of side sets (caller PE)
 //! \param[in] triinpoel Triangle face connectivity with global IDs (caller PE)
 //! \param[in] bnode Node lists of side sets (caller PE)

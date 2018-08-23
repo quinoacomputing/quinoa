@@ -20,6 +20,8 @@
 #include "ContainerUtil.h"
 #include "StatCtr.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -307,3 +309,5 @@ void ContainerUtil_object::test< 9 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

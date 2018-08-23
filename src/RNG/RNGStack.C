@@ -65,7 +65,7 @@ RNGStack::RNGStack(
 //  Constructor: register generators into factory for each supported library
 //! \param[in] mklparam MKL RNG parameters to use to configure MKL RNGs
 //! \param[in] rngsseparam RNGSSE RNG parameters to use to configure RNGSSE RNGs
-//! \param[in] rngr123param Random123 RNG parameters to use to configure
+//! \param[in] r123param Random123 RNG parameters to use to configure
 //!   Random123 RNGs
 // *****************************************************************************
 {

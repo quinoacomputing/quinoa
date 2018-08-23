@@ -28,8 +28,7 @@ extern ctr::InputDeck g_inputdeck;
 
 using inciter::DistFCT;
 
-DistFCT::DistFCT( const CProxy_Transporter& host,
-                  int nchare,
+DistFCT::DistFCT( int nchare,
                   std::size_t nu,
                   std::size_t np,
                   const std::unordered_map< int,
@@ -37,7 +36,6 @@ DistFCT::DistFCT( const CProxy_Transporter& host,
                   const std::unordered_map< std::size_t, std::size_t >& bid,
                   const std::unordered_map< std::size_t, std::size_t >& lid,
                   const std::vector< std::size_t >& inpoel ) :
-  m_host( host ),
   m_nhsol( 0 ),
   m_nlsol( 0 ),
   m_naec( 0 ),

@@ -19,6 +19,8 @@ extern std::string g_executable;
 
 } // unittest::
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 #if defined(STRICT_GNUC)
@@ -159,3 +161,5 @@ void LoadDistributor_object::test< 7 >() {
 #endif
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

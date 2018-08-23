@@ -23,6 +23,8 @@ extern CProxy_TUTSuite g_suiteProxy;
 
 } // unittest::
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -156,5 +158,7 @@ void Scheme_object::test< 5 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT
 
 #include "NoWarning/migrated_inciter.def.h"

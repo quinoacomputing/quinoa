@@ -635,11 +635,11 @@ ExodusIIMeshReader::readSidesetNodes()
 
 void
 ExodusIIMeshReader::readSidesetFaces(
-  std::map< int, std::vector< std::size_t > >& belem,
+  std::map< int, std::vector< std::size_t > >& bface,
   std::map< int, std::vector< std::size_t > >& faces )
 // *****************************************************************************
 //  Read side sets from ExodusII file
-//! \param[in,out] belem Elem ids of side sets to read into
+//! \param[in,out] bface Elem ids of side sets to read into
 //! \param[in,out] faces Elem-relative face ids of tets of side sets
 // *****************************************************************************
 {
@@ -672,7 +672,7 @@ ExodusIIMeshReader::readSidesetFaces(
               "Failed to read side set " + std::to_string(i) );
 
       // Store file-internal element ids of side set
-      auto& elem = belem[i];
+      auto& elem = bface[i];
       elem.resize( exoelem.size() );
       std::size_t j = 0;
       for (auto e : exoelem) elem[j++] = static_cast< std::size_t >( e-1 );

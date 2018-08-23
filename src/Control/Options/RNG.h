@@ -46,11 +46,11 @@ enum class RNGType : uint8_t { NO_RNG=0
                              , RNGSSE_MRG32K3A
                              #endif
                              #ifdef HAS_MKL
-                             , MKL_MCG31
+                             , MKL_MCG31        // leap frog support
                              , MKL_R250
                              , MKL_MRG32K3A
-                             , MKL_MCG59
-                             , MKL_WH
+                             , MKL_MCG59        // leap frog support
+                             , MKL_WH           // leap frog support
                              , MKL_MT19937
                              , MKL_MT2203
                              , MKL_SFMT19937

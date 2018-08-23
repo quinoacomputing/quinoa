@@ -25,6 +25,8 @@
 #include "RNGSSE.h"
 #include "TestRNG.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -994,3 +996,5 @@ void RNGSSE_object::test< 78 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

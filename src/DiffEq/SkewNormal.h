@@ -9,6 +9,9 @@
 
     In a nutshell, the equation integrated governs a set of scalars,
     \f$x_\alpha\f$, \f$\alpha\!=\!1,\dots,N\f$, as
+
+    @m_class{m-show-m}
+
     \f[
        \mathrm{d}x_\alpha(t) = -\frac{1}{T_\alpha}\left[x_\alpha -
        \lambda_\alpha\sigma^2_\alpha\sqrt{\frac{2}{\pi}} \cdot
@@ -16,12 +19,36 @@
        \left( \lambda_\alpha x_\alpha/\sqrt{2}\right)} \right] \mathrm{d}t +
        \sqrt{\frac{2\sigma^2_\alpha}{T_\alpha}}\mathrm{d}W_\alpha(t).
     \f]
+
+    @m_class{m-hide-m}
+
+    \f[ \begin{split}
+       \mathrm{d}x_\alpha(t) = -\frac{1}{T_\alpha}\left[x_\alpha -
+       \lambda_\alpha\sigma^2_\alpha\sqrt{\frac{2}{\pi}} \cdot
+       \frac{\exp{\left(-\lambda_\alpha^2x^2_\alpha/2\right)}}{1+\mathrm{erf}
+       \left( \lambda_\alpha x_\alpha/\sqrt{2}\right)} \right] \mathrm{d}t \\ +
+       \sqrt{\frac{2\sigma^2_\alpha}{T_\alpha}}\mathrm{d}W_\alpha(t).
+    \end{split} \f]
+
     The invariant distribution is the joint skew-normal distribution
+
+    @m_class{m-show-m}
+
     \f[
        p(x_\alpha) = \frac{1}{\sigma_\alpha\sqrt{2\pi}} \exp\left(
        -\frac{x^2_\alpha}{2\sigma^2_\alpha} \right) \left[1 + \mathrm{erf}\left(
        \frac{\lambda_\alpha x_\alpha}{\sqrt{2}}\right) \right].
     \f]
+
+    @m_class{m-hide-m}
+
+    \f[ \begin{split}
+       p(x_\alpha) = \frac{1}{\sigma_\alpha\sqrt{2\pi}} \exp\left(
+       -\frac{x^2_\alpha}{2\sigma^2_\alpha} \right) \\ \times
+       \left[1 + \mathrm{erf}\left(
+       \frac{\lambda_\alpha x_\alpha}{\sqrt{2}}\right) \right].
+    \end{split} \f]
+
     Here \f$\mathrm{erf}(y) = 2/\sqrt{\pi} \int_0^y \exp(-u^2) \mathrm{d}u\f$,
     \f$T_\alpha\f$ are time scales, \f$\sigma_\alpha\f$ are variance parameters,
     \f$\mathrm{d}W_\alpha(t)\f$ is an isotropic [Wiener
