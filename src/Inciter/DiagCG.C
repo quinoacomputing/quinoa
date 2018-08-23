@@ -77,6 +77,7 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 //  Constructor
 //! \param[in] disc Discretization proxy
 //! \param[in] solver Linear system solver (Solver) proxy
+//! \param[in] fd Face data structures
 // *****************************************************************************
 {
 //   if (g_inputdeck.get< tag::cmd, tag::chare >() ||

@@ -102,7 +102,7 @@ static void echoHeader( const Print& print, HeaderType header )
 static void echoBuildEnv( const Print& print, const std::string& executable )
 // *****************************************************************************
 //! \brief Echo build environment
-//! \details Echo information read from <build>/Base/Config.h filled by
+//! \details Echo information read from build_dir/Base/Config.h filled by
 //!    CMake based on src/Main/Config.h.in.
 //! \param[in] print Pretty printer
 //! \param[in] executable Name of the executable

@@ -189,8 +189,8 @@ class MixMassFracBetaCoeffDecay {
 
 //! \brief Mix mass-fraction beta SDE homogneous decay coefficients policy
 //! \details User-defined parameters b' and kappa' are constants in time and
-//!   ensure decay in the evolution of <y^2>. Additionally, S is constrained to
-//!   make d<rho>/dt = 0, where <rho> = rho_2/(1+rY).
+//!   ensure decay in the evolution of \<y^2\>. Additionally, S is constrained
+//!   to make d\<rho\>/dt = 0, where \<rho\> = rho_2/(1+rY).
 class MixMassFracBetaCoeffHomDecay {
 
     using ncomp_t = kw::ncomp::info::expect::type;
@@ -241,7 +241,7 @@ class MixMassFracBetaCoeffHomDecay {
     //! \details This where the mix mass-fraction beta SDE is made consistent
     //!   with the no-mix and fully mixed limits by specifying the SDE
     //!   coefficients, b and kappa as functions of b' and kappa'. We also
-    //!   specify S to force d<rho>/dt = 0, where <rho> = rho_2/(1+rY).
+    //!   specify S to force d\<rho\>/dt = 0, where \<rho\> = rho_2/(1+rY).
     void update(
       char depvar,
       ncomp_t ncomp,
@@ -308,9 +308,9 @@ class MixMassFracBetaCoeffHomDecay {
 //! \brief Mix mass-fraction beta SDE Monte Carlo homogenous decay coefficients
 //!   policy
 //! \details User-defined parameters b' and kappa' are constants in time and
-//!   ensure decay in the evolution of <y^2>. Additionally, S is constrained to
-//!   make d<rho>/dt = 0, where <rho> = rho_2/(1+rY). This is the same as the
-//!   specification in MixMassFracBetaCoeffHomDecay, but uses more advanced
+//!   ensure decay in the evolution of \<y^2\>. Additionally, S is constrained
+//!   to make d\<rho\>/dt = 0, where \<rho\> = rho_2/(1+rY). This is the same as
+//!   the specification in MixMassFracBetaCoeffHomDecay, but uses more advanced
 //!   statistics, available from the Monte Carlo simulation, which yield a
 //!   simpler formula for the coefficient S.
 class MixMassFracBetaCoeffMonteCarloHomDecay {
@@ -363,7 +363,7 @@ class MixMassFracBetaCoeffMonteCarloHomDecay {
     //! \details This where the mix mass-fraction beta SDE is made consistent
     //!   with the no-mix and fully mixed limits by specifying the SDE
     //!   coefficients, b and kappa as functions of b' and kappa'. We also
-    //!   specify S to force d<rho>/dt = 0, where <rho> = rho_2/(1+rY).
+    //!   specify S to force d\<rho\>/dt = 0, where \<rho\> = rho_2/(1+rY).
     void update(
       char depvar,
       ncomp_t ncomp,
@@ -435,8 +435,8 @@ class MixMassFracBetaCoeffMonteCarloHomDecay {
 //!   time scale
 //! \details User-defined parameters b' and kappa' are functions of an
 //!   externally, e.g., DNS-, provided hydrodynamics time scale ensuring decay
-//!   in the evolution of <y^2>. Additionally, S is constrained to
-//!   make d<rho>/dt = 0, where <rho> = rho_2/(1+rY). Additionally,
+//!   in the evolution of \<y^2\>. Additionally, S is constrained to
+//!   make d\<rho\>/dt = 0, where \<rho\> = rho_2/(1+rY). Additionally,
 //!   we pull in a hydrodynamic timescale from an external function.
 //! \see kw::hydrotimescale_info
 class MixMassFracBetaCoeffHydroTimeScale {
@@ -490,7 +490,7 @@ class MixMassFracBetaCoeffHydroTimeScale {
     //!   with the no-mix and fully mixed limits by specifying the SDE
     //!   coefficients, b and kappa as functions of b' and kappa'. Additionally,
     //!   we pull in a hydrodynamic timescale from an external function. We also
-    //!   specify S to force d<rho>/dt = 0, where <rho> = rho_2/(1+rY).
+    //!   specify S to force d\<rho\>/dt = 0, where \<rho\> = rho_2/(1+rY).
     void update(
       char depvar,
       ncomp_t ncomp,

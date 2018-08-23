@@ -20,54 +20,6 @@
     utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
     overview of the algorithm structure and how it interfaces with Charm++ is
     discussed in the Charm++ interface file src/Inciter/diagcg.ci.
-
-    #### Call graph ####
-    The following is a directed acyclic graph (DAG) that outlines the
-    asynchronous algorithm implemented in this class The detailed discussion of
-    the algorithm is given in the Charm++ interface file transporter.ci, which
-    also repeats the graph below using ASCII graphics. On the DAG orange
-    fills denote global synchronization points that contain or eventually lead
-    to global reductions. Dashed lines are potential shortcuts that allow
-    jumping over some of the task-graph under some circumstances or optional
-    code paths (taken, e.g., only in DEBUG mode). See the detailed discussion in
-    diagcg.ci.
-    \dot
-    digraph "DiagCG SDAG" {
-      rankdir="LR";
-      node [shape=record, fontname=Helvetica, fontsize=10];
-      OwnLhs [ label="OwnLhs"
-               tooltip="own contributions to the left hand side lumped-mass
-                        matrix computed"
-               URL="\ref inciter::DiagCG::lhs"];
-      ComLhs [ label="ComLhs"
-               tooltip="contributions to the left hand side lumped-mass matrix
-                        communicated"
-               URL="\ref inciter::DiagCG::comlhs"];
-      OwnRhs [ label="OwnRhs"
-               tooltip="own contributions to the right hand side computed"
-               URL="\ref inciter::DiagCG::rhs"];
-      ComRhs [ label="ComRhs"
-               tooltip="contributions to the right hand side communicated"
-               URL="\ref inciter::DiagCG::comrhs"];
-      OwnDif [ label="OwnDif"
-               tooltip="own contributions to the mass diffusion rhs computed"
-               URL="\ref inciter::DiagCG::rhs"];
-      ComDif [ label="ComDif"
-               tooltip="contributions to the mass diffusion rhs communicated"
-               URL="\ref inciter::DiagCG::comdif"];
-      Start [ label="Ver" tooltip="start time stepping"
-              URL="\ref inciter::DiagCG::start"];
-      Solve [ label="Ver" tooltip="solve diagonal systems"
-              URL="\ref inciter::DiagCG::solve"];
-      OwnLhs -> Start [ style="solid" ];
-      ComLhs -> Start [ style="solid" ];
-      OwnRhs -> Solve [ style="solid" ];
-      ComRhs -> Solve [ style="solid" ];
-      OwnDif -> Solve [ style="solid" ];
-      ComDif -> Solve [ style="solid" ];
-    }
-    \enddot
-    \include Inciter/diagcg.ci
 */
 // *****************************************************************************
 #ifndef DiagCG_h
@@ -127,7 +79,7 @@ class DiagCG : public CBase_DiagCG {
 
     //! Constructor
     explicit DiagCG( const CProxy_Discretization& disc,
-                     const tk::CProxy_Solver&,
+                     const tk::CProxy_Solver& solver,
                      const FaceData& fd );
 
     #if defined(__clang__)
@@ -170,6 +122,7 @@ class DiagCG : public CBase_DiagCG {
     //! Evaluate whether to continue with next step
     void eval();
 
+    /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

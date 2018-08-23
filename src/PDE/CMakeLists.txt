@@ -5,8 +5,17 @@ project(PDE CXX)
 add_library(PDE
             PDEStack.C
             ConfigureTransport.C
-            ConfigureCompFlow.C
-)
+            ConfigureCompFlow.C)
+
+target_include_directories(PDE PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${QUINOA_SOURCE_DIR}/Inciter
+                           ${BRIGAND_INCLUDE_DIRS}
+                           ${PEGTL_INCLUDE_DIRS}
+                           ${CHARM_INCLUDE_DIRS}
+                           ${PROJECT_BINARY_DIR}/../Main)
 
 set_target_properties(PDE PROPERTIES LIBRARY_OUTPUT_NAME quinoa_pde)
 

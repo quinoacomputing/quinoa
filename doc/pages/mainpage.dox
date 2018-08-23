@@ -1,0 +1,175 @@
+/** @mainpage Quinoa
+
+@m_div{m-col-t-4 m-right-t}
+<img src="quinoa.svg"/>
+@m_enddiv
+
+__Adaptive computational fluid dynamics__
+
+Quinoa is a set of computational tools that enables research and numerical
+analysis in fluid dynamics. Using the [Charm++](http://charmplusplus.org/)
+runtime system, we employ _asynchronous_ (or non-blocking) parallel programming
+and decompose computational problems into a large number of work units (that may
+be more than the available number of processors) enabling _arbitrary
+overlap_ of parallel computation, communication, input, and output. Then the
+runtime system _dynamically_ and _automatically_ homogenizes computational load
+across the simulation distributed across many computers.
+
+Our ultimate goal is to simulate large, interesting (i.e., complex and
+practically useful) multiphysics problems with a production-quality code that is
+extensible and maintainable, using hardware resources efficiently even for
+problems with _a priori_ unknown and heterogeneous load distribution that can
+also dynamically change in time. Read more at our @ref why page.
+
+@section mainpage_tools Tools
+
+Quinoa consists of the following tools:
+
+  - @ref walker_main --- __Time-integrator for stochastic differential
+    equations__
+
+    _Walker_ is a mathematical tool to analyze and design the behavior of
+    stochastic differential equations. Solving a multivariate
+    [Fokker-Planck equation](https://en.wikipedia.org/wiki/Fokker%E2%80%93Planck_equation),
+    it allows the estimation of arbitrary coupled @ref statistics_output
+    "statistics" and probability distributions as they evolve in time and
+    is used for the design of @ref papers_walker "statistical moment approximations"
+    for turbulent flows.
+
+  - @ref inciter_main --- __Navier-Stokes solver for complex domains__
+
+    _Inciter_ is a fully asynchronous distributed-memory-parallel fluid solver
+    for complex engineering geometries. We are working on a compressible-flow
+    solver using continuous and discontinuous Galerkin finite element methods,
+    and solution-adaptive mesh-, and polynomial-degree refinement, enabling
+    dynamically concentrating compute resources to regions with interesting
+    physics.
+
+  - @ref rngtest_main --- __Random number generators test suite__
+
+    _RNGTest_ is a test harness to subject random number generators to stringent
+    statistical tests, enabling quantitative ranking with respect to their
+    quality and computational cost. Multiple generators can be tested from
+    Intel's [Math Kernel Library](https://software.intel.com/en-us/intel-mkl),
+    [RNGSSE](https://doi.org/10.1016/j.cpc.2013.04.007), and
+    [Random123](http://www.thesalmons.org/john/random123/releases/latest/docs/index.html).
+
+  - @ref unittest_main --- __Test suite for synchronous and asynchronous
+    functions__
+
+    _UnitTest_ is an asynchronous distributed-memory-parallel test harness,
+    capable of testing serial, synchronous (e.g., MPI) parallel, and
+    asynchronous parallel (e.g., Charm++) functions.
+
+  - @ref meshconv_main --- __Tetrahedron-mesh converter__
+
+    _MeshConv_ is a mesh file converter that can be used to convert tetrahedron
+    meshes from and to either of the following formats:
+    [Gmsh](http://www.geuz.org/gmsh),
+    [Netgen](https://sourceforge.net/projects/netgen-mesher),
+    [ExodusII](https://github.com/gsjaardema/seacas),
+    [HyperMesh](http://www.altairhyperworks.com/product/HyperMesh), and
+    ASC used in [Jacob Waltz](https://www.researchgate.net/scientific-contributions/2014382994_Jacob_Waltz)'s _Chicoma_ code.
+
+@section mainpage_build Build
+
+- Install prerequisites: _Debian/Ubuntu linux_ (line 1: required, line 2: recommended)
+
+       apt-get install cmake gfortran gcc g++ openmpi-bin libopenmpi-dev
+       apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
+
+- Install prerequisites: _Mac OS X_ (line 1: required, line 2: recommended)
+
+       port install cmake openmpi-clang38 && port select clang mp-clang-3.8 && port select mpi openmpi-clang38-fortran
+       port install gmsh pugixml lapack boost
+
+- Clone, build third-party libraries, build & test
+
+       git clone --recurse-submodules https://github.com/quinoacomputing/quinoa.git; cd quinoa
+       mkdir tpl/build; cd tpl/build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 ..; make; cd -
+       mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src; make; ../script/run_tests.sh
+
+All executables will be under `build/Main/`. Read more about other ways of
+cloning and working with quinoa's repositories on the page detailing @ref
+git_submodules_subtrees.
+
+@section mainpage_authors Authors
+
+(in chronological order of contribution)
+
+1. [Jozsef Bakosi](https://github.com/jbakosi)
+2. [Francisco Gonzalez](https://github.com/franjgonzalez)
+3. [Brandon Rogers](https://github.com/brog2610)
+4. [Christoph Junghans](https://github.com/junghans)
+5. [Robert Pavel](https://github.com/rspavel)
+6. [Aditya Pakki](https://github.com/adityapakki)
+7. [Bob Bird](https://github.com/rfbird)
+8. [Aditya Pandare](https://github.com/adityakpandare)
+
+@section mainpage_resources Resources
+
+- Releases --- https://github.com/quinoacomputing/quinoa/releases
+- Source --- https://github.com/quinoacomputing/quinoa
+- Contributing --- https://www.clahub.com/agreements/quinoacomputing/quinoa
+- License --- https://github.com/quinoacomputing/quinoa/blob/master/LICENSE
+- Third-party libraries and licenses --- https://quinoacomputing.org/licenses
+- Documentation --- https://quinoacomputing.org
+- Web --- https://quinoacomputing.org
+- Email --- mailto:quinoa@lanl.gov
+- Gitter --- https://gitter.im/quinoacomputing/quinoa
+- Philosophy --- https://quinoacomputing.org/why
+- Papers --- https://quinoacomputing.org/papers
+- Roadmap --- https://github.com/quinoacomputing/quinoa/issues
+- Doxygen --- https://quinoacomputing.org
+- Gcov --- https://quinoacomputing.org/coverage
+- CppCheck --- https://quinoacomputing.org/cppcheck
+- Docker --- https://hub.docker.com/r/quinoacomputing
+- Travis --- https://travis-ci.org/quinoacomputing/quinoa
+- Codecov --- https://codecov.io/gh/quinoacomputing/quinoa/commits
+- Sonarqube --- https://sonarqube.com/organizations/quinoacomputing
+- Analytics --- http://www.openhub.net/p/quinoacomputing
+- Cite --- https://zenodo.org/badge/latestdoi/38454430
+
+@section mainpage_license License
+
+> Copyright (c) 2016-2018, Los Alamos National Security, LLC
+> All rights reserved.
+> 
+> Copyright 2016-2018. Los Alamos National Security, LLC. This software was
+> produced under U.S. Government contract DE-AC52-06NA25396 for Los Alamos
+> National Laboratory (LANL), which is operated by Los Alamos National Security,
+> LLC for the U.S. Department of Energy. The U.S. Government has rights to use,
+> reproduce, and distribute this software. NEITHER THE GOVERNMENT NOR LOS ALAMOS
+> NATIONAL SECURITY, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY
+> LIABILITY FOR THE USE OF THIS SOFTWARE. If software is modified to produce
+> derivative works, such modified software should be clearly marked, so as not to
+> confuse it with the version available from LANL.
+>  
+> Additionally, redistribution and use in source and binary forms, with or without
+> modification, are permitted provided that the following conditions are met:
+> 
+> 1. Redistributions of source code must retain the above copyright notice, this
+> list of conditions and the following disclaimer.
+> 
+> 2. Redistributions in binary form must reproduce the above copyright notice,
+> this list of conditions and the following disclaimer in the documentation and/or
+> other materials provided with the distribution.
+> 
+> 3. Neither the name of Los Alamos National Security, LLC, Los Alamos National
+> Laboratory, LANL, the U.S. Government, nor the names of its contributors may be
+> used to endorse or promote products derived from this software without specific
+> prior written permission.
+> 
+> THIS SOFTWARE IS PROVIDED BY LOS ALAMOS NATIONAL SECURITY, LLC AND CONTRIBUTORS
+> "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+> THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+> ARE DISCLAIMED. IN NO EVENT SHALL LOS ALAMOS NATIONAL SECURITY, LLC OR
+> CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+> OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+> SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+> INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+> CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+> IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+> OF SUCH DAMAGE.
+
+*/

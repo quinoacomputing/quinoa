@@ -16,6 +16,8 @@
 #include "Random123.h"
 #include "TestRNG.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -255,3 +257,5 @@ void Random123_object::test< 21 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

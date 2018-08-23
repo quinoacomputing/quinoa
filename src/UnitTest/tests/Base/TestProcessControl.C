@@ -13,6 +13,8 @@
 #include "Exception.h"
 #include "ProcessControl.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -46,3 +48,5 @@ void ProcessControl_object::test< 1 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

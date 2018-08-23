@@ -136,7 +136,7 @@ void operator|( PUP::er& p, std::vector< DGPDE >& eqs ) {
 
 } // inciter::
 
-//! \brief Charm++ main chare for the shock hydroddynamics executable, inciter.
+//! \brief Charm++ main chare for the shock hydrodynamics executable, inciter.
 //! \details In inciter the Charm++ runtime system is initialized only after the
 //!   mesh has been read in, partitioned, and the necessary data structures,
 //!   e.g., communication maps, have been generated. This delayed initialization
@@ -147,7 +147,7 @@ class Main : public CBase_Main {
 
   public:
     //! \brief Constructor
-    //! \details The main chare constructor is the main entry point of the
+    //! \details Inciter's main chare constructor is the entry point of the
     //!   Charm++ portion of inciter, called by the Charm++ runtime system. The
     //!   constructor does basic initialization steps, prints out some useful
     //!   information to screen (in verbose mode), and instantiates a driver.

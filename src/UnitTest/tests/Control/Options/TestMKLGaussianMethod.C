@@ -12,6 +12,8 @@
 #include "TUTConfig.h"
 #include "Options/MKLGaussianMethod.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -114,3 +116,5 @@ void MKLGaussianMethod_object::test< 6 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

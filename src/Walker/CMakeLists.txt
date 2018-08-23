@@ -8,8 +8,22 @@ include(charm)
 add_library(Walker
             Distributor.C
             Collector.C
-            Integrator.C
-)
+            Integrator.C)
+
+target_include_directories(Walker PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${QUINOA_SOURCE_DIR}/Main
+                           ${QUINOA_SOURCE_DIR}/DiffEq
+                           ${QUINOA_SOURCE_DIR}/IO
+                           ${QUINOA_SOURCE_DIR}/Statistics
+                           ${PROJECT_BINARY_DIR}/../Base
+                           ${PROJECT_BINARY_DIR}/../Main
+                           ${PROJECT_BINARY_DIR}/../Walker
+                           ${BRIGAND_INCLUDE_DIRS}
+                           ${PEGTL_INCLUDE_DIRS}
+                           ${CHARM_INCLUDE_DIRS})
 
 addCharmModule( "distributor" "Walker" )
 addCharmModule( "collector" "Walker" )
@@ -25,5 +39,4 @@ set_target_properties(Walker PROPERTIES LIBRARY_OUTPUT_NAME quinoa_walker)
 INSTALL(TARGETS Walker
   	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
   	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
- 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-)
+ 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)

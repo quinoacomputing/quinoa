@@ -12,6 +12,8 @@
 #include "TUTConfig.h"
 #include "StrConvUtil.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -93,3 +95,5 @@ void StrConvUtil_object::test< 4 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

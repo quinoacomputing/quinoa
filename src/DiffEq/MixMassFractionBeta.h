@@ -20,11 +20,23 @@
 
     In a nutshell, the equation integrated governs a set of scalars,
     \f$0\!\le\!Y_\alpha\f$, \f$\alpha\!=\!1,\dots,N\f$, as
+
+    @m_class{m-show-m}
+
     \f[
        \mathrm{d}Y_\alpha(t) = \frac{b_\alpha}{2}\left(S_\alpha - Y_\alpha\right)
        \mathrm{d}t + \sqrt{\kappa_\alpha Y_\alpha(1-Y_\alpha)}
        \mathrm{d}W_\alpha(t), \qquad \alpha=1,\dots,N
     \f]
+
+    @m_class{m-hide-m}
+
+    \f[ \begin{split}
+       \mathrm{d}Y_\alpha(t) = \frac{b_\alpha}{2}\left(S_\alpha - Y_\alpha\right)
+       \mathrm{d}t + \sqrt{\kappa_\alpha Y_\alpha(1-Y_\alpha)}
+       \mathrm{d}W_\alpha(t), \\ \alpha=1,\dots,N
+    \end{split} \f]
+
     with parameter vectors \f$b_\alpha = \Theta b'_\alpha > 0\f$, \f$
     \newcommand{\irv}[1]{\langle{#1^2}\rangle} \kappa_\alpha = \kappa' \irv{x} >
     0\f$, and \f$0 < S_\alpha < 1\f$. This is similar to DiffEq/Beta.h, but the
@@ -43,10 +55,10 @@
 
     In addition to integrating the above SDE, there are two additional functions
     of \f$ Y_\alpha \f$ are computed as
-    \f[ \begin{align}
+    \f[ \begin{aligned}
       \rho(Y_\alpha) & = \frac{ \rho_{2\alpha} }{ 1 + r_\alpha Y_\alpha } \\
       V(Y_\alpha) & = \frac{1}{ \rho(Y_\alpha) }
-    \end{align} \f]
+    \end{aligned} \f]
     These equations compute the instantaneous mixture density, \f$ \rho \f$, and
     instantaneous specific volume, \f$ V_\alpha \f$, for equation \f$ \alpha \f$
     in the system. These quantities are used in binary mixing of

@@ -49,7 +49,7 @@ class Main : public CBase_Main {
 
   public:
     //! \brief Constructor
-    //! \details The main chare constructor is the main entry point of the
+    //! \details MeshConv's main chare constructor is the entry point of the
     //!   program, called by the Charm++ runtime system. The constructor does
     //!   basic initialization steps, e.g., parser the command-line, prints out
     //!   some useful information to screen (in verbose mode), and instantiates

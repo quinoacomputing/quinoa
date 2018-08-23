@@ -62,8 +62,16 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
   m_upper( 0 )
 // *****************************************************************************
 //  Constructor: prepare owned mesh node IDs for reordering
+//! \param[in] transporter Transporter (host) Charm++ proxy
+//! \param[in] solver Linear system solver Charm++ proxy
+//! \param[in] cbs Charm++ callbacks for Sorter
+//! \param[in] scheme Discretization scheme
+//! \param[in] ginpoel Mesh connectivity (this chare) using global node IDs
+//! \param[in] coordmap Mesh node coordinates (this chare) for global node IDs
 //! \param[in] bface Face lists mapped to side set ids
-//! \param[in] triinpoel Interconnectivity of points and boundary-face
+//! \param[in] triinpoel Interconnectivity of points and boundary-faces
+//! \param[in] bnode Node ids mapped to side set ids
+//! \param[in] nchare Total number of Charm++ Refiner chares
 // *****************************************************************************
 {
   // Ensure boundary face ids will not index out of face connectivity
@@ -418,7 +426,7 @@ Sorter::neworder( const std::unordered_map< std::size_t,
                         std::tuple< std::size_t, tk::UnsMesh::Coord > >& nodes )
 // *****************************************************************************
 //  Receive new (reordered) global node IDs
-//! \param[in] nd Map associating new to old node IDs
+//! \param[in] nodes Map associating new to old node IDs
 // *****************************************************************************
 {
   // Store new node IDs associated to old ones, and node coordinates associated

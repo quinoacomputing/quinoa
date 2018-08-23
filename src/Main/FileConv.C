@@ -2,8 +2,8 @@
 /*!
   \file      src/Main/FileConv.C
   \copyright 2016-2018, Los Alamos National Security, LLC.
-  \brief     File file converter Charm++ main chare
-  \details   File file converter Charm++ main chare. This file contains the
+  \brief     File converter Charm++ main chare
+  \details   File converter Charm++ main chare. This file contains the
     definition of the Charm++ main chare, equivalent to main() in Charm++-land.
 */
 // *****************************************************************************
@@ -49,7 +49,7 @@ class Main : public CBase_Main {
 
   public:
     //! \brief Constructor
-    //! \details The main chare constructor is the main entry point of the
+    //! \details FileConv's main chare constructor is the entry point of the
     //!   program, called by the Charm++ runtime system. The constructor does
     //!   basic initialization steps, e.g., parser the command-line, prints out
     //!   some useful information to screen (in verbose mode), and instantiates

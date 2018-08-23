@@ -12,6 +12,8 @@
 #include "TUTConfig.h"
 #include "Options/MKLBetaMethod.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -113,3 +115,5 @@ void MKLBetaMethod_object::test< 6 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

@@ -40,7 +40,12 @@ else()
                                             PATH_SUFFIXES lib lib64)
 endif()
 
-set(PUGIXML_INCLUDE_DIRS ${PUGIXML_INCLUDE_DIR})
+if(PUGIXML_INCLUDE_DIR)
+  set(PUGIXML_INCLUDE_DIRS ${PUGIXML_INCLUDE_DIR})
+else()
+  set(PUGIXML_INCLUDE_DIRS "")
+endif()
+
 set(PUGIXML_LIBRARIES ${PUGIXML_LIBRARY})
 
 # Handle the QUIETLY and REQUIRED arguments and set PUGIXML_FOUND to TRUE if

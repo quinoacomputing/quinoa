@@ -1,13 +1,12 @@
 /*!
   \page      rngtest_example_smallcrush RNGTest: Test a few RNGs with SmallCrush
-  \tableofcontents
 
-This example runs [rngtest](rngtest_doc.html) to subject a few selected random
+This example runs @ref rngtest_main to subject a few selected random
 number generators to TestU01's SmallCrush battery.
 
-\section rngtest_example_smallcrush_control Control file
+@section rngtest_example_smallcrush_control Control file
 
-\code{.py}
+\code{.bash}
 # vim: filetype=sh:
 # This is a comment
 # Keywords are case-sensitive
@@ -34,12 +33,12 @@ smallcrush
 end
 \endcode
 
-\section rngtest_example_smallcrush_run Example run on 8 CPUs
-\code{.py}
+@section rngtest_example_smallcrush_run Example run on 8 CPUs
+@code{.bash}
 ./charmrun +p8 Main/rngtest -v -c ../../tmp/rngtest.q
-\endcode
+@endcode
 
-\section rngtest_example_smallcrush_output Output
+@section rngtest_example_smallcrush_output Output
 \verbatim
 Running on 8 processors:  Main/rngtest -v -c ../../tmp/rngtest.q
 charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 8  Main/rngtest -v -c ../../tmp/rngtest.q
@@ -261,9 +260,4 @@ Charm++> cpu topology info is gathered in 0.002 seconds.
 [Partition 0][Node 0] End of program
 \endverbatim
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Wed 04 Feb 2015 02:02:43 PM MST
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */

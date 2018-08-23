@@ -152,10 +152,6 @@ TestU01Stack::BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \param[in] gen Raw function pointer to TestU01 statistical test
-//! \param[in] res Pointer to test results object
-//! \param[in] xargs Test arguments
-//! \return Vector p-values as a result of the statistical test
 // *****************************************************************************
 {
   using std::get;

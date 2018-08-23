@@ -19,7 +19,7 @@
 
 using tk::RootMeshWriter;
 
-RootMeshWriter::RootMeshWriter( const std::string filename, int option ) :
+RootMeshWriter::RootMeshWriter( const std::string filename, int mode ) :
   m_filename( filename )
 // *****************************************************************************
 //  Constructor: create/open Root file
@@ -29,12 +29,12 @@ RootMeshWriter::RootMeshWriter( const std::string filename, int option ) :
 //!   appending
 // *****************************************************************************
 {
-  if (option == 0 ) {
+  if (mode == 0 ) {
 
     m_rfile = new TFile( filename.c_str(), "RECREATE" );
     m_tree_connect = new TTree ( "ctree", "store the connectivity" );
 
-  } else if (option == 1) {
+  } else if (mode == 1) {
 
       m_rfile = TFile::Open( filename.c_str(), "UPDATE" );
       m_tree_connect = static_cast< TTree* >( m_rfile->Get( "ctree" ) );

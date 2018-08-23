@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/TTree.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
-  \brief     Include <Root>/TTree.h with turning off specific compiler warnings
+  \brief     Include Root's TTree.h with turning off specific compiler warnings
 */
 // *****************************************************************************
 #ifndef nowarning_TTree_h

@@ -18,6 +18,17 @@ add_library(Base
             ChareStateCollector.C
 )
 
+target_include_directories(Base PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${CHARM_INCLUDE_DIRS}
+                           ${PROJECT_BINARY_DIR}/../Main
+                           ${BACKWARDCPP_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_PATH}
+                           ${PSTREAMS_INCLUDE_DIRS})
+
 addCharmModule( "charestatecollector" "Base" )
 
 set_target_properties(Base PROPERTIES LIBRARY_OUTPUT_NAME quinoa_base)

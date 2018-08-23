@@ -74,7 +74,7 @@ DG::DG( const CProxy_Discretization& disc,
 //  Constructor
 //! \param[in] disc Discretization proxy
 //! \param[in] solver Linear system solver (Solver) proxy
-//! \param[in] Face data structures
+//! \param[in] fd Face data structures
 // *****************************************************************************
 {
 //   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
@@ -761,6 +761,7 @@ DG::comsol( int fromch,
             const std::vector< std::vector< tk::real > >& u )
 // *****************************************************************************
 //  Receive chare-boundary solution ghost data from neighboring chares
+//! \param[in] fromch Sender chare id
 //! \param[in] tetid Ghost tet ids we receive solution data for
 //! \param[in] u Solution ghost data
 //! \details This function receives contributions to m_u from fellow chares.

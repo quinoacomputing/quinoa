@@ -79,6 +79,7 @@ class Refiner : public CBase_Refiner {
     //! Send Refiner proxy to Discretization objects
     void sendProxy();
 
+    /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

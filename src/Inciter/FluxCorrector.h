@@ -78,6 +78,7 @@ class FluxCorrector {
               tk::Fields& Q,
               tk::Fields& A ) const;
 
+    /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

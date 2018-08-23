@@ -350,18 +350,18 @@ class Print {
     //! \details All input arrays are the same size. The prefix strings
     //!   are optional, i.e., they can be empty strings. The function generates
     //!   an output to the stream configured in the following fashion:
-    //!   <pre1>[<done1>/<max1>], <pre2>[<done2>/<max2>], ..., e.g.,
-    //!   r:[1/3], b[2/8]. Whenever this function is called, a number of
-    //!   backspaces are put into the stream so that the new progress report
-    //!   string overwrites the old one. In order to backtrack the correct
-    //!   amount, the length of the old progress report is stored (by whatever
-    //!   object holds us) and passed in by reference in progress_size, which is
-    //!   overwritten here once it has been used for backtracking. Therefore,
-    //!   for restarting a new series of progress reports, this variable must be
-    //!   zeroed. Also, it is best to not to interleave multiple tasks, because
-    //!   even if a different progress_size is kept for each, there is no regard
-    //!   as to which line we output to in the stream. In other words, multiple
-    //!   task outputs will be intermingled, leading to confusing screen output.
+    //!   pre1[done1/max1], pre2[done2/max2], ..., e.g., r:[1/3], b[2/8].
+    //!   Whenever this function is called, a number of backspaces are put into
+    //!   the stream so that the new progress report string overwrites the old
+    //!   one. In order to backtrack the correct amount, the length of the old
+    //!   progress report is stored (by whatever object holds us) and passed in
+    //!   by reference in progress_size, which is overwritten here once it has
+    //!   been used for backtracking. Therefore, for restarting a new series of
+    //!   progress reports, this variable must be zeroed. Also, it is best to
+    //!   not to interleave multiple tasks, because even if a different
+    //!   progress_size is kept for each, there is no regard as to which line we
+    //!   output to in the stream. In other words, multiple task outputs will
+    //!   be intermingled, leading to confusing screen output.
     template< std::size_t N, Style s = VERBOSE >
     void progress( const std::array< std::string, N >& prefix,
                    const std::array< int, N >& done,

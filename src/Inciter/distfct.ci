@@ -17,7 +17,6 @@ module distfct {
 
     array [1D] DistFCT {
       entry DistFCT(
-        const CProxy_Transporter& host,
         int nchare,
         std::size_t nu,
         std::size_t np,
@@ -38,13 +37,6 @@ module distfct {
       // High-level overview of the dependency and asynchronous call structure
       // ---------------------------------------------------------------------
       //
-      // Directed Acyclic Graph (DAG):
-      // -----------------------------
-      //
-      // See src/Inciter/DistFCT.h.
-      //
-      // Interpretation of the above DAG
-      // -------------------------------
       // Control flow is from left to right and top to bottom.
       //
       // Only in DEBUG mode, wait4ver(): When the low and high order solutions

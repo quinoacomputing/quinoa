@@ -14,6 +14,8 @@
 #include "RNGParam.h"
 #include "QuinoaConfig.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -192,3 +194,5 @@ void RNGOptions_object::test< 13 >() {
 #endif
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

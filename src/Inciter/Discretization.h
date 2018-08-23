@@ -73,43 +73,66 @@ class Discretization : public CBase_Discretization {
     //! Compute mesh cell statistics
     void stat();
 
-    /** @name Accessors
-      * */
+    /** @name Accessors */
     ///@{
+    //! Coordinates accessors as const-ref
     const tk::UnsMesh::Coords& Coord() const{ return m_coord; }
+    //! Coordinates accessors as non-const ref
     tk::UnsMesh::Coords& Coord() { return m_coord; }
 
+    //! Global ids accessors as const-ref
     const std::vector< std::size_t >& Gid() const { return m_gid; }
+    //! Global ids accessors as non-const-ref
     std::vector< std::size_t >& Gid() { return m_gid; }
 
+    //! Local ids accessors as const-ref
     const std::unordered_map< std::size_t, std::size_t >& Lid() const
     { return m_lid; }
+    //! Local ids accessors as non-const-ref
     std::unordered_map< std::size_t, std::size_t >& Lid() { return m_lid; }
 
+    //! Tetrahedron element connectivity (with local ids) accessors as const-ref
     const std::vector< std::size_t >& Inpoel() const { return m_inpoel; }
+    //! \brief Tetrahedron element connectivity (with local ids) accessors as
+    //!    non-const-ref
     std::vector< std::size_t >& Inpoel() { return m_inpoel; }
 
+    //! Total mesh volume accessors const-ref
     const std::vector< tk::real >& V() const { return m_v; }
+    //! Total mesh volume accessors non-const-ref
     std::vector< tk::real >& V() { return m_v; }
 
+    //! Nodal mesh volumes accessors as const-ref
     const std::vector< tk::real >& Vol() const { return m_vol; }
+    //! Nodal mesh volumes accessors as non-const-ref
     std::vector< tk::real >& Vol() { return m_vol; }
 
+    //! Time step size accessor
     tk::real Dt() const { return m_dt; }
+    //! Physical time accessor
     tk::real T() const { return m_t; }
+    //! Iteration count accessor
     uint64_t It() const { return m_it; }
 
+    //! Timer accessor as const-ref
     const tk::Timer& Timer() const { return m_timer; }
+    //! Timer accessor as non-const-ref
     tk::Timer& Timer() { return m_timer; }
 
+    //! Time at which field output happened last accessor as const-ref
     tk::real LastFieldWriteTime() const { return m_lastFieldWriteTime; }
+    //! Time at which field output happened last accessor as non-const-ref
     tk::real& LastFieldWriteTime() { return m_lastFieldWriteTime; }
 
+    //! Transporter proxy accessor as const-ref
     const CProxy_Transporter& Tr() const { return m_transporter; }
+    //! Transporter proxy accessor as non-const-ref
     CProxy_Transporter& Tr() { return m_transporter; }
 
-   const CProxy_Refiner& Ref() const { return m_refiner; }
-   CProxy_Refiner& Ref() { return m_refiner; }
+    //! Refiner proxy accessor as const-ref
+    const CProxy_Refiner& Ref() const { return m_refiner; }
+    //! Refiner proxy accessor as non-const-ref
+    CProxy_Refiner& Ref() { return m_refiner; }
 
     //! Access bound DistFCT class pointer
     DistFCT* FCT() const {
@@ -117,20 +140,28 @@ class Discretization : public CBase_Discretization {
       return m_fct[ thisIndex ].ckLocal();
     }
 
+    //! Boundary node ids accessor as const-ref
     const std::unordered_map< std::size_t, std::size_t >& Bid() const
     { return m_bid; }
+    //! Boundary node ids accessor as non-const-ref
     std::unordered_map< std::size_t, std::size_t >& Bid() { return m_bid; }
 
+    //! Nodal communication map accessor as const-ref
     const std::unordered_map< int, std::vector< std::size_t > >& Msum() const
     { return m_msum; }
+    //! Nodal communication map accessor as non-const-ref
     std::unordered_map< int, std::vector< std::size_t > >& Msum()
     { return m_msum; }
 
+    //! Output filename accessor as const-ref
     const std::string& OutFilename() const { return m_outFilename; }
+    //! Output filename accessor as non-const-ref
     std::string& OutFilename() { return m_outFilename; }
 
+    //! Points surrounding points accessor as const-ref
     const std::pair< std::vector< std::size_t >, std::vector< std::size_t > >&
     Psup() const { return m_psup; }
+    //! Points surrounding points accessor as non-const-ref
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > >&
     Psup() { return m_psup; }
     //@}
@@ -169,6 +200,7 @@ class Discretization : public CBase_Discretization {
     //! Otput one-liner status report
     void status();
 
+    /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
