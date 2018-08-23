@@ -46,6 +46,7 @@ add_regression_test(amr_init_u1_compflow_dg ${INCITER_EXECUTABLE}
                     BIN_BASELINE vortical_flow_dg.std.exo
                     BIN_RESULT out.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
+                    BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg
