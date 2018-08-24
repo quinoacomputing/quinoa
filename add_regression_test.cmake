@@ -199,6 +199,8 @@ function(ADD_REGRESSION_TEST test_name executable)
     string(REPLACE ";" " " ARG_TEXT_DIFF_PROG_ARGS "${ARG_TEXT_DIFF_PROG_ARGS}")
   endif()
 
+  # Make exodiff quiet (errors and warnings will still come to output)
+  list(APPEND ARG_BIN_DIFF_PROG_ARGS "-q")
   if(ARG_BIN_DIFF_PROG_ARGS)
     # Convert list to space-separated string for passing as arguments to test
     # runner cmake script below
@@ -227,6 +229,8 @@ function(ADD_REGRESSION_TEST test_name executable)
 
   # Construct and echo configuration for test being added
   set(msg "Add regression test ${test_name} for ${executable}")
+  # Run all regression tests with quiescence detection
+  list(APPEND ARG_ARGS "-q")
   if (ARG_ARGS)
     string(REPLACE ";" " " ARGUMENTS "${ARG_ARGS}")
     string(CONCAT msg "${msg}, args: '${ARGUMENTS}'")
@@ -283,16 +287,45 @@ function(ADD_REGRESSION_TEST test_name executable)
            -P ${TEST_RUNNER}
            WORKING_DIRECTORY ${workdir})
 
+  # build pass regular expression list for test
+  set(pass_regexp "")
+  # add pass regular expression for numdiff output if needed
+  if (ARG_TEXT_BASELINE)
+    list(APPEND pass_regexp ".*${test_name}.*PASS")
+  endif()
+  # add pass regular expression for rngtest output if needed
+  if (test_name MATCHES "${RNGTEST_EXECUTABLE}")
+    list(APPEND pass_regexp "Failed statistics" "All tests passed")
+  endif()
+  # add pass regular expression for exodiff output if needed
+  if (ARG_BIN_BASELINE)
+    list(APPEND pass_regexp "exodiff: Files are the same")
+  endif()
+  # add pass regular expression for when postprocessor not available, if needed
+  if (POSTPROCESS_PROG_OUTPUT)
+    list(APPEND pass_regexp "would be required for this test to be rigorous")
+  endif()
+
+  # build fail regular expression list for test
+  set(fail_regexp "")
+  # add fail regular expression for numdiff output if needed
+  if (ARG_TEXT_BASELINE)
+    list(APPEND fail_regexp ".*${test_name}.*FAIL")
+  endif()
+  # add pass regular expression for exodiff output if needed
+  if (ARG_BIN_BASELINE)
+    list(APPEND fail_regexp "exodiff: Files are different" "exodiff: ERROR")
+  endif()
+  # add fail regular expression to detect cmake error during test run
+  list(APPEND fail_regexp "CMake Error")
+
+  #message("'${test_name}' pass regexp: ${pass_regexp}, fail regexp: ${fail_regexp}")
+
   # Set test properties and instruct ctest to check textual diff output against
-  # the regular expressions specified. At least one of the regular expressions
-  # has to match, otherwise the test will fail. Regular expression in list:
-  #  1 - pass regular expression for numdiff output
-  #  2,3 - pass regular expression for rngtest output (only test successful run)
-  #  4 - pass regular expression for exodiff output
-  #  5 - pass regular expression for when postprocessor not available
+  # the regular expressions specified.
   set_tests_properties(${test_name} PROPERTIES ${test_properties}
-    PASS_REGULAR_EXPRESSION ".*${test_name}.*PASS;Failed statistics;All tests passed;exodiff: Files are the same;would be required for this test to be rigorous"
-    FAIL_REGULAR_EXPRESSION "exodiff: ERROR;exodiff: Files are different;FAIL;CMake Error")
+                       PASS_REGULAR_EXPRESSION "${pass_regexp}"
+                       FAIL_REGULAR_EXPRESSION "${fail_regexp}")
 
   # Set labels cmake test property. The LABELS built-in cmake property is not
   # passed as part of test_properties above in set_test_properties as

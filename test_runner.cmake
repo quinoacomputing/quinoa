@@ -199,7 +199,13 @@ else() # Test command ran successfully, attempt to do diffs
                            -f ${conf} ${baseline} ${result})
       string(REPLACE ";" " " bin_diff_command_string "${bin_diff_command}")
       message("\nRunning binary diff command: '${bin_diff_command_string}'\n")
-      execute_process(COMMAND ${bin_diff_command} RESULT_VARIABLE ERROR)
+      execute_process(COMMAND ${bin_diff_command} RESULT_VARIABLE ERROR
+                      ERROR_VARIABLE ERROR_OUTPUT)
+      # remove warnings from exodiff output (this speeds up evaluating the test)
+      string(REGEX REPLACE ".*WARNING.*" "" ERROR_OUTPUT "${ERROR_OUTPUT}")
+      if (ERROR_OUTPUT)
+        message("${ERROR_OUTPUT}")
+      endif()
       # Check return value from binary diff command
       if(ERROR)
         message(FATAL_ERROR "Binary diff returned error code: '${bin_diff_command_string}' returned error code: ${ERROR}")
