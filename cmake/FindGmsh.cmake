@@ -21,7 +21,7 @@ if(GMSH_EXECUTABLE)
   set (GMSH_FIND_QUIETLY TRUE)
 endif()
 
-FIND_PATH(GMSH_EXECUTABLE NAMES gmsh)
+find_program(GMSH_EXECUTABLE NAMES gmsh)
 
 # Handle the QUIETLY and REQUIRED arguments and set GMSH_FOUND to TRUE if
 # all listed variables are TRUE.
