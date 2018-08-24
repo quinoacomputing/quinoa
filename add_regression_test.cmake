@@ -302,7 +302,7 @@ function(ADD_REGRESSION_TEST test_name executable)
     list(APPEND pass_regexp "exodiff: Files are the same")
   endif()
   # add pass regular expression for when postprocessor not available, if needed
-  if (POSTPROCESS_PROG_OUTPUT)
+  if (ENABLE_MESHCONV AND NOT GMSH_FOUND)
     list(APPEND pass_regexp "would be required for this test to be rigorous")
   endif()
 
