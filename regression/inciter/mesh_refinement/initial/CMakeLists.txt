@@ -3,7 +3,7 @@
 
 # Naming convention for AMR regression tests
 #
-# Example: amr_init_u1_trans_dg_u0.4
+# Example: amr_init_u1_trans_reord_dg_u0.4
 #
 # Legend:
 # * amr - exercising adaptive mesh refinement (AMR)
@@ -18,6 +18,7 @@
 # * trans - type of physics, e.g., compflow, transport
 #           other possibilities instead of 'trans':
 #           - compflow - compressible flow
+# * reord - perform PE-locality mesh node reordering during setup
 # * dg - discontinuous Galerkin discretization scheme,
 #        other possibilities instead of 'dg':
 #        - diagcg - lumped-mass (diagonal) continuous Galerkin
@@ -43,6 +44,21 @@ add_regression_test(amr_init_u1_compflow_dg ${INCITER_EXECUTABLE}
                                diag_dg.std
                                exodiff_dg.cfg vortical_flow_dg.std.exo
                     ARGS -c vortical_flow_dg.q -i unitcube_1k.exo -v
+                    BIN_BASELINE vortical_flow_dg.std.exo
+                    BIN_RESULT out.0
+                    BIN_DIFF_PROG_CONF exodiff_dg.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_dg.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg
+                    LABELS amr)
+
+add_regression_test(amr_init_u1_compflow_reord_dg ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES vortical_flow_reord_dg.q unitcube_1k.exo
+                               diag_dg.std
+                               exodiff_dg.cfg vortical_flow_dg.std.exo
+                    ARGS -c vortical_flow_reord_dg.q -i unitcube_1k.exo -v
                     BIN_BASELINE vortical_flow_dg.std.exo
                     BIN_RESULT out.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
