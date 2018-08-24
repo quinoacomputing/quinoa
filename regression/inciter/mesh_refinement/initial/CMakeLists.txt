@@ -38,6 +38,35 @@ add_regression_test(amr_init_u1_trans_matcg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     LABELS amr)
 
+add_regression_test(amr_init_u1_trans_diagcg ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES slot_cyl_amr_diagcg.q unitsquare_01_955.exo
+                               exodiff.cfg slot_cyl_diagcg_pe1_u0.0.std.exo
+                               diag_diagcg.std
+                    ARGS -c slot_cyl_amr_diagcg.q -i unitsquare_01_955.exo -v
+                    BIN_BASELINE slot_cyl_diagcg_pe1_u0.0.std.exo
+                    BIN_RESULT out.0
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    TEXT_BASELINE diag_diagcg.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF slot_cyl_diagcg.ndiff.cfg
+                    LABELS amr)
+
+add_regression_test(amr_init_u1_trans_reord_diagcg ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES slot_cyl_amr_reord_diagcg.q unitsquare_01_955.exo
+                               exodiff.cfg slot_cyl_diagcg_pe1_u0.0.std.exo
+                               diag_diagcg.std
+                    ARGS -c slot_cyl_amr_reord_diagcg.q
+                         -i unitsquare_01_955.exo -v
+                    BIN_BASELINE slot_cyl_diagcg_pe1_u0.0.std.exo
+                    BIN_RESULT out.0
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    TEXT_BASELINE diag_diagcg.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF slot_cyl_diagcg.ndiff.cfg
+                    LABELS amr)
+
 add_regression_test(amr_init_u1_compflow_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES vortical_flow_dg.q unitcube_1k.exo
