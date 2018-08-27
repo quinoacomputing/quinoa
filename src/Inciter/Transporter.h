@@ -138,15 +138,17 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target yielding the minimum mesh statistics across
     //!   all workers
-    void minstat( tk::real d0, tk::real d1 );
+    void minstat( tk::real d0, tk::real d1, tk::real d2 );
 
     //! \brief Reduction target yielding the maximum mesh statistics across
     //!   all workers
-    void maxstat( tk::real d0, tk::real d1 );
+    void maxstat( tk::real d0, tk::real d1, tk::real d2 );
 
     //! \brief Reduction target yielding the sum of mesh statistics across
     //!   all workers
-    void sumstat( tk::real d0, tk::real d1, tk::real d2, tk::real d3 );
+    void sumstat( tk::real d0, tk::real d1,
+                  tk::real d2, tk::real d3,
+                  tk::real d4, tk::real d5 );
 
     //! \brief Reduction target yielding PDF of mesh statistics across all
     //!    workers
@@ -182,11 +184,11 @@ class Transporter : public CBase_Transporter {
      //! Total mesh volume
     tk::real m_V;
     //! Minimum mesh statistics
-    std::array< tk::real, 2 > m_minstat;
+    std::array< tk::real, 3 > m_minstat;
     //! Maximum mesh statistics
-    std::array< tk::real, 2 > m_maxstat;
+    std::array< tk::real, 3 > m_maxstat;
     //! Average mesh statistics
-    std::array< tk::real, 2 > m_avgstat;
+    std::array< tk::real, 3 > m_avgstat;
     //! Timer tags
     enum class TimerTag { MESH_READ=0 };
     //! Timers

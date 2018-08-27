@@ -272,11 +272,12 @@ Discretization::stat()
 
   auto MIN = -std::numeric_limits< tk::real >::max();
   auto MAX = std::numeric_limits< tk::real >::max();
-  std::vector< tk::real > min{ MAX, MAX };
-  std::vector< tk::real > max{ MIN, MIN };
-  std::vector< tk::real > sum{ 0.0, 0.0, 0.0, 0.0 };
+  std::vector< tk::real > min{ MAX, MAX, MAX };
+  std::vector< tk::real > max{ MIN, MIN, MIN };
+  std::vector< tk::real > sum{ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
   tk::UniPDF edgePDF( 1e-4 );
   tk::UniPDF volPDF( 1e-4 );
+  tk::UniPDF ntetPDF( 1e-4 );
 
   // Compute edge length statistics
   // Note that while the min and max edge lengths are independent of the number
@@ -317,6 +318,11 @@ Discretization::stat()
     volPDF.add( L );
   }
 
+  // Contribute stats of number of tetrahedra (ntets)
+  sum[4] = 1.0;
+  min[2] = max[2] = sum[5] = m_inpoel.size() / 4;
+  ntetPDF.add( min[2] );
+
   // Contribute to mesh statistics across all Discretization chares
   contribute( min, CkReduction::min_double,
     CkCallback(CkReductionTarget(Transporter,minstat), m_transporter) );
@@ -326,7 +332,7 @@ Discretization::stat()
     CkCallback(CkReductionTarget(Transporter,sumstat), m_transporter) );
 
   // Serialize PDFs to raw stream
-  auto stream = tk::serialize( { edgePDF, volPDF } );
+  auto stream = tk::serialize( { edgePDF, volPDF, ntetPDF } );
   // Create Charm++ callback function for reduction of PDFs with
   // Transporter::pdfstat() as the final target where the results will appear.
   CkCallback cb( CkIndex_Transporter::pdfstat(nullptr), m_transporter );
