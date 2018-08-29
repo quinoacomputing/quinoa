@@ -134,18 +134,22 @@ namespace AMR {
            )
         {
             if (!normal) {
+                trace_out << " not normal 3 " << std::endl;
                 compatibility = 3;
             }
             else { // Attempt to allow for "normal" 1:4 and 1:8
                 compatibility = 2;
+                trace_out << " normal 3 " << std::endl;
             }
 
         }
         else {
             if (num_locked_edges == 0) {
+                trace_out << " no lock 1 " << std::endl;
                 compatibility = 1;
             }
             else {
+                trace_out << " lock 2 " << std::endl;
                 compatibility = 2;
             }
         }
@@ -228,6 +232,7 @@ namespace AMR {
                     trace_out << "Checking " << tet_id <<
                         " ref case " << refinement_case << 
                         " num ref " << num_to_refine <<
+                        " normal " << normal << 
                         std::endl;
 
 
@@ -239,6 +244,8 @@ namespace AMR {
 
                         compatibility = detect_compatibility(num_locked_edges,
                                 refinement_case, normal);
+
+                        trace_out << "Compat " << compatibility << std::endl;
 
                         // Now check num_to_refine against situations
                         if (compatibility == 1)
@@ -552,6 +559,8 @@ namespace AMR {
      */
     void mesh_adapter_t::refinement_class_two(edge_list_t edge_list, size_t tet_id)
     {
+        trace_out << "Refinement Class Two" << std::endl;
+
 
         // "Deactivate all locked edges"
 
