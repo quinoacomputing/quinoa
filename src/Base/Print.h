@@ -328,13 +328,14 @@ class Print {
       // Output states
       std::size_t q = 0;
       for (const auto& p : sorted_state) {
-        for (const auto& i : p.second)
+        for (const auto& i : p.second) {
           stream<s>() << m_charestate_fmt % i.get< tag::ch >()
                                           % p.first
                                           % i.get< tag::fn >()
                                           % i.get< tag::pe >()
                                           % i.get< tag::it >()
                                           % i.get< tag::time >();
+        }
         if (++q != sorted_state.size())
            stream<s>() << m_charestate_frame_fmt % "";
       }
