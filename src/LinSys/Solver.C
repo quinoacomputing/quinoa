@@ -100,8 +100,6 @@ Solver::Solver( CProxy_SolverShadow sh,
 //! \param[in] n Total number of scalar components in the linear system
 // *****************************************************************************
 {
-std::cout << CkMyPe() << " solver ctor\n";
-
   // Activate SDAG waits
   thisProxy[ CkMyPe() ].wait4lhsbc();
   thisProxy[ CkMyPe() ].wait4rhsbc();

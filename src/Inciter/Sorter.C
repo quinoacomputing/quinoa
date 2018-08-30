@@ -620,7 +620,7 @@ Sorter::createWorkers()
   // insertion: 1st arg: chare id, last arg: PE chare is created on, middle
   // args: Discretization's child ctor args. See also Charm++ manual, Sec.
   // "Dynamic Insertion".
-  m_scheme.insert( thisIndex, m_scheme.get(), m_solver, fd, CkMyPe() );
+  m_scheme.insert( thisIndex, m_scheme.get(), m_solver, fd );
 
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chcreated();
 

@@ -262,8 +262,7 @@ Partitioner::refine()
                                m_bface,                     // this compute node
                                m_triinpoel,                 // this compute node
                                m_bnode,                     // this compute node
-                               m_nchare,
-                               CkMyPe() );
+                               m_nchare );
     }
 
   }

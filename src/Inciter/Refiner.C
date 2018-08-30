@@ -447,7 +447,7 @@ Refiner::finish()
 {
   // create sorter Charm++ chare array elements using dynamic insertion
   m_sorter[ thisIndex ].insert( m_host, m_solver, m_cbs, m_scheme, m_ginpoel,
-    m_coordmap, m_belem, m_triinpoel, m_bnode, m_nchare, CkMyPe() );
+    m_coordmap, m_belem, m_triinpoel, m_bnode, m_nchare );
  
   // Compute final number of cells across whole problem
   std::vector< std::uint64_t > mesh{ m_ginpoel.size()/4, m_coord[0].size() };
