@@ -75,7 +75,7 @@ class Transporter : public CBase_Transporter {
     void distributed();
 
     //! Reduction target: all PEs have created the mesh refiners
-    void refinserted();
+    void refinserted( int error );
 
     //! Reduction target: all Discretization chares have been inserted
     void discinserted();
@@ -170,8 +170,6 @@ class Transporter : public CBase_Transporter {
   private:
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of worker chares
-    uint64_t m_chunksize;                //!< Number of elements per PE
-    uint64_t m_remainder;                //!< Number elements added to last PE
     tk::CProxy_Solver m_solver;          //!< Linear system solver group proxy
     Scheme m_scheme;                     //!< Discretization scheme
     CProxy_Partitioner m_partitioner;    //!< Partitioner group proxy

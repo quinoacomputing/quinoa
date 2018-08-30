@@ -23,7 +23,7 @@ module diagcg {
 
     array [1D] DiagCG {
       entry DiagCG( const CProxy_Discretization& disc,
-                    const tk::CProxy_Solver& solver,
+                    const tk::CProxy_Solver&,
                     const FaceData& fd );
       initnode void registerReducers();
       entry void setup( tk::real v );

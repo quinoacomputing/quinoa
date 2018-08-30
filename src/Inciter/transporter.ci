@@ -19,7 +19,7 @@ module transporter {
       entry [reductiontarget] void nchare();
       entry [reductiontarget] void bounds();
       entry [reductiontarget] void distributed();
-      entry [reductiontarget] void refinserted();
+      entry [reductiontarget] void refinserted( int error );
       entry [reductiontarget] void discinserted();
       entry [reductiontarget] void disccreated();
       entry [reductiontarget] void workinserted();

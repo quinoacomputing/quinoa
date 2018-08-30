@@ -118,9 +118,6 @@ class Solver : public CBase_Solver {
                    int fromch,
                    const std::vector< std::size_t >& row );
 
-    //! Signal the runtime system that the workers have been created
-    void created();
-
     //! Receive global row ids from fellow group branches
     void addrow( int fromch, int frompe, const std::set< std::size_t >& row );
 

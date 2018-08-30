@@ -53,8 +53,6 @@ using inciter::Transporter;
 Transporter::Transporter() :
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_nchare( 0 ),
-  m_chunksize( 0 ),
-  m_remainder( 0 ),
   m_solver(),
   m_scheme( g_inputdeck.get< tag::discr, tag::scheme >() ),
   m_partitioner(),
@@ -288,10 +286,11 @@ Transporter::load( uint64_t nelem, uint64_t npoin )
 {
   // Compute load distribution given total work (nelem) and user-specified
   // virtualization
+  uint64_t chunksize, remainder;
   m_nchare = static_cast<int>(
                tk::linearLoadDistributor(
                  g_inputdeck.get< tag::cmd, tag::virtualization >(),
-                 nelem, CkNumPes(), m_chunksize, m_remainder ) );
+                 nelem, CkNumPes(), chunksize, remainder ) );
 
   // Send total number of chares to all linear solver PEs
   m_solver.nchare( m_nchare );
@@ -315,12 +314,11 @@ Transporter::load( uint64_t nelem, uint64_t npoin )
   m_print.item( "Virtualization [0.0...1.0]",
                 g_inputdeck.get< tag::cmd, tag::virtualization >() );
   m_print.item( "Number of tetrahedra", nelem );
-  m_print.item( "Number of processing elements", CkNumPes() );
-  m_print.item( "Number of work units",
-                std::to_string( m_nchare ) + " (" +
-                std::to_string( m_nchare-1 ) + "*" +
-                std::to_string( m_chunksize ) + "+" +
-                std::to_string( m_chunksize+m_remainder ) + ')' );
+  m_print.item( "Number of processing elements",
+                std::to_string( CkNumPes() ) + " (" +
+                std::to_string( CkNumNodes() ) + 'x' +
+                std::to_string( CkNumPes()/CkNumNodes() ) + ')' );
+  m_print.item( "Number of work units", m_nchare );
 
   m_print.endsubsection();
 
@@ -353,12 +351,28 @@ Transporter::distributed()
 }
 
 void
-Transporter::refinserted()
+Transporter::refinserted( int error )
 // *****************************************************************************
 // Reduction target: all PEs have created the mesh refiners
+//! \param[in] Error aggregated across all PEs with operator max
 // *****************************************************************************
 {
-  m_refiner.doneInserting();
+  if (error) {
+    m_print << "\n>>> ERROR: A worker chare was not assigned any mesh "
+               "elements. This can happen in SMP-mode with a large +ppn "
+               "parameter (number of worker threads per logical node) and is "
+               "most likely the fault of the mesh partitioning algorithm not "
+               "tolerating the case when it is asked to divide the "
+               "computational domain into a number of partitions different "
+               "than the number of ranks it is called on, i.e., in case of "
+               "overdecomposition and/or calling the partitioner in SMP mode "
+               "with +ppn larger than 1. Solution 1: Try a different "
+               "partitioning algorithm (e.g., rcb instead of mj). Solution 2: "
+               "Decrease +ppn.";
+    finish();
+  } else {
+     m_refiner.doneInserting();
+  }
 }
 
 void

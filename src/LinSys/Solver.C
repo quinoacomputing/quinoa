@@ -57,7 +57,6 @@ Solver::Solver( CProxy_SolverShadow sh,
   m_ncomp( n ),
   m_nchare( 0 ),
   m_nbounds( 0 ),
-  m_ncomm( 0 ),
   m_nperow( 0 ),
   m_nchbc( 0 ),
   m_lower( std::numeric_limits< std::size_t >::max() ),
@@ -101,6 +100,8 @@ Solver::Solver( CProxy_SolverShadow sh,
 //! \param[in] n Total number of scalar components in the linear system
 // *****************************************************************************
 {
+std::cout << CkMyPe() << " solver ctor\n";
+
   // Activate SDAG waits
   thisProxy[ CkMyPe() ].wait4lhsbc();
   thisProxy[ CkMyPe() ].wait4rhsbc();
@@ -289,18 +290,6 @@ Solver::recrow()
 {
   --m_nperow;
   if (comcomplete()) contribute( m_cb.get< tag::com >() );
-}
-
-void
-Solver::created()
-// *****************************************************************************
-// Signal the runtime system that the workers have been created
-// *****************************************************************************
-{
-  if (++m_ncomm == m_nchare) {
-    m_ncomm = 0;
-    contribute( m_cb.get< tag::com >() );
-  }
 }
 
 void

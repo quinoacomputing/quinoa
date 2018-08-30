@@ -79,7 +79,7 @@ class DiagCG : public CBase_DiagCG {
 
     //! Constructor
     explicit DiagCG( const CProxy_Discretization& disc,
-                     const tk::CProxy_Solver& solver,
+                     const tk::CProxy_Solver&,
                      const FaceData& fd );
 
     #if defined(__clang__)

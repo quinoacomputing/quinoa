@@ -21,7 +21,7 @@ module partitioner {
 
   namespace inciter {
 
-    group Partitioner {
+    nodegroup Partitioner {
       entry Partitioner(
         const tk::PartitionerCallback& cbp,
         const tk::RefinerCallback& cbr,
@@ -34,12 +34,12 @@ module partitioner {
         const std::map< int, std::vector< std::size_t > >& belem,
         const std::map< int, std::vector< std::size_t > >& faces,
         const std::map< int, std::vector< std::size_t > >& bnode );
-      entry void partition( int nchare );
-      entry void addMesh( int frompe,
+      entry [exclusive] void partition( int nchare );
+      entry [exclusive] void addMesh( int frompe,
                           const std::unordered_map< int,
                                   std::tuple< std::vector< std::size_t >,
                                     tk::UnsMesh::CoordMap > >& chmesh );
-      entry void recvMesh();
+      entry [exclusive] void recvMesh();
       entry void refine();
     };
 

@@ -9,7 +9,7 @@
     stepping scheme that is equivalent to the Lax-Wendroff (LW) scheme within
     the unstructured-mesh FE context and treats discontinuities with
     flux-corrected transport (FCT). Only the diagonal entries of the left-hand
-    side matrix are non-zero thus it does not need a mtrix-based linear solver.
+    side matrix are non-zero thus it does not need a matrix-based linear solver.
   \see The documentation in DiagCG.h.
 */
 // *****************************************************************************
@@ -47,7 +47,7 @@ extern std::vector< CGPDE > g_cgpde;
 using inciter::DiagCG;
 
 DiagCG::DiagCG( const CProxy_Discretization& disc,
-                const tk::CProxy_Solver& solver,
+                const tk::CProxy_Solver&,
                 const FaceData& fd ) :
   m_itf( 0 ),
   m_nsol( 0 ),
@@ -74,7 +74,6 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
-//! \param[in] solver Linear system solver (Solver) proxy
 //! \param[in] fd Face data structures
 // *****************************************************************************
 {
@@ -94,7 +93,7 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   for (auto& b : m_lhsc) std::fill( begin(b), end(b), 0.0 );
 
   // Signal the runtime system that the workers have been created
-  solver.ckLocalBranch()->created();
+  contribute(CkCallback(CkReductionTarget(Transporter,comfinal), d->Tr()));
 }
 
 void

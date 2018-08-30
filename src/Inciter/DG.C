@@ -34,9 +34,8 @@ extern std::vector< DGPDE > g_dgpde;
 using inciter::DG;
 
 DG::DG( const CProxy_Discretization& disc,
-        const tk::CProxy_Solver& solver,
+        const tk::CProxy_Solver&,
         const FaceData& fd ) :
-  m_solver( solver ),
   m_ncomfac( 0 ),
   m_nadj( 0 ),
   m_nsol( 0 ),
@@ -70,7 +69,6 @@ DG::DG( const CProxy_Discretization& disc,
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
-//! \param[in] solver Linear system solver (Solver) proxy
 //! \param[in] fd Face data structures
 // *****************************************************************************
 {
@@ -589,7 +587,7 @@ DG::adj()
     }
 
   // Signal the runtime system that all workers have received their adjacency
-  m_solver.ckLocalBranch()->created();
+  contribute(CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()));
 }
 
 void
