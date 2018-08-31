@@ -96,8 +96,6 @@ class Partitioner : public CBase_Partitioner {
     //! \brief Element connectivity with local node IDs of this compute node's
     //!   mesh chunk
     std::vector< std::size_t > m_inpoel;
-    //! Global node IDs of elements of this compute node's mesh chunk
-    std::vector< std::size_t > m_gid;
     //! Global->local node IDs of elements of this compute node's mesh chunk
     //! \details Key: global node id, value: local node id
     std::unordered_map< std::size_t, std::size_t > m_lid;

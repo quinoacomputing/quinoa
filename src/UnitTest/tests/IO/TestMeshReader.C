@@ -82,10 +82,10 @@ struct MeshReader_common {
   //! \param[in,out] mr MeshReader object to verify
   void verifyTets( tk::MeshReader& mr ) {
     // Read mesh graph in serial
-    std::vector< std::size_t > ginpoel, inpoel, triinpoel, gid;
+    std::vector< std::size_t > ginpoel, inpoel, triinpoel;
     std::unordered_map< std::size_t, std::size_t > lid;
     tk::UnsMesh::Coords coord;
-    mr.readMeshPart( ginpoel, inpoel, triinpoel, gid, lid, coord );
+    mr.readMeshPart( ginpoel, inpoel, triinpoel, lid, coord );
 
     // Test if the number of elements is correct
     ensure_equals( "number of elements incorrect",

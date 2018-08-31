@@ -63,7 +63,6 @@ Partitioner::Partitioner(
   m_ginpoel(),
   m_coord(),
   m_inpoel(),
-  m_gid(),
   m_lid(),
   m_ndist( 0 ),
   m_nchare( 0 ),
@@ -92,7 +91,7 @@ Partitioner::Partitioner(
   // Read this compute node's chunk of the mesh (graph and coords) from file
   std::vector< size_t > triinpoel;
 
-  mr.readMeshPart( m_ginpoel, m_inpoel, triinpoel, m_gid, m_lid, m_coord,
+  mr.readMeshPart( m_ginpoel, m_inpoel, triinpoel, m_lid, m_coord,
                    CkNumNodes(), CkMyNode() );
 
   // Compute triangle connectivity for side sets, reduce boundary face for side
