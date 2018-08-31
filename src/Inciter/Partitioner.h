@@ -2,8 +2,10 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Charm++ chare partitioner group used to perform mesh partitioning
-  \details   Charm++ chare partitioner group used to perform mesh partitioning.
+  \brief     Charm++ chare partitioner nodegroup used to perform mesh
+             partitioning
+  \details   Charm++ chare partitioner nodegroup used to perform mesh read and
+             partitioning, one worker per compute node.
 */
 // *****************************************************************************
 #ifndef Partitioner_h
@@ -36,7 +38,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
-//! Partitioner Charm++ chare group class
+//! Partitioner Charm++ chare nodegroup class
 //! \details Instantiations of Partitioner comprise a processor aware Charm++
 //!   chare node group. When instantiated, a new object is created on each
 //!   compute node and not more (as opposed to individual chares or chare array

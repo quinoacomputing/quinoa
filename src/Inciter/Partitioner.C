@@ -2,15 +2,10 @@
 /*!
   \file      src/Inciter/Partitioner.C
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Charm++ chare partitioner group used to perform mesh partitioning
-  \details   Charm++ chare partitioner group used to parform mesh partitioning.
-
-    The implementation uses the Charm++ runtime system and is fully
-    asynchronous, overlapping computation, communication as well as I/O. The
-    algorithm utilizes the structured dagger (SDAG) Charm++ functionality. The
-    high-level overview of the algorithm structure and how it interfaces with
-    Charm++ is discussed in the Charm++ interface file
-    src/Inciter/partitioner.ci.
+  \brief     Charm++ chare partitioner nodegroup used to perform mesh
+             partitioning
+  \details   Charm++ chare partitioner nodegroup used to perform mesh read and
+             partitioning, one worker per compute node.
 */
 // *****************************************************************************
 
