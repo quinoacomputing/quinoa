@@ -60,7 +60,6 @@ Transporter::Transporter() :
   m_sorter(),
   m_nelem( 0 ),
   m_npoin( 0 ),
-  m_avcost( 0.0 ),
   m_V( 0.0 ),
   m_minstat( {{ 0.0, 0.0, 0.0 }} ),
   m_maxstat( {{ 0.0, 0.0, 0.0 }} ),
@@ -159,7 +158,7 @@ Transporter::Transporter() :
   // constdt is zero, see inciter::ctr::InputDeck::InputDeck().
   if ( nstep != 0 && term > t0 && constdt < term-t0 ) {
 
-    // Enable SDAG waits
+    // Enable SDAG waits for collecting mesh statistics
     thisProxy.wait4stat();
 
     // Print I/O filenames
@@ -168,6 +167,8 @@ Transporter::Transporter() :
                            + ".<chareid>" );
     m_print.item( "Diagnostics",
                   g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
+    if (g_inputdeck.get< tag::cmd, tag::benchmark >())
+      m_print.item( "Benchmark mode", "on" );
 
     // Print output intervals
     m_print.section( "Output intervals" );
@@ -196,7 +197,7 @@ Transporter::createSolver()
 {
   // Create linear system solver callbacks
   tk::SolverCallback cbs{
-      CkCallback( CkReductionTarget(Transporter,nchare), thisProxy )
+      CkCallback( CkReductionTarget(Transporter,partition), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,bounds), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,comfinal), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,disccreated), thisProxy )
@@ -264,10 +265,10 @@ Transporter::createPartitioner()
   // Create mesh partitioner Charm++ chare group and start preparing mesh
   m_print.diag( "Reading mesh" );
 
-  // Create empty mesh sorter Chare chare array
+  // Create empty mesh sorter Charm++ chare array
   m_sorter = CProxy_Sorter::ckNew();
 
-  // Create empty mesh refiner Chare chare array
+  // Create empty mesh refiner Charm++ chare array
   m_refiner = CProxy_Refiner::ckNew();
 
   // Create mesh partitioner Charm++ chare group
@@ -332,7 +333,7 @@ Transporter::load( uint64_t nelem, uint64_t npoin )
 }
 
 void
-Transporter::nchare()
+Transporter::partition()
 // *****************************************************************************
 // Reduction target: Reduction target: all Solver (PEs) have computed the number
 // of chares they will recieve contributions from during linear solution

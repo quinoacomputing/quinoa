@@ -66,7 +66,7 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target: all Solver (PEs) have computed the number of
     //!   chares they will recieve contributions from during linear solution
-    void nchare();
+    void partition();
 
     //! Reduction target: all Solver (PEs) have computed their row bounds
     void bounds();
@@ -177,8 +177,6 @@ class Transporter : public CBase_Transporter {
     CProxy_Sorter m_sorter;              //!< Mesh sorter array proxy
     std::size_t m_nelem;                 //!< Number mesh elements
     std::size_t m_npoin;                 //!< Number mesh points
-    //! Average communication cost of merging the linear system
-    tk::real m_avcost;
      //! Total mesh volume
     tk::real m_V;
     //! Minimum mesh statistics
@@ -204,9 +202,6 @@ class Transporter : public CBase_Transporter {
 
     //! Create mesh partitioner and boundary condition object group
     void createPartitioner();
-
-    //! Start partitioning the mesh
-    void partition();
 
     //! Configure and write diagnostics file header
     void diagHeader();
