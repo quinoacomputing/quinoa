@@ -30,7 +30,7 @@ using RefinerCallback =
                          >;
 
 using SolverCallback =
-  tk::tuple::tagged_tuple< tag::nchare,         CkCallback
+  tk::tuple::tagged_tuple< tag::part,           CkCallback
                          , tag::bounds,         CkCallback
                          , tag::com,            CkCallback
                          , tag::disccreated,    CkCallback

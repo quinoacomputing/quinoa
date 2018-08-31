@@ -196,7 +196,7 @@ Transporter::createSolver()
 {
   // Create linear system solver callbacks
   tk::SolverCallback cbs{
-      CkCallback( CkReductionTarget(Transporter,nchare), thisProxy )
+      CkCallback( CkReductionTarget(Transporter,partition), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,bounds), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,comfinal), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,disccreated), thisProxy )
@@ -264,10 +264,10 @@ Transporter::createPartitioner()
   // Create mesh partitioner Charm++ chare group and start preparing mesh
   m_print.diag( "Reading mesh" );
 
-  // Create empty mesh sorter Chare chare array
+  // Create empty mesh sorter Charm++ chare array
   m_sorter = CProxy_Sorter::ckNew();
 
-  // Create empty mesh refiner Chare chare array
+  // Create empty mesh refiner Charm++ chare array
   m_refiner = CProxy_Refiner::ckNew();
 
   // Create mesh partitioner Charm++ chare group
@@ -332,7 +332,7 @@ Transporter::load( uint64_t nelem, uint64_t npoin )
 }
 
 void
-Transporter::nchare()
+Transporter::partition()
 // *****************************************************************************
 // Reduction target: Reduction target: all Solver (PEs) have computed the number
 // of chares they will recieve contributions from during linear solution

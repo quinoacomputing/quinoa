@@ -138,7 +138,7 @@ Solver::nchare( int n )
   if (CkMyPe() == CkNumPes()-1) mynchare += n % CkNumPes();
   m_nchare = static_cast< std::size_t >( mynchare );
 
-  contribute( m_cb.get< tag::nchare >() );
+  contribute( m_cb.get< tag::part >() );
 }
 
 void
