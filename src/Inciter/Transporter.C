@@ -167,6 +167,8 @@ Transporter::Transporter() :
                            + ".<chareid>" );
     m_print.item( "Diagnostics",
                   g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
+    if (g_inputdeck.get< tag::cmd, tag::benchmark >())
+      m_print.item( "Benchmark mode", "on" );
 
     // Print output intervals
     m_print.section( "Output intervals" );
