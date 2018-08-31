@@ -21,7 +21,6 @@ mainmodule unittest {
     readonly CProxy_TUTSuite g_suiteProxy;
     readonly std::string g_executable;
     readonly int g_maxTestsInGroup;
-    readonly bool g_charmpass;
 
   } // unittest::
 

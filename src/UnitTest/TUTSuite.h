@@ -22,6 +22,7 @@
 #include "UnitTest/CmdLine/CmdLine.h"
 
 #include "NoWarning/tutsuite.decl.h"
+#include "NoWarning/mpirunner.decl.h"
 
 namespace unittest {
 
@@ -36,15 +37,17 @@ class TUTSuite : public CBase_TUTSuite {
     void evaluate( std::vector< std::string > status );
 
   private:
-    UnitTestPrint m_print;      //!< Pretty printer
-    std::size_t m_nrun;         //!< Number of tests ran (including dummies)
-    std::size_t m_ngroup;       //!< Number of test groups
-    std::size_t m_ncomplete;    //!< Number of completed tests
-    std::size_t m_nfail;        //!< Number of failed tests
-    std::size_t m_nskip;        //!< Number of skipped tests
-    std::size_t m_nwarn;        //!< Number of tests with a warning
-    std::size_t m_nexcp;        //!< Number of tests with an exception
-    std::size_t m_nmigr;        //!< Number of Charm++ migration tests ran
+    //! MPI unit test runner nodegroup proxy
+    CProxy_MPIRunner< CProxy_TUTSuite > m_mpirunner;
+    UnitTestPrint m_print;         //!< Pretty printer
+    std::size_t m_nrun;            //!< Number of tests ran (including dummies)
+    std::size_t m_ngroup;          //!< Number of test groups
+    std::size_t m_ncomplete;       //!< Number of completed tests
+    std::size_t m_nfail;           //!< Number of failed tests
+    std::size_t m_nskip;           //!< Number of skipped tests
+    std::size_t m_nwarn;           //!< Number of tests with a warning
+    std::size_t m_nexcp;           //!< Number of tests with an exception
+    std::size_t m_nmigr;           //!< Number of Charm++ migration tests ran
 
     //! \brief Charm++ migration test group names and number of tests
     //! \details This map stores the names of test groups that define Charm++

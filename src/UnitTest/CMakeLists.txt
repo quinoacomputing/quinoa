@@ -9,7 +9,7 @@ add_library(UnitTest
             Assessment.C
             TUTSuite.C
             TUTTest.C
-)
+            MPIRunner.C)
 
 target_include_directories(UnitTest PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -23,14 +23,16 @@ target_include_directories(UnitTest PUBLIC
                            ${BRIGAND_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_PATH}
                            ${PROJECT_BINARY_DIR}/../Main
                            ${PROJECT_BINARY_DIR}/../LinSys
                            ${PROJECT_BINARY_DIR}/../LoadBalance
                            ${PROJECT_BINARY_DIR}/../UnitTest)
 
-
 addCharmModule( "tuttest" "UnitTest" )
 addCharmModule( "tutsuite" "UnitTest" )
+addCharmModule( "mpirunner" "UnitTest" )
 addCharmModule( "charmchild" "UnitTest" )
 addCharmModule( "charmtimer" "UnitTest" )
 addCharmModule( "testarray" "UnitTest" )
