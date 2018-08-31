@@ -158,7 +158,7 @@ Transporter::Transporter() :
   // constdt is zero, see inciter::ctr::InputDeck::InputDeck().
   if ( nstep != 0 && term > t0 && constdt < term-t0 ) {
 
-    // Enable SDAG waits
+    // Enable SDAG waits for collecting mesh statistics
     thisProxy.wait4stat();
 
     // Print I/O filenames
