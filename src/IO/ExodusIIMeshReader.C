@@ -757,7 +757,7 @@ ExodusIIMeshReader::triinpoel(
 // *****************************************************************************
 {
   Assert( !(m_from == 0 && m_till == 0),
-          "Lower and upper tetrahedron id bounds must both be zero" );
+          "Lower and upper tetrahedron id bounds must not both be zero" );
 
   // This will contain one of our final results: face (triangle) connectivity
   // for the side sets only. The difference between bnd_triinpoel and triinpoel
