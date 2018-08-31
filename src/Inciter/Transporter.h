@@ -177,8 +177,6 @@ class Transporter : public CBase_Transporter {
     CProxy_Sorter m_sorter;              //!< Mesh sorter array proxy
     std::size_t m_nelem;                 //!< Number mesh elements
     std::size_t m_npoin;                 //!< Number mesh points
-    //! Average communication cost of merging the linear system
-    tk::real m_avcost;
      //! Total mesh volume
     tk::real m_V;
     //! Minimum mesh statistics

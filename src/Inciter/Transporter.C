@@ -60,7 +60,6 @@ Transporter::Transporter() :
   m_sorter(),
   m_nelem( 0 ),
   m_npoin( 0 ),
-  m_avcost( 0.0 ),
   m_V( 0.0 ),
   m_minstat( {{ 0.0, 0.0, 0.0 }} ),
   m_maxstat( {{ 0.0, 0.0, 0.0 }} ),
