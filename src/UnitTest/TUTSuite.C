@@ -52,6 +52,16 @@ TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
 //! \param[in] cmdline Data structure storing data from the command-line parser
 // *****************************************************************************
 {
+  // Print out info on load distribution
+  m_print.section( "Load distribution" );
+  //m_print.item( "Number of tetrahedra", nelem );
+  m_print.item( "Number of processing elements",
+                std::to_string( CkNumPes() ) + " (" +
+                std::to_string( CkNumNodes() ) + 'x' +
+                std::to_string( CkNumPes()/CkNumNodes() ) + ')' );
+
+  m_print.endpart();
+
   m_print.part( "Factory" );
 
   // Output registered test groups
