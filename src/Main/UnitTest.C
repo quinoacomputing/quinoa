@@ -171,10 +171,8 @@ class Main : public CBase_Main {
     void finalize( bool worked, bool pass ) {
       try {
         if (worked && !m_timer.empty()) {
-          m_timestamp.emplace_back( "Serial and Charm++ tests runtime",
-                                    m_timer[0].hms() );
-          m_print.time( "Serial and Charm++ test suite timers (h:m:s)",
-                        m_timestamp );
+          m_timestamp.emplace_back( "Unit tests runtime", m_timer[0].hms() );
+          m_print.time( "Test suite timers (h:m:s)", m_timestamp );
           m_print.endpart();
         }
       } catch (...) { tk::processExceptionCharm(); }
