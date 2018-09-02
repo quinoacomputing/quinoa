@@ -21,12 +21,10 @@ extern CProxy_TUTSuite g_suiteProxy;
 
 } // unittest::
 
-UnitTestDriver::UnitTestDriver( const UnitTestPrint& print,
-                                const ctr::CmdLine& cmdline ) :
-  m_print( print )
+UnitTestDriver::UnitTestDriver( const UnitTestPrint&,
+                                const ctr::CmdLine& cmdline )
 // *****************************************************************************
 //  Constructor
-//! \param[in] print Pretty printer
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
 // *****************************************************************************

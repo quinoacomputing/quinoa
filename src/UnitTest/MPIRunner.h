@@ -31,10 +31,16 @@ class MPIRunner : public CBase_MPIRunner< Proxy > {
     void rungroup( const std::string& groupname ) {
       for (int t=1; t<=g_maxTestsInGroup; ++t) {      
         tut::test_result tr;
-        // Calls MPI
-        g_runner.get().run_test( groupname, t, tr );
         auto nd = CBase_MPIRunner< Proxy >::thisIndex;
-        if (CkNodeFirst(nd) == 0) {  // only send one result back
+        // Invoke those MPI tests whose group name contains "MPISingle" from a
+        // single MPI rank only
+        if (groupname.find("MPISingle") != std::string::npos) {
+          if (CkNodeFirst(nd) == 0) g_runner.get().run_test( groupname, t, tr );
+        } else {
+          g_runner.get().run_test( groupname, t, tr );
+        }
+        // Send result (only one)
+        if (CkNodeFirst(nd) == 0) {
           m_host.evaluate( { tr.group, tr.name, std::to_string(tr.result),
                              tr.message, tr.exception_typeid } );
         }

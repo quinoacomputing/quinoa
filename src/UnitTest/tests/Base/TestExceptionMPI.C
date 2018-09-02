@@ -25,6 +25,8 @@ using ExceptionMPI_group =
 using ExceptionMPI_object = ExceptionMPI_group::object;
 
 //! Define test group
+//! \note Those test groups whose name contains "MPI" will be started as
+//!    MPI tests (from a Charm++ nodegroup)
 static ExceptionMPI_group ExceptionMPI( "Base/ExceptionMPI" );
 
 //! Test definitions for group

@@ -25,9 +25,6 @@ class UnitTestDriver {
 
     //! Execute driver
     void execute() const {}
-
-  private:
-    const UnitTestPrint& m_print;
 };
 
 } // unittest::
