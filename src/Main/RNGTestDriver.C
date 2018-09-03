@@ -45,7 +45,13 @@ RNGTestDriver::RNGTestDriver( const RNGTestPrint& print,
   m_print.item( "Control file", cmdline.get< tag::io, tag::control >() );  
   InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );
   m_print.item( "Parsed control file", "success" );  
-  m_print.endpart();
+
+  // Print out info on load distribution
+  m_print.section( "Load distribution" );
+  m_print.item( "Number of processing elements",
+                std::to_string( CkNumPes() ) + " (" +
+                std::to_string( CkNumNodes() ) + 'x' +
+                std::to_string( CkNumPes()/CkNumNodes() ) + ')' );
 }
 
 void
@@ -54,6 +60,8 @@ RNGTestDriver::execute() const
 //  Run battery
 // *****************************************************************************
 {
+  m_print.endpart();
+
   m_print.part( "Factory" );
 
   // Register batteries
