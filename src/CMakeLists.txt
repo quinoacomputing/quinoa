@@ -191,6 +191,7 @@ message(STATUS "Required language standard: C++${CMAKE_CXX_STANDARD}")
 # Get git revision
 include(GetGitRevisionDescription)
 git_describe(GIT_SHA1 --tags)
+git_rev_parse(GIT_SHA1_ONLY)
 message(STATUS "git sha1: ${GIT_SHA1}")
 
 # Macro to add C++ compiler flags
