@@ -53,13 +53,12 @@ try :
 
   // Construct exception message
   std::stringstream s;
-  s << m_message << std::endl;
-  if (line) {
+  s << m_message;
+  if (line)
     s << ">>> Exception at " << m_file << ":" << m_line << ": " << m_func;
-  } else {
-    s << ">>> No file:line:func information from exception";
-  }
   m_message = s.str();
+
+  printf( ">>> Exception: %s\n", m_message.c_str() );
 
   // Save call-trace
   saveTrace();
@@ -179,8 +178,6 @@ Exception::handleException() noexcept
 //!   throws exceptions.
 // *****************************************************************************
 {
-  printf("\n>>> Error: %s\n", what());
-
   if (m_addrLength > 0) {
     fprintf( stderr, ">>>\n>>> =========== CALL TRACE ===========\n>>>\n" );
     echoTrace();
