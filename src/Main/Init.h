@@ -17,6 +17,8 @@
 #include <ctime>
 #include <unistd.h>
 
+#include "NoWarning/charm++.h"
+
 #include "QuinoaConfig.h"
 #include "Exception.h"
 #include "Print.h"
@@ -156,6 +158,11 @@ static void echoRunEnv( const Print& print, int argc, char** argv,
 
   print.item( "Screen output", verbose ? "verbose (quiet: omit -v)" : "quiet" );
   print.item( "Quiescence detection", quiescence ? "on" : "off" );
+
+  print.item( "Number of processing elements",
+              std::to_string( CkNumPes() ) + " (" +
+              std::to_string( CkNumNodes() ) + 'x' +
+              std::to_string( CkNumPes()/CkNumNodes() ) + ')' );
 }
 
 //! \brief Generic Main() used for all executables for code-reuse and a uniform
