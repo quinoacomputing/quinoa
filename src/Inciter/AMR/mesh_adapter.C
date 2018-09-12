@@ -355,9 +355,10 @@ namespace AMR {
             }
         }
 
+        trace_out << "round_two size " << round_two.size() << std::endl;
         for (const auto i : round_two)
         {
-            trace_out << "i " << i << std::endl;
+            trace_out << "round two i " << i << std::endl;
 
             AMR::Refinement_State& element = tet_store.data(i);
 
@@ -588,6 +589,7 @@ namespace AMR {
         for (size_t face = 0; face < NUM_TET_FACES; face++)
         {
             int num_face_refine_edges = 0;
+            int num_face_locked_edges = 0;
 
             face_ids_t face_ids = face_list[face];
             edge_list_t face_edge_list = AMR::edge_store_t::generate_keys_from_face_ids(face_ids);
@@ -604,25 +606,24 @@ namespace AMR {
                 // This case only cares about faces with no locks
                 if (tet_store.edge_store.get(key).lock_case != AMR::Edge_Lock_Case::unlocked)
                 {
-                    // Abort this face
-                    num_face_refine_edges = 0;
-                    continue;
+                    num_face_locked_edges++;
                 }
             }
-            if (num_face_refine_edges >= 2)
+
+
+            // Decide if we want to process this face
+            if (num_face_refine_edges >= 2 && num_face_locked_edges == 0)
             {
+                // We can refine this face
                 face_refine = true;
                 face_refine_id = face;
                 break;
             }
         }
 
-        // If we have locked edges, we don't want to do 1:4
-        // TODO: there is a more elegant way of expressing this
-        if (locked != 0) { face_refine = 0; }
-
         // "If nrefine = 1
         // Accept as 1:2 refinement"
+        // TODO: can we hoist this higher
         if (num_active_edges == 1)
         {
             //node_pair_t nodes = find_single_refinement_nodes(edge_list);
