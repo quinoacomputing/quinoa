@@ -187,11 +187,13 @@ namespace AMR {
 
                 // Currently we lock one per tet, around the split node. We
                 // also need to lock the two "arms" which come out from it
-                lock_edges_from_node(new_tet_id, new_node_id, Edge_Lock_Case::intermediate);
-                lock_edges_from_node(new_tet_id2, new_node_id, Edge_Lock_Case::intermediate);
+                //lock_edges_from_node(new_tet_id, new_node_id, Edge_Lock_Case::intermediate);
+                //lock_edges_from_node(new_tet_id2, new_node_id, Edge_Lock_Case::intermediate);
 
                 // Deactivate parent tet?
                 tet_store.deactivate(tet_id);
+                //lock_edges_from_node(new_node_id, Edge_Lock_Case::intermediate);
+                tet_store.intermediate_list.insert(new_node_id);
             }
 
             /**
@@ -202,6 +204,7 @@ namespace AMR {
             */
             void refine_one_to_four(size_t tet_id)
             {
+                trace_out << "do refine 1:4 " << std::endl;
                 //bool face_refine = false;
                 size_t face_refine_id = 0; // FIXME: Does this need a better default
                 face_list_t face_list = tet_store.generate_face_lists(tet_id);
@@ -358,7 +361,22 @@ namespace AMR {
                 size_t center_id = child[1]; // 1 to preserve Jacobian order
                 tet_store.add(center_id, AC, AB, BC, D, Refinement_Case::one_to_four, tet_id);
 
+
+                // TODO: replace this with a more concise way to lock the correct edges
+
                 tet_store.add_center(center_id);
+                /*
+                lock_edges_from_node(child[0], AB, Edge_Lock_Case::intermediate);
+                lock_edges_from_node(child[0], AC, Edge_Lock_Case::intermediate);
+                lock_edges_from_node(child[2], AC, Edge_Lock_Case::intermediate);
+                lock_edges_from_node(child[2], BC, Edge_Lock_Case::intermediate);
+                lock_edges_from_node(child[3], AB, Edge_Lock_Case::intermediate);
+                lock_edges_from_node(child[3], BC, Edge_Lock_Case::intermediate);
+                lock_edges_from_node(center_id, AC, Edge_Lock_Case::intermediate);
+                lock_edges_from_node(center_id, AB, Edge_Lock_Case::intermediate);
+                lock_edges_from_node(center_id, BC, Edge_Lock_Case::intermediate);
+                */
+
 
                 tet_store.deactivate(tet_id);
 
@@ -368,6 +386,16 @@ namespace AMR {
                     // << child[2] << ", "
                     // << child[3]
                     // << std::endl;
+
+                /*
+                lock_edges_from_node(AB, Edge_Lock_Case::intermediate);
+                lock_edges_from_node(AC, Edge_Lock_Case::intermediate);
+                lock_edges_from_node(BC, Edge_Lock_Case::intermediate);
+                */
+
+                tet_store.intermediate_list.insert(AB);
+                tet_store.intermediate_list.insert(AC);
+                tet_store.intermediate_list.insert(BC);
 
             }
 
@@ -586,6 +614,33 @@ namespace AMR {
                 return returned_nodes;
             }
 
+            // TODO: remove this, it's horrible and not efficient.
+            // WARNING: THIS GOES OVER ALL TETS!!!!
+            void lock_edges_from_node(
+                    size_t node_id,
+                    Edge_Lock_Case lock_case
+            )
+            {
+                // Iterate over edges of ALL tet
+                for (const auto& kv : tet_store.tets)
+                {
+                    size_t tet_id = kv.first;
+                    edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
+                    for (size_t k = 0; k < NUM_TET_EDGES; k++)
+                    {
+                        // If it contains that node id, mark it using lock_case
+                        edge_t edge = edge_list[k];
+
+                        size_t edge_node_A_id = edge.first();
+                        size_t edge_node_B_id = edge.second();
+
+                        if ((edge_node_A_id == node_id) || (edge_node_B_id == node_id)) {
+                            trace_out << " found node in " << edge_node_A_id << " - " << edge_node_B_id << " set to " << lock_case << std::endl;
+                            tet_store.edge_store.get(edge).lock_case = lock_case;
+                        }
+                    }
+                }
+            }
             void lock_edges_from_node(
                     size_t tet_id,
                     size_t node_id,

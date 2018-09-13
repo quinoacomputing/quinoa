@@ -23,6 +23,7 @@ namespace AMR {
             AMR::active_element_store_t active_elements;
             AMR::master_element_store_t master_elements;
 
+
             std::vector<real_t> cell_type_list;
             std::vector<real_t> refinement_level_list;
 
@@ -33,6 +34,7 @@ namespace AMR {
             AMR::id_generator_t id_generator;
 
         public:
+            std::set<size_t> intermediate_list;
             // Public so it can be trivially grabbed for looping over.
             std::vector< std::size_t > active_id_mapping;
             // TODO: implement iterators at some point..

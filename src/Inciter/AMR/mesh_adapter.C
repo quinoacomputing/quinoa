@@ -120,14 +120,73 @@ namespace AMR {
      * @param num_locked_edges The number of locked edges
      * @param refinement_case The refinement case of the tet
      *
-     * @return The compatibility class of the current scenario
+     * @return The compatibili4y class of the current scenario
      */
-    int mesh_adapter_t::detect_compatibility(int num_locked_edges,
-            AMR::Refinement_Case refinement_case, int normal)
+    int mesh_adapter_t::detect_compatibility(
+            int num_locked_edges,
+            int num_intermediate_edges,
+            AMR::Refinement_Case refinement_case,
+            int normal
+    )
     {
         int compatibility = 0;
+        num_locked_edges += num_intermediate_edges;
 
-        // Only 1:2 and 1:4 are intermediates and eligible for class3
+        /*
+        // Split this into three categories
+        // 1. Normal elements without locked edges. => 1
+        //if (normal) {
+
+            // 3. Intermediate elements with at least one edge marked for refinement => 3
+            if (num_intermediate_edges > 0)
+            {
+                compatibility = 3;
+            }
+            else if (num_locked_edges == 0) {
+                compatibility = 1;
+            }
+        // 2. Normal elements with locked edges. => 2
+            else {
+                compatibility = 2;
+            }
+        //}
+        */
+
+        //else {
+            //if (num_intermediate_edges > 0) { compatibility = 3; }
+        //}
+
+
+
+        // Only 1:2 and 1:4 are intermediates and eligible for class3 // NOT TRUE!
+        /*
+        if (num_intermediate_edges > 0)
+        {
+            if (!normal) {
+                trace_out << " not normal 3 " << std::endl;
+                compatibility = 3;
+            }
+            else { // Attempt to allow for "normal" 1:4 and 1:8
+                compatibility = 2;
+                trace_out << " normal 3 " << std::endl;
+            }
+
+        }
+        else {
+            if (num_locked_edges == 0) {
+                trace_out << " no lock 1 " << std::endl;
+                compatibility = 1;
+            }
+            else {
+                trace_out << " lock 2 " << std::endl;
+                compatibility = 2;
+            }
+        }
+        */
+
+
+        // Old implementation
+        // Only 1:2 and 1:4 are intermediates and eligible for class3 // NOT TRUE!
         if (
                 (refinement_case == AMR::Refinement_Case::one_to_two) or
                 (refinement_case == AMR::Refinement_Case::one_to_four)
@@ -154,6 +213,8 @@ namespace AMR {
             }
         }
 
+        assert(compatibility > 0);
+        assert(compatibility < 4);
         return compatibility;
     }
 
@@ -187,6 +248,7 @@ namespace AMR {
                 if (tet_store.is_active(tet_id)) {
                     int compatibility = 1;
                     int num_locked_edges = 0;
+                    int num_intermediate_edges = 0;
 
                     // Loop over nodes and count the number which need refining
                     int num_to_refine = 0;
@@ -206,11 +268,16 @@ namespace AMR {
                         //Count locked edges and edges in need of
                         // refinement
                         // Count Locked Edges
-                        if(tet_store.edge_store.get(key).lock_case != AMR::Edge_Lock_Case::unlocked)
+                        if(tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::locked)
                         {
                             trace_out << "Found locked edge " << key << std::endl;
                             trace_out << "Locked :" << tet_store.edge_store.get(key).lock_case << std::endl;
                             num_locked_edges++;
+                        }
+                        else if(tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::intermediate)
+                        {
+                            trace_out << "Found intermediate edge " << key << std::endl;
+                            num_intermediate_edges++;
                         }
                         else
                         {
@@ -230,9 +297,9 @@ namespace AMR {
                     int normal = tet_store.get_is_normal(tet_id);
 
                     trace_out << "Checking " << tet_id <<
-                        " ref case " << refinement_case << 
+                        " ref case " << refinement_case <<
                         " num ref " << num_to_refine <<
-                        " normal " << normal << 
+                        " normal " << normal <<
                         std::endl;
 
 
@@ -243,7 +310,7 @@ namespace AMR {
                         //Determine compatibility case
 
                         compatibility = detect_compatibility(num_locked_edges,
-                                refinement_case, normal);
+                                num_intermediate_edges, refinement_case, normal);
 
                         trace_out << "Compat " << compatibility << std::endl;
 
@@ -256,7 +323,8 @@ namespace AMR {
                         {
                             refinement_class_two(edge_list, tet_id);
                         }
-                        else { // compatibility == 3
+                        else if (compatibility == 3)
+                        {
                             refinement_class_three(tet_id);
                         }
 
@@ -322,6 +390,7 @@ namespace AMR {
             size_t tet_id = kv.first;
             size_t parent_id = 0;
 
+            trace_out << "Do refine of " << tet_id << std::endl;
             if (tet_store.has_refinement_decision(tet_id))
             {
                 switch(tet_store.marked_refinements.get(tet_id))
@@ -404,8 +473,17 @@ namespace AMR {
         //node_connectivity.print();
 
         //reset_intermediate_edges();
-        remove_edge_locks(0);
+        remove_edge_locks(1);
         remove_normals();
+
+        lock_intermediates();
+    }
+
+    void mesh_adapter_t::lock_intermediates() {
+        for (int k : tet_store.intermediate_list)
+        {
+            refiner.lock_edges_from_node(k, Edge_Lock_Case::intermediate);
+        }
     }
 
     /**
@@ -426,7 +504,6 @@ namespace AMR {
             //node_pair_t nodes = find_single_refinement_nodes(edge_list);
             //refine_one_to_two( tet_id, nodes[0], nodes[1]);
             // TODO: I'm pretty sure this needs to mark the edge for reifnement
-            //tet_store.mark_edges_for_refinement(tet_id);
             tet_store.mark_one_to_two(tet_id);
         }
 
@@ -588,6 +665,7 @@ namespace AMR {
         // Iterate over each face
         for (size_t face = 0; face < NUM_TET_FACES; face++)
         {
+            trace_out << "face " << face << std::endl;
             int num_face_refine_edges = 0;
             int num_face_locked_edges = 0;
 
@@ -597,9 +675,11 @@ namespace AMR {
             for (size_t k = 0; k < NUM_FACE_NODES; k++)
             {
                 edge_t key = face_edge_list[k];
+                trace_out << "Checking " << key << std::endl;
                 if (tet_store.edge_store.get(key).needs_refining == true)
                 {
                     num_face_refine_edges++;
+                    trace_out << "ref! " << key << std::endl;
                 }
 
                 // Check for locked edges
@@ -607,6 +687,7 @@ namespace AMR {
                 if (tet_store.edge_store.get(key).lock_case != AMR::Edge_Lock_Case::unlocked)
                 {
                     num_face_locked_edges++;
+                    trace_out << "locked! " << key << std::endl;
                 }
             }
 
@@ -684,6 +765,7 @@ namespace AMR {
      */
     bool mesh_adapter_t::check_valid_refinement_case(size_t child_id) {
 
+        trace_out << "check valid ref " << child_id << std::endl;
         edge_list_t edge_list = tet_store.generate_edge_keys(child_id);
 
         size_t num_to_refine = 0;
@@ -813,7 +895,7 @@ namespace AMR {
             {
                 edge_t key = edge_list[k];
                 trace_out << "Compat 3 " << key << std::endl;
-                if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::unlocked) 
+                if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::unlocked)
 		{
                     trace_out << "Compat 3 marking edge " << key << std::endl;
                     tet_store.edge_store.mark_for_refinement(key);
@@ -835,9 +917,7 @@ namespace AMR {
             size_t child = children[i];
             if ( !check_valid_refinement_case(child) )
             {
-                trace_out <<
-                    "Compat 3 Marking compatible false because of invalid refinement case"
-                    << std::endl;
+                trace_out << "Compat 3 Marking compatible false because of invalid refinement case" << std::endl;
 
                 compatible = false;
             }
@@ -859,14 +939,13 @@ namespace AMR {
                 deactivate_tet_edges(child);
                 lock_tet_edges(child);
                 trace_out << "Compat 3 locking edges of " << child << std::endl;
-                // TODO: Mark tet as "normal"
                 // Here we interpret normal to mean "don't treat it like it has intermediates"
                 tet_store.mark_normal(child);
                 trace_out << "Compat 3 " << child << std::endl;
             }
         }
         else {
-            trace_out << "TIME TO 2:8" << std::endl;
+            trace_out << "TIME TO 2:8 " << tet_id << std::endl;
             // Accept as 2:8 or 4:8
             AMR::Refinement_State& element = tet_store.data(tet_id);
             if (element.refinement_case == AMR::Refinement_Case::one_to_two)
@@ -876,6 +955,9 @@ namespace AMR {
             else if (element.refinement_case == AMR::Refinement_Case::one_to_four)
             {
                 tet_store.mark_four_to_eight(tet_id);
+            }
+            else {
+                trace_out << " I don't know what to do with this..it looks like you're trying to 2/4:8 an 8... " << std::endl;
             }
 
         }
@@ -896,7 +978,7 @@ namespace AMR {
         {
             size_t tet_id = kv.first;
 
-            trace_out << "Process tet " << tet_id << std::endl;
+            trace_out << "Process tet removelock " << tet_id << std::endl;
 
             // Only apply checks to tets on the active list
             if (tet_store.is_active(tet_id)) {
@@ -915,7 +997,7 @@ namespace AMR {
         {
             size_t tet_id = kv.first;
 
-            trace_out << "Process tet " << tet_id << std::endl;
+            trace_out << "Process tet reset " << tet_id << std::endl;
 
             // Only apply checks to tets on the active list
             if (tet_store.is_active(tet_id)) {

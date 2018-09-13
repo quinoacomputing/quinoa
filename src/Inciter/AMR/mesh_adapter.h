@@ -52,8 +52,14 @@ namespace AMR {
             void error_refinement( const std::vector< edge_t >& edge,
                     const std::vector< real_t >& criteria );
 
-            int detect_compatibility(int num_locked_edges,
-                    AMR::Refinement_Case refinement_case, int normal=0);
+            int detect_compatibility(
+                    int num_locked_edges,
+                    int num_intermediate_edges,
+                    AMR::Refinement_Case refinement_case,
+                    int normal=0
+            );
+
+            void lock_intermediates();
 
             void mark_refinement();
             void perform_refinement();
