@@ -94,6 +94,12 @@ class Transporter : public CBase_Transporter {
     //! Reduction target: all PEs have optionally refined their mesh
     void refined( std::size_t nelem, std::size_t npoin );
 
+    //! Reduction target: all Sorter chares have queried their boundary nodes
+    void queried();
+    //! \brief Reduction target: all Sorter chares have responded with their
+    //!   boundary nodes
+    void responded();
+
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished flattening its global mesh node IDs and they are ready
     //!   for computing the communication maps required for node ID reordering
@@ -103,7 +109,8 @@ class Transporter : public CBase_Transporter {
     void pepartitioned() { m_progMesh.inc< PART >(); }
     //! Non-reduction target for receiving progress report on distributing mesh
     void pedistributed() { m_progMesh.inc< DIST >(); }
-    //! Non-reduction target for receiving progress report on flattening mesh
+    //! \brief Non-reduction target for receiving progress report on computing
+    //!    boundary data
     void chbnd() { m_progMesh.inc< BND >(); }
     //! Non-reduction target for receiving progress report on node ID comm map
     void chcomm() { m_progMesh.inc< COMM >(); }
@@ -245,9 +252,8 @@ class Transporter : public CBase_Transporter {
         if (bnd.find(i) != end(bnd))  // user BC found among side sets in file
           sidesets_as_bc.insert( i );  // store side set id configured as BC
         else {
-          m_print << "\n>>> ERROR: Boundary conditions specified on side set " +
-            std::to_string(i) + " which does not exist in mesh file";
-          finish();
+          Throw( "Boundary conditions specified on side set " +
+            std::to_string(i) + " which does not exist in mesh file" );
         }
       }
       // Remove sidesets not configured as BCs (will not process those further)

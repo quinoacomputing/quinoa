@@ -37,7 +37,9 @@ using SolverCallback =
                          >;
 
 using SorterCallback =
-  tk::tuple::tagged_tuple< tag::flattened,      CkCallback
+  tk::tuple::tagged_tuple< tag::queried,        CkCallback
+                         , tag::responded,      CkCallback
+                         , tag::flattened,      CkCallback
                          , tag::discinserted,   CkCallback
                          , tag::workinserted,   CkCallback
                          >;

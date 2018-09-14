@@ -15,16 +15,10 @@
 #include "DerivedData.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "Solver.h"
-#include "HashMapReducer.h"
-//#include "BndFaceReducer.h"
 
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
-
-static CkReduction::reducerType ChBndNodeMerger;
-static CkReduction::reducerType BndFaceMerger;
-static CkReduction::reducerType BndNodeMerger;
 
 } // inciter::
 
@@ -46,12 +40,15 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
   m_scheme( scheme ),
   m_ginpoel( ginpoel ),
   m_coordmap( coordmap ),
+  m_nbnd( 0 ),
   m_bface( bface ),
   m_triinpoel( triinpoel ),
   m_bnode( bnode ),
   m_nchare( nchare ),
   m_nodeset( begin(ginpoel), end(ginpoel) ),
   m_noffset( 0 ),
+  m_nodech(),
+  m_chnode(),
   m_msum(),
   m_reordcomm(),
   m_start( 0 ),
@@ -81,169 +78,139 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
                                   [&](decltype(s.second)::value_type f)
                                   { return f*3+2 < m_triinpoel.size(); } ); } ),
           "Boundary face data structures inconsistent" );
+}
 
-  // Find chare-boundary nodes
-  std::vector< std::size_t > chbnode;
-  auto el = tk::global2local( ginpoel );      // generate local mesh data
-  const auto& inpoel = std::get< 0 >( el );   // local connectivity
-  const auto& gid = std::get< 1 >( el );      // local->global node ids
-  auto esup = tk::genEsup( inpoel, 4 );       // elements surrounding points
+void
+Sorter::setup( std::size_t npoin )
+// *****************************************************************************
+// Setup chare mesh boundary node communication map
+//! \param[in] npoin Total number of mesh points in mesh
+// *****************************************************************************
+{
+  // Compute the number of nodes a chare will build a node communication map for
+  auto chunksize = npoin / static_cast< std::size_t >( m_nchare );
+
+  // Find chare-boundary nodes of our mesh chunk. This algorithm collects the
+  // nglobal mesh node ids on the chare boundary. A node is on a chare boundary
+  // if it belongs to a face of a tetrahedron that has no neighbor tet at a
+  // face. The nodes are categorized tp bins that will be sent to different
+  // chares to build the (point-to-point) node communication map across all
+  // chares. The binning is determined by the global node id divided by the
+  // chunksize.
+  std::unordered_map< int, std::vector< std::size_t > > chbnode;
+  auto el = tk::global2local( m_ginpoel );      // generate local mesh data
+  const auto& inpoel = std::get< 0 >( el );     // local connectivity
+  auto esup = tk::genEsup( inpoel, 4 );         // elements surrounding points
   auto esuel = tk::genEsuelTet( inpoel, esup ); // elems surrounding elements
   for (std::size_t e=0; e<esuel.size()/4; ++e) {
     auto mark = e*4;
-    for (std::size_t f=0; f<4; ++f) {
-      if (esuel[mark+f] == -1) {
-        chbnode.push_back( gid[ inpoel[ mark+tk::lpofa[f][0] ] ] );
-        chbnode.push_back( gid[ inpoel[ mark+tk::lpofa[f][1] ] ] );
-        chbnode.push_back( gid[ inpoel[ mark+tk::lpofa[f][2] ] ] );
-      }
-    }
+    for (std::size_t f=0; f<4; ++f)
+      if (esuel[mark+f] == -1)
+        for (std::size_t n=0; n<3; ++n) {
+          auto g = m_ginpoel[ mark+tk::lpofa[f][n] ];
+          Assert( g/chunksize < static_cast<std::size_t>(m_nchare),
+                  "Indexing out of number of chares" );
+          chbnode[ static_cast<int>(g/chunksize) ].push_back( g );
+        }
   }
-  // Make boundary nodes unique
-  tk::unique( chbnode );
+  for (auto& c : chbnode) tk::unique(c.second);
 
-  if (g_inputdeck.get< tag::cmd, tag::feedback >()) m_host.chbnd();
+  // Send node lists in bins to chares that will compute node communication
+  // maps for a list of nodes in the bin. These bins form a distributed table.
+  // Note that we only send data to those chares that have data to work on. The
+  // receiving sides do not know in advance if they receive messages or not.
+  // Completion is detected by having the receiver respond back and counting
+  // the responses on the sender side, i.e., this chare.
+  m_nbnd = chbnode.size();
+  if (m_nbnd == 0)
+    contribute( m_cbs.get< tag::queried >() );
+  else
+    for (const auto& c : chbnode)
+      thisProxy[ c.first ].query( thisIndex, c.second );
+}
 
-  // Activate SDAG wait for receiving boundary face and node data
-  thisProxy[ thisIndex ].wait4com();
+void
+Sorter::query( int fromch, const std::vector< std::size_t >& nodes )
+// *****************************************************************************
+// Incoming query for a list mesh nodes for which this chare compiles node
+// communication maps
+//! \param[in] fromch Sender chare ID
+//! \param[in] nodes Chare-boundary node list from another chare
+// *****************************************************************************
+{
+  // Store incoming nodes in node->chare and its inverse, chare->node, maps
+  for (auto n : nodes) m_nodech[ n ].push_back( fromch );
+  auto& c = m_chnode[ fromch ];
+  c.insert( end(c), begin(nodes), end(nodes) );
+  // Report back to chare message received from
+  thisProxy[ fromch ].recvquery();
+}
 
-  // Aggregate chare boundary nodes across all Sorter chares
-  std::unordered_map< int, std::vector< std::size_t > >
-    bnd{{ thisIndex, std::move(chbnode) }};
-  auto chbnodestream = tk::serialize( bnd );
-  contribute( chbnodestream.first, chbnodestream.second.get(), ChBndNodeMerger,
-    CkCallback(CkIndex_Sorter::comChBndNode(nullptr),thisProxy) );
+void
+Sorter::recvquery()
+// *****************************************************************************
+// Receive receipt of boundary node lists to query
+// *****************************************************************************
+{
+  if (--m_nbnd == 0) contribute( m_cbs.get< tag::queried >() );
+}
 
-  // Aggregate boundary faces (and triangle connectivity) of side sets across
-  // all Sorter chares (pack to triangle connectivity set per side set first)
-  std::unordered_map< int, tk::UnsMesh::FaceSet > bconn;
-  for (const auto& s : m_bface) {
-    auto& b = bconn[ s.first ];
-    for (auto f : s.second) {
-      b.insert( {{{ m_triinpoel[f*3+0],
-                    m_triinpoel[f*3+1],
-                    m_triinpoel[f*3+2] }}} );
-    } 
+void
+Sorter::response()
+// *****************************************************************************
+//  Respond to boundary node list queries
+// *****************************************************************************
+{
+  std::unordered_map< int,
+    std::map< int, std::unordered_set< std::size_t > > > exp;
+
+  // Compute node communication map to be sent back to chares
+  for (const auto& c : m_chnode) {
+    auto& e = exp[ c.first ];
+    for (auto n : c.second)
+      for (auto d : tk::cref_find(m_nodech,n))
+        if (d != c.first)
+          e[ d ].insert( n );
   }
-  auto facestream = tk::serialize( bconn );
-  contribute( facestream.first, facestream.second.get(), BndFaceMerger,
-    CkCallback(CkIndex_Sorter::comface(nullptr),thisProxy) );
 
-  // Aggregate boundary nodes of side sets across all Sorter chares (pack to
-  // node sets per side set first)
-  std::unordered_map< int, std::unordered_set< std::size_t > > bnodeset;
-  for (const auto& s : m_bnode)
-    bnodeset[ s.first ].insert( begin(s.second), end(s.second) );
-  auto nodestream = tk::serialize( bnodeset );
-  contribute( nodestream.first, nodestream.second.get(), BndNodeMerger,
-    CkCallback(CkIndex_Sorter::comnode(nullptr),thisProxy) );
+  // Send node communication maps to chares that issued a query to us. Node
+  // communication maps were computed above for those chares that queried this
+  // map from us. These mesh nodes form a distributed table and we only work on
+  // a chunk of it. Note that we only send data back to those chares that have
+  // queried us. The receiving sides do not know in advance if the receive
+  // messages or not. Completion is detected by having the receiver respond
+  // back and counting the responses on the sender side, i.e., this chare.
+  m_nbnd = exp.size();
+  if (m_nbnd == 0)
+    contribute( m_cbs.get< tag::responded >() );
+  else
+    for (const auto& c : exp)
+      thisProxy[ c.first ].bnd( thisIndex, c.second );
 }
 
 void
-Sorter::registerReducers()
+Sorter::bnd( int fromch,
+             const std::map< int, std::unordered_set< std::size_t > >& msum )
 // *****************************************************************************
-//  Configure Charm++ reduction types
-//! \details Since this is a [nodeinit] routine, the runtime system executes the
-//!   routine exactly once on every logical node early on in the Charm++ init
-//!   sequence. Must be static as it is called without an object. See also:
-//!   Section "Initializations at Program Startup" at in the Charm++ manual
-//!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
+// Receive boundary node communication maps for our mesh chunk
+//! \param[in] fromch Sender chare ID
+//! \param[in] msum Boundary node communication map assembled by chare fromch
 // *****************************************************************************
 {
-  ChBndNodeMerger = CkReduction::addReducer(
-                      tk::mergeHashMap< int, std::vector< std::size_t > > );
-  BndFaceMerger = CkReduction::addReducer(
-                    tk::mergeHashMap< int, tk::UnsMesh::FaceSet > );
-  BndNodeMerger = CkReduction::addReducer(
-                   tk::mergeHashMap< int, std::unordered_set< std::size_t > > );
+  for (const auto& c : msum)
+    m_msum[ c.first ].insert( begin(c.second), end(c.second) );
+
+  // Report back to chare message received from
+  thisProxy[ fromch ].recvbnd();
 }
 
 void
-Sorter::comChBndNode( CkReductionMsg* msg )
+Sorter::recvbnd()
 // *****************************************************************************
-//  Receive aggregated chare boundary nodes associated to chares
-//! \param[in] msg Aggregated chare boundary nodes across the whole problem
-//! \details This is a reduction target receiving the aggregated chare boundary
-//!    nodes associated to chare IDs across the whole problem.
+// Receive receipt of boundary node communication map
 // *****************************************************************************
 {
-  // Unpack final result of aggregating boundary nodes associated to chares
-  std::unordered_map< int, std::vector< std::size_t > > bnd;
-  PUP::fromMem creator( msg->getData() );
-  creator | bnd;
-  delete msg;
-
-  // Store the global mesh node IDs associated to chare IDs bordering our mesh
-  // chunk. This loop computes m_msum, a symmetric chare-node communication map,
-  // that associates a unique set of global node IDs to chare IDs we share these
-  // nodes with.
-  for (const auto& c : bnd)
-    if (c.first != thisIndex)
-      for (auto i : c.second) {
-        const auto it = m_nodeset.find( i );
-        if (it != end(m_nodeset)) m_msum[ c.first ].insert( i );
-      }
-
-  comchbndnode_complete();
-}
-
-void
-Sorter::comface( CkReductionMsg* msg )
-// *****************************************************************************
-//  Receive aggregated boundary faces (and triangle connectivity) of side sets
-//! \param[in] msg Aggregated boundary faces (and triangle connectivity) of side
-//!   sets across the whole problem
-//! \details This is a reduction target receiving the aggregated boundary faces
-//!   (and triangle connectivity) of side sets across the whole problem.
-// *****************************************************************************
-{
-  // Unpack final result of aggregating boundary face data associated to chares
-  PUP::fromMem creator( msg->getData() );
-  std::unordered_map< int, tk::UnsMesh::FaceSet > bconn;
-  creator | bconn;
-  delete msg;
-
-   // Convert set of triangle connectivities per side set to 2 data structures:
-   // one that stores the face lists (local face ids) per side set, and an other
-   // with the triangle connectivity.
-   m_bface.clear();
-   m_triinpoel.clear();
-   std::size_t f = 0;
-   for (const auto& s : bconn) {
-     auto& b = m_bface[ s.first ];
-     for (const auto& t : s.second) {
-       b.push_back( f++ );
-       m_triinpoel.insert( end(m_triinpoel), begin(t), end(t) );
-     }
-   }
-
-  comface_complete();
-}
-
-void
-Sorter::comnode( CkReductionMsg* msg )
-// *****************************************************************************
-//  Receive aggregated boundary nodes of side sets
-//! \param[in] msg Aggregated boundary nodes of side sets across the whole
-//!   problem
-//! \details This is a reduction target receiving the aggregated boundary nodes
-//!   of side sets across the whole problem.
-// *****************************************************************************
-{
-  // Unpack final result of aggregating boundary nodes associated to chares
-  PUP::fromMem creator( msg->getData() );
-  std::unordered_map< int, std::unordered_set< std::size_t > > bnode;
-  creator | bnode;
-  delete msg;
-
-   // Convert set to vector of nodes per side sets
-   m_bnode.clear();
-   for (const auto& s : bnode) {
-     auto& b = m_bnode[ s.first ];
-     b.insert( begin(b), begin(s.second), end(s.second) );
-   }
-
-  comnode_complete();
+  if (--m_nbnd == 0) contribute( m_cbs.get< tag::responded >() );
 }
 
 void
@@ -253,6 +220,9 @@ Sorter::start()
 // *****************************************************************************
 {
   if (g_inputdeck.get< tag::cmd, tag::feedback >()) m_host.chcomm();
+
+  tk::destroy( m_nodech );
+  tk::destroy( m_chnode );
 
   if (g_inputdeck.get< tag::discr, tag::reorder >())
     mask();   // continue with mesh node reordering if requested (or required)
@@ -545,7 +515,7 @@ Sorter::createDiscWorkers()
   // args: Discretization ctor args. See also Charm++ manual, Sec. "Dynamic
   // Insertion".
   m_scheme.discInsert( thisIndex, m_host, m_ginpoel, m_coordmap, m_msum,
-                       m_nchare, CkMyPe() );
+                       m_nchare );
 
   contribute( m_cbs.get< tag::discinserted >() );
 }
@@ -557,60 +527,14 @@ Sorter::createWorkers()
 // *****************************************************************************
 {
   // If there was no reordering, assign a one-to-one node-map
-  if (m_newnodes.empty()) for (auto n : m_nodeset) m_newnodes[ n ] = n;
+  //if (m_newnodes.empty()) for (auto n : m_nodeset) m_newnodes[ n ] = n;
 
-  // Extract this chare's portion of the boundary node lists
-  decltype(m_bnode) chbnode;
-  for (const auto& s : m_bnode) {
-    auto& n = chbnode[ s.first ];
-    for (auto p : s.second) {
-      auto q = m_newnodes.find(p);
-      if (q != end(m_newnodes)) n.push_back( q->second );
-    }
-    if (n.empty()) chbnode.erase( s.first );
-  }
-  // Make boundary node IDs unique for each physical boundary (side set)
-  for (auto& s : chbnode) tk::unique( s.second );
-
-
-  // Generate set of all mesh faces
-  tk::UnsMesh::FaceSet faceset;
-  for (std::size_t e=0; e<m_ginpoel.size()/4; ++e) { // for all tets
-    auto mark = e*4;
-    for (std::size_t f=0; f<4; ++f) // for all tet faces
-      faceset.insert( {{{ m_ginpoel[ mark + tk::lpofa[f][0] ],
-                          m_ginpoel[ mark + tk::lpofa[f][1] ],
-                          m_ginpoel[ mark + tk::lpofa[f][2] ] }}} );
-  }
-
-  // Extract this chare's portion of the boundary faces and their connectivity
-  decltype(m_bface) chbface;
-  decltype(m_triinpoel) chtriinpoel;
-  std::size_t cnt = 0;
-
-  // Generate boundary 
-  for (const auto& ss : m_bface)  // for all phsyical boundaries (sidesets)
-    for (auto f : ss.second) {    // for all faces on this physical boundary
-      // attempt to find face nodes on this chare
-      auto f1 = m_newnodes.find( m_triinpoel[f*3+0] );
-      auto f2 = m_newnodes.find( m_triinpoel[f*3+1] );
-      auto f3 = m_newnodes.find( m_triinpoel[f*3+2] );
-      // if all 3 nodes of the physical boundary face are on this chare
-      if (f1!=end(m_newnodes) && f2!=end(m_newnodes) && f3!=end(m_newnodes)) {
-        // Create face with new node ids (after mesh node reordering)
-        std::array< std::size_t, 3 > n{{f1->second, f2->second, f3->second}};
-        // if this boundary face is on this chare
-        if (faceset.find(n) != end(faceset)) {
-          // store face connectivity with new (global) node ids of this chare
-          chtriinpoel.insert( end(chtriinpoel), begin(n), end(n) );
-          // generate/store physical boundary face id associated to sideset id
-          chbface[ ss.first ].push_back( cnt++ );
-        }
-      }
-    }
+  // The above, in some form, might be still necessary to remap the boundary
+  // data if reordering was done and will probably go into finish(), together
+  // with remapping other mesh data.
 
   // Create face data
-  FaceData fd( m_ginpoel, chbface, chbnode, chtriinpoel );
+  FaceData fd( m_ginpoel, m_bface, m_bnode, m_triinpoel );
 
   // Make sure (bound) base is already created and accessible
   Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,

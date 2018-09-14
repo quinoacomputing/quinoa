@@ -1212,9 +1212,9 @@ genInpofaTet( std::size_t ntfac,
     for (std::size_t f=0; f<nbfac; ++f)
     {
       icoun = nnpf * f;
-      inpofa[icoun+0] = triinpoel[icoun+2];
+      inpofa[icoun+0] = triinpoel[icoun+0];
       inpofa[icoun+1] = triinpoel[icoun+1];
-      inpofa[icoun+2] = triinpoel[icoun+0];
+      inpofa[icoun+2] = triinpoel[icoun+2];
     }
   }
 

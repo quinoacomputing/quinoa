@@ -35,10 +35,15 @@ module partitioner {
         const std::map< int, std::vector< std::size_t > >& faces,
         const std::map< int, std::vector< std::size_t > >& bnode );
       entry [exclusive] void partition( int nchare );
-      entry [exclusive] void addMesh( int frompe,
-                          const std::unordered_map< int,
-                                  std::tuple< std::vector< std::size_t >,
-                                    tk::UnsMesh::CoordMap > >& chmesh );
+      entry [exclusive] void addMesh(
+        int fromnode,
+        const std::unordered_map< int,
+                std::tuple<
+                  std::vector< std::size_t >,
+                  tk::UnsMesh::CoordMap,
+                  std::unordered_map< int, std::vector< std::size_t > >,
+                  std::unordered_map< int, std::vector< std::size_t > >
+                > >& chmesh );
       entry [exclusive] void recvMesh();
       entry void refine();
     };

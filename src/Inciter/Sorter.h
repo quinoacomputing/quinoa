@@ -70,18 +70,23 @@ class Sorter : public CBase_Sorter {
     //! Configure Charm++ reduction types
     static void registerReducers();
 
-    //! Create worker chare array elements on this PE
-    void createWorkers();
+    //! Setup chare mesh boundary node communication map
+    void setup( std::size_t npoin );
+    //! \brief Incoming query for a list mesh nodes for which this chare
+    //!   compiles node communication maps
+    void query( int fromch, const std::vector< std::size_t >& nodes );
+    //! Report receipt of boundary node lists
+    void recvquery();
+    //! Respond to boundary node list queries
+    void response();
+    //! Receive boundary node communication maps for our mesh chunk
+    void bnd( int fromch, const std::map< int,
+                            std::unordered_set< std::size_t > >& msum );
+    //! Receive receipt of boundary node communication map
+    void recvbnd();
 
-    //! Receive aggregated chare boundary nodes associated to chares
-    void comChBndNode( CkReductionMsg* msg );
-
-    //! Receive aggregated boundary nodes for side sets
-    void comnode( CkReductionMsg* msg );
-
-    //! \brief Receive aggregated boundary faces (and triangle connectivity)
-    //!    for side sets
-    void comface( CkReductionMsg* msg );
+    //! Start reordering (if user enabled it)
+    void start();
 
     //! \brief Receive number of uniquely assigned global mesh node IDs from
     //!   chares with lower indices
@@ -100,6 +105,9 @@ class Sorter : public CBase_Sorter {
     //! Create Discretization chare array elements on this PE
     void createDiscWorkers();
 
+    //! Create worker chare array elements on this PE
+    void createWorkers();
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -112,12 +120,15 @@ class Sorter : public CBase_Sorter {
       p | m_scheme;
       p | m_ginpoel;
       p | m_coordmap;
+      p | m_nbnd;
       p | m_bface;
       p | m_triinpoel;
       p | m_bnode;
       p | m_nchare;
       p | m_nodeset;
       p | m_noffset;
+      p | m_nodech;
+      p | m_chnode;
       p | m_msum;
       p | m_reordcomm;
       p | m_start;
@@ -146,6 +157,8 @@ class Sorter : public CBase_Sorter {
     std::vector< std::size_t > m_ginpoel;
     //! Coordinates associated to global node IDs of our mesh chunk
     tk::UnsMesh::CoordMap m_coordmap;
+    //! Counter for number of chares contributing to chare boundary nodes
+    std::size_t m_nbnd;
     //! List of boundary faces associated to side-set IDs
     std::map< int, std::vector< std::size_t > > m_bface;
     //! Boundary face-node connectivity
@@ -159,14 +172,19 @@ class Sorter : public CBase_Sorter {
     //! \brief Counter for the number of chares from which this chare has
     //!   received node reordering offsets from
     int m_noffset;
+    //! Node->chare map used to build boundary node communication maps
+    std::unordered_map< std::size_t, std::vector< int > > m_nodech;
+    //! Chare->node map used to build boundary node communication maps
+    std::unordered_map< int, std::vector< std::size_t > > m_chnode;
     //! \brief Symmetric communication map associating global mesh node IDs to
     //!    chare IDs this chare shares the node IDs with
     std::map< int, std::unordered_set< std::size_t > > m_msum;
     //! \brief Communication map used for distributed mesh node reordering
     //! \details This map associates the list of global mesh point
-    //!   indices to fellow chare IDs from which this chare receives new node IDs
-    //!   during reordering. Only data that will be received from chares with a
-    //!   lower index are stored, thus this is an asymmetric communication map.
+    //!   indices to fellow chare IDs from which this chare receives new node
+    //!   IDs during reordering. Only data that will be received from chares
+    //!   with a lower index are stored, thus this is an asymmetric
+    //!   communication map.
     std::unordered_map< int, std::unordered_set< std::size_t > > m_reordcomm;
     //! \brief Starting global mesh node ID for node reordering on this chare
     //!   during mesh node reordering
@@ -181,9 +199,6 @@ class Sorter : public CBase_Sorter {
     std::size_t m_lower;
     //! Upper bound of node IDs this chare contributes to in a linear system
     std::size_t m_upper;
-
-    //! Start reordering (if user enabled it)
-    void start();
 
     //! Start preparing for mesh node reordering in parallel
     void mask();

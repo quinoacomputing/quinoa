@@ -26,6 +26,8 @@ module transporter {
       entry [reductiontarget] void matched( std::size_t extra );
       entry [reductiontarget] void refined( std::size_t nelem,
                                             std::size_t npoin );
+      entry [reductiontarget] void queried();
+      entry [reductiontarget] void responded();
       entry [reductiontarget] void flattened();
       entry [reductiontarget] void comfinal();
       entry [reductiontarget] void totalvol( tk::real v );

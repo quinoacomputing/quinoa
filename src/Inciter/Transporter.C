@@ -254,7 +254,9 @@ Transporter::createPartitioner()
 
   // Create sorter callbacks (order matters)
   tk::SorterCallback cbs {
-      CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
+      CkCallback( CkReductionTarget(Transporter,queried), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,responded), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,discinserted), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,workinserted), thisProxy )
   };
@@ -285,6 +287,9 @@ Transporter::load( uint64_t nelem, uint64_t npoin )
 //! \param[in] npoin Total number of mesh points (summed across all PEs)
 // *****************************************************************************
 {
+  // Store total number of nodes in mesh
+  m_npoin = npoin;
+
   // Compute load distribution given total work (nelem) and user-specified
   // virtualization
   uint64_t chunksize, remainder;
@@ -355,7 +360,7 @@ void
 Transporter::refinserted( int error )
 // *****************************************************************************
 // Reduction target: all PEs have created the mesh refiners
-//! \param[in] Error aggregated across all PEs with operator max
+//! \param[in] error aggregated across all PEs with operator max
 // *****************************************************************************
 {
   if (error) {
@@ -397,7 +402,7 @@ Transporter::matched( std::size_t extra )
 }
 
 void
-Transporter::refined( std::size_t nelem, std::size_t npoin )
+Transporter::refined( std::size_t nelem, std::size_t /*npoin*/ )
 // *****************************************************************************
 // Reduction target: all PEs have refined their mesh
 //! \param[in] nelem Total number of elements in mesh across the whole problem
@@ -405,9 +410,27 @@ Transporter::refined( std::size_t nelem, std::size_t npoin )
 // *****************************************************************************
 {
   m_sorter.doneInserting();
-
   m_nelem = nelem;
-  m_npoin = npoin;
+  //m_npoin = npoin; /// This currently would double-count the boundary nodes.
+  m_sorter.setup( m_npoin );
+}
+
+void
+Transporter::queried()
+// *****************************************************************************
+// Reduction target: all Sorter chares have queried their boundary nodes
+// *****************************************************************************
+{
+  m_sorter.response();
+}
+
+void
+Transporter::responded()
+// *****************************************************************************
+// Reduction target: all Sorter chares have responded with their boundary nodes
+// *****************************************************************************
+{
+  m_sorter.start();
 }
 
 void

@@ -181,6 +181,8 @@ struct edge {};
 struct cv {};
 struct k {};
 struct com {};
+struct queried {};
+struct responded {};
 struct coord {};
 struct refinserted {};
 struct discinserted {};

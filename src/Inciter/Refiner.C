@@ -79,9 +79,10 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 //! \param[in] cbs Charm++ callbacks for Sorter
 //! \param[in] ginpoel Mesh connectivity (this chare) using global node IDs
 //! \param[in] coordmap Mesh node coordinates (this chare) for global node IDs
-//! \param[in] belem File-internal elem ids of side sets (caller PE)
-//! \param[in] triinpoel Triangle face connectivity with global IDs (caller PE)
-//! \param[in] bnode Node lists of side sets (caller PE)
+//! \param[in] belem File-internal elem ids of side sets (creator compute node)
+//! \param[in] triinpoel Triangle face connectivity with global IDs (creator
+//!   compute node)
+//! \param[in] bnode Node lists of side sets (creator compute node)
 //! \param[in] nchare Total number of refiner chares (chare array elements)
 // *****************************************************************************
 {
@@ -448,7 +449,7 @@ Refiner::finish()
   // create sorter Charm++ chare array elements using dynamic insertion
   m_sorter[ thisIndex ].insert( m_host, m_solver, m_cbs, m_scheme, m_ginpoel,
     m_coordmap, m_belem, m_triinpoel, m_bnode, m_nchare );
- 
+
   // Compute final number of cells across whole problem
   std::vector< std::uint64_t > mesh{ m_ginpoel.size()/4, m_coord[0].size() };
   contribute( mesh, CkReduction::sum_ulong, m_cbr.get< tag::refined >() );

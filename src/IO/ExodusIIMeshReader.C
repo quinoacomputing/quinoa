@@ -806,8 +806,8 @@ ExodusIIMeshReader::triinpoel(
           // generate triangle (face) connectivity using global node ids, note
           // the switched node order, 0,2,1, as lpofa is different from expofa
           bnd_triinpoel.push_back( ginpoel[ t*4 + tri[0] ] );
-          bnd_triinpoel.push_back( ginpoel[ t*4 + tri[2] ] );
           bnd_triinpoel.push_back( ginpoel[ t*4 + tri[1] ] );
+          bnd_triinpoel.push_back( ginpoel[ t*4 + tri[2] ] );
           localface = true;
         }
 

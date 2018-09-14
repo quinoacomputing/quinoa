@@ -23,10 +23,16 @@ module sorter {
                     const std::vector< std::size_t >& triinpoel,
                     const std::map< int, std::vector< std::size_t > >& bnode,
                     int nchare );
-      initnode void registerReducers();
-      entry [reductiontarget] void comChBndNode( CkReductionMsg* msg );
-      entry [reductiontarget] void comnode( CkReductionMsg* msg );
-      entry [reductiontarget] void comface( CkReductionMsg* msg );
+      entry void setup( std::size_t npoin );
+      entry void query( int fromch,
+                        const std::vector< std::size_t >& nodes );
+      entry void recvquery();
+      entry void response();
+      entry void bnd( int fromch,
+                      const std::map< int,
+                              std::unordered_set< std::size_t > >& msum );
+      entry void recvbnd();
+      entry void start();
       entry void offset( int c, std::size_t u );
       entry void request( int c, const std::unordered_set< std::size_t >& nd );
       entry void neworder( const std::unordered_map< std::size_t,
@@ -38,11 +44,6 @@ module sorter {
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
-      entry void wait4com() {
-        when comchbndnode_complete(), comface_complete(), comnode_complete()
-        serial "com" { start(); }
-      };
-
       entry void wait4prep() {
         when reorderowned_complete(), nodes_requested_complete()
         serial "prepare" { prepare(); }
@@ -52,9 +53,6 @@ module sorter {
         when lower_complete(), upper_complete() serial "create" { create(); }
       };
 
-      entry void comchbndnode_complete();
-      entry void comnode_complete();
-      entry void comface_complete();
       entry void reorderowned_complete();
       entry void nodes_requested_complete();
       entry void lower_complete();
