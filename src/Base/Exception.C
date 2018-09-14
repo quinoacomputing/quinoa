@@ -55,7 +55,7 @@ try :
   std::stringstream s;
   s << m_message;
   if (line)
-    s << ">>> Exception at " << m_file << ":" << m_line << ": " << m_func;
+    s << "\n>>> Exception at " << m_file << ":" << m_line << ": " << m_func;
   m_message = s.str();
 
   printf( ">>> Exception: %s\n", m_message.c_str() );
