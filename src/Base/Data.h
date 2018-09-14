@@ -25,6 +25,8 @@
 
 namespace tk {
 
+extern ctr::InputDeck g_inputdeck;
+
 //! Tags for selecting data layout policies
 const uint8_t UnkEqComp = 0;
 const uint8_t EqCompUnk = 1;
@@ -40,7 +42,7 @@ class Data {
 
   public:
     //! Default constructor (required for Charm++ migration)
-    explicit Data() : m_vec(), m_nunk(), m_nprop() {}
+    explicit Data() : m_vec(), m_nunk(), m_nprop(), m_ndof() {}
 
     //! Constructor
     //! \param[in] nu Number of unknowns to allocate memory for
@@ -49,7 +51,8 @@ class Data {
     explicit Data( ncomp_t nu, ncomp_t np ) :
       m_vec( nu*np ),
       m_nunk( nu ),
-      m_nprop( np ) {}
+      m_nprop( np ),
+      m_ndof( g_inputdeck.get< tag::discr, tag::dof >() ) {}
 
     //! Const data access dispatch
     //! \details Public interface to const-ref data access to a single real
@@ -274,7 +277,7 @@ class Data {
     //! \return Reference to ourselves after subtraction
     Data< Layout >& operator-= ( const Data< Layout >& rhs ) {
       Assert( rhs.nunk() == m_nunk, "Incorrect number of unknowns" );
-      Assert( rhs.nprop() == m_nprop, "Incorrect number of properties" );
+      Assert( rhs.nprop() == m_ndof*m_nprop, "Incorrect number of properties" );
       std::transform( rhs.data().cbegin(), rhs.data().cend(),
                       m_vec.cbegin(), m_vec.begin(),
                       []( tk::real s, tk::real d ){ return d-s; } );

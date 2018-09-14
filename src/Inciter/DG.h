@@ -123,6 +123,7 @@ class DG : public CBase_DG {
       p | m_nsol;
       p | m_itf;
       p | m_fd;
+      p | m_ndof;
       p | m_u;
       p | m_un;
       p | m_vol;
@@ -178,6 +179,8 @@ class DG : public CBase_DG {
     uint64_t m_itf;
     //! Face data
     FaceData m_fd;
+    //! Solution DOFs
+    std::size_t m_ndof;
     //! Vector of unknown/solution average over each mesh element
     tk::Fields m_u;
     //! Vector of unknown at previous time-step

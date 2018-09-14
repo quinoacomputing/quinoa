@@ -72,7 +72,7 @@ class Transport {
       m_bcextrapolate( config< tag::bcextrapolate >( c ) ),
       m_bcinlet( config< tag::bcinlet >( c ) ),
       m_bcoutlet( config< tag::bcoutlet >( c ) ),
-      m_ndof( 4 )
+      m_ndof( g_inputdeck.get< tag::discr, tag::dof >() )
     {
       Problem::errchk( m_c, m_ncomp );
     }
@@ -96,7 +96,10 @@ class Transport {
 
         const auto s = Problem::solution( m_c, m_ncomp, xcc, ycc, zcc, t );
         for (ncomp_t c=0; c<m_ncomp; ++c)
-          unk(e, c, m_offset) = s[c];
+        {
+          auto mark = c*m_ndof;
+          unk(e, mark, m_offset) = s[c];
+        }
       }
     }
 
@@ -111,7 +114,10 @@ class Transport {
       for (std::size_t e=0; e<nelem; ++e)
       {
         for (ncomp_t c=0; c<m_ncomp; ++c)
-          l(e, c, m_offset) = geoElem(e,0,0);
+        {
+          auto mark = c*m_ndof;
+          l(e, mark, m_offset) = geoElem(e,0,0);
+        }
       }
     }
 
@@ -150,9 +156,9 @@ class Transport {
     {
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
-      Assert( U.nprop() == m_ncomp && R.nprop() == m_ncomp,
+      Assert( U.nprop() == m_ndof*m_ncomp && R.nprop() == m_ndof*m_ncomp,
               "Number of components in solution and right-hand side vector " 
-              "must equal "+ std::to_string(m_ncomp) );
+              "must equal "+ std::to_string(m_ndof*m_ncomp) );
 
       const auto& bface = fd.Bface();
       const auto& esuf = fd.Esuf();
@@ -167,13 +173,22 @@ class Transport {
         std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
         auto farea = geoFace(f,0,0);
 
+        std::array< std::vector< tk::real >, 2 > ugp;
+        for (ncomp_t c=0; c<m_ncomp; ++c)
+        {
+          auto mark = c*m_ndof;
+          ugp[0].push_back( U(el, mark, m_offset) );
+          ugp[1].push_back( U(er, mark, m_offset) );
+        }
+
         //--- upwind fluxes
         auto flux = upwindFlux( {{geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0)}},
-                                f, geoFace, {{U.extract(el), U.extract(er)}} );
+                                f, geoFace, ugp );
 
         for (ncomp_t c=0; c<m_ncomp; ++c) {
-          R(el, c, m_offset) -= farea * flux[c];
-          R(er, c, m_offset) += farea * flux[c];
+          auto mark = c*m_ndof;
+          R(el, mark, m_offset) -= farea * flux[c];
+          R(er, mark, m_offset) += farea * flux[c];
         }
       }
 
@@ -361,9 +376,12 @@ class Transport {
       }
 
       // compute boundary surface flux integrals
-      bndIntegralp1< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, U, R );
-      bndIntegralp1< Inlet >( m_bcinlet, bface, esuf, geoFace, U, R );
-      bndIntegralp1< Outlet >( m_bcoutlet, bface, esuf, geoFace, U, R );
+      bndIntegralp1< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace,
+                                    inpoel, inpofa, coord, U, R );
+      bndIntegralp1< Inlet >( m_bcinlet, bface, esuf, geoFace, inpoel, inpofa,
+                              coord, U, R );
+      bndIntegralp1< Outlet >( m_bcoutlet, bface, esuf, geoFace, inpoel,
+                               inpofa, coord, U, R );
 
       // resize quadrature point arrays
       coordgp[0].resize(5,0);
@@ -503,17 +521,24 @@ class Transport {
       std::vector< std::vector< tk::real > > out;
       // will output numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
-        out.push_back( U.extract( c, m_offset ) );
+      {
+        auto mark = c*m_ndof;
+        out.push_back( U.extract( mark, m_offset ) );
+      }
       // evaluate analytic solution at time t
       auto E = U;
       initialize( geoElem, E, t );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
-        out.push_back( E.extract( c, m_offset ) );
+      {
+        auto mark = c*m_ndof;
+        out.push_back( E.extract( mark, m_offset ) );
+      }
       // will output error for all components
       for (ncomp_t c=0; c<m_ncomp; ++c) {
-        auto u = U.extract( c, m_offset );
-        auto e = E.extract( c, m_offset );
+        auto mark = c*m_ndof;
+        auto u = U.extract( mark, m_offset );
+        auto e = E.extract( mark, m_offset );
         for (std::size_t i=0; i<u.size(); ++i)
           e[i] = std::pow( e[i] - u[i], 2.0 ) * geoElem(i,0,0);
         out.push_back( e );
@@ -549,8 +574,8 @@ class Transport {
     //!   at extrapolation boundaries
     struct Extrapolate {
       static std::array< std::vector< tk::real >, 2 >
-      LR( const tk::Fields& U, std::size_t e ) {
-        return {{ U.extract( e ), U.extract( e ) }};
+      LR( const std::vector< tk::real >& ul ) {
+        return {{ ul, ul }};
       }
     };
 
@@ -558,8 +583,7 @@ class Transport {
     //!   at inlet boundaries
     struct Inlet {
       static std::array< std::vector< tk::real >, 2 >
-      LR( const tk::Fields& U, std::size_t e ) {
-        auto ul = U.extract( e );
+      LR( const std::vector< tk::real >& ul ) {
         auto ur = ul;
         std::fill( begin(ur), end(ur), 0.0 );
         return {{ std::move(ul), std::move(ur) }};
@@ -570,8 +594,8 @@ class Transport {
     //!   at outlet boundaries
     struct Outlet {
       static std::array< std::vector< tk::real >, 2 >
-      LR( const tk::Fields& U, std::size_t e ) {
-        return {{ U.extract( e ), U.extract( e ) }};
+      LR( const std::vector< tk::real >& ul ) {
+        return {{ ul, ul }};
       }
     };
 
@@ -595,12 +619,22 @@ class Transport {
         Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
         auto farea = geoFace(f,0,0);
 
+        std::vector< tk::real > ugp;
+        for (ncomp_t c=0; c<m_ncomp; ++c)
+        {
+          auto mark = c*m_ndof;
+          ugp.push_back( U(el, mark, m_offset) );
+        }
+
         //--- upwind fluxes
         auto flux = upwindFlux( {{geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0)}},
-                                f, geoFace, State::LR(U,el) );
+                                f, geoFace, State::LR( ugp ) );
 
         for (ncomp_t c=0; c<m_ncomp; ++c)
-          R(el, c, m_offset) -= farea * flux[c];
+        {
+          auto mark = c*m_ndof;
+          R(el, mark, m_offset) -= farea * flux[c];
+        }
       }
     }
 
@@ -632,6 +666,9 @@ class Transport {
     //! \param[in] faces Face IDs at which to compute surface integral
     //! \param[in] esuf Elements surrounding face, see tk::genEsuf()
     //! \param[in] geoFace Face geometry array
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] inpofa Face-node connectivity
+    //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
     //! \tparam State Policy class providing the left and right state at
@@ -640,6 +677,9 @@ class Transport {
     void surfIntp1( const std::vector< std::size_t >& faces,
                     const std::vector< int >& esuf,
                     const tk::Fields& geoFace,
+                    const std::vector< std::size_t >& inpoel,
+                    const std::vector< std::size_t >& inpofa,
+                    const tk::UnsMesh::Coords& coord,
                     const tk::Fields& U,
                     tk::Fields& R ) const
     {
@@ -659,7 +699,6 @@ class Transport {
       for (const auto& f : faces) {
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
         Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
-        auto farea = geoFace(f,0,0);
 
         // nodal coordinates of the left element
         std::array< tk::real, 3 > 
@@ -724,23 +763,20 @@ class Transport {
 
           auto wt = wgp[igp] * geoFace(f,0,0);
 
-          std::array< std::vector< tk::real >, 2 > ugp;
+          std::vector< tk::real > ugp;
           
           for (ncomp_t c=0; c<m_ncomp; ++c)
           {
             auto mark = c*m_ndof;
-            ugp[0].push_back(  U(el, mark,   m_offset) 
-                             + U(el, mark+1, m_offset) * B2l
-                             + U(el, mark+2, m_offset) * B3l
-                             + U(el, mark+3, m_offset) * B4l );
-            ugp[1].push_back(  U(er, mark,   m_offset) 
-                             + U(er, mark+1, m_offset) * B2r
-                             + U(er, mark+2, m_offset) * B3r
-                             + U(er, mark+3, m_offset) * B4r );
+            ugp.push_back(  U(el, mark,   m_offset) 
+                          + U(el, mark+1, m_offset) * B2l
+                          + U(el, mark+2, m_offset) * B3l
+                          + U(el, mark+3, m_offset) * B4l );
           }
 
           //--- upwind fluxes
-          auto flux = upwindFlux( {{xgp, ygp, zgp}}, f, geoFace, ugp );
+          auto flux = upwindFlux( {{xgp, ygp, zgp}}, f, geoFace,
+                                  State::LR(ugp) );
 
           for (ncomp_t c=0; c<m_ncomp; ++c)
           {
@@ -752,10 +788,6 @@ class Transport {
             R(el, mark+3, m_offset) -= wt * flux[c] * B4l;
           }
         }
-
-        //--- upwind fluxes
-        auto flux = upwindFlux( {{geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0)}},
-                                f, geoFace, State::LR(U,el) );
       }
     }
 
@@ -765,6 +797,9 @@ class Transport {
     //! \param[in] bface Boundary faces side-set information
     //! \param[in] esuf Elements surrounding faces
     //! \param[in] geoFace Face geometry array
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] inpofa Face-node connectivity
+    //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
     template< class BCType >
@@ -773,13 +808,17 @@ class Transport {
                    const std::map< int, std::vector< std::size_t > >& bface,
                    const std::vector< int >& esuf,
                    const tk::Fields& geoFace,
+                   const std::vector< std::size_t >& inpoel,
+                   const std::vector< std::size_t >& inpofa,
+                   const tk::UnsMesh::Coords& coord,
                    const tk::Fields& U,
                    tk::Fields& R ) const
     {
       for (const auto& s : bcconfig) {       // for all bc sidesets
         auto bc = bface.find( std::stoi(s) );// faces for side set
         if (bc != end(bface))
-          surfIntp1< BCType >( bc->second, esuf, geoFace, U, R );
+          surfIntp1< BCType >( bc->second, esuf, geoFace, inpoel, inpofa,
+                               coord, U, R );
       }
     }
 

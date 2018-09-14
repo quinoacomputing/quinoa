@@ -46,8 +46,9 @@ DG::DG( const CProxy_Discretization& disc,
   m_nsol( 0 ),
   m_itf( 0 ),
   m_fd( fd ),
+  m_ndof( g_inputdeck.get< tag::discr, tag::dof >() ),
   m_u( m_disc[thisIndex].ckLocal()->Inpoel().size()/4,
-       4*g_inputdeck.get< tag::component >().nprop() ),
+       m_ndof*g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_vol( 0.0 ),
   m_geoFace( tk::genGeoFaceTri( fd.Ntfac(), fd.Inpofa(),
@@ -70,7 +71,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_recvGhost(),
   m_diag(),
   m_stage( 0 ),
-  m_dgp( 1 )
+  m_dgp( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy

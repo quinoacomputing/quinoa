@@ -201,6 +201,7 @@ struct elem {};
 struct avecost {};
 struct stdcost {};
 struct flux {};
+struct dof{};
 struct update {};
 struct ch {};
 struct pe {};
