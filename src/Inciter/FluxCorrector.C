@@ -220,7 +220,7 @@ FluxCorrector::verify( std::size_t nchare,
       const auto& dul = dUl.data();
       const auto& u = U.data();
       std::stringstream ss;
-      ss << "maximum difference at " << d.first << ": " << d.second
+      ss << "maximum difference at mesh node " << d.first << ": " << d.second
          << ", dUh:" << duh[d.first] << ", dUl:" << dul[d.first]
          << ", dUh-dUl:" << duh[d.first] - dul[d.first]
          << ", AEC:" << u[d.first] << '\n';
