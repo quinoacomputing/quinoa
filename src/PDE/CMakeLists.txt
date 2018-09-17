@@ -12,6 +12,7 @@ target_include_directories(PDE PUBLIC
                            ${QUINOA_SOURCE_DIR}/Base
                            ${QUINOA_SOURCE_DIR}/Control
                            ${QUINOA_SOURCE_DIR}/Inciter
+                           ${QUINOA_SOURCE_DIR}/Mesh
                            ${BRIGAND_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}

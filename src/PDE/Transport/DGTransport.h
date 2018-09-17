@@ -568,7 +568,7 @@ class Transport {
     const std::vector< bcconf_t > m_bcinlet;
     //! Outlet BC configuration
     const std::vector< bcconf_t > m_bcoutlet;
-    const uint8_t m_ndof;
+    const std::size_t m_ndof;
 
     //! \brief State policy class providing the left and right state of a face
     //!   at extrapolation boundaries
