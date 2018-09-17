@@ -170,7 +170,7 @@ namespace AMR {
                         tet_id
                 );
 
-                size_t new_tet_id2 = second_child_id;
+                //size_t new_tet_id2 = second_child_id;
                 tet_store.add(
                         second_child_id,
                         new_tet2,

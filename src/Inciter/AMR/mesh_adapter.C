@@ -480,7 +480,7 @@ namespace AMR {
     }
 
     void mesh_adapter_t::lock_intermediates() {
-        for (int k : tet_store.intermediate_list)
+        for (auto k : tet_store.intermediate_list)
         {
             refiner.lock_edges_from_node(k, Edge_Lock_Case::intermediate);
         }
