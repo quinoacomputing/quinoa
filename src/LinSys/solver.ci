@@ -19,8 +19,7 @@ module solver {
     group Solver {
       entry Solver( CProxy_SolverShadow sh,
                     const SolverCallback& cb,
-                    std::size_t ncomp,
-                    bool feedback );
+                    std::size_t ncomp );
       entry void nchare( int n );
       initnode void registerReducers();
       entry void pebounds( int p, std::size_t lower, std::size_t upper );
@@ -51,18 +50,6 @@ module solver {
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
-      // High-level overview of the dependency and asynchronous call structure
-      // ---------------------------------------------------------------------
-      //
-      // Directed Acyclic Graph (DAG):
-      // -----------------------------
-      //
-      // See src/LinSys/Solver.h.
-      //
-      // Interpretation of the DAG in src/LinSys/Solver.h
-      // ------------------------------------------------------
-      // Control flow is from left to right and top to bottom.
-      //
       // A word on multiple invokation of SDAG triggers: As the commit message
       // of b79ea29 explains, the "triggers", such as hyprerow_complete(),
       // enumerated below, at threir call site should be thought of as messages

@@ -72,7 +72,10 @@ Transporter::Transporter() :
   m_progMesh( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
               {{ "p", "d", "r", "b", "c", "m", "r", "b" }},
               {{ "partition", "distribute", "refine", "bnd", "comm", "mask",
-                  "reorder", "bounds"}} )
+                  "reorder", "bounds"}} ),
+  m_progWork( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
+              {{ "c", "b", "f", "g", "a" }},
+              {{ "create", "bndface", "comfac", "ghost", "adj" }} )
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
@@ -231,8 +234,7 @@ Transporter::createSolver()
   m_solver = tk::CProxy_Solver::
                ckNew( tk::CProxy_SolverShadow::ckNew(),
                       cbs,
-                      g_inputdeck.get< tag::component >().nprop(),
-                      g_inputdeck.get< tag::cmd, tag::feedback >() );
+                      g_inputdeck.get< tag::component >().nprop() );
 }
 
 void
@@ -244,27 +246,22 @@ Transporter::createPartitioner()
   // Create mesh reader for reading side sets from file
   tk::MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
-  std::map< int, std::vector< std::size_t > > bface;
-  std::vector< std::size_t > triinpoel;
+  std::map< int, std::vector< std::size_t > > belem;
+  std::map< int, std::vector< std::size_t > > faces;
   std::map< int, std::vector< std::size_t > > bnode;
-  std::map< int, std::vector< int > > faceid;
 
   // Read boundary (side set) data from input file
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   if (scheme == ctr::SchemeType::DG) {
     // Read boundary-face connectivity on side sets
-    auto nbfac = mr.readSidesetFaces( bface, faceid );
-    mr.readFaces( nbfac, triinpoel );
-    // Note that it is NOT okay bface to be empty; boundary conditions required
-    Assert( nbfac > 0, "DG must have boundary faces (and side sets) defined" );
+    mr.readSidesetFaces( belem, faces );
     // Verify boundarty condition (BC) side sets used exist in mesh file
-    verifyBCsExist( g_dgpde, bface );
+    matchBCs( g_dgpde, belem );
   } else {
     // Read node lists on side sets
-    bnode = mr.readSidesets();
+    bnode = mr.readSidesetNodes();
     // Verify boundarty condition (BC) side sets used exist in mesh file
-    verifyBCsExist( g_cgpde, bnode );
-    // Note that it is okay bnode to be empty if no boundary conditions needed
+    matchBCs( g_cgpde, bnode );
   }
 
   // Create partitioner callbacks (order matters)
@@ -304,7 +301,7 @@ Transporter::createPartitioner()
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
     CProxy_Partitioner::ckNew( cbp, cbr, cbs, thisProxy, m_solver, m_refiner,
-                               m_sorter, m_scheme, bface, triinpoel, bnode );
+                               m_sorter, m_scheme, belem, faces, bnode );
 }
 
 void
@@ -457,6 +454,9 @@ Transporter::disccreated()
     m_print.endsubsection();
   }
 
+  m_progWork.start( "Preparing workers",
+                    {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
+
   m_sorter.createWorkers();
 
   auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
@@ -580,7 +580,6 @@ Transporter::maxstat( tk::real d0, tk::real d1 )
 // Reduction target yielding the maximum mesh statistics across all workers
 //! \param[in] d0 Maximum mesh statistics collected over all chares
 //! \param[in] d1 Maximum mesh statistics collected over all chares
-//! \param[in] n Size of data behind d
 // *****************************************************************************
 {
   m_maxstat[0] = d0;  // maximum edge length
@@ -597,7 +596,6 @@ Transporter::sumstat( tk::real d0, tk::real d1, tk::real d2, tk::real d3 )
 //! \param[in] d1 Sum mesh statistics collected over all chares
 //! \param[in] d2 Sum mesh statistics collected over all chares
 //! \param[in] d3 Sum mesh statistics collected over all chares
-//! \param[in] n Size of data behind d
 // *****************************************************************************
 {
   m_avgstat[0] = d1 / d0;      // average edge length
@@ -639,6 +637,8 @@ Transporter::stat()
 // Echo diagnostics mesh statistics
 // *****************************************************************************
 {
+  m_progWork.end();
+
   m_print.diag( "Mesh statistics: min/max/avg(edgelength) = " +
                 std::to_string( m_minstat[0] ) + " / " +
                 std::to_string( m_maxstat[0] ) + " / " +

@@ -19,6 +19,8 @@
 #include "NoWarning/tutsuite.decl.h"
 #include "charmchild.decl.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace unittest {
 
 extern CProxy_TUTSuite g_suiteProxy;
@@ -522,5 +524,7 @@ void Factory_object::test< 14 >() {
 #endif
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT
 
 #include "NoWarning/charmchild.def.h"

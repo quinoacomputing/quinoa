@@ -13,6 +13,8 @@
 #include "MKLRNG.h"
 #include "TestRNG.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 #if defined(STRICT_GNUC)
@@ -315,3 +317,5 @@ void MKLRNG_object::test< 23 >() {
 #endif
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

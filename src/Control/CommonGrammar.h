@@ -134,7 +134,7 @@ namespace grm {
     OPTIONAL };         //!< Message key used to indicate of something optional
 
   //! Associate parser errors to error messages
-  static const std::map< MsgKey, std::string > message( {
+  static const std::map< MsgKey, std::string > message{
     { MsgKey::KEYWORD, "Unknown keyword or keyword unrecognized in this "
       "block." },
     { MsgKey::MOMENT, "Unknown term in moment." },
@@ -340,7 +340,7 @@ namespace grm {
       "should not be used as one. But its key can be used to indicate "
       "something optional (which is not an error), which in some situations is "
       "not optional (which is an error)." }
-  } );
+  };
 
   //! \brief Parser error and warning message handler.
   //! \details This function is used to associated and dispatch an error or a

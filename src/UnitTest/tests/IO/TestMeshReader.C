@@ -17,6 +17,8 @@
 #include "MeshReader.h"
 #include "ContainerUtil.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace tut {
 
 //! All tests in group inherited from this base
@@ -80,10 +82,10 @@ struct MeshReader_common {
   //! \param[in,out] mr MeshReader object to verify
   void verifyTets( tk::MeshReader& mr ) {
     // Read mesh graph in serial
-    std::vector< std::size_t > ginpoel, inpoel, gid;
+    std::vector< std::size_t > ginpoel, inpoel, triinpoel, gid;
     std::unordered_map< std::size_t, std::size_t > lid;
     tk::UnsMesh::Coords coord;
-    mr.readMeshPart( ginpoel, inpoel, gid, lid, coord );
+    mr.readMeshPart( ginpoel, inpoel, triinpoel, gid, lid, coord );
 
     // Test if the number of elements is correct
     ensure_equals( "number of elements incorrect",
@@ -117,26 +119,24 @@ struct MeshReader_common {
   void verifyTris( tk::MeshReader& mr ) {
     // Read side set faces
     std::map< int, std::vector< std::size_t > > bface;
-    std::map< int, std::vector< int > > faceid;
-    auto nbfac = mr.readSidesetFaces( bface, faceid );
-    // Test if the number of boundary faces is correct
-    ensure_equals( "number of boundary faces incorrect", nbfac, 2398 );
+    std::map< int, std::vector< std::size_t > > faceid;
+    mr.readSidesetFaces( bface, faceid );
     // Test if the number of boundary face element ids is correct
     ensure_equals( "number of boundary face elements incorrect",
-                   tk::sumvalsize(bface), nbfac );
+                   tk::sumvalsize(bface), 2398 );
     // Test if the number of side set sides is correct
     ensure_equals( "number of side set sides incorrect",
-                   tk::sumvalsize(faceid), nbfac );
+                   tk::sumvalsize(faceid), 2398 );
 
     // Read face connectivity
     std::vector< std::size_t > triinpoel;
-    mr.readFaces( nbfac, triinpoel );
+    mr.readFaces( triinpoel );
     // Test if the number of faces is correct
     ensure_equals( "number of faces in triangle connectivity incorrect",
                    triinpoel.size()/3, 2398 );
 
     // Read node lists associated to side sets
-    auto bnode = mr.readSidesets();
+    auto bnode = mr.readSidesetNodes();
     // Test if the number of nodes is correct
     ensure_equals( "number of nodes of sidesets incorrect",
                    tk::sumvalsize(bnode), 1365 );
@@ -266,3 +266,5 @@ void MeshReader_object::test< 6 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT

@@ -10,8 +10,7 @@
     algorithm utilizes the structured dagger (SDAG) Charm++ functionality. The
     high-level overview of the algorithm structure and how it interfaces with
     Charm++ is discussed in the Charm++ interface file
-    src/Inciter/partitioner.ci. See also src/Inciter/Partitioner.h for the
-    asynchronous call graph.
+    src/Inciter/partitioner.ci.
 */
 // *****************************************************************************
 
@@ -50,8 +49,8 @@ Partitioner::Partitioner(
   const CProxy_Refiner& refiner,
   const CProxy_Sorter& sorter,
   const Scheme& scheme,
-  const std::map< int, std::vector< std::size_t > >& bface,
-  const std::vector< std::size_t >& triinpoel,
+  const std::map< int, std::vector< std::size_t > >& belem,
+  const std::map< int, std::vector< std::size_t > >& faces,
   const std::map< int, std::vector< std::size_t > >& bnode ) :
   m_cbp( cbp ),
   m_cbr( cbr ),
@@ -77,38 +76,68 @@ Partitioner::Partitioner(
   m_chinpoel(),
   m_chcoordmap(),
   m_bnodechares(),
-  m_bface( bface ),
-  m_triinpoel( triinpoel ),
+  m_bface( belem ),
   m_bnode( bnode )
 // *****************************************************************************
 //  Constructor
-//! \param[in] cb Charm++ callbacks
+//! \param[in] cbp Charm++ callbacks for Partitioner
+//! \param[in] cbr Charm++ callbacks for Refiner
+//! \param[in] cbs Charm++ callbacks for Sorter
 //! \param[in] host Host Charm++ proxy we are being called from
 //! \param[in] solver Linear system solver proxy
-//! \param[in] bc Boundary conditions group proxy
+//! \param[in] refiner Mesh refiner proxy
+//! \param[in] sorter Mesh reordering (sorter) proxy
 //! \param[in] scheme Discretization scheme
-//! \param[in] bface Face lists mapped to side set ids
-//! \param[in] triinpoel Interconnectivity of points and boundary-face
+//! \param[in] belem File-internal elem ids of side sets (whole mesh)
+//! \param[in] faces Elem-relative face ids of side sets (whole mesh)
+//! \param[in] bnode Node lists of side sets (whole mesh)
 // *****************************************************************************
 {
   // Create mesh reader
   tk::MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
   // Read this PE's chunk of the mesh (graph and coords) from file
-  mr.readMeshPart( m_ginpoel, m_inpoel, m_gid, m_lid, m_coord,
+  std::vector< size_t > triinpoel;
+  mr.readMeshPart( m_ginpoel, m_inpoel, triinpoel, m_gid, m_lid, m_coord,
                    CkNumPes(), CkMyPe() );
 
-// std::cout << CkMyPe() << ": ginpoel: " << m_ginpoel.size()
-//            << ", inpoel: " << m_inpoel.size()
-//            << ", gid: " << m_gid.size()
-//            << ", lid: " << m_lid.size()
-//            << ", coord: " << m_coord[0].size()
-//            << '\n';
+  // Compute triangle connectivity for side sets, reduce boundary face for side
+  // sets to this PE only and to PE-local face ids
+  m_triinpoel = mr.triinpoel( m_bface, faces, m_ginpoel, triinpoel );
+
+  // Reduce boundary node lists (global ids) for side sets to this PE only
+  ownBndNodes( m_lid, m_bnode );
 
   // Compute number of cells across whole problem
   std::vector< std::size_t > meshsize{{ m_ginpoel.size()/4,
                                         m_coord[0].size() }};
   contribute( meshsize, CkReduction::sum_ulong, m_cbp.get< tag::load >() );
+}
+
+void
+Partitioner::ownBndNodes(
+  const std::unordered_map< std::size_t, std::size_t >& lid,
+  std::map< int, std::vector< std::size_t > >& bnode )
+// *****************************************************************************
+// Keep only those nodes for side sets that reside on this PE
+//! \param[in] lid Global->local node IDs of elements of this PE's mesh chunk
+//! \param[in,out] bnode Global ids of nodes for side sets for whole mesh
+//! \details This function overwrites the input boundary node lists map with the
+//!    nodes that reside on the caller PE.
+// *****************************************************************************
+{
+  std::map< int, std::vector< std::size_t > > bnode_own;
+
+  for (const auto& s : bnode) {
+    auto& b = bnode_own[ s.first ];
+    for (auto n : s.second) {
+      auto i = lid.find( n );
+      if (i != end(lid)) b.push_back( n );
+    }
+    if (b.empty()) bnode_own.erase( s.first );
+  }
+
+  bnode = std::move(bnode_own);
 }
 
 void
@@ -157,7 +186,7 @@ Partitioner::addMesh( int frompe,
 // *****************************************************************************
 //  Receive mesh associated to chares we own after refinement
 //! \param[in] frompe PE call coming from
-//! \param[in] cmesh Map associating mesh connectivities to global node ids
+//! \param[in] chmesh Map associating mesh connectivities to global node ids
 //!   and node coordinates for mesh chunks we are assigned by the partitioner
 // *****************************************************************************
 {
@@ -232,9 +261,9 @@ Partitioner::refine()
                              m_cbs,
                              tk::cref_find(m_chinpoel,cid),     // chare mesh
                              tk::cref_find(m_chcoordmap,cid),   // chare mesh
-                             m_bface,           // whole mesh
-                             m_triinpoel,       // whole mesh
-                             m_bnode,           // whole mesh
+                             m_bface,                           // this PE
+                             m_triinpoel,                       // this PE
+                             m_bnode,                           // this PE
                              m_nchare,
                              CkMyPe() );
   }
@@ -248,7 +277,7 @@ Partitioner::centroids( const std::vector< std::size_t >& inpoel,
 // *****************************************************************************
 //  Compute element centroid coordinates
 //! \param[in] inpoel Mesh connectivity with local ids
-//! \param[ib] coord Node coordinates
+//! \param[in] coord Node coordinates
 //! \return Centroids for all cells on this PE
 // *****************************************************************************
 {

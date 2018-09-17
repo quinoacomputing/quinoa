@@ -57,8 +57,7 @@
 
 namespace walker {
 
-//! \brief Mass-fraction beta SDE constant coefficients policity: constants in
-//!   time
+//! Mass-fraction beta SDE constant coefficients policity: constants in time
 class MassFractionBetaCoeffConst {
 
   public:

@@ -1,13 +1,12 @@
 /*!
   \page      walker_example_gamma Walker: Integrating the gamma SDE
-  \tableofcontents
 
-This example runs [walker](walker_doc.html) to integrate the gamma SDE (see
+This example runs @ref walker_main to integrate the gamma SDE (see
 DiffEq/Gamma.h) using constant coefficients.
 
-\section walker_example_gamma_control Control file
+@section walker_example_gamma_control Control file
 
-\verbatim
+@code{.bash}
 title "Example problem"
 
 walker
@@ -49,14 +48,14 @@ walker
     g( L2 : 2.0e-1 )
   end
 end
-\endverbatim
+@endcode
 
-\section walker_example_gamma_run Example run on 8 CPUs
-\verbatim
+@section walker_example_gamma_run Example run on 8 CPUs
+@code{.bash}
 ./charmrun +p8 Main/walker -v -c ../../tmp/gamma.q
-\endverbatim
+@endcode
 
-\section walker_example_gamma_output Output
+@section walker_example_gamma_output Output
 \verbatim
 Running on 8 processors:  Main/walker -v -c ../../tmp/gamma.q
 charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 8  Main/walker -v -c ../../tmp/gamma.q
@@ -261,7 +260,7 @@ Charm++> cpu topology info is gathered in 0.003 seconds.
 [Partition 0][Node 0] End of program
 \endverbatim
 
-\section walker_example_gamma_results Results
+@section walker_example_gamma_results Results
 
 The left figure shows the time evolution of the means estimated from the
 numerical simulation together with those of the invariant distributions. The
@@ -269,32 +268,35 @@ right figure shows the time evolution of the variances and those of the
 invariant. Both plots indicate convergence to the correct statistically
 stationary state.
 
-<img src="https://quinoacomputing.github.io/gamma_mean.svg" align="left" width="50%" background=transparent>
-<img src="https://quinoacomputing.github.io/gamma_var.svg" align="right" width="50%" background=transparent>
+@m_div{m-col-m-6 m-left-m}
+<img src="gamma_mean.svg"/>
+@m_enddiv
+@m_div{m-col-m-6 m-right-m}
+<img src="gamma_var.svg"/>
+@m_enddiv
 
 Gnuplot commands to reproduce the above plots:
-\verbatim
+@code{.bash}
 plot "stat.txt" u 2:3 w l t "<L1>", "stat.txt" u 2:4 w l t "<L2>", 2.0 lt 1, 4.0 lt 2
 plot "stat.txt" u 2:5 w l t "<l1l1>", "stat.txt" u 2:7 w l t "<l2l2>", 4.0 lt 1, 8.0 lt 2
-\endverbatim
+@endcode
 
 The left figure shows the 2 estimated PDFs at the final step of the simulation
 together with the corresponding invariants. The right figure shows the time
 evolution of the estimated covariance indicating no correlations at all times
 corresponding to the statistically independent equations integrated.
 
-<img src="https://quinoacomputing.github.io/gamma_pdf.svg" align="left" width="50%" background=transparent>
-<img src="https://quinoacomputing.github.io/gamma_cov.svg" align="right" width="50%" background=transparent>
+@m_div{m-col-m-6 m-left-m}
+<img src="gamma_pdf.svg"/>
+@m_enddiv
+@m_div{m-col-m-6 m-right-m}
+<img src="gamma_cov.svg"/>
+@m_enddiv
 
 Gnuplot commands to reproduce the above plots:
-\verbatim
+@code{.bash}
 plot "pdf_f.txt" t "k=1.0, theta=2.0", "pdf_g.txt" t "k=2.0, theta=2.0", x**(1.0-1.0)*exp(-x/2.0)/gamma(1.0)/2.0**1.0 lt 1, x**(2.0-1.0)*exp(-x/2.0)/gamma(2.0)/2.0**2.0 lt 2
 plot "stat.txt" u 2:6 w l t "<l1l2>"
-\endverbatim
+@endcode
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Thu 06 Apr 2017 10:47:07 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */

@@ -1,13 +1,12 @@
 /*!
   \page      walker_example_skewnormal Walker: Integrating the skew-normal SDE
-  \tableofcontents
 
-This example runs [walker](walker_doc.html) to integrate the skew-normal
-SDE (see DiffEq/SkewNormal.h) using constant coefficients.
+This example runs @ref walker_main to integrate the skew-normal SDE (see
+DiffEq/SkewNormal.h) using constant coefficients.
 
-\section walker_example_skewnormal_control Control file
+@section walker_example_skewnormal_control Control file
 
-\verbatim
+@code{.bash}
 title "Example problem"
 
 walker
@@ -48,14 +47,14 @@ walker
     p2( M2 : 1.0e-2 )
   end
 end
-\endverbatim
+@endcode
 
-\section walker_example_skewnormal_run Example run on 4 CPUs
-\verbatim
+@section walker_example_skewnormal_run Example run on 4 CPUs
+@code{.bash}
 ./charmrun +p4 Main/walker -v -c ../../tmp/test.q -u 0.9
-\endverbatim
+@endcode
 
-\section walker_example_skewnormal_output Output
+@section walker_example_skewnormal_output Output
 \verbatim
 Running on 4 processors:  Main/walker -v -c ../../tmp/skew.q -u 0.9
 charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 4  Main/walker -v -c ../../tmp/skew.q -u 0.9
@@ -234,24 +233,23 @@ Charm++> cpu topology info is gathered in 0.000 seconds.
 [Partition 0][Node 0] End of program
 \endverbatim
 
-\section walker_example_skewnormal_results Results
+@section walker_example_skewnormal_results Results
 
 The left figure shows the first two moments indicating convergence to a
 statistically stationary state. The right one shows the estimated PDFs with
 their analytical solution (see DiffEq/SkewNormal.h).
 
-<img src="https://quinoacomputing.github.io/skew_mom.svg" align="left" width="50%" background=transparent>
-<img src="https://quinoacomputing.github.io/skew_pdf.svg" align="right" width="50%" background=transparent>
+@m_div{m-col-m-6 m-left-m}
+<img src="skew_mom.svg"/>
+@m_enddiv
+@m_div{m-col-m-6 m-right-m}
+<img src="skew_pdf.svg"/>
+@m_enddiv
 
 Gnuplot commands to reproduce the above plots:
-\verbatim
+@code{.bash}
 plot "stat.txt" u 2:3 w l t "<M1>", "stat.txt" u 2:4 w l t "<M2>", "stat.txt" u 2:5 w l t "<m1m1>", "stat.txt" u 2:6 w l t "<m2m2>"
 plot "pdf_p1.txt" w p, "pdf_p2.txt" w p, exp(-x*x/2/0.2/0.2)*(1+erf(100.0*x/sqrt(2)))/0.2/sqrt(2*pi) lt 1, exp(-x*x/2/0.5/0.5)*(1+erf(-50.0*x/sqrt(2)))/0.5/sqrt(2*pi) lt 2
-\endverbatim
+@endcode
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Thu 06 Apr 2017 10:45:52 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */

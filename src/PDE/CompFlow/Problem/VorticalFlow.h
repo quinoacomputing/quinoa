@@ -25,8 +25,10 @@ namespace inciter {
 //!   Computational Physics 267 (2014) 196-209.
 class CompFlowProblemVorticalFlow {
 
-  public:
+  private:
+    using ncomp_t = tk::ctr::ncomp_type;
 
+  public:
     //! Evaluate analytical solution at (x,y,z) for all components
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs

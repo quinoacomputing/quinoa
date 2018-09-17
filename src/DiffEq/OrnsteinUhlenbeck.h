@@ -10,11 +10,23 @@
 
     In a nutshell, the equation integrated governs a set of scalars,
     \f$Y_\alpha\f$, \f$\alpha\!=\!1,\dots,N\f$, as
+
+    @m_class{m-show-m}
+
     \f[
        \mathrm{d}Y_\alpha(t) = \theta_\alpha\left(\mu_\alpha - Y_\alpha\right)
        \mathrm{d}t + \sum_{\beta=1}^N \sigma_{\alpha\beta}\mathrm{d}W_\beta(t),
        \qquad \alpha=1,\dots,N
     \f]
+
+    @m_class{m-hide-m}
+
+    \f[ \begin{split}
+       \mathrm{d}Y_\alpha(t) = \theta_\alpha\left(\mu_\alpha - Y_\alpha\right)
+       \mathrm{d}t + \sum_{\beta=1}^N \sigma_{\alpha\beta}\mathrm{d}W_\beta(t),
+       \\ \alpha=1,\dots,N
+    \end{split} \f]
+
     with parameter vectors \f$\theta_\alpha > 0\f$, \f$\mu_\alpha\f$, and
     symmetric positive semi-definite diffusion matrix
     \f$\sigma_{\alpha\beta}\f$. Here \f$\mathrm{d}W_\beta(t)\f$ is an isotropic
@@ -34,6 +46,9 @@
     while the equation governing the covariance matrix, \f$ \langle y_\alpha
     y_\beta \rangle \equiv \left\langle (Y_\alpha - \langle Y_\alpha \rangle)
     (Y_\beta - \langle Y_\beta\rangle) \right\rangle \f$, is
+
+    @m_class{m-show-m}
+
     \f[
       \newcommand{\irmean}[1]{{\langle{#1}\rangle}}
       \newcommand{\irv}[1]{\langle{#1^2}\rangle}
@@ -41,6 +56,16 @@
       -\left(\theta_\alpha+\theta_\beta\right)\irmean{y_\alpha y_\beta}
       +\sum_{\gamma=1}^N \sigma_{\alpha\gamma} \sigma_{\gamma\beta}.
     \f]
+
+    @m_class{m-hide-m}
+
+    \f[ \begin{split}
+      \newcommand{\irmean}[1]{{\langle{#1}\rangle}}
+      \newcommand{\irv}[1]{\langle{#1^2}\rangle}
+      \frac{\partial\irmean{y_\alpha y_\beta}}{\partial t} =
+      -\left(\theta_\alpha+\theta_\beta\right)\irmean{y_\alpha y_\beta} \\
+      +\sum_{\gamma=1}^N \sigma_{\alpha\gamma} \sigma_{\gamma\beta}.
+    \end{split} \f]
 */
 // *****************************************************************************
 #ifndef OrnsteinUhlenbeck_h

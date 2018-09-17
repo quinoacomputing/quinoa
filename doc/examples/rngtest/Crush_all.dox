@@ -1,13 +1,12 @@
 /*!
   \page      rngtest_example_crush_all RNGTest: Test all available MKL and RNGSSE RNGs with Crush
-  \tableofcontents
 
-This example runs [rngtest](rngtest_doc.html) to subject all currently available
+This example runs @ref rngtest_main to subject all currently available
 MKL and RNGSSE random number generators to TestU01's Crush battery.
 
-\section rngtest_example_crush_all_control Control file
+@section rngtest_example_crush_all_control Control file
 
-\code{.py}
+@code{.bash}
 title "Test all available RNGs"
 
 crush
@@ -39,14 +38,14 @@ crush
   mkl_nondeterm end
 
 end
-\endcode
+@endcode
 
-\section rngtest_example_crush_all_run Example run on 3x32=96 CPUs
-\code{.py}
+@section rngtest_example_crush_all_run Example run on 3x32=96 CPUs
+@code{.bash}
 ./charmrun +p96 Main/rngtest -v -c ../../tmp/all.q
-\endcode
+@endcode
 
-\section rngtest_example_crush_all_output Output
+@section rngtest_example_crush_all_output Output
 \verbatim
 Running on 96 processors:  Main/rngtest -v -c ../../tmp/all.q
 charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 96  Main/rngtest -v -c ../../tmp/all.q
@@ -4027,9 +4026,4 @@ Charm++> cpu topology info is gathered in 0.011 seconds.
 [Partition 0][Node 0] End of program
 \endverbatim
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Thu 05 Feb 2015 04:15:55 PM MST
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */

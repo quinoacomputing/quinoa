@@ -57,11 +57,17 @@ env:
     - TARGET=meshconv COMPILER=clang BUILD=Release SHARED_LIBS=off
 
     - TARGET=all COMPILER=gnu BUILD=Release SONARQUBE=ON
+    - TARGET=doc
 
 script:
-  - export DISTRO=alpine
+  - if [[ ${TARGET} = doc ]]; then
+      export DISTRO=debian-doc;
+    else
+      export DISTRO=alpine-${COMPILER}${SHARED_LIBS:+-static}${SONARQUBE:+-sonarqube};
+    fi
   - rm -rf tpl
   - cp -vr docker ${HOME}/docker
+  - sed -i "/^FROM/s/alpine/${DISTRO}/" ${HOME}/docker/Dockerfile.quinoa-build-travis
   - cd ../../
   - mv -v ${TRAVIS_REPO_SLUG} $HOME/docker/quinoa
   - cp -r $HOME/.ccache ${HOME}/docker/ccache

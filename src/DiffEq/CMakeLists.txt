@@ -21,6 +21,18 @@ add_library(DiffEq
             ConfigureDissipation.C
 )
 
+target_include_directories(DiffEq PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/RNG
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${QUINOA_SOURCE_DIR}/Statistics
+                           ${PROJECT_BINARY_DIR}/../Main
+                           ${PEGTL_INCLUDE_DIRS}
+                           ${CHARM_INCLUDE_DIRS}
+                           ${RNGSSE2_INCLUDE_DIRS}
+                           ${BRIGAND_INCLUDE_DIRS})
+
 set_target_properties(DiffEq PROPERTIES LIBRARY_OUTPUT_NAME quinoa_diffeq)
 
 INSTALL(TARGETS DiffEq

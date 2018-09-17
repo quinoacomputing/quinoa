@@ -16,6 +16,8 @@
 #include "NoWarning/tutsuite.decl.h"
 #include "migrated_base.decl.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 namespace unittest {
 
 extern CProxy_TUTSuite g_suiteProxy;
@@ -962,5 +964,7 @@ void PUPUtil_object::test< 14 >() {
 }
 
 } // tut::
+
+#endif  // DOXYGEN_GENERATING_OUTPUT
 
 #include "NoWarning/migrated_base.def.h"

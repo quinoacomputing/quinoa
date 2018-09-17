@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/TFile.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
-  \brief     Include <Root>/TFile.h with turning off specific compiler warnings
+  \brief     Include Root's TFile.h with turning off specific compiler warnings
 */
 // *****************************************************************************
 #ifndef nowarning_TFile_h

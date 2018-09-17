@@ -7,7 +7,7 @@
 */
 // *****************************************************************************
 
-#include <Omega_h_file.hpp>
+#include "NoWarning/Omega_h_file.h"
 #include <Omega_h_library.hpp>
 
 #include "Macro.h"
@@ -21,6 +21,7 @@ void
 Omega_h_MeshReader::readMeshPart(
   std::vector< std::size_t >& ginpoel,
   std::vector< std::size_t >& inpoel,
+  std::vector< std::size_t >& triinp,
   std::vector< std::size_t >& gid,
   std::unordered_map< std::size_t, std::size_t >& lid,
   tk::UnsMesh::Coords& coord,
@@ -31,6 +32,8 @@ Omega_h_MeshReader::readMeshPart(
 //!   chunk of the mesh (global ids)
 //! \param[in,out] inpoel Container to store element connectivity with local
 //!   node IDs of this PE's mesh chunk
+//! \param[in,out] triinp Container to store triangle element connectivity
+//!   (if exists in file) with global node indices
 //! \param[in,out] gid Container to store global node IDs of elements of this
 //!   PE's mesh chunk
 //! \param[in,out] lid Container to store global->local node IDs of elements of
@@ -49,13 +52,24 @@ Omega_h_MeshReader::readMeshPart(
 // *****************************************************************************
 {
   IGNORE( mype );       // Avoid compiler warning in Release mode
+  IGNORE( triinp );
+
   Assert( mype < numpes, "Invalid input: PE id must be lower than NumPEs" );
   Assert( ginpoel.empty() && inpoel.empty() && gid.empty() && lid.empty() &&
           coord[0].empty() && coord[1].empty() && coord[2].empty(),
           "Containers to store mesh must be empty" );
 
+  #if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wold-style-cast"
+  #endif
+
   // Create Omega_h library instance
   auto lib = Omega_h::Library( nullptr, nullptr, MPI_COMM_WORLD );
+
+  #if defined(__clang__)
+    #pragma clang diagnostic pop
+  #endif
 
   // Find out how many partitions the Omega_h mesh was saved with
   auto nparts = Omega_h::binary::read_nparts( m_filename, lib.world() );
@@ -115,41 +129,54 @@ Omega_h_MeshReader::readMeshPart(
   std::tie( inpoel, gid, lid ) = tk::global2local( ginpoel );
 }
 
-std::size_t
-Omega_h_MeshReader::readSidesetFaces(
+
+std::vector< std::size_t >
+Omega_h_MeshReader::triinpoel(
   std::map< int, std::vector< std::size_t > >& bface,
-  std::map< int, std::vector< int > >& faceid )
+  const std::map< int, std::vector< std::size_t > >& faces,
+  const std::vector< std::size_t >& ginpoel,
+  const std::vector< std::size_t >& triinp ) const
 // *****************************************************************************
-//  Read face list of all side sets from Omega_h file
-//! \param[in,out] bface Face-Element lists mapped to side set ids
-//! \param[in,out] faceid Side set side lists associated to side set ids
-//! \return Total number of boundary faces
+// ...
+//! \note Must be preceded by a call to readElemBlockIDs()
 // *****************************************************************************
 {
-IGNORE(bface);
-IGNORE(faceid);
-  return 0;
+  IGNORE(bface);
+  IGNORE(faces);
+  IGNORE(ginpoel);
+  IGNORE(triinp);
+  std::vector< std::size_t > bnd_triinpoel;
+  return bnd_triinpoel;
 }
 
 void
-Omega_h_MeshReader::readFaces( std::size_t nbfac,
-                               std::vector< std::size_t >& conn ) const
+Omega_h_MeshReader::readSidesetFaces(
+  std::map< int, std::vector< std::size_t > >& bface,
+  std::map< int, std::vector< std::size_t > >& faces )
 // *****************************************************************************
-//  Read face connectivity of a number of boundary faces from Omega_h file
-//! \param[in] nbfac Number of boundary faces
-//! \param[inout] conn Connectivity vector to push to
-//! \details This function reads in the total number of boundary faces,
-//!   also called triangle-elements, and their connectivity.
-//! \note It is okay to call this function with zero nbfac: it will be no-op.
+//  Read side sets from Omega_h file
+//! \param[in,out] bface Elem ids of side sets to read into
+//! \param[in,out] faces Elem-relative face ids of tets of side sets
 // *****************************************************************************
 {
-  // Return if no boundary faces in file
-  if (nbfac == 0) return;
+IGNORE(bface);
+IGNORE(faces);
+}
+
+void
+Omega_h_MeshReader::readFaces( std::vector< std::size_t >& conn ) const
+// *****************************************************************************
+//  Read face connectivity of a number of boundary faces from Omega_h file
+//! \param[in,out] conn Connectivity vector to push to
+//! \details This function reads in the total number of boundary faces,
+//!   also called triangle-elements, and their connectivity.
+// *****************************************************************************
+{
 IGNORE(conn);
 }
 
 std::map< int, std::vector< std::size_t > >
-Omega_h_MeshReader::readSidesets()
+Omega_h_MeshReader::readSidesetNodes()
 // *****************************************************************************
 //  Read node list of all side sets from Omega_h file
 //! \return Node lists mapped to side set ids
