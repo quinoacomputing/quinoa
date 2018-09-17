@@ -103,20 +103,20 @@ ElemDiagnostics::compute( Discretization& d,
     // Put in norms sweeping our mesh chunk
     for (std::size_t i=0; i<u.nunk()-nchGhost; ++i) {
       // Compute sum for L2 norm of the numerical solution
-      for (std::size_t c=0; c<u.nprop(); ++c)
+      for (std::size_t c=0; c<u.nprop()/ndof; ++c)
       {
         auto mark = c*ndof;
         diag[L2SOL][c] += u(i,mark,0) * u(i,mark,0) * geoElem(i,0,0);
       }
       // Compute sum for L2 norm of the numerical-analytic solution
-      for (std::size_t c=0; c<u.nprop(); ++c)
+      for (std::size_t c=0; c<u.nprop()/ndof; ++c)
       {
         auto mark = c*ndof;
         diag[L2ERR][c] +=
           (u(i,mark,0)-a(i,mark,0)) * (u(i,mark,0)-a(i,mark,0)) * geoElem(i,0,0);
       }
       // Compute max for Linf norm of the numerical-analytic solution
-      for (std::size_t c=0; c<u.nprop(); ++c) {
+      for (std::size_t c=0; c<u.nprop()/ndof; ++c) {
         auto mark = c*ndof;
         auto err = std::abs( u(i,mark,0) - a(i,mark,0) );
         if (err > diag[LINFERR][c]) diag[LINFERR][c] = err;
