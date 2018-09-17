@@ -64,9 +64,9 @@ Transporter::Transporter() :
   m_npoin( 0 ),
   m_avcost( 0.0 ),
   m_V( 0.0 ),
-  m_minstat( {{ 0.0, 0.0 }} ),
-  m_maxstat( {{ 0.0, 0.0 }} ),
-  m_avgstat( {{ 0.0, 0.0 }} ),
+  m_minstat( {{ 0.0, 0.0, 0.0 }} ),
+  m_maxstat( {{ 0.0, 0.0, 0.0 }} ),
+  m_avgstat( {{ 0.0, 0.0, 0.0 }} ),
   m_timer(),
   m_linsysbc(),
   m_progMesh( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
@@ -561,45 +561,53 @@ Transporter::totalvol( tk::real v )
 }
 
 void
-Transporter::minstat( tk::real d0, tk::real d1 )
+Transporter::minstat( tk::real d0, tk::real d1, tk::real d2 )
 // *****************************************************************************
 // Reduction target yielding minimum mesh statistcs across all workers
 //! \param[in] d0 Minimum mesh statistics collected over all chares
 //! \param[in] d1 Minimum mesh statistics collected over all chares
+//! \param[in] d2 Minimum mesh statistics collected over all chares
 // *****************************************************************************
 {
   m_minstat[0] = d0;  // minimum edge length
   m_minstat[1] = d1;  // minimum cell volume cubic root
+  m_minstat[2] = d2;  // minimum number of cells on chare
 
   minstat_complete();
 }
 
 void
-Transporter::maxstat( tk::real d0, tk::real d1 )
+Transporter::maxstat( tk::real d0, tk::real d1, tk::real d2 )
 // *****************************************************************************
 // Reduction target yielding the maximum mesh statistics across all workers
 //! \param[in] d0 Maximum mesh statistics collected over all chares
 //! \param[in] d1 Maximum mesh statistics collected over all chares
+//! \param[in] d2 Maximum mesh statistics collected over all chares
 // *****************************************************************************
 {
   m_maxstat[0] = d0;  // maximum edge length
   m_maxstat[1] = d1;  // maximum cell volume cubic root
+  m_maxstat[2] = d2;  // maximum number of cells on chare
 
   maxstat_complete();
 }
 
 void
-Transporter::sumstat( tk::real d0, tk::real d1, tk::real d2, tk::real d3 )
+Transporter::sumstat( tk::real d0, tk::real d1, tk::real d2, tk::real d3,
+                      tk::real d4, tk::real d5 )
 // *****************************************************************************
 // Reduction target yielding the sum mesh statistics across all workers
 //! \param[in] d0 Sum mesh statistics collected over all chares
 //! \param[in] d1 Sum mesh statistics collected over all chares
 //! \param[in] d2 Sum mesh statistics collected over all chares
 //! \param[in] d3 Sum mesh statistics collected over all chares
+//! \param[in] d4 Sum mesh statistics collected over all chares
+//! \param[in] d5 Sum mesh statistics collected over all chares
 // *****************************************************************************
 {
   m_avgstat[0] = d1 / d0;      // average edge length
   m_avgstat[1] = d3 / d2;      // average cell volume cubic root
+  m_avgstat[2] = d5 / d4;      // average number of cells per chare
 
   sumstat_complete();
 }
@@ -628,6 +636,11 @@ Transporter::pdfstat( CkReductionMsg* msg )
   // Output cell volume cubic root PDF
   pdfv.writeTxt( pdf[1], tk::ctr::PDFInfo{ {"PDF"}, {}, {"V^{1/3}"} } );
 
+  // Create new PDF file (overwrite if exists)
+  tk::PDFWriter pdfn( "mesh_ntet_pdf.txt" );
+  // Output number of cells PDF
+  pdfn.writeTxt( pdf[2], tk::ctr::PDFInfo{ {"PDF"}, {}, {"ntets"} } );
+
   pdfstat_complete();
 }
 
@@ -647,6 +660,10 @@ Transporter::stat()
                 std::to_string( m_minstat[1] ) + " / " +
                 std::to_string( m_maxstat[1] ) + " / " +
                 std::to_string( m_avgstat[1] ) );
+  m_print.diag( "Mesh statistics: min/max/avg(ntets) = " +
+              std::to_string( static_cast<std::size_t>(m_minstat[2]) ) + " / " +
+              std::to_string( static_cast<std::size_t>(m_maxstat[2]) ) + " / " +
+              std::to_string( static_cast<std::size_t>(m_avgstat[2]) ) );
 
   m_print.inthead( "Time integration", "Unstructured-mesh PDE solver testbed",
      "Legend: it - iteration count\n"

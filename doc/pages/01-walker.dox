@@ -67,7 +67,7 @@ Here \f$\mathrm{d}{\mbox{\boldmath$W$}}(t)\f$ is a vector-valued isotropic
 \f$F({\mbox{\boldmath$Y$}},t)\f$ is the joint probability distribution of
 \f$N\f$ variables \f$Y_\alpha\f$ of the sample space. The drift, \f$A_\alpha\f$,
 and diffusion, \f$B_{\alpha\beta}\f$, functions can be defined in any way as
-long as the diffision is positive semi-definite. Walker discretizes and
+long as the diffusion is positive semi-definite. Walker discretizes and
 numerically solves the system of SDEs using a large number of particles and can
 estimate arbitrary statistics and distributions as they evolve in time.
 

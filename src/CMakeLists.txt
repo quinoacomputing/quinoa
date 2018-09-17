@@ -176,12 +176,13 @@ endif()
 # Query build hostname
 site_name(HOSTNAME)
 
-# Grab current date to stick into the binary
-execute_process(
-  COMMAND "date" #"+%m/%d/%Y"
-  OUTPUT_VARIABLE BUILD_DATE
-)
+# Grab current date to stick into the executables and doc (footer)
+execute_process(COMMAND "date" OUTPUT_VARIABLE BUILD_DATE)
 string(REGEX REPLACE "[\r\n]" "" BUILD_DATE "${BUILD_DATE}")
+
+execute_process(COMMAND "date" "+%A, %b %d, %Y"
+                OUTPUT_VARIABLE BUILD_DATE_SIMPLE)
+string(REGEX REPLACE "[\r\n]" "" BUILD_DATE_SIMPLE "${BUILD_DATE_SIMPLE}")
 
 # Set the requirement for the C++ standard
 set(CMAKE_CXX_STANDARD 11)
@@ -191,6 +192,7 @@ message(STATUS "Required language standard: C++${CMAKE_CXX_STANDARD}")
 # Get git revision
 include(GetGitRevisionDescription)
 git_describe(GIT_SHA1 --tags)
+git_rev_parse(GIT_SHA1_ONLY)
 message(STATUS "git sha1: ${GIT_SHA1}")
 
 # Macro to add C++ compiler flags
