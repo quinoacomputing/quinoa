@@ -400,10 +400,12 @@ Discretization::writeMesh(
 
         // Do not write side sets in parallel
         const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-        if (scheme == ctr::SchemeType::DG)
+        const auto centering = ctr::Scheme().centering( scheme );
+        if (centering == ctr::Centering::ELEM)
           ew.writeMesh( m_inpoel, m_coord, bface, triinpoel );
-        else
+        else if (centering == ctr::Centering::NODE)
           ew.writeMesh( m_inpoel, m_coord, bnode );
+        else Throw( "Scheme centering not handled for writing mesh" );
 
       } else {
         ew.writeMesh( m_inpoel, m_coord );

@@ -719,12 +719,13 @@ Refiner::nodeinit( std::size_t npoin,
 
   // Evaluate ICs differently depending on nodal or cell-centered discretization
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG) {
+  const auto centering = ctr::Scheme().centering( scheme );
+  if (centering == ctr::Centering::NODE) {
 
     // Node-centered: evaluate ICs for all scalar components integrated
     for (const auto& eq : g_cgpde) eq.initialize( m_coord, u, t0 );
 
-  } else if (scheme == ctr::SchemeType::DG) {
+  } else if (centering == ctr::Centering::ELEM) {
 
     // Initialize cell-centered unknowns
     tk::Fields ue( m_inpoel.size()/4, nprop );
@@ -746,7 +747,7 @@ Refiner::nodeinit( std::size_t npoin,
       for (std::size_t c=0; c<nprop; ++c) u(p,c,0) = up[c] / vol;
     }
 
-  } else Throw( "Nodal initialization not handled for discretization scheme" );
+  } else Throw( "Scheme centring not handled for nodal initialization" );
 
   Assert( u.nunk() == m_coord[0].size(), "Size mismatch" );
   Assert( u.nprop() == nprop, "Size mismatch" );

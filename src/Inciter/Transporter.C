@@ -110,17 +110,19 @@ Transporter::Transporter() :
   const auto constdt = g_inputdeck.get< tag::discr, tag::dt >();
   const auto cfl = g_inputdeck.get< tag::discr, tag::cfl >();
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+  const auto centering = ctr::Scheme().centering( scheme );
 
   // Print discretization parameters
   m_print.section( "Discretization parameters" );
   m_print.Item< ctr::Scheme, tag::discr, tag::scheme >();
-  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG) {
+
+  if (centering == ctr::Centering::NODE) {
     auto fct = g_inputdeck.get< tag::discr, tag::fct >();
     m_print.item( "Flux-corrected transport (FCT)", fct );
     if (fct)
       m_print.item( "FCT mass diffusion coeff",
                     g_inputdeck.get< tag::discr, tag::ctau >() );
-  } else if (scheme == ctr::SchemeType::DG) {
+  } else if (centering == ctr::Centering::ELEM) {
     m_print.Item< ctr::Flux, tag::discr, tag::flux >();
   }
   m_print.item( "PE-locality mesh reordering",
@@ -252,12 +254,13 @@ Transporter::createPartitioner()
 
   // Read boundary (side set) data from input file
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (scheme == ctr::SchemeType::DG) {
+  const auto centering = ctr::Scheme().centering( scheme );
+  if (centering == ctr::Centering::ELEM) {
     // Read boundary-face connectivity on side sets
     mr.readSidesetFaces( belem, faces );
     // Verify boundarty condition (BC) side sets used exist in mesh file
     matchBCs( g_dgpde, belem );
-  } else {
+  } else if (centering == ctr::Centering::NODE) {
     // Read node lists on side sets
     bnode = mr.readSidesetNodes();
     // Verify boundarty condition (BC) side sets used exist in mesh file
@@ -488,9 +491,10 @@ Transporter::diagHeader()
   // Collect variables names for integral/diagnostics output
   std::vector< std::string > var;
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG)
+  const auto centering = ctr::Scheme().centering( scheme );
+  if (centering == ctr::Centering::NODE)
     for (const auto& eq : g_cgpde) varnames( eq, var );
-  else if (scheme == ctr::SchemeType::DG)
+  else if (centering == ctr::Centering::ELEM)
     for (const auto& eq : g_dgpde) varnames( eq, var );
   else Throw( "Diagnostics header not handled for discretization scheme" );
 

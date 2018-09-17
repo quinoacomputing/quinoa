@@ -21,7 +21,12 @@ namespace ctr {
 //! Scheme types
 enum class SchemeType : uint8_t { MatCG
                                 , DiagCG
-                                , DG };
+                                , DG
+                                , DGP1 };
+
+//! Scheme centering types
+enum class Centering : uint8_t { NODE
+                               , ELEM };
 
 //! Pack/Unpack SchemeType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, SchemeType& e ) { PUP::pup( p, e ); }
@@ -34,6 +39,7 @@ class Scheme : public tk::Toggle< SchemeType > {
     using keywords = brigand::list< kw::matcg
                                   , kw::diagcg
                                   , kw::dg
+                                  , kw::dgp1
                                   >;
 
     //! \brief Options constructor
@@ -46,13 +52,24 @@ class Scheme : public tk::Toggle< SchemeType > {
         //! Enums -> names (if defined, policy codes, if not, name)
         { { SchemeType::MatCG, kw::matcg::name() },
           { SchemeType::DiagCG, kw::diagcg::name() },
-          { SchemeType::DG, kw::dg::name() } },
+          { SchemeType::DG, kw::dg::name() },
+          { SchemeType::DGP1, kw::dgp1::name() } },
         //! keywords -> Enums
         { { kw::matcg::string(), SchemeType::MatCG },
           { kw::diagcg::string(), SchemeType::DiagCG },
-          { kw::dg::string(), SchemeType::DG } } )
-    {}
+          { kw::dg::string(), SchemeType::DG },
+          { kw::dgp1::string(), SchemeType::DGP1 } } ) {}
 
+    //! Return scheme centering for SchemeType
+    //! \param[in] type Scheme type
+    //! \return Centering for scheme type
+    Centering centering( SchemeType type ) {
+      if (type == SchemeType::MatCG || type == SchemeType::DiagCG)
+        return Centering::NODE;
+      else if (type == SchemeType::DG || type == SchemeType::DGP1)
+        return Centering::ELEM;
+      else Throw( "No such scheme centering" );
+    }
 };
 
 } // ctr::
