@@ -13,8 +13,14 @@
 #define Init_h
 
 #include <string>
+#include <unordered_map>
+
+#include "NoWarning/charm.h"
 
 #include "Print.h"
+#include "Exception.h"
+#include "ChareStateCollector.h"
+#include "ProcessException.h"
 
 namespace tk {
 
@@ -79,6 +85,130 @@ Driver Main( int argc, char* argv[],
 
   // Create and return driver
   return Driver( print, cmdline );
+}
+
+//! Generic Main Charm++ module constructor for all executables
+//! \tparam ExecuteProxy Charm++ proxy type for the 'excecute' chare, see
+//!    src/Main/<executable>.C
+//! \tparam MainProxy Main Charm++ chare proxy for the executable
+//! \tparam CmdLine Executable-specific tagged tuple storing the rusult of the
+//!    command line parser
+//! \param[in] msg Charm++ CkArgMsg pointer passed (by Charm++) to the main
+//!   chare proxy
+//! \param[in,out] mainProxy to set for the main chare
+//! \param[in] thisProxy 'thisProxy' to set as mainProxy
+//! \param[in,out] stateProxy Chare state collector proxy
+//! \param[in,out] timer Vector of timers, held by the main chare, in which to
+//!   start the first timer, measuring the migration of global-scope data
+//! \param[in] cmdline Command line grammar stack for the executable (assumed
+//!   already parsed)
+//! \param[in] quiescenceTarget Pre-created Charm++ callback to use as the
+//!   target function to call if quiescence is detected
+template< class ExecuteProxy, class MainProxy, class CmdLine >
+void MainCtor( CkArgMsg* msg,
+               MainProxy& mainProxy,
+               const MainProxy& thisProxy,
+               tk::CProxy_ChareStateCollector& stateProxy,
+               std::vector< tk::Timer >& timer,
+               const CmdLine& cmdline,
+               const CkCallback& quiescenceTarget )
+{
+  delete msg;
+
+  // Set Charm++ main proxy
+  mainProxy = thisProxy;
+
+  // If quiescence detection is on or user requested it, create chare state
+  // collector Charm++ chare group
+  if ( cmdline.template get< tag::chare >() ||
+       cmdline.template get< tag::quiescence >() )
+    stateProxy = tk::CProxy_ChareStateCollector::ckNew();
+
+  // Optionally enable quiscence detection
+  if (cmdline.template get< tag::quiescence >()) CkStartQD( quiescenceTarget );
+
+  // Fire up an asynchronous execute object, which when created at some
+  // future point in time will call back to this->execute(). This is
+  // necessary so that this->execute() can access already migrated
+  // global-scope data.
+  ExecuteProxy::ckNew();
+
+  // Start new timer measuring the migration of global-scope data
+  timer.emplace_back();
+}
+
+//! Generic function to dump the Charm++ chare state (if collected)
+//! \tparam CmdLine Executable-specific tagged tuple storing the rusult of the
+//!    command line parser
+//! \param[in] cmdline Command line grammar stack for the executable
+//! \param[in] print Pretty printer
+//! \param[in] msg Charm++ reduction message containing the chare state
+//!   aggregated from all PEs
+template< class CmdLine >
+void dumpstate( const CmdLine& cmdline,
+                const tk::Print& print,
+                CkReductionMsg* msg )
+{
+  try {
+
+    // unpack chare state
+    std::unordered_map< int, std::vector< tk::ChareState > > state;
+    PUP::fromMem creator( msg->getData() );
+    creator | state;
+    delete msg;
+
+    // find out if chare state collection was triggered due to an error
+    auto it = state.find( -1 );
+    bool error = it != end(state);
+    if (error) state.erase( it );
+
+    // pretty-print collected chare state (only if user requested it or
+    // quiescence was detected which is and indication of a logic error)
+    if (cmdline.template get< tag::chare >() || error)
+      print.charestate( state );
+
+    // exit differently depending on how we were called
+    if (error)
+      Throw( "Quiescence detected" );
+    else
+      CkExit(); // tell the Charm++ runtime system to exit
+
+  } catch (...) { tk::processExceptionCharm(); }
+}
+
+//! Generic finalize function for different executables
+//! \param[in] cmdline Command line grammar stack for the executable
+//! \param[in] timer Vector of timers, held by the main chare
+//! \param[in] print Pretty printer
+//! \param[in,out] stateProxy Chare state collector proxy
+//! \param[in,out] timestamp Vector of time stamps in h:m:s with labels
+//! \param[in] dumpstateTarget Pre-created Charm++ callback to use as the
+//!   target function for dumping chare state
+template< class CmdLine >
+void finalize( const CmdLine& cmdline,
+               const std::vector< tk::Timer >& timer,
+               const tk::Print& print,
+               tk::CProxy_ChareStateCollector& stateProxy,
+               std::vector< std::pair< std::string,
+                                       tk::Timer::Watch > >& timestamp,
+               const CkCallback& dumpstateTarget )
+{
+  try {
+
+    if (!timer.empty()) {
+      timestamp.emplace_back( "Total runtime", timer[0].hms() );
+      print.time( "Timers (h:m:s)", timestamp );
+      print.endpart();
+      // if quiescence detection is on or user requested it, collect chare
+      // state
+     if ( cmdline.template get< tag::chare >() ||
+          cmdline.template get< tag::quiescence >() )
+       stateProxy.collect( /* error = */ false, dumpstateTarget );
+     else
+       CkExit(); // tell the Charm++ runtime system to exit
+    }
+
+  } catch (...) { tk::processExceptionCharm(); }
 }
 
 } // tk::

@@ -159,22 +159,10 @@ class Main : public CBase_Main {
       if (m_helped) CkExit();
       // Save executable name to global-scope string so FileParser can access it
       unittest::g_executable = msg->argv[0];
-      delete msg;
-      mainProxy = thisProxy;
-      // If quiescence detection is on or user requested it, create chare state
-      // collector Charm++ chare group
-      if (m_cmdline.get< tag::chare >() || m_cmdline.get< tag::quiescence >())
-        stateProxy = tk::CProxy_ChareStateCollector::ckNew();
-      // Optionally enable quiscence detection
-      if (m_cmdline.get< tag::quiescence >())
-        CkStartQD( CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
-      // Fire up an asynchronous execute object, which when created at some
-      // future point in time will call back to this->execute(). This is
-      // necessary so that this->execute() can access already migrated
-      // global-scope data.
-      CProxy_execute::ckNew();
-      // Start new timer measuring the migration of global-scope data
-      m_timer.emplace_back();
+      // Call generic mainchare contructor
+      tk::MainCtor< CProxy_execute >
+        ( msg, mainProxy, thisProxy, stateProxy, m_timer, m_cmdline,
+          CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
     } catch (...) { tk::processExceptionCharm(); }
 
     void execute() {
@@ -215,25 +203,7 @@ class Main : public CBase_Main {
 
     //! Dump chare state
     void dumpstate( CkReductionMsg* msg ) {
-      try {
-        std::unordered_map< int, std::vector< tk::ChareState > > state;
-        PUP::fromMem creator( msg->getData() );
-        creator | state;
-        delete msg;
-        // find out if chare state collection was triggered due to an error
-        auto it = state.find( -1 );
-        bool error = it != end(state);
-        if (error) state.erase( it );
-        // pretty-print collected chare state (only if user requested it or
-        // quiescence was detected which is and indication of a logic error)
-        if (m_cmdline.get< tag::chare >() || error)
-          m_print.charestate( state );
-        // exit differently depending on how we were called
-        if (error)
-          Throw( "Quiescence detected" );
-        else
-          CkExit(); // tell the Charm++ runtime system to exit
-      } catch (...) { tk::processExceptionCharm(); }
+      tk::dumpstate( m_cmdline, m_print, msg );
     }
 
   private:
