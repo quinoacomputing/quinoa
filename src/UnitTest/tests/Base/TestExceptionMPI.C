@@ -34,6 +34,10 @@ template<> template<>
 void ExceptionMPI_object::test< 1 >() {
   set_test_name( "AssertMPI macro throws all false" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   try {
     AssertMPI( 0 == 1, "msg" );
     #ifndef NDEBUG
@@ -50,6 +54,10 @@ void ExceptionMPI_object::test< 1 >() {
 template<> template<>
 void ExceptionMPI_object::test< 2 >() {
   set_test_name( "AssertMPI macro doesn't throw all true" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   try {
     AssertMPI( 1 == 1, "msg" );
@@ -71,6 +79,10 @@ template<> template<>
 void ExceptionMPI_object::test< 3 >() {
   set_test_name( "ErrChkMPI macro throws all false" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   try {
     ErrChkMPI( 0 == 1, "msg" );
     fail( "should throw excecption" );
@@ -85,6 +97,10 @@ template<> template<>
 void ExceptionMPI_object::test< 4 >() {
   set_test_name( "ErrChkMPI macro doesn't throw all true" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   try {
     ErrChkMPI( 0 != 1, "msg" );
   }
@@ -97,6 +113,10 @@ void ExceptionMPI_object::test< 4 >() {
 template<> template<>
 void ExceptionMPI_object::test< 5 >() {
   set_test_name( "ErrChkMPI macro throws 0th false" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   try {
     int peid;
@@ -113,6 +133,10 @@ void ExceptionMPI_object::test< 5 >() {
 template<> template<>
 void ExceptionMPI_object::test< 6 >() {
   set_test_name( "ErrChkMPI macro throws 0th true only" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   int numpes;
   MPI_Comm_size( MPI_COMM_WORLD, &numpes );

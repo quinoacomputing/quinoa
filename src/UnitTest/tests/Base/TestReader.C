@@ -48,6 +48,10 @@ template<> template<>
 void Reader_object::test< 2 >() {
   set_test_name( "ctor throws if filename empty" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   // Correctly throws exception in DEBUG mode if empty filename string is given
   try {
 
@@ -77,6 +81,10 @@ template<> template<>
 void Reader_object::test< 3 >() {
   set_test_name( "ctor throws if file doesn't exist" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   // Correctly throws exception if file does not exist
   try {
 
@@ -99,6 +107,10 @@ void Reader_object::test< 3 >() {
 template<> template<>
 void Reader_object::test< 4 >() {
   set_test_name( "ctor throws if cannot read from file" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   // Correctly throws exception if cannot read from file
   try {

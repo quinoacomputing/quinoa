@@ -58,7 +58,8 @@ try :
     s << "\n>>> Exception at " << m_file << ":" << m_line << ": " << m_func;
   m_message = s.str();
 
-  printf( ">>> Exception: %s\n", m_message.c_str() );
+  // Uses streams (std::cerr) so it can be redirected
+  std::cerr << ">>> Exception: " << m_message.c_str() << '\n';
 
   // Save call-trace
   saveTrace();

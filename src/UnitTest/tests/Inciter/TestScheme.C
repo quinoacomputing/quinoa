@@ -49,6 +49,11 @@ class Receiver : public CBase_Receiver {
       tut::test_result tr( "Inciter/Scheme", 1,
                            "Charm:migrate Scheme(" + label + ") 2",
                            tut::test_result::result_type::ok );
+
+      // Quiet std::cerr, to quiet exception message during its ctor
+      std::stringstream quiet;
+      tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
       try {
         int actual = s.which();
         // Evaluate test

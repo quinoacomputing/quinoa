@@ -160,6 +160,11 @@ class CharmTimer : public CBase_CharmTimer {
     tut::test_result tr( "Base/Timer", 7,
                          "Charm:migrate tk::Timer 2",
                          tut::test_result::result_type::ok );
+
+    // Quiet std::cerr, to quiet exception message during its ctor
+    std::stringstream quiet;
+    tk::cerr_redirect( quiet.rdbuf() );
+
     // Evaluate test: The incoming timer's time point is queried here that
     // includes the time elapsed before the Charm++ chare has been created + the
     // migration time, so tested with a somewhat lose precision that includes
@@ -218,6 +223,10 @@ void Timer_object::test< 7 >() {
 template<> template<>
 void Timer_object::test< 8 >() {
   set_test_name( "query throws with non-existent key" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   try {
     std::map< std::string, tk::Timer > timer;

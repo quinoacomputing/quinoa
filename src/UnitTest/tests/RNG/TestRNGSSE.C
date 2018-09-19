@@ -46,6 +46,10 @@ template<> template<>
 void RNGSSE_object::test< 1 >() {
   set_test_name( "constructor throws with zero threads" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   // Test all possible specializations
 
   // Attempt to instantiate RNGSSE RNG with zero number of threads
