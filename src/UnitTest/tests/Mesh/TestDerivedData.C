@@ -145,6 +145,10 @@ template<> template<>
 void DerivedData_object::test< 1 >() {
   set_test_name( "genEsup throws with empty inpoel" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -163,6 +167,10 @@ void DerivedData_object::test< 1 >() {
 template<> template<>
 void DerivedData_object::test< 2 >() {
   set_test_name( "genEsup throws on non-positive nnpe" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
@@ -185,6 +193,10 @@ void DerivedData_object::test< 2 >() {
 template<> template<>
 void DerivedData_object::test< 3 >() {
   set_test_name( "genEsup throws on inpoel non-div nnpe" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   try {
     // Partial mesh mesh connectivity
@@ -372,6 +384,10 @@ template<> template<>
 void DerivedData_object::test< 6 >() {
   set_test_name( "genPsup throws with empty inpoel" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -392,6 +408,10 @@ template<> template<>
 void DerivedData_object::test< 7 >() {
   set_test_name( "genPsup throws on non-positive nnpe" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
@@ -410,6 +430,10 @@ void DerivedData_object::test< 7 >() {
 template<> template<>
 void DerivedData_object::test< 8 >() {
   set_test_name( "genPsup throws with empty esup.first" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
@@ -430,6 +454,10 @@ template<> template<>
 void DerivedData_object::test< 9 >() {
   set_test_name( "genPsup throws with empty esup.second" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -449,6 +477,10 @@ void DerivedData_object::test< 9 >() {
 template<> template<>
 void DerivedData_object::test< 10 >() {
   set_test_name( "genPsup throws on inpoel non-div nnpe" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield invalid read" );
@@ -638,6 +670,10 @@ template<> template<>
 void DerivedData_object::test< 13 >() {
   set_test_name( "genEsupel throws with empty inpoel" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -658,6 +694,10 @@ template<> template<>
 void DerivedData_object::test< 14 >() {
   set_test_name( "genEsupel throws on non-positive nnpe" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
@@ -676,6 +716,10 @@ void DerivedData_object::test< 14 >() {
 template<> template<>
 void DerivedData_object::test< 15 >() {
   set_test_name( "genEsupel throws with empty esup.first" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
@@ -696,6 +740,10 @@ template<> template<>
 void DerivedData_object::test< 16 >() {
   set_test_name( "genEsupel throws with empty esup.second" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -715,6 +763,10 @@ void DerivedData_object::test< 16 >() {
 template<> template<>
 void DerivedData_object::test< 17 >() {
   set_test_name( "genEsupel throws on inpoel non-div nnpe" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   try {
     // Partial mesh mesh connectivity
@@ -936,6 +988,10 @@ template<> template<>
 void DerivedData_object::test< 20 >() {
   set_test_name( "genEsuel throws with empty inpoel" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   try {
     std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
     std::vector< std::size_t > empty;
@@ -954,6 +1010,10 @@ void DerivedData_object::test< 20 >() {
 template<> template<>
 void DerivedData_object::test< 21 >() {
   set_test_name( "genEsuel throws on non-positive nnpe" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
@@ -974,6 +1034,10 @@ template<> template<>
 void DerivedData_object::test< 22 >() {
   set_test_name( "genEsuel throws with empty esup.first" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -992,6 +1056,10 @@ void DerivedData_object::test< 22 >() {
 template<> template<>
 void DerivedData_object::test< 23 >() {
   set_test_name( "genEsuel throws with empty esup.second" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
@@ -1012,6 +1080,10 @@ void DerivedData_object::test< 23 >() {
 template<> template<>
 void DerivedData_object::test< 24 >() {
   set_test_name( "genEsuel throws on inpoel non-div nnpe" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield invalid read" );
@@ -1223,6 +1295,10 @@ template<> template<>
 void DerivedData_object::test< 27 >() {
   set_test_name( "genEdsup throws with empty inpoel" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -1242,6 +1318,10 @@ void DerivedData_object::test< 27 >() {
 template<> template<>
 void DerivedData_object::test< 28 >() {
   set_test_name( "genEdsup throws on non-positive nnpe" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
@@ -1263,6 +1343,10 @@ template<> template<>
 void DerivedData_object::test< 29 >() {
   set_test_name( "genEdsup throws on unsupported nnpe" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
@@ -1281,6 +1365,10 @@ void DerivedData_object::test< 29 >() {
 template<> template<>
 void DerivedData_object::test< 30 >() {
   set_test_name( "genEdsup throws with empty esup.first" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
@@ -1301,6 +1389,10 @@ template<> template<>
 void DerivedData_object::test< 31 >() {
   set_test_name( "genEdsup throws with empty esup.second" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -1320,6 +1412,10 @@ void DerivedData_object::test< 31 >() {
 template<> template<>
 void DerivedData_object::test< 32 >() {
   set_test_name( "genEdsup throws on inpoel non-div nnpe" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield invalid read" );
@@ -1531,6 +1627,10 @@ template<> template<>
 void DerivedData_object::test< 35 >() {
   set_test_name( "genInpoed throws with empty inpoel" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -1550,6 +1650,10 @@ void DerivedData_object::test< 35 >() {
 template<> template<>
 void DerivedData_object::test< 36 >() {
   set_test_name( "genInpoed throws on non-positive nnpe" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
@@ -1571,6 +1675,10 @@ template<> template<>
 void DerivedData_object::test< 37 >() {
   set_test_name( "genInpoed throws on unsupported nnpe" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
@@ -1589,6 +1697,10 @@ void DerivedData_object::test< 37 >() {
 template<> template<>
 void DerivedData_object::test< 38 >() {
   set_test_name( "genInpoed throws with empty esup.first" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
@@ -1609,6 +1721,10 @@ template<> template<>
 void DerivedData_object::test< 39 >() {
   set_test_name( "genInpoed throws with empty esup.second" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -1628,6 +1744,10 @@ void DerivedData_object::test< 39 >() {
 template<> template<>
 void DerivedData_object::test< 40 >() {
   set_test_name( "genInpoed throws on inpoel non-div nnpe" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield invalid read" );
@@ -1785,6 +1905,10 @@ template<> template<>
 void DerivedData_object::test< 43 >() {
   set_test_name( "genInedel throws with empty inpoel" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
@@ -1804,6 +1928,10 @@ void DerivedData_object::test< 43 >() {
 template<> template<>
 void DerivedData_object::test< 44 >() {
   set_test_name( "genInpoed throws on non-positive nnpe" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
@@ -1825,6 +1953,10 @@ template<> template<>
 void DerivedData_object::test< 45 >() {
   set_test_name( "genInpoed throws on unsupported nnpe" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
@@ -1843,6 +1975,10 @@ void DerivedData_object::test< 45 >() {
 template<> template<>
 void DerivedData_object::test< 46 >() {
   set_test_name( "genInpoed throws with empty inpoed" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
@@ -1863,6 +1999,10 @@ void DerivedData_object::test< 46 >() {
 template<> template<>
 void DerivedData_object::test< 47 >() {
   set_test_name( "genInedel throws on inpoel non-div nnpe" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield invalid read" );
@@ -2074,6 +2214,10 @@ template<> template<>
 void DerivedData_object::test< 50 >() {
   set_test_name( "genEsued throws with empty inpoel" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -2093,6 +2237,10 @@ void DerivedData_object::test< 50 >() {
 template<> template<>
 void DerivedData_object::test< 51 >() {
   set_test_name( "genEsued throws on non-positive nnpe" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
@@ -2114,6 +2262,10 @@ template<> template<>
 void DerivedData_object::test< 52 >() {
   set_test_name( "genEsued throws on unsupported nnpe" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
@@ -2132,6 +2284,10 @@ void DerivedData_object::test< 52 >() {
 template<> template<>
 void DerivedData_object::test< 53 >() {
   set_test_name( "genEsued throws with empty esup.first" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
@@ -2152,6 +2308,10 @@ template<> template<>
 void DerivedData_object::test< 54 >() {
   set_test_name( "genEsued throws with empty esup.second" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -2171,6 +2331,10 @@ void DerivedData_object::test< 54 >() {
 template<> template<>
 void DerivedData_object::test< 55 >() {
   set_test_name( "genEsued throws on inpoel non-div nnpe" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield invalid read" );

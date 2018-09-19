@@ -34,6 +34,10 @@ template<> template<>
 void Exception_object::test< 1 >() {
   set_test_name( "constructor message w/ line number info" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   tk::Exception e( "msg", "file", "func", 12 );
   ensure_equals( "get exception message",
                  std::string( e.what() ),
@@ -44,6 +48,10 @@ void Exception_object::test< 1 >() {
 template<> template<>
 void Exception_object::test< 2 >() {
   set_test_name( "constructor message w/o line number info" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   tk::Exception e( "msg", "file", "func", 0 );
   ensure_equals( "get exception message",
@@ -61,6 +69,10 @@ void Exception_object::test< 2 >() {
 template<> template<>
 void Exception_object::test< 3 >() {
   set_test_name( "Throw macro" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   try {
     Throw( "msg" );
@@ -80,6 +92,10 @@ template<> template<>
 void Exception_object::test< 4 >() {
   set_test_name( "Assert macro throws if condition is false" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   try {
     Assert( 0 == 1, "msg" );
     #ifndef NDEBUG
@@ -97,6 +113,10 @@ template<> template<>
 void Exception_object::test< 5 >() {
   set_test_name( "Assert macro doesn't throw if cond is true" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   try {
     Assert( 1 == 1, "msg" );
   }
@@ -109,6 +129,10 @@ void Exception_object::test< 5 >() {
 template<> template<>
 void Exception_object::test< 6 >() {
   set_test_name( "ErrChk macro throws if condition is false" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   try {
     ErrChk( 0 == 1, "msg" );
@@ -123,6 +147,10 @@ void Exception_object::test< 6 >() {
 template<> template<>
 void Exception_object::test< 7 >() {
   set_test_name( "ErrChk macro doesn't throw if cond is true" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   try {
     ErrChk( 0 != 1, "msg" );

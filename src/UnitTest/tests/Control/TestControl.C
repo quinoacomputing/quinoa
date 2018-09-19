@@ -358,6 +358,10 @@ void Control_object::test< 12 >() {
 
   control c;
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   try {
     c.convert< int >( "a" );
     fail( "should throw exception" );
@@ -374,6 +378,10 @@ void Control_object::test< 13 >() {
 
   control c;
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   try {
     int a = c.convert< int >( "345" );
     ensure_equals( "conversion", a, 345 );
@@ -389,6 +397,10 @@ void Control_object::test< 14 >() {
   set_test_name( "str convert(T)" );
 
   control c;
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   try {
     std::string a = c.convert( 345 );
