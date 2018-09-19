@@ -56,8 +56,7 @@ void Exception_object::test< 2 >() {
   tk::Exception e( "msg", "file", "func", 0 );
   ensure_equals( "get exception message",
                  std::string( e.what() ),
-                 std::string( "msg\n>>> No file:line:func information from "
-                              "exception" ) );
+                 std::string( "msg" ) );
 }
 
 #if defined(__clang__)
