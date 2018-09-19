@@ -54,7 +54,7 @@ class Refiner : public CBase_Refiner {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
-    explicit Refiner( CkMigrateMessage* ) : m_refiner( m_inpoel ) {}
+    explicit Refiner( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -84,7 +84,7 @@ class Refiner : public CBase_Refiner {
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &p ) override {
+    void pup( PUP::er &p ) {
       p | m_host;
       p | m_sorter;
       p | m_solver;
@@ -105,7 +105,7 @@ class Refiner : public CBase_Refiner {
       p | m_bnode;
       p | m_nchare;
       p | m_initref;
-      //p | m_refiner;
+      p | m_refiner;
       p | m_nref;
       p | m_extra;
       p | m_ch;

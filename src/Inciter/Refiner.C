@@ -441,7 +441,7 @@ Refiner::nextref()
 //!   are more steps configured by the user.
 // *****************************************************************************
 {
-  //AtSync();   // Migrate here if needed
+  AtSync();   // Migrate here if needed
 
   // Output mesh after recent step of initial mesh refinement
   auto level = g_inputdeck.get<tag::amr, tag::init>().size() - m_initref.size();

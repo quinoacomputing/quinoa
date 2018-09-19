@@ -16,6 +16,20 @@ namespace AMR {
             bool refinement_state_changed = false;
 
         public:
+            /** @name Charm++ pack/unpack serializer member functions */
+            ///@{
+            //! \brief Pack/Unpack serialize member function
+            //! \param[in,out] p Charm++'s PUP::er serializer object reference
+            void pup( PUP::er &p ) {
+              p | marked_refinements;
+            }
+            //! \brief Pack/Unpack serialize operator|
+            //! \param[in,out] p Charm++'s PUP::er serializer object reference
+            //! \param[in,out] m tet_store_t object reference
+            friend void operator|( PUP::er& p, marked_refinements_store_t& m )
+            { m.pup(p); }
+            //@}
+
             /**
              * @brief function to see if a given id has already had a
              * refinement decision made

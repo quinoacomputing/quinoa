@@ -1,6 +1,8 @@
 #ifndef AMR_edge_t_h
 #define AMR_edge_t_h
 
+#include "NoWarning/charm++.h"
+
 #include <iostream>
 #include <ostream>
 #include <array>
@@ -12,6 +14,18 @@ class edge_t {
         friend std::ostream& operator<<(std::ostream&, const edge_t&);
 
     public:
+        /** @name Charm++ pack/unpack serializer member functions */
+        ///@{
+        //! \brief Pack/Unpack serialize member function
+        //! \param[in,out] p Charm++'s PUP::er serializer object reference
+        void pup( PUP::er &p ) {
+          p | data;
+        }
+        //! \brief Pack/Unpack serialize operator|
+        //! \param[in,out] p Charm++'s PUP::er serializer object reference
+        //! \param[in,out] e edge_t object reference
+        friend void operator|( PUP::er& p, edge_t& e ) { e.pup(p); }
+        //@}
 
         edge_ get_data() const {
             return data;

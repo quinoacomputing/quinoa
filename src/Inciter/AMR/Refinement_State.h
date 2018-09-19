@@ -5,6 +5,8 @@
 #ifndef TETAMR_AMR_DATA_H
 #define TETAMR_AMR_DATA_H
 
+#include "NoWarning/charm++.h"
+
 #include <vector>
 #include <cstddef>
 
@@ -44,6 +46,25 @@ namespace AMR {
         {
             // Empty
         }
+
+        /** @name Charm++ pack/unpack serializer member functions */
+        ///@{
+        //! \brief Pack/Unpack serialize member function
+        //! \param[in,out] p Charm++'s PUP::er serializer object reference
+        void pup( PUP::er &p ) {
+          p | A;
+          p | B;
+          p | refinement_criteria;
+          p | needs_refining;
+          p | needs_derefining;
+          p | is_dead;
+          p | lock_case;
+        }
+        //! \brief Pack/Unpack serialize operator|
+        //! \param[in,out] p Charm++'s PUP::er serializer object reference
+        //! \param[in,out] e Edge_Refinement object reference
+        friend void operator|( PUP::er& p, Edge_Refinement& e ) { e.pup(p); }
+        //@}
 
         // This abstraction is hardly any better than using an explicit initialisation
         // list but it makes it easier if we decide to add/remove a parameter

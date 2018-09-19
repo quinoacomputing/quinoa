@@ -23,20 +23,23 @@ namespace AMR {
             const size_t DEFAULT_REFINEMENT_LEVEL = 0; //TODO: Is this in the right place?
             const size_t MIN_REFINEMENT_LEVEL = DEFAULT_REFINEMENT_LEVEL;
 
-            // TODO: Tidy up edge store references here
-            tet_store_t& tet_store;
-            node_connectivity_t& node_connectivity;
-
         public:
 
             const size_t MAX_REFINEMENT_LEVEL = 4;
 
-            refinement_t(tet_store_t& ts, node_connectivity_t& ns) : tet_store(ts), node_connectivity(ns)
-            {
+            /** @name Charm++ pack/unpack serializer member functions */
+            ///@{
+            //! \brief Pack/Unpack serialize member function
+            void pup( PUP::er & ) {
             }
+            //! \brief Pack/Unpack serialize operator|
+            //! \param[in,out] p Charm++'s PUP::er serializer object reference
+            //! \param[in,out] r refinement_t object reference
+            friend void operator|( PUP::er& p, refinement_t& r ) { r.pup(p); }
+            //@}
 
             // TODO: Document this
-            child_id_list_t generate_child_ids(size_t parent_id, size_t count = MAX_CHILDREN)
+            child_id_list_t generate_child_ids( tet_store_t& tet_store, size_t parent_id, size_t count = MAX_CHILDREN)
             {
                 //return morton_id_generator_t::get_children_ids(parent_id);
                 return tet_store.generate_child_ids(parent_id, count);
@@ -50,7 +53,7 @@ namespace AMR {
              *
              * @return A bool stating if the tet can be validly refined
              */
-            bool check_allowed_refinement(size_t tet_id)
+            bool check_allowed_refinement( tet_store_t& tet_store, size_t tet_id)
             {
                 Refinement_State& master_element = tet_store.data(tet_id);
 
@@ -79,11 +82,11 @@ namespace AMR {
              *
              * @param tet_id The id to refine 1:2
              */
-            void refine_one_to_two(size_t tet_id)
+            void refine_one_to_two( tet_store_t& tet_store, node_connectivity_t& node_connectivity, size_t tet_id)
             {
                 edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
-                node_pair_t nodes = find_single_refinement_nodes(edge_list);
-                refine_one_to_two( tet_id, nodes[0], nodes[1]);
+                node_pair_t nodes = find_single_refinement_nodes(tet_store,edge_list);
+                refine_one_to_two( tet_store, node_connectivity, tet_id, nodes[0], nodes[1]);
             }
 
             /**
@@ -115,6 +118,8 @@ namespace AMR {
              * edge which will be split
              */
             void refine_one_to_two(
+                    tet_store_t& tet_store,
+                    node_connectivity_t& node_connectivity,
                     size_t tet_id,
                     size_t edge_node_A_id,
                     size_t edge_node_B_id
@@ -122,7 +127,7 @@ namespace AMR {
             {
 
                 trace_out << "refine_one_to_two" << std::endl;
-                if (!check_allowed_refinement(tet_id)) return;
+                if (!check_allowed_refinement(tet_store,tet_id)) return;
 
                 tet_t original_tet = tet_store.get(tet_id);
 
@@ -156,7 +161,7 @@ namespace AMR {
                 tet_store.edge_store.split(edge_node_A_id, edge_node_B_id, new_node_id,
                         Edge_Lock_Case::intermediate);
 
-                child_id_list_t child_list = generate_child_ids(tet_id, 2);
+                child_id_list_t child_list = generate_child_ids(tet_store,tet_id, 2);
 
                 size_t first_child_id = child_list[0];
                 size_t second_child_id = child_list[1];
@@ -202,7 +207,8 @@ namespace AMR {
              *
              * @param tet_id The id to refine 1:4
             */
-            void refine_one_to_four(size_t tet_id)
+            void refine_one_to_four( tet_store_t& tet_store, 
+                    node_connectivity_t& node_connectivity, size_t tet_id)
             {
                 trace_out << "do refine 1:4 " << std::endl;
                 //bool face_refine = false;
@@ -261,7 +267,7 @@ namespace AMR {
                 trace_out << "face list 1 " << face_list[face_refine_id][1] << std::endl;
                 trace_out << "face list 2 " << face_list[face_refine_id][2] << std::endl;
 
-                refine_one_to_four(tet_id, face_list[face_refine_id], opposite_id);
+                refine_one_to_four(tet_store, node_connectivity, tet_id, face_list[face_refine_id], opposite_id);
             }
 
             /**
@@ -274,6 +280,8 @@ namespace AMR {
              * split face
              */
             void refine_one_to_four(
+                    tet_store_t& tet_store,
+                    node_connectivity_t& node_connectivity,
                     size_t tet_id,
                     std::array<size_t, NUM_FACE_NODES> face_ids,
                     size_t opposite_id
@@ -281,7 +289,7 @@ namespace AMR {
             {
 
                 trace_out << "refine_one_to_four" << std::endl;
-                if (!check_allowed_refinement(tet_id)) return;
+                if (!check_allowed_refinement(tet_store,tet_id)) return;
 
                 trace_out << "Refining tet_id " << tet_id <<
                     " 1:4 opposite edge " << opposite_id << std::endl;
@@ -350,7 +358,7 @@ namespace AMR {
                 // AB B BC D
 
                 size_t num_children = 4;
-                child_id_list_t child = generate_child_ids(tet_id, num_children);
+                child_id_list_t child = generate_child_ids(tet_store,tet_id, num_children);
 
                 // Outsides
                 tet_store.add(child[0], A,  AB, AC, D, Refinement_Case::one_to_four, tet_id);
@@ -405,10 +413,12 @@ namespace AMR {
              *
              * @param tet_id Id of tet to refine
              */
-            void refine_one_to_eight( size_t tet_id ) {
+            void refine_one_to_eight( tet_store_t& tet_store,
+                    node_connectivity_t& node_connectivity, size_t tet_id)
+            {
 
                 trace_out << "refine_one_to_eight" << std::endl;
-                if (!check_allowed_refinement(tet_id)) return;
+                if (!check_allowed_refinement(tet_store,tet_id)) return;
 
                 // Split every edge into two
                 // Makes 4 tets out of the old corners and 3 near mid-points
@@ -501,7 +511,7 @@ namespace AMR {
                 //
 
                 // TODO: This is actually generating IDs not trying to get them
-                child_id_list_t child = generate_child_ids(tet_id);
+                child_id_list_t child = generate_child_ids(tet_store,tet_id);
 
                 // This order should give a positive Jacobian
                 tet_store.add(child[0], A, AB, AC, AD, Refinement_Case::one_to_eight, tet_id);
@@ -573,7 +583,7 @@ namespace AMR {
              * @return tet into data arrays the tet lives
              */
             // TODO: Move this (or rename?)
-            size_t tet_id_to_node_id(size_t tet, size_t element) {
+            size_t tet_id_to_node_id( tet_store_t& tet_store, size_t tet, size_t element) {
                 return tet_store.get(tet)[element];
             }
 
@@ -587,7 +597,7 @@ namespace AMR {
              * @return The node pair which represent the edge which needs
              * refining
              */
-            node_pair_t find_single_refinement_nodes(edge_list_t edge_list)
+            node_pair_t find_single_refinement_nodes( tet_store_t& tet_store, edge_list_t edge_list)
             {
                 node_pair_t returned_nodes;
                 bool found_break = false;
@@ -617,6 +627,7 @@ namespace AMR {
             // TODO: remove this, it's horrible and not efficient.
             // WARNING: THIS GOES OVER ALL TETS!!!!
             void lock_edges_from_node(
+                    tet_store_t& tet_store,
                     size_t node_id,
                     Edge_Lock_Case lock_case
             )
@@ -642,6 +653,7 @@ namespace AMR {
                 }
             }
             void lock_edges_from_node(
+                    tet_store_t& tet_store,
                     size_t tet_id,
                     size_t node_id,
                     Edge_Lock_Case lock_case
@@ -670,7 +682,7 @@ namespace AMR {
              * @param parent_id Id of the parent for whom you will delete the
              * children
              */
-            void derefine_children(size_t parent_id)
+            void derefine_children(tet_store_t& tet_store, size_t parent_id)
             {
                 // For a given tet_id, find and delete its children
                 Refinement_State& parent = tet_store.data(parent_id);
@@ -688,30 +700,30 @@ namespace AMR {
              *
              * @param parent_id The id of the parent
              */
-            void generic_derefine(size_t parent_id)
+            void generic_derefine(tet_store_t& tet_store, size_t parent_id)
             {
-                derefine_children(parent_id);
+                derefine_children(tet_store,parent_id);
                 tet_store.activate(parent_id);
             }
 
             // TODO: Document This.
-            void derefine_two_to_one(size_t parent_id)
+            void derefine_two_to_one(tet_store_t& tet_store, size_t parent_id)
             {
-                delete_intermediates_of_children(parent_id);
-                generic_derefine(parent_id);
+                delete_intermediates_of_children( tet_store, parent_id);
+                generic_derefine(tet_store,parent_id);
             }
 
             // TODO: Document This.
-            void derefine_four_to_one(size_t parent_id)
+            void derefine_four_to_one(tet_store_t& tet_store, size_t parent_id)
             {
-                delete_intermediates_of_children(parent_id);
-                generic_derefine(parent_id);
+                delete_intermediates_of_children(tet_store, parent_id);
+                generic_derefine(tet_store,parent_id);
             }
 
             // TODO: Document This.
-            void derefine_eight_to_one(size_t parent_id)
+            void derefine_eight_to_one(tet_store_t& tet_store, size_t parent_id)
             {
-                generic_derefine(parent_id);
+                generic_derefine(tet_store,parent_id);
 
                 // Delete the center edges
                     // If edge isn't in the parent, delete it? Is there a better way?
@@ -721,7 +733,7 @@ namespace AMR {
                 for (auto c : parent.children)
                 {
                     edge_list_t child_edges = tet_store.generate_edge_keys(c);
-                    delete_non_matching_edges( child_edges, parent_edges);
+                    delete_non_matching_edges( tet_store, child_edges, parent_edges);
                 }
             }
 
@@ -750,17 +762,17 @@ namespace AMR {
              *
              * @param parent_id Id of parent
              */
-            void delete_intermediates_of_children(size_t parent_id)
+            void delete_intermediates_of_children( tet_store_t& tet_store, size_t parent_id)
             {
                 Refinement_State& parent = tet_store.data(parent_id);
                 for (auto c : parent.children)
                 {
-                    delete_intermediates(c);
+                    delete_intermediates(tet_store,c);
                 }
             }
 
             // TODO: Document this
-            void delete_intermediates(size_t tet_id)
+            void delete_intermediates( tet_store_t& tet_store, size_t tet_id)
             {
                 edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
                 for (size_t k = 0; k < NUM_TET_EDGES; k++)
@@ -783,7 +795,7 @@ namespace AMR {
              * @param candidate The edge list which is to be searched and deleted
              * @param basis The edge list to check against
              */
-            void delete_non_matching_edges(edge_list_t candidate, edge_list_t basis)
+            void delete_non_matching_edges( tet_store_t& tet_store, edge_list_t candidate, edge_list_t basis)
             {
                 trace_out << "Looking for edges to delete" << std::endl;
 
@@ -825,7 +837,7 @@ namespace AMR {
              *
              * @return A bool stating if the tet can be validly de-refined
              */
-            bool check_allowed_derefinement(size_t tet_id)
+            bool check_allowed_derefinement( tet_store_t& tet_store, size_t tet_id)
             {
                 Refinement_State& master_element = tet_store.data(tet_id);
 

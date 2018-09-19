@@ -44,6 +44,22 @@ namespace AMR {
             // TODO: Make this private at some point
             AMR::marked_refinements_store_t marked_refinements;
 
+            /** @name Charm++ pack/unpack serializer member functions */
+            ///@{
+            //! \brief Pack/Unpack serialize member function
+            //! \param[in,out] p Charm++'s PUP::er serializer object reference
+            void pup( PUP::er &p ) {
+              p | intermediate_list;
+              p | active_id_mapping;
+              p | tets;
+              p | marked_refinements;
+            }
+            //! \brief Pack/Unpack serialize operator|
+            //! \param[in,out] p Charm++'s PUP::er serializer object reference
+            //! \param[in,out] t tet_store_t object reference
+            friend void operator|( PUP::er& p, tet_store_t& t ) { t.pup(p); }
+            //@}
+
             /**
              * @brief function to return the number of tets stored
              *

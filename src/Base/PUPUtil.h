@@ -12,7 +12,6 @@
 
 #include <unordered_map>
 #include <unordered_set>
-#include <array>
 
 #include "NoWarning/optional.h"
 #include "NoWarning/variant.h"

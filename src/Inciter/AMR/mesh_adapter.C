@@ -396,13 +396,13 @@ namespace AMR {
                 switch(tet_store.marked_refinements.get(tet_id))
                 {
                     case AMR::Refinement_Case::one_to_two:
-                        refiner.refine_one_to_two(tet_id);
+                        refiner.refine_one_to_two(tet_store,node_connectivity,tet_id);
                         break;
                     case AMR::Refinement_Case::one_to_four:
-                        refiner.refine_one_to_four(tet_id);
+                        refiner.refine_one_to_four(tet_store,node_connectivity,tet_id);
                         break;
                     case AMR::Refinement_Case::one_to_eight:
-                        refiner.refine_one_to_eight(tet_id);
+                        refiner.refine_one_to_eight(tet_store,node_connectivity,tet_id);
                         break;
                     case AMR::Refinement_Case::two_to_eight:
                         parent_id = tet_store.get_parent_id(tet_id);
@@ -434,19 +434,19 @@ namespace AMR {
             if (element.num_children == 2)
             {
                 trace_out << "perform 2:8" << std::endl;
-                refiner.derefine_two_to_one(i);
+                refiner.derefine_two_to_one(tet_store,i);
             }
             else if (element.num_children == 4)
             {
                 trace_out << "perform 4:8" << std::endl;
-                refiner.derefine_four_to_one(i);
+                refiner.derefine_four_to_one(tet_store,i);
             }
             else {
                 std::cout << "num children " << element.num_children << std::endl;
                 assert(0);
             }
 
-            refiner.refine_one_to_eight(i);
+            refiner.refine_one_to_eight(tet_store,node_connectivity,i);
             tet_store.unset_marked_children(i); // FIXME: This will not work well in parallel
             element.refinement_case = AMR::Refinement_Case::one_to_eight;
         }
@@ -482,7 +482,7 @@ namespace AMR {
     void mesh_adapter_t::lock_intermediates() {
         for (auto k : tet_store.intermediate_list)
         {
-            refiner.lock_edges_from_node(k, Edge_Lock_Case::intermediate);
+            refiner.lock_edges_from_node(tet_store,k, Edge_Lock_Case::intermediate);
         }
     }
 

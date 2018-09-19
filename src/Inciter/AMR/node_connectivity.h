@@ -17,7 +17,21 @@ namespace AMR {
 
         public:
 
-            //node_connectivity_t() { } // default cons
+            node_connectivity_t() { } // default cons
+
+            /** @name Charm++ pack/unpack serializer member functions */
+            ///@{
+            //! \brief Pack/Unpack serialize member function
+            //! \param[in,out] p Charm++'s PUP::er serializer object reference
+            void pup( PUP::er &p ) {
+              p | nodes;
+            }
+            //! \brief Pack/Unpack serialize operator|
+            //! \param[in,out] p Charm++'s PUP::er serializer object reference
+            //! \param[in,out] n mesh_adapter_t object reference
+            friend void operator|( PUP::er& p, node_connectivity_t& n )
+            { n.pup(p); }
+            //@}
 
             /**
              * @brief Method to add initial nodes to the store
