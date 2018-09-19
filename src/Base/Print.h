@@ -18,6 +18,9 @@
 #include <list>
 #include <cmath>
 #include <array>
+#include <vector>
+#include <algorithm>
+#include <unordered_map>
 
 #include <brigand/algorithms/for_each.hpp>
 
@@ -26,6 +29,7 @@
 #include "Timer.h"
 #include "Exception.h"
 #include "Has.h"
+#include "ChareState.h"
 
 namespace tk {
 
@@ -303,6 +307,41 @@ class Print {
     template< Style s = VERBOSE >
     void diagend( const std::string& msg ) const
     { stream<s>() << m_diag_end_fmt % msg << std::flush; }
+
+    //! ...
+    template< Style s = VERBOSE >
+    void charestate( const std::unordered_map< int,
+                        std::vector< ChareState > >& state ) const
+    {
+      stream<s>() << m_charestate_frame_fmt %
+                     "\n>>> =========== CHARE STATE ==========\n>>>";
+      // Group state by chare id
+      std::map< int, std::vector< ChareState > > sorted_state;
+      for (const auto& p : state)
+        for (const auto& i : p.second)
+          sorted_state[ i.get< tag::id >() ].push_back( i );
+      // Sort states by time stamp
+      for (auto& p : sorted_state)
+        std::sort( begin(p.second), end(p.second),
+                   []( const ChareState& a, const ChareState& b )
+                     { return a.get< tag::time >() < b.get< tag::time >(); } );
+      // Output states
+      std::size_t q = 0;
+      for (const auto& p : sorted_state) {
+        for (const auto& i : p.second) {
+          stream<s>() << m_charestate_fmt % i.get< tag::ch >()
+                                          % p.first
+                                          % i.get< tag::fn >()
+                                          % i.get< tag::pe >()
+                                          % i.get< tag::it >()
+                                          % i.get< tag::time >();
+        }
+        if (++q != sorted_state.size())
+           stream<s>() << m_charestate_frame_fmt % "";
+      }
+      stream<s>() << m_charestate_frame_fmt %
+                     "\n>>> ======= END OF CHARE STATE =======\n>>>";
+    }
 
     //! Echo formatted print of a progress message
     //! \param[in] prefix Strings to output prefixing the progress report
@@ -675,6 +714,9 @@ class Print {
     mutable format m_note_fmt = format("%s%-30s\n");
     mutable format m_diag_fmt = format("Quinoa> %s\n");
     mutable format m_diag_start_fmt = format("Quinoa> %s ");
+    mutable format m_charestate_frame_fmt = format(">>> %s\n");
+    mutable format m_charestate_fmt =
+              format(">>> %s(%d)::%|-15| PE:%|-4| it:%|-5| t:%f\n");
     mutable format m_diag_end_fmt = format("%s\n");
     mutable format m_progress_fmt = format("%s");
     mutable format m_help_title_fmt = format("\n%s %s\n");

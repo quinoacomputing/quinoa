@@ -1,6 +1,8 @@
 #ifndef QUINOA_MESH_ADAPTER_H
 #define QUINOA_MESH_ADAPTER_H
 
+#include "DerivedData.h"
+
 #include "types.h"
 #include "util.h"
 #include "id_generator.h"
@@ -23,7 +25,7 @@ namespace AMR {
 
             mesh_adapter_t( const std::vector< std::size_t >& inpoel ) :
                 tet_store(),
-                node_connectivity( util::npoin(inpoel) ),
+                node_connectivity( tk::npoin(inpoel) ),
                 refiner( tet_store, node_connectivity )
             {
                 consume_tets( inpoel );

@@ -18,7 +18,6 @@ namespace AMR {
         coordinate_t find_mid_point(coordinate_t edge_node_A, coordinate_t edge_node_B);
         coordinate_t find_mid_point(real_t x1, real_t y1, real_t z1, real_t x2, real_t y2, real_t z2);
 
-				std::size_t npoin( const std::vector< std::size_t >& inpoel );
     }
 }
 #endif // AMR_util

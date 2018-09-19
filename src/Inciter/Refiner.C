@@ -22,6 +22,7 @@
 #include "Around.h"
 #include "ExodusIIMeshWriter.h"
 #include "HashMapReducer.h"
+#include "Discretization.h"
 
 namespace inciter {
 
@@ -87,6 +88,8 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 {
   Assert( !m_ginpoel.empty(), "No elements assigned to refiner chare" );
 
+  usesAtSync = true;    // Enable migration at AtSync
+
   // Reverse initial mesh refinement type list (will pop from back)
   std::reverse( begin(m_initref), end(m_initref) );
 
@@ -96,6 +99,22 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
     start();
   else
     finish();
+}
+
+void
+Refiner::sendProxy()
+// *****************************************************************************
+// Send Refiner proxy to Discretization objects
+//! \details This should be called when bound Discretization chare array
+//!   elements have already been created.
+// *****************************************************************************
+{
+  // Make sure (bound) Discretization chare is already created and accessible
+  Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
+          "About to dereference nullptr" );
+
+  // Pass Refiner Charm++ chare proxy to fellow (bound) Discretization object
+  m_scheme.get()[thisIndex].ckLocal()->setRefiner( thisProxy );
 }
 
 void
@@ -422,6 +441,8 @@ Refiner::nextref()
 //!   are more steps configured by the user.
 // *****************************************************************************
 {
+  //AtSync();   // Migrate here if needed
+
   // Output mesh after recent step of initial mesh refinement
   auto level = g_inputdeck.get<tag::amr, tag::init>().size() - m_initref.size();
   tk::ExodusIIMeshWriter

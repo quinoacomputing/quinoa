@@ -49,6 +49,16 @@ class Refiner : public CBase_Refiner {
                       const std::map< int, std::vector< std::size_t > >& bnode,
                       int nchare );
 
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wundefined-func-template"
+    #endif
+    //! Migrate constructor
+    explicit Refiner( CkMigrateMessage* ) : m_refiner( m_inpoel ) {}
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
+
     //! Configure Charm++ reduction types
     static void registerReducers();
 
@@ -67,13 +77,18 @@ class Refiner : public CBase_Refiner {
     //! Decide wether to continue with another step of mesh refinement
     void nextref();
 
+    //! Send Refiner proxy to Discretization objects
+    void sendProxy();
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &p ) {
-      CBase_Refiner::pup(p);
+    void pup( PUP::er &p ) override {
       p | m_host;
+      p | m_sorter;
+      p | m_solver;
+      p | m_scheme;
       p | m_cbr;
       p | m_cbs;
       p | m_ginpoel;

@@ -31,6 +31,11 @@ namespace cmd {
          tk::grm::process_cmd_switch< use< kw::verbose >,
                                       tag::verbose > {};
 
+  //! Match and set chare state switch
+  struct charestate :
+         tk::grm::process_cmd_switch< use< kw::charestate >,
+                                      tag::chare > {};
+
   //! Match and set benchmark switch (i.e., benchmark mode)
   struct benchmark :
          tk::grm::process_cmd_switch< use< kw::benchmark >,
@@ -78,6 +83,7 @@ namespace cmd {
   //! Match all command line keywords
   struct keywords :
          pegtl::sor< verbose,
+                     charestate,
                      benchmark,
                      feedback,
                      virtualization,

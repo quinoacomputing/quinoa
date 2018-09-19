@@ -82,6 +82,8 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
                                   { return f*3+2 < m_triinpoel.size(); } ); } ),
           "Boundary face data structures inconsistent" );
 
+  usesAtSync = true;    // Enable migration at AtSync
+
   // Find chare-boundary nodes
   std::vector< std::size_t > chbnode;
   auto el = tk::global2local( ginpoel );      // generate local mesh data
@@ -335,6 +337,8 @@ Sorter::reorder()
 //  Reorder global mesh node IDs
 // *****************************************************************************
 {
+  AtSync();   // Migrate here if needed
+
   // Activate SDAG waits for arriving requests from other chares requesting new
   // node IDs for node IDs we assign new IDs to during reordering; and for
   // computing/receiving lower and upper bounds of global node IDs our chare's

@@ -23,6 +23,7 @@ target_include_directories(UnitTest PUBLIC
                            ${BRIGAND_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
+                           ${PROJECT_BINARY_DIR}/../Base
                            ${PROJECT_BINARY_DIR}/../Main
                            ${PROJECT_BINARY_DIR}/../LinSys
                            ${PROJECT_BINARY_DIR}/../LoadBalance

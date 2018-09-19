@@ -3113,6 +3113,25 @@ struct verbose_info {
 };
 using verbose = keyword< verbose_info, TAOCPP_PEGTL_STRING("verbose") >;
 
+struct charestate_info {
+  static std::string name() { return "charestate"; }
+  static std::string shortDescription() { return
+    "Enable verbose chare state screen output"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to enable verbose Charm++ chare state collection and
+    screen output. The chare state is displayed after a run is finished and the
+    data collected is grouped by chare id (thisIndex), and within groups data
+    is ordered by the time-stamp when a given chare member function is
+    called. See src/Base/ChareState.h for details on what is collected. Note
+    that to collect chare state, the given chare must be instrumented. For an
+    example, see src/Inciter/DG.h. Note that if quescence detection is enabled,
+    chare state collection is also automatically enabled, but the chare state is
+    only output if quiescence is detected (which also triggers an error).)";
+  }
+  using alias = Alias< S >;
+};
+using charestate = keyword< charestate_info, TAOCPP_PEGTL_STRING("state") >;
+
 struct benchmark_info {
   static std::string name() { return "benchmark"; }
   static std::string shortDescription() { return "Select benchmark mode"; }
@@ -3284,7 +3303,7 @@ struct reorder_info {
   struct expect {
     using type = bool;
     static std::string choices() { return "true | false"; }
-    static std::string description() { return "string (on/off) in inciter"; }
+    static std::string description() { return "string"; }
   };
 };
 using reorder = keyword< reorder_info, TAOCPP_PEGTL_STRING("reorder") >;

@@ -26,7 +26,6 @@ module transporter {
       entry [reductiontarget] void matched( std::size_t extra );
       entry [reductiontarget] void refined( std::size_t nelem,
                                             std::size_t npoin );
-      entry [reductiontarget] void flattened();
       entry [reductiontarget] void comfinal();
       entry [reductiontarget] void totalvol( tk::real v );
       entry [reductiontarget] void vol();
@@ -41,6 +40,7 @@ module transporter {
       entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
       entry [reductiontarget] void start();
       entry [reductiontarget] void next();
+      entry [reductiontarget] void advance( tk::real );
       entry [reductiontarget] void finish();
 
       entry void pepartitioned();

@@ -19,6 +19,7 @@ target_include_directories(RNGTest PUBLIC
                            ${QUINOA_SOURCE_DIR}/Control
                            ${QUINOA_SOURCE_DIR}/RNG
                            ${QUINOA_SOURCE_DIR}/Main
+                           ${PROJECT_BINARY_DIR}/../Base
                            ${PROJECT_BINARY_DIR}/../Main
                            ${PROJECT_BINARY_DIR}/../RNGTest
                            ${CHARM_INCLUDE_DIRS}

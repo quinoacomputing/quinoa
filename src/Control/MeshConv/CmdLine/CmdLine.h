@@ -36,6 +36,7 @@ class CmdLine :
   public tk::Control< // tag           type
                       tag::io,         ios,
                       tag::verbose,    bool,
+                      tag::chare,      bool,
                       tag::reorder,    bool,
                       tag::help,       bool,
                       tag::helpctr,    bool,
@@ -48,6 +49,7 @@ class CmdLine :
     //! \brief MeshConv command-line keywords
     //! \see tk::grm::use and its documentation
     using keywords = brigand::set< kw::verbose
+                                 , kw::charestate
                                  , kw::help
                                  , kw::helpkw
                                  , kw::input
@@ -64,6 +66,7 @@ class CmdLine :
     //! \see walker::ctr::CmdLine
     CmdLine() {
       set< tag::verbose >( false ); // Use quiet output by default
+      set< tag::chare >( false ); // No chare state output by default
       set< tag::reorder >( false ); // Do not reorder by default
       // Initialize help: fill from own keywords
       brigand::for_each< keywords >( tk::ctr::Info( get< tag::cmdinfo >() ) );
@@ -76,6 +79,7 @@ class CmdLine :
     void pup( PUP::er& p ) {
       tk::Control< tag::io,         ios,
                    tag::verbose,    bool,
+                   tag::chare,      bool,
                    tag::reorder,    bool,
                    tag::help,       bool,
                    tag::helpctr,    bool,
