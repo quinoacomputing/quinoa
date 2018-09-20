@@ -46,6 +46,10 @@ template<> template<>
 void RNGOptions_object::test< 2 >() {
   set_test_name( "param() throws if can't find" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   try {
 
     m.param( static_cast< tk::ctr::RNGType >( 250 ) );

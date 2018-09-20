@@ -61,6 +61,9 @@ try :
   }
   m_message = s.str();
 
+  // Uses streams (std::cerr) so it can be redirected
+  std::cerr << ">>> Exception: " << m_message.c_str() << '\n';
+
   // Save call-trace
   saveTrace();
 
