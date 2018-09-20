@@ -139,6 +139,14 @@ class DGPDE {
       tk::Fields& U ) const
     { return self->fieldOutput( t, V, geoElem, U ); }
 
+    //! Public interface to returning analytical solution
+    std::vector< tk::real >
+    analyticalSol( tk::real xi,
+                   tk::real yi,
+                   tk::real zi,
+                   tk::real t ) const
+    { return self->analyticalSol( xi, yi, zi, t ); }
+
     //! Copy assignment
     DGPDE& operator=( const DGPDE& x )
     { DGPDE tmp(x); *this = std::move(tmp); return *this; }
@@ -192,6 +200,10 @@ class DGPDE {
         tk::real,
         const tk::Fields&,
         tk::Fields& ) const = 0;
+      virtual std::vector< tk::real > analyticalSol( tk::real xi,
+                                                     tk::real yi,
+                                                     tk::real zi,
+                                                     tk::real t ) const = 0;
     };
 
     //! \brief Model models the Concept above by deriving from it and overriding
@@ -246,6 +258,12 @@ class DGPDE {
         const tk::Fields& geoElem,
         tk::Fields& U ) const override
       { return data.fieldOutput( t, V, geoElem, U ); }
+      std::vector< tk::real >
+      analyticalSol( tk::real xi,
+                     tk::real yi,
+                     tk::real zi,
+                     tk::real t ) const override
+      { return data.analyticalSol( xi, yi, zi, t ); }
       T data;
     };
 

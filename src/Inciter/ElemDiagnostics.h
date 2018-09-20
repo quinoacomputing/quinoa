@@ -31,6 +31,14 @@ class ElemDiagnostics {
                   const tk::Fields& geoElem,
                   const tk::Fields& u );
 
+    //! Compute diagnostics, e.g., residuals, norms of errors, etc. for dgp1
+    bool computep1( Discretization& d,
+                    const std::size_t nchGhost,
+                    const tk::Fields& geoElem,
+                    const std::vector< std::size_t >& inpoel,
+                    const tk::UnsMesh::Coords& coord,
+                    const tk::Fields& u );
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function

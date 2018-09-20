@@ -698,6 +698,22 @@ class Transport {
       return n;
     }
 
+    //! Return analytical solution at the given (xi,yi,zi) location at time t
+    //! \param[in] xi X-coordinate
+    //! \param[in] yi Y-coordinate
+    //! \param[in] zi Z-coordinate
+    //! \param[in] t Physical time
+    //! \return Vector of analytical solution at given location and time
+    std::vector< tk::real >
+    analyticalSol( tk::real xi,
+                   tk::real yi,
+                   tk::real zi,
+                   tk::real t ) const
+    {
+      const auto s = Problem::solution( m_c, m_ncomp, xi, yi, zi, t );
+      return s;
+    }
+
   private:
     const ncomp_t m_c;                  //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
