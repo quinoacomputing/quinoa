@@ -71,7 +71,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_recvGhost(),
   m_diag(),
   m_stage( 0 ),
-  m_dgp( 0 )
+  m_dgp( 1 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -668,7 +668,11 @@ DG::setup( tk::real v )
   lhs();
 
   // Set initial conditions for all PDEs
-  for (const auto& eq : g_dgpde) eq.initialize( m_geoElem, m_u,  d->T() );
+  for (const auto& eq : g_dgpde) 
+    if (m_dgp == 1)
+      eq.initializep1( m_lhs, d->Inpoel(), d->Coord(), m_u, d->T() );
+    else
+      eq.initialize( m_geoElem, m_u,  d->T() );
   m_un = m_u;
 
   // Output initial conditions to file (regardless of whether it was requested)

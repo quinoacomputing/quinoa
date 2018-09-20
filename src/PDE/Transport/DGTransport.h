@@ -103,6 +103,103 @@ class Transport {
       }
     }
 
+    //! Initalize the transport equations for DGP1 using problem policy
+    //! \param[in] lhs Element mass matrix
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in,out] unk Array of unknowns
+    //! \param[in] t Physical time
+    void initializep1( const tk::Fields& lhs,
+                       const std::vector< std::size_t >& inpoel,
+                       const tk::UnsMesh::Coords& coord,
+                       tk::Fields& unk,
+                       tk::real t ) const
+    {
+      Assert( lhs.nunk() == unk.nunk(), "Size mismatch" );
+      std::size_t nelem = unk.nunk();
+
+      // right hand side vector
+      std::vector< tk::real > R;
+      R.resize(unk.nprop(),0);
+
+      // arrays for quadrature points
+      std::array< std::vector< tk::real >, 3 > coordgp;
+      std::vector< tk::real > wgp; 
+
+      // resize quadrature point arrays
+      coordgp[0].resize(5,0);
+      coordgp[1].resize(5,0);
+      coordgp[2].resize(5,0);
+
+      wgp.resize(5,0);
+
+      // get quadrature point weights and coordinates for tetrahedron
+      GaussQuadrature( 3, coordgp, wgp );
+
+      for (std::size_t e=0; e<nelem; ++e)
+      {
+        auto vole = lhs(e, 0, m_offset);
+
+        auto x1 = coord[0][ inpoel[4*e]   ];
+        auto y1 = coord[1][ inpoel[4*e]   ];
+        auto z1 = coord[2][ inpoel[4*e]   ];
+
+        auto x2 = coord[0][ inpoel[4*e+1] ];
+        auto y2 = coord[1][ inpoel[4*e+1] ];
+        auto z2 = coord[2][ inpoel[4*e+1] ];
+
+        auto x3 = coord[0][ inpoel[4*e+2] ];
+        auto y3 = coord[1][ inpoel[4*e+2] ];
+        auto z3 = coord[2][ inpoel[4*e+2] ];
+
+        auto x4 = coord[0][ inpoel[4*e+3] ];
+        auto y4 = coord[1][ inpoel[4*e+3] ];
+        auto z4 = coord[2][ inpoel[4*e+3] ];
+
+        std::fill( R.begin(), R.end(), 0.0);
+
+        // Gaussian quadrature
+        for (std::size_t igp=0; igp<5; ++igp)
+        {
+          auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp]
+                    - 1.0;
+          auto B3 = 3.0 * coordgp[1][igp] + coordgp[2][igp] - 1.0;
+          auto B4 = 4.0 * coordgp[2][igp] - 1.0;
+
+          auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp] - coordgp[2][igp];
+          auto shp2 = coordgp[0][igp];
+          auto shp3 = coordgp[1][igp];
+          auto shp4 = coordgp[2][igp];
+
+          auto xgp = x1*shp1 + x2*shp2 + x3*shp3 + x4*shp4;
+          auto ygp = y1*shp1 + y2*shp2 + y3*shp3 + y4*shp4;
+          auto zgp = z1*shp1 + z2*shp2 + z3*shp3 + z4*shp4;
+
+          auto wt = vole * wgp[igp];
+
+          const auto s = Problem::solution( m_c, m_ncomp, xgp, ygp, zgp, t );
+          for (ncomp_t c=0; c<m_ncomp; ++c)
+          {
+            auto mark = c*m_ndof;
+
+            R[mark  ] += wt * s[c];
+            R[mark+1] += wt * s[c]*B2;
+            R[mark+2] += wt * s[c]*B3;
+            R[mark+3] += wt * s[c]*B4;
+          }
+        }
+
+        for (ncomp_t c=0; c<m_ncomp; ++c)
+        {
+          auto mark = c*m_ndof;
+          unk(e, mark,   m_offset) = R[mark]   / lhs(e, mark,   m_offset);
+          unk(e, mark+1, m_offset) = R[mark+1] / lhs(e, mark+1, m_offset);
+          unk(e, mark+2, m_offset) = R[mark+2] / lhs(e, mark+2, m_offset);
+          unk(e, mark+3, m_offset) = R[mark+3] / lhs(e, mark+3, m_offset);
+        }
+      }
+    }
+
     //! Compute the left hand side mass matrix
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] l Block diagonal mass matrix
@@ -217,7 +314,7 @@ class Transport {
     {
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
-      Assert( U.nprop() == m_ncomp && R.nprop() == m_ncomp,
+      Assert( U.nprop() == m_ndof*m_ncomp && R.nprop() == m_ndof*m_ncomp,
               "Number of components in solution and right-hand side vector " 
               "must equal "+ std::to_string(m_ncomp) );
 
@@ -393,6 +490,8 @@ class Transport {
       // get quadrature point weights and coordinates for tetrahedron
       GaussQuadrature( 3, coordgp, wgp );
 
+      std::array< std::array< tk::real, 3 >, 3 > jacInv;
+
       // compute volume integrals
       for (std::size_t e=0; e<U.nunk(); ++e)
       {
@@ -412,6 +511,59 @@ class Transport {
         auto y4 = coord[1][ inpoel[4*e+3] ];
         auto z4 = coord[2][ inpoel[4*e+3] ];
 
+        jacInv = getJacInverse( {{x1, y1, z1}},
+                                {{x2, y2, z2}},
+                                {{x3, y3, z3}},
+                                {{x4, y4, z4}} );
+
+        auto db2dxi1 = 2.0;
+        auto db2dxi2 = 1.0;
+        auto db2dxi3 = 1.0;
+
+        auto db3dxi1 = 0.0;
+        auto db3dxi2 = 3.0;
+        auto db3dxi3 = 1.0;
+
+        auto db4dxi1 = 0.0;
+        auto db4dxi2 = 0.0;
+        auto db4dxi3 = 4.0;
+
+        auto db2dx =  db2dxi1 * jacInv[0][0]
+                    + db2dxi2 * jacInv[1][0]
+                    + db2dxi3 * jacInv[2][0];
+
+        auto db2dy =  db2dxi1 * jacInv[0][1]
+                    + db2dxi2 * jacInv[1][1]
+                    + db2dxi3 * jacInv[2][1];
+
+        auto db2dz =  db2dxi1 * jacInv[0][2]
+                    + db2dxi2 * jacInv[1][2]
+                    + db2dxi3 * jacInv[2][2];
+
+        auto db3dx =  db3dxi1 * jacInv[0][0]
+                    + db3dxi2 * jacInv[1][0]
+                    + db3dxi3 * jacInv[2][0];
+
+        auto db3dy =  db3dxi1 * jacInv[0][1]
+                    + db3dxi2 * jacInv[1][1]
+                    + db3dxi3 * jacInv[2][1];
+
+        auto db3dz =  db3dxi1 * jacInv[0][2]
+                    + db3dxi2 * jacInv[1][2]
+                    + db3dxi3 * jacInv[2][2];
+
+        auto db4dx =  db4dxi1 * jacInv[0][0]
+                    + db4dxi2 * jacInv[1][0]
+                    + db4dxi3 * jacInv[2][0];
+
+        auto db4dy =  db4dxi1 * jacInv[0][1]
+                    + db4dxi2 * jacInv[1][1]
+                    + db4dxi3 * jacInv[2][1];
+
+        auto db4dz =  db4dxi1 * jacInv[0][2]
+                    + db4dxi2 * jacInv[1][2]
+                    + db4dxi3 * jacInv[2][2];
+
         // Gaussian quadrature
         for (std::size_t igp=0; igp<5; ++igp)
         {
@@ -430,18 +582,6 @@ class Transport {
           auto ygp = y1*shp1 + y2*shp2 + y3*shp3 + y4*shp4;
           auto zgp = z1*shp1 + z2*shp2 + z3*shp3 + z4*shp4;
 
-          auto db2dxi1 = 2.0;
-          auto db2dxi2 = 1.0;
-          auto db2dxi3 = 1.0;
-
-          auto db3dxi1 = 0.0;
-          auto db3dxi2 = 3.0;
-          auto db3dxi3 = 1.0;
-
-          auto db4dxi1 = 0.0;
-          auto db4dxi2 = 0.0;
-          auto db4dxi3 = 4.0;
-
           const auto vel = Problem::prescribedVelocity( xgp, ygp, zgp, m_c, m_ncomp );
 
           for (ncomp_t c=0; c<m_ncomp; ++c)
@@ -456,9 +596,9 @@ class Transport {
             auto fluxy = vel[c][1] * ugp;
             auto fluxz = vel[c][2] * ugp;
 
-            R(e, mark+1, m_offset) += wt * (fluxx * db2dxi1 + fluxy * db2dxi2 + fluxz * db2dxi3);
-            R(e, mark+2, m_offset) += wt * (fluxx * db3dxi1 + fluxy * db3dxi2 + fluxz * db3dxi3);
-            R(e, mark+3, m_offset) += wt * (fluxx * db4dxi1 + fluxy * db4dxi2 + fluxz * db4dxi3);
+            R(e, mark+1, m_offset) += wt * (fluxx * db2dx + fluxy * db2dy + fluxz * db2dz);
+            R(e, mark+2, m_offset) += wt * (fluxx * db3dx + fluxy * db3dy + fluxz * db3dz);
+            R(e, mark+3, m_offset) += wt * (fluxx * db4dx + fluxy * db4dy + fluxz * db4dz);
           }
         }
       }
@@ -943,6 +1083,47 @@ class Transport {
               * ((p2[1]-p1[1])*(p3[2]-p1[2]) - (p3[1]-p1[1])*(p2[2]-p1[2]));
 
       return detT;
+    }
+
+    //! Inverse of Jacobian of transformation
+    //! \param[in] p1 (x,y,z) coordinates of 1st local node in the tetrahedron
+    //! \param[in] p2 (x,y,z) coordinates of 2nd local node in the tetrahedron
+    //! \param[in] p3 (x,y,z) coordinates of 3rd local node in the tetrahedron
+    //! \param[in] p4 (x,y,z) coordinates of 4th local node in the tetrahedron
+    //! \return Inverse of the Jacobian of transformation of physical
+    //!   tetrahedron to reference (xi, eta, zeta) space
+    std::array< std::array< tk::real, 3 >, 3 >
+    getJacInverse( const std::array< tk::real, 3 >& p1,
+                   const std::array< tk::real, 3 >& p2,
+                   const std::array< tk::real, 3 >& p3,
+                   const std::array< tk::real, 3 >& p4 ) const
+    {
+      std::array< std::array< tk::real, 3 >, 3 > jacInv;
+
+      auto detJ = getJacobian( p1, p2, p3, p4 );
+
+      jacInv[0][0] =  (  (p3[1]-p1[1])*(p4[2]-p1[2])
+                       - (p4[1]-p1[1])*(p3[2]-p1[2])) / detJ;
+      jacInv[1][0] = -(  (p2[1]-p1[1])*(p4[2]-p1[2])
+                       - (p4[1]-p1[1])*(p2[2]-p1[2])) / detJ;
+      jacInv[2][0] =  (  (p2[1]-p1[1])*(p3[2]-p1[2])
+                       - (p3[1]-p1[1])*(p2[2]-p1[2])) / detJ;
+
+      jacInv[0][1] = -(  (p3[0]-p1[0])*(p4[2]-p1[2])
+                       - (p4[0]-p1[0])*(p3[2]-p1[2])) / detJ;
+      jacInv[1][1] =  (  (p2[0]-p1[0])*(p4[2]-p1[2])
+                       - (p4[0]-p1[0])*(p2[2]-p1[2])) / detJ;
+      jacInv[2][1] = -(  (p2[0]-p1[0])*(p3[2]-p1[2])
+                       - (p3[0]-p1[0])*(p2[2]-p1[2])) / detJ;
+
+      jacInv[0][2] =  (  (p3[0]-p1[0])*(p4[1]-p1[1])
+                       - (p4[0]-p1[0])*(p3[1]-p1[1])) / detJ;
+      jacInv[1][2] = -(  (p2[0]-p1[0])*(p4[1]-p1[1])
+                       - (p4[0]-p1[0])*(p2[1]-p1[1])) / detJ;
+      jacInv[2][2] =  (  (p2[0]-p1[0])*(p3[1]-p1[1])
+                       - (p3[0]-p1[0])*(p2[1]-p1[1])) / detJ;
+
+      return jacInv;
     }
 
 };

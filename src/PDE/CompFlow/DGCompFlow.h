@@ -146,6 +146,22 @@ class CompFlow {
       }
     }
 
+    //! Initalize the compressible flow equations, prepare for time integration
+    //! \param[in] lhs Element mass matrix
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in,out] unk Array of unknowns
+    //! \param[in] t Physical time
+    void initializep1( const tk::Fields& /*lhs*/,
+                       const std::vector< std::size_t >& /*inpoel*/,
+                       const tk::UnsMesh::Coords& /*coord*/,
+                       tk::Fields& /*unk*/,
+                       tk::real /*t*/ ) const
+    {
+      //Assert( lhs.nunk() == unk.nunk(), "Size mismatch" );
+      //std::size_t nelem = unk.nunk();
+    }
+
     //! Compute the left hand side block-diagonal mass matrix
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] l Block diagonal mass matrix

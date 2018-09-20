@@ -79,6 +79,14 @@ class DGPDE {
                      tk::real t ) const
     { self->initialize( geoElem, unk, t ); }
 
+    //! Public interface to setting the initial conditions for the diff eq
+    void initializep1( const tk::Fields& lhs,
+                       const std::vector< std::size_t >& inpoel,
+                       const tk::UnsMesh::Coords& coord,
+                       tk::Fields& unk,
+                       tk::real t ) const
+    { self->initializep1( lhs, inpoel, coord, unk, t ); }
+
     //! Public interface to computing the left-hand side matrix for the diff eq
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
     { self->lhs( geoElem, l ); }
@@ -152,6 +160,11 @@ class DGPDE {
       virtual void initialize( const tk::Fields&,
                                tk::Fields&,
                                tk::real ) const = 0;
+      virtual void initializep1( const tk::Fields& lhs,
+                                 const std::vector< std::size_t >& inpoel,
+                                 const tk::UnsMesh::Coords& coord,
+                                 tk::Fields& unk,
+                                 tk::real t ) const = 0;
       virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
       virtual void lhsp1( const tk::Fields&, tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
@@ -191,6 +204,12 @@ class DGPDE {
                        tk::Fields& unk,
                        tk::real t )
       const override { data.initialize( geoElem, unk, t ); }
+      void initializep1( const tk::Fields& lhs,
+                         const std::vector< std::size_t >& inpoel,
+                         const tk::UnsMesh::Coords& coord,
+                         tk::Fields& unk,
+                         tk::real t )
+      const override { data.initializep1( lhs, inpoel, coord, unk, t ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
       void lhsp1( const tk::Fields& geoElem, tk::Fields& l ) const override
