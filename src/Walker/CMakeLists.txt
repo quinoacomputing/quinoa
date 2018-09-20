@@ -18,6 +18,7 @@ target_include_directories(Walker PUBLIC
                            ${QUINOA_SOURCE_DIR}/DiffEq
                            ${QUINOA_SOURCE_DIR}/IO
                            ${QUINOA_SOURCE_DIR}/Statistics
+                           ${PROJECT_BINARY_DIR}/../Base
                            ${PROJECT_BINARY_DIR}/../Main
                            ${PROJECT_BINARY_DIR}/../Walker
                            ${BRIGAND_INCLUDE_DIRS}

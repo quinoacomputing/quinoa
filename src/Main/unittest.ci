@@ -11,8 +11,10 @@
 mainmodule unittest {
 
   extern module tutsuite;
+  extern module charestatecollector;
 
   readonly CProxy_Main mainProxy;
+  readonly tk::CProxy_ChareStateCollector stateProxy;
 
   namespace unittest {
 
@@ -30,6 +32,7 @@ mainmodule unittest {
     entry void execute();
     entry void finalize( bool worked, bool pass );
     entry void quiescence();
+    entry [reductiontarget] void dumpstate( CkReductionMsg* msg );
   }
 
   chare execute { entry execute(); }

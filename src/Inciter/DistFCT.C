@@ -72,6 +72,8 @@ DistFCT::DistFCT( int nchare,
 //! \param[in] inpoel Mesh connectivity of our chunk of the mesh
 // *****************************************************************************
 {
+  usesAtSync = true;    // Enable migration at AtSync
+
   // Allocate receive buffers for FCT
   m_pc.resize( m_bid.size() );
   for (auto& b : m_pc) b.resize( np*2 );

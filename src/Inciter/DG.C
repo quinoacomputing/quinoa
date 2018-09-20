@@ -22,6 +22,7 @@
 #include "ElemDiagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "ExodusIIMeshWriter.h"
+//#include "ChareStateCollector.h"
 
 namespace inciter {
 
@@ -31,17 +32,19 @@ extern std::vector< DGPDE > g_dgpde;
 
 } // inciter::
 
+//extern tk::CProxy_ChareStateCollector stateProxy;
+
 using inciter::DG;
 
 DG::DG( const CProxy_Discretization& disc,
         const tk::CProxy_Solver& solver,
         const FaceData& fd ) :
+  m_disc( disc ),
   m_solver( solver ),
   m_ncomfac( 0 ),
   m_nadj( 0 ),
   m_nsol( 0 ),
   m_itf( 0 ),
-  m_disc( disc ),
   m_fd( fd ),
   m_u( m_disc[thisIndex].ckLocal()->Inpoel().size()/4,
        g_inputdeck.get< tag::component >().nprop() ),
@@ -74,6 +77,13 @@ DG::DG( const CProxy_Discretization& disc,
 //! \param[in] fd Face data structures
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+//                                         "DG" );
+
+  usesAtSync = true;    // Enable migration at AtSync
+
   auto d = Disc();
 
   const auto& gid = d->Gid();
@@ -217,6 +227,11 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
 //! \param[in] infaces Unique set of faces we potentially share with fromch
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+//                                         "comfac" );
+
   // Attempt to find sender chare among chares we potentially share faces with.
   // Note that it is feasible that a sender chare called us but we do not have a
   // set of faces associated to that chare. This can happen if we only share a
@@ -388,6 +403,11 @@ DG::reqGhost()
 // Receive requests for ghost data
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+//                                         "reqGhost" );
+
   // If every chare we communicate with has requested ghost data from us, we may
   // fulfill the requests, but only if we have already setup our ghost data.
   if (++m_ghostReq == m_msumset.size()) reqghost_complete();
@@ -399,6 +419,11 @@ DG::sendGhost()
 // Send all of our ghost data to fellow chares
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+//                                         "sendGhost" );
+
   for (const auto& c : m_ghostData)
     thisProxy[ c.first ].comGhost( thisIndex, c.second );
 
@@ -428,6 +453,11 @@ DG::comGhost( int fromch, const GhostData& ghost )
 //! \param[in] ghost Ghost data, see Inciter/FaceData.h for the type
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+//                                         "comGhost" );
+
   // nodelist with fromch, currently only used for an assert
   const auto& nl = tk::cref_find( m_msumset, fromch );
   IGNORE(nl);
@@ -613,6 +643,11 @@ DG::setup( tk::real v )
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+//                                         "setup" );
+
   tk::destroy(m_msumset);
 
   auto d = Disc();
@@ -650,6 +685,11 @@ DG::dt()
 // Compute time step size
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+//                                         "dt" );
+
   auto mindt = std::numeric_limits< tk::real >::max();
 
   auto const_dt = g_inputdeck.get< tag::discr, tag::dt >();
@@ -676,8 +716,8 @@ DG::dt()
   thisProxy[ thisIndex ].wait4sol();
 
   // Contribute to minimum dt across all chares then advance to next step
-  contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-              CkCallback(CkReductionTarget(DG,advance), thisProxy) );
+  contribute(sizeof(tk::real), &mindt, CkReduction::min_double,
+             CkCallback(CkReductionTarget(Transporter,advance), Disc()->Tr()));
 }
 
 void
@@ -687,6 +727,11 @@ DG::advance( tk::real newdt )
 //! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+//                                         "advance" );
+
   auto d = Disc();
 
   // Set new time step size
@@ -722,6 +767,11 @@ DG::comsol( int fromch,
 //! \details This function receives contributions to m_u from fellow chares.
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+//                                         "comsol" );
+
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comsol()" );
 
   // Find local-to-ghost tet id map for sender chare
@@ -824,6 +874,11 @@ DG::solve()
 // Compute right-hand side of discrete transport equations
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+//                                         "solve" );
+
   auto d = Disc();
 
   for (const auto& eq : g_dgpde)
@@ -840,7 +895,8 @@ DG::solve()
     // Output field data to file
     out();
     // Compute diagnostics, e.g., residuals
-    auto diag = m_diag.compute( *d, m_u.nunk()-m_esuelTet.size()/4, m_geoElem, m_u );
+    auto diag =
+      m_diag.compute( *d, m_u.nunk()-m_esuelTet.size()/4, m_geoElem, m_u );
     // Increase number of iterations and physical time
     d->next();
     // Output one-liner status report
@@ -862,6 +918,13 @@ DG::eval()
 // Evaluate whether to continue with next step
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+//                                         "eval" );
+
+  if (m_stage == 3) AtSync();     // Migrate here if needed
+
   auto d = Disc();
 
   const auto term = g_inputdeck.get< tag::discr, tag::term >();

@@ -40,11 +40,6 @@ module dg {
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
-      // High-level overview of the dependency and asynchronous call structure
-      // ---------------------------------------------------------------------
-      //
-      // Control flow is from left to right and top to bottom.
-      //
       // If we have computed our own ghost data in setupGhost(), and every chare
       // we communicate with has requested ghost data from us, we fulfill the
       // requests and send out ghost data.

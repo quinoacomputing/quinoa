@@ -30,7 +30,7 @@ class StringParser {
     explicit StringParser( int argc, char** argv );
 
     //! \brief Echo errors and warnings accumulated during parsing
-    void diagnostics( const tk::Print& print,
+    void diagnostics( const Print& print,
                       const std::vector< std::string >& messages );
 
     std::string m_string;                     //!< String to parse

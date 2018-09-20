@@ -94,16 +94,11 @@ class Transporter : public CBase_Transporter {
     //! Reduction target: all PEs have optionally refined their mesh
     void refined( std::size_t nelem, std::size_t npoin );
 
-    //! \brief Reduction target indicating that all Partitioner chare groups
-    //!   have finished flattening its global mesh node IDs and they are ready
-    //!   for computing the communication maps required for node ID reordering
-    void flattened();
-
     //! Non-reduction target for receiving progress report on partitioning mesh
     void pepartitioned() { m_progMesh.inc< PART >(); }
     //! Non-reduction target for receiving progress report on distributing mesh
     void pedistributed() { m_progMesh.inc< DIST >(); }
-    //! Non-reduction target for receiving progress report on flattening mesh
+    //! Non-reduction target for receiving progress report on finding bnd nodes
     void chbnd() { m_progMesh.inc< BND >(); }
     //! Non-reduction target for receiving progress report on node ID comm map
     void chcomm() { m_progMesh.inc< COMM >(); }
@@ -162,7 +157,10 @@ class Transporter : public CBase_Transporter {
     void start();
 
     //! Reset linear solver for next time step
-    void next() { m_solver.next(); }
+    void next();
+
+    //! Reduction target computing minimum of dt
+    void advance( tk::real dt );
 
     //! Normal finish of time stepping
     void finish();

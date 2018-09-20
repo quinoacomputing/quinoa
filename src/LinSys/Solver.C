@@ -651,12 +651,11 @@ Solver::charebc( const std::unordered_map< std::size_t,
 // *****************************************************************************
 {
   // Associate BC vectors to mesh nodes owned
-  if (!bc.empty())  // only if chare has anything to offer
-    for (const auto& n : bc) {
-      Assert( n.second.size() == m_ncomp, "The total number of scalar "
-      "components does not equal that of set in the BC vector." );
-      m_bc[ n.first ] = n.second;
-    }
+  for (const auto& n : bc) {
+    Assert( n.second.size() == m_ncomp, "The total number of scalar "
+    "components does not equal that of set in the BC vector." );
+    m_bc[ n.first ] = n.second;
+  }
 
   // Forward all BC vectors received to fellow branches
   if (++m_nchbc == m_nchare) {

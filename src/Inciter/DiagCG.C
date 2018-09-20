@@ -31,7 +31,7 @@
 #include "DistFCT.h"
 #include "DiagReducer.h"
 #include "NodeBC.h"
-
+//#include "ChareStateCollector.h"
 #ifdef HAS_ROOT
   #include "RootMeshWriter.h"
 #endif
@@ -44,17 +44,19 @@ extern std::vector< CGPDE > g_cgpde;
 
 } // inciter::
 
+// extern tk::CProxy_ChareStateCollector stateProxy;
+
 using inciter::DiagCG;
 
 DiagCG::DiagCG( const CProxy_Discretization& disc,
                 const tk::CProxy_Solver& solver,
                 const FaceData& fd ) :
+  m_disc( disc ),
   m_itf( 0 ),
   m_nsol( 0 ),
   m_nlhs( 0 ),
   m_nrhs( 0 ),
   m_ndif( 0 ),
-  m_disc( disc ),
   m_fd( fd ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
@@ -70,7 +72,7 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_rhsc(),
   m_difc(),
   m_vol( 0.0 ),
-  m_diag( *Disc() )
+  m_diag()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -78,6 +80,13 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 //! \param[in] fd Face data structures
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
+//                                         Disc()->It(), "DiagCG" );
+
+  usesAtSync = true;    // Enable migration at AtSync
+
   auto d = Disc();
 
   // Allocate communication buffers for LHS, ICs, RHS, mass diffusion RHS
@@ -118,6 +127,11 @@ DiagCG::setup( tk::real v )
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
+//                                         Disc()->It(), "setup" );
+
   auto d = Disc();
 
   // Store total mesh volume
@@ -202,6 +216,11 @@ DiagCG::comlhs( const std::vector< std::size_t >& gid,
 //!   are combined in start().
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
+//                                         Disc()->It(), "comlhs" );
+
   Assert( L.size() == gid.size(), "Size mismatch" );
 
   using tk::operator+=;
@@ -226,6 +245,11 @@ DiagCG::dt()
 // Comppute time step size
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
+//                                         Disc()->It(), "dt" );
+
   tk::real mindt = std::numeric_limits< tk::real >::max();
 
   auto const_dt = g_inputdeck.get< tag::discr, tag::dt >();
@@ -254,7 +278,7 @@ DiagCG::dt()
 
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-              CkCallback(CkReductionTarget(DiagCG,advance), thisProxy) );
+              CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
 }
 
 void
@@ -312,6 +336,11 @@ DiagCG::comrhs( const std::vector< std::size_t >& gid,
 //!   are combined in solve().
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
+//                                         Disc()->It(), "comrhs" );
+
   Assert( R.size() == gid.size(), "Size mismatch" );
 
   using tk::operator+=;
@@ -344,6 +373,11 @@ DiagCG::comdif( const std::vector< std::size_t >& gid,
 //!   are combined in solve().
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
+//                                         Disc()->It(), "comdif" );
+
   Assert( D.size() == gid.size(), "Size mismatch" );
 
   using tk::operator+=;
@@ -518,6 +552,11 @@ DiagCG::advance( tk::real newdt )
 //! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
+//                                         Disc()->It(), "advance" );
+
   auto d = Disc();
 
   // Set new time step size
@@ -556,12 +595,11 @@ DiagCG::next( const tk::Fields& a )
   // Output field data to file
   out();
   // Compute diagnostics, e.g., residuals
-  auto diag =  m_diag.compute( *d, m_u );
+  auto diag = m_diag.compute( *d, m_u );
   // Increase number of iterations and physical time
   d->next();
   // Output one-liner status report
   d->status();
-
   // Evaluate whether to continue with next step
   if (!diag) eval();
 }
@@ -572,6 +610,13 @@ DiagCG::eval()
 // Evaluate whether to continue with next step
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
+//                                         Disc()->It(), "eval" );
+
+  AtSync();     // Migrate here if needed
+
   auto d = Disc();
 
   const auto term = g_inputdeck.get< tag::discr, tag::term >();

@@ -22,6 +22,7 @@
 #include "MeshConv/CmdLine/CmdLine.h"
 #include "MeshConv/CmdLine/Parser.h"
 #include "ProcessException.h"
+#include "ChareStateCollector.h"
 
 #include "NoWarning/charm.h"
 #include "NoWarning/meshconv.decl.h"
@@ -34,6 +35,9 @@
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
 CProxy_Main mainProxy;
+
+//! Chare state collector Charm++ chare group proxy
+tk::CProxy_ChareStateCollector stateProxy;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -78,18 +82,9 @@ class Main : public CBase_Main {
       m_timer(1),       // Start new timer measuring the total runtime
       m_timestamp()
     {
-      delete msg;
-      mainProxy = thisProxy;
-      // Optionally enable quiscence detection
-      if (m_cmdline.get< tag::quiescence >())
-        CkStartQD( CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
-      // Fire up an asynchronous execute object, which when created at some
-      // future point in time will call back to this->execute(). This is
-      // necessary so that this->execute() can access already migrated
-      // global-scope data.
-      CProxy_execute::ckNew();
-      // Start new timer measuring the migration of global-scope data
-      m_timer.emplace_back();
+      tk::MainCtor< CProxy_execute >
+        ( msg, mainProxy, thisProxy, stateProxy, m_timer, m_cmdline,
+          CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
     } catch (...) { tk::processExceptionCharm(); }
 
     void execute() {
@@ -99,14 +94,10 @@ class Main : public CBase_Main {
       } catch (...) { tk::processExceptionCharm(); }
     }
 
+    //! Towards normal exit but collect chare state first (if any)
     void finalize() {
-      try {
-        m_timestamp.emplace_back( "Total runtime", m_timer[0].hms() );
-        m_print.time( "Timers (h:m:s)", m_timestamp );
-        m_print.endpart();
-      } catch (...) { tk::processExceptionCharm(); }
-      // Tell the Charm++ runtime system to exit
-      CkExit();
+      tk::finalize( m_cmdline, m_timer, m_print, stateProxy, m_timestamp,
+                    CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
     }
 
     //! Add a time stamp contributing to final timers output
@@ -120,8 +111,16 @@ class Main : public CBase_Main {
     { for (const auto& t : s) timestamp( t.first, t.second ); }
 
     //! Entry method triggered when quiescence is detected
-    [[noreturn]] void quiescence() {
-      Throw( "Quiescence detected" );
+    void quiescence() {
+      try {
+        stateProxy.collect( /* error= */ true,
+          CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
+      } catch (...) { tk::processExceptionCharm(); }
+    }
+
+    //! Dump chare state
+    void dumpstate( CkReductionMsg* msg ) {
+      tk::dumpstate( m_cmdline, m_print, msg );
     }
 
   private:

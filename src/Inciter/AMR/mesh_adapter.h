@@ -23,13 +23,13 @@ class mesh_adapter_t {
 
   public:
     //! Constructor
-    mesh_adapter_t( const std::vector< std::size_t >& inpoel ) :
+    mesh_adapter_t( const std::vector< std::size_t >& /*inpoel*/ ) :
       tet_store(),
-      node_connectivity( tk::npoin(inpoel) ),
+      node_connectivity( 0/*tk::npoin(inpoel)*/ ),
       refiner( tet_store, node_connectivity )
     {
-      consume_tets( inpoel );
-      tet_store.generate_edges();
+      //consume_tets( inpoel );
+      //tet_store.generate_edges();
     }
 
     // TODO: Set these in a better way

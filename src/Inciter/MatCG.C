@@ -50,11 +50,11 @@ using inciter::MatCG;
 MatCG::MatCG( const CProxy_Discretization& disc,
               const tk::CProxy_Solver& solver,
               const FaceData& fd ) :
+  m_disc( disc ),
+  m_solver( solver ),
   m_itf( 0 ),
   m_nhsol( 0 ),
   m_nlsol( 0 ),
-  m_disc( disc ),
-  m_solver( solver ),
   m_fd( fd ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
@@ -65,7 +65,7 @@ MatCG::MatCG( const CProxy_Discretization& disc,
   m_lhsd( m_disc[thisIndex].ckLocal()->Psup().second.size()-1, m_u.nprop() ),
   m_lhso( m_disc[thisIndex].ckLocal()->Psup().first.size(), m_u.nprop() ),
   m_vol( 0.0 ),
-  m_diag( *Disc() )
+  m_diag()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -167,7 +167,7 @@ MatCG::dt()
 
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-              CkCallback(CkReductionTarget(MatCG,advance), thisProxy) );
+              CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
 }
 
 void

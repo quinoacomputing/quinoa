@@ -33,6 +33,11 @@ namespace cmd {
          tk::grm::process_cmd_switch< use< kw::verbose >,
                                       tag::verbose > {};
 
+  //! Match and set chare state switch
+  struct charestate :
+         tk::grm::process_cmd_switch< use< kw::charestate >,
+                                      tag::chare > {};
+
   //! \brief Match help on command-line parameters
   struct help :
          tk::grm::process_cmd_switch< use< kw::help >,
@@ -56,7 +61,7 @@ namespace cmd {
 
   //! \brief Match all command line keywords
   struct keywords :
-         pegtl::sor< verbose, help, helpkw, group, quiescence > {};
+         pegtl::sor< verbose, charestate, help, helpkw, group, quiescence > {};
 
   //! \brief Grammar entry point: parse keywords until end of string
   struct read_string :
