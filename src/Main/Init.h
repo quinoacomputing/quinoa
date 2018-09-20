@@ -95,9 +95,9 @@ Driver Main( int argc, char* argv[],
 //!    command line parser
 //! \param[in] msg Charm++ CkArgMsg pointer passed (by Charm++) to the main
 //!   chare proxy
-//! \param[in,out] mainProxy to set for the main chare
-//! \param[in] thisProxy 'thisProxy' to set as mainProxy
-//! \param[in,out] stateProxy Chare state collector proxy
+//! \param[in,out] mp MainProxy to set for the main chare
+//! \param[in] thisProxy 'thisProxy' to set as MainProxy
+//! \param[in,out] state Chare state collector proxy
 //! \param[in,out] timer Vector of timers, held by the main chare, in which to
 //!   start the first timer, measuring the migration of global-scope data
 //! \param[in] cmdline Command line grammar stack for the executable (assumed
@@ -106,9 +106,9 @@ Driver Main( int argc, char* argv[],
 //!   target function to call if quiescence is detected
 template< class ExecuteProxy, class MainProxy, class CmdLine >
 void MainCtor( CkArgMsg* msg,
-               MainProxy& mainProxy,
+               MainProxy& mp,
                const MainProxy& thisProxy,
-               tk::CProxy_ChareStateCollector& stateProxy,
+               tk::CProxy_ChareStateCollector& state,
                std::vector< tk::Timer >& timer,
                const CmdLine& cmdline,
                const CkCallback& quiescenceTarget )
@@ -116,13 +116,13 @@ void MainCtor( CkArgMsg* msg,
   delete msg;
 
   // Set Charm++ main proxy
-  mainProxy = thisProxy;
+  mp = thisProxy;
 
   // If quiescence detection is on or user requested it, create chare state
   // collector Charm++ chare group
   if ( cmdline.template get< tag::chare >() ||
        cmdline.template get< tag::quiescence >() )
-    stateProxy = tk::CProxy_ChareStateCollector::ckNew();
+    state = tk::CProxy_ChareStateCollector::ckNew();
 
   // Optionally enable quiscence detection
   if (cmdline.template get< tag::quiescence >()) CkStartQD( quiescenceTarget );
