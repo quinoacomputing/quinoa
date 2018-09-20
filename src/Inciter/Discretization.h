@@ -60,8 +60,11 @@ class Discretization : public CBase_Discretization {
     void vol();
 
     //! Set Refiner Charm++ proxy
-    //! \param[in] ref Incoming refiner proxy to store
-    void setRefiner( const CProxy_Refiner& ref ) { m_refiner = ref; }
+    void setRefiner( const CProxy_Refiner& ref );
+
+    //! Receive new mesh from refiner
+    void newMesh( const std::vector< std::size_t >& inpoel,
+                  const tk::UnsMesh::Coords& coord );
 
     //! Collect nodal volumes across chare boundaries
     void comvol( const std::vector< std::size_t >& gid,

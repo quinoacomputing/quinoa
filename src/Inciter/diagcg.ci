@@ -28,7 +28,7 @@ module diagcg {
       initnode void registerReducers();
       entry void setup( tk::real v );
       entry void dt();
-      entry void eval();
+      entry void diag();
       entry [reductiontarget] void advance( tk::real newdt );
       entry void comlhs( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& L );
@@ -72,12 +72,17 @@ module diagcg {
         when ownrhs_complete(), comrhs_complete(),
              owndif_complete(), comdif_complete() serial "rhs" { solve(); } };
 
+      entry void wait4eval() {
+        when diag_complete(), ref_complete() serial "eval" { eval(); } };
+
       entry void ownlhs_complete();
       entry void ownrhs_complete();
       entry void owndif_complete();
       entry void comlhs_complete();
       entry void comrhs_complete();
       entry void comdif_complete();
+      entry void diag_complete();
+      entry void ref_complete();
     };
 
   } // inciter::

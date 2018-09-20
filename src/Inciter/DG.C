@@ -714,6 +714,7 @@ DG::dt()
 
   // Enable SDAG wait for building the solution vector
   thisProxy[ thisIndex ].wait4sol();
+  if (m_stage == 2) thisProxy[ thisIndex ].wait4eval();
 
   // Contribute to minimum dt across all chares then advance to next step
   contribute(sizeof(tk::real), &mindt, CkReduction::min_double,
@@ -891,25 +892,46 @@ DG::solve()
   // Increment Runge-Kutta stage counter
   ++m_stage;
 
-  if (m_stage == 3) {
+  if (m_stage < 3) {
+
+    // Continue with next tims step stage
+    eval();
+
+  } else {
+
     // Output field data to file
     out();
     // Compute diagnostics, e.g., residuals
-    auto diag =
+    auto diag_computed =
       m_diag.compute( *d, m_u.nunk()-m_esuelTet.size()/4, m_geoElem, m_u );
     // Increase number of iterations and physical time
     d->next();
-    // Output one-liner status report
-    d->status();
     // Update Un
     m_un = m_u;
+    // Signal that diagnostics have been computed (or in this case, skipped)
+    if (!diag_computed) diag();
+    // Optionally refine mesh
+    refine();
 
-    // Evaluate whether to continue with next step
-    if (!diag) eval();
   }
-  else
-    // Continue with next stage
-    eval();
+}
+
+void
+DG::diag()
+// *****************************************************************************
+// Signal the runtime system that diagnostics have been computed
+// *****************************************************************************
+{
+  diag_complete();
+}
+
+void
+DG::refine()
+// *****************************************************************************
+// Optionally refine/derefine mesh
+// *****************************************************************************
+{
+  ref_complete();
 }
 
 void
@@ -923,8 +945,6 @@ DG::eval()
 //     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
 //                                         "eval" );
 
-  if (m_stage == 3) AtSync();     // Migrate here if needed
-
   auto d = Disc();
 
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
@@ -933,16 +953,25 @@ DG::eval()
 
   // If Runge-Kutta stages not complete, continue with dt(), otherwise assess
   // computation completion criteria
-  if (m_stage < 3) 
+  if (m_stage < 3) {
+
     dt();
-  else {
+
+  } else {
+
+    // Output one-liner status report to screen
+    d->status();
     // Reset Runge-Kutta stage counter
     m_stage = 0;
+
     // If neither max iterations nor max time reached, continue, otherwise finish
-    if (std::fabs(d->T()-term) > eps && d->It() < nstep)
+    if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
+      AtSync();   // Migrate here if needed
       dt();
-    else
+    } else {
       contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));
+    }
+
   }
 }
 

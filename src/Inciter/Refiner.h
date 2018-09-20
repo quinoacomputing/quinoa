@@ -62,6 +62,9 @@ class Refiner : public CBase_Refiner {
     //! Configure Charm++ reduction types
     static void registerReducers();
 
+    //! Start new step of mesh refinement
+    void start( bool initial, tk::real t );
+
     //! Receive boundary edges from all PEs (including this one)
     void addBndEdges( CkReductionMsg* msg );
 
@@ -74,8 +77,8 @@ class Refiner : public CBase_Refiner {
     //! Correct refinement to arrive at conforming mesh across chare boundaries
     void correctref();
 
-    //! Decide wether to continue with another step of mesh refinement
-    void nextref();
+    //! Decide what to do after a mesh refinement step
+    void eval();
 
     //! Send Refiner proxy to Discretization objects
     void sendProxy();
@@ -104,6 +107,8 @@ class Refiner : public CBase_Refiner {
       p | m_triinpoel;
       p | m_bnode;
       p | m_nchare;
+      p | m_initial;
+      p | m_t;
       p | m_initref;
       p | m_refiner;
       p | m_nref;
@@ -172,6 +177,10 @@ class Refiner : public CBase_Refiner {
     std::map< int, std::vector< std::size_t > > m_bnode;
     //! Total number of refiner chares
     int m_nchare;
+    //! True if initial AMR, false if during time stepping
+    bool m_initial;
+    //! Physical time
+    tk::real m_t;
     //! Initial mesh refinement type list (in reverse order)
     std::vector< ctr::AMRInitialType > m_initref;
     //! Mesh refiner (library) object
@@ -192,9 +201,6 @@ class Refiner : public CBase_Refiner {
 
     //! Generate flat coordinate data from coordinate map
     tk::UnsMesh::Coords flatcoord( const tk::UnsMesh::CoordMap& coordmap );
-
-    //! Prepare for next step of mesh refinement
-    void start();
 
     //! Generate boundary edges and send them to all chares
     void bndEdges();

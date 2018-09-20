@@ -116,11 +116,14 @@ class DiagCG : public CBase_DiagCG {
     void comdif( const std::vector< std::size_t >& gid,
                  const std::vector< std::vector< tk::real > >& D );
 
-    //! Prepare for next step    
-    void next( const tk::Fields& a );
+    //! Update solution at the end of time step
+    void update( const tk::Fields& a );
 
-    //! Evaluate whether to continue with next step
-    void eval();
+    //! Signal the runtime system that diagnostics have been computed
+    void diag();
+
+    //! Optionally refine/derefine mesh
+    void refine();
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -230,6 +233,9 @@ class DiagCG : public CBase_DiagCG {
 
     //! Solve low and high order diagonal systems
     void solve();
+
+    //! Evaluate whether to continue with next step
+    void eval();
 };
 
 } // inciter::

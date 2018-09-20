@@ -276,6 +276,10 @@ DiagCG::dt()
 
   }
 
+  // Actiavate SDAG waits for time step
+  thisProxy[ thisIndex ].wait4rhs();
+  thisProxy[ thisIndex ].wait4eval();
+
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
               CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
@@ -565,15 +569,12 @@ DiagCG::advance( tk::real newdt )
   // Activate SDAG-waits for FCT
   d->FCT()->next();
 
-  // Actiavate SDAG waits for time step
-  thisProxy[ thisIndex ].wait4rhs();
-
   // Compute rhs for next time step
   rhs();
 }
 
 void
-DiagCG::next( const tk::Fields& a )
+DiagCG::update( const tk::Fields& a )
 // *****************************************************************************
 // Prepare for next step
 //! \param[in] a Limited antidiffusive element contributions
@@ -595,13 +596,31 @@ DiagCG::next( const tk::Fields& a )
   // Output field data to file
   out();
   // Compute diagnostics, e.g., residuals
-  auto diag = m_diag.compute( *d, m_u );
+  auto diag_computed = m_diag.compute( *d, m_u );
   // Increase number of iterations and physical time
   d->next();
-  // Output one-liner status report
-  d->status();
-  // Evaluate whether to continue with next step
-  if (!diag) eval();
+  // Signal that diagnostics have been computed (or in this case, skipped)
+  if (!diag_computed) diag();
+  // Optionally refine mesh
+  refine();
+}
+
+void
+DiagCG::diag()
+// *****************************************************************************
+// Signal the runtime system that diagnostics have been computed
+// *****************************************************************************
+{
+  diag_complete();
+}
+
+void
+DiagCG::refine()
+// *****************************************************************************
+// Optionally refine/derefine mesh
+// *****************************************************************************
+{
+  ref_complete();
 }
 
 void
@@ -615,19 +634,23 @@ DiagCG::eval()
 //     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
 //                                         Disc()->It(), "eval" );
 
-  AtSync();     // Migrate here if needed
 
   auto d = Disc();
+
+  // Output one-liner status report to screen
+  d->status();
 
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
 
   // If neither max iterations nor max time reached, continue, otherwise finish
-  if (std::fabs(d->T()-term) > eps && d->It() < nstep)
+  if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
+    AtSync();   // Migrate here if needed
     dt();
-  else
+  } else {
     contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
+  }
 }
 
 #include "NoWarning/diagcg.def.h"

@@ -62,6 +62,8 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_triinpoel( triinpoel ),
   m_bnode( bnode ),
   m_nchare( nchare ),
+  m_initial( true ),
+  m_t( 0.0 ),
   m_initref( g_inputdeck.get< tag::amr, tag::init >() ),
   m_refiner( m_inpoel ),
   m_nref( 0 ),
@@ -96,7 +98,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   // If initial mesh refinement is configured, start initial mesh refinement.
   // See also tk::grm::check_amr_errors in Control/Inciter/InputDeck/Ggrammar.h.
   if (g_inputdeck.get< tag::amr, tag::initamr >())
-    start();
+    start( true, 0.0 );
   else
     finish();
 }
@@ -161,15 +163,21 @@ Refiner::flatcoord( const tk::UnsMesh::CoordMap& coordmap )
 }
 
 void
-Refiner::start()
+Refiner::start( bool initial, tk::real t )
 // *****************************************************************************
-// Prepare for next step of mesh refinement
+// Start new step of mesh refinement
+//! \param[in] initial True if initial AMR, false if during time stepping
+//! \param[in] t Physical time
 // *****************************************************************************
 {
-  Assert( (!g_inputdeck.get< tag::amr, tag::init >().empty()) ||
-          (!g_inputdeck.get< tag::amr, tag::init >().empty()),
-          "Neither initial mesh refinement type list nor user-defined "
-          "edge list given" );
+  m_initial = initial;
+  m_t = t;
+
+  if (initial)
+    Assert( (!g_inputdeck.get< tag::amr, tag::init >().empty()) ||
+            (!g_inputdeck.get< tag::amr, tag::init >().empty()),
+            "Neither initial mesh refinement type list nor user-defined "
+            "edge list given" );
 
   m_extra = 0;  // assume at least a single step of correction is needed
   m_bndEdges.clear();
@@ -434,35 +442,54 @@ Refiner::correctref()
 }
 
 void
-Refiner::nextref()
+Refiner::eval()
 // *****************************************************************************
-// Decide wether to continue with another step of mesh refinement
-//! \details This concludes this mesh refinement step, and we continue if there
-//!   are more steps configured by the user.
+// Decide what to do after a mesh refinement step
+//! \details If this function is called during a step (potentially multiple
+//!   levels of) initial AMR, it evaluates whether to do another one. If it is
+//!   called during time stepping, this concludes the single mesh refinement
+//!   step and the new mesh is sent to the PDE worker (Discretization).
 // *****************************************************************************
 {
   AtSync();   // Migrate here if needed
 
-  // Output mesh after recent step of initial mesh refinement
-  auto level = g_inputdeck.get<tag::amr, tag::init>().size() - m_initref.size();
-  tk::ExodusIIMeshWriter
-    mw( "initref." + std::to_string(level) + '.' + std::to_string(thisIndex),
-        tk::ExoWriter::CREATE );
-  // Output mesh coordinates and connectivity
-  tk::UnsMesh refmesh( m_inpoel, m_coord );
-  mw.writeMesh( refmesh );
-  // Output element-centered scalar fields on recent mesh refinement step
-  mw.writeElemVarNames( { "refinement level", "cell type" } );
-  mw.writeElemScalar( 1, 1, m_refiner.tet_store.get_refinement_level_list() );
-  mw.writeElemScalar( 1, 2, m_refiner.tet_store.get_cell_type_list() );
+  // Lambda to write mesh to file after refinement step. Parameters:
+  //  * prefix - Prefix to mesh filename
+  //  * it - Iteration count to put in filename (This could be the
+  //  refinement level for initial (pre-timestepping) AMR or the physical time
+  //  for AMR during time stepping.
+  auto writeMesh = [this]( const std::string& prefix, const std::string& it ){
+    tk::ExodusIIMeshWriter
+      mw( prefix + '.' + it + '.' + std::to_string(this->thisIndex),
+          tk::ExoWriter::CREATE );
+    // Output mesh coordinates and connectivity
+    tk::UnsMesh refmesh( this->m_inpoel, this->m_coord );
+    mw.writeMesh( refmesh );
+    // Output element-centered scalar fields on recent mesh refinement step
+    mw.writeElemVarNames( { "refinement level", "cell type" } );
+    auto& tet_store = this->m_refiner.tet_store;
+    mw.writeElemScalar( 1, 1, tet_store.get_refinement_level_list() );
+    mw.writeElemScalar( 1, 2, tet_store.get_cell_type_list() );
+  };
 
-  // Remove initial mesh refinement step from list
-  if (!m_initref.empty()) m_initref.pop_back();
+  if (m_initial) {      // if initial (before t=0) AMR
 
-  if (!m_initref.empty())       // Continue to next initial refinement step
-    start();
-  else                          // Finish mesh refinement
-    finish();
+    // Output mesh after recent step of initial mesh refinement
+    auto level = g_inputdeck.get<tag::amr, tag::init>().size() - m_initref.size();
+    writeMesh( "t0ref", std::to_string(level) );
+    // Remove initial mesh refinement step from list
+    if (!m_initref.empty()) m_initref.pop_back();
+    // Continue to next initial AMR step or finish
+    if (!m_initref.empty()) start( true, 0.0 ); else finish();
+
+  } else {              // if AMR during time stepping (t>0)
+
+    // Output mesh after recent step of mesh refinement during time stepping
+    writeMesh( "dtref", std::to_string(m_t) );
+    // Send new mesh back to PDE worker base (Discretization)
+    m_scheme.get()[thisIndex].ckLocal()->newMesh( m_inpoel, m_coord );
+
+  }
 }
 
 void

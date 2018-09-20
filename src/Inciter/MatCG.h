@@ -49,6 +49,29 @@ extern ctr::InputDeck g_inputdeck;
 class MatCG : public CBase_MatCG {
 
   public:
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wunused-parameter"
+      #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    #elif defined(STRICT_GNUC)
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wunused-parameter"
+      #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    #elif defined(__INTEL_COMPILER)
+      #pragma warning( push )
+      #pragma warning( disable: 1478 )
+    #endif
+    // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
+    // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+    MatCG_SDAG_CODE
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #elif defined(STRICT_GNUC)
+      #pragma GCC diagnostic pop
+    #elif defined(__INTEL_COMPILER)
+      #pragma warning( pop )
+    #endif
+
     //! Constructor
     explicit MatCG( const CProxy_Discretization& disc,
                     const tk::CProxy_Solver& solver,
@@ -86,11 +109,14 @@ class MatCG : public CBase_MatCG {
                        const std::vector< std::size_t >& gid,
                        const std::vector< tk::real >& du );
 
-    //! Prepare for next step
-    void next( const tk::Fields& a );
+    //! Update solution at the end of time step
+    void update( const tk::Fields& a );
 
-    //! Evaluate whether to continue with next step
-    void eval();
+    //! Signal the runtime system that diagnostics have been computed
+    void diag();
+
+    //! Optionally refine/derefine mesh
+    void refine();
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -172,6 +198,9 @@ class MatCG : public CBase_MatCG {
 
     //! Compute righ-hand side vector of transport equations
     void rhs();
+
+    //! Evaluate whether to continue with next step
+    void eval();
 };
 
 } // inciter::

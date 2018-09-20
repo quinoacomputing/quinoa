@@ -31,7 +31,7 @@ module dg {
       initnode void registerReducers();      
       entry void setup( tk::real v );
       entry void dt();
-      entry void eval();
+      entry void diag();
       entry void comsol( int fromch,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u );
@@ -55,10 +55,15 @@ module dg {
       entry void wait4sol() {
         when ownsol_complete(), comsol_complete() serial "sol" { solve(); } };
 
+      entry void wait4eval() {
+        when diag_complete(), ref_complete() serial "eval" { eval(); } };
+
       entry void ownghost_complete();
       entry void reqghost_complete();
       entry void ownsol_complete();
       entry void comsol_complete();
+      entry void diag_complete();
+      entry void ref_complete();
     };
 
   } // inciter::

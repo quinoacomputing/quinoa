@@ -29,12 +29,21 @@ module matcg {
       initnode void registerReducers();
       entry void setup( tk::real v );
       entry void dt();
-      entry void eval();
+      entry void diag();
       entry [reductiontarget] void advance( tk::real newdt );
       entry void updateSol( const std::vector< std::size_t >& gid,
                             const std::vector< tk::real >& sol );
       entry void updateLowSol( const std::vector< std::size_t >& gid,
                                const std::vector< tk::real >& sol );
+
+      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+      entry void wait4eval() {
+        when diag_complete(), ref_complete() serial "eval" { eval(); } };
+
+      entry void diag_complete();
+      entry void ref_complete();
     };
 
   } // inciter::

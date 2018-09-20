@@ -401,7 +401,7 @@ Transporter::matched( std::size_t extra )
     m_refiner.correctref();
   else {
     m_progMesh.inc< REFINE >();
-    m_refiner.nextref();
+    m_refiner.eval();
   }
 }
 
@@ -750,7 +750,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
   dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
 
   // Evaluate whether to continue with next step
-  m_scheme.eval< tag::bcast >();
+  m_scheme.diag< tag::bcast >();
 }
 
 void
