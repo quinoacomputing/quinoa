@@ -146,7 +146,6 @@ class DG : public CBase_DG {
       p | m_diag;
       p | m_stage;
       p | m_rkcoef;
-      p | m_dgp;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -237,8 +236,6 @@ class DG : public CBase_DG {
     //! Runge-Kutta coefficients
     std::array< std::array< tk::real, 3 >, 2 >
       m_rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
-    //! Order of DG solution
-    uint8_t m_dgp;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

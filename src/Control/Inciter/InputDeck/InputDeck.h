@@ -173,7 +173,7 @@ class InputDeck :
       set< tag::discr, tag::ctau >( 1.0 );
       set< tag::discr, tag::scheme >( SchemeType::MatCG );
       set< tag::discr, tag::flux >( FluxType::HLLC );
-      set< tag::discr, tag::dof >( 4 );
+      set< tag::discr, tag::ndof >( 1 );
       // Default field output file type
       set< tag::selected, tag::filetype >( tk::ctr::FieldFileType::EXODUSII );
       // Default AMR settings

@@ -72,7 +72,7 @@ class Transport {
       m_bcextrapolate( config< tag::bcextrapolate >( c ) ),
       m_bcinlet( config< tag::bcinlet >( c ) ),
       m_bcoutlet( config< tag::bcoutlet >( c ) ),
-      m_ndof( g_inputdeck.get< tag::discr, tag::dof >() )
+      m_ndof( g_inputdeck.get< tag::discr, tag::ndof >() )
     {
       Problem::errchk( m_c, m_ncomp );
     }

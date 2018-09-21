@@ -234,6 +234,10 @@ namespace grm {
       if (stack.template get< tag::discr, tag::scheme >() ==
            inciter::ctr::SchemeType::MatCG)
         stack.template get< tag::discr, tag::reorder >() = true;
+      // if DGP1 is configured, set ndofs to be 4
+      if (stack.template get< tag::discr, tag::scheme >() ==
+           inciter::ctr::SchemeType::DGP1)
+        stack.template get< tag::discr, tag::ndof >() = 4;
     }
   };
 

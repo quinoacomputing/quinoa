@@ -96,7 +96,7 @@ ElemDiagnostics::compute( Discretization& d,
     // 0: L2-norm of all scalar components of the numerical solution
     // 1: L2-norm of all scalar components of the numerical-analytic solution
     // 2: Linf-norm of all scalar components of the numerical-analytic solution
-    auto ndof = g_inputdeck.get< tag::discr, tag::dof >();
+    auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
     std::vector< std::vector< tk::real > >
       diag( NUMDIAG, std::vector< tk::real >( u.nprop()/ndof, 0.0 ) );
 
@@ -181,7 +181,7 @@ ElemDiagnostics::computep1( Discretization& d,
     // 0: L2-norm of all scalar components of the numerical solution
     // 1: L2-norm of all scalar components of the numerical-analytic solution
     // 2: Linf-norm of all scalar components of the numerical-analytic solution
-    auto ndof = g_inputdeck.get< tag::discr, tag::dof >();
+    auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
     std::vector< std::vector< tk::real > >
       diag( NUMDIAG, std::vector< tk::real >( u.nprop()/ndof, 0.0 ) );
 

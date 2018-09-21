@@ -46,7 +46,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_nsol( 0 ),
   m_itf( 0 ),
   m_fd( fd ),
-  m_ndof( g_inputdeck.get< tag::discr, tag::dof >() ),
+  m_ndof( g_inputdeck.get< tag::discr, tag::ndof >() ),
   m_u( m_disc[thisIndex].ckLocal()->Inpoel().size()/4,
        m_ndof*g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
@@ -70,8 +70,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_exptGhost(),
   m_recvGhost(),
   m_diag(),
-  m_stage( 0 ),
-  m_dgp( 1 )
+  m_stage( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -669,7 +668,7 @@ DG::setup( tk::real v )
 
   // Set initial conditions for all PDEs
   for (const auto& eq : g_dgpde) 
-    if (m_dgp == 1)
+    if (m_ndof == 4)
       eq.initializep1( m_lhs, d->Inpoel(), d->Coord(), m_u, d->T() );
     else
       eq.initialize( m_geoElem, m_u,  d->T() );
@@ -872,7 +871,7 @@ DG::lhs()
 {
   // Compute left-hand side matrix for all equations
   for (const auto& eq : g_dgpde)
-    if (m_dgp == 1)
+    if (m_ndof == 4)
       eq.lhsp1( m_geoElem, m_lhs );
     else
       eq.lhs( m_geoElem, m_lhs );
@@ -893,7 +892,7 @@ DG::solve()
   auto d = Disc();
 
   for (const auto& eq : g_dgpde)
-    if (m_dgp == 1)
+    if (m_ndof == 4)
       eq.rhsp1( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(),
                 m_u, m_rhs );
     else
@@ -916,8 +915,14 @@ DG::solve()
     // Output field data to file
     out();
     // Compute diagnostics, e.g., residuals
-    auto diag_computed =
-      m_diag.compute( *d, m_u.nunk()-m_esuelTet.size()/4, m_geoElem, m_u );
+    bool diag_computed;
+    if (m_ndof == 4)
+      diag_computed = m_diag.computep1( *d, m_u.nunk()-m_esuelTet.size()/4,
+                                        m_geoElem, d->Inpoel(), d->Coord(),
+                                        m_u );
+    else
+      diag_computed = m_diag.compute( *d, m_u.nunk()-m_esuelTet.size()/4,
+                                      m_geoElem, m_u );
     // Increase number of iterations and physical time
     d->next();
     // Update Un
