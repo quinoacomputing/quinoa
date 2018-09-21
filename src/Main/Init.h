@@ -180,7 +180,7 @@ void dumpstate( const CmdLine& cmdline,
 //! \param[in] cmdline Command line grammar stack for the executable
 //! \param[in] timer Vector of timers, held by the main chare
 //! \param[in] print Pretty printer
-//! \param[in,out] stateProxy Chare state collector proxy
+//! \param[in,out] state Chare state collector proxy
 //! \param[in,out] timestamp Vector of time stamps in h:m:s with labels
 //! \param[in] dumpstateTarget Pre-created Charm++ callback to use as the
 //!   target function for dumping chare state
@@ -188,7 +188,7 @@ template< class CmdLine >
 void finalize( const CmdLine& cmdline,
                const std::vector< tk::Timer >& timer,
                const tk::Print& print,
-               tk::CProxy_ChareStateCollector& stateProxy,
+               tk::CProxy_ChareStateCollector& state,
                std::vector< std::pair< std::string,
                                        tk::Timer::Watch > >& timestamp,
                const CkCallback& dumpstateTarget )
@@ -203,7 +203,7 @@ void finalize( const CmdLine& cmdline,
       // state
      if ( cmdline.template get< tag::chare >() ||
           cmdline.template get< tag::quiescence >() )
-       stateProxy.collect( /* error = */ false, dumpstateTarget );
+       state.collect( /* error = */ false, dumpstateTarget );
      else
        CkExit(); // tell the Charm++ runtime system to exit
     }
