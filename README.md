@@ -18,4 +18,4 @@ practically useful) multiphysics problems with a production-quality code that
 is extensible and maintainable, using hardware resources efficiently even for
 problems with _a priori_ unknown and heterogeneous load distribution that can
 also dynamically change in time. Read more at our
-[documentation](https://quinoacomputing.github.io/why.html) page.
+[documentation](https://quinoacomputing.github.io) page.
