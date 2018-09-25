@@ -1,5 +1,4 @@
-Quinoa
-======
+## What is Quinoa?
 
 _Adaptive computational fluid dynamics_
 
