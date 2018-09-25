@@ -81,3 +81,16 @@ void PUP::pup( PUP::er &p, AMR::mesh_adapter_t& m )
   p | m.node_store;
   p | m.refiner;
 }
+
+void PUP::pup( PUP::er &p, AMR::node_store_t& n )
+// *****************************************************************************
+//  Pack/Unpack node_store_t
+//! \param[in] p Charm++'s pack/unpack object
+//! \param[in,out] n node_store_t object reference
+// *****************************************************************************
+{
+  p | n.m_x;
+  p | n.m_y;
+  p | n.m_z;
+  p | n.m_graphsize;
+}
