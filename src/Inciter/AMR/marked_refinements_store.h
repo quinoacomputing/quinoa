@@ -6,11 +6,8 @@
 
 namespace AMR {
 
-    // TODO: Should we more careful about deleting things from here?
-        // Or is it OK to just set them to none?
     class marked_refinements_store_t {
         private:
-            // TODO: Make this unordered
             std::map<size_t, Refinement_Case> marked_refinements;
 
             // TODO: This probably isn't the right place for this
@@ -19,6 +16,20 @@ namespace AMR {
             bool refinement_state_changed = false;
 
         public:
+            /** @name Charm++ pack/unpack serializer member functions */
+            ///@{
+            //! \brief Pack/Unpack serialize member function
+            //! \param[in,out] p Charm++'s PUP::er serializer object reference
+            void pup( PUP::er &p ) {
+              p | marked_refinements;
+            }
+            //! \brief Pack/Unpack serialize operator|
+            //! \param[in,out] p Charm++'s PUP::er serializer object reference
+            //! \param[in,out] m tet_store_t object reference
+            friend void operator|( PUP::er& p, marked_refinements_store_t& m )
+            { m.pup(p); }
+            //@}
+
             /**
              * @brief function to see if a given id has already had a
              * refinement decision made
@@ -32,6 +43,9 @@ namespace AMR {
                 auto f = marked_refinements.find(id);
                 if (f != marked_refinements.end())
                 {
+                    trace_out << "Marked element " << id << " has value " <<
+                        f->second << std::endl;
+
                     return true;
                 }
                 return false;
@@ -49,8 +63,6 @@ namespace AMR {
                 return marked_refinements.at(id);
             }
 
-            // TODO: This should probably actually delete the element, not mark it as none?
-            // TODO: Document
             void erase(size_t id)
             {
                 marked_refinements[id] = Refinement_Case::none;
@@ -65,21 +77,25 @@ namespace AMR {
              */
             void add(size_t id, Refinement_Case r)
             {
-                // TODO: This is doing a nice double find, once in exist, and
-                    // once when looking/setting the value. We can avoid this
-
                 // Check if that active element already exists
                 if (exists(id))
                 {
                     if (marked_refinements[id] != r)
                     {
+                        trace_out << "Updating marked value to " << r <<
+                            " was " << marked_refinements[id] << std::endl;
+
                         marked_refinements[id] = r;
 
-                        // TODO: Find a better way to handle/update this global
+                        // TODO :Find a better way to handle/update this global
                         refinement_state_changed = true;
+                    }
+                    else {
+                        trace_out << "Not setting marked refinement val as same val"<< std::endl;
                     }
                 }
                 else {
+                    trace_out << "Adding new marked value " << id << " = " << r << std::endl;
                     marked_refinements.insert( std::pair<size_t, Refinement_Case>(id, r));
                     refinement_state_changed = true;
                 }
@@ -97,6 +113,14 @@ namespace AMR {
                 refinement_state_changed = t;
             }
 
+            void replace(size_t old_id, size_t new_id)
+            {
+                // Swap id out in map
+                auto i = marked_refinements.find(old_id);
+                auto value = i->second;
+                marked_refinements.erase(i);
+                marked_refinements[new_id] = value;
+            }
     };
 }
 

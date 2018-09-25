@@ -95,11 +95,14 @@ class DG : public CBase_DG {
                  const std::vector< std::size_t >& tetid,
                  const std::vector< std::vector< tk::real > >& u );
 
-    //! Evaluate whether to continue with next step
-    void eval();
-
     //! Advance equations to next time step
     void advance( tk::real newdt );
+
+    //! Signal the runtime system that diagnostics have been computed
+    void diag();
+
+    //! Optionally refine/derefine mesh
+    void refine();
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -267,6 +270,9 @@ class DG : public CBase_DG {
 
     //! Output mesh-based fields to file
     void writeFields( tk::real time );
+
+    //! Evaluate whether to continue with next step
+    void eval();
 };
 
 } // inciter::

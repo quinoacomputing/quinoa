@@ -4,7 +4,6 @@
 #include <map>
 #include <algorithm>
 
-#include "Base/Exception.h"
 #include "Refinement_State.h"
 
 namespace AMR {
@@ -88,6 +87,9 @@ namespace AMR {
                 size_t refinement_level =
                     get(parent_id).refinement_level + 1;
 
+                trace_out << "Refinement Level " << refinement_level <<
+                    std::endl;
+
                 add(element_number, refinement_case,
                         refinement_level, parent_id);
 
@@ -103,7 +105,7 @@ namespace AMR {
              */
             Refinement_State& get(size_t id)
             {
-                Assert( exists(id), "ID does not exist" );
+                assert( exists(id) );
                 return master_elements.at(id);
             }
 
@@ -121,6 +123,7 @@ namespace AMR {
                 auto f = master_elements.find(id);
                 if (f != master_elements.end())
                 {
+                    //trace_out << "master_elements " << id << " exists." << std::endl;
                     return true;
                 }
                 return false;
@@ -150,17 +153,33 @@ namespace AMR {
             {
                 get(parent_id).children.push_back(child_id);
                 get(parent_id).num_children++;
-
-                Assert(
-                    get(parent_id).num_children <= 8,
-                    "Addition would violate max child rules"
-                );
+                assert( get(parent_id).num_children <= 8);
             }
 
             size_t get_child_id(size_t parent_id, size_t offset)
             {
-                Assert(offset < get(parent_id).children.size(), "Child ID out of range");
+                assert(offset < get(parent_id).children.size());
                 return get(parent_id).children[offset];
+            }
+
+            void replace(size_t old_id, size_t new_id)
+            {
+                // Swap id out in map
+                auto i = master_elements.find(old_id);
+                auto value = i->second;
+                master_elements.erase(i);
+                master_elements[new_id] = value;
+
+                // Replace child reference too
+                auto children = get(new_id).children;
+                std::replace (children.begin(), children.end(), old_id, new_id);
+
+                // Iterate over children and update their parent
+                for (auto c : children)
+                {
+                    get(c).parent_id = new_id;
+                }
+
             }
 
     };

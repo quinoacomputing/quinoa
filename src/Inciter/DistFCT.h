@@ -61,7 +61,7 @@ class DistFCT : public CBase_DistFCT {
     struct Next : boost::static_visitor<> {
       Next( const tk::Fields& a ) : A(a) {}
       template< typename P >
-        void operator()( const P& p ) const { p.ckLocal()->next( A ); }
+        void operator()( const P& p ) const { p.ckLocal()->update( A ); }
       const tk::Fields& A;
     };
   

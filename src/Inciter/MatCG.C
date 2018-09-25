@@ -165,6 +165,9 @@ MatCG::dt()
 
   }
 
+  // Activate SDAG waits for time step
+  thisProxy[ thisIndex ].wait4eval();
+
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
               CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
@@ -401,9 +404,9 @@ MatCG::advance( tk::real newdt )
 }
 
 void
-MatCG::next( const tk::Fields& a )
+MatCG::update( const tk::Fields& a )
 // *****************************************************************************
-// Prepare for next step
+//  Update solution at the end of time step
 //! \param[in] a Limited antidiffusive element contributions
 // *****************************************************************************
 {
@@ -423,30 +426,31 @@ MatCG::next( const tk::Fields& a )
   // Output field data to file
   out();
   // Compute diagnostics, e.g., residuals
-  auto diag = m_diag.compute( *d, m_u );
+  auto diag_computed = m_diag.compute( *d, m_u );
   // Increase number of iterations and physical time
   d->next();
-  // Output one-liner status report
-  d->status();
-
-//     // TEST FEATURE: Manually migrate this chare by using migrateMe to see if
-//     // all relevant state variables are being PUPed correctly.
-//     //CkPrintf("I'm MatCG chare %d on PE %d\n",thisIndex,CkMyPe());
-//     if (thisIndex == 2 && CkMyPe() == 2) {
-//       /*int j;
-//       for (int i; i < 50*std::pow(thisIndex,4); i++) {
-//         j = i*thisIndex;
-//       }*/
-//       CkPrintf("I'm MatCG chare %d on PE %d\n",thisIndex,CkMyPe());
-//       migrateMe(1);
-//    }
-//    if (thisIndex == 2 && CkMyPe() == 1) {
-//      CkPrintf("I'm MatCG chare %d on PE %d\n",thisIndex,CkMyPe());
-//      migrateMe(2);
-//    }
-
   // Evaluate whether to continue with next step
-  if (!diag) eval();
+  if (!diag_computed) diag();
+  // Optionally refine mesh
+  refine();
+}
+
+void
+MatCG::diag()
+// *****************************************************************************
+// Signal the runtime system that diagnostics have been computed
+// *****************************************************************************
+{
+  diag_complete();
+}
+
+void
+MatCG::refine()
+// *****************************************************************************
+// Optionally refine/derefine mesh
+// *****************************************************************************
+{
+  ref_complete();
 }
 
 void
@@ -457,15 +461,19 @@ MatCG::eval()
 {
   auto d = Disc();
 
+  // Output one-liner status report
+  d->status();
+
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
 
   // If neither max iterations nor max time reached, continue, otherwise finish
-  if (std::fabs(d->T()-term) > eps && d->It() < nstep)
+  if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
     contribute( CkCallback( CkReductionTarget(Transporter,next), d->Tr() ) );
-  else
+  } else {
     contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
+  }
 }
 
 #include "NoWarning/matcg.def.h"

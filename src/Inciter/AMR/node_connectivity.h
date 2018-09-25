@@ -2,7 +2,6 @@
 #define AMR_node_connectivity_h
 
 #include <vector>
-#include "Base/Exception.h"
 
 namespace AMR {
 
@@ -18,11 +17,28 @@ namespace AMR {
 
         public:
 
+            node_connectivity_t() { } // default cons
+
+            /** @name Charm++ pack/unpack serializer member functions */
+            ///@{
+            //! \brief Pack/Unpack serialize member function
+            //! \param[in,out] p Charm++'s PUP::er serializer object reference
+            void pup( PUP::er &p ) {
+              p | nodes;
+            }
+            //! \brief Pack/Unpack serialize operator|
+            //! \param[in,out] p Charm++'s PUP::er serializer object reference
+            //! \param[in,out] n mesh_adapter_t object reference
+            friend void operator|( PUP::er& p, node_connectivity_t& n )
+            { n.pup(p); }
+            //@}
+
             /**
              * @brief Method to add initial nodes to the store
              *
              * @param initial_size Size of the list to fill to
              */
+// TODO: Do we need to port over the constructor which does this?
             node_connectivity_t(size_t initial_size)
             {
                 for (size_t i = 0; i < initial_size; i++)
@@ -81,7 +97,6 @@ namespace AMR {
             {
                 // TODO: make this actually inspect the face_list and be much
                 // more robust...
-                // TODO: Remove this hack to supress warning
                 size_t result = face_list[0][0];
                 switch(opposite_index)
                 {
@@ -98,15 +113,14 @@ namespace AMR {
                         result = 0;
                         break;
                     default: // something went horribly wrong..
-                        Assert(0, "Invalid Opposite Index");
+                        assert(0);
                         break;
                 }
-
                 return result;
             }
 
             // TODO: Document this
-            // Int because it's signed.. is this a good idea?
+            // Int becasue it's signed..
             int find(size_t A, size_t B)
             {
                 size_t min = std::min(A,B);
@@ -129,18 +143,21 @@ namespace AMR {
             {
                 if (A != 0 || B != 0)
                 {
-                    Assert(A != B, "Trying to add node with duplicated ID");
+                    assert(A != B);
                     // TODO: Abstract to exists method. (Could have one for id,
                     // as well as one for val)
 
                     // check if already exists
                     int f = find(A,B);
                     if (f != -1) {
+                        trace_out << "Connect already exits " << A << " " << B << std::endl;
                         return static_cast<size_t>(f);
                     }
                 }
 
                 nodes.push_back( {{std::min(A,B), std::max(A,B)}} );
+                trace_out << "Made new node " << size() -1 << std::endl;
+                //std::cout << " add " << size()-1 << " a = " <<  A << " b = " << B << std::endl;
                 return size()-1;
             }
 
@@ -149,11 +166,11 @@ namespace AMR {
              */
             void print()
             {
-                std::cout << "Connectivity" << std::endl;
-                for (size_t i = 0; i < size(); i ++)
-                {
-                    std::cout << i << ": A " << get(i)[0] << " B " << get(i)[1] << std::endl;
-                }
+//                 std::cout << "Connectivity" << std::endl;
+//                 for (size_t i = 0; i < size(); i ++)
+//                 {
+//                     std::cout << i << ": A " << get(i)[0] << " B " << get(i)[1] << std::endl;
+//                 }
             }
 
     };

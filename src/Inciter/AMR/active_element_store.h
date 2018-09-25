@@ -2,7 +2,6 @@
 #define AMR_active_element_store_h
 
 #include <set>
-#include "Base/Exception.h"
 
 namespace AMR {
 
@@ -18,7 +17,7 @@ namespace AMR {
             void add(size_t id)
             {
                 // Check if that active element already exists
-                Assert( !exists(id), "Element ID already exits" );
+                assert( !exists(id) );
                 active_elements.insert(id);
             }
 

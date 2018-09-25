@@ -4,8 +4,10 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
+#include <algorithm>
 
-#include "AMR_types.h"
+#include "Loggers.h"
+#include "types.h"
 
 namespace AMR {
     namespace util {

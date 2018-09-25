@@ -30,13 +30,14 @@ module refiner {
                      const std::vector< std::size_t >& triinpoel,
                      const std::map< int, std::vector< std::size_t > >& bnode,
                      int nchare );
-      initnode void registerReducers();      
+      initnode void registerReducers();
+      entry void start( bool initial, tk::real t );
       entry [reductiontarget] void addBndEdges( CkReductionMsg* msg );
       entry void addRefBndEdges( int fromch,
                                  const tk::UnsMesh::EdgeNodeCoord& en );
       entry void recvRefBndEdges();
       entry void correctref();
-      entry void nextref();
+      entry void eval();
       entry void sendProxy();
     };
 

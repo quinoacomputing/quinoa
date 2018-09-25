@@ -411,6 +411,23 @@ namespace deck {
                           use< kw::end >,
                           tk::grm::check_vector< tag::amr, tag::edge > > {};
 
+  //! xminus configuring coordinate-based edge tagging for mesh refinement
+  template< typename keyword, typename Tag >
+  struct half_world :
+         tk::grm::control< use< keyword >, pegtl::digit, tag::amr, Tag > {};
+
+  //! coordref ... end block
+  struct coordref :
+           pegtl::if_must<
+             tk::grm::readkw< use< kw::amr_coordref >::pegtl_string >,
+             tk::grm::block< use< kw::end >,
+                         half_world< kw::amr_xminus, tag::xminus >,
+                         half_world< kw::amr_xplus, tag::xplus >,
+                         half_world< kw::amr_yminus, tag::yminus >,
+                         half_world< kw::amr_yplus, tag::yplus >,
+                         half_world< kw::amr_zminus, tag::zminus >,
+                         half_world< kw::amr_zplus, tag::zplus > > > {};
+
   //! initial conditions block for compressible flow
   template< class eq, class param >
   struct ic_compflow :
@@ -564,6 +581,7 @@ namespace deck {
            tk::grm::block< use< kw::end >,
                            refvars,
                            initref,
+                           coordref,
                            tk::grm::process<
                              use< kw::amr_initial >,
                              tk::grm::store_back_option< use,

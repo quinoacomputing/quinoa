@@ -4242,6 +4242,16 @@ struct amr_initial_conditions_info {
 using amr_initial_conditions =
   keyword< amr_initial_conditions_info, TAOCPP_PEGTL_STRING("ic") >;
 
+struct amr_coords_info {
+  using code = Code< c >;
+  static std::string name() { return "cooords"; }
+  static std::string shortDescription() { return
+    "Select coordinate-based initial mesh refinement"; }
+  static std::string longDescription() { return R"(This keyword is used to
+    select coordinate-based initial mesh refinement.)"; }
+};
+using amr_coords = keyword< amr_coords_info, TAOCPP_PEGTL_STRING("coords") >;
+
 struct amr_initial_info {
   static std::string name() { return "Initial refinement typelist"; }
   static std::string shortDescription() { return
@@ -4256,6 +4266,7 @@ struct amr_initial_info {
     static std::string description() { return "string"; }
     static std::string choices() {
       return '\'' + amr_uniform::string() + "\' | \'"
+                  + amr_coords::string()  + "\' | \'"
                   + amr_initial_conditions::string() + '\'';
     }
   };
@@ -4304,6 +4315,146 @@ struct amr_initref_info {
   };
 };
 using amr_initref = keyword< amr_initref_info, TAOCPP_PEGTL_STRING("initref") >;
+
+struct amr_coordref_info {
+  static std::string name() {
+    return "initial refinement with coordinate planes"; }
+  static std::string shortDescription() { return
+    "Configure initial refinement using coordinate planes"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to configure entire volumes on a given side of a
+    plane in 3D space. The keyword introduces an coordref ... end block within
+    an amr ... end block and must contain the either or multiple of the
+    following keywords: x- <real>, x+ <real>, y- <real>, y+ <real>, z- <real>,
+    z+ <real>. All edges of the input mesh will be tagged for refinement whose
+    end-points lie less than (-) or larger than (+) the real number given.
+    Example: 'x- 0.5' refines all edges whose end-point coordinates are less
+    than 0.5. Multiple specifications are understood by combining with a logical
+    AND. That is: 'x- 0.5 y+ 0.3' refines all edges whose end-point x
+    coordinates are less than 0.5 AND y coordinates are larger than 0.3.)"; }
+};
+using amr_coordref =
+  keyword< amr_coordref_info, TAOCPP_PEGTL_STRING("coordref") >;
+
+struct amr_xminus_info {
+  static std::string name() { return "initial refinement: x-"; }
+  static std::string shortDescription() { return "Configure initial refinement "
+    "for coordinates lower than an x-normal plane"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to configure a mesh refinement volume for edges
+    whose end-points are less than the x coordinate of a plane perpendicular to
+    coordinate x in 3D space. The keyword must be used in a coordref ... end
+    block within an amr ... end block with syntax 'x- <real>'. All edges of the
+    input mesh will be tagged for refinement whose end-points lie less than (-)
+    the real number given. Example: 'x- 0.5' refines all edges whose end-point
+    coordinates are less than 0.5.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using amr_xminus =
+  keyword< amr_xminus_info, TAOCPP_PEGTL_STRING("x-") >;
+
+struct amr_xplus_info {
+  static std::string name() { return "initial refinement: x+"; }
+  static std::string shortDescription() { return "Configure initial refinement "
+    "for coordinates larger than an x-normal plane"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to configure a mesh refinement volume for edges
+    whose end-points are larger than the x coordinate of a plane perpendicular
+    to coordinate x in 3D space. The keyword must be used in a coordref ... end
+    block within an amr ... end block with syntax 'x+ <real>'. All edges of the
+    input mesh will be tagged for refinement whose end-points lie larger than
+    (+) the real number given. Example: 'x+ 0.5' refines all edges whose
+    end-point coordinates are larger than 0.5.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using amr_xplus =
+  keyword< amr_xplus_info, TAOCPP_PEGTL_STRING("x+") >;
+
+struct amr_yminus_info {
+  static std::string name() { return "initial refinement: y-"; }
+  static std::string shortDescription() { return "Configure initial refinement "
+    "for coordinates lower than an y-normal plane"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to configure a mesh refinement volume for edges
+    whose end-points are less than the y coordinate of a plane perpendicular to
+    coordinate y in 3D space. The keyword must be used in a coordref ... end
+    block within an amr ... end block with syntax 'y- <real>'. All edges of the
+    input mesh will be tagged for refinement whose end-points lie less than (-)
+    the real number given. Example: 'y- 0.5' refines all edges whose end-point
+    coordinates are less than 0.5.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using amr_yminus =
+  keyword< amr_yminus_info, TAOCPP_PEGTL_STRING("y-") >;
+
+struct amr_yplus_info {
+  static std::string name() { return "initial refinement: y+"; }
+  static std::string shortDescription() { return "Configure initial refinement "
+    "for coordinates larger than an y-normal plane"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to configure a mesh refinement volume for edges
+    whose end-points are larger than the y coordinate of a plane perpendicular
+    to coordinate y in 3D space. The keyword must be used in a coordref ... end
+    block within an amr ... end block with syntax 'y+ <real>'. All edges of the
+    input mesh will be tagged for refinement whose end-points lie larger than
+    (+) the real number given. Example: 'y+ 0.5' refines all edges whose
+    end-point coordinates are larger than 0.5.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using amr_yplus =
+  keyword< amr_yplus_info, TAOCPP_PEGTL_STRING("y+") >;
+
+struct amr_zminus_info {
+  static std::string name() { return "initial refinement: z-"; }
+  static std::string shortDescription() { return "Configure initial refinement "
+    "for coordinates lower than an z-normal plane"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to configure a mesh refinement volume for edges
+    whose end-points are less than the z coordinate of a plane perpendicular to
+    coordinate z in 3D space. The keyword must be used in a coordref ... end
+    block within an amr ... end block with syntax 'z- <real>'. All edges of the
+    input mesh will be tagged for refinement whose end-points lie less than (-)
+    the real number given. Example: 'z- 0.5' refines all edges whose end-point
+    coordinates are less than 0.5.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using amr_zminus =
+  keyword< amr_zminus_info, TAOCPP_PEGTL_STRING("z-") >;
+
+struct amr_zplus_info {
+  static std::string name() { return "initial refinement: z+"; }
+  static std::string shortDescription() { return "Configure initial refinement "
+    "for coordinates larger than an z-normal plane"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to configure a mesh refinement volume for edges
+    whose end-points are larger than the z coordinate of a plane perpendicular
+    to coordinate z in 3D space. The keyword must be used in a coordref ... end
+    block within an amr ... end block with syntax 'z+ <real>'. All edges of the
+    input mesh will be tagged for refinement whose end-points lie larger than
+    (+) the real number given. Example: 'z+ 0.5' refines all edges whose
+    end-point coordinates are larger than 0.5.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using amr_zplus =
+  keyword< amr_zplus_info, TAOCPP_PEGTL_STRING("z+") >;
 
 struct amr_jump_info {
   static std::string name() { return "jump"; }
@@ -4356,6 +4507,10 @@ struct amr_info {
     R"(This keyword is used to introduce the amr ... end block, used to
     configure adaptive mesh refinement. Keywords allowed
     in this block: )" + std::string("\'")
+    + amr_refvar::string() + "\' | \'"
+    + amr_error::string() + "\' | \'"
+    + amr_coordref::string() + "\' | \'"
+    + amr_initref::string() + "\' | \'"
     + amr_initial::string() + "\'.";
   }
 };
