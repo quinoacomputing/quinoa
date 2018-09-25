@@ -2,7 +2,7 @@
 
 <img src="https://quinoacomputing.github.io/quinoa.svg" align="right" width="25%" background=transparent>
 
-_Adaptive computational fluid dynamics_
+_Adaptive computational fluid dynamics_ - https://quinoacomputing.github.io
 
 Quinoa is a set of computational tools that enables research and numerical
 analysis in fluid dynamics. Using the [Charm++](http://charmplusplus.org)
