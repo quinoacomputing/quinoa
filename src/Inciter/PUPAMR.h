@@ -13,6 +13,7 @@
 #include "NoWarning/pup_stl.h"
 
 #include "AMR/Refinement_State.h"
+#include "AMR/edge_store.h"
 
 //! Extensions to Charm++'s Pack/Unpack routines
 namespace PUP {
@@ -29,6 +30,20 @@ void pup( PUP::er &p, AMR::Edge_Refinement& e );
 //! \param[in,out] e Edge_Refinement object reference
 inline void operator|( PUP::er& p, AMR::Edge_Refinement& e ) { pup(p,e); }
 //@}
+
+//////////////////// Serialize edge_store_t ////////////////////
+
+/** @name Charm++ pack/unpack serializer member functions */
+///@{
+//! Pack/Unpack edge_store_t
+void pup( PUP::er &p, AMR::edge_store_t& e );
+
+//! Pack/Unpack serialize operator|
+//! \param[in,out] p Charm++'s PUP::er serializer object reference
+//! \param[in,out] e edge_store_t object reference
+inline void operator|( PUP::er& p, AMR::edge_store_t& e ) { pup(p,e); }
+//@}
+
 
 } // PUP::
 

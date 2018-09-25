@@ -27,3 +27,13 @@ void PUP::pup( PUP::er &p, AMR::Edge_Refinement& e )
   p | e.is_dead;
   p | e.lock_case;
 }
+
+void PUP::pup( PUP::er &p, AMR::edge_store_t& e )
+// *****************************************************************************
+//  Pack/Unpack Edge_Refinement
+//! \param[in] p Charm++'s pack/unpack object
+//! \param[in,out] e edge_store_T object reference
+// *****************************************************************************
+{
+  p | e.edges;
+}
