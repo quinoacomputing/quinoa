@@ -3,7 +3,7 @@
   \file      src/Base/PUPUtil.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Charm++ Pack/UnPack utilities
-  \brief     This file contains some extensions to Charm++'s Pack/UnPack
+  \details   This file contains some extensions to Charm++'s Pack/UnPack
     routines.
 */
 // *****************************************************************************

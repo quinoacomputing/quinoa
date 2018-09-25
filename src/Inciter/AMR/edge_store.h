@@ -1,6 +1,8 @@
 #ifndef AMR_edge_store_h
 #define AMR_edge_store_h
 
+#include "PUPAMR.h"
+
 namespace AMR {
 
     class edge_store_t {
