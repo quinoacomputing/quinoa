@@ -27,17 +27,6 @@ namespace AMR {
 
             const size_t MAX_REFINEMENT_LEVEL = 4;
 
-            /** @name Charm++ pack/unpack serializer member functions */
-            ///@{
-            //! \brief Pack/Unpack serialize member function
-            void pup( PUP::er & ) {
-            }
-            //! \brief Pack/Unpack serialize operator|
-            //! \param[in,out] p Charm++'s PUP::er serializer object reference
-            //! \param[in,out] r refinement_t object reference
-            friend void operator|( PUP::er& p, refinement_t& r ) { r.pup(p); }
-            //@}
-
             // TODO: Document this
             child_id_list_t generate_child_ids( tet_store_t& tet_store, size_t parent_id, size_t count = MAX_CHILDREN)
             {

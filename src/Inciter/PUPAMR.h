@@ -20,6 +20,7 @@
 #include "AMR/mesh_adapter.h"
 #include "AMR/node_store.h"
 #include "AMR/node_connectivity.h"
+#include "AMR/refinement.h"
 
 //! Extensions to Charm++'s Pack/Unpack routines
 namespace PUP {
@@ -115,6 +116,17 @@ void pup( PUP::er &p, AMR::node_connectivity_t& n );
 //! \param[in,out] p Charm++'s PUP::er serializer object reference
 //! \param[in,out] n node_connectivity_t object reference
 inline void operator|( PUP::er& p, AMR::node_connectivity_t& n ) { pup(p,n); }
+//@}
+
+/** @name Charm++ pack/unpack serializer member functions for refinement_t */
+///@{
+//! Pack/Unpack refinement_t
+void pup( PUP::er &p, AMR::refinement_t& r );
+
+//! Pack/Unpack serialize operator|
+//! \param[in,out] p Charm++'s PUP::er serializer object reference
+//! \param[in,out] r refinement_t object reference
+inline void operator|( PUP::er& p, AMR::refinement_t& r ) { pup(p,r); }
 //@}
 
 } // PUP::

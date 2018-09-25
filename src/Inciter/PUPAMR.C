@@ -104,3 +104,11 @@ void PUP::pup( PUP::er &p, AMR::node_connectivity_t& n )
 {
   p | n.data();
 }
+
+void PUP::pup( PUP::er &, AMR::refinement_t& )
+// *****************************************************************************
+//  Pack/Unpack refinement_t
+// *****************************************************************************
+{
+  // no state in refinement_t currently
+}
