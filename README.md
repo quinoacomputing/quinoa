@@ -1,4 +1,4 @@
-## What is Quinoa?
+## Quinoa
 
 <img src="https://quinoacomputing.github.io/quinoa.svg" align="right" width="25%" background=transparent>
 
