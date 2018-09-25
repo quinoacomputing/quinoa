@@ -94,3 +94,13 @@ void PUP::pup( PUP::er &p, AMR::node_store_t& n )
   p | n.m_z;
   p | n.m_graphsize;
 }
+
+void PUP::pup( PUP::er &p, AMR::node_connectivity_t& n )
+// *****************************************************************************
+//  Pack/Unpack node_connectivity_t
+//! \param[in] p Charm++'s pack/unpack object
+//! \param[in,out] n node_connectivity_t object reference
+// *****************************************************************************
+{
+  p | n.data();
+}

@@ -19,6 +19,7 @@
 #include "AMR/tet_store.h"
 #include "AMR/mesh_adapter.h"
 #include "AMR/node_store.h"
+#include "AMR/node_connectivity.h"
 
 //! Extensions to Charm++'s Pack/Unpack routines
 namespace PUP {
@@ -103,6 +104,17 @@ void pup( PUP::er &p, AMR::node_store_t& n );
 //! \param[in,out] p Charm++'s PUP::er serializer object reference
 //! \param[in,out] n node_store_t object reference
 inline void operator|( PUP::er& p, AMR::node_store_t& n ) { pup(p,n); }
+//@}
+
+/** @name Charm++ pack/unpack serializer member functions for node_connectivity_t */
+///@{
+//! Pack/Unpack node_connectivity_t
+void pup( PUP::er &p, AMR::node_connectivity_t& n );
+
+//! Pack/Unpack serialize operator|
+//! \param[in,out] p Charm++'s PUP::er serializer object reference
+//! \param[in,out] n node_connectivity_t object reference
+inline void operator|( PUP::er& p, AMR::node_connectivity_t& n ) { pup(p,n); }
 //@}
 
 } // PUP::
