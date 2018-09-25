@@ -81,7 +81,7 @@ Quinoa consists of the following tools:
 - Install prerequisites: _Mac OS X_ (line 1: required, line 2: recommended)
 
        port install cmake openmpi-gcc7 && port select gcc mp-gcc7 && port select mpi openmpi-gcc7-fortran
-       port install gmsh pugixml lapack boost
+       port install gmsh pugixml lapack
 
 - Clone, build third-party libraries, build & test
 
