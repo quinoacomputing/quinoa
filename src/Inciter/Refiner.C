@@ -548,6 +548,8 @@ Refiner::errorRefine()
   const auto& refidx = g_inputdeck.get< tag::amr, tag::id >();
   auto errtype = g_inputdeck.get< tag::amr, tag::error >();
 
+  using AMR::edge_t;
+
   // Compute errors in ICs and define refinement criteria for edges
   std::vector< edge_t > edge;
   std::vector< tk::real > crit;
@@ -597,6 +599,8 @@ Refiner::userRefine()
     tk::UnsMesh::EdgeSet edgeset;
     for (std::size_t i=0; i<edgenodelist.size()/2; ++i)
       edgeset.insert( {{ {edgenodelist[i*2+0], edgenodelist[i*2+1]} }} );
+
+    using AMR::edge_t;
 
     // Tag edges the user configured
     std::vector< edge_t > edge;
@@ -649,6 +653,8 @@ Refiner::coordRefine()
   bool yp = std::abs(yplus - rmax) > eps ? true : false;
   bool zm = std::abs(zminus - rmax) > eps ? true : false;
   bool zp = std::abs(zplus - rmax) > eps ? true : false;
+
+  using AMR::edge_t;
 
   if (xm || xp || ym || yp || zm || zp) {       // if any half-world configured
     // Find number of nodes in old mesh
@@ -755,6 +761,8 @@ Refiner::correctRefine( const tk::UnsMesh::EdgeSet& extra )
 //! \param[in] extra Unique edges that need a new node on chare boundaries
 // *****************************************************************************
 {
+  using AMR::edge_t;
+
   if (!extra.empty()) {
     // Generate list of edges that need to be corrected
     std::vector< edge_t > edge;
