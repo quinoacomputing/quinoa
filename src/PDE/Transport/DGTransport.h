@@ -72,6 +72,7 @@ class Transport {
       m_bcextrapolate( config< tag::bcextrapolate >( c ) ),
       m_bcinlet( config< tag::bcinlet >( c ) ),
       m_bcoutlet( config< tag::bcoutlet >( c ) ),
+      m_bcdir( config< tag::bcdir >( c ) ),
       m_ndof( g_inputdeck.get< tag::discr, tag::ndof >() )
     {
       Problem::errchk( m_c, m_ncomp );
@@ -240,11 +241,12 @@ class Transport {
     }
 
     //! Compute right hand side
+    //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
-    void rhs( tk::real,
+    void rhs( tk::real t,
               const tk::Fields& geoFace,
               const tk::Fields&,
               const inciter::FaceData& fd,
@@ -290,12 +292,14 @@ class Transport {
       }
 
       // compute boundary surface flux integrals
-      bndIntegral< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, U, R );
-      bndIntegral< Inlet >( m_bcinlet, bface, esuf, geoFace, U, R );
-      bndIntegral< Outlet >( m_bcoutlet, bface, esuf, geoFace, U, R );
+      bndIntegral< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, t, U, R );
+      bndIntegral< Inlet >( m_bcinlet, bface, esuf, geoFace, t, U, R );
+      bndIntegral< Outlet >( m_bcoutlet, bface, esuf, geoFace, t, U, R );
+      bndIntegral< Outlet >( m_bcdir, bface, esuf, geoFace, t, U, R );
     }
 
     //! Compute P1 right hand side
+    //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
@@ -303,7 +307,7 @@ class Transport {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
-    void rhsp1( tk::real,
+    void rhsp1( tk::real t,
                 const tk::Fields& geoFace,
                 const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
@@ -474,11 +478,13 @@ class Transport {
 
       // compute boundary surface flux integrals
       bndIntegralp1< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace,
-                                    inpoel, inpofa, coord, U, R );
+                                    inpoel, inpofa, coord, t, U, R );
       bndIntegralp1< Inlet >( m_bcinlet, bface, esuf, geoFace, inpoel, inpofa,
-                              coord, U, R );
+                              coord, t, U, R );
       bndIntegralp1< Outlet >( m_bcoutlet, bface, esuf, geoFace, inpoel,
-                               inpofa, coord, U, R );
+                               inpofa, coord, t, U, R );
+      bndIntegralp1< Outlet >( m_bcdir, bface, esuf, geoFace, inpoel,
+                               inpofa, coord, t, U, R );
 
       // resize quadrature point arrays
       coordgp[0].resize(5,0);
@@ -724,13 +730,18 @@ class Transport {
     const std::vector< bcconf_t > m_bcinlet;
     //! Outlet BC configuration
     const std::vector< bcconf_t > m_bcoutlet;
+    //! Dirichlet BC configuration
+    const std::vector< bcconf_t > m_bcdir;
     const std::size_t m_ndof;
 
     //! \brief State policy class providing the left and right state of a face
     //!   at extrapolation boundaries
     struct Extrapolate {
       static std::array< std::vector< tk::real >, 2 >
-      LR( const std::vector< tk::real >& ul ) {
+      LR( ncomp_t /*ncomp*/,
+          const std::vector< tk::real >& ul,
+          tk::real /*xc*/, tk::real /*yc*/, tk::real /*zc*/,
+          tk::real /*t*/ ) {
         return {{ ul, ul }};
       }
     };
@@ -739,7 +750,10 @@ class Transport {
     //!   at inlet boundaries
     struct Inlet {
       static std::array< std::vector< tk::real >, 2 >
-      LR( const std::vector< tk::real >& ul ) {
+      LR( ncomp_t /*ncomp*/,
+          const std::vector< tk::real >& ul,
+          tk::real /*xc*/, tk::real /*yc*/, tk::real /*zc*/,
+          tk::real /*t*/ ) {
         auto ur = ul;
         std::fill( begin(ur), end(ur), 0.0 );
         return {{ std::move(ul), std::move(ur) }};
@@ -750,8 +764,27 @@ class Transport {
     //!   at outlet boundaries
     struct Outlet {
       static std::array< std::vector< tk::real >, 2 >
-      LR( const std::vector< tk::real >& ul ) {
+      LR( ncomp_t /*ncomp*/,
+          const std::vector< tk::real >& ul,
+          tk::real /*xc*/, tk::real /*yc*/, tk::real /*zc*/,
+          tk::real /*t*/ ) {
         return {{ ul, ul }};
+      }
+    };
+
+    //! \brief State policy class providing the left and right state of a face
+    //!   at Dirichlet boundaries
+    struct Dir {
+      static std::array< std::vector< tk::real >, 2 >
+      LR( ncomp_t ncomp,
+          const std::vector< tk::real >& ul,
+          tk::real xc, tk::real yc, tk::real zc,
+          tk::real t ) {
+        auto ur = ul;
+        const auto urbc = Problem::solution(0, ncomp, xc, yc, zc, t);
+        for (ncomp_t c=0; c<ncomp; ++c)
+          ur[c] = urbc[c];
+        return {{ ul, ur }};
       }
     };
 
@@ -759,6 +792,7 @@ class Transport {
     //! \param[in] faces Face IDs at which to compute surface integral
     //! \param[in] esuf Elements surrounding face, see tk::genEsuf()
     //! \param[in] geoFace Face geometry array
+    //! \param[in] t Physical time
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
     //! \tparam State Policy class providing the left and right state at
@@ -767,6 +801,7 @@ class Transport {
     void surfInt( const std::vector< std::size_t >& faces,
                   const std::vector< int >& esuf,
                   const tk::Fields& geoFace,
+                  tk::real t,
                   const tk::Fields& U,
                   tk::Fields& R ) const
     {
@@ -784,7 +819,10 @@ class Transport {
 
         //--- upwind fluxes
         auto flux = upwindFlux( {{geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0)}},
-                                f, geoFace, State::LR( ugp ) );
+                                f, geoFace,
+                                State::LR( m_ncomp, ugp, geoFace(f,4,0),
+                                                geoFace(f,5,0),
+                                                geoFace(f,6,0), t ) );
 
         for (ncomp_t c=0; c<m_ncomp; ++c)
         {
@@ -800,6 +838,7 @@ class Transport {
     //! \param[in] bface Boundary faces side-set information
     //! \param[in] esuf Elements surrounding faces
     //! \param[in] geoFace Face geometry array
+    //! \param[in] t Physical time
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
     template< class BCType >
@@ -808,13 +847,14 @@ class Transport {
                  const std::map< int, std::vector< std::size_t > >& bface,
                  const std::vector< int >& esuf,
                  const tk::Fields& geoFace,
+                 tk::real t,
                  const tk::Fields& U,
                  tk::Fields& R ) const
     {
       for (const auto& s : bcconfig) {       // for all bc sidesets
         auto bc = bface.find( std::stoi(s) );// faces for side set
         if (bc != end(bface))
-          surfInt< BCType >( bc->second, esuf, geoFace, U, R );
+          surfInt< BCType >( bc->second, esuf, geoFace, t, U, R );
       }
     }
 
@@ -825,6 +865,7 @@ class Transport {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] inpofa Face-node connectivity
     //! \param[in] coord Array of nodal coordinates
+    //! \param[in] t Physical time
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
     //! \tparam State Policy class providing the left and right state at
@@ -836,6 +877,7 @@ class Transport {
                     const std::vector< std::size_t >& inpoel,
                     const std::vector< std::size_t >& inpofa,
                     const tk::UnsMesh::Coords& coord,
+                    tk::real t,
                     const tk::Fields& U,
                     tk::Fields& R ) const
     {
@@ -932,7 +974,7 @@ class Transport {
 
           //--- upwind fluxes
           auto flux = upwindFlux( {{xgp, ygp, zgp}}, f, geoFace,
-                                  State::LR(ugp) );
+                                  State::LR(m_ncomp, ugp, xgp, ygp, zgp, t) );
 
           for (ncomp_t c=0; c<m_ncomp; ++c)
           {
@@ -956,6 +998,7 @@ class Transport {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] inpofa Face-node connectivity
     //! \param[in] coord Array of nodal coordinates
+    //! \param[in] t Physical time
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
     template< class BCType >
@@ -967,6 +1010,7 @@ class Transport {
                    const std::vector< std::size_t >& inpoel,
                    const std::vector< std::size_t >& inpofa,
                    const tk::UnsMesh::Coords& coord,
+                   tk::real t,
                    const tk::Fields& U,
                    tk::Fields& R ) const
     {
@@ -974,7 +1018,7 @@ class Transport {
         auto bc = bface.find( std::stoi(s) );// faces for side set
         if (bc != end(bface))
           surfIntp1< BCType >( bc->second, esuf, geoFace, inpoel, inpofa,
-                               coord, U, R );
+                               coord, t, U, R );
       }
     }
 
