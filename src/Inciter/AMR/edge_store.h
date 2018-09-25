@@ -1,6 +1,8 @@
 #ifndef AMR_edge_store_h
 #define AMR_edge_store_h
 
+#include <cassert>
+
 #include "Loggers.h"
 
 namespace AMR {

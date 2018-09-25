@@ -10,8 +10,6 @@
 
 #include "PUPAMR.h"
 
-#include "NoWarning/charm++.h"
-
 void PUP::pup( PUP::er &p, AMR::Edge_Refinement& e )
 // *****************************************************************************
 //  Pack/Unpack Edge_Refinement
@@ -46,4 +44,40 @@ void PUP::pup( PUP::er &p, AMR::edge_t& e )
 // *****************************************************************************
 {
   p | e.get_data();
+}
+
+void PUP::pup( PUP::er &p, AMR::marked_refinements_store_t& m )
+// *****************************************************************************
+//  Pack/Unpack marked_refinements_store_t
+//! \param[in] p Charm++'s pack/unpack object
+//! \param[in,out] m marked_refinements_store_t object reference
+// *****************************************************************************
+{
+  p | m.data();
+}
+
+void PUP::pup( PUP::er &p, AMR::tet_store_t& t )
+// *****************************************************************************
+//  Pack/Unpack tet_store_t
+//! \param[in] p Charm++'s pack/unpack object
+//! \param[in,out] t tet_store_t object reference
+// *****************************************************************************
+{
+  p | t.intermediate_list;
+  p | t.active_id_mapping;
+  p | t.tets;
+  p | t.marked_refinements;
+}
+
+void PUP::pup( PUP::er &p, AMR::mesh_adapter_t& m )
+// *****************************************************************************
+//  Pack/Unpack mesh_adapter_t
+//! \param[in] p Charm++'s pack/unpack object
+//! \param[in,out] m mesh_adapter_t object reference
+// *****************************************************************************
+{
+  p | m.tet_store;
+  p | m.node_connectivity;
+  p | m.node_store;
+  p | m.refiner;
 }
