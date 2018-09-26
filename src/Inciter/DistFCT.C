@@ -383,11 +383,11 @@ DistFCT::apply()
   }
 
   // Prepare for next time step. The code below is equivalent to the function
-  // call m_scheme[ thisIndex ].ckLocal()->next( m_a ). The call is done via a
+  // call m_scheme[ thisIndex ].ckLocal()->update( m_a ). The call is done via a
   // variant to facilitate calling back to chare arrays of different types,
   // e.g., MatCG or DiagCG. See also DistFCT::SchemeProxy.
   auto e = tk::element< ProxyElem >( m_scheme, thisIndex );
-  boost::apply_visitor( Next(m_a), e );
+  boost::apply_visitor( Update(m_a), e );
 }
 
 #include "NoWarning/distfct.def.h"
