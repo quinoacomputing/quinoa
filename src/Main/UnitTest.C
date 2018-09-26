@@ -150,7 +150,7 @@ class Main : public CBase_Main {
                         ( msg->argc, msg->argv,
                           m_cmdline,
                           tk::HeaderType::UNITTEST,
-                          tk::meshconv_executable(),
+                          tk::unittest_executable(),
                           m_print ) ),
       m_timer(1), // Start new timer measuring the serial+Charm++ runtime
       m_timestamp()
