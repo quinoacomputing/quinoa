@@ -486,9 +486,8 @@ Refiner::eval()
 
     // Output mesh after recent step of mesh refinement during time stepping
     writeMesh( "dtref", std::to_string(m_t) );
-    // Send new mesh back to PDE worker base (Discretization)
-    m_scheme.get()[thisIndex].ckLocal()->newMesh( m_inpoel, m_coord );
-
+    // Send new mesh back to PDE worker
+    m_scheme.newMesh< tag::elem >( thisIndex, m_inpoel, m_coord );
   }
 }
 

@@ -25,6 +25,7 @@
 #include "Callback.h"
 #include "UnsMesh.h"
 #include "Base/Fields.h"
+#include "SchemeBase.h"
 
 #include "NoWarning/transporter.decl.h"
 #include "NoWarning/refiner.decl.h"

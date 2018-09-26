@@ -169,19 +169,6 @@ Discretization::setRefiner( const CProxy_Refiner& ref )
 }
 
 void
-Discretization::newMesh( const std::vector< std::size_t >& inpoel,
-                         const tk::UnsMesh::Coords& coord )
-// *****************************************************************************
-//  Receive new mesh from refiner
-//! \param[in] inpoel Mesh connectivity using local node IDs
-//! \param[in] coord Mesh node coordinates
-// *****************************************************************************
-{
-  m_inpoel = inpoel;
-  m_coord = coord;
-}
-
-void
 Discretization::vol()
 // *****************************************************************************
 // Sum mesh volumes to nodes, start communicating them on chare-boundaries

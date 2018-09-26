@@ -125,6 +125,10 @@ class DiagCG : public CBase_DiagCG {
     //! Optionally refine/derefine mesh
     void refine();
 
+    //! Receive new mesh from refiner
+    void newMesh( const std::vector< std::size_t >& inpoel,
+                  const tk::UnsMesh::Coords& coord );
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function

@@ -32,6 +32,7 @@
 #include "DistFCT.h"
 #include "DiagReducer.h"
 #include "NodeBC.h"
+#include "Refiner.h"
 
 #ifdef HAS_ROOT
   #include "RootMeshWriter.h"
@@ -450,6 +451,24 @@ MatCG::refine()
 // Optionally refine/derefine mesh
 // *****************************************************************************
 {
+  auto d = Disc();
+  d->Ref()->start( false, d->T() );
+}
+
+void
+MatCG::newMesh( const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord )
+// *****************************************************************************
+//  Receive new mesh from refiner
+//! \param[in] inpoel Mesh connectivity using local node IDs
+//! \param[in] coord Mesh node coordinates
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  //d->Inpoel() = inpoel;
+  //d->Coord() = coord;
+
   ref_complete();
 }
 

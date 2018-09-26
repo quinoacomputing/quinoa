@@ -36,6 +36,8 @@ module diagcg {
                          const std::vector< std::vector< tk::real > >& R );
       entry void comdif( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& D );
+      entry void newMesh( const std::vector< std::size_t >& inpoel,
+                          const tk::UnsMesh::Coords& coord );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".

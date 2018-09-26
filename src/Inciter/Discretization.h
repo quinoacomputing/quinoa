@@ -62,10 +62,6 @@ class Discretization : public CBase_Discretization {
     //! Set Refiner Charm++ proxy
     void setRefiner( const CProxy_Refiner& ref );
 
-    //! Receive new mesh from refiner
-    void newMesh( const std::vector< std::size_t >& inpoel,
-                  const tk::UnsMesh::Coords& coord );
-
     //! Collect nodal volumes across chare boundaries
     void comvol( const std::vector< std::size_t >& gid,
                  const std::vector< tk::real >& nodevol );
@@ -132,10 +128,12 @@ class Discretization : public CBase_Discretization {
     //! Transporter proxy accessor as non-const-ref
     CProxy_Transporter& Tr() { return m_transporter; }
 
-    //! Refiner proxy accessor as const-ref
-    const CProxy_Refiner& Ref() const { return m_refiner; }
-    //! Refiner proxy accessor as non-const-ref
-    CProxy_Refiner& Ref() { return m_refiner; }
+    //! Access bound Refiner class pointer
+    Refiner* Ref() const {
+      Assert( m_refiner[ thisIndex ].ckLocal() != nullptr,
+              "Refiner ckLocal() null" );
+      return m_refiner[ thisIndex ].ckLocal();
+    }
 
     //! Access bound DistFCT class pointer
     DistFCT* FCT() const {

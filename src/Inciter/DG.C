@@ -22,6 +22,7 @@
 #include "ElemDiagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "ExodusIIMeshWriter.h"
+#include "Refiner.h"
 //#include "ChareStateCollector.h"
 
 namespace inciter {
@@ -931,6 +932,24 @@ DG::refine()
 // Optionally refine/derefine mesh
 // *****************************************************************************
 {
+  auto d = Disc();
+  d->Ref()->start( false, d->T() );
+}
+
+void
+DG::newMesh( const std::vector< std::size_t >& inpoel,
+             const tk::UnsMesh::Coords& coord )
+// *****************************************************************************
+//  Receive new mesh from refiner
+//! \param[in] inpoel Mesh connectivity using local node IDs
+//! \param[in] coord Mesh node coordinates
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  //d->Inpoel() = inpoel;
+  //d->Coord() = coord;
+
   ref_complete();
 }
 
