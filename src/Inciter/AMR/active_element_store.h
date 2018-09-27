@@ -9,6 +9,10 @@ namespace AMR {
         private:
             std::set<size_t> active_elements;
         public:
+
+            //! Non-const-ref access to state
+            std::set<size_t>& data() { return active_elements; }
+
             /**
              * @brief Function to add active elements
              *

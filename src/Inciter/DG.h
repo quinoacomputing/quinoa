@@ -66,8 +66,15 @@ class DG : public CBase_DG {
                  const tk::CProxy_Solver& solver,
                  const FaceData& fd );
 
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wundefined-func-template"
+    #endif
     //! Migrate constructor
     explicit DG( CkMigrateMessage* ) {}
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
 
     //! Receive unique set of faces we potentially share with/from another chare
     void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );

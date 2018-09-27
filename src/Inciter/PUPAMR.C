@@ -10,6 +10,23 @@
 
 #include "PUPAMR.h"
 
+void PUP::pup( PUP::er &p, AMR::Refinement_State& s )
+// *****************************************************************************
+//  Pack/Unpack Edge_Refinement
+//! \param[in] p Charm++'s pack/unpack object
+//! \param[in,out] s Refinement_State object reference
+// *****************************************************************************
+{
+  p | s.active_element_number;
+  p | s.refinement_case;
+  p | s.num_children;
+  p | s.children;
+  p | s.refinement_level;
+  p | s.child_number;
+  p | s.parent_id;
+  p | s.normal;
+}
+
 void PUP::pup( PUP::er &p, AMR::Edge_Refinement& e )
 // *****************************************************************************
 //  Pack/Unpack Edge_Refinement
@@ -30,7 +47,7 @@ void PUP::pup( PUP::er &p, AMR::edge_store_t& e )
 // *****************************************************************************
 //  Pack/Unpack edge_store_t
 //! \param[in] p Charm++'s pack/unpack object
-//! \param[in,out] e edge_store_T object reference
+//! \param[in,out] e edge_store_t object reference
 // *****************************************************************************
 {
   p | e.edges;
@@ -56,6 +73,37 @@ void PUP::pup( PUP::er &p, AMR::marked_refinements_store_t& m )
   p | m.data();
 }
 
+void PUP::pup( PUP::er &p, AMR::active_element_store_t& a )
+// *****************************************************************************
+//  Pack/Unpack marked_refinements_store_t
+//! \param[in] p Charm++'s pack/unpack object
+//! \param[in,out] a active_element_store_t object reference
+// *****************************************************************************
+{
+  p | a.data();
+}
+
+void PUP::pup( PUP::er &p, AMR::master_element_store_t& m )
+// *****************************************************************************
+//  Pack/Unpack marked_refinements_store_t
+//! \param[in] p Charm++'s pack/unpack object
+//! \param[in,out] m master_element_store_t object reference
+// *****************************************************************************
+{
+  p | m.data();
+}
+
+void PUP::pup( PUP::er &p, AMR::id_generator_t& i )
+// *****************************************************************************
+//  Pack/Unpack marked_refinements_store_t
+//! \param[in] p Charm++'s pack/unpack object
+//! \param[in,out] i id_generator_t object reference
+// *****************************************************************************
+{
+  p | i.start_id;
+  p | i.next_tet_id;
+}
+
 void PUP::pup( PUP::er &p, AMR::tet_store_t& t )
 // *****************************************************************************
 //  Pack/Unpack tet_store_t
@@ -63,9 +111,18 @@ void PUP::pup( PUP::er &p, AMR::tet_store_t& t )
 //! \param[in,out] t tet_store_t object reference
 // *****************************************************************************
 {
+  p | t.center_tets;
+  p | t.active_elements.data();
+  p | t.master_elements.data();
+  p | t.cell_type_list;
+  p | t.refinement_level_list;
+  p | t.active_tetinpoel;
+  p | t.active_nodes;
+  p | t.id_generator;
   p | t.intermediate_list;
   p | t.active_id_mapping;
   p | t.tets;
+  p | t.edge_store;
   p | t.marked_refinements;
 }
 
