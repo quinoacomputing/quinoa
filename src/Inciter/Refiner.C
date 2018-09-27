@@ -99,9 +99,9 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   // If initial mesh refinement is configured, start initial mesh refinement.
   // See also tk::grm::check_amr_errors in Control/Inciter/InputDeck/Ggrammar.h.
   if (g_inputdeck.get< tag::amr, tag::initamr >())
-    start();
+    t0ref();
   else
-    finish();
+    endt0ref();
 }
 
 void
@@ -177,11 +177,11 @@ Refiner::dtref( tk::real t, const SchemeBase::Proxy& s )
   // Store discretization scheme proxy
   m_schemeproxy = s;
 
-  start();
+  t0ref();
 }
 
 void
-Refiner::start()
+Refiner::t0ref()
 // *****************************************************************************
 // Start new step of initial mesh refinement (before t>0)
 //! \param[in] t Physical time
@@ -504,7 +504,7 @@ Refiner::eval()
     // Remove initial mesh refinement step from list
     if (!m_initref.empty()) m_initref.pop_back();
     // Continue to next initial AMR step or finish
-    if (!m_initref.empty()) start(); else finish();
+    if (!m_initref.empty()) t0ref(); else endt0ref();
 
   } else {              // if AMR during time stepping (t>0)
 
@@ -517,7 +517,7 @@ Refiner::eval()
 }
 
 void
-Refiner::finish()
+Refiner::endt0ref()
 // *****************************************************************************
 // Finish initial mesh refinement
 //! \details This function is called as after initial mesh refinement has

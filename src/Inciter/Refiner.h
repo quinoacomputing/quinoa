@@ -211,7 +211,7 @@ class Refiner : public CBase_Refiner {
     tk::UnsMesh::Coords flatcoord( const tk::UnsMesh::CoordMap& coordmap );
 
     //! Start new step of initial mesh refinement (before t>0)
-    void start();
+    void t0ref();
 
     //! Generate boundary edges and send them to all chares
     void bndEdges();
@@ -223,7 +223,7 @@ class Refiner : public CBase_Refiner {
     void comExtra();
 
     //! Finish initiel mesh refinement
-    void finish();
+    void endt0ref();
 
     //! Do uniform mesh refinement
     void uniformRefine();
