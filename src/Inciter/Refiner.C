@@ -585,9 +585,11 @@ Refiner::errorRefine()
   const auto& refidx = g_inputdeck.get< tag::amr, tag::id >();
   auto errtype = g_inputdeck.get< tag::amr, tag::error >();
 
+  using AMR::edge_t;
+
   // Compute errors in ICs and define refinement criteria for edges
   std::vector< edge_t > edge;
-  std::vector< real_t > crit;
+  std::vector< tk::real > crit;
   AMR::Error error;
   for (std::size_t p=0; p<npoin; ++p)   // for all mesh nodes on this chare
     for (auto q : tk::Around(psup,p)) { // for all nodes surrounding p
@@ -635,9 +637,11 @@ Refiner::userRefine()
     for (std::size_t i=0; i<edgenodelist.size()/2; ++i)
       edgeset.insert( {{ {edgenodelist[i*2+0], edgenodelist[i*2+1]} }} );
 
+    using AMR::edge_t;
+
     // Tag edges the user configured
     std::vector< edge_t > edge;
-    std::vector< real_t > crit;
+    std::vector< tk::real > crit;
     for (std::size_t p=0; p<npoin; ++p)        // for all mesh nodes on this chare
       for (auto q : tk::Around(psup,p)) {      // for all nodes surrounding p
         tk::UnsMesh::Edge e{{p,q}};
@@ -687,6 +691,8 @@ Refiner::coordRefine()
   bool zm = std::abs(zminus - rmax) > eps ? true : false;
   bool zp = std::abs(zplus - rmax) > eps ? true : false;
 
+  using AMR::edge_t;
+
   if (xm || xp || ym || yp || zm || zp) {       // if any half-world configured
     // Find number of nodes in old mesh
     auto npoin = tk::npoin( m_inpoel );
@@ -699,7 +705,7 @@ Refiner::coordRefine()
     const auto& z = m_coord[2];
     // Compute errors in ICs and define refinement criteria for edges
     std::vector< edge_t > edge;
-    std::vector< real_t > crit;
+    std::vector< tk::real > crit;
     for (std::size_t p=0; p<npoin; ++p)        // for all mesh nodes on this chare
       for (auto q : tk::Around(psup,p)) {      // for all nodes surrounding p
         tk::UnsMesh::Edge e{{p,q}};
@@ -788,11 +794,13 @@ Refiner::correctRefine( const tk::UnsMesh::EdgeSet& extra )
 //! \param[in] extra Unique edges that need a new node on chare boundaries
 // *****************************************************************************
 {
+  using AMR::edge_t;
+
   if (!extra.empty()) {
     // Generate list of edges that need to be corrected
     std::vector< edge_t > edge;
     for (const auto& e : extra) edge.push_back( edge_t(e[0],e[1]) );
-    std::vector< real_t > crit( edge.size(), 1.0 );
+    std::vector< tk::real > crit( edge.size(), 1.0 );
 
     // Do refinement including edges that need to be corrected
     m_refiner.error_refinement( edge, crit );

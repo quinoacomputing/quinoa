@@ -13,7 +13,7 @@ namespace AMR {
     class node_store_t
     {
 
-        private:
+        public:
             coord_type m_x;
             coord_type m_y;
             coord_type m_z;
@@ -24,24 +24,7 @@ namespace AMR {
             //node_store_t(const node_store_t& c) = delete;
             //node_store_t& operator=(const node_store_t&) = delete;
 
-        public:
             node_store_t() { } // default cons
-
-            /** @name Charm++ pack/unpack serializer member functions */
-            ///@{
-            //! \brief Pack/Unpack serialize member function
-            //! \param[in,out] p Charm++'s PUP::er serializer object reference
-            void pup( PUP::er &p ) {
-              p | m_x;
-              p | m_y;
-              p | m_z;
-              p | m_graphsize;
-            }
-            //! \brief Pack/Unpack serialize operator|
-            //! \param[in,out] p Charm++'s PUP::er serializer object reference
-            //! \param[in,out] n mesh_adapter_t object reference
-            friend void operator|( PUP::er& p, node_store_t& n ) { n.pup(p); }
-            //@}
 
             size_t m_graphsize;
 

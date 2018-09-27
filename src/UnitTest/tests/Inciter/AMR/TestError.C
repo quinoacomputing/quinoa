@@ -116,21 +116,23 @@ struct AMRError_common {
   void TestErrorIndicator( inciter::ctr::AMRErrorType errtype ) {
     // Shift node IDs to start from zero
     tk::shiftToZero( inpoel );
-  
+
     // find out number of points in mesh connectivity
     auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
     Assert( *minmax.first == 0, "node ids should start from zero" );
     auto npoin = *minmax.second + 1;
-  
+
     // Generate elements surrounding points
     auto esup = tk::genEsup( inpoel, 4 );
-  
+
     // Generate edge connectivity
     auto inpoed = tk::genInpoed( inpoel, 4, esup );
-  
+
     // create error indicator object to get access to error indicators
     AMR::Error err;
-  
+
+    using AMR::edge_t;
+
     // generate a constant scalar field
     tk::Fields uc( npoin, 1 );
     uc.fill( 1.2 );

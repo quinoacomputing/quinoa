@@ -40,8 +40,8 @@ using node_list_t = std::vector<real_t>;
 #include "edge.h"
 
 // Complex types
-using edges_t = std::map<edge_t, AMR::Edge_Refinement>;
-using edge_list_t  = std::array<edge_t, NUM_TET_EDGES>;
+using edges_t = std::map<AMR::edge_t, AMR::Edge_Refinement>;
+using edge_list_t  = std::array<AMR::edge_t, NUM_TET_EDGES>;
 using edge_list_ids_t  = std::array<std::size_t, NUM_TET_EDGES>;
 
 using coord_type = std::vector< tk::real >;
