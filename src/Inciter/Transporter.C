@@ -143,9 +143,9 @@ Transporter::Transporter() :
     m_print.refvar( g_inputdeck.get< tag::amr, tag::refvar >(),
                     g_inputdeck.get< tag::amr, tag::id >() );
     m_print.Item< ctr::AMRError, tag::amr, tag::error >();
-    auto initamr = g_inputdeck.get< tag::amr, tag::initamr >();
-    m_print.item( "Initial refinement", initamr );
-    if (initamr) {
+    auto t0amr = g_inputdeck.get< tag::amr, tag::t0amr >();
+    m_print.item( "Initial refinement", t0amr );
+    if (t0amr) {
       const auto& initref = g_inputdeck.get< tag::amr, tag::init >();
       m_print.item( "Initial refinement steps", initref.size() );
       m_print.ItemVec< ctr::AMRInitial >( initref );
@@ -350,7 +350,7 @@ Transporter::load( uint64_t nelem, uint64_t npoin )
 
   // Query number of initial mesh refinement steps
   int nref = 0;
-  if (g_inputdeck.get< tag::amr, tag::initamr >())
+  if (g_inputdeck.get< tag::amr, tag::t0amr >())
     nref = static_cast<int>( g_inputdeck.get< tag::amr, tag::init >().size() );
 
   m_progMesh.start( "Preparing mesh", {{ CkNumPes(), CkNumPes(), nref,
@@ -445,7 +445,7 @@ Transporter::disccreated()
 {
   m_progMesh.end();
 
-  if (g_inputdeck.get< tag::amr, tag::initamr >()) {
+  if (g_inputdeck.get< tag::amr, tag::t0amr >()) {
     m_print.section( "Refined mesh graph statistics" );
     m_print.item( "Number of tetrahedra", m_nelem );
     m_print.item( "Number of nodes", m_npoin );

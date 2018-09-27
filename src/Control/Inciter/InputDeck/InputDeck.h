@@ -176,7 +176,8 @@ class InputDeck :
       set< tag::selected, tag::filetype >( tk::ctr::FieldFileType::EXODUSII );
       // Default AMR settings
       set< tag::amr, tag::amr >( false );
-      set< tag::amr, tag::initamr >( false );
+      set< tag::amr, tag::t0amr >( false );
+      set< tag::amr, tag::dtamr >( false );
       set< tag::amr, tag::error >( AMRErrorType::JUMP );
       auto rmax =
         std::numeric_limits< kw::amr_xminus::info::expect::type >::max();

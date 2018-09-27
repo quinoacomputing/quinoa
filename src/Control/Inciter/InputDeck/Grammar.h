@@ -311,11 +311,11 @@ namespace grm {
         Message< Stack, ERROR, MsgKey::INITREFODD >( stack, in );
       // Set initial AMR (on/off) if either the initial refinement type list or
       // an edge list is configured
-      Assert( (stack.template get< tag::amr, tag::initamr >() == false),
+      Assert( (stack.template get< tag::amr, tag::t0amr >() == false),
               "InitAMR switch must be false by default" );
       const auto& initref = stack.template get< tag::amr, tag::init >();
       if (!initref.empty() || !edgeref.empty())
-        stack.template get< tag::amr, tag::initamr >() = true;
+        stack.template get< tag::amr, tag::t0amr >() = true;
     }
   };
 
