@@ -574,7 +574,7 @@ Refiner::errorRefine()
 
   } else {              // if AMR during time stepping (t>0)
 
-    // Get solution from worker (pointer to solution from bound element)
+    // Get solution from worker (pointer to solution from bound array element)
     auto e = tk::element< SchemeBase::ProxyElem >( m_schemeproxy, thisIndex );
     boost::apply_visitor( Solution(u), e );
 
