@@ -26,6 +26,9 @@
 #include "UnsMesh.h"
 #include "Base/Fields.h"
 #include "SchemeBase.h"
+#include "MatCG.h"
+#include "DiagCG.h"
+#include "DG.h"
 
 #include "NoWarning/transporter.decl.h"
 #include "NoWarning/refiner.decl.h"
@@ -63,8 +66,8 @@ class Refiner : public CBase_Refiner {
     //! Configure Charm++ reduction types
     static void registerReducers();
 
-    //! Start new step of mesh refinement
-    void start( bool initial, tk::real t );
+    //! Start mesh refinement (during time stepping, t>0)
+    void dtref( tk::real t, const SchemeBase::Proxy& s );
 
     //! Receive boundary edges from all PEs (including this one)
     void addBndEdges( CkReductionMsg* msg );
@@ -93,6 +96,7 @@ class Refiner : public CBase_Refiner {
       p | m_sorter;
       p | m_solver;
       p | m_scheme;
+      p | m_schemeproxy;
       p | m_cbr;
       p | m_cbs;
       p | m_ginpoel;
@@ -146,6 +150,8 @@ class Refiner : public CBase_Refiner {
     tk::CProxy_Solver m_solver;
     //! Discretization scheme
     Scheme m_scheme;
+    //! Variant storing the discretization scheme class we interoperate with
+    SchemeBase::Proxy m_schemeproxy;
     //! Charm++ callbacks associated to compile-time tags for refiner
     tk::RefinerCallback m_cbr;
     //! Charm++ callbacks associated to compile-time tags for sorter
@@ -203,6 +209,9 @@ class Refiner : public CBase_Refiner {
     //! Generate flat coordinate data from coordinate map
     tk::UnsMesh::Coords flatcoord( const tk::UnsMesh::CoordMap& coordmap );
 
+    //! Start new step of initial mesh refinement (before t>0)
+    void start();
+
     //! Generate boundary edges and send them to all chares
     void bndEdges();
 
@@ -255,9 +264,31 @@ class Refiner : public CBase_Refiner {
                          const BndFaces& bnd );
 
     //! Evaluate initial conditions (IC) at mesh nodes
-    tk::Fields nodeinit( std::size_t npoin,
-                         const std::pair< std::vector< std::size_t >,
-                                          std::vector< std::size_t > >& esup );
+    void nodeinit( std::size_t npoin,
+                   const std::pair< std::vector< std::size_t >,
+                                    std::vector< std::size_t > >& esup,
+                   tk::Fields& u );
+
+    //! Functor to call the solution() member function behind SchemeBase::Proxy
+    struct Solution : boost::static_visitor<> {
+      tk::Fields& U;
+      Solution( tk::Fields& u ) : U(u) {}
+      template< typename P > void operator()( const P& p ) const {
+         p.ckLocal()->solution( U );
+      }
+    };
+
+    //! Functor to call the newMesh() member function behind SchemeBase::Proxy
+    struct NewMesh : boost::static_visitor<> {
+      const std::vector< std::size_t >& Inpoel;
+      const tk::UnsMesh::Coords& Coord;
+      NewMesh( const std::vector< std::size_t >& inpoel,
+               const tk::UnsMesh::Coords& coord )
+        : Inpoel(inpoel), Coord(coord) {}
+      template< typename P > void operator()( const P& p ) const {
+        p.ckLocal()->newMesh( Inpoel, Coord );
+      }
+    };
 };
 
 } // inciter::

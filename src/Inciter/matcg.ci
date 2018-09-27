@@ -35,8 +35,6 @@ module matcg {
                             const std::vector< tk::real >& sol );
       entry void updateLowSol( const std::vector< std::size_t >& gid,
                                const std::vector< tk::real >& sol );
-      entry void newMesh( const std::vector< std::size_t >& inpoel,
-                          const tk::UnsMesh::Coords& coord );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".

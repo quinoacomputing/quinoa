@@ -77,16 +77,6 @@ class MatCG : public CBase_MatCG {
                     const tk::CProxy_Solver& solver,
                     const FaceData& fd );
 
-    #if defined(__clang__)
-      #pragma clang diagnostic push
-      #pragma clang diagnostic ignored "-Wundefined-func-template"
-    #endif
-    //! Migrate constructor
-    explicit MatCG( CkMigrateMessage* ) {}
-    #if defined(__clang__)
-      #pragma clang diagnostic pop
-    #endif
-
     //! Configure Charm++ custom reduction types initiated from this chare array
     static void registerReducers();
 
@@ -121,6 +111,10 @@ class MatCG : public CBase_MatCG {
     //! Receive new mesh from refiner
     void newMesh( const std::vector< std::size_t >& inpoel,
                   const tk::UnsMesh::Coords& coord );
+
+    //! Const-ref access to current solution
+    //! \param[in,out] u Reference to update with current solution
+    void solution( tk::Fields& u ) const { u = m_u; }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

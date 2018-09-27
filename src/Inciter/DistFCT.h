@@ -51,9 +51,9 @@ namespace inciter {
 class DistFCT : public CBase_DistFCT {
 
   private:
-    //! Variant storing one proxy storing the discretization proxy we work with
+    //! Variant listing the types of the discretization proxies we work with
     using SchemeProxy = boost::variant< CProxy_MatCG, CProxy_DiagCG >;
-    //! Variant type listing chare element proxy types of discretization proxy
+    //! Variant listing the chare element proxy types of discretization proxies
     using ProxyElem =
       boost::variant< CProxy_MatCG::element_t, CProxy_DiagCG::element_t >;
   

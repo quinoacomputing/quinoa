@@ -452,7 +452,7 @@ MatCG::refine()
 // *****************************************************************************
 {
   auto d = Disc();
-  d->Ref()->start( false, d->T() );
+  d->Ref()->dtref( d->T(), thisProxy );
 }
 
 void

@@ -66,9 +66,6 @@ class DG : public CBase_DG {
                  const tk::CProxy_Solver& solver,
                  const FaceData& fd );
 
-    //! Migrate constructor
-    explicit DG( CkMigrateMessage* ) {}
-
     //! Receive unique set of faces we potentially share with/from another chare
     void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
 
@@ -107,6 +104,10 @@ class DG : public CBase_DG {
     //! Receive new mesh from refiner
     void newMesh( const std::vector< std::size_t >& inpoel,
                   const tk::UnsMesh::Coords& coord );
+
+    //! Const-ref access to current solution
+    //! \param[in,out] u Reference to update with current solution
+    void solution( tk::Fields& u ) const { u = m_u; }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

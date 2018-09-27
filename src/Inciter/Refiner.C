@@ -52,6 +52,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_sorter( sorter ),
   m_solver( solver ),
   m_scheme( scheme ),
+  m_schemeproxy(),
   m_cbr( cbr ),
   m_cbs( cbs ),
   m_ginpoel( ginpoel ),
@@ -98,7 +99,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   // If initial mesh refinement is configured, start initial mesh refinement.
   // See also tk::grm::check_amr_errors in Control/Inciter/InputDeck/Ggrammar.h.
   if (g_inputdeck.get< tag::amr, tag::initamr >())
-    start( true, 0.0 );
+    start();
   else
     finish();
 }
@@ -163,17 +164,31 @@ Refiner::flatcoord( const tk::UnsMesh::CoordMap& coordmap )
 }
 
 void
-Refiner::start( bool initial, tk::real t )
+Refiner::dtref( tk::real t, const SchemeBase::Proxy& s )
 // *****************************************************************************
-// Start new step of mesh refinement
-//! \param[in] initial True if initial AMR, false if during time stepping
+// Start mesh refinement (during time stepping, t>0)
 //! \param[in] t Physical time
+//! \param[in] scheme Discretization scheme Charm++ proxy we interoperate with
 // *****************************************************************************
 {
-  m_initial = initial;
+  m_initial = false;
   m_t = t;
 
-  if (initial)
+  // Store discretization scheme proxy
+  m_schemeproxy = s;
+
+  start();
+}
+
+void
+Refiner::start()
+// *****************************************************************************
+// Start new step of initial mesh refinement (before t>0)
+//! \param[in] t Physical time
+//! \param[in] scheme Discretization scheme Charm++ proxy we interoperate with
+// *****************************************************************************
+{
+  if (m_initial)
     Assert( (!g_inputdeck.get< tag::amr, tag::init >().empty()) ||
             (!g_inputdeck.get< tag::amr, tag::init >().empty()),
             "Neither initial mesh refinement type list nor user-defined "
@@ -272,20 +287,29 @@ Refiner::refine()
             "Boundary edge not found before refinement" );
   }
 
-  // Refine mesh based on next initial refinement type
-  if (!m_initref.empty()) {
-    auto r = m_initref.back();    // consume (reversed) list from back
-    if (r == ctr::AMRInitialType::UNIFORM)
-      uniformRefine();
-    else if (r == ctr::AMRInitialType::INITIAL_CONDITIONS)
-      errorRefine();
-    else if (r == ctr::AMRInitialType::COORDINATES)
-      coordRefine();
-    else Throw( "Initial AMR type not implemented" );
+  if (m_initial) {      // if initial (before t=0) AMR
+
+    // Refine mesh based on next initial refinement type
+    if (!m_initref.empty()) {
+      auto r = m_initref.back();    // consume (reversed) list from back
+      if (r == ctr::AMRInitialType::UNIFORM)
+        uniformRefine();
+      else if (r == ctr::AMRInitialType::INITIAL_CONDITIONS)
+        errorRefine();
+      else if (r == ctr::AMRInitialType::COORDINATES)
+        coordRefine();
+      else Throw( "Initial AMR type not implemented" );
+    }
+
+    // Additionally refine mesh based on user explicitly tagging edges
+    userRefine();
+
+  } else {              // if AMR during time stepping (t>0)
+
+    errorRefine();
+
   }
 
-  // Additionally refine mesh based on user explicitly tagging edges
-  userRefine();
 
   for (const auto& e : tk::cref_find(m_bndEdges,thisIndex)) {
     IGNORE(e);
@@ -480,14 +504,15 @@ Refiner::eval()
     // Remove initial mesh refinement step from list
     if (!m_initref.empty()) m_initref.pop_back();
     // Continue to next initial AMR step or finish
-    if (!m_initref.empty()) start( true, 0.0 ); else finish();
+    if (!m_initref.empty()) start(); else finish();
 
   } else {              // if AMR during time stepping (t>0)
 
     // Output mesh after recent step of mesh refinement during time stepping
     writeMesh( "dtref", std::to_string(m_t) );
     // Send new mesh back to PDE worker
-    m_scheme.newMesh< tag::elem >( thisIndex, m_inpoel, m_coord );
+    auto e = tk::element< SchemeBase::ProxyElem >( m_schemeproxy, thisIndex );
+    boost::apply_visitor( NewMesh(m_inpoel,m_coord), e );
   }
 }
 
@@ -539,8 +564,21 @@ Refiner::errorRefine()
   auto esup = tk::genEsup( m_inpoel, 4 );
   auto psup = tk::genPsup( m_inpoel, 4, esup );
 
-  // Evaluate initial conditions at mesh nodes
-  auto u = nodeinit( npoin, esup );
+  // Get solution whose error to evaluate
+  auto nprop = g_inputdeck.get< tag::component >().nprop();
+  tk::Fields u( m_coord[0].size(), nprop );
+  if (m_initial) {      // if initial (before t=0) AMR
+
+    // Evaluate initial conditions at mesh nodes
+    nodeinit( npoin, esup, u );
+
+  } else {              // if AMR during time stepping (t>0)
+
+    // Get solution from worker (pointer to solution from bound element)
+    auto e = tk::element< SchemeBase::ProxyElem >( m_schemeproxy, thisIndex );
+    boost::apply_visitor( Solution(u), e );
+
+  }
 
   // Get the indices (in the system of systems) of refinement variables and the
   // error indicator configured
@@ -693,22 +731,20 @@ Refiner::coordRefine()
   }
 }
 
-tk::Fields
+void
 Refiner::nodeinit( std::size_t npoin,
                    const std::pair< std::vector< std::size_t >,
-                                    std::vector< std::size_t > >& esup )
+                                    std::vector< std::size_t > >& esup,
+                   tk::Fields& u )
 // *****************************************************************************
 // Evaluate initial conditions (IC) at mesh nodes
 //! \param[in] npoin Number points in mesh (on this chare)
 //! \param[in] esup Elements surrounding points as linked lists, see tk::genEsup
-//! \return Initial conditions (evaluated at t0) at nodes
+//! \param[in,out] u Initial conditions (evaluated at t0) at nodes
 // *****************************************************************************
 {
   auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
   auto nprop = g_inputdeck.get< tag::component >().nprop();
-
-  // Will store nodal ICs
-  tk::Fields u( m_coord[0].size(), nprop );
 
   // Evaluate ICs differently depending on nodal or cell-centered discretization
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
@@ -743,8 +779,6 @@ Refiner::nodeinit( std::size_t npoin,
 
   Assert( u.nunk() == m_coord[0].size(), "Size mismatch" );
   Assert( u.nprop() == nprop, "Size mismatch" );
-
-  return u;
 }
 
 void
