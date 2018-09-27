@@ -12,6 +12,11 @@ namespace AMR {
         private:
             std::map<size_t, Refinement_State> master_elements;
         public:
+            //! Non-const-ref access to state
+            std::map<size_t, Refinement_State>& data() {
+              return master_elements;
+            }
+
             /**
              * @brief Add an element to the master element list.
              *

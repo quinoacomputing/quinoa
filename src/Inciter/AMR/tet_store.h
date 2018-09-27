@@ -14,7 +14,7 @@
 namespace AMR {
 
     class tet_store_t {
-        private:
+        public:
             // TODO: Remove this (center_tets) data structure!
             // This is a horrendous code abuse, and I'm sorry. I'm fairly
             // certain we'll be re-writing how this detection is done and just
@@ -34,7 +34,6 @@ namespace AMR {
             // TODO: I'd like this on the stack, but still pass an initial val
             AMR::id_generator_t id_generator;
 
-        public:
             std::set<size_t> intermediate_list;
             // Public so it can be trivially grabbed for looping over.
             std::vector< std::size_t > active_id_mapping;
@@ -589,11 +588,11 @@ namespace AMR {
                     }
                 }
 
-                std::cout << "Active Totals:" << std::endl;
-                std::cout << "  --> Initial = " << initial_grid << std::endl;
-                std::cout << "  --> 1:2 = " << one_to_two << std::endl;
-                std::cout << "  --> 1:4 = " << one_to_four << std::endl;
-                std::cout << "  --> 1:8 = " << one_to_eight << std::endl;
+                //std::cout << "Active Totals:" << std::endl;
+                //std::cout << "  --> Initial = " << initial_grid << std::endl;
+                //std::cout << "  --> 1:2 = " << one_to_two << std::endl;
+                //std::cout << "  --> 1:4 = " << one_to_four << std::endl;
+                //std::cout << "  --> 1:8 = " << one_to_eight << std::endl;
             }
 
             edge_list_t generate_edge_keys(size_t tet_id)

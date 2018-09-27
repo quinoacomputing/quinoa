@@ -82,6 +82,16 @@ class DiagCG : public CBase_DiagCG {
                      const tk::CProxy_Solver& solver,
                      const FaceData& fd );
 
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wundefined-func-template"
+    #endif
+    //! Migrate constructor
+    explicit DiagCG( CkMigrateMessage* ) {}
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
+
     //! Configure Charm++ custom reduction types initiated from this chare array
     static void registerReducers();
 

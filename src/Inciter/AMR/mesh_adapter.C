@@ -363,8 +363,8 @@ namespace AMR {
         }
         trace_out << "Loop took " << iter << " rounds." << std::endl;
 
-        std::cout << "Print Tets" << std::endl;
-        print_tets();
+        //std::cout << "Print Tets" << std::endl;
+        //print_tets();
 
     }
 
@@ -461,8 +461,8 @@ namespace AMR {
         // Clean up dead edges
         // clean_up_dead_edges(); // Nothing get's marked as "dead" atm?
 
-        std::cout << "Total Edges : " << tet_store.edge_store.size() << std::endl;
-        std::cout << "Total Tets : " << tet_store.size() << std::endl;
+        //std::cout << "Total Edges : " << tet_store.edge_store.size() << std::endl;
+        //std::cout << "Total Tets : " << tet_store.size() << std::endl;
         //std::cout << "Total Nodes : " << m_x.size() << std::endl;
 
         trace_out << "Done ref" << std::endl;
