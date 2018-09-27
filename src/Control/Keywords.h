@@ -4499,6 +4499,39 @@ struct amr_error_info {
 };
 using amr_error = keyword< amr_error_info, TAOCPP_PEGTL_STRING("error") >;
 
+struct amr_t0ref_info {
+  static std::string name() { return "Mesh refinement at t<0"; }
+  static std::string shortDescription() { return
+    "Enable mesh refinement at t<0"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to enable initial mesh refinement, which can be
+    configured to perform multiple levels of mesh refinement based on various
+    refinement criteria and configuration settings.)";
+  }
+  struct expect {
+    using type = bool;
+    static std::string choices() { return "true | false"; }
+    static std::string description() { return "string"; }
+  };
+};
+using amr_t0ref = keyword< amr_t0ref_info, TAOCPP_PEGTL_STRING("t0ref") >;
+
+struct amr_dtref_info {
+  static std::string name() { return "Mesh refinement at t>0"; }
+  static std::string shortDescription() { return
+    "Enable mesh refinement at t>0"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to enable soution-adaptive mesh refinement during "
+    "time stepping.)";
+  }
+  struct expect {
+    using type = bool;
+    static std::string choices() { return "true | false"; }
+    static std::string description() { return "string"; }
+  };
+};
+using amr_dtref = keyword< amr_dtref_info, TAOCPP_PEGTL_STRING("dtref") >;
+
 struct amr_info {
   static std::string name() { return "AMR"; }
   static std::string shortDescription() { return
@@ -4507,11 +4540,13 @@ struct amr_info {
     R"(This keyword is used to introduce the amr ... end block, used to
     configure adaptive mesh refinement. Keywords allowed
     in this block: )" + std::string("\'")
+    + amr_t0ref::string() + "\' | \'"
+    + amr_dtref::string() + "\' | \'"
+    + amr_initial::string() + "\' | \'"
     + amr_refvar::string() + "\' | \'"
     + amr_error::string() + "\' | \'"
     + amr_coordref::string() + "\' | \'"
-    + amr_initref::string() + "\' | \'"
-    + amr_initial::string() + "\'.";
+    + amr_initref::string() + "\'.";
   }
 };
 using amr = keyword< amr_info, TAOCPP_PEGTL_STRING("amr") >;

@@ -38,6 +38,7 @@ inciter
   end
 
   amr
+    t0ref true
     initial uniform
     refvar u end
     error jump

@@ -622,8 +622,10 @@ DiagCG::refine()
 // Optionally refine/derefine mesh
 // *****************************************************************************
 {
-  auto d = Disc();
-  d->Ref()->dtref( d->T(), thisProxy );
+  if (g_inputdeck.get< tag::amr, tag::dtref >()) {
+    auto d = Disc();
+    d->Ref()->dtref( d->T(), thisProxy );
+  } else ref_complete();
 }
 
 void

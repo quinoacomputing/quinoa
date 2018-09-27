@@ -42,8 +42,8 @@ using selects = tk::tuple::tagged_tuple<
 //! Adaptive-mesh refinement options
 using amr = tk::tuple::tagged_tuple<
   tag::amr,     bool,                             //!< AMR on/off
-  tag::t0amr,   bool,                             //!< AMR before t<0 on/off
-  tag::dtamr,   bool,                             //!< AMR during t>0 on/off
+  tag::t0ref,   bool,                             //!< AMR before t<0 on/off
+  tag::dtref,   bool,                             //!< AMR during t>0 on/off
   tag::init,    std::vector< AMRInitialType >,    //!< List of initial AMR types
   tag::refvar,  std::vector< std::string >,       //!< List of refinement vars
   tag::id,      std::vector< std::size_t >,       //!< List of refvar indices

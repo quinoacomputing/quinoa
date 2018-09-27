@@ -98,7 +98,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 
   // If initial mesh refinement is configured, start initial mesh refinement.
   // See also tk::grm::check_amr_errors in Control/Inciter/InputDeck/Ggrammar.h.
-  if (g_inputdeck.get< tag::amr, tag::t0amr >())
+  if (g_inputdeck.get< tag::amr, tag::t0ref >())
     t0ref();
   else
     endt0ref();
