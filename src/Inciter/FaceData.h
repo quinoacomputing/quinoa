@@ -26,7 +26,13 @@ using GhostData =
                         // 3 node ids for potentially multiple faces
                         std::vector< std::size_t >,
                         // elem geometry, see tk::genGeoElemTet()
-                        std::vector< tk::real > > >;
+                        std::vector< tk::real >,
+                        // coordinates of vertex of tet that is not on face
+                        std::array< tk::real, 3 >,
+                        // relative position of above vertex in inpoel
+                        std::size_t,
+                        // inpoel of said tet
+                        std::array< std::size_t, 4 > > >;
 
 
 //! FaceData class holding face-connectivity data useful for DG discretization

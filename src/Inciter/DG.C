@@ -51,17 +51,19 @@ DG::DG( const CProxy_Discretization& disc,
        m_ndof*g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_vol( 0.0 ),
-  m_geoFace( tk::genGeoFaceTri( fd.Ntfac(), fd.Inpofa(),
-                                m_disc[thisIndex].ckLocal()->Coord()) ),
-  m_geoElem( tk::genGeoElemTet( m_disc[thisIndex].ckLocal()->Inpoel(),
-                                m_disc[thisIndex].ckLocal()->Coord() ) ),
+  m_coord( m_disc[thisIndex].ckLocal()->Coord() ),
+  m_inpoel( m_disc[thisIndex].ckLocal()->Inpoel() ),
+  m_geoFace( tk::genGeoFaceTri( fd.Ntfac(), fd.Inpofa(), m_coord) ),
+  m_geoElem( tk::genGeoElemTet( m_inpoel,
+                                m_coord ) ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_nfac( fd.Inpofa().size()/3 ),
   m_nunk( m_u.nunk() ),
+  m_ncoord( m_coord[0].size() ),
   m_msumset( msumset() ),
-  m_esuelTet( tk::genEsuelTet( m_disc[thisIndex].ckLocal()->Inpoel(),
-                tk::genEsup( m_disc[thisIndex].ckLocal()->Inpoel(), 4 ) ) ),
+  m_esuelTet( tk::genEsuelTet( m_inpoel,
+                tk::genEsup( m_inpoel, 4 ) ) ),
   m_bndFace(),
   m_ghostData(),
   m_ghostReq( 0 ),
@@ -329,6 +331,7 @@ DG::setupGhost()
   auto d = Disc();
   const auto& gid = d->Gid();
   const auto& inpoel = d->Inpoel();
+  const auto& coord = d->Coord();
 
   // Enlarge elements surrounding faces data structure for ghosts
   m_fd.Esuf().resize( 2*m_nfac, -1 );
@@ -360,7 +363,37 @@ DG::setupGhost()
           auto& tuple = ghost[ e ];
           // If tetid e has not yet been encountered, store geometry (only once)
           auto& nodes = std::get< 0 >( tuple );
-          if (nodes.empty()) std::get< 1 >( tuple ) = m_geoElem[ e ];
+          if (nodes.empty()) {
+            std::get< 1 >( tuple ) = m_geoElem[ e ];
+            // determine the element node that is not on this face
+            std::size_t inode;
+            std::size_t missing = 0;
+            for (std::size_t in=0; in<4; ++in) {
+              auto nodee = gid[ inpoel[ mark+in ] ];
+              for (std::size_t jn=0; jn<3; ++jn) {
+                auto nodef = t[jn];
+                if (nodef != nodee) {
+                  inode = in;
+                  ++missing;
+                }
+              }
+            }
+
+            Assert( missing == 1, "Incorrect number of nodes of tet found on "
+                                  "chare-boundary face" );
+
+            auto& ncoord = std::get< 2 >( tuple );
+            ncoord[0] = coord[0][ inpoel[ mark+inode ] ];
+            ncoord[1] = coord[1][ inpoel[ mark+inode ] ];
+            ncoord[2] = coord[2][ inpoel[ mark+inode ] ];
+
+            std::get< 3 >( tuple ) = inode;
+
+            std::get< 4 >( tuple ) = {{ gid[ inpoel[ mark ] ],
+                                        gid[ inpoel[ mark+1 ] ],
+                                        gid[ inpoel[ mark+2 ] ],
+                                        gid[ inpoel[ mark+3 ] ] }};
+          }
           // (Always) store face node IDs on chare boundary, even if tetid e has
           // already been stored. Thus we store potentially multiple faces along
           // the same chare-boundary. This happens, e.g., when the boundary
@@ -393,6 +426,8 @@ DG::setupGhost()
               "No elem geometry data for ghost" );
       Assert( std::get< 1 >( t.second ).size() == m_geoElem.nprop(),
               "Elem geometry data for ghost must be for single tet" );
+      Assert( !std::get< 2 >( t.second ).empty(),
+              "No nodal coordinate data for ghost" );
     }
 
   ownghost_complete();
@@ -459,6 +494,9 @@ DG::comGhost( int fromch, const GhostData& ghost )
 //     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
 //                                         "comGhost" );
 
+  auto d = Disc();
+  const auto& lid = d->Lid();
+
   // nodelist with fromch, currently only used for an assert
   const auto& nl = tk::cref_find( m_msumset, fromch );
   IGNORE(nl);
@@ -470,10 +508,15 @@ DG::comGhost( int fromch, const GhostData& ghost )
     auto e = g.first;  // remote/ghost tet id outside of chare boundary
     const auto& nodes = std::get< 0 >( g.second );  // node IDs of face(s)
     const auto& geo = std::get< 1 >( g.second );    // ghost elem geometry data
+    const auto& coord = std::get< 2 >( g.second );  // coordinate of ghost node
+    auto inode = std::get< 3 >( g.second ); // index of ghost node in inpoel
+    const auto& inpoel = std::get< 4 >( g.second ); // inpoel of ghost tet
     Assert( nodes.size() % 3 == 0, "Face node IDs must be triplets" );
     Assert( nodes.size() <= 4*3, "Overflow of faces/tet received" );
     Assert( geo.size() % 4 == 0, "Ghost geometry size mismatch" );
     Assert( geo.size() == m_geoElem.nprop(), "Ghost geometry number mismatch" );
+    Assert( coord.size() == 3, "Incorrect ghost node coordinate size" );
+    Assert( inpoel.size() == 4, "Ghost inpoel size mismatch" );
     for (std::size_t n=0; n<nodes.size()/3; ++n) {  // face(s) of ghost e
       // node IDs of face on chare boundary
       tk::UnsMesh::Face t{{ nodes[n*3+0], nodes[n*3+1], nodes[n*3+2] }};
@@ -498,7 +541,15 @@ DG::comGhost( int fromch, const GhostData& ghost )
         addEsuf( id, m_nunk );     // fill in elements surrounding face
         ghostelem[e] = m_nunk;     // assign new local tet id to remote ghost id
         m_geoElem.push_back( geo );// store ghost elem geometry
+        for (std::size_t gp=0; gp<4; ++gp) {
+          auto lp = tk::cref_find( lid,inpoel[gp] );
+          m_inpoel.push_back( lp );       // store ghost element connectivity
+        }
+        m_coord[0].push_back( coord[0] ); // store ghost node coordinate
+        m_coord[1].push_back( coord[1] ); // store ghost node coordinate
+        m_coord[2].push_back( coord[2] ); // store ghost node coordinate
         ++m_nunk;                  // increase number of unknowns on this chare
+        ++m_ncoord;                // increase number of nodes on this chare
       }
     }
   }
@@ -604,8 +655,10 @@ DG::adj()
   m_lhs.resize( m_nunk );
   m_rhs.resize( m_nunk );
 
-  // Ensure that we also have all the geometry data (including those of ghosts)
+  // Ensure that we also have all the geometry and connectivity data 
+  // (including those of ghosts)
   Assert( m_geoElem.nunk() == m_u.nunk(), "GeoElem unknowns size mismatch" );
+  Assert( m_inpoel.size()/4 == m_u.nunk(), "Inpoel size mismatch" );
 
   // Basic error checking on ghost tet ID map
   Assert( m_ghost.find( thisIndex ) == m_ghost.cend(),
@@ -660,8 +713,9 @@ DG::setup( tk::real v )
   // Output fields metadata to output file
   d->writeElemMeta();
 
-  // Basic error checking on element geometry data size
+  // Basic error checking on sizes of element geometry data and connectivity
   Assert( m_geoElem.nunk() == m_lhs.nunk(), "Size mismatch in DG::setup()" );
+  Assert( m_inpoel.size()/4 == m_lhs.nunk(), "Size mismatch in DG::setup()" );
 
   // Compute left-hand side of discrete PDEs
   lhs();

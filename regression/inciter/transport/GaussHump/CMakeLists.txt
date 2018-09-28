@@ -16,6 +16,19 @@ add_regression_test(gauss_hump_dg ${INCITER_EXECUTABLE}
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
 
+add_regression_test(gauss_hump_dgp1 ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES gauss_hump_dgp1.q unitsquare_01_3.6k.exo diag_dgp1.std
+                               exodiff.cfg gauss_hump_dgp1.std.exo
+                    ARGS -c gauss_hump_dgp1.q -i unitsquare_01_3.6k.exo -v
+                    BIN_BASELINE gauss_hump_dgp1.std.exo
+                    BIN_RESULT out.0
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_dgp1.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
+
 add_regression_test(gauss_hump_dg ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES gauss_hump.q unitsquare_01_3.6k.exo diag.std

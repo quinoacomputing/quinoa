@@ -127,12 +127,15 @@ class DG : public CBase_DG {
       p | m_u;
       p | m_un;
       p | m_vol;
+      p | m_coord;
+      p | m_inpoel;
       p | m_geoFace;
       p | m_geoElem;
       p | m_lhs;
       p | m_rhs;
       p | m_nfac;
       p | m_nunk;
+      p | m_ncoord;
       p | m_msumset;
       p | m_esuelTet;
       p | m_ipface;
@@ -186,6 +189,10 @@ class DG : public CBase_DG {
     tk::Fields m_un;
     //! Total mesh volume
     tk::real m_vol;
+    //! Coordinates of nodes
+    tk::UnsMesh::Coords m_coord;
+    //! Tet element connectivity
+    std::vector< std::size_t > m_inpoel;
     //! Face geometry
     tk::Fields m_geoFace;
     //! Element geometry
@@ -198,6 +205,8 @@ class DG : public CBase_DG {
     std::size_t m_nfac;
     //! Counter for number of unknowns on this chare (including ghosts)
     std::size_t m_nunk;
+    //! Counter for number of nodes on this chare (including ghosts)
+    std::size_t m_ncoord;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!    worker chares associated to their chare IDs
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
