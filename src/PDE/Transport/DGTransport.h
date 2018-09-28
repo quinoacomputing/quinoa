@@ -321,10 +321,14 @@ class Transport {
       Assert( U.nprop() == m_ndof*m_ncomp && R.nprop() == m_ndof*m_ncomp,
               "Number of components in solution and right-hand side vector " 
               "must equal "+ std::to_string(m_ncomp) );
+      Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
+              "size" );
 
       const auto& bface = fd.Bface();
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();
+
+      Assert( inpofa.size()/3 == esuf.size()/2, "Mismatch in inpofa size" );
 
       // set rhs to zero
       R.fill(0.0);
