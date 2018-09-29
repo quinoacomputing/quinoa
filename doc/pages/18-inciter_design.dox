@@ -2,36 +2,81 @@
   \page      inciter_design Inciter software design
 
 This page discusses the high-level software design and some implementation
-aspects of @ref inciter_main. The discussion roughly follows as exection
-happens in time, from program start to finish.
+aspects of @ref inciter_main. The discussion follows as execution happens in
+time, from program start to finish.
 
 @section startup 1. Startup and migration of read-only global-scope data
 
+## Startup
+
 As all other executables in Quinoa, Inciter uses the Charm++ runtime system.
 Runtime execution starts in the Charm++ `mainmodule` constructor, defined in
-Main/Inciter.C. The command line is parsed first, followed by creating a
-driver, inciter::InciterDriver. After the main chare constructor has finished,
-the runtime system initializes global scope data and migrates it to all other
-PEs, which the is considered read-only. This global-scope data are defined at
-the beginning of Main/Inciter.C in the same order as they appear in the
-companion Charm++ interface file Main/inciter.ci. This is the order in which
-these data are initialized and migrated. Global scope data is limited to such
-read-only data. It stores data initialized during parsing the command line and
-the input (control) file. The command line is parsed by
-inciter::CmdLineParser's constructor, called during the main chare's
-constructor, while the input file is parsed by inciter::InputDeckParser's
-constructor, called during InciterDriver's constructor. Note that up to this
-point execution is serial, since there is only a single main Charm++ chare.
-InciterDriver::execute() then fires up a single Charm++ chare instance of
-Transporter, called from Main::execute() after the runtime system has finished
-migrating all global-scope data. Note that InciterDriver is _not_ a Charm++
-chare, only an ordinary C++ class. Transporter is the main driver class of
-Inciter that is a Charm++ chare from which all execution happens, e.g., via
-broadcasts, and to which all execution ends up in, leading to
-Transporter::finish(), which eventually calls back to Main::finalize(), calling
-CkExit(), singaling the runtime system to exit.
+Main/Inciter.C as `Main`. Starting down the constructor's initializer list, the
+command line is parsed, followed by creating a driver, inciter::InciterDriver,
+which parses the input file.
 
-_Mention polymorphic global-scope data_
+## Command line and input file parsing, global-scope data
+
+After the main chare constructor has finished, the runtime system initializes
+global scope data and migrates it to all other PEs, which from that point is
+considered read-only.
+
+@warning Note that this global-scope is _assumed_ read-only after migration but
+the compiler has now way of enforcing this, thus modifying it after migration
+will not generate a compile-time error.
+
+This global-scope data are defined at the beginning of Main/Inciter.C in the
+same order as they appear in the companion Charm++ interface file
+Main/inciter.ci. This is the order in which these data are initialized and
+migrated. Global scope data is limited to such read-only data.  It stores data
+initialized during parsing the command line and the input (control) file. The
+command line is parsed by inciter::CmdLineParser's constructor, called during
+the main chare's constructor, while the input file is parsed by
+inciter::InputDeckParser's constructor, called during InciterDriver's
+constructor.
+
+Global_scope data is always prefixed by `g_`. Inciter's global-scope data
+contains two input decks: the defaults (inciter::g_inputdeck_defaults) and
+inciter::g_inputdeck which contains all data parsed during command line and
+input file parsing.
+
+## Global scope data for runtime polymorphism
+
+Two other global scope vectors are `inciter::g_cgpde` and `inciter::g_dgpde`.
+These two vectors hold base classes for partial differential equations (PDE)
+that can be specialized to different types of derived PDEs that use continuous
+Galerkin finite element (FE) discretizations (inciter::CGPDE) and discontinuous
+Galerkin FE discretizations (inciter::DGPDE). These two vectors are global
+scope because they hold pointers to derived classes that enable runtime
+polymorphism. Runtime polymorphism enables code reuse and helps client code
+uniform and modular. Such polymorphic use of pointers (`std::unique_ptr`) are
+one of the rare uses of pointers throughout the code.
+
+@note While Charm++ allows migratable chares holding pointers and even supports
+runtime polymorphism among chare arrays, we strongly discourage the use of
+pointers and reference semantics, because it complicates writing safe code for
+such migratable objects. For more details on reference and value semantics in
+C++, see https://isocpp.org/wiki/faq/value-vs-ref-semantics. For more details
+on runtime polymorphism without client-side inheritance, the style in which the
+"base" classes inciter::CGPDE and inciter::DGPDE are written, that leads to
+cleaner and safer client code, see Sean Parent's talk on [concept-based
+polymorphism](http://sean-parent.stlab.cc/papers-and-presentations/#value-semantics-and-concept-based-polymorphism).
+For more details on concept-based runtime polymorphism with migratable Charm++
+chare arrays using value semantics, see Inciter/Scheme.h and [this
+talk](http://charm.cs.illinois.edu/charmWorkshop/slides/CharmWorkshop2018_bakosi.pdf).
+
+## Create inciter's driver, single Charm++ chare Transporter
+
+Up to this point execution is serial, since there is only a single main Charm++
+chare. `InciterDriver`'s constructor then fires up a single Charm++ chare
+instance of `Transporter`, called from Main::execute() after the runtime system
+has finished migrating all global-scope data. Note that InciterDriver is _not_
+a Charm++ chare, only an ordinary C++ class. `Transporter`, defined in
+Inciter/Transporter.C, is the main driver class of Inciter that is a Charm++
+chare from which all execution happens, e.g., via broadcasts, and to which all
+execution ends up in, leading to `Transporter::finish()`, which eventually
+calls back to `Main::finalize()`, calling `CkExit()`, signaling the runtime
+system to exit.
 
 @section setup 2. Setup
 
