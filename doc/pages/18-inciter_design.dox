@@ -18,8 +18,8 @@ which parses the input file.
 ## Command line and input file parsing, global-scope data
 
 After the main chare constructor has finished, the runtime system initializes
-global scope data and migrates it to all other PEs, which from that point is
-considered read-only.
+global scope data and migrates it to all other processing elements (PEs), which
+from that point is considered read-only.
 
 @warning Note that this global-scope is _assumed_ read-only after migration but
 the compiler has now way of enforcing this, thus modifying it after migration
@@ -65,7 +65,7 @@ For more details on concept-based runtime polymorphism with migratable Charm++
 chare arrays using value semantics, see Inciter/Scheme.h and [this
 talk](http://charm.cs.illinois.edu/charmWorkshop/slides/CharmWorkshop2018_bakosi.pdf).
 
-## Create inciter's driver, single Charm++ chare Transporter
+## Create inciter's driver, single Charm++ chare _Transporter_
 
 Up to this point execution is serial, since there is only a single main Charm++
 chare. `InciterDriver`'s constructor then fires up a single Charm++ chare
@@ -78,7 +78,81 @@ execution ends up in, leading to `Transporter::finish()`, which eventually
 calls back to `Main::finalize()`, calling `CkExit()`, signaling the runtime
 system to exit.
 
-@section setup 2. Setup
+@section classes 2. Important classes
+
+Here are the important classes that interoperate within inciter:
+
+ - `Transporter` (single chare, driver)
+ - `Solver` (chare _group_, linear system solver)
+ - `Partitioner` (chare _group_, mesh partitioner)
+ - `Refiner` (chare _array_, mesh refiner)
+ - `Sorter` (chare _array_, performs mesh reordering)
+ - `Discretization` (chare _array_, generic PDE solver base class)
+   - `DiagCG` (chare _array_, PDE solver child class, specialized to continuous
+     Galerkin finite element discretization scheme with a lumped-mass left-hand
+     side and flux-corrected transport combined with Lax-Wendroff time stepping),
+   - `MatCG` (chare _array_, PDE solver child class, specialized to continuous
+     Galerkin finite element discretization in space with a consistent-mass
+     left-hand side and a linear solver with flux-corrected transport combined
+     with Lax-Wendroff time stepping),
+   - `DG` (chare _array_, PDE solver child class, specialized to discontinuous
+     Galerkin finite element discretization scheme with a diagonal left-hand
+     side with Runge-Kutta time stepping),
+   - ... (more hydro schemes to be added in the future)
+ - `DistFCT` (chare _array_, performs distributed-memory flux-corrected
+   transport, if used by a specific discretization scheme)
+
+_Chare_ above means a single Charm++ chare. There is a single instance of this
+class. By design, `Transporter` is a single chare and is used as a driver that
+creates objects, it is as a target of global parallel reductions, and thus
+global synchronization points. `Transporter` also does most of the printouts to
+screen, collects statistics, and the end-point of an execution in
+`Transporter::finish()`.
+
+_Group_ above means a Charm++ chare group. A group is a processor-aware chare
+collection, which means that there is guaranteed to be a single instance of a
+group per PE which does _not_ migrate. Examples in inciter are `Solver` and
+`Partitioner` both of which are groups because they call MPI-only libraries,
+which require calls from PEs.
+
+@note Charm++ chare groups `Solver` and `Partitioner` are currently in the
+process of being converted to Charm++ `nodegroup`s, which are similar to groups
+in that they are processor-aware but instead of one per PE, nodegroups are
+guaranteed to be one per logical (compute) node, where a _compute node_ is
+understood to be a logical node which may or may not be equivalent to a
+physical compute node (i.e., a shared-memory node), depending on how a given
+execution environment is configured in Charm++'s symmetric multi-processing
+mode (SMP) mode. (For example, a run in SMP mode can be configured with a
+logical node corresponding to a shared-memory compute node or to a socket
+within a compute node). Similar to groups, nodegroups do not migrate but there
+is a significant difference in their parallel computing semantics in how the
+runtime system invokes their member functions compared to groups. Note that
+there is no difference between gorups and nodegroups if Charm++ is built in
+non-SMP mode, which is currently the default. For more details see the Charm++
+manual.
+
+_Array_ above means a Charm++ chare array, whose elements can migrate (if
+enabled) and thus they actively participate in automatic load balancing. With
+nonzero overdecomposition, configured with the `-u` command line argument,
+there may be more array elements (workers) than the number of available PEs.
+Arrays do the bulk of the heavy lifting in a calculation, i.e., computing
+right-hand sides for PDE operators, and hold the bulk of unknown/solution
+arrays. The degree of overdecomposition can be specified by the `-u` command
+line argument. This argument accepts a real value between 0.0 and 1.0,
+inclusive. 0.0 means no overdecomposition, which corresponds to partitioning
+the mesh into a number of pieces equalling the number of PEs available. (`-u
+0.0` is how MPI codes are traditionally used.) Nonzero overdecomposition yields
+larger number of mesh partitions than the available PEs. The extreme of `1.0`
+represents the largest degree of overdecomposition, which also results in the
+smallest work units. For a discussion on the effects of overdecomposition, see
+the page on @ref inciter_performance.
+
+_Bound arrays_: `Discretization` and its specialized children, `DiagCG`, `DG`,
+etc., `Refiner`, and, if used/created, `DistFCT` are _bound_ arrays. This means
+that the runtime system migrates its corresponding array elements together.
+Bound arrays facilitate modularization among workers that migrate.
+
+@section setup 3. Setup
 
 ...
 
