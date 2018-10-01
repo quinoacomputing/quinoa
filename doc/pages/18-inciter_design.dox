@@ -2,12 +2,12 @@
   \page      inciter_design Inciter software design
 
 This page discusses the high-level software design and some implementation
-aspects of @ref inciter_main. The discussion follows as execution happens in
-time, from program start to finish.
+aspects of @ref inciter_main. The discussion roughly follows as execution
+happens in time, from program start to finish.
 
-@section startup 1. Startup and migration of read-only global-scope data
+@section inciter_startup 1. Startup and migration of read-only global-scope data
 
-## Startup
+@subsection inciter_startup_itself Startup
 
 As all other executables in Quinoa, Inciter uses the Charm++ runtime system.
 Runtime execution starts in the Charm++ `mainmodule` constructor, defined in
@@ -15,7 +15,7 @@ Main/Inciter.C as `Main`. Starting down the constructor's initializer list, the
 command line is parsed, followed by creating a driver, inciter::InciterDriver,
 which parses the input file.
 
-## Command line and input file parsing, global-scope data
+@subsection inciter_startup_parsing Command line and input file parsing, global-scope data
 
 After the main chare constructor has finished, the runtime system initializes
 global scope data and migrates it to all other processing elements (PEs), which
@@ -40,7 +40,7 @@ contains two input decks: the defaults (inciter::g_inputdeck_defaults) and
 inciter::g_inputdeck which contains all data parsed during command line and
 input file parsing.
 
-## Global scope data for runtime polymorphism
+@subsection inciter_startup_polymorphism Global scope data for runtime polymorphism
 
 Two other global scope vectors are `inciter::g_cgpde` and `inciter::g_dgpde`.
 These two vectors hold base classes for partial differential equations (PDE)
@@ -65,7 +65,7 @@ For more details on concept-based runtime polymorphism with migratable Charm++
 chare arrays using value semantics, see Inciter/Scheme.h and [this
 talk](http://charm.cs.illinois.edu/charmWorkshop/slides/CharmWorkshop2018_bakosi.pdf).
 
-## Create inciter's driver, single Charm++ chare _Transporter_
+@subsection inciter_startup_transporter Create inciter's driver, single Charm++ chare Transporter
 
 Up to this point execution is serial, since there is only a single main Charm++
 chare. `InciterDriver`'s constructor then fires up a single Charm++ chare
@@ -78,7 +78,7 @@ execution ends up in, leading to `Transporter::finish()`, which eventually
 calls back to `Main::finalize()`, calling `CkExit()`, signaling the runtime
 system to exit.
 
-@section classes 2. Important classes
+@section inciter_classes 2. Important classes
 
 Here are the important classes that interoperate within inciter:
 
@@ -152,7 +152,7 @@ etc., `Refiner`, and, if used/created, `DistFCT` are _bound_ arrays. This means
 that the runtime system migrates its corresponding array elements together.
 Bound arrays facilitate modularization among workers that migrate.
 
-@section setup 3. Setup
+@section inciter_setup 3. Setup
 
 ...
 
