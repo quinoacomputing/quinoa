@@ -301,23 +301,26 @@ namespace grm {
   struct action< check_amr_errors > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-      // Error out if refvar size does not equal refidx size
+      // Error out if refvar size does not equal refidx size (programmer error)
       Assert( (stack.template get< tag::amr, tag::refvar >().size() ==
                stack.template get< tag::amr, tag::id >().size()),
               "The size of refvar and refidx vectors must equal" );
       const auto& initref = stack.template get< tag::amr, tag::init >();
       const auto& edgeref = stack.template get< tag::amr, tag::edge >();
       const auto& refvar = stack.template get< tag::amr, tag::refvar >();
-      // Error out if initref edge list is not divisible by 2
+      // Error out if initref edge list is not divisible by 2 (user error)
       if (edgeref.size() % 2 == 1)
         Message< Stack, ERROR, MsgKey::T0REFODD >( stack, in );
-      // Warn if initial AMR will be a no-op
+      // Error out if initial AMR will be a no-op (user error)
       if ( stack.template get< tag::amr, tag::t0ref >() &&
            initref.empty() && edgeref.empty() )
         Message< Stack, ERROR, MsgKey::T0REFNOOP >( stack, in );
-      // Warn if timestepping AMR will be a no-op
+      // Error out if timestepping AMR will be a no-op (user error)
       if ( stack.template get< tag::amr, tag::dtref >() && refvar.empty() )
         Message< Stack, ERROR, MsgKey::DTREFNOOP >( stack, in );
+      // Error out if mesh refinement frequency is zero (programmer error)
+      Assert( (stack.template get< tag::amr, tag::dtfreq >() > 0),
+              "Mesh refinement frequency must be positive" );
     }
   };
 
@@ -602,7 +605,10 @@ namespace deck {
                              pegtl::alpha >,
                            tk::grm::process< use< kw::amr_dtref >,
                              tk::grm::Store< tag::amr, tag::dtref >,
-                             pegtl::alpha >
+                             pegtl::alpha >,
+                           tk::grm::process< use< kw::amr_dtfreq >,
+                             tk::grm::Store< tag::amr, tag::dtfreq >,
+                             pegtl::digit >
                          >,
            tk::grm::check_amr_errors > {};
 

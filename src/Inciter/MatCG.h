@@ -118,13 +118,22 @@ class MatCG : public CBase_MatCG {
     //! Optionally refine/derefine mesh
     void refine();
 
+    //! Compute left-hand side of transport equations
+    void lhs();
+
     //! Receive new mesh from refiner
-    void newMesh( const std::vector< std::size_t >& inpoel,
-                  const tk::UnsMesh::Coords& coord );
+    void resize( const tk::UnsMesh::Chunk& chunk,
+                 const tk::UnsMesh::Coords& coord,
+                 const tk::Fields& u,
+                 const std::unordered_map< int,
+                         std::vector< std::size_t > >& msum );
 
     //! Const-ref access to current solution
     //! \param[in,out] u Reference to update with current solution
     void solution( tk::Fields& u ) const { u = m_u; }
+
+    //! Resizing data sutrctures after mesh refinement has been completed
+    void resized();
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -200,9 +209,6 @@ class MatCG : public CBase_MatCG {
     //! \brief Extract node IDs from side set node lists and match to
     //    user-specified boundary conditions
     void bc();
-
-    //! Compute left-hand side of transport equations
-    void lhs();
 
     //! Compute righ-hand side vector of transport equations
     void rhs();

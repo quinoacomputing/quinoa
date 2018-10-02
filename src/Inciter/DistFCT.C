@@ -36,8 +36,6 @@ DistFCT::DistFCT( int nchare,
                   const std::unordered_map< std::size_t, std::size_t >& bid,
                   const std::unordered_map< std::size_t, std::size_t >& lid,
                   const std::vector< std::size_t >& inpoel ) :
-  m_nhsol( 0 ),
-  m_nlsol( 0 ),
   m_naec( 0 ),
   m_nalw( 0 ),
   m_nlim( 0 ),
@@ -74,13 +72,61 @@ DistFCT::DistFCT( int nchare,
 {
   usesAtSync = true;    // Enable migration at AtSync
 
-  // Allocate receive buffers for FCT
-  m_pc.resize( m_bid.size() );
+  resizeComm();         // Size communication buffers
+}
+
+
+void
+DistFCT::resizeComm()
+// *****************************************************************************
+//  Size FCT communication buffers
+//! \details The size of the communication buffers are determined based on
+//!    m_bid.size() and m_a.nprop().
+// *****************************************************************************
+{
+  auto bs = m_bid.size();
+  auto np = m_a.nprop();
+
+  m_pc.resize( bs );
   for (auto& b : m_pc) b.resize( np*2 );
-  m_qc.resize( m_bid.size() );
+  m_qc.resize( bs );
   for (auto& b : m_qc) b.resize( np*2 );
-  m_ac.resize( m_bid.size() );
+  m_ac.resize( bs );
   for (auto& b : m_ac) b.resize( np );
+}
+
+void
+DistFCT::resize( std::size_t nu,
+                 const std::unordered_map< int,
+                   std::vector< std::size_t > >& msum,
+                 const std::unordered_map< std::size_t, std::size_t >& bid,
+                 const std::unordered_map< std::size_t, std::size_t >& lid,
+                 const std::vector< std::size_t >& inpoel )
+// *****************************************************************************
+//  Resize FCT data structures (e.g., after mesh refinement)
+//! \param[in] nu New number of unknowns in solution vector
+//! \param[in] msum New global mesh node IDs associated to chare IDs bordering
+//!   the mesh chunk we operate on
+//! \param[in] bid New local chare-boundary mesh node IDs at which we receive
+//!   contributions associated to global mesh node IDs of mesh elements we
+//!   contribute to
+//! \param[in] lid New local mesh node ids associated to the global ones of
+//!   owned elements
+//! \param[in] inpoel Mesh connectivity of our chunk of the mesh
+// *****************************************************************************
+{
+  m_msum = msum;
+  m_bid = bid;
+  m_lid = lid;
+  m_inpoel = inpoel;
+
+  auto np = m_a.nprop();
+  m_p.resize( nu, np*2 );
+  m_q.resize( nu, np*2 );
+  m_a.resize( nu, np );
+  resizeComm();
+
+  m_fluxcorrector.resize( m_inpoel.size() );
 }
 
 tk::Fields

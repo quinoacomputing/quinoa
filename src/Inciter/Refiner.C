@@ -72,7 +72,9 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_ch(),
   m_edgenode(),
   m_edgenodeCh(),
-  m_bndEdges()
+  m_bndEdges(),
+  m_u(),
+  m_msum()
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Transporter (host) proxy
@@ -306,7 +308,8 @@ Refiner::refine()
 
   } else {              // if AMR during time stepping (t>0)
 
-    errorRefine();
+    //errorRefine();
+    uniformRefine();
 
   }
 
@@ -339,7 +342,7 @@ Refiner::comExtra()
                 m_cbr.get< tag::matched >() );
   else {
     m_nref = 0;
-    for (auto c : m_ch) {       // for all chars we share at least an edge with
+    for (auto c : m_ch) {       // for all chares we share at least an edge with
       // For all boundary edges of chare c, find out if we have added a new
       // node to it, and if so, export parents->(newid,coords) to c.
       tk::UnsMesh::EdgeNodeCoord exp;
@@ -510,9 +513,20 @@ Refiner::eval()
 
     // Output mesh after recent step of mesh refinement during time stepping
     writeMesh( "dtref", std::to_string(m_t) );
-    // Send new mesh back to PDE worker
+
+    // Augment node comm. map with newly added nodes on chare-boundary edges
+    for (const auto& c : m_edgenodeCh) {
+      auto& nodes = tk::ref_find( m_msum, c.first );
+      for (const auto& n : c.second)
+        nodes.push_back( std::get<0>(n.second) );
+    }
+
+    // Send new mesh and solution back to PDE worker
+    Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
+            "About to use nullptr" );
     auto e = tk::element< SchemeBase::ProxyElem >( m_schemeproxy, thisIndex );
-    boost::apply_visitor( NewMesh(m_inpoel,m_coord), e );
+    boost::apply_visitor( Resize(m_el,m_coord,m_u,m_msum), e );
+
   }
 }
 
@@ -565,16 +579,17 @@ Refiner::errorRefine()
   auto psup = tk::genPsup( m_inpoel, 4, esup );
 
   // Get solution whose error to evaluate
-  auto nprop = g_inputdeck.get< tag::component >().nprop();
-  tk::Fields u( m_coord[0].size(), nprop );
+  tk::Fields u;
   if (m_initial) {      // if initial (before t=0) AMR
 
     // Evaluate initial conditions at mesh nodes
-    nodeinit( npoin, esup, u );
+    u = nodeinit( npoin, esup );
 
   } else {              // if AMR during time stepping (t>0)
 
-    // Get solution from worker (pointer to solution from bound array element)
+    // Get old solution from worker (pointer to soln from bound array element)
+    Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
+            "About to use nullptr" );
     auto e = tk::element< SchemeBase::ProxyElem >( m_schemeproxy, thisIndex );
     boost::apply_visitor( Solution(u), e );
 
@@ -604,6 +619,8 @@ Refiner::errorRefine()
          crit.push_back( cmax );
        }
      }
+
+  //std::cout << "err: " << edge.size() << '\n';
 
   Assert( edge.size() == crit.size(), "Size mismatch" );
 
@@ -737,20 +754,22 @@ Refiner::coordRefine()
   }
 }
 
-void
+tk::Fields
 Refiner::nodeinit( std::size_t npoin,
                    const std::pair< std::vector< std::size_t >,
-                                    std::vector< std::size_t > >& esup,
-                   tk::Fields& u )
+                                    std::vector< std::size_t > >& esup )
 // *****************************************************************************
 // Evaluate initial conditions (IC) at mesh nodes
 //! \param[in] npoin Number points in mesh (on this chare)
 //! \param[in] esup Elements surrounding points as linked lists, see tk::genEsup
-//! \param[in,out] u Initial conditions (evaluated at t0) at nodes
+//! \return Initial conditions (evaluated at t0) at nodes
 // *****************************************************************************
 {
   auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
   auto nprop = g_inputdeck.get< tag::component >().nprop();
+
+  // Will store nodal ICs
+  tk::Fields u( m_coord[0].size(), nprop );
 
   // Evaluate ICs differently depending on nodal or cell-centered discretization
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
@@ -785,6 +804,8 @@ Refiner::nodeinit( std::size_t npoin,
 
   Assert( u.nunk() == m_coord[0].size(), "Size mismatch" );
   Assert( u.nprop() == nprop, "Size mismatch" );
+
+  return u;
 }
 
 void
@@ -824,6 +845,17 @@ Refiner::updateMesh()
   std::unordered_set< std::size_t > old( m_inpoel.cbegin(), m_inpoel.cend() );
   std::unordered_set< std::size_t > ref( refinpoel.cbegin(), refinpoel.cend() );
 
+  // Get old solution from worker (pointer to soln from bound array element)
+  if (!m_initial) {
+    Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
+            "About to use nullptr" );
+    auto e = tk::element< SchemeBase::ProxyElem >( m_schemeproxy, thisIndex );
+    boost::apply_visitor( Solution(m_u), e );
+    // Get nodal communication map from Discretization worker
+    m_msum = m_scheme.get()[thisIndex].ckLocal()->Msum();
+  }
+
+  // Update mesh and solution after refinement
   updateVolMesh( old, ref );
   updateBndMesh( old, ref );
 
@@ -861,12 +893,14 @@ Refiner::updateVolMesh( const std::unordered_set< std::size_t >& old,
   auto& y = m_coord[1];
   auto& z = m_coord[2];
 
-  // Resize node coordinate storage to accommodate refined mesh nodes
+  // Resize node coordinates, global ids, and solution vector
   auto npoin = ref.size();
+  auto nprop = g_inputdeck.get<tag::component>().nprop();
   x.resize( npoin );
   y.resize( npoin );
   z.resize( npoin );
   m_gid.resize( npoin, std::numeric_limits< std::size_t >::max() );
+  if (!m_initial) m_u.resize( npoin, nprop );
 
   // Generate coordinates and ids to newly added nodes after refinement step
   for (auto r : ref) {               // for all unique nodes of the refined mesh
@@ -880,7 +914,14 @@ Refiner::updateVolMesh( const std::unordered_set< std::size_t >& old,
       x[r] = (x[p[0]] + x[p[1]])/2.0;
       y[r] = (y[p[0]] + y[p[1]])/2.0;
       z[r] = (z[p[0]] + z[p[1]])/2.0;
-      decltype(p) gp{{ m_gid[p[0]], m_gid[p[1]] }}; // global parent ids
+
+      // generate solution for newly added node
+      if (!m_initial)   // only during t>0 refinement
+        for (std::size_t c=0; c<nprop; ++c)
+          m_u(r,c,0) = (m_u(p[0],c,0) + m_u(p[1],c,0))/2.0;
+
+      // global parent ids
+      decltype(p) gp{{ m_gid[p[0]], m_gid[p[1]] }};
       // generate new global ID for newly added node
       auto g = tk::UnsMesh::Hash<2>()( gp );
       // ensure newly generated node id has not yet been used
@@ -894,7 +935,7 @@ Refiner::updateVolMesh( const std::unordered_set< std::size_t >& old,
       m_lid[g] = r;
       // assign new coordinates to new global node id
       Assert( m_coordmap.find(g) == end(m_coordmap),
-              "Overwriting entry coordmap" );
+              "Overwriting entry already in coordmap" );
       m_coordmap.insert( {g, {{x[r], y[r], z[r]}}} );
       // assign new coordinates and new global node id to global parent id pair
       m_edgenode[ gp ] = std::make_tuple( g, x[r], y[r], z[r] );

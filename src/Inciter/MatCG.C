@@ -339,7 +339,7 @@ MatCG::writeFields( tk::real time )
   if (filetype == tk::ctr::FieldFileType::ROOT) {
 
     // Create Root writer
-    tk::RootMeshWriter rmw( d->OutFilename(), 1 );
+    tk::RootMeshWriter rmw( d->filename(), 1 );
     // Write time stamp
     rmw.writeTimeStamp( m_itf, time );
     // Write node fields to file
@@ -350,7 +350,7 @@ MatCG::writeFields( tk::real time )
   {
 
     // Create ExodusII writer
-    tk::ExodusIIMeshWriter ew( d->OutFilename(), tk::ExoWriter::OPEN );
+    tk::ExodusIIMeshWriter ew( d->filename(), tk::ExoWriter::OPEN );
     // Write time stamp
     ew.writeTimeStamp( m_itf, time );
     // Write node fields to file
@@ -367,21 +367,19 @@ MatCG::out()
 {
   auto d = Disc();
 
-  // Optionally output field and particle data
-  if ( !((d->It()+1) % g_inputdeck.get< tag::interval, tag::field >()) &&
-       !g_inputdeck.get< tag::cmd, tag::benchmark >() )
-  {
-    writeFields( d->T()+d->Dt() );
-  }
+  // Output field data to file if not in benchmark mode
+  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) {
 
-  // Output final field data to file (regardless of whether it was requested)
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  if ( (std::fabs(d->T() + d->Dt()-term) < eps || (d->It()+1) >= nstep) &&
-       (!g_inputdeck.get< tag::cmd, tag::benchmark >()) )
-  {
-    writeFields( d->T()+d->Dt() );
+    if ( !((d->It()) % g_inputdeck.get< tag::interval, tag::field >()) )
+      writeFields( d->T() );
+  
+    // Output final field data to file (regardless of whether it was requested)
+    const auto term = g_inputdeck.get< tag::discr, tag::term >();
+    const auto eps = std::numeric_limits< tk::real >::epsilon();
+    const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+    if ( (std::fabs(d->T()-term) < eps || d->It() >= nstep ) )
+      writeFields( d->T() );
+  
   }
 }
 
@@ -405,6 +403,15 @@ MatCG::advance( tk::real newdt )
 }
 
 void
+MatCG::resized()
+// *****************************************************************************
+// Resizing data sutrctures after mesh refinement has been completed
+// *****************************************************************************
+{
+  resize_complete();
+}
+
+void
 MatCG::update( const tk::Fields& a )
 // *****************************************************************************
 //  Update solution at the end of time step
@@ -424,8 +431,6 @@ MatCG::update( const tk::Fields& a )
   else
     m_u = m_u + m_du;
 
-  // Output field data to file
-  out();
   // Compute diagnostics, e.g., residuals
   auto diag_computed = m_diag.compute( *d, m_u );
   // Increase number of iterations and physical time
@@ -452,19 +457,39 @@ MatCG::refine()
 // *****************************************************************************
 {
   auto d = Disc();
-  d->Ref()->dtref( d->T(), thisProxy );
+
+  auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
+  auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
+
+  // if t>0 refinement enabled and we hit the frequency
+  if (dtref && !(d->It() % dtfreq)) {   // refine
+
+    d->Ref()->dtref( d->T(), thisProxy );
+
+  } else {      // do not refine
+
+    ref_complete();
+    lhs_complete();
+    resize_complete();
+
+  }
 }
 
 void
-MatCG::newMesh( const std::vector< std::size_t >& inpoel,
-                const tk::UnsMesh::Coords& coord )
+MatCG::resize( const tk::UnsMesh::Chunk& /*chunk*/,
+               const tk::UnsMesh::Coords& /*coord*/,
+               const tk::Fields& /*u*/,
+               const std::unordered_map< int,
+                       std::vector< std::size_t > >& /*msum*/ )
 // *****************************************************************************
 //  Receive new mesh from refiner
-//! \param[in] inpoel Mesh connectivity using local node IDs
-//! \param[in] coord Mesh node coordinates
+//! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
+//! \param[in] coord New mesh node coordinates
+//! \param[in] u New solution on new mesh
+//! \param[in] msum New node communication map
 // *****************************************************************************
 {
-  auto d = Disc();
+  //auto d = Disc();
 
   //d->Inpoel() = inpoel;
   //d->Coord() = coord;
@@ -480,6 +505,8 @@ MatCG::eval()
 {
   auto d = Disc();
 
+  // Output field data to file
+  out();
   // Output one-liner status report
   d->status();
 

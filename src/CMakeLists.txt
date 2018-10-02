@@ -227,6 +227,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
   add_compiler_flag("-Wno-global-constructors")
   add_compiler_flag("-Wno-weak-vtables")
   add_compiler_flag("-Wno-unknown-pragmas")
+  add_compiler_flag("-Wno-unknown-warning-option")
   add_compiler_flag("-Wno-unused-command-line-argument")
   add_compiler_flag("-Wno-disabled-macro-expansion")
   add_compiler_flag("-Wno-reserved-id-macro")

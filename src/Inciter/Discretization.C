@@ -44,17 +44,12 @@ Discretization::Discretization(
   int nchare ) :
   m_nchare( nchare ),
   m_it( 0 ),
+  m_itr( 0 ),
+  m_initial( 1.0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_lastFieldWriteTime( -1.0 ),
   m_nvol( 0 ),
-  m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + '.' +
-                 std::to_string( thisIndex )
-                 #ifdef HAS_ROOT
-                 + (g_inputdeck.get< tag::selected, tag::filetype >() ==
-                     tk::ctr::FieldFileType::ROOT ? ".root" : "")
-                 #endif
-                ),
   m_fct( fctproxy ),
   m_transporter( transporter ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
@@ -116,6 +111,47 @@ Discretization::Discretization(
                                m_msum, m_bid, m_lid, m_inpoel, CkMyPe() );
 
   contribute( CkCallback(CkReductionTarget(Transporter,disccreated),
+              m_transporter) );
+}
+
+void
+Discretization::resize( const tk::UnsMesh::Chunk& chunk,
+                        const tk::UnsMesh::Coords& coord,
+                        const std::unordered_map< int,
+                                std::vector< std::size_t > >& msum )
+// *****************************************************************************
+//  Resize mesh data structures (e.g., after mesh refinement)
+//! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
+//! \param[in] coord New mesh node coordinates
+//! \param[in] msum New node communication map
+// *****************************************************************************
+{
+  // Update volume mesh (connectivity, global<->local id maps and coordinates)
+  m_el = chunk;         // updates m_inpoel, m_gid, m_lid
+  m_coord = coord;      // update mesh node coordinates
+  m_msum = msum;        // update node communciation map
+
+  // Generate local ids for new chare boundary global ids
+  std::size_t lid = m_bid.size();
+  for (const auto& c : m_msum)
+    for (auto g : c.second)
+      if (m_bid.find( g ) == end(m_bid))
+        m_bid[ g ] = lid++;
+
+  // Resize receive buffer for nodal volumes
+  std::fill( begin(m_volc), end(m_volc), 0.0 );
+  m_volc.resize( m_bid.size(), 0.0 );
+
+  // Set flag that indicates that we are during time stepping
+  m_initial = 0.0;
+
+  // Update mesh volume
+  std::fill( begin(m_vol), end(m_vol), 0.0 );
+  m_vol.resize( m_gid.size(), 0.0 );
+
+  m_nvol = 0;
+
+  contribute( CkCallback(CkReductionTarget(Transporter,discresized),
               m_transporter) );
 }
 
@@ -266,9 +302,9 @@ Discretization::totalvol()
   }
 
   // Sum mesh volume to host
-  tk::real tvol = 0.0;
-  for (auto v : m_v) tvol += v;
-  contribute( sizeof(tk::real), &tvol, CkReduction::sum_double,
+  std::vector< tk::real > tvol{ 0.0, m_initial };
+  for (auto v : m_v) tvol[0] += v;
+  contribute( tvol, CkReduction::sum_double,
     CkCallback(CkReductionTarget(Transporter,totalvol), m_transporter) );
 }
 
@@ -374,14 +410,14 @@ Discretization::writeMesh(
 
     if (filetype == tk::ctr::FieldFileType::ROOT) {
 
-      tk::RootMeshWriter rmw( m_outFilename, 0 );
+      tk::RootMeshWriter rmw( filename(), 0 );
       rmw.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
 
     } else
     #endif
     {
       // Create ExodusII writer
-      tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
+      tk::ExodusIIMeshWriter ew( filename(), tk::ExoWriter::CREATE );
       // Write chare mesh
       if (m_nchare == 1) {
 
@@ -462,7 +498,7 @@ Discretization::writeNodeMeta() const
 
     if (filetype == tk::ctr::FieldFileType::ROOT) {
  
-      tk::RootMeshWriter rmw( m_outFilename, 1 );
+      tk::RootMeshWriter rmw( filename(), 1 );
 
       // Collect nodal field output names from all PDEs
       std::vector< std::string > names;
@@ -479,7 +515,7 @@ Discretization::writeNodeMeta() const
     {
 
       // Create ExodusII writer
-      tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
+      tk::ExodusIIMeshWriter ew( filename(), tk::ExoWriter::OPEN );
 
       // Collect nodal field output names from all PDEs
       std::vector< std::string > names;
@@ -504,7 +540,7 @@ Discretization::writeElemMeta() const
   if (!g_inputdeck.get< tag::cmd, tag::benchmark >())
   {
     // Create ExodusII writer
-    tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
+    tk::ExodusIIMeshWriter ew( filename(), tk::ExoWriter::OPEN );
 
     // Collect elemental field output names from all PDEs
     std::vector< std::string > names;
@@ -530,6 +566,41 @@ Discretization::setdt( tk::real newdt )
   // Truncate the size of last time step
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   if (m_t+m_dt > term) m_dt = term - m_t;;
+}
+
+
+std::string
+Discretization::filename() const
+// *****************************************************************************
+//  Compute ExodusII filename
+//! \details We use a file naming convention for large field output data that
+//!   allows ParaView to glue multiple files into a single simulation output by
+//!   only loading a single file. The base filename is followed by ".e-s.",
+//!   which probably stands for Exodus Sequence, followed by 3 integers:
+//!   (1) {RS}: counts the number of "restart dumps", but we use this for
+//!   counting the number of outputs with a different mesh, e.g., due to
+//!   mesh refinement, thus if this first number is new the mesh is new
+//!   compared to the previous (first) number afer ".e-s.",
+//!   (2) {NP}: total number of partitions (workers, chares), this is more than
+//!   the number of PEs with nonzero virtualization (overdecomposition), and
+//!   (3) {RANK}: worker (chare) id.
+//!   Thus {RANK} does spatial partitioning, while {RS} partitions in time, but
+//!   a single {RS} id may contain multiple time steps, which equals to the
+//!   number of time steps at which field output is saved without refining the
+//!   mesh.
+//! \return Filename computed
+//! \see https://www.paraview.org/Wiki/Restarted_Simulation_Readers
+// *****************************************************************************
+{
+  return g_inputdeck.get< tag::cmd, tag::io, tag::output >() + ".e-s"
+         + '.' + std::to_string( m_itr )        // create new file if new mesh
+         + '.' + std::to_string( m_nchare )     // total number of workers
+         + '.' + std::to_string( thisIndex )    // new file per worker
+         #ifdef HAS_ROOT
+         + (g_inputdeck.get< tag::selected, tag::filetype >() ==
+             tk::ctr::FieldFileType::ROOT ? ".root" : "")
+         #endif
+         ;
 }
 
 void
@@ -558,6 +629,7 @@ Discretization::status()
     const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
     const auto field = g_inputdeck.get< tag::interval,tag::field >();
     const auto diag = g_inputdeck.get< tag::interval, tag::diag >();
+    const auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
 
     // estimate time elapsed and time for accomplishment
@@ -582,6 +654,7 @@ Discretization::status()
     // Augment one-liner with output indicators
     if (!(m_it % field)) print << 'F';
     if (!(m_it % diag)) print << 'D';
+    if (!(m_it % dtfreq)) print << 'H';
   
     print << std::endl;
   }

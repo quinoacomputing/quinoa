@@ -588,11 +588,11 @@ namespace AMR {
                     }
                 }
 
-                //std::cout << "Active Totals:" << std::endl;
-                //std::cout << "  --> Initial = " << initial_grid << std::endl;
-                //std::cout << "  --> 1:2 = " << one_to_two << std::endl;
-                //std::cout << "  --> 1:4 = " << one_to_four << std::endl;
-                //std::cout << "  --> 1:8 = " << one_to_eight << std::endl;
+                std::cout << "Active Totals:" << std::endl;
+                std::cout << "  --> Initial = " << initial_grid << std::endl;
+                std::cout << "  --> 1:2 = " << one_to_two << std::endl;
+                std::cout << "  --> 1:4 = " << one_to_four << std::endl;
+                std::cout << "  --> 1:8 = " << one_to_eight << std::endl;
             }
 
             edge_list_t generate_edge_keys(size_t tet_id)

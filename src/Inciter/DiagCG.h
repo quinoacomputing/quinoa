@@ -104,6 +104,9 @@ class DiagCG : public CBase_DiagCG {
     //! Advance equations to next time step
     void advance( tk::real newdt );
 
+    //! Compute left-hand side of transport equations
+    void lhs();
+
     //! Receive contributions to left-hand side matrix on chare-boundaries
     void comlhs( const std::vector< std::size_t >& gid,
                  const std::vector< std::vector< tk::real > >& L );
@@ -126,12 +129,18 @@ class DiagCG : public CBase_DiagCG {
     void refine();
 
     //! Receive new mesh from refiner
-    void newMesh( const std::vector< std::size_t >& inpoel,
-                  const tk::UnsMesh::Coords& coord );
+    void resize( const tk::UnsMesh::Chunk& chunk,
+                 const tk::UnsMesh::Coords& coord,
+                 const tk::Fields& u,
+                 const std::unordered_map< int,
+                         std::vector< std::size_t > >& msum );
 
     //! Const-ref access to current solution
     //! \param[in,out] u Reference to update with current solution
     void solution( tk::Fields& u ) const { u = m_u; }
+
+    //! Resizing data sutrctures after mesh refinement has been completed
+    void resized();
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -140,6 +149,7 @@ class DiagCG : public CBase_DiagCG {
     void pup( PUP::er &p ) override {
       p | m_disc;
       p | m_itf;
+      p | m_initial;
       p | m_nsol;
       p | m_nlhs;
       p | m_nrhs;
@@ -171,8 +181,12 @@ class DiagCG : public CBase_DiagCG {
 
     //! Discretization proxy
     CProxy_Discretization m_disc;
-    //! Field output iteration count
+    //! Field output iteration count without mesh refinement
+    //! \details Counts the number of field outputs to file during two
+    //!   time steps with mesh efinement
     uint64_t m_itf;
+    //! True if starting time stepping, false if during time stepping
+    bool m_initial;
     //! Counter for high order solution vector nodes updated
     std::size_t m_nsol;
     //! Counter for left-hand side matrix (vector) nodes updated
@@ -220,6 +234,9 @@ class DiagCG : public CBase_DiagCG {
       return m_disc[ thisIndex ].ckLocal();
     }
 
+    //! Size communication buffers
+    void resizeComm();
+
     //! Output mesh and particle fields to files
     void out();
 
@@ -230,8 +247,11 @@ class DiagCG : public CBase_DiagCG {
     //    user-specified boundary conditions
     void bc();
 
-    //! Compute left-hand side of transport equations
-    void lhs();
+    //! ...
+    void lhsdone();
+
+    //! ...
+    void lhsmerge();
 
     //! Compute righ-hand side vector of transport equations
     void rhs();

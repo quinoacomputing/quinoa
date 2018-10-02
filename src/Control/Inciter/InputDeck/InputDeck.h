@@ -124,6 +124,7 @@ class InputDeck :
                                    kw::amr,
                                    kw::amr_t0ref,
                                    kw::amr_dtref,
+                                   kw::amr_dtfreq,
                                    kw::amr_initial,
                                    kw::amr_uniform,
                                    kw::amr_initial_conditions,
@@ -180,6 +181,7 @@ class InputDeck :
       set< tag::amr, tag::amr >( false );
       set< tag::amr, tag::t0ref >( false );
       set< tag::amr, tag::dtref >( false );
+      set< tag::amr, tag::dtfreq >( 3 );
       set< tag::amr, tag::error >( AMRErrorType::JUMP );
       auto rmax =
         std::numeric_limits< kw::amr_xminus::info::expect::type >::max();

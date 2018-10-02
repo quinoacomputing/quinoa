@@ -56,6 +56,12 @@ class Discretization : public CBase_Discretization {
     //! Configure Charm++ reduction types
     static void registerReducers();
 
+    //! Resize mesh data structures (e.g., after mesh refinement)
+    void resize( const tk::UnsMesh::Chunk& chunk,
+                 const tk::UnsMesh::Coords& coord,
+                 const std::unordered_map< int,
+                         std::vector< std::size_t > >& msum );
+
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();
 
@@ -113,6 +119,9 @@ class Discretization : public CBase_Discretization {
     //! Iteration count accessor
     uint64_t It() const { return m_it; }
 
+    //! Non-const-ref refinement iteration count accessor
+    uint64_t& Itr() { return m_itr; }
+
     //! Timer accessor as const-ref
     const tk::Timer& Timer() const { return m_timer; }
     //! Timer accessor as non-const-ref
@@ -153,11 +162,6 @@ class Discretization : public CBase_Discretization {
     //! Nodal communication map accessor as non-const-ref
     std::unordered_map< int, std::vector< std::size_t > >& Msum()
     { return m_msum; }
-
-    //! Output filename accessor as const-ref
-    const std::string& OutFilename() const { return m_outFilename; }
-    //! Output filename accessor as non-const-ref
-    std::string& OutFilename() { return m_outFilename; }
 
     //! Points surrounding points accessor as const-ref
     const std::pair< std::vector< std::size_t >, std::vector< std::size_t > >&
@@ -201,6 +205,9 @@ class Discretization : public CBase_Discretization {
     //! Otput one-liner status report
     void status();
 
+    //! Compute ExodusII filename
+    std::string filename() const;
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -208,11 +215,12 @@ class Discretization : public CBase_Discretization {
     void pup( PUP::er &p ) override {
       p | m_nchare;
       p | m_it;
+      p | m_itr;
+      p | m_initial;
       p | m_t;
       p | m_dt;
       p | m_lastFieldWriteTime;
       p | m_nvol;
-      p | m_outFilename;
       p | m_fct;
       p | m_transporter;
       p | m_refiner;
@@ -242,7 +250,14 @@ class Discretization : public CBase_Discretization {
     int m_nchare;
     //! Iteration count
     uint64_t m_it;
-     //! Physical time
+    //! Iteration count with mesh refinement
+    //! \details Used as the restart sequence number {RS} in saving output in
+    //!    an ExodusII sequence
+    //! \see https://www.paraview.org/Wiki/Restarted_Simulation_Readers
+    uint64_t m_itr;
+    //! Flag that is nonzero during setup and zero during time stepping
+    tk::real m_initial;
+    //! Physical time
     tk::real m_t;
     //! Physical time step size
     tk::real m_dt;
@@ -251,8 +266,6 @@ class Discretization : public CBase_Discretization {
     //! \brief Number of chares from which we received nodal volume
     //!   contributions on chare boundaries
     std::size_t m_nvol;
-    //! Output filename
-    std::string m_outFilename;
     //! Distributed FCT proxy
     CProxy_DistFCT m_fct;
     //! Transporter proxy
@@ -264,9 +277,7 @@ class Discretization : public CBase_Discretization {
     //!   connectivity (local IDs), the second vector is the global node IDs of
     //!   owned elements, while the third one is a map of global->local node
     //!   IDs.
-    std::tuple< std::vector< std::size_t >,
-                std::vector< std::size_t >,
-                std::unordered_map< std::size_t, std::size_t > > m_el;
+    tk::UnsMesh::Chunk m_el;
     //! Alias to element connectivity
     std::vector< std::size_t >& m_inpoel = std::get< 0 >( m_el );
     //! Alias to global node IDs of owned elements
