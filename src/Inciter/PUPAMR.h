@@ -12,7 +12,6 @@
 
 #include "NoWarning/pup_stl.h"
 
-#include "AMR/Refinement_State.h"
 #include "AMR/edge_store.h"
 #include "AMR/edge.h"
 #include "AMR/marked_refinements_store.h"
