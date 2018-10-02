@@ -18,6 +18,7 @@
 #include <vector>
 #include <unordered_map>
 
+#include "PUPAMR.h"
 #include "AMR/mesh_adapter.h"
 #include "Inciter/Options/AMRInitial.h"
 #include "TaggedTuple.h"

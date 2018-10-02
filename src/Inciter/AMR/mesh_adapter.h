@@ -34,22 +34,6 @@ namespace AMR {
                 tet_store.generate_edges();
             }
 
-            /** @name Charm++ pack/unpack serializer member functions */
-            ///@{
-            //! \brief Pack/Unpack serialize member function
-            //! \param[in,out] p Charm++'s PUP::er serializer object reference
-            void pup( PUP::er &p ) {
-              p | tet_store;
-              p | node_connectivity;
-              p | node_store;
-              p | refiner;
-            }
-            //! \brief Pack/Unpack serialize operator|
-            //! \param[in,out] p Charm++'s PUP::er serializer object reference
-            //! \param[in,out] m mesh_adapter_t object reference
-            friend void operator|( PUP::er& p, mesh_adapter_t& m ) { m.pup(p); }
-            //@}
-
             //AMR::refinement_t init(const std::vector<size_t>& tetinpoel, size_t num_nodes);
             void init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t graph_size);
 

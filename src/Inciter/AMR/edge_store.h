@@ -1,6 +1,10 @@
 #ifndef AMR_edge_store_h
 #define AMR_edge_store_h
 
+#include <cassert>
+
+#include "Loggers.h"
+
 namespace AMR {
 
     class edge_store_t {
@@ -16,19 +20,6 @@ namespace AMR {
                 // NOTE: At some point, this could probably be deleted..
                 // NOTE: This is only mainted by split.
             //std::map<edge_t, size_t> children;
-
-            /** @name Charm++ pack/unpack serializer member functions */
-            ///@{
-            //! \brief Pack/Unpack serialize member function
-            //! \param[in,out] p Charm++'s PUP::er serializer object reference
-            void pup( PUP::er &p ) {
-              p | edges;
-            }
-            //! \brief Pack/Unpack serialize operator|
-            //! \param[in,out] p Charm++'s PUP::er serializer object reference
-            //! \param[in,out] e edge_store_t object reference
-            friend void operator|( PUP::er& p, edge_store_t& e ) { e.pup(p); }
-            //@}
 
             size_t size()
             {

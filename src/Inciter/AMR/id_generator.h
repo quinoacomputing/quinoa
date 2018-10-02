@@ -9,8 +9,7 @@
 namespace AMR {
 
     class id_generator_t {
-        protected:
-
+        public:
             size_t start_id;
 
             // Used to track which tet_id to give the next parent
@@ -18,7 +17,6 @@ namespace AMR {
             // many tets can be on the first level
             size_t next_tet_id;
 
-        public:
             // Constructor
             id_generator_t(size_t start_tet_id = 0) :
                 start_id(start_tet_id),
