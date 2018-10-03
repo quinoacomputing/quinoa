@@ -479,11 +479,16 @@ namespace AMR {
         lock_intermediates();
     }
 
-    void mesh_adapter_t::lock_intermediates() {
+    void mesh_adapter_t::lock_intermediates()
+    {
+        /*
         for (auto k : tet_store.intermediate_list)
         {
             refiner.lock_edges_from_node(tet_store,k, Edge_Lock_Case::intermediate);
         }
+        */
+        // TODO: Passing tet_store twice probably isn't the best
+        refiner.lock_intermediates(tet_store, tet_store.intermediate_list, Edge_Lock_Case::intermediate);
     }
 
     /**
