@@ -335,6 +335,7 @@ DG::setupGhost()
 
   // Enlarge elements surrounding faces data structure for ghosts
   m_fd.Esuf().resize( 2*m_nfac, -1 );
+  m_fd.Inpofa().resize( 3*m_nfac, 0 );
   // Enlarge face geometry data structure for ghosts
   m_geoFace.resize( m_nfac, 0.0 );
 
@@ -519,7 +520,7 @@ DG::comGhost( int fromch, const GhostData& ghost )
     Assert( geo.size() % 4 == 0, "Ghost geometry size mismatch" );
     Assert( geo.size() == m_geoElem.nprop(), "Ghost geometry number mismatch" );
     Assert( coord.size() == 3, "Incorrect ghost node coordinate size" );
-    Assert( inpoel.size() == 4, "Ghost inpoel size mismatch" );
+    Assert( inpoel.size() == 4, "Incorrect ghost inpoel size" );
 
     for (std::size_t n=0; n<nodes.size()/3; ++n) {  // face(s) of ghost e
       // node IDs of face on chare boundary
@@ -538,9 +539,9 @@ DG::comGhost( int fromch, const GhostData& ghost )
       // compute face geometry for chare-boundary face
       addGeoFace( t, id );
       // add node-triplet to node-face connectivity
-      inpofa.push_back( tk::cref_find( lid, t[2] ) );
-      inpofa.push_back( tk::cref_find( lid, t[1] ) );
-      inpofa.push_back( tk::cref_find( lid, t[0] ) );
+      inpofa[3*id[0]+0] = tk::cref_find( lid, t[2] );
+      inpofa[3*id[0]+1] = tk::cref_find( lid, t[1] );
+      inpofa[3*id[0]+2] = tk::cref_find( lid, t[0] );
 
       // if ghost tet id not yet encountered on boundary with fromch
       auto i = ghostelem.find( e );
@@ -558,6 +559,7 @@ DG::comGhost( int fromch, const GhostData& ghost )
           if (it != end(lid))
             lp = it->second;
           else {
+            Assert( nodes.size() == 3, "Expected node not found in lid" );
             Assert( gp == inode,
                     "Ghost node not matching correct entry in ghost inpoel" );
             lp = m_ncoord;
@@ -573,7 +575,7 @@ DG::comGhost( int fromch, const GhostData& ghost )
           m_coord[1].push_back( coord[1] );
           m_coord[2].push_back( coord[2] );
           Assert( m_coord[0].size() == m_ncoord+1,
-                  "Wrong size of coord array" );
+                  "Mismatch in size of extended coord array" );
           Assert( m_coord[0][m_ncoord]-coord[0] < 1.0e-12,
                   "Wrong entry for ghost node in extended coord array" );
           Assert( m_inpoel[ 4*(m_nunk-1)+inode ] == m_ncoord,

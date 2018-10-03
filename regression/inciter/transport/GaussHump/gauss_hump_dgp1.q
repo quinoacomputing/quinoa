@@ -6,9 +6,9 @@ title "Advection of 2D Gaussian hump"
 
 inciter
 
-  nstep 1000  # Max number of time steps
+  nstep 200   # Max number of time steps
   dt   2.0e-4 # Time step size
-  ttyi 50     # TTY output interval
+  ttyi 10     # TTY output interval
   ctau 1.0    # FCT mass diffusivity
   scheme dgp1
 
@@ -36,7 +36,7 @@ inciter
   end
 
   plotvar
-    interval 250
+    interval 50
   end
 
 end
