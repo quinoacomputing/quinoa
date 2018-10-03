@@ -49,6 +49,29 @@ extern ctr::InputDeck g_inputdeck;
 class MatCG : public CBase_MatCG {
 
   public:
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wunused-parameter"
+      #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    #elif defined(STRICT_GNUC)
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wunused-parameter"
+      #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    #elif defined(__INTEL_COMPILER)
+      #pragma warning( push )
+      #pragma warning( disable: 1478 )
+    #endif
+    // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
+    // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+    MatCG_SDAG_CODE
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #elif defined(STRICT_GNUC)
+      #pragma GCC diagnostic pop
+    #elif defined(__INTEL_COMPILER)
+      #pragma warning( pop )
+    #endif
+
     //! Constructor
     explicit MatCG( const CProxy_Discretization& disc,
                     const tk::CProxy_Solver& solver,
@@ -59,7 +82,7 @@ class MatCG : public CBase_MatCG {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
-    explicit MatCG( CkMigrateMessage* ) : m_diag( *Disc() ) {}
+    explicit MatCG( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -86,23 +109,25 @@ class MatCG : public CBase_MatCG {
                        const std::vector< std::size_t >& gid,
                        const std::vector< tk::real >& du );
 
-    //! Prepare for next step
-    void next( const tk::Fields& a );
+    //! Update solution at the end of time step
+    void update( const tk::Fields& a );
 
-    //! Evaluate whether to continue with next step
-    void eval();
+    //! Signal the runtime system that diagnostics have been computed
+    void diag();
+
+    //! Optionally refine/derefine mesh
+    void refine();
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &p ) {
-      CBase_MatCG::pup(p);
+    void pup( PUP::er &p ) override {
+      p | m_disc;
+      p | m_solver;
       p | m_itf;
       p | m_nhsol;
       p | m_nlsol;
-      p | m_disc;
-      p | m_solver;
       p | m_fd;
       p | m_u;
       p | m_ul;
@@ -123,16 +148,16 @@ class MatCG : public CBase_MatCG {
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
 
+    //! Discretization proxy
+    CProxy_Discretization m_disc;
+    //! Linear system merger and solver proxy
+    tk::CProxy_Solver m_solver;
     //! Field output iteration count
     uint64_t m_itf;
     //! Counter for high order solution nodes updated
     std::size_t m_nhsol;
     //! Counter for low order solution nodes updated
     std::size_t m_nlsol;
-    //! Discretization proxy
-    CProxy_Discretization m_disc;
-    //! Linear system merger and solver proxy
-    tk::CProxy_Solver m_solver;
     //! Face data
     FaceData m_fd;
     //! Unknown/solution vector at mesh nodes
@@ -173,6 +198,9 @@ class MatCG : public CBase_MatCG {
 
     //! Compute righ-hand side vector of transport equations
     void rhs();
+
+    //! Evaluate whether to continue with next step
+    void eval();
 };
 
 } // inciter::

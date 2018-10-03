@@ -44,16 +44,15 @@ class SchemeBase {
     explicit SchemeBase( ctr::SchemeType scheme ) :
       discproxy( CProxy_Discretization::ckNew() )
     {
-      CkArrayOptions bound;
-      bound.bindTo( discproxy );
+      m_bound.bindTo( discproxy );
       if (scheme == ctr::SchemeType::MatCG) {
-        proxy = static_cast< CProxy_MatCG >( CProxy_MatCG::ckNew(bound) );
-        fctproxy = CProxy_DistFCT::ckNew(bound);
+        proxy = static_cast< CProxy_MatCG >( CProxy_MatCG::ckNew(m_bound) );
+        fctproxy = CProxy_DistFCT::ckNew(m_bound);
       } else if (scheme == ctr::SchemeType::DiagCG) {
-        proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(bound) );
-        fctproxy= CProxy_DistFCT::ckNew(bound);
+        proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(m_bound) );
+        fctproxy= CProxy_DistFCT::ckNew(m_bound);
       } else if (scheme == ctr::SchemeType::DG) {
-        proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(bound) );
+        proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(m_bound) );
       } else Throw( "Unknown discretization scheme" );
     }
 
@@ -70,6 +69,10 @@ class SchemeBase {
       return tk::element< ProxyElem >( proxy, 0 ).which();
     }
 
+    //! Charm++ array options accessor for binding external proxies
+    //! \return Charm++ array options object reference
+    const CkArrayOptions& arrayoptions() { return m_bound; }
+
   protected:
     //! Variant type listing all chare proxy types modeling the same concept
     using Proxy = boost::variant< CProxy_MatCG, CProxy_DiagCG, CProxy_DG >;
@@ -84,6 +87,8 @@ class SchemeBase {
     CProxy_Discretization discproxy;
     //! Charm++ proxy to flux-corrected transport (FCT) driver class
     CProxy_DistFCT fctproxy;
+    //! Charm++ array options for binding chares
+    CkArrayOptions m_bound;
 
     //! Generic base for all call_* classes
     //! \details This class stores the entry method arguments and contains a

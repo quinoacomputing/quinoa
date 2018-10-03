@@ -13,9 +13,9 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 set(TEST_RUNNER ${CMAKE_SOURCE_DIR}/../cmake/test_runner.cmake)
 
 # Find gmsh executable
-find_program(GMSH gmsh)
-if(ENABLE_MESHCONV AND NOT GMSH)
-  message(STATUS "Gmsh not found, meshconv regression tests will not be rigorous")
+find_package(Gmsh)
+if(ENABLE_MESHCONV AND NOT GMSH_FOUND)
+  message(WARNING "Gmsh not found, meshconv regression tests will not be rigorous")
 endif()
 
 # Include function used to add regression tests

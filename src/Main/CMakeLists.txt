@@ -12,7 +12,7 @@ include(charm)
 
 # Link executables with the charmc wrapper
 STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
-       "${LINKER_COMPILER} -module DistributedLB ${EXTRA_LINK_ARGS} -c++ <CMAKE_CXX_COMPILER>"
+       "${LINKER_COMPILER} -module CommonLBs ${EXTRA_LINK_ARGS} -c++ <CMAKE_CXX_COMPILER>"
        CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE}")
 
 include(ConfigExecutable)
@@ -23,6 +23,26 @@ add_library(Config ${PROJECT_BINARY_DIR}/QuinoaConfig.C)
 set_target_properties(Config PROPERTIES LIBRARY_OUTPUT_NAME quinoa_config)
 
 INSTALL(TARGETS Config
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
+
+# Configure executable initialization library
+add_library(Init Init.C)
+
+set_target_properties(Init PROPERTIES LIBRARY_OUTPUT_NAME quinoa_init)
+
+target_include_directories(Init PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${QUINOA_TPL_DIR}
+                           ${PEGTL_INCLUDE_DIRS}
+                           ${CHARM_INCLUDE_DIRS}
+                           ${BRIGAND_INCLUDE_DIRS}
+                           ${PROJECT_BINARY_DIR}/../Main)
+
+INSTALL(TARGETS Init
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
@@ -113,6 +133,7 @@ if (ENABLE_UNITTEST)
   target_link_libraries(${UNITTEST_EXECUTABLE}
                         Base
                         Config
+                        Init
                         RNG
                         MeshRefinement
                         UnitTest
@@ -165,6 +186,7 @@ if (ENABLE_INCITER)
                         LinSys
                         Base
                         Config
+                        Init
                         IO
                         ExodusIIMeshIO
                         ${OMEGAHMESHIO}
@@ -214,6 +236,7 @@ if (ENABLE_RNGTEST)
                         RNGTestControl
                         Base
                         Config
+                        Init
                         ${TESTU01_LIBRARIES}
                         ${MKL_INTERFACE_LIBRARY}
                         ${MKL_SEQUENTIAL_LAYER_LIBRARY}
@@ -236,6 +259,9 @@ if (ENABLE_MESHCONV)
 
   config_executable(${MESHCONV_EXECUTABLE})
 
+  target_include_directories(${MESHCONV_EXECUTABLE} PUBLIC
+                             ${PROJECT_BINARY_DIR}/../Base)
+
   target_link_libraries(${MESHCONV_EXECUTABLE}
                         NativeMeshIO
                         ExodusIIMeshIO
@@ -245,6 +271,7 @@ if (ENABLE_MESHCONV)
                         MeshConvControl
                         Base
                         Config
+                        Init
                         ${PUGIXML_LIBRARIES}
                         ${SEACASExodus_LIBRARIES}
                         ${NETCDF_LIBRARIES}       # only for static link
@@ -278,6 +305,7 @@ if (ENABLE_WALKER)
                         WalkerControl
                         Base
                         Config
+                        Init
                         ${SEACASExodus_LIBRARIES}
                         ${LAPACKE_LIBRARIES}      # only if MKL not found
                         ${MKL_INTERFACE_LIBRARY}
@@ -304,7 +332,8 @@ if (ENABLE_FILECONV)
                  FileConv.C)
 
   target_include_directories(${FILECONV_EXECUTABLE} PUBLIC
-                             ${QUINOA_SOURCE_DIR}/IO)
+                             ${QUINOA_SOURCE_DIR}/IO
+                             ${PROJECT_BINARY_DIR}/../Base)
 
   config_executable(${FILECONV_EXECUTABLE})
 
@@ -315,6 +344,7 @@ if (ENABLE_FILECONV)
                         FileConvControl
                         Base
                         Config
+                        Init
                         ${SEACASExodus_LIBRARIES}
                         ${ROOT_LIBRARIES}
                         ${NETCDF_LIBRARIES}       # only for static link

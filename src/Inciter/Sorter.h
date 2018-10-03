@@ -67,6 +67,16 @@ class Sorter : public CBase_Sorter {
                      const std::map< int, std::vector< std::size_t > >& bnode,
                      int nchare );
 
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wundefined-func-template"
+    #endif
+    //! Migrate constructor
+    explicit Sorter( CkMigrateMessage* ) {}
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
+
     //! Configure Charm++ reduction types
     static void registerReducers();
 
@@ -112,8 +122,7 @@ class Sorter : public CBase_Sorter {
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &p ) {
-      CBase_Sorter::pup(p);
+    void pup( PUP::er &p ) override {
       p | m_host;
       p | m_solver;
       p | m_cbs;

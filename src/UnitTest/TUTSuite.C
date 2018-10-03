@@ -75,7 +75,7 @@ TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
 
     m_print.note( "\nNo test groups to be executed because no test group "
                   "names match '" + grp + "'.\n" );
-    mainProxy.finalize( false, true );
+    mainProxy.finalize( true );
 
   } else {
 
@@ -153,7 +153,7 @@ TUTSuite::evaluate( std::vector< std::string > status )
     auto pass =
       assess( m_print, m_nfail, m_nwarn, m_nskip, m_nexcp, m_ncomplete );
     // Quit
-    mainProxy.finalize( true, pass );
+    mainProxy.finalize( pass );
   }
 }
 

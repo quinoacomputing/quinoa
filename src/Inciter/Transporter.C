@@ -147,6 +147,32 @@ Transporter::Transporter() :
       m_print.item( "Initial refinement steps", initref.size() );
       m_print.ItemVec< ctr::AMRInitial >( initref );
       m_print.edgeref( g_inputdeck.get< tag::amr, tag::edge >() );
+
+      auto rmax =
+        std::numeric_limits< kw::amr_xminus::info::expect::type >::max();
+      auto eps =
+        std::numeric_limits< kw::amr_xminus::info::expect::type >::epsilon();
+     
+      auto xminus = g_inputdeck.get< tag::amr, tag::xminus >();
+      if (std::abs( xminus - rmax ) > eps)
+        m_print.item( "Initial refinement x-", xminus );
+      auto xplus = g_inputdeck.get< tag::amr, tag::xplus >();
+      if (std::abs( xplus - rmax ) > eps)
+        m_print.item( "Initial refinement x+", xplus );
+
+      auto yminus = g_inputdeck.get< tag::amr, tag::yminus >();
+      if (std::abs( yminus - rmax ) > eps)
+        m_print.item( "Initial refinement y-", yminus );
+      auto yplus = g_inputdeck.get< tag::amr, tag::yplus >();
+      if (std::abs( yplus - rmax ) > eps)
+        m_print.item( "Initial refinement y+", yplus );
+
+      auto zminus = g_inputdeck.get< tag::amr, tag::zminus >();
+      if (std::abs( zminus - rmax ) > eps)
+        m_print.item( "Initial refinement z-", zminus );
+      auto zplus = g_inputdeck.get< tag::amr, tag::zplus >();
+      if (std::abs( zplus - rmax ) > eps)
+        m_print.item( "Initial refinement z+", zplus );
     }
   }
 
@@ -243,7 +269,6 @@ Transporter::createPartitioner()
     , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refinserted), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
   };
 
   // Create refiner callbacks (order matters)
@@ -256,7 +281,6 @@ Transporter::createPartitioner()
   tk::SorterCallback cbs {
       CkCallback( CkReductionTarget(Transporter,queried), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,responded), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,discinserted), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,workinserted), thisProxy )
   };
@@ -270,8 +294,8 @@ Transporter::createPartitioner()
   // Create empty mesh sorter Charm++ chare array
   m_sorter = CProxy_Sorter::ckNew();
 
-  // Create empty mesh refiner Charm++ chare array
-  m_refiner = CProxy_Refiner::ckNew();
+  // Create empty mesh refiner chare array (bound to workers)
+  m_refiner = CProxy_Refiner::ckNew( m_scheme.arrayoptions() );
 
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
@@ -397,7 +421,7 @@ Transporter::matched( std::size_t extra )
     m_refiner.correctref();
   else {
     m_progMesh.inc< REFINE >();
-    m_refiner.nextref();
+    m_refiner.eval();
   }
 }
 
@@ -466,9 +490,9 @@ Transporter::disccreated()
     m_print.endsubsection();
   }
 
+  m_refiner.sendProxy();
   m_progWork.start( "Preparing workers",
                     {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
-
   m_sorter.createWorkers();
 
   auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
@@ -528,17 +552,6 @@ Transporter::diagHeader()
 
   // Write diagnostics header
   dw.header( d );
-}
-
-void
-Transporter::flattened()
-// *****************************************************************************
-// Reduction target indicating that all Partitioner chare groups have finished
-// flattening its global mesh node IDs and they are ready for computing the
-// communication maps required for node ID reordering
-// *****************************************************************************
-{
-  //m_sorter.gather();
 }
 
 void
@@ -659,9 +672,10 @@ Transporter::pdfstat( CkReductionMsg* msg )
 void
 Transporter::stat()
 // *****************************************************************************
-// Echo diagnostics mesh statistics
+// Echo diagnostics on mesh statistics
 // *****************************************************************************
 {
+  CkStartLB();
   m_progWork.end();
 
   m_print.diag( "Mesh statistics: min/max/avg(edgelength) = " +
@@ -698,6 +712,25 @@ Transporter::start()
 // *****************************************************************************
 {
   m_scheme.dt< tag::bcast >();
+}
+
+void
+Transporter::next()
+// *****************************************************************************
+// Reset linear solver for next time step
+//! \note Only called if MatCG is used
+// *****************************************************************************
+{
+  m_solver.next();
+}
+
+void
+Transporter::advance( tk::real dt )
+// *****************************************************************************
+// Reduction target computing the minimum of dt
+// *****************************************************************************
+{
+  m_scheme.advance( dt );
 }
 
 void
@@ -754,8 +787,8 @@ Transporter::diagnostics( CkReductionMsg* msg )
                      std::ios_base::app );
   dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
 
-  // Evaluate whther to continue with next step
-  m_scheme.eval< tag::bcast >();
+  // Evaluate whether to continue with next step
+  m_scheme.diag< tag::bcast >();
 }
 
 void

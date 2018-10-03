@@ -61,7 +61,7 @@ class DistFCT : public CBase_DistFCT {
     struct Next : boost::static_visitor<> {
       Next( const tk::Fields& a ) : A(a) {}
       template< typename P >
-        void operator()( const P& p ) const { p.ckLocal()->next( A ); }
+        void operator()( const P& p ) const { p.ckLocal()->update( A ); }
       const tk::Fields& A;
     };
   
@@ -151,8 +151,7 @@ class DistFCT : public CBase_DistFCT {
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &p ) {
-      CBase_DistFCT::pup(p);
+    void pup( PUP::er &p ) override {
       p | m_nhsol;
       p | m_nlsol;
       p | m_naec;

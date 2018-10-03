@@ -78,6 +78,8 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
                                   [&](decltype(s.second)::value_type f)
                                   { return f*3+2 < m_triinpoel.size(); } ); } ),
           "Boundary face data structures inconsistent" );
+
+  usesAtSync = true;    // Enable migration at AtSync
 }
 
 void
@@ -91,9 +93,9 @@ Sorter::setup( std::size_t npoin )
   auto chunksize = npoin / static_cast< std::size_t >( m_nchare );
 
   // Find chare-boundary nodes of our mesh chunk. This algorithm collects the
-  // nglobal mesh node ids on the chare boundary. A node is on a chare boundary
+  // global mesh node ids on the chare boundary. A node is on a chare boundary
   // if it belongs to a face of a tetrahedron that has no neighbor tet at a
-  // face. The nodes are categorized tp bins that will be sent to different
+  // face. The nodes are categorized to bins that will be sent to different
   // chares to build the (point-to-point) node communication map across all
   // chares. The binning is determined by the global node id divided by the
   // chunksize.
@@ -108,9 +110,10 @@ Sorter::setup( std::size_t npoin )
       if (esuel[mark+f] == -1)
         for (std::size_t n=0; n<3; ++n) {
           auto g = m_ginpoel[ mark+tk::lpofa[f][n] ];
-          Assert( g/chunksize < static_cast<std::size_t>(m_nchare),
-                  "Indexing out of number of chares" );
-          chbnode[ static_cast<int>(g/chunksize) ].push_back( g );
+          int bin = static_cast< int >( g/chunksize );
+          if (bin >= m_nchare) bin = m_nchare-1;
+          Assert( bin < m_nchare, "Indexing out of number of chares" );
+          chbnode[ bin ].push_back( g );
         }
   }
   for (auto& c : chbnode) tk::unique(c.second);
@@ -305,6 +308,8 @@ Sorter::reorder()
 //  Reorder global mesh node IDs
 // *****************************************************************************
 {
+  AtSync();   // Migrate here if needed
+
   // Activate SDAG waits for arriving requests from other chares requesting new
   // node IDs for node IDs we assign new IDs to during reordering; and for
   // computing/receiving lower and upper bounds of global node IDs our chare's

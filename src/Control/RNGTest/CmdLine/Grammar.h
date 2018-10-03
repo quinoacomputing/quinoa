@@ -32,6 +32,11 @@ namespace cmd {
          tk::grm::process_cmd_switch< use< kw::verbose >,
                                       tag::verbose > {};
 
+  //! Match and set chare state switch
+  struct charestate :
+         tk::grm::process_cmd_switch< use< kw::charestate >,
+                                      tag::chare > {};
+
   //! \brief Match and set control (i.e., input deck) file name
   struct control :
          tk::grm::process_cmd< use< kw::control >,
@@ -60,7 +65,13 @@ namespace cmd {
 
   //! Match all command line keywords
   struct keywords :
-         pegtl::sor< verbose, control, help, helpctr, helpkw, quiescence > {};
+         pegtl::sor< verbose,
+                     charestate,
+                     control,
+                     help,
+                     helpctr,
+                     helpkw,
+                     quiescence > {};
 
   //! \brief Grammar entry point: parse keywords until end of string
   struct read_string :

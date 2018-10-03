@@ -45,9 +45,11 @@ target_include_directories(Inciter PUBLIC
                            ${MPI_CXX_INCLUDE_PATH}
                            ${PROJECT_BINARY_DIR}/../LinSys
                            ${PROJECT_BINARY_DIR}/../Inciter
+                           ${PROJECT_BINARY_DIR}/../Base
                            ${PROJECT_BINARY_DIR}/../Main)
 
 add_library(MeshRefinement
+            PUPAMR.C
             AMR/mesh_adapter.C
             AMR/util.C
             AMR/edge.C

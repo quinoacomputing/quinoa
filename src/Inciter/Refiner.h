@@ -18,12 +18,14 @@
 #include <vector>
 #include <unordered_map>
 
+#include "PUPAMR.h"
 #include "AMR/mesh_adapter.h"
 #include "Inciter/Options/AMRInitial.h"
 #include "TaggedTuple.h"
 #include "Tags.h"
 #include "Callback.h"
 #include "UnsMesh.h"
+#include "Base/Fields.h"
 
 #include "NoWarning/transporter.decl.h"
 #include "NoWarning/refiner.decl.h"
@@ -48,8 +50,21 @@ class Refiner : public CBase_Refiner {
                       const std::map< int, std::vector< std::size_t > >& bnode,
                       int nchare );
 
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wundefined-func-template"
+    #endif
+    //! Migrate constructor
+    explicit Refiner( CkMigrateMessage* ) {}
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
+
     //! Configure Charm++ reduction types
     static void registerReducers();
+
+    //! Start new step of mesh refinement
+    void start( bool initial, tk::real t );
 
     //! Receive boundary edges from all PEs (including this one)
     void addBndEdges( CkReductionMsg* msg );
@@ -63,16 +78,21 @@ class Refiner : public CBase_Refiner {
     //! Correct refinement to arrive at conforming mesh across chare boundaries
     void correctref();
 
-    //! Decide wether to continue with another step of mesh refinement
-    void nextref();
+    //! Decide what to do after a mesh refinement step
+    void eval();
+
+    //! Send Refiner proxy to Discretization objects
+    void sendProxy();
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
-      CBase_Refiner::pup(p);
       p | m_host;
+      p | m_sorter;
+      p | m_solver;
+      p | m_scheme;
       p | m_cbr;
       p | m_cbs;
       p | m_ginpoel;
@@ -88,8 +108,10 @@ class Refiner : public CBase_Refiner {
       p | m_triinpoel;
       p | m_bnode;
       p | m_nchare;
+      p | m_initial;
+      p | m_t;
       p | m_initref;
-      //p | m_refiner;
+      p | m_refiner;
       p | m_nref;
       p | m_extra;
       p | m_ch;
@@ -156,6 +178,10 @@ class Refiner : public CBase_Refiner {
     std::map< int, std::vector< std::size_t > > m_bnode;
     //! Total number of refiner chares
     int m_nchare;
+    //! True if initial AMR, false if during time stepping
+    bool m_initial;
+    //! Physical time
+    tk::real m_t;
     //! Initial mesh refinement type list (in reverse order)
     std::vector< ctr::AMRInitialType > m_initref;
     //! Mesh refiner (library) object
@@ -177,9 +203,6 @@ class Refiner : public CBase_Refiner {
     //! Generate flat coordinate data from coordinate map
     tk::UnsMesh::Coords flatcoord( const tk::UnsMesh::CoordMap& coordmap );
 
-    //! Prepare for next step of mesh refinement
-    void start();
-
     //! Generate boundary edges and send them to all chares
     void bndEdges();
 
@@ -200,6 +223,9 @@ class Refiner : public CBase_Refiner {
 
     //! Do mesh refinement based on user explicitly tagging edges
     void userRefine();
+
+    //! Do mesh refinement based on tagging edges based on end-point coordinates
+    void coordRefine();
 
     //! Do mesh refinement correcting PE-boundary edges
     void correctRefine( const EdgeSet& extra );

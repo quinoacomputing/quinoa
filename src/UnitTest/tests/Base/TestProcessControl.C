@@ -35,6 +35,10 @@ template<> template<>
 void ProcessControl_object::test< 1 >() {
   set_test_name( "rm throws on empty argument" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect q( quiet.rdbuf() );
+
   try {
     tk::rm( "" );
     #ifndef NDEBUG

@@ -21,7 +21,6 @@ using PartitionerCallback =
                          , tag::distributed,    CkCallback
                          , tag::refinserted,    CkCallback
                          , tag::refined,        CkCallback
-                         , tag::flattened,      CkCallback
                          >;
 
 using RefinerCallback =
@@ -39,7 +38,6 @@ using SolverCallback =
 using SorterCallback =
   tk::tuple::tagged_tuple< tag::queried,        CkCallback
                          , tag::responded,      CkCallback
-                         , tag::flattened,      CkCallback
                          , tag::discinserted,   CkCallback
                          , tag::workinserted,   CkCallback
                          >;

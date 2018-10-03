@@ -36,6 +36,7 @@
 #include "UnitTestDriver.h"
 #include "UnitTest/CmdLine/Parser.h"
 #include "TUTConfig.h"
+#include "ChareStateCollector.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -45,6 +46,9 @@
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
 CProxy_Main mainProxy;
+
+//! Chare state collector Charm++ chare group proxy
+tk::CProxy_ChareStateCollector stateProxy;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -138,7 +142,7 @@ class Main : public CBase_Main {
                         ( msg->argc, msg->argv,
                           m_cmdline,
                           tk::HeaderType::UNITTEST,
-                          tk::meshconv_executable(),
+                          tk::unittest_executable(),
                           m_print ) ),
       m_timer(1), // Start new timer measuring the serial+Charm++ runtime
       m_timestamp()
@@ -147,18 +151,10 @@ class Main : public CBase_Main {
       if (m_helped) CkExit();
       // Save executable name to global-scope string so FileParser can access it
       unittest::g_executable = msg->argv[0];
-      delete msg;
-      mainProxy = thisProxy;
-      // Optionally enable quiscence detection
-      if (m_cmdline.get< tag::quiescence >())
-        CkStartQD( CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
-      // Fire up an asynchronous execute object, which when created at some
-      // future point in time will call back to this->execute(). This is
-      // necessary so that this->execute() can access already migrated
-      // global-scope data.
-      CProxy_execute::ckNew();
-      // Start new timer measuring the migration of global-scope data
-      m_timer.emplace_back();
+      // Call generic mainchare contructor
+      tk::MainCtor< CProxy_execute >
+        ( msg, mainProxy, thisProxy, stateProxy, m_timer, m_cmdline,
+          CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
     } catch (...) { tk::processExceptionCharm(); }
 
     void execute() {
@@ -168,21 +164,24 @@ class Main : public CBase_Main {
       } catch (...) { tk::processExceptionCharm(); }
     }
 
-    void finalize( bool worked, bool pass ) {
-      try {
-        if (worked && !m_timer.empty()) {
-          m_timestamp.emplace_back( "Unit tests runtime", m_timer[0].hms() );
-          m_print.time( "Test suite timers (h:m:s)", m_timestamp );
-          m_print.endpart();
-        }
-      } catch (...) { tk::processExceptionCharm(); }
-      // Tell the Charm++ runtime system to exit
-      if (pass) CkExit(); else CkAbort("Test(s) failed");
+    //! Towards normal exit but collect chare state first (if any)
+    void finalize( bool pass ) {
+      tk::finalize( m_cmdline, m_timer, m_print, stateProxy, m_timestamp,
+                    CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ),
+                    pass );
     }
 
     //! Entry method triggered when quiescence is detected
-    [[noreturn]] void quiescence() {
-      Throw( "Quiescence detected" );
+    void quiescence() {
+      try {
+        stateProxy.collect( /* error= */ true,
+          CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
+      } catch (...) { tk::processExceptionCharm(); }
+    }
+
+    //! Dump chare state
+    void dumpstate( CkReductionMsg* msg ) {
+      tk::dumpstate( m_cmdline, m_print, msg );
     }
 
   private:

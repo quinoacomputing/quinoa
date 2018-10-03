@@ -364,14 +364,14 @@ Partitioner::categorize( const std::vector< std::size_t >& target ) const
                    m_triinpoel[f*3+1],
                    m_triinpoel[f*3+2] }} ] = s.first;
 
-  // Build hash map associating side set id to boundary nodes
-  std::unordered_map< std::size_t, int > nodeside;
+  // Build hash map associating side set ids to boundary nodes
+  std::unordered_map< std::size_t, std::unordered_set< int > > nodeside;
   for (const auto& s : m_bnode)
     for (auto n : s.second)
-      nodeside[ n ] = s.first;
+      nodeside[ n ].insert( s.first );
 
   // Categorize mesh data (tets, node coordinates, and boundary data) by target
-  // chare based which chare the partitioner assigned elements (tets) to
+  // chare based on which chare the partitioner assigned elements (tets) to
   std::unordered_map< int, MeshData > chmesh;
   for (std::size_t e=0; e<target.size(); ++e) {
     // Construct a tetrahedron with global node ids
@@ -397,9 +397,15 @@ Partitioner::categorize( const std::vector< std::size_t >& target ) const
     for (const auto& n : t) {
       auto it = nodeside.find( n );
       if (it != end(nodeside))
-        bnode[ it->second ].push_back( n );
+        for (auto s : it->second)
+          bnode[ s ].push_back( n );
     }
   }
+
+  // Make boundary node lists unique per side set
+  for (auto& c : chmesh)
+    for (auto& n : std::get<2>(c.second))
+       tk::unique( n.second );
 
   // Make sure all compute nodes have target chares assigned
   Assert( !chmesh.empty(), "No elements have been assigned to a chare" );

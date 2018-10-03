@@ -5,16 +5,20 @@
 #include <ostream>
 #include <array>
 
+namespace AMR {
+
 class edge_t {
     using edge_ = std::array< std::size_t, 2 >;
     private:
-        // TODO: Should data members be m_<blah>
         edge_ data;
         friend std::ostream& operator<<(std::ostream&, const edge_t&);
 
     public:
+        edge_& get_data() {
+            return data;
+        }
 
-        edge_ get_data() const {
+        const edge_& get_data() const {
             return data;
         }
 
@@ -22,7 +26,6 @@ class edge_t {
         edge_t()
         {
         }
-
         edge_t(size_t A, size_t B)
         {
             data = {{ std::min(A,B), std::max(A,B) }};
@@ -66,5 +69,7 @@ class edge_t {
         }
 
 };
+
+}  // AMR::
 
 #endif

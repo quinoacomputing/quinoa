@@ -66,8 +66,15 @@ class DG : public CBase_DG {
                  const tk::CProxy_Solver&,
                  const FaceData& fd );
 
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wundefined-func-template"
+    #endif
     //! Migrate constructor
     explicit DG( CkMigrateMessage* ) {}
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
 
     //! Receive unique set of faces we potentially share with/from another chare
     void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
@@ -95,23 +102,25 @@ class DG : public CBase_DG {
                  const std::vector< std::size_t >& tetid,
                  const std::vector< std::vector< tk::real > >& u );
 
-    //! Evaluate whether to continue with next step
-    void eval();
-
     //! Advance equations to next time step
     void advance( tk::real newdt );
+
+    //! Signal the runtime system that diagnostics have been computed
+    void diag();
+
+    //! Optionally refine/derefine mesh
+    void refine();
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &p ) {
-      CBase_DG::pup(p);
+    void pup( PUP::er &p ) override {
+      p | m_disc;
       p | m_ncomfac;
       p | m_nadj;
       p | m_nsol;
       p | m_itf;
-      p | m_disc;
       p | m_fd;
       p | m_u;
       p | m_un;
@@ -153,6 +162,8 @@ class DG : public CBase_DG {
                           tk::UnsMesh::Hash<3>,
                           tk::UnsMesh::Eq<3> >;
 
+    //! Discretization proxy
+    CProxy_Discretization m_disc;
     //! Counter for face adjacency communication map
     std::size_t m_ncomfac;
     //! Counter signaling that all ghost data have been received
@@ -161,8 +172,6 @@ class DG : public CBase_DG {
     std::size_t m_nsol;
     //! Field output iteration count
     uint64_t m_itf;
-    //! Discretization proxy
-    CProxy_Discretization m_disc;
     //! Face data
     FaceData m_fd;
     //! Vector of unknown/solution average over each mesh element
@@ -265,6 +274,9 @@ class DG : public CBase_DG {
 
     //! Output mesh-based fields to file
     void writeFields( tk::real time );
+
+    //! Evaluate whether to continue with next step
+    void eval();
 };
 
 } // inciter::

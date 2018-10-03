@@ -3,8 +3,7 @@
 
 #include <cmath>
 
-#include "Base/Exception.h"
-#include "AMR_types.h"
+#include "types.h"
 #include "tet_store.h"
 
 // TODO: make this have a base class to support multiple generator schemes
@@ -14,19 +13,17 @@ namespace AMR {
     class node_store_t
     {
 
-        private:
+        public:
             coord_type m_x;
             coord_type m_y;
             coord_type m_z;
 
-//             // We really don't want people to pass this by value..
-//             // (Because we store refs in here, which are consts..)
-//             // NonCopyable & operator=(const NonCopyable&) = delete;
-//             node_store_t(const node_store_t& c) = delete;
-//             node_store_t& operator=(const node_store_t&) = delete;
+            // We really don't want people to pass this by value..
+            // (Because we store refs in here, which are consts..)
+            // NonCopyable & operator=(const NonCopyable&) = delete;
+            //node_store_t(const node_store_t& c) = delete;
+            //node_store_t& operator=(const node_store_t&) = delete;
 
-        public:
-            // TODO: This needs to set the member variables
             node_store_t() { } // default cons
 
             size_t m_graphsize;
@@ -55,6 +52,17 @@ namespace AMR {
              * @param zc data to add
              */
             void add_z(real_t zc) { m_z.push_back(zc); }
+
+            coord_type get_x_array() {
+                return m_x;
+            }
+            coord_type get_y_array() {
+                return m_y;
+            }
+            coord_type get_z_array() {
+                return m_z;
+            }
+
             real_t x(size_t id)
             {
                 return m_x[id];
@@ -83,7 +91,7 @@ namespace AMR {
                         y(i) << ", " <<
                         z(i) << ", " <<
                         std::endl;
-               }
+                }
             }
 
 
@@ -98,7 +106,7 @@ namespace AMR {
              */
             size_t add(real_t xc, real_t yc, real_t zc) {
 
-                // Need to: Add to {xc,yc,zc} Add any connectivity?
+                // Need to: Add to {x,y,z} Add any connectivity?
 
                 // Check if the node already exists
                 int already_exists = check_node_exists(xc,yc,zc);
@@ -106,9 +114,11 @@ namespace AMR {
                 if (already_exists == -1) {
                     size_t return_node_id = add_coordinates(xc,yc,zc);
                     m_graphsize++; // TODO: how best to deal with this?
+                    trace_out << "Made new node " << return_node_id << std::endl;
                     return return_node_id;
                 }
                 else {
+                    trace_out << "--> Reusing " << already_exists << std::endl;
                     return static_cast<size_t>(already_exists);
                 }
 
@@ -151,9 +161,10 @@ namespace AMR {
              *
              * @return id of node added
              */
+// TODO: Why is there 2 add functions
             size_t add_node(real_t xc, real_t yc, real_t zc) {
 
-                // Need to: Add to {xc,y,z} Add any connectivity?
+                // Need to: Add to {x,y,z} Add any connectivity?
 
                 // Check if the node already exists
                 int already_exists = check_node_exists(xc,yc,zc);
@@ -164,6 +175,7 @@ namespace AMR {
                     return return_node_id;
                 }
                 else {
+                    trace_out << "--> Reusing " << already_exists << std::endl;
                     return static_cast<size_t>(already_exists);
                 }
 
@@ -194,7 +206,9 @@ namespace AMR {
                         std::abs( z(i) - z_in) < eps
                     )
                     {
-                        return static_cast<int>(i);
+                        trace_out << "!!!! x " << x_in << " y " << y_in <<
+                            " z " << z_in << " exits " << std::endl;
+                            return static_cast<int>(i);
                     }
                 }
 
@@ -227,7 +241,7 @@ namespace AMR {
              */
             coordinate_t id_to_coordinate(size_t id)
             {
-                Assert( id < size(), "Invalid ID");
+                assert( id < size());
 
                 // Note: extra braces are to appease Clangs warning generator.
                 //   (It's probably ok to remove them....)

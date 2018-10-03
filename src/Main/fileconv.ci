@@ -10,7 +10,10 @@
 
 mainmodule fileconv {
 
+  extern module charestatecollector;
+
   readonly CProxy_Main mainProxy;
+  readonly tk::CProxy_ChareStateCollector stateProxy;
 
   mainchare Main {
     entry Main( CkArgMsg* msg );
@@ -20,6 +23,7 @@ mainmodule fileconv {
     entry
       void timestamp( const std::vector< std::pair<std::string,tk::real> >& s );
     entry void quiescence();
+    entry [reductiontarget] void dumpstate( CkReductionMsg* msg );
   }
 
   chare execute { entry execute(); }

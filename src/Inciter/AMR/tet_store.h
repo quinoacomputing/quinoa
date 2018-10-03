@@ -4,18 +4,17 @@
 #include <set>
 #include <vector>
 
-#include "Base/Exception.h"
-
-#include "AMR_types.h"
+#include "types.h"
 #include "active_element_store.h"
 #include "master_element_store.h"
 #include "edge_store.h"
 #include "util.h"
+#include "id_generator.h"
 
 namespace AMR {
 
     class tet_store_t {
-        private:
+        public:
             // TODO: Remove this (center_tets) data structure!
             // This is a horrendous code abuse, and I'm sorry. I'm fairly
             // certain we'll be re-writing how this detection is done and just
@@ -25,18 +24,19 @@ namespace AMR {
             AMR::active_element_store_t active_elements;
             AMR::master_element_store_t master_elements;
 
+
             std::vector<real_t> cell_type_list;
             std::vector<real_t> refinement_level_list;
 
             std::vector< std::size_t > active_tetinpoel;
             std::set< std::size_t > active_nodes;
 
-            std::vector< std::size_t > active_id_mapping;
             // TODO: I'd like this on the stack, but still pass an initial val
             AMR::id_generator_t id_generator;
 
-        public:
+            std::set<size_t> intermediate_list;
             // Public so it can be trivially grabbed for looping over.
+            std::vector< std::size_t > active_id_mapping;
             // TODO: implement iterators at some point..
             tet_list_t tets;
             AMR::edge_store_t edge_store;
@@ -66,6 +66,23 @@ namespace AMR {
             }
 
             // TODO: Document this
+            void set_normal(size_t id, int val)
+            {
+                data(id).normal = val;
+            }
+
+            int get_is_normal(size_t id)
+            {
+                return data(id).normal;
+            }
+
+            // TODO: Document this
+            void mark_normal(size_t id)
+            {
+                set_normal(id, 1);
+            }
+
+            // TODO: Document this
             Refinement_State& data(size_t id)
             {
                 return master_elements.get(id);
@@ -82,7 +99,7 @@ namespace AMR {
             // TODO: Rename this?
             void insert(size_t id, tet_t t)
             {
-                Assert( !exists(id), "ID already exists" );
+                assert( !exists(id) );
                 tets.insert( std::pair<size_t, tet_t>(id, t));
             }
 
@@ -95,8 +112,8 @@ namespace AMR {
              */
             tet_t get( size_t id )
             {
-                Assert( exists(id), "ID does not exist" );
-                return tets[id];
+                assert( exists(id) );
+                return tets.at(id);
             }
 
             /**
@@ -113,6 +130,7 @@ namespace AMR {
                 auto f = tets.find(id);
                 if (f != tets.end())
                 {
+                    //trace_out << "tet " << id << " exists." << std::endl;
                     return true;
                 }
                 return false;
@@ -124,19 +142,18 @@ namespace AMR {
              * @param id The ID of the tetrahedron to insert
              * @param nodes The node ids which make up the tet
              */
-            void store_tet(size_t id, tet_t nodes)
-            {
+            void store_tet(size_t id, tet_t nodes) {
+
                 insert(id, nodes);
 
                 // Sanity check the storage ids
                 // (this is probably better in a function/2d loop)
-                // TODO: Dry this
-                Assert( nodes[0] != nodes[1], "Tet has duplicate node ID" );
-                Assert( nodes[0] != nodes[2], "Tet has duplicate node ID" );
-                Assert( nodes[0] != nodes[3], "Tet has duplicate node ID" );
-                Assert( nodes[1] != nodes[2], "Tet has duplicate node ID" );
-                Assert( nodes[1] != nodes[3], "Tet has duplicate node ID" );
-                Assert( nodes[2] != nodes[3], "Tet has duplicate node ID" );
+                assert( nodes[0] != nodes[1] );
+                assert( nodes[0] != nodes[2] );
+                assert( nodes[0] != nodes[3] );
+                assert( nodes[1] != nodes[2] );
+                assert( nodes[1] != nodes[3] );
+                assert( nodes[2] != nodes[3] );
             }
 
             /**
@@ -167,6 +184,9 @@ namespace AMR {
                     size_t parent_id
             )
             {
+
+                //std::cout << "id " << id << " parent " << parent_id << std::endl;
+
                 add(id, nodes, refinement_case);
 
                 // Set parent id
@@ -177,6 +197,9 @@ namespace AMR {
 
                 // Deal with updating parent
                 master_elements.add_child(parent_id, id);
+
+                trace_out << "Added child " << id << " (" <<
+                    master_elements.get(parent_id).num_children << ")" << std::endl;
             }
 
             /**
@@ -262,13 +285,14 @@ namespace AMR {
 
             /**
              * @brief Function to add a tet to a list which maintains what is a
-             * center tet.
+             * center tet. (The need to maintain a list could be replaced by a
+             * geometric check on the tet itself)
              *
              * @param id Id of the tet to add
              */
             void add_center(size_t id)
             {
-                Assert( !is_center(id), "Center Node already added" );
+                assert( !is_center(id) );
                 center_tets.insert(id);
             }
 
@@ -307,6 +331,7 @@ namespace AMR {
                     }
                 }
 
+                trace_out << "Made refinement level list of len " << refinement_level_list.size() << std::endl;
                 return refinement_level_list;
             }
 
@@ -343,7 +368,6 @@ namespace AMR {
                             case Refinement_Case::initial_grid:
                                 val = 1.0;
                                 break;
-                            // Note: Below here isn't used right now?
                             case Refinement_Case::two_to_eight:
                                 val = 2.8;
                                 break;
@@ -358,6 +382,7 @@ namespace AMR {
                     }
                 }
 
+                trace_out << "Made cell type list of len " << cell_type_list.size() << std::endl;
                 return cell_type_list;
             }
 
@@ -431,6 +456,7 @@ namespace AMR {
                     }
                 }
 
+                trace_out << "in size " << in.size() << " active size " << active.size() << std::endl;
                 return active;
             }
 
@@ -445,6 +471,8 @@ namespace AMR {
             {
                 // TODO: If none of these methods need extra markings, then
                 // change them into a single method
+                // TODO: Mark extra edges
+                trace_out << "Mark " << tet_id << " as 1:2" << std::endl;
                 marked_refinements.add(tet_id, Refinement_Case::one_to_two);
             }
 
@@ -456,6 +484,7 @@ namespace AMR {
             void mark_one_to_four(size_t tet_id)
             {
                 // TODO: Mark extra edges
+                trace_out << "Mark " << tet_id << " as 1:4" << std::endl;
                 marked_refinements.add(tet_id, Refinement_Case::one_to_four);
             }
 
@@ -463,6 +492,7 @@ namespace AMR {
             void mark_two_to_eight(size_t tet_id)
             {
                 // TODO: Mark extra edges
+                trace_out << "Mark " << tet_id << " as 2:8" << std::endl;
                 marked_refinements.add(tet_id, Refinement_Case::two_to_eight);
             }
 
@@ -470,6 +500,7 @@ namespace AMR {
             void mark_four_to_eight(size_t tet_id)
             {
                 // TODO: Mark extra edges
+                trace_out << "Mark " << tet_id << " as 4:8" << std::endl;
                 marked_refinements.add(tet_id, Refinement_Case::four_to_eight);
             }
 
@@ -481,6 +512,7 @@ namespace AMR {
             void mark_one_to_eight(size_t tet_id)
             {
                 // TODO: Mark extra edges
+                trace_out << "Mark " << tet_id << " as 1:8" << std::endl;
                 marked_refinements.add(tet_id, Refinement_Case::one_to_eight);
             }
 
@@ -497,7 +529,7 @@ namespace AMR {
                 {
                     tet_t tet = kv.second;
 
-                    std::cout << "Tet " << kv.first << " has edges :" <<
+                    trace_out << "Tet " << kv.first << " has edges :" <<
                         tet[0] << ", " <<
                         tet[1] << ", " <<
                         tet[2] << ", " <<
@@ -556,12 +588,11 @@ namespace AMR {
                     }
                 }
 
-//                 std::cout << "Active Totals:" << std::endl;
-//                 std::cout << "  --> Initial = " << initial_grid << std::endl;
-//                 std::cout << "  --> 1:2 = " << one_to_two << std::endl;
-//                 std::cout << "  --> 1:4 = " << one_to_four << std::endl;
-//                 std::cout << "  --> 1:8 = " << one_to_eight << std::endl;
-//                 std::cout << "  --> other = " << other << std::endl;
+                //std::cout << "Active Totals:" << std::endl;
+                //std::cout << "  --> Initial = " << initial_grid << std::endl;
+                //std::cout << "  --> 1:2 = " << one_to_two << std::endl;
+                //std::cout << "  --> 1:4 = " << one_to_four << std::endl;
+                //std::cout << "  --> 1:8 = " << one_to_eight << std::endl;
             }
 
             edge_list_t generate_edge_keys(size_t tet_id)
@@ -605,6 +636,13 @@ namespace AMR {
                 // Hard code this for now...
                 tet_t tet = get(tet_id);
 
+                trace_out  << "Tet has nodes " <<
+                    tet[0] << ", " <<
+                    tet[1] << ", " <<
+                    tet[2] << ", " <<
+                    tet[3] << ", " <<
+                    std::endl;
+
                 face_list_t face_list;
 
                 // ABC
@@ -622,7 +660,7 @@ namespace AMR {
                 face_list[2][1] = tet[2];
                 face_list[2][2] = tet[3];
 
-                // BDC
+                // BCD
                 face_list[3][0] = tet[1];
                 face_list[3][1] = tet[3];
                 face_list[3][2] = tet[2];
@@ -643,6 +681,7 @@ namespace AMR {
                 {
                     edge_t edge = edge_list[k];
                     edge_store.mark_for_refinement(edge);
+                    trace_out << "Marking edge " << edge << " for refine " << std::endl;
                 }
             }
 
@@ -687,7 +726,6 @@ namespace AMR {
                 return master_elements.get_parent(id);
             }
 
-            /*
             void update_id(size_t old_id, size_t new_id)
             {
                 // General map replacement idiom. VERY slow. Map keys are just
@@ -713,7 +751,6 @@ namespace AMR {
                 // Update edges..
                 // TODO: This
             }
-            */
 
             void replace(size_t old_id, size_t new_id)
             {

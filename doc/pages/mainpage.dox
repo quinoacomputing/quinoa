@@ -80,8 +80,8 @@ Quinoa consists of the following tools:
 
 - Install prerequisites: _Mac OS X_ (line 1: required, line 2: recommended)
 
-       port install cmake openmpi-clang38 && port select clang mp-clang-3.8 && port select mpi openmpi-clang38-fortran
-       port install gmsh pugixml lapack boost
+       port install cmake openmpi-gcc7 && port select gcc mp-gcc7 && port select mpi openmpi-gcc7-fortran
+       port install gmsh pugixml lapack
 
 - Clone, build third-party libraries, build & test
 
@@ -112,17 +112,17 @@ git_submodules_subtrees.
 - Source --- https://github.com/quinoacomputing/quinoa
 - Contributing --- https://www.clahub.com/agreements/quinoacomputing/quinoa
 - License --- https://github.com/quinoacomputing/quinoa/blob/master/LICENSE
-- Third-party libraries and licenses --- https://quinoacomputing.org/licenses
-- Documentation --- https://quinoacomputing.org
-- Web --- https://quinoacomputing.org
+- Third-party libraries and licenses --- https://quinoacomputing.github.io/licenses.html
+- Documentation --- https://quinoacomputing.github.io
+- Web --- https://quinoacomputing.github.io
 - Email --- mailto:quinoa@lanl.gov
 - Gitter --- https://gitter.im/quinoacomputing/quinoa
-- Philosophy --- https://quinoacomputing.org/why
-- Papers --- https://quinoacomputing.org/papers
+- Philosophy --- https://quinoacomputing.github.io/why
+- Papers --- https://quinoacomputing.github.io/papers
 - Roadmap --- https://github.com/quinoacomputing/quinoa/issues
-- Doxygen --- https://quinoacomputing.org
-- Gcov --- https://quinoacomputing.org/coverage
-- CppCheck --- https://quinoacomputing.org/cppcheck
+- Doxygen --- https://quinoacomputing.github.io
+- Gcov --- https://quinoacomputing.github.io/coverage
+- CppCheck --- https://quinoacomputing.github.io/coverage
 - Docker --- https://hub.docker.com/r/quinoacomputing
 - Travis --- https://travis-ci.org/quinoacomputing/quinoa
 - Codecov --- https://codecov.io/gh/quinoacomputing/quinoa/commits

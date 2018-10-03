@@ -59,6 +59,10 @@ template<> template<>
 void FileParser_object::test< 2 >() {
   set_test_name( "ctor throws if filename empty" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   // Correctly throws exception in DEBUG mode if empty filename string is given
   try {
 
@@ -86,6 +90,10 @@ template<> template<>
 void FileParser_object::test< 3 >() {
   set_test_name( "ctor throws if file doesn't exist" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   // Correctly throws exception if file does not exist
   try {
 
@@ -107,6 +115,10 @@ template<> template<>
 void FileParser_object::test< 4 >() {
   set_test_name( "ctor throws if cannot read from file" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   // Correctly throws exception if cannot read from file
   try {
 
@@ -125,6 +137,10 @@ void FileParser_object::test< 4 >() {
 template<> template<>
 void FileParser_object::test< 5 >() {
   set_test_name( "diagnostics throws on error" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   // Correctly throws exception on error
   try {
@@ -150,6 +166,10 @@ template<> template<>
 void FileParser_object::test< 6 >() {
   set_test_name( "diagnostics doesn't throw on warning" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   // Does not throw exception on warning
   try {
 
@@ -167,6 +187,10 @@ void FileParser_object::test< 6 >() {
 template<> template<>
 void FileParser_object::test< 7 >() {
   set_test_name( "diagnostics with no messages" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   // Does not throw exception on warning
   try {

@@ -26,21 +26,6 @@ static CkReduction::reducerType DiagMerger;
 
 using inciter::NodeDiagnostics;
 
-NodeDiagnostics::NodeDiagnostics( const Discretization& d )
-// *****************************************************************************
-//  Compute diagnostics, e.g., residuals, norms of errors, etc.
-//! \param[in] d Discretization proxy to read from
-// *****************************************************************************
-{
-  // Store the local IDs of those mesh nodes to which we contribute but do not
-  // own, i.e., slave nodes. Ownership here is defined by having a lower chare
-  // ID than any other chare that also contributes to the node.
-  for (const auto& c : d.Msum())        // for all chares that neighbor our mesh
-    if (d.thisIndex > c.first)          // if our chare ID is larger than theirs
-      for (auto i : c.second)           // store local ID in set
-        m_slave.insert( tk::cref_find( d.Lid(), i ) );
-}
-
 void
 NodeDiagnostics::registerReducers()
 // *****************************************************************************
@@ -71,6 +56,20 @@ NodeDiagnostics::compute( Discretization& d, const tk::Fields& u )
   auto diagfreq = g_inputdeck.get< tag::interval, tag::diag >();
 
   if ( !((d.It()+1) % diagfreq) ) {     // if remainder, don't dump
+
+    // Store the local IDs of those mesh nodes to which we contribute but do not
+    // own, i.e., slave nodes. Ownership here is defined by having a lower chare
+    // ID than any other chare that also contributes to the node.
+
+    // Slave mesh node local IDs. Local IDs of those mesh nodes to which we
+    // contribute to but do not own. Ownership here is defined by having a lower
+    // chare ID than any other chare that also contributes to the node.
+    std::unordered_set< std::size_t > slave;
+
+    for (const auto& c : d.Msum())      // for all chares that neighbor our mesh
+      if (d.thisIndex > c.first)        // if our chare ID is larger than theirs
+        for (auto i : c.second)         // store local ID in set
+          slave.insert( tk::cref_find( d.Lid(), i ) );
 
     // Collect analytical solutions (if available) from all PDEs. Note that
     // calling the polymorphic PDE::initialize() is assumed to evaluate the
@@ -111,7 +110,7 @@ NodeDiagnostics::compute( Discretization& d, const tk::Fields& u )
 
     // Put in norms sweeping our mesh chunk
     for (std::size_t i=0; i<u.nunk(); ++i)
-      if (m_slave.find(i) == end(m_slave)) {    // ignore non-owned nodes
+      if (slave.find(i) == end(slave)) {    // ignore non-owned nodes
         // Compute sum for L2 norm of the numerical solution
         for (std::size_t c=0; c<u.nprop(); ++c)
           diag[L2SOL][c] += u(i,c,0) * u(i,c,0) * d.Vol()[i];

@@ -56,6 +56,10 @@ template<> template<>
 void Toggle_object::test< 1 >() {
   set_test_name( "ctor throws if maps aren't the same size" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   try {
 
     toggle t( "some switch name describing the option",
@@ -98,6 +102,10 @@ template<> template<>
 void Toggle_object::test< 4 >() {
   set_test_name( "value() throws if can't find keyword" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   try {
 
     p.value("bogus keyword");
@@ -126,6 +134,10 @@ void Toggle_object::test< 5 >() {
 template<> template<>
 void Toggle_object::test< 6 >() {
   set_test_name( "name() throws if can't find value" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   try {
 

@@ -6,8 +6,11 @@
 #include <map>
 
 #include "../Base/Types.h"
+#include "edge.h"
 
 // TODO: Do we need to merge this with Base/Types.h?
+
+namespace AMR {
 
 const int DIMENSION = 3;
 const size_t NUM_TET_NODES = 4;
@@ -35,16 +38,14 @@ using tet_list_t = std::map<size_t, tet_t>;
 using inpoel_t = std::vector< std::size_t >;     //!< Tetrahedron connectivity
 using node_list_t = std::vector<real_t>;
 
-// TODO: Is there a way to avoid having this kind of complex include ?
-#include "Refinement_State.h"
-// TODO: Is this include creating a circular dependency in Refinement_State.h?
-
-#include "edge.h"
-
 // Complex types
-using edges_t = std::map<edge_t, AMR::Edge_Refinement>;
+struct Edge_Refinement; // forward declare
+using edges_t = std::map<edge_t, Edge_Refinement>;
 using edge_list_t  = std::array<edge_t, NUM_TET_EDGES>;
 using edge_list_ids_t  = std::array<std::size_t, NUM_TET_EDGES>;
 
 using coord_type = std::vector< tk::real >;
+
+}  // AMR::
+
 #endif

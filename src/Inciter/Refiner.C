@@ -22,6 +22,7 @@
 #include "Around.h"
 #include "ExodusIIMeshWriter.h"
 #include "HashMapReducer.h"
+#include "Discretization.h"
 
 namespace inciter {
 
@@ -38,7 +39,7 @@ using inciter::Refiner;
 Refiner::Refiner( const CProxy_Transporter& transporter,
                   const CProxy_Sorter& sorter,
                   const tk::CProxy_Solver& solver,
-                  const Scheme& scheme,                
+                  const Scheme& scheme,
                   const tk::RefinerCallback& cbr,
                   const tk::SorterCallback& cbs,
                   const std::vector< std::size_t >& ginpoel,
@@ -61,6 +62,8 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_triinpoel( triinpoel ),
   m_bnode( bnode ),
   m_nchare( nchare ),
+  m_initial( true ),
+  m_t( 0.0 ),
   m_initref( g_inputdeck.get< tag::amr, tag::init >() ),
   m_refiner( m_inpoel ),
   m_nref( 0 ),
@@ -88,15 +91,33 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 {
   Assert( !m_ginpoel.empty(), "No elements assigned to refiner chare" );
 
+  usesAtSync = true;    // Enable migration at AtSync
+
   // Reverse initial mesh refinement type list (will pop from back)
   std::reverse( begin(m_initref), end(m_initref) );
 
   // If initial mesh refinement is configured, start initial mesh refinement.
   // See also tk::grm::check_amr_errors in Control/Inciter/InputDeck/Ggrammar.h.
   if (g_inputdeck.get< tag::amr, tag::initamr >())
-    start();
+    start( true, 0.0 );
   else
     finish();
+}
+
+void
+Refiner::sendProxy()
+// *****************************************************************************
+// Send Refiner proxy to Discretization objects
+//! \details This should be called when bound Discretization chare array
+//!   elements have already been created.
+// *****************************************************************************
+{
+  // Make sure (bound) Discretization chare is already created and accessible
+  Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
+          "About to dereference nullptr" );
+
+  // Pass Refiner Charm++ chare proxy to fellow (bound) Discretization object
+  m_scheme.get()[thisIndex].ckLocal()->setRefiner( thisProxy );
 }
 
 void
@@ -143,15 +164,21 @@ Refiner::flatcoord( const tk::UnsMesh::CoordMap& coordmap )
 }
 
 void
-Refiner::start()
+Refiner::start( bool initial, tk::real t )
 // *****************************************************************************
-// Prepare for next step of mesh refinement
+// Start new step of mesh refinement
+//! \param[in] initial True if initial AMR, false if during time stepping
+//! \param[in] t Physical time
 // *****************************************************************************
 {
-  Assert( (!g_inputdeck.get< tag::amr, tag::init >().empty()) ||
-          (!g_inputdeck.get< tag::amr, tag::init >().empty()),
-          "Neither initial mesh refinement type list nor user-defined "
-          "edge list given" );
+  m_initial = initial;
+  m_t = t;
+
+  if (initial)
+    Assert( (!g_inputdeck.get< tag::amr, tag::init >().empty()) ||
+            (!g_inputdeck.get< tag::amr, tag::init >().empty()),
+            "Neither initial mesh refinement type list nor user-defined "
+            "edge list given" );
 
   m_extra = 0;  // assume at least a single step of correction is needed
   m_bndEdges.clear();
@@ -253,6 +280,8 @@ Refiner::refine()
       uniformRefine();
     else if (r == ctr::AMRInitialType::INITIAL_CONDITIONS)
       errorRefine();
+    else if (r == ctr::AMRInitialType::COORDINATES)
+      coordRefine();
     else Throw( "Initial AMR type not implemented" );
   }
 
@@ -414,25 +443,53 @@ Refiner::correctref()
 }
 
 void
-Refiner::nextref()
+Refiner::eval()
 // *****************************************************************************
-// Decide wether to continue with another step of mesh refinement
-//! \details This concludes this mesh refinement step, and we continue if there
-//!   are more steps configured by the user.
+// Decide what to do after a mesh refinement step
+//! \details If this function is called during a step (potentially multiple
+//!   levels of) initial AMR, it evaluates whether to do another one. If it is
+//!   called during time stepping, this concludes the single mesh refinement
+//!   step and the new mesh is sent to the PDE worker (Discretization).
 // *****************************************************************************
 {
-  // Remove initial mesh refinement step from list
-  if (!m_initref.empty()) m_initref.pop_back();
+  AtSync();   // Migrate here if needed
 
-  if (!m_initref.empty())       // Continue to next initial refinement step
-    start();
-  else {                        // Finish mesh refinement
-    // Output final mesh after initial mesh refinement
-    tk::UnsMesh refmesh( m_inpoel, m_coord );
-    tk::ExodusIIMeshWriter mw( "initref.final." + std::to_string(thisIndex),
-                               tk::ExoWriter::CREATE );
+  // Lambda to write mesh to file after refinement step. Parameters:
+  //  * prefix - Prefix to mesh filename
+  //  * it - Iteration count to put in filename (This could be the
+  //  refinement level for initial (pre-timestepping) AMR or the physical time
+  //  for AMR during time stepping.
+  auto writeMesh = [this]( const std::string& prefix, const std::string& it ){
+    tk::ExodusIIMeshWriter
+      mw( prefix + '.' + it + '.' + std::to_string(this->thisIndex),
+          tk::ExoWriter::CREATE );
+    // Output mesh coordinates and connectivity
+    tk::UnsMesh refmesh( this->m_inpoel, this->m_coord );
     mw.writeMesh( refmesh );
-    finish();
+    // Output element-centered scalar fields on recent mesh refinement step
+    mw.writeElemVarNames( { "refinement level", "cell type" } );
+    auto& tet_store = this->m_refiner.tet_store;
+    mw.writeElemScalar( 1, 1, tet_store.get_refinement_level_list() );
+    mw.writeElemScalar( 1, 2, tet_store.get_cell_type_list() );
+  };
+
+  if (m_initial) {      // if initial (before t=0) AMR
+
+    // Output mesh after recent step of initial mesh refinement
+    auto level = g_inputdeck.get<tag::amr, tag::init>().size() - m_initref.size();
+    writeMesh( "t0ref", std::to_string(level) );
+    // Remove initial mesh refinement step from list
+    if (!m_initref.empty()) m_initref.pop_back();
+    // Continue to next initial AMR step or finish
+    if (!m_initref.empty()) start( true, 0.0 ); else finish();
+
+  } else {              // if AMR during time stepping (t>0)
+
+    // Output mesh after recent step of mesh refinement during time stepping
+    writeMesh( "dtref", std::to_string(m_t) );
+    // Send new mesh back to PDE worker base (Discretization)
+    m_scheme.get()[thisIndex].ckLocal()->newMesh( m_inpoel, m_coord );
+
   }
 }
 
@@ -492,9 +549,11 @@ Refiner::errorRefine()
   const auto& refidx = g_inputdeck.get< tag::amr, tag::id >();
   auto errtype = g_inputdeck.get< tag::amr, tag::error >();
 
+  using AMR::edge_t;
+
   // Compute errors in ICs and define refinement criteria for edges
   std::vector< edge_t > edge;
-  std::vector< real_t > crit;
+  std::vector< tk::real > crit;
   AMR::Error error;
   for (std::size_t p=0; p<npoin; ++p)   // for all mesh nodes on this chare
     for (auto q : tk::Around(psup,p)) { // for all nodes surrounding p
@@ -542,9 +601,11 @@ Refiner::userRefine()
     for (std::size_t i=0; i<edgenodelist.size()/2; ++i)
       edgeset.insert( {{ {edgenodelist[i*2+0], edgenodelist[i*2+1]} }} );
 
-    // Compute errors in ICs and define refinement criteria for edges
+    using AMR::edge_t;
+
+    // Tag edges the user configured
     std::vector< edge_t > edge;
-    std::vector< real_t > crit;
+    std::vector< tk::real > crit;
     for (std::size_t p=0; p<npoin; ++p)        // for all mesh nodes on this chare
       for (auto q : tk::Around(psup,p)) {      // for all nodes surrounding p
         tk::UnsMesh::Edge e{{p,q}};
@@ -567,10 +628,83 @@ Refiner::userRefine()
   }
 }
 
+void
+Refiner::coordRefine()
+// *****************************************************************************
+// Do mesh refinement based on tagging edges based on end-point coordinates
+// *****************************************************************************
+{
+  // Get user-defined half-world coordinates
+  auto xminus = g_inputdeck.get< tag::amr, tag::xminus >();
+  auto xplus = g_inputdeck.get< tag::amr, tag::xplus >();
+  auto yminus = g_inputdeck.get< tag::amr, tag::yminus >();
+  auto yplus = g_inputdeck.get< tag::amr, tag::yplus >();
+  auto zminus = g_inputdeck.get< tag::amr, tag::zminus >();
+  auto zplus = g_inputdeck.get< tag::amr, tag::zplus >();
+
+  // The default is the largest representable double
+  auto rmax = std::numeric_limits< kw::amr_xminus::info::expect::type >::max();
+  auto eps =
+    std::numeric_limits< kw::amr_xminus::info::expect::type >::epsilon();
+
+  // Decide if user has configured the half-world
+  bool xm = std::abs(xminus - rmax) > eps ? true : false;
+  bool xp = std::abs(xplus - rmax) > eps ? true : false;
+  bool ym = std::abs(yminus - rmax) > eps ? true : false;
+  bool yp = std::abs(yplus - rmax) > eps ? true : false;
+  bool zm = std::abs(zminus - rmax) > eps ? true : false;
+  bool zp = std::abs(zplus - rmax) > eps ? true : false;
+
+  using AMR::edge_t;
+
+  if (xm || xp || ym || yp || zm || zp) {       // if any half-world configured
+    // Find number of nodes in old mesh
+    auto npoin = tk::npoin( m_inpoel );
+    // Generate edges surrounding points in old mesh
+    auto esup = tk::genEsup( m_inpoel, 4 );
+    auto psup = tk::genPsup( m_inpoel, 4, esup );
+    // Get access to node coordinates
+    const auto& x = m_coord[0];
+    const auto& y = m_coord[1];
+    const auto& z = m_coord[2];
+    // Compute errors in ICs and define refinement criteria for edges
+    std::vector< edge_t > edge;
+    std::vector< tk::real > crit;
+    for (std::size_t p=0; p<npoin; ++p)        // for all mesh nodes on this chare
+      for (auto q : tk::Around(psup,p)) {      // for all nodes surrounding p
+        tk::UnsMesh::Edge e{{p,q}};
+
+        bool t = true;
+        if (xm) { if (x[p]>xminus && x[q]>xminus) t = false; }
+        if (xp) { if (x[p]<xplus && x[q]<xplus) t = false; }
+        if (ym) { if (y[p]>yminus && y[q]>yminus) t = false; }
+        if (yp) { if (y[p]<yplus && y[q]<yplus) t = false; }
+        if (zm) { if (z[p]>zminus && z[q]>zminus) t = false; }
+        if (zp) { if (z[p]<zplus && z[q]<zplus) t = false; }
+
+        if (t) {
+          edge.push_back( edge_t(e[0],e[1]) );
+          crit.push_back( 1.0 );
+        }
+      }
+
+    Assert( edge.size() == crit.size(), "Size mismatch" );
+
+    // Do error-based refinement
+    m_refiner.error_refinement( edge, crit );
+
+    // Update mesh coordinates and connectivity
+    updateMesh();
+
+    // Set number of extra edges to a nonzero number, triggering correction
+    m_extra = 1;
+  }
+}
+
 tk::Fields
 Refiner::nodeinit( std::size_t npoin,
-                       const std::pair< std::vector< std::size_t >,
-                          std::vector< std::size_t > >& esup )
+                   const std::pair< std::vector< std::size_t >,
+                                    std::vector< std::size_t > >& esup )
 // *****************************************************************************
 // Evaluate initial conditions (IC) at mesh nodes
 //! \param[in] npoin Number points in mesh (on this chare)
@@ -628,15 +762,17 @@ Refiner::correctRefine( const tk::UnsMesh::EdgeSet& extra )
 //! \param[in] extra Unique edges that need a new node on chare boundaries
 // *****************************************************************************
 {
+  using AMR::edge_t;
+
   if (!extra.empty()) {
     // Generate list of edges that need to be corrected
     std::vector< edge_t > edge;
     for (const auto& e : extra) edge.push_back( edge_t(e[0],e[1]) );
-    std::vector< real_t > crit( edge.size(), 1.0 );
-  
+    std::vector< tk::real > crit( edge.size(), 1.0 );
+
     // Do refinement including edges that need to be corrected
     m_refiner.error_refinement( edge, crit );
-  
+
     // Update mesh coordinates and connectivity
     updateMesh();
   }

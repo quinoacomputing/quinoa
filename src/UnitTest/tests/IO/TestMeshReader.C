@@ -252,6 +252,10 @@ template<> template<>
 void MeshReader_object::test< 6 >() {
   set_test_name( "constructor throws on input file not detected" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   try {
     // Pass a CMakeLists.txt's name as mesh file, should throw
     tk::MeshReader e( tk::regression_dir()+"/CMakeLists.txt" );

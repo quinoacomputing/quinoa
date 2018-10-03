@@ -87,6 +87,8 @@ Discretization::Discretization(
   Assert( m_psup.second.size()-1 == m_gid.size(),
           "Number of mesh points and number of global IDs unequal" );
 
+  usesAtSync = true;    // Enable migration at AtSync
+
   // Convert neighbor nodes to vectors from sets
   for (const auto& n : msum) {
     auto& v = m_msum[ n.first ];
@@ -135,7 +137,7 @@ Discretization::registerReducers()
 tk::UnsMesh::Coords
 Discretization::setCoord( const tk::UnsMesh::CoordMap& coordmap )
 // *****************************************************************************
-// ...
+// Set mesh coordinates based on coordinates map
 // *****************************************************************************
 {
   Assert( coordmap.size() == m_gid.size(), "Size mismatch" );
@@ -154,6 +156,29 @@ Discretization::setCoord( const tk::UnsMesh::CoordMap& coordmap )
   }
 
   return coord;
+}
+
+void
+Discretization::setRefiner( const CProxy_Refiner& ref )
+// *****************************************************************************
+//  Set Refiner Charm++ proxy
+//! \param[in] ref Incoming refiner proxy to store
+// *****************************************************************************
+{
+  m_refiner = ref;
+}
+
+void
+Discretization::newMesh( const std::vector< std::size_t >& inpoel,
+                         const tk::UnsMesh::Coords& coord )
+// *****************************************************************************
+//  Receive new mesh from refiner
+//! \param[in] inpoel Mesh connectivity using local node IDs
+//! \param[in] coord Mesh node coordinates
+// *****************************************************************************
+{
+  m_inpoel = inpoel;
+  m_coord = coord;
 }
 
 void

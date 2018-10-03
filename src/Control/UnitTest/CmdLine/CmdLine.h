@@ -34,6 +34,7 @@ namespace ctr {
 class CmdLine : public tk::Control<
                   // tag            type
                   tag::verbose,     bool,
+                  tag::chare,       bool,
                   tag::help,        bool,
                   tag::helpctr,     bool,
                   tag::quiescence,  bool,
@@ -46,6 +47,7 @@ class CmdLine : public tk::Control<
     //! \brief UnitTest command-line keywords
     //! \see tk::grm::use and its documentation
     using keywords = brigand::set< kw::verbose
+                                 , kw::charestate
                                  , kw::help
                                  , kw::helpkw
                                  , kw::group
@@ -60,6 +62,7 @@ class CmdLine : public tk::Control<
     //! \see walker::ctr::CmdLine
     CmdLine() {
       set< tag::verbose >( false ); // Use quiet output by default
+      set< tag::chare >( false ); // No chare state output by default
       // Initialize help: fill from own keywords
       brigand::for_each< keywords >( tk::ctr::Info( get< tag::cmdinfo >() ) );
     }
@@ -70,6 +73,7 @@ class CmdLine : public tk::Control<
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er& p ) {
       tk::Control< tag::verbose,    bool,
+                   tag::chare,      bool,
                    tag::help,       bool,
                    tag::helpctr,    bool,
                    tag::quiescence, bool,

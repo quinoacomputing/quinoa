@@ -71,6 +71,9 @@ class Partitioner : public CBase_Partitioner {
                  const std::map< int, std::vector< std::size_t > >& faces,
                  const std::map< int, std::vector< std::size_t > >& bnode );
 
+    //! Turn off automatic load balancing
+    void lboff();
+
     //! Partition the computational mesh into a number of chares
     void partition( int nchare );
 
