@@ -89,8 +89,23 @@ Sorter::setup( std::size_t npoin )
 //! \param[in] npoin Total number of mesh points in mesh
 // *****************************************************************************
 {
-  // Compute the number of nodes a chare will build a node communication map for
-  auto chunksize = npoin / static_cast< std::size_t >( m_nchare );
+  // Compute the number of nodes (chunksize) a chare will build a node
+  // communication map for. We compute two values of chunksize: one for when
+  // the global node ids are abounded between [0...npoin-1], inclusive, and
+  // another one for when the global node ids are assigned by a hash algorithm
+  // during initial mesh refinement. In the latter case, the maximum
+  // representable value of a std::size_t is assumed to be the large global node
+  // id and is used to compute the chunksize. To compute the bin id, we attempt
+  // to use the first chunksize first: if it gives a chare id that is
+  // (strictly) lower than the number of chares, that's good. If not, we compute
+  // the bin id based on the second chunksize, which almost always will give a
+  // bin id strictly lower than the number of chares, except if the global node
+  // id assigned by the hash algorithm in Refiner hits the maximum
+  // representable number in std::size_t. If that is the case, we just assign
+  // that node to the last chare.
+  auto N = static_cast< std::size_t >( m_nchare );
+  std::array< std::size_t, 2 > chunksize{{
+     npoin / N, std::numeric_limits< std::size_t >::max() / N }};
 
   // Find chare-boundary nodes of our mesh chunk. This algorithm collects the
   // global mesh node ids on the chare boundary. A node is on a chare boundary
@@ -98,7 +113,9 @@ Sorter::setup( std::size_t npoin )
   // face. The nodes are categorized to bins that will be sent to different
   // chares to build the (point-to-point) node communication map across all
   // chares. The binning is determined by the global node id divided by the
-  // chunksize.
+  // chunksizes. See discussion above on how we use two chunksizes for global
+  // node ids assigned by the hash algorithm in Refiner (if initial mesh
+  // refinement has been done).
   std::unordered_map< int, std::vector< std::size_t > > chbnode;
   auto el = tk::global2local( m_ginpoel );      // generate local mesh data
   const auto& inpoel = std::get< 0 >( el );     // local connectivity
@@ -110,10 +127,11 @@ Sorter::setup( std::size_t npoin )
       if (esuel[mark+f] == -1)
         for (std::size_t n=0; n<3; ++n) {
           auto g = m_ginpoel[ mark+tk::lpofa[f][n] ];
-          int bin = static_cast< int >( g/chunksize );
-          if (bin >= m_nchare) bin = m_nchare-1;
-          Assert( bin < m_nchare, "Indexing out of number of chares" );
-          chbnode[ bin ].push_back( g );
+          auto bin = g / chunksize[0];
+          if (bin >= N) bin = g / chunksize[1];
+          if (bin >= N) bin = N - 1;
+          Assert( bin < N, "Will index out of number of chares" );
+          chbnode[ static_cast<int>(bin) ].push_back( g );
         }
   }
   for (auto& c : chbnode) tk::unique(c.second);
