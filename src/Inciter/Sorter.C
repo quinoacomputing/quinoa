@@ -455,6 +455,9 @@ Sorter::finish()
   m_nodeset.clear();
   m_nodeset.insert( begin(m_ginpoel), end(m_ginpoel) );
 
+  // Update boundary face-node connectivity with the reordered node IDs
+  for (auto& p : m_triinpoel) p = tk::cref_find(m_newnodes,p);
+
   // Progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chreordered();
 
