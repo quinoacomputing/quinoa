@@ -8,38 +8,35 @@
 
 namespace AMR {
 
+    // TODO: Make the coordinate stuff ifdefd out
+    /**
+     * @brief This accepts external coord arrays and allows the node_store to
+     * track the new node positions as they are added
+     *
+     * @param m_x X coodinates
+     * @param m_y Y coodinates
+     * @param m_z Z coodinates
+     * @param graph_size Total number of nodes
+     */
     void mesh_adapter_t::init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t graph_size)
     {
+        assert( m_x->size() == m_y->size() );
+        assert( m_x->size() == m_z->size() );
+        assert( m_x->size() == graph_size );
+
         node_store.set_x(*m_x);
         node_store.set_y(*m_y);
         node_store.set_z(*m_z);
+        // TODO: can this be replaced by m_x.size()?
         node_store.m_graphsize = graph_size;
     }
 
-    //void mesh_adapter_t::init_with_nodes(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t* graph_size)
-    //{
-        //init_node_store(m_x, m_y, m_z, graph_size);
-        //init(); // TODO: This also needs to call init if you want node support to work
-    //}
-
-    /*
-    AMR::refinement_t
-    mesh_adapter_t::init(const std::vector<size_t>& tetinpoel, size_t num_nodes)
-		{
-		    // TODO: this should have already been done by the contrustor?
-        //node_connectivity.fill_initial_nodes(num_nodes);
-
-        auto ref = AMR::refinement_t(tet_store, node_connectivity);
-
-        consume_tets(tetinpoel);
-        tet_store.generate_edges();
-        return ref;
-    }
-    */
-
-    // This would be a candidate for a nice design pattern with runtime
-    // selectable functionality..
-    // TODO: Document this
+    /** @brief Consume an existing mesh, and turn it into the AMRs
+     * representations of tets and nodes
+     *
+     * @param tetinpoel Vector of nodes grouped together in blocks of 4 to
+     * represent tets
+     */
     void mesh_adapter_t::consume_tets(const std::vector< std::size_t >& tetinpoel )
     {
         for (size_t i = 0; i < tetinpoel.size(); i+=4)
@@ -58,19 +55,11 @@ namespace AMR {
         }
     }
 
-    /*
-    // TODO: Tidy the retrun type of this to avoid duplication
-    std::vector< std::size_t >& mesh_adapter_t::get_active_inpoel()
-    {
-        return tet_store.get_active_inpoel();
-    }*/
-
     /**
      * @brief Place holder function to evaluate error estimate at
      * nodes, and therefor mark things as needing to be refined
      */
     void mesh_adapter_t::evaluate_error_estimate() {
-        // TODO: This could be implicit based of refinement_criteria value?
         for (auto& kv : tet_store.edge_store.edges)
         {
             // Mark them as needing refinement
@@ -87,7 +76,9 @@ namespace AMR {
         }
     }
 
-    // TODO: Document this
+    /**
+     * @brief Helper function to apply uniform refinement to all tets
+     */
     void mesh_adapter_t::uniform_refinement()
     {
         for (auto& kv : tet_store.edge_store.edges) {
@@ -98,8 +89,17 @@ namespace AMR {
         perform_refinement();
     }
 
-    void mesh_adapter_t::error_refinement( const std::vector< edge_t >& edge,
-                                           const std::vector< real_t >& crit )
+    /**
+     * @brief For a given set of edges, set their refinement criteria for
+     * refinement
+     *
+     * @param edge vector of edges to set the refinement criteria of
+     * @param crit values to set to corresponding edges refinement criteria
+     */
+    void mesh_adapter_t::error_refinement(
+            const std::vector< edge_t >& edge,
+            const std::vector< real_t >& crit
+    )
     {
        assert( edge.size() == crit.size()); //, "edges and crit size mismatch" );
        for (std::size_t e=0; e<edge.size(); e++)
@@ -112,6 +112,7 @@ namespace AMR {
         mark_refinement();
         perform_refinement();
     }
+
     /**
      * @brief Function to detect the compatibility class (1,
      * 2, or 3) based on the number of locked edges and the existence
@@ -225,9 +226,11 @@ namespace AMR {
      */
     void mesh_adapter_t::mark_refinement() {
 
+#ifndef AMR_MAX_ROUNDS
         // Paper says the average actual num rounds will be 5-15
-        // TODO: make this smaller
-        const size_t max_num_rounds = 50;
+#define AMR_MAX_ROUNDS 30
+#endif
+        const size_t max_num_rounds = AMR_MAX_ROUNDS;
 
         // Mark refinements
         size_t iter;
@@ -255,9 +258,6 @@ namespace AMR {
 
                     // This is useful for later inspection
                     edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
-
-                    // TODO: not all of this will be common to all three cases,
-                    // so can be pushed down to the relevant case
 
                     //Iterate over edges
                     for(auto & key : edge_list)
@@ -368,7 +368,9 @@ namespace AMR {
 
     }
 
-    // TODO: Document
+    /**
+     * @brief Helper function to print tet information when needed
+     */
     void mesh_adapter_t::print_tets() {
         tet_store.print_tets();
     }
@@ -450,13 +452,6 @@ namespace AMR {
             tet_store.unset_marked_children(i); // FIXME: This will not work well in parallel
             element.refinement_case = AMR::Refinement_Case::one_to_eight;
         }
-        /*
-           for (size_t t : tet_delete_list)
-           {
-        // TODO: also decrease number of children
-        tets.erase(t);
-        }
-        */
 
         // Clean up dead edges
         // clean_up_dead_edges(); // Nothing get's marked as "dead" atm?
@@ -506,9 +501,6 @@ namespace AMR {
         // Accept as a 1:2 refinement"
         if (num_to_refine == 1)
         {
-            //node_pair_t nodes = find_single_refinement_nodes(edge_list);
-            //refine_one_to_two( tet_id, nodes[0], nodes[1]);
-            // TODO: I'm pretty sure this needs to mark the edge for reifnement
             tet_store.mark_one_to_two(tet_id);
         }
 

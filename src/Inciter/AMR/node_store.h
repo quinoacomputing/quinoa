@@ -161,7 +161,7 @@ namespace AMR {
              *
              * @return id of node added
              */
-// TODO: Why is there 2 add functions
+            // TODO: Why is there 2 add functions
             size_t add_node(real_t xc, real_t yc, real_t zc) {
 
                 // Need to: Add to {x,y,z} Add any connectivity?
