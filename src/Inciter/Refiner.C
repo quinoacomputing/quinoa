@@ -1066,7 +1066,7 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
                  parfac.find(oldface[1]) != end(parfac) &&
                  parfac.find(oldface[2]) != end(parfac) )
             {
-              addBndFace(sideface, {{m_gid[rf[2]],m_gid[rf[1]],m_gid[rf[0]]}});
+              addBndFace(sideface, {{m_gid[rf[0]],m_gid[rf[1]],m_gid[rf[2]]}});
             }
           }
         }
