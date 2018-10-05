@@ -50,6 +50,7 @@ class FaceData {
     { return m_bface; }
     const std::map< int, std::vector< std::size_t > >& Bnode() const
     { return m_bnode; }
+    std::map< int, std::vector< std::size_t > >& Bnode() { return m_bnode; }
     const std::vector< std::size_t >& Triinpoel() const { return m_triinpoel; }
     std::size_t Nbfac() const { return tk::sumvalsize( m_bface ); }
     const std::vector< int >& Esuel() const { return m_esuel; }

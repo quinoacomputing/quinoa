@@ -291,14 +291,16 @@ class Refiner : public CBase_Refiner {
       const tk::UnsMesh::Coords& Coord;
       const tk::Fields& U;
       const std::unordered_map< int, std::vector< std::size_t > >& Msum;
+      const std::map< int, std::vector< std::size_t > > Bnode;
       Resize( const tk::UnsMesh::Chunk& chunk,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& u,
               const std::unordered_map< int,
-                      std::vector< std::size_t > >& msum )
-        : Chunk(chunk), Coord(coord), U(u), Msum(msum) {}
+                      std::vector< std::size_t > >& msum,
+              const std::map< int, std::vector< std::size_t > >& bnode )
+        : Chunk(chunk), Coord(coord), U(u), Msum(msum), Bnode(bnode) {}
       template< typename P > void operator()( const P& p ) const {
-        p.ckLocal()->resize( Chunk, Coord, U, Msum );
+        p.ckLocal()->resize( Chunk, Coord, U, Msum, Bnode );
       }
     };
 };

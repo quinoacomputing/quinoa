@@ -525,7 +525,7 @@ Refiner::eval()
     Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
             "About to use nullptr" );
     auto e = tk::element< SchemeBase::ProxyElem >( m_schemeproxy, thisIndex );
-    boost::apply_visitor( Resize(m_el,m_coord,m_u,m_msum), e );
+    boost::apply_visitor( Resize(m_el,m_coord,m_u,m_msum,m_bnode), e );
 
   }
 }
