@@ -482,15 +482,25 @@ Refiner::eval()
 
   // Lambda to write mesh to file after refinement step. Parameters:
   //  * prefix - Prefix to mesh filename
-  //  * it - Iteration count to put in filename (This could be the
-  //  refinement level for initial (pre-timestepping) AMR or the physical time
-  //  for AMR during time stepping.
+  //  * it - Iteration count to put in filename (This can be the refinement
+  //    level for initial (pre-timestepping) AMR or the physical time for AMR
+  //    during time stepping.
   auto writeMesh = [this]( const std::string& prefix, const std::string& it ){
     tk::ExodusIIMeshWriter
-      mw( prefix + '.' + it + '.' + std::to_string(this->thisIndex),
+      mw( prefix + ".e-s"
+          + '.' + it                            // create new file for new mesh
+          + '.' + std::to_string( this->m_nchare )   // total number of workers
+          + '.' + std::to_string( this->thisIndex ), // new file per worker
           tk::ExoWriter::CREATE );
-    // Output mesh coordinates and connectivity
-    tk::UnsMesh refmesh( this->m_inpoel, this->m_coord );
+    // Prepare boundary data for file output
+    decltype(this->m_bnode) bnode;
+    if (this->m_nchare == 1) {  // do not write boundary data in parallel
+      // Convert boundary node lists to local ids for output
+      bnode = m_bnode;
+      for (auto& s : bnode) for (auto& p : s.second) p = tk::cref_find(m_lid,p);
+    }
+    // Output mesh
+    tk::UnsMesh refmesh( this->m_inpoel, this->m_coord, bnode );
     mw.writeMesh( refmesh );
     // Output element-centered scalar fields on recent mesh refinement step
     mw.writeElemVarNames( { "refinement level", "cell type" } );
