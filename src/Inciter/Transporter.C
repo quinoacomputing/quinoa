@@ -110,19 +110,18 @@ Transporter::Transporter() :
   const auto constdt = g_inputdeck.get< tag::discr, tag::dt >();
   const auto cfl = g_inputdeck.get< tag::discr, tag::cfl >();
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  const auto centering = ctr::Scheme().centering( scheme );
 
   // Print discretization parameters
   m_print.section( "Discretization parameters" );
   m_print.Item< ctr::Scheme, tag::discr, tag::scheme >();
 
-  if (centering == ctr::Centering::NODE) {
+  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG) {
     auto fct = g_inputdeck.get< tag::discr, tag::fct >();
     m_print.item( "Flux-corrected transport (FCT)", fct );
     if (fct)
       m_print.item( "FCT mass diffusion coeff",
                     g_inputdeck.get< tag::discr, tag::ctau >() );
-  } else if (centering == ctr::Centering::ELEM) {
+  } else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1) {
     m_print.Item< ctr::Flux, tag::discr, tag::flux >();
   }
   m_print.item( "PE-locality mesh reordering",
@@ -491,10 +490,9 @@ Transporter::diagHeader()
   // Collect variables names for integral/diagnostics output
   std::vector< std::string > var;
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  const auto centering = ctr::Scheme().centering( scheme );
-  if (centering == ctr::Centering::NODE)
+  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG)
     for (const auto& eq : g_cgpde) varnames( eq, var );
-  else if (centering == ctr::Centering::ELEM)
+  else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1)
     for (const auto& eq : g_dgpde) varnames( eq, var );
   else Throw( "Diagnostics header not handled for discretization scheme" );
 

@@ -33,6 +33,7 @@ inciter
     interval  25
     format    scientific
     error l2
+    error linf
   end
 
   plotvar

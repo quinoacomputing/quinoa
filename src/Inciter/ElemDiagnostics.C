@@ -83,42 +83,38 @@ ElemDiagnostics::compute( Discretization& d,
       eq.initialize( geoElem, a, d.T()+d.Dt() );
 
     // Prepare for computing diagnostics. Diagnostics are defined as some norm,
-    // .e.g., L2 norm, of a quantity, computed in mesh nodes, A, as ||A||_2 =
-    // sqrt[ sum_i(A_i)^2 V_i ], where the sum is taken over all mesh nodes and
-    // V_i is the nodal volume. We send multiple sets of quantities to the host
-    // for aggregation across the whole mesh: (1) the numerical solutions of all
-    // components of all PDEs, and their error, defined as A_i = (a_i - n_i),
-    // where a_i and n_i are the analytical and numerical solutions at node i,
-    // respectively. The final aggregated solution will end up in
-    // Transporter::diagnostics().
+    // .e.g., L2 norm, of a quantity, computed in mesh elements, A, as ||A||_2 =
+    // sqrt[ sum_i(A_i)^2 V_i ], where the sum is taken over all mesh elements
+    // and V_i is the cell volume. We send multiple sets of quantities to
+    // the host for aggregation across the whole mesh: (1) the numerical
+    // solutions of all components of all PDEs, and their error, defined as
+    // A_i = (a_i - n_i), where a_i and n_i are the analytical and numerical
+    // solutions at element i, respectively. The final aggregated solution will
+    // end up in Transporter::diagnostics().
 
     // Diagnostics vector (of vectors) during aggregation:
     // 0: L2-norm of all scalar components of the numerical solution
     // 1: L2-norm of all scalar components of the numerical-analytic solution
     // 2: Linf-norm of all scalar components of the numerical-analytic solution
-    auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
     std::vector< std::vector< tk::real > >
-      diag( NUMDIAG, std::vector< tk::real >( u.nprop()/ndof, 0.0 ) );
+      diag( NUMDIAG, std::vector< tk::real >( u.nprop(), 0.0 ) );
 
     // Put in norms sweeping our mesh chunk
     for (std::size_t i=0; i<u.nunk()-nchGhost; ++i) {
       // Compute sum for L2 norm of the numerical solution
-      for (std::size_t c=0; c<u.nprop()/ndof; ++c)
+      for (std::size_t c=0; c<u.nprop(); ++c)
       {
-        auto mark = c*ndof;
-        diag[L2SOL][c] += u(i,mark,0) * u(i,mark,0) * geoElem(i,0,0);
+        diag[L2SOL][c] += u(i,c,0) * u(i,c,0) * geoElem(i,0,0);
       }
       // Compute sum for L2 norm of the numerical-analytic solution
-      for (std::size_t c=0; c<u.nprop()/ndof; ++c)
+      for (std::size_t c=0; c<u.nprop(); ++c)
       {
-        auto mark = c*ndof;
         diag[L2ERR][c] +=
-          (u(i,mark,0)-a(i,mark,0)) * (u(i,mark,0)-a(i,mark,0)) * geoElem(i,0,0);
+          (u(i,c,0)-a(i,c,0)) * (u(i,c,0)-a(i,c,0)) * geoElem(i,0,0);
       }
       // Compute max for Linf norm of the numerical-analytic solution
-      for (std::size_t c=0; c<u.nprop()/ndof; ++c) {
-        auto mark = c*ndof;
-        auto err = std::abs( u(i,mark,0) - a(i,mark,0) );
+      for (std::size_t c=0; c<u.nprop(); ++c) {
+        auto err = std::abs( u(i,c,0) - a(i,c,0) );
         if (err > diag[LINFERR][c]) diag[LINFERR][c] = err;
       }
     }
@@ -168,14 +164,14 @@ ElemDiagnostics::computep1( Discretization& d,
   if ( !((d.It()+1) % diagfreq) ) {     // if remainder, don't dump
 
     // Prepare for computing diagnostics. Diagnostics are defined as some norm,
-    // .e.g., L2 norm, of a quantity, computed in mesh nodes, A, as ||A||_2 =
-    // sqrt[ sum_i(A_i)^2 V_i ], where the sum is taken over all mesh nodes and
-    // V_i is the nodal volume. We send multiple sets of quantities to the host
-    // for aggregation across the whole mesh: (1) the numerical solutions of all
-    // components of all PDEs, and their error, defined as A_i = (a_i - n_i),
-    // where a_i and n_i are the analytical and numerical solutions at node i,
-    // respectively. The final aggregated solution will end up in
-    // Transporter::diagnostics().
+    // .e.g., L2 norm, of a quantity, computed in mesh elements, A, as ||A||_2 =
+    // sqrt[ sum_i(A_i)^2 V_i ], where the sum is taken over all mesh elements
+    // and V_i are the basis functions. We send multiple sets of quantities to
+    // the host for aggregation across the whole mesh: (1) the numerical
+    // solutions of all components of all PDEs, and their error, defined as
+    // A_i = (a_i - n_i), where a_i and n_i are the analytical and numerical
+    // solutions at element i, respectively. The final aggregated solution will
+    // end up in Transporter::diagnostics().
 
     // Diagnostics vector (of vectors) during aggregation:
     // 0: L2-norm of all scalar components of the numerical solution
@@ -188,6 +184,10 @@ ElemDiagnostics::computep1( Discretization& d,
     // Quadrature points
     std::array< std::vector< tk::real >, 3 > coordgp;
     std::vector< tk::real > wgp;
+
+    const auto& cx = coord[0];
+    const auto& cy = coord[1];
+    const auto& cz = coord[2];
 
     coordgp[0].resize(5,0);
     coordgp[1].resize(5,0);
@@ -225,21 +225,21 @@ ElemDiagnostics::computep1( Discretization& d,
 
       auto vole = geoElem(i,0,0);
 
-      auto x1 = coord[0][ inpoel[4*i]   ];
-      auto y1 = coord[1][ inpoel[4*i]   ];
-      auto z1 = coord[2][ inpoel[4*i]   ];
+      auto x1 = cx[ inpoel[4*i]   ];
+      auto y1 = cy[ inpoel[4*i]   ];
+      auto z1 = cz[ inpoel[4*i]   ];
 
-      auto x2 = coord[0][ inpoel[4*i+1] ];
-      auto y2 = coord[1][ inpoel[4*i+1] ];
-      auto z2 = coord[2][ inpoel[4*i+1] ];
+      auto x2 = cx[ inpoel[4*i+1] ];
+      auto y2 = cy[ inpoel[4*i+1] ];
+      auto z2 = cz[ inpoel[4*i+1] ];
 
-      auto x3 = coord[0][ inpoel[4*i+2] ];
-      auto y3 = coord[1][ inpoel[4*i+2] ];
-      auto z3 = coord[2][ inpoel[4*i+2] ];
+      auto x3 = cx[ inpoel[4*i+2] ];
+      auto y3 = cy[ inpoel[4*i+2] ];
+      auto z3 = cz[ inpoel[4*i+2] ];
 
-      auto x4 = coord[0][ inpoel[4*i+3] ];
-      auto y4 = coord[1][ inpoel[4*i+3] ];
-      auto z4 = coord[2][ inpoel[4*i+3] ];
+      auto x4 = cx[ inpoel[4*i+3] ];
+      auto y4 = cy[ inpoel[4*i+3] ];
+      auto z4 = cz[ inpoel[4*i+3] ];
 
       // Gaussian quadrature
       for (std::size_t igp=0; igp<5; ++igp)

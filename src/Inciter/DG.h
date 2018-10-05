@@ -123,12 +123,9 @@ class DG : public CBase_DG {
       p | m_nsol;
       p | m_itf;
       p | m_fd;
-      p | m_ndof;
       p | m_u;
       p | m_un;
       p | m_vol;
-      p | m_coord;
-      p | m_inpoel;
       p | m_geoFace;
       p | m_geoElem;
       p | m_lhs;
@@ -181,18 +178,12 @@ class DG : public CBase_DG {
     uint64_t m_itf;
     //! Face data
     FaceData m_fd;
-    //! Solution DOFs
-    std::size_t m_ndof;
     //! Vector of unknown/solution average over each mesh element
     tk::Fields m_u;
     //! Vector of unknown at previous time-step
     tk::Fields m_un;
     //! Total mesh volume
     tk::real m_vol;
-    //! Coordinates of nodes
-    tk::UnsMesh::Coords m_coord;
-    //! Tet element connectivity
-    std::vector< std::size_t > m_inpoel;
     //! Face geometry
     tk::Fields m_geoFace;
     //! Element geometry
@@ -205,7 +196,7 @@ class DG : public CBase_DG {
     std::size_t m_nfac;
     //! Counter for number of unknowns on this chare (including ghosts)
     std::size_t m_nunk;
-    //! Counter for number of nodes on this chare (including ghosts)
+    //! Counter for number of nodes on this chare excluding ghosts
     std::size_t m_ncoord;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!    worker chares associated to their chare IDs

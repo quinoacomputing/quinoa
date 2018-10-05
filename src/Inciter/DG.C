@@ -46,24 +46,23 @@ DG::DG( const CProxy_Discretization& disc,
   m_nsol( 0 ),
   m_itf( 0 ),
   m_fd( fd ),
-  m_ndof( g_inputdeck.get< tag::discr, tag::ndof >() ),
   m_u( m_disc[thisIndex].ckLocal()->Inpoel().size()/4,
-       m_ndof*g_inputdeck.get< tag::component >().nprop() ),
+       g_inputdeck.get< tag::discr, tag::ndof >()*
+       g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_vol( 0.0 ),
-  m_coord( m_disc[thisIndex].ckLocal()->Coord() ),
-  m_inpoel( m_disc[thisIndex].ckLocal()->Inpoel() ),
-  m_geoFace( tk::genGeoFaceTri( fd.Ntfac(), fd.Inpofa(), m_coord) ),
-  m_geoElem( tk::genGeoElemTet( m_inpoel,
-                                m_coord ) ),
+  m_geoFace( tk::genGeoFaceTri( fd.Ntfac(), fd.Inpofa(),
+                                m_disc[thisIndex].ckLocal()->Coord()) ),
+  m_geoElem( tk::genGeoElemTet( m_disc[thisIndex].ckLocal()->Inpoel(),
+                                m_disc[thisIndex].ckLocal()->Coord() ) ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_nfac( fd.Inpofa().size()/3 ),
   m_nunk( m_u.nunk() ),
-  m_ncoord( m_coord[0].size() ),
+  m_ncoord( m_disc[thisIndex].ckLocal()->Coord()[0].size() ),
   m_msumset( msumset() ),
-  m_esuelTet( tk::genEsuelTet( m_inpoel,
-                tk::genEsup( m_inpoel, 4 ) ) ),
+  m_esuelTet( tk::genEsuelTet( m_disc[thisIndex].ckLocal()->Inpoel(),
+                tk::genEsup( m_disc[thisIndex].ckLocal()->Inpoel(), 4 ) ) ),
   m_bndFace(),
   m_ghostData(),
   m_ghostReq( 0 ),
@@ -366,22 +365,6 @@ DG::setupGhost()
           auto& nodes = std::get< 0 >( tuple );
           if (nodes.empty()) {
             std::get< 1 >( tuple ) = m_geoElem[ e ];
-            //// determine the element node that is not on this face
-            //std::size_t inode;
-            //std::size_t missing = 0;
-            //for (std::size_t in=0; in<4; ++in) {
-            //  auto nodee = gid[ inpoel[ mark+in ] ];
-            //  for (std::size_t jn=0; jn<3; ++jn) {
-            //    auto nodef = t[jn];
-            //    if (nodef != nodee) {
-            //      inode = in;
-            //      ++missing;
-            //    }
-            //  }
-            //}
-
-            //Assert( missing == 1, "Incorrect number of nodes of tet found on "
-            //                      "chare-boundary face" );
 
             auto& ncoord = std::get< 2 >( tuple );
             ncoord[0] = coord[0][ inpoel[ mark+f ] ];
@@ -498,6 +481,9 @@ DG::comGhost( int fromch, const GhostData& ghost )
   auto d = Disc();
   const auto& lid = d->Lid();
   auto& inpofa = m_fd.Inpofa();
+  auto& inpoel = d->Inpoel();
+  auto& coord = d->Coord();
+  auto ncoord = coord[0].size();
 
   // nodelist with fromch, currently only used for an assert
   const auto& nl = tk::cref_find( m_msumset, fromch );
@@ -510,17 +496,15 @@ DG::comGhost( int fromch, const GhostData& ghost )
     auto e = g.first;  // remote/ghost tet id outside of chare boundary
     const auto& nodes = std::get< 0 >( g.second );  // node IDs of face(s)
     const auto& geo = std::get< 1 >( g.second );    // ghost elem geometry data
-    const auto& coord = std::get< 2 >( g.second );  // coordinate of ghost node
-    auto inode = std::get< 3 >( g.second ); // index of ghost node in inpoel
-    IGNORE(inode);
-    const auto& inpoel = std::get< 4 >( g.second ); // inpoel of ghost tet
+    const auto& coordg = std::get< 2 >( g.second );  // coordinate of ghost node
+    const auto& inpoelg = std::get< 4 >( g.second ); // inpoel of ghost tet
 
     Assert( nodes.size() % 3 == 0, "Face node IDs must be triplets" );
     Assert( nodes.size() <= 4*3, "Overflow of faces/tet received" );
     Assert( geo.size() % 4 == 0, "Ghost geometry size mismatch" );
     Assert( geo.size() == m_geoElem.nprop(), "Ghost geometry number mismatch" );
-    Assert( coord.size() == 3, "Incorrect ghost node coordinate size" );
-    Assert( inpoel.size() == 4, "Incorrect ghost inpoel size" );
+    Assert( coordg.size() == 3, "Incorrect ghost node coordinate size" );
+    Assert( inpoelg.size() == 4, "Incorrect ghost inpoel size" );
 
     for (std::size_t n=0; n<nodes.size()/3; ++n) {  // face(s) of ghost e
       // node IDs of face on chare boundary
@@ -554,33 +538,29 @@ DG::comGhost( int fromch, const GhostData& ghost )
         ++m_nunk;                  // increase number of unknowns on this chare
         std::size_t counter = 0;
         for (std::size_t gp=0; gp<4; ++gp) {
-          auto it = lid.find( inpoel[gp] );
+          auto it = lid.find( inpoelg[gp] );
           std::size_t lp;
           if (it != end(lid))
             lp = it->second;
           else {
             Assert( nodes.size() == 3, "Expected node not found in lid" );
-            Assert( gp == inode,
+            Assert( gp == std::get< 3 >( g.second ),
                     "Ghost node not matching correct entry in ghost inpoel" );
-            lp = m_ncoord;
+            lp = ncoord;
             ++counter;
           }
-          m_inpoel.push_back( lp );       // store ghost element connectivity
+          inpoel.push_back( lp );       // store ghost element connectivity
         }
         // only a single or no ghost node should be found
         Assert( counter <= 1, "Incorrect number of ghost nodes detected. "
                 "Detected "+ std::to_string(counter) +" ghost nodes" );
         if (counter == 1) {
-          m_coord[0].push_back( coord[0] ); // store ghost node coordinate
-          m_coord[1].push_back( coord[1] );
-          m_coord[2].push_back( coord[2] );
-          Assert( m_coord[0].size() == m_ncoord+1,
-                  "Mismatch in size of extended coord array" );
-          Assert( m_coord[0][m_ncoord]-coord[0] < 1.0e-12,
-                  "Wrong entry for ghost node in extended coord array" );
-          Assert( m_inpoel[ 4*(m_nunk-1)+inode ] == m_ncoord,
+          coord[0].push_back( coordg[0] ); // store ghost node coordinate
+          coord[1].push_back( coordg[1] );
+          coord[2].push_back( coordg[2] );
+          Assert( inpoel[ 4*(m_nunk-1)+std::get< 3 >( g.second ) ] == ncoord,
                   "Mismatch in extended inpoel for ghost element" );
-          ++m_ncoord;                // increase number of nodes on this chare
+          ++ncoord;                // increase number of nodes on this chare
         }
       }
     }
@@ -657,7 +637,9 @@ DG::adj()
 //!    on this chare.
 // *****************************************************************************
 {
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) Disc()->Tr().chadj();
+  auto d = Disc();
+
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) d->Tr().chadj();
 
   tk::destroy(m_bndFace);
 
@@ -690,7 +672,7 @@ DG::adj()
   // Ensure that we also have all the geometry and connectivity data 
   // (including those of ghosts)
   Assert( m_geoElem.nunk() == m_u.nunk(), "GeoElem unknowns size mismatch" );
-  Assert( m_inpoel.size()/4 == m_u.nunk(), "Inpoel size mismatch" );
+  Assert( d->Inpoel().size()/4 == m_u.nunk(), "Inpoel size mismatch" );
 
   // Basic error checking on ghost tet ID map
   Assert( m_ghost.find( thisIndex ) == m_ghost.cend(),
@@ -740,22 +722,45 @@ DG::setup( tk::real v )
 
   // Store total mesh volume
   m_vol = v;
+
+  // Extract ghost data from inpoel and coord for mesh-writing
+  auto& inpoel = d->Inpoel();
+  std::vector< std::size_t > inpoelg;
+  for (auto e=m_esuelTet.size()/4; e<inpoel.size()/4; ++e)
+    for (std::size_t i=0; i<4; ++i)
+      inpoelg.push_back( inpoel[4*e+i] );
+  inpoel.resize(m_esuelTet.size());
+
+  auto& coord = d->Coord();
+  std::array< std::vector< tk::real >, 3 > coordg;
+  for (auto ip=m_ncoord; ip<coord[0].size(); ++ip)
+    for (std::size_t i=0; i<3; ++i)
+      coordg[i].push_back( coord[i][ip] );
+  for (std::size_t i=0; i<3; ++i)
+    coord[i].resize( m_ncoord );
+
   // Output chare mesh to file
   d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode() );
   // Output fields metadata to output file
   d->writeElemMeta();
 
+  // Restore coord and inpoel with ghost data
+  inpoel.insert( inpoel.end(), inpoelg.begin(), inpoelg.end() );
+  for (std::size_t i=0; i<3; ++i)
+    coord[i].insert( coord[i].end(), coordg[i].begin(), coordg[i].end() );
+
   // Basic error checking on sizes of element geometry data and connectivity
   Assert( m_geoElem.nunk() == m_lhs.nunk(), "Size mismatch in DG::setup()" );
-  Assert( m_inpoel.size()/4 == m_lhs.nunk(), "Size mismatch in DG::setup()" );
+  Assert( inpoel.size()/4 == m_lhs.nunk(), "Size mismatch in DG::setup()" );
 
   // Compute left-hand side of discrete PDEs
   lhs();
 
   // Set initial conditions for all PDEs
+  const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
   for (const auto& eq : g_dgpde) 
-    if (m_ndof == 4)
-      eq.initializep1( m_lhs, m_inpoel, m_coord, m_u, d->T() );
+    if (ndof == 4)
+      eq.initializep1( m_lhs, inpoel, coord, m_u, d->T() );
     else
       eq.initialize( m_geoElem, m_u,  d->T() );
   m_un = m_u;
@@ -956,8 +961,9 @@ DG::lhs()
 // *****************************************************************************
 {
   // Compute left-hand side matrix for all equations
+  const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
   for (const auto& eq : g_dgpde)
-    if (m_ndof == 4)
+    if (ndof == 4)
       eq.lhsp1( m_geoElem, m_lhs );
     else
       eq.lhs( m_geoElem, m_lhs );
@@ -977,9 +983,10 @@ DG::solve()
 
   auto d = Disc();
 
+  const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
   for (const auto& eq : g_dgpde)
-    if (m_ndof == 4)
-      eq.rhsp1( d->T(), m_geoFace, m_geoElem, m_fd, m_inpoel, m_coord,
+    if (ndof == 4)
+      eq.rhsp1( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(),
                 m_u, m_rhs );
     else
       eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, m_u, m_rhs );
@@ -1002,9 +1009,9 @@ DG::solve()
     out();
     // Compute diagnostics, e.g., residuals
     bool diag_computed;
-    if (m_ndof == 4)
+    if (ndof == 4)
       diag_computed = m_diag.computep1( *d, m_u.nunk()-m_esuelTet.size()/4,
-                                        m_geoElem, m_inpoel, m_coord, m_u );
+                                        m_geoElem, d->Inpoel(), d->Coord(), m_u );
     else
       diag_computed = m_diag.compute( *d, m_u.nunk()-m_esuelTet.size()/4,
                                       m_geoElem, m_u );

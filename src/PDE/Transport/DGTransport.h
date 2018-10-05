@@ -134,28 +134,32 @@ class Transport {
 
       wgp.resize(5,0);
 
+      const auto& cx = coord[0];
+      const auto& cy = coord[1];
+      const auto& cz = coord[2];
+
       // get quadrature point weights and coordinates for tetrahedron
-      GaussQuadrature( 3, coordgp, wgp );
+      GaussQuadratureTet( coordgp, wgp );
 
       for (std::size_t e=0; e<nelem; ++e)
       {
         auto vole = lhs(e, 0, m_offset);
 
-        auto x1 = coord[0][ inpoel[4*e]   ];
-        auto y1 = coord[1][ inpoel[4*e]   ];
-        auto z1 = coord[2][ inpoel[4*e]   ];
+        auto x1 = cx[ inpoel[4*e]   ];
+        auto y1 = cy[ inpoel[4*e]   ];
+        auto z1 = cz[ inpoel[4*e]   ];
 
-        auto x2 = coord[0][ inpoel[4*e+1] ];
-        auto y2 = coord[1][ inpoel[4*e+1] ];
-        auto z2 = coord[2][ inpoel[4*e+1] ];
+        auto x2 = cx[ inpoel[4*e+1] ];
+        auto y2 = cy[ inpoel[4*e+1] ];
+        auto z2 = cz[ inpoel[4*e+1] ];
 
-        auto x3 = coord[0][ inpoel[4*e+2] ];
-        auto y3 = coord[1][ inpoel[4*e+2] ];
-        auto z3 = coord[2][ inpoel[4*e+2] ];
+        auto x3 = cx[ inpoel[4*e+2] ];
+        auto y3 = cy[ inpoel[4*e+2] ];
+        auto z3 = cz[ inpoel[4*e+2] ];
 
-        auto x4 = coord[0][ inpoel[4*e+3] ];
-        auto y4 = coord[1][ inpoel[4*e+3] ];
-        auto z4 = coord[2][ inpoel[4*e+3] ];
+        auto x4 = cx[ inpoel[4*e+3] ];
+        auto y4 = cy[ inpoel[4*e+3] ];
+        auto z4 = cz[ inpoel[4*e+3] ];
 
         std::fill( R.begin(), R.end(), 0.0);
 
@@ -295,7 +299,7 @@ class Transport {
       bndIntegral< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, t, U, R );
       bndIntegral< Inlet >( m_bcinlet, bface, esuf, geoFace, t, U, R );
       bndIntegral< Outlet >( m_bcoutlet, bface, esuf, geoFace, t, U, R );
-      bndIntegral< Outlet >( m_bcdir, bface, esuf, geoFace, t, U, R );
+      bndIntegral< Dir >( m_bcdir, bface, esuf, geoFace, t, U, R );
     }
 
     //! Compute P1 right hand side
@@ -343,8 +347,12 @@ class Transport {
 
       wgp.resize(3,0);
 
+      const auto& cx = coord[0];
+      const auto& cy = coord[1];
+      const auto& cz = coord[2];
+
       // get quadrature point weights and coordinates for triangle
-      GaussQuadrature( 2, coordgp, wgp );
+      GaussQuadratureTri( coordgp, wgp );
 
       // compute internal surface flux integrals
       for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
@@ -354,48 +362,48 @@ class Transport {
 
         // nodal coordinates of the left element
         std::array< tk::real, 3 > 
-          p1_l{{ coord[0][ inpoel[4*el] ],
-                 coord[1][ inpoel[4*el] ],
-                 coord[2][ inpoel[4*el] ] }},
-          p2_l{{ coord[0][ inpoel[4*el+1] ],
-                 coord[1][ inpoel[4*el+1] ],
-                 coord[2][ inpoel[4*el+1] ] }},
-          p3_l{{ coord[0][ inpoel[4*el+2] ],
-                 coord[1][ inpoel[4*el+2] ],
-                 coord[2][ inpoel[4*el+2] ] }},
-          p4_l{{ coord[0][ inpoel[4*el+3] ],
-                 coord[1][ inpoel[4*el+3] ],
-                 coord[2][ inpoel[4*el+3] ] }};
+          p1_l{{ cx[ inpoel[4*el] ],
+                 cy[ inpoel[4*el] ],
+                 cz[ inpoel[4*el] ] }},
+          p2_l{{ cx[ inpoel[4*el+1] ],
+                 cy[ inpoel[4*el+1] ],
+                 cz[ inpoel[4*el+1] ] }},
+          p3_l{{ cx[ inpoel[4*el+2] ],
+                 cy[ inpoel[4*el+2] ],
+                 cz[ inpoel[4*el+2] ] }},
+          p4_l{{ cx[ inpoel[4*el+3] ],
+                 cy[ inpoel[4*el+3] ],
+                 cz[ inpoel[4*el+3] ] }};
 
         // nodal coordinates of the right element
         std::array< tk::real, 3 > 
-          p1_r{{ coord[0][ inpoel[4*er] ],
-                 coord[1][ inpoel[4*er] ],
-                 coord[2][ inpoel[4*er] ] }},
-          p2_r{{ coord[0][ inpoel[4*er+1] ],
-                 coord[1][ inpoel[4*er+1] ],
-                 coord[2][ inpoel[4*er+1] ] }},
-          p3_r{{ coord[0][ inpoel[4*er+2] ],
-                 coord[1][ inpoel[4*er+2] ],
-                 coord[2][ inpoel[4*er+2] ] }},
-          p4_r{{ coord[0][ inpoel[4*er+3] ],
-                 coord[1][ inpoel[4*er+3] ],
-                 coord[2][ inpoel[4*er+3] ] }};
+          p1_r{{ cx[ inpoel[4*er] ],
+                 cy[ inpoel[4*er] ],
+                 cz[ inpoel[4*er] ] }},
+          p2_r{{ cx[ inpoel[4*er+1] ],
+                 cy[ inpoel[4*er+1] ],
+                 cz[ inpoel[4*er+1] ] }},
+          p3_r{{ cx[ inpoel[4*er+2] ],
+                 cy[ inpoel[4*er+2] ],
+                 cz[ inpoel[4*er+2] ] }},
+          p4_r{{ cx[ inpoel[4*er+3] ],
+                 cy[ inpoel[4*er+3] ],
+                 cz[ inpoel[4*er+3] ] }};
 
         auto detT_l = getJacobian( p1_l, p2_l, p3_l, p4_l );
         auto detT_r = getJacobian( p1_r, p2_r, p3_r, p4_r );
 
-        auto x1 = coord[0][ inpofa[3*f]   ];
-        auto y1 = coord[1][ inpofa[3*f]   ];
-        auto z1 = coord[2][ inpofa[3*f]   ];
+        auto x1 = cx[ inpofa[3*f]   ];
+        auto y1 = cy[ inpofa[3*f]   ];
+        auto z1 = cz[ inpofa[3*f]   ];
 
-        auto x2 = coord[0][ inpofa[3*f+1] ];
-        auto y2 = coord[1][ inpofa[3*f+1] ];
-        auto z2 = coord[2][ inpofa[3*f+1] ];
+        auto x2 = cx[ inpofa[3*f+1] ];
+        auto y2 = cy[ inpofa[3*f+1] ];
+        auto z2 = cz[ inpofa[3*f+1] ];
 
-        auto x3 = coord[0][ inpofa[3*f+2] ];
-        auto y3 = coord[1][ inpofa[3*f+2] ];
-        auto z3 = coord[2][ inpofa[3*f+2] ];
+        auto x3 = cx[ inpofa[3*f+2] ];
+        auto y3 = cy[ inpofa[3*f+2] ];
+        auto z3 = cz[ inpofa[3*f+2] ];
 
         // Gaussian quadrature
         for (std::size_t igp=0; igp<3; ++igp)
@@ -413,6 +421,15 @@ class Transport {
           auto zgp = z1*shp1 + z2*shp2 + z3*shp3;
 
           tk::real detT_gp(0);
+
+          // The basis functions chosen for the DG method are the Dubiner
+          // basis, which are Legendre polynomials modified for tetrahedra,
+          // which are defined only on the reference/master tetrahedron.
+          // Thus, to determine the high-order solution from the left and right
+          // elements at the surface quadrature points, the basis functions
+          // from the left and right elements are needed. For this, a
+          // transformation to the reference coordinates is necessary, since
+          // the basis functions are defined on the reference tetrahedron only.
 
           // transformation of the physical coordinates of the quadrature point
           // to reference space for the left element to be able to compute
@@ -487,8 +504,8 @@ class Transport {
                               coord, t, U, R );
       bndIntegralp1< Outlet >( m_bcoutlet, bface, esuf, geoFace, inpoel,
                                inpofa, coord, t, U, R );
-      bndIntegralp1< Outlet >( m_bcdir, bface, esuf, geoFace, inpoel,
-                               inpofa, coord, t, U, R );
+      bndIntegralp1< Dir >( m_bcdir, bface, esuf, geoFace, inpoel,
+                            inpofa, coord, t, U, R );
 
       // resize quadrature point arrays
       coordgp[0].resize(5,0);
@@ -498,33 +515,41 @@ class Transport {
       wgp.resize(5,0);
 
       // get quadrature point weights and coordinates for tetrahedron
-      GaussQuadrature( 3, coordgp, wgp );
+      GaussQuadratureTet( coordgp, wgp );
 
       std::array< std::array< tk::real, 3 >, 3 > jacInv;
 
       // compute volume integrals
       for (std::size_t e=0; e<U.nunk(); ++e)
       {
-        auto x1 = coord[0][ inpoel[4*e]   ];
-        auto y1 = coord[1][ inpoel[4*e]   ];
-        auto z1 = coord[2][ inpoel[4*e]   ];
+        auto x1 = cx[ inpoel[4*e]   ];
+        auto y1 = cy[ inpoel[4*e]   ];
+        auto z1 = cz[ inpoel[4*e]   ];
 
-        auto x2 = coord[0][ inpoel[4*e+1] ];
-        auto y2 = coord[1][ inpoel[4*e+1] ];
-        auto z2 = coord[2][ inpoel[4*e+1] ];
+        auto x2 = cx[ inpoel[4*e+1] ];
+        auto y2 = cy[ inpoel[4*e+1] ];
+        auto z2 = cz[ inpoel[4*e+1] ];
 
-        auto x3 = coord[0][ inpoel[4*e+2] ];
-        auto y3 = coord[1][ inpoel[4*e+2] ];
-        auto z3 = coord[2][ inpoel[4*e+2] ];
+        auto x3 = cx[ inpoel[4*e+2] ];
+        auto y3 = cy[ inpoel[4*e+2] ];
+        auto z3 = cz[ inpoel[4*e+2] ];
 
-        auto x4 = coord[0][ inpoel[4*e+3] ];
-        auto y4 = coord[1][ inpoel[4*e+3] ];
-        auto z4 = coord[2][ inpoel[4*e+3] ];
+        auto x4 = cx[ inpoel[4*e+3] ];
+        auto y4 = cy[ inpoel[4*e+3] ];
+        auto z4 = cz[ inpoel[4*e+3] ];
 
         jacInv = getJacInverse( {{x1, y1, z1}},
                                 {{x2, y2, z2}},
                                 {{x3, y3, z3}},
                                 {{x4, y4, z4}} );
+
+        // The derivatives of the basis functions dB/dx are easily calculated
+        // via a transformation to the reference space as,
+        // dB/dx = dB/dX . dx/dxi,
+        // where, x = (x,y,z) are the physical coordinates, and
+        //        xi = (xi, eta, zeta) are the reference coordinates.
+        // The matrix dx/dxi is the inverse of the Jacobian of transformation
+        // and the matrix vector product has to be calculated. This follows.
 
         auto db2dxi1 = 2.0;
         auto db2dxi2 = 1.0;
@@ -895,8 +920,12 @@ class Transport {
 
       wgp.resize(3,0);
 
+      const auto& cx = coord[0];
+      const auto& cy = coord[1];
+      const auto& cz = coord[2];
+
       // get quadrature point weights and coordinates for triangle
-      GaussQuadrature( 2, coordgp, wgp );
+      GaussQuadratureTri( coordgp, wgp );
 
       for (const auto& f : faces) {
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
@@ -904,32 +933,32 @@ class Transport {
 
         // nodal coordinates of the left element
         std::array< tk::real, 3 > 
-          p1_l{{ coord[0][ inpoel[4*el] ],
-                 coord[1][ inpoel[4*el] ],
-                 coord[2][ inpoel[4*el] ] }},
-          p2_l{{ coord[0][ inpoel[4*el+1] ],
-                 coord[1][ inpoel[4*el+1] ],
-                 coord[2][ inpoel[4*el+1] ] }},
-          p3_l{{ coord[0][ inpoel[4*el+2] ],
-                 coord[1][ inpoel[4*el+2] ],
-                 coord[2][ inpoel[4*el+2] ] }},
-          p4_l{{ coord[0][ inpoel[4*el+3] ],
-                 coord[1][ inpoel[4*el+3] ],
-                 coord[2][ inpoel[4*el+3] ] }};
+          p1_l{{ cx[ inpoel[4*el] ],
+                 cy[ inpoel[4*el] ],
+                 cz[ inpoel[4*el] ] }},
+          p2_l{{ cx[ inpoel[4*el+1] ],
+                 cy[ inpoel[4*el+1] ],
+                 cz[ inpoel[4*el+1] ] }},
+          p3_l{{ cx[ inpoel[4*el+2] ],
+                 cy[ inpoel[4*el+2] ],
+                 cz[ inpoel[4*el+2] ] }},
+          p4_l{{ cx[ inpoel[4*el+3] ],
+                 cy[ inpoel[4*el+3] ],
+                 cz[ inpoel[4*el+3] ] }};
 
         auto detT_l = getJacobian( p1_l, p2_l, p3_l, p4_l );
 
-        auto x1 = coord[0][ inpofa[3*f]   ];
-        auto y1 = coord[1][ inpofa[3*f]   ];
-        auto z1 = coord[2][ inpofa[3*f]   ];
+        auto x1 = cx[ inpofa[3*f]   ];
+        auto y1 = cy[ inpofa[3*f]   ];
+        auto z1 = cz[ inpofa[3*f]   ];
 
-        auto x2 = coord[0][ inpofa[3*f+1] ];
-        auto y2 = coord[1][ inpofa[3*f+1] ];
-        auto z2 = coord[2][ inpofa[3*f+1] ];
+        auto x2 = cx[ inpofa[3*f+1] ];
+        auto y2 = cy[ inpofa[3*f+1] ];
+        auto z2 = cz[ inpofa[3*f+1] ];
 
-        auto x3 = coord[0][ inpofa[3*f+2] ];
-        auto y3 = coord[1][ inpofa[3*f+2] ];
-        auto z3 = coord[2][ inpofa[3*f+2] ];
+        auto x3 = cx[ inpofa[3*f+2] ];
+        auto y3 = cy[ inpofa[3*f+2] ];
+        auto z3 = cz[ inpofa[3*f+2] ];
 
         // Gaussian quadrature
         for (std::size_t igp=0; igp<3; ++igp)
@@ -1028,20 +1057,21 @@ class Transport {
 
     //! Riemann solver using upwind method
     //! \param[in] f Face ID
+    //! \param[in] gpcoord Coordinates of the flux integration point
     //! \param[in] geoFace Face geometry array
     //! \param[in] u Left and right unknown/state vector
     //! \return Riemann solution using upwind method
     std::vector< tk::real >
-    upwindFlux( std::array< tk::real, 3> centcoord,
+    upwindFlux( const std::array< tk::real, 3>& gpcoord,
                 std::size_t f,
                 const tk::Fields& geoFace,
                 const std::array< std::vector< tk::real >, 2 >& u ) const
     {
       std::vector< tk::real > flux( u[0].size(), 0 );
 
-      auto xc = centcoord[0];
-      auto yc = centcoord[1];
-      auto zc = centcoord[2];
+      auto xc = gpcoord[0];
+      auto yc = gpcoord[1];
+      auto zc = gpcoord[2];
 
       std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
                                       geoFace(f,2,0),
@@ -1068,60 +1098,57 @@ class Transport {
       return flux;
     }
 
-    //! Gaussian quadrature points locations and weights
-    //! \param[in] ndimn Dimension of integration domain
+    //! Gaussian quadrature points locations and weights for a tetrahedron
     //! \param[in,out] coordgp Coordinates of quadrature points
     //! \param[in,out] wgp Weights of quadrature points
     void
-    GaussQuadrature( uint8_t ndimn,
-                     std::array< std::vector< tk::real >, 3 >& coordgp,
-                     std::vector< tk::real >& wgp ) const
+    GaussQuadratureTet( std::array< std::vector< tk::real >, 3 >& coordgp,
+                        std::vector< tk::real >& wgp ) const
     {
-      if (ndimn == 3)
-        {
-          coordgp[0][0] = 0.25;
-          coordgp[1][0] = 0.25;
-          coordgp[2][0] = 0.25;
-          wgp[0]        = -12.0/15.0;
+      coordgp[0][0] = 0.25;
+      coordgp[1][0] = 0.25;
+      coordgp[2][0] = 0.25;
+      wgp[0]        = -12.0/15.0;
 
-          coordgp[0][1] = 1.0/6.0;
-          coordgp[1][1] = 1.0/6.0;
-          coordgp[2][1] = 1.0/6.0;
-          wgp[1]        = 9.0/20.0;
+      coordgp[0][1] = 1.0/6.0;
+      coordgp[1][1] = 1.0/6.0;
+      coordgp[2][1] = 1.0/6.0;
+      wgp[1]        = 9.0/20.0;
 
-          coordgp[0][2] = 0.5;
-          coordgp[1][2] = 1.0/6.0;
-          coordgp[2][2] = 1.0/6.0;
-          wgp[2]        = 9.0/20.0;
+      coordgp[0][2] = 0.5;
+      coordgp[1][2] = 1.0/6.0;
+      coordgp[2][2] = 1.0/6.0;
+      wgp[2]        = 9.0/20.0;
 
-          coordgp[0][3] = 1.0/6.0;
-          coordgp[1][3] = 0.5;
-          coordgp[2][3] = 1.0/6.0;
-          wgp[3]        = 9.0/20.0;
+      coordgp[0][3] = 1.0/6.0;
+      coordgp[1][3] = 0.5;
+      coordgp[2][3] = 1.0/6.0;
+      wgp[3]        = 9.0/20.0;
 
-          coordgp[0][4] = 1.0/6.0;
-          coordgp[1][4] = 1.0/6.0;
-          coordgp[2][4] = 0.5;
-          wgp[4]        = 9.0/20.0;
-        }
-      else if (ndimn == 2)
-        {
-          coordgp[0][0] = 2.0/3.0;
-          coordgp[1][0] = 1.0/6.0;
-          wgp[0]        = 1.0/3.0;
+      coordgp[0][4] = 1.0/6.0;
+      coordgp[1][4] = 1.0/6.0;
+      coordgp[2][4] = 0.5;
+      wgp[4]        = 9.0/20.0;
+    }
 
-          coordgp[0][1] = 1.0/6.0;
-          coordgp[1][1] = 2.0/3.0;
-          wgp[1]        = 1.0/3.0;
+    //! Gaussian quadrature points locations and weights for a triangle
+    //! \param[in,out] coordgp Coordinates of quadrature points
+    //! \param[in,out] wgp Weights of quadrature points
+    void
+    GaussQuadratureTri( std::array< std::vector< tk::real >, 3 >& coordgp,
+                        std::vector< tk::real >& wgp ) const
+    {
+      coordgp[0][0] = 2.0/3.0;
+      coordgp[1][0] = 1.0/6.0;
+      wgp[0]        = 1.0/3.0;
 
-          coordgp[0][2] = 1.0/6.0;
-          coordgp[1][2] = 1.0/6.0;
-          wgp[2]        = 1.0/3.0;
-        }
-      else
-        {
-          std::cout << "Incorrect dimensionality input to GaussQuadrature\n";
-        }
+      coordgp[0][1] = 1.0/6.0;
+      coordgp[1][1] = 2.0/3.0;
+      wgp[1]        = 1.0/3.0;
+
+      coordgp[0][2] = 1.0/6.0;
+      coordgp[1][2] = 1.0/6.0;
+      wgp[2]        = 1.0/3.0;
     }
 
     //! Determinant of Jacobian of transformation
