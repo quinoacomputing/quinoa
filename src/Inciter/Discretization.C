@@ -654,7 +654,7 @@ Discretization::status()
     // Augment one-liner with output indicators
     if (!(m_it % field)) print << 'F';
     if (!(m_it % diag)) print << 'D';
-    if (!(m_it % dtfreq)) print << 'H';
+    if (!(m_it % dtfreq)) print << 'h';
   
     print << std::endl;
   }
