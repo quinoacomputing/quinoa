@@ -166,15 +166,21 @@ Refiner::flatcoord( const tk::UnsMesh::CoordMap& coordmap )
 }
 
 void
-Refiner::dtref( tk::real t, const SchemeBase::Proxy& s )
+Refiner::dtref( tk::real t,
+                const SchemeBase::Proxy& s,
+                const std::map< int, std::vector< std::size_t > >& bnode )
 // *****************************************************************************
 // Start mesh refinement (during time stepping, t>0)
 //! \param[in] t Physical time
 //! \param[in] scheme Discretization scheme Charm++ proxy we interoperate with
+//! \param[in] bnode Node lists of side sets
 // *****************************************************************************
 {
   m_initial = false;
   m_t = t;
+
+  // Update boundary node lists
+  m_bnode = bnode;
 
   // Store discretization scheme proxy
   m_schemeproxy = s;
@@ -962,11 +968,13 @@ Refiner::updateVolMesh( const std::unordered_set< std::size_t >& old,
 Refiner::BndFaces
 Refiner::boundary()
 // *****************************************************************************
-// Generate boundary data structure
-//! \return Map associating a pair of side set id and adjacent tet id (value)
-//!   to a partition-boundary triangle face (key) given by three global node IDs
-//! \details This is used to regenerate physical boundary face and node data
-//!   structures after refinement, see updateBoundaryMesh().
+//  Generate boundary data structure used to update refined boundary faces and
+//  nodes
+//! \return Map associating a pair of side set id and adjacent tet id (value) to
+//!   a partition-boundary triangle face (key) given by three global node IDs.
+//! \details The output of this function is used to regenerate physical boundary
+//!   face and node data structures after refinement, see updateBndFaces() and
+//!   updateBndNodes().
 // *****************************************************************************
 {
   using Face = tk::UnsMesh::Face;
@@ -1022,7 +1030,9 @@ Refiner::boundary()
   // boundary faces (and their associated side set id and tet id).
   if (!m_belem.empty()) {
     auto bndcopy = bnd;
-    for (const auto& f : bndcopy) if (f.second.first == -1) bnd.erase( f.first );
+    for (const auto& f : bndcopy)
+      if (f.second.first == -1)
+        bnd.erase( f.first );
   }
 
   return bnd;
@@ -1037,7 +1047,8 @@ Refiner::updateBndMesh( const std::unordered_set< std::size_t >& old,
 //! \param[in] ref Unique nodes of the refined mesh using local ids
 // *****************************************************************************
 {
-  // generate boundary data structure after mesh refinement
+  // generate boundary face data structure used to regenerate boundary face and
+  // node data after mesh refinement
   auto bnd = boundary();
 
   // regerate boundary faces and nodes after mesh refinement
@@ -1053,8 +1064,9 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
 // Regenerate boundary faces after mesh refinement step
 //! \param[in] old Unique nodes of the old (unrefined) mesh using local ids
 //! \param[in] ref Unique nodes of the refined mesh using local ids
-//! \param[in] bnd Boundary face map, associating a pair of side set id and
-//!   adjacent tet id to a boundary triangle face
+//! \param[in] bnd Map associating a pair of side set id and adjacent tet id
+//!   (value) to a partition-boundary triangle face (key) given by three global
+//!   node IDs.
 // *****************************************************************************
 {
   IGNORE(ref);  // to avoid compiler warning when asserts are optimized away
@@ -1164,13 +1176,14 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
 void
 Refiner::updateBndNodes( const std::unordered_set< std::size_t >& old,
                          const std::unordered_set< std::size_t >& ref,
-                         const BndFaces& bnd )
+                         const Refiner::BndFaces& bnd )
 // *****************************************************************************
 // Update boundary nodes after mesh refinement
 //! \param[in] old Unique nodes of the old (unrefined) mesh using local ids
 //! \param[in] ref Unique nodes of the refined mesh using local ids
-//! \param[in] bnd Boundary face map, associating a pair of side set id and
-//!   adjacent tet id to a boundary triangle face
+//! \param[in] bnd Map associating a pair of side set id and adjacent tet id
+//!   (value) to a partition-boundary triangle face (key) given by three global
+//!   node IDs.
 // *****************************************************************************
 {
   IGNORE(ref);  // to avoid compiler warning when asserts are optimized away
@@ -1193,8 +1206,9 @@ Refiner::updateBndNodes( const std::unordered_set< std::size_t >& old,
       return this->m_refiner.node_connectivity.get( c );
   };
 
-  // Lambda to find a global node ID among the nodelists of side sets. Return -1
-  // if not found, or all the side set ids in which the node is found.
+  // Lambda to find a global node ID among the nodelists of side sets. Return
+  // all side set ids in which the node is found (or an empty vector if the
+  // node was not found.
   auto bndNode = [ &bnodeset ]( std::size_t p ){
     std::vector< int > ss;
     for (const auto& s : bnodeset)  // for all phsyical boundaries (sidesets)
@@ -1208,12 +1222,12 @@ Refiner::updateBndNodes( const std::unordered_set< std::size_t >& old,
   for (const auto& f : bnd) {
     // query number of children of boundary tet adjacent to boundary face
     auto nc = m_refiner.tet_store.data( f.second.second ).num_children;
-    if (nc == 0) {      // if boundary tet is not refined, add its boundary face
+    if (nc == 0) {  // if boundary tet is not refined, add its boundary node
       for (auto n : f.first) {
         auto ss = bndNode( n );
-        for (auto s : ss) if (s != -1) bnode[ s ].push_back( n );
+        for (auto s : ss) bnode[ s ].push_back( n );
       }
-    } else {            // if boundary tet is refined
+    } else {        // if boundary tet is refined
       const auto& tets = m_refiner.tet_store.tets;
       for (decltype(nc) i=0; i<nc; ++i ) {      // for all child tets
         // get child tet id
@@ -1241,7 +1255,7 @@ Refiner::updateBndNodes( const std::unordered_set< std::size_t >& old,
             auto ss2 = bndNode( m_gid[p[1]] );
             for (auto s1 : ss1)
               for (auto s2 : ss2)
-                if (s1 != -1 && s2 != -1 && s1 == s2)
+                if (s1 == s2)
                   bnode[ s1 ].push_back( m_gid[c] );
           }
       }

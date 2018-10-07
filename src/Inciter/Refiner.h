@@ -68,7 +68,9 @@ class Refiner : public CBase_Refiner {
     static void registerReducers();
 
     //! Start mesh refinement (during time stepping, t>0)
-    void dtref( tk::real t, const SchemeBase::Proxy& s );
+    void dtref( tk::real t,
+                const SchemeBase::Proxy& s,
+                const std::map< int, std::vector< std::size_t > >& bnode );
 
     //! Receive boundary edges from all PEs (including this one)
     void addBndEdges( CkReductionMsg* msg );
@@ -258,7 +260,8 @@ class Refiner : public CBase_Refiner {
     void updateBndMesh( const std::unordered_set< std::size_t >& old,
                         const std::unordered_set< std::size_t >& ref );
 
-    //! Generate boundary data structures after mesh refinement
+    //! \brief Generate boundary data structure used to update refined
+    //!   boundary faces and nodes assigned to side sets
     BndFaces boundary();
 
     //! Regenerate boundary faces after mesh refinement step
