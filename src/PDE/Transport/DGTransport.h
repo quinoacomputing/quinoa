@@ -430,6 +430,8 @@ class Transport {
           // from the left and right elements are needed. For this, a
           // transformation to the reference coordinates is necessary, since
           // the basis functions are defined on the reference tetrahedron only.
+          // Ref: [1] https://doi.org/10.1007/BF01060030
+          //      [2] https://doi.org/10.1093/imamat/hxh111
 
           // transformation of the physical coordinates of the quadrature point
           // to reference space for the left element to be able to compute

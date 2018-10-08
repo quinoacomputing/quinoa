@@ -147,11 +147,11 @@ class CompFlow {
     }
 
     //! Initalize the compressible flow equations, prepare for time integration
-    //! \param[in] lhs Element mass matrix
-    //! \param[in] inpoel Element-node connectivity
-    //! \param[in] coord Array of nodal coordinates
-    //! \param[in,out] unk Array of unknowns
-    //! \param[in] t Physical time
+//    //! \param[in] lhs Element mass matrix
+//    //! \param[in] inpoel Element-node connectivity
+//    //! \param[in] coord Array of nodal coordinates
+//    //! \param[in,out] unk Array of unknowns
+//    //! \param[in] t Physical time
     void initializep1( const tk::Fields& /*lhs*/,
                        const std::vector< std::size_t >& /*inpoel*/,
                        const tk::UnsMesh::Coords& /*coord*/,
@@ -259,14 +259,14 @@ class CompFlow {
     }
 
     //! Compute P1 right hand side
-    //! \param[in] t Physical time
-    //! \param[in] geoElem Element geometry array
-    //! \param[in] geoFace Face geometry array
-    //! \param[in] fd Face connectivity data object
-    //! \param[in] inpoel Element-node connectivity
-    //! \param[in] coord Array of nodal coordinates
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in,out] R Right-hand side vector computed
+//    //! \param[in] t Physical time
+//    //! \param[in] geoElem Element geometry array
+//    //! \param[in] geoFace Face geometry array
+//    //! \param[in] fd Face connectivity data object
+//    //! \param[in] inpoel Element-node connectivity
+//    //! \param[in] coord Array of nodal coordinates
+//    //! \param[in] U Solution vector at recent time step
+//    //! \param[in,out] R Right-hand side vector computed
     void rhsp1( tk::real /*t*/,
                 const tk::Fields& /*geoFace*/,
                 const tk::Fields& /*geoElem*/,
