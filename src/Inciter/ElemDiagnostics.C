@@ -13,6 +13,7 @@
 #include "ElemDiagnostics.h"
 #include "DiagReducer.h"
 #include "Discretization.h"
+#include "Quadrature.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 namespace inciter {
@@ -49,6 +50,31 @@ ElemDiagnostics::compute( Discretization& d,
                           const tk::Fields& u )
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc.
+//! \param[in] d Discretization proxy to read from
+//! \param[in] lhs Mass matrix
+//! \param[in] nchGhost Number of chare boundary ghost elements
+//! \param[in] geoElem Element geometry
+//! \param[in] u Current solution vector
+//! \return True if diagnostics have been computed
+// *****************************************************************************
+{
+  auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+  if (ndof == 1)
+    return computep0( d, lhs, nchGhost, geoElem, u );
+  else if (ndof == 4)
+    return computep1( d, lhs, nchGhost, geoElem, u );
+  else Throw( "ElemDiagnostics::compute() not defined for NDOF=" +
+               std::to_string(ndof) );
+}
+
+bool
+ElemDiagnostics::computep0( Discretization& d,
+                            const tk::Fields& lhs,
+                            const std::size_t nchGhost,
+                            const tk::Fields& geoElem,
+                            const tk::Fields& u )
+// *****************************************************************************
+//  Compute diagnostics, e.g., residuals, norms of errors, etc. for DG(P0)
 //! \param[in] d Discretization proxy to read from
 //! \param[in] lhs Mass matrix
 //! \param[in] nchGhost Number of chare boundary ghost elements
@@ -147,7 +173,7 @@ ElemDiagnostics::computep1( Discretization& d,
                             const tk::Fields& geoElem,
                             const tk::Fields& u )
 // *****************************************************************************
-//  Compute diagnostics, e.g., residuals, norms of errors, etc. for dgp1
+//  Compute diagnostics, e.g., residuals, norms of errors, etc. for DG(P1)
 //! \param[in] d Discretization proxy to read from
 //! \param[in] nchGhost Number of chare boundary ghost elements
 //! \param[in] geoElem Element geometry
@@ -184,43 +210,14 @@ ElemDiagnostics::computep1( Discretization& d,
       diag( NUMDIAG, std::vector< tk::real >( u.nprop()/ndof, 0.0 ) );
 
     // Quadrature points
-    std::array< std::vector< tk::real >, 3 > coordgp;
-    std::vector< tk::real > wgp;
+    std::array< std::array< tk::real, 5 >, 3 > coordgp;
+    std::array< tk::real, 5 > wgp;
 
     const auto& cx = coord[0];
     const auto& cy = coord[1];
     const auto& cz = coord[2];
 
-    coordgp[0].resize(5,0);
-    coordgp[1].resize(5,0);
-    coordgp[2].resize(5,0);
-
-    wgp.resize(5,0);
-
-    coordgp[0][0] = 0.25;
-    coordgp[1][0] = 0.25;
-    coordgp[2][0] = 0.25;
-    wgp[0]        = -12.0/15.0;
-
-    coordgp[0][1] = 1.0/6.0;
-    coordgp[1][1] = 1.0/6.0;
-    coordgp[2][1] = 1.0/6.0;
-    wgp[1]        = 9.0/20.0;
-
-    coordgp[0][2] = 0.5;
-    coordgp[1][2] = 1.0/6.0;
-    coordgp[2][2] = 1.0/6.0;
-    wgp[2]        = 9.0/20.0;
-
-    coordgp[0][3] = 1.0/6.0;
-    coordgp[1][3] = 0.5;
-    coordgp[2][3] = 1.0/6.0;
-    wgp[3]        = 9.0/20.0;
-
-    coordgp[0][4] = 1.0/6.0;
-    coordgp[1][4] = 1.0/6.0;
-    coordgp[2][4] = 0.5;
-    wgp[4]        = 9.0/20.0;
+    GaussQuadratureTet( coordgp, wgp );
 
     // Put in norms sweeping our mesh chunk
     for (std::size_t i=0; i<u.nunk()-nchGhost; ++i) {

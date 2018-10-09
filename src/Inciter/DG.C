@@ -1002,14 +1002,9 @@ DG::solve()
     // Output field data to file
     out();
     // Compute diagnostics, e.g., residuals
-    bool diag_computed;
-    if (ndof == 4)
-      diag_computed =
-        m_diag.computep1( *d, m_lhs, m_u.nunk()-m_esuelTet.size()/4,
-                          m_geoElem, m_u );
-    else
-      diag_computed = m_diag.compute( *d, m_lhs, m_u.nunk()-m_esuelTet.size()/4,
-                                      m_geoElem, m_u );
+    auto diag_computed =
+        m_diag.compute( *d, m_lhs, m_u.nunk()-m_esuelTet.size()/4,
+                        m_geoElem, m_u );
     // Increase number of iterations and physical time
     d->next();
     // Update Un

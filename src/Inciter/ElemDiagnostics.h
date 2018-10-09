@@ -32,13 +32,6 @@ class ElemDiagnostics {
                   const tk::Fields& geoElem,
                   const tk::Fields& u );
 
-    //! Compute diagnostics, e.g., residuals, norms of errors, etc. for dgp1
-    bool computep1( Discretization& d,
-                    const tk::Fields& lhs,
-                    const std::size_t nchGhost,
-                    const tk::Fields& geoElem,
-                    const tk::Fields& u );
-
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -48,6 +41,21 @@ class ElemDiagnostics {
     //! \param[in,out] d Diagnostics object reference
     friend void operator|( PUP::er& p, ElemDiagnostics& d ) { d.pup(p); }
     //@}
+
+  private:
+    //! Compute diagnostics, e.g., residuals, norms of errors, etc.
+    bool computep0( Discretization& d,
+                    const tk::Fields& lhs,
+                    const std::size_t nchGhost,
+                    const tk::Fields& geoElem,
+                    const tk::Fields& u );
+
+    //! Compute diagnostics, e.g., residuals, norms of errors, etc. for dgp1
+    bool computep1( Discretization& d,
+                    const tk::Fields& lhs,
+                    const std::size_t nchGhost,
+                    const tk::Fields& geoElem,
+                    const tk::Fields& u );
 };
 
 } // inciter::

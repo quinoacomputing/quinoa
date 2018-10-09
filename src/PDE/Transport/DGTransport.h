@@ -96,7 +96,9 @@ class Transport {
         initializep0( lhs, inpoel, coord, unk, t );
       else if (ndof == 4)
         initializep1( lhs, inpoel, coord, unk, t );
-      else Throw( "DGTransport::initialize() not defined" );
+      else
+        Throw( "DGTransport::initialize() not defined for NDOF=" +
+               std::to_string(ndof) );
     }
 
     //! Compute the left hand side mass matrix
