@@ -4,7 +4,7 @@
 #include <set>
 #include <vector>
 
-#include "types.h"
+#include "AMR_types.h"
 #include "active_element_store.h"
 #include "master_element_store.h"
 #include "edge_store.h"

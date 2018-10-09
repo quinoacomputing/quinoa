@@ -1,34 +1,42 @@
 #ifndef AMR_node_connectivity_h
 #define AMR_node_connectivity_h
 
-#include <vector>
+#include <unordered_map>
+#include <UnsMesh.h>
 
 namespace AMR {
 
     /**
      * @brief This class stores the connectivity of the node. Simply what this
-     * means is that it just a vector of node ids. The value of the vector is
-     * the two nodes the new node joins, and the index is the node id
+     * means is that it just a mapping of node ids to a unique index.  The
+     * value of the map is the index, and the key is the two nodes the new node
+     * joins
      */
     class node_connectivity_t {
 
         private:
-            std::vector<node_pair_t> nodes;
+            //using Hash = tk::UnsMesh::Hash;
+            //using Eq = tk::UnsMesh::Eq;
+
+            using node_list_key_t = node_pair_t;
+            using node_list_value_t = size_t;
+            using node_list_t = std::unordered_map<node_list_key_t, node_list_value_t,  tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2>>;
+
+            node_list_t nodes;
 
         public:
 
             node_connectivity_t() { } // default cons
 
             //! Non-const-ref accessor to state
-            //! \return Vector of node pairs
-            std::vector<node_pair_t>& data() { return nodes; }
+            //! \return  All node pairs
+            node_list_t& data() { return nodes; }
 
             /**
              * @brief Method to add initial nodes to the store
              *
              * @param initial_size Size of the list to fill to
              */
-// TODO: Do we need to port over the constructor which does this?
             node_connectivity_t(size_t initial_size)
             {
                 for (size_t i = 0; i < initial_size; i++)
@@ -52,15 +60,19 @@ namespace AMR {
             }
 
             /**
-             * @brief Getter into node storage
+             * @brief Getter into node storage *VALUE*
              *
-             * @param id Id of the node to get
+             * @param id VALUE of the node to get
              *
              * @return The node_pair at the given id
              */
             node_pair_t get(size_t id)
             {
-                return nodes.at(id);
+                // TOOD: this is now a linear search..
+                for (auto it = nodes.begin(); it != nodes.end(); ++it) {
+                    if (it->second == id) return it->first;
+                }
+                assert(0);
             }
 
             /**
@@ -109,46 +121,32 @@ namespace AMR {
                 return result;
             }
 
-            // TODO: Document this
-            // Int becasue it's signed..
-            int find(size_t A, size_t B)
+            /**
+             * @brief Add connectivity, unless it already exists
+             *
+             * @param A First node
+             * @param B Second node
+             *
+             * @return Id/unique identifier of the node
+             */
+            node_list_value_t add(size_t A, size_t B)
             {
-                size_t min = std::min(A,B);
-                size_t max = std::max(A,B);
+                assert(A != B);
 
-                for (size_t i = 0; i < size(); i++)
-                {
-                    // Did we find it?
-                    node_pair_t n = get(i);
-                    if (min == n[0] && max == n[1])
-                    {
-                        return static_cast<int>(i);
-                    }
+                node_list_key_t key = {{std::min(A,B), std::max(A,B)}};
+                auto iter = nodes.find(key);
+
+                // return the corresponding value if we find the key in the map
+                if(iter != nodes.end()) {
+                    return iter->second;
                 }
-                return -1;
-            }
-
-            // TODO: Document this
-            size_t add(size_t A, size_t B)
-            {
-                if (A != 0 || B != 0)
-                {
-                    assert(A != B);
-                    // TODO: Abstract to exists method. (Could have one for id,
-                    // as well as one for val)
-
-                    // check if already exists
-                    int f = find(A,B);
-                    if (f != -1) {
-                        trace_out << "Connect already exits " << A << " " << B << std::endl;
-                        return static_cast<size_t>(f);
-                    }
+                else {
+                    // if not in map
+                    node_list_value_t value = nodes.size();
+                    nodes[key] = value; // TODO: is insert faster here?
+                    trace_out << "Made new node " << size() -1 << std::endl;
+                    return value;
                 }
-
-                nodes.push_back( {{std::min(A,B), std::max(A,B)}} );
-                trace_out << "Made new node " << size() -1 << std::endl;
-                //std::cout << " add " << size()-1 << " a = " <<  A << " b = " << B << std::endl;
-                return size()-1;
             }
 
             /**

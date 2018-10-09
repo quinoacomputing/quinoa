@@ -3,7 +3,7 @@
 
 #include <cmath>
 
-#include "types.h"
+#include "AMR_types.h"
 #include "tet_store.h"
 
 // TODO: make this have a base class to support multiple generator schemes

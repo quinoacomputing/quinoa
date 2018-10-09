@@ -3,7 +3,7 @@
 
 #include "DerivedData.h"
 
-#include "types.h"
+#include "AMR_types.h"
 #include "util.h"
 #include "id_generator.h"
 

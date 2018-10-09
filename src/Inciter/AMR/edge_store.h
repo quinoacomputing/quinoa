@@ -4,7 +4,7 @@
 #include <cassert>
 
 #include "Loggers.h"
-#include "AMR/types.h"
+#include "AMR/AMR_types.h"
 
 namespace AMR {
 
