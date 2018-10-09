@@ -51,10 +51,8 @@ DG::DG( const CProxy_Discretization& disc,
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_vol( 0.0 ),
-  m_geoFace( tk::genGeoFaceTri( fd.Ntfac(), fd.Inpofa(),
-                                Disc()->Coord()) ),
-  m_geoElem( tk::genGeoElemTet( Disc()->Inpoel(),
-                                Disc()->Coord() ) ),
+  m_geoFace( tk::genGeoFaceTri( fd.Ntfac(), fd.Inpofa(), Disc()->Coord()) ),
+  m_geoElem( tk::genGeoElemTet( Disc()->Inpoel(), Disc()->Coord() ) ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_nfac( fd.Inpofa().size()/3 ),
@@ -62,7 +60,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_ncoord( Disc()->Coord()[0].size() ),
   m_msumset( msumset() ),
   m_esuelTet( tk::genEsuelTet( Disc()->Inpoel(),
-                tk::genEsup( Disc()->Inpoel(), 4 ) ) ),
+                               tk::genEsup( Disc()->Inpoel(), 4 ) ) ),
   m_bndFace(),
   m_ghostData(),
   m_ghostReq( 0 ),
@@ -637,9 +635,7 @@ DG::adj()
 //!    on this chare.
 // *****************************************************************************
 {
-  auto d = Disc();
-
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) d->Tr().chadj();
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) Disc()->Tr().chadj();
 
   tk::destroy(m_bndFace);
 
@@ -672,7 +668,7 @@ DG::adj()
   // Ensure that we also have all the geometry and connectivity data 
   // (including those of ghosts)
   Assert( m_geoElem.nunk() == m_u.nunk(), "GeoElem unknowns size mismatch" );
-  Assert( d->Inpoel().size()/4 == m_u.nunk(), "Inpoel size mismatch" );
+  Assert( Disc()->Inpoel().size()/4 == m_u.nunk(), "Inpoel size mismatch" );
 
   // Basic error checking on ghost tet ID map
   Assert( m_ghost.find( thisIndex ) == m_ghost.cend(),
@@ -723,7 +719,7 @@ DG::setup( tk::real v )
   // Store total mesh volume
   m_vol = v;
 
-  // Extract ghost data from inpoel and coord for mesh-writing
+  // Extract ghost data from inpoel and coord for writing the mesh
   auto& inpoel = d->Inpoel();
   std::vector< std::size_t > inpoelg;
   for (auto e=m_esuelTet.size()/4; e<inpoel.size()/4; ++e)
