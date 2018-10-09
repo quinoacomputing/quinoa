@@ -285,8 +285,9 @@ class Transport {
         }
 
         //--- upwind fluxes
-        auto flux = upwindFlux( {{geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0)}},
-                                f, geoFace, ugp );
+        auto flux =
+          upwindFlux( {{geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0)}}, f,
+                      geoFace, ugp );
 
         for (ncomp_t c=0; c<m_ncomp; ++c) {
           auto mark = c*m_ndof;
@@ -849,11 +850,12 @@ class Transport {
         }
 
         //--- upwind fluxes
-        auto flux = upwindFlux( {{geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0)}},
-                                f, geoFace,
-                                State::LR( m_ncomp, ugp, geoFace(f,4,0),
-                                                geoFace(f,5,0),
-                                                geoFace(f,6,0), t ) );
+        auto flux =
+          upwindFlux( {{geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0)}},
+                      f,
+                      geoFace,
+                      State::LR( m_ncomp, ugp, geoFace(f,4,0), geoFace(f,5,0),
+                                 geoFace(f,6,0), t ) );
 
         for (ncomp_t c=0; c<m_ncomp; ++c)
         {
