@@ -109,6 +109,7 @@ class CompFlow {
   public:
     //! Constructor
     explicit CompFlow( ncomp_t c ) :
+      m_ncomp( g_inputdeck.get< tag::component >().get< tag::transport >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< tag::compflow >(c) ),
       m_riemann( tk::cref_find( RiemannSolvers(),
                    g_inputdeck.get< tag::discr, tag::flux >() ) ),
@@ -118,7 +119,9 @@ class CompFlow {
       m_ndof( 4 )
       //ErrChk( !m_bcdir.empty() || !m_bcsym.empty() || !m_bcextrapolate.empty(),
       //        "Boundary conditions not set in control file for DG CompFlow" );
-    {}
+    {
+      //Problem::errchk( m_c, m_ncomp );
+    }
 
     //! Initalize the compressible flow equations for DG
     //! \param[in] L Element mass matrix
@@ -246,23 +249,338 @@ class CompFlow {
     }
 
     //! Compute P1 right hand side
-//    //! \param[in] t Physical time
-//    //! \param[in] geoElem Element geometry array
-//    //! \param[in] geoFace Face geometry array
-//    //! \param[in] fd Face connectivity data object
-//    //! \param[in] inpoel Element-node connectivity
-//    //! \param[in] coord Array of nodal coordinates
-//    //! \param[in] U Solution vector at recent time step
-//    //! \param[in,out] R Right-hand side vector computed
-    void rhsp1( tk::real /*t*/,
-                const tk::Fields& /*geoFace*/,
-                const tk::Fields& /*geoElem*/,
-                const inciter::FaceData& /*fd*/,
-                const std::vector< std::size_t >& /*inpoel*/,
-                const tk::UnsMesh::Coords& /*coord*/,
-                const tk::Fields& /*U*/,
-                tk::Fields& /*R*/ ) const
+    //! \param[in] t Physical time
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] fd Face connectivity data object
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] R Right-hand side vector computed
+    void rhsp1( tk::real t,
+                const tk::Fields& geoFace,
+                const tk::Fields& geoElem,
+                const inciter::FaceData& fd,
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord,
+                const tk::Fields& U,
+                tk::Fields& R ) const
     {
+      Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
+              "vector and right-hand side at recent time step incorrect" );
+      Assert( U.nunk() == geoElem.nunk(), "Number of unknowns in solution "
+              "vector and element-geometry at recent time step incorrect" );
+      Assert( U.nprop() == 5 && R.nprop() == 5,
+              "Number of components in solution and right-hand side vector "
+              "must equal "+ std::to_string(5) );
+
+      const auto& bface = fd.Bface();
+      const auto& esuf = fd.Esuf();
+      const auto& inpofa = fd.Inpofa();
+
+      // set rhs to zero
+      R.fill(0.0);
+
+      // arrays for quadrature points
+      std::array< std::vector< tk::real >, 3 > coordgp;
+      std::vector< tk::real > wgp;
+
+      coordgp[0].resize(3,0);
+      coordgp[1].resize(3,0);
+      coordgp[2].resize(3,0);
+
+      wgp.resize(3,0);
+
+      // get quadrature point weights and coordinates for triangle
+      GaussQuadrature( 2, coordgp, wgp );
+
+      // compute internal surface flux integrals
+      for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
+      {
+        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+        std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+
+        // nodal coordinates of the left element
+        std::array< tk::real, 3 >
+          p1_l{{ coord[0][ inpoel[4*el] ],
+                 coord[1][ inpoel[4*el] ],
+                 coord[2][ inpoel[4*el] ] }},
+          p2_l{{ coord[0][ inpoel[4*el+1] ],
+                 coord[1][ inpoel[4*el+1] ],
+                 coord[2][ inpoel[4*el+1] ] }},
+          p3_l{{ coord[0][ inpoel[4*el+2] ],
+                 coord[1][ inpoel[4*el+2] ],
+                 coord[2][ inpoel[4*el+2] ] }},
+          p4_l{{ coord[0][ inpoel[4*el+3] ],
+                 coord[1][ inpoel[4*el+3] ],
+                 coord[2][ inpoel[4*el+3] ] }};
+
+        // nodal coordinates of the right element
+        std::array< tk::real, 3 >
+          p1_r{{ coord[0][ inpoel[4*er] ],
+                 coord[1][ inpoel[4*er] ],
+                 coord[2][ inpoel[4*er] ] }},
+          p2_r{{ coord[0][ inpoel[4*er+1] ],
+                 coord[1][ inpoel[4*er+1] ],
+                 coord[2][ inpoel[4*er+1] ] }},
+          p3_r{{ coord[0][ inpoel[4*er+2] ],
+                 coord[1][ inpoel[4*er+2] ],
+                 coord[2][ inpoel[4*er+2] ] }},
+          p4_r{{ coord[0][ inpoel[4*er+3] ],
+                 coord[1][ inpoel[4*er+3] ],
+                 coord[2][ inpoel[4*er+3] ] }};
+
+        auto detT_l = getJacobian( p1_l, p2_l, p3_l, p4_l );
+        auto detT_r = getJacobian( p1_r, p2_r, p3_r, p4_r );
+
+        auto x1 = coord[0][ inpofa[3*f]   ];
+        auto y1 = coord[1][ inpofa[3*f]   ];
+        auto z1 = coord[2][ inpofa[3*f]   ];
+
+        auto x2 = coord[0][ inpofa[3*f+1] ];
+        auto y2 = coord[1][ inpofa[3*f+1] ];
+        auto z2 = coord[2][ inpofa[3*f+1] ];
+
+        auto x3 = coord[0][ inpofa[3*f+2] ];
+        auto y3 = coord[1][ inpofa[3*f+2] ];
+        auto z3 = coord[2][ inpofa[3*f+2] ];
+
+        // Gaussian quadrature
+        for (std::size_t igp=0; igp<3; ++igp)
+        {
+          // Barycentric coordinates for the triangular face
+          auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];
+          auto shp2 = coordgp[0][igp];
+          auto shp3 = coordgp[1][igp];
+
+          // transformation of the quadrature point from the 2D reference/master
+          // element to physical domain, to obtain its physical (x,y,z)
+          // coordinates.
+          auto xgp = x1*shp1 + x2*shp2 + x3*shp3;
+          auto ygp = y1*shp1 + y2*shp2 + y3*shp3;
+          auto zgp = z1*shp1 + z2*shp2 + z3*shp3;
+
+          tk::real detT_gp(0);
+
+          // transformation of the physical coordinates of the quadrature point
+          // to reference space for the left element to be able to compute
+          // basis functions on the left element.
+          detT_gp = getJacobian( p1_l, {{ xgp, ygp, zgp }}, p3_l, p4_l );
+          auto xi_l = detT_gp / detT_l;
+          detT_gp = getJacobian( p1_l, p2_l, {{ xgp, ygp, zgp }}, p4_l );
+          auto eta_l = detT_gp / detT_l;
+          detT_gp = getJacobian( p1_l, p2_l, p3_l, {{ xgp, ygp, zgp }} );
+          auto zeta_l = detT_gp / detT_l;
+
+          // basis functions at igp for the left element
+          auto B2l = 2.0 * xi_l + eta_l + zeta_l - 1.0;
+          auto B3l = 3.0 * eta_l + zeta_l - 1.0;
+          auto B4l = 4.0 * zeta_l - 1.0;
+
+          // transformation of the physical coordinates of the quadrature point
+          // to reference space for the right element
+          detT_gp = getJacobian( p1_r, {{ xgp, ygp, zgp }}, p3_r, p4_r );
+          auto xi_r = detT_gp / detT_r;
+          detT_gp = getJacobian( p1_r, p2_r, {{ xgp, ygp, zgp }}, p4_r );
+          auto eta_r = detT_gp / detT_r;
+          detT_gp = getJacobian( p1_r, p2_r, p3_r, {{ xgp, ygp, zgp }} );
+          auto zeta_r = detT_gp / detT_r;
+          
+          // basis functions at igp for the right element
+          auto B2r = 2.0 * xi_r + eta_r + zeta_r - 1.0;
+          auto B3r = 3.0 * eta_r + zeta_r - 1.0;
+          auto B4r = 4.0 * zeta_r - 1.0;
+
+          auto wt = wgp[igp] * geoFace(f,0,0);
+
+          std::array< std::vector< tk::real >, 2 > ugp;
+
+          for (ncomp_t c=0; c<m_ncomp; ++c)
+          {
+            auto mark = c*m_ndof;
+            ugp[0].push_back(  U(el, mark,   m_offset)
+                             + U(el, mark+1, m_offset) * B2l
+                             + U(el, mark+2, m_offset) * B3l
+                             + U(el, mark+3, m_offset) * B4l );
+            ugp[1].push_back(  U(er, mark,   m_offset)
+                             + U(er, mark+1, m_offset) * B2r
+                             + U(er, mark+2, m_offset) * B3r
+                             + U(er, mark+3, m_offset) * B4r );
+          }
+
+          auto flux = m_riemann.flux( f, geoFace, {{ugp[0], ugp[1]}} );
+
+          for (ncomp_t c=0; c<m_ncomp; ++c)
+          {
+            auto mark = c*m_ndof;
+
+            R(el, mark,   m_offset) -= wt * flux[c];
+            R(el, mark+1, m_offset) -= wt * flux[c] * B2l;
+            R(el, mark+2, m_offset) -= wt * flux[c] * B3l;
+            R(el, mark+3, m_offset) -= wt * flux[c] * B4l;
+
+            R(er, mark,   m_offset) += wt * flux[c];
+            R(er, mark+1, m_offset) += wt * flux[c] * B2r;
+            R(er, mark+2, m_offset) += wt * flux[c] * B3r;
+            R(er, mark+3, m_offset) += wt * flux[c] * B4r;
+          }
+        }
+      }
+
+      // compute boundary surface flux integrals
+      bndIntegralp1< Dir >( m_bcdir, bface, esuf, geoFace, inpoel, inpofa, coord, t, U, R );
+      bndIntegralp1< Sym >( m_bcsym, bface, esuf, geoFace, inpoel, inpofa, coord, t, U, R );
+      bndIntegralp1< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, inpoel, inpofa, 
+				    			    coord, t, U, R );
+
+      // resize quadrature point arrays
+      coordgp[0].resize(5,0);
+      coordgp[1].resize(5,0);
+      coordgp[2].resize(5,0);
+
+      wgp.resize(5,0);
+
+      // get quadrature point weights and coordinates for tetrahedron
+      GaussQuadrature( 3, coordgp, wgp );
+
+      std::array< std::array< tk::real, 3 >, 3 > jacInv;
+
+      // compute volume integrals
+      for (std::size_t e=0; e<U.nunk(); ++e)
+      {
+        auto x1 = coord[0][ inpoel[4*e]   ];
+        auto y1 = coord[1][ inpoel[4*e]   ];
+        auto z1 = coord[2][ inpoel[4*e]   ];
+
+        auto x2 = coord[0][ inpoel[4*e+1] ];
+        auto y2 = coord[1][ inpoel[4*e+1] ];
+        auto z2 = coord[2][ inpoel[4*e+1] ];
+
+        auto x3 = coord[0][ inpoel[4*e+2] ];
+        auto y3 = coord[1][ inpoel[4*e+2] ];
+        auto z3 = coord[2][ inpoel[4*e+2] ];
+
+        auto x4 = coord[0][ inpoel[4*e+3] ];
+        auto y4 = coord[1][ inpoel[4*e+3] ];
+        auto z4 = coord[2][ inpoel[4*e+3] ];
+
+        jacInv = getJacInverse( {{x1, y1, z1}},
+                                {{x2, y2, z2}},
+                                {{x3, y3, z3}},
+                                {{x4, y4, z4}} );
+
+        auto db2dxi1 = 2.0;
+        auto db2dxi2 = 1.0;
+        auto db2dxi3 = 1.0;
+
+        auto db3dxi1 = 0.0;
+        auto db3dxi2 = 3.0;
+        auto db3dxi3 = 1.0;
+
+        auto db4dxi1 = 0.0;
+        auto db4dxi2 = 0.0;
+        auto db4dxi3 = 4.0;
+
+        auto db2dx =  db2dxi1 * jacInv[0][0]
+                    + db2dxi2 * jacInv[1][0]
+                    + db2dxi3 * jacInv[2][0];
+
+        auto db2dy =  db2dxi1 * jacInv[0][1]
+                    + db2dxi2 * jacInv[1][1]
+                    + db2dxi3 * jacInv[2][1];
+
+        auto db2dz =  db2dxi1 * jacInv[0][2]
+                    + db2dxi2 * jacInv[1][2]
+                    + db2dxi3 * jacInv[2][2];
+
+        auto db3dx =  db3dxi1 * jacInv[0][0]
+                    + db3dxi2 * jacInv[1][0]
+                    + db3dxi3 * jacInv[2][0];
+
+        auto db3dy =  db3dxi1 * jacInv[0][1]
+                    + db3dxi2 * jacInv[1][1]
+                    + db3dxi3 * jacInv[2][1];
+
+        auto db3dz =  db3dxi1 * jacInv[0][2]
+                    + db3dxi2 * jacInv[1][2]
+                    + db3dxi3 * jacInv[2][2];
+
+        auto db4dx =  db4dxi1 * jacInv[0][0]
+                    + db4dxi2 * jacInv[1][0]
+                    + db4dxi3 * jacInv[2][0];        
+	
+	    auto db4dy =  db4dxi1 * jacInv[0][1]
+                    + db4dxi2 * jacInv[1][1]
+                    + db4dxi3 * jacInv[2][1];
+
+        auto db4dz =  db4dxi1 * jacInv[0][2]
+                    + db4dxi2 * jacInv[1][2]
+                    + db4dxi3 * jacInv[2][2];
+
+        // Gaussian quadrature
+        for (std::size_t igp=0; igp<5; ++igp)
+        {
+          tk::real u, v, w, p;
+          std::vector< tk::real > ugp;
+          std::array< std::vector< tk::real >, 3 > flux;
+
+          tk::real g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
+
+          ugp.resize(m_ncomp,0);
+
+          flux[0].resize(m_ncomp,0);
+          flux[1].resize(m_ncomp,0);
+          flux[2].resize(m_ncomp,0);
+
+          auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp] - 1.0;
+          auto B3 = 3.0 * coordgp[1][igp] + coordgp[2][igp] - 1.0;
+          auto B4 = 4.0 * coordgp[2][igp] - 1.0;
+
+          auto wt = wgp[igp] * geoElem(e, 0, 0);
+	  	  
+	  	  for (ncomp_t c=0; c<m_ncomp; ++c)
+	  	  {
+	  	    auto mark = c*m_ndof;
+
+      	    ugp[c] =  U(e, mark,   m_offset)
+      	            + U(e, mark+1, m_offset) * B2
+      	            + U(e, mark+2, m_offset) * B3
+      	            + U(e, mark+3, m_offset) * B4;
+	  	  }
+
+	  	  u = ugp[1] / ugp[0];
+	  	  v = ugp[2] / ugp[0];
+	  	  w = ugp[3] / ugp[0];
+	  	  p = (g - 1) * (ugp[4] - 0.5 * ugp[0] * (u*u + v*v + w*w) );
+
+	  	  flux[0][0] = ugp[1];
+	  	  flux[0][1] = ugp[1] * u + p;
+	  	  flux[0][2] = ugp[1] * v;
+	  	  flux[0][3] = ugp[1] * w;
+	  	  flux[0][4] = u * (ugp[4] + p);
+
+	  	  flux[1][0] = ugp[2];
+      	  flux[1][1] = ugp[2] * u;
+      	  flux[1][2] = ugp[2] * v + p;
+      	  flux[1][3] = ugp[2] * w;
+      	  flux[1][4] = v * (ugp[4] + p);
+
+	  	  flux[2][0] = ugp[3];
+      	  flux[2][1] = ugp[3] * u;
+      	  flux[2][2] = ugp[3] * v;
+      	  flux[2][3] = ugp[3] * w + p;
+      	  flux[2][4] = w * (ugp[4] + p);
+
+      	  for (ncomp_t c=0; c<m_ncomp; ++c)
+      	  {
+	  	    auto mark = c*m_ndof;
+	  	    
+	  	    R(e, mark+1, m_offset) += wt * (flux[0][c]*db2dx + flux[1][c]*db2dy + flux[2][c]*db2dz);
+	  	    R(e, mark+2, m_offset) += wt * (flux[0][c]*db3dx + flux[1][c]*db3dy + flux[2][c]*db3dz);
+	  	    R(e, mark+3, m_offset) += wt * (flux[0][c]*db4dx + flux[1][c]*db4dy + flux[2][c]*db4dz);
+	  	  }
+		}
+      }
     }
 
     //! Compute the minimum time step size
@@ -354,6 +672,8 @@ class CompFlow {
     }
 
   private:
+    //!< Number of components in this PDE
+    const ncomp_t m_ncomp;
     //! Offset PDE operates from
     const ncomp_t m_offset;
     //! Riemann solver
@@ -422,11 +742,11 @@ class CompFlow {
     //!   at Dirichlet boundaries
     struct Dir {
       static std::array< std::vector< tk::real >, 2 >
-      LR( const tk::Fields& U, std::size_t e,
+      LR( const std::vector< tk::real >& U,
           tk::real xc, tk::real yc, tk::real zc,
           std::array< tk::real, 3 > /*fn*/,
           tk::real t ) {
-        auto ul = U.extract( e );
+        auto ul = U;
         auto ur = ul;
         const auto urbc = Problem::solution(0, xc, yc, zc, t);
         for (ncomp_t c=0; c<5; ++c)
@@ -439,11 +759,11 @@ class CompFlow {
     //!   at symmetric boundaries
     struct Sym {
       static std::array< std::vector< tk::real >, 2 >
-      LR( const tk::Fields& U, std::size_t e,
+      LR( const std::vector< tk::real >& U,
           tk::real /*xc*/, tk::real /*yc*/, tk::real /*zc*/,
           std::array< tk::real, 3 > fn,
           tk::real /*t*/ ) {
-        auto ul = U.extract( e );
+        auto ul = U;
         auto ur = ul;
         // Internal cell velocity components
         auto v1l = ul[1]/ul[0];
@@ -469,11 +789,11 @@ class CompFlow {
     //!   at extrapolation boundaries
     struct Extrapolate {
       static std::array< std::vector< tk::real >, 2 >
-      LR( const tk::Fields& U, std::size_t e,
+      LR( const std::vector< tk::real >& U,
           tk::real /*xc*/, tk::real /*yc*/, tk::real /*zc*/,
           std::array< tk::real, 3 > /*fn*/,
           tk::real /*t*/ ) {
-        return {{ U.extract( e ), U.extract( e ) }};
+        return {{ U, U }};
       }
     };
 
@@ -506,7 +826,7 @@ class CompFlow {
                                         geoFace(f,3,0) }};
 
         //--- fluxes
-        auto flux = m_riemann.flux( f, geoFace, State::LR(U,el,xc,yc,zc,fn,t) );
+        auto flux = m_riemann.flux( f, geoFace, State::LR(U.extract( el ),xc,yc,zc,fn,t) );
 
         for (ncomp_t c=0; c<5; ++c)
           R(el, c, m_offset) -= farea * flux[c];
@@ -538,6 +858,297 @@ class CompFlow {
         if (bc != end(bface))
           surfInt< BCType >( bc->second, esuf, geoFace, t, U, R );
       }
+    }
+
+    //! Compute boundary surface integral for a number of faces
+    //! \param[in] faces Face IDs at which to compute surface integral
+    //! \param[in] esuf Elements surrounding face, see tk::genEsuf()
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] inpofa Face-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] t Physical time
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] R Right-hand side vector computed
+    //! \tparam State Policy class providing the left and right state at
+    //!   boundaries by its member function State::LR()
+    template< class State >
+    void surfIntp1( const std::vector< std::size_t >& faces,
+                    const std::vector< int >& esuf,
+                    const tk::Fields& geoFace,
+                    const std::vector< std::size_t >& inpoel,
+                    const std::vector< std::size_t >& inpofa,
+                    const tk::UnsMesh::Coords& coord,
+                    tk::real t,
+                    const tk::Fields& U,
+                    tk::Fields& R ) const
+      {
+      // arrays for quadrature points
+      std::array< std::vector< tk::real >, 3 > coordgp;
+      std::vector< tk::real > wgp;
+
+      coordgp[0].resize(3,0);
+      coordgp[1].resize(3,0);
+      coordgp[2].resize(3,0);
+
+      wgp.resize(3,0);
+
+      // get quadrature point weights and coordinates for triangle
+      GaussQuadrature( 2, coordgp, wgp );
+
+      for (const auto& f : faces) {
+        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+        Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
+		//auto xc = geoFace(f,4,0);
+        //auto yc = geoFace(f,5,0);
+        //auto zc = geoFace(f,6,0); 
+        std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
+                                        geoFace(f,2,0),
+                                        geoFace(f,3,0) }};
+
+        // nodal coordinates of the left element
+        std::array< tk::real, 3 >
+          p1_l{{ coord[0][ inpoel[4*el] ],
+                 coord[1][ inpoel[4*el] ],
+                 coord[2][ inpoel[4*el] ] }},
+          p2_l{{ coord[0][ inpoel[4*el+1] ],
+                 coord[1][ inpoel[4*el+1] ],
+                 coord[2][ inpoel[4*el+1] ] }},
+          p3_l{{ coord[0][ inpoel[4*el+2] ],
+                 coord[1][ inpoel[4*el+2] ],
+                 coord[2][ inpoel[4*el+2] ] }},
+          p4_l{{ coord[0][ inpoel[4*el+3] ],
+                 coord[1][ inpoel[4*el+3] ],
+                 coord[2][ inpoel[4*el+3] ] }};
+
+        auto detT_l = getJacobian( p1_l, p2_l, p3_l, p4_l );
+
+        auto x1 = coord[0][ inpofa[3*f]   ];
+        auto y1 = coord[1][ inpofa[3*f]   ];
+        auto z1 = coord[2][ inpofa[3*f]   ];
+
+        auto x2 = coord[0][ inpofa[3*f+1] ];
+        auto y2 = coord[1][ inpofa[3*f+1] ];
+        auto z2 = coord[2][ inpofa[3*f+1] ];
+
+        auto x3 = coord[0][ inpofa[3*f+2] ];
+        auto y3 = coord[1][ inpofa[3*f+2] ];
+        auto z3 = coord[2][ inpofa[3*f+2] ];
+
+        // Gaussian quadrature
+        for (std::size_t igp=0; igp<3; ++igp)
+        {
+          // Barycentric coordinates for the triangular face
+          auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];
+          auto shp2 = coordgp[0][igp];
+          auto shp3 = coordgp[1][igp];
+
+          // transformation of the quadrature point from the 2D reference/master
+          // element to physical domain, to obtain its physical (x,y,z)
+          // coordinates.
+          auto xgp = x1*shp1 + x2*shp2 + x3*shp3;
+          auto ygp = y1*shp1 + y2*shp2 + y3*shp3;
+          auto zgp = z1*shp1 + z2*shp2 + z3*shp3;
+
+          tk::real detT_gp(0);
+
+          // transformation of the physical coordinates of the quadrature point
+          // to reference space for the left element to be able to compute
+          // basis functions on the left element.
+          detT_gp = getJacobian( p1_l, {{ xgp, ygp, zgp }}, p3_l, p4_l );
+          auto xi_l = detT_gp / detT_l;
+          detT_gp = getJacobian( p1_l, p2_l, {{ xgp, ygp, zgp }}, p4_l );
+          auto eta_l = detT_gp / detT_l;
+          detT_gp = getJacobian( p1_l, p2_l, p3_l, {{ xgp, ygp, zgp }} );
+          auto zeta_l = detT_gp / detT_l;
+
+          // basis functions at igp for the left element
+          auto B2l = 2.0 * xi_l + eta_l + zeta_l - 1.0;
+          auto B3l = 3.0 * eta_l + zeta_l - 1.0;
+          auto B4l = 4.0 * zeta_l - 1.0;
+
+          auto wt = wgp[igp] * geoFace(f,0,0);
+
+	  	  std::vector< tk::real > ugp;
+
+          for (ncomp_t c=0; c<m_ncomp; ++c)
+          {
+            auto mark = c*m_ndof;
+            ugp.push_back (  U(el, mark,   m_offset)
+                           + U(el, mark+1, m_offset) * B2l
+                           + U(el, mark+2, m_offset) * B3l
+                           + U(el, mark+3, m_offset) * B4l );
+          }
+
+          //--- fluxes
+          auto flux = m_riemann.flux( f, geoFace, State::LR(ugp,xgp,ygp,zgp,fn,t) );
+
+          for (ncomp_t c=0; c<m_ncomp; ++c)
+          {
+            auto mark = c*m_ndof;
+
+            R(el, mark,   m_offset) -= wt * flux[c];
+            R(el, mark+1, m_offset) -= wt * flux[c] * B2l;
+            R(el, mark+2, m_offset) -= wt * flux[c] * B3l;
+            R(el, mark+3, m_offset) -= wt * flux[c] * B4l;
+          }
+        }
+      }
+    }
+
+    //! Compute boundary surface flux integrals for a given boundary type
+    //! \tparam BCType Specifies the type of boundary condition to apply
+    //! \param bcconfig BC configuration vector for multiple side sets
+    //! \param[in] bface Boundary faces side-set information
+    //! \param[in] esuf Elements surrounding faces
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] inpofa Face-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] t Physical time
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] R Right-hand side vector computed
+    template< class BCType >
+    void
+    bndIntegralp1( const std::vector< bcconf_t >& bcconfig,
+                   const std::map< int, std::vector< std::size_t > >& bface,
+                   const std::vector< int >& esuf,
+                   const tk::Fields& geoFace,
+                   const std::vector< std::size_t >& inpoel,
+                   const std::vector< std::size_t >& inpofa,
+                   const tk::UnsMesh::Coords& coord,
+                   tk::real t,
+                   const tk::Fields& U,
+                   tk::Fields& R ) const
+    {
+      for (const auto& s : bcconfig) {       // for all bc sidesets
+        auto bc = bface.find( std::stoi(s) );// faces for side set
+        if (bc != end(bface))
+          surfIntp1< BCType >( bc->second, esuf, geoFace, inpoel, inpofa,
+                               coord, t, U, R );
+      }
+    }
+
+    //! Gaussian quadrature points locations and weights
+    //! \param[in] ndimn Dimension of integration domain
+    //! \param[in,out] coordgp Coordinates of quadrature points
+    //! \param[in,out] wgp Weights of quadrature points
+    void
+    GaussQuadrature( uint8_t ndimn,
+                     std::array< std::vector< tk::real >, 3 >& coordgp,
+                     std::vector< tk::real >& wgp ) const
+    {
+      if (ndimn == 3)
+        {
+          coordgp[0][0] = 0.25;
+          coordgp[1][0] = 0.25;
+          coordgp[2][0] = 0.25;
+          wgp[0]        = -12.0/15.0;
+
+          coordgp[0][1] = 1.0/6.0;
+          coordgp[1][1] = 1.0/6.0;
+          coordgp[2][1] = 1.0/6.0;
+          wgp[1]        = 9.0/20.0;
+
+          coordgp[0][2] = 0.5;
+          coordgp[1][2] = 1.0/6.0;
+          coordgp[2][2] = 1.0/6.0;
+          wgp[2]        = 9.0/20.0;
+
+          coordgp[0][3] = 1.0/6.0;
+          coordgp[1][3] = 0.5;
+          coordgp[2][3] = 1.0/6.0;
+          wgp[3]        = 9.0/20.0;
+
+          coordgp[0][4] = 1.0/6.0;
+          coordgp[1][4] = 1.0/6.0;
+          coordgp[2][4] = 0.5;
+          wgp[4]        = 9.0/20.0;
+        }
+      else if (ndimn == 2)
+        {
+          coordgp[0][0] = 2.0/3.0;
+          coordgp[1][0] = 1.0/6.0;
+          wgp[0]        = 1.0/3.0;
+
+          coordgp[0][1] = 1.0/6.0;
+          coordgp[1][1] = 2.0/3.0;
+          wgp[1]        = 1.0/3.0;
+
+          coordgp[0][2] = 1.0/6.0;
+          coordgp[1][2] = 1.0/6.0;
+          wgp[2]        = 1.0/3.0;
+        }
+      else
+        {
+          std::cout << "Incorrect dimensionality input to GaussQuadrature\n";
+        }
+    }
+
+    //! Determinant of Jacobian of transformation
+    //! \param[in] p1 (x,y,z) coordinates of 1st local node in the tetrahedron
+    //! \param[in] p2 (x,y,z) coordinates of 2nd local node in the tetrahedron
+    //! \param[in] p3 (x,y,z) coordinates of 3rd local node in the tetrahedron
+    //! \param[in] p4 (x,y,z) coordinates of 4th local node in the tetrahedron
+    //! \return Determinant of the Jacobian of transformation of physical
+    //!   tetrahedron to reference (xi, eta, zeta) space
+    tk::real
+    getJacobian( const std::array< tk::real, 3 >& p1,
+                 const std::array< tk::real, 3 >& p2,
+                 const std::array< tk::real, 3 >& p3,
+                 const std::array< tk::real, 3 >& p4 ) const
+    {
+      tk::real detT;
+
+      detT = (p2[0]-p1[0])
+              * ((p3[1]-p1[1])*(p4[2]-p1[2]) - (p4[1]-p1[1])*(p3[2]-p1[2]))
+            -(p3[0]-p1[0])
+              * ((p2[1]-p1[1])*(p4[2]-p1[2]) - (p4[1]-p1[1])*(p2[2]-p1[2]))
+            +(p4[0]-p1[0])
+              * ((p2[1]-p1[1])*(p3[2]-p1[2]) - (p3[1]-p1[1])*(p2[2]-p1[2]));
+
+      return detT;
+    }
+
+    //! Inverse of Jacobian of transformation
+    //! \param[in] p1 (x,y,z) coordinates of 1st local node in the tetrahedron
+    //! \param[in] p2 (x,y,z) coordinates of 2nd local node in the tetrahedron
+    //! \param[in] p3 (x,y,z) coordinates of 3rd local node in the tetrahedron
+    //! \param[in] p4 (x,y,z) coordinates of 4th local node in the tetrahedron
+    //! \return Inverse of the Jacobian of transformation of physical
+    //!   tetrahedron to reference (xi, eta, zeta) space
+    std::array< std::array< tk::real, 3 >, 3 >
+    getJacInverse( const std::array< tk::real, 3 >& p1,
+                   const std::array< tk::real, 3 >& p2,
+                   const std::array< tk::real, 3 >& p3,
+                   const std::array< tk::real, 3 >& p4 ) const
+    {
+      std::array< std::array< tk::real, 3 >, 3 > jacInv;
+
+      auto detJ = getJacobian( p1, p2, p3, p4 );
+
+      jacInv[0][0] =  (  (p3[1]-p1[1])*(p4[2]-p1[2])
+                       - (p4[1]-p1[1])*(p3[2]-p1[2])) / detJ;
+      jacInv[1][0] = -(  (p2[1]-p1[1])*(p4[2]-p1[2])
+                       - (p4[1]-p1[1])*(p2[2]-p1[2])) / detJ;
+      jacInv[2][0] =  (  (p2[1]-p1[1])*(p3[2]-p1[2])
+                       - (p3[1]-p1[1])*(p2[2]-p1[2])) / detJ;
+
+      jacInv[0][1] = -(  (p3[0]-p1[0])*(p4[2]-p1[2])
+                       - (p4[0]-p1[0])*(p3[2]-p1[2])) / detJ;
+      jacInv[1][1] =  (  (p2[0]-p1[0])*(p4[2]-p1[2])
+                       - (p4[0]-p1[0])*(p2[2]-p1[2])) / detJ;
+      jacInv[2][1] = -(  (p2[0]-p1[0])*(p3[2]-p1[2])
+                       - (p3[0]-p1[0])*(p2[2]-p1[2])) / detJ;
+
+      jacInv[0][2] =  (  (p3[0]-p1[0])*(p4[1]-p1[1])
+                       - (p4[0]-p1[0])*(p3[1]-p1[1])) / detJ;
+      jacInv[1][2] = -(  (p2[0]-p1[0])*(p4[1]-p1[1])
+                       - (p4[0]-p1[0])*(p2[1]-p1[1])) / detJ;
+      jacInv[2][2] =  (  (p2[0]-p1[0])*(p3[1]-p1[1])
+                       - (p3[0]-p1[0])*(p2[1]-p1[1])) / detJ;
+
+      return jacInv;
     }
 };
 
