@@ -189,36 +189,34 @@ ElemDiagnostics::computep1( Discretization& d,
     const auto& cy = coord[1];
     const auto& cz = coord[2];
 
-    coordgp[0].resize(5,0);
-    coordgp[1].resize(5,0);
-    coordgp[2].resize(5,0);
+    coordgp[0].resize(4,0);
+    coordgp[1].resize(4,0);
+    coordgp[2].resize(4,0);
 
-    wgp.resize(5,0);
+    wgp.resize(4,0);
 
-    coordgp[0][0] = 0.25;
-    coordgp[1][0] = 0.25;
-    coordgp[2][0] = 0.25;
-    wgp[0]        = -12.0/15.0;
+    tk::real c1 = 0.5854101966249685;
+    tk::real c2 = 0.1381966011250105;
 
-    coordgp[0][1] = 1.0/6.0;
-    coordgp[1][1] = 1.0/6.0;
-    coordgp[2][1] = 1.0/6.0;
-    wgp[1]        = 9.0/20.0;
+    coordgp[0][0] = c2;
+    coordgp[1][0] = c2;
+    coordgp[2][0] = c2;
+    wgp[0]        = 0.25;
 
-    coordgp[0][2] = 0.5;
-    coordgp[1][2] = 1.0/6.0;
-    coordgp[2][2] = 1.0/6.0;
-    wgp[2]        = 9.0/20.0;
+    coordgp[0][1] = c1;
+    coordgp[1][1] = c2;
+    coordgp[2][1] = c2;
+    wgp[1]        = 0.25;
 
-    coordgp[0][3] = 1.0/6.0;
-    coordgp[1][3] = 0.5;
-    coordgp[2][3] = 1.0/6.0;
-    wgp[3]        = 9.0/20.0;
+    coordgp[0][2] = c2;
+    coordgp[1][2] = c1;
+    coordgp[2][2] = c2;
+    wgp[2]        = 0.25;
 
-    coordgp[0][4] = 1.0/6.0;
-    coordgp[1][4] = 1.0/6.0;
-    coordgp[2][4] = 0.5;
-    wgp[4]        = 9.0/20.0;
+    coordgp[0][3] = c2;
+    coordgp[1][3] = c2;
+    coordgp[2][3] = c1;
+    wgp[3]        = 0.25;
 
     // Put in norms sweeping our mesh chunk
     for (std::size_t i=0; i<u.nunk()-nchGhost; ++i) {
@@ -242,7 +240,7 @@ ElemDiagnostics::computep1( Discretization& d,
       auto z4 = cz[ inpoel[4*i+3] ];
 
       // Gaussian quadrature
-      for (std::size_t igp=0; igp<5; ++igp)
+      for (std::size_t igp=0; igp<4; ++igp)
       {
         auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp]
                   - 1.0;
