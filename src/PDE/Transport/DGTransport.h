@@ -20,6 +20,7 @@
 #include "Macro.h"
 #include "Exception.h"
 #include "Vector.h"
+#include "Quadrature.h"
 #include "Inciter/Options/BC.h"
 #include "UnsMesh.h"
 
@@ -124,15 +125,8 @@ class Transport {
       R.resize(unk.nprop(),0);
 
       // arrays for quadrature points
-      std::array< std::vector< tk::real >, 3 > coordgp;
-      std::vector< tk::real > wgp; 
-
-      // resize quadrature point arrays
-      coordgp[0].resize(5,0);
-      coordgp[1].resize(5,0);
-      coordgp[2].resize(5,0);
-
-      wgp.resize(5,0);
+      std::array< std::array< tk::real, 5 >, 3 > coordgp;
+      std::array< tk::real, 5 > wgp;
 
       const auto& cx = coord[0];
       const auto& cy = coord[1];
@@ -338,15 +332,168 @@ class Transport {
       // set rhs to zero
       R.fill(0.0);
 
+      // compute surface flux integrals
+      surfInt( inpoel, coord, fd, geoFace, U, R );
+
+      // compute boundary surface flux integrals
+      bndIntegralp1< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace,
+                                    inpoel, inpofa, coord, t, U, R );
+      bndIntegralp1< Inlet >( m_bcinlet, bface, esuf, geoFace, inpoel, inpofa,
+                              coord, t, U, R );
+      bndIntegralp1< Outlet >( m_bcoutlet, bface, esuf, geoFace, inpoel,
+                               inpofa, coord, t, U, R );
+      bndIntegralp1< Dir >( m_bcdir, bface, esuf, geoFace, inpoel,
+                            inpofa, coord, t, U, R );
+
+      // compute volume integrals
+      volInt( inpoel, coord, geoElem, U, R );
+    }
+
+    //! Compute the minimum time step size
+//     //! \param[in] U Solution vector at recent time step
+//     //! \param[in] coord Mesh node coordinates
+//     //! \param[in] inpoel Mesh element connectivity
+    //! \return Minimum time step size
+    tk::real dt( const std::array< std::vector< tk::real >, 3 >& /*coord*/,
+                 const std::vector< std::size_t >& /*inpoel*/,
+                 const tk::Fields& /*U*/ ) const
+    {
+      tk::real mindt = std::numeric_limits< tk::real >::max();
+      return mindt;
+    }
+
+    //! \brief Query all side set IDs the user has configured for all components
+    //!   in this PDE system
+    //! \param[in,out] conf Set of unique side set IDs to add to
+    void side( std::unordered_set< int >& conf ) const
+    { Problem::side( conf ); }
+
+    //! Return field names to be output to file
+    //! \return Vector of strings labelling fields output in file
+    //! \details This functions should be written in conjunction with
+    //!   fieldOutput(), which provides the vector of fields to be output
+    std::vector< std::string > fieldNames() const {
+      std::vector< std::string > n;
+      const auto& depvar =
+        g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_c);
+      // will output numerical solution for all components
+      for (ncomp_t c=0; c<m_ncomp; ++c)
+        n.push_back( depvar + std::to_string(c) + "_numerical" );
+      // will output analytic solution for all components
+      for (ncomp_t c=0; c<m_ncomp; ++c)
+        n.push_back( depvar + std::to_string(c) + "_analytic" );
+      // will output error for all components
+      for (ncomp_t c=0; c<m_ncomp; ++c)
+        n.push_back( depvar + std::to_string(c) + "_error" );
+      return n;
+    }
+
+    //! Return field output going to file
+    //! \param[in] t Physical time
+    //! \param[in] geoElem Element geometry array
+    //! \param[in,out] U Solution vector at recent time step
+    //! \return Vector of vectors to be output to file
+    //! \details This functions should be written in conjunction with names(),
+    //!   which provides the vector of field names
+    //! \note U is overwritten
+    std::vector< std::vector< tk::real > >
+    fieldOutput( tk::real t,
+                 tk::real /*V*/,
+                 const tk::Fields& geoElem,
+                 tk::Fields& U ) const
+    {
+      Assert( geoElem.nunk() == U.nunk(), "Size mismatch" );
+      std::vector< std::vector< tk::real > > out;
+      // will output numerical solution for all components
+      for (ncomp_t c=0; c<m_ncomp; ++c)
+      {
+        auto mark = c*m_ndof;
+        out.push_back( U.extract( mark, m_offset ) );
+      }
+      // evaluate analytic solution at time t
+      auto E = U;
+      initialize( geoElem, E, t );
+      // will output analytic solution for all components
+      for (ncomp_t c=0; c<m_ncomp; ++c)
+      {
+        auto mark = c*m_ndof;
+        out.push_back( E.extract( mark, m_offset ) );
+      }
+      // will output error for all components
+      for (ncomp_t c=0; c<m_ncomp; ++c) {
+        auto mark = c*m_ndof;
+        auto u = U.extract( mark, m_offset );
+        auto e = E.extract( mark, m_offset );
+        for (std::size_t i=0; i<u.size(); ++i)
+          e[i] = std::pow( e[i] - u[i], 2.0 ) * geoElem(i,0,0);
+        out.push_back( e );
+      }
+      return out;
+    }
+
+    //! Return names of integral variables to be output to diagnostics file
+    //! \return Vector of strings labelling integral variables output
+    std::vector< std::string > names() const {
+      std::vector< std::string > n;
+      const auto& depvar =
+        g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_c);
+      // construct the name of the numerical solution for all components
+      for (ncomp_t c=0; c<m_ncomp; ++c)
+        n.push_back( depvar + std::to_string(c) );
+      return n;
+    }
+
+    //! Return analytical solution at the given (xi,yi,zi) location at time t
+    //! \param[in] xi X-coordinate
+    //! \param[in] yi Y-coordinate
+    //! \param[in] zi Z-coordinate
+    //! \param[in] t Physical time
+    //! \return Vector of analytical solution at given location and time
+    std::vector< tk::real >
+    analyticalSol( tk::real xi,
+                   tk::real yi,
+                   tk::real zi,
+                   tk::real t ) const
+    {
+      const auto s = Problem::solution( m_c, m_ncomp, xi, yi, zi, t );
+      return s;
+    }
+
+  private:
+    const ncomp_t m_c;                  //!< Equation system index
+    const ncomp_t m_ncomp;              //!< Number of components in this PDE
+    const ncomp_t m_offset;             //!< Offset this PDE operates from
+    //! Extrapolation BC configuration
+    const std::vector< bcconf_t > m_bcextrapolate;
+    //! Inlet BC configuration
+    const std::vector< bcconf_t > m_bcinlet;
+    //! Outlet BC configuration
+    const std::vector< bcconf_t > m_bcoutlet;
+    //! Dirichlet BC configuration
+    const std::vector< bcconf_t > m_bcdir;
+    const std::size_t m_ndof;
+
+
+    //! Compute internal surface flux integrals
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] R Right-hand side vector computed
+    void surfInt( const std::vector< std::size_t >& inpoel,
+                  const tk::UnsMesh::Coords& coord,
+                  const inciter::FaceData& fd,
+                  const tk::Fields& geoFace,
+                  const tk::Fields& U,
+                  tk::Fields& R ) const
+    {
+      const auto& esuf = fd.Esuf();
+      const auto& inpofa = fd.Inpofa();
+
       // arrays for quadrature points
-      std::array< std::vector< tk::real >, 3 > coordgp;
-      std::vector< tk::real > wgp; 
-
-      coordgp[0].resize(3,0);
-      coordgp[1].resize(3,0);
-      coordgp[2].resize(3,0);
-
-      wgp.resize(3,0);
+      std::array< std::array< tk::real, 3 >, 2 > coordgp;
+      std::array< tk::real, 3 > wgp; 
 
       const auto& cx = coord[0];
       const auto& cy = coord[1];
@@ -499,28 +646,32 @@ class Transport {
           }
         }
       }
+    }
 
-      // compute boundary surface flux integrals
-      bndIntegralp1< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace,
-                                    inpoel, inpofa, coord, t, U, R );
-      bndIntegralp1< Inlet >( m_bcinlet, bface, esuf, geoFace, inpoel, inpofa,
-                              coord, t, U, R );
-      bndIntegralp1< Outlet >( m_bcoutlet, bface, esuf, geoFace, inpoel,
-                               inpofa, coord, t, U, R );
-      bndIntegralp1< Dir >( m_bcdir, bface, esuf, geoFace, inpoel,
-                            inpofa, coord, t, U, R );
-
-      // resize quadrature point arrays
-      coordgp[0].resize(5,0);
-      coordgp[1].resize(5,0);
-      coordgp[2].resize(5,0);
-
-      wgp.resize(5,0);
+    //! Compute volume integrals
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] R Right-hand side vector computed
+    void volInt( const std::vector< std::size_t >& inpoel,
+                 const tk::UnsMesh::Coords& coord,
+                 const tk::Fields& geoElem,
+                 const tk::Fields& U,
+                 tk::Fields& R ) const
+    {
+      // arrays for quadrature points
+      std::array< std::array< tk::real, 5 >, 3 > coordgp;
+      std::array< tk::real, 5 > wgp;
 
       // get quadrature point weights and coordinates for tetrahedron
       GaussQuadratureTet( coordgp, wgp );
 
       std::array< std::array< tk::real, 3 >, 3 > jacInv;
+
+      const auto& cx = coord[0];
+      const auto& cy = coord[1];
+      const auto& cz = coord[2];
 
       // compute volume integrals
       for (std::size_t e=0; e<U.nunk(); ++e)
@@ -605,7 +756,8 @@ class Transport {
         // Gaussian quadrature
         for (std::size_t igp=0; igp<5; ++igp)
         {
-          auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp] - 1.0;
+          auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp]
+                    + coordgp[2][igp] - 1.0;
           auto B3 = 3.0 * coordgp[1][igp] + coordgp[2][igp] - 1.0;
           auto B4 = 4.0 * coordgp[2][igp] - 1.0;
 
@@ -620,7 +772,8 @@ class Transport {
           auto ygp = y1*shp1 + y2*shp2 + y3*shp3 + y4*shp4;
           auto zgp = z1*shp1 + z2*shp2 + z3*shp3 + z4*shp4;
 
-          const auto vel = Problem::prescribedVelocity( xgp, ygp, zgp, m_c, m_ncomp );
+          const auto vel =
+            Problem::prescribedVelocity( xgp, ygp, zgp, m_c, m_ncomp );
 
           for (ncomp_t c=0; c<m_ncomp; ++c)
           {
@@ -634,137 +787,16 @@ class Transport {
             auto fluxy = vel[c][1] * ugp;
             auto fluxz = vel[c][2] * ugp;
 
-            R(e, mark+1, m_offset) += wt * (fluxx * db2dx + fluxy * db2dy + fluxz * db2dz);
-            R(e, mark+2, m_offset) += wt * (fluxx * db3dx + fluxy * db3dy + fluxz * db3dz);
-            R(e, mark+3, m_offset) += wt * (fluxx * db4dx + fluxy * db4dy + fluxz * db4dz);
+            R(e, mark+1, m_offset) +=
+              wt * (fluxx * db2dx + fluxy * db2dy + fluxz * db2dz);
+            R(e, mark+2, m_offset) +=
+              wt * (fluxx * db3dx + fluxy * db3dy + fluxz * db3dz);
+            R(e, mark+3, m_offset) +=
+              wt * (fluxx * db4dx + fluxy * db4dy + fluxz * db4dz);
           }
         }
       }
     }
-
-    //! Compute the minimum time step size
-//     //! \param[in] U Solution vector at recent time step
-//     //! \param[in] coord Mesh node coordinates
-//     //! \param[in] inpoel Mesh element connectivity
-    //! \return Minimum time step size
-    tk::real dt( const std::array< std::vector< tk::real >, 3 >& /*coord*/,
-                 const std::vector< std::size_t >& /*inpoel*/,
-                 const tk::Fields& /*U*/ ) const
-    {
-      tk::real mindt = std::numeric_limits< tk::real >::max();
-      return mindt;
-    }
-
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    //! \param[in,out] conf Set of unique side set IDs to add to
-    void side( std::unordered_set< int >& conf ) const
-    { Problem::side( conf ); }
-
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    //! \details This functions should be written in conjunction with
-    //!   fieldOutput(), which provides the vector of fields to be output
-    std::vector< std::string > fieldNames() const {
-      std::vector< std::string > n;
-      const auto& depvar =
-        g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_c);
-      // will output numerical solution for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        n.push_back( depvar + std::to_string(c) + "_numerical" );
-      // will output analytic solution for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        n.push_back( depvar + std::to_string(c) + "_analytic" );
-      // will output error for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        n.push_back( depvar + std::to_string(c) + "_error" );
-      return n;
-    }
-
-    //! Return field output going to file
-    //! \param[in] t Physical time
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] U Solution vector at recent time step
-    //! \return Vector of vectors to be output to file
-    //! \details This functions should be written in conjunction with names(),
-    //!   which provides the vector of field names
-    //! \note U is overwritten
-    std::vector< std::vector< tk::real > >
-    fieldOutput( tk::real t,
-                 tk::real /*V*/,
-                 const tk::Fields& geoElem,
-                 tk::Fields& U ) const
-    {
-      Assert( geoElem.nunk() == U.nunk(), "Size mismatch" );
-      std::vector< std::vector< tk::real > > out;
-      // will output numerical solution for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-      {
-        auto mark = c*m_ndof;
-        out.push_back( U.extract( mark, m_offset ) );
-      }
-      // evaluate analytic solution at time t
-      auto E = U;
-      initialize( geoElem, E, t );
-      // will output analytic solution for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-      {
-        auto mark = c*m_ndof;
-        out.push_back( E.extract( mark, m_offset ) );
-      }
-      // will output error for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c) {
-        auto mark = c*m_ndof;
-        auto u = U.extract( mark, m_offset );
-        auto e = E.extract( mark, m_offset );
-        for (std::size_t i=0; i<u.size(); ++i)
-          e[i] = std::pow( e[i] - u[i], 2.0 ) * geoElem(i,0,0);
-        out.push_back( e );
-      }
-      return out;
-    }
-
-    //! Return names of integral variables to be output to diagnostics file
-    //! \return Vector of strings labelling integral variables output
-    std::vector< std::string > names() const {
-      std::vector< std::string > n;
-      const auto& depvar =
-        g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_c);
-      // construct the name of the numerical solution for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        n.push_back( depvar + std::to_string(c) );
-      return n;
-    }
-
-    //! Return analytical solution at the given (xi,yi,zi) location at time t
-    //! \param[in] xi X-coordinate
-    //! \param[in] yi Y-coordinate
-    //! \param[in] zi Z-coordinate
-    //! \param[in] t Physical time
-    //! \return Vector of analytical solution at given location and time
-    std::vector< tk::real >
-    analyticalSol( tk::real xi,
-                   tk::real yi,
-                   tk::real zi,
-                   tk::real t ) const
-    {
-      const auto s = Problem::solution( m_c, m_ncomp, xi, yi, zi, t );
-      return s;
-    }
-
-  private:
-    const ncomp_t m_c;                  //!< Equation system index
-    const ncomp_t m_ncomp;              //!< Number of components in this PDE
-    const ncomp_t m_offset;             //!< Offset this PDE operates from
-    //! Extrapolation BC configuration
-    const std::vector< bcconf_t > m_bcextrapolate;
-    //! Inlet BC configuration
-    const std::vector< bcconf_t > m_bcinlet;
-    //! Outlet BC configuration
-    const std::vector< bcconf_t > m_bcoutlet;
-    //! Dirichlet BC configuration
-    const std::vector< bcconf_t > m_bcdir;
-    const std::size_t m_ndof;
 
     //! \brief State policy class providing the left and right state of a face
     //!   at extrapolation boundaries
@@ -830,12 +862,12 @@ class Transport {
     //! \tparam State Policy class providing the left and right state at
     //!   boundaries by its member function State::LR()
     template< class State >
-    void surfInt( const std::vector< std::size_t >& faces,
-                  const std::vector< int >& esuf,
-                  const tk::Fields& geoFace,
-                  tk::real t,
-                  const tk::Fields& U,
-                  tk::Fields& R ) const
+    void bndSurfInt( const std::vector< std::size_t >& faces,
+                     const std::vector< int >& esuf,
+                     const tk::Fields& geoFace,
+                     tk::real t,
+                     const tk::Fields& U,
+                     tk::Fields& R ) const
     {
       for (const auto& f : faces) {
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
@@ -887,7 +919,7 @@ class Transport {
       for (const auto& s : bcconfig) {       // for all bc sidesets
         auto bc = bface.find( std::stoi(s) );// faces for side set
         if (bc != end(bface))
-          surfInt< BCType >( bc->second, esuf, geoFace, t, U, R );
+          bndSurfInt< BCType >( bc->second, esuf, geoFace, t, U, R );
       }
     }
 
@@ -904,25 +936,19 @@ class Transport {
     //! \tparam State Policy class providing the left and right state at
     //!   boundaries by its member function State::LR()
     template< class State >
-    void surfIntp1( const std::vector< std::size_t >& faces,
-                    const std::vector< int >& esuf,
-                    const tk::Fields& geoFace,
-                    const std::vector< std::size_t >& inpoel,
-                    const std::vector< std::size_t >& inpofa,
-                    const tk::UnsMesh::Coords& coord,
-                    tk::real t,
-                    const tk::Fields& U,
-                    tk::Fields& R ) const
+    void bndSurfIntp1( const std::vector< std::size_t >& faces,
+                       const std::vector< int >& esuf,
+                       const tk::Fields& geoFace,
+                       const std::vector< std::size_t >& inpoel,
+                       const std::vector< std::size_t >& inpofa,
+                       const tk::UnsMesh::Coords& coord,
+                       tk::real t,
+                       const tk::Fields& U,
+                       tk::Fields& R ) const
     {
       // arrays for quadrature points
-      std::array< std::vector< tk::real >, 3 > coordgp;
-      std::vector< tk::real > wgp; 
-
-      coordgp[0].resize(3,0);
-      coordgp[1].resize(3,0);
-      coordgp[2].resize(3,0);
-
-      wgp.resize(3,0);
+      std::array< std::array< tk::real, 3 >, 2 > coordgp;
+      std::array< tk::real, 3 > wgp;
 
       const auto& cx = coord[0];
       const auto& cy = coord[1];
@@ -1054,8 +1080,8 @@ class Transport {
       for (const auto& s : bcconfig) {       // for all bc sidesets
         auto bc = bface.find( std::stoi(s) );// faces for side set
         if (bc != end(bface))
-          surfIntp1< BCType >( bc->second, esuf, geoFace, inpoel, inpofa,
-                               coord, t, U, R );
+          bndSurfIntp1< BCType >( bc->second, esuf, geoFace, inpoel, inpofa,
+                                  coord, t, U, R );
       }
     }
 
@@ -1100,59 +1126,6 @@ class Transport {
       }
     
       return flux;
-    }
-
-    //! Gaussian quadrature points locations and weights for a tetrahedron
-    //! \param[in,out] coordgp Coordinates of quadrature points
-    //! \param[in,out] wgp Weights of quadrature points
-    void
-    GaussQuadratureTet( std::array< std::vector< tk::real >, 3 >& coordgp,
-                        std::vector< tk::real >& wgp ) const
-    {
-      coordgp[0][0] = 0.25;
-      coordgp[1][0] = 0.25;
-      coordgp[2][0] = 0.25;
-      wgp[0]        = -12.0/15.0;
-
-      coordgp[0][1] = 1.0/6.0;
-      coordgp[1][1] = 1.0/6.0;
-      coordgp[2][1] = 1.0/6.0;
-      wgp[1]        = 9.0/20.0;
-
-      coordgp[0][2] = 0.5;
-      coordgp[1][2] = 1.0/6.0;
-      coordgp[2][2] = 1.0/6.0;
-      wgp[2]        = 9.0/20.0;
-
-      coordgp[0][3] = 1.0/6.0;
-      coordgp[1][3] = 0.5;
-      coordgp[2][3] = 1.0/6.0;
-      wgp[3]        = 9.0/20.0;
-
-      coordgp[0][4] = 1.0/6.0;
-      coordgp[1][4] = 1.0/6.0;
-      coordgp[2][4] = 0.5;
-      wgp[4]        = 9.0/20.0;
-    }
-
-    //! Gaussian quadrature points locations and weights for a triangle
-    //! \param[in,out] coordgp Coordinates of quadrature points
-    //! \param[in,out] wgp Weights of quadrature points
-    void
-    GaussQuadratureTri( std::array< std::vector< tk::real >, 3 >& coordgp,
-                        std::vector< tk::real >& wgp ) const
-    {
-      coordgp[0][0] = 2.0/3.0;
-      coordgp[1][0] = 1.0/6.0;
-      wgp[0]        = 1.0/3.0;
-
-      coordgp[0][1] = 1.0/6.0;
-      coordgp[1][1] = 2.0/3.0;
-      wgp[1]        = 1.0/3.0;
-
-      coordgp[0][2] = 1.0/6.0;
-      coordgp[1][2] = 1.0/6.0;
-      wgp[2]        = 1.0/3.0;
     }
 
     //! Determinant of Jacobian of transformation
