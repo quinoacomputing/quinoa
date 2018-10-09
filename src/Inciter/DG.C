@@ -741,9 +741,9 @@ DG::setup( tk::real v )
   d->writeElemMeta();
 
   // Restore coord and inpoel with ghost data
-  inpoel.insert( inpoel.end(), inpoelg.begin(), inpoelg.end() );
+  std::move( begin(inpoelg), end(inpoelg), std::back_inserter(inpoel) );
   for (std::size_t i=0; i<3; ++i)
-    coord[i].insert( coord[i].end(), coordg[i].begin(), coordg[i].end() );
+    std::move( begin(coordg[i]), end(coordg[i]), std::back_inserter(coord[i]) );
 
   // Basic error checking on sizes of element geometry data and connectivity
   Assert( m_geoElem.nunk() == m_lhs.nunk(), "Size mismatch in DG::setup()" );
