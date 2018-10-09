@@ -540,6 +540,8 @@ class CompFlow {
 	  	  
 	  	  for (ncomp_t c=0; c<m_ncomp; ++c)
 	  	  {
+			auto mark = c*m_ndof;
+
       	    ugp[c] =  U(e, mark,   m_offset)
       	            + U(e, mark+1, m_offset) * B2
       	            + U(e, mark+2, m_offset) * B3
