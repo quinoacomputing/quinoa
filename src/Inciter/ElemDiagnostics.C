@@ -43,12 +43,14 @@ ElemDiagnostics::registerReducers()
 
 bool
 ElemDiagnostics::compute( Discretization& d,
+                          const tk::Fields& lhs,
                           const std::size_t nchGhost,
                           const tk::Fields& geoElem,
                           const tk::Fields& u )
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc.
 //! \param[in] d Discretization proxy to read from
+//! \param[in] lhs Mass matrix
 //! \param[in] nchGhost Number of chare boundary ghost elements
 //! \param[in] geoElem Element geometry
 //! \param[in] u Current solution vector
@@ -80,7 +82,7 @@ ElemDiagnostics::compute( Discretization& d,
     // really the initial condition.
     auto a = u;
     for (const auto& eq : g_dgpde)
-      eq.initialize( geoElem, a, d.T()+d.Dt() );
+      eq.initialize( lhs, d.Inpoel(), d.Coord(), a, d.T()+d.Dt() );
 
     // Prepare for computing diagnostics. Diagnostics are defined as some norm,
     // .e.g., L2 norm, of a quantity, computed in mesh elements, A, as ||A||_2 =
@@ -140,23 +142,23 @@ ElemDiagnostics::compute( Discretization& d,
 
 bool
 ElemDiagnostics::computep1( Discretization& d,
+                            const tk::Fields&,
                             const std::size_t nchGhost,
                             const tk::Fields& geoElem,
-                            const std::vector< std::size_t >& inpoel,
-                            const tk::UnsMesh::Coords& coord,
                             const tk::Fields& u )
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc. for dgp1
 //! \param[in] d Discretization proxy to read from
 //! \param[in] nchGhost Number of chare boundary ghost elements
 //! \param[in] geoElem Element geometry
-//! \param[in] inpoel Element-node connectivity
-//! \param[in] coord Array of nodal coordinates
 //! \param[in] u Current solution vector
 //! \return True if diagnostics have been computed
 // *****************************************************************************
 {
   // Optionally collect diagnostics and send for aggregation across all workers
+
+  const auto& inpoel = d.Inpoel();
+  const auto& coord = d.Coord();
 
   // Query after how many time steps user wants to dump diagnostics
   auto diagfreq = g_inputdeck.get< tag::interval, tag::diag >();

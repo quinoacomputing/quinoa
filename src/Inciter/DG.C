@@ -753,12 +753,8 @@ DG::setup( tk::real v )
   lhs();
 
   // Set initial conditions for all PDEs
-  const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
   for (const auto& eq : g_dgpde) 
-    if (ndof == 4)
-      eq.initializep1( m_lhs, inpoel, coord, m_u, d->T() );
-    else
-      eq.initialize( m_geoElem, m_u,  d->T() );
+    eq.initialize( m_lhs, inpoel, coord, m_u, d->T() );
   m_un = m_u;
 
   // Output initial conditions to file (regardless of whether it was requested)
@@ -910,7 +906,9 @@ DG::writeFields( tk::real time )
   std::vector< std::vector< tk::real > > elemfields;
   auto u = m_u;   // make a copy as eq::output() may overwrite its arg
   for (const auto& eq : g_dgpde) {
-    auto output = eq.fieldOutput( time, m_vol, m_geoElem, u );
+    auto output =
+      eq.fieldOutput( m_lhs, d->Inpoel(), d->Coord(), time, m_geoElem, u );
+
     // cut off ghost elements
     for (auto& o : output) o.resize( m_esuelTet.size()/4 );
     elemfields.insert( end(elemfields), begin(output), end(output) );
@@ -1006,10 +1004,11 @@ DG::solve()
     // Compute diagnostics, e.g., residuals
     bool diag_computed;
     if (ndof == 4)
-      diag_computed = m_diag.computep1( *d, m_u.nunk()-m_esuelTet.size()/4,
-                                        m_geoElem, d->Inpoel(), d->Coord(), m_u );
+      diag_computed =
+        m_diag.computep1( *d, m_lhs, m_u.nunk()-m_esuelTet.size()/4,
+                          m_geoElem, m_u );
     else
-      diag_computed = m_diag.compute( *d, m_u.nunk()-m_esuelTet.size()/4,
+      diag_computed = m_diag.compute( *d, m_lhs, m_u.nunk()-m_esuelTet.size()/4,
                                       m_geoElem, m_u );
     // Increase number of iterations and physical time
     d->next();

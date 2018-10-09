@@ -74,18 +74,12 @@ class DGPDE {
               std::move( x( std::forward<Args>(args)... ) ) ) ) {}
 
     //! Public interface to setting the initial conditions for the diff eq
-    void initialize( const tk::Fields& geoElem,
+    void initialize( const tk::Fields& lhs,
+                     const std::vector< std::size_t >& inpoel,
+                     const tk::UnsMesh::Coords& coord,
                      tk::Fields& unk,
                      tk::real t ) const
-    { self->initialize( geoElem, unk, t ); }
-
-    //! Public interface to setting the initial conditions for the diff eq
-    void initializep1( const tk::Fields& lhs,
-                       const std::vector< std::size_t >& inpoel,
-                       const tk::UnsMesh::Coords& coord,
-                       tk::Fields& unk,
-                       tk::real t ) const
-    { self->initializep1( lhs, inpoel, coord, unk, t ); }
+    { self->initialize( lhs, inpoel, coord, unk, t ); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
@@ -133,11 +127,13 @@ class DGPDE {
 
     //! Public interface to returning field output
     std::vector< std::vector< tk::real > > fieldOutput(
+      const tk::Fields& lhs,
+      const std::vector< std::size_t >& inpoel,
+      const tk::UnsMesh::Coords& coord,
       tk::real t,
-      tk::real V,
       const tk::Fields& geoElem,
       tk::Fields& U ) const
-    { return self->fieldOutput( t, V, geoElem, U ); }
+    { return self->fieldOutput( lhs, inpoel, coord, t, geoElem, U ); }
 
     //! Public interface to returning analytical solution
     std::vector< tk::real >
@@ -166,13 +162,10 @@ class DGPDE {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual void initialize( const tk::Fields&,
+                               const std::vector< std::size_t >&,
+                               const tk::UnsMesh::Coords&,
                                tk::Fields&,
                                tk::real ) const = 0;
-      virtual void initializep1( const tk::Fields& lhs,
-                                 const std::vector< std::size_t >& inpoel,
-                                 const tk::UnsMesh::Coords& coord,
-                                 tk::Fields& unk,
-                                 tk::real t ) const = 0;
       virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
       virtual void lhsp1( const tk::Fields&, tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
@@ -196,7 +189,9 @@ class DGPDE {
       virtual std::vector< std::string > fieldNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > fieldOutput(
-        tk::real,
+        const tk::Fields&,
+        const std::vector< std::size_t >&,
+        const tk::UnsMesh::Coords&,
         tk::real,
         const tk::Fields&,
         tk::Fields& ) const = 0;
@@ -212,16 +207,12 @@ class DGPDE {
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
-      void initialize( const tk::Fields& geoElem,
+      void initialize( const tk::Fields& lhs,
+                       const std::vector< std::size_t >& inpoel,
+                       const tk::UnsMesh::Coords& coord,
                        tk::Fields& unk,
                        tk::real t )
-      const override { data.initialize( geoElem, unk, t ); }
-      void initializep1( const tk::Fields& lhs,
-                         const std::vector< std::size_t >& inpoel,
-                         const tk::UnsMesh::Coords& coord,
-                         tk::Fields& unk,
-                         tk::real t )
-      const override { data.initializep1( lhs, inpoel, coord, unk, t ); }
+      const override { data.initialize( lhs, inpoel, coord, unk, t ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
       void lhsp1( const tk::Fields& geoElem, tk::Fields& l ) const override
@@ -253,11 +244,13 @@ class DGPDE {
       std::vector< std::string > names() const override
       { return data.names(); }
       std::vector< std::vector< tk::real > > fieldOutput(
+        const tk::Fields& lhs,
+        const std::vector< std::size_t >& inpoel,
+        const tk::UnsMesh::Coords& coord,
         tk::real t,
-        tk::real V,
         const tk::Fields& geoElem,
         tk::Fields& U ) const override
-      { return data.fieldOutput( t, V, geoElem, U ); }
+      { return data.fieldOutput( lhs, inpoel, coord, t, geoElem, U ); }
       std::vector< tk::real >
       analyticalSol( tk::real xi,
                      tk::real yi,

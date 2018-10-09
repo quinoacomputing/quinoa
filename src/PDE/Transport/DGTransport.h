@@ -79,124 +79,24 @@ class Transport {
       Problem::errchk( m_c, m_ncomp );
     }
 
-    //! Initalize the transport equations using problem policy
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] unk Array of unknowns
-    //! \param[in] t Physical time
-    void initialize( const tk::Fields& geoElem,
-                     tk::Fields& unk,
-                     tk::real t ) const
-    {
-      Assert( geoElem.nunk() == unk.nunk(), "Size mismatch" );
-      std::size_t nelem = unk.nunk();
-
-      for (std::size_t e=0; e<nelem; ++e)
-      {
-        auto xcc = geoElem(e,1,0);
-        auto ycc = geoElem(e,2,0);
-        auto zcc = geoElem(e,3,0);
-
-        const auto s = Problem::solution( m_c, m_ncomp, xcc, ycc, zcc, t );
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-        {
-          auto mark = c*m_ndof;
-          unk(e, mark, m_offset) = s[c];
-        }
-      }
-    }
-
-    //! Initalize the transport equations for DGP1 using problem policy
+    //! Initalize the transport equations for DG
     //! \param[in] lhs Element mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
-    void initializep1( const tk::Fields& lhs,
-                       const std::vector< std::size_t >& inpoel,
-                       const tk::UnsMesh::Coords& coord,
-                       tk::Fields& unk,
-                       tk::real t ) const
+    void initialize( const tk::Fields& lhs,
+                     const std::vector< std::size_t >& inpoel,
+                     const tk::UnsMesh::Coords& coord,
+                     tk::Fields& unk,
+                     tk::real t ) const
     {
-      Assert( lhs.nunk() == unk.nunk(), "Size mismatch" );
-      std::size_t nelem = unk.nunk();
-
-      // right hand side vector
-      std::vector< tk::real > R;
-      R.resize(unk.nprop(),0);
-
-      // arrays for quadrature points
-      std::array< std::array< tk::real, 5 >, 3 > coordgp;
-      std::array< tk::real, 5 > wgp;
-
-      const auto& cx = coord[0];
-      const auto& cy = coord[1];
-      const auto& cz = coord[2];
-
-      // get quadrature point weights and coordinates for tetrahedron
-      GaussQuadratureTet( coordgp, wgp );
-
-      for (std::size_t e=0; e<nelem; ++e)
-      {
-        auto vole = lhs(e, 0, m_offset);
-
-        auto x1 = cx[ inpoel[4*e]   ];
-        auto y1 = cy[ inpoel[4*e]   ];
-        auto z1 = cz[ inpoel[4*e]   ];
-
-        auto x2 = cx[ inpoel[4*e+1] ];
-        auto y2 = cy[ inpoel[4*e+1] ];
-        auto z2 = cz[ inpoel[4*e+1] ];
-
-        auto x3 = cx[ inpoel[4*e+2] ];
-        auto y3 = cy[ inpoel[4*e+2] ];
-        auto z3 = cz[ inpoel[4*e+2] ];
-
-        auto x4 = cx[ inpoel[4*e+3] ];
-        auto y4 = cy[ inpoel[4*e+3] ];
-        auto z4 = cz[ inpoel[4*e+3] ];
-
-        std::fill( R.begin(), R.end(), 0.0);
-
-        // Gaussian quadrature
-        for (std::size_t igp=0; igp<5; ++igp)
-        {
-          auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp]
-                    - 1.0;
-          auto B3 = 3.0 * coordgp[1][igp] + coordgp[2][igp] - 1.0;
-          auto B4 = 4.0 * coordgp[2][igp] - 1.0;
-
-          auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp] - coordgp[2][igp];
-          auto shp2 = coordgp[0][igp];
-          auto shp3 = coordgp[1][igp];
-          auto shp4 = coordgp[2][igp];
-
-          auto xgp = x1*shp1 + x2*shp2 + x3*shp3 + x4*shp4;
-          auto ygp = y1*shp1 + y2*shp2 + y3*shp3 + y4*shp4;
-          auto zgp = z1*shp1 + z2*shp2 + z3*shp3 + z4*shp4;
-
-          auto wt = vole * wgp[igp];
-
-          const auto s = Problem::solution( m_c, m_ncomp, xgp, ygp, zgp, t );
-          for (ncomp_t c=0; c<m_ncomp; ++c)
-          {
-            auto mark = c*m_ndof;
-
-            R[mark  ] += wt * s[c];
-            R[mark+1] += wt * s[c]*B2;
-            R[mark+2] += wt * s[c]*B3;
-            R[mark+3] += wt * s[c]*B4;
-          }
-        }
-
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-        {
-          auto mark = c*m_ndof;
-          unk(e, mark,   m_offset) = R[mark]   / lhs(e, mark,   m_offset);
-          unk(e, mark+1, m_offset) = R[mark+1] / lhs(e, mark+1, m_offset);
-          unk(e, mark+2, m_offset) = R[mark+2] / lhs(e, mark+2, m_offset);
-          unk(e, mark+3, m_offset) = R[mark+3] / lhs(e, mark+3, m_offset);
-        }
-      }
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      if (ndof == 1)
+        initializep0( lhs, inpoel, coord, unk, t );
+      else if (ndof == 4)
+        initializep1( lhs, inpoel, coord, unk, t );
+      else Throw( "DGTransport::initialize() not defined" );
     }
 
     //! Compute the left hand side mass matrix
@@ -389,6 +289,9 @@ class Transport {
     }
 
     //! Return field output going to file
+    //! \param[in] lhs Element mass matrix
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
     //! \param[in] t Physical time
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] U Solution vector at recent time step
@@ -397,8 +300,10 @@ class Transport {
     //!   which provides the vector of field names
     //! \note U is overwritten
     std::vector< std::vector< tk::real > >
-    fieldOutput( tk::real t,
-                 tk::real /*V*/,
+    fieldOutput( const tk::Fields& lhs,
+                 const std::vector< std::size_t >& inpoel,
+                 const tk::UnsMesh::Coords& coord,
+                 tk::real t,
                  const tk::Fields& geoElem,
                  tk::Fields& U ) const
     {
@@ -412,7 +317,7 @@ class Transport {
       }
       // evaluate analytic solution at time t
       auto E = U;
-      initialize( geoElem, E, t );
+      initializep0( lhs, inpoel, coord, E, t );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
       {
@@ -473,6 +378,131 @@ class Transport {
     const std::vector< bcconf_t > m_bcdir;
     const std::size_t m_ndof;
 
+    //! Initalize the transport equations using problem policy
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in,out] unk Array of unknowns
+    //! \param[in] t Physical time
+    void initializep0( const tk::Fields&,
+                       const std::vector< std::size_t >& inpoel,
+                       const tk::UnsMesh::Coords& coord,
+                       tk::Fields& unk,
+                       tk::real t ) const
+    {
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
+      for (std::size_t e=0; e<unk.nunk(); ++e) {
+        // node ids
+        const auto A = inpoel[e*4+0];
+        const auto B = inpoel[e*4+1];
+        const auto C = inpoel[e*4+2];
+        const auto D = inpoel[e*4+3];
+        // compute centroid
+        auto xcc = (x[A]+x[B]+x[C]+x[D])/4.0;
+        auto ycc = (y[A]+y[B]+y[C]+y[D])/4.0;
+        auto zcc = (z[A]+z[B]+z[C]+z[D])/4.0;
+        // evaluate solution at centroid
+        const auto s = Problem::solution( m_c, m_ncomp, xcc, ycc, zcc, t );
+        // initialize unknown vector with solution at centroids
+        for (ncomp_t c=0; c<m_ncomp; ++c) unk(e, c, m_offset) = s[c];
+      }
+    }
+
+    //! Initalize the transport equations for DGP1 using problem policy
+    //! \param[in] lhs Element mass matrix
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in,out] unk Array of unknowns
+    //! \param[in] t Physical time
+    void initializep1( const tk::Fields& lhs,
+                       const std::vector< std::size_t >& inpoel,
+                       const tk::UnsMesh::Coords& coord,
+                       tk::Fields& unk,
+                       tk::real t ) const
+    {
+      Assert( lhs.nunk() == unk.nunk(), "Size mismatch" );
+      std::size_t nelem = unk.nunk();
+
+      // right hand side vector
+      std::vector< tk::real > R;
+      R.resize(unk.nprop(),0);
+
+      // arrays for quadrature points
+      std::array< std::array< tk::real, 5 >, 3 > coordgp;
+      std::array< tk::real, 5 > wgp;
+
+      const auto& cx = coord[0];
+      const auto& cy = coord[1];
+      const auto& cz = coord[2];
+
+      // get quadrature point weights and coordinates for tetrahedron
+      GaussQuadratureTet( coordgp, wgp );
+
+      for (std::size_t e=0; e<nelem; ++e)
+      {
+        auto vole = lhs(e, 0, m_offset);
+
+        auto x1 = cx[ inpoel[4*e]   ];
+        auto y1 = cy[ inpoel[4*e]   ];
+        auto z1 = cz[ inpoel[4*e]   ];
+
+        auto x2 = cx[ inpoel[4*e+1] ];
+        auto y2 = cy[ inpoel[4*e+1] ];
+        auto z2 = cz[ inpoel[4*e+1] ];
+
+        auto x3 = cx[ inpoel[4*e+2] ];
+        auto y3 = cy[ inpoel[4*e+2] ];
+        auto z3 = cz[ inpoel[4*e+2] ];
+
+        auto x4 = cx[ inpoel[4*e+3] ];
+        auto y4 = cy[ inpoel[4*e+3] ];
+        auto z4 = cz[ inpoel[4*e+3] ];
+
+        std::fill( R.begin(), R.end(), 0.0);
+
+        // Gaussian quadrature
+        for (std::size_t igp=0; igp<5; ++igp)
+        {
+          auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp]
+                    - 1.0;
+          auto B3 = 3.0 * coordgp[1][igp] + coordgp[2][igp] - 1.0;
+          auto B4 = 4.0 * coordgp[2][igp] - 1.0;
+
+          auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp] - coordgp[2][igp];
+          auto shp2 = coordgp[0][igp];
+          auto shp3 = coordgp[1][igp];
+          auto shp4 = coordgp[2][igp];
+
+          auto xgp = x1*shp1 + x2*shp2 + x3*shp3 + x4*shp4;
+          auto ygp = y1*shp1 + y2*shp2 + y3*shp3 + y4*shp4;
+          auto zgp = z1*shp1 + z2*shp2 + z3*shp3 + z4*shp4;
+
+          auto wt = vole * wgp[igp];
+
+          const auto s = Problem::solution( m_c, m_ncomp, xgp, ygp, zgp, t );
+          for (ncomp_t c=0; c<m_ncomp; ++c)
+          {
+            auto mark = c*m_ndof;
+
+            R[mark  ] += wt * s[c];
+            R[mark+1] += wt * s[c]*B2;
+            R[mark+2] += wt * s[c]*B3;
+            R[mark+3] += wt * s[c]*B4;
+          }
+        }
+
+        for (ncomp_t c=0; c<m_ncomp; ++c)
+        {
+          auto mark = c*m_ndof;
+          unk(e, mark,   m_offset) = R[mark]   / lhs(e, mark,   m_offset);
+          unk(e, mark+1, m_offset) = R[mark+1] / lhs(e, mark+1, m_offset);
+          unk(e, mark+2, m_offset) = R[mark+2] / lhs(e, mark+2, m_offset);
+          unk(e, mark+3, m_offset) = R[mark+3] / lhs(e, mark+3, m_offset);
+        }
+      }
+    }
 
     //! Compute internal surface flux integrals
     //! \param[in] inpoel Element-node connectivity

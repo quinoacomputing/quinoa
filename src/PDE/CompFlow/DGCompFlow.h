@@ -120,46 +120,24 @@ class CompFlow {
       //        "Boundary conditions not set in control file for DG CompFlow" );
     {}
 
-    //! Initalize the compressible flow equations, prepare for time integration
-    //! \param[in] geoElem Element geometry array
+    //! Initalize the compressible flow equations for DG
+    //! \param[in] lhs Element mass matrix
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
-    void initialize( const tk::Fields& geoElem,
+    void initialize( const tk::Fields& lhs,
+                     const std::vector< std::size_t >& inpoel,
+                     const tk::UnsMesh::Coords& coord,
                      tk::Fields& unk,
                      tk::real t ) const
     {
-      Assert( geoElem.nunk() == unk.nunk(), "Size mismatch" );
-      std::size_t nelem = unk.nunk();
-
-      for (std::size_t e=0; e<nelem; ++e)
-      {
-        auto xcc = geoElem(e,1,0);
-        auto ycc = geoElem(e,2,0);
-        auto zcc = geoElem(e,3,0);
-
-        const auto s = Problem::solution( 0, xcc, ycc, zcc, t );
-        unk(e, 0, m_offset) = s[0];
-        unk(e, 1, m_offset) = s[1];
-        unk(e, 2, m_offset) = s[2];
-        unk(e, 3, m_offset) = s[3];
-        unk(e, 4, m_offset) = s[4];
-      }
-    }
-
-    //! Initalize the compressible flow equations, prepare for time integration
-//    //! \param[in] lhs Element mass matrix
-//    //! \param[in] inpoel Element-node connectivity
-//    //! \param[in] coord Array of nodal coordinates
-//    //! \param[in,out] unk Array of unknowns
-//    //! \param[in] t Physical time
-    void initializep1( const tk::Fields& /*lhs*/,
-                       const std::vector< std::size_t >& /*inpoel*/,
-                       const tk::UnsMesh::Coords& /*coord*/,
-                       tk::Fields& /*unk*/,
-                       tk::real /*t*/ ) const
-    {
-      //Assert( lhs.nunk() == unk.nunk(), "Size mismatch" );
-      //std::size_t nelem = unk.nunk();
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      if (ndof == 1)
+        initializep0( lhs, inpoel, coord, unk, t );
+      else if (ndof == 4)
+        initializep1( lhs, inpoel, coord, unk, t );
+      else Throw( "DGCompFlow::initialize() not defined" );
     }
 
     //! Compute the left hand side block-diagonal mass matrix
@@ -327,13 +305,14 @@ class CompFlow {
 
     //! Return field output going to file
     //! \param[in] t Physical time
-    //! \param[in] V Total mesh volume
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
-    fieldOutput( tk::real t,
-                 tk::real V,
+    fieldOutput( const tk::Fields& /*lhs*/,
+                 const std::vector< std::size_t >& /*inpoel*/,
+                 const tk::UnsMesh::Coords& /*coord*/,
+                 tk::real t,
                  const tk::Fields& geoElem,
                  tk::Fields& U ) const
     {
@@ -344,7 +323,7 @@ class CompFlow {
       coord[1] = geoElem.extract(2,0);
       coord[2] = geoElem.extract(3,0);
 
-      return Problem::fieldOutput( 0, m_offset, t, V, v, coord, U );
+      return Problem::fieldOutput( 0, m_offset, t, 0.0, v, coord, U );
     }
 
     //! Return names of integral variables to be output to diagnostics file
@@ -383,6 +362,58 @@ class CompFlow {
     //! Extrapolation BC configuration
     const std::vector< bcconf_t > m_bcextrapolate;
     const uint8_t m_ndof;
+
+    //! Initalize the compressible flow equations using problem policy
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in,out] unk Array of unknowns
+    //! \param[in] t Physical time
+    void initializep0( const tk::Fields&,
+                       const std::vector< std::size_t >& inpoel,
+                       const tk::UnsMesh::Coords& coord,
+                       tk::Fields& unk,
+                       tk::real t ) const
+    {
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
+      for (std::size_t e=0; e<unk.nunk(); ++e) {
+        // node ids
+        const auto A = inpoel[e*4+0];
+        const auto B = inpoel[e*4+1];
+        const auto C = inpoel[e*4+2];
+        const auto D = inpoel[e*4+3];
+        // compute centroid
+        auto xcc = (x[A]+x[B]+x[C]+x[D])/4.0;
+        auto ycc = (y[A]+y[B]+y[C]+y[D])/4.0;
+        auto zcc = (z[A]+z[B]+z[C]+z[D])/4.0;
+        // evaluate solution at centroid
+        const auto s = Problem::solution( 0, xcc, ycc, zcc, t );
+        // initialize unknown vector with solution at centroids
+        unk(e, 0, m_offset) = s[0];
+        unk(e, 1, m_offset) = s[1];
+        unk(e, 2, m_offset) = s[2];
+        unk(e, 3, m_offset) = s[3];
+        unk(e, 4, m_offset) = s[4];
+      }
+    }
+
+    //! Initalize the compressible flow equations, prepare for time integration
+//    //! \param[in] lhs Element mass matrix
+//    //! \param[in] inpoel Element-node connectivity
+//    //! \param[in] coord Array of nodal coordinates
+//    //! \param[in,out] unk Array of unknowns
+//    //! \param[in] t Physical time
+    void initializep1( const tk::Fields& /*lhs*/,
+                       const std::vector< std::size_t >& /*inpoel*/,
+                       const tk::UnsMesh::Coords& /*coord*/,
+                       tk::Fields& /*unk*/,
+                       tk::real /*t*/ ) const
+    {
+      //Assert( lhs.nunk() == unk.nunk(), "Size mismatch" );
+      //std::size_t nelem = unk.nunk();
+    }
 
     //! \brief State policy class providing the left and right state of a face
     //!   at Dirichlet boundaries

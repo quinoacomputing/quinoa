@@ -727,10 +727,14 @@ Refiner::nodeinit( std::size_t npoin,
 
   } else if (centering == ctr::Centering::ELEM) {
 
-    // Initialize cell-centered unknowns
+    // Initialize cell-based unknowns
     tk::Fields ue( m_inpoel.size()/4, nprop );
+    auto lhs = ue;
     auto geoElem = tk::genGeoElemTet( m_inpoel, m_coord );
-    for (const auto& eq : g_dgpde) eq.initialize( geoElem, ue, t0 );
+    for (const auto& eq : g_dgpde)
+      eq.lhs( geoElem, lhs );
+    for (const auto& eq : g_dgpde)
+      eq.initialize( lhs, m_inpoel, m_coord, ue, t0 );
 
     // Transfer initial conditions from cells to nodes
     for (std::size_t p=0; p<npoin; ++p) {    // for all mesh nodes on this chare
