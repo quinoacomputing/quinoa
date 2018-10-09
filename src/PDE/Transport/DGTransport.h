@@ -1166,16 +1166,10 @@ class Transport {
                  const std::array< tk::real, 3 >& p3,
                  const std::array< tk::real, 3 >& p4 ) const
     {
-      tk::real detT;
-
-      detT = (p2[0]-p1[0])
-              * ((p3[1]-p1[1])*(p4[2]-p1[2]) - (p4[1]-p1[1])*(p3[2]-p1[2]))
-            -(p3[0]-p1[0])
-              * ((p2[1]-p1[1])*(p4[2]-p1[2]) - (p4[1]-p1[1])*(p2[2]-p1[2]))
-            +(p4[0]-p1[0])
-              * ((p2[1]-p1[1])*(p3[2]-p1[2]) - (p3[1]-p1[1])*(p2[2]-p1[2]));
-
-      return detT;
+      std::array< tk::real, 3 > ba{{ p2[0]-p1[0], p2[1]-p1[1], p2[2]-p1[2] }},
+                                ca{{ p3[0]-p1[0], p3[1]-p1[1], p3[2]-p1[2] }},
+                                da{{ p4[0]-p1[0], p4[1]-p1[1], p4[2]-p1[2] }};
+      return tk::triple( ba, ca, da );
     }
 
     //! Inverse of Jacobian of transformation
