@@ -247,3 +247,15 @@ add_regression_test(amr_init_u1_trans_diagcg_u0.5 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     LABELS amr)
+
+add_regression_test(amr_init_coords ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES slot_cyl_amr_coords.q unitcube_01_364.exo
+                               exodiff.cfg
+                               amr_init_coords.1.std.exo.0
+                    ARGS -c slot_cyl_amr_coords.q -i unitcube_01_364.exo -v
+                    BIN_BASELINE amr_init_coords.1.std.exo.0
+                    BIN_RESULT out.0
+                    BIN_DIFF_PROG_ARGS -m
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    LABELS amr)
