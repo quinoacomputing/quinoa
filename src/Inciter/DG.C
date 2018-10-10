@@ -970,13 +970,9 @@ DG::solve()
 
   auto d = Disc();
 
-  const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
   for (const auto& eq : g_dgpde)
-    if (ndof == 4)
-      eq.rhsp1( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(),
-                m_u, m_rhs );
-    else
-      eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, m_u, m_rhs );
+    eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(), m_u,
+            m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   m_u =  m_rkcoef[0][m_stage] * m_un

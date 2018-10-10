@@ -92,11 +92,11 @@ class Transport {
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       if (ndof == 1)
-        initializep0( lhs, inpoel, coord, unk, t );
+        initializeP0( lhs, inpoel, coord, unk, t );
       else if (ndof == 4)
-        initializep1( lhs, inpoel, coord, unk, t );
+        initializeP1( lhs, inpoel, coord, unk, t );
       else
-        Throw( "DGTransport::initialize() not defined for NDOF=" +
+        Throw( "dg::Transport::initialize() not defined for NDOF=" +
                std::to_string(ndof) );
     }
 
@@ -116,80 +116,15 @@ class Transport {
       // Augment LHS for DG(P1)
       if (ndof > 1)
         for (std::size_t e=0; e<nelem; ++e)
-          for (ncomp_t c=0; c<m_ncomp; ++c)
-            lhsP1( geoElem, l, e, c );
+          for (ncomp_t c=0; c<m_ncomp; ++c) {
+            const auto mark = c * ndof;
+            l(e, mark+1, m_offset) = geoElem(e,0,0) / 10.0;
+            l(e, mark+2, m_offset) = geoElem(e,0,0) * 3.0/10.0;
+            l(e, mark+3, m_offset) = geoElem(e,0,0) * 3.0/5.0;
+          }
     }
 
-  private:
-    //! Compute the left hand side mass matrix for up to DG(P1)
-    void lhsP1( const tk::Fields& geoElem, tk::Fields& l,
-                std::size_t e, std::size_t c ) const
-    {
-      const auto mark = c * g_inputdeck.get< tag::discr, tag::ndof >();
-      l(e, mark+1, m_offset) = geoElem(e,0,0) / 10.0;
-      l(e, mark+2, m_offset) = geoElem(e,0,0) * 3.0/10.0;
-      l(e, mark+3, m_offset) = geoElem(e,0,0) * 3.0/5.0;
-    }
-
-  public:
     //! Compute right hand side
-    //! \param[in] t Physical time
-    //! \param[in] geoFace Face geometry array
-    //! \param[in] fd Face connectivity and boundary conditions object
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in,out] R Right-hand side vector computed
-    void rhs( tk::real t,
-              const tk::Fields& geoFace,
-              const tk::Fields&,
-              const inciter::FaceData& fd,
-              const tk::Fields& U,
-              tk::Fields& R ) const
-    {
-      Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
-              "vector and right-hand side at recent time step incorrect" );
-      Assert( U.nprop() == m_ncomp && R.nprop() == m_ncomp,
-              "Number of components in solution and right-hand side vector " 
-              "must equal "+ std::to_string(m_ncomp) );
-
-      const auto& bface = fd.Bface();
-      const auto& esuf = fd.Esuf();
-
-      // set rhs to zero
-      R.fill(0.0);
-
-      // compute internal surface flux integrals
-      for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
-      {
-        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-        std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
-        auto farea = geoFace(f,0,0);
-
-        std::array< std::vector< tk::real >, 2 > ugp;
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-        {
-          ugp[0].push_back( U(el, c, m_offset) );
-          ugp[1].push_back( U(er, c, m_offset) );
-        }
-
-        //--- upwind fluxes
-        auto flux =
-          upwindFlux( {{geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0)}}, f,
-                      geoFace, ugp );
-
-        for (ncomp_t c=0; c<m_ncomp; ++c) {
-          R(el, c, m_offset) -= farea * flux[c];
-          R(er, c, m_offset) += farea * flux[c];
-        }
-      }
-
-      // compute boundary surface flux integrals
-      bndInt< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, t, U, R );
-      bndInt< Inlet >( m_bcinlet, bface, esuf, geoFace, t, U, R );
-      bndInt< Outlet >( m_bcoutlet, bface, esuf, geoFace, t, U, R );
-      bndInt< Dir >( m_bcdir, bface, esuf, geoFace, t, U, R );
-    }
-
-    //! Compute P1 right hand side
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
@@ -198,14 +133,14 @@ class Transport {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
-    void rhsp1( tk::real t,
-                const tk::Fields& geoFace,
-                const tk::Fields& geoElem,
-                const inciter::FaceData& fd,
-                const std::vector< std::size_t >& inpoel,
-                const tk::UnsMesh::Coords& coord,
-                const tk::Fields& U,
-                tk::Fields& R ) const
+    void rhs( tk::real t,
+              const tk::Fields& geoFace,
+              const tk::Fields& geoElem,
+              const inciter::FaceData& fd,
+              const std::vector< std::size_t >& inpoel,
+              const tk::UnsMesh::Coords& coord,
+              const tk::Fields& U,
+              tk::Fields& R ) const
     {
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
@@ -224,21 +159,36 @@ class Transport {
       // set rhs to zero
       R.fill(0.0);
 
-      // compute surface flux integrals
-      surfInt( inpoel, coord, fd, geoFace, U, R );
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      if (ndof == 1) {  // DG(P0)
 
-      // compute boundary surface flux integrals
-      bndIntP1< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace,
-                               inpoel, inpofa, coord, t, U, R );
-      bndIntP1< Inlet >( m_bcinlet, bface, esuf, geoFace, inpoel, inpofa,
-                         coord, t, U, R );
-      bndIntP1< Outlet >( m_bcoutlet, bface, esuf, geoFace, inpoel,
-                          inpofa, coord, t, U, R );
-      bndIntP1< Dir >( m_bcdir, bface, esuf, geoFace, inpoel,
-                       inpofa, coord, t, U, R );
+        // compute internal surface flux integrals
+        surfIntP0( fd, geoFace, U, R );
+        // compute boundary surface flux integrals
+        bndInt< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, t, U, R );
+        bndInt< Inlet >( m_bcinlet, bface, esuf, geoFace, t, U, R );
+        bndInt< Outlet >( m_bcoutlet, bface, esuf, geoFace, t, U, R );
+        bndInt< Dir >( m_bcdir, bface, esuf, geoFace, t, U, R );
 
-      // compute volume integrals
-      volInt( inpoel, coord, geoElem, U, R );
+      } else if (ndof == 4) {  // DG(P1)
+
+        // compute internal surface flux integrals
+        surfIntP1( inpoel, coord, fd, geoFace, U, R );
+        // compute volume integrals
+        volIntP1( inpoel, coord, geoElem, U, R );
+        // compute boundary surface flux integrals
+        bndIntP1< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace,
+                                 inpoel, inpofa, coord, t, U, R );
+        bndIntP1< Inlet >( m_bcinlet, bface, esuf, geoFace, inpoel, inpofa,
+                           coord, t, U, R );
+        bndIntP1< Outlet >( m_bcoutlet, bface, esuf, geoFace, inpoel,
+                            inpofa, coord, t, U, R );
+        bndIntP1< Dir >( m_bcdir, bface, esuf, geoFace, inpoel,
+                         inpofa, coord, t, U, R );
+
+      } else
+        Throw( "dg::Transport::rhs() not defined for NDOF=" +
+               std::to_string(ndof) );
     }
 
     //! Compute the minimum time step size
@@ -307,7 +257,7 @@ class Transport {
         out.push_back( U.extract( c*ndof, m_offset ) );
       // evaluate analytic solution at time t
       auto E = U;
-      initializep0( lhs, inpoel, coord, E, t );
+      initializeP0( lhs, inpoel, coord, E, t );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( E.extract( c*ndof, m_offset ) );
@@ -347,8 +297,7 @@ class Transport {
                    tk::real zi,
                    tk::real t ) const
     {
-      const auto s = Problem::solution( m_c, m_ncomp, xi, yi, zi, t );
-      return s;
+      return Problem::solution( m_c, m_ncomp, xi, yi, zi, t );
     }
 
   private:
@@ -364,12 +313,12 @@ class Transport {
     //! Dirichlet BC configuration
     const std::vector< bcconf_t > m_bcdir;
 
-    //! Initalize the transport equations using problem policy
+    //! Initalize the transport equations for DG(P0) using problem policy
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
-    void initializep0( const tk::Fields&,
+    void initializeP0( const tk::Fields&,
                        const std::vector< std::size_t >& inpoel,
                        const tk::UnsMesh::Coords& coord,
                        tk::Fields& unk,
@@ -396,13 +345,13 @@ class Transport {
       }
     }
 
-    //! Initalize the transport equations for DGP1 using problem policy
+    //! Initalize the transport equations for DG(P1) using problem policy
     //! \param[in] lhs Element mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
-    void initializep1( const tk::Fields& lhs,
+    void initializeP1( const tk::Fields& lhs,
                        const std::vector< std::size_t >& inpoel,
                        const tk::UnsMesh::Coords& coord,
                        tk::Fields& unk,
@@ -492,19 +441,56 @@ class Transport {
       }
     }
 
-    //! Compute internal surface flux integrals
+    //! Compute internal surface flux integrals for DG(P0)
+    //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] R Right-hand side vector computed
+    void surfIntP0( const inciter::FaceData& fd,
+                    const tk::Fields& geoFace,
+                    const tk::Fields& U,
+                    tk::Fields& R ) const
+    {
+      const auto& esuf = fd.Esuf();
+
+      for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
+      {
+        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+        std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+        auto farea = geoFace(f,0,0);
+
+        std::array< std::vector< tk::real >, 2 > ugp;
+        for (ncomp_t c=0; c<m_ncomp; ++c)
+        {
+          ugp[0].push_back( U(el, c, m_offset) );
+          ugp[1].push_back( U(er, c, m_offset) );
+        }
+
+        //--- upwind fluxes
+        auto flux =
+          upwindFlux( {{geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0)}}, f,
+                      geoFace, ugp );
+
+        for (ncomp_t c=0; c<m_ncomp; ++c) {
+          R(el, c, m_offset) -= farea * flux[c];
+          R(er, c, m_offset) += farea * flux[c];
+        }
+      }
+    }
+
+    //! Compute internal surface flux integrals for DG(P1)
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] geoFace Face geometry array
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
-    void surfInt( const std::vector< std::size_t >& inpoel,
-                  const tk::UnsMesh::Coords& coord,
-                  const inciter::FaceData& fd,
-                  const tk::Fields& geoFace,
-                  const tk::Fields& U,
-                  tk::Fields& R ) const
+    void surfIntP1( const std::vector< std::size_t >& inpoel,
+                    const tk::UnsMesh::Coords& coord,
+                    const inciter::FaceData& fd,
+                    const tk::Fields& geoFace,
+                    const tk::Fields& U,
+                    tk::Fields& R ) const
     {
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();
@@ -668,17 +654,17 @@ class Transport {
       }
     }
 
-    //! Compute volume integrals
+    //! Compute volume integrals for DG(P1)
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] geoElem Element geometry array
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
-    void volInt( const std::vector< std::size_t >& inpoel,
-                 const tk::UnsMesh::Coords& coord,
-                 const tk::Fields& geoElem,
-                 const tk::Fields& U,
-                 tk::Fields& R ) const
+    void volIntP1( const std::vector< std::size_t >& inpoel,
+                   const tk::UnsMesh::Coords& coord,
+                   const tk::Fields& geoElem,
+                   const tk::Fields& U,
+                   tk::Fields& R ) const
     {
       // arrays for quadrature points
       std::array< std::array< tk::real, 5 >, 3 > coordgp;

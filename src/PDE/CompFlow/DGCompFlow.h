@@ -181,12 +181,16 @@ class CompFlow {
     //! \param[in] geoElem Element geometry array
     //! \param[in] geoFace Face geometry array
     //! \param[in] fd Face connectivity data object
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
               const tk::Fields& geoFace,
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
+              const std::vector< std::size_t >& inpoel,
+              const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               tk::Fields& R ) const
     {
@@ -197,6 +201,9 @@ class CompFlow {
       Assert( U.nprop() == 5 && R.nprop() == 5,
               "Number of components in solution and right-hand side vector " 
               "must equal "+ std::to_string(5) );
+
+      IGNORE(coord);
+      IGNORE(inpoel);
 
       // set rhs to zero
       R.fill(0.0);
