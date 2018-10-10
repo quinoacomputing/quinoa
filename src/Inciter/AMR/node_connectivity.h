@@ -76,7 +76,8 @@ namespace AMR {
                 // Ban getting of a node whos parents are {0,0}
                 assert(id > empty_node_count-1); //[0..empty_node_counts)
 
-                // TOOD: this is now a linear search..
+                // TODO: this is now a linear search..
+                // TODO: replace with a inverse map to search both ways
                 for (auto it = nodes.begin(); it != nodes.end(); ++it) {
                     if (it->second == id) return it->first;
                 }
@@ -164,7 +165,7 @@ namespace AMR {
                 else {
                     // if not in map
                     node_list_value_t value = nodes.size() + empty_node_count;
-                    nodes[key] = value; // TODO: is insert faster here?
+                    nodes[key] = value;
                     trace_out << "Made new node " << value << std::endl;
                     return value;
                 }

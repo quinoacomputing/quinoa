@@ -18,6 +18,8 @@ namespace AMR {
      * @param m_z Z coodinates
      * @param graph_size Total number of nodes
      */
+    // TODO: remove graph size and use m.size()
+    // TODO: remove these pointers
     void mesh_adapter_t::init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t graph_size)
     {
         assert( m_x->size() == m_y->size() );

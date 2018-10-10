@@ -1,7 +1,7 @@
 #ifndef AMR_tet_store_h
 #define AMR_tet_store_h
 
-#include <set>
+#include <unordered_set>
 #include <vector>
 
 #include "AMR_types.h"
@@ -34,7 +34,7 @@ namespace AMR {
             // TODO: I'd like this on the stack, but still pass an initial val
             AMR::id_generator_t id_generator;
 
-            std::set<size_t> intermediate_list;
+            std::unordered_set<size_t> intermediate_list;
             // Public so it can be trivially grabbed for looping over.
             std::vector< std::size_t > active_id_mapping;
             // TODO: implement iterators at some point..
