@@ -361,9 +361,12 @@ class Transport {
       std::vector< tk::real > R;
       R.resize(unk.nprop(),0);
 
+      // Number of integration points
+      constexpr std::size_t NG = 5;
+
       // arrays for quadrature points
-      std::array< std::array< tk::real, 5 >, 3 > coordgp;
-      std::array< tk::real, 5 > wgp;
+      std::array< std::array< tk::real, NG >, 3 > coordgp;
+      std::array< tk::real, NG > wgp;
 
       const auto& cx = coord[0];
       const auto& cy = coord[1];
@@ -395,7 +398,7 @@ class Transport {
         std::fill( R.begin(), R.end(), 0.0);
 
         // Gaussian quadrature
-        for (std::size_t igp=0; igp<5; ++igp)
+        for (std::size_t igp=0; igp<NG; ++igp)
         {
           auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp]
                     - 1.0;
@@ -490,9 +493,12 @@ class Transport {
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();
 
+      // Number of integration points
+      constexpr std::size_t NG = 3;
+
       // arrays for quadrature points
-      std::array< std::array< tk::real, 3 >, 2 > coordgp;
-      std::array< tk::real, 3 > wgp; 
+      std::array< std::array< tk::real, NG >, 2 > coordgp;
+      std::array< tk::real, NG > wgp;
 
       const auto& cx = coord[0];
       const auto& cy = coord[1];
@@ -555,7 +561,7 @@ class Transport {
         auto z3 = cz[ inpofa[3*f+2] ];
 
         // Gaussian quadrature
-        for (std::size_t igp=0; igp<3; ++igp)
+        for (std::size_t igp=0; igp<NG; ++igp)
         {
           // Barycentric coordinates for the triangular face
           auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];
@@ -661,9 +667,12 @@ class Transport {
                    const tk::Fields& U,
                    tk::Fields& R ) const
     {
+      // Number of integration points
+      constexpr std::size_t NG = 5;
+
       // arrays for quadrature points
-      std::array< std::array< tk::real, 5 >, 3 > coordgp;
-      std::array< tk::real, 5 > wgp;
+      std::array< std::array< tk::real, NG >, 3 > coordgp;
+      std::array< tk::real, NG > wgp;
 
       // get quadrature point weights and coordinates for tetrahedron
       GaussQuadratureTet( coordgp, wgp );
@@ -757,7 +766,7 @@ class Transport {
                     + db4dxi3 * jacInv[2][2];
 
         // Gaussian quadrature
-        for (std::size_t igp=0; igp<5; ++igp)
+        for (std::size_t igp=0; igp<NG; ++igp)
         {
           auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp]
                     + coordgp[2][igp] - 1.0;
@@ -944,9 +953,12 @@ class Transport {
                        const tk::Fields& U,
                        tk::Fields& R ) const
     {
+      // Number of integration points
+      constexpr std::size_t NG = 3;
+
       // arrays for quadrature points
-      std::array< std::array< tk::real, 3 >, 2 > coordgp;
-      std::array< tk::real, 3 > wgp;
+      std::array< std::array< tk::real, NG >, 2 > coordgp;
+      std::array< tk::real, NG > wgp;
 
       const auto& cx = coord[0];
       const auto& cy = coord[1];
@@ -991,7 +1003,7 @@ class Transport {
         auto z3 = cz[ inpofa[3*f+2] ];
 
         // Gaussian quadrature
-        for (std::size_t igp=0; igp<3; ++igp)
+        for (std::size_t igp=0; igp<NG; ++igp)
         {
           // Barycentric coordinates for the triangular face
           auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];
