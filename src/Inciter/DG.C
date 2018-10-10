@@ -954,14 +954,7 @@ DG::lhs()
 // Compute left-hand side of discrete transport equations
 // *****************************************************************************
 {
-  // Compute left-hand side matrix for all equations
-  const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-  for (const auto& eq : g_dgpde)
-    if (ndof == 4)
-      eq.lhsp1( m_geoElem, m_lhs );
-    else
-      eq.lhs( m_geoElem, m_lhs );
-      
+  for (const auto& eq : g_dgpde) eq.lhs( m_geoElem, m_lhs );
 }
 
 void

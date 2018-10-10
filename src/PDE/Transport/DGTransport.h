@@ -73,8 +73,7 @@ class Transport {
       m_bcextrapolate( config< tag::bcextrapolate >( c ) ),
       m_bcinlet( config< tag::bcinlet >( c ) ),
       m_bcoutlet( config< tag::bcoutlet >( c ) ),
-      m_bcdir( config< tag::bcdir >( c ) ),
-      m_ndof( g_inputdeck.get< tag::discr, tag::ndof >() )
+      m_bcdir( config< tag::bcdir >( c ) )
     {
       Problem::errchk( m_c, m_ncomp );
     }
@@ -104,42 +103,35 @@ class Transport {
     //! Compute the left hand side mass matrix
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] l Block diagonal mass matrix
-    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
-    {
+    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
       Assert( geoElem.nunk() == l.nunk(), "Size mismatch" );
-      std::size_t nelem = geoElem.nunk();
+      const auto nelem = geoElem.nunk();
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
+      // Compute LHS for DG(P0)
       for (std::size_t e=0; e<nelem; ++e)
-      {
         for (ncomp_t c=0; c<m_ncomp; ++c)
-        {
-          auto mark = c*m_ndof;
-          l(e, mark, m_offset) = geoElem(e,0,0);
-        }
-      }
+          l(e, c*ndof, m_offset) = geoElem(e,0,0);
+
+      // Augment LHS for DG(P1)
+      if (ndof > 1)
+        for (std::size_t e=0; e<nelem; ++e)
+          for (ncomp_t c=0; c<m_ncomp; ++c)
+            lhsP1( geoElem, l, e, c );
     }
 
-    //! Compute the left hand side P1 mass matrix
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] l Block diagonal mass matrix
-    void lhsp1( const tk::Fields& geoElem, tk::Fields& l ) const
+  private:
+    //! Compute the left hand side mass matrix for up to DG(P1)
+    void lhsP1( const tk::Fields& geoElem, tk::Fields& l,
+                std::size_t e, std::size_t c ) const
     {
-      Assert( geoElem.nunk() == l.nunk(), "Size mismatch" );
-      std::size_t nelem = geoElem.nunk();
-
-      for (std::size_t e=0; e<nelem; ++e)
-      {
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-        {
-          auto mark = c*m_ndof;
-          l(e, mark,   m_offset) = geoElem(e,0,0);
-          l(e, mark+1, m_offset) = geoElem(e,0,0) / 10.0;
-          l(e, mark+2, m_offset) = geoElem(e,0,0) * 3.0/10.0;
-          l(e, mark+3, m_offset) = geoElem(e,0,0) * 3.0/5.0;
-        }
-      }
+      const auto mark = c * g_inputdeck.get< tag::discr, tag::ndof >();
+      l(e, mark+1, m_offset) = geoElem(e,0,0) / 10.0;
+      l(e, mark+2, m_offset) = geoElem(e,0,0) * 3.0/10.0;
+      l(e, mark+3, m_offset) = geoElem(e,0,0) * 3.0/5.0;
     }
 
+  public:
     //! Compute right hand side
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
@@ -155,9 +147,9 @@ class Transport {
     {
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
-      Assert( U.nprop() == m_ndof*m_ncomp && R.nprop() == m_ndof*m_ncomp,
+      Assert( U.nprop() == m_ncomp && R.nprop() == m_ncomp,
               "Number of components in solution and right-hand side vector " 
-              "must equal "+ std::to_string(m_ndof*m_ncomp) );
+              "must equal "+ std::to_string(m_ncomp) );
 
       const auto& bface = fd.Bface();
       const auto& esuf = fd.Esuf();
@@ -175,9 +167,8 @@ class Transport {
         std::array< std::vector< tk::real >, 2 > ugp;
         for (ncomp_t c=0; c<m_ncomp; ++c)
         {
-          auto mark = c*m_ndof;
-          ugp[0].push_back( U(el, mark, m_offset) );
-          ugp[1].push_back( U(er, mark, m_offset) );
+          ugp[0].push_back( U(el, c, m_offset) );
+          ugp[1].push_back( U(er, c, m_offset) );
         }
 
         //--- upwind fluxes
@@ -186,9 +177,8 @@ class Transport {
                       geoFace, ugp );
 
         for (ncomp_t c=0; c<m_ncomp; ++c) {
-          auto mark = c*m_ndof;
-          R(el, mark, m_offset) -= farea * flux[c];
-          R(er, mark, m_offset) += farea * flux[c];
+          R(el, c, m_offset) -= farea * flux[c];
+          R(er, c, m_offset) += farea * flux[c];
         }
       }
 
@@ -219,7 +209,7 @@ class Transport {
     {
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
-      Assert( U.nprop() == m_ndof*m_ncomp && R.nprop() == m_ndof*m_ncomp,
+      Assert( U.nprop() == m_ncomp && R.nprop() == m_ncomp,
               "Number of components in solution and right-hand side vector " 
               "must equal "+ std::to_string(m_ncomp) );
       Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
@@ -309,26 +299,21 @@ class Transport {
                  const tk::Fields& geoElem,
                  tk::Fields& U ) const
     {
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       Assert( geoElem.nunk() == U.nunk(), "Size mismatch" );
       std::vector< std::vector< tk::real > > out;
       // will output numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
-      {
-        auto mark = c*m_ndof;
-        out.push_back( U.extract( mark, m_offset ) );
-      }
+        out.push_back( U.extract( c*ndof, m_offset ) );
       // evaluate analytic solution at time t
       auto E = U;
       initializep0( lhs, inpoel, coord, E, t );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
-      {
-        auto mark = c*m_ndof;
-        out.push_back( E.extract( mark, m_offset ) );
-      }
+        out.push_back( E.extract( c*ndof, m_offset ) );
       // will output error for all components
       for (ncomp_t c=0; c<m_ncomp; ++c) {
-        auto mark = c*m_ndof;
+        auto mark = c*ndof;
         auto u = U.extract( mark, m_offset );
         auto e = E.extract( mark, m_offset );
         for (std::size_t i=0; i<u.size(); ++i)
@@ -378,7 +363,6 @@ class Transport {
     const std::vector< bcconf_t > m_bcoutlet;
     //! Dirichlet BC configuration
     const std::vector< bcconf_t > m_bcdir;
-    const std::size_t m_ndof;
 
     //! Initalize the transport equations using problem policy
     //! \param[in] inpoel Element-node connectivity
@@ -426,6 +410,8 @@ class Transport {
     {
       Assert( lhs.nunk() == unk.nunk(), "Size mismatch" );
       std::size_t nelem = unk.nunk();
+
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
       // right hand side vector
       std::vector< tk::real > R;
@@ -486,7 +472,7 @@ class Transport {
           const auto s = Problem::solution( m_c, m_ncomp, xgp, ygp, zgp, t );
           for (ncomp_t c=0; c<m_ncomp; ++c)
           {
-            auto mark = c*m_ndof;
+            auto mark = c*ndof;
 
             R[mark  ] += wt * s[c];
             R[mark+1] += wt * s[c]*B2;
@@ -497,7 +483,7 @@ class Transport {
 
         for (ncomp_t c=0; c<m_ncomp; ++c)
         {
-          auto mark = c*m_ndof;
+          auto mark = c*ndof;
           unk(e, mark,   m_offset) = R[mark]   / lhs(e, mark,   m_offset);
           unk(e, mark+1, m_offset) = R[mark+1] / lhs(e, mark+1, m_offset);
           unk(e, mark+2, m_offset) = R[mark+2] / lhs(e, mark+2, m_offset);
@@ -530,6 +516,8 @@ class Transport {
       const auto& cx = coord[0];
       const auto& cy = coord[1];
       const auto& cz = coord[2];
+
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
       // get quadrature point weights and coordinates for triangle
       GaussQuadratureTri( coordgp, wgp );
@@ -648,7 +636,7 @@ class Transport {
           
           for (ncomp_t c=0; c<m_ncomp; ++c)
           {
-            auto mark = c*m_ndof;
+            auto mark = c*ndof;
             ugp[0].push_back(  U(el, mark,   m_offset) 
                              + U(el, mark+1, m_offset) * B2l
                              + U(el, mark+2, m_offset) * B3l
@@ -664,7 +652,7 @@ class Transport {
 
           for (ncomp_t c=0; c<m_ncomp; ++c)
           {
-            auto mark = c*m_ndof;
+            auto mark = c*ndof;
 
             R(el, mark,   m_offset) -= wt * flux[c];
             R(el, mark+1, m_offset) -= wt * flux[c] * B2l; 
@@ -698,6 +686,8 @@ class Transport {
 
       // get quadrature point weights and coordinates for tetrahedron
       GaussQuadratureTet( coordgp, wgp );
+
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
       std::array< std::array< tk::real, 3 >, 3 > jacInv;
 
@@ -809,7 +799,7 @@ class Transport {
 
           for (ncomp_t c=0; c<m_ncomp; ++c)
           {
-            auto mark = c*m_ndof;
+            auto mark = c*ndof;
             auto ugp =   U(e, mark,   m_offset) 
                        + U(e, mark+1, m_offset) * B2
                        + U(e, mark+2, m_offset) * B3
@@ -905,13 +895,11 @@ class Transport {
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
         Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
         auto farea = geoFace(f,0,0);
+        const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
         std::vector< tk::real > ugp;
         for (ncomp_t c=0; c<m_ncomp; ++c)
-        {
-          auto mark = c*m_ndof;
-          ugp.push_back( U(el, mark, m_offset) );
-        }
+          ugp.push_back( U(el, c*ndof, m_offset) );
 
         //--- upwind fluxes
         auto flux =
@@ -922,10 +910,7 @@ class Transport {
                                  geoFace(f,6,0), t ) );
 
         for (ncomp_t c=0; c<m_ncomp; ++c)
-        {
-          auto mark = c*m_ndof;
-          R(el, mark, m_offset) -= farea * flux[c];
-        }
+          R(el, c*ndof, m_offset) -= farea * flux[c];
       }
     }
 
@@ -985,6 +970,8 @@ class Transport {
       const auto& cx = coord[0];
       const auto& cy = coord[1];
       const auto& cz = coord[2];
+
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
       // get quadrature point weights and coordinates for triangle
       GaussQuadratureTri( coordgp, wgp );
@@ -1060,7 +1047,7 @@ class Transport {
           
           for (ncomp_t c=0; c<m_ncomp; ++c)
           {
-            auto mark = c*m_ndof;
+            auto mark = c*ndof;
             ugp.push_back(  U(el, mark,   m_offset) 
                           + U(el, mark+1, m_offset) * B2l
                           + U(el, mark+2, m_offset) * B3l
@@ -1073,7 +1060,7 @@ class Transport {
 
           for (ncomp_t c=0; c<m_ncomp; ++c)
           {
-            auto mark = c*m_ndof;
+            auto mark = c*ndof;
 
             R(el, mark,   m_offset) -= wt * flux[c];
             R(el, mark+1, m_offset) -= wt * flux[c] * B2l; 

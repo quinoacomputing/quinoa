@@ -85,10 +85,6 @@ class DGPDE {
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
     { self->lhs( geoElem, l ); }
 
-    //! Public interface to computing the left-hand side matrix for the diff eq
-    void lhsp1( const tk::Fields& geoElem, tk::Fields& l ) const
-    { self->lhsp1( geoElem, l ); }
-
     //! Public interface to computing the right-hand side vector for the diff eq
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -167,7 +163,6 @@ class DGPDE {
                                tk::Fields&,
                                tk::real ) const = 0;
       virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
-      virtual void lhsp1( const tk::Fields&, tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
                         const tk::Fields&,
                         const tk::Fields&,
@@ -215,8 +210,6 @@ class DGPDE {
       const override { data.initialize( lhs, inpoel, coord, unk, t ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
-      void lhsp1( const tk::Fields& geoElem, tk::Fields& l ) const override
-      { data.lhsp1( geoElem, l ); }
       void rhs( tk::real t,
                 const tk::Fields& geoFace,
                 const tk::Fields& geoElem,
