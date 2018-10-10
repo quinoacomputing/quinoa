@@ -285,20 +285,15 @@ class Transport {
       return n;
     }
 
-    //! Return analytical solution at the given (xi,yi,zi) location at time t
+    //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate
     //! \param[in] yi Y-coordinate
     //! \param[in] zi Z-coordinate
     //! \param[in] t Physical time
-    //! \return Vector of analytical solution at given location and time
+    //! \return Vector of analytic solution at given spatial location and time
     std::vector< tk::real >
-    analyticalSol( tk::real xi,
-                   tk::real yi,
-                   tk::real zi,
-                   tk::real t ) const
-    {
-      return Problem::solution( m_c, m_ncomp, xi, yi, zi, t );
-    }
+    analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
+    { return Problem::solution( m_c, m_ncomp, xi, yi, zi, t ); }
 
   private:
     const ncomp_t m_c;                  //!< Equation system index

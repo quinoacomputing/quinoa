@@ -44,14 +44,12 @@ ElemDiagnostics::registerReducers()
 
 bool
 ElemDiagnostics::compute( Discretization& d,
-                          const tk::Fields& lhs,
                           const std::size_t nchGhost,
                           const tk::Fields& geoElem,
                           const tk::Fields& u )
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc.
 //! \param[in] d Discretization base class to read from
-//! \param[in] lhs Mass matrix
 //! \param[in] nchGhost Number of chare boundary ghost elements
 //! \param[in] geoElem Element geometry
 //! \param[in] u Current solution vector
@@ -82,9 +80,9 @@ ElemDiagnostics::compute( Discretization& d,
       diag( NUMDIAG, std::vector< tk::real >( u.nprop()/ndof, 0.0 ) );
   
     if (ndof == 1)
-      computep0( d, lhs, nchGhost, geoElem, u, diag );
+      computeP0( d, nchGhost, geoElem, u, diag );
     else if (ndof == 4)
-      computep1( d, lhs, nchGhost, geoElem, u, diag );
+      computeP1( d, nchGhost, geoElem, u, diag );
     else Throw( "ElemDiagnostics::compute() not defined for NDOF=" +
                  std::to_string(ndof) );
 
@@ -109,8 +107,7 @@ ElemDiagnostics::compute( Discretization& d,
 }
 
 void
-ElemDiagnostics::computep0( Discretization& d,
-                            const tk::Fields& lhs,
+ElemDiagnostics::computeP0( Discretization& d,
                             const std::size_t nchGhost,
                             const tk::Fields& geoElem,
                             const tk::Fields& u,
@@ -118,57 +115,44 @@ ElemDiagnostics::computep0( Discretization& d,
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc. for DG(P0)
 //! \param[in] d Discretization base class to read from
-//! \param[in] lhs Mass matrix
 //! \param[in] nchGhost Number of chare boundary ghost elements
 //! \param[in] geoElem Element geometry
 //! \param[in] u Current solution vector
 //! \param[in,out] diag Diagnostics vector
 // *****************************************************************************
 {
-  // Collect analytical solutions (if available) from all PDEs. Note that
-  // calling the polymorphic PDE::initialize() is assumed to evaluate the
-  // analytical solution for a PDE. For those PDE problems that have
-  // analytical solutions, this is the same as used for setting the initial
-  // conditions, since if the analytical solution is available for a problem,
-  // it is (so far anyway) always initialized to its analytical solution and
-  // that is done by calling PDE::initialize(). If the analytical solution is
-  // a function of time, that is already incorporated in setting initial
-  // conditions. For those PDEs where the analytical solution is not
-  // available, initialize() returns the initial conditions (obviously), and
-  // thus the "error", defined between this "analytical" and numerical
-  // solution will be a measure of the "distance" between the initial
-  // condition and the current numerical solution. This is not necessarily
-  // useful, but simplies the logic because all PDEs can be treated as being
-  // able to compute an error based on some "analytical" solution, which is
-  // really the initial condition.
-  auto a = u;
-  for (const auto& eq : g_dgpde)
-    eq.initialize( lhs, d.Inpoel(), d.Coord(), a, d.T()+d.Dt() );
-
-  // Put in norms sweeping our mesh chunk
   for (std::size_t i=0; i<u.nunk()-nchGhost; ++i) {
+
     // Compute sum for L2 norm of the numerical solution
     for (std::size_t c=0; c<u.nprop(); ++c)
-    {
       diag[L2SOL][c] += u(i,c,0) * u(i,c,0) * geoElem(i,0,0);
+
+    // Query and collect analytic solution for all components of all PDEs
+    // integrated at cell centroids
+    std::vector< tk::real > a;
+    const auto xc = geoElem(i,1,0);
+    const auto yc = geoElem(i,2,0);
+    const auto zc = geoElem(i,3,0);
+    for (const auto& eq : g_dgpde) {
+      auto s = eq.analyticSolution( xc, yc, zc, d.T()+d.Dt() );
+      std::move( begin(s), end(s), std::back_inserter(a) );
     }
+    Assert( a.size() == u.nprop(), "Size mismatch" );
+
     // Compute sum for L2 norm of the numerical-analytic solution
     for (std::size_t c=0; c<u.nprop(); ++c)
-    {
-      diag[L2ERR][c] +=
-        (u(i,c,0)-a(i,c,0)) * (u(i,c,0)-a(i,c,0)) * geoElem(i,0,0);
-    }
+      diag[L2ERR][c] += (u(i,c,0)-a[c]) * (u(i,c,0)-a[c]) * geoElem(i,0,0);
     // Compute max for Linf norm of the numerical-analytic solution
     for (std::size_t c=0; c<u.nprop(); ++c) {
-      auto err = std::abs( u(i,c,0) - a(i,c,0) );
+      auto err = std::abs( u(i,c,0) - a[c] );
       if (err > diag[LINFERR][c]) diag[LINFERR][c] = err;
     }
+
   }
 }
 
 void
-ElemDiagnostics::computep1( Discretization& d,
-                            const tk::Fields&,
+ElemDiagnostics::computeP1( Discretization& d,
                             const std::size_t nchGhost,
                             const tk::Fields& geoElem,
                             const tk::Fields& u,
@@ -241,7 +225,7 @@ ElemDiagnostics::computep1( Discretization& d,
       std::vector< tk::real > s;
 
       for (const auto& eq : g_dgpde)
-        s = eq.analyticalSol( xgp, ygp, zgp, d.T()+d.Dt() );
+        s = eq.analyticSolution( xgp, ygp, zgp, d.T()+d.Dt() );
 
       for (std::size_t c=0; c<u.nprop()/ndof; ++c)
       {

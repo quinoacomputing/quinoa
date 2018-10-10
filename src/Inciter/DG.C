@@ -992,8 +992,7 @@ DG::solve()
     out();
     // Compute diagnostics, e.g., residuals
     auto diag_computed =
-        m_diag.compute( *d, m_lhs, m_u.nunk()-m_esuelTet.size()/4,
-                        m_geoElem, m_u );
+      m_diag.compute( *d, m_u.nunk()-m_esuelTet.size()/4, m_geoElem, m_u );
     // Increase number of iterations and physical time
     d->next();
     // Update Un

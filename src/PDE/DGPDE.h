@@ -122,13 +122,10 @@ class DGPDE {
       tk::Fields& U ) const
     { return self->fieldOutput( lhs, inpoel, coord, t, geoElem, U ); }
 
-    //! Public interface to returning analytical solution
+    //! Public interface to returning analytic solution
     std::vector< tk::real >
-    analyticalSol( tk::real xi,
-                   tk::real yi,
-                   tk::real zi,
-                   tk::real t ) const
-    { return self->analyticalSol( xi, yi, zi, t ); }
+    analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
+    { return self->analyticSolution( xi, yi, zi, t ); }
 
     //! Copy assignment
     DGPDE& operator=( const DGPDE& x )
@@ -175,10 +172,8 @@ class DGPDE {
         tk::real,
         const tk::Fields&,
         tk::Fields& ) const = 0;
-      virtual std::vector< tk::real > analyticalSol( tk::real xi,
-                                                     tk::real yi,
-                                                     tk::real zi,
-                                                     tk::real t ) const = 0;
+      virtual std::vector< tk::real > analyticSolution(
+        tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
     };
 
     //! \brief Model models the Concept above by deriving from it and overriding
@@ -223,11 +218,8 @@ class DGPDE {
         tk::Fields& U ) const override
       { return data.fieldOutput( lhs, inpoel, coord, t, geoElem, U ); }
       std::vector< tk::real >
-      analyticalSol( tk::real xi,
-                     tk::real yi,
-                     tk::real zi,
-                     tk::real t ) const override
-      { return data.analyticalSol( xi, yi, zi, t ); }
+      analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
+       const override { return data.analyticSolution( xi, yi, zi, t ); }
       T data;
     };
 

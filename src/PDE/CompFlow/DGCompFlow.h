@@ -338,23 +338,17 @@ class CompFlow {
     std::vector< std::string > names() const
     { return Problem::names(); }
 
-    //! Return analytical solution at the given (xi,yi,zi) location at time t
+    //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate
     //! \param[in] yi Y-coordinate
     //! \param[in] zi Z-coordinate
     //! \param[in] t Physical time
-    //! \return Vector of analytical solution at given location and time
+    //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
-    analyticalSol( tk::real xi,
-                   tk::real yi,
-                   tk::real zi,
-                   tk::real t ) const
+    analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     {
-      const auto s = Problem::solution( 0, xi, yi, zi, t );
-      std::vector< tk::real > sv(5,0);
-      for (std::size_t i=0; i<5; ++i)
-        sv[i] = s[i];
-      return sv;
+      auto s = Problem::solution( 0, xi, yi, zi, t );
+      return std::vector< tk::real >( begin(s), end(s) );
     }
 
   private:
