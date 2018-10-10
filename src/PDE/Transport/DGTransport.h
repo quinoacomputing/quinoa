@@ -183,10 +183,10 @@ class Transport {
       }
 
       // compute boundary surface flux integrals
-      bndIntegral< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, t, U, R );
-      bndIntegral< Inlet >( m_bcinlet, bface, esuf, geoFace, t, U, R );
-      bndIntegral< Outlet >( m_bcoutlet, bface, esuf, geoFace, t, U, R );
-      bndIntegral< Dir >( m_bcdir, bface, esuf, geoFace, t, U, R );
+      bndInt< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, t, U, R );
+      bndInt< Inlet >( m_bcinlet, bface, esuf, geoFace, t, U, R );
+      bndInt< Outlet >( m_bcoutlet, bface, esuf, geoFace, t, U, R );
+      bndInt< Dir >( m_bcdir, bface, esuf, geoFace, t, U, R );
     }
 
     //! Compute P1 right hand side
@@ -228,14 +228,14 @@ class Transport {
       surfInt( inpoel, coord, fd, geoFace, U, R );
 
       // compute boundary surface flux integrals
-      bndIntegralp1< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace,
-                                    inpoel, inpofa, coord, t, U, R );
-      bndIntegralp1< Inlet >( m_bcinlet, bface, esuf, geoFace, inpoel, inpofa,
-                              coord, t, U, R );
-      bndIntegralp1< Outlet >( m_bcoutlet, bface, esuf, geoFace, inpoel,
-                               inpofa, coord, t, U, R );
-      bndIntegralp1< Dir >( m_bcdir, bface, esuf, geoFace, inpoel,
-                            inpofa, coord, t, U, R );
+      bndIntP1< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace,
+                               inpoel, inpofa, coord, t, U, R );
+      bndIntP1< Inlet >( m_bcinlet, bface, esuf, geoFace, inpoel, inpofa,
+                         coord, t, U, R );
+      bndIntP1< Outlet >( m_bcoutlet, bface, esuf, geoFace, inpoel,
+                          inpofa, coord, t, U, R );
+      bndIntP1< Dir >( m_bcdir, bface, esuf, geoFace, inpoel,
+                       inpofa, coord, t, U, R );
 
       // compute volume integrals
       volInt( inpoel, coord, geoElem, U, R );
@@ -925,13 +925,13 @@ class Transport {
     //! \param[in,out] R Right-hand side vector computed
     template< class BCType >
     void
-    bndIntegral( const std::vector< bcconf_t >& bcconfig,
-                 const std::map< int, std::vector< std::size_t > >& bface,
-                 const std::vector< int >& esuf,
-                 const tk::Fields& geoFace,
-                 tk::real t,
-                 const tk::Fields& U,
-                 tk::Fields& R ) const
+    bndInt( const std::vector< bcconf_t >& bcconfig,
+            const std::map< int, std::vector< std::size_t > >& bface,
+            const std::vector< int >& esuf,
+            const tk::Fields& geoFace,
+            tk::real t,
+            const tk::Fields& U,
+            tk::Fields& R ) const
     {
       for (const auto& s : bcconfig) {       // for all bc sidesets
         auto bc = bface.find( std::stoi(s) );// faces for side set
@@ -1085,16 +1085,16 @@ class Transport {
     //! \param[in,out] R Right-hand side vector computed
     template< class BCType >
     void
-    bndIntegralp1( const std::vector< bcconf_t >& bcconfig,
-                   const std::map< int, std::vector< std::size_t > >& bface,
-                   const std::vector< int >& esuf,
-                   const tk::Fields& geoFace,
-                   const std::vector< std::size_t >& inpoel,
-                   const std::vector< std::size_t >& inpofa,
-                   const tk::UnsMesh::Coords& coord,
-                   tk::real t,
-                   const tk::Fields& U,
-                   tk::Fields& R ) const
+    bndIntP1( const std::vector< bcconf_t >& bcconfig,
+              const std::map< int, std::vector< std::size_t > >& bface,
+              const std::vector< int >& esuf,
+              const tk::Fields& geoFace,
+              const std::vector< std::size_t >& inpoel,
+              const std::vector< std::size_t >& inpofa,
+              const tk::UnsMesh::Coords& coord,
+              tk::real t,
+              const tk::Fields& U,
+              tk::Fields& R ) const
     {
       for (const auto& s : bcconfig) {       // for all bc sidesets
         auto bc = bface.find( std::stoi(s) );// faces for side set
