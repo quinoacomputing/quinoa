@@ -135,102 +135,12 @@ class CompFlow {
                      tk::Fields& unk,
                      tk::real t ) const
     {
-<<<<<<< HEAD
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       if (ndof == 1)
         initializep0( L, inpoel, coord, unk, t );
       else if (ndof == 4)
         initializep1( L, inpoel, coord, unk, t );
       else Throw( "DGCompFlow::initialize() not defined" );
-=======
-      Assert( lhs.nunk() == unk.nunk(), "Size mismatch" );
-      std::size_t nelem = unk.nunk();
-
-      // right hand side vector
-      std::vector< tk::real > R;
-      R.resize(unk.nprop(),0);
-
-      // arrays for quadrature points
-      std::array< std::vector< tk::real >, 3 > coordgp;
-      std::vector< tk::real > wgp;
-
-      // resize quadrature point arrays
-      coordgp[0].resize(5,0);
-      coordgp[1].resize(5,0);
-      coordgp[2].resize(5,0);
-
-      wgp.resize(5,0);
-
-      const auto& cx = coord[0];
-      const auto& cy = coord[1];
-      const auto& cz = coord[2];
-
-      // get quadrature point weights and coordinates for tetrahedron
-      GaussQuadratureTet( coordgp, wgp );
-
-
-          for (std::size_t e=0; e<nelem; ++e)
-      {
-        auto vole = lhs(e, 0, m_offset);
-
-        auto x1 = cx[ inpoel[4*e]   ];
-        auto y1 = cy[ inpoel[4*e]   ];
-        auto z1 = cz[ inpoel[4*e]   ];
-
-        auto x2 = cx[ inpoel[4*e+1] ];
-        auto y2 = cy[ inpoel[4*e+1] ];
-        auto z2 = cz[ inpoel[4*e+1] ];
-
-        auto x3 = cx[ inpoel[4*e+2] ];
-        auto y3 = cy[ inpoel[4*e+2] ];
-        auto z3 = cz[ inpoel[4*e+2] ];
-
-        auto x4 = cx[ inpoel[4*e+3] ];
-        auto y4 = cy[ inpoel[4*e+3] ];
-        auto z4 = cz[ inpoel[4*e+3] ];
-
-        std::fill( R.begin(), R.end(), 0.0);
-
-        // Gaussian quadrature
-        for (std::size_t igp=0; igp<5; ++igp)
-        {
-          auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp] - 1.0;
-          auto B3 = 3.0 * coordgp[1][igp] + coordgp[2][igp] - 1.0;
-          auto B4 = 4.0 * coordgp[2][igp] - 1.0;
-
-          auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp] - coordgp[2][igp];
-          auto shp2 = coordgp[0][igp];
-          auto shp3 = coordgp[1][igp];
-          auto shp4 = coordgp[2][igp];
-
-          auto xgp = x1*shp1 + x2*shp2 + x3*shp3 + x4*shp4;
-          auto ygp = y1*shp1 + y2*shp2 + y3*shp3 + y4*shp4;
-          auto zgp = z1*shp1 + z2*shp2 + z3*shp3 + z4*shp4;
-
-          auto wt = vole * wgp[igp];
-
-          const auto s = Problem::solution( 0, xgp, ygp, zgp, t );
-          for (ncomp_t c=0; c<m_ncomp; ++c)
-          {
-            auto mark = c*m_ndof;
-
-            R[mark  ] += wt * s[c];
-            R[mark+1] += wt * s[c]*B2;
-            R[mark+2] += wt * s[c]*B3;
-            R[mark+3] += wt * s[c]*B4;
-          }
-        }
-
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-        {
-          auto mark = c*m_ndof;
-          unk(e, mark,   m_offset) = R[mark]   / lhs(e, mark,   m_offset);
-          unk(e, mark+1, m_offset) = R[mark+1] / lhs(e, mark+1, m_offset);
-          unk(e, mark+2, m_offset) = R[mark+2] / lhs(e, mark+2, m_offset);
-          unk(e, mark+3, m_offset) = R[mark+3] / lhs(e, mark+3, m_offset);
-        }
-      }
->>>>>>> Update the rhsp1 function and surfIntp1 function with branch dgp1.
     }
 
     //! Compute the left hand side block-diagonal mass matrix
