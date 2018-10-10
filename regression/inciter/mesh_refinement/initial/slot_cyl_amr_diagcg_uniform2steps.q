@@ -17,6 +17,7 @@ inciter
   end
 
   amr
+    t0ref true
     initial uniform
     initial uniform
   end

@@ -36,6 +36,8 @@ module diagcg {
                          const std::vector< std::vector< tk::real > >& R );
       entry void comdif( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& D );
+      entry void resized();
+      entry void lhs();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -65,15 +67,16 @@ module diagcg {
       // happens independently on each chare, communicating with their
       // respective neighbors.
 
-      entry void wait4setup() {
-        when ownlhs_complete(), comlhs_complete() serial "setup" { start(); } };
+      entry void wait4lhs() {
+        when ownlhs_complete(), comlhs_complete() serial "lhs" { lhsdone(); } };
 
       entry void wait4rhs() {
         when ownrhs_complete(), comrhs_complete(),
              owndif_complete(), comdif_complete() serial "rhs" { solve(); } };
 
       entry void wait4eval() {
-        when diag_complete(), ref_complete() serial "eval" { eval(); } };
+        when diag_complete(), ref_complete(), lhs_complete(),
+             resize_complete() serial "eval" { eval(); } };
 
       entry void ownlhs_complete();
       entry void ownrhs_complete();
@@ -83,6 +86,8 @@ module diagcg {
       entry void comdif_complete();
       entry void diag_complete();
       entry void ref_complete();
+      entry void lhs_complete();
+      entry void resize_complete();
     };
 
   } // inciter::

@@ -100,6 +100,14 @@ class Transporter : public CBase_Transporter {
     //!   boundary nodes
     void responded();
 
+    //! \brief Reduction target: all Discretization chares have resized their
+    //!    own data after mesh refinement
+    void discresized();
+
+    //! \brief Reduction target: all worker chares have resized their own data
+    //!   after mesh refinement
+    void workresized();
+
     //! Non-reduction target for receiving progress report on partitioning mesh
     void pepartitioned() { m_progMesh.inc< PART >(); }
     //! Non-reduction target for receiving progress report on distributing mesh
@@ -131,7 +139,7 @@ class Transporter : public CBase_Transporter {
     void comfinal();
 
     //! Reduction target summing total mesh volume
-    void totalvol( tk::real v );
+    void totalvol( tk::real v, tk::real initial );
 
     //! \brief Reduction target indicating that all workers have finished
     //!   computing/receiving their part of the nodal volumes
@@ -212,6 +220,10 @@ class Transporter : public CBase_Transporter {
 
     //! Echo diagnostics on mesh statistics
     void stat();
+
+    //! \brief All Discretization and worker chares have resized their own data
+    //!   after mesh refinement
+    void resized();
 
     //! Query variable names for all equation systems to be integrated
     //! \param[in] eq Equation system whose variable names to query

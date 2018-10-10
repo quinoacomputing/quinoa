@@ -301,21 +301,26 @@ namespace grm {
   struct action< check_amr_errors > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-      // Error out if refvar size does not equal refidx size
+      // Error out if refvar size does not equal refidx size (programmer error)
       Assert( (stack.template get< tag::amr, tag::refvar >().size() ==
                stack.template get< tag::amr, tag::id >().size()),
               "The size of refvar and refidx vectors must equal" );
-      // Error out if initref list is not divisible by 2
-      const auto& edgeref = stack.template get< tag::amr, tag::edge >();
-      if (edgeref.size() % 2 == 1)
-        Message< Stack, ERROR, MsgKey::INITREFODD >( stack, in );
-      // Set initial AMR (on/off) if either the initial refinement type list or
-      // an edge list is configured
-      Assert( (stack.template get< tag::amr, tag::initamr >() == false),
-              "InitAMR switch must be false by default" );
       const auto& initref = stack.template get< tag::amr, tag::init >();
-      if (!initref.empty() || !edgeref.empty())
-        stack.template get< tag::amr, tag::initamr >() = true;
+      const auto& edgeref = stack.template get< tag::amr, tag::edge >();
+      const auto& refvar = stack.template get< tag::amr, tag::refvar >();
+      // Error out if initref edge list is not divisible by 2 (user error)
+      if (edgeref.size() % 2 == 1)
+        Message< Stack, ERROR, MsgKey::T0REFODD >( stack, in );
+      // Error out if initial AMR will be a no-op (user error)
+      if ( stack.template get< tag::amr, tag::t0ref >() &&
+           initref.empty() && edgeref.empty() )
+        Message< Stack, ERROR, MsgKey::T0REFNOOP >( stack, in );
+      // Error out if timestepping AMR will be a no-op (user error)
+      if ( stack.template get< tag::amr, tag::dtref >() && refvar.empty() )
+        Message< Stack, ERROR, MsgKey::DTREFNOOP >( stack, in );
+      // Error out if mesh refinement frequency is zero (programmer error)
+      Assert( (stack.template get< tag::amr, tag::dtfreq >() > 0),
+              "Mesh refinement frequency must be positive" );
     }
   };
 
@@ -594,7 +599,17 @@ namespace deck {
                              tk::grm::store_inciter_option<
                                ctr::AMRError,
                                tag::amr, tag::error >,
-                             pegtl::alpha > >,
+                             pegtl::alpha >,
+                           tk::grm::process< use< kw::amr_t0ref >,
+                             tk::grm::Store< tag::amr, tag::t0ref >,
+                             pegtl::alpha >,
+                           tk::grm::process< use< kw::amr_dtref >,
+                             tk::grm::Store< tag::amr, tag::dtref >,
+                             pegtl::alpha >,
+                           tk::grm::process< use< kw::amr_dtfreq >,
+                             tk::grm::Store< tag::amr, tag::dtfreq >,
+                             pegtl::digit >
+                         >,
            tk::grm::check_amr_errors > {};
 
   //! plotvar ... end block
