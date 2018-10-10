@@ -24,6 +24,9 @@ namespace AMR {
 
             node_list_t nodes;
 
+            size_t empty_node_count = 0;
+
+
         public:
 
             node_connectivity_t() { } // default cons
@@ -68,10 +71,16 @@ namespace AMR {
              */
             node_pair_t get(size_t id)
             {
+                trace_out << "PROBLEM FINDING ID " << id << std::endl;
+
+                // Ban getting of a node whos parents are {0,0}
+                assert(id > empty_node_count-1); //[0..empty_node_counts)
+
                 // TOOD: this is now a linear search..
                 for (auto it = nodes.begin(); it != nodes.end(); ++it) {
                     if (it->second == id) return it->first;
                 }
+                trace_out << "PROBLEM FINDING ID " << id << std::endl;
                 assert(0);
             }
 
@@ -131,20 +140,32 @@ namespace AMR {
              */
             node_list_value_t add(size_t A, size_t B)
             {
-                assert(A != B);
+                if ((A == 0) && (B == 0))
+                {
+                    trace_out << "empty nodes = " << empty_node_count << std::endl;
+                    node_list_value_t value = nodes.size() + empty_node_count;
+                    empty_node_count++;
+                    return value;
+                }
+                else {
+                    assert(A != B);
+                }
 
                 node_list_key_t key = {{std::min(A,B), std::max(A,B)}};
                 auto iter = nodes.find(key);
 
+                trace_out << "A " << A << " B " << B << std::endl;
+
                 // return the corresponding value if we find the key in the map
                 if(iter != nodes.end()) {
+                    trace_out << "Reuse " << iter->second << std::endl;
                     return iter->second;
                 }
                 else {
                     // if not in map
-                    node_list_value_t value = nodes.size();
+                    node_list_value_t value = nodes.size() + empty_node_count;
                     nodes[key] = value; // TODO: is insert faster here?
-                    trace_out << "Made new node " << size() -1 << std::endl;
+                    trace_out << "Made new node " << value << std::endl;
                     return value;
                 }
             }

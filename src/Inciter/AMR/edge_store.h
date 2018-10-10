@@ -59,7 +59,11 @@ namespace AMR {
              */
             void generate(size_t A, size_t B, Edge_Lock_Case lc)
             {
-                assert(A != B);
+                if ((A != 0) && (B != 0)) {
+                    trace_out << "A " << A << " B " << B << std::endl;
+                    assert(A != B);
+                }
+
                 // Generate key
                 edge_t keyAB = nodes_to_key(A, B);
                 //Create refined edge
