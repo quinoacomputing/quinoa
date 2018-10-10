@@ -27,31 +27,14 @@ inciter
 
   amr
     #initial uniform
-    #initial uniform
-    #initial ic
-    #initial uniform
-    #initial ic
-    #initial uniform
     #initial ic
     initial coords
     initial coords
-    #initial coords
-    #initial ic
-    #initial uniform
-    #initial ic
-    #initial uniform
-    #initial ic
-    #initial uniform
-    #refvar c end
-    #error jump
 
     coordref
       x- 0.5
       #x+ 0.25 x- 0.75
     end
-    #initref
-    # 1 2 3
-    #end
   end
 
   plotvar
