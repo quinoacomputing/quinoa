@@ -43,19 +43,21 @@ class ElemDiagnostics {
     //@}
 
   private:
-    //! Compute diagnostics, e.g., residuals, norms of errors, etc.
-    bool computep0( Discretization& d,
+    //! Compute diagnostics for DG(P0)
+    void computep0( Discretization& d,
                     const tk::Fields& lhs,
                     const std::size_t nchGhost,
                     const tk::Fields& geoElem,
-                    const tk::Fields& u );
+                    const tk::Fields& u,
+                    std::vector< std::vector< tk::real > >& diag );
 
-    //! Compute diagnostics, e.g., residuals, norms of errors, etc. for dgp1
-    bool computep1( Discretization& d,
+    //! Compute diagnostics for DG(P1)
+    void computep1( Discretization& d,
                     const tk::Fields& lhs,
                     const std::size_t nchGhost,
                     const tk::Fields& geoElem,
-                    const tk::Fields& u );
+                    const tk::Fields& u,
+                    std::vector< std::vector< tk::real > >& diag );
 };
 
 } // inciter::
