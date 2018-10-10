@@ -16,13 +16,17 @@
 
 namespace inciter {
 
-//! Gaussian quadrature points locations and weights for a tetrahedron
+//! Five Gaussian quadrature points locations and weights for a tetrahedron
 void
 GaussQuadratureTet( std::array< std::array< tk::real, 5 >, 3 >& coordgp,
                     std::array< tk::real, 5 >& wgp );
 
+//! Four Gaussian quadrature points locations and weights for a tetrahedron
+void
+GaussQuadratureTet( std::array< std::array< tk::real, 4 >, 3 >& coordgp,
+                    std::array< tk::real, 4 >& wgp );
 
-//! Gaussian quadrature points locations and weights for a triangle
+//! Three Gaussian quadrature points locations and weights for a triangle
 void
 GaussQuadratureTri( std::array< std::array< tk::real, 3 >, 2 >& coordgp,
                     std::array< tk::real, 3 >& wgp );

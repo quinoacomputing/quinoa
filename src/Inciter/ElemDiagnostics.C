@@ -169,9 +169,12 @@ ElemDiagnostics::computeP1( Discretization& d,
   const auto& inpoel = d.Inpoel();
   const auto& coord = d.Coord();
 
+  // Number of integration points
+  constexpr std::size_t NG = 4;
+
   // Quadrature points
-  std::array< std::array< tk::real, 5 >, 3 > coordgp;
-  std::array< tk::real, 5 > wgp;
+  std::array< std::array< tk::real, NG >, 3 > coordgp;
+  std::array< tk::real, NG > wgp;
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -204,7 +207,7 @@ ElemDiagnostics::computeP1( Discretization& d,
     auto z4 = cz[ inpoel[4*i+3] ];
 
     // Gaussian quadrature
-    for (std::size_t igp=0; igp<5; ++igp)
+    for (std::size_t igp=0; igp<NG; ++igp)
     {
       auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp]
                 - 1.0;
