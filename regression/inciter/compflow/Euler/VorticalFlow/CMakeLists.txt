@@ -9,7 +9,7 @@ add_regression_test(compflow_euler_vorticalflow ${INCITER_EXECUTABLE}
                                exodiff.cfg vortical_flow.std.exo
                     ARGS -c vortical_flow.q -i unitcube_1k.exo -v
                     BIN_BASELINE vortical_flow.std.exo
-                    BIN_RESULT out.0
+                    BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag.std
                     TEXT_RESULT diag
@@ -22,7 +22,7 @@ add_regression_test(compflow_euler_vorticalflow_diagcg ${INCITER_EXECUTABLE}
                                exodiff.cfg vortical_flow_diagcg.std.exo
                     ARGS -c vortical_flow_diagcg.q -i unitcube_1k.exo -v
                     BIN_BASELINE vortical_flow_diagcg.std.exo
-                    BIN_RESULT out.0
+                    BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_diagcg.std
                     TEXT_RESULT diag
@@ -35,7 +35,7 @@ add_regression_test(compflow_euler_vorticalflow_dg ${INCITER_EXECUTABLE}
                                exodiff_dg.cfg vortical_flow_dg.std.exo
                     ARGS -c vortical_flow_dg.q -i unitcube_1k.exo -v
                     BIN_BASELINE vortical_flow_dg.std.exo
-                    BIN_RESULT out.0
+                    BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_dg.std
@@ -49,7 +49,7 @@ add_regression_test(compflow_euler_vorticalflow_dg_lf ${INCITER_EXECUTABLE}
                                exodiff_dg.cfg vortical_flow_dg_lf.std.exo
                     ARGS -c vortical_flow_dg_lf.q -i unitcube_1k.exo -v
                     BIN_BASELINE vortical_flow_dg_lf.std.exo
-                    BIN_RESULT out.0
+                    BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_dg_lf.std
@@ -63,7 +63,7 @@ add_regression_test(compflow_euler_vorticalflow_reord_dg ${INCITER_EXECUTABLE}
                                exodiff_dg.cfg vortical_flow_dg.std.exo
                     ARGS -c vortical_flow_reord_dg.q -i unitcube_1k.exo -v
                     BIN_BASELINE vortical_flow_dg.std.exo
-                    BIN_RESULT out.0
+                    BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_dg.std
@@ -86,7 +86,10 @@ add_regression_test(compflow_euler_vorticalflow ${INCITER_EXECUTABLE}
                                  vortical_flow_pe4.std.exo.1
                                  vortical_flow_pe4.std.exo.2
                                  vortical_flow_pe4.std.exo.3
-                    BIN_RESULT out.0 out.1 out.2 out.3
+                    BIN_RESULT out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag.std
@@ -117,7 +120,14 @@ add_regression_test(compflow_euler_vorticalflow_u0.5 ${INCITER_EXECUTABLE}
                                  vortical_flow_pe4_u0.5.std.exo.5
                                  vortical_flow_pe4_u0.5.std.exo.6
                                  vortical_flow_pe4_u0.5.std.exo.7
-                    BIN_RESULT out.0 out.1 out.2 out.3 out.4 out.5 out.6 out.7
+                    BIN_RESULT out.e-s.0.8.0
+                               out.e-s.0.8.1
+                               out.e-s.0.8.2
+                               out.e-s.0.8.3
+                               out.e-s.0.8.4
+                               out.e-s.0.8.5
+                               out.e-s.0.8.6
+                               out.e-s.0.8.7
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag.std
@@ -145,7 +155,14 @@ add_regression_test(compflow_euler_vorticalflow_diagcg_u0.5 ${INCITER_EXECUTABLE
                                  vortical_flow_diagcg_pe4_u0.5.std.exo.5
                                  vortical_flow_diagcg_pe4_u0.5.std.exo.6
                                  vortical_flow_diagcg_pe4_u0.5.std.exo.7
-                    BIN_RESULT out.0 out.1 out.2 out.3 out.4 out.5 out.6 out.7
+                    BIN_RESULT out.e-s.0.8.0
+                               out.e-s.0.8.1
+                               out.e-s.0.8.2
+                               out.e-s.0.8.3
+                               out.e-s.0.8.4
+                               out.e-s.0.8.5
+                               out.e-s.0.8.6
+                               out.e-s.0.8.7
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_diagcg.std
@@ -237,12 +254,44 @@ add_regression_test(compflow_euler_vorticalflow_diagcg_u0.9_migr
                                  vortical_flow_diagcg_pe4_u0.9.std.exo.35
                                  vortical_flow_diagcg_pe4_u0.9.std.exo.36
                                  vortical_flow_diagcg_pe4_u0.9.std.exo.37
-                    BIN_RESULT out.0 out.1 out.2 out.3 out.4 out.5 out.6 out.7
-                               out.8 out.9 out.10 out.11 out.12 out.13 out.14
-                               out.15 out.16 out.17 out.18 out.19 out.20 out.21
-                               out.22 out.23 out.24 out.25 out.26 out.27 out.28
-                               out.29 out.30 out.31 out.32 out.33 out.34 out.35
-                               out.36 out.37
+                    BIN_RESULT out.e-s.0.38.0
+                               out.e-s.0.38.1
+                               out.e-s.0.38.2
+                               out.e-s.0.38.3
+                               out.e-s.0.38.4
+                               out.e-s.0.38.5
+                               out.e-s.0.38.6
+                               out.e-s.0.38.7
+                               out.e-s.0.38.8
+                               out.e-s.0.38.9
+                               out.e-s.0.38.10
+                               out.e-s.0.38.11
+                               out.e-s.0.38.12
+                               out.e-s.0.38.13
+                               out.e-s.0.38.14
+                               out.e-s.0.38.15
+                               out.e-s.0.38.16
+                               out.e-s.0.38.17
+                               out.e-s.0.38.18
+                               out.e-s.0.38.19
+                               out.e-s.0.38.20
+                               out.e-s.0.38.21
+                               out.e-s.0.38.22
+                               out.e-s.0.38.23
+                               out.e-s.0.38.24
+                               out.e-s.0.38.25
+                               out.e-s.0.38.26
+                               out.e-s.0.38.27
+                               out.e-s.0.38.28
+                               out.e-s.0.38.29
+                               out.e-s.0.38.30
+                               out.e-s.0.38.31
+                               out.e-s.0.38.32
+                               out.e-s.0.38.33
+                               out.e-s.0.38.34
+                               out.e-s.0.38.35
+                               out.e-s.0.38.36
+                               out.e-s.0.38.37
                     BIN_DIFF_PROG_ARGS -m -q
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_diagcg.std

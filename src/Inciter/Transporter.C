@@ -143,9 +143,9 @@ Transporter::Transporter() :
     m_print.refvar( g_inputdeck.get< tag::amr, tag::refvar >(),
                     g_inputdeck.get< tag::amr, tag::id >() );
     m_print.Item< ctr::AMRError, tag::amr, tag::error >();
-    auto initamr = g_inputdeck.get< tag::amr, tag::initamr >();
-    m_print.item( "Initial refinement", initamr );
-    if (initamr) {
+    auto t0ref = g_inputdeck.get< tag::amr, tag::t0ref >();
+    m_print.item( "Refinement at t < 0", t0ref );
+    if (t0ref) {
       const auto& initref = g_inputdeck.get< tag::amr, tag::init >();
       m_print.item( "Initial refinement steps", initref.size() );
       m_print.ItemVec< ctr::AMRInitial >( initref );
@@ -176,6 +176,12 @@ Transporter::Transporter() :
       auto zplus = g_inputdeck.get< tag::amr, tag::zplus >();
       if (std::abs( zplus - rmax ) > eps)
         m_print.item( "Initial refinement z+", zplus );
+    }
+    auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
+    m_print.item( "Refinement at t > 0", dtref );
+    if (dtref) {
+      auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
+      m_print.item( "Mesh refinement frequency", dtfreq );
     }
   }
 
@@ -350,7 +356,7 @@ Transporter::load( uint64_t nelem, uint64_t npoin )
 
   // Query number of initial mesh refinement steps
   int nref = 0;
-  if (g_inputdeck.get< tag::amr, tag::initamr >())
+  if (g_inputdeck.get< tag::amr, tag::t0ref >())
     nref = static_cast<int>( g_inputdeck.get< tag::amr, tag::init >().size() );
 
   m_progMesh.start( "Preparing mesh", {{ CkNumPes(), CkNumPes(), nref,
@@ -420,6 +426,37 @@ Transporter::refined( std::size_t nelem, std::size_t npoin )
 }
 
 void
+Transporter::discresized()
+// *****************************************************************************
+// Reduction target: all Discretization chares have resized their own data after
+// mesh refinement
+// *****************************************************************************
+{
+  disc_resized();
+}
+
+void
+Transporter::workresized()
+// *****************************************************************************
+// Reduction target: all worker chares have resized their own data after
+// mesh refinement
+// *****************************************************************************
+{
+  work_resized();
+}
+
+void
+Transporter::resized()
+// *****************************************************************************
+// Reduction target: all worker chares have resized their own data after
+// mesh refinement
+// *****************************************************************************
+{
+  m_scheme.vol();
+  m_scheme.lhs();
+}
+
+void
 Transporter::bounds()
 // *****************************************************************************
 // Reduction target: all Solver (PEs) have computed their row bounds
@@ -445,8 +482,8 @@ Transporter::disccreated()
 {
   m_progMesh.end();
 
-  if (g_inputdeck.get< tag::amr, tag::initamr >()) {
-    m_print.section( "Refined mesh graph statistics" );
+  if (g_inputdeck.get< tag::amr, tag::t0ref >()) {
+    m_print.section( "Initially (t<0) refined mesh graph statistics" );
     m_print.item( "Number of tetrahedra", m_nelem );
     m_print.item( "Number of nodes", m_npoin );
     m_print.endsubsection();
@@ -461,7 +498,7 @@ Transporter::disccreated()
   if (sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG)
     m_scheme.doneDistFCTInserting< tag::bcast >();
 
-  m_scheme.vol< tag::bcast >();
+  m_scheme.vol();
 }
 
 void
@@ -533,18 +570,24 @@ Transporter::vol()
 // computing/receiving their part of the nodal volumes
 // *****************************************************************************
 {
-  m_scheme.totalvol< tag::bcast >();
+  m_scheme.totalvol();
 }
 
 void
-Transporter::totalvol( tk::real v )
+Transporter::totalvol( tk::real v, tk::real initial )
 // *****************************************************************************
 // Reduction target summing total mesh volume across all workers
-//! \param[in] v mesh volume
+//! \param[in] v Mesh volume summed across the whole problem
+//! \param[in] initial Sum of contributions from all chares. If larger than
+//!    zero, we are during time stepping and if zero we are during setup.
 // *****************************************************************************
 {
   m_V = v;
-  m_scheme.stat< tag::bcast >();
+
+  if (initial > 0.0)
+    m_scheme.stat< tag::bcast >();
+  else
+    m_scheme.resized();
 }
 
 void
@@ -654,14 +697,17 @@ Transporter::stat()
               std::to_string( static_cast<std::size_t>(m_avgstat[2]) ) );
 
   m_print.inthead( "Time integration", "Unstructured-mesh PDE solver testbed",
-     "Legend: it - iteration count\n"
-     "         t - time\n"
-     "        dt - time step size\n"
-     "       ETE - estimated time elapsed (h:m:s)\n"
-     "       ETA - estimated time for accomplishment (h:m:s)\n"
-     "       out - output-saved flags (F: field, D: diagnostics)\n",
-     "\n      it             t            dt        ETE        ETA   out\n"
-       " ---------------------------------------------------------------\n" );
+  "Legend: it - iteration count\n"
+  "         t - time\n"
+  "        dt - time step size\n"
+  "       ETE - estimated time elapsed (h:m:s)\n"
+  "       ETA - estimated time for accomplishment (h:m:s)\n"
+  "       out - output-saved flags\n"
+  "             F - field\n"
+  "             D - diagnostics\n"
+  "             H - h-refinement\n",
+  "\n      it             t            dt        ETE        ETA   out\n"
+    " ---------------------------------------------------------------\n" );
 
   m_scheme.setup( m_V );
 }
@@ -692,6 +738,10 @@ Transporter::advance( tk::real dt )
 // Reduction target computing the minimum of dt
 // *****************************************************************************
 {
+  // Enable SDAG waits for resize operations after mesh refinement
+  thisProxy.wait4resize();
+
+  // Comptue size of next time step
   m_scheme.advance( dt );
 }
 

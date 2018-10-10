@@ -111,6 +111,23 @@ class DG : public CBase_DG {
     //! Optionally refine/derefine mesh
     void refine();
 
+    //! Receive new mesh from refiner
+    void resize( const tk::UnsMesh::Chunk& chunk,
+                 const tk::UnsMesh::Coords& coord,
+                 const tk::Fields& u,
+                 const std::unordered_map< int,
+                         std::vector< std::size_t > >& msum );
+
+    //! Compute left hand side
+    void lhs();
+
+    //! Const-ref access to current solution
+    //! \param[in,out] u Reference to update with current solution
+    void solution( tk::Fields& u ) const { u = m_u; }
+
+    //! Resizing data sutrctures after mesh refinement has been completed
+    void resized();
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -265,9 +282,6 @@ class DG : public CBase_DG {
     //! Fill face geometry data along chare boundary
     void addGeoFace( const tk::UnsMesh::Face& t,
                      const std::array< std::size_t, 2 >& id );
-
-    //! Compute left hand side
-    void lhs();
 
     //! Compute right hand side and solve system
     void solve();
