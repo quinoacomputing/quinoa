@@ -46,7 +46,7 @@ bool
 ElemDiagnostics::compute( Discretization& d,
                           const std::size_t nchGhost,
                           const tk::Fields& geoElem,
-                          const tk::Fields& u )
+                          const tk::Fields& u ) const
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc.
 //! \param[in] d Discretization base class to read from
@@ -111,7 +111,7 @@ ElemDiagnostics::computeP0( Discretization& d,
                             const std::size_t nchGhost,
                             const tk::Fields& geoElem,
                             const tk::Fields& u,
-                            std::vector< std::vector< tk::real > >& diag )
+                            std::vector< std::vector< tk::real > >& diag ) const
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc. for DG(P0)
 //! \param[in] d Discretization base class to read from
@@ -156,7 +156,7 @@ ElemDiagnostics::computeP1( Discretization& d,
                             const std::size_t nchGhost,
                             const tk::Fields& geoElem,
                             const tk::Fields& u,
-                            std::vector< std::vector< tk::real > >& diag )
+                            std::vector< std::vector< tk::real > >& diag ) const
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc. for DG(P1)
 //! \param[in] d Discretization base class to read from
