@@ -142,11 +142,13 @@ class Transport {
               const tk::Fields& U,
               tk::Fields& R ) const
     {
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
-      Assert( U.nprop() == m_ncomp && R.nprop() == m_ncomp,
+      Assert( U.nprop() == ndof*m_ncomp && R.nprop() == ndof*m_ncomp,
               "Number of components in solution and right-hand side vector " 
-              "must equal "+ std::to_string(m_ncomp) );
+              "must equal "+ std::to_string(ndof*m_ncomp) );
       Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
               "size" );
 
@@ -159,7 +161,6 @@ class Transport {
       // set rhs to zero
       R.fill(0.0);
 
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       if (ndof == 1) {  // DG(P0)
 
         // compute internal surface flux integrals

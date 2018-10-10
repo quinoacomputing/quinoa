@@ -54,9 +54,9 @@ inciter::GaussQuadratureTet(
   std::array< std::array< tk::real, 4 >, 3 >& coordgp,
   std::array< tk::real, 4 >& wgp )
 // *****************************************************************************
-//  Five Gaussian quadrature points locations and weights for a tetrahedron
-//! \param[in,out] coordgp 3 spatial coordinates of 5 quadrature points
-//! \param[in,out] wgp 5 weights of quadrature points
+//  Four Gaussian quadrature points locations and weights for a tetrahedron
+//! \param[in,out] coordgp 3 spatial coordinates of 4 quadrature points
+//! \param[in,out] wgp 4 weights of quadrature points
 // *****************************************************************************
 {
   const tk::real c1 = 0.5854101966249685;
