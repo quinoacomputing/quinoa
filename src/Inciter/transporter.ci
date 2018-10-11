@@ -62,13 +62,12 @@ module transporter {
 
       entry void wait4stat() {
         when minstat_complete(), maxstat_complete(), sumstat_complete(),
-             pdfstat_complete(), com_complete() serial "stat" { stat(); } };
+             pdfstat_complete() serial "stat" { stat(); } };
 
       entry void minstat_complete();
       entry void maxstat_complete();
       entry void sumstat_complete();
       entry void pdfstat_complete();
-      entry void com_complete();
     }
 
   } // inciter::
