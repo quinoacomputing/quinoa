@@ -74,7 +74,6 @@ class SchemeBase {
     //! \return Charm++ array options object reference
     const CkArrayOptions& arrayoptions() { return m_bound; }
 
-  protected:
     //! Variant type listing all chare proxy types modeling the same concept
     using Proxy = boost::variant< CProxy_MatCG, CProxy_DiagCG, CProxy_DG >;
     //! Variant type listing all chare element proxy types (behind operator[])
@@ -82,6 +81,7 @@ class SchemeBase {
       boost::variant< CProxy_MatCG::element_t, CProxy_DiagCG::element_t,
                       CProxy_DG::element_t >;
 
+  protected:
     //! Variant storing one proxy to which this class is configured for
     Proxy proxy;
     //! Charm++ proxy to data and code common to all discretizations

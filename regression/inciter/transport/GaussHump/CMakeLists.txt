@@ -9,7 +9,7 @@ add_regression_test(gauss_hump_dg ${INCITER_EXECUTABLE}
                                exodiff.cfg gauss_hump.std.exo
                     ARGS -c gauss_hump.q -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE gauss_hump.std.exo
-                    BIN_RESULT out.0
+                    BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag.std
@@ -42,10 +42,10 @@ add_regression_test(gauss_hump_dg ${INCITER_EXECUTABLE}
                                  gauss_hump_pe4_u0.0.std.exo.1
                                  gauss_hump_pe4_u0.0.std.exo.2
                                  gauss_hump_pe4_u0.0.std.exo.3
-                    BIN_RESULT out.0
-                               out.1
-                               out.2
-                               out.3
+                    BIN_RESULT out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag.std
@@ -98,14 +98,14 @@ add_regression_test(gauss_hump_dg_u0.5 ${INCITER_EXECUTABLE}
                                  gauss_hump_pe4_u0.5.std.exo.5
                                  gauss_hump_pe4_u0.5.std.exo.6
                                  gauss_hump_pe4_u0.5.std.exo.7
-                    BIN_RESULT out.0
-                               out.1
-                               out.2
-                               out.3
-                               out.4
-                               out.5
-                               out.6
-                               out.7
+                    BIN_RESULT out.e-s.0.8.0
+                               out.e-s.0.8.1
+                               out.e-s.0.8.2
+                               out.e-s.0.8.3
+                               out.e-s.0.8.4
+                               out.e-s.0.8.5
+                               out.e-s.0.8.6
+                               out.e-s.0.8.7
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag.std
@@ -200,12 +200,46 @@ add_regression_test(gauss_hump_dg_u0.9_migr ${INCITER_EXECUTABLE}
                                  gauss_hump_pe4_u0.9.std.exo.37
                                  gauss_hump_pe4_u0.9.std.exo.38
                                  gauss_hump_pe4_u0.9.std.exo.39
-                    BIN_RESULT out.0 out.1 out.2 out.3 out.4 out.5 out.6 out.7
-                               out.8 out.9 out.10 out.11 out.12 out.13 out.14
-                               out.15 out.16 out.17 out.18 out.19 out.20 out.21
-                               out.22 out.23 out.24 out.25 out.26 out.27 out.28
-                               out.29 out.30 out.31 out.32 out.33 out.34 out.35
-                               out.36 out.37 out.38 out.39
+                    BIN_RESULT out.e-s.0.40.0
+                               out.e-s.0.40.1
+                               out.e-s.0.40.2
+                               out.e-s.0.40.3
+                               out.e-s.0.40.4
+                               out.e-s.0.40.5
+                               out.e-s.0.40.6
+                               out.e-s.0.40.7
+                               out.e-s.0.40.8
+                               out.e-s.0.40.9
+                               out.e-s.0.40.10
+                               out.e-s.0.40.11
+                               out.e-s.0.40.12
+                               out.e-s.0.40.13
+                               out.e-s.0.40.14
+                               out.e-s.0.40.15
+                               out.e-s.0.40.16
+                               out.e-s.0.40.17
+                               out.e-s.0.40.18
+                               out.e-s.0.40.19
+                               out.e-s.0.40.20
+                               out.e-s.0.40.21
+                               out.e-s.0.40.22
+                               out.e-s.0.40.23
+                               out.e-s.0.40.24
+                               out.e-s.0.40.25
+                               out.e-s.0.40.26
+                               out.e-s.0.40.27
+                               out.e-s.0.40.28
+                               out.e-s.0.40.29
+                               out.e-s.0.40.30
+                               out.e-s.0.40.31
+                               out.e-s.0.40.32
+                               out.e-s.0.40.33
+                               out.e-s.0.40.34
+                               out.e-s.0.40.35
+                               out.e-s.0.40.36
+                               out.e-s.0.40.37
+                               out.e-s.0.40.38
+                               out.e-s.0.40.39
                     BIN_DIFF_PROG_ARGS -m -q
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag.std
