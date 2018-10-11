@@ -3508,6 +3508,30 @@ struct sod_shocktube_info {
 using sod_shocktube =
   keyword< sod_shocktube_info, TAOCPP_PEGTL_STRING("sod_shocktube") >;
 
+struct sod_rotated_shocktube_info {
+  using code = Code< O >;
+  static std::string name() { return "Rotated Sod shock-tube"; }
+  static std::string shortDescription() { return
+    "Select the rotated Sod shock-tube test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the rotated Sod shock-tube test problem.
+    This the same as Sod shocktube but the geometry is rotated about X, Y, Z
+    each by 45 degrees (in that order) so that none of the domain boundary align
+    with any of the coordinate directions. The purpose of this test problem is
+    to test the correctness of the approximate Riemann solver and its shock and
+    interface capturing capabilities in an arbitrarily oriented geometry.
+    Example: "problem rotated_sod_shocktube". For more details on the Sod
+    problem, see G. A. Sod, "A Survey of Several Finite Difference Methods for
+    Systems of Nonlinear Hyperbolic Conservation Laws", J. Comput. Phys., 27
+    (1978) 1–31.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using rotated_sod_shocktube =
+  keyword< sod_rotated_shocktube_info,
+           TAOCPP_PEGTL_STRING("rotated_sod_shocktube") >;
+
 struct problem_info {
   using code = Code< r >;
   static std::string name() { return "Test problem"; }
@@ -3529,7 +3553,8 @@ struct problem_info {
                   + nl_energy_growth::string() + "\' | \'"
                   + rayleigh_taylor::string() + "\' | \'"
                   + taylor_green::string() + "\' | \'"
-                  + sod_shocktube::string() + '\'';
+                  + sod_shocktube::string() + "\' | \'"
+                  + rotated_sod_shocktube::string() + '\'';
     }
   };
 };

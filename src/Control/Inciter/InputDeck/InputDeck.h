@@ -153,7 +153,8 @@ class InputDeck :
                                    kw::bc_outlet,
                                    kw::bc_extrapolate,
                                    kw::gauss_hump,
-                                   kw::sod_shocktube >;
+                                   kw::sod_shocktube,
+                                   kw::rotated_sod_shocktube >;
 
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
