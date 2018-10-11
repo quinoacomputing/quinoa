@@ -78,11 +78,12 @@ namespace AMR {
 
                 // TODO: this is now a linear search..
                 // TODO: replace with a inverse map to search both ways
-                for (auto it = nodes.begin(); it != nodes.end(); ++it) {
-                    if (it->second == id) return it->first;
+                auto it = nodes.begin();
+                for (it = nodes.begin(); it != nodes.end(); ++it) {
+                    if (it->second == id) break;
                 }
-                trace_out << "PROBLEM FINDING ID " << id << std::endl;
-                assert(0);
+                assert(it != nodes.end());
+                return it->first;
             }
 
             /**
