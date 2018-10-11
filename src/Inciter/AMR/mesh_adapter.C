@@ -8,7 +8,8 @@
 
 namespace AMR {
 
-    // TODO: Make the coordinate stuff ifdefd out
+
+#ifdef ENABLE_NODE_STORE
     /**
      * @brief This accepts external coord arrays and allows the node_store to
      * track the new node positions as they are added
@@ -20,18 +21,16 @@ namespace AMR {
      */
     // TODO: remove graph size and use m.size()
     // TODO: remove these pointers
-    void mesh_adapter_t::init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t graph_size)
+    void mesh_adapter_t::init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z)
     {
         assert( m_x->size() == m_y->size() );
         assert( m_x->size() == m_z->size() );
-        assert( m_x->size() == graph_size );
 
         node_store.set_x(*m_x);
         node_store.set_y(*m_y);
         node_store.set_z(*m_z);
-        // TODO: can this be replaced by m_x.size()?
-        node_store.m_graphsize = graph_size;
     }
+#endif
 
     /** @brief Consume an existing mesh, and turn it into the AMRs
      * representations of tets and nodes

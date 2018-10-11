@@ -7,6 +7,7 @@
 #include "tet_store.h"
 
 // TODO: make this have a base class to support multiple generator schemes
+// TODO: if def this stuff out
 // using the policy design pattern
 namespace AMR {
 
@@ -18,15 +19,7 @@ namespace AMR {
             coord_type m_y;
             coord_type m_z;
 
-            // We really don't want people to pass this by value..
-            // (Because we store refs in here, which are consts..)
-            // NonCopyable & operator=(const NonCopyable&) = delete;
-            //node_store_t(const node_store_t& c) = delete;
-            //node_store_t& operator=(const node_store_t&) = delete;
-
             node_store_t() { } // default cons
-
-            size_t m_graphsize;
 
             void set_x(coord_type x_in) { m_x = x_in; }
             void set_y(coord_type y_in) { m_y = y_in; }
@@ -81,7 +74,9 @@ namespace AMR {
                 return m_x.size();
             }
 
-            // TODO: Document this
+            /**
+             * @brief Helper function to print node coordinates
+             */
             void print()
             {
                 for (size_t i = 0; i < size(); i++)
@@ -93,7 +88,6 @@ namespace AMR {
                         std::endl;
                 }
             }
-
 
             /**
              * @brief Function to add a new node
@@ -113,7 +107,6 @@ namespace AMR {
 
                 if (already_exists == -1) {
                     size_t return_node_id = add_coordinates(xc,yc,zc);
-                    m_graphsize++; // TODO: how best to deal with this?
                     trace_out << "Made new node " << return_node_id << std::endl;
                     return return_node_id;
                 }
@@ -152,37 +145,8 @@ namespace AMR {
                 return size()-1; // -1 because of the 0 index
             }
 
-            /**
-             * @brief Function to add a new node
-             *
-             * @param xc x val of node
-             * @param yc y val of node
-             * @param zc z val of node
-             *
-             * @return id of node added
-             */
-            // TODO: Why is there 2 add functions
-            size_t add_node(real_t xc, real_t yc, real_t zc) {
-
-                // Need to: Add to {x,y,z} Add any connectivity?
-
-                // Check if the node already exists
-                int already_exists = check_node_exists(xc,yc,zc);
-
-                if (already_exists == -1) {
-                    size_t return_node_id = add_coordinates(xc,yc,zc);
-                    m_graphsize++; // TODO: how to deal with this?
-                    return return_node_id;
-                }
-                else {
-                    trace_out << "--> Reusing " << already_exists << std::endl;
-                    return static_cast<size_t>(already_exists);
-                }
-
-            }
-
             // TODO: Remove all calls to this as it's fairly expensive...
-            // TODO: Find a more cost effective way to implement this
+                //  Find a more cost effective way to implement this
                 // Most likely change data structure for a faster search
                 // This is also going to be a potential problem in async parallel
             /**
@@ -252,4 +216,4 @@ namespace AMR {
     }; // end class
 }
 
-#endif  // guard
+#endif  // AMR_node_store
