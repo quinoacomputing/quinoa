@@ -455,9 +455,6 @@ Transporter::disccreated()
   }
 
   m_refiner.sendProxy();
-  m_progWork.start( "Preparing workers",
-                    {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
-  m_sorter.createWorkers();
 
   auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
   if (sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG)
@@ -521,11 +518,12 @@ Transporter::diagHeader()
 void
 Transporter::comfinal()
 // *****************************************************************************
-// Reduction target indicating that the communication has been established among
-// PEs
+// Reduction target indicating that communication maps have been setup
 // *****************************************************************************
 {
-  com_complete();
+  CkStartLB();  // start load balancing
+  m_progWork.end();
+  m_scheme.setup( m_V );
 }
 
 void
@@ -639,9 +637,6 @@ Transporter::stat()
 // Echo diagnostics on mesh statistics
 // *****************************************************************************
 {
-  CkStartLB();
-  m_progWork.end();
-
   m_print.diag( "Mesh statistics: min/max/avg(edgelength) = " +
                 std::to_string( m_minstat[0] ) + " / " +
                 std::to_string( m_maxstat[0] ) + " / " +
@@ -665,7 +660,10 @@ Transporter::stat()
      "\n      it             t            dt        ETE        ETA   out\n"
        " ---------------------------------------------------------------\n" );
 
-  m_scheme.setup( m_V );
+  m_progWork.start( "Preparing workers",
+                    {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
+  // Create "derived-class" workers
+  m_sorter.createWorkers();
 }
 
 void
