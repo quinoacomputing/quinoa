@@ -68,7 +68,9 @@ class Refiner : public CBase_Refiner {
     static void registerReducers();
 
     //! Start mesh refinement (during time stepping, t>0)
-    void dtref( tk::real t, const SchemeBase::Proxy& s );
+    void dtref( tk::real t,
+                const SchemeBase::Proxy& s,
+                const std::map< int, std::vector< std::size_t > >& bnode );
 
     //! Receive boundary edges from all PEs (including this one)
     void addBndEdges( CkReductionMsg* msg );
@@ -258,7 +260,8 @@ class Refiner : public CBase_Refiner {
     void updateBndMesh( const std::unordered_set< std::size_t >& old,
                         const std::unordered_set< std::size_t >& ref );
 
-    //! Generate boundary data structures after mesh refinement
+    //! \brief Generate boundary data structure used to update refined
+    //!   boundary faces and nodes assigned to side sets
     BndFaces boundary();
 
     //! Regenerate boundary faces after mesh refinement step
@@ -291,14 +294,16 @@ class Refiner : public CBase_Refiner {
       const tk::UnsMesh::Coords& Coord;
       const tk::Fields& U;
       const std::unordered_map< int, std::vector< std::size_t > >& Msum;
+      const std::map< int, std::vector< std::size_t > > Bnode;
       Resize( const tk::UnsMesh::Chunk& chunk,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& u,
               const std::unordered_map< int,
-                      std::vector< std::size_t > >& msum )
-        : Chunk(chunk), Coord(coord), U(u), Msum(msum) {}
+                      std::vector< std::size_t > >& msum,
+              const std::map< int, std::vector< std::size_t > >& bnode )
+        : Chunk(chunk), Coord(coord), U(u), Msum(msum), Bnode(bnode) {}
       template< typename P > void operator()( const P& p ) const {
-        p.ckLocal()->resize( Chunk, Coord, U, Msum );
+        p.ckLocal()->resize( Chunk, Coord, U, Msum, Bnode );
       }
     };
 };

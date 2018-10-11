@@ -126,7 +126,8 @@ class MatCG : public CBase_MatCG {
                  const tk::UnsMesh::Coords& coord,
                  const tk::Fields& u,
                  const std::unordered_map< int,
-                         std::vector< std::size_t > >& msum );
+                         std::vector< std::size_t > >& msum,
+                 const std::map< int, std::vector< std::size_t > >& bnode );
 
     //! Const-ref access to current solution
     //! \param[in,out] u Reference to update with current solution

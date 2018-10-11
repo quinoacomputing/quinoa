@@ -682,7 +682,7 @@ DiagCG::refine()
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
-    d->Ref()->dtref( d->T(), thisProxy );
+    d->Ref()->dtref( d->T(), thisProxy, m_fd.Bnode() );
 
   } else {      // do not refine
 
@@ -698,13 +698,16 @@ DiagCG::resize( const tk::UnsMesh::Chunk& chunk,
                 const tk::UnsMesh::Coords& coord,
                 const tk::Fields& u,
                 const std::unordered_map< int,
-                      std::vector< std::size_t > >& msum )
+                      std::vector< std::size_t > >& msum,
+                const std::map< int, std::vector< std::size_t > >& bnode )
 // *****************************************************************************
 //  Receive new mesh from Refiner
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
 //! \param[in] coord New mesh node coordinates
 //! \param[in] u New solution on new mesh
 //! \param[in] msum New node communication map
+//! \param[in] bnode Map of boundary-node lists mapped to corresponding
+//!   side set ids for this mesh chunk
 // *****************************************************************************
 {
   auto d = Disc();
@@ -735,6 +738,9 @@ DiagCG::resize( const tk::UnsMesh::Chunk& chunk,
   m_lhs.resize( npoin, nprop );
   m_rhs.resize( npoin, nprop );
   m_dif.resize( npoin, nprop );
+
+  // Update physical-boundary node lists
+  m_fd.Bnode() = bnode;
 
   // Resize communication buffers
   resizeComm();

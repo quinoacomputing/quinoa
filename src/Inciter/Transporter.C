@@ -743,7 +743,7 @@ Transporter::stat()
   "       out - output-saved flags\n"
   "             F - field\n"
   "             D - diagnostics\n"
-  "             H - h-refinement\n",
+  "             h - h-refinement\n",
   "\n      it             t            dt        ETE        ETA   out\n"
     " ---------------------------------------------------------------\n" );
 
