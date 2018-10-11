@@ -295,7 +295,7 @@ namespace AMR {
 
                     // TODO: Should this be a reference?
                     AMR::Refinement_Case refinement_case = tet_store.get_refinement_case(tet_id);
-                    int normal = tet_store.get_is_normal(tet_id);
+                    int normal = tet_store.is_normal(tet_id);
 
                     trace_out << "Checking " << tet_id <<
                         " ref case " << refinement_case <<

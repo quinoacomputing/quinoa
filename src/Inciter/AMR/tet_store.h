@@ -15,10 +15,10 @@ namespace AMR {
 
     class tet_store_t {
         public:
-            // TODO: Remove this (center_tets) data structure!
-            // This is a horrendous code abuse, and I'm sorry. I'm fairly
-            // certain we'll be re-writing how this detection is done and just
-            // wanted a quick-fix so I could move on :(
+            // FIXME: Remove this (center_tets) data structure!
+                // This is a horrendous code abuse, and I'm sorry. I'm fairly
+                // certain we'll be re-writing how this detection is done and just
+                // wanted a quick-fix so I could move on :(
             std::set<size_t> center_tets; // Store for 1:4 centers
 
             AMR::active_element_store_t active_elements;
@@ -31,17 +31,16 @@ namespace AMR {
             std::vector< std::size_t > active_tetinpoel;
             std::set< std::size_t > active_nodes;
 
-            // TODO: I'd like this on the stack, but still pass an initial val
             AMR::id_generator_t id_generator;
 
             std::unordered_set<size_t> intermediate_list;
             // Public so it can be trivially grabbed for looping over.
             std::vector< std::size_t > active_id_mapping;
-            // TODO: implement iterators at some point..
+
             tet_list_t tets;
             AMR::edge_store_t edge_store;
 
-            // TODO: Make this private at some point
+            // TODO: Make this (and others) private at some point
             AMR::marked_refinements_store_t marked_refinements;
 
             /**
@@ -53,36 +52,71 @@ namespace AMR {
                 return tets.size();
             }
 
-            // TODO: Document this
+            /**
+             * @brief Helper to check if an given tet is active
+             *
+             * @param id id of the tool to check
+             *
+             * @return active status of tet
+             */
             bool is_active(size_t id)
             {
                 return active_elements.exists(id);
             }
 
-            // TODO: Document this
+            /**
+             * @brief Return refinement case for a given id
+             *
+             * @param id id to get case for
+             *
+             * @return Refinement case for id
+             */
             Refinement_Case get_refinement_case(size_t id)
             {
                 return data(id).refinement_case;
             }
 
-            // TODO: Document this
-            void set_normal(size_t id, int val)
+            /**
+             * @brief Set value of normal
+             *
+             * @param id Id to set
+             * @param val true/false to set
+             */
+            void set_normal(size_t id, bool val)
             {
                 data(id).normal = val;
             }
 
-            int get_is_normal(size_t id)
+            /**
+             * @brief Get normal value for given id
+             *
+             * @param id Id of tet to check
+             *
+             * @return true/false of normal value
+             */
+            bool is_normal(size_t id)
             {
+                // should the underlying type be bool?
                 return data(id).normal;
             }
 
-            // TODO: Document this
+            /**
+             * @brief set a tet as normal
+             *
+             * @param id id to set
+             */
             void mark_normal(size_t id)
             {
-                set_normal(id, 1);
+                set_normal(id, true);
             }
 
-            // TODO: Document this
+            /**
+             * @brief get data for a tet from master element
+             *
+             * @param id id of tet to get
+             *
+             * @return state of the tet
+             */
             Refinement_State& data(size_t id)
             {
                 return master_elements.get(id);
@@ -96,7 +130,6 @@ namespace AMR {
              * @param id Id of the added tet
              * @param t The tet element
              */
-            // TODO: Rename this?
             void insert(size_t id, tet_t t)
             {
                 assert( !exists(id) );
@@ -442,24 +475,6 @@ namespace AMR {
                 return active_tetinpoel;
             }
 
-            // TODO: Remove this as it shouldn't make a difference..but it's good to check
-            std::vector< real_t > get_active_coordinate_array(std::vector<real_t> in)
-            {
-                std::vector< real_t > active;
-
-                for (size_t i = 0; i < in.size(); i++)
-                {
-                    // If an active tet has an edge which contains this i value
-                    if ( active_nodes.find(i) != active_nodes.end() )
-                    {
-                        active.push_back( in[i] );
-                    }
-                }
-
-                trace_out << "in size " << in.size() << " active size " << active.size() << std::endl;
-                return active;
-            }
-
             // TODO: These mark methods can probably be a single one to which a
                 // Refinement_Case is passed, depending on how extra edges are marked
             /**
@@ -471,35 +486,39 @@ namespace AMR {
             {
                 // TODO: If none of these methods need extra markings, then
                 // change them into a single method
-                // TODO: Mark extra edges
                 trace_out << "Mark " << tet_id << " as 1:2" << std::endl;
                 marked_refinements.add(tet_id, Refinement_Case::one_to_two);
             }
 
             /**
-             * @brief Function to mark a given tet as needing a 1:4 refinement
+             * @brief Mark a given tet as needing a 1:4 refinement
              *
              * @param tet_id The tet to mark
              */
             void mark_one_to_four(size_t tet_id)
             {
-                // TODO: Mark extra edges
                 trace_out << "Mark " << tet_id << " as 1:4" << std::endl;
                 marked_refinements.add(tet_id, Refinement_Case::one_to_four);
             }
 
-            // TODO: Document this
+            /**
+             * @brief Mark a given tet as needing a 2:8 refinement
+             *
+             * @param tet_id id of tet to mark
+             */
             void mark_two_to_eight(size_t tet_id)
             {
-                // TODO: Mark extra edges
                 trace_out << "Mark " << tet_id << " as 2:8" << std::endl;
                 marked_refinements.add(tet_id, Refinement_Case::two_to_eight);
             }
 
-            // TODO: Document this
+            /**
+             * @brief Mark a given tet as needing a 4:8 refinement
+             *
+             * @param tet_id id of tet to mark
+             */
             void mark_four_to_eight(size_t tet_id)
             {
-                // TODO: Mark extra edges
                 trace_out << "Mark " << tet_id << " as 4:8" << std::endl;
                 marked_refinements.add(tet_id, Refinement_Case::four_to_eight);
             }
@@ -511,7 +530,6 @@ namespace AMR {
              */
             void mark_one_to_eight(size_t tet_id)
             {
-                // TODO: Mark extra edges
                 trace_out << "Mark " << tet_id << " as 1:8" << std::endl;
                 marked_refinements.add(tet_id, Refinement_Case::one_to_eight);
             }
@@ -689,7 +707,7 @@ namespace AMR {
              * @brief Delete existing edges. Iterate over the tets, and add them to
              * the edge store.
              */
-            // TODO: Rename this
+            // FIXME: Better name for this?
             void generate_edges() {
 
                 // Go over tets, and generate all known edges
