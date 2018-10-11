@@ -4499,6 +4499,61 @@ struct amr_error_info {
 };
 using amr_error = keyword< amr_error_info, TAOCPP_PEGTL_STRING("error") >;
 
+struct amr_t0ref_info {
+  static std::string name() { return "Mesh refinement at t<0"; }
+  static std::string shortDescription() { return
+    "Enable mesh refinement at t<0"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to enable initial mesh refinement, which can be
+    configured to perform multiple levels of mesh refinement based on various
+    refinement criteria and configuration settings.)";
+  }
+  struct expect {
+    using type = bool;
+    static std::string choices() { return "true | false"; }
+    static std::string description() { return "string"; }
+  };
+};
+using amr_t0ref = keyword< amr_t0ref_info, TAOCPP_PEGTL_STRING("t0ref") >;
+
+struct amr_dtref_info {
+  static std::string name() { return "Mesh refinement at t>0"; }
+  static std::string shortDescription() { return
+    "Enable mesh refinement at t>0"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to enable soution-adaptive mesh refinement during "
+    "time stepping.)";
+  }
+  struct expect {
+    using type = bool;
+    static std::string choices() { return "true | false"; }
+    static std::string description() { return "string"; }
+  };
+};
+using amr_dtref = keyword< amr_dtref_info, TAOCPP_PEGTL_STRING("dtref") >;
+
+struct amr_dtfreq_info {
+  static std::string name() { return "Mesh refinement frequency"; }
+  static std::string shortDescription() { return
+    "Set mesh refinement frequency during time stepping"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to configure the frequency of mesh refinement
+    during time stepping. The default is 3, which means that mesh refinement
+    will be performed every 3rd time step.)";
+  }
+  struct expect {
+    using type = std::size_t;
+    static constexpr type lower = 1;
+    static constexpr type upper = std::numeric_limits< tk::real >::digits10 + 1;
+    static std::string description() { return "int"; }
+    static std::string choices() {
+      return "integer between [" + std::to_string(lower) + "..." +
+             std::to_string(upper) + "] (both inclusive)";
+    }
+  };
+};
+using amr_dtfreq = keyword< amr_dtfreq_info, TAOCPP_PEGTL_STRING("dtfreq") >;
+
 struct amr_info {
   static std::string name() { return "AMR"; }
   static std::string shortDescription() { return
@@ -4507,11 +4562,14 @@ struct amr_info {
     R"(This keyword is used to introduce the amr ... end block, used to
     configure adaptive mesh refinement. Keywords allowed
     in this block: )" + std::string("\'")
+    + amr_t0ref::string() + "\' | \'"
+    + amr_dtref::string() + "\' | \'"
+    + amr_dtfreq::string() + "\' | \'"
+    + amr_initial::string() + "\' | \'"
     + amr_refvar::string() + "\' | \'"
     + amr_error::string() + "\' | \'"
     + amr_coordref::string() + "\' | \'"
-    + amr_initref::string() + "\' | \'"
-    + amr_initial::string() + "\'.";
+    + amr_initref::string() + "\'.";
   }
 };
 using amr = keyword< amr_info, TAOCPP_PEGTL_STRING("amr") >;

@@ -35,7 +35,7 @@ add_regression_test(amr_init_u1_trans_matcg ${INCITER_EXECUTABLE}
                                exodiff.cfg slot_cyl_pe1_u0.0.std.exo
                     ARGS -c slot_cyl_amr.q -i unitsquare_01_955.exo -v
                     BIN_BASELINE slot_cyl_pe1_u0.0.std.exo
-                    BIN_RESULT out.0
+                    BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     LABELS amr)
@@ -47,7 +47,7 @@ add_regression_test(amr_init_u1_trans_diagcg ${INCITER_EXECUTABLE}
                                diag_diagcg.std
                     ARGS -c slot_cyl_amr_diagcg.q -i unitsquare_01_955.exo -v
                     BIN_BASELINE slot_cyl_diagcg_pe1_u0.0.std.exo
-                    BIN_RESULT out.0
+                    BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_diagcg.std
                     TEXT_RESULT diag
@@ -62,7 +62,7 @@ add_regression_test(amr_init_u1_trans_reord_diagcg ${INCITER_EXECUTABLE}
                     ARGS -c slot_cyl_amr_reord_diagcg.q
                          -i unitsquare_01_955.exo -v
                     BIN_BASELINE slot_cyl_diagcg_pe1_u0.0.std.exo
-                    BIN_RESULT out.0
+                    BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_diagcg.std
                     TEXT_RESULT diag
@@ -76,7 +76,7 @@ add_regression_test(amr_init_u1_compflow_dg ${INCITER_EXECUTABLE}
                                exodiff_dg.cfg vortical_flow_dg.std.exo
                     ARGS -c vortical_flow_dg.q -i unitcube_1k.exo -v
                     BIN_BASELINE vortical_flow_dg.std.exo
-                    BIN_RESULT out.0
+                    BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_dg.std
@@ -91,7 +91,7 @@ add_regression_test(amr_init_u1_compflow_reord_dg ${INCITER_EXECUTABLE}
                                exodiff_dg.cfg vortical_flow_dg.std.exo
                     ARGS -c vortical_flow_reord_dg.q -i unitcube_1k.exo -v
                     BIN_BASELINE vortical_flow_dg.std.exo
-                    BIN_RESULT out.0
+                    BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_dg.std
@@ -114,10 +114,10 @@ add_regression_test(amr_init_u1_trans_matcg ${INCITER_EXECUTABLE}
                                  slot_cyl_pe4_u0.0.std.exo.1
                                  slot_cyl_pe4_u0.0.std.exo.2
                                  slot_cyl_pe4_u0.0.std.exo.3
-                    BIN_RESULT out.0
-                               out.1
-                               out.2
-                               out.3
+                    BIN_RESULT out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     LABELS amr)
@@ -135,10 +135,10 @@ add_regression_test(amr_init_u1_trans_diagcg ${INCITER_EXECUTABLE}
                                  slot_cyl_diagcg_pe4_u0.0.std.exo.1
                                  slot_cyl_diagcg_pe4_u0.0.std.exo.2
                                  slot_cyl_diagcg_pe4_u0.0.std.exo.3
-                    BIN_RESULT out.0
-                               out.1
-                               out.2
-                               out.3
+                    BIN_RESULT out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     LABELS amr)
@@ -166,14 +166,14 @@ add_regression_test(amr_init_u1_trans_matcg_u0.5 ${INCITER_EXECUTABLE}
                                  slot_cyl_pe4_u0.5.std.exo.5
                                  slot_cyl_pe4_u0.5.std.exo.6
                                  slot_cyl_pe4_u0.5.std.exo.7
-                    BIN_RESULT out.0
-                               out.1
-                               out.2
-                               out.3
-                               out.4
-                               out.5
-                               out.6
-                               out.7
+                    BIN_RESULT out.e-s.0.8.0
+                               out.e-s.0.8.1
+                               out.e-s.0.8.2
+                               out.e-s.0.8.3
+                               out.e-s.0.8.4
+                               out.e-s.0.8.5
+                               out.e-s.0.8.6
+                               out.e-s.0.8.7
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     LABELS amr)
@@ -202,14 +202,14 @@ add_regression_test(amr_init_u2_trans_matcg_u0.5 ${INCITER_EXECUTABLE}
                                  slot_cyl_uni2_pe4_u0.5.std.exo.5
                                  slot_cyl_uni2_pe4_u0.5.std.exo.6
                                  slot_cyl_uni2_pe4_u0.5.std.exo.7
-                    BIN_RESULT out.0
-                               out.1
-                               out.2
-                               out.3
-                               out.4
-                               out.5
-                               out.6
-                               out.7
+                    BIN_RESULT out.e-s.0.8.0
+                               out.e-s.0.8.1
+                               out.e-s.0.8.2
+                               out.e-s.0.8.3
+                               out.e-s.0.8.4
+                               out.e-s.0.8.5
+                               out.e-s.0.8.6
+                               out.e-s.0.8.7
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     LABELS amr)
@@ -236,14 +236,14 @@ add_regression_test(amr_init_u1_trans_diagcg_u0.5 ${INCITER_EXECUTABLE}
                                  slot_cyl_diagcg_pe4_u0.5.std.exo.5
                                  slot_cyl_diagcg_pe4_u0.5.std.exo.6
                                  slot_cyl_diagcg_pe4_u0.5.std.exo.7
-                    BIN_RESULT out.0
-                               out.1
-                               out.2
-                               out.3
-                               out.4
-                               out.5
-                               out.6
-                               out.7
+                    BIN_RESULT out.e-s.0.8.0
+                               out.e-s.0.8.1
+                               out.e-s.0.8.2
+                               out.e-s.0.8.3
+                               out.e-s.0.8.4
+                               out.e-s.0.8.5
+                               out.e-s.0.8.6
+                               out.e-s.0.8.7
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     LABELS amr)
