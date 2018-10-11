@@ -116,7 +116,7 @@ namespace AMR {
 
             /**
              * @brief Function to check if master element entry exists. Useful
-             * for debugging access to invalid elements, or trying to re-create 
+             * for debugging access to invalid elements, or trying to re-create
              * an element which already exists
              *
              * @param id Id to check
@@ -134,14 +134,30 @@ namespace AMR {
                 return false;
             }
 
-            // TODO: document this
-            void erase(size_t id) {
-                master_elements.erase(id);
-            }
-
+            /**
+             * @brief Getting function to access parent of a given ID
+             *
+             * @param id ID to find parent of
+             *
+             * @return ID of parent
+             */
             size_t get_parent(size_t id)
             {
                 return get(id).parent_id;
+            }
+
+            /**
+             * @brief Getting function to find child id for a given parent
+             *
+             * @param parent_id ID of parent
+             * @param offset Offset into child list (i.e child number)
+             *
+             * @return ID of the child
+             */
+            size_t get_child_id(size_t parent_id, size_t offset)
+            {
+                assert(offset < get(parent_id).children.size());
+                return get(parent_id).children[offset];
             }
 
             /**
@@ -153,7 +169,13 @@ namespace AMR {
                 return master_elements.size();
             }
 
-            // TODO: Document
+            /**
+             * @brief Add child to a given node, to track the relationship and
+             * allow graph traversal
+             *
+             * @param parent_id ID of the parent
+             * @param child_id ID of the child
+             */
             void add_child(size_t parent_id, size_t child_id)
             {
                 get(parent_id).children.push_back(child_id);
@@ -161,31 +183,16 @@ namespace AMR {
                 assert( get(parent_id).num_children <= 8);
             }
 
-            size_t get_child_id(size_t parent_id, size_t offset)
-            {
-                assert(offset < get(parent_id).children.size());
-                return get(parent_id).children[offset];
+            /**
+             * @brief  Remove id from master_element (relevant for
+             * de-refinement)
+             *
+             * @param id ID of element to remove
+             */
+            void erase(size_t id) {
+                master_elements.erase(id);
             }
 
-            void replace(size_t old_id, size_t new_id)
-            {
-                // Swap id out in map
-                auto i = master_elements.find(old_id);
-                auto value = i->second;
-                master_elements.erase(i);
-                master_elements[new_id] = value;
-
-                // Replace child reference too
-                auto children = get(new_id).children;
-                std::replace (children.begin(), children.end(), old_id, new_id);
-
-                // Iterate over children and update their parent
-                for (auto c : children)
-                {
-                    get(c).parent_id = new_id;
-                }
-
-            }
 
     };
 }

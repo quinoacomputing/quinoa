@@ -726,50 +726,6 @@ namespace AMR {
                 return master_elements.get_parent(id);
             }
 
-            void update_id(size_t old_id, size_t new_id)
-            {
-                // General map replacement idiom. VERY slow. Map keys are just
-                // not meant to be changed..basically guarntees a rebalance
-                //auto i = m.find(old);
-                //value = i->second;
-                //m.erase(i);
-                //m[new_id] = value;
-
-                // Update master_elements
-                // TODO: need to search children too
-                master_elements.replace(old_id, new_id);
-
-                // Update active elements
-                active_elements.replace(old_id, new_id);
-
-                // Update tets
-                replace(old_id, new_id);
-
-                // Update marked_refinements
-                marked_refinements.replace(old_id, new_id);
-
-                // Update edges..
-                // TODO: This
-            }
-
-            void replace(size_t old_id, size_t new_id)
-            {
-                // Swap id out in map
-                auto i = tets.find(old_id);
-                auto value = i->second;
-                tets.erase(i);
-                tets[new_id] = value;
-            }
-
-            /*
-            size_t find_intermediate_nodes(size_t A, size_t B)
-            {
-                // Find the edge that forms
-                // Find a (any?) tet which uses that edge
-                // See if it has children
-                return edge_store.find_intermediate_nodes(A, B);
-            }
-            */
     };
 }
 
