@@ -11,6 +11,7 @@
 
 #include <vector>
 #include <map>
+#include <set>
 #include <algorithm>
 #include <iterator>
 
@@ -148,14 +149,11 @@ operator+=( std::vector< T, Allocator >& dst,
 template< class C1, class C2 >
 bool keyEqual( const C1& a, const C2& b ) {
   Assert( a.size() == b.size(), "Size mismatch comparing containers" );
-  auto ia = a.cbegin();
-  auto ib = b.cbegin();
-  while (ia != a.cend()) {
-    if (ia->first != ib->first) return false;
-    ++ia;
-    ++ib;
-  }
-  return true;
+  std::set< typename C1::key_type > sorted_keys_of_a;
+  for (const auto& c : a) sorted_keys_of_a.insert( c.first );
+  std::set< typename C2::key_type > sorted_keys_of_b;
+  for (const auto& c : b) sorted_keys_of_b.insert( c.first );
+  return sorted_keys_of_a == sorted_keys_of_b;
 }
 
 // *****************************************************************************

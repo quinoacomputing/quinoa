@@ -36,6 +36,8 @@ module dg {
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u );
       entry [reductiontarget] void advance( tk::real newdt );
+      entry void resized();
+      entry void lhs();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -56,7 +58,8 @@ module dg {
         when ownsol_complete(), comsol_complete() serial "sol" { solve(); } };
 
       entry void wait4eval() {
-        when diag_complete(), ref_complete() serial "eval" { eval(); } };
+        when diag_complete(), ref_complete(), lhs_complete(),
+             resize_complete() serial "eval" { eval(); } };
 
       entry void ownghost_complete();
       entry void reqghost_complete();
@@ -64,6 +67,8 @@ module dg {
       entry void comsol_complete();
       entry void diag_complete();
       entry void ref_complete();
+      entry void lhs_complete();
+      entry void resize_complete();
     };
 
   } // inciter::

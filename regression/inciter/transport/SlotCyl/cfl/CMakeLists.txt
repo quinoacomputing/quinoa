@@ -9,7 +9,7 @@ add_regression_test(cfl ${INCITER_EXECUTABLE}
                                slot_cyl_cfl_pe1_u0.0.std.exo
                     ARGS -c slot_cyl_cfl.q -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE slot_cyl_cfl_pe1_u0.0.std.exo
-                    BIN_RESULT out.0
+                    BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff.cfg)
 
 if (HAS_OMEGA_H)
@@ -19,7 +19,7 @@ if (HAS_OMEGA_H)
                                  slot_cyl_cfl_osh10_pe1.std.exo
                       ARGS -c slot_cyl_cfl.q -i box10.osh -v
                       BIN_BASELINE slot_cyl_cfl_osh10_pe1.std.exo
-                      BIN_RESULT out.0
+                      BIN_RESULT out.e-s.0.1.0
                       BIN_DIFF_PROG_CONF exodiff.cfg)
 
   # parallel with nranks = nparts
@@ -31,7 +31,7 @@ if (HAS_OMEGA_H)
                       ARGS -c slot_cyl_cfl.q -i box10_2.osh -v
                       BIN_BASELINE slot_cyl_cfl_osh10_pe2.std.exo.0
                                    slot_cyl_cfl_osh10_pe2.std.exo.1
-                      BIN_RESULT out.0 out.1
+                      BIN_RESULT out.e-s.0.2.0 out.e-s.0.2.1
                       BIN_DIFF_PROG_CONF exodiff.cfg)
 
 #  # parallel with nranks > nparts
@@ -48,7 +48,10 @@ if (HAS_OMEGA_H)
 #                                   slot_cyl_cfl_osh10_pe4.std.exo.2
 #                                   slot_cyl_cfl_osh10_pe4.std.exo.3
 #                      BIN_DIFF_PROG_ARGS -m
-#                      BIN_RESULT out.0 out.1 out.2 out.3
+#                      BIN_RESULT out.e-s.0.4.0
+#                                 out.e-s.0.4.1
+#                                 out.e-s.0.4.2
+#                                 out.e-s.0.4.3
 #                      BIN_DIFF_PROG_CONF exodiff.cfg)
 endif()
 
@@ -65,10 +68,10 @@ add_regression_test(cfl ${INCITER_EXECUTABLE}
                                  slot_cyl_cfl_pe4_u0.0.std.exo.1
                                  slot_cyl_cfl_pe4_u0.0.std.exo.2
                                  slot_cyl_cfl_pe4_u0.0.std.exo.3
-                    BIN_RESULT out.0
-                               out.1
-                               out.2
-                               out.3
+                    BIN_RESULT out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg)
 
@@ -79,11 +82,14 @@ add_regression_test(cfl_u0.7 ${INCITER_EXECUTABLE}
                     INPUTFILES slot_cyl_cfl.q unitsquare_01_3.6k.exo exodiff.cfg
                                slot_cyl_cfl_pe1_u0.7.std.exo.0
                                slot_cyl_cfl_pe1_u0.7.std.exo.1
+                               slot_cyl_cfl_pe1_u0.7.std.exo.2
                     ARGS -c slot_cyl_cfl.q -i unitsquare_01_3.6k.exo -v -u 0.7
                     BIN_BASELINE slot_cyl_cfl_pe1_u0.7.std.exo.0
                                  slot_cyl_cfl_pe1_u0.7.std.exo.1
-                    BIN_RESULT out.0
-                               out.1
+                                 slot_cyl_cfl_pe1_u0.7.std.exo.2
+                    BIN_RESULT out.e-s.0.3.0
+                               out.e-s.0.3.1
+                               out.e-s.0.3.2
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg)
 
@@ -111,14 +117,14 @@ add_regression_test(cfl_u0.5 ${INCITER_EXECUTABLE}
                                  slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.5
                                  slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.6
                                  slot_cyl_cfl_diagcg_pe4_u0.5.std.exo.7
-                    BIN_RESULT out.0
-                               out.1
-                               out.2
-                               out.3
-                               out.4
-                               out.5
-                               out.6
-                               out.7
+                    BIN_RESULT out.e-s.0.8.0
+                               out.e-s.0.8.1
+                               out.e-s.0.8.2
+                               out.e-s.0.8.3
+                               out.e-s.0.8.4
+                               out.e-s.0.8.5
+                               out.e-s.0.8.6
+                               out.e-s.0.8.7
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg)
 
@@ -210,12 +216,46 @@ add_regression_test(cfl_u0.9_migr ${INCITER_EXECUTABLE}
                                  slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.37
                                  slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.38
                                  slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.39
-                    BIN_RESULT out.0 out.1 out.2 out.3 out.4 out.5 out.6 out.7
-                               out.8 out.9 out.10 out.11 out.12 out.13 out.14
-                               out.15 out.16 out.17 out.18 out.19 out.20 out.21
-                               out.22 out.23 out.24 out.25 out.26 out.27 out.28
-                               out.29 out.30 out.31 out.32 out.33 out.34 out.35
-                               out.36 out.37 out.38 out.39
+                    BIN_RESULT out.e-s.0.40.0
+                               out.e-s.0.40.1
+                               out.e-s.0.40.2
+                               out.e-s.0.40.3
+                               out.e-s.0.40.4
+                               out.e-s.0.40.5
+                               out.e-s.0.40.6
+                               out.e-s.0.40.7
+                               out.e-s.0.40.8
+                               out.e-s.0.40.9
+                               out.e-s.0.40.10
+                               out.e-s.0.40.11
+                               out.e-s.0.40.12
+                               out.e-s.0.40.13
+                               out.e-s.0.40.14
+                               out.e-s.0.40.15
+                               out.e-s.0.40.16
+                               out.e-s.0.40.17
+                               out.e-s.0.40.18
+                               out.e-s.0.40.19
+                               out.e-s.0.40.20
+                               out.e-s.0.40.21
+                               out.e-s.0.40.22
+                               out.e-s.0.40.23
+                               out.e-s.0.40.24
+                               out.e-s.0.40.25
+                               out.e-s.0.40.26
+                               out.e-s.0.40.27
+                               out.e-s.0.40.28
+                               out.e-s.0.40.29
+                               out.e-s.0.40.30
+                               out.e-s.0.40.31
+                               out.e-s.0.40.32
+                               out.e-s.0.40.33
+                               out.e-s.0.40.34
+                               out.e-s.0.40.35
+                               out.e-s.0.40.36
+                               out.e-s.0.40.37
+                               out.e-s.0.40.38
+                               out.e-s.0.40.39
                     BIN_DIFF_PROG_ARGS -m -q
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     LABELS migration)
@@ -229,10 +269,10 @@ if (HAS_ROOT)
                       INPUTFILES slot_cyl_cfl_root.q unitsquare_01_3.6k.exo
                                  exodiff.cfg  slot_cyl_cfl_pe1_u0.0.std.exo
 	              ARGS -c slot_cyl_cfl_root.q -i unitsquare_01_3.6k.exo -v
-		      FILECONV_INPUT out.0.root
-		      FILECONV_RESULT out.0.exo
+		      FILECONV_INPUT out.e-s.0.1.0.root
+		      FILECONV_RESULT out.e-s.0.1.0.exo
 	              BIN_BASELINE slot_cyl_cfl_pe1_u0.0.std.exo
-		      BIN_RESULT out.0.exo
+		      BIN_RESULT out.e-s.0.1.0.exo
 		      BIN_DIFF_PROG_CONF exodiff.cfg)
 
   # Virtualization = 0, Multiprocessor check
@@ -245,22 +285,22 @@ if (HAS_ROOT)
 	                         slot_cyl_cfl_pe4_u0.0.std.exo.2
 		                 slot_cyl_cfl_pe4_u0.0.std.exo.3
 		      ARGS -c slot_cyl_cfl_root.q -i unitcube_01_31k.exo -v
-		      FILECONV_RESULT out.0.exo
-				      out.1.exo
-				      out.2.exo
-				      out.3.exo
-		      FILECONV_INPUT out.0.root
-                                     out.1.root
-                                     out.2.root
-                                     out.3.root
+		      FILECONV_RESULT out.e-s.0.4.0.exo
+                                      out.e-s.0.4.1.exo
+                                      out.e-s.0.4.2.exo
+                                      out.e-s.0.4.3.exo
+		      FILECONV_INPUT out.e-s.0.4.0.root
+                                     out.e-s.0.4.1.root
+                                     out.e-s.0.4.2.root
+                                     out.e-s.0.4.3.root
 		      BIN_BASELINE slot_cyl_cfl_pe4_u0.0.std.exo.0
 			           slot_cyl_cfl_pe4_u0.0.std.exo.1
 			           slot_cyl_cfl_pe4_u0.0.std.exo.2
 			           slot_cyl_cfl_pe4_u0.0.std.exo.3
-		      BIN_RESULT out.0.exo
-			         out.1.exo
-			         out.2.exo
-			         out.3.exo
+		      BIN_RESULT out.e-s.0.4.0.exo
+			         out.e-s.0.4.1.exo
+			         out.e-s.0.4.2.exo
+			         out.e-s.0.4.3.exo
                       BIN_DIFF_PROG_ARGS -m
                       BIN_DIFF_PROG_CONF exodiff.cfg)
 

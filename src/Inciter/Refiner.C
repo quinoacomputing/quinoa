@@ -52,6 +52,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_sorter( sorter ),
   m_solver( solver ),
   m_scheme( scheme ),
+  m_schemeproxy(),
   m_cbr( cbr ),
   m_cbs( cbs ),
   m_ginpoel( ginpoel ),
@@ -71,7 +72,9 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_ch(),
   m_edgenode(),
   m_edgenodeCh(),
-  m_bndEdges()
+  m_bndEdges(),
+  m_u(),
+  m_msum()
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Transporter (host) proxy
@@ -97,10 +100,10 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 
   // If initial mesh refinement is configured, start initial mesh refinement.
   // See also tk::grm::check_amr_errors in Control/Inciter/InputDeck/Ggrammar.h.
-  if (g_inputdeck.get< tag::amr, tag::initamr >())
-    start( true, 0.0 );
+  if (g_inputdeck.get< tag::amr, tag::t0ref >())
+    t0ref();
   else
-    finish();
+    endt0ref();
 }
 
 void
@@ -163,17 +166,37 @@ Refiner::flatcoord( const tk::UnsMesh::CoordMap& coordmap )
 }
 
 void
-Refiner::start( bool initial, tk::real t )
+Refiner::dtref( tk::real t,
+                const SchemeBase::Proxy& s,
+                const std::map< int, std::vector< std::size_t > >& bnode )
 // *****************************************************************************
-// Start new step of mesh refinement
-//! \param[in] initial True if initial AMR, false if during time stepping
+// Start mesh refinement (during time stepping, t>0)
 //! \param[in] t Physical time
+//! \param[in] scheme Discretization scheme Charm++ proxy we interoperate with
+//! \param[in] bnode Node lists of side sets
 // *****************************************************************************
 {
-  m_initial = initial;
+  m_initial = false;
   m_t = t;
 
-  if (initial)
+  // Update boundary node lists
+  m_bnode = bnode;
+
+  // Store discretization scheme proxy
+  m_schemeproxy = s;
+
+  t0ref();
+}
+
+void
+Refiner::t0ref()
+// *****************************************************************************
+// Start new step of initial mesh refinement (before t>0)
+//! \param[in] t Physical time
+//! \param[in] scheme Discretization scheme Charm++ proxy we interoperate with
+// *****************************************************************************
+{
+  if (m_initial)
     Assert( (!g_inputdeck.get< tag::amr, tag::init >().empty()) ||
             (!g_inputdeck.get< tag::amr, tag::init >().empty()),
             "Neither initial mesh refinement type list nor user-defined "
@@ -272,20 +295,30 @@ Refiner::refine()
             "Boundary edge not found before refinement" );
   }
 
-  // Refine mesh based on next initial refinement type
-  if (!m_initref.empty()) {
-    auto r = m_initref.back();    // consume (reversed) list from back
-    if (r == ctr::AMRInitialType::UNIFORM)
-      uniformRefine();
-    else if (r == ctr::AMRInitialType::INITIAL_CONDITIONS)
-      errorRefine();
-    else if (r == ctr::AMRInitialType::COORDINATES)
-      coordRefine();
-    else Throw( "Initial AMR type not implemented" );
+  if (m_initial) {      // if initial (before t=0) AMR
+
+    // Refine mesh based on next initial refinement type
+    if (!m_initref.empty()) {
+      auto r = m_initref.back();    // consume (reversed) list from back
+      if (r == ctr::AMRInitialType::UNIFORM)
+        uniformRefine();
+      else if (r == ctr::AMRInitialType::INITIAL_CONDITIONS)
+        errorRefine();
+      else if (r == ctr::AMRInitialType::COORDINATES)
+        coordRefine();
+      else Throw( "Initial AMR type not implemented" );
+    }
+
+    // Additionally refine mesh based on user explicitly tagging edges
+    userRefine();
+
+  } else {              // if AMR during time stepping (t>0)
+
+    //errorRefine();
+    uniformRefine();
+
   }
 
-  // Additionally refine mesh based on user explicitly tagging edges
-  userRefine();
 
   for (const auto& e : tk::cref_find(m_bndEdges,thisIndex)) {
     IGNORE(e);
@@ -315,7 +348,7 @@ Refiner::comExtra()
                 m_cbr.get< tag::matched >() );
   else {
     m_nref = 0;
-    for (auto c : m_ch) {       // for all chars we share at least an edge with
+    for (auto c : m_ch) {       // for all chares we share at least an edge with
       // For all boundary edges of chare c, find out if we have added a new
       // node to it, and if so, export parents->(newid,coords) to c.
       tk::UnsMesh::EdgeNodeCoord exp;
@@ -455,15 +488,25 @@ Refiner::eval()
 
   // Lambda to write mesh to file after refinement step. Parameters:
   //  * prefix - Prefix to mesh filename
-  //  * it - Iteration count to put in filename (This could be the
-  //  refinement level for initial (pre-timestepping) AMR or the physical time
-  //  for AMR during time stepping.
+  //  * it - Iteration count to put in filename (This can be the refinement
+  //    level for initial (pre-timestepping) AMR or the physical time for AMR
+  //    during time stepping.
   auto writeMesh = [this]( const std::string& prefix, const std::string& it ){
     tk::ExodusIIMeshWriter
-      mw( prefix + '.' + it + '.' + std::to_string(this->thisIndex),
+      mw( prefix + ".e-s"
+          + '.' + it                            // create new file for new mesh
+          + '.' + std::to_string( this->m_nchare )   // total number of workers
+          + '.' + std::to_string( this->thisIndex ), // new file per worker
           tk::ExoWriter::CREATE );
-    // Output mesh coordinates and connectivity
-    tk::UnsMesh refmesh( this->m_inpoel, this->m_coord );
+    // Prepare boundary data for file output
+    decltype(this->m_bnode) bnode;
+    if (this->m_nchare == 1) {  // do not write boundary data in parallel
+      // Convert boundary node lists to local ids for output
+      bnode = m_bnode;
+      for (auto& s : bnode) for (auto& p : s.second) p = tk::cref_find(m_lid,p);
+    }
+    // Output mesh
+    tk::UnsMesh refmesh( this->m_inpoel, this->m_coord, bnode );
     mw.writeMesh( refmesh );
     // Output element-centered scalar fields on recent mesh refinement step
     mw.writeElemVarNames( { "refinement level", "cell type" } );
@@ -480,20 +523,31 @@ Refiner::eval()
     // Remove initial mesh refinement step from list
     if (!m_initref.empty()) m_initref.pop_back();
     // Continue to next initial AMR step or finish
-    if (!m_initref.empty()) start( true, 0.0 ); else finish();
+    if (!m_initref.empty()) t0ref(); else endt0ref();
 
   } else {              // if AMR during time stepping (t>0)
 
     // Output mesh after recent step of mesh refinement during time stepping
     writeMesh( "dtref", std::to_string(m_t) );
-    // Send new mesh back to PDE worker base (Discretization)
-    m_scheme.get()[thisIndex].ckLocal()->newMesh( m_inpoel, m_coord );
+
+    // Augment node comm. map with newly added nodes on chare-boundary edges
+    for (const auto& c : m_edgenodeCh) {
+      auto& nodes = tk::ref_find( m_msum, c.first );
+      for (const auto& n : c.second)
+        nodes.push_back( std::get<0>(n.second) );
+    }
+
+    // Send new mesh and solution back to PDE worker
+    Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
+            "About to use nullptr" );
+    auto e = tk::element< SchemeBase::ProxyElem >( m_schemeproxy, thisIndex );
+    boost::apply_visitor( Resize(m_el,m_coord,m_u,m_msum,m_bnode), e );
 
   }
 }
 
 void
-Refiner::finish()
+Refiner::endt0ref()
 // *****************************************************************************
 // Finish initial mesh refinement
 //! \details This function is called as after initial mesh refinement has
@@ -540,8 +594,22 @@ Refiner::errorRefine()
   auto esup = tk::genEsup( m_inpoel, 4 );
   auto psup = tk::genPsup( m_inpoel, 4, esup );
 
-  // Evaluate initial conditions at mesh nodes
-  auto u = nodeinit( npoin, esup );
+  // Get solution whose error to evaluate
+  tk::Fields u;
+  if (m_initial) {      // if initial (before t=0) AMR
+
+    // Evaluate initial conditions at mesh nodes
+    u = nodeinit( npoin, esup );
+
+  } else {              // if AMR during time stepping (t>0)
+
+    // Get old solution from worker (pointer to soln from bound array element)
+    Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
+            "About to use nullptr" );
+    auto e = tk::element< SchemeBase::ProxyElem >( m_schemeproxy, thisIndex );
+    boost::apply_visitor( Solution(u), e );
+
+  }
 
   // Get the indices (in the system of systems) of refinement variables and the
   // error indicator configured
@@ -567,6 +635,8 @@ Refiner::errorRefine()
          crit.push_back( cmax );
        }
      }
+
+  //std::cout << "err: " << edge.size() << '\n';
 
   Assert( edge.size() == crit.size(), "Size mismatch" );
 
@@ -791,6 +861,17 @@ Refiner::updateMesh()
   std::unordered_set< std::size_t > old( m_inpoel.cbegin(), m_inpoel.cend() );
   std::unordered_set< std::size_t > ref( refinpoel.cbegin(), refinpoel.cend() );
 
+  // Get old solution from worker (pointer to soln from bound array element)
+  if (!m_initial) {
+    Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
+            "About to use nullptr" );
+    auto e = tk::element< SchemeBase::ProxyElem >( m_schemeproxy, thisIndex );
+    boost::apply_visitor( Solution(m_u), e );
+    // Get nodal communication map from Discretization worker
+    m_msum = m_scheme.get()[thisIndex].ckLocal()->Msum();
+  }
+
+  // Update mesh and solution after refinement
   updateVolMesh( old, ref );
   updateBndMesh( old, ref );
 
@@ -828,12 +909,14 @@ Refiner::updateVolMesh( const std::unordered_set< std::size_t >& old,
   auto& y = m_coord[1];
   auto& z = m_coord[2];
 
-  // Resize node coordinate storage to accommodate refined mesh nodes
+  // Resize node coordinates, global ids, and solution vector
   auto npoin = ref.size();
+  auto nprop = g_inputdeck.get<tag::component>().nprop();
   x.resize( npoin );
   y.resize( npoin );
   z.resize( npoin );
   m_gid.resize( npoin, std::numeric_limits< std::size_t >::max() );
+  if (!m_initial) m_u.resize( npoin, nprop );
 
   // Generate coordinates and ids to newly added nodes after refinement step
   for (auto r : ref) {               // for all unique nodes of the refined mesh
@@ -847,7 +930,14 @@ Refiner::updateVolMesh( const std::unordered_set< std::size_t >& old,
       x[r] = (x[p[0]] + x[p[1]])/2.0;
       y[r] = (y[p[0]] + y[p[1]])/2.0;
       z[r] = (z[p[0]] + z[p[1]])/2.0;
-      decltype(p) gp{{ m_gid[p[0]], m_gid[p[1]] }}; // global parent ids
+
+      // generate solution for newly added node
+      if (!m_initial)   // only during t>0 refinement
+        for (std::size_t c=0; c<nprop; ++c)
+          m_u(r,c,0) = (m_u(p[0],c,0) + m_u(p[1],c,0))/2.0;
+
+      // global parent ids
+      decltype(p) gp{{ m_gid[p[0]], m_gid[p[1]] }};
       // generate new global ID for newly added node
       auto g = tk::UnsMesh::Hash<2>()( gp );
       // ensure newly generated node id has not yet been used
@@ -861,7 +951,7 @@ Refiner::updateVolMesh( const std::unordered_set< std::size_t >& old,
       m_lid[g] = r;
       // assign new coordinates to new global node id
       Assert( m_coordmap.find(g) == end(m_coordmap),
-              "Overwriting entry coordmap" );
+              "Overwriting entry already in coordmap" );
       m_coordmap.insert( {g, {{x[r], y[r], z[r]}}} );
       // assign new coordinates and new global node id to global parent id pair
       m_edgenode[ gp ] = std::make_tuple( g, x[r], y[r], z[r] );
@@ -878,11 +968,13 @@ Refiner::updateVolMesh( const std::unordered_set< std::size_t >& old,
 Refiner::BndFaces
 Refiner::boundary()
 // *****************************************************************************
-// Generate boundary data structure
-//! \return Map associating a pair of side set id and adjacent tet id (value)
-//!   to a partition-boundary triangle face (key) given by three global node IDs
-//! \details This is used to regenerate physical boundary face and node data
-//!   structures after refinement, see updateBoundaryMesh().
+//  Generate boundary data structure used to update refined boundary faces and
+//  nodes
+//! \return Map associating a pair of side set id and adjacent tet id (value) to
+//!   a partition-boundary triangle face (key) given by three global node IDs.
+//! \details The output of this function is used to regenerate physical boundary
+//!   face and node data structures after refinement, see updateBndFaces() and
+//!   updateBndNodes().
 // *****************************************************************************
 {
   using Face = tk::UnsMesh::Face;
@@ -938,7 +1030,9 @@ Refiner::boundary()
   // boundary faces (and their associated side set id and tet id).
   if (!m_belem.empty()) {
     auto bndcopy = bnd;
-    for (const auto& f : bndcopy) if (f.second.first == -1) bnd.erase( f.first );
+    for (const auto& f : bndcopy)
+      if (f.second.first == -1)
+        bnd.erase( f.first );
   }
 
   return bnd;
@@ -953,7 +1047,8 @@ Refiner::updateBndMesh( const std::unordered_set< std::size_t >& old,
 //! \param[in] ref Unique nodes of the refined mesh using local ids
 // *****************************************************************************
 {
-  // generate boundary data structure after mesh refinement
+  // generate boundary face data structure used to regenerate boundary face and
+  // node data after mesh refinement
   auto bnd = boundary();
 
   // regerate boundary faces and nodes after mesh refinement
@@ -969,8 +1064,9 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
 // Regenerate boundary faces after mesh refinement step
 //! \param[in] old Unique nodes of the old (unrefined) mesh using local ids
 //! \param[in] ref Unique nodes of the refined mesh using local ids
-//! \param[in] bnd Boundary face map, associating a pair of side set id and
-//!   adjacent tet id to a boundary triangle face
+//! \param[in] bnd Map associating a pair of side set id and adjacent tet id
+//!   (value) to a partition-boundary triangle face (key) given by three global
+//!   node IDs.
 // *****************************************************************************
 {
   IGNORE(ref);  // to avoid compiler warning when asserts are optimized away
@@ -1080,13 +1176,14 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
 void
 Refiner::updateBndNodes( const std::unordered_set< std::size_t >& old,
                          const std::unordered_set< std::size_t >& ref,
-                         const BndFaces& bnd )
+                         const Refiner::BndFaces& bnd )
 // *****************************************************************************
 // Update boundary nodes after mesh refinement
 //! \param[in] old Unique nodes of the old (unrefined) mesh using local ids
 //! \param[in] ref Unique nodes of the refined mesh using local ids
-//! \param[in] bnd Boundary face map, associating a pair of side set id and
-//!   adjacent tet id to a boundary triangle face
+//! \param[in] bnd Map associating a pair of side set id and adjacent tet id
+//!   (value) to a partition-boundary triangle face (key) given by three global
+//!   node IDs.
 // *****************************************************************************
 {
   IGNORE(ref);  // to avoid compiler warning when asserts are optimized away
@@ -1109,8 +1206,9 @@ Refiner::updateBndNodes( const std::unordered_set< std::size_t >& old,
       return this->m_refiner.node_connectivity.get( c );
   };
 
-  // Lambda to find a global node ID among the nodelists of side sets. Return -1
-  // if not found, or all the side set ids in which the node is found.
+  // Lambda to find a global node ID among the nodelists of side sets. Return
+  // all side set ids in which the node is found (or an empty vector if the
+  // node was not found.
   auto bndNode = [ &bnodeset ]( std::size_t p ){
     std::vector< int > ss;
     for (const auto& s : bnodeset)  // for all phsyical boundaries (sidesets)
@@ -1124,12 +1222,12 @@ Refiner::updateBndNodes( const std::unordered_set< std::size_t >& old,
   for (const auto& f : bnd) {
     // query number of children of boundary tet adjacent to boundary face
     auto nc = m_refiner.tet_store.data( f.second.second ).num_children;
-    if (nc == 0) {      // if boundary tet is not refined, add its boundary face
+    if (nc == 0) {  // if boundary tet is not refined, add its boundary node
       for (auto n : f.first) {
         auto ss = bndNode( n );
-        for (auto s : ss) if (s != -1) bnode[ s ].push_back( n );
+        for (auto s : ss) bnode[ s ].push_back( n );
       }
-    } else {            // if boundary tet is refined
+    } else {        // if boundary tet is refined
       const auto& tets = m_refiner.tet_store.tets;
       for (decltype(nc) i=0; i<nc; ++i ) {      // for all child tets
         // get child tet id
@@ -1157,7 +1255,7 @@ Refiner::updateBndNodes( const std::unordered_set< std::size_t >& old,
             auto ss2 = bndNode( m_gid[p[1]] );
             for (auto s1 : ss1)
               for (auto s2 : ss2)
-                if (s1 != -1 && s2 != -1 && s1 == s2)
+                if (s1 == s2)
                   bnode[ s1 ].push_back( m_gid[c] );
           }
       }

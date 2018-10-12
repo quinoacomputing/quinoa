@@ -22,6 +22,7 @@
 #include "ElemDiagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "ExodusIIMeshWriter.h"
+#include "Refiner.h"
 //#include "ChareStateCollector.h"
 
 namespace inciter {
@@ -825,7 +826,7 @@ DG::writeFields( tk::real time )
   }
 
   // Create ExodusII writer
-  tk::ExodusIIMeshWriter ew( d->OutFilename(), tk::ExoWriter::OPEN );
+  tk::ExodusIIMeshWriter ew( d->filename(), tk::ExoWriter::OPEN );
   // Write time stamp
   ew.writeTimeStamp( m_itf, time );
   // Write node fields to file
@@ -840,21 +841,19 @@ DG::out()
 {
   auto d = Disc();
 
-  // Optionally output field and particle data
-  if ( !((d->It()+1) % g_inputdeck.get< tag::interval, tag::field >()) &&
-       !g_inputdeck.get< tag::cmd, tag::benchmark >() )
-  {
-    writeFields( d->T() + d->Dt() );
-  }
+  // Output field data to file if not in benchmark mode
+  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) {
 
-  // Output final field data to file (regardless of whether it was requested)
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  if ( (std::fabs(d->T() + d->Dt() - term) < eps || (d->It()+1) >= nstep) &&
-       (!g_inputdeck.get< tag::cmd, tag::benchmark >()) )
-  {
-    writeFields( d->T()+d->Dt() );
+    if ( !((d->It()) % g_inputdeck.get< tag::interval, tag::field >()) )
+      writeFields( d->T() );
+  
+    // Output final field data to file (regardless of whether it was requested)
+    const auto term = g_inputdeck.get< tag::discr, tag::term >();
+    const auto eps = std::numeric_limits< tk::real >::epsilon();
+    const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+    if ( (std::fabs(d->T()-term) < eps || d->It() >= nstep ) )
+      writeFields( d->T() );
+  
   }
 }
 
@@ -899,8 +898,6 @@ DG::solve()
 
   } else {
 
-    // Output field data to file
-    out();
     // Compute diagnostics, e.g., residuals
     auto diag_computed =
       m_diag.compute( *d, m_u.nunk()-m_esuelTet.size()/4, m_geoElem, m_u );
@@ -914,6 +911,15 @@ DG::solve()
     refine();
 
   }
+}
+
+void
+DG::resized()
+// *****************************************************************************
+// Resizing data sutrctures after mesh refinement has been completed
+// *****************************************************************************
+{
+  resize_complete();
 }
 
 void
@@ -931,6 +937,47 @@ DG::refine()
 // Optionally refine/derefine mesh
 // *****************************************************************************
 {
+  auto d = Disc();
+
+  auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
+  auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
+
+  // if t>0 refinement enabled and we hit the frequency
+  if (dtref && !(d->It() % dtfreq)) {   // refine
+
+    d->Ref()->dtref( d->T(), thisProxy, m_fd.Bnode() );
+
+  } else {      // do not refine
+
+    ref_complete();
+    lhs_complete();
+    resize_complete();
+
+  }
+}
+
+void
+DG::resize( const tk::UnsMesh::Chunk& /*chunk*/,
+            const tk::UnsMesh::Coords& /*coord*/,
+            const tk::Fields& /*u*/,
+            const std::unordered_map< int,
+                    std::vector< std::size_t > >& /*msum*/,
+            const std::map< int, std::vector< std::size_t > >& /*bnode*/ )
+// *****************************************************************************
+//  Receive new mesh from refiner
+//! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
+//! \param[in] coord New mesh node coordinates
+//! \param[in] u New solution on new mesh
+//! \param[in] msum New node communication map
+//! \param[in] bnode Map of boundary-node lists mapped to corresponding
+//!   side set ids for this mesh chunk
+// *****************************************************************************
+{
+  //auto d = Disc();
+
+  //d->Inpoel() = inpoel;
+  //d->Coord() = coord;
+
   ref_complete();
 }
 
@@ -959,6 +1006,8 @@ DG::eval()
 
   } else {
 
+    // Output field data to file
+    out();
     // Output one-liner status report to screen
     d->status();
     // Reset Runge-Kutta stage counter

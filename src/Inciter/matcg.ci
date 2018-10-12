@@ -35,15 +35,20 @@ module matcg {
                             const std::vector< tk::real >& sol );
       entry void updateLowSol( const std::vector< std::size_t >& gid,
                                const std::vector< tk::real >& sol );
+      entry void resized();
+      entry void lhs();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
       entry void wait4eval() {
-        when diag_complete(), ref_complete() serial "eval" { eval(); } };
+        when diag_complete(), ref_complete(), lhs_complete(),
+             resize_complete() serial "eval" { eval(); } };
 
       entry void diag_complete();
       entry void ref_complete();
+      entry void lhs_complete();
+      entry void resize_complete();
     };
 
   } // inciter::

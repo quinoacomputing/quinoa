@@ -129,7 +129,9 @@ namespace grm {
     POSITION_MISSING,   //!< Missing required position model
     VELOCITY_MISSING,   //!< Missing required velocity model
     DISSIPATION_MISSING,//!< Missing required dissipation model
-    INITREFODD,         //!< AMR initref vector size is odd (must be even)
+    T0REFODD,           //!< AMR initref vector size is odd (must be even)
+    T0REFNOOP,          //!< AMR t<0 refinement will be no-op
+    DTREFNOOP,          //!< AMR t>0 refinement will be no-op
     CHARMARG,           //!< Argument inteded for the Charm++ runtime system
     OPTIONAL };         //!< Message key used to indicate of something optional
 
@@ -326,10 +328,22 @@ namespace grm {
     { MsgKey::VELOCITY_MISSING, "Specification for a velocity model missing." },
     { MsgKey::DISSIPATION_MISSING,
       "Specification for a dissipation model missing." },
-    { MsgKey::INITREFODD, "Error in the preceding line or block. "
+    { MsgKey::T0REFODD, "Error in the preceding line or block. "
       "The number of edge-nodes, marking edges as pairs of nodes, used for "
       "explicit tagging of edges for initial mesh refineoment is odd (it must "
       "be even)." },
+    { MsgKey::T0REFNOOP, "Initial (t<0) mesh refinement configuration will be a"
+      " no-op. Initial mesh refinement requires in the amr ... end block: (1) "
+      "'" +  kw::amr_t0ref::string() + " true' and one of the following: (A) "
+      "at least one initial refinement type, e.g., '" +
+      kw::amr_initial::string() + ' ' + kw::amr_uniform::string() + "', or "
+      "(B) an initial refinement edge list, e.g., '" + kw::amr_initref::string()
+      + " 1 2 3 4 end'." },
+    { MsgKey::DTREFNOOP, "Mesh refinement configuration for t>0 will be a "
+      "no-op. During-timestepping (t>0) mesh refinement configuration "
+      "requires in the amr ... end block: (1) '" + kw::amr_dtref::string() +
+      " true' and (2) a specification of at least one refinement variable, "
+      "e.g., '" + kw::amr_refvar::string() + " c end'." },
     { MsgKey::CHARMARG, "Arguments starting with '+' are assumed to be inteded "
       "for the Charm++ runtime system. Did you forget to prefix the command "
       "line with charmrun? If this warning persists even after running with "
