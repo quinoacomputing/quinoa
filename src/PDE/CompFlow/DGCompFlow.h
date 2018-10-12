@@ -109,7 +109,7 @@ class CompFlow {
   public:
     //! Constructor
     explicit CompFlow( ncomp_t c ) :
-      m_ncomp( g_inputdeck.get< tag::component >().get< tag::transport >().at(c) ),
+      //m_ncomp( g_inputdeck.get< tag::component >().get< tag::transport >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< tag::compflow >(c) ),
       m_riemann( tk::cref_find( RiemannSolvers(),
                    g_inputdeck.get< tag::discr, tag::flux >() ) ),
@@ -119,9 +119,7 @@ class CompFlow {
       m_ndof( 4 )
       //ErrChk( !m_bcdir.empty() || !m_bcsym.empty() || !m_bcextrapolate.empty(),
       //        "Boundary conditions not set in control file for DG CompFlow" );
-    {
-      //Problem::errchk( m_c, m_ncomp );
-    }
+    {}
 
     //! Initalize the compressible flow equations for DG
     //! \param[in] L Element mass matrix
@@ -176,6 +174,19 @@ class CompFlow {
           l(e, mark+2, m_offset) = geoElem(e,0,0) * 3.0/10.0;
           l(e, mark+3, m_offset) = geoElem(e,0,0) * 3.0/5.0;
         }
+		
+		//if (e == 0)
+	    //{
+		//  for (ncomp_t c=0; c<5; ++c)
+        //  { 
+        //    auto mark = c*m_ndof;
+		//	std::cout << "l(0, " << mark << ")" << geoElem(e,0,0) << std::endl;
+		//	std::cout << "l(0, " << mark+1 << ")" << geoElem(e,0,0) / 10.0 << std::endl;
+		//	std::cout << "l(0, " << mark+2 << ")" << geoElem(e,0,0) * 3.0/10.0 << std::endl;
+		//	std::cout << "l(0, " << mark+3 << ")" << geoElem(e,0,0) * 3.0/5.0 << std::endl;
+		//  }
+		//}
+
       }
     }
 
@@ -207,10 +218,16 @@ class CompFlow {
               "Number of components in solution and right-hand side vector " 
               "must equal "+ std::to_string(5) );
 
+<<<<<<< HEAD
       IGNORE(coord);
       IGNORE(inpoel);
 
       // set rhs to zero
+=======
+	  //std::cout << " Starting the rhs function " << std::endl;    
+ 
+	  // set rhs to zero
+>>>>>>> Find the gama input in the rhs is wrong and fix it.
       R.fill(0.0);
 
       const auto& esuf = fd.Esuf();
@@ -268,9 +285,9 @@ class CompFlow {
     {
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
-      Assert( U.nprop() == m_ndof*m_ncomp && R.nprop() == m_ndof*m_ncomp,
-              "Number of components in solution and right-hand side vector "
-              "must equal "+ std::to_string(m_ncomp) );
+      //Assert( U.nprop() == m_ndof*m_ncomp && R.nprop() == m_ndof*m_ncomp,
+      //        "Number of components in solution and right-hand side vector "
+      //        "must equal "+ std::to_string(m_ncomp) );
       Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
               "size" );
 
@@ -279,6 +296,21 @@ class CompFlow {
       const auto& inpofa = fd.Inpofa();
 
       Assert( inpofa.size()/3 == esuf.size()/2, "Mismatch in inpofa size" );
+
+	  //if(0 == 0)
+	  //{
+		//std::cout << std::endl;
+		//std::cout << "e = " << 713 << "\t";
+	    //for (ncomp_t c=0; c<5 /*m_ncomp*/; ++c)
+	    //{
+	    //  auto mark = c*m_ndof;
+	    //  std::cout << "U[" << c << "][0] = " << U(713, mark,   m_offset) << "\t";
+        //  std::cout << "U[" << c << "][1] = " << U(713, mark+1,   m_offset) << "\t";
+        //  std::cout << "U[" << c << "][2] = " << U(713, mark+2,   m_offset) << "\t";
+        //  std::cout << "U[" << c << "][3] = " << U(713, mark+3,   m_offset) << std::endl;
+	    //}
+	  //std::cout << std::endl;
+	  //}
 
       // set rhs to zero
       R.fill(0.0);
@@ -412,7 +444,7 @@ class CompFlow {
 
           std::array< std::vector< tk::real >, 2 > ugp;
 
-          for (ncomp_t c=0; c<m_ncomp; ++c)
+          for (ncomp_t c=0; c<5 /*m_ncomp*/; ++c)
           {
             auto mark = c*m_ndof;
             ugp[0].push_back(  U(el, mark,   m_offset)
@@ -427,7 +459,7 @@ class CompFlow {
 
           auto flux = m_riemann.flux( f, geoFace, {{ugp[0], ugp[1]}} );
 
-          for (ncomp_t c=0; c<m_ncomp; ++c)
+          for (ncomp_t c=0; c<5/*m_ncomp*/; ++c)
           {
             auto mark = c*m_ndof;
 
@@ -441,14 +473,53 @@ class CompFlow {
             R(er, mark+2, m_offset) += wt * flux[c] * B3r;
             R(er, mark+3, m_offset) += wt * flux[c] * B4r;
           }
+		  //if(el == 713 || er == 713)
+		  //{
+		  //  std::cout << std::endl;
+          //  std::cout << "Flux after face integration " << std::endl;
+		  //  std::cout << "el, er = " << el << "\t" << er << std::endl;
+          //  //for (ncomp_t c=0; c<5/*m_ncomp*/; ++c)
+          //  //{
+          //    //auto mark = c*m_ndof;
+          //    //std::cout << "db2dx dy dz = " << db2dx << "\t" <<  db2dy << "\t" << db2dz << "\t" << wt << std::endl;
+          //    //std::cout << "db3dx dy dz = " << db3dx << "\t" <<  db3dy << "\t" << db3dz << "\t" << wt << std::endl;
+          //    //std::cout << "db4dx dy dz = " << db4dx << "\t" <<  db4dy << "\t" << db4dz << "\t" << wt << std::endl;
+          //    //std::cout << "Volume flux vector = " <<  flux[0][c] << "\t" << flux[1][c] << "\t" << flux[2][c] << std::endl;
+		  //    std::cout << "ugp[0] = " << ugp[0][0] << "\t" << ugp[0][1] << "\t" << ugp[0][2] << "\t" << ugp[0][3] << "\t" << ugp[0][4] << std::endl;
+		  //    std::cout << "ugp[1] = " << ugp[1][0] << "\t" << ugp[1][1] << "\t" << ugp[1][2] << "\t" << ugp[1][3] << "\t" << ugp[1][4] << std::endl;
+          //    std::cout << "flux for 713 = " << flux[0] << "\t" << flux[1] << "\t" << flux[2] << "\t" << flux[3] << "\t" << flux[4] << std::endl;
+          //  //}
+		  //}
         }
       }
+	  //std::cout << std::endl;
+      //std::cout << "After face integration " << std::endl;
+      //for (ncomp_t c=0; c<5/*m_ncomp*/; ++c)
+      //{
+      //  auto mark = c*m_ndof;
+      //  //std::cout << "db2dx dy dz = " << db2dx << "\t" <<  db2dy << "\t" << db2dz << "\t" << wt << std::endl;
+      //  //std::cout << "db3dx dy dz = " << db3dx << "\t" <<  db3dy << "\t" << db3dz << "\t" << wt << std::endl;
+      //  //std::cout << "db4dx dy dz = " << db4dx << "\t" <<  db4dy << "\t" << db4dz << "\t" << wt << std::endl;
+      //  //std::cout << "Volume flux vector = " <<  flux[0][c] << "\t" << flux[1][c] << "\t" << flux[2][c] << std::endl;
+      //  std::cout << "R(713," << c << ") = " << R(713, mark, m_offset) << "\t" << R(713, mark+1, m_offset) << "\t" << R(713, mark+2, m_offset) << "\t" << R(713, mark+3, m_offset) << std::endl;
+      //}
 
       // compute boundary surface flux integrals
       bndIntegralp1< Dir >( m_bcdir, bface, esuf, geoFace, inpoel, inpofa, coord, t, U, R );
       bndIntegralp1< Sym >( m_bcsym, bface, esuf, geoFace, inpoel, inpofa, coord, t, U, R );
       bndIntegralp1< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, inpoel, inpofa, 
 				    			    coord, t, U, R );
+
+      // Add source term to right hand side
+      for (std::size_t e=0; e<geoElem.nunk(); ++e) {
+        auto vole = geoElem(e,0,0);
+        auto xc = geoElem(e,1,0);
+        auto yc = geoElem(e,2,0);
+        auto zc = geoElem(e,3,0);
+        auto s = Problem::src(0, xc, yc, zc, t);
+        for (ncomp_t c=0; c<5; ++c)
+          R(e, c, m_offset) += vole * s[c];
+      }
 
       // resize quadrature point arrays
       coordgp[0].resize(5,0);
@@ -548,13 +619,13 @@ class CompFlow {
           std::vector< tk::real > ugp;
           std::array< std::vector< tk::real >, 3 > flux;
 
-          tk::real g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
+          //tk::real g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
 
-          ugp.resize(m_ncomp,0);
+          ugp.resize(5/*m_ncomp*/,0);
 
-          flux[0].resize(m_ncomp,0);
-          flux[1].resize(m_ncomp,0);
-          flux[2].resize(m_ncomp,0);
+          flux[0].resize(5/*m_ncomp*/,0);
+          flux[1].resize(5/*m_ncomp*/,0);
+          flux[2].resize(5/*m_ncomp*/,0);
 
           auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp] - 1.0;
           auto B3 = 3.0 * coordgp[1][igp] + coordgp[2][igp] - 1.0;
@@ -562,7 +633,7 @@ class CompFlow {
 
           auto wt = wgp[igp] * geoElem(e, 0, 0);
 	  	  
-	  	  for (ncomp_t c=0; c<m_ncomp; ++c)
+	  	  for (ncomp_t c=0; c<5/*m_ncomp*/; ++c)
 	  	  {
 			auto mark = c*m_ndof;
 
@@ -575,7 +646,27 @@ class CompFlow {
 	  	  auto u = ugp[1] / ugp[0];
 	  	  auto v = ugp[2] / ugp[0];
 	  	  auto w = ugp[3] / ugp[0];
-	  	  auto p = (g - 1) * (ugp[4] - 0.5 * ugp[0] * (u*u + v*v + w*w) );
+	  	  auto p = (5.0/3 - 1) * (ugp[4] - 0.5 * ugp[0] * (u*u + v*v + w*w) );
+
+          //if (e == 675)
+          //{	
+		  //  std::cout << std::endl;
+          //  for (ncomp_t c=0; c<5; c++)
+          //  {
+		  //  	std::cout << "In the rhs vol integration " << std::endl;
+          //      auto mark = c*m_ndof;
+          //      std::cout << "U(675, mark, m_offset) = " << U(e, mark,   m_offset) << "\t" << U(e, mark+1,   m_offset) << "\t" <<  U(e, mark+2,   m_offset) << "\t" << U(e, mark+3,   m_offset) << std::endl;
+          //  }
+		  //  std::cout << std::endl;
+          //}
+
+		  //if (e == 556)
+		  //{
+		  //  std::cout << " e = " << e << "\t" << std::endl;
+		  //  std::cout << "rho = " << ugp[0] << std::endl;
+		  //  std::cout << "u, v, w = " << u << "\t" << v << "\t" << w << std::endl;
+		  //  std::cout << "E,p,g = " << ugp[4] << "\t" << p << /*"\t" << g <<*/ std::endl;
+		  //}
 
 	  	  flux[0][0] = ugp[1];
 	  	  flux[0][1] = ugp[1] * u + p;
@@ -595,7 +686,7 @@ class CompFlow {
       	  flux[2][3] = ugp[3] * w + p;
       	  flux[2][4] = w * (ugp[4] + p);
 
-      	  for (ncomp_t c=0; c<m_ncomp; ++c)
+      	  for (ncomp_t c=0; c<5/*m_ncomp*/; ++c)
       	  {
 	  	    auto mark = c*m_ndof;
 	  	    
@@ -603,7 +694,35 @@ class CompFlow {
 	  	    R(e, mark+2, m_offset) += wt * (flux[0][c]*db3dx + flux[1][c]*db3dy + flux[2][c]*db3dz);
 	  	    R(e, mark+3, m_offset) += wt * (flux[0][c]*db4dx + flux[1][c]*db4dy + flux[2][c]*db4dz);
 	  	  }
+
+		  //if(e==675)
+		  //{
+		  //  std::cout << std::endl;
+		  //  for (ncomp_t c=0; c<5/*m_ncomp*/; ++c)
+		  //  {
+		  //  	auto mark = c*m_ndof;
+		  //  	std::cout << "db2dx dy dz = " << db2dx << "\t" <<  db2dy << "\t" << db2dz << "\t" << wt << std::endl;
+		  //  	std::cout << "db3dx dy dz = " << db3dx << "\t" <<  db3dy << "\t" << db3dz << "\t" << wt << std::endl;
+		  //  	std::cout << "db4dx dy dz = " << db4dx << "\t" <<  db4dy << "\t" << db4dz << "\t" << wt << std::endl;
+		  //  	std::cout << "Volume flux vector = " <<  flux[0][c] << "\t" << flux[1][c] << "\t" << flux[2][c] << std::endl;
+		  //  	std::cout << "R(675," << c << ") = " << R(e, mark, m_offset) << "\t" << R(e, mark+1, m_offset) << "\t" << R(e, mark+2, m_offset) << "\t" << R(e, mark+3, m_offset) << std::endl;
+		  //  }
+		  //}
 		}
+		//if(e==713)
+        //{
+        //  std::cout << std::endl;
+        //  std::cout << "After volume integration " << std::endl;
+        //  for (ncomp_t c=0; c<5/*m_ncomp*/; ++c)
+        //  {
+        //    auto mark = c*m_ndof;
+        //    //std::cout << "db2dx dy dz = " << db2dx << "\t" <<  db2dy << "\t" << db2dz << "\t" << wt << std::endl;
+        //    //std::cout << "db3dx dy dz = " << db3dx << "\t" <<  db3dy << "\t" << db3dz << "\t" << wt << std::endl;
+        //    //std::cout << "db4dx dy dz = " << db4dx << "\t" <<  db4dy << "\t" << db4dz << "\t" << wt << std::endl;
+        //    //std::cout << "Volume flux vector = " <<  flux[0][c] << "\t" << flux[1][c] << "\t" << flux[2][c] << std::endl;
+        //    std::cout << "R(713," << c << ") = " << R(e, mark, m_offset) << "\t" << R(e, mark+1, m_offset) << "\t" << R(e, mark+2, m_offset) << "\t" << R(e, mark+3, m_offset) << std::endl;
+        //  }
+        //}
       }
     }
 
@@ -697,7 +816,7 @@ class CompFlow {
 
   private:
     //!< Number of components in this PDE
-    const ncomp_t m_ncomp;
+    //const ncomp_t m_ncomp;
     //! Offset PDE operates from
     const ncomp_t m_offset;
     //! Riemann solver
@@ -849,8 +968,17 @@ class CompFlow {
                                         geoFace(f,2,0),
                                         geoFace(f,3,0) }};
 
-        //--- fluxes
-        auto flux = m_riemann.flux( f, geoFace, State::LR(U.extract( el ),xc,yc,zc,fn,t) );
+        ////--- fluxes
+        //auto flux = m_riemann.flux( f, geoFace, State::LR(U.extract( el ),xc,yc,zc,fn,t) );
+
+        //auto farea = geoFace(f,0,0);
+
+        std::vector< tk::real > ugp;
+        for (ncomp_t c=0; c<5; ++c)
+          ugp.push_back( U(el, c, m_offset) );
+
+		//--- fluxes
+        auto flux = m_riemann.flux( f, geoFace, State::LR(ugp,xc,yc,zc,fn,t) );
 
         for (ncomp_t c=0; c<5; ++c)
           R(el, c, m_offset) -= farea * flux[c];
@@ -917,6 +1045,8 @@ class CompFlow {
 
       wgp.resize(3,0);
 
+	  //std::cout << "Start surfInt function " << std::endl;
+
       const auto& cx = coord[0];
       const auto& cy = coord[1];
       const auto& cz = coord[2];
@@ -961,6 +1091,13 @@ class CompFlow {
         auto y3 = cy[ inpofa[3*f+2] ];
         auto z3 = cz[ inpofa[3*f+2] ];
 
+		//if (x1 == 0 && y1 == 0 && z1 == 0 )
+		//	cout << "el = " << el << endl;
+        //if (x2 == 0 && y2 == 0 && z3 == 0 )
+        //    cout << "el = " << el << endl;
+        //if (x3 == 0 && y3 == 0 && z3 == 0 )
+        //    cout << "el = " << el << endl;
+
         // Gaussian quadrature
         for (std::size_t igp=0; igp<3; ++igp)
         {
@@ -997,7 +1134,7 @@ class CompFlow {
 
 	  	  std::vector< tk::real > ugp;
 
-          for (ncomp_t c=0; c<m_ncomp; ++c)
+          for (ncomp_t c=0; c<5/*m_ncomp*/; ++c)
           {
             auto mark = c*m_ndof;
             ugp.push_back (  U(el, mark,   m_offset)
@@ -1006,10 +1143,26 @@ class CompFlow {
                            + U(el, mark+3, m_offset) * B4l );
           }
 
+		  //if (el == 675)
+		  //{
+		  //  for (ncomp_t c=0; c<5; c++)
+		  //  {
+		  //  	auto mark = c*m_ndof;
+		  //  	std::cout << "U(675, mark, m_offset) = " << U(el, mark,   m_offset) << "\t" << U(el, mark+1,   m_offset) << "\t" <<  U(el, mark+2,   m_offset) << "\t" << U(el, mark+3,   m_offset) << std::endl;
+		  //  }
+		  //}
+
           //--- fluxes
           auto flux = m_riemann.flux( f, geoFace, State::LR(ugp,xgp,ygp,zgp,fn,t) );
 
-          for (ncomp_t c=0; c<m_ncomp; ++c)
+		  //std::cout << "el = " << el << std::endl;
+		  //if (el == 675)
+		  //{
+		  //  std::cout << "el = " << el << "\t" << "ugp = " << ugp[0] << "\t" << ugp[1] << "\t" << ugp[2] << "\t" << ugp[3] << "\t" << ugp[4] << std::endl;
+		  //	std::cout << "el = " << el << "\t" << "flux = " << flux[0] << "\t" << flux[1] << "\t" << flux[2] << "\t" << flux[3] << "\t" << flux[4] << std::endl;
+		  //}
+
+          for (ncomp_t c=0; c<5/*m_ncomp*/; ++c)
           {
             auto mark = c*m_ndof;
 
@@ -1019,6 +1172,20 @@ class CompFlow {
             R(el, mark+3, m_offset) -= wt * flux[c] * B4l;
           }
         }
+	    //if(el==713)
+        //{
+        //  std::cout << std::endl;
+        //  std::cout << "After boundary face integration " << std::endl;
+        //  for (ncomp_t c=0; c<5/*m_ncomp*/; ++c)
+        //  {
+        //    auto mark = c*m_ndof;
+        //    //std::cout << "db2dx dy dz = " << db2dx << "\t" <<  db2dy << "\t" << db2dz << "\t" << wt << std::endl;
+        //    //std::cout << "db3dx dy dz = " << db3dx << "\t" <<  db3dy << "\t" << db3dz << "\t" << wt << std::endl;
+        //    //std::cout << "db4dx dy dz = " << db4dx << "\t" <<  db4dy << "\t" << db4dz << "\t" << wt << std::endl;
+        //    //std::cout << "Volume flux vector = " <<  flux[0][c] << "\t" << flux[1][c] << "\t" << flux[2][c] << std::endl;
+        //    std::cout << "R(713," << c << ") = " << R(el, mark, m_offset) << "\t" << R(el, mark+1, m_offset) << "\t" << R(el, mark+2, m_offset) << "\t" << R(el, mark+3, m_offset) << std::endl;
+        //  }
+        //}
       }
     }
 
@@ -1106,7 +1273,7 @@ class CompFlow {
       coordgp[0][2] = 1.0/6.0;
       coordgp[1][2] = 1.0/6.0;
       wgp[2]        = 1.0/3.0;
-    h
+    }
 
     //! \param[in] p1 (x,y,z) coordinates of 1st local node in the tetrahedron
     //! \param[in] p2 (x,y,z) coordinates of 2nd local node in the tetrahedron
