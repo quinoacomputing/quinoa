@@ -255,7 +255,7 @@ add_regression_test(amr_init_coords ${INCITER_EXECUTABLE}
                                amr_init_coords.1.std.exo.0
                     ARGS -c slot_cyl_amr_coords.q -i unitcube_01_364.exo -v
                     BIN_BASELINE amr_init_coords.1.std.exo.0
-                    BIN_RESULT out.0
+                    BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     LABELS amr)
