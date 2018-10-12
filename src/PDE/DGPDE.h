@@ -74,12 +74,12 @@ class DGPDE {
               std::move( x( std::forward<Args>(args)... ) ) ) ) {}
 
     //! Public interface to setting the initial conditions for the diff eq
-    void initialize( const tk::Fields& lhs,
+    void initialize( const tk::Fields& L,
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
                      tk::Fields& unk,
                      tk::real t ) const
-    { self->initialize( lhs, inpoel, coord, unk, t ); }
+    { self->initialize( L, inpoel, coord, unk, t ); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
@@ -182,12 +182,12 @@ class DGPDE {
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
-      void initialize( const tk::Fields& lhs,
+      void initialize( const tk::Fields& L,
                        const std::vector< std::size_t >& inpoel,
                        const tk::UnsMesh::Coords& coord,
                        tk::Fields& unk,
                        tk::real t )
-      const override { data.initialize( lhs, inpoel, coord, unk, t ); }
+      const override { data.initialize( L, inpoel, coord, unk, t ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
       void rhs( tk::real t,
