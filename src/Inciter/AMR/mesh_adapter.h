@@ -11,7 +11,10 @@
 #include "tet_store.h"
 
 #include "node_connectivity.h"
+
+#ifdef ENABLE_NODE_STORE
 #include "node_store.h"
+#endif
 
 #include "refinement.h"
 //#include "derefinement.h"
@@ -34,18 +37,19 @@ namespace AMR {
                 tet_store.generate_edges();
             }
 
-            //AMR::refinement_t init(const std::vector<size_t>& tetinpoel, size_t num_nodes);
-            void init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t graph_size);
+            void init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z);
 
-            // TODO: Set these in a better way
+            // FIXME: Set these in a better way
             const real_t derefinement_cut_off = 0.2;
             const real_t refinement_cut_off = 0.9;
 
             AMR::tet_store_t tet_store;
             AMR::node_connectivity_t node_connectivity;
 
-            // for coord type stuff
+#ifdef ENABLE_NODE_STORE
+            // for coord tracking type stuff (debugging)
             AMR::node_store_t node_store;
+#endif
 
             AMR::refinement_t refiner;
 

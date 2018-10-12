@@ -48,7 +48,7 @@ namespace AMR {
             {
                 child_id_list_t c;
                 c.resize(count);
-                c[0] = parent_id; // TODO: Remove this hack which suppresses warning
+                c[0] = parent_id; // FIXME: Remove this hack which suppresses warning
                 for (auto& i : c)
                 {
                     i = get_next_tet_id();
@@ -67,11 +67,9 @@ namespace AMR {
             // This basically says the number of tets which can be in an initial grid
             // A sensible value is 2^20 (1,048,576) for big simulations, and anything
             // smaller for toy problems
-            #define START_TET_ID 1024 // TODO: There must be a better way to pass a literal value
+            #define START_TET_ID 1024
 
             // Constructor to reset START_TET_ID on the new value
-
-                // TODO: Is there a nice way to remove this code duplication
             morton_id_generator_t() : id_generator_t(START_TET_ID) {
 		        // Empty
             }

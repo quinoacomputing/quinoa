@@ -25,7 +25,6 @@ namespace AMR {
     class Refinement_State {
 
         public:
-
             /// Common to active and master elements
             size_t active_element_number; // TODO: Some of these can be removed?
             Refinement_Case refinement_case;
@@ -34,13 +33,9 @@ namespace AMR {
             size_t refinement_level;
             size_t child_number;
             size_t parent_id;
-            int normal; // TODO: make this a bool?
+            bool normal;
 
-            // Only needed for active
-            //size_t master_element_number; // TODO: Some of these can be removed?
-
-            Refinement_State() {} // TODO: Remove?
-
+            Refinement_State() {}
 
             /**
              * @brief Constructor which allows for all data fields to be explicitly

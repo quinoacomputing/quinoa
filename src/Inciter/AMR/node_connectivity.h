@@ -77,12 +77,13 @@ namespace AMR {
                 assert(id > empty_node_count-1); //[0..empty_node_counts)
 
                 // TODO: this is now a linear search..
-                // TODO: replace with a inverse map to search both ways
-                for (auto it = nodes.begin(); it != nodes.end(); ++it) {
-                    if (it->second == id) return it->first;
+                    // replace with a inverse map to search both ways
+                auto it = nodes.begin();
+                for (it = nodes.begin(); it != nodes.end(); ++it) {
+                    if (it->second == id) break;
                 }
-                trace_out << "PROBLEM FINDING ID " << id << std::endl;
-                assert(0);
+                assert(it != nodes.end());
+                return it->first;
             }
 
             /**
@@ -107,8 +108,8 @@ namespace AMR {
              */
             static size_t face_list_opposite(face_list_t face_list, size_t opposite_index)
             {
-                // TODO: make this actually inspect the face_list and be much
-                // more robust...
+                // FIXME: make this actually inspect the face_list and be much
+                    // more robust...
                 size_t result = face_list[0][0];
                 switch(opposite_index)
                 {
