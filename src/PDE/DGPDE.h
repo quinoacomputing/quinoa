@@ -114,13 +114,13 @@ class DGPDE {
 
     //! Public interface to returning field output
     std::vector< std::vector< tk::real > > fieldOutput(
-      const tk::Fields& lhs,
+      const tk::Fields& L,
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
       tk::real t,
       const tk::Fields& geoElem,
       tk::Fields& U ) const
-    { return self->fieldOutput( lhs, inpoel, coord, t, geoElem, U ); }
+    { return self->fieldOutput( L, inpoel, coord, t, geoElem, U ); }
 
     //! Public interface to returning analytic solution
     std::vector< tk::real >
@@ -210,13 +210,13 @@ class DGPDE {
       std::vector< std::string > names() const override
       { return data.names(); }
       std::vector< std::vector< tk::real > > fieldOutput(
-        const tk::Fields& lhs,
+        const tk::Fields& L,
         const std::vector< std::size_t >& inpoel,
         const tk::UnsMesh::Coords& coord,
         tk::real t,
         const tk::Fields& geoElem,
         tk::Fields& U ) const override
-      { return data.fieldOutput( lhs, inpoel, coord, t, geoElem, U ); }
+      { return data.fieldOutput( L, inpoel, coord, t, geoElem, U ); }
       std::vector< tk::real >
       analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
        const override { return data.analyticSolution( xi, yi, zi, t ); }
