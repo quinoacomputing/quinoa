@@ -49,6 +49,7 @@ target_include_directories(Inciter PUBLIC
                            ${PROJECT_BINARY_DIR}/../Main)
 
 add_library(MeshRefinement
+            PUPAMR.C
             AMR/mesh_adapter.C
             AMR/util.C
             AMR/edge.C

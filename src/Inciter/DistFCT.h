@@ -51,15 +51,15 @@ namespace inciter {
 class DistFCT : public CBase_DistFCT {
 
   private:
-    //! Variant storing one proxy storing the discretization proxy we work with
+    //! Variant listing the types of the discretization proxies we work with
     using SchemeProxy = boost::variant< CProxy_MatCG, CProxy_DiagCG >;
-    //! Variant type listing chare element proxy types of discretization proxy
+    //! Variant listing the chare element proxy types of discretization proxies
     using ProxyElem =
       boost::variant< CProxy_MatCG::element_t, CProxy_DiagCG::element_t >;
   
-    //! Functor to call the next() member function behind SchemeProxy
-    struct Next : boost::static_visitor<> {
-      Next( const tk::Fields& a ) : A(a) {}
+    //! Functor to call the update() member function behind SchemeProxy
+    struct Update : boost::static_visitor<> {
+      Update( const tk::Fields& a ) : A(a) {}
       template< typename P >
         void operator()( const P& p ) const { p.ckLocal()->update( A ); }
       const tk::Fields& A;
@@ -147,13 +147,19 @@ class DistFCT : public CBase_DistFCT {
               const tk::Fields& dUl,
               const SchemeProxy& scheme );
 
+    //! Resize FCT data structures (e.g., after mesh refinement)
+    void resize( std::size_t nu,
+                 const std::unordered_map< int,
+                   std::vector< std::size_t > >& msum,
+                 const std::unordered_map< std::size_t, std::size_t >& bid,
+                 const std::unordered_map< std::size_t, std::size_t >& lid,
+                 const std::vector< std::size_t >& inpoel );
+
     /** @name Pack/unpack (Charm++ serialization) routines */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
-      p | m_nhsol;
-      p | m_nlsol;
       p | m_naec;
       p | m_nalw;
       p | m_nlim;
@@ -183,10 +189,6 @@ class DistFCT : public CBase_DistFCT {
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
 
-    //! Counter for high order solution nodes updated
-    std::size_t m_nhsol;
-    //! Counter for low order solution nodes updated
-    std::size_t m_nlsol;
     //! \brief Number of chares from which we received antidiffusive element
     //!   contributions on chare boundaries
     std::size_t m_naec;
@@ -226,6 +228,9 @@ class DistFCT : public CBase_DistFCT {
     tk::Fields m_ul, m_dul, m_du;
     //! Variant storing the discretization scheme class we interoperate with
     SchemeProxy m_scheme;
+
+    //! Size FCT communication buffers
+    void resizeComm();
 
     //! \brief Verify antidiffusive element contributions up to linear solver
     //!   convergence

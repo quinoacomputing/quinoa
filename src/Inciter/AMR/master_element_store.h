@@ -12,6 +12,11 @@ namespace AMR {
         private:
             std::map<size_t, Refinement_State> master_elements;
         public:
+            //! Non-const-ref access to state
+            std::map<size_t, Refinement_State>& data() {
+              return master_elements;
+            }
+
             /**
              * @brief Add an element to the master element list.
              *
@@ -36,14 +41,14 @@ namespace AMR {
                  size_t parent_id
             )
             {
-                Refinement_State data = Refinement_State(
+                Refinement_State d = Refinement_State(
                         element_number,
                         refinement_case,
                         refinement_level,
                         parent_id
                 );
 
-                master_elements.insert( std::pair<size_t, Refinement_State>(element_number, data));
+                master_elements.insert( std::pair<size_t, Refinement_State>(element_number, d));
 
                 return element_number;
             }

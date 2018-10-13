@@ -576,7 +576,6 @@ Sorter::createWorkers()
   // Make boundary node IDs unique for each physical boundary (side set)
   for (auto& s : chbnode) tk::unique( s.second );
 
-
   // Generate set of all mesh faces
   tk::UnsMesh::FaceSet faceset;
   for (std::size_t e=0; e<m_ginpoel.size()/4; ++e) { // for all tets

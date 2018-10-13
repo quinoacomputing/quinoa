@@ -5,12 +5,11 @@
 #ifndef TETAMR_AMR_DATA_H
 #define TETAMR_AMR_DATA_H
 
-#include "NoWarning/charm++.h"
-
 #include <vector>
 #include <cstddef>
 
-#include "types.h"
+#include "Types.h"
+#include "AMR_types.h"
 
 namespace AMR {
     // Types
@@ -22,75 +21,6 @@ namespace AMR {
     // TODO: Populate this enum with the available refinement cases
     enum Refinement_Case { initial_grid = 0, one_to_two, one_to_four, one_to_eight,
         two_to_eight, four_to_eight, none };
-
-    enum Edge_Lock_Case {unlocked = 0, locked, intermediate, temporary};
-     // TODO: Make these class enums? (breaks printing)
-    struct Edge_Refinement {
-        size_t A;
-        size_t B;
-        real_t refinement_criteria;
-        bool needs_refining; // TODO: This could possibly be deduced implicitly
-        bool needs_derefining; // TODO: Marge this with needs_refining
-        bool is_dead;
-        Edge_Lock_Case lock_case; // TODO: Refactor this to match _ style?
-
-        // Explicit Empty Constructor
-        Edge_Refinement() :
-            A(0),
-            B(0),
-            refinement_criteria(0.0),
-            needs_refining(false),
-            needs_derefining(false),
-            is_dead(false),
-            lock_case(Edge_Lock_Case::unlocked)
-        {
-            // Empty
-        }
-
-        /** @name Charm++ pack/unpack serializer member functions */
-        ///@{
-        //! \brief Pack/Unpack serialize member function
-        //! \param[in,out] p Charm++'s PUP::er serializer object reference
-        void pup( PUP::er &p ) {
-          p | A;
-          p | B;
-          p | refinement_criteria;
-          p | needs_refining;
-          p | needs_derefining;
-          p | is_dead;
-          p | lock_case;
-        }
-        //! \brief Pack/Unpack serialize operator|
-        //! \param[in,out] p Charm++'s PUP::er serializer object reference
-        //! \param[in,out] e Edge_Refinement object reference
-        friend void operator|( PUP::er& p, Edge_Refinement& e ) { e.pup(p); }
-        //@}
-
-        // This abstraction is hardly any better than using an explicit initialisation
-        // list but it makes it easier if we decide to add/remove a parameter
-        Edge_Refinement(
-                size_t A_in,
-                size_t B_in,
-                real_t refinement_criteria_in,
-                bool needs_refining_in,
-                bool needs_derefining_in,
-                bool is_dead_in,
-                Edge_Lock_Case lock_case_in
-                ) :
-            A(A_in),
-            B(B_in),
-            refinement_criteria(refinement_criteria_in),
-            needs_refining(needs_refining_in),
-            needs_derefining(needs_derefining_in),
-            is_dead(is_dead_in),
-            lock_case(lock_case_in)
-        {
-            // Empty, all implicit.
-            // Could add logic here to reconcile needs_refining and needs_derefining
-        }
-    };
-
-    //stop it being copied around?
 
     class Refinement_State {
 
