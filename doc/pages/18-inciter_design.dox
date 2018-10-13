@@ -206,7 +206,7 @@ whose constructor starts by reading a different chunk of the mesh in blocks as
 they appear in the file. We read a chunk of the mesh and associated node
 coordinates for all mesh cells that are in the chunk read.  `Partitioner`'s
 constructor also reads/computes the triangle element connectivity associated to
-side sets as well as the node lists associated to side sets. Note only the
+side sets as well as the node lists associated to side sets. Note that only the
 portion of all this data is read in on a group that belongs to a given chunk of
 the mesh. At this point this results in a simple partitioning which almost
 certainly _not_ ideal for computing equations later, because of a large
@@ -250,15 +250,17 @@ initial mesh refinement.
 @subsection inciter_refine Optional initial mesh refinement
 
 `Transporter::distributed()` issues a broadcast to `Partitioner::refine()`,
-which uses dynamic array insertion to create all `Refiner` chare array elements.
-Note that there may be multiple `Refiner` objects created on each `Partitioner`
-PE (or compute node in SMP mode). Each `Refiner` constructor gets a chunk of the
-mesh (which now are smaller chunks than the chunks that were originally read
-from file), corresponding to the total number of chares. Note only the mesh
-connectivity and node coordinates, but the boundary face connectivity and
-boundary node lists associated to multiple side sets are also passed to Refiner,
-and only those portions of these data structures that belong to the particular
-`Refiner` chare.
+which uses dynamic array insertion to create all `Refiner` chare array
+elements.  Note that there may be multiple `Refiner` objects created on each
+`Partitioner` PE (or compute node in SMP mode). Each `Refiner` constructor gets
+a chunk of the mesh (which now are smaller chunks than the chunks that were
+originally read from file), corresponding to the total number of chares. Not
+only the mesh connectivity and node coordinates, but also the boundary face
+connectivity and boundary node lists associated to multiple side sets are also
+passed to Refiner, and only those portions of these data structures that belong
+to the particular `Refiner` chare. (Boundary face connectivity is used for
+cell-based discretization schemes, such as `DG`, while boundary node lists are
+used for nodal discretizations, such as `CG` to set boundary conditions.)
 
 @note As usual, dynamic insertion calls are asynchronous, i.e., the calls really
 only signals to the runtime system that it is time to start calling constructors
@@ -267,7 +269,132 @@ array placement. See the Charm++ manual.
 
 `Refiner`'s constructor evaluates user configuration and decides if initial mesh
 refinement is to be performed or not. If not, execution is simply skipped ahead
-to inciter::Refiner::finish(). If initial refinement is configured, we descend
-into inciter::Refiner::start().
+to inciter::Refiner::endt0ref(). If initial refinement is configured, we descend
+into inciter::Refiner::t0ref().
+
+There are two ways inciter::Refiner is used:
+1. Mesh refinement before time stepping (t<0), `t0ref`, and
+2. Mesh refinement during time stepping (t>0), `dtref`.
+
+Initial mesh refinement consists of potentially multiple steps of different
+refinement types: `uniform`, `ic`, `coordref`, which respectively stand for
+uniform refinement, i.e., 1->8, initial-conditions-based, i.e., based on
+estimating the error in the initial conditions on a given initial mesh, and
+coordinate-based, which allows specifying planes in the 3 dimensional space and
+allows tagging edges for refinement between two extremes. Additionally the user
+can also tag edges manually, using the `initref` keyword and creating a list of
+pairs of global node ids.
+
+inciter::Refiner::eval() evaluates, at the end of each initial refinement step,
+if a next initial refinement step is to be performed. In the last step,
+execution continues inciter::Refiner::endt0ref(), which creates
+inciter::Sorter.
+
+inciter::Refiner::endt0ref() not only creates the `Sorter` array chares but
+also reports back to inciter::Transporter::refined(), signaling the end of the
+initial mesh refinement. In this reduction target the final number of mesh
+cells and nodes are also aggregated across the whole problem and set in
+`Transporter::m_nelem` and `Transporter::m_npoin`.
+
+@subsection inciter_reorder Optional initial PE-locality mesh node reordering
+
+`Sorter` takes a chunk of the mesh, together with its physical boundary face
+and node data structures, and sets up a symmetric node communication map
+(`m_msum`), which stores the global node IDs of chare boundaries associated to
+chare IDs on each chare. This map is symmetric in a sense that if two chares
+share a node after partitioning, the same node ID will be stored on each chare
+assigned to the other chare IDs. This map used for point-point communication
+during time stepping. This map is used by node-centered (CG) schemes, as well
+as a starting point for setting up face and ghost communication data structures
+for cell-centered DG.
+
+`Sorter` performs optional PE-locality mesh node reordering in parallel. This
+reordering is optional and is off by default unless `MatCG` is configured by
+the user. The reordering assigns new global mesh node IDs that roughly increase
+with chare ID. This enables optimal communication for `MatCG` when
+contributions to the linear system are communicated and assembled for a linear
+solution in tk::Solver.
+
+Whether node reordering is to be performed or not is evaluated in
+inciter::Sorter::start().  If reordering is done, it starts in
+inciter::Sorter::mask(). If reordering is not done, we skip to
+inciter::Sorter::create(), which starts creating the worker chares, that will
+eventually perform the heavy lifting during time stepping: computing the PDE
+operators and time integration.
+
+@subsection inciter_create Creating workers
+
+The worker Charm++ chare array elements, that store the mesh and associated
+data structures and compute PDE operators during time stepping, are organized
+into a single-level base-child relationship for code reuse and runtime
+polymorphism. However, both the base-child relationship and runtime
+polymorphism are slightly differently implemented compared what would be
+familiar with inheritance in standard object-oriented programming (OOP).
+
+There is a single base class, `inciter::Discretization`, that encapsulates data
+and member functions that are generic to all mesh-based discretization schemes.
+It stores the mesh, connectivity, node coordinates, etc. As `Discretization` is
+a chare array, its elements are distributed across the whole problem on all
+available compute nodes and PEs, and can also migrate for load balancing. In
+the OOP sense, derived (or child) classes are the classes that implement a
+particular discretization scheme, e.g., inciter::DiagCG or inciter::DG.
+
+@note For more details on runtime polymorphism with migratable Charm++ chare
+arrays using value semantics, see Inciter/Scheme.h and [this
+talk](http://charm.cs.illinois.edu/charmWorkshop/slides/CharmWorkshop2018_bakosi.pdf).
+
+inciter::Sorter::create() starts creating the `Discretization` chares in
+inciter::Sorter::createDiscWorkers(). This is done via the usual Charm++
+dynamic array insertion passing the mesh chunk and associated data structures
+to their constructors. Eventually, this is followed by creating the child
+workers in inciter::Sorter::createWorkers().
+
+Execution from the `Discretization` constructor follows to
+inciter::Transporter::disccreated()` which fires up `Discretization::vol()`,
+which computes nodal volumes as well as the total volume of the complete
+problem, which ends up in `Transporter::totalvol()`. Volume calculations are
+followed by computing various statistics on the mesh cell sizes, including
+min/max edge lengths, and histograms, which are useful diagnostics to estimate
+load imbalance.
+
+@note The mesh statistics computed by inciter::Discretization::stat() are
+simple diagnostics and feedback for the user and the developer and are _not_
+used by the runtime system for load balancing.
+
+The various mesh statistics aggregate and arrive independently in reduction
+target member functions of `Transporter`, `minstat()`, `maxstat()`,
+`sumstat()`, and `pdfstat()`. When all of these are complete (see
+src/Inciter/transporter.ci how this condition is told the runtime system using
+a DAG) ,inciter::Transporter::stat() is called in which execution continues by
+creating the child (or derived) workers in inciter::Sorter::createWorkers(). As
+usual, the children are also created by dynamic array insertion.
+
+@warning Since the child classes `DiagCG`, `DG`, etc., access (potentially
+large) data from `Discretization` via raw pointers, base and child are always
+migrated together, using Charm++'s _bound arrays_ feature. `Refiner` and
+`DistFCT` are also bound to `Discretization` and the children. See also
+src/Inciter/SchemeBase.h.
+
+After the child constructors have started, one way or another, they are
+expected to call inciter::Transporter::comfinal(), which signals the end of
+setting up any (additional) communication maps needed by the specific
+discretization schemes. After this the child classes are called again via their
+member function setup(). All specific discretization schemes, "deriving from"
+`Discretization`, are expected to define certain member functions, such as
+`setup()`, which do scheme-specific setup and is eventually expected to call
+`dt()`, which starts time stepping (by computing the size of the next time
+step). `dt()` is also the member function that is called again and again
+starting a new time step during time stepping.
+
+@section inciter_timestepping 4. Time stepping
+
+After all the above, time stepping starts. Time stepping is done very
+differently by the different types of discretizations but they all expected to
+define a few member functions that are common so they can interoperate with
+their host, `Transporter`. These are must also be Charm++ entry methods and
+must also have the same function signature (as in a derived class in OOP).
+Since the set of these function may change, the best way to find out what is
+required is to compare the Charm++ interface (`.ci`) files and look for entry
+methods are defined by all child schemes.
 
 */
