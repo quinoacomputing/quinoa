@@ -93,6 +93,10 @@ class TransportProblemGaussHump {
       for (const auto& s : g_inputdeck.get< param, transport,
                                             tag::bcextrapolate >())
         for (const auto& i : s) conf.insert( std::stoi(i) );
+
+      for (const auto& s : g_inputdeck.get< param, transport,
+                                            tag::bcdir >())
+        for (const auto& i : s) conf.insert( std::stoi(i) );
     }
 
     //! Assign prescribed velocity at a point

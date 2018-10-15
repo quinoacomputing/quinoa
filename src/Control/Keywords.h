@@ -4608,16 +4608,33 @@ struct diagcg_info {
 using diagcg = keyword< diagcg_info, TAOCPP_PEGTL_STRING("diagcg") >;
 
 struct dg_info {
-  static std::string name() { return "discontinuous Galerkin + Runge-Kutta"; }
+  static std::string name() { return "DG(P0) + RK"; }
   static std::string shortDescription() { return
-    "Select discontinuous Galerkin discretization"; }
+    "Select 1st-order accurate discontinuous Galerkin discretization + "
+    "Runge-Kutta"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the discontinuous Galerkin (DG) spatial
-    discretiztaion used in inciter. Selecting DG also selects the Runge-Kutta
-    scheme for time discretization. See
-    Control/Inciter/Options/Scheme.h for other valid options.)"; }
+    R"(This keyword is used to select the first-order accurate discontinuous
+    Galerkin, DG(P0), spatial discretiztaion used in Inciter. As this is first
+    order accurate, it is intended for testing and debugging purposes only.
+    Selecting this spatial discretization also selects the Runge-Kutta scheme
+    for time discretization. See Control/Inciter/Options/Scheme.h for other
+    valid options.)"; }
 };
 using dg = keyword< dg_info, TAOCPP_PEGTL_STRING("dg") >;
+
+struct dgp1_info {
+  static std::string name() { return "DG(P1) + RK"; }
+  static std::string shortDescription() { return
+    "Select 2nd-order accurate discontinuous Galerkin discretization + "
+    "Runge-Kutta"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the second-order accurate discontinuous
+    Galerkin, DG(P1), spatial discretiztaion used in Inciter.Selecting this
+    spatial discretization also selects the Runge-Kutta scheme for time
+    discretization. See Control/Inciter/Options/Scheme.h for other
+    valid options.)"; }
+};
+using dgp1 = keyword< dgp1_info, TAOCPP_PEGTL_STRING("dgp1") >;
 
 struct scheme_info {
   static std::string name() { return "Discretization scheme"; }

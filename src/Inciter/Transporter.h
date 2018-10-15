@@ -128,8 +128,7 @@ class Transporter : public CBase_Transporter {
     //! Non-reduction target for receiving progress report on face adjacency
     void chadj() { m_progWork.inc< ADJ >(); }
 
-    //! \brief Reduction target indicating that the communication has been
-    //!    established among PEs
+    //! Reduction target indicating that the communication maps have been setup
     void comfinal();
 
     //! Reduction target summing total mesh volume
