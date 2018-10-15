@@ -45,8 +45,8 @@ FaceData::FaceData(
 //!   chosen.
 // *****************************************************************************
 {
-  if (g_inputdeck.get< tag::discr, tag::scheme >() == ctr::SchemeType::DG) {
-
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+  if (ctr::Scheme().centering(scheme) == ctr::Centering::ELEM) {
     auto el = tk::global2local( ginpoel );   // fills inpoel, m_gid, m_lid
     const auto& inpoel = std::get< 0 >( el );
     const auto& lid = std::get< 2 >( el );

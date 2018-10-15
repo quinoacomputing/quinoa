@@ -72,6 +72,19 @@ class CompFlow {
       }
     }
 
+    //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
+    //! \param[in] xi X-coordinate
+    //! \param[in] yi Y-coordinate
+    //! \param[in] zi Z-coordinate
+    //! \param[in] t Physical time
+    //! \return Vector of analytic solution at given location and time
+    std::vector< tk::real >
+    analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
+    {
+      auto s = Problem::solution( m_c, xi, yi, zi, t );
+      return std::vector< tk::real >( begin(s), end(s) );
+    }
+
     //! Compute the left hand side sparse matrix
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
