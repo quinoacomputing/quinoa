@@ -882,17 +882,8 @@ class CompFlow {
                                         geoFace(f,2,0),
                                         geoFace(f,3,0) }};
 
-        ////--- fluxes
-        //auto flux = m_riemann.flux( f, geoFace, State::LR(U.extract( el ),xc,yc,zc,fn,t) );
-
-        //auto farea = geoFace(f,0,0);
-
-        std::vector< tk::real > ugp;
-        for (ncomp_t c=0; c<5; ++c)
-          ugp.push_back( U(el, c, m_offset) );
-
-		//--- fluxes
-        auto flux = m_riemann.flux( f, geoFace, State::LR(ugp,xc,yc,zc,fn,t) );
+        //--- fluxes
+        auto flux = m_riemann.flux( f, geoFace, State::LR(U.extract(el),xc,yc,zc,fn,t) );
 
         for (ncomp_t c=0; c<5; ++c)
           R(el, c, m_offset) -= farea * flux[c];
