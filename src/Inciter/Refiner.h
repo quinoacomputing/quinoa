@@ -69,7 +69,7 @@ class Refiner : public CBase_Refiner {
 
     //! Start mesh refinement (during time stepping, t>0)
     void dtref( tk::real t,
-                const SchemeBase::Proxy& s,
+                const SchemeBase::Proxy& scheme,
                 const std::map< int, std::vector< std::size_t > >& bnode );
 
     //! Receive boundary edges from all PEs (including this one)
@@ -222,6 +222,9 @@ class Refiner : public CBase_Refiner {
     //! Start new step of initial mesh refinement (before t>0)
     void t0ref();
 
+    //! Write mesh to file
+    void writeMesh( const std::string& prefix, uint64_t it, tk::real t );
+
     //! Generate boundary edges and send them to all chares
     void bndEdges();
 
@@ -248,6 +251,9 @@ class Refiner : public CBase_Refiner {
 
     //! Do mesh refinement correcting PE-boundary edges
     void correctRefine( const EdgeSet& extra );
+
+    //! ...
+    void matched();
 
     //! Update mesh after refinement
     void updateMesh();

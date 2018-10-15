@@ -167,7 +167,7 @@ Refiner::flatcoord( const tk::UnsMesh::CoordMap& coordmap )
 
 void
 Refiner::dtref( tk::real t,
-                const SchemeBase::Proxy& s,
+                const SchemeBase::Proxy& scheme,
                 const std::map< int, std::vector< std::size_t > >& bnode )
 // *****************************************************************************
 // Start mesh refinement (during time stepping, t>0)
@@ -183,7 +183,7 @@ Refiner::dtref( tk::real t,
   m_bnode = bnode;
 
   // Store discretization scheme proxy
-  m_schemeproxy = s;
+  m_schemeproxy = scheme;
 
   t0ref();
 }
@@ -192,15 +192,19 @@ void
 Refiner::t0ref()
 // *****************************************************************************
 // Start new step of initial mesh refinement (before t>0)
-//! \param[in] t Physical time
-//! \param[in] scheme Discretization scheme Charm++ proxy we interoperate with
 // *****************************************************************************
 {
-  if (m_initial)
+  if (m_initial) {
     Assert( (!g_inputdeck.get< tag::amr, tag::init >().empty()) ||
             (!g_inputdeck.get< tag::amr, tag::init >().empty()),
             "Neither initial mesh refinement type list nor user-defined "
             "edge list given" );
+    // Output initial mesh to file
+    auto n = g_inputdeck.get<tag::amr, tag::init>().size(); // num initref steps
+    auto l = n - m_initref.size();  // num initref steps completed
+    auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
+    if (l == 0) writeMesh( "t0ref", l, t0-1.0 );
+  }
 
   m_extra = 0;  // assume at least a single step of correction is needed
   m_bndEdges.clear();
@@ -210,6 +214,44 @@ Refiner::t0ref()
 
   // Generate boundary edges
   bndEdges();
+}
+
+void
+Refiner::writeMesh( const std::string& prefix, uint64_t it, tk::real t )
+// *****************************************************************************
+// Write mesh to file
+//! \param[in] prefix Prefix to mesh filename
+//! \param[in] it Iteration number counting number of meshes changed during
+//!   multiple file output. (This can be the refinement level for initial (t<0)
+//!   AMR, or ...
+//! \param[in] t Physical time ...
+// *****************************************************************************
+{
+  tk::ExodusIIMeshWriter
+    mw( prefix + ".e-s"
+        + '.' + std::to_string( it )       // create new file for new mesh
+        + '.' + std::to_string( m_nchare )   // total number of workers
+        + '.' + std::to_string( thisIndex ), // new file per worker
+        tk::ExoWriter::CREATE );
+
+  // Prepare boundary data for file output
+  decltype(m_bnode) bnode;
+  if (m_nchare == 1) {  // do not write boundary data in parallel
+    // Convert boundary node lists to local ids for output
+    bnode = m_bnode;
+    for (auto& s : bnode) for (auto& p : s.second) p = tk::cref_find(m_lid,p);
+  }
+
+  // Output mesh
+  tk::UnsMesh refmesh( m_inpoel, m_coord, bnode );
+  mw.writeMesh( refmesh );
+
+  // Output element-centered scalar fields on recent mesh refinement step
+  mw.writeTimeStamp( 1, t );
+  auto& tet_store = m_refiner.tet_store;
+  mw.writeElemVarNames( { "refinement level", "cell type" } );
+  mw.writeElemScalar( 1, 1, tet_store.get_refinement_level_list() );
+  mw.writeElemScalar( 1, 2, tet_store.get_cell_type_list() );
 }
 
 void
@@ -319,7 +361,6 @@ Refiner::refine()
 
   }
 
-
   for (const auto& e : tk::cref_find(m_bndEdges,thisIndex)) {
     IGNORE(e);
     Assert( m_lid.find( e[0] ) != end( m_lid ) &&
@@ -342,10 +383,9 @@ Refiner::comExtra()
 // Communicate refined edges after a refinement step
 // *****************************************************************************
 {
-  // Export added nodes on our mesh chunk boundary to other chares (in serial)
+  // Export added nodes on our mesh chunk boundary to other chares
   if (m_ch.empty())
-    contribute( sizeof(std::size_t), &m_extra, CkReduction::max_ulong,
-                m_cbr.get< tag::matched >() );
+    matched();
   else {
     m_nref = 0;
     for (auto c : m_ch) {       // for all chares we share at least an edge with
@@ -393,10 +433,21 @@ Refiner::recvRefBndEdges()
   // the first time in a given initial mesh refinement step, i.e., not after a
   // correction step, m_extra=1 on all chares, so a correction step is assumed
   // to be required.
-  if (++m_nref == m_ch.size()) {
-    contribute( sizeof(std::size_t), &m_extra, CkReduction::max_ulong,
-                m_cbr.get< tag::matched >() );
-  }
+  if (++m_nref == m_ch.size()) matched();
+}
+
+void
+Refiner::matched()
+// *****************************************************************************
+// ...
+// *****************************************************************************
+{
+  // Update mesh coordinates and connectivity
+  if (m_extra == 0) updateMesh();
+
+  // Aggregate number of extra edges that still need correction
+  contribute( sizeof(std::size_t), &m_extra, CkReduction::max_ulong,
+              m_cbr.get< tag::matched >() );
 }
 
 void
@@ -486,40 +537,15 @@ Refiner::eval()
 {
   AtSync();   // Migrate here if needed
 
-  // Lambda to write mesh to file after refinement step. Parameters:
-  //  * prefix - Prefix to mesh filename
-  //  * it - Iteration count to put in filename (This can be the refinement
-  //    level for initial (pre-timestepping) AMR or the physical time for AMR
-  //    during time stepping.
-  auto writeMesh = [this]( const std::string& prefix, const std::string& it ){
-    tk::ExodusIIMeshWriter
-      mw( prefix + ".e-s"
-          + '.' + it                            // create new file for new mesh
-          + '.' + std::to_string( this->m_nchare )   // total number of workers
-          + '.' + std::to_string( this->thisIndex ), // new file per worker
-          tk::ExoWriter::CREATE );
-    // Prepare boundary data for file output
-    decltype(this->m_bnode) bnode;
-    if (this->m_nchare == 1) {  // do not write boundary data in parallel
-      // Convert boundary node lists to local ids for output
-      bnode = m_bnode;
-      for (auto& s : bnode) for (auto& p : s.second) p = tk::cref_find(m_lid,p);
-    }
-    // Output mesh
-    tk::UnsMesh refmesh( this->m_inpoel, this->m_coord, bnode );
-    mw.writeMesh( refmesh );
-    // Output element-centered scalar fields on recent mesh refinement step
-    mw.writeElemVarNames( { "refinement level", "cell type" } );
-    auto& tet_store = this->m_refiner.tet_store;
-    mw.writeElemScalar( 1, 1, tet_store.get_refinement_level_list() );
-    mw.writeElemScalar( 1, 2, tet_store.get_cell_type_list() );
-  };
-
   if (m_initial) {      // if initial (before t=0) AMR
 
     // Output mesh after recent step of initial mesh refinement
-    auto level = g_inputdeck.get<tag::amr, tag::init>().size() - m_initref.size();
-    writeMesh( "t0ref", std::to_string(level) );
+    auto n = g_inputdeck.get<tag::amr, tag::init>().size(); // num initref steps
+    auto l = n - m_initref.size() + 1;  // num initref steps completed
+    auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
+    // Generate times for file output equally subdividing t0-1...t0 to n steps
+    tk::real t = t0 - 1.0 + static_cast<tk::real>(l)/static_cast<tk::real>(n);
+    writeMesh( "t0ref", l, t );
     // Remove initial mesh refinement step from list
     if (!m_initref.empty()) m_initref.pop_back();
     // Continue to next initial AMR step or finish
@@ -528,7 +554,7 @@ Refiner::eval()
   } else {              // if AMR during time stepping (t>0)
 
     // Output mesh after recent step of mesh refinement during time stepping
-    writeMesh( "dtref", std::to_string(m_t) );
+    writeMesh( "dtref", 0, m_t );
 
     // Augment node comm. map with newly added nodes on chare-boundary edges
     for (const auto& c : m_edgenodeCh) {
@@ -573,9 +599,6 @@ Refiner::uniformRefine()
 {
   // Do uniform refinement
   m_refiner.uniform_refinement();
-
-  // Update mesh coordinates and connectivity
-  updateMesh();
 
   // Set number of extra edges to be zero, skipping correction (if this is the
   // only step in this refinement step)
@@ -643,9 +666,6 @@ Refiner::errorRefine()
   // Do error-based refinement
   m_refiner.error_refinement( edge, crit );
 
-  // Update mesh coordinates and connectivity
-  updateMesh();
-
   // Set number of extra edges to a nonzero number, triggering correction
   m_extra = 1;
 }
@@ -688,9 +708,6 @@ Refiner::userRefine()
 
     // Do error-based refinement
     m_refiner.error_refinement( edge, crit );
-
-    // Update mesh coordinates and connectivity
-    updateMesh();
 
     // Set number of extra edges to a nonzero number, triggering correction
     m_extra = 1;
@@ -761,9 +778,6 @@ Refiner::coordRefine()
 
     // Do error-based refinement
     m_refiner.error_refinement( edge, crit );
-
-    // Update mesh coordinates and connectivity
-    updateMesh();
 
     // Set number of extra edges to a nonzero number, triggering correction
     m_extra = 1;
@@ -846,9 +860,6 @@ Refiner::correctRefine( const tk::UnsMesh::EdgeSet& extra )
 
     // Do refinement including edges that need to be corrected
     m_refiner.error_refinement( edge, crit );
-
-    // Update mesh coordinates and connectivity
-    updateMesh();
   }
 }
 

@@ -356,7 +356,7 @@ ExodusIIMeshWriter::writeTimeStamp( uint64_t it, tk::real time ) const
 // *****************************************************************************
 {
   ErrChk( ex_put_time( m_outFile, static_cast<int>(it), &time ) == 0,
-          "Failed to time stamp to ExodusII file: " + m_filename );
+          "Failed to write time stamp to ExodusII file: " + m_filename );
 }
 
 void
