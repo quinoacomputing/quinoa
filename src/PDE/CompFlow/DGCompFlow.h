@@ -121,12 +121,12 @@ class CompFlow {
     {}
 
     //! Initalize the compressible flow equations for DG
-    //! \param[in] lhs Element mass matrix
+    //! \param[in] L Element mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
-    void initialize( const tk::Fields& lhs,
+    void initialize( const tk::Fields& L,
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
                      tk::Fields& unk,
@@ -134,9 +134,9 @@ class CompFlow {
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       if (ndof == 1)
-        initializep0( lhs, inpoel, coord, unk, t );
+        initializep0( L, inpoel, coord, unk, t );
       else if (ndof == 4)
-        initializep1( lhs, inpoel, coord, unk, t );
+        initializep1( L, inpoel, coord, unk, t );
       else Throw( "DGCompFlow::initialize() not defined" );
     }
 
@@ -316,7 +316,7 @@ class CompFlow {
     //! \param[in,out] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
-    fieldOutput( const tk::Fields& /*lhs*/,
+    fieldOutput( const tk::Fields& /*L*/,
                  const std::vector< std::size_t >& /*inpoel*/,
                  const tk::UnsMesh::Coords& /*coord*/,
                  tk::real t,
@@ -401,18 +401,18 @@ class CompFlow {
     }
 
     //! Initalize the compressible flow equations, prepare for time integration
-//    //! \param[in] lhs Element mass matrix
+//    //! \param[in] L Element mass matrix
 //    //! \param[in] inpoel Element-node connectivity
 //    //! \param[in] coord Array of nodal coordinates
 //    //! \param[in,out] unk Array of unknowns
 //    //! \param[in] t Physical time
-    void initializep1( const tk::Fields& /*lhs*/,
+    void initializep1( const tk::Fields& /*L*/,
                        const std::vector< std::size_t >& /*inpoel*/,
                        const tk::UnsMesh::Coords& /*coord*/,
                        tk::Fields& /*unk*/,
                        tk::real /*t*/ ) const
     {
-      //Assert( lhs.nunk() == unk.nunk(), "Size mismatch" );
+      //Assert( L.nunk() == unk.nunk(), "Size mismatch" );
       //std::size_t nelem = unk.nunk();
     }
 
