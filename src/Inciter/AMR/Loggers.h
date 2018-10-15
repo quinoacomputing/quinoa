@@ -1,4 +1,3 @@
-///TODO: Add header
 #ifndef Loggers_h
 #define Loggers_h
 

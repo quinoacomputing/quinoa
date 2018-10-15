@@ -613,6 +613,31 @@ namespace AMR {
                 return returned_nodes;
             }
 
+            void lock_intermediates(
+                    tet_store_t& tet_store,
+                    std::unordered_set<size_t> intermediate_list,
+                    Edge_Lock_Case lock_case
+                )
+            {
+                // Loop over all edges
+                // If the edge is in the intermediate_list, deal with it
+                for (const auto& p : tet_store.edge_store.edges)
+                {
+                    auto e = p.first;
+                    size_t k1 = e.first();
+                    size_t k2 = e.second();
+                    // Can we make this double search cheaper?
+                    if (
+                            (intermediate_list.count(k1)) ||
+                            (intermediate_list.count(k2))
+                       )
+                    {
+                        tet_store.edge_store.get(e).lock_case = lock_case;
+                    }
+                }
+
+            }
+
             // TODO: remove this, it's horrible and not efficient.
             // WARNING: THIS GOES OVER ALL TETS!!!!
             void lock_edges_from_node(
@@ -663,6 +688,7 @@ namespace AMR {
                     }
                 }
             }
+
 
             ///// DEREFINEMENT STARTS HERE /////
             /**

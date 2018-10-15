@@ -38,6 +38,54 @@ using tet_list_t = std::map<size_t, tet_t>;
 using inpoel_t = std::vector< std::size_t >;     //!< Tetrahedron connectivity
 using node_list_t = std::vector<real_t>;
 
+enum Edge_Lock_Case {unlocked = 0, locked, intermediate, temporary};
+
+ // TODO: Make these class enums? (breaks printing)
+struct Edge_Refinement {
+    size_t A;
+    size_t B;
+    real_t refinement_criteria;
+    bool needs_refining; // TODO: This could possibly be deduced implicitly
+    bool needs_derefining; // TODO: Marge this with needs_refining
+    bool is_dead;
+    Edge_Lock_Case lock_case; // TODO: Refactor this to match _ style?
+
+    // Explicit Empty Constructor
+    Edge_Refinement() :
+        A(0),
+        B(0),
+        refinement_criteria(0.0),
+        needs_refining(false),
+        needs_derefining(false),
+        is_dead(false),
+        lock_case(Edge_Lock_Case::unlocked)
+    {
+        // Empty
+    }
+
+    // This abstraction is hardly any better than using an explicit initialisation
+    // list but it makes it easier if we decide to add/remove a parameter
+    Edge_Refinement(
+            size_t A_in,
+            size_t B_in,
+            real_t refinement_criteria_in,
+            bool needs_refining_in,
+            bool needs_derefining_in,
+            bool is_dead_in,
+            Edge_Lock_Case lock_case_in
+            ) :
+        A(A_in),
+        B(B_in),
+        refinement_criteria(refinement_criteria_in),
+        needs_refining(needs_refining_in),
+        needs_derefining(needs_derefining_in),
+        is_dead(is_dead_in),
+        lock_case(lock_case_in)
+    {
+        // Empty, all implicit.
+        // Could add logic here to reconcile needs_refining and needs_derefining
+    }
+};
 // Complex types
 struct Edge_Refinement; // forward declare
 using edges_t = std::map<edge_t, Edge_Refinement>;
