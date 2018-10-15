@@ -4,6 +4,7 @@ project(PDE CXX)
 
 add_library(PDE
             PDEStack.C
+            Quadrature.C
             ConfigureTransport.C
             ConfigureCompFlow.C)
 
@@ -12,6 +13,8 @@ target_include_directories(PDE PUBLIC
                            ${QUINOA_SOURCE_DIR}/Base
                            ${QUINOA_SOURCE_DIR}/Control
                            ${QUINOA_SOURCE_DIR}/Inciter
+                           ${QUINOA_SOURCE_DIR}/Mesh
+                           ${QUINOA_SOURCE_DIR}/PDE
                            ${BRIGAND_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}

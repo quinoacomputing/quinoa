@@ -76,7 +76,8 @@ using discretization = tk::tuple::tagged_tuple<
   tag::reorder,bool,                          //!< reordering on/off
   tag::ctau,   kw::ctau::info::expect::type,  //!< FCT mass diffisivity
   tag::scheme, inciter::ctr::SchemeType,      //!< Spatial discretization type
-  tag::flux,   inciter::ctr::FluxType         //!< Flux function type
+  tag::flux,   inciter::ctr::FluxType,        //!< Flux function type
+  tag::ndof,   std::size_t                    //!< Number of solution DOFs
 >;
 
 //! ASCII output floating-point precision in digits

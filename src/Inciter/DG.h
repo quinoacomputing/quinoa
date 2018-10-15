@@ -150,6 +150,7 @@ class DG : public CBase_DG {
       p | m_rhs;
       p | m_nfac;
       p | m_nunk;
+      p | m_ncoord;
       p | m_msumset;
       p | m_esuelTet;
       p | m_ipface;
@@ -213,6 +214,8 @@ class DG : public CBase_DG {
     std::size_t m_nfac;
     //! Counter for number of unknowns on this chare (including ghosts)
     std::size_t m_nunk;
+    //! Counter for number of nodes on this chare excluding ghosts
+    std::size_t m_ncoord;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!    worker chares associated to their chare IDs
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
