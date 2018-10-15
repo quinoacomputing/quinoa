@@ -79,12 +79,12 @@ class Transport {
     }
 
     //! Initalize the transport equations for DG
-    //! \param[in] lhs Element mass matrix
+    //! \param[in] L Element mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
-    void initialize( const tk::Fields& lhs,
+    void initialize( const tk::Fields& L,
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
                      tk::Fields& unk,
@@ -92,9 +92,9 @@ class Transport {
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       if (ndof == 1)
-        initializeP0( lhs, inpoel, coord, unk, t );
+        initializeP0( L, inpoel, coord, unk, t );
       else if (ndof == 4)
-        initializeP1( lhs, inpoel, coord, unk, t );
+        initializeP1( L, inpoel, coord, unk, t );
       else
         Throw( "dg::Transport::initialize() not defined for NDOF=" +
                std::to_string(ndof) );
@@ -232,7 +232,7 @@ class Transport {
     }
 
     //! Return field output going to file
-    //! \param[in] lhs Element mass matrix
+    //! \param[in] L Element mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] t Physical time
@@ -243,7 +243,7 @@ class Transport {
     //!   which provides the vector of field names
     //! \note U is overwritten
     std::vector< std::vector< tk::real > >
-    fieldOutput( const tk::Fields& lhs,
+    fieldOutput( const tk::Fields& L,
                  const std::vector< std::size_t >& inpoel,
                  const tk::UnsMesh::Coords& coord,
                  tk::real t,
@@ -258,7 +258,7 @@ class Transport {
         out.push_back( U.extract( c*ndof, m_offset ) );
       // evaluate analytic solution at time t
       auto E = U;
-      initializeP0( lhs, inpoel, coord, E, t );
+      initializeP0( L, inpoel, coord, E, t );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( E.extract( c*ndof, m_offset ) );
@@ -342,18 +342,18 @@ class Transport {
     }
 
     //! Initalize the transport equations for DG(P1) using problem policy
-    //! \param[in] lhs Element mass matrix
+    //! \param[in] L Element mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
-    void initializeP1( const tk::Fields& lhs,
+    void initializeP1( const tk::Fields& L,
                        const std::vector< std::size_t >& inpoel,
                        const tk::UnsMesh::Coords& coord,
                        tk::Fields& unk,
                        tk::real t ) const
     {
-      Assert( lhs.nunk() == unk.nunk(), "Size mismatch" );
+      Assert( L.nunk() == unk.nunk(), "Size mismatch" );
       std::size_t nelem = unk.nunk();
 
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
@@ -378,7 +378,7 @@ class Transport {
 
       for (std::size_t e=0; e<nelem; ++e)
       {
-        auto vole = lhs(e, 0, m_offset);
+        auto vole = L(e, 0, m_offset);
 
         auto x1 = cx[ inpoel[4*e]   ];
         auto y1 = cy[ inpoel[4*e]   ];
@@ -432,10 +432,10 @@ class Transport {
         for (ncomp_t c=0; c<m_ncomp; ++c)
         {
           auto mark = c*ndof;
-          unk(e, mark,   m_offset) = R[mark]   / lhs(e, mark,   m_offset);
-          unk(e, mark+1, m_offset) = R[mark+1] / lhs(e, mark+1, m_offset);
-          unk(e, mark+2, m_offset) = R[mark+2] / lhs(e, mark+2, m_offset);
-          unk(e, mark+3, m_offset) = R[mark+3] / lhs(e, mark+3, m_offset);
+          unk(e, mark,   m_offset) = R[mark]   / L(e, mark,   m_offset);
+          unk(e, mark+1, m_offset) = R[mark+1] / L(e, mark+1, m_offset);
+          unk(e, mark+2, m_offset) = R[mark+2] / L(e, mark+2, m_offset);
+          unk(e, mark+3, m_offset) = R[mark+3] / L(e, mark+3, m_offset);
         }
       }
     }
