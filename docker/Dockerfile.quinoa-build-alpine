@@ -85,4 +85,4 @@ USER root
 RUN cd quinoa/build && make install
 RUN apk del bash m4 file git cmake gfortran gcc g++ make perl grep boost-dev zlib-dev libexecinfo-dev ncurses-terminfo-base ncurses-terminfo ncurses-libs readline && apk add libexecinfo && rm -rf /var/cache/apk/*
 USER quinoa
-RUN rm -rf quinoa
+#RUN rm -rf quinoa
