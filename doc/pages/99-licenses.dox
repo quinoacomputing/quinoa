@@ -155,6 +155,11 @@ files, only build it and use it as a separate (external) executable.
   - Web: https://github.com/ibaned/omega_h
   - License: @subpage omega_h_license_page
 
+\subsection brigand_license Brigand for template meta-programming
+  - Required
+  - Web: https://github.com/edouarda/brigand
+  - License: @subpage brigand_license_page
+
 <hr>
 
 \section compiler_web Compilers
