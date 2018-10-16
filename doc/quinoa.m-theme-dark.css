@@ -32,8 +32,8 @@
 
     * Compile css:
       $ cd <quinoa>/doc
-      $ cp quinoa.m-theme-dark.css <quinoa-tpl>/install/clang-x86_64/m.css/css/m-theme-dark.css
-      $ cd <quinoa-tpl>/install/clang-x86_64/m.css/css/
+      $ cp quinoa.m-theme-dark.css <quinoa-tpl-install>/m.css/css/m-theme-dark.css
+      $ cd <quinoa-tpl-install-install>/clang-x86_64/m.css/css/
       $ ./postprocess.py m-dark.css m-doxygen.css -o <quinoa>/doc/quinoa.m-dark-noindent+doxygen.compiled.css
     ==========================================================================
 */
