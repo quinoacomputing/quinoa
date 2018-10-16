@@ -423,16 +423,17 @@ Discretization::writeMesh(
 
         // Do not write side sets in parallel
         const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-        if (scheme == ctr::SchemeType::DG)
+        const auto centering = ctr::Scheme().centering( scheme );
+        if (centering == ctr::Centering::ELEM)
           ew.writeMesh( m_inpoel, m_coord, bface, triinpoel );
-        else {
+        else if (centering == ctr::Centering::NODE) {
           // Convert boundary node lists to local ids for output
           auto lbnode = bnode;
           for (auto& s : lbnode)
             for (auto& p : s.second)
               p = tk::cref_find(m_lid,p);
           ew.writeMesh( m_inpoel, m_coord, lbnode );
-        }
+        } else Throw( "Scheme centering not handled for writing mesh" );
 
       } else {
         ew.writeMesh( m_inpoel, m_coord );

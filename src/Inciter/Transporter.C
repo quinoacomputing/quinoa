@@ -111,13 +111,14 @@ Transporter::Transporter() :
   // Print discretization parameters
   m_print.section( "Discretization parameters" );
   m_print.Item< ctr::Scheme, tag::discr, tag::scheme >();
+
   if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG) {
     auto fct = g_inputdeck.get< tag::discr, tag::fct >();
     m_print.item( "Flux-corrected transport (FCT)", fct );
     if (fct)
       m_print.item( "FCT mass diffusion coeff",
                     g_inputdeck.get< tag::discr, tag::ctau >() );
-  } else if (scheme == ctr::SchemeType::DG) {
+  } else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1) {
     m_print.Item< ctr::Flux, tag::discr, tag::flux >();
   }
   m_print.item( "PE-locality mesh reordering",
@@ -257,12 +258,13 @@ Transporter::createPartitioner()
 
   // Read boundary (side set) data from input file
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (scheme == ctr::SchemeType::DG) {
+  const auto centering = ctr::Scheme().centering( scheme );
+  if (centering == ctr::Centering::ELEM) {
     // Read boundary-face connectivity on side sets
     mr.readSidesetFaces( belem, faces );
     // Verify boundarty condition (BC) side sets used exist in mesh file
     matchBCs( g_dgpde, belem );
-  } else {
+  } else if (centering == ctr::Centering::NODE) {
     // Read node lists on side sets
     bnode = mr.readSidesetNodes();
     // Verify boundarty condition (BC) side sets used exist in mesh file
@@ -528,9 +530,6 @@ Transporter::disccreated()
   }
 
   m_refiner.sendProxy();
-  m_progWork.start( "Preparing workers",
-                    {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
-  m_sorter.createWorkers();
 
   auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
   if (sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG)
@@ -565,7 +564,7 @@ Transporter::diagHeader()
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG)
     for (const auto& eq : g_cgpde) varnames( eq, var );
-  else if (scheme == ctr::SchemeType::DG)
+  else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1)
     for (const auto& eq : g_dgpde) varnames( eq, var );
   else Throw( "Diagnostics header not handled for discretization scheme" );
 
@@ -594,11 +593,12 @@ Transporter::diagHeader()
 void
 Transporter::comfinal()
 // *****************************************************************************
-// Reduction target indicating that the communication has been established among
-// PEs
+// Reduction target indicating that communication maps have been setup
 // *****************************************************************************
 {
-  com_complete();
+  CkStartLB();  // start load balancing
+  m_progWork.end();
+  m_scheme.setup( m_V );
 }
 
 void
@@ -718,9 +718,6 @@ Transporter::stat()
 // Echo diagnostics on mesh statistics
 // *****************************************************************************
 {
-  CkStartLB();
-  m_progWork.end();
-
   m_print.diag( "Mesh statistics: min/max/avg(edgelength) = " +
                 std::to_string( m_minstat[0] ) + " / " +
                 std::to_string( m_maxstat[0] ) + " / " +
@@ -747,7 +744,10 @@ Transporter::stat()
   "\n      it             t            dt        ETE        ETA   out\n"
     " ---------------------------------------------------------------\n" );
 
-  m_scheme.setup( m_V );
+  m_progWork.start( "Preparing workers",
+                    {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
+  // Create "derived-class" workers
+  m_sorter.createWorkers();
 }
 
 void

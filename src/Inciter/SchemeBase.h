@@ -51,7 +51,8 @@ class SchemeBase {
       } else if (scheme == ctr::SchemeType::DiagCG) {
         proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(m_bound) );
         fctproxy= CProxy_DistFCT::ckNew(m_bound);
-      } else if (scheme == ctr::SchemeType::DG) {
+      } else if (scheme == ctr::SchemeType::DG ||
+                 scheme == ctr::SchemeType::DGP1) {
         proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(m_bound) );
       } else Throw( "Unknown discretization scheme" );
     }

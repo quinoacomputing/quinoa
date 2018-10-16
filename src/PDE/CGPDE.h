@@ -132,6 +132,11 @@ class CGPDE {
       tk::Fields& U ) const
     { return self->fieldOutput( t, V, coord, v, U ); }
 
+    //! Public interface to returning analytic solution
+    std::vector< tk::real >
+    analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
+    { return self->analyticSolution( xi, yi, zi, t ); }
+
     //! Copy assignment
     CGPDE& operator=( const CGPDE& x )
     { CGPDE tmp(x); *this = std::move(tmp); return *this; }
@@ -183,6 +188,8 @@ class CGPDE {
         const std::array< std::vector< tk::real >, 3 >&,
         const std::vector< tk::real >&,
         tk::Fields& ) const = 0;
+      virtual std::vector< tk::real > analyticSolution(
+        tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
     };
 
     //! \brief Model models the Concept above by deriving from it and overriding
@@ -232,6 +239,9 @@ class CGPDE {
         const std::vector< tk::real >& v,
         tk::Fields& U ) const override
       { return data.fieldOutput( t, V, coord, v, U ); }
+      std::vector< tk::real >
+      analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
+       const override { return data.analyticSolution( xi, yi, zi, t ); }
       T data;
     };
 

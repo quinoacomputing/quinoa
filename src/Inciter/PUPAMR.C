@@ -135,10 +135,15 @@ void PUP::pup( PUP::er &p, AMR::mesh_adapter_t& m )
 {
   p | m.tet_store;
   p | m.node_connectivity;
+
+#ifdef ENABLE_NODE_STORE
   p | m.node_store;
+#endif
+
   p | m.refiner;
 }
 
+#ifdef ENABLE_NODE_STORE
 void PUP::pup( PUP::er &p, AMR::node_store_t& n )
 // *****************************************************************************
 //  Pack/Unpack node_store_t
@@ -149,8 +154,9 @@ void PUP::pup( PUP::er &p, AMR::node_store_t& n )
   p | n.m_x;
   p | n.m_y;
   p | n.m_z;
-  p | n.m_graphsize;
 }
+#endif
+
 
 void PUP::pup( PUP::er &p, AMR::node_connectivity_t& n )
 // *****************************************************************************
