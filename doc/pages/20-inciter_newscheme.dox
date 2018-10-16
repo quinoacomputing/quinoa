@@ -1,0 +1,142 @@
+namespace inciter {
+/*!
+  \page      inciter_newscheme How to add a new scheme to Inciter
+
+@ref inciter_main supports multiple discretization schemes. This page describes
+how to add yours by walking through an example of adding a new one. See also
+the @ref inciter_design page.
+
+@section inciter_newscheme_keyword 1. Add a new keyword
+
+A specific discretization scheme is selected by the user in the control (input)
+file via the `scheme` keyword, e.g., `scheme diagcg`. We add the new keyword,
+`alecg`, which then can be recognized by the control file parser in
+`src/Control/Keywords.h` by adding the following code block:
+
+@code{.diff}
+$ git diff src/Control/Keywords.h
+diff --git a/src/Control/Keywords.h b/src/Control/Keywords.h
+index 002869cb..c18f193a 100644
+--- a/src/Control/Keywords.h
++++ b/src/Control/Keywords.h
+@@ -4607,6 +4607,19 @@ struct diagcg_info {
+ };
+ using diagcg = keyword< diagcg_info, TAOCPP_PEGTL_STRING("diagcg") >;
+
++struct alecg_info {
++  static std::string name() { return "ALE-CG with RK"; }
++  static std::string shortDescription() { return "Select continuous Galerkin "
++    "with ALE + Runge-Kutta"; }
++  static std::string longDescription() { return
++    R"(This keyword is used to select the continuous Galerkin finite element
++    scheme in the arbitrary Lagrangian-Eulerian (ALE) reference frame combined
++    with Runge-Kutta (RK) time stepping. See Control/Inciter/Options/Scheme.h
++    for other valid options.)"; }
++};
++using alecg = keyword< alecg_info, TAOCPP_PEGTL_STRING("alecg") >;
++
+ struct dg_info {
+   static std::string name() { return "DG(P0) + RK"; }
+   static std::string shortDescription() { return
+@endcode
+
+We also add the new keyword to inciter's grammar's keywords pool:
+
+@code{.diff}
+$ git diff src/Control/Inciter/InputDeck/InputDeck.h
+diff --git a/src/Control/Inciter/InputDeck/InputDeck.h b/src/Control/Inciter/InputDeck/InputDeck.h
+index 83572480..20ce8975 100644
+--- a/src/Control/Inciter/InputDeck/InputDeck.h
++++ b/src/Control/Inciter/InputDeck/InputDeck.h
+@@ -144,6 +144,7 @@ class InputDeck :
+                                    kw::scheme,
+                                    kw::matcg,
+                                    kw::diagcg,
++                                   kw::alecg,
+                                    kw::dg,
+                                    kw::dgp1,
+                                    kw::flux,
+@endcode
+
+This is required so that the compiler can generate a database containing the
+help for all the keywords in the grammar understood by inciter's control file
+parser. The above changes not only add the keyword but also some documentation
+that gets displayed when passing the `-C` or `-H` command line arguments to the
+inciter executable, so quick help is available at the user's fingertips:
+
+@code{.ansi}
+$ inciter -C
+inciter Control File Keywords:
+             advdiff     string Specify the advection + diffusion physics configuration for a PDE
+           advection     string Specify the advection physics configuration for a PDE
+               alecg            Select continuous Galerkin with ALE + Runge-Kutta
+           algorithm     string Select mesh partitioning algorithm
+               alpha       real Set PDE parameter(s) alpha
+...
+$ inciter -H alecg
+inciter control file keyword 'alecg'
+
+   Select continuous Galerkin with ALE + Runge-Kutta (RK)
+
+   This keyword is used to select the continuous Galerkin finite element scheme
+   in the arbitrary Lagrangian-Eulerian (ALE) reference frame combined with
+   Runge-Kutta (RK) time stepping. See Control/Inciter/Options/Scheme.h for other
+   valid options.
+@endcode
+
+@section inciter_newscheme_option 2. Add new option switch
+
+Next is to add a new state to the existing Scheme option switch. This is done
+by extending the list of schemes in `src/Control/Inciter/Options/Scheme.h`:
+
+@code{.diff}
+$ git diff src/Control/Inciter/Options/Scheme.h
+diff --git a/src/Control/Inciter/Options/Scheme.h b/src/Control/Inciter/Options/Scheme.h
+index 4c20df61..7b89a117 100644
+--- a/src/Control/Inciter/Options/Scheme.h
++++ b/src/Control/Inciter/Options/Scheme.h
+@@ -21,6 +21,7 @@ namespace ctr {
+ //! Scheme types
+ enum class SchemeType : uint8_t { MatCG
+                                 , DiagCG
++                                , ALECG
+                                 , DG
+                                 , DGP1 };
+
+@@ -38,6 +39,7 @@ class Scheme : public tk::Toggle< SchemeType > {
+     //! Valid expected choices to make them also available at compile-time
+     using keywords = brigand::list< kw::matcg
+                                   , kw::diagcg
++                                  , kw::alecg
+                                   , kw::dg
+                                   , kw::dgp1
+                                   >;
+@@ -52,11 +54,13 @@ class Scheme : public tk::Toggle< SchemeType > {
+         //! Enums -> names (if defined, policy codes, if not, name)
+         { { SchemeType::MatCG, kw::matcg::name() },
+           { SchemeType::DiagCG, kw::diagcg::name() },
++          { SchemeType::ALECG, kw::alecg::name() },
+           { SchemeType::DG, kw::dg::name() },
+           { SchemeType::DGP1, kw::dgp1::name() } },
+         //! keywords -> Enums
+         { { kw::matcg::string(), SchemeType::MatCG },
+           { kw::diagcg::string(), SchemeType::DiagCG },
++          { kw::alecg::string(), SchemeType::ALECG },
+           { kw::dg::string(), SchemeType::DG },
+           { kw::dgp1::string(), SchemeType::DGP1 } } ) {}
+
+@@ -64,7 +68,8 @@ class Scheme : public tk::Toggle< SchemeType > {
+     //! \param[in] type Scheme type
+     //! \return Centering for scheme type
+     Centering centering( SchemeType type ) {
+-      if (type == SchemeType::MatCG || type == SchemeType::DiagCG)
++      if (type == SchemeType::MatCG || type == SchemeType::DiagCG ||
++          type == SchemeType::ALECG )
+         return Centering::NODE;
+       else if (type == SchemeType::DG || type == SchemeType::DGP1)
+         return Centering::ELEM;
+@endcode
+
+
+*/
+} // inciter::

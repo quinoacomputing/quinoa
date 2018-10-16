@@ -403,4 +403,4 @@ discretization schemes, e.g., DiagCG, DG, etc., and look for entry methods that
 are defined by all child schemes.
 
 */
-}
+} // inciter::

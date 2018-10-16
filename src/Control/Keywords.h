@@ -4578,7 +4578,7 @@ struct matcg_info {
   static std::string name()
   { return "consistent-mass continuous Galerkin + Lax-Wendroff"; }
   static std::string shortDescription() { return "Select continuous Galerkin "
-    "discretization + Lax Wendroff with a matrix solver"; }
+    "+ Lax Wendroff with consistent-mass LHS"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the consistent-mass continuous Galerkin
     (CG) finite element spatial discretiztaion used in inciter. CG is combined
@@ -4594,8 +4594,7 @@ struct diagcg_info {
   static std::string name()
   { return "lumped-mass continuous Galerkin + Lax-Wendroff"; }
   static std::string shortDescription() { return "Select continuous Galerkin "
-    "discretization + Lax Wendroff with a lumped mass matrix as the left hand "
-    "side matrix"; }
+    "+ Lax Wendroff with a lumped LHS"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the lumped-mass continuous Galerkin (CG)
     finite element spatial discretiztaion used in inciter. CG is combined with a
@@ -4610,8 +4609,7 @@ using diagcg = keyword< diagcg_info, TAOCPP_PEGTL_STRING("diagcg") >;
 struct dg_info {
   static std::string name() { return "DG(P0) + RK"; }
   static std::string shortDescription() { return
-    "Select 1st-order accurate discontinuous Galerkin discretization + "
-    "Runge-Kutta"; }
+    "Select 1st-order discontinuous Galerkin discretization + Runge-Kutta"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the first-order accurate discontinuous
     Galerkin, DG(P0), spatial discretiztaion used in Inciter. As this is first
@@ -4625,8 +4623,7 @@ using dg = keyword< dg_info, TAOCPP_PEGTL_STRING("dg") >;
 struct dgp1_info {
   static std::string name() { return "DG(P1) + RK"; }
   static std::string shortDescription() { return
-    "Select 2nd-order accurate discontinuous Galerkin discretization + "
-    "Runge-Kutta"; }
+    "Select 2nd-order discontinuous Galerkin discretization + Runge-Kutta"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the second-order accurate discontinuous
     Galerkin, DG(P1), spatial discretiztaion used in Inciter.Selecting this
