@@ -7,7 +7,7 @@
 #include <algorithm>
 
 #include "Loggers.h"
-#include "types.h"
+#include "AMR_types.h"
 
 namespace AMR {
     namespace util {

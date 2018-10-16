@@ -4,7 +4,7 @@
 #include <cassert>
 
 #include "Loggers.h"
-#include "AMR/types.h"
+#include "AMR/AMR_types.h"
 
 namespace AMR {
 
@@ -59,7 +59,11 @@ namespace AMR {
              */
             void generate(size_t A, size_t B, Edge_Lock_Case lc)
             {
-                assert(A != B);
+                if ((A != 0) && (B != 0)) {
+                    trace_out << "A " << A << " B " << B << std::endl;
+                    assert(A != B);
+                }
+
                 // Generate key
                 edge_t keyAB = nodes_to_key(A, B);
                 //Create refined edge
@@ -206,7 +210,12 @@ namespace AMR {
                     get(key).needs_refining = false;
             }
 
-            // TODO: Document this (and implement!)
+            /**
+             * @brief For a given list of node pairs, mark the edge as needing
+             * to be de-refined
+             *
+             * @param ids a vector of pairs to mark for derefinement
+             */
             void mark_edges_for_derefinement(std::vector<node_pair_t> ids) {
                 for (const auto& id : ids)
                 {
@@ -228,11 +237,9 @@ namespace AMR {
              * @return A list (array) of edge keys which can be separated out to
              * name the two composing node ids
              */
-            // TODO: Should this return a pointer/reference?
             edge_list_t generate_keys(tet_t tet)
             {
                 // FIXME : Generate these with a (2d) loop and not hard code them?
-                    // DRY THIS
                 edge_list_t key_list;
 
                 size_t A = tet[0];
@@ -275,56 +282,7 @@ namespace AMR {
                     std::endl;
                 }
             }
-
-            /*
-            void replace(size_t old_id, size_t new_id)
-            {
-                for (const auto& kv : edges)
-                {
-                    // Find all slots which have the id in the key
-                    if (false) //  TODO: Implement this
-                    {
-                        // Cache value
-                        auto value = kv.second;
-                        edge_t key = kv.first;
-
-                        // Find the bit of the old key we need to keep
-                        size_t remainder_key = 0; // TODO:
-
-                        // Delete them
-                        erase(key);
-
-                        // Build new key
-                        edge_t new_key = nodes_to_key(new_id, remainder_key);
-
-                        // Re add with new key
-                        add(new_key, value);
-                    }
-
-                }
-            }
-            */
-
-            /*
-            // TODO: Document this
-            // If this returns 0, it couldn't find it. 0 is a really unlikely
-            // added node id..
-            size_t find_intermediate_nodes(size_t A, size_t B)
-            {
-                size_t id = 0;
-                edge_t key = nodes_to_key(A, B);
-
-                if (children.find(key) != children.end())
-                {
-                    id = children[key];
-                }
-
-                return id;
-            }
-            */
-
-
     };
 }
 
-#endif // guard
+#endif // AMR_edge_store
