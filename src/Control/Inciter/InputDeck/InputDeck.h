@@ -144,6 +144,7 @@ class InputDeck :
                                    kw::scheme,
                                    kw::matcg,
                                    kw::diagcg,
+                                   kw::alecg,
                                    kw::dg,
                                    kw::dgp1,
                                    kw::flux,

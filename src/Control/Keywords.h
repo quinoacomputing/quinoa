@@ -4606,6 +4606,18 @@ struct diagcg_info {
 };
 using diagcg = keyword< diagcg_info, TAOCPP_PEGTL_STRING("diagcg") >;
 
+struct alecg_info {
+  static std::string name() { return "ALE-CG with RK"; }
+  static std::string shortDescription() { return "Select continuous Galerkin "
+    "with ALE + Runge-Kutta"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the continuous Galerkin finite element
+    scheme in the arbitrary Lagrangian-Eulerian (ALE) reference frame combined
+    with Runge-Kutta (RK) time stepping. See Control/Inciter/Options/Scheme.h
+    for other valid options.)"; }
+};
+using alecg = keyword< alecg_info, TAOCPP_PEGTL_STRING("alecg") >;
+
 struct dg_info {
   static std::string name() { return "DG(P0) + RK"; }
   static std::string shortDescription() { return
