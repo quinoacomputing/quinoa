@@ -109,7 +109,6 @@ class CompFlow {
   public:
     //! Constructor
     explicit CompFlow( ncomp_t c ) :
-      m_ncomp( g_inputdeck.get< tag::component >().get< tag::compflow >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< tag::compflow >(c) ),
       m_riemann( tk::cref_find( RiemannSolvers(),
                    g_inputdeck.get< tag::discr, tag::flux >() ) ),
@@ -205,7 +204,7 @@ class CompFlow {
       IGNORE(coord);
       IGNORE(inpoel);
 
-      // set rhs to zero
+	  // set rhs to zero
       R.fill(0.0);
 
       const auto& esuf = fd.Esuf();
@@ -727,8 +726,6 @@ class CompFlow {
     }
 
   private:
-    //!< Number of components in this PDE
-    const ncomp_t m_ncomp;
     //! Offset PDE operates from
     const ncomp_t m_offset;
     //! Riemann solver
@@ -774,23 +771,106 @@ class CompFlow {
         unk(e, 2, m_offset) = s[2];
         unk(e, 3, m_offset) = s[3];
         unk(e, 4, m_offset) = s[4];
-      }
+      } 
     }
 
     //! Initalize the compressible flow equations, prepare for time integration
-//    //! \param[in] L Element mass matrix
-//    //! \param[in] inpoel Element-node connectivity
-//    //! \param[in] coord Array of nodal coordinates
-//    //! \param[in,out] unk Array of unknowns
-//    //! \param[in] t Physical time
-    void initializep1( const tk::Fields& /*L*/,
-                       const std::vector< std::size_t >& /*inpoel*/,
-                       const tk::UnsMesh::Coords& /*coord*/,
-                       tk::Fields& /*unk*/,
-                       tk::real /*t*/ ) const
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in,out] unk Array of unknowns
+    //! \param[in] t Physical time
+    void initializep1( const tk::Fields& lhs,
+                       const std::vector< std::size_t >& inpoel,
+                       const tk::UnsMesh::Coords& coord,
+                       tk::Fields& unk,
+                       tk::real t ) const
     {
-      //Assert( L.nunk() == unk.nunk(), "Size mismatch" );
-      //std::size_t nelem = unk.nunk();
+      Assert( lhs.nunk() == unk.nunk(), "Size mismatch" );
+      std::size_t nelem = unk.nunk();
+
+      // right hand side vector
+      std::vector< tk::real > R;
+      R.resize(unk.nprop(),0);
+
+      // arrays for quadrature points
+      std::array< std::vector< tk::real >, 3 > coordgp;
+      std::vector< tk::real > wgp;
+
+      // resize quadrature point arrays
+      coordgp[0].resize(5,0);
+      coordgp[1].resize(5,0);
+      coordgp[2].resize(5,0);
+
+      wgp.resize(5,0);
+
+      const auto& cx = coord[0];
+      const auto& cy = coord[1];
+      const auto& cz = coord[2];
+
+      // get quadrature point weights and coordinates for tetrahedron
+      GaussQuadratureTet( coordgp, wgp );
+
+      for (std::size_t e=0; e<nelem; ++e)
+      {
+        auto vole = lhs(e, 0, m_offset);
+
+        auto x1 = cx[ inpoel[4*e]   ];
+        auto y1 = cy[ inpoel[4*e]   ];
+        auto z1 = cz[ inpoel[4*e]   ];
+
+        auto x2 = cx[ inpoel[4*e+1] ];
+        auto y2 = cy[ inpoel[4*e+1] ];
+        auto z2 = cz[ inpoel[4*e+1] ];
+
+        auto x3 = cx[ inpoel[4*e+2] ];
+        auto y3 = cy[ inpoel[4*e+2] ];
+        auto z3 = cz[ inpoel[4*e+2] ];
+
+        auto x4 = cx[ inpoel[4*e+3] ];
+        auto y4 = cy[ inpoel[4*e+3] ];
+        auto z4 = cz[ inpoel[4*e+3] ];
+
+        std::fill( R.begin(), R.end(), 0.0);
+
+        // Gaussian quadrature
+        for (std::size_t igp=0; igp<5; ++igp)
+        {
+          auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp] - 1.0;
+          auto B3 = 3.0 * coordgp[1][igp] + coordgp[2][igp] - 1.0;
+          auto B4 = 4.0 * coordgp[2][igp] - 1.0;
+
+          auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp] - coordgp[2][igp];
+          auto shp2 = coordgp[0][igp];
+          auto shp3 = coordgp[1][igp];
+          auto shp4 = coordgp[2][igp];
+
+          auto xgp = x1*shp1 + x2*shp2 + x3*shp3 + x4*shp4;
+          auto ygp = y1*shp1 + y2*shp2 + y3*shp3 + y4*shp4;
+          auto zgp = z1*shp1 + z2*shp2 + z3*shp3 + z4*shp4;
+
+          auto wt = vole * wgp[igp];
+
+          const auto s = Problem::solution( 0, xgp, ygp, zgp, t );
+          for (ncomp_t c=0; c<m_ncomp; ++c)
+          {
+            auto mark = c*m_ndof;
+
+            R[mark  ] += wt * s[c];
+            R[mark+1] += wt * s[c]*B2;
+            R[mark+2] += wt * s[c]*B3;
+            R[mark+3] += wt * s[c]*B4;
+          }
+        }
+
+        for (ncomp_t c=0; c<m_ncomp; ++c)
+        {
+          auto mark = c*m_ndof;
+          unk(e, mark,   m_offset) = R[mark]   / lhs(e, mark,   m_offset);
+          unk(e, mark+1, m_offset) = R[mark+1] / lhs(e, mark+1, m_offset);
+          unk(e, mark+2, m_offset) = R[mark+2] / lhs(e, mark+2, m_offset);
+          unk(e, mark+3, m_offset) = R[mark+3] / lhs(e, mark+3, m_offset);
+        }
+      }
     }
 
     //! \brief State policy class providing the left and right state of a face
@@ -1139,6 +1219,7 @@ class CompFlow {
       wgp[2]        = 1.0/3.0;
     }
 
+    //! Determinant of Jacobian of transformation
     //! \param[in] p1 (x,y,z) coordinates of 1st local node in the tetrahedron
     //! \param[in] p2 (x,y,z) coordinates of 2nd local node in the tetrahedron
     //! \param[in] p3 (x,y,z) coordinates of 3rd local node in the tetrahedron
@@ -1151,16 +1232,10 @@ class CompFlow {
                  const std::array< tk::real, 3 >& p3,
                  const std::array< tk::real, 3 >& p4 ) const
     {
-      tk::real detT;
-
-      detT = (p2[0]-p1[0])
-              * ((p3[1]-p1[1])*(p4[2]-p1[2]) - (p4[1]-p1[1])*(p3[2]-p1[2]))
-            -(p3[0]-p1[0])
-              * ((p2[1]-p1[1])*(p4[2]-p1[2]) - (p4[1]-p1[1])*(p2[2]-p1[2]))
-            +(p4[0]-p1[0])
-              * ((p2[1]-p1[1])*(p3[2]-p1[2]) - (p3[1]-p1[1])*(p2[2]-p1[2]));
-
-      return detT;
+      std::array< tk::real, 3 > ba{{ p2[0]-p1[0], p2[1]-p1[1], p2[2]-p1[2] }},
+                                ca{{ p3[0]-p1[0], p3[1]-p1[1], p3[2]-p1[2] }},
+                                da{{ p4[0]-p1[0], p4[1]-p1[1], p4[2]-p1[2] }};
+      return tk::triple( ba, ca, da );
     }
 
     //! Inverse of Jacobian of transformation
