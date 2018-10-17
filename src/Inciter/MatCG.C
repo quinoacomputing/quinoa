@@ -22,8 +22,6 @@
 #include "Reader.h"
 #include "ContainerUtil.h"
 #include "UnsMesh.h"
-#include "Reorder.h"
-#include "ExodusIIMeshReader.h"
 #include "ExodusIIMeshWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "DerivedData.h"

@@ -21,8 +21,6 @@
 #include "Reader.h"
 #include "ContainerUtil.h"
 #include "UnsMesh.h"
-#include "Reorder.h"
-#include "ExodusIIMeshReader.h"
 #include "ExodusIIMeshWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "DerivedData.h"
@@ -174,7 +172,7 @@ DiagCG::setup( tk::real v )
 void
 DiagCG::lhsdone()
 // *****************************************************************************
-// ...
+// The own and communication portion of the left-hand side is complete
 // *****************************************************************************
 {
   if (m_initial) {
