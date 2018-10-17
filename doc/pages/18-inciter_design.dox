@@ -8,7 +8,7 @@ happens in time, from program start to finish. On any of the Charm++ concepts
 below, consult the [Charm++
 manual](http://charm.cs.illinois.edu/manuals/html/charm++/manual.html).
 
-@tableofcontents
+@tableofcontents{xml}
 
 @section inciter_startup 1. Startup and migration of read-only global-scope data
 

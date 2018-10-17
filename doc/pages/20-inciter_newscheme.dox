@@ -3,14 +3,30 @@ namespace inciter {
   \page      inciter_newscheme How to add a new scheme to Inciter
 
 @ref inciter_main supports multiple discretization schemes. This page describes
-how to add yours by walking through an example of adding a new one. See also
-the @ref inciter_design page.
+how to add yours by walking through an example of adding a new one.
+
+@tableofcontents{xml}
+
+@section inciter_newscheme_rationale Rationale and plan
+
+Similar to the existing discretization schemes, `DiagCG`, `MatCG`, or `DG`, the
+new scheme, `ALECG` (short for arbitrary Lagrangian-Eulerian continuous
+Galerkin), will interact with `Discretization` in a child-base fashion, e.g.,
+will directly access (and reuse) its member data and functions.  It will also
+intereact with `Refiner`, for mesh refinement, and will also be migratable to
+enable dynamic load balancing. In essence, it will have everything an existing
+scheme has. However, we will _not_ implement the low-level details of the actual
+numerical method, only the glue-code necessary to interact with the rest of the
+code and we make it ready to start implementing the low-level details of a
+particular discretization, done by a `PDE` class, held behind a derived class
+of, e.g., `CGPDE` or `DGPDE`. For more details on how these classes interact,
+see also the @ref inciter_design page.
 
 @section inciter_newscheme_keyword 1. Add a new keyword
 
 A specific discretization scheme is selected by the user in the control (input)
 file via the `scheme` keyword, e.g., `scheme diagcg`. We add the new keyword,
-`alecg`, which then can be recognized by the control file parser in
+`alecg`, which then can be recognized by the control file parser, in
 `src/Control/Keywords.h` by adding the following code block:
 
 @code{.diff}
@@ -137,6 +153,432 @@ index 4c20df61..7b89a117 100644
          return Centering::ELEM;
 @endcode
 
+@section inciter_newscheme_proxy 3. Add new Charm++ chare proxy in Scheme
+
+`Scheme` is a class that, together with its base, `SchemeBase`, implements
+concept-based runtime polymorphism for migratable Charm++ chare arrays using
+value semantics. Client code, e.g., `Transporter`, interacts with
+`Discretization` and its children via a uniform interface provided by `Scheme`,
+which dispatches entry method calls to the correct class instance, the base or
+the child, and is capable of performing broadcasts as well as addressing a
+particular chare array element. Read more details at src/Inciter/Scheme.h. To
+teach it to dispatch to our new `ALECG` scheme, besides the existing ones, we
+make the following changes:
+
+@code{.diff}
+$ git diff src/Inciter/SchemeBase.h
+diff --git a/src/Inciter/SchemeBase.h b/src/Inciter/SchemeBase.h
+index 61510d01..dea3d78a 100644
+--- a/src/Inciter/SchemeBase.h
++++ b/src/Inciter/SchemeBase.h
+@@ -22,6 +22,7 @@
+
+ #include "NoWarning/matcg.decl.h"
+ #include "NoWarning/diagcg.decl.h"
++#include "NoWarning/alecg.decl.h"
+ #include "NoWarning/distfct.decl.h"
+ #include "NoWarning/dg.decl.h"
+ #include "NoWarning/discretization.decl.h"
+@@ -51,6 +52,8 @@ class SchemeBase {
+       } else if (scheme == ctr::SchemeType::DiagCG) {
+         proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(m_bound) );
+         fctproxy= CProxy_DistFCT::ckNew(m_bound);
++      } else if (scheme == ctr::SchemeType::ALECG) {
++        proxy = static_cast< CProxy_ALECG >( CProxy_ALECG::ckNew(m_bound) );
+       } else if (scheme == ctr::SchemeType::DG ||
+                  scheme == ctr::SchemeType::DGP1) {
+         proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(m_bound) );
+@@ -75,11 +78,12 @@ class SchemeBase {
+     const CkArrayOptions& arrayoptions() { return m_bound; }
+
+     //! Variant type listing all chare proxy types modeling the same concept
+-    using Proxy = boost::variant< CProxy_MatCG, CProxy_DiagCG, CProxy_DG >;
++    using Proxy =
++      boost::variant< CProxy_MatCG, CProxy_DiagCG, CProxy_ALECG, CProxy_DG >;
+     //! Variant type listing all chare element proxy types (behind operator[])
+     using ProxyElem =
+       boost::variant< CProxy_MatCG::element_t, CProxy_DiagCG::element_t,
+-                      CProxy_DG::element_t >;
++                      CProxy_ALECG::element_t, CProxy_DG::element_t >;
+
+   protected:
+     //! Variant storing one proxy to which this class is configured for
+@endcode
+
+@section inciter_newscheme_chare 4. Add new Charm++ chare array
+
+Next is to add a new class, `ALECG`, that will serve as the glue between
+`Transporter`, `Refiner`, and `CGPDE`. These classes, respectively, are the
+driver, the mesh refiner, and the polymorphic vector of PDE discretization
+class objects that hold the low-level details of the numerical implementation
+of spatial discretizations, dispatching to multiple specific systems of
+equations, e.g., `cg::Transport` or `cg::CompFlow`.
+
+We create the following new files:
+
+- Inciter/alecg.ci, Charm++ interface file for ALECG,
+- NoWarning/alecg.decl.h and NoWarning/alecg.def.h, which help ignore compiler
+  warnings in Charm++-generated code, and
+- Inciter/ALECG.h and Inciter/ALECG.C, header and implementation of ALECG.
+
+Before we discuss the details of the above new files, let's get a couple of
+simple things out of the way. We also need to
+
+- Add the new include to `Refiner.h` so it can call back to ALECG::resize()
+  after a mesh refinement step:
+  @code{.diff}
+  $ git diff src/Inciter/Refiner.h
+  diff --git a/src/Inciter/Refiner.h b/src/Inciter/Refiner.h
+  index dfcb1ffd..4fe743a4 100644
+  --- a/src/Inciter/Refiner.h
+  +++ b/src/Inciter/Refiner.h
+  @@ -29,6 +29,7 @@
+   #include "SchemeBase.h"
+   #include "MatCG.h"
+   #include "DiagCG.h"
+  +#include "ALECG.h"
+   #include "DG.h"
+
+   #include "NoWarning/transporter.decl.h"
+  @endcode
+
+- Tell the build system about our new `ALECG` class and its Charm++ module:
+  @code{.diff}
+  $ gd src/Inciter/CMakeLists.txt
+  diff --git a/src/Inciter/CMakeLists.txt b/src/Inciter/CMakeLists.txt
+  index 141055ec..e339b65b 100644
+  --- a/src/Inciter/CMakeLists.txt
+  +++ b/src/Inciter/CMakeLists.txt
+  @@ -14,6 +14,7 @@ add_library(Inciter
+               Sorter.C
+               MatCG.C
+               DiagCG.C
+  +            ALECG.C
+               DG.C
+               FluxCorrector.C
+               DistFCT.C
+  @@ -74,6 +75,7 @@ addCharmModule( "refiner" "Inciter" )
+   addCharmModule( "sorter" "Inciter" )
+   addCharmModule( "matcg" "Inciter" )
+   addCharmModule( "diagcg" "Inciter" )
+  +addCharmModule( "alecg" "Inciter" )
+   addCharmModule( "distfct" "Inciter" )
+   addCharmModule( "dg" "Inciter" )
+  @endcode
+  The `addCharmModule` cmake macro above ensures that build target `Inciter`
+  will properly depend on our new `alecg` Charm++ module, defined in
+  `Inciter/alecg.ci`.
+
+Now to the new files. First is the new Charm++ interface file, Inciter/alecg.ci:
+@code{.cpp}
+// *****************************************************************************
+/*!
+  \file      src/Inciter/alecg.ci
+  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \brief     Charm++ module interface for continuous Galerkin + ALE + RK
+  \details   Charm++ module interface file for the continuous Galerkin (CG)
+             finite element scheme in the arbitrary Lagrangian-Eulerian (ALE)
+             reference frame + Runge-Kutta (RK) time stepping.
+  \see       ALECG.h and ALECG.C for more info.
+*/
+// *****************************************************************************
+
+module alecg {
+
+  extern module transporter;
+  extern module discretization;
+
+  include "UnsMesh.h";
+  include "PUPUtil.h";
+  include "FaceData.h";
+
+  namespace inciter {
+
+    array [1D] ALECG {
+      entry ALECG( const CProxy_Discretization& disc,
+                   const tk::CProxy_Solver& solver,
+                   const FaceData& fd );
+      initnode void registerReducers();
+      entry void setup( tk::real v );
+      entry void dt();
+      entry void diag();
+      entry [reductiontarget] void advance( tk::real newdt );
+      entry void comlhs( const std::vector< std::size_t >& gid,
+                         const std::vector< std::vector< tk::real > >& L );
+      entry void comrhs( const std::vector< std::size_t >& gid,
+                         const std::vector< std::vector< tk::real > >& R );
+      entry void resized();
+      entry void lhs();
+
+      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+      entry void wait4lhs() {
+        when ownlhs_complete(), comlhs_complete() serial "lhs" { lhsdone(); } };
+
+      entry void wait4rhs() {
+        when ownrhs_complete(), comrhs_complete() serial "rhs" { solve(); } };
+
+      entry void wait4eval() {
+        when diag_complete(), ref_complete(), lhs_complete(),
+             resize_complete() serial "eval" { eval(); } };
+
+      entry void ownlhs_complete();
+      entry void ownrhs_complete();
+      entry void comlhs_complete();
+      entry void comrhs_complete();
+      entry void diag_complete();
+      entry void ref_complete();
+      entry void lhs_complete();
+      entry void resize_complete();
+    };
+
+  } // inciter::
+
+}
+@endcode
+
+The newly added files to the `NoWarning/` directory simply include the
+Charm++-generated `alecg.decl.h` and `alecg.def.h` files and locally, around
+the include, turn off specific compiler warnings for various compilers -- we
+will not discuss them here further.
+
+Next are the newly added Inciter/ALECG.h and Inciter/ALECG.C, header and
+implementation of ALECG.
+
+@code{.cpp}
+// *****************************************************************************
+/*!
+  \file      src/Inciter/ALECG.h
+  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \brief     ALECG for a PDE system with continuous Galerkin + ALE + RK
+  \details   ALECG advances a system of partial differential equations (PDEs)
+    using a continuous Galerkin (CG) finite element (FE) spatial discretization
+    (using linear shapefunctions on tetrahedron elements) combined with a
+    Runge-Kutta (RK) time stepping scheme in the argbitrary Eulerian-Lagrangian
+    reference frame.
+
+    There are a potentially large number of ALECG Charm++ chares created by
+    Transporter. Each ALECG gets a chunk of the full load (part of the mesh)
+    and does the same: initializes and advances a number of PDE systems in time.
+
+    The implementation uses the Charm++ runtime system and is fully
+    asynchronous, overlapping computation and communication. The algorithm
+    utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
+    overview of the algorithm structure and how it interfaces with Charm++ is
+    discussed in the Charm++ interface file src/Inciter/diagcg.ci.
+*/
+// *****************************************************************************
+#ifndef ALECG_h
+#define ALECG_h
+
+#include <vector>
+#include <map>
+
+#include "QuinoaConfig.h"
+#include "Types.h"
+#include "Fields.h"
+#include "DerivedData.h"
+#include "VectorReducer.h"
+#include "FluxCorrector.h"
+#include "NodeDiagnostics.h"
+#include "Inciter/InputDeck/InputDeck.h"
+#include "FaceData.h"
+
+#include "NoWarning/diagcg.decl.h"
+
+namespace inciter {
+
+extern ctr::InputDeck g_inputdeck;
+
+//! ALECG Charm++ chare array used to advance PDEs in time with ALECG+RK
+class ALECG : public CBase_ALECG {
+
+  public:
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wunused-parameter"
+      #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    #elif defined(STRICT_GNUC)
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wunused-parameter"
+      #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    #elif defined(__INTEL_COMPILER)
+      #pragma warning( push )
+      #pragma warning( disable: 1478 )
+    #endif
+    // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
+    // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+    ALECG_SDAG_CODE
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #elif defined(STRICT_GNUC)
+      #pragma GCC diagnostic pop
+    #elif defined(__INTEL_COMPILER)
+      #pragma warning( pop )
+    #endif
+
+    //! Constructor
+    explicit ALECG( const CProxy_Discretization& disc,
+                    const tk::CProxy_Solver& solver,
+                    const FaceData& fd );
+
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wundefined-func-template"
+    #endif
+    //! Migrate constructor
+    explicit ALECG( CkMigrateMessage* ) {}
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
+
+    //! Configure Charm++ custom reduction types initiated from this chare array
+    static void registerReducers();
+
+    //! Setup: query boundary conditions, output mesh, etc.
+    void setup( tk::real v );
+
+    //! Compute time step size
+    void dt();
+
+    //! Advance equations to next time step
+    void advance( tk::real newdt );
+
+    //! Compute left-hand side of transport equations
+    void lhs();
+
+    //! Receive contributions to left-hand side matrix on chare-boundaries
+    void comlhs( const std::vector< std::size_t >& gid,
+                 const std::vector< std::vector< tk::real > >& L );
+
+    //! Receive contributions to right-hand side vector on chare-boundaries
+    void comrhs( const std::vector< std::size_t >& gid,
+                 const std::vector< std::vector< tk::real > >& R );
+
+    //! Update solution at the end of time step
+    void update( const tk::Fields& a );
+
+    //! Signal the runtime system that diagnostics have been computed
+    void diag();
+
+    //! Optionally refine/derefine mesh
+    void refine();
+
+    //! Receive new mesh from refiner
+    void resize( const tk::UnsMesh::Chunk& chunk,
+                 const tk::UnsMesh::Coords& coord,
+                 const tk::Fields& u,
+                 const std::unordered_map< int,
+                         std::vector< std::size_t > >& msum,
+                 const std::map< int, std::vector< std::size_t > >& bnode );
+
+    //! Const-ref access to current solution
+    //! \param[in,out] u Reference to update with current solution
+    void solution( tk::Fields& u ) const { u = m_u; }
+
+    //! Resizing data sutrctures after mesh refinement has been completed
+    void resized();
+
+    /** @name Charm++ pack/unpack serializer member functions */
+    ///@{
+    //! \brief Pack/Unpack serialize member function
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    void pup( PUP::er &p ) override {
+      p | m_disc;
+      p | m_itf;
+      p | m_initial;
+      p | m_nsol;
+      p | m_nlhs;
+      p | m_nrhs;
+      p | m_fd;
+      p | m_u;
+      p | m_du;
+      p | m_lhs;
+      p | m_rhs;
+      p | m_lhsc;
+      p | m_rhsc;
+      p | m_vol;
+      p | m_diag;
+    }
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] i ALECG object reference
+    friend void operator|( PUP::er& p, ALECG& i ) { i.pup(p); }
+    //@}
+
+  private:
+    using ncomp_t = kw::ncomp::info::expect::type;
+
+    //! Discretization proxy
+    CProxy_Discretization m_disc;
+    //! Field output iteration count without mesh refinement
+    //! \details Counts the number of field outputs to file during two
+    //!   time steps with mesh efinement
+    uint64_t m_itf;
+    //! True if starting time stepping, false if during time stepping
+    bool m_initial;
+    //! Counter for high order solution vector nodes updated
+    std::size_t m_nsol;
+    //! Counter for left-hand side matrix (vector) nodes updated
+    std::size_t m_nlhs;
+    //! Counter for right-hand side vector nodes updated
+    std::size_t m_nrhs;
+    //! Face data
+    FaceData m_fd;
+    //! Unknown/solution vector at mesh nodes
+    tk::Fields m_u;
+    //! Unknown/solution vector increment (high order)
+    tk::Fields m_du;
+    //! Lumped lhs mass matrix
+    tk::Fields m_lhs;
+    //! Right-hand side vector (for the high order system)
+    tk::Fields m_rhs;
+    //! Receive buffers for communication
+    std::vector< std::vector< tk::real > > m_lhsc, m_rhsc;
+    //! Total mesh volume
+    tk::real m_vol;
+    //! Diagnostics object
+    NodeDiagnostics m_diag;
+
+    //! Access bound Discretization class pointer
+    Discretization* Disc() const {
+      Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
+      return m_disc[ thisIndex ].ckLocal();
+    }
+
+    //! Size communication buffers
+    void resizeComm();
+
+    //! Output mesh and particle fields to files
+    void out();
+
+    //! Output mesh-based fields to file
+    void writeFields( tk::real time );
+
+    //! The own and communication portion of the left-hand side is complete
+    void lhsdone();
+
+    //! Combine own and communicated contributions to left hand side
+    void lhsmerge();
+
+    //! Compute righ-hand side vector of transport equations
+    void rhs();
+
+    //! Start time stepping
+    void start();
+
+    //! Solve low and high order diagonal systems
+    void solve();
+
+    //! Evaluate whether to continue with next step
+    void eval();
+};
+
+} // inciter::
+
+#endif // ALECG_h
+@endcode
 
 */
 } // inciter::

@@ -29,6 +29,7 @@
 #include "SchemeBase.h"
 #include "MatCG.h"
 #include "DiagCG.h"
+#include "ALECG.h"
 #include "DG.h"
 
 #include "NoWarning/transporter.decl.h"
