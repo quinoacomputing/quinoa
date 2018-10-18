@@ -26,6 +26,7 @@
 #include "Riemann/HLLC.h"
 #include "Riemann/LaxFriedrichs.h"
 #include "UnsMesh.h"
+#include "Quadrature.h"
 
 namespace inciter {
 
@@ -145,41 +146,35 @@ class CompFlow {
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
     {
       Assert( geoElem.nunk() == l.nunk(), "Size mismatch" );
-      std::size_t nelem = geoElem.nunk();
+      const auto nelem = geoElem.nunk();
+	  const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
+	  // Compute LHS for DG(P0)
       for (std::size_t e=0; e<nelem; ++e)
-      {
         for (ncomp_t c=0; c<5; ++c)
-          l(e, c, m_offset) = geoElem(e,0,0);
-      }
+          l(e, c*ndof, m_offset) = geoElem(e,0,0);
+
+      // Augment LHS for DG(P1)
+      if (ndof > 1){
+        for (std::size_t e=0; e<nelem; ++e) {
+          for (ncomp_t c=0; c<5; ++c) {
+            const auto mark = c * ndof;
+			//l(e, mark+1, m_offset) = 1;
+            //l(e, mark+2, m_offset) = 1;
+            //l(e, mark+3, m_offset) = 1;;
+            l(e, mark+1, m_offset) = geoElem(e,0,0) / 10.0;
+            l(e, mark+2, m_offset) = geoElem(e,0,0) * 3.0/10.0;
+            l(e, mark+3, m_offset) = geoElem(e,0,0) * 3.0/5.0;
+          }
+	   	}
+	  }
     }
 
-    //! Compute the left hand side P1 block-diagonal mass matrix
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] l Block diagonal mass matrix
-    void lhsp1( const tk::Fields& geoElem, tk::Fields& l ) const
-    {
-      Assert( geoElem.nunk() == l.nunk(), "Size mismatch" );
-      std::size_t nelem = geoElem.nunk();
-
-      for (std::size_t e=0; e<nelem; ++e)
-      {
-        for (ncomp_t c=0; c<5; ++c)
-        {
-          auto mark = c*m_ndof;
-          l(e, mark,   m_offset) = geoElem(e,0,0);
-          l(e, mark+1, m_offset) = geoElem(e,0,0) / 10.0;
-          l(e, mark+2, m_offset) = geoElem(e,0,0) * 3.0/10.0;
-          l(e, mark+3, m_offset) = geoElem(e,0,0) * 3.0/5.0;
-        }
-      }
-    }
-
-    //! Compute right hand side
+	//! Compute right hand side
     //! \param[in] t Physical time
-    //! \param[in] geoElem Element geometry array
     //! \param[in] geoFace Face geometry array
-    //! \param[in] fd Face connectivity data object
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
@@ -194,79 +189,22 @@ class CompFlow {
               const tk::Fields& U,
               tk::Fields& /*limFunc*/,
               tk::Fields& R ) const
-    {
+	{
+	  //std::cout << "R at rhs " << std::endl;
+	  //std::cout << "R(0) = " << R(0, 0, m_offset) << "\t" << R(0, 1, m_offset) << "\t" << R(0, 2, m_offset) << "\t" << R(0, 3, m_offset) << std::endl;
+      //std::cout << "R(1) = " << R(0, 4, m_offset) << "\t" << R(0, 5, m_offset) << "\t" << R(0, 6, m_offset) << "\t" << R(0, 7, m_offset) << std::endl;
+      //std::cout << "R(2) = " << R(0, 8, m_offset) << "\t" << R(0, 9, m_offset) << "\t" << R(0, 10, m_offset) << "\t" << R(0, 11, m_offset) << std::endl;
+      //std::cout << "R(3) = " << R(0, 12, m_offset) << "\t" << R(0, 13, m_offset) << "\t" << R(0, 14, m_offset) << "\t" << R(0, 15, m_offset) << std::endl;
+      //std::cout << "R(4) = " << R(0, 16, m_offset) << "\t" << R(0, 17, m_offset) << "\t" << R(0, 18, m_offset) << "\t" << R(0, 19, m_offset) << std::endl;
+	  //std::cout << std::endl;
+
+	  const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
-      Assert( U.nunk() == geoElem.nunk(), "Number of unknowns in solution "
-              "vector and element-geometry at recent time step incorrect" );
-      Assert( U.nprop() == 5 && R.nprop() == 5,
-              "Number of components in solution and right-hand side vector " 
-              "must equal "+ std::to_string(5) );
-
-      IGNORE(coord);
-      IGNORE(inpoel);
-
-	  // set rhs to zero
-      R.fill(0.0);
-
-      const auto& esuf = fd.Esuf();
-
-      // compute internal surface flux integrals
-      for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
-      {
-        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-        std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
-        auto farea = geoFace(f,0,0);
-
-        auto flux =
-          m_riemann.flux( f, geoFace, {{U.extract(el), U.extract(er)}} );
-
-        for (ncomp_t c=0; c<5; ++c) {
-          R(el, c, m_offset) -= farea * flux[c];
-          R(er, c, m_offset) += farea * flux[c];
-        }
-      }
-
-      // compute boundary surface flux integrals
-      bndIntegral< Dir >( m_bcdir, fd, geoFace, t, U, R );
-      bndIntegral< Sym >( m_bcsym, fd, geoFace, t, U, R );
-      bndIntegral< Extrapolate >( m_bcextrapolate, fd, geoFace, t, U, R );
-
-      // Add source term to right hand side
-      for (std::size_t e=0; e<geoElem.nunk(); ++e) {
-        auto vole = geoElem(e,0,0);
-        auto xc = geoElem(e,1,0);
-        auto yc = geoElem(e,2,0);
-        auto zc = geoElem(e,3,0);
-        auto s = Problem::src(0, xc, yc, zc, t);
-        for (ncomp_t c=0; c<5; ++c)
-          R(e, c, m_offset) += vole * s[c];
-      }
-    }
-
-    //! Compute P1 right hand side
-    //! \param[in] t Physical time
-    //! \param[in] geoElem Element geometry array
-    //! \param[in] geoFace Face geometry array
-    //! \param[in] fd Face connectivity data object
-    //! \param[in] inpoel Element-node connectivity
-    //! \param[in] coord Array of nodal coordinates
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in,out] R Right-hand side vector computed
-    void rhsp1( tk::real t,
-                const tk::Fields& geoFace,
-                const tk::Fields& geoElem,
-                const inciter::FaceData& fd,
-                const std::vector< std::size_t >& inpoel,
-                const tk::UnsMesh::Coords& coord,
-                const tk::Fields& U,
-                tk::Fields& R ) const
-    {
-      Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
-              "vector and right-hand side at recent time step incorrect" );
-      Assert( U.nprop() == m_ndof*m_ncomp && R.nprop() == m_ndof*m_ncomp,
+      Assert( U.nprop() == ndof*5 && R.nprop() == ndof*5,
               "Number of components in solution and right-hand side vector "
-              "must equal "+ std::to_string(m_ncomp) );
+              "must equal "+ std::to_string(ndof*5) );
       Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
               "size" );
 
@@ -279,365 +217,37 @@ class CompFlow {
       // set rhs to zero
       R.fill(0.0);
 
-      // arrays for quadrature points
-      std::array< std::vector< tk::real >, 3 > coordgp;
-      std::vector< tk::real > wgp;
+      if (ndof == 1) {  // DG(P0)
 
-      coordgp[0].resize(3,0);
-      coordgp[1].resize(3,0);
-      coordgp[2].resize(3,0);
+        // compute internal surface flux integrals
+        surfIntP0( fd, geoFace, U, R );
+		// compute source term intehrals
+		srcIntP0( t, geoElem, R);
+        // compute boundary surface flux integrals
+        bndInt< Dir >( m_bcdir, fd, geoFace, t, U, R );
+        bndInt< Sym >( m_bcsym, fd, geoFace, t, U, R );
+        bndInt< Extrapolate >( m_bcextrapolate, fd, geoFace, t, U, R );
+      } else if (ndof == 4) {  // DG(P1)
 
-      wgp.resize(3,0);
-
-      const auto& cx = coord[0];
-      const auto& cy = coord[1];
-      const auto& cz = coord[2];
-
-      // get quadrature point weights and coordinates for triangle
-      GaussQuadratureTri( coordgp, wgp );
-
-      // compute internal surface flux integrals
-      for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
-      {
-        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-        std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
-
-        // nodal coordinates of the left element
-        std::array< tk::real, 3 >
-          p1_l{{ cx[ inpoel[4*el] ],
-                 cy[ inpoel[4*el] ],
-                 cz[ inpoel[4*el] ] }},
-          p2_l{{ cx[ inpoel[4*el+1] ],
-                 cy[ inpoel[4*el+1] ],
-                 cz[ inpoel[4*el+1] ] }},
-          p3_l{{ cx[ inpoel[4*el+2] ],
-                 cy[ inpoel[4*el+2] ],
-                 cz[ inpoel[4*el+2] ] }},
-          p4_l{{ cx[ inpoel[4*el+3] ],
-                 cy[ inpoel[4*el+3] ],
-                 cz[ inpoel[4*el+3] ] }};
-
-        // nodal coordinates of the right element
-        std::array< tk::real, 3 >
-          p1_r{{ cx[ inpoel[4*er] ],
-                 cy[ inpoel[4*er] ],
-                 cz[ inpoel[4*er] ] }},
-          p2_r{{ cx[ inpoel[4*er+1] ],
-                 cy[ inpoel[4*er+1] ],
-                 cz[ inpoel[4*er+1] ] }},
-          p3_r{{ cx[ inpoel[4*er+2] ],
-                 cy[ inpoel[4*er+2] ],
-                 cz[ inpoel[4*er+2] ] }},
-          p4_r{{ cx[ inpoel[4*er+3] ],
-                 cy[ inpoel[4*er+3] ],
-                 cz[ inpoel[4*er+3] ] }};
-
-        auto detT_l = getJacobian( p1_l, p2_l, p3_l, p4_l );
-        auto detT_r = getJacobian( p1_r, p2_r, p3_r, p4_r );
-
-        auto x1 = cx[ inpofa[3*f]   ];
-        auto y1 = cy[ inpofa[3*f]   ];
-        auto z1 = cz[ inpofa[3*f]   ];
-
-        auto x2 = cx[ inpofa[3*f+1] ];
-        auto y2 = cy[ inpofa[3*f+1] ];
-        auto z2 = cz[ inpofa[3*f+1] ];
-
-        auto x3 = cx[ inpofa[3*f+2] ];
-        auto y3 = cy[ inpofa[3*f+2] ];
-        auto z3 = cz[ inpofa[3*f+2] ];
-
-        // Gaussian quadrature
-        for (std::size_t igp=0; igp<3; ++igp)
-        {
-          // Barycentric coordinates for the triangular face
-          auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];
-          auto shp2 = coordgp[0][igp];
-          auto shp3 = coordgp[1][igp];
-
-          // transformation of the quadrature point from the 2D reference/master
-          // element to physical domain, to obtain its physical (x,y,z)
-          // coordinates.
-          auto xgp = x1*shp1 + x2*shp2 + x3*shp3;
-          auto ygp = y1*shp1 + y2*shp2 + y3*shp3;
-          auto zgp = z1*shp1 + z2*shp2 + z3*shp3;
-
-          tk::real detT_gp(0);
-
-          // The basis functions chosen for the DG method are the Dubiner
-          // basis, which are Legendre polynomials modified for tetrahedra,
-          // which are defined only on the reference/master tetrahedron.
-          // Thus, to determine the high-order solution from the left and right
-          // elements at the surface quadrature points, the basis functions
-          // from the left and right elements are needed. For this, a
-          // transformation to the reference coordinates is necessary, since
-          // the basis functions are defined on the reference tetrahedron only.
-          // Ref: [1] https://doi.org/10.1007/BF01060030
-          //      [2] https://doi.org/10.1093/imamat/hxh111
-
-          // transformation of the physical coordinates of the quadrature point
-          // to reference space for the left element to be able to compute
-          // basis functions on the left element.
-          detT_gp = getJacobian( p1_l, {{ xgp, ygp, zgp }}, p3_l, p4_l );
-          auto xi_l = detT_gp / detT_l;
-          detT_gp = getJacobian( p1_l, p2_l, {{ xgp, ygp, zgp }}, p4_l );
-          auto eta_l = detT_gp / detT_l;
-          detT_gp = getJacobian( p1_l, p2_l, p3_l, {{ xgp, ygp, zgp }} );
-          auto zeta_l = detT_gp / detT_l;
-
-          // basis functions at igp for the left element
-          auto B2l = 2.0 * xi_l + eta_l + zeta_l - 1.0;
-          auto B3l = 3.0 * eta_l + zeta_l - 1.0;
-          auto B4l = 4.0 * zeta_l - 1.0;
-
-          // transformation of the physical coordinates of the quadrature point
-          // to reference space for the right element
-          detT_gp = getJacobian( p1_r, {{ xgp, ygp, zgp }}, p3_r, p4_r );
-          auto xi_r = detT_gp / detT_r;
-          detT_gp = getJacobian( p1_r, p2_r, {{ xgp, ygp, zgp }}, p4_r );
-          auto eta_r = detT_gp / detT_r;
-          detT_gp = getJacobian( p1_r, p2_r, p3_r, {{ xgp, ygp, zgp }} );
-          auto zeta_r = detT_gp / detT_r;
-          
-          // basis functions at igp for the right element
-          auto B2r = 2.0 * xi_r + eta_r + zeta_r - 1.0;
-          auto B3r = 3.0 * eta_r + zeta_r - 1.0;
-          auto B4r = 4.0 * zeta_r - 1.0;
-
-          auto wt = wgp[igp] * geoFace(f,0,0);
-
-          std::array< std::vector< tk::real >, 2 > ugp;
-
-          for (ncomp_t c=0; c<m_ncomp; ++c)
-          {
-            auto mark = c*m_ndof;
-            ugp[0].push_back(  U(el, mark,   m_offset)
-                             + U(el, mark+1, m_offset) * B2l
-                             + U(el, mark+2, m_offset) * B3l
-                             + U(el, mark+3, m_offset) * B4l );
-            ugp[1].push_back(  U(er, mark,   m_offset)
-                             + U(er, mark+1, m_offset) * B2r
-                             + U(er, mark+2, m_offset) * B3r
-                             + U(er, mark+3, m_offset) * B4r );
-          }
-
-          auto flux = m_riemann.flux( f, geoFace, {{ugp[0], ugp[1]}} );
-
-          for (ncomp_t c=0; c<m_ncomp; ++c)
-          {
-            auto mark = c*m_ndof;
-
-            R(el, mark,   m_offset) -= wt * flux[c];
-            R(el, mark+1, m_offset) -= wt * flux[c] * B2l;
-            R(el, mark+2, m_offset) -= wt * flux[c] * B3l;
-            R(el, mark+3, m_offset) -= wt * flux[c] * B4l;
-
-            R(er, mark,   m_offset) += wt * flux[c];
-            R(er, mark+1, m_offset) += wt * flux[c] * B2r;
-            R(er, mark+2, m_offset) += wt * flux[c] * B3r;
-            R(er, mark+3, m_offset) += wt * flux[c] * B4r;
-          }
-        }
-      }
-
-      // compute boundary surface flux integrals
-      bndIntegralp1< Dir >( m_bcdir, bface, esuf, geoFace, inpoel, inpofa, coord, t, U, R );
-      bndIntegralp1< Sym >( m_bcsym, bface, esuf, geoFace, inpoel, inpofa, coord, t, U, R );
-      bndIntegralp1< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, inpoel, inpofa, 
-				    			    coord, t, U, R );
-
-      // Add source term to right hand side
-	  coordgp[0].resize(5,0);
-      coordgp[1].resize(5,0);
-      coordgp[2].resize(5,0);
-
-      wgp.resize(5,0);
-
-      GaussQuadratureTet( coordgp, wgp );
-	 
-	  for (std::size_t e=0; e<geoElem.nunk(); ++e)
-	  {
-	    auto x1 = cx[ inpoel[4*e]   ];
-        auto y1 = cy[ inpoel[4*e]   ];
-        auto z1 = cz[ inpoel[4*e]   ];
-
-        auto x2 = cx[ inpoel[4*e+1] ];
-        auto y2 = cy[ inpoel[4*e+1] ];
-        auto z2 = cz[ inpoel[4*e+1] ];
-
-        auto x3 = cx[ inpoel[4*e+2] ];
-        auto y3 = cy[ inpoel[4*e+2] ];
-        auto z3 = cz[ inpoel[4*e+2] ];
-
-        auto x4 = cx[ inpoel[4*e+3] ];
-        auto y4 = cy[ inpoel[4*e+3] ];
-        auto z4 = cz[ inpoel[4*e+3] ];
- 
-	    for (std::size_t igp=0; igp<5; ++igp)
-	    {
-		  auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp] - coordgp[2][igp];
-      	  auto shp2 = coordgp[0][igp];
-      	  auto shp3 = coordgp[1][igp];
-      	  auto shp4 = coordgp[2][igp];
-		
-		  auto wt = wgp[igp] * geoElem(e, 0, 0);
-		
-		  auto xgp = x1*shp1 + x2*shp2 + x3*shp3 + x4*shp4;
-		  auto ygp = y1*shp1 + y2*shp2 + y3*shp3 + y4*shp4;
-		  auto zgp = z1*shp1 + z2*shp2 + z3*shp3 + z4*shp4;		
-
-      	  auto s = Problem::src(0, xgp, ygp, zgp, t);
-      	  for (ncomp_t c=0; c<5; ++c)
-      	    R(e, c, m_offset) += wt * s[c];
-      	}
-	  }
-
-      std::array< std::array< tk::real, 3 >, 3 > jacInv;
-
-      // compute volume integrals
-      for (std::size_t e=0; e<U.nunk(); ++e)
-      {
-	    auto x1 = cx[ inpoel[4*e]   ];
-        auto y1 = cy[ inpoel[4*e]   ];
-        auto z1 = cz[ inpoel[4*e]   ];
-
-        auto x2 = cx[ inpoel[4*e+1] ];
-        auto y2 = cy[ inpoel[4*e+1] ];
-        auto z2 = cz[ inpoel[4*e+1] ];
-
-        auto x3 = cx[ inpoel[4*e+2] ];
-        auto y3 = cy[ inpoel[4*e+2] ];
-        auto z3 = cz[ inpoel[4*e+2] ];
-
-        auto x4 = cx[ inpoel[4*e+3] ];
-        auto y4 = cy[ inpoel[4*e+3] ];
-        auto z4 = cz[ inpoel[4*e+3] ];
-
-        jacInv = getJacInverse( {{x1, y1, z1}},
-                                {{x2, y2, z2}},
-                                {{x3, y3, z3}},
-                                {{x4, y4, z4}} );
-		
-		// The derivatives of the basis functions dB/dx are easily calculated
-        // via a transformation to the reference space as,
-        // dB/dx = dB/dX . dx/dxi,
-        // where, x = (x,y,z) are the physical coordinates, and
-        //        xi = (xi, eta, zeta) are the reference coordinates.
-        // The matrix dx/dxi is the inverse of the Jacobian of transformation
-        // and the matrix vector product has to be calculated. This follows.
-
-        auto db2dxi1 = 2.0;
-        auto db2dxi2 = 1.0;
-        auto db2dxi3 = 1.0;
-
-        auto db3dxi1 = 0.0;
-        auto db3dxi2 = 3.0;
-        auto db3dxi3 = 1.0;
-
-        auto db4dxi1 = 0.0;
-        auto db4dxi2 = 0.0;
-        auto db4dxi3 = 4.0;
-
-        auto db2dx =  db2dxi1 * jacInv[0][0]
-                    + db2dxi2 * jacInv[1][0]
-                    + db2dxi3 * jacInv[2][0];
-
-        auto db2dy =  db2dxi1 * jacInv[0][1]
-                    + db2dxi2 * jacInv[1][1]
-                    + db2dxi3 * jacInv[2][1];
-
-        auto db2dz =  db2dxi1 * jacInv[0][2]
-                    + db2dxi2 * jacInv[1][2]
-                    + db2dxi3 * jacInv[2][2];
-
-        auto db3dx =  db3dxi1 * jacInv[0][0]
-                    + db3dxi2 * jacInv[1][0]
-                    + db3dxi3 * jacInv[2][0];
-
-        auto db3dy =  db3dxi1 * jacInv[0][1]
-                    + db3dxi2 * jacInv[1][1]
-                    + db3dxi3 * jacInv[2][1];
-
-        auto db3dz =  db3dxi1 * jacInv[0][2]
-                    + db3dxi2 * jacInv[1][2]
-                    + db3dxi3 * jacInv[2][2];
-
-        auto db4dx =  db4dxi1 * jacInv[0][0]
-                    + db4dxi2 * jacInv[1][0]
-                    + db4dxi3 * jacInv[2][0];        
-	
-	    auto db4dy =  db4dxi1 * jacInv[0][1]
-                    + db4dxi2 * jacInv[1][1]
-                    + db4dxi3 * jacInv[2][1];
-
-        auto db4dz =  db4dxi1 * jacInv[0][2]
-                    + db4dxi2 * jacInv[1][2]
-                    + db4dxi3 * jacInv[2][2];
-
-        // Gaussian quadrature
-        for (std::size_t igp=0; igp<5; ++igp)
-        {
-          std::vector< tk::real > ugp;
-          std::array< std::vector< tk::real >, 3 > flux;
-
-          tk::real g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
-
-          ugp.resize(m_ncomp,0);
-
-          flux[0].resize(m_ncomp,0);
-          flux[1].resize(m_ncomp,0);
-          flux[2].resize(m_ncomp,0);
-
-          auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp] - 1.0;
-          auto B3 = 3.0 * coordgp[1][igp] + coordgp[2][igp] - 1.0;
-          auto B4 = 4.0 * coordgp[2][igp] - 1.0;
-
-          auto wt = wgp[igp] * geoElem(e, 0, 0);
-	  	  
-	  	  for (ncomp_t c=0; c<m_ncomp; ++c)
-	  	  {
-			auto mark = c*m_ndof;
-
-      	    ugp[c] =  U(e, mark,   m_offset)
-      	            + U(e, mark+1, m_offset) * B2
-      	            + U(e, mark+2, m_offset) * B3
-      	            + U(e, mark+3, m_offset) * B4;
-	  	  }
-
-	  	  auto u = ugp[1] / ugp[0];
-	  	  auto v = ugp[2] / ugp[0];
-	  	  auto w = ugp[3] / ugp[0];
-	  	  auto p = (g - 1) * (ugp[4] - 0.5 * ugp[0] * (u*u + v*v + w*w) );
-
-	  	  flux[0][0] = ugp[1];
-	  	  flux[0][1] = ugp[1] * u + p;
-	  	  flux[0][2] = ugp[1] * v;
-	  	  flux[0][3] = ugp[1] * w;
-	  	  flux[0][4] = u * (ugp[4] + p);
-
-	  	  flux[1][0] = ugp[2];
-      	  flux[1][1] = ugp[2] * u;
-      	  flux[1][2] = ugp[2] * v + p;
-      	  flux[1][3] = ugp[2] * w;
-      	  flux[1][4] = v * (ugp[4] + p);
-
-	  	  flux[2][0] = ugp[3];
-      	  flux[2][1] = ugp[3] * u;
-      	  flux[2][2] = ugp[3] * v;
-      	  flux[2][3] = ugp[3] * w + p;
-      	  flux[2][4] = w * (ugp[4] + p);
-
-      	  for (ncomp_t c=0; c<m_ncomp; ++c)
-      	  {
-	  	    auto mark = c*m_ndof;
-	  	    
-	  	    R(e, mark+1, m_offset) += wt * (flux[0][c]*db2dx + flux[1][c]*db2dy + flux[2][c]*db2dz);
-	  	    R(e, mark+2, m_offset) += wt * (flux[0][c]*db3dx + flux[1][c]*db3dy + flux[2][c]*db3dz);
-	  	    R(e, mark+3, m_offset) += wt * (flux[0][c]*db4dx + flux[1][c]*db4dy + flux[2][c]*db4dz);
-	  	  }
-		}
-      }
-    }
+        // compute internal surface flux integrals
+        //surfIntP0( fd, geoFace, U, R );
+        surfIntP1( inpoel, coord, fd, geoFace, U, R );
+		// compute source term intehrals
+        //srcIntP0( t, geoElem, R);
+        srcIntP1( t, inpoel, coord, geoElem, R);
+        // compute volume integrals
+        volIntP1( inpoel, coord, geoElem, U, R );
+        // compute boundary surface flux integrals
+        //bndInt< Dir >( m_bcdir, fd, geoFace, t, U, R );
+        //bndInt< Sym >( m_bcsym, fd, geoFace, t, U, R );
+        //bndInt< Extrapolate >( m_bcextrapolate, fd, geoFace, t, U, R );
+        bndIntP1< Dir >( m_bcdir, bface, esuf, geoFace, inpoel, inpofa, coord, t, U, R );
+        bndIntP1< Sym >( m_bcsym, bface, esuf, geoFace, inpoel, inpofa, coord, t, U, R );
+        bndIntP1< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, inpoel, inpofa, coord, t, U, R );
+      } else
+        Throw( "dg::Transport::rhs() not defined for NDOF=" +
+               std::to_string(ndof) );
+	}
 
     //! Compute the minimum time step size
 //     //! \param[in] U Solution vector at recent time step
@@ -751,6 +361,8 @@ class CompFlow {
                        tk::Fields& unk,
                        tk::real t ) const
     {
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
@@ -768,11 +380,11 @@ class CompFlow {
         // evaluate solution at centroid
         const auto s = Problem::solution( 0, xcc, ycc, zcc, t );
         // initialize unknown vector with solution at centroids
-        unk(e, 0, m_offset) = s[0];
-        unk(e, 1, m_offset) = s[1];
-        unk(e, 2, m_offset) = s[2];
-        unk(e, 3, m_offset) = s[3];
-        unk(e, 4, m_offset) = s[4];
+        unk(e, 0*ndof, m_offset) = s[0];
+        unk(e, 1*ndof, m_offset) = s[1];
+        unk(e, 2*ndof, m_offset) = s[2];
+        unk(e, 3*ndof, m_offset) = s[3];
+        unk(e, 4*ndof, m_offset) = s[4];
       } 
     }
 
@@ -794,16 +406,12 @@ class CompFlow {
       std::vector< tk::real > R;
       R.resize(unk.nprop(),0);
 
+      // Number of integration points
+      constexpr std::size_t NG = 5;
+
       // arrays for quadrature points
-      std::array< std::vector< tk::real >, 3 > coordgp;
-      std::vector< tk::real > wgp;
-
-      // resize quadrature point arrays
-      coordgp[0].resize(5,0);
-      coordgp[1].resize(5,0);
-      coordgp[2].resize(5,0);
-
-      wgp.resize(5,0);
+      std::array< std::array< tk::real, NG >, 3 > coordgp;
+      std::array< tk::real, NG > wgp;
 
       const auto& cx = coord[0];
       const auto& cy = coord[1];
@@ -853,7 +461,7 @@ class CompFlow {
           auto wt = vole * wgp[igp];
 
           const auto s = Problem::solution( 0, xgp, ygp, zgp, t );
-          for (ncomp_t c=0; c<m_ncomp; ++c)
+          for (ncomp_t c=0; c<5; ++c)
           {
             auto mark = c*m_ndof;
 
@@ -862,15 +470,511 @@ class CompFlow {
             R[mark+2] += wt * s[c]*B3;
             R[mark+3] += wt * s[c]*B4;
           }
-        }
+		}
 
-        for (ncomp_t c=0; c<m_ncomp; ++c)
+        for (ncomp_t c=0; c<5; ++c)
         {
           auto mark = c*m_ndof;
           unk(e, mark,   m_offset) = R[mark]   / lhs(e, mark,   m_offset);
           unk(e, mark+1, m_offset) = R[mark+1] / lhs(e, mark+1, m_offset);
           unk(e, mark+2, m_offset) = R[mark+2] / lhs(e, mark+2, m_offset);
           unk(e, mark+3, m_offset) = R[mark+3] / lhs(e, mark+3, m_offset);
+        }
+		//std::cout << "e = " << e << std::endl;
+		//for (ncomp_t c=0; c<5; ++c)
+        //{
+		//  auto mark = c*m_ndof;
+		//  std::cout << "R(" << mark << ") = " << R[mark] << "\t" <<  R[mark+1] << "\t" << R[mark+2] << "\t" << R[mark+3] << std::endl;
+		//  std::cout << "lhs(" << mark << ") = " << lhs(e, mark,   m_offset) << "\t" <<  lhs(e, mark+1,   m_offset) << "\t" << lhs(e, mark+2,   m_offset) << "\t" << lhs(e, mark+3,   m_offset) << std::endl;
+		//  std::cout << "unk(" << mark << ") = " << unk(e, mark,   m_offset) << "\t" <<  unk(e, mark+1,   m_offset) << "\t" << unk(e, mark+2,   m_offset) << "\t" << unk(e, mark+3,   m_offset) << std::endl;
+		//}
+		//std::cout << std::endl;
+      }
+    }
+
+    //! Compute internal surface flux integrals for DG(P0)
+    //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] R Right-hand side vector computed
+    void surfIntP0( const inciter::FaceData& fd,
+                    const tk::Fields& geoFace,
+                    const tk::Fields& U,
+                    tk::Fields& R ) const
+    {
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto& esuf = fd.Esuf();
+
+      for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
+      {
+        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+        std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+        auto farea = geoFace(f,0,0);
+
+        std::array< std::vector< tk::real >, 2 > ugp;
+        for (ncomp_t c=0; c<5; ++c)
+        { 
+          auto mark = c*ndof;
+          ugp[0].push_back( U(el, mark, m_offset) );
+          ugp[1].push_back( U(er, mark, m_offset) );
+        }
+
+          auto flux = m_riemann.flux( f, geoFace, {{ugp[0], ugp[1]}} );
+        //auto flux =
+          //m_riemann.flux( f, geoFace, {{U.extract(el), U.extract(er)}} );
+
+        for (ncomp_t c=0; c<5; ++c) {
+          auto mark = c*ndof;
+          R(el, mark, m_offset) -= farea * flux[c];
+          R(er, mark, m_offset) += farea * flux[c];
+        }
+      }
+    }
+
+    //! Compute internal surface flux integrals for DG(P1)
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] R Right-hand side vector computed
+    void surfIntP1( const std::vector< std::size_t >& inpoel,
+                    const tk::UnsMesh::Coords& coord,
+                    const inciter::FaceData& fd,
+                    const tk::Fields& geoFace,
+                    const tk::Fields& U,
+                    tk::Fields& R ) const
+    {
+      const auto& esuf = fd.Esuf();
+      const auto& inpofa = fd.Inpofa();
+
+      // Number of integration points
+      constexpr std::size_t NG = 3;
+
+      // arrays for quadrature points
+      std::array< std::array< tk::real, NG >, 2 > coordgp;
+      std::array< tk::real, NG > wgp;
+
+      const auto& cx = coord[0];
+      const auto& cy = coord[1];
+      const auto& cz = coord[2];
+
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+
+      // get quadrature point weights and coordinates for triangle
+      GaussQuadratureTri( coordgp, wgp );
+
+      // compute internal surface flux integrals
+      for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
+      {
+        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+        std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+
+        // nodal coordinates of the left element
+        std::array< tk::real, 3 >
+          p1_l{{ cx[ inpoel[4*el] ],
+                 cy[ inpoel[4*el] ],
+                 cz[ inpoel[4*el] ] }},
+          p2_l{{ cx[ inpoel[4*el+1] ],
+                 cy[ inpoel[4*el+1] ],
+                 cz[ inpoel[4*el+1] ] }},
+          p3_l{{ cx[ inpoel[4*el+2] ],
+                 cy[ inpoel[4*el+2] ],
+                 cz[ inpoel[4*el+2] ] }},
+          p4_l{{ cx[ inpoel[4*el+3] ],
+                 cy[ inpoel[4*el+3] ],
+                 cz[ inpoel[4*el+3] ] }};
+
+        // nodal coordinates of the right element
+        std::array< tk::real, 3 >
+          p1_r{{ cx[ inpoel[4*er] ],
+                 cy[ inpoel[4*er] ],
+                 cz[ inpoel[4*er] ] }},
+          p2_r{{ cx[ inpoel[4*er+1] ],
+                 cy[ inpoel[4*er+1] ],
+                 cz[ inpoel[4*er+1] ] }},
+          p3_r{{ cx[ inpoel[4*er+2] ],
+                 cy[ inpoel[4*er+2] ],
+                 cz[ inpoel[4*er+2] ] }},
+          p4_r{{ cx[ inpoel[4*er+3] ],
+                 cy[ inpoel[4*er+3] ],
+                 cz[ inpoel[4*er+3] ] }};
+
+        auto detT_l = getJacobian( p1_l, p2_l, p3_l, p4_l );
+        auto detT_r = getJacobian( p1_r, p2_r, p3_r, p4_r );
+
+        auto x1 = cx[ inpofa[3*f]   ];
+        auto y1 = cy[ inpofa[3*f]   ];
+        auto z1 = cz[ inpofa[3*f]   ];
+
+        auto x2 = cx[ inpofa[3*f+1] ];
+        auto y2 = cy[ inpofa[3*f+1] ];
+        auto z2 = cz[ inpofa[3*f+1] ];
+
+        auto x3 = cx[ inpofa[3*f+2] ];
+        auto y3 = cy[ inpofa[3*f+2] ];
+        auto z3 = cz[ inpofa[3*f+2] ];
+
+        // Gaussian quadrature
+        for (std::size_t igp=0; igp<NG; ++igp)
+        {
+          // Barycentric coordinates for the triangular face
+          auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];
+          auto shp2 = coordgp[0][igp];
+          auto shp3 = coordgp[1][igp];
+
+          // transformation of the quadrature point from the 2D reference/master
+          // element to physical domain, to obtain its physical (x,y,z)
+          // coordinates.
+          auto xgp = x1*shp1 + x2*shp2 + x3*shp3;
+          auto ygp = y1*shp1 + y2*shp2 + y3*shp3;
+          auto zgp = z1*shp1 + z2*shp2 + z3*shp3;
+
+          tk::real detT_gp(0);
+
+          // The basis functions chosen for the DG method are the Dubiner
+          // basis, which are Legendre polynomials modified for tetrahedra,
+          // which are defined only on the reference/master tetrahedron.
+          // Thus, to determine the high-order solution from the left and right
+          // elements at the surface quadrature points, the basis functions
+          // from the left and right elements are needed. For this, a
+          // transformation to the reference coordinates is necessary, since
+          // the basis functions are defined on the reference tetrahedron only.
+          // Ref: [1] https://doi.org/10.1007/BF01060030
+          //      [2] https://doi.org/10.1093/imamat/hxh111
+
+          // transformation of the physical coordinates of the quadrature point
+          // to reference space for the left element to be able to compute
+          // basis functions on the left element.
+          detT_gp = getJacobian( p1_l, {{ xgp, ygp, zgp }}, p3_l, p4_l );
+          auto xi_l = detT_gp / detT_l;
+          detT_gp = getJacobian( p1_l, p2_l, {{ xgp, ygp, zgp }}, p4_l );
+          auto eta_l = detT_gp / detT_l;
+          detT_gp = getJacobian( p1_l, p2_l, p3_l, {{ xgp, ygp, zgp }} );
+          auto zeta_l = detT_gp / detT_l;
+
+          // basis functions at igp for the left element
+          auto B2l = 2.0 * xi_l + eta_l + zeta_l - 1.0;
+          auto B3l = 3.0 * eta_l + zeta_l - 1.0;
+          auto B4l = 4.0 * zeta_l - 1.0;
+
+          // transformation of the physical coordinates of the quadrature point
+          // to reference space for the right element
+          detT_gp = getJacobian( p1_r, {{ xgp, ygp, zgp }}, p3_r, p4_r );
+          auto xi_r = detT_gp / detT_r;
+          detT_gp = getJacobian( p1_r, p2_r, {{ xgp, ygp, zgp }}, p4_r );
+          auto eta_r = detT_gp / detT_r;
+          detT_gp = getJacobian( p1_r, p2_r, p3_r, {{ xgp, ygp, zgp }} );
+          auto zeta_r = detT_gp / detT_r;
+
+          // basis functions at igp for the right element
+          auto B2r = 2.0 * xi_r + eta_r + zeta_r - 1.0;
+          auto B3r = 3.0 * eta_r + zeta_r - 1.0;
+          auto B4r = 4.0 * zeta_r - 1.0;
+
+          auto wt = wgp[igp] * geoFace(f,0,0);
+
+          std::array< std::vector< tk::real >, 2 > ugp;
+
+          for (ncomp_t c=0; c<5; ++c)
+          {
+            auto mark = c*ndof;
+            ugp[0].push_back(  U(el, mark,   m_offset)
+                             + U(el, mark+1, m_offset) * B2l
+                             + U(el, mark+2, m_offset) * B3l
+                             + U(el, mark+3, m_offset) * B4l );
+            ugp[1].push_back(  U(er, mark,   m_offset)
+                             + U(er, mark+1, m_offset) * B2r
+                             + U(er, mark+2, m_offset) * B3r
+                             + U(er, mark+3, m_offset) * B4r );
+          }
+
+          auto flux = m_riemann.flux( f, geoFace, {{ugp[0], ugp[1]}} );
+
+          for (ncomp_t c=0; c<5; ++c)
+          {
+            auto mark = c*ndof;
+
+            R(el, mark,   m_offset) -= wt * flux[c];
+            R(el, mark+1, m_offset) -= wt * flux[c] * B2l;
+            R(el, mark+2, m_offset) -= wt * flux[c] * B3l;
+            R(el, mark+3, m_offset) -= wt * flux[c] * B4l;
+
+            R(er, mark,   m_offset) += wt * flux[c];
+            R(er, mark+1, m_offset) += wt * flux[c] * B2r;
+            R(er, mark+2, m_offset) += wt * flux[c] * B3r;
+            R(er, mark+3, m_offset) += wt * flux[c] * B4r;
+          }
+        }
+      }
+    }
+
+	//! Compute source term integrals for DG(P0)
+    //! \param[in] t Physical time
+    //! \param[in] geoElem Element geometry array
+    //! \param[in,out] R Right-hand side vector computed
+	void srcIntP0( tk::real t,
+              	   const tk::Fields& geoElem,
+              	   tk::Fields& R) const
+	{
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      for (std::size_t e=0; e<geoElem.nunk(); ++e) {
+        auto vole = geoElem(e,0,0);
+        auto xc = geoElem(e,1,0);
+        auto yc = geoElem(e,2,0);
+        auto zc = geoElem(e,3,0);
+        auto s = Problem::src(0, xc, yc, zc, t);
+        for (ncomp_t c=0; c<5; ++c){
+		  auto mark = c*ndof;
+          R(e, mark, m_offset) += vole * s[c];
+		}
+      }
+	  //std::cout << "R at srcIntP0 " << std::endl;
+      //std::cout << "R(0) = " << R(0, 0, m_offset) << "\t" << R(0, 1, m_offset) << "\t" << R(0, 2, m_offset) << "\t" << R(0, 3, m_offset) << std::endl;
+      //std::cout << "R(1) = " << R(0, 4, m_offset) << "\t" << R(0, 5, m_offset) << "\t" << R(0, 6, m_offset) << "\t" << R(0, 7, m_offset) << std::endl;
+      //std::cout << "R(2) = " << R(0, 8, m_offset) << "\t" << R(0, 9, m_offset) << "\t" << R(0, 10, m_offset) << "\t" << R(0, 11, m_offset) << std::endl;
+      //std::cout << "R(3) = " << R(0, 12, m_offset) << "\t" << R(0, 13, m_offset) << "\t" << R(0, 14, m_offset) << "\t" << R(0, 15, m_offset) << std::endl;
+      //std::cout << "R(4) = " << R(0, 16, m_offset) << "\t" << R(0, 17, m_offset) << "\t" << R(0, 18, m_offset) << "\t" << R(0, 19, m_offset) << std::endl;
+      //std::cout << std::endl;
+	}
+
+    //! Compute source term integrals for DG(P1)
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] geoElem Element geometry array
+    //! \param[in,out] R Right-hand side vector computed
+	void srcIntP1( tk::real t,
+              	   const std::vector< std::size_t >& inpoel,
+              	   const tk::UnsMesh::Coords& coord,
+                   const tk::Fields& geoElem,
+              	   tk::Fields& R) const
+	{
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      // Number of integration points
+      constexpr std::size_t NG = 5;
+
+      // arrays for quadrature points
+      std::array< std::array< tk::real, NG >, 3 > coordgp;
+      std::array< tk::real, NG > wgp;
+
+      // get quadrature point weights and coordinates for tetrahedron
+      GaussQuadratureTet( coordgp, wgp );
+
+      const auto& cx = coord[0];
+      const auto& cy = coord[1];
+      const auto& cz = coord[2];
+
+      for (std::size_t e=0; e<geoElem.nunk(); ++e)
+      {
+        auto x1 = cx[ inpoel[4*e]   ];
+        auto y1 = cy[ inpoel[4*e]   ];
+        auto z1 = cz[ inpoel[4*e]   ];
+
+        auto x2 = cx[ inpoel[4*e+1] ];
+        auto y2 = cy[ inpoel[4*e+1] ];
+        auto z2 = cz[ inpoel[4*e+1] ];
+
+        auto x3 = cx[ inpoel[4*e+2] ];
+        auto y3 = cy[ inpoel[4*e+2] ];
+        auto z3 = cz[ inpoel[4*e+2] ];
+
+        auto x4 = cx[ inpoel[4*e+3] ];
+        auto y4 = cy[ inpoel[4*e+3] ];
+        auto z4 = cz[ inpoel[4*e+3] ];
+
+        for (std::size_t igp=0; igp<5; ++igp)
+        {
+          auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp] - coordgp[2][igp];
+          auto shp2 = coordgp[0][igp];
+          auto shp3 = coordgp[1][igp];
+          auto shp4 = coordgp[2][igp];
+
+          auto wt = wgp[igp] * geoElem(e, 0, 0);
+
+          auto xgp = x1*shp1 + x2*shp2 + x3*shp3 + x4*shp4;
+          auto ygp = y1*shp1 + y2*shp2 + y3*shp3 + y4*shp4;
+          auto zgp = z1*shp1 + z2*shp2 + z3*shp3 + z4*shp4;
+
+          auto s = Problem::src(0, xgp, ygp, zgp, t);
+          for (ncomp_t c=0; c<5; ++c){
+			auto mark = c*ndof;
+            R(e, mark, m_offset) += wt * s[c];
+		  }
+        }
+      }
+	}
+
+	//! Compute volume integrals for DG(P1)
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] R Right-hand side vector computed
+    void volIntP1( const std::vector< std::size_t >& inpoel,
+                   const tk::UnsMesh::Coords& coord,
+                   const tk::Fields& geoElem,
+                   const tk::Fields& U,
+                   tk::Fields& R ) const
+    {
+      // Number of integration points
+      constexpr std::size_t NG = 5;
+
+      // arrays for quadrature points
+      std::array< std::array< tk::real, NG >, 3 > coordgp;
+      std::array< tk::real, NG > wgp;
+
+      // get quadrature point weights and coordinates for tetrahedron
+      GaussQuadratureTet( coordgp, wgp );
+
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+
+      std::array< std::array< tk::real, 3 >, 3 > jacInv;
+
+      const auto& cx = coord[0];
+      const auto& cy = coord[1];
+      const auto& cz = coord[2];
+
+      // compute volume integrals
+      for (std::size_t e=0; e<U.nunk(); ++e)
+      {
+        auto x1 = cx[ inpoel[4*e]   ];
+        auto y1 = cy[ inpoel[4*e]   ];
+        auto z1 = cz[ inpoel[4*e]   ];
+
+        auto x2 = cx[ inpoel[4*e+1] ];
+        auto y2 = cy[ inpoel[4*e+1] ];
+        auto z2 = cz[ inpoel[4*e+1] ];
+
+        auto x3 = cx[ inpoel[4*e+2] ];
+        auto y3 = cy[ inpoel[4*e+2] ];
+        auto z3 = cz[ inpoel[4*e+2] ];
+
+        auto x4 = cx[ inpoel[4*e+3] ];
+        auto y4 = cy[ inpoel[4*e+3] ];
+        auto z4 = cz[ inpoel[4*e+3] ];
+
+        jacInv = getJacInverse( {{x1, y1, z1}},
+                                {{x2, y2, z2}},
+                                {{x3, y3, z3}},
+                                {{x4, y4, z4}} );
+
+        // The derivatives of the basis functions dB/dx are easily calculated
+        // via a transformation to the reference space as,
+        // dB/dx = dB/dX . dx/dxi,
+        // where, x = (x,y,z) are the physical coordinates, and
+        //        xi = (xi, eta, zeta) are the reference coordinates.
+        // The matrix dx/dxi is the inverse of the Jacobian of transformation
+        // and the matrix vector product has to be calculated. This follows.
+
+        auto db2dxi1 = 2.0;
+        auto db2dxi2 = 1.0;
+        auto db2dxi3 = 1.0;
+
+        auto db3dxi1 = 0.0;
+        auto db3dxi2 = 3.0;
+        auto db3dxi3 = 1.0;
+
+        auto db4dxi1 = 0.0;
+        auto db4dxi2 = 0.0;
+        auto db4dxi3 = 4.0;
+
+        auto db2dx =  db2dxi1 * jacInv[0][0]
+                    + db2dxi2 * jacInv[1][0]
+                    + db2dxi3 * jacInv[2][0];
+
+        auto db2dy =  db2dxi1 * jacInv[0][1]
+                    + db2dxi2 * jacInv[1][1]
+                    + db2dxi3 * jacInv[2][1];
+
+        auto db2dz =  db2dxi1 * jacInv[0][2]
+                    + db2dxi2 * jacInv[1][2]
+                    + db2dxi3 * jacInv[2][2];
+
+        auto db3dx =  db3dxi1 * jacInv[0][0]
+                    + db3dxi2 * jacInv[1][0]
+                    + db3dxi3 * jacInv[2][0];
+
+        auto db3dy =  db3dxi1 * jacInv[0][1]
+                    + db3dxi2 * jacInv[1][1]
+                    + db3dxi3 * jacInv[2][1];
+
+        auto db3dz =  db3dxi1 * jacInv[0][2]
+                    + db3dxi2 * jacInv[1][2]
+                    + db3dxi3 * jacInv[2][2];
+
+        auto db4dx =  db4dxi1 * jacInv[0][0]
+                    + db4dxi2 * jacInv[1][0]
+                    + db4dxi3 * jacInv[2][0];
+
+        auto db4dy =  db4dxi1 * jacInv[0][1]
+                    + db4dxi2 * jacInv[1][1]
+                    + db4dxi3 * jacInv[2][1];
+
+        auto db4dz =  db4dxi1 * jacInv[0][2]
+                    + db4dxi2 * jacInv[1][2]
+                    + db4dxi3 * jacInv[2][2];
+
+        // Gaussian quadrature
+        for (std::size_t igp=0; igp<NG; ++igp)
+        {
+          std::vector< tk::real > ugp;
+          std::array< std::vector< tk::real >, 3 > flux;
+
+          tk::real g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
+
+          ugp.resize(5,0);
+
+          flux[0].resize(5,0);
+          flux[1].resize(5,0);
+          flux[2].resize(5,0);
+
+          auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp] - 1.0;
+          auto B3 = 3.0 * coordgp[1][igp] + coordgp[2][igp] - 1.0;
+          auto B4 = 4.0 * coordgp[2][igp] - 1.0;
+
+          auto wt = wgp[igp] * geoElem(e, 0, 0);
+
+          for (ncomp_t c=0; c<5; ++c)
+          {
+            auto mark = c*ndof;
+
+            ugp[c] =  U(e, mark,   m_offset)
+                    + U(e, mark+1, m_offset) * B2
+                    + U(e, mark+2, m_offset) * B3
+                    + U(e, mark+3, m_offset) * B4;
+          }
+
+          auto u = ugp[1] / ugp[0];
+          auto v = ugp[2] / ugp[0];
+          auto w = ugp[3] / ugp[0];
+          auto p = (g - 1) * (ugp[4] - 0.5 * ugp[0] * (u*u + v*v + w*w) );
+
+          flux[0][0] = ugp[1];
+          flux[0][1] = ugp[1] * u + p;
+          flux[0][2] = ugp[1] * v;
+          flux[0][3] = ugp[1] * w;
+          flux[0][4] = u * (ugp[4] + p);
+
+          flux[1][0] = ugp[2];
+          flux[1][1] = ugp[2] * u;
+          flux[1][2] = ugp[2] * v + p;
+          flux[1][3] = ugp[2] * w;
+          flux[1][4] = v * (ugp[4] + p);
+
+          flux[2][0] = ugp[3];
+          flux[2][1] = ugp[3] * u;
+          flux[2][2] = ugp[3] * v;
+          flux[2][3] = ugp[3] * w + p;
+          flux[2][4] = w * (ugp[4] + p);
+
+          for (ncomp_t c=0; c<5; ++c)
+          {
+            auto mark = c*m_ndof;
+
+            R(e, mark+1, m_offset) += wt * (flux[0][c]*db2dx + flux[1][c]*db2dy + flux[2][c]*db2dz);
+            R(e, mark+2, m_offset) += wt * (flux[0][c]*db3dx + flux[1][c]*db3dy + flux[2][c]*db3dz);
+            R(e, mark+3, m_offset) += wt * (flux[0][c]*db4dx + flux[1][c]*db4dy + flux[2][c]*db4dz);
+          }
         }
       }
     }
@@ -944,7 +1048,7 @@ class CompFlow {
     //! \tparam State Policy class providing the left and right state at
     //!   boundaries by its member function State::LR()
     template< class State >
-    void surfInt( const std::vector< std::size_t >& faces,
+    void bndsurfInt( const std::vector< std::size_t >& faces,
                   const std::vector< int >& esuf,
                   const tk::Fields& geoFace,
                   tk::real t,
@@ -962,11 +1066,19 @@ class CompFlow {
                                         geoFace(f,2,0),
                                         geoFace(f,3,0) }};
 
-        //--- fluxes
-        auto flux = m_riemann.flux( f, geoFace, State::LR(U.extract(el),xc,yc,zc,fn,t) );
-
+        const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+        std::vector< tk::real > ugp;
         for (ncomp_t c=0; c<5; ++c)
-          R(el, c, m_offset) -= farea * flux[c];
+          ugp.push_back( U(el, c*ndof, m_offset) );
+
+        //--- fluxes
+        auto flux = m_riemann.flux( f, geoFace, State::LR(ugp,xc,yc,zc,fn,t) );
+        //auto flux = m_riemann.flux( f, geoFace, State::LR(U.extract(el),xc,yc,zc,fn,t) );
+
+        for (ncomp_t c=0; c<5; ++c){
+          auto mark = c*m_ndof;
+          R(el, mark, m_offset) -= farea * flux[c];
+		}
       }
     }
 
@@ -980,7 +1092,7 @@ class CompFlow {
     //! \param[in,out] R Right-hand side vector computed
     template< class BCType >
     void
-    bndIntegral( const std::vector< bcconf_t >& bcconfig,
+    bndInt( const std::vector< bcconf_t >& bcconfig,
                  const inciter::FaceData& fd,
                  const tk::Fields& geoFace,
                  tk::real t,
@@ -993,7 +1105,7 @@ class CompFlow {
       for (const auto& s : bcconfig) {       // for all bc sidesets
         auto bc = bface.find( std::stoi(s) );// faces for side set
         if (bc != end(bface))
-          surfInt< BCType >( bc->second, esuf, geoFace, t, U, R );
+          bndsurfInt< BCType >( bc->second, esuf, geoFace, t, U, R );
       }
     }
 
@@ -1010,7 +1122,7 @@ class CompFlow {
     //! \tparam State Policy class providing the left and right state at
     //!   boundaries by its member function State::LR()
     template< class State >
-    void surfIntp1( const std::vector< std::size_t >& faces,
+    void bndsurfIntp1( const std::vector< std::size_t >& faces,
                     const std::vector< int >& esuf,
                     const tk::Fields& geoFace,
                     const std::vector< std::size_t >& inpoel,
@@ -1020,15 +1132,12 @@ class CompFlow {
                     const tk::Fields& U,
                     tk::Fields& R ) const
       {
+      // Number of integration points
+      constexpr std::size_t NG = 3;
+
       // arrays for quadrature points
-      std::array< std::vector< tk::real >, 3 > coordgp;
-      std::vector< tk::real > wgp;
-
-      coordgp[0].resize(3,0);
-      coordgp[1].resize(3,0);
-      coordgp[2].resize(3,0);
-
-      wgp.resize(3,0);
+      std::array< std::array< tk::real, NG >, 2 > coordgp;
+      std::array< tk::real, NG > wgp;
 
       const auto& cx = coord[0];
       const auto& cy = coord[1];
@@ -1110,7 +1219,7 @@ class CompFlow {
 
 	  	  std::vector< tk::real > ugp;
 
-          for (ncomp_t c=0; c<m_ncomp; ++c)
+          for (ncomp_t c=0; c<5; ++c)
           {
             auto mark = c*m_ndof;
             ugp.push_back (  U(el, mark,   m_offset)
@@ -1122,7 +1231,7 @@ class CompFlow {
           //--- fluxes
           auto flux = m_riemann.flux( f, geoFace, State::LR(ugp,xgp,ygp,zgp,fn,t) );
 
-          for (ncomp_t c=0; c<m_ncomp; ++c)
+          for (ncomp_t c=0; c<5; ++c)
           {
             auto mark = c*m_ndof;
 
@@ -1149,7 +1258,7 @@ class CompFlow {
     //! \param[in,out] R Right-hand side vector computed
     template< class BCType >
     void
-    bndIntegralp1( const std::vector< bcconf_t >& bcconfig,
+    bndIntP1( const std::vector< bcconf_t >& bcconfig,
                    const std::map< int, std::vector< std::size_t > >& bface,
                    const std::vector< int >& esuf,
                    const tk::Fields& geoFace,
@@ -1163,12 +1272,12 @@ class CompFlow {
       for (const auto& s : bcconfig) {       // for all bc sidesets
         auto bc = bface.find( std::stoi(s) );// faces for side set
         if (bc != end(bface))
-          surfIntp1< BCType >( bc->second, esuf, geoFace, inpoel, inpofa,
+          bndsurfIntp1< BCType >( bc->second, esuf, geoFace, inpoel, inpofa,
                                coord, t, U, R );
       }
     }
 
-    //! Gaussian quadrature points locations and weights for a tetrahedron
+/*    //! Gaussian quadrature points locations and weights for a tetrahedron
     //! \param[in,out] coordgp Coordinates of quadrature points
     //! \param[in,out] wgp Weights of quadrature points
     void
@@ -1220,7 +1329,7 @@ class CompFlow {
       coordgp[1][2] = 1.0/6.0;
       wgp[2]        = 1.0/3.0;
     }
-
+*/
     //! Determinant of Jacobian of transformation
     //! \param[in] p1 (x,y,z) coordinates of 1st local node in the tetrahedron
     //! \param[in] p2 (x,y,z) coordinates of 2nd local node in the tetrahedron
