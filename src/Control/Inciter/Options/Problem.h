@@ -28,6 +28,7 @@ enum class ProblemType : uint8_t { USER_DEFINED=0,
                                    TAYLOR_GREEN,
                                    SLOT_CYL,
                                    GAUSS_HUMP,
+                                   CYL_ADVECT,
                                    SOD_SHOCKTUBE };
 
 //! Pack/Unpack ProblemType: forward overload to generic enum class packer
@@ -46,6 +47,7 @@ class Problem : public tk::Toggle< ProblemType > {
                                   , kw::taylor_green
                                   , kw::slot_cyl
                                   , kw::gauss_hump
+                                  , kw::cyl_advect
                                   , kw::sod_shocktube
                                   >;
 
@@ -65,6 +67,7 @@ class Problem : public tk::Toggle< ProblemType > {
           { ProblemType::TAYLOR_GREEN, kw::taylor_green::name() },
           { ProblemType::SLOT_CYL, kw::slot_cyl::name() },
           { ProblemType::GAUSS_HUMP, kw::gauss_hump::name() },
+          { ProblemType::CYL_ADVECT, kw::cyl_advect::name() },
           { ProblemType::SOD_SHOCKTUBE, kw::sod_shocktube::name() } },
         //! keywords -> Enums
         { { kw::user_defined::string(), ProblemType::USER_DEFINED },
@@ -75,6 +78,7 @@ class Problem : public tk::Toggle< ProblemType > {
           { kw::taylor_green::string(), ProblemType::TAYLOR_GREEN },
           { kw::slot_cyl::string(), ProblemType::SLOT_CYL },
           { kw::gauss_hump::string(), ProblemType::GAUSS_HUMP },
+          { kw::cyl_advect::string(), ProblemType::CYL_ADVECT },
           { kw::sod_shocktube::string(), ProblemType::SOD_SHOCKTUBE } } )
     {
        brigand::for_each< keywords >( assertPolicyCodes() );
@@ -113,6 +117,7 @@ class Problem : public tk::Toggle< ProblemType > {
       , { ProblemType::TAYLOR_GREEN, *kw::taylor_green::code() }      
       , { ProblemType::SLOT_CYL, *kw::slot_cyl::code() }
       , { ProblemType::GAUSS_HUMP, *kw::gauss_hump::code() }
+      , { ProblemType::CYL_ADVECT, *kw::cyl_advect::code() }
       , { ProblemType::SOD_SHOCKTUBE, *kw::sod_shocktube::code() }
     };
 };

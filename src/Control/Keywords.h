@@ -3406,6 +3406,22 @@ struct gauss_hump_info {
 };
 using gauss_hump = keyword< gauss_hump_info, TAOCPP_PEGTL_STRING("gauss_hump") >;
 
+struct cyl_advect_info {
+  using code = Code< C >;
+  static std::string name() { return "Advection of cylinder"; }
+  static std::string shortDescription() { return
+    "Select advection of cylinder test problem"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the advection of cylinder test
+    problem. The initial and boundary conditions are specified to set up the
+    test problem suitable to exercise and test the advection
+    terms of the scalar transport equation. Example: "problem cyl_advect".)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using cyl_advect = keyword< cyl_advect_info, TAOCPP_PEGTL_STRING("cyl_advect") >;
+
 struct vortical_flow_info {
   using code = Code< V >;
   static std::string name() { return "Vortical flow"; }
@@ -3525,6 +3541,7 @@ struct problem_info {
                   + shear_diff::string() + "\' | \'"
                   + slot_cyl::string() + "\' | \'"
                   + gauss_hump::string() + "\' | \'"
+                  + cyl_advect::string() + "\' | \'"
                   + vortical_flow::string() + "\' | \'"
                   + nl_energy_growth::string() + "\' | \'"
                   + rayleigh_taylor::string() + "\' | \'"
@@ -3873,6 +3890,28 @@ struct ctau_info {
   };
 };
 using ctau = keyword< ctau_info, TAOCPP_PEGTL_STRING("ctau") >;
+
+struct cweight_info {
+  static std::string name() { return "cweight"; }
+  static std::string shortDescription() { return
+    R"(Set value for central linear weight used by WENO, cweight)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to set the central linear weight used for the
+    central stencil in the Weighted Essentially Non-Oscillatory (WENO) limiter
+    for discontinuous Galerkin (DG) methods. Example:
+    "cweight 10.0".)"; }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 1.0;
+    static constexpr type upper = 1000.0;
+    static std::string description() { return "real"; }
+    static std::string choices() {
+      return "real between [" + std::to_string(lower) + "..." +
+             std::to_string(upper) + "]";
+    }
+  };
+};
+using cweight = keyword< cweight_info, TAOCPP_PEGTL_STRING("cweight") >;
 
 struct sideset_info {
   static std::string name() { return "sideset"; }
@@ -4661,7 +4700,7 @@ struct laxfriedrichs_info {
     "Select Lax-Friedrichs flux function"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the Lax-Friedrichs flux function used for
-    discontinuous Galerkin (DG) spatial discretiztaion used in inciter. See
+    discontinuous Galerkin (DG) spatial discretization used in inciter. See
     Control/Inciter/Options/Flux.h for other valid options.)"; }
 };
 using laxfriedrichs =
@@ -4673,7 +4712,7 @@ struct hllc_info {
     "Select the Harten-Lax-van Leer-Contact (HLLC) flux function"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the Harten-Lax-van Leer-Contact flux
-    function used for discontinuous Galerkin (DG) spatial discretiztaion
+    function used for discontinuous Galerkin (DG) spatial discretization
     used in inciter. See Control/Inciter/Options/Flux.h for other valid
     options.)"; }
 };
@@ -4685,7 +4724,7 @@ struct flux_info {
     "Select flux function"; }
   static std::string longDescription() { return
     R"(This keyword is used to select a fllux function, used for
-    discontinuous Galerkin (DG) spatial discretiztaion used in inciter. See
+    discontinuous Galerkin (DG) spatial discretization used in inciter. See
     Control/Inciter/Options/Flux.h for valid options.)"; }
   struct expect {
     static std::string description() { return "string"; }
@@ -4696,6 +4735,48 @@ struct flux_info {
   };
 };
 using flux = keyword< flux_info, TAOCPP_PEGTL_STRING("flux") >;
+
+struct nolimiter_info {
+  static std::string name() { return "No limiter"; }
+  static std::string shortDescription() { return
+    "No limiter used"; }
+  static std::string longDescription() { return
+    R"(This keyword is used for discontinuous Galerkin (DG) spatial
+    discretization without any limiter in inciter. See
+    Control/Inciter/Options/Limiter.h for other valid options.)"; }
+};
+using nolimiter =
+  keyword< nolimiter_info, TAOCPP_PEGTL_STRING("nolimiter") >;
+
+struct wenop1_info {
+  static std::string name() { return "WENOP1"; }
+  static std::string shortDescription() { return
+    "Select the Weighted Essentially Non-Oscillatory (WENO) limiter for DGP1"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Weighted Essentially Non-Oscillatory
+    limiter used for discontinuous Galerkin (DG) P1 spatial discretization
+    used in inciter. See Control/Inciter/Options/Limiter.h for other valid
+    options.)"; }
+};
+using wenop1 = keyword< wenop1_info, TAOCPP_PEGTL_STRING("wenop1") >;
+
+struct limiter_info {
+  static std::string name() { return "Limiter function"; }
+  static std::string shortDescription() { return
+    "Select limiter function"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select a limiter function, used for
+    discontinuous Galerkin (DG) spatial discretization used in inciter. See
+    Control/Inciter/Options/Limiter.h for valid options.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + nolimiter::string() + "\' | \'"
+                  + wenop1::string() + '\'';
+    }
+  };
+};
+using limiter = keyword< limiter_info, TAOCPP_PEGTL_STRING("limiter") >;
 
 struct fct_info {
   static std::string name() { return "Flux-corrected transport"; }

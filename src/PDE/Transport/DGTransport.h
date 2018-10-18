@@ -21,6 +21,7 @@
 #include "Exception.h"
 #include "Vector.h"
 #include "Quadrature.h"
+#include "Limiter.h"
 #include "Inciter/Options/BC.h"
 #include "UnsMesh.h"
 
@@ -143,6 +144,7 @@ class Transport {
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
 
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
@@ -155,6 +157,7 @@ class Transport {
       const auto& bface = fd.Bface();
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();
+      const auto& esuel = fd.Esuel();
 
       Assert( inpofa.size()/3 == esuf.size()/2, "Mismatch in inpofa size" );
 
@@ -173,19 +176,26 @@ class Transport {
 
       } else if (ndof == 4) {  // DG(P1)
 
+        // limiter function
+        tk::Fields limFunc = U;
+        limFunc.fill(1.0);
+  
+        if (limiter == ctr::LimiterType::WENOP1)
+          WENO_P1( esuel, m_c, U, limFunc );
+
         // compute internal surface flux integrals
-        surfIntP1( inpoel, coord, fd, geoFace, U, R );
+        surfIntP1( inpoel, coord, fd, geoFace, U, limFunc, R );
         // compute volume integrals
-        volIntP1( inpoel, coord, geoElem, U, R );
+        volIntP1( inpoel, coord, geoElem, U, limFunc, R );
         // compute boundary surface flux integrals
         bndIntP1< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace,
-                                 inpoel, inpofa, coord, t, U, R );
+                                 inpoel, inpofa, coord, t, U, limFunc, R );
         bndIntP1< Inlet >( m_bcinlet, bface, esuf, geoFace, inpoel, inpofa,
-                           coord, t, U, R );
+                           coord, t, U, limFunc, R );
         bndIntP1< Outlet >( m_bcoutlet, bface, esuf, geoFace, inpoel,
-                            inpofa, coord, t, U, R );
+                            inpofa, coord, t, U, limFunc, R );
         bndIntP1< Dir >( m_bcdir, bface, esuf, geoFace, inpoel,
-                         inpofa, coord, t, U, R );
+                         inpofa, coord, t, U, limFunc, R );
 
       } else
         Throw( "dg::Transport::rhs() not defined for NDOF=" +
@@ -483,12 +493,14 @@ class Transport {
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] geoFace Face geometry array
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] limFunc Limiter function for higher-order solution dofs
     //! \param[in,out] R Right-hand side vector computed
     void surfIntP1( const std::vector< std::size_t >& inpoel,
                     const tk::UnsMesh::Coords& coord,
                     const inciter::FaceData& fd,
                     const tk::Fields& geoFace,
                     const tk::Fields& U,
+                    const tk::Fields& limFunc,
                     tk::Fields& R ) const
     {
       const auto& esuf = fd.Esuf();
@@ -626,13 +638,13 @@ class Transport {
           {
             auto mark = c*ndof;
             ugp[0].push_back(  U(el, mark,   m_offset) 
-                             + U(el, mark+1, m_offset) * B2l
-                             + U(el, mark+2, m_offset) * B3l
-                             + U(el, mark+3, m_offset) * B4l );
+                             + limFunc(el, mark+1, 0) * U(el, mark+1, m_offset) * B2l
+                             + limFunc(el, mark+2, 0) * U(el, mark+2, m_offset) * B3l
+                             + limFunc(el, mark+3, 0) * U(el, mark+3, m_offset) * B4l );
             ugp[1].push_back(  U(er, mark,   m_offset) 
-                             + U(er, mark+1, m_offset) * B2r
-                             + U(er, mark+2, m_offset) * B3r
-                             + U(er, mark+3, m_offset) * B4r );
+                             + limFunc(er, mark+1, 0) * U(er, mark+1, m_offset) * B2r
+                             + limFunc(er, mark+2, 0) * U(er, mark+2, m_offset) * B3r
+                             + limFunc(er, mark+3, 0) * U(er, mark+3, m_offset) * B4r );
           }
 
           //--- upwind fluxes
@@ -661,11 +673,13 @@ class Transport {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] geoElem Element geometry array
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] limFunc Limiter function for higher-order solution dofs
     //! \param[in,out] R Right-hand side vector computed
     void volIntP1( const std::vector< std::size_t >& inpoel,
                    const tk::UnsMesh::Coords& coord,
                    const tk::Fields& geoElem,
                    const tk::Fields& U,
+                   const tk::Fields& limFunc,
                    tk::Fields& R ) const
     {
       // Number of integration points
@@ -792,9 +806,9 @@ class Transport {
           {
             auto mark = c*ndof;
             auto ugp =   U(e, mark,   m_offset) 
-                       + U(e, mark+1, m_offset) * B2
-                       + U(e, mark+2, m_offset) * B3
-                       + U(e, mark+3, m_offset) * B4;
+                       + limFunc(e, mark+1, 0) * U(e, mark+1, m_offset) * B2
+                       + limFunc(e, mark+2, 0) * U(e, mark+2, m_offset) * B3
+                       + limFunc(e, mark+3, 0) * U(e, mark+3, m_offset) * B4;
 
             auto fluxx = vel[c][0] * ugp;
             auto fluxy = vel[c][1] * ugp;
@@ -940,6 +954,7 @@ class Transport {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] t Physical time
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] limFunc Limiter function for higher-order solution dofs
     //! \param[in,out] R Right-hand side vector computed
     //! \tparam State Policy class providing the left and right state at
     //!   boundaries by its member function State::LR()
@@ -952,6 +967,7 @@ class Transport {
                        const tk::UnsMesh::Coords& coord,
                        tk::real t,
                        const tk::Fields& U,
+                       const tk::Fields& limFunc,
                        tk::Fields& R ) const
     {
       // Number of integration points
@@ -1043,9 +1059,9 @@ class Transport {
           {
             auto mark = c*ndof;
             ugp.push_back(  U(el, mark,   m_offset) 
-                          + U(el, mark+1, m_offset) * B2l
-                          + U(el, mark+2, m_offset) * B3l
-                          + U(el, mark+3, m_offset) * B4l );
+                          + limFunc(el, mark+1, 0) * U(el, mark+1, m_offset) * B2l
+                          + limFunc(el, mark+2, 0) * U(el, mark+2, m_offset) * B3l
+                          + limFunc(el, mark+3, 0) * U(el, mark+3, m_offset) * B4l );
           }
 
           //--- upwind fluxes
@@ -1076,6 +1092,7 @@ class Transport {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] t Physical time
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] limFunc Limiter function for higher-order solution dofs
     //! \param[in,out] R Right-hand side vector computed
     template< class BCType >
     void
@@ -1088,13 +1105,14 @@ class Transport {
               const tk::UnsMesh::Coords& coord,
               tk::real t,
               const tk::Fields& U,
+              const tk::Fields& limFunc,
               tk::Fields& R ) const
     {
       for (const auto& s : bcconfig) {       // for all bc sidesets
         auto bc = bface.find( std::stoi(s) );// faces for side set
         if (bc != end(bface))
           bndSurfIntp1< BCType >( bc->second, esuf, geoFace, inpoel, inpofa,
-                                  coord, t, U, R );
+                                  coord, t, U, limFunc, R );
       }
     }
 
