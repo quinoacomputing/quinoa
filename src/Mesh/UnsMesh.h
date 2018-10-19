@@ -106,13 +106,6 @@ class UnsMesh {
       }
     };
 
-    //! Map associating the ID and the coordinates of a node to an edge
-    using EdgeNodeCoord =
-       std::unordered_map< Edge,
-                           std::tuple< std::size_t, real, real, real >,
-                           Hash<2>,
-                           Eq<2> >;
-
     //! Unique set of edges
     using EdgeSet = std::unordered_set< Edge, Hash<2>, Eq<2> >;
 

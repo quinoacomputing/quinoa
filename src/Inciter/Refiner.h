@@ -76,7 +76,7 @@ class Refiner : public CBase_Refiner {
     void addBndEdges( CkReductionMsg* msg );
 
     //! Receive newly added mesh node IDs on our chare boundary
-    void addRefBndEdges( int fromch, const tk::UnsMesh::EdgeNodeCoord& ed );
+    void addRefBndEdges( int fromch, const AMR::EdgeData& ed );
 
     //! Acknowledge received newly added nodes shared with other chares
     void recvRefBndEdges();
@@ -122,8 +122,8 @@ class Refiner : public CBase_Refiner {
       p | m_nref;
       p | m_extra;
       p | m_ch;
-      p | m_edgenode;
-      p | m_edgenodeCh;
+      p | m_edgedata;
+      p | m_edgedataCh;
       p | m_bndEdges;
       p | m_u;
       p | m_msum;
@@ -201,11 +201,12 @@ class Refiner : public CBase_Refiner {
     std::size_t m_extra;
     //! Chares we share at least a single edge with
     std::unordered_set< int > m_ch;
-    //! Map associating global IDs and coordinates of a node added to an edge
-    tk::UnsMesh::EdgeNodeCoord m_edgenode;
-    //! \brief Map associating global IDs and coordinates of a node added to an
-    //!   edge associated to another chare the edge is shared with
-    std::unordered_map< int, tk::UnsMesh::EdgeNodeCoord > m_edgenodeCh;
+    //! \brief Map associating global IDs, lock case, and coordinates of a node
+    //!   added to an edge
+    AMR::EdgeData m_edgedata;
+    //! \brief Map associating global IDs, lock case, and coordinates of a node
+    //!   added to an edge associated to another chare the edge is shared with
+    std::unordered_map< int, AMR::EdgeData > m_edgedataCh;
     //! Boundary edges associated to chares we share these edges with
     std::unordered_map< int, EdgeSet > m_bndEdges;
     //! Solution vector
@@ -250,21 +251,24 @@ class Refiner : public CBase_Refiner {
     void coordRefine();
 
     //! Do mesh refinement correcting PE-boundary edges
-    void correctRefine( const EdgeSet& extra );
+    void correctRefine( const AMR::EdgeLock& extra );
 
     //! ...
     void matched();
 
-    //! Update mesh after refinement
+    //! Compute new mesh after refinement
+    void newMesh();
+
+    //! Update old mesh after refinement
     void updateMesh();
 
     //! Update volume mesh after mesh refinement
-    void updateVolMesh( const std::unordered_set< std::size_t >& old,
-                        const std::unordered_set< std::size_t >& ref );
+    void newVolMesh( const std::unordered_set< std::size_t >& old,
+                     const std::unordered_set< std::size_t >& ref );
 
     //! Update boundary data structures after mesh refinement
-    void updateBndMesh( const std::unordered_set< std::size_t >& old,
-                        const std::unordered_set< std::size_t >& ref );
+    void newBndMesh( const std::unordered_set< std::size_t >& old,
+                     const std::unordered_set< std::size_t >& ref );
 
     //! \brief Generate boundary data structure used to update refined
     //!   boundary faces and nodes assigned to side sets

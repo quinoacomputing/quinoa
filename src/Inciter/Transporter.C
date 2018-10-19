@@ -53,6 +53,7 @@ using inciter::Transporter;
 Transporter::Transporter() :
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_nchare( 0 ),
+  m_ncit( 0 ),
   m_chunksize( 0 ),
   m_remainder( 0 ),
   m_solver(),
@@ -402,12 +403,15 @@ Transporter::matched( std::size_t extra )
 //!   correction due to refinement along chare boundaries
 // *****************************************************************************
 {
-//std::cout << "max extra: " << extra << '\n';
   // If at least a single edge on a chare still needs correction, do correction,
   // otherwise, this initial mesh refinement step is complete
-  if (extra > 0)
+  if (extra > 0) {
+    ++m_ncit;
     m_refiner.correctref();
-  else {
+  } else {
+    m_print.diag( "Number of correction iterations after mesh refinement: " +
+                  std::to_string( m_ncit ) );
+    m_ncit = 0;
     m_progMesh.inc< REFINE >();
     m_refiner.eval();
   }

@@ -30,6 +30,7 @@ class edge_t {
         {
             data = {{ std::min(A,B), std::max(A,B) }};
         }
+        edge_t( edge_ e ) : data( std::move(e) ) {}
 
         // Operators
             // Piggy back underlying edge_ type where possible

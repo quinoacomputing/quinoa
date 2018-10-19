@@ -175,6 +175,7 @@ class Transporter : public CBase_Transporter {
   private:
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of worker chares
+    std::size_t m_ncit;                  //!< Number of mesh ref corr iter
     uint64_t m_chunksize;                //!< Number of elements per PE
     uint64_t m_remainder;                //!< Number elements added to last PE
     tk::CProxy_Solver m_solver;          //!< Linear system solver group proxy

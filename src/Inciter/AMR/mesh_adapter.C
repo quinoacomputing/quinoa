@@ -96,17 +96,22 @@ namespace AMR {
      *
      * @param edge vector of edges to set the refinement criteria of
      * @param crit values to set to corresponding edges refinement criteria
+     * @param lock values of lock case to set for edges
      */
     void mesh_adapter_t::error_refinement(
             const std::vector< edge_t >& edge,
-            const std::vector< real_t >& crit
-    )
+            const std::vector< real_t >& crit,
+            const std::vector< Edge_Lock_Case >& lock )
     {
-       assert( edge.size() == crit.size()); //, "edges and crit size mismatch" );
+       assert( edge.size() == crit.size() );
+       assert( edge.size() == lock.size() );
        for (std::size_t e=0; e<edge.size(); e++)
        {
-           trace_out << "Mark edge " << e << " as " << crit[e] << std::endl;
-           tet_store.edge_store.get( edge[e] ).refinement_criteria = crit[e];
+           trace_out << "Mark edge " << e << " as " << crit[e]
+                     << " with lock case " << lock[e] << std::endl;
+           auto& edgeref = tet_store.edge_store.get( edge[e] );
+           edgeref.refinement_criteria = crit[e];
+           edgeref.lock_case = lock[e];
        }
 
         evaluate_error_estimate();

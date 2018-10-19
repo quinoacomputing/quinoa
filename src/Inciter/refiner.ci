@@ -11,6 +11,7 @@
 module refiner {
 
   include "Scheme.h";
+  include "AMR/AMR_types.h";
 
   extern module sorter;
   extern module solver;
@@ -36,8 +37,7 @@ module refiner {
                     const SchemeBase::Proxy& scheme,
                     const std::map< int, std::vector< std::size_t > >& bnode );
       entry [reductiontarget] void addBndEdges( CkReductionMsg* msg );
-      entry void addRefBndEdges( int fromch,
-                                 const tk::UnsMesh::EdgeNodeCoord& en );
+      entry void addRefBndEdges( int fromch, const AMR::EdgeData& en );
       entry void recvRefBndEdges();
       entry void correctref();
       entry void eval();
