@@ -43,18 +43,18 @@ class TransportProblemCylAdvect {
       const auto vel = prescribedVelocity( x, y, 0.0, ncomp, ncomp );
 
       std::vector< tk::real > s( ncomp, 0.0 );
-      for (ncomp_t c=0; c<ncomp; ++c) 
+      for (ncomp_t c=0; c<ncomp; ++c)
       {
-        // center of the hump
+        // center of the cylinder
         auto x0 = 0.25 + vel[c][0]*t;
         auto y0 = 0.25 + vel[c][1]*t;
 
-        // square wave                                                          
-        auto r = sqrt((x-x0)*(x-x0) + (y-y0)*(y-y0));                                
-        if (r<0.2)                                                              
-          s[c] = 1.0;                                                           
-        else                                                                    
-          s[c] = 0.0; 
+        // square wave
+        auto r = sqrt((x-x0)*(x-x0) + (y-y0)*(y-y0));
+        if (r<0.2)
+          s[c] = 1.0;
+        else
+          s[c] = 0.0;
       }
       return s;
     }

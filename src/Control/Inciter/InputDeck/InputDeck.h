@@ -182,7 +182,7 @@ class InputDeck :
       set< tag::discr, tag::scheme >( SchemeType::MatCG );
       set< tag::discr, tag::flux >( FluxType::HLLC );
       set< tag::discr, tag::ndof >( 1 );
-      set< tag::discr, tag::limiter >( LimiterType::NoLimiter );
+      set< tag::discr, tag::limiter >( LimiterType::NOLIMITER );
       set< tag::discr, tag::cweight >( 1.0 );
       // Default field output file type
       set< tag::selected, tag::filetype >( tk::ctr::FieldFileType::EXODUSII );

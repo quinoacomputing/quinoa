@@ -2,8 +2,8 @@
 /*!
   \file      src/Control/Inciter/Options/Limiter.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
-  \brief     Limiter options for inciter
-  \details   Limiter options for inciter
+  \brief     Limiter options for DG
+  \details   Limiter options for DG
 */
 // *****************************************************************************
 #ifndef LimiterOptions_h
@@ -19,7 +19,7 @@ namespace inciter {
 namespace ctr {
 
 //! Limiter types
-enum class LimiterType : uint8_t { NoLimiter
+enum class LimiterType : uint8_t { NOLIMITER
                                  , WENOP1 };
 
 //! Pack/Unpack LimiterType: forward overload to generic enum class packer
@@ -42,10 +42,10 @@ class Limiter : public tk::Toggle< LimiterType > {
         //! Group, i.e., options, name
         kw::limiter::name(),
         //! Enums -> names (if defined, policy codes, if not, name)
-        { { LimiterType::NoLimiter, kw::nolimiter::name() },
+        { { LimiterType::NOLIMITER, kw::nolimiter::name() },
           { LimiterType::WENOP1, kw::wenop1::name() } },
         //! keywords -> Enums
-        { { kw::nolimiter::string(), LimiterType::NoLimiter },
+        { { kw::nolimiter::string(), LimiterType::NOLIMITER },
           { kw::wenop1::string(), LimiterType::WENOP1 } } )
     {}
 

@@ -133,6 +133,7 @@ class Transport {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] limFunc Limiter function for higher-order solution dofs
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -141,6 +142,7 @@ class Transport {
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
+              tk::Fields& limFunc,
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
@@ -176,10 +178,15 @@ class Transport {
 
       } else if (ndof == 4) {  // DG(P1)
 
-        // limiter function
-        tk::Fields limFunc = U;
+        // set limiter function to one
         limFunc.fill(1.0);
-  
+
+        Assert( U.nunk() == limFunc.nunk(), "Number of unknowns in solution "
+                "vector and limiter at recent time step incorrect" );
+
+        Assert( U.nprop() == limFunc.nprop()+m_ncomp, "Number of components in "
+                "solution vector and limiter at recent time step incorrect" );
+
         if (limiter == ctr::LimiterType::WENOP1)
           WENO_P1( esuel, m_c, U, limFunc );
 
@@ -638,13 +645,13 @@ class Transport {
           {
             auto mark = c*ndof;
             ugp[0].push_back(  U(el, mark,   m_offset) 
-                             + limFunc(el, mark+1, 0) * U(el, mark+1, m_offset) * B2l
-                             + limFunc(el, mark+2, 0) * U(el, mark+2, m_offset) * B3l
-                             + limFunc(el, mark+3, 0) * U(el, mark+3, m_offset) * B4l );
+                             + limFunc(el, mark+0, 0) * U(el, mark+1, m_offset) * B2l
+                             + limFunc(el, mark+1, 0) * U(el, mark+2, m_offset) * B3l
+                             + limFunc(el, mark+2, 0) * U(el, mark+3, m_offset) * B4l );
             ugp[1].push_back(  U(er, mark,   m_offset) 
-                             + limFunc(er, mark+1, 0) * U(er, mark+1, m_offset) * B2r
-                             + limFunc(er, mark+2, 0) * U(er, mark+2, m_offset) * B3r
-                             + limFunc(er, mark+3, 0) * U(er, mark+3, m_offset) * B4r );
+                             + limFunc(er, mark+0, 0) * U(er, mark+1, m_offset) * B2r
+                             + limFunc(er, mark+1, 0) * U(er, mark+2, m_offset) * B3r
+                             + limFunc(er, mark+2, 0) * U(er, mark+3, m_offset) * B4r );
           }
 
           //--- upwind fluxes
@@ -806,9 +813,9 @@ class Transport {
           {
             auto mark = c*ndof;
             auto ugp =   U(e, mark,   m_offset) 
-                       + limFunc(e, mark+1, 0) * U(e, mark+1, m_offset) * B2
-                       + limFunc(e, mark+2, 0) * U(e, mark+2, m_offset) * B3
-                       + limFunc(e, mark+3, 0) * U(e, mark+3, m_offset) * B4;
+                       + limFunc(e, mark+0, 0) * U(e, mark+1, m_offset) * B2
+                       + limFunc(e, mark+1, 0) * U(e, mark+2, m_offset) * B3
+                       + limFunc(e, mark+2, 0) * U(e, mark+3, m_offset) * B4;
 
             auto fluxx = vel[c][0] * ugp;
             auto fluxy = vel[c][1] * ugp;
@@ -1059,9 +1066,9 @@ class Transport {
           {
             auto mark = c*ndof;
             ugp.push_back(  U(el, mark,   m_offset) 
-                          + limFunc(el, mark+1, 0) * U(el, mark+1, m_offset) * B2l
-                          + limFunc(el, mark+2, 0) * U(el, mark+2, m_offset) * B3l
-                          + limFunc(el, mark+3, 0) * U(el, mark+3, m_offset) * B4l );
+                          + limFunc(el, mark+0, 0) * U(el, mark+1, m_offset) * B2l
+                          + limFunc(el, mark+1, 0) * U(el, mark+2, m_offset) * B3l
+                          + limFunc(el, mark+2, 0) * U(el, mark+3, m_offset) * B4l );
           }
 
           //--- upwind fluxes

@@ -14,7 +14,7 @@
 #include <array>
 
 #include "Types.h"
-#include "Inciter/InputDeck/InputDeck.h"                                        
+#include "Inciter/InputDeck/InputDeck.h"
 #include "Fields.h"
 
 namespace inciter {
