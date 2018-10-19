@@ -132,10 +132,9 @@ class CompFlow {
                      tk::Fields& unk,
                      tk::real t ) const
     {
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      if (ndof == 1)
+      if (m_ndof == 1)
         initializep0( L, inpoel, coord, unk, t );
-      else if (ndof == 4)
+      else if (m_ndof == 4)
         initializep1( L, inpoel, coord, unk, t );
       else Throw( "DGCompFlow::initialize() not defined" );
     }
@@ -147,21 +146,17 @@ class CompFlow {
     {
       Assert( geoElem.nunk() == l.nunk(), "Size mismatch" );
       const auto nelem = geoElem.nunk();
-	  const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
 	  // Compute LHS for DG(P0)
       for (std::size_t e=0; e<nelem; ++e)
         for (ncomp_t c=0; c<5; ++c)
-          l(e, c*ndof, m_offset) = geoElem(e,0,0);
+          l(e, c*m_ndof, m_offset) = geoElem(e,0,0);
 
       // Augment LHS for DG(P1)
-      if (ndof > 1){
+      if (m_ndof > 1){
         for (std::size_t e=0; e<nelem; ++e) {
           for (ncomp_t c=0; c<5; ++c) {
-            const auto mark = c * ndof;
-			//l(e, mark+1, m_offset) = 1;
-            //l(e, mark+2, m_offset) = 1;
-            //l(e, mark+3, m_offset) = 1;;
+            const auto mark = c * m_ndof;
             l(e, mark+1, m_offset) = geoElem(e,0,0) / 10.0;
             l(e, mark+2, m_offset) = geoElem(e,0,0) * 3.0/10.0;
             l(e, mark+3, m_offset) = geoElem(e,0,0) * 3.0/5.0;
@@ -190,21 +185,12 @@ class CompFlow {
               tk::Fields& /*limFunc*/,
               tk::Fields& R ) const
 	{
-	  //std::cout << "R at rhs " << std::endl;
-	  //std::cout << "R(0) = " << R(0, 0, m_offset) << "\t" << R(0, 1, m_offset) << "\t" << R(0, 2, m_offset) << "\t" << R(0, 3, m_offset) << std::endl;
-      //std::cout << "R(1) = " << R(0, 4, m_offset) << "\t" << R(0, 5, m_offset) << "\t" << R(0, 6, m_offset) << "\t" << R(0, 7, m_offset) << std::endl;
-      //std::cout << "R(2) = " << R(0, 8, m_offset) << "\t" << R(0, 9, m_offset) << "\t" << R(0, 10, m_offset) << "\t" << R(0, 11, m_offset) << std::endl;
-      //std::cout << "R(3) = " << R(0, 12, m_offset) << "\t" << R(0, 13, m_offset) << "\t" << R(0, 14, m_offset) << "\t" << R(0, 15, m_offset) << std::endl;
-      //std::cout << "R(4) = " << R(0, 16, m_offset) << "\t" << R(0, 17, m_offset) << "\t" << R(0, 18, m_offset) << "\t" << R(0, 19, m_offset) << std::endl;
-	  //std::cout << std::endl;
-
-	  const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
-      Assert( U.nprop() == ndof*5 && R.nprop() == ndof*5,
+      Assert( U.nprop() == m_ndof*5 && R.nprop() == m_ndof*5,
               "Number of components in solution and right-hand side vector "
-              "must equal "+ std::to_string(ndof*5) );
+              "must equal "+ std::to_string(m_ndof*5) );
       Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
               "size" );
 
@@ -217,8 +203,7 @@ class CompFlow {
       // set rhs to zero
       R.fill(0.0);
 
-      if (ndof == 1) {  // DG(P0)
-
+      if (m_ndof == 1) {  // DG(P0)
         // compute internal surface flux integrals
         surfIntP0( fd, geoFace, U, R );
 		// compute source term intehrals
@@ -227,26 +212,20 @@ class CompFlow {
         bndInt< Dir >( m_bcdir, fd, geoFace, t, U, R );
         bndInt< Sym >( m_bcsym, fd, geoFace, t, U, R );
         bndInt< Extrapolate >( m_bcextrapolate, fd, geoFace, t, U, R );
-      } else if (ndof == 4) {  // DG(P1)
-
+      } else if (m_ndof == 4) {  // DG(P1)
         // compute internal surface flux integrals
-        //surfIntP0( fd, geoFace, U, R );
         surfIntP1( inpoel, coord, fd, geoFace, U, R );
 		// compute source term intehrals
-        //srcIntP0( t, geoElem, R);
         srcIntP1( t, inpoel, coord, geoElem, R);
         // compute volume integrals
         volIntP1( inpoel, coord, geoElem, U, R );
         // compute boundary surface flux integrals
-        //bndInt< Dir >( m_bcdir, fd, geoFace, t, U, R );
-        //bndInt< Sym >( m_bcsym, fd, geoFace, t, U, R );
-        //bndInt< Extrapolate >( m_bcextrapolate, fd, geoFace, t, U, R );
         bndIntP1< Dir >( m_bcdir, bface, esuf, geoFace, inpoel, inpofa, coord, t, U, R );
         bndIntP1< Sym >( m_bcsym, bface, esuf, geoFace, inpoel, inpofa, coord, t, U, R );
         bndIntP1< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, inpoel, inpofa, coord, t, U, R );
       } else
         Throw( "dg::Transport::rhs() not defined for NDOF=" +
-               std::to_string(ndof) );
+               std::to_string(m_ndof) );
 	}
 
     //! Compute the minimum time step size
@@ -361,8 +340,6 @@ class CompFlow {
                        tk::Fields& unk,
                        tk::real t ) const
     {
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
@@ -380,11 +357,11 @@ class CompFlow {
         // evaluate solution at centroid
         const auto s = Problem::solution( 0, xcc, ycc, zcc, t );
         // initialize unknown vector with solution at centroids
-        unk(e, 0*ndof, m_offset) = s[0];
-        unk(e, 1*ndof, m_offset) = s[1];
-        unk(e, 2*ndof, m_offset) = s[2];
-        unk(e, 3*ndof, m_offset) = s[3];
-        unk(e, 4*ndof, m_offset) = s[4];
+        unk(e, 0*m_ndof, m_offset) = s[0];
+        unk(e, 1*m_ndof, m_offset) = s[1];
+        unk(e, 2*m_ndof, m_offset) = s[2];
+        unk(e, 3*m_ndof, m_offset) = s[3];
+        unk(e, 4*m_ndof, m_offset) = s[4];
       } 
     }
 
@@ -464,7 +441,6 @@ class CompFlow {
           for (ncomp_t c=0; c<5; ++c)
           {
             auto mark = c*m_ndof;
-
             R[mark  ] += wt * s[c];
             R[mark+1] += wt * s[c]*B2;
             R[mark+2] += wt * s[c]*B3;
@@ -480,15 +456,6 @@ class CompFlow {
           unk(e, mark+2, m_offset) = R[mark+2] / lhs(e, mark+2, m_offset);
           unk(e, mark+3, m_offset) = R[mark+3] / lhs(e, mark+3, m_offset);
         }
-		//std::cout << "e = " << e << std::endl;
-		//for (ncomp_t c=0; c<5; ++c)
-        //{
-		//  auto mark = c*m_ndof;
-		//  std::cout << "R(" << mark << ") = " << R[mark] << "\t" <<  R[mark+1] << "\t" << R[mark+2] << "\t" << R[mark+3] << std::endl;
-		//  std::cout << "lhs(" << mark << ") = " << lhs(e, mark,   m_offset) << "\t" <<  lhs(e, mark+1,   m_offset) << "\t" << lhs(e, mark+2,   m_offset) << "\t" << lhs(e, mark+3,   m_offset) << std::endl;
-		//  std::cout << "unk(" << mark << ") = " << unk(e, mark,   m_offset) << "\t" <<  unk(e, mark+1,   m_offset) << "\t" << unk(e, mark+2,   m_offset) << "\t" << unk(e, mark+3,   m_offset) << std::endl;
-		//}
-		//std::cout << std::endl;
       }
     }
 
@@ -502,7 +469,6 @@ class CompFlow {
                     const tk::Fields& U,
                     tk::Fields& R ) const
     {
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       const auto& esuf = fd.Esuf();
 
       for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
@@ -514,17 +480,15 @@ class CompFlow {
         std::array< std::vector< tk::real >, 2 > ugp;
         for (ncomp_t c=0; c<5; ++c)
         { 
-          auto mark = c*ndof;
+          auto mark = c*m_ndof;
           ugp[0].push_back( U(el, mark, m_offset) );
           ugp[1].push_back( U(er, mark, m_offset) );
         }
 
           auto flux = m_riemann.flux( f, geoFace, {{ugp[0], ugp[1]}} );
-        //auto flux =
-          //m_riemann.flux( f, geoFace, {{U.extract(el), U.extract(er)}} );
 
         for (ncomp_t c=0; c<5; ++c) {
-          auto mark = c*ndof;
+          auto mark = c*m_ndof;
           R(el, mark, m_offset) -= farea * flux[c];
           R(er, mark, m_offset) += farea * flux[c];
         }
@@ -558,8 +522,6 @@ class CompFlow {
       const auto& cx = coord[0];
       const auto& cy = coord[1];
       const auto& cz = coord[2];
-
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
       // get quadrature point weights and coordinates for triangle
       GaussQuadratureTri( coordgp, wgp );
@@ -678,7 +640,7 @@ class CompFlow {
 
           for (ncomp_t c=0; c<5; ++c)
           {
-            auto mark = c*ndof;
+            auto mark = c*m_ndof;
             ugp[0].push_back(  U(el, mark,   m_offset)
                              + U(el, mark+1, m_offset) * B2l
                              + U(el, mark+2, m_offset) * B3l
@@ -693,7 +655,7 @@ class CompFlow {
 
           for (ncomp_t c=0; c<5; ++c)
           {
-            auto mark = c*ndof;
+            auto mark = c*m_ndof;
 
             R(el, mark,   m_offset) -= wt * flux[c];
             R(el, mark+1, m_offset) -= wt * flux[c] * B2l;
@@ -717,7 +679,7 @@ class CompFlow {
               	   const tk::Fields& geoElem,
               	   tk::Fields& R) const
 	{
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      //const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       for (std::size_t e=0; e<geoElem.nunk(); ++e) {
         auto vole = geoElem(e,0,0);
         auto xc = geoElem(e,1,0);
@@ -725,17 +687,10 @@ class CompFlow {
         auto zc = geoElem(e,3,0);
         auto s = Problem::src(0, xc, yc, zc, t);
         for (ncomp_t c=0; c<5; ++c){
-		  auto mark = c*ndof;
+		  auto mark = c*m_ndof;
           R(e, mark, m_offset) += vole * s[c];
 		}
       }
-	  //std::cout << "R at srcIntP0 " << std::endl;
-      //std::cout << "R(0) = " << R(0, 0, m_offset) << "\t" << R(0, 1, m_offset) << "\t" << R(0, 2, m_offset) << "\t" << R(0, 3, m_offset) << std::endl;
-      //std::cout << "R(1) = " << R(0, 4, m_offset) << "\t" << R(0, 5, m_offset) << "\t" << R(0, 6, m_offset) << "\t" << R(0, 7, m_offset) << std::endl;
-      //std::cout << "R(2) = " << R(0, 8, m_offset) << "\t" << R(0, 9, m_offset) << "\t" << R(0, 10, m_offset) << "\t" << R(0, 11, m_offset) << std::endl;
-      //std::cout << "R(3) = " << R(0, 12, m_offset) << "\t" << R(0, 13, m_offset) << "\t" << R(0, 14, m_offset) << "\t" << R(0, 15, m_offset) << std::endl;
-      //std::cout << "R(4) = " << R(0, 16, m_offset) << "\t" << R(0, 17, m_offset) << "\t" << R(0, 18, m_offset) << "\t" << R(0, 19, m_offset) << std::endl;
-      //std::cout << std::endl;
 	}
 
     //! Compute source term integrals for DG(P1)
@@ -749,7 +704,7 @@ class CompFlow {
                    const tk::Fields& geoElem,
               	   tk::Fields& R) const
 	{
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      //const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       // Number of integration points
       constexpr std::size_t NG = 5;
 
@@ -796,8 +751,9 @@ class CompFlow {
           auto zgp = z1*shp1 + z2*shp2 + z3*shp3 + z4*shp4;
 
           auto s = Problem::src(0, xgp, ygp, zgp, t);
-          for (ncomp_t c=0; c<5; ++c){
-			auto mark = c*ndof;
+          for (ncomp_t c=0; c<5; ++c)
+		  {
+			auto mark = c*m_ndof;
             R(e, mark, m_offset) += wt * s[c];
 		  }
         }
@@ -825,8 +781,6 @@ class CompFlow {
 
       // get quadrature point weights and coordinates for tetrahedron
       GaussQuadratureTet( coordgp, wgp );
-
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
       std::array< std::array< tk::real, 3 >, 3 > jacInv;
 
@@ -936,8 +890,7 @@ class CompFlow {
 
           for (ncomp_t c=0; c<5; ++c)
           {
-            auto mark = c*ndof;
-
+            auto mark = c*m_ndof;
             ugp[c] =  U(e, mark,   m_offset)
                     + U(e, mark+1, m_offset) * B2
                     + U(e, mark+2, m_offset) * B3
@@ -970,7 +923,6 @@ class CompFlow {
           for (ncomp_t c=0; c<5; ++c)
           {
             auto mark = c*m_ndof;
-
             R(e, mark+1, m_offset) += wt * (flux[0][c]*db2dx + flux[1][c]*db2dy + flux[2][c]*db2dz);
             R(e, mark+2, m_offset) += wt * (flux[0][c]*db3dx + flux[1][c]*db3dy + flux[2][c]*db3dz);
             R(e, mark+3, m_offset) += wt * (flux[0][c]*db4dx + flux[1][c]*db4dy + flux[2][c]*db4dz);
@@ -1066,19 +1018,16 @@ class CompFlow {
                                         geoFace(f,2,0),
                                         geoFace(f,3,0) }};
 
-        const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
         std::vector< tk::real > ugp;
         for (ncomp_t c=0; c<5; ++c)
-          ugp.push_back( U(el, c*ndof, m_offset) );
+          ugp.push_back( U(el, c*m_ndof, m_offset) );
 
         //--- fluxes
         auto flux = m_riemann.flux( f, geoFace, State::LR(ugp,xc,yc,zc,fn,t) );
         //auto flux = m_riemann.flux( f, geoFace, State::LR(U.extract(el),xc,yc,zc,fn,t) );
 
-        for (ncomp_t c=0; c<5; ++c){
-          auto mark = c*m_ndof;
-          R(el, mark, m_offset) -= farea * flux[c];
-		}
+        for (ncomp_t c=0; c<5; ++c)
+          R(el, c*m_ndof, m_offset) -= farea * flux[c];
       }
     }
 
@@ -1234,7 +1183,6 @@ class CompFlow {
           for (ncomp_t c=0; c<5; ++c)
           {
             auto mark = c*m_ndof;
-
             R(el, mark,   m_offset) -= wt * flux[c];
             R(el, mark+1, m_offset) -= wt * flux[c] * B2l;
             R(el, mark+2, m_offset) -= wt * flux[c] * B3l;
@@ -1277,59 +1225,6 @@ class CompFlow {
       }
     }
 
-/*    //! Gaussian quadrature points locations and weights for a tetrahedron
-    //! \param[in,out] coordgp Coordinates of quadrature points
-    //! \param[in,out] wgp Weights of quadrature points
-    void
-    GaussQuadratureTet( std::array< std::vector< tk::real >, 3 >& coordgp,
-                        std::vector< tk::real >& wgp ) const
-    {
-      coordgp[0][0] = 0.25;
-      coordgp[1][0] = 0.25;
-      coordgp[2][0] = 0.25;
-      wgp[0]        = -12.0/15.0;
-
-      coordgp[0][1] = 1.0/6.0;
-      coordgp[1][1] = 1.0/6.0;
-      coordgp[2][1] = 1.0/6.0;
-      wgp[1]        = 9.0/20.0;
-
-      coordgp[0][2] = 0.5;
-      coordgp[1][2] = 1.0/6.0;
-      coordgp[2][2] = 1.0/6.0;
-      wgp[2]        = 9.0/20.0;
-
-      coordgp[0][3] = 1.0/6.0;
-      coordgp[1][3] = 0.5;
-      coordgp[2][3] = 1.0/6.0;
-      wgp[3]        = 9.0/20.0;
-
-      coordgp[0][4] = 1.0/6.0;
-      coordgp[1][4] = 1.0/6.0;
-      coordgp[2][4] = 0.5;
-      wgp[4]        = 9.0/20.0;
-    }
-
-    //! Gaussian quadrature points locations and weights for a triangle
-    //! \param[in,out] coordgp Coordinates of quadrature points
-    //! \param[in,out] wgp Weights of quadrature points
-    void
-    GaussQuadratureTri( std::array< std::vector< tk::real >, 3 >& coordgp,
-                        std::vector< tk::real >& wgp ) const
-    {
-      coordgp[0][0] = 2.0/3.0;
-      coordgp[1][0] = 1.0/6.0;
-      wgp[0]        = 1.0/3.0;
-
-      coordgp[0][1] = 1.0/6.0;
-      coordgp[1][1] = 2.0/3.0;
-      wgp[1]        = 1.0/3.0;
-
-      coordgp[0][2] = 1.0/6.0;
-      coordgp[1][2] = 1.0/6.0;
-      wgp[2]        = 1.0/3.0;
-    }
-*/
     //! Determinant of Jacobian of transformation
     //! \param[in] p1 (x,y,z) coordinates of 1st local node in the tetrahedron
     //! \param[in] p2 (x,y,z) coordinates of 2nd local node in the tetrahedron
