@@ -45,8 +45,7 @@ WENO_P1( const std::vector< int >& esuel,
     for (std::size_t e=0; e<U.nunk(); ++e)
     {
       // reset all stencil values to zero
-      for (std::size_t is=0; is<5; ++is)
-        gradu[is].fill(0);
+      for (auto& g : gradu) g.fill(0.0);
       osc.fill(0);
       wtDof.fill(0);
       wtStencil.fill(0);
@@ -76,9 +75,7 @@ WENO_P1( const std::vector< int >& esuel,
         // ignore physical domain ghosts
         if (nel == -1)
         {
-          gradu[is][0] = 0.0;
-          gradu[is][1] = 0.0;
-          gradu[is][2] = 0.0;
+          gradu[is].fill(0.0);
           wtStencil[is] = 0.0;
           continue;
         }
