@@ -215,12 +215,12 @@ index 61510d01..dea3d78a 100644
 
 @section inciter_newscheme_chare 4. Add new Charm++ chare array
 
-Next is to add a new class, `ALECG`, that will serve as the glue between
+Next is to add a new class, `ALECG`, which will serve as the glue between
 `Transporter`, `Refiner`, and `CGPDE`. These classes, respectively, are the
-driver, the mesh refiner, and the polymorphic vector of PDE discretization
-class objects that hold the low-level details of the numerical implementation
-of spatial discretizations, dispatching to multiple specific systems of
-equations, e.g., `cg::Transport` or `cg::CompFlow`.
+driver, the mesh refiner, and the polymorphic vector of PDE discretization class
+objects that hold the low-level details of the numerical implementation of
+spatial discretizations, dispatching to multiple specific systems of equations,
+e.g., `cg::Transport` or `cg::CompFlow`.
 
 We create the following new files:
 
@@ -230,8 +230,8 @@ We create the following new files:
 - Inciter/ALECG.h and Inciter/ALECG.C, header and implementation of ALECG.
 
 Before we discuss the details of the above new files, let's get a couple of
-simple things out of the way. We also need to dd the new include to `Refiner.h`
-so it can call back to ALECG::resize() after a mesh refinement step:
+simple things out of the way. We also need to add the new include to `Refiner.h`
+so, e.g., it can call back to ALECG::resize() after a mesh refinement step:
 
 @subsection inciter_newscheme_chare_Refiner Inciter/Refiner.h
 
@@ -279,9 +279,14 @@ index 141055ec..e339b65b 100644
  addCharmModule( "dg" "Inciter" )
 @endcode
 
-The `addCharmModule` cmake macro above ensures that build target `Inciter` will
-properly depend on our new `alecg` Charm++ module, defined in
-`Inciter/alecg.ci`.
+The `addCharmModule` cmake macro above, defined in `cmake/charm.cmake`, ensures
+that build target `Inciter` will properly depend on our new `alecg` Charm++
+module, defined in `Inciter/alecg.ci`. The macro also tells cmake how the two
+files, `alecg.decl.h` and `alecg.def.h`, are generated from `alecg.ci`: using
+`charmc`, a compiler wrapper that generates Charm++-code to make the `ALECG`
+from an ordinary C++ class into a Charm++ chare array, with _entry_ methods
+callable across the network, make it migratable, enable its structured DAGger,
+etc. See also the Charm++ manual.
 
 Now to the new files. First is the new Charm++ interface file, Inciter/alecg.ci:
 
@@ -289,7 +294,7 @@ Now to the new files. First is the new Charm++ interface file, Inciter/alecg.ci:
 
 @include Inciter/alecg.ci
 
-@subsection inciter_newscheme_chare_NoWarning NoWarning/alecg.decl.h, NoWarning/alecg.def.h
+@subsection inciter_newscheme_chare_NoWarning NoWarning/alecg.decl.h and NoWarning/alecg.def.h
 
 The newly added files to the `NoWarning/` directory simply include the
 Charm++-generated `alecg.decl.h` and `alecg.def.h` files and locally, around
