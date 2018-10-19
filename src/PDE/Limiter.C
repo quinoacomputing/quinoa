@@ -80,9 +80,9 @@ WENO_P1( const std::vector< int >& esuel,
           continue;
         }
 
-        gradu[is][0] = U(nel, mark+1, offset);
-        gradu[is][1] = U(nel, mark+2, offset);
-        gradu[is][2] = U(nel, mark+3, offset);
+        gradu[is][0] = U( static_cast< std::size_t >(nel), mark+1, offset );
+        gradu[is][1] = U( static_cast< std::size_t >(nel), mark+2, offset );
+        gradu[is][2] = U( static_cast< std::size_t >(nel), mark+3, offset );
         wtStencil[is] = 1.0;
       }
 
