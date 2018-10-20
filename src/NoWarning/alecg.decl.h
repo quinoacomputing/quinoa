@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/diagcg.decl.h
+  \file      src/NoWarning/alecg.decl.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Include alecg.decl.h with turning off specific compiler warnings.
 */

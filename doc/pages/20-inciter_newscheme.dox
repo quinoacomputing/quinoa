@@ -292,11 +292,10 @@ Now to the new files. First is the new Charm++ interface file, Inciter/alecg.ci:
 
 @subsection inciter_newscheme_chare_alecg Inciter/alecg.ci
 
-This is the file that is parsed by Charm++'s compiler and it generates
-additional code that makes ALECG a Charm++ chare array, migratable, etc. We list
-the whole file first then discuss its details below.
-
-@include Inciter/alecg.ci
+This is the file that is parsed by Charm++'s compiler which then generates
+additional code that makes ALECG a Charm++ chare array, makes it migratable,
+etc. The full listing is at @subpage inciter_newscheme_alecg_ci some of whose
+details are discussed below.
 
 @subsubsection inciter_newscheme_chare_alecg_headers Inciter/alecg.ci -- External modules and header includes
 
@@ -372,26 +371,28 @@ manual](http://charm.cs.illinois.edu/manuals/html/charm++/manual.html).
 @subsection inciter_newscheme_nowarning NoWarning/alecg.decl.h and NoWarning/alecg.def.h
 
 The newly added files to the `NoWarning/` directory simply include the
-Charm++-generated `alecg.decl.h` and `alecg.def.h` files and locally, around
-the include, turn off specific compiler warnings for various compilers -- we
-will not discuss them here further.
+Charm++-generated `alecg.decl.h` and `alecg.def.h` files and locally, around the
+include, turn off specific compiler warnings for various compilers -- we will
+not discuss them here further. The full listings are at
+@subpage inciter_newscheme_nowarning_page.
 
-@section inciter_newscheme_header 5. New C++ class header
+@section inciter_newscheme_class 5. New C++ class
 
 Next are the newly added Inciter/ALECG.h and Inciter/ALECG.C, header and
-implementation of ALECG.
+implementation of ALECG. The full listings are at
+@subpage inciter_newscheme_header_page and
+@subpage inciter_newscheme_class_page, some of whose details are discussed below.
 
-@subsection inciter_newscheme_header_ALECG_h Inciter/ALECG.h
+@subsection inciter_newscheme_workflow Execution sequence
 
-@include Inciter/ALECG.h
+...
 
-@section inciter_newscheme_class 6. New C++ class defintion
+@section inciter_newscheme_work 6. Making it all work
 
-@subsection inciter_newscheme_class_ALECG_C Inciter/ALECG.C
-
-@include Inciter/ALECG.C
-
-@section inciter_newscheme_work 7. Making it all work
+There is only a couple of minor but important steps remain. First we add the new
+Charm++ module as an external module in inciter's Charm++ module. This is
+required so that all Charm++ code that references to the new ALECG Charm++ chare
+array is visible and correctly interact with Inciter's main charm chare.
 
 @subsection inciter_newscheme_work_inciter_ci Main/inciter.ci
 
@@ -409,6 +410,14 @@ index bf7eac98..e9b114b6 100644
    extern module dg;
    extern module charestatecollector;
 @endcode
+
+The second, and final, step is to enable triggering the instantiation of
+specialized CGPDE class objects for our new ALECG scheme when the system of
+systems is instantiated. This associates the type of generic PDE systems that is
+used to instantiate the PDE classes, selected by user configuration. Since ALECG
+will be a node-centered scheme, we assign it to use the CGPDE polymorphic
+interface (instead of DGPDE, which is tailored for cell-centered
+discretizations).
 
 @subsection inciter_newscheme_work_PDEStack PDE/PDEStack.C
 

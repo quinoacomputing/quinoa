@@ -15,9 +15,7 @@
 
     The implementation uses the Charm++ runtime system and is fully
     asynchronous, overlapping computation and communication. The algorithm
-    utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
-    overview of the algorithm structure and how it interfaces with Charm++ is
-    discussed in the Charm++ interface file src/Inciter/alecg.ci.
+    utilizes the structured dagger (SDAG) Charm++ functionality.
 */
 // *****************************************************************************
 #ifndef ALECG_h
