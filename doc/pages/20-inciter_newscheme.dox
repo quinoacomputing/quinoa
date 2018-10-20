@@ -385,7 +385,15 @@ implementation of ALECG. The full listings are at
 
 @subsection inciter_newscheme_workflow Execution sequence
 
-...
+As discussed in Section @ref inciter_create on the @ref inciter_design page, the
+worker chare array elements, such as ALECG, are created using Charm++'s dynamic
+array insertion feature. This is an asynchronous call, issued from
+Sorter::createWorkers(), and it signals the runtime system that it is time to
+start calling individual constructors of ALECG, passing them the appropriate
+data, required for each of them to initialize and operate on a mesh partition
+each is assigned (held by their companion Discretization "base" class). Thus
+running Sorter::createWorkers() eventually triggers calling ALECG's constructors
+distributed across the whole problem and available PEs.
 
 @section inciter_newscheme_work 6. Making it all work
 
