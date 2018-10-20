@@ -12,16 +12,21 @@
 
 module alecg {
 
+  //! [External modules and includes]
   extern module transporter;
   extern module discretization;
 
   include "UnsMesh.h";
   include "PUPUtil.h";
   include "FaceData.h";
+  //! [External modules and includes]
 
   namespace inciter {
 
+    //! [1D Charm++ chare array]
     array [1D] ALECG {
+    //! [1D Charm++ chare array]
+      //! [Entry methods]
       entry ALECG( const CProxy_Discretization& disc,
                    const tk::CProxy_Solver& solver,
                    const FaceData& fd );
@@ -36,10 +41,12 @@ module alecg {
                          const std::vector< std::vector< tk::real > >& R );
       entry void resized();
       entry void lhs();
+      //! [Entry methods]
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
+      //! [DAG]
       entry void wait4lhs() {
         when ownlhs_complete(), comlhs_complete() serial "lhs" { lhsdone(); } };
 
@@ -58,6 +65,7 @@ module alecg {
       entry void ref_complete();
       entry void lhs_complete();
       entry void resize_complete();
+      //! [DAG]
     };
 
   } // inciter::

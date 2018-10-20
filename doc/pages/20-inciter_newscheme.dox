@@ -292,27 +292,108 @@ Now to the new files. First is the new Charm++ interface file, Inciter/alecg.ci:
 
 @subsection inciter_newscheme_chare_alecg Inciter/alecg.ci
 
+This is the file that is parsed by Charm++'s compiler and it generates
+additional code that makes ALECG a Charm++ chare array, migratable, etc. We list
+the whole file first then discuss its details below.
+
 @include Inciter/alecg.ci
 
-@subsection inciter_newscheme_chare_NoWarning NoWarning/alecg.decl.h and NoWarning/alecg.def.h
+@subsubsection inciter_newscheme_chare_alecg_headers Inciter/alecg.ci -- External modules and header includes
+
+@snippet Inciter/alecg.ci External modules and includes
+
+First we declare some external Charm++ modules that ALECG needs to interact with
+and thus from where we need type information. The `extern module` statements are
+followed by some usual C++ `include`s (without the `#`): these are in the
+Charm++ interface file because the Charm++ code below requires type information
+from them.
+
+@subsubsection inciter_newscheme_chare_alecg_array Inciter/alecg.ci -- 1D Charm++ chare array
+
+@snippet Inciter/alecg.ci 1D Charm++ chare array
+
+Next comes the specification of the ALECG Charm++ chare array. This a 1D array
+whose elements at runtime will be distributed across the available processing
+elements and compute nodes. If load balancing is enabled, the array elements
+(C++ objects) are migrated to homogenize load across a simulation. Because the
+array is 1D, we use a single integer index to address a particular array
+element. Charm++ also allows multi-dimensional arrays which can be useful if the
+problem naturally maps to a multi-dimensional notion, e.g., partitioning a 3D
+Cartesian mesh, so index calculations to address array elements (and thus
+work-units) become cleaner.
+
+@subsubsection inciter_newscheme_chare_alecg_entry Inciter/alecg.ci -- Entry methods
+
+@snippet Inciter/alecg.ci Entry methods
+
+We simply list those member functions of ALECG as _entry_ methods, e.g.,
+ALECG::setup() or ALECG::dt(), that we need be able to call externally,
+potentially across the network, from another PE. Entry methods are always
+_public_ in the C++ OOP sense. Note that there can be other member functions of
+ALECG. These are simple C++ class member functions and are usually not _public_
+but _private_, such as `ALECG::rhs()`. Note also that there are
+`[reductiontarget]` entry methods, e.g., `ALECG::advance()` which can be
+designated as the _target_ entry method of a reduction operation across the
+chare array elements. There is also an `initnode` entry method,
+`ALECG::registerReducers()` which is a special member function that is also
+declared as _static_ in the C++ sense (see ALECG.h). This is static because the
+runtime system must be able to call this function without creating an object and
+a lot earlier than the actual ALECG chare array elements are created. This is
+how _custom reducers_ can be associated in Charm++ to a chare array. Such custom
+reducers are an excellent way to rely on the asynchronous, tree-based
+implementation of parallel reductions in Charm++ yet still do it on custom,
+arbitrarily complex data types, e.g., a hash-map that holds vectors, as long as
+one defines how aggregation is to be performed when merging such data. Such an
+example is given in Inciter/DiagReducer.C.
+
+@subsubsection inciter_newscheme_chare_alecg_sdag Inciter/alecg.ci -- Structured DAG
+
+@snippet Inciter/alecg.ci DAG
+
+The entry methods, defined in the `.ci` file and with `when` keywords, form a
+structured directed acyclic graph (DAG). These specify logical relations among
+tasks and execution logic within the class. For example, `wait4lhs` tells the
+runtime system that only when `ownlhs_complete()` _and_ `comlhs_complete` are
+both done, can (and will) `lhsdone()` be called. In this case, this construct
+ensures that the runtime system will call a member function that operates on the
+left-hand side matrix, when both the local and external contributions are
+complete. Note that this logic only relates to a given array element, say with
+index 2. Another one, say index 3, may perform this operation at a very
+different time and independently, thus computation and communications can
+overlap. The entry methods listed at the bottom, e.g., `ownlhs_complete()` can
+be thought of simply as labels to the runtime systems that help define such task
+logic and they are defined by the runtime system. Note that the construct we
+used here, when \b A _and_ \b B are both complete _then_ do \b C, is probably
+the simplest task-logic Charm++ allows prescribing. There are many more advanced
+ways of expressing such logic, e.g., using loops. For more details, see Section
+_Structured Control Flow: Structured Dagger_ in the [Charm++
+manual](http://charm.cs.illinois.edu/manuals/html/charm++/manual.html).
+
+@subsection inciter_newscheme_nowarning NoWarning/alecg.decl.h and NoWarning/alecg.def.h
 
 The newly added files to the `NoWarning/` directory simply include the
 Charm++-generated `alecg.decl.h` and `alecg.def.h` files and locally, around
 the include, turn off specific compiler warnings for various compilers -- we
 will not discuss them here further.
 
+@section inciter_newscheme_header 5. New C++ class header
+
 Next are the newly added Inciter/ALECG.h and Inciter/ALECG.C, header and
 implementation of ALECG.
 
-@subsection inciter_newscheme_chare_ALECG_h Inciter/ALECG.h
+@subsection inciter_newscheme_header_ALECG_h Inciter/ALECG.h
 
 @include Inciter/ALECG.h
 
-@subsection inciter_newscheme_chare_ALECG_C Inciter/ALECG.C
+@section inciter_newscheme_class 6. New C++ class defintion
+
+@subsection inciter_newscheme_class_ALECG_C Inciter/ALECG.C
 
 @include Inciter/ALECG.C
 
-@subsection inciter_newscheme_chare_inciter Main/inciter.ci
+@section inciter_newscheme_work 7. Making it all work
+
+@subsection inciter_newscheme_work_inciter_ci Main/inciter.ci
 
 @code{.diff}
 $ git diff src/Main/inciter.ci
@@ -329,7 +410,7 @@ index bf7eac98..e9b114b6 100644
    extern module charestatecollector;
 @endcode
 
-@subsection inciter_newscheme_chare_PDEStack PDE/PDEStack.C
+@subsection inciter_newscheme_work_PDEStack PDE/PDEStack.C
 
 @code{.diff}
 $ git diff src/PDE/PDEStack.C
