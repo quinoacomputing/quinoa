@@ -69,8 +69,9 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 //! \param[in] solver Linear system solver (Solver) proxy
 //! \param[in] fd Face data structures
 // *****************************************************************************
+//! [Constructor]
 {
-  // Enable migration at AtSync
+  //! Enable migration at AtSync
   usesAtSync = true;
 
   // Size communication buffers
@@ -79,6 +80,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   // Signal the runtime system that the workers have been created
   solver.ckLocalBranch()->created();
 }
+//! [Constructor]
 
 void
 ALECG::resizeComm()
@@ -127,6 +129,8 @@ ALECG::setup( tk::real v )
   // Store total mesh volume
   m_vol = v;
 
+  //! [init and lhs]
+
   // Activate SDAG waits for computing the left-hand side
   thisProxy[ thisIndex ].wait4lhs();
 
@@ -135,6 +139,8 @@ ALECG::setup( tk::real v )
 
   // Set initial conditions for all PDEs
   for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
+
+  //! [init and lhs]
 
   // Output initial condition to file (if not in benchmark mode)
   if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) {
@@ -147,27 +153,30 @@ ALECG::setup( tk::real v )
   }
 }
 
+//! [Merge lhs and continue]
 void
-ALECG::lhsdone()
+ALECG::lhsmerge()
 // *****************************************************************************
 // The own and communication portion of the left-hand side is complete
 // *****************************************************************************
 {
-  if (m_initial) {
-    start();
-  } else {
-    lhsmerge();
-    lhs_complete();
-  }
-}
+  // Combine own and communicated contributions to left hand side
+  auto d = Disc();
 
-void
-ALECG::lhsmerge()
-// *****************************************************************************
-//  Combine own and communicated contributions to left hand side
-// *****************************************************************************
-{
+  // Combine own and communicated contributions to LHS and ICs
+  for (const auto& b : d->Bid()) {
+    auto lid = tk::cref_find( d->Lid(), b.first );
+    const auto& blhsc = m_lhsc[ b.second ];
+    for (ncomp_t c=0; c<m_lhs.nprop(); ++c) m_lhs(lid,c,0) += blhsc[c];
+  }
+
+  // Zero communication buffers for next time step
+  for (auto& b : m_rhsc) std::fill( begin(b), end(b), 0.0 );
+
+  // Continue after lhs is complete
+  if (m_initial) start(); else lhs_complete();
 }
+//! [Merge lhs and continue]
 
 void
 ALECG::resized()
@@ -187,13 +196,11 @@ ALECG::start()
   // Start timer measuring time stepping wall clock time
   Disc()->Timer().zero();
 
-  // Combine own and communicated contributions to left hand side
-  lhsmerge();
-
   // Start time stepping by computing the size of the next time step)
   dt();
 }
 
+//! [Compute own and send lhs on chare-boundary]
 void
 ALECG::lhs()
 // *****************************************************************************
@@ -203,9 +210,8 @@ ALECG::lhs()
   auto d = Disc();
 
   // Compute own portion of the lhs
-  // ...
+  // m_lhs = ...
 
-  // Communicate lhs to other chares on chare-boundary
   if (d->Msum().empty())        // in serial we are done
     comlhs_complete();
   else // send contributions of lhs to chare-boundary nodes to fellow chares
@@ -217,10 +223,12 @@ ALECG::lhs()
 
   ownlhs_complete();
 }
+//! [Compute own and send lhs on chare-boundary]
 
+//! [Receive lhs on chare-boundary]
 void
 ALECG::comlhs( const std::vector< std::size_t >& gid,
-                const std::vector< std::vector< tk::real > >& L )
+               const std::vector< std::vector< tk::real > >& L )
 // *****************************************************************************
 //  Receive contributions to left-hand side diagonal matrix on chare-boundaries
 //! \param[in] gid Global mesh node IDs at which we receive LHS contributions
@@ -229,7 +237,7 @@ ALECG::comlhs( const std::vector< std::size_t >& gid,
 //!   diagonal (lumped) mass matrix at mesh nodes. While m_lhs stores
 //!   own contributions, m_lhsc collects the neighbor chare contributions during
 //!   communication. This way work on m_lhs and m_lhsc is overlapped. The two
-//!   are combined in start().
+//!   are combined in lhsmerge().
 // *****************************************************************************
 {
   Assert( L.size() == gid.size(), "Size mismatch" );
@@ -250,6 +258,7 @@ ALECG::comlhs( const std::vector< std::size_t >& gid,
     comlhs_complete();
   }
 }
+//! [Receive lhs on chare-boundary]
 
 void
 ALECG::dt()

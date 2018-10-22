@@ -48,7 +48,7 @@ module alecg {
 
       //! [DAG]
       entry void wait4lhs() {
-        when ownlhs_complete(), comlhs_complete() serial "lhs" { lhsdone(); } };
+        when ownlhs_complete(), comlhs_complete() serial "lhs" { lhsmerge(); } };
 
       entry void wait4rhs() {
         when ownrhs_complete(), comrhs_complete() serial "rhs" { solve(); } };

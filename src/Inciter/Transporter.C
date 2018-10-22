@@ -558,11 +558,13 @@ Transporter::comfinal()
 // *****************************************************************************
 // Reduction target indicating that communication maps have been setup
 // *****************************************************************************
+// [Discretization-specific communication maps]
 {
   CkStartLB();  // start load balancing
   m_progWork.end();
   m_scheme.setup( m_V );
 }
+// [Discretization-specific communication maps]
 
 void
 Transporter::vol()
