@@ -26,11 +26,6 @@ After the main chare constructor has finished, the runtime system initializes
 global scope data and migrates it to all other processing elements (PEs), which
 from that point is considered read-only.
 
-@warning Note that this global-scope data is _assumed_ read-only after
-migration but the compiler has no way of enforcing this, thus modifying it
-after migration is possible but will not generate an error either at compile or
-runtime.
-
 This global-scope data are defined at the beginning of Main/Inciter.C in the
 same order as they appear in the companion Charm++ interface file
 Main/inciter.ci. This is the order in which these data are initialized and
@@ -43,6 +38,12 @@ constructor, called during InciterDriver's constructor.
 Global_scope data is always prefixed by `g_`. Inciter's global-scope data
 contains two input decks: the defaults (g_inputdeck_defaults) and g_inputdeck
 which contains all data parsed during command line and input file parsing.
+
+@warning Note that this global-scope data is _assumed_ read-only after
+migration but the compiler has no way of enforcing this, thus modifying it
+after migration is possible but will not generate an error either at compile or
+runtime. For more details on global scope data in Charm++, see Section
+_Read-only Data_ in the Charm++ manual.
 
 @subsection inciter_startup_polymorphism Global scope data for runtime polymorphism
 
@@ -158,7 +159,12 @@ the page on @ref inciter_performance.
 _Bound arrays_: `Discretization` and its specialized children, `DiagCG`, `DG`,
 etc., `Refiner`, and, if used/created, `DistFCT` are _bound_ arrays. This means
 that the runtime system migrates its corresponding array elements together.
-Bound arrays facilitate modularization among workers that migrate.
+Bound arrays facilitate modularization among workers that migrate. Since array
+elements that are bound always appear together on a given PE, even after
+migration, they can also be thought of as part of the same class, because they
+can access data from each other (but still respecting the C++ rules of
+`public`, `private`, etc). However, dividing functionality into classes, as
+always, helps readibility and makes reasoning about code easier.
 
 @section inciter_setup 3. Setup
 
@@ -246,11 +252,11 @@ categorize (or group) all cells (their connectivity and node coordinates)
 together that are assigned to each chare by the partitioner and send them to
 their (owner) chare. This is started out in `Partitioner::distribute()`, and
 communicated, in a point-to-point fashion, to other Partitioner chares by
-calling the Partitioner::addMesh() entry method. When every Partitioner
-object has received their assigned mesh, they issue a global `contribute` call
-to `Transporter::distributed()`. When all contribute calls have arrived,
-communication of the different parts of the mesh has finished. Next is optional
-initial mesh refinement.
+calling the Partitioner::addMesh() entry method. When every Partitioner object
+has received their assigned mesh, they issue a global `contribute` call to
+`Transporter::distributed()`. When all contribute calls have arrived,
+communication of the different parts of the mesh has finished. This is followed
+by optional initial mesh refinement.
 
 @subsection inciter_refine Optional initial mesh refinement
 
@@ -284,12 +290,13 @@ There are two ways Refiner is used:
 
 Initial mesh refinement consists of potentially multiple steps of different
 refinement types: `uniform`, `ic`, `coordref`, which respectively stand for
-uniform refinement, i.e., 1->8, initial-conditions-based, i.e., non-uniform
-refinement based on estimating the error in the initial conditions on a given
-initial mesh, and coordinate-based, which allows specifying planes and simple
-extents in 3 dimensional space and allows tagging edges for refinement between
-two extremes. Additionally the user can also tag edges manually, using the
-`initref` keyword and creating a list of pairs of global node ids.
+uniform refinement, i.e., split each tetrahedron into 8 new ones,
+initial-conditions-based, i.e., non-uniform refinement based on estimating the
+error in the initial conditions on a given initial mesh, and coordinate-based,
+which allows specifying planes and simple extents in 3 dimensional space and
+allows tagging edges for refinement between two extremes. Additionally the user
+can also tag edges manually, using the `initref` keyword and creating a list of
+pairs of global node ids.
 
 Refiner::eval() evaluates, at the end of each initial refinement step, if a
 next initial refinement step is to be performed. In the last step, execution
