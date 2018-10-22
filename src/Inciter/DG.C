@@ -664,11 +664,13 @@ DG::adj()
   // Perform leak test on face geometry data structure enlarged by ghosts
   Assert( !leakyAdjacency(), "Face adjacency leaky" );
 
-  // Resize solution vectors, lhs, and rhs by the number of ghost tets
+  // Resize solution vectors, lhs, rhs and limiter function by the number of
+  // ghost tets
   m_u.resize( m_nunk );
   m_un.resize( m_nunk );
   m_lhs.resize( m_nunk );
   m_rhs.resize( m_nunk );
+  m_limFunc.resize( m_nunk );
 
   // Ensure that we also have all the geometry and connectivity data 
   // (including those of ghosts)
