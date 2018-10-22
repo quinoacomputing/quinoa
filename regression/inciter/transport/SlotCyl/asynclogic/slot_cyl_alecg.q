@@ -11,6 +11,8 @@ inciter
   ttyi 1      # TTY output interval
   ctau 1.0    # FCT mass diffusivity
 
+  scheme alecg
+
   transport
     depvar c
     physics advection
