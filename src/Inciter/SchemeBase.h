@@ -52,11 +52,12 @@ class SchemeBase {
       } else if (scheme == ctr::SchemeType::DiagCG) {
         proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(m_bound) );
         fctproxy= CProxy_DistFCT::ckNew(m_bound);
+      } else if (scheme == ctr::SchemeType::DG ||
+                 scheme == ctr::SchemeType::DGP1)
+      {
+        proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(m_bound) );
       } else if (scheme == ctr::SchemeType::ALECG) {
         proxy = static_cast< CProxy_ALECG >( CProxy_ALECG::ckNew(m_bound) );
-      } else if (scheme == ctr::SchemeType::DG ||
-                 scheme == ctr::SchemeType::DGP1) {
-        proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(m_bound) );
       } else Throw( "Unknown discretization scheme" );
     }
 
@@ -79,11 +80,11 @@ class SchemeBase {
 
     //! Variant type listing all chare proxy types modeling the same concept
     using Proxy =
-      boost::variant< CProxy_MatCG, CProxy_DiagCG, CProxy_ALECG, CProxy_DG >;
+      boost::variant< CProxy_MatCG, CProxy_DiagCG, CProxy_DG, CProxy_ALECG >;
     //! Variant type listing all chare element proxy types (behind operator[])
     using ProxyElem =
       boost::variant< CProxy_MatCG::element_t, CProxy_DiagCG::element_t,
-                      CProxy_ALECG::element_t, CProxy_DG::element_t >;
+                      CProxy_DG::element_t, CProxy_ALECG::element_t >;
 
   protected:
     //! Variant storing one proxy to which this class is configured for
