@@ -2,6 +2,8 @@ namespace inciter {
 /*!
   \page      inciter_newscheme How to add a new scheme to Inciter
 
+@warning THIS PAGE IS WORK IN PROGRESS AND SUBJECT TO CHANGE!
+
 @ref inciter_main supports multiple discretization schemes. This page describes
 how to add yours by walking through an example of adding a new one.
 
@@ -311,14 +313,14 @@ from them.
 
 @snippet Inciter/alecg.ci 1D Charm++ chare array
 
-Next comes the specification of the ALECG Charm++ chare array. This a 1D array
-whose elements at runtime will be distributed across the available processing
-elements and compute nodes. If load balancing is enabled, the array elements
-(C++ objects) are migrated to homogenize load across a simulation. Because the
-array is 1D, we use a single integer index to address a particular array
-element. Charm++ also allows multi-dimensional arrays which can be useful if the
-problem naturally maps to a multi-dimensional notion, e.g., partitioning a 3D
-Cartesian mesh, so index calculations to address array elements (and thus
+Next comes the specification of the ALECG Charm++ chare array. This is a 1D
+array whose elements at runtime will be distributed across the available
+processing elements and compute nodes. If load balancing is enabled, the array
+elements (C++ objects) are migrated to homogenize load across a simulation.
+Because the array is 1D, we use a single integer index to address a particular
+array element. Charm++ also allows multi-dimensional arrays which can be useful
+if the problem naturally maps to a multi-dimensional notion, e.g., partitioning
+a 3D Cartesian mesh, so index calculations to address array elements (and thus
 work-units) become cleaner.
 
 @subsubsection inciter_newscheme_chare_alecg_entry Inciter/alecg.ci -- Entry methods
@@ -326,24 +328,24 @@ work-units) become cleaner.
 @snippet Inciter/alecg.ci Entry methods
 
 We simply list those member functions of ALECG as _entry_ methods, e.g.,
-ALECG::setup() or ALECG::dt(), that we need be able to call externally,
-potentially across the network, from another PE. Entry methods are always
-_public_ in the C++ OOP sense. Note that there can be other member functions of
-ALECG. These are simple C++ class member functions and are usually not _public_
-but _private_, such as `ALECG::rhs()`. Note also that there are
-`[reductiontarget]` entry methods, e.g., `ALECG::advance()` which can be
-designated as the _target_ entry method of a reduction operation across the
-chare array elements. There is also an `initnode` entry method,
-`ALECG::registerReducers()` which is a special member function that is also
-declared as _static_ in the C++ sense (see ALECG.h). This is static because the
-runtime system must be able to call this function without creating an object and
-a lot earlier than the actual ALECG chare array elements are created. This is
-how _custom reducers_ can be associated in Charm++ to a chare array. Such custom
-reducers are an excellent way to rely on the asynchronous, tree-based
-implementation of parallel reductions in Charm++ yet still do it on custom,
-arbitrarily complex data types, e.g., a hash-map that holds vectors, as long as
-one defines how aggregation is to be performed when merging such data. Such an
-example is given in Inciter/DiagReducer.C.
+ALECG::setup() or ALECG::dt(), that we need to be able to call externally,
+potentially across the network, from another processing element (PE). Entry
+methods are always _public_ in the C++ object-oriented programming (OOP) sense.
+Note that there can be other member functions of ALECG. These are simple C++
+class member functions and are usually not _public_ but _private_, such as
+`ALECG::rhs()`. Note also that there are `[reductiontarget]` entry methods,
+e.g., `ALECG::advance()` which can be designated as the _target_ entry method of
+a reduction operation across the chare array elements. There is also an
+`initnode` entry method, `ALECG::registerReducers()` which is a special member
+function that is also declared as _static_ in the C++ sense (see ALECG.h). This
+is static because the runtime system must be able to call this function without
+creating an object and a lot earlier than the actual ALECG chare array elements
+are created. This is how _custom reducers_ can be associated in Charm++ to a
+chare array. Such custom reducers are an excellent way to rely on the
+asynchronous, tree-based implementation of parallel reductions in Charm++ yet
+still do it on custom, arbitrarily complex data types, e.g., a hash-map that
+holds vectors, as long as one defines how aggregation is to be performed when
+merging such data. Such an example is given in Inciter/DiagReducer.C.
 
 @subsubsection inciter_newscheme_chare_alecg_sdag Inciter/alecg.ci -- Structured DAG
 
@@ -353,12 +355,12 @@ The entry methods, defined in the `.ci` file and with `when` keywords, form a
 structured directed acyclic graph (DAG). These specify logical relations among
 tasks and execution logic within the class. For example, `wait4lhs` tells the
 runtime system that only when `ownlhs_complete()` _and_ `comlhs_complete` are
-both done, can (and will) `lhsdone()` be called. In this case, this construct
+both done, can (and will) `lhsmerge()` be called. In this case, this construct
 ensures that the runtime system will call a member function that operates on the
 left-hand side matrix, when both the local and external contributions are
 complete. Note that this logic only relates to a given array element, say with
 index 2. Another one, say index 3, may perform this operation at a very
-different time and independently, thus computation and communications can
+different time and independently, thus computation and communication can
 overlap. The entry methods listed at the bottom, e.g., `ownlhs_complete()` can
 be thought of simply as labels to the runtime systems that help define such task
 logic and they are defined by the runtime system. Note that the construct we
@@ -381,9 +383,12 @@ not discuss them here further. The full listings are at
 Next are the newly added Inciter/ALECG.h and Inciter/ALECG.C, header and
 implementation of ALECG. The full listings are at
 @subpage inciter_newscheme_header_page and
-@subpage inciter_newscheme_class_page, some of whose details are discussed below.
+@subpage inciter_newscheme_class_page, some of
+whose details are discussed below, rougly in order of execution.
 
-@subsection inciter_newscheme_workflow Execution sequence
+@subsection inciter_newscheme_class_constructor ALECG::ALECG -- Constructor
+
+@snippet Inciter/ALECG.C Constructor
 
 As discussed in Section @ref inciter_create on the @ref inciter_design page, the
 worker chare array elements, such as ALECG, are created using Charm++'s dynamic
@@ -395,12 +400,125 @@ each is assigned (held by their companion Discretization "base" class). Thus
 running Sorter::createWorkers() eventually triggers calling ALECG's constructors
 distributed across the whole problem and available PEs.
 
+In the constructor's body, listed above, we first enable migration for the
+class, then the local communication buffers are initialized by sizing them for
+the first time.  Finally, we signal the runtime system that _extra_
+communication buffers, specific to this particular discretization scheme, have
+been created.  This is a reduction call, issued by all array elements,
+eventually calling the reduction target `Transporter::comfinal()` a single time.
+
+@note By default, there are no extra communication buffers needed to be setup in
+ALECG, because the symmetric mesh-node communication maps have already been
+setup and stored in Discretization::m_msum, discussed in Section @ref
+inciter_reorder on the @ref inciter_design page. This node communication map is
+made available to all discretization schemes by default. A counter-example to
+ALECG is DG which, in this stage, sets up face communication and ghost element
+data structures, required only by the cell-centered DG-style discretization.
+These _extra_ communication data structures are stored in DG, i.e., locally in
+that class, but DG, just like ALECG (and all other schemes) are expected to
+signal the end of such _extra_ communication maps by issuing the reduction
+targeting `Transporter::comfinal()`.
+
+@subsection inciter_newscheme_class_comfinal Transporter::comfinal() -- Complete communication maps
+
+@snippet Inciter/Transporter.C Discretization-specific communication maps
+
+Though asynchronously executed, the reduction operation targeting
+`Transporter::comfinal()` is a global synchronization point: all chares arrive
+in that function body, synchronized, and all continue from there again by
+calling ALECG::setup().
+
+@note The call to ALECG::setup() is hidden behind Scheme::setup(). In an OOP
+sense this is equivalent to calling a virtual member function on a reference or
+a pointer of the base class, Discretization, which then dispatches down to the
+child class member function ALECG::setup().
+
+@note Also note that the call to ALECG::setup(), `m_scheme.setup(m_V)`, does
+_not_ address any particular chare array element, which means that it addresses
+_all_ array elements. Its argument is sent to all elements (across the network)
+in a broadcast fashion.
+
+Transporter::comfinal() is a global synchronization point because _all_ worker
+chares must finish resizing and/or constructing their communication maps before
+their `setup()` member function can be invoked. This is because `setup()` starts
+using those communication maps, e.g., when it starts computing and assembling
+the left hand side matrix or vector. When a chare receives data from others this
+data must be correctly sized and ready on all chares before these data
+containers can be used. If a global synchronization point did not precede
+`setup()`, chares that finish their constructor early might go ahead all the way
+to calling ALECG::comlhs(), which then will attempt to write to a communication
+buffer on the receiving side, which would lead to corrupt data and errors.
+
+@subsection inciter_newscheme_class_setup ALECG::setup() -- Set initial conditions and compute the left hand side
+
+@snippet Inciter/ALECG.C init and lhs
+
+In the ALECG::setup() code snippet above we first tell the runtime system to
+start listening for the completion of tasks leading to computing the left-hand
+side (lhs). This is done by the call `wait4lhs()`, which activates the relevant
+part of the DAG, discussed above in Section @ref
+inciter_newscheme_chare_alecg_sdag. Then we call ALECG::lhs() which starts by
+computing the own contribution of the lhs followed by sending out contributions
+to those chares the given chare shares at least a single mesh node with.
+
+@subsection inciter_newscheme_class_lhs ALECG::lhs() -- Compute own and send lhs on chare-boundary
+
+@snippet Inciter/ALECG.C Compute own and send lhs on chare-boundary
+
+As the above ALECG::lhs() code snippet shows, to communicate the lhs first we
+check if the node communication map is empty. If so, we are running in serial
+and the communication part is a no-op -- we call `comlhs_complete()` right away.
+If the map is not empty, we loop through the map and for each chare the given
+chare shares a node (or multiple nodes) with we collect the values of the lhs in
+those nodes into a vector and send it to the given destination chare. The send
+is done via the entry method function call `thisProxy[n.first].comlhs()`, which
+sends its arguments to chare id `n.first` in a point-point fashion.
+
+@subsection inciter_newscheme_class_comlhs ALECG::comlhs() -- Receive left hand side on chare boundary
+
+@snippet Inciter/ALECG.C Receive lhs on chare-boundary
+
+The above code snippet from ALECG::comlhs() shows the implementation of the
+receive side of the lhs communication step. The functions receives two vectors:
+in `gid` the list of global node IDs and in `L` the list of lhs values, one for
+each scalar component of the number of equations solved (in a system of
+systems). The size of the two vectors must equal -- this is the number of nodes
+we receive data for. The we loop over all incoming data, find the local IDs for
+the global IDs and store them by _adding_ their contributions at each node
+received. As the comment says, when this chare has received all contributions it
+supposed to receive, we tell the runtime system that on this chare communication
+of the lhs is finished by calling `comlhs_cmplete()`. The completion condition
+is implemented via a counter, whose value is increment upon each call to this
+function and testing its equality with the size of the symmetric node
+communication map (Discretization::m_msum), which has data for as many chares as
+many other chare a given chare must communicate with. As discussed in @ref
+inciter_newscheme_chare_alecg_sdag, when both own and communicated parts of the
+lhs are complete, the runtime system calls `lhsmerge`().
+
+@subsection inciter_newscheme_class_lhsmerge ALECG::lhsmerge() -- Merge left hand side and continue
+
+@snippet Inciter/ALECG.C Merge lhs and continue
+
+When the own and communicated contributions to the lhs are in place, the
+communication buffer for the lhs, `ALECG::m_lhsc`, is merged into
+`ALECG::m_lhs`. As the above code snippet of ALECG::lhsmerge() shows, we loop
+through the global IDs of all chare-boundary nodes and add the received
+contributions to the lhs. After preparing (zeroing) the communication buffers
+for the right hand side (rhs), at the end of ALECG::lhsmerge() we continue in
+different directions depending on whether this is the first step or we are
+during time stepping. If `lhsmerge()` was called during the first step, we call
+ALECG::start() but if it was called during time stepping, we just tell the
+runtime system that the lhs is complete. (This latter happens after a mesh
+refinement step, in which case we need to regenerate the lhs, and in that case,
+completing the lhs is only part of a DAG, `wait4eval`, waiting for multiple
+overlapping tasks, required for continuing.)
+
 @section inciter_newscheme_work 6. Making it all work
 
 There is only a couple of minor but important steps remain. First we add the new
 Charm++ module as an external module in inciter's Charm++ module. This is
-required so that all Charm++ code that references to the new ALECG Charm++ chare
-array is visible and correctly interact with Inciter's main charm chare.
+required so that all Charm++ code that references the new ALECG Charm++ chare
+array is visible and can correctly interact with Inciter's main charm chare.
 
 @subsection inciter_newscheme_work_inciter_ci Main/inciter.ci
 
