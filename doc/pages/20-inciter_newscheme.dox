@@ -566,5 +566,13 @@ index 438cb5e3..9b2e14e7 100644
        if (d == ctr::PDEType::TRANSPORT)
 @endcode
 
+@section inciter_newscheme_unittest 7. Augment unit tests for Scheme
+
+...
+
+@section inciter_newscheme_regression 8. Add new regression tests
+
+...
+
 */
 } // inciter::
