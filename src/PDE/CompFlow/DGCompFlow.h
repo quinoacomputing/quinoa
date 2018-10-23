@@ -148,7 +148,7 @@ class CompFlow {
       Assert( geoElem.nunk() == l.nunk(), "Size mismatch" );
       const auto nelem = geoElem.nunk();
 
-	  // Compute LHS for DG(P0)
+    // Compute LHS for DG(P0)
       for (std::size_t e=0; e<nelem; ++e)
         for (ncomp_t c=0; c<5; ++c)
           l(e, c*m_ndof, m_offset) = geoElem(e,0,0);
@@ -162,11 +162,11 @@ class CompFlow {
             l(e, mark+2, m_offset) = geoElem(e,0,0) * 3.0/10.0;
             l(e, mark+3, m_offset) = geoElem(e,0,0) * 3.0/5.0;
           }
-	   	}
-	  }
+        }
+      }
     }
 
-	//! Compute right hand side
+    //! Compute right hand side
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
@@ -209,8 +209,8 @@ class CompFlow {
       if (m_ndof == 1) {  // DG(P0)
         // compute internal surface flux integrals
         surfIntP0( fd, geoFace, U, R );
-		// compute source term intehrals
-		srcIntP0( t, geoElem, R);
+        // compute source term intehrals
+        srcIntP0( t, geoElem, R);
         // compute boundary surface flux integrals
         bndInt< Dir >( m_bcdir, fd, geoFace, t, U, R );
         bndInt< Sym >( m_bcsym, fd, geoFace, t, U, R );
@@ -243,9 +243,9 @@ class CompFlow {
         bndIntP1< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, inpoel,
                                  inpofa, coord, t, U, limFunc, R );
       } else
-        Throw( "dg::Transport::rhs() not defined for NDOF=" +
+        Throw( "dg::Compflow::rhs() not defined for NDOF=" +
                std::to_string(m_ndof) );
-	}
+  }
 
     //! Compute the minimum time step size
 //     //! \param[in] U Solution vector at recent time step
@@ -359,6 +359,7 @@ class CompFlow {
                        tk::Fields& unk,
                        tk::real t ) const
     {
+
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
@@ -465,7 +466,7 @@ class CompFlow {
             R[mark+2] += wt * s[c]*B3;
             R[mark+3] += wt * s[c]*B4;
           }
-		}
+        }
 
         for (ncomp_t c=0; c<5; ++c)
         {
@@ -693,14 +694,14 @@ class CompFlow {
       }
     }
 
-	//! Compute source term integrals for DG(P0)
+    //! Compute source term integrals for DG(P0)
     //! \param[in] t Physical time
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] R Right-hand side vector computed
-	void srcIntP0( tk::real t,
-              	   const tk::Fields& geoElem,
-              	   tk::Fields& R) const
-	{
+    void srcIntP0( tk::real t,
+                   const tk::Fields& geoElem,
+                   tk::Fields& R) const
+    {
       //const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       for (std::size_t e=0; e<geoElem.nunk(); ++e) {
         auto vole = geoElem(e,0,0);
@@ -709,23 +710,23 @@ class CompFlow {
         auto zc = geoElem(e,3,0);
         auto s = Problem::src(0, xc, yc, zc, t);
         for (ncomp_t c=0; c<5; ++c){
-		  auto mark = c*m_ndof;
+          auto mark = c*m_ndof;
           R(e, mark, m_offset) += vole * s[c];
-		}
+        }
       }
-	}
+    }
 
     //! Compute source term integrals for DG(P1)
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] R Right-hand side vector computed
-	void srcIntP1( tk::real t,
-              	   const std::vector< std::size_t >& inpoel,
-              	   const tk::UnsMesh::Coords& coord,
+    void srcIntP1( tk::real t,
+                   const std::vector< std::size_t >& inpoel,
+                   const tk::UnsMesh::Coords& coord,
                    const tk::Fields& geoElem,
-              	   tk::Fields& R) const
-	{
+                   tk::Fields& R) const
+    {
       //const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       // Number of integration points
       constexpr std::size_t NG = 5;
@@ -787,9 +788,9 @@ class CompFlow {
 		  }
         }
       }
-	}
+    }
 
-	//! Compute volume integrals for DG(P1)
+    //! Compute volume integrals for DG(P1)
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] geoElem Element geometry array
@@ -904,7 +905,6 @@ class CompFlow {
         {
           std::vector< tk::real > ugp;
           std::array< std::vector< tk::real >, 3 > flux;
-
           tk::real g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
 
           ugp.resize(5,0);
@@ -1133,12 +1133,12 @@ class CompFlow {
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
         Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
         
-		std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
+        std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
                                         geoFace(f,2,0),
                                         geoFace(f,3,0) }};
 
         // nodal coordinates of the left element
-		std::array< tk::real, 3 >
+        std::array< tk::real, 3 >
           p1_l{{ cx[ inpoel[4*el] ],
                  cy[ inpoel[4*el] ],
                  cz[ inpoel[4*el] ] }},
