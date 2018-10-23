@@ -56,6 +56,10 @@ DG::DG( const CProxy_Discretization& disc,
   m_geoElem( tk::genGeoElemTet( Disc()->Inpoel(), Disc()->Coord() ) ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
+  m_limFunc( (g_inputdeck.get< tag::discr, tag::ndof >() == 1 ? 0 :
+              Disc()->Inpoel().size()/4),
+             (g_inputdeck.get< tag::discr, tag::ndof >()-1)*
+             g_inputdeck.get< tag::component >().nprop() ),
   m_nfac( fd.Inpofa().size()/3 ),
   m_nunk( m_u.nunk() ),
   m_ncoord( Disc()->Coord()[0].size() ),
@@ -660,11 +664,13 @@ DG::adj()
   // Perform leak test on face geometry data structure enlarged by ghosts
   Assert( !leakyAdjacency(), "Face adjacency leaky" );
 
-  // Resize solution vectors, lhs, and rhs by the number of ghost tets
+  // Resize solution vectors, lhs, rhs and limiter function by the number of
+  // ghost tets
   m_u.resize( m_nunk );
   m_un.resize( m_nunk );
   m_lhs.resize( m_nunk );
   m_rhs.resize( m_nunk );
+  m_limFunc.resize( m_nunk );
 
   // Ensure that we also have all the geometry and connectivity data 
   // (including those of ghosts)
@@ -971,7 +977,7 @@ DG::solve()
 
   for (const auto& eq : g_dgpde)
     eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(), m_u,
-            m_rhs );
+            m_limFunc, m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   m_u =  m_rkcoef[0][m_stage] * m_un
