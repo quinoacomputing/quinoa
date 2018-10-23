@@ -204,6 +204,8 @@ struct avecost {};
 struct stdcost {};
 struct flux {};
 struct ndof{};
+struct limiter {};
+struct cweight {};
 struct update {};
 struct ch {};
 struct pe {};

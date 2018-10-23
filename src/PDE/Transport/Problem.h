@@ -46,6 +46,7 @@
 #include "Problem/ShearDiff.h"
 #include "Problem/SlotCyl.h"
 #include "Problem/GaussHump.h"
+#include "Problem/CylAdvect.h"
 
 namespace inciter {
 
@@ -53,6 +54,7 @@ namespace inciter {
 using TransportProblems = brigand::list< TransportProblemShearDiff
                                        , TransportProblemSlotCyl
                                        , TransportProblemGaussHump
+                                       , TransportProblemCylAdvect
                                        >;
 
 } // inciter::

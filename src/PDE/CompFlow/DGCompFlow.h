@@ -184,6 +184,7 @@ class CompFlow {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
+//    //! \param[in] limFunc Limiter function for higher-order solution dofs
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -192,6 +193,7 @@ class CompFlow {
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
+              tk::Fields& /*limFunc*/,
               tk::Fields& R ) const
     {
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
