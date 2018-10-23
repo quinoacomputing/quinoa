@@ -27,6 +27,7 @@
 #include "Riemann/LaxFriedrichs.h"
 #include "UnsMesh.h"
 #include "Quadrature.h"
+#include "Limiter.h"
 
 namespace inciter {
 
@@ -173,7 +174,7 @@ class CompFlow {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
-//    //! \param[in] limFunc Limiter function for higher-order solution dofs
+    //! \param[in] limFunc Limiter function for higher-order solution dofs
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -182,9 +183,10 @@ class CompFlow {
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
-              tk::Fields& /*limFunc*/,
+              tk::Fields& limFunc,
               tk::Fields& R ) const
 	{
+      const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
 
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
@@ -197,6 +199,7 @@ class CompFlow {
       const auto& bface = fd.Bface();
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();
+      const auto& esuel = fd.Esuel();
 
       Assert( inpofa.size()/3 == esuf.size()/2, "Mismatch in inpofa size" );
 
@@ -213,16 +216,32 @@ class CompFlow {
         bndInt< Sym >( m_bcsym, fd, geoFace, t, U, R );
         bndInt< Extrapolate >( m_bcextrapolate, fd, geoFace, t, U, R );
       } else if (m_ndof == 4) {  // DG(P1)
+
+        // set limiter function to one
+        limFunc.fill(1.0);
+
+        Assert( U.nunk() == limFunc.nunk(), "Number of unknowns in solution "
+                "vector and limiter at recent time step incorrect" );
+
+        Assert( U.nprop() == limFunc.nprop()+5, "Number of components in "
+                "solution vector and limiter at recent time step incorrect" );
+
+        if (limiter == ctr::LimiterType::WENOP1)
+          WENO_P1( esuel, 0, U, limFunc );
+
         // compute internal surface flux integrals
-        surfIntP1( inpoel, coord, fd, geoFace, U, R );
-		// compute source term intehrals
+        surfIntP1( inpoel, coord, fd, geoFace, U, limFunc, R );
+        // compute source term intehrals
         srcIntP1( t, inpoel, coord, geoElem, R);
         // compute volume integrals
-        volIntP1( inpoel, coord, geoElem, U, R );
+        volIntP1( inpoel, coord, geoElem, U, limFunc, R );
         // compute boundary surface flux integrals
-        bndIntP1< Dir >( m_bcdir, bface, esuf, geoFace, inpoel, inpofa, coord, t, U, R );
-        bndIntP1< Sym >( m_bcsym, bface, esuf, geoFace, inpoel, inpofa, coord, t, U, R );
-        bndIntP1< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, inpoel, inpofa, coord, t, U, R );
+        bndIntP1< Dir >( m_bcdir, bface, esuf, geoFace, inpoel, inpofa, coord,
+                         t, U, limFunc, R );
+        bndIntP1< Sym >( m_bcsym, bface, esuf, geoFace, inpoel, inpofa, coord,
+                         t, U, limFunc, R );
+        bndIntP1< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, inpoel,
+                                 inpofa, coord, t, U, limFunc, R );
       } else
         Throw( "dg::Transport::rhs() not defined for NDOF=" +
                std::to_string(m_ndof) );
@@ -501,12 +520,14 @@ class CompFlow {
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] geoFace Face geometry array
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] limFunc Limiter function for higher-order solution dofs
     //! \param[in,out] R Right-hand side vector computed
     void surfIntP1( const std::vector< std::size_t >& inpoel,
                     const tk::UnsMesh::Coords& coord,
                     const inciter::FaceData& fd,
                     const tk::Fields& geoFace,
                     const tk::Fields& U,
+                    const tk::Fields& limFunc,
                     tk::Fields& R ) const
     {
       const auto& esuf = fd.Esuf();
@@ -641,14 +662,15 @@ class CompFlow {
           for (ncomp_t c=0; c<5; ++c)
           {
             auto mark = c*m_ndof;
+            auto lmark = c*(m_ndof-1);
             ugp[0].push_back(  U(el, mark,   m_offset)
-                             + U(el, mark+1, m_offset) * B2l
-                             + U(el, mark+2, m_offset) * B3l
-                             + U(el, mark+3, m_offset) * B4l );
+                             + limFunc(el, lmark+0, 0) * U(el, mark+1, m_offset) * B2l
+                             + limFunc(el, lmark+1, 0) * U(el, mark+2, m_offset) * B3l
+                             + limFunc(el, lmark+2, 0) * U(el, mark+3, m_offset) * B4l );
             ugp[1].push_back(  U(er, mark,   m_offset)
-                             + U(er, mark+1, m_offset) * B2r
-                             + U(er, mark+2, m_offset) * B3r
-                             + U(er, mark+3, m_offset) * B4r );
+                             + limFunc(er, lmark+0, 0) * U(er, mark+1, m_offset) * B2r
+                             + limFunc(er, lmark+1, 0) * U(er, mark+2, m_offset) * B3r
+                             + limFunc(er, lmark+2, 0) * U(er, mark+3, m_offset) * B4r );
           }
 
           auto flux = m_riemann.flux( f, geoFace, {{ugp[0], ugp[1]}} );
@@ -750,11 +772,18 @@ class CompFlow {
           auto ygp = y1*shp1 + y2*shp2 + y3*shp3 + y4*shp4;
           auto zgp = z1*shp1 + z2*shp2 + z3*shp3 + z4*shp4;
 
+          auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp] - 1.0;
+          auto B3 = 3.0 * coordgp[1][igp] + coordgp[2][igp] - 1.0;
+          auto B4 = 4.0 * coordgp[2][igp] - 1.0;
+
           auto s = Problem::src(0, xgp, ygp, zgp, t);
           for (ncomp_t c=0; c<5; ++c)
 		  {
 			auto mark = c*m_ndof;
-            R(e, mark, m_offset) += wt * s[c];
+            R(e, mark, m_offset)   += wt * s[c];
+            R(e, mark+1, m_offset) += wt * s[c] * B2;
+            R(e, mark+2, m_offset) += wt * s[c] * B3;
+            R(e, mark+3, m_offset) += wt * s[c] * B4;
 		  }
         }
       }
@@ -765,11 +794,13 @@ class CompFlow {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] geoElem Element geometry array
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] limFunc Limiter function for higher-order solution dofs
     //! \param[in,out] R Right-hand side vector computed
     void volIntP1( const std::vector< std::size_t >& inpoel,
                    const tk::UnsMesh::Coords& coord,
                    const tk::Fields& geoElem,
                    const tk::Fields& U,
+                   const tk::Fields& limFunc,
                    tk::Fields& R ) const
     {
       // Number of integration points
@@ -891,10 +922,11 @@ class CompFlow {
           for (ncomp_t c=0; c<5; ++c)
           {
             auto mark = c*m_ndof;
+            auto lmark = c*(m_ndof-1);
             ugp[c] =  U(e, mark,   m_offset)
-                    + U(e, mark+1, m_offset) * B2
-                    + U(e, mark+2, m_offset) * B3
-                    + U(e, mark+3, m_offset) * B4;
+                    + limFunc(e, lmark+0, 0) * U(e, mark+1, m_offset) * B2
+                    + limFunc(e, lmark+1, 0) * U(e, mark+2, m_offset) * B3
+                    + limFunc(e, lmark+2, 0) * U(e, mark+3, m_offset) * B4;
           }
 
           auto u = ugp[1] / ugp[0];
@@ -1067,6 +1099,7 @@ class CompFlow {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] t Physical time
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] limFunc Limiter function for higher-order solution dofs
     //! \param[in,out] R Right-hand side vector computed
     //! \tparam State Policy class providing the left and right state at
     //!   boundaries by its member function State::LR()
@@ -1079,6 +1112,7 @@ class CompFlow {
                     const tk::UnsMesh::Coords& coord,
                     tk::real t,
                     const tk::Fields& U,
+                    const tk::Fields& limFunc,
                     tk::Fields& R ) const
       {
       // Number of integration points
@@ -1166,15 +1200,16 @@ class CompFlow {
 
           auto wt = wgp[igp] * geoFace(f,0,0);
 
-	  	  std::vector< tk::real > ugp;
+          std::vector< tk::real > ugp;
 
           for (ncomp_t c=0; c<5; ++c)
           {
             auto mark = c*m_ndof;
+            auto lmark = c*(m_ndof-1);
             ugp.push_back (  U(el, mark,   m_offset)
-                           + U(el, mark+1, m_offset) * B2l
-                           + U(el, mark+2, m_offset) * B3l
-                           + U(el, mark+3, m_offset) * B4l );
+                           + limFunc(el, lmark+0, 0) * U(el, mark+1, m_offset) * B2l
+                           + limFunc(el, lmark+1, 0) * U(el, mark+2, m_offset) * B3l
+                           + limFunc(el, lmark+2, 0) * U(el, mark+3, m_offset) * B4l );
           }
 
           //--- fluxes
@@ -1203,6 +1238,7 @@ class CompFlow {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] t Physical time
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] limFunc Limiter function for higher-order solution dofs
     //! \param[in,out] R Right-hand side vector computed
     template< class BCType >
     void
@@ -1215,13 +1251,14 @@ class CompFlow {
                    const tk::UnsMesh::Coords& coord,
                    tk::real t,
                    const tk::Fields& U,
+                   const tk::Fields& limFunc,
                    tk::Fields& R ) const
     {
       for (const auto& s : bcconfig) {       // for all bc sidesets
         auto bc = bface.find( std::stoi(s) );// faces for side set
         if (bc != end(bface))
           bndsurfIntp1< BCType >( bc->second, esuf, geoFace, inpoel, inpofa,
-                               coord, t, U, R );
+                               coord, t, U, limFunc, R );
       }
     }
 
