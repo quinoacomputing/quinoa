@@ -135,7 +135,7 @@ MatCG::setup( tk::real v )
 void
 MatCG::dt()
 // *****************************************************************************
-// Comppute time step size
+// Compute time step size
 // *****************************************************************************
 {
   tk::real mindt = std::numeric_limits< tk::real >::max();

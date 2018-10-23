@@ -263,7 +263,7 @@ ALECG::comlhs( const std::vector< std::size_t >& gid,
 void
 ALECG::dt()
 // *****************************************************************************
-// Comppute time step size
+// Compute time step size
 // *****************************************************************************
 {
   tk::real mindt = std::numeric_limits< tk::real >::max();
@@ -281,7 +281,7 @@ ALECG::dt()
 
   } else {      // compute dt based on CFL
 
-    // find the minimum dt across all PDEs integrated
+    //! [Find the minimum dt across all PDEs integrated]
     for (const auto& eq : g_cgpde) {
       auto eqdt = eq.dt( d->Coord(), d->Inpoel(), m_u );
       if (eqdt < mindt) mindt = eqdt;
@@ -289,9 +289,11 @@ ALECG::dt()
 
     // Scale smallest dt with CFL coefficient
     mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
+    //! [Find the minimum dt across all PDEs integrated]
 
   }
 
+  //! [Advance]
   // Actiavate SDAG waits for time step
   thisProxy[ thisIndex ].wait4rhs();
   thisProxy[ thisIndex ].wait4eval();
@@ -299,6 +301,7 @@ ALECG::dt()
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
               CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
+  //! [Advance]
 }
 
 void
@@ -381,6 +384,7 @@ ALECG::solve()
   // Solve sytem
   // m_du = m_rhs / m_lhs;
 
+  //! [Continue after solve]
   // Compute diagnostics, e.g., residuals
   auto diag_computed = m_diag.compute( *d, m_u );
   // Increase number of iterations and physical time
@@ -389,6 +393,7 @@ ALECG::solve()
   if (!diag_computed) diag();
   // Optionally refine mesh
   refine();
+  //! [Continue after solve]
 }
 
 void
@@ -511,6 +516,7 @@ ALECG::refine()
 // Optionally refine/derefine mesh
 // *****************************************************************************
 {
+  //! [Refine]
   auto d = Disc();
 
   auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
@@ -528,8 +534,10 @@ ALECG::refine()
     resize_complete();
 
   }
+  //! [Refine]
 }
 
+//! [Resize]
 void
 ALECG::resize( const tk::UnsMesh::Chunk& chunk,
                const tk::UnsMesh::Coords& coord,
@@ -584,6 +592,7 @@ ALECG::resize( const tk::UnsMesh::Chunk& chunk,
 
   contribute( CkCallback(CkReductionTarget(Transporter,workresized), d->Tr()) );
 }
+//! [Resize]
 
 void
 ALECG::eval()

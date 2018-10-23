@@ -278,7 +278,7 @@ DiagCG::comlhs( const std::vector< std::size_t >& gid,
 void
 DiagCG::dt()
 // *****************************************************************************
-// Comppute time step size
+// Compute time step size
 // *****************************************************************************
 {
 //   if (g_inputdeck.get< tag::cmd, tag::chare >() ||

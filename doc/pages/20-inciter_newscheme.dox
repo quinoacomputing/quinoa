@@ -5,7 +5,9 @@ namespace inciter {
 @warning THIS PAGE IS WORK IN PROGRESS AND SUBJECT TO CHANGE!
 
 @ref inciter_main supports multiple discretization schemes. This page describes
-how to add yours by walking through an example of adding a new one.
+how to add yours by walking through an example of adding a new one. We also
+discuss the main steps of the execution logic, which, at a high level, is the
+same for all discretization schemes.
 
 @tableofcontents{xml}
 
@@ -511,7 +513,78 @@ ALECG::start() but if it was called during time stepping, we just tell the
 runtime system that the lhs is complete. (This latter happens after a mesh
 refinement step, in which case we need to regenerate the lhs, and in that case,
 completing the lhs is only part of a DAG, `wait4eval`, waiting for multiple
-overlapping tasks, required for continuing.)
+overlapping tasks, required for continuing.) ALECG::start() calls ALECG::dt(),
+which is the first step in a time step.
+
+@subsection inciter_newscheme_class_dt ALECG::dt() -- Start time step
+
+@snippet Inciter/ALECG.C Find the minimum dt across all PDEs integrated
+
+The above code snippet from ALECG::dt() shows a `for` loop that calls the the
+`dt()` member function of all types of PDEs configured by the user and finds the
+minimum size of the time step.
+
+@snippet Inciter/ALECG.C Advance
+
+Once we have the time step size, we enable a couple of SDAG waits and issue a
+reduction to Transporter::advance() which yields the global minimum across all
+chares then issues a broadcast to ALECG::advance(). `advance()` saves the new
+time step in `Discretization::m_dt`, which is the _master_ copy, calls
+`ALECG::rhs()`, which starts computing the right hand sides of all PDEs
+integrated.
+
+@subsection inciter_newscheme_class_rhs ALECG::rhs() & ALECG::comrhs() -- Compute and communicate right hand side
+
+Computing the right hand sides (rhs) of all PDE operators and communicating the
+rhs values in chare boundary nodes look exactly the same as the analogous
+functions for the lhs. When both the own and communicated contributions are
+complete on a chare, the runtime system calls ALECG::solve(), which first
+combines the own and received contributions then solves the system.
+
+@subsection inciter_newscheme_class_solve ALECG::solve() -- Solve, diagnostics, refine
+
+@snippet Inciter/ALECG.C Continue after solve
+
+The above code snippet shows what happens immediately after solving the linear
+system on a chare. First we compute _diagnostics_, which is a catch-all phrase
+for various norms and integral quantities, see Inciter/NodeDiagnostics.C for
+details. Note that computing diagnostics only happens every few time step,
+depending on user configuration. If `m_diag.compute()` returns true, diagnostics
+have been computed in this time step. If diagnostics have been computed, their
+correct values require global reduction operations, performing different
+aggregation operations depending on the value. As all reductions, diagnostics
+are also collected by Transporter, this time in target
+`Transporter::diagnostics()`, which calls back, via a broadcast, to
+ALECG::diag(), which signals, on the ALECG chare, that diagnostics have been
+computed. If diagnostics have not been computed in this time step, we call
+ALECG::diag() right away. Next we increase the number of iterations taken and
+update physical time on the master copies, Discretization::m_it and
+Discretization::m_t. This is followed by (optionally) refining the mesh, calling
+ALECG::refine().
+
+@subsection inciter_newscheme_class_refine ALECG::refine() -- Optionally refine mesh
+
+@snippet Inciter/ALECG.C Refine
+
+The above snippet shows that mesh refinement happens only at every few time step
+with its frequency configured by the user. If the mesh is _not_ refined, we
+simply enable the SDAG waits associated to the tasks of the mesh refinement
+step. If the mesh _is_ refined, we call a member function of the mesh refiner
+object held by Discretization, Refiner::dtref(), which when done, eventually
+calls back to ALECG::resize(), passing back the new mesh and associated data
+structures.
+
+@subsection inciter_newscheme_class_resize ALECG::resize() -- Resize data after mesh refinement
+
+@snippet Inciter/ALECG.C Resize
+
+The above snippet shows ALECG::resize() called by Refiner when it finished mesh
+refinement. Besides resizing the mesh-related data held locally by ALECG, e.g.,
+ALECG::m_u, ALECG::m_du, etc., as well as the communication buffers in
+ALECG::resizeComm(), we also call Discretization::resize(), which resizes all
+mesh-related data structures in Discretization. We also prepare for recomputing
+the lhs on the new mesh.
+
 
 @section inciter_newscheme_work 6. Making it all work
 
