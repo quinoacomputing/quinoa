@@ -155,6 +155,8 @@ class CompFlowProblemSodShocktube {
       tk::real g =
         g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
 
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+
       std::vector< std::vector< tk::real > > out;
       const auto r  = U.extract( 0*ndof, offset );
       const auto ru = U.extract( 1*ndof, offset );
