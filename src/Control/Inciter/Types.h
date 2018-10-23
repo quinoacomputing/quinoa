@@ -18,6 +18,7 @@
 #include "Inciter/Options/PDE.h"
 #include "Inciter/Options/Problem.h"
 #include "Inciter/Options/Scheme.h"
+#include "Inciter/Options/Limiter.h"
 #include "Inciter/Options/Flux.h"
 #include "Inciter/Options/AMRInitial.h"
 #include "Inciter/Options/AMRError.h"
@@ -67,17 +68,19 @@ using amr = tk::tuple::tagged_tuple<
 
 //! Discretization parameters storage
 using discretization = tk::tuple::tagged_tuple<
-  tag::nstep,  kw::nstep::info::expect::type, //!< Number of time steps
-  tag::term,   kw::term::info::expect::type,  //!< Time to terminate
-  tag::t0,     kw::t0::info::expect::type,    //!< Starting time
-  tag::dt,     kw::dt::info::expect::type,    //!< Size of time step
-  tag::cfl,    kw::cfl::info::expect::type,   //!< CFL coefficient
-  tag::fct,    bool,                          //!< FCT on/off
-  tag::reorder,bool,                          //!< reordering on/off
-  tag::ctau,   kw::ctau::info::expect::type,  //!< FCT mass diffisivity
-  tag::scheme, inciter::ctr::SchemeType,      //!< Spatial discretization type
-  tag::flux,   inciter::ctr::FluxType,        //!< Flux function type
-  tag::ndof,   std::size_t                    //!< Number of solution DOFs
+  tag::nstep,  kw::nstep::info::expect::type,   //!< Number of time steps
+  tag::term,   kw::term::info::expect::type,    //!< Time to terminate
+  tag::t0,     kw::t0::info::expect::type,      //!< Starting time
+  tag::dt,     kw::dt::info::expect::type,      //!< Size of time step
+  tag::cfl,    kw::cfl::info::expect::type,     //!< CFL coefficient
+  tag::fct,    bool,                            //!< FCT on/off
+  tag::reorder,bool,                            //!< reordering on/off
+  tag::ctau,   kw::ctau::info::expect::type,    //!< FCT mass diffisivity
+  tag::scheme, inciter::ctr::SchemeType,        //!< Spatial discretization type
+  tag::limiter,inciter::ctr::LimiterType,       //!< Limiter type
+  tag::cweight,kw::cweight::info::expect::type, //!< WENO central stencil weight
+  tag::flux,   inciter::ctr::FluxType,          //!< Flux function type
+  tag::ndof,   std::size_t                      //!< Number of solution DOFs
 >;
 
 //! ASCII output floating-point precision in digits
