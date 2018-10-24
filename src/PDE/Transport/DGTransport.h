@@ -644,14 +644,15 @@ class Transport {
           for (ncomp_t c=0; c<m_ncomp; ++c)
           {
             auto mark = c*ndof;
+            auto lmark = c*(ndof-1);
             ugp[0].push_back(  U(el, mark,   m_offset) 
-                             + limFunc(el, mark+0, 0) * U(el, mark+1, m_offset) * B2l
-                             + limFunc(el, mark+1, 0) * U(el, mark+2, m_offset) * B3l
-                             + limFunc(el, mark+2, 0) * U(el, mark+3, m_offset) * B4l );
+                             + limFunc(el, lmark+0, 0) * U(el, mark+1, m_offset) * B2l
+                             + limFunc(el, lmark+1, 0) * U(el, mark+2, m_offset) * B3l
+                             + limFunc(el, lmark+2, 0) * U(el, mark+3, m_offset) * B4l );
             ugp[1].push_back(  U(er, mark,   m_offset) 
-                             + limFunc(er, mark+0, 0) * U(er, mark+1, m_offset) * B2r
-                             + limFunc(er, mark+1, 0) * U(er, mark+2, m_offset) * B3r
-                             + limFunc(er, mark+2, 0) * U(er, mark+3, m_offset) * B4r );
+                             + limFunc(er, lmark+0, 0) * U(er, mark+1, m_offset) * B2r
+                             + limFunc(er, lmark+1, 0) * U(er, mark+2, m_offset) * B3r
+                             + limFunc(er, lmark+2, 0) * U(er, mark+3, m_offset) * B4r );
           }
 
           //--- upwind fluxes
@@ -812,10 +813,11 @@ class Transport {
           for (ncomp_t c=0; c<m_ncomp; ++c)
           {
             auto mark = c*ndof;
+            auto lmark = c*(ndof-1);
             auto ugp =   U(e, mark,   m_offset) 
-                       + limFunc(e, mark+0, 0) * U(e, mark+1, m_offset) * B2
-                       + limFunc(e, mark+1, 0) * U(e, mark+2, m_offset) * B3
-                       + limFunc(e, mark+2, 0) * U(e, mark+3, m_offset) * B4;
+                       + limFunc(e, lmark+0, 0) * U(e, mark+1, m_offset) * B2
+                       + limFunc(e, lmark+1, 0) * U(e, mark+2, m_offset) * B3
+                       + limFunc(e, lmark+2, 0) * U(e, mark+3, m_offset) * B4;
 
             auto fluxx = vel[c][0] * ugp;
             auto fluxy = vel[c][1] * ugp;
@@ -1065,10 +1067,11 @@ class Transport {
           for (ncomp_t c=0; c<m_ncomp; ++c)
           {
             auto mark = c*ndof;
+            auto lmark = c*(ndof-1);
             ugp.push_back(  U(el, mark,   m_offset) 
-                          + limFunc(el, mark+0, 0) * U(el, mark+1, m_offset) * B2l
-                          + limFunc(el, mark+1, 0) * U(el, mark+2, m_offset) * B3l
-                          + limFunc(el, mark+2, 0) * U(el, mark+3, m_offset) * B4l );
+                          + limFunc(el, lmark+0, 0) * U(el, mark+1, m_offset) * B2l
+                          + limFunc(el, lmark+1, 0) * U(el, mark+2, m_offset) * B3l
+                          + limFunc(el, lmark+2, 0) * U(el, mark+3, m_offset) * B4l );
           }
 
           //--- upwind fluxes
