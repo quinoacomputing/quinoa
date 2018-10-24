@@ -5,6 +5,7 @@ project(DiffEq CXX)
 add_library(DiffEq
             DiffEqStack.C
             ConfigureDirichlet.C
+            ConfigureMixDirichlet.C
             ConfigureGeneralizedDirichlet.C
             ConfigureWrightFisher.C
             ConfigureOrnsteinUhlenbeck.C

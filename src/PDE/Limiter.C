@@ -41,6 +41,7 @@ WENO_P1( const std::vector< int >& esuel,
   for (inciter::ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
+    auto lmark = c*(ndof-1);
 
     for (std::size_t e=0; e<U.nunk(); ++e)
     {
@@ -117,20 +118,20 @@ WENO_P1( const std::vector< int >& esuel,
         wtDof[is] = wtDof[is]/wtotal;
       }
 
-      limFunc(e, mark+0, 0) = 0.0;
-      limFunc(e, mark+1, 0) = 0.0;
-      limFunc(e, mark+2, 0) = 0.0;
+      limFunc(e, lmark+0, 0) = 0.0;
+      limFunc(e, lmark+1, 0) = 0.0;
+      limFunc(e, lmark+2, 0) = 0.0;
 
       // limiter function
       for (std::size_t is=0; is<5; ++is)
       {
         // A small number (1.0e-12) is needed here to avoid dividing by a zero
         // in the case of a constant solution, where gradu would be zero.
-        limFunc(e, mark+0, 0) += wtDof[is]*gradu[is][0]
+        limFunc(e, lmark+0, 0) += wtDof[is]*gradu[is][0]
                                 / ( gradu[0][0] + std::copysign(1.0e-12,gradu[0][0]) );
-        limFunc(e, mark+1, 0) += wtDof[is]*gradu[is][1]
+        limFunc(e, lmark+1, 0) += wtDof[is]*gradu[is][1]
                                 / ( gradu[0][1] + std::copysign(1.0e-12,gradu[0][1]) );
-        limFunc(e, mark+2, 0) += wtDof[is]*gradu[is][2]
+        limFunc(e, lmark+2, 0) += wtDof[is]*gradu[is][2]
                                 / ( gradu[0][2] + std::copysign(1.0e-12,gradu[0][2]) );
       }
     }

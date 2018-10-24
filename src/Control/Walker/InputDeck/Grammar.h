@@ -46,6 +46,7 @@ namespace deck {
   //! \brief Number of registered equations
   //! \details Counts the number of parsed equation blocks during parsing.
   static tk::tuple::tagged_tuple< tag::dirichlet,       std::size_t,
+                                  tag::mixdirichlet,    std::size_t,
                                   tag::gendir,          std::size_t,
                                   tag::wrightfisher,    std::size_t,
                                   tag::ou,              std::size_t,
@@ -1053,8 +1054,56 @@ namespace deck {
                                                  tag::S >,
                            sde_parameter_vector< kw::sde_kappa,
                                                  tag::dirichlet,
-                                                 tag::kappa > >,
+                                                 tag::kappa >
+                         >,
            check_errors< tag::dirichlet > > {};
+
+  //! MixDirichlet SDE
+  struct mixdirichlet :
+         pegtl::if_must<
+           scan_sde< use< kw::mixdirichlet >, tag::mixdirichlet >,
+           tk::grm::block< use< kw::end >,
+                           tk::grm::depvar< use,
+                                            tag::mixdirichlet,
+                                            tag::depvar >,
+                           tk::grm::component< use< kw::ncomp >,
+                                               tag::mixdirichlet >,
+                           tk::grm::rng< use,
+                                         use< kw::rng >,
+                                         tk::ctr::RNG,
+                                         tag::mixdirichlet,
+                                         tag::rng >,
+                           tk::grm::policy< use,
+                                            use< kw::init >,
+                                            ctr::InitPolicy,
+                                            tag::mixdirichlet,
+                                            tag::initpolicy >,
+                           tk::grm::policy< use,
+                                            use< kw::coeff >,
+                                            ctr::CoeffPolicy,
+                                            tag::mixdirichlet,
+                                            tag::coeffpolicy >,
+                           icdelta< tag::mixdirichlet >,
+                           icbeta< tag::mixdirichlet >,
+                           icgamma< tag::mixdirichlet >,
+                           icgaussian< tag::mixdirichlet >,
+                           sde_parameter_vector< kw::sde_b,
+                                                 tag::mixdirichlet,
+                                                 tag::b >,
+                           sde_parameter_vector< kw::sde_S,
+                                                 tag::mixdirichlet,
+                                                 tag::S >,
+                           sde_parameter_vector< kw::sde_kappa,
+                                                 tag::mixdirichlet,
+                                                 tag::kappa >,
+                           sde_parameter_vector< kw::sde_rho2,
+                                                 tag::mixdirichlet,
+                                                 tag::rho2 >,
+                           sde_parameter_vector< kw::sde_r,
+                                                 tag::mixdirichlet,
+                                                 tag::r >
+                         >,
+           check_errors< tag::mixdirichlet > > {};
 
   //! Generalized Dirichlet SDE
   struct gendir :
@@ -1306,6 +1355,7 @@ namespace deck {
   //! stochastic differential equations
   struct sde :
          pegtl::sor< dirichlet,
+                     mixdirichlet,
                      gendir,
                      wright_fisher,
                      ornstein_uhlenbeck,

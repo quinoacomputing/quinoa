@@ -18,6 +18,7 @@ namespace ctr {
 //! Number of components of systems of equations
 using ncomps = tk::ctr::ncomponents<
    tag::dirichlet,       std::vector< tk::ctr::ncomp_type >
+ , tag::mixdirichlet,    std::vector< tk::ctr::ncomp_type >
  , tag::gendir,          std::vector< tk::ctr::ncomp_type >
  , tag::wrightfisher,    std::vector< tk::ctr::ncomp_type >
  , tag::diagou,          std::vector< tk::ctr::ncomp_type >
