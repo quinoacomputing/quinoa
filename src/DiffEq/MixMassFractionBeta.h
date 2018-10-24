@@ -117,6 +117,7 @@ class MixMassFractionBeta {
       m_depvar( g_inputdeck.get< tag::param,
                                  tag::mixmassfracbeta,
                                  tag::depvar >().at(c) ),
+      // divide by the number of derived variables computed, see derived()
       m_ncomp( g_inputdeck.get< tag::component >().
                            get< tag::mixmassfracbeta >().at(c) / 4 ),
       m_offset( g_inputdeck.get< tag::component >().

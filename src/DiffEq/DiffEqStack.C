@@ -16,6 +16,7 @@
 #include "Tags.h"
 
 #include "ConfigureDirichlet.h"
+#include "ConfigureMixDirichlet.h"
 #include "ConfigureGeneralizedDirichlet.h"
 #include "ConfigureWrightFisher.h"
 #include "ConfigureOrnsteinUhlenbeck.h"
@@ -107,6 +108,7 @@ DiffEqStack::DiffEqStack() : m_factory(), m_eqTypes()
 // *****************************************************************************
 {
   registerDirichlet( m_factory, m_eqTypes );
+  registerMixDirichlet( m_factory, m_eqTypes );
   registerGenDir( m_factory, m_eqTypes );
   registerWrightFisher( m_factory, m_eqTypes );
   registerOrnsteinUhlenbeck( m_factory, m_eqTypes );
@@ -136,6 +138,8 @@ DiffEqStack::selected() const
   for (const auto& d : g_inputdeck.get< tag::selected, tag::diffeq >()) {
     if (d == ctr::DiffEqType::DIRICHLET)
       diffeqs.push_back( createDiffEq< tag::dirichlet >( d, cnt ) );
+    else if (d == ctr::DiffEqType::MIXDIRICHLET)
+      diffeqs.push_back( createDiffEq< tag::mixdirichlet >( d, cnt ) );
     else if (d == ctr::DiffEqType::GENDIR)
       diffeqs.push_back( createDiffEq< tag::gendir >( d, cnt ) );
     else if (d == ctr::DiffEqType::WRIGHTFISHER)
@@ -212,6 +216,8 @@ DiffEqStack::info() const
   for (const auto& d : g_inputdeck.get< tag::selected, tag::diffeq >()) {
     if (d == ctr::DiffEqType::DIRICHLET)
       nfo.emplace_back( infoDirichlet( cnt ) );
+    else if (d == ctr::DiffEqType::MIXDIRICHLET)
+      nfo.emplace_back( infoMixDirichlet( cnt ) );
     else if (d == ctr::DiffEqType::GENDIR)
       nfo.emplace_back( infoGenDir( cnt ) );
     else if (d == ctr::DiffEqType::WRIGHTFISHER)
