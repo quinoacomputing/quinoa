@@ -742,6 +742,24 @@ index 6dc48c75..e4acfce4 100644
 +}
 @endcode
 
+Now that we will test ALECG using the unit test harness, @ref unittest_main, we also have to make the UnitTest build target depend on the new ALECG Charm++ module:
+
+@code{.diff}
+$ git diff src/UnitTest/CMakeLists.txt
+diff --git a/src/UnitTest/CMakeLists.txt b/src/UnitTest/CMakeLists.txt
+index bb740285..e0ea47fe 100644
+--- a/src/UnitTest/CMakeLists.txt
++++ b/src/UnitTest/CMakeLists.txt
+@@ -48,6 +48,7 @@ add_dependencies("UnitTest" "unittestCharmModule")
+ if (ENABLE_INCITER)
+   add_dependencies("UnitTest" "matcgCharmModule")
+   add_dependencies("UnitTest" "diagcgCharmModule")
++  add_dependencies("UnitTest" "alecgCharmModule")
+   add_dependencies("UnitTest" "distfctCharmModule")
+   add_dependencies("UnitTest" "dgCharmModule")
+   add_dependencies("UnitTest" "discretizationCharmModule")
+@endcode
+
 @section inciter_newscheme_regression 8. Add new regression tests
 
 We also add a bunch of new regression tests that stress-test the asynchronous
