@@ -109,7 +109,7 @@ WENO_P1( const std::vector< int >& esuel,
         // the case of a constant solution, where osc would be zero. The number
         // is not set to machine zero because it is squared, and a number
         // between 1.0e-8 to 1.0e-6 is needed.
-        wtDof[is] = wtStencil[is] * pow( (1.0e-8 + osc[is]), -2 );
+        wtDof[is] = wtStencil[is] * pow( (1.0e-10 + osc[is]), -2 );
         wtotal += wtDof[is];
       }
 

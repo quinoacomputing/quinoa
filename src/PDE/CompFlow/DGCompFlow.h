@@ -133,11 +133,11 @@ class CompFlow {
                      tk::Fields& unk,
                      tk::real t ) const
     {
-      if (m_ndof == 1)
+      //if (m_ndof == 1)
         initializep0( L, inpoel, coord, unk, t );
-      else if (m_ndof == 4)
-        initializep1( L, inpoel, coord, unk, t );
-      else Throw( "DGCompFlow::initialize() not defined" );
+      //else if (m_ndof == 4)
+      //  initializep1( L, inpoel, coord, unk, t );
+      //else Throw( "DGCompFlow::initialize() not defined" );
     }
 
     //! Compute the left hand side block-diagonal mass matrix
@@ -933,6 +933,7 @@ class CompFlow {
           auto v = ugp[2] / ugp[0];
           auto w = ugp[3] / ugp[0];
           auto p = (g - 1) * (ugp[4] - 0.5 * ugp[0] * (u*u + v*v + w*w) );
+          p = std::max(p, 1.0e-12);
 
           flux[0][0] = ugp[1];
           flux[0][1] = ugp[1] * u + p;
