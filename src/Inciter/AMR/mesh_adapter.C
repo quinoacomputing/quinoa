@@ -87,7 +87,6 @@ namespace AMR {
         }
         evaluate_error_estimate();
         mark_refinement();
-        perform_refinement();
     }
 
     /**
@@ -111,12 +110,11 @@ namespace AMR {
                      << " with lock case " << lock[e] << std::endl;
            auto& edgeref = tet_store.edge_store.get( edge[e] );
            edgeref.refinement_criteria = crit[e];
-           edgeref.lock_case = lock[e];
+           //edgeref.lock_case = lock[e];
        }
 
         evaluate_error_estimate();
         mark_refinement();
-        perform_refinement();
     }
 
     /**

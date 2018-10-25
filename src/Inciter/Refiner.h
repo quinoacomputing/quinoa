@@ -251,13 +251,13 @@ class Refiner : public CBase_Refiner {
     void coordRefine();
 
     //! Do mesh refinement correcting PE-boundary edges
-    void correctRefine( const AMR::EdgeLock& extra );
+    void correctRefine( const AMR::EdgeData& extra );
 
     //! ...
-    void matched();
+    void updateEdgeData();
 
-    //! Compute new mesh after refinement
-    void newMesh();
+    //! Aggregate number of extra edges across all chares
+    void matched();
 
     //! Update old mesh after refinement
     void updateMesh();

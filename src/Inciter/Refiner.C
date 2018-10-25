@@ -206,7 +206,7 @@ Refiner::t0ref()
     if (l == 0) writeMesh( "t0ref", l, t0-1.0 );
   }
 
-  m_extra = 0;  // assume at least a single step of correction is needed
+  m_extra = 0;
   m_bndEdges.clear();
   m_ch.clear();
   m_edgedataCh.clear();
@@ -316,12 +316,14 @@ Refiner::addBndEdges( CkReductionMsg* msg )
 void
 Refiner::refine()
 // *****************************************************************************
-//  Do a single step of initial mesh refinement based on initial mesh ref list
-//! \details This is a single step in a potentially multiple-entry list of
-//!   initial adaptive mesh refinement steps. Distribution of the chare-boundary
-//!   edges has preceded this step, so that boundary edges (shared by multiple
-//!   chares) can agree on a refinement that yields a conforming mesh across
-//!   chare boundaries.
+//  Do a single step of mesh refinement
+//! \details During initial (t<0) mesh refinement, this is a single step in a
+//!   potentially multiple-entry list of initial adaptive mesh refinement steps.
+//!   Distribution of the chare-boundary edges must have preceded this step, so
+//!   that boundary edges (shared by multiple chares) can agree on a refinement
+//!   that yields a conforming mesh across chare boundaries.
+//!   During-timestepping (dtref) mesh refinement this is called once, as we
+//!   only do a single step during time stepping.
 // *****************************************************************************
 {
   // Perform leak test on old mesh
@@ -368,8 +370,6 @@ Refiner::refine()
             "Boundary edge not found after refinement" );
   }
 
-  // Compute new mesh after refinement
-  newMesh();
   // Communicate extra edges
   comExtra();
 }
@@ -378,10 +378,10 @@ Refiner::refine()
 void
 Refiner::comExtra()
 // *****************************************************************************
-// Communicate refined edges after a refinement step
+// Communicate extra edges along chare boundaries
 // *****************************************************************************
 {
-  // Export added nodes on our mesh chunk boundary to other chares
+  // Export extra added nodes on our mesh chunk boundary to other chares
   if (m_ch.empty())
     matched();
   else {
@@ -394,11 +394,6 @@ Refiner::comExtra()
         auto i = m_edgedata.find(e);
         if (i != end(m_edgedata)) exp[ e ] = i->second;
       }
-
-// std::cout << thisIndex << " will send to " << c << ' ' << exp.size() << " edges, searched " << tk::cref_find(m_bndEdges,c).size() << " own edges, sending edges: ";
-// for (const auto& e : exp) std::cout << e.first[0] << '-' << e.first[1] << ' ';
-// std::cout << '\n';
-
       thisProxy[ c ].addRefBndEdges( thisIndex, exp );
     }
   }
@@ -407,18 +402,14 @@ Refiner::comExtra()
 void
 Refiner::addRefBndEdges( int fromch, const AMR::EdgeData& ed )
 // *****************************************************************************
-//! Receive newly added mesh node IDs on our chare boundary
+//! Receive tagged edges on our chare boundary
 //! \param[in] fromch Chare call coming from
-//! \param[in] ed Newly added node IDs associated to parent nodes on chare
-//!   boundary
-//! \details Receive newly added global node IDs and coordinates associated to
-//!   global parent IDs of edges on our mesh chunk boundary.
+//! \param[in] ed Tagged edges on chare boundary
 // *****************************************************************************
 {
-  // Save/augment buffer of edge-node (IDs, lock cases, and coords) for each
-  // sender chare
+  // Save/augment buffer of edge data for each sender chare
   m_edgedataCh[ fromch ].insert( begin(ed), end(ed) );
-  // Acknowledge receipt of chare-boundary edges to sender
+  // Acknowledge receipt of chare-boundary edge data to sender
   thisProxy[ fromch ].recvRefBndEdges();
 }
 
@@ -429,27 +420,21 @@ Refiner::recvRefBndEdges()
 // *****************************************************************************
 {
   // When we have heard from all chares we share at least a single edge with,
-  // contribute the number of extra edges that this mesh refinement step has
-  // found that were not refined by this chare but were refined by other chares
-  // this chare shares the edge with. A global maximum is then be computed on
-  // the umber of extra edges appearing in Transporter::matched() which is then
-  // used to decide if a new correction step is needed. If this is called for
-  // the first time in a given initial mesh refinement step, i.e., not after a
-  // correction step, m_extra=1 on all chares, so a correction step is assumed
-  // to be required.
+  // continue.
   if (++m_nref == m_ch.size()) matched();
 }
 
 void
 Refiner::matched()
 // *****************************************************************************
-// ...
+//  Aggregate number of extra edges across all chares
+//! \details Contribute the number of extra edges that this mesh refinement step
+//!    has tagged that are not to be refined by this chare but were refined by
+//!    other chares this chare shares the edge with. A global maximum is then be
+//!    computed on the umber of extra edges appearing in Transporter::matched()
+//!    which is then used to decide if a new correction step is needed.
 // *****************************************************************************
 {
-  // ...
-  newMesh();
-  updateMesh();
-
   // Aggregate number of extra edges that still need correction
   contribute( sizeof(std::size_t), &m_extra, CkReduction::max_ulong,
               m_cbr.get< tag::matched >() );
@@ -458,63 +443,24 @@ Refiner::matched()
 void
 Refiner::correctref()
 // *****************************************************************************
-//  Correct refinement to arrive at conforming mesh across chare boundaries
+//  Correct extra edges to arrive at conforming mesh across chare boundaries
 //! \details This function is called repeatedly until there is not a a single
 //!    edge that needs correction for the whole distributed problem to arrive at
-//!    a conforming mesh across chare boundaries during this initial mesh
-//!    refinement step.
+//!    a conforming mesh across chare boundaries during a mesh refinement step.
 // *****************************************************************************
 {
-  // Storage for edges and their lock case that need correction (either need a
-  // new node or chares need to agree on lock case) to yield a conforming mesh
-  AMR::EdgeLock extra;
+  // Storage for edge data that need correction to yield a conforming mesh
+  AMR::EdgeData extra;
 
-// std::cout << thisIndex << " correctRef: " << m_edgedataCh.size() << ": ";
-// for (const auto& c : m_edgedataCh)
-//   std::cout << c.first << "> " << c.second.size() << ' ';
-// std::cout << '\n';
-
-  // Ensure that the same global node ID has been assigned by all chares and
-  // that the new nodes have the same coordinates generated by potentially
-  // multiple chares sharing the refined edge. This is done by searching for all
-  // edges that we share with and refined by other chares: (1) If the incoming
-  // edge is found among our refined ones, we ensure the newly assigned global
-  // IDs equal (independently assigned by multiple chares, this is also a test
-  // on the quality of the hash algorithm) and also verify that the new node
-  // coordinates equal to machine precision. (2) If the incoming edge is not
-  // found among our refined ones, we need to correct the mesh to make it
-  // conforming since the edge has been refined by the remote chare. We collect
-  // these extra edges, and run a correction refinement, whose result then needs
-  // to be communicated again as the new refinement step may introduce new edges
-  // that other chares did not yet refine but are shared.
   for (const auto& c : m_edgedataCh)       // for all chares we share edges with
     for (const auto& r : c.second) {       // for all refined edges on c.first
       auto l = m_edgedata.find( r.first ); // find refined edge given parents
       if (l != end(m_edgedata)) {          // found same added node on edge
 
-        // locally assigned added node ID, lock case, and coordinates: l->second
-        // remotely assigned added node ID, lock case, and coordinates: r.second
-
-        // Ensure global IDs of newly added nodes are the same
-        Assert( std::get< 0 >( l->second ) == std::get< 0 >( r.second ),
-                "Remotely and locally assigned global ids mismatch" );
-        // Ensure coordinates are the same
-        Assert( std::abs( std::get<2>(l->second) - std::get<2>(r.second) ) <
-                  std::numeric_limits<tk::real>::epsilon() &&
-                std::abs( std::get<3>(l->second) - std::get<3>(r.second) ) <
-                  std::numeric_limits<tk::real>::epsilon() &&
-                std::abs( std::get<4>(l->second) - std::get<4>(r.second) ) <
-                  std::numeric_limits<tk::real>::epsilon(),
-                "Remote and local added node coordinates mismatch" );
-
         // Compute lock case: larger enum value of AMR::Edge_Lock_Case wins
-        auto local_lock = std::get< 1 >( l->second );
-        auto remote_lock = std::get< 1 >( r.second );
+        auto local_lock = l->second;
+        auto remote_lock = r.second;
 
-        // Save edge (given by parent global node IDs) to which both the local
-        // and remote chare have added a new node but with different lock
-        // cases. Will need to communicate computed lock case so the local and
-        // remote can correct the mesh so it conforms across chare boundaries.
         if (local_lock != remote_lock) {
           extra[ { tk::cref_find( m_lid, r.first[0] ),
                    tk::cref_find( m_lid, r.first[1] ) } ] =
@@ -536,62 +482,50 @@ Refiner::correctref()
         // has added a new node but we did not. Will need to correct the mesh so
         // it conforms across chare boundaries.
         extra[ { tk::cref_find( m_lid, r.first[0] ),
-                 tk::cref_find( m_lid, r.first[1] ) } ] =
-          std::get< 1 >( r.second );
-
-//std::cout << thisIndex << " not found: " << r.first[0] << '-' << r.first[1] << " with remote lock " << std::get< 1 >( r.second ) << '\n';
+                 tk::cref_find( m_lid, r.first[1] ) } ] = r.second;
 
       }
     }
 
-  // Store number of extra edges on this chare which this chare did not add but
-  // was refined by another chare, so now we need to tag and refine them and
-  // propagate reconnection of neighbor cells to arrive at conforming mesh
-  // across chare boundaries.
   m_extra = extra.size();
 
-// if (m_extra == 0) {
-//   if (thisIndex==0) {
-//     std::cout << "extra = 0 on chare " << thisIndex << ", num new nodes: " << m_edgedata.size() << ": ";
-//     for (const auto& e : m_edgedata) {
-//       std::cout << e.first[0] << '-' << e.first[1] << ' ';
-//       if (e.first[0]==158 && e.first[1]==284)
-//         std::cout << " coords: " << std::get<2>(e.second) << ',' << std::get<3>(e.second) << ',' << std::get<4>(e.second) << ' ';
-//     }
-//     std::cout << '\n';
-//   } else {
-//     std::cerr << "extra = 0 on chare " << thisIndex << ", num new nodes: " << m_edgedata.size() << ": ";
-//     for (const auto& e : m_edgedata) std::cerr << e.first[0] << '-' << e.first[1] << ' ';
-//     std::cerr << '\n';
-//   }
-// }
-
-  // Refine mesh triggered by nodes added on chare-boundary by other chares
+  //std::cout << thisIndex << " needs to correct: " << m_extra << '\n';
   correctRefine( extra );
-
-  // Compute new mesh after refinement
-  newMesh();
-
-  // Communicate extra edges. Since refining edges that we did not but other
-  // chares did may result in refining new edges that may also be shared along
-  // chare boundaries, we now need to communicate these edges and potentially
-  // repeat the correction step. This must happen until all chares that share
-  // edges can agree that there are no more edges to correct (in which case the
-  // above loop finds no extra edges). Only then can this refinement step be
-  // considered complete.
   comExtra();
+}
+
+void
+Refiner::updateEdgeData()
+// *****************************************************************************
+// Query AMR lib and update our local store of edge data
+// *****************************************************************************
+{
+  using Edge = tk::UnsMesh::Edge;
+  const auto& ref_edges = m_refiner.tet_store.edge_store.edges;
+  m_edgedata.clear();
+  for (const auto& e : ref_edges)
+    if (e.second.needs_refining) {
+      const auto& ed = e.first.get_data();
+      const auto ged = Edge{ m_gid[ ed[0] ], m_gid[ ed[1] ] };
+      m_edgedata[ ged ] = e.second.lock_case;
+    }
 }
 
 void
 Refiner::eval()
 // *****************************************************************************
-// Decide what to do after a mesh refinement step
-//! \details If this function is called during a step (potentially multiple
-//!   levels of) initial AMR, it evaluates whether to do another one. If it is
-//!   called during time stepping, this concludes the single mesh refinement
-//!   step and the new mesh is sent to the PDE worker (Discretization).
+// Refine mesh and decide how to continue
+//! \details First the mesh refiner object is called to perform a single step
+//!   of mesh refinement. Then, if this function is called during a step
+//!   (potentially multiple levels of) initial AMR, it evaluates whether to do
+//!   another one. If it is called during time stepping, this concludes the
+//!   single mesh refinement step and the new mesh is sent to the PDE worker
+//!   (Discretization).
 // *****************************************************************************
 {
+  m_refiner.perform_refinement();
+  updateMesh();
+
   AtSync();   // Migrate here if needed
 
   if (m_initial) {      // if initial (before t=0) AMR
@@ -613,12 +547,12 @@ Refiner::eval()
     // Output mesh after recent step of mesh refinement during time stepping
     writeMesh( "dtref", 0, m_t );
 
-    // Augment node comm. map with newly added nodes on chare-boundary edges
-    for (const auto& c : m_edgedataCh) {
-      auto& nodes = tk::ref_find( m_msum, c.first );
-      for (const auto& n : c.second)
-        nodes.push_back( std::get<0>(n.second) );
-    }
+//     // Augment node comm. map with newly added nodes on chare-boundary edges
+//     for (const auto& c : m_edgedataCh) {
+//       auto& nodes = tk::ref_find( m_msum, c.first );
+//       for (const auto& n : c.second)
+//         nodes.push_back( std::get<0>(n.second) );
+//     }
 
     // Send new mesh and solution back to PDE worker
     Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
@@ -656,6 +590,9 @@ Refiner::uniformRefine()
 {
   // Do uniform refinement
   m_refiner.uniform_refinement();
+
+  // Update our extra-edge store based on refiner
+  updateEdgeData();
 
   // Set number of extra edges to be zero, skipping correction (if this is the
   // only step in this refinement step)
@@ -701,6 +638,7 @@ Refiner::errorRefine()
   // Compute errors in ICs and define refinement criteria for edges
   std::vector< edge_t > edge;
   std::vector< tk::real > crit;
+  std::vector< AMR::Edge_Lock_Case > lock;
   AMR::Error error;
   for (std::size_t p=0; p<npoin; ++p)   // for all mesh nodes on this chare
     for (auto q : tk::Around(psup,p)) { // for all nodes surrounding p
@@ -713,15 +651,18 @@ Refiner::errorRefine()
        if (cmax > 0.0) {         // if nonzero error, will pass edge to refiner
          edge.push_back( e );
          crit.push_back( cmax );
+         lock.push_back( AMR::Edge_Lock_Case::unlocked );
        }
      }
 
   Assert( edge.size() == crit.size(), "Size mismatch" );
+  Assert( edge.size() == lock.size(), "Size mismatch" );
 
   // Do error-based refinement
-  std::vector< AMR::Edge_Lock_Case >
-    lock( edge.size(), AMR::Edge_Lock_Case::unlocked );
   m_refiner.error_refinement( edge, crit, lock );
+
+  // Update our extra-edge store based on refiner
+  updateEdgeData();
 
   // Set number of extra edges to a nonzero number, triggering correction
   m_extra = 1;
@@ -768,6 +709,9 @@ Refiner::userRefine()
       lock( edge.size(), AMR::Edge_Lock_Case::unlocked );
     m_refiner.error_refinement( edge, crit, lock );
 
+    // Update our extra-edge store based on refiner
+    updateEdgeData();
+
     // Set number of extra edges to a nonzero number, triggering correction
     m_extra = 1;
   }
@@ -812,7 +756,7 @@ Refiner::coordRefine()
     const auto& x = m_coord[0];
     const auto& y = m_coord[1];
     const auto& z = m_coord[2];
-    // Compute errors in ICs and define refinement criteria for edges
+    // Compute edges to be tagged for refinement
     std::vector< edge_t > edge;
     std::vector< tk::real > crit;
     for (std::size_t p=0; p<npoin; ++p)        // for all mesh nodes on this chare
@@ -839,6 +783,9 @@ Refiner::coordRefine()
     std::vector< AMR::Edge_Lock_Case >
       lock( edge.size(), AMR::Edge_Lock_Case::unlocked );
     m_refiner.error_refinement( edge, crit, lock );
+
+    // Update our extra-edge store based on refiner
+    updateEdgeData();
 
     // Set number of extra edges to a nonzero number, triggering correction
     m_extra = 1;
@@ -905,7 +852,7 @@ Refiner::nodeinit( std::size_t npoin,
 }
 
 void
-Refiner::correctRefine( const AMR::EdgeLock& extra )
+Refiner::correctRefine( const AMR::EdgeData& extra )
 // *****************************************************************************
 // Do mesh refinement correcting chare-boundary edges
 //! \param[in] extra Unique edges that need a new node on chare boundaries
@@ -925,13 +872,16 @@ Refiner::correctRefine( const AMR::EdgeLock& extra )
 
     // Do refinement including edges that need to be corrected
     m_refiner.error_refinement( edge, crit, lock );
+
+    // Update our extra-edge store based on refiner
+    updateEdgeData();
   }
 }
 
 void
-Refiner::newMesh()
+Refiner::updateMesh()
 // *****************************************************************************
-// Compute new mesh after refinement
+// Update old mesh after refinement
 // *****************************************************************************
 {
   // Get refined mesh connectivity
@@ -954,15 +904,8 @@ Refiner::newMesh()
 
   // Update mesh and solution after refinement
   newVolMesh( old, ref );
-  if (m_extra == 0) newBndMesh( old, ref );
-}
+  newBndMesh( old, ref );
 
-void
-Refiner::updateMesh()
-// *****************************************************************************
-// Update old mesh after refinement
-// *****************************************************************************
-{
   // Update mesh connectivity with local node IDs
   m_inpoel = m_refiner.tet_store.get_active_inpoel();
 
@@ -1042,23 +985,9 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
         Assert( m_coordmap.find(g) == end(m_coordmap),
                 "Overwriting entry already in coordmap" );
         m_coordmap.insert( {g, {{x[r], y[r], z[r]}}} );
-
-//if (thisIndex==0 && gp[0]==158 && gp[1]==284)
-//  std::cout << "inserting " << x[r] << ',' << y[r] << ',' << z[r] << '\n';
-
-        // get lock case of refined edge
-        auto lock = m_refiner.tet_store.edge_store.get(p).lock_case;
-        // assign new global node id, lock case, and coordinates to global
-        // parent id pair for (refined) boundary edge
-        const auto& ownbndedges = tk::cref_find( m_bndEdges, thisIndex );
-        auto b = ownbndedges.find( gp );
-        if (b != end(ownbndedges))
-          m_edgedata[ gp ] = std::make_tuple( g, lock, x[r], y[r], z[r] );
       }
     }
   }
-
-//if (m_gid.size() != m_lid.size()) std::cout << thisIndex << " mismatch: " << m_gid.size() << ", " << m_lid.size() << '\n';
 
   Assert( m_gid.size() == m_lid.size(), "Size mismatch" );
 

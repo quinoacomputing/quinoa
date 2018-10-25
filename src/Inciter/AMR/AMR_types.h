@@ -96,16 +96,8 @@ using edge_list_ids_t  = std::array<std::size_t, NUM_TET_EDGES>;
 
 using coord_type = std::vector< tk::real >;
 
-//! Map associating the ID, lock case, and the coordinates of a node to an edge
+//! Edge lock case associated to an edge given by global parent IDs
 using EdgeData =
-   std::unordered_map< tk::UnsMesh::Edge,
-                       std::tuple< std::size_t, Edge_Lock_Case,
-                                   tk::real, tk::real, tk::real >,
-                       tk::UnsMesh::Hash<2>,
-                       tk::UnsMesh::Eq<2> >;
-
-//! ...
-using EdgeLock =
    std::unordered_map< tk::UnsMesh::Edge,
                        Edge_Lock_Case,
                        tk::UnsMesh::Hash<2>,

@@ -409,7 +409,7 @@ Transporter::matched( std::size_t extra )
     ++m_ncit;
     m_refiner.correctref();
   } else {
-    m_print.diag( "Number of correction iterations after mesh refinement: " +
+    m_print.diag( "Number of correction iterations: " +
                   std::to_string( m_ncit ) );
     m_ncit = 0;
     m_progMesh.inc< REFINE >();
