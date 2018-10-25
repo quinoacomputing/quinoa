@@ -97,6 +97,11 @@ class DG : public CBase_DG {
     //! Compute time step size
     void dt();
 
+    //! Receive chare-boundary limiter function data from neighboring chares
+    void comlim( int fromch,
+                 const std::vector< std::size_t >& tetid,
+                 const std::vector< std::vector< tk::real > >& lfn );
+
     //! Receive chare-boundary ghost data from neighboring chares
     void comsol( int fromch,
                  const std::vector< std::size_t >& tetid,
@@ -122,6 +127,9 @@ class DG : public CBase_DG {
     //! Compute left hand side
     void lhs();
 
+    //! Compute limiter function
+    void lim();
+
     //! Const-ref access to current solution
     //! \param[in,out] u Reference to update with current solution
     void solution( tk::Fields& u ) const { u = m_u; }
@@ -139,6 +147,7 @@ class DG : public CBase_DG {
       p | m_ncomfac;
       p | m_nadj;
       p | m_nsol;
+      p | m_nlim;
       p | m_itf;
       p | m_fd;
       p | m_u;
@@ -153,7 +162,6 @@ class DG : public CBase_DG {
       p | m_nunk;
       p | m_ncoord;
       p | m_msumset;
-      p | m_esuelTet;
       p | m_ipface;
       p | m_bndFace;
       p | m_ghostData;
@@ -193,6 +201,8 @@ class DG : public CBase_DG {
     std::size_t m_nadj;
     //! Counter signaling that we have received all our solution ghost data
     std::size_t m_nsol;
+    //! Counter signaling that we have received all our limiter function ghost data
+    std::size_t m_nlim;
     //! Field output iteration count
     uint64_t m_itf;
     //! Face data
@@ -225,8 +235,6 @@ class DG : public CBase_DG {
     //!   points. This is the same data as in Discretization::m_msum, but the
     //!   nodelist is stored as a set.
     std::unordered_map< int, std::unordered_set< std::size_t > > m_msumset;
-    //! Elements surrounding elements with -1 at boundaries, see genEsuelTet()
-    std::vector< int > m_esuelTet;
     //! Internal + physical boundary faces (inverse of inpofa)
     tk::UnsMesh::FaceSet m_ipface;
     //! Face * tet IDs associated to global node IDs of the face for each chare
@@ -285,6 +293,11 @@ class DG : public CBase_DG {
 
     //! Fill elements surrounding a face along chare boundary
     void addEsuf( const std::array< std::size_t, 2 >& id, std::size_t ghostid );
+
+    //! Fill elements surrounding a element along chare boundary
+    void addEsuel( const std::array< std::size_t, 2 >& id,
+                   std::size_t ghostid,
+                   const tk::UnsMesh::Face& t );
 
     //! Fill face geometry data along chare boundary
     void addGeoFace( const tk::UnsMesh::Face& t,

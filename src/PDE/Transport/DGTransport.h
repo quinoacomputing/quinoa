@@ -21,7 +21,6 @@
 #include "Exception.h"
 #include "Vector.h"
 #include "Quadrature.h"
-#include "Limiter.h"
 #include "Inciter/Options/BC.h"
 #include "UnsMesh.h"
 
@@ -146,7 +145,6 @@ class Transport {
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
 
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
@@ -159,7 +157,6 @@ class Transport {
       const auto& bface = fd.Bface();
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();
-      const auto& esuel = fd.Esuel();
 
       Assert( inpofa.size()/3 == esuf.size()/2, "Mismatch in inpofa size" );
 
@@ -177,18 +174,6 @@ class Transport {
         bndInt< Dir >( m_bcdir, bface, esuf, geoFace, t, U, R );
 
       } else if (ndof == 4) {  // DG(P1)
-
-        // set limiter function to one
-        limFunc.fill(1.0);
-
-        Assert( U.nunk() == limFunc.nunk(), "Number of unknowns in solution "
-                "vector and limiter at recent time step incorrect" );
-
-        Assert( U.nprop() == limFunc.nprop()+m_ncomp, "Number of components in "
-                "solution vector and limiter at recent time step incorrect" );
-
-        if (limiter == ctr::LimiterType::WENOP1)
-          WENO_P1( esuel, m_c, U, limFunc );
 
         // compute internal surface flux integrals
         surfIntP1( inpoel, coord, fd, geoFace, U, limFunc, R );

@@ -43,7 +43,7 @@ WENO_P1( const std::vector< int >& esuel,
     auto mark = c*ndof;
     auto lmark = c*(ndof-1);
 
-    for (std::size_t e=0; e<U.nunk(); ++e)
+    for (std::size_t e=0; e<esuel.size()/4; ++e)
     {
       // reset all stencil values to zero
       for (auto& g : gradu) g.fill(0.0);
@@ -81,6 +81,8 @@ WENO_P1( const std::vector< int >& esuel,
           continue;
         }
 
+if (nel >= U.nunk()) std::cout << "access: " << nel << ", " << U.nunk() << '\n';
+
         gradu[is][0] = U( static_cast< std::size_t >(nel), mark+1, offset );
         gradu[is][1] = U( static_cast< std::size_t >(nel), mark+2, offset );
         gradu[is][2] = U( static_cast< std::size_t >(nel), mark+3, offset );
@@ -109,7 +111,7 @@ WENO_P1( const std::vector< int >& esuel,
         // the case of a constant solution, where osc would be zero. The number
         // is not set to machine zero because it is squared, and a number
         // between 1.0e-8 to 1.0e-6 is needed.
-        wtDof[is] = wtStencil[is] * pow( (1.0e-10 + osc[is]), -2 );
+        wtDof[is] = wtStencil[is] * pow( (1.0e-8 + osc[is]), -2 );
         wtotal += wtDof[is];
       }
 

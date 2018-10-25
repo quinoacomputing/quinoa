@@ -27,7 +27,6 @@
 #include "Riemann/LaxFriedrichs.h"
 #include "UnsMesh.h"
 #include "Quadrature.h"
-#include "Limiter.h"
 
 namespace inciter {
 
@@ -166,7 +165,7 @@ class CompFlow {
 	  }
     }
 
-	//! Compute right hand side
+    //! Compute right hand side
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
@@ -186,8 +185,6 @@ class CompFlow {
               tk::Fields& limFunc,
               tk::Fields& R ) const
 	{
-      const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
-
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
       Assert( U.nprop() == m_ndof*5 && R.nprop() == m_ndof*5,
@@ -199,7 +196,6 @@ class CompFlow {
       const auto& bface = fd.Bface();
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();
-      const auto& esuel = fd.Esuel();
 
       Assert( inpofa.size()/3 == esuf.size()/2, "Mismatch in inpofa size" );
 
@@ -217,18 +213,6 @@ class CompFlow {
         bndInt< Extrapolate >( m_bcextrapolate, fd, geoFace, t, U, R );
       } else if (m_ndof == 4) {  // DG(P1)
 
-        // set limiter function to one
-        limFunc.fill(1.0);
-
-        Assert( U.nunk() == limFunc.nunk(), "Number of unknowns in solution "
-                "vector and limiter at recent time step incorrect" );
-
-        Assert( U.nprop() == limFunc.nprop()+5, "Number of components in "
-                "solution vector and limiter at recent time step incorrect" );
-
-        if (limiter == ctr::LimiterType::WENOP1)
-          WENO_P1( esuel, 0, U, limFunc );
-
         // compute internal surface flux integrals
         surfIntP1( inpoel, coord, fd, geoFace, U, limFunc, R );
         // compute source term intehrals
@@ -245,7 +229,7 @@ class CompFlow {
       } else
         Throw( "dg::Transport::rhs() not defined for NDOF=" +
                std::to_string(m_ndof) );
-	}
+      }
 
     //! Compute the minimum time step size
 //     //! \param[in] U Solution vector at recent time step
