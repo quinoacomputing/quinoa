@@ -23,12 +23,11 @@ namespace inciter {
 
 } // inciter::
 
-  //! Weighted Essentially Non-Oscillatory (WENO) limiter for DGP1
-  void
-  WENO_P1( const std::vector< int >& esuel,
-           inciter::ncomp_t offset,
-           const tk::Fields& U,
-           tk::Fields& limFunc );
-
+//! Weighted Essentially Non-Oscillatory (WENO) limiter for DGP1
+void
+WENO_P1( const std::vector< int >& esuel,
+         inciter::ncomp_t offset,
+         const tk::Fields& U,
+         tk::Fields& limFunc );
 
 #endif // Limiter_h

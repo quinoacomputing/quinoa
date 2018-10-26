@@ -32,8 +32,8 @@ target_include_directories(Inciter PUBLIC
                            ${QUINOA_SOURCE_DIR}/LoadBalance
                            ${QUINOA_SOURCE_DIR}/Statistics
                            ${QUINOA_SOURCE_DIR}/LinSys
-                           ${QUINOA_SOURCE_DIR}/Inciter
                            ${QUINOA_SOURCE_DIR}/PDE
+                           ${QUINOA_SOURCE_DIR}/Inciter
                            ${QUINOA_TPL_DIR}
                            ${SEACASExodus_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS}
