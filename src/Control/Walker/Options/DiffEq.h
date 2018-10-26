@@ -32,6 +32,7 @@ enum class DiffEqType : uint8_t { NO_DIFFEQ=0,
                                   MIXNUMFRACBETA,
                                   MIXMASSFRACBETA,
                                   DIRICHLET,
+                                  MIXDIRICHLET,
                                   GENDIR,
                                   WRIGHTFISHER,
                                   POSITION,
@@ -62,6 +63,7 @@ class DiffEq : public tk::Toggle< DiffEqType > {
                                   , kw::mixnumfracbeta
                                   , kw::mixmassfracbeta
                                   , kw::dirichlet
+                                  , kw::mixdirichlet
                                   , kw::gendir
                                   , kw::wrightfisher
                                   , kw::position
@@ -85,6 +87,7 @@ class DiffEq : public tk::Toggle< DiffEqType > {
           { DiffEqType::MIXNUMFRACBETA, kw::mixnumfracbeta::name() },
           { DiffEqType::MIXMASSFRACBETA, kw::mixmassfracbeta::name() },
           { DiffEqType::DIRICHLET, kw::dirichlet::name() },
+          { DiffEqType::MIXDIRICHLET, kw::mixdirichlet::name() },
           { DiffEqType::GENDIR, kw::gendir::name() },
           { DiffEqType::WRIGHTFISHER, kw::wrightfisher::name() },
           { DiffEqType::POSITION, kw::position::name() },
@@ -102,6 +105,7 @@ class DiffEq : public tk::Toggle< DiffEqType > {
           { kw::mixnumfracbeta::string(), DiffEqType::MIXNUMFRACBETA },
           { kw::mixmassfracbeta::string(), DiffEqType::MIXMASSFRACBETA },
           { kw::dirichlet::string(), DiffEqType::DIRICHLET },
+          { kw::mixdirichlet::string(), DiffEqType::MIXDIRICHLET },
           { kw::gendir::string(), DiffEqType::GENDIR },
           { kw::wrightfisher::string(), DiffEqType::WRIGHTFISHER },
           { kw::position::string(), DiffEqType::POSITION },

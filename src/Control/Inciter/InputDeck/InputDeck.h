@@ -149,11 +149,16 @@ class InputDeck :
                                    kw::flux,
                                    kw::laxfriedrichs,
                                    kw::hllc,
+                                   kw::limiter,
+                                   kw::cweight,
+                                   kw::nolimiter,
+                                   kw::wenop1,
                                    kw::bc_sym,
                                    kw::bc_inlet,
                                    kw::bc_outlet,
                                    kw::bc_extrapolate,
                                    kw::gauss_hump,
+                                   kw::cyl_advect,
                                    kw::sod_shocktube >;
 
     //! \brief Constructor: set defaults
@@ -177,6 +182,8 @@ class InputDeck :
       set< tag::discr, tag::scheme >( SchemeType::MatCG );
       set< tag::discr, tag::flux >( FluxType::HLLC );
       set< tag::discr, tag::ndof >( 1 );
+      set< tag::discr, tag::limiter >( LimiterType::NOLIMITER );
+      set< tag::discr, tag::cweight >( 1.0 );
       // Default field output file type
       set< tag::selected, tag::filetype >( tk::ctr::FieldFileType::EXODUSII );
       // Default AMR settings
