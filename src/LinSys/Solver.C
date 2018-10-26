@@ -740,7 +740,6 @@ Solver::hyprerow()
 //!   to update the vector with HYPRE_IJVectorGetValues().
 // *****************************************************************************
 {
-//std::cout << CkMyPe() << ": " << "hyprerow\n";
   if (m_hypreRows.empty()) {
     for (auto r : m_row) {
       std::vector< int > h( m_ncomp );
@@ -898,7 +897,6 @@ Solver::hypresol()
 //  Build Hypre data for our portion of the solution vector
 // *****************************************************************************
 {
-//  std::cout << CkMyPe() << ": " << "hypresol\n";
   Assert( solcomplete(),
           "Values of distributed solution vector on PE " +
           std::to_string( CkMyPe() ) + " is incomplete" );
