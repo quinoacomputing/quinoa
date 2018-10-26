@@ -81,8 +81,6 @@ WENO_P1( const std::vector< int >& esuel,
           continue;
         }
 
-if (nel >= U.nunk()) std::cout << "access: " << nel << ", " << U.nunk() << '\n';
-
         gradu[is][0] = U( static_cast< std::size_t >(nel), mark+1, offset );
         gradu[is][1] = U( static_cast< std::size_t >(nel), mark+2, offset );
         gradu[is][2] = U( static_cast< std::size_t >(nel), mark+3, offset );
