@@ -24,9 +24,7 @@
 # This container does not contain proprietary software and thus the container
 # image can be publicly distributed.
 
-FROM debian:testing
-
-ARG COMMIT
+FROM debian:stable
 
 # Install system-wide prerequisites
 RUN apt-get update -y && apt-get install -y m4 autoconf git cmake gfortran gcc g++ openmpi-bin libopenmpi-dev gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhypre-dev zlib1g-dev libhdf5-dev libhdf5-openmpi-dev binutils-dev libx11-dev libxpm-dev libxft-dev libxext-dev ninja-build flex bison
@@ -41,12 +39,14 @@ CMD ["/bin/sh"]
 # Clone quinoa
 RUN git clone --recurse-submodules http://github.com/quinoacomputing/quinoa.git
 # Checkout commit to be tested
-RUN cd quinoa && git checkout $COMMIT
+ARG BRANCH
+RUN cd quinoa && git checkout -b $BRANCH remotes/origin/$BRANCH && git log -1 HEAD
 # Update submodules
 RUN cd quinoa && git submodule update --recursive && cd tpl && git submodule init && git submodule update --recursive && cd .. && git submodule status --recursive
 # Build TPLs
-RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DENABLE_ROOT=true -DENABLE_OMEGA_H=true -DCXXFLAGS="-Wno-cast-function-type -Wno-implicit-fallthrough -fpermissive -Wno-error" .. && make -sj$(grep -c processor /proc/cpuinfo)
+RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DENABLE_ROOT=true -DENABLE_OMEGA_H=true .. && make -sj$(grep -c processor /proc/cpuinfo)
 # Build & test
-RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS="-Werror -Wno-cast-function-type -Wno-catch-value" -GNinja ../src && ninja && ../script/run_tests.sh
+RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS="-Werror" -GNinja ../src && ninja
+# && ../script/run_tests.sh
 # Clean code
 RUN rm -rf /quinoa
