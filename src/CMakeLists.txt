@@ -439,32 +439,13 @@ if (DEFINED ENV{NERSC_HOST})
 elseif(ARCH MATCHES "ppc64")
   find_program(RUNNER ${CMAKE_CURRENT_SOURCE_DIR}/../script/cobalt-runjob.sh)
   SET(RUNNER_NCPUS_ARG "--np")
-  SET(RUNNER_ARGS "")
   SET(RUNNER_REQUIRED true)
-else()
+elseif(NOT RUNNER)
   SET(RUNNER "${CHARM_RUN}")
   SET(RUNNER_NCPUS_ARG "+p")
 endif()
 
-# Set default parallel/serial job runner extra arguments
-if (NOT ARCH MATCHES "ppc64" AND
-    NOT DEFINED RUNNER_ARGS AND
-    NOT DEFINED ENV{CRAY_PRGENVPGI} AND
-    NOT DEFINED ENV{CRAY_PRGENVGNU} AND
-    NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
-    NOT DEFINED ENV{CRAY_PRGENVINTEL})
-
-  if(ENABLE_AMPI)
-    SET(RUNNER_ARGS "")
-  else()
-    set(RUNNER_ARGS "--bind-to none -oversubscribe"
-        CACHE STRING "Arguments to pass to the parallel/serial job runner, e.g., mpirun.")
-  endif()
-
-endif()
-
 # Echo runner configuration
-message(STATUS "Parallel/serial job runner required: ${RUNNER_REQUIRED}")
 message(STATUS "Parallel/serial job runner: ${RUNNER}")
 message(STATUS "Parallel job runner ncpus arg: ${RUNNER_NCPUS_ARG}")
 message(STATUS "Parallel/serial job runner args: ${RUNNER_ARGS}")
