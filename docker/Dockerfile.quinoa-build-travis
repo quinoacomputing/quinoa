@@ -41,6 +41,7 @@ RUN cmake \
     ${SHARED_LIBS:+-DBUILD_SHARED_LIBS=$SHARED_LIBS} \
     ${SONARQUBE:+-DCOVERAGE=ON} \
     -DLCOV=/bin/true \
+    -DRUNNER_ARGS=-oversubscribe \
     -DGENHTML=/bin/true \
     ../src
 RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} ninja -j2 ${TARGET}
