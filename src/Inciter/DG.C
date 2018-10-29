@@ -75,6 +75,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_recvGhost(),
   m_diag(),
   m_stage( 0 )
+  //m_ndof( g_inputdeck.get< tag::discr, tag::ndof >() )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -902,6 +903,7 @@ DG::writeFields( tk::real time )
 // *****************************************************************************
 {
   auto d = Disc();
+  //const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
   // Save time stamp at which the last field write happened
   d->LastFieldWriteTime() = time;
@@ -909,25 +911,99 @@ DG::writeFields( tk::real time )
   // Increase field output iteration count
   ++m_itf;
 
-  // Collect element field output
-  std::vector< std::vector< tk::real > > elemfields;
-  auto u = m_u;   // make a copy as eq::output() may overwrite its arg
-  for (const auto& eq : g_dgpde) {
-    auto output =
-      eq.fieldOutput( m_lhs, d->Inpoel(), d->Coord(), time, m_geoElem, u );
+  //if(m_ndof == 1)
+  //{
+    // Collect element field output
+    std::vector< std::vector< tk::real > > elemfields;
+    auto u = m_u;   // make a copy as eq::output() may overwrite its arg
+    for (const auto& eq : g_dgpde) {
+      auto output =
+        eq.fieldOutput( m_lhs, d->Inpoel(), d->Coord(), time, m_geoElem, u );
 
-    // cut off ghost elements
-    for (auto& o : output) o.resize( m_esuelTet.size()/4 );
-    elemfields.insert( end(elemfields), begin(output), end(output) );
-  }
+      // cut off ghost elements
+      for (auto& o : output) o.resize( m_esuelTet.size()/4 );
+      elemfields.insert( end(elemfields), begin(output), end(output) );
 
-  // Create ExodusII writer
-  tk::ExodusIIMeshWriter ew( d->filename(), tk::ExoWriter::OPEN );
-  // Write time stamp
-  ew.writeTimeStamp( m_itf, time );
-  // Write node fields to file
-  d->writeElemSolution( ew, m_itf, elemfields );
+    }
+    // Create ExodusII writer
+    tk::ExodusIIMeshWriter ew( d->filename(), tk::ExoWriter::OPEN );
+    // Write time stamp
+    ew.writeTimeStamp( m_itf, time );
+    // Write node fields to file
+    d->writeElemSolution( ew, m_itf, elemfields );
+  //}
+  /*else
+  {
+    // Collect nodal point field output
+    std::vector< std::vector< tk::real > > nodefields;
+    nodefields.resize( 5, std::vector<tk::real>(m_ncoord,0) );
+
+    auto u = m_u;   // make a copy as eq::output() may overwrite its arg
+
+    NodeSolP1( nodefields, u, m_geoElem, d->Coord(), d->Inpoel(), m_limFunc, m_ndof);
+
+    // Create ExodusII writer
+    tk::ExodusIIMeshWriter ew( d->filename(), tk::ExoWriter::OPEN );
+    // Write time stamp
+    ew.writeTimeStamp( m_itf, time );
+    // Write node fields to file
+    d->writeNodeSolution( ew, m_itf, nodefields );
+  }*/
 }
+
+/*void NodeSolP1( std::vector< std::vector< tk::real > > &U_node,
+                tk::Fields& U,
+                tk::Fields& geoElem,
+                tk::UnsMesh::Coords& coord,
+                std::vector< std::size_t >& inpoel,
+                tk::Fields& limFunc,
+                std::size_t ndof)
+// *****************************************************************************
+//! Compute numerical solution at nodal points
+//! \param[in] Numerical solution at node
+//! \param[in] U Solution vector at recent time step
+//! \param[in] geoElem Element geometry array
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] limFunc Limiter function for higher-order solution dofs
+// *****************************************************************************
+{
+  // Coordinates of nodal point in the reference domain
+  std::vector< std::vector< tk::real > > 
+    RefNcoord{{ 0, 1, 0, 0 },
+              { 0, 0, 1, 0 },
+              { 0, 0, 0, 1 }};
+
+  std::vector<std::size_t> count;
+  count.resize( coord[0].size(), 0 );
+
+  for (std::size_t e=0; e<geoElem.nunk(); ++e)
+  {
+    for (std::size_t i=0; i<4; ++i)
+    {
+      auto B2 = 2.0 * RefNcoord[i][0] + RefNcoord[i][1] + RefNcoord[i][2] - 1.0;
+      auto B3 = 3.0 * RefNcoord[i][1] + RefNcoord[i][2] - 1.0;
+      auto B4 = 4.0 * RefNcoord[i][2] - 1.0;
+
+      for (std::size_t c=0; c<5; ++c)
+      {
+        auto mark = c*ndof;
+        auto lmark = c*(ndof-1);
+        U_node[c][inpoel[4*e+i]] +=  U(e, mark, 0)
+                                   + limFunc(e, lmark+0, 0) * U(e, mark+1, 0) * B2
+                                   + limFunc(e, lmark+1, 0) * U(e, mark+2, 0) * B3
+                                   + limFunc(e, lmark+2, 0) * U(e, mark+3, 0) * B4;
+      }
+      ++count[inpoel[4*e+i]];
+    }
+  }
+  for(std::size_t i=0; i<coord[0].size(); ++i)
+  {
+    for (std::size_t c=0; c<5; ++c)
+      U_node[c][i] = U_node[i][c] / count[i];
+  }
+}*/
+
 
 void
 DG::out()
