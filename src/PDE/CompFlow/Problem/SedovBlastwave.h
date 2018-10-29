@@ -39,11 +39,31 @@ class CompFlowProblemSedovBlastwave {
       // ratio of specific heats
       const tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[e];
       tk::real r, p, u, v, w, rE;
-      if ( (x<0.05) && (y<0.05) ) {
+      //if ( (x<0.05) && (y<0.05) ) {
+      //  // density
+      //  r = 1.0;
+      //  // pressure
+      //  p = 783.4112;
+      //  // velocity
+      //  u = 0.0;
+      //  v = 0.0;
+      //  w = 0.0;
+      //}
+      //else {
+      //  // density
+      //  r = 1.0;
+      //  // pressure
+      //  p = 1.0e-6;
+      //  // velocity
+      //  u = 0.0;
+      //  v = 0.0;
+      //  w = 0.0;
+      //}
+      if ( (std::sqrt(x*x + y*y)<0.5) ) {
         // density
         r = 1.0;
         // pressure
-        p = 783.4112;
+        p = 1.0;
         // velocity
         u = 0.0;
         v = 0.0;
@@ -51,14 +71,15 @@ class CompFlowProblemSedovBlastwave {
       }
       else {
         // density
-        r = 1.0;
+        r = 0.125;
         // pressure
-        p = 1.0e-6;
+        p = 0.1;
         // velocity
         u = 0.0;
         v = 0.0;
         w = 0.0;
       }
+
       // total specific energy
       rE = p/(g-1.0) + 0.5*r*(u*u + v*v + w*w);
       return {{ r, r*u, r*v, r*w, rE }};
@@ -151,12 +172,14 @@ class CompFlowProblemSedovBlastwave {
       tk::real g =
         g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
 
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+
       std::vector< std::vector< tk::real > > out;
-      const auto r  = U.extract( 0, offset );
-      const auto ru = U.extract( 1, offset );
-      const auto rv = U.extract( 2, offset );
-      const auto rw = U.extract( 3, offset );
-      const auto re = U.extract( 4, offset );
+      const auto r  = U.extract( 0*ndof, offset );
+      const auto ru = U.extract( 1*ndof, offset );
+      const auto rv = U.extract( 2*ndof, offset );
+      const auto rw = U.extract( 3*ndof, offset );
+      const auto re = U.extract( 4*ndof, offset );
 
       // mesh node coordinates
       //const auto& x = coord[0];

@@ -801,6 +801,7 @@ DG::setup( tk::real v )
   for (const auto& eq : g_dgpde) 
     eq.initialize( m_lhs, inpoel, coord, m_u, d->T() );
   m_un = m_u;
+  m_limFunc.fill(1.0);
 
   // Output initial conditions to file (regardless of whether it was requested)
   if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( d->T() );
@@ -829,6 +830,8 @@ DG::dt()
   auto def_const_dt = g_inputdeck_defaults.get< tag::discr, tag::dt >();
   auto eps = std::numeric_limits< tk::real >::epsilon();
 
+  auto d = Disc();
+
   // use constant dt if configured
   if (std::abs(const_dt - def_const_dt) > eps) {
 
@@ -837,8 +840,11 @@ DG::dt()
   } else {      // compute dt based on CFL
 
     // find the minimum dt across all PDEs integrated
-    // ...
-    mindt = 0.1;        // stub for now to overwrite numeric_limits::max
+    for (const auto& eq : g_dgpde) {
+      auto eqdt = eq.dt( d->Coord(), d->Inpoel(), m_fd, m_geoFace, m_geoElem,
+                         m_limFunc, m_u );
+      if (eqdt < mindt) mindt = eqdt;
+    }
 
     // Scale smallest dt with CFL coefficient
     mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
@@ -961,12 +967,21 @@ DG::writeFields( tk::real time )
     elemfields.insert( end(elemfields), begin(output), end(output) );
   }
 
+  // Collect node field output
+  std::vector< std::vector< tk::real > > nodefields;
+  for (const auto& eq : g_dgpde) {
+    auto output =
+      eq.avgElemToNode( d->Inpoel(), d->Coord(), m_geoElem, m_u );
+
+    nodefields.insert( end(nodefields), begin(output), end(output) );
+  }
+
   // Create ExodusII writer
   tk::ExodusIIMeshWriter ew( d->filename(), tk::ExoWriter::OPEN );
   // Write time stamp
   ew.writeTimeStamp( m_itf, time );
-  // Write node fields to file
-  d->writeElemSolution( ew, m_itf, elemfields );
+  // Write element and node fields to file
+  d->writeElemSolution( ew, m_itf, elemfields, nodefields );
 }
 
 void

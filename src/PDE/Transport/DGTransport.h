@@ -201,6 +201,10 @@ class Transport {
     //! \return Minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& /*coord*/,
                  const std::vector< std::size_t >& /*inpoel*/,
+                 const inciter::FaceData& /*fd*/,
+                 const tk::Fields& /*geoFace*/,
+                 const tk::Fields& /*geoElem*/,
+                 const tk::Fields& /*limFunc*/,
                  const tk::Fields& /*U*/ ) const
     {
       tk::real mindt = std::numeric_limits< tk::real >::max();
@@ -231,6 +235,17 @@ class Transport {
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_error" );
       return n;
+    }
+
+    //!
+    std::vector< std::vector< tk::real > >
+    avgElemToNode( const std::vector< std::size_t >& /*inpoel*/,
+                   const tk::UnsMesh::Coords& /*coord*/,
+                   const tk::Fields& /*geoElem*/,
+                   const tk::Fields& /*U*/ ) const
+    {
+      std::vector< std::vector< tk::real > > out;
+      return out;
     }
 
     //! Return field output going to file

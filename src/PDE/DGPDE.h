@@ -100,8 +100,12 @@ class DGPDE {
     //! Public interface for computing the minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< std::size_t >& inpoel,
+                 const inciter::FaceData& fd,
+                 const tk::Fields& geoFace,
+                 const tk::Fields& geoElem,
+                 const tk::Fields& limFunc,
                  const tk::Fields& U ) const
-    { return self->dt( coord, inpoel, U ); }
+    { return self->dt( coord, inpoel, fd, geoFace, geoElem, limFunc, U ); }
 
     //! \brief Public interface for collecting all side set IDs the user has
     //!   configured for all components of a PDE system
@@ -122,6 +126,14 @@ class DGPDE {
       const tk::Fields& geoElem,
       tk::Fields& U ) const
     { return self->fieldOutput( L, inpoel, coord, t, geoElem, U ); }
+
+    //! Public interface to returning nodal field output
+    std::vector< std::vector< tk::real > > avgElemToNode(
+      const std::vector< std::size_t >& inpoel,
+      const tk::UnsMesh::Coords& coord,
+      const tk::Fields& geoElem,
+      const tk::Fields& U ) const
+    { return self->avgElemToNode( inpoel, coord, geoElem, U ); }
 
     //! Public interface to returning analytic solution
     std::vector< tk::real >
@@ -163,6 +175,10 @@ class DGPDE {
                         tk::Fields& ) const = 0;
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
                            const std::vector< std::size_t >&,
+                           const inciter::FaceData&,
+                           const tk::Fields&,
+                           const tk::Fields&,
+                           const tk::Fields&,
                            const tk::Fields& ) const = 0;
       virtual void side( std::unordered_set< int >& conf ) const = 0;
       virtual std::vector< std::string > fieldNames() const = 0;
@@ -174,6 +190,11 @@ class DGPDE {
         tk::real,
         const tk::Fields&,
         tk::Fields& ) const = 0;
+      virtual std::vector< std::vector< tk::real > > avgElemToNode(
+        const std::vector< std::size_t >&,
+        const tk::UnsMesh::Coords&,
+        const tk::Fields&,
+        const tk::Fields& ) const = 0;
       virtual std::vector< tk::real > analyticSolution(
         tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
     };
@@ -204,8 +225,12 @@ class DGPDE {
       { data.rhs( t, geoFace, geoElem, fd, inpoel, coord, U, limFunc, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
+                   const inciter::FaceData& fd,
+                   const tk::Fields& geoFace,
+                   const tk::Fields& geoElem,
+                   const tk::Fields& limFunc,
                    const tk::Fields& U ) const override
-      { return data.dt( coord, inpoel, U ); }
+      { return data.dt( coord, inpoel, fd, geoFace, geoElem, limFunc, U ); }
       void side( std::unordered_set< int >& conf ) const override
       { data.side( conf ); }
       std::vector< std::string > fieldNames() const override
@@ -220,6 +245,12 @@ class DGPDE {
         const tk::Fields& geoElem,
         tk::Fields& U ) const override
       { return data.fieldOutput( L, inpoel, coord, t, geoElem, U ); }
+      std::vector< std::vector< tk::real > > avgElemToNode(
+        const std::vector< std::size_t >& inpoel,
+        const tk::UnsMesh::Coords& coord,
+        const tk::Fields& geoElem,
+        const tk::Fields& U ) const override
+      { return data.avgElemToNode( inpoel, coord, geoElem, U ); }
       std::vector< tk::real >
       analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
        const override { return data.analyticSolution( xi, yi, zi, t ); }

@@ -193,7 +193,8 @@ class Discretization : public CBase_Discretization {
     #endif
     void writeElemSolution( const tk::ExodusIIMeshWriter& ew,
                             uint64_t it,
-                            const std::vector< std::vector< tk::real > >& u )
+                            const std::vector< std::vector< tk::real > >& u,
+                            const std::vector< std::vector< tk::real > >& v )
                           const;
 
     //! Set time step size
