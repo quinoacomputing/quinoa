@@ -384,7 +384,9 @@ namespace deck {
                              pegtl::alpha >,
            tk::grm::interval< use< kw::ttyi >, tag::tty >,
            discroption< use, kw::scheme, inciter::ctr::Scheme, tag::scheme >,
-           discroption< use, kw::flux, inciter::ctr::Flux, tag::flux >
+           discroption< use, kw::flux, inciter::ctr::Flux, tag::flux >,
+           discroption< use, kw::limiter, inciter::ctr::Limiter, tag::limiter >,
+           tk::grm::discrparam< use, kw::cweight, tag::cweight >
          > {};
 
   //! PDE parameter vector

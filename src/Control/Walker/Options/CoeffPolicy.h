@@ -22,6 +22,7 @@ namespace ctr {
 //! Differential equation coefficients policy types
 enum class CoeffPolicyType : uint8_t { CONSTANT=0
                                      , DECAY
+                                     , HOMOGENEOUS
                                      , HOMOGENEOUS_DECAY
                                      , MONTE_CARLO_HOMOGENEOUS_DECAY
                                      , HYDROTIMESCALE
@@ -39,6 +40,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
     //! Valid expected choices to make them also available at compile-time
     using keywords = brigand::list< kw::constant
                                   , kw::decay
+                                  , kw::homogeneous
                                   , kw::homdecay
                                   , kw::montecarlo_homdecay
                                   , kw::hydrotimescale
@@ -56,6 +58,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
         //! Enums -> names
         { { CoeffPolicyType::CONSTANT, kw::constant::name() },
           { CoeffPolicyType::DECAY, kw::decay::name() },
+          { CoeffPolicyType::HOMOGENEOUS, kw::homogeneous::name() },
           { CoeffPolicyType::HOMOGENEOUS_DECAY, kw::homdecay::name() },
           { CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY,
             kw::montecarlo_homdecay::name() },
@@ -66,6 +69,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
         //! keywords -> Enums
         {  { kw::constant::string(), CoeffPolicyType::CONSTANT },
            { kw::decay::string(), CoeffPolicyType::DECAY },
+           { kw::homogeneous::string(), CoeffPolicyType::HOMOGENEOUS },
            { kw::homdecay::string(), CoeffPolicyType::HOMOGENEOUS_DECAY },
            { kw::montecarlo_homdecay::string(),
              CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY },
@@ -104,6 +108,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
     std::map< CoeffPolicyType, std::string > policy {
         { CoeffPolicyType::CONSTANT, *kw::constant::code() }
       , { CoeffPolicyType::DECAY, *kw::decay::code() }
+      , { CoeffPolicyType::HOMOGENEOUS, *kw::homogeneous::code() }
       , { CoeffPolicyType::HOMOGENEOUS_DECAY, *kw::homdecay::code() }
       , { CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY,
           *kw::montecarlo_homdecay::code() }

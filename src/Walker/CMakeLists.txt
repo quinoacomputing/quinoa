@@ -23,6 +23,7 @@ target_include_directories(Walker PUBLIC
                            ${PROJECT_BINARY_DIR}/../Walker
                            ${BRIGAND_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
+                           ${MKL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS})
 
 addCharmModule( "distributor" "Walker" )

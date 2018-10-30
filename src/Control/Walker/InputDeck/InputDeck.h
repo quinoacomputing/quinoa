@@ -71,6 +71,7 @@ class InputDeck :
                                      , kw::skewnormal
                                      , kw::gamma
                                      , kw::dirichlet
+                                     , kw::mixdirichlet
                                      , kw::gendir
                                      , kw::wrightfisher
                                      , kw::beta
@@ -155,6 +156,7 @@ class InputDeck :
                                      , kw::mixmassfracbeta
                                      , kw::massfracbeta
                                      , kw::sde_r
+                                     , kw::homogeneous
                                      , kw::homdecay
                                      , kw::montecarlo_homdecay
                                      , kw::hydrotimescale

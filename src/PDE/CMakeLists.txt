@@ -5,6 +5,7 @@ project(PDE CXX)
 add_library(PDE
             PDEStack.C
             Quadrature.C
+            Limiter.C
             ConfigureTransport.C
             ConfigureCompFlow.C)
 
