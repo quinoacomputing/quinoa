@@ -431,21 +431,44 @@ endif()
 # while make puts it into <build>/Main, but after any executable target we copy
 # <build>/Main/charmrun to <build> for non-ninja builds. See also
 # cmake/ConfigExecutable.cmake.
-SET(RUNNER_REQUIRED false) # if true all executables must be prefixed by runner
+
+# Defaults for runner, used to run regression tests
+set(RUNNER_REQUIRED false)
+set(RUNNER "${CHARM_RUN}" CACHE STRING
+    "Parallel/serial job runner, used to run regression tests")
+set(RUNNER_NCPUS_ARG "+p" CACHE STRING
+    "The argument used to specify the number of PEs for the runner")
+set(RUNNER_ARGS "--bind-to none -oversubscribe" CACHE STRING
+    "Arguments to pass to the parallel/serial job runner, e.g., to mpirun.")
+
+if(ENABLE_AMPI)
+  set(RUNNER_ARGS "")
+endif()
+
+# Host-, and/or architecture-specifc runner configuration
 if (DEFINED ENV{NERSC_HOST})
-  SET(RUNNER "srun")
-  SET(RUNNER_NCPUS_ARG "-n")
-  SET(RUNNER_REQUIRED true)
+
+  set(RUNNER "srun")
+  set(RUNNER_NCPUS_ARG "-n")
+  set(RUNNER_REQUIRED true)
+
 elseif(ARCH MATCHES "ppc64")
+
   find_program(RUNNER ${CMAKE_CURRENT_SOURCE_DIR}/../script/cobalt-runjob.sh)
-  SET(RUNNER_NCPUS_ARG "--np")
-  SET(RUNNER_REQUIRED true)
-elseif(NOT RUNNER)
-  SET(RUNNER "${CHARM_RUN}")
-  SET(RUNNER_NCPUS_ARG "+p")
+  set(RUNNER_NCPUS_ARG "--np")
+  set(RUNNER_REQUIRED true)
+
+elseif(DEFINED ENV{CRAY_PRGENVPGI} OR
+       DEFINED ENV{CRAY_PRGENVGNU} OR
+       DEFINED ENV{CRAY_PRGENVCRAY} OR
+       DEFINED ENV{CRAY_PRGENVINTEL})
+
+  set(RUNNER_ARGS "")
+
 endif()
 
 # Echo runner configuration
+message(STATUS "Parallel/serial job runner required: ${RUNNER_REQUIRED}")
 message(STATUS "Parallel/serial job runner: ${RUNNER}")
 message(STATUS "Parallel job runner ncpus arg: ${RUNNER_NCPUS_ARG}")
 message(STATUS "Parallel/serial job runner args: ${RUNNER_ARGS}")
