@@ -1390,8 +1390,27 @@ struct decay_info {
 };
 using decay = keyword< decay_info, TAOCPP_PEGTL_STRING("decay") >;
 
-struct homdecay_info {
+struct homogeneous_info {
   using code = Code< H >;
+  static std::string name() { return "homogeneous"; }
+  static std::string shortDescription() { return
+    "Select homogeneous coefficients policy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the homogeneous coefficients policy.
+    This policy (or model) is used to constrain a Dirichlet stochastic
+    differential equation so that its mean density stays constant.
+    A coefficients policy, in general, is used to specify how the
+    coefficients are set at each time step during time-integration. Example:
+    "coeff const", which selects constant coefficients policy, which sets
+    constant coefficients before t = 0 and leaves the coefficients unchanged
+    during time integration. Note that this option may behave differently
+    depending on the particular equation or physical model.)"; }
+};
+using homogeneous =
+  keyword< homogeneous_info, TAOCPP_PEGTL_STRING("homogeneous") >;
+
+struct homdecay_info {
+  using code = Code< Y >;
   static std::string name() { return "homogeneous decay"; }
   static std::string shortDescription() { return
     "Select homogeneous decay coefficients policy"; }
@@ -1499,7 +1518,7 @@ using instantaneous_velocity =
 
 struct coeff_info {
   using code = Code< c >;
-  static std::string name() { return "coeficients fpolicy"; }
+  static std::string name() { return "coefficients policy"; }
   static std::string shortDescription() { return
     "Select the coefficients policy"; }
   static std::string longDescription() { return
@@ -2273,6 +2292,34 @@ struct dirichlet_info {
   }
 };
 using dirichlet = keyword< dirichlet_info,  TAOCPP_PEGTL_STRING("dirichlet") >;
+
+struct mixdirichlet_info {
+  static std::string name() { return "MixDirichlet"; }
+  static std::string shortDescription() { return
+    "Start configuration block for the Mixture Dirichlet SDE"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a mixdirichlet ... end block, used to
+    specify the configuration of a system of stochastic differential
+    equations (SDEs), whose invariant is the Dirichlet distribution constrained
+    to model multi-material mixing in turbulent flows. For more
+    details on the Dirichlet SDE, see https://doi.org/10.1155/2013/842981.
+    Keywords allowed in a mixdirichlet ... end block: )" + std::string("\'")
+    + depvar::string()+ "\', \'"
+    + ncomp::string() + "\', \'"
+    + rng::string() + "\', \'"
+    + init::string() + "\', \'"
+    + coeff::string() + "\', \'"
+    + sde_b::string() + "\', \'"
+    + sde_S::string() + "\', \'"
+    + sde_kappa::string() + "\', \'"
+    + sde_rho2::string() + "\', \'"
+    + sde_r::string() + "\'. "
+    + R"(For an example mixdirichlet ... end block, see
+      doc/html/walker_example_mixdirichlet.html.)";
+  }
+};
+using mixdirichlet =
+  keyword< mixdirichlet_info, TAOCPP_PEGTL_STRING("mixdirichlet") >;
 
 struct gendir_info {
   static std::string name() { return "Generalized Dirichlet"; }

@@ -56,6 +56,7 @@ struct central {};
 struct binsize {};
 struct extent {};
 struct dirichlet {};
+struct mixdirichlet {};
 struct gendir {};
 struct wrightfisher {};
 struct p0 {};
