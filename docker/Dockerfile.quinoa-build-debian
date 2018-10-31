@@ -39,8 +39,8 @@ CMD ["/bin/sh"]
 # Clone quinoa
 RUN git clone --recurse-submodules http://github.com/quinoacomputing/quinoa.git
 # Checkout commit to be tested
-ARG BRANCH
-RUN cd quinoa && git checkout -b $BRANCH remotes/origin/$BRANCH && git log -1 HEAD
+ARG COMMIT
+RUN cd quinoa && git checkout $COMMIT && git log -1 HEAD
 # Update submodules
 RUN cd quinoa && git submodule update --recursive && cd tpl && git submodule init && git submodule update --recursive && cd .. && git submodule status --recursive
 # Build TPLs
