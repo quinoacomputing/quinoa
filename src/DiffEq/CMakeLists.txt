@@ -32,6 +32,7 @@ target_include_directories(DiffEq PUBLIC
                            ${PEGTL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
                            ${RNGSSE2_INCLUDE_DIRS}
+                           ${MKL_INCLUDE_DIRS}
                            ${LAPACKE_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS})
 

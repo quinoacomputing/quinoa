@@ -131,12 +131,13 @@ else()
   set(UNDERLYING_CXX_COMPILER "${CMAKE_CXX_COMPILER}")
   set(LINKER_COMPILER "${AMPI_CXX_COMPILER}")
   set(MPI_CXX_INCLUDE_DIRS "")
-  MESSAGE(STATUS "MPI C compiler: " ${MPI_C_COMPILER})
-  MESSAGE(STATUS "MPI C++ compiler: " ${MPI_CXX_COMPILER})
-  MESSAGE(STATUS "Underlying C compiler: " ${UNDERLYING_C_COMPILER})
-  MESSAGE(STATUS "Underlying C++ compiler: " ${UNDERLYING_CXX_COMPILER})
   MESSAGE(STATUS "AMPIrun: " ${AMPI_RUN})
 endif()
+
+MESSAGE(STATUS "MPI C compiler: " ${MPI_C_COMPILER})
+MESSAGE(STATUS "MPI C++ compiler: " ${MPI_CXX_COMPILER})
+MESSAGE(STATUS "Underlying C compiler: " ${UNDERLYING_C_COMPILER})
+MESSAGE(STATUS "Underlying C++ compiler: " ${UNDERLYING_CXX_COMPILER})
 
 MESSAGE(STATUS "Charmrun: " ${CHARM_RUN})
 MESSAGE(STATUS "Linker compiler: " ${LINKER_COMPILER})
@@ -430,35 +431,39 @@ endif()
 # while make puts it into <build>/Main, but after any executable target we copy
 # <build>/Main/charmrun to <build> for non-ninja builds. See also
 # cmake/ConfigExecutable.cmake.
-SET(RUNNER_REQUIRED false) # if true all executables must be prefixed by runner
-if (DEFINED ENV{NERSC_HOST})
-  SET(RUNNER "srun")
-  SET(RUNNER_NCPUS_ARG "-n")
-  SET(RUNNER_REQUIRED true)
-elseif(ARCH MATCHES "ppc64")
-  find_program(RUNNER ${CMAKE_CURRENT_SOURCE_DIR}/../script/cobalt-runjob.sh)
-  SET(RUNNER_NCPUS_ARG "--np")
-  SET(RUNNER_ARGS "")
-  SET(RUNNER_REQUIRED true)
-else()
-  SET(RUNNER "${CHARM_RUN}")
-  SET(RUNNER_NCPUS_ARG "+p")
+
+# Defaults for runner, used to run regression tests
+set(RUNNER_REQUIRED false)
+set(RUNNER "${CHARM_RUN}" CACHE STRING
+    "Parallel/serial job runner, used to run regression tests")
+set(RUNNER_NCPUS_ARG "+p" CACHE STRING
+    "The argument used to specify the number of PEs for the runner")
+set(RUNNER_ARGS "--bind-to none -oversubscribe" CACHE STRING
+    "Arguments to pass to the parallel/serial job runner, e.g., to mpirun.")
+
+if(ENABLE_AMPI)
+  set(RUNNER_ARGS "")
 endif()
 
-# Set default parallel/serial job runner extra arguments
-if (NOT ARCH MATCHES "ppc64" AND
-    NOT DEFINED RUNNER_ARGS AND
-    NOT DEFINED ENV{CRAY_PRGENVPGI} AND
-    NOT DEFINED ENV{CRAY_PRGENVGNU} AND
-    NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
-    NOT DEFINED ENV{CRAY_PRGENVINTEL})
+# Host-, and/or architecture-specifc runner configuration
+if (DEFINED ENV{NERSC_HOST})
 
-  if(ENABLE_AMPI)
-    SET(RUNNER_ARGS "")
-  else()
-    set(RUNNER_ARGS "--bind-to none -oversubscribe"
-        CACHE STRING "Arguments to pass to the parallel/serial job runner, e.g., mpirun.")
-  endif()
+  set(RUNNER "srun")
+  set(RUNNER_NCPUS_ARG "-n")
+  set(RUNNER_REQUIRED true)
+
+elseif(ARCH MATCHES "ppc64")
+
+  find_program(RUNNER ${CMAKE_CURRENT_SOURCE_DIR}/../script/cobalt-runjob.sh)
+  set(RUNNER_NCPUS_ARG "--np")
+  set(RUNNER_REQUIRED true)
+
+elseif(DEFINED ENV{CRAY_PRGENVPGI} OR
+       DEFINED ENV{CRAY_PRGENVGNU} OR
+       DEFINED ENV{CRAY_PRGENVCRAY} OR
+       DEFINED ENV{CRAY_PRGENVINTEL})
+
+  set(RUNNER_ARGS "")
 
 endif()
 
