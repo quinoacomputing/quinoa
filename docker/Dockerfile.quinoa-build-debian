@@ -50,6 +50,6 @@ RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS=-Werror -
 # Run tests
 RUN cd quinoa/build && ../script/run_tests.sh $(grep -c processor /proc/cpuinfo) mpirun -n
 # Build doc
-#RUN cd quinoa/build && ninja doc
+#RUN cd quinoa/build && ninja doc       # not yet: need python 3.6, not yet available in debian:stable
 # Clean code
 RUN rm -rf /quinoa
