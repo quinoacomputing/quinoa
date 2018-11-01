@@ -46,6 +46,7 @@ target_include_directories(RNGTestControl PUBLIC
                            ${PEGTL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS}
+                           ${MKL_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../Main)
 
 set_target_properties(RNGTestControl PROPERTIES
@@ -144,6 +145,7 @@ target_include_directories(WalkerControl PUBLIC
                            ${QUINOA_SOURCE_DIR}/Control
                            ${PROJECT_BINARY_DIR}/../Main
                            ${PEGTL_INCLUDE_DIRS}
+                           ${MKL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS})
 

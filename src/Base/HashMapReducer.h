@@ -47,13 +47,23 @@ serialize( const std::unordered_map< Key, T, Hash, Eq >& m ) {
   return { sizer.size(), std::move(flatData) };
 }
 
-//! Concatenate vectors
+//! Concatenate vectors of T
 //! \tparam T Vector value type
 //! \param[in] src Source vector
 //! \param[in,out] dst Destination vector
 template< class T >
 void concat( const std::vector< T >& src, std::vector< T >& dst ) {
   dst.insert( end(dst), begin(src), end(src) );
+}
+
+//! Overwrite vectors of pair< bool, tk::real >
+//! \tparam T Vector value type
+//! \param[in] src Source vector
+//! \param[in,out] dst Destination vector
+template< class T >
+void concat( const std::vector< std::pair< bool, T > >& src,
+             std::vector< std::pair< bool, T > >& dst ) {
+  dst = src;
 }
 
 //! Concatenate unordered sets
