@@ -59,7 +59,7 @@ RUN cd quinoa && git submodule update --recursive && cd tpl && git submodule ini
 # Build TPLs
 RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off .. && make -sj$(grep -c processor /proc/cpuinfo)
 # Build quinoa
-RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off -DCMAKE_CXX_FLAGS=-Werror -DRUNNER_ARGS="--bind-to none -oversubscribe -mca plm isolated" ../src && make -sj$(grep -c processor /proc/cpuinfo) && ../script/run_tests.sh $(grep -c processor /proc/cpuinfo) "--bind-to none -oversubscribe -mca plm isolated"
+RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off -DCMAKE_CXX_FLAGS=-Werror -DRUNNER_ARGS="--bind-to none -oversubscribe -mca plm isolated" ../src && make -sj$(grep -c processor /proc/cpuinfo) && ../script/run_tests.sh $(grep -c processor /proc/cpuinfo) ./charmrun +p "--bind-to none -oversubscribe -mca plm isolated"
 
 # Ensure all executables are statically linked
 RUN cd quinoa/build && \
