@@ -59,7 +59,7 @@
 
 # Error checking on the number of arguments
 if [ "$#" -eq 2 ]; then
-  echo -e "Error: 2 args are not allowed: if the 2nd [runner] arg is given, it must be followed by the 3rd [runner_ncpus_arg] arg.\nSee the source of this file for details." | fold -s -w`tput cols`
+  echo -e "Error: 2 args are not allowed: if the 2nd [runner] arg is given, it must be followed by the 3rd [runner_ncpus_arg] arg.  See the source of this file for details."
   exit -1
 fi
 

@@ -54,6 +54,7 @@
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
   #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
   #pragma GCC diagnostic ignored "-Wparentheses"
+  #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 181 )
