@@ -46,10 +46,10 @@ RUN cd quinoa && git submodule update --recursive && cd tpl && git submodule ini
 # Build TPLs
 RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DENABLE_ROOT=true -DENABLE_OMEGA_H=true .. && make -sj$(grep -c processor /proc/cpuinfo)
 # Build code
-RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS="-Werror" -GNinja -DRUNNER=mpirun -DRUNNER_NCPUS_ARG=-n ../src && ninja
+RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS=-Werror -GNinja -DRUNNER=mpirun -DRUNNER_NCPUS_ARG=-n ../src && ninja
 # Run tests
 RUN cd quinoa/build && ../script/run_tests.sh $(grep -c processor /proc/cpuinfo) mpirun -n
 # Build doc
 #RUN cd quinoa/build && ninja doc
 # Clean code
-#RUN rm -rf /quinoa
+RUN rm -rf /quinoa
