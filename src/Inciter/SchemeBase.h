@@ -29,6 +29,7 @@
 
 namespace inciter {
 
+//! Base class for generic forwarding interface to discretization proxies
 class SchemeBase {
 
   public:
@@ -37,11 +38,13 @@ class SchemeBase {
 
     //! Constructor
     //! \param[in] scheme Discretization scheme
-    //! \details Based on the enum we create two empty chare arrays: (1)
-    //!    discproxy which contains common functionality and data for all
-    //!    discretizations, and (2) proxy, which have functionality and data
-    //!    specific to a given discretization. Note that proxy is bound (in
-    //!    migration behavior and properties) to discproxy.
+    //! \details Based on the input enum we create at least two empty chare
+    //!   arrays: (1) discproxy which contains common functionality and data for
+    //!   all discretizations, and (2) proxy, which have functionality and data
+    //!   specific to a given discretization. Note that proxy is bound (in
+    //!   migration behavior and properties) to discproxy.
+    //! \note There may be other bound proxy arrays created depending on the
+    //!   specific discretization configured by the enum.
     explicit SchemeBase( ctr::SchemeType scheme ) :
       discproxy( CProxy_Discretization::ckNew() )
     {

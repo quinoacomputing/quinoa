@@ -133,6 +133,7 @@
 
 namespace inciter {
 
+//! Generic forwarding interface to discretization proxies
 class Scheme : public SchemeBase {
 
   public:
