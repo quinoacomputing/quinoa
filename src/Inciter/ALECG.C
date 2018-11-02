@@ -6,7 +6,7 @@
   \details   ALECG advances a system of partial differential equations (PDEs)
     using a continuous Galerkin (CG) finite element (FE) spatial discretization
     (using linear shapefunctions on tetrahedron elements) combined with a
-    Runge-Kutta (RK) time stepping scheme in the argbitrary Eulerian-Lagrangian
+    Runge-Kutta (RK) time stepping scheme in the arbitrary Eulerian-Lagrangian
     reference frame.
   \see The documentation in ALECG.h.
 */

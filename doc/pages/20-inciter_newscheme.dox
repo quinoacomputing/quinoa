@@ -3,16 +3,16 @@ namespace inciter {
   \page      inciter_newscheme How to add a new scheme to Inciter
 
 @ref inciter_main supports multiple discretization schemes. This page describes
-how to add yours by walking through an example of adding a new one. We also
-discuss the main steps of the execution logic, which, at a high level, is the
-same for all discretization schemes.
+how to add a scheme of your choice by walking through an example of adding a
+new one. We also discuss the main steps of the execution logic, which, at a
+high level, is the same for all discretization schemes.
 
 @tableofcontents{xml}
 
 @section inciter_newscheme_rationale Rationale and plan
 
 Similar to the existing discretization schemes, `DiagCG`, `MatCG`, or `DG`, the
-new scheme, `ALECG` (short for arbitrary Lagrangian-Eulerian continuous
+new scheme, `ALECG` (short for Arbitrary Lagrangian-Eulerian Continuous
 Galerkin), will interact with `Discretization` in a child-base fashion, e.g.,
 will directly access (and reuse) its member data and functions.  It will also
 intereact with `Refiner`, for mesh refinement, and will also be migratable to
@@ -356,19 +356,20 @@ merging such data. Such an example is given in Inciter/DiagReducer.C.
 The entry methods, defined in the `.ci` file and with `when` keywords, form a
 structured directed acyclic graph (DAG). These specify logical relations among
 tasks and execution logic within the class. For example, `wait4lhs` tells the
-runtime system that only when `ownlhs_complete()` _and_ `comlhs_complete` are
-both done, can (and will) `lhsmerge()` be called. In this case, this construct
-ensures that the runtime system will call a member function that operates on the
+runtime system that only when `ownlhs_complete()` _and_ `comlhs_complete()` are
+both done will `lhsmerge()` be called. In this case, this construct ensures
+that the runtime system will call a member function that operates on the
 left-hand side matrix, when both the local and external contributions are
 complete. Note that this logic only relates to a given array element, say with
 index 2. Another one, say index 3, may perform this operation at a very
 different time and independently, thus computation and communication can
 overlap. The entry methods listed at the bottom, e.g., `ownlhs_complete()` can
-be thought of simply as labels to the runtime systems that help define such task
-logic and they are defined by the runtime system. Note that the construct we
-used here, when \b A _and_ \b B are both complete _then_ do \b C, is probably
-the simplest task-logic Charm++ allows prescribing. There are many more advanced
-ways of expressing such logic, e.g., using loops. For more details, see Section
+be thought of as "labels" to the runtime systems that help define the task
+logic. These labels are functions that the runtime system defines and we call
+them when the given task is complete. Note that the construct we used here,
+when \b A _and_ \b B are both complete _then_ do \b C, is probably the simplest
+task-logic Charm++ allows prescribing. There are many more advanced ways of
+expressing such logic, e.g., using loops. For more details, see Section
 _Structured Control Flow: Structured Dagger_ in the [Charm++
 manual](http://charm.cs.illinois.edu/manuals/html/charm++/manual.html).
 
@@ -623,8 +624,8 @@ system this logic, involving the four tasks.
 
 @section inciter_newscheme_work 6. Making it all work
 
-There is only a couple of minor but important steps remain. First we add the new
-Charm++ module as an external module in inciter's Charm++ module. This is
+There is only a couple of minor, but important steps remain. First we add the
+new Charm++ module as an external module in inciter's Charm++ module. This is
 required so that all Charm++ code that references the new ALECG Charm++ chare
 array is visible and can correctly interact with Inciter's main charm chare.
 
@@ -672,6 +673,13 @@ index 438cb5e3..9b2e14e7 100644
 
      for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
        if (d == ctr::PDEType::TRANSPORT)
+         pdes.push_back( createCG< tag::transport >( d, cnt ) );
+       else if (d == ctr::PDEType::COMPFLOW)
+         pdes.push_back( createCG< tag::compflow >( d, cnt ) );
+       else Throw( "Can't find selected CGPDE" );
+     }
+
+   }
 @endcode
 
 @section inciter_newscheme_unittest 7. Augment unit tests for Scheme
