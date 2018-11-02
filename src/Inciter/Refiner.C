@@ -210,7 +210,8 @@ Refiner::t0ref()
   m_bndEdges.clear();
   m_ch.clear();
   m_edgedataCh.clear();
-  m_edgedata.clear();
+
+  updateEdgeData();
 
   // Generate boundary edges
   bndEdges();
@@ -374,7 +375,6 @@ Refiner::refine()
   comExtra();
 }
 
-
 void
 Refiner::comExtra()
 // *****************************************************************************
@@ -457,39 +457,74 @@ Refiner::correctref()
       auto l = m_edgedata.find( r.first ); // find refined edge given parents
       if (l != end(m_edgedata)) {          // found same added node on edge
 
-        // Compute lock case: larger enum value of AMR::Edge_Lock_Case wins
-        auto local_lock = l->second;
-        auto remote_lock = r.second;
+        const auto& local = l->second;
+        const auto& remote = r.second;
+        auto local_needs_refining = std::get<0>(local);
+        auto local_lock_case = std::get<1>(local);
+        auto remote_needs_refining = std::get<0>(remote);
+        auto remote_lock_case = std::get<1>(remote);
 
-        if (local_lock != remote_lock) {
-          extra[ { tk::cref_find( m_lid, r.first[0] ),
-                   tk::cref_find( m_lid, r.first[1] ) } ] =
-            std::max( local_lock, remote_lock );
+        auto local_needs_refining_orig = local_needs_refining;
+        auto local_lock_case_orig = local_lock_case;
 
-          std::cout << thisIndex << " found: " << r.first[0] << '-'
-                    << r.first[1] << ", locks: " << local_lock << " + "
-                    << remote_lock << " -> "
-                    << std::max( local_lock, remote_lock ) << '\n';
+        Assert( !(local_lock_case > AMR::Edge_Lock_Case::unlocked &&
+                  local_needs_refining),
+                "Invalid local edge: locked & needs refining" );
+        Assert( !(remote_lock_case > AMR::Edge_Lock_Case::unlocked &&
+                  remote_needs_refining),
+                "Invalid remote edge: locked & needs refining" );
+
+        // compute lock from local and remote locks as most restrictive
+        local_lock_case = std::max( local_lock_case, remote_lock_case );
+
+        if (local_lock_case > AMR::Edge_Lock_Case::unlocked)
+          local_needs_refining = false;
+
+        if (local_lock_case == AMR::Edge_Lock_Case::unlocked &&
+            remote_needs_refining)
+          local_needs_refining = true;
+
+        if (local_lock_case != local_lock_case_orig ||
+            local_needs_refining != local_needs_refining_orig) {
+
+           auto l1 = tk::cref_find( m_lid, r.first[0] );
+           auto l2 = tk::cref_find( m_lid, r.first[1] );
+           Assert( l1 != l2, "Edge end-points local ids are the same" );
+
+           extra[ {{ std::min(l1,l2), std::max(l1,l2) }} ] =
+             { local_needs_refining, local_lock_case };
+
         }
+
+//        if (local_lock != remote_lock) {
+//          extra[ { tk::cref_find( m_lid, r.first[0] ),
+//                   tk::cref_find( m_lid, r.first[1] ) } ] =
+//            std::max( local_lock, remote_lock );
+//
+//          std::cout << thisIndex << " found: " << r.first[0] << '-'
+//                    << r.first[1] << ", locks: " << local_lock << " + "
+//                    << remote_lock << " -> "
+//                    << std::max( local_lock, remote_lock ) << '\n';
+//        }
 
       } else {  // remote chare added node on edge but we did not
 
-        // Make sure we know about this chare-boundary edge (we did not refine)
-        Assert( m_bndEdges.find( thisIndex )->second.find( r.first ) !=
-                m_bndEdges.find( thisIndex )->second.end(),
-                "Local node IDs of boundary edge not found" );
-        // Save edge (given by parent global node IDs) to which the remote chare
-        // has added a new node but we did not. Will need to correct the mesh so
-        // it conforms across chare boundaries.
-        extra[ { tk::cref_find( m_lid, r.first[0] ),
-                 tk::cref_find( m_lid, r.first[1] ) } ] = r.second;
+//        // Make sure we know about this chare-boundary edge (we did not refine)
+//        Assert( m_bndEdges.find( thisIndex )->second.find( r.first ) !=
+//                m_bndEdges.find( thisIndex )->second.end(),
+//                "Local node IDs of boundary edge not found" );
+//        // Save edge (given by parent global node IDs) to which the remote chare
+//        // has added a new node but we did not. Will need to correct the mesh so
+//        // it conforms across chare boundaries.
+//        extra[ { tk::cref_find( m_lid, r.first[0] ),
+//                 tk::cref_find( m_lid, r.first[1] ) } ] = r.second;
 
       }
     }
 
   m_extra = extra.size();
 
-  //std::cout << thisIndex << " needs to correct: " << m_extra << '\n';
+  std::cout << thisIndex << " needs to correct: " << m_extra << '\n';
   correctRefine( extra );
   comExtra();
 }
@@ -503,12 +538,11 @@ Refiner::updateEdgeData()
   using Edge = tk::UnsMesh::Edge;
   const auto& ref_edges = m_refiner.tet_store.edge_store.edges;
   m_edgedata.clear();
-  for (const auto& e : ref_edges)
-    if (e.second.needs_refining) {
-      const auto& ed = e.first.get_data();
-      const auto ged = Edge{ m_gid[ ed[0] ], m_gid[ ed[1] ] };
-      m_edgedata[ ged ] = e.second.lock_case;
-    }
+  for (const auto& e : ref_edges) {
+    const auto& ed = e.first.get_data();
+    const auto ged = Edge{ m_gid[ ed[0] ], m_gid[ ed[1] ] };
+    m_edgedata[ ged ] = { e.second.needs_refining, e.second.lock_case };
+  }
 }
 
 void
@@ -637,8 +671,6 @@ Refiner::errorRefine()
 
   // Compute errors in ICs and define refinement criteria for edges
   std::vector< edge_t > edge;
-  std::vector< tk::real > crit;
-  std::vector< AMR::Edge_Lock_Case > lock;
   AMR::Error error;
   for (std::size_t p=0; p<npoin; ++p)   // for all mesh nodes on this chare
     for (auto q : tk::Around(psup,p)) { // for all nodes surrounding p
@@ -648,18 +680,13 @@ Refiner::errorRefine()
          auto c = error.scalar( u, e, i, m_coord, m_inpoel, esup, errtype );
          if (c > cmax) cmax = c;        // find max error at edge
        }
-       if (cmax > 0.0) {         // if nonzero error, will pass edge to refiner
+       if (cmax > 0.8) {         // if nonzero error, will pass edge to refiner
          edge.push_back( e );
-         crit.push_back( cmax );
-         lock.push_back( AMR::Edge_Lock_Case::unlocked );
        }
      }
 
-  Assert( edge.size() == crit.size(), "Size mismatch" );
-  Assert( edge.size() == lock.size(), "Size mismatch" );
-
   // Do error-based refinement
-  m_refiner.error_refinement( edge, crit, lock );
+  m_refiner.error_refinement( edge );
 
   // Update our extra-edge store based on refiner
   updateEdgeData();
@@ -707,7 +734,7 @@ Refiner::userRefine()
     // Do error-based refinement
     std::vector< AMR::Edge_Lock_Case >
       lock( edge.size(), AMR::Edge_Lock_Case::unlocked );
-    m_refiner.error_refinement( edge, crit, lock );
+    //m_refiner.error_refinement( edge, crit, lock );
 
     // Update our extra-edge store based on refiner
     updateEdgeData();
@@ -782,7 +809,7 @@ Refiner::coordRefine()
     // Do error-based refinement
     std::vector< AMR::Edge_Lock_Case >
       lock( edge.size(), AMR::Edge_Lock_Case::unlocked );
-    m_refiner.error_refinement( edge, crit, lock );
+    //m_refiner.error_refinement( edge, crit, lock );
 
     // Update our extra-edge store based on refiner
     updateEdgeData();
@@ -858,21 +885,9 @@ Refiner::correctRefine( const AMR::EdgeData& extra )
 //! \param[in] extra Unique edges that need a new node on chare boundaries
 // *****************************************************************************
 {
-  using AMR::edge_t;
-
   if (!extra.empty()) {
-    // Generate list of edges that need to be corrected
-    std::vector< edge_t > edge;
-    std::vector< AMR::Edge_Lock_Case > lock;
-    for (const auto& e : extra) {
-      edge.push_back( edge_t(e.first[0],e.first[1]) );
-      lock.push_back( e.second );
-    }
-    std::vector< tk::real > crit( edge.size(), 1.0 );
-
     // Do refinement including edges that need to be corrected
-    m_refiner.error_refinement( edge, crit, lock );
-
+    m_refiner.error_refinement_corr( extra );
     // Update our extra-edge store based on refiner
     updateEdgeData();
   }

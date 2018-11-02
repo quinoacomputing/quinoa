@@ -57,10 +57,9 @@ namespace AMR {
 
             void evaluate_error_estimate();
             void uniform_refinement();
-            void error_refinement( const std::vector< edge_t >& edge,
-                                   const std::vector< real_t >& criteria,
-                                   const std::vector< Edge_Lock_Case >& lock );
+            void error_refinement( const std::vector< edge_t >& edge );
 
+            void error_refinement_corr( const EdgeData& edges );
             int detect_compatibility(
                     int num_locked_edges,
                     int num_intermediate_edges,

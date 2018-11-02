@@ -98,23 +98,31 @@ namespace AMR {
      * @param lock values of lock case to set for edges
      */
     void mesh_adapter_t::error_refinement(
-            const std::vector< edge_t >& edge,
-            const std::vector< real_t >& crit,
-            const std::vector< Edge_Lock_Case >& lock )
+            const std::vector< edge_t >& remote )
     {
-       assert( edge.size() == crit.size() );
-       assert( edge.size() == lock.size() );
-       for (std::size_t e=0; e<edge.size(); e++)
+       for (std::size_t e=0; e<remote.size(); e++)
        {
-           trace_out << "Mark edge " << e << " as " << crit[e]
-                     << " with lock case " << lock[e] << std::endl;
-           auto& edgeref = tet_store.edge_store.get( edge[e] );
-           edgeref.refinement_criteria = crit[e];
-           //edgeref.lock_case = lock[e];
+           auto& local = tet_store.edge_store.get( remote[e] );
+           if (local.lock_case > Edge_Lock_Case::unlocked)
+             local.needs_refining = false;
+           else
+             local.needs_refining = true;
        }
 
-        evaluate_error_estimate();
-        mark_refinement();
+       mark_refinement();
+    }
+
+   void mesh_adapter_t::error_refinement_corr(
+            const EdgeData& edges )
+    {
+       auto& local = tet_store.edge_store;
+       for (const auto& e : edges)
+       {
+           auto& edgeref = local.get( e.first );
+           edgeref.needs_refining = std::get<0>(e.second);
+           edgeref.lock_case = std::get<1>(e.second);
+       }
+       mark_refinement();
     }
 
     /**

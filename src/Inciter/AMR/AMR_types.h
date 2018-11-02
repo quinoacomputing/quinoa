@@ -99,7 +99,7 @@ using coord_type = std::vector< tk::real >;
 //! Edge lock case associated to an edge given by global parent IDs
 using EdgeData =
    std::unordered_map< tk::UnsMesh::Edge,
-                       Edge_Lock_Case,
+                       std::tuple< bool, Edge_Lock_Case >,
                        tk::UnsMesh::Hash<2>,
                        tk::UnsMesh::Eq<2> >;
 
