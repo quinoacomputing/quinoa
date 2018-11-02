@@ -624,7 +624,7 @@ system this logic, involving the four tasks.
 
 @section inciter_newscheme_work 6. Making it all work
 
-There is only a couple of minor, but important steps remain. First we add the
+Only a couple of minor, but important, steps remain. First we add the
 new Charm++ module as an external module in inciter's Charm++ module. This is
 required so that all Charm++ code that references the new ALECG Charm++ chare
 array is visible and can correctly interact with Inciter's main charm chare.
