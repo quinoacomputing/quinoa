@@ -438,12 +438,8 @@ set(RUNNER "${CHARM_RUN}" CACHE STRING
     "Parallel/serial job runner, used to run regression tests")
 set(RUNNER_NCPUS_ARG "+p" CACHE STRING
     "The argument used to specify the number of PEs for the runner")
-set(RUNNER_ARGS "--bind-to none -oversubscribe" CACHE STRING
+set(RUNNER_ARGS "" CACHE STRING
     "Arguments to pass to the parallel/serial job runner, e.g., to mpirun.")
-
-if(ENABLE_AMPI)
-  set(RUNNER_ARGS "")
-endif()
 
 # Host-, and/or architecture-specifc runner configuration
 if (DEFINED ENV{NERSC_HOST})
