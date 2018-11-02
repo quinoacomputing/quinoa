@@ -216,7 +216,6 @@ class CompFlow {
         bndInt< Sym >( m_bcsym, fd, geoFace, t, U, R );
         bndInt< Extrapolate >( m_bcextrapolate, fd, geoFace, t, U, R );
       } else if (m_ndof == 4) {  // DG(P1)
-
         // set limiter function to one
         limFunc.fill(1.0);
 
