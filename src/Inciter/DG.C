@@ -920,8 +920,8 @@ DG::writeFields( tk::real time )
     // cut off ghost elements
     for (auto& o : output) o.resize( m_esuelTet.size()/4 );
     elemfields.insert( end(elemfields), begin(output), end(output) );
-
   }
+
   // Create ExodusII writer
   tk::ExodusIIMeshWriter ew( d->filename(), tk::ExoWriter::OPEN );
   // Write time stamp

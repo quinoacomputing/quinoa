@@ -165,7 +165,6 @@ class DG : public CBase_DG {
       p | m_diag;
       p | m_stage;
       p | m_rkcoef;
-      //p | m_ndof;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -255,8 +254,6 @@ class DG : public CBase_DG {
     ElemDiagnostics m_diag;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
-    //! Number of degree of freedom
-    //std::size_t m_ndof;
     //! Runge-Kutta coefficients
     std::array< std::array< tk::real, 3 >, 2 >
       m_rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
@@ -304,15 +301,6 @@ class DG : public CBase_DG {
 
     //! Evaluate whether to continue with next step
     void eval();
-
-    //! Compute numerical solution at nodal points
-    /*void NodeSolP1( std::vector< std::vector< tk::real > >& U_node,
-                    tk::Fields& U,
-                    tk::Fields& geoElem,
-                    tk::UnsMesh::Coords& coord,
-                    std::vector< std::size_t >& inpoel,
-                    tk::Fields& limFunc,
-                    std::size_t ndof);*/
 };
 
 } // inciter::

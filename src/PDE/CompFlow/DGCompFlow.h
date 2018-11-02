@@ -185,7 +185,7 @@ class CompFlow {
               const tk::Fields& U,
               tk::Fields& limFunc,
               tk::Fields& R ) const
-	{
+  {
       const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
 
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
@@ -358,7 +358,6 @@ class CompFlow {
                        tk::Fields& unk,
                        tk::real t ) const
     {
-
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
@@ -778,13 +777,13 @@ class CompFlow {
 
           auto s = Problem::src(0, xgp, ygp, zgp, t);
           for (ncomp_t c=0; c<5; ++c)
-		  {
-			auto mark = c*m_ndof;
+          {
+            auto mark = c*m_ndof;
             R(e, mark, m_offset)   += wt * s[c];
             R(e, mark+1, m_offset) += wt * s[c] * B2;
             R(e, mark+2, m_offset) += wt * s[c] * B3;
             R(e, mark+3, m_offset) += wt * s[c] * B4;
-		  }
+          }
         }
       }
     }
@@ -1055,7 +1054,6 @@ class CompFlow {
 
         //--- fluxes
         auto flux = m_riemann.flux( f, geoFace, State::LR(ugp,xc,yc,zc,fn,t) );
-        //auto flux = m_riemann.flux( f, geoFace, State::LR(U.extract(el),xc,yc,zc,fn,t) );
 
         for (ncomp_t c=0; c<5; ++c)
           R(el, c*m_ndof, m_offset) -= farea * flux[c];

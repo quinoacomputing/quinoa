@@ -16,6 +16,7 @@
 
 #include "Types.h"
 #include "Inciter/Options/Problem.h"
+
 namespace inciter {
 
 //! CompFlow system of PDEs problem: vortical flow
@@ -62,6 +63,7 @@ class CompFlowProblemVorticalFlow {
     {
       return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
     }
+
     //! Compute and return source term for vortical flow manufactured solution
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
@@ -144,19 +146,19 @@ class CompFlowProblemVorticalFlow {
         g_inputdeck.get< tag::param, tag::compflow, tag::beta >()[e];
       const auto& p0 =
         g_inputdeck.get< tag::param, tag::compflow, tag::p0 >()[e];
-	  // number of degree of freedom
-	  const std::size_t m_ndof = 
-		g_inputdeck.get< tag::discr, tag::ndof >();
+      // number of degree of freedom
+      const std::size_t ndof = 
+        g_inputdeck.get< tag::discr, tag::ndof >();
       // ratio of specific heats
       tk::real g =
         g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
 
       std::vector< std::vector< tk::real > > out;
-      const auto r  = U.extract( 0*m_ndof, offset );
-      const auto ru = U.extract( 1*m_ndof, offset );
-      const auto rv = U.extract( 2*m_ndof, offset );
-      const auto rw = U.extract( 3*m_ndof, offset );
-      const auto re = U.extract( 4*m_ndof, offset );
+      const auto r  = U.extract( 0*ndof, offset );
+      const auto ru = U.extract( 1*ndof, offset );
+      const auto rv = U.extract( 2*ndof, offset );
+      const auto rw = U.extract( 3*ndof, offset );
+      const auto re = U.extract( 4*ndof, offset );
 
       // mesh node coordinates
       const auto& x = coord[0];
