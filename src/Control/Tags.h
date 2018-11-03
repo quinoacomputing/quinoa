@@ -12,6 +12,8 @@
 //! Tags used as unique-type labels for compile-time code-generation
 namespace tag {
 
+struct low {};
+struct high {};
 struct io {};
 struct quiescence {};
 struct input {};

@@ -2,8 +2,8 @@
 /*!
   \file      src/LinSys/Solver.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Charm++ chare linear system merger group to solve a linear system
-  \details   Charm++ chare linear system merger group used to collect and
+  \brief     Charm++ linear system merger nodegroup to solve a linear system
+  \details   Charm++ linear system merger nodegroup used to collect and
     assemble the left hand side matrix (lhs), the right hand side (rhs) vector,
     and the solution (unknown) vector from individual worker
     chares. Beside collection and assembly, the system is also solved. The
@@ -19,13 +19,13 @@
     high-order right hand side vector and another vector, assembled separately
     (and overlapped with that of the high-order system). This dual system
     solution is done here as required by the flux-corrected transport algorithm
-    used for transport equations in inciter.
+    used for transport equations in inciter, and the low order system is
+    derived from the high order system using continuous Galerkin node-centered
+    scheme.
 
     The implementation uses the Charm++ runtime system and is fully
     asynchronous, overlapping computation and communication. The algorithm
-    utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
-    overview of the algorithm structure and how it interfaces with Charm++ is
-    discussed in the Charm++ interface file src/LinSys/solver.ci.
+    utilizes the structured dagger (SDAG) Charm++ functionality.
 */
 // *****************************************************************************
 #ifndef Solver_h
@@ -42,9 +42,9 @@
 #include "HypreMatrix.h"
 #include "HypreVector.h"
 #include "HypreSolver.h"
+#include "Callback.h"
 
 #include "NoWarning/solver.decl.h"
-#include "NoWarning/matcg.decl.h"
 
 namespace tk {
 
@@ -54,13 +54,13 @@ namespace tk {
 //!   callbacks in reduction messages"
 class SolverShadow : public CBase_SolverShadow { public: SolverShadow(); };
 
-//! Linear system merger and solver Charm++ chare group class
+//! Linear system merger and solver Charm++ chare nodegroup class
 //! \details Instantiations of Solver comprise a processor aware Charm++
-//!   chare group. When instantiated, a new object is created on each PE and not
-//!   more (as opposed to individual chares or chare array object elements). The
-//!   group's elements are used to collect information from all chare objects
-//!   that happen to be on a given PE. See also the Charm++ interface file
-//!   solver.ci.
+//!   chare nodegroup. When instantiated, a new object is created on each
+//!   compute node and not more (as opposed to individual chares or chare
+//!   array object elements). The nodegroup's elements are used to collect
+//!   information from all chare objects that happen to be on a given compute
+//!   node. See also the Charm++ interface file solver.ci.
 class Solver : public CBase_Solver {
 
   #if defined(__clang__)
@@ -88,38 +88,31 @@ class Solver : public CBase_Solver {
 
   public:
     //! Constructor
-    Solver( CProxy_SolverShadow sh,
-            const SolverCallback& cb,
-            std::size_t n );
+    Solver( CProxy_SolverShadow sh, const SolverCallback& cb, std::size_t n );
 
     //! Configure Charm++ reduction types for concatenating BC nodelists
     static void registerReducers();
 
+    //! Set number of worker chares expected to contribute on this compute node
+    void nchare( int n );
+
     //!  Receive lower and upper global node IDs from chares
-    //! \note This is not a Charm++ entry method but public because it is called
-    //!    by chares on this PE.
     void chbounds( std::size_t lower, std::size_t upper );
 
-    //!  Compute lower and upper bounds across all PEs
-    void pebounds( int p, std::size_t lower, std::size_t upper );
+    //!  Communicate lower and upper bounds across all compute nodes
+    void nodebounds( int n, std::size_t lower, std::size_t upper );
 
-    //! Compute lower and upper bounds across PEs
-    void computeBounds( int c, std::size_t lower, std::size_t upper );
+    //! Chares contribute their ids and callbacks
+    void charecom( int fromch, const MatCGCallback& cb );
 
-    //! Prepare for next step
+    //! Chares contribute their global row ids for establishing communications
+    void charerow( int fromch, const std::vector< std::size_t >& row );
+
     //! Prepare for next step
     void next();
 
-    //! Set number of worker chares expected to contribute on my PE
-    void nchare( int n );
-
-    //! Chares contribute their global row ids for establishing communications
-    void charecom( const inciter::CProxy_MatCG& worker,
-                   int fromch,
-                   const std::vector< std::size_t >& row );
-
-    //! Receive global row ids from fellow group branches
-    void addrow( int fromch, int frompe, const std::set< std::size_t >& row );
+    //! Receive global row ids from fellow nodegroup branches
+    void addrow( int fromch, int fromnode, const std::set< std::size_t >& row );
 
     //! Acknowledge received row ids
     void recrow();
@@ -129,7 +122,7 @@ class Solver : public CBase_Solver {
                    const std::vector< std::size_t >& gid,
                    const Fields& solution );
 
-    //! Receive solution vector nonzeros from fellow group branches
+    //! Receive solution vector nonzeros from fellow nodegroup branches
     void addsol( int fromch,
                  const std::map< std::size_t,
                                  std::vector< tk::real > >& solution );
@@ -142,7 +135,7 @@ class Solver : public CBase_Solver {
                    const tk::Fields& lhsd,
                    const tk::Fields& lhso );
 
-    //! Receive matrix nonzeros from fellow group branches
+    //! Receive matrix nonzeros from fellow nodegroup branches
     void addlhs( int fromch,
                  const std::map< std::size_t,
                                  std::map< std::size_t,
@@ -153,7 +146,7 @@ class Solver : public CBase_Solver {
                    const std::vector< std::size_t >& gid,
                    const Fields& r );
 
-    //! Receive+add right-hand side vector nonzeros from fellow group branches
+    //! Receive right-hand side vector nonzeros from fellow nodegroup branches
     void addrhs( int fromch,
                  const std::map< std::size_t, std::vector< tk::real > >& r );
 
@@ -162,7 +155,7 @@ class Solver : public CBase_Solver {
                       const std::vector< std::size_t >& gid,
                       const Fields& lowrhs );
 
-    //! Receive+add low-order rhs vector nonzeros from fellow group branches
+    //! Receive low-order rhs vector nonzeros from fellow node group branches
     void addlowrhs( int fromch,
                     const std::map< std::size_t,
                                     std::vector< tk::real > >& lowrhs );
@@ -172,18 +165,18 @@ class Solver : public CBase_Solver {
                       const std::vector< std::size_t >& gid,
                       const Fields& lowlhs );
 
-    //! \brief Receive and add lhs vector to the low-order system from fellow
-    //!   group branches
+    //! \brief Receive lhs vector to the low-order system from fellow
+    //!   nodegroup branches
     void addlowlhs( int fromch,
                     const std::map< std::size_t,
                                     std::vector< tk::real > >& lowlhs );
 
-    //! All communications have been establised among PEs
+    //! All communications have been establised among compute nodes
     void comfinal();
 
     //! Chares query Dirichlet boundary conditions
     //! \note This function does not have to be declared as a Charm++ entry
-    //!   method since it is always called by chares on the same PE.
+    //!   method since it is always called by chares on the same compute node.
     const std::unordered_map< std::size_t,
             std::vector< std::pair< bool, tk::real > > >&
       dirbc() { return m_bc; }
@@ -208,31 +201,28 @@ class Solver : public CBase_Solver {
                     const std::vector< tk::real >& v );
 
     //! \brief Receive numerical and analytical solution vector nonzeros from
-    //!   fellow group branches for computing diagnostics
+    //!   fellow nodegroup branches for computing diagnostics
     void adddiag( int fromch,
                   std::map< std::size_t,
                     std::vector< std::vector< tk::real > > >& solution );
 
-    //! Return processing element for global mesh row id
-    int pe( std::size_t gid );
-
   private:
     CProxy_SolverShadow m_shadow;
-    SolverCallback m_cb;        //!< Charm++ associated to compile-time tags
-    std::size_t m_ncomp;       //!< Number of scalar components per unknown
-    std::size_t m_nchare;      //!< Number of chares contributing to my PE
-    std::size_t m_nbounds;     //!< Number of chares contributed bounds to my PE
-    std::size_t m_ncomm;       //!< Number of chares finished commaps on my PE
-    std::size_t m_nperow;      //!< Number of fellow PEs to send row ids to
-    std::size_t m_nchbc;       //!< Number of chares we received bcs from
-    std::size_t m_lower;       //!< Lower index of the global rows on my PE
-    std::size_t m_upper;       //!< Upper index of the global rows on my PE
-    uint64_t m_it;             //!< Iteration count (original in Discretization)
-    tk::real m_t;              //!< Physical time (original in Discretization)
-    tk::real m_dt;             //!< Time step size (original in Discretization)
-    bool m_feedback;           //!< Whether to send sub-task feedback to host
-    //! Ids of workers on my PE
-    std::vector< int > m_myworker;
+    SolverCallback m_cb;    //!< Charm++ associated to compile-time tags
+    std::size_t m_ncomp;    //!< Number of scalar components per unknown
+    std::size_t m_nchare;   //!< Total number of worker chares
+    std::size_t m_mynchare; //!< Number of chares contributing to my node
+    std::size_t m_nbounds;  //!< Number of chares contributed bounds to my node
+    std::size_t m_ncomm;    //!< Number of chares finished commaps on my node
+    std::size_t m_nperow;   //!< Number of fellow nodes to send row ids to
+    std::size_t m_nchbc;    //!< Number of chares we received bcs from
+    std::size_t m_lower;    //!< Lower index of the global rows on my node
+    std::size_t m_upper;    //!< Upper index of the global rows on my node
+    uint64_t m_it;          //!< Iteration count (original in Discretization)
+    tk::real m_t;           //!< Physical time (original in Discretization)
+    tk::real m_dt;          //!< Time step size (original in Discretization)
+    //! Chare id and callbacks to entry methods of all worker chares
+    std::map< int, tk::MatCGCallback > m_worker;
     //! \brief Import map associating a list of global row ids to a worker chare
     //!   id during the communication of the global row ids
     std::map< int, std::vector< std::size_t > > m_rowimport;
@@ -251,27 +241,27 @@ class Solver : public CBase_Solver {
     //! \brief Import map associating a list of global row ids to a worker chare
     //!   id during the communication of the low-order lhs vector
     std::map< int, std::vector< std::size_t > > m_lowlhsimport;
-    //! Part of global row indices owned by my PE
+    //! Part of global row indices owned by my node
     std::set< std::size_t > m_row;
-    //! \brief Part of unknown/solution vector owned by my PE
+    //! \brief Part of unknown/solution vector owned by my node
     //! \details Vector of values (for each scalar equation solved) associated
     //!   to global mesh point row IDs
     std::map< std::size_t, std::vector< tk::real > > m_sol;
-    //! \brief Part of left-hand side matrix owned by my PE
+    //! \brief Part of left-hand side matrix owned by my node
     //! \details Nonzero values (for each scalar equation solved) associated to
     //!   global mesh point row and column IDs.
     std::map< std::size_t,
               std::map< std::size_t, std::vector< tk::real > > > m_lhs;
-    //! \brief Part of right-hand side vector owned by my PE
+    //! \brief Part of right-hand side vector owned by my node
     //! \details Vector of values (for each scalar equation solved) associated
     //!   to global mesh point row ids
     std::map< std::size_t, std::vector< tk::real > > m_rhs;
-    //! \brief Part of low-order right-hand side vector owned by my PE
+    //! \brief Part of low-order right-hand side vector owned by my node
     //! \details Vector of values (for each scalar equation solved) associated
     //!   to global mesh point row ids. This vector collects the rhs
     //!   terms to be combined with the rhs to produce the low-order rhs.
     std::map< std::size_t, std::vector< tk::real > > m_lowrhs;
-    //! \brief Part of the low-order system left-hand side vector owned by my PE
+    //! Part of the low-order system left-hand side vector owned by my node
     //! \details Vector of values (for each scalar equation solved) associated
     //!   to global mesh point row ids. This vector collects the nonzero values
     //!   of the low-order system lhs "matrix" solution.
@@ -281,30 +271,30 @@ class Solver : public CBase_Solver {
     tk::hypre::HypreVector m_b; //!< Hypre vector to store the right-hand side
     //! Hypre solver
     tk::hypre::HypreSolver m_solver;
-    //! Row indices for my PE
+    //! Row indices for my node
     std::vector< int > m_hypreRows;
-    //! Number of matrix columns/rows on my PE
+    //! Number of matrix columns/rows on my node
     std::vector< int > m_hypreNcols;
-    //! Matrix column indices for rows on my PE
+    //! Matrix column indices for rows on my node
     std::vector< int > m_hypreCols;
-    //! Matrix nonzero values for my PE
+    //! Matrix nonzero values for my node
     std::vector< tk::real > m_hypreMat;
-    //! RHS vector nonzero values for my PE
+    //! RHS vector nonzero values for my node
     std::vector< tk::real > m_hypreRhs;
-    //! Solution vector nonzero values for my PE
+    //! Solution vector nonzero values for my node
     std::vector< tk::real > m_hypreSol;
     //! Global->local row id map for sending back solution vector parts
     std::map< std::size_t, std::size_t > m_lid;
-    //! \brief PEs associated to lower and upper global row indices
+    //! Compute nodes associated to lower and upper global row indices
     //! \details These are the divisions at which the linear system is divided
-    //!   along PE boundaries.
+    //!   along compute node boundaries.
     std::map< std::pair< std::size_t, std::size_t >, int > m_div;
-    //! \brief PEs associated to global mesh point indices
-    //! \details This is used to cache the PE associated to mesh nodes
+    //! Compute nodes associated to global mesh point indices
+    //! \details This is used to cache the compute node associated to mesh nodes
     //!   communicated, so that a quicker-than-linear-cost search can be used to
-    //!   find the PE for a communicated mesh node after the node is in the
-    //!   cache.
-    std::map< std::size_t, int > m_pe;
+    //!   find the compute node for a communicated mesh node after the node is
+    //!   in the cache.
+    std::map< std::size_t, int > m_node;
     //! \brief Values (for each scalar equation solved) of Dirichlet boundary
     //!   conditions assigned to global node IDs we set
     //! \details The map key is the global mesh node/row ID, the value is a
@@ -313,18 +303,21 @@ class Solver : public CBase_Solver {
     //!   of the vectors is the number of PDEs integrated times the number of
     //!   scalar components in all PDEs. This BC map stores all row IDs at which
     //!   Dirichlet boundary conditions are prescribed, i.e., including boundary
-    //!   conditions set across all PEs, not just the ones need to be set on
-    //!   this PE.
+    //!   conditions set across all compute nodes, not just the ones need to be
+    //!   set on this compute node.
     std::unordered_map< std::size_t,
                         std::vector< std::pair< bool, tk::real > > > m_bc;
     //! Matrix non-zero coefficients for Dirichlet boundary conditions
     std::unordered_map< std::size_t,
                         std::map< std::size_t, std::vector<tk::real> > > m_bca;
-    //! Worker proxy
-    inciter::CProxy_MatCG m_worker;
 
-    //! Check if we have done our part in storing and exporting global row ids
-    bool comcomplete() const;
+    //! Return compute node id for global mesh row id
+    int node( std::size_t gid );
+
+    //! Serialize solution vector into a Charm++ message, ready for a CkCallback
+    std::pair< int, std::unique_ptr<char[]> >
+    serializeSol( const std::vector< std::size_t >& gid,
+                  const std::vector< tk::real >& u ) const;
 
     //! Check if our portion of the solution vector values is complete
     bool solcomplete() const { return m_solimport == m_rowimport; }
@@ -377,13 +370,14 @@ class Solver : public CBase_Solver {
     //! Assemble distributed right-hand side vector
     void assemblerhs();
 
-    //! Update solution vector in our PE's workers
+    //! Update solution vector in workers contributing on this compute node
     void updateSol();
 
     //! Solve hyigh-order linear system
     void solve();
 
-    //! Update low-order solution vector in our PE's workers
+    //! \brief Update low-order solution vector in workers contributing on this
+    //!   compute node
     void updateLowSol();
 
     //! Solve low-order linear system

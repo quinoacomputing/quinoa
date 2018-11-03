@@ -2,20 +2,8 @@
 /*!
   \file      src/LinSys/Solver.C
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Charm++ chare linear system merger group to solve a linear system
-  \details   Charm++ chare linear system merger group used to collect and
-    assemble the left hand side matrix (lhs), the right hand side (rhs) vector,
-    and the solution (unknown) vector from individual worker
-    chares. Beside collection and assembly, the system is also solved. The
-    solution is outsourced to hypre, an MPI-only library. Once the solution is
-    available, the individual worker chares are updated with the new solution.
-
-    The implementation uses the Charm++ runtime system and is fully
-    asynchronous, overlapping computation and communication. The algorithm
-    utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
-    overview of the algorithm structure and how it interfaces with Charm++ is
-    discussed in the Charm++ interface file src/LinSys/solver.ci. See also
-    src/LinSys/Solver.h for a discussion of the asynchronous call logic.
+  \brief     Charm++ linear system merger nodegroup to solve a linear system
+  \see       src/LinSys/Solver.h
 */
 // *****************************************************************************
 
@@ -56,6 +44,7 @@ Solver::Solver( CProxy_SolverShadow sh,
   m_cb( cb ),
   m_ncomp( n ),
   m_nchare( 0 ),
+  m_mynchare( 0 ),
   m_nbounds( 0 ),
   m_nperow( 0 ),
   m_nchbc( 0 ),
@@ -64,7 +53,7 @@ Solver::Solver( CProxy_SolverShadow sh,
   m_it( 0 ),
   m_t( 0.0 ),
   m_dt( 0.0 ),
-  m_myworker(),
+  m_worker(),
   m_rowimport(),
   m_solimport(),
   m_lhsimport(),
@@ -89,25 +78,26 @@ Solver::Solver( CProxy_SolverShadow sh,
   m_hypreSol(),
   m_lid(),
   m_div(),
-  m_pe(),
+  m_node(),
   m_bc(),
   m_bca()
 // *****************************************************************************
 //  Constructor
-//! \param[in] sh Solver "shadow" Charm++ chare group proxy for starting
+//! \param[in] sh Solver "shadow" Charm++ nodegroup proxy for starting
 //!   reductions at the same time as other reductions from Charm++ chare Solver
 //! \param[in] cb Charm++ callbacks for Solver
 //! \param[in] n Total number of scalar components in the linear system
 // *****************************************************************************
 {
   // Activate SDAG waits
-  thisProxy[ CkMyPe() ].wait4lhsbc();
-  thisProxy[ CkMyPe() ].wait4rhsbc();
-  thisProxy[ CkMyPe() ].wait4hypresol();
-  thisProxy[ CkMyPe() ].wait4hyprelhs();
-  thisProxy[ CkMyPe() ].wait4hyprerhs();
-  thisProxy[ CkMyPe() ].wait4asm();
-  thisProxy[ CkMyPe() ].wait4low();
+  thisProxy[ CkMyNode() ].wait4com();
+  thisProxy[ CkMyNode() ].wait4lhsbc();
+  thisProxy[ CkMyNode() ].wait4rhsbc();
+  thisProxy[ CkMyNode() ].wait4hypresol();
+  thisProxy[ CkMyNode() ].wait4hyprelhs();
+  thisProxy[ CkMyNode() ].wait4hyprerhs();
+  thisProxy[ CkMyNode() ].wait4asm();
+  thisProxy[ CkMyNode() ].wait4low();
 }
 
 void
@@ -129,14 +119,17 @@ Solver::registerReducers()
 void
 Solver::nchare( int n )
 // *****************************************************************************
-//  Set number of worker chares expected to contribute on my PE
-//! \param[in] n Total number of chares (work units) across all PEs
+//  Set number of worker chares expected to contribute on this compute node
+//! \param[in] n Total number of chares (work units) across all compute nodes
+//! \details Besides the number of workers contribute to this compute nodes, we
+//!    also the total number of chares across the whole problem.
 // *****************************************************************************
 {
-  auto chunksize = n / CkNumPes();
+  auto chunksize = n / CkNumNodes();
   auto mynchare = chunksize;
-  if (CkMyPe() == CkNumPes()-1) mynchare += n % CkNumPes();
-  m_nchare = static_cast< std::size_t >( mynchare );
+  if (CkMyNode() == CkNumNodes()-1) mynchare += n % CkNumNodes();
+  m_mynchare = static_cast< std::size_t >( mynchare );
+  m_nchare = static_cast< std::size_t >( n );
 
   contribute( m_cb.get< tag::part >() );
 }
@@ -153,41 +146,47 @@ Solver::chbounds( std::size_t lower, std::size_t upper )
           "(" + std::to_string(lower) + "..." +  std::to_string(upper) +
           ") sent by chare" );
 
-  // Compute extents of bounds on this PE
+  // Compute extents of bounds on this compute node
   m_lower = std::min( m_lower, lower );
   m_upper = std::max( m_upper, upper );
 
-  // When this PE has heard from all chares on this PE, aggregate PE bounds
-  if (++m_nbounds == m_nchare) thisProxy.pebounds( CkMyPe(), m_lower, m_upper );
+  // When this compute node has heard from all chares on this compute node,
+  // aggregate compute node bounds
+  if (++m_nbounds == m_mynchare)
+    thisProxy.nodebounds( CkMyNode(), m_lower, m_upper );
 }
 
 void
-Solver::pebounds( int p, std::size_t lower, std::size_t upper )
+Solver::nodebounds( int n, std::size_t lower, std::size_t upper )
 // *****************************************************************************
-//  Compute lower and upper bounds across all PEs
-//! \param[in] p PE whose bounds being received
-//! \param[in] lower Lower index of the global rows of sending PE
-//! \param[in] upper Upper index of the global rows of sending PE
+//  Receive lower and upper bounds across all compute nodes
+//! \param[in] n Compute node whose bounds being received
+//! \param[in] lower Lower index of the global rows of sending compute node
+//! \param[in] upper Upper index of the global rows of sending compute node
 // *****************************************************************************
 {
   Assert( lower < upper, "Lower bound must be lower than the upper bound: "
           "(" + std::to_string(lower) + "..." +  std::to_string(upper) +
-          ") sent by PE " + std::to_string(p) );
+          ") sent by compute node " + std::to_string(n) );
 
   // Store our bounds
-  if (p == CkMyPe()) {
+  if (n == CkMyNode()) {
     m_lower = lower;
     m_upper = upper;
   }
 
-  // Store inverse of PE-division map stored on all PE
-  m_div[ {lower,upper} ] = p;
+  // Store inverse of compute-node-division map stored on all compute nodes
+  m_div[ {lower,upper} ] = n;
 
-  // If we have all PEs' bounds, signal the runtime system to continue
-  if (m_div.size() == static_cast<std::size_t>(CkNumPes())) {
-    // Create my PE's lhs matrix distributed across all PEs
+  // If we have all compute nodes' bounds, signal the runtime system to continue
+  if (m_div.size() == static_cast<std::size_t>(CkNumNodes())) {
+
+//std::cout << CkMyNode() << ": " << m_lower << " ... " << m_upper << '\n';
+
+    // Create my compute node's lhs matrix distributed across all compute nodes
     m_A.create( m_lower*m_ncomp, m_upper*m_ncomp );
-    // Create my PE's rhs and unknown vectors distributed across all PEs
+    // Create my compute node's rhs and unknown vectors distributed across all
+    // compute nodes
     m_b.create( m_lower*m_ncomp, m_upper*m_ncomp );
     m_x.create( m_lower*m_ncomp, m_upper*m_ncomp );
     // Create linear solver
@@ -203,10 +202,10 @@ Solver::next()
 //! \details Re-enable SDAG waits for rebuilding the right-hand side vector only
 // *****************************************************************************
 {
-  thisProxy[ CkMyPe() ].wait4rhsbc();
-  thisProxy[ CkMyPe() ].wait4hyprerhs();
-  thisProxy[ CkMyPe() ].wait4asm();
-  thisProxy[ CkMyPe() ].wait4low();
+  thisProxy[ CkMyNode() ].wait4rhsbc();
+  thisProxy[ CkMyNode() ].wait4hyprerhs();
+  thisProxy[ CkMyNode() ].wait4asm();
+  thisProxy[ CkMyNode() ].wait4low();
 
   m_rhsimport.clear();
   m_lowrhsimport.clear();
@@ -221,28 +220,35 @@ Solver::next()
   asmsol_complete();
   asmlhs_complete();
 
-  // Continue with next time step
-  for (auto i : m_myworker) m_worker[i].dt();
+  // Continue with next time step: for all workers call .dt()
+  if (CkMyNode() == 0)
+    for (const auto& c : m_worker)
+       c.second.get< tag::dt >().send();
 }
 
 void
-Solver::charecom( const inciter::CProxy_MatCG& worker,
-                  int fromch,
-                  const std::vector< std::size_t >& row )
+Solver::charecom( int fromch, const MatCGCallback& cb )
 // *****************************************************************************
-//  Chares contribute their global row ids for establishing communications
-//! \param[in] worker Charm chare array proxy contribution coming from
+//  Chares contribute their ids and callbacks
 //! \param[in] fromch Charm chare array index contribution coming from
-//! \param[in] row Global mesh point (row) indices contributed
-//! \note This function does not have to be declared as a Charm++ entry
-//!   method since it is always called by chares on the same PE.
+//! \param[in] cb Callbacks to member functions
 // *****************************************************************************
 {
-  // Store worker proxy for solution update later
-  m_worker = worker;
+  // Store ids and callbacks to worker chare entry methods
+  m_worker[ fromch ] = cb;
 
-  // Collect chare ids of workers on my PE
-  m_myworker.push_back( fromch );
+  if (m_worker.size() == m_nchare) com_complete();
+}
+
+void
+Solver::charerow( int fromch, const std::vector< std::size_t >& row )
+// *****************************************************************************
+//  Chares contribute their global row ids for establishing communications
+//! \param[in] fromch Charm chare array index contribution coming from
+//! \param[in] row Global mesh point (row) indices contributed
+// *****************************************************************************
+{
+  //std::cout << CkMyNode() << " charerow from ch " << fromch << '\n';
 
   // Store rows owned and pack those to be exported, also build import map
   // used to test for completion
@@ -251,33 +257,35 @@ Solver::charecom( const inciter::CProxy_MatCG& worker,
     if (gid >= m_lower && gid < m_upper) {  // if own
       m_rowimport[ fromch ].push_back( gid );
       m_row.insert( gid );
-    } else exp[ pe(gid) ].insert( gid );
+    } else exp[ node(gid) ].insert( gid );
   }
 
   // Export non-owned parts to fellow branches that own them
   m_nperow += exp.size();
   for (const auto& p : exp) {
     auto tope = static_cast< int >( p.first );
-    thisProxy[ tope ].addrow( fromch, CkMyPe(), p.second );
+    thisProxy[ tope ].addrow( fromch, CkMyNode(), p.second );
   }
 
-  if (comcomplete()) contribute( m_cb.get< tag::com >() );
+  if (m_nperow == 0) row_complete();
 }
 
 void
-Solver::addrow( int fromch, int frompe, const std::set< std::size_t >& row )
+Solver::addrow( int fromch, int fromnode, const std::set< std::size_t >& row )
 // *****************************************************************************
 //  Receive global row ids from fellow group branches
 //! \param[in] fromch Charm chare array index contribution coming from
-//! \param[in] frompe PE contribution coming from
+//! \param[in] fromnode Compute node contribution coming from
 //! \param[in] row Global mesh point (row) indices received
 // *****************************************************************************
 {
+  //std::cout << CkMyNode() << " addrow from ch " << fromch << ", frompe " << frompe << '\n';
+
   for (auto r : row) {
     m_rowimport[ fromch ].push_back( r );
     m_row.insert( r );
   }
-  thisProxy[ frompe ].recrow();
+  thisProxy[ fromnode ].recrow();
 }
 
 void
@@ -286,8 +294,7 @@ Solver::recrow()
 //  Acknowledge received row ids
 // *****************************************************************************
 {
-  --m_nperow;
-  if (comcomplete()) contribute( m_cb.get< tag::com >() );
+  if (--m_nperow == 0) row_complete();
 }
 
 void
@@ -299,8 +306,6 @@ Solver::charesol( int fromch,
 //! \param[in] fromch Charm chare array index contribution coming from
 //! \param[in] gid Global row indices of the vector contributed
 //! \param[in] solution Portion of the unknown/solution vector contributed
-//! \note This function does not have to be declared as a Charm++ entry
-//!   method since it is always called by chares on the same PE.
 // *****************************************************************************
 {
   Assert( gid.size() == solution.nunk(),
@@ -315,7 +320,7 @@ Solver::charesol( int fromch,
       m_solimport[ fromch ].push_back( gid[i] );
       m_sol[ gid[i] ] = solution[i];
     } else {
-      exp[ pe(gid[i]) ][ gid[i] ] = solution[i];
+      exp[ node(gid[i]) ][ gid[i] ] = solution[i];
     }
 
   // Export non-owned vector values to fellow branches that own them
@@ -366,8 +371,6 @@ Solver::charelhs( int fromch,
 //!   containing non-zero values (for all scalar components of the equations
 //!   solved) as a sparse matrix off-diagonal entries in compressed row
 //!   storage format
-//! \note This function does not have to be declared as a Charm++ entry
-//!   method since it is always called by chares on the same PE.
 // *****************************************************************************
 {
   Assert( psup.second.size()-1 == gid.size(),
@@ -391,7 +394,7 @@ Solver::charelhs( int fromch,
       for (auto j=psup.second[i]+1; j<=psup.second[i+1]; ++j)
         row[ gid[ psup.first[j] ] ] += lhso[j];
     } else {
-      auto& row = exp[ pe(gid[i]) ][ gid[i] ];
+      auto& row = exp[ node(gid[i]) ][ gid[i] ];
       row[ gid[i] ] = lhsd[i];
       for (auto j=psup.second[i]+1; j<=psup.second[i+1]; ++j)
         row[ gid[ psup.first[j] ] ] = lhso[j];
@@ -434,10 +437,10 @@ Solver::charerhs( int fromch,
 //! \param[in] fromch Charm chare array index contribution coming from
 //! \param[in] gid Global row indices of the vector contributed
 //! \param[in] r Portion of the right-hand side vector contributed
-//! \note This function does not have to be declared as a Charm++ entry
-//!   method since it is always called by chares on the same PE.
 // *****************************************************************************
 {
+  //std::cout << CkMyNode() << " charerhs from ch " << fromch << '\n';
+
   Assert( gid.size() == r.nunk(),
           "Size of right-hand side and row ID vectors must equal" );
 
@@ -449,7 +452,7 @@ Solver::charerhs( int fromch,
       m_rhsimport[ fromch ].push_back( gid[i] );
       m_rhs[ gid[i] ] += r[i];
     } else
-      exp[ pe(gid[i]) ][ gid[i] ] = r[i];
+      exp[ node(gid[i]) ][ gid[i] ] = r[i];
 
   // Export non-owned vector values to fellow branches that own them
   for (const auto& p : exp) {
@@ -457,12 +460,13 @@ Solver::charerhs( int fromch,
     thisProxy[ tope ].addrhs( fromch, p.second );
   }
 
+  //std::cout << CkMyNode() << " charerhs: " << m_rhsimport.size() << " == " << m_rowimport.size() << '\n';
   if (rhscomplete()) rhs_complete();
 }
 
 void
 Solver::addrhs( int fromch,
-                const std::map< std::size_t, std::vector< tk::real > >& r )//,
+                const std::map< std::size_t, std::vector< tk::real > >& r )
 // *****************************************************************************
 //  Receive+add right-hand side vector nonzeros from fellow group branches
 //! \param[in] fromch Charm chare array index contribution coming from
@@ -470,11 +474,25 @@ Solver::addrhs( int fromch,
 //!   global row indices and values
 // *****************************************************************************
 {
+  //std::cout << CkMyNode() << " addrhs from ch " << fromch << '\n';
+
   // Store rhs contributions
   for (const auto& l : r) {
     m_rhsimport[ fromch ].push_back( l.first );
     m_rhs[ l.first ] += l.second;
   }
+
+//   std::cout << CkMyNode() << " addrhs: " << m_rhsimport.size() << " == " << m_rowimport.size() << ": row: ";
+//   for (const auto& row : m_rowimport) {
+//     std::cout << row.first << ':';
+//     for (auto i : row.second) std::cout << i << ' ';
+//   }
+//   std::cout << ": rhs: ";
+//   for (const auto& row : m_rhsimport) {
+//     std::cout << row.first << ':';
+//     for (auto i : row.second) std::cout << i << ' ';
+//   }
+//   std::cout << std::boolalpha << ": verdict: " << rhscomplete() << '\n';
 
   if (rhscomplete()) rhs_complete();
 }
@@ -484,12 +502,10 @@ Solver::charelowrhs( int fromch,
                      const std::vector< std::size_t >& gid,
                      const Fields& lowrhs )
 // *****************************************************************************
-//  Chares contribute to the rhs of the low-order linear system
+//  Chares contribute to the rhs of the low order linear system
 //! \param[in] fromch Charm chare array index contribution coming from
 //! \param[in] gid Global row indices of the vector contributed
-//! \param[in] lowrhs Portion of the low-order rhs vector contributed
-//! \note This function does not have to be declared as a Charm++ entry
-//!   method since it is always called by chares on the same PE.
+//! \param[in] lowrhs Portion of the low order rhs vector contributed
 // *****************************************************************************
 {
   using tk::operator+=;
@@ -505,7 +521,7 @@ Solver::charelowrhs( int fromch,
       m_lowrhsimport[ fromch ].push_back( gid[i] );
       m_lowrhs[ gid[i] ] += lowrhs[i];
     } else
-      exp[ pe(gid[i]) ][ gid[i] ] = lowrhs[i];
+      exp[ node(gid[i]) ][ gid[i] ] = lowrhs[i];
 
   // Export non-owned vector values to fellow branches that own them
   for (const auto& p : exp) {
@@ -521,9 +537,9 @@ Solver::addlowrhs( int fromch,
                    const std::map< std::size_t,
                                    std::vector< tk::real > >& lowrhs )
 // *****************************************************************************
-//  Receive+add low-order rhs vector nonzeros from fellow group branches
+//  Receive+add low order rhs vector nonzeros from fellow group branches
 //! \param[in] fromch Charm chare array index contribution coming from
-//! \param[in] lowrhs Portion of the low-order rhs vector contributed,
+//! \param[in] lowrhs Portion of the low order rhs vector contributed,
 //!   containing global row indices and values
 // *****************************************************************************
 {
@@ -542,12 +558,10 @@ Solver::charelowlhs( int fromch,
                      const std::vector< std::size_t >& gid,
                      const Fields& lowlhs )
 // *****************************************************************************
-//  Chares contribute to the lhs of the low-order linear system
+//  Chares contribute to the lhs of the low order linear system
 //! \param[in] fromch Charm chare array the contribution coming from
 //! \param[in] gid Global row indices of the vector contributed
-//! \param[in] lowlhs Portion of the low-order lhs vector contributed
-//! \note This function does not have to be declared as a Charm++ entry
-//!   method since it is always called by chares on the same PE.
+//! \param[in] lowlhs Portion of the low order lhs vector contributed
 // *****************************************************************************
 {
   using tk::operator+=;
@@ -563,7 +577,7 @@ Solver::charelowlhs( int fromch,
       m_lowlhsimport[ fromch ].push_back( gid[i] );
       m_lowlhs[ gid[i] ] += lowlhs[i];
     } else
-      exp[ pe(gid[i]) ][ gid[i] ] = lowlhs[i];
+      exp[ node(gid[i]) ][ gid[i] ] = lowlhs[i];
 
   // Export non-owned vector values to fellow branches that own them
   for (const auto& p : exp) {
@@ -579,9 +593,9 @@ Solver::addlowlhs( int fromch,
                    const std::map< std::size_t,
                                    std::vector< tk::real > >& lowlhs )
 // *****************************************************************************
-// Receive and add lhs vector to the low-order system from fellow group branches
+// Receive and add lhs vector to the low order system from fellow group branches
 //! \param[in] fromch Charm chare array index contribution coming from
-//! \param[in] lowlhs Portion of the lhs vector contributed to the low-order
+//! \param[in] lowlhs Portion of the lhs vector contributed to the low order
 //!   linear system, containing global row indices and values
 // *****************************************************************************
 {
@@ -598,25 +612,28 @@ Solver::addlowlhs( int fromch,
 void
 Solver::comfinal()
 // *****************************************************************************
-//  All communications have been establised among PEs
-//! \details At this point all solver objects on all PEs must have received
-//!   their global row ids which means that the communications have been
-//!   established among all PEs and this the communications (maps) are final on
-//!   all PEs.
+//  All communications have been establised among compute nodes
+//! \details At this point all solver objects on all compute nodes must have
+//!   received their global row ids which means that the communications have
+//!   been established among all compute nodes and this the communications
+//!   (maps) are final on all compute nodes.
 // *****************************************************************************
 {
-  // Assert that all global row indices have been received on my PE.  The assert
-  // consists of three necessary conditions, which together comprise the
-  // sufficient condition that all global row indices have been received owned
-  // by this PE.
-  Assert( // 1. have heard from every chare on my PE
-          m_myworker.size() == m_nchare &&
-          // 2. number of rows equals that of the expected on my PE
+  // Assert that all global row indices have been received on this compute
+  // node. The assert consists of three necessary conditions, which together
+  // comprise the sufficient condition that all global row indices have been
+  // received owned by this compute node.
+
+//   std::cout << CkMyNode() << ": " << m_worker.size() << " == " << m_nchare <<  " "
+//             << m_row.size() << " == " << m_upper-m_lower << '(' << m_upper << '-' << m_lower << ") "
+//             << m_nperow << " == 0\n";
+
+  Assert( // 1. number of rows equals that of the expected on this compute node
           m_row.size() == m_upper-m_lower &&
-          // 3. all fellow PEs have received my row ids contribution
+          // 2. all fellow compute nodes have received my row ids contribution
           m_nperow == 0,
           // if any of the above is unsatisfied, the row ids are incomplete
-          "Row ids are incomplete on PE " + std::to_string(CkMyPe()) );
+          "Row ids are incomplete on node " + std::to_string(CkMyNode()) );
 
   // now that the global row ids are complete, build Hypre data from it
   hyprerow();
@@ -633,8 +650,6 @@ Solver::charebc( const std::unordered_map< std::size_t,
 //!   Here the bool indicates whether the BC value is set at the given node
 //!   by the user. The size of the vectors is the number of PDEs integrated
 //!   times the number of scalar components in all PDEs.
-//! \note This function does not have to be declared as a Charm++ entry
-//!   method since it is always called by chares on the same PE.
 // *****************************************************************************
 {
   // Associate BC vectors to mesh nodes owned
@@ -645,7 +660,7 @@ Solver::charebc( const std::unordered_map< std::size_t,
   }
 
   // Forward all BC vectors received to fellow branches
-  if (++m_nchbc == m_nchare) {
+  if (++m_nchbc == m_mynchare) {
     auto stream = tk::serialize( m_bc );
     m_shadow.ckLocalBranch()->contribute(
       stream.first, stream.second.get(), BCMapMerger,
@@ -667,56 +682,35 @@ Solver::addbc( CkReductionMsg* msg )
 }
 
 int
-Solver::pe( std::size_t gid )
+Solver::node( std::size_t gid )
 // *****************************************************************************
-//  Return processing element for global mesh row id
+//  Return compute node id for global mesh row id
 //! \param[in] gid Global mesh point (matrix or vector row) id
-//! \details First we attempt to the point index in the cache. If that
+//! \details First we attempt to find the point index in the cache. If that
 //!   fails, we resort to a linear search across the division map. Once the
-//!   PE is found, we store it in the cache, so next time the search is
-//!   quicker. This procedure must find the PE for the id.
-//! \return PE that owns global row id
+//!   compute node is found, we store it in the cache, so next time the search
+//!   is quicker. This procedure must find the compute node id for the global
+//!   node/row id.
+//! \return Compute node id that owns the global row id
 // *****************************************************************************
 {
-  Assert( m_div.size() == static_cast<std::size_t>(CkNumPes()),
-          "PE bounds incomplete on PE " + std::to_string(CkMyPe()) );
+  Assert( m_div.size() == static_cast<std::size_t>(CkNumNodes()),
+          "Compute node bounds incomplete on node " +
+          std::to_string(CkMyNode()) );
 
-  int p = -1;
-  auto it = m_pe.find( gid );
-  if (it != end(m_pe))
-    p = it->second;
+  int n = -1;
+  auto it = m_node.find( gid );
+  if (it != end(m_node))
+    n = it->second;
   else
     for (const auto& d : m_div)
       if (gid >= d.first.first && gid < d.first.second)
-        p = m_pe[ gid ] = d.second;
+        n = m_node[ gid ] = d.second;
 
-  Assert( p >= 0, "PE not found for node id " + std::to_string(gid) );
-  Assert( p < CkNumPes(), "Assigning to nonexistent PE" );
+  Assert( n >= 0, "Compute node not found for node id " + std::to_string(gid) );
+  Assert( n < CkNumNodes(), "Assigning to nonexistent compute node" );
 
-  return p;
-}
-
-bool
-Solver::comcomplete() const
-// *****************************************************************************
-//  Check if we have done our part in storing and exporting global row ids
-//! \details This does not mean the global row ids on our PE is complete
-//!   (which is tested by an assert in comfinal), only that we have done
-//!   our part of receiving contributions from chare array groups storing
-//!   the parts that we own and have sent the parts we do not own to fellow
-//!   PEs, i.e., we have nothing else to export. Only when all other fellow
-//!   branches have received all contributions are the row ids complete on
-//!   all PEs. This latter condition can only be tested after the global
-//!   reduction initiated by signal2host_row_complete, which is called when
-//!   all fellow branches have returned true from comcomplete.
-//! \see comfinal()
-//! \return True if we have done our part storing and exporting row ids
-// *****************************************************************************
-{
-  return // have heard from every chare on my PE
-         m_myworker.size() == m_nchare &&
-         // all fellow PEs have received my row ids contribution
-         m_nperow == 0;
+  return n;
 }
 
 void
@@ -747,8 +741,10 @@ Solver::lhsbc()
 // *****************************************************************************
 {
   Assert( lhscomplete(),
-          "Nonzero values of distributed matrix on PE " +
-          std::to_string( CkMyPe() ) + " is incomplete: cannot set BCs" );
+          "Nonzero values of distributed matrix on compute node " +
+          std::to_string( CkMyNode() ) + " is incomplete: cannot set BCs" );
+
+  //std::cout << CkMyNode() << ": " << m_bc.size() << '\n';
 
   // Set Dirichlet BCs on the lhs matrix. Loop through all BCs and if a BC
   // is prescribed on a row we own, find that row (r) and in that row the
@@ -847,9 +843,10 @@ Solver::rhsbc()
 //!    enforcing zero rhs (no solution increment) at BC nodes
 // *****************************************************************************
 {
-  Assert( rhscomplete(),
-          "Values of distributed right-hand-side vector on PE " +
-          std::to_string( CkMyPe() ) + " is incomplete: cannot set BCs" );
+  //std::cout << CkMyNode() << " rhsbc: " << rhscomplete() << '\n';
+  Assert( rhscomplete(), "Values of distributed right-hand-side vector on "
+          "compute node " + std::to_string( CkMyNode() ) + " is incomplete: "
+          "cannot set BCs" );
 
 //   for (const auto& n : m_bc) {
 //      auto r = m_bca.find( n.first );
@@ -884,9 +881,8 @@ Solver::hypresol()
 //  Build Hypre data for our portion of the solution vector
 // *****************************************************************************
 {
-  Assert( solcomplete(),
-          "Values of distributed solution vector on PE " +
-          std::to_string( CkMyPe() ) + " is incomplete" );
+  Assert( solcomplete(), "Values of distributed solution vector on compute "
+          "node " + std::to_string( CkMyNode() ) + " is incomplete" );
 
   std::size_t i = 0;
   for (const auto& r : m_sol) {
@@ -905,9 +901,9 @@ Solver::hyprelhs()
 //!   to update the vector with HYPRE_IJVectorGetValues().
 // *****************************************************************************
 {
-  Assert( lhscomplete(),
-          "Nonzero values of distributed matrix on PE " +
-          std::to_string( CkMyPe() ) + " is incomplete: cannot convert" );
+  Assert( lhscomplete(), "Nonzero values of distributed matrix on compute "
+          "node " + std::to_string( CkMyNode() ) + " is incomplete: cannot "
+          "convert" );
 
   for (const auto& r : m_lhs)
     for (std::size_t i=0; i<m_ncomp; ++i) {
@@ -927,9 +923,9 @@ Solver::hyprerhs()
 //  Build Hypre data for our portion of the right-hand side vector
 // *****************************************************************************
 {
-  Assert( rhscomplete(),
-          "Values of distributed right-hand-side vector on PE " +
-          std::to_string( CkMyPe() ) + " is incomplete: cannot convert" );
+  Assert( rhscomplete(), "Values of distributed right-hand-side vector on "
+          "compute node " + std::to_string( CkMyNode() ) + " is incomplete: "
+          "cannot convert" );
 
   for (const auto& r : m_rhs)
     m_hypreRhs.insert( end(m_hypreRhs), begin(r.second), end(r.second) );
@@ -943,9 +939,8 @@ Solver::sol()
 //  Set our portion of values of the distributed solution vector
 // *****************************************************************************
 {
-  Assert( m_hypreSol.size() == m_hypreRows.size(),
-          "Solution vector values incomplete on PE " +
-          std::to_string(CkMyPe()) );
+  Assert( m_hypreSol.size() == m_hypreRows.size(), "Solution vector values "
+          "incomplete on compute node " + std::to_string(CkMyNode()) );
 
   // Set our portion of the vector values
   m_x.set( static_cast< int >( (m_upper - m_lower)*m_ncomp ),
@@ -962,8 +957,8 @@ Solver::lhs()
 //  Set our portion of values of the distributed matrix
 // *****************************************************************************
 {
-  Assert( m_hypreMat.size() == m_hypreCols.size(),
-          "Matrix values incomplete on PE " + std::to_string(CkMyPe()) );
+  Assert( m_hypreMat.size() == m_hypreCols.size(), "Matrix values incomplete "
+          "on compute node " + std::to_string(CkMyNode()) );
 
   // Set our portion of the matrix values
   m_A.set( static_cast< int >( (m_upper - m_lower)*m_ncomp ),
@@ -982,8 +977,8 @@ Solver::rhs()
 //  Set our portion of values of the distributed right-hand side vector
 // *****************************************************************************
 {
-  Assert( m_hypreRhs.size() == m_hypreRows.size(),
-          "RHS vector values incomplete on PE " + std::to_string(CkMyPe()) );
+  Assert( m_hypreRhs.size() == m_hypreRows.size(), "RHS vector values "
+          "incomplete on compute node " + std::to_string(CkMyNode()) );
 
   // Set our portion of the vector values
   m_b.set( static_cast< int >( (m_upper - m_lower)*m_ncomp ),
@@ -994,13 +989,40 @@ Solver::rhs()
   asmrhs_complete();
 }
 
+std::pair< int, std::unique_ptr<char[]> >
+Solver::serializeSol( const std::vector< std::size_t >& gid,
+                      const std::vector< tk::real >& u ) const
+// *****************************************************************************
+//  Serialize solution vector into a Charm++ message, ready for a CkCallback
+//! \param[in] gid Global row indices of the vector updated
+//! \param[in] u Portion of the unknown/solution vector update
+// *****************************************************************************
+{
+  // Prepare for serializing global ids and solution vector to a raw binary
+  // stream, compute size
+  PUP::sizer sizer;
+  sizer | const_cast< std::vector< std::size_t >& >( gid );
+  sizer | const_cast< std::vector< tk::real >& >( u );
+
+  // Create raw character stream to store the serialized data
+  std::unique_ptr<char[]> flatData = tk::make_unique<char[]>( sizer.size() );
+
+  // Serialize global ids and solution
+  PUP::toMem packer( flatData.get() );
+  packer | const_cast< std::vector< std::size_t >& >( gid );
+  packer | const_cast< std::vector< tk::real >& >( u );
+
+  // Return serialized data (size in number of characters and pointer to data)
+  return { sizer.size(), std::move(flatData) };
+}
+
 void
 Solver::updateSol()
 // *****************************************************************************
-//  Update solution vector in our PE's workers
+//  Update solution vector in workers on this compute node
 // *****************************************************************************
 {
-  // Get solution vector values for our PE
+  // Get solution vector values for this compute node
   m_x.get( static_cast< int >( (m_upper - m_lower)*m_ncomp ),
            m_hypreRows.data(),
            m_hypreSol.data() );
@@ -1027,14 +1049,17 @@ Solver::updateSol()
                " to export in solution vector" );
     }
 
-    m_worker[ w.first ].updateSol( gid, solution );
+    // Update worker with high order solution
+    auto stream = serializeSol( gid, solution );
+    tk::cref_find( m_worker, w.first ).get< tag::high >().
+      send( stream.first, stream.second.get() );
   }
 }
 
 void
 Solver::solve()
 // *****************************************************************************
-//  Solve hyigh-order linear system
+//  Solve high order linear system
 // *****************************************************************************
 {
   m_solver.solve( m_A, m_b, m_x );
@@ -1044,7 +1069,7 @@ Solver::solve()
 void
 Solver::updateLowSol()
 // *****************************************************************************
-//  Update low-order solution vector in our PE's workers
+//  Update low order solution vector in workers on this compute node
 // *****************************************************************************
 {
   for (const auto& w : m_solimport) {
@@ -1061,17 +1086,20 @@ Solver::updateLowSol()
                " to export in low order solution vector" );
     }
 
-    m_worker[ w.first ].updateLowSol( gid, solution );
+    // Update worker with low order solution
+    auto stream = serializeSol( gid, solution );
+    tk::cref_find( m_worker, w.first ).get< tag::low >().
+      send( stream.first, stream.second.get() );
   }
 }
 
 void
 Solver::lowsolve()
 // *****************************************************************************
-//  Solve low-order linear system
+//  Solve low order linear system
 // *****************************************************************************
 {
-  // Set boundary conditions on the low-order system
+  // Set boundary conditions on the low order system
   for (const auto& n : m_bc)
     if (n.first >= m_lower && n.first < m_upper) {
       // lhs
@@ -1089,25 +1117,25 @@ Solver::lowsolve()
         if (n.second[i].first) r[i] = 0.0;
     }
 
-  // Solve low-order system
+  // Solve low order system
   Assert( rhscomplete(),
-          "Values of distributed right-hand-side vector on PE " +
-          std::to_string( CkMyPe() ) + " is incomplete: cannot solve low "
+          "Values of distributed right-hand-side vector on compute node " +
+          std::to_string( CkMyNode() ) + " is incomplete: cannot solve low "
           "order system" );
   Assert( lowrhscomplete(),
-          "Values of distributed mass diffusion rhs vector on PE " +
-          std::to_string( CkMyPe() ) + " is incomplete: cannot solve low "
+          "Values of distributed mass diffusion rhs vector on compute node " +
+          std::to_string( CkMyNode() ) + " is incomplete: cannot solve low "
           "order system" );
   Assert( lowlhscomplete(),
-          "Values of distributed lumped mass lhs vector on PE " +
-          std::to_string( CkMyPe() ) + " is incomplete: cannot solve low "
+          "Values of distributed lumped mass lhs vector on compute node " +
+          std::to_string( CkMyNode() ) + " is incomplete: cannot solve low "
           "order system" );
   Assert( tk::keyEqual( m_rhs, m_lowrhs ), "Row IDs of rhs and mass "
-          "diffusion rhs vector unequal on PE " + std::to_string( CkMyPe() )
-          + ": cannot solve low order system" );
+          "diffusion rhs vector unequal on compute node " +
+          std::to_string( CkMyNode() )  + ": cannot solve low order system" );
   Assert( tk::keyEqual( m_rhs, m_lowlhs ), "Row IDs of rhs and lumped mass "
-          "lhs vector unequal on PE " + std::to_string( CkMyPe() ) + ": "
-          "cannot solve low order system" );
+          "lhs vector unequal on compute node " + std::to_string( CkMyNode() ) +
+          ": cannot solve low order system" );
 
   auto ir = m_rhs.cbegin();
   auto id = m_lowrhs.begin();

@@ -118,6 +118,8 @@ class Discretization : public CBase_Discretization {
     tk::real T() const { return m_t; }
     //! Iteration count accessor
     uint64_t It() const { return m_it; }
+    //! Total number of chares accessor
+    int nchare() const { return m_nchare; }
 
     //! Non-const-ref refinement iteration count accessor
     uint64_t& Itr() { return m_itr; }

@@ -100,14 +100,10 @@ class MatCG : public CBase_MatCG {
     void advance( tk::real newdt );
 
     //! Update high order solution vector
-    void updateSol( //solMsg* m );
-                    const std::vector< std::size_t >& gid,
-                    const std::vector< tk::real >& du );
+    void updateSol( CkDataMsg* msg );
 
     //! Update low order solution vector
-    void updateLowSol( //solMsg* m );
-                       const std::vector< std::size_t >& gid,
-                       const std::vector< tk::real >& du );
+    void updateLowSol( CkDataMsg* msg );
 
     //! Update solution at the end of time step
     void update( const tk::Fields& a );
@@ -200,6 +196,13 @@ class MatCG : public CBase_MatCG {
       Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
       return m_disc[ thisIndex ].ckLocal();
     }
+
+    //! Return nodegroup id for chare id
+    int node( int id ) const;
+
+    //! Deserialize solution vector from Charm++ message
+    std::pair< std::vector< std::size_t >, std::vector< tk::real > >
+    deserializeSol( CkDataMsg* msg );
 
     //! Output mesh and particle fields to files
     void out();

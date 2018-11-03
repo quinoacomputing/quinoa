@@ -223,7 +223,7 @@ FluxCorrector::verify( std::size_t nchare,
       ss << "maximum difference at mesh node " << d.first << ": " << d.second
          << ", dUh:" << duh[d.first] << ", dUl:" << dul[d.first]
          << ", dUh-dUl:" << duh[d.first] - dul[d.first]
-         << ", AEC:" << u[d.first] << '\n';
+         << ", AEC:" << u[d.first];
       Throw( "Assembled AEC does not equal dUh-dUl: " + ss.str() );
     }
 

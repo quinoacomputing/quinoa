@@ -11,41 +11,67 @@
 module solver {
 
   include "Callback.h";
+  include "Fields.h";
 
   namespace tk {
 
-    group SolverShadow { entry SolverShadow(); };
+    nodegroup SolverShadow { entry SolverShadow(); };
 
-    group Solver {
+    nodegroup Solver {
       entry Solver( CProxy_SolverShadow sh,
                     const SolverCallback& cb,
                     std::size_t ncomp );
-      entry void nchare( int n );
       initnode void registerReducers();
-      entry void pebounds( int p, std::size_t lower, std::size_t upper );
+      entry void nchare( int n );
+      entry [exclusive] void chbounds( std::size_t lower, std::size_t upper );
+      entry [exclusive]
+        void nodebounds( int n, std::size_t lower, std::size_t upper );
       entry void next();
-      entry void addrow( int fromch,
-                         int frompe,
-                         const std::set< std::size_t >& row );
-      entry void recrow();
-      entry [reductiontarget] void addbc( CkReductionMsg* msg );
-      entry void addsol( int fromch,
-                         const std::map< std::size_t,
-                                         std::vector< tk::real > >& solution );
-      entry void addlhs( int fromch,
+      entry void charecom( int fromch, const MatCGCallback& cb );
+      entry [exclusive]
+        void charerow( int fromch, const std::vector< std::size_t >& row );
+      entry [exclusive] void addrow( int fromch,
+                                     int fromnode,
+                                     const std::set< std::size_t >& row );
+      entry [exclusive] void recrow();
+      entry [exclusive] void charesol( int fromch,
+                                       const std::vector< std::size_t >& gid,
+                                       const Fields& solution );
+      entry [exclusive] void addsol( int fromch,
+                                     const std::map< std::size_t,
+                                       std::vector< tk::real > >& solution );
+      entry [exclusive,reductiontarget] void addbc( CkReductionMsg* msg );
+      entry [exclusive] void charelhs( int fromch,
+                           const std::vector< std::size_t >& gid,
+                           const std::pair< std::vector< std::size_t >,
+                                            std::vector< std::size_t > >& psup,
+                           const tk::Fields& lhsd,
+                           const tk::Fields& lhso );
+      entry [exclusive] void addlhs( int fromch,
         const std::map< std::size_t,
                         std::map< std::size_t,
                                   std::vector< tk::real > > >& lhs );
-      entry void addrhs( int fromch,
+      entry [exclusive] void charerhs( int fromch,
+                           const std::vector< std::size_t >& gid,
+                           const Fields& r );
+      entry [exclusive] void addrhs( int fromch,
                          const std::map< std::size_t,
                                          std::vector< tk::real > >& rhs );
-      entry void addlowrhs( int fromch,
+      entry [exclusive] void charelowrhs( int fromch,
+                              const std::vector< std::size_t >& gid,
+                              const Fields& lowrhs );
+      entry [exclusive] void addlowrhs( int fromch,
                             const std::map< std::size_t,
                                             std::vector< tk::real > >& lorhs );
-      entry void addlowlhs( int fromch,
+      entry [exclusive] void charelowlhs( int fromch,
+                              const std::vector< std::size_t >& gid,
+                              const Fields& lowlhs );
+      entry [exclusive] void addlowlhs( int fromch,
                             const std::map< std::size_t,
                                             std::vector< tk::real > >& lolhs );
-      entry void comfinal();
+      entry [exclusive] void comfinal();
+      entry [exclusive] void charebc( const std::unordered_map< std::size_t,
+                            std::vector< std::pair< bool, tk::real > > >& bc );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -57,6 +83,10 @@ module solver {
       // they appear. If they appear in multiple when clauses, they consume
       // multple messages, thus they have to be triggered multiple times. See
       // https://lists.cs.illinois.edu/lists/arc/charm/2016-09/msg00002.html.
+
+      entry void wait4com() {
+        when com_complete(), row_complete() serial "com" {
+          contribute( m_cb.get< tag::com >() ); } };
 
       entry void wait4lhsbc() {
         when lhs_complete(), bc_complete() serial "lhsbc" { lhsbc(); } };
@@ -77,6 +107,8 @@ module solver {
         when rhsbc_complete(), lowlhs_complete(), lowrhs_complete()
           serial "low" { lowsolve(); } };
 
+      entry void com_complete();
+      entry void row_complete();
       entry void bc_complete();
       entry void rhsbc_complete();
       entry void hyprerow_complete();

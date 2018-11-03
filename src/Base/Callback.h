@@ -35,6 +35,12 @@ using SolverCallback =
                          , tag::disccreated,    CkCallback
                          >;
 
+using MatCGCallback =
+  tk::tuple::tagged_tuple< tag::dt,             CkCallback
+                         , tag::high,           CkCallback
+                         , tag::low,            CkCallback
+                         >;
+
 using SorterCallback =
   tk::tuple::tagged_tuple< tag::queried,        CkCallback
                          , tag::responded,      CkCallback

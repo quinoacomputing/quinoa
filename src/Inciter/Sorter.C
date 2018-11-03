@@ -510,6 +510,23 @@ Sorter::lower( std::size_t low )
   lower_complete();
 }
 
+int
+Sorter::node( int id ) const
+// *****************************************************************************
+//  Return nodegroup id for chare id
+//! \param[in] id Chare id
+//! \return Nodegroup that creates the chare
+//! \details This is computed based on a simple contiguous linear
+//!   distribution of chare ids to compute nodes.
+// *****************************************************************************
+{
+  Assert( m_nchare > 0, "Number of chares must be a positive number" );
+  auto p = id / (m_nchare / CkNumNodes());
+  if (p >= CkNumNodes()) p = CkNumNodes()-1;
+  Assert( p < CkNumNodes(), "Assigning to nonexistent node" );
+  return p;
+}
+
 void
 Sorter::create()
 // *****************************************************************************
@@ -521,7 +538,7 @@ Sorter::create()
 
   if ( g_inputdeck.get< tag::discr, tag::scheme >() == ctr::SchemeType::MatCG)
     // broadcast this chare's bounds of global node IDs to matrix solvers
-    m_solver.ckLocalBranch()->chbounds( m_lower, m_upper );
+    m_solver[ node(thisIndex) ].chbounds( m_lower, m_upper );
   else // if no MatCG, no matrix solver, continue
     createDiscWorkers();
 }

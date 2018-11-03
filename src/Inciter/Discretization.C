@@ -108,7 +108,7 @@ Discretization::Discretization(
   const auto nprop = g_inputdeck.get< tag::component >().nprop();
   if ((sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG))
     m_fct[ thisIndex ].insert( nchare, m_gid.size(), nprop,
-                               m_msum, m_bid, m_lid, m_inpoel, CkMyPe() );
+                               m_msum, m_bid, m_lid, m_inpoel );
 
   contribute( CkCallback(CkReductionTarget(Transporter,disccreated),
               m_transporter) );

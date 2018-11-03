@@ -31,10 +31,8 @@ module matcg {
       entry void dt();
       entry void diag();
       entry [reductiontarget] void advance( tk::real newdt );
-      entry void updateSol( const std::vector< std::size_t >& gid,
-                            const std::vector< tk::real >& sol );
-      entry void updateLowSol( const std::vector< std::size_t >& gid,
-                               const std::vector< tk::real >& sol );
+      entry void updateSol( CkDataMsg* msg );
+      entry void updateLowSol( CkDataMsg* msg );
       entry void resized();
       entry void lhs();
 

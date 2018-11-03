@@ -76,8 +76,22 @@ MatCG::MatCG( const CProxy_Discretization& disc,
 {
   auto d = Disc();
 
+  //std::cout << "MatCG " << thisIndex << " on node " << CkMyNode() << '\n';
+
+  // Create callbacks to various member functions of this chare
+  auto proxy = thisProxy[ thisIndex ];
+  tk::MatCGCallback cb{
+    CkCallback( CkIndex_MatCG::dt(), proxy ),
+    CkCallback( CkIndex_MatCG::updateSol(nullptr), proxy ),
+    CkCallback( CkIndex_MatCG::updateLowSol(nullptr), proxy ) };
+
+  // Send callbacks of this chare to linear system solver. This is a broadcast,
+  // i.e., all worker chares to all linear system merger compute nodes, so that
+  // any compute node can call to any worker chare to send solution updates.
+  m_solver.charecom( thisIndex, cb );
+
   // Send off global row IDs to linear system solver
-  m_solver.ckLocalBranch()->charecom( thisProxy, thisIndex, d->Gid() );
+  m_solver[ node(thisIndex) ].charerow( thisIndex, d->Gid() );
 }
 
 void
@@ -94,6 +108,25 @@ MatCG::registerReducers()
   NodeDiagnostics::registerReducers();
 }
 
+int
+MatCG::node( int id ) const
+// *****************************************************************************
+//  Return nodegroup id for chare id
+//! \param[in] id Chare id
+//! \return Charm++ nodegroup that a chare contributes to
+//! \details This is computed based on a simple contiguous linear
+//!   distribution of chare ids to nodes.
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  Assert( d->nchare() > 0, "Number of chares must be a positive number" );
+  auto n = id / (d->nchare() / CkNumNodes());
+  if (n >= CkNumNodes()) n = CkNumNodes()-1;
+  Assert( n < CkNumNodes(), "Assigning to nonexistent compute node" );
+  return n;
+}
+
 void
 MatCG::setup( tk::real v )
 // *****************************************************************************
@@ -103,7 +136,7 @@ MatCG::setup( tk::real v )
 {
   auto d = Disc();
 
-  m_solver.ckLocalBranch()->comfinal();
+  m_solver[ node(thisIndex) ].comfinal();
 
   // Store total mesh volume
   m_vol = v;
@@ -122,7 +155,7 @@ MatCG::setup( tk::real v )
   for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
 
   // Send off initial guess for assembly
-  m_solver.ckLocalBranch()->charesol( thisIndex, d->Gid(), m_du );
+  m_solver[ node(thisIndex) ].charesol( thisIndex, d->Gid(), m_du );
 
   // Output initial conditions to file (regardless of whether it was requested)
   if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( d->T() );
@@ -187,13 +220,13 @@ MatCG::lhs()
     eq.lhs( d->Coord(), d->Inpoel(), d->Psup(), m_lhsd, m_lhso );
 
   // Send off left hand side for assembly
-  m_solver.ckLocalBranch()->
+  m_solver[ node(thisIndex) ].
     charelhs( thisIndex, d->Gid(), d->Psup(), m_lhsd, m_lhso );
 
   // Compute lumped mass lhs required for the low order solution
   auto lump = d->FCT()->lump( *d );
   // Send off lumped mass lhs for assembly
-  m_solver.ckLocalBranch()->charelowlhs( thisIndex, d->Gid(), lump );
+  m_solver[ node(thisIndex) ].charelowlhs( thisIndex, d->Gid(), lump );
 }
 
 void
@@ -212,13 +245,15 @@ MatCG::rhs()
   // Query and match user-specified boundary conditions to side sets
   bc();
 
+//std::cout << thisIndex << " rhs, it:" << d->It() << "\n";
+
   // Send off right-hand sides for assembly
-  m_solver.ckLocalBranch()->charerhs( thisIndex, d->Gid(), r );
+  m_solver[ node(thisIndex) ].charerhs( thisIndex, d->Gid(), r );
 
   // Compute mass diffusion rhs contribution required for the low order solution
   auto diff = d->FCT()->diff( *d, m_u );
   // Send off mass diffusion rhs contribution for assembly
-  m_solver.ckLocalBranch()->charelowrhs( thisIndex, d->Gid(), diff );
+  m_solver[ node(thisIndex) ].charelowrhs( thisIndex, d->Gid(), diff );
 }
 
 void
@@ -234,18 +269,40 @@ MatCG::bc()
                       d->Gid(), d->Lid(), m_fd.Bnode() );
 
   // Send off BCs to Solver for aggregation
-  m_solver.ckLocalBranch()->charebc( dirbc );
+  m_solver[ node(thisIndex) ].charebc( dirbc );
+}
+
+std::pair< std::vector< std::size_t >, std::vector< tk::real > >
+MatCG::deserializeSol( CkDataMsg* msg )
+// *****************************************************************************
+//  Deserialize solution vector from Charm++ message
+//! \param[in] msg Charm++ data messsage to deserialize
+//! \return Global row indices of the vector updated and the portion of the
+//!    unknown/solution vector update
+// *****************************************************************************
+{
+  // Deserialize global node ids and solution vector update
+  std::vector< std::size_t > gid;  // Global row indices of the vector updated
+  std::vector< tk::real > du;  // Portion of the unknown/solution vector update
+  PUP::fromMem creator( msg->getData() );
+  creator | gid;
+  creator | du;
+  delete msg;
+
+  return { gid, du };
 }
 
 void
-MatCG::updateLowSol( const std::vector< std::size_t >& gid,
-                     const std::vector< tk::real >& du )
+MatCG::updateLowSol( CkDataMsg* msg )
 // *****************************************************************************
 // Update low order solution vector
-//! \param[in] gid Global row indices of the vector updated
-//! \param[in] du Portion of the unknown/solution vector update
 // *****************************************************************************
 {
+  // Deserialize global node ids and solution vector update
+  std::vector< std::size_t > gid;  // Global row indices of the vector updated
+  std::vector< tk::real > du;  // Portion of the unknown/solution vector update
+  std::tie( gid, du ) = deserializeSol( msg );
+
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
   Assert( gid.size() * ncomp == du.size(),
           "Size of row ID vector times the number of scalar components and the "
@@ -271,14 +328,16 @@ MatCG::updateLowSol( const std::vector< std::size_t >& gid,
 }
 
 void
-MatCG::updateSol( const std::vector< std::size_t >& gid,
-                  const std::vector< tk::real >& du )
+MatCG::updateSol( CkDataMsg* msg )
 // *****************************************************************************
 // Update high order solution vector
-//! \param[in] gid Global row indices of the vector updated
-//! \param[in] du Portion of the unknown/solution vector update
 // *****************************************************************************
 {
+  // Deserialize global node ids and solution vector update
+  std::vector< std::size_t > gid;  // Global row indices of the vector updated
+  std::vector< tk::real > du;  // Portion of the unknown/solution vector update
+  std::tie( gid, du ) = deserializeSol( msg );
+
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
   Assert( gid.size() * ncomp == du.size(),
           "Size of row ID vector times the number of scalar components and the "

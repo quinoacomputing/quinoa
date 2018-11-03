@@ -227,6 +227,9 @@ class Sorter : public CBase_Sorter {
     //! \brief Create chare array elements on this PE and assign the global mesh
     //!   element IDs they will operate on
     void create();
+
+    //! Return nodegroup id for chare id
+    int node( int id ) const;
 };
 
 } // inciter::
