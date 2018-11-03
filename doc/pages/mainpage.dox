@@ -15,11 +15,11 @@ overlap_ of parallel computation, communication, input, and output. Then the
 runtime system _dynamically_ and _automatically_ homogenizes computational load
 across the simulation distributed across many computers.
 
-Our ultimate goal is to simulate large, interesting (i.e., complex and
-practically useful) multiphysics problems with a production-quality code that is
-extensible and maintainable, using hardware resources efficiently even for
-problems with _a priori_ unknown and heterogeneous load distribution that can
-also dynamically change in time. Read more at our @ref why page.
+Our ultimate goal is to simulate large and complex engineering multiphysics
+problems with a production-quality code that is extensible and maintainable,
+using hardware resources efficiently, even for problems with _a priori_
+unknown, heterogeneous, and dynamic load distribution.  Read more at our @ref
+why page.
 
 @section mainpage_tools Tools
 
