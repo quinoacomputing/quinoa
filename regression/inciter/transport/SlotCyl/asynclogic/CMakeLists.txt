@@ -4,7 +4,7 @@
 foreach(scheme matcg diagcg dg alecg)
   foreach(virt 0.0 0.5 0.9)
     foreach(npes RANGE 1 8)
-      add_regression_test(asynclogic_${scheme}_${virt} ${INCITER_EXECUTABLE}
+      add_regression_test(asynclogic_${scheme}_u${virt} ${INCITER_EXECUTABLE}
         NUMPES ${npes}
         INPUTFILES slot_cyl_${scheme}.q unitcube_01_31k.exo noop.ndiff.cfg
         ARGS -c slot_cyl_${scheme}.q -i unitcube_01_31k.exo -v -u ${virt}
