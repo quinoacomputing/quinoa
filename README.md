@@ -16,8 +16,7 @@ across the simulation distributed across many computers.
 Our ultimate goal is to simulate large and complex engineering multiphysics
 problems with a production-quality code that is extensible and maintainable,
 using hardware resources efficiently, even for problems with _a priori_
-unknown, heterogeneous, and dynamic load distribution.  Read more at our @ref
-why page.
+unknown, heterogeneous, and dynamic load distribution.
 
 For more details on philosophy, documentation, software design, journal papers,
 license, contributing see the
