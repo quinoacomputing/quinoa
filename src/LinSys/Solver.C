@@ -121,8 +121,8 @@ Solver::nchare( int n )
 // *****************************************************************************
 //  Set number of worker chares expected to contribute on this compute node
 //! \param[in] n Total number of chares (work units) across all compute nodes
-//! \details Besides the number of workers contribute to this compute nodes, we
-//!    also the total number of chares across the whole problem.
+//! \details Besides the number of workers contribute to this compute node, we
+//!    also store the total number of chares across the whole problem.
 // *****************************************************************************
 {
   auto chunksize = n / CkNumNodes();

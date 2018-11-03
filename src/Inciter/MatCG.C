@@ -78,6 +78,13 @@ MatCG::MatCG( const CProxy_Discretization& disc,
 
   //std::cout << "MatCG " << thisIndex << " on node " << CkMyNode() << '\n';
 
+  // Ensure all local IDs can be found for all physical boundary node IDs
+  for (const auto& c : m_fd.Bnode())
+    for (auto p : c.second)
+      Assert( d->Lid().find(p) != d->Lid().cend(),
+              "Local ID not found for global boundary node ID " +
+              std::to_string(p) + " on chare " + std::to_string(thisIndex) );
+
   // Create callbacks to various member functions of this chare
   auto proxy = thisProxy[ thisIndex ];
   tk::MatCGCallback cb{

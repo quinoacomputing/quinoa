@@ -447,7 +447,7 @@ Sorter::finish()
   // Update symmetric chare-node communication map with the reordered IDs
   for (auto& c : m_msum) {
     decltype(c.second) n;
-    for (auto p : c.second) n.insert( tk::cref_find(m_newnodes,p) );
+    for (auto p : c.second) n.insert( tk::cref_find( m_newnodes, p ) );
     c.second = std::move( n );
   }
 
@@ -456,7 +456,12 @@ Sorter::finish()
   m_nodeset.insert( begin(m_ginpoel), end(m_ginpoel) );
 
   // Update boundary face-node connectivity with the reordered node IDs
-  for (auto& p : m_triinpoel) p = tk::cref_find(m_newnodes,p);
+  for (auto& p : m_triinpoel) p = tk::cref_find( m_newnodes, p );
+
+  // Update boundary node lists with the reordered node IDs
+  for (auto& s : m_bnode)
+    for (auto& p : s.second)
+      p = tk::cref_find( m_newnodes, p );
 
   // Progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chreordered();
