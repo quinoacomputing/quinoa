@@ -9,6 +9,9 @@
 
     In a nutshell, the equation integrated governs a set of scalars, \f$0 \le
     Y_i\f$, \f$i=1,\dots,K\f$, \f$\sum_{i=1}^KY_i\le1\f$, as
+
+    @m_class{m-show-m}
+
     \f[ \begin{split}
       \mathrm{d}Y_i(t) = \frac{\mathcal{U}_i}{2}\left\{ b_i\Big[S_i
       \mathcal{Y}_K - (1-S_i)Y_i\Big] + Y_i\mathcal{Y}_K
@@ -16,18 +19,43 @@
       \sqrt{\kappa_i Y_i \mathcal{Y}_K \mathcal{U}_i}\mathrm{d}W_i(t), \\
       \qquad i=1,\dots,K, \end{split}
     \f]
+
+    @m_class{m-hide-m}
+
+    \f[ \begin{split}
+      \mathrm{d}Y_i(t) = \frac{\mathcal{U}_i}{2}\left\{ b_i\Big[S_i
+      \mathcal{Y}_K - (1-S_i)Y_i\Big] + Y_i\mathcal{Y}_K
+      \sum_{j=i}^{K-1}\frac{c_{ij}}{\mathcal{Y}_j}\right\}\mathrm{d}t \\ +
+      \sqrt{\kappa_i Y_i \mathcal{Y}_K \mathcal{U}_i}\mathrm{d}W_i(t),
+      \qquad i=1,\dots,K, \end{split}
+    \f]
+
     where \f$\mathrm{d}W_i(t)\f$ is an isotropic vector-valued [Wiener
     process](http://en.wikipedia.org/wiki/Wiener_process) with independent
     increments. The statistically stationary solution of the above coupled
     system of nonlinear stochastic differential equations is the generalized
     Dirichlet distribution,
+
+    @m_class{m-show-m}
+
     \f[
        \newcommand{\bv}[1]{{\mbox{$\mathbf{#1}$}}}
-       \mathscr{G}(\bv{Y},\bv{\alpha},\bv{\beta}) =
+       G(\bv{Y},\bv{\alpha},\bv{\beta}) =
        \prod_{i=1}^K\frac{\Gamma(\alpha_i+\beta_i)}{\Gamma(\alpha_i)
        \Gamma(\beta_i)}Y_i^{\alpha_i-1} \mathcal{Y}_i^{\gamma_i} \qquad
        \mathrm{with} \qquad \mathcal{Y}_i = 1-\sum_{k=1}^i Y_k,
     \f]
+
+    @m_class{m-hide-m}
+
+    \f[ \begin{split}
+       \newcommand{\bv}[1]{{\mbox{$\mathbf{#1}$}}}
+       G(\bv{Y},\bv{\alpha},\bv{\beta}) =
+       \prod_{i=1}^K\frac{\Gamma(\alpha_i+\beta_i)}{\Gamma(\alpha_i)
+       \Gamma(\beta_i)}Y_i^{\alpha_i-1} \mathcal{Y}_i^{\gamma_i} \\
+       \mathrm{with} \qquad \mathcal{Y}_i = 1-\sum_{k=1}^i Y_k,
+    \end{split} \f]
+
     provided the coefficients, \f$b_i\!>\!0\f$, \f$\kappa_i\!>\!0\f$,
     \f$0\!<\!S_i\!<\!1\f$, and \f$c_{ij}\f$, with \f$c_{ij}\!=\!0\f$ for
     \f$i\!>\!j\f$, \f$i,j\!=\!1,\dots,K\!-\!1\f$, satisfy
@@ -53,12 +81,12 @@
 #define GeneralizedDirichlet_h
 
 #include <vector>
+#include <cmath>
 
 #include "InitPolicy.h"
 #include "GeneralizedDirichletCoeffPolicy.h"
 #include "RNG.h"
 #include "Particles.h"
-#include "SystemComponents.h"
 
 namespace walker {
 
@@ -147,7 +175,7 @@ class GeneralizedDirichlet {
         for (ncomp_t i=0; i<m_ncomp; ++i) {
           tk::real& par = particles( p, i, m_offset );
           tk::real d = m_k[i] * par * Y[m_ncomp-1] * U[i] * dt;
-          d = (d > 0.0 ? sqrt(d) : 0.0);
+          d = (d > 0.0 ? std::sqrt(d) : 0.0);
           tk::real a=0.0;
           for (ncomp_t j=i; j<m_ncomp-1; ++j) a += m_cij[k++]/Y[j];
           par += U[i]/2.0*( m_b[i]*( m_S[i]*Y[m_ncomp-1] - (1.0-m_S[i])*par ) +

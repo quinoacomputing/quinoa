@@ -1,13 +1,12 @@
 /*!
   \page      rngtest_example_smallcrush_all RNGTest: Test all available MKL and RNGSSE RNGs with SmallCrush
-  \tableofcontents
 
-This example runs [rngtest](rngtest_doc.html) to subject all currently available
-MKL and RNGSSE random number generators to TestU01's SmallCrush battery.
+This example runs @ref rngtest_main to subject all available MKL and RNGSSE random
+number generators to TestU01's SmallCrush battery.
 
-\section rngtest_example_smallcrush_all_control Control file
+@section rngtest_example_smallcrush_all_control Control file
 
-\code{.py}
+@code{.bash}
 title "Test all available RNGs"
 
 smallcrush
@@ -39,14 +38,14 @@ smallcrush
   mkl_nondeterm end
 
 end
-\endcode
+@endcode
 
-\section rngtest_example_smallcrush_all_run Example run on 8 CPUs
-\code{.py}
+@section rngtest_example_smallcrush_all_run Example run on 8 CPUs
+@code{.bash}
 ./charmrun +p8 Main/rngtest -v -c ../../tmp/all.q
-\endcode
+@endcode
 
-\section rngtest_example_smallcrush_all_output Output
+@section rngtest_example_smallcrush_all_output Output
 \verbatim
 Running on 8 processors:  Main/rngtest -v -c ../../tmp/all.q
 charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 8  Main/rngtest -v -c ../../tmp/all.q
@@ -683,9 +682,4 @@ Charm++> cpu topology info is gathered in 0.003 seconds.
 [Partition 0][Node 0] End of program
 \endverbatim
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Wed 04 Feb 2015 04:41:58 PM MST
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */

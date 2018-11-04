@@ -76,6 +76,7 @@ DiagWriter::diag( uint64_t it,
 //  Write out diagnostics
 //! \param[in] it Iteration counter
 //! \param[in] t Time
+//! \param[in] dt Time step size
 //! \param[in] diagnostics Vector with the diagnostics
 //! \return The total number of diagnostics written to the output file
 // *****************************************************************************

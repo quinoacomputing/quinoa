@@ -26,129 +26,6 @@
     utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
     overview of the algorithm structure and how it interfaces with Charm++ is
     discussed in the Charm++ interface file src/LinSys/solver.ci.
-
-    #### Call graph ####
-    The following is a directed acyclic graph (DAG) that outlines the
-    asynchronous algorithm implemented in this class The detailed discussion of
-    the algorithm is given in the Charm++ interface file solver.ci. On the
-    DAG orange fills denote global synchronization points that contain or
-    eventually lead to global reductions. Dashed lines are potential shortcuts
-    that allow jumping over some of the task-graph under some circumstances or
-    optional code paths (taken, e.g., only in DEBUG mode). See the detailed
-    discussion in solver.ci.
-    \dot
-    digraph "Solver SDAG" {
-      rankdir="LR";
-      node [shape=record, fontname=Helvetica, fontsize=10];
-      ChCom [ label="ChCom"
-              tooltip="chares contribute their global row IDs"
-              URL="\ref tk::Solver::charecom"];
-      ChBC [ label="ChBC"
-             tooltip="chares contribute their global node IDs at which
-                      they can set boundary conditions"
-             URL="\ref tk::Solver::charebc"];
-      ComComplete   [ label="ComComplete"  style="solid"
-              tooltip="all linear system solver branches have done heir part of
-              storing and exporting global row ids"
-              URL="\ref inciter::Transporter::comcomplete"];
-      Setup [ label="Setup"
-              tooltip="Workers start setting and outputing ICs, computing
-                       initial dt, computing LHS"
-              URL="\ref inciter::MatCG::setup"];
-      dt [ label="dt"
-           tooltip="Worker chares compute their minimum time step size"
-            style="solid"];
-      ComFinal  [ label="ComFinal"
-              tooltip="start converting row IDs to hypre format"
-              URL="\ref tk::Solver::comfinal"];
-      t_start [ label="Transporter::start"
-              tooltip="start time stepping"
-              URL="\ref inicter::Transporter::start"];
-      LhsBC [ label="LhsBC"
-              tooltip="set boundary conditions on the left-hand side matrix"
-              URL="\ref tk::Solver::lhsbc"];
-      RhsBC [ label="RhsBC"
-              tooltip="set boundary conditions on the right-hand side vector"
-              URL="\ref tk::Solver::rhsbc"];
-      ChSol [ label="ChSol"
-              tooltip="chares contribute their solution vector nonzeros"
-              URL="\ref tk::Solver::charesol"];
-      ChLhs [ label="ChLhs"
-              tooltip="chares contribute their left hand side matrix nonzeros"
-              URL="\ref tk::Solver::charelhs"];
-      ChLowLhs [ label="ChLowLhs"
-              tooltip="chares contribute their low-order left hand side matrix"
-              URL="\ref tk::Solver::charelow"];
-      ChRhs [ label="ChRhs"
-              tooltip="chares contribute their right hand side vector nonzeros"
-              URL="\ref tk::Solver::charesol"];
-      ChLowRhs [ label="ChLowRhs"
-              tooltip="chares contribute their contribution to the low-order
-                       right hand side vector"
-              URL="\ref tk::Solver::charelowrhs"];
-      HypreRow [ label="HypreRow"
-              tooltip="convert global row ID vector to hypre format"
-              URL="\ref tk::Solver::hyprerow"];
-      HypreSol [ label="HypreSol"
-              tooltip="convert solution vector to hypre format"
-              URL="\ref tk::Solver::hypresol"];
-      HypreLhs [ label="HypreLhs"
-              tooltip="convert left hand side matrix to hypre format"
-              URL="\ref tk::Solver::hyprelhs"];
-      HypreRhs [ label="HypreRhs"
-              tooltip="convert right hand side vector to hypre format"
-              URL="\ref tk::Solver::hyprerhs"];
-      Sol [ label="Sol"
-              tooltip="fill/set solution vector"
-              URL="\ref tk::Solver::sol"];
-      Lhs [ label="Lhs"
-              tooltip="fill/set left hand side matrix"
-              URL="\ref tk::Solver::lhs"];
-      Rhs [ label="Rhs"
-              tooltip="fill/set right hand side vector"
-              URL="\ref tk::Solver::rhs"];
-      Solve [ label="Solve" tooltip="solve linear system"
-              URL="\ref tk::Solver::solve"];
-      LowSolve [ label="LowSolve" tooltip="solve low-order linear system"
-              URL="\ref tk::Solver::lowsolve"];
-      Upd [ label="Upd" tooltip="update solution"
-                 style="solid"
-                URL="\ref tk::Solver::updateSol"];
-      LowUpd [ label="LowUpd" tooltip="update low-order solution"
-               style="solid"
-               URL="\ref tk::Solver::updateLowol"];
-      ChCom -> ComComplete [ style="solid" ];
-      ComComplete -> Setup [ style="solid" ];
-      ComFinal -> HypreRow [ style="solid" ];
-      ChLhs -> LhsBC [ style="solid" ];
-      ChRhs -> RhsBC [ style="solid" ];
-      LhsBC -> HypreLhs [ style="solid" ];
-      RhsBC -> HypreRhs [ style="solid" ];
-      RhsBC -> LowSolve [ style="solid" ];
-      ChLowRhs -> LowSolve [ style="solid" ];
-      ChLowLhs -> LowSolve [ style="solid" ];
-      Setup -> ComFinal [ style="solid" ];
-      Setup -> ChSol [ style="solid" ];
-      Setup -> ChLhs [ style="solid" ];
-      Setup -> ChLowLhs [ style="solid" ];
-      Setup -> t_start [ style="solid" ];
-      t_start -> dt [ style="solid" ];
-      dt -> ChRhs [ style="solid" ];
-      dt -> ChLowRhs [ style="solid" ];
-      dt -> ChBC [ style="solid" ];
-      ChBC -> LhsBC [ style="solid" ];
-      ChBC -> RhsBC [ style="solid" ];
-      HypreRow -> Sol [ style="solid" ];
-      HypreRow -> Lhs [ style="solid" ];
-      HypreRow -> Rhs [ style="solid" ];
-      ChSol -> HypreSol -> Sol -> Solve [ style="solid" ];
-      HypreLhs -> Lhs -> Solve [ style="solid" ];
-      HypreRhs -> Rhs -> Solve [ style="solid" ];
-      Solve -> Upd [ style="solid" ];
-      LowSolve -> LowUpd [ style="solid" ];
-    }
-    \enddot
-    \include LinSys/solver.ci
 */
 // *****************************************************************************
 #ifndef Solver_h
@@ -212,16 +89,24 @@ class Solver : public CBase_Solver {
   public:
     //! Constructor
     Solver( CProxy_SolverShadow sh,
-            const std::vector< CkCallback >& cb,
-            std::size_t n,
-            bool /*feedback*/ );
+            const SolverCallback& cb,
+            std::size_t n );
 
     //! Configure Charm++ reduction types for concatenating BC nodelists
     static void registerReducers();
 
-    //! Receive lower and upper global node IDs all PEs will operate on
-    void bounds( int p, std::size_t lower, std::size_t upper );
+    //!  Receive lower and upper global node IDs from chares
+    //! \note This is not a Charm++ entry method but public because it is called
+    //!    by chares on this PE.
+    void chbounds( std::size_t lower, std::size_t upper );
 
+    //!  Compute lower and upper bounds across all PEs
+    void pebounds( int p, std::size_t lower, std::size_t upper );
+
+    //! Compute lower and upper bounds across PEs
+    void computeBounds( int c, std::size_t lower, std::size_t upper );
+
+    //! Prepare for next step
     //! Prepare for next step
     void next();
 
@@ -336,14 +221,10 @@ class Solver : public CBase_Solver {
 
   private:
     CProxy_SolverShadow m_shadow;
-    //! Charm++ reduction callbacks associated to compile-time tags
-    tk::tuple::tagged_tuple<
-        tag::com,   CkCallback
-      , tag::coord, CkCallback
-      , tag::diag,  CkCallback
-    > m_cb;
+    SolverCallback m_cb;        //!< Charm++ associated to compile-time tags
     std::size_t m_ncomp;       //!< Number of scalar components per unknown
     std::size_t m_nchare;      //!< Number of chares contributing to my PE
+    std::size_t m_nbounds;     //!< Number of chares contributed bounds to my PE
     std::size_t m_ncomm;       //!< Number of chares finished commaps on my PE
     std::size_t m_nperow;      //!< Number of fellow PEs to send row ids to
     std::size_t m_nchbc;       //!< Number of chares we received bcs from

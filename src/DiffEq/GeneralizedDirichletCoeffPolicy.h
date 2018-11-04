@@ -48,7 +48,7 @@
 #ifndef GeneralizedDirichletCoeffPolicy_h
 #define GeneralizedDirichletCoeffPolicy_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Types.h"
 #include "Walker/Options/CoeffPolicy.h"
@@ -93,7 +93,7 @@ class GeneralizedDirichletCoeffConst {
 
 //! List of all generalized Dirichlet's coefficients policies
 using GeneralizedDirichletCoeffPolicies =
-  boost::mpl::vector< GeneralizedDirichletCoeffConst >;
+  brigand::list< GeneralizedDirichletCoeffConst >;
 
 } // walker::
 

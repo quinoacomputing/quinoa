@@ -41,9 +41,8 @@ tk::SolverShadow::SolverShadow()
 //!   different from Solver to avoid the runtime error "mis-matched client
 //!   callbacks in reduction messages". Why the constructor definition is not
 //!   defined in the class definition? To avoid the compiler warning: "warning:
-//!   instantiation of function 'CBaseT1<Group,
-//!   tk::CProxy_SolverShadow>::virtual_pup' required here, but no definition is
-//!   available [-Wundefined-func-template]".
+//!   instantiation of function virtual_pup from CBaseT1 required here, but no
+//!   definition is available [-Wundefined-func-template]".
 // *****************************************************************************
 {
 }
@@ -51,22 +50,21 @@ tk::SolverShadow::SolverShadow()
 using tk::Solver;
 
 Solver::Solver( CProxy_SolverShadow sh,
-                const std::vector< CkCallback >& cb,
-                std::size_t n,
-                bool /*feedback*/ ) :
+                const SolverCallback& cb,
+                std::size_t n ) :
   m_shadow( sh ),
-  m_cb( cb[0], cb[1], cb[2] ),
+  m_cb( cb ),
   m_ncomp( n ),
   m_nchare( 0 ),
+  m_nbounds( 0 ),
   m_ncomm( 0 ),
   m_nperow( 0 ),
   m_nchbc( 0 ),
-  m_lower( 0 ),
+  m_lower( std::numeric_limits< std::size_t >::max() ),
   m_upper( 0 ),
   m_it( 0 ),
   m_t( 0.0 ),
   m_dt( 0.0 ),
-  //m_feedback( feedback ),
   m_myworker(),
   m_rowimport(),
   m_solimport(),
@@ -97,13 +95,13 @@ Solver::Solver( CProxy_SolverShadow sh,
   m_bca()
 // *****************************************************************************
 //  Constructor
-//! \param[in] cb Charm++ callbacks
-//! \param[in] s Mesh node IDs mapped to side set ids
+//! \param[in] sh Solver "shadow" Charm++ chare group proxy for starting
+//!   reductions at the same time as other reductions from Charm++ chare Solver
+//! \param[in] cb Charm++ callbacks for Solver
 //! \param[in] n Total number of scalar components in the linear system
 // *****************************************************************************
 {
   // Activate SDAG waits
-  thisProxy[ CkMyPe() ].wait4nchare();
   thisProxy[ CkMyPe() ].wait4lhsbc();
   thisProxy[ CkMyPe() ].wait4rhsbc();
   thisProxy[ CkMyPe() ].wait4hypresol();
@@ -125,17 +123,52 @@ Solver::registerReducers()
 // *****************************************************************************
 {
   BCMapMerger = CkReduction::addReducer(
-                  tk::mergeHashMap< std::size_t,
-                    std::vector< std::pair< bool, tk::real > > > );
+                    tk::mergeHashMap< decltype(m_bc)::key_type,
+                                      decltype(m_bc)::mapped_type > );
 }
 
 void
-Solver::bounds( int p, std::size_t lower, std::size_t upper )
+Solver::nchare( int n )
 // *****************************************************************************
-//  Receive lower and upper global node IDs all PEs will operate on
+//  Set number of worker chares expected to contribute on my PE
+//! \param[in] n Total number of chares (work units) across all PEs
+// *****************************************************************************
+{
+  auto chunksize = n / CkNumPes();
+  auto mynchare = chunksize;
+  if (CkMyPe() == CkNumPes()-1) mynchare += n % CkNumPes();
+  m_nchare = static_cast< std::size_t >( mynchare );
+
+  contribute( m_cb.get< tag::nchare >() );
+}
+
+void
+Solver::chbounds( std::size_t lower, std::size_t upper )
+// *****************************************************************************
+//  Receive lower and upper global node IDs from chares
+//! \param[in] lower Lower index of the global rows of sending chare
+//! \param[in] upper Upper index of the global rows of sending chare
+// *****************************************************************************
+{
+  Assert( lower < upper, "Lower bound must be lower than the upper bound: "
+          "(" + std::to_string(lower) + "..." +  std::to_string(upper) +
+          ") sent by chare" );
+
+  // Compute extents of bounds on this PE
+  m_lower = std::min( m_lower, lower );
+  m_upper = std::max( m_upper, upper );
+
+  // When this PE has heard from all chares on this PE, aggregate PE bounds
+  if (++m_nbounds == m_nchare) thisProxy.pebounds( CkMyPe(), m_lower, m_upper );
+}
+
+void
+Solver::pebounds( int p, std::size_t lower, std::size_t upper )
+// *****************************************************************************
+//  Compute lower and upper bounds across all PEs
 //! \param[in] p PE whose bounds being received
-//! \param[in] lower Lower index of the global rows on my PE
-//! \param[in] upper Upper index of the global rows on my PE
+//! \param[in] lower Lower index of the global rows of sending PE
+//! \param[in] upper Upper index of the global rows of sending PE
 // *****************************************************************************
 {
   Assert( lower < upper, "Lower bound must be lower than the upper bound: "
@@ -160,7 +193,7 @@ Solver::bounds( int p, std::size_t lower, std::size_t upper )
     m_x.create( m_lower*m_ncomp, m_upper*m_ncomp );
     // Create linear solver
     m_solver.create();
-    bounds_complete();
+    contribute( m_cb.get< tag::bounds >() );
   }
 }
 
@@ -191,21 +224,6 @@ Solver::next()
 
   // Continue with next time step
   for (auto i : m_myworker) m_worker[i].dt();
-}
-
-void
-Solver::nchare( int n )
-// *****************************************************************************
-//  Set number of worker chares expected to contribute on my PE
-//! \param[in] n Total number of chares (work units) across all PEs
-// *****************************************************************************
-{
-  auto chunksize = n / CkNumPes();
-  auto mynchare = chunksize;
-  if (CkMyPe() == CkNumPes()-1) mynchare += n % CkNumPes();
-  m_nchare = static_cast< std::size_t >( mynchare );
-
-  nchare_complete();
 }
 
 void
@@ -633,12 +651,11 @@ Solver::charebc( const std::unordered_map< std::size_t,
 // *****************************************************************************
 {
   // Associate BC vectors to mesh nodes owned
-  if (!bc.empty())  // only if chare has anything to offer
-    for (const auto& n : bc) {
-      Assert( n.second.size() == m_ncomp, "The total number of scalar "
-      "components does not equal that of set in the BC vector." );
-      m_bc[ n.first ] = n.second;
-    }
+  for (const auto& n : bc) {
+    Assert( n.second.size() == m_ncomp, "The total number of scalar "
+    "components does not equal that of set in the BC vector." );
+    m_bc[ n.first ] = n.second;
+  }
 
   // Forward all BC vectors received to fellow branches
   if (++m_nchbc == m_nchare) {
@@ -674,6 +691,9 @@ Solver::pe( std::size_t gid )
 //! \return PE that owns global row id
 // *****************************************************************************
 {
+  Assert( m_div.size() == static_cast<std::size_t>(CkNumPes()),
+          "PE bounds incomplete on PE " + std::to_string(CkMyPe()) );
+
   int p = -1;
   auto it = m_pe.find( gid );
   if (it != end(m_pe))
@@ -720,7 +740,6 @@ Solver::hyprerow()
 //!   to update the vector with HYPRE_IJVectorGetValues().
 // *****************************************************************************
 {
-//std::cout << CkMyPe() << ": " << "hyprerow\n";
   if (m_hypreRows.empty()) {
     for (auto r : m_row) {
       std::vector< int > h( m_ncomp );
@@ -878,7 +897,6 @@ Solver::hypresol()
 //  Build Hypre data for our portion of the solution vector
 // *****************************************************************************
 {
-//  std::cout << CkMyPe() << ": " << "hypresol\n";
   Assert( solcomplete(),
           "Values of distributed solution vector on PE " +
           std::to_string( CkMyPe() ) + " is incomplete" );

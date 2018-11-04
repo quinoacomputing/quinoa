@@ -48,7 +48,7 @@
 #ifndef CompFlowProblem_h
 #define CompFlowProblem_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Problem/UserDefined.h"
 #include "Problem/VorticalFlow.h"
@@ -60,12 +60,12 @@
 namespace inciter {
 
 //! List of all CompFlow Problem policies (defined in the includes above)
-using CompFlowProblems = boost::mpl::vector< CompFlowProblemUserDefined
-                                           , CompFlowProblemVorticalFlow
-                                           , CompFlowProblemNLEnergyGrowth
-                                           , CompFlowProblemRayleighTaylor
-                                           , CompFlowProblemTaylorGreen
-                                           , CompFlowProblemSodShocktube >;
+using CompFlowProblems = brigand::list< CompFlowProblemUserDefined
+                                      , CompFlowProblemVorticalFlow
+                                      , CompFlowProblemNLEnergyGrowth
+                                      , CompFlowProblemRayleighTaylor
+                                      , CompFlowProblemTaylorGreen
+                                      , CompFlowProblemSodShocktube >;
 
 } // inciter::
 

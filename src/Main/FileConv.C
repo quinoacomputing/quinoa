@@ -2,8 +2,8 @@
 /*!
   \file      src/Main/FileConv.C
   \copyright 2016-2018, Los Alamos National Security, LLC.
-  \brief     File file converter Charm++ main chare
-  \details   File file converter Charm++ main chare. This file contains the
+  \brief     File converter Charm++ main chare
+  \details   File converter Charm++ main chare. This file contains the
     definition of the Charm++ main chare, equivalent to main() in Charm++-land.
 */
 // *****************************************************************************
@@ -22,6 +22,7 @@
 #include "FileConv/CmdLine/CmdLine.h"
 #include "FileConv/CmdLine/Parser.h"
 #include "ProcessException.h"
+#include "ChareStateCollector.h"
 
 #include "NoWarning/charm.h"
 #include "NoWarning/fileconv.decl.h"
@@ -35,6 +36,9 @@
 //!    etc., must be in global scope, unique per executable
 CProxy_Main mainProxy;
 
+//! Chare state collector Charm++ chare group proxy
+tk::CProxy_ChareStateCollector stateProxy;
+
 #if defined(__clang__)
   #pragma clang diagnostic pop
 #endif
@@ -45,7 +49,7 @@ class Main : public CBase_Main {
 
   public:
     //! \brief Constructor
-    //! \details The main chare constructor is the main entry point of the
+    //! \details FileConv's main chare constructor is the entry point of the
     //!   program, called by the Charm++ runtime system. The constructor does
     //!   basic initialization steps, e.g., parser the command-line, prints out
     //!   some useful information to screen (in verbose mode), and instantiates
@@ -73,20 +77,14 @@ class Main : public CBase_Main {
                         ( msg->argc, msg->argv,
                           m_cmdline,
 			  tk::HeaderType::FILECONV,
-			  FILECONV_EXECUTABLE,
+			  tk::fileconv_executable(),
 			  m_print ) ),
       m_timer(1),       // Start new timer measuring the total runtime
       m_timestamp()
     {
-      delete msg;
-      mainProxy = thisProxy;
-      // Fire up an asynchronous execute object, which when created at some
-      // future point in time will call back to this->execute(). This is
-      // necessary so that this->execute() can access already migrated
-      // global-scope data.
-      CProxy_execute::ckNew();
-      // Start new timer measuring the migration of global-scope data
-      m_timer.emplace_back();
+      tk::MainCtor< CProxy_execute >
+        ( msg, mainProxy, thisProxy, stateProxy, m_timer, m_cmdline,
+          CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
     } catch (...) { tk::processExceptionCharm(); }
 
     void execute() {
@@ -96,14 +94,23 @@ class Main : public CBase_Main {
       } catch (...) { tk::processExceptionCharm(); }
     }
 
+    //! Towards normal exit but collect chare state first (if any)
     void finalize() {
+      tk::finalize( m_cmdline, m_timer, m_print, stateProxy, m_timestamp,
+                    CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
+    }
+
+    //! Entry method triggered when quiescence is detected
+    void quiescence() {
       try {
-        m_timestamp.emplace_back( "Total runtime", m_timer[0].hms() );
-        m_print.time( "Timers (h:m:s)", m_timestamp );
-        m_print.endpart();
+        stateProxy.collect( /* error= */ true,
+          CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
       } catch (...) { tk::processExceptionCharm(); }
-      // Tell the Charm++ runtime system to exit
-      CkExit();
+    }
+
+    //! Dump chare state
+    void dumpstate( CkReductionMsg* msg ) {
+      tk::dumpstate( m_cmdline, m_print, msg );
     }
 
     //! Add a time stamp contributing to final timers output

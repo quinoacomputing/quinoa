@@ -113,17 +113,4 @@ function(get_mpi_compilers)
     endif()
   endif()
 
-  # Echo underling compilers
-  if (UNDERLYING_C_COMPILER)
-    MESSAGE(STATUS "Underlying C compiler: " ${UNDERLYING_C_COMPILER})
-  endif()
-
-  if (UNDERLYING_CXX_COMPILER)
-    MESSAGE(STATUS "Underlying C++ compiler: " ${UNDERLYING_CXX_COMPILER})
-  endif()
-
-  if (UNDERLYING_Fortran_COMPILER)
-    MESSAGE(STATUS "Underlying Fortran compiler: " ${UNDERLYING_Fortran_COMPILER})
-  endif()
-
 endfunction()

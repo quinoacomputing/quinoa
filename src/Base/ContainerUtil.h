@@ -11,6 +11,7 @@
 
 #include <vector>
 #include <map>
+#include <set>
 #include <algorithm>
 #include <iterator>
 
@@ -22,7 +23,7 @@ template< class Container >
 void
 unique( Container& c )
 // *****************************************************************************
-//! Make elements of container unique
+//! Make elements of container unique (in-place, overwriting source container)
 //! \param[inout] c Container
 // *****************************************************************************
 {
@@ -31,6 +32,20 @@ unique( Container& c )
   auto d = std::distance( begin(c), it );
   Assert( d >= 0, "Distance must be non-negative in tk::unique()" );
   c.resize( static_cast< std::size_t >( d ) );
+}
+
+template< class Container >
+Container
+uniquecopy( const Container& src )
+// *****************************************************************************
+//! Make elements of container unique (on a copy, leaving the source as is)
+//! \param[in] src Container
+//! \return Container containing only unique elements compared to src
+// *****************************************************************************
+{
+  auto c = src;
+  unique( c );
+  return c;
 }
 
 template< typename Container >
@@ -131,17 +146,14 @@ operator+=( std::vector< T, Allocator >& dst,
 //!   triggering an exception in DEBUG mode.
 //! \note Operator != is used to compare the container keys.
 // *****************************************************************************
-template< class Container >
-bool keyEqual( const Container& a, const Container& b ) {
+template< class C1, class C2 >
+bool keyEqual( const C1& a, const C2& b ) {
   Assert( a.size() == b.size(), "Size mismatch comparing containers" );
-  auto ia = a.cbegin();
-  auto ib = b.cbegin();
-  while (ia != a.cend()) {
-    if (ia->first != ib->first) return false;
-    ++ia;
-    ++ib;
-  }
-  return true;
+  std::set< typename C1::key_type > sorted_keys_of_a;
+  for (const auto& c : a) sorted_keys_of_a.insert( c.first );
+  std::set< typename C2::key_type > sorted_keys_of_b;
+  for (const auto& c : b) sorted_keys_of_b.insert( c.first );
+  return sorted_keys_of_a == sorted_keys_of_b;
 }
 
 // *****************************************************************************
@@ -157,6 +169,19 @@ std::size_t sumsize( const Container& c ) {
 }
 
 // *****************************************************************************
+//! Compute the sum of the sizes of the values of an associative container
+//! \tparam Map Container of containers type
+//! \param[in] c Container of containers
+//! \return Sum of the sizes of the values of the associative container
+// *****************************************************************************
+template< class Map >
+std::size_t sumvalsize( const Map& c ) {
+  std::size_t sum = 0;
+  for (const auto& s : c) sum += s.second.size();
+  return sum;
+}
+
+// *****************************************************************************
 //! Free memory of a container
 //! \param[in] c Container defining a swap() member function
 //! \details See http://stackoverflow.com/a/10465032 as to why this is done with
@@ -167,6 +192,21 @@ std::size_t sumsize( const Container& c ) {
 template< class Container >
 void destroy( Container& c ) {
   typename std::remove_reference< decltype(c) >::type().swap( c );
+}
+
+// *****************************************************************************
+//! Remove items from container based on predicate
+//! \tparam Container Type of container to remove from
+//! \tparam Predicate Type for functor defining the predicate
+//! \param items Container object to remove from
+//! \param predicate Predicate object instance to use
+// *****************************************************************************
+template< typename Container, typename Predicate >
+void erase_if( Container& items, const Predicate& predicate ) {
+  for ( auto it = items.begin(); it != items.end(); ) {
+    if ( predicate(*it) ) it = items.erase(it);
+    else ++it;
+  }
 }
 
 } // tk::

@@ -32,6 +32,12 @@ namespace cmd {
   struct verbose :
          tk::grm::process_cmd_switch< use< kw::verbose >, tag::verbose > {};
 
+
+  //! Match and set chare state switch
+  struct charestate :
+         tk::grm::process_cmd_switch< use< kw::charestate >,
+                                      tag::chare > {};
+
   //! \brief Match and set io parameter
   template< typename keyword, typename io_tag >
   struct io :
@@ -47,11 +53,18 @@ namespace cmd {
                                tk::grm::helpkw,
                                pegtl::alnum > {};
 
+  //! Match help on control file keywords
+  struct quiescence :
+         tk::grm::process_cmd_switch< use< kw::quiescence >,
+                                      tag::quiescence > {};
+
   //! \brief Match all command line keywords
   struct keywords :
          pegtl::sor< verbose,
+                     charestate,
                      help,
                      helpkw,
+                     quiescence,
                      io< use< kw::input >, tag::input >,
                      io< use< kw::output >, tag::output > > {};
 

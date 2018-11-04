@@ -16,7 +16,7 @@
 #include "QuinoaConfig.h"
 
 #ifdef HAS_MKL
-#include "MKLGrammar.h"
+  #include "MKLGrammar.h"
 #endif
 
 #ifdef HAS_RNGSSE2
@@ -34,10 +34,7 @@ namespace deck {
 
   //! \brief Specialization of tk::grm::use for RNGTest's control file parser
   template< typename keyword >
-  using use = tk::grm::use< keyword,
-                            ctr::InputDeck::keywords1,
-                            ctr::InputDeck::keywords2,
-                            ctr::InputDeck::keywords3 >;
+  using use = tk::grm::use< keyword, ctr::InputDeck::keywords >;
 
 } // ::deck
 } // ::rngtest

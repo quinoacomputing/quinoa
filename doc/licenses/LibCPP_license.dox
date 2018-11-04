@@ -18,9 +18,4 @@ Note that the LLVM Project does distribute dragonegg, which is GPL. This means t
 We have no plans to change the license of LLVM. If you have questions or comments about the license, please contact the LLVM Developer's Mailing List.
 \endverbatim
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Thu 04 Jun 2015 08:05:28 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */

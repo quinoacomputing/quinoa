@@ -14,6 +14,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <cstddef>
+#include <array>
 
 #include "Types.h"
 
@@ -46,6 +47,11 @@ std::tuple< std::vector< std::size_t >,
             std::vector< std::size_t >,
             std::unordered_map< std::size_t, std::size_t > >
 global2local( const std::vector< std::size_t >& ginpoel );
+
+//! Test positivity of the Jacobian for all cells in a mesh
+bool
+positiveJacobians( const std::vector< std::size_t >& inpoel,
+                   const std::array< std::vector< real >, 3 >& coord );
 
 } // ::tk
 

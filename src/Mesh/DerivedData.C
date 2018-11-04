@@ -11,6 +11,7 @@
 #include <set>
 #include <map>
 #include <iterator>
+#include <numeric>
 #include <algorithm>
 #include <type_traits>
 #include <cstddef>
@@ -1356,6 +1357,35 @@ genGeoFaceTri( std::size_t ntfac,
   return geoFace;
 }
 
+std::array< tk::real, 3 >
+normal( const std::array< tk::real, 3 >& x,
+        const std::array< tk::real, 3 >& y,
+        const std::array< tk::real, 3 >& z )
+// *****************************************************************************
+//! Compute the unit normal vector of a triangle
+//! \param[in] x x-coordinates of the three vertices of the triangle
+//! \param[in] y y-coordinates of the three vertices of the triangle
+//! \param[in] z z-coordinates of the three vertices of the triangle
+//! \return Unit normal
+// *****************************************************************************
+{
+  tk::real ax = x[1] - x[0];
+  tk::real ay = y[1] - y[0];
+  tk::real az = z[1] - z[0];
+
+  tk::real bx = x[2] - x[0];
+  tk::real by = y[2] - y[0];
+  tk::real bz = z[2] - z[0];
+
+  tk::real nx =   ay*bz - az*by;
+  tk::real ny = -(ax*bz - az*bx);
+  tk::real nz =   ax*by - ay*bx;
+
+  auto farea = std::sqrt( nx*nx + ny*ny + nz*nz );
+
+  return {{ nx/farea, ny/farea, nz/farea }};
+}
+
 tk::Fields
 geoFaceTri( const std::array< tk::real, 3 >& x,
             const std::array< tk::real, 3 >& y,
@@ -1372,71 +1402,35 @@ geoFaceTri( const std::array< tk::real, 3 >& x,
 {
   tk::Fields geoiFace( 1, 7 );
 
-  tk::real xp1, yp1, zp1,
-           xp2, yp2, zp2,
-           xp3, yp3, zp3,
-           ax, ay, az,
-           bx, by, bz,
-           nx, ny, nz,
-           sidea, sideb, sidec,
-           semip, farea;
+  auto sidea = std::sqrt( (x[1]-x[0])*(x[1]-x[0])
+                        + (y[1]-y[0])*(y[1]-y[0])
+                        + (z[1]-z[0])*(z[1]-z[0]) );
 
-  xp1 = x[0];
-  xp2 = x[1];
-  xp3 = x[2];
+  auto sideb = std::sqrt( (x[2]-x[1])*(x[2]-x[1])
+                        + (y[2]-y[1])*(y[2]-y[1])
+                        + (z[2]-z[1])*(z[2]-z[1]) );
 
-  yp1 = y[0];
-  yp2 = y[1];
-  yp3 = y[2];
+  auto sidec = std::sqrt( (x[0]-x[2])*(x[0]-x[2])
+                        + (y[0]-y[2])*(y[0]-y[2])
+                        + (z[0]-z[2])*(z[0]-z[2]) );
 
-  zp1 = z[0];
-  zp2 = z[1];
-  zp3 = z[2];
+  auto semip = 0.5 * (sidea + sideb + sidec);
 
-  sidea = sqrt( (xp2-xp1)*(xp2-xp1)
-              + (yp2-yp1)*(yp2-yp1)
-              + (zp2-zp1)*(zp2-zp1) );
-
-  sideb = sqrt( (xp3-xp2)*(xp3-xp2)
-              + (yp3-yp2)*(yp3-yp2)
-              + (zp3-zp2)*(zp3-zp2) );
-
-  sidec = sqrt( (xp1-xp3)*(xp1-xp3)
-              + (yp1-yp3)*(yp1-yp3)
-              + (zp1-zp3)*(zp1-zp3) );
-
-  semip = 0.5 * (sidea + sideb + sidec);
-
-  farea = sqrt( semip
-              * (semip-sidea)
-              * (semip-sideb)
-              * (semip-sidec) );
-
-  geoiFace(0,0,0) = farea;
+  geoiFace(0,0,0) = sqrt( semip
+                        * (semip-sidea)
+                        * (semip-sideb)
+                        * (semip-sidec) );
 
   // get unit normal to face
-  ax = xp2 - xp1;
-  ay = yp2 - yp1;
-  az = zp2 - zp1;
-
-  bx = xp3 - xp1;
-  by = yp3 - yp1;
-  bz = zp3 - zp1;
-
-  nx =   ay*bz - az*by;
-  ny = -(ax*bz - az*bx);
-  nz =   ax*by - ay*bx;
-
-  farea = sqrt(nx*nx + ny*ny + nz*nz);
-
-  geoiFace(0,1,0) = nx/farea;
-  geoiFace(0,2,0) = ny/farea;
-  geoiFace(0,3,0) = nz/farea;
+  auto n = normal( x, y, z );
+  geoiFace(0,1,0) = n[0];
+  geoiFace(0,2,0) = n[1];
+  geoiFace(0,3,0) = n[2];
 
   // get centroid
-  geoiFace(0,4,0) = (xp1+xp2+xp3)/3.0;
-  geoiFace(0,5,0) = (yp1+yp2+yp3)/3.0;
-  geoiFace(0,6,0) = (zp1+zp2+zp3)/3.0;
+  geoiFace(0,4,0) = (x[0]+x[1]+x[2])/3.0;
+  geoiFace(0,5,0) = (y[0]+y[1]+y[2])/3.0;
+  geoiFace(0,6,0) = (z[0]+z[1]+z[2])/3.0;
 
   return geoiFace;
 }
@@ -1496,6 +1490,54 @@ genGeoElemTet( const std::vector< std::size_t >& inpoel,
   }
 
   return geoElem;
+}
+
+bool
+leakyPartition( const std::vector< int >& esueltet,
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord )
+// *****************************************************************************
+// Perform leak-test on mesh (partition)
+//! \param[in] esueltet Elements surrounding elements for tetrahedra, see
+//!   tk::genEsueltet()
+//! \param[in] inpoel Element connectivity
+//! \param[in] coord Node coordinates
+//! \details This function computes a surface integral over the boundary of the
+//!   incoming mesh (partition). A non-zero vector result indicates a leak, e.g.,
+//!   a hole in the mesh (partition), which indicates an error either in the
+//    mesh geometry, mesh partitioning, or in the data structures that represent
+//    faces.
+//! \return True if partition leaks.
+// *****************************************************************************
+{
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  // Storage for surface integral over our mesh partition
+  std::array< tk::real, 3 > s{{ 0.0, 0.0, 0.0}};
+
+  for (std::size_t e=0; e<esueltet.size()/4; ++e) {   // for all our tets
+    auto mark = e*4;
+    for (std::size_t f=0; f<4; ++f)     // for all tet faces
+      if (esueltet[mark+f] == -1) {     // if face has no outside-neighbor tet
+        // 3 local node IDs of face
+        auto A = inpoel[ mark + tk::lpofa[f][0] ];
+        auto B = inpoel[ mark + tk::lpofa[f][1] ];
+        auto C = inpoel[ mark + tk::lpofa[f][2] ];
+        // Compute geometry data for face
+        auto geoface = tk::geoFaceTri( {{x[A], x[B], x[C]}},
+                                       {{y[A], y[B], y[C]}},
+                                       {{z[A], z[B], z[C]}} );
+        // Sum up face area * face unit-normal
+        s[0] += geoface(0,0,0) * geoface(0,1,0);
+        s[1] += geoface(0,0,0) * geoface(0,2,0);
+        s[2] += geoface(0,0,0) * geoface(0,3,0);
+      }
+  }
+
+  auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
+  return std::abs(s[0]) > eps || std::abs(s[1]) > eps || std::abs(s[2]) > eps;
 }
 
 } // tk::

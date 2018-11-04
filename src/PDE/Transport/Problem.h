@@ -18,42 +18,44 @@
       which returns the enum value of the option from the underlying option
       class, collecting all possible options for coefficients policies.
 
-   - Must define the static function _errchk()_, doing general error checks.
+    - Must define the static function _errchk()_, doing general error checks.
 
-   - Must define the static function _solution()_, used to evaluate the analytic
-     solution (if defined) and for initialization of the computed fields at time
-     t.
+    - Must define the static function _solution()_, used to evaluate the
+      analytic solution (if defined) and for initialization of the computed
+      fields at time _t_.
 
-   - Must define the static function _solinc()_, used to evaluate the increment
-     from t to t+dt of the analytic solution (if defined).
+    - Must define the static function _solinc()_, used to evaluate the
+      increment from t to t+dt of the analytic solution (if defined).
 
-   - Must define the static function _side()_,  used to query all side set IDs
-     the user has configured for all components.
-
-   - Must define the static function _dirbc()_,  used to query Dirichlet
-     boundary condition value on a given side set for all components in the PDE
-     system.
-
-   - Must define the static function _prescribedVelocity()_, used to query the
-     prescribed velocity at a point.
+    - Must define the static function _side()_,  used to query all side set IDs
+      the user has configured for all components.
+  
+    - Must define the static function _dirbc()_,  used to query Dirichlet
+      boundary condition value on a given side set for all components in the PDE
+      system.
+  
+    - Must define the static function _prescribedVelocity()_, used to query the
+      prescribed velocity at a point.
 */
 // *****************************************************************************
 #ifndef TransportProblem_h
 #define TransportProblem_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Problem/ShearDiff.h"
 #include "Problem/SlotCyl.h"
 #include "Problem/GaussHump.h"
+#include "Problem/CylAdvect.h"
 
 namespace inciter {
 
 //! List of all Transport Problem policies (defined in the includes above)
-using TransportProblems = boost::mpl::vector< TransportProblemShearDiff
-                                            , TransportProblemSlotCyl
-                                            , TransportProblemGaussHump
-                                            >;
+using TransportProblems = brigand::list< TransportProblemShearDiff
+                                       , TransportProblemSlotCyl
+                                       , TransportProblemGaussHump
+                                       , TransportProblemCylAdvect
+                                       >;
 
 } // inciter::
 

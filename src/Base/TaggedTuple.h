@@ -65,6 +65,8 @@ struct tt_impl<typelist<Ss...>, typelist<Ts...>> : public std::tuple<Ts...> {
   //! Constructor
   template<typename... Args> tt_impl(Args &&...args) :
     std::tuple<Ts...>(std::forward<Args>(args)...) {}
+  //! PUP::reconstruct constructor
+  template<typename... Args> tt_impl(PUP::reconstruct) {}
   //! Const-ref accessor
   template<typename S> constexpr const nT<S>& get() const {
     return std::get<index<S, Ss...>::value>(*this); }

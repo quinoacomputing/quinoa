@@ -12,8 +12,9 @@
 
 #include <sstream>
 
-#include <boost/mpl/or.hpp>
-#include "NoWarning/for_each.h"
+#include <brigand/algorithms/for_each.hpp>
+#include <brigand/functions/logical/or.hpp>
+#include <brigand/sequences/has_key.hpp>
 
 #include "If.h"
 #include "Exception.h"
@@ -72,20 +73,27 @@ namespace grm {
     PREMATURE,          //!< Premature end of line
     UNSUPPORTED,        //!< Option not supported
     NOOPTION,           //!< Option does not exist
-    NOINIT,             //!< No initialization policy selected
+    NOINIT,             //!< No (or too many) initialization policy selected
     NOPROBLEM,          //!< No test problem type selected
     NOCOEFF,            //!< No coefficients policy selected
     NOTSELECTED,        //!< Option not selected upstream
     EXISTS,             //!< Variable already used
     NODEPVAR,           //!< Dependent variable has not been specified
+    NOSOLVE,            //!< Dependent variable to solve for has not been spec'd
     NOSUCHDEPVAR,       //!< Dependent variable has not been previously selected
+    NOSUCHCOMPONENT,    //!< No such scalar component
+    POSITIVECOMPONENT,  //!< Scalar component must be positive
     NOTALPHA,           //!< Variable must be alphanumeric
     NOTERMS,            //!< Statistic need a variable
     ODDSPIKES,          //!< Incomplete spikes block
     HEIGHTSPIKES,       //!< Height-sum of spikes does not add up to unity
     NODELTA,            //!< No icdelta...end block when initpolicy = jointdelta
     NOBETA,             //!< No icbeta...end block when initpolicy = jointbeta
+    NOGAMMA,            //!< No icgamma...end block when initpolicy = jointgamma
     WRONGBETAPDF,       //!< Wrong number of parameters configuring a beta pdf
+    WRONGGAMMAPDF,      //!< Wrong number of parameters configuring a gamma pdf
+    WRONGGAUSSIAN,      //!< Wrong number of parameters configuring a PDF
+    NEGATIVEPARAM,      //!< Negative variance given configuring a Gaussian
     NONCOMP,            //!< No number of components selected
     NORNG,              //!< No RNG selected
     NODT,               //!< No time-step-size policy selected
@@ -95,17 +103,17 @@ namespace grm {
     MALFORMEDSAMPLE,    //!< PDF sample space variable specification incorrect
     INVALIDBINSIZE,     //!< PDF sample space bin size specification incorrect
     INVALIDEXTENT,      //!< PDF sample space extent specification incorrect
-    EXTENTLOWER,        //!< PDF sample space extent-pair in non-increasing order
+    EXTENTLOWER,        //!< PDF sample space extents in non-increasing order
     NOBINS,             //!< PDF sample space bin size required
     ZEROBINSIZE,        //!< PDF sample space bin size incorrect
     MAXSAMPLES,         //!< PDF sample space dimension too large
     MAXBINSIZES,        //!< PDF sample space bin sizes too many
     MAXEXTENTS,         //!< PDF sample space extent-pairs too many
-    BINSIZES,           //!< PDF sample space variables unequal to number of bins
+    BINSIZES,           //!< PDF sample space vars unequal to number of bins
     PDF,                //!< PDF specification syntax error
     PDFEXISTS,          //!< PDF identifier already defined
     BADPRECISION,       //!< Floating point precision specification incorrect
-    PRECISIONBOUNDS,    //!< Floating point precision specification out of bounds
+    PRECISIONBOUNDS,    //!< Floating point precision spec out of bounds
     UNFINISHED,         //!< Unfinished block
     VORTICAL_UNFINISHED,//!< Vortical flow problem configuration unfinished
     ENERGY_UNFINISHED,  //!< Nonlinear energy growth problem config unfinished
@@ -114,10 +122,21 @@ namespace grm {
     WRONGSIZE,          //!< Size of parameter vector incorrect
     HYDROTIMESCALES,    //!< Missing required hydrotimescales vector
     HYDROPRODUCTIONS,   //!< Missing required hydroproductions vector
-    CHARMARG };         //!< Argument inteded for the Charm++ runtime system
+    POSITION_DEPVAR,    //!< Missing required position model dependent variable
+    VELOCITY_DEPVAR,    //!< Missing required velocity model dependent variable
+    DISSIPATION_DEPVAR, //!< Missing required dissipation model dependent var
+    MIXMASSFRACBETA_DEPVAR,//!< Missing required mass fraction model dependent var
+    POSITION_MISSING,   //!< Missing required position model
+    VELOCITY_MISSING,   //!< Missing required velocity model
+    DISSIPATION_MISSING,//!< Missing required dissipation model
+    T0REFODD,           //!< AMR initref vector size is odd (must be even)
+    T0REFNOOP,          //!< AMR t<0 refinement will be no-op
+    DTREFNOOP,          //!< AMR t>0 refinement will be no-op
+    CHARMARG,           //!< Argument inteded for the Charm++ runtime system
+    OPTIONAL };         //!< Message key used to indicate of something optional
 
   //! Associate parser errors to error messages
-  static const std::map< MsgKey, std::string > message( {
+  static const std::map< MsgKey, std::string > message{
     { MsgKey::KEYWORD, "Unknown keyword or keyword unrecognized in this "
       "block." },
     { MsgKey::MOMENT, "Unknown term in moment." },
@@ -134,11 +153,21 @@ namespace grm {
       "here is appropriate, but in order to use this keyword in this context, "
       "the option must be selected upstream." },
     { MsgKey::EXISTS, "Dependent variable already used." },
-    { MsgKey::NOSUCHDEPVAR, "Dependent variable not selected. To request a "
-      "statistic or PDF involving this variable, or use this variable as a "
-      "coefficients policy variable, an equation must be specified "
-      "upstream in the control file assigning this variable to an "
-      "equation to be integrated using the depvar keyword." },
+    { MsgKey::NOSUCHDEPVAR, "Dependent variable not selected upstream in the "
+      "input file. To request a statistic or PDF involving this variable, use "
+      "this variable as a coefficients policy variable, or use this variable as "
+      "a refinement variable, or use a dependent variable in any way, an "
+      "equation must be specified upstream in the control file assigning this "
+      "variable to an equation to be integrated using the depvar keyword." },
+    { MsgKey::NOSUCHCOMPONENT, "Scalar component, used in conjunction with "
+      "dependent variable, does not exist in the preceeding block. This happens "
+      "when referring to a scalar component of a multi-component system of "
+      "equations that has less than the number of total components than the one "
+      "specified. Note that numbering components starts from 1 and their "
+      "maximum value is the number specified by the 'ncomp' keyword, if "
+      "applicable for the equation block the component specification refers "
+      "to." },
+    { MsgKey::POSITIVECOMPONENT, "Scalar component must be positive." },
     { MsgKey::NOTALPHA, "Variable not alphanumeric." },
     { MsgKey::HEIGHTSPIKES, "The sum of all spike heights given in the "
       "spike...end block does not add up to unity. A spike...end block "
@@ -149,6 +178,10 @@ namespace grm {
     { MsgKey::NODEPVAR, "Dependent variable not specified within the block "
       "preceding this position. This is mandatory for the preceding block. Use "
       "the keyword 'depvar' to specify the dependent variable." },
+    { MsgKey::NOSOLVE, "Dependent variable to solve for not specified within "
+      "the block preceding this position. This is mandatory for the preceding "
+      "block. Use the keyword 'solve' to specify the type of the dependent "
+      "variable to solve for." },
     { MsgKey::NONCOMP, "The number of components has not been specified in the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'ncomp' to specify the number of components." },
@@ -163,8 +196,9 @@ namespace grm {
       "constant or 'cfl' to set an adaptive time step size calculation policy. "
       "Setting 'cfl' and 'dt' are mutually exclusive. If both 'cfl' and 'dt' "
       "are set, 'dt' wins." },
-    { MsgKey::NOINIT, "No initialization policy has been specified within the "
-      "block preceding this position. This is mandatory for the preceding "
+    { MsgKey::NOINIT, "No (or too many) initialization policy (or policies) "
+      "has been specified within the block preceding this position. An "
+      "initialization policy (and only one) is mandatory for the preceding "
       "block. Use the keyword 'init' to specify an initialization policy." },
     { MsgKey::NOPROBLEM, "No test problem has been specified within the "
       "block preceding this position. This is mandatory for the preceding "
@@ -184,6 +218,12 @@ namespace grm {
       "initpolicy is selected. Pick an initpolicy different than jointbeta "
       "(using keyword 'init') or specify at least a single betapdf...end block "
       "(within a icbeta...end block)." },
+    { MsgKey::NOGAMMA, "No gamma...end block with at least a single "
+      "gammapdf...end block has been specified within the block preceding this "
+      "position. This is mandatory for the preceding block if jointgamma "
+      "initpolicy is selected. Pick an initpolicy different than jointgamma "
+      "(using keyword 'init') or specify at least a single gammapdf...end block "
+      "(within a icgamma...end block)." },
     { MsgKey::ODDSPIKES, "Incomplete spike...end block has been specified "
       "within the  block preceding this position. A spike...end block "
       "must contain an even number of real numbers, where every odd one is the "
@@ -192,6 +232,14 @@ namespace grm {
     { MsgKey::WRONGBETAPDF, "Wrong number of beta distribution parameters. A "
       "beta distribution must be configured by exactly four real numbers in a "
       "betapdf...end block." },
+    { MsgKey::WRONGGAMMAPDF, "Wrong number of gamma distribution parameters. A "
+      "gamma distribution must be configured by exactly two real numbers in a "
+      "gammapdf...end block." },
+    { MsgKey::WRONGGAUSSIAN, "Wrong number of Gaussian distribution "
+      "parameters. A Gaussian distribution must be configured by exactly 2 "
+      "real numbers in a gaussian...end block." },
+    { MsgKey::NEGATIVEPARAM, "Negative distribution parameter (e.g., variance, "
+      "shape, scale) specified configuring a probabililty distribution." },
     { MsgKey::NOTERMS, "Statistic requires at least one variable." },
     { MsgKey::NOSAMPLES, "PDF requires at least one sample space variable." },
     { MsgKey::INVALIDSAMPLESPACE, "PDF sample space specification incorrect. A "
@@ -256,13 +304,57 @@ namespace grm {
       "Specification of a 'hydrotimescales' vector missing." },
     { MsgKey::HYDROPRODUCTIONS, "Error in the preceding line or block. "
       "Specification of a 'hydroproductions' vector missing." },
+    { MsgKey::POSITION_DEPVAR, "Error in the preceding line or block. "
+      "Specification of a dependent variable, configured as a coupled position "
+      "model, is missing. Specify a dependent variable in an equation block "
+      "as, e.g., depvar x, then use 'position x' within the block in question, "
+      "e.g., velocity." },
+    { MsgKey::DISSIPATION_DEPVAR, "Error in the preceding line or block. "
+      "Specification of a dependent variable, configured as a coupled "
+      "dissipation model, is missing. Specify a dependent variable in an "
+      "equation block as, e.g., depvar x, then use 'dissipation x' within the "
+      "block in question, e.g., velocity." },
+    { MsgKey::MIXMASSFRACBETA_DEPVAR, "Error in the preceding line or block. "
+      "Specification of a dependent variable, configured as a coupled "
+      "mass fraction model, is missing. Specify a dependent variable in an "
+      "equation block as, e.g., depvar x, then use 'massfraction x' within the "
+      "block in question, e.g., velocity." },
+    { MsgKey::VELOCITY_DEPVAR, "Error in the preceding line or block. "
+      "Specification of a dependent variable, configured as a coupled velocity "
+      "model, is missing. Specify a dependent variable in an equation block "
+      "as, e.g., depvar u, then use 'velocity u' within the block in question, "
+      "e.g., position." },
+    { MsgKey::POSITION_MISSING, "Specification for a position model missing." },
+    { MsgKey::VELOCITY_MISSING, "Specification for a velocity model missing." },
+    { MsgKey::DISSIPATION_MISSING,
+      "Specification for a dissipation model missing." },
+    { MsgKey::T0REFODD, "Error in the preceding line or block. "
+      "The number of edge-nodes, marking edges as pairs of nodes, used for "
+      "explicit tagging of edges for initial mesh refineoment is odd (it must "
+      "be even)." },
+    { MsgKey::T0REFNOOP, "Initial (t<0) mesh refinement configuration will be a"
+      " no-op. Initial mesh refinement requires in the amr ... end block: (1) "
+      "'" +  kw::amr_t0ref::string() + " true' and one of the following: (A) "
+      "at least one initial refinement type, e.g., '" +
+      kw::amr_initial::string() + ' ' + kw::amr_uniform::string() + "', or "
+      "(B) an initial refinement edge list, e.g., '" + kw::amr_initref::string()
+      + " 1 2 3 4 end'." },
+    { MsgKey::DTREFNOOP, "Mesh refinement configuration for t>0 will be a "
+      "no-op. During-timestepping (t>0) mesh refinement configuration "
+      "requires in the amr ... end block: (1) '" + kw::amr_dtref::string() +
+      " true' and (2) a specification of at least one refinement variable, "
+      "e.g., '" + kw::amr_refvar::string() + " c end'." },
     { MsgKey::CHARMARG, "Arguments starting with '+' are assumed to be inteded "
       "for the Charm++ runtime system. Did you forget to prefix the command "
       "line with charmrun? If this warning persists even after running with "
       "charmrun, then Charm++ does not understand it either. See the Charm++ "
       "manual at http://charm.cs.illinois.edu/manuals/html/charm++/"
-      "manual.html." }
-  } );
+      "manual.html." },
+    { MsgKey::OPTIONAL, "This is not really an error message and thus it "
+      "should not be used as one. But its key can be used to indicate "
+      "something optional (which is not an error), which in some situations is "
+      "not optional (which is an error)." }
+  };
 
   //! \brief Parser error and warning message handler.
   //! \details This function is used to associated and dispatch an error or a
@@ -308,15 +400,15 @@ namespace grm {
   //! \brief Compile-time test functor verifying that type U is a keyword
   //! \details This functor is used for triggering a compiler error if any of
   //!   the expected option values is not in the keywords pool of the grammar.
-  //!   It is used inside of a boost::mpl::for_each to run a compile-time loop
-  //!   over an MPL sequence, e.g., a vector, which verifies that each type in
-  //!   the vector is a valid keyword that defines the type 'pegtl_string'.
+  //!   It is used inside of a brigand::for_each to run a compile-time loop
+  //!   over an type sequence, e.g., a list, which verifies that each type in
+  //!   the list is a valid keyword that defines the type 'pegtl_string'.
   //!  \see kw::keyword in Control/Keyword.h
   //!  \see e.g. store_option
   template< template< class > class use >
   struct is_keyword {
-    template< typename U > void operator()( U ) {
-      // Attempting to define the type blow accomplishes triggering an error if
+    template< typename U > void operator()( brigand::type_<U> ) {
+      // Attempting to define the type below accomplishes triggering an error if
       // the type does not define pegtl_string. The compiler, however, does not
       // see that far, and generates a warning: unused type alias 'kw', so we
       // ignore it around this template.
@@ -379,7 +471,7 @@ namespace grm {
     }
     // trigger error at compile-time if any of the expected option values
     // is not in the keywords pool of the grammar
-    boost::mpl::for_each< typename Option::keywords >( is_keyword< use >() );
+    brigand::for_each< typename Option::keywords >( is_keyword< use >() );
   }
   #if defined(__clang__)
     #pragma clang diagnostic pop
@@ -547,7 +639,7 @@ namespace grm {
       }
       // trigger error at compile-time if any of the expected option values
       // is not in the keywords pool of the grammar
-      boost::mpl::for_each< typename Option::keywords >( is_keyword< use >() );
+      brigand::for_each< typename Option::keywords >( is_keyword< use >() );
     }
   };
 
@@ -580,7 +672,7 @@ namespace grm {
       }
       // trigger error at compile-time if any of the expected option values
       // is not in the keywords pool of the grammar
-      boost::mpl::for_each< typename Option::keywords >( is_keyword< use >() );
+      brigand::for_each< typename Option::keywords >( is_keyword< use >() );
     }
   };
 
@@ -646,7 +738,7 @@ namespace grm {
                   ( key, Option().value(in.string()) );
       // trigger error at compile-time if any of the expected option values
       // is not in the keywords pool of the grammar
-      boost::mpl::for_each< typename Option::keywords >( is_keyword< use >() );
+      brigand::for_each< typename Option::keywords >( is_keyword< use >() );
     }
   };
 
@@ -980,6 +1072,46 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  template< class eq, class param > struct check_gammapdfs : pegtl::success {};
+  //! \brief Check if the gammapdf parameter vector specifications are correct
+  //! \details gammapdf vectors are used to configure univariate gamma
+  //!   distributions.
+  template< class eq, class param >
+  struct action< check_gammapdfs< eq, param > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      const auto& gamma =
+        stack.template get< tag::param, eq, param >().back().back();
+      // Error out if the number parameters is not two
+      if (gamma.size() != 2)
+        Message< Stack, ERROR, MsgKey::WRONGGAMMAPDF >( stack, in );
+      // Error out if the specified shape or scale parameter negative
+      if (gamma[0] < 0.0 || gamma[1] < 0.0)
+        Message< Stack, ERROR, MsgKey::NEGATIVEPARAM >( stack, in );
+    }
+  };
+
+  //! Rule used to trigger action
+  template< class eq, class param > struct check_gaussians : pegtl::success {};
+  //! Check if the Gaussian PDF parameter vector specifications are correct
+  //! \details Gaussian vectors are used to configure univariate Gaussian
+  //!   distributions.
+  template< class eq, class param >
+  struct action< check_gaussians< eq, param > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      const auto& gaussian =
+        stack.template get< tag::param, eq, param >().back().back();
+      // Error out if the number parameters is not two
+      if (gaussian.size() != 2)
+        Message< Stack, ERROR, MsgKey::WRONGGAUSSIAN >( stack, in );
+      // Error out if the specified variance is negative
+      if (gaussian.back() < 0.0)
+        Message< Stack, ERROR, MsgKey::NEGATIVEPARAM >( stack, in );
+    }
+  };
+
+  //! Rule used to trigger action
   struct check_expectation : pegtl::success {};
   //! \brief Check if there is at least one variable in expectation
   template<>
@@ -1051,7 +1183,8 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       // field ID numbers start at 0
       auto f = stack.template convert< long >( in.string() ) - 1;
-      Assert( f>=0, "Field value must be non-negative in tk::grm::save_field" );
+      if (f < 0)
+        Message< Stack, ERROR, MsgKey::POSITIVECOMPONENT >( stack, in );
       field = static_cast< ncomp_t >( f );
     }
   };
@@ -1458,11 +1591,11 @@ namespace grm {
             typename eq,
             typename param >
   struct parameter_vector :
-         act< vector< keyword,
-                      store< tag::param, eq, param >,
-                      use< kw::end >,
-                      start< tag::param, eq, param > >,
-              check< eq, param > > {};
+         pegtl::if_must< vector< keyword,
+                                 store< tag::param, eq, param >,
+                                 use< kw::end >,
+                                 start< tag::param, eq, param > >,
+                         check< eq, param > > {};
 
   //! \brief Match equation/model option vector
   //! \details This structure is used to match a keyword ... end block that
@@ -1562,21 +1695,11 @@ namespace grm {
   //!   inherit from base class 'char'. In that case, simply add the new keyword
   //!   into one of the pools of keywords corresponding to the given grammar.
   //!   The rationale behind this wrapper is to force the developer to maintain
-  //!   the keywords pool for a grammar. The pools are boost::mpl::sets and are
+  //!   the keywords pool for a grammar. The pools are brigand::set and are
   //!   used to provide help on command line arguments for a given executable.
-  //!   They allow compile-time iteration with boost::mpl::for_each or
+  //!   They allow compile-time iteration with brigand::for_each or
   //!   generating a run-time std::map associating, e.g., keywords to their help
   //!   strings.
-  //! \warning Since the default maximum number of elements in a
-  //!   boost::mpl::set is 20, and increasing this number would require custom
-  //!   boost::preprocessor-generated boost::mpl headers, which is cumbersome
-  //!   and error-prone, instead we work with several pools here that can each
-  //!   hold a maximum 20 items and use boost::mpl::or_ and boost::mpl::has_key
-  //!   to search for the keyword in either of the pools. Note that
-  //!   boost::mpl::or_ allows a maximum 5 template arguments by definition,
-  //!   i.e., max 5 OR'd pools, which corresponds to a maximum of 5x20=100
-  //!   keywords. If you need more than that, increase
-  //!   BOOST_MPL_LIMIT_METAFUNCTION_ARITY in src/CMakeLitst.txt.
   //! \warning Note that an even more elegant solution to the problem this
   //!   wrapper is intended to solve is to use a metaprogram that collects all
   //!   occurrences of the keywords in a grammar. However, that does not seem to
@@ -1590,15 +1713,10 @@ namespace grm {
   //!   on-screen help generated even though some of the keywords may not be
   //!   implemented by the given grammar. So please don't abuse and don't list
   //!   keywords in the pool only if they are implemented in the grammar.
-  //! \see For example usage with a single pool, see the template typedef
+  //! \see For example usage see the template typedef
   //!   walker::cmd::use in Control/Walker/CmdLine/Grammar.h and its keywords
   //!   pool, walker::ctr::CmdLine::keywords, in
   //!   Control/Walker/CmdLine/CmdLine.h.
-  //! \see For example usage with multiple pools, see the template typedef,
-  //!   walker::deck::use, in Control/Walker/InputDeck/Grammar.h and its
-  //!   keywords pools, walker::ctr::InputDeck::keywords1,
-  //!   walker::ctr::InputDeck::keywords2, etc., in
-  //!   Control/Walker/InputDeck/InputDeck.h.
   //! \see http://en.cppreference.com/w/cpp/types/conditional
   //! \see http://www.boost.org/doc/libs/release/libs/mpl/doc/refmanual/set.html
   //! \see http://www.boost.org/doc/libs/release/libs/mpl/doc/refmanual/has_key.html
@@ -1606,11 +1724,10 @@ namespace grm {
   //! \see http://www.boost.org/doc/libs/release/libs/mpl/doc/refmanual/limit-metafunction-arity.html
   //! TODO It still would be nice to generate a more developer-friendly
   //!    compiler error if the keyword is not in the pool.
-  template< typename keyword, typename pool, typename... pools >
+  template< typename keyword, typename pool >
   struct use :
-         std::conditional< boost::mpl::or_<
-                             boost::mpl::has_key< pool, keyword >,
-                             boost::mpl::has_key< pools, keyword >... >::value,
+         std::conditional< brigand::or_<
+                             brigand::has_key< pool, keyword > >::value,
                            keyword,
                            char >::type {};
 

@@ -11,8 +11,9 @@
 
 #include <string>
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "NoWarning/set.h"
-#include "NoWarning/for_each.h"
 
 #include "Control.h"
 #include "HelpFactory.h"
@@ -29,8 +30,10 @@ class CmdLine : public tk::Control<
                   tag::io,             ios,
                   tag::virtualization, kw::virtualization::info::expect::type,
                   tag::verbose,        bool,
+                  tag::chare,          bool,
                   tag::help,           bool,
                   tag::helpctr,        bool,
+                  tag::quiescence,     bool,
                   tag::cmdinfo,        tk::ctr::HelpFactory,
                   tag::ctrinfo,        tk::ctr::HelpFactory,
                   tag::helpkw,         tk::ctr::HelpKw,
@@ -38,15 +41,17 @@ class CmdLine : public tk::Control<
 
   public:
     //! Walker command-line keywords
-    using keywords = boost::mpl::set< kw::verbose
-                                    , kw::virtualization
-                                    , kw::help
-                                    , kw::helpctr
-                                    , kw::helpkw
-                                    , kw::control
-                                    , kw::pdf
-                                    , kw::stat
-                                    >;
+    using keywords = brigand::set< kw::verbose
+                                 , kw::charestate
+                                 , kw::virtualization
+                                 , kw::help
+                                 , kw::helpctr
+                                 , kw::helpkw
+                                 , kw::control
+                                 , kw::pdf
+                                 , kw::stat
+                                 , kw::quiescence
+                                 >;
 
     //! \brief Constructor: set all defaults.
     //! \param[in] ctrinfo std::map of control file keywords and their info
@@ -84,8 +89,9 @@ class CmdLine : public tk::Control<
       set< tag::io, tag::stat >( "stat.txt" );
       set< tag::virtualization >( 0.0 );
       set< tag::verbose >( false ); // Quiet output by default
+      set< tag::chare >( false ); // No chare state output by default
       // Initialize help: fill from own keywords + add map passed in
-      boost::mpl::for_each< keywords >( tk::ctr::Info( get< tag::cmdinfo >() ) );
+      brigand::for_each< keywords >( tk::ctr::Info( get< tag::cmdinfo >() ) );
       get< tag::ctrinfo >() = std::move( ctrinfo );
     }
 
@@ -94,8 +100,10 @@ class CmdLine : public tk::Control<
       tk::Control< tag::io,             ios,
                    tag::virtualization, kw::virtualization::info::expect::type,
                    tag::verbose,        bool,
+                   tag::chare,          bool,
                    tag::help,           bool,
                    tag::helpctr,        bool,
+                   tag::quiescence,     bool,
                    tag::cmdinfo,        tk::ctr::HelpFactory,
                    tag::ctrinfo,        tk::ctr::HelpFactory,
                    tag::helpkw,         tk::ctr::HelpKw,

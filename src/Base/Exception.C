@@ -18,6 +18,10 @@
 #include "QuinoaConfig.h"
 #include "Exception.h"
 
+#ifdef HAS_BACKWARD
+  #include "NoWarning/backward.h"
+#endif
+
 using tk::Exception;
 
 Exception::Exception( std::string&& message,
@@ -49,13 +53,13 @@ try :
 
   // Construct exception message
   std::stringstream s;
-  s << m_message << std::endl;
-  if (line) {
-    s << ">>> Exception at " << m_file << ":" << m_line << ": " << m_func;
-  } else {
-    s << ">>> No file:line:func information from exception";
-  }
+  s << m_message;
+  if (line)
+    s << "\n>>> Exception at " << m_file << ":" << m_line << ": " << m_func;
   m_message = s.str();
+
+  // Uses streams (std::cerr) so it can be redirected
+  std::cerr << ">>> Exception: " << m_message.c_str() << '\n';
 
   // Save call-trace
   saveTrace();
@@ -180,6 +184,14 @@ Exception::handleException() noexcept
     echoTrace();
     fprintf( stderr, ">>>\n>>> ======= END OF CALL TRACE ========\n>>>\n" );
   }
+
+  #ifdef HAS_BACKWARD
+  fprintf( stderr, ">>>\n>>> =========== STACK TRACE ==========\n>>>\n" );
+  using namespace backward;
+  StackTrace st; st.load_here(64);
+  Printer p; p.print( st, stderr );
+  fprintf( stderr, ">>>\n>>> ======= END OF STACK TRACE =======\n>>>\n" );
+  #endif
  
   return tk::ErrCode::FAILURE;
 }

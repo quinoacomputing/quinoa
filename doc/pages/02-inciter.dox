@@ -1,0 +1,38 @@
+/*!
+  \page      inciter_main Inciter
+
+@m_div{m-col-m-6 m-right-m}
+<img src="inciter_white.svg"/>
+@m_enddiv
+
+__Navier-Stokes solver for complex domains__
+
+Inciter is a fully asynchronous distributed-memory-parallel fluid solver for
+complex engineering geometries. Computational domains of arbitrary shapes are
+discretized into tetrahedron elements and decomposed into small chunks assigned
+to different CPUs. The number of chunks may be more than the number of CPUs
+allowing _overdecomposition_. The solution along partition boundaries, that
+exists on multiple processing elements, is made consistent with _asynchronous_
+communication which enables overlapping parallel computation, communication,
+input, and output (I/O).
+
+Inciter is used to research asynchronous algorithms for fluid dynamics and to
+experiment with coupling asynchronous to bulk-synchronous parallel code, e.g.,
+Charm++ code to MPI-only libraries. We are working on a
+[Navier-Stokes](https://en.wikipedia.org/wiki/Navier%E2%80%93Stokes_equations)
+solver for compressible gases. The equations governing the conservation of mass,
+momentum, and energy are discretized using continuous and discontinuous Galerkin
+finite element methods. We are implementing solution-adaptive mesh-, and
+polynomial-degree refinement to enable dynamically concentrating compute
+resources to regions with interesting phenomena such as vortices or large
+gradients. Combining these features we are exploring how to scale such
+high-load-imbalance simulations, representative of production multiphysics
+codes, to large problems on large computers using Charm++'s automatic load
+balancing capabilities.
+
+@section inciter_pages Other pages related to inciter
+- @ref inciter_performance "Performance"
+- @ref inciter_design "Software design"
+- @ref inciter_examples "Examples"
+- @ref layout
+*/

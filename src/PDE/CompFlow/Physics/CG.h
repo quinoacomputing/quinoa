@@ -36,7 +36,7 @@
 #ifndef CompFlowPhysicsCG_h
 #define CompFlowPhysicsCG_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "CGEuler.h"
 #include "CGNavierStokes.h"
@@ -45,8 +45,8 @@ namespace inciter {
 namespace cg {
 
 //! CompFlow Physics policies implemented using continuous Galerkin
-using CompFlowPhysics = boost::mpl::vector< CompFlowPhysicsEuler
-                                          , CompFlowPhysicsNavierStokes >;
+using CompFlowPhysics = brigand::list< CompFlowPhysicsEuler
+                                     , CompFlowPhysicsNavierStokes >;
 
 } // cg::
 } // inciter::

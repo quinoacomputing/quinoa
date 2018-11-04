@@ -29,8 +29,9 @@ class ElemDiagnostics {
     bool compute( Discretization& d,
                   const std::size_t nchGhost,
                   const tk::Fields& geoElem,
-                  const tk::Fields& u );
+                  const tk::Fields& u ) const;
 
+    /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     void pup( PUP::er& ) {}
@@ -39,6 +40,21 @@ class ElemDiagnostics {
     //! \param[in,out] d Diagnostics object reference
     friend void operator|( PUP::er& p, ElemDiagnostics& d ) { d.pup(p); }
     //@}
+
+  private:
+    //! Compute diagnostics for DG(P0)
+    void computeP0( Discretization& d,
+                    const std::size_t nchGhost,
+                    const tk::Fields& geoElem,
+                    const tk::Fields& u,
+                    std::vector< std::vector< tk::real > >& diag ) const;
+
+    //! Compute diagnostics for DG(P1)
+    void computeP1( Discretization& d,
+                    const std::size_t nchGhost,
+                    const tk::Fields& geoElem,
+                    const tk::Fields& u,
+                    std::vector< std::vector< tk::real > >& diag ) const;
 };
 
 } // inciter::

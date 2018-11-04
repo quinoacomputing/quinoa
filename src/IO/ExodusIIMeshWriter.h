@@ -12,8 +12,10 @@
 #include <cstddef>
 #include <iosfwd>
 #include <vector>
+#include <map>
 
 #include "Types.h"
+#include "UnsMesh.h"
 
 namespace tk {
 
@@ -38,8 +40,24 @@ class ExodusIIMeshWriter {
     //! Destructor
     ~ExodusIIMeshWriter() noexcept;
 
-    //! Write ExodusII mesh to file
+    //! Write ExodusII mesh file taking a tk::UnsMesh object
     void writeMesh( const UnsMesh& mesh ) const;
+
+    //! Write ExodusII mesh file taking inputs to a tk::UnsMesh object
+    void writeMesh( const std::vector< std::size_t >& tetinp,
+                    const UnsMesh::Coords& coord,
+                    const std::map< int, std::vector< std::size_t > >& bface,
+                    const std::vector< std::size_t >& triinp ) const;
+
+    //! Write ExodusII mesh file taking inputs to a tk::UnsMesh object
+    void writeMesh( const std::vector< std::size_t >& tetinp,
+                    const UnsMesh::Coords& coord,
+                    const std::map< int, std::vector< std::size_t > >& bnode )
+      const;
+
+    //! Write ExodusII mesh file taking inputs to a tk::UnsMesh object
+    void writeMesh( const std::vector< std::size_t >& tetinp,
+                    const UnsMesh::Coords& coord ) const;
 
     //!  Write time stamp to ExodusII file
     void writeTimeStamp( uint64_t it, tk::real time ) const;
@@ -85,6 +103,12 @@ class ExodusIIMeshWriter {
 
     //! Write element conectivity to ExodusII file
     void writeElements( const UnsMesh& mesh ) const;
+
+    //! Write side sets and their face connectivity to ExodusII file
+    void writeSidesets( const UnsMesh& mesh ) const;
+
+    //! Write side sets and their node list to ExodusII file
+    void writeNodesets( const UnsMesh& mesh ) const;
 
     const std::string m_filename;          //!< File name
     int m_outFile;                         //!< ExodusII file handle
