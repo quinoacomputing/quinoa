@@ -12,10 +12,9 @@ ENV RUNNER_ARGS="-oversubscribe" \
     PATH=/opt/openmpi/${COMPILER}/bin:$PATH
 
 USER quinoa
-RUN git clone https://github.com/quinoacomputing/quinoa.git
+COPY quinoa /home/quinoa/quinoa
 RUN mkdir build
-
-WORKDIR /home/quinoa/quinoa/build
+WORKDIR build
 RUN cmake \
     -GNinja \
     -DCMAKE_C_COMPILER=mpicc \
