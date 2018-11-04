@@ -1,0 +1,37 @@
+# vim: filetype=dockerfile:
+
+FROM quinoacomputing/buildenv:alpine
+
+ARG COMPILER
+ARG BUILD
+ARG TARGET
+ARG SHARED_LIBS
+
+ENV RUNNER_ARGS="-oversubscribe" \
+    OMPI_MCA_plm=isolated \
+    PATH=/opt/openmpi/${COMPILER}/bin:$PATH
+
+USER quinoa
+RUN git clone https://github.com/quinoacomputing/quinoa.git
+RUN mkdir build
+
+WORKDIR /home/quinoa/quinoa/build
+RUN cmake \
+    -GNinja \
+    -DCMAKE_C_COMPILER=mpicc \
+    -DCMAKE_CXX_COMPILER=mpicxx \
+    -DTPL_DIR="/home/quinoa/tpl/${COMPILER}${SHARED_LIBS:+-static}" \
+    -DCMAKE_CXX_FLAGS="-Werror" \
+    -DCMAKE_BUILD_TYPE="${BUILD}" \
+    ${SHARED_LIBS:+-DBUILD_SHARED_LIBS=$SHARED_LIBS} \
+    -DRUNNER_ARGS=${RUNNER_ARGS} \
+    ../src
+RUN ninja ${TARGET}
+RUN if [ ${TARGET} = unittest ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q; fi
+RUN if [ ${TARGET} != doc ] && [ ${TARGET} != unittest ]; then ctest --output-on-failure -j2 -LE stringent -R ${TARGET}; fi
+RUN if [ ${TARGET} == doc ]; then ninja -j2 doc; fi
+USER root
+RUN ninja -j2 install
+USER quinoa
+RUN export PATH=/usr/local/bin:$PATH && unittest -h && inciter && rngtest && meshconv && walker
+WORKDIR /home/quinoa

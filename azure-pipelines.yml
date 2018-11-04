@@ -8,7 +8,11 @@ pool:
 
 variables:
   imageName: 'quinoa-azure-test:$(build.buildId)'
+  COMPILER: gnu
+  BUILD: Debug
+  TARGET: unittest
+  SHARED_LIBS: off
 
 steps:
-- script: docker build -f docker/Dockerfile.quinoa-build-travis -t $(imageName) .
+- script: docker build -f docker/Dockerfile.quinoa-build-azure -t $(imageName) .
   displayName: 'docker build'
