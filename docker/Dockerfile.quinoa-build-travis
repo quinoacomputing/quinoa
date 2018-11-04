@@ -52,7 +52,7 @@ RUN if [ ${TARGET} == doc ]; then ninja -j2 doc; fi
 RUN cd .. && if [ ${SONARQUBE} ]; then \
   python -m coverxygen --xml-dir build/doc/xml/ --src-dir . --output doxygen.coverage.info; \
   wget -O codecov.sh https://codecov.io/bash; \
-  bash codecov.sh -X gcov -f doxygen.coverage.info -F doxygen; \
+  bash codecov.sh -X gcov -X gcovout -f doxygen.coverage.info -F doxygen; \
   if [ ${COMPILER} = clang ]; then \
     $HOME/.local/bin/codecov -F ${COMPILER} --gcov-exec "llvm-cov gcov"; \
   else \
