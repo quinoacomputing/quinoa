@@ -14,5 +14,5 @@ variables:
   SHARED_LIBS: off
 
 steps:
-- script: docker build -f docker/Dockerfile.quinoa-build-azure -t $(imageName) .
+- script: ls -la && docker build -f docker/Dockerfile.quinoa-build-azure -t $(imageName) .
   displayName: 'docker build'
