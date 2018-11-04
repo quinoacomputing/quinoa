@@ -12,7 +12,7 @@ ENV RUNNER_ARGS="-oversubscribe" \
     PATH=/opt/openmpi/${COMPILER}/bin:$PATH
 
 USER quinoa
-COPY quinoa /home/quinoa/quinoa
+COPY . /home/quinoa/
 RUN mkdir build
 WORKDIR build
 RUN cmake \
