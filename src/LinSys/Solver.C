@@ -16,43 +16,21 @@
 
 #include "Solver.h"
 
-namespace tk {
-
-static CkReduction::reducerType BCMapMerger;
-
-}
-
-tk::SolverShadow::SolverShadow()
-// *****************************************************************************
-//  Constructor
-//! \details Solver shadow class constructor used to fire off a reduction
-//!   different from Solver to avoid the runtime error "mis-matched client
-//!   callbacks in reduction messages". Why the constructor definition is not
-//!   defined in the class definition? To avoid the compiler warning: "warning:
-//!   instantiation of function virtual_pup from CBaseT1 required here, but no
-//!   definition is available [-Wundefined-func-template]".
-// *****************************************************************************
-{
-}
-
 using tk::Solver;
 
-Solver::Solver( CProxy_SolverShadow sh,
-                const SolverCallback& cb,
-                std::size_t n ) :
-  m_shadow( sh ),
+Solver::Solver( const SolverCallback& cb, std::size_t n ) :
   m_cb( cb ),
   m_ncomp( n ),
   m_nchare( 0 ),
   m_mynchare( 0 ),
   m_nbounds( 0 ),
-  m_nperow( 0 ),
   m_nchbc( 0 ),
   m_lower( std::numeric_limits< std::size_t >::max() ),
   m_upper( 0 ),
   m_it( 0 ),
   m_t( 0.0 ),
   m_dt( 0.0 ),
+  m_initial( true ),
   m_worker(),
   m_rowimport(),
   m_solimport(),
@@ -83,8 +61,6 @@ Solver::Solver( CProxy_SolverShadow sh,
   m_bca()
 // *****************************************************************************
 //  Constructor
-//! \param[in] sh Solver "shadow" Charm++ nodegroup proxy for starting
-//!   reductions at the same time as other reductions from Charm++ chare Solver
 //! \param[in] cb Charm++ callbacks for Solver
 //! \param[in] n Total number of scalar components in the linear system
 // *****************************************************************************
@@ -98,22 +74,6 @@ Solver::Solver( CProxy_SolverShadow sh,
   thisProxy[ CkMyNode() ].wait4hyprerhs();
   thisProxy[ CkMyNode() ].wait4asm();
   thisProxy[ CkMyNode() ].wait4low();
-}
-
-void
-Solver::registerReducers()
-// *****************************************************************************
-//  Configure Charm++ reduction types
-//! \details Since this is a [nodeinit] routine, the runtime system executes the
-//!   routine exactly once on every logical node early on in the Charm++ init
-//!   sequence. Must be static as it is called without an object. See also:
-//!   Section "Initializations at Program Startup" at in the Charm++ manual
-//!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
-// *****************************************************************************
-{
-  BCMapMerger = CkReduction::addReducer(
-                    tk::mergeHashMap< decltype(m_bc)::key_type,
-                                      decltype(m_bc)::mapped_type > );
 }
 
 void
@@ -202,6 +162,8 @@ Solver::next()
 //! \details Re-enable SDAG waits for rebuilding the right-hand side vector only
 // *****************************************************************************
 {
+  m_initial = false;
+
   thisProxy[ CkMyNode() ].wait4rhsbc();
   thisProxy[ CkMyNode() ].wait4hyprerhs();
   thisProxy[ CkMyNode() ].wait4asm();
@@ -261,13 +223,12 @@ Solver::charerow( int fromch, const std::vector< std::size_t >& row )
   }
 
   // Export non-owned parts to fellow branches that own them
-  m_nperow += exp.size();
   for (const auto& p : exp) {
-    auto tope = static_cast< int >( p.first );
-    thisProxy[ tope ].addrow( fromch, CkMyNode(), p.second );
+    auto tonode = static_cast< int >( p.first );
+    thisProxy[ tonode ].addrow( fromch, CkMyNode(), p.second );
   }
 
-  if (m_nperow == 0) row_complete();
+  if (m_row.size() == m_upper-m_lower) row_complete();
 }
 
 void
@@ -294,7 +255,7 @@ Solver::recrow()
 //  Acknowledge received row ids
 // *****************************************************************************
 {
-  if (--m_nperow == 0) row_complete();
+  if (m_row.size() == m_upper-m_lower) row_complete();
 }
 
 void
@@ -325,8 +286,8 @@ Solver::charesol( int fromch,
 
   // Export non-owned vector values to fellow branches that own them
   for (const auto& p : exp) {
-    auto tope = static_cast< int >( p.first );
-    thisProxy[ tope ].addsol( fromch, p.second );
+    auto tonode = static_cast< int >( p.first );
+    thisProxy[ tonode ].addsol( fromch, p.second );
   }
 
   if (solcomplete()) hypresol();
@@ -456,8 +417,8 @@ Solver::charerhs( int fromch,
 
   // Export non-owned vector values to fellow branches that own them
   for (const auto& p : exp) {
-    auto tope = static_cast< int >( p.first );
-    thisProxy[ tope ].addrhs( fromch, p.second );
+    auto tonode = static_cast< int >( p.first );
+    thisProxy[ tonode ].addrhs( fromch, p.second );
   }
 
   //std::cout << CkMyNode() << " charerhs: " << m_rhsimport.size() << " == " << m_rowimport.size() << '\n';
@@ -525,8 +486,8 @@ Solver::charelowrhs( int fromch,
 
   // Export non-owned vector values to fellow branches that own them
   for (const auto& p : exp) {
-    auto tope = static_cast< int >( p.first );
-    thisProxy[ tope ].addlowrhs( fromch, p.second );
+    auto tonode = static_cast< int >( p.first );
+    thisProxy[ tonode ].addlowrhs( fromch, p.second );
   }
 
   if (lowrhscomplete()) lowrhs_complete();
@@ -581,8 +542,8 @@ Solver::charelowlhs( int fromch,
 
   // Export non-owned vector values to fellow branches that own them
   for (const auto& p : exp) {
-    auto tope = static_cast< int >( p.first );
-    thisProxy[ tope ].addlowlhs( fromch, p.second );
+    auto tonode = static_cast< int >( p.first );
+    thisProxy[ tonode ].addlowlhs( fromch, p.second );
   }
 
   if (lowlhscomplete()) lowlhs_complete();
@@ -619,21 +580,14 @@ Solver::comfinal()
 //!   (maps) are final on all compute nodes.
 // *****************************************************************************
 {
-  // Assert that all global row indices have been received on this compute
-  // node. The assert consists of three necessary conditions, which together
-  // comprise the sufficient condition that all global row indices have been
-  // received owned by this compute node.
-
 //   std::cout << CkMyNode() << ": " << m_worker.size() << " == " << m_nchare <<  " "
-//             << m_row.size() << " == " << m_upper-m_lower << '(' << m_upper << '-' << m_lower << ") "
-//             << m_nperow << " == 0\n";
+//             << m_row.size() << " == " << m_upper-m_lower << '(' << m_upper << '-' << m_lower << ") " << std::endl;
 
-  Assert( // 1. number of rows equals that of the expected on this compute node
-          m_row.size() == m_upper-m_lower &&
-          // 2. all fellow compute nodes have received my row ids contribution
-          m_nperow == 0,
-          // if any of the above is unsatisfied, the row ids are incomplete
-          "Row ids are incomplete on node " + std::to_string(CkMyNode()) );
+  Assert( m_row.size() == m_upper-m_lower,
+          "Row ids are incomplete on node " + std::to_string(CkMyNode()) + ": "
+          "number of rows received: " + std::to_string(m_row.size()) + " vs. "
+          "number of rows supposed to have been received: " +
+          std::to_string(m_upper-m_lower) );
 
   // now that the global row ids are complete, build Hypre data from it
   hyprerow();
@@ -655,30 +609,15 @@ Solver::charebc( const std::unordered_map< std::size_t,
   // Associate BC vectors to mesh nodes owned
   for (const auto& n : bc) {
     Assert( n.second.size() == m_ncomp, "The total number of scalar "
-    "components does not equal that of set in the BC vector." );
+            "components does not equal that of set in the BC vector." );
     m_bc[ n.first ] = n.second;
   }
 
-  // Forward all BC vectors received to fellow branches
-  if (++m_nchbc == m_mynchare) {
-    auto stream = tk::serialize( m_bc );
-    m_shadow.ckLocalBranch()->contribute(
-      stream.first, stream.second.get(), BCMapMerger,
-      CkCallback(CkIndex_Solver::addbc(nullptr),thisProxy) );
+  if (++m_nchbc == m_nchare) {
+    m_nchbc = 0;
+    bc_complete();
+    if (m_initial) bc_complete();
   }
-}
-
-void
-Solver::addbc( CkReductionMsg* msg )
-// *****************************************************************************
-// Reduction target collecting the final aggregated BC node list map
-// *****************************************************************************
-{
-  PUP::fromMem creator( msg->getData() );
-  creator | m_bc;
-  delete msg;
-  m_nchbc = 0;
-  bc_complete();  bc_complete();
 }
 
 int
@@ -722,12 +661,19 @@ Solver::hyprerow()
 // *****************************************************************************
 {
   if (m_hypreRows.empty()) {
+
     for (auto r : m_row) {
       std::vector< int > h( m_ncomp );
       std::iota( begin(h), end(h), r*m_ncomp+1 );
       m_hypreRows.insert( end(m_hypreRows), begin(h), end(h) );
     }
-    hyprerow_complete();  hyprerow_complete();  hyprerow_complete();
+
+    hyprerow_complete();
+    if (m_initial) {
+      hyprerow_complete();
+      hyprerow_complete();
+    }
+
   }
 }
 
@@ -743,8 +689,6 @@ Solver::lhsbc()
   Assert( lhscomplete(),
           "Nonzero values of distributed matrix on compute node " +
           std::to_string( CkMyNode() ) + " is incomplete: cannot set BCs" );
-
-  //std::cout << CkMyNode() << ": " << m_bc.size() << '\n';
 
   // Set Dirichlet BCs on the lhs matrix. Loop through all BCs and if a BC
   // is prescribed on a row we own, find that row (r) and in that row the

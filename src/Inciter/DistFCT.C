@@ -158,9 +158,6 @@ DistFCT::next()
 // Prepare for next time step stage
 // *****************************************************************************
 {
-  #ifndef NDEBUG
-  thisProxy[ thisIndex ].wait4ver();
-  #endif
   thisProxy[ thisIndex ].wait4fct();
   thisProxy[ thisIndex ].wait4app();
 
@@ -220,9 +217,6 @@ DistFCT::aec( const Discretization& d,
     }
 
   ownaec_complete();
-  #ifndef NDEBUG
-  ownaec_complete();
-  #endif
 }
 
 void
@@ -296,9 +290,6 @@ DistFCT::alw( const tk::Fields& Un,
     }
 
   ownalw_complete();
-  #ifndef NDEBUG
-  ownalw_complete();
-  #endif
 }
 
 void
@@ -346,6 +337,8 @@ DistFCT::lim()
 //!   (Lohner: AEC^c), see also FluxCorrector::limit().
 // *****************************************************************************
 {
+  m_fluxcorrector.verify( m_nchare, m_inpoel, m_du, m_dul );
+
   // Combine own and communicated contributions to P and Q
   for (const auto& b : m_bid) {
     auto lid = tk::cref_find( m_lid, b.first );
@@ -404,15 +397,6 @@ DistFCT::comlim( const std::vector< std::size_t >& gid,
     m_nlim = 0;
     comlim_complete();
   }
-}
-
-void
-DistFCT::verify()
-// *****************************************************************************
-// Verify antidiffusive element contributions up to linear solver convergence
-// *****************************************************************************
-{
-  m_fluxcorrector.verify( m_nchare, m_inpoel, m_du, m_dul );
 }
 
 void

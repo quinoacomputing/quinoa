@@ -238,9 +238,7 @@ Transporter::createSolver()
 
   // Create linear system solver Charm++ chare group
   m_solver = tk::CProxy_Solver::
-               ckNew( tk::CProxy_SolverShadow::ckNew(),
-                      cbs,
-                      g_inputdeck.get< tag::component >().nprop() );
+               ckNew( cbs, g_inputdeck.get< tag::component >().nprop() );
 }
 
 void

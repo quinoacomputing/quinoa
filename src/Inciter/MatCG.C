@@ -79,11 +79,12 @@ MatCG::MatCG( const CProxy_Discretization& disc,
   //std::cout << "MatCG " << thisIndex << " on node " << CkMyNode() << '\n';
 
   // Ensure all local IDs can be found for all physical boundary node IDs
-  for (const auto& c : m_fd.Bnode())
-    for (auto p : c.second)
-      Assert( d->Lid().find(p) != d->Lid().cend(),
-              "Local ID not found for global boundary node ID " +
-              std::to_string(p) + " on chare " + std::to_string(thisIndex) );
+  Assert( std::all_of( fd.Bnode().cbegin(), fd.Bnode().cend(),
+            [&]( const std::pair< const int, std::vector< std::size_t > >& s )
+            { return std::all_of( s.second.cbegin(), s.second.cend(),
+                [&]( std::size_t p )
+                { return d->Lid().find(p) != d->Lid().cend(); } ); } ),
+          "Local ID not found for global boundary node ID" );
 
   // Create callbacks to various member functions of this chare
   auto proxy = thisProxy[ thisIndex ];
@@ -252,8 +253,6 @@ MatCG::rhs()
   // Query and match user-specified boundary conditions to side sets
   bc();
 
-//std::cout << thisIndex << " rhs, it:" << d->It() << "\n";
-
   // Send off right-hand sides for assembly
   m_solver[ node(thisIndex) ].charerhs( thisIndex, d->Gid(), r );
 
@@ -275,8 +274,8 @@ MatCG::bc()
   auto dirbc = match( m_u.nprop(), d->T(), d->Dt(), d->Coord(),
                       d->Gid(), d->Lid(), m_fd.Bnode() );
 
-  // Send off BCs to Solver for aggregation
-  m_solver[ node(thisIndex) ].charebc( dirbc );
+  // Send off BCs to all Solver node groups
+  m_solver.charebc( dirbc );
 }
 
 std::pair< std::vector< std::size_t >, std::vector< tk::real > >

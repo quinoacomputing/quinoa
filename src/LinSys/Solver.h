@@ -48,12 +48,6 @@
 
 namespace tk {
 
-//! Solver shadow class used to fire off a reduction different from Solver
-//! \details Solver shadow class constructor used to fire off a reduction
-//!   different from Solver to avoid the runtime error "mis-matched client
-//!   callbacks in reduction messages"
-class SolverShadow : public CBase_SolverShadow { public: SolverShadow(); };
-
 //! Linear system merger and solver Charm++ chare nodegroup class
 //! \details Instantiations of Solver comprise a processor aware Charm++
 //!   chare nodegroup. When instantiated, a new object is created on each
@@ -88,10 +82,7 @@ class Solver : public CBase_Solver {
 
   public:
     //! Constructor
-    Solver( CProxy_SolverShadow sh, const SolverCallback& cb, std::size_t n );
-
-    //! Configure Charm++ reduction types for concatenating BC nodelists
-    static void registerReducers();
+    Solver( const SolverCallback& cb, std::size_t n );
 
     //! Set number of worker chares expected to contribute on this compute node
     void nchare( int n );
@@ -207,20 +198,19 @@ class Solver : public CBase_Solver {
                     std::vector< std::vector< tk::real > > >& solution );
 
   private:
-    CProxy_SolverShadow m_shadow;
     SolverCallback m_cb;    //!< Charm++ associated to compile-time tags
     std::size_t m_ncomp;    //!< Number of scalar components per unknown
     std::size_t m_nchare;   //!< Total number of worker chares
     std::size_t m_mynchare; //!< Number of chares contributing to my node
     std::size_t m_nbounds;  //!< Number of chares contributed bounds to my node
     std::size_t m_ncomm;    //!< Number of chares finished commaps on my node
-    std::size_t m_nperow;   //!< Number of fellow nodes to send row ids to
     std::size_t m_nchbc;    //!< Number of chares we received bcs from
     std::size_t m_lower;    //!< Lower index of the global rows on my node
     std::size_t m_upper;    //!< Upper index of the global rows on my node
     uint64_t m_it;          //!< Iteration count (original in Discretization)
     tk::real m_t;           //!< Physical time (original in Discretization)
     tk::real m_dt;          //!< Time step size (original in Discretization)
+    bool m_initial;         //!< True in the first time step, false after
     //! Chare id and callbacks to entry methods of all worker chares
     std::map< int, tk::MatCGCallback > m_worker;
     //! \brief Import map associating a list of global row ids to a worker chare

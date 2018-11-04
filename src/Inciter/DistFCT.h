@@ -232,10 +232,6 @@ class DistFCT : public CBase_DistFCT {
     //! Size FCT communication buffers
     void resizeComm();
 
-    //! \brief Verify antidiffusive element contributions up to linear solver
-    //!   convergence
-    void verify();
-
     //! Compute the limited antidiffusive element contributions
     void lim();
 

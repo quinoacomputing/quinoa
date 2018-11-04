@@ -15,19 +15,14 @@ module solver {
 
   namespace tk {
 
-    nodegroup SolverShadow { entry SolverShadow(); };
-
     nodegroup Solver {
-      entry Solver( CProxy_SolverShadow sh,
-                    const SolverCallback& cb,
-                    std::size_t ncomp );
-      initnode void registerReducers();
-      entry void nchare( int n );
+      entry Solver( const SolverCallback& cb, std::size_t ncomp );
+      entry [exclusive] void nchare( int n );
       entry [exclusive] void chbounds( std::size_t lower, std::size_t upper );
       entry [exclusive]
         void nodebounds( int n, std::size_t lower, std::size_t upper );
-      entry void next();
-      entry void charecom( int fromch, const MatCGCallback& cb );
+      entry [exclusive] void next();
+      entry [exclusive] void charecom( int fromch, const MatCGCallback& cb );
       entry [exclusive]
         void charerow( int fromch, const std::vector< std::size_t >& row );
       entry [exclusive] void addrow( int fromch,
@@ -40,7 +35,6 @@ module solver {
       entry [exclusive] void addsol( int fromch,
                                      const std::map< std::size_t,
                                        std::vector< tk::real > >& solution );
-      entry [exclusive,reductiontarget] void addbc( CkReductionMsg* msg );
       entry [exclusive] void charelhs( int fromch,
                            const std::vector< std::size_t >& gid,
                            const std::pair< std::vector< std::size_t >,
