@@ -902,7 +902,6 @@ DG::writeFields( tk::real time )
 // *****************************************************************************
 {
   auto d = Disc();
-  //const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
   // Save time stamp at which the last field write happened
   d->LastFieldWriteTime() = time;
