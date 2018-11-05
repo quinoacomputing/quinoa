@@ -116,7 +116,7 @@ class CompFlow {
                    g_inputdeck.get< tag::discr, tag::flux >() ) ),
       m_bcdir( config< tag::bcdir >( c ) ),
       m_bcsym( config< tag::bcsym >( c ) ),
-      m_bcextrapolate( config< tag::bcextrapolate >( c ) ),
+      m_bcextrapolate( config< tag::bcextrapolate >( c ) )
       //ErrChk( !m_bcdir.empty() || !m_bcsym.empty() || !m_bcextrapolate.empty(),
       //        "Boundary conditions not set in control file for DG CompFlow" );
     {}
@@ -147,8 +147,9 @@ class CompFlow {
     {
       Assert( geoElem.nunk() == l.nunk(), "Size mismatch" );
       const auto nelem = geoElem.nunk();
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
-    // Compute LHS for DG(P0)
+      // Compute LHS for DG(P0)
       for (std::size_t e=0; e<nelem; ++e)
         for (ncomp_t c=0; c<5; ++c)
           l(e, c*ndof, m_offset) = geoElem(e,0,0);
@@ -701,9 +702,6 @@ class CompFlow {
                    const tk::Fields& geoElem,
                    tk::Fields& R) const
     {
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-
-      //const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       for (std::size_t e=0; e<geoElem.nunk(); ++e) {
         auto vole = geoElem(e,0,0);
         auto xc = geoElem(e,1,0);
