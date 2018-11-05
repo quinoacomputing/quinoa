@@ -2,7 +2,8 @@
 /*!
   \file      src/NoWarning/TString.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
-  \brief     Include <Root>/TString.h with turning off specific compiler warnings
+  \brief     Include Root's TString.h with turning off specific compiler
+             warnings
 */
 // *****************************************************************************
 #ifndef nowarning_TString_h

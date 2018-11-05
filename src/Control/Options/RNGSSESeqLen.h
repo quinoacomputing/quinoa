@@ -9,7 +9,7 @@
 #ifndef RNGSSESeqLenOptions_h
 #define RNGSSESeqLenOptions_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -33,10 +33,10 @@ class RNGSSESeqLen : public tk::Toggle< RNGSSESeqLenType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::seq_short
-                                       , kw::seq_med
-                                       , kw::seq_long
-                                       >;
+    using keywords = brigand::list< kw::seq_short
+                                  , kw::seq_med
+                                  , kw::seq_long
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which

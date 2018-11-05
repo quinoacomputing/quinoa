@@ -1,0 +1,22 @@
+// *****************************************************************************
+/*!
+  \file      src/Base/charestatecollector.ci
+  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \brief     Charm++ module interface file for the chare state collector group
+  \details   Charm++ module interface file for the chare state collectory group
+             used for debugging.
+*/
+// *****************************************************************************
+
+module charestatecollector {
+
+  namespace tk {
+
+    group ChareStateCollector {
+      entry ChareStateCollector();
+      initnode void registerReducers();
+      entry void collect( bool error, CkCallback cb );
+    };
+
+  } // tk::
+}

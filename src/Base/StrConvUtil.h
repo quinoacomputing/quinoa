@@ -13,9 +13,11 @@
 
 namespace tk {
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+
 //! Operator << for writing enum class value to output streams.
 //! \param[in] os Output stream into which e is written
-//! \param[in] e  Value of enum class to write to stream
+//! \param[in] e Value of enum class to write to stream
 //! \return Updated output stream for chain-use of the operator
 template< typename T, typename Ch, typename Tr,
           typename std::enable_if< std::is_enum<T>::value, int >::type = 0 >
@@ -25,15 +27,17 @@ operator<< ( std::basic_ostream< Ch, Tr >& os, const T& e ) {
   return os;
 }
 
+#endif  // DOXYGEN_GENERATING_OUTPUT
+
 //! Delegate operator << to default for writing non-enums to output streams.
 //! \param[in] os Output stream into which t is written
-//! \param[in] t  Value of arbitrary non-enum-class type to write to stream
+//! \param[in] e  Value of arbitrary non-enum-class type to write to stream
 //! \return Updated output stream for chain-use of the operator
 template< typename T, typename Ch, typename Tr,
           typename std::enable_if< !std::is_enum<T>::value, int >::type = 0 >
 inline std::basic_ostream< Ch, Tr >&
-operator<< ( std::basic_ostream< Ch, Tr >& os, const T& t ) {
-  os << t;
+operator<< ( std::basic_ostream< Ch, Tr >& os, const T& e ) {
+  os << e;
   return os;
 }
 

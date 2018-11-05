@@ -18,12 +18,18 @@
 #include <list>
 #include <cmath>
 #include <array>
+#include <vector>
+#include <algorithm>
+#include <unordered_map>
+
+#include <brigand/algorithms/for_each.hpp>
 
 #include "NoWarning/format.h"
 
 #include "Timer.h"
 #include "Exception.h"
 #include "Has.h"
+#include "ChareState.h"
 
 namespace tk {
 
@@ -302,6 +308,41 @@ class Print {
     void diagend( const std::string& msg ) const
     { stream<s>() << m_diag_end_fmt % msg << std::flush; }
 
+    //! ...
+    template< Style s = VERBOSE >
+    void charestate( const std::unordered_map< int,
+                        std::vector< ChareState > >& state ) const
+    {
+      stream<s>() << m_charestate_frame_fmt %
+                     "\n>>> =========== CHARE STATE ==========\n>>>";
+      // Group state by chare id
+      std::map< int, std::vector< ChareState > > sorted_state;
+      for (const auto& p : state)
+        for (const auto& i : p.second)
+          sorted_state[ i.get< tag::id >() ].push_back( i );
+      // Sort states by time stamp
+      for (auto& p : sorted_state)
+        std::sort( begin(p.second), end(p.second),
+                   []( const ChareState& a, const ChareState& b )
+                     { return a.get< tag::time >() < b.get< tag::time >(); } );
+      // Output states
+      std::size_t q = 0;
+      for (const auto& p : sorted_state) {
+        for (const auto& i : p.second) {
+          stream<s>() << m_charestate_fmt % i.get< tag::ch >()
+                                          % p.first
+                                          % i.get< tag::fn >()
+                                          % i.get< tag::pe >()
+                                          % i.get< tag::it >()
+                                          % i.get< tag::time >();
+        }
+        if (++q != sorted_state.size())
+           stream<s>() << m_charestate_frame_fmt % "";
+      }
+      stream<s>() << m_charestate_frame_fmt %
+                     "\n>>> ======= END OF CHARE STATE =======\n>>>";
+    }
+
     //! Echo formatted print of a progress message
     //! \param[in] prefix Strings to output prefixing the progress report
     //! \param[in] done Array of integers indicating how many have been done
@@ -310,18 +351,18 @@ class Print {
     //! \details All input arrays are the same size. The prefix strings
     //!   are optional, i.e., they can be empty strings. The function generates
     //!   an output to the stream configured in the following fashion:
-    //!   <pre1>[<done1>/<max1>], <pre2>[<done2>/<max2>], ..., e.g.,
-    //!   r:[1/3], b[2/8]. Whenever this function is called, a number of
-    //!   backspaces are put into the stream so that the new progress report
-    //!   string overwrites the old one. In order to backtrack the correct
-    //!   amount, the length of the old progress report is stored (by whatever
-    //!   object holds us) and passed in by reference in progress_size, which is
-    //!   overwritten here once it has been used for backtracking. Therefore,
-    //!   for restarting a new series of progress reports, this variable must be
-    //!   zeroed. Also, it is best to not to interleave multiple tasks, because
-    //!   even if a different progress_size is kept for each, there is no regard
-    //!   as to which line we output to in the stream. In other words, multiple
-    //!   task outputs will be intermingled, leading to confusing screen output.
+    //!   pre1[done1/max1], pre2[done2/max2], ..., e.g., r:[1/3], b[2/8].
+    //!   Whenever this function is called, a number of backspaces are put into
+    //!   the stream so that the new progress report string overwrites the old
+    //!   one. In order to backtrack the correct amount, the length of the old
+    //!   progress report is stored (by whatever object holds us) and passed in
+    //!   by reference in progress_size, which is overwritten here once it has
+    //!   been used for backtracking. Therefore, for restarting a new series of
+    //!   progress reports, this variable must be zeroed. Also, it is best to
+    //!   not to interleave multiple tasks, because even if a different
+    //!   progress_size is kept for each, there is no regard as to which line we
+    //!   output to in the stream. In other words, multiple task outputs will
+    //!   be intermingled, leading to confusing screen output.
     template< std::size_t N, Style s = VERBOSE >
     void progress( const std::array< std::string, N >& prefix,
                    const std::array< int, N >& done,
@@ -456,7 +497,7 @@ class Print {
       //! Constructor: store host object pointer
       echoPolicies( const Print* const host ) : m_host( host ) {}
       //! Function call operator templated on the type that echos a policy
-      template< typename U > void operator()( U ) {
+      template< typename U > void operator()( brigand::type_<U> ) {
         static_assert( tk::HasTypedefCode< typename U::info >::value,
                        "Policy code undefined for keyword" );
         // Print policy code - policy name
@@ -673,6 +714,9 @@ class Print {
     mutable format m_note_fmt = format("%s%-30s\n");
     mutable format m_diag_fmt = format("Quinoa> %s\n");
     mutable format m_diag_start_fmt = format("Quinoa> %s ");
+    mutable format m_charestate_frame_fmt = format(">>> %s\n");
+    mutable format m_charestate_fmt =
+              format(">>> %s(%d)::%|-15| PE:%|-4| it:%|-5| t:%f\n");
     mutable format m_diag_end_fmt = format("%s\n");
     mutable format m_progress_fmt = format("%s");
     mutable format m_help_title_fmt = format("\n%s %s\n");

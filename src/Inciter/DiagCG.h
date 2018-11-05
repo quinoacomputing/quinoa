@@ -20,54 +20,6 @@
     utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
     overview of the algorithm structure and how it interfaces with Charm++ is
     discussed in the Charm++ interface file src/Inciter/diagcg.ci.
-
-    #### Call graph ####
-    The following is a directed acyclic graph (DAG) that outlines the
-    asynchronous algorithm implemented in this class The detailed discussion of
-    the algorithm is given in the Charm++ interface file transporter.ci, which
-    also repeats the graph below using ASCII graphics. On the DAG orange
-    fills denote global synchronization points that contain or eventually lead
-    to global reductions. Dashed lines are potential shortcuts that allow
-    jumping over some of the task-graph under some circumstances or optional
-    code paths (taken, e.g., only in DEBUG mode). See the detailed discussion in
-    diagcg.ci.
-    \dot
-    digraph "DiagCG SDAG" {
-      rankdir="LR";
-      node [shape=record, fontname=Helvetica, fontsize=10];
-      OwnLhs [ label="OwnLhs"
-               tooltip="own contributions to the left hand side lumped-mass
-                        matrix computed"
-               URL="\ref inciter::DiagCG::lhs"];
-      ComLhs [ label="ComLhs"
-               tooltip="contributions to the left hand side lumped-mass matrix
-                        communicated"
-               URL="\ref inciter::DiagCG::comlhs"];
-      OwnRhs [ label="OwnRhs"
-               tooltip="own contributions to the right hand side computed"
-               URL="\ref inciter::DiagCG::rhs"];
-      ComRhs [ label="ComRhs"
-               tooltip="contributions to the right hand side communicated"
-               URL="\ref inciter::DiagCG::comrhs"];
-      OwnDif [ label="OwnDif"
-               tooltip="own contributions to the mass diffusion rhs computed"
-               URL="\ref inciter::DiagCG::rhs"];
-      ComDif [ label="ComDif"
-               tooltip="contributions to the mass diffusion rhs communicated"
-               URL="\ref inciter::DiagCG::comdif"];
-      Start [ label="Ver" tooltip="start time stepping"
-              URL="\ref inciter::DiagCG::start"];
-      Solve [ label="Ver" tooltip="solve diagonal systems"
-              URL="\ref inciter::DiagCG::solve"];
-      OwnLhs -> Start [ style="solid" ];
-      ComLhs -> Start [ style="solid" ];
-      OwnRhs -> Solve [ style="solid" ];
-      ComRhs -> Solve [ style="solid" ];
-      OwnDif -> Solve [ style="solid" ];
-      ComDif -> Solve [ style="solid" ];
-    }
-    \enddot
-    \include Inciter/diagcg.ci
 */
 // *****************************************************************************
 #ifndef DiagCG_h
@@ -127,15 +79,15 @@ class DiagCG : public CBase_DiagCG {
 
     //! Constructor
     explicit DiagCG( const CProxy_Discretization& disc,
-                     const tk::CProxy_Solver&,
-                     const FaceData& );
+                     const tk::CProxy_Solver& solver,
+                     const FaceData& fd );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
-    explicit DiagCG( CkMigrateMessage* ) : m_diag( *Disc() ) {}
+    explicit DiagCG( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -152,6 +104,9 @@ class DiagCG : public CBase_DiagCG {
     //! Advance equations to next time step
     void advance( tk::real newdt );
 
+    //! Compute left-hand side of transport equations
+    void lhs();
+
     //! Receive contributions to left-hand side matrix on chare-boundaries
     void comlhs( const std::vector< std::size_t >& gid,
                  const std::vector< std::vector< tk::real > >& L );
@@ -164,28 +119,43 @@ class DiagCG : public CBase_DiagCG {
     void comdif( const std::vector< std::size_t >& gid,
                  const std::vector< std::vector< tk::real > >& D );
 
-    //! Verify that solution does not change at Dirichlet boundary conditions
-    bool correctBC( const tk::Fields& a );
+    //! Update solution at the end of time step
+    void update( const tk::Fields& a );
 
-    //! Prepare for next step    
-    void next( const tk::Fields& a );
+    //! Signal the runtime system that diagnostics have been computed
+    void diag();
 
-    //! Evaluate whether to continue with next step
-    void eval();
+    //! Optionally refine/derefine mesh
+    void refine();
 
+    //! Receive new mesh from refiner
+    void resize( const tk::UnsMesh::Chunk& chunk,
+                 const tk::UnsMesh::Coords& coord,
+                 const tk::Fields& u,
+                 const std::unordered_map< int,
+                         std::vector< std::size_t > >& msum,
+                 const std::map< int, std::vector< std::size_t > >& bnode );
+
+    //! Const-ref access to current solution
+    //! \param[in,out] u Reference to update with current solution
+    void solution( tk::Fields& u ) const { u = m_u; }
+
+    //! Resizing data sutrctures after mesh refinement has been completed
+    void resized();
+
+    /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &p ) {
-      CBase_DiagCG::pup(p);
+    void pup( PUP::er &p ) override {
+      p | m_disc;
       p | m_itf;
+      p | m_initial;
       p | m_nsol;
       p | m_nlhs;
       p | m_nrhs;
       p | m_ndif;
-      p | m_disc;
-      p | m_solver;
-      p | m_side;
+      p | m_fd;
       p | m_u;
       p | m_ul;
       p | m_du;
@@ -194,6 +164,7 @@ class DiagCG : public CBase_DiagCG {
       p | m_lhs;
       p | m_rhs;
       p | m_dif;
+      p | m_bc;
       p | m_lhsc;
       p | m_rhsc;
       p | m_difc;
@@ -209,8 +180,14 @@ class DiagCG : public CBase_DiagCG {
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
 
-    //! Field output iteration count
+    //! Discretization proxy
+    CProxy_Discretization m_disc;
+    //! Field output iteration count without mesh refinement
+    //! \details Counts the number of field outputs to file during two
+    //!   time steps with mesh efinement
     uint64_t m_itf;
+    //! True if starting time stepping, false if during time stepping
+    bool m_initial;
     //! Counter for high order solution vector nodes updated
     std::size_t m_nsol;
     //! Counter for left-hand side matrix (vector) nodes updated
@@ -219,12 +196,8 @@ class DiagCG : public CBase_DiagCG {
     std::size_t m_nrhs;
     //! Counter for right-hand side masss-diffusion vector nodes updated
     std::size_t m_ndif;
-    //! Discretization proxy
-    CProxy_Discretization m_disc;
-    //! Linear system merger and solver proxy
-    tk::CProxy_Solver m_solver;
-    //! Map associating local node IDs to side set IDs
-    std::map< int, std::vector< std::size_t > > m_side;
+    //! Face data
+    FaceData m_fd;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
     //! Unknown/solution vector at mesh nodes (low orderd)
@@ -262,6 +235,9 @@ class DiagCG : public CBase_DiagCG {
       return m_disc[ thisIndex ].ckLocal();
     }
 
+    //! Size communication buffers
+    void resizeComm();
+
     //! Output mesh and particle fields to files
     void out();
 
@@ -272,8 +248,11 @@ class DiagCG : public CBase_DiagCG {
     //    user-specified boundary conditions
     void bc();
 
-    //! Compute left-hand side of transport equations
-    void lhs();
+    //! ...
+    void lhsdone();
+
+    //! ...
+    void lhsmerge();
 
     //! Compute righ-hand side vector of transport equations
     void rhs();
@@ -283,6 +262,9 @@ class DiagCG : public CBase_DiagCG {
 
     //! Solve low and high order diagonal systems
     void solve();
+
+    //! Evaluate whether to continue with next step
+    void eval();
 };
 
 } // inciter::

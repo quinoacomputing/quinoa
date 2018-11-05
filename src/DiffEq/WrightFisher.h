@@ -19,9 +19,9 @@
 #include "QuinoaConfig.h"
 
 #ifdef HAS_MKL
-  #include "NoWarning/mkl_lapacke.h"
+  #include <mkl_lapacke.h>
 #else
-  #include "NoWarning/lapacke.h"
+  #include <lapacke.h>
 #endif
 
 #include "Macro.h"

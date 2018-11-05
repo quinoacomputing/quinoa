@@ -36,6 +36,12 @@ const std::array< std::array< std::size_t, 3 >, 4 >
 std::size_t
 npoin( const std::vector< std::size_t >& inpoel );
 
+//! Compute the unit normal vector of a triangle
+std::array< tk::real, 3 >
+normal( const std::array< tk::real, 3 >& x,
+        const std::array< tk::real, 3 >& y,
+        const std::array< tk::real, 3 >& z );
+
 //! Generate derived data structure, elements surrounding points
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
 genEsup( const std::vector< std::size_t >& inpoel, std::size_t nnpe );
@@ -151,6 +157,13 @@ geoFaceTri( const std::array< tk::real, 3 >& x,
 tk::Fields
 genGeoElemTet( const std::vector< std::size_t >& inpoel,
                const tk::UnsMesh::Coords& coord );
+
+//! Perform leak-test on mesh (partition)
+bool
+leakyPartition( const std::vector< int >& esueltet,
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord );
+
 } // tk::
 
 #endif // DerivedData_h

@@ -15,6 +15,7 @@ inciter
 
     physics euler
     problem sod_shocktube
+    depvar u
 
     material
       id 1

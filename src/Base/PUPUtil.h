@@ -3,7 +3,7 @@
   \file      src/Base/PUPUtil.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Charm++ Pack/UnPack utilities
-  \brief     This file contains some extensions to Charm++'s Pack/UnPack
+  \details   This file contains some extensions to Charm++'s Pack/UnPack
     routines.
 */
 // *****************************************************************************
@@ -12,12 +12,10 @@
 
 #include <unordered_map>
 #include <unordered_set>
-#include <array>
 
 #include "NoWarning/optional.h"
 #include "NoWarning/variant.h"
 #include "NoWarning/pup_stl.h"
-#include "CharmUtil.h"
 
 //! Extensions to Charm++'s Pack/Unpack routines
 namespace PUP {
@@ -163,10 +161,14 @@ inline void operator|( PUP::er& p, boost::optional< T >& o ) { pup( p, o ); }
 //! Pack/Unpack helper for boost::variant
 //! \param[in,out] index Counter (location) for type in variant
 //! \param[in] send_index Target counter (location) for type in variant
+//! \param[in] p Charm++'s pack/unpack object
 //! \param[in] var boost::variant< Ts... > of arbitrary types to pack/unpack
 template <class T, class... Ts>
-char pup_helper(int& index, const int send_index, PUP::er& p,
-                boost::variant<Ts...>& var) {
+char pup_helper( int& index,
+                 const int send_index,
+                 PUP::er& p,
+                 boost::variant<Ts...>& var )
+{
   if (index == send_index) {
     if (p.isUnpacking()) {
       T t{};

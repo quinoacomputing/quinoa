@@ -9,7 +9,7 @@
 #ifndef RNGTestBatteryOptions_h
 #define RNGTestBatteryOptions_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -32,10 +32,10 @@ class Battery : public tk::Toggle< BatteryType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::smallcrush
-                                       , kw::crush
-                                       , kw::bigcrush
-                                       >;
+    using keywords = brigand::list< kw::smallcrush
+                                  , kw::crush
+                                  , kw::bigcrush
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which

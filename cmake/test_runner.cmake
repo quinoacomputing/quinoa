@@ -16,10 +16,11 @@ string(REPLACE " " ";" TEXT_RESULT "${TEXT_RESULT}")
 string(REPLACE " " ";" FILECONV_INPUT "${FILECONV_INPUT}")
 string(REPLACE " " ";" FILECONV_RESULT "${FILECONV_RESULT}")
 # Covert string to list of file names of binary baseline(s), binary result(s),
-# and binary diff program confguration file(s)
+# binary diff program argument(s), and binary diff program confguration file(s)
 string(REPLACE " " ";" BIN_BASELINE "${BIN_BASELINE}")
 string(REPLACE " " ";" BIN_RESULT "${BIN_RESULT}")
 string(REPLACE " " ";" BIN_DIFF_PROG_CONF "${BIN_DIFF_PROG_CONF}")
+string(REPLACE " " ";" BIN_DIFF_PROG_ARGS "${BIN_DIFF_PROG_ARGS}")
 # Covert string to list of postprocess program arguments
 string(REPLACE " " ";" POSTPROCESS_PROG_ARGS "${POSTPROCESS_PROG_ARGS}")
 # Covert string to list of test labels
@@ -199,7 +200,12 @@ else() # Test command ran successfully, attempt to do diffs
       string(REPLACE ";" " " bin_diff_command_string "${bin_diff_command}")
       message("\nRunning binary diff command: '${bin_diff_command_string}'\n")
       execute_process(COMMAND ${bin_diff_command} RESULT_VARIABLE ERROR
-                      ERROR_QUIET)
+                      ERROR_VARIABLE ERROR_OUTPUT)
+      # remove warnings from exodiff output (this speeds up evaluating the test)
+      string(REGEX REPLACE ".*WARNING.*" "" ERROR_OUTPUT "${ERROR_OUTPUT}")
+      if (ERROR_OUTPUT)
+        message("${ERROR_OUTPUT}")
+      endif()
       # Check return value from binary diff command
       if(ERROR)
         message(FATAL_ERROR "Binary diff returned error code: '${bin_diff_command_string}' returned error code: ${ERROR}")

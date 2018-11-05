@@ -17,8 +17,9 @@
 #include <utility>
 #include <cstddef>
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "NoWarning/format.h"
-#include "NoWarning/for_each.h"
 
 #include "Keywords.h"
 #include "Print.h"
@@ -148,10 +149,10 @@ class WalkerPrint : public tk::RNGPrint {
                        "Policy code undefined for keyword" );
         raw( m_item_indent + " * " + *kw::init::code() + ": "
                            + kw::init::name() + ":\n" );
-        boost::mpl::for_each< ctr::InitPolicy::keywords >( echoPolicies(this) );
+        brigand::for_each< ctr::InitPolicy::keywords >( echoPolicies(this) );
         raw( m_item_indent + " * " + *kw::coeff::code() + ": "
                            + kw::coeff::name() + ":\n" );
-        boost::mpl::for_each< ctr::CoeffPolicy::keywords >( echoPolicies(this) );
+        brigand::for_each< ctr::CoeffPolicy::keywords >( echoPolicies(this) );
         raw( '\n' );
         // extract eqname and supported policies
         const auto ip = ctr::InitPolicy();

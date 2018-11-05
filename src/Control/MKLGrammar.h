@@ -72,6 +72,16 @@ namespace mkl {
                           tag::beta_method,
                           sel, vec, tags... > {};
 
+  //! \brief Match and set MKL gamma method algorithm
+  template< template< class > class use, typename sel,
+            typename vec, typename... tags >
+  struct gamma_method :
+         grm::rng_option< use,
+                          use< kw::gamma_method >,
+                          ctr::MKLGammaMethod,
+                          tag::gamma_method,
+                          sel, vec, tags... > {};
+
   //! \brief Match MKL RNGs in an rngs ... end block
   //! \see walker::deck::rngs
   template< template< class > class use, typename sel,
@@ -86,7 +96,8 @@ namespace mkl {
                            seed< use, sel, vec, tags... >,
                            uniform_method< use, sel, vec, tags... >,
                            gaussian_method< use, sel, vec, tags... >,
-                           beta_method< use, sel, vec, tags... > > >
+                           beta_method< use, sel, vec, tags... >,
+                           gamma_method< use, sel, vec, tags... > > >
   {};
 
 } // mkl::

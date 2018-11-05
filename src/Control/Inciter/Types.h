@@ -18,6 +18,7 @@
 #include "Inciter/Options/PDE.h"
 #include "Inciter/Options/Problem.h"
 #include "Inciter/Options/Scheme.h"
+#include "Inciter/Options/Limiter.h"
 #include "Inciter/Options/Flux.h"
 #include "Inciter/Options/AMRInitial.h"
 #include "Inciter/Options/AMRError.h"
@@ -41,23 +42,45 @@ using selects = tk::tuple::tagged_tuple<
 
 //! Adaptive-mesh refinement options
 using amr = tk::tuple::tagged_tuple<
-  tag::amr,    bool,                             //!< AMR on/off
-  tag::init,   std::vector< AMRInitialType >,    //!< List of initial AMR types
-  tag::levels, unsigned int,                     //!< Initial uniform levels
-  tag::error,  AMRErrorType                      //!< Error estimator for AMR
+  tag::amr,     bool,                             //!< AMR on/off
+  tag::t0ref,   bool,                             //!< AMR before t<0 on/off
+  tag::dtref,   bool,                             //!< AMR during t>0 on/off
+  tag::dtfreq,  kw::amr_dtfreq::info::expect::type, //!< refinement frequency
+  tag::init,    std::vector< AMRInitialType >,    //!< List of initial AMR types
+  tag::refvar,  std::vector< std::string >,       //!< List of refinement vars
+  tag::id,      std::vector< std::size_t >,       //!< List of refvar indices
+  tag::error,   AMRErrorType,                     //!< Error estimator for AMR
+  //! List of edges-node pairs
+  tag::edge,    std::vector< kw::amr_initref::info::expect::type >,
+  //! Refinement tagging edges with end-point coordinates lower than x coord
+  tag::xminus,  kw::amr_xminus::info::expect::type,
+  //! Refinement tagging edges with end-point coordinates higher than x coord
+  tag::xplus,  kw::amr_xplus::info::expect::type,
+  //! Refinement tagging edges with end-point coordinates lower than y coord
+  tag::yminus,  kw::amr_yminus::info::expect::type,
+  //! Refinement tagging edges with end-point coordinates higher than y coord
+  tag::yplus,  kw::amr_yplus::info::expect::type,
+  //! Refinement tagging edges with end-point coordinates lower than z coord
+  tag::zminus,  kw::amr_zminus::info::expect::type,
+  //! Refinement tagging edges with end-point coordinates higher than z coord
+  tag::zplus,  kw::amr_zplus::info::expect::type
 >;
 
 //! Discretization parameters storage
 using discretization = tk::tuple::tagged_tuple<
-  tag::nstep,  kw::nstep::info::expect::type, //!< Number of time steps
-  tag::term,   kw::term::info::expect::type,  //!< Time to terminate
-  tag::t0,     kw::t0::info::expect::type,    //!< Starting time
-  tag::dt,     kw::dt::info::expect::type,    //!< Size of time step
-  tag::cfl,    kw::cfl::info::expect::type,   //!< CFL coefficient
-  tag::fct,    bool,                          //!< FCT on/off
-  tag::ctau,   kw::ctau::info::expect::type,  //!< FCT mass diffisivity
-  tag::scheme, inciter::ctr::SchemeType,      //!< Spatial discretization type
-  tag::flux,   inciter::ctr::FluxType         //!< Flux function type
+  tag::nstep,  kw::nstep::info::expect::type,   //!< Number of time steps
+  tag::term,   kw::term::info::expect::type,    //!< Time to terminate
+  tag::t0,     kw::t0::info::expect::type,      //!< Starting time
+  tag::dt,     kw::dt::info::expect::type,      //!< Size of time step
+  tag::cfl,    kw::cfl::info::expect::type,     //!< CFL coefficient
+  tag::fct,    bool,                            //!< FCT on/off
+  tag::reorder,bool,                            //!< reordering on/off
+  tag::ctau,   kw::ctau::info::expect::type,    //!< FCT mass diffisivity
+  tag::scheme, inciter::ctr::SchemeType,        //!< Spatial discretization type
+  tag::limiter,inciter::ctr::LimiterType,       //!< Limiter type
+  tag::cweight,kw::cweight::info::expect::type, //!< WENO central stencil weight
+  tag::flux,   inciter::ctr::FluxType,          //!< Flux function type
+  tag::ndof,   std::size_t                      //!< Number of solution DOFs
 >;
 
 //! ASCII output floating-point precision in digits
@@ -116,6 +139,7 @@ using TransportPDEParameters = tk::tuple::tagged_tuple<
 
 //! Compressible flow equation parameters storage
 using CompFlowPDEParameters = tk::tuple::tagged_tuple<
+  tag::depvar,       std::vector< char >,
   tag::physics,      std::vector< PhysicsType >,
   tag::problem,      std::vector< ProblemType >,
   tag::bcdir,        std::vector< std::vector<

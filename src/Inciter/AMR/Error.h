@@ -12,6 +12,7 @@
 #include "Fields.h"
 #include "Keywords.h"
 #include "Inciter/Options/AMRError.h"
+#include "AMR/edge.h"
 
 namespace AMR {
 
@@ -24,30 +25,30 @@ class Error {
   public:
     //! Compute error estimate for a scalar quantity
     tk::real scalar( const tk::Fields& u,
-                     const std::pair< std::size_t, std::size_t >& edge,
+                     const edge_t& edge,
                      ncomp_t c,
                      const std::array< std::vector< tk::real >, 3 >& coord,
                      const std::vector< std::size_t >& inpoel,
                      const std::pair< std::vector< std::size_t >,
                                       std::vector< std::size_t > >& esup,
-                     inciter::ctr::AMRErrorType err );
+                     inciter::ctr::AMRErrorType err ) const;
 
   private:
     //! Estimate error for scalar quantity on edge based on jump in solution
     tk::real
     error_jump( const tk::Fields& u,
-                const std::pair< std::size_t, std::size_t >& edge,
-                ncomp_t c );
+                const edge_t& edge,
+                ncomp_t c ) const;
 
     //! Estimate error for scalar quantity on edge based on Hessian of solution
     tk::real
     error_hessian( const tk::Fields& u,
-                   const std::pair< std::size_t, std::size_t >& edge,
+                   const edge_t& edge,
                    ncomp_t c,
                    const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const std::pair< std::vector< std::size_t >,
-                                    std::vector< std::size_t > >& esup );
+                                    std::vector< std::size_t > >& esup ) const;
 };
 
 } // AMR::

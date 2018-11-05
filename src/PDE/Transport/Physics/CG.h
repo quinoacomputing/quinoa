@@ -30,7 +30,7 @@
 #ifndef TransportCGPhysics_h
 #define TransportCGPhysics_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "CGAdvection.h"
 #include "CGAdvDiff.h"
@@ -39,8 +39,8 @@ namespace inciter {
 namespace cg {
 
 //! Transport Physics policies implemented using continuous Galerkin
-using TransportPhysics = boost::mpl::vector< TransportPhysicsAdvection
-                                           , TransportPhysicsAdvDiff >;
+using TransportPhysics = brigand::list< TransportPhysicsAdvection
+                                      , TransportPhysicsAdvDiff >;
 
 } // cg::
 } // inciter::

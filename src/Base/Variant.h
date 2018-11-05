@@ -10,6 +10,7 @@
 #define Variant_h
 
 #include "NoWarning/variant.h"
+#include "NoWarning/charm++.h"
 
 namespace tk {
 

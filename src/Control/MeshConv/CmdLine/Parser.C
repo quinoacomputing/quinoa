@@ -80,13 +80,14 @@ CmdLineParser::CmdLineParser( int argc,
   // without arguments or the help was requested
   const auto helpcmd = cmdline.get< tag::help >();
   if (argc == 1 || helpcmd)
-    print.help< tk::QUIET >( MESHCONV_EXECUTABLE, cmdline.get< tag::cmdinfo >(),
+    print.help< tk::QUIET >( tk::meshconv_executable(),
+                             cmdline.get< tag::cmdinfo >(),
                              "Command-line Parameters:", "-" );
 
   // Print out verbose help for a single keyword if requested
   const auto helpkw = cmdline.get< tag::helpkw >();
   if (!helpkw.keyword.empty())
-    print.helpkw< tk::QUIET >( MESHCONV_EXECUTABLE, helpkw );
+    print.helpkw< tk::QUIET >( tk::meshconv_executable(), helpkw );
 
   // Immediately exit if any help was output or was called without any argument
   if (argc == 1 || helpcmd || !helpkw.keyword.empty()) CkExit();

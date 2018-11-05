@@ -70,7 +70,7 @@
 #ifndef MixNumberFractionBetaCoeffPolicy_h
 #define MixNumberFractionBetaCoeffPolicy_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Types.h"
 #include "Walker/Options/CoeffPolicy.h"
@@ -155,7 +155,7 @@ class MixNumFracBetaCoeffDecay {
 
 //! List of all mix numberf-fraction beta's coefficients policies
 using MixNumFracBetaCoeffPolicies =
-  boost::mpl::vector< MixNumFracBetaCoeffDecay >;
+  brigand::list< MixNumFracBetaCoeffDecay >;
 
 } // walker::
 

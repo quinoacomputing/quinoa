@@ -19,6 +19,7 @@
 #include "UnsMesh.h"
 
 #include "NoWarning/discretization.decl.h"
+#include "NoWarning/refiner.decl.h"
 
 namespace tk {
   class ExodusIIMeshWriter;
@@ -37,12 +38,9 @@ class Discretization : public CBase_Discretization {
       Discretization(
         const CProxy_DistFCT& fctproxy,
         const CProxy_Transporter& transporter,
-        const CProxy_BoundaryConditions& bc,
         const std::vector< std::size_t >& conn,
-        const std::unordered_map< int,
-                std::unordered_set< std::size_t > >& msum,
-        const std::unordered_map< std::size_t, std::size_t >& filenodes,
-        const tk::UnsMesh::EdgeNodes& edgenodes,
+        const tk::UnsMesh::CoordMap& coordmap,
+        const std::map< int, std::unordered_set< std::size_t > >& msum,
         int nchare );
 
     #if defined(__clang__)
@@ -58,13 +56,21 @@ class Discretization : public CBase_Discretization {
     //! Configure Charm++ reduction types
     static void registerReducers();
 
-    //! \brief Read mesh node coordinates and optionally add new edge-nodes in
-    //!   case of initial uniform refinement
-    void coord();
+    //! Resize mesh data structures (e.g., after mesh refinement)
+    void resize( const tk::UnsMesh::Chunk& chunk,
+                 const tk::UnsMesh::Coords& coord,
+                 const std::unordered_map< int,
+                         std::vector< std::size_t > >& msum );
+
+    //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
+    void vol();
+
+    //! Set Refiner Charm++ proxy
+    void setRefiner( const CProxy_Refiner& ref );
 
     //! Collect nodal volumes across chare boundaries
     void comvol( const std::vector< std::size_t >& gid,
-                 const std::vector< tk::real >& vol );
+                 const std::vector< tk::real >& nodevol );
 
     //! Sum mesh volumes and contribute own mesh volume to total volume
     void totalvol();
@@ -72,43 +78,71 @@ class Discretization : public CBase_Discretization {
     //! Compute mesh cell statistics
     void stat();
 
-    /** @name Accessors
-      * */
+    /** @name Accessors */
     ///@{
+    //! Coordinates accessors as const-ref
     const tk::UnsMesh::Coords& Coord() const{ return m_coord; }
+    //! Coordinates accessors as non-const ref
     tk::UnsMesh::Coords& Coord() { return m_coord; }
 
+    //! Global ids accessors as const-ref
     const std::vector< std::size_t >& Gid() const { return m_gid; }
+    //! Global ids accessors as non-const-ref
     std::vector< std::size_t >& Gid() { return m_gid; }
 
+    //! Local ids accessors as const-ref
     const std::unordered_map< std::size_t, std::size_t >& Lid() const
     { return m_lid; }
+    //! Local ids accessors as non-const-ref
     std::unordered_map< std::size_t, std::size_t >& Lid() { return m_lid; }
 
+    //! Tetrahedron element connectivity (with local ids) accessors as const-ref
     const std::vector< std::size_t >& Inpoel() const { return m_inpoel; }
+    //! \brief Tetrahedron element connectivity (with local ids) accessors as
+    //!    non-const-ref
     std::vector< std::size_t >& Inpoel() { return m_inpoel; }
 
+    //! Total mesh volume accessors const-ref
     const std::vector< tk::real >& V() const { return m_v; }
+    //! Total mesh volume accessors non-const-ref
     std::vector< tk::real >& V() { return m_v; }
 
+    //! Nodal mesh volumes accessors as const-ref
     const std::vector< tk::real >& Vol() const { return m_vol; }
+    //! Nodal mesh volumes accessors as non-const-ref
     std::vector< tk::real >& Vol() { return m_vol; }
 
+    //! Time step size accessor
     tk::real Dt() const { return m_dt; }
+    //! Physical time accessor
     tk::real T() const { return m_t; }
+    //! Iteration count accessor
     uint64_t It() const { return m_it; }
 
+    //! Non-const-ref refinement iteration count accessor
+    uint64_t& Itr() { return m_itr; }
+
+    //! Timer accessor as const-ref
     const tk::Timer& Timer() const { return m_timer; }
+    //! Timer accessor as non-const-ref
     tk::Timer& Timer() { return m_timer; }
 
+    //! Time at which field output happened last accessor as const-ref
     tk::real LastFieldWriteTime() const { return m_lastFieldWriteTime; }
+    //! Time at which field output happened last accessor as non-const-ref
     tk::real& LastFieldWriteTime() { return m_lastFieldWriteTime; }
 
+    //! Transporter proxy accessor as const-ref
     const CProxy_Transporter& Tr() const { return m_transporter; }
+    //! Transporter proxy accessor as non-const-ref
     CProxy_Transporter& Tr() { return m_transporter; }
 
-    //! Access boundary conditions group local branch pointer
-    BoundaryConditions* BC() { return m_bc.ckLocalBranch(); }
+    //! Access bound Refiner class pointer
+    Refiner* Ref() const {
+      Assert( m_refiner[ thisIndex ].ckLocal() != nullptr,
+              "Refiner ckLocal() null" );
+      return m_refiner[ thisIndex ].ckLocal();
+    }
 
     //! Access bound DistFCT class pointer
     DistFCT* FCT() const {
@@ -116,31 +150,31 @@ class Discretization : public CBase_Discretization {
       return m_fct[ thisIndex ].ckLocal();
     }
 
-    const std::unordered_map< std::size_t, std::size_t >& Filenodes() const
-    { return m_filenodes; }
-    std::unordered_map< std::size_t, std::size_t >& Filenodes()
-    { return m_filenodes; }
-
+    //! Boundary node ids accessor as const-ref
     const std::unordered_map< std::size_t, std::size_t >& Bid() const
     { return m_bid; }
+    //! Boundary node ids accessor as non-const-ref
     std::unordered_map< std::size_t, std::size_t >& Bid() { return m_bid; }
 
+    //! Nodal communication map accessor as const-ref
     const std::unordered_map< int, std::vector< std::size_t > >& Msum() const
     { return m_msum; }
+    //! Nodal communication map accessor as non-const-ref
     std::unordered_map< int, std::vector< std::size_t > >& Msum()
     { return m_msum; }
 
-    const std::string& OutFilename() const { return m_outFilename; }
-    std::string& OutFilename() { return m_outFilename; }
-
+    //! Points surrounding points accessor as const-ref
     const std::pair< std::vector< std::size_t >, std::vector< std::size_t > >&
     Psup() const { return m_psup; }
+    //! Points surrounding points accessor as non-const-ref
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > >&
     Psup() { return m_psup; }
     //@}
 
     //! Output chare element blocks to output file
-    void writeMesh();
+    void writeMesh( const std::map< int, std::vector< std::size_t > >& bface,
+                    const std::vector< std::size_t >& triinpoel,
+                    const std::map< int, std::vector< std::size_t > >& bnode );
 
     //! Output mesh-based fields metadata to file
     void writeNodeMeta() const;
@@ -171,22 +205,25 @@ class Discretization : public CBase_Discretization {
     //! Otput one-liner status report
     void status();
 
+    //! Compute ExodusII filename
+    std::string filename() const;
+
+    /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &p ) {
-      CBase_Discretization::pup(p);
+    void pup( PUP::er &p ) override {
+      p | m_nchare;
       p | m_it;
+      p | m_itr;
+      p | m_initial;
       p | m_t;
       p | m_dt;
       p | m_lastFieldWriteTime;
       p | m_nvol;
-      p | m_outFilename;
       p | m_fct;
       p | m_transporter;
-      p | m_bc;
-      p | m_filenodes;
-      p | m_edgenodes;
+      p | m_refiner;
       p | m_el;
       if (p.isUnpacking()) {
         m_inpoel = std::get< 0 >( m_el );
@@ -209,9 +246,18 @@ class Discretization : public CBase_Discretization {
     //@}
 
   private:
+    //! Total number of Discretization chares
+    int m_nchare;
     //! Iteration count
     uint64_t m_it;
-     //! Physical time
+    //! Iteration count with mesh refinement
+    //! \details Used as the restart sequence number {RS} in saving output in
+    //!    an ExodusII sequence
+    //! \see https://www.paraview.org/Wiki/Restarted_Simulation_Readers
+    uint64_t m_itr;
+    //! Flag that is nonzero during setup and zero during time stepping
+    tk::real m_initial;
+    //! Physical time
     tk::real m_t;
     //! Physical time step size
     tk::real m_dt;
@@ -220,28 +266,18 @@ class Discretization : public CBase_Discretization {
     //! \brief Number of chares from which we received nodal volume
     //!   contributions on chare boundaries
     std::size_t m_nvol;
-    //! Output filename
-    std::string m_outFilename;
     //! Distributed FCT proxy
     CProxy_DistFCT m_fct;
     //! Transporter proxy
     CProxy_Transporter m_transporter;
-    //! Boundary conditions proxy
-    CProxy_BoundaryConditions m_bc;
-    //! Map associating file node IDs to local node IDs
-    std::unordered_map< std::size_t, std::size_t > m_filenodes;
-    //! \brief Maps associating node node IDs to edges (a pair of old node IDs)
-    //!   for only the nodes newly added as a result of initial uniform
-    //!   refinement.
-    tk::UnsMesh::EdgeNodes m_edgenodes;
+    //! Mesh refiner proxy
+    CProxy_Refiner m_refiner;
     //! \brief Elements of the mesh chunk we operate on
     //! \details Initialized by the constructor. The first vector is the element
     //!   connectivity (local IDs), the second vector is the global node IDs of
     //!   owned elements, while the third one is a map of global->local node
     //!   IDs.
-    std::tuple< std::vector< std::size_t >,
-                std::vector< std::size_t >,
-                std::unordered_map< std::size_t, std::size_t > > m_el;
+    tk::UnsMesh::Chunk m_el;
     //! Alias to element connectivity
     std::vector< std::size_t >& m_inpoel = std::get< 0 >( m_el );
     //! Alias to global node IDs of owned elements
@@ -281,15 +317,8 @@ class Discretization : public CBase_Discretization {
     //! Timer measuring a time step
     tk::Timer m_timer;
 
-    //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
-    void vol();
-
-    //! Read coordinates of mesh nodes given
-    void readCoords();
-
-    //! \brief Add coordinates of mesh nodes newly generated to edge-mid points
-    //!    during initial refinement
-    void addEdgeNodeCoords();
+    //! Set mesh coordinates based on coordinates map
+    tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );
 };
 
 } // inciter::

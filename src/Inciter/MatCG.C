@@ -31,7 +31,8 @@
 #include "Discretization.h"
 #include "DistFCT.h"
 #include "DiagReducer.h"
-#include "BoundaryConditions.h"
+#include "NodeBC.h"
+#include "Refiner.h"
 
 #ifdef HAS_ROOT
   #include "RootMeshWriter.h"
@@ -49,13 +50,13 @@ using inciter::MatCG;
 
 MatCG::MatCG( const CProxy_Discretization& disc,
               const tk::CProxy_Solver& solver,
-              const FaceData& ) :
+              const FaceData& fd ) :
+  m_disc( disc ),
+  m_solver( solver ),
   m_itf( 0 ),
   m_nhsol( 0 ),
   m_nlsol( 0 ),
-  m_disc( disc ),
-  m_solver( solver ),
-  m_side( Disc()->BC()->sideNodes( Disc()->Filenodes(), Disc()->Lid() ) ),
+  m_fd( fd ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_ul( m_u.nunk(), m_u.nprop() ),
@@ -65,11 +66,12 @@ MatCG::MatCG( const CProxy_Discretization& disc,
   m_lhsd( m_disc[thisIndex].ckLocal()->Psup().second.size()-1, m_u.nprop() ),
   m_lhso( m_disc[thisIndex].ckLocal()->Psup().first.size(), m_u.nprop() ),
   m_vol( 0.0 ),
-  m_diag( *Disc() )
+  m_diag()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
 //! \param[in] solver Linear system solver (Solver) proxy
+//! \param[in] fd Face data structures
 // *****************************************************************************
 {
   auto d = Disc();
@@ -106,7 +108,7 @@ MatCG::setup( tk::real v )
   // Store total mesh volume
   m_vol = v;
   // Output chare mesh to file
-  d->writeMesh();
+  d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode() );
   // Output fields metadata to output file
   d->writeNodeMeta();
 
@@ -164,9 +166,12 @@ MatCG::dt()
 
   }
 
+  // Activate SDAG waits for time step
+  thisProxy[ thisIndex ].wait4eval();
+
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-              CkCallback(CkReductionTarget(MatCG,advance), thisProxy) );
+              CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
 }
 
 void
@@ -225,8 +230,8 @@ MatCG::bc()
   auto d = Disc();
 
   // Match user-specified boundary conditions to side sets
-  auto dirbc = d->BC()->match( m_u.nprop(), d->T(), d->Dt(), d->Coord(),
-                               d->Gid(), m_side );
+  auto dirbc = match( m_u.nprop(), d->T(), d->Dt(), d->Coord(),
+                      d->Gid(), d->Lid(), m_fd.Bnode() );
 
   // Send off BCs to Solver for aggregation
   m_solver.ckLocalBranch()->charebc( dirbc );
@@ -297,52 +302,6 @@ MatCG::updateSol( const std::vector< std::size_t >& gid,
   }
 }
 
-bool
-MatCG::correctBC( const tk::Fields& a )
-// *****************************************************************************
-//  Verify that the change in the solution at those nodes where Dirichlet
-//  boundary conditions are set is exactly the amount the BCs prescribe
-//! \param[in] a Limited antidiffusive element contributions
-//! \return True if the solution is correct at Dirichlet boundary condition
-//!   nodes
-// *****************************************************************************
-{
-  auto& dirbc = m_solver.ckLocalBranch()->dirbc();
-
-  if (dirbc.empty()) return true;
-
-  auto d = Disc();
-
-  // We loop through the map that associates a vector of local node IDs to side
-  // set IDs for all side sets read from mesh file. Then for each side set for
-  // all mesh nodes on a given side set we attempt to find the global node ID
-  // in dirbc, which stores only those nodes (and BC settings) at which the
-  // user has configured Dirichlet BCs to be set. Then for all scalar
-  // components of all system of systems of PDEs integrated if a BC is to be
-  // set for a given component, we compute the low order solution increment +
-  // the anti-diffusive element contributions, which is the current solution
-  // increment (to be used to update the solution at time n) at that node. This
-  // solution increment must equal the BC prescribed at the given node as we
-  // solve for solution increments. If not, the BCs are not set correctly,
-  // which is an error.
-  for (const auto& s : m_side)
-    for (auto i : s.second) {
-      auto u = dirbc.find( d->Gid()[i] );
-      if (u != end(dirbc)) {
-        const auto& b = u->second;
-        Assert( b.size() == m_u.nprop(), "Size mismatch" );
-        for (std::size_t c=0; c<b.size(); ++c)
-          if ( b[c].first &&
-               std::abs( m_dul(i,c,0) + a(i,c,0) - b[c].second ) >
-                 std::numeric_limits< tk::real >::epsilon() ) {
-             return false;
-          }
-      }
-  }
-
-  return true;
-}
-
 void
 MatCG::writeFields( tk::real time )
 // *****************************************************************************
@@ -380,7 +339,7 @@ MatCG::writeFields( tk::real time )
   if (filetype == tk::ctr::FieldFileType::ROOT) {
 
     // Create Root writer
-    tk::RootMeshWriter rmw( d->OutFilename(), 1 );
+    tk::RootMeshWriter rmw( d->filename(), 1 );
     // Write time stamp
     rmw.writeTimeStamp( m_itf, time );
     // Write node fields to file
@@ -391,7 +350,7 @@ MatCG::writeFields( tk::real time )
   {
 
     // Create ExodusII writer
-    tk::ExodusIIMeshWriter ew( d->OutFilename(), tk::ExoWriter::OPEN );
+    tk::ExodusIIMeshWriter ew( d->filename(), tk::ExoWriter::OPEN );
     // Write time stamp
     ew.writeTimeStamp( m_itf, time );
     // Write node fields to file
@@ -408,21 +367,19 @@ MatCG::out()
 {
   auto d = Disc();
 
-  // Optionally output field and particle data
-  if ( !((d->It()+1) % g_inputdeck.get< tag::interval, tag::field >()) &&
-       !g_inputdeck.get< tag::cmd, tag::benchmark >() )
-  {
-    writeFields( d->T()+d->Dt() );
-  }
+  // Output field data to file if not in benchmark mode
+  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) {
 
-  // Output final field data to file (regardless of whether it was requested)
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  if ( (std::fabs(d->T() + d->Dt()-term) < eps || (d->It()+1) >= nstep) &&
-       (!g_inputdeck.get< tag::cmd, tag::benchmark >()) )
-  {
-    writeFields( d->T()+d->Dt() );
+    if ( !((d->It()) % g_inputdeck.get< tag::interval, tag::field >()) )
+      writeFields( d->T() );
+  
+    // Output final field data to file (regardless of whether it was requested)
+    const auto term = g_inputdeck.get< tag::discr, tag::term >();
+    const auto eps = std::numeric_limits< tk::real >::epsilon();
+    const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+    if ( (std::fabs(d->T()-term) < eps || d->It() >= nstep ) )
+      writeFields( d->T() );
+  
   }
 }
 
@@ -446,47 +403,101 @@ MatCG::advance( tk::real newdt )
 }
 
 void
-MatCG::next( const tk::Fields& a )
+MatCG::resized()
 // *****************************************************************************
-// Prepare for next step
+// Resizing data sutrctures after mesh refinement has been completed
+// *****************************************************************************
+{
+  resize_complete();
+}
+
+void
+MatCG::update( const tk::Fields& a )
+// *****************************************************************************
+//  Update solution at the end of time step
 //! \param[in] a Limited antidiffusive element contributions
 // *****************************************************************************
 {
+  auto d = Disc();
+
+  // Verify that the change in the solution at those nodes where Dirichlet
+  // boundary conditions are set is exactly the amount the BCs prescribe
+  Assert( correctBC( a, m_dul, m_solver.ckLocalBranch()->dirbc(), d->Lid() ),
+          "Dirichlet boundary condition incorrect" );
+
   // Apply limited antidiffusive element contributions to low order solution
   if (g_inputdeck.get< tag::discr, tag::fct >())
     m_u = m_ul + a;
   else
     m_u = m_u + m_du;
 
-  auto d = Disc();
-
-  // Output field data to file
-  out();
   // Compute diagnostics, e.g., residuals
-  auto diag = m_diag.compute( *d, m_u );
+  auto diag_computed = m_diag.compute( *d, m_u );
   // Increase number of iterations and physical time
   d->next();
-  // Output one-liner status report
-  d->status();
-
-//     // TEST FEATURE: Manually migrate this chare by using migrateMe to see if
-//     // all relevant state variables are being PUPed correctly.
-//     //CkPrintf("I'm MatCG chare %d on PE %d\n",thisIndex,CkMyPe());
-//     if (thisIndex == 2 && CkMyPe() == 2) {
-//       /*int j;
-//       for (int i; i < 50*std::pow(thisIndex,4); i++) {
-//         j = i*thisIndex;
-//       }*/
-//       CkPrintf("I'm MatCG chare %d on PE %d\n",thisIndex,CkMyPe());
-//       migrateMe(1);
-//    }
-//    if (thisIndex == 2 && CkMyPe() == 1) {
-//      CkPrintf("I'm MatCG chare %d on PE %d\n",thisIndex,CkMyPe());
-//      migrateMe(2);
-//    }
-
   // Evaluate whether to continue with next step
-  if (!diag) eval();
+  if (!diag_computed) diag();
+  // Optionally refine mesh
+  refine();
+}
+
+void
+MatCG::diag()
+// *****************************************************************************
+// Signal the runtime system that diagnostics have been computed
+// *****************************************************************************
+{
+  diag_complete();
+}
+
+void
+MatCG::refine()
+// *****************************************************************************
+// Optionally refine/derefine mesh
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
+  auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
+
+  // if t>0 refinement enabled and we hit the frequency
+  if (dtref && !(d->It() % dtfreq)) {   // refine
+
+    d->Ref()->dtref( d->T(), thisProxy, m_fd.Bnode() );
+
+  } else {      // do not refine
+
+    ref_complete();
+    lhs_complete();
+    resize_complete();
+
+  }
+}
+
+void
+MatCG::resize( const tk::UnsMesh::Chunk& /*chunk*/,
+               const tk::UnsMesh::Coords& /*coord*/,
+               const tk::Fields& /*u*/,
+               const std::unordered_map< int,
+                       std::vector< std::size_t > >& /*msum*/,
+               const std::map< int, std::vector< std::size_t > >& /*bnode*/ )
+// *****************************************************************************
+//  Receive new mesh from refiner
+//! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
+//! \param[in] coord New mesh node coordinates
+//! \param[in] u New solution on new mesh
+//! \param[in] msum New node communication map
+//! \param[in] bnode Map of boundary-node lists mapped to corresponding
+//!   side set ids for this mesh chunk
+// *****************************************************************************
+{
+  //auto d = Disc();
+
+  //d->Inpoel() = inpoel;
+  //d->Coord() = coord;
+
+  ref_complete();
 }
 
 void
@@ -497,15 +508,21 @@ MatCG::eval()
 {
   auto d = Disc();
 
+  // Output field data to file
+  out();
+  // Output one-liner status report
+  d->status();
+
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
 
   // If neither max iterations nor max time reached, continue, otherwise finish
-  if (std::fabs(d->T()-term) > eps && d->It() < nstep)
+  if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
     contribute( CkCallback( CkReductionTarget(Transporter,next), d->Tr() ) );
-  else
+  } else {
     contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
+  }
 }
 
 #include "NoWarning/matcg.def.h"

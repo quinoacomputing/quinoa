@@ -17,8 +17,12 @@
 
 #include "Types.h"
 #include "Inciter/Options/Physics.h"
+#include "Inciter/InputDeck/InputDeck.h"
 
 namespace inciter {
+
+extern ctr::InputDeck g_inputdeck;
+
 namespace cg {
 
 //! Physics policy for advection-diffusion using continuous Galerkin
@@ -52,7 +56,7 @@ class TransportPhysicsAdvDiff {
         g_inputdeck.get< tag::param, tag::transport, tag::diffusivity >().at(e);
       // add diffusion contribution to right hand side
       const auto d = deltat * J/6.0;
-      for (ncomp_t c=0; c<ncomp; ++c)
+      for (tk::ctr::ncomp_type c=0; c<ncomp; ++c)
         for (std::size_t k=0; k<3; ++k) {
           const auto D = diff[ 3*c+k ];
           for (std::size_t a=0; a<4; ++a)
@@ -78,7 +82,7 @@ class TransportPhysicsAdvDiff {
         g_inputdeck.get< tag::param, tag::transport, tag::diffusivity >().at(e);
       // compute the minimum diffusion time step size across the four nodes
       tk::real mindt = std::numeric_limits< tk::real >::max();
-      for (ncomp_t c=0; c<ncomp; ++c) {
+      for (tk::ctr::ncomp_type c=0; c<ncomp; ++c) {
         const auto di = 3*c;
         const auto d = std::max( df[di+2], std::max( df[di+0], df[di+1] ) );
         const auto dt = L * L / (2.0*d);  // dt ~ dx^2/(2D)

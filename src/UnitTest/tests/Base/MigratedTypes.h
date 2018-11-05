@@ -2,8 +2,8 @@
 /*!
   \file      src/UnitTest/tests/Base/MigratedTypes.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Type definitions for unit tests of Charm++ migrated data
-  \details   Type definitions for unit tests of Charm++ migrated data
+  \brief     Type definitions for unit tests of Charm++ migrated data in Base
+  \details   Type definitions for unit tests of Charm++ migrated data in Base.
 */
 // *****************************************************************************
 #ifndef test_MigratedTypes_h

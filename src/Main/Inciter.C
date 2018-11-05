@@ -28,6 +28,7 @@
 #include "Inciter/CmdLine/Parser.h"
 #include "Inciter/CmdLine/CmdLine.h"
 #include "Inciter/InputDeck/InputDeck.h"
+#include "ChareStateCollector.h"
 
 #include "NoWarning/inciter.decl.h"
 
@@ -39,6 +40,9 @@
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
 CProxy_Main mainProxy;
+
+//! Chare state collector Charm++ chare group proxy
+tk::CProxy_ChareStateCollector stateProxy;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -103,7 +107,9 @@ std::vector< DGPDE > g_dgpde;
 //!   parallel).
 inline
 void operator|( PUP::er& p, std::vector< CGPDE >& eqs ) {
-  if (!p.isSizing()) eqs = PDEStack().selectedCG();
+  try {
+    if (!p.isSizing()) eqs = PDEStack().selectedCG();
+  } catch (...) { tk::processExceptionCharm(); }
 }
 
 //! \brief Pack/Unpack selected partial differential equations using
@@ -123,12 +129,14 @@ void operator|( PUP::er& p, std::vector< CGPDE >& eqs ) {
 //!   parallel).
 inline
 void operator|( PUP::er& p, std::vector< DGPDE >& eqs ) {
-  if (!p.isSizing()) eqs = PDEStack().selectedDG();
+  try {
+    if (!p.isSizing()) eqs = PDEStack().selectedDG();
+  } catch (...) { tk::processExceptionCharm(); }
 }
 
 } // inciter::
 
-//! \brief Charm++ main chare for the shock hydroddynamics executable, inciter.
+//! \brief Charm++ main chare for the shock hydrodynamics executable, inciter.
 //! \details In inciter the Charm++ runtime system is initialized only after the
 //!   mesh has been read in, partitioned, and the necessary data structures,
 //!   e.g., communication maps, have been generated. This delayed initialization
@@ -139,7 +147,7 @@ class Main : public CBase_Main {
 
   public:
     //! \brief Constructor
-    //! \details The main chare constructor is the main entry point of the
+    //! \details Inciter's main chare constructor is the entry point of the
     //!   Charm++ portion of inciter, called by the Charm++ runtime system. The
     //!   constructor does basic initialization steps, prints out some useful
     //!   information to screen (in verbose mode), and instantiates a driver.
@@ -169,21 +177,15 @@ class Main : public CBase_Main {
                         ( msg->argc, msg->argv,
                           m_cmdline,
                           tk::HeaderType::INCITER,
-                          INCITER_EXECUTABLE,
+                          tk::inciter_executable(),
                           m_print ) ),
       // Start new timer measuring the total runtime
       m_timer(1),
       m_timestamp()
     {
-      delete msg;
-      mainProxy = thisProxy;
-      // Fire up an asynchronous execute object, which when created at some
-      // future point in time will call back to this->execute(). This is
-      // necessary so that this->execute() can access already migrated
-      // global-scope data.
-      CProxy_execute::ckNew();
-      // Start new timer measuring the migration of global-scope data
-      m_timer.emplace_back();
+      tk::MainCtor< CProxy_execute >
+        ( msg, mainProxy, thisProxy, stateProxy, m_timer, m_cmdline,
+          CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
     } catch (...) { tk::processExceptionCharm(); }
 
     //! Execute driver created and initialized by constructor
@@ -194,17 +196,23 @@ class Main : public CBase_Main {
       } catch (...) { tk::processExceptionCharm(); }
     }
 
-    //! Normal exit point
+    //! Towards normal exit but collect chare state first (if any)
     void finalize() {
+      tk::finalize( m_cmdline, m_timer, m_print, stateProxy, m_timestamp,
+                    CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
+    }
+
+    //! Entry method triggered when quiescence is detected
+    void quiescence() {
       try {
-        if (!m_timer.empty()) {
-          m_timestamp.emplace_back( "Total runtime", m_timer[0].hms() );
-          m_print.time( "Timers (h:m:s)", m_timestamp );
-          m_print.endpart();
-        }
+        stateProxy.collect( /* error= */ true,
+          CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
       } catch (...) { tk::processExceptionCharm(); }
-      // Tell the Charm++ runtime system to exit
-      CkExit();
+    }
+
+    //! Dump chare state
+    void dumpstate( CkReductionMsg* msg ) {
+      tk::dumpstate( m_cmdline, m_print, msg );
     }
 
   private:

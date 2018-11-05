@@ -31,6 +31,9 @@ namespace inciter {
 //!   627-665.
 class TransportProblemSlotCyl {
 
+  private:
+    using ncomp_t = tk::ctr::ncomp_type;
+
   public:
     //! Evaluate analytical solution at (x,y,t) for all components
     //! \param[in] ncomp Number of components in this transport equation system

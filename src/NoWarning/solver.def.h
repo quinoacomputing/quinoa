@@ -12,6 +12,7 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wshadow"
   #pragma clang diagnostic ignored "-Wunused-variable"
   #pragma clang diagnostic ignored "-Wold-style-cast"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"

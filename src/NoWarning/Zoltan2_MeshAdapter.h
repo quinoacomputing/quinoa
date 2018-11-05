@@ -13,7 +13,6 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic push
-  #pragma clang diagnostic ignored "-Wreserved-id-macro"
   #pragma clang diagnostic ignored "-Wcovered-switch-default"
   #pragma clang diagnostic ignored "-Wunused-parameter"
   #pragma clang diagnostic ignored "-Wdocumentation"
@@ -40,6 +39,7 @@
   #pragma clang diagnostic ignored "-Wunused-template"
   #pragma clang diagnostic ignored "-Wcast-qual"
   #pragma clang diagnostic ignored "-Wshadow"
+  #pragma clang diagnostic ignored "-Watomic-implicit-seq-cst"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wredundant-decls"

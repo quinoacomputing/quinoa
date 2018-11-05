@@ -1,0 +1,396 @@
+/*!
+
+This file contains high level documentation of all directories under src/.
+
+@dir src
+@brief Root of the source tree
+
+@dir src/Base
+@brief Basic, general, generic utilities, reused across all executables
+@details This directory contains basic, usually small, utility-like
+functionality. The classes and functions defined here are general purpose,
+usually generic, and therefore can and are heavily reused across all
+executables built by Quinoa.
+
+@dir src/Control
+@brief Command line and input file parsing and grammars for all executables
+
+@details This directory contains parsing-related functionality for all
+executables. It has multiple grammar definitions for
+ - _command line_ parsers for all executables, in subdirectories
+   `src/Control/<executable>/CmdLine`, and
+ - _input file_ parsers for those executables that take an input file, in
+   subdirectories `src/Control/<executable>/InputDeck`.
+
+Grammar definitions are defined using the [Parsing Expression Grammar Template
+Library (PEGTL)](https://github.com/taocpp/PEGTL) according to [Parsing
+Expression Grammar (PEG)](https://en.wikipedia.org/wiki/Parsing_expression_grammar). As the PEGTL documentation describes
+
+> Grammars are written as regular C++ code, created with template programming
+> (not template meta programming), i.e. nested template instantiations that
+> naturally correspond to the inductive definition of PEGs (and other
+> parser-combinator approaches).
+
+Grammars are thus written purely in C++ and the compiler generates the parsers
+using PEGTL.
+
+Files `src/Control/<executable>/Components.h` store the number of scalar
+components for systems of equations integrated, by e.g., @ref walker_main or
+@ref inciter_main.
+
+CommonGrammar.h defines the smallest building blocks of all grammars. It
+contains generic functions that are reused among multiple command line and
+input file grammars.
+
+The _state_ (or _stack_) of the grammar is a tagged tuple
+(tk::tuple::tagged_tuple), a hierarchical heterogeneous data structure that
+stores all information parsed. Files `src/Control/<executable>/Types.h` declare
+the types of the components of a grammar's state. The components are usually
+also tuples to nest multiple levels of hierarchies, to group related
+information together.
+
+Control.h defines a generic base class, tk::Control, used as grammar states, It
+defines helper functions, used to store a variety of data parsed.
+
+Tags.h defines empty structs that are used as labels during compile time. These
+labels are used to index into tagged tuples.
+
+Keywords.h defines all keywords accepted by all parsers together with their
+documentation.
+
+Toggle.h defines a generic _switch_ with multiple states, from which
+specialized switches derive. Directories `src/Control/Options` and
+`<executable>/Options` define specific switches, specializing a tk::Toggle. The
+former directory defines switches that are used by multiple executables, while
+the latter define those that are specific to a given `<executable>`, e.g., @ref
+unittest_main.
+
+@dir src/Control/FileConv
+@brief Types, command line parsing, and grammar for _FileConv_
+
+@dir src/Control/FileConv/CmdLine
+@brief Command line parsing and grammar for _FileConv_
+
+@dir src/Control/Inciter
+@brief Types, options, command line parsing, and grammar for _Inciter_
+
+@dir src/Control/Inciter/CmdLine
+@brief Command line parsing and grammar for _Inciter_
+
+@dir src/Control/Inciter/InputDeck
+@brief Input file parsing and grammar for _Inciter_
+
+@dir src/Control/Inciter/Options
+@brief Options for _Inciter_
+
+@dir src/Control/MeshConv
+@brief Types, command line parsing, and grammar for _MeshConv_
+
+@dir src/Control/MeshConv/CmdLine
+@brief Command line parsing and grammar for _MeshConv_
+
+@dir src/Control/Options
+@brief Options for multiple executables
+
+@dir src/Control/RNGTest
+@brief Types, options, command line parsing, and grammar for _RNGTest_
+
+@dir src/Control/RNGTest/CmdLine
+@brief Command line parsing and grammar for _RNGTest_
+
+@dir src/Control/RNGTest/InputDeck
+@brief Input file parsing and grammar for _RNGTest_
+
+@dir src/Control/RNGTest/Options
+@brief Options for _RNGTest_
+
+@dir src/Control/UnitTest
+@brief Types, command line parsing, and grammar for _UnitTest_
+
+@dir src/Control/UnitTest/CmdLine
+@brief Command line parsing and grammar for _UnitTest_
+
+@dir src/Control/Walker
+@brief Types, options, command line parsing, and grammar for _Walker_
+
+@dir src/Control/Walker/CmdLine
+@brief Command line parsing and grammar for _Walker_
+
+@dir src/Control/Walker/InputDeck
+@brief Input file parsing and grammar for _Walker_
+
+@dir src/Control/Walker/Options
+@brief Options for _Walker_
+
+@dir src/DiffEq
+@brief Stochastic and deterministic (ordinary) differential equations
+
+@details This directory contains implementations of discrete time integrators
+for deterministic and stochastic _ordinary_ differential equations. (_Ordinary_
+as opposed to _partial_ differential equations in `src/PDE`). At this time, all
+of these ordinary differential equations are used exclusively by @ref
+walker_main.
+
+`Configure<eq>.[Ch]` contain functionality related to registration and querying
+user-configuration information on specific equation types.
+
+All specific equation types "inherit" from the common "base", tk::DiffEq, so
+that user-configured instances of multiple specific equations (as a potentially
+coupled system) can be integrated in a generic fashion. This is done using
+[concept-based runtime polymorphism](http://sean-parent.stlab.cc/papers-and-presentations/#value-semantics-and-concept-based-polymorphism).
+
+The specific equation types are registered into a
+[factory](http://www.boost.org/doc/libs/release/libs/functional/factory),
+walker::DiffEqFactory, which leads to generic code for configuring and using
+existing equation types and adding new ones.
+
+@see @ref diffeq
+
+@dir src/PDE
+@brief Partial differential equations
+
+@details This directory contains implementations of spatial discretizations
+for _partial_ differential equations (PDE). (_Partial_ as opposed to _ordinary_
+differential equations in `src/DiffEq`). At this time, all of these PDEs are
+used exclusively by @ref inciter_main.
+
+`Configure<eq>.[Ch]` contain functionality related to registration and querying
+user-configuration information on specific equation types.
+
+All specific equation types "inherit" from a common "base" so that
+user-configured instances of multiple specific equations (as a potentially
+coupled system) can be integrated in a generic fashion. This is done using
+[concept-based runtime
+polymorphism](http://sean-parent.stlab.cc/papers-and-presentations/#value-semantics-and-concept-based-polymorphism).
+
+The specific equation types are registered into a
+[factory](http://www.boost.org/doc/libs/release/libs/functional/factory), which
+leads to generic code for configuring and using existing equation types and
+adding new ones.
+
+Currently, there are two families of spatial discretizations (or _schemes_)
+implemented: _continuous_ and _discontinuous_ Galerkin (CG, DG) finite element
+methods (FEM). Correspondingly, there are two factories into which PDEs are
+registered, inciter::CGFactory and inciter::DGFactory. (These are analogous to
+tk::DiffEqFactory in @ref walker_main.)
+
+CG discretization in space is combined with a time stepping scheme that is
+equivalent to the [Lax-Wendroff (LW)](https://en.wikipedia.org/wiki/Lax%E2%80%93Wendroff_method)
+scheme adopted to the unstructured-mesh finite element context and treats
+discontinuities with flux-corrected transport (FCT).
+
+DG discretization in space is combined with Runge-Kutta time stepping.
+
+@dir src/PDE/Transport
+@brief Partial differential equations for scalar transport
+
+@details This directory contains code for discretizing a system of scalar
+transport equations. The subdirectories `Physics` and `Problem` contain various
+ways to configure scalar transport with respect to the type of physics solved
+(e.g., advection only or advection _and_ diffusion) and with respect to the
+type of problem solved (e.g., a predefined problem with an analytical solution
+for verification or a user-defined problem).
+
+@dir src/PDE/Transport/Physics
+@brief Physics configurations for scalar transport
+
+@dir src/PDE/Transport/Problem
+@brief Problem configurations for scalar transport
+
+@dir src/PDE/CompFlow
+@brief Partial differential equations for compressible flow
+
+@details This directory contains code for discretizing a system of conservation
+equations that govern compressible flow. The subdirectories `Physics` and
+`Problem` contain various ways to the compressible flow solver with respect to
+the type of physics solved (e.g., inviscid or viscous) and with respect to the
+type of problem solved (e.g., a predefined problem with an analytical solution
+for verification or a user-defined problem).
+
+@dir src/PDE/CompFlow/Physics
+@brief Physics configurations for compressible flow
+
+@dir src/PDE/CompFlow/Problem
+@brief Problem configurations for compressible flow
+
+@dir src/PDE/CompFlow/Riemann
+@brief Riemann solvers for compressible flow
+
+@dir src/RNG
+@brief Interoperation with random number generator libraries
+
+@details This directory contains code used to interface with random number
+generator (RNG) third-party libraries. It also defines a
+[factory](http://www.boost.org/doc/libs/release/libs/functional/factory),
+tk::RNGFactory, which leads to generic code for configuring and using supported
+RNGs and adding new ones.
+
+@dir src/RNGTest
+@brief Functionality specific to _RNGTest_
+
+@details This directory contains code specific to @ref rngtest_main.
+
+@see @ref rngs_input
+@see @ref rngtest_design
+@see @ref rngtest_examples
+
+@dir src/Statistics
+@brief Estimating statistical moments and probablity distributions from ensembles
+
+@details This directory contains code to estimate arbitrary statistical moments
+and discrete probability distributions from fluctuating ensembles. It also
+contains code used to aggregate distributions across a large problem
+distributed across many processing elements (PEs) in parallel, using custom
+reducers of the Charm++ runtime system.
+
+@see @ref statistics_output
+@see @ref walker_examples
+
+@dir src/Walker
+@brief Functionality specific to _Walker_
+
+@details This directory contains code specific to @ref walker_main.
+
+@see @ref diffeq
+@see @ref inhomogeneity
+@see @ref io
+@see @ref walker_examples
+
+@dir src/UnitTest
+@brief Functionality specific to _UnitTest_
+
+@details This directory contains code specific to @ref unittest_main. The
+subdirectory structure relative to `src/UnitTest/tests` mirrors that of the
+root source directory, `src`, and contain unit test definitions for the given
+subdirectories mirrored.
+
+@dir src/UnitTest/tests
+@brief Unit test root
+
+@dir src/UnitTest/tests/Base
+@brief Unit tests for subdirectory _Base_
+
+@dir src/UnitTest/tests/Control
+@brief Unit tests for subdirectory _Control_
+
+@dir src/UnitTest/tests/Control/Options
+@brief Unit tests for subdirectory _Control/Options_
+
+@dir src/UnitTest/tests/Control/Options
+@brief Unit tests for subdirectory _Control/Options_
+
+@dir src/UnitTest/tests/Inciter
+@brief Unit tests for subdirectory _Inciter_
+
+@dir src/UnitTest/tests/Inciter/AMR
+@brief Unit tests for subdirectory _Inciter/AMR_
+
+@dir src/UnitTest/tests/IO
+@brief Unit tests for subdirectory _IO_
+
+@dir src/UnitTest/tests/LoadBalance
+@brief Unit tests for subdirectory _LoadBalance_
+
+@dir src/UnitTest/tests/Mesh
+@brief Unit tests for subdirectory _Mesh_
+
+@dir src/UnitTest/tests/RNG
+@brief Unit tests for subdirectory _RNG_
+
+@dir src/Particles
+@brief Functionality related _spatial transport_ of Lagrangian particles
+
+@details This directory contains functionality specific to _spatial_ transport
+of Lagrangian particles. (_Spatial_ transport as opposed to transport in sample
+(or state) space which is in `src/DiffEq`.) This is also the place for particle
+transport across processing elements (PEs or CPUs) of a distributed problem
+running in parallel.
+
+@dir src/NoWarning
+@brief Include files turning of specific compiler warnings
+
+@dir src/Mesh
+@brief Functionality related to unstructured meshes
+
+@details This directory contains functionality used to discretize differential
+equations in 3-dimensional space. It contains functionality to
+ - store unstructured tetrahedron meshes, k::UnsMesh,
+ - compute data structures derived from the connectivity graph, DerivedData.C,
+ - helpers for iterating over derived data structures, e.g., tk::Around,
+ - reordering meshes, Reorder.C, and
+ - computing gradients, Gradients.C.
+
+This directory does _not_ contain functionality to read or write meshes, that
+is in `src/IO`.
+
+@dir src/Main
+@brief Driver routines for all executables
+
+@details This directory contains all the main() functions, and all Main Charm++
+chares for all executables. It contains
+ - the `Main` Charm++ chares in `<executable>.C`,
+ - the main Charm++ modules, `mainmodule`, in `<lower_case_executable>.ci`,
+ - drivers, `<executable>Driver.[Ch]`, instantiated from the `Main` Charm++
+   chares,
+ - executable-specific pretty-printers in `<executable>Print.[Ch]`,
+ - configuration compiler macros and values imported from cmake in
+   `QuinoaConfig.[Ch]`, and
+ - generic initialization routines reused across all executables, Init.h.
+
+In other words, this is where all execution starts for all executables.
+
+@dir src/LoadBalance
+@brief _Static_ load balancing
+
+@details This directory contains functionality specific to _static_ load
+balancing. (_Static_ because dynamic load balancing is handled by Charm++.) It
+has code
+ - to interoperate with Zoltan2, used for _initial_ mesh (graph) partitioning
+   in @ref inciter_main, ZoltanInterOp.C, and
+ - to experiment with custom Charm++ object placement (currently unused), e.g.,
+   UnsMeshMap.C.
+
+@dir src/LinSys
+@brief Linear solvers
+
+@details This directory contains functionality to interoperate with solvers for
+large, distributed linear systems as a result of spatial discretization of
+partial differential equations (PDEs). The main functionality is in Solver.C,
+which defines a Charm++ chare linear system merger group used to collect and
+assemble the left hand side matrix (lhs), the right hand side (rhs) vector, and
+the solution (unknown) vector from individual worker Charm++ chares (that hold
+the part of the computational mesh distributed across multiple CPUs, and
+discretize PDE operators). Beside collection and assembly, the system is also
+solved. The solution of the linear system is outsourced to
+[hypre](https://computation.llnl.gov/projects/hypre-scalable-linear-solvers-multigrid-methods/software).
+
+@dir src/IO
+@brief File input and output
+
+@details This directory contains functionality for reading from and writing to
+files. It has
+ - native readers and writers of specialized (usually small) data, e.g.,
+   ensemble statistics from @ref walker_main or error norms from @ref
+   inciter_main,
+ - mesh readers in various standard formats via third-party libraries, see @ref
+   meshconv_main, and
+ - a particle data writer via the [H5Part](http://vis.lbl.gov/Research/H5Part)
+   library.
+
+@dir src/Inciter
+@brief Functionality specific to _Inciter_
+
+@details This directory contains code specific to @ref inciter_main.
+
+@see @ref inciter_examples
+
+@dir src/Inciter/AMR
+@brief Adaptive mesh refinement for _Inciter_
+
+@details The adaptive mesh refinement (AMR) algorithm implemented in this directory  is specific to unstructured 3D tetrahedron meshes and closely follows
+
+- @m_div{m-text m-strong}
+  J. Walts, **[Parallel adaptive refinement for unsteady flow calculations on 3D unstructured grids](http://dx.doi.org/10.1002/fld.674)**, Int. J. Numer. Meth. Fluids, 46: 37–57. doi:10.1002/fld.674.
+  @m_enddiv
+
+*/
