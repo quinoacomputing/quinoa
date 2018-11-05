@@ -1,0 +1,67 @@
+# Docker image
+# Build a Docker image to deploy, run, or push to a container registry.
+# Add steps that use Docker Compose, tag images, push to a registry, run an image, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+jobs:
+- job: "Quinoa"
+  pool:
+    vmImage: 'Ubuntu 16.04'
+  
+  variables:
+    imageName: 'quinoa-azure:$(build.buildId)'
+  
+  strategy:
+    matrix:
+      gnu-debug:
+        COMPILER: 'gnu'
+        BUILD: 'Debug'
+        DISTRO: 'alpine-gnu'
+      gnu-debug-static:
+        COMPILER: 'gnu'
+        BUILD: 'Debug'
+        SHARED_LIBS: 'off'
+        DISTRO: 'alpine-gnu-static'
+      gnu-release:
+        COMPILER: 'gnu'
+        BUILD: 'Release'
+        DISTRO: 'alpine-gnu'
+      gnu-release-static:
+        COMPILER: 'gnu'
+        BUILD: 'Release'
+        SHARED_LIBS: 'off'
+        DISTRO: 'alpine-gnu-static'
+        DOCKERHUB: 'true'
+      clang-debug:
+        COMPILER: 'clang'
+        BUILD: 'Debug'
+        DISTRO: 'alpine-clang'
+      clang-debug-static:
+        COMPILER: 'clang'
+        BUILD: 'Debug'
+        SHARED_LIBS: 'off'
+        DISTRO: 'alpine-clang-static'
+      clang-release:
+        COMPILER: 'clang'
+        BUILD: 'Release'
+        DISTRO: 'alpine-clang'
+      clang-release-static:
+        COMPILER: 'clang'
+        BUILD: 'Release'
+        SHARED_LIBS: 'off'
+        DISTRO: 'alpine-clang-static'
+      doc:
+        DOC: true
+        DISTRO: 'debian-doc'
+  
+  steps:
+    - bash: |
+        cp -vr docker $(HOME)/docker
+        sed -i "/^FROM/s/alpine/${DISTRO}/" docker/Dockerfile.quinoa-build-azure
+        docker build \
+               --build-arg COMPILER=${COMPILER} \
+               --build-arg BUILD=${BUILD} \
+               --build-arg DOC=${DOC} \
+               --build-arg SHARED_LIBS="${SHARED_LIBS}" \
+               --rm=false -f docker/Dockerfile.quinoa-build-azure -t ${DISTRO} .
+      displayName: 'Build & Test'
