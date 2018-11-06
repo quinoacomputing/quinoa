@@ -803,6 +803,7 @@ class CompFlow {
                    tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
 
       // Number of integration points
       constexpr std::size_t NG = 5;
@@ -905,7 +906,6 @@ class CompFlow {
         {
           std::vector< tk::real > ugp;
           std::array< std::vector< tk::real >, 3 > flux;
-          tk::real g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
 
           ugp.resize(5,0);
 
@@ -967,12 +967,11 @@ class CompFlow {
     //!   at Dirichlet boundaries
     struct Dir {
       static std::array< std::vector< tk::real >, 2 >
-      LR( const std::vector< tk::real >& U,
+      LR( const std::vector< tk::real >& ul,
           tk::real xc, tk::real yc, tk::real zc,
           std::array< tk::real, 3 > /*fn*/,
           tk::real t ) {
-        auto ul = U;
-        auto ur = ul;
+        std::vector< tk::real > ur(5);
         const auto urbc = Problem::solution(0, xc, yc, zc, t);
         for (ncomp_t c=0; c<5; ++c)
           ur[c] = urbc[c];
@@ -984,12 +983,11 @@ class CompFlow {
     //!   at symmetric boundaries
     struct Sym {
       static std::array< std::vector< tk::real >, 2 >
-      LR( const std::vector< tk::real >& U,
+      LR( const std::vector< tk::real >& ul,
           tk::real /*xc*/, tk::real /*yc*/, tk::real /*zc*/,
           std::array< tk::real, 3 > fn,
           tk::real /*t*/ ) {
-        auto ul = U;
-        auto ur = ul;
+        std::vector< tk::real > ur(5);
         // Internal cell velocity components
         auto v1l = ul[1]/ul[0];
         auto v2l = ul[2]/ul[0];
@@ -1014,11 +1012,11 @@ class CompFlow {
     //!   at extrapolation boundaries
     struct Extrapolate {
       static std::array< std::vector< tk::real >, 2 >
-      LR( const std::vector< tk::real >& U,
+      LR( const std::vector< tk::real >& ul,
           tk::real /*xc*/, tk::real /*yc*/, tk::real /*zc*/,
           std::array< tk::real, 3 > /*fn*/,
           tk::real /*t*/ ) {
-        return {{ U, U }};
+        return {{ ul, ul }};
       }
     };
 
