@@ -270,7 +270,7 @@ class CompFlow {
       for (std::size_t f=0; f<esuf.size()/2; ++f)
       {
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-        std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+        auto er = esuf[2*f+1];
 
         // nodal coordinates of the left element
         std::array< tk::real, 3 >
@@ -370,19 +370,20 @@ class CompFlow {
           if (er > -1) {
 
             // nodal coordinates of the right element
+            std::size_t eR = static_cast< std::size_t >( er );
             std::array< tk::real, 3 >
-              p1_r{{ cx[ inpoel[4*er] ],
-                     cy[ inpoel[4*er] ],
-                     cz[ inpoel[4*er] ] }},
-              p2_r{{ cx[ inpoel[4*er+1] ],
-                     cy[ inpoel[4*er+1] ],
-                     cz[ inpoel[4*er+1] ] }},
-              p3_r{{ cx[ inpoel[4*er+2] ],
-                     cy[ inpoel[4*er+2] ],
-                     cz[ inpoel[4*er+2] ] }},
-              p4_r{{ cx[ inpoel[4*er+3] ],
-                     cy[ inpoel[4*er+3] ],
-                     cz[ inpoel[4*er+3] ] }};
+              p1_r{{ cx[ inpoel[4*eR] ],
+                     cy[ inpoel[4*eR] ],
+                     cz[ inpoel[4*eR] ] }},
+              p2_r{{ cx[ inpoel[4*eR+1] ],
+                     cy[ inpoel[4*eR+1] ],
+                     cz[ inpoel[4*eR+1] ] }},
+              p3_r{{ cx[ inpoel[4*eR+2] ],
+                     cy[ inpoel[4*eR+2] ],
+                     cz[ inpoel[4*eR+2] ] }},
+              p4_r{{ cx[ inpoel[4*eR+3] ],
+                     cy[ inpoel[4*eR+3] ],
+                     cz[ inpoel[4*eR+3] ] }};
 
             auto detT_r = getJacobian( p1_r, p2_r, p3_r, p4_r );
 
@@ -404,10 +405,10 @@ class CompFlow {
             {
               auto mark = c*m_ndof;
               auto lmark = c*(m_ndof-1);
-              ugp[1].push_back(  U(er, mark,   m_offset)
-                               + limFunc(er, lmark+0, 0) * U(er, mark+1, m_offset) * B2r
-                               + limFunc(er, lmark+1, 0) * U(er, mark+2, m_offset) * B3r
-                               + limFunc(er, lmark+2, 0) * U(er, mark+3, m_offset) * B4r );
+              ugp[1].push_back(  U(eR, mark,   m_offset)
+                               + limFunc(eR, lmark+0, 0) * U(eR, mark+1, m_offset) * B2r
+                               + limFunc(eR, lmark+1, 0) * U(eR, mark+2, m_offset) * B3r
+                               + limFunc(eR, lmark+2, 0) * U(eR, mark+3, m_offset) * B4r );
             }
 
             rho = ugp[1][0];
@@ -423,7 +424,7 @@ class CompFlow {
             vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
 
             dSV_r = wt * (std::fabs(vn) + a);
-            delt[er] += std::max( dSV_l, dSV_r );
+            delt[eR] += std::max( dSV_l, dSV_r );
           }
 
           delt[el] += std::max( dSV_l, dSV_r );

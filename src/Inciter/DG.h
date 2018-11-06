@@ -108,7 +108,7 @@ class DG : public CBase_DG {
                  const std::vector< std::vector< tk::real > >& u );
 
     //! Advance equations to next time step
-    void advance( tk::real newdt );
+    void advance( tk::real );
 
     //! Signal the runtime system that diagnostics have been computed
     void diag();
@@ -136,6 +136,9 @@ class DG : public CBase_DG {
 
     //! Resizing data sutrctures after mesh refinement has been completed
     void resized();
+
+    //! Compute right hand side and solve system
+    void solve( tk::real newdt );
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -302,9 +305,6 @@ class DG : public CBase_DG {
     //! Fill face geometry data along chare boundary
     void addGeoFace( const tk::UnsMesh::Face& t,
                      const std::array< std::size_t, 2 >& id );
-
-    //! Compute right hand side and solve system
-    void solve();
 
     //! Output mesh and particle fields to files
     void out();

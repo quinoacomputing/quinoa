@@ -809,8 +809,12 @@ DG::setup( tk::real v )
   // Start timer measuring time stepping wall clock time
   d->Timer().zero();
 
+  // Enable SDAG wait for building the solution vector
+  thisProxy[ thisIndex ].wait4sol();
+  thisProxy[ thisIndex ].wait4lim();
+
   // Start time stepping
-  dt();
+  advance( 0.0 );
 }
 
 void
@@ -858,32 +862,21 @@ DG::dt()
     mindt = d->Dt();
   }
 
-  // Enable SDAG wait for building the solution vector
-  thisProxy[ thisIndex ].wait4sol();
-  thisProxy[ thisIndex ].wait4lim();
-  if (m_stage == 2) thisProxy[ thisIndex ].wait4eval();
-
   // Contribute to minimum dt across all chares then advance to next step
-  contribute(sizeof(tk::real), &mindt, CkReduction::min_double,
-             CkCallback(CkReductionTarget(Transporter,advance), Disc()->Tr()));
+  contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
+              CkCallback(CkReductionTarget(DG,solve), thisProxy) );
 }
 
 void
-DG::advance( tk::real newdt )
+DG::advance( tk::real )
 // *****************************************************************************
 // Advance equations to next time step
-//! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
 //   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
 //       g_inputdeck.get< tag::cmd, tag::quiescence >())
 //     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
 //                                         "advance" );
-
-  auto d = Disc();
-
-  // Set new time step size
-  d->setdt( newdt );
 
   // communicate solution ghost data (if any)
   if (m_ghostData.empty())
@@ -1062,13 +1055,13 @@ DG::lim()
         thisProxy[ n.first ].comlim( thisIndex, tetid, limfunc );
       }
 
-    ownlim_complete();
-
   } else {
 
-    solve();
+    comlim_complete();
 
   }
+
+  ownlim_complete();
 }
 
 void
@@ -1111,9 +1104,10 @@ DG::comlim( int fromch,
 }
 
 void
-DG::solve()
+DG::solve( tk::real newdt )
 // *****************************************************************************
 // Compute right-hand side of discrete transport equations
+//! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
 //   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
@@ -1121,7 +1115,15 @@ DG::solve()
 //     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
 //                                         "solve" );
 
+  // Enable SDAG wait for building the solution vector
+  thisProxy[ thisIndex ].wait4sol();
+  thisProxy[ thisIndex ].wait4lim();
+  if (m_stage == 2) thisProxy[ thisIndex ].wait4eval();
+
   auto d = Disc();
+
+  // Set new time step size
+  d->setdt( newdt );
 
   for (const auto& eq : g_dgpde)
     eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(), m_u,
@@ -1245,7 +1247,7 @@ DG::eval()
   // computation completion criteria
   if (m_stage < 3) {
 
-    dt();
+    advance( 0.0 );
 
   } else {
 
@@ -1259,7 +1261,7 @@ DG::eval()
     // If neither max iterations nor max time reached, continue, otherwise finish
     if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
       AtSync();   // Migrate here if needed
-      dt();
+      advance( 0.0 );
     } else {
       contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));
     }

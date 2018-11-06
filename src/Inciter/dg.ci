@@ -38,7 +38,8 @@ module dg {
       entry void comsol( int fromch,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u );
-      entry [reductiontarget] void advance( tk::real newdt );
+      entry void advance( tk::real );
+      entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();
       entry void lhs();
 
@@ -61,7 +62,7 @@ module dg {
         when ownsol_complete(), comsol_complete() serial "sol" { lim(); } };
 
       entry void wait4lim() {
-        when ownlim_complete(), comlim_complete() serial "lim" { solve(); } };
+        when ownlim_complete(), comlim_complete() serial "lim" { dt(); } };
 
       entry void wait4eval() {
         when diag_complete(), ref_complete(), lhs_complete(),
