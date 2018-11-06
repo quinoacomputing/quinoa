@@ -242,6 +242,7 @@ class Transport {
     avgElemToNode( const std::vector< std::size_t >& /*inpoel*/,
                    const tk::UnsMesh::Coords& /*coord*/,
                    const tk::Fields& /*geoElem*/,
+                   const tk::Fields& /*limFunc*/,
                    const tk::Fields& /*U*/ ) const
     {
       std::vector< std::vector< tk::real > > out;

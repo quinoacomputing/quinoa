@@ -423,12 +423,10 @@ class CompFlow {
             vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
 
             dSV_r = wt * (std::fabs(vn) + a);
+            delt[er] += std::max( dSV_l, dSV_r );
           }
 
           delt[el] += std::max( dSV_l, dSV_r );
-
-          if (er > -1)
-            delt[er] += std::max( dSV_l, dSV_r );
         }
       }
 
@@ -505,6 +503,7 @@ class CompFlow {
     avgElemToNode( const std::vector< std::size_t >& inpoel,
                    const tk::UnsMesh::Coords& coord,
                    const tk::Fields& /*geoElem*/,
+                   const tk::Fields& limFunc,
                    const tk::Fields& U ) const
     {
       tk::real g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
@@ -566,10 +565,11 @@ class CompFlow {
               ugp[c] =  U(e, c, m_offset);
             } else {
               auto mark = c*m_ndof;
+              auto lmark = c*(m_ndof-1);
               ugp[c] =  U(e, mark,   m_offset)
-                      + U(e, mark+1, m_offset) * B2
-                      + U(e, mark+2, m_offset) * B3
-                      + U(e, mark+3, m_offset) * B4;
+                      + limFunc(e, lmark+0, 0) * U(e, mark+1, m_offset) * B2
+                      + limFunc(e, lmark+1, 0) * U(e, mark+2, m_offset) * B3
+                      + limFunc(e, lmark+2, 0) * U(e, mark+3, m_offset) * B4;
             }
           }
 

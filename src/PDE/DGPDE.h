@@ -132,8 +132,9 @@ class DGPDE {
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
       const tk::Fields& geoElem,
+      const tk::Fields& limFunc,
       const tk::Fields& U ) const
-    { return self->avgElemToNode( inpoel, coord, geoElem, U ); }
+    { return self->avgElemToNode( inpoel, coord, geoElem, limFunc, U ); }
 
     //! Public interface to returning analytic solution
     std::vector< tk::real >
@@ -194,6 +195,7 @@ class DGPDE {
         const std::vector< std::size_t >&,
         const tk::UnsMesh::Coords&,
         const tk::Fields&,
+        const tk::Fields&,
         const tk::Fields& ) const = 0;
       virtual std::vector< tk::real > analyticSolution(
         tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
@@ -249,8 +251,9 @@ class DGPDE {
         const std::vector< std::size_t >& inpoel,
         const tk::UnsMesh::Coords& coord,
         const tk::Fields& geoElem,
+        const tk::Fields& limFunc,
         const tk::Fields& U ) const override
-      { return data.avgElemToNode( inpoel, coord, geoElem, U ); }
+      { return data.avgElemToNode( inpoel, coord, geoElem, limFunc, U ); }
       std::vector< tk::real >
       analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
        const override { return data.analyticSolution( xi, yi, zi, t ); }

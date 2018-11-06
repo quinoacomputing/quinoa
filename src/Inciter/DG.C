@@ -826,29 +826,36 @@ DG::dt()
 
   auto mindt = std::numeric_limits< tk::real >::max();
 
-  auto const_dt = g_inputdeck.get< tag::discr, tag::dt >();
-  auto def_const_dt = g_inputdeck_defaults.get< tag::discr, tag::dt >();
-  auto eps = std::numeric_limits< tk::real >::epsilon();
-
   auto d = Disc();
 
-  // use constant dt if configured
-  if (std::abs(const_dt - def_const_dt) > eps) {
+  if (m_stage == 0)
+  {
+    auto const_dt = g_inputdeck.get< tag::discr, tag::dt >();
+    auto def_const_dt = g_inputdeck_defaults.get< tag::discr, tag::dt >();
+    auto eps = std::numeric_limits< tk::real >::epsilon();
 
-    mindt = const_dt;
+    // use constant dt if configured
+    if (std::abs(const_dt - def_const_dt) > eps) {
 
-  } else {      // compute dt based on CFL
+      mindt = const_dt;
 
-    // find the minimum dt across all PDEs integrated
-    for (const auto& eq : g_dgpde) {
-      auto eqdt = eq.dt( d->Coord(), d->Inpoel(), m_fd, m_geoFace, m_geoElem,
-                         m_limFunc, m_u );
-      if (eqdt < mindt) mindt = eqdt;
+    } else {      // compute dt based on CFL
+
+      // find the minimum dt across all PDEs integrated
+      for (const auto& eq : g_dgpde) {
+        auto eqdt = eq.dt( d->Coord(), d->Inpoel(), m_fd, m_geoFace, m_geoElem,
+                           m_limFunc, m_u );
+        if (eqdt < mindt) mindt = eqdt;
+      }
+
+      // Scale smallest dt with CFL coefficient
+      mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
+
     }
-
-    // Scale smallest dt with CFL coefficient
-    mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
-
+  }
+  else
+  {
+    mindt = d->Dt();
   }
 
   // Enable SDAG wait for building the solution vector
@@ -971,7 +978,7 @@ DG::writeFields( tk::real time )
   std::vector< std::vector< tk::real > > nodefields;
   for (const auto& eq : g_dgpde) {
     auto output =
-      eq.avgElemToNode( d->Inpoel(), d->Coord(), m_geoElem, m_u );
+      eq.avgElemToNode( d->Inpoel(), d->Coord(), m_geoElem, m_limFunc, m_u );
 
     nodefields.insert( end(nodefields), begin(output), end(output) );
   }

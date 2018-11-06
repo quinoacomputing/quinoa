@@ -492,8 +492,8 @@ Discretization::writeElemSolution(
 {
   int varid = 0;
   for (const auto& f : u) ew.writeElemScalar( it, ++varid, f );
-  varid = 0;
-  for (const auto& f : v) ew.writeNodeScalar( it, ++varid, f );
+  //varid = 0;
+  //for (const auto& f : v) ew.writeNodeScalar( it, ++varid, f );
 }
 
 void
@@ -563,8 +563,8 @@ Discretization::writeElemMeta() const
     // Write element field names
     ew.writeElemVarNames( names );
 
-    // Write node field names
-    ew.writeNodeVarNames( names );
+    //// Write node field names
+    //ew.writeNodeVarNames( names );
   }
 }
 
