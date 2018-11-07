@@ -693,22 +693,16 @@ Refiner::userRefine()
 
     // Tag edges the user configured
     std::vector< edge_t > edge;
-    std::vector< tk::real > crit;
     for (std::size_t p=0; p<npoin; ++p)        // for all mesh nodes on this chare
       for (auto q : tk::Around(psup,p)) {      // for all nodes surrounding p
         tk::UnsMesh::Edge e{{p,q}};
         if (edgeset.find(e) != end(edgeset)) { // tag edge if on user's list
           edge.push_back( edge_t(e[0],e[1]) );
-          crit.push_back( 1.0 );
         }
       }
 
-    Assert( edge.size() == crit.size(), "Size mismatch" );
-
     // Do error-based refinement
-    std::vector< AMR::Edge_Lock_Case >
-      lock( edge.size(), AMR::Edge_Lock_Case::unlocked );
-    //m_refiner.error_refinement( edge, crit, lock );
+    m_refiner.error_refinement( edge );
 
     // Update our extra-edge store based on refiner
     updateEdgeData();
@@ -759,7 +753,6 @@ Refiner::coordRefine()
     const auto& z = m_coord[2];
     // Compute edges to be tagged for refinement
     std::vector< edge_t > edge;
-    std::vector< tk::real > crit;
     for (std::size_t p=0; p<npoin; ++p)        // for all mesh nodes on this chare
       for (auto q : tk::Around(psup,p)) {      // for all nodes surrounding p
         tk::UnsMesh::Edge e{{p,q}};
@@ -772,18 +765,11 @@ Refiner::coordRefine()
         if (zm) { if (z[p]>zminus && z[q]>zminus) t = false; }
         if (zp) { if (z[p]<zplus && z[q]<zplus) t = false; }
 
-        if (t) {
-          edge.push_back( edge_t(e[0],e[1]) );
-          crit.push_back( 1.0 );
-        }
+        if (t) edge.push_back( edge_t(e[0],e[1]) );
       }
 
-    Assert( edge.size() == crit.size(), "Size mismatch" );
-
     // Do error-based refinement
-    std::vector< AMR::Edge_Lock_Case >
-      lock( edge.size(), AMR::Edge_Lock_Case::unlocked );
-    //m_refiner.error_refinement( edge, crit, lock );
+    m_refiner.error_refinement( edge );
 
     // Update our extra-edge store based on refiner
     updateEdgeData();
