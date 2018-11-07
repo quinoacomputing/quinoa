@@ -49,19 +49,19 @@ RUN ccache -s
 RUN if [ ${TARGET} = unittest ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q; fi
 RUN if [ -z "${SONARQUBE}" ] && [ ${TARGET} != doc ]; then ctest --output-on-failure -j2 -LE stringent -R ${TARGET}; fi
 RUN if [ ${TARGET} == doc ]; then ninja -j2 doc; fi
-RUN cd .. && if [ ${SONARQUBE} ]; then \
-  python -m coverxygen --xml-dir build/doc/xml/ --src-dir . --output doxygen.coverage.info; \
-  wget -O codecov.sh https://codecov.io/bash; \
-  bash codecov.sh -X gcov -f doxygen.coverage.info -F doxygen; \
-  if [ ${COMPILER} = clang ]; then \
-    $HOME/.local/bin/codecov -F ${COMPILER} --gcov-exec "llvm-cov gcov"; \
-  else \
-    $HOME/.local/bin/codecov -F ${COMPILER}; \
-    cd build && find . -type f -name '*.gcno' -exec gcov -pb  {} + && \
-    find . -type f -name '*.gcov' -not -name '*#quinoa#src*' -delete && \
-    find . -type f -name '*.def.h*.gcov' -o -name '*UnitTest#tests*.gcov' -delete; \
-  fi; \
-fi
+#RUN cd .. && if [ ${SONARQUBE} ]; then \
+#  python -m coverxygen --xml-dir build/doc/xml/ --src-dir . --output doxygen.coverage.info; \
+#  wget -O codecov.sh https://codecov.io/bash; \
+#  bash codecov.sh -X gcov -X gcovout -f doxygen.coverage.info -F doxygen; \
+#  if [ ${COMPILER} = clang ]; then \
+#    $HOME/.local/bin/codecov -F ${COMPILER} --gcov-exec "llvm-cov gcov"; \
+#  else \
+#    $HOME/.local/bin/codecov -F ${COMPILER}; \
+#    cd build && find . -type f -name '*.gcno' -exec gcov -pb  {} + && \
+#    find . -type f -name '*.gcov' -not -name '*#quinoa#src*' -delete && \
+#    find . -type f -name '*.def.h*.gcov' -o -name '*UnitTest#tests*.gcov' -delete; \
+#  fi; \
+#fi
 RUN cd .. && if [ ${SONARQUBE} ] && [ -n "${SONARQUBE_GITHUB_TOKEN}" ] && [ -n "${SONARQUBE_TOKEN}" ]; then \
   sonar-scanner \
     -Dsonar.projectKey=${TRAVIS_REPO_SLUG#*/} \

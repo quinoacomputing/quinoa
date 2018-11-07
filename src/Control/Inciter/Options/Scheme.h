@@ -21,6 +21,7 @@ namespace ctr {
 //! Scheme types
 enum class SchemeType : uint8_t { MatCG
                                 , DiagCG
+                                , ALECG
                                 , DG
                                 , DGP1 };
 
@@ -38,6 +39,7 @@ class Scheme : public tk::Toggle< SchemeType > {
     //! Valid expected choices to make them also available at compile-time
     using keywords = brigand::list< kw::matcg
                                   , kw::diagcg
+                                  , kw::alecg
                                   , kw::dg
                                   , kw::dgp1
                                   >;
@@ -52,11 +54,13 @@ class Scheme : public tk::Toggle< SchemeType > {
         //! Enums -> names (if defined, policy codes, if not, name)
         { { SchemeType::MatCG, kw::matcg::name() },
           { SchemeType::DiagCG, kw::diagcg::name() },
+          { SchemeType::ALECG, kw::alecg::name() },
           { SchemeType::DG, kw::dg::name() },
           { SchemeType::DGP1, kw::dgp1::name() } },
         //! keywords -> Enums
         { { kw::matcg::string(), SchemeType::MatCG },
           { kw::diagcg::string(), SchemeType::DiagCG },
+          { kw::alecg::string(), SchemeType::ALECG },
           { kw::dg::string(), SchemeType::DG },
           { kw::dgp1::string(), SchemeType::DGP1 } } ) {}
 
@@ -64,7 +68,8 @@ class Scheme : public tk::Toggle< SchemeType > {
     //! \param[in] type Scheme type
     //! \return Centering for scheme type
     Centering centering( SchemeType type ) {
-      if (type == SchemeType::MatCG || type == SchemeType::DiagCG)
+      if (type == SchemeType::MatCG || type == SchemeType::DiagCG ||
+          type == SchemeType::ALECG )
         return Centering::NODE;
       else if (type == SchemeType::DG || type == SchemeType::DGP1)
         return Centering::ELEM;

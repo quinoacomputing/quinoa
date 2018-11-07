@@ -248,10 +248,10 @@ class DiagCG : public CBase_DiagCG {
     //    user-specified boundary conditions
     void bc();
 
-    //! ...
+    //! The own and communication portion of the left-hand side is complete
     void lhsdone();
 
-    //! ...
+    //! Combine own and communicated contributions to left hand side
     void lhsmerge();
 
     //! Compute righ-hand side vector of transport equations
