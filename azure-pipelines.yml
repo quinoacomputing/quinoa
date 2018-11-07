@@ -5,12 +5,11 @@
 
 jobs:
 - job: "Quinoa"
+  timeoutInMinutes: 90
   pool:
     vmImage: 'Ubuntu 16.04'
-  
   variables:
     imageName: 'quinoa-azure:$(build.buildId)'
-  
   strategy:
     matrix:
       gnu-debug:
@@ -53,7 +52,6 @@ jobs:
       doc:
         DOC: true
         DISTRO: 'debian-doc'
-  
   steps:
     - bash: |
         cp -vr docker $(HOME)/docker
