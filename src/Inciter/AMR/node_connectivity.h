@@ -71,7 +71,7 @@ namespace AMR {
              */
             node_pair_t get(size_t id)
             {
-                trace_out << "PROBLEM FINDING ID " << id << std::endl;
+                //trace_out << "PROBLEM FINDING ID " << id << std::endl;
 
                 // Ban getting of a node whos parents are {0,0}
                 assert(id > empty_node_count-1); //[0..empty_node_counts)

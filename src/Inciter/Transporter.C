@@ -407,7 +407,7 @@ Transporter::matched( std::size_t extra )
   // otherwise, this initial mesh refinement step is complete
   if (extra > 0) {
     ++m_ncit;
-    m_refiner.correctref();
+    m_refiner.comExtra();
   } else {
     m_print.diag( "Number of correction iterations: " +
                   std::to_string( m_ncit ) );

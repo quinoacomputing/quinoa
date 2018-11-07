@@ -78,11 +78,11 @@ class Refiner : public CBase_Refiner {
     //! Receive newly added mesh node IDs on our chare boundary
     void addRefBndEdges( int fromch, const AMR::EdgeData& ed );
 
-    //! Acknowledge received newly added nodes shared with other chares
-    void recvRefBndEdges();
-
     //! Correct refinement to arrive at conforming mesh across chare boundaries
     void correctref();
+
+    //! Communicate refined edges after a refinement step
+    void comExtra();
 
     //! Decide what to do after a mesh refinement step
     void eval();
@@ -231,9 +231,6 @@ class Refiner : public CBase_Refiner {
 
     //! Refine mesh
     void refine();
-
-    //! Communicate refined edges after a refinement step
-    void comExtra();
 
     //! Finish initiel mesh refinement
     void endt0ref();

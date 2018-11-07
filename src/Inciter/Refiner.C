@@ -383,9 +383,8 @@ Refiner::comExtra()
 {
   // Export extra added nodes on our mesh chunk boundary to other chares
   if (m_ch.empty())
-    matched();
+    correctref();
   else {
-    m_nref = 0;
     for (auto c : m_ch) {       // for all chares we share at least an edge with
       // For all boundary edges of chare c, find out if we have added a new
       // node to it, and if so, export parents->(newid,lock_case,coords) to c.
@@ -409,35 +408,11 @@ Refiner::addRefBndEdges( int fromch, const AMR::EdgeData& ed )
 {
   // Save/augment buffer of edge data for each sender chare
   m_edgedataCh[ fromch ].insert( begin(ed), end(ed) );
-  // Acknowledge receipt of chare-boundary edge data to sender
-  thisProxy[ fromch ].recvRefBndEdges();
-}
-
-void
-Refiner::recvRefBndEdges()
-// *****************************************************************************
-//  Acknowledge received newly added nodes shared with other chares
-// *****************************************************************************
-{
-  // When we have heard from all chares we share at least a single edge with,
-  // continue.
-  if (++m_nref == m_ch.size()) matched();
-}
-
-void
-Refiner::matched()
-// *****************************************************************************
-//  Aggregate number of extra edges across all chares
-//! \details Contribute the number of extra edges that this mesh refinement step
-//!    has tagged that are not to be refined by this chare but were refined by
-//!    other chares this chare shares the edge with. A global maximum is then be
-//!    computed on the umber of extra edges appearing in Transporter::matched()
-//!    which is then used to decide if a new correction step is needed.
-// *****************************************************************************
-{
-  // Aggregate number of extra edges that still need correction
-  contribute( sizeof(std::size_t), &m_extra, CkReduction::max_ulong,
-              m_cbr.get< tag::matched >() );
+  // Heard from every worker we share at least a single edge with
+  if (++m_nref == m_ch.size()) {
+    m_nref = 0;
+    correctref();
+  }
 }
 
 void
@@ -459,10 +434,10 @@ Refiner::correctref()
 
         const auto& local = l->second;
         const auto& remote = r.second;
-        auto local_needs_refining = std::get<0>(local);
-        auto local_lock_case = std::get<1>(local);
-        auto remote_needs_refining = std::get<0>(remote);
-        auto remote_lock_case = std::get<1>(remote);
+        auto local_needs_refining = local.first;
+        auto local_lock_case = local.second;
+        auto remote_needs_refining = remote.first;
+        auto remote_lock_case = remote.second;
 
         auto local_needs_refining_orig = local_needs_refining;
         auto local_lock_case_orig = local_lock_case;
@@ -495,38 +470,37 @@ Refiner::correctref()
              { local_needs_refining, local_lock_case };
 
         }
-
-//        if (local_lock != remote_lock) {
-//          extra[ { tk::cref_find( m_lid, r.first[0] ),
-//                   tk::cref_find( m_lid, r.first[1] ) } ] =
-//            std::max( local_lock, remote_lock );
-//
-//          std::cout << thisIndex << " found: " << r.first[0] << '-'
-//                    << r.first[1] << ", locks: " << local_lock << " + "
-//                    << remote_lock << " -> "
-//                    << std::max( local_lock, remote_lock ) << '\n';
-//        }
-
-      } else {  // remote chare added node on edge but we did not
-
-//        // Make sure we know about this chare-boundary edge (we did not refine)
-//        Assert( m_bndEdges.find( thisIndex )->second.find( r.first ) !=
-//                m_bndEdges.find( thisIndex )->second.end(),
-//                "Local node IDs of boundary edge not found" );
-//        // Save edge (given by parent global node IDs) to which the remote chare
-//        // has added a new node but we did not. Will need to correct the mesh so
-//        // it conforms across chare boundaries.
-//        extra[ { tk::cref_find( m_lid, r.first[0] ),
-//                 tk::cref_find( m_lid, r.first[1] ) } ] = r.second;
-
       }
     }
 
   m_extra = extra.size();
 
-  std::cout << thisIndex << " needs to correct: " << m_extra << '\n';
+  std::cout << thisIndex << " correcting: " << m_extra << ": ";
+  for (const auto& e : extra)
+     std::cout << e.first[0] << '-' << e.first[1] << '{'
+               << e.second.first << ',' << e.second.second << "} ";
+  std::cout << std::endl;
+
   correctRefine( extra );
-  comExtra();
+
+  // Aggregate number of extra edges that still need correction
+  contribute( sizeof(std::size_t), &m_extra, CkReduction::max_ulong,
+              m_cbr.get< tag::matched >() );
+}
+
+void
+Refiner::correctRefine( const AMR::EdgeData& extra )
+// *****************************************************************************
+// Do mesh refinement correcting chare-boundary edges
+//! \param[in] extra Unique edges that need a new node on chare boundaries
+// *****************************************************************************
+{
+  if (!extra.empty()) {
+    // Do refinement including edges that need to be corrected
+    m_refiner.error_refinement_corr( extra );
+    // Update our extra-edge store based on refiner
+    updateEdgeData();
+  }
 }
 
 void
@@ -585,7 +559,7 @@ Refiner::eval()
 //     for (const auto& c : m_edgedataCh) {
 //       auto& nodes = tk::ref_find( m_msum, c.first );
 //       for (const auto& n : c.second)
-//         nodes.push_back( std::get<0>(n.second) );
+//         nodes.push_back( n.second.first );
 //     }
 
     // Send new mesh and solution back to PDE worker
@@ -876,21 +850,6 @@ Refiner::nodeinit( std::size_t npoin,
   Assert( u.nprop() == nprop, "Size mismatch" );
 
   return u;
-}
-
-void
-Refiner::correctRefine( const AMR::EdgeData& extra )
-// *****************************************************************************
-// Do mesh refinement correcting chare-boundary edges
-//! \param[in] extra Unique edges that need a new node on chare boundaries
-// *****************************************************************************
-{
-  if (!extra.empty()) {
-    // Do refinement including edges that need to be corrected
-    m_refiner.error_refinement_corr( extra );
-    // Update our extra-edge store based on refiner
-    updateEdgeData();
-  }
 }
 
 void

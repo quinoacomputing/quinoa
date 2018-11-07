@@ -38,8 +38,7 @@ module refiner {
                     const std::map< int, std::vector< std::size_t > >& bnode );
       entry [reductiontarget] void addBndEdges( CkReductionMsg* msg );
       entry void addRefBndEdges( int fromch, const AMR::EdgeData& en );
-      entry void recvRefBndEdges();
-      entry void correctref();
+      entry void comExtra();
       entry void eval();
       entry void sendProxy();
     };
