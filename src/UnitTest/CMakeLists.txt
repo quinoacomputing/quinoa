@@ -36,7 +36,9 @@ addCharmModule( "charmchild" "UnitTest" )
 addCharmModule( "charmtimer" "UnitTest" )
 addCharmModule( "testarray" "UnitTest" )
 addCharmModule( "migrated_base" "UnitTest" )
-addCharmModule( "migrated_inciter" "UnitTest" )
+if (ENABLE_INCITER)
+  addCharmModule( "migrated_inciter" "UnitTest" )
+endif()
 
 # Add extra dependency of UnitTest on unittestCharmModule. This is required as a
 # dependency of UnitTest, TUTSuite, refers to the main Charm++ proxy defined in

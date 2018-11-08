@@ -10,10 +10,13 @@
 #include <unistd.h>
 
 #include "NoWarning/tut.h"
+#include "QuinoaConfig.h"
 
 #include "TUTConfig.h"
 #include "NoWarning/tutsuite.decl.h"
-#include "migrated_inciter.decl.h"
+#ifdef ENABLE_INCITER
+  #include "NoWarning/migrated_inciter.decl.h"
+#endif
 
 #include "Scheme.h"
 

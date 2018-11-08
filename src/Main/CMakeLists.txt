@@ -55,6 +55,12 @@ if (HAS_OMEGA_H)
   set(OMEGAHMESHIO "OmegaHMeshIO")
 endif()
 
+if (ENABLE_INCITER)
+  set(TestScheme "../UnitTest/tests/Inciter/TestScheme.C")
+  set(TestError "../UnitTest/tests/Inciter/AMR/TestError.C")
+  set(MESHREFINEMENT "MeshRefinement")
+endif()
+
 ## UnitTest executable ########################################################
 
 if (ENABLE_UNITTEST)
@@ -100,8 +106,8 @@ if (ENABLE_UNITTEST)
                  ../UnitTest/tests/Control/TestStringParser.C
                  ../UnitTest/tests/Control/TestSystemComponents.C
                  ../UnitTest/tests/Control/TestToggle.C
-                 ../UnitTest/tests/Inciter/TestScheme.C
-                 ../UnitTest/tests/Inciter/AMR/TestError.C
+                 ../UnitTest/${TestScheme}
+                 ../UnitTest/${TestError}
                  ../UnitTest/tests/IO/TestExodusIIMeshReader.C
                  ../UnitTest/tests/IO/TestMesh.C
                  ../UnitTest/tests/IO/TestMeshReader.C
@@ -135,14 +141,13 @@ if (ENABLE_UNITTEST)
                         Config
                         Init
                         RNG
-                        MeshRefinement
+                        ${MESHREFINEMENT}
                         UnitTest
                         UnitTestControl
                         LoadBalance
                         Mesh
                         MeshDetect
                         NativeMeshIO
-                        MeshRefinement
                         ExodusIIMeshIO
                         HyperMeshIO
                         ${OMEGAHMESHIO}
