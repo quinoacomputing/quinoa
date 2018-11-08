@@ -514,7 +514,7 @@ Refiner::updateEdgeData()
   m_edgedata.clear();
   for (const auto& e : ref_edges) {
     const auto& ed = e.first.get_data();
-    const auto ged = Edge{ m_gid[ ed[0] ], m_gid[ ed[1] ] };
+    const auto ged = Edge{{ m_gid[ ed[0] ], m_gid[ ed[1] ] }};
     m_edgedata[ ged ] = { e.second.needs_refining, e.second.lock_case };
   }
 }
