@@ -119,6 +119,10 @@
     send across the network, (2) std::bind cannot currently be used to bind a
     variadic number arguments and thus the bind calls would not be very generic,
     and (3) a runtime associative container would take additional state.
+
+  \see Talk on [Concept-based runtime polymorphism with Charm++ chare arrays
+    using value semantics](http://charm.cs.illinois.edu/charmWorkshop/slides/CharmWorkshop2018_bakosi.pdf) at the 16th Annual Workshop on Charm++ and its
+    Applications, April 2018.
 */
 // *****************************************************************************
 #ifndef Scheme_h
@@ -129,6 +133,7 @@
 
 namespace inciter {
 
+//! Generic forwarding interface to discretization proxies
 class Scheme : public SchemeBase {
 
   public:
