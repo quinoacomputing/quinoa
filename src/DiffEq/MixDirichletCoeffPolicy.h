@@ -52,9 +52,9 @@
 
 namespace walker {
 
-//! MixDirichlet coefficients policy: constants in time + <rho> = const
+//! MixDirichlet coefficients policity: constants in time + <rho> = const
 //! \details User-defined parameters b and kappa are constant vectors in time
-//!   and, S is constrained to make \f$\mathrm{d}<\rho>/\mathrm{d}t = 0\f$.
+//!   and, S is constrained to make \f$\mathrm{d}\<\rho\>/\mathrm{d}t = 0\f$.
 class MixDirichletHomCoeffConst {
 
   private:
@@ -99,27 +99,67 @@ class MixDirichletHomCoeffConst {
     {
       using tk::ctr::lookup;
       using tk::ctr::mean;
+      using tk::ctr::Term;
+      using tk::ctr::Moment;
+      using tk::ctr::Product;
+
       // statistics nomenclature:
-      //   Y = instantaneous mass fraction,
-      //   R = instantaneous density,
-      //   y = Y - <Y>, mass fraction fluctuation about its mean,
-      //   r = R - <R>, density fluctuation about its mean,
-      // <Y> = mean mass fraction,
-      // <R> = mean density,
+      //   Y = instantaneous mass fraction
+      //   R = instantaneous density
+      //   y = Y - <Y>, mass fraction fluctuation about its mean
+      //   r = R - <R>, density fluctuation about its mean
+      // <Y> = mean mass fraction
+      // <R> = mean density
 
+      // <R>
+      tk::real R = lookup( mean(depvar,ncomp), moments );
+      if (R < 1.0e-8) R = 1.0;
 
-      tk::real d = lookup( mean(depvar,ncomp), moments );       // <R>
-      if (d < 1.0e-8) { std::cout << "d:" << d << " "; d = 0.5; }
+      // <RY^c>
+      std::vector< tk::real > RY( ncomp, 0.0 );
+      for (ncomp_t c=0; c<ncomp; ++c) {
+        Term tR( 'Y', ncomp, Moment::ORDINARY );
+        Term tY( 'Y', c, Moment::ORDINARY );
+        RY[c] = lookup( Product({tR,tY}), moments );
+      }
+
+      // Ytc
+      std::vector< tk::real > Yt( ncomp, 0.0 );
+      for (ncomp_t c=0; c<ncomp; ++c)
+        Yt[c] = RY[c] / R;
+
+      // sum of Yc
+      tk::real sumY = 0.0;
+      for (ncomp_t c=0; c<ncomp; ++c)
+        sumY += lookup( mean(depvar,c), moments );
+
+      // Y|Nc
+      std::vector< tk::real > YN( ncomp, 0.0 );
+      for (ncomp_t c=0; c<ncomp; ++c)
+        YN[c] = sumY - lookup( mean(depvar,c), moments );
+
+      // sum of Ytc
+      tk::real sumYt = 0.0;
+      for (ncomp_t c=0; c<ncomp; ++c)
+        sumYt += Yt[c];
+
+      // Yt|Nc
+      std::vector< tk::real > YtN( ncomp, 0.0 );
+      for (ncomp_t c=0; c<ncomp; ++c)
+        YtN[c] = sumYt - Yt[c];
+
+      // Sc
+      for (ncomp_t c=0; c<ncomp; ++c) {
+        S[c] = 1.0/(1.0-YN[c]) - (1.0-Yt[c])/(1.0-YtN[c]);
+        std::cout << "S: " << S[c] << ", YNc: " << YN[c]
+                  << ", Ytc: " << Yt[c] << ", YtNc: " << YtN[c] << ' ';
+      }
+      std::cout << std::endl;
 
       for (ncomp_t c=0; c<ncomp; ++c) {
-        tk::real m = lookup( mean(depvar,c), moments );         // <Y>
-        if (m<1.0e-8 || m>1.0-1.0e-8) m = 0.5;
-
-        //S[c] = 0.5;
-
         if (S[c] < 0.0 || S[c] > 1.0) {
-          std::cout << S[c] << " ";
-          //S[c] = 0.5;
+          std::cout << "S bounds violated: " << S[c] << ' ';
+          S[c] = 0.5;
         }
       }
     }
