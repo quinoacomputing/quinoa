@@ -103,6 +103,8 @@ class MixDirichletHomCoeffConst {
       using tk::ctr::Moment;
       using tk::ctr::Product;
 
+      // note: ncomp = K = N-1
+
       // statistics nomenclature:
       //   Y = instantaneous mass fraction
       //   R = instantaneous density
@@ -123,45 +125,65 @@ class MixDirichletHomCoeffConst {
         RY[c] = lookup( Product({tR,tY}), moments );
       }
 
-      // Ytc
-      std::vector< tk::real > Yt( ncomp, 0.0 );
-      for (ncomp_t c=0; c<ncomp; ++c)
-        Yt[c] = RY[c] / R;
+      // Reynolds means
 
-      // sum of Yc
-      tk::real sumY = 0.0;
-      for (ncomp_t c=0; c<ncomp; ++c)
-        sumY += lookup( mean(depvar,c), moments );
-
-      // Y|Nc
-      std::vector< tk::real > YN( ncomp, 0.0 );
-      for (ncomp_t c=0; c<ncomp; ++c)
-        YN[c] = sumY - lookup( mean(depvar,c), moments );
-
-      // sum of Ytc
-      tk::real sumYt = 0.0;
-      for (ncomp_t c=0; c<ncomp; ++c)
-        sumYt += Yt[c];
-
-      // Yt|Nc
-      std::vector< tk::real > YtN( ncomp, 0.0 );
-      for (ncomp_t c=0; c<ncomp; ++c)
-        YtN[c] = sumYt - Yt[c];
-
-      // Sc
+      // Reynolds means, Yc
+      std::vector< tk::real > Y( ncomp, 0.0 );
       for (ncomp_t c=0; c<ncomp; ++c) {
-        S[c] = 1.0/(1.0-YN[c]) - (1.0-Yt[c])/(1.0-YtN[c]);
-        std::cout << "S: " << S[c] << ", YNc: " << YN[c]
-                  << ", Ytc: " << Yt[c] << ", YtNc: " << YtN[c] << ' ';
+        Y[c] = lookup( mean(depvar,c), moments );
+        std::cout << "Y: " << Y[c] << ' ';
       }
       std::cout << std::endl;
 
+      // sum of Yc
+      tk::real sumY = 0.0;
+      for (ncomp_t c=0; c<ncomp; ++c) sumY += Y[c];
+
+      // Y|Kc
+      std::vector< tk::real > YK( ncomp, 0.0 );
+      for (ncomp_t c=0; c<ncomp; ++c) {
+        YK[c] = sumY - lookup( mean(depvar,c), moments );
+        std::cout << "YK: " << YK[c] << ' ';
+      }
+      std::cout << std::endl;
+
+      // Favre means
+
+      // Ytc
+      std::vector< tk::real > Yt( ncomp, 0.0 );
+      for (ncomp_t c=0; c<ncomp; ++c) {
+        Yt[c] = RY[c] / R;
+        std::cout << "Yt: " << Yt[c] << ' ';
+      }
+      std::cout << std::endl;
+
+      // sum of Ytc
+      tk::real sumYt = 0.0;
+      for (ncomp_t c=0; c<ncomp; ++c) sumYt += Yt[c];
+
+      // Yt|Kc
+      std::vector< tk::real > YtK( ncomp, 0.0 );
+      for (ncomp_t c=0; c<ncomp; ++c) {
+        YtK[c] = sumYt - Yt[c];
+        std::cout << "YtK: " << YtK[c] << ' ';
+      }
+      std::cout << std::endl;
+
+      // Sc
+      for (ncomp_t c=0; c<ncomp; ++c) {
+        S[c] = 1.0/(1.0-YK[c]) - (1.0-Yt[c])/(1.0-YtK[c]);
+        //std::cout << "S: " << S[c] << ", YKc: " << YK[c]
+        //          << ", Ytc: " << Yt[c] << ", YtKc: " << YtK[c] << ' ';
+      }
+      //std::cout << std::endl;
+
       for (ncomp_t c=0; c<ncomp; ++c) {
         if (S[c] < 0.0 || S[c] > 1.0) {
-          std::cout << "S bounds violated: " << S[c] << ' ';
+          std::cout << "S[" << c << "] bounds violated: " << S[c] << ' ';
           S[c] = 0.5;
         }
       }
+      std::cout << std::endl;
     }
 };
 
