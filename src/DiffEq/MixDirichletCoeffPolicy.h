@@ -171,7 +171,10 @@ class MixDirichletHomCoeffConst {
 
       // Sc
       for (ncomp_t c=0; c<ncomp; ++c) {
-        S[c] = 1.0/(1.0-YK[c]) - (1.0-Yt[c])/(1.0-YtK[c]);
+        // 1st attempt at forcing <rho> = const
+        //S[c] = 1.0/(1.0-YK[c]) - (1.0-Yt[c])/(1.0-YtK[c]);
+        // 2nd attempt at forcing <rho> = const
+        S[c] = YK[c]/(1.0-YK[c]) - (1.0-Yt[c])*YtK[c]/(1.0-YtK[c]) + Yt[c];
         //std::cout << "S: " << S[c] << ", YKc: " << YK[c]
         //          << ", Ytc: " << Yt[c] << ", YtKc: " << YtK[c] << ' ';
       }
