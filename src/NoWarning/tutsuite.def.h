@@ -9,6 +9,7 @@
 #define nowarning_tutsuite_def_h
 
 #include "Macro.h"
+#include "QuinoaConfig.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -25,7 +26,11 @@
   #pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
 
-#include "../UnitTest/tutsuite.def.h"
+#ifdef ENABLE_INCITER
+  #include "../UnitTest/tutsuiteinciter.def.h"
+#else
+  #include "../UnitTest/tutsuite.def.h"
+#endif
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

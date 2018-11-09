@@ -21,6 +21,7 @@
 #include "UnitTestPrint.h"
 #include "UnitTest/CmdLine/CmdLine.h"
 
+#include "QuinoaConfig.h"
 #include "NoWarning/tutsuite.decl.h"
 
 namespace unittest {

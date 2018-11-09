@@ -10,6 +10,7 @@
 #define nowarning_unittest_def_h
 
 #include "Macro.h"
+#include "QuinoaConfig.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -32,7 +33,11 @@
   #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
 #endif
 
-#include "../Main/unittest.def.h"
+#ifdef ENABLE_INCITER
+  #include "../Main/unittestinciter.def.h"
+#else
+  #include "../Main/unittest.def.h"
+#endif
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

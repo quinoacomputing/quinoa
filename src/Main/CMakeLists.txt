@@ -56,8 +56,8 @@ if (HAS_OMEGA_H)
 endif()
 
 if (ENABLE_INCITER)
-  set(TestScheme "../UnitTest/tests/Inciter/TestScheme.C")
   set(TestError "../UnitTest/tests/Inciter/AMR/TestError.C")
+  set(TestScheme "../UnitTest/tests/Inciter/TestScheme.C")
   set(MESHREFINEMENT "MeshRefinement")
 endif()
 
@@ -166,7 +166,11 @@ if (ENABLE_UNITTEST)
                         ${OMEGA_H_LIBRARIES})
 
   # Add custom dependencies for UnitTest's main Charm++ module
-  addCharmModule( "unittest" "${UNITTEST_EXECUTABLE}" )
+  if(ENABLE_INCITER)
+    addCharmModule( "unittestinciter" "${UNITTEST_EXECUTABLE}" )
+  else()
+    addCharmModule( "unittest" "${UNITTEST_EXECUTABLE}" )
+  endif()
 
 endif(ENABLE_UNITTEST)
 
