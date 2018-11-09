@@ -22,12 +22,14 @@
 
 #include "NoWarning/matcg.decl.h"
 #include "NoWarning/diagcg.decl.h"
+#include "NoWarning/alecg.decl.h"
 #include "NoWarning/distfct.decl.h"
 #include "NoWarning/dg.decl.h"
 #include "NoWarning/discretization.decl.h"
 
 namespace inciter {
 
+//! Base class for generic forwarding interface to discretization proxies
 class SchemeBase {
 
   public:
@@ -36,11 +38,13 @@ class SchemeBase {
 
     //! Constructor
     //! \param[in] scheme Discretization scheme
-    //! \details Based on the enum we create two empty chare arrays: (1)
-    //!    discproxy which contains common functionality and data for all
-    //!    discretizations, and (2) proxy, which have functionality and data
-    //!    specific to a given discretization. Note that proxy is bound (in
-    //!    migration behavior and properties) to discproxy.
+    //! \details Based on the input enum we create at least two empty chare
+    //!   arrays: (1) discproxy which contains common functionality and data for
+    //!   all discretizations, and (2) proxy, which have functionality and data
+    //!   specific to a given discretization. Note that proxy is bound (in
+    //!   migration behavior and properties) to discproxy.
+    //! \note There may be other bound proxy arrays created depending on the
+    //!   specific discretization configured by the enum.
     explicit SchemeBase( ctr::SchemeType scheme ) :
       discproxy( CProxy_Discretization::ckNew() )
     {
@@ -52,8 +56,11 @@ class SchemeBase {
         proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(m_bound) );
         fctproxy= CProxy_DistFCT::ckNew(m_bound);
       } else if (scheme == ctr::SchemeType::DG ||
-                 scheme == ctr::SchemeType::DGP1) {
+                 scheme == ctr::SchemeType::DGP1)
+      {
         proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(m_bound) );
+      } else if (scheme == ctr::SchemeType::ALECG) {
+        proxy = static_cast< CProxy_ALECG >( CProxy_ALECG::ckNew(m_bound) );
       } else Throw( "Unknown discretization scheme" );
     }
 
@@ -75,11 +82,12 @@ class SchemeBase {
     const CkArrayOptions& arrayoptions() { return m_bound; }
 
     //! Variant type listing all chare proxy types modeling the same concept
-    using Proxy = boost::variant< CProxy_MatCG, CProxy_DiagCG, CProxy_DG >;
+    using Proxy =
+      boost::variant< CProxy_MatCG, CProxy_DiagCG, CProxy_DG, CProxy_ALECG >;
     //! Variant type listing all chare element proxy types (behind operator[])
     using ProxyElem =
       boost::variant< CProxy_MatCG::element_t, CProxy_DiagCG::element_t,
-                      CProxy_DG::element_t >;
+                      CProxy_DG::element_t, CProxy_ALECG::element_t >;
 
   protected:
     //! Variant storing one proxy to which this class is configured for

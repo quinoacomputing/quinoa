@@ -1,8 +1,6 @@
 /*!
   \page      layout Large-data memory layout for equation systems
 
-@tableofcontents
-
 This page discusses the requirements, design, implementation, and verification
 of a data container with zero-cost compile-time-configurable memory layout for
 storing a 3-dimensional array of real values. The three dimensions are
@@ -12,6 +10,8 @@ storing a 3-dimensional array of real values. The three dimensions are
 3. _Unknown_ index, as required by some discretization of a numerical solution,
 representing field variables at discrete locations, e.g., particles or a mesh
 entity such as cell, face, node, etc.
+
+@tableofcontents{xml}
 
 @section layout_req Data layout requirements and design
 
