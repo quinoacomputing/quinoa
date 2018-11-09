@@ -385,11 +385,12 @@ class CompFlow {
     }
 
     //! Initalize the compressible flow equations, prepare for time integration
+    //! \param[in,out] l Block diagonal mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
-    void initializeP1( const tk::Fields& lhs,
+    void initializeP1( const tk::Fields& L,
                        const std::vector< std::size_t >& inpoel,
                        const tk::UnsMesh::Coords& coord,
                        tk::Fields& unk,
@@ -397,7 +398,7 @@ class CompFlow {
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
-      Assert( lhs.nunk() == unk.nunk(), "Size mismatch" );
+      Assert( L.nunk() == unk.nunk(), "Size mismatch" );
       std::size_t nelem = unk.nunk();
 
       // right hand side vector
@@ -420,7 +421,7 @@ class CompFlow {
 
       for (std::size_t e=0; e<nelem; ++e)
       {
-        auto vole = lhs(e, 0, m_offset);
+        auto vole = L(e, 0, m_offset);
 
         auto x1 = cx[ inpoel[4*e]   ];
         auto y1 = cy[ inpoel[4*e]   ];
@@ -472,10 +473,10 @@ class CompFlow {
         for (ncomp_t c=0; c<5; ++c)
         {
           auto mark = c*ndof;
-          unk(e, mark,   m_offset) = R[mark]   / lhs(e, mark,   m_offset);
-          unk(e, mark+1, m_offset) = R[mark+1] / lhs(e, mark+1, m_offset);
-          unk(e, mark+2, m_offset) = R[mark+2] / lhs(e, mark+2, m_offset);
-          unk(e, mark+3, m_offset) = R[mark+3] / lhs(e, mark+3, m_offset);
+          unk(e, mark,   m_offset) = R[mark]   / L(e, mark,   m_offset);
+          unk(e, mark+1, m_offset) = R[mark+1] / L(e, mark+1, m_offset);
+          unk(e, mark+2, m_offset) = R[mark+2] / L(e, mark+2, m_offset);
+          unk(e, mark+3, m_offset) = R[mark+3] / L(e, mark+3, m_offset);
         }
       }
     }
