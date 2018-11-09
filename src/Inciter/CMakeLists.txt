@@ -14,6 +14,7 @@ add_library(Inciter
             Sorter.C
             MatCG.C
             DiagCG.C
+            ALECG.C
             DG.C
             FluxCorrector.C
             DistFCT.C
@@ -74,6 +75,7 @@ addCharmModule( "refiner" "Inciter" )
 addCharmModule( "sorter" "Inciter" )
 addCharmModule( "matcg" "Inciter" )
 addCharmModule( "diagcg" "Inciter" )
+addCharmModule( "alecg" "Inciter" )
 addCharmModule( "distfct" "Inciter" )
 addCharmModule( "dg" "Inciter" )
 
