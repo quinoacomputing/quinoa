@@ -385,7 +385,7 @@ class CompFlow {
     }
 
     //! Initalize the compressible flow equations, prepare for time integration
-    //! \param[in,out] l Block diagonal mass matrix
+    //! \param[in,out] L Block diagonal mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] unk Array of unknowns
