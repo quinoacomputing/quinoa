@@ -12,13 +12,12 @@
 #ifndef Timer_h
 #define Timer_h
 
+#include <bits/stdint-uintn.h>  // for uint64_t
+#include <type_traits>          // for move, enable_if<>::type
 #include <chrono>
-#include <map>
 
-#include "NoWarning/pup.h"
-
+#include "NoWarning/pup.h"      // for er
 #include "Types.h"
-#include "Exception.h"
 
 namespace tk {
 

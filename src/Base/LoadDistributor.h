@@ -10,7 +10,7 @@
 #ifndef LoadDistributor_h
 #define LoadDistributor_h
 
-#include <cstdint>
+#include <bits/stdint-uintn.h>  // for uint64_t
 
 #include "Types.h"
 

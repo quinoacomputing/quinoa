@@ -13,8 +13,6 @@
 
 #include <fstream>
 
-#include "Exception.h"
-
 namespace tk {
 
 //! Writer base serves as a base class for various file writers. It does generic
