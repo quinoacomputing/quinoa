@@ -12,8 +12,9 @@
 #include "NoWarning/tut.h"
 
 #include "TUTConfig.h"
+#include "QuinoaConfig.h"
 #include "NoWarning/tutsuite.decl.h"
-#include "migrated_inciter.decl.h"
+#include "NoWarning/migrated_inciter.decl.h"
 
 #include "Scheme.h"
 

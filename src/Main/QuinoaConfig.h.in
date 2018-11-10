@@ -37,6 +37,9 @@ namespace tk {
 #cmakedefine HAS_BACKWARD
 #cmakedefine HAS_OMEGA_H
 
+// Executables optional
+#cmakedefine ENABLE_INCITER
+
 // Backward-cpp config
 #cmakedefine01 BACKWARD_HAS_UNWIND
 #cmakedefine01 BACKWARD_HAS_BACKTRACE
