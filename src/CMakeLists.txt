@@ -99,6 +99,11 @@ if (EXISTS ${TPL_DIR}/include)
   message(STATUS "Third-party library dir: " ${TPL_DIR})
 endif()
 
+# Detect gcc compiler version
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  include(DetectCXXversion)
+endif()
+
 # Include third-party libraries configuration
 include(TPLs)
 
@@ -296,9 +301,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
   # Linker flags for gcc
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wno-unused-parameter")
-
-  # Detect compiler version
-  include(DetectCXXversion)
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 
