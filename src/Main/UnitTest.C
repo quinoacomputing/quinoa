@@ -24,6 +24,7 @@
 #include "NoWarning/mpi.h"
 #include "NoWarning/mpi-interoperate.h"
 
+#include "QuinoaConfig.h"
 #include "NoWarning/tutsuite.decl.h"
 #include "NoWarning/unittest.decl.h"
 

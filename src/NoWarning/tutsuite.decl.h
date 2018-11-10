@@ -9,6 +9,7 @@
 #define nowarning_tutsuite_decl_h
 
 #include "Macro.h"
+#include "QuinoaConfig.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -64,7 +65,11 @@
   #pragma warning( disable: 2282 )
 #endif
 
-#include "../UnitTest/tutsuite.decl.h"
+#ifdef ENABLE_INCITER
+  #include "../UnitTest/tutsuiteinciter.decl.h"
+#else
+  #include "../UnitTest/tutsuite.decl.h"
+#endif
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
