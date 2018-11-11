@@ -10,6 +10,8 @@
 #define DiagReducer_h
 
 #include <vector>
+#include <memory>
+#include <utility>
 
 #include "NoWarning/charm++.h"
 

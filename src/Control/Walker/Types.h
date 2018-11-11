@@ -13,7 +13,7 @@
 #define WalkerTypes_h
 
 #include "Tags.h"
-#include "Types.h"
+#include "Base/Types.h"
 #include "RNGParam.h"
 #include "Walker/Options/DiffEq.h"
 #include "Walker/Options/InitPolicy.h"
