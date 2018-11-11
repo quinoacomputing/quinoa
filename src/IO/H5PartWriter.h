@@ -13,7 +13,7 @@
 
 #include <vector>
 #include <string>
-#include <bits/stdint-uintn.h>
+#include <cstdint>
 
 #include "Types.h"
 

@@ -12,7 +12,7 @@
 #ifndef Timer_h
 #define Timer_h
 
-#include <bits/stdint-uintn.h>  // for uint64_t
+#include <cstdint>
 #include <type_traits>          // for move, enable_if<>::type
 #include <chrono>
 
