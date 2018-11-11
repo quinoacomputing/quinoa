@@ -8,9 +8,13 @@
 */
 // *****************************************************************************
 
+#include <stddef.h>
+#include <string>
+
 #include "NoWarning/Zoltan2_MeshAdapter.h"
 #include "NoWarning/Zoltan2_PartitioningProblem.h"
-#include <Zoltan2_PartitioningSolution.hpp>
+#include "Zoltan2_PartitioningSolution.hpp"
+#include "Teuchos_ParameterList.hpp"
 
 #include "ZoltanInterOp.h"
 

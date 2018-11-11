@@ -14,7 +14,7 @@
 #define IncitierTypes_h
 
 #include "Tags.h"
-#include "Types.h"
+#include "Base/Types.h"
 #include "Inciter/Options/PDE.h"
 #include "Inciter/Options/Problem.h"
 #include "Inciter/Options/Scheme.h"

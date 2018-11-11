@@ -7,11 +7,7 @@
 */
 // *****************************************************************************
 
-#include <cstdint>
-#include <cstdio>
-#include <string>
 #include <numeric>
-#include <unordered_map>
 
 #include "NoWarning/exodusII.h"
 

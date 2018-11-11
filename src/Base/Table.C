@@ -9,8 +9,8 @@
 */
 // *****************************************************************************
 
-#include <vector>
 #include <utility>
+#include <stddef.h>
 
 #include "Table.h"
 #include "Exception.h"

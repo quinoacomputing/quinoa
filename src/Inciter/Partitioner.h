@@ -9,15 +9,9 @@
 #ifndef Partitioner_h
 #define Partitioner_h
 
-#include <vector>
-#include <set>
-#include <map>
-#include <unordered_map>
-#include <unordered_set>
-#include <algorithm>
-#include <numeric>
+#include <array>
+#include <stddef.h>
 
-#include "ExodusIIMeshReader.h"
 #include "ContainerUtil.h"
 #include "ZoltanInterOp.h"
 #include "Inciter/InputDeck/InputDeck.h"

@@ -7,7 +7,6 @@
 */
 // *****************************************************************************
 
-#include "Macro.h"
 #include "STLMesh.h"
 #include "STLTxtMeshReader.h"
 
