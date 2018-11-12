@@ -7,8 +7,6 @@ how to add a scheme of your choice by walking through an example of adding a
 new one. We also discuss the main steps of the execution logic, which, at a
 high level, is the same for all discretization schemes.
 
-@tableofcontents{xml}
-
 @section inciter_newscheme_rationale Rationale and plan
 
 Similar to the existing discretization schemes, `DiagCG`, `MatCG`, or `DG`, the
