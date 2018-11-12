@@ -39,7 +39,7 @@ include(BuildShared)
 # This must precede all add_executable() calls adding executables to link
 # statically.
 if (NOT BUILD_SHARED_LIBS)
-  set(CMAKE_EXE_LINKER_FLAGS "-static")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 endif()
 
