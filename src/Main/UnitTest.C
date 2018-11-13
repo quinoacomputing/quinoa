@@ -190,7 +190,7 @@ class Main : public CBase_Main {
           stateProxy.collect( /* error = */ false,
             CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
         else
-          CkExit(); // tell the Charm++ runtime system to exit
+          CkExit(); // tell the Charm++ runtime system to exit w/ zero exit code
       } catch (...) { tk::processExceptionCharm(); }
     }
 
