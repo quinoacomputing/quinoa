@@ -24,7 +24,7 @@ target_include_directories(Base PUBLIC
                            ${QUINOA_SOURCE_DIR}/Control
                            ${CHARM_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../Main
-                           ${BACKWARDCPP_INCLUDE_DIRS}
+                           ${BACKWARD_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_PATH}
                            ${PSTREAMS_INCLUDE_DIRS})
