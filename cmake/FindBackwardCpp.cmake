@@ -11,8 +11,8 @@
 # Find Backward-cpp library headers
 #
 #  BACKWARDCPP_FOUND               - True if Backward-cpp is found
-#  BACKWARDCPP_INCLUDE_DIRS        - Backward-cpp install path
-#  BACKWARDCPP_CMAKE_CONFIG_DIRS   - Backward-cpp cmake configuration path
+#  BACKWARD_INCLUDE_DIRS           - Backward-cpp install path
+#  BACKWARD_LIBRARIES              - Backward-cpp libraries to link
 #
 #  Set BACKWARDCPP_ROOT before calling find_package to a path to add an
 #  additional search path, e.g.,
@@ -22,14 +22,12 @@
 #  set(BACKWARDCPP_ROOT "/path/to/custom/backward-cpp") # prefer over system
 #  find_package(Backward)
 #  if(BackwardCpp_FOUND)
-#    list(APPEND CMAKE_MODULE_PATH "${BACKWARDCPP_CMAKE_CONFIG_DIRS}")
-#    include(BackwardConfig)
-#    include_directories( ${BACKWARDCPP_INCLUDE_DIRS} )
+#    include_directories( ${BACKWARD_INCLUDE_DIRS} )
 #    target_link_libraries( <executable> ${BACKWARD_LIBRARIES} )
 #  endif()
 
 # If already in cache, be silent
-if (BACKWARDCPP_INCLUDE_DIRS AND BACKWARDCPP_CMAKE_CONFIG_DIRS)
+if (BACKWARD_INCLUDE_DIRS AND BACKWARD_LIBRARIES)
   set (BACKWARDCPP_FIND_QUIETLY TRUE)
 endif()
 
@@ -40,39 +38,35 @@ FIND_PATH(BACKWARDCPP_INCLUDE_DIR
           HINTS ${BACKWARDCPP_ROOT} $ENV{BACKWARDCPP_ROOT})
 
 # Look for the cmake configuration file
-FIND_PATH(BACKWARDCPP_CMAKE_CONFIG_DIR
+FIND_PATH(BACKWARD_CMAKE_CONFIG_DIR
           NAMES BackwardConfig.cmake
           PATH_SUFFIXES lib/backward
           HINTS ${BACKWARDCPP_ROOT} $ENV{BACKWARDCPP_ROOT})
 
-set(BACKWARDCPP_INCLUDE_DIRS ${BACKWARDCPP_INCLUDE_DIR})
-set(BACKWARDCPP_CMAKE_CONFIG_DIRS ${BACKWARDCPP_CMAKE_CONFIG_DIR})
+if(BACKWARDCPP_INCLUDE_DIR AND BACKWARD_CMAKE_CONFIG_DIR)
+  list(APPEND CMAKE_MODULE_PATH "${BACKWARD_CMAKE_CONFIG_DIR}")
+  include(BackwardConfig)
+  set(HAS_BACKWARD true)
 
-if(NOT BUILD_SHARED_LIBS AND BACKWARD_LIBRARIES MATCHES "libdw")
-  set(BACKWARD_STATIC_LIBS elf ebl bz2 lzma)
-  foreach(lib ${BACKWARD_STATIC_LIBS})
-    find_library(BACKWARD_${lib}_LIBRARY NAMES lib${lib}.a
-                 HINTS /usr/lib/${CMAKE_LIBRARY_ARCHITECTURE})
-    list(APPEND BACKWARD_STATIC_LIBRARIES "${BACKWARD_${lib}_LIBRARY}")
-    list(APPEND BACKWARD_STATIC_LIBRARY_VARS BACKWARD_${lib}_LIBRARY)
-  endforeach()
+  # If BackwardCpp uses libdw, it needs additional libs for static builds
+  if(NOT BUILD_SHARED_LIBS AND BACKWARD_LIBRARIES MATCHES "libdw")
+    set(BACKWARD_STATIC_LIBS elf ebl bz2 lzma)
+    foreach(lib ${BACKWARD_STATIC_LIBS})
+      find_library(BACKWARD_${lib}_LIBRARY NAMES lib${lib}.a
+                   HINTS /usr/lib/${CMAKE_LIBRARY_ARCHITECTURE})
+      list(APPEND BACKWARD_LIBRARIES "${BACKWARD_${lib}_LIBRARY}")
+    endforeach()
+  endif()
+
+  message(STATUS "Backward-cpp config: ${BACKWARD_DEFINITIONS}")
+  message(STATUS "Backward-cpp libraries: ${BACKWARD_LIBRARIES}")
 endif()
+
+set(BACKWARD_INCLUDE_DIRS ${BACKWARDCPP_INCLUDE_DIR})
 
 # Handle the QUIETLY and REQUIRED arguments and set BACKWARDCPP_FOUND to TRUE if
 # all listed variables are TRUE
 INCLUDE(FindPackageHandleStandardArgs)
-if(NOT BUILD_SHARED_LIBS)
-  FIND_PACKAGE_HANDLE_STANDARD_ARGS(BackwardCpp DEFAULT_MSG
-    BACKWARDCPP_INCLUDE_DIRS BACKWARDCPP_CMAKE_CONFIG_DIRS
-    ${BACKWARD_STATIC_LIBRARY_VARS})
-else()
-  FIND_PACKAGE_HANDLE_STANDARD_ARGS(BackwardCpp DEFAULT_MSG
-    BACKWARDCPP_INCLUDE_DIRS BACKWARDCPP_CMAKE_CONFIG_DIRS)
-endif()
-
-if (BACKWARD_STATIC_LIBRARIES)
-  message(STATUS "Bacward-cpp static libraries: ${BACKWARD_STATIC_LIBRARIES}")
-endif()
-
-MARK_AS_ADVANCED(BACKWARDCPP_INCLUDE_DIRS BACKWARDCPP_CMAKE_CONFIG_DIRS
-                 BACKWARD_STATIC_LIBRARIES)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(BackwardCpp DEFAULT_MSG
+  BACKWARD_INCLUDE_DIRS BACKWARD_LIBRARIES)
+MARK_AS_ADVANCED(BACKWARD_INCLUDE_DIRS BACKWARD_LIBRARIES)
