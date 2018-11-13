@@ -132,13 +132,9 @@ endif()
 set(BACKWARD_ROOT ${TPL_DIR}) # prefer ours
 find_package(BackwardCpp)
 if(BACKWARDCPP_FOUND)
-  list(APPEND CMAKE_MODULE_PATH "${BACKWARDCPP_CMAKE_CONFIG_DIRS}")
-  include(BackwardConfig)
   set(HAS_BACKWARD true)  # will become compiler define in Main/QuinoaConfig.h
-  message(STATUS "Backward-cpp config: ${BACKWARD_DEFINITIONS}")
-  message(STATUS "Backward-cpp libraries: ${BACKWARD_LIBRARIES}")
 else()
-  set(BACKWARDCPP_INCLUDE_DIRS "")
+  set(BACKWARD_INCLUDE_DIRS "")
   set(BACKWARD_LIBRARIES "")
 endif()
 
