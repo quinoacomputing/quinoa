@@ -171,7 +171,7 @@ void dumpstate( const CmdLine& cmdline,
     if (error)
       Throw( "Quiescence detected" );
     else
-      CkExit(); // tell the Charm++ runtime system to exit
+      CkExit(); // tell the Charm++ runtime system to exit with zero exit code
 
   } catch (...) { tk::processExceptionCharm(); }
 }
@@ -205,7 +205,7 @@ void finalize( const CmdLine& cmdline,
           cmdline.template get< tag::quiescence >() )
        state.collect( /* error = */ false, dumpstateTarget );
      else
-       CkExit(); // tell the Charm++ runtime system to exit
+       CkExit(); // tell the Charm++ runtime system to exit with zero exit code
     }
 
   } catch (...) { tk::processExceptionCharm(); }

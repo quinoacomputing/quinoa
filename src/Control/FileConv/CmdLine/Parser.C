@@ -83,6 +83,7 @@ CmdLineParser::CmdLineParser( int argc,
   const auto helpkw = cmdline.get< tag::helpkw >();
 
   // Immediately exit if any help was output or was called without any argument
+  // with zero exit code
   if (argc == 1 || helpcmd || !helpkw.keyword.empty()) CkExit();
 
   // Make sure mandatory arguments are set
