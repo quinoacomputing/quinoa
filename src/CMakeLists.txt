@@ -99,9 +99,10 @@ if (EXISTS ${TPL_DIR}/include)
   message(STATUS "Third-party library dir: " ${TPL_DIR})
 endif()
 
-# Detect gcc compiler version
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  include(DetectCXXversion)
+# Detect compiler version
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
+    CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  include(DetectCompilerVersion)
 endif()
 
 # Include third-party libraries configuration
@@ -212,7 +213,7 @@ macro (add_c_compiler_flag flag)
 endmacro (add_c_compiler_flag)
 
 # Compiler-specific settings
-if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
 
   # Include function that allows to set standard C++ library
   include(libstdcxx)

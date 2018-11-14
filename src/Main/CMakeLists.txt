@@ -163,7 +163,6 @@ if (ENABLE_UNITTEST)
                         ${HDF5_C_LIBRARIES}
                         ${AEC_LIBRARIES}          # only for static link
                         ${BACKWARD_LIBRARIES}
-                        ${BACKWARD_STATIC_LIBRARIES}
                         ${OMEGA_H_LIBRARIES})
 
   # Add custom dependencies for UnitTest's main Charm++ module
@@ -223,7 +222,6 @@ if (ENABLE_INCITER)
                         ${HDF5_C_LIBRARIES}
                         ${AEC_LIBRARIES}          # only for static link
                         ${BACKWARD_LIBRARIES}
-                        ${BACKWARD_STATIC_LIBRARIES}
                         ${OMEGA_H_LIBRARIES})
 
   # Add custom dependencies for Inciter's main Charm++ module
@@ -260,8 +258,7 @@ if (ENABLE_RNGTEST)
                         ${MKL_CORE_LIBRARY}
                         ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                         ${RNGSSE2_LIBRARIES}
-                        ${BACKWARD_LIBRARIES}
-                        ${BACKWARD_STATIC_LIBRARIES})
+                        ${BACKWARD_LIBRARIES})
 
   # Add custom dependencies for RNGTest's main Charm++ module
   addCharmModule( "rngtest" "${RNGTEST_EXECUTABLE}" )
@@ -299,7 +296,6 @@ if (ENABLE_MESHCONV)
                         ${HDF5_C_LIBRARIES}
                         ${AEC_LIBRARIES}          # only for static link
                         ${BACKWARD_LIBRARIES}
-                        ${BACKWARD_STATIC_LIBRARIES}
                         ${OMEGA_H_LIBRARIES})
 
   # Add custom dependencies for MeshConv's main Charm++ module
@@ -340,8 +336,7 @@ if (ENABLE_WALKER)
                         ${HDF5_HL_LIBRARIES}      # only for static link
                         ${HDF5_C_LIBRARIES}
                         ${AEC_LIBRARIES}          # only for static link
-                        ${BACKWARD_LIBRARIES}
-                        ${BACKWARD_STATIC_LIBRARIES})
+                        ${BACKWARD_LIBRARIES})
 
   # Add custom dependencies for Walker's main Charm++ module
   addCharmModule( "walker" "${WALKER_EXECUTABLE}" )
@@ -375,7 +370,6 @@ if (ENABLE_FILECONV)
                         ${ROOT_LIBRARIES}
                         ${NETCDF_LIBRARIES}       # only for static link
                         ${BACKWARD_LIBRARIES}
-                        ${BACKWARD_STATIC_LIBRARIES}
                         ${OMEGA_H_LIBRARIES})
 
   # Add custom dependencies for FileConv's main Charm++ module
