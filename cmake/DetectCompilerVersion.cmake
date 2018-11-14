@@ -6,7 +6,12 @@
 #
 ################################################################################
 
-set(COMPILERS C CXX Fortran)
+set(COMPILERS C CXX)
+
+if (CMAKE_Fortran_COMPILER)
+  set(APPEND COMPILERS "Fortran")
+endif()
+
 foreach(comp  ${COMPILERS})
   string(REGEX MATCH "([0-9]*)\\.([0-9]*)\\.([0-9]*)" major ${CMAKE_${comp}_COMPILER_VERSION})
   set(CMAKE_${comp}_COMPILER_MAJOR ${CMAKE_MATCH_1})
