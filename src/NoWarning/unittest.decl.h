@@ -9,6 +9,7 @@
 #define nowarning_unittest_decl_h
 
 #include "Macro.h"
+#include "QuinoaConfig.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -23,7 +24,11 @@
   #pragma GCC diagnostic ignored "-Wshadow"
 #endif
 
-#include "../Main/unittest.decl.h"
+#ifdef ENABLE_INCITER
+  #include "../Main/unittestinciter.decl.h"
+#else
+  #include "../Main/unittest.decl.h"
+#endif
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

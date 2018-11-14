@@ -36,11 +36,6 @@
 
 #include "NoWarning/matcg.decl.h"
 
-namespace tk {
-  class ExodusIIMeshWriter;
-  class RootMeshWriter;
-}
-
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;

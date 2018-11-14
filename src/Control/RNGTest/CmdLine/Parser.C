@@ -105,6 +105,7 @@ CmdLineParser::CmdLineParser( int argc,
     print.helpkw< tk::QUIET >( tk::rngtest_executable(), helpkw );
 
   // Immediately exit if any help was output or was called without any argument
+  // with zero exit code
   if (argc == 1 || helpcmd || helpctr || !helpkw.keyword.empty()) CkExit();
 
   // Make sure mandatory arguments are set

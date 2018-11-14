@@ -1,4 +1,8 @@
+#include <stddef.h>
+#include <sstream>
+
 #include "util.h"
+#include "AMR/AMR_types.h"
 
 namespace AMR {
     namespace util {

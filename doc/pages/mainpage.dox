@@ -15,11 +15,11 @@ overlap_ of parallel computation, communication, input, and output. Then the
 runtime system _dynamically_ and _automatically_ homogenizes computational load
 across the simulation distributed across many computers.
 
-Our ultimate goal is to simulate large, interesting (i.e., complex and
-practically useful) multiphysics problems with a production-quality code that is
-extensible and maintainable, using hardware resources efficiently even for
-problems with _a priori_ unknown and heterogeneous load distribution that can
-also dynamically change in time. Read more at our @ref why page.
+Our ultimate goal is to simulate large and complex engineering multiphysics
+problems with a production-quality code that is extensible and maintainable,
+using hardware resources efficiently, even for problems with _a priori_
+unknown, heterogeneous, and dynamic load distribution.  Read more at our @ref
+why page.
 
 @section mainpage_tools Tools
 
@@ -105,11 +105,12 @@ git_submodules_subtrees.
 6. [Aditya Pakki](https://github.com/adityapakki)
 7. [Bob Bird](https://github.com/rfbird)
 8. [Aditya Pandare](https://github.com/adityakpandare)
+9. [Weizhao Li](https://github.com/WeizhaoLi2018)
 
 @section mainpage_resources Resources
 
-- Releases --- https://github.com/quinoacomputing/quinoa/releases
 - Source --- https://github.com/quinoacomputing/quinoa
+- Releases --- https://github.com/quinoacomputing/quinoa/releases
 - Contributing --- https://www.clahub.com/agreements/quinoacomputing/quinoa
 - License --- https://github.com/quinoacomputing/quinoa/blob/master/LICENSE
 - Third-party libraries and licenses --- https://quinoacomputing.github.io/licenses.html
@@ -121,12 +122,11 @@ git_submodules_subtrees.
 - Papers --- https://quinoacomputing.github.io/papers
 - Roadmap --- https://github.com/quinoacomputing/quinoa/issues
 - Doxygen --- https://quinoacomputing.github.io
-- Gcov --- https://quinoacomputing.github.io/coverage
-- CppCheck --- https://quinoacomputing.github.io/coverage
-- Docker --- https://hub.docker.com/r/quinoacomputing
-- Travis --- https://travis-ci.org/quinoacomputing/quinoa
+- Coverage --- https://quinoacomputing.github.io/coverage
 - Codecov --- https://codecov.io/gh/quinoacomputing/quinoa/commits
 - Sonarqube --- https://sonarqube.com/organizations/quinoacomputing
+- Docker --- https://hub.docker.com/r/quinoacomputing/quinoa
+- Travis --- https://travis-ci.org/quinoacomputing/quinoa/builds
 - Analytics --- http://www.openhub.net/p/quinoacomputing
 - Cite --- https://zenodo.org/badge/latestdoi/38454430
 

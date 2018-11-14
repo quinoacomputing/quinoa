@@ -115,8 +115,7 @@ class CompFlow {
                    g_inputdeck.get< tag::discr, tag::flux >() ) ),
       m_bcdir( config< tag::bcdir >( c ) ),
       m_bcsym( config< tag::bcsym >( c ) ),
-      m_bcextrapolate( config< tag::bcextrapolate >( c ) ),
-      m_ndof( g_inputdeck.get< tag::discr, tag::ndof >() )
+      m_bcextrapolate( config< tag::bcextrapolate >( c ) )
       //ErrChk( !m_bcdir.empty() || !m_bcsym.empty() || !m_bcextrapolate.empty(),
       //        "Boundary conditions not set in control file for DG CompFlow" );
     {}
@@ -132,10 +131,11 @@ class CompFlow {
                      tk::Fields& unk,
                      tk::real t ) const
     {
-      if (m_ndof == 1)
-        initializep0( L, inpoel, coord, unk, t );
-      else if (m_ndof == 4)
-        initializep1( L, inpoel, coord, unk, t );
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      if (ndof == 1)
+        initializeP0( L, inpoel, coord, unk, t );
+      else if (ndof == 4)
+        initializeP1( L, inpoel, coord, unk, t );
       else Throw( "DGCompFlow::initialize() not defined" );
     }
 
@@ -146,23 +146,24 @@ class CompFlow {
     {
       Assert( geoElem.nunk() == l.nunk(), "Size mismatch" );
       const auto nelem = geoElem.nunk();
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
-	  // Compute LHS for DG(P0)
+      // Compute LHS for DG(P0)
       for (std::size_t e=0; e<nelem; ++e)
         for (ncomp_t c=0; c<5; ++c)
-          l(e, c*m_ndof, m_offset) = geoElem(e,0,0);
+          l(e, c*ndof, m_offset) = geoElem(e,0,0);
 
       // Augment LHS for DG(P1)
-      if (m_ndof > 1){
+      if (ndof > 1){
         for (std::size_t e=0; e<nelem; ++e) {
           for (ncomp_t c=0; c<5; ++c) {
-            const auto mark = c * m_ndof;
+            const auto mark = c * ndof;
             l(e, mark+1, m_offset) = geoElem(e,0,0) / 10.0;
             l(e, mark+2, m_offset) = geoElem(e,0,0) * 3.0/10.0;
             l(e, mark+3, m_offset) = geoElem(e,0,0) * 3.0/5.0;
           }
-	   	}
-	  }
+        }
+      }
     }
 
     //! Compute right hand side
@@ -184,12 +185,14 @@ class CompFlow {
               const tk::Fields& U,
               tk::Fields& limFunc,
               tk::Fields& R ) const
-	{
+    {
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
-      Assert( U.nprop() == m_ndof*5 && R.nprop() == m_ndof*5,
+      Assert( U.nprop() == ndof*5 && R.nprop() == ndof*5,
               "Number of components in solution and right-hand side vector "
-              "must equal "+ std::to_string(m_ndof*5) );
+              "must equal "+ std::to_string(ndof*5) );
       Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
               "size" );
 
@@ -202,17 +205,16 @@ class CompFlow {
       // set rhs to zero
       R.fill(0.0);
 
-      if (m_ndof == 1) {  // DG(P0)
+      if (ndof == 1) {  // DG(P0)
         // compute internal surface flux integrals
         surfIntP0( fd, geoFace, U, R );
-		// compute source term intehrals
-		srcIntP0( t, geoElem, R);
+        // compute source term intehrals
+        srcIntP0( t, geoElem, R);
         // compute boundary surface flux integrals
         bndInt< Dir >( m_bcdir, fd, geoFace, t, U, R );
         bndInt< Sym >( m_bcsym, fd, geoFace, t, U, R );
         bndInt< Extrapolate >( m_bcextrapolate, fd, geoFace, t, U, R );
-      } else if (m_ndof == 4) {  // DG(P1)
-
+      } else if (ndof == 4) {  // DG(P1)
         // compute internal surface flux integrals
         surfIntP1( inpoel, coord, fd, geoFace, U, limFunc, R );
         // compute source term intehrals
@@ -227,9 +229,9 @@ class CompFlow {
         bndIntP1< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, inpoel,
                                  inpofa, coord, t, U, limFunc, R );
       } else
-        Throw( "dg::Transport::rhs() not defined for NDOF=" +
-               std::to_string(m_ndof) );
-      }
+        Throw( "dg::Compflow::rhs() not defined for NDOF=" +
+               std::to_string(ndof) );
+    }
 
     //! Compute the minimum time step size
     //! \param[in] U Solution vector at recent time step
@@ -244,7 +246,9 @@ class CompFlow {
                  const tk::Fields& limFunc,
                  const tk::Fields& U ) const
     {
-      tk::real g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const tk::real g =
+        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
 
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();
@@ -344,8 +348,8 @@ class CompFlow {
           // left element
           for (ncomp_t c=0; c<5; ++c)
           {
-            auto mark = c*m_ndof;
-            auto lmark = c*(m_ndof-1);
+            auto mark = c*ndof;
+            auto lmark = c*(ndof-1);
             ugp[0].push_back(  U(el, mark,   m_offset)
                              + limFunc(el, lmark+0, 0) * U(el, mark+1, m_offset) * B2l
                              + limFunc(el, lmark+1, 0) * U(el, mark+2, m_offset) * B3l
@@ -357,7 +361,7 @@ class CompFlow {
           v = ugp[0][2]/rho;
           w = ugp[0][3]/rho;
           rhoE = ugp[0][4];
-          p = (g-1.0)*(rhoE - rho*(u*u + v*v + w*w)/2.0); 
+          p = (g-1.0)*(rhoE - rho*(u*u + v*v + w*w)/2.0);
           p = std::max(p, 1.0e-12);
 
           a = std::sqrt(g * p / rho);
@@ -403,8 +407,8 @@ class CompFlow {
 
             for (ncomp_t c=0; c<5; ++c)
             {
-              auto mark = c*m_ndof;
-              auto lmark = c*(m_ndof-1);
+              auto mark = c*ndof;
+              auto lmark = c*(ndof-1);
               ugp[1].push_back(  U(eR, mark,   m_offset)
                                + limFunc(eR, lmark+0, 0) * U(eR, mark+1, m_offset) * B2r
                                + limFunc(eR, lmark+1, 0) * U(eR, mark+2, m_offset) * B3r
@@ -416,7 +420,7 @@ class CompFlow {
             v = ugp[1][2]/rho;
             w = ugp[1][3]/rho;
             rhoE = ugp[1][4];
-            p = (g-1.0)*(rhoE - rho*(u*u + v*v + w*w)/2.0); 
+            p = (g-1.0)*(rhoE - rho*(u*u + v*v + w*w)/2.0);
             p = std::max(p, 1.0e-12);
 
             a = std::sqrt(g * p / rho);
@@ -507,7 +511,9 @@ class CompFlow {
                    const tk::Fields& limFunc,
                    const tk::Fields& U ) const
     {
-      tk::real g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const tk::real g =
+        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
 
       const auto& cx = coord[0];
       const auto& cy = coord[1];
@@ -562,11 +568,11 @@ class CompFlow {
 
           for (ncomp_t c=0; c<5; ++c)
           {
-            if (m_ndof == 1) {
+            if (ndof == 1) {
               ugp[c] =  U(e, c, m_offset);
             } else {
-              auto mark = c*m_ndof;
-              auto lmark = c*(m_ndof-1);
+              auto mark = c*ndof;
+              auto lmark = c*(ndof-1);
               ugp[c] =  U(e, mark,   m_offset)
                       + limFunc(e, lmark+0, 0) * U(e, mark+1, m_offset) * B2
                       + limFunc(e, lmark+1, 0) * U(e, mark+2, m_offset) * B3
@@ -626,14 +632,13 @@ class CompFlow {
     const std::vector< bcconf_t > m_bcsym;
     //! Extrapolation BC configuration
     const std::vector< bcconf_t > m_bcextrapolate;
-    const std::size_t m_ndof;
 
     //! Initalize the compressible flow equations using problem policy
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
-    void initializep0( const tk::Fields&,
+    void initializeP0( const tk::Fields&,
                        const std::vector< std::size_t >& inpoel,
                        const tk::UnsMesh::Coords& coord,
                        tk::Fields& unk,
@@ -656,26 +661,29 @@ class CompFlow {
         // evaluate solution at centroid
         const auto s = Problem::solution( 0, xcc, ycc, zcc, t );
         // initialize unknown vector with solution at centroids
-        unk(e, 0*m_ndof, m_offset) = s[0];
-        unk(e, 1*m_ndof, m_offset) = s[1];
-        unk(e, 2*m_ndof, m_offset) = s[2];
-        unk(e, 3*m_ndof, m_offset) = s[3];
-        unk(e, 4*m_ndof, m_offset) = s[4];
+        unk(e, 0, m_offset) = s[0];
+        unk(e, 1, m_offset) = s[1];
+        unk(e, 2, m_offset) = s[2];
+        unk(e, 3, m_offset) = s[3];
+        unk(e, 4, m_offset) = s[4];
       } 
     }
 
     //! Initalize the compressible flow equations, prepare for time integration
+    //! \param[in,out] L Block diagonal mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
-    void initializep1( const tk::Fields& lhs,
+    void initializeP1( const tk::Fields& L,
                        const std::vector< std::size_t >& inpoel,
                        const tk::UnsMesh::Coords& coord,
                        tk::Fields& unk,
                        tk::real t ) const
     {
-      Assert( lhs.nunk() == unk.nunk(), "Size mismatch" );
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+
+      Assert( L.nunk() == unk.nunk(), "Size mismatch" );
       std::size_t nelem = unk.nunk();
 
       // right hand side vector
@@ -698,7 +706,7 @@ class CompFlow {
 
       for (std::size_t e=0; e<nelem; ++e)
       {
-        auto vole = lhs(e, 0, m_offset);
+        auto vole = L(e, 0, m_offset);
 
         auto x1 = cx[ inpoel[4*e]   ];
         auto y1 = cy[ inpoel[4*e]   ];
@@ -739,21 +747,21 @@ class CompFlow {
           const auto s = Problem::solution( 0, xgp, ygp, zgp, t );
           for (ncomp_t c=0; c<5; ++c)
           {
-            auto mark = c*m_ndof;
+            auto mark = c*ndof;
             R[mark  ] += wt * s[c];
             R[mark+1] += wt * s[c]*B2;
             R[mark+2] += wt * s[c]*B3;
             R[mark+3] += wt * s[c]*B4;
           }
-		}
+        }
 
         for (ncomp_t c=0; c<5; ++c)
         {
-          auto mark = c*m_ndof;
-          unk(e, mark,   m_offset) = R[mark]   / lhs(e, mark,   m_offset);
-          unk(e, mark+1, m_offset) = 0.0; //R[mark+1] / lhs(e, mark+1, m_offset);
-          unk(e, mark+2, m_offset) = 0.0; //R[mark+2] / lhs(e, mark+2, m_offset);
-          unk(e, mark+3, m_offset) = 0.0; //R[mark+3] / lhs(e, mark+3, m_offset);
+          auto mark = c*ndof;
+          unk(e, mark,   m_offset) = R[mark]   / L(e, mark,   m_offset);
+          unk(e, mark+1, m_offset) = R[mark+1] / L(e, mark+1, m_offset);
+          unk(e, mark+2, m_offset) = R[mark+2] / L(e, mark+2, m_offset);
+          unk(e, mark+3, m_offset) = R[mark+3] / L(e, mark+3, m_offset);
         }
       }
     }
@@ -779,17 +787,15 @@ class CompFlow {
         std::array< std::vector< tk::real >, 2 > ugp;
         for (ncomp_t c=0; c<5; ++c)
         { 
-          auto mark = c*m_ndof;
-          ugp[0].push_back( U(el, mark, m_offset) );
-          ugp[1].push_back( U(er, mark, m_offset) );
+          ugp[0].push_back( U(el, c, m_offset) );
+          ugp[1].push_back( U(er, c, m_offset) );
         }
 
           auto flux = m_riemann.flux( f, geoFace, {{ugp[0], ugp[1]}} );
 
         for (ncomp_t c=0; c<5; ++c) {
-          auto mark = c*m_ndof;
-          R(el, mark, m_offset) -= farea * flux[c];
-          R(er, mark, m_offset) += farea * flux[c];
+          R(el, c, m_offset) -= farea * flux[c];
+          R(er, c, m_offset) += farea * flux[c];
         }
       }
     }
@@ -810,6 +816,7 @@ class CompFlow {
                     const tk::Fields& limFunc,
                     tk::Fields& R ) const
     {
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();
 
@@ -941,8 +948,8 @@ class CompFlow {
 
           for (ncomp_t c=0; c<5; ++c)
           {
-            auto mark = c*m_ndof;
-            auto lmark = c*(m_ndof-1);
+            auto mark = c*ndof;
+            auto lmark = c*(ndof-1);
             ugp[0].push_back(  U(el, mark,   m_offset)
                              + limFunc(el, lmark+0, 0) * U(el, mark+1, m_offset) * B2l
                              + limFunc(el, lmark+1, 0) * U(el, mark+2, m_offset) * B3l
@@ -957,7 +964,7 @@ class CompFlow {
 
           for (ncomp_t c=0; c<5; ++c)
           {
-            auto mark = c*m_ndof;
+            auto mark = c*ndof;
 
             R(el, mark,   m_offset) -= wt * flux[c];
             R(el, mark+1, m_offset) -= wt * flux[c] * B2l;
@@ -973,40 +980,38 @@ class CompFlow {
       }
     }
 
-	//! Compute source term integrals for DG(P0)
+    //! Compute source term integrals for DG(P0)
     //! \param[in] t Physical time
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] R Right-hand side vector computed
-	void srcIntP0( tk::real t,
-              	   const tk::Fields& geoElem,
-              	   tk::Fields& R) const
-	{
-      //const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+    void srcIntP0( tk::real t,
+                   const tk::Fields& geoElem,
+                   tk::Fields& R) const
+    {
       for (std::size_t e=0; e<geoElem.nunk(); ++e) {
         auto vole = geoElem(e,0,0);
         auto xc = geoElem(e,1,0);
         auto yc = geoElem(e,2,0);
         auto zc = geoElem(e,3,0);
         auto s = Problem::src(0, xc, yc, zc, t);
-        for (ncomp_t c=0; c<5; ++c){
-		  auto mark = c*m_ndof;
-          R(e, mark, m_offset) += vole * s[c];
-		}
+        for (ncomp_t c=0; c<5; ++c)
+          R(e, c, m_offset) += vole * s[c];
       }
-	}
+    }
 
     //! Compute source term integrals for DG(P1)
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] R Right-hand side vector computed
-	void srcIntP1( tk::real t,
-              	   const std::vector< std::size_t >& inpoel,
-              	   const tk::UnsMesh::Coords& coord,
+    void srcIntP1( tk::real t,
+                   const std::vector< std::size_t >& inpoel,
+                   const tk::UnsMesh::Coords& coord,
                    const tk::Fields& geoElem,
-              	   tk::Fields& R) const
-	{
-      //const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+                   tk::Fields& R) const
+    {
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+
       // Number of integration points
       constexpr std::size_t NG = 5;
 
@@ -1058,18 +1063,18 @@ class CompFlow {
 
           auto s = Problem::src(0, xgp, ygp, zgp, t);
           for (ncomp_t c=0; c<5; ++c)
-		  {
-			auto mark = c*m_ndof;
+          {
+            auto mark = c*ndof;
             R(e, mark, m_offset)   += wt * s[c];
             R(e, mark+1, m_offset) += wt * s[c] * B2;
             R(e, mark+2, m_offset) += wt * s[c] * B3;
             R(e, mark+3, m_offset) += wt * s[c] * B4;
-		  }
+          }
         }
       }
-	}
+    }
 
-	//! Compute volume integrals for DG(P1)
+    //! Compute volume integrals for DG(P1)
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] geoElem Element geometry array
@@ -1083,6 +1088,9 @@ class CompFlow {
                    const tk::Fields& limFunc,
                    tk::Fields& R ) const
     {
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
+
       // Number of integration points
       constexpr std::size_t NG = 5;
 
@@ -1185,8 +1193,6 @@ class CompFlow {
           std::vector< tk::real > ugp;
           std::array< std::vector< tk::real >, 3 > flux;
 
-          tk::real g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
-
           ugp.resize(5,0);
 
           flux[0].resize(5,0);
@@ -1201,8 +1207,8 @@ class CompFlow {
 
           for (ncomp_t c=0; c<5; ++c)
           {
-            auto mark = c*m_ndof;
-            auto lmark = c*(m_ndof-1);
+            auto mark = c*ndof;
+            auto lmark = c*(ndof-1);
             ugp[c] =  U(e, mark,   m_offset)
                     + limFunc(e, lmark+0, 0) * U(e, mark+1, m_offset) * B2
                     + limFunc(e, lmark+1, 0) * U(e, mark+2, m_offset) * B3
@@ -1213,7 +1219,6 @@ class CompFlow {
           auto v = ugp[2] / ugp[0];
           auto w = ugp[3] / ugp[0];
           auto p = (g - 1) * (ugp[4] - 0.5 * ugp[0] * (u*u + v*v + w*w) );
-          p = std::max(p, 1.0e-12);
 
           flux[0][0] = ugp[1];
           flux[0][1] = ugp[1] * u + p;
@@ -1235,7 +1240,7 @@ class CompFlow {
 
           for (ncomp_t c=0; c<5; ++c)
           {
-            auto mark = c*m_ndof;
+            auto mark = c*ndof;
             R(e, mark+1, m_offset) += wt * (flux[0][c]*db2dx + flux[1][c]*db2dy + flux[2][c]*db2dz);
             R(e, mark+2, m_offset) += wt * (flux[0][c]*db3dx + flux[1][c]*db3dy + flux[2][c]*db3dz);
             R(e, mark+3, m_offset) += wt * (flux[0][c]*db4dx + flux[1][c]*db4dy + flux[2][c]*db4dz);
@@ -1248,12 +1253,11 @@ class CompFlow {
     //!   at Dirichlet boundaries
     struct Dir {
       static std::array< std::vector< tk::real >, 2 >
-      LR( const std::vector< tk::real >& U,
+      LR( const std::vector< tk::real >& ul,
           tk::real xc, tk::real yc, tk::real zc,
           std::array< tk::real, 3 > /*fn*/,
           tk::real t ) {
-        auto ul = U;
-        auto ur = ul;
+        std::vector< tk::real > ur(5);
         const auto urbc = Problem::solution(0, xc, yc, zc, t);
         for (ncomp_t c=0; c<5; ++c)
           ur[c] = urbc[c];
@@ -1265,12 +1269,11 @@ class CompFlow {
     //!   at symmetric boundaries
     struct Sym {
       static std::array< std::vector< tk::real >, 2 >
-      LR( const std::vector< tk::real >& U,
+      LR( const std::vector< tk::real >& ul,
           tk::real /*xc*/, tk::real /*yc*/, tk::real /*zc*/,
           std::array< tk::real, 3 > fn,
           tk::real /*t*/ ) {
-        auto ul = U;
-        auto ur = ul;
+        std::vector< tk::real > ur(5);
         // Internal cell velocity components
         auto v1l = ul[1]/ul[0];
         auto v2l = ul[2]/ul[0];
@@ -1295,11 +1298,11 @@ class CompFlow {
     //!   at extrapolation boundaries
     struct Extrapolate {
       static std::array< std::vector< tk::real >, 2 >
-      LR( const std::vector< tk::real >& U,
+      LR( const std::vector< tk::real >& ul,
           tk::real /*xc*/, tk::real /*yc*/, tk::real /*zc*/,
           std::array< tk::real, 3 > /*fn*/,
           tk::real /*t*/ ) {
-        return {{ U, U }};
+        return {{ ul, ul }};
       }
     };
 
@@ -1333,14 +1336,13 @@ class CompFlow {
 
         std::vector< tk::real > ugp;
         for (ncomp_t c=0; c<5; ++c)
-          ugp.push_back( U(el, c*m_ndof, m_offset) );
+          ugp.push_back( U(el, c, m_offset) );
 
         //--- fluxes
         auto flux = m_riemann.flux( f, geoFace, State::LR(ugp,xc,yc,zc,fn,t) );
-        //auto flux = m_riemann.flux( f, geoFace, State::LR(U.extract(el),xc,yc,zc,fn,t) );
 
         for (ncomp_t c=0; c<5; ++c)
-          R(el, c*m_ndof, m_offset) -= farea * flux[c];
+          R(el, c, m_offset) -= farea * flux[c];
       }
     }
 
@@ -1396,6 +1398,8 @@ class CompFlow {
                     const tk::Fields& limFunc,
                     tk::Fields& R ) const
       {
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+
       // Number of integration points
       constexpr std::size_t NG = 3;
 
@@ -1414,12 +1418,12 @@ class CompFlow {
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
         Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
         
-		std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
+        std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
                                         geoFace(f,2,0),
                                         geoFace(f,3,0) }};
 
         // nodal coordinates of the left element
-		std::array< tk::real, 3 >
+        std::array< tk::real, 3 >
           p1_l{{ cx[ inpoel[4*el] ],
                  cy[ inpoel[4*el] ],
                  cz[ inpoel[4*el] ] }},
@@ -1485,8 +1489,8 @@ class CompFlow {
 
           for (ncomp_t c=0; c<5; ++c)
           {
-            auto mark = c*m_ndof;
-            auto lmark = c*(m_ndof-1);
+            auto mark = c*ndof;
+            auto lmark = c*(ndof-1);
             ugp.push_back (  U(el, mark,   m_offset)
                            + limFunc(el, lmark+0, 0) * U(el, mark+1, m_offset) * B2l
                            + limFunc(el, lmark+1, 0) * U(el, mark+2, m_offset) * B3l
@@ -1498,7 +1502,7 @@ class CompFlow {
 
           for (ncomp_t c=0; c<5; ++c)
           {
-            auto mark = c*m_ndof;
+            auto mark = c*ndof;
             R(el, mark,   m_offset) -= wt * flux[c];
             R(el, mark+1, m_offset) -= wt * flux[c] * B2l;
             R(el, mark+2, m_offset) -= wt * flux[c] * B3l;

@@ -9,6 +9,8 @@
 
 module tutsuite {
 
+  include "UnitTest/CmdLine/CmdLine.h";
+
   // Note that chare TUTSuite depends on chare TUTTest and in turn TUTTest
   // depends on TUTSuite (see also the interface file tuttest.ci). This is a
   // mutual dependency and it is made to work with one of the chares (TUTTest)
@@ -22,14 +24,11 @@ module tutsuite {
   // this is not included, Charm++ generates bad code and valgrind detects
   // memory errors as chares are fired up from unit tests inside TUTSuite.
   extern module migrated_base;
-  extern module migrated_inciter;
   extern module charmchild;
   extern module charmtimer;
   extern module linearmap;
   extern module unsmeshmap;
   extern module testarray;
-
-  include "UnitTest/CmdLine/CmdLine.h";
 
   namespace unittest {
 

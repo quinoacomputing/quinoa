@@ -4681,40 +4681,50 @@ struct matcg_info {
   static std::string name()
   { return "consistent-mass continuous Galerkin + Lax-Wendroff"; }
   static std::string shortDescription() { return "Select continuous Galerkin "
-    "discretization + Lax Wendroff with a matrix solver"; }
+    "+ Lax Wendroff with consistent-mass matrix LHS"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the consistent-mass continuous Galerkin
-    (CG) finite element spatial discretiztaion used in inciter. CG is combined
-    with a Lax-Wendroff scheme for time discretization and flux-corrected
-    transport (FCT) for treating discontinuous solutions. This option selects
-    the scheme that stores the left-hand side matrix as a compressed sparse row
-    (CSR) storage consistent-mass matrix and uses a linear solver. See
-    Control/Inciter/Options/Scheme.h for other valid options.)"; }
+    R"(This keyword is used to select the consistent-mass matrix continuous
+    Galerkin (CG) finite element spatial discretiztaion used in inciter. CG is
+    combined with a Lax-Wendroff scheme for time discretization and
+    flux-corrected transport (FCT) for treating discontinuous solutions. This
+    option selects the scheme that stores the left-hand side matrix as a
+    compressed sparse row (CSR) storage consistent-mass matrix and uses a linear
+    solver. See Control/Inciter/Options/Scheme.h for other valid options.)"; }
 };
 using matcg = keyword< matcg_info, TAOCPP_PEGTL_STRING("matcg") >;
 
 struct diagcg_info {
   static std::string name()
-  { return "lumped-mass continuous Galerkin + Lax-Wendroff"; }
+  { return "lumped-mass matrix continuous Galerkin + Lax-Wendroff"; }
   static std::string shortDescription() { return "Select continuous Galerkin "
-    "discretization + Lax Wendroff with a lumped mass matrix as the left hand "
-    "side matrix"; }
+    "+ Lax Wendroff with a lumped-mass matrix LHS"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the lumped-mass continuous Galerkin (CG)
-    finite element spatial discretiztaion used in inciter. CG is combined with a
-    Lax-Wendroff scheme for time discretization and flux-corrected transport
-    (FCT) for treating discontinuous solutions. This option selects the scheme
-    that stores the left-hand side matrix lumped, i.e., only the diagonal
-    elements stored and thus does not require a linear solver. See
+    R"(This keyword is used to select the lumped-mass matrix continuous Galerkin
+    (CG) finite element spatial discretiztaion used in inciter. CG is combined
+    with a Lax-Wendroff scheme for time discretization and flux-corrected
+    transport (FCT) for treating discontinuous solutions. This option selects
+    the scheme that stores the left-hand side matrix lumped, i.e., only the
+    diagonal elements stored and thus does not require a linear solver. See
     Control/Inciter/Options/Scheme.h for other valid options.)"; }
 };
 using diagcg = keyword< diagcg_info, TAOCPP_PEGTL_STRING("diagcg") >;
 
+struct alecg_info {
+  static std::string name() { return "ALE-CG with RK"; }
+  static std::string shortDescription() { return "Select continuous Galerkin "
+    "with ALE + Runge-Kutta"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the continuous Galerkin finite element
+    scheme in the arbitrary Lagrangian-Eulerian (ALE) reference frame combined
+    with Runge-Kutta (RK) time stepping. See Control/Inciter/Options/Scheme.h
+    for other valid options.)"; }
+};
+using alecg = keyword< alecg_info, TAOCPP_PEGTL_STRING("alecg") >;
+
 struct dg_info {
   static std::string name() { return "DG(P0) + RK"; }
   static std::string shortDescription() { return
-    "Select 1st-order accurate discontinuous Galerkin discretization + "
-    "Runge-Kutta"; }
+    "Select 1st-order discontinuous Galerkin discretization + Runge-Kutta"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the first-order accurate discontinuous
     Galerkin, DG(P0), spatial discretiztaion used in Inciter. As this is first
@@ -4728,8 +4738,7 @@ using dg = keyword< dg_info, TAOCPP_PEGTL_STRING("dg") >;
 struct dgp1_info {
   static std::string name() { return "DG(P1) + RK"; }
   static std::string shortDescription() { return
-    "Select 2nd-order accurate discontinuous Galerkin discretization + "
-    "Runge-Kutta"; }
+    "Select 2nd-order discontinuous Galerkin discretization + Runge-Kutta"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the second-order accurate discontinuous
     Galerkin, DG(P1), spatial discretiztaion used in Inciter.Selecting this

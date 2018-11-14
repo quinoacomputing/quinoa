@@ -1,5 +1,20 @@
 #include "mesh_adapter.h"
 
+#include <assert.h>                        // for assert
+#include <cstddef>                         // for size_t
+#include <iostream>                        // for operator<<, endl, basic_os...
+#include <set>                             // for set
+#include <utility>                         // for pair
+#include "AMR/AMR_types.h"                 // for Edge_Refinement, edge_list_t
+#include "AMR/Loggers.h"                   // for trace_out
+#include "AMR/Refinement_State.h"          // for Refinement_Case, Refinemen...
+#include "AMR/edge.h"                      // for operator<<, edge_t
+#include "AMR/edge_store.h"                // for edge_store_t
+#include "AMR/marked_refinements_store.h"  // for marked_refinements_store_t
+#include "AMR/node_connectivity.h"         // for node_connectivity_t
+#include "AMR/refinement.h"                // for refinement_t
+#include "AMR/tet_store.h"                 // for tet_store_t
+
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wunreachable-code"

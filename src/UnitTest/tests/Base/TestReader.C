@@ -11,6 +11,7 @@
 
 #include "TUTConfig.h"
 #include "Reader.h"
+#include "Exception.h"
 
 namespace unittest {
 
