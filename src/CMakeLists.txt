@@ -99,9 +99,10 @@ if (EXISTS ${TPL_DIR}/include)
   message(STATUS "Third-party library dir: " ${TPL_DIR})
 endif()
 
-# Detect gcc compiler version
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  include(DetectCXXversion)
+# Detect compiler version
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
+    "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+  include(DetectCompilerVersion)
 endif()
 
 # Include third-party libraries configuration
