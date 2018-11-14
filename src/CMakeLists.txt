@@ -100,8 +100,8 @@ if (EXISTS ${TPL_DIR}/include)
 endif()
 
 # Detect compiler version
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
-    "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
+    CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   include(DetectCompilerVersion)
 endif()
 
@@ -213,7 +213,7 @@ macro (add_c_compiler_flag flag)
 endmacro (add_c_compiler_flag)
 
 # Compiler-specific settings
-if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
 
   # Include function that allows to set standard C++ library
   include(libstdcxx)
