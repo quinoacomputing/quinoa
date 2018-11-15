@@ -1243,11 +1243,17 @@ DG::eval()
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
 
+  tk::real fdt = 0.0;
+
   // If Runge-Kutta stages not complete, continue with dt(), otherwise assess
   // computation completion criteria
   if (m_stage < 3) {
 
-    advance( 0.0 );
+    // The following contribute call serves as a global-synchonization which
+    // ensures that all chares have completed the 3rd RK stage solution update
+    // before proceeding to DG::advance() to communicate ghost-cell solutions
+    contribute( sizeof(tk::real), &fdt, CkReduction::nop,
+                CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
 
   } else {
 
@@ -1261,7 +1267,8 @@ DG::eval()
     // If neither max iterations nor max time reached, continue, otherwise finish
     if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
       AtSync();   // Migrate here if needed
-      advance( 0.0 );
+      contribute( sizeof(tk::real), &fdt, CkReduction::nop,
+                  CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
     } else {
       contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));
     }
