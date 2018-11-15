@@ -48,17 +48,19 @@ if(NOT BUILD_SHARED_LIBS)
   # is detected in src/CMakeLists.txt and the architecture is detected by
   # including GNUInstallDirs in cmake/TPLs.cmake.
   find_library(GFORTRAN_LIBRARY NAMES libgfortran.a
-               HINTS ${LAPACKE_ROOT}/lib
-                     /usr/lib/gcc/${CMAKE_LIBRARY_ARCHITECTURE}/${CMAKE_Fortran_COMPILER_MAJOR}
-                     $ENV{LAPACKE_ROOT}
-                     $ENV{LAPACKE_ROOT}/lib
-               PATH_SUFFIXES lapack lapacke)
+    HINTS ${LAPACKE_ROOT}/lib
+      /usr/lib/gcc/${CMAKE_LIBRARY_ARCHITECTURE}/${CMAKE_Fortran_COMPILER_MAJOR}
+      /usr/lib/gcc/${CMAKE_LIBRARY_ARCHITECTURE}/${CMAKE_CXX_COMPILER_MAJOR}
+      $ENV{LAPACKE_ROOT}
+      $ENV{LAPACKE_ROOT}/lib
+    PATH_SUFFIXES lapack lapacke)
   if(NOT ARCH MATCHES "ppc64")
     find_library(QUADMATH_LIBRARY NAMES libquadmath.a
-                 HINTS ${LAPACKE_ROOT}/lib
-                       /usr/lib/gcc/${CMAKE_LIBRARY_ARCHITECTURE}/${CMAKE_Fortran_COMPILER_MAJOR}
-                       $ENV{LAPACKE_ROOT}/lib
-                 PATH_SUFFIXES lapack lapacke)
+      HINTS ${LAPACKE_ROOT}/lib
+      /usr/lib/gcc/${CMAKE_LIBRARY_ARCHITECTURE}/${CMAKE_Fortran_COMPILER_MAJOR}
+      /usr/lib/gcc/${CMAKE_LIBRARY_ARCHITECTURE}/${CMAKE_CXX_COMPILER_MAJOR}
+      $ENV{LAPACKE_ROOT}/lib
+      PATH_SUFFIXES lapack lapacke)
   endif()
 else()
   find_library(LAPACKE_LIBRARY NAMES lapacke reflapacke
