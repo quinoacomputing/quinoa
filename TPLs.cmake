@@ -133,6 +133,8 @@ set(BACKWARD_ROOT ${TPL_DIR}) # prefer ours
 find_package(BackwardCpp)
 if(BACKWARDCPP_FOUND)
   set(HAS_BACKWARD true)  # will become compiler define in Main/QuinoaConfig.h
+else()
+  set(BACKWARD_INCLUDE_DIRS "")
 endif()
 
 #### Configure Omega_h
