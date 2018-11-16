@@ -1284,6 +1284,35 @@ struct jointgaussian_info {
 using jointgaussian =
   keyword< jointgaussian_info, TAOCPP_PEGTL_STRING("jointgaussian") >;
 
+struct jointcorrgaussian_info {
+  using code = Code< C >;
+  static std::string name() { return "Correlated Gaussian"; }
+  static std::string shortDescription() { return
+    "Select the joint correlated Gaussian initialization policy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the joint correlated Gaussian
+    initialization policy. The initialization policy is used to specify how the
+    initial conditions are
+    set at t = 0 before time-integration. Example: "init zero", which selects
+    zero initialization policy, which puts zeros in memory. Note that this
+    option may behave differently depending on the particular equation or
+    physical model. For an example, see tk::InitPolicies in
+    DiffEq/InitPolicy.h for valid options.) The joint correlated Gaussian
+    initialization policy can be used to prescribe a joint correlated Gaussian
+    on the sample space with a given covariance matrix. Example:
+     "init jointcorrgaussian
+      icjointgaussian
+        mean 0.0 0.5 1.0 end
+        cov
+          4.0  2.5   1.1
+              32.0   5.6
+                    23.0
+        end
+      end")"; }
+};
+using jointcorrgaussian =
+  keyword< jointcorrgaussian_info, TAOCPP_PEGTL_STRING("jointcorrgaussian") >;
+
 struct jointbeta_info {
   using code = Code< B >;
   static std::string name() { return "beta"; }
@@ -1351,6 +1380,7 @@ struct init_info {
                   + jointdelta::string() + "\' | \'"
                   + jointbeta::string() + "\' | \'"
                   + jointgaussian::string() + "\' | \'"
+                  + jointcorrgaussian::string() + "\' | \'"
                   + jointgamma::string() + '\'';
     }
   };
@@ -1999,7 +2029,7 @@ struct sde_sigmasq_info {
   static std::string longDescription() { return
     R"(This keyword is used to specify a vector of real numbers used to
     parameterize a system of stochastic differential equations. Example:
-       "cov
+       "sigmasq
           4.0  2.5   1.1
               32.0   5.6
                     23.0

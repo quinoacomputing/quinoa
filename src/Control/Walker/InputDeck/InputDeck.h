@@ -165,6 +165,7 @@ class InputDeck :
                                      , kw::jointbeta
                                      , kw::jointdelta
                                      , kw::jointgaussian
+                                     , kw::jointcorrgaussian
                                      , kw::icbeta
                                      , kw::betapdf
                                      , kw::sde_c0

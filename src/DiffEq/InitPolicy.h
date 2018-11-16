@@ -175,6 +175,7 @@ struct InitBeta {
 };
 
 //! Gaussian initialization policy: generate samples from a joint Gaussian PDF
+//! \note No correlations supported. For correlations, see jointCorrGaussian
 struct InitGaussian {
 
   //! Initialize particle properties (zero)
@@ -217,6 +218,52 @@ struct InitGaussian {
   static ctr::InitPolicyType type() noexcept
   { return ctr::InitPolicyType::JOINTGAUSSIAN; }
 };
+
+//! \brief Gaussian initialization policy: generate samples from a joint
+//!   correlated Gaussian PDF
+struct InitCorrGaussian {
+
+  //! Initialize particle properties (zero)
+  template< class eq >
+  static void init( const ctr::InputDeck& deck,
+                    const tk::RNG& rng,
+                    int stream,
+                    tk::Particles& particles,
+                    tk::ctr::ncomp_type e,
+                    tk::ctr::ncomp_type ncomp,
+                    tk::ctr::ncomp_type offset )
+  {
+    using ncomp_t = kw::ncomp::info::expect::type;
+
+//     const auto& gaussian =
+//       deck.template get< tag::param, eq, tag::gaussian >().at(e);
+// 
+//     // use only the first ncomp gaussian if there are more than the equation is
+//     // configured for
+//     const ncomp_t size = std::min( ncomp, gaussian.size() );
+// 
+//     for (ncomp_t c=0; c<size; ++c) {
+//       // get vector of gaussian pdf parameters for component c
+//       const auto& gc = gaussian[c];
+// 
+//       for (ncomp_t s=0; s<gc.size(); s+=2) {
+//         // generate Gaussian random numbers for all particles using parameters
+//         for (ncomp_t p=0; p<particles.nunk(); ++p) {
+//           auto& par = particles( p, c, offset );
+//           // sample from Gaussian with zero mean and unit variance
+//           rng.gaussian( stream, 1, &par );
+//           // scale to given mean and variance
+//           par = par * sqrt(gc[s+1]) + gc[s];
+//         }
+//       }
+//     }
+
+  }
+
+  static ctr::InitPolicyType type() noexcept
+  { return ctr::InitPolicyType::JOINTCORRGAUSSIAN; }
+};
+
 
 //! Gamma initialization policy: generate samples from a joint gamma PDF
 struct InitGamma {
@@ -261,7 +308,7 @@ using InitPolicies = brigand::list< InitRaw
                                   , InitDelta
                                   , InitBeta
                                   , InitGaussian
-                                  //, InitJointGaussian
+                                  , InitCorrGaussian
                                   , InitGamma
                                   >;
 
