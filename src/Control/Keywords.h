@@ -1350,6 +1350,7 @@ struct init_info {
                   + zero::string() + "\' | \'"
                   + jointdelta::string() + "\' | \'"
                   + jointbeta::string() + "\' | \'"
+                  + jointgaussian::string() + "\' | \'"
                   + jointgamma::string() + '\'';
     }
   };
@@ -1998,7 +1999,12 @@ struct sde_sigmasq_info {
   static std::string longDescription() { return
     R"(This keyword is used to specify a vector of real numbers used to
     parameterize a system of stochastic differential equations. Example:
-    "sigmasq 5.0 2.0 3.0 end". The length of the vector depends on the
+       "cov
+          4.0  2.5   1.1
+              32.0   5.6
+                    23.0
+        end"
+    The length of the vector depends on the
     particular type of SDE system and is controlled by the preceding keyword
     'ncomp'.)"; }
   struct expect {
@@ -2007,6 +2013,28 @@ struct sde_sigmasq_info {
   };
 };
 using sde_sigmasq = keyword< sde_sigmasq_info, TAOCPP_PEGTL_STRING("sigmasq") >;
+
+struct sde_cov_info {
+  static std::string name() { return "cov"; }
+  static std::string shortDescription() { return
+    R"(Set SDE parameter(s) cov)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of real numbers used to
+    parameterize a system of stochastic differential equations. Example:
+       "cov
+          4.0  2.5   1.1
+              32.0   5.6
+                    23.0
+        end"
+    The length of the vector depends on the
+    particular type of SDE system and is controlled by the preceding keyword
+    'ncomp'.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using sde_cov = keyword< sde_cov_info, TAOCPP_PEGTL_STRING("cov") >;
 
 struct sde_theta_info {
   static std::string name() { return "theta"; }
@@ -2039,6 +2067,22 @@ struct sde_mu_info {
   };
 };
 using sde_mu = keyword< sde_mu_info, TAOCPP_PEGTL_STRING("mu") >;
+
+struct sde_mean_info {
+  static std::string name() { return "mean"; }
+  static std::string shortDescription() { return
+    R"(Set SDE parameter(s) mean)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of real numbers used to
+    parameterize a system of stochastic differential equations. Example:
+    "mean 5.0 2.0 3.0 end". The length of the vector depends on the particular
+    type of SDE system and is controlled by the preceding keyword 'ncomp'.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using sde_mean = keyword< sde_mean_info, TAOCPP_PEGTL_STRING("mean") >;
 
 struct sde_T_info {
   static std::string name() { return "T"; }
@@ -2167,6 +2211,30 @@ struct icgaussian_info {
     keyword jointgaussian and gaussian.)"; }
 };
 using icgaussian = keyword< icgaussian_info, TAOCPP_PEGTL_STRING("icgaussian") >;
+
+struct icjointgaussian_info {
+  static std::string name() { return "icjointgaussian"; }
+  static std::string shortDescription() { return R"(Introduce an
+    icjointgaussian...end block used to configure a joint Gaussian distribution
+    with a covariance matrix)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an icjointgaussian...end block in which
+    a multi-variate joint Gaussian distribution is configured for the
+    jointgaussian initialization policy. Example: "init jointgaussian" - select
+    jointgaussian init-policy, "
+      icjointgaussian
+        mean 0.0 0.5 1.0 end
+        cov
+          4.0  2.5   1.1
+              32.0   5.6
+                    23.0
+        end
+      end" - prescribes a tri-variate joint Gaussian distribution with means
+      0.0, 0.5 and 1.0, and a covariance matrix which must be symmetric positive
+    definite. See also the help on keyword jointgaussian and gaussian.)"; }
+};
+using icjointgaussian =
+  keyword< icjointgaussian_info, TAOCPP_PEGTL_STRING("icjointgaussian") >;
 
 struct gammapdf_info {
   static std::string name() { return "gammapdf"; }

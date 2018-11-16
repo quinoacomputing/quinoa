@@ -261,6 +261,7 @@ using InitPolicies = brigand::list< InitRaw
                                   , InitDelta
                                   , InitBeta
                                   , InitGaussian
+                                  //, InitJointGaussian
                                   , InitGamma
                                   >;
 

@@ -78,6 +78,8 @@ class InputDeck :
                                      , kw::sde_sigmasq
                                      , kw::sde_theta
                                      , kw::sde_mu
+                                     , kw::sde_mean
+                                     , kw::sde_cov
                                      , kw::sde_T
                                      , kw::sde_lambda
                                      , kw::sde_b
@@ -167,6 +169,7 @@ class InputDeck :
                                      , kw::betapdf
                                      , kw::sde_c0
                                      , kw::icgaussian
+                                     , kw::icjointgaussian
                                      , kw::gaussian
                                      , kw::dissipation
                                      , kw::jointgamma
