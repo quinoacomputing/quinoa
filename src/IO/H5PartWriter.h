@@ -13,9 +13,7 @@
 
 #include <vector>
 #include <string>
-#include <memory>
-
-#include "NoWarning/H5Part.h"
+#include <cstdint>
 
 #include "Types.h"
 

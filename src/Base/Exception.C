@@ -7,13 +7,11 @@
 */
 // *****************************************************************************
 
-#include <string>
-#include <sstream>
 #include <type_traits>
 #include <cstdio>
-#include <cstddef>
 #include <cxxabi.h>
 #include <execinfo.h>
+#include <sstream>
 
 #include "QuinoaConfig.h"
 #include "Exception.h"

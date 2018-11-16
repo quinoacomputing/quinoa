@@ -168,8 +168,12 @@ if (ENABLE_UNITTEST)
   # Add custom dependencies for UnitTest's main Charm++ module
   if(ENABLE_INCITER)
     addCharmModule( "unittestinciter" "${UNITTEST_EXECUTABLE}" )
+    add_dependencies( "unittestinciterCharmModule"
+                      "charestatecollectorCharmModule" )
   else()
     addCharmModule( "unittest" "${UNITTEST_EXECUTABLE}" )
+    add_dependencies( "unittestCharmModule"
+                      "charestatecollectorCharmModule" )
   endif()
 
 endif(ENABLE_UNITTEST)
@@ -223,6 +227,8 @@ if (ENABLE_INCITER)
   # Add custom dependencies for Inciter's main Charm++ module
   addCharmModule( "inciter" "${INCITER_EXECUTABLE}" )
 
+  add_dependencies( "inciterCharmModule" "charestatecollectorCharmModule" )
+
 endif(ENABLE_INCITER)
 
 ### RNGTest executable #########################################################
@@ -256,6 +262,8 @@ if (ENABLE_RNGTEST)
 
   # Add custom dependencies for RNGTest's main Charm++ module
   addCharmModule( "rngtest" "${RNGTEST_EXECUTABLE}" )
+
+  add_dependencies( "rngtestCharmModule" "charestatecollectorCharmModule" )
 
 endif(ENABLE_RNGTEST)
 
@@ -292,6 +300,8 @@ if (ENABLE_MESHCONV)
 
   # Add custom dependencies for MeshConv's main Charm++ module
   addCharmModule( "meshconv" "${MESHCONV_EXECUTABLE}" )
+
+  add_dependencies( "meshconvCharmModule" "charestatecollectorCharmModule" )
 
 endif(ENABLE_MESHCONV)
 
@@ -331,6 +341,8 @@ if (ENABLE_WALKER)
   # Add custom dependencies for Walker's main Charm++ module
   addCharmModule( "walker" "${WALKER_EXECUTABLE}" )
 
+  add_dependencies( "walkerCharmModule" "charestatecollectorCharmModule" )
+
 endif(ENABLE_WALKER)
 
 ### FileConv executable ########################################################
@@ -362,5 +374,7 @@ if (ENABLE_FILECONV)
 
   # Add custom dependencies for FileConv's main Charm++ module
   addCharmModule( "fileconv" "${FILECONV_EXECUTABLE}" )
+
+  add_dependencies( "fileconvCharmModule" "charestatecollectorCharmModule" )
 
 endif(ENABLE_FILECONV)

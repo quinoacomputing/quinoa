@@ -9,7 +9,7 @@
 #ifndef MeshDetect_h
 #define MeshDetect_h
 
-#include <string>
+#include <iosfwd>
 
 namespace tk {
 

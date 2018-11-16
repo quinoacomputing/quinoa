@@ -12,7 +12,7 @@
 #ifndef QuinoaConfig_h
 #define QuinoaConfig_h
 
-#include <string>
+#include <iosfwd>
 
 namespace tk {
  

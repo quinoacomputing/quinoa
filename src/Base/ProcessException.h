@@ -19,13 +19,13 @@
 namespace tk {
 
 //! Signal handler for multiple signals, SIGABRT, SIGSEGV, etc.
-[[noreturn]] void signalHandler( int signum );
+void signalHandler( int signum );
 
 //! Set signal handlers for multiple signals, SIGABRT, SIGSEGV, etc
 int setSignalHandlers();
 
 //! Process an exception from the Charm++ runtime system
-[[noreturn]] void processExceptionCharm();
+void processExceptionCharm();
 
 //! Process an exception from the MPI runtime system
 void processExceptionMPI();

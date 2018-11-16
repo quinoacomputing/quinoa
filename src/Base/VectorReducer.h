@@ -10,8 +10,11 @@
 #define VectorReducer_h
 
 #include <vector>
+#include <stddef.h>
+#include <memory>
+#include <utility>
 
-#include "NoWarning/charm++.h"
+class CkReductionMsg;
 
 namespace tk {
 

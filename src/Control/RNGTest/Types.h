@@ -14,7 +14,7 @@
 #define RNGTestTypes_h
 
 #include "Tags.h"
-#include "Types.h"
+#include "Base/Types.h"
 #include "RNGParam.h"
 #include "RNGTest/Options/Battery.h"
 #include "Options/RNG.h"

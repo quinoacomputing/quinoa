@@ -10,7 +10,8 @@
 */
 // *****************************************************************************
 
-#include <iostream>
+#include <algorithm>
+#include <ratio>
 
 #include "Timer.h"
 
