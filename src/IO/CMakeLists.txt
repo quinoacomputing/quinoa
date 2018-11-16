@@ -93,6 +93,7 @@ if (HAS_OMEGA_H)
                              ${QUINOA_SOURCE_DIR}
                              ${QUINOA_SOURCE_DIR}/Base
                              ${QUINOA_SOURCE_DIR}/Mesh
+                             ${TPL_INCLUDE_DIR}
                              ${OMEGA_H_INCLUDE_DIRS}
                              ${MPI_CXX_INCLUDE_DIRS}
                              ${MPI_CXX_INCLUDE_PATH})
