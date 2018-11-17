@@ -148,16 +148,19 @@ class CompFlowProblemSodShocktube {
                  const std::array< std::vector< tk::real >, 3 >& /*coord*/,
                  tk::Fields& U )
     {
+      // number of degree of freedom
+      const std::size_t ndof =
+        g_inputdeck.get< tag::discr, tag::ndof >();
       // ratio of specific heats
       tk::real g =
         g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
 
       std::vector< std::vector< tk::real > > out;
-      const auto r  = U.extract( 0, offset );
-      const auto ru = U.extract( 1, offset );
-      const auto rv = U.extract( 2, offset );
-      const auto rw = U.extract( 3, offset );
-      const auto re = U.extract( 4, offset );
+      const auto r  = U.extract( 0*ndof, offset );
+      const auto ru = U.extract( 1*ndof, offset );
+      const auto rv = U.extract( 2*ndof, offset );
+      const auto rw = U.extract( 3*ndof, offset );
+      const auto re = U.extract( 4*ndof, offset );
 
       // mesh node coordinates
       //const auto& x = coord[0];

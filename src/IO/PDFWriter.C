@@ -10,7 +10,6 @@
 */
 // *****************************************************************************
 
-#include <iostream>
 #include <iomanip>
 
 #include "NoWarning/exodusII.h"

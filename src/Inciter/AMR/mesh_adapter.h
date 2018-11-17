@@ -1,15 +1,13 @@
 #ifndef QUINOA_MESH_ADAPTER_H
 #define QUINOA_MESH_ADAPTER_H
 
+#include <stddef.h>
+#include <vector>
+
 #include "DerivedData.h"
 
 #include "AMR_types.h"
-#include "util.h"
-#include "id_generator.h"
-
-#include "marked_refinements_store.h"
 #include "tet_store.h"
-
 #include "node_connectivity.h"
 
 #ifdef ENABLE_NODE_STORE

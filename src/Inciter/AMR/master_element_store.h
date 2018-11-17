@@ -5,6 +5,7 @@
 #include <algorithm>
 
 #include "Refinement_State.h"
+#include "AMR/Loggers.h"                   // for trace_out
 
 namespace AMR {
 

@@ -1,5 +1,5 @@
 /*!
-  \page      LibCPP_license LibC++ license
+  \page      libcpp_license_page LibC++ license
 
 \verbatim
 We intend to keep LLVM perpetually open source and to use a liberal open source license. As a contributor to the project, you agree that any contributions be licensed under the terms of the corresponding subproject. All of the code in LLVM is available under the University of Illinois/NCSA Open Source License, which boils down to this:

@@ -29,6 +29,7 @@
 #include "SchemeBase.h"
 #include "MatCG.h"
 #include "DiagCG.h"
+#include "ALECG.h"
 #include "DG.h"
 
 #include "NoWarning/transporter.decl.h"
@@ -69,7 +70,7 @@ class Refiner : public CBase_Refiner {
 
     //! Start mesh refinement (during time stepping, t>0)
     void dtref( tk::real t,
-                const SchemeBase::Proxy& s,
+                const SchemeBase::Proxy& scheme,
                 const std::map< int, std::vector< std::size_t > >& bnode );
 
     //! Receive boundary edges from all PEs (including this one)

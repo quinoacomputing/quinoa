@@ -9,6 +9,7 @@
 #define nowarning_tuttest_decl_h
 
 #include "Macro.h"
+#include "QuinoaConfig.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -63,7 +64,11 @@
   #pragma warning( disable: 2282 )
 #endif
 
-#include "../UnitTest/tuttest.decl.h"
+#ifdef ENABLE_INCITER
+  #include "../UnitTest/tuttestinciter.decl.h"
+#else
+  #include "../UnitTest/tuttest.decl.h"
+#endif
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

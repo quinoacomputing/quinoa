@@ -22,7 +22,7 @@ if(MCSS_DOX2HTML5 AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND JINJA2_FOUND AND
 endif()
 
 # Find Python 3 and prerequisites for m.css
-find_package(PythonInterp 3)
+find_package(PythonInterp 3.6)
 
 if (PYTHONINTERP_FOUND)
 
