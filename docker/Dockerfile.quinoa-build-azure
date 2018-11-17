@@ -1,6 +1,6 @@
 # vim: filetype=dockerfile:
 
-FROM quinoacomputing/buildenv:alpine
+FROM quinoacomputing/buildenv:debian
 
 ARG COMPILER
 ARG BUILD

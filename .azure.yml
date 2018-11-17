@@ -15,47 +15,47 @@ jobs:
       gnu-debug:
         COMPILER: 'gnu'
         BUILD: 'Debug'
-        DISTRO: 'alpine-gnu'
+        DISTRO: 'debian-gnu'
       gnu-debug-static:
         COMPILER: 'gnu'
         BUILD: 'Debug'
         SHARED_LIBS: 'off'
-        DISTRO: 'alpine-gnu-static'
+        DISTRO: 'debian-gnu-static'
       gnu-release:
         COMPILER: 'gnu'
         BUILD: 'Release'
-        DISTRO: 'alpine-gnu'
+        DISTRO: 'debian-gnu'
       gnu-release-static:
         COMPILER: 'gnu'
         BUILD: 'Release'
         SHARED_LIBS: 'off'
-        DISTRO: 'alpine-gnu-static'
+        DISTRO: 'debian-gnu-static'
         DOCKERHUB: 'true'
       clang-debug:
         COMPILER: 'clang'
         BUILD: 'Debug'
-        DISTRO: 'alpine-clang'
+        DISTRO: 'debian-clang'
       clang-debug-static:
         COMPILER: 'clang'
         BUILD: 'Debug'
         SHARED_LIBS: 'off'
-        DISTRO: 'alpine-clang-static'
+        DISTRO: 'debian-clang-static'
       clang-release:
         COMPILER: 'clang'
         BUILD: 'Release'
-        DISTRO: 'alpine-clang'
+        DISTRO: 'debian-clang'
       clang-release-static:
         COMPILER: 'clang'
         BUILD: 'Release'
         SHARED_LIBS: 'off'
-        DISTRO: 'alpine-clang-static'
+        DISTRO: 'debian-clang-static'
       doc:
         DOC: true
         DISTRO: 'debian-doc'
   steps:
     - bash: |
         cp -vr docker $(HOME)/docker
-        sed -i "/^FROM/s/alpine/${DISTRO}/" docker/Dockerfile.quinoa-build-azure
+        sed -i "/^FROM/s/debian/${DISTRO}/" docker/Dockerfile.quinoa-build-azure
         docker build \
                --build-arg COMPILER=${COMPILER} \
                --build-arg BUILD=${BUILD} \
