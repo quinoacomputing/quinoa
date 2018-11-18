@@ -7,9 +7,7 @@ ARG BUILD
 ARG SHARED_LIBS
 ARG DOC
 
-ENV RUNNER_ARGS="-oversubscribe" \
-    OMPI_MCA_plm=isolated \
-    PATH=/opt/openmpi/${COMPILER}/bin:$PATH
+ENV PATH=/opt/openmpi/${COMPILER}/bin:$PATH
 
 USER quinoa
 COPY . /home/quinoa/
@@ -23,9 +21,9 @@ RUN cmake \
     -DCMAKE_CXX_FLAGS="-Werror" \
     -DCMAKE_BUILD_TYPE="${BUILD}" \
     ${SHARED_LIBS:+-DBUILD_SHARED_LIBS=$SHARED_LIBS} \
-    -DRUNNER_ARGS=${RUNNER_ARGS} \
+    -DRUNNER=mpirun -DRUNNER_NCPUS_ARG=-n -DRUNNER_ARGS=-oversubscribe \
     ../src
-RUN [ ${DOC} ] && ninja doc || (ninja && ../script/run_tests.sh)
+RUN [ ${DOC} ] && ninja doc || (ninja && ../script/run_tests.sh (grep -c processor /proc/cpuinfo) mpirun -n)
 
 USER root
 RUN [ ${DOC} ] || ninja install
