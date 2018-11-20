@@ -71,17 +71,26 @@ Quinoa consists of the following tools:
     [HyperMesh](http://www.altairhyperworks.com/product/HyperMesh), and
     ASC used in [Jacob Waltz](https://www.researchgate.net/scientific-contributions/2014382994_Jacob_Waltz)'s _Chicoma_ code.
 
+@section mainpage_try Try
+
+The quickest is to try the pre-built executables inside a docker container, see
+instructions at https://hub.docker.com/r/quinoacomputing/quinoa/. See also
+- https://quinoacomputing.github.io/examples.html
+- https://github.com/quinoacomputing/quinoa-examples
+
+For larger problems and computers, however, you should build from source.
+
 @section mainpage_build Build
 
 - Install prerequisites: _Debian/Ubuntu linux_ (line 1: required, line 2: recommended)
 
        apt-get install cmake gfortran gcc g++ openmpi-bin libopenmpi-dev
-       apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
+       apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhypre-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev binutils-dev flex bison python3-pygments python3-jinja2 texlive-latex-base libdw-dev
 
 - Install prerequisites: _Mac OS X_ (line 1: required, line 2: recommended)
 
-       port install cmake openmpi-gcc7 && port select gcc mp-gcc7 && port select mpi openmpi-gcc7-fortran
-       port install gmsh pugixml lapack
+       port install cmake openmpi-gcc8 && port select gcc mp-gcc8 && port select mpi openmpi-gcc8-fortran
+       port install gmsh pugixml lapack hdf5
 
 - Clone, build third-party libraries, build & test
 
@@ -89,9 +98,39 @@ Quinoa consists of the following tools:
        mkdir tpl/build; cd tpl/build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 ..; make; cd -
        mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src; make; ../script/run_tests.sh
 
-All executables will be under `build/Main/`. Read more about other ways of
-cloning and working with quinoa's repositories on the page detailing @ref
+All executables will be under `build/Main/`.
+
+@note The above is only the simplest way to build from source and by default
+some optional libraries will _not_ be built. If you are building on a different
+system, you might have to experiment with your package manager a bit to get all
+required @ref licenses "libraries" built. The following may help with building in
+various environments:
+- https://github.com/quinoacomputing/quinoa/tree/master/docker
+- https://github.com/quinoacomputing/quinoa-tpl/tree/master/docker
+- https://github.com/quinoacomputing/buildenv
+
+We roughly follow the development model described
+[here](http://nvie.com/posts/a-successful-git-branching-model). As a
+consequence, our
+[master](https://github.com/quinoacomputing/quinoa/commits/master) (stable)
+branch can lag behind our
+[develop](https://github.com/quinoacomputing/quinoa/commits/develop) (bleeding
+edge) branch. If you want the latest, clone with
+
+```
+git clone --recurse-submodules --branch=develop https://github.com/quinoacomputing/quinoa.git
+```
+
+Read more about other ways of cloning and working with [quinoa's
+repositories](https://github.com/quinoacomputing) on the page detailing @ref
 git_submodules_subtrees.
+
+@section mainpage_contributing Contribute
+
+Contributions and collaborators are welcome. Contact us via
+[GitHub](https://github.com/quinoacomputing/quinoa),
+[Email](mailto:quinoa@lanl.gov) or
+[Gitter](https://gitter.im/quinoacomputing/quinoa).
 
 @section mainpage_authors Authors
 

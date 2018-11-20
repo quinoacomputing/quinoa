@@ -172,7 +172,7 @@ if (ENABLE_UNITTEST)
                       "charestatecollectorCharmModule" )
   else()
     addCharmModule( "unittest" "${UNITTEST_EXECUTABLE}" )
-    add_dependencies( "unittesCharmModule"
+    add_dependencies( "unittestCharmModule"
                       "charestatecollectorCharmModule" )
   endif()
 
