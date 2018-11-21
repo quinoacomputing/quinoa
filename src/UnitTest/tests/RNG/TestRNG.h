@@ -24,6 +24,7 @@
 #ifdef HAS_MKL
   #include <mkl_lapacke.h>
 #else
+  #undef I
   #include <lapacke.h>
 #endif
 
