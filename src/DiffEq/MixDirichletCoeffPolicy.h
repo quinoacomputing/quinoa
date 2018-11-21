@@ -54,7 +54,7 @@ namespace walker {
 
 //! MixDirichlet coefficients policity: constants in time + <rho> = const
 //! \details User-defined parameters b and kappa are constant vectors in time
-//!   and, S is constrained to make \f$\mathrm{d}\<\rho\>/\mathrm{d}t = 0\f$.
+//!   and, S is constrained to make \f$\mathrm{d}<rho>/\mathrm{d}t = 0\f$.
 class MixDirichletHomCoeffConst {
 
   private:
