@@ -93,7 +93,7 @@ class DGPDE {
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
-              tk::Fields& limFunc,
+              const tk::Fields& limFunc,
               tk::Fields& R ) const
     { self->rhs( t, geoFace, geoElem, fd, inpoel, coord, U, limFunc, R ); }
 
@@ -172,7 +172,7 @@ class DGPDE {
                         const std::vector< std::size_t >&,
                         const tk::UnsMesh::Coords&,
                         const tk::Fields&,
-                        tk::Fields&,
+                        const tk::Fields&,
                         tk::Fields& ) const = 0;
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
                            const std::vector< std::size_t >&,
@@ -222,7 +222,7 @@ class DGPDE {
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const tk::Fields& U,
-                tk::Fields& limFunc,
+                const tk::Fields& limFunc,
                 tk::Fields& R ) const override
       { data.rhs( t, geoFace, geoElem, fd, inpoel, coord, U, limFunc, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,

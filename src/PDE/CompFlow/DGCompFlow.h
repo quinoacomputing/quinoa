@@ -183,7 +183,7 @@ class CompFlow {
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
-              tk::Fields& limFunc,
+              const tk::Fields& limFunc,
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
