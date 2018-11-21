@@ -47,6 +47,12 @@
 
 #include <brigand/sequences/list.hpp>
 
+#ifdef HAS_MKL
+  #include <mkl_lapacke.h>
+#else
+  #include <lapacke.h>
+#endif
+
 #include "Macro.h"
 #include "Types.h"
 #include "Particles.h"
@@ -235,29 +241,29 @@ struct InitCorrGaussian {
   {
     using ncomp_t = kw::ncomp::info::expect::type;
 
-//     const auto& gaussian =
-//       deck.template get< tag::param, eq, tag::gaussian >().at(e);
-// 
-//     // use only the first ncomp gaussian if there are more than the equation is
-//     // configured for
-//     const ncomp_t size = std::min( ncomp, gaussian.size() );
-// 
-//     for (ncomp_t c=0; c<size; ++c) {
-//       // get vector of gaussian pdf parameters for component c
-//       const auto& gc = gaussian[c];
-// 
-//       for (ncomp_t s=0; s<gc.size(); s+=2) {
-//         // generate Gaussian random numbers for all particles using parameters
-//         for (ncomp_t p=0; p<particles.nunk(); ++p) {
-//           auto& par = particles( p, c, offset );
-//           // sample from Gaussian with zero mean and unit variance
-//           rng.gaussian( stream, 1, &par );
-//           // scale to given mean and variance
-//           par = par * sqrt(gc[s+1]) + gc[s];
-//         }
-//       }
-//     }
+    const auto& mean = deck.template get< tag::param, eq, tag::mean >().at(e);
+    Assert( mean.size() == ncomp, "Size mismatch" );
+    const auto& cov_ = deck.template get< tag::param, eq, tag::cov >().at(e);
+    Assert( cov_.size() == ncomp*(ncomp+1)/2, "Size mismatch" );
 
+    // Compute covariance matrix using Cholesky-decompositionm, see Intel MKL
+    // example: vdrnggaussianmv.c, and UnitTest/tests/RNG/TestRNG.h
+    auto cov = cov_;
+    lapack_int n = static_cast< lapack_int >( ncomp );
+    #ifndef NDEBUG
+    lapack_int info =
+    #endif
+      LAPACKE_dpptrf( LAPACK_ROW_MAJOR, 'U', n, cov.data() );
+    Assert( info == 0, "Error in Cholesky-decomposition" );
+
+    // Generate multi-variate Gaussian random numbers for all particles with
+    // means and covariance matrix given by user
+    for (ncomp_t p=0; p<particles.nunk(); ++p) {
+      std::vector< double > r( ncomp );
+      rng.gaussianmv( stream, 1, ncomp, mean.data(), cov.data(), r.data() );
+      for (ncomp_t c=0; c<ncomp; ++c)
+        particles( p, c, offset ) = r[c];
+    }
   }
 
   static ctr::InitPolicyType type() noexcept

@@ -225,6 +225,23 @@ namespace grm {
         if (!gammapdf.empty() && gammapdf.back().empty())
           Message< Stack, ERROR, MsgKey::NOGAMMA >( stack, in );
       }
+      // Error checks for joint correlated Gaussian initpolicy
+      if (init.size() == neq.get< eq >() &&
+          init.back() == walker::ctr::InitPolicyType::JOINTCORRGAUSSIAN) {
+        // Ensure there was a mean vector and covaraiance matrix configured
+        const auto& mean =
+          stack.template get< tag::param, eq, tag::mean >();
+        if (mean.empty() || mean.back().empty())
+          Message< Stack, ERROR, MsgKey::NOMEAN >( stack, in );
+        const auto& cov =
+          stack.template get< tag::param, eq, tag::cov >();
+        if (cov.empty() || cov.back().empty())
+          Message< Stack, ERROR, MsgKey::NOCOV >( stack, in );
+        // Ensure that an MKL RNG is configured if initpolicy is corr-Gaussian
+        const auto& rng = stack.template get< tag::param, eq, tag::rng >();
+        if (tk::ctr::RNG().lib( rng.back() ) != tk::ctr::RNGLibType::MKL)
+          Message< Stack, ERROR, MsgKey::NOMKLRNG >( stack, in );
+      }
     }
   };
 
@@ -685,7 +702,7 @@ namespace deck {
                            icbeta< tag::ou >,
                            icgamma< tag::ou >,
                            icgaussian< tag::ou >,
-                           icjointgaussian< tag::diagou >,
+                           icjointgaussian< tag::ou >,
                            sde_parameter_vector< kw::sde_sigmasq,
                                                  tag::ou,
                                                  tag::sigmasq >,
@@ -726,7 +743,7 @@ namespace deck {
                            icbeta< tag::skewnormal >,
                            icgamma< tag::skewnormal >,
                            icgaussian< tag::skewnormal >,
-                           icjointgaussian< tag::diagou >,
+                           icjointgaussian< tag::skewnormal >,
                            sde_parameter_vector< kw::sde_T,
                                                  tag::skewnormal,
                                                  tag::timescale >,
@@ -767,7 +784,7 @@ namespace deck {
                            icbeta< tag::beta >,
                            icgamma< tag::beta >,
                            icgaussian< tag::beta >,
-                           icjointgaussian< tag::diagou >,
+                           icjointgaussian< tag::beta >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::beta,
                                                  tag::b >,
@@ -808,7 +825,7 @@ namespace deck {
                            icbeta< tag::numfracbeta >,
                            icgamma< tag::numfracbeta >,
                            icgaussian< tag::numfracbeta >,
-                           icjointgaussian< tag::diagou >,
+                           icjointgaussian< tag::numfracbeta >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::numfracbeta,
                                                  tag::b >,
@@ -855,7 +872,7 @@ namespace deck {
                            icbeta< tag::massfracbeta >,
                            icgamma< tag::massfracbeta >,
                            icgaussian< tag::massfracbeta >,
-                           icjointgaussian< tag::diagou >,
+                           icjointgaussian< tag::massfracbeta >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::massfracbeta,
                                                  tag::b >,
@@ -902,7 +919,7 @@ namespace deck {
                            icbeta< tag::mixnumfracbeta >,
                            icgamma< tag::mixnumfracbeta >,
                            icgaussian< tag::mixnumfracbeta >,
-                           icjointgaussian< tag::diagou >,
+                           icjointgaussian< tag::mixnumfracbeta >,
                            sde_parameter_vector< kw::sde_bprime,
                                                  tag::mixnumfracbeta,
                                                  tag::bprime >,
@@ -949,7 +966,7 @@ namespace deck {
                            icbeta< tag::mixmassfracbeta >,
                            icgamma< tag::mixmassfracbeta >,
                            icgaussian< tag::mixmassfracbeta >,
-                           icjointgaussian< tag::diagou >,
+                           icjointgaussian< tag::mixmassfracbeta >,
                            sde_option_vector< ctr::HydroTimeScales,
                                               kw::hydrotimescales,
                                               tag::mixmassfracbeta,
@@ -1026,7 +1043,7 @@ namespace deck {
                            icbeta< tag::gamma >,
                            icgamma< tag::gamma >,
                            icgaussian< tag::gamma >,
-                           icjointgaussian< tag::diagou >,
+                           icjointgaussian< tag::gamma >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::gamma,
                                                  tag::b >,
@@ -1067,7 +1084,7 @@ namespace deck {
                            icbeta< tag::dirichlet >,
                            icgamma< tag::dirichlet >,
                            icgaussian< tag::dirichlet >,
-                           icjointgaussian< tag::diagou >,
+                           icjointgaussian< tag::dirichlet >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::dirichlet,
                                                  tag::b >,
@@ -1109,7 +1126,7 @@ namespace deck {
                            icbeta< tag::mixdirichlet >,
                            icgamma< tag::mixdirichlet >,
                            icgaussian< tag::mixdirichlet >,
-                           icjointgaussian< tag::diagou >,
+                           icjointgaussian< tag::mixdirichlet >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::mixdirichlet,
                                                  tag::b >,
@@ -1157,7 +1174,7 @@ namespace deck {
                            icbeta< tag::gendir >,
                            icgamma< tag::gendir >,
                            icgaussian< tag::gendir >,
-                           icjointgaussian< tag::diagou >,
+                           icjointgaussian< tag::gendir >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::gendir,
                                                  tag::b >,
@@ -1201,7 +1218,7 @@ namespace deck {
                            icbeta< tag::wrightfisher >,
                            icgamma< tag::wrightfisher >,
                            icgaussian< tag::wrightfisher >,
-                           icjointgaussian< tag::diagou >,
+                           icjointgaussian< tag::wrightfisher >,
                            sde_parameter_vector< kw::sde_omega,
                                                  tag::wrightfisher,
                                                  tag::omega > >,
@@ -1245,7 +1262,7 @@ namespace deck {
                            icbeta< tag::velocity >,
                            icgamma< tag::velocity >,
                            icgaussian< tag::velocity >,
-                           icjointgaussian< tag::diagou >,
+                           icjointgaussian< tag::velocity >,
                            sde_option_vector< ctr::HydroTimeScales,
                                               kw::hydrotimescales,
                                               tag::velocity,
@@ -1314,7 +1331,7 @@ namespace deck {
                            icbeta< tag::position >,
                            icgamma< tag::position >,
                            icgaussian< tag::position >,
-                           icjointgaussian< tag::diagou >,
+                           icjointgaussian< tag::position >,
                            tk::grm::process<
                              use< kw::velocity >,
                              tk::grm::Store_back< tag::param,
@@ -1371,7 +1388,7 @@ namespace deck {
                            icbeta< tag::dissipation >,
                            icgamma< tag::dissipation >,
                            icgaussian< tag::dissipation >,
-                           icjointgaussian< tag::diagou >,
+                           icjointgaussian< tag::dissipation >,
                            tk::grm::process<
                              use< kw::velocity >,
                              tk::grm::Store_back< tag::param,

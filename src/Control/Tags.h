@@ -20,6 +20,7 @@ struct diag {};
 struct seed {};
 struct uniform_method {};
 struct gaussian_method {};
+struct gaussianmv_method {};
 struct gaussian {};
 struct jointgaussian {};
 struct beta_method {};

@@ -528,6 +528,28 @@ struct gaussian_method_info {
 using gaussian_method =
   keyword< gaussian_method_info, TAOCPP_PEGTL_STRING("gaussian_method") >;
 
+struct gaussianmv_method_info {
+  static std::string name() { return "multi-variate Gaussian method"; }
+  static std::string shortDescription() { return
+    "Select an Intel MKL multi-variate Gaussian RNG method"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the method used to generate multi-variate
+    Gaussian random numbers using the Intel Math Kernel Library (MKL) random
+    number generators. Valid options are 'boxmuller', 'boxmuller2', and 'icdf'.
+    For more info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
+  }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + boxmuller::string() + "\' | \'"
+                  + boxmuller2::string() + "\' | \'"
+                  + icdf::string() + '\'';
+    }
+  };
+};
+using gaussianmv_method =
+  keyword< gaussianmv_method_info, TAOCPP_PEGTL_STRING("gaussianmv_method") >;
+
 struct cja_info {
   static std::string name() { return "CJA"; }
   static std::string shortDescription() { return
@@ -1286,7 +1308,7 @@ using jointgaussian =
 
 struct jointcorrgaussian_info {
   using code = Code< C >;
-  static std::string name() { return "Correlated Gaussian"; }
+  static std::string name() { return "correlated Gaussian"; }
   static std::string shortDescription() { return
     "Select the joint correlated Gaussian initialization policy"; }
   static std::string longDescription() { return
