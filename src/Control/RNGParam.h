@@ -18,6 +18,7 @@
 #ifdef HAS_MKL
   #include "Options/MKLUniformMethod.h"
   #include "Options/MKLGaussianMethod.h"
+  #include "Options/MKLGaussianMVMethod.h"
   #include "Options/MKLBetaMethod.h"
   #include "Options/MKLGammaMethod.h"
 #endif
@@ -43,11 +44,13 @@ using RNGRandom123Parameters = std::map< RNGType, RNGRandom123Param >;
 #ifdef HAS_MKL
 //! MKL random number generator parameters storage
 using RNGMKLParam = tk::tuple::tagged_tuple<
-  tag::seed,            kw::seed::info::expect::type, //!< seed
-  tag::uniform_method,  MKLUniformMethodType,         //!< uniform method type
-  tag::gaussian_method, MKLGaussianMethodType,        //!< Gaussian method type
-  tag::beta_method,     MKLBetaMethodType,            //!< beta method type
-  tag::gamma_method,    MKLGammaMethodType            //!< gamma method type
+  tag::seed,              kw::seed::info::expect::type, //!< seed
+  tag::uniform_method,    MKLUniformMethodType,         //!< uniform method type
+  tag::gaussian_method,   MKLGaussianMethodType,        //!< Gaussian method type
+  //! multi-variate Gaussian method type
+  tag::gaussianmv_method, MKLGaussianMVMethodType,
+  tag::beta_method,       MKLBetaMethodType,            //!< beta method type
+  tag::gamma_method,      MKLGammaMethodType            //!< gamma method type
 >;
 //! MKL RNG parameters bundle associating RNG types and their parameters
 using RNGMKLParameters = std::map< RNGType, RNGMKLParam >;

@@ -20,6 +20,7 @@ RUN cmake \
     -DTPL_DIR="/home/quinoa/tpl/${COMPILER}${SHARED_LIBS:+-static}" \
     -DCMAKE_CXX_FLAGS="-Werror -ftemplate-depth=1024" \
     -DCMAKE_BUILD_TYPE="${BUILD}" \
+    -DCMAKE_CXX_FLAGS_DEBUG=-g0 \
     ${SHARED_LIBS:+-DBUILD_SHARED_LIBS=$SHARED_LIBS} \
     -DRUNNER=mpirun -DRUNNER_NCPUS_ARG=-n -DRUNNER_ARGS=-oversubscribe \
     ../src
