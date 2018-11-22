@@ -10,6 +10,12 @@
 #ifndef MKLGrammar_h
 #define MKLGrammar_h
 
+#ifdef HAS_MKL
+  #include "Options/MKLGaussianMethod.h"
+  #include "Options/MKLGaussianMVMethod.h"
+  #include "Options/MKLUniformMethod.h"
+#endif
+
 namespace tk {
 //! Toolkit, grammar definition for Intel's Math Kernel Library
 namespace mkl {
@@ -61,6 +67,16 @@ namespace mkl {
                           ctr::MKLGaussianMethod,
                           tag::gaussian_method,
                           sel, vec, tags... > {};
+     
+  //! \brief Match and set MKL multi-variate Gaussian method algorithm
+  template< template< class > class use, typename sel,
+            typename vec, typename... tags >
+  struct gaussianmv_method :
+         grm::rng_option< use,
+                          use< kw::gaussianmv_method >,
+                          ctr::MKLGaussianMVMethod,
+                          tag::gaussianmv_method,
+                          sel, vec, tags... > {};
 
   //! \brief Match and set MKL beta method algorithm
   template< template< class > class use, typename sel,
@@ -96,6 +112,7 @@ namespace mkl {
                            seed< use, sel, vec, tags... >,
                            uniform_method< use, sel, vec, tags... >,
                            gaussian_method< use, sel, vec, tags... >,
+                           gaussianmv_method< use, sel, vec, tags... >,
                            beta_method< use, sel, vec, tags... >,
                            gamma_method< use, sel, vec, tags... > > >
   {};

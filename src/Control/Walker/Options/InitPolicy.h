@@ -24,6 +24,7 @@ enum class InitPolicyType : uint8_t { RAW=0,
                                       ZERO,
                                       JOINTDELTA,
                                       JOINTGAUSSIAN,
+                                      JOINTCORRGAUSSIAN,
                                       JOINTBETA,
                                       JOINTGAMMA };
 
@@ -39,6 +40,7 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
                                   , kw::zero
                                   , kw::jointdelta
                                   , kw::jointgaussian
+                                  , kw::jointcorrgaussian
                                   , kw::jointbeta
                                   , kw::jointgamma
                                   >;
@@ -55,6 +57,7 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
           { InitPolicyType::ZERO, kw::zero::name() },
           { InitPolicyType::JOINTDELTA, kw::jointdelta::name() },
           { InitPolicyType::JOINTGAUSSIAN, kw::jointgaussian::name() },
+          { InitPolicyType::JOINTCORRGAUSSIAN, kw::jointcorrgaussian::name() },
           { InitPolicyType::JOINTBETA, kw::jointbeta::name() },
           { InitPolicyType::JOINTGAMMA, kw::jointgamma::name() } },
         //! keywords -> Enums
@@ -62,6 +65,8 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
           { kw::zero::string(), InitPolicyType::ZERO },
           { kw::jointdelta::string(), InitPolicyType::JOINTDELTA },
           { kw::jointgaussian::string(), InitPolicyType::JOINTGAUSSIAN },
+          { kw::jointcorrgaussian::string(),
+            InitPolicyType::JOINTCORRGAUSSIAN },
           { kw::jointbeta::string(), InitPolicyType::JOINTBETA },
           { kw::jointgamma::string(), InitPolicyType::JOINTGAMMA } } )
     {
@@ -97,6 +102,7 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
       , { InitPolicyType::ZERO, *kw::zero::code() }
       , { InitPolicyType::JOINTDELTA, *kw::jointdelta::code() }
       , { InitPolicyType::JOINTGAUSSIAN, *kw::jointgaussian::code() }
+      , { InitPolicyType::JOINTCORRGAUSSIAN, *kw::jointcorrgaussian::code() }
       , { InitPolicyType::JOINTBETA, *kw::jointbeta::code() }
       , { InitPolicyType::JOINTGAMMA, *kw::jointgamma::code() }
     };

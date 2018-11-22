@@ -27,6 +27,7 @@
   #pragma GCC diagnostic ignored "-Wparentheses"
 #endif
 
+#undef I
 #include <boost/variant.hpp>
 
 #if defined(__clang__)
