@@ -131,6 +131,7 @@ if (ENABLE_UNITTEST)
                              ${QUINOA_SOURCE_DIR}/IO
                              ${QUINOA_SOURCE_DIR}/RNG
                              ${TUT_INCLUDE_DIRS}
+                             ${LAPACKE_INCLUDE_DIRS}
                              ${PROJECT_BINARY_DIR}/../LinSys
                              ${PROJECT_BINARY_DIR}/../UnitTest)
 
