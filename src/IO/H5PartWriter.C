@@ -12,6 +12,8 @@
 #include "H5PartWriter.h"
 #include "Exception.h"
 
+#include "NoWarning/H5Part.h"
+
 using tk::H5PartWriter;
 
 H5PartWriter::H5PartWriter( const std::string& filename ) :

@@ -7,11 +7,6 @@
 */
 // *****************************************************************************
 
-#include <algorithm>
-#include <functional>
-#include <string>
-#include <utility>
-
 #include "NoWarning/exodusII.h"
 
 #include "ExodusIIMeshWriter.h"

@@ -8,6 +8,8 @@
 // *****************************************************************************
 
 #include <array>
+#include <cstddef>
+#include <vector>
 #include <string>
 #include <sstream>
 

@@ -2,8 +2,9 @@
 #define AMR_edge_t_h
 
 #include <iostream>
-#include <ostream>
+#include <stddef.h>
 #include <array>
+#include <algorithm>
 
 namespace AMR {
 

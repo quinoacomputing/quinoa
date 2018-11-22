@@ -1,0 +1,73 @@
+// *****************************************************************************
+/*!
+  \file      src/Inciter/alecg.ci
+  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \brief     Charm++ module interface for continuous Galerkin + ALE + RK
+  \details   Charm++ module interface file for the continuous Galerkin (CG)
+             finite element scheme in the arbitrary Lagrangian-Eulerian (ALE)
+             reference frame + Runge-Kutta (RK) time stepping.
+  \see       ALECG.h and ALECG.C for more info.
+*/
+// *****************************************************************************
+
+module alecg {
+
+  //! [External modules and includes]
+  extern module transporter;
+  extern module discretization;
+
+  include "UnsMesh.h";
+  include "PUPUtil.h";
+  include "FaceData.h";
+  //! [External modules and includes]
+
+  namespace inciter {
+
+    //! [1D Charm++ chare array]
+    array [1D] ALECG {
+    //! [1D Charm++ chare array]
+      //! [Entry methods]
+      entry ALECG( const CProxy_Discretization& disc,
+                   const tk::CProxy_Solver&,
+                   const FaceData& fd );
+      initnode void registerReducers();
+      entry void setup( tk::real v );
+      entry void dt();
+      entry void diag();
+      entry [reductiontarget] void advance( tk::real newdt );
+      entry void comlhs( const std::vector< std::size_t >& gid,
+                         const std::vector< std::vector< tk::real > >& L );
+      entry void comrhs( const std::vector< std::size_t >& gid,
+                         const std::vector< std::vector< tk::real > >& R );
+      entry void resized();
+      entry void lhs();
+      //! [Entry methods]
+
+      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+      //! [DAG]
+      entry void wait4lhs() {
+        when ownlhs_complete(), comlhs_complete() serial "lhs" { lhsmerge(); } };
+
+      entry void wait4rhs() {
+        when ownrhs_complete(), comrhs_complete() serial "rhs" { solve(); } };
+
+      entry void wait4eval() {
+        when diag_complete(), ref_complete(), lhs_complete(),
+             resize_complete() serial "eval" { eval(); } };
+
+      entry void ownlhs_complete();
+      entry void ownrhs_complete();
+      entry void comlhs_complete();
+      entry void comrhs_complete();
+      entry void diag_complete();
+      entry void ref_complete();
+      entry void lhs_complete();
+      entry void resize_complete();
+      //! [DAG]
+    };
+
+  } // inciter::
+
+}

@@ -163,6 +163,7 @@ ElemDiagnostics::computeP1( Discretization& d,
 //! \param[in] nchGhost Number of chare boundary ghost elements
 //! \param[in] geoElem Element geometry
 //! \param[in] u Current solution vector
+//! \param[in,out] diag Diagnostics vector
 //! \return True if diagnostics have been computed
 // *****************************************************************************
 {

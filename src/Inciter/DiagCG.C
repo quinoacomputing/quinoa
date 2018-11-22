@@ -21,8 +21,6 @@
 #include "Reader.h"
 #include "ContainerUtil.h"
 #include "UnsMesh.h"
-#include "Reorder.h"
-#include "ExodusIIMeshReader.h"
 #include "ExodusIIMeshWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "DerivedData.h"
@@ -171,25 +169,12 @@ DiagCG::setup( tk::real v )
 }
 
 void
-DiagCG::lhsdone()
-// *****************************************************************************
-// ...
-// *****************************************************************************
-{
-  if (m_initial) {
-    start();
-  } else {
-    lhsmerge();
-    lhs_complete();
-  }
-}
-
-void
 DiagCG::lhsmerge()
 // *****************************************************************************
-//  Combine own and communicated contributions to left hand side
+// The own and communication portion of the left-hand side is complete
 // *****************************************************************************
 {
+  // Combine own and communicated contributions to left hand side
   auto d = Disc();
 
   // Combine own and communicated contributions to LHS and ICs
@@ -199,9 +184,12 @@ DiagCG::lhsmerge()
     for (ncomp_t c=0; c<m_lhs.nprop(); ++c) m_lhs(lid,c,0) += blhsc[c];
   }
 
-  // Zero communication buffers for first time step (rhs, mass diffusion rhs)
+  // Zero communication buffers for next time step (rhs, mass diffusion rhs)
   for (auto& b : m_rhsc) std::fill( begin(b), end(b), 0.0 );
   for (auto& b : m_difc) std::fill( begin(b), end(b), 0.0 );
+
+  // Continue after lhs is complete
+  if (m_initial) start(); else lhs_complete();
 }
 
 void
@@ -221,9 +209,6 @@ DiagCG::start()
 {
   // Start timer measuring time stepping wall clock time
   Disc()->Timer().zero();
-
-  // Combine own and communicated contributions to left hand side
-  lhsmerge();
 
   // Start time stepping by computing the size of the next time step)
   dt();
@@ -263,7 +248,7 @@ DiagCG::comlhs( const std::vector< std::size_t >& gid,
 //!   diagonal (lumped) mass matrix at mesh nodes. While m_lhs stores
 //!   own contributions, m_lhsc collects the neighbor chare contributions during
 //!   communication. This way work on m_lhs and m_lhsc is overlapped. The two
-//!   are combined in start().
+//!   are combined in lhsmerge().
 // *****************************************************************************
 {
 //   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
@@ -292,7 +277,7 @@ DiagCG::comlhs( const std::vector< std::size_t >& gid,
 void
 DiagCG::dt()
 // *****************************************************************************
-// Comppute time step size
+// Compute time step size
 // *****************************************************************************
 {
 //   if (g_inputdeck.get< tag::cmd, tag::chare >() ||

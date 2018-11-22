@@ -90,7 +90,7 @@ Driver Main( int argc, char* argv[],
 
 //! Generic Main Charm++ module constructor for all executables
 //! \tparam ExecuteProxy Charm++ proxy type for the 'excecute' chare, see
-//!    src/Main/<executable>.C
+//!    src/Main/\<executable\>.C
 //! \tparam MainProxy Main Charm++ chare proxy for the executable
 //! \tparam CmdLine Executable-specific tagged tuple storing the rusult of the
 //!    command line parser
@@ -172,7 +172,7 @@ void dumpstate( const CmdLine& cmdline,
     if (error)
       Throw( "Quiescence detected" );
     else
-      CkExit(); // tell the Charm++ runtime system to exit
+      CkExit(); // tell the Charm++ runtime system to exit with zero exit code
 
   } catch (...) { tk::processExceptionCharm(); }
 }
@@ -209,6 +209,7 @@ void finalize( const CmdLine& cmdline,
           cmdline.template get< tag::quiescence >() )
        state.collect( /* error = */ false, dumpstateTarget );
      else
+       // tell the Charm++ runtime system to exit with zero exit code
        if (clean) CkExit(); else CkAbort("Failed");
     }
 

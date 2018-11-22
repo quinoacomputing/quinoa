@@ -16,7 +16,6 @@
 
 #include <exception>
 #include <cstdlib>
-#include <string>
 #include <iostream>
 
 //! Toolkit declarations and definitions for general purpose utilities

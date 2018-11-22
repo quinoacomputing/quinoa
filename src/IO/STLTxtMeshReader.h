@@ -10,13 +10,16 @@
 #define STLTxtMeshReader_h
 
 #include <iostream>
+#include <stddef.h>
+#include <string>
 
+#include "Types.h"
 #include "Reader.h"
 #include "Exception.h"
 
-class STLMesh;
-
 namespace tk {
+
+class STLMesh;
 
 //! \brief STLTxtMeshReader : tk::Reader
 //! \details Mesh reader class facilitating reading a mesh from a file in

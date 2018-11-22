@@ -10,6 +10,7 @@
 #define nowarning_mpirunner_decl_h
 
 #include "Macro.h"
+#include "QuinoaConfig.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -50,7 +51,11 @@
   #pragma GCC diagnostic ignored "-Wparentheses"
 #endif
 
-#include "../UnitTest/mpirunner.decl.h"
+#ifdef ENABLE_INCITER
+  #include "../UnitTest/mpirunnerinciter.decl.h"
+#else
+  #include "../UnitTest/mpirunner.decl.h"
+#endif
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

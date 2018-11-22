@@ -50,4 +50,11 @@ implemented in Quinoa. The papers are grouped by executables.
   walker::NumberFractionBeta, walker::MassFractionBeta,
   walker::MixNumberFractionBeta, and walker::MixMassFractionBeta.
 
+@section papers_inciter Inciter
+
+- @m_div{m-text m-strong}
+  J. Waltz, **[Parallel adaptive refinement for unsteady flow calculations on 3D unstructured grids](http://dx.doi.org/10.1002/fld.674)**, International Journal for Numerical Methods in Fluids, 46: 37–57, 2004.
+  @m_enddiv
+
+  This paper describes the adaptive mesh refinement algorithm implemented in @ref inciter_main.
 */

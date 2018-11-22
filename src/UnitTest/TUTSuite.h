@@ -21,6 +21,7 @@
 #include "UnitTestPrint.h"
 #include "UnitTest/CmdLine/CmdLine.h"
 
+#include "QuinoaConfig.h"
 #include "NoWarning/tutsuite.decl.h"
 #include "NoWarning/mpirunner.decl.h"
 
@@ -64,7 +65,7 @@ class TUTSuite : public CBase_TUTSuite {
         { "Base/Factory", 2 }
       , { "Base/PUPUtil", 14 }
       , { "Base/Timer", 1 }
-      , { "Inciter/Scheme", 3 }
+      , { "Inciter/Scheme", 4 }
     };
 
     // Tests that must be run on PE 0

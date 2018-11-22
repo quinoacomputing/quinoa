@@ -11,10 +11,12 @@
 #define Gradients_h
 
 #include <array>
+#include <stddef.h>
 #include <vector>
 #include <utility>
 
 #include "Fields.h"
+#include "Types.h"
 #include "Keywords.h"
 
 namespace tk {

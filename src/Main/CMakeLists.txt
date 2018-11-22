@@ -55,6 +55,12 @@ if (HAS_OMEGA_H)
   set(OMEGAHMESHIO "OmegaHMeshIO")
 endif()
 
+if (ENABLE_INCITER)
+  set(TestError "../UnitTest/tests/Inciter/AMR/TestError.C")
+  set(TestScheme "../UnitTest/tests/Inciter/TestScheme.C")
+  set(MESHREFINEMENT "MeshRefinement")
+endif()
+
 ## UnitTest executable ########################################################
 
 if (ENABLE_UNITTEST)
@@ -100,8 +106,8 @@ if (ENABLE_UNITTEST)
                  ../UnitTest/tests/Control/TestStringParser.C
                  ../UnitTest/tests/Control/TestSystemComponents.C
                  ../UnitTest/tests/Control/TestToggle.C
-                 ../UnitTest/tests/Inciter/TestScheme.C
-                 ../UnitTest/tests/Inciter/AMR/TestError.C
+                 ../UnitTest/${TestScheme}
+                 ../UnitTest/${TestError}
                  ../UnitTest/tests/IO/TestExodusIIMeshReader.C
                  ../UnitTest/tests/IO/TestMesh.C
                  ../UnitTest/tests/IO/TestMeshReader.C
@@ -135,14 +141,13 @@ if (ENABLE_UNITTEST)
                         Config
                         Init
                         RNG
-                        MeshRefinement
+                        ${MESHREFINEMENT}
                         UnitTest
                         UnitTestControl
                         LoadBalance
                         Mesh
                         MeshDetect
                         NativeMeshIO
-                        MeshRefinement
                         ExodusIIMeshIO
                         HyperMeshIO
                         ${OMEGAHMESHIO}
@@ -161,7 +166,17 @@ if (ENABLE_UNITTEST)
                         ${OMEGA_H_LIBRARIES})
 
   # Add custom dependencies for UnitTest's main Charm++ module
-  addCharmModule( "unittest" "${UNITTEST_EXECUTABLE}" )
+  if(ENABLE_INCITER)
+    addCharmModule( "unittestinciter" "${UNITTEST_EXECUTABLE}" )
+    add_dependencies( "unittestinciterCharmModule"
+                      "charestatecollectorCharmModule"
+                      "mpirunnerinciterCharmModule" )
+  else()
+    addCharmModule( "unittest" "${UNITTEST_EXECUTABLE}" )
+    add_dependencies( "unittestCharmModule"
+                      "charestatecollectorCharmModule"
+                      "mpirunnerCharmModule" )
+  endif()
 
 endif(ENABLE_UNITTEST)
 
@@ -214,6 +229,8 @@ if (ENABLE_INCITER)
   # Add custom dependencies for Inciter's main Charm++ module
   addCharmModule( "inciter" "${INCITER_EXECUTABLE}" )
 
+  add_dependencies( "inciterCharmModule" "charestatecollectorCharmModule" )
+
 endif(ENABLE_INCITER)
 
 ### RNGTest executable #########################################################
@@ -247,6 +264,8 @@ if (ENABLE_RNGTEST)
 
   # Add custom dependencies for RNGTest's main Charm++ module
   addCharmModule( "rngtest" "${RNGTEST_EXECUTABLE}" )
+
+  add_dependencies( "rngtestCharmModule" "charestatecollectorCharmModule" )
 
 endif(ENABLE_RNGTEST)
 
@@ -283,6 +302,8 @@ if (ENABLE_MESHCONV)
 
   # Add custom dependencies for MeshConv's main Charm++ module
   addCharmModule( "meshconv" "${MESHCONV_EXECUTABLE}" )
+
+  add_dependencies( "meshconvCharmModule" "charestatecollectorCharmModule" )
 
 endif(ENABLE_MESHCONV)
 
@@ -322,6 +343,8 @@ if (ENABLE_WALKER)
   # Add custom dependencies for Walker's main Charm++ module
   addCharmModule( "walker" "${WALKER_EXECUTABLE}" )
 
+  add_dependencies( "walkerCharmModule" "charestatecollectorCharmModule" )
+
 endif(ENABLE_WALKER)
 
 ### FileConv executable ########################################################
@@ -353,5 +376,7 @@ if (ENABLE_FILECONV)
 
   # Add custom dependencies for FileConv's main Charm++ module
   addCharmModule( "fileconv" "${FILECONV_EXECUTABLE}" )
+
+  add_dependencies( "fileconvCharmModule" "charestatecollectorCharmModule" )
 
 endif(ENABLE_FILECONV)

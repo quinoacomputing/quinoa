@@ -13,7 +13,6 @@
 #include "Macro.h"
 #include "Omega_h_MeshReader.h"
 #include "Reorder.h"
-#include "Reader.h"
 
 using tk::Omega_h_MeshReader;
 

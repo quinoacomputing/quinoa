@@ -7,6 +7,7 @@
 #include "AMR_types.h"
 #include "active_element_store.h"
 #include "master_element_store.h"
+#include "marked_refinements_store.h"
 #include "edge_store.h"
 #include "util.h"
 #include "id_generator.h"

@@ -12,6 +12,7 @@
 // each inclusion will generate different code.
 
 #include "Macro.h"
+#include "QuinoaConfig.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -33,7 +34,11 @@
   #pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
 
-#include "../UnitTest/mpirunner.def.h"
+#ifdef ENABLE_INCITER
+  #include "../UnitTest/mpirunnerinciter.def.h"
+#else
+  #include "../UnitTest/mpirunner.def.h"
+#endif
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
