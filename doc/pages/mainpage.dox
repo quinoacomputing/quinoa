@@ -126,6 +126,7 @@ git_submodules_subtrees.
 - Sonarqube --- https://sonarqube.com/organizations/quinoacomputing
 - Docker --- https://hub.docker.com/r/quinoacomputing/quinoa
 - Travis --- https://travis-ci.org/quinoacomputing/quinoa/builds
+- Azure --- https://dev.azure.com/quinoacomputing/Quinoa
 - Analytics --- http://www.openhub.net/p/quinoacomputing
 - Cite --- https://zenodo.org/badge/latestdoi/38454430
 
