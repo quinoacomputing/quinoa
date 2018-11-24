@@ -2414,7 +2414,7 @@ HTML_EXTRA_STYLESHEET = \
 ##! M_FAVICON = @CMAKE_CURRENT_SOURCE_DIR@/../doc/images/quinoa_sum.png
 
 ##! M_LINKS_NAVBAR1 = pages namespaces annotated files
-##! M_LINKS_NAVBAR2 = "<a href=\"https://github.com/quinoacomputing/quinoa\">GitHub</a> papers coverage <a href=\"https://hub.docker.com/r/quinoacomputing/quinoa\">Docker</a> <a href=\"https://travis-ci.org/quinoacomputing/quinoa/builds\">Travis</a>"
+##! M_LINKS_NAVBAR2 = "<a href=\"https://github.com/quinoacomputing/quinoa\">GitHub</a> papers coverage <a href=\"https://hub.docker.com/r/quinoacomputing/quinoa\">Docker</a> <a href=\"https://travis-ci.org/quinoacomputing/quinoa/builds\">Travis</a> <a href=\"https://dev.azure.com/quinoacomputing/Quinoa">Azure</a>"
 
 ##! M_PAGE_FINE_PRINT = "<p>Quinoa docs, part of the <a href="http://quinoacomputing.org/">Quinoa project</a>. Copyright © J. Bakosi 2012&ndash;2015, <a href="http://www.lansllc.com/">Los Alamos National Security, LLC,</a> 2016&ndash;2018.<br />Generated on @BUILD_DATE_SIMPLE@ based on <a href="https://github.com/quinoacomputing/quinoa/commit/@GIT_SHA1_ONLY@">@GIT_SHA1_ONLY@</a> by <a href="http://doxygen.org/">Doxygen</a> {doxygen_version} and <a href="http://mcss.mosra.cz/">m.css</a>. Contact us via <a href="https://github.com/quinoacomputing/quinoa/">GitHub</a>, <a href="mailto:quinoa@lanl.gov">Email</a> or <a href="https://gitter.im/quinoacomputing/quinoa">Gitter</a>.</p>"
 
