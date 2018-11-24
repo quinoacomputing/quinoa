@@ -47,6 +47,7 @@
   #include "Options/MKLBetaMethod.h"
   #include "Options/MKLGammaMethod.h"
   #include "Options/MKLGaussianMethod.h"
+  #include "Options/MKLGaussianMVMethod.h"
   #include "Options/MKLUniformMethod.h"
 #endif
 
@@ -115,10 +116,12 @@ RNGStack::regMKL( int nstreams, const tk::ctr::RNGMKLParameters& param )
   using tk::ctr::RNGType;
   using tk::ctr::MKLUniformMethodType;
   using tk::ctr::MKLGaussianMethodType;
+  using tk::ctr::MKLGaussianMVMethodType;
   using tk::ctr::MKLBetaMethodType;
   using tk::ctr::MKLGammaMethodType;
   using tag::uniform_method;
   using tag::gaussian_method;
+  using tag::gaussianmv_method;
   using tag::beta_method;
   using tag::gamma_method;
 
@@ -126,12 +129,14 @@ RNGStack::regMKL( int nstreams, const tk::ctr::RNGMKLParameters& param )
   unsigned int s_def = 0;
   MKLUniformMethodType u_def = MKLUniformMethodType::STANDARD;
   MKLGaussianMethodType g_def = MKLGaussianMethodType::BOXMULLER;
+  MKLGaussianMVMethodType gmv_def = MKLGaussianMVMethodType::BOXMULLER;
   MKLBetaMethodType b_def = MKLBetaMethodType::CJA;
   MKLGammaMethodType ga_def = MKLGammaMethodType::GNORM;
 
   tk::ctr::RNG opt;
   tk::ctr::MKLUniformMethod um_opt;
   tk::ctr::MKLGaussianMethod gm_opt;
+  tk::ctr::MKLGaussianMVMethod gmvm_opt;
   tk::ctr::MKLBetaMethod bm_opt;
   tk::ctr::MKLGammaMethod gam_opt;
 
@@ -144,6 +149,7 @@ RNGStack::regMKL( int nstreams, const tk::ctr::RNGMKLParameters& param )
         opt.param< tag::seed >( rng, s_def, param ),
         um_opt.param( opt.param< uniform_method >( rng, u_def, param ) ),
         gm_opt.param( opt.param< gaussian_method >( rng, g_def, param) ),
+        gmvm_opt.param( opt.param< gaussianmv_method >( rng, gmv_def, param) ),
         bm_opt.param( opt.param< beta_method >( rng, b_def, param) ),
         gam_opt.param( opt.param< gamma_method >( rng, ga_def, param) ) );
   };

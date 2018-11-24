@@ -15,8 +15,6 @@
 #include <vector>
 #include <cstddef>
 
-#include "Exception.h"
-
 namespace tk {
 
 //! Reader base serves as a base class for various file readers. It does generic

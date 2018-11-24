@@ -10,7 +10,7 @@
 #include "UnitTestPrint.h"
 #include "UnitTestDriver.h"
 #include "UnitTest/CmdLine/CmdLine.h"
-
+#include "QuinoaConfig.h"
 #include "NoWarning/tutsuite.decl.h"
 
 using unittest::UnitTestDriver;

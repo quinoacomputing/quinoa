@@ -79,9 +79,12 @@ class Dirichlet {
     //!   file.
     explicit Dirichlet( ncomp_t c ) :
       m_c( c ),
-      m_depvar( g_inputdeck.get< tag::param, tag::dirichlet, tag::depvar >().at(c) ),
-      m_ncomp( g_inputdeck.get< tag::component >().get< tag::dirichlet >().at(c) ),
-      m_offset( g_inputdeck.get< tag::component >().offset< tag::dirichlet >(c) ),
+      m_depvar(
+        g_inputdeck.get< tag::param, tag::dirichlet, tag::depvar >().at(c) ),
+      m_ncomp(
+        g_inputdeck.get< tag::component >().get< tag::dirichlet >().at(c) ),
+      m_offset(
+        g_inputdeck.get< tag::component >().offset< tag::dirichlet >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, tag::dirichlet, tag::rng >().at(c) ) ) ),
       m_b(),

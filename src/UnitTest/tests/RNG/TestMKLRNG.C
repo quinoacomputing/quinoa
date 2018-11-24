@@ -145,9 +145,55 @@ void MKLRNG_object::test< 5 >() {
 //   RNG_common::test_gaussian( r );
 // }
 
-//! Test beta generator statistics from mcg31 using multiple threads
+//! \brief Test multi-variate Gaussian generator statistics from mcg31 using
+//!   multiple threads
 template<> template<>
 void MKLRNG_object::test< 7 >() {
+  set_test_name( "multi-variate Gaussian mcg31 from 4 emulated streams" );
+
+  tk::MKLRNG r( 4, VSL_BRNG_MCG31 );
+
+  std::array< double, 3 > m3{{ 3.0, 5.0, 2.0 }};
+  std::array< double, 3*(3+1)/2 > c3{{ 16.0,  8.0,  4.0,
+                                             13.0, 17.0,
+                                                   62.0 }};
+  RNG_common::test_gaussianmv< 3 >( r, m3, c3 );
+
+  std::array< double, 5 > m5{{ 1.0, -2.0, 3.4, 5.6, 2.3 }};
+  std::array< double, 5*(5+1)/2 > c5{{ 16.0, -8.0,  -2.0,  2.0,  1.3,
+                                              12.5, -1.0,  2.0, -0.3,
+                                                     8.5, -3.0, -1.0,
+                                                          18.0, -1.0,
+                                                                10.0 }};
+  RNG_common::test_gaussianmv< 5 >( r, m5, c5 );
+}
+
+//! \brief Test multi-variate Gaussian generator statistics from mcg59 using
+//!    multiple threads
+template<> template<>
+void MKLRNG_object::test< 8 >() {
+  set_test_name( "multi-variate Gaussian mcg59 from 4 emulated streams" );
+
+  tk::MKLRNG r( 4, VSL_BRNG_MCG59 );
+
+  std::array< double, 3 > m3{{ 3.0, 5.0, 2.0 }};
+  std::array< double, 3*(3+1)/2 > c3{{ 16.0,  8.0,  4.0,
+                                             13.0, 17.0,
+                                                   62.0 }};
+  RNG_common::test_gaussianmv< 3 >( r, m3, c3 );
+
+  std::array< double, 5 > m5{{ 1.0, -2.0, 3.4, 5.6, 2.3 }};
+  std::array< double, 5*(5+1)/2 > c5{{ 16.0, -8.0,  -2.0,  2.0,  1.3,
+                                              12.5, -1.0,  2.0, -0.3,
+                                                     8.5, -3.0, -1.0,
+                                                          18.0, -1.0,
+                                                                10.0 }};
+  RNG_common::test_gaussianmv< 5 >( r, m5, c5 );
+}
+
+//! Test beta generator statistics from mcg31 using multiple threads
+template<> template<>
+void MKLRNG_object::test< 9 >() {
   set_test_name( "beta mcg31 from 4 emulated streams" );
 
   tk::MKLRNG r( 4, VSL_BRNG_MCG31 );
@@ -156,7 +202,7 @@ void MKLRNG_object::test< 7 >() {
 
 //! Test beta generator statistics from mcg59 using multiple threads
 template<> template<>
-void MKLRNG_object::test< 8 >() {
+void MKLRNG_object::test< 10 >() {
   set_test_name( "beta mcg59 from 4 emulated streams" );
 
   tk::MKLRNG r( 4, VSL_BRNG_MCG59 );
@@ -165,7 +211,7 @@ void MKLRNG_object::test< 8 >() {
 
 //! Test beta generator statistics from wh using multiple threads
 template<> template<>
-void MKLRNG_object::test< 9 >() {
+void MKLRNG_object::test< 11 >() {
   set_test_name( "beta wh from 4 emulated streams" );
 
   tk::MKLRNG r( 4, VSL_BRNG_WH );
@@ -174,7 +220,7 @@ void MKLRNG_object::test< 9 >() {
 
 //! Test uniform generator statistics from mcg31 using multiple threads
 template<> template<>
-void MKLRNG_object::test< 10 >() {
+void MKLRNG_object::test< 12 >() {
   set_test_name( "uniform mcg31 from 4 emulated streams" );
 
   tk::MKLRNG r( 4, VSL_BRNG_MCG31 );
@@ -183,7 +229,7 @@ void MKLRNG_object::test< 10 >() {
 
 //! Test uniform generator statistics from mcg59 using multiple threads
 template<> template<>
-void MKLRNG_object::test< 11 >() {
+void MKLRNG_object::test< 13 >() {
   set_test_name( "uniform mcg59 from 4 emulated streams" );
 
   tk::MKLRNG r( 4, VSL_BRNG_MCG59 );
@@ -195,7 +241,7 @@ void MKLRNG_object::test< 11 >() {
 // //!   reasonable uniform random numbers: it generates samples outside the
 // //!   bounds (-eps, 1.0+eps)
 // template<> template<>
-// void MKLRNG_object::test< 12 >() {
+// void MKLRNG_object::test< 14 >() {
 //   set_test_name( "uniform wh from 4 emulated streams" );
 //
 //   tk::MKLRNG r( 4, VSL_BRNG_WH );
@@ -204,7 +250,7 @@ void MKLRNG_object::test< 11 >() {
 
 //! Test copy constructor for mcg31
 template<> template<>
-void MKLRNG_object::test< 13 >() {
+void MKLRNG_object::test< 15 >() {
   set_test_name( "copy constructor with mcg31" );
 
   tk::MKLRNG p( 1 );                    // one thread
@@ -215,7 +261,7 @@ void MKLRNG_object::test< 13 >() {
 
 //! Test copy constructor for mcg59
 template<> template<>
-void MKLRNG_object::test< 14 >() {
+void MKLRNG_object::test< 16 >() {
   set_test_name( "copy constructor with mcg59" );
 
   tk::MKLRNG r( 4, VSL_BRNG_MCG59 );
@@ -226,7 +272,7 @@ void MKLRNG_object::test< 14 >() {
 // //! \note For some reason this generator consistently fails to generate
 // //!   reasonable Gaussian random numbers
 // template<> template<>
-// void MKLRNG_object::test< 15 >() {
+// void MKLRNG_object::test< 17 >() {
 //   set_test_name( "copy constructor with wh" );
 //
 //   tk::MKLRNG r( 4, VSL_BRNG_WH );
@@ -235,7 +281,7 @@ void MKLRNG_object::test< 14 >() {
 
 //! Test move constructor for mcg31
 template<> template<>
-void MKLRNG_object::test< 16 >() {
+void MKLRNG_object::test< 18 >() {
   set_test_name( "move constructor with mcg31" );
 
   tk::MKLRNG r( 4, VSL_BRNG_MCG31 );
@@ -244,7 +290,7 @@ void MKLRNG_object::test< 16 >() {
 
 //! Test move constructor for mcg59
 template<> template<>
-void MKLRNG_object::test< 17 >() {
+void MKLRNG_object::test< 19 >() {
   set_test_name( "move constructor with mcg59" );
 
   tk::MKLRNG r( 4, VSL_BRNG_MCG59 );
@@ -255,7 +301,7 @@ void MKLRNG_object::test< 17 >() {
 // //! \note For some reason this generator consistently fails to generate
 // //!   reasonable Gaussian random numbers
 // template<> template<>
-// void MKLRNG_object::test< 18 >() {
+// void MKLRNG_object::test< 20 >() {
 //   set_test_name( "move constructor with wh" );
 //
 //   tk::MKLRNG r( 4, VSL_BRNG_WH );
@@ -264,7 +310,7 @@ void MKLRNG_object::test< 17 >() {
 
 //! Test copy assignment for mcg31
 template<> template<>
-void MKLRNG_object::test< 19 >() {
+void MKLRNG_object::test< 21 >() {
   set_test_name( "copy assignment with mcg31" );
 
   tk::MKLRNG p( 1 );                    // one thread
@@ -275,7 +321,7 @@ void MKLRNG_object::test< 19 >() {
 
 //! Test copy assignment for mcg59
 template<> template<>
-void MKLRNG_object::test< 20 >() {
+void MKLRNG_object::test< 22 >() {
   set_test_name( "copy assignment with mcg59" );
 
   tk::MKLRNG r( 4, VSL_BRNG_MCG59 );
@@ -286,7 +332,7 @@ void MKLRNG_object::test< 20 >() {
 // //! \note For some reason this generator consistently fails to generate
 // //!   reasonable Gaussian random numbers
 // template<> template<>
-// void MKLRNG_object::test< 21 >() {
+// void MKLRNG_object::test< 23 >() {
 //   set_test_name( "copy assignment with wh" );
 //
 //   tk::MKLRNG r( 4, VSL_BRNG_WH );
@@ -295,7 +341,7 @@ void MKLRNG_object::test< 20 >() {
 
 //! Test move assignment for mcg31
 template<> template<>
-void MKLRNG_object::test< 22 >() {
+void MKLRNG_object::test< 24 >() {
   set_test_name( "move assignment with mcg31" );
 
   tk::MKLRNG p( 1 );                    // one thread
@@ -306,7 +352,7 @@ void MKLRNG_object::test< 22 >() {
 
 //! Test move assignment for mcg59
 template<> template<>
-void MKLRNG_object::test< 23 >() {
+void MKLRNG_object::test< 25 >() {
   set_test_name( "move assignment with mcg59" );
 
   tk::MKLRNG r( 4, VSL_BRNG_MCG59 );
@@ -317,7 +363,7 @@ void MKLRNG_object::test< 23 >() {
 // //! \note For some reason this generator consistently fails to generate
 // //!   reasonable Gaussian random numbers
 // template<> template<>
-// void MKLRNG_object::test< 24 >() {
+// void MKLRNG_object::test< 26 >() {
 //   set_test_name( "move assignment with wh" );
 //
 //   tk::MKLRNG r( 4, VSL_BRNG_WH );

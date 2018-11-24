@@ -13,6 +13,7 @@
 #include "PUPUtil.h"
 #include "tests/Base/MigratedTypes.h"
 
+#include "QuinoaConfig.h"
 #include "NoWarning/tutsuite.decl.h"
 #include "migrated_base.decl.h"
 

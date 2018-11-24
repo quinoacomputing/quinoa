@@ -13,6 +13,7 @@
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wdeprecated"
+  #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
 
 #include <pugixml.hpp>

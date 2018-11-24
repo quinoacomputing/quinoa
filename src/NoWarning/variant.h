@@ -18,12 +18,16 @@
   #pragma clang diagnostic ignored "-Wundef"
   #pragma clang diagnostic ignored "-Wundefined-func-template"
   #pragma clang diagnostic ignored "-Wmissing-noreturn"
+  #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+  #pragma clang diagnostic ignored "-Wredundant-parens"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
+  #pragma GCC diagnostic ignored "-Wparentheses"
 #endif
 
+#undef I
 #include <boost/variant.hpp>
 
 #if defined(__clang__)

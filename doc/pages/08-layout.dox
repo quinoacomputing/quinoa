@@ -11,8 +11,6 @@ storing a 3-dimensional array of real values. The three dimensions are
 representing field variables at discrete locations, e.g., particles or a mesh
 entity such as cell, face, node, etc.
 
-@tableofcontents{xml}
-
 @section layout_req Data layout requirements and design
 
 How should field values, storing particle properties (in @ref walker_main)
