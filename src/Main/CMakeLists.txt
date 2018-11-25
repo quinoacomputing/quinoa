@@ -42,6 +42,8 @@ target_include_directories(Init PUBLIC
                            ${BRIGAND_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../Main)
 
+add_dependencies( "Init" "charestatecollectorCharmModule" )
+
 INSTALL(TARGETS Init
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
