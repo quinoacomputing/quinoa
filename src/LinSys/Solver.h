@@ -212,22 +212,22 @@ class Solver : public CBase_Solver {
     std::map< int, tk::MatCGCallback > m_worker;
     //! \brief Import map associating a list of global row ids to a worker chare
     //!   id during the communication of the global row ids
-    std::map< int, std::vector< std::size_t > > m_rowimport;
+    std::vector< std::vector< std::size_t > > m_rowimport;
     //! \brief Import map associating a list of global row ids to a worker chare
     //!   id during the communication of the solution/unknown vector
-    std::map< int, std::vector< std::size_t > > m_solimport;
+    std::vector< std::vector< std::size_t > > m_solimport;
     //! \brief Import map associating a list of global row ids to a worker chare
     //!   id during the communication of the left-hand side matrix
-    std::map< int, std::vector< std::size_t > > m_lhsimport;
+    std::vector< std::vector< std::size_t > > m_lhsimport;
     //! \brief Import map associating a list of global row ids to a worker chare
     //!   id during the communication of the righ-hand side vector
-    std::map< int, std::vector< std::size_t > > m_rhsimport;
+    std::vector< std::vector< std::size_t > > m_rhsimport;
     //! \brief Import map associating a list of global row ids to a worker chare
     //!   id during the communication of the low-order rhs vector
-    std::map< int, std::vector< std::size_t > > m_lowrhsimport;
+    std::vector< std::vector< std::size_t > > m_lowrhsimport;
     //! \brief Import map associating a list of global row ids to a worker chare
     //!   id during the communication of the low-order lhs vector
-    std::map< int, std::vector< std::size_t > > m_lowlhsimport;
+    std::vector< std::vector< std::size_t > > m_lowlhsimport;
     //! Part of global row indices owned by my node
     std::set< std::size_t > m_row;
     //! \brief Part of unknown/solution vector owned by my node

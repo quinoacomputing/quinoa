@@ -91,6 +91,14 @@ Solver::nchare( int n )
   m_mynchare = static_cast< std::size_t >( mynchare );
   m_nchare = static_cast< std::size_t >( n );
 
+  // Knowing the number of chares that will contribute, resize receive buffers
+  m_rowimport.resize( m_nchare );
+  m_solimport.resize( m_nchare );
+  m_lhsimport.resize( m_nchare );
+  m_rhsimport.resize( m_nchare );
+  m_lowlhsimport.resize( m_nchare );
+  m_lowrhsimport.resize( m_nchare );
+
   contribute( m_cb.get< tag::part >() );
 }
 
@@ -168,7 +176,9 @@ Solver::next()
   thisProxy[ CkMyNode() ].wait4low();
 
   m_rhsimport.clear();
+  m_rhsimport.resize( m_nchare );
   m_lowrhsimport.clear();
+  m_lowrhsimport.resize( m_nchare );
   m_lowrhs.clear();
   m_hypreRhs.clear();
   m_rhs.clear();
@@ -213,7 +223,7 @@ Solver::charerow( int fromch, const std::vector< std::size_t >& row )
   std::map< int, std::set< std::size_t > > exp;
   for (auto gid : row) {
     if (gid >= m_lower && gid < m_upper) {  // if own
-      m_rowimport[ fromch ].push_back( gid );
+      m_rowimport[ static_cast<std::size_t>(fromch) ].push_back( gid );
       m_row.insert( gid );
     } else exp[ node(gid) ].insert( gid );
   }
@@ -236,7 +246,7 @@ Solver::addrow( int fromch, const std::set< std::size_t >& row )
 // *****************************************************************************
 {
   for (auto r : row) {
-    m_rowimport[ fromch ].push_back( r );
+    m_rowimport[ static_cast<std::size_t>(fromch) ].push_back( r );
     m_row.insert( r );
   }
 
@@ -263,7 +273,7 @@ Solver::charesol( int fromch,
 
   for (std::size_t i=0; i<gid.size(); ++i)
     if (gid[i] >= m_lower && gid[i] < m_upper) {    // if own
-      m_solimport[ fromch ].push_back( gid[i] );
+      m_solimport[ static_cast<std::size_t>(fromch)].push_back( gid[i] );
       m_sol[ gid[i] ] = solution[i];
     } else {
       exp[ node(gid[i]) ][ gid[i] ] = solution[i];
@@ -290,7 +300,7 @@ Solver::addsol( int fromch,
 // *****************************************************************************
 {
   for (const auto& r : solution) {
-    m_solimport[ fromch ].push_back( r.first );
+    m_solimport[ static_cast<std::size_t>(fromch) ].push_back( r.first );
     m_sol[ r.first ] = r.second;
   }
 
@@ -334,7 +344,7 @@ Solver::charelhs( int fromch,
 
   for (std::size_t i=0; i<gid.size(); ++i)
     if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
-      m_lhsimport[ fromch ].push_back( gid[i] );
+      m_lhsimport[ static_cast<std::size_t>(fromch) ].push_back( gid[i] );
       auto& row = m_lhs[ gid[i] ];
       row[ gid[i] ] += lhsd[i];
       for (auto j=psup.second[i]+1; j<=psup.second[i+1]; ++j)
@@ -366,7 +376,7 @@ Solver::addlhs( int fromch,
 // *****************************************************************************
 {
   for (const auto& r : l) {
-    m_lhsimport[ fromch ].push_back( r.first );
+    m_lhsimport[ static_cast<std::size_t>(fromch) ].push_back( r.first );
     auto& row = m_lhs[ r.first ];
     for (const auto& c : r.second) row[ c.first ] += c.second;
   }
@@ -393,7 +403,7 @@ Solver::charerhs( int fromch,
 
   for (std::size_t i=0; i<gid.size(); ++i)
     if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
-      m_rhsimport[ fromch ].push_back( gid[i] );
+      m_rhsimport[ static_cast<std::size_t>(fromch) ].push_back( gid[i] );
       m_rhs[ gid[i] ] += r[i];
     } else
       exp[ node(gid[i]) ][ gid[i] ] = r[i];
@@ -419,7 +429,7 @@ Solver::addrhs( int fromch,
 {
   // Store rhs contributions
   for (const auto& l : r) {
-    m_rhsimport[ fromch ].push_back( l.first );
+    m_rhsimport[ static_cast<std::size_t>(fromch) ].push_back( l.first );
     m_rhs[ l.first ] += l.second;
   }
 
@@ -447,7 +457,7 @@ Solver::charelowrhs( int fromch,
 
   for (std::size_t i=0; i<gid.size(); ++i)
     if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
-      m_lowrhsimport[ fromch ].push_back( gid[i] );
+      m_lowrhsimport[ static_cast<std::size_t>(fromch) ].push_back( gid[i] );
       m_lowrhs[ gid[i] ] += lowrhs[i];
     } else
       exp[ node(gid[i]) ][ gid[i] ] = lowrhs[i];
@@ -475,7 +485,7 @@ Solver::addlowrhs( int fromch,
   using tk::operator+=;
 
   for (const auto& r : lowrhs) {
-    m_lowrhsimport[ fromch ].push_back( r.first );
+    m_lowrhsimport[ static_cast<std::size_t>(fromch) ].push_back( r.first );
     m_lowrhs[ r.first ] += r.second;
   }
 
@@ -503,7 +513,7 @@ Solver::charelowlhs( int fromch,
 
   for (std::size_t i=0; i<gid.size(); ++i)
     if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
-      m_lowlhsimport[ fromch ].push_back( gid[i] );
+      m_lowlhsimport[ static_cast<std::size_t>(fromch) ].push_back( gid[i] );
       m_lowlhs[ gid[i] ] += lowlhs[i];
     } else
       exp[ node(gid[i]) ][ gid[i] ] = lowlhs[i];
@@ -531,7 +541,7 @@ Solver::addlowlhs( int fromch,
   using tk::operator+=;
 
   for (const auto& r : lowlhs) {
-    m_lowlhsimport[ fromch ].push_back( r.first );
+    m_lowlhsimport[ static_cast<std::size_t>(fromch) ].push_back( r.first );
     m_lowlhs[ r.first ] += r.second;
   }
 
@@ -937,30 +947,34 @@ Solver::updateSol()
 
   // Group solution vector by workers and send each the parts back to workers
   // that own them
+  int c = 0;
   for (const auto& w : m_solimport) {
-    std::vector< std::size_t > gid;
-    std::vector< tk::real > solution;
+    if (!w.empty()) {
+      std::vector< std::size_t > gid;
+      std::vector< tk::real > solution;
 
-    for (auto r : w.second) {
-      const auto it = m_sol.find( r );
-      if (it != end(m_sol)) {
-        gid.push_back( it->first );
-        auto i = tk::cref_find( m_lid, it->first );
-        using diff_type = typename decltype(m_hypreSol)::difference_type;
-        auto b = static_cast< diff_type >( i*m_ncomp );
-        auto e = static_cast< diff_type >( (i+1)*m_ncomp );
-        solution.insert( end(solution),
-                         std::next( begin(m_hypreSol), b ),
-                         std::next( begin(m_hypreSol), e ) );
-      } else
-        Throw( "Can't find global row id " + std::to_string(r) +
-               " to export in solution vector" );
+      for (auto r : w) {
+        const auto it = m_sol.find( r );
+        if (it != end(m_sol)) {
+          gid.push_back( it->first );
+          auto i = tk::cref_find( m_lid, it->first );
+          using diff_type = typename decltype(m_hypreSol)::difference_type;
+          auto b = static_cast< diff_type >( i*m_ncomp );
+          auto e = static_cast< diff_type >( (i+1)*m_ncomp );
+          solution.insert( end(solution),
+                           std::next( begin(m_hypreSol), b ),
+                           std::next( begin(m_hypreSol), e ) );
+        } else
+          Throw( "Can't find global row id " + std::to_string(r) +
+                 " to export in solution vector" );
+      }
+
+      // Update worker with high order solution
+      auto stream = serializeSol( gid, solution );
+      tk::cref_find( m_worker, c ).get< tag::high >().
+        send( stream.first, stream.second.get() );
     }
-
-    // Update worker with high order solution
-    auto stream = serializeSol( gid, solution );
-    tk::cref_find( m_worker, w.first ).get< tag::high >().
-      send( stream.first, stream.second.get() );
+    ++c;
   }
 }
 
@@ -980,24 +994,28 @@ Solver::updateLowSol()
 //  Update low order solution vector in workers on this compute node
 // *****************************************************************************
 {
+  int c = 0;
   for (const auto& w : m_solimport) {
-    std::vector< std::size_t > gid;
-    std::vector< tk::real > solution;
+    if (!w.empty()) {
+      std::vector< std::size_t > gid;
+      std::vector< tk::real > solution;
 
-    for (auto r : w.second) {
-      const auto it = m_lowrhs.find( r );
-      if (it != end(m_lowrhs)) {
-        gid.push_back( it->first );
-        solution.insert(end(solution), begin(it->second), end(it->second));
-      } else
-        Throw( "Can't find global row id " + std::to_string(r) +
-               " to export in low order solution vector" );
+      for (auto r : w) {
+        const auto it = m_lowrhs.find( r );
+        if (it != end(m_lowrhs)) {
+          gid.push_back( it->first );
+          solution.insert( end(solution), begin(it->second), end(it->second) );
+        } else
+          Throw( "Can't find global row id " + std::to_string(r) +
+                 " to export in low order solution vector" );
+      }
+
+      // Update worker with low order solution
+      auto stream = serializeSol( gid, solution );
+      tk::cref_find( m_worker, c ).get< tag::low >().
+        send( stream.first, stream.second.get() );
     }
-
-    // Update worker with low order solution
-    auto stream = serializeSol( gid, solution );
-    tk::cref_find( m_worker, w.first ).get< tag::low >().
-      send( stream.first, stream.second.get() );
+    ++c;
   }
 }
 
@@ -1007,24 +1025,6 @@ Solver::lowsolve()
 //  Solve low order linear system
 // *****************************************************************************
 {
-  // Set boundary conditions on the low order system
-  for (const auto& n : m_bc)
-    if (n.first >= m_lower && n.first < m_upper) {
-      // lhs
-      auto& l = tk::ref_find( m_lowlhs, n.first );
-      for (std::size_t i=0; i<m_ncomp; ++i)
-        if (n.second[i].first) l[i] = 1.0;
-      // rhs (set to zero instead of the solution increment at Dirichlet
-      // BCs, because for the low order solution the right hand side is the sum
-      // of the high order right hand side and mass diffusion, so the low order
-      // system is L = R + D, where L is the lumped mass matrix, R is the high
-      // order RHS, and D is mass diffusion, and R already has the Dirichlet BC
-      // set)
-      auto& r = tk::ref_find( m_lowrhs, n.first );
-      for (std::size_t i=0; i<m_ncomp; ++i)
-        if (n.second[i].first) r[i] = 0.0;
-    }
-
   // Solve low order system
   Assert( rhscomplete(),
           "Values of distributed right-hand-side vector on compute node " +
@@ -1044,6 +1044,24 @@ Solver::lowsolve()
   Assert( tk::keyEqual( m_rhs, m_lowlhs ), "Row IDs of rhs and lumped mass "
           "lhs vector unequal on compute node " + std::to_string( CkMyNode() ) +
           ": cannot solve low order system" );
+
+  // Set boundary conditions on the low order system
+  for (const auto& n : m_bc)
+    if (n.first >= m_lower && n.first < m_upper) {
+      // lhs
+      auto& l = tk::ref_find( m_lowlhs, n.first );
+      for (std::size_t i=0; i<m_ncomp; ++i)
+        if (n.second[i].first) l[i] = 1.0;
+      // rhs (set to zero instead of the solution increment at Dirichlet
+      // BCs, because for the low order solution the right hand side is the sum
+      // of the high order right hand side and mass diffusion, so the low order
+      // system is L = R + D, where L is the lumped mass matrix, R is the high
+      // order RHS, and D is mass diffusion, and R already has the Dirichlet BC
+      // set)
+      auto& r = tk::ref_find( m_lowrhs, n.first );
+      for (std::size_t i=0; i<m_ncomp; ++i)
+        if (n.second[i].first) r[i] = 0.0;
+    }
 
   auto ir = m_rhs.cbegin();
   auto id = m_lowrhs.begin();
