@@ -647,7 +647,7 @@ DG::addEsuel( const std::array< std::size_t, 2 >& id,
       ++nmatch;
       Assert( esuel[ id[1]*4 + i ] == esuf[ 2*id[0]+1 ], "Incorrect boundary "
              "element entered in esuel" );
-      Assert( static_cast<std::size_t>(id[1]) == esuf[ 2*id[0]+0 ], "Boundary "
+      Assert( static_cast<int>(id[1]) == esuf[ 2*id[0]+0 ], "Boundary "
              "element entered in incorrect esuel location" );
     }
     ++i;
