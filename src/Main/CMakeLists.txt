@@ -42,6 +42,8 @@ target_include_directories(Init PUBLIC
                            ${BRIGAND_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../Main)
 
+add_dependencies( "Init" "charestatecollectorCharmModule" )
+
 INSTALL(TARGETS Init
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
@@ -131,6 +133,7 @@ if (ENABLE_UNITTEST)
                              ${QUINOA_SOURCE_DIR}/IO
                              ${QUINOA_SOURCE_DIR}/RNG
                              ${TUT_INCLUDE_DIRS}
+                             ${LAPACKE_INCLUDE_DIRS}
                              ${PROJECT_BINARY_DIR}/../LinSys
                              ${PROJECT_BINARY_DIR}/../UnitTest)
 
