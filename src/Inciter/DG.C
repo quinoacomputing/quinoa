@@ -627,6 +627,7 @@ DG::addEsuel( const std::array< std::size_t, 2 >& id,
   const auto& inpoel = d->Inpoel();
   const auto& esuf = m_fd.Esuf();
   auto lid = d->Lid();
+  IGNORE(esuf);
 
   std::array< tk::UnsMesh::Face, 4 > face;
   for (std::size_t f = 0; f<4; ++f)
@@ -646,8 +647,8 @@ DG::addEsuel( const std::array< std::size_t, 2 >& id,
       ++nmatch;
       Assert( esuel[ id[1]*4 + i ] == esuf[ 2*id[0]+1 ], "Incorrect boundary "
              "element entered in esuel" );
-      Assert( id[1] == esuf[ 2*id[0]+0 ], "Boundary element entered in "
-             "incorrect esuel location" );
+      Assert( static_cast<std::size_t>(id[1]) == esuf[ 2*id[0]+0 ], "Boundary "
+             "element entered in incorrect esuel location" );
     }
     ++i;
   }
@@ -709,7 +710,7 @@ DG::adj()
   // Ensure that all elements surrounding elements are correct including those
   // at chare boundaries
   const auto& esuel = m_fd.Esuel();
-  int nbound = 0;
+  std::size_t nbound = 0;
   for (std::size_t e=0; e<esuel.size()/4; ++e) {
     for (std::size_t f=0; f<4; ++f)
       if (esuel[4*e+f] == -1) ++nbound;
