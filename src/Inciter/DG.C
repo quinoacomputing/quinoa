@@ -625,6 +625,8 @@ DG::addEsuel( const std::array< std::size_t, 2 >& id,
 {
   auto d = Disc();
   const auto& inpoel = d->Inpoel();
+  const auto& esuf = m_fd.Esuf();
+  auto lid = d->Lid();
 
   std::array< tk::UnsMesh::Face, 4 > face;
   for (std::size_t f = 0; f<4; ++f)
@@ -632,14 +634,27 @@ DG::addEsuel( const std::array< std::size_t, 2 >& id,
       face[f][i] = inpoel[ id[1]*4 + tk::lpofa[f][i] ];
 
   auto& esuel = m_fd.Esuel();
-  std::size_t i = 0;
+  std::size_t i(0), nmatch(0);
   for (const auto& f : face) {
-    if (tk::UnsMesh::Eq< 3 >()( t, f )) {
-      Assert( esuel[ id[1]*4 + i ] == -1, "Incorrect boundary element found in esuel");
+    tk::UnsMesh::Face tl {{ tk::cref_find( lid, t[0] ),
+                            tk::cref_find( lid, t[1] ),
+                            tk::cref_find( lid, t[2] ) }};
+    if (tk::UnsMesh::Eq< 3 >()( tl, f )) {
+      Assert( esuel[ id[1]*4 + i ] == -1, "Incorrect boundary element found in "
+             "esuel");
       esuel[ id[1]*4 + i ] = static_cast<int>(ghostid);
+      ++nmatch;
+      Assert( esuel[ id[1]*4 + i ] == esuf[ 2*id[0]+1 ], "Incorrect boundary "
+             "element entered in esuel" );
+      Assert( id[1] == esuf[ 2*id[0]+0 ], "Boundary element entered in "
+             "incorrect esuel location" );
     }
     ++i;
   }
+
+  // ensure that exactly one face matched
+  Assert( nmatch == 1, "Incorrect number of node-triplets (faces) matched for "
+         "updating esuel; matching faces = "+ std::to_string(nmatch) );
 }
 
 void
@@ -690,6 +705,17 @@ DG::adj()
       Assert( m_fd.Esuf()[2*f+1] > -1,
            "Right element in esuf for internal/chare faces cannot be a ghost" );
   }
+
+  // Ensure that all elements surrounding elements are correct including those
+  // at chare boundaries
+  const auto& esuel = m_fd.Esuel();
+  int nbound = 0;
+  for (std::size_t e=0; e<esuel.size()/4; ++e) {
+    for (std::size_t f=0; f<4; ++f)
+      if (esuel[4*e+f] == -1) ++nbound;
+  }
+  Assert( nbound == m_fd.Nbfac(), "Incorrect number of ghost-element -1's in "
+         "updated esuel" );
 
   // Error checking on ghost data
   for(const auto& n : m_ghostData)
@@ -801,7 +827,10 @@ DG::setup( tk::real v )
   for (const auto& eq : g_dgpde) 
     eq.initialize( m_lhs, inpoel, coord, m_u, d->T() );
   m_un = m_u;
-  m_limFunc.fill(1.0);
+
+  for (std::size_t e=0; e<m_fd.Esuel().size()/4; ++e)
+    for (std::size_t c=0; c<m_limFunc.nprop(); ++c)
+      m_limFunc(e,c,0)=1.0;
 
   // Output initial conditions to file (regardless of whether it was requested)
   if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( d->T() );
@@ -1024,9 +1053,6 @@ DG::lim()
 // *****************************************************************************
 {
   if (g_inputdeck.get< tag::discr, tag::ndof >() > 1) {
-
-    // set limiter function to one
-    m_limFunc.fill(1.0);
   
     Assert( m_u.nunk() == m_limFunc.nunk(), "Number of unknowns in solution "
             "vector and limiter at recent time step incorrect" );
@@ -1035,6 +1061,10 @@ DG::lim()
             (m_u.nprop()/g_inputdeck.get< tag::discr, tag::ndof >()),
             "Number of components in solution vector and limiter at recent "
             "time step incorrect" );
+
+    for (std::size_t e=0; e<m_fd.Esuel().size()/4; ++e)
+      for (std::size_t c=0; c<m_limFunc.nprop(); ++c)
+        m_limFunc(e,c,0)=1.0;
   
     const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
     if (limiter == ctr::LimiterType::WENOP1)
@@ -1091,6 +1121,8 @@ DG::comlim( int fromch,
     auto j = tk::cref_find( n, tetid[i] );
     Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
     Assert( j < m_limFunc.nunk(), "Indexing out of bounds in DG::comlim()" );
+    Assert( lfn[i].size() == m_limFunc.nprop(), "size mismatch in received "
+           "limfunc in DG::comlim()" );
     for (std::size_t c=0; c<m_limFunc.nprop(); ++c)
       m_limFunc(j,c,0) = lfn[i][c];
   }
