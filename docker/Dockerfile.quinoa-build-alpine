@@ -4,36 +4,28 @@
 # \file      docker/Dockerfile.quinoa-build-alpine
 # \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
 # \brief     Dockerfile for a static build of Quinoa
-#
-################################################################################
-
-# Dockerfile for a static build of Quinoa, i.e., all executables statically
-# linked to all libraries.
+# \details   Dockerfile for a static build of Quinoa, i.e., all executables
+# statically linked to all libraries.
 #
 # We start from a minimalistic official Alpine Linux distribution (which is
 # based on busybox and musl-libc) and install all prerequisites, OpenMPI, etc.
 # This docker image creates statically built release executables requiring
-# absolutely no dependencies. This container is cleaned at the end, it only
-# contains the absolute minimal setup required to run the executables in order
-# to reduce the container size. This container is intended for distributing
-# containerized releases (and to test the static build).
+# absolutely no dependencies.
 #
-# This container does not contain proprietary software and thus the container
-# image can be publicly distributed.
-#
-# All prerequisites for building the container are downloaded from the internet.
+################################################################################
 
 FROM alpine:latest
 
 # Install system-wide prerequisites
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && cat /etc/apk/repositories
-RUN apk update && apk add patch libtool autoconf automake gfortran gcc g++ make boost-dev bash m4 file git cmake perl grep zlib-dev libexecinfo-dev ninja graphviz libelf-dev binutils-dev flex bison
+RUN apk update && apk add patch libtool autoconf automake gfortran gcc g++ make boost-dev bash m4 file git cmake perl grep zlib-dev libexecinfo-dev ninja graphviz libelf-dev binutils-dev flex bison vim
 
 # Install OpenMPI
 ADD http://download.open-mpi.org/release/open-mpi/v3.1/openmpi-3.1.1.tar.gz /openmpi/
 RUN cd /openmpi/ && tar xzf openmpi-3.1.1.tar.gz && cd openmpi-3.1.1 && ./configure --enable-shared --enable-static --prefix=/opt/openmpi && make -sj$(grep -c processor /proc/cpuinfo) install
 ENV PATH /opt/openmpi/bin:$PATH
 ENV LD_LIBRARY_PATH /opt/openmpi/lib:$LD_LIBRARY_PATH
+ENV OMPI_MCA_plm isolated
 RUN rm -rf /openmpi
 
 # Remove /install - no more installs after this line
@@ -59,7 +51,7 @@ RUN cd quinoa && git submodule update --recursive && cd tpl && git submodule ini
 # Build TPLs
 RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off .. && make -sj$(grep -c processor /proc/cpuinfo)
 # Build quinoa
-RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off -DCMAKE_CXX_FLAGS=-Werror -DRUNNER_ARGS="--bind-to none -oversubscribe -mca plm isolated" ../src && make -sj$(grep -c processor /proc/cpuinfo) && ../script/run_tests.sh $(grep -c processor /proc/cpuinfo) ./charmrun +p "--bind-to none -oversubscribe -mca plm isolated"
+RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off -DCMAKE_CXX_FLAGS=-Werror -DRUNNER_ARGS="--bind-to none -oversubscribe" ../src && make -sj$(grep -c processor /proc/cpuinfo) && ../script/run_tests.sh $(grep -c processor /proc/cpuinfo) ./charmrun +p "--bind-to none -oversubscribe"
 
 # Ensure all executables are statically linked
 RUN cd quinoa/build && \
@@ -78,10 +70,3 @@ RUN cd quinoa/build && \
     if ! ldd Main/walker | grep -v ldd | wc -l > /dev/null; then \
       echo "Non-static executable: walker"; exit 1; \
     fi
-
-# Clean container, but keep stuff required to run the executables
-USER root
-RUN cd quinoa/build && make install
-RUN apk del bash m4 file git cmake gfortran gcc g++ make perl grep boost-dev zlib-dev libexecinfo-dev ncurses-terminfo-base ncurses-terminfo ncurses-libs readline && apk add libexecinfo && rm -rf /var/cache/apk/*
-USER quinoa
-#RUN rm -rf quinoa
