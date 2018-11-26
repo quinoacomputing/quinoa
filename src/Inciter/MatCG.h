@@ -192,9 +192,6 @@ class MatCG : public CBase_MatCG {
       return m_disc[ thisIndex ].ckLocal();
     }
 
-    //! Return nodegroup id for chare id
-    int node( int id ) const;
-
     //! Deserialize solution vector from Charm++ message
     std::pair< std::vector< std::size_t >, std::vector< tk::real > >
     deserializeSol( CkDataMsg* msg );

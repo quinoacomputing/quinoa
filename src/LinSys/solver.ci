@@ -27,41 +27,22 @@ module solver {
         void charerow( int fromch, const std::vector< std::size_t >& row );
       entry [exclusive] void addrow( int fromch,
                                      const std::set< std::size_t >& row );
-      entry [exclusive] void charesol( int fromch,
-                                       const std::vector< std::size_t >& gid,
-                                       const Fields& solution );
       entry [exclusive] void addsol( int fromch,
                                      const std::map< std::size_t,
                                        std::vector< tk::real > >& solution );
-      entry [exclusive] void charelhs( int fromch,
-                           const std::vector< std::size_t >& gid,
-                           const std::pair< std::vector< std::size_t >,
-                                            std::vector< std::size_t > >& psup,
-                           const tk::Fields& lhsd,
-                           const tk::Fields& lhso );
       entry [exclusive] void addlhs( int fromch,
         const std::map< std::size_t,
                         std::map< std::size_t,
                                   std::vector< tk::real > > >& lhs );
-      entry [exclusive] void charerhs( int fromch,
-                           const std::vector< std::size_t >& gid,
-                           const Fields& r );
       entry [exclusive] void addrhs( int fromch,
                          const std::map< std::size_t,
                                          std::vector< tk::real > >& rhs );
-      entry [exclusive] void charelowrhs( int fromch,
-                              const std::vector< std::size_t >& gid,
-                              const Fields& lowrhs );
       entry [exclusive] void addlowrhs( int fromch,
                             const std::map< std::size_t,
                                             std::vector< tk::real > >& lorhs );
-      entry [exclusive] void charelowlhs( int fromch,
-                              const std::vector< std::size_t >& gid,
-                              const Fields& lowlhs );
       entry [exclusive] void addlowlhs( int fromch,
                             const std::map< std::size_t,
                                             std::vector< tk::real > >& lolhs );
-      entry [exclusive] void comfinal();
       entry [exclusive] void charebc( const std::unordered_map< std::size_t,
                             std::vector< std::pair< bool, tk::real > > >& bc );
 

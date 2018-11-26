@@ -31,6 +31,7 @@
 #include "DiagReducer.h"
 #include "NodeBC.h"
 #include "Refiner.h"
+// #include "ChareStateCollector.h"
 
 #ifdef HAS_ROOT
   #include "RootMeshWriter.h"
@@ -43,6 +44,8 @@ extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< CGPDE > g_cgpde;
 
 } // inciter::
+
+// extern tk::CProxy_ChareStateCollector stateProxy;
 
 using inciter::MatCG;
 
@@ -72,6 +75,11 @@ MatCG::MatCG( const CProxy_Discretization& disc,
 //! \param[in] fd Face data structures
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->
+//       insert( "MatCG", thisIndex, CkMyPe(), Disc()->It(), "MatCG" );
+
   auto d = Disc();
 
   //std::cout << "MatCG " << thisIndex << " on node " << CkMyNode() << '\n';
@@ -97,7 +105,7 @@ MatCG::MatCG( const CProxy_Discretization& disc,
   m_solver.charecom( thisIndex, cb );
 
   // Send off global row IDs to linear system solver
-  m_solver[ node(thisIndex) ].charerow( thisIndex, d->Gid() );
+  m_solver.ckLocalBranch()->charerow( thisIndex, d->Gid() );
 }
 
 void
@@ -114,25 +122,6 @@ MatCG::registerReducers()
   NodeDiagnostics::registerReducers();
 }
 
-int
-MatCG::node( int id ) const
-// *****************************************************************************
-//  Return nodegroup id for chare id
-//! \param[in] id Chare id
-//! \return Charm++ nodegroup that a chare contributes to
-//! \details This is computed based on a simple contiguous linear
-//!   distribution of chare ids to nodes.
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  Assert( d->nchare() > 0, "Number of chares must be a positive number" );
-  auto n = id / (d->nchare() / CkNumNodes());
-  if (n >= CkNumNodes()) n = CkNumNodes()-1;
-  Assert( n < CkNumNodes(), "Assigning to nonexistent compute node" );
-  return n;
-}
-
 void
 MatCG::setup( tk::real v )
 // *****************************************************************************
@@ -140,9 +129,14 @@ MatCG::setup( tk::real v )
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->
+//       insert( "MatCG", thisIndex, CkMyPe(), Disc()->It(), "setup" );
+
   auto d = Disc();
 
-  m_solver[ node(thisIndex) ].comfinal();
+  m_solver.ckLocalBranch()->comfinal();
 
   // Store total mesh volume
   m_vol = v;
@@ -161,7 +155,7 @@ MatCG::setup( tk::real v )
   for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
 
   // Send off initial guess for assembly
-  m_solver[ node(thisIndex) ].charesol( thisIndex, d->Gid(), m_du );
+  m_solver.ckLocalBranch()->charesol( thisIndex, d->Gid(), m_du );
 
   // Output initial conditions to file (regardless of whether it was requested)
   if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( d->T() );
@@ -179,6 +173,11 @@ MatCG::dt()
 // Compute time step size
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->
+//       insert( "MatCG", thisIndex, CkMyPe(), Disc()->It(), "dt" );
+
   tk::real mindt = std::numeric_limits< tk::real >::max();
 
   auto const_dt = g_inputdeck.get< tag::discr, tag::dt >();
@@ -219,6 +218,11 @@ MatCG::lhs()
 // Compute left-hand side of transport equations
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->
+//       insert( "MatCG", thisIndex, CkMyPe(), Disc()->It(), "lhs" );
+
   auto d = Disc();
 
   // Compute left-hand side matrix for all equations
@@ -226,13 +230,13 @@ MatCG::lhs()
     eq.lhs( d->Coord(), d->Inpoel(), d->Psup(), m_lhsd, m_lhso );
 
   // Send off left hand side for assembly
-  m_solver[ node(thisIndex) ].
+  m_solver.ckLocalBranch()->
     charelhs( thisIndex, d->Gid(), d->Psup(), m_lhsd, m_lhso );
 
   // Compute lumped mass lhs required for the low order solution
   auto lump = d->FCT()->lump( *d );
   // Send off lumped mass lhs for assembly
-  m_solver[ node(thisIndex) ].charelowlhs( thisIndex, d->Gid(), lump );
+  m_solver.ckLocalBranch()->charelowlhs( thisIndex, d->Gid(), lump );
 }
 
 void
@@ -241,6 +245,11 @@ MatCG::rhs()
 // Compute right-hand side of transport equations
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->
+//       insert( "MatCG", thisIndex, CkMyPe(), Disc()->It(), "rhs" );
+
   auto d = Disc();
 
   // Compute right-hand side and query Dirichlet BCs for all equations
@@ -252,12 +261,12 @@ MatCG::rhs()
   bc();
 
   // Send off right-hand sides for assembly
-  m_solver[ node(thisIndex) ].charerhs( thisIndex, d->Gid(), r );
+  m_solver.ckLocalBranch()->charerhs( thisIndex, d->Gid(), r );
 
   // Compute mass diffusion rhs contribution required for the low order solution
   auto diff = d->FCT()->diff( *d, m_u );
   // Send off mass diffusion rhs contribution for assembly
-  m_solver[ node(thisIndex) ].charelowrhs( thisIndex, d->Gid(), diff );
+  m_solver.ckLocalBranch()->charelowrhs( thisIndex, d->Gid(), diff );
 }
 
 void
@@ -266,6 +275,11 @@ MatCG::bc()
 // Query and match user-specified boundary conditions to side sets
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->
+//       insert( "MatCG", thisIndex, CkMyPe(), Disc()->It(), "bc" );
+
   auto d = Disc();
 
   // Match user-specified boundary conditions to side sets
@@ -302,6 +316,11 @@ MatCG::updateLowSol( CkDataMsg* msg )
 // Update low order solution vector
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->
+//       insert( "MatCG", thisIndex, CkMyPe(), Disc()->It(), "updateLowSol" );
+
   // Deserialize global node ids and solution vector update
   std::vector< std::size_t > gid;  // Global row indices of the vector updated
   std::vector< tk::real > du;  // Portion of the unknown/solution vector update
@@ -337,6 +356,11 @@ MatCG::updateSol( CkDataMsg* msg )
 // Update high order solution vector
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->
+//       insert( "MatCG", thisIndex, CkMyPe(), Disc()->It(), "updteSol" );
+
   // Deserialize global node ids and solution vector update
   std::vector< std::size_t > gid;  // Global row indices of the vector updated
   std::vector< tk::real > du;  // Portion of the unknown/solution vector update
@@ -453,6 +477,11 @@ MatCG::advance( tk::real newdt )
 //! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->
+//       insert( "MatCG", thisIndex, CkMyPe(), Disc()->It(), "advance" );
+
   auto d = Disc();
 
   // Set new time step size
@@ -471,6 +500,11 @@ MatCG::resized()
 // Resizing data sutrctures after mesh refinement has been completed
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->
+//       insert( "MatCG", thisIndex, CkMyPe(), Disc()->It(), "resized" );
+
   resize_complete();
 }
 
@@ -481,6 +515,11 @@ MatCG::update( const tk::Fields& a )
 //! \param[in] a Limited antidiffusive element contributions
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->
+//       insert( "MatCG", thisIndex, CkMyPe(), Disc()->It(), "update" );
+
   auto d = Disc();
 
   // Verify that the change in the solution at those nodes where Dirichlet
@@ -510,6 +549,11 @@ MatCG::diag()
 // Signal the runtime system that diagnostics have been computed
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->
+//       insert( "MatCG", thisIndex, CkMyPe(), Disc()->It(), "diag" );
+
   diag_complete();
 }
 
@@ -519,6 +563,11 @@ MatCG::refine()
 // Optionally refine/derefine mesh
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->
+//       insert( "MatCG", thisIndex, CkMyPe(), Disc()->It(), "refine" );
+
   auto d = Disc();
 
   auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
@@ -555,6 +604,11 @@ MatCG::resize( const tk::UnsMesh::Chunk& /*chunk*/,
 //!   side set ids for this mesh chunk
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->
+//       insert( "MatCG", thisIndex, CkMyPe(), Disc()->It(), "resize" );
+
   //auto d = Disc();
 
   //d->Inpoel() = inpoel;
@@ -569,6 +623,11 @@ MatCG::eval()
 // Evaluate whether to continue with next step
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->
+//       insert( "MatCG", thisIndex, CkMyPe(), Disc()->It(), "eval" );
+
   auto d = Disc();
 
   // Output field data to file

@@ -141,8 +141,6 @@ Solver::nodebounds( int n, std::size_t lower, std::size_t upper )
   // If we have all compute nodes' bounds, signal the runtime system to continue
   if (m_div.size() == static_cast<std::size_t>(CkNumNodes())) {
 
-//std::cout << CkMyNode() << ": " << m_lower << " ... " << m_upper << '\n';
-
     // Create my compute node's lhs matrix distributed across all compute nodes
     m_A.create( m_lower*m_ncomp, m_upper*m_ncomp );
     // Create my compute node's rhs and unknown vectors distributed across all
@@ -210,8 +208,6 @@ Solver::charerow( int fromch, const std::vector< std::size_t >& row )
 //! \param[in] row Global mesh point (row) indices contributed
 // *****************************************************************************
 {
-  //std::cout << CkMyNode() << " charerow from ch " << fromch << '\n';
-
   // Store rows owned and pack those to be exported, also build import map
   // used to test for completion
   std::map< int, std::set< std::size_t > > exp;
@@ -389,8 +385,6 @@ Solver::charerhs( int fromch,
 //! \param[in] r Portion of the right-hand side vector contributed
 // *****************************************************************************
 {
-  //std::cout << CkMyNode() << " charerhs from ch " << fromch << '\n';
-
   Assert( gid.size() == r.nunk(),
           "Size of right-hand side and row ID vectors must equal" );
 
@@ -410,7 +404,6 @@ Solver::charerhs( int fromch,
     thisProxy[ tonode ].addrhs( fromch, p.second );
   }
 
-  //std::cout << CkMyNode() << " charerhs: " << m_rhsimport.size() << " == " << m_rowimport.size() << '\n';
   if (rhscomplete()) rhs_complete();
 }
 
@@ -424,25 +417,11 @@ Solver::addrhs( int fromch,
 //!   global row indices and values
 // *****************************************************************************
 {
-  //std::cout << CkMyNode() << " addrhs from ch " << fromch << '\n';
-
   // Store rhs contributions
   for (const auto& l : r) {
     m_rhsimport[ fromch ].push_back( l.first );
     m_rhs[ l.first ] += l.second;
   }
-
-//   std::cout << CkMyNode() << " addrhs: " << m_rhsimport.size() << " == " << m_rowimport.size() << ": row: ";
-//   for (const auto& row : m_rowimport) {
-//     std::cout << row.first << ':';
-//     for (auto i : row.second) std::cout << i << ' ';
-//   }
-//   std::cout << ": rhs: ";
-//   for (const auto& row : m_rhsimport) {
-//     std::cout << row.first << ':';
-//     for (auto i : row.second) std::cout << i << ' ';
-//   }
-//   std::cout << std::boolalpha << ": verdict: " << rhscomplete() << '\n';
 
   if (rhscomplete()) rhs_complete();
 }
@@ -569,9 +548,6 @@ Solver::comfinal()
 //!   (maps) are final on all compute nodes.
 // *****************************************************************************
 {
-//   std::cout << CkMyNode() << ": " << m_worker.size() << " == " << m_nchare <<  " "
-//             << m_row.size() << " == " << m_upper-m_lower << '(' << m_upper << '-' << m_lower << ") " << std::endl;
-
   Assert( m_row.size() == m_upper-m_lower,
           "Row ids are incomplete on node " + std::to_string(CkMyNode()) + ": "
           "number of rows received: " + std::to_string(m_row.size()) + " vs. "
@@ -776,7 +752,6 @@ Solver::rhsbc()
 //!    enforcing zero rhs (no solution increment) at BC nodes
 // *****************************************************************************
 {
-  //std::cout << CkMyNode() << " rhsbc: " << rhscomplete() << '\n';
   Assert( rhscomplete(), "Values of distributed right-hand-side vector on "
           "compute node " + std::to_string( CkMyNode() ) + " is incomplete: "
           "cannot set BCs" );
