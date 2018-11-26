@@ -225,36 +225,25 @@ Solver::charerow( int fromch, const std::vector< std::size_t >& row )
   // Export non-owned parts to fellow branches that own them
   for (const auto& p : exp) {
     auto tonode = static_cast< int >( p.first );
-    thisProxy[ tonode ].addrow( fromch, CkMyNode(), p.second );
+    thisProxy[ tonode ].addrow( fromch, p.second );
   }
 
   if (m_row.size() == m_upper-m_lower) row_complete();
 }
 
 void
-Solver::addrow( int fromch, int fromnode, const std::set< std::size_t >& row )
+Solver::addrow( int fromch, const std::set< std::size_t >& row )
 // *****************************************************************************
 //  Receive global row ids from fellow group branches
 //! \param[in] fromch Charm chare array index contribution coming from
-//! \param[in] fromnode Compute node contribution coming from
 //! \param[in] row Global mesh point (row) indices received
 // *****************************************************************************
 {
-  //std::cout << CkMyNode() << " addrow from ch " << fromch << ", frompe " << frompe << '\n';
-
   for (auto r : row) {
     m_rowimport[ fromch ].push_back( r );
     m_row.insert( r );
   }
-  thisProxy[ fromnode ].recrow();
-}
 
-void
-Solver::recrow()
-// *****************************************************************************
-//  Acknowledge received row ids
-// *****************************************************************************
-{
   if (m_row.size() == m_upper-m_lower) row_complete();
 }
 

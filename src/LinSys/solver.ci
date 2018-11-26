@@ -26,9 +26,7 @@ module solver {
       entry [exclusive]
         void charerow( int fromch, const std::vector< std::size_t >& row );
       entry [exclusive] void addrow( int fromch,
-                                     int fromnode,
                                      const std::set< std::size_t >& row );
-      entry [exclusive] void recrow();
       entry [exclusive] void charesol( int fromch,
                                        const std::vector< std::size_t >& gid,
                                        const Fields& solution );

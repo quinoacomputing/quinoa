@@ -103,10 +103,7 @@ class Solver : public CBase_Solver {
     void next();
 
     //! Receive global row ids from fellow nodegroup branches
-    void addrow( int fromch, int fromnode, const std::set< std::size_t >& row );
-
-    //! Acknowledge received row ids
-    void recrow();
+    void addrow( int fromch, const std::set< std::size_t >& row );
 
     //! Chares contribute their solution nonzero values
     void charesol( int fromch,
