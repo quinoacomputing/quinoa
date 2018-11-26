@@ -66,8 +66,11 @@ infoDirichlet( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
   nfo.emplace_back( "kind", "stochastic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::dirichlet, tag::depvar >()[c] ) );
-  nfo.emplace_back( "initialization policy", ctr::InitPolicy().name(
-    g_inputdeck.get< tag::param, tag::dirichlet, tag::initpolicy >()[c] ) );
+
+  auto init =
+    g_inputdeck.get< tag::param, tag::dirichlet, tag::initpolicy >()[c];
+  nfo.emplace_back( "initialization policy", ctr::InitPolicy().name( init ) );
+
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::dirichlet, tag::coeffpolicy >()[c] ) );
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
@@ -85,6 +88,21 @@ infoDirichlet( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
     parameters(
       g_inputdeck.get< tag::param, tag::dirichlet, tag::kappa >().at(c) )
   );
+
+  if (init == ctr::InitPolicyType::JOINTCORRGAUSSIAN) {
+    nfo.emplace_back(
+      "coeff mean [" + std::to_string( ncomp ) + "]",
+      parameters(
+        g_inputdeck.get< tag::param, tag::dirichlet, tag::mean >().at(c) )
+    );
+    auto n = std::to_string( ncomp );
+    nfo.emplace_back(
+      "coeff cov [" + n + '(' + n + "+1)/2="
+                    + std::to_string( ncomp*(ncomp+1)/2 ) + "]",
+      parameters(
+        g_inputdeck.get< tag::param, tag::dirichlet, tag::cov >().at(c) )
+    );
+  }
 
   return nfo;
 }

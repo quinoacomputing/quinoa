@@ -22,6 +22,7 @@
 
 #ifdef HAS_MKL
   #include "Options/MKLGaussianMethod.h"
+  #include "Options/MKLGaussianMVMethod.h"
   #include "Options/MKLUniformMethod.h"
 #endif
 
@@ -37,6 +38,7 @@ RNGPrint::echoMKLParams( const ctr::RNGMKLParam& p ) const
 {
   ctr::MKLUniformMethod um;
   ctr::MKLGaussianMethod gm;
+  ctr::MKLGaussianMVMethod gmvm;
 
   m_stream << m_item_name_value_fmt
               % m_item_indent
@@ -52,6 +54,11 @@ RNGPrint::echoMKLParams( const ctr::RNGMKLParam& p ) const
               % m_item_indent
               % gm.group()
               % gm.name( p.get< tag::gaussian_method >() );
+
+  m_stream << m_item_name_value_fmt
+              % m_item_indent
+              % gmvm.group()
+              % gmvm.name( p.get< tag::gaussianmv_method >() );
 }
 #endif
 

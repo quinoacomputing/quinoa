@@ -73,8 +73,8 @@ Quinoa consists of the following tools:
 
 @section mainpage_try Try
 
-The quickest is to try the pre-built executables inside a docker container, see
-instructions at https://hub.docker.com/r/quinoacomputing/quinoa/. See also
+The quickest is to try the pre-built executables inside a [docker
+container](https://hub.docker.com/r/quinoacomputing/quinoa). See also
 - https://quinoacomputing.github.io/examples.html
 - https://github.com/quinoacomputing/quinoa-examples
 
@@ -166,6 +166,7 @@ Contributions and collaborators are welcome. Contact us via
 - Sonarqube --- https://sonarqube.com/organizations/quinoacomputing
 - Docker --- https://hub.docker.com/r/quinoacomputing/quinoa
 - Travis --- https://travis-ci.org/quinoacomputing/quinoa/builds
+- Azure --- https://dev.azure.com/quinoacomputing/Quinoa
 - Analytics --- http://www.openhub.net/p/quinoacomputing
 - Cite --- https://zenodo.org/badge/latestdoi/38454430
 

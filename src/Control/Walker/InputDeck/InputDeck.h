@@ -78,6 +78,8 @@ class InputDeck :
                                      , kw::sde_sigmasq
                                      , kw::sde_theta
                                      , kw::sde_mu
+                                     , kw::sde_mean
+                                     , kw::sde_cov
                                      , kw::sde_T
                                      , kw::sde_lambda
                                      , kw::sde_b
@@ -122,6 +124,7 @@ class InputDeck :
                                      , kw::mkl_nondeterm
                                      , kw::uniform_method
                                      , kw::gaussian_method
+                                     , kw::gaussianmv_method
                                      , kw::beta_method
                                      , kw::standard
                                      , kw::accurate
@@ -163,10 +166,12 @@ class InputDeck :
                                      , kw::jointbeta
                                      , kw::jointdelta
                                      , kw::jointgaussian
+                                     , kw::jointcorrgaussian
                                      , kw::icbeta
                                      , kw::betapdf
                                      , kw::sde_c0
                                      , kw::icgaussian
+                                     , kw::icjointgaussian
                                      , kw::gaussian
                                      , kw::dissipation
                                      , kw::jointgamma

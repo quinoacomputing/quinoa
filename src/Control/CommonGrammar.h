@@ -90,6 +90,9 @@ namespace grm {
     NODELTA,            //!< No icdelta...end block when initpolicy = jointdelta
     NOBETA,             //!< No icbeta...end block when initpolicy = jointbeta
     NOGAMMA,            //!< No icgamma...end block when initpolicy = jointgamma
+    NOMEAN,             //!< No mean when initpolicy = jointcorrgaussian
+    NOCOV,              //!< No cov when initpolicy = jointcorrgaussian
+    NOMKLRNG,           //!< No MKL RNG configured
     WRONGBETAPDF,       //!< Wrong number of parameters configuring a beta pdf
     WRONGGAMMAPDF,      //!< Wrong number of parameters configuring a gamma pdf
     WRONGGAUSSIAN,      //!< Wrong number of parameters configuring a PDF
@@ -224,6 +227,15 @@ namespace grm {
       "initpolicy is selected. Pick an initpolicy different than jointgamma "
       "(using keyword 'init') or specify at least a single gammapdf...end block "
       "(within a icgamma...end block)." },
+    { MsgKey::NOMEAN, "No means have been specified within icjointgaussian..."
+      "end block for jointcorrgaussian initialization policy." },
+    { MsgKey::NOCOV, "No covariance matrix has been specified within "
+      "icjointgaussian...end block for jointcorrgaussian initialization "
+      "policy." },
+    { MsgKey::NOMKLRNG, "No MKL random number generator has been configured "
+      "for the equation integrated. If the initialization policy is "
+      "configured to be as the joint correlated Gaussian, a RNG provided by "
+      "Intel's Math Kernel Library is required." },
     { MsgKey::ODDSPIKES, "Incomplete spike...end block has been specified "
       "within the  block preceding this position. A spike...end block "
       "must contain an even number of real numbers, where every odd one is the "
