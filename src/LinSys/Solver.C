@@ -143,6 +143,7 @@ Solver::nodebounds( int n, std::size_t lower, std::size_t upper )
     m_upper = upper;
     m_sol.resize( m_upper - m_lower );
     m_lhs.resize( m_upper - m_lower );
+    m_rhs.resize( m_upper - m_lower );
   }
 
   // Store inverse of compute-node-division map stored on all compute nodes
@@ -184,6 +185,7 @@ Solver::next()
   m_lowrhs.clear();
   m_hypreRhs.clear();
   m_rhs.clear();
+  m_rhs.resize( m_upper - m_lower );
 
   m_bc.clear();
 
@@ -410,7 +412,7 @@ Solver::charerhs( int fromch,
   for (std::size_t i=0; i<gid.size(); ++i)
     if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
       m_rhsimport[ static_cast<std::size_t>(fromch) ].push_back( gid[i] );
-      m_rhs[ gid[i] ] += r[i];
+      m_rhs[ gid[i]-m_lower ] += r[i];
     } else
       exp[ node(gid[i]) ][ gid[i] ] = r[i];
 
@@ -435,8 +437,10 @@ Solver::addrhs( int fromch,
 {
   // Store rhs contributions
   for (const auto& l : r) {
+    Assert( l.first >= m_lower && l.first < m_upper,
+            "Solver instance received rhs that it does not own" );
     m_rhsimport[ static_cast<std::size_t>(fromch) ].push_back( l.first );
-    m_rhs[ l.first ] += l.second;
+    m_rhs[ l.first-m_lower ] += l.second;
   }
 
   if (rhscomplete()) rhs_complete();
@@ -790,7 +794,7 @@ Solver::rhsbc()
 
   for (const auto& n : m_bc) {
     if (n.first >= m_lower && n.first < m_upper) {
-      auto& r = tk::ref_find( m_rhs, n.first );
+      auto& r = m_rhs[ n.first-m_lower ];
       for (std::size_t i=0; i<m_ncomp; ++i)
         if (n.second[i].first)
           r[i] = n.second[i].second;
@@ -852,7 +856,7 @@ Solver::hyprerhs()
           "cannot convert" );
 
   for (const auto& r : m_rhs)
-    m_hypreRhs.insert( end(m_hypreRhs), begin(r.second), end(r.second) );
+    m_hypreRhs.insert( end(m_hypreRhs), begin(r), end(r) );
 
   hyprerhs_complete();
 }
@@ -1039,12 +1043,6 @@ Solver::lowsolve()
           "Values of distributed lumped mass lhs vector on compute node " +
           std::to_string( CkMyNode() ) + " is incomplete: cannot solve low "
           "order system" );
-  Assert( tk::keyEqual( m_rhs, m_lowrhs ), "Row IDs of rhs and mass "
-          "diffusion rhs vector unequal on compute node " +
-          std::to_string( CkMyNode() )  + ": cannot solve low order system" );
-  Assert( tk::keyEqual( m_rhs, m_lowlhs ), "Row IDs of rhs and lumped mass "
-          "lhs vector unequal on compute node " + std::to_string( CkMyNode() ) +
-          ": cannot solve low order system" );
 
   // Set boundary conditions on the low order system
   for (const auto& n : m_bc)
@@ -1069,7 +1067,7 @@ Solver::lowsolve()
   auto im = m_lowlhs.cbegin();
 
   while (ir != m_rhs.cend()) {
-    const auto& r = ir->second;
+    const auto& r = *ir;
     const auto& m = im->second;
     auto& d = id->second;
     Assert( r.size()==m_ncomp && m.size()==m_ncomp && d.size()==m_ncomp,

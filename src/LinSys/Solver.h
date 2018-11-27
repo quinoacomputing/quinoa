@@ -232,7 +232,7 @@ class Solver : public CBase_Solver {
     std::vector< std::set< std::size_t > > m_row;
     //! \brief Part of unknown/solution vector owned by my node
     //! \details Vector of values (for each scalar equation solved) for each
-    //!   owned global mesh point row IDs
+    //!   owned global mesh point row
     std::vector< std::vector< tk::real > > m_sol;
     //! \brief Part of left-hand side matrix owned by my node
     //! \details Nonzero values (for each scalar equation solved) for each owned
@@ -240,8 +240,8 @@ class Solver : public CBase_Solver {
     std::vector< std::map< std::size_t, std::vector< tk::real > > > m_lhs;
     //! \brief Part of right-hand side vector owned by my node
     //! \details Vector of values (for each scalar equation solved) for each
-    //!   owned global mesh point row id
-    std::map< std::size_t, std::vector< tk::real > > m_rhs;
+    //!   owned global mesh point row
+    std::vector< std::vector< tk::real > > m_rhs;
     //! \brief Part of low-order right-hand side vector owned by my node
     //! \details Vector of values (for each scalar equation solved) associated
     //!   to global mesh point row ids. This vector collects the rhs
