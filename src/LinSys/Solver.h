@@ -233,7 +233,7 @@ class Solver : public CBase_Solver {
     //! \brief Part of unknown/solution vector owned by my node
     //! \details Vector of values (for each scalar equation solved) associated
     //!   to global mesh point row IDs
-    std::map< std::size_t, std::vector< tk::real > > m_sol;
+    std::vector< std::vector< tk::real > > m_sol;
     //! \brief Part of left-hand side matrix owned by my node
     //! \details Nonzero values (for each scalar equation solved) associated to
     //!   global mesh point row and column IDs.
@@ -270,8 +270,6 @@ class Solver : public CBase_Solver {
     std::vector< tk::real > m_hypreRhs;
     //! Solution vector nonzero values for my node
     std::vector< tk::real > m_hypreSol;
-    //! Global->local row id map for sending back solution vector parts
-    std::map< std::size_t, std::size_t > m_lid;
     //! Compute nodes associated to lower and upper global row indices
     //! \details These are the divisions at which the linear system is divided
     //!   along compute node boundaries.

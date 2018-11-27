@@ -54,7 +54,6 @@ Solver::Solver( const SolverCallback& cb, std::size_t n ) :
   m_hypreMat(),
   m_hypreRhs(),
   m_hypreSol(),
-  m_lid(),
   m_div(),
   m_node(),
   m_bc(),
@@ -142,6 +141,7 @@ Solver::nodebounds( int n, std::size_t lower, std::size_t upper )
   if (n == CkMyNode()) {
     m_lower = lower;
     m_upper = upper;
+    m_sol.resize( m_upper - m_lower );
   }
 
   // Store inverse of compute-node-division map stored on all compute nodes
@@ -274,8 +274,8 @@ Solver::charesol( int fromch,
 
   for (std::size_t i=0; i<gid.size(); ++i)
     if (gid[i] >= m_lower && gid[i] < m_upper) {    // if own
-      m_solimport[ static_cast<std::size_t>(fromch)].push_back( gid[i] );
-      m_sol[ gid[i] ] = solution[i];
+      m_solimport[ static_cast<std::size_t>(fromch) ].push_back( gid[i] );
+      m_sol[ gid[i]-m_lower ] = solution[i];
     } else {
       exp[ node(gid[i]) ][ gid[i] ] = solution[i];
     }
@@ -301,8 +301,10 @@ Solver::addsol( int fromch,
 // *****************************************************************************
 {
   for (const auto& r : solution) {
+    Assert( r.first >= m_lower && r.first < m_upper,
+            "Solver instance received solution but does not own" );
     m_solimport[ static_cast<std::size_t>(fromch) ].push_back( r.first );
-    m_sol[ r.first ] = r.second;
+    m_sol[ r.first-m_lower ] = r.second;
   }
 
   if (solcomplete()) hypresol();
@@ -807,11 +809,8 @@ Solver::hypresol()
   Assert( solcomplete(), "Values of distributed solution vector on compute "
           "node " + std::to_string( CkMyNode() ) + " is incomplete" );
 
-  std::size_t i = 0;
-  for (const auto& r : m_sol) {
-    m_lid[ r.first ] = i++;
-    m_hypreSol.insert( end(m_hypreSol), begin(r.second), end(r.second) );
-  }
+  for (const auto& r : m_sol)
+    m_hypreSol.insert( end(m_hypreSol), begin(r), end(r) );
 
   hypresol_complete();
 }
@@ -959,19 +958,14 @@ Solver::updateSol()
       std::vector< tk::real > solution;
 
       for (auto r : w) {
-        const auto it = m_sol.find( r );
-        if (it != end(m_sol)) {
-          gid.push_back( it->first );
-          auto i = tk::cref_find( m_lid, it->first );
+          gid.push_back( r );
+          auto i = r - m_lower;
           using diff_type = typename decltype(m_hypreSol)::difference_type;
           auto b = static_cast< diff_type >( i*m_ncomp );
           auto e = static_cast< diff_type >( (i+1)*m_ncomp );
           solution.insert( end(solution),
                            std::next( begin(m_hypreSol), b ),
                            std::next( begin(m_hypreSol), e ) );
-        } else
-          Throw( "Can't find global row id " + std::to_string(r) +
-                 " to export in solution vector" );
       }
 
       // Update worker with high order solution
