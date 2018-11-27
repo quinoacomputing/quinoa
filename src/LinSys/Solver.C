@@ -145,6 +145,7 @@ Solver::nodebounds( int n, std::size_t lower, std::size_t upper )
     m_lhs.resize( m_upper - m_lower );
     m_rhs.resize( m_upper - m_lower );
     m_lowrhs.resize( m_upper - m_lower );
+    m_lowlhs.resize( m_upper - m_lower );
   }
 
   // Store inverse of compute-node-division map stored on all compute nodes
@@ -528,7 +529,7 @@ Solver::charelowlhs( int fromch,
   for (std::size_t i=0; i<gid.size(); ++i)
     if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
       m_lowlhsimport[ static_cast<std::size_t>(fromch) ].push_back( gid[i] );
-      m_lowlhs[ gid[i] ] += lowlhs[i];
+      m_lowlhs[ gid[i]-m_lower ] += lowlhs[i];
     } else
       exp[ node(gid[i]) ][ gid[i] ] = lowlhs[i];
 
@@ -555,8 +556,10 @@ Solver::addlowlhs( int fromch,
   using tk::operator+=;
 
   for (const auto& r : lowlhs) {
+    Assert( r.first >= m_lower && r.first < m_upper,
+            "Solver instance received lowlhs that it does not own" );
     m_lowlhsimport[ static_cast<std::size_t>(fromch) ].push_back( r.first );
-    m_lowlhs[ r.first ] += r.second;
+    m_lowlhs[ r.first-m_lower ] += r.second;
   }
 
   if (lowlhscomplete()) lowlhs_complete();
@@ -1048,7 +1051,7 @@ Solver::lowsolve()
   for (const auto& n : m_bc)
     if (n.first >= m_lower && n.first < m_upper) {
       // lhs
-      auto& l = tk::ref_find( m_lowlhs, n.first );
+      auto& l = m_lowlhs[ n.first-m_lower ];
       for (std::size_t i=0; i<m_ncomp; ++i)
         if (n.second[i].first) l[i] = 1.0;
       // rhs (set to zero instead of the solution increment at Dirichlet
@@ -1068,7 +1071,7 @@ Solver::lowsolve()
 
   while (ir != m_rhs.cend()) {
     const auto& r = *ir;
-    const auto& m = im->second;
+    const auto& m = *im;
     auto& d = *id;
     Assert( r.size()==m_ncomp && m.size()==m_ncomp && d.size()==m_ncomp,
             "Wrong number of components in solving the low order system" );

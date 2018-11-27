@@ -248,10 +248,10 @@ class Solver : public CBase_Solver {
     //!   combined with the rhs to produce the low-order rhs.
     std::vector< std::vector< tk::real > > m_lowrhs;
     //! Part of the low-order system left-hand side vector owned by my node
-    //! \details Vector of values (for each scalar equation solved) associated
-    //!   to global mesh point row ids. This vector collects the nonzero values
+    //! \details Vector of values (for each scalar equation solved) for each
+    //!   owned global mesh point row. This vector collects the nonzero values
     //!   of the low-order system lhs "matrix" solution.
-    std::map< std::size_t, std::vector< tk::real > > m_lowlhs;
+    std::vector< std::vector< tk::real > > m_lowlhs;
     tk::hypre::HypreVector m_x; //!< Hypre vector to store the solution/unknowns
     tk::hypre::HypreMatrix m_A; //!< Hypre matrix to store the left-hand side
     tk::hypre::HypreVector m_b; //!< Hypre vector to store the right-hand side
