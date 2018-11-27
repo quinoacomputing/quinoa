@@ -41,7 +41,7 @@ class Discretization : public CBase_Discretization {
         const std::vector< std::size_t >& conn,
         const tk::UnsMesh::CoordMap& coordmap,
         const std::map< int, std::unordered_set< std::size_t > >& msum,
-        int nchare );
+        int n );
 
     #if defined(__clang__)
       #pragma clang diagnostic push

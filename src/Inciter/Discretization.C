@@ -41,8 +41,8 @@ Discretization::Discretization(
   const std::vector< std::size_t >& conn,
   const tk::UnsMesh::CoordMap& coordmap,
   const std::map< int, std::unordered_set< std::size_t > >& msum,
-  int nchare ) :
-  m_nchare( nchare ),
+  int nc ) :
+  m_nchare( nc ),
   m_it( 0 ),
   m_itr( 0 ),
   m_initial( 1.0 ),
@@ -68,7 +68,7 @@ Discretization::Discretization(
 //! \param[in] coordmap Coordinates of mesh nodes and their global IDs
 //! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
 //!   mesh chunk we operate on
-//! \param[in] nchare Total number of Discretization chares
+//! \param[in] nc Total number of Discretization chares
 //! \details "Contiguous-row-id" here means that the numbering of the mesh nodes
 //!   (which corresponds to rows in the linear system) are (approximately)
 //!   contiguous (as much as this can be done with an unstructured mesh) as the
@@ -107,7 +107,7 @@ Discretization::Discretization(
   const auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
   const auto nprop = g_inputdeck.get< tag::component >().nprop();
   if ((sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG))
-    m_fct[ thisIndex ].insert( nchare, m_gid.size(), nprop,
+    m_fct[ thisIndex ].insert( m_nchare, m_gid.size(), nprop,
                                m_msum, m_bid, m_lid, m_inpoel );
 
   contribute( CkCallback(CkReductionTarget(Transporter,disccreated),
