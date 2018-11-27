@@ -210,38 +210,37 @@ class Solver : public CBase_Solver {
     bool m_initial;         //!< True in the first time step, false after
     //! Chare id and callbacks to entry methods of all worker chares
     std::map< int, tk::MatCGCallback > m_worker;
-    //! \brief Import map associating a list of global row ids to a worker chare
-    //!   id during the communication of the global row ids
+    //! \brief Global row ids for each worker chare during the communication
+    //!    of the global row ids
     std::vector< std::vector< std::size_t > > m_rowimport;
-    //! \brief Import map associating a list of global row ids to a worker chare
-    //!   id during the communication of the solution/unknown vector
+    //! \brief Global row ids for each worker chare during the communication
+    //!    of the solution/unknown vector
     std::vector< std::vector< std::size_t > > m_solimport;
-    //! \brief Import map associating a list of global row ids to a worker chare
-    //!   id during the communication of the left-hand side matrix
+    //! \brief Global row ids for each worker chare during the communication
+    //!    of the left-hand side matrix
     std::vector< std::vector< std::size_t > > m_lhsimport;
-    //! \brief Import map associating a list of global row ids to a worker chare
-    //!   id during the communication of the righ-hand side vector
+    //! \brief Global row ids for each worker chare during the communication
+    //!    of the righ-hand side vector
     std::vector< std::vector< std::size_t > > m_rhsimport;
-    //! \brief Import map associating a list of global row ids to a worker chare
-    //!   id during the communication of the low-order rhs vector
+    //! \brief Global row ids for each worker chare during the communication
+    //!   of the low-order rhs vector
     std::vector< std::vector< std::size_t > > m_lowrhsimport;
-    //! \brief Import map associating a list of global row ids to a worker chare
-    //!   id during the communication of the low-order lhs vector
+    //! \brief Global row ids for each worker chare during the communication
+    //!   of the low-order lhs vector
     std::vector< std::vector< std::size_t > > m_lowlhsimport;
     //! Part of global row indices owned by my node for each contributing chare
     std::vector< std::set< std::size_t > > m_row;
     //! \brief Part of unknown/solution vector owned by my node
-    //! \details Vector of values (for each scalar equation solved) associated
-    //!   to global mesh point row IDs
+    //! \details Vector of values (for each scalar equation solved) for each
+    //!   owned global mesh point row IDs
     std::vector< std::vector< tk::real > > m_sol;
     //! \brief Part of left-hand side matrix owned by my node
-    //! \details Nonzero values (for each scalar equation solved) associated to
+    //! \details Nonzero values (for each scalar equation solved) for each owned
     //!   global mesh point row and column IDs.
-    std::map< std::size_t,
-              std::map< std::size_t, std::vector< tk::real > > > m_lhs;
+    std::vector< std::map< std::size_t, std::vector< tk::real > > > m_lhs;
     //! \brief Part of right-hand side vector owned by my node
-    //! \details Vector of values (for each scalar equation solved) associated
-    //!   to global mesh point row ids
+    //! \details Vector of values (for each scalar equation solved) for each
+    //!   owned global mesh point row id
     std::map< std::size_t, std::vector< tk::real > > m_rhs;
     //! \brief Part of low-order right-hand side vector owned by my node
     //! \details Vector of values (for each scalar equation solved) associated

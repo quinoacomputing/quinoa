@@ -142,6 +142,7 @@ Solver::nodebounds( int n, std::size_t lower, std::size_t upper )
     m_lower = lower;
     m_upper = upper;
     m_sol.resize( m_upper - m_lower );
+    m_lhs.resize( m_upper - m_lower );
   }
 
   // Store inverse of compute-node-division map stored on all compute nodes
@@ -302,7 +303,7 @@ Solver::addsol( int fromch,
 {
   for (const auto& r : solution) {
     Assert( r.first >= m_lower && r.first < m_upper,
-            "Solver instance received solution but does not own" );
+            "Solver instance received solution that it does not own" );
     m_solimport[ static_cast<std::size_t>(fromch) ].push_back( r.first );
     m_sol[ r.first-m_lower ] = r.second;
   }
@@ -348,7 +349,7 @@ Solver::charelhs( int fromch,
   for (std::size_t i=0; i<gid.size(); ++i)
     if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
       m_lhsimport[ static_cast<std::size_t>(fromch) ].push_back( gid[i] );
-      auto& row = m_lhs[ gid[i] ];
+      auto& row = m_lhs[ gid[i]-m_lower ];
       row[ gid[i] ] += lhsd[i];
       for (auto j=psup.second[i]+1; j<=psup.second[i+1]; ++j)
         row[ gid[ psup.first[j] ] ] += lhso[j];
@@ -379,8 +380,10 @@ Solver::addlhs( int fromch,
 // *****************************************************************************
 {
   for (const auto& r : l) {
+    Assert( r.first >= m_lower && r.first < m_upper,
+            "Solver instance received lhs that it does not own" );
     m_lhsimport[ static_cast<std::size_t>(fromch) ].push_back( r.first );
-    auto& row = m_lhs[ r.first ];
+    auto& row = m_lhs[ r.first-m_lower ];
     for (const auto& c : r.second) row[ c.first ] += c.second;
   }
 
@@ -685,9 +688,9 @@ Solver::lhsbc()
 //   s( begin(m_bc), end(m_bc) );
 // for (const auto& n : s) std::cout << n.first << ' '; std::cout << '\n';
 
-  for (const auto& n : m_bc) {
+  for (const auto& n : m_bc)
     if (n.first >= m_lower && n.first < m_upper) {
-      auto& r = tk::ref_find( m_lhs, n.first );
+      auto& r = m_lhs[ n.first-m_lower ];
       auto& diag = tk::ref_find( r, n.first );
       for (std::size_t i=0; i<m_ncomp; ++i)
         if (n.second[i].first) {
@@ -695,7 +698,6 @@ Solver::lhsbc()
           diag[i] = 1.0;    // put 1.0 in diagonal of BC row
         }
     }
-  }
 
 //   for (const auto& n : m_bc) {
 //     auto r = m_lhs.find( n.first );
@@ -829,8 +831,8 @@ Solver::hyprelhs()
 
   for (const auto& r : m_lhs)
     for (std::size_t i=0; i<m_ncomp; ++i) {
-      m_hypreNcols.push_back( static_cast< int >( r.second.size() ) );
-      for (const auto& c : r.second) {
+      m_hypreNcols.push_back( static_cast< int >( r.size() ) );
+      for (const auto& c : r) {
         m_hypreCols.push_back( static_cast< int >( c.first*m_ncomp+i+1 ) );
         m_hypreMat.push_back( c.second[i] );
       }
