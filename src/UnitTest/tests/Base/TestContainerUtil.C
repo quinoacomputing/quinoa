@@ -320,6 +320,49 @@ void ContainerUtil_object::test< 9 >() {
   ensure_equals( "destroy yields empty map of vec", m.empty(), true );
 }
 
+//! Test numunique()
+template<> template<>
+void ContainerUtil_object::test< 10 >() {
+  set_test_name( "numunique" );
+
+  // Test a vector of vector of ints
+  std::vector< std::vector< int > > v{ {3,-4}, {2,3,6} };
+  ensure_equals(
+    "number of unique values in container of containers incorrect",
+    tk::numunique( v ), 4 );
+
+  // Test a set of vector of std::size_ts
+  std::set< std::vector< std::size_t > > s{ {1,2}, {3,4,5} };
+  ensure_equals(
+    "number of unique values in container of containers incorrect",
+    tk::numunique( s ), 5 );
+
+  // Test a vector of set of std::size_ts
+  std::vector< std::set< std::size_t > > q{ {1,2}, {1,4,5} };
+  ensure_equals(
+    "number of unique values in container of containers incorrect",
+    tk::numunique( q ), 4 );
+}
+
+//! Test erase_if()
+template<> template<>
+void ContainerUtil_object::test< 11 >() {
+  set_test_name( "erase_if" );
+
+  std::vector< int > v{ 3,-4,2,3,6 };
+  tk::erase_if( v, []( int i ){ return i%2; } );
+  ensure( "erase_if on vector incorrect", v == std::vector<int>{-4,2,6} );
+
+  std::vector< int > w{ 3,-4,2,3,6 };
+  tk::erase_if( w, []( int i ){ return !(i%2); } );
+  ensure( "erase_if on vector incorrect", w == std::vector<int>{3,3} );
+
+  std::map< int, std::vector< std::size_t > > b{ {3,{4,5,6}}, {-2,{3,2,3}} };
+  std::map< int, std::vector< std::size_t > > correct_result{ {3,{4,5,6}} };
+  tk::erase_if( b, []( decltype(b)::value_type& p ){ return p.first<0; } );
+  ensure( "erase_if on map incorrect", b == correct_result );
+}
+
 } // tut::
 
 #endif  // DOXYGEN_GENERATING_OUTPUT
