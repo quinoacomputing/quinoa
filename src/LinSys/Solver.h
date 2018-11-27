@@ -228,8 +228,8 @@ class Solver : public CBase_Solver {
     //! \brief Import map associating a list of global row ids to a worker chare
     //!   id during the communication of the low-order lhs vector
     std::vector< std::vector< std::size_t > > m_lowlhsimport;
-    //! Part of global row indices owned by my node
-    std::set< std::size_t > m_row;
+    //! Part of global row indices owned by my node for each contributing chare
+    std::vector< std::set< std::size_t > > m_row;
     //! \brief Part of unknown/solution vector owned by my node
     //! \details Vector of values (for each scalar equation solved) associated
     //!   to global mesh point row IDs

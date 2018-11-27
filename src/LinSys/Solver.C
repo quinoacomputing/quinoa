@@ -98,6 +98,7 @@ Solver::nchare( int n )
   m_rhsimport.resize( m_nchare );
   m_lowlhsimport.resize( m_nchare );
   m_lowrhsimport.resize( m_nchare );
+  m_row.resize( m_nchare );
 
   contribute( m_cb.get< tag::part >() );
 }
@@ -224,7 +225,7 @@ Solver::charerow( int fromch, const std::vector< std::size_t >& row )
   for (auto gid : row) {
     if (gid >= m_lower && gid < m_upper) {  // if own
       m_rowimport[ static_cast<std::size_t>(fromch) ].push_back( gid );
-      m_row.insert( gid );
+      m_row[ static_cast<std::size_t>(fromch) ].insert( gid );
     } else exp[ node(gid) ].insert( gid );
   }
 
@@ -234,7 +235,7 @@ Solver::charerow( int fromch, const std::vector< std::size_t >& row )
     thisProxy[ tonode ].addrow( fromch, p.second );
   }
 
-  if (m_row.size() == m_upper-m_lower) row_complete();
+  if (tk::numunique(m_row) == m_upper-m_lower) row_complete();
 }
 
 void
@@ -247,10 +248,10 @@ Solver::addrow( int fromch, const std::set< std::size_t >& row )
 {
   for (auto r : row) {
     m_rowimport[ static_cast<std::size_t>(fromch) ].push_back( r );
-    m_row.insert( r );
+    m_row[ static_cast<std::size_t>(fromch) ].insert( r );
   }
 
-  if (m_row.size() == m_upper-m_lower) row_complete();
+  if (tk::numunique(m_row) == m_upper-m_lower) row_complete();
 }
 
 void
@@ -558,10 +559,10 @@ Solver::comfinal()
 //!   (maps) are final on all compute nodes.
 // *****************************************************************************
 {
-  Assert( m_row.size() == m_upper-m_lower,
+  Assert( tk::numunique(m_row) == m_upper-m_lower,
           "Row ids are incomplete on node " + std::to_string(CkMyNode()) + ": "
-          "number of rows received: " + std::to_string(m_row.size()) + " vs. "
-          "number of rows supposed to have been received: " +
+          "number of rows received: " + std::to_string(tk::numunique(m_row)) +
+          " vs. number of rows supposed to have been received: " +
           std::to_string(m_upper-m_lower) );
 
   // now that the global row ids are complete, build Hypre data from it
@@ -637,7 +638,11 @@ Solver::hyprerow()
 {
   if (m_hypreRows.empty()) {
 
-    for (auto r : m_row) {
+    // aggregate row ids across chares contributed
+    decltype(m_row)::value_type row;
+    for (const auto& r : m_row) row.insert( begin(r), end(r) );
+
+    for (auto r : row) {
       std::vector< int > h( m_ncomp );
       std::iota( begin(h), end(h), r*m_ncomp+1 );
       m_hypreRows.insert( end(m_hypreRows), begin(h), end(h) );
