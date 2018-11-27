@@ -167,7 +167,7 @@ class Solver : public CBase_Solver {
     //!   method since it is always called by chares on the same compute node.
     const std::unordered_map< std::size_t,
             std::vector< std::pair< bool, tk::real > > >&
-      dirbc() { return m_bc; }
+      dirbc() { return m_bcmap; }
 
     //! \brief Chares contribute their global row ids and associated Dirichlet
     //!   boundary condition values at which they set BCs
@@ -204,6 +204,7 @@ class Solver : public CBase_Solver {
     std::size_t m_nchbc;    //!< Number of chares we received bcs from
     std::size_t m_lower;    //!< Lower index of the global rows on my node
     std::size_t m_upper;    //!< Upper index of the global rows on my node
+    std::size_t m_nrows;    //!< Total number of rows of the distributed matrix
     uint64_t m_it;          //!< Iteration count (original in Discretization)
     tk::real m_t;           //!< Physical time (original in Discretization)
     tk::real m_dt;          //!< Time step size (original in Discretization)
@@ -280,17 +281,29 @@ class Solver : public CBase_Solver {
     //!   in the cache.
     std::map< std::size_t, int > m_node;
     //! \brief Values (for each scalar equation solved) of Dirichlet boundary
-    //!   conditions assigned to global node IDs we set
+    //!   conditions for all global node ID
+    //! \details The inner vector contains a pair of which the bool (.first)
+    //!   indicates whether the boundary condition value (.second) is set at the
+    //!   given node. The size of the inner vectors is the number of PDEs
+    //!   integrated times the number of scalar components in all PDEs. This BC
+    //!   (outer) vector stores all row IDs for the whole distributed problem at
+    //!   which Dirichlet boundary conditions can be prescribed, i.e., including
+    //!   boundary conditions set across all compute nodes, not just the ones
+    //!   need to be set on this compute node.
+    std::vector< std::vector< std::pair< bool, tk::real > > > m_bc;
+    //! \brief Values (for each scalar equation solved) of Dirichlet boundary
+    //!   conditions assigned to global node IDs
     //! \details The map key is the global mesh node/row ID, the value is a
     //!   vector of pairs in which the bool (.first) indicates whether the
     //!   boundary condition value (.second) is set at the given node. The size
     //!   of the vectors is the number of PDEs integrated times the number of
-    //!   scalar components in all PDEs. This BC map stores all row IDs at which
-    //!   Dirichlet boundary conditions are prescribed, i.e., including boundary
-    //!   conditions set across all compute nodes, not just the ones need to be
-    //!   set on this compute node.
+    //!   scalar components in all PDEs. This BC map stores all row IDs for the
+    //!   whole distributed problem at which Dirichlet boundary conditions can
+    //!   be prescribed, i.e., including boundary conditions set across all
+    //!   compute nodes, not just the ones need to be set on this compute node.
+    //! \note This is the same data as in m_bc but as a hash map.
     std::unordered_map< std::size_t,
-                        std::vector< std::pair< bool, tk::real > > > m_bc;
+                        std::vector< std::pair< bool, tk::real > > > m_bcmap;
     //! Matrix non-zero coefficients for Dirichlet boundary conditions
     std::unordered_map< std::size_t,
                         std::map< std::size_t, std::vector<tk::real> > > m_bca;

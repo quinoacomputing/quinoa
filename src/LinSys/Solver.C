@@ -27,6 +27,7 @@ Solver::Solver( const SolverCallback& cb, std::size_t n ) :
   m_nchbc( 0 ),
   m_lower( std::numeric_limits< std::size_t >::max() ),
   m_upper( 0 ),
+  m_nrows( 0 ),
   m_it( 0 ),
   m_t( 0.0 ),
   m_dt( 0.0 ),
@@ -57,6 +58,7 @@ Solver::Solver( const SolverCallback& cb, std::size_t n ) :
   m_div(),
   m_node(),
   m_bc(),
+  m_bcmap(),
   m_bca()
 // *****************************************************************************
 //  Constructor
@@ -151,9 +153,13 @@ Solver::nodebounds( int n, std::size_t lower, std::size_t upper )
   // Store inverse of compute-node-division map stored on all compute nodes
   m_div[ {lower,upper} ] = n;
 
+  // Compute total number of rows in distributed matrix
+  m_nrows = std::max( m_nrows, upper );
+
   // If we have all compute nodes' bounds, signal the runtime system to continue
   if (m_div.size() == static_cast<std::size_t>(CkNumNodes())) {
-
+    // Allocate Dirichlet BC container for all rows in the distributed matrix
+    m_bc.resize( m_nrows );
     // Create my compute node's lhs matrix distributed across all compute nodes
     m_A.create( m_lower*m_ncomp, m_upper*m_ncomp );
     // Create my compute node's rhs and unknown vectors distributed across all
@@ -191,6 +197,8 @@ Solver::next()
   m_rhs.resize( m_upper - m_lower );
 
   m_bc.clear();
+  m_bc.resize( m_nrows );
+  m_bcmap.clear();
 
   lowlhs_complete();
   hyprerow_complete();
@@ -606,6 +614,13 @@ Solver::charebc( const std::unordered_map< std::size_t,
   }
 
   if (++m_nchbc == m_nchare) {
+
+    std::size_t row = 0;
+    for (const auto& n : m_bc) {
+      if (!n.empty()) m_bcmap[ row ] = n;
+      ++row;
+    }
+
     m_nchbc = 0;
     bc_complete();
     if (m_initial) bc_complete();
@@ -694,21 +709,19 @@ Solver::lhsbc()
   // given component and set the off-diagonals to zero while put 1.0 into
   // the diagonal.
 
-//std::cout << "l: ";
-// std::map< std::size_t, std::vector< std::pair< bool, tk::real > > >
-//   s( begin(m_bc), end(m_bc) );
-// for (const auto& n : s) std::cout << n.first << ' '; std::cout << '\n';
-
-  for (const auto& n : m_bc)
-    if (n.first >= m_lower && n.first < m_upper) {
-      auto& r = m_lhs[ n.first-m_lower ];
-      auto& diag = tk::ref_find( r, n.first );
+  std::size_t row = 0;
+  for (const auto& n : m_bc) {
+    if (!n.empty() && row >= m_lower && row < m_upper) {
+      auto& r = m_lhs[ row-m_lower ];
+      auto& diag = tk::ref_find( r, row );
       for (std::size_t i=0; i<m_ncomp; ++i)
-        if (n.second[i].first) {
+        if (n[i].first) {
           for (auto& c : r) c.second[i] = 0.0;  // zero columns in BC row
           diag[i] = 1.0;    // put 1.0 in diagonal of BC row
         }
     }
+    ++row;
+  }
 
 //   for (const auto& n : m_bc) {
 //     auto r = m_lhs.find( n.first );
@@ -799,13 +812,15 @@ Solver::rhsbc()
 //          }
 //    }
 
+  std::size_t row = 0;
   for (const auto& n : m_bc) {
-    if (n.first >= m_lower && n.first < m_upper) {
-      auto& r = m_rhs[ n.first-m_lower ];
+    if (!n.empty() && row >= m_lower && row < m_upper) {
+      auto& r = m_rhs[ row-m_lower ];
       for (std::size_t i=0; i<m_ncomp; ++i)
-        if (n.second[i].first)
-          r[i] = n.second[i].second;
+        if (n[i].first)
+          r[i] = n[i].second;
     }
+    ++row;
   }
 
   hyprerhs();
@@ -1048,22 +1063,25 @@ Solver::lowsolve()
           "order system" );
 
   // Set boundary conditions on the low order system
-  for (const auto& n : m_bc)
-    if (n.first >= m_lower && n.first < m_upper) {
+  std::size_t row = 0;
+  for (const auto& n : m_bc) {
+    if (!n.empty() && row >= m_lower && row < m_upper) {
       // lhs
-      auto& l = m_lowlhs[ n.first-m_lower ];
+      auto& l = m_lowlhs[ row-m_lower ];
       for (std::size_t i=0; i<m_ncomp; ++i)
-        if (n.second[i].first) l[i] = 1.0;
+        if (n[i].first) l[i] = 1.0;
       // rhs (set to zero instead of the solution increment at Dirichlet
       // BCs, because for the low order solution the right hand side is the sum
       // of the high order right hand side and mass diffusion, so the low order
       // system is L = R + D, where L is the lumped mass matrix, R is the high
       // order RHS, and D is mass diffusion, and R already has the Dirichlet BC
       // set)
-      auto& r = m_lowrhs[ n.first-m_lower ];
+      auto& r = m_lowrhs[ row-m_lower ];
       for (std::size_t i=0; i<m_ncomp; ++i)
-        if (n.second[i].first) r[i] = 0.0;
+        if (n[i].first) r[i] = 0.0;
     }
+    ++row;
+  }
 
   auto ir = m_rhs.cbegin();
   auto id = m_lowrhs.begin();
