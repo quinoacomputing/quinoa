@@ -144,6 +144,7 @@ Solver::nodebounds( int n, std::size_t lower, std::size_t upper )
     m_sol.resize( m_upper - m_lower );
     m_lhs.resize( m_upper - m_lower );
     m_rhs.resize( m_upper - m_lower );
+    m_lowrhs.resize( m_upper - m_lower );
   }
 
   // Store inverse of compute-node-division map stored on all compute nodes
@@ -183,6 +184,7 @@ Solver::next()
   m_lowrhsimport.clear();
   m_lowrhsimport.resize( m_nchare );
   m_lowrhs.clear();
+  m_lowrhs.resize( m_upper - m_lower );
   m_hypreRhs.clear();
   m_rhs.clear();
   m_rhs.resize( m_upper - m_lower );
@@ -468,7 +470,7 @@ Solver::charelowrhs( int fromch,
   for (std::size_t i=0; i<gid.size(); ++i)
     if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
       m_lowrhsimport[ static_cast<std::size_t>(fromch) ].push_back( gid[i] );
-      m_lowrhs[ gid[i] ] += lowrhs[i];
+      m_lowrhs[ gid[i]-m_lower ] += lowrhs[i];
     } else
       exp[ node(gid[i]) ][ gid[i] ] = lowrhs[i];
 
@@ -495,8 +497,10 @@ Solver::addlowrhs( int fromch,
   using tk::operator+=;
 
   for (const auto& r : lowrhs) {
+    Assert( r.first >= m_lower && r.first < m_upper,
+            "Solver instance received lowrhs that it does not own" );
     m_lowrhsimport[ static_cast<std::size_t>(fromch) ].push_back( r.first );
-    m_lowrhs[ r.first ] += r.second;
+    m_lowrhs[ r.first-m_lower ] += r.second;
   }
 
   if (lowrhscomplete()) lowrhs_complete();
@@ -964,14 +968,14 @@ Solver::updateSol()
       std::vector< tk::real > solution;
 
       for (auto r : w) {
-          gid.push_back( r );
-          auto i = r - m_lower;
-          using diff_type = typename decltype(m_hypreSol)::difference_type;
-          auto b = static_cast< diff_type >( i*m_ncomp );
-          auto e = static_cast< diff_type >( (i+1)*m_ncomp );
-          solution.insert( end(solution),
-                           std::next( begin(m_hypreSol), b ),
-                           std::next( begin(m_hypreSol), e ) );
+        gid.push_back( r );
+        auto i = r - m_lower;
+        using diff_type = typename decltype(m_hypreSol)::difference_type;
+        auto b = static_cast< diff_type >( i*m_ncomp );
+        auto e = static_cast< diff_type >( (i+1)*m_ncomp );
+        solution.insert( end(solution),
+                         std::next( begin(m_hypreSol), b ),
+                         std::next( begin(m_hypreSol), e ) );
       }
 
       // Update worker with high order solution
@@ -1006,13 +1010,9 @@ Solver::updateLowSol()
       std::vector< tk::real > solution;
 
       for (auto r : w) {
-        const auto it = m_lowrhs.find( r );
-        if (it != end(m_lowrhs)) {
-          gid.push_back( it->first );
-          solution.insert( end(solution), begin(it->second), end(it->second) );
-        } else
-          Throw( "Can't find global row id " + std::to_string(r) +
-                 " to export in low order solution vector" );
+        gid.push_back( r );
+        const auto& lowrhs = m_lowrhs[ r-m_lower ];
+        solution.insert( end(solution), begin(lowrhs), end(lowrhs) );
       }
 
       // Update worker with low order solution
@@ -1057,7 +1057,7 @@ Solver::lowsolve()
       // system is L = R + D, where L is the lumped mass matrix, R is the high
       // order RHS, and D is mass diffusion, and R already has the Dirichlet BC
       // set)
-      auto& r = tk::ref_find( m_lowrhs, n.first );
+      auto& r = m_lowrhs[ n.first-m_lower ];
       for (std::size_t i=0; i<m_ncomp; ++i)
         if (n.second[i].first) r[i] = 0.0;
     }
@@ -1069,7 +1069,7 @@ Solver::lowsolve()
   while (ir != m_rhs.cend()) {
     const auto& r = *ir;
     const auto& m = im->second;
-    auto& d = id->second;
+    auto& d = *id;
     Assert( r.size()==m_ncomp && m.size()==m_ncomp && d.size()==m_ncomp,
             "Wrong number of components in solving the low order system" );
     for (std::size_t i=0; i<m_ncomp; ++i) d[i] = (r[i]+d[i])/m[i];
