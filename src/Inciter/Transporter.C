@@ -350,10 +350,6 @@ Transporter::load( uint64_t nelem, uint64_t npoin )
   m_print.item( "Virtualization [0.0...1.0]",
                 g_inputdeck.get< tag::cmd, tag::virtualization >() );
   m_print.item( "Number of tetrahedra", nelem );
-  m_print.item( "Number of processing elements",
-                std::to_string( CkNumPes() ) + " (" +
-                std::to_string( CkNumNodes() ) + 'x' +
-                std::to_string( CkNumPes()/CkNumNodes() ) + ')' );
   m_print.item( "Number of work units", m_nchare );
 
   m_print.endsubsection();
