@@ -304,9 +304,6 @@ class Solver : public CBase_Solver {
     //! \note This is the same data as in m_bc but as a hash map.
     std::unordered_map< std::size_t,
                         std::vector< std::pair< bool, tk::real > > > m_bcmap;
-    //! Matrix non-zero coefficients for Dirichlet boundary conditions
-    std::unordered_map< std::size_t,
-                        std::map< std::size_t, std::vector<tk::real> > > m_bca;
 
     //! Return compute node id for global mesh row id
     int node( std::size_t gid );

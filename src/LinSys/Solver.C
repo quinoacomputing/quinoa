@@ -58,8 +58,7 @@ Solver::Solver( const SolverCallback& cb, std::size_t n ) :
   m_div(),
   m_node(),
   m_bc(),
-  m_bcmap(),
-  m_bca()
+  m_bcmap()
 // *****************************************************************************
 //  Constructor
 //! \param[in] cb Charm++ callbacks for Solver
@@ -723,67 +722,6 @@ Solver::lhsbc()
     ++row;
   }
 
-//   for (const auto& n : m_bc) {
-//     auto r = m_lhs.find( n.first );
-//     if (r != end(m_lhs)) {
-//       m_bca[ n.first ] = r->second;
-//       for (const auto& c : r->second)
-//         if (c.first != n.first ) {
-//           auto a = m_lhs.find( c.first );
-//           if (a != end(m_lhs)) {
-//             auto& b = tk::ref_find( a->second, n.first );
-//             for (std::size_t i=0; i<m_ncomp; ++i)
-//               if (n.second[i].first)
-//                 b[i] = 0.0;
-//           }
-//         }
-//     }
-//   }
-// 
-//   // test BCs in matrix (only in serial)
-//   auto eps = std::numeric_limits< tk::real >::epsilon();
-//   for (const auto& n : m_bc) {
-//     auto r = m_lhs.find( n.first );
-//     if (r != end(m_lhs)) {
-//       std::size_t ver_row = 0, ver_col = 0;
-//       for (const auto& c : r->second)
-//         if (c.first != n.first) {
-//           // test row
-//           for (std::size_t i=0; i<m_ncomp; ++i)
-//             if (std::abs(c.second[i]) > eps)      // test zero
-//               std::cout << 'r';
-//             else                                  // count nonzeros
-//               ++ver_row;
-//           // test column
-//           auto b = m_lhs.find( c.first );
-//           if (b !=end(m_lhs)) {
-//             auto d = b->second.find( n.first );
-//             if (d != end(b->second)) {
-//               for (std::size_t i=0; i<m_ncomp; ++i)
-//                 if (std::abs(d->second[i]) > eps)  // test zero
-//                   std::cout << 'c';
-//                 else
-//                   ++ver_col;                       // count nonzeros
-//             }
-//           }
-//         }
-//       // test number of nonzeros in BC row
-//       if (ver_row != (r->second.size()-1)*m_ncomp) std::cout << 'R';
-//       // test number of nonzeros in BC column
-//       if (ver_col != (r->second.size()-1)*m_ncomp) std::cout << 'C';
-//     }
-//   }
-// 
-//   // test symmetry of matrix (only in serial)
-//   for (const auto& r : m_lhs)
-//     for (const auto& c : r.second) {
-//       const auto& v = tk::cref_find( m_lhs, c.first );
-//       const auto& w = tk::cref_find( v, r.first );
-//       for (std::size_t i=0; i<m_ncomp; ++i)
-//         if (std::abs(c.second[i]-w[i]) > 1.0e-14)
-//           std::cout << 's';
-//     }
-
   hyprelhs();
 }
 
@@ -798,19 +736,6 @@ Solver::rhsbc()
   Assert( rhscomplete(), "Values of distributed right-hand-side vector on "
           "compute node " + std::to_string( CkMyNode() ) + " is incomplete: "
           "cannot set BCs" );
-
-//   for (const auto& n : m_bc) {
-//      auto r = m_bca.find( n.first );
-//      if (r != end(m_bca))
-//        for (const auto& c : r->second)
-//          if (c.first != n.first ) {
-//            auto a = m_rhs.find( c.first );
-//            if (a != end(m_rhs))
-//              for (std::size_t i=0; i<m_ncomp; ++i)
-//                if (n.second[i].first)
-//                  a->second[i] -= n.second[i].second * c.second[i];
-//          }
-//    }
 
   std::size_t row = 0;
   for (const auto& n : m_bc) {
