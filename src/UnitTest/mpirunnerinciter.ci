@@ -19,7 +19,7 @@ module mpirunnerinciter {
     chare MPIRunner< CProxy_TUTSuite >;
 
     template< class Proxy >
-    group MPIRunner {
+    nodegroup MPIRunner {
       entry MPIRunner( const Proxy& proxy );
       entry void rungroup( const std::string& groupname );
     }
