@@ -47,12 +47,10 @@ struct HLLC {
     auto pl = (g-1.0)*(u[0][4] - (u[0][1]*u[0][1] +
                                   u[0][2]*u[0][2] +
                                   u[0][3]*u[0][3]) / (2.0*rhol));
-    pl = std::max(pl, 1.0e-12);
 
     auto pr = (g-1.0)*(u[1][4] - (u[1][1]*u[1][1] +
                                   u[1][2]*u[1][2] +
                                   u[1][3]*u[1][3]) / (2.0*rhor));
-    pr = std::max(pr, 1.0e-12);
 
     auto al = sqrt(g * pl / rhol);
     auto ar = sqrt(g * pr / rhor);

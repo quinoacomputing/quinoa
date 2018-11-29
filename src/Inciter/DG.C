@@ -620,13 +620,17 @@ DG::addEsuel( const std::array< std::size_t, 2 >& id,
 // Fill elements surrounding a element along chare boundary
 //! \param[in] id Local face and (inner) tet id adjacent to it
 //! \param[in] ghostid Local ID for ghost tet
-// ...
+//! \param[in] t node-triplet associated with the chare boundary face
+//! \details This function updates the elements surrounding element (esuel) data
+//    structure for the (inner) tets adjacent to the chare-boundaries. It fills
+//    esuel of this inner tet with the local tet-id that has been assigned to
+//    the outer ghost tet in DG::comGhost in place of the -1 before.
 // *****************************************************************************
 {
   auto d = Disc();
   const auto& inpoel = d->Inpoel();
   const auto& esuf = m_fd.Esuf();
-  auto lid = d->Lid();
+  const auto& lid = d->Lid();
   IGNORE(esuf);
 
   std::array< tk::UnsMesh::Face, 4 > face;
@@ -634,12 +638,13 @@ DG::addEsuel( const std::array< std::size_t, 2 >& id,
     for (std::size_t i = 0; i<3; ++i)
       face[f][i] = inpoel[ id[1]*4 + tk::lpofa[f][i] ];
 
+  tk::UnsMesh::Face tl{{ tk::cref_find( lid, t[0] ),
+                         tk::cref_find( lid, t[1] ),
+                         tk::cref_find( lid, t[2] ) }};
+
   auto& esuel = m_fd.Esuel();
   std::size_t i(0), nmatch(0);
   for (const auto& f : face) {
-    tk::UnsMesh::Face tl {{ tk::cref_find( lid, t[0] ),
-                            tk::cref_find( lid, t[1] ),
-                            tk::cref_find( lid, t[2] ) }};
     if (tk::UnsMesh::Eq< 3 >()( tl, f )) {
       Assert( esuel[ id[1]*4 + i ] == -1, "Incorrect boundary element found in "
              "esuel");
@@ -670,8 +675,8 @@ DG::addGeoFace( const tk::UnsMesh::Face& t,
 // *****************************************************************************
 {
   auto d = Disc();
-  auto coord = d->Coord();
-  auto lid = d->Lid();
+  const auto& coord = d->Coord();
+  const auto& lid = d->Lid();
 
   // get global node IDs reversing order to get outward-pointing normal
   auto A = tk::cref_find( lid, t[2] );
@@ -829,7 +834,7 @@ DG::setup( tk::real v )
     eq.initialize( m_lhs, inpoel, coord, m_u, d->T() );
   m_un = m_u;
 
-  for (std::size_t e=0; e<m_fd.Esuel().size()/4; ++e)
+  for (std::size_t e=0; e<esuel.size()/4; ++e)
     for (std::size_t c=0; c<m_limFunc.nprop(); ++c)
       m_limFunc(e,c,0)=1.0;
 

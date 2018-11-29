@@ -362,7 +362,6 @@ class CompFlow {
           w = ugp[0][3]/rho;
           rhoE = ugp[0][4];
           p = (g-1.0)*(rhoE - rho*(u*u + v*v + w*w)/2.0);
-          p = std::max(p, 1.0e-12);
 
           a = std::sqrt(g * p / rho);
 
@@ -421,7 +420,6 @@ class CompFlow {
             w = ugp[1][3]/rho;
             rhoE = ugp[1][4];
             p = (g-1.0)*(rhoE - rho*(u*u + v*v + w*w)/2.0);
-            p = std::max(p, 1.0e-12);
 
             a = std::sqrt(g * p / rho);
 
@@ -519,15 +517,9 @@ class CompFlow {
       const auto& cy = coord[1];
       const auto& cz = coord[2];
 
-      std::vector< std::vector< tk::real > > out;
       std::vector< tk::real > count(cx.size(), 0);
-
-      // sizing output vector
-      out.resize(6);
-      for (std::size_t i=0; i<6; ++i)
-      {
-        out[i].resize( cx.size(), 0.0 );
-      }
+      std::vector< std::vector< tk::real > >
+        out( 6, std::vector< tk::real >( cx.size(), 0.0 ) );
 
       for (std::size_t e=0; e<inpoel.size()/4 ; ++e)
       {
