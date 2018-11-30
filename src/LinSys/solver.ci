@@ -41,7 +41,8 @@ module solver {
       entry [exclusive] void addlowlhs( int fromch,
                             const std::map< std::size_t,
                                             std::vector< tk::real > >& lolhs );
-      entry [exclusive] void charebc( const std::unordered_map< std::size_t,
+      entry [exclusive] void charebc( int fromch,
+                            const std::unordered_map< std::size_t,
                             std::vector< std::pair< bool, tk::real > > >& bc );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/

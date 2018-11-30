@@ -171,7 +171,8 @@ class Solver : public CBase_Solver {
 
     //! \brief Chares contribute their global row ids and associated Dirichlet
     //!   boundary condition values at which they set BCs
-    void charebc( const std::unordered_map< std::size_t,
+    void charebc( int fromch,
+                  const std::unordered_map< std::size_t,
                           std::vector< std::pair< bool, tk::real > > >& bc );
 
     //! Reduction target collecting the final aggregated BC node list map
@@ -201,7 +202,6 @@ class Solver : public CBase_Solver {
     std::size_t m_mynchare; //!< Number of chares contributing to my node
     std::size_t m_nbounds;  //!< Number of chares contributed bounds to my node
     std::size_t m_ncomm;    //!< Number of chares finished commaps on my node
-    std::size_t m_nchbc;    //!< Number of chares we received bcs from
     std::size_t m_lower;    //!< Lower index of the global rows on my node
     std::size_t m_upper;    //!< Upper index of the global rows on my node
     std::size_t m_nrows;    //!< Total number of rows of the distributed matrix
@@ -304,6 +304,8 @@ class Solver : public CBase_Solver {
     //! \note This is the same data as in m_bc but as a hash map.
     std::unordered_map< std::size_t,
                         std::vector< std::pair< bool, tk::real > > > m_bcmap;
+    //! Vector to indicate which chares contributed boundary condition data
+    std::vector< int > m_recbc;
 
     //! Return compute node id for global mesh row id
     int node( std::size_t gid );

@@ -24,7 +24,6 @@ Solver::Solver( const SolverCallback& cb, std::size_t n ) :
   m_nchare( 0 ),
   m_mynchare( 0 ),
   m_nbounds( 0 ),
-  m_nchbc( 0 ),
   m_lower( std::numeric_limits< std::size_t >::max() ),
   m_upper( 0 ),
   m_nrows( 0 ),
@@ -58,7 +57,8 @@ Solver::Solver( const SolverCallback& cb, std::size_t n ) :
   m_div(),
   m_node(),
   m_bc(),
-  m_bcmap()
+  m_bcmap(),
+  m_recbc()
 // *****************************************************************************
 //  Constructor
 //! \param[in] cb Charm++ callbacks for Solver
@@ -100,6 +100,7 @@ Solver::nchare( int n )
   m_lowrhsimport.resize( m_nchare );
   m_row.resize( m_nchare );
   m_worker.resize( m_nchare );
+  m_recbc.resize( m_nchare, 0 );
 
   contribute( m_cb.get< tag::part >() );
 }
@@ -186,19 +187,15 @@ Solver::next()
   thisProxy[ CkMyNode() ].wait4asm();
   thisProxy[ CkMyNode() ].wait4low();
 
-  m_rhsimport.clear();
-  m_rhsimport.resize( m_nchare );
-  m_lowrhsimport.clear();
-  m_lowrhsimport.resize( m_nchare );
-  m_lowrhs.clear();
-  m_lowrhs.resize( m_upper - m_lower );
-  m_hypreRhs.clear();
-  m_rhs.clear();
-  m_rhs.resize( m_upper - m_lower );
+  tk::destroy( m_rhsimport );  m_rhsimport.resize( m_nchare );
+  tk::destroy( m_lowrhsimport );  m_lowrhsimport.resize( m_nchare );
+  tk::destroy( m_lowrhs );  m_lowrhs.resize( m_upper - m_lower );
+  tk::destroy( m_hypreRhs );
+  tk::destroy( m_rhs );  m_rhs.resize( m_upper - m_lower );
 
-  m_bc.clear();
-  m_bc.resize( m_nrows );
-  m_bcmap.clear();
+  tk::destroy( m_bc );  m_bc.resize( m_nrows );
+  tk::destroy( m_bcmap );
+  std::fill( begin(m_recbc), end(m_recbc), 0 );
 
   lowlhs_complete();
   hyprerow_complete();
@@ -598,11 +595,13 @@ Solver::comfinal()
 }
 
 void
-Solver::charebc( const std::unordered_map< std::size_t,
+Solver::charebc( int fromch,
+                 const std::unordered_map< std::size_t,
                    std::vector< std::pair< bool, tk::real > > >& bc )
 // *****************************************************************************
 //  Chares contribute their global row ids and associated Dirichlet boundary
 //  condition values at which they set BCs
+//! \param[in] fromch Charm chare array index contribution coming from
 //! \param[in] bc Vector of pairs of bool and BC value (BC vector)
 //!   associated to global node IDs at which the boundary condition is set.
 //!   Here the bool indicates whether the BC value is set at the given node
@@ -617,7 +616,10 @@ Solver::charebc( const std::unordered_map< std::size_t,
     m_bc[ n.first ] = n.second;
   }
 
-  if (++m_nchbc == m_nchare) {
+  // Record as BCs have been received from chare
+  m_recbc[ static_cast<std::size_t>(fromch) ] = 1;
+
+  if (std::all_of( m_recbc.cbegin(), m_recbc.cend(), [](int c){return c;} )) {
 
     std::size_t row = 0;
     for (const auto& n : m_bc) {
@@ -625,9 +627,9 @@ Solver::charebc( const std::unordered_map< std::size_t,
       ++row;
     }
 
-    m_nchbc = 0;
     bc_complete();
     if (m_initial) bc_complete();
+
   }
 }
 

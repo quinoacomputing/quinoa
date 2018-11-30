@@ -288,7 +288,7 @@ MatCG::bc()
                       d->Gid(), d->Lid(), m_fd.Bnode() );
 
   // Send off BCs to all Solver node groups
-  m_solver.charebc( dirbc );
+  m_solver.charebc( thisIndex, dirbc );
 }
 
 std::pair< std::vector< std::size_t >, std::vector< tk::real > >
