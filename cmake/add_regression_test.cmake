@@ -245,6 +245,7 @@ function(ADD_REGRESSION_TEST test_name executable)
   foreach(file ${ARG_INPUTFILES})
     list(APPEND reqfiles "${CMAKE_CURRENT_SOURCE_DIR}/${file}")
   endforeach()
+  list(APPEND reqfiles "${CMAKE_CURRENT_SOURCE_DIR}/${ARG_TEXT_DIFF_PROG_CONF}")
 
   # Softlink files required to build directory
   foreach(target ${reqfiles})

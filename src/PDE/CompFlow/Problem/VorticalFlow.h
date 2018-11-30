@@ -16,7 +16,6 @@
 
 #include "Types.h"
 #include "Inciter/Options/Problem.h"
-
 namespace inciter {
 
 //! CompFlow system of PDEs problem: vortical flow
@@ -63,7 +62,6 @@ class CompFlowProblemVorticalFlow {
     {
       return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
     }
-
     //! Compute and return source term for vortical flow manufactured solution
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs

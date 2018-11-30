@@ -28,9 +28,10 @@ enum class ProblemType : uint8_t { USER_DEFINED=0,
                                    TAYLOR_GREEN,
                                    SLOT_CYL,
                                    GAUSS_HUMP,
-                                   SOD_SHOCKTUBE,
                                    CYL_ADVECT,
-                                   ROTATED_SOD_SHOCKTUBE };
+                                   SOD_SHOCKTUBE,
+                                   ROTATED_SOD_SHOCKTUBE,
+                                   SEDOV_BLASTWAVE };
 
 //! Pack/Unpack ProblemType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, ProblemType& e ) { PUP::pup( p, e ); }
@@ -51,6 +52,7 @@ class Problem : public tk::Toggle< ProblemType > {
                                   , kw::cyl_advect
                                   , kw::sod_shocktube
                                   , kw::rotated_sod_shocktube
+                                  , kw::sedov_blastwave
                                   >;
 
     //! \brief Options constructor
@@ -69,11 +71,11 @@ class Problem : public tk::Toggle< ProblemType > {
           { ProblemType::TAYLOR_GREEN, kw::taylor_green::name() },
           { ProblemType::SLOT_CYL, kw::slot_cyl::name() },
           { ProblemType::GAUSS_HUMP, kw::gauss_hump::name() },
-          { ProblemType::SOD_SHOCKTUBE, kw::sod_shocktube::name() },
           { ProblemType::CYL_ADVECT, kw::cyl_advect::name() },
+          { ProblemType::SOD_SHOCKTUBE, kw::sod_shocktube::name() },
           { ProblemType::ROTATED_SOD_SHOCKTUBE,
-            kw::rotated_sod_shocktube::name() }
-        },
+            kw::rotated_sod_shocktube::name() },
+          { ProblemType::SEDOV_BLASTWAVE, kw::sedov_blastwave::name() } },
         //! keywords -> Enums
         { { kw::user_defined::string(), ProblemType::USER_DEFINED },
           { kw::shear_diff::string(), ProblemType::SHEAR_DIFF },
@@ -83,11 +85,12 @@ class Problem : public tk::Toggle< ProblemType > {
           { kw::taylor_green::string(), ProblemType::TAYLOR_GREEN },
           { kw::slot_cyl::string(), ProblemType::SLOT_CYL },
           { kw::gauss_hump::string(), ProblemType::GAUSS_HUMP },
-          { kw::sod_shocktube::string(), ProblemType::SOD_SHOCKTUBE },
           { kw::cyl_advect::string(), ProblemType::CYL_ADVECT },
+          { kw::sod_shocktube::string(), ProblemType::SOD_SHOCKTUBE },
           { kw::rotated_sod_shocktube::string(),
-            ProblemType::ROTATED_SOD_SHOCKTUBE }
-        } )
+            ProblemType::ROTATED_SOD_SHOCKTUBE },
+          { kw::sod_shocktube::string(), ProblemType::SOD_SHOCKTUBE },
+          { kw::sedov_blastwave::string(), ProblemType::SEDOV_BLASTWAVE } } )
     {
        brigand::for_each< keywords >( assertPolicyCodes() );
     }
@@ -129,6 +132,7 @@ class Problem : public tk::Toggle< ProblemType > {
       , { ProblemType::SOD_SHOCKTUBE, *kw::sod_shocktube::code() }
       , { ProblemType::ROTATED_SOD_SHOCKTUBE,
           *kw::rotated_sod_shocktube::code() }
+      , { ProblemType::SEDOV_BLASTWAVE, *kw::sedov_blastwave::code() }
     };
 };
 

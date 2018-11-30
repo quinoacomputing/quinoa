@@ -32,10 +32,14 @@ module dg {
       entry void setup( tk::real v );
       entry void dt();
       entry void diag();
+      entry void comlim( int fromch,
+                         const std::vector< std::size_t >& tetid,
+                         const std::vector< std::vector< tk::real > >& lfn );
       entry void comsol( int fromch,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u );
-      entry [reductiontarget] void advance( tk::real newdt );
+      entry void advance( tk::real );
+      entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();
       entry void lhs();
 
@@ -55,7 +59,10 @@ module dg {
         { sendGhost(); } };
 
       entry void wait4sol() {
-        when ownsol_complete(), comsol_complete() serial "sol" { solve(); } };
+        when ownsol_complete(), comsol_complete() serial "sol" { lim(); } };
+
+      entry void wait4lim() {
+        when ownlim_complete(), comlim_complete() serial "lim" { dt(); } };
 
       entry void wait4eval() {
         when diag_complete(), ref_complete(), lhs_complete(),
@@ -65,6 +72,8 @@ module dg {
       entry void reqghost_complete();
       entry void ownsol_complete();
       entry void comsol_complete();
+      entry void ownlim_complete();
+      entry void comlim_complete();
       entry void diag_complete();
       entry void ref_complete();
       entry void lhs_complete();

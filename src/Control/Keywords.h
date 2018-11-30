@@ -3715,6 +3715,23 @@ using rotated_sod_shocktube =
   keyword< sod_rotated_shocktube_info,
            TAOCPP_PEGTL_STRING("rotated_sod_shocktube") >;
 
+struct sedov_blastwave_info {
+  using code = Code< B >;
+  static std::string name() { return "Sedov blast-wave"; }
+  static std::string shortDescription() { return
+    "Select the Sedov blast-wave test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Sedov blast-wave test problem. The
+    purpose of this test problem is to test the correctness of the
+    approximate Riemann solver and its strong shock and interface capturing
+    capabilities. Example: "problem sedov_blastwave".)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using sedov_blastwave =
+  keyword< sedov_blastwave_info, TAOCPP_PEGTL_STRING("sedov_blastwave") >;
+
 struct problem_info {
   using code = Code< r >;
   static std::string name() { return "Test problem"; }

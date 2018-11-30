@@ -30,7 +30,7 @@ module matcg {
       entry void setup( tk::real v );
       entry void dt();
       entry void diag();
-      entry [reductiontarget] void advance( tk::real newdt );
+      entry void advance( tk::real newdt );
       entry void updateSol( CkDataMsg* msg );
       entry void updateLowSol( CkDataMsg* msg );
       entry void resized();

@@ -27,7 +27,6 @@
 #include "Riemann/LaxFriedrichs.h"
 #include "UnsMesh.h"
 #include "Quadrature.h"
-#include "Limiter.h"
 
 namespace inciter {
 
@@ -184,11 +183,10 @@ class CompFlow {
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
-              tk::Fields& limFunc,
+              const tk::Fields& limFunc,
               tk::Fields& R ) const
-  {
+    {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
 
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
@@ -201,7 +199,6 @@ class CompFlow {
       const auto& bface = fd.Bface();
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();
-      const auto& esuel = fd.Esuel();
 
       Assert( inpofa.size()/3 == esuf.size()/2, "Mismatch in inpofa size" );
 
@@ -218,18 +215,6 @@ class CompFlow {
         bndInt< Sym >( m_bcsym, fd, geoFace, t, U, R );
         bndInt< Extrapolate >( m_bcextrapolate, fd, geoFace, t, U, R );
       } else if (ndof == 4) {  // DG(P1)
-        // set limiter function to one
-        limFunc.fill(1.0);
-
-        Assert( U.nunk() == limFunc.nunk(), "Number of unknowns in solution "
-                "vector and limiter at recent time step incorrect" );
-
-        Assert( U.nprop() == limFunc.nprop()+5, "Number of components in "
-                "solution vector and limiter at recent time step incorrect" );
-
-        if (limiter == ctr::LimiterType::WENOP1)
-          WENO_P1( esuel, 0, U, limFunc );
-
         // compute internal surface flux integrals
         surfIntP1( inpoel, coord, fd, geoFace, U, limFunc, R );
         // compute source term intehrals
@@ -246,18 +231,216 @@ class CompFlow {
       } else
         Throw( "dg::Compflow::rhs() not defined for NDOF=" +
                std::to_string(ndof) );
-  }
+    }
 
     //! Compute the minimum time step size
-//     //! \param[in] U Solution vector at recent time step
-//     //! \param[in] coord Mesh node coordinates
-//     //! \param[in] inpoel Mesh element connectivity
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] inpoel Mesh element connectivity
     //! \return Minimum time step size
-    tk::real dt( const std::array< std::vector< tk::real >, 3 >& /*coord*/,
-                 const std::vector< std::size_t >& /*inpoel*/,
-                 const tk::Fields& /*U*/ ) const
+    tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
+                 const std::vector< std::size_t >& inpoel,
+                 const inciter::FaceData& fd,
+                 const tk::Fields& geoFace,
+                 const tk::Fields& geoElem,
+                 const tk::Fields& limFunc,
+                 const tk::Fields& U ) const
     {
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const tk::real g =
+        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
+
+      const auto& esuf = fd.Esuf();
+      const auto& inpofa = fd.Inpofa();
+
+      // Number of integration points
+      constexpr std::size_t NG = 3;
+
+      // arrays for quadrature points
+      std::array< std::array< tk::real, NG >, 2 > coordgp;
+      std::array< tk::real, NG > wgp;
+
+      tk::real rho, u, v, w, rhoE, p, a, vn, dSV_l, dSV_r;
+      std::vector< tk::real > delt( U.nunk(), 0.0 );
+
+      const auto& cx = coord[0];
+      const auto& cy = coord[1];
+      const auto& cz = coord[2];
+
+      // get quadrature point weights and coordinates for triangle
+      GaussQuadratureTri( coordgp, wgp );
+
+      // compute internal surface maximum characteristic speed
+      for (std::size_t f=0; f<esuf.size()/2; ++f)
+      {
+        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+        auto er = esuf[2*f+1];
+
+        // nodal coordinates of the left element
+        std::array< tk::real, 3 >
+          p1_l{{ cx[ inpoel[4*el] ],
+                 cy[ inpoel[4*el] ],
+                 cz[ inpoel[4*el] ] }},
+          p2_l{{ cx[ inpoel[4*el+1] ],
+                 cy[ inpoel[4*el+1] ],
+                 cz[ inpoel[4*el+1] ] }},
+          p3_l{{ cx[ inpoel[4*el+2] ],
+                 cy[ inpoel[4*el+2] ],
+                 cz[ inpoel[4*el+2] ] }},
+          p4_l{{ cx[ inpoel[4*el+3] ],
+                 cy[ inpoel[4*el+3] ],
+                 cz[ inpoel[4*el+3] ] }};
+
+        auto detT_l = getJacobian( p1_l, p2_l, p3_l, p4_l );
+
+
+        auto x1 = cx[ inpofa[3*f]   ];
+        auto y1 = cy[ inpofa[3*f]   ];
+        auto z1 = cz[ inpofa[3*f]   ];
+
+        auto x2 = cx[ inpofa[3*f+1] ];
+        auto y2 = cy[ inpofa[3*f+1] ];
+        auto z2 = cz[ inpofa[3*f+1] ];
+
+        auto x3 = cx[ inpofa[3*f+2] ];
+        auto y3 = cy[ inpofa[3*f+2] ];
+        auto z3 = cz[ inpofa[3*f+2] ];
+
+        dSV_l = 0.0;
+        dSV_r = 0.0;
+
+        // Gaussian quadrature
+        for (std::size_t igp=0; igp<NG; ++igp)
+        {
+          // Barycentric coordinates for the triangular face
+          auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];
+          auto shp2 = coordgp[0][igp];
+          auto shp3 = coordgp[1][igp];
+
+          // transformation of the quadrature point from the 2D reference/master
+          // element to physical domain, to obtain its physical (x,y,z)
+          // coordinates.
+          auto xgp = x1*shp1 + x2*shp2 + x3*shp3;
+          auto ygp = y1*shp1 + y2*shp2 + y3*shp3;
+          auto zgp = z1*shp1 + z2*shp2 + z3*shp3;
+
+          tk::real detT_gp(0);
+
+          // transformation of the physical coordinates of the quadrature point
+          // to reference space for the left element to be able to compute
+          // basis functions on the left element.
+          detT_gp = getJacobian( p1_l, {{ xgp, ygp, zgp }}, p3_l, p4_l );
+          auto xi_l = detT_gp / detT_l;
+          detT_gp = getJacobian( p1_l, p2_l, {{ xgp, ygp, zgp }}, p4_l );
+          auto eta_l = detT_gp / detT_l;
+          detT_gp = getJacobian( p1_l, p2_l, p3_l, {{ xgp, ygp, zgp }} );
+          auto zeta_l = detT_gp / detT_l;
+
+          // basis functions at igp for the left element
+          auto B2l = 2.0 * xi_l + eta_l + zeta_l - 1.0;
+          auto B3l = 3.0 * eta_l + zeta_l - 1.0;
+          auto B4l = 4.0 * zeta_l - 1.0;
+
+          auto wt = wgp[igp] * geoFace(f,0,0);
+
+          std::array< std::vector< tk::real >, 2 > ugp;
+
+          // left element
+          for (ncomp_t c=0; c<5; ++c)
+          {
+            auto mark = c*ndof;
+            auto lmark = c*(ndof-1);
+            ugp[0].push_back(  U(el, mark,   m_offset)
+                             + limFunc(el, lmark+0, 0) * U(el, mark+1, m_offset) * B2l
+                             + limFunc(el, lmark+1, 0) * U(el, mark+2, m_offset) * B3l
+                             + limFunc(el, lmark+2, 0) * U(el, mark+3, m_offset) * B4l );
+          }
+
+          rho = ugp[0][0];
+          u = ugp[0][1]/rho;
+          v = ugp[0][2]/rho;
+          w = ugp[0][3]/rho;
+          rhoE = ugp[0][4];
+          p = (g-1.0)*(rhoE - rho*(u*u + v*v + w*w)/2.0);
+
+          a = std::sqrt(g * p / rho);
+
+          vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
+
+          dSV_l = wt * (std::fabs(vn) + a);
+
+          // right element
+          if (er > -1) {
+
+            // nodal coordinates of the right element
+            std::size_t eR = static_cast< std::size_t >( er );
+            std::array< tk::real, 3 >
+              p1_r{{ cx[ inpoel[4*eR] ],
+                     cy[ inpoel[4*eR] ],
+                     cz[ inpoel[4*eR] ] }},
+              p2_r{{ cx[ inpoel[4*eR+1] ],
+                     cy[ inpoel[4*eR+1] ],
+                     cz[ inpoel[4*eR+1] ] }},
+              p3_r{{ cx[ inpoel[4*eR+2] ],
+                     cy[ inpoel[4*eR+2] ],
+                     cz[ inpoel[4*eR+2] ] }},
+              p4_r{{ cx[ inpoel[4*eR+3] ],
+                     cy[ inpoel[4*eR+3] ],
+                     cz[ inpoel[4*eR+3] ] }};
+
+            auto detT_r = getJacobian( p1_r, p2_r, p3_r, p4_r );
+
+            // transformation of the physical coordinates of the quadrature
+            // point to reference space for the right element
+            detT_gp = getJacobian( p1_r, {{ xgp, ygp, zgp }}, p3_r, p4_r );
+            auto xi_r = detT_gp / detT_r;
+            detT_gp = getJacobian( p1_r, p2_r, {{ xgp, ygp, zgp }}, p4_r );
+            auto eta_r = detT_gp / detT_r;
+            detT_gp = getJacobian( p1_r, p2_r, p3_r, {{ xgp, ygp, zgp }} );
+            auto zeta_r = detT_gp / detT_r;
+
+            // basis functions at igp for the right element
+            auto B2r = 2.0 * xi_r + eta_r + zeta_r - 1.0;
+            auto B3r = 3.0 * eta_r + zeta_r - 1.0;
+            auto B4r = 4.0 * zeta_r - 1.0;
+
+            for (ncomp_t c=0; c<5; ++c)
+            {
+              auto mark = c*ndof;
+              auto lmark = c*(ndof-1);
+              ugp[1].push_back(  U(eR, mark,   m_offset)
+                               + limFunc(eR, lmark+0, 0) * U(eR, mark+1, m_offset) * B2r
+                               + limFunc(eR, lmark+1, 0) * U(eR, mark+2, m_offset) * B3r
+                               + limFunc(eR, lmark+2, 0) * U(eR, mark+3, m_offset) * B4r );
+            }
+
+            rho = ugp[1][0];
+            u = ugp[1][1]/rho;
+            v = ugp[1][2]/rho;
+            w = ugp[1][3]/rho;
+            rhoE = ugp[1][4];
+            p = (g-1.0)*(rhoE - rho*(u*u + v*v + w*w)/2.0);
+
+            a = std::sqrt(g * p / rho);
+
+            vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
+
+            dSV_r = wt * (std::fabs(vn) + a);
+            delt[eR] += std::max( dSV_l, dSV_r );
+          }
+
+          delt[el] += std::max( dSV_l, dSV_r );
+        }
+      }
+
       tk::real mindt = std::numeric_limits< tk::real >::max();
+
+      // compute allowable dt
+      for (std::size_t e=0; e<U.nunk(); ++e)
+      {
+        mindt = std::min( mindt, geoElem(e,0,0)/delt[e] );
+      }
+
       return mindt;
     }
 
@@ -316,6 +499,100 @@ class CompFlow {
       coord[2] = geoElem.extract(3,0);
 
       return Problem::fieldOutput( 0, m_offset, t, 0.0, v, coord, U );
+    }
+
+    //! Return nodal field output going to file
+    std::vector< std::vector< tk::real > >
+    avgElemToNode( const std::vector< std::size_t >& inpoel,
+                   const tk::UnsMesh::Coords& coord,
+                   const tk::Fields& /*geoElem*/,
+                   const tk::Fields& limFunc,
+                   const tk::Fields& U ) const
+    {
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const tk::real g =
+        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
+
+      const auto& cx = coord[0];
+      const auto& cy = coord[1];
+      const auto& cz = coord[2];
+
+      std::vector< tk::real > count(cx.size(), 0);
+      std::vector< std::vector< tk::real > >
+        out( 6, std::vector< tk::real >( cx.size(), 0.0 ) );
+
+      for (std::size_t e=0; e<inpoel.size()/4 ; ++e)
+      {
+        // nodal coordinates of the left element
+        std::array< std::array< tk::real, 3 >, 4 >
+          pi{{ {{ cx[ inpoel[4*e] ],
+                 cy[ inpoel[4*e] ],
+                 cz[ inpoel[4*e] ] }},
+              {{ cx[ inpoel[4*e+1] ],
+                 cy[ inpoel[4*e+1] ],
+                 cz[ inpoel[4*e+1] ] }},
+              {{ cx[ inpoel[4*e+2] ],
+                 cy[ inpoel[4*e+2] ],
+                 cz[ inpoel[4*e+2] ] }},
+              {{ cx[ inpoel[4*e+3] ],
+                 cy[ inpoel[4*e+3] ],
+                 cz[ inpoel[4*e+3] ] }} }};
+        auto detT = getJacobian( pi[0], pi[1], pi[2], pi[3] );
+
+        for (std::size_t i=0; i<4; ++i)
+        {
+          tk::real detT_gp;
+          // transformation of the physical coordinates of the quadrature point
+          // to reference space for the left element to be able to compute
+          // basis functions on the left element.
+          detT_gp = getJacobian( pi[0], pi[i], pi[2], pi[3] );
+          auto xi = detT_gp / detT;
+          detT_gp = getJacobian( pi[0], pi[1], pi[i], pi[3] );
+          auto eta = detT_gp / detT;
+          detT_gp = getJacobian( pi[0], pi[1], pi[2], pi[i] );
+          auto zeta = detT_gp / detT;
+
+          auto B2 = 2.0 * xi + eta + zeta - 1.0;
+          auto B3 = 3.0 * eta + zeta - 1.0;
+          auto B4 = 4.0 * zeta - 1.0;
+
+          std::vector< tk::real > ugp(5,0);
+
+          for (ncomp_t c=0; c<5; ++c)
+          {
+            if (ndof == 1) {
+              ugp[c] =  U(e, c, m_offset);
+            } else {
+              auto mark = c*ndof;
+              auto lmark = c*(ndof-1);
+              ugp[c] =  U(e, mark,   m_offset)
+                      + limFunc(e, lmark+0, 0) * U(e, mark+1, m_offset) * B2
+                      + limFunc(e, lmark+1, 0) * U(e, mark+2, m_offset) * B3
+                      + limFunc(e, lmark+2, 0) * U(e, mark+3, m_offset) * B4;
+            }
+          }
+
+          auto u = ugp[1] / ugp[0];
+          auto v = ugp[2] / ugp[0];
+          auto w = ugp[3] / ugp[0];
+          auto p = (g - 1) * (ugp[4] - 0.5 * ugp[0] * (u*u + v*v + w*w) );
+
+          out[0][ inpoel[4*e+i] ] += ugp[0];
+          out[1][ inpoel[4*e+i] ] += u;
+          out[2][ inpoel[4*e+i] ] += v;
+          out[3][ inpoel[4*e+i] ] += w;
+          out[4][ inpoel[4*e+i] ] += ugp[4]/ugp[0];
+          out[5][ inpoel[4*e+i] ] += p;
+          count[ inpoel[4*e+i] ] += 1.0;
+        }
+      }
+
+      // average
+      for (std::size_t i=0; i<cx.size(); ++i)
+        for (std::size_t c=0; c<6; ++c)
+          out[c][i] /= count[i];
+
+      return out;
     }
 
     //! Return names of integral variables to be output to diagnostics file
