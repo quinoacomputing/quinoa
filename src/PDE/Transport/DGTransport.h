@@ -21,7 +21,6 @@
 #include "Exception.h"
 #include "Vector.h"
 #include "Quadrature.h"
-#include "Limiter.h"
 #include "Inciter/Options/BC.h"
 #include "UnsMesh.h"
 
@@ -142,11 +141,10 @@ class Transport {
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
-              tk::Fields& limFunc,
+              const tk::Fields& limFunc,
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
 
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
@@ -159,7 +157,6 @@ class Transport {
       const auto& bface = fd.Bface();
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();
-      const auto& esuel = fd.Esuel();
 
       Assert( inpofa.size()/3 == esuf.size()/2, "Mismatch in inpofa size" );
 
@@ -177,18 +174,6 @@ class Transport {
         bndInt< Dir >( m_bcdir, bface, esuf, geoFace, t, U, R );
 
       } else if (ndof == 4) {  // DG(P1)
-
-        // set limiter function to one
-        limFunc.fill(1.0);
-
-        Assert( U.nunk() == limFunc.nunk(), "Number of unknowns in solution "
-                "vector and limiter at recent time step incorrect" );
-
-        Assert( U.nprop() == limFunc.nprop()+m_ncomp, "Number of components in "
-                "solution vector and limiter at recent time step incorrect" );
-
-        if (limiter == ctr::LimiterType::WENOP1)
-          WENO_P1( esuel, m_c, U, limFunc );
 
         // compute internal surface flux integrals
         surfIntP1( inpoel, coord, fd, geoFace, U, limFunc, R );
@@ -216,6 +201,10 @@ class Transport {
     //! \return Minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& /*coord*/,
                  const std::vector< std::size_t >& /*inpoel*/,
+                 const inciter::FaceData& /*fd*/,
+                 const tk::Fields& /*geoFace*/,
+                 const tk::Fields& /*geoElem*/,
+                 const tk::Fields& /*limFunc*/,
                  const tk::Fields& /*U*/ ) const
     {
       tk::real mindt = std::numeric_limits< tk::real >::max();
@@ -246,6 +235,18 @@ class Transport {
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_error" );
       return n;
+    }
+
+    //!
+    std::vector< std::vector< tk::real > >
+    avgElemToNode( const std::vector< std::size_t >& /*inpoel*/,
+                   const tk::UnsMesh::Coords& /*coord*/,
+                   const tk::Fields& /*geoElem*/,
+                   const tk::Fields& /*limFunc*/,
+                   const tk::Fields& /*U*/ ) const
+    {
+      std::vector< std::vector< tk::real > > out;
+      return out;
     }
 
     //! Return field output going to file

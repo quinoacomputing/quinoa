@@ -193,9 +193,9 @@ if (ENABLE_INCITER)
   config_executable(${INCITER_EXECUTABLE})
 
   target_link_libraries(${INCITER_EXECUTABLE}
-                        PDE
                         InciterControl
                         Inciter
+                        PDE
                         MeshRefinement
                         LoadBalance
                         ZoltanInterOp

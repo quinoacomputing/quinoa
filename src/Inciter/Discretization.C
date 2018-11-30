@@ -480,16 +480,20 @@ void
 Discretization::writeElemSolution(
   const tk::ExodusIIMeshWriter& ew,
   uint64_t it,
-  const std::vector< std::vector< tk::real > >& u ) const
+  const std::vector< std::vector< tk::real > >& u,
+  const std::vector< std::vector< tk::real > >& /*v*/ ) const
 // *****************************************************************************
 // Output solution to file
 //! \param[in] ew ExodusII mesh-based writer object
 //! \param[in] it Iteration count
 //! \param[in] u Vector of element fields to write to file
+//! \param[in] v Vector of node fields to write to file
 // *****************************************************************************
 {
   int varid = 0;
   for (const auto& f : u) ew.writeElemScalar( it, ++varid, f );
+  //varid = 0;
+  //for (const auto& f : v) ew.writeNodeScalar( it, ++varid, f );
 }
 
 void
@@ -558,6 +562,9 @@ Discretization::writeElemMeta() const
 
     // Write element field names
     ew.writeElemVarNames( names );
+
+    //// Write node field names
+    //ew.writeNodeVarNames( names );
   }
 }
 

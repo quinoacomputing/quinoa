@@ -56,6 +56,7 @@
 #include "Problem/RayleighTaylor.h"
 #include "Problem/TaylorGreen.h"
 #include "Problem/SodShocktube.h"
+#include "Problem/SedovBlastwave.h"
 
 namespace inciter {
 
@@ -65,7 +66,8 @@ using CompFlowProblems = brigand::list< CompFlowProblemUserDefined
                                       , CompFlowProblemNLEnergyGrowth
                                       , CompFlowProblemRayleighTaylor
                                       , CompFlowProblemTaylorGreen
-                                      , CompFlowProblemSodShocktube >;
+                                      , CompFlowProblemSodShocktube
+                                      , CompFlowProblemSedovBlastwave >;
 
 } // inciter::
 
