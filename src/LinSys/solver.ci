@@ -17,31 +17,29 @@ module solver {
 
     nodegroup Solver {
       entry Solver( const SolverCallback& cb, std::size_t ncomp );
-      entry [exclusive] void nchare( int n );
+      entry void nchare( int n );
       entry [exclusive] void chbounds( std::size_t lower, std::size_t upper );
       entry [exclusive]
         void nodebounds( int n, std::size_t lower, std::size_t upper );
-      entry [exclusive] void next();
-      entry [exclusive] void charecom( int fromch, const MatCGCallback& cb );
-      entry [exclusive] void addrow( int fromch,
-                                     const std::set< std::size_t >& row );
-      entry [exclusive] void addsol( int fromch,
-                                     const std::map< std::size_t,
+      entry void next();
+      entry void charecom( int fromch, const MatCGCallback& cb );
+      entry void addrow( int fromch, const std::set< std::size_t >& row );
+      entry void addsol( int fromch, const std::map< std::size_t,
                                        std::vector< tk::real > >& solution );
-      entry [exclusive] void addlhs( int fromch,
+      entry void addlhs( int fromch,
         const std::map< std::size_t,
                         std::map< std::size_t,
                                   std::vector< tk::real > > >& lhs );
-      entry [exclusive] void addrhs( int fromch,
+      entry void addrhs( int fromch,
                          const std::map< std::size_t,
                                          std::vector< tk::real > >& rhs );
-      entry [exclusive] void addlowrhs( int fromch,
+      entry void addlowrhs( int fromch,
                             const std::map< std::size_t,
                                             std::vector< tk::real > >& lorhs );
-      entry [exclusive] void addlowlhs( int fromch,
+      entry void addlowlhs( int fromch,
                             const std::map< std::size_t,
                                             std::vector< tk::real > >& lolhs );
-      entry [exclusive] void charebc( int fromch,
+      entry void charebc( int fromch,
                             const std::unordered_map< std::size_t,
                             std::vector< std::pair< bool, tk::real > > >& bc );
 
