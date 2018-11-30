@@ -210,7 +210,7 @@ class Solver : public CBase_Solver {
     tk::real m_dt;          //!< Time step size (original in Discretization)
     bool m_initial;         //!< True in the first time step, false after
     //! Chare id and callbacks to entry methods of all worker chares
-    std::map< int, tk::MatCGCallback > m_worker;
+    std::vector< tk::MatCGCallback > m_worker;
     //! \brief Global row ids for each worker chare during the communication
     //!    of the global row ids
     std::vector< std::vector< std::size_t > > m_rowimport;

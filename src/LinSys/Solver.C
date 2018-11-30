@@ -99,6 +99,7 @@ Solver::nchare( int n )
   m_lowlhsimport.resize( m_nchare );
   m_lowrhsimport.resize( m_nchare );
   m_row.resize( m_nchare );
+  m_worker.resize( m_nchare );
 
   contribute( m_cb.get< tag::part >() );
 }
@@ -205,9 +206,7 @@ Solver::next()
   asmlhs_complete();
 
   // Continue with next time step: for all workers call .dt()
-  if (CkMyNode() == 0)
-    for (const auto& c : m_worker)
-       c.second.get< tag::dt >().send();
+  if (CkMyNode() == 0) for (const auto& c : m_worker) c.get< tag::dt >().send();
 }
 
 void
@@ -219,9 +218,15 @@ Solver::charecom( int fromch, const MatCGCallback& cb )
 // *****************************************************************************
 {
   // Store ids and callbacks to worker chare entry methods
-  m_worker[ fromch ] = cb;
+  m_worker[ static_cast<std::size_t>(fromch) ] = cb;
 
-  if (m_worker.size() == m_nchare) com_complete();
+  if (std::none_of( m_worker.cbegin(), m_worker.cend(),
+       []( const MatCGCallback& c )
+       { return c.get< tag::dt >().type ==
+                  CkCallback::callbackType::invalid; } ))
+  {
+    com_complete();
+  }
 }
 
 void
@@ -904,7 +909,7 @@ Solver::updateSol()
 
   // Group solution vector by workers and send each the parts back to workers
   // that own them
-  int c = 0;
+  std::size_t c = 0;
   for (const auto& w : m_solimport) {
     if (!w.empty()) {
       std::vector< std::size_t > gid;
@@ -923,8 +928,7 @@ Solver::updateSol()
 
       // Update worker with high order solution
       auto stream = serializeSol( gid, solution );
-      tk::cref_find( m_worker, c ).get< tag::high >().
-        send( stream.first, stream.second.get() );
+      m_worker[c].get< tag::high >().send( stream.first, stream.second.get() );
     }
     ++c;
   }
@@ -946,7 +950,7 @@ Solver::updateLowSol()
 //  Update low order solution vector in workers on this compute node
 // *****************************************************************************
 {
-  int c = 0;
+  std::size_t c = 0;
   for (const auto& w : m_solimport) {
     if (!w.empty()) {
       std::vector< std::size_t > gid;
@@ -960,8 +964,7 @@ Solver::updateLowSol()
 
       // Update worker with low order solution
       auto stream = serializeSol( gid, solution );
-      tk::cref_find( m_worker, c ).get< tag::low >().
-        send( stream.first, stream.second.get() );
+      m_worker[c].get< tag::low >().send( stream.first, stream.second.get() );
     }
     ++c;
   }

@@ -136,6 +136,7 @@ MatCG::setup( tk::real v )
 
   auto d = Disc();
 
+  // Communication data structures have been setup
   m_solver.ckLocalBranch()->comfinal();
 
   // Store total mesh volume

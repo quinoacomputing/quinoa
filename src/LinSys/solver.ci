@@ -23,8 +23,6 @@ module solver {
         void nodebounds( int n, std::size_t lower, std::size_t upper );
       entry [exclusive] void next();
       entry [exclusive] void charecom( int fromch, const MatCGCallback& cb );
-      entry [exclusive]
-        void charerow( int fromch, const std::vector< std::size_t >& row );
       entry [exclusive] void addrow( int fromch,
                                      const std::set< std::size_t >& row );
       entry [exclusive] void addsol( int fromch,
