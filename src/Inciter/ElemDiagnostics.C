@@ -13,7 +13,7 @@
 #include "ElemDiagnostics.h"
 #include "DiagReducer.h"
 #include "Discretization.h"
-#include "Quadrature.h"
+#include "HighOrderIntegration.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 namespace inciter {

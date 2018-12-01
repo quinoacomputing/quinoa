@@ -20,7 +20,7 @@
 #include "Macro.h"
 #include "Exception.h"
 #include "Vector.h"
-#include "Quadrature.h"
+#include "HighOrderIntegration.h"
 #include "Inciter/Options/BC.h"
 #include "UnsMesh.h"
 

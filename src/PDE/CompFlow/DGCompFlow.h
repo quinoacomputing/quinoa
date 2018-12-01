@@ -26,7 +26,7 @@
 #include "Riemann/HLLC.h"
 #include "Riemann/LaxFriedrichs.h"
 #include "UnsMesh.h"
-#include "Quadrature.h"
+#include "HighOrderIntegration.h"
 
 namespace inciter {
 

@@ -1,16 +1,17 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Quadrature.C
+  \file      src/PDE/HighOrderIntegration.C
   \copyright 2016-2018, Los Alamos National Security, LLC.
-  \brief     Quadrature coordinates and weights for numerical integration
+  \brief     Functions for high order numerical integration
   \details   This file contains functions that provide Gauss quadrature
-    coordinates and weights for numerical integration.
+    coordinates and weights for and functionality for high order numerical
+    integration.
 */
 // *****************************************************************************
 
 #include <array>
 
-#include "Quadrature.h"
+#include "HighOrderIntegration.h"
 
 void
 inciter::GaussQuadratureTet(

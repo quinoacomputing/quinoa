@@ -1,14 +1,15 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Quadrature.h
+  \file      src/PDE/HighOrderIntegration.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
-  \brief     Quadrature coordinates and weights for numerical integration
+  \brief     Functions for high order numerical integration
   \details   This file contains functions that provide Gauss quadrature
-    coordinates and weights for numerical integration.
+    coordinates and weights for and functionality for high order numerical
+    integration.
 */
 // *****************************************************************************
-#ifndef Quadrature_h
-#define Quadrature_h
+#ifndef HighOrderIntegration_h
+#define HighOrderIntegration_h
 
 #include <array>
 
@@ -33,4 +34,4 @@ GaussQuadratureTri( std::array< std::array< tk::real, 3 >, 2 >& coordgp,
 
 } // inciter::
 
-#endif // Quadrature_h
+#endif // HighOrderIntegration_h
