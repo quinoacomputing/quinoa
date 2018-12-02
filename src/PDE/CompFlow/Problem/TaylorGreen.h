@@ -47,6 +47,7 @@ class CompFlowProblemTaylorGreen {
     {
       Assert( ncomp == m_ncomp, "Number of scalar components must be " +
                                 std::to_string(m_ncomp) );
+      IGNORE(ncomp);
       using tag::param; using tag::compflow; using std::sin; using std::cos;
       // ratio of specific heats
       const tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[e];

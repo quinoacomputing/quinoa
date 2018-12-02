@@ -71,6 +71,7 @@ class CompFlowProblemNLEnergyGrowth {
     {
       Assert( ncomp == m_ncomp, "Number of scalar components must be " +
                                 std::to_string(m_ncomp) );
+      IGNORE(ncomp);
       using tag::param; using tag::compflow;
       // manufactured solution parameters
       const auto ce = g_inputdeck.get< param, compflow, tag::ce >()[system];

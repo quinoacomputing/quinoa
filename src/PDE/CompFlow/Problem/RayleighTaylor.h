@@ -46,6 +46,7 @@ class CompFlowProblemRayleighTaylor {
     {
       Assert( ncomp == m_ncomp, "Number of scalar components must be " +
                                 std::to_string(m_ncomp) );
+      IGNORE(ncomp);
       using tag::param; using tag::compflow; using std::sin; using std::cos;
       // manufactured solution parameters
       const auto a = g_inputdeck.get< param, compflow, tag::alpha >()[e];

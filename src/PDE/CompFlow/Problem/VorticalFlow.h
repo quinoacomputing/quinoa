@@ -27,6 +27,7 @@ class CompFlowProblemVorticalFlow {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
+    static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
   public:
     //! Evaluate analytical solution at (x,y,z) for all components
@@ -36,11 +37,14 @@ class CompFlowProblemVorticalFlow {
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] z Z coordinate where to evaluate the solution
     //! \return Values of all components evaluated at (x,y,z)
-    static std::vector< tk::real >
+    //! \note The function signature must follow tk::SolutionFn
+    static tk::SolutionFn::result_type
     solution( ncomp_t e, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
               tk::real )
     {
-      Assert( ncomp == 5, "Number of scalar components must be 5" );
+      Assert( ncomp == m_ncomp, "Number of scalar components must be " +
+                                std::to_string(m_ncomp) );
+      IGNORE(ncomp);
       using tag::param; using tag::compflow;
       // manufactured solution parameters
       const auto& a = g_inputdeck.get< param, compflow, tag::alpha >()[ e ];
@@ -60,7 +64,7 @@ class CompFlowProblemVorticalFlow {
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
     //! \return Increment in values of all components: all zero for this problem
-    static std::array< tk::real, 5 >
+    static std::vector< tk::real >
     solinc( ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real ) {
       return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
     }
@@ -80,8 +84,8 @@ class CompFlowProblemVorticalFlow {
       // ratio of specific heats
       tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ e ];
       // evaluate solution at x,y,z
-      auto s = solution( e, 5, x, y, z, 0.0 );
-      std::vector< tk::real > r( 5 );
+      auto s = solution( e, m_ncomp, x, y, z, 0.0 );
+      std::vector< tk::real > r( m_ncomp );
       // density source
       r[0] = 0.0;
       // momentum source
