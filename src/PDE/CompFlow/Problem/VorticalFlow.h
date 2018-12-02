@@ -16,6 +16,7 @@
 
 #include "Types.h"
 #include "Inciter/Options/Problem.h"
+
 namespace inciter {
 
 //! CompFlow system of PDEs problem: vortical flow
@@ -35,8 +36,11 @@ class CompFlowProblemVorticalFlow {
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] z Z coordinate where to evaluate the solution
     //! \return Values of all components evaluated at (x,y,z)
-    static std::array< tk::real, 5 >
-    solution( ncomp_t e, tk::real x, tk::real y, tk::real z, tk::real ) {
+    static std::vector< tk::real >
+    solution( ncomp_t e, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
+              tk::real )
+    {
+      Assert( ncomp == 5, "Number of scalar components must be 5" );
       using tag::param; using tag::compflow;
       // manufactured solution parameters
       const auto& a = g_inputdeck.get< param, compflow, tag::alpha >()[ e ];
@@ -57,9 +61,7 @@ class CompFlowProblemVorticalFlow {
     //!   at (x,y,z) for all components
     //! \return Increment in values of all components: all zero for this problem
     static std::array< tk::real, 5 >
-    solinc( tk::ctr::ncomp_type,
-            tk::real, tk::real, tk::real, tk::real, tk::real )
-    {
+    solinc( ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real ) {
       return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
     }
     //! Compute and return source term for vortical flow manufactured solution
@@ -69,7 +71,7 @@ class CompFlowProblemVorticalFlow {
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] z Z coordinate where to evaluate the solution
     //! \return Array of reals containing the source for all components
-    static std::array< tk::real, 5 >
+    static std::vector< tk::real >
     src( ncomp_t e, tk::real x, tk::real y, tk::real z, tk::real ) {
       using tag::param; using tag::compflow;
       // manufactured solution parameters
@@ -78,8 +80,8 @@ class CompFlowProblemVorticalFlow {
       // ratio of specific heats
       tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ e ];
       // evaluate solution at x,y,z
-      auto s = solution( e, x, y, z, 0.0 );
-      std::array< tk::real, 5 > r;
+      auto s = solution( e, 5, x, y, z, 0.0 );
+      std::vector< tk::real > r( 5 );
       // density source
       r[0] = 0.0;
       // momentum source

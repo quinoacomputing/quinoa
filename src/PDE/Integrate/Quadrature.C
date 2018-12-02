@@ -1,22 +1,18 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/HighOrderIntegration.C
+  \file      src/PDE/Integrate/Quadrature.C
   \copyright 2016-2018, Los Alamos National Security, LLC.
-  \brief     Functions for high order numerical integration
+  \brief     Quadrature coordinates and weights for numerical integration
   \details   This file contains functions that provide Gauss quadrature
-    coordinates and weights for and functionality for high order numerical
-    integration.
+    coordinates and weights for numerical integration.
 */
 // *****************************************************************************
 
-#include <array>
-
-#include "HighOrderIntegration.h"
+#include "Quadrature.h"
 
 void
-inciter::GaussQuadratureTet(
-  std::array< std::array< tk::real, 5 >, 3 >& coordgp,
-  std::array< tk::real, 5 >& wgp )
+tk::GaussQuadratureTet( std::array< std::array< tk::real, 5 >, 3 >& coordgp,
+                        std::array< tk::real, 5 >& wgp )
 // *****************************************************************************
 //  Five Gaussian quadrature points locations and weights for a tetrahedron
 //! \param[in,out] coordgp 3 spatial coordinates of 5 quadrature points
@@ -50,9 +46,8 @@ inciter::GaussQuadratureTet(
 }
 
 void
-inciter::GaussQuadratureTet(
-  std::array< std::array< tk::real, 4 >, 3 >& coordgp,
-  std::array< tk::real, 4 >& wgp )
+tk::GaussQuadratureTet( std::array< std::array< tk::real, 4 >, 3 >& coordgp,
+                        std::array< tk::real, 4 >& wgp )
 // *****************************************************************************
 //  Four Gaussian quadrature points locations and weights for a tetrahedron
 //! \param[in,out] coordgp 3 spatial coordinates of 4 quadrature points
@@ -84,9 +79,8 @@ inciter::GaussQuadratureTet(
 }
 
 void
-inciter::GaussQuadratureTri(
-  std::array< std::array< tk::real, 3 >, 2 >& coordgp,
-  std::array< tk::real, 3 >& wgp )
+tk::GaussQuadratureTri( std::array< std::array< tk::real, 3 >, 2 >& coordgp,
+                        std::array< tk::real, 3 >& wgp )
 // *****************************************************************************
 //! Three Gaussian quadrature points locations and weights for a triangle
 //! \param[in,out] coordgp 2 spatial coordinates of 3 quadrature points

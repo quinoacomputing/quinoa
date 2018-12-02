@@ -27,18 +27,25 @@ class CompFlowProblemRayleighTaylor {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
+    static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
   public:
     //! Evaluate analytical solution at (x,y,z,t) for all components
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
+    //! param[in] ncomp Number of scalar components in this PDE system
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] z Z coordinate where to evaluate the solution
     //! \param[in] t Time where to evaluate the solution
     //! \return Values of all components evaluated at (x,y,z,t)
-    static std::array< tk::real, 5 >
-    solution( ncomp_t e, tk::real x, tk::real y, tk::real z, tk::real t ) {
+    //! \note The function signature must follow tk::SolutionFn
+    static tk::SolutionFn::result_type
+    solution( ncomp_t e, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
+              tk::real t )
+    {
+      Assert( ncomp == m_ncomp, "Number of scalar components must be " +
+                                std::to_string(m_ncomp) );
       using tag::param; using tag::compflow; using std::sin; using std::cos;
       // manufactured solution parameters
       const auto a = g_inputdeck.get< param, compflow, tag::alpha >()[e];
@@ -76,12 +83,12 @@ class CompFlowProblemRayleighTaylor {
     //! \param[in] t Time where to evaluate the solution increment starting from
     //! \param[in] dt Time increment at which evaluate the solution increment to
     //! \return Increment in values of all components evaluated at (x,y,z,t+dt)
-    static std::array< tk::real, 5 >
+    static std::vector< tk::real >
     solinc( ncomp_t e, tk::real x, tk::real y, tk::real z, tk::real t,
             tk::real dt )
     {
-      auto st1 = solution( e, x, y, z, t );
-      auto st2 = solution( e, x, y, z, t+dt );
+      auto st1 = solution( e, m_ncomp, x, y, z, t );
+      auto st2 = solution( e, m_ncomp, x, y, z, t+dt );
       std::transform( begin(st1), end(st1), begin(st2), begin(st2),
                       []( tk::real s, tk::real& d ){ return d -= s; } );
       return st2;
@@ -95,7 +102,7 @@ class CompFlowProblemRayleighTaylor {
     //! \param[in] z Z coordinate where to evaluate the solution
     //! \param[in] t Physical time at which to evaluate the source
     //! \return Array of reals containing the source for all components
-    static std::array< tk::real, 5 >
+    static std::vector< tk::real >
     src( ncomp_t e, tk::real x, tk::real y, tk::real z, tk::real t ) {
       using tag::param; using tag::compflow; using std::sin; using std::cos;
 
@@ -110,7 +117,7 @@ class CompFlowProblemRayleighTaylor {
       tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[e];
 
       // evaluate solution at x,y,z,t
-      auto s = solution( e, x, y, z, t );
+      auto s = solution( e, m_ncomp, x, y, z, t );
 
       // density, velocity, energy, pressure
       auto rho = s[0];
@@ -147,7 +154,7 @@ class CompFlowProblemRayleighTaylor {
       auto dwdt =  k*M_PI*sin(k*M_PI*t)/2*M_PI*z*z*(cos(M_PI*x) - sin(M_PI*y));
       auto dedt = u*dudt + v*dvdt + w*dwdt;
 
-      std::array< tk::real, 5 > r;
+      std::vector< tk::real > r( m_ncomp );
       // density source
       r[0] = u*drdx[0] + v*drdx[1] + w*drdx[2];
       // momentum source
@@ -253,7 +260,7 @@ class CompFlowProblemRayleighTaylor {
 
       auto er = r, ee = r, ep = r, eu = r, ev = r, ew = r;
       for (std::size_t i=0; i<r.size(); ++i) {
-        auto s = solution( e, x[i], y[i], z[i], t );
+        auto s = solution( e, m_ncomp, x[i], y[i], z[i], t );
         er[i] = std::pow( r[i] - s[0], 2.0 ) * vol[i] / V;
         ee[i] = std::pow( E[i] - s[4]/s[0], 2.0 ) * vol[i] / V;
         eu[i] = std::pow( u[i] - s[1]/s[0], 2.0 ) * vol[i] / V;

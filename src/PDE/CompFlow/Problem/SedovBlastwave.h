@@ -22,19 +22,25 @@ namespace inciter {
 //! CompFlow system of PDEs problem: Sedov blast-wave
 class CompFlowProblemSedovBlastwave {
 
-  public:
+  private:
+    using ncomp_t = tk::ctr::ncomp_type;
+    static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
+  public:
     //! Evaluate analytical solution at (x,y,0) for all components
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
+    //! param[in] ncomp Number of scalar components in this PDE system
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
-//    //! \param[in] t Time at which to evaluate the solution
     //! \return Values of all components evaluated at (x,y,0)
-    static std::array< tk::real, 5 >
-    solution( tk::ctr::ncomp_type e,
-              tk::real x, tk::real y, tk::real, tk::real /*t*/ )
+    //! \note The function signature must follow tk::SolutionFn
+    static tk::SolutionFn::result_type
+    solution( ncomp_t e, ncomp_t ncomp,
+              tk::real x, tk::real y, tk::real, tk::real )
     {
+      Assert( ncomp == m_ncomp, "Number of scalar components must be " +
+                                std::to_string(m_ncomp) );
       using tag::param; using tag::compflow;
       // ratio of specific heats
       const tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[e];
@@ -74,12 +80,12 @@ class CompFlowProblemSedovBlastwave {
     //! \param[in] t Time where to evaluate the solution increment starting from
     //! \param[in] dt Time increment at which evaluate the solution increment to
     //! \return Increment in values of all components evaluated at (x,y,z,t+dt)
-    static std::array< tk::real, 5 >
+    static std::vector< tk::real >
     solinc( tk::ctr::ncomp_type e,
             tk::real x, tk::real y, tk::real z, tk::real t, tk::real dt )
     {
-      auto st1 = solution( e, x, y, z, t );
-      auto st2 = solution( e, x, y, z, t+dt );
+      auto st1 = solution( e, m_ncomp, x, y, z, t );
+      auto st2 = solution( e, m_ncomp, x, y, z, t+dt );
       std::transform( begin(st1), end(st1), begin(st2), begin(st2),
                       []( tk::real s, tk::real& d ){ return d -= s; } );
       return st2;
@@ -88,7 +94,7 @@ class CompFlowProblemSedovBlastwave {
     //! Compute and return source term for this problem
     //! \return Array of reals containing the source which is zero for this
     //!   problem
-    static std::array< tk::real, 5 >
+    static std::vector< tk::real >
     src( tk::ctr::ncomp_type, tk::real, tk::real, tk::real, tk::real ) {
       return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
     }

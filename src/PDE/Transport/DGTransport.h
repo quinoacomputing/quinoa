@@ -20,7 +20,8 @@
 #include "Macro.h"
 #include "Exception.h"
 #include "Vector.h"
-#include "HighOrderIntegration.h"
+#include "Integrate/Quadrature.h"
+#include "Integrate/Initialize.h"
 #include "Inciter/Options/BC.h"
 #include "UnsMesh.h"
 
@@ -65,7 +66,7 @@ class Transport {
     //! Constructor
     //! \param[in] c Equation system index (among multiple systems configured)
     explicit Transport( ncomp_t c ) :
-      m_c( c ),
+      m_system( c ),
       m_ncomp(
         g_inputdeck.get< tag::component >().get< tag::transport >().at(c) ),
       m_offset(
@@ -75,7 +76,7 @@ class Transport {
       m_bcoutlet( config< tag::bcoutlet >( c ) ),
       m_bcdir( config< tag::bcdir >( c ) )
     {
-      Problem::errchk( m_c, m_ncomp );
+      Problem::errchk( m_system, m_ncomp );
     }
 
     //! Initalize the transport equations for DG
@@ -90,14 +91,8 @@ class Transport {
                      tk::Fields& unk,
                      tk::real t ) const
     {
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      if (ndof == 1)
-        initializeP0( L, inpoel, coord, unk, t );
-      else if (ndof == 4)
-        initializeP1( L, inpoel, coord, unk, t );
-      else
-        Throw( "dg::Transport::initialize() not defined for NDOF=" +
-               std::to_string(ndof) );
+      tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
+                      Problem::solution, unk, t );
     }
 
     //! Compute the left hand side mass matrix
@@ -224,7 +219,7 @@ class Transport {
     std::vector< std::string > fieldNames() const {
       std::vector< std::string > n;
       const auto& depvar =
-        g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_c);
+      g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_system);
       // will output numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_numerical" );
@@ -250,7 +245,6 @@ class Transport {
     }
 
     //! Return field output going to file
-    //! \param[in] L Element mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] t Physical time
@@ -261,7 +255,7 @@ class Transport {
     //!   which provides the vector of field names
     //! \note U is overwritten
     std::vector< std::vector< tk::real > >
-    fieldOutput( const tk::Fields& L,
+    fieldOutput( const tk::Fields&,
                  const std::vector< std::size_t >& inpoel,
                  const tk::UnsMesh::Coords& coord,
                  tk::real t,
@@ -276,7 +270,8 @@ class Transport {
         out.push_back( U.extract( c*ndof, m_offset ) );
       // evaluate analytic solution at time t
       auto E = U;
-      initializeP0( L, inpoel, coord, E, t );
+      tk::initializeP0( m_system, m_ncomp, m_offset, inpoel, coord,
+                        Problem::solution, E, t );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( E.extract( c*ndof, m_offset ) );
@@ -297,7 +292,7 @@ class Transport {
     std::vector< std::string > names() const {
       std::vector< std::string > n;
       const auto& depvar =
-        g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_c);
+      g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_system);
       // construct the name of the numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) );
@@ -312,10 +307,10 @@ class Transport {
     //! \return Vector of analytic solution at given spatial location and time
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    { return Problem::solution( m_c, m_ncomp, xi, yi, zi, t ); }
+    { return Problem::solution( m_system, m_ncomp, xi, yi, zi, t ); }
 
   private:
-    const ncomp_t m_c;                  //!< Equation system index
+    const ncomp_t m_system;             //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     const ncomp_t m_offset;             //!< Offset this PDE operates from
     //! Extrapolation BC configuration
@@ -326,137 +321,6 @@ class Transport {
     const std::vector< bcconf_t > m_bcoutlet;
     //! Dirichlet BC configuration
     const std::vector< bcconf_t > m_bcdir;
-
-    //! Initalize the transport equations for DG(P0) using problem policy
-    //! \param[in] inpoel Element-node connectivity
-    //! \param[in] coord Array of nodal coordinates
-    //! \param[in,out] unk Array of unknowns
-    //! \param[in] t Physical time
-    void initializeP0( const tk::Fields&,
-                       const std::vector< std::size_t >& inpoel,
-                       const tk::UnsMesh::Coords& coord,
-                       tk::Fields& unk,
-                       tk::real t ) const
-    {
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
-
-      for (std::size_t e=0; e<unk.nunk(); ++e) {
-        // node ids
-        const auto A = inpoel[e*4+0];
-        const auto B = inpoel[e*4+1];
-        const auto C = inpoel[e*4+2];
-        const auto D = inpoel[e*4+3];
-        // compute centroid
-        auto xcc = (x[A]+x[B]+x[C]+x[D])/4.0;
-        auto ycc = (y[A]+y[B]+y[C]+y[D])/4.0;
-        auto zcc = (z[A]+z[B]+z[C]+z[D])/4.0;
-        // evaluate solution at centroid
-        const auto s = Problem::solution( m_c, m_ncomp, xcc, ycc, zcc, t );
-        // initialize unknown vector with solution at centroids
-        for (ncomp_t c=0; c<m_ncomp; ++c) unk(e, c, m_offset) = s[c];
-      }
-    }
-
-    //! Initalize the transport equations for DG(P1) using problem policy
-    //! \param[in] L Element mass matrix
-    //! \param[in] inpoel Element-node connectivity
-    //! \param[in] coord Array of nodal coordinates
-    //! \param[in,out] unk Array of unknowns
-    //! \param[in] t Physical time
-    void initializeP1( const tk::Fields& L,
-                       const std::vector< std::size_t >& inpoel,
-                       const tk::UnsMesh::Coords& coord,
-                       tk::Fields& unk,
-                       tk::real t ) const
-    {
-      Assert( L.nunk() == unk.nunk(), "Size mismatch" );
-      std::size_t nelem = unk.nunk();
-
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-
-      // right hand side vector
-      std::vector< tk::real > R;
-      R.resize(unk.nprop(),0);
-
-      // Number of integration points
-      constexpr std::size_t NG = 5;
-
-      // arrays for quadrature points
-      std::array< std::array< tk::real, NG >, 3 > coordgp;
-      std::array< tk::real, NG > wgp;
-
-      const auto& cx = coord[0];
-      const auto& cy = coord[1];
-      const auto& cz = coord[2];
-
-      // get quadrature point weights and coordinates for tetrahedron
-      GaussQuadratureTet( coordgp, wgp );
-
-      for (std::size_t e=0; e<nelem; ++e)
-      {
-        auto vole = L(e, 0, m_offset);
-
-        auto x1 = cx[ inpoel[4*e]   ];
-        auto y1 = cy[ inpoel[4*e]   ];
-        auto z1 = cz[ inpoel[4*e]   ];
-
-        auto x2 = cx[ inpoel[4*e+1] ];
-        auto y2 = cy[ inpoel[4*e+1] ];
-        auto z2 = cz[ inpoel[4*e+1] ];
-
-        auto x3 = cx[ inpoel[4*e+2] ];
-        auto y3 = cy[ inpoel[4*e+2] ];
-        auto z3 = cz[ inpoel[4*e+2] ];
-
-        auto x4 = cx[ inpoel[4*e+3] ];
-        auto y4 = cy[ inpoel[4*e+3] ];
-        auto z4 = cz[ inpoel[4*e+3] ];
-
-        std::fill( R.begin(), R.end(), 0.0);
-
-        // Gaussian quadrature
-        for (std::size_t igp=0; igp<NG; ++igp)
-        {
-          auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp]
-                    - 1.0;
-          auto B3 = 3.0 * coordgp[1][igp] + coordgp[2][igp] - 1.0;
-          auto B4 = 4.0 * coordgp[2][igp] - 1.0;
-
-          auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp] - coordgp[2][igp];
-          auto shp2 = coordgp[0][igp];
-          auto shp3 = coordgp[1][igp];
-          auto shp4 = coordgp[2][igp];
-
-          auto xgp = x1*shp1 + x2*shp2 + x3*shp3 + x4*shp4;
-          auto ygp = y1*shp1 + y2*shp2 + y3*shp3 + y4*shp4;
-          auto zgp = z1*shp1 + z2*shp2 + z3*shp3 + z4*shp4;
-
-          auto wt = vole * wgp[igp];
-
-          const auto s = Problem::solution( m_c, m_ncomp, xgp, ygp, zgp, t );
-          for (ncomp_t c=0; c<m_ncomp; ++c)
-          {
-            auto mark = c*ndof;
-
-            R[mark  ] += wt * s[c];
-            R[mark+1] += wt * s[c]*B2;
-            R[mark+2] += wt * s[c]*B3;
-            R[mark+3] += wt * s[c]*B4;
-          }
-        }
-
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-        {
-          auto mark = c*ndof;
-          unk(e, mark,   m_offset) = R[mark]   / L(e, mark,   m_offset);
-          unk(e, mark+1, m_offset) = R[mark+1] / L(e, mark+1, m_offset);
-          unk(e, mark+2, m_offset) = R[mark+2] / L(e, mark+2, m_offset);
-          unk(e, mark+3, m_offset) = R[mark+3] / L(e, mark+3, m_offset);
-        }
-      }
-    }
 
     //! Compute internal surface flux integrals for DG(P0)
     //! \param[in] fd Face connectivity and boundary conditions object
@@ -528,7 +392,7 @@ class Transport {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
       // get quadrature point weights and coordinates for triangle
-      GaussQuadratureTri( coordgp, wgp );
+      tk::GaussQuadratureTri( coordgp, wgp );
 
       // compute internal surface flux integrals
       for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
@@ -699,7 +563,7 @@ class Transport {
       std::array< tk::real, NG > wgp;
 
       // get quadrature point weights and coordinates for tetrahedron
-      GaussQuadratureTet( coordgp, wgp );
+      tk::GaussQuadratureTet( coordgp, wgp );
 
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
@@ -809,7 +673,7 @@ class Transport {
           auto zgp = z1*shp1 + z2*shp2 + z3*shp3 + z4*shp4;
 
           const auto vel =
-            Problem::prescribedVelocity( xgp, ygp, zgp, m_c, m_ncomp );
+            Problem::prescribedVelocity( xgp, ygp, zgp, m_system, m_ncomp );
 
           for (ncomp_t c=0; c<m_ncomp; ++c)
           {
@@ -994,7 +858,7 @@ class Transport {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
       // get quadrature point weights and coordinates for triangle
-      GaussQuadratureTri( coordgp, wgp );
+      tk::GaussQuadratureTri( coordgp, wgp );
 
       for (const auto& f : faces) {
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
@@ -1149,7 +1013,8 @@ class Transport {
                                       geoFace(f,2,0),
                                       geoFace(f,3,0) }};
 
-      const auto vel = Problem::prescribedVelocity( xc, yc, zc, m_c, m_ncomp );
+      const auto vel =
+        Problem::prescribedVelocity( xc, yc, zc, m_system, m_ncomp );
     
       for(ncomp_t c=0; c<m_ncomp; ++c)
       {

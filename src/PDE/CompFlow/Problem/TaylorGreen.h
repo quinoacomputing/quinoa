@@ -28,18 +28,25 @@ namespace inciter {
 //!   Fluids, 2013, Vol.81, pp.57-67.
 class CompFlowProblemTaylorGreen {
 
-  public:
+  private:
+    using ncomp_t = tk::ctr::ncomp_type;
+    static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
+  public:
     //! Evaluate analytical solution at (x,y,0) for all components
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
+    //! param[in] ncomp Number of scalar components in this PDE system
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \return Values of all components evaluated at (x,y,0)
-    static std::array< tk::real, 5 >
-    solution( tk::ctr::ncomp_type e,
+    //! \note The function signature must follow tk::SolutionFn
+    static tk::SolutionFn::result_type
+    solution( ncomp_t e, ncomp_t ncomp,
               tk::real x, tk::real y, tk::real, tk::real )
     {
+      Assert( ncomp == m_ncomp, "Number of scalar components must be " +
+                                std::to_string(m_ncomp) );
       using tag::param; using tag::compflow; using std::sin; using std::cos;
       // ratio of specific heats
       const tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[e];
@@ -59,10 +66,8 @@ class CompFlowProblemTaylorGreen {
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
     //! \return Increment in values of all components: all zero for this problem
-    static std::array< tk::real, 5 >
-    solinc( tk::ctr::ncomp_type,
-            tk::real, tk::real, tk::real, tk::real, tk::real )
-    {
+    static std::vector< tk::real >
+    solinc( ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real ) {
       return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
     }
 
@@ -70,15 +75,11 @@ class CompFlowProblemTaylorGreen {
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \return Array of reals containing the source for all components
-    static std::array< tk::real, 5 >
-    src( tk::ctr::ncomp_type, tk::real x, tk::real y, tk::real, tk::real ) {
-      using tag::param; using tag::compflow; using std::sin; using std::cos;
-      // ratio of specific heats
-      std::array< tk::real, 5 > r{{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
-      // only energy source
-      r[4] = 3.0*M_PI/8.0*( cos(3.0*M_PI*x)*cos(M_PI*y) -
-                            cos(3.0*M_PI*y)*cos(M_PI*x) );
-      return r;
+    static std::vector< tk::real >
+    src( ncomp_t, tk::real x, tk::real y, tk::real, tk::real ) {
+      return {{ 0.0, 0.0, 0.0, 0.0,
+        3.0*M_PI/8.0*( cos(3.0*M_PI*x)*cos(M_PI*y) -
+                       cos(3.0*M_PI*y)*cos(M_PI*x) ) }};
     }
 
     //! \brief Query all side set IDs the user has configured for all components
@@ -124,8 +125,8 @@ class CompFlowProblemTaylorGreen {
     //! \param[in] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
-    fieldOutput( tk::ctr::ncomp_type e,
-                 tk::ctr::ncomp_type offset,
+    fieldOutput( ncomp_t e,
+                 ncomp_t offset,
                  tk::real,
                  tk::real V,
                  const std::vector< tk::real >& vol,
