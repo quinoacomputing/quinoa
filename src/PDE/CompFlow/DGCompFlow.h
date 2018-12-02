@@ -28,6 +28,7 @@
 #include "UnsMesh.h"
 #include "Integrate/Quadrature.h"
 #include "Integrate/Initialize.h"
+#include "Integrate/Lhs.h"
 
 namespace inciter {
 
@@ -142,28 +143,8 @@ class CompFlow {
     //! Compute the left hand side block-diagonal mass matrix
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] l Block diagonal mass matrix
-    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
-    {
-      Assert( geoElem.nunk() == l.nunk(), "Size mismatch" );
-      const auto nelem = geoElem.nunk();
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-
-      // Compute LHS for DG(P0)
-      for (std::size_t e=0; e<nelem; ++e)
-        for (ncomp_t c=0; c<5; ++c)
-          l(e, c*ndof, m_offset) = geoElem(e,0,0);
-
-      // Augment LHS for DG(P1)
-      if (ndof > 1){
-        for (std::size_t e=0; e<nelem; ++e) {
-          for (ncomp_t c=0; c<5; ++c) {
-            const auto mark = c * ndof;
-            l(e, mark+1, m_offset) = geoElem(e,0,0) / 10.0;
-            l(e, mark+2, m_offset) = geoElem(e,0,0) * 3.0/10.0;
-            l(e, mark+3, m_offset) = geoElem(e,0,0) * 3.0/5.0;
-          }
-        }
-      }
+    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
+      tk::lhs( m_ncomp, m_offset, geoElem, l );
     }
 
     //! Compute right hand side

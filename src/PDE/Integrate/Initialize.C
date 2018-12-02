@@ -22,9 +22,9 @@ extern ctr::InputDeck g_inputdeck;
 } // inciter::
 
 void
-tk::initializeP0( std::size_t system,
-                  std::size_t ncomp,
-                  std::size_t offset,
+tk::initializeP0( ncomp_t system,
+                  ncomp_t ncomp,
+                  ncomp_t offset,
                   const std::vector< std::size_t >& inpoel,
                   const tk::UnsMesh::Coords& coord,
                   const SolutionFn& solution,
@@ -65,9 +65,9 @@ tk::initializeP0( std::size_t system,
 }
 
 void
-tk::initializeP1( std::size_t system,
-                  std::size_t ncomp,
-                  std::size_t offset,
+tk::initializeP1( ncomp_t system,
+                  ncomp_t ncomp,
+                  ncomp_t offset,
                   const tk::Fields& L,
                   const std::vector< std::size_t >& inpoel,
                   const tk::UnsMesh::Coords& coord,
@@ -169,9 +169,9 @@ tk::initializeP1( std::size_t system,
 }
 
 void
-tk::initialize( std::size_t system,
-                std::size_t ncomp,
-                std::size_t offset,
+tk::initialize( ncomp_t system,
+                ncomp_t ncomp,
+                ncomp_t offset,
                 const tk::Fields& L,
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,

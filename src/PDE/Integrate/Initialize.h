@@ -20,9 +20,9 @@ namespace tk {
 
 //! Initalize a PDE system for DG(P0)
 void
-initializeP0( std::size_t system,
-              std::size_t ncomp,
-              std::size_t offset,
+initializeP0( ncomp_t system,
+              ncomp_t ncomp,
+              ncomp_t offset,
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
               const SolutionFn& solution,
@@ -31,9 +31,9 @@ initializeP0( std::size_t system,
 
 //! Initalize a PDE system for DG(P1)
 void
-initializeP1( std::size_t system,
-              std::size_t ncomp,
-              std::size_t offset,
+initializeP1( ncomp_t system,
+              ncomp_t ncomp,
+              ncomp_t offset,
               const tk::Fields& L,
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
@@ -43,9 +43,9 @@ initializeP1( std::size_t system,
 
 //! Initalize a system of PDEs for discontinous Galerkin methods
 void
-initialize( std::size_t system,
-            std::size_t ncomp,
-            std::size_t offset,
+initialize( ncomp_t system,
+            ncomp_t ncomp,
+            ncomp_t offset,
             const tk::Fields& L,
             const std::vector< std::size_t >& inpoel,
             const tk::UnsMesh::Coords& coord,
