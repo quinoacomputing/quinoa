@@ -26,10 +26,10 @@ tk::initializeP0( ncomp_t system,
                   ncomp_t ncomp,
                   ncomp_t offset,
                   const std::vector< std::size_t >& inpoel,
-                  const tk::UnsMesh::Coords& coord,
+                  const UnsMesh::Coords& coord,
                   const SolutionFn& solution,
-                  tk::Fields& unk,
-                  tk::real t )
+                  Fields& unk,
+                  real t )
 // *****************************************************************************
 //  Initalize a PDE system for DG(P0)
 //! \param[in] system Equation system index
@@ -68,12 +68,12 @@ void
 tk::initializeP1( ncomp_t system,
                   ncomp_t ncomp,
                   ncomp_t offset,
-                  const tk::Fields& L,
+                  const Fields& L,
                   const std::vector< std::size_t >& inpoel,
-                  const tk::UnsMesh::Coords& coord,
+                  const UnsMesh::Coords& coord,
                   const SolutionFn& solution,
-                  tk::Fields& unk,
-                  tk::real t )
+                  Fields& unk,
+                  real t )
 // *****************************************************************************
 //  Initalize a PDE system for DG(P1)
 //! \param[in] system Equation system index
@@ -97,8 +97,8 @@ tk::initializeP1( ncomp_t system,
   constexpr std::size_t ndof = 4;
 
   // arrays for quadrature points
-  std::array< std::array< tk::real, NG >, 3 > coordgp;
-  std::array< tk::real, NG > wgp;
+  std::array< std::array< real, NG >, 3 > coordgp;
+  std::array< real, NG > wgp;
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -127,7 +127,7 @@ tk::initializeP1( ncomp_t system,
     auto z4 = cz[ inpoel[4*e+3] ];
 
     // right hand side vector
-    std::vector< tk::real > R( unk.nprop(), 0.0 );
+    std::vector< real > R( unk.nprop(), 0.0 );
 
     // Gaussian quadrature
     for (std::size_t igp=0; igp<NG; ++igp)
@@ -172,12 +172,12 @@ void
 tk::initialize( ncomp_t system,
                 ncomp_t ncomp,
                 ncomp_t offset,
-                const tk::Fields& L,
+                const Fields& L,
                 const std::vector< std::size_t >& inpoel,
-                const tk::UnsMesh::Coords& coord,
+                const UnsMesh::Coords& coord,
                 const SolutionFn& solution,
-                tk::Fields& unk,
-                tk::real t )
+                Fields& unk,
+                real t )
 // *****************************************************************************
 //! Initalize a system of DGPDEs
 //! \details This is the public interface exposed to client code.

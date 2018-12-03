@@ -14,7 +14,7 @@
 #include "Types.h"
 #include "Fields.h"
 #include "UnsMesh.h"
-#include "Solution.h"
+#include "FunctionPrototypes.h"
 
 namespace tk {
 
@@ -24,34 +24,34 @@ initializeP0( ncomp_t system,
               ncomp_t ncomp,
               ncomp_t offset,
               const std::vector< std::size_t >& inpoel,
-              const tk::UnsMesh::Coords& coord,
+              const UnsMesh::Coords& coord,
               const SolutionFn& solution,
-              tk::Fields& unk,
-              tk::real t );
+              Fields& unk,
+              real t );
 
 //! Initalize a PDE system for DG(P1)
 void
 initializeP1( ncomp_t system,
               ncomp_t ncomp,
               ncomp_t offset,
-              const tk::Fields& L,
+              const Fields& L,
               const std::vector< std::size_t >& inpoel,
-              const tk::UnsMesh::Coords& coord,
+              const UnsMesh::Coords& coord,
               const SolutionFn& solution,
-              tk::Fields& unk,
-              tk::real t );
+              Fields& unk,
+              real t );
 
 //! Initalize a system of PDEs for discontinous Galerkin methods
 void
 initialize( ncomp_t system,
             ncomp_t ncomp,
             ncomp_t offset,
-            const tk::Fields& L,
+            const Fields& L,
             const std::vector< std::size_t >& inpoel,
-            const tk::UnsMesh::Coords& coord,
+            const UnsMesh::Coords& coord,
             const SolutionFn& solution,
-            tk::Fields& unk,
-            tk::real t );
+            Fields& unk,
+            real t );
 
 } // tk::
 

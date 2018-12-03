@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/CompFlow/Riemann/HLLC.h
+  \file      src/PDE/Integrate/Riemann/HLLC.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Harten-Lax-van Leer-Contact (HLLC) Riemann flux function
   \details   This file implements the Harten-Lax-van Leer-Contact (HLLC) Riemann
@@ -14,28 +14,30 @@
 
 #include "Types.h"
 #include "Fields.h"
+#include "Tags.h"
+#include "FunctionPrototypes.h"
+#include "Inciter/InputDeck/InputDeck.h"
 #include "Inciter/Options/Flux.h"
 
 namespace inciter {
 
+extern ctr::InputDeck g_inputdeck;
+
 //! HLLC approximate Riemann solver
-//! \details This class is used polymorphically with inciter::RiemannSolver
+//! \details This class can be used polymorphically with inciter::RiemannSolver
 struct HLLC {
+
   //! HLLC approximate Riemann solver flux function
-  //! \param[in] f Face ID
-  //! \param[in] geoFace Face geometry array
+  //! \param[in] fn Face/Surface normal
   //! \param[in] u Left and right unknown/state vector
   //! \return Riemann solution using a central difference method
-  std::vector< tk::real >
-  flux( std::size_t f,
-        const tk::Fields& geoFace,
-        const std::array< std::vector< tk::real >, 2 >& u ) const
+  //! \note The function signature must follow tk::FluxFn
+  static tk::FluxFn::result_type
+  flux( const std::array< tk::real, 3 >& fn,
+        const std::array< std::vector< tk::real >, 2 >& u,
+        const std::vector< std::array< tk::real, 3 > >& )
   {
     std::vector< tk::real > flx( u[0].size(), 0 );
-
-    std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
-                                    geoFace(f,2,0),
-                                    geoFace(f,3,0) }};
 
     // ratio of specific heats
     auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];

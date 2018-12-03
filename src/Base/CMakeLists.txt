@@ -15,6 +15,7 @@ add_library(Base
             Writer.C
             VectorReducer.C
             Table.C
+            Vector.C
             ChareStateCollector.C
 )
 

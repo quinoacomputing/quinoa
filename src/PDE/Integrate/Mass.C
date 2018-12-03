@@ -1,18 +1,16 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Integrate/Lhs.C
+  \file      src/PDE/Integrate/Mass.C
   \copyright 2016-2018, Los Alamos National Security, LLC.
-  \brief     Functions for computing the left hand side of system of PDEs in DG
+  \brief     Functions for computing the mass matrix for a system of PDEs in DG
      methods
-  \details   This file contains functionality for computing the left hand side
-     of PDEs used in discontinuous Galerkin methods for various orders of
-     numerical representation.
+  \details   This file contains functionality for computing the mass matrix for
+     a system of PDEs used in discontinuous Galerkin methods for various orders
+     of numerical representation.
 */
 // *****************************************************************************
 
-#include <array>
-
-#include "Lhs.h"
+#include "Mass.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 namespace inciter {
@@ -22,12 +20,12 @@ extern ctr::InputDeck g_inputdeck;
 } // inciter::
 
 void
-tk::lhs( ncomp_t ncomp,
-         ncomp_t offset,
-         const tk::Fields& geoElem,
-         tk::Fields& l )
+tk::mass( ncomp_t ncomp,
+          ncomp_t offset,
+          const Fields& geoElem,
+          Fields& l )
 // *****************************************************************************
-//  Compute the left hand side block-diagonal mass matrix
+//  Compute the block-diagonal mass matrix for DG
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] geoElem Element geometry array

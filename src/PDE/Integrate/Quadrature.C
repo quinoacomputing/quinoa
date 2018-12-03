@@ -11,8 +11,8 @@
 #include "Quadrature.h"
 
 void
-tk::GaussQuadratureTet( std::array< std::array< tk::real, 5 >, 3 >& coordgp,
-                        std::array< tk::real, 5 >& wgp )
+tk::GaussQuadratureTet( std::array< std::array< real, 5 >, 3 >& coordgp,
+                        std::array< real, 5 >& wgp )
 // *****************************************************************************
 //  Five Gaussian quadrature points locations and weights for a tetrahedron
 //! \param[in,out] coordgp 3 spatial coordinates of 5 quadrature points
@@ -46,16 +46,16 @@ tk::GaussQuadratureTet( std::array< std::array< tk::real, 5 >, 3 >& coordgp,
 }
 
 void
-tk::GaussQuadratureTet( std::array< std::array< tk::real, 4 >, 3 >& coordgp,
-                        std::array< tk::real, 4 >& wgp )
+tk::GaussQuadratureTet( std::array< std::array< real, 4 >, 3 >& coordgp,
+                        std::array< real, 4 >& wgp )
 // *****************************************************************************
 //  Four Gaussian quadrature points locations and weights for a tetrahedron
 //! \param[in,out] coordgp 3 spatial coordinates of 4 quadrature points
 //! \param[in,out] wgp 4 weights of quadrature points
 // *****************************************************************************
 {
-  const tk::real c1 = 0.5854101966249685;
-  const tk::real c2 = 0.1381966011250105;
+  const real c1 = 0.5854101966249685;
+  const real c2 = 0.1381966011250105;
 
   coordgp[0][0] = c2;
   coordgp[1][0] = c2;
@@ -79,8 +79,8 @@ tk::GaussQuadratureTet( std::array< std::array< tk::real, 4 >, 3 >& coordgp,
 }
 
 void
-tk::GaussQuadratureTri( std::array< std::array< tk::real, 3 >, 2 >& coordgp,
-                        std::array< tk::real, 3 >& wgp )
+tk::GaussQuadratureTri( std::array< std::array< real, 3 >, 2 >& coordgp,
+                        std::array< real, 3 >& wgp )
 // *****************************************************************************
 //! Three Gaussian quadrature points locations and weights for a triangle
 //! \param[in,out] coordgp 2 spatial coordinates of 3 quadrature points

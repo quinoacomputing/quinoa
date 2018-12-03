@@ -15,6 +15,7 @@
 #include <unordered_set>
 
 #include "Types.h"
+#include "FunctionPrototypes.h"
 #include "Inciter/Options/Problem.h"
 
 namespace inciter {

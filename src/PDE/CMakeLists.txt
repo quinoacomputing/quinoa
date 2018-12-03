@@ -6,7 +6,9 @@ add_library(PDE
             PDEStack.C
             Integrate/Quadrature.C
             Integrate/Initialize.C
-            Integrate/Lhs.C
+            Integrate/Mass.C
+            Integrate/Surf.C
+            Integrate/Riemann/RiemannFactory.C
             Limiter.C
             ConfigureTransport.C
             ConfigureCompFlow.C)
