@@ -32,12 +32,21 @@ using SolutionFn = std::function<
 
 //! Function prototype for Riemann flux functions
 //! \details Functions of this type are used to compute numerical fluxes across a
-//!    surface
+//!    surface using a Riemann solver
 //! \see e.g., inciter::Upwind, inciter::LaxFriedrichs, inciter::HLLC
-using FluxFn = std::function<
+using RiemannFluxFn = std::function<
   std::vector< real >( const std::array< real, 3 >&,
                        const std::array< std::vector< real >, 2 >&,
                        const std::vector< std::array< real, 3 > >& ) >;
+
+//! Function prototype for flux vector functions
+//! \details Functions of this type are used to compute numerical fluxes across a
+//!    surface by evaluating the fluxes in PDEs
+//! \see e.g., inciter::dg::Transport::flux, inciter::dg::CompFlow::flux
+using FluxFn = std::function<
+  std::vector< std::array< real, 3 > >
+  ( ncomp_t, ncomp_t, const std::vector< real >&,
+    const std::vector< std::array< real, 3 > >& ) >;
 
 //! Function prototype for evaluating a prescribed velocity field
 //! \details Functions of this type are used to prescribe known velocity fields

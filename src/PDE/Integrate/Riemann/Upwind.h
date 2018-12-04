@@ -28,8 +28,8 @@ struct Upwind {
     //!   where this flux function is used for all scalar components in the
     //!   system of PDEs integrated
     //! \return Riemann solution using a central difference method
-    //! \note The function signature must follow tk::FluxFn
-    static tk::FluxFn::result_type
+    //! \note The function signature must follow tk::RiemannFluxFn
+    static tk::RiemannFluxFn::result_type
     flux( const std::array< tk::real, 3 >& fn,
           const std::array< std::vector< tk::real >, 2 >& u,
           const std::vector< std::array< tk::real, 3 > >& v )

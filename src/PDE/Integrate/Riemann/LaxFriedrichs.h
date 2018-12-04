@@ -28,9 +28,9 @@ struct LaxFriedrichs {
   //! Lax-Friedrichs approximate Riemann solver flux function
   //! \param[in] fn Face/Surface normal
   //! \param[in] u Left and right unknown/state vector
-  //! \return Riemann solution accordin Lax and Friedrichs
-  //! \note The function signature must follow tk::FluxFn
-  static tk::FluxFn::result_type
+  //! \return Riemann solution according Lax and Friedrichs
+  //! \note The function signature must follow tk::RiemannFluxFn
+  static tk::RiemannFluxFn::result_type
   flux( const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
         const std::vector< std::array< tk::real, 3 > >& )

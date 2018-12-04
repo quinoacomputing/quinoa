@@ -27,7 +27,8 @@ tk::cross( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 )
 
 std::array< tk::real, 3 >
 tk::crossdiv( const std::array< real, 3 >& v1,
-              const std::array< real, 3 >& v2, real j )
+              const std::array< real, 3 >& v2,
+              real j )
 // *****************************************************************************
 //  Compute the cross-product of two vectors divided by a scalar
 //! \param[in] v1 1st vector

@@ -9,6 +9,7 @@ add_library(PDE
             Integrate/Mass.C
             Integrate/Surface.C
             Integrate/Boundary.C
+            Integrate/Volume.C
             Integrate/Riemann/RiemannFactory.C
             Limiter.C
             ConfigureTransport.C

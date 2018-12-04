@@ -26,6 +26,7 @@
 #include "Integrate/Mass.h"
 #include "Integrate/Surface.h"
 #include "Integrate/Boundary.h"
+#include "Integrate/Volume.h"
 #include "Integrate/Riemann/RiemannFactory.h"
 
 namespace inciter {
@@ -143,7 +144,7 @@ class CompFlow {
 
       // configure Riemann flux function
       using namespace std::placeholders;
-      auto fluxfn = std::bind( &RiemannSolver::flux, m_riemann, _1, _2, _3 );
+      auto rieflxfn = std::bind( &RiemannSolver::flux, m_riemann, _1, _2, _3 );
       // configure a no-op lambda for prescribed velocity
       auto velfn = [this]( tk::real, tk::real, tk::real, ncomp_t, ncomp_t ){
         return std::vector< std::array< tk::real, 3 > >( this->m_ncomp ); };
@@ -157,29 +158,30 @@ class CompFlow {
       if (ndof == 1) {  // DG(P0)
 
         // compute internal surface flux integrals
-        tk::surfIntP0( m_system, m_ncomp, m_offset, fd, geoFace, fluxfn, velfn,
-                       U, R );
+        tk::surfIntP0( m_system, m_ncomp, m_offset, fd, geoFace, rieflxfn,
+                       velfn, U, R );
         // compute source term intehrals
         srcIntP0( t, geoElem, R);
         // compute boundary surface flux integrals
         for (const auto& b : bctypes)
           tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, bface, esuf,
-            geoFace, t, fluxfn, velfn, b.second, U, R );
+            geoFace, t, rieflxfn, velfn, b.second, U, R );
 
       } else if (ndof == 4) {  // DG(P1)
 
         // compute internal surface flux integrals
         tk::surfIntP1( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                       fluxfn, velfn, U, limFunc, R );
+                       rieflxfn, velfn, U, limFunc, R );
         // compute source term intehrals
         srcIntP1( t, inpoel, coord, geoElem, R);
         // compute volume integrals
-        volIntP1( inpoel, coord, geoElem, U, limFunc, R );
+        tk::volIntP1( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
+                      velfn, U, limFunc, R );
         // compute boundary surface flux integrals
         for (const auto& b : bctypes)
           tk::sidesetIntP1( m_system, m_ncomp, m_offset, b.first, bface, esuf,
-            geoFace, inpoel, inpofa, coord, t, fluxfn, velfn, b.second, U,
-            limFunc, R );
+            geoFace, inpoel, inpofa, coord, t, rieflxfn, velfn, b.second,
+            U, limFunc, R );
 
       } else
         Throw( "dg::Compflow::rhs() not defined for NDOF=" +
@@ -676,179 +678,50 @@ class CompFlow {
       }
     }
 
-    //! Compute volume integrals for DG(P1)
-    //! \param[in] inpoel Element-node connectivity
-    //! \param[in] coord Array of nodal coordinates
-    //! \param[in] geoElem Element geometry array
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in] limFunc Limiter function for higher-order solution dofs
-    //! \param[in,out] R Right-hand side vector computed
-    void volIntP1( const std::vector< std::size_t >& inpoel,
-                   const tk::UnsMesh::Coords& coord,
-                   const tk::Fields& geoElem,
-                   const tk::Fields& U,
-                   const tk::Fields& limFunc,
-                   tk::Fields& R ) const
+    //! Evaluate physical flux function for this PDE system
+    //! \param[in] system Equation system index
+    //! \param[in] ncomp Number of scalar components in this PDE system
+    //! \param[in] ugp Numerical solution at the Gauss point at which to
+    //!   evaluate the flux
+    //! \return Flux vectors for all components in this PDE system
+    //! \note The function signature must follow tk::FluxFn
+    static tk::FluxFn::result_type
+    flux( ncomp_t system,
+          ncomp_t ncomp,
+          const std::vector< tk::real >& ugp,
+          const std::vector< std::array< tk::real, 3 > >& )
     {
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      const auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
+      Assert( ugp.size() == ncomp, "Size mismatch" );
 
-      // Number of integration points
-      constexpr std::size_t NG = 5;
+      const auto g =
+        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[ system ];
 
-      // arrays for quadrature points
-      std::array< std::array< tk::real, NG >, 3 > coordgp;
-      std::array< tk::real, NG > wgp;
+      auto u = ugp[1] / ugp[0];
+      auto v = ugp[2] / ugp[0];
+      auto w = ugp[3] / ugp[0];
+      auto p = (g - 1) * (ugp[4] - 0.5 * ugp[0] * (u*u + v*v + w*w) );
 
-      // get quadrature point weights and coordinates for tetrahedron
-      tk::GaussQuadratureTet( coordgp, wgp );
+      std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
 
-      std::array< std::array< tk::real, 3 >, 3 > jacInv;
+      fl[0][0] = ugp[1];
+      fl[1][0] = ugp[1] * u + p;
+      fl[2][0] = ugp[1] * v;
+      fl[3][0] = ugp[1] * w;
+      fl[4][0] = u * (ugp[4] + p);
 
-      const auto& cx = coord[0];
-      const auto& cy = coord[1];
-      const auto& cz = coord[2];
+      fl[0][1] = ugp[2];
+      fl[1][1] = ugp[2] * u;
+      fl[2][1] = ugp[2] * v + p;
+      fl[3][1] = ugp[2] * w;
+      fl[4][1] = v * (ugp[4] + p);
 
-      // compute volume integrals
-      for (std::size_t e=0; e<U.nunk(); ++e)
-      {
-        auto x1 = cx[ inpoel[4*e]   ];
-        auto y1 = cy[ inpoel[4*e]   ];
-        auto z1 = cz[ inpoel[4*e]   ];
+      fl[0][2] = ugp[3];
+      fl[1][2] = ugp[3] * u;
+      fl[2][2] = ugp[3] * v;
+      fl[3][2] = ugp[3] * w + p;
+      fl[4][2] = w * (ugp[4] + p);
 
-        auto x2 = cx[ inpoel[4*e+1] ];
-        auto y2 = cy[ inpoel[4*e+1] ];
-        auto z2 = cz[ inpoel[4*e+1] ];
-
-        auto x3 = cx[ inpoel[4*e+2] ];
-        auto y3 = cy[ inpoel[4*e+2] ];
-        auto z3 = cz[ inpoel[4*e+2] ];
-
-        auto x4 = cx[ inpoel[4*e+3] ];
-        auto y4 = cy[ inpoel[4*e+3] ];
-        auto z4 = cz[ inpoel[4*e+3] ];
-
-        jacInv = tk::inverseJacobian( {{x1, y1, z1}},
-                                      {{x2, y2, z2}},
-                                      {{x3, y3, z3}},
-                                      {{x4, y4, z4}} );
-
-        // The derivatives of the basis functions dB/dx are easily calculated
-        // via a transformation to the reference space as,
-        // dB/dx = dB/dX . dx/dxi,
-        // where, x = (x,y,z) are the physical coordinates, and
-        //        xi = (xi, eta, zeta) are the reference coordinates.
-        // The matrix dx/dxi is the inverse of the Jacobian of transformation
-        // and the matrix vector product has to be calculated. This follows.
-
-        auto db2dxi1 = 2.0;
-        auto db2dxi2 = 1.0;
-        auto db2dxi3 = 1.0;
-
-        auto db3dxi1 = 0.0;
-        auto db3dxi2 = 3.0;
-        auto db3dxi3 = 1.0;
-
-        auto db4dxi1 = 0.0;
-        auto db4dxi2 = 0.0;
-        auto db4dxi3 = 4.0;
-
-        auto db2dx =  db2dxi1 * jacInv[0][0]
-                    + db2dxi2 * jacInv[1][0]
-                    + db2dxi3 * jacInv[2][0];
-
-        auto db2dy =  db2dxi1 * jacInv[0][1]
-                    + db2dxi2 * jacInv[1][1]
-                    + db2dxi3 * jacInv[2][1];
-
-        auto db2dz =  db2dxi1 * jacInv[0][2]
-                    + db2dxi2 * jacInv[1][2]
-                    + db2dxi3 * jacInv[2][2];
-
-        auto db3dx =  db3dxi1 * jacInv[0][0]
-                    + db3dxi2 * jacInv[1][0]
-                    + db3dxi3 * jacInv[2][0];
-
-        auto db3dy =  db3dxi1 * jacInv[0][1]
-                    + db3dxi2 * jacInv[1][1]
-                    + db3dxi3 * jacInv[2][1];
-
-        auto db3dz =  db3dxi1 * jacInv[0][2]
-                    + db3dxi2 * jacInv[1][2]
-                    + db3dxi3 * jacInv[2][2];
-
-        auto db4dx =  db4dxi1 * jacInv[0][0]
-                    + db4dxi2 * jacInv[1][0]
-                    + db4dxi3 * jacInv[2][0];
-
-        auto db4dy =  db4dxi1 * jacInv[0][1]
-                    + db4dxi2 * jacInv[1][1]
-                    + db4dxi3 * jacInv[2][1];
-
-        auto db4dz =  db4dxi1 * jacInv[0][2]
-                    + db4dxi2 * jacInv[1][2]
-                    + db4dxi3 * jacInv[2][2];
-
-        // Gaussian quadrature
-        for (std::size_t igp=0; igp<NG; ++igp)
-        {
-          std::vector< tk::real > ugp;
-          std::array< std::vector< tk::real >, 3 > flux;
-
-          ugp.resize(5,0);
-
-          flux[0].resize(5,0);
-          flux[1].resize(5,0);
-          flux[2].resize(5,0);
-
-          auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp] - 1.0;
-          auto B3 = 3.0 * coordgp[1][igp] + coordgp[2][igp] - 1.0;
-          auto B4 = 4.0 * coordgp[2][igp] - 1.0;
-
-          auto wt = wgp[igp] * geoElem(e, 0, 0);
-
-          for (ncomp_t c=0; c<5; ++c)
-          {
-            auto mark = c*ndof;
-            auto lmark = c*(ndof-1);
-            ugp[c] =  U(e, mark,   m_offset)
-                    + limFunc(e, lmark+0, 0) * U(e, mark+1, m_offset) * B2
-                    + limFunc(e, lmark+1, 0) * U(e, mark+2, m_offset) * B3
-                    + limFunc(e, lmark+2, 0) * U(e, mark+3, m_offset) * B4;
-          }
-
-          auto u = ugp[1] / ugp[0];
-          auto v = ugp[2] / ugp[0];
-          auto w = ugp[3] / ugp[0];
-          auto p = (g - 1) * (ugp[4] - 0.5 * ugp[0] * (u*u + v*v + w*w) );
-
-          flux[0][0] = ugp[1];
-          flux[0][1] = ugp[1] * u + p;
-          flux[0][2] = ugp[1] * v;
-          flux[0][3] = ugp[1] * w;
-          flux[0][4] = u * (ugp[4] + p);
-
-          flux[1][0] = ugp[2];
-          flux[1][1] = ugp[2] * u;
-          flux[1][2] = ugp[2] * v + p;
-          flux[1][3] = ugp[2] * w;
-          flux[1][4] = v * (ugp[4] + p);
-
-          flux[2][0] = ugp[3];
-          flux[2][1] = ugp[3] * u;
-          flux[2][2] = ugp[3] * v;
-          flux[2][3] = ugp[3] * w + p;
-          flux[2][4] = w * (ugp[4] + p);
-
-          for (ncomp_t c=0; c<5; ++c)
-          {
-            auto mark = c*ndof;
-            R(e, mark+1, m_offset) += wt * (flux[0][c]*db2dx + flux[1][c]*db2dy + flux[2][c]*db2dz);
-            R(e, mark+2, m_offset) += wt * (flux[0][c]*db3dx + flux[1][c]*db3dy + flux[2][c]*db3dz);
-            R(e, mark+3, m_offset) += wt * (flux[0][c]*db4dx + flux[1][c]*db4dy + flux[2][c]*db4dz);
-          }
-        }
-      }
+      return fl;
     }
 
     //! \brief Boundary state function providing the left and right state of a
@@ -857,6 +730,8 @@ class CompFlow {
     //! \param[in] ncomp Number of scalar components in this PDE system
     //! \param[in] ul Left (domain-internal) state
     //! \param[in] t Physical time
+    //! \return Left and right states for all scalar components in this PDE
+    //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
     Dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
@@ -870,6 +745,8 @@ class CompFlow {
     //!   face at symmetry boundaries
     //! \param[in] ul Left (domain-internal) state
     //! \param[in] fn Unit face normal
+    //! \return Left and right states for all scalar components in this PDE
+    //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
     Symmetry( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
@@ -899,6 +776,8 @@ class CompFlow {
     //! \brief Boundary state function providing the left and right state of a
     //!   face at extrapolation boundaries
     //! \param[in] ul Left (domain-internal) state
+    //! \return Left and right states for all scalar components in this PDE
+    //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
     Extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,

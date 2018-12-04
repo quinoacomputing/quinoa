@@ -29,7 +29,7 @@ tk::surfIntP0( ncomp_t system,
                ncomp_t offset,
                const inciter::FaceData& fd,
                const Fields& geoFace,
-               const FluxFn& flux,
+               const RiemannFluxFn& flux,
                const VelFn& vel,
                const Fields& U,
                Fields& R )
@@ -40,7 +40,7 @@ tk::surfIntP0( ncomp_t system,
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
-//! \param[in] flux Flux function to use
+//! \param[in] flux Riemann flux function to use
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
 //! \param[in,out] R Right-hand side vector added to
@@ -63,11 +63,12 @@ tk::surfIntP0( ncomp_t system,
       state[1][c] = U(er, c, offset);
     }
 
+    // evaluate prescribed velocity (if any)
+    auto v =
+      vel( geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0), system, ncomp );
+
     auto fl =
-       flux( {{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }},
-             state,
-             vel( geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0), system,
-                  ncomp ) );
+       flux( {{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }}, state, v );
 
     for (ncomp_t c=0; c<ncomp; ++c) {
       R(el, c, offset) -= farea * fl[c];
@@ -84,7 +85,7 @@ tk::surfIntP1( ncomp_t system,
                const UnsMesh::Coords& coord,
                const inciter::FaceData& fd,
                const Fields& geoFace,
-               const FluxFn& flux,
+               const RiemannFluxFn& flux,
                const VelFn& vel,
                const Fields& U,
                const Fields& limFunc,
@@ -98,7 +99,7 @@ tk::surfIntP1( ncomp_t system,
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
-//! \param[in] flux Flux function to use
+//! \param[in] flux Riemann flux function to use
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
 //! \param[in] limFunc Limiter function for higher-order solution dofs
@@ -251,11 +252,11 @@ tk::surfIntP1( ncomp_t system,
                       + limFunc(er, lmark+2, 0) * U(er, mark+3, offset) * B4r;
       }
 
+      // evaluate prescribed velocity (if any)
+      auto v = vel( gp[0], gp[1], gp[2], system, ncomp );
+      // compute flux
       auto fl =
-         flux( {{geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0)}},
-               state,
-               vel( geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0), system,
-                    ncomp ) );
+         flux( {{geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0)}}, state, v );
 
       for (ncomp_t c=0; c<ncomp; ++c)
       {

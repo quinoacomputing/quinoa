@@ -31,7 +31,7 @@ tk::bndSurfIntP0( ncomp_t system,
                   const std::vector< int >& esuf,
                   const Fields& geoFace,
                   real t,
-                  const FluxFn& flux,
+                  const RiemannFluxFn& flux,
                   const VelFn& vel,
                   const StateFn& state,
                   const Fields& U,
@@ -45,7 +45,7 @@ tk::bndSurfIntP0( ncomp_t system,
 //! \param[in] esuf Elements surrounding face, see tk::genEsuf()
 //! \param[in] geoFace Face geometry array
 //! \param[in] t Physical time
-//! \param[in] flux Flux function to use
+//! \param[in] flux Riemann flux function to use
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] state Function to evaluate the left and right solution state at
 //!   boundaries
@@ -86,7 +86,7 @@ tk::sidesetIntP0( ncomp_t system,
                   const std::vector< int >& esuf,
                   const Fields& geoFace,
                   real t,
-                  const FluxFn& flux,
+                  const RiemannFluxFn& flux,
                   const VelFn& vel,
                   const StateFn& state,
                   const Fields& U,
@@ -104,7 +104,7 @@ tk::sidesetIntP0( ncomp_t system,
 //! \param[in] esuf Elements surrounding faces
 //! \param[in] geoFace Face geometry array
 //! \param[in] t Physical time
-//! \param[in] flux Flux function to use
+//! \param[in] flux Riemann flux function to use
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] state Function to evaluate the left and right solution state at
 //!   boundaries
@@ -132,7 +132,7 @@ tk::sidesetIntP0( ncomp_t system,
 //! \param[in] inpofa Face-node connectivity
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] t Physical time
-//! \param[in] flux Flux function to use
+//! \param[in] flux Riemann flux function to use
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] state Function to evaluate the left and right solution state at
 //!   boundaries
@@ -153,7 +153,7 @@ tk::bndSurfIntP1( ncomp_t system,
                   const std::vector< std::size_t >& inpofa,
                   const UnsMesh::Coords& coord,
                   real t,
-                  const FluxFn& flux,
+                  const RiemannFluxFn& flux,
                   const VelFn& vel,
                   const StateFn& state,
                   const Fields& U,
@@ -286,7 +286,7 @@ tk::sidesetIntP1( ncomp_t system,
                   const std::vector< std::size_t >& inpofa,
                   const UnsMesh::Coords& coord,
                   real t,
-                  const FluxFn& flux,
+                  const RiemannFluxFn& flux,
                   const VelFn& vel,
                   const StateFn& state,
                   const Fields& U,
@@ -309,7 +309,7 @@ tk::sidesetIntP1( ncomp_t system,
 //! \param[in] inpofa Face-node connectivity
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] t Physical time
-//! \param[in] flux Flux function to use
+//! \param[in] flux Riemann flux function to use
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] state Function to evaluate the left and right solution state at
 //!   boundaries
