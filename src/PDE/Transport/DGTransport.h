@@ -365,10 +365,10 @@ class Transport {
         auto y4 = cy[ inpoel[4*e+3] ];
         auto z4 = cz[ inpoel[4*e+3] ];
 
-        jacInv = getJacInverse( {{x1, y1, z1}},
-                                {{x2, y2, z2}},
-                                {{x3, y3, z3}},
-                                {{x4, y4, z4}} );
+        jacInv = tk::inverseJacobian( {{x1, y1, z1}},
+                                      {{x2, y2, z2}},
+                                      {{x3, y3, z3}},
+                                      {{x4, y4, z4}} );
 
         // The derivatives of the basis functions dB/dx are easily calculated
         // via a transformation to the reference space as,
@@ -524,48 +524,6 @@ class Transport {
     {
       return {{ ul, Problem::solution( system, ncomp, xc, yc, zc, t ) }};
     }
-
-    //! Inverse of Jacobian of transformation
-    //! \param[in] p1 (x,y,z) coordinates of 1st local node in the tetrahedron
-    //! \param[in] p2 (x,y,z) coordinates of 2nd local node in the tetrahedron
-    //! \param[in] p3 (x,y,z) coordinates of 3rd local node in the tetrahedron
-    //! \param[in] p4 (x,y,z) coordinates of 4th local node in the tetrahedron
-    //! \return Inverse of the Jacobian of transformation of physical
-    //!   tetrahedron to reference (xi, eta, zeta) space
-    std::array< std::array< tk::real, 3 >, 3 >
-    getJacInverse( const std::array< tk::real, 3 >& p1,
-                   const std::array< tk::real, 3 >& p2,
-                   const std::array< tk::real, 3 >& p3,
-                   const std::array< tk::real, 3 >& p4 ) const
-    {
-      std::array< std::array< tk::real, 3 >, 3 > jacInv;
-
-      auto detJ = tk::Jacobian( p1, p2, p3, p4 );
-
-      jacInv[0][0] =  (  (p3[1]-p1[1])*(p4[2]-p1[2])
-                       - (p4[1]-p1[1])*(p3[2]-p1[2])) / detJ;
-      jacInv[1][0] = -(  (p2[1]-p1[1])*(p4[2]-p1[2])
-                       - (p4[1]-p1[1])*(p2[2]-p1[2])) / detJ;
-      jacInv[2][0] =  (  (p2[1]-p1[1])*(p3[2]-p1[2])
-                       - (p3[1]-p1[1])*(p2[2]-p1[2])) / detJ;
-
-      jacInv[0][1] = -(  (p3[0]-p1[0])*(p4[2]-p1[2])
-                       - (p4[0]-p1[0])*(p3[2]-p1[2])) / detJ;
-      jacInv[1][1] =  (  (p2[0]-p1[0])*(p4[2]-p1[2])
-                       - (p4[0]-p1[0])*(p2[2]-p1[2])) / detJ;
-      jacInv[2][1] = -(  (p2[0]-p1[0])*(p3[2]-p1[2])
-                       - (p3[0]-p1[0])*(p2[2]-p1[2])) / detJ;
-
-      jacInv[0][2] =  (  (p3[0]-p1[0])*(p4[1]-p1[1])
-                       - (p4[0]-p1[0])*(p3[1]-p1[1])) / detJ;
-      jacInv[1][2] = -(  (p2[0]-p1[0])*(p4[1]-p1[1])
-                       - (p4[0]-p1[0])*(p2[1]-p1[1])) / detJ;
-      jacInv[2][2] =  (  (p2[0]-p1[0])*(p3[1]-p1[1])
-                       - (p3[0]-p1[0])*(p2[1]-p1[1])) / detJ;
-
-      return jacInv;
-    }
-
 };
 
 } // dg::

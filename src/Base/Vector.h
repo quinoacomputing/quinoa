@@ -35,12 +35,21 @@ triple( const std::array< real, 3 >& v1,
         const std::array< real, 3 >& v2,
         const std::array< real, 3 >& v3 );
 
-//! Compute the Jacobian of a coordinate transformation over a tetrahedron
+//! \brief Compute the determinant of the Jacobian of a coordinate
+//!  transformation over a tetrahedron
 tk::real
 Jacobian( const std::array< real, 3 >& v1,
           const std::array< real, 3 >& v2,
           const std::array< real, 3 >& v3,
           const std::array< real, 3 >& v4 );
+
+//! \brief Compute the inverse of the Jacobian of a coordinate transformation
+//!   over a tetrahedron
+std::array< std::array< tk::real, 3 >, 3 >
+inverseJacobian( const std::array< tk::real, 3 >& v1,
+                 const std::array< tk::real, 3 >& v2,
+                 const std::array< tk::real, 3 >& v3,
+                 const std::array< tk::real, 3 >& v4 );
 
 } // tk::
 
