@@ -7,7 +7,8 @@ add_library(PDE
             Integrate/Quadrature.C
             Integrate/Initialize.C
             Integrate/Mass.C
-            Integrate/Surf.C
+            Integrate/Surface.C
+            Integrate/Boundary.C
             Integrate/Riemann/RiemannFactory.C
             Limiter.C
             ConfigureTransport.C

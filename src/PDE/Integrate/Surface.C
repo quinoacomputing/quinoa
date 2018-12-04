@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Integrate/Surf.C
+  \file      src/PDE/Integrate/Surface.C
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Functions for computing internal surface integrals of a system
      of PDEs in DG methods
@@ -12,7 +12,7 @@
 
 #include <array>
 
-#include "Surf.h"
+#include "Surface.h"
 #include "Vector.h"
 #include "Quadrature.h"
 #include "Inciter/InputDeck/InputDeck.h"
@@ -40,8 +40,8 @@ tk::surfIntP0( ncomp_t system,
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
-//! \param[in] ctr Flux constructur to use to initialize the flux calculation
 //! \param[in] flux Flux function to use
+//! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
 //! \param[in,out] R Right-hand side vector added to
 // *****************************************************************************
@@ -64,7 +64,7 @@ tk::surfIntP0( ncomp_t system,
     }
 
     auto fl =
-       flux( {{geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0)}},
+       flux( {{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }},
              state,
              vel( geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0), system,
                   ncomp ) );
@@ -99,6 +99,7 @@ tk::surfIntP1( ncomp_t system,
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
 //! \param[in] flux Flux function to use
+//! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
 //! \param[in] limFunc Limiter function for higher-order solution dofs
 //! \param[in,out] R Right-hand side vector computed

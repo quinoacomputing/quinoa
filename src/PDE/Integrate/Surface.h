@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Integrate/Surf.h
+  \file      src/PDE/Integrate/Surface.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Functions for computing internal surface integrals of a system
      of PDEs in DG methods
@@ -9,8 +9,8 @@
      various orders of numerical representation.
 */
 // *****************************************************************************
-#ifndef Surf_h
-#define Surf_h
+#ifndef Surface_h
+#define Surface_h
 
 #include "Types.h"
 #include "Fields.h"
@@ -21,6 +21,7 @@
 namespace tk {
 
 using ncomp_t = kw::ncomp::info::expect::type;
+using bcconf_t = kw::sideset::info::expect::type;
 
 //! Compute internal surface flux integrals for DG(P0)
 void
@@ -51,4 +52,4 @@ surfIntP1( ncomp_t system,
 
 } // tk::
 
-#endif // Surf_h
+#endif // Surface_h

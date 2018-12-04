@@ -47,6 +47,14 @@ using VelFn = std::function<
   std::vector< std::array< tk::real, 3 > >
   ( real, real, real, ncomp_t, ncomp_t ) >;
 
+//! Function prototype for physical boundary states
+//! \details Functions of this type are used to provide the left and right
+//!    states of boundary faces along physical boundaries
+using StateFn = std::function<
+  std::array< std::vector< real >, 2 >
+  ( ncomp_t, ncomp_t, const std::vector< real >&, real, real, real, real,
+    const std::array< tk::real, 3 >& ) >;
+
 } // tk::
 
 #endif // FunctionPrototypes_h
