@@ -64,6 +64,14 @@ using StateFn = std::function<
   ( ncomp_t, ncomp_t, const std::vector< real >&, real, real, real, real,
     const std::array< tk::real, 3 >& ) >;
 
+//! Function prototype for evaluating a source term for a system of PDEs
+//! \details Functions of this type are used to evaluate an arbitrary source
+//!   term specialized to a particular problem, e.g., derived using the method
+//!   of manufactured solutions, and specialized to a particular system of PDEs
+//! \see e.g., CompFlowProblemRayleighTaylor::src
+using SrcFn = std::function<
+  std::vector< tk::real >( ncomp_t, real, real, real, real ) >;
+
 } // tk::
 
 #endif // FunctionPrototypes_h

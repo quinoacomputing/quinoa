@@ -35,7 +35,7 @@ class CompFlowProblemTaylorGreen {
 
   public:
     //! Evaluate analytical solution at (x,y,0) for all components
-    //! \param[in] e Equation system index, i.e., which compressible
+    //! \param[in] system Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
     //! param[in] ncomp Number of scalar components in this PDE system
     //! \param[in] x X coordinate where to evaluate the solution
@@ -43,7 +43,7 @@ class CompFlowProblemTaylorGreen {
     //! \return Values of all components evaluated at (x,y,0)
     //! \note The function signature must follow tk::SolutionFn
     static tk::SolutionFn::result_type
-    solution( ncomp_t e, ncomp_t ncomp,
+    solution( ncomp_t system, ncomp_t ncomp,
               tk::real x, tk::real y, tk::real, tk::real )
     {
       Assert( ncomp == m_ncomp, "Number of scalar components must be " +
@@ -51,7 +51,8 @@ class CompFlowProblemTaylorGreen {
       IGNORE(ncomp);
       using tag::param; using tag::compflow; using std::sin; using std::cos;
       // ratio of specific heats
-      const tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[e];
+      const tk::real g =
+        g_inputdeck.get< param, compflow, tag::gamma >()[system];
       // density
       const tk::real r = 1.0;
       // pressure
@@ -77,7 +78,8 @@ class CompFlowProblemTaylorGreen {
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \return Array of reals containing the source for all components
-    static std::vector< tk::real >
+    //! \note The function signature must follow tk::SrcFn
+    static tk::SrcFn::result_type
     src( ncomp_t, tk::real x, tk::real y, tk::real, tk::real ) {
       return {{ 0.0, 0.0, 0.0, 0.0,
         3.0*M_PI/8.0*( cos(3.0*M_PI*x)*cos(M_PI*y) -
@@ -117,7 +119,7 @@ class CompFlowProblemTaylorGreen {
     }
 
     //! Return field output going to file
-    //! \param[in] e Equation system index, i.e., which compressible
+    //! \param[in] system Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
@@ -127,7 +129,7 @@ class CompFlowProblemTaylorGreen {
     //! \param[in] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
-    fieldOutput( ncomp_t e,
+    fieldOutput( ncomp_t system,
                  ncomp_t offset,
                  tk::real,
                  tk::real V,
@@ -137,7 +139,7 @@ class CompFlowProblemTaylorGreen {
     {
       // ratio of specific heats
       tk::real g =
-        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
+        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[system];
 
       std::vector< std::vector< tk::real > > out;
       const auto r  = U.extract( 0, offset );

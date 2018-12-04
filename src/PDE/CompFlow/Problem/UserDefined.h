@@ -29,7 +29,7 @@ class CompFlowProblemUserDefined {
 
   public:
     //! Evaluate initial condition solution at (x,y,z,t) for all components
-    //! \param[in] e Equation system index, i.e., which compressible
+    //! \param[in] system Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
     //! param[in] ncomp Number of scalar components in this PDE system
     //! \param[in] x X coordinate where to evaluate the solution
@@ -39,12 +39,17 @@ class CompFlowProblemUserDefined {
     //! \return Values of all components evaluated at (x,y,z,t)
     //! \note The function signature must follow tk::SolutionFn
     static tk::SolutionFn::result_type
-    solution( ncomp_t e, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
+    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
               tk::real t )
     {
       Assert( ncomp == m_ncomp, "Number of scalar components must be " +
                                 std::to_string(m_ncomp) );
-      IGNORE(e);  IGNORE(ncomp);  IGNORE(x);  IGNORE(y);  IGNORE(z);  IGNORE(t);
+      IGNORE(system);
+      IGNORE(ncomp);
+      IGNORE(x);
+      IGNORE(y);
+      IGNORE(z);
+      IGNORE(t);
       return {{ 1.0, 0.0, 0.0, 1.0, 293.0 }};
     }
 
@@ -59,7 +64,8 @@ class CompFlowProblemUserDefined {
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
     //! \details No-op for user-deefined problems.
     //! \return Array of reals containing the source for all components
-    static std::vector< tk::real >
+    //! \note The function signature must follow tk::SrcFn
+    static tk::SrcFn::result_type
     src( ncomp_t, tk::real, tk::real, tk::real, tk::real )
     { return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }}; }
 

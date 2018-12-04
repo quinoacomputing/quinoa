@@ -29,7 +29,7 @@ class CompFlowProblemSedovBlastwave {
 
   public:
     //! Evaluate analytical solution at (x,y,0) for all components
-    //! \param[in] e Equation system index, i.e., which compressible
+    //! \param[in] system Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
     //! param[in] ncomp Number of scalar components in this PDE system
     //! \param[in] x X coordinate where to evaluate the solution
@@ -37,7 +37,7 @@ class CompFlowProblemSedovBlastwave {
     //! \return Values of all components evaluated at (x,y,0)
     //! \note The function signature must follow tk::SolutionFn
     static tk::SolutionFn::result_type
-    solution( ncomp_t e, ncomp_t ncomp,
+    solution( ncomp_t system, ncomp_t ncomp,
               tk::real x, tk::real y, tk::real, tk::real )
     {
       Assert( ncomp == m_ncomp, "Number of scalar components must be " +
@@ -45,7 +45,8 @@ class CompFlowProblemSedovBlastwave {
       IGNORE(ncomp);
       using tag::param; using tag::compflow;
       // ratio of specific heats
-      const tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[e];
+      const tk::real g =
+        g_inputdeck.get< param, compflow, tag::gamma >()[system];
       tk::real r, p, u, v, w, rE;
       if ( (x<0.05) && (y<0.05) ) {
         // density
@@ -74,7 +75,7 @@ class CompFlowProblemSedovBlastwave {
 
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
-    //! \param[in] e Equation system index, i.e., which compressible
+    //! \param[in] system Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
@@ -83,11 +84,11 @@ class CompFlowProblemSedovBlastwave {
     //! \param[in] dt Time increment at which evaluate the solution increment to
     //! \return Increment in values of all components evaluated at (x,y,z,t+dt)
     static std::vector< tk::real >
-    solinc( tk::ctr::ncomp_type e,
+    solinc( ncomp_t system,
             tk::real x, tk::real y, tk::real z, tk::real t, tk::real dt )
     {
-      auto st1 = solution( e, m_ncomp, x, y, z, t );
-      auto st2 = solution( e, m_ncomp, x, y, z, t+dt );
+      auto st1 = solution( system, m_ncomp, x, y, z, t );
+      auto st2 = solution( system, m_ncomp, x, y, z, t+dt );
       std::transform( begin(st1), end(st1), begin(st2), begin(st2),
                       []( tk::real s, tk::real& d ){ return d -= s; } );
       return st2;
@@ -96,8 +97,9 @@ class CompFlowProblemSedovBlastwave {
     //! Compute and return source term for this problem
     //! \return Array of reals containing the source which is zero for this
     //!   problem
-    static std::vector< tk::real >
-    src( tk::ctr::ncomp_type, tk::real, tk::real, tk::real, tk::real ) {
+    //! \note The function signature must follow tk::SrcFn
+    static tk::SrcFn::result_type
+    src( ncomp_t, tk::real, tk::real, tk::real, tk::real ) {
       return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
     }
 
@@ -137,7 +139,7 @@ class CompFlowProblemSedovBlastwave {
     }
 
     //! Return field output going to file
-    //! \param[in] e Equation system index, i.e., which compressible
+    //! \param[in] system Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
@@ -147,8 +149,8 @@ class CompFlowProblemSedovBlastwave {
     //! \param[in] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
-    fieldOutput( tk::ctr::ncomp_type e,
-                 tk::ctr::ncomp_type offset,
+    fieldOutput( ncomp_t system,
+                 ncomp_t offset,
                  tk::real,
                  tk::real /*V*/,
                  const std::vector< tk::real >& /*vol*/,
@@ -157,7 +159,7 @@ class CompFlowProblemSedovBlastwave {
     {
       // ratio of specific heats
       tk::real g =
-        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
+        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[system];
 
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 

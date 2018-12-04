@@ -197,10 +197,10 @@ add_regression_test(compflow_euler_vorticalflow_diagcg_u0.5 ${INCITER_EXECUTABLE
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg)
 
-add_regression_test(compflow_euler_vorticalflow_dgp1_u0.90 ${INCITER_EXECUTABLE}
-                    NUMPES 4
-                    INPUTFILES vortical_flow_dgp1.q unitcube_1k.exo
-                               diag_dgp1.std
+#add_regression_test(compflow_euler_vorticalflow_dgp1_u0.90 ${INCITER_EXECUTABLE}
+#                    NUMPES 4
+#                    INPUTFILES vortical_flow_dgp1.q unitcube_1k.exo
+#                               diag_dgp1.std
 #                               exodiff_dg.cfg
 #                               vortical_flow_dgp1_pe4_u0.90.std.exo.0
 #                               vortical_flow_dgp1_pe4_u0.90.std.exo.1
@@ -240,7 +240,7 @@ add_regression_test(compflow_euler_vorticalflow_dgp1_u0.90 ${INCITER_EXECUTABLE}
 #                               vortical_flow_dgp1_pe4_u0.90.std.exo.35
 #                               vortical_flow_dgp1_pe4_u0.90.std.exo.36
 #                               vortical_flow_dgp1_pe4_u0.90.std.exo.37
-                    ARGS -c vortical_flow_dgp1.q -i unitcube_1k.exo -v -u 0.90
+#                    ARGS -c vortical_flow_dgp1.q -i unitcube_1k.exo -v -u 0.90
 #                    BIN_BASELINE vortical_flow_dgp1_pe4_u0.90.std.exo.0
 #                                 vortical_flow_dgp1_pe4_u0.90.std.exo.1
 #                                 vortical_flow_dgp1_pe4_u0.90.std.exo.2
@@ -319,9 +319,9 @@ add_regression_test(compflow_euler_vorticalflow_dgp1_u0.90 ${INCITER_EXECUTABLE}
 #                               out.e-s.0.38.37
 #                    BIN_DIFF_PROG_CONF exodiff_dg.cfg
 #                    BIN_DIFF_PROG_ARGS -m
-                    TEXT_BASELINE diag_dgp1.std
-                    TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg)
+#                    TEXT_BASELINE diag_dgp1.std
+#                    TEXT_RESULT diag
+#                    TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg)
 
 # Parallel + virtualization + migration
 

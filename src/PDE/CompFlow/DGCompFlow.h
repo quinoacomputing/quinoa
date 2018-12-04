@@ -27,6 +27,7 @@
 #include "Integrate/Surface.h"
 #include "Integrate/Boundary.h"
 #include "Integrate/Volume.h"
+#include "Integrate/Source.h"
 #include "Integrate/Riemann/RiemannFactory.h"
 
 namespace inciter {
@@ -161,7 +162,8 @@ class CompFlow {
         tk::surfIntP0( m_system, m_ncomp, m_offset, fd, geoFace, rieflxfn,
                        velfn, U, R );
         // compute source term intehrals
-        srcIntP0( t, geoElem, R);
+        tk::srcIntP0( m_system, m_ncomp, m_offset,
+                      t, geoElem, Problem::src, R );
         // compute boundary surface flux integrals
         for (const auto& b : bctypes)
           tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, bface, esuf,
@@ -173,7 +175,8 @@ class CompFlow {
         tk::surfIntP1( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
                        rieflxfn, velfn, U, limFunc, R );
         // compute source term intehrals
-        srcIntP1( t, inpoel, coord, geoElem, R);
+        tk::srcIntP1( m_system, m_ncomp, m_offset,
+                      t, inpoel, coord, geoElem, Problem::src, R );
         // compute volume integrals
         tk::volIntP1( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
                       velfn, U, limFunc, R );
@@ -583,100 +586,6 @@ class CompFlow {
     const std::vector< bcconf_t > m_bcsym;
     //! Extrapolation BC configuration
     const std::vector< bcconf_t > m_bcextrapolate;
-
-    //! Compute source term integrals for DG(P0)
-    //! \param[in] t Physical time
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] R Right-hand side vector computed
-    void srcIntP0( tk::real t,
-                   const tk::Fields& geoElem,
-                   tk::Fields& R) const
-    {
-      for (std::size_t e=0; e<geoElem.nunk(); ++e) {
-        auto vole = geoElem(e,0,0);
-        auto xc = geoElem(e,1,0);
-        auto yc = geoElem(e,2,0);
-        auto zc = geoElem(e,3,0);
-        auto s = Problem::src(0, xc, yc, zc, t);
-        for (ncomp_t c=0; c<5; ++c)
-          R(e, c, m_offset) += vole * s[c];
-      }
-    }
-
-    //! Compute source term integrals for DG(P1)
-    //! \param[in] inpoel Element-node connectivity
-    //! \param[in] coord Array of nodal coordinates
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] R Right-hand side vector computed
-    void srcIntP1( tk::real t,
-                   const std::vector< std::size_t >& inpoel,
-                   const tk::UnsMesh::Coords& coord,
-                   const tk::Fields& geoElem,
-                   tk::Fields& R) const
-    {
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-
-      // Number of integration points
-      constexpr std::size_t NG = 5;
-
-      // arrays for quadrature points
-      std::array< std::array< tk::real, NG >, 3 > coordgp;
-      std::array< tk::real, NG > wgp;
-
-      // get quadrature point weights and coordinates for tetrahedron
-      tk::GaussQuadratureTet( coordgp, wgp );
-
-      const auto& cx = coord[0];
-      const auto& cy = coord[1];
-      const auto& cz = coord[2];
-
-      for (std::size_t e=0; e<geoElem.nunk(); ++e)
-      {
-        auto x1 = cx[ inpoel[4*e]   ];
-        auto y1 = cy[ inpoel[4*e]   ];
-        auto z1 = cz[ inpoel[4*e]   ];
-
-        auto x2 = cx[ inpoel[4*e+1] ];
-        auto y2 = cy[ inpoel[4*e+1] ];
-        auto z2 = cz[ inpoel[4*e+1] ];
-
-        auto x3 = cx[ inpoel[4*e+2] ];
-        auto y3 = cy[ inpoel[4*e+2] ];
-        auto z3 = cz[ inpoel[4*e+2] ];
-
-        auto x4 = cx[ inpoel[4*e+3] ];
-        auto y4 = cy[ inpoel[4*e+3] ];
-        auto z4 = cz[ inpoel[4*e+3] ];
-
-        for (std::size_t igp=0; igp<5; ++igp)
-        {
-          auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp] - coordgp[2][igp];
-          auto shp2 = coordgp[0][igp];
-          auto shp3 = coordgp[1][igp];
-          auto shp4 = coordgp[2][igp];
-
-          auto wt = wgp[igp] * geoElem(e, 0, 0);
-
-          auto xgp = x1*shp1 + x2*shp2 + x3*shp3 + x4*shp4;
-          auto ygp = y1*shp1 + y2*shp2 + y3*shp3 + y4*shp4;
-          auto zgp = z1*shp1 + z2*shp2 + z3*shp3 + z4*shp4;
-
-          auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp] - 1.0;
-          auto B3 = 3.0 * coordgp[1][igp] + coordgp[2][igp] - 1.0;
-          auto B4 = 4.0 * coordgp[2][igp] - 1.0;
-
-          auto s = Problem::src(0, xgp, ygp, zgp, t);
-          for (ncomp_t c=0; c<5; ++c)
-          {
-            auto mark = c*ndof;
-            R(e, mark, m_offset)   += wt * s[c];
-            R(e, mark+1, m_offset) += wt * s[c] * B2;
-            R(e, mark+2, m_offset) += wt * s[c] * B3;
-            R(e, mark+3, m_offset) += wt * s[c] * B4;
-          }
-        }
-      }
-    }
 
     //! Evaluate physical flux function for this PDE system
     //! \param[in] system Equation system index

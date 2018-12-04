@@ -32,7 +32,7 @@ class CompFlowProblemRayleighTaylor {
 
   public:
     //! Evaluate analytical solution at (x,y,z,t) for all components
-    //! \param[in] e Equation system index, i.e., which compressible
+    //! \param[in] system Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
     //! param[in] ncomp Number of scalar components in this PDE system
     //! \param[in] x X coordinate where to evaluate the solution
@@ -42,7 +42,7 @@ class CompFlowProblemRayleighTaylor {
     //! \return Values of all components evaluated at (x,y,z,t)
     //! \note The function signature must follow tk::SolutionFn
     static tk::SolutionFn::result_type
-    solution( ncomp_t e, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
+    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
               tk::real t )
     {
       Assert( ncomp == m_ncomp, "Number of scalar components must be " +
@@ -50,15 +50,15 @@ class CompFlowProblemRayleighTaylor {
       IGNORE(ncomp);
       using tag::param; using tag::compflow; using std::sin; using std::cos;
       // manufactured solution parameters
-      const auto a = g_inputdeck.get< param, compflow, tag::alpha >()[e];
-      const auto bx = g_inputdeck.get< param, compflow, tag::betax >()[e];
-      const auto by = g_inputdeck.get< param, compflow, tag::betay >()[e];
-      const auto bz = g_inputdeck.get< param, compflow, tag::betaz >()[e];
-      const auto p0 = g_inputdeck.get< param, compflow, tag::p0 >()[e];
-      const auto r0 = g_inputdeck.get< param, compflow, tag::r0 >()[e];
-      const auto k = g_inputdeck.get< param, compflow, tag::kappa >()[e];
+      const auto a = g_inputdeck.get< param, compflow, tag::alpha >()[system];
+      const auto bx = g_inputdeck.get< param, compflow, tag::betax >()[system];
+      const auto by = g_inputdeck.get< param, compflow, tag::betay >()[system];
+      const auto bz = g_inputdeck.get< param, compflow, tag::betaz >()[system];
+      const auto p0 = g_inputdeck.get< param, compflow, tag::p0 >()[system];
+      const auto r0 = g_inputdeck.get< param, compflow, tag::r0 >()[system];
+      const auto k = g_inputdeck.get< param, compflow, tag::kappa >()[system];
       // ratio of specific heats
-      const tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[e];
+      const tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[system];
       // spatial component of density and pressure fields
       const tk::real gx = bx*x*x + by*y*y + bz*z*z;
       // density
@@ -77,7 +77,7 @@ class CompFlowProblemRayleighTaylor {
 
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
-    //! \param[in] e Equation system index, i.e., which compressible
+    //! \param[in] system Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
@@ -86,40 +86,41 @@ class CompFlowProblemRayleighTaylor {
     //! \param[in] dt Time increment at which evaluate the solution increment to
     //! \return Increment in values of all components evaluated at (x,y,z,t+dt)
     static std::vector< tk::real >
-    solinc( ncomp_t e, tk::real x, tk::real y, tk::real z, tk::real t,
+    solinc( ncomp_t system, tk::real x, tk::real y, tk::real z, tk::real t,
             tk::real dt )
     {
-      auto st1 = solution( e, m_ncomp, x, y, z, t );
-      auto st2 = solution( e, m_ncomp, x, y, z, t+dt );
+      auto st1 = solution( system, m_ncomp, x, y, z, t );
+      auto st2 = solution( system, m_ncomp, x, y, z, t+dt );
       std::transform( begin(st1), end(st1), begin(st2), begin(st2),
                       []( tk::real s, tk::real& d ){ return d -= s; } );
       return st2;
     }
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
-    //! \param[in] e Equation system index, i.e., which compressible
+    //! \param[in] system Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] z Z coordinate where to evaluate the solution
     //! \param[in] t Physical time at which to evaluate the source
     //! \return Array of reals containing the source for all components
-    static std::vector< tk::real >
-    src( ncomp_t e, tk::real x, tk::real y, tk::real z, tk::real t ) {
+    //! \note The function signature must follow tk::SrcFn
+    static tk::SrcFn::result_type
+    src( ncomp_t system, tk::real x, tk::real y, tk::real z, tk::real t ) {
       using tag::param; using tag::compflow; using std::sin; using std::cos;
 
       // manufactured solution parameters
-      auto a = g_inputdeck.get< param, compflow, tag::alpha >()[e];
-      auto bx = g_inputdeck.get< param, compflow, tag::betax >()[e];
-      auto by = g_inputdeck.get< param, compflow, tag::betay >()[e];
-      auto bz = g_inputdeck.get< param, compflow, tag::betaz >()[e];
-      auto k = g_inputdeck.get< param, compflow, tag::kappa >()[e];
-      auto p0 = g_inputdeck.get< param, compflow, tag::p0 >()[e];
+      auto a = g_inputdeck.get< param, compflow, tag::alpha >()[system];
+      auto bx = g_inputdeck.get< param, compflow, tag::betax >()[system];
+      auto by = g_inputdeck.get< param, compflow, tag::betay >()[system];
+      auto bz = g_inputdeck.get< param, compflow, tag::betaz >()[system];
+      auto k = g_inputdeck.get< param, compflow, tag::kappa >()[system];
+      auto p0 = g_inputdeck.get< param, compflow, tag::p0 >()[system];
       // ratio of specific heats
-      tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[e];
+      tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[system];
 
       // evaluate solution at x,y,z,t
-      auto s = solution( e, m_ncomp, x, y, z, t );
+      auto s = solution( system, m_ncomp, x, y, z, t );
 
       // density, velocity, energy, pressure
       auto rho = s[0];
@@ -206,7 +207,7 @@ class CompFlowProblemRayleighTaylor {
     }
 
     //! Return field output going to file
-    //! \param[in] e Equation system index, i.e., which compressible
+    //! \param[in] system Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
@@ -217,7 +218,7 @@ class CompFlowProblemRayleighTaylor {
     //! \param[in] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
-    fieldOutput( ncomp_t e,
+    fieldOutput( ncomp_t system,
                  ncomp_t offset,
                  tk::real t,
                  tk::real V,
@@ -227,7 +228,7 @@ class CompFlowProblemRayleighTaylor {
     {
       // ratio of specific heats
       tk::real g =
-        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
+        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[system];
 
       std::vector< std::vector< tk::real > > out;
       auto r = U.extract( 0, offset );
@@ -262,7 +263,7 @@ class CompFlowProblemRayleighTaylor {
 
       auto er = r, ee = r, ep = r, eu = r, ev = r, ew = r;
       for (std::size_t i=0; i<r.size(); ++i) {
-        auto s = solution( e, m_ncomp, x[i], y[i], z[i], t );
+        auto s = solution( system, m_ncomp, x[i], y[i], z[i], t );
         er[i] = std::pow( r[i] - s[0], 2.0 ) * vol[i] / V;
         ee[i] = std::pow( E[i] - s[4]/s[0], 2.0 ) * vol[i] / V;
         eu[i] = std::pow( u[i] - s[1]/s[0], 2.0 ) * vol[i] / V;
