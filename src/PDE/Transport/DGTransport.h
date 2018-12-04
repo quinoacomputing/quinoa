@@ -336,7 +336,7 @@ class Transport {
       std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
 
       for (ncomp_t c=0; c<ncomp; ++c)
-        fl[c] = { v[c][0] * ugp[c], v[c][1] * ugp[c], v[c][2] * ugp[c] };
+        fl[c] = {{ v[c][0] * ugp[c], v[c][1] * ugp[c], v[c][2] * ugp[c] }};
 
       return fl;
     }
