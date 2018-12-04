@@ -236,14 +236,14 @@ class Transport {
 
         // get prescribed velocity
         const std::array< std::vector<std::array<tk::real,3>>, 4 > vel{{
-          Problem::prescribedVelocity( x[N[0]], y[N[0]], z[N[0]],
-                                       m_system, m_ncomp ),
-          Problem::prescribedVelocity( x[N[0]], y[N[1]], z[N[1]],
-                                       m_system, m_ncomp ),
-          Problem::prescribedVelocity( x[N[0]], y[N[2]], z[N[2]],
-                                       m_system, m_ncomp ),
-          Problem::prescribedVelocity( x[N[0]], y[N[3]], z[N[3]],
-                                       m_system, m_ncomp ) }};
+          Problem::prescribedVelocity( m_system, m_ncomp,
+                                       x[N[0]], y[N[0]], z[N[0]] ),
+          Problem::prescribedVelocity( m_system, m_ncomp,
+                                       x[N[1]], y[N[1]], z[N[1]] ),
+          Problem::prescribedVelocity( m_system, m_ncomp,
+                                       x[N[2]], y[N[2]], z[N[2]] ),
+          Problem::prescribedVelocity( m_system, m_ncomp,
+                                       x[N[3]], y[N[3]], z[N[3]] ) }};
 
         // sum flux (advection) contributions to element
         tk::real d = deltat/2.0;
@@ -295,7 +295,7 @@ class Transport {
         auto yc = (y[N[0]] + y[N[1]] + y[N[2]] + y[N[3]]) / 4.0;
         auto zc = (z[N[0]] + z[N[1]] + z[N[2]] + z[N[3]]) / 4.0;
         const auto vel =
-          Problem::prescribedVelocity( xc, yc, zc, m_system, m_ncomp );
+          Problem::prescribedVelocity( m_system, m_ncomp, xc, yc, zc );
 
         // scatter-add flux contributions to rhs at nodes
         tk::real d = deltat * J/6.0;
@@ -341,14 +341,14 @@ class Transport {
         for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
         // get velocity for problem
         const std::array< std::vector<std::array<tk::real,3>>, 4 > vel{{
-          Problem::prescribedVelocity( x[N[0]], y[N[0]], z[N[0]],
-                                       m_system, m_ncomp ),
-          Problem::prescribedVelocity( x[N[0]], y[N[1]], z[N[1]],
-                                       m_system, m_ncomp ),
-          Problem::prescribedVelocity( x[N[0]], y[N[2]], z[N[2]],
-                                       m_system, m_ncomp ),
-          Problem::prescribedVelocity( x[N[0]], y[N[3]], z[N[3]],
-                                       m_system, m_ncomp ) }};
+          Problem::prescribedVelocity( m_system, m_ncomp,
+                                       x[N[0]], y[N[0]], z[N[0]] ),
+          Problem::prescribedVelocity( m_system, m_ncomp,
+                                       x[N[1]], y[N[1]], z[N[1]] ),
+          Problem::prescribedVelocity( m_system, m_ncomp,
+                                       x[N[2]], y[N[2]], z[N[2]] ),
+          Problem::prescribedVelocity( m_system, m_ncomp,
+                                       x[N[3]], y[N[3]], z[N[3]] ) }};
         // compute the maximum length of the characteristic velocity (advection
         // velocity) across the four element nodes
         tk::real maxvel = 0.0;

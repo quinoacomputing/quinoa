@@ -70,7 +70,7 @@ tk::bndSurfIntP0( ncomp_t system,
 
     auto fl = flux( fn,
                     state( system, ncomp, ugp, xc, yc, zc, t, fn ),
-                    vel( xc, yc, zc, system, ncomp ) );
+                    vel( system, ncomp, xc, yc, zc ) );
 
     for (ncomp_t c=0; c<ncomp; ++c)
       R(el, c, offset) -= farea * fl[c];
@@ -260,7 +260,7 @@ tk::bndSurfIntP1( ncomp_t system,
 
       auto fl = flux( fn,
                       state( system, ncomp, ugp, xgp, ygp, zgp, t, fn ),
-                      vel( xgp, ygp, zgp, system, ncomp ) );
+                      vel( system, ncomp, xgp, ygp, zgp ) );
 
       for (ncomp_t c=0; c<ncomp; ++c)
       {

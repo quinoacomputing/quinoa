@@ -176,7 +176,7 @@ tk::volIntP1( ncomp_t system,
       }
 
      // evaluate prescribed velocity (if any)
-      auto v = vel( gp[0], gp[1], gp[2], system, ncomp );
+      auto v = vel( system, ncomp, gp[0], gp[1], gp[2] );
       // comput flux
       auto fl = flux( system, ncomp, ugp, v );
 

@@ -65,7 +65,7 @@ tk::surfIntP0( ncomp_t system,
 
     // evaluate prescribed velocity (if any)
     auto v =
-      vel( geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0), system, ncomp );
+      vel( system, ncomp, geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0) );
 
     auto fl =
        flux( {{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }}, state, v );
@@ -253,7 +253,7 @@ tk::surfIntP1( ncomp_t system,
       }
 
       // evaluate prescribed velocity (if any)
-      auto v = vel( gp[0], gp[1], gp[2], system, ncomp );
+      auto v = vel( system, ncomp, gp[0], gp[1], gp[2] );
       // compute flux
       auto fl =
          flux( {{geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0)}}, state, v );

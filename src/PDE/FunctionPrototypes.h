@@ -54,7 +54,7 @@ using FluxFn = std::function<
 //! \see e.g., TransportProblemShearDiff::prescribedVelocity
 using VelFn = std::function<
   std::vector< std::array< tk::real, 3 > >
-  ( real, real, real, ncomp_t, ncomp_t ) >;
+  ( ncomp_t, ncomp_t, real, real, real ) >;
 
 //! Function prototype for physical boundary states
 //! \details Functions of this type are used to provide the left and right

@@ -146,7 +146,7 @@ class CompFlow {
       using namespace std::placeholders;
       auto rieflxfn = std::bind( &RiemannSolver::flux, m_riemann, _1, _2, _3 );
       // configure a no-op lambda for prescribed velocity
-      auto velfn = [this]( tk::real, tk::real, tk::real, ncomp_t, ncomp_t ){
+      auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real ){
         return std::vector< std::array< tk::real, 3 > >( this->m_ncomp ); };
 
       // supported boundary condition types and associated state functions
@@ -692,6 +692,7 @@ class CompFlow {
           const std::vector< std::array< tk::real, 3 > >& )
     {
       Assert( ugp.size() == ncomp, "Size mismatch" );
+      IGNORE(ncomp);
 
       const auto g =
         g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[ system ];
