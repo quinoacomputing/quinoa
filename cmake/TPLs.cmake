@@ -156,6 +156,27 @@ find_package(Brigand)
 
 message(STATUS "------------------------------------------")
 
+# Function to print a list of missing library names
+# Arguments:
+#   'executable' a string to use in the error message printed for which libraries are not found
+#   'reqlibs' list of cmake variables in the form of "CHARM_FOUND", Boost_FOUND, etc.
+# Details: For each variable in 'reqlibs' if evaluates to false, trim the
+# ending "_FOUND", convert to lower case and print an error message with the
+# list of missing variables names. Intended to use after multiple find_package
+# calls, passing all cmake variables named '*_FOUND' for all required libraries
+# for an executable.
+function(PrintMissing executable reqlibs)
+  foreach(lib ${reqlibs})
+    if(NOT ${lib})
+      string(REPLACE "_FOUND" "" lib ${lib})
+      string(TOLOWER ${lib} lib)
+      list(APPEND missing "${lib}")
+    endif()
+  endforeach()
+  string(REPLACE ";" ", " missing "${missing}")
+  message(STATUS "Executable '${executable}' will NOT be configured, missing: ${missing}")
+endfunction(PrintMissing)
+
 # Enable individual executables based on required TPLs found
 
 if (CHARM_FOUND AND PUGIXML_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND
@@ -163,16 +184,16 @@ if (CHARM_FOUND AND PUGIXML_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND
   set(ENABLE_UNITTEST "true")
   set(UNITTEST_EXECUTABLE unittest)
 else()
-  message(STATUS "Executable 'unittest' will NOT be configured")
+  PrintMissing(unittest "CHARM_FOUND;PUGIXML_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;HDF5_FOUND;BRIGAND_FOUND;TUT_FOUND;PEGTL_FOUND;Boost_FOUND")
 endif()
 
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND HYPRE_FOUND AND
-    Zoltan2_FOUND AND HDF5_FOUND AND HDF5_FOUND AND BRIGAND_FOUND AND
-    PEGTL_FOUND AND (MKL_FOUND OR LAPACKE_FOUND) AND Boost_FOUND)
+    Zoltan2_FOUND AND HDF5_FOUND AND BRIGAND_FOUND AND PEGTL_FOUND AND
+    (MKL_FOUND OR LAPACKE_FOUND) AND Boost_FOUND)
   set(ENABLE_INCITER "true")
   set(INCITER_EXECUTABLE inciter)
 else()
-  message(STATUS "Executable 'inciter' will NOT be configured")
+  PrintMissing(inciter "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;HYPRE_FOUND;Zoltan2_FOUND;HDF5_FOUND;BRIGAND_FOUND;PEGTL_FOUND;MKL_FOUND;LAPACKE_FOUND;Boost_FOUND")
 endif()
 
 if (CHARM_FOUND AND TESTU01_FOUND AND BRIGAND_FOUND AND PEGTL_FOUND AND
@@ -182,7 +203,7 @@ if (CHARM_FOUND AND TESTU01_FOUND AND BRIGAND_FOUND AND PEGTL_FOUND AND
   set(RNGTEST_SRC_DIR ${QUINOA_SOURCE_DIR}/RNGTest)
   set(RNGTEST_BIN_DIR ${PROJECT_BINARY_DIR}/RNGTest)
 else()
-  message(STATUS "Executable 'rngtest' will NOT be configured")
+  PrintMissing(rngtest "CHARM_FOUND;TESTU01_FOUND;BRIGAND_FOUND;PEGTL_FOUND;RANDOM123_FOUND;Boost_FOUND")
 endif()
 
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND PEGTL_FOUND AND
@@ -190,7 +211,7 @@ if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND PEGTL_FOUND AND
   set(ENABLE_MESHCONV "true")
   set(MESHCONV_EXECUTABLE meshconv)
 else()
-  message(STATUS "Executable 'meshconv' will NOT be configured")
+  PrintMissing(meshconv "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;PEGTL_FOUND;PUGIXML_FOUND;HDF5_FOUND;Boost_FOUND")
 endif()
 
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND PEGTL_FOUND AND
@@ -199,7 +220,7 @@ if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND PEGTL_FOUND AND
   set(ENABLE_WALKER "true")
   set(WALKER_EXECUTABLE walker)
 else()
-  message(STATUS "Executable 'walker' will NOT be configured")
+  PrintMissing(walker "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;PEGTL_FOUND;BRIGAND_FOUND;HDF5_FOUND;RANDOM123_FOUND;Boost_FOUND;MKL_FOUND;LAPACKE_FOUND")
 endif()
 
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND ROOT_FOUND
@@ -207,5 +228,5 @@ if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND ROOT_FOUND
   set(ENABLE_FILECONV "true")
   set(FILECONV_EXECUTABLE fileconv)
 else()
-  message(STATUS "Executable 'fileconv' will NOT be configured")
+  PrintMissing(fileconv "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;ROOT_FOUND;PEGTL_FOUND;PUGIXML_FOUND;HDF5_FOUND;Boost_FOUND")
 endif()
