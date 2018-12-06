@@ -4,8 +4,6 @@
 add_regression_test(Velocity_SLM_HomogeneousShear ${WALKER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES slm_homogeneous_shear.q
-                               slm_homogeneous_shear.stat.txt.std
-                               velocity.ndiff.cfg
                     ARGS -c slm_homogeneous_shear.q -v
                     TEXT_BASELINE slm_homogeneous_shear.stat.txt.std
                     TEXT_RESULT stat.txt
@@ -15,8 +13,6 @@ add_regression_test(Velocity_SLM_HomogeneousShear ${WALKER_EXECUTABLE}
 add_regression_test(Velocity_SLM_HomogeneousShear ${WALKER_EXECUTABLE}
                     NUMPES 2
                     INPUTFILES slm_homogeneous_shear.q
-                               slm_homogeneous_shear.stat.txt.std
-                               velocity.ndiff.cfg
                     ARGS -c slm_homogeneous_shear.q -v
                     TEXT_BASELINE slm_homogeneous_shear.stat.txt.std
                     TEXT_RESULT stat.txt
@@ -26,8 +22,6 @@ add_regression_test(Velocity_SLM_HomogeneousShear ${WALKER_EXECUTABLE}
 add_regression_test(Velocity_SLM_HomogeneousShear ${WALKER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slm_homogeneous_shear.q
-                               slm_homogeneous_shear.stat.txt.std
-                               velocity.ndiff.cfg
                     ARGS -c slm_homogeneous_shear.q -v
                     TEXT_BASELINE slm_homogeneous_shear.stat.txt.std
                     TEXT_RESULT stat.txt
@@ -37,8 +31,6 @@ add_regression_test(Velocity_SLM_HomogeneousShear ${WALKER_EXECUTABLE}
 add_regression_test(Velocity_SLM_HomogeneousShear_u0.9 ${WALKER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slm_homogeneous_shear.q
-                               slm_homogeneous_shear.stat.txt.std
-                               velocity.ndiff.cfg
                     ARGS -c slm_homogeneous_shear.q -v -u 0.9
                     TEXT_BASELINE slm_homogeneous_shear.stat.txt.std
                     TEXT_RESULT stat.txt
@@ -48,8 +40,6 @@ add_regression_test(Velocity_SLM_HomogeneousShear_u0.9 ${WALKER_EXECUTABLE}
 add_regression_test(Velocity_GLM_HomogeneousShear ${WALKER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES glm_homogeneous_shear.q
-                               glm_homogeneous_shear.stat.txt.std
-                               velocity.ndiff.cfg
                     ARGS -c glm_homogeneous_shear.q -v
                     TEXT_BASELINE glm_homogeneous_shear.stat.txt.std
                     TEXT_RESULT stat.txt
@@ -59,8 +49,6 @@ add_regression_test(Velocity_GLM_HomogeneousShear ${WALKER_EXECUTABLE}
 add_regression_test(Velocity_GLM_HomogeneousShear ${WALKER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES glm_homogeneous_shear.q
-                               glm_homogeneous_shear.stat.txt.std
-                               velocity.ndiff.cfg
                     ARGS -c glm_homogeneous_shear.q -v
                     TEXT_BASELINE glm_homogeneous_shear.stat.txt.std
                     TEXT_RESULT stat.txt
@@ -70,8 +58,6 @@ add_regression_test(Velocity_GLM_HomogeneousShear ${WALKER_EXECUTABLE}
 add_regression_test(Velocity_GLM_HomogeneousShear_u0.9 ${WALKER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES glm_homogeneous_shear.q
-                               glm_homogeneous_shear.stat.txt.std
-                               velocity.ndiff.cfg
                     ARGS -c glm_homogeneous_shear.q -v -u 0.9
                     TEXT_BASELINE glm_homogeneous_shear.stat.txt.std
                     TEXT_RESULT stat.txt

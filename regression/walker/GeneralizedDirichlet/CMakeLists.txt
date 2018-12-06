@@ -3,7 +3,7 @@
 
 add_regression_test(GeneralizedDirichlet ${WALKER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES gdir.q stat.txt.std gdir.ndiff.cfg
+                    INPUTFILES gdir.q
                     ARGS -c gdir.q -v
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt
@@ -11,7 +11,7 @@ add_regression_test(GeneralizedDirichlet ${WALKER_EXECUTABLE}
 
 add_regression_test(GeneralizedDirichlet ${WALKER_EXECUTABLE}
                     NUMPES 2
-                    INPUTFILES gdir.q stat.txt.std gdir.ndiff.cfg
+                    INPUTFILES gdir.q
                     ARGS -c gdir.q -v
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt
@@ -19,7 +19,7 @@ add_regression_test(GeneralizedDirichlet ${WALKER_EXECUTABLE}
 
 add_regression_test(GeneralizedDirichlet ${WALKER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES gdir.q stat.txt.std gdir.ndiff.cfg
+                    INPUTFILES gdir.q
                     ARGS -c gdir.q -v
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt
@@ -27,7 +27,7 @@ add_regression_test(GeneralizedDirichlet ${WALKER_EXECUTABLE}
 
 add_regression_test(GeneralizedDirichlet_u0.9 ${WALKER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES gdir.q stat.txt.std gdir.ndiff.cfg
+                    INPUTFILES gdir.q
                     ARGS -c gdir.q -v -u 0.9
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt
