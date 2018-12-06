@@ -5,8 +5,7 @@
 
 add_regression_test(gauss_hump_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES gauss_hump.q unitsquare_01_3.6k.exo diag.std
-                               exodiff.cfg gauss_hump.std.exo
+                    INPUTFILES gauss_hump.q unitsquare_01_3.6k.exo
                     ARGS -c gauss_hump.q -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE gauss_hump.std.exo
                     BIN_RESULT out.e-s.0.1.0
@@ -18,8 +17,7 @@ add_regression_test(gauss_hump_dg ${INCITER_EXECUTABLE}
 
 add_regression_test(gauss_hump_dgp1 ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES gauss_hump_dgp1.q unitsquare_01_3.6k.exo diag_dgp1.std
-                               exodiff.cfg gauss_hump_dgp1.std.exo
+                    INPUTFILES gauss_hump_dgp1.q unitsquare_01_3.6k.exo
                     ARGS -c gauss_hump_dgp1.q -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE gauss_hump_dgp1.std.exo
                     BIN_RESULT out.e-s.0.1.0
@@ -31,12 +29,7 @@ add_regression_test(gauss_hump_dgp1 ${INCITER_EXECUTABLE}
 
 add_regression_test(gauss_hump_dg ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES gauss_hump.q unitsquare_01_3.6k.exo diag.std
-                               exodiff.cfg
-                               gauss_hump_pe4_u0.0.std.exo.0
-                               gauss_hump_pe4_u0.0.std.exo.1
-                               gauss_hump_pe4_u0.0.std.exo.2
-                               gauss_hump_pe4_u0.0.std.exo.3
+                    INPUTFILES gauss_hump.q unitsquare_01_3.6k.exo
                     ARGS -c gauss_hump.q -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE gauss_hump_pe4_u0.0.std.exo.0
                                  gauss_hump_pe4_u0.0.std.exo.1
@@ -54,12 +47,7 @@ add_regression_test(gauss_hump_dg ${INCITER_EXECUTABLE}
 
 add_regression_test(gauss_hump_dgp1 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES gauss_hump_dgp1.q unitsquare_01_3.6k.exo diag_dgp1.std
-                               exodiff.cfg
-                               gauss_hump_dgp1_pe4_u0.0.std.exo.0
-                               gauss_hump_dgp1_pe4_u0.0.std.exo.1
-                               gauss_hump_dgp1_pe4_u0.0.std.exo.2
-                               gauss_hump_dgp1_pe4_u0.0.std.exo.3
+                    INPUTFILES gauss_hump_dgp1.q unitsquare_01_3.6k.exo
                     ARGS -c gauss_hump_dgp1.q -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE gauss_hump_dgp1_pe4_u0.0.std.exo.0
                                  gauss_hump_dgp1_pe4_u0.0.std.exo.1
@@ -79,16 +67,7 @@ add_regression_test(gauss_hump_dgp1 ${INCITER_EXECUTABLE}
 
 add_regression_test(gauss_hump_dg_u0.5 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES gauss_hump.q unitsquare_01_3.6k.exo diag.std
-                               exodiff.cfg
-                               gauss_hump_pe4_u0.5.std.exo.0
-                               gauss_hump_pe4_u0.5.std.exo.1
-                               gauss_hump_pe4_u0.5.std.exo.2
-                               gauss_hump_pe4_u0.5.std.exo.3
-                               gauss_hump_pe4_u0.5.std.exo.4
-                               gauss_hump_pe4_u0.5.std.exo.5
-                               gauss_hump_pe4_u0.5.std.exo.6
-                               gauss_hump_pe4_u0.5.std.exo.7
+                    INPUTFILES gauss_hump.q unitsquare_01_3.6k.exo
                     ARGS -c gauss_hump.q -i unitsquare_01_3.6k.exo -v -u 0.5
                     BIN_BASELINE gauss_hump_pe4_u0.5.std.exo.0
                                  gauss_hump_pe4_u0.5.std.exo.1
@@ -116,48 +95,7 @@ add_regression_test(gauss_hump_dg_u0.5 ${INCITER_EXECUTABLE}
 
 add_regression_test(gauss_hump_dg_u0.9_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES gauss_hump.q unitsquare_01_3.6k.exo diag.std
-                               exodiff.cfg
-                               gauss_hump_pe4_u0.9.std.exo.0
-                               gauss_hump_pe4_u0.9.std.exo.1
-                               gauss_hump_pe4_u0.9.std.exo.2
-                               gauss_hump_pe4_u0.9.std.exo.3
-                               gauss_hump_pe4_u0.9.std.exo.4
-                               gauss_hump_pe4_u0.9.std.exo.5
-                               gauss_hump_pe4_u0.9.std.exo.6
-                               gauss_hump_pe4_u0.9.std.exo.7
-                               gauss_hump_pe4_u0.9.std.exo.8
-                               gauss_hump_pe4_u0.9.std.exo.9
-                               gauss_hump_pe4_u0.9.std.exo.10
-                               gauss_hump_pe4_u0.9.std.exo.11
-                               gauss_hump_pe4_u0.9.std.exo.12
-                               gauss_hump_pe4_u0.9.std.exo.13
-                               gauss_hump_pe4_u0.9.std.exo.14
-                               gauss_hump_pe4_u0.9.std.exo.15
-                               gauss_hump_pe4_u0.9.std.exo.16
-                               gauss_hump_pe4_u0.9.std.exo.17
-                               gauss_hump_pe4_u0.9.std.exo.18
-                               gauss_hump_pe4_u0.9.std.exo.19
-                               gauss_hump_pe4_u0.9.std.exo.20
-                               gauss_hump_pe4_u0.9.std.exo.21
-                               gauss_hump_pe4_u0.9.std.exo.22
-                               gauss_hump_pe4_u0.9.std.exo.23
-                               gauss_hump_pe4_u0.9.std.exo.24
-                               gauss_hump_pe4_u0.9.std.exo.25
-                               gauss_hump_pe4_u0.9.std.exo.26
-                               gauss_hump_pe4_u0.9.std.exo.27
-                               gauss_hump_pe4_u0.9.std.exo.28
-                               gauss_hump_pe4_u0.9.std.exo.29
-                               gauss_hump_pe4_u0.9.std.exo.30
-                               gauss_hump_pe4_u0.9.std.exo.31
-                               gauss_hump_pe4_u0.9.std.exo.32
-                               gauss_hump_pe4_u0.9.std.exo.33
-                               gauss_hump_pe4_u0.9.std.exo.34
-                               gauss_hump_pe4_u0.9.std.exo.35
-                               gauss_hump_pe4_u0.9.std.exo.36
-                               gauss_hump_pe4_u0.9.std.exo.37
-                               gauss_hump_pe4_u0.9.std.exo.38
-                               gauss_hump_pe4_u0.9.std.exo.39
+                    INPUTFILES gauss_hump.q unitsquare_01_3.6k.exo
                     ARGS -c gauss_hump.q -i unitsquare_01_3.6k.exo -v -u 0.9
                          +balancer RandCentLB +LBDebug 1
                     BIN_BASELINE gauss_hump_pe4_u0.9.std.exo.0

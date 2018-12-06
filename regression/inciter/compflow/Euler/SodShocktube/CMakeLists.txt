@@ -6,8 +6,6 @@
 add_regression_test(compflow_euler_sodshocktube_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES sod_shocktube_dg.q rectangle_01_1.5k.exo
-                               diag_dg.std
-                               exodiff_dg.cfg sod_shocktube_dg.std.exo
                     ARGS -c sod_shocktube_dg.q -i rectangle_01_1.5k.exo -v
                     BIN_BASELINE sod_shocktube_dg.std.exo
                     BIN_RESULT out.e-s.0.1.0

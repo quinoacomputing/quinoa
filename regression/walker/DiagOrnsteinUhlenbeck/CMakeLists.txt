@@ -4,7 +4,7 @@
 if (HAS_MKL)
   add_regression_test(DiagOrnsteinUhlenbeck_mkl ${WALKER_EXECUTABLE}
                       NUMPES 1
-                      INPUTFILES diagou_mkl.q stat.txt.std diagou.ndiff.cfg
+                      INPUTFILES diagou_mkl.q
                       ARGS -c diagou_mkl.q -v
                       TEXT_BASELINE stat.txt.std
                       TEXT_RESULT stat.txt
@@ -12,7 +12,7 @@ if (HAS_MKL)
 
   add_regression_test(DiagOrnsteinUhlenbeck_mkl ${WALKER_EXECUTABLE}
                       NUMPES 2
-                      INPUTFILES diagou_mkl.q stat.txt.std diagou.ndiff.cfg
+                      INPUTFILES diagou_mkl.q
                       ARGS -c diagou_mkl.q -v
                       TEXT_BASELINE stat.txt.std
                       TEXT_RESULT stat.txt
@@ -20,7 +20,7 @@ if (HAS_MKL)
 
   add_regression_test(DiagOrnsteinUhlenbeck_mkl ${WALKER_EXECUTABLE}
                       NUMPES 4
-                      INPUTFILES diagou_mkl.q stat.txt.std diagou.ndiff.cfg
+                      INPUTFILES diagou_mkl.q
                       ARGS -c diagou_mkl.q -v
                       TEXT_BASELINE stat.txt.std
                       TEXT_RESULT stat.txt
@@ -28,7 +28,7 @@ if (HAS_MKL)
 
   add_regression_test(DiagOrnsteinUhlenbeck_mkl_u0.9 ${WALKER_EXECUTABLE}
                       NUMPES 4
-                      INPUTFILES diagou_mkl.q stat.txt.std diagou.ndiff.cfg
+                      INPUTFILES diagou_mkl.q
                       ARGS -c diagou_mkl.q -v -u 0.9
                       TEXT_BASELINE stat.txt.std
                       TEXT_RESULT stat.txt
@@ -36,8 +36,7 @@ if (HAS_MKL)
 
   add_regression_test(DiagOrnsteinUhlenbeckPDF_mkl ${WALKER_EXECUTABLE}
                       NUMPES 8
-                      INPUTFILES diagou_pdf_mkl.q pdf_f2.txt.std
-                                 diagou_pdf.ndiff.cfg
+                      INPUTFILES diagou_pdf_mkl.q
                       ARGS -c diagou_pdf_mkl.q -v
                       LABELS verification stringent
                       TEXT_BASELINE pdf_f2.txt.std
@@ -48,7 +47,7 @@ endif()
 if (HAS_RNGSSE2)
   add_regression_test(DiagOrnsteinUhlenbeck_rngsse ${WALKER_EXECUTABLE}
                       NUMPES 1
-                      INPUTFILES diagou_rngsse.q stat.txt.std diagou.ndiff.cfg
+                      INPUTFILES diagou_rngsse.q
                       ARGS -c diagou_rngsse.q -v
                       TEXT_BASELINE stat.txt.std
                       TEXT_RESULT stat.txt
@@ -56,7 +55,7 @@ if (HAS_RNGSSE2)
 
   add_regression_test(DiagOrnsteinUhlenbeck_rngsse ${WALKER_EXECUTABLE}
                       NUMPES 2
-                      INPUTFILES diagou_rngsse.q stat.txt.std diagou.ndiff.cfg
+                      INPUTFILES diagou_rngsse.q
                       ARGS -c diagou_rngsse.q -v
                       TEXT_BASELINE stat.txt.std
                       TEXT_RESULT stat.txt
@@ -64,7 +63,7 @@ if (HAS_RNGSSE2)
 
   add_regression_test(DiagOrnsteinUhlenbeck_rngsse ${WALKER_EXECUTABLE}
                       NUMPES 4
-                      INPUTFILES diagou_rngsse.q stat.txt.std diagou.ndiff.cfg
+                      INPUTFILES diagou_rngsse.q
                       ARGS -c diagou_rngsse.q -v
                       TEXT_BASELINE stat.txt.std
                       TEXT_RESULT stat.txt
@@ -72,7 +71,7 @@ if (HAS_RNGSSE2)
 
   add_regression_test(DiagOrnsteinUhlenbeck_rngsse_u0.9 ${WALKER_EXECUTABLE}
                       NUMPES 4
-                      INPUTFILES diagou_rngsse.q stat.txt.std diagou.ndiff.cfg
+                      INPUTFILES diagou_rngsse.q
                       ARGS -c diagou_rngsse.q -v -u 0.9
                       TEXT_BASELINE stat.txt.std
                       TEXT_RESULT stat.txt
@@ -80,8 +79,7 @@ if (HAS_RNGSSE2)
 
   add_regression_test(DiagOrnsteinUhlenbeckPDF_rngsse ${WALKER_EXECUTABLE}
                       NUMPES 8
-                      INPUTFILES diagou_pdf_rngsse.q pdf_f2.txt.std
-                                 diagou_pdf.ndiff.cfg
+                      INPUTFILES diagou_pdf_rngsse.q
                       ARGS -c diagou_pdf_rngsse.q -v
                       LABELS verification stringent
                       TEXT_BASELINE pdf_f2.txt.std
@@ -91,7 +89,7 @@ endif()
 
 add_regression_test(DiagOrnsteinUhlenbeck ${WALKER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES diagou.q stat.txt.std diagou.ndiff.cfg
+                    INPUTFILES diagou.q
                     ARGS -c diagou.q -v
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt
@@ -99,7 +97,7 @@ add_regression_test(DiagOrnsteinUhlenbeck ${WALKER_EXECUTABLE}
 
 add_regression_test(DiagOrnsteinUhlenbeck ${WALKER_EXECUTABLE}
                     NUMPES 2
-                    INPUTFILES diagou.q stat.txt.std diagou.ndiff.cfg
+                    INPUTFILES diagou.q
                     ARGS -c diagou.q -v
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt
@@ -107,7 +105,7 @@ add_regression_test(DiagOrnsteinUhlenbeck ${WALKER_EXECUTABLE}
 
 add_regression_test(DiagOrnsteinUhlenbeck ${WALKER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES diagou.q stat.txt.std diagou.ndiff.cfg
+                    INPUTFILES diagou.q
                     ARGS -c diagou.q -v
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt
@@ -115,7 +113,7 @@ add_regression_test(DiagOrnsteinUhlenbeck ${WALKER_EXECUTABLE}
 
 add_regression_test(DiagOrnsteinUhlenbeck_u0.9 ${WALKER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES diagou.q stat.txt.std diagou.ndiff.cfg
+                    INPUTFILES diagou.q
                     ARGS -c diagou.q -v -u 0.9
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt
@@ -123,8 +121,7 @@ add_regression_test(DiagOrnsteinUhlenbeck_u0.9 ${WALKER_EXECUTABLE}
 
 add_regression_test(DiagOrnsteinUhlenbeckPDF ${WALKER_EXECUTABLE}
                     NUMPES 8
-                    INPUTFILES diagou_pdf.q pdf_f2.txt.std
-                               diagou_pdf.ndiff.cfg
+                    INPUTFILES diagou_pdf.q
                     ARGS -c diagou_pdf.q -v
                     LABELS verification stringent
                     TEXT_BASELINE pdf_f2.txt.std

@@ -5,8 +5,7 @@
 
 add_regression_test(compflow_euler_rayleigh_taylor_st ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES rayleigh_taylor_st.q unitcube_1k.exo diag_st.std
-                               exodiff.cfg rayleigh_taylor_st.std.exo
+                    INPUTFILES rayleigh_taylor_st.q unitcube_1k.exo
                     ARGS -c rayleigh_taylor_st.q -i unitcube_1k.exo -v
                     BIN_BASELINE rayleigh_taylor_st.std.exo
                     BIN_RESULT out.e-s.0.1.0
@@ -19,12 +18,7 @@ add_regression_test(compflow_euler_rayleigh_taylor_st ${INCITER_EXECUTABLE}
 
 add_regression_test(compflow_euler_rayleigh_taylor_st ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES rayleigh_taylor_st.q unitcube_1k.exo diag_st.std
-                               exodiff.cfg
-                               rayleigh_taylor_st_pe4.std.exo.0
-                               rayleigh_taylor_st_pe4.std.exo.1
-                               rayleigh_taylor_st_pe4.std.exo.2
-                               rayleigh_taylor_st_pe4.std.exo.3
+                    INPUTFILES rayleigh_taylor_st.q unitcube_1k.exo
                     ARGS -c rayleigh_taylor_st.q -i unitcube_1k.exo -v
                     BIN_BASELINE rayleigh_taylor_st_pe4.std.exo.0
                                  rayleigh_taylor_st_pe4.std.exo.1
@@ -44,8 +38,7 @@ add_regression_test(compflow_euler_rayleigh_taylor_st ${INCITER_EXECUTABLE}
 
 add_regression_test(compflow_euler_rayleigh_taylor ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES rayleigh_taylor.q unitcube_1k.exo diag.std
-                               exodiff.cfg rayleigh_taylor.std.exo
+                    INPUTFILES rayleigh_taylor.q unitcube_1k.exo
                     ARGS -c rayleigh_taylor.q -i unitcube_1k.exo -v
                     BIN_BASELINE rayleigh_taylor.std.exo
                     BIN_RESULT out.e-s.0.1.0
@@ -58,12 +51,7 @@ add_regression_test(compflow_euler_rayleigh_taylor ${INCITER_EXECUTABLE}
 
 add_regression_test(compflow_euler_rayleigh_taylor ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES rayleigh_taylor.q unitcube_1k.exo diag.std
-                               exodiff.cfg
-                               rayleigh_taylor_pe4.std.exo.0
-                               rayleigh_taylor_pe4.std.exo.1
-                               rayleigh_taylor_pe4.std.exo.2
-                               rayleigh_taylor_pe4.std.exo.3
+                    INPUTFILES rayleigh_taylor.q unitcube_1k.exo
                     ARGS -c rayleigh_taylor.q -i unitcube_1k.exo -v
                     BIN_BASELINE rayleigh_taylor_pe4.std.exo.0
                                  rayleigh_taylor_pe4.std.exo.1
