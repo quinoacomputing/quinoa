@@ -10,7 +10,7 @@
 #ifndef ASCMeshReader_h
 #define ASCMeshReader_h
 
-#include <string>
+#include <iosfwd>
 
 #include "Reader.h"
 

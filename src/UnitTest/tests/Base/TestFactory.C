@@ -16,6 +16,7 @@
 #include "Make_unique.h"
 #include "Factory.h"
 
+#include "QuinoaConfig.h"
 #include "NoWarning/tutsuite.decl.h"
 #include "charmchild.decl.h"
 

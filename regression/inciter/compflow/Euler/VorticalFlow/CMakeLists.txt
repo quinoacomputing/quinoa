@@ -5,8 +5,7 @@
 
 add_regression_test(compflow_euler_vorticalflow ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES vortical_flow.q unitcube_1k.exo diag.std
-                               exodiff.cfg vortical_flow.std.exo
+                    INPUTFILES vortical_flow.q unitcube_1k.exo
                     ARGS -c vortical_flow.q -i unitcube_1k.exo -v
                     BIN_BASELINE vortical_flow.std.exo
                     BIN_RESULT out.e-s.0.1.0
@@ -18,8 +17,6 @@ add_regression_test(compflow_euler_vorticalflow ${INCITER_EXECUTABLE}
 add_regression_test(compflow_euler_vorticalflow_diagcg ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES vortical_flow_diagcg.q unitcube_1k.exo
-                               diag_diagcg.std
-                               exodiff.cfg vortical_flow_diagcg.std.exo
                     ARGS -c vortical_flow_diagcg.q -i unitcube_1k.exo -v
                     BIN_BASELINE vortical_flow_diagcg.std.exo
                     BIN_RESULT out.e-s.0.1.0
@@ -31,8 +28,6 @@ add_regression_test(compflow_euler_vorticalflow_diagcg ${INCITER_EXECUTABLE}
 add_regression_test(compflow_euler_vorticalflow_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES vortical_flow_dg.q unitcube_1k.exo
-                               diag_dg.std
-                               exodiff_dg.cfg vortical_flow_dg.std.exo
                     ARGS -c vortical_flow_dg.q -i unitcube_1k.exo -v
                     BIN_BASELINE vortical_flow_dg.std.exo
                     BIN_RESULT out.e-s.0.1.0
@@ -45,8 +40,6 @@ add_regression_test(compflow_euler_vorticalflow_dg ${INCITER_EXECUTABLE}
 add_regression_test(compflow_euler_vorticalflow_dg_lf ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES vortical_flow_dg_lf.q unitcube_1k.exo
-                               diag_dg_lf.std
-                               exodiff_dg.cfg vortical_flow_dg_lf.std.exo
                     ARGS -c vortical_flow_dg_lf.q -i unitcube_1k.exo -v
                     BIN_BASELINE vortical_flow_dg_lf.std.exo
                     BIN_RESULT out.e-s.0.1.0
@@ -59,8 +52,6 @@ add_regression_test(compflow_euler_vorticalflow_dg_lf ${INCITER_EXECUTABLE}
 add_regression_test(compflow_euler_vorticalflow_reord_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES vortical_flow_reord_dg.q unitcube_1k.exo
-                               diag_dg.std
-                               exodiff_dg.cfg vortical_flow_dg.std.exo
                     ARGS -c vortical_flow_reord_dg.q -i unitcube_1k.exo -v
                     BIN_BASELINE vortical_flow_dg.std.exo
                     BIN_RESULT out.e-s.0.1.0
@@ -70,17 +61,35 @@ add_regression_test(compflow_euler_vorticalflow_reord_dg ${INCITER_EXECUTABLE}
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg)
 
+add_regression_test(compflow_euler_vorticalflow_dgp1 ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES vortical_flow_dgp1.q unitcube_1k.exo
+                    ARGS -c vortical_flow_dgp1.q -i unitcube_1k.exo -v
+                    BIN_BASELINE vortical_flow_dgp1.std.exo
+                    BIN_RESULT out.e-s.0.1.0
+                    BIN_DIFF_PROG_CONF exodiff_dg.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_dgp1.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg)
+
+add_regression_test(compflow_euler_vorticalflow_dgp1_lf ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES vortical_flow_dgp1_lf.q unitcube_1k.exo
+                    ARGS -c vortical_flow_dgp1_lf.q -i unitcube_1k.exo -v
+                    BIN_BASELINE vortical_flow_dgp1_lf.std.exo
+                    BIN_RESULT out.e-s.0.1.0
+                    BIN_DIFF_PROG_CONF exodiff_dg.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_dgp1_lf.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg)
+
 # Parallel + no virtualization
 
 add_regression_test(compflow_euler_vorticalflow ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES vortical_flow.q unitcube_1k.exo
-                               exodiff.cfg
-                               diag.std
-                               vortical_flow_pe4.std.exo.0
-                               vortical_flow_pe4.std.exo.1
-                               vortical_flow_pe4.std.exo.2
-                               vortical_flow_pe4.std.exo.3
                     ARGS -c vortical_flow.q -i unitcube_1k.exo -v
                     BIN_BASELINE vortical_flow_pe4.std.exo.0
                                  vortical_flow_pe4.std.exo.1
@@ -101,16 +110,6 @@ add_regression_test(compflow_euler_vorticalflow ${INCITER_EXECUTABLE}
 add_regression_test(compflow_euler_vorticalflow_u0.5 ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES vortical_flow.q unitcube_1k.exo
-                               exodiff.cfg
-                               diag.std
-                               vortical_flow_pe4_u0.5.std.exo.0
-                               vortical_flow_pe4_u0.5.std.exo.1
-                               vortical_flow_pe4_u0.5.std.exo.2
-                               vortical_flow_pe4_u0.5.std.exo.3
-                               vortical_flow_pe4_u0.5.std.exo.4
-                               vortical_flow_pe4_u0.5.std.exo.5
-                               vortical_flow_pe4_u0.5.std.exo.6
-                               vortical_flow_pe4_u0.5.std.exo.7
                     ARGS -c vortical_flow.q -i unitcube_1k.exo -v -u 0.5
                     BIN_BASELINE vortical_flow_pe4_u0.5.std.exo.0
                                  vortical_flow_pe4_u0.5.std.exo.1
@@ -137,15 +136,6 @@ add_regression_test(compflow_euler_vorticalflow_u0.5 ${INCITER_EXECUTABLE}
 add_regression_test(compflow_euler_vorticalflow_diagcg_u0.5 ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES vortical_flow_diagcg.q unitcube_1k.exo
-                               diag_diagcg.std exodiff.cfg
-                               vortical_flow_diagcg_pe4_u0.5.std.exo.0
-                               vortical_flow_diagcg_pe4_u0.5.std.exo.1
-                               vortical_flow_diagcg_pe4_u0.5.std.exo.2
-                               vortical_flow_diagcg_pe4_u0.5.std.exo.3
-                               vortical_flow_diagcg_pe4_u0.5.std.exo.4
-                               vortical_flow_diagcg_pe4_u0.5.std.exo.5
-                               vortical_flow_diagcg_pe4_u0.5.std.exo.6
-                               vortical_flow_diagcg_pe4_u0.5.std.exo.7
                     ARGS -c vortical_flow_diagcg.q -i unitcube_1k.exo -v -u 0.5
                     BIN_BASELINE vortical_flow_diagcg_pe4_u0.5.std.exo.0
                                  vortical_flow_diagcg_pe4_u0.5.std.exo.1
@@ -175,45 +165,6 @@ add_regression_test(compflow_euler_vorticalflow_diagcg_u0.9_migr
                     ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES vortical_flow_diagcg.q unitcube_1k.exo
-                               diag_diagcg.std exodiff.cfg
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.0
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.1
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.2
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.3
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.4
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.5
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.6
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.7
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.8
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.9
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.10
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.11
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.12
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.13
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.14
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.15
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.16
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.17
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.18
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.19
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.20
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.21
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.22
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.23
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.24
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.25
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.26
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.27
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.28
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.29
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.30
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.31
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.32
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.33
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.34
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.35
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.36
-                               vortical_flow_diagcg_pe4_u0.9.std.exo.37
                     ARGS -c vortical_flow_diagcg.q -i unitcube_1k.exo -v -u 0.9
                          +balancer RandCentLB +LBDebug 3 +cs
                     BIN_BASELINE vortical_flow_diagcg_pe4_u0.9.std.exo.0

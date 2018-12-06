@@ -4,7 +4,7 @@
 if (HAS_MKL)
   add_regression_test(Dirichlet_mkl ${WALKER_EXECUTABLE}
                       NUMPES 1
-                      INPUTFILES dir_mkl.q stat.txt.std dir.ndiff.cfg
+                      INPUTFILES dir_mkl.q
                       ARGS -c dir_mkl.q -v
                       TEXT_BASELINE stat.txt.std
                       TEXT_RESULT stat.txt
@@ -13,7 +13,7 @@ if (HAS_MKL)
 
   add_regression_test(Dirichlet_mkl ${WALKER_EXECUTABLE}
                       NUMPES 2
-                      INPUTFILES dir_mkl.q stat.txt.std dir.ndiff.cfg
+                      INPUTFILES dir_mkl.q
                       ARGS -c dir_mkl.q -v
                       TEXT_BASELINE stat.txt.std
                       TEXT_RESULT stat.txt
@@ -21,7 +21,7 @@ if (HAS_MKL)
 
   add_regression_test(Dirichlet_mkl ${WALKER_EXECUTABLE}
                       NUMPES 4
-                      INPUTFILES dir_mkl.q stat.txt.std dir.ndiff.cfg
+                      INPUTFILES dir_mkl.q
                       ARGS -c dir_mkl.q -v
                       TEXT_BASELINE stat.txt.std
                       TEXT_RESULT stat.txt
@@ -29,7 +29,7 @@ if (HAS_MKL)
 
   add_regression_test(Dirichlet_mkl_u0.9 ${WALKER_EXECUTABLE}
                       NUMPES 4
-                      INPUTFILES dir_mkl.q stat.txt.std dir.ndiff.cfg
+                      INPUTFILES dir_mkl.q
                       ARGS -c dir_mkl.q -v -u 0.9
                       TEXT_BASELINE stat.txt.std
                       TEXT_RESULT stat.txt
@@ -39,7 +39,7 @@ endif()
 if (HAS_RNGSSE2)
   add_regression_test(Dirichlet_rngsse ${WALKER_EXECUTABLE}
                       NUMPES 1
-                      INPUTFILES dir_rngsse.q stat.txt.std dir.ndiff.cfg
+                      INPUTFILES dir_rngsse.q
                       ARGS -c dir_rngsse.q -v
                       TEXT_BASELINE stat.txt.std
                       TEXT_RESULT stat.txt
@@ -47,7 +47,7 @@ if (HAS_RNGSSE2)
 
   add_regression_test(Dirichlet_rngsse ${WALKER_EXECUTABLE}
                       NUMPES 2
-                      INPUTFILES dir_rngsse.q stat.txt.std dir.ndiff.cfg
+                      INPUTFILES dir_rngsse.q
                       ARGS -c dir_rngsse.q -v
                       TEXT_BASELINE stat.txt.std
                       TEXT_RESULT stat.txt
@@ -55,7 +55,7 @@ if (HAS_RNGSSE2)
 
   add_regression_test(Dirichlet_rngsse ${WALKER_EXECUTABLE}
                       NUMPES 4
-                      INPUTFILES dir_rngsse.q stat.txt.std dir.ndiff.cfg
+                      INPUTFILES dir_rngsse.q
                       ARGS -c dir_rngsse.q -v
                       TEXT_BASELINE stat.txt.std
                       TEXT_RESULT stat.txt
@@ -63,7 +63,7 @@ if (HAS_RNGSSE2)
 
   add_regression_test(Dirichlet_rngsse_u0.9 ${WALKER_EXECUTABLE}
                       NUMPES 4
-                      INPUTFILES dir_rngsse.q stat.txt.std dir.ndiff.cfg
+                      INPUTFILES dir_rngsse.q
                       ARGS -c dir_rngsse.q -v -u 0.9
                       TEXT_BASELINE stat.txt.std
                       TEXT_RESULT stat.txt
@@ -72,7 +72,7 @@ endif()
 
 add_regression_test(Dirichlet ${WALKER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES dir.q stat.txt.std dir.ndiff.cfg
+                    INPUTFILES dir.q
                     ARGS -c dir.q -v
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt
@@ -80,7 +80,7 @@ add_regression_test(Dirichlet ${WALKER_EXECUTABLE}
 
 add_regression_test(Dirichlet ${WALKER_EXECUTABLE}
                     NUMPES 2
-                    INPUTFILES dir.q stat.txt.std dir.ndiff.cfg
+                    INPUTFILES dir.q
                     ARGS -c dir.q -v
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt
@@ -88,7 +88,7 @@ add_regression_test(Dirichlet ${WALKER_EXECUTABLE}
 
 add_regression_test(Dirichlet ${WALKER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES dir.q stat.txt.std dir.ndiff.cfg
+                    INPUTFILES dir.q
                     ARGS -c dir.q -v
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt
@@ -96,7 +96,7 @@ add_regression_test(Dirichlet ${WALKER_EXECUTABLE}
 
 add_regression_test(Dirichlet_u0.9 ${WALKER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES dir.q stat.txt.std dir.ndiff.cfg
+                    INPUTFILES dir.q
                     ARGS -c dir.q -v -u 0.9
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt

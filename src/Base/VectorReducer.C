@@ -7,9 +7,16 @@
 */
 // *****************************************************************************
 
+#include <cstddef>
+#include <iterator>
+#include <type_traits>
+
 #include "VectorReducer.h"
 #include "Make_unique.h"
 #include "ContainerUtil.h"
+
+#include "NoWarning/charm++.h"
+#include "NoWarning/pup_stl.h"
 
 namespace tk {
 

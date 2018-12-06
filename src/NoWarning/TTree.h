@@ -16,6 +16,8 @@
   #pragma clang diagnostic ignored "-Wconversion"
   #pragma clang diagnostic ignored "-Wold-style-cast"
   #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+  #pragma clang diagnostic ignored "-Wdeprecated"
+  #pragma clang diagnostic ignored "-Wnewline-eof"
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 1 )

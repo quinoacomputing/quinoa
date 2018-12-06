@@ -528,6 +528,28 @@ struct gaussian_method_info {
 using gaussian_method =
   keyword< gaussian_method_info, TAOCPP_PEGTL_STRING("gaussian_method") >;
 
+struct gaussianmv_method_info {
+  static std::string name() { return "multi-variate Gaussian method"; }
+  static std::string shortDescription() { return
+    "Select an Intel MKL multi-variate Gaussian RNG method"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the method used to generate multi-variate
+    Gaussian random numbers using the Intel Math Kernel Library (MKL) random
+    number generators. Valid options are 'boxmuller', 'boxmuller2', and 'icdf'.
+    For more info on MKL see https://software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
+  }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + boxmuller::string() + "\' | \'"
+                  + boxmuller2::string() + "\' | \'"
+                  + icdf::string() + '\'';
+    }
+  };
+};
+using gaussianmv_method =
+  keyword< gaussianmv_method_info, TAOCPP_PEGTL_STRING("gaussianmv_method") >;
+
 struct cja_info {
   static std::string name() { return "CJA"; }
   static std::string shortDescription() { return
@@ -1284,6 +1306,35 @@ struct jointgaussian_info {
 using jointgaussian =
   keyword< jointgaussian_info, TAOCPP_PEGTL_STRING("jointgaussian") >;
 
+struct jointcorrgaussian_info {
+  using code = Code< C >;
+  static std::string name() { return "correlated Gaussian"; }
+  static std::string shortDescription() { return
+    "Select the joint correlated Gaussian initialization policy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the joint correlated Gaussian
+    initialization policy. The initialization policy is used to specify how the
+    initial conditions are
+    set at t = 0 before time-integration. Example: "init zero", which selects
+    zero initialization policy, which puts zeros in memory. Note that this
+    option may behave differently depending on the particular equation or
+    physical model. For an example, see tk::InitPolicies in
+    DiffEq/InitPolicy.h for valid options.) The joint correlated Gaussian
+    initialization policy can be used to prescribe a joint correlated Gaussian
+    on the sample space with a given covariance matrix. Example:
+     "init jointcorrgaussian
+      icjointgaussian
+        mean 0.0 0.5 1.0 end
+        cov
+          4.0  2.5   1.1
+              32.0   5.6
+                    23.0
+        end
+      end")"; }
+};
+using jointcorrgaussian =
+  keyword< jointcorrgaussian_info, TAOCPP_PEGTL_STRING("jointcorrgaussian") >;
+
 struct jointbeta_info {
   using code = Code< B >;
   static std::string name() { return "beta"; }
@@ -1350,6 +1401,8 @@ struct init_info {
                   + zero::string() + "\' | \'"
                   + jointdelta::string() + "\' | \'"
                   + jointbeta::string() + "\' | \'"
+                  + jointgaussian::string() + "\' | \'"
+                  + jointcorrgaussian::string() + "\' | \'"
                   + jointgamma::string() + '\'';
     }
   };
@@ -1998,7 +2051,12 @@ struct sde_sigmasq_info {
   static std::string longDescription() { return
     R"(This keyword is used to specify a vector of real numbers used to
     parameterize a system of stochastic differential equations. Example:
-    "sigmasq 5.0 2.0 3.0 end". The length of the vector depends on the
+       "sigmasq
+          4.0  2.5   1.1
+              32.0   5.6
+                    23.0
+        end"
+    The length of the vector depends on the
     particular type of SDE system and is controlled by the preceding keyword
     'ncomp'.)"; }
   struct expect {
@@ -2007,6 +2065,28 @@ struct sde_sigmasq_info {
   };
 };
 using sde_sigmasq = keyword< sde_sigmasq_info, TAOCPP_PEGTL_STRING("sigmasq") >;
+
+struct sde_cov_info {
+  static std::string name() { return "cov"; }
+  static std::string shortDescription() { return
+    R"(Set SDE parameter(s) cov)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of real numbers used to
+    parameterize a system of stochastic differential equations. Example:
+       "cov
+          4.0  2.5   1.1
+              32.0   5.6
+                    23.0
+        end"
+    The length of the vector depends on the
+    particular type of SDE system and is controlled by the preceding keyword
+    'ncomp'.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using sde_cov = keyword< sde_cov_info, TAOCPP_PEGTL_STRING("cov") >;
 
 struct sde_theta_info {
   static std::string name() { return "theta"; }
@@ -2039,6 +2119,22 @@ struct sde_mu_info {
   };
 };
 using sde_mu = keyword< sde_mu_info, TAOCPP_PEGTL_STRING("mu") >;
+
+struct sde_mean_info {
+  static std::string name() { return "mean"; }
+  static std::string shortDescription() { return
+    R"(Set SDE parameter(s) mean)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of real numbers used to
+    parameterize a system of stochastic differential equations. Example:
+    "mean 5.0 2.0 3.0 end". The length of the vector depends on the particular
+    type of SDE system and is controlled by the preceding keyword 'ncomp'.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using sde_mean = keyword< sde_mean_info, TAOCPP_PEGTL_STRING("mean") >;
 
 struct sde_T_info {
   static std::string name() { return "T"; }
@@ -2167,6 +2263,30 @@ struct icgaussian_info {
     keyword jointgaussian and gaussian.)"; }
 };
 using icgaussian = keyword< icgaussian_info, TAOCPP_PEGTL_STRING("icgaussian") >;
+
+struct icjointgaussian_info {
+  static std::string name() { return "icjointgaussian"; }
+  static std::string shortDescription() { return R"(Introduce an
+    icjointgaussian...end block used to configure a joint Gaussian distribution
+    with a covariance matrix)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an icjointgaussian...end block in which
+    a multi-variate joint Gaussian distribution is configured for the
+    jointgaussian initialization policy. Example: "init jointgaussian" - select
+    jointgaussian init-policy, "
+      icjointgaussian
+        mean 0.0 0.5 1.0 end
+        cov
+          4.0  2.5   1.1
+              32.0   5.6
+                    23.0
+        end
+      end" - prescribes a tri-variate joint Gaussian distribution with means
+      0.0, 0.5 and 1.0, and a covariance matrix which must be symmetric positive
+    definite. See also the help on keyword jointgaussian and gaussian.)"; }
+};
+using icjointgaussian =
+  keyword< icjointgaussian_info, TAOCPP_PEGTL_STRING("icjointgaussian") >;
 
 struct gammapdf_info {
   static std::string name() { return "gammapdf"; }
@@ -3571,6 +3691,23 @@ struct sod_shocktube_info {
 using sod_shocktube =
   keyword< sod_shocktube_info, TAOCPP_PEGTL_STRING("sod_shocktube") >;
 
+struct sedov_blastwave_info {
+  using code = Code< B >;
+  static std::string name() { return "Sedov blast-wave"; }
+  static std::string shortDescription() { return
+    "Select the Sedov blast-wave test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Sedov blast-wave test problem. The
+    purpose of this test problem is to test the correctness of the
+    approximate Riemann solver and its strong shock and interface capturing
+    capabilities. Example: "problem sedov_blastwave".)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using sedov_blastwave =
+  keyword< sedov_blastwave_info, TAOCPP_PEGTL_STRING("sedov_blastwave") >;
+
 struct problem_info {
   using code = Code< r >;
   static std::string name() { return "Test problem"; }
@@ -4664,40 +4801,50 @@ struct matcg_info {
   static std::string name()
   { return "consistent-mass continuous Galerkin + Lax-Wendroff"; }
   static std::string shortDescription() { return "Select continuous Galerkin "
-    "discretization + Lax Wendroff with a matrix solver"; }
+    "+ Lax Wendroff with consistent-mass matrix LHS"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the consistent-mass continuous Galerkin
-    (CG) finite element spatial discretiztaion used in inciter. CG is combined
-    with a Lax-Wendroff scheme for time discretization and flux-corrected
-    transport (FCT) for treating discontinuous solutions. This option selects
-    the scheme that stores the left-hand side matrix as a compressed sparse row
-    (CSR) storage consistent-mass matrix and uses a linear solver. See
-    Control/Inciter/Options/Scheme.h for other valid options.)"; }
+    R"(This keyword is used to select the consistent-mass matrix continuous
+    Galerkin (CG) finite element spatial discretiztaion used in inciter. CG is
+    combined with a Lax-Wendroff scheme for time discretization and
+    flux-corrected transport (FCT) for treating discontinuous solutions. This
+    option selects the scheme that stores the left-hand side matrix as a
+    compressed sparse row (CSR) storage consistent-mass matrix and uses a linear
+    solver. See Control/Inciter/Options/Scheme.h for other valid options.)"; }
 };
 using matcg = keyword< matcg_info, TAOCPP_PEGTL_STRING("matcg") >;
 
 struct diagcg_info {
   static std::string name()
-  { return "lumped-mass continuous Galerkin + Lax-Wendroff"; }
+  { return "lumped-mass matrix continuous Galerkin + Lax-Wendroff"; }
   static std::string shortDescription() { return "Select continuous Galerkin "
-    "discretization + Lax Wendroff with a lumped mass matrix as the left hand "
-    "side matrix"; }
+    "+ Lax Wendroff with a lumped-mass matrix LHS"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the lumped-mass continuous Galerkin (CG)
-    finite element spatial discretiztaion used in inciter. CG is combined with a
-    Lax-Wendroff scheme for time discretization and flux-corrected transport
-    (FCT) for treating discontinuous solutions. This option selects the scheme
-    that stores the left-hand side matrix lumped, i.e., only the diagonal
-    elements stored and thus does not require a linear solver. See
+    R"(This keyword is used to select the lumped-mass matrix continuous Galerkin
+    (CG) finite element spatial discretiztaion used in inciter. CG is combined
+    with a Lax-Wendroff scheme for time discretization and flux-corrected
+    transport (FCT) for treating discontinuous solutions. This option selects
+    the scheme that stores the left-hand side matrix lumped, i.e., only the
+    diagonal elements stored and thus does not require a linear solver. See
     Control/Inciter/Options/Scheme.h for other valid options.)"; }
 };
 using diagcg = keyword< diagcg_info, TAOCPP_PEGTL_STRING("diagcg") >;
 
+struct alecg_info {
+  static std::string name() { return "ALE-CG with RK"; }
+  static std::string shortDescription() { return "Select continuous Galerkin "
+    "with ALE + Runge-Kutta"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the continuous Galerkin finite element
+    scheme in the arbitrary Lagrangian-Eulerian (ALE) reference frame combined
+    with Runge-Kutta (RK) time stepping. See Control/Inciter/Options/Scheme.h
+    for other valid options.)"; }
+};
+using alecg = keyword< alecg_info, TAOCPP_PEGTL_STRING("alecg") >;
+
 struct dg_info {
   static std::string name() { return "DG(P0) + RK"; }
   static std::string shortDescription() { return
-    "Select 1st-order accurate discontinuous Galerkin discretization + "
-    "Runge-Kutta"; }
+    "Select 1st-order discontinuous Galerkin discretization + Runge-Kutta"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the first-order accurate discontinuous
     Galerkin, DG(P0), spatial discretiztaion used in Inciter. As this is first
@@ -4711,8 +4858,7 @@ using dg = keyword< dg_info, TAOCPP_PEGTL_STRING("dg") >;
 struct dgp1_info {
   static std::string name() { return "DG(P1) + RK"; }
   static std::string shortDescription() { return
-    "Select 2nd-order accurate discontinuous Galerkin discretization + "
-    "Runge-Kutta"; }
+    "Select 2nd-order discontinuous Galerkin discretization + Runge-Kutta"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the second-order accurate discontinuous
     Galerkin, DG(P1), spatial discretiztaion used in Inciter.Selecting this

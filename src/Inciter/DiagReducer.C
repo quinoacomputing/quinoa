@@ -7,10 +7,13 @@
 */
 // *****************************************************************************
 
+#include <stddef.h>
+#include <type_traits>
+
 #include "DiagReducer.h"
 #include "Make_unique.h"
-#include "ContainerUtil.h"
 #include "Diagnostics.h"
+#include "Exception.h"
 
 namespace inciter {
 

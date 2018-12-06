@@ -39,7 +39,7 @@ include(BuildShared)
 # This must precede all add_executable() calls adding executables to link
 # statically.
 if (NOT BUILD_SHARED_LIBS)
-  set(CMAKE_EXE_LINKER_FLAGS "-static")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 endif()
 
@@ -97,6 +97,12 @@ endif()
 if (EXISTS ${TPL_DIR}/include)
   set(TPL_INCLUDE_DIR ${TPL_DIR}/include)
   message(STATUS "Third-party library dir: " ${TPL_DIR})
+endif()
+
+# Detect compiler version
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
+    CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  include(DetectCompilerVersion)
 endif()
 
 # Include third-party libraries configuration
@@ -207,7 +213,7 @@ macro (add_c_compiler_flag flag)
 endmacro (add_c_compiler_flag)
 
 # Compiler-specific settings
-if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
 
   # Include function that allows to set standard C++ library
   include(libstdcxx)
@@ -296,9 +302,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
   # Linker flags for gcc
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wno-unused-parameter")
-
-  # Detect compiler version
-  include(DetectCXXversion)
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 

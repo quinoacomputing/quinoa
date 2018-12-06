@@ -21,6 +21,12 @@
   #include "MKLRNG.h"
 #endif
 
+#ifdef HAS_MKL
+  #include <mkl_lapacke.h>
+#else
+  #include <lapacke.h>
+#endif
+
 #ifdef HAS_RNGSSE2
   #include <gm19.h>
   #include <gm29.h>
@@ -134,6 +140,56 @@ struct RNG_common {
     test_stats( numbers, 0.0, 1.0, 0.0, 0.0 );
   }
 
+  // Compute the Cholesky decomposition of a covariance matrix
+  //! \tparam D Number of dimensions of covariance matrix
+  //! \param[in] C Covariance matrix to decompose, only the upper diagonal and
+  //!   the diagonal are stored as the matrix is assumed to be symmetric (and
+  //!   positive definite)
+  //! \return Choleksy decomposition (upper triangle only)
+  template< std::size_t D >
+  static std::array< double, D*(D+1)/2 >
+  cholesky( const std::array< double, D*(D+1)/2 >& C ) {
+    auto cov = C;
+    lapack_int ndim = static_cast< lapack_int >( D );
+    #ifndef NDEBUG
+    lapack_int info =
+    #endif
+      LAPACKE_dpptrf( LAPACK_ROW_MAJOR, 'U', ndim, cov.data() );
+    Assert( info == 0, "Error in Cholesky-decomposition" );
+    return cov;
+  }
+
+  //! Test multi-variate Gaussian distribution of a random number generator
+  //! \tparam D Number of dimensions of covariance matrix
+  //! \tparam rng Random number generator class type whose instance to test
+  //! \param[in] r RNG to test
+  //! \param[in] mean Vector of means
+  //! \param[in] C Upper triangle of the covariance matrix
+  //! \details In real code the member function used to generate random numbers
+  //!   are called by different threads, but here we pass a different thread ID
+  //!   (first argument to the member function called) will exercise multiple
+  //!   streams in serial, i.e., emulate multi-threaded RNG on a single thread.
+  //!   This is done here this way because the unit test harness deals out each
+  //!   test to a PE, thus calling the generators from real threads would create
+  //!   contention.
+  template< std::size_t D, class rng >
+  static void test_gaussianmv( const rng& r,
+                               const std::array< double, D >& mean,
+                               const std::array< double, D*(D+1)/2 >& C )
+  {
+    const auto n = r.nthreads();
+    const std::size_t num = 1000000;
+    // Compute Cholesky decomposition of covariance matrix
+    auto cov = cholesky< D >( C );
+    // Generate joint Gaussian random vectors of D dimension
+    std::vector< double > numbers( num*D );
+    for (std::size_t i=0; i<n; ++i)
+      r.gaussianmv( static_cast<int>(i), num/n, D, mean.data(), cov.data(),
+                    &numbers[i*num*D/n] );
+    // Test first two moments
+    test_statsmv< D >( numbers, mean, C );
+  }
+
   //! Test beta distribution of a random number generator
   //! \param[in] r RNG to test
   //! \details In real code the member function used to generate random numbers
@@ -206,6 +262,11 @@ struct RNG_common {
   }
 
   // Test the first four moments of random numbers passed in
+  //! \param[in] numbers Random numbers to test
+  //! \param[in] correct_mean Baseline mean to compare to
+  //! \param[in] correct_variance Baseline variance to compare to
+  //! \param[in] correct_skewness Baseline skewness to compare to
+  //! \param[in] correct_excess_kurtosis Baseline excess kurtosis to compare to
   static void test_stats( const std::vector< double >& numbers,
                           double correct_mean,
                           double correct_variance,
@@ -230,6 +291,51 @@ struct RNG_common {
                    s[2]/std::pow(s[1],1.5), correct_skewness, precision );
     ensure_equals( "excess kurtosis inaccurate",
                    s[3]/s[1]/s[1]-3.0, correct_excess_kurtosis, precision );
+  }
+
+  // Test the first the two moments of multi-variate random numbers passed in
+  //! \tparam D Number of dimensions of sample space in multi-variate
+  //!    distribution
+  //! \param[in] numbers Random vectors to test, size: num*D, vector size: D
+  //! \param[in] correct_mean Baseline mean vector to compare to
+  //! \param[in] correct_cov Baseline covariance matrix to compare to
+  template< std::size_t D >
+  static void test_statsmv(
+     const std::vector< double >& numbers,
+     const std::array< double, D >& correct_mean,
+     const std::array< double, D*(D+1)/2 >& correct_cov )
+  {
+    const double precision = 0.05;
+    const auto N = numbers.size() / D;
+
+    // Compute and test means
+    std::array< double, D > mean;
+    for (std::size_t i=0; i<D; ++i) {
+      mean[i] = 0.0;
+      for (std::size_t j=0; j<N; ++j) mean[i] += numbers[j*D+i];
+      mean[i] /= N;
+      ensure_equals( "mean inaccurate", mean[i], correct_mean[i],
+                     std::abs(correct_mean[i])*precision );
+    }
+
+    // Compute and test covariance matrix
+    std::array< double, D*(D+1)/2 > cov;
+    cov.fill( 0.0 );
+    std::size_t e = 0;
+    for (std::size_t r=0; r<D; ++r)
+      for (std::size_t c=0; c<D; ++c) {
+        if (r<=c) {
+          for (std::size_t j=0; j<N; ++j)
+            cov[e] += (numbers[j*D+r] - mean[r]) * (numbers[j*D+c] - mean[c]);
+          ++e;
+        }
+      }
+    for (std::size_t c=0; c<cov.size(); ++c) {
+      cov[c] /= N;
+      ensure_equals( "covariance matrix entry " + std::to_string(c) +
+                     " inaccurate", cov[c], correct_cov[c],
+                     std::abs(correct_cov[c])*precision );
+    }
   }
 
   static constexpr double eps = 1.0e-9;

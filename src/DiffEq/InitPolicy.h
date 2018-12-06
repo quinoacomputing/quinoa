@@ -47,6 +47,12 @@
 
 #include <brigand/sequences/list.hpp>
 
+#ifdef HAS_MKL
+  #include <mkl_lapacke.h>
+#else
+  #include <lapacke.h>
+#endif
+
 #include "Macro.h"
 #include "Types.h"
 #include "Particles.h"
@@ -175,6 +181,7 @@ struct InitBeta {
 };
 
 //! Gaussian initialization policy: generate samples from a joint Gaussian PDF
+//! \note No correlations supported. For correlations, see jointCorrGaussian
 struct InitGaussian {
 
   //! Initialize particle properties (zero)
@@ -217,6 +224,52 @@ struct InitGaussian {
   static ctr::InitPolicyType type() noexcept
   { return ctr::InitPolicyType::JOINTGAUSSIAN; }
 };
+
+//! \brief Gaussian initialization policy: generate samples from a joint
+//!   correlated Gaussian PDF
+struct InitCorrGaussian {
+
+  //! Initialize particle properties (zero)
+  template< class eq >
+  static void init( const ctr::InputDeck& deck,
+                    const tk::RNG& rng,
+                    int stream,
+                    tk::Particles& particles,
+                    tk::ctr::ncomp_type e,
+                    tk::ctr::ncomp_type ncomp,
+                    tk::ctr::ncomp_type offset )
+  {
+    using ncomp_t = kw::ncomp::info::expect::type;
+
+    const auto& mean = deck.template get< tag::param, eq, tag::mean >().at(e);
+    Assert( mean.size() == ncomp, "Size mismatch" );
+    const auto& cov_ = deck.template get< tag::param, eq, tag::cov >().at(e);
+    Assert( cov_.size() == ncomp*(ncomp+1)/2, "Size mismatch" );
+
+    // Compute covariance matrix using Cholesky-decompositionm, see Intel MKL
+    // example: vdrnggaussianmv.c, and UnitTest/tests/RNG/TestRNG.h
+    auto cov = cov_;
+    lapack_int n = static_cast< lapack_int >( ncomp );
+    #ifndef NDEBUG
+    lapack_int info =
+    #endif
+      LAPACKE_dpptrf( LAPACK_ROW_MAJOR, 'U', n, cov.data() );
+    Assert( info == 0, "Error in Cholesky-decomposition" );
+
+    // Generate multi-variate Gaussian random numbers for all particles with
+    // means and covariance matrix given by user
+    for (ncomp_t p=0; p<particles.nunk(); ++p) {
+      std::vector< double > r( ncomp );
+      rng.gaussianmv( stream, 1, ncomp, mean.data(), cov.data(), r.data() );
+      for (ncomp_t c=0; c<ncomp; ++c)
+        particles( p, c, offset ) = r[c];
+    }
+  }
+
+  static ctr::InitPolicyType type() noexcept
+  { return ctr::InitPolicyType::JOINTCORRGAUSSIAN; }
+};
+
 
 //! Gamma initialization policy: generate samples from a joint gamma PDF
 struct InitGamma {
@@ -261,6 +314,7 @@ using InitPolicies = brigand::list< InitRaw
                                   , InitDelta
                                   , InitBeta
                                   , InitGaussian
+                                  , InitCorrGaussian
                                   , InitGamma
                                   >;
 

@@ -102,6 +102,27 @@ class RNGSSE {
       for (ncomp_t i=0; i<num; ++i) r[i] = gauss_dist( generator );
     }
 
+    //! \brief Multi-variate Gaussian RNG: Generate multi-variate Gaussian
+    //!    random numbers
+    //! \param[in] tid Thread (or more precisely stream) ID
+    //! \param[in] num Number of RNGs to generate
+    //! \param[in] d Dimension d ( d ≥ 1) of output random vectors
+    //! \param[in] mean Mean vector of dimension d
+    //! \param[in] cov Lower triangle of covariance matrix, stored as a vector
+    //!   of length d(d+1)/2
+    //! \param[in,out] r Pointer to memory to write the random numbers to
+    //! \warning Not implemented!
+    void gaussianmv( int tid, ncomp_t num, ncomp_t d, const double* const mean,
+                     const double* const cov, double* r ) const
+    {
+      IGNORE(tid);
+      IGNORE(num);
+      IGNORE(d);
+      IGNORE(mean);
+      IGNORE(cov);
+      IGNORE(r);
+    }
+
     //! Beta RNG: Generate beta random numbers
     //! \param[in] tid Thread (or more precisely stream) ID
     //! \param[in] num Number of RNGs to generate

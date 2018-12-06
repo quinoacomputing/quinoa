@@ -14,18 +14,15 @@
 */
 // *****************************************************************************
 
-#include <algorithm>
+#include <numeric>
 
 #include "Partitioner.h"
 #include "DerivedData.h"
 #include "Reorder.h"
 #include "MeshReader.h"
-#include "Around.h"
 #include "CGPDE.h"
 #include "DGPDE.h"
-#include "AMR/Error.h"
 #include "Inciter/Options/Scheme.h"
-#include "Inciter/Options/AMRInitial.h"
 #include "UnsMesh.h"
 #include "ContainerUtil.h"
 #include "Callback.h"

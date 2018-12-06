@@ -29,7 +29,7 @@ namespace tk {
 //!   that not only these mappings are important, but also the order of the
 //!   nodes within the triplets as this specific order also defines the outwards
 //!   normal of each face.
-const std::array< std::array< std::size_t, 3 >, 4 >
+const std::array< UnsMesh::Face, 4 >
   lpofa{{ {{1,2,3}}, {{2,0,3}}, {{3,0,1}}, {{0,2,1}} }};
 
 //! Compute number of points (nodes) in mesh from connectivity

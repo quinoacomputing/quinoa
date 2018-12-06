@@ -12,7 +12,7 @@
 #ifndef QuinoaConfig_h
 #define QuinoaConfig_h
 
-#include <string>
+#include <iosfwd>
 
 namespace tk {
  
@@ -36,6 +36,9 @@ namespace tk {
 #cmakedefine HAS_ROOT
 #cmakedefine HAS_BACKWARD
 #cmakedefine HAS_OMEGA_H
+
+// Executables optional
+#cmakedefine ENABLE_INCITER
 
 // Backward-cpp config
 #cmakedefine01 BACKWARD_HAS_UNWIND

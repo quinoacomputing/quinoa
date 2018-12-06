@@ -74,6 +74,7 @@ class InputDeck : public tk::Control<
                                  , kw::mkl_nondeterm
                                  , kw::uniform_method
                                  , kw::gaussian_method
+                                 , kw::gaussianmv_method
                                  , kw::beta_method
                                  , kw::standard
                                  , kw::accurate

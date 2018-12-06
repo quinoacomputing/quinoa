@@ -17,9 +17,9 @@
 #include <utility>
 #include <vector>
 
-#include "QEndian.h"
 #include "UnsMesh.h"
 #include "GmshMeshReader.h"
+#include "GmshMeshIO.h"
 #include "Reorder.h"
 #include "StrConvUtil.h"
 

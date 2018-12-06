@@ -8,6 +8,8 @@
 */
 // *****************************************************************************
 
+#include <cstddef>
+
 #include "Exception.h"
 #include "Gradients.h"
 #include "Vector.h"

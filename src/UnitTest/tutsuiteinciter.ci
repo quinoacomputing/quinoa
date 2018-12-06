@@ -1,0 +1,45 @@
+// *****************************************************************************
+/*!
+  \file      src/UnitTest/tutsuiteinciter.ci
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \brief     Charm++ module interface file for Template Unit Test suite
+  \details   Charm++ module interface file for Template Unit Test suite,
+             including dependencies for inciter.
+*/
+// *****************************************************************************
+
+module tutsuiteinciter {
+
+  include "UnitTest/CmdLine/CmdLine.h";
+
+  // Note that chare TUTSuite depends on chare TUTTest and in turn TUTTest
+  // depends on TUTSuite (see also the interface file tuttest.ci). This is a
+  // mutual dependency and it is made to work with one of the chares (TUTTest)
+  // being a template chare. Note: if this extern module dependency is removed,
+  // the code still compiles but Charm++ generates the wrong code yielding
+  // segfaults. See also the Charm++ manual on more information on template
+  // chares.
+  extern module tuttestinciter;
+
+  // TUTSuite spawns chares defined in the modules defined below as extern. If
+  // this is not included, Charm++ generates bad code and valgrind detects
+  // memory errors as chares are fired up from unit tests inside TUTSuite.
+  extern module migrated_base;
+  extern module migrated_inciter;
+  extern module charmchild;
+  extern module charmtimer;
+  extern module linearmap;
+  extern module unsmeshmap;
+  extern module testarray;
+
+  namespace unittest {
+
+    chare TUTSuite {
+      entry TUTSuite( const ctr::CmdLine& cmdline );
+      entry [expedited] // expedited so one-liners are printed when tests finish
+        void evaluate( std::vector< std::string > status );
+    }
+
+  } // unittest::
+
+}

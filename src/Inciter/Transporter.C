@@ -528,7 +528,8 @@ Transporter::diagHeader()
   // Collect variables names for integral/diagnostics output
   std::vector< std::string > var;
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG)
+  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG ||
+      scheme == ctr::SchemeType::ALECG)
     for (const auto& eq : g_cgpde) varnames( eq, var );
   else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1)
     for (const auto& eq : g_dgpde) varnames( eq, var );
@@ -561,11 +562,13 @@ Transporter::comfinal()
 // *****************************************************************************
 // Reduction target indicating that communication maps have been setup
 // *****************************************************************************
+// [Discretization-specific communication maps]
 {
   CkStartLB();  // start load balancing
   m_progWork.end();
   m_scheme.setup( m_V );
 }
+// [Discretization-specific communication maps]
 
 void
 Transporter::vol()

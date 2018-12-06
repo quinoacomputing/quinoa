@@ -154,6 +154,34 @@ function(ADD_REGRESSION_TEST test_name executable)
   # Prefix executable and append NUMPES to test name
   set(test_name "${executable}:${test_name}_pe${NUMPES}")
 
+  # Construct and echo configuration for test being added
+  set(msg "Add regression test ${test_name} for ${executable}")
+  # Run all regression tests with quiescence detection
+  list(APPEND ARG_ARGS "-q")
+  if (ARG_ARGS)
+    string(REPLACE ";" " " ARGUMENTS "${ARG_ARGS}")
+    string(CONCAT msg "${msg}, args: '${ARGUMENTS}'")
+  endif()
+
+  # Set and create test run directory
+  set(workdir ${CMAKE_CURRENT_BINARY_DIR}/${test_name})
+  file(MAKE_DIRECTORY ${workdir})
+
+  # Create list of files required to softlink to build directory
+  set(reqfiles)
+  foreach(file IN LISTS ARG_TEXT_DIFF_PROG_CONF ARG_INPUTFILES ARG_TEXT_BASELINE ARG_BIN_BASELINE ARG_BIN_DIFF_PROG_CONF)
+    list(APPEND reqfiles "${CMAKE_CURRENT_SOURCE_DIR}/${file}")
+  endforeach()
+
+  # Softlink files required to build directory
+  foreach(target ${reqfiles})
+    set(LN_COMMAND "ln -sf ${target} ${workdir}")
+    exec_program(${LN_COMMAND} OUTPUT_VARIABLE ln_output RETURN_VALUE ln_retval)
+    if("${ln_retval}" GREATER 0)
+      message(FATAL_ERROR "Problem creating symlink from \"${target}\" to \"${workdir}\":\n${ln_output}")
+    endif()
+  endforeach()
+
   # Do sainity check on and prepare to pass as cmake script arguments the
   # filenames of text baseline(s) and text result(s)
   if(ARG_TEXT_BASELINE OR ARG_TEXT_RESULT)
@@ -226,34 +254,6 @@ function(ADD_REGRESSION_TEST test_name executable)
     # runner cmake script below
     string(REPLACE ";" " " ARG_BIN_DIFF_PROG_CONF "${ARG_BIN_DIFF_PROG_CONF}")
   endif()
-
-  # Construct and echo configuration for test being added
-  set(msg "Add regression test ${test_name} for ${executable}")
-  # Run all regression tests with quiescence detection
-  list(APPEND ARG_ARGS "-q")
-  if (ARG_ARGS)
-    string(REPLACE ";" " " ARGUMENTS "${ARG_ARGS}")
-    string(CONCAT msg "${msg}, args: '${ARGUMENTS}'")
-  endif()
-
-  # Set and create test run directory
-  set(workdir ${CMAKE_CURRENT_BINARY_DIR}/${test_name})
-  file(MAKE_DIRECTORY ${workdir})
-
-  # Create list of files required to softlink to build directory
-  set(reqfiles)
-  foreach(file ${ARG_INPUTFILES})
-    list(APPEND reqfiles "${CMAKE_CURRENT_SOURCE_DIR}/${file}")
-  endforeach()
-
-  # Softlink files required to build directory
-  foreach(target ${reqfiles})
-    set(LN_COMMAND "ln -sf ${target} ${workdir}")
-    exec_program(${LN_COMMAND} OUTPUT_VARIABLE ln_output RETURN_VALUE ln_retval)
-    if("${ln_retval}" GREATER 0)
-      message(FATAL_ERROR "Problem creating symlink from \"${target}\" to \"${workdir}\":\n${ln_output}")
-    endif()
-  endforeach()
 
   # Add the test. See test_runner.cmake for documentation of the arguments.
   add_test(NAME ${test_name}
