@@ -6,8 +6,6 @@
 add_regression_test(shear_centered_diffonly ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES shear_diffonly.q shear_centered_12k.exo
-                               exodiff.cfg shear_centered_diffonly.std.exo
-                               shear_centered_diffonly.diag.std
                     ARGS -c shear_diffonly.q -i shear_centered_12k.exo -v
                     BIN_BASELINE shear_centered_diffonly.std.exo
                     BIN_RESULT out.e-s.0.1.0
@@ -19,8 +17,6 @@ add_regression_test(shear_centered_diffonly ${INCITER_EXECUTABLE}
 add_regression_test(shear_centered_diffonly_nofct ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES shear_diffonly_nofct.q shear_centered_12k.exo
-                               exodiff.cfg shear_centered_diffonly_nofct.std.exo
-                               shear_centered_diffonly_nofct.diag.std
                     ARGS -c shear_diffonly_nofct.q -i shear_centered_12k.exo -v
                     BIN_BASELINE shear_centered_diffonly_nofct.std.exo
                     BIN_RESULT out.e-s.0.1.0
@@ -32,7 +28,6 @@ add_regression_test(shear_centered_diffonly_nofct ${INCITER_EXECUTABLE}
 add_regression_test(shear_centered_advdiff ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES shear_advdiff.q shear_centered_12k.exo
-                               exodiff.cfg shear_centered_advdiff.std.exo
                     ARGS -c shear_advdiff.q -i shear_centered_12k.exo -v
                     BIN_BASELINE shear_centered_advdiff.std.exo
                     BIN_RESULT out.e-s.0.1.0
@@ -41,8 +36,6 @@ add_regression_test(shear_centered_advdiff ${INCITER_EXECUTABLE}
 add_regression_test(shear_centered_advdiffshear ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES shear_advdiffshear.q shear_centered_12k.exo
-                               exodiff.cfg shear_centered_advdiffshear.std.exo
-                               shear_centered_advdiffshear.diag.std
                     ARGS -c shear_advdiffshear.q -i shear_centered_12k.exo -v
                     BIN_BASELINE shear_centered_advdiffshear.std.exo
                     BIN_RESULT out.e-s.0.1.0
@@ -54,9 +47,6 @@ add_regression_test(shear_centered_advdiffshear ${INCITER_EXECUTABLE}
 add_regression_test(shear_centered_advdiffshear_c2 ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES shear_advdiffshear_c2.q shear_centered_12k.exo
-                               exodiff_c2.cfg
-                               shear_centered_advdiffshear_c2.diag.std
-                               shear_centered_advdiffshear_c2.std.exo
                     ARGS -c shear_advdiffshear_c2.q -i shear_centered_12k.exo -v
                     BIN_BASELINE shear_centered_advdiffshear_c2.std.exo
                     BIN_RESULT out.e-s.0.1.0
@@ -71,12 +61,6 @@ add_regression_test(shear_centered_advdiffshear_c2 ${INCITER_EXECUTABLE}
 add_regression_test(shear_centered_advdiffshear ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES shear_advdiffshear.q shear_centered_12k.exo
-                               exodiff_par.cfg
-                               shear_centered_advdiffshear.diag.std
-                               shear_centered_advdiffshear_pe4.std.exo.0
-                               shear_centered_advdiffshear_pe4.std.exo.1
-                               shear_centered_advdiffshear_pe4.std.exo.2
-                               shear_centered_advdiffshear_pe4.std.exo.3
                     ARGS -c shear_advdiffshear.q -i shear_centered_12k.exo -v
                     BIN_BASELINE shear_centered_advdiffshear_pe4.std.exo.0
                                  shear_centered_advdiffshear_pe4.std.exo.1
@@ -97,16 +81,6 @@ add_regression_test(shear_centered_advdiffshear ${INCITER_EXECUTABLE}
 add_regression_test(shear_centered_advdiffshear_u0.5 ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES shear_advdiffshear.q shear_centered_12k.exo
-                               exodiff_par.cfg
-                               shear_centered_advdiffshear.diag.std
-                               shear_centered_advdiffshear_pe4_u0.5.std.exo.0
-                               shear_centered_advdiffshear_pe4_u0.5.std.exo.1
-                               shear_centered_advdiffshear_pe4_u0.5.std.exo.2
-                               shear_centered_advdiffshear_pe4_u0.5.std.exo.3
-                               shear_centered_advdiffshear_pe4_u0.5.std.exo.4
-                               shear_centered_advdiffshear_pe4_u0.5.std.exo.5
-                               shear_centered_advdiffshear_pe4_u0.5.std.exo.6
-                               shear_centered_advdiffshear_pe4_u0.5.std.exo.7
                     ARGS -c shear_advdiffshear.q -i shear_centered_12k.exo -v
                          -u 0.5
                     BIN_BASELINE shear_centered_advdiffshear_pe4_u0.5.std.exo.0
