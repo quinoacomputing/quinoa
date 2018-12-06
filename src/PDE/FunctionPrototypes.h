@@ -26,7 +26,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //! \details Functions of this type are used to evaluate known (e.g.,
 //!    analytical) solutions or setting initial conditions
 //! \see e.g., inciter::CompFlowProblemVorticalFlow::solution
-//! \note Used for both contininuous and discontinuous Galerkin discretizations
+//! \note Used for both continuous and discontinuous Galerkin discretizations
 using SolutionFn = std::function<
   std::vector< real >( ncomp_t, ncomp_t, real, real, real, real ) >;
 
@@ -40,8 +40,10 @@ using RiemannFluxFn = std::function<
                        const std::vector< std::array< real, 3 > >& ) >;
 
 //! Function prototype for flux vector functions
-//! \details Functions of this type are used to compute numerical fluxes across a
-//!    surface by evaluating the fluxes in PDEs
+//! \details Functions of this type are used to compute physical flux functions
+//!   in the PDEs being solved. These are different than the RiemannFluxFn
+//!   because they compute the actual flux functions, not the solution to a
+//!   Riemann problem.
 //! \see e.g., inciter::dg::Transport::flux, inciter::dg::CompFlow::flux
 using FluxFn = std::function<
   std::vector< std::array< real, 3 > >

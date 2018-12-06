@@ -4918,7 +4918,9 @@ struct upwind_info {
   static std::string longDescription() { return
     R"(This keyword is used to select the upwind flux
     function used for discontinuous Galerkin (DG) spatial discretization
-    used in inciter. See Control/Inciter/Options/Flux.h for other valid
+    used in inciter. It is really only useful for scalar transport, it is thus
+    not selectable for anything else, and for scalar transport it is the
+    hardcoded flux type. See Control/Inciter/Options/Flux.h for other valid
     options.)"; }
 };
 using upwind = keyword< upwind_info, TAOCPP_PEGTL_STRING("upwind") >;
