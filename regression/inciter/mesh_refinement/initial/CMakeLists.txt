@@ -32,7 +32,6 @@
 add_regression_test(amr_init_u1_trans_matcg ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
-                               exodiff.cfg slot_cyl_pe1_u0.0.std.exo
                     ARGS -c slot_cyl_amr.q -i unitsquare_01_955.exo -v
                     BIN_BASELINE slot_cyl_pe1_u0.0.std.exo
                     BIN_RESULT out.e-s.0.1.0
@@ -43,8 +42,6 @@ add_regression_test(amr_init_u1_trans_matcg ${INCITER_EXECUTABLE}
 add_regression_test(amr_init_u1_trans_diagcg ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES slot_cyl_amr_diagcg.q unitsquare_01_955.exo
-                               exodiff.cfg slot_cyl_diagcg_pe1_u0.0.std.exo
-                               diag_diagcg.std
                     ARGS -c slot_cyl_amr_diagcg.q -i unitsquare_01_955.exo -v
                     BIN_BASELINE slot_cyl_diagcg_pe1_u0.0.std.exo
                     BIN_RESULT out.e-s.0.1.0
@@ -57,8 +54,6 @@ add_regression_test(amr_init_u1_trans_diagcg ${INCITER_EXECUTABLE}
 add_regression_test(amr_init_u1_trans_reord_diagcg ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES slot_cyl_amr_reord_diagcg.q unitsquare_01_955.exo
-                               exodiff.cfg slot_cyl_diagcg_pe1_u0.0.std.exo
-                               diag_diagcg.std
                     ARGS -c slot_cyl_amr_reord_diagcg.q
                          -i unitsquare_01_955.exo -v
                     BIN_BASELINE slot_cyl_diagcg_pe1_u0.0.std.exo
@@ -72,8 +67,6 @@ add_regression_test(amr_init_u1_trans_reord_diagcg ${INCITER_EXECUTABLE}
 add_regression_test(amr_init_u1_compflow_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES vortical_flow_dg.q unitcube_1k.exo
-                               diag_dg.std
-                               exodiff_dg.cfg vortical_flow_dg.std.exo
                     ARGS -c vortical_flow_dg.q -i unitcube_1k.exo -v
                     BIN_BASELINE vortical_flow_dg.std.exo
                     BIN_RESULT out.e-s.0.1.0
@@ -87,8 +80,6 @@ add_regression_test(amr_init_u1_compflow_dg ${INCITER_EXECUTABLE}
 add_regression_test(amr_init_u1_compflow_reord_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES vortical_flow_reord_dg.q unitcube_1k.exo
-                               diag_dg.std
-                               exodiff_dg.cfg vortical_flow_dg.std.exo
                     ARGS -c vortical_flow_reord_dg.q -i unitcube_1k.exo -v
                     BIN_BASELINE vortical_flow_dg.std.exo
                     BIN_RESULT out.e-s.0.1.0
@@ -104,11 +95,6 @@ add_regression_test(amr_init_u1_compflow_reord_dg ${INCITER_EXECUTABLE}
 add_regression_test(amr_init_u1_trans_matcg ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
-                               exodiff.cfg
-                               slot_cyl_pe4_u0.0.std.exo.0
-                               slot_cyl_pe4_u0.0.std.exo.1
-                               slot_cyl_pe4_u0.0.std.exo.2
-                               slot_cyl_pe4_u0.0.std.exo.3
                     ARGS -c slot_cyl_amr.q -i unitsquare_01_955.exo -v
                     BIN_BASELINE slot_cyl_pe4_u0.0.std.exo.0
                                  slot_cyl_pe4_u0.0.std.exo.1
@@ -125,11 +111,6 @@ add_regression_test(amr_init_u1_trans_matcg ${INCITER_EXECUTABLE}
 add_regression_test(amr_init_u1_trans_diagcg ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slot_cyl_amr_diagcg.q unitsquare_01_955.exo
-                               exodiff.cfg
-                               slot_cyl_diagcg_pe4_u0.0.std.exo.0
-                               slot_cyl_diagcg_pe4_u0.0.std.exo.1
-                               slot_cyl_diagcg_pe4_u0.0.std.exo.2
-                               slot_cyl_diagcg_pe4_u0.0.std.exo.3
                     ARGS -c slot_cyl_amr_diagcg.q -i unitsquare_01_955.exo -v
                     BIN_BASELINE slot_cyl_diagcg_pe4_u0.0.std.exo.0
                                  slot_cyl_diagcg_pe4_u0.0.std.exo.1
@@ -148,15 +129,6 @@ add_regression_test(amr_init_u1_trans_diagcg ${INCITER_EXECUTABLE}
 add_regression_test(amr_init_u1_trans_matcg_u0.5 ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
-                               exodiff.cfg
-                               slot_cyl_pe4_u0.5.std.exo.0
-                               slot_cyl_pe4_u0.5.std.exo.1
-                               slot_cyl_pe4_u0.5.std.exo.2
-                               slot_cyl_pe4_u0.5.std.exo.3
-                               slot_cyl_pe4_u0.5.std.exo.4
-                               slot_cyl_pe4_u0.5.std.exo.5
-                               slot_cyl_pe4_u0.5.std.exo.6
-                               slot_cyl_pe4_u0.5.std.exo.7
                     ARGS -c slot_cyl_amr.q -i unitsquare_01_955.exo -v -u 0.5
                     BIN_BASELINE slot_cyl_pe4_u0.5.std.exo.0
                                  slot_cyl_pe4_u0.5.std.exo.1
@@ -182,15 +154,6 @@ add_regression_test(amr_init_u2_trans_matcg_u0.5 ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slot_cyl_amr_uniform2steps.q
                                unitsquare_01_955.exo
-                               exodiff.cfg
-                               slot_cyl_uni2_pe4_u0.5.std.exo.0
-                               slot_cyl_uni2_pe4_u0.5.std.exo.1
-                               slot_cyl_uni2_pe4_u0.5.std.exo.2
-                               slot_cyl_uni2_pe4_u0.5.std.exo.3
-                               slot_cyl_uni2_pe4_u0.5.std.exo.4
-                               slot_cyl_uni2_pe4_u0.5.std.exo.5
-                               slot_cyl_uni2_pe4_u0.5.std.exo.6
-                               slot_cyl_uni2_pe4_u0.5.std.exo.7
                     ARGS -c slot_cyl_amr_uniform2steps.q
                          -i unitsquare_01_955.exo
                          -v -u 0.5
@@ -217,15 +180,6 @@ add_regression_test(amr_init_u2_trans_matcg_u0.5 ${INCITER_EXECUTABLE}
 add_regression_test(amr_init_u1_trans_diagcg_u0.5 ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slot_cyl_amr_diagcg.q unitsquare_01_955.exo
-                               exodiff.cfg
-                               slot_cyl_diagcg_pe4_u0.5.std.exo.0
-                               slot_cyl_diagcg_pe4_u0.5.std.exo.1
-                               slot_cyl_diagcg_pe4_u0.5.std.exo.2
-                               slot_cyl_diagcg_pe4_u0.5.std.exo.3
-                               slot_cyl_diagcg_pe4_u0.5.std.exo.4
-                               slot_cyl_diagcg_pe4_u0.5.std.exo.5
-                               slot_cyl_diagcg_pe4_u0.5.std.exo.6
-                               slot_cyl_diagcg_pe4_u0.5.std.exo.7
                     ARGS -c slot_cyl_amr_diagcg.q -i unitsquare_01_955.exo
                          -v -u 0.5
                     BIN_BASELINE slot_cyl_diagcg_pe4_u0.5.std.exo.0
@@ -251,8 +205,6 @@ add_regression_test(amr_init_u1_trans_diagcg_u0.5 ${INCITER_EXECUTABLE}
 add_regression_test(amr_init_coords ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES slot_cyl_amr_coords.q unitcube_01_364.exo
-                               exodiff.cfg
-                               amr_init_coords.1.std.exo.0
                     ARGS -c slot_cyl_amr_coords.q -i unitcube_01_364.exo -v
                     BIN_BASELINE amr_init_coords.1.std.exo.0
                     BIN_RESULT out.e-s.0.1.0
