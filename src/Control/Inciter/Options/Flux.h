@@ -20,7 +20,8 @@ namespace ctr {
 
 //! Flux types
 enum class FluxType : uint8_t { LaxFriedrichs
-                              , HLLC };
+                              , HLLC
+                              , UPWIND };
 
 //! Pack/Unpack FluxType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, FluxType& e ) { PUP::pup( p, e ); }
@@ -32,6 +33,7 @@ class Flux : public tk::Toggle< FluxType > {
     //! Valid expected choices to make them also available at compile-time
     using keywords = brigand::list< kw::laxfriedrichs
                                   , kw::hllc
+                                  , kw::upwind
                                   >;
 
     //! \brief Options constructor
@@ -43,10 +45,12 @@ class Flux : public tk::Toggle< FluxType > {
         kw::flux::name(),
         //! Enums -> names (if defined, policy codes, if not, name)
         { { FluxType::LaxFriedrichs, kw::laxfriedrichs::name() },
-          { FluxType::HLLC, kw::hllc::name() } },
+          { FluxType::HLLC, kw::hllc::name() },
+          { FluxType::UPWIND, kw::upwind::name() } },
         //! keywords -> Enums
         { { kw::laxfriedrichs::string(), FluxType::LaxFriedrichs },
-          { kw::hllc::string(), FluxType::HLLC } } )
+          { kw::hllc::string(), FluxType::HLLC },
+          { kw::upwind::string(), FluxType::UPWIND } } )
     {}
 
 };

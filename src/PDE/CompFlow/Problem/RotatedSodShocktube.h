@@ -27,6 +27,7 @@ namespace inciter {
 //!   Nonlinear Hyperbolic Conservation Laws. J. Comput. Phys., 27:1–31, 1978.
 class CompFlowProblemRotatedSodShocktube : public CompFlowProblemSodShocktube {
 
+  private:
     //! Rotate vector about X axis by -45 degress
     //! \param[in] v Vector to rotate
     //! \return Rotated vector
@@ -70,23 +71,24 @@ class CompFlowProblemRotatedSodShocktube : public CompFlowProblemSodShocktube {
     }
 
   public:
-
     //! Evaluate analytical solution at (x,y,0) for all components
-    //! \param[in] e Equation system index, i.e., which compressible
+    //! \param[in] system Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
+    //! \param[in] ncomp Number of scalar components in this PDE system
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] z Z coordinate where to evaluate the solution
     //! \param[in] t Time at which to evaluate the solution
     //! \return Values of all components evaluated at (x,y,0)
-    static std::array< tk::real, 5 >
-    solution( tk::ctr::ncomp_type e,
-              tk::real x, tk::real y, tk::real z, tk::real t )
-    {
+    //! \note The function signature must follow tk::SolutionFn
+    static tk::SolutionFn::result_type
+    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
+              tk::real t ) {
       // Assume the domain is rotated by 45 degrees about the X, Y, and then Z
       // axis compared to the original tube with largest dimension in X
       auto c = rotateX( rotateY( rotateZ( {{ x, y, z }} ) ) );
-      return CompFlowProblemSodShocktube::solution( e, c[0], c[1], c[2], t );
+      return CompFlowProblemSodShocktube::solution( system, ncomp,
+                                                    c[0], c[1], c[2], t );
     }
 
     static ctr::ProblemType type() noexcept

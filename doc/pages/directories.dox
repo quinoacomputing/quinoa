@@ -1,12 +1,14 @@
 /*!
 
-This file contains high level documentation of all directories under src/.
-
 @dir src
 @brief Root of the source tree
 
+@details This is the root of the source tree. Browse the directories below to
+learn more about how the source code is organized into directories.
+
 @dir src/Base
 @brief Basic, general, generic utilities, reused across all executables
+
 @details This directory contains basic, usually small, utility-like
 functionality. The classes and functions defined here are general purpose,
 usually generic, and therefore can and are heavily reused across all
@@ -213,8 +215,20 @@ for verification or a user-defined problem).
 @dir src/PDE/CompFlow/Problem
 @brief Problem configurations for compressible flow
 
-@dir src/PDE/CompFlow/Riemann
-@brief Riemann solvers for compressible flow
+@dir src/PDE/Integrate
+@brief Integrals of various PDE operators used in discontinuous Galerkin methods
+
+@details This directory contains code used to compute various operators in
+systems of PDEs, discretized with discontinuous Galerkin methods. The code is
+reused between various different PDE types, such as inciter::dg::Transport and
+inciter::dg::CompFlow.
+
+@dir src/PDE/Integrate/Riemann
+@brief Approximate Riemann solvers
+
+@details This directory contains various approximate Riemann solver
+implementations as well as a Riemann solver factory and the "base class",
+RiemannSolver, used to access various Riemann solvers in a polymorphic fashion.
 
 @dir src/RNG
 @brief Interoperation with random number generator libraries
@@ -307,10 +321,10 @@ transport across processing elements (PEs or CPUs) of a distributed problem
 running in parallel.
 
 @dir src/NoWarning
-@brief Include files turning of specific compiler warnings
+@brief Include files turning on/off specific compiler warnings for third-party library includes
 
 @dir src/Mesh
-@brief Functionality related to unstructured meshes
+@brief Functionality related to unstructured meshes and derived data structures
 
 @details This directory contains functionality used to discretize differential
 equations in 3-dimensional space. It contains functionality to

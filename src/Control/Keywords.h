@@ -4917,6 +4917,20 @@ struct hllc_info {
 };
 using hllc = keyword< hllc_info, TAOCPP_PEGTL_STRING("hllc") >;
 
+struct upwind_info {
+  static std::string name() { return "Upwind"; }
+  static std::string shortDescription() { return
+    "Select the upwind flux function"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the upwind flux
+    function used for discontinuous Galerkin (DG) spatial discretization
+    used in inciter. It is really only useful for scalar transport, it is thus
+    not selectable for anything else, and for scalar transport it is the
+    hardcoded flux type. See Control/Inciter/Options/Flux.h for other valid
+    options.)"; }
+};
+using upwind = keyword< upwind_info, TAOCPP_PEGTL_STRING("upwind") >;
+
 struct flux_info {
   static std::string name() { return "Flux function"; }
   static std::string shortDescription() { return
@@ -4929,7 +4943,8 @@ struct flux_info {
     static std::string description() { return "string"; }
     static std::string choices() {
       return '\'' + laxfriedrichs::string() + "\' | \'"
-                  + hllc::string() + '\'';
+                  + hllc::string() + "\' | \'"
+                  + upwind::string() + '\'';
     }
   };
 };

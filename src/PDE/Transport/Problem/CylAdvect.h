@@ -31,16 +31,17 @@ class TransportProblemCylAdvect {
 
   public:
     //! Evaluate analytical solution at (x,y,t) for all components
+    //! \param[in] system Equation system index
     //! \param[in] ncomp Number of components in this transport equation system
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] t Time where to evaluate the solution
     //! \return Values of all components evaluated at (x,y,t)
     static std::vector< tk::real >
-    solution( ncomp_t, ncomp_t ncomp,
+    solution( ncomp_t system, ncomp_t ncomp,
               tk::real x, tk::real y, tk::real, tk::real t )
     {
-      const auto vel = prescribedVelocity( x, y, 0.0, ncomp, ncomp );
+      const auto vel = prescribedVelocity( system, ncomp, x, y, 0.0 );
 
       std::vector< tk::real > s( ncomp, 0.0 );
       for (ncomp_t c=0; c<ncomp; ++c)
@@ -107,12 +108,7 @@ class TransportProblemCylAdvect {
     //! \return Velocity assigned to all vertices of a tetrehedron, size:
     //!   ncomp * ndim = [ncomp][3]
     static std::vector< std::array< tk::real, 3 > >
-    prescribedVelocity( tk::real,
-                        tk::real,
-                        tk::real,
-                        ncomp_t,
-                        ncomp_t ncomp )
-    {
+    prescribedVelocity( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real ) {
       std::vector< std::array< tk::real, 3 > > vel( ncomp );
       for (ncomp_t c=0; c<ncomp; ++c)
         vel[c] = {{ 0.1, 0.1, 0.0 }};

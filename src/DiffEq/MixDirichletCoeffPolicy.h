@@ -52,7 +52,7 @@
 
 namespace walker {
 
-//! MixDirichlet coefficients policity: constants in time + <rho> = const
+//! MixDirichlet coefficients policity: constants in time + mean(rho) = const
 //! \details User-defined parameters b and kappa are constant vectors in time
 //!   and, S is constrained to make \f$\mathrm{d}<rho>/\mathrm{d}t = 0\f$.
 class MixDirichletHomCoeffConst {
@@ -89,7 +89,7 @@ class MixDirichletHomCoeffConst {
     static ctr::CoeffPolicyType type() noexcept
     { return ctr::CoeffPolicyType::HOMOGENEOUS; }
 
-    //! \brief Update coefficients vector S so <rho> = const
+    //! \brief Update coefficients vector S so avg(rho) = const
     void update(
       char depvar,
       ncomp_t ncomp,
@@ -171,9 +171,9 @@ class MixDirichletHomCoeffConst {
 
       // Sc
       for (ncomp_t c=0; c<ncomp; ++c) {
-        // 1st attempt at forcing <rho> = const
+        // 1st attempt at forcing mean(rho) = const
         //S[c] = 1.0/(1.0-YK[c]) - (1.0-Yt[c])/(1.0-YtK[c]);
-        // 2nd attempt at forcing <rho> = const
+        // 2nd attempt at forcing mean(rho) = const
         S[c] = YK[c]/(1.0-YK[c]) - (1.0-Yt[c])*YtK[c]/(1.0-YtK[c]) + Yt[c];
         //std::cout << "S: " << S[c] << ", YKc: " << YK[c]
         //          << ", Ytc: " << Yt[c] << ", YtKc: " << YtK[c] << ' ';

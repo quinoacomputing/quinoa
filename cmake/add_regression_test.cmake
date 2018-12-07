@@ -228,7 +228,7 @@ function(ADD_REGRESSION_TEST test_name executable)
   endif()
 
   # Make exodiff quiet (errors and warnings will still come to output)
-  #list(APPEND ARG_BIN_DIFF_PROG_ARGS "-q")
+  list(APPEND ARG_BIN_DIFF_PROG_ARGS "-q")
   if(ARG_BIN_DIFF_PROG_ARGS)
     # Convert list to space-separated string for passing as arguments to test
     # runner cmake script below
