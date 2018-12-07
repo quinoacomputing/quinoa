@@ -705,7 +705,7 @@ Solver::lhsbc()
 {
   Assert( lhscomplete(),
           "Nonzero values of distributed matrix on compute node " +
-          std::to_string( CkMyNode() ) + " is incomplete: cannot set BCs" );
+          std::to_string( CkMyNode() ) + " incomplete: cannot set BCs" );
 
   // Set Dirichlet BCs on the lhs matrix. Loop through all BCs and if a BC
   // is prescribed on a row we own, find that row (r) and in that row the
@@ -741,7 +741,7 @@ Solver::rhsbc()
 // *****************************************************************************
 {
   Assert( rhscomplete(), "Values of distributed right-hand-side vector on "
-          "compute node " + std::to_string( CkMyNode() ) + " is incomplete: "
+          "compute node " + std::to_string( CkMyNode() ) + " incomplete: "
           "cannot set BCs" );
 
   std::size_t row = 0;
@@ -767,7 +767,7 @@ Solver::hypresol()
 // *****************************************************************************
 {
   Assert( solcomplete(), "Values of distributed solution vector on compute "
-          "node " + std::to_string( CkMyNode() ) + " is incomplete" );
+          "node " + std::to_string( CkMyNode() ) + " incomplete" );
 
   for (const auto& r : m_sol)
     m_hypreSol.insert( end(m_hypreSol), begin(r), end(r) );
@@ -784,7 +784,7 @@ Solver::hyprelhs()
 // *****************************************************************************
 {
   Assert( lhscomplete(), "Nonzero values of distributed matrix on compute "
-          "node " + std::to_string( CkMyNode() ) + " is incomplete: cannot "
+          "node " + std::to_string( CkMyNode() ) + " incomplete: cannot "
           "convert" );
 
   for (const auto& r : m_lhs)
@@ -806,7 +806,7 @@ Solver::hyprerhs()
 // *****************************************************************************
 {
   Assert( rhscomplete(), "Values of distributed right-hand-side vector on "
-          "compute node " + std::to_string( CkMyNode() ) + " is incomplete: "
+          "compute node " + std::to_string( CkMyNode() ) + " incomplete: "
           "cannot convert" );
 
   for (const auto& r : m_rhs)
@@ -981,15 +981,15 @@ Solver::lowsolve()
   // Solve low order system
   Assert( rhscomplete(),
           "Values of distributed right-hand-side vector on compute node " +
-          std::to_string( CkMyNode() ) + " is incomplete: cannot solve low "
+          std::to_string( CkMyNode() ) + " incomplete: cannot solve low "
           "order system" );
   Assert( lowrhscomplete(),
           "Values of distributed mass diffusion rhs vector on compute node " +
-          std::to_string( CkMyNode() ) + " is incomplete: cannot solve low "
+          std::to_string( CkMyNode() ) + " incomplete: cannot solve low "
           "order system" );
   Assert( lowlhscomplete(),
           "Values of distributed lumped mass lhs vector on compute node " +
-          std::to_string( CkMyNode() ) + " is incomplete: cannot solve low "
+          std::to_string( CkMyNode() ) + " incomplete: cannot solve low "
           "order system" );
 
   // Set boundary conditions on the low order system
