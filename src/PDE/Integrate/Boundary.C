@@ -1,12 +1,12 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Integrate/Surface.C
+  \file      src/PDE/Integrate/Boundary.C
   \copyright 2016-2018, Los Alamos National Security, LLC.
-  \brief     Functions for computing boundary surface integrals of a system
-     of PDEs in DG methods
-  \details   This file contains functionality for computing boundary surface
-     integrals of a system of PDEs used in discontinuous Galerkin methods for
-     various orders of numerical representation.
+  \brief     Functions for computing physical boundary surface integrals of a
+     system of PDEs in DG methods
+  \details   This file contains functionality for computing physical boundary
+     surface integrals of a system of PDEs used in discontinuous Galerkin
+     methods for various orders of numerical representation.
 */
 // *****************************************************************************
 
@@ -82,8 +82,7 @@ tk::sidesetIntP0( ncomp_t system,
                   ncomp_t ncomp,
                   ncomp_t offset,
                   const std::vector< bcconf_t >& bcconfig,
-                  const std::map< int, std::vector< std::size_t > >& bface,
-                  const std::vector< int >& esuf,
+                  const inciter::FaceData& fd,
                   const Fields& geoFace,
                   real t,
                   const RiemannFluxFn& flux,
@@ -100,8 +99,7 @@ tk::sidesetIntP0( ncomp_t system,
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] bcconfig BC configuration vector for multiple side sets
-//! \param[in] bface Boundary faces side-set information
-//! \param[in] esuf Elements surrounding faces
+//! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
 //! \param[in] t Physical time
 //! \param[in] flux Riemann flux function to use
@@ -112,14 +110,33 @@ tk::sidesetIntP0( ncomp_t system,
 //! \param[in,out] R Right-hand side vector added to
 // *****************************************************************************
 {
+  const auto& bface = fd.Bface();
+
   for (const auto& s : bcconfig) {       // for all bc sidesets
     auto bc = bface.find( std::stoi(s) );// faces for side set
     if (bc != end(bface))
-      bndSurfIntP0( system, ncomp, offset, bc->second, esuf, geoFace, t, flux,
-                    vel, state, U, R );
+      bndSurfIntP0( system, ncomp, offset, bc->second, fd.Esuf(), geoFace, t,
+                    flux, vel, state, U, R );
   }
 }
 
+void
+tk::bndSurfIntP1( ncomp_t system,
+                  ncomp_t ncomp,
+                  ncomp_t offset,
+                  const std::vector< std::size_t >& faces,
+                  const std::vector< int >& esuf,
+                  const Fields& geoFace,
+                  const std::vector< std::size_t >& inpoel,
+                  const std::vector< std::size_t >& inpofa,
+                  const UnsMesh::Coords& coord,
+                  real t,
+                  const RiemannFluxFn& flux,
+                  const VelFn& vel,
+                  const StateFn& state,
+                  const Fields& U,
+                  const Fields& limFunc,
+                  Fields& R )
 // *****************************************************************************
 //  Compute boundary surface integral for a number of faces for DG(P1)
 //! \param[in] system Equation system index
@@ -142,23 +159,6 @@ tk::sidesetIntP0( ncomp_t system,
 //! \tparam State Policy class providing the left and right state at
 //!   boundaries by its member function State::LR()
 // *****************************************************************************
-void
-tk::bndSurfIntP1( ncomp_t system,
-                  ncomp_t ncomp,
-                  ncomp_t offset,
-                  const std::vector< std::size_t >& faces,
-                  const std::vector< int >& esuf,
-                  const Fields& geoFace,
-                  const std::vector< std::size_t >& inpoel,
-                  const std::vector< std::size_t >& inpofa,
-                  const UnsMesh::Coords& coord,
-                  real t,
-                  const RiemannFluxFn& flux,
-                  const VelFn& vel,
-                  const StateFn& state,
-                  const Fields& U,
-                  const Fields& limFunc,
-                  Fields& R )
 {
   // Number of integration points
   constexpr std::size_t NG = 3;
@@ -279,11 +279,9 @@ tk::sidesetIntP1( ncomp_t system,
                   ncomp_t ncomp,
                   ncomp_t offset,
                   const std::vector< bcconf_t >& bcconfig,
-                  const std::map< int, std::vector< std::size_t > >& bface,
-                  const std::vector< int >& esuf,
+                  const inciter::FaceData& fd,
                   const Fields& geoFace,
                   const std::vector< std::size_t >& inpoel,
-                  const std::vector< std::size_t >& inpofa,
                   const UnsMesh::Coords& coord,
                   real t,
                   const RiemannFluxFn& flux,
@@ -301,12 +299,9 @@ tk::sidesetIntP1( ncomp_t system,
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] bcconfig BC configuration vector for multiple side sets
-//! \param[in] bcconfig BC configuration vector for multiple side sets
-//! \param[in] bface Boundary faces side-set information
-//! \param[in] esuf Elements surrounding faces
+//! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
 //! \param[in] inpoel Element-node connectivity
-//! \param[in] inpofa Face-node connectivity
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] t Physical time
 //! \param[in] flux Riemann flux function to use
@@ -318,10 +313,12 @@ tk::sidesetIntP1( ncomp_t system,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
+  const auto& bface = fd.Bface();
+
   for (const auto& s : bcconfig) {       // for all bc sidesets
     auto bc = bface.find( std::stoi(s) );// faces for side set
     if (bc != end(bface))
-      bndSurfIntP1( system, ncomp, offset, bc->second, esuf, geoFace, inpoel,
-                    inpofa, coord, t, flux, vel, state, U, limFunc, R );
+      bndSurfIntP1( system, ncomp, offset, bc->second, fd.Esuf(), geoFace,
+        inpoel, fd.Inpofa(), coord, t, flux, vel, state, U, limFunc, R );
   }
 }

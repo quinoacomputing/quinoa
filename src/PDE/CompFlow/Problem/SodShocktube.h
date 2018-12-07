@@ -33,7 +33,7 @@ class CompFlowProblemSodShocktube {
     //! Evaluate analytical solution at (x,y,0) for all components
     //! \param[in] system Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
-    //! param[in] ncomp Number of scalar components in this PDE system
+    //! \param[in] ncomp Number of scalar components in this PDE system
     //! \param[in] x X coordinate where to evaluate the solution
     //! \return Values of all components evaluated at (x,y,0)
     //! \note The function signature must follow tk::SolutionFn

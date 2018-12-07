@@ -136,12 +136,8 @@ class Transport {
               "must equal "+ std::to_string(ndof*m_ncomp) );
       Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
               "size" );
-
-      const auto& bface = fd.Bface();
-      const auto& esuf = fd.Esuf();
-      const auto& inpofa = fd.Inpofa();
-
-      Assert( inpofa.size()/3 == esuf.size()/2, "Mismatch in inpofa size" );
+      Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
+              "Mismatch in inpofa size" );
 
       // set rhs to zero
       R.fill(0.0);
@@ -160,9 +156,8 @@ class Transport {
                        Problem::prescribedVelocity, U, R );
         // compute boundary surface flux integrals
         for (const auto& b : bctypes)
-          tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, bface, esuf,
-            geoFace, t, Upwind::flux, Problem::prescribedVelocity, b.second, U,
-            R );
+          tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
+            t, Upwind::flux, Problem::prescribedVelocity, b.second, U, R );
 
       } else if (ndof == 4) {  // DG(P1)
 
@@ -174,9 +169,9 @@ class Transport {
                       flux, Problem::prescribedVelocity, U, limFunc, R );
         // compute boundary surface flux integrals
         for (const auto& b : bctypes)
-          tk::sidesetIntP1( m_system, m_ncomp, m_offset, b.first, bface, esuf,
-            geoFace, inpoel, inpofa, coord, t, Upwind::flux,
-            Problem::prescribedVelocity, b.second, U, limFunc, R );
+          tk::sidesetIntP1( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
+            inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
+            b.second, U, limFunc, R );
 
       } else
         Throw( "dg::Transport::rhs() not defined for NDOF=" +
@@ -294,10 +289,10 @@ class Transport {
     }
 
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
-    //! \param[in] xi X-coordinate
-    //! \param[in] yi Y-coordinate
-    //! \param[in] zi Z-coordinate
-    //! \param[in] t Physical time
+    //! \param[in] xi X-coordinate at which to evaluate the analytic solution
+    //! \param[in] yi Y-coordinate at which to evaluate the analytic solution
+    //! \param[in] zi Z-coordinate at which to evaluate the analytic solution
+    //! \param[in] t Physical time at which to evaluate the analytic solution
     //! \return Vector of analytic solution at given spatial location and time
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
@@ -390,16 +385,19 @@ class Transport {
     //! \param[in] system Equation system index
     //! \param[in] ncomp Number of scalar components in this PDE system
     //! \param[in] ul Left (domain-internal) state
+    //! \param[in] x X-coordinate at which to compute the states
+    //! \param[in] y Y-coordinate at which to compute the states
+    //! \param[in] z Z-coordinate at which to compute the states
     //! \param[in] t Physical time
     //! \return Left and right states for all scalar components in this PDE
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
     Dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
-               tk::real xc, tk::real yc, tk::real zc, tk::real t,
+               tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >& )
     {
-      return {{ ul, Problem::solution( system, ncomp, xc, yc, zc, t ) }};
+      return {{ ul, Problem::solution( system, ncomp, x, y, z, t ) }};
     }
 };
 

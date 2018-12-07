@@ -83,6 +83,7 @@ class CompFlow {
     {}
 
     //! Initalize the compressible flow equations, prepare for time integration
+    //! \param[in] L Block diagonal mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] unk Array of unknowns
@@ -133,12 +134,8 @@ class CompFlow {
               "must equal "+ std::to_string(ndof*5) );
       Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
               "size" );
-
-      const auto& bface = fd.Bface();
-      const auto& esuf = fd.Esuf();
-      const auto& inpofa = fd.Inpofa();
-
-      Assert( inpofa.size()/3 == esuf.size()/2, "Mismatch in inpofa size" );
+      Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
+              "Mismatch in inpofa size" );
 
       // set rhs to zero
       R.fill(0.0);
@@ -166,7 +163,7 @@ class CompFlow {
                       t, geoElem, Problem::src, R );
         // compute boundary surface flux integrals
         for (const auto& b : bctypes)
-          tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, bface, esuf,
+          tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, fd,
             geoFace, t, rieflxfn, velfn, b.second, U, R );
 
       } else if (ndof == 4) {  // DG(P1)
@@ -182,9 +179,8 @@ class CompFlow {
                       velfn, U, limFunc, R );
         // compute boundary surface flux integrals
         for (const auto& b : bctypes)
-          tk::sidesetIntP1( m_system, m_ncomp, m_offset, b.first, bface, esuf,
-            geoFace, inpoel, inpofa, coord, t, rieflxfn, velfn, b.second,
-            U, limFunc, R );
+          tk::sidesetIntP1( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
+            inpoel, coord, t, rieflxfn, velfn, b.second, U, limFunc, R );
 
       } else
         Throw( "dg::Compflow::rhs() not defined for NDOF=" +
@@ -192,9 +188,13 @@ class CompFlow {
     }
 
     //! Compute the minimum time step size
-    //! \param[in] U Solution vector at recent time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
+    //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] limFunc Limiter function for higher-order solution dofs
+    //! \param[in] U Solution vector at recent time step
     //! \return Minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< std::size_t >& inpoel,
@@ -559,10 +559,10 @@ class CompFlow {
     { return Problem::names(); }
 
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
-    //! \param[in] xi X-coordinate
-    //! \param[in] yi Y-coordinate
-    //! \param[in] zi Z-coordinate
-    //! \param[in] t Physical time
+    //! \param[in] xi X-coordinate at which to evaluate the analytic solution
+    //! \param[in] yi Y-coordinate at which to evaluate the analytic solution
+    //! \param[in] zi Z-coordinate at which to evaluate the analytic solution
+    //! \param[in] t Physical time at which to evaluate the analytic solution
     //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
@@ -639,16 +639,19 @@ class CompFlow {
     //! \param[in] system Equation system index
     //! \param[in] ncomp Number of scalar components in this PDE system
     //! \param[in] ul Left (domain-internal) state
+    //! \param[in] x X-coordinate at which to compute the states
+    //! \param[in] y Y-coordinate at which to compute the states
+    //! \param[in] z Z-coordinate at which to compute the states
     //! \param[in] t Physical time
     //! \return Left and right states for all scalar components in this PDE
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
     Dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
-               tk::real xc, tk::real yc, tk::real zc, tk::real t,
+               tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >& )
     {
-      return {{ ul, Problem::solution( system, ncomp, xc, yc, zc, t ) }};
+      return {{ ul, Problem::solution( system, ncomp, x, y, z, t ) }};
     }
 
     //! \brief Boundary state function providing the left and right state of a

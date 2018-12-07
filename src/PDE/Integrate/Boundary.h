@@ -2,11 +2,11 @@
 /*!
   \file      src/PDE/Integrate/Boundary.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
-  \brief     Functions for computing boundary surface integrals of a system
-     of PDEs in DG methods
-  \details   This file contains functionality for computing boundary surface
-     integrals of a system of PDEs used in discontinuous Galerkin methods for
-     various orders of numerical representation.
+  \brief     Functions for computing physical boundary surface integrals of a
+     system of PDEs in DG methods
+  \details   This file contains functionality for computing physical boundary
+     surface integrals of a system of PDEs used in discontinuous Galerkin
+     methods for various orders of numerical representation.
 */
 // *****************************************************************************
 #ifndef Boundary_h
@@ -44,8 +44,7 @@ sidesetIntP0( ncomp_t system,
               ncomp_t ncomp,
               ncomp_t offset,
               const std::vector< bcconf_t >& bcconfig,
-              const std::map< int, std::vector< std::size_t > >& bface,
-              const std::vector< int >& esuf,
+              const inciter::FaceData& fd,
               const tk::Fields& geoFace,
               tk::real t,
               const RiemannFluxFn& flux,
@@ -79,11 +78,9 @@ sidesetIntP1( ncomp_t system,
               ncomp_t ncomp,
               ncomp_t offset,
               const std::vector< bcconf_t >& bcconfig,
-              const std::map< int, std::vector< std::size_t > >& bface,
-              const std::vector< int >& esuf,
+              const inciter::FaceData& fd,
               const tk::Fields& geoFace,
               const std::vector< std::size_t >& inpoel,
-              const std::vector< std::size_t >& inpofa,
               const tk::UnsMesh::Coords& coord,
               tk::real t,
               const RiemannFluxFn& flux,

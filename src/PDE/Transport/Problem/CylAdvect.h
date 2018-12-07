@@ -31,6 +31,7 @@ class TransportProblemCylAdvect {
 
   public:
     //! Evaluate analytical solution at (x,y,t) for all components
+    //! \param[in] system Equation system index
     //! \param[in] ncomp Number of components in this transport equation system
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution

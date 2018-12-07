@@ -67,6 +67,7 @@ tk::srcIntP1( ncomp_t system,
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
+//! \param[in] t Physical time
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] geoElem Element geometry array
