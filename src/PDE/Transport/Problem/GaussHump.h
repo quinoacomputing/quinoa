@@ -31,16 +31,18 @@ class TransportProblemGaussHump {
 
   public:
     //! Evaluate analytical solution at (x,y,t) for all components
+    //! \param[in] system Equation system index, i.e., which transport equation
+    //!   system we operate on among the systems of PDEs
     //! \param[in] ncomp Number of components in this transport equation system
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] t Time where to evaluate the solution
     //! \return Values of all components evaluated at (x,y,t)
     static std::vector< tk::real >
-    solution( ncomp_t, ncomp_t ncomp,
+    solution( ncomp_t system, ncomp_t ncomp,
               tk::real x, tk::real y, tk::real, tk::real t )
     {
-      const auto vel = prescribedVelocity( x, y, 0.0, ncomp, ncomp );
+      const auto vel = prescribedVelocity( system, ncomp, x, y, 0.0 );
 
       std::vector< tk::real > s( ncomp, 0.0 );
       for (ncomp_t c=0; c<ncomp; ++c) 
@@ -58,6 +60,8 @@ class TransportProblemGaussHump {
 
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
+    //! \param[in] system Equation system index, i.e., which transport equation
+    //!   system we operate on among the systems of PDEs
     //! \param[in] ncomp Number of components in this transport equation system
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
@@ -65,11 +69,11 @@ class TransportProblemGaussHump {
     //! \param[in] dt Time increment at which evaluate the solution increment to
     //! \return Increment in values of all components evaluated at (x,y,t+dt)
     static std::vector< tk::real >
-    solinc( ncomp_t, ncomp_t ncomp, tk::real x, tk::real y, tk::real,
+    solinc( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real,
             tk::real t, tk::real dt )
     {
-      auto st1 = solution( 0, ncomp, x, y, 0.0, t );
-      auto st2 = solution( 0, ncomp, x, y, 0.0, t+dt );
+      auto st1 = solution( system, ncomp, x, y, 0.0, t );
+      auto st2 = solution( system, ncomp, x, y, 0.0, t+dt );
       std::transform( begin(st1), end(st1), begin(st2), begin(st2),
                       []( tk::real s, tk::real& d ){ return d -= s; } );
       return st2;
@@ -104,11 +108,11 @@ class TransportProblemGaussHump {
     //! \return Velocity assigned to all vertices of a tetrehedron, size:
     //!   ncomp * ndim = [ncomp][3]
     static std::vector< std::array< tk::real, 3 > >
-    prescribedVelocity( tk::real,
+    prescribedVelocity( ncomp_t,
+                        ncomp_t ncomp,
                         tk::real,
                         tk::real,
-                        ncomp_t,
-                        ncomp_t ncomp )
+                        tk::real )
     {
       std::vector< std::array< tk::real, 3 > > vel( ncomp );
       for (ncomp_t c=0; c<ncomp; ++c)
