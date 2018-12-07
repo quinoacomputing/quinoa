@@ -40,7 +40,7 @@ FaceData::FaceData(
 //!   mesh chunk
 //! \details This class is created per chare-worker in 
 //!   Partitioner::createWorkers(). This is done so that Discretization will 
-//!   not hold all this data unnecessarily, viz. for MatCG and DiagCG, where 
+//!   not hold all this data unnecessarily, viz. for DiagCG, where 
 //!   it's not needed. It will be computed only when DG discretization is 
 //!   chosen.
 // *****************************************************************************

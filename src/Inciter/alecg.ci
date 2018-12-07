@@ -27,9 +27,7 @@ module alecg {
     array [1D] ALECG {
     //! [1D Charm++ chare array]
       //! [Entry methods]
-      entry ALECG( const CProxy_Discretization& disc,
-                   const tk::CProxy_Solver&,
-                   const FaceData& fd );
+      entry ALECG( const CProxy_Discretization& disc, const FaceData& fd );
       initnode void registerReducers();
       entry void setup( tk::real v );
       entry void dt();

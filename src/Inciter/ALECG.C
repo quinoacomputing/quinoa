@@ -14,7 +14,6 @@
 
 #include "QuinoaConfig.h"
 #include "ALECG.h"
-#include "Solver.h"
 #include "Vector.h"
 #include "Reader.h"
 #include "ContainerUtil.h"
@@ -44,9 +43,7 @@ extern std::vector< CGPDE > g_cgpde;
 
 using inciter::ALECG;
 
-ALECG::ALECG( const CProxy_Discretization& disc,
-              const tk::CProxy_Solver&,
-              const FaceData& fd ) :
+ALECG::ALECG( const CProxy_Discretization& disc, const FaceData& fd ) :
   m_disc( disc ),
   m_itf( 0 ),
   m_initial( true ),

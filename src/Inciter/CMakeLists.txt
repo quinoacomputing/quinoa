@@ -12,7 +12,6 @@ add_library(Inciter
             Discretization.C
             Refiner.C
             Sorter.C
-            MatCG.C
             DiagCG.C
             ALECG.C
             DG.C
@@ -32,7 +31,6 @@ target_include_directories(Inciter PUBLIC
                            ${QUINOA_SOURCE_DIR}/Main
                            ${QUINOA_SOURCE_DIR}/LoadBalance
                            ${QUINOA_SOURCE_DIR}/Statistics
-                           ${QUINOA_SOURCE_DIR}/LinSys
                            ${QUINOA_SOURCE_DIR}/Inciter
                            ${QUINOA_SOURCE_DIR}/PDE
                            ${QUINOA_TPL_DIR}
@@ -44,7 +42,6 @@ target_include_directories(Inciter PUBLIC
                            ${ROOT_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_PATH}
-                           ${PROJECT_BINARY_DIR}/../LinSys
                            ${PROJECT_BINARY_DIR}/../Inciter
                            ${PROJECT_BINARY_DIR}/../Base
                            ${PROJECT_BINARY_DIR}/../Main)
@@ -73,7 +70,6 @@ addCharmModule( "partitioner" "Inciter" )
 addCharmModule( "discretization" "Inciter" )
 addCharmModule( "refiner" "Inciter" )
 addCharmModule( "sorter" "Inciter" )
-addCharmModule( "matcg" "Inciter" )
 addCharmModule( "diagcg" "Inciter" )
 addCharmModule( "alecg" "Inciter" )
 addCharmModule( "distfct" "Inciter" )
@@ -90,11 +86,6 @@ add_dependencies( "Inciter" "inciterCharmModule" )
 ## maps.
 #add_dependencies( "transporterCharmModule" "linearmapCharmModule" )
 #add_dependencies( "transporterCharmModule" "unsmeshmapCharmModule" )
-
-# Add extra dependency of Inciter on Solver charm module. This is required so
-# that solver.decl.h and solver.def.h are generated before Inciter including
-# those.
-add_dependencies( "Inciter" "solverCharmModule" )
 
 # Add extra dependency of Transporter charm module on Partitioner charm module.
 # This is required so that Partitioner.decl.h and Partitioner.def.h are

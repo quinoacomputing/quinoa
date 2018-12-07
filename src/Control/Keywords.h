@@ -3462,9 +3462,7 @@ struct reorder_info {
     do (or not do) a global distributed mesh reordering across all PEs that
     yields an approximately continous mesh node ID order as mesh partitions are
     assigned to PEs after mesh partitioning. Reordering is optional in meshconv
-    and optional in inciter if the DiagCG or the DG discretization schemes are
-    configured and mandatory (i.e., on independent of the user setting in the
-    input file) if MatCG is configured.)";
+    and inciter.)";
   }
   using alias = Alias< r >;
   struct expect {
@@ -4822,22 +4820,6 @@ struct amr_info {
 };
 using amr = keyword< amr_info, TAOCPP_PEGTL_STRING("amr") >;
 
-struct matcg_info {
-  static std::string name()
-  { return "consistent-mass continuous Galerkin + Lax-Wendroff"; }
-  static std::string shortDescription() { return "Select continuous Galerkin "
-    "+ Lax Wendroff with consistent-mass matrix LHS"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select the consistent-mass matrix continuous
-    Galerkin (CG) finite element spatial discretiztaion used in inciter. CG is
-    combined with a Lax-Wendroff scheme for time discretization and
-    flux-corrected transport (FCT) for treating discontinuous solutions. This
-    option selects the scheme that stores the left-hand side matrix as a
-    compressed sparse row (CSR) storage consistent-mass matrix and uses a linear
-    solver. See Control/Inciter/Options/Scheme.h for other valid options.)"; }
-};
-using matcg = keyword< matcg_info, TAOCPP_PEGTL_STRING("matcg") >;
-
 struct diagcg_info {
   static std::string name()
   { return "lumped-mass matrix continuous Galerkin + Lax-Wendroff"; }
@@ -4904,8 +4886,7 @@ struct scheme_info {
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
-      return '\'' + matcg::string() + "\' | \'"
-                  + diagcg::string() + "\' | \'"
+      return '\'' + diagcg::string() + "\' | \'"
                   + dg::string() + '\'';
     }
   };
@@ -5003,7 +4984,7 @@ struct fct_info {
   static std::string longDescription() { return
     R"(This keyword can be used to turn on/off flux-corrected transport (FCT).
     Note that FCT is only used in conjunction with continuous Galerkin finite
-    element discretization, configured by schemes matcg or diagcg and it has no
+    element discretization, configured by scheme diagcg and it has no
     effect when the discontinuous Galerkin (DG) scheme is used, configured by
     'scheme dg'. Also note that even if FCT is turned off, it is still
     performed, only its result is not applied.)"; }

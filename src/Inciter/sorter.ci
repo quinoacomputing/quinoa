@@ -10,11 +10,12 @@
 
 module sorter {
 
+  include "Callback.h";
+
   namespace inciter {
 
     array [1D] Sorter {
       entry Sorter( const CProxy_Transporter& transporter,
-                    const tk::CProxy_Solver& solver,
                     const tk::SorterCallback& cbs,
                     const Scheme& scheme,
                     const std::vector< std::size_t >& ginpoel,
@@ -37,8 +38,6 @@ module sorter {
       entry void request( int c, const std::unordered_set< std::size_t >& nd );
       entry void neworder( const std::unordered_map< std::size_t,
                        std::tuple< std::size_t, tk::UnsMesh::Coord > >& nodes );
-      entry void lower( std::size_t low );
-      entry void createDiscWorkers();
       entry void createWorkers();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
@@ -49,14 +48,8 @@ module sorter {
         serial "prepare" { prepare(); }
       };
 
-      entry void wait4bounds() {
-        when lower_complete(), upper_complete() serial "create" { create(); }
-      };
-
       entry void reorderowned_complete();
       entry void nodes_requested_complete();
-      entry void lower_complete();
-      entry void upper_complete();
     };
 
   } // inciter::

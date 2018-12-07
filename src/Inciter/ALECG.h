@@ -68,9 +68,7 @@ class ALECG : public CBase_ALECG {
     #endif
 
     //! Constructor
-    explicit ALECG( const CProxy_Discretization& disc,
-                    const tk::CProxy_Solver&,
-                    const FaceData& fd );
+    explicit ALECG( const CProxy_Discretization& disc, const FaceData& fd );
 
     #if defined(__clang__)
       #pragma clang diagnostic push

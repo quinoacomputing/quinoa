@@ -555,7 +555,6 @@ endif()
 if (ENABLE_INCITER)
   add_subdirectory(PDE)
   add_subdirectory(Inciter)
-  add_subdirectory(LinSys)
 endif()
 
 if (ENABLE_UNITTEST)

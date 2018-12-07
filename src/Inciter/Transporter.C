@@ -53,7 +53,6 @@ using inciter::Transporter;
 Transporter::Transporter() :
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_nchare( 0 ),
-  m_solver(),
   m_scheme( g_inputdeck.get< tag::discr, tag::scheme >() ),
   m_partitioner(),
   m_refiner(),
@@ -65,11 +64,10 @@ Transporter::Transporter() :
   m_maxstat( {{ 0.0, 0.0, 0.0 }} ),
   m_avgstat( {{ 0.0, 0.0, 0.0 }} ),
   m_timer(),
-  m_linsysbc(),
   m_progMesh( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-              {{ "p", "d", "r", "b", "c", "m", "r", "b" }},
+              {{ "p", "d", "r", "b", "c", "m", "r" }},
               {{ "partition", "distribute", "refine", "bnd", "comm", "mask",
-                  "reorder", "bounds"}} ),
+                  "reorder" }} ),
   m_progWork( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
               {{ "c", "b", "f", "g", "a" }},
               {{ "create", "bndface", "comfac", "ghost", "adj" }} )
@@ -112,7 +110,7 @@ Transporter::Transporter() :
   m_print.section( "Discretization parameters" );
   m_print.Item< ctr::Scheme, tag::discr, tag::scheme >();
 
-  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG) {
+  if (scheme == ctr::SchemeType::DiagCG) {
     auto fct = g_inputdeck.get< tag::discr, tag::fct >();
     m_print.item( "Flux-corrected transport (FCT)", fct );
     if (fct)
@@ -213,32 +211,10 @@ Transporter::Transporter() :
     // Configure and write diagnostics file header
     diagHeader();
 
-    // Create linear system solver group
-    createSolver();
-
     // Create mesh partitioner AND boundary condition object group
     createPartitioner();
 
   } else finish();      // stop if no time stepping requested
-}
-
-void
-Transporter::createSolver()
-// *****************************************************************************
-// Create linear solver
-// *****************************************************************************
-{
-  // Create linear system solver callbacks
-  tk::SolverCallback cbs{
-      CkCallback( CkReductionTarget(Transporter,partition), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,bounds), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,comfinal), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,disccreated), thisProxy )
-  };
-
-  // Create linear system solver Charm++ chare group
-  m_solver = tk::CProxy_Solver::
-               ckNew( cbs, g_inputdeck.get< tag::component >().nprop() );
 }
 
 void
@@ -305,7 +281,7 @@ Transporter::createPartitioner()
 
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
-    CProxy_Partitioner::ckNew( cbp, cbr, cbs, thisProxy, m_solver, m_refiner,
+    CProxy_Partitioner::ckNew( cbp, cbr, cbs, thisProxy, m_refiner,
                                m_sorter, m_scheme, belem, faces, bnode );
 }
 
@@ -327,9 +303,6 @@ Transporter::load( uint64_t nelem, uint64_t npoin )
                tk::linearLoadDistributor(
                  g_inputdeck.get< tag::cmd, tag::virtualization >(),
                  nelem, CkNumPes(), chunksize, remainder ) );
-
-  // Send total number of chares to all linear solver PEs
-  m_solver.nchare( m_nchare );
 
   // Start timer measuring preparation of the mesh for partitioning
   const auto& timer = tk::cref_find( m_timer, TimerTag::MESH_READ );
@@ -360,16 +333,9 @@ Transporter::load( uint64_t nelem, uint64_t npoin )
     nref = static_cast<int>( g_inputdeck.get< tag::amr, tag::init >().size() );
 
   m_progMesh.start( "Preparing mesh", {{ CkNumPes(), CkNumPes(), nref,
-    m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
-}
+    m_nchare, m_nchare, m_nchare, m_nchare }} );
 
-void
-Transporter::partition()
-// *****************************************************************************
-// Reduction target: Reduction target: all Solver (PEs) have computed the number
-// of chares they will recieve contributions from during linear solution
-// *****************************************************************************
-{
+  // Partition the mesh
   m_partitioner.partition( m_nchare );
 }
 
@@ -491,15 +457,6 @@ Transporter::resized()
 }
 
 void
-Transporter::bounds()
-// *****************************************************************************
-// Reduction target: all Solver (PEs) have computed their row bounds
-// *****************************************************************************
-{
-  m_sorter.createDiscWorkers();
-}
-
-void
 Transporter::discinserted()
 // *****************************************************************************
 // Reduction target: all Discretization chares have been inserted
@@ -526,7 +483,7 @@ Transporter::disccreated()
   m_refiner.sendProxy();
 
   auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG)
+  if (sch == ctr::SchemeType::DiagCG)
     m_scheme.doneDistFCTInserting< tag::bcast >();
 
   m_scheme.vol();
@@ -556,8 +513,7 @@ Transporter::diagHeader()
   // Collect variables names for integral/diagnostics output
   std::vector< std::string > var;
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG ||
-      scheme == ctr::SchemeType::ALECG)
+  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG)
     for (const auto& eq : g_cgpde) varnames( eq, var );
   else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1)
     for (const auto& eq : g_dgpde) varnames( eq, var );
@@ -745,26 +701,6 @@ Transporter::stat()
                     {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
   // Create "derived-class" workers
   m_sorter.createWorkers();
-}
-
-void
-Transporter::start()
-// *****************************************************************************
-// Start time stepping
-//! \note Only called if MatCG/DiagG is used
-// *****************************************************************************
-{
-  m_scheme.dt< tag::bcast >();
-}
-
-void
-Transporter::next()
-// *****************************************************************************
-// Reset linear solver for next time step
-//! \note Only called if MatCG is used
-// *****************************************************************************
-{
-  m_solver.next();
 }
 
 void

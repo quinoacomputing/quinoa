@@ -69,14 +69,6 @@ Discretization::Discretization(
 //! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
 //!   mesh chunk we operate on
 //! \param[in] nc Total number of Discretization chares
-//! \details "Contiguous-row-id" here means that the numbering of the mesh nodes
-//!   (which corresponds to rows in the linear system) are (approximately)
-//!   contiguous (as much as this can be done with an unstructured mesh) as the
-//!   problem is distirbuted across PEs, held by Solver objects. This ordering
-//!   is in start contrast with "as-in-file" ordering, which is the ordering of
-//!   the mesh nodes as it is stored in the file from which the mesh is read in.
-//!   The as-in-file ordering is highly non-contiguous across the distributed
-//!   problem.
 // *****************************************************************************
 {
   Assert( m_psup.second.size()-1 == m_gid.size(),
@@ -102,11 +94,10 @@ Discretization::Discretization(
 
   // Insert DistFCT chare array element if FCT is needed. Note that even if FCT
   // is configured false in the input deck, at this point, we still need the FCT
-  // object as FCT is still being performed, only its results are ignored. See
-  // also, e.g., MatCG::next().
+  // object as FCT is still being performed, only its results are ignored.
   const auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
   const auto nprop = g_inputdeck.get< tag::component >().nprop();
-  if ((sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG))
+  if (sch == ctr::SchemeType::DiagCG)
     m_fct[ thisIndex ].insert( m_nchare, m_gid.size(), nprop,
                                m_msum, m_bid, m_lid, m_inpoel );
 

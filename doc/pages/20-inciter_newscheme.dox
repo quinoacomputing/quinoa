@@ -9,7 +9,7 @@ high level, is the same for all discretization schemes.
 
 @section inciter_newscheme_rationale Rationale and plan
 
-Similar to the existing discretization schemes, `DiagCG`, `MatCG`, or `DG`, the
+Similar to the existing discretization schemes, `DiagCG`, or `DG`, the
 new scheme, `ALECG` (short for Arbitrary Lagrangian-Eulerian Continuous
 Galerkin), will interact with `Discretization` in a child-base fashion, e.g.,
 will directly access (and reuse) its member data and functions.  It will also
@@ -148,12 +148,12 @@ index 61510d01..0cb3e9e8 100644
      const CkArrayOptions& arrayoptions() { return m_bound; }
 
      //! Variant type listing all chare proxy types modeling the same concept
--    using Proxy = boost::variant< CProxy_MatCG, CProxy_DiagCG, CProxy_DG >;
+-    using Proxy = boost::variant< CProxy_DiagCG, CProxy_DG >;
 +    using Proxy =
-+      boost::variant< CProxy_MatCG, CProxy_DiagCG, CProxy_DG, CProxy_ALECG >;
++      boost::variant< CProxy_DiagCG, CProxy_DG, CProxy_ALECG >;
      //! Variant type listing all chare element proxy types (behind operator[])
      using ProxyElem =
-       boost::variant< CProxy_MatCG::element_t, CProxy_DiagCG::element_t,
+       boost::variant< CProxy_DiagCG::element_t,
 -                      CProxy_DG::element_t >;
 +                      CProxy_DG::element_t, CProxy_ALECG::element_t >;
 
@@ -202,12 +202,12 @@ index 61510d01..dea3d78a 100644
      const CkArrayOptions& arrayoptions() { return m_bound; }
 
      //! Variant type listing all chare proxy types modeling the same concept
--    using Proxy = boost::variant< CProxy_MatCG, CProxy_DiagCG, CProxy_DG >;
+-    using Proxy = boost::variant< CProxy_DiagCG, CProxy_DG >;
 +    using Proxy =
-+      boost::variant< CProxy_MatCG, CProxy_DiagCG, CProxy_ALECG, CProxy_DG >;
++      boost::variant< CProxy_DiagCG, CProxy_ALECG, CProxy_DG >;
      //! Variant type listing all chare element proxy types (behind operator[])
      using ProxyElem =
-       boost::variant< CProxy_MatCG::element_t, CProxy_DiagCG::element_t,
+       boost::variant< CProxy_DiagCG::element_t,
 -                      CProxy_DG::element_t >;
 +                      CProxy_ALECG::element_t, CProxy_DG::element_t >;
 
@@ -245,7 +245,6 @@ index dfcb1ffd..4fe743a4 100644
 +++ b/src/Inciter/Refiner.h
 @@ -29,6 +29,7 @@
  #include "SchemeBase.h"
- #include "MatCG.h"
  #include "DiagCG.h"
 +#include "ALECG.h"
  #include "DG.h"
@@ -266,7 +265,6 @@ index 141055ec..e339b65b 100644
 +++ b/src/Inciter/CMakeLists.txt
 @@ -14,6 +14,7 @@ add_library(Inciter
              Sorter.C
-             MatCG.C
              DiagCG.C
 +            ALECG.C
              DG.C
@@ -664,10 +662,8 @@ index 438cb5e3..9b2e14e7 100644
    std::vector< CGPDE > pdes;                // will store instantiated PDEs
 
    const auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
--  if (sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG) {
-+  if (sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG ||
-+      sch == ctr::SchemeType::ALECG)
-+  {
+-  if (sch == ctr::SchemeType::DiagCG) {
++  if (sch == ctr::SchemeType::DiagCG || sch == ctr::SchemeType::ALECG) {
 
      for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
        if (d == ctr::PDEType::TRANSPORT)
@@ -721,7 +717,6 @@ index 6dc48c75..e4acfce4 100644
 +  ensure_equals( "Underlying element type", a.which_element(), 3 );
  }
 
- //! Test Pack/Unpack of Scheme holding CProxy_MatCG
 @@ -162,6 +166,27 @@ void Scheme_object::test< 5 >() {
      inciter::Scheme( inciter::ctr::SchemeType::DG ), 2, "DG" );
  }

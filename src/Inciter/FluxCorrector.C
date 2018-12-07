@@ -71,7 +71,6 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
 {
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
   auto ctau = g_inputdeck.get< tag::discr, tag::ctau >();
-  auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
 
   Assert( vol.size() == coord[0].size(), "Nodal volume vector size mismatch" );
   Assert( m_aec.nunk() == inpoel.size() && m_aec.nprop() == ncomp,
@@ -109,11 +108,10 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
 
     // access solution at element nodes at time n
     std::vector< std::array< tk::real, 4 > > un( ncomp );
+    // access high-order solution increment at element nodes: duh = 0 for
+    // lumped-mass CG
     for (ncomp_t c=0; c<ncomp; ++c) un[c] = Un.extract( c, 0, N );
-    // access high-order solution increment at element nodes
     std::vector< std::array< tk::real, 4 > > duh( ncomp, {{0,0,0,0}} );
-    if (sch == ctr::SchemeType::MatCG)  // duh = 0 for lumped-mass CG
-      for (ncomp_t c=0; c<ncomp; ++c) duh[c] = dUh.extract( c, 0, N );
 
     // Compute antidiffusive element contributions (AEC). The high order system
     // is M_c * dUh = r, where M_c is the consistent mass matrix and r is the

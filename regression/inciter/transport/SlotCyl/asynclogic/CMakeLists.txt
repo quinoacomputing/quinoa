@@ -1,7 +1,7 @@
 # See cmake/add_regression_test.cmake for documentation on the arguments to
 # add_regression_test().
 
-foreach(scheme matcg diagcg dg alecg)
+foreach(scheme diagcg dg alecg)
   foreach(virt 0.0 0.5 0.9)
     foreach(npes RANGE 1 8)
       add_regression_test(asynclogic_${scheme}_u${virt} ${INCITER_EXECUTABLE}

@@ -57,7 +57,6 @@ class Sorter : public CBase_Sorter {
   public:
     //! Constructor
     explicit Sorter( const CProxy_Transporter& transporter,
-                     const tk::CProxy_Solver& solver,
                      const tk::SorterCallback& cbs,
                      const Scheme& scheme,
                      const std::vector< std::size_t >& ginpoel,
@@ -112,9 +111,6 @@ class Sorter : public CBase_Sorter {
     void neworder( const std::unordered_map< std::size_t,
            std::tuple< std::size_t, tk::UnsMesh::Coord > >& nodes );
 
-    //! Create Discretization chare array elements on this PE
-    void createDiscWorkers();
-
     //! Create worker chare array elements on this PE
     void createWorkers();
 
@@ -124,7 +120,6 @@ class Sorter : public CBase_Sorter {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_host;
-      p | m_solver;
       p | m_cbs;
       p | m_scheme;
       p | m_ginpoel;
@@ -156,8 +151,6 @@ class Sorter : public CBase_Sorter {
   private:
     //! Host proxy
     CProxy_Transporter m_host;
-    //! Linear system solver proxy
-    tk::CProxy_Solver m_solver;
     //! Charm++ callbacks associated to compile-time tags for sorter
     tk::SorterCallback m_cbs;
     //! Discretization scheme
@@ -221,15 +214,8 @@ class Sorter : public CBase_Sorter {
     //! Compute final result of reordering
     void finish();
 
-    //! Compute lower and upper bounds of reordered node IDs our PE operates on
-    void bounds();
-
-    //! \brief Create chare array elements on this PE and assign the global mesh
-    //!   element IDs they will operate on
-    void create();
-
-    //! Return nodegroup id for chare id
-    int node( int id ) const;
+    //! Create Discretization chare array elements on this PE
+    void createDiscWorkers();
 };
 
 } // inciter::

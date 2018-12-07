@@ -13,7 +13,6 @@ module dg {
 
   extern module transporter;
   extern module discretization;
-  extern module solver;
 
   include "UnsMesh.h";
   include "PUPUtil.h";
@@ -22,9 +21,7 @@ module dg {
   namespace inciter {
 
     array [1D] DG {
-      entry DG( const CProxy_Discretization& disc,
-                const tk::CProxy_Solver&,
-                const FaceData& fd );
+      entry DG( const CProxy_Discretization& disc, const FaceData& fd );
       entry void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
       entry void comGhost( int fromch, const GhostData& ghost );
       entry void reqGhost();

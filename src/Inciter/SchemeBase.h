@@ -20,7 +20,6 @@
 #include "PUPUtil.h"
 #include "Inciter/Options/Scheme.h"
 
-#include "NoWarning/matcg.decl.h"
 #include "NoWarning/diagcg.decl.h"
 #include "NoWarning/alecg.decl.h"
 #include "NoWarning/distfct.decl.h"
@@ -49,10 +48,7 @@ class SchemeBase {
       discproxy( CProxy_Discretization::ckNew() )
     {
       m_bound.bindTo( discproxy );
-      if (scheme == ctr::SchemeType::MatCG) {
-        proxy = static_cast< CProxy_MatCG >( CProxy_MatCG::ckNew(m_bound) );
-        fctproxy = CProxy_DistFCT::ckNew(m_bound);
-      } else if (scheme == ctr::SchemeType::DiagCG) {
+      if (scheme == ctr::SchemeType::DiagCG) {
         proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(m_bound) );
         fctproxy= CProxy_DistFCT::ckNew(m_bound);
       } else if (scheme == ctr::SchemeType::DG ||
@@ -83,11 +79,12 @@ class SchemeBase {
 
     //! Variant type listing all chare proxy types modeling the same concept
     using Proxy =
-      boost::variant< CProxy_MatCG, CProxy_DiagCG, CProxy_DG, CProxy_ALECG >;
+      boost::variant< CProxy_DiagCG, CProxy_DG, CProxy_ALECG >;
     //! Variant type listing all chare element proxy types (behind operator[])
     using ProxyElem =
-      boost::variant< CProxy_MatCG::element_t, CProxy_DiagCG::element_t,
-                      CProxy_DG::element_t, CProxy_ALECG::element_t >;
+      boost::variant< CProxy_DiagCG::element_t,
+                      CProxy_DG::element_t,
+                      CProxy_ALECG::element_t >;
 
   protected:
     //! Variant storing one proxy to which this class is configured for

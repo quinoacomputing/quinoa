@@ -16,7 +16,6 @@
 #include "DG.h"
 #include "Discretization.h"
 #include "DGPDE.h"
-#include "Solver.h"
 #include "DiagReducer.h"
 #include "DerivedData.h"
 #include "ElemDiagnostics.h"
@@ -38,9 +37,7 @@ extern std::vector< DGPDE > g_dgpde;
 
 using inciter::DG;
 
-DG::DG( const CProxy_Discretization& disc,
-        const tk::CProxy_Solver&,
-        const FaceData& fd ) :
+DG::DG( const CProxy_Discretization& disc, const FaceData& fd ) :
   m_disc( disc ),
   m_ncomfac( 0 ),
   m_nadj( 0 ),

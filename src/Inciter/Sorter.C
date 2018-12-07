@@ -14,7 +14,6 @@
 #include "Reorder.h"
 #include "DerivedData.h"
 #include "Inciter/InputDeck/InputDeck.h"
-#include "Solver.h"
 
 namespace inciter {
 
@@ -25,7 +24,6 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::Sorter;
 
 Sorter::Sorter( const CProxy_Transporter& transporter,
-                const tk::CProxy_Solver& solver,
                 const tk::SorterCallback& cbs,
                 const Scheme& scheme,
                 const std::vector< std::size_t >& ginpoel,
@@ -35,7 +33,6 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
                 const std::map< int, std::vector< std::size_t > >& bnode,
                 int nchare ) :
   m_host( transporter ),
-  m_solver( solver ),
   m_cbs( cbs ),
   m_scheme( scheme ),
   m_ginpoel( ginpoel ),
@@ -60,7 +57,6 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
 // *****************************************************************************
 //  Constructor: prepare owned mesh node IDs for reordering
 //! \param[in] transporter Transporter (host) Charm++ proxy
-//! \param[in] solver Linear system solver Charm++ proxy
 //! \param[in] cbs Charm++ callbacks for Sorter
 //! \param[in] scheme Discretization scheme
 //! \param[in] ginpoel Mesh connectivity (this chare) using global node IDs
@@ -248,7 +244,7 @@ Sorter::start()
   if (g_inputdeck.get< tag::discr, tag::reorder >())
     mask();   // continue with mesh node reordering if requested (or required)
   else
-    create(); // skip mesh node reordering
+    createDiscWorkers();  // skip mesh node reordering
 }
 
 void
@@ -333,7 +329,6 @@ Sorter::reorder()
   // computing/receiving lower and upper bounds of global node IDs our chare's
   // linear system will operate on after reordering.
   thisProxy[ thisIndex ].wait4prep();
-  thisProxy[ thisIndex ].wait4bounds();
 
   // Send out request for new global node IDs for nodes we do not reorder
   for (const auto& c : m_reordcomm)
@@ -466,86 +461,7 @@ Sorter::finish()
   // Progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chreordered();
 
-  // Compute lower and upper bounds of reordered node IDs on this chare
-  bounds();
-}
-
-void
-Sorter::bounds()
-// *****************************************************************************
-// Compute lower and upper bounds of reordered node IDs for this chare
-//! \details This function computes the bounds that this chare will contribute
-//!   to in a linear system solve. We find the largest node ID assigned on each
-//!   chare by the reordering and use that as the upper global row index for
-//!   this chare. Note that while this rarely results in equal number of rows
-//!   assigned to chares, potentially resulting in some load-imbalance, it
-//!   yields a pretty good division reducing communication costs during the
-//!   assembly of the linear system, which is more important than a slight
-//!   (FLOP) load imbalance. Since the upper index for chare 1 is the same as
-//!   the lower index for chare 2, etc., we find the upper indices and then the
-//!   lower indices for all chares are communicated.
-// *****************************************************************************
-{
-  m_upper = *std::max_element( begin(m_nodeset), end(m_nodeset) );
-
-  // The bounds are the dividers (global mesh point indices) at which the linear
-  // system assembly is divided among PEs. However, Solver expect exclusive
-  // upper indices, so we increase the last one by one here.
-  if (thisIndex == m_nchare-1) ++m_upper;
-
-  // Tell the runtime system that the upper bound has been computed
-  upper_complete();
-
-  // Set lower index for chare 0 as 0
-  if (thisIndex == 0) lower( 0 );
-
-  // All chares except the last one send their upper bound as the lower index for
-  // the chare with thisIndex+1
-  if (thisIndex < m_nchare-1) thisProxy[ thisIndex+1 ].lower( m_upper );
-}
-
-void
-Sorter::lower( std::size_t low )
-// *****************************************************************************
-//  Receive lower bound of node IDs for this chare
-//! \param[in] low Lower bound of node IDs assigned to this chare
-// *****************************************************************************
-{
-  m_lower = low;
-  lower_complete();
-}
-
-int
-Sorter::node( int id ) const
-// *****************************************************************************
-//  Return nodegroup id for chare id
-//! \param[in] id Chare id
-//! \return Nodegroup that creates the chare
-//! \details This is computed based on a simple contiguous linear
-//!   distribution of chare ids to compute nodes.
-// *****************************************************************************
-{
-  Assert( m_nchare > 0, "Number of chares must be a positive number" );
-  auto p = id / (m_nchare / CkNumNodes());
-  if (p >= CkNumNodes()) p = CkNumNodes()-1;
-  Assert( p < CkNumNodes(), "Assigning to nonexistent node" );
-  return p;
-}
-
-void
-Sorter::create()
-// *****************************************************************************
-// Create chare array elements on this PE and assign the global mesh element IDs
-// they will operate on
-// *****************************************************************************
-{
-  if (g_inputdeck.get< tag::cmd, tag::feedback >()) m_host.chbounds();
-
-  if ( g_inputdeck.get< tag::discr, tag::scheme >() == ctr::SchemeType::MatCG)
-    // broadcast this chare's bounds of global node IDs to matrix solvers
-    m_solver[ node(thisIndex) ].chbounds( m_lower, m_upper );
-  else // if no MatCG, no matrix solver, continue
-    createDiscWorkers();
+  createDiscWorkers();
 }
 
 void
@@ -592,7 +508,7 @@ Sorter::createWorkers()
   // insertion: 1st arg: chare id, last arg: PE chare is created on, middle
   // args: Discretization's child ctor args. See also Charm++ manual, Sec.
   // "Dynamic Insertion".
-  m_scheme.insert( thisIndex, m_scheme.get(), m_solver, fd );
+  m_scheme.insert( thisIndex, m_scheme.get(), fd );
 
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chcreated();
 

@@ -16,8 +16,6 @@ module transporter {
     chare Transporter {
       entry Transporter();
       entry [reductiontarget] void load( uint64_t nelem, uint64_t npoin );
-      entry [reductiontarget] void partition();
-      entry [reductiontarget] void bounds();
       entry [reductiontarget] void distributed();
       entry [reductiontarget] void refinserted( int error );
       entry [reductiontarget] void discinserted();
@@ -42,8 +40,6 @@ module transporter {
                                             tk::real d4, tk::real d5 );
       entry [reductiontarget] void pdfstat( CkReductionMsg* msg );
       entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
-      entry [reductiontarget] void start();
-      entry [reductiontarget] void next();
       entry [reductiontarget] void advance( tk::real );
       entry [reductiontarget] void finish();
 
@@ -53,7 +49,6 @@ module transporter {
       entry void chcomm();
       entry void chmask();
       entry void chreordered();
-      entry void chbounds();
 
       entry void chcreated();
       entry void chbndface();

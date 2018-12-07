@@ -37,7 +37,6 @@ Partitioner::Partitioner(
   const tk::RefinerCallback& cbr,
   const tk::SorterCallback& cbs,
   const CProxy_Transporter& host,
-  const tk::CProxy_Solver& solver,
   const CProxy_Refiner& refiner,
   const CProxy_Sorter& sorter,
   const Scheme& scheme,
@@ -48,7 +47,6 @@ Partitioner::Partitioner(
   m_cbr( cbr ),
   m_cbs( cbs ),
   m_host( host ),
-  m_solver( solver ),
   m_refiner( refiner ),
   m_sorter( sorter ),
   m_scheme( scheme ),
@@ -72,7 +70,6 @@ Partitioner::Partitioner(
 //! \param[in] cbr Charm++ callbacks for Refiner
 //! \param[in] cbs Charm++ callbacks for Sorter
 //! \param[in] host Host Charm++ proxy we are being called from
-//! \param[in] solver Linear system solver proxy
 //! \param[in] refiner Mesh refiner proxy
 //! \param[in] sorter Mesh reordering (sorter) proxy
 //! \param[in] scheme Discretization scheme
@@ -274,7 +271,6 @@ Partitioner::refine()
       // create refiner Charm++ chare array element using dynamic insertion
       m_refiner[ cid ].insert( m_host,
                                m_sorter,
-                               m_solver,
                                m_scheme,
                                m_cbr,
                                m_cbs,

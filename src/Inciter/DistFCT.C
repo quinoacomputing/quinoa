@@ -255,13 +255,13 @@ void
 DistFCT::alw( const tk::Fields& Un,
               const tk::Fields& Ul,
               const tk::Fields& dUl,
-              const SchemeProxy& scheme )
+              const CProxy_DiagCG& host )
 // *****************************************************************************
 //  Compute the maximum and minimum unknowns of elements surrounding nodes
 //! \param[in] Un Solution at the previous time step
 //! \param[in] Ul Low order solution
 //! \param[in] dUl Low order solution increment
-//! \param[in] scheme Discretization scheme Charm++ proxy we interoperate with
+//! \param[in] host DiagCG Charm++ proxy we interoperate with
 //! \details This function computes and starts communicating m_q, which stores
 //!    the maximum and mimimum unknowns of all elements surrounding each node
 //!    (Lohner: u^{max,min}_i), see also FluxCorrector::alw().
@@ -272,7 +272,7 @@ DistFCT::alw( const tk::Fields& Un,
   m_dul = dUl;
 
   // Store discretization scheme proxy
-  m_scheme = scheme;
+  m_host = host;
 
   // Compute the maximum and minimum unknowns of all elements surrounding nodes
   // Note that the maximum and minimum unknowns are complete on nodes that are
@@ -412,12 +412,8 @@ DistFCT::apply()
     for (ncomp_t c=0; c<m_a.nprop(); ++c) m_a(lid,c,0) += bac[c];
   }
 
-  // Prepare for next time step. The code below is equivalent to the function
-  // call m_scheme[ thisIndex ].ckLocal()->update( m_a ). The call is done via a
-  // variant to facilitate calling back to chare arrays of different types,
-  // e.g., MatCG or DiagCG. See also DistFCT::SchemeProxy.
-  auto e = tk::element< ProxyElem >( m_scheme, thisIndex );
-  boost::apply_visitor( Update(m_a), e );
+  // Update solution in host
+  m_host[ thisIndex ].ckLocal()->update(m_a);
 }
 
 #include "NoWarning/distfct.def.h"

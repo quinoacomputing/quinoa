@@ -78,9 +78,7 @@ class DiagCG : public CBase_DiagCG {
     #endif
 
     //! Constructor
-    explicit DiagCG( const CProxy_Discretization& disc,
-                     const tk::CProxy_Solver&,
-                     const FaceData& fd );
+    explicit DiagCG( const CProxy_Discretization& disc, const FaceData& fd );
 
     #if defined(__clang__)
       #pragma clang diagnostic push

@@ -27,7 +27,6 @@ module partitioner {
         const tk::RefinerCallback& cbr,
         const tk::SorterCallback& cbs,
         const CProxy_Transporter& host,
-        const tk::CProxy_Solver& solver,
         const CProxy_Refiner& refiner,
         const CProxy_Sorter& sorter,
         const Scheme& scheme,

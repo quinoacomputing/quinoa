@@ -38,7 +38,6 @@ using inciter::Refiner;
 
 Refiner::Refiner( const CProxy_Transporter& transporter,
                   const CProxy_Sorter& sorter,
-                  const tk::CProxy_Solver& solver,
                   const Scheme& scheme,
                   const tk::RefinerCallback& cbr,
                   const tk::SorterCallback& cbs,
@@ -50,7 +49,6 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
                   int nchare ) :
   m_host( transporter ),
   m_sorter( sorter ),
-  m_solver( solver ),
   m_scheme( scheme ),
   m_schemeproxy(),
   m_cbr( cbr ),
@@ -79,7 +77,6 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 //  Constructor
 //! \param[in] transporter Transporter (host) proxy
 //! \param[in] sorter Mesh reordering (sorter) proxy
-//! \param[in] solver Linear system solver proxy
 //! \param[in] scheme Discretization scheme
 //! \param[in] cbr Charm++ callbacks for Refiner
 //! \param[in] cbs Charm++ callbacks for Sorter
@@ -558,7 +555,7 @@ Refiner::endt0ref()
 // *****************************************************************************
 {
   // create sorter Charm++ chare array elements using dynamic insertion
-  m_sorter[ thisIndex ].insert( m_host, m_solver, m_cbs, m_scheme, m_ginpoel,
+  m_sorter[ thisIndex ].insert( m_host, m_cbs, m_scheme, m_ginpoel,
     m_coordmap, m_belem, m_triinpoel, m_bnode, m_nchare );
 
   // Compute final number of cells across whole problem

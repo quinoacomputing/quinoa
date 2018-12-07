@@ -142,7 +142,6 @@ class InputDeck :
                                    kw::amr_zminus,
                                    kw::amr_zplus,
                                    kw::scheme,
-                                   kw::matcg,
                                    kw::diagcg,
                                    kw::alecg,
                                    kw::dg,
@@ -182,7 +181,7 @@ class InputDeck :
       set< tag::discr, tag::fct >( true );
       set< tag::discr, tag::reorder >( false );
       set< tag::discr, tag::ctau >( 1.0 );
-      set< tag::discr, tag::scheme >( SchemeType::MatCG );
+      set< tag::discr, tag::scheme >( SchemeType::DiagCG );
       set< tag::discr, tag::flux >( FluxType::HLLC );
       set< tag::discr, tag::ndof >( 1 );
       set< tag::discr, tag::limiter >( LimiterType::NOLIMITER );

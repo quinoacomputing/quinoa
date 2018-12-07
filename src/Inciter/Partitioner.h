@@ -18,7 +18,6 @@
 #include "ZoltanInterOp.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "Options/PartitioningAlgorithm.h"
-#include "Solver.h"
 #include "DerivedData.h"
 #include "UnsMesh.h"
 #include "FaceData.h"
@@ -57,7 +56,6 @@ class Partitioner : public CBase_Partitioner {
                  const tk::RefinerCallback& cbr,
                  const tk::SorterCallback& cbs,
                  const CProxy_Transporter& host,
-                 const tk::CProxy_Solver& solver,
                  const CProxy_Refiner& refiner,
                  const CProxy_Sorter& sorter,
                  const Scheme& scheme,
@@ -96,8 +94,6 @@ class Partitioner : public CBase_Partitioner {
     tk::SorterCallback m_cbs;
     //! Host proxy
     CProxy_Transporter m_host;
-    //! Linear system solver proxy
-    tk::CProxy_Solver m_solver;
     //! Mesh refiner proxy
     CProxy_Refiner m_refiner;
     //! Mesh sorter proxy

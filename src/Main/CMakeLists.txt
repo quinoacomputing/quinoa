@@ -128,13 +128,11 @@ if (ENABLE_UNITTEST)
   target_include_directories(${UNITTEST_EXECUTABLE} PUBLIC
                              ${QUINOA_SOURCE_DIR}
                              ${QUINOA_SOURCE_DIR}/UnitTest
-                             ${QUINOA_SOURCE_DIR}/LinSys
                              ${QUINOA_SOURCE_DIR}/LoadBalance
                              ${QUINOA_SOURCE_DIR}/IO
                              ${QUINOA_SOURCE_DIR}/RNG
                              ${TUT_INCLUDE_DIRS}
                              ${LAPACKE_INCLUDE_DIRS}
-                             ${PROJECT_BINARY_DIR}/../LinSys
                              ${PROJECT_BINARY_DIR}/../UnitTest)
 
   config_executable(${UNITTEST_EXECUTABLE})
@@ -201,7 +199,6 @@ if (ENABLE_INCITER)
                         MeshRefinement
                         LoadBalance
                         ZoltanInterOp
-                        LinSys
                         Base
                         Config
                         Init
@@ -213,7 +210,6 @@ if (ENABLE_INCITER)
                         Mesh
                         Statistics
                         ${SEACASExodus_LIBRARIES}
-                        ${HYPRE_LIBRARIES}
                         ${ROOT_LIBRARIES}
                         ${Zoltan2_LIBRARIES}
                         ${RNGSSE2_LIBRARIES}

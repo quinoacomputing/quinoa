@@ -13,7 +13,6 @@ module diagcg {
 
   extern module transporter;
   extern module discretization;
-  extern module solver;
 
   include "UnsMesh.h";
   include "PUPUtil.h";
@@ -22,9 +21,7 @@ module diagcg {
   namespace inciter {
 
     array [1D] DiagCG {
-      entry DiagCG( const CProxy_Discretization& disc,
-                    const tk::CProxy_Solver&,
-                    const FaceData& fd );
+      entry DiagCG( const CProxy_Discretization& disc, const FaceData& fd );
       initnode void registerReducers();
       entry void setup( tk::real v );
       entry void dt();

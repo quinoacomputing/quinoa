@@ -30,7 +30,7 @@ class Transporter : public CBase_Transporter {
 
   private:
     //! Indices for progress report on mesh preparation
-    enum ProgMesh{ PART=0, DIST, REFINE, BND, COMM, MASK, REORD, BOUND };
+    enum ProgMesh{ PART=0, DIST, REFINE, BND, COMM, MASK, REORD };
     //! Indices for progress report on workers preparation
     enum ProgWork{ CREATE=0, BNDFACE, COMFAC, GHOST, ADJ };
 
@@ -67,9 +67,6 @@ class Transporter : public CBase_Transporter {
     //! \brief Reduction target: all Solver (PEs) have computed the number of
     //!   chares they will recieve contributions from during linear solution
     void partition();
-
-    //! Reduction target: all Solver (PEs) have computed their row bounds
-    void bounds();
 
     //! Reduction target: all PEs have distrbuted their mesh after partitioning
     void distributed();
@@ -120,8 +117,6 @@ class Transporter : public CBase_Transporter {
     void chmask() { m_progMesh.inc< MASK >(); }
     //! Non-reduction target for receiving progress report on reordering mesh
     void chreordered() { m_progMesh.inc< REORD >(); }
-    //! Non-reduction target for receiving progress report on computing bounds
-    void chbounds() { m_progMesh.inc< BOUND >(); }
 
     //! Non-reduction target for receiving progress report on creating workers
     void chcreated() { m_progWork.inc< CREATE >(); }
@@ -166,12 +161,6 @@ class Transporter : public CBase_Transporter {
     //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );
 
-    //! Start time stepping
-    void start();
-
-    //! Reset linear solver for next time step
-    void next();
-
     //! Reduction target computing minimum of dt
     void advance( tk::real dt );
 
@@ -181,7 +170,6 @@ class Transporter : public CBase_Transporter {
   private:
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of worker chares
-    tk::CProxy_Solver m_solver;          //!< Linear system solver group proxy
     Scheme m_scheme;                     //!< Discretization scheme
     CProxy_Partitioner m_partitioner;    //!< Partitioner group proxy
     CProxy_Refiner m_refiner;            //!< Mesh refiner array proxy
@@ -200,16 +188,10 @@ class Transporter : public CBase_Transporter {
     enum class TimerTag { MESH_READ=0 };
     //! Timers
     std::map< TimerTag, tk::Timer > m_timer;
-    //! \brief Aggregate 'old' (as in file) node ID list at which Solver
-    //!   sets boundary conditions, see also Partitioner.h
-    std::vector< std::size_t > m_linsysbc;
     //! Progress object for preparing mesh
-    tk::Progress< 8 > m_progMesh;
+    tk::Progress< 7 > m_progMesh;
     //! Progress object for preparing workers
     tk::Progress< 5 > m_progWork;
-
-    //! Create linear solver group
-    void createSolver();
 
     //! Create mesh partitioner and boundary condition object group
     void createPartitioner();

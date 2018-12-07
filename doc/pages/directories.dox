@@ -350,20 +350,6 @@ has code
  - to experiment with custom Charm++ object placement (currently unused), e.g.,
    UnsMeshMap.C.
 
-@dir src/LinSys
-@brief Linear solvers
-
-@details This directory contains functionality to interoperate with solvers for
-large, distributed linear systems as a result of spatial discretization of
-partial differential equations (PDEs). The main functionality is in Solver.C,
-which defines a Charm++ chare linear system merger group used to collect and
-assemble the left hand side matrix (lhs), the right hand side (rhs) vector, and
-the solution (unknown) vector from individual worker Charm++ chares (that hold
-the part of the computational mesh distributed across multiple CPUs, and
-discretize PDE operators). Beside collection and assembly, the system is also
-solved. The solution of the linear system is outsourced to
-[hypre](https://computation.llnl.gov/projects/hypre-scalable-linear-solvers-multigrid-methods/software).
-
 @dir src/IO
 @brief File input and output
 
