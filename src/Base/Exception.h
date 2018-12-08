@@ -16,6 +16,7 @@
 
 #include <exception>
 #include <cstdlib>
+#include <string>
 #include <iostream>
 
 //! Toolkit declarations and definitions for general purpose utilities
@@ -125,8 +126,8 @@ struct cerr_redirect {
   //! Destructor: restore previous state of std::cerr
   ~cerr_redirect( ) { std::cerr.rdbuf( old ); }
 
-private:
-  std::streambuf * old; //!< store previous state of std::cerr
+  private:
+    std::streambuf * old; //!< store previous state of std::cerr
 };
 
 } // tk::
