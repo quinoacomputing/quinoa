@@ -112,5 +112,23 @@ if(AMPI_C_COMPILER AND AMPI_CXX_COMPILER)
   set(ENABLE_AMPI true)
 endif()
 
+if(CHARM_COMPILER)
+  include(CheckIncludeFiles)
+  CHECK_INCLUDE_FILES("${CHARM_INCLUDE_DIR}/conv-mach-opt.h"
+                      HAVE_CHARM_CONV_MACH_OPT)
+
+  if (HAVE_CHARM_CONV_MACH_OPT)
+    include(CheckSymbolExists)
+    CHECK_SYMBOL_EXISTS(CMK_SMP "${CHARM_INCLUDE_DIR}/conv-mach-opt.h"
+                        CHARM_SMP)
+    if (CHARM_SMP)
+      message(STATUS "Charm++ built in SMP mode")
+    else()
+      message(STATUS "Charm++ built in non-SMP mode")
+    endif()
+  endif()
+
+endif()
+
 MARK_AS_ADVANCED(CHARM_COMPILER CHARM_INCLUDE_DIRS CHARM_RUN ENABLE_AMPI
                  AMPI_C_COMPILER AMPI_CXX_COMPILER AMPI_RUN)
