@@ -118,6 +118,7 @@ if (ENABLE_UNITTEST)
                  ../UnitTest/tests/LoadBalance/TestUnsMeshMap.C
                  ../UnitTest/tests/Mesh/TestAround.C
                  ../UnitTest/tests/Mesh/TestDerivedData.C
+                 ../UnitTest/tests/Mesh/TestDerivedData_MPISingle.C
                  ../UnitTest/tests/Mesh/TestGradients.C
                  ../UnitTest/tests/Mesh/TestReorder.C
                  ../UnitTest/${TestMKLRNG}
