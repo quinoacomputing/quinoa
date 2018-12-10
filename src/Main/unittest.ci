@@ -13,6 +13,7 @@ mainmodule unittest {
   extern module tutsuite;
   extern module mpirunner;
   extern module charestatecollector;
+  extern module quietcerr;
 
   readonly CProxy_Main mainProxy;
   readonly tk::CProxy_ChareStateCollector stateProxy;

@@ -21,7 +21,7 @@ module mpirunner {
     template< class Proxy >
     nodegroup MPIRunner {
       entry MPIRunner( const Proxy& proxy );
-      entry void rungroup( const std::string& groupname );
+      entry [exclusive] void rungroup( const std::string& groupname );
     }
 
   } // unittest::

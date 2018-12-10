@@ -106,10 +106,6 @@ void ContainerUtil_object::test< 3 >() {
   auto two = tk::ref_find(u,2);
   ensure_equals( "ref_find incorrect", two, "two" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   // test if cref_find throws in DEBUG when cannot find key
   try {
     auto three = tk::ref_find(u,3);
@@ -174,10 +170,6 @@ void ContainerUtil_object::test< 6 >() {
                  v1[1], v2[1], precision );
   ensure_equals( "add non-empty vector to empty one, src[2]==dst[2], incorrect",
                  v1[2], v2[2], precision );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   // add empty vector to non-empty one: throw in DEBUG to warn on no-op
   // skipped in RELEASE mode, would yield segmentation fault
@@ -275,10 +267,6 @@ void ContainerUtil_object::test< 7 >() {
   // Test if keys are unequal
   std::map< int, tk::real > q1{ {3,4.0}, {2,2.0} }, q2{ {1,4.0}, {2,3.0} };
   ensure_equals( "keys are equal", tk::keyEqual(q1,q2), false );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   // test if throws in DEBUG to warn on unequal-size containers
   // skipped in RELEASE mode, would yield segmentation fault

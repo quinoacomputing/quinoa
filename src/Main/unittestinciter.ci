@@ -14,6 +14,7 @@ mainmodule unittestinciter {
   extern module tutsuiteinciter;
   extern module mpirunnerinciter;
   extern module charestatecollector;
+  extern module quietcerr;
 
   readonly CProxy_Main mainProxy;
   readonly tk::CProxy_ChareStateCollector stateProxy;

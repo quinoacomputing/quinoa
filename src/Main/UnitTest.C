@@ -37,6 +37,7 @@
 #include "UnitTest/CmdLine/Parser.h"
 #include "TUTConfig.h"
 #include "ChareStateCollector.h"
+#include "QuietCerr.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -155,6 +156,8 @@ class Main : public CBase_Main {
       tk::MainCtor< CProxy_execute >
         ( msg, mainProxy, thisProxy, stateProxy, m_timer, m_cmdline,
           CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
+      // Quiet std::cerr
+      tk::CProxy_QuietCerr::ckNew();
     } catch (...) { tk::processExceptionCharm(); }
 
     void execute() {

@@ -9,6 +9,7 @@ add_library(UnitTest
             Assessment.C
             TUTSuite.C
             TUTTest.C
+            QuietCerr.C
             MPIRunner.C)
 
 target_include_directories(UnitTest PUBLIC
@@ -35,6 +36,7 @@ addCharmModule( "charmchild" "UnitTest" )
 addCharmModule( "charmtimer" "UnitTest" )
 addCharmModule( "testarray" "UnitTest" )
 addCharmModule( "migrated_base" "UnitTest" )
+addCharmModule( "quietcerr" "UnitTest" )
 
 if (ENABLE_INCITER)
   addCharmModule( "migrated_inciter" "UnitTest" )

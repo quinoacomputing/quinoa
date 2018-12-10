@@ -1634,10 +1634,6 @@ void ExodusIIMeshReader_object::test< 7 >() {
   std::unordered_map< std::size_t, std::size_t > lid;
   tk::UnsMesh::Coords coord;
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   // Test error checking emulating serial read
 
   try {
