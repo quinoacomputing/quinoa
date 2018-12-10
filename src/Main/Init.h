@@ -199,19 +199,18 @@ void finalize( const CmdLine& cmdline,
 {
   try {
 
-    if (!timer.empty()) {
-      timestamp.emplace_back( "Total runtime", timer[0].hms() );
-      print.time( "Timers (h:m:s)", timestamp );
-      print.endpart();
-      // if quiescence detection is on or user requested it, collect chare
-      // state
+   if (!timer.empty()) {
+     timestamp.emplace_back( "Total runtime", timer[0].hms() );
+     print.time( "Timers (h:m:s)", timestamp );
+     print.endpart();
+     // if quiescence detection is on or user requested it, collect chare state
      if ( cmdline.template get< tag::chare >() ||
-          cmdline.template get< tag::quiescence >() )
+          cmdline.template get< tag::quiescence >() ) {
        state.collect( /* error = */ false, dumpstateTarget );
-     else
-       // tell the Charm++ runtime system to exit with zero exit code
-       if (clean) CkExit(); else CkAbort("Failed");
-    }
+     }
+     // tell the Charm++ runtime system to exit with zero exit code
+     if (clean) CkExit(); else CkAbort("Failed");
+   }
 
   } catch (...) { tk::processExceptionCharm(); }
 }
