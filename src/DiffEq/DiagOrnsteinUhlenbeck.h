@@ -10,10 +10,21 @@
 
     In a nutshell, the equation integrated governs a set of scalars,
     \f$Y_\alpha\f$, \f$\alpha\!=\!1,\dots,N\f$, as
+
+    @m_class{m-show-m}
+
     \f[
        \mathrm{d}Y_\alpha(t) = \theta_\alpha\left(\mu_\alpha - Y_\alpha\right)
        \mathrm{d}t + \sigma_\alpha\mathrm{d}W_\alpha(t), \qquad \alpha=1,\dots,N
     \f]
+
+    @m_class{m-hide-m}
+
+    \f[ \begin{split}
+       \mathrm{d}Y_\alpha(t) = \theta_\alpha\left(\mu_\alpha - Y_\alpha\right)
+       \mathrm{d}t + \sigma_\alpha\mathrm{d}W_\alpha(t), \\ \alpha=1,\dots,N
+    \end{split} \f]
+
     with parameter vectors \f$\theta_\alpha > 0\f$, \f$\mu_\alpha\f$, and
     \f$\sigma_\alpha > 0\f$. Here \f$\mathrm{d}W_\alpha(t)\f$ is an isotropic
     vector-valued [Wiener process](http://en.wikipedia.org/wiki/Wiener_process)
@@ -32,6 +43,9 @@
     while the equation governing the covariance matrix, \f$ \langle y_\alpha
     y_\beta \rangle \equiv \left\langle (Y_\alpha - \langle Y_\alpha \rangle)
     (Y_\beta - \langle Y_\beta\rangle) \right\rangle \f$, is
+
+    @m_class{m-show-m}
+
     \f[
       \newcommand{\irmean}[1]{{\langle{#1}\rangle}}
       \newcommand{\irv}[1]{\langle{#1^2}\rangle}
@@ -42,6 +56,19 @@
           0               & \mathrm{for} \quad \alpha \ne \beta
         \end{array} \right..
     \f]
+
+    @m_class{m-hide-m}
+
+    \f[ \begin{split}
+      \newcommand{\irmean}[1]{{\langle{#1}\rangle}}
+      \newcommand{\irv}[1]{\langle{#1^2}\rangle}
+      \frac{\partial\irmean{y_\alpha y_\beta}}{\partial t} =
+        -\left(\theta_\alpha+\theta_\beta\right)\irmean{y_\alpha y_\beta} \\ +
+        \left\{ \begin{array}{lr}
+          \sigma_\alpha^2 & \mathrm{for} \quad \alpha = \beta,\\
+          0               & \mathrm{for} \quad \alpha \ne \beta
+        \end{array} \right..
+    \end{split} \f]
 */
 // *****************************************************************************
 #ifndef DiagOrnsteinUhlenbeck_h
@@ -54,7 +81,6 @@
 #include "DiagOrnsteinUhlenbeckCoeffPolicy.h"
 #include "RNG.h"
 #include "Particles.h"
-#include "SystemComponents.h"
 
 namespace walker {
 

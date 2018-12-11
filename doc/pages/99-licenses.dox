@@ -1,0 +1,208 @@
+/*!
+  \page      licenses Third-party libraries, compilers, and tools
+
+This page collects links to full verbatim texts of the licenses of all third-party
+libraries (TPLs), and the list of compilers and tools used by Quinoa.
+
+@section licenses_tpl_vs_tool TPLs and external tools
+
+An important distinction between TPLs and tools is that TPLs are libraries whose
+source we directly use, e.g., via include files and/or (static and dynamic)
+linking, while from a tool we do not include source code nor link its object
+files, only build it and use it as a separate (external) executable.
+
+\section tpl_licenses Third-party libraries
+
+\subsection charm_license The Charm++ Parallel Programming System
+  - Required
+  - Web: http://charm.cs.illinois.edu
+  - License: @subpage charm_license_page
+
+\subsection pegtl_license The Parsing Expression Grammar Template Library
+  - Required
+  - Web: https://github.com/taocpp/PEGTL
+  - License: @subpage pegtl_license_page
+
+\subsection tut_license C++ Template Unit Test Framework
+  - Required
+  - Web: http://mrzechonek.github.io/tut-framework
+  - License: @subpage tut_license_page
+
+\subsection boost_license Boost C++ libraries
+  - Required
+  - Web: http://www.boost.org
+  - License: @subpage boost_license_page
+
+\subsection pstreams_license PStreams for POSIX process Control
+  - Required
+  - Web: http://pstreams.sourceforge.net/
+  - License: @subpage pstreams_license_page
+
+\subsection hdf5_license The HDF5 data model
+  - Required
+  - Web: http://www.hdfgroup.org/HDF5
+  - License: @subpage hdf5_license_page
+
+\subsection netcdf_license The NetCDF data model
+  - Required
+  - Web: http://www.unidata.ucar.edu/downloads/netcdf/index.jsp
+  - License: @subpage netcdf_license_page
+
+\subsection seacas_license SEACAS for storing data for finite element analyses
+  - Required
+  - Web: https://github.com/trilinos/Trilinos/tree/master/packages/seacas
+  - License: @subpage seacas_license_page
+
+\subsection zoltan_license Zoltan for static load balancing
+  - Required
+  - Web: http://www.cs.sandia.gov/Zoltan/Zoltan.html
+  - License: @subpage zoltan_license_page
+
+\subsection hypre_license Hypre for linear solvers and preconditioners
+  - Required
+  - Web: https://computation.llnl.gov/projects/hypre-scalable-linear-solvers-multigrid-methods
+  - License: @subpage hypre_license_page
+
+\subsection rngsselib_license RNGSSELIB for random number generation
+  - Optional
+  - Web: http://cpc.cs.qub.ac.uk/summaries/AEIT_v2_0.html
+  - License: @subpage rngsselib_license_page
+
+\subsection testu01_license TestU01 for statistical testing of random number generators
+  - Required
+  - Web: http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
+  - License: @subpage testu01_license_page
+
+\subsection pugixml_license PugiXML for XML format reading and writing
+  - Required
+  - Web: http://pugixml.org/
+  - License: @subpage pugixml_license_page
+
+\subsection blas_license  BLAS for basic linear algebra
+  - Required
+  - Web: http://www.netlib.org/blas
+  - License: @subpage blas_license_page
+
+\subsection lapack_license LAPACK for linear algebra
+  - Required
+  - Web: http://www.netlib.org/lapack
+  - License: @subpage lapack_license_page
+
+\subsection aec_license AEC for adaptive entropy coding
+  - Required
+  - Web: https://gitlab.dkrz.de/k202009/libaec
+  - License: @subpage aec_license_page
+
+\subsection libstdcpp_license Libstdc++ for standard C++ containers and algorithms
+  - Either libc++ or libstdc++ required
+  - Web: https://gcc.gnu.org/libstdc++
+  - License: @subpage libstdcpp_license_page
+
+\subsection libcpp_license Libc++ for standard C++ containers and algorithms
+  - Either libc++ or libstdc++ required
+  - Web: http://libcxx.llvm.org
+  - License: @subpage libcpp_license_page
+
+\subsection musllibc_license Musl-libc for standard C library
+  - Either Optional
+  - Web: https://www.musl-libc.org
+  - License: @subpage musllibc_license_page
+
+\subsection openmpi_license OpenMPI for the message passing interface
+  - Required
+  - Web: http://www.open-mpi.org
+  - License: @subpage openmpi_license_page
+
+\subsection mkl_license Intel Math Kernel Library for BLAS/LAPACK and random number generation
+  - Optional
+  - Web: https://software.intel.com/en-us/intel-mkl
+  - License: @subpage mkl_license_page
+
+\subsection h5part_license H5Part for saving particle data to files
+  - Required
+  - Web: http://vis.lbl.gov/Research/H5Part
+  - License: @subpage h5part_license_page
+
+\subsection random123_license Random123 for random number generation
+  - Required
+  - Web: http://www.thesalmons.org/john/random123/releases/latest/docs/index.html
+  - License: @subpage random123_license_page
+
+\subsection backwardcpp_license BackwardCpp for generating backtraces
+  - Optional
+  - Web: https://github.com/bombela/backward-cpp
+  - License: @subpage backwardcpp_license_page
+  - Possible dependencies of BackWardCpp and their licenses:
+       + [GNU/binuitls](http://www.gnu.org/software/binutils) (GPL)
+       + [elfutils](https://sourceware.org/elfutils/) (GPLv2+/LGPLv3+)
+       + [libdwarf](https://sourceforge.net/projects/libdwarf/) (BSD/LGPLv2/GPLv2)
+       + [libelf](http://www.mr511.de/software/english.html) (LGPL)
+
+\subsection highwayhash_license HighwayHash for generating hashes
+  - Required
+  - Web: https://github.com/google/highwayhash
+  - License: @subpage highwayhash_license_page
+
+\subsection root_license ROOT for saving field data for data analysis
+  - Optional
+  - Web: https://root.cern.ch
+  - License: @subpage root_license_page
+
+\subsection omega_h_license Omega_h for reading large tetrahedron meshes in parallel
+  - Optional
+  - Web: https://github.com/ibaned/omega_h
+  - License: @subpage omega_h_license_page
+
+\subsection brigand_license Brigand for template meta-programming
+  - Required
+  - Web: https://github.com/edouarda/brigand
+  - License: @subpage brigand_license_page
+
+<hr>
+
+\section compiler_web Compilers
+
+\subsection clang_web Clang C++ compiler
+  - Web: http://llvm.org
+
+\subsection gcc_web GNU C++ compiler
+  - Web: https://gcc.gnu.org
+
+\subsection intel_web Intel C++ compiler
+  - Web: https://software.intel.com/en-us/c-compilers
+
+\subsection cray_web Cray C++ compiler
+  - Web: https://pubs.cray.com/content/S-2179/8.7/cray-c-and-c++-reference-manual
+
+<hr>
+
+\section tools_web Tools
+
+\subsection doxygen_web Doxygen for design, theory, and software API documentation
+  - Web: http://www.doxygen.org
+
+\subsection cmake_web CMake as a build system
+  - Web: http://www.cmake.org
+
+\subsection ninja_web Ninja for building
+  - Web: https://ninja-build.org
+
+\subsection gold_web Gold for linking
+  - Web: http://www.gnu.org/software/binutils
+
+\subsection gcov_web Gcov for unit test coverage analysis
+  - Web: https://gcc.gnu.org/onlinedocs/gcc/Gcov.html
+
+\subsection lcov_web Lcov for unit test coverage analysis report
+  - Web: http://ltp.sourceforge.net/coverage/lcov.php
+
+\subsection git_web Git for source code version control
+  - Web: https://git-scm.com
+
+\subsection numdiff_web Numdiff for comparison of text files with numerical content
+  - Web: http://svn.cern.ch/guest/madx/trunk/madX/tools/numdiff
+
+\subsection mcss_web M.CSS for improving on Doxygen output
+  - Web: http://mcss.mosra.cz/doxygen
+
+*/

@@ -10,33 +10,74 @@ add_library(Inciter
             Partitioner.C
             FaceData.C
             Discretization.C
+            Refiner.C
+            Sorter.C
             MatCG.C
             DiagCG.C
+            ALECG.C
             DG.C
             FluxCorrector.C
             DistFCT.C
             DiagReducer.C
             NodeDiagnostics.C
             ElemDiagnostics.C
-            BoundaryConditions.C
-            MeshReader.C
-)
+            NodeBC.C)
+
+target_include_directories(Inciter PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Mesh
+                           ${QUINOA_SOURCE_DIR}/IO
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${QUINOA_SOURCE_DIR}/Main
+                           ${QUINOA_SOURCE_DIR}/LoadBalance
+                           ${QUINOA_SOURCE_DIR}/Statistics
+                           ${QUINOA_SOURCE_DIR}/LinSys
+                           ${QUINOA_SOURCE_DIR}/Inciter
+                           ${QUINOA_SOURCE_DIR}/PDE
+                           ${QUINOA_TPL_DIR}
+                           ${SEACASExodus_INCLUDE_DIRS}
+                           ${BRIGAND_INCLUDE_DIRS}
+                           ${CHARM_INCLUDE_DIRS}
+                           ${PEGTL_INCLUDE_DIRS}
+                           ${HYPRE_INCLUDE_DIRS}
+                           ${ROOT_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_DIRS}
+                           ${MPI_CXX_INCLUDE_PATH}
+                           ${PROJECT_BINARY_DIR}/../LinSys
+                           ${PROJECT_BINARY_DIR}/../Inciter
+                           ${PROJECT_BINARY_DIR}/../Base
+                           ${PROJECT_BINARY_DIR}/../Main)
 
 add_library(MeshRefinement
+            PUPAMR.C
             AMR/mesh_adapter.C
             AMR/util.C
             AMR/edge.C
-            AMR/Error.C
-)
+            AMR/Error.C)
+
+target_include_directories(MeshRefinement PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${QUINOA_SOURCE_DIR}/Mesh
+                           ${QUINOA_SOURCE_DIR}/Inciter
+                           ${PEGTL_INCLUDE_DIRS}
+                           ${CHARM_INCLUDE_DIRS}
+                           ${TPL_INCLUDE_DIR}
+                           ${BRIGAND_INCLUDE_DIRS}
+                           ${PROJECT_BINARY_DIR}/../Main)
 
 addCharmModule( "transporter" "Inciter" )
 addCharmModule( "partitioner" "Inciter" )
 addCharmModule( "discretization" "Inciter" )
+addCharmModule( "refiner" "Inciter" )
+addCharmModule( "sorter" "Inciter" )
 addCharmModule( "matcg" "Inciter" )
 addCharmModule( "diagcg" "Inciter" )
+addCharmModule( "alecg" "Inciter" )
 addCharmModule( "distfct" "Inciter" )
 addCharmModule( "dg" "Inciter" )
-addCharmModule( "boundaryconditions" "Inciter" )
 
 # Add extra dependency of Inciter on inciterCharmModule. This is required as
 # Inciter refers to the main Charm++ proxy defined in the Charm++ module

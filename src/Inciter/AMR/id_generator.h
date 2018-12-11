@@ -2,14 +2,14 @@
 #define AMR_id_generator_h
 
 #include <limits>
-#include "Base/Exception.h"
+#include <cassert>
 
 // TODO: make this have a base class to support multiple generator schemes
 // using the policy design pattern
 namespace AMR {
 
     class id_generator_t {
-        protected:
+        public:
             size_t start_id;
 
             // Used to track which tet_id to give the next parent
@@ -17,13 +17,11 @@ namespace AMR {
             // many tets can be on the first level
             size_t next_tet_id;
 
-        public:
             // Constructor
             id_generator_t(size_t start_tet_id = 0) :
                 start_id(start_tet_id),
                 next_tet_id(start_id)
             {
-                // Empty
             }
 
             /**
@@ -37,12 +35,12 @@ namespace AMR {
             }
 
             /**
-             * @brief Helper function to get the all the child ids for a given
-             * parent
+             * Helper function to get all the child ids for a given parent
              *
              * WARNING: If you don't use all the children you ask for, you may have a bad time...
              *
              * @param parent_id The id of the parent
+             * @param count Number of children
              *
              * @return The list of children ids
              */
@@ -50,7 +48,7 @@ namespace AMR {
             {
                 child_id_list_t c;
                 c.resize(count);
-                c[0] = parent_id; // TODO: Remove this hack which suppresses warning
+                c[0] = parent_id; // FIXME: Remove this hack which suppresses warning
                 for (auto& i : c)
                 {
                     i = get_next_tet_id();
@@ -69,12 +67,11 @@ namespace AMR {
             // This basically says the number of tets which can be in an initial grid
             // A sensible value is 2^20 (1,048,576) for big simulations, and anything
             // smaller for toy problems
-            #define START_TET_ID 1024 // TODO: There must be a better way to pass a literal value
-            // const int START_TET_ID 1024 is technically uninitialized in constructor
+            #define START_TET_ID 1024
 
             // Constructor to reset START_TET_ID on the new value
             morton_id_generator_t() : id_generator_t(START_TET_ID) {
-                // Empty
+		        // Empty
             }
 
             /**
@@ -95,6 +92,7 @@ namespace AMR {
              * parent
              *
              * @param parent_id The id of the parent
+             * @param count Number of children
              *
              * @return The list of children ids
              */
@@ -102,7 +100,6 @@ namespace AMR {
             {
                 child_id_list_t c;
                 c.resize(count);
-                // TODO: Should this be range based?
                 for (size_t i = 0; i < count; i++)
                 {
                     c[i] = get_child_id(parent_id, i);
@@ -122,10 +119,7 @@ namespace AMR {
             static size_t get_child_id(size_t parent_id, size_t offset)
             {
                 // Try detect overflow
-                Assert(
-                        parent_id <= get_parent_id(std::numeric_limits<size_t>::max()),
-                        "Parent id is too large to make sense"
-                      );
+                assert( parent_id <= get_parent_id(std::numeric_limits<size_t>::max()));
                 return get_child_id(parent_id) + offset;
             }
 

@@ -60,10 +60,20 @@ class RNG {
     void gaussian( int stream, ncomp_t num, double* r ) const
     { self->gaussian( stream, num, r ); }
 
+    //! Public interface to multi-variate Gaussian RNG
+    void gaussianmv( int stream, ncomp_t num, ncomp_t d,
+                     const double* const mean, const double* const cov,
+                     double* r ) const
+    { self->gaussianmv( stream, num, d, mean, cov, r ); }
+
     //! Public interface to beta RNG
     void beta( int stream, ncomp_t num, double p, double q, double a, double b,
                double* r ) const
     { self->beta( stream, num, p, q, a, b, r ); }
+
+    //! Public interface to gamma RNG
+    void gamma( int stream, ncomp_t num, double a, double b, double* r ) const
+    { self->gamma( stream, num, a, b, r ); }
 
     //! Public interface to number of threads accessor
     std::size_t nthreads() const noexcept { return self->nthreads(); }
@@ -88,12 +98,15 @@ class RNG {
       virtual Concept* copy() const = 0;
       virtual void uniform( int, ncomp_t, double* ) const = 0;
       virtual void gaussian( int, ncomp_t, double* ) const = 0;
-      virtual void beta( int, ncomp_t, double, double, double, double, double* )
-      const = 0;
+      virtual void gaussianmv( int, ncomp_t, ncomp_t, const double* const,
+                               const double* const, double* ) const = 0;
+      virtual void beta(int, ncomp_t, double, double, double, double, double*)
+        const = 0;
+      virtual void gamma( int, ncomp_t, double, double, double* ) const = 0;
       virtual std::size_t nthreads() const noexcept = 0;
     };
 
-    //! Model models the Concept above by deriving from it and overriding the
+    //! \brief Model models the Concept above by deriving from it and overriding
     //! the virtual functions required by Concept
     template< typename T >
     struct Model : Concept {
@@ -103,9 +116,15 @@ class RNG {
       { data.uniform( stream, num, r ); }
       void gaussian( int stream, ncomp_t num, double* r ) const override
       { data.gaussian( stream, num, r ); }
+      void gaussianmv( int stream, ncomp_t num, ncomp_t d,
+                       const double* const mean, const double* const cov,
+                       double* r ) const override
+      { data.gaussianmv( stream, num, d, mean, cov, r ); }
       void beta( int stream, ncomp_t num, double p, double q, double a,
                  double b, double* r ) const override
       { data.beta( stream, num, p, q, a, b, r ); }
+      void gamma( int stream, ncomp_t num, double a, double b, double* r ) const
+        override { data.gamma( stream, num, a, b, r ); }
       std::size_t nthreads() const noexcept override { return data.nthreads(); }
       T data;
     };

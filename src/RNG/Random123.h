@@ -16,6 +16,7 @@
 
 #include "NoWarning/uniform.h"
 #include "NoWarning/beta_distribution.h"
+#include <boost/random/gamma_distribution.hpp>
 
 #include "Make_unique.h"
 #include "Exception.h"
@@ -112,6 +113,27 @@ class Random123 {
       for (ncomp_t i=0; i<num; ++i) r[i] = gauss_dist( generator );
     }
 
+    //! \brief Multi-variate Gaussian RNG: Generate multi-variate Gaussian
+    //!    random numbers
+    //! \param[in] tid Thread (or more precisely stream) ID
+    //! \param[in] num Number of RNGs to generate
+    //! \param[in] d Dimension d ( d ≥ 1) of output random vectors
+    //! \param[in] mean Mean vector of dimension d
+    //! \param[in] cov Lower triangle of covariance matrix, stored as a vector
+    //!   of length d(d+1)/2
+    //! \param[in,out] r Pointer to memory to write the random numbers to
+    //! \warning Not implemented!
+    void gaussianmv( int tid, ncomp_t num, ncomp_t d, const double* const mean,
+                     const double* const cov, double* r ) const
+    {
+      IGNORE(tid);
+      IGNORE(num);
+      IGNORE(d);
+      IGNORE(mean);
+      IGNORE(cov);
+      IGNORE(r);
+    }
+
     //! Beta RNG: Generate beta random numbers
     //! \param[in] tid Thread (or more precisely stream) ID
     //! \param[in] num Number of RNGs to generate
@@ -133,6 +155,26 @@ class Random123 {
       Adaptor generator( m_rng, m_data, tid );
       boost::random::beta_distribution<> beta_dist( p, q );
       for (ncomp_t i=0; i<num; ++i) r[i] = beta_dist( generator ) * b + a;
+    }
+
+    //! Gamma RNG: Generate gamma random numbers
+    //! \param[in] tid Thread (or more precisely stream) ID
+    //! \param[in] num Number of RNGs to generate
+    //! \param[in] a Gamma shape parameter
+    //! \param[in] b Gamma scale factor
+    //! \param[in,out] r Pointer to memory to write the random numbers to
+    //! \details Generating gamma-distributed random numbers is implemented via
+    //!   an adaptor, modeling boost::UniformRandomNumberGenerator, outsourcing
+    //!   the transformation of uniform random numbers to gamma-distributed
+    //!   ones, to boost::random. The adaptor is instantiated here because a
+    //!   boost random number distribution, such as e.g.,
+    //!   boost::random::gamma_distribution, generates numbers using operator()
+    //!   with no arguments, thus the RNG state and the thread ID (this latter
+    //!   only known here) must be stored in the adaptor functor's state.
+    void gamma( int tid, ncomp_t num, double a, double b, double* r ) const {
+      Adaptor generator( m_rng, m_data, tid );
+      boost::random::gamma_distribution<> gamma_dist( a, b );
+      for (ncomp_t i=0; i<num; ++i) r[i] = gamma_dist( generator );
     }
 
     //! Accessor to the number of threads we operate on

@@ -12,24 +12,11 @@
 */
 // *****************************************************************************
 
-#include "NoWarning/cartesian_product.h"
-
 #include "PDEStack.h"
 #include "Tags.h"
-#include "SystemComponents.h"
-#include "Inciter/Options/Problem.h"
 
-#include "Transport/CGTransport.h"
-#include "Transport/DGTransport.h"
-#include "Transport/Physics/CG.h"
-#include "Transport/Physics/DG.h"
-#include "Transport/Problem.h"
-
-#include "CompFlow/CGCompFlow.h"
-#include "CompFlow/DGCompFlow.h"
-#include "CompFlow/Physics/CG.h"
-#include "CompFlow/Physics/DG.h"
-#include "CompFlow/Problem.h"
+#include "ConfigureTransport.h"
+#include "ConfigureCompFlow.h"
 
 using inciter::PDEStack;
 
@@ -83,62 +70,31 @@ PDEStack::PDEStack() : m_cgfactory(), m_dgfactory(), m_eqTypes()
 //!   use of the partial differential equations to be generic, which eliminates
 //!   a lot of boiler-plate code and makes client-code uniform.
 //!
-//!   _Details of registration using mpl::cartesian_product:_
+//!   _Details of registration using brigand::for_each and
+//!   tk::cartesian_product:_
 //!
-//!   The template argument to mpl::cartesian_product requires a sequence of
-//!   sequences of types. We use vector of vectors of types, listing all
-//!   possible policies. The constructor argument to mpl::cartesian_product is a
-//!   functor that is to be applied to all combinations. mpl::cartesian_product
-//!   will then create all possible combinations of these types and call the
-//!   user-supplied functor with each type of the created sequence as a template
-//!   parameter. The user-supplied functor here is registerPDE, which, i.e.,
-//!   its constructor call, needs a single template argument, a class templated
-//!   on policy classes. This is the partial differential equation class to be
-//!   configured by selecting policies and to be registered. The arguments to
-//!   registerPDE's constructor are the factory, the enum denoting the
-//!   differential equation type, and a reference to a variable of type
-//!   std::set< ctr::PDEType >, which is only used internally to PDEStack
-//!   for counting up the number of unique differential equation types
-//!   registered, used for diagnostics purposes.
+//!   The template argument to brigand::for_each, as used below, requires a
+//!   list of list of types. We use brigand::list of brigand::list of types,
+//!   listing all possible policies, where the inner list must have exactly two
+//!   types, as the list of lists is constructed from two lists using the
+//!   cartesian product, and the length of the outer list (the list of lists) is
+//!   arbitrary. The constructor argument to brigand::for_each is a functor that
+//!   is to be applied to all members of the outer list. tk::cartesian_product
+//!   will create all possible combinations of these types and call the functor
+//!   with each type of the created sequence as a template parameter. The
+//!   functor here inherits from registerPDE, which, i.e., its constructor call,
+//!   needs a single template argument, a class templated on policy classes.
+//!   This is the partial differential equation class to be configured by
+//!   selecting policies and to be registered. The arguments to registerPDE's
+//!   constructor are the factory, the enum denoting the differential equation
+//!   type, and a reference to a variable of type std::set< ctr::PDEType >,
+//!   which is only used internally to PDEStack for counting up the number of
+//!   unique differential equation types registered, used for diagnostics
+//!   purposes.
 // *****************************************************************************
 {
-  namespace mpl = boost::mpl;
-
-  // Register PDEs using continuous Galerkin discretization
-
-  // Transport PDEs
-  // Construct vector of vectors for all possible policies
-  using CGTransportPolicies =
-    mpl::vector< cg::TransportPhysics, TransportProblems >;
-  // Register PDEs for all combinations of policies
-  mpl::cartesian_product< CGTransportPolicies >(
-    registerCG< cg::Transport >( this, ctr::PDEType::TRANSPORT ) );
-
-  // Compressible flow PDEs
-  // Construct vector of vectors for all possible policies
-  using CGCompFlowPolicies =
-    mpl::vector< cg::CompFlowPhysics, CompFlowProblems >;
-  // Register PDEs for all combinations of policies
-  mpl::cartesian_product< CGCompFlowPolicies >(
-    registerCG< cg::CompFlow >( this, ctr::PDEType::COMPFLOW ) );
-
-  // Register PDEs using discontinuous Galerkin discretization
-
-  // Transport PDEs
-  // Construct vector of vectors for all possible policies
-  using DGTransportPolicies =
-    mpl::vector< dg::TransportPhysics, TransportProblems >;
-  // Register PDEs for all combinations of policies
-  mpl::cartesian_product< DGTransportPolicies >(
-    registerDG< dg::Transport >( this, ctr::PDEType::TRANSPORT ) );
-
-  // Compressible flow DGPDEs
-  // Construct vector of vectors for all possible policies
-  using DGCompFlowPolicies =
-    mpl::vector< dg::CompFlowPhysics, CompFlowProblems >;
-  // Register PDEs for all combinations of policies
-  mpl::cartesian_product< DGCompFlowPolicies >(
-    registerDG< dg::CompFlow >( this, ctr::PDEType::COMPFLOW ) );
+  registerTransport( m_cgfactory, m_dgfactory, m_eqTypes );
+  registerCompFlow( m_cgfactory, m_dgfactory, m_eqTypes );
 }
 
 std::vector< inciter::CGPDE >
@@ -151,8 +107,10 @@ PDEStack::selectedCG() const
   std::map< ctr::PDEType, ncomp_t > cnt;    // count PDEs per type
   std::vector< CGPDE > pdes;                // will store instantiated PDEs
 
-  auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG) {
+  const auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
+  if (sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG ||
+      sch == ctr::SchemeType::ALECG)
+  {
 
     for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
       if (d == ctr::PDEType::TRANSPORT)
@@ -178,7 +136,7 @@ PDEStack::selectedDG() const
   std::vector< DGPDE > pdes;                // will store instantiated PDEs
 
   auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (sch == ctr::SchemeType::DG) {
+  if (sch == ctr::SchemeType::DG || sch == ctr::SchemeType::DGP1) {
 
     for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
       if (d == ctr::PDEType::TRANSPORT)
@@ -212,159 +170,6 @@ PDEStack::info() const
       nfo.emplace_back( infoCompFlow( cnt ) );
     else Throw( "Can't find selected PDE" );
   }
-
-  return nfo;
-}
-
-std::vector< std::pair< std::string, std::string > >
-PDEStack::infoTransport( std::map< ctr::PDEType, ncomp_t >& cnt ) const
-// *****************************************************************************
-//  Return information on the transport PDE
-//! \param[inout] cnt std::map of counters for all partial differential equation
-//!   types
-//! \return vector of string pairs describing the PDE configuration
-// *****************************************************************************
-{
-  auto c = ++cnt[ ctr::PDEType::TRANSPORT ];       // count eqs
-  --c;  // used to index vectors starting with 0
-
-  std::vector< std::pair< std::string, std::string > > nfo;
-
-  nfo.emplace_back( ctr::PDE().name( ctr::PDEType::TRANSPORT ), "" );
-
-  nfo.emplace_back( "problem", ctr::Problem().name(
-    g_inputdeck.get< tag::param, tag::transport, tag::problem >()[c] ) );
-
-  nfo.emplace_back( "start offset in unknowns array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::transport >(c) ) );
-
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::transport >()[c];
-  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
-
-  const auto& diff =
-     g_inputdeck.get< tag::param, tag::transport, tag::diffusivity >();
-  if (diff.size() > c)
-    nfo.emplace_back( "coeff diffusivity [" + std::to_string( ncomp ) + "]",
-                       parameters( diff[c] ) );
-
-  const auto& u0 = g_inputdeck.get< tag::param, tag::transport, tag::u0 >();
-  if (u0.size() > c)
-    nfo.emplace_back( "coeff u0 [" + std::to_string( ncomp ) + "]",
-                       parameters( u0[c] ) );
-
-  const auto& lambda =
-    g_inputdeck.get< tag::param, tag::transport, tag::lambda >();
-  if (lambda.size() > c)
-    nfo.emplace_back( "coeff lambda [" + std::to_string( ncomp ) + "]",
-      parameters( lambda[c] ) );
-
-  const auto& bcdir =
-    g_inputdeck.get< tag::param, tag::transport, tag::bcdir >();
-  if (bcdir.size() > c)
-    nfo.emplace_back( "Dirichlet boundary [" + std::to_string( ncomp ) + "]",
-      parameters( bcdir[c] ) );
-
-  const auto& bcsym =
-    g_inputdeck.get< tag::param, tag::transport, tag::bcsym >();
-  if (bcsym.size() > c)
-    nfo.emplace_back( "Symmetry boundary [" + std::to_string( ncomp ) + "]",
-      parameters( bcsym[c] ) );
-
-  const auto& bcinlet =
-    g_inputdeck.get< tag::param, tag::transport, tag::bcinlet >();
-  if (bcinlet.size() > c)
-    nfo.emplace_back( "Inlet boundary [" + std::to_string( ncomp ) + "]",
-      parameters( bcinlet[c] ) );
-
-  const auto& bcoutlet =
-    g_inputdeck.get< tag::param, tag::transport, tag::bcoutlet >();
-  if (bcoutlet.size() > c)
-    nfo.emplace_back( "Outlet boundary [" + std::to_string( ncomp ) + "]",
-      parameters( bcoutlet[c] ) );
-
-  const auto& bcextrapolate =
-    g_inputdeck.get< tag::param, tag::transport, tag::bcextrapolate >();
-  if (bcextrapolate.size() > c)
-    nfo.emplace_back( "Symmetry boundary [" + std::to_string( ncomp ) + "]",
-      parameters( bcextrapolate[c] ) );
-
-  return nfo;
-}
-
-std::vector< std::pair< std::string, std::string > >
-PDEStack::infoCompFlow( std::map< ctr::PDEType, ncomp_t >& cnt ) const
-// *****************************************************************************
-//  Return information on the compressible flow system of PDEs
-//! \param[inout] cnt std::map of counters for all partial differential equation
-//!   types
-//! \return vector of string pairs describing the PDE configuration
-// *****************************************************************************
-{
-  auto c = ++cnt[ ctr::PDEType::COMPFLOW ];       // count eqs
-  --c;  // used to index vectors starting with 0
-
-  std::vector< std::pair< std::string, std::string > > nfo;
-
-  nfo.emplace_back( ctr::PDE().name( ctr::PDEType::COMPFLOW ), "" );
-  nfo.emplace_back( "physics", ctr::Physics().name(
-    g_inputdeck.get< tag::param, tag::compflow, tag::physics >()[c] ) );
-  nfo.emplace_back( "problem", ctr::Problem().name(
-    g_inputdeck.get< tag::param, tag::compflow, tag::problem >()[c] ) );
-  nfo.emplace_back( "start offset in unknowns array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::compflow >(c) ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::compflow >()[c];
-  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
-  nfo.emplace_back( "material id", parameters(
-    g_inputdeck.get< tag::param, tag::compflow, tag::id >() ) );
-  nfo.emplace_back( "ratio of specific heats", parameters(
-    g_inputdeck.get< tag::param, tag::compflow, tag::gamma >() ) );
-
-  const auto& mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >();
-  if (!mu.empty())
-    nfo.emplace_back( "dynamic viscosity", parameters( mu ) );
-
-  const auto& cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >();
-  if (!cv.empty())
-    nfo.emplace_back( "specific heat at const. volume", parameters( cv ) );
-
-  const auto& k = g_inputdeck.get< tag::param, tag::compflow, tag::k >();
-  if (!k.empty())
-    nfo.emplace_back( "heat conductivity", parameters( k ) );
-
-  const auto& npar = g_inputdeck.get< tag::param, tag::compflow, tag::npar >();
-  if (!npar.empty())
-    nfo.emplace_back( "number of tracker particles", parameters( npar ) );
-
-  const auto& alpha = g_inputdeck.get< tag::param, tag::compflow, tag::alpha >();;
-  if (!alpha.empty()) nfo.emplace_back( "coeff alpha", parameters( alpha ) );
-
-  const auto& beta =
-    g_inputdeck.get< tag::param, tag::compflow, tag::beta >();;
-  if (!beta.empty())
-    nfo.emplace_back( "coeff beta", parameters( beta ) );
-
-  const auto& bx = g_inputdeck.get< tag::param, tag::compflow, tag::betax >();;
-  if (!bx.empty()) nfo.emplace_back( "coeff betax", parameters( bx ) );
-
-  const auto& by = g_inputdeck.get< tag::param, tag::compflow, tag::betay >();;
-  if (!by.empty()) nfo.emplace_back( "coeff betay", parameters( by ) );
-
-  const auto& bz = g_inputdeck.get< tag::param, tag::compflow, tag::betaz >();;
-  if (!bz.empty()) nfo.emplace_back( "coeff betaz", parameters( bz ) );
-
-  const auto& r0 = g_inputdeck.get< tag::param, tag::compflow, tag::r0 >();;
-  if (!r0.empty()) nfo.emplace_back( "coeff r0", parameters( r0 ) );
-
-  const auto& ce = g_inputdeck.get< tag::param, tag::compflow, tag::ce >();;
-  if (!ce.empty()) nfo.emplace_back( "coeff ce", parameters( ce ) );
-
-  const auto& kappa = g_inputdeck.get< tag::param, tag::compflow, tag::kappa >();
-  if (!kappa.empty()) nfo.emplace_back( "coeff k", parameters( kappa ) );
-
-  const auto& p0 =
-    g_inputdeck.get< tag::param, tag::compflow, tag::p0 >();;
-  if (!p0.empty())
-    nfo.emplace_back( "coeff p0", parameters( p0 ) );
 
   return nfo;
 }

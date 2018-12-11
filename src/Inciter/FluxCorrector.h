@@ -38,6 +38,11 @@ class FluxCorrector {
     explicit FluxCorrector( std::size_t is = 0 ) :
       m_aec( is, g_inputdeck.get< tag::component >().nprop() ) {}
 
+    //! Resize state (e.g., after mesh refinement)
+    void resize( std::size_t is ) {
+      m_aec.resize( is, g_inputdeck.get< tag::component >().nprop() );
+    }
+
     //! Compute antidiffusive element contributions (AEC)
     void aec( const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
@@ -78,6 +83,7 @@ class FluxCorrector {
               tk::Fields& Q,
               tk::Fields& A ) const;
 
+    /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

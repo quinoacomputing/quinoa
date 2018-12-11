@@ -29,12 +29,18 @@ namespace tk {
 //!   that not only these mappings are important, but also the order of the
 //!   nodes within the triplets as this specific order also defines the outwards
 //!   normal of each face.
-const std::array< std::array< std::size_t, 3 >, 4 >
+const std::array< UnsMesh::Face, 4 >
   lpofa{{ {{1,2,3}}, {{2,0,3}}, {{3,0,1}}, {{0,2,1}} }};
 
 //! Compute number of points (nodes) in mesh from connectivity
 std::size_t
 npoin( const std::vector< std::size_t >& inpoel );
+
+//! Compute the unit normal vector of a triangle
+std::array< tk::real, 3 >
+normal( const std::array< tk::real, 3 >& x,
+        const std::array< tk::real, 3 >& y,
+        const std::array< tk::real, 3 >& z );
 
 //! Generate derived data structure, elements surrounding points
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
@@ -151,6 +157,13 @@ geoFaceTri( const std::array< tk::real, 3 >& x,
 tk::Fields
 genGeoElemTet( const std::vector< std::size_t >& inpoel,
                const tk::UnsMesh::Coords& coord );
+
+//! Perform leak-test on mesh (partition)
+bool
+leakyPartition( const std::vector< int >& esueltet,
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord );
+
 } // tk::
 
 #endif // DerivedData_h

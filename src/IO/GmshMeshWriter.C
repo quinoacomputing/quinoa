@@ -20,6 +20,7 @@
 #include "UnsMesh.h"
 #include "StrConvUtil.h"
 #include "GmshMeshWriter.h"
+#include "GmshMeshIO.h"
 
 using tk::GmshMeshWriter;
 

@@ -13,8 +13,9 @@
 
 #include <string>
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "NoWarning/set.h"
-#include "NoWarning/for_each.h"
 
 #include "Macro.h"
 #include "Control.h"
@@ -31,23 +32,27 @@ namespace ctr {
 //! \see Base/TaggedTuple.h
 //! \see Control/UnitTest/Types.h
 class CmdLine : public tk::Control<
-                  // tag        type
-                  tag::verbose, bool,
-                  tag::help,    bool,
-                  tag::helpctr, bool,
-                  tag::cmdinfo, tk::ctr::HelpFactory,
-                  tag::ctrinfo, tk::ctr::HelpFactory,
-                  tag::helpkw,  tk::ctr::HelpKw,
-                  tag::group,   std::string,
-                  tag::error,   std::vector< std::string > > {
+                  // tag            type
+                  tag::verbose,     bool,
+                  tag::chare,       bool,
+                  tag::help,        bool,
+                  tag::helpctr,     bool,
+                  tag::quiescence,  bool,
+                  tag::cmdinfo,     tk::ctr::HelpFactory,
+                  tag::ctrinfo,     tk::ctr::HelpFactory,
+                  tag::helpkw,      tk::ctr::HelpKw,
+                  tag::group,       std::string,
+                  tag::error,       std::vector< std::string > > {
   public:
     //! \brief UnitTest command-line keywords
     //! \see tk::grm::use and its documentation
-    using keywords = boost::mpl::set< kw::verbose
-                                    , kw::help
-                                    , kw::helpkw
-                                    , kw::group
-                                    >;
+    using keywords = brigand::set< kw::verbose
+                                 , kw::charestate
+                                 , kw::help
+                                 , kw::helpkw
+                                 , kw::group
+                                 , kw::quiescence
+                                 >;
 
     //! \brief Constructor: set defaults.
     //! \details Anything not set here is initialized by the compiler using the
@@ -57,8 +62,9 @@ class CmdLine : public tk::Control<
     //! \see walker::ctr::CmdLine
     CmdLine() {
       set< tag::verbose >( false ); // Use quiet output by default
+      set< tag::chare >( false ); // No chare state output by default
       // Initialize help: fill from own keywords
-      boost::mpl::for_each< keywords >( tk::ctr::Info( get< tag::cmdinfo >() ) );
+      brigand::for_each< keywords >( tk::ctr::Info( get< tag::cmdinfo >() ) );
     }
 
     /** @name Pack/Unpack: Serialize CmdLine object for Charm++ */
@@ -66,14 +72,16 @@ class CmdLine : public tk::Control<
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er& p ) {
-      tk::Control< tag::verbose, bool,
-                   tag::help,    bool,
-                   tag::helpctr, bool,
-                   tag::cmdinfo, tk::ctr::HelpFactory,
-                   tag::ctrinfo, tk::ctr::HelpFactory,
-                   tag::helpkw,  tk::ctr::HelpKw,
-                   tag::group,   std::string,
-                   tag::error,   std::vector< std::string > >::pup(p);
+      tk::Control< tag::verbose,    bool,
+                   tag::chare,      bool,
+                   tag::help,       bool,
+                   tag::helpctr,    bool,
+                   tag::quiescence, bool,
+                   tag::cmdinfo,    tk::ctr::HelpFactory,
+                   tag::ctrinfo,    tk::ctr::HelpFactory,
+                   tag::helpkw,     tk::ctr::HelpKw,
+                   tag::group,      std::string,
+                   tag::error,      std::vector< std::string > >::pup(p);
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

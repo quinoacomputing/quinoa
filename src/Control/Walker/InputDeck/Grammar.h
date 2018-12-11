@@ -39,26 +39,23 @@ namespace deck {
 
   //! \brief Specialization of tk::grm::use for Walker's input deck parser
   template< typename keyword >
-  using use = tk::grm::use< keyword,
-                            ctr::InputDeck::keywords1,
-                            ctr::InputDeck::keywords2,
-                            ctr::InputDeck::keywords3,
-                            ctr::InputDeck::keywords4,
-                            ctr::InputDeck::keywords5,
-                            ctr::InputDeck::keywords6,
-                            ctr::InputDeck::keywords7 >;
+  using use = tk::grm::use< keyword, ctr::InputDeck::keywords >;
 
   // Walker's InputDeck state
  
   //! \brief Number of registered equations
   //! \details Counts the number of parsed equation blocks during parsing.
   static tk::tuple::tagged_tuple< tag::dirichlet,       std::size_t,
+                                  tag::mixdirichlet,    std::size_t,
                                   tag::gendir,          std::size_t,
                                   tag::wrightfisher,    std::size_t,
                                   tag::ou,              std::size_t,
                                   tag::diagou,          std::size_t,
                                   tag::skewnormal,      std::size_t,
                                   tag::gamma,           std::size_t,
+                                  tag::velocity,        std::size_t,
+                                  tag::position,        std::size_t,
+                                  tag::dissipation,     std::size_t,
                                   tag::beta,            std::size_t,
                                   tag::numfracbeta,     std::size_t,
                                   tag::massfracbeta,    std::size_t,
@@ -132,24 +129,20 @@ namespace grm {
   //! \brief Do error checking of a vector (required for a block)
   //! \details This functor can be used to verify the correct size of an already
   //!   existing vector, specified by the user in a given block. The vector is
-  //!   required to have a specific size: ncomp/4, i.e., the number of
-  //!   components in a block divided by four. This specific value is the only
-  //!   way this is used at this time, thus the hard-coding of ncomp/4. However,
-  //!   this could be abstracted away via a template argument if needed.
+  //!   required to be non-empty.
   //! \note This functor does not check existence of a vector. If the vector
   //!   does not even exist, it will throw an exception in DEBUG mode, while in
   //!   RELEASE mode it will attempt to access unallocated memory yielding a
   //!   segfault. The existence of the vector should be checked by
   //!   check_vector_exists first.
-  template< class eq, class vec >
+  template< class eq, class vec  >
   struct action< check_vector_size< eq, vec > > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       const auto& vv = stack.template get< tag::param, eq, vec >();
       Assert( !vv.empty(), "Vector of vectors checked must not be empty" );
       const auto& v = vv.back();
-      const auto& ncomp = stack.template get< tag::component, eq >().back();
-      if (v.empty() || v.size() != ncomp/4)
+      if (v.empty())
         Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
     }
   };
@@ -222,7 +215,241 @@ namespace grm {
         if (!betapdf.empty() && betapdf.back().empty())
           Message< Stack, ERROR, MsgKey::NOBETA >( stack, in );
       }
+      // Error checks for joint gamma initpolicy
+      if (init.size() == neq.get< eq >() &&
+          init.back() == walker::ctr::InitPolicyType::JOINTGAMMA) {
+        // Make sure there was an icgamma...end block with at least a single
+        // gammapdf...end block
+        const auto& gammapdf =
+          stack.template get< tag::param, eq, tag::gamma >();
+        if (!gammapdf.empty() && gammapdf.back().empty())
+          Message< Stack, ERROR, MsgKey::NOGAMMA >( stack, in );
+      }
+      // Error checks for joint correlated Gaussian initpolicy
+      if (init.size() == neq.get< eq >() &&
+          init.back() == walker::ctr::InitPolicyType::JOINTCORRGAUSSIAN) {
+        // Ensure there was a mean vector and covaraiance matrix configured
+        const auto& mean =
+          stack.template get< tag::param, eq, tag::mean >();
+        if (mean.empty() || mean.back().empty())
+          Message< Stack, ERROR, MsgKey::NOMEAN >( stack, in );
+        const auto& cov =
+          stack.template get< tag::param, eq, tag::cov >();
+        if (cov.empty() || cov.back().empty())
+          Message< Stack, ERROR, MsgKey::NOCOV >( stack, in );
+        // Ensure that an MKL RNG is configured if initpolicy is corr-Gaussian
+        const auto& rng = stack.template get< tag::param, eq, tag::rng >();
+        if (tk::ctr::RNG().lib( rng.back() ) != tk::ctr::RNGLibType::MKL)
+          Message< Stack, ERROR, MsgKey::NOMKLRNG >( stack, in );
+      }
+    }
+  };
 
+  //! Do error checking on eq coupled to another eq and compute depvar id
+  //! \tparam eq Equation tag of equation
+  //! \tparam coupledeq Equation tag of equation coupled to eq
+  //! \tparam id Equation offsets tag for coupled equation
+  //! \tparam depvar Error message key to use on missing coupled depvar
+  //! \param[in] in Parser input
+  //! \param[in,out] stack Grammar stack to wrok with
+  //! \param[in] missing Error message key to use on missing coupled equation if
+  //!   the coupling is required, use missing = MsgKey::OPTIONAL is the coupling
+  //!   is optional
+  template< typename eq, typename coupledeq, typename id, MsgKey depvar,
+            typename Input, typename Stack >
+  static void couple( const Input& in, Stack& stack, MsgKey missing )
+  {
+    using walker::deck::neq;
+    if (neq.get< coupledeq >() == 0) {    // if no coupldeq block defined
+      if (missing != MsgKey::OPTIONAL) {  // if the coupling is required
+        // error out if <eq> is configured without <coupledeq> model
+        stack.template push_back< tag::error >
+          ( std::string("Parser error: ") + tk::cref_find( message, missing ) );
+      }
+    } else {    // Compute depvar id for coupled eq
+      // get coupled eq configuration
+      const auto& ceq = stack.template get< tag::param, eq, coupledeq >();
+      if (ceq.empty() && missing != MsgKey::OPTIONAL) // if !coupled & !optional
+        // error out if <coupledeq> depvar is not selected
+        Message< Stack, ERROR, depvar >( stack, in );
+      else { // find offset (local eq system index among systems) for depvar
+        // get ncomponents object from this input deck
+        const auto& ncomps = stack.template get< tag::component >();
+        // compute offset map associating offsets to dependent variables
+        auto offsetmap = ncomps.offsetmap( stack );
+        // get and save offsets for all depvars for eqs configured
+        for (auto p : ceq)
+          stack.template
+            get< tag::param, eq, id >().
+              push_back( tk::cref_find( offsetmap, p ) );
+      }
+    }
+  }
+
+  //! Rule used to trigger action
+  struct check_velocity : pegtl::success {};
+  //! \brief Do error checking on the velocity eq block
+  template<>
+  struct action< check_velocity > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using walker::deck::neq;
+      // if there was a velocity eq block defined
+      if (neq.get< tag::velocity >() > 0) {
+        // Ensure a coupled position model is configured
+        couple< tag::velocity,
+            tag::position, tag::position_id, MsgKey::POSITION_DEPVAR >
+          ( in, stack, MsgKey::POSITION_MISSING );
+        // Ensure a coupled dissipation model is configured
+        couple< tag::velocity,
+            tag::dissipation, tag::dissipation_id, MsgKey::DISSIPATION_DEPVAR >
+          ( in, stack, MsgKey::DISSIPATION_MISSING );
+        // Compute equation id if a coupled mass fraction model is configured
+        couple< tag::velocity, tag::mixmassfracbeta, tag::mixmassfracbeta_id,
+                MsgKey::MIXMASSFRACBETA_DEPVAR >
+          ( in, stack, MsgKey::OPTIONAL );
+        // Error out if no dependent variable to solve for was selected
+        const auto& solve =
+          stack.template get< tag::param, tag::velocity, tag::solve >();
+        if (solve.size() != neq.get< tag::velocity >())
+          Message< Stack, ERROR, MsgKey::NOSOLVE >( stack, in );
+        // Set C0 = 2.1 if not specified
+        auto& C0 = stack.template get< tag::param, tag::velocity, tag::c0 >();
+        if (C0.size() != neq.get< tag::velocity >()) C0.push_back( 2.1 );
+        // Set SLM if not specified
+        auto& variant =
+          stack.template get< tag::param, tag::velocity, tag::variant >();
+        if (variant.size() != neq.get< tag::velocity >())
+          variant.push_back( walker::ctr::VelocityVariantType::SLM );
+      }
+    }
+  };
+
+  //! Rule used to trigger action
+  struct check_position : pegtl::success {};
+  //! \brief Do error checking on the position eq block
+  template<>
+  struct action< check_position > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using walker::deck::neq;
+      // if there was a position eq block defined
+      if (neq.get< tag::position >() > 0) {
+        // Ensure a coupled velocity model is configured
+        couple< tag::position,
+            tag::velocity, tag::velocity_id, MsgKey::VELOCITY_DEPVAR >
+          ( in, stack, MsgKey::VELOCITY_MISSING );
+        // Error out if no dependent variable to solve for was selected
+        const auto& solve =
+          stack.template get< tag::param, tag::position, tag::solve >();
+        if (solve.size() != neq.get< tag::position >())
+          Message< Stack, ERROR, MsgKey::NOSOLVE >( stack, in );
+      }
+    }
+  };
+
+  //! Rule used to trigger action
+  struct check_dissipation : pegtl::success {};
+  //! \brief Do error checking on the dissipation eq block
+  template<>
+  struct action< check_dissipation > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using walker::deck::neq;
+      // if there was a dissipation eq block defined
+      if (neq.get< tag::dissipation >() > 0) {
+        // Ensure a coupled velocity model is configured
+        couple< tag::dissipation,
+            tag::velocity, tag::velocity_id, MsgKey::VELOCITY_DEPVAR >
+          ( in, stack, MsgKey::VELOCITY_MISSING );
+        // Set C3 if not specified
+        auto& C3 = stack.template get< tag::param, tag::dissipation, tag::c3 >();
+        if (C3.size() != neq.get< tag::dissipation >()) C3.push_back( 1.0 );
+        // Set C4 if not specified
+        auto& C4 = stack.template get< tag::param, tag::dissipation, tag::c4 >();
+        if (C4.size() != neq.get< tag::dissipation >()) C4.push_back( 0.25 );
+        // Set COM1 if not specified
+        auto& COM1 =
+          stack.template get< tag::param, tag::dissipation, tag::com1 >();
+        if (COM1.size() != neq.get< tag::dissipation >()) COM1.push_back( 0.44 );
+        // Set COM2 if not specified
+        auto& COM2 =
+          stack.template get< tag::param, tag::dissipation, tag::com2 >();
+        if (COM2.size() != neq.get< tag::dissipation >()) COM2.push_back( 0.9 );
+      }
+    }
+  };
+
+  //! Rule used to trigger action
+  struct check_mixmassfracbeta : pegtl::success {};
+  //! \brief Do error checking on a mass fraction eq block
+  template<>
+  struct action< check_mixmassfracbeta > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using walker::deck::neq;
+      // if there was a mixmassfracbeta eq block defined
+      if (neq.get< tag::mixmassfracbeta >() > 0) {
+        // Compute equation id if a coupled velocity model is configured
+        couple< tag::mixmassfracbeta,
+            tag::velocity, tag::velocity_id, MsgKey::VELOCITY_DEPVAR >
+          ( in, stack, MsgKey::OPTIONAL );
+        // Compute equation id if a coupled dissipation model is configured
+        couple< tag::mixmassfracbeta,
+            tag::dissipation, tag::dissipation_id, MsgKey::DISSIPATION_DEPVAR >
+          ( in, stack, MsgKey::OPTIONAL );
+      }
+    }
+  };
+
+  //! Rule used to trigger action
+  struct velocity_defaults : pegtl::success {};
+  //! \brief Set defaults for the velocity model
+  template<>
+  struct action< velocity_defaults > {
+    template< typename Input, typename Stack >
+    static void apply( const Input&, Stack& stack ) {
+      // Set number of components: always 3 velocity components
+      auto& ncomp = stack.template get< tag::component, tag::velocity >();
+      ncomp.push_back( 3 );
+    }
+  };
+
+  //! Rule used to trigger action
+  struct position_defaults : pegtl::success {};
+  //! \brief Set defaults for all Lagrangian particle position models
+  template<>
+  struct action< position_defaults > {
+    template< typename Input, typename Stack >
+    static void apply( const Input&, Stack& stack ) {
+      using walker::deck::neq;
+      // Set number of components: always 3 position components
+      auto& ncomp = stack.template get< tag::component, tag::position >();
+      ncomp.push_back( 3 );
+      // Set RNG if no RNG has been selected (not all position models use this,
+      // so don't impose on the user to define one). Pick a Random123 generator,
+      // as that is always available.
+      auto& rngs = stack.template get< tag::selected, tag::rng >();
+      auto& rng = stack.template get< tag::param, tag::position, tag::rng >();
+      if (rng.empty() || rng.size() != neq.get< tag::position >()) {
+        // add RNG to the list of selected RNGs (as it has been parsed)
+        rngs.push_back( tk::ctr::RNG().value( kw::r123_philox::string() ) );
+        // select RNG for position equation (as it has been parsed)
+        rng.push_back( tk::ctr::RNGType::R123_PHILOX );
+      }
+    }
+  };
+
+  //! Rule used to trigger action
+  struct dissipation_defaults : pegtl::success {};
+  //! \brief Set defaults for all Lagrangian particle dissipation models
+  template<>
+  struct action< dissipation_defaults > {
+    template< typename Input, typename Stack >
+    static void apply( const Input&, Stack& stack ) {
+      // Set number of components: always 1 dissipation component
+      auto& ncomp = stack.template get< tag::component, tag::dissipation >();
+      ncomp.push_back( 1 );
     }
   };
 
@@ -255,7 +482,17 @@ namespace deck {
                         // potential jointbeta initpolicy
                         tk::grm::start_vector< tag::param,
                                                eq,
-                                               tag::betapdf > > {};
+                                               tag::betapdf >,
+                        // start new vector or vectors of gamma parameters for a
+                        // potential jointgamma initpolicy
+                        tk::grm::start_vector< tag::param,
+                                               eq,
+                                               tag::gamma >,
+                        // start new vector or vectors of gaussian parameters
+                        // for a potential jointgaussian initpolicy
+                        tk::grm::start_vector< tag::param,
+                                               eq,
+                                               tag::gaussian > > {};
 
   //! Discretization parameters
   struct discretization_parameters :
@@ -314,6 +551,61 @@ namespace deck {
                              eq,
                              tag::betapdf > > > {};
 
+  //! scan icgamma ... end block
+  template< class eq >
+  struct icgamma :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::icgamma >::pegtl_string >,
+           // parse a gammapdf ... end block (there can be multiple)
+           tk::grm::block< use< kw::end >,
+                           tk::grm::parameter_vector<
+                             use,
+                             use< kw::gammapdf >,
+                             tk::grm::Store_back_back_back,
+                             tk::grm::start_vector_back,
+                             tk::grm::check_gammapdfs,
+                             eq,
+                             tag::gamma > > > {};
+
+  //! scan icgaussian ... end block
+  template< class eq >
+  struct icgaussian :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::icgaussian >::pegtl_string >,
+           // parse a gaussian ... end block (there can be multiple)
+           tk::grm::block< use< kw::end >,
+                           tk::grm::parameter_vector<
+                             use,
+                             use< kw::gaussian >,
+                             tk::grm::Store_back_back_back,
+                             tk::grm::start_vector_back,
+                             tk::grm::check_gaussians,
+                             eq,
+                             tag::gaussian > > > {};
+
+  //! SDE parameter vector
+  template< class keyword, class eq, class param >
+  struct sde_parameter_vector :
+         tk::grm::parameter_vector< use,
+                                    use< keyword >,
+                                    tk::grm::Store_back_back,
+                                    tk::grm::start_vector,
+                                    tk::grm::check_vector,
+                                    eq,
+                                    param > {};
+
+  //! scan icjointgaussian ... end block
+  template< class eq >
+  struct icjointgaussian :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::icjointgaussian >::pegtl_string >,
+           // parse a jointgaussian ... end block
+           tk::grm::block< use< kw::end >,
+                           sde_parameter_vector< kw::sde_mean, eq, tag::mean >,
+                           sde_parameter_vector< kw::sde_cov,
+                                                 eq,
+                                                 tag::cov > > > {};
+
   //! Error checks after an equation ... end block has been parsed
   template< class eq, class... extra_checks  >
   struct check_errors :
@@ -326,17 +618,6 @@ namespace deck {
            tk::grm::check_init< eq >,
            // performe extra pegtl actions, e.g., performing extra checks
            extra_checks... > {};
-
-  //! SDE parameter vector
-  template< class keyword, class eq, class param >
-  struct sde_parameter_vector :
-         tk::grm::parameter_vector< use,
-                                    use< keyword >,
-                                    tk::grm::Store_back_back,
-                                    tk::grm::start_vector,
-                                    tk::grm::check_vector,
-                                    eq,
-                                    param > {};
 
   //! SDE option vector
   template< class Option, class keyword, class eq, class param,
@@ -378,6 +659,9 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::diagou >,
                            icbeta< tag::diagou >,
+                           icgamma< tag::diagou >,
+                           icgaussian< tag::diagou >,
+                           icjointgaussian< tag::diagou >,
                            sde_parameter_vector< kw::sde_sigmasq,
                                                  tag::diagou,
                                                  tag::sigmasq >,
@@ -416,6 +700,9 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::ou >,
                            icbeta< tag::ou >,
+                           icgamma< tag::ou >,
+                           icgaussian< tag::ou >,
+                           icjointgaussian< tag::ou >,
                            sde_parameter_vector< kw::sde_sigmasq,
                                                  tag::ou,
                                                  tag::sigmasq >,
@@ -454,6 +741,9 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::skewnormal >,
                            icbeta< tag::skewnormal >,
+                           icgamma< tag::skewnormal >,
+                           icgaussian< tag::skewnormal >,
+                           icjointgaussian< tag::skewnormal >,
                            sde_parameter_vector< kw::sde_T,
                                                  tag::skewnormal,
                                                  tag::timescale >,
@@ -492,6 +782,9 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::beta >,
                            icbeta< tag::beta >,
+                           icgamma< tag::beta >,
+                           icgaussian< tag::beta >,
+                           icjointgaussian< tag::beta >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::beta,
                                                  tag::b >,
@@ -530,6 +823,9 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::numfracbeta >,
                            icbeta< tag::numfracbeta >,
+                           icgamma< tag::numfracbeta >,
+                           icgaussian< tag::numfracbeta >,
+                           icjointgaussian< tag::numfracbeta >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::numfracbeta,
                                                  tag::b >,
@@ -574,6 +870,9 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::massfracbeta >,
                            icbeta< tag::massfracbeta >,
+                           icgamma< tag::massfracbeta >,
+                           icgaussian< tag::massfracbeta >,
+                           icjointgaussian< tag::massfracbeta >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::massfracbeta,
                                                  tag::b >,
@@ -618,6 +917,9 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::mixnumfracbeta >,
                            icbeta< tag::mixnumfracbeta >,
+                           icgamma< tag::mixnumfracbeta >,
+                           icgaussian< tag::mixnumfracbeta >,
+                           icjointgaussian< tag::mixnumfracbeta >,
                            sde_parameter_vector< kw::sde_bprime,
                                                  tag::mixnumfracbeta,
                                                  tag::bprime >,
@@ -662,6 +964,9 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::mixmassfracbeta >,
                            icbeta< tag::mixmassfracbeta >,
+                           icgamma< tag::mixmassfracbeta >,
+                           icgaussian< tag::mixmassfracbeta >,
+                           icjointgaussian< tag::mixmassfracbeta >,
                            sde_option_vector< ctr::HydroTimeScales,
                                               kw::hydrotimescales,
                                               tag::mixmassfracbeta,
@@ -686,7 +991,19 @@ namespace deck {
                                                  tag::rho2 >,
                            sde_parameter_vector< kw::sde_r,
                                                  tag::mixmassfracbeta,
-                                                 tag::r > >,
+                                                 tag::r >,
+                           tk::grm::process<
+                             use< kw::velocity >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::mixmassfracbeta,
+                                                  tag::velocity >,
+                             pegtl::alpha >,
+                           tk::grm::process<
+                             use< kw::dissipation >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::mixmassfracbeta,
+                                                  tag::dissipation >,
+                             pegtl::alpha > >,
            check_errors< tag::mixmassfracbeta,
                          tk::grm::check_vector_exists<
                            tag::mixmassfracbeta,
@@ -724,6 +1041,9 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::gamma >,
                            icbeta< tag::gamma >,
+                           icgamma< tag::gamma >,
+                           icgaussian< tag::gamma >,
+                           icjointgaussian< tag::gamma >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::gamma,
                                                  tag::b >,
@@ -762,6 +1082,9 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::dirichlet >,
                            icbeta< tag::dirichlet >,
+                           icgamma< tag::dirichlet >,
+                           icgaussian< tag::dirichlet >,
+                           icjointgaussian< tag::dirichlet >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::dirichlet,
                                                  tag::b >,
@@ -770,8 +1093,57 @@ namespace deck {
                                                  tag::S >,
                            sde_parameter_vector< kw::sde_kappa,
                                                  tag::dirichlet,
-                                                 tag::kappa > >,
+                                                 tag::kappa >
+                         >,
            check_errors< tag::dirichlet > > {};
+
+  //! MixDirichlet SDE
+  struct mixdirichlet :
+         pegtl::if_must<
+           scan_sde< use< kw::mixdirichlet >, tag::mixdirichlet >,
+           tk::grm::block< use< kw::end >,
+                           tk::grm::depvar< use,
+                                            tag::mixdirichlet,
+                                            tag::depvar >,
+                           tk::grm::component< use< kw::ncomp >,
+                                               tag::mixdirichlet >,
+                           tk::grm::rng< use,
+                                         use< kw::rng >,
+                                         tk::ctr::RNG,
+                                         tag::mixdirichlet,
+                                         tag::rng >,
+                           tk::grm::policy< use,
+                                            use< kw::init >,
+                                            ctr::InitPolicy,
+                                            tag::mixdirichlet,
+                                            tag::initpolicy >,
+                           tk::grm::policy< use,
+                                            use< kw::coeff >,
+                                            ctr::CoeffPolicy,
+                                            tag::mixdirichlet,
+                                            tag::coeffpolicy >,
+                           icdelta< tag::mixdirichlet >,
+                           icbeta< tag::mixdirichlet >,
+                           icgamma< tag::mixdirichlet >,
+                           icgaussian< tag::mixdirichlet >,
+                           icjointgaussian< tag::mixdirichlet >,
+                           sde_parameter_vector< kw::sde_b,
+                                                 tag::mixdirichlet,
+                                                 tag::b >,
+                           sde_parameter_vector< kw::sde_S,
+                                                 tag::mixdirichlet,
+                                                 tag::S >,
+                           sde_parameter_vector< kw::sde_kappa,
+                                                 tag::mixdirichlet,
+                                                 tag::kappa >,
+                           sde_parameter_vector< kw::sde_rho2,
+                                                 tag::mixdirichlet,
+                                                 tag::rho2 >,
+                           sde_parameter_vector< kw::sde_r,
+                                                 tag::mixdirichlet,
+                                                 tag::r >
+                         >,
+           check_errors< tag::mixdirichlet > > {};
 
   //! Generalized Dirichlet SDE
   struct gendir :
@@ -800,6 +1172,9 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::gendir >,
                            icbeta< tag::gendir >,
+                           icgamma< tag::gendir >,
+                           icgaussian< tag::gendir >,
+                           icjointgaussian< tag::gendir >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::gendir,
                                                  tag::b >,
@@ -841,14 +1216,191 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::wrightfisher >,
                            icbeta< tag::wrightfisher >,
+                           icgamma< tag::wrightfisher >,
+                           icgaussian< tag::wrightfisher >,
+                           icjointgaussian< tag::wrightfisher >,
                            sde_parameter_vector< kw::sde_omega,
                                                  tag::wrightfisher,
                                                  tag::omega > >,
            check_errors< tag::wrightfisher > > {};
 
+  //! Velocity SDE
+  struct velocity :
+         pegtl::if_must<
+           scan_sde< use< kw::velocity >, tag::velocity >,
+           tk::grm::velocity_defaults,
+           tk::grm::block< use< kw::end >,
+                           tk::grm::depvar< use,
+                                            tag::velocity,
+                                            tag::depvar >,
+                           tk::grm::rng< use,
+                                         use< kw::rng >,
+                                         tk::ctr::RNG,
+                                         tag::velocity,
+                                         tag::rng >,
+                           tk::grm::policy< use,
+                                            use< kw::init >,
+                                            ctr::InitPolicy,
+                                            tag::velocity,
+                                            tag::initpolicy >,
+                           tk::grm::policy< use,
+                                            use< kw::coeff >,
+                                            ctr::CoeffPolicy,
+                                            tag::velocity,
+                                            tag::coeffpolicy >,
+                           tk::grm::policy< use,
+                                            use< kw::solve >,
+                                            ctr::Depvar,
+                                            tag::velocity,
+                                            tag::solve >,
+                           tk::grm::policy< use,
+                                            use< kw::variant >,
+                                            ctr::VelocityVariant,
+                                            tag::velocity,
+                                            tag::variant >,
+                           icdelta< tag::velocity >,
+                           icbeta< tag::velocity >,
+                           icgamma< tag::velocity >,
+                           icgaussian< tag::velocity >,
+                           icjointgaussian< tag::velocity >,
+                           sde_option_vector< ctr::HydroTimeScales,
+                                              kw::hydrotimescales,
+                                              tag::velocity,
+                                              tag::hydrotimescales,
+                                              tk::grm::check_vector_size >,
+                           sde_option_vector< ctr::HydroProductions,
+                                              kw::hydroproductions,
+                                              tag::velocity,
+                                              tag::hydroproductions,
+                                              tk::grm::check_vector_size >,
+                           tk::grm::process<
+                             use< kw::sde_c0 >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::velocity,
+                                                  tag::c0 > >,
+                           tk::grm::process<
+                             use< kw::position >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::velocity,
+                                                  tag::position >,
+                             pegtl::alpha >,
+                           tk::grm::process<
+                             use< kw::dissipation >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::velocity,
+                                                  tag::dissipation >,
+                             pegtl::alpha >,
+                           tk::grm::process<
+                             use< kw::mixmassfracbeta >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::velocity,
+                                                  tag::mixmassfracbeta >,
+                             pegtl::alpha > >,
+           check_errors< tag::velocity > > {};
+
+  //! position equation
+  struct position :
+         pegtl::if_must<
+           scan_sde< use< kw::position >, tag::position >,
+           tk::grm::position_defaults,
+           tk::grm::block< use< kw::end >,
+                           tk::grm::depvar< use,
+                                            tag::position,
+                                            tag::depvar >,
+                           tk::grm::rng< use,
+                                         use< kw::rng >,
+                                         tk::ctr::RNG,
+                                         tag::position,
+                                         tag::rng >,
+                           tk::grm::policy< use,
+                                            use< kw::init >,
+                                            ctr::InitPolicy,
+                                            tag::position,
+                                            tag::initpolicy >,
+                           tk::grm::policy< use,
+                                            use< kw::coeff >,
+                                            ctr::CoeffPolicy,
+                                            tag::position,
+                                            tag::coeffpolicy >,
+                           tk::grm::policy< use,
+                                            use< kw::solve >,
+                                            ctr::Depvar,
+                                            tag::position,
+                                            tag::solve >,
+                           icdelta< tag::position >,
+                           icbeta< tag::position >,
+                           icgamma< tag::position >,
+                           icgaussian< tag::position >,
+                           icjointgaussian< tag::position >,
+                           tk::grm::process<
+                             use< kw::velocity >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::position,
+                                                  tag::velocity >,
+                             pegtl::alpha > >,
+           check_errors< tag::position > > {};
+
+  //! dissipation equation
+  struct dissipation :
+         pegtl::if_must<
+           scan_sde< use< kw::dissipation >, tag::dissipation >,
+           tk::grm::dissipation_defaults,
+           tk::grm::block< use< kw::end >,
+                           tk::grm::depvar< use,
+                                            tag::dissipation,
+                                            tag::depvar >,
+                           tk::grm::rng< use,
+                                         use< kw::rng >,
+                                         tk::ctr::RNG,
+                                         tag::dissipation,
+                                         tag::rng >,
+                           tk::grm::policy< use,
+                                            use< kw::init >,
+                                            ctr::InitPolicy,
+                                            tag::dissipation,
+                                            tag::initpolicy >,
+                           tk::grm::policy< use,
+                                            use< kw::coeff >,
+                                            ctr::CoeffPolicy,
+                                            tag::dissipation,
+                                            tag::coeffpolicy >,
+                           tk::grm::process<
+                             use< kw::sde_c3 >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::dissipation,
+                                                  tag::c3 > >,
+                           tk::grm::process<
+                             use< kw::sde_c4 >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::dissipation,
+                                                  tag::c4 > >,
+                           tk::grm::process<
+                             use< kw::sde_com1 >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::dissipation,
+                                                  tag::com1 > >,
+                           tk::grm::process<
+                             use< kw::sde_com2 >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::dissipation,
+                                                  tag::com2 > >,
+                           icdelta< tag::dissipation >,
+                           icbeta< tag::dissipation >,
+                           icgamma< tag::dissipation >,
+                           icgaussian< tag::dissipation >,
+                           icjointgaussian< tag::dissipation >,
+                           tk::grm::process<
+                             use< kw::velocity >,
+                             tk::grm::Store_back< tag::param,
+                                                  tag::dissipation,
+                                                  tag::velocity >,
+                             pegtl::alpha > >,
+           check_errors< tag::dissipation > > {};
+
   //! stochastic differential equations
   struct sde :
          pegtl::sor< dirichlet,
+                     mixdirichlet,
                      gendir,
                      wright_fisher,
                      ornstein_uhlenbeck,
@@ -859,22 +1411,31 @@ namespace deck {
                      numfracbeta,
                      massfracbeta,
                      mixnumfracbeta,
-                     mixmassfracbeta > {};
+                     mixmassfracbeta,
+                     position,
+                     dissipation,
+                     velocity > {};
+
 
   //! 'walker' block
   struct walker :
          pegtl::if_must<
            tk::grm::readkw< use< kw::walker >::pegtl_string >,
            pegtl::sor<
-             tk::grm::block<
-               use< kw::end >,
-               discretization_parameters,
-               sde,
-               tk::grm::rngblock< use, rngs >,
-               tk::grm::statistics< use, tk::grm::store_walker_option >,
-               tk::grm::pdfs< use, tk::grm::store_walker_option > >,
-               tk::grm::msg< tk::grm::MsgType::ERROR,
-                             tk::grm::MsgKey::UNFINISHED > > > {};
+             pegtl::seq<
+               tk::grm::block<
+                 use< kw::end >,
+                 discretization_parameters,
+                 sde,
+                 tk::grm::rngblock< use, rngs >,
+                 tk::grm::statistics< use, tk::grm::store_walker_option >,
+                 tk::grm::pdfs< use, tk::grm::store_walker_option > >,
+               tk::grm::check_velocity,
+               tk::grm::check_position,
+               tk::grm::check_dissipation,
+               tk::grm::check_mixmassfracbeta >,
+           tk::grm::msg< tk::grm::MsgType::ERROR,
+                         tk::grm::MsgKey::UNFINISHED > > > {};
 
   //! main keywords
   struct keywords :

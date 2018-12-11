@@ -9,7 +9,7 @@
 #ifndef InciterPDEOptions_h
 #define InciterPDEOptions_h
 
-#include "NoWarning/vector.h"
+#include <brigand/sequences/list.hpp>
 
 #include "TaggedTuple.h"
 #include "Toggle.h"
@@ -38,9 +38,9 @@ class PDE : public tk::Toggle< PDEType > {
 
   public:
     // List valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::transport
-                                       , kw::compflow
-                                       >;
+    using keywords = brigand::list< kw::transport
+                                  , kw::compflow
+                                  >;
 
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions

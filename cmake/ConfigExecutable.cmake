@@ -38,12 +38,10 @@ function(config_executable target)
     set_target_properties(${target} PROPERTIES LINK_FLAGS "-static")
   endif()
 
-  if (NOT "${target}" MATCHES "unittest")
-    INSTALL(TARGETS ${target}
-            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
-            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
-  endif()
+  INSTALL(TARGETS ${target}
+          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
 
   if(NOT CMAKE_GENERATOR STREQUAL "Ninja")
     add_custom_command(TARGET ${target} POST_BUILD

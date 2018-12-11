@@ -44,14 +44,21 @@ if(HYPRE_INCLUDE_DIRS AND HYPRE_LIBRARIES)
   set (HYPRE_FIND_QUIETLY TRUE)
 endif()
 
+if (HYPRE_ROOT)
+  set(HYPRE_SEARCH_OPTS NO_DEFAULT_PATH)
+endif()
+
 find_path(HYPRE_INCLUDE_DIR NAMES HYPRE.h
                             PATH_SUFFIXES hypre
-                            HINTS ${HYPRE_ROOT}/include)
+                            HINTS ${HYPRE_ROOT}/include
+                            ${HYPRE_SEARCH_OPTS})
 
 if(HYPRE_INCLUDE_DIR)
   _HYPRE_GET_VERSION(HYPRE_VERSION ${HYPRE_INCLUDE_DIR}/HYPRE_config.h)
+  set(HYPRE_INCLUDE_DIRS ${HYPRE_INCLUDE_DIR})
 else()
   set(HYPRE_VERSION 0.0.0)
+  set(HYPRE_INCLUDE_DIRS "")
 endif()
 
 if(NOT BUILD_SHARED_LIBS)
@@ -60,7 +67,6 @@ else()
   find_library(HYPRE_LIBRARY NAMES HYPRE HINTS ${HYPRE_ROOT}/lib)
 endif()
 
-set(HYPRE_INCLUDE_DIRS ${HYPRE_INCLUDE_DIR})
 set(HYPRE_LIBRARIES ${HYPRE_LIBRARY})
 
 # Handle the QUIETLY and REQUIRED arguments and set HYPRE_FOUND to TRUE if

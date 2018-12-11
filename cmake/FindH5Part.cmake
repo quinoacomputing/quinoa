@@ -28,9 +28,14 @@ if (H5PART_INCLUDE_DIRS AND H5PART_LIBRARIES)
   set (H5Part_FIND_QUIETLY TRUE)
 endif()
 
+if (H5PART_ROOT)
+  set(H5PART_SEARCH_OPTS NO_DEFAULT_PATH)
+endif()
+
 # Look for the header file
 FIND_PATH(H5PART_INCLUDE_DIR NAMES H5Part.h HINTS ${H5PART_ROOT}/include
-                                                  $ENV{H5PART_ROOT}/include)
+                                                  $ENV{H5PART_ROOT}/include
+                                                  ${H5PART_SEARCH_OPTS})
 
 # Look for the library
 if(NOT BUILD_SHARED_LIBS)
@@ -41,7 +46,12 @@ else()
                                                  $ENV{H5PART_ROOT}/lib)
 endif()
 
-set(H5PART_INCLUDE_DIRS ${H5PART_INCLUDE_DIR})
+if(H5PART_INCLUDE_DIR)
+  set(H5PART_INCLUDE_DIRS ${H5PART_INCLUDE_DIR})
+else()
+  set(H5PART_INCLUDE_DIRS "")
+endif()
+
 set(H5PART_LIBRARIES ${H5PART_LIBRARY})
 
 # Handle the QUIETLY and REQUIRED arguments and set H5PART_FOUND to TRUE if 

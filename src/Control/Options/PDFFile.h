@@ -9,7 +9,7 @@
 #ifndef PDFFileOptions_h
 #define PDFFileOptions_h
 
-#include "NoWarning/vector.h"
+#include <brigand/sequences/list.hpp>
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -34,11 +34,11 @@ class PDFFile : public tk::Toggle< PDFFileType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::txt
-                                       , kw::gmshtxt
-                                       , kw::gmshbin
-                                       , kw::exodusii
-                                       >;
+    using keywords = brigand::list< kw::txt
+                                  , kw::gmshtxt
+                                  , kw::gmshbin
+                                  , kw::exodusii
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which

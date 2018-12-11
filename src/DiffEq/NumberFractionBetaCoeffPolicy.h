@@ -49,7 +49,7 @@
 #ifndef NumberFractionBetaCoeffPolicy_h
 #define NumberFractionBetaCoeffPolicy_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Types.h"
 #include "Walker/Options/CoeffPolicy.h"
@@ -101,7 +101,7 @@ class NumberFractionBetaCoeffConst {
 
 //! List of all number-fraction beta's coefficients policies
 using NumberFractionBetaCoeffPolicies =
-  boost::mpl::vector< NumberFractionBetaCoeffConst >;
+  brigand::list< NumberFractionBetaCoeffConst >;
 
 } // walker::
 

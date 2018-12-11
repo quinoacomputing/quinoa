@@ -24,6 +24,7 @@
 #include "NoWarning/mpi.h"
 #include "NoWarning/mpi-interoperate.h"
 
+#include "QuinoaConfig.h"
 #include "NoWarning/tutsuite.decl.h"
 #include "NoWarning/unittest.decl.h"
 
@@ -37,86 +38,23 @@
 #include "Assessment.h"
 #include "ProcessException.h"
 #include "UnitTest/CmdLine/CmdLine.h"
-#include "TestArray.h"
 #include "UnitTestPrint.h"
 #include "UnitTestDriver.h"
 #include "UnitTest/CmdLine/Parser.h"
-
-namespace tut {
-
-//! \brief Maximum number of tests in every test group to attempt to run
-//! \details If any of the unit test groups have more tests than this number,
-//!   this should be increased. All test groups included below will use this
-//!   value to override the default template argument for tut::test_group<>.
-const int MAX_TESTS_IN_GROUP = 80;
-
-} // tut::
-
-// // Unit test groups to be tested. Each file defines a different test group.
-#include "tests/Base/TestCharmUtil.h"
-#include "tests/Base/TestFactory.h"
-#include "tests/Base/TestTimer.h"
-#include "tests/Base/TestPUPUtil.h"
-
-#include "tests/Base/TestFlip_map.h"
-#include "tests/Base/TestMake_list.h"
-#include "tests/Base/TestHas.h"
-#include "tests/Base/TestData.h"
-#include "tests/Base/TestPrint.h"
-#include "tests/Base/TestTaggedTuple.h"
-#include "tests/Base/TestException.h"
-#include "tests/Base/TestExceptionMPI.h"
-#include "tests/Base/TestReader.h"
-#include "tests/Base/TestStrConvUtil.h"
-#include "tests/Base/TestWriter.h"
-#include "tests/Base/TestProcessControl.h"
-#include "tests/Base/TestVector.h"
-#include "tests/Base/TestContainerUtil.h"
-
-#include "tests/Control/TestSystemComponents.h"
-#include "tests/Control/TestControl.h"
-#include "tests/Control/TestFileParser.h"
-#include "tests/Control/TestStringParser.h"
-#include "tests/Control/TestToggle.h"
-#ifdef HAS_MKL
-  #include "tests/Control/Options/TestMKLUniformMethod.h"
-  #include "tests/Control/Options/TestMKLGaussianMethod.h"
-  #include "tests/Control/Options/TestMKLBetaMethod.h"
-#endif
-#include "tests/Control/Options/TestRNG.h"
-
-#include "tests/IO/TestMesh.h"
-#include "tests/IO/TestExodusIIMeshReader.h"
-
-#include "tests/Mesh/TestDerivedData.h"
-#include "tests/Mesh/TestReorder.h"
-#include "tests/Mesh/TestGradients.h"
-#include "tests/Mesh/TestAround.h"
-
-#include "tests/RNG/TestRNG.h"
-#ifdef HAS_MKL
-  #include "tests/RNG/TestMKLRNG.h"
-#endif
-#ifdef HAS_RNGSSE2
-#include "tests/RNG/TestRNGSSE.h"
-#endif
-#include "tests/RNG/TestRandom123.h"
-
-#include "tests/LoadBalance/TestLoadDistributor.h"
-#include "tests/LoadBalance/TestLinearMap.h"
-#include "tests/LoadBalance/TestUnsMeshMap.h"
+#include "TUTConfig.h"
+#include "ChareStateCollector.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wmissing-variable-declarations"
 #endif
 
-#include "tests/Inciter/TestScheme.h"
-#include "tests/Inciter/AMR/TestError.h"
-
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
 CProxy_Main mainProxy;
+
+//! Chare state collector Charm++ chare group proxy
+tk::CProxy_ChareStateCollector stateProxy;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -181,7 +119,7 @@ class Main : public CBase_Main {
 
   public:
     //! \brief Constructor
-    //! \details The main chare constructor is the main entry point of the
+    //! \details UnitTest's main chare constructor is the entry point of the
     //!   program, called by the Charm++ runtime system. The constructor does
     //!   basic initialization steps, e.g., parser the command-line, prints out
     //!   some useful information to screen (in verbose mode), and instantiates
@@ -213,7 +151,7 @@ class Main : public CBase_Main {
                         ( msg->argc, msg->argv,
                           m_cmdline,
                           tk::HeaderType::UNITTEST,
-                          UNITTEST_EXECUTABLE,
+                          tk::unittest_executable(),
                           m_print ) ),
       m_timer(1), // Start new timer measuring the serial+Charm++ runtime
       m_timestamp()
@@ -222,15 +160,10 @@ class Main : public CBase_Main {
       if (m_helped) CkExit();
       // Save executable name to global-scope string so FileParser can access it
       unittest::g_executable = msg->argv[0];
-      delete msg;
-      mainProxy = thisProxy;
-      // Fire up an asynchronous execute object, which when created at some
-      // future point in time will call back to this->execute(). This is
-      // necessary so that this->execute() can access already migrated
-      // global-scope data.
-      CProxy_execute::ckNew();
-      // Start new timer measuring the migration of global-scope data
-      m_timer.emplace_back();
+      // Call generic mainchare contructor
+      tk::MainCtor< CProxy_execute >
+        ( msg, mainProxy, thisProxy, stateProxy, m_timer, m_cmdline,
+          CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
     } catch (...) { tk::processExceptionCharm(); }
 
     void execute() {
@@ -249,11 +182,29 @@ class Main : public CBase_Main {
                         m_timestamp );
           m_print.endpart();
         }
+        // Set global bool indicating whether all tests have passed
+        unittest::g_charmpass = pass;
+        // If quiescence detection is on or user requested it, collect chare
+        // state
+        if (m_cmdline.get< tag::chare >()||m_cmdline.get< tag::quiescence >())
+          stateProxy.collect( /* error = */ false,
+            CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
+        else
+          CkExit(); // tell the Charm++ runtime system to exit w/ zero exit code
       } catch (...) { tk::processExceptionCharm(); }
-      // Set global bool indicating whether all tests have passed
-      unittest::g_charmpass = pass;
-      // Tell the Charm++ runtime system to exit
-      CkExit();
+    }
+
+    //! Entry method triggered when quiescence is detected
+    void quiescence() {
+      try {
+        stateProxy.collect( /* error= */ true,
+          CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
+      } catch (...) { tk::processExceptionCharm(); }
+    }
+
+    //! Dump chare state
+    void dumpstate( CkReductionMsg* msg ) {
+      tk::dumpstate( m_cmdline, m_print, msg );
     }
 
   private:
@@ -276,6 +227,11 @@ class Main : public CBase_Main {
 class execute : public CBase_execute {
  public: execute() { mainProxy.execute(); }
 };
+
+#if defined(STRICT_GNUC)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wreturn-type"
+#endif
 
 //! \brief UnitTest main()
 //! \details UnitTest does have a main() function so that we can have tests
@@ -338,14 +294,14 @@ int main( int argc, char **argv ) {
     // Print out help on all command-line arguments if help was requested
     const auto helpcmd = cmdline.get< tag::help >();
     if (peid == 0 && helpcmd)
-      print.help< tk::QUIET >( UNITTEST_EXECUTABLE,
+      print.help< tk::QUIET >( tk::unittest_executable(),
                                cmdline.get< tag::cmdinfo >(),
                                "Command-line Parameters:", "-" );
 
     // Print out verbose help for a single keyword if requested
     const auto helpkw = cmdline.get< tag::helpkw >();
     if (peid == 0 && !helpkw.keyword.empty())
-      print.helpkw< tk::QUIET >( UNITTEST_EXECUTABLE, helpkw );
+      print.helpkw< tk::QUIET >( tk::unittest_executable(), helpkw );
 
     // Immediately exit if any help was output
     if (helpcmd || !helpkw.keyword.empty()) stop( mpipass );
@@ -425,8 +381,8 @@ int main( int argc, char **argv ) {
   stop( mpipass );
 }
 
-#include "NoWarning/charmchild.def.h"
-#include "NoWarning/charmtimer.def.h"
-#include "NoWarning/migrated.def.h"
-#include "NoWarning/testarray.def.h"
+#if defined(STRICT_GNUC)
+  #pragma GCC diagnostic pop
+#endif
+
 #include "NoWarning/unittest.def.h"

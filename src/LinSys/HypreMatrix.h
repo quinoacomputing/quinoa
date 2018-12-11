@@ -60,7 +60,7 @@ class HypreMatrix {
 
     //! Print out matrix to file (for debugging)
     //! \param[in] filename Base file name
-    //! \details The files names will be <filename>.XXXXX, where XXXXX is the
+    //! \details The files names will be filename.XXXXX, where XXXXX is the
     //!   processor id.
     void print( const std::string& filename )
     { HYPRE_IJMatrixPrint( m_A, filename.c_str() ); }

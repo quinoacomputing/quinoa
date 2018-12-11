@@ -30,7 +30,7 @@
 #ifndef TransportDGPhysics_h
 #define TransportDGPhysics_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "DGAdvection.h"
 
@@ -38,7 +38,7 @@ namespace inciter {
 namespace dg {
 
 //! Transport Physics policies implemented using discontinuous Galerkin
-using TransportPhysics = boost::mpl::vector< TransportPhysicsAdvection >;
+using TransportPhysics = brigand::list< TransportPhysicsAdvection >;
 
 } // dg::
 } // inciter::

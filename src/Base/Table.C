@@ -9,10 +9,11 @@
 */
 // *****************************************************************************
 
-#include <vector>
 #include <utility>
+#include <stddef.h>
 
 #include "Table.h"
+#include "Exception.h"
 
 tk::real
 tk::sample( tk::real x, const tk::Table& table )
@@ -32,6 +33,8 @@ tk::sample( tk::real x, const tk::Table& table )
 //! \see walker::invhts_eq_A005H, walker::prod_A005H for example tables
 // *****************************************************************************
 {
+  Assert( !table.empty(), "Empty table to sample from" );
+
   if (x < table.front().first) return table.front().second;
 
   for (std::size_t i=0; i<table.size()-1; ++i) {

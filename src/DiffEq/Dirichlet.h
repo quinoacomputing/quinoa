@@ -10,11 +10,25 @@
     In a nutshell, the equation integrated governs a set of scalars,
     \f$0\!\le\!Y_\alpha\f$, \f$\alpha\!=\!1,\dots,N-1\f$,
     \f$\sum_{\alpha=1}^{N-1}Y_\alpha\!\le\!1\f$, as
+
+    @m_class{m-show-m}
+
     \f[
        \mathrm{d}Y_\alpha(t) = \frac{b_\alpha}{2}\big[S_\alpha Y_N -
        (1-S_\alpha)Y_\alpha\big]\mathrm{d}t + \sqrt{\kappa_\alpha Y_\alpha
        Y_N}\mathrm{d}W_\alpha(t), \qquad \alpha=1,\dots,N-1
     \f]
+
+    @m_class{m-hide-m}
+
+    \f[
+       \begin{split}
+       \mathrm{d}Y_\alpha(t) = \frac{b_\alpha}{2}\big[S_\alpha Y_N -
+       (1-S_\alpha)Y_\alpha\big]\mathrm{d}t + \sqrt{\kappa_\alpha Y_\alpha
+       Y_N}\mathrm{d}W_\alpha(t), \\ \alpha=1,\dots,N-1
+       \end{split}
+    \f]
+
     with parameter vectors \f$b_\alpha > 0\f$, \f$\kappa_\alpha > 0\f$, and \f$0
     < S_\alpha < 1\f$, and \f$Y_N = 1-\sum_{\alpha=1}^{N-1}Y_\alpha\f$. Here
     \f$\mathrm{d}W_\alpha(t)\f$ is an isotropic vector-valued [Wiener
@@ -39,7 +53,6 @@
 #include "DirichletCoeffPolicy.h"
 #include "RNG.h"
 #include "Particles.h"
-#include "SystemComponents.h"
 
 namespace walker {
 
@@ -66,9 +79,12 @@ class Dirichlet {
     //!   file.
     explicit Dirichlet( ncomp_t c ) :
       m_c( c ),
-      m_depvar( g_inputdeck.get< tag::param, tag::dirichlet, tag::depvar >().at(c) ),
-      m_ncomp( g_inputdeck.get< tag::component >().get< tag::dirichlet >().at(c) ),
-      m_offset( g_inputdeck.get< tag::component >().offset< tag::dirichlet >(c) ),
+      m_depvar(
+        g_inputdeck.get< tag::param, tag::dirichlet, tag::depvar >().at(c) ),
+      m_ncomp(
+        g_inputdeck.get< tag::component >().get< tag::dirichlet >().at(c) ),
+      m_offset(
+        g_inputdeck.get< tag::component >().offset< tag::dirichlet >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, tag::dirichlet, tag::rng >().at(c) ) ) ),
       m_b(),

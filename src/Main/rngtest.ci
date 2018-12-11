@@ -12,8 +12,10 @@
 mainmodule rngtest {
 
   extern module testu01suite;
+  extern module charestatecollector;
 
   readonly CProxy_Main mainProxy;
+  readonly tk::CProxy_ChareStateCollector stateProxy;
 
   namespace rngtest {
 
@@ -29,6 +31,8 @@ mainmodule rngtest {
     entry Main( CkArgMsg* msg );
     entry void execute();
     entry void finalize();
+    entry void quiescence();
+    entry [reductiontarget] void dumpstate( CkReductionMsg* msg );
   }
 
   chare execute { entry execute(); }

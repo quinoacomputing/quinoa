@@ -35,6 +35,7 @@
 #include "Walker/CmdLine/Parser.h"
 #include "Walker/CmdLine/CmdLine.h"
 #include "Walker/InputDeck/InputDeck.h"
+#include "ChareStateCollector.h"
 
 #include "NoWarning/walker.decl.h"
 
@@ -46,6 +47,9 @@
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
 CProxy_Main mainProxy;
+
+//! Chare state collector Charm++ chare group proxy
+tk::CProxy_ChareStateCollector stateProxy;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -112,17 +116,19 @@ CProxy_Distributor g_DistributorProxy;
 //! parallel).
 inline
 void operator|( PUP::er& p, std::map< tk::ctr::RawRNGType, tk::RNG >& rng ) {
-  if (!p.isSizing()) {
-    tk::RNGStack stack(
-      #ifdef HAS_MKL
-      g_inputdeck.get< tag::param, tag::rngmkl >(),
-      #endif
-      #ifdef HAS_RNGSSE2
-      g_inputdeck.get< tag::param, tag::rngsse >(),
-      #endif
-      g_inputdeck.get< tag::param, tag::rng123 >() );
-    rng = stack.selected( g_inputdeck.get< tag::selected, tag::rng >() );
-  }
+  try {
+    if (!p.isSizing()) {
+      tk::RNGStack stack(
+        #ifdef HAS_MKL
+        g_inputdeck.get< tag::param, tag::rngmkl >(),
+        #endif
+        #ifdef HAS_RNGSSE2
+        g_inputdeck.get< tag::param, tag::rngsse >(),
+        #endif
+        g_inputdeck.get< tag::param, tag::rng123 >() );
+      rng = stack.selected( g_inputdeck.get< tag::selected, tag::rng >() );
+    }
+  } catch (...) { tk::processExceptionCharm(); }
 }
 
 //! Pack/Unpack selected differential equations. This Pack/Unpack method
@@ -140,7 +146,9 @@ void operator|( PUP::er& p, std::map< tk::ctr::RawRNGType, tk::RNG >& rng ) {
 //! serial) and packing and unpacking (in parallel).
 inline
 void operator|( PUP::er& p, std::vector< DiffEq >& eqs ) {
-  if (!p.isSizing()) eqs = DiffEqStack().selected();
+  try {
+    if (!p.isSizing()) eqs = DiffEqStack().selected();
+  } catch (...) { tk::processExceptionCharm(); }
 }
 
 } // walker::
@@ -151,7 +159,7 @@ class Main : public CBase_Main {
 
   public:
     //! \brief Constructor
-    //! \details The main chare constructor is the main entry point of the
+    //! \details Walker's main chare constructor is the entry point of the
     //!   program, called by the Charm++ runtime system. The constructor does
     //!   basic initialization steps, e.g., parser the command-line, prints out
     //!   some useful information to screen (in verbose mode), and instantiates
@@ -182,20 +190,14 @@ class Main : public CBase_Main {
                         ( msg->argc, msg->argv,
                           m_cmdline,
                           tk::HeaderType::WALKER,
-                          WALKER_EXECUTABLE,
+                          tk::walker_executable(),
                           m_print ) ),
       m_timer(1),       // start new timer measuring the total runtime
       m_timestamp()
     {
-      delete msg;
-      mainProxy = thisProxy;
-      // Fire up an asynchronous execute object, which when created at some
-      // future point in time will call back to this->execute(). This is
-      // necessary so that this->execute() can access already migrated
-      // global-scope data.
-      CProxy_execute::ckNew();
-      // Start new timer measuring the migration of global-scope data
-      m_timer.emplace_back();
+      tk::MainCtor< CProxy_execute >
+        ( msg, mainProxy, thisProxy, stateProxy, m_timer, m_cmdline,
+          CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
     } catch (...) { tk::processExceptionCharm(); }
 
     //! Execute driver created and initialized by constructor
@@ -206,17 +208,23 @@ class Main : public CBase_Main {
       } catch (...) { tk::processExceptionCharm(); }
     }
 
-    //! Normal exit point
+    //! Towards normal exit but collect chare state first (if any)
     void finalize() {
+      tk::finalize( m_cmdline, m_timer, m_print, stateProxy, m_timestamp,
+                    CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
+    }
+
+    //! Entry method triggered when quiescence is detected
+    void quiescence() {
       try {
-        if (!m_timer.empty()) {
-          m_timestamp.emplace_back( "Total runtime", m_timer[0].hms() );
-          m_print.time( "Timers (h:m:s)", m_timestamp );
-          m_print.endpart();
-        }
+        stateProxy.collect( /* error= */ true,
+          CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
       } catch (...) { tk::processExceptionCharm(); }
-      // Tell the Charm++ runtime system to exit
-      CkExit();
+    }
+
+    //! Dump chare state
+    void dumpstate( CkReductionMsg* msg ) {
+      tk::dumpstate( m_cmdline, m_print, msg );
     }
 
     //! Add time stamp contributing to final timers output

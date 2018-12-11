@@ -11,8 +11,10 @@
 mainmodule walker {
 
   extern module integrator;
+  extern module charestatecollector;
 
   readonly CProxy_Main mainProxy;
+  readonly tk::CProxy_ChareStateCollector stateProxy;
 
   namespace walker {
 
@@ -31,6 +33,8 @@ mainmodule walker {
     entry void execute();
     entry void finalize();
     entry void timestamp( std::string label, tk::real stamp );
+    entry void quiescence();
+    entry [reductiontarget] void dumpstate( CkReductionMsg* msg );
   }
 
   chare execute { entry execute(); }

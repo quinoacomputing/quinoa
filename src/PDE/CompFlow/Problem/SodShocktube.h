@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/CompFlowProblem/SodShocktube.h
+  \file      src/PDE/CompFlow/Problem/SodShocktube.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Problem configuration for Sod's shock-tube
   \details   This file defines a policy class for the compressible flow
@@ -14,9 +14,8 @@
 #include <string>
 #include <unordered_set>
 
-#include <boost/mpl/vector.hpp>
-
 #include "Types.h"
+#include "FunctionPrototypes.h"
 #include "Inciter/Options/Problem.h"
 
 namespace inciter {
@@ -26,21 +25,29 @@ namespace inciter {
 //!   Nonlinear Hyperbolic Conservation Laws. J. Comput. Phys., 27:1–31, 1978.
 class CompFlowProblemSodShocktube {
 
-  public:
+  private:
+    using ncomp_t = tk::ctr::ncomp_type;
+    static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
+  public:
     //! Evaluate analytical solution at (x,y,0) for all components
-    //! \param[in] e Equation system index, i.e., which compressible
+    //! \param[in] system Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
+    //! \param[in] ncomp Number of scalar components in this PDE system
     //! \param[in] x X coordinate where to evaluate the solution
-//    //! \param[in] t Time at which to evaluate the solution
     //! \return Values of all components evaluated at (x,y,0)
-    static std::array< tk::real, 5 >
-    solution( tk::ctr::ncomp_type e,
-              tk::real x, tk::real, tk::real, tk::real /*t*/ )
+    //! \note The function signature must follow tk::SolutionFn
+    static tk::SolutionFn::result_type
+    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real, tk::real,
+              tk::real )
     {
+      Assert( ncomp == m_ncomp, "Number of scalar components must be " +
+                                std::to_string(m_ncomp) );
+      IGNORE(ncomp);
       using tag::param; using tag::compflow;
       // ratio of specific heats
-      const tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[e];
+      const tk::real g =
+        g_inputdeck.get< param, compflow, tag::gamma >()[system];
       tk::real r, p, u, v, w, rE;
       if (x<0.5) {
         // density
@@ -69,18 +76,20 @@ class CompFlowProblemSodShocktube {
 
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
+    //! \param[in] system Equation system index, i.e., which compressible
+    //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] z Z coordinate where to evaluate the solution
     //! \param[in] t Time where to evaluate the solution increment starting from
     //! \param[in] dt Time increment at which evaluate the solution increment to
     //! \return Increment in values of all components evaluated at (x,y,z,t+dt)
-    static std::array< tk::real, 5 >
-    solinc( tk::ctr::ncomp_type e,
-            tk::real x, tk::real y, tk::real z, tk::real t, tk::real dt )
+    static std::vector< tk::real >
+    solinc( ncomp_t system, tk::real x, tk::real y, tk::real z, tk::real t,
+            tk::real dt )
     {
-      auto st1 = solution( e, x, y, z, t );
-      auto st2 = solution( e, x, y, z, t+dt );
+      auto st1 = solution( system, m_ncomp, x, y, z, t );
+      auto st2 = solution( system, m_ncomp, x, y, z, t+dt );
       std::transform( begin(st1), end(st1), begin(st2), begin(st2),
                       []( tk::real s, tk::real& d ){ return d -= s; } );
       return st2;
@@ -89,7 +98,8 @@ class CompFlowProblemSodShocktube {
     //! Compute and return source term for this problem
     //! \return Array of reals containing the source which is zero for this
     //!   problem
-    static std::array< tk::real, 5 >
+    //! \note The function signature must follow tk::SrcFn
+    static tk::SrcFn::result_type
     src( tk::ctr::ncomp_type, tk::real, tk::real, tk::real, tk::real ) {
       return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
     }
@@ -98,10 +108,14 @@ class CompFlowProblemSodShocktube {
     //!   in this PDE system
     //! \param[in,out] conf Set of unique side set IDs to add to
     static void side( std::unordered_set< int >& conf ) {
-      using tag::param; using tag::compflow; using tag::bcdir;
-      for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
-        for (const auto& i : s)
-          conf.insert( std::stoi(i) );
+      using tag::param; using tag::compflow;
+
+      for (const auto& s : g_inputdeck.get< param, compflow,
+                                            tag::bcextrapolate >())
+        for (const auto& i : s) conf.insert( std::stoi(i) );
+
+      for (const auto& s : g_inputdeck.get< param, compflow, tag::bcsym >())
+        for (const auto& i : s) conf.insert( std::stoi(i) );
     }
 
     //! Return field names to be output to file
@@ -126,7 +140,7 @@ class CompFlowProblemSodShocktube {
     }
 
     //! Return field output going to file
-    //! \param[in] e Equation system index, i.e., which compressible
+    //! \param[in] system Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
@@ -136,7 +150,7 @@ class CompFlowProblemSodShocktube {
     //! \param[in] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
-    fieldOutput( tk::ctr::ncomp_type e,
+    fieldOutput( tk::ctr::ncomp_type system,
                  tk::ctr::ncomp_type offset,
                  tk::real,
                  tk::real /*V*/,
@@ -144,16 +158,19 @@ class CompFlowProblemSodShocktube {
                  const std::array< std::vector< tk::real >, 3 >& /*coord*/,
                  tk::Fields& U )
     {
+      // number of degree of freedom
+      const std::size_t ndof =
+        g_inputdeck.get< tag::discr, tag::ndof >();
       // ratio of specific heats
       tk::real g =
-        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
+        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[system];
 
       std::vector< std::vector< tk::real > > out;
-      const auto r  = U.extract( 0, offset );
-      const auto ru = U.extract( 1, offset );
-      const auto rv = U.extract( 2, offset );
-      const auto rw = U.extract( 3, offset );
-      const auto re = U.extract( 4, offset );
+      const auto r  = U.extract( 0*ndof, offset );
+      const auto ru = U.extract( 1*ndof, offset );
+      const auto rv = U.extract( 2*ndof, offset );
+      const auto rw = U.extract( 3*ndof, offset );
+      const auto re = U.extract( 4*ndof, offset );
 
       // mesh node coordinates
       //const auto& x = coord[0];

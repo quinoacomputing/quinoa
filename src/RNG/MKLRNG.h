@@ -9,9 +9,11 @@
 #ifndef MKLRNG_h
 #define MKLRNG_h
 
-#include <mkl_vsl_types.h>
+#include <mkl_vsl.h>
 
 #include "Exception.h"
+#include "Make_unique.h"
+#include "Keywords.h"
 
 namespace tk {
 
@@ -27,18 +29,26 @@ class MKLRNG {
     //! \param[in] seed RNG seed
     //! \param[in] uniform_method MKL ID of the method to use for uniform RNGs
     //! \param[in] gaussian_method MKL ID of the method to use for Gaussian RNGs
+    //! \param[in] gaussianmv_method MKL ID of the method to use for
+    //!    multi-variate Gaussian RNGs
     //! \param[in] beta_method MKL ID of the method to use for beta RNGs
-    explicit MKLRNG( int n = 1,
-                     int brng = VSL_BRNG_MCG59,
-                     unsigned int seed = 0,
-                     int uniform_method = VSL_RNG_METHOD_UNIFORM_STD,
-                     int gaussian_method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
-                     int beta_method = VSL_RNG_METHOD_BETA_CJA ) :
+    //! \param[in] gamma_method MKL ID of the method to use for gamma RNGs
+    explicit MKLRNG(
+      int n = 1,
+      int brng = VSL_BRNG_MCG59,
+      unsigned int seed = 0,
+      int uniform_method = VSL_RNG_METHOD_UNIFORM_STD,
+      int gaussian_method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
+      int gaussianmv_method = VSL_RNG_METHOD_GAUSSIANMV_BOXMULLER2,
+      int beta_method = VSL_RNG_METHOD_BETA_CJA,
+      int gamma_method = VSL_RNG_METHOD_GAMMA_GNORM ) :
       m_brng( brng ),
       m_seed( seed ),
       m_uniform_method( uniform_method ),
       m_gaussian_method( gaussian_method ),
+      m_gaussianmv_method( gaussianmv_method ),
       m_beta_method( beta_method ),
+      m_gamma_method( gamma_method ),
       m_nthreads( n ),
       m_stream()
     {
@@ -91,6 +101,30 @@ class MKLRNG {
                      0.0, 1.0 );
     }
 
+    //! \brief Multi-variate Gaussian RNG: Generate multi-variate Gaussian
+    //!    random numbers
+    //! \param[in] tid Thread (or more precisely stream) ID
+    //! \param[in] num Number of RNGs to generate
+    //! \param[in] d Dimension d ( d ≥ 1) of output random vectors
+    //! \param[in] mean Mean vector of dimension d
+    //! \param[in] cov Lower triangle of covariance matrix, stored as a vector
+    //!   of length d(d+1)/2
+    //! \param[in,out] r Pointer to memory to write the random numbers to
+    void gaussianmv( int tid, ncomp_t num, ncomp_t d, const double* const mean,
+                     const double* const cov, double* r ) const
+    {
+      Assert( d > 0,
+              "Dimension of multi-variate Gaussian RNGs must be positive" );
+      vdRngGaussianMV( m_gaussianmv_method,
+                       m_stream[ static_cast<std::size_t>(tid) ],
+                       static_cast< long long >( num ),
+                       r,
+                       static_cast< int >( d ),
+                       VSL_MATRIX_STORAGE_PACKED,
+                       mean,
+                       cov );
+    }
+
     //! Beta RNG: Generate beta random numbers
     //! \param[in] tid Thread (or more precisely stream) ID
     //! \param[in] num Number of RNGs to generate
@@ -109,13 +143,30 @@ class MKLRNG {
                  p, q, a, b );
     }
 
+    //! Gamma RNG: Generate gamma random numbers
+    //! \param[in] tid Thread (or more precisely stream) ID
+    //! \param[in] num Number of RNGs to generate
+    //! \param[in] a Gamma shape parameter
+    //! \param[in] b Gamma scale factor
+    //! \param[in,out] r Pointer to memory to write the random numbers to
+    void gamma( int tid, ncomp_t num, double a, double b, double* r ) const
+    {
+      vdRngGamma( m_beta_method,
+                  m_stream[ static_cast<std::size_t>(tid) ],
+                  static_cast< long long >( num ),
+                  r,
+                  a, 0.0, b );  // displacement = 0.0
+    }
+
     //! Copy assignment
     MKLRNG& operator=( const MKLRNG& x ) {
       m_brng = x.m_brng;
       m_seed = x.m_seed;
       m_uniform_method = x.m_uniform_method;
       m_gaussian_method = x.m_gaussian_method;
+      m_gaussianmv_method = x.m_gaussianmv_method;
       m_beta_method = x.m_beta_method;
+      m_gamma_method = x.m_gamma_method;
       m_nthreads = x.m_nthreads;
       m_stream = tk::make_unique< VSLStreamStatePtr[] >(
                    static_cast<std::size_t>(x.m_nthreads) );
@@ -140,7 +191,9 @@ class MKLRNG {
       m_seed = x.m_seed;
       m_uniform_method = x.m_uniform_method;
       m_gaussian_method = x.m_gaussian_method;
+      m_gaussianmv_method = x.m_gaussianmv_method;
       m_beta_method = x.m_beta_method;
+      m_gamma_method = x.m_gamma_method;
       m_nthreads = x.m_nthreads;
       m_stream = tk::make_unique< VSLStreamStatePtr[] >(
                    static_cast<std::size_t>(x.m_nthreads) );
@@ -153,7 +206,9 @@ class MKLRNG {
       x.m_seed = 0;
       x.m_uniform_method = 0;
       x.m_gaussian_method = 0;
+      x.m_gaussianmv_method = 0;
       x.m_beta_method = 0;
+      x.m_gamma_method = 0;
       x.m_nthreads = 0;
       x.m_stream.reset( nullptr );
       return *this;
@@ -165,7 +220,9 @@ class MKLRNG {
       m_seed( 0 ),
       m_uniform_method( 0 ),
       m_gaussian_method( 0 ),
+      m_gaussianmv_method( 0 ),
       m_beta_method( 0 ),
+      m_gamma_method( 0 ),
       m_nthreads( 0 ),
       m_stream( nullptr )
     { *this = std::move(x); }
@@ -200,7 +257,9 @@ class MKLRNG {
     unsigned int m_seed;                             //!< Seed
     int m_uniform_method;                            //!< Uniform method to use
     int m_gaussian_method;                           //!< Gaussian method to use
+    int m_gaussianmv_method;           //!< Multi-variate Gaussian method to use
     int m_beta_method;                               //!< Beta method to use
+    int m_gamma_method;                              //!< Gamma method to use
     int m_nthreads;                                  //!< Number of threads
     std::unique_ptr< VSLStreamStatePtr[] > m_stream; //!< Random number streams
 };

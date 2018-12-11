@@ -110,7 +110,7 @@ class CGPDE {
 
     //! \brief Public interface for querying Dirichlet boundary condition values
     //!  set by the user on a given side set for all components in a PDE system
-    std::unordered_map< std::size_t,  std::vector< std::pair<bool,tk::real> > >
+    std::map< std::size_t, std::vector< std::pair<bool,tk::real> > >
     dirbc( tk::real t,
            tk::real deltat,
            const std::pair< const int, std::vector< std::size_t > >& sides,
@@ -131,6 +131,11 @@ class CGPDE {
       const std::vector< tk::real >& v,
       tk::Fields& U ) const
     { return self->fieldOutput( t, V, coord, v, U ); }
+
+    //! Public interface to returning analytic solution
+    std::vector< tk::real >
+    analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
+    { return self->analyticSolution( xi, yi, zi, t ); }
 
     //! Copy assignment
     CGPDE& operator=( const CGPDE& x )
@@ -170,7 +175,7 @@ class CGPDE {
                            const tk::Fields& ) const = 0;
       virtual void side( std::unordered_set< int >& conf ) const = 0;
       virtual
-      std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
+      std::map< std::size_t, std::vector< std::pair<bool,tk::real> > >
       dirbc( tk::real,
              tk::real,
              const std::pair< const int, std::vector< std::size_t > >&,
@@ -183,6 +188,8 @@ class CGPDE {
         const std::array< std::vector< tk::real >, 3 >&,
         const std::vector< tk::real >&,
         tk::Fields& ) const = 0;
+      virtual std::vector< tk::real > analyticSolution(
+        tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
     };
 
     //! \brief Model models the Concept above by deriving from it and overriding
@@ -215,7 +222,7 @@ class CGPDE {
       { return data.dt( coord, inpoel, U ); }
       void side( std::unordered_set< int >& conf ) const override
       { data.side( conf ); }
-      std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
+      std::map< std::size_t, std::vector< std::pair<bool,tk::real> > >
       dirbc( tk::real t,
              tk::real deltat,
              const std::pair< const int, std::vector< std::size_t > >& sides,
@@ -232,6 +239,9 @@ class CGPDE {
         const std::vector< tk::real >& v,
         tk::Fields& U ) const override
       { return data.fieldOutput( t, V, coord, v, U ); }
+      std::vector< tk::real >
+      analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
+       const override { return data.analyticSolution( xi, yi, zi, t ); }
       T data;
     };
 

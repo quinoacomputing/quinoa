@@ -3,17 +3,11 @@
   \file      src/IO/ExodusIIMeshReader.C
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     ExodusII mesh reader
-  \details   ExodusII mesh reader class definition. Currently, this is a bare
-     minimum functionality to interface with the ExodusII reader. It only reads
-     3D meshes and only triangle and tetrahedron elements.
+  \details   ExodusII mesh reader class definition.
 */
 // *****************************************************************************
 
-#include <cstdint>
-#include <cstdio>
-#include <string>
 #include <numeric>
-#include <unordered_map>
 
 #include "NoWarning/exodusII.h"
 
@@ -29,13 +23,19 @@ ExodusIIMeshReader::ExodusIIMeshReader( const std::string& filename,
                                         int cpuwordsize,
                                         int iowordsize ) :
   m_filename( filename ),
+  m_cpuwordsize( cpuwordsize ),
+  m_iowordsize( iowordsize ),
   m_inFile( 0 ),
   m_nnode( 0 ),
   m_neblk( 0 ),
   m_neset( 0 ),
-  m_eid(),
-  m_eidt( m_nnpe.size() ),
-  m_nel( m_nnpe.size() )
+  m_from( 0 ),
+  m_till( 0 ),
+  m_blockid(),
+  m_blockid_by_type( ExoNnpe.size() ),
+  m_nel( ExoNnpe.size() ),
+  m_elemblocks(),
+  m_tri()
 // *****************************************************************************
 //  Constructor: open Exodus II file
 //! \param[in] filename File to open as ExodusII file
@@ -71,6 +71,7 @@ ExodusIIMeshReader::readMesh( UnsMesh& mesh )
   readHeader( mesh );
   readAllElements( mesh );
   readAllNodes( mesh );
+  readSidesetFaces( mesh.bface(), mesh.faceid() );
 }
 
 void
@@ -82,6 +83,101 @@ ExodusIIMeshReader::readGraph( UnsMesh& mesh )
 {
   readHeader( mesh );
   readAllElements( mesh );
+}
+
+void
+ExodusIIMeshReader::readMeshPart(
+  std::vector< std::size_t >& ginpoel,
+  std::vector< std::size_t >& inpoel,
+  std::vector< std::size_t >& triinp,
+  std::vector< std::size_t >& gid,
+  std::unordered_map< std::size_t, std::size_t >& lid,
+  tk::UnsMesh::Coords& coord,
+  int numpes, int mype )
+// *****************************************************************************
+//  Read a part of the mesh (graph and coordinates) from ExodusII file
+//! \param[in,out] ginpoel Container to store element connectivity of this PE's
+//!   chunk of the mesh (global ids)
+//! \param[in,out] inpoel Container to store element connectivity with local
+//!   node IDs of this PE's mesh chunk
+//! \param[in,out] triinp Container to store triangle element connectivity
+//!   (if exists in file) with global node indices
+//! \param[in,out] gid Container to store global node IDs of elements of this
+//!   PE's mesh chunk
+//! \param[in,out] lid Container to store global->local node IDs of elements of
+//!   this PE's mesh chunk
+//! \param[in,out] coord Container to store coordinates of mesh nodes of this
+//!   PE's mesh chunk
+//! \param[in] numpes Total number of PEs (default n = 1, for a single-CPU read)
+//! \param[in] mype This PE (default m = 0, for a single-CPU read)
+// *****************************************************************************
+{
+  Assert( mype < numpes, "Invalid input: PE id must be lower than NumPEs" );
+  Assert( ginpoel.empty() && inpoel.empty() && gid.empty() && lid.empty() &&
+          coord[0].empty() && coord[1].empty() && coord[2].empty(),
+          "Containers to store mesh must be empty" );
+
+  // Read info on element blocks from ExodusII file
+  readElemBlockIDs();
+  // Get number of number of tetrahedron elements in file
+  auto nel = nelem( tk::ExoElemType::TET );
+
+  // Compute extents of element IDs of this PE's mesh chunk to read
+  auto npes = static_cast< std::size_t >( numpes );
+  auto pe = static_cast< std::size_t >( mype );
+  auto chunk = nel / npes;
+  m_from = pe * chunk;
+  m_till = m_from + chunk;
+  if (pe == npes-1) m_till += nel % npes;
+
+  // Read tetrahedron connectivity between from and till
+  readElements( {{m_from, m_till-1}}, tk::ExoElemType::TET, ginpoel );
+
+  // Compute local data from global mesh connectivity
+  std::tie( inpoel, gid, lid ) = tk::global2local( ginpoel );
+
+  // Read this PE's chunk of the mesh node coordinates from file
+  coord = readCoords( gid );
+
+  // Generate set of unique faces
+  tk::UnsMesh::FaceSet faces;
+  for (std::size_t e=0; e<ginpoel.size()/4; ++e)
+    for (std::size_t f=0; f<4; ++f) {
+      const auto& tri = tk::expofa[f];
+      faces.insert( {{{ ginpoel[ e*4+tri[0] ],
+                        ginpoel[ e*4+tri[1] ],
+                        ginpoel[ e*4+tri[2] ] }}} );
+    }
+
+  // Read triangle element connectivity (all triangle blocks in file)
+  auto ntri = nelem( tk::ExoElemType::TRI );
+  if ( ntri !=0 ) readElements( {{0,ntri-1}}, tk::ExoElemType::TRI, triinp );
+
+  // Keep triangles shared in (partially-read) tetrahedron mesh
+  std::vector< std::size_t > triinp_own;
+  std::size_t ltrid = 0;        // local triangle id
+  for (std::size_t e=0; e<triinp.size()/3; ++e) {
+    auto i = faces.find( {{ triinp[e*3+0], triinp[e*3+1], triinp[e*3+2] }} );
+    if (i != end(faces)) {
+      m_tri[e] = ltrid++;       // generate global->local triangle ids
+      triinp_own.push_back( triinp[e*3+0] );
+      triinp_own.push_back( triinp[e*3+1] );
+      triinp_own.push_back( triinp[e*3+2] );
+    }
+  }
+  triinp = std::move(triinp_own);
+}
+
+std::array< std::vector< tk::real >, 3 >
+ExodusIIMeshReader::readCoords( const std::vector< std::size_t >& gid ) const
+// *****************************************************************************
+//  Read coordinates of a number of mesh nodes from ExodusII file
+//! \param[in] gid Global node IDs whose coordinates to read
+//! \return Vector of node coordinates read from file
+// *****************************************************************************
+{
+  // Read node coordinates from file with global node IDs given in gid
+  return readNodes( gid );
 }
 
 std::size_t
@@ -104,7 +200,7 @@ ExodusIIMeshReader::readHeader()
   ErrChk( neblk > 0,
           "Number of element blocks read from ExodusII file must be larger "
           "than zero" );
-  ErrChk( ndim == 3, "Need a 3D mesh from ExodusII file " + m_filename);
+  ErrChk( ndim == 3, "Need a 3D mesh from ExodusII file " + m_filename );
 
   m_neblk = static_cast< std::size_t >( neblk );
   m_neset = static_cast< std::size_t >( nelemset );
@@ -139,6 +235,60 @@ ExodusIIMeshReader::readAllNodes( UnsMesh& mesh ) const
           "Failed to read coordinates from ExodusII file: " + m_filename );
 }
 
+void
+ExodusIIMeshReader::readNode( std::size_t fid,
+                              std::size_t mid,
+                              std::vector< tk::real >& x,
+                              std::vector< tk::real >& y,
+                              std::vector< tk::real >& z ) const
+// *****************************************************************************
+//  Read coordinates of a single mesh node from ExodusII file
+//! \param[in] fid Node id in file whose coordinates to read
+//! \param[in] mid Node id in memory to which to put new cordinates
+//! \param[in,out] x Vector of x coordinates to push to
+//! \param[in,out] y Vector of y coordinates to push to
+//! \param[in,out] z Vector of z coordinates to push to
+// *****************************************************************************
+{
+  Assert( x.size() == y.size() && x.size() == z.size(), "Size mismatch" );
+  Assert( mid < x.size() && mid < y.size() && mid < z.size(),
+          "Indexing out of bounds" );
+
+  readNode( fid, x[mid], y[mid], z[mid] );
+}
+
+void
+ExodusIIMeshReader::readNode( std::size_t id,
+                              std::array< tk::real, 3 >& coord ) const
+// *****************************************************************************
+//  Read coordinates of a single mesh node from ExodusII file
+//! \param[in] id Node id whose coordinates to read
+//! \param[in,out] coord Array of x, y, and z coordinates
+// *****************************************************************************
+{
+  readNode( id, coord[0], coord[1], coord[2] );
+}
+
+void
+ExodusIIMeshReader::readNode( std::size_t id,
+                              tk::real& x,
+                              tk::real& y,
+                              tk::real& z ) const
+// *****************************************************************************
+// Read coordinates of a single mesh node from file
+//! \param[in] id Node id whose coordinates to read
+//! \param[in,out] x X coordinate to write to
+//! \param[in,out] y Y coordinate to write to
+//! \param[in,out] z Z coordinate to write to
+// *****************************************************************************
+{
+  ErrChk(
+    ex_get_partial_coord( m_inFile, static_cast<int64_t>(id)+1, 1,
+                          &x, &y, &z ) == 0,
+    "Failed to read coordinates of node " + std::to_string(id) +
+    " from ExodusII file: " + m_filename );
+}
+
 std::array< std::vector< tk::real >, 3 >
 ExodusIIMeshReader::readNodes( const std::vector< std::size_t >& gid ) const
 // *****************************************************************************
@@ -150,10 +300,7 @@ ExodusIIMeshReader::readNodes( const std::vector< std::size_t >& gid ) const
   std::vector< tk::real > px( gid.size() ), py( gid.size() ), pz( gid.size() );
 
   std::size_t i=0;
-  for (auto g : gid) {
-    readNode( g, i, px, py, pz );
-    ++i;
-  }
+  for (auto g : gid) readNode( g, i++, px, py, pz );
 
   return {{ std::move(px), std::move(py), std::move(pz) }};
 }
@@ -168,15 +315,21 @@ ExodusIIMeshReader::readElemBlockIDs()
   // Read ExodusII file header
   auto nnode = readHeader();
 
-  std::vector< int > eid( m_neblk );
+  std::vector< int > bid( m_neblk );
 
   // Read element block ids
-  ErrChk( ex_get_ids( m_inFile, EX_ELEM_BLOCK, eid.data()) == 0,
+  ErrChk( ex_get_ids( m_inFile, EX_ELEM_BLOCK, bid.data()) == 0,
           "Failed to read element block ids from ExodusII file: " +
           m_filename );
 
+  m_elemblocks.clear();
+  m_nel.clear();
+  m_nel.resize( ExoNnpe.size() );
+  m_blockid_by_type.clear();
+  m_blockid_by_type.resize( ExoNnpe.size() );
+
   // Fill element block ID vector
-  for (auto id : eid) {
+  for (auto id : bid) {
     char eltype[MAX_STR_LENGTH+1];
     int n, nnpe, nattr;
 
@@ -187,26 +340,32 @@ ExodusIIMeshReader::readElemBlockIDs()
       m_filename );
 
     // Store ExodusII element block ID
-    m_eid.push_back( id );
+    m_blockid.push_back( id );
 
-    // Store ExodusII element block IDs mapped to elem type, and add up the
-    // number of elements per for each elem type
+    auto nel = static_cast< std::size_t >( n );
+
+    // Store info on ExodusII element blocks
     if (nnpe == 4) {        // tetrahedra
+
+      m_elemblocks.push_back( { ExoElemType::TET, nel } );
       auto e = static_cast< std::size_t >( ExoElemType::TET );
-      m_eidt[ e ].push_back( id );
-      m_nel[ e ].push_back( static_cast< std::size_t >( n ) );
-      Assert( m_eidt[e].size() == m_nel[e].size(), "Size mismatch" );
+      m_blockid_by_type[ e ].push_back( id );
+      m_nel[ e ].push_back( nel );
+      Assert( m_blockid_by_type[e].size() == m_nel[e].size(), "Size mismatch" );
+
     } else if (nnpe == 3) { // triangles
+
+      m_elemblocks.push_back( { ExoElemType::TRI, nel } );
       auto e = static_cast< std::size_t >( ExoElemType::TRI );
-      m_eidt[ e ].push_back( id );
-      m_nel[ e ].push_back( static_cast< std::size_t >( n ) );
-      Assert( m_eidt[e].size() == m_nel[e].size(), "Size mismatch" );
+      m_blockid_by_type[ e ].push_back( id );
+      m_nel[ e ].push_back( nel );
+      Assert( m_blockid_by_type[e].size() == m_nel[e].size(), "Size mismatch" );
+
     }
   }
 
   return nnode;
 }
-
 
 void
 ExodusIIMeshReader::readAllElements( UnsMesh& mesh )
@@ -218,7 +377,7 @@ ExodusIIMeshReader::readAllElements( UnsMesh& mesh )
   // Read element block ids
   readElemBlockIDs();
 
-  for (auto id : m_eid) {
+  for (auto id : m_blockid) {
     char eltype[MAX_STR_LENGTH+1];
     int nel, nnpe, nattr;
 
@@ -277,7 +436,7 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
 //!   denote lowest and the largest-1 element IDs to be read from file.
 // *****************************************************************************
 {
-  Assert( tk::sumsize(m_eidt) > 0,
+  Assert( tk::sumsize(m_blockid_by_type) > 0,
           "A call to this function must be preceded by a call to "
           "ExodusIIMeshReader::readElemBlockIDs()" );
   Assert( ext[0] <= ext[1] &&
@@ -290,7 +449,7 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
           "requested cell type. Requested element ID extents: ["
           + std::to_string(ext[0]) + "..." + std::to_string(ext[1])
           + "), 'maxelements' of cell type with "
-          + std::to_string( m_nnpe[ static_cast<std::size_t>(elemtype) ] )
+          + std::to_string( ExoNnpe[ static_cast<std::size_t>(elemtype) ] )
           + " nodes per cell in file '" + m_filename + "': "
           + std::to_string( nelem( elemtype ) ) );
 
@@ -298,7 +457,7 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
   // List of number of elements of all blocks of element type requested
   const auto& nel = m_nel[e];
   // List of element block IDs for element type requested
-  const auto& bid = m_eidt[e];
+  const auto& bid = m_blockid_by_type[e];
 
   // Compute lower and upper element block ids to read from based on extents
   std::size_t lo_bid = 0, hi_bid = 0, offset = 0;
@@ -345,7 +504,7 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
   std::size_t B = 0;
   for (auto b=lo_bid; b<=hi_bid; ++b, ++B) {
     const auto& r = rext[B];
-    std::vector< int > c( (r[1]-r[0]+1) * m_nnpe[e] );
+    std::vector< int > c( (r[1]-r[0]+1) * ExoNnpe[e] );
     ErrChk( ex_get_partial_conn( m_inFile,
                                  EX_ELEM_BLOCK,
                                  bid[b],
@@ -362,7 +521,7 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
     std::move( begin(c), end(c), std::back_inserter(inpoel) );
   }
 
-  Assert( inpoel.size() == (ext[1]-ext[0]+1)*m_nnpe[e],
+  Assert( inpoel.size() == (ext[1]-ext[0]+1)*ExoNnpe[e],
           "Failed to read element connectivity of elements [" +
           std::to_string(ext[0]) + "..." + std::to_string(ext[1]) + ") from "
           "ExodusII file: " + m_filename );
@@ -374,34 +533,21 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
 }
 
 void
-ExodusIIMeshReader::readFaces( std::size_t nbfac,
-                               std::vector< std::size_t >& conn )
+ExodusIIMeshReader::readFaces( std::vector< std::size_t >& conn ) const
 // *****************************************************************************
 //  Read face connectivity of a number of boundary faces from ExodusII file
-//! \param[in] nbfac Number of boundary faces
 //! \param[inout] conn Connectivity vector to push to
-//! \details This function reads-in the total number of boundary faces 
+//! \details This function reads in the total number of boundary faces,
 //!   also called triangle-elements in the EXO2 file, and their connectivity.
 // *****************************************************************************
 {
-  ErrChk( nbfac > 0, "Number of boundary faces must be larger than zero" );
+  // Return quietly if no triangle elements in file
+  if (nelem(tk::ExoElemType::TRI) == 0) return;
 
-  std::size_t nnpf(3);
-
-  // Read triangle boundary-face connectivity
+  // Read triangle boundary-face connectivity (all the triangle element block)
   std::vector< std::size_t > l_triinpoel;
-  readElements( {{0,nbfac-1}}, tk::ExoElemType::TRI, l_triinpoel );
-
-  std::size_t count(0);
-  // Use node_map to get the global-IDs of the face-node connectivity
-  for (std::size_t f=0; f<nbfac; ++f)
-  {
-    count = f*nnpf;
-    for (std::size_t i=0; i<nnpf; ++i)
-    {
-      conn.push_back( l_triinpoel[count+i] );
-    }
-  }
+  readElements( {{0,nelem(tk::ExoElemType::TRI)-1}}, tk::ExoElemType::TRI,
+                conn );
 }
 
 std::vector< std::size_t >
@@ -436,7 +582,7 @@ ExodusIIMeshReader::readNodemap()
 }
 
 std::map< int, std::vector< std::size_t > >
-ExodusIIMeshReader::readSidesets()
+ExodusIIMeshReader::readSidesetNodes()
 // *****************************************************************************
 //  Read node list of all side sets from ExodusII file
 //! \return Node lists mapped to side set ids
@@ -483,74 +629,202 @@ ExodusIIMeshReader::readSidesets()
   return side;
 }
 
-std::size_t
+void
 ExodusIIMeshReader::readSidesetFaces(
-  std::map< int, std::vector< std::size_t > >& bface )
+  std::map< int, std::vector< std::size_t > >& bface,
+  std::map< int, std::vector< std::size_t > >& faces )
 // *****************************************************************************
-//  Read face list of all side sets from ExodusII file
-//! \param[out] bface Face-Element lists mapped to side set ids
-//! \return Total number of boundary faces
+//  Read side sets from ExodusII file
+//! \param[in,out] bface Elem ids of side sets to read into
+//! \param[in,out] faces Elem-relative face ids of tets of side sets
 // *****************************************************************************
 {
   // Read element block ids
   readElemBlockIDs();
 
-  std::size_t nbfac = 0;
-
-  if (m_neset > 0)
-  {
-    // Read all side set ids from file
+  if (m_neset > 0) {
+    // Read side set ids from file
     std::vector< int > ids( m_neset );
     ErrChk( ex_get_ids( m_inFile, EX_SIDE_SET, ids.data() ) == 0,
             "Failed to read side set ids from ExodusII file: " + m_filename );
 
-    auto num_elem = nelem(tk::ExoElemType::TET) + nelem(tk::ExoElemType::TRI);
-    std::vector< int > elem_map( num_elem );
-
-    // Read in the element number map to map the above side-set elements to the 
-    // global element-IDs
-    ErrChk( ex_get_id_map( m_inFile, EX_ELEM_MAP, elem_map.data() ) == 0, 
-            "Failed to read elem map length from ExodusII file: " + m_filename );
-
-    // Read in face list for all side sets
-    for (auto i : ids)
-    {
+    // Read all side sets from file
+    for (auto i : ids) {
       int nface, nnode;
 
-      // Read number of faces and number of distribution factors in side set i
+      // Read number of faces in side set
       ErrChk( ex_get_set_param( m_inFile, EX_SIDE_SET, i, &nface, &nnode ) == 0,
               "Failed to read side set " + std::to_string(i) + " parameters "
               "from ExodusII file: " + m_filename );
 
-      // total number of boundary faces
-      nbfac += static_cast< std::size_t >(nface);
-
       Assert(nface > 0, "Number of faces = 0 in side set" + std::to_string(i));
-      std::vector< int > tbface( static_cast< std::size_t >( nface ) );
-      std::vector< int > tbelem( static_cast< std::size_t >( nface ) );
-      std::vector< int > gbelem( static_cast< std::size_t >( nface ) );
 
-      // Read in face and element list for side set i
-      ErrChk( ex_get_set( m_inFile, EX_SIDE_SET, i, tbelem.data(),
-                          tbface.data() ) == 0,
-              "Failed to read side set " + std::to_string(i) + " face/elem list"
-              " length from ExodusII file: " + m_filename );
+      std::vector< int > exoelem( static_cast< std::size_t >( nface ) );
+      std::vector< int > exoface( static_cast< std::size_t >( nface ) );
 
-      // Use elem_map to get the global-IDs of the boundary elements
-      std::size_t icount = 0;
-      for (auto& n : tbelem)
-      {
-              gbelem[icount] = elem_map[ static_cast< std::size_t >( n-1 ) ];
-              icount++;
-      }
+      // Read in file-internal element ids and relative face ids for side set
+      ErrChk( ex_get_set( m_inFile, EX_SIDE_SET, i, exoelem.data(),
+                          exoface.data() ) == 0,
+              "Failed to read side set " + std::to_string(i) );
 
-      // Store 0-based face ID list as std::size_t vector instead of ints
-      auto& list2 = bface[ i ];
-      for (auto&& n : gbelem) list2.push_back( static_cast<std::size_t>(n-1) );
+      // Store file-internal element ids of side set
+      auto& elem = bface[i];
+      elem.resize( exoelem.size() );
+      std::size_t j = 0;
+      for (auto e : exoelem) elem[j++] = static_cast< std::size_t >( e-1 );
+
+      // Store zero-based relative face ids of side set
+      auto& face = faces[i];
+      face.resize( exoface.size() );
+      j = 0;
+      for (auto n : exoface) face[j++] = static_cast< std::size_t >( n-1 );
+
+      Assert( std::all_of( begin(face), end(face),
+                           [](std::size_t f){ return f<4; } ),
+              "Relative face id of side set must be between 0 and 3" );
+      Assert( elem.size() == face.size(), "Size mismatch" );
     }
   }
+}
 
-  return nbfac;
+std::pair< tk::ExoElemType, std::size_t >
+ExodusIIMeshReader::blkRelElemId( std::size_t id ) const
+// *****************************************************************************
+// Compute element-block-relative element id and element type
+//! \param[in] id (ExodusII) file-internal element id
+//! \return Element type the internal id points to and element id relative to
+//!   cell-type
+//! \details This function takes an internal element id, which in general can
+//!   point to any element block in the ExodusII file and thus we do not know
+//!   which element type a block contains. It then computes which cell type the
+//!   id points to and computes the relative index for the given cell type. This
+//!   is necessary because elements are read in from file by from potentially
+//!   multiple blocks by cell type.
+//! \note Must be preceded by a call to readElemBlockIDs()
+// *****************************************************************************
+{
+  auto TRI = tk::ExoElemType::TRI;
+  auto TET = tk::ExoElemType::TET;
+
+  std::size_t e = 0;            // counts elements (independent of cell type)
+  std::size_t ntri = 0;         // counts triangle elements
+  std::size_t ntet = 0;         // counts tetrahedron elements
+
+  for (const auto& b : m_elemblocks) {  // walk all element blocks in order
+    e += b.second;                      // increment file-internal element id
+    if (e > id) {                       // found element block for internal id
+      if (b.first == TRI) {             // if triangle block
+        return { TRI, id-ntet };        // return cell type and triangle id
+      } else if (b.first == TET) {      // if tetrahedron block
+        return { TET, id-ntri };        // return cell type and tetrahedron id
+      }
+    }
+    // increment triangle and tetrahedron elements independently
+    if (b.first == TRI)
+      ntri += b.second;
+    else if (b.first == TET)
+      ntet += b.second;
+  }
+
+  Throw( " Exodus internal element id not found" );
+}
+
+std::vector< std::size_t >
+ExodusIIMeshReader::triinpoel(
+  std::map< int, std::vector< std::size_t > >& belem,
+  const std::map< int, std::vector< std::size_t > >& faces,
+  const std::vector< std::size_t >& ginpoel,
+  const std::vector< std::size_t >& triinp ) const
+// *****************************************************************************
+//  Generate triangle face connectivity for side sets
+//! \param[in,out] belem File-internal elem ids of side sets
+//! \param[in] faces Elem-relative face ids of side sets
+//! \param[in] ginpoel Tetrahedron element connectivity with global nodes
+//! \param[in] triinp Triangle element connectivity with global nodes
+//!   (if exists in file)
+//! \return Triangle face connectivity with global node IDs of side sets
+//! \details This function takes lists of file-internal element ids (in belem)
+//!   for side sets and does two things: (1) generates face connectivity (with
+//!   global node IDs) for side sets, and (2) converts the (ExodusII)
+//!   file-internal element IDs to face ids so that they can be used to index
+//!   into the face connectivity. The IDs in belem are modified and the face
+//!   connectivity (for boundary faces only) is returned.
+//! \note Must be preceded by a call to readElemBlockIDs()
+// *****************************************************************************
+{
+  Assert( !(m_from == 0 && m_till == 0),
+          "Lower and upper tetrahedron id bounds must both be zero" );
+
+  // This will contain one of our final results: face (triangle) connectivity
+  // for the side sets only. The difference between bnd_triinpoel and triinpoel
+  // is that triinpoel is a triangle element connectivity, independent of side
+  // sets, while bnd_triinpoel is a triangle connectivity only for side sets.
+  std::vector< std::size_t > bnd_triinpoel;
+
+  // Storage for boundary face lists for each side set on this PE
+  std::map< int, std::vector< std::size_t > > belem_own;
+
+  std::size_t f = 0;            // counts all faces
+  for (auto& ss : belem) {      // for all side sets
+
+    // insert side set id into new map
+    auto& b = belem_own[ ss.first ];
+    // get element-relative face ids for side set
+    const auto& face = tk::cref_find( faces, ss.first );
+    std::size_t s = 0;          // counts side set faces
+    for (auto& i : ss.second) { // for all faces on side set
+
+      // compute element-block-relative element id and element type
+      auto r = blkRelElemId( i );
+
+      // extract boundary face connectivity based on element type
+      bool localface = false;
+      if (r.first == tk::ExoElemType::TRI) {
+
+        auto t = m_tri.find(r.second);
+        if (t != end(m_tri)) {  // only if triangle id exists on this PE
+          Assert( t->second < triinp.size()/3,
+                  "Indexing out of triangle connectivity" );
+          // generate triangle (face) connectivity using global node ids
+          bnd_triinpoel.push_back( triinp[ t->second*3 + 0 ] );
+          bnd_triinpoel.push_back( triinp[ t->second*3 + 1 ] );
+          bnd_triinpoel.push_back( triinp[ t->second*3 + 2 ] );
+          localface = true;
+        }
+
+      } else if (r.first == tk::ExoElemType::TET) {
+
+        if (r.second >= m_from && r.second < m_till) {  // if tet is on this PE
+          auto t = r.second - m_from;
+          Assert( t < ginpoel.size()/4,
+                  "Indexing out of tetrahedron connectivity" );
+          // get ExodusII face-node numbering for side sets, see ExodusII
+          // manual figure on "Sideset side Numbering"
+          const auto& tri = tk::expofa[ face[s] ];
+          // generate triangle (face) connectivity using global node ids, note
+          // the switched node order, 0,2,1, as lpofa is different from expofa
+          bnd_triinpoel.push_back( ginpoel[ t*4 + tri[0] ] );
+          bnd_triinpoel.push_back( ginpoel[ t*4 + tri[2] ] );
+          bnd_triinpoel.push_back( ginpoel[ t*4 + tri[1] ] );
+          localface = true;
+        }
+
+      }
+
+      ++s;
+
+      // generate PE-local face id for side set (this is to be used to index
+      // into triinpoel)
+      if (localface) b.push_back( f++ );
+    }
+
+    // if no faces on this side set (on this PE), remove side set id
+    if (b.empty()) belem_own.erase( ss.first );
+  }
+
+  belem = std::move(belem_own);
+
+  return bnd_triinpoel;
 }
 
 std::size_t

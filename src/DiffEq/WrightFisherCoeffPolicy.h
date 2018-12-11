@@ -39,7 +39,7 @@
 #ifndef WrightFisherCoeffPolicy_h
 #define WrightFisherCoeffPolicy_h
 
-#include <boost/mpl/vector.hpp>
+#include <brigand/sequences/list.hpp>
 
 #include "Types.h"
 #include "Walker/Options/CoeffPolicy.h"
@@ -67,7 +67,7 @@ class WrightFisherCoeffConst {
 };
 
 //! List of all Wright-Fisher's coefficients policies
-using WrightFisherCoeffPolicies = boost::mpl::vector< WrightFisherCoeffConst >;
+using WrightFisherCoeffPolicies = brigand::list< WrightFisherCoeffConst >;
 
 } // walker::
 

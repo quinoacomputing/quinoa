@@ -15,8 +15,9 @@
 #include <iomanip>
 #include <iostream>
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "NoWarning/set.h"
-#include "NoWarning/for_each.h"
 
 #include "Control.h"
 #include "Inciter/CmdLine/CmdLine.h"
@@ -47,103 +48,121 @@ class InputDeck :
 
   public:
     //! \brief Inciter input deck keywords
-    //! \details Since there are more than 20 and boost::mpl only allows maxium
-    //!   20 items in a set by default (and I don't want to mess with
-    //!   preprocessor-generated boost::mpl headers), the whole set is broken up
-    //!   into several sets each containing 20 keywords.
     //! \see tk::grm::use and its documentation
-    using keywords1 = boost::mpl::set< kw::title,
-                                       kw::nstep,
-                                       kw::term,
-                                       kw::t0,
-                                       kw::dt,
-                                       kw::ttyi,
-                                       kw::transport,
-                                       kw::end,
-                                       kw::shear_diff,
-                                       kw::slot_cyl,
-                                       kw::problem,
-                                       kw::plotvar,
-                                       kw::interval,
-                                       kw::partitioning,
-                                       kw::algorithm,
-                                       kw::rcb,
-                                       kw::rib,
-                                       kw::hsfc,
-                                       kw::phg,
-                                       kw::inciter >;
-    using keywords2 = boost::mpl::set< kw::ncomp,
-                                       kw::pde_diffusivity,
-                                       kw::pde_lambda,
-                                       kw::pde_u0,
-                                       kw::bc_dirichlet,
-                                       kw::sideset,
-                                       kw::compflow,
-                                       kw::ic,
-                                       kw::txt_float_format,
-                                       kw::txt_float_default,
-                                       kw::txt_float_fixed,
-                                       kw::txt_float_scientific,
-                                       kw::precision,
-                                       kw::diagnostics,
-                                       kw::material,
-                                       kw::id,
-                                       kw::mat_gamma,
-                                       kw::mat_mu >;
-    using keywords3 = boost::mpl::set< kw::mat_cv,
-                                       kw::mat_k,
-                                       kw::npar,
-                                       kw::physics,
-                                       kw::advection,
-                                       kw::advdiff,
-                                       kw::compflow_navierstokes,
-                                       kw::compflow_euler,
-                                       kw::user_defined,
-                                       kw::vortical_flow,
-                                       kw::pde_alpha,
-                                       kw::pde_beta,
-                                       kw::pde_p0,
-                                       kw::ctau,
-                                       kw::cfl,
-                                       kw::mj,
-                                       kw::depvar >;
-    using keywords4 = boost::mpl::set< kw::nl_energy_growth,
-                                       kw::pde_betax,
-                                       kw::pde_betay,
-                                       kw::pde_betaz,
-                                       kw::pde_ce,
-                                       kw::pde_kappa,
-                                       kw::pde_r0,
-                                       kw::rayleigh_taylor,
-                                       kw::taylor_green,
-                                       kw::filetype,
-                                       kw::exodusii,
-                                       kw::root,
-                                       kw::error,
-                                       kw::l2,
-                                       kw::linf >;
-    using keywords5 = boost::mpl::set< kw::fct,
-                                       kw::amr,
-                                       kw::amr_initial,
-                                       kw::amr_uniform,
-                                       kw::amr_initial_conditions,
-                                       kw::amr_uniform_levels,
-                                       kw::amr_error,
-                                       kw::amr_jump,
-                                       kw::amr_hessian,
-                                       kw::scheme,
-                                       kw::matcg,
-                                       kw::diagcg,
-                                       kw::dg >;
-    using keywords6 = boost::mpl::set< kw::flux,
-                                       kw::laxfriedrichs,
-                                       kw::hllc,
-                                       kw::bc_sym,
-                                       kw::bc_inlet,
-                                       kw::bc_outlet,
-                                       kw::bc_extrapolate,
-                                       kw::gauss_hump,
-                                       kw::sod_shocktube >;
+    using keywords = brigand::set< kw::title,
+                                   kw::nstep,
+                                   kw::term,
+                                   kw::t0,
+                                   kw::dt,
+                                   kw::ttyi,
+                                   kw::transport,
+                                   kw::end,
+                                   kw::shear_diff,
+                                   kw::slot_cyl,
+                                   kw::problem,
+                                   kw::plotvar,
+                                   kw::interval,
+                                   kw::partitioning,
+                                   kw::algorithm,
+                                   kw::rcb,
+                                   kw::rib,
+                                   kw::hsfc,
+                                   kw::phg,
+                                   kw::inciter,
+                                   kw::ncomp,
+                                   kw::pde_diffusivity,
+                                   kw::pde_lambda,
+                                   kw::pde_u0,
+                                   kw::bc_dirichlet,
+                                   kw::sideset,
+                                   kw::compflow,
+                                   kw::ic,
+                                   kw::txt_float_format,
+                                   kw::txt_float_default,
+                                   kw::txt_float_fixed,
+                                   kw::txt_float_scientific,
+                                   kw::precision,
+                                   kw::diagnostics,
+                                   kw::material,
+                                   kw::id,
+                                   kw::mat_gamma,
+                                   kw::mat_mu,
+                                   kw::mat_cv,
+                                   kw::mat_k,
+                                   kw::npar,
+                                   kw::physics,
+                                   kw::advection,
+                                   kw::advdiff,
+                                   kw::compflow_navierstokes,
+                                   kw::compflow_euler,
+                                   kw::user_defined,
+                                   kw::vortical_flow,
+                                   kw::pde_alpha,
+                                   kw::pde_beta,
+                                   kw::pde_p0,
+                                   kw::ctau,
+                                   kw::cfl,
+                                   kw::mj,
+                                   kw::depvar,
+                                   kw::nl_energy_growth,
+                                   kw::pde_betax,
+                                   kw::pde_betay,
+                                   kw::pde_betaz,
+                                   kw::pde_ce,
+                                   kw::pde_kappa,
+                                   kw::pde_r0,
+                                   kw::rayleigh_taylor,
+                                   kw::taylor_green,
+                                   kw::filetype,
+                                   kw::exodusii,
+                                   kw::root,
+                                   kw::error,
+                                   kw::l2,
+                                   kw::linf,
+                                   kw::fct,
+                                   kw::reorder,
+                                   kw::amr,
+                                   kw::amr_t0ref,
+                                   kw::amr_dtref,
+                                   kw::amr_dtfreq,
+                                   kw::amr_initial,
+                                   kw::amr_uniform,
+                                   kw::amr_initial_conditions,
+                                   kw::amr_coords,
+                                   kw::amr_error,
+                                   kw::amr_jump,
+                                   kw::amr_hessian,
+                                   kw::amr_refvar,
+                                   kw::amr_initref,
+                                   kw::amr_coordref,
+                                   kw::amr_xminus,
+                                   kw::amr_xplus,
+                                   kw::amr_yminus,
+                                   kw::amr_yplus,
+                                   kw::amr_zminus,
+                                   kw::amr_zplus,
+                                   kw::scheme,
+                                   kw::matcg,
+                                   kw::diagcg,
+                                   kw::alecg,
+                                   kw::dg,
+                                   kw::dgp1,
+                                   kw::flux,
+                                   kw::laxfriedrichs,
+                                   kw::hllc,
+                                   kw::upwind,
+                                   kw::limiter,
+                                   kw::cweight,
+                                   kw::nolimiter,
+                                   kw::wenop1,
+                                   kw::bc_sym,
+                                   kw::bc_inlet,
+                                   kw::bc_outlet,
+                                   kw::bc_extrapolate,
+                                   kw::gauss_hump,
+                                   kw::cyl_advect,
+                                   kw::sod_shocktube,
+                                   kw::sedov_blastwave >;
 
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
@@ -161,15 +180,29 @@ class InputDeck :
       set< tag::discr, tag::dt >( 0.0 );
       set< tag::discr, tag::cfl >( 0.0 );
       set< tag::discr, tag::fct >( true );
+      set< tag::discr, tag::reorder >( false );
       set< tag::discr, tag::ctau >( 1.0 );
       set< tag::discr, tag::scheme >( SchemeType::MatCG );
       set< tag::discr, tag::flux >( FluxType::HLLC );
+      set< tag::discr, tag::ndof >( 1 );
+      set< tag::discr, tag::limiter >( LimiterType::NOLIMITER );
+      set< tag::discr, tag::cweight >( 1.0 );
       // Default field output file type
       set< tag::selected, tag::filetype >( tk::ctr::FieldFileType::EXODUSII );
       // Default AMR settings
       set< tag::amr, tag::amr >( false );
-      set< tag::amr, tag::levels >( 1 );
+      set< tag::amr, tag::t0ref >( false );
+      set< tag::amr, tag::dtref >( false );
+      set< tag::amr, tag::dtfreq >( 3 );
       set< tag::amr, tag::error >( AMRErrorType::JUMP );
+      auto rmax =
+        std::numeric_limits< kw::amr_xminus::info::expect::type >::max();
+      set< tag::amr, tag::xminus >( rmax );
+      set< tag::amr, tag::xplus >( rmax );
+      set< tag::amr, tag::yminus >( rmax );
+      set< tag::amr, tag::yplus >( rmax );
+      set< tag::amr, tag::zminus >( rmax );
+      set< tag::amr, tag::zplus >( rmax );
       // Default txt floating-point output precision in digits
       set< tag::prec, tag::diag >( std::cout.precision() );
       // Default intervals
@@ -178,12 +211,7 @@ class InputDeck :
       set< tag::interval, tag::diag >( 1 );
       // Initialize help: fill own keywords
       const auto& ctrinfoFill = tk::ctr::Info( get< tag::cmd, tag::ctrinfo >() );
-      boost::mpl::for_each< keywords1 >( ctrinfoFill );
-      boost::mpl::for_each< keywords2 >( ctrinfoFill );
-      boost::mpl::for_each< keywords3 >( ctrinfoFill );
-      boost::mpl::for_each< keywords4 >( ctrinfoFill );
-      boost::mpl::for_each< keywords5 >( ctrinfoFill );
-      boost::mpl::for_each< keywords6 >( ctrinfoFill );
+      brigand::for_each< keywords >( ctrinfoFill );
     }
 
     /** @name Pack/Unpack: Serialize InputDeck object for Charm++ */

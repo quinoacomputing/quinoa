@@ -28,8 +28,7 @@ extern ctr::InputDeck g_inputdeck;
 
 using inciter::DistFCT;
 
-DistFCT::DistFCT( const CProxy_Transporter& host,
-                  int nchare,
+DistFCT::DistFCT( int nchare,
                   std::size_t nu,
                   std::size_t np,
                   const std::unordered_map< int,
@@ -37,9 +36,6 @@ DistFCT::DistFCT( const CProxy_Transporter& host,
                   const std::unordered_map< std::size_t, std::size_t >& bid,
                   const std::unordered_map< std::size_t, std::size_t >& lid,
                   const std::vector< std::size_t >& inpoel ) :
-  m_host( host ),
-  m_nhsol( 0 ),
-  m_nlsol( 0 ),
   m_naec( 0 ),
   m_nalw( 0 ),
   m_nlim( 0 ),
@@ -74,13 +70,63 @@ DistFCT::DistFCT( const CProxy_Transporter& host,
 //! \param[in] inpoel Mesh connectivity of our chunk of the mesh
 // *****************************************************************************
 {
-  // Allocate receive buffers for FCT
-  m_pc.resize( m_bid.size() );
+  usesAtSync = true;    // Enable migration at AtSync
+
+  resizeComm();         // Size communication buffers
+}
+
+
+void
+DistFCT::resizeComm()
+// *****************************************************************************
+//  Size FCT communication buffers
+//! \details The size of the communication buffers are determined based on
+//!    m_bid.size() and m_a.nprop().
+// *****************************************************************************
+{
+  auto bs = m_bid.size();
+  auto np = m_a.nprop();
+
+  m_pc.resize( bs );
   for (auto& b : m_pc) b.resize( np*2 );
-  m_qc.resize( m_bid.size() );
+  m_qc.resize( bs );
   for (auto& b : m_qc) b.resize( np*2 );
-  m_ac.resize( m_bid.size() );
+  m_ac.resize( bs );
   for (auto& b : m_ac) b.resize( np );
+}
+
+void
+DistFCT::resize( std::size_t nu,
+                 const std::unordered_map< int,
+                   std::vector< std::size_t > >& msum,
+                 const std::unordered_map< std::size_t, std::size_t >& bid,
+                 const std::unordered_map< std::size_t, std::size_t >& lid,
+                 const std::vector< std::size_t >& inpoel )
+// *****************************************************************************
+//  Resize FCT data structures (e.g., after mesh refinement)
+//! \param[in] nu New number of unknowns in solution vector
+//! \param[in] msum New global mesh node IDs associated to chare IDs bordering
+//!   the mesh chunk we operate on
+//! \param[in] bid New local chare-boundary mesh node IDs at which we receive
+//!   contributions associated to global mesh node IDs of mesh elements we
+//!   contribute to
+//! \param[in] lid New local mesh node ids associated to the global ones of
+//!   owned elements
+//! \param[in] inpoel Mesh connectivity of our chunk of the mesh
+// *****************************************************************************
+{
+  m_msum = msum;
+  m_bid = bid;
+  m_lid = lid;
+  m_inpoel = inpoel;
+
+  auto np = m_a.nprop();
+  m_p.resize( nu, np*2 );
+  m_q.resize( nu, np*2 );
+  m_a.resize( nu, np );
+  resizeComm();
+
+  m_fluxcorrector.resize( m_inpoel.size() );
 }
 
 tk::Fields
@@ -369,23 +415,6 @@ DistFCT::verify()
   m_fluxcorrector.verify( m_nchare, m_inpoel, m_du, m_dul );
 }
 
-bool
-DistFCT::verifyBC()
-// *****************************************************************************
-//  Verify that the change in the solution at those nodes where Dirichlet
-//  boundary conditions are set is exactly the amount the BCs prescribe
-//! \return True if the solution is correct at Dirichlet boundary condition
-//!   nodes
-// *****************************************************************************
-{
-  // Call Scheme.correctBC(). The code below is equivalent to the function call
-  // m_scheme[ thisIndex ].ckLocal()->correctBC( m_a ). The call is done via
-  // a variant to facilitate calling back to chare arrays of different types,
-  // e.g., MatCG or DiagCG. See also DistFCT::SchemeProxy.
-  auto e = tk::element< ProxyElem >( m_scheme, thisIndex );
-  return boost::apply_visitor( correctBC(m_a), e );
-}
-
 void
 DistFCT::apply()
 // *****************************************************************************
@@ -399,15 +428,12 @@ DistFCT::apply()
     for (ncomp_t c=0; c<m_a.nprop(); ++c) m_a(lid,c,0) += bac[c];
   }
 
-  // Verify that solution values do not change at Dirichlet BC nodes
-  Assert( verifyBC(), "Dirichlet boundary condition incorrect" );
-
   // Prepare for next time step. The code below is equivalent to the function
-  // call m_scheme[ thisIndex ].ckLocal()->next( m_a ). The call is done via a
+  // call m_scheme[ thisIndex ].ckLocal()->update( m_a ). The call is done via a
   // variant to facilitate calling back to chare arrays of different types,
   // e.g., MatCG or DiagCG. See also DistFCT::SchemeProxy.
   auto e = tk::element< ProxyElem >( m_scheme, thisIndex );
-  boost::apply_visitor( Next(m_a), e );
+  boost::apply_visitor( Update(m_a), e );
 }
 
 #include "NoWarning/distfct.def.h"

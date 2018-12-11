@@ -14,9 +14,8 @@
 #include <string>
 #include <unordered_set>
 
-#include <boost/mpl/vector.hpp>
-
 #include "Types.h"
+#include "FunctionPrototypes.h"
 #include "Inciter/Options/Problem.h"
 
 namespace inciter {
@@ -24,12 +23,33 @@ namespace inciter {
 //! CompFlow system of PDEs problem: user defined
 class CompFlowProblemUserDefined {
 
-  public:
+  private:
+    using ncomp_t = tk::ctr::ncomp_type;
+    static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
+  public:
     //! Evaluate initial condition solution at (x,y,z,t) for all components
+    //! \param[in] system Equation system index, i.e., which compressible
+    //!   flow equation system we operate on among the systems of PDEs
+    //! \param[in] ncomp Number of scalar components in this PDE system
+    //! \param[in] x X coordinate where to evaluate the solution
+    //! \param[in] y Y coordinate where to evaluate the solution
+    //! \param[in] z Z coordinate where to evaluate the solution
+    //! \param[in] t Physical time at which to evaluate the solution
     //! \return Values of all components evaluated at (x,y,z,t)
-    static std::array< tk::real, 5 >
-    solution( tk::ctr::ncomp_type, tk::real, tk::real, tk::real, tk::real ) {
+    //! \note The function signature must follow tk::SolutionFn
+    static tk::SolutionFn::result_type
+    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
+              tk::real t )
+    {
+      Assert( ncomp == m_ncomp, "Number of scalar components must be " +
+                                std::to_string(m_ncomp) );
+      IGNORE(system);
+      IGNORE(ncomp);
+      IGNORE(x);
+      IGNORE(y);
+      IGNORE(z);
+      IGNORE(t);
       return {{ 1.0, 0.0, 0.0, 1.0, 293.0 }};
     }
 
@@ -37,17 +57,16 @@ class CompFlowProblemUserDefined {
     //!   at (x,y,z) for all components
     //! \return Increment in values of all components: all zero for now
     static std::array< tk::real, 5 >
-    solinc( tk::ctr::ncomp_type,
-            tk::real, tk::real, tk::real, tk::real, tk::real )
-    {
+    solinc( ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real ) {
       return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
     }
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
     //! \details No-op for user-deefined problems.
     //! \return Array of reals containing the source for all components
-    static std::array< tk::real, 5 >
-    src( tk::ctr::ncomp_type, tk::real, tk::real, tk::real, tk::real )
+    //! \note The function signature must follow tk::SrcFn
+    static tk::SrcFn::result_type
+    src( ncomp_t, tk::real, tk::real, tk::real, tk::real )
     { return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }}; }
 
     //! Return field names to be output to file
@@ -79,8 +98,8 @@ class CompFlowProblemUserDefined {
     //! \param[in] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
-    fieldOutput( tk::ctr::ncomp_type,
-                 tk::ctr::ncomp_type offset,
+    fieldOutput( ncomp_t,
+                 ncomp_t offset,
                  tk::real,
                  tk::real,
                  const std::vector< tk::real >&,

@@ -2,18 +2,24 @@
 #define AMR_edge_t_h
 
 #include <iostream>
-#include <ostream>
+#include <stddef.h>
+#include <array>
+#include <algorithm>
+
+namespace AMR {
 
 class edge_t {
-    using edge_ = std::pair<size_t, size_t>;
+    using edge_ = std::array< std::size_t, 2 >;
     private:
-        // TODO: Should data members be m_<blah>
         edge_ data;
         friend std::ostream& operator<<(std::ostream&, const edge_t&);
 
     public:
+        edge_& get_data() {
+            return data;
+        }
 
-        edge_ get_data() const {
+        const edge_& get_data() const {
             return data;
         }
 
@@ -21,10 +27,9 @@ class edge_t {
         edge_t()
         {
         }
-
         edge_t(size_t A, size_t B)
         {
-            data = std::make_pair(std::min(A,B), std::max(A,B));
+            data = {{ std::min(A,B), std::max(A,B) }};
         }
 
         // Operators
@@ -42,28 +47,30 @@ class edge_t {
           return (data < rhs.get_data());
         }
 
-        size_t first()
+        size_t first() const
         {
-            return data.first;
+            return data[0];
         }
-        size_t second()
+        size_t second() const
         {
-            return data.second;
+            return data[1];
         }
 
         void replace(size_t new_id, size_t old_id)
         {
-            if (data.first == old_id)
+            if (data[0] == old_id)
             {
-                data.first = new_id;
+                data[0] = new_id;
             }
 
-            if (data.second == old_id)
+            if (data[1] == old_id)
             {
-                data.second = new_id;
+                data[1] = new_id;
             }
         }
 
 };
+
+}  // AMR::
 
 #endif

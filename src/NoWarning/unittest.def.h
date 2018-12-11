@@ -10,6 +10,7 @@
 #define nowarning_unittest_def_h
 
 #include "Macro.h"
+#include "QuinoaConfig.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -22,15 +23,21 @@
   #pragma clang diagnostic ignored "-Wunused-variable"
   #pragma clang diagnostic ignored "-Wcast-qual"
   #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+  #pragma clang diagnostic ignored "-Wmissing-noreturn"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wswitch-default"
   #pragma GCC diagnostic ignored "-Wunused-parameter"
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wunused-variable"
+  #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
 #endif
 
-#include "../Main/unittest.def.h"
+#ifdef ENABLE_INCITER
+  #include "../Main/unittestinciter.def.h"
+#else
+  #include "../Main/unittest.def.h"
+#endif
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

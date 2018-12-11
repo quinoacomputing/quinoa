@@ -1,5 +1,5 @@
 /*!
-  \page      BLAS_license BLAS license
+  \page      blas_license_page BLAS license
 
 \verbatim
 The reference BLAS is a freely-available software package. It is available from
@@ -18,9 +18,4 @@ done, however, it is the responsibility of the person who modified the routine
 to provide support.
 \endverbatim
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Fri 29 Apr 2016 09:00:08 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */

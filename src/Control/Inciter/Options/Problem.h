@@ -9,8 +9,8 @@
 #ifndef ProblemOptions_h
 #define ProblemOptions_h
 
-#include <boost/mpl/vector.hpp>
-#include "NoWarning/for_each.h"
+#include <brigand/sequences/list.hpp>
+#include <brigand/algorithms/for_each.hpp>
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -28,7 +28,9 @@ enum class ProblemType : uint8_t { USER_DEFINED=0,
                                    TAYLOR_GREEN,
                                    SLOT_CYL,
                                    GAUSS_HUMP,
-                                   SOD_SHOCKTUBE };
+                                   CYL_ADVECT,
+                                   SOD_SHOCKTUBE,
+                                   SEDOV_BLASTWAVE };
 
 //! Pack/Unpack ProblemType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, ProblemType& e ) { PUP::pup( p, e ); }
@@ -38,16 +40,18 @@ class Problem : public tk::Toggle< ProblemType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::user_defined
-                                       , kw::shear_diff
-                                       , kw::vortical_flow
-                                       , kw::nl_energy_growth
-                                       , kw::rayleigh_taylor
-                                       , kw::taylor_green
-                                       , kw::slot_cyl
-                                       , kw::gauss_hump
-                                       , kw::sod_shocktube
-                                       >;
+    using keywords = brigand::list< kw::user_defined
+                                  , kw::shear_diff
+                                  , kw::vortical_flow
+                                  , kw::nl_energy_growth
+                                  , kw::rayleigh_taylor
+                                  , kw::taylor_green
+                                  , kw::slot_cyl
+                                  , kw::gauss_hump
+                                  , kw::cyl_advect
+                                  , kw::sod_shocktube
+                                  , kw::sedov_blastwave
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
@@ -65,7 +69,9 @@ class Problem : public tk::Toggle< ProblemType > {
           { ProblemType::TAYLOR_GREEN, kw::taylor_green::name() },
           { ProblemType::SLOT_CYL, kw::slot_cyl::name() },
           { ProblemType::GAUSS_HUMP, kw::gauss_hump::name() },
-          { ProblemType::SOD_SHOCKTUBE, kw::sod_shocktube::name() } },
+          { ProblemType::CYL_ADVECT, kw::cyl_advect::name() },
+          { ProblemType::SOD_SHOCKTUBE, kw::sod_shocktube::name() },
+          { ProblemType::SEDOV_BLASTWAVE, kw::sedov_blastwave::name() } },
         //! keywords -> Enums
         { { kw::user_defined::string(), ProblemType::USER_DEFINED },
           { kw::shear_diff::string(), ProblemType::SHEAR_DIFF },
@@ -75,9 +81,11 @@ class Problem : public tk::Toggle< ProblemType > {
           { kw::taylor_green::string(), ProblemType::TAYLOR_GREEN },
           { kw::slot_cyl::string(), ProblemType::SLOT_CYL },
           { kw::gauss_hump::string(), ProblemType::GAUSS_HUMP },
-          { kw::sod_shocktube::string(), ProblemType::SOD_SHOCKTUBE } } )
+          { kw::cyl_advect::string(), ProblemType::CYL_ADVECT },
+          { kw::sod_shocktube::string(), ProblemType::SOD_SHOCKTUBE },
+          { kw::sedov_blastwave::string(), ProblemType::SEDOV_BLASTWAVE } } )
     {
-       boost::mpl::for_each< keywords >( assertPolicyCodes() );
+       brigand::for_each< keywords >( assertPolicyCodes() );
     }
 
     //! \brief Return policy code based on Enum
@@ -97,7 +105,7 @@ class Problem : public tk::Toggle< ProblemType > {
     struct assertPolicyCodes {
       //! \brief Function call operator templated on the type to assert the
       //!   existence of a policy code
-      template< typename U > void operator()( U ) {
+      template< typename U > void operator()( brigand::type_<U> ) {
         static_assert( tk::HasTypedefCode< typename U::info >::value,
                        "Policy code undefined for keyword" );
       }
@@ -113,7 +121,9 @@ class Problem : public tk::Toggle< ProblemType > {
       , { ProblemType::TAYLOR_GREEN, *kw::taylor_green::code() }      
       , { ProblemType::SLOT_CYL, *kw::slot_cyl::code() }
       , { ProblemType::GAUSS_HUMP, *kw::gauss_hump::code() }
+      , { ProblemType::CYL_ADVECT, *kw::cyl_advect::code() }
       , { ProblemType::SOD_SHOCKTUBE, *kw::sod_shocktube::code() }
+      , { ProblemType::SEDOV_BLASTWAVE, *kw::sedov_blastwave::code() }
     };
 };
 

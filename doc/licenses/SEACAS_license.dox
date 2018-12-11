@@ -1,5 +1,5 @@
 /*!
-  \page      SEACAS_license SEACAS license
+  \page      seacas_license_page SEACAS license
 
 \verbatim
 LGPL code licensed by Sandia contains the following notice:
@@ -164,9 +164,4 @@ proxy's public statement of acceptance of any version is permanent authorization
 for you to choose that version for the Library.
 \endverbatim
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Mon 10 Apr 2017 11:19:49 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */

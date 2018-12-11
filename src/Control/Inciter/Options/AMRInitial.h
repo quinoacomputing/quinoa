@@ -9,7 +9,8 @@
 #ifndef InciterAMRInitialOptions_h
 #define InciterAMRInitialOptions_h
 
-#include "NoWarning/vector.h"
+#include <brigand/sequences/list.hpp>
+#include <brigand/algorithms/for_each.hpp>
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -20,7 +21,8 @@ namespace ctr {
 
 //! Initial AMR types
 enum class AMRInitialType : uint8_t { UNIFORM
-                                    , INITIAL_CONDITIONS };
+                                    , INITIAL_CONDITIONS
+                                    , COORDINATES };
 
 //! Pack/Unpack AMRInitialType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, AMRInitialType& e )
@@ -31,8 +33,9 @@ class AMRInitial : public tk::Toggle< AMRInitialType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::amr_uniform
-                                       , kw::amr_initial_conditions >;
+    using keywords = brigand::list< kw::amr_uniform
+                                  , kw::amr_initial_conditions
+                                  , kw::amr_coords >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
@@ -44,13 +47,15 @@ class AMRInitial : public tk::Toggle< AMRInitialType > {
         //! Enums -> names
         { { AMRInitialType::UNIFORM, kw::amr_uniform::name() },
           { AMRInitialType::INITIAL_CONDITIONS,
-            kw::amr_initial_conditions::name() } },
+            kw::amr_initial_conditions::name() },
+          { AMRInitialType::COORDINATES, kw::amr_coords::name() } },
         //! keywords -> Enums
         { { kw::amr_uniform::string(), AMRInitialType::UNIFORM },
           { kw::amr_initial_conditions::string(),
-            AMRInitialType::INITIAL_CONDITIONS } } )
+            AMRInitialType::INITIAL_CONDITIONS },
+          { kw::amr_coords::string(), AMRInitialType::COORDINATES } } )
     {
-       boost::mpl::for_each< keywords >( assertPolicyCodes() );
+       brigand::for_each< keywords >( assertPolicyCodes() );
     }
 
     //! \brief Return policy code based on Enum
@@ -70,7 +75,7 @@ class AMRInitial : public tk::Toggle< AMRInitialType > {
     struct assertPolicyCodes {
       //! \brief Function call operator templated on the type to assert the
       //!   existence of a policy code
-      template< typename U > void operator()( U ) {
+      template< typename U > void operator()( brigand::type_<U> ) {
         static_assert( tk::HasTypedefCode< typename U::info >::value,
                        "Policy code undefined for keyword" );
       }
@@ -81,6 +86,7 @@ class AMRInitial : public tk::Toggle< AMRInitialType > {
         { AMRInitialType::UNIFORM, *kw::amr_uniform::code() }
       , { AMRInitialType::INITIAL_CONDITIONS,
           *kw::amr_initial_conditions::code() }
+      , { AMRInitialType::COORDINATES, *kw::amr_coords::code() }
     };
 };
 

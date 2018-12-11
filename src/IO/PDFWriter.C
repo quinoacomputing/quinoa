@@ -10,7 +10,6 @@
 */
 // *****************************************************************************
 
-#include <iostream>
 #include <iomanip>
 
 #include "NoWarning/exodusII.h"
@@ -839,7 +838,6 @@ PDFWriter::writeExodusII( const BiPDF& pdf,
 //  Write out standardized bivariate PDF to Exodus II format
 //! \param[in] pdf Bivariate PDF
 //! \param[in] info PDF metadata
-//! \param[in] it Iteration count
 //! \param[in] centering Bin centering on sample space mesh
 // *****************************************************************************
 {
@@ -966,7 +964,6 @@ PDFWriter::writeExodusII( const TriPDF& pdf,
 //  Write out standardized trivariate PDF to Exodus II format
 //! \param[in] pdf Trivariate PDF
 //! \param[in] info PDF metadata
-//! \param[in] it Iteration count
 //! \param[in] centering Bin centering on sample space mesh
 // *****************************************************************************
 {

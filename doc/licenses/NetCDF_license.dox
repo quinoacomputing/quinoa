@@ -1,5 +1,5 @@
 /*!
-  \page      NetCDF_license NetCDF license
+  \page      netcdf_license_page NetCDF license
 
 \verbatim
 Copyright 1993-2014 University Corporation for Atmospheric Research/Unidata
@@ -32,9 +32,4 @@ IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 IN CONNECTION WITH THE ACCESS, USE OR PERFORMANCE OF THIS SOFTWARE.
 \endverbatim
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Thu 04 Jun 2015 08:06:37 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */

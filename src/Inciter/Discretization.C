@@ -38,31 +38,22 @@ using inciter::Discretization;
 Discretization::Discretization(
   const CProxy_DistFCT& fctproxy,
   const CProxy_Transporter& transporter,
-  const CProxy_BoundaryConditions& bc,
   const std::vector< std::size_t >& conn,
-  const std::unordered_map< int, std::unordered_set< std::size_t > >& msum,
-  const std::unordered_map< std::size_t, std::size_t >& filenodes,
-  const tk::UnsMesh::EdgeNodes& edgenodes,
+  const tk::UnsMesh::CoordMap& coordmap,
+  const std::map< int, std::unordered_set< std::size_t > >& msum,
   int nchare ) :
+  m_nchare( nchare ),
   m_it( 0 ),
+  m_itr( 0 ),
+  m_initial( 1.0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_lastFieldWriteTime( -1.0 ),
   m_nvol( 0 ),
-  m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + '.' +
-                 std::to_string( thisIndex )
-                 #ifdef HAS_ROOT
-                 + (g_inputdeck.get< tag::selected, tag::filetype >() ==
-                     tk::ctr::FieldFileType::ROOT ? ".root" : "")
-                 #endif
-                ),
   m_fct( fctproxy ),
   m_transporter( transporter ),
-  m_bc( bc ),
-  m_filenodes( filenodes ),
-  m_edgenodes( edgenodes ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
-  m_coord(),
+  m_coord( setCoord( coordmap ) ),
   m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
   m_v( m_gid.size(), 0.0 ),
   m_vol( m_gid.size(), 0.0 ),
@@ -73,16 +64,10 @@ Discretization::Discretization(
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy
 //! \param[in] fctproxy Distributed FCT proxy
-//! \param[in] solver Linear system solver (Solver) proxy
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
+//! \param[in] coordmap Coordinates of mesh nodes and their global IDs
 //! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
 //!   mesh chunk we operate on
-//! \param[in] filenodes Map associating old node IDs (as in file) to new node
-//!   IDs (as in producing contiguous-row-id linear system contributions)
-//! \param[in] edgenodes Map associating new node IDs ('new' as in producing
-//!   contiguous-row-id linear system contributions) to edges (a pair of old
-//!   node IDs ('old' as in file). These 'new' node IDs are the ones newly
-//!   added during inital uniform mesh refinement.
 //! \param[in] nchare Total number of Discretization chares
 //! \details "Contiguous-row-id" here means that the numbering of the mesh nodes
 //!   (which corresponds to rows in the linear system) are (approximately)
@@ -96,6 +81,8 @@ Discretization::Discretization(
 {
   Assert( m_psup.second.size()-1 == m_gid.size(),
           "Number of mesh points and number of global IDs unequal" );
+
+  usesAtSync = true;    // Enable migration at AtSync
 
   // Convert neighbor nodes to vectors from sets
   for (const auto& n : msum) {
@@ -120,8 +107,52 @@ Discretization::Discretization(
   const auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
   const auto nprop = g_inputdeck.get< tag::component >().nprop();
   if ((sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG))
-    m_fct[ thisIndex ].insert( m_transporter, nchare, m_gid.size(), nprop,
+    m_fct[ thisIndex ].insert( nchare, m_gid.size(), nprop,
                                m_msum, m_bid, m_lid, m_inpoel, CkMyPe() );
+
+  contribute( CkCallback(CkReductionTarget(Transporter,disccreated),
+              m_transporter) );
+}
+
+void
+Discretization::resize( const tk::UnsMesh::Chunk& chunk,
+                        const tk::UnsMesh::Coords& coord,
+                        const std::unordered_map< int,
+                                std::vector< std::size_t > >& msum )
+// *****************************************************************************
+//  Resize mesh data structures (e.g., after mesh refinement)
+//! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
+//! \param[in] coord New mesh node coordinates
+//! \param[in] msum New node communication map
+// *****************************************************************************
+{
+  // Update volume mesh (connectivity, global<->local id maps and coordinates)
+  m_el = chunk;         // updates m_inpoel, m_gid, m_lid
+  m_coord = coord;      // update mesh node coordinates
+  m_msum = msum;        // update node communciation map
+
+  // Generate local ids for new chare boundary global ids
+  std::size_t lid = m_bid.size();
+  for (const auto& c : m_msum)
+    for (auto g : c.second)
+      if (m_bid.find( g ) == end(m_bid))
+        m_bid[ g ] = lid++;
+
+  // Resize receive buffer for nodal volumes
+  std::fill( begin(m_volc), end(m_volc), 0.0 );
+  m_volc.resize( m_bid.size(), 0.0 );
+
+  // Set flag that indicates that we are during time stepping
+  m_initial = 0.0;
+
+  // Update mesh volume
+  std::fill( begin(m_vol), end(m_vol), 0.0 );
+  m_vol.resize( m_gid.size(), 0.0 );
+
+  m_nvol = 0;
+
+  contribute( CkCallback(CkReductionTarget(Transporter,discresized),
+              m_transporter) );
 }
 
 void
@@ -139,20 +170,38 @@ Discretization::registerReducers()
   PDFMerger = CkReduction::addReducer( tk::mergeUniPDFs );
 }
 
-void
-Discretization::coord()
+tk::UnsMesh::Coords
+Discretization::setCoord( const tk::UnsMesh::CoordMap& coordmap )
 // *****************************************************************************
-//  Read mesh node coordinates and optionally add new edge-nodes in case of
-//  initial uniform refinement
+// Set mesh coordinates based on coordinates map
 // *****************************************************************************
 {
-  // Read coordinates of nodes of the mesh chunk we operate on
-  readCoords();
-  // Add coordinates of mesh nodes newly generated to edge-mid points during
-  // initial refinement
-  addEdgeNodeCoords();
-  // Compute mesh cell volumes
-  vol();
+  Assert( coordmap.size() == m_gid.size(), "Size mismatch" );
+  Assert( coordmap.size() == m_lid.size(), "Size mismatch" );
+
+  tk::UnsMesh::Coords coord;
+  coord[0].resize( coordmap.size() );
+  coord[1].resize( coordmap.size() );
+  coord[2].resize( coordmap.size() );
+
+  for (const auto& p : coordmap) {
+    auto i = tk::cref_find( m_lid, p.first );
+    coord[0][i] = p.second[0];
+    coord[1][i] = p.second[1];
+    coord[2][i] = p.second[2];
+  }
+
+  return coord;
+}
+
+void
+Discretization::setRefiner( const CProxy_Refiner& ref )
+// *****************************************************************************
+//  Set Refiner Charm++ proxy
+//! \param[in] ref Incoming refiner proxy to store
+// *****************************************************************************
+{
+  m_refiner = ref;
 }
 
 void
@@ -253,9 +302,9 @@ Discretization::totalvol()
   }
 
   // Sum mesh volume to host
-  tk::real tvol = 0.0;
-  for (auto v : m_v) tvol += v;
-  contribute( sizeof(tk::real), &tvol, CkReduction::sum_double,
+  std::vector< tk::real > tvol{ 0.0, m_initial };
+  for (auto v : m_v) tvol[0] += v;
+  contribute( tvol, CkReduction::sum_double,
     CkCallback(CkReductionTarget(Transporter,totalvol), m_transporter) );
 }
 
@@ -271,11 +320,12 @@ Discretization::stat()
 
   auto MIN = -std::numeric_limits< tk::real >::max();
   auto MAX = std::numeric_limits< tk::real >::max();
-  std::array< tk::real, 2 > min = {{ MAX, MAX }};
-  std::array< tk::real, 2 > max = {{ MIN, MIN }};
-  std::array< tk::real, 4 > sum{{ 0.0, 0.0, 0.0, 0.0 }};
+  std::vector< tk::real > min{ MAX, MAX, MAX };
+  std::vector< tk::real > max{ MIN, MIN, MIN };
+  std::vector< tk::real > sum{ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
   tk::UniPDF edgePDF( 1e-4 );
   tk::UniPDF volPDF( 1e-4 );
+  tk::UniPDF ntetPDF( 1e-4 );
 
   // Compute edge length statistics
   // Note that while the min and max edge lengths are independent of the number
@@ -316,16 +366,21 @@ Discretization::stat()
     volPDF.add( L );
   }
 
+  // Contribute stats of number of tetrahedra (ntets)
+  sum[4] = 1.0;
+  min[2] = max[2] = sum[5] = m_inpoel.size() / 4;
+  ntetPDF.add( min[2] );
+
   // Contribute to mesh statistics across all Discretization chares
-  contribute( min.size()*sizeof(tk::real), min.data(), CkReduction::min_double,
+  contribute( min, CkReduction::min_double,
     CkCallback(CkReductionTarget(Transporter,minstat), m_transporter) );
-  contribute( max.size()*sizeof(tk::real), max.data(), CkReduction::max_double,
+  contribute( max, CkReduction::max_double,
     CkCallback(CkReductionTarget(Transporter,maxstat), m_transporter) );
-  contribute( sum.size()*sizeof(tk::real), sum.data(), CkReduction::sum_double,
+  contribute( sum, CkReduction::sum_double,
     CkCallback(CkReductionTarget(Transporter,sumstat), m_transporter) );
 
   // Serialize PDFs to raw stream
-  auto stream = tk::serialize( { edgePDF, volPDF } );
+  auto stream = tk::serialize( { edgePDF, volPDF, ntetPDF } );
   // Create Charm++ callback function for reduction of PDFs with
   // Transporter::pdfstat() as the final target where the results will appear.
   CkCallback cb( CkIndex_Transporter::pdfstat(nullptr), m_transporter );
@@ -334,75 +389,18 @@ Discretization::stat()
 }
 
 void
-Discretization::readCoords()
-// *****************************************************************************
-//  Read coordinates of mesh nodes from file
-// *****************************************************************************
-{
-  tk::ExodusIIMeshReader
-    er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
-
-  auto nnode = er.readHeader();
-
-  auto& x = m_coord[0];
-  auto& y = m_coord[1];
-  auto& z = m_coord[2];
-
-  auto nn = m_lid.size();
-  x.resize( nn );
-  y.resize( nn );
-  z.resize( nn );
-
-  for (auto p : m_gid) {
-    auto n = m_filenodes.find(p);
-    if (n != end(m_filenodes) && n->second < nnode)
-      er.readNode( n->second, tk::cref_find(m_lid,n->first), x, y, z );
-  }
-}
-
-void
-Discretization::addEdgeNodeCoords()
-// *****************************************************************************
-//  Add coordinates of mesh nodes newly generated to edge-mid points during
-//  initial refinement
-// *****************************************************************************
-{
-  if (m_edgenodes.empty()) return;
-
-  auto& x = m_coord[0];
-  auto& y = m_coord[1];
-  auto& z = m_coord[2];
-  Assert( x.size() == y.size() && x.size() == z.size(), "Size mismatch" );
-
-  // Lambda to add coordinates for a single new node on an edge
-  auto addnode = [ this, &x, &y, &z ]
-                 ( const decltype(m_edgenodes)::value_type& e )
-  {
-    auto p = tk::cref_find( m_lid, e.first[0] );
-    auto q = tk::cref_find( m_lid, e.first[1] );
-    auto i = tk::cref_find( m_lid, e.second );
-    Assert( p < x.size(), "Discretization chare " + std::to_string(thisIndex) +
-                          " indexing out of bounds: " + std::to_string(p)
-                          + " must be lower than " + std::to_string(x.size()) );
-    Assert( q < x.size(), "Discretization chare " + std::to_string(thisIndex) +
-                          " indexing out of bounds: " + std::to_string(q)
-                          + " must be lower than " + std::to_string(x.size()) );
-    Assert( i < x.size(), "Discretization chare " + std::to_string(thisIndex) +
-                          " indexing out of bounds: " + std::to_string(i)
-                          + " must be lower than " + std::to_string(x.size()) );
-    x[i] = (x[p]+x[q])/2.0;
-    y[i] = (y[p]+y[q])/2.0;
-    z[i] = (z[p]+z[q])/2.0;
-  };
-
-  // add new nodes
-  for (const auto& e : m_edgenodes) addnode( e );
-}
-
-void
-Discretization::writeMesh()
+Discretization::writeMesh(
+  const std::map< int, std::vector< std::size_t > >& bface,
+  const std::vector< std::size_t >& triinpoel,
+  const std::map< int, std::vector< std::size_t > >& bnode )
 // *****************************************************************************
 // Output chare element blocks to file
+//! \param[in] bface Map of boundary-face lists mapped to corresponding side set
+//!   ids for this mesh chunk
+//! \param[in] triinpoel Interconnectivity of points and boundary-face in this
+//!   mesh chunk
+//! \param[in] bnode Map of boundary-node lists mapped to corresponding side set
+//!   ids for this mesh chunk
 // *****************************************************************************
 {
   if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
@@ -412,19 +410,35 @@ Discretization::writeMesh()
 
     if (filetype == tk::ctr::FieldFileType::ROOT) {
 
-      tk::RootMeshWriter rmw( m_outFilename, 0 );
+      tk::RootMeshWriter rmw( filename(), 0 );
       rmw.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
 
     } else
     #endif
     {
-
       // Create ExodusII writer
-      tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
-      // Write chare mesh initializing element connectivity and point coords
-      ew.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
-    
-    }    
+      tk::ExodusIIMeshWriter ew( filename(), tk::ExoWriter::CREATE );
+      // Write chare mesh
+      if (m_nchare == 1) {
+
+        // Do not write side sets in parallel
+        const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+        const auto centering = ctr::Scheme().centering( scheme );
+        if (centering == ctr::Centering::ELEM)
+          ew.writeMesh( m_inpoel, m_coord, bface, triinpoel );
+        else if (centering == ctr::Centering::NODE) {
+          // Convert boundary node lists to local ids for output
+          auto lbnode = bnode;
+          for (auto& s : lbnode)
+            for (auto& p : s.second)
+              p = tk::cref_find(m_lid,p);
+          ew.writeMesh( m_inpoel, m_coord, lbnode );
+        } else Throw( "Scheme centering not handled for writing mesh" );
+
+      } else {
+        ew.writeMesh( m_inpoel, m_coord );
+      }
+    }
   }
 }
 
@@ -466,16 +480,20 @@ void
 Discretization::writeElemSolution(
   const tk::ExodusIIMeshWriter& ew,
   uint64_t it,
-  const std::vector< std::vector< tk::real > >& u ) const
+  const std::vector< std::vector< tk::real > >& u,
+  const std::vector< std::vector< tk::real > >& /*v*/ ) const
 // *****************************************************************************
 // Output solution to file
 //! \param[in] ew ExodusII mesh-based writer object
 //! \param[in] it Iteration count
 //! \param[in] u Vector of element fields to write to file
+//! \param[in] v Vector of node fields to write to file
 // *****************************************************************************
 {
   int varid = 0;
   for (const auto& f : u) ew.writeElemScalar( it, ++varid, f );
+  //varid = 0;
+  //for (const auto& f : v) ew.writeNodeScalar( it, ++varid, f );
 }
 
 void
@@ -491,7 +509,7 @@ Discretization::writeNodeMeta() const
 
     if (filetype == tk::ctr::FieldFileType::ROOT) {
  
-      tk::RootMeshWriter rmw( m_outFilename, 1 );
+      tk::RootMeshWriter rmw( filename(), 1 );
 
       // Collect nodal field output names from all PDEs
       std::vector< std::string > names;
@@ -508,7 +526,7 @@ Discretization::writeNodeMeta() const
     {
 
       // Create ExodusII writer
-      tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
+      tk::ExodusIIMeshWriter ew( filename(), tk::ExoWriter::OPEN );
 
       // Collect nodal field output names from all PDEs
       std::vector< std::string > names;
@@ -533,7 +551,7 @@ Discretization::writeElemMeta() const
   if (!g_inputdeck.get< tag::cmd, tag::benchmark >())
   {
     // Create ExodusII writer
-    tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
+    tk::ExodusIIMeshWriter ew( filename(), tk::ExoWriter::OPEN );
 
     // Collect elemental field output names from all PDEs
     std::vector< std::string > names;
@@ -544,6 +562,9 @@ Discretization::writeElemMeta() const
 
     // Write element field names
     ew.writeElemVarNames( names );
+
+    //// Write node field names
+    //ew.writeNodeVarNames( names );
   }
 }
 
@@ -559,6 +580,41 @@ Discretization::setdt( tk::real newdt )
   // Truncate the size of last time step
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   if (m_t+m_dt > term) m_dt = term - m_t;;
+}
+
+
+std::string
+Discretization::filename() const
+// *****************************************************************************
+//  Compute ExodusII filename
+//! \details We use a file naming convention for large field output data that
+//!   allows ParaView to glue multiple files into a single simulation output by
+//!   only loading a single file. The base filename is followed by ".e-s.",
+//!   which probably stands for Exodus Sequence, followed by 3 integers:
+//!   (1) {RS}: counts the number of "restart dumps", but we use this for
+//!   counting the number of outputs with a different mesh, e.g., due to
+//!   mesh refinement, thus if this first number is new the mesh is new
+//!   compared to the previous (first) number afer ".e-s.",
+//!   (2) {NP}: total number of partitions (workers, chares), this is more than
+//!   the number of PEs with nonzero virtualization (overdecomposition), and
+//!   (3) {RANK}: worker (chare) id.
+//!   Thus {RANK} does spatial partitioning, while {RS} partitions in time, but
+//!   a single {RS} id may contain multiple time steps, which equals to the
+//!   number of time steps at which field output is saved without refining the
+//!   mesh.
+//! \return Filename computed
+//! \see https://www.paraview.org/Wiki/Restarted_Simulation_Readers
+// *****************************************************************************
+{
+  return g_inputdeck.get< tag::cmd, tag::io, tag::output >() + ".e-s"
+         + '.' + std::to_string( m_itr )        // create new file if new mesh
+         + '.' + std::to_string( m_nchare )     // total number of workers
+         + '.' + std::to_string( thisIndex )    // new file per worker
+         #ifdef HAS_ROOT
+         + (g_inputdeck.get< tag::selected, tag::filetype >() ==
+             tk::ctr::FieldFileType::ROOT ? ".root" : "")
+         #endif
+         ;
 }
 
 void
@@ -587,6 +643,7 @@ Discretization::status()
     const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
     const auto field = g_inputdeck.get< tag::interval,tag::field >();
     const auto diag = g_inputdeck.get< tag::interval, tag::diag >();
+    const auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
 
     // estimate time elapsed and time for accomplishment
@@ -611,6 +668,7 @@ Discretization::status()
     // Augment one-liner with output indicators
     if (!(m_it % field)) print << 'F';
     if (!(m_it % diag)) print << 'D';
+    if (!(m_it % dtfreq)) print << 'h';
   
     print << std::endl;
   }

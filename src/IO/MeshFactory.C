@@ -8,10 +8,9 @@
 // *****************************************************************************
 
 #include <string>
-#include <stdexcept>
 
 #include "MeshFactory.h"
-#include "Exception.h"
+#include "MeshDetect.h"
 #include "Timer.h"
 #include "Reader.h"
 #include "GmshMeshReader.h"
@@ -25,68 +24,11 @@
 #include "DerivedData.h"
 #include "Reorder.h"
 
+#ifdef HAS_OMEGA_H
+  #include "Omega_h_MeshReader.h"
+#endif
+
 namespace tk {
-
-MeshReader
-detectInput( const std::string& filename )
-// *****************************************************************************
-//  Detect input mesh file type
-//! \param[in] filename File to open and detect its type
-//! \return enum specifying the mesh reader type
-// *****************************************************************************
-{
-  // Get first three letters from input file
-  std::string s( Reader( filename ).firstline().substr(0,4) );
-
-  if ( s.find("$Me") != std::string::npos ) {
-    return MeshReader::GMSH;
-  } else if ( s.find("CDF") != std::string::npos ||
-              s.find("HDF") != std::string::npos ) {
-    return MeshReader::EXODUSII;
-  } else if ( s.find("<?x") != std::string::npos ) {
-    return MeshReader::HYPER;
-  } else if ( s.find("*nd") != std::string::npos ) {
-    return MeshReader::ASC;
-  } else {
-    try {
-      std::stoi(s);    // try to convert to an integer
-    } catch ( std::invalid_argument ) {
-      Throw( "Input mesh file type could not be determined from header: " +
-             filename );
-    }
-    // could also catch std::out_of_range, the other exception potentially
-    // thrown by std::stoi(), but a three-digit integer will always fit into int
-
-    // if we got here, the above string-to-integer conversion succeeded
-    return MeshReader::NETGEN;
-  }
-}
-
-MeshWriter
-pickOutput( const std::string& filename )
-// *****************************************************************************
-//  Determine output mesh file type
-//! \param[in] filename Filename to pick its type based on extension given
-//! \return enum specifying the mesh writer type
-// *****************************************************************************
-{
-  // Get extension of input file name
-  std::string fn = filename;
-  std::string ext( fn.substr(fn.find_last_of(".") + 1) );
-
-  if ( ext == "msh" ) {
-    return MeshWriter::GMSH;
-  } else if ( ext == "exo" || ext == "h5" ) {
-    return MeshWriter::EXODUSII;
-  } else if ( ext == "mesh" ) {
-    return MeshWriter::NETGEN;
-  } else {
-    Throw( "Output mesh file type could not be determined from extension of "
-           "filename '" + filename + "'; valid extensions are: "
-           "'msh' for Gmsh, 'exo' or 'h5' for ExodusII, 'mesh' for Netgen's "
-           "neutral" );
-  }
-}
 
 UnsMesh
 readUnsMesh( const tk::Print& print,
@@ -111,15 +53,15 @@ readUnsMesh( const tk::Print& print,
 
   const auto meshtype = detectInput( filename );
 
-  if (meshtype == MeshReader::GMSH)
+  if (meshtype == MeshReaderType::GMSH)
     GmshMeshReader( filename ).readMesh( mesh );
-  else if (meshtype == MeshReader::NETGEN)
+  else if (meshtype == MeshReaderType::NETGEN)
     NetgenMeshReader( filename ).readMesh( mesh );
-  else if (meshtype == MeshReader::EXODUSII)
+  else if (meshtype == MeshReaderType::EXODUSII)
     ExodusIIMeshReader( filename ).readMesh( mesh );
-  else if (meshtype == MeshReader::ASC)
+  else if (meshtype == MeshReaderType::ASC)
     ASCMeshReader( filename ).readMesh( mesh );
-  else if (meshtype == MeshReader::HYPER)
+  else if (meshtype == MeshReaderType::HYPER)
     HyperMeshReader( filename ).readMesh( mesh );
 
   timestamp = std::make_pair( "Read mesh from file", t.dsec() );
@@ -149,6 +91,32 @@ writeUnsMesh( const tk::Print& print,
   std::vector< std::pair< std::string, tk::real > > times;
 
   tk::Timer t;
+
+  // If mesh has tetrahedra but no triangles, generate triangle connectivity
+  if (!mesh.tetinpoel().empty() && mesh.triinpoel().empty()) {
+    print.diagstart( "Generating missing surface mesh ..." );
+
+    const auto& inpoel = mesh.tetinpoel();        // get tet connectivity
+    auto esup = tk::genEsup( inpoel, 4 );         // elements surrounding points
+    auto esuel = tk::genEsuelTet( inpoel, esup ); // elems surrounding elements
+    auto& triinpoel = mesh.triinpoel();
+    // collect boundary faces
+    for (std::size_t e=0; e<esuel.size()/4; ++e) {
+      auto mark = e*4;
+      for (std::size_t f=0; f<4; ++f) {
+        if (esuel[mark+f] == -1) {
+          // extract triangle element connectivity from tetrahedron
+          triinpoel.push_back( inpoel[ mark+tk::lpofa[f][0] ] );
+          triinpoel.push_back( inpoel[ mark+tk::lpofa[f][1] ] );
+          triinpoel.push_back( inpoel[ mark+tk::lpofa[f][2] ] );
+        }
+      }
+    }
+
+    print.diagend( "done" );
+    times.emplace_back( "Generate surface mesh", t.dsec() );
+    t.zero();
+  }
 
   if (reorder) {
     print.diagstart( "Reordering mesh nodes ..." );
@@ -186,11 +154,11 @@ writeUnsMesh( const tk::Print& print,
 
   const auto meshtype = pickOutput( filename );
 
-  if (meshtype == MeshWriter::GMSH)
+  if (meshtype == MeshWriterType::GMSH)
     GmshMeshWriter( filename ).writeMesh( mesh );
-  else if (meshtype == MeshWriter::NETGEN)
+  else if (meshtype == MeshWriterType::NETGEN)
     NetgenMeshWriter( filename ).writeMesh( mesh );
-  else if (meshtype== MeshWriter::EXODUSII)
+  else if (meshtype== MeshWriterType::EXODUSII)
     ExodusIIMeshWriter( filename, ExoWriter::CREATE ).writeMesh( mesh );
 
   print.diagend( "done" );

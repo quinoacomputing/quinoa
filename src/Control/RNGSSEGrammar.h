@@ -10,6 +10,8 @@
 #ifndef RNGSSEGrammar_h
 #define RNGSSEGrammar_h
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "CommonGrammar.h"
 
 namespace tk {
@@ -46,7 +48,7 @@ namespace grm {
                                ( key, opt.value(in.string()) );
       // trigger error at compile-time if any of the expected option values
       // is not in the keywords pool of the grammar
-      boost::mpl::for_each< typename Option::keywords >( is_keyword< use >() );
+      brigand::for_each< typename Option::keywords >( is_keyword< use >() );
     }
   };
 

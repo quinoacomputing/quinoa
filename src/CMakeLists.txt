@@ -39,7 +39,7 @@ include(BuildShared)
 # This must precede all add_executable() calls adding executables to link
 # statically.
 if (NOT BUILD_SHARED_LIBS)
-  set(CMAKE_EXE_LINKER_FLAGS "-static")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 endif()
 
@@ -64,16 +64,18 @@ endif()
 # Convert CMAKE_BUILD_TYPE
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 
-# Set build type (will become compiler define in Main/QuinoaConfig.h)
+# Set build type (will be exported to the source)
 set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
-# Query regression tests direcetory (will become compiler define in
-# Main/QuinoaConfig.h)
+# Query regression tests directory (will be exported to the source)
 set(REGRESSION_DIR "${PROJECT_SOURCE_DIR}/../regression")
 
 # Query target architecture
 include(TargetArch)
 target_architecture(ARCH)
 message(STATUS "Target architecture: ${ARCH}")
+
+# Echo install dir
+message(STATUS "CMAKE_INSTALL_PREFIX: " ${CMAKE_INSTALL_PREFIX})
 
 # Detect operating system type and version
 include(DetectOS)
@@ -90,29 +92,71 @@ if (NOT TPL_DIR)
   set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../tpl/install/${COMP}-${ARCH})
   get_filename_component(ABS_TPL_DIR ${REL_TPL_DIR} ABSOLUTE)
   set(TPL_DIR ${ABS_TPL_DIR} CACHE STRING "Third-party libraries directory.")
-  if (EXISTS ${TPL_DIR}/include)
-    set(TPL_INCLUDE_DIR ${TPL_DIR}/include)
-    message(STATUS "Third-party library dir: " ${TPL_DIR})
-  endif()
 endif()
 
-# Find MPI and get its underlying compilers
-include(MPICompilers)
-get_mpi_compilers()
+if (EXISTS ${TPL_DIR}/include)
+  set(TPL_INCLUDE_DIR ${TPL_DIR}/include)
+  message(STATUS "Third-party library dir: " ${TPL_DIR})
+endif()
+
+# Detect compiler version
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
+    CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  include(DetectCompilerVersion)
+endif()
+
+# Include third-party libraries configuration
+include(TPLs)
+
+# Compilers
+# =========
+# There are two sets of compilers, given by the following CMake variables:
+#
+# 1. The underlying compiler suite
+#    UNDERLYING_C_COMPILER
+#    UNDERLYING_CXX_COMPILER
+#
+# 2. The MPI wrappers (of the underlying compilers)
+#    MPI_C_COMPILER
+#    MPI_CXX_COMPILER
+
+# Find MPI and get its underlying compilers. If a traditional MPI (e.g.,
+# OpenMPI) is used, the get_mpi_compilers cmake function uses the built-in CMake
+# functionality to find the MPI wrappers and based on the wrappers detects the
+# underyling compilers. If Charm++'s Adaptive MPI (AMPI) is used, the Charm++
+# TPL build builds Charm++ as well as AMPI and we use the AMPI wrappers to build
+# MPI libraries.
+if(NOT ENABLE_AMPI)
+  include(MPICompilers)
+  get_mpi_compilers()
+  set(LINKER_COMPILER "${CHARM_COMPILER}")
+else()
+  set(MPI_C_COMPILER "${AMPI_C_COMPILER}")
+  set(MPI_CXX_COMPILER "${AMPI_CXX_COMPILER}")
+  set(UNDERLYING_C_COMPILER "${CMAKE_C_COMPILER}")
+  set(UNDERLYING_CXX_COMPILER "${CMAKE_CXX_COMPILER}")
+  set(LINKER_COMPILER "${AMPI_CXX_COMPILER}")
+  set(MPI_CXX_INCLUDE_DIRS "")
+  MESSAGE(STATUS "AMPIrun: " ${AMPI_RUN})
+endif()
+
+MESSAGE(STATUS "MPI C compiler: " ${MPI_C_COMPILER})
+MESSAGE(STATUS "MPI C++ compiler: " ${MPI_CXX_COMPILER})
+MESSAGE(STATUS "Underlying C compiler: " ${UNDERLYING_C_COMPILER})
+MESSAGE(STATUS "Underlying C++ compiler: " ${UNDERLYING_CXX_COMPILER})
+
+MESSAGE(STATUS "Charmrun: " ${CHARM_RUN})
+MESSAGE(STATUS "Linker compiler: " ${LINKER_COMPILER})
+
+if (EXTRA_LINK_ARGS)
+  MESSAGE(STATUS "Extra linker args (EXTRA_LINK_ARGS): ${EXTRA_LINK_ARGS}")
+endif()
+
+add_definitions(-DQUINOA_CONFIG_MPI_ENABLED)
 
 # Set compilers
 set(COMPILER ${UNDERLYING_CXX_COMPILER})
 set(MPI_COMPILER ${MPI_CXX_COMPILER})
-
-# If we have met the mandatory MPI dependency, add a definition
-if(${MPI_CXX_FOUND})
-  add_definitions(-DQUINOA_CONFIG_MPI_ENABLED)
-endif(${MPI_CXX_FOUND})
-
-# See documentation for tk::grm::use in src/ControlCommonGrammar.h for details
-# on why these macros are necessary for our use of BOOST::MPL.
-add_definitions(-D BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS)
-add_definitions(-D BOOST_MPL_LIMIT_METAFUNCTION_ARITY=20)
 
 # Mac OS X specifics
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -139,12 +183,13 @@ endif()
 # Query build hostname
 site_name(HOSTNAME)
 
-# Grab current date to stick into the binary
-execute_process(
-  COMMAND "date" #"+%m/%d/%Y"
-  OUTPUT_VARIABLE BUILD_DATE
-)
+# Grab current date to stick into the executables and doc (footer)
+execute_process(COMMAND "date" OUTPUT_VARIABLE BUILD_DATE)
 string(REGEX REPLACE "[\r\n]" "" BUILD_DATE "${BUILD_DATE}")
+
+execute_process(COMMAND "date" "+%A, %b %d, %Y"
+                OUTPUT_VARIABLE BUILD_DATE_SIMPLE)
+string(REGEX REPLACE "[\r\n]" "" BUILD_DATE_SIMPLE "${BUILD_DATE_SIMPLE}")
 
 # Set the requirement for the C++ standard
 set(CMAKE_CXX_STANDARD 11)
@@ -154,6 +199,7 @@ message(STATUS "Required language standard: C++${CMAKE_CXX_STANDARD}")
 # Get git revision
 include(GetGitRevisionDescription)
 git_describe(GIT_SHA1 --tags)
+git_rev_parse(GIT_SHA1_ONLY)
 message(STATUS "git sha1: ${GIT_SHA1}")
 
 # Macro to add C++ compiler flags
@@ -167,7 +213,7 @@ macro (add_c_compiler_flag flag)
 endmacro (add_c_compiler_flag)
 
 # Compiler-specific settings
-if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
 
   # Include function that allows to set standard C++ library
   include(libstdcxx)
@@ -188,12 +234,16 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
   add_compiler_flag("-Wno-global-constructors")
   add_compiler_flag("-Wno-weak-vtables")
   add_compiler_flag("-Wno-unknown-pragmas")
+  add_compiler_flag("-Wno-unknown-warning-option")
   add_compiler_flag("-Wno-unused-command-line-argument")
   add_compiler_flag("-Wno-disabled-macro-expansion")
+  add_compiler_flag("-Wno-reserved-id-macro")
+  add_compiler_flag("-Wno-unknown-warning-option")
 
   # Linker flags for clang
   set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)      # clear link flags
-  set(CMAKE_EXE_LINKER_FLAGS "-Wno-missing-prototypes -Wno-unused-parameter")
+  set(CMAKE_EXE_LINKER_FLAGS
+    "${CMAKE_EXE_LINKER_FLAGS} -Wno-missing-prototypes -Wno-unused-parameter")
 
   # Using clang on mac in release mode, use -O1, otherwise we get a runtime
   # error: auxlhs_complete() not found referenced by libquinoa_inciter.dylib
@@ -247,12 +297,11 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wno-stack-protector")
   add_compiler_flag("-Wno-expansion-to-defined")
   add_compiler_flag("-Wno-int-in-bool-context")
+  add_compiler_flag("-Wno-cast-function-type")
+  add_compiler_flag("-Wno-format-overflow")
 
   # Linker flags for gcc
-  set(CMAKE_EXE_LINKER_FLAGS "-Wno-unused-parameter")
-
-  # Detect compiler version
-  include(DetectCXXversion)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wno-unused-parameter")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 
@@ -313,7 +362,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   endif()
 
   # Linker flags for intel
-  set(CMAKE_EXE_LINKER_FLAGS "-diag-disable 869")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -diag-disable 869")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 
@@ -385,31 +434,35 @@ endif()
 # while make puts it into <build>/Main, but after any executable target we copy
 # <build>/Main/charmrun to <build> for non-ninja builds. See also
 # cmake/ConfigExecutable.cmake.
-SET(RUNNER_REQUIRED false) # if true all executables must be prefixed by runner
+
+# Defaults for runner, used to run regression tests
+set(RUNNER_REQUIRED false)
+set(RUNNER "${CHARM_RUN}" CACHE STRING
+    "Parallel/serial job runner, used to run regression tests")
+set(RUNNER_NCPUS_ARG "+p" CACHE STRING
+    "The argument used to specify the number of PEs for the runner")
+set(RUNNER_ARGS "" CACHE STRING
+    "Arguments to pass to the parallel/serial job runner, e.g., to mpirun.")
+
+# Host-, and/or architecture-specifc runner configuration
 if (DEFINED ENV{NERSC_HOST})
-  SET(RUNNER "srun")
-  SET(RUNNER_NCPUS_ARG "-n")
-  SET(RUNNER_REQUIRED true)
+
+  set(RUNNER "srun")
+  set(RUNNER_NCPUS_ARG "-n")
+  set(RUNNER_REQUIRED true)
+
 elseif(ARCH MATCHES "ppc64")
+
   find_program(RUNNER ${CMAKE_CURRENT_SOURCE_DIR}/../script/cobalt-runjob.sh)
-  SET(RUNNER_NCPUS_ARG "--np")
-  SET(RUNNER_ARGS "")
-  SET(RUNNER_REQUIRED true)
-else()
-  SET(RUNNER "${CMAKE_BINARY_DIR}/charmrun")
-  SET(RUNNER_NCPUS_ARG "+p")
-endif()
+  set(RUNNER_NCPUS_ARG "--np")
+  set(RUNNER_REQUIRED true)
 
-# Set default parallel/serial job runner extra arguments
-if (NOT ARCH MATCHES "ppc64" AND
-    NOT DEFINED RUNNER_ARGS AND
-    NOT DEFINED ENV{CRAY_PRGENVPGI} AND
-    NOT DEFINED ENV{CRAY_PRGENVGNU} AND
-    NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
-    NOT DEFINED ENV{CRAY_PRGENVINTEL})
+elseif(DEFINED ENV{CRAY_PRGENVPGI} OR
+       DEFINED ENV{CRAY_PRGENVGNU} OR
+       DEFINED ENV{CRAY_PRGENVCRAY} OR
+       DEFINED ENV{CRAY_PRGENVINTEL})
 
-  set(RUNNER_ARGS "--bind-to none --map-by node"
-      CACHE STRING "Arguments to pass to the parallel/serial job runner, e.g., mpirun.")
+  set(RUNNER_ARGS "")
 
 endif()
 
@@ -422,9 +475,6 @@ message(STATUS "Parallel/serial job runner args: ${RUNNER_ARGS}")
 # Attempt to find tools required for code coverage analysis
 include(DetectCodeCoverage)
 
-# Include third-party libraries configuration
-include(TPLs)
-
 # Set compiler flags to perform code coverage analysis
 if(CODE_COVERAGE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
@@ -434,23 +484,10 @@ endif()
 # Echo compiler flags
 message(STATUS "C compiler flags: '${CMAKE_C_FLAGS}'")
 message(STATUS "C++ compiler flags: '${CMAKE_CXX_FLAGS}'")
+message(STATUS "Executable linker flags: '${CMAKE_EXE_LINKER_FLAGS}'")
 
 # Include cmake code to enable configuration for data layouts
 include(ConfigureDataLayout)
-
-# Set names of executables
-set(INCITER_EXECUTABLE inciter)
-if (HAS_TESTU01)
-  set(RNGTEST_EXECUTABLE rngtest)
-  set(RNGTEST_SRC_DIR ${QUINOA_SOURCE_DIR}/RNGTest)
-  set(RNGTEST_BIN_DIR ${PROJECT_BINARY_DIR}/RNGTest)
-endif()
-set(MESHCONV_EXECUTABLE meshconv)
-set(WALKER_EXECUTABLE walker)
-set(UNITTEST_EXECUTABLE unittest)
-if (HAS_ROOT)
-  set(FILECONV_EXECUTABLE fileconv)
-endif()
 
 # Create set of all executables tested. These are the executables that do
 # "interesting things", i.e., excluding unittest but keeping rngtest as that is
@@ -469,112 +506,70 @@ set(EXECUTABLES ${INCITER_EXECUTABLE}
                 ${UNITTEST_EXECUTABLE}
                 ${FILECONV_EXECUTABLE})
 
-# Make sure that the config file is in the search path
-# Configure a header file to pass info to the code
-configure_file(
-  "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.h.in"
-  "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.h"
-)
+# Configure cmake variable to pass to the code
+configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.h.in"
+                "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.h" )
+configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.C.in"
+                "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.C" )
 
 # Remove build hostname from cmake cache
 unset(HOSTNAME CACHE)
 
-### Set RPATH so that shared libs paths stay in the binary after install ###
-# Don't skip the full RPATH for the build tree
-set(CMAKE_SKIP_BUILD_RPATH false)
+if (BUILD_SHARED_LIBS)
 
-# When building, don't use the install RPATH
-# (use later on when installing)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH false)
+  ### Set RPATH so that shared libs paths stay in the binary after install ###
+  # Don't skip the full RPATH for the build tree
+  set(CMAKE_SKIP_BUILD_RPATH false)
+  
+  # When building, don't use the install RPATH
+  # (use later on when installing)
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH false)
+  
+  # Add the automatically determined parts of the RPATH
+  # which point to directories outside the build tree to the install RPATH
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
+  
+  # the RPATH to be used when installing, but only if it's not a system directory
+  list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
+       "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" isSystemDir)
+  if("${isSystemDir}" STREQUAL "-1")
+     set(CMAKE_INSTALL_RPATH
+       "${CMAKE_INSTALL_RPATH};${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+  endif("${isSystemDir}" STREQUAL "-1")
 
-# Add the automatically determined parts of the RPATH
-# which point to directories outside the build tree to the install RPATH
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
-
-# the RPATH to be used when installing, but only if it's not a system directory
-list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
-     "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
-if("${isSystemDir}" STREQUAL "-1")
-   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${CMAKE_INSTALL_PREFIX}/lib")
-endif("${isSystemDir}" STREQUAL "-1")
-
-# add a target to generate API documentation with Doxygen
-find_package(Doxygen 1.8.12)
-if(DOXYGEN_FOUND)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.doxy
-                 ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
-  add_custom_target(doc
-                    ${DOXYGEN_EXECUTABLE}
-                    ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
-                    COMMENT "Documentation" VERBATIM)
-  message(STATUS "Add target 'doc' to generate documentation to ./doc/html/index.html")
-endif(DOXYGEN_FOUND)
-
-include_directories(${QUINOA_SOURCE_DIR}
-                    ${QUINOA_SOURCE_DIR}/Base
-                    ${QUINOA_SOURCE_DIR}/Control
-                    ${QUINOA_SOURCE_DIR}/DiffEq
-                    ${QUINOA_SOURCE_DIR}/PDE
-                    ${QUINOA_SOURCE_DIR}/Walker
-                    ${QUINOA_SOURCE_DIR}/Inciter
-                    ${QUINOA_SOURCE_DIR}/LinSys
-                    ${QUINOA_SOURCE_DIR}/LoadBalance
-                    ${QUINOA_SOURCE_DIR}/IO
-                    ${QUINOA_SOURCE_DIR}/Main
-                    ${QUINOA_SOURCE_DIR}/Mesh
-                    ${QUINOA_SOURCE_DIR}/RNG
-                    ${RNGTEST_SRC_DIR}
-                    ${QUINOA_SOURCE_DIR}/Statistics
-                    ${QUINOA_SOURCE_DIR}/UnitTest
-                    ${MPI_CXX_INCLUDE_DIRS}
-                    ${MPI_CXX_INCLUDE_PATH}
-                    ${MKL_INCLUDE_DIRS}
-                    ${HDF5_INCLUDE_DIRS}
-                    ${HYPRE_INCLUDE_DIRS}
-                    ${ROOT_INCLUDE_DIRS}
-                    ${PSTREAMS_INCLUDE_DIRS}
-                    ${PUGIXML_INCLUDE_DIRS}
-                    ${H5PART_INCLUDE_DIRS}
-                    ${TUT_INCLUDE_DIRS}
-                    ${CARTESIAN_PRODUCT_INCLUDE_DIRS}
-                    ${PEGTL_INCLUDE_DIRS}
-                    ${RANDOM123_INCLUDE_DIRS}
-                    ${TESTU01_INCLUDE_DIRS}
-                    ${RNGSSE2_INCLUDE_DIRS}
-                    ${LAPACKE_INCLUDE_DIRS}
-                    ${Zoltan2_INCLUDE_DIR}
-                    ${SEACASExodus_INCLUDE_DIRS}
-                    ${TPL_INCLUDE_DIR}
-                    ${CHARM_INCLUDE_DIRS}
-                    ${RNGTEST_BIN_DIR}
-                    ${PROJECT_BINARY_DIR}/LoadBalance   # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/Walker        # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/Inciter       # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/UnitTest      # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/LinSys        # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/IO            # for Charm++ modules
-)
+endif(BUILD_SHARED_LIBS)
 
 # Components
-add_subdirectory(Main)
-add_subdirectory(UnitTest)
 add_subdirectory(Base)
 add_subdirectory(Control)
-add_subdirectory(DiffEq)
-add_subdirectory(PDE)
-add_subdirectory(Walker)
-add_subdirectory(Inciter)
+add_subdirectory(Main)
 add_subdirectory(LoadBalance)
-add_subdirectory(LinSys)
-add_subdirectory(IO)
-add_subdirectory(Mesh)
 add_subdirectory(RNG)
-if (HAS_TESTU01)
+add_subdirectory(Statistics)
+
+if (ENABLE_MESHCONV OR ENABLE_INCITER)
+  add_subdirectory(Mesh)
+  add_subdirectory(IO)
+endif()
+
+if (ENABLE_INCITER)
+  add_subdirectory(PDE)
+  add_subdirectory(Inciter)
+  add_subdirectory(LinSys)
+endif()
+
+if (ENABLE_UNITTEST)
+  add_subdirectory(UnitTest)
+endif()
+
+if (ENABLE_WALKER)
+  add_subdirectory(DiffEq)
+  add_subdirectory(Walker)
+endif()
+
+if (ENABLE_RNGTEST)
   add_subdirectory(RNGTest)
 endif()
-add_subdirectory(Statistics)
 
 # Conditionally enforce static link for all executables. This must be after all
 # add_executable() calls creating the targets for executables in EXECUTABLES.
@@ -585,6 +580,24 @@ if (NOT BUILD_SHARED_LIBS)
   endforeach()
 endif()
 
+# add a target to generate API documentation with Doxygen
+find_package(Doxygen 1.8.15)
+find_package(MCSS)
+if(DOXYGEN_FOUND AND MCSS_FOUND AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND JINJA2_FOUND AND LATEX_FOUND)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.doxy
+                 ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
+  add_custom_command(OUTPUT xml
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
+                     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy
+                     COMMAND ${DOXYGEN_EXECUTABLE} quinoa.doxy
+                     COMMAND ${MCSS_DOX2HTML5} --no-doxygen quinoa.doxy
+                     VERBATIM USES_TERMINAL)
+  add_custom_target(doc DEPENDS xml
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
+                    COMMENT "Documentation")
+  message(STATUS "Add target 'doc' to generate documentation to ./doc/html/index.html")
+endif()
+
 # Optionally enable cppcheck static analysis
 include(CppCheck)
 
@@ -592,7 +605,6 @@ include(CppCheck)
 enable_testing()
 
 # Include cmake code common to all regression tests
-message(STATUS "Adding regression tests ...")
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../regression
                  ${CMAKE_BINARY_DIR}/regression
                  EXCLUDE_FROM_ALL)

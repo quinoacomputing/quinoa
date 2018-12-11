@@ -16,40 +16,6 @@
     utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
     overview of the algorithm structure and how it interfaces with Charm++ is
     discussed in the Charm++ interface file src/Inciter/dg.ci.
-
-    #### Call graph ####
-    The following is a directed acyclic graph (DAG) that outlines the
-    asynchronous algorithm implemented in this class The detailed discussion of
-    the algorithm is given in the Charm++ interface file transporter.ci. On the
-    DAG orange fills denote global synchronization points that contain or
-    eventually lead to global reductions. Dashed lines are potential shortcuts
-    that allow jumping over some of the task-graph under some circumstances or
-    optional code paths (taken, e.g., only in DEBUG mode). See the detailed
-    discussion in dg.ci.
-    \dot
-    digraph "DG SDAG" {
-      rankdir="LR";
-      node [shape=record, fontname=Helvetica, fontsize=10];
-      OwnGhost [ label="OwnGhost"
-               tooltip="own ghost data computed"
-               URL="\ref inciter::DG::setupGhost"];
-      ReqGhost [ label="ReqGhost"
-               tooltip="all of ghost data have been requested from us"
-               URL="\ref inciter::DG::reqGhost"];
-      OwnGhost -> sendGhost [ style="solid" ];
-      ReqGhost -> sendGhost [ style="solid" ];
-      OwnSol [ label="OwnSol"
-               tooltip="own solution/unknown data computed"
-               URL="\ref inciter::DG::advance"];
-      ComSol [ label="ComSol"
-               tooltip="communicated (ghost) solution/unknown data received"
-               URL="\ref inciter::DG::comsol"];
-      OwnSol -> Solve [ style="solid" ];
-      ComSol -> Solve [ style="solid" ];
-    }
-    \enddot
-    \include Inciter/dg.ci
-
 */
 // *****************************************************************************
 #ifndef DG_h
@@ -97,11 +63,18 @@ class DG : public CBase_DG {
 
     //! Constructor
     explicit DG( const CProxy_Discretization& disc,
-                 const tk::CProxy_Solver&,
+                 const tk::CProxy_Solver& solver,
                  const FaceData& fd );
 
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wundefined-func-template"
+    #endif
     //! Migrate constructor
     explicit DG( CkMigrateMessage* ) {}
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
 
     //! Receive unique set of faces we potentially share with/from another chare
     void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
@@ -124,27 +97,61 @@ class DG : public CBase_DG {
     //! Compute time step size
     void dt();
 
+    //! Receive chare-boundary limiter function data from neighboring chares
+    void comlim( int fromch,
+                 const std::vector< std::size_t >& tetid,
+                 const std::vector< std::vector< tk::real > >& lfn );
+
     //! Receive chare-boundary ghost data from neighboring chares
     void comsol( int fromch,
                  const std::vector< std::size_t >& tetid,
                  const std::vector< std::vector< tk::real > >& u );
 
-    //! Evaluate whether to continue with next step
-    void eval();
-
     //! Advance equations to next time step
-    void advance( tk::real newdt );
+    void advance( tk::real );
 
+    //! Signal the runtime system that diagnostics have been computed
+    void diag();
+
+    //! Optionally refine/derefine mesh
+    void refine();
+
+    //! Receive new mesh from refiner
+    void resize( const tk::UnsMesh::Chunk& chunk,
+                 const tk::UnsMesh::Coords& coord,
+                 const tk::Fields& u,
+                 const std::unordered_map< int,
+                         std::vector< std::size_t > >& msum,
+                 const std::map< int, std::vector< std::size_t > >& bnode );
+
+    //! Compute left hand side
+    void lhs();
+
+    //! Compute limiter function
+    void lim();
+
+    //! Const-ref access to current solution
+    //! \param[in,out] u Reference to update with current solution
+    void solution( tk::Fields& u ) const { u = m_u; }
+
+    //! Resizing data sutrctures after mesh refinement has been completed
+    void resized();
+
+    //! Compute right hand side and solve system
+    void solve( tk::real newdt );
+
+    /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &p ) {
-      CBase_DG::pup(p);
+    void pup( PUP::er &p ) override {
+      p | m_disc;
+      p | m_solver;
       p | m_ncomfac;
       p | m_nadj;
       p | m_nsol;
+      p | m_nlim;
       p | m_itf;
-      p | m_disc;
       p | m_fd;
       p | m_u;
       p | m_un;
@@ -153,10 +160,11 @@ class DG : public CBase_DG {
       p | m_geoElem;
       p | m_lhs;
       p | m_rhs;
+      p | m_limFunc;
       p | m_nfac;
       p | m_nunk;
+      p | m_ncoord;
       p | m_msumset;
-      p | m_esuelTet;
       p | m_ipface;
       p | m_bndFace;
       p | m_ghostData;
@@ -166,6 +174,8 @@ class DG : public CBase_DG {
       p | m_exptGhost;
       p | m_recvGhost;
       p | m_diag;
+      p | m_stage;
+      p | m_rkcoef;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -181,19 +191,23 @@ class DG : public CBase_DG {
     using FaceMap =
       std::unordered_map< tk::UnsMesh::Face,  // 3 global node IDs
                           std::array< std::size_t, 2 >, // local face & tet ID
-                          tk::UnsMesh::FaceHasher,
-                          tk::UnsMesh::FaceEq >;
+                          tk::UnsMesh::Hash<3>,
+                          tk::UnsMesh::Eq<3> >;
 
+    //! Discretization proxy
+    CProxy_Discretization m_disc;
+    //! Linear system merger and solver proxy, only used to call created()
+    tk::CProxy_Solver m_solver;
     //! Counter for face adjacency communication map
     std::size_t m_ncomfac;
     //! Counter signaling that all ghost data have been received
     std::size_t m_nadj;
     //! Counter signaling that we have received all our solution ghost data
     std::size_t m_nsol;
+    //! Counter signaling that we have received all our limiter function ghost data
+    std::size_t m_nlim;
     //! Field output iteration count
     uint64_t m_itf;
-    //! Discretization proxy
-    CProxy_Discretization m_disc;
     //! Face data
     FaceData m_fd;
     //! Vector of unknown/solution average over each mesh element
@@ -210,18 +224,20 @@ class DG : public CBase_DG {
     tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
+    //! Vector of limiter function values
+    tk::Fields m_limFunc;
     //! Counter for number of faces on this chare (including chare boundaries)
     std::size_t m_nfac;
     //! Counter for number of unknowns on this chare (including ghosts)
     std::size_t m_nunk;
+    //! Counter for number of nodes on this chare excluding ghosts
+    std::size_t m_ncoord;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!    worker chares associated to their chare IDs
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
     //!   points. This is the same data as in Discretization::m_msum, but the
     //!   nodelist is stored as a set.
     std::unordered_map< int, std::unordered_set< std::size_t > > m_msumset;
-    //! Elements surrounding elements with -1 at boundaries, see genEsuelTet()
-    std::vector< int > m_esuelTet;
     //! Internal + physical boundary faces (inverse of inpofa)
     tk::UnsMesh::FaceSet m_ipface;
     //! Face * tet IDs associated to global node IDs of the face for each chare
@@ -247,6 +263,11 @@ class DG : public CBase_DG {
     std::set< std::size_t > m_recvGhost;
     //! Diagnostics object
     ElemDiagnostics m_diag;
+    //! Runge-Kutta stage counter
+    std::size_t m_stage;
+    //! Runge-Kutta coefficients
+    std::array< std::array< tk::real, 3 >, 2 >
+      m_rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -276,21 +297,23 @@ class DG : public CBase_DG {
     //! Fill elements surrounding a face along chare boundary
     void addEsuf( const std::array< std::size_t, 2 >& id, std::size_t ghostid );
 
+    //! Fill elements surrounding a element along chare boundary
+    void addEsuel( const std::array< std::size_t, 2 >& id,
+                   std::size_t ghostid,
+                   const tk::UnsMesh::Face& t );
+
     //! Fill face geometry data along chare boundary
     void addGeoFace( const tk::UnsMesh::Face& t,
                      const std::array< std::size_t, 2 >& id );
-
-    //! Compute left hand side
-    void lhs();
-
-    //! Compute right hand side and solve system
-    void solve();
 
     //! Output mesh and particle fields to files
     void out();
 
     //! Output mesh-based fields to file
     void writeFields( tk::real time );
+
+    //! Evaluate whether to continue with next step
+    void eval();
 };
 
 } // inciter::

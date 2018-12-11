@@ -1,5 +1,5 @@
 /*!
-  \page      PEGTL_license PEGTL license
+  \page      pegtl_license_page PEGTL license
 
 \verbatim
 Copyright (c) 2010 Dr. Colin Hirsch
@@ -22,9 +22,4 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 \endverbatim
 
-<hr>
-<div><small>
-<em>Page last updated:</em> Thu 04 Jun 2015 08:07:55 AM MDT
-<em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
-</small></div>
 */

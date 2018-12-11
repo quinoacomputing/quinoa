@@ -10,6 +10,7 @@
 #define HyperMeshReader_h
 
 #include <iosfwd>
+#include <utility>
 
 #include "Reader.h"
 

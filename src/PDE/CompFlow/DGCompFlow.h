@@ -13,18 +13,22 @@
 #include <cmath>
 #include <algorithm>
 #include <unordered_set>
-#include <unordered_map>
-
-#include <boost/mpl/vector.hpp>
-#include "NoWarning/for_each.h"
+#include <map>
 
 #include "Macro.h"
 #include "Exception.h"
 #include "Vector.h"
 #include "ContainerUtil.h"
-#include "RiemannSolver.h"
-#include "Riemann/HLLC.h"
-#include "Riemann/LaxFriedrichs.h"
+#include "UnsMesh.h"
+#include "Inciter/InputDeck/InputDeck.h"
+#include "Integrate/Quadrature.h"
+#include "Integrate/Initialize.h"
+#include "Integrate/Mass.h"
+#include "Integrate/Surface.h"
+#include "Integrate/Boundary.h"
+#include "Integrate/Volume.h"
+#include "Integrate/Source.h"
+#include "Integrate/Riemann/RiemannFactory.h"
 
 namespace inciter {
 
@@ -45,49 +49,6 @@ class CompFlow {
     using ncomp_t = kw::ncomp::info::expect::type;
     using bcconf_t = kw::sideset::info::expect::type;
 
-    //! Factory for Riemann solvers
-    //! \details This factory is used to store the constructors as a
-    //!   std::function of specific Riemann solvers that can be invoked at a
-    //!   later time compared to the point where the map is populated. The key
-    //!   is an enum, uniquely idenfitying a specific Riemann solver. The value
-    //!   is std::function storing a constructor to be invoked. The type of
-    //!   object stored in std::function is a generic (base) class constructor,
-    //!   which provides a polymorphyic interface (overridable functions) that
-    //!   specific (child) Riemann solvers override.
-    using RiemannFactory =
-      std::map< ctr::FluxType, std::function< RiemannSolver() > >;
-
-    //! Register a Riemann solver into the Riemann solver factory
-    struct registerRiemannSolver {
-      //! Factory to which to register the Riemann solver
-      RiemannFactory& factory;
-      //! Constructor
-      //! \param[in] f Factory
-      registerRiemannSolver( RiemannFactory& f ) : factory( f ) {}
-      //! \brief Function call operator templated on the type that implements
-      //!   a specific Riemann solver
-      template< typename U > void operator()( U ) {
-         // Function object holding the (default) constructor to be called later
-         // without bound arguments, since all specific Riemann solvers'
-         // constructors are compiler-generated (default) constructors, and thus
-         // taking no arguments.
-         std::function< U() > c = boost::value_factory< U >();
-         // Associate constructor function object to flux type in factory
-         factory.emplace( U::type(),
-           boost::bind(boost::value_factory< RiemannSolver >(), std::move(c)) );
-      }
-    };
-
-    // Register all supported Riemann solvers into a factory
-    //! \return Riemann solver factory
-    RiemannFactory RiemannSolvers() {
-      namespace mpl = boost::mpl;
-      using RiemannSolverList = mpl::vector< HLLC, LaxFriedrichs >;
-      RiemannFactory r;
-      mpl::for_each< RiemannSolverList >( registerRiemannSolver( r ) );
-      return r;
-    }
-
     //! Extract BC configuration ignoring if BC not specified
     //! \param[in] c Equation system index (among multiple systems configured)
     //! \return Vector of BC config of type bcconf_t used to apply BCs for all
@@ -107,7 +68,10 @@ class CompFlow {
 
   public:
     //! Constructor
+    //! \param[in] c Equation system index (among multiple systems configured)
     explicit CompFlow( ncomp_t c ) :
+      m_system( c ),
+      m_ncomp( 5 ),
       m_offset( g_inputdeck.get< tag::component >().offset< tag::compflow >(c) ),
       m_riemann( tk::cref_find( RiemannSolvers(),
                    g_inputdeck.get< tag::discr, tag::flux >() ) ),
@@ -119,116 +83,322 @@ class CompFlow {
     {}
 
     //! Initalize the compressible flow equations, prepare for time integration
-    //! \param[in] geoElem Element geometry array
+    //! \param[in] L Block diagonal mass matrix
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
-    void initialize( const tk::Fields& geoElem,
+    void initialize( const tk::Fields& L,
+                     const std::vector< std::size_t >& inpoel,
+                     const tk::UnsMesh::Coords& coord,
                      tk::Fields& unk,
                      tk::real t ) const
     {
-      Assert( geoElem.nunk() == unk.nunk(), "Size mismatch" );
-      std::size_t nelem = unk.nunk();
-
-      for (std::size_t e=0; e<nelem; ++e)
-      {
-        auto xcc = geoElem(e,1,0);
-        auto ycc = geoElem(e,2,0);
-        auto zcc = geoElem(e,3,0);
-
-        const auto s = Problem::solution( 0, xcc, ycc, zcc, t );
-        unk(e, 0, m_offset) = s[0];
-        unk(e, 1, m_offset) = s[1];
-        unk(e, 2, m_offset) = s[2];
-        unk(e, 3, m_offset) = s[3];
-        unk(e, 4, m_offset) = s[4];
-      }
+      tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
+                      Problem::solution, unk, t );
     }
 
     //! Compute the left hand side block-diagonal mass matrix
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] l Block diagonal mass matrix
-    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
-    {
-      Assert( geoElem.nunk() == l.nunk(), "Size mismatch" );
-      std::size_t nelem = geoElem.nunk();
-
-      for (std::size_t e=0; e<nelem; ++e)
-      {
-        for (ncomp_t c=0; c<5; ++c)
-          l(e, c, m_offset) = geoElem(e,0,0);
-      }
+    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
+      tk::mass( m_ncomp, m_offset, geoElem, l );
     }
 
     //! Compute right hand side
     //! \param[in] t Physical time
-    //! \param[in] geoElem Element geometry array
     //! \param[in] geoFace Face geometry array
-    //! \param[in] fd Face connectivity data object
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] limFunc Limiter function for higher-order solution dofs
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
               const tk::Fields& geoFace,
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
+              const std::vector< std::size_t >& inpoel,
+              const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
+              const tk::Fields& limFunc,
               tk::Fields& R ) const
     {
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
-      Assert( U.nunk() == geoElem.nunk(), "Number of unknowns in solution "
-              "vector and element-geometry at recent time step incorrect" );
-      Assert( U.nprop() == 5 && R.nprop() == 5,
-              "Number of components in solution and right-hand side vector " 
-              "must equal "+ std::to_string(5) );
+      Assert( U.nprop() == ndof*5 && R.nprop() == ndof*5,
+              "Number of components in solution and right-hand side vector "
+              "must equal "+ std::to_string(ndof*5) );
+      Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
+              "size" );
+      Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
+              "Mismatch in inpofa size" );
 
       // set rhs to zero
       R.fill(0.0);
 
-      const auto& esuf = fd.Esuf();
+      // configure Riemann flux function
+      using namespace std::placeholders;
+      auto rieflxfn = std::bind( &RiemannSolver::flux, m_riemann, _1, _2, _3 );
+      // configure a no-op lambda for prescribed velocity
+      auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real ){
+        return std::vector< std::array< tk::real, 3 > >( this->m_ncomp ); };
 
-      // compute internal surface flux integrals
-      for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
-      {
-        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-        std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
-        auto farea = geoFace(f,0,0);
+      // supported boundary condition types and associated state functions
+      std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > > bctypes{{
+        { m_bcdir, Dirichlet },
+        { m_bcsym, Symmetry },
+        { m_bcextrapolate, Extrapolate } }};
 
-        auto flux =
-          m_riemann.flux( f, geoFace, {{U.extract(el), U.extract(er)}} );
+      if (ndof == 1) {  // DG(P0)
 
-        for (ncomp_t c=0; c<5; ++c) {
-          R(el, c, m_offset) -= farea * flux[c];
-          R(er, c, m_offset) += farea * flux[c];
-        }
-      }
+        // compute internal surface flux integrals
+        tk::surfIntP0( m_system, m_ncomp, m_offset, fd, geoFace, rieflxfn,
+                       velfn, U, R );
+        // compute source term intehrals
+        tk::srcIntP0( m_system, m_ncomp, m_offset,
+                      t, geoElem, Problem::src, R );
+        // compute boundary surface flux integrals
+        for (const auto& b : bctypes)
+          tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, fd,
+            geoFace, t, rieflxfn, velfn, b.second, U, R );
 
-      // compute boundary surface flux integrals
-      bndIntegral< Dir >( m_bcdir, fd, geoFace, t, U, R );
-      bndIntegral< Sym >( m_bcsym, fd, geoFace, t, U, R );
-      bndIntegral< Extrapolate >( m_bcextrapolate, fd, geoFace, t, U, R );
+      } else if (ndof == 4) {  // DG(P1)
 
-      // Add source term to right hand side
-      for (std::size_t e=0; e<geoElem.nunk(); ++e) {
-        auto vole = geoElem(e,0,0);
-        auto xc = geoElem(e,1,0);
-        auto yc = geoElem(e,2,0);
-        auto zc = geoElem(e,3,0);
-        auto s = Problem::src(0, xc, yc, zc, t);
-        for (ncomp_t c=0; c<5; ++c)
-          R(e, c, m_offset) += vole * s[c];
-      }
+        // compute internal surface flux integrals
+        tk::surfIntP1( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
+                       rieflxfn, velfn, U, limFunc, R );
+        // compute source term intehrals
+        tk::srcIntP1( m_system, m_ncomp, m_offset,
+                      t, inpoel, coord, geoElem, Problem::src, R );
+        // compute volume integrals
+        tk::volIntP1( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
+                      velfn, U, limFunc, R );
+        // compute boundary surface flux integrals
+        for (const auto& b : bctypes)
+          tk::sidesetIntP1( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
+            inpoel, coord, t, rieflxfn, velfn, b.second, U, limFunc, R );
+
+      } else
+        Throw( "dg::Compflow::rhs() not defined for NDOF=" +
+               std::to_string(ndof) );
     }
 
     //! Compute the minimum time step size
-//     //! \param[in] U Solution vector at recent time step
-//     //! \param[in] coord Mesh node coordinates
-//     //! \param[in] inpoel Mesh element connectivity
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] inpoel Mesh element connectivity
+    //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] limFunc Limiter function for higher-order solution dofs
+    //! \param[in] U Solution vector at recent time step
     //! \return Minimum time step size
-    tk::real dt( const std::array< std::vector< tk::real >, 3 >& /*coord*/,
-                 const std::vector< std::size_t >& /*inpoel*/,
-                 const tk::Fields& /*U*/ ) const
+    tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
+                 const std::vector< std::size_t >& inpoel,
+                 const inciter::FaceData& fd,
+                 const tk::Fields& geoFace,
+                 const tk::Fields& geoElem,
+                 const tk::Fields& limFunc,
+                 const tk::Fields& U ) const
     {
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const tk::real g =
+        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
+
+      const auto& esuf = fd.Esuf();
+      const auto& inpofa = fd.Inpofa();
+
+      // Number of integration points
+      constexpr std::size_t NG = 3;
+
+      // arrays for quadrature points
+      std::array< std::array< tk::real, NG >, 2 > coordgp;
+      std::array< tk::real, NG > wgp;
+
+      tk::real rho, u, v, w, rhoE, p, a, vn, dSV_l, dSV_r;
+      std::vector< tk::real > delt( U.nunk(), 0.0 );
+
+      const auto& cx = coord[0];
+      const auto& cy = coord[1];
+      const auto& cz = coord[2];
+
+      // get quadrature point weights and coordinates for triangle
+      tk::GaussQuadratureTri( coordgp, wgp );
+
+      // compute internal surface maximum characteristic speed
+      for (std::size_t f=0; f<esuf.size()/2; ++f)
+      {
+        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+        auto er = esuf[2*f+1];
+
+        // nodal coordinates of the left element
+        std::array< tk::real, 3 >
+          p1_l{{ cx[ inpoel[4*el] ],
+                 cy[ inpoel[4*el] ],
+                 cz[ inpoel[4*el] ] }},
+          p2_l{{ cx[ inpoel[4*el+1] ],
+                 cy[ inpoel[4*el+1] ],
+                 cz[ inpoel[4*el+1] ] }},
+          p3_l{{ cx[ inpoel[4*el+2] ],
+                 cy[ inpoel[4*el+2] ],
+                 cz[ inpoel[4*el+2] ] }},
+          p4_l{{ cx[ inpoel[4*el+3] ],
+                 cy[ inpoel[4*el+3] ],
+                 cz[ inpoel[4*el+3] ] }};
+
+        auto detT_l = tk::Jacobian( p1_l, p2_l, p3_l, p4_l );
+
+
+        auto x1 = cx[ inpofa[3*f]   ];
+        auto y1 = cy[ inpofa[3*f]   ];
+        auto z1 = cz[ inpofa[3*f]   ];
+
+        auto x2 = cx[ inpofa[3*f+1] ];
+        auto y2 = cy[ inpofa[3*f+1] ];
+        auto z2 = cz[ inpofa[3*f+1] ];
+
+        auto x3 = cx[ inpofa[3*f+2] ];
+        auto y3 = cy[ inpofa[3*f+2] ];
+        auto z3 = cz[ inpofa[3*f+2] ];
+
+        dSV_l = 0.0;
+        dSV_r = 0.0;
+
+        // Gaussian quadrature
+        for (std::size_t igp=0; igp<NG; ++igp)
+        {
+          // Barycentric coordinates for the triangular face
+          auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];
+          auto shp2 = coordgp[0][igp];
+          auto shp3 = coordgp[1][igp];
+
+          // transformation of the quadrature point from the 2D reference/master
+          // element to physical domain, to obtain its physical (x,y,z)
+          // coordinates.
+          auto xgp = x1*shp1 + x2*shp2 + x3*shp3;
+          auto ygp = y1*shp1 + y2*shp2 + y3*shp3;
+          auto zgp = z1*shp1 + z2*shp2 + z3*shp3;
+
+          tk::real detT_gp(0);
+
+          // transformation of the physical coordinates of the quadrature point
+          // to reference space for the left element to be able to compute
+          // basis functions on the left element.
+          detT_gp = tk::Jacobian( p1_l, {{ xgp, ygp, zgp }}, p3_l, p4_l );
+          auto xi_l = detT_gp / detT_l;
+          detT_gp = tk::Jacobian( p1_l, p2_l, {{ xgp, ygp, zgp }}, p4_l );
+          auto eta_l = detT_gp / detT_l;
+          detT_gp = tk::Jacobian( p1_l, p2_l, p3_l, {{ xgp, ygp, zgp }} );
+          auto zeta_l = detT_gp / detT_l;
+
+          // basis functions at igp for the left element
+          auto B2l = 2.0 * xi_l + eta_l + zeta_l - 1.0;
+          auto B3l = 3.0 * eta_l + zeta_l - 1.0;
+          auto B4l = 4.0 * zeta_l - 1.0;
+
+          auto wt = wgp[igp] * geoFace(f,0,0);
+
+          std::array< std::vector< tk::real >, 2 > ugp;
+
+          // left element
+          for (ncomp_t c=0; c<5; ++c)
+          {
+            auto mark = c*ndof;
+            auto lmark = c*(ndof-1);
+            ugp[0].push_back(  U(el, mark,   m_offset)
+                             + limFunc(el, lmark+0, 0) * U(el, mark+1, m_offset) * B2l
+                             + limFunc(el, lmark+1, 0) * U(el, mark+2, m_offset) * B3l
+                             + limFunc(el, lmark+2, 0) * U(el, mark+3, m_offset) * B4l );
+          }
+
+          rho = ugp[0][0];
+          u = ugp[0][1]/rho;
+          v = ugp[0][2]/rho;
+          w = ugp[0][3]/rho;
+          rhoE = ugp[0][4];
+          p = (g-1.0)*(rhoE - rho*(u*u + v*v + w*w)/2.0);
+
+          a = std::sqrt(g * p / rho);
+
+          vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
+
+          dSV_l = wt * (std::fabs(vn) + a);
+
+          // right element
+          if (er > -1) {
+
+            // nodal coordinates of the right element
+            std::size_t eR = static_cast< std::size_t >( er );
+            std::array< tk::real, 3 >
+              p1_r{{ cx[ inpoel[4*eR] ],
+                     cy[ inpoel[4*eR] ],
+                     cz[ inpoel[4*eR] ] }},
+              p2_r{{ cx[ inpoel[4*eR+1] ],
+                     cy[ inpoel[4*eR+1] ],
+                     cz[ inpoel[4*eR+1] ] }},
+              p3_r{{ cx[ inpoel[4*eR+2] ],
+                     cy[ inpoel[4*eR+2] ],
+                     cz[ inpoel[4*eR+2] ] }},
+              p4_r{{ cx[ inpoel[4*eR+3] ],
+                     cy[ inpoel[4*eR+3] ],
+                     cz[ inpoel[4*eR+3] ] }};
+
+            auto detT_r = tk::Jacobian( p1_r, p2_r, p3_r, p4_r );
+
+            // transformation of the physical coordinates of the quadrature
+            // point to reference space for the right element
+            detT_gp = tk::Jacobian( p1_r, {{ xgp, ygp, zgp }}, p3_r, p4_r );
+            auto xi_r = detT_gp / detT_r;
+            detT_gp = tk::Jacobian( p1_r, p2_r, {{ xgp, ygp, zgp }}, p4_r );
+            auto eta_r = detT_gp / detT_r;
+            detT_gp = tk::Jacobian( p1_r, p2_r, p3_r, {{ xgp, ygp, zgp }} );
+            auto zeta_r = detT_gp / detT_r;
+
+            // basis functions at igp for the right element
+            auto B2r = 2.0 * xi_r + eta_r + zeta_r - 1.0;
+            auto B3r = 3.0 * eta_r + zeta_r - 1.0;
+            auto B4r = 4.0 * zeta_r - 1.0;
+
+            for (ncomp_t c=0; c<5; ++c)
+            {
+              auto mark = c*ndof;
+              auto lmark = c*(ndof-1);
+              ugp[1].push_back(  U(eR, mark,   m_offset)
+                               + limFunc(eR, lmark+0, 0) * U(eR, mark+1, m_offset) * B2r
+                               + limFunc(eR, lmark+1, 0) * U(eR, mark+2, m_offset) * B3r
+                               + limFunc(eR, lmark+2, 0) * U(eR, mark+3, m_offset) * B4r );
+            }
+
+            rho = ugp[1][0];
+            u = ugp[1][1]/rho;
+            v = ugp[1][2]/rho;
+            w = ugp[1][3]/rho;
+            rhoE = ugp[1][4];
+            p = (g-1.0)*(rhoE - rho*(u*u + v*v + w*w)/2.0);
+
+            a = std::sqrt(g * p / rho);
+
+            vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
+
+            dSV_r = wt * (std::fabs(vn) + a);
+            delt[eR] += std::max( dSV_l, dSV_r );
+          }
+
+          delt[el] += std::max( dSV_l, dSV_r );
+        }
+      }
+
       tk::real mindt = std::numeric_limits< tk::real >::max();
+
+      // compute allowable dt
+      for (std::size_t e=0; e<U.nunk(); ++e)
+      {
+        mindt = std::min( mindt, geoElem(e,0,0)/delt[e] );
+      }
+
       return mindt;
     }
 
@@ -268,13 +438,14 @@ class CompFlow {
 
     //! Return field output going to file
     //! \param[in] t Physical time
-    //! \param[in] V Total mesh volume
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
-    fieldOutput( tk::real t,
-                 tk::real V,
+    fieldOutput( const tk::Fields& /*L*/,
+                 const std::vector< std::size_t >& /*inpoel*/,
+                 const tk::UnsMesh::Coords& /*coord*/,
+                 tk::real t,
                  const tk::Fields& geoElem,
                  tk::Fields& U ) const
     {
@@ -285,7 +456,101 @@ class CompFlow {
       coord[1] = geoElem.extract(2,0);
       coord[2] = geoElem.extract(3,0);
 
-      return Problem::fieldOutput( 0, m_offset, t, V, v, coord, U );
+      return Problem::fieldOutput( 0, m_offset, t, 0.0, v, coord, U );
+    }
+
+    //! Return nodal field output going to file
+    std::vector< std::vector< tk::real > >
+    avgElemToNode( const std::vector< std::size_t >& inpoel,
+                   const tk::UnsMesh::Coords& coord,
+                   const tk::Fields& /*geoElem*/,
+                   const tk::Fields& limFunc,
+                   const tk::Fields& U ) const
+    {
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const tk::real g =
+        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
+
+      const auto& cx = coord[0];
+      const auto& cy = coord[1];
+      const auto& cz = coord[2];
+
+      std::vector< tk::real > count(cx.size(), 0);
+      std::vector< std::vector< tk::real > >
+        out( 6, std::vector< tk::real >( cx.size(), 0.0 ) );
+
+      for (std::size_t e=0; e<inpoel.size()/4 ; ++e)
+      {
+        // nodal coordinates of the left element
+        std::array< std::array< tk::real, 3 >, 4 >
+          pi{{ {{ cx[ inpoel[4*e] ],
+                 cy[ inpoel[4*e] ],
+                 cz[ inpoel[4*e] ] }},
+              {{ cx[ inpoel[4*e+1] ],
+                 cy[ inpoel[4*e+1] ],
+                 cz[ inpoel[4*e+1] ] }},
+              {{ cx[ inpoel[4*e+2] ],
+                 cy[ inpoel[4*e+2] ],
+                 cz[ inpoel[4*e+2] ] }},
+              {{ cx[ inpoel[4*e+3] ],
+                 cy[ inpoel[4*e+3] ],
+                 cz[ inpoel[4*e+3] ] }} }};
+        auto detT = tk::Jacobian( pi[0], pi[1], pi[2], pi[3] );
+
+        for (std::size_t i=0; i<4; ++i)
+        {
+          tk::real detT_gp;
+          // transformation of the physical coordinates of the quadrature point
+          // to reference space for the left element to be able to compute
+          // basis functions on the left element.
+          detT_gp = tk::Jacobian( pi[0], pi[i], pi[2], pi[3] );
+          auto xi = detT_gp / detT;
+          detT_gp = tk::Jacobian( pi[0], pi[1], pi[i], pi[3] );
+          auto eta = detT_gp / detT;
+          detT_gp = tk::Jacobian( pi[0], pi[1], pi[2], pi[i] );
+          auto zeta = detT_gp / detT;
+
+          auto B2 = 2.0 * xi + eta + zeta - 1.0;
+          auto B3 = 3.0 * eta + zeta - 1.0;
+          auto B4 = 4.0 * zeta - 1.0;
+
+          std::vector< tk::real > ugp(5,0);
+
+          for (ncomp_t c=0; c<5; ++c)
+          {
+            if (ndof == 1) {
+              ugp[c] =  U(e, c, m_offset);
+            } else {
+              auto mark = c*ndof;
+              auto lmark = c*(ndof-1);
+              ugp[c] =  U(e, mark,   m_offset)
+                      + limFunc(e, lmark+0, 0) * U(e, mark+1, m_offset) * B2
+                      + limFunc(e, lmark+1, 0) * U(e, mark+2, m_offset) * B3
+                      + limFunc(e, lmark+2, 0) * U(e, mark+3, m_offset) * B4;
+            }
+          }
+
+          auto u = ugp[1] / ugp[0];
+          auto v = ugp[2] / ugp[0];
+          auto w = ugp[3] / ugp[0];
+          auto p = (g - 1) * (ugp[4] - 0.5 * ugp[0] * (u*u + v*v + w*w) );
+
+          out[0][ inpoel[4*e+i] ] += ugp[0];
+          out[1][ inpoel[4*e+i] ] += u;
+          out[2][ inpoel[4*e+i] ] += v;
+          out[3][ inpoel[4*e+i] ] += w;
+          out[4][ inpoel[4*e+i] ] += ugp[4]/ugp[0];
+          out[5][ inpoel[4*e+i] ] += p;
+          count[ inpoel[4*e+i] ] += 1.0;
+        }
+      }
+
+      // average
+      for (std::size_t i=0; i<cx.size(); ++i)
+        for (std::size_t c=0; c<6; ++c)
+          out[c][i] /= count[i];
+
+      return out;
     }
 
     //! Return names of integral variables to be output to diagnostics file
@@ -293,8 +558,25 @@ class CompFlow {
     std::vector< std::string > names() const
     { return Problem::names(); }
 
+    //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
+    //! \param[in] xi X-coordinate at which to evaluate the analytic solution
+    //! \param[in] yi Y-coordinate at which to evaluate the analytic solution
+    //! \param[in] zi Z-coordinate at which to evaluate the analytic solution
+    //! \param[in] t Physical time at which to evaluate the analytic solution
+    //! \return Vector of analytic solution at given location and time
+    std::vector< tk::real >
+    analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
+    {
+      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
+      return std::vector< tk::real >( begin(s), end(s) );
+    }
+
   private:
-    //! Offset PDE operates from
+    //! Equation system index
+    const ncomp_t m_system;
+    //! Number of components in this PDE system
+    const ncomp_t m_ncomp;
+    //! Offset PDE system operates from
     const ncomp_t m_offset;
     //! Riemann solver
     RiemannSolver m_riemann;
@@ -305,126 +587,117 @@ class CompFlow {
     //! Extrapolation BC configuration
     const std::vector< bcconf_t > m_bcextrapolate;
 
-    //! \brief State policy class providing the left and right state of a face
-    //!   at Dirichlet boundaries
-    struct Dir {
-      static std::array< std::vector< tk::real >, 2 >
-      LR( const tk::Fields& U, std::size_t e,
-          tk::real xc, tk::real yc, tk::real zc,
-          std::array< tk::real, 3 > /*fn*/,
-          tk::real t ) {
-        auto ul = U.extract( e );
-        auto ur = ul;
-        const auto urbc = Problem::solution(0, xc, yc, zc, t);
-        for (ncomp_t c=0; c<5; ++c)
-          ur[c] = urbc[c];
-        return {{ std::move(ul), std::move(ur) }};
-      }
-    };
-
-    //! \brief State policy class providing the left and right state of a face
-    //!   at symmetric boundaries
-    struct Sym {
-      static std::array< std::vector< tk::real >, 2 >
-      LR( const tk::Fields& U, std::size_t e,
-          tk::real /*xc*/, tk::real /*yc*/, tk::real /*zc*/,
-          std::array< tk::real, 3 > fn,
-          tk::real /*t*/ ) {
-        auto ul = U.extract( e );
-        auto ur = ul;
-        // Internal cell velocity components
-        auto v1l = ul[1]/ul[0];
-        auto v2l = ul[2]/ul[0];
-        auto v3l = ul[3]/ul[0];
-        // Normal component of velocity
-        auto vnl = v1l*fn[0] + v2l*fn[1] + v3l*fn[2];
-        // Ghost state velocity components
-        auto v1r = v1l - 2.0*vnl*fn[0];
-        auto v2r = v2l - 2.0*vnl*fn[1];
-        auto v3r = v3l - 2.0*vnl*fn[2];
-        // Boundary condition
-        ur[0] = ul[0];
-        ur[1] = ur[0] * v1r;
-        ur[2] = ur[0] * v2r;
-        ur[3] = ur[0] * v3r;
-        ur[4] = ul[4];
-        return {{ std::move(ul), std::move(ur) }};
-      }
-    };
-
-    //! \brief State policy class providing the left and right state of a face
-    //!   at extrapolation boundaries
-    struct Extrapolate {
-      static std::array< std::vector< tk::real >, 2 >
-      LR( const tk::Fields& U, std::size_t e,
-          tk::real /*xc*/, tk::real /*yc*/, tk::real /*zc*/,
-          std::array< tk::real, 3 > /*fn*/,
-          tk::real /*t*/ ) {
-        return {{ U.extract( e ), U.extract( e ) }};
-      }
-    };
-
-    //! Compute boundary surface integral for a number of faces
-    //! \param[in] faces Face IDs at which to compute surface integral
-    //! \param[in] esuf Elements surrounding face, see tk::genEsuf()
-    //! \param[in] geoFace Face geometry array
-    //! \param[in] t Physical time
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in,out] R Right-hand side vector computed
-    //! \tparam State Policy class providing the left and right state at
-    //!   boundaries by its member function State::LR()
-    template< class State >
-    void surfInt( const std::vector< std::size_t >& faces,
-                  const std::vector< int >& esuf,
-                  const tk::Fields& geoFace,
-                  tk::real t,
-                  const tk::Fields& U,
-                  tk::Fields& R ) const
+    //! Evaluate physical flux function for this PDE system
+    //! \param[in] system Equation system index
+    //! \param[in] ncomp Number of scalar components in this PDE system
+    //! \param[in] ugp Numerical solution at the Gauss point at which to
+    //!   evaluate the flux
+    //! \return Flux vectors for all components in this PDE system
+    //! \note The function signature must follow tk::FluxFn
+    static tk::FluxFn::result_type
+    flux( ncomp_t system,
+          ncomp_t ncomp,
+          const std::vector< tk::real >& ugp,
+          const std::vector< std::array< tk::real, 3 > >& )
     {
-      for (const auto& f : faces) {
-        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-        Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
-        auto farea = geoFace(f,0,0);
-        auto xc = geoFace(f,4,0);
-        auto yc = geoFace(f,5,0);
-        auto zc = geoFace(f,6,0);
-        std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
-                                        geoFace(f,2,0),
-                                        geoFace(f,3,0) }};
+      Assert( ugp.size() == ncomp, "Size mismatch" );
+      IGNORE(ncomp);
 
-        //--- fluxes
-        auto flux = m_riemann.flux( f, geoFace, State::LR(U,el,xc,yc,zc,fn,t) );
+      const auto g =
+        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[ system ];
 
-        for (ncomp_t c=0; c<5; ++c)
-          R(el, c, m_offset) -= farea * flux[c];
-      }
+      auto u = ugp[1] / ugp[0];
+      auto v = ugp[2] / ugp[0];
+      auto w = ugp[3] / ugp[0];
+      auto p = (g - 1) * (ugp[4] - 0.5 * ugp[0] * (u*u + v*v + w*w) );
+
+      std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
+
+      fl[0][0] = ugp[1];
+      fl[1][0] = ugp[1] * u + p;
+      fl[2][0] = ugp[1] * v;
+      fl[3][0] = ugp[1] * w;
+      fl[4][0] = u * (ugp[4] + p);
+
+      fl[0][1] = ugp[2];
+      fl[1][1] = ugp[2] * u;
+      fl[2][1] = ugp[2] * v + p;
+      fl[3][1] = ugp[2] * w;
+      fl[4][1] = v * (ugp[4] + p);
+
+      fl[0][2] = ugp[3];
+      fl[1][2] = ugp[3] * u;
+      fl[2][2] = ugp[3] * v;
+      fl[3][2] = ugp[3] * w + p;
+      fl[4][2] = w * (ugp[4] + p);
+
+      return fl;
     }
 
-    //! Compute boundary surface flux integrals for a given boundary type
-    //! \tparam BCType Specifies the type of boundary condition to apply
-    //! \param bcconfig BC configuration vector for multiple side sets
-    //! \param[in] fd Face connectivity data object
-    //! \param[in] geoFace Face geometry array
+    //! \brief Boundary state function providing the left and right state of a
+    //!   face at Dirichlet boundaries
+    //! \param[in] system Equation system index
+    //! \param[in] ncomp Number of scalar components in this PDE system
+    //! \param[in] ul Left (domain-internal) state
+    //! \param[in] x X-coordinate at which to compute the states
+    //! \param[in] y Y-coordinate at which to compute the states
+    //! \param[in] z Z-coordinate at which to compute the states
     //! \param[in] t Physical time
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in,out] R Right-hand side vector computed
-    template< class BCType >
-    void
-    bndIntegral( const std::vector< bcconf_t >& bcconfig,
-                 const inciter::FaceData& fd,
-                 const tk::Fields& geoFace,
-                 tk::real t,
-                 const tk::Fields& U,
-                 tk::Fields& R ) const
+    //! \return Left and right states for all scalar components in this PDE
+    //!   system
+    //! \note The function signature must follow tk::StateFn
+    static tk::StateFn::result_type
+    Dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
+               tk::real x, tk::real y, tk::real z, tk::real t,
+               const std::array< tk::real, 3 >& )
     {
-      const auto& bface = fd.Bface();
-      const auto& esuf = fd.Esuf();
+      return {{ ul, Problem::solution( system, ncomp, x, y, z, t ) }};
+    }
 
-      for (const auto& s : bcconfig) {       // for all bc sidesets
-        auto bc = bface.find( std::stoi(s) );// faces for side set
-        if (bc != end(bface))
-          surfInt< BCType >( bc->second, esuf, geoFace, t, U, R );
-      }
+    //! \brief Boundary state function providing the left and right state of a
+    //!   face at symmetry boundaries
+    //! \param[in] ul Left (domain-internal) state
+    //! \param[in] fn Unit face normal
+    //! \return Left and right states for all scalar components in this PDE
+    //!   system
+    //! \note The function signature must follow tk::StateFn
+    static tk::StateFn::result_type
+    Symmetry( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+              tk::real, tk::real, tk::real, tk::real,
+              const std::array< tk::real, 3 >& fn )
+    {
+      std::vector< tk::real > ur(5);
+      // Internal cell velocity components
+      auto v1l = ul[1]/ul[0];
+      auto v2l = ul[2]/ul[0];
+      auto v3l = ul[3]/ul[0];
+      // Normal component of velocity
+      auto vnl = v1l*fn[0] + v2l*fn[1] + v3l*fn[2];
+      // Ghost state velocity components
+      auto v1r = v1l - 2.0*vnl*fn[0];
+      auto v2r = v2l - 2.0*vnl*fn[1];
+      auto v3r = v3l - 2.0*vnl*fn[2];
+      // Boundary condition
+      ur[0] = ul[0];
+      ur[1] = ur[0] * v1r;
+      ur[2] = ur[0] * v2r;
+      ur[3] = ur[0] * v3r;
+      ur[4] = ul[4];
+      return {{ std::move(ul), std::move(ur) }};
+    }
+
+    //! \brief Boundary state function providing the left and right state of a
+    //!   face at extrapolation boundaries
+    //! \param[in] ul Left (domain-internal) state
+    //! \return Left and right states for all scalar components in this PDE
+    //!   system
+    //! \note The function signature must follow tk::StateFn
+    static tk::StateFn::result_type
+    Extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+                 tk::real, tk::real, tk::real, tk::real,
+                 const std::array< tk::real, 3 >& )
+    {
+      return {{ ul, ul }};
     }
 };
 

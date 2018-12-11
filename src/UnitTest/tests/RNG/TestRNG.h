@@ -2,17 +2,15 @@
 /*!
   \file      src/UnitTest/tests/RNG/TestRNG.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Unit tests for RNG/RNG.h
-  \details   Unit tests for RNG/RNG.h
+  \brief     Reused test code for unit testing random number generators
+  \details   Reused test code for unit testing random number generators
 */
 // *****************************************************************************
-#ifndef test_RNG_h
-#define test_RNG_h
 
 #include <functional>
 
-#include <boost/functional/value_factory.hpp>
-#include "NoWarning/tut.h"
+#include "NoWarning/value_factory.h"
+
 #include "QuinoaConfig.h"
 
 #include "NoWarning/threefry.h"
@@ -21,6 +19,12 @@
 #ifdef HAS_MKL
   #include <mkl_vsl_types.h>
   #include "MKLRNG.h"
+#endif
+
+#ifdef HAS_MKL
+  #include <mkl_lapacke.h>
+#else
+  #include <lapacke.h>
 #endif
 
 #ifdef HAS_RNGSSE2
@@ -136,6 +140,56 @@ struct RNG_common {
     test_stats( numbers, 0.0, 1.0, 0.0, 0.0 );
   }
 
+  // Compute the Cholesky decomposition of a covariance matrix
+  //! \tparam D Number of dimensions of covariance matrix
+  //! \param[in] C Covariance matrix to decompose, only the upper diagonal and
+  //!   the diagonal are stored as the matrix is assumed to be symmetric (and
+  //!   positive definite)
+  //! \return Choleksy decomposition (upper triangle only)
+  template< std::size_t D >
+  static std::array< double, D*(D+1)/2 >
+  cholesky( const std::array< double, D*(D+1)/2 >& C ) {
+    auto cov = C;
+    lapack_int ndim = static_cast< lapack_int >( D );
+    #ifndef NDEBUG
+    lapack_int info =
+    #endif
+      LAPACKE_dpptrf( LAPACK_ROW_MAJOR, 'U', ndim, cov.data() );
+    Assert( info == 0, "Error in Cholesky-decomposition" );
+    return cov;
+  }
+
+  //! Test multi-variate Gaussian distribution of a random number generator
+  //! \tparam D Number of dimensions of covariance matrix
+  //! \tparam rng Random number generator class type whose instance to test
+  //! \param[in] r RNG to test
+  //! \param[in] mean Vector of means
+  //! \param[in] C Upper triangle of the covariance matrix
+  //! \details In real code the member function used to generate random numbers
+  //!   are called by different threads, but here we pass a different thread ID
+  //!   (first argument to the member function called) will exercise multiple
+  //!   streams in serial, i.e., emulate multi-threaded RNG on a single thread.
+  //!   This is done here this way because the unit test harness deals out each
+  //!   test to a PE, thus calling the generators from real threads would create
+  //!   contention.
+  template< std::size_t D, class rng >
+  static void test_gaussianmv( const rng& r,
+                               const std::array< double, D >& mean,
+                               const std::array< double, D*(D+1)/2 >& C )
+  {
+    const auto n = r.nthreads();
+    const std::size_t num = 1000000;
+    // Compute Cholesky decomposition of covariance matrix
+    auto cov = cholesky< D >( C );
+    // Generate joint Gaussian random vectors of D dimension
+    std::vector< double > numbers( num*D );
+    for (std::size_t i=0; i<n; ++i)
+      r.gaussianmv( static_cast<int>(i), num/n, D, mean.data(), cov.data(),
+                    &numbers[i*num*D/n] );
+    // Test first two moments
+    test_statsmv< D >( numbers, mean, C );
+  }
+
   //! Test beta distribution of a random number generator
   //! \param[in] r RNG to test
   //! \details In real code the member function used to generate random numbers
@@ -192,7 +246,8 @@ struct RNG_common {
   //! \param[in] r RNG to test
   template< class rng >
   static void test_copy_assignment( const rng& r ) {
-    auto v = r;
+    rng v( r );
+    v = r;
     test_gaussian( r );         // test that source of copy still works
     test_gaussian( v );         // test that the copy works
   }
@@ -207,6 +262,11 @@ struct RNG_common {
   }
 
   // Test the first four moments of random numbers passed in
+  //! \param[in] numbers Random numbers to test
+  //! \param[in] correct_mean Baseline mean to compare to
+  //! \param[in] correct_variance Baseline variance to compare to
+  //! \param[in] correct_skewness Baseline skewness to compare to
+  //! \param[in] correct_excess_kurtosis Baseline excess kurtosis to compare to
   static void test_stats( const std::vector< double >& numbers,
                           double correct_mean,
                           double correct_variance,
@@ -233,122 +293,53 @@ struct RNG_common {
                    s[3]/s[1]/s[1]-3.0, correct_excess_kurtosis, precision );
   }
 
+  // Test the first the two moments of multi-variate random numbers passed in
+  //! \tparam D Number of dimensions of sample space in multi-variate
+  //!    distribution
+  //! \param[in] numbers Random vectors to test, size: num*D, vector size: D
+  //! \param[in] correct_mean Baseline mean vector to compare to
+  //! \param[in] correct_cov Baseline covariance matrix to compare to
+  template< std::size_t D >
+  static void test_statsmv(
+     const std::vector< double >& numbers,
+     const std::array< double, D >& correct_mean,
+     const std::array< double, D*(D+1)/2 >& correct_cov )
+  {
+    const double precision = 0.05;
+    const auto N = numbers.size() / D;
+
+    // Compute and test means
+    std::array< double, D > mean;
+    for (std::size_t i=0; i<D; ++i) {
+      mean[i] = 0.0;
+      for (std::size_t j=0; j<N; ++j) mean[i] += numbers[j*D+i];
+      mean[i] /= N;
+      ensure_equals( "mean inaccurate", mean[i], correct_mean[i],
+                     std::abs(correct_mean[i])*precision );
+    }
+
+    // Compute and test covariance matrix
+    std::array< double, D*(D+1)/2 > cov;
+    cov.fill( 0.0 );
+    std::size_t e = 0;
+    for (std::size_t r=0; r<D; ++r)
+      for (std::size_t c=0; c<D; ++c) {
+        if (r<=c) {
+          for (std::size_t j=0; j<N; ++j)
+            cov[e] += (numbers[j*D+r] - mean[r]) * (numbers[j*D+c] - mean[c]);
+          ++e;
+        }
+      }
+    for (std::size_t c=0; c<cov.size(); ++c) {
+      cov[c] /= N;
+      ensure_equals( "covariance matrix entry " + std::to_string(c) +
+                     " inaccurate", cov[c], correct_cov[c],
+                     std::abs(correct_cov[c])*precision );
+    }
+  }
+
   static constexpr double eps = 1.0e-9;
   std::vector< tk::RNG > rngs;
 };
 
-//! Test group shortcuts
-using RNG_group = test_group< RNG_common, MAX_TESTS_IN_GROUP >;
-using RNG_object = RNG_group::object;
-
-//! Define test group
-static RNG_group RNG( "RNG/RNG" );
-
-//! Test definitions for group
-
-//! Test constructor taking an object modeling Concept in tk::RNG
-template<> template<>
-void RNG_object::test< 1 >() {
-  set_test_name( "ctor( rng() ) & nthreads()" );
-  for (const auto& r : rngs)
-    ensure_equals( "nthreads() via polymorphic tk::RNG call incorrect",
-                   r.nthreads(), 4 );
-}
-
-//! \brief Test constructor taking a function pointer to a constructor of an
-//!   object modeling Concept in tk::RNG
-template<> template<>
-void RNG_object::test< 2 >() {
-  set_test_name( "ctor( std::function<rng>(rng) )" );
-
-  std::vector< tk::RNG > v;
-
-  #ifdef HAS_MKL
-  add< tk::MKLRNG >( v, 4, VSL_BRNG_MCG31 );
-  #endif
-
-  #ifdef HAS_RNGSSE2
-  add< tk::RNGSSE< gm19_state, unsigned, gm19_generate_ > >
-     ( v, 4, gm19_init_sequence_ );
-  add< tk::RNGSSE< gm29_state, unsigned, gm29_generate_ > >
-     ( v, 4, gm29_init_short_sequence_ );
-  add< tk::RNGSSE< gm31_state, unsigned, gm31_generate_ > >
-     ( v, 4, gm31_init_short_sequence_ );
-  add< tk::RNGSSE< gm55_state, unsigned long long, gm55_generate_ > >
-     ( v, 4, gm55_init_short_sequence_ );
-  add< tk::RNGSSE< gm61_state, unsigned long long, gm61_generate_ > >
-     ( v, 4, gm61_init_sequence_ );
-  add< tk::RNGSSE< gq58x1_state, unsigned, gq58x1_generate_ > >
-     ( v, 4, gq58x1_init_short_sequence_ );
-  add< tk::RNGSSE< gq58x3_state, unsigned, gq58x3_generate_ > >
-     ( v, 4, gq58x3_init_short_sequence_ );
-  add< tk::RNGSSE< gq58x4_state, unsigned, gq58x4_generate_ > >
-     ( v, 4, gq58x4_init_short_sequence_ );
-  add< tk::RNGSSE< mt19937_state, unsigned long long, mt19937_generate_ > >
-     ( v, 4, mt19937_init_sequence_ );
-  add< tk::RNGSSE< lfsr113_state, unsigned long long, lfsr113_generate_ > >
-     ( v, 4, lfsr113_init_long_sequence_ );
-  add< tk::RNGSSE< mrg32k3a_state, unsigned long long, mrg32k3a_generate_ > >
-     ( v, 4, mrg32k3a_init_sequence_ );
-  #endif
-
-  add< tk::Random123< r123::Threefry2x64 > >( v, 4 );
-  add< tk::Random123< r123::Philox2x64 > >( v, 4 );
-
-  for (const auto& r : v)
-    ensure_equals( "nthreads() via polymorphic tk::RNG call incorrect",
-                   r.nthreads(), 4 );
-}
-
-//! Test Gaussian generator statistics via polymorphic call in tk::RNG
-template<> template<>
-void RNG_object::test< 3 >() {
-  set_test_name( "Gaussian from 4 emulated streams" );
-  for (const auto& r : rngs) test_gaussian( r );
-}
-
-//! Test beta generator statistics via polymorphic call in tk::RNG
-template<> template<>
-void RNG_object::test< 4 >() {
-  set_test_name( "beta from 4 emulated streams" );
-  for (const auto& r : rngs) test_beta( r );
-}
-
-//! Test uniform generator statistics via polymorphic call in tk::RNG
-template<> template<>
-void RNG_object::test< 5 >() {
-  set_test_name( "uniform from 4 emulated streams" );
-  for (const auto& r : rngs) test_uniform( r );
-}
-
-//! Test copy constructor
-template<> template<>
-void RNG_object::test< 6 >() {
-  set_test_name( "copy constructor" );
-  for (const auto& r : rngs) test_copy_ctor( r );
-}
-
-//! Test move constructor
-template<> template<>
-void RNG_object::test< 7 >() {
-  set_test_name( "move constructor" );
-  for (const auto& r : rngs) test_move_ctor( r );
-}
-
-//! Test copy assignment
-template<> template<>
-void RNG_object::test< 8 >() {
-  set_test_name( "copy assignment" );
-  for (const auto& r : rngs) test_copy_assignment( r );
-}
-
-//! Test move assignment
-template<> template<>
-void RNG_object::test< 9 >() {
-  set_test_name( "move assignment" );
-  for (const auto& r : rngs) test_move_assignment( r );
-}
-
 } // tut::
-
-#endif // test_RNG_h

@@ -3,8 +3,8 @@
 
 #include <iostream>
 #include <vector>
-#include <sstream>
 
+#include "Loggers.h"
 #include "AMR_types.h"
 
 namespace AMR {

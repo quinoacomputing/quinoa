@@ -3,7 +3,7 @@
 
 add_regression_test(MassFracBeta ${WALKER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES massfracbeta.q stat.txt.std massfracbeta.ndiff.cfg
+                    INPUTFILES massfracbeta.q
                     ARGS -c massfracbeta.q -v
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt
@@ -11,7 +11,7 @@ add_regression_test(MassFracBeta ${WALKER_EXECUTABLE}
 
 add_regression_test(MassFracBeta ${WALKER_EXECUTABLE}
                     NUMPES 2
-                    INPUTFILES massfracbeta.q stat.txt.std massfracbeta.ndiff.cfg
+                    INPUTFILES massfracbeta.q
                     ARGS -c massfracbeta.q -v
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt
@@ -19,7 +19,7 @@ add_regression_test(MassFracBeta ${WALKER_EXECUTABLE}
 
 add_regression_test(MassFracBeta ${WALKER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES massfracbeta.q stat.txt.std massfracbeta.ndiff.cfg
+                    INPUTFILES massfracbeta.q
                     ARGS -c massfracbeta.q -v
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt
@@ -27,7 +27,7 @@ add_regression_test(MassFracBeta ${WALKER_EXECUTABLE}
 
 add_regression_test(MassFracBeta_u0.9 ${WALKER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES massfracbeta.q stat.txt.std massfracbeta.ndiff.cfg
+                    INPUTFILES massfracbeta.q
                     ARGS -c massfracbeta.q -v -u 0.9
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt

@@ -13,8 +13,9 @@
 
 #include <string>
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "NoWarning/set.h"
-#include "NoWarning/for_each.h"
 
 #include "Control.h"
 #include "HelpFactory.h"
@@ -34,10 +35,12 @@ class CmdLine : public tk::Control<
                   tag::io,             ios,
                   tag::virtualization, kw::virtualization::info::expect::type,
                   tag::verbose,        bool,
+                  tag::chare,          bool,
                   tag::benchmark,      bool,
                   tag::feedback,       bool,
                   tag::help,           bool,
                   tag::helpctr,        bool,
+                  tag::quiescence,     bool,
                   tag::cmdinfo,        tk::ctr::HelpFactory,
                   tag::ctrinfo,        tk::ctr::HelpFactory,
                   tag::helpkw,         tk::ctr::HelpKw,
@@ -46,18 +49,20 @@ class CmdLine : public tk::Control<
   public:
     //! \brief Inciter command-line keywords
     //! \see tk::grm::use and its documentation
-    using keywords = boost::mpl::set< kw::verbose
-                                    , kw::benchmark
-                                    , kw::feedback
-                                    , kw::virtualization
-                                    , kw::help
-                                    , kw::helpctr
-                                    , kw::helpkw
-                                    , kw::control
-                                    , kw::input
-                                    , kw::output
-                                    , kw::diagnostics
-                                    >;
+    using keywords = brigand::set< kw::verbose
+                                 , kw::charestate
+                                 , kw::benchmark
+                                 , kw::feedback
+                                 , kw::virtualization
+                                 , kw::help
+                                 , kw::helpctr
+                                 , kw::helpkw
+                                 , kw::control
+                                 , kw::input
+                                 , kw::output
+                                 , kw::diagnostics
+                                 , kw::quiescence
+                                 >;
 
     //! \brief Constructor: set all defaults.
     //! \param[in] ctrinfo std::map of control file keywords and their info
@@ -95,10 +100,11 @@ class CmdLine : public tk::Control<
       set< tag::io, tag::part >( "track.h5part" );
       set< tag::virtualization >( 0.0 );
       set< tag::verbose >( false ); // Quiet output by default
+      set< tag::chare >( false ); // No chare state output by default
       set< tag::benchmark >( false ); // No benchmark mode by default
       set< tag::feedback >( false ); // No detailed feedback by default
       // Initialize help: fill from own keywords + add map passed in
-      boost::mpl::for_each< keywords >( tk::ctr::Info( get< tag::cmdinfo >() ) );
+      brigand::for_each< keywords >( tk::ctr::Info( get< tag::cmdinfo >() ) );
       get< tag::ctrinfo >() = std::move( ctrinfo );
     }
 
@@ -110,10 +116,12 @@ class CmdLine : public tk::Control<
       tk::Control< tag::io,             ios,
                    tag::virtualization, kw::virtualization::info::expect::type,
                    tag::verbose,        bool,
+                   tag::chare,          bool,
                    tag::benchmark,      bool,
                    tag::feedback,       bool,
                    tag::help,           bool,
                    tag::helpctr,        bool,
+                   tag::quiescence,     bool,
                    tag::cmdinfo,        tk::ctr::HelpFactory,
                    tag::ctrinfo,        tk::ctr::HelpFactory,
                    tag::helpkw,         tk::ctr::HelpKw,

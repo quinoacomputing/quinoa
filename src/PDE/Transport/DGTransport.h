@@ -15,12 +15,20 @@
 #include <limits>
 #include <cmath>
 #include <unordered_set>
-#include <unordered_map>
+#include <map>
 
 #include "Macro.h"
 #include "Exception.h"
 #include "Vector.h"
 #include "Inciter/Options/BC.h"
+#include "UnsMesh.h"
+#include "Integrate/Quadrature.h"
+#include "Integrate/Initialize.h"
+#include "Integrate/Mass.h"
+#include "Integrate/Surface.h"
+#include "Integrate/Boundary.h"
+#include "Integrate/Volume.h"
+#include "Integrate/Riemann/Upwind.h"
 
 namespace inciter {
 
@@ -63,100 +71,111 @@ class Transport {
     //! Constructor
     //! \param[in] c Equation system index (among multiple systems configured)
     explicit Transport( ncomp_t c ) :
-      m_c( c ),
+      m_system( c ),
       m_ncomp(
         g_inputdeck.get< tag::component >().get< tag::transport >().at(c) ),
       m_offset(
         g_inputdeck.get< tag::component >().offset< tag::transport >(c) ),
       m_bcextrapolate( config< tag::bcextrapolate >( c ) ),
       m_bcinlet( config< tag::bcinlet >( c ) ),
-      m_bcoutlet( config< tag::bcoutlet >( c ) )
+      m_bcoutlet( config< tag::bcoutlet >( c ) ),
+      m_bcdir( config< tag::bcdir >( c ) )
     {
-      Problem::errchk( m_c, m_ncomp );
+      Problem::errchk( m_system, m_ncomp );
     }
 
-    //! Initalize the transport equations using problem policy
-    //! \param[in] geoElem Element geometry array
+    //! Initalize the transport equations for DG
+    //! \param[in] L Element mass matrix
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
-    void initialize( const tk::Fields& geoElem,
+    void initialize( const tk::Fields& L,
+                     const std::vector< std::size_t >& inpoel,
+                     const tk::UnsMesh::Coords& coord,
                      tk::Fields& unk,
                      tk::real t ) const
     {
-      Assert( geoElem.nunk() == unk.nunk(), "Size mismatch" );
-      std::size_t nelem = unk.nunk();
-
-      for (std::size_t e=0; e<nelem; ++e)
-      {
-        auto xcc = geoElem(e,1,0);
-        auto ycc = geoElem(e,2,0);
-        auto zcc = geoElem(e,3,0);
-
-        const auto s = Problem::solution( m_c, m_ncomp, xcc, ycc, zcc, t );
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-          unk(e, c, m_offset) = s[c];
-      }
+      tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
+                      Problem::solution, unk, t );
     }
 
     //! Compute the left hand side mass matrix
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] l Block diagonal mass matrix
-    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
-    {
-      Assert( geoElem.nunk() == l.nunk(), "Size mismatch" );
-      std::size_t nelem = geoElem.nunk();
-
-      for (std::size_t e=0; e<nelem; ++e)
-      {
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-          l(e, c, m_offset) = geoElem(e,0,0);
-      }
+    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
+      tk::mass( m_ncomp, m_offset, geoElem, l );
     }
 
     //! Compute right hand side
+    //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
+    //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] limFunc Limiter function for higher-order solution dofs
     //! \param[in,out] R Right-hand side vector computed
-    void rhs( tk::real,
+    void rhs( tk::real t,
               const tk::Fields& geoFace,
-              const tk::Fields&,
+              const tk::Fields& geoElem,
               const inciter::FaceData& fd,
+              const std::vector< std::size_t >& inpoel,
+              const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
+              const tk::Fields& limFunc,
               tk::Fields& R ) const
     {
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
-      Assert( U.nprop() == m_ncomp && R.nprop() == m_ncomp,
+      Assert( U.nprop() == ndof*m_ncomp && R.nprop() == ndof*m_ncomp,
               "Number of components in solution and right-hand side vector " 
-              "must equal "+ std::to_string(m_ncomp) );
-
-      const auto& bface = fd.Bface();
-      const auto& esuf = fd.Esuf();
+              "must equal "+ std::to_string(ndof*m_ncomp) );
+      Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
+              "size" );
+      Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
+              "Mismatch in inpofa size" );
 
       // set rhs to zero
       R.fill(0.0);
 
-      // compute internal surface flux integrals
-      for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
-      {
-        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-        std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
-        auto farea = geoFace(f,0,0);
+      // supported boundary condition types and associated state functions
+      std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > > bctypes{{
+        { m_bcextrapolate, Extrapolate },
+        { m_bcinlet, Inlet },
+        { m_bcoutlet, Outlet },
+        { m_bcdir, Dirichlet } }};
 
-        //--- upwind fluxes
-        auto flux = upwindFlux( f, geoFace, {{U.extract(el), U.extract(er)}} );
+      if (ndof == 1) {  // DG(P0)
 
-        for (ncomp_t c=0; c<m_ncomp; ++c) {
-          R(el, c, m_offset) -= farea * flux[c];
-          R(er, c, m_offset) += farea * flux[c];
-        }
-      }
+        // compute internal surface flux integrals
+        tk::surfIntP0( m_system, m_ncomp, m_offset, fd, geoFace, Upwind::flux,
+                       Problem::prescribedVelocity, U, R );
+        // compute boundary surface flux integrals
+        for (const auto& b : bctypes)
+          tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
+            t, Upwind::flux, Problem::prescribedVelocity, b.second, U, R );
 
-      // compute boundary surface flux integrals
-      bndIntegral< Extrapolate >( m_bcextrapolate, bface, esuf, geoFace, U, R );
-      bndIntegral< Inlet >( m_bcinlet, bface, esuf, geoFace, U, R );
-      bndIntegral< Outlet >( m_bcoutlet, bface, esuf, geoFace, U, R );
+      } else if (ndof == 4) {  // DG(P1)
+
+        // compute internal surface flux integrals
+        tk::surfIntP1( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
+                     Upwind::flux, Problem::prescribedVelocity, U, limFunc, R );
+        // compute volume integrals
+        tk::volIntP1( m_system, m_ncomp, m_offset, inpoel, coord, geoElem,
+                      flux, Problem::prescribedVelocity, U, limFunc, R );
+        // compute boundary surface flux integrals
+        for (const auto& b : bctypes)
+          tk::sidesetIntP1( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
+            inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
+            b.second, U, limFunc, R );
+
+      } else
+        Throw( "dg::Transport::rhs() not defined for NDOF=" +
+               std::to_string(ndof) );
     }
 
     //! Compute the minimum time step size
@@ -166,6 +185,10 @@ class Transport {
     //! \return Minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& /*coord*/,
                  const std::vector< std::size_t >& /*inpoel*/,
+                 const inciter::FaceData& /*fd*/,
+                 const tk::Fields& /*geoFace*/,
+                 const tk::Fields& /*geoElem*/,
+                 const tk::Fields& /*limFunc*/,
                  const tk::Fields& /*U*/ ) const
     {
       tk::real mindt = std::numeric_limits< tk::real >::max();
@@ -185,7 +208,7 @@ class Transport {
     std::vector< std::string > fieldNames() const {
       std::vector< std::string > n;
       const auto& depvar =
-        g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_c);
+      g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_system);
       // will output numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_numerical" );
@@ -198,7 +221,21 @@ class Transport {
       return n;
     }
 
+    //!
+    std::vector< std::vector< tk::real > >
+    avgElemToNode( const std::vector< std::size_t >& /*inpoel*/,
+                   const tk::UnsMesh::Coords& /*coord*/,
+                   const tk::Fields& /*geoElem*/,
+                   const tk::Fields& /*limFunc*/,
+                   const tk::Fields& /*U*/ ) const
+    {
+      std::vector< std::vector< tk::real > > out;
+      return out;
+    }
+
     //! Return field output going to file
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
     //! \param[in] t Physical time
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] U Solution vector at recent time step
@@ -207,26 +244,31 @@ class Transport {
     //!   which provides the vector of field names
     //! \note U is overwritten
     std::vector< std::vector< tk::real > >
-    fieldOutput( tk::real t,
-                 tk::real /*V*/,
+    fieldOutput( const tk::Fields&,
+                 const std::vector< std::size_t >& inpoel,
+                 const tk::UnsMesh::Coords& coord,
+                 tk::real t,
                  const tk::Fields& geoElem,
                  tk::Fields& U ) const
     {
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       Assert( geoElem.nunk() == U.nunk(), "Size mismatch" );
       std::vector< std::vector< tk::real > > out;
       // will output numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
-        out.push_back( U.extract( c, m_offset ) );
+        out.push_back( U.extract( c*ndof, m_offset ) );
       // evaluate analytic solution at time t
       auto E = U;
-      initialize( geoElem, E, t );
+      tk::initializeP0( m_system, m_ncomp, m_offset, inpoel, coord,
+                        Problem::solution, E, t );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
-        out.push_back( E.extract( c, m_offset ) );
+        out.push_back( E.extract( c*ndof, m_offset ) );
       // will output error for all components
       for (ncomp_t c=0; c<m_ncomp; ++c) {
-        auto u = U.extract( c, m_offset );
-        auto e = E.extract( c, m_offset );
+        auto mark = c*ndof;
+        auto u = U.extract( mark, m_offset );
+        auto e = E.extract( mark, m_offset );
         for (std::size_t i=0; i<u.size(); ++i)
           e[i] = std::pow( e[i] - u[i], 2.0 ) * geoElem(i,0,0);
         out.push_back( e );
@@ -239,15 +281,25 @@ class Transport {
     std::vector< std::string > names() const {
       std::vector< std::string > n;
       const auto& depvar =
-        g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_c);
+      g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_system);
       // construct the name of the numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) );
       return n;
     }
 
+    //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
+    //! \param[in] xi X-coordinate at which to evaluate the analytic solution
+    //! \param[in] yi Y-coordinate at which to evaluate the analytic solution
+    //! \param[in] zi Z-coordinate at which to evaluate the analytic solution
+    //! \param[in] t Physical time at which to evaluate the analytic solution
+    //! \return Vector of analytic solution at given spatial location and time
+    std::vector< tk::real >
+    analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
+    { return Problem::solution( m_system, m_ncomp, xi, yi, zi, t ); }
+
   private:
-    const ncomp_t m_c;                  //!< Equation system index
+    const ncomp_t m_system;             //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     const ncomp_t m_offset;             //!< Offset this PDE operates from
     //! Extrapolation BC configuration
@@ -256,131 +308,97 @@ class Transport {
     const std::vector< bcconf_t > m_bcinlet;
     //! Outlet BC configuration
     const std::vector< bcconf_t > m_bcoutlet;
+    //! Dirichlet BC configuration
+    const std::vector< bcconf_t > m_bcdir;
 
-    //! \brief State policy class providing the left and right state of a face
-    //!   at extrapolation boundaries
-    struct Extrapolate {
-      static std::array< std::vector< tk::real >, 2 >
-      LR( const tk::Fields& U, std::size_t e ) {
-        return {{ U.extract( e ), U.extract( e ) }};
-      }
-    };
-
-    //! \brief State policy class providing the left and right state of a face
-    //!   at inlet boundaries
-    struct Inlet {
-      static std::array< std::vector< tk::real >, 2 >
-      LR( const tk::Fields& U, std::size_t e ) {
-        auto ul = U.extract( e );
-        auto ur = ul;
-        std::fill( begin(ur), end(ur), 0.0 );
-        return {{ std::move(ul), std::move(ur) }};
-      }
-    };
-
-    //! \brief State policy class providing the left and right state of a face
-    //!   at outlet boundaries
-    struct Outlet {
-      static std::array< std::vector< tk::real >, 2 >
-      LR( const tk::Fields& U, std::size_t e ) {
-        return {{ U.extract( e ), U.extract( e ) }};
-      }
-    };
-
-    //! Compute boundary surface integral for a number of faces
-    //! \param[in] faces Face IDs at which to compute surface integral
-    //! \param[in] esuf Elements surrounding face, see tk::genEsuf()
-    //! \param[in] geoFace Face geometry array
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in,out] R Right-hand side vector computed
-    //! \tparam State Policy class providing the left and right state at
-    //!   boundaries by its member function State::LR()
-    template< class State >
-    void surfInt( const std::vector< std::size_t >& faces,
-                  const std::vector< int >& esuf,
-                  const tk::Fields& geoFace,
-                  const tk::Fields& U,
-                  tk::Fields& R ) const
+    //! Evaluate physical flux function for this PDE system
+    //! \param[in] ncomp Number of scalar components in this PDE system
+    //! \param[in] ugp Numerical solution at the Gauss point at which to
+    //!   evaluate the flux
+    //! \param[in] v Prescribed velocity evaluated at the Gauss point at which
+    //!   to evaluate the flux
+    //! \return Flux vectors for all components in this PDE system
+    //! \note The function signature must follow tk::FluxFn
+    static tk::FluxFn::result_type
+    flux( ncomp_t,
+          ncomp_t ncomp,
+          const std::vector< tk::real >& ugp,
+          const std::vector< std::array< tk::real, 3 > >& v )
     {
-      for (const auto& f : faces) {
-        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-        Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
-        auto farea = geoFace(f,0,0);
+      Assert( ugp.size() == ncomp, "Size mismatch" );
+      Assert( v.size() == ncomp, "Size mismatch" );
 
-        //--- upwind fluxes
-        auto flux = upwindFlux( f, geoFace, State::LR(U,el) );
+      std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
 
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-          R(el, c, m_offset) -= farea * flux[c];
-      }
+      for (ncomp_t c=0; c<ncomp; ++c)
+        fl[c] = {{ v[c][0] * ugp[c], v[c][1] * ugp[c], v[c][2] * ugp[c] }};
+
+      return fl;
     }
 
-    //! Compute boundary surface flux integrals for a given boundary type
-    //! \tparam BCType Specifies the type of boundary condition to apply
-    //! \param bcconfig BC configuration vector for multiple side sets
-    //! \param[in] bface Boundary faces side-set information
-    //! \param[in] esuf Elements surrounding faces
-    //! \param[in] geoFace Face geometry array
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in,out] R Right-hand side vector computed
-    template< class BCType >
-    void
-    bndIntegral( const std::vector< bcconf_t >& bcconfig,
-                 const std::unordered_map< int,
-                   std::vector< std::size_t > >& bface,
-                 const std::vector< int >& esuf,
-                 const tk::Fields& geoFace,
-                 const tk::Fields& U,
-                 tk::Fields& R ) const
+    //! \brief Boundary state function providing the left and right state of a
+    //!   face at extrapolation boundaries
+    //! \param[in] ul Left (domain-internal) state
+    //! \return Left and right states for all scalar components in this PDE
+    //!   system
+    //! \note The function signature must follow tk::StateFn
+    static tk::StateFn::result_type
+    Extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+                 tk::real, tk::real, tk::real, tk::real,
+                 const std::array< tk::real, 3 >& )
     {
-      for (const auto& s : bcconfig) {       // for all bc sidesets
-        auto bc = bface.find( std::stoi(s) );// faces for side set
-        if (bc != end(bface))
-          surfInt< BCType >( bc->second, esuf, geoFace, U, R );
-      }
+      return {{ ul, ul }};
     }
 
-    //! Riemann solver using upwind method
-    //! \param[in] f Face ID
-    //! \param[in] geoFace Face geometry array
-    //! \param[in] u Left and right unknown/state vector
-    //! \return Riemann solution using upwind method
-    std::vector< tk::real >
-    upwindFlux( std::size_t f,
-                const tk::Fields& geoFace,
-                const std::array< std::vector< tk::real >, 2 >& u ) const
+    //! \brief Boundary state function providing the left and right state of a
+    //!   face at extrapolation boundaries
+    //! \param[in] ul Left (domain-internal) state
+    //! \return Left and right states for all scalar components in this PDE
+    //!   system
+    //! \note The function signature must follow tk::StateFn
+    static tk::StateFn::result_type
+    Inlet( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+           tk::real, tk::real, tk::real, tk::real,
+           const std::array< tk::real, 3 >& )
     {
-      std::vector< tk::real > flux( u[0].size(), 0 );
-
-      auto xc = geoFace(f,4,0);
-      auto yc = geoFace(f,5,0);
-      auto zc = geoFace(f,6,0);
-
-      std::array< tk::real, 3 > fn {{ geoFace(f,1,0),
-                                      geoFace(f,2,0),
-                                      geoFace(f,3,0) }};
-
-      const auto vel = Problem::prescribedVelocity( xc, yc, zc, m_c, m_ncomp );
-    
-      for(ncomp_t c=0; c<m_ncomp; ++c)
-      {
-        auto ax = vel[c][0];
-        auto ay = vel[c][1];
-        auto az = vel[c][2];
-
-        // wave speed
-        tk::real swave = ax*fn[0] + ay*fn[1] + az*fn[2];
-    
-        // upwinding
-        tk::real splus  = 0.5 * (swave + fabs(swave));
-        tk::real sminus = 0.5 * (swave - fabs(swave));
-    
-        flux[c] = splus * u[0][c] + sminus * u[1][c];
-      }
-    
-      return flux;
+      auto ur = ul;
+      std::fill( begin(ur), end(ur), 0.0 );
+      return {{ ul, std::move(ur) }};
     }
 
+    //! \brief Boundary state function providing the left and right state of a
+    //!   face at outlet boundaries
+    //! \param[in] ul Left (domain-internal) state
+    //! \return Left and right states for all scalar components in this PDE
+    //!   system
+    //! \note The function signature must follow tk::StateFn
+    static tk::StateFn::result_type
+    Outlet( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+            tk::real, tk::real, tk::real, tk::real,
+            const std::array< tk::real, 3 >& )
+    {
+      return {{ ul, ul }};
+    }
+
+    //! \brief Boundary state function providing the left and right state of a
+    //!   face at Dirichlet boundaries
+    //! \param[in] system Equation system index
+    //! \param[in] ncomp Number of scalar components in this PDE system
+    //! \param[in] ul Left (domain-internal) state
+    //! \param[in] x X-coordinate at which to compute the states
+    //! \param[in] y Y-coordinate at which to compute the states
+    //! \param[in] z Z-coordinate at which to compute the states
+    //! \param[in] t Physical time
+    //! \return Left and right states for all scalar components in this PDE
+    //!   system
+    //! \note The function signature must follow tk::StateFn
+    static tk::StateFn::result_type
+    Dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
+               tk::real x, tk::real y, tk::real z, tk::real t,
+               const std::array< tk::real, 3 >& )
+    {
+      return {{ ul, Problem::solution( system, ncomp, x, y, z, t ) }};
+    }
 };
 
 } // dg::

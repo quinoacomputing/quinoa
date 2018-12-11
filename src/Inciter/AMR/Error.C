@@ -20,13 +20,13 @@ using AMR::Error;
 
 tk::real
 Error::scalar( const tk::Fields& u,
-               const std::pair< std::size_t, std::size_t >& edge,
+               const edge_t& edge,
                ncomp_t c,
                const std::array< std::vector< tk::real >, 3 >& coord,
                const std::vector< std::size_t >& inpoel,
                const std::pair< std::vector< std::size_t >,
                                 std::vector< std::size_t > >& esup,
-               inciter::ctr::AMRErrorType err )
+               inciter::ctr::AMRErrorType err ) const
 // *****************************************************************************
 //  Estimate error for scalar quantity
 //! \param[in] u Solution vector
@@ -50,8 +50,8 @@ Error::scalar( const tk::Fields& u,
 
 tk::real
 Error::error_jump( const tk::Fields& u,
-                   const std::pair< std::size_t, std::size_t >& edge,
-                   ncomp_t c )
+                   const edge_t& edge,
+                   ncomp_t c ) const
 // *****************************************************************************
 //  Estimate error for scalar quantity on edge based on jump in solution
 //! \param[in] u Solution vector
@@ -62,8 +62,8 @@ Error::error_jump( const tk::Fields& u,
 {
   const tk::real small = std::numeric_limits< tk::real >::epsilon();
 
-  auto a = edge.first;
-  auto b = edge.second;
+  auto a = edge.first();
+  auto b = edge.second();
 
   // If the normalization factor is zero, return zero error
   auto norm = std::abs( u(a,c,0) + u(b,c,0) );
@@ -74,12 +74,13 @@ Error::error_jump( const tk::Fields& u,
 
 tk::real
 Error::error_hessian( const tk::Fields& u,
-                      const std::pair< std::size_t, std::size_t >& edge,
+                      const edge_t& edge,
                       ncomp_t c,
                       const std::array< std::vector< tk::real >, 3 >& coord,
                       const std::vector< std::size_t >& inpoel,
                       const std::pair< std::vector< std::size_t >,
                                        std::vector< std::size_t > >& esup )
+const
 // *****************************************************************************
 //  Estimate error for scalar quantity on edge based on Hessian of solution
 //! \param[in] u Solution vector
@@ -97,8 +98,8 @@ Error::error_hessian( const tk::Fields& u,
   const auto& x = coord[0];
   const auto& y = coord[1];
   const auto& z = coord[2];
-  auto a = edge.first;
-  auto b = edge.second;
+  auto a = edge.first();
+  auto b = edge.second();
 
   // Compute edge vector
   std::array< tk::real, 3 > h {{ x[a]-x[b], y[a]-y[b], z[a]-z[b] }};

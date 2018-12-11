@@ -21,8 +21,6 @@
 #include "Reader.h"
 #include "ContainerUtil.h"
 #include "UnsMesh.h"
-#include "Reorder.h"
-#include "ExodusIIMeshReader.h"
 #include "ExodusIIMeshWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "DerivedData.h"
@@ -30,7 +28,9 @@
 #include "Discretization.h"
 #include "DistFCT.h"
 #include "DiagReducer.h"
-#include "BoundaryConditions.h"
+#include "NodeBC.h"
+#include "Refiner.h"
+//#include "ChareStateCollector.h"
 
 #ifdef HAS_ROOT
   #include "RootMeshWriter.h"
@@ -44,18 +44,21 @@ extern std::vector< CGPDE > g_cgpde;
 
 } // inciter::
 
+// extern tk::CProxy_ChareStateCollector stateProxy;
+
 using inciter::DiagCG;
 
 DiagCG::DiagCG( const CProxy_Discretization& disc,
                 const tk::CProxy_Solver& solver,
-                const FaceData& ) :
+                const FaceData& fd ) :
+  m_disc( disc ),
   m_itf( 0 ),
+  m_initial( true ),
   m_nsol( 0 ),
   m_nlhs( 0 ),
   m_nrhs( 0 ),
   m_ndif( 0 ),
-  m_disc( disc ),
-  m_side( Disc()->BC()->sideNodes( Disc()->Filenodes(), Disc()->Lid() ) ),
+  m_fd( fd ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_ul( m_u.nunk(), m_u.nprop() ),
@@ -70,16 +73,38 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_rhsc(),
   m_difc(),
   m_vol( 0.0 ),
-  m_diag( *Disc() )
+  m_diag()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
 //! \param[in] solver Linear system solver (Solver) proxy
+//! \param[in] fd Face data structures
+// *****************************************************************************
+{
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
+//                                         Disc()->It(), "DiagCG" );
+
+  usesAtSync = true;    // Enable migration at AtSync
+
+  // Size communication buffers
+  resizeComm();
+
+  // Signal the runtime system that the workers have been created
+  solver.ckLocalBranch()->created();
+}
+
+void
+DiagCG::resizeComm()
+// *****************************************************************************
+//  Size communication buffers
+//! \details The size of the communication buffers are determined based on
+//!    Disc()->Bid.size() and m_u.nprop().
 // *****************************************************************************
 {
   auto d = Disc();
 
-  // Allocate communication buffers for LHS, ICs, RHS, mass diffusion RHS
   auto np = m_u.nprop();
   auto nb = d->Bid().size();
   m_lhsc.resize( nb );
@@ -89,11 +114,8 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_difc.resize( nb );
   for (auto& b : m_difc) b.resize( np );
 
-  // Zero communication buffers for setup (LHS, ICs)
+  // Zero communication buffers
   for (auto& b : m_lhsc) std::fill( begin(b), end(b), 0.0 );
-
-  // Signal the runtime system that the workers have been created
-  solver.ckLocalBranch()->created();
 }
 
 void
@@ -117,14 +139,18 @@ DiagCG::setup( tk::real v )
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
+//                                         Disc()->It(), "setup" );
+
   auto d = Disc();
 
   // Store total mesh volume
   m_vol = v;
-  // Output chare mesh to file
-  d->writeMesh();
-  // Output fields metadata to output file
-  d->writeNodeMeta();
+
+  // Activate SDAG waits for computing the left-hand side
+  thisProxy[ thisIndex ].wait4lhs();
 
   // Compute left-hand side of PDEs
   lhs();
@@ -132,23 +158,25 @@ DiagCG::setup( tk::real v )
   // Set initial conditions for all PDEs
   for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
 
-  // Activate SDAG waits for setup
-  thisProxy[ thisIndex ].wait4setup();
-
-  // Output initial conditions to file (regardless of whether it was requested)
-  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( d->T() );
+  // Output initial condition to file (if not in benchmark mode)
+  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) {
+    // Output chare mesh to file
+    d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode());
+    // Output fields metadata to output file
+    d->writeNodeMeta();
+    // Output initial conditions to file (regardless of whether it was requested)
+    writeFields( d->T() );
+  }
 }
 
 void
-DiagCG::start()
+DiagCG::lhsmerge()
 // *****************************************************************************
-//  Start time stepping
+// The own and communication portion of the left-hand side is complete
 // *****************************************************************************
 {
+  // Combine own and communicated contributions to left hand side
   auto d = Disc();
-
-  // Start timer measuring time stepping wall clock time
-  d->Timer().zero();
 
   // Combine own and communicated contributions to LHS and ICs
   for (const auto& b : d->Bid()) {
@@ -157,10 +185,33 @@ DiagCG::start()
     for (ncomp_t c=0; c<m_lhs.nprop(); ++c) m_lhs(lid,c,0) += blhsc[c];
   }
 
-  // Zero communication buffers for first time step (rhs, mass diffusion rhs)
+  // Zero communication buffers for next time step (rhs, mass diffusion rhs)
   for (auto& b : m_rhsc) std::fill( begin(b), end(b), 0.0 );
   for (auto& b : m_difc) std::fill( begin(b), end(b), 0.0 );
 
+  // Continue after lhs is complete
+  if (m_initial) start(); else lhs_complete();
+}
+
+void
+DiagCG::resized()
+// *****************************************************************************
+// Resizing data sutrctures after mesh refinement has been completed
+// *****************************************************************************
+{
+  resize_complete();
+}
+
+void
+DiagCG::start()
+// *****************************************************************************
+//  Start time stepping
+// *****************************************************************************
+{
+  // Start timer measuring time stepping wall clock time
+  Disc()->Timer().zero();
+
+  // Start time stepping by computing the size of the next time step)
   dt();
 }
 
@@ -198,9 +249,14 @@ DiagCG::comlhs( const std::vector< std::size_t >& gid,
 //!   diagonal (lumped) mass matrix at mesh nodes. While m_lhs stores
 //!   own contributions, m_lhsc collects the neighbor chare contributions during
 //!   communication. This way work on m_lhs and m_lhsc is overlapped. The two
-//!   are combined in start().
+//!   are combined in lhsmerge().
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
+//                                         Disc()->It(), "comlhs" );
+
   Assert( L.size() == gid.size(), "Size mismatch" );
 
   using tk::operator+=;
@@ -222,9 +278,14 @@ DiagCG::comlhs( const std::vector< std::size_t >& gid,
 void
 DiagCG::dt()
 // *****************************************************************************
-// Comppute time step size
+// Compute time step size
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
+//                                         Disc()->It(), "dt" );
+
   tk::real mindt = std::numeric_limits< tk::real >::max();
 
   auto const_dt = g_inputdeck.get< tag::discr, tag::dt >();
@@ -251,9 +312,13 @@ DiagCG::dt()
 
   }
 
+  // Actiavate SDAG waits for time step
+  thisProxy[ thisIndex ].wait4rhs();
+  thisProxy[ thisIndex ].wait4eval();
+
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-              CkCallback(CkReductionTarget(DiagCG,advance), thisProxy) );
+              CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
 }
 
 void
@@ -311,6 +376,11 @@ DiagCG::comrhs( const std::vector< std::size_t >& gid,
 //!   are combined in solve().
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
+//                                         Disc()->It(), "comrhs" );
+
   Assert( R.size() == gid.size(), "Size mismatch" );
 
   using tk::operator+=;
@@ -343,6 +413,11 @@ DiagCG::comdif( const std::vector< std::size_t >& gid,
 //!   are combined in solve().
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
+//                                         Disc()->It(), "comdif" );
+
   Assert( D.size() == gid.size(), "Size mismatch" );
 
   using tk::operator+=;
@@ -370,8 +445,8 @@ DiagCG::bc()
   auto d = Disc();
 
   // Match user-specified boundary conditions to side sets
-  m_bc = d->BC()->match( m_u.nprop(), d->T(), d->Dt(), d->Coord(), d->Gid(),
-                         m_side );
+  m_bc = match( m_u.nprop(), d->T(), d->Dt(), d->Coord(), d->Gid(),
+                d->Lid(), m_fd.Bnode() );
 }
 
 void
@@ -427,49 +502,6 @@ DiagCG::solve()
   d->FCT()->alw( m_u, m_ul, m_dul, thisProxy );  
 }
 
-bool
-DiagCG::correctBC( const tk::Fields& a )
-// *****************************************************************************
-//  Verify that the change in the solution at those nodes where Dirichlet
-//  boundary conditions are set is exactly the amount the BCs prescribe
-//! \param[in] a Limited antidiffusive element contributions
-//! \return True if the solution is correct at Dirichlet boundary condition
-//!   nodes
-// *****************************************************************************
-{
-  if (m_bc.empty()) return true;
-
-  auto d = Disc();
-
-  // We loop through the map that associates a vector of local node IDs to side
-  // set IDs for all side sets read from mesh file. Then for each side set for
-  // all mesh nodes on a given side set we attempt to find the global node ID in
-  // m_bc, which stores only those nodes (and BC settings) at which the user has
-  // configured Dirichlet BCs to be set. Then for all scalar components of all
-  // system of systems of PDEs integrated if a BC is to be set for a given
-  // component, we compute the low order solution increment + the anti-diffusive
-  // element contributions, which is the current solution increment (to be used
-  // to update the solution at time n) at that node. This solution increment
-  // must equal the BC prescribed at the given node as we solve for solution
-  // increments. If not, the BCs are not set correctly, which is an error.
-  for (const auto& s : m_side)
-    for (auto i : s.second) {
-      auto u = m_bc.find( d->Gid()[i] );
-      if (u != end(m_bc)) {
-        const auto& b = u->second;
-        Assert( b.size() == m_u.nprop(), "Size mismatch" );
-        for (std::size_t c=0; c<b.size(); ++c)
-          if ( b[c].first &&
-               std::abs( m_dul(i,c,0) + a(i,c,0) - b[c].second ) >
-                 std::numeric_limits< tk::real >::epsilon() ) {
-             return false;
-          }
-      }
-  }
-
-  return true;
-}
-
 void
 DiagCG::writeFields( tk::real time )
 // *****************************************************************************
@@ -507,7 +539,7 @@ DiagCG::writeFields( tk::real time )
   if (filetype == tk::ctr::FieldFileType::ROOT) {
 
     // Create Root writer
-    tk::RootMeshWriter rmw( d->OutFilename(), 1 );
+    tk::RootMeshWriter rmw( d->filename(), 1 );
     // Write time stamp
     rmw.writeTimeStamp( m_itf, time );
     // Write node fields to file
@@ -517,8 +549,16 @@ DiagCG::writeFields( tk::real time )
   #endif
   {
 
+    // if the previous iteration refined the mesh, start by writing the mesh
+    if (m_itf == 1) {
+      // Output chare mesh to file
+      d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode() );
+      // Output fields metadata to output file
+      d->writeNodeMeta();
+    }
+
     // Create ExodusII writer
-    tk::ExodusIIMeshWriter ew( d->OutFilename(), tk::ExoWriter::OPEN );
+    tk::ExodusIIMeshWriter ew( d->filename(), tk::ExoWriter::OPEN );
     // Write time stamp
     ew.writeTimeStamp( m_itf, time );
     // Write node fields to file
@@ -535,21 +575,19 @@ DiagCG::out()
 {
   auto d = Disc();
 
-  // Optionally output field and particle data
-  if ( !((d->It()+1) % g_inputdeck.get< tag::interval, tag::field >()) &&
-       !g_inputdeck.get< tag::cmd, tag::benchmark >() )
-  {
-    writeFields( d->T()+d->Dt() );
-  }
+  // Output field data to file if not in benchmark mode
+  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) {
 
-  // Output final field data to file (regardless of whether it was requested)
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  if ( (std::fabs(d->T() + d->Dt()-term) < eps || (d->It()+1) >= nstep) &&
-       (!g_inputdeck.get< tag::cmd, tag::benchmark >()) )
-  {
-    writeFields( d->T()+d->Dt() );
+    if ( !((d->It()) % g_inputdeck.get< tag::interval, tag::field >()) )
+      writeFields( d->T() );
+
+    // Output final field data to file (regardless of whether it was requested)
+    const auto term = g_inputdeck.get< tag::discr, tag::term >();
+    const auto eps = std::numeric_limits< tk::real >::epsilon();
+    const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+    if ( (std::fabs(d->T()-term) < eps || d->It() >= nstep ) )
+      writeFields( d->T() );
+
   }
 }
 
@@ -560,6 +598,11 @@ DiagCG::advance( tk::real newdt )
 //! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
+//                                         Disc()->It(), "advance" );
+
   auto d = Disc();
 
   // Set new time step size
@@ -568,39 +611,135 @@ DiagCG::advance( tk::real newdt )
   // Activate SDAG-waits for FCT
   d->FCT()->next();
 
-  // Actiavate SDAG waits for time step
-  thisProxy[ thisIndex ].wait4rhs();
-
   // Compute rhs for next time step
   rhs();
 }
 
 void
-DiagCG::next( const tk::Fields& a )
+DiagCG::update( const tk::Fields& a )
 // *****************************************************************************
 // Prepare for next step
 //! \param[in] a Limited antidiffusive element contributions
 // *****************************************************************************
 {
+  auto d = Disc();
+
+  // Verify that the change in the solution at those nodes where Dirichlet
+  // boundary conditions are set is exactly the amount the BCs prescribe
+  Assert( correctBC( a, m_dul, m_bc, d->Lid() ),
+          "Dirichlet boundary condition incorrect" );
+
   // Apply limited antidiffusive element contributions to low order solution
   if (g_inputdeck.get< tag::discr, tag::fct >())
     m_u = m_ul + a;
   else
     m_u = m_u + m_du;
 
-  auto d = Disc();
-
-  // Output field data to file
-  out();
   // Compute diagnostics, e.g., residuals
-  auto diag =  m_diag.compute( *d, m_u );
+  auto diag_computed = m_diag.compute( *d, m_u );
   // Increase number of iterations and physical time
   d->next();
-  // Output one-liner status report
-  d->status();
+  // Signal that diagnostics have been computed (or in this case, skipped)
+  if (!diag_computed) diag();
+  // Optionally refine mesh
+  refine();
+}
 
-  // Evaluate whether to continue with next step
-  if (!diag) eval();
+void
+DiagCG::diag()
+// *****************************************************************************
+// Signal the runtime system that diagnostics have been computed
+// *****************************************************************************
+{
+  diag_complete();
+}
+
+void
+DiagCG::refine()
+// *****************************************************************************
+// Optionally refine/derefine mesh
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
+  auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
+
+  // if t>0 refinement enabled and we hit the frequency
+  if (dtref && !(d->It() % dtfreq)) {   // refine
+
+    d->Ref()->dtref( d->T(), thisProxy, m_fd.Bnode() );
+
+  } else {      // do not refine
+
+    ref_complete();
+    lhs_complete();
+    resize_complete();
+
+  }
+}
+
+void
+DiagCG::resize( const tk::UnsMesh::Chunk& chunk,
+                const tk::UnsMesh::Coords& coord,
+                const tk::Fields& u,
+                const std::unordered_map< int,
+                      std::vector< std::size_t > >& msum,
+                const std::map< int, std::vector< std::size_t > >& bnode )
+// *****************************************************************************
+//  Receive new mesh from Refiner
+//! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
+//! \param[in] coord New mesh node coordinates
+//! \param[in] u New solution on new mesh
+//! \param[in] msum New node communication map
+//! \param[in] bnode Map of boundary-node lists mapped to corresponding
+//!   side set ids for this mesh chunk
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Set flag that indicates that we are during time stepping
+  m_initial = false;
+
+  // Zero field output iteration count between two mesh refinement steps
+  m_itf = 0;
+
+  // Increase number of iterations with mesh refinement
+  ++d->Itr();
+
+  // Resize mesh data structures
+  d->resize( chunk, coord, msum );
+
+  // Update (resize) solution on new mesh
+  m_u = u;
+
+  // Resize auxiliary solution vectors
+  auto nelem = d->Inpoel().size()/4;
+  auto npoin = coord[0].size();
+  auto nprop = m_u.nprop();
+  m_ul.resize( npoin, nprop );
+  m_du.resize( npoin, nprop );
+  m_dul.resize( npoin, nprop );
+  m_ue.resize( nelem, nprop );
+  m_lhs.resize( npoin, nprop );
+  m_rhs.resize( npoin, nprop );
+  m_dif.resize( npoin, nprop );
+
+  // Update physical-boundary node lists
+  m_fd.Bnode() = bnode;
+
+  // Resize communication buffers
+  resizeComm();
+
+  // Resize FCT data structures
+  d->FCT()->resize( npoin, msum, d->Bid(), d->Lid(), d->Inpoel() );
+
+  // Activate SDAG waits for re-computing the left-hand side
+  thisProxy[ thisIndex ].wait4lhs();
+
+  ref_complete();
+
+  contribute( CkCallback(CkReductionTarget(Transporter,workresized), d->Tr()) );
 }
 
 void
@@ -609,17 +748,29 @@ DiagCG::eval()
 // Evaluate whether to continue with next step
 // *****************************************************************************
 {
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
+//                                         Disc()->It(), "eval" );
+
   auto d = Disc();
+
+  // Output field data to file
+  out();
+  // Output one-liner status report to screen
+  d->status();
 
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
 
   // If neither max iterations nor max time reached, continue, otherwise finish
-  if (std::fabs(d->T()-term) > eps && d->It() < nstep)
+  if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
+    AtSync();   // Migrate here if needed
     dt();
-  else
+  } else {
     contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
+  }
 }
 
 #include "NoWarning/diagcg.def.h"

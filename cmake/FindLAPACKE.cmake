@@ -24,14 +24,8 @@
 #  endif()
 
 # If already in cache, be silent
-if(NOT BUILD_SHARED_LIBS)
-  if(LAPACKE_LIBRARIES AND LAPACKE_INCLUDE_DIRS)
-    set (LAPACKE_FIND_QUIETLY TRUE)
-  endif()
-else()
-  if(LAPACKE_LIBRARIES AND LAPACKE_INCLUDE_DIRS)
-    set (LAPACKE_FIND_QUIETLY TRUE)
-  endif()
+if(LAPACKE_LIBRARIES AND LAPACKE_INCLUDE_DIRS)
+  set (LAPACKE_FIND_QUIETLY TRUE)
 endif()
 
 find_path(LAPACKE_INCLUDE_DIR lapacke.h DOC "C-interface to LAPACK"
@@ -39,6 +33,7 @@ find_path(LAPACKE_INCLUDE_DIR lapacke.h DOC "C-interface to LAPACK"
           PATH_SUFFIXES lapack lapacke)
 
 if(NOT BUILD_SHARED_LIBS)
+
   find_library(LAPACKE_LIBRARY NAMES liblapacke.a HINTS ${LAPACKE_ROOT}/lib
                                                         $ENV{LAPACKE_ROOT}/lib
                PATH_SUFFIXES lapack lapacke)
@@ -49,24 +44,33 @@ if(NOT BUILD_SHARED_LIBS)
   find_library(BLAS_LIBRARY NAMES libblas.a HINTS ${LAPACKE_ROOT}/lib
                                                   $ENV{LAPACKE_ROOT}/lib
                PATH_SUFFIXES lapack lapacke)
+
   # These two are also searched on multiarch lib paths. This requires knowing
   # the architecture and the major version of the compiler. The compiler version
   # is detected in src/CMakeLists.txt and the architecture is detected by
   # including GNUInstallDirs in cmake/TPLs.cmake.
   find_library(GFORTRAN_LIBRARY NAMES libgfortran.a
-               HINTS ${LAPACKE_ROOT}/lib
-                     /usr/lib/gcc/${CMAKE_LIBRARY_ARCHITECTURE}/${CMAKE_CXX_COMPILER_MAJOR}
-                     $ENV{LAPACKE_ROOT}
-                     $ENV{LAPACKE_ROOT}/lib
-               PATH_SUFFIXES lapack lapacke)
+    HINTS ${LAPACKE_ROOT}
+          $ENV{LAPACKE_ROOT}
+          /usr/lib/gcc/${CMAKE_LIBRARY_ARCHITECTURE}
+    PATH_SUFFIXES lib lapack lapacke
+                  1 2 3 4 5 6 7 8 9     # gcc compiler majors
+                  ${CMAKE_Fortran_COMPILER_MAJOR}
+                  ${CMAKE_CXX_COMPILER_MAJOR})
+
   if(NOT ARCH MATCHES "ppc64")
     find_library(QUADMATH_LIBRARY NAMES libquadmath.a
-                 HINTS ${LAPACKE_ROOT}/lib
-                       /usr/lib/gcc/${CMAKE_LIBRARY_ARCHITECTURE}/${CMAKE_CXX_COMPILER_MAJOR}
-                       $ENV{LAPACKE_ROOT}/lib
-                 PATH_SUFFIXES lapack lapacke)
+      HINTS ${LAPACKE_ROOT}
+            $ENV{LAPACKE_ROOT}
+            /usr/lib/gcc/${CMAKE_LIBRARY_ARCHITECTURE}
+      PATH_SUFFIXES lib lapack lapacke
+                    1 2 3 4 5 6 7 8 9     # gcc compiler majors
+                    ${CMAKE_Fortran_COMPILER_MAJOR}
+                    ${CMAKE_CXX_COMPILER_MAJOR})
   endif()
+
 else()
+
   find_library(LAPACKE_LIBRARY NAMES lapacke reflapacke
                HINTS ${LAPACKE_ROOT}/lib
                      $ENV{LAPACKE_ROOT}/lib
@@ -77,6 +81,9 @@ else()
   find_library(BLAS_LIBRARY NAMES blas refblas
                HINTS ${LAPACKE_ROOT}/lib $ENV{LAPACKE_ROOT}/lib
                PATH_SUFFIXES lapack lapacke)
+  set(GFORTRAN_LIBRARY "")
+  set(QUADMATH_LIBRARY "")
+
 endif()
 
 set(LAPACKE_INCLUDE_DIRS ${LAPACKE_INCLUDE_DIR})
@@ -85,6 +92,13 @@ set(LAPACKE_LIBRARIES ${LAPACKE_LIBRARY} ${LAPACK_LIBRARY} ${BLAS_LIBRARY} ${GFO
 # Handle the QUIETLY and REQUIRED arguments and set LAPACKE_FOUND to TRUE if
 # all listed variables are TRUE.
 INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(LAPACKE DEFAULT_MSG LAPACKE_LIBRARIES LAPACKE_INCLUDE_DIRS)
+if(NOT BUILD_SHARED_LIBS)
+  FIND_PACKAGE_HANDLE_STANDARD_ARGS(LAPACKE DEFAULT_MSG LAPACKE_LIBRARY
+    LAPACK_LIBRARY BLAS_LIBRARY GFORTRAN_LIBRARY QUADMATH_LIBRARY
+    LAPACKE_INCLUDE_DIRS)
+else()
+  FIND_PACKAGE_HANDLE_STANDARD_ARGS(LAPACKE DEFAULT_MSG LAPACKE_LIBRARY
+    LAPACK_LIBRARY BLAS_LIBRARY LAPACKE_INCLUDE_DIRS)
+endif()
 
 MARK_AS_ADVANCED(LAPACKE_INCLUDE_DIRS LAPACKE_LIBRARIES)

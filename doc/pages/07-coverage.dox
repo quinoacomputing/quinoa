@@ -1,0 +1,52 @@
+/*!
+  \page      coverage Coverage
+
+In Quinoa code correctness is verified and quantified using @ref correct
+"multiple levels" of testing. Code coverage, the percentage of lines of code
+tested compared to all the code, is quantified using two independent tools:
+[codecov.io](https://codecov.io) and
+[gcov](https://gcc.gnu.org/onlinedocs/gcc/Gcov.html). Here are various code
+coverage analysis reports, produced by gcov, for building in Release and Debug
+mode. Also listed are static analysis reports, produced by
+[cppcheck](http://cppcheck.sourceforge.net/) and
+[sonarqube](https://www.sonarqube.org/). The coverage and static analysis
+reports are automatically updated whenever the
+[master](https://github.com/quinoacomputing/quinoa/tree/master) or the
+[develop](https://github.com/quinoacomputing/quinoa/tree/develop) branches are
+updated.
+
+@section coverage_gcov Gcov
+
+- <a href="Debug/test_coverage/index.html"
+target="_blank">Full test coverage report (Debug)</a>
+- <a href="Debug/unittest_coverage/index.html"
+target="_blank">Unit test coverage report (Debug)</a>
+- <a href="Debug/regression_coverage/index.html"
+target="_blank">Regression test coverage report (Debug)</a>
+
+- <a href="Release/unittest_coverage/index.html"
+target="_blank">Unit test coverage report (Release)</a>
+- <a href="Release/regression_coverage/index.html"
+target="_blank">Regression test coverage report (Release)</a>
+- <a href="Release/test_coverage/index.html"
+target="_blank">Full test coverage report (Release)</a>
+
+@section coverage_cppcheck CppCheck
+
+- <a href="Debug/cppcheck/index.html"
+target="_blank">Cppcheck static analysis report (Debug)</a>
+
+- <a href="Release/cppcheck/index.html"
+target="_blank">Cppcheck static analysis report (Release)</a>
+
+@section coverage_codecov CodeCov
+
+- <a href="https://codecov.io/gh/quinoacomputing/quinoa"
+target="_blank">Coverage overview</a>
+
+@section coverage_sonarqube SonarQube
+
+- <a href="https://sonarqube.com/organizations/quinoacomputing"
+target="_blank">Branch quality overview</a>
+
+*/

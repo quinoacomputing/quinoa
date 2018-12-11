@@ -12,13 +12,12 @@
 #ifndef Timer_h
 #define Timer_h
 
+#include <cstdint>
+#include <type_traits>          // for move, enable_if<>::type
 #include <chrono>
-#include <map>
 
-#include "NoWarning/pup.h"
-
+#include "NoWarning/pup.h"      // for er
 #include "Types.h"
-#include "Exception.h"
 
 namespace tk {
 
@@ -65,8 +64,6 @@ class Timer {
     }
 
     //! Query time in second since the constructor call.
-    //! \return Time elapsed between start and stop as hours, minutes, and
-    //! seconds, as a Watch struct.
     Watch hms() const;
 
     //! Estimate time for accomplishment
