@@ -2,8 +2,8 @@
 /*!
   \file      src/UnitTest/QuietCerr.C
   \copyright 2016-2018, Los Alamos National Security, LLC.
-  \brief     Charm++ chare group to quiet std::cerr in a thread-safe fashion
-  \details   Charm++ chare group to quiet std::cerr in a thread-safe fashion.
+  \brief     Charm++ nodegroup to quiet std::cerr in a thread-safe fashion
+  \details   Charm++ nodegroup to quiet std::cerr in a thread-safe fashion.
 */
 // *****************************************************************************
 
@@ -14,10 +14,19 @@
 
 namespace tk {
 
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wmissing-variable-declarations"
+#endif
+
 //! std::tringstream used to quiet std::cerr's stream by redirecting to it
 std::stringstream cerr_quiet;
 //! std::streambuf used to store state of std::cerr before redirecting it
 std::streambuf* cerr_old;
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
 
 }
 

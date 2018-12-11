@@ -12,7 +12,8 @@
 #include "Macro.h"
 
 #if defined(__clang__)
-  //#pragma clang diagnostic ignored "-Wunused-variable"
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wunused-variable"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wunused-variable"
