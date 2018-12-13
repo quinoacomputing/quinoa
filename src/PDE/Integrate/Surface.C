@@ -50,6 +50,12 @@ tk::surfIntP0( ncomp_t system,
 
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
   {
+    auto ela = esuf[2*f];
+    auto era = esuf[2*f+1];
+    Assert( ela > -1 && era > -1, "Interior element detected as -1" );
+    IGNORE(ela);
+    IGNORE(era);
+
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
     std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
     auto farea = geoFace(f,0,0);

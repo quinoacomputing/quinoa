@@ -607,6 +607,8 @@ DG::addEsuf( const std::array< std::size_t, 2 >& id, std::size_t ghostid )
   Assert( 2*id[0]+1 < esuf.size(), "Indexing out of esuf" );
 
   // put in inner tet id
+  Assert( esuf[ 2*id[0] ] == -1 && esuf[ 2*id[0]+1 ] == -1, "Updating esuf at "
+          "wrong location instead of chare-boundary" );
   esuf[ 2*id[0]+0 ] = static_cast< int >( id[1] );
   // put in local id for outer/ghost tet
   esuf[ 2*id[0]+1 ] = static_cast< int >( ghostid );
