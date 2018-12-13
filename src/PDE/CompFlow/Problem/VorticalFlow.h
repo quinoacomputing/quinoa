@@ -83,7 +83,8 @@ class CompFlowProblemVorticalFlow {
     //! \return Array of reals containing the source for all components
     //! \note The function signature must follow tk::SrcFn
     static tk::SrcFn::result_type
-    src( ncomp_t system, tk::real x, tk::real y, tk::real z, tk::real ) {
+    src( ncomp_t system, ncomp_t, tk::real x, tk::real y, tk::real z, tk::real )
+    {
       using tag::param; using tag::compflow;
       // manufactured solution parameters
       const auto& a =
@@ -117,7 +118,7 @@ class CompFlowProblemVorticalFlow {
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
-    static std::vector< std::string > fieldNames() {
+    static std::vector< std::string > fieldNames( ncomp_t ) {
       std::vector< std::string > n;
       n.push_back( "density_numerical" );
       n.push_back( "density_analytical" );
@@ -144,6 +145,7 @@ class CompFlowProblemVorticalFlow {
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t system,
+                 ncomp_t,
                  ncomp_t offset,
                  tk::real,
                  tk::real,
@@ -223,7 +225,7 @@ class CompFlowProblemVorticalFlow {
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
-    static std::vector< std::string > names()
+    static std::vector< std::string > names( ncomp_t )
     { return { "r", "ru", "rv", "rw", "re" }; }
 
     static ctr::ProblemType type() noexcept

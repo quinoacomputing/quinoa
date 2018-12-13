@@ -99,7 +99,8 @@ class CompFlowProblemSedovBlastwave {
     //!   problem
     //! \note The function signature must follow tk::SrcFn
     static tk::SrcFn::result_type
-    src( ncomp_t, tk::real, tk::real, tk::real, tk::real ) {
+    src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real )
+    {
       return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
     }
 
@@ -118,7 +119,7 @@ class CompFlowProblemSedovBlastwave {
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
-    static std::vector< std::string > fieldNames() {
+    static std::vector< std::string > fieldNames( ncomp_t ) {
       std::vector< std::string > n;
       n.push_back( "density_numerical" );
       //n.push_back( "density_analytical" );
@@ -149,6 +150,7 @@ class CompFlowProblemSedovBlastwave {
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t system,
+                 ncomp_t,
                  ncomp_t offset,
                  tk::real,
                  tk::real /*V*/,
@@ -238,7 +240,7 @@ class CompFlowProblemSedovBlastwave {
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
-    static std::vector< std::string > names()
+    static std::vector< std::string > names( ncomp_t )
     { return { "r", "ru", "rv", "rw", "re" }; }
 
     static ctr::ProblemType type() noexcept

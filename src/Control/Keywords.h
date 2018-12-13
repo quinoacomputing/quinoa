@@ -1727,6 +1727,23 @@ struct ncomp_info {
 };
 using ncomp = keyword< ncomp_info,  TAOCPP_PEGTL_STRING("ncomp") >;
 
+struct nmat_info {
+  static std::string name() { return "nmat"; }
+  static std::string shortDescription() { return
+    "Set number of materials for a system of differential equations"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the number of materials, e.g., for
+    multi-material flow, see also the keyword 'multimat_compflow' and
+    'veleq'.)";
+  }
+  struct expect {
+    using type = std::size_t;
+    static constexpr type lower = 1;
+    static std::string description() { return "uint"; }
+  };
+};
+using nmat = keyword< nmat_info,  TAOCPP_PEGTL_STRING("nmat") >;
+
 struct ttyi_info {
   static std::string name() { return "ttyi"; }
   static std::string shortDescription() { return
@@ -3769,6 +3786,23 @@ struct compflow_euler_info {
 };
 using compflow_euler = keyword< compflow_euler_info, TAOCPP_PEGTL_STRING("euler") >;
 
+struct multimat_compflow_veleq_info {
+  using code = Code< V >;
+  static std::string name() { return "Velocity equilibrium"; }
+  static std::string shortDescription() { return "Specify the multi-material "
+    " compressible flow with velocity equilibrium as physics configuration"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select a compressible flow algorithm as physics
+    configuration designed for multiple materials assuming velocity equailibrium
+    (single velocity). Example: "multimat_compflow physics veleq end")";
+    }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using multimat_compflow_veleq =
+  keyword< multimat_compflow_veleq_info, TAOCPP_PEGTL_STRING("veleq") >;
+
 struct advection_info {
   using code = Code< A >;
   static std::string name() { return "Advection"; }
@@ -4367,6 +4401,41 @@ struct compflow_info {
   }
 };
 using compflow = keyword< compflow_info, TAOCPP_PEGTL_STRING("compflow") >;
+
+struct multimat_compflow_info {
+  static std::string name() { return "Compressible multi-material flow"; }
+  static std::string shortDescription() { return "Start configuration block "
+    "for the multi-material compressible flow equations"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the multimat_compflow ... end block,
+    used to specify the configuration for a system of partial differential
+    equations, governing multi-material compressible fluid flow. Keywords
+    allowed in a multimat_compflow ... end block: )" + std::string("\'")
+    + depvar::string()+ "\', \'"
+    + physics::string() + "\', \'"
+    + problem::string() + "\', \'"
+    + material::string() + "\', \'"
+    + nmat::string() + "\', \'"
+    + pde_alpha::string() + "\', \'"
+    + pde_p0::string() + "\', \'"
+    + pde_betax::string() + "\', \'"
+    + pde_betay::string() + "\', \'"
+    + pde_betaz::string() + "\', \'"
+    + pde_beta::string() + "\', \'"
+    + pde_r0::string() + "\', \'"
+    + pde_ce::string() + "\', \'"
+    + pde_kappa::string() + "\', \'"
+    + bc_dirichlet::string() + "\', \'"
+    + bc_sym::string() + "\', \'"
+    + bc_inlet::string() + "\', \'"
+    + bc_outlet::string() + "\', \'"
+    + bc_extrapolate::string() + "\'."
+    + R"(For an example multimat_compflow ... end block, see
+      doc/html/inicter_example_multimat_compflow.html.)";
+  }
+};
+using multimat_compflow =
+  keyword< multimat_compflow_info, TAOCPP_PEGTL_STRING("multimat_compflow") >;
 
 struct rcb_info {
   static std::string name() { return "recursive coordinate bisection"; }

@@ -80,7 +80,8 @@ class CompFlowProblemTaylorGreen {
     //! \return Array of reals containing the source for all components
     //! \note The function signature must follow tk::SrcFn
     static tk::SrcFn::result_type
-    src( ncomp_t, tk::real x, tk::real y, tk::real, tk::real ) {
+    src( ncomp_t, ncomp_t, tk::real x, tk::real y, tk::real, tk::real )
+    {
       return {{ 0.0, 0.0, 0.0, 0.0,
         3.0*M_PI/8.0*( cos(3.0*M_PI*x)*cos(M_PI*y) -
                        cos(3.0*M_PI*y)*cos(M_PI*x) ) }};
@@ -98,7 +99,7 @@ class CompFlowProblemTaylorGreen {
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
-    static std::vector< std::string > fieldNames() {
+    static std::vector< std::string > fieldNames( ncomp_t ) {
       std::vector< std::string > n;
       n.push_back( "density_numerical" );
       n.push_back( "density_analytical" );
@@ -130,6 +131,7 @@ class CompFlowProblemTaylorGreen {
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t system,
+                 ncomp_t,
                  ncomp_t offset,
                  tk::real,
                  tk::real V,
@@ -222,7 +224,7 @@ class CompFlowProblemTaylorGreen {
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
-    static std::vector< std::string > names()
+    static std::vector< std::string > names( ncomp_t )
     { return { "r", "ru", "rv", "rw", "re" }; }
 
     static ctr::ProblemType type() noexcept

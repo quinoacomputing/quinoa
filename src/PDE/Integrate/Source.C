@@ -46,7 +46,7 @@ tk::srcIntP0( ncomp_t system,
     auto xc = geoElem(e,1,0);
     auto yc = geoElem(e,2,0);
     auto zc = geoElem(e,3,0);
-    auto s = src( system, xc, yc, zc, t );
+    auto s = src( system, ncomp, xc, yc, zc, t );
     for (ncomp_t c=0; c<ncomp; ++c)
       R(e, c, offset) += vole * s[c];
   }
@@ -126,7 +126,7 @@ tk::srcIntP1( ncomp_t system,
       auto B3 = 3.0 * coordgp[1][igp] + coordgp[2][igp] - 1.0;
       auto B4 = 4.0 * coordgp[2][igp] - 1.0;
 
-      auto s = src( system, xgp, ygp, zgp, t );
+      auto s = src( system, ncomp, xgp, ygp, zgp, t );
       for (ncomp_t c=0; c<ncomp; ++c) {
         auto mark = c*ndof;
         R(e, mark, offset)   += wt * s[c];

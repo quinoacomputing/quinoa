@@ -22,7 +22,8 @@ namespace ctr {
 
 //! Differential equation types
 enum class PDEType : uint8_t { TRANSPORT=0,
-                               COMPFLOW };
+                               COMPFLOW,
+                               MULTIMAT_COMPFLOW };
 
 //! Pack/Unpack: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, PDEType& e ) { PUP::pup( p, e ); }
@@ -40,6 +41,7 @@ class PDE : public tk::Toggle< PDEType > {
     // List valid expected choices to make them also available at compile-time
     using keywords = brigand::list< kw::transport
                                   , kw::compflow
+                                  , kw::multimat_compflow
                                   >;
 
     //! Constructor: pass associations references to base, which will handle
@@ -48,10 +50,12 @@ class PDE : public tk::Toggle< PDEType > {
       tk::Toggle< PDEType >( "Partial differential equation",
         //! Enums -> names
         { { PDEType::TRANSPORT, kw::transport::name() },
-          { PDEType::COMPFLOW, kw::compflow::name() } },
+          { PDEType::COMPFLOW, kw::compflow::name() },
+          { PDEType::MULTIMAT_COMPFLOW, kw::multimat_compflow::name() } },
         //! keywords -> Enums
         { { kw::transport::string(), PDEType::TRANSPORT },
-          { kw::compflow::string(), PDEType::COMPFLOW } } ) {}
+          { kw::compflow::string(), PDEType::COMPFLOW },
+          { kw::multimat_compflow::string(), PDEType::MULTIMAT_COMPFLOW } } ) {}
 };
 
 } // ctr::

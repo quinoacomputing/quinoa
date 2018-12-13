@@ -184,10 +184,46 @@ using CompFlowPDEParameters = tk::tuple::tagged_tuple<
   tag::npar,          std::vector< kw::npar::info::expect::type >
 >;
 
+//! Compressible flow equation parameters storage
+using MultiMatCompFlowPDEParameters = tk::tuple::tagged_tuple<
+  tag::depvar,        std::vector< char >,
+  tag::physics,       std::vector< PhysicsType >,
+  tag::problem,       std::vector< ProblemType >,
+  tag::bcdir,         std::vector< std::vector<
+                       kw::sideset::info::expect::type > >,
+  tag::bcsym,         std::vector< std::vector<
+                       kw::sideset::info::expect::type > >,
+  tag::bcinlet,       std::vector< std::vector<
+                        kw::sideset::info::expect::type > >,
+  tag::bcoutlet,      std::vector< std::vector<
+                        kw::sideset::info::expect::type > >,
+  tag::bcextrapolate, std::vector< std::vector<
+                         kw::sideset::info::expect::type > >,
+  //! Parameter vector (for specific, e.g., verification problems)
+  tag::alpha,         std::vector< kw::pde_alpha::info::expect::type >,
+  //! Parameter vector (for specific, e.g., verification problems)
+  tag::beta,          std::vector< kw::pde_beta::info::expect::type >,
+  //! Parameter vector (for specific, e.g., verification problems)
+  tag::p0,            std::vector< kw::pde_p0::info::expect::type >,
+  //! Material ID
+  tag::id,            std::vector< kw::id::info::expect::type >,
+  //! Ratio of spec heats
+  tag::gamma,         std::vector< kw::mat_gamma::info::expect::type >,
+  //! Dynamic viscosity
+  tag::mu,            std::vector< kw::mat_mu::info::expect::type >,
+  //! Spec. heat at const vol.
+  tag::cv,            std::vector< kw::mat_cv::info::expect::type >,
+  //! Heat conductivity
+  tag::k,             std::vector< kw::mat_k::info::expect::type >,
+  //! number of materials
+  tag::nmat,          std::vector< kw::nmat::info::expect::type >
+>;
+
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
-  tag::transport,   TransportPDEParameters,
-  tag::compflow,    CompFlowPDEParameters
+  tag::transport,            TransportPDEParameters,
+  tag::compflow,             CompFlowPDEParameters,
+  tag::multimat_compflow,    MultiMatCompFlowPDEParameters
 >;
 
 //! PEGTL location/position type to use throughout all of Inciter's parsers

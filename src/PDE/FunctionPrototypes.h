@@ -72,7 +72,7 @@ using StateFn = std::function<
 //!   of manufactured solutions, and specialized to a particular system of PDEs
 //! \see e.g., CompFlowProblemRayleighTaylor::src
 using SrcFn = std::function<
-  std::vector< tk::real >( ncomp_t, real, real, real, real ) >;
+  std::vector< tk::real >( ncomp_t, ncomp_t, real, real, real, real ) >;
 
 } // tk::
 

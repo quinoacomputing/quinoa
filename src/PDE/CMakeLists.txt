@@ -14,7 +14,8 @@ add_library(PDE
             Integrate/Riemann/RiemannFactory.C
             Limiter.C
             ConfigureTransport.C
-            ConfigureCompFlow.C)
+            ConfigureCompFlow.C
+            ConfigureMultiMatCompFlow.C)
 
 target_include_directories(PDE PUBLIC
                            ${QUINOA_SOURCE_DIR}

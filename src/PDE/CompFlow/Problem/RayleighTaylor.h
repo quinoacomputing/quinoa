@@ -107,8 +107,10 @@ class CompFlowProblemRayleighTaylor {
     //! \return Array of reals containing the source for all components
     //! \note The function signature must follow tk::SrcFn
     static tk::SrcFn::result_type
-    src( ncomp_t system, tk::real x, tk::real y, tk::real z, tk::real t ) {
-      using tag::param; using tag::compflow; using std::sin; using std::cos;
+    src( ncomp_t system, ncomp_t, tk::real x, tk::real y, tk::real z,
+         tk::real t )
+    {
+      using tag::param; using std::sin; using std::cos;
 
       // manufactured solution parameters
       auto a = g_inputdeck.get< param, eq, tag::alpha >()[system];
@@ -184,7 +186,7 @@ class CompFlowProblemRayleighTaylor {
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
-    static std::vector< std::string > fieldNames() {
+    static std::vector< std::string > fieldNames( ncomp_t ) {
       std::vector< std::string > n;
       n.push_back( "density_numerical" );
       n.push_back( "x-velocity_numerical" );
@@ -220,6 +222,7 @@ class CompFlowProblemRayleighTaylor {
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t system,
+                 ncomp_t,
                  ncomp_t offset,
                  tk::real t,
                  tk::real V,
@@ -298,7 +301,7 @@ class CompFlowProblemRayleighTaylor {
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
-    static std::vector< std::string > names()
+    static std::vector< std::string > names( ncomp_t )
     { return { "r", "ru", "rv", "rw", "re" }; }
 
     static ctr::ProblemType type() noexcept

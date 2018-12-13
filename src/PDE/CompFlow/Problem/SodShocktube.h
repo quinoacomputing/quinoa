@@ -100,9 +100,8 @@ class CompFlowProblemSodShocktube {
     //!   problem
     //! \note The function signature must follow tk::SrcFn
     static tk::SrcFn::result_type
-    src( tk::ctr::ncomp_type, tk::real, tk::real, tk::real, tk::real ) {
-      return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
-    }
+    src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real )
+    { return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }}; }
 
     //! \brief Query all side set IDs the user has configured for all components
     //!   in this PDE system
@@ -119,7 +118,7 @@ class CompFlowProblemSodShocktube {
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
-    static std::vector< std::string > fieldNames() {
+    static std::vector< std::string > fieldNames( ncomp_t ) {
       std::vector< std::string > n;
       n.push_back( "density_numerical" );
       //n.push_back( "density_analytical" );
@@ -149,8 +148,9 @@ class CompFlowProblemSodShocktube {
     //! \param[in] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
-    fieldOutput( tk::ctr::ncomp_type system,
-                 tk::ctr::ncomp_type offset,
+    fieldOutput( ncomp_t system,
+                 ncomp_t,
+                 ncomp_t offset,
                  tk::real,
                  tk::real /*V*/,
                  const std::vector< tk::real >& /*vol*/,
@@ -240,7 +240,7 @@ class CompFlowProblemSodShocktube {
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
-    static std::vector< std::string > names()
+    static std::vector< std::string > names( ncomp_t )
     { return { "r", "ru", "rv", "rw", "re" }; }
 
     static ctr::ProblemType type() noexcept
