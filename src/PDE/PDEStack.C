@@ -20,7 +20,8 @@
 
 using inciter::PDEStack;
 
-PDEStack::PDEStack() : m_cgfactory(), m_dgfactory(), m_eqTypes()
+PDEStack::PDEStack() : m_cgfactory(), m_dgfactory(),
+                       m_cgEqTypes(), m_dgEqTypes()
 // *****************************************************************************
 //  Constructor: register all partial differential equations into factory
 //! \details This constructor consists of several blocks, each registering a
@@ -93,8 +94,8 @@ PDEStack::PDEStack() : m_cgfactory(), m_dgfactory(), m_eqTypes()
 //!   purposes.
 // *****************************************************************************
 {
-  registerTransport( m_cgfactory, m_dgfactory, m_eqTypes );
-  registerCompFlow( m_cgfactory, m_dgfactory, m_eqTypes );
+  registerTransport( m_cgfactory, m_dgfactory, m_cgEqTypes, m_dgEqTypes );
+  registerCompFlow( m_cgfactory, m_dgfactory, m_cgEqTypes, m_dgEqTypes );
 }
 
 std::vector< inciter::CGPDE >

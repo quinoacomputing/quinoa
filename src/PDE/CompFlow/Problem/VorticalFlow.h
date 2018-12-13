@@ -2,10 +2,12 @@
 /*!
   \file      src/PDE/CompFlow/Problem/VorticalFlow.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
-  \brief     Problem configuration for the compressible flow equations
-  \details   This file defines a Problem policy class for the compressible flow
-    equations, defined in PDE/CompFlow/CompFlow.h. See PDE/CompFlow/Problems.h
-    for general requirements on Problem policy classes for CompFlow.
+  \brief     Problem configuration for the single-material compressible flow
+    equations
+  \details   This file defines a Problem policy class for the single-material
+    compressible flow equations, defined under PDE/CompFlow/. See
+    PDE/CompFlow/Problem.h for general requirements on Problem policy classes
+    for CompFlow.
 */
 // *****************************************************************************
 #ifndef CompFlowProblemVorticalFlow_h
@@ -71,6 +73,7 @@ class CompFlowProblemVorticalFlow {
     solinc( ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real ) {
       return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
     }
+
     //! Compute and return source term for vortical flow manufactured solution
     //! \param[in] system Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
@@ -216,7 +219,7 @@ class CompFlowProblemVorticalFlow {
       out.push_back( P );
 
       return out;
-   }
+    }
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output

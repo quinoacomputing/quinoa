@@ -1712,10 +1712,12 @@ using cfl = keyword< cfl_info, TAOCPP_PEGTL_STRING("cfl") >;
 struct ncomp_info {
   static std::string name() { return "ncomp"; }
   static std::string shortDescription() { return
-    "Set number of scalar components for a system of SDEs"; }
+    "Set number of scalar components for a system of differential equations"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify the number of scalar components of a
-    vector.)";
+    R"(This keyword is used to specify the number of scalar
+    components of a vector. 'ncomp' means "number of components". It is also
+    used for specifying the number of scalar components of a transporter scalar
+    (see also the keywords 'transport').)";
   }
   struct expect {
     using type = std::size_t;
@@ -3709,7 +3711,7 @@ using sedov_blastwave =
   keyword< sedov_blastwave_info, TAOCPP_PEGTL_STRING("sedov_blastwave") >;
 
 struct problem_info {
-  using code = Code< r >;
+  using code = Code< t >;
   static std::string name() { return "Test problem"; }
   static std::string shortDescription() { return
     "Specify problem configuration for a partial differential equation solver";
@@ -3798,7 +3800,7 @@ struct advdiff_info {
 using advdiff = keyword< advdiff_info, TAOCPP_PEGTL_STRING("advdiff") >;
 
 struct physics_info {
-  using code = Code< h >;
+  using code = Code< p >;
   static std::string name() { return "Physics configuration"; }
   static std::string shortDescription() { return
     "Specify the physics configuration for a system of PDEs"; }
@@ -4333,7 +4335,7 @@ struct velocityic_info {
 using velocityic = keyword< velocityic_info, TAOCPP_PEGTL_STRING("velocity") >;
 
 struct compflow_info {
-  static std::string name() { return "Compressible flow"; }
+  static std::string name() { return "Compressible single-material flow"; }
   static std::string shortDescription() { return
     "Start configuration block for the compressible flow equations"; }
   static std::string longDescription() { return
@@ -4342,8 +4344,24 @@ struct compflow_info {
     governing compressible fluid flow. Keywords allowed in an compflow ... end
     block: )" + std::string("\'")
     + depvar::string()+ "\', \'"
-    + problem::string() + "\', \'"
     + physics::string() + "\', \'"
+    + problem::string() + "\', \'"
+    + material::string() + "\', \'"
+    + npar::string() + "\', \'"
+    + pde_alpha::string() + "\', \'"
+    + pde_p0::string() + "\', \'"
+    + pde_betax::string() + "\', \'"
+    + pde_betay::string() + "\', \'"
+    + pde_betaz::string() + "\', \'"
+    + pde_beta::string() + "\', \'"
+    + pde_r0::string() + "\', \'"
+    + pde_ce::string() + "\', \'"
+    + pde_kappa::string() + "\', \'"
+    + bc_dirichlet::string() + "\', \'"
+    + bc_sym::string() + "\', \'"
+    + bc_inlet::string() + "\', \'"
+    + bc_outlet::string() + "\', \'"
+    + bc_extrapolate::string() + "\'."
     + R"(For an example compflow ... end block, see
       doc/html/inicter_example_compflow.html.)";
   }

@@ -4,7 +4,7 @@
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Problem configuration for the compressible flow equations
   \details   This file defines a policy class for the compressible flow
-    equations, defined in PDE/CompFlow/CompFlow.h. See PDE/CompFlow/Problems.h
+    equations, defined in PDE/CompFlow/CompFlow.h. See PDE/CompFlow/Problem.h
     for general requirements on Problem policy classes for CompFlow.
 */
 // *****************************************************************************
@@ -25,6 +25,7 @@ class CompFlowProblemUserDefined {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
+    using eq = tag::compflow;
     static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
   public:
@@ -87,8 +88,8 @@ class CompFlowProblemUserDefined {
     //!   in this PDE system
     //! \param[in,out] conf Set of unique side set IDs to add to
     static void side( std::unordered_set< int >& conf ) {
-      using tag::param; using tag::compflow; using tag::bcdir;
-      for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
+      using tag::param; using tag::bcdir;
+      for (const auto& s : g_inputdeck.get< param, eq, bcdir >())
         conf.insert( std::stoi(s[0]) );
     }
 
@@ -130,12 +131,12 @@ class CompFlowProblemUserDefined {
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       out.push_back( E );
       std::vector< tk::real > p = r;
-      tk::real g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
+      tk::real g = g_inputdeck.get< tag::param, eq, tag::gamma >()[0];
       for (std::size_t i=0; i<p.size(); ++i)
         p[i] = (g-1.0)*r[i]*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
       out.push_back( p );
       std::vector< tk::real > T = r;
-      tk::real cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >()[0];
+      tk::real cv = g_inputdeck.get< tag::param, eq, tag::cv >()[0];
       for (std::size_t i=0; i<T.size(); ++i)
         T[i] = cv*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
       out.push_back( T );

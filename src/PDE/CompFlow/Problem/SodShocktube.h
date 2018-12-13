@@ -4,7 +4,7 @@
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Problem configuration for Sod's shock-tube
   \details   This file defines a policy class for the compressible flow
-    equations, defined in PDE/CompFlow/CompFlow.h. See PDE/CompFlow/Problems.h
+    equations, defined in PDE/CompFlow/CompFlow.h. See PDE/CompFlow/Problem.h
     for general requirements on Problem policy classes for CompFlow.
 */
 // *****************************************************************************
@@ -27,6 +27,7 @@ class CompFlowProblemSodShocktube {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
+    using eq = tag::compflow;
     static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
   public:
@@ -44,10 +45,9 @@ class CompFlowProblemSodShocktube {
       Assert( ncomp == m_ncomp, "Number of scalar components must be " +
                                 std::to_string(m_ncomp) );
       IGNORE(ncomp);
-      using tag::param; using tag::compflow;
+      using tag::param;
       // ratio of specific heats
-      const tk::real g =
-        g_inputdeck.get< param, compflow, tag::gamma >()[system];
+      const tk::real g = g_inputdeck.get< param, eq, tag::gamma >()[system];
       tk::real r, p, u, v, w, rE;
       if (x<0.5) {
         // density
@@ -108,13 +108,12 @@ class CompFlowProblemSodShocktube {
     //!   in this PDE system
     //! \param[in,out] conf Set of unique side set IDs to add to
     static void side( std::unordered_set< int >& conf ) {
-      using tag::param; using tag::compflow;
+      using tag::param;
 
-      for (const auto& s : g_inputdeck.get< param, compflow,
-                                            tag::bcextrapolate >())
+      for (const auto& s : g_inputdeck.get< param, eq, tag::bcextrapolate >())
         for (const auto& i : s) conf.insert( std::stoi(i) );
 
-      for (const auto& s : g_inputdeck.get< param, compflow, tag::bcsym >())
+      for (const auto& s : g_inputdeck.get< param, eq, tag::bcsym >())
         for (const auto& i : s) conf.insert( std::stoi(i) );
     }
 
@@ -162,8 +161,7 @@ class CompFlowProblemSodShocktube {
       const std::size_t ndof =
         g_inputdeck.get< tag::discr, tag::ndof >();
       // ratio of specific heats
-      tk::real g =
-        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[system];
+      tk::real g = g_inputdeck.get< tag::param, eq, tag::gamma >()[system];
 
       std::vector< std::vector< tk::real > > out;
       const auto r  = U.extract( 0*ndof, offset );

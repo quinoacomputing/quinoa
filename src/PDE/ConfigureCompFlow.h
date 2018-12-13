@@ -21,7 +21,10 @@ namespace inciter {
 
 //! Register compressible flow PDEs into PDE factory
 void
-registerCompFlow( CGFactory& cf, DGFactory& df, std::set< ctr::PDEType >& t );
+registerCompFlow( CGFactory& cf,
+                  DGFactory& df,
+                  std::set< ctr::PDEType >& cgt,
+                  std::set< ctr::PDEType >& dgt );
 
 //! Return information on the compressible flow PDE
 std::vector< std::pair< std::string, std::string > >

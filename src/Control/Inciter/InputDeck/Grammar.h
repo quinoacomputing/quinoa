@@ -77,18 +77,22 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       using inciter::deck::neq;
+
       // Error out if no dependent variable has been selected
       auto& depvar = stack.template get< tag::param, eq, tag::depvar >();
       if (depvar.empty() || depvar.size() != neq.get< eq >())
         Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
+
       // If no number of components has been selected, default to 1
       auto& ncomp = stack.template get< tag::component, eq >();
       if (ncomp.empty() || ncomp.size() != neq.get< eq >())
         ncomp.push_back( 1 );
+
       // If physics type is not given, default to 'advection'
       auto& physics = stack.template get< tag::param, eq, tag::physics >();
       if (physics.empty() || physics.size() != neq.get< eq >())
         physics.push_back( inciter::ctr::PhysicsType::ADVECTION );
+
       // If physics type is advection-diffusion, check for correct number of
       // advection velocity, shear, and diffusion coefficients
       if (physics.back() == inciter::ctr::PhysicsType::ADVDIFF) {
@@ -127,16 +131,20 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       using inciter::deck::neq;
+
       // Error out if no dependent variable has been selected
       auto& depvar = stack.template get< tag::param, eq, tag::depvar >();
       if (depvar.empty() || depvar.size() != neq.get< eq >())
         Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
-      // Set number of components to 5 (mass, 3 x mom, energy)
-      stack.template get< tag::component, eq >().push_back( 5 );
+
       // If physics type is not given, default to 'euler'
       auto& physics = stack.template get< tag::param, eq, tag::physics >();
       if (physics.empty() || physics.size() != neq.get< eq >())
         physics.push_back( inciter::ctr::PhysicsType::EULER );
+
+      // Set number of components to 5 (mass, 3 x mom, energy)
+      stack.template get< tag::component, eq >().push_back( 5 );
+
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< tag::param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
@@ -184,6 +192,7 @@ namespace grm {
              r0.size() != problem.size() )
           Message< Stack, ERROR, MsgKey::RT_UNFINISHED >( stack, in);
       }
+
       // Error check Dirichlet boundary condition block for all compflow
       // configurations
       for (const auto& s : stack.template get< tag::param, eq, tag::bcdir >())
