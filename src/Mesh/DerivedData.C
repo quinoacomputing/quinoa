@@ -1137,6 +1137,7 @@ genEsuf( std::size_t nfpe,
       }
     }
 
+    // loop to get face-element connectivity for physical-boundary faces
     bcoun = 0;
     for (auto ie : belem) {
       esuf[bcoun] = static_cast< int >(ie);
