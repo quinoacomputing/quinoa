@@ -37,6 +37,7 @@ RUN cmake \
     -DCMAKE_CXX_COMPILER=mpicxx \
     -DTPL_DIR="/home/quinoa/tpl/${COMPILER}${SHARED_LIBS:+-static}" \
     -DCMAKE_CXX_FLAGS="-Werror -Wno-zero-as-null-pointer-constant" \
+    -DCMAKE_CXX_FLAGS_DEBUG=-g0 \
     -DCMAKE_BUILD_TYPE="${BUILD}" \
     ${SHARED_LIBS:+-DBUILD_SHARED_LIBS=$SHARED_LIBS} \
     ${SONARQUBE:+-DCOVERAGE=ON} \

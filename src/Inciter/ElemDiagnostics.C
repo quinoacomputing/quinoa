@@ -13,7 +13,7 @@
 #include "ElemDiagnostics.h"
 #include "DiagReducer.h"
 #include "Discretization.h"
-#include "Quadrature.h"
+#include "Integrate/Quadrature.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 namespace inciter {
@@ -181,7 +181,7 @@ ElemDiagnostics::computeP1( Discretization& d,
   const auto& cy = coord[1];
   const auto& cz = coord[2];
 
-  GaussQuadratureTet( coordgp, wgp );
+  tk::GaussQuadratureTet( coordgp, wgp );
 
   // Query number of degrees of freedom from user's setting
   const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();

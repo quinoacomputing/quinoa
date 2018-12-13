@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/CompFlow/RiemannSolver.h
+  \file      src/PDE/Integrate/Riemann/RiemannSolver.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Riemann solver interface class for various Riemann solvers
   \details   This file defines a generic Riemann solver interface class. The
@@ -21,6 +21,7 @@
 #include "Types.h"
 #include "Make_unique.h"
 #include "Fields.h"
+#include "FunctionPrototypes.h"
 
 namespace inciter {
 
@@ -68,10 +69,10 @@ class RiemannSolver {
 
     //! Public interface to computing the Riemann flux
     std::vector< tk::real >
-    flux( std::size_t f,
-          const tk::Fields& geoFace,
-          const std::array< std::vector< tk::real >, 2 >& u ) const
-    { return self->flux( f, geoFace, u ); }
+    flux( const std::array< tk::real, 3 >& fn,
+          const std::array< std::vector< tk::real >, 2 >& u,
+          const std::vector< std::array< tk::real, 3 > >& v ) const
+    { return self->flux( fn, u, v ); }
 
     //! Copy assignment
     RiemannSolver& operator=( const RiemannSolver& x )
@@ -93,9 +94,9 @@ class RiemannSolver {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual std::vector< tk::real >
-        flux( std::size_t,
-              const tk::Fields&,
-              const std::array< std::vector< tk::real >, 2 >& ) const = 0;
+        flux( const std::array< tk::real, 3 >&,
+              const std::array< std::vector< tk::real >, 2 >&,
+              const std::vector< std::array< tk::real, 3 > >& ) const = 0;
     };
 
     //! \brief Model models the Concept above by deriving from it and overriding
@@ -105,10 +106,10 @@ class RiemannSolver {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
       std::vector< tk::real >
-        flux( std::size_t f,
-              const tk::Fields& geoFace,
-              const std::array< std::vector< tk::real >, 2 >& u ) const override
-      { return data.flux( f, geoFace, u ); }
+        flux( const std::array< tk::real, 3 >& fn,
+              const std::array< std::vector< tk::real >, 2 >& u,
+              const std::vector< std::array< tk::real, 3 > >& v ) const override
+      { return data.flux( fn, u, v ); }
       T data;
     };
 

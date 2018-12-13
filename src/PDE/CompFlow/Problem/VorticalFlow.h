@@ -15,7 +15,9 @@
 #include <unordered_set>
 
 #include "Types.h"
+#include "FunctionPrototypes.h"
 #include "Inciter/Options/Problem.h"
+
 namespace inciter {
 
 //! CompFlow system of PDEs problem: vortical flow
@@ -26,24 +28,33 @@ class CompFlowProblemVorticalFlow {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
+    static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
   public:
     //! Evaluate analytical solution at (x,y,z) for all components
-    //! \param[in] e Equation system index, i.e., which compressible
+    //! \param[in] system Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
+    //! \param[in] ncomp Number of scalar components in this PDE system
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] z Z coordinate where to evaluate the solution
     //! \return Values of all components evaluated at (x,y,z)
-    static std::array< tk::real, 5 >
-    solution( ncomp_t e, tk::real x, tk::real y, tk::real z, tk::real ) {
+    //! \note The function signature must follow tk::SolutionFn
+    static tk::SolutionFn::result_type
+    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
+              tk::real )
+    {
+      Assert( ncomp == m_ncomp, "Number of scalar components must be " +
+                                std::to_string(m_ncomp) );
+      IGNORE(ncomp);
       using tag::param; using tag::compflow;
       // manufactured solution parameters
-      const auto& a = g_inputdeck.get< param, compflow, tag::alpha >()[ e ];
-      const auto& b = g_inputdeck.get< param, compflow, tag::beta >()[ e ];
-      const auto& p0 = g_inputdeck.get< param, compflow, tag::p0 >()[ e ];
+      const auto& a =
+        g_inputdeck.get< param, compflow, tag::alpha >()[ system ];
+      const auto& b = g_inputdeck.get< param, compflow, tag::beta >()[ system ];
+      const auto& p0 = g_inputdeck.get< param, compflow, tag::p0 >()[ system ];
       // ratio of specific heats
-      tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ e ];
+      tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ system ];
       // velocity
       const tk::real ru = a*x - b*y;
       const tk::real rv = b*x + a*y;
@@ -56,30 +67,30 @@ class CompFlowProblemVorticalFlow {
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
     //! \return Increment in values of all components: all zero for this problem
-    static std::array< tk::real, 5 >
-    solinc( tk::ctr::ncomp_type,
-            tk::real, tk::real, tk::real, tk::real, tk::real )
-    {
+    static std::vector< tk::real >
+    solinc( ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real ) {
       return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
     }
     //! Compute and return source term for vortical flow manufactured solution
-    //! \param[in] e Equation system index, i.e., which compressible
+    //! \param[in] system Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] z Z coordinate where to evaluate the solution
     //! \return Array of reals containing the source for all components
-    static std::array< tk::real, 5 >
-    src( ncomp_t e, tk::real x, tk::real y, tk::real z, tk::real ) {
+    //! \note The function signature must follow tk::SrcFn
+    static tk::SrcFn::result_type
+    src( ncomp_t system, tk::real x, tk::real y, tk::real z, tk::real ) {
       using tag::param; using tag::compflow;
       // manufactured solution parameters
-      const auto& a = g_inputdeck.get< param, compflow, tag::alpha >()[ e ];
-      const auto& b = g_inputdeck.get< param, compflow, tag::beta >()[ e ];
+      const auto& a =
+        g_inputdeck.get< param, compflow, tag::alpha >()[ system ];
+      const auto& b = g_inputdeck.get< param, compflow, tag::beta >()[ system ];
       // ratio of specific heats
-      tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ e ];
+      tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ system ];
       // evaluate solution at x,y,z
-      auto s = solution( e, x, y, z, 0.0 );
-      std::array< tk::real, 5 > r;
+      auto s = solution( system, m_ncomp, x, y, z, 0.0 );
+      std::vector< tk::real > r( m_ncomp );
       // density source
       r[0] = 0.0;
       // momentum source
@@ -121,7 +132,7 @@ class CompFlowProblemVorticalFlow {
     }
 
     //! Return field output going to file
-    //! \param[in] e Equation system index, i.e., which compressible
+    //! \param[in] system Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
@@ -129,7 +140,7 @@ class CompFlowProblemVorticalFlow {
     //! \param[in] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
-    fieldOutput( ncomp_t e,
+    fieldOutput( ncomp_t system,
                  ncomp_t offset,
                  tk::real,
                  tk::real,
@@ -139,17 +150,17 @@ class CompFlowProblemVorticalFlow {
     {
       // manufactured solution parameters
       const auto& a =
-        g_inputdeck.get< tag::param, tag::compflow, tag::alpha >()[e];
+        g_inputdeck.get< tag::param, tag::compflow, tag::alpha >()[system];
       const auto& b =
-        g_inputdeck.get< tag::param, tag::compflow, tag::beta >()[e];
+        g_inputdeck.get< tag::param, tag::compflow, tag::beta >()[system];
       const auto& p0 =
-        g_inputdeck.get< tag::param, tag::compflow, tag::p0 >()[e];
+        g_inputdeck.get< tag::param, tag::compflow, tag::p0 >()[system];
       // number of degree of freedom
       const std::size_t ndof = 
         g_inputdeck.get< tag::discr, tag::ndof >();
       // ratio of specific heats
       tk::real g =
-        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
+        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[system];
 
       std::vector< std::vector< tk::real > > out;
       const auto r  = U.extract( 0*ndof, offset );
