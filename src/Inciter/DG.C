@@ -1158,7 +1158,6 @@ DG::solve( tk::real newdt )
   // Enable SDAG wait for building the solution vector
   thisProxy[ thisIndex ].wait4sol();
   thisProxy[ thisIndex ].wait4lim();
-  if (m_stage == 2) thisProxy[ thisIndex ].wait4eval();
 
   auto d = Disc();
 
@@ -1173,15 +1172,14 @@ DG::solve( tk::real newdt )
   m_u =  m_rkcoef[0][m_stage] * m_un
        + m_rkcoef[1][m_stage] * ( m_u + d->Dt() * m_rhs/m_lhs );
 
-  // Increment Runge-Kutta stage counter
-  ++m_stage;
-
-  if (m_stage < 3) {
+  if (m_stage < 2) {
 
     // Continue with next tims step stage
     eval();
 
   } else {
+
+    thisProxy[ thisIndex ].wait4eval();
 
     // Compute diagnostics, e.g., residuals
     auto diag_computed =
@@ -1284,6 +1282,9 @@ DG::eval()
   const auto eps = std::numeric_limits< tk::real >::epsilon();
 
   tk::real fdt = 0.0;
+
+  // Increment Runge-Kutta stage counter
+  ++m_stage;
 
   // If Runge-Kutta stages not complete, continue with dt(), otherwise assess
   // computation completion criteria
