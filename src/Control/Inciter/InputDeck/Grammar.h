@@ -204,12 +204,12 @@ namespace grm {
 
   //! Rule used to trigger action
   template< class eq > struct check_multimat_compflow : pegtl::success {};
-  //! \brief Set defaults and do error checking on the compressible flow
-  //!   equation block
-  //! \details This is error checking that only the compressible flow equation
-  //!   block must satisfy. Besides error checking we also set defaults here as
-  //!   this block is called when parsing of a multimat_compflow...end block has
-  //!   just finished.
+  //! \brief Set defaults and do error checking on the multimaterial
+  //!    compressible flow equation block
+  //! \details This is error checking that only the multimaterial compressible
+  //!   flow equation block must satisfy. Besides error checking we also set
+  //!   defaults here as this block is called when parsing of a
+  //!   multimat_compflow...end block has just finished.
   template< class eq >
   struct action< check_multimat_compflow< eq > > {
     template< typename Input, typename Stack >
@@ -235,8 +235,6 @@ namespace grm {
         // if nmat is unspecified, configure it be 2
         if (nmat.empty() || nmat.size() != neq.get< eq >()) {
           Message< Stack, WARNING, MsgKey::NONMAT >( stack, in );
-          g_print << "\n>>> WARNING: Setting default as nmat = 2 for physics "
-                     "multimat_veleq" << std::endl;
           nmat.push_back( 2 );
         }
         // set ncomp based on nmat

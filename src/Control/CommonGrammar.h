@@ -1,3 +1,4 @@
+// *****************************************************************************
 /*!
   \file      src/Control/CommonGrammar.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
