@@ -76,7 +76,7 @@
 #define MixMassFractionBeta_h
 
 #include <vector>
-#include <cmath>
+#include <tuple>
 
 #include "InitPolicy.h"
 #include "MixMassFractionBetaCoeffPolicy.h"
@@ -104,6 +104,7 @@ class MixMassFractionBeta {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
+    using eq = tag::mixmassfracbeta;
 
   public:
     //! \brief Constructor
@@ -114,17 +115,14 @@ class MixMassFractionBeta {
     //!   the mixmassfracbeta ... end blocks are given the control file.
     explicit MixMassFractionBeta( ncomp_t c ) :
       m_c( c ),
-      m_depvar( g_inputdeck.get< tag::param,
-                                 tag::mixmassfracbeta,
-                                 tag::depvar >().at(c) ),
+      m_depvar( g_inputdeck.get< tag::param, eq, tag::depvar >().at(c) ),
       // divide by the number of derived variables computed, see derived()
-      m_ncomp( g_inputdeck.get< tag::component >().
-                           get< tag::mixmassfracbeta >().at(c) / 4 ),
-      m_offset( g_inputdeck.get< tag::component >().
-                            offset< tag::mixmassfracbeta >(c) ),
-      m_rng( g_rng.at( tk::ctr::raw( g_inputdeck.get< tag::param,
-                                                      tag::mixmassfracbeta,
-                                                      tag::rng >().at(c) ) ) ),
+      m_ncomp( g_inputdeck.get< tag::component >().get< eq >().at(c) / 4 ),
+      m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
+      m_grad( initScalarGradient() ),
+      m_rng( g_rng.at( tk::ctr::raw(
+        g_inputdeck.get< tag::param, eq, tag::rng >().at(c) ) ) ),
+      m_velocity( initCoupledVelocity() ),
       m_bprime(),
       m_S(),
       m_kprime(),
@@ -134,39 +132,27 @@ class MixMassFractionBeta {
       m_k(),
       coeff(
         m_ncomp,
-        g_inputdeck.get< tag::param,
-                         tag::mixmassfracbeta,
-                         tag::bprime >().at(c),
-        g_inputdeck.get< tag::param,
-                         tag::mixmassfracbeta,
-                         tag::S >().at(c),
-        g_inputdeck.get< tag::param,
-                         tag::mixmassfracbeta,
-                         tag::kappaprime >().at(c),
-        g_inputdeck.get< tag::param,
-                         tag::mixmassfracbeta,
-                         tag::rho2 >().at(c),
-        g_inputdeck.get< tag::param,
-                         tag::mixmassfracbeta,
-                         tag::r >().at(c),
+        g_inputdeck.get< tag::param, eq, tag::bprime >().at(c),
+        g_inputdeck.get< tag::param, eq, tag::S >().at(c),
+        g_inputdeck.get< tag::param, eq, tag::kappaprime >().at(c),
+        g_inputdeck.get< tag::param, eq, tag::rho2 >().at(c),
+        g_inputdeck.get< tag::param, eq, tag::r >().at(c),
         m_bprime, m_S, m_kprime, m_rho2, m_r, m_b, m_k )
     {
       // Populate inverse hydrodynamics time scales and hydrodyanmics
       // production/dissipation extracted from DNS
       if ( Coefficients::type() == ctr::CoeffPolicyType::HYDROTIMESCALE ) {
         // Configure inverse hydrodyanmics time scale from DNS
-        const auto& hts = g_inputdeck.get< tag::param,
-                                           tag::mixmassfracbeta,
-                                           tag::hydrotimescales >().at(c);
+        const auto& hts =
+          g_inputdeck.get< tag::param, eq, tag::hydrotimescales >().at(c);
         ctr::HydroTimeScales ot;
         for (auto t : hts) m_hts.push_back( ot.table(t) );
         Assert( m_hts.size() == m_ncomp, "Number of inverse hydro time scale "
           "tables associated does not match the components integrated" );
 
         // Configure hydrodyanmics production/dissipation from DNS
-        const auto& hp = g_inputdeck.get< tag::param,
-                                          tag::mixmassfracbeta,
-                                          tag::hydroproductions >().at(c);
+        const auto& hp =
+          g_inputdeck.get< tag::param, eq, tag::hydroproductions >().at(c);
         ctr::HydroProductions op;
         for (auto t : hp) m_hp.push_back( op.table(t) );
         Assert( m_hp.size() == m_ncomp, "Number of hydro "
@@ -180,9 +166,8 @@ class MixMassFractionBeta {
     //! \param[in,out] particles Array of particle properties 
     void initialize( int stream, tk::Particles& particles ) {
       //! Set initial conditions using initialization policy
-      Init::template
-        init< tag::mixmassfracbeta >
-            ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
+      Init::template init< eq >
+        ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
       // Initialize values derived from primary prognostic variable
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p)
@@ -212,12 +197,22 @@ class MixMassFractionBeta {
         // Generate Gaussian random numbers with zero mean and unit variance
         std::vector< tk::real > dW( m_ncomp );
         m_rng.gaussian( stream, m_ncomp, dW.data() );
+
+        // Access coupled particle velocity
+        tk::real u = 0.0, v = 0.0, w = 0.0;
+        if (std::get<0>(m_velocity)) {
+          u = particles( p, 0, std::get<2>(m_velocity) );
+          v = particles( p, 1, std::get<2>(m_velocity) );
+          w = particles( p, 2, std::get<2>(m_velocity) );
+        }
+
         // Advance all m_ncomp scalars
         for (ncomp_t i=0; i<m_ncomp; ++i) {
           tk::real& Y = particles( p, i, m_offset );
           tk::real d = m_k[i] * Y * (1.0 - Y) * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
-          Y += 0.5*m_b[i]*(m_S[i] - Y)*dt + d*dW[i];
+          Y += 0.5*m_b[i]*(m_S[i] - Y)*dt + d*dW[i]
+               + m_grad[0]*u + m_grad[1]*v + m_grad[2]*w;
           // Compute instantaneous values derived from updated Y
           derived( particles, p, i );
         }
@@ -229,7 +224,11 @@ class MixMassFractionBeta {
     const char m_depvar;                //!< Dependent variable
     const ncomp_t m_ncomp;              //!< Number of components
     const ncomp_t m_offset;             //!< Offset SDE operates from
+    const std::vector< tk::real > m_grad; //! Prescribed mean scalar gradient
     const tk::RNG& m_rng;               //!< Random number generator
+    const std::tuple< bool,             //!< True if coupled to velocity model
+                      char,             //!< Coupled velocity dependent variable
+                      ncomp_t > m_velocity;   //!< Offset of coupled velocity eq
 
     //! Coefficients
     std::vector< kw::sde_bprime::info::expect::type > m_bprime;
@@ -284,6 +283,32 @@ class MixMassFractionBeta {
       particles( p, m_ncomp+i, m_offset ) = rho( Y, i );
       particles( p, m_ncomp*2+i, m_offset ) = vol( Y, i );
       particles( p, m_ncomp*3+i, m_offset ) = 1.0 - Y;
+    }
+
+    //! Initialize imposed mean scalar gradient from user input
+    std::vector< tk::real > initScalarGradient() const {
+      const auto& mg = g_inputdeck.get< tag::param, eq, tag::mean_gradient >();
+      std::vector< tk::real > mean_gradient;
+      if (mg.size() > m_c)
+        mean_gradient = mg[ m_c ];
+      else
+        mean_gradient = {{ 0.0, 0.0, 0.0 }};
+      Assert( mean_gradient.size() == 3,
+              "Mean scalar gradient vector size must be 3" );
+      return mean_gradient;
+    }
+
+    //! Initialize velocity coupling from user input
+    std::tuple< bool, char, ncomp_t > initCoupledVelocity() const {
+      const auto& vel = g_inputdeck.get< tag::param, eq, tag::velocity >();
+      std::tuple< bool, char, ncomp_t > v{ false, 'a', 0 };
+      if (vel.size() > m_c) {
+        std::get<0>(v) = true;
+        std::get<1>(v) = vel[ m_c ];
+        std::get<2>(v) =
+          g_inputdeck.get< tag::param, eq, tag::velocity_id >()[ m_c ];
+      }
+      return v;
     }
 };
 

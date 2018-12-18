@@ -36,6 +36,7 @@ class Dissipation {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
+    using eq = tag::dissipation;
 
   public:
     //! \brief Constructor
@@ -46,23 +47,20 @@ class Dissipation {
     //!   dissipation ... end blocks are given the control file.
     explicit Dissipation( ncomp_t c ) :
       m_c( c ),
-      m_depvar(
-        g_inputdeck.get< tag::param, tag::dissipation, tag::depvar >().at(c) ),
-      m_ncomp(
-        g_inputdeck.get< tag::component >().get< tag::dissipation >().at(c) ),
-      m_offset(
-        g_inputdeck.get< tag::component >().offset< tag::dissipation >(c) ),
+      m_depvar( g_inputdeck.get< tag::param, eq, tag::depvar >().at(c) ),
+      m_ncomp( g_inputdeck.get< tag::component >().get< eq >().at(c) ),
+      m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_velocity_depvar(
-        g_inputdeck.get< tag::param, tag::dissipation, tag::velocity >().at(c)),
-      m_velocity_offset( g_inputdeck.get< tag::param, tag::dissipation,
-                                          tag::velocity_id >().at(c)),
+        g_inputdeck.get< tag::param, eq, tag::velocity >().at(c) ),
+      m_velocity_offset(
+        g_inputdeck.get< tag::param, eq, tag::velocity_id >().at(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::dissipation, tag::rng >().at(c) ) ) ),
+        g_inputdeck.get< tag::param, eq, tag::rng >().at(c) ) ) ),
       m_coeff(
-        g_inputdeck.get< tag::param, tag::dissipation, tag::c3 >().at(c),
-        g_inputdeck.get< tag::param, tag::dissipation, tag::c4 >().at(c),
-        g_inputdeck.get< tag::param, tag::dissipation, tag::com1 >().at(c),
-        g_inputdeck.get< tag::param, tag::dissipation, tag::com2 >().at(c),
+        g_inputdeck.get< tag::param, eq, tag::c3 >().at(c),
+        g_inputdeck.get< tag::param, eq, tag::c4 >().at(c),
+        g_inputdeck.get< tag::param, eq, tag::com1 >().at(c),
+        g_inputdeck.get< tag::param, eq, tag::com2 >().at(c),
         m_c3, m_c4, m_com1, m_com2 ),
       m_O( tk::ctr::mean( m_depvar, 0 ) ),
       m_R( {{ tk::ctr::variance( m_velocity_depvar, 0 ),
@@ -79,9 +77,8 @@ class Dissipation {
     //! \param[in,out] particles Array of particle properties
     void initialize( int stream, tk::Particles& particles ) {
       //! Set initial conditions using initialization policy
-      Init::template
-        init< tag::dissipation >
-            ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
+      Init::template init< eq >
+        ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
     }
 
     //! \brief Advance particles according to the dissipation SDE

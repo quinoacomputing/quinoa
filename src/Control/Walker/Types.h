@@ -451,12 +451,14 @@ using MixMassFractionBetaParameters = tk::tuple::tagged_tuple<
                           kw::gammapdf::info::expect::type > > >,
   tag::gaussian,        std::vector< std::vector< std::vector <
                           kw::gaussian::info::expect::type > > >,
-  tag::mean,        std::vector< std::vector<
-                      kw::sde_mu::info::expect::type > >,
-  tag::cov,         std::vector< std::vector<
-                      kw::sde_cov::info::expect::type > >,
-  tag::jointgaussian, std::vector< std::vector< std::vector <
-                        kw::gaussian::info::expect::type > > >,
+  tag::mean,            std::vector< std::vector<
+                          kw::sde_mu::info::expect::type > >,
+  tag::cov,             std::vector< std::vector<
+                          kw::sde_cov::info::expect::type > >,
+  tag::jointgaussian,   std::vector< std::vector< std::vector <
+                          kw::gaussian::info::expect::type > > >,
+  tag::mean_gradient,   std::vector< std::vector<
+                          kw::mean_gradient::info::expect::type > >,
   tag::hydrotimescales, std::vector< std::vector< ctr::HydroTimeScalesType > >,
   tag::hydroproductions,std::vector< std::vector< ctr::HydroProductionsType > >,
   tag::rng,             std::vector< tk::ctr::RNGType >,
@@ -491,12 +493,12 @@ using VelocityParameters = tk::tuple::tagged_tuple<
                           kw::gammapdf::info::expect::type > > >,
   tag::gaussian,        std::vector< std::vector< std::vector <
                           kw::gaussian::info::expect::type > > >,
-  tag::mean,        std::vector< std::vector<
-                      kw::sde_mu::info::expect::type > >,
-  tag::cov,         std::vector< std::vector<
-                      kw::sde_cov::info::expect::type > >,
-  tag::jointgaussian, std::vector< std::vector< std::vector <
-                        kw::gaussian::info::expect::type > > >,
+  tag::mean,            std::vector< std::vector<
+                          kw::sde_mu::info::expect::type > >,
+  tag::cov,             std::vector< std::vector<
+                          kw::sde_cov::info::expect::type > >,
+  tag::jointgaussian,   std::vector< std::vector< std::vector <
+                          kw::gaussian::info::expect::type > > >,
   tag::hydrotimescales, std::vector< std::vector< ctr::HydroTimeScalesType > >,
   tag::hydroproductions,std::vector< std::vector< ctr::HydroProductionsType > >
 >;
@@ -518,12 +520,12 @@ using PositionParameters = tk::tuple::tagged_tuple<
                           kw::gammapdf::info::expect::type > > >,
   tag::gaussian,        std::vector< std::vector< std::vector <
                           kw::gaussian::info::expect::type > > >,
-  tag::mean,        std::vector< std::vector<
-                      kw::sde_mu::info::expect::type > >,
-  tag::cov,         std::vector< std::vector<
-                      kw::sde_cov::info::expect::type > >,
-  tag::jointgaussian, std::vector< std::vector< std::vector <
-                        kw::gaussian::info::expect::type > > >
+  tag::mean,           std::vector< std::vector<
+                         kw::sde_mu::info::expect::type > >,
+  tag::cov,            std::vector< std::vector<
+                         kw::sde_cov::info::expect::type > >,
+  tag::jointgaussian,  std::vector< std::vector< std::vector <
+                         kw::gaussian::info::expect::type > > >
 >;
 
 //! Dissipation parameters storage
@@ -546,12 +548,12 @@ using DissipationParameters = tk::tuple::tagged_tuple<
                           kw::gammapdf::info::expect::type > > >,
   tag::gaussian,        std::vector< std::vector< std::vector <
                           kw::gaussian::info::expect::type > > >,
-  tag::mean,        std::vector< std::vector<
-                      kw::sde_mu::info::expect::type > >,
-  tag::cov,         std::vector< std::vector<
-                      kw::sde_cov::info::expect::type > >,
-  tag::jointgaussian, std::vector< std::vector< std::vector <
-                        kw::gaussian::info::expect::type > > >
+  tag::mean,            std::vector< std::vector<
+                          kw::sde_mu::info::expect::type > >,
+  tag::cov,             std::vector< std::vector<
+                          kw::sde_cov::info::expect::type > >,
+  tag::jointgaussian,  std::vector< std::vector< std::vector <
+                         kw::gaussian::info::expect::type > > >
 >;
 
 //! Parameters storage

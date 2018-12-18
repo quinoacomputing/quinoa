@@ -27,6 +27,7 @@ enum class CoeffPolicyType : uint8_t { CONSTANT=0
                                      , MONTE_CARLO_HOMOGENEOUS_DECAY
                                      , HYDROTIMESCALE
                                      , CONST_SHEAR
+                                     , CONST_DISSIPATION
                                      , INSTANTANEOUS_VELOCITY
                                      };
 
@@ -45,6 +46,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
                                   , kw::montecarlo_homdecay
                                   , kw::hydrotimescale
                                   , kw::const_shear
+                                  , kw::const_dissipation
                                   , kw::instantaneous_velocity
                                   >;
 
@@ -64,6 +66,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
             kw::montecarlo_homdecay::name() },
           { CoeffPolicyType::HYDROTIMESCALE, kw::hydrotimescale::name() },
           { CoeffPolicyType::CONST_SHEAR, kw::const_shear::name() },
+          { CoeffPolicyType::CONST_DISSIPATION, kw::const_dissipation::name() },
           { CoeffPolicyType::INSTANTANEOUS_VELOCITY,
             kw::instantaneous_velocity::name() } },
         //! keywords -> Enums
@@ -75,6 +78,8 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
              CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY },
            { kw::hydrotimescale::string(), CoeffPolicyType::HYDROTIMESCALE },
            { kw::const_shear::string(), CoeffPolicyType::CONST_SHEAR },
+           { kw::const_dissipation::string(),
+             CoeffPolicyType::CONST_DISSIPATION },
            { kw::instantaneous_velocity::string(),
              CoeffPolicyType::INSTANTANEOUS_VELOCITY } } )
     {
@@ -114,6 +119,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
           *kw::montecarlo_homdecay::code() }
       , { CoeffPolicyType::HYDROTIMESCALE, *kw::hydrotimescale::code() }
       , { CoeffPolicyType::CONST_SHEAR, *kw::const_shear::code() }
+      , { CoeffPolicyType::CONST_DISSIPATION, *kw::const_dissipation::code() }
       , { CoeffPolicyType::INSTANTANEOUS_VELOCITY,
           *kw::instantaneous_velocity::code() }
     };

@@ -1556,6 +1556,24 @@ struct const_shear_info {
 using const_shear =
   keyword< const_shear_info, TAOCPP_PEGTL_STRING("const_shear") >;
 
+struct const_dissipation_info {
+  using code = Code< R >;
+  static std::string name() { return "prescribed constant dissipation"; }
+  static std::string shortDescription() { return "Select constant turbulent "
+     "kinetic energy dissipation rate coefficients policy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the prescribed constant turbulent kinetic
+    energy dissipation rate coefficients policy, used to compute a homogeneous
+    forced turbulent flow using the Langevin model. This policy (or model)
+    prescribes a constant dissipation rate and thus mimics forced statistically
+    stationary turbulence. See also Sec 12.3.1, Stationary istropic turbulence
+    in Pope, S.B. (2000). Turbulent flows (Cambridge: Cambridge University
+    Press).)";
+  }
+};
+using const_dissipation =
+  keyword< const_dissipation_info, TAOCPP_PEGTL_STRING("const_dissipation") >;
+
 struct instantaneous_velocity_info {
   using code = Code< V >;
   static std::string name() { return "instantaneous velocity"; }
@@ -2356,6 +2374,24 @@ struct sde_rho2_info {
   };
 };
 using sde_rho2 = keyword< sde_rho2_info,  TAOCPP_PEGTL_STRING("rho2") >;
+
+struct mean_gradient_info {
+  static std::string name() { return "Prescribed mean gradient"; }
+  static std::string shortDescription() { return
+    R"(Set prescribed mean gradient)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of real numbers used to
+    parameterize a system of stochastic differential equations. Example:
+    "mean_gradient 1.0 1.0 0.0 end". One use of a mean gradient vector is to
+    specify a prescribed mean scalar gradient in 3 spatial directions for a
+    scalar transprot equation.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using mean_gradient = keyword< mean_gradient_info,
+  TAOCPP_PEGTL_STRING("mean_gradient") >;
 
 struct sde_rcomma_info {
   static std::string name() { return "rcomma"; }

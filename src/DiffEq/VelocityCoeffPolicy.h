@@ -146,7 +146,7 @@ glm( tk::real hts,
 //! Velocity equation coefficients policy with prescribed mean shear
 //! \details C0 is user-defined and we prescibe a hard-coded mean shear in the x
 //!   direction
-//! \see kw::hydrotimescale_info
+//! \see kw::const_shear_info
 class Velocity_ConstShear {
 
   public:
@@ -249,6 +249,108 @@ class Velocity_ConstShear {
     std::array< tk::real, 9 > m_dU;
 };
 
+//! Velocity equation coefficients policy with prescribed constant dissipation
+//! \details C0 is user-defined and we prescibe a hard-coded dissipation rate
+//! \see kw::const_dissipation_info
+class Velocity_ConstDissipation {
+
+  public:
+    //! Constructor: initialize coefficients
+    //! \param[in] C0_ Value of C0 parameter in the Langevin model
+    //! \param[in,out] C0 Value of to set the C0 parameter in the Langevin model
+    //! \param[in,out] dU Prescribed mean velocity gradient1
+    Velocity_ConstDissipation( kw::sde_c0::info::expect::type C0_,
+                               kw::sde_c0::info::expect::type& C0,
+                               std::array< tk::real, 9 >& dU ) :
+      m_dU( {{ 0.0, 0.0, 0.0,
+               0.0, 0.0, 0.0,
+               0.0, 0.0, 0.0 }} )
+    {
+      C0 = C0_;
+      dU = m_dU;
+    }
+
+    //! Coefficients policy type accessor
+    static ctr::CoeffPolicyType type() noexcept
+    { return ctr::CoeffPolicyType::CONST_DISSIPATION; }
+
+    //! Update the model coefficients (prescribing shear)
+    //! \details Update the dissipation rate (eps) and G_{ij} based on the
+    //!   turbulent kinetic energy (k) for a prescribed honmogeneous shear flow.
+    void update( char depvar,
+                 char,
+                 const std::map< tk::ctr::Product, tk::real >& moments,
+                 const tk::Table&,
+                 ctr::DepvarType solve,
+                 ctr::VelocityVariantType variant,
+                 kw::sde_c0::info::expect::type C0,
+                 tk::real,
+                 tk::real& eps,
+                 std::array< tk::real, 9 >& G ) const
+    {
+      using tk::ctr::lookup;
+      using tk::ctr::mean;
+      using tk::ctr::Product;
+
+      // Extract diagonal of the Reynolds stress
+      Product r11, r22, r33, r12, r13, r23;
+      if (solve == ctr::DepvarType::FULLVAR) {
+
+        using tk::ctr::variance;
+        using tk::ctr::covariance;
+        r11 = variance( depvar, 0 );
+        r22 = variance( depvar, 1 );
+        r33 = variance( depvar, 2 );
+        r12 = covariance( depvar, 0, depvar, 1 );
+        r13 = covariance( depvar, 0, depvar, 2 );
+        r23 = covariance( depvar, 1, depvar, 2 );
+
+      } else if (solve == ctr::DepvarType::FLUCTUATION) {
+
+        // Since we are solving for the fluctuating velocity, the "ordinary"
+        // moments, e.g., <U1U1>, are really central moments, i.e., <u1u1>.
+        using tk::ctr::Term;
+        using tk::ctr::Moment;
+        auto d = static_cast< char >( std::toupper( depvar ) );
+        Term u( d, 0, Moment::ORDINARY );
+        Term v( d, 1, Moment::ORDINARY );
+        Term w( d, 2, Moment::ORDINARY );
+        r11 = tk::ctr::Product( { u, u } );
+        r22 = tk::ctr::Product( { v, v } );
+        r33 = tk::ctr::Product( { w, w } );
+        r12 = tk::ctr::Product( { u, v } );
+        r13 = tk::ctr::Product( { u, w } );
+        r23 = tk::ctr::Product( { v, w } );
+
+      } else Throw( "Depvar type not implemented" );
+
+      // Compute nonzero components of the Reynolds stress
+      std::array< tk::real, 6 > rs{{ lookup(r11,moments),
+                                     lookup(r22,moments),
+                                     lookup(r33,moments),
+                                     lookup(r12,moments),
+                                     lookup(r13,moments),
+                                     lookup(r23,moments) }};
+
+      // Assign constant mean turbulence frequency
+      tk::real O = 1.0;
+
+      // Assign constant turbulent kinetic energy dissipation rate
+      eps = 1.0;
+
+      // update drift tensor based on the Langevin model variant configured
+      if (variant == ctr::VelocityVariantType::SLM)     // simplified
+        G = slm( O, C0 );
+      else if (variant == ctr::VelocityVariantType::GLM)// generalized
+        G = glm( O, C0, rs, m_dU );
+      else Throw( "Velocity variant type not implemented" );
+    }
+
+  private:
+    //! Mean velocity gradient prescribed for simpled 1D homogeneous shear
+    std::array< tk::real, 9 > m_dU;
+};
+
 //! Velocity equation coefficients policy with DNS hydrodynamics time scale
 //! \details C0 is user-defined and we pull in a hydrodynamic timescale from an
 //!   external function (from DNS).
@@ -318,6 +420,7 @@ class Velocity_HydroTimeScale {
 //! List of all Velocity's coefficients policies
 using VelocityCoeffPolicies = brigand::list< Velocity_HydroTimeScale
                                            , Velocity_ConstShear
+                                           , Velocity_ConstDissipation
                                            >;
 
 } // walker::

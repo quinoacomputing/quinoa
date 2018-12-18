@@ -38,6 +38,7 @@ class Velocity {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
+    using eq = tag::velocity;
 
   public:
     //! \brief Constructor
@@ -48,27 +49,21 @@ class Velocity {
     //!   the control file.
     explicit Velocity( ncomp_t c ) :
       m_c( c ),
-      m_depvar(
-        g_inputdeck.get< tag::param, tag::velocity, tag::depvar >().at(c) ),
-      m_ncomp(
-        g_inputdeck.get< tag::component >().get< tag::velocity >().at(c) ),
+      m_depvar( g_inputdeck.get< tag::param, eq, tag::depvar >().at(c) ),
+      m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset(
-        g_inputdeck.get< tag::component >().offset< tag::velocity >(c) ),
-      m_dissipation_depvar(
-        g_inputdeck.get< tag::param, tag::velocity, tag::dissipation >().at(c) ),
+        g_inputdeck.get< tag::component >().offset< eq >(c) ),
+      m_dissipation_depvar( initCoupledDissipation() ),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::velocity, tag::rng >().at(c) ) ) ),
-      m_solve(g_inputdeck.get< tag::param, tag::velocity, tag::solve >().at(c)),
+        g_inputdeck.get< tag::param, eq, tag::rng >().at(c) ) ) ),
+      m_solve(g_inputdeck.get< tag::param, eq, tag::solve >().at(c)),
       m_U( {{ tk::ctr::mean( m_depvar, 0 ),
               tk::ctr::mean( m_depvar, 1 ),
               tk::ctr::mean( m_depvar, 2 ) }} ),
-      m_variant(
-       g_inputdeck.get< tag::param, tag::velocity, tag::variant >().at(c) ),
+      m_variant( g_inputdeck.get< tag::param, eq, tag::variant >().at(c) ),
       m_c0(),
       m_G(),
-      m_coeff( g_inputdeck.get< tag::param, tag::velocity, tag::c0 >().at(c),
-               m_c0,
-               m_dU )
+      m_coeff( g_inputdeck.get< tag::param, eq, tag::c0 >().at(c), m_c0, m_dU )
     {
       Assert( m_ncomp == 3, "Velocity eq number of components must be 3" );
       // Zero prescribed mean velocity gradient if full variable is solved for
@@ -76,9 +71,8 @@ class Velocity {
       // Populate inverse hydrodynamics time scales extracted from DNS
       if ( Coefficients::type() == ctr::CoeffPolicyType::HYDROTIMESCALE ) {
         // Configure inverse hydrodyanmics time scale from DNS
-        const auto& hts = g_inputdeck.get< tag::param,
-                                           tag::velocity,
-                                           tag::hydrotimescales >().at(c);
+        const auto& hts =
+          g_inputdeck.get< tag::param, eq, tag::hydrotimescales >().at(c);
         Assert( hts.size() == 1,
                 "Velocity eq Hydrotimescales vector size must be 1" );
         m_hts = ctr::HydroTimeScales().table( hts[0] );
@@ -90,9 +84,8 @@ class Velocity {
     //! \param[in,out] particles Array of particle properties
     void initialize( int stream, tk::Particles& particles ) {
       // Set initial conditions using initialization policy
-      Init::template
-        init< tag::velocity >
-            ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
+      Init::template init< eq >
+        ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
     }
 
     //! \brief Advance particles according to the system of beta SDEs
@@ -174,6 +167,16 @@ class Velocity {
 
     //! (Optionally) prescribed mean velocity gradient
     std::array< tk::real, 9 > m_dU;
+
+    //! Initialize dissipation coupling from user input
+    char initCoupledDissipation() const {
+      const auto& diss = g_inputdeck.get< tag::param, eq, tag::dissipation >();
+      char d = 'a';
+      if (diss.size() > m_c) {
+        d = diss[ m_c ];
+      }
+      return d;
+    }
 };
 
 } // walker::

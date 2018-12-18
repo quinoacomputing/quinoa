@@ -148,6 +148,21 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  template< class eq, class vec >
+  struct check_mean_gradient : pegtl::success {};
+  //! Do error checking for a vector of prescribed mean gradient
+  template< class eq, class vec  >
+  struct action< check_mean_gradient< eq, vec > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      auto& vv = stack.template get< tag::param, eq, vec >();
+      Assert( !vv.empty(), "Vector of vectors checked must not be empty" );
+      if (vv.back().size() != 3)
+        Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
+    }
+  };
+
+  //! Rule used to trigger action
   template< class eq > struct check_eq : pegtl::success {};
   //! \brief Do general error checking on the differential equation block
   //! \details This is error checking that all equation types must satisfy.
@@ -300,10 +315,10 @@ namespace grm {
         couple< tag::velocity,
             tag::position, tag::position_id, MsgKey::POSITION_DEPVAR >
           ( in, stack, MsgKey::POSITION_MISSING );
-        // Ensure a coupled dissipation model is configured
+        // Compute equation id if a coupled dissipation model is configured
         couple< tag::velocity,
             tag::dissipation, tag::dissipation_id, MsgKey::DISSIPATION_DEPVAR >
-          ( in, stack, MsgKey::DISSIPATION_MISSING );
+          ( in, stack, MsgKey::OPTIONAL );
         // Compute equation id if a coupled mass fraction model is configured
         couple< tag::velocity, tag::mixmassfracbeta, tag::mixmassfracbeta_id,
                 MsgKey::MIXMASSFRACBETA_DEPVAR >
@@ -584,13 +599,15 @@ namespace deck {
                              tag::gaussian > > > {};
 
   //! SDE parameter vector
-  template< class keyword, class eq, class param >
+  template< class keyword, class eq, class param,
+            template< class, class > class check_vector =
+              tk::grm::check_vector >
   struct sde_parameter_vector :
          tk::grm::parameter_vector< use,
                                     use< keyword >,
                                     tk::grm::Store_back_back,
                                     tk::grm::start_vector,
-                                    tk::grm::check_vector,
+                                    check_vector,
                                     eq,
                                     param > {};
 
@@ -992,6 +1009,10 @@ namespace deck {
                            sde_parameter_vector< kw::sde_r,
                                                  tag::mixmassfracbeta,
                                                  tag::r >,
+                           sde_parameter_vector< kw::mean_gradient,
+                                                 tag::mixmassfracbeta,
+                                                 tag::mean_gradient,
+                                                 tk::grm::check_mean_gradient >,
                            tk::grm::process<
                              use< kw::velocity >,
                              tk::grm::Store_back< tag::param,

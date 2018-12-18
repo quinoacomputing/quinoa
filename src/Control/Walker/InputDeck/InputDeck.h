@@ -80,6 +80,7 @@ class InputDeck :
                                      , kw::sde_mu
                                      , kw::sde_mean
                                      , kw::sde_cov
+                                     , kw::mean_gradient
                                      , kw::sde_T
                                      , kw::sde_lambda
                                      , kw::sde_b
@@ -106,6 +107,7 @@ class InputDeck :
                                      , kw::r123_threefry
                                      , kw::r123_philox
                                      , kw::const_shear
+                                     , kw::const_dissipation
                                      , kw::position
                                      , kw::velocity
                                      , kw::instantaneous_velocity

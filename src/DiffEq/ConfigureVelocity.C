@@ -68,12 +68,8 @@ infoVelocity( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
     g_inputdeck.get< tag::param, tag::velocity, tag::position >()[c] ) );
   nfo.emplace_back( "coupled position depvar offset", std::to_string(
     g_inputdeck.get< tag::param, tag::velocity, tag::position_id >()[c] ) );
-  nfo.emplace_back( "coupled dissipation depvar", std::string( 1,
-    g_inputdeck.get< tag::param, tag::velocity, tag::dissipation >()[c] ) );
-  nfo.emplace_back( "coupled dissipation depv offs", std::to_string(
-    g_inputdeck.get< tag::param, tag::velocity, tag::dissipation_id >()[c] ) );
 
-  // Optional coupled
+  // Optional coupled scalar
   const auto& coupled_mixmassfracbeta =
     g_inputdeck.get< tag::param, tag::velocity, tag::mixmassfracbeta >();
   const auto& coupled_mixmassfracbeta_id =
@@ -85,6 +81,20 @@ infoVelocity( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
       coupled_mixmassfracbeta[c] ) );
     nfo.emplace_back( "coupled mixmassfracbeta dv of", std::to_string(
       coupled_mixmassfracbeta_id[c] ) );
+  }
+
+  // Optional coupled dissipation
+  const auto& coupled_dissipation =
+    g_inputdeck.get< tag::param, tag::velocity, tag::dissipation >();
+  const auto& coupled_dissipation_id =
+    g_inputdeck.get< tag::param, tag::velocity, tag::dissipation_id >();
+  Assert( coupled_dissipation.size() == coupled_dissipation_id.size(),
+          "Size mismatch" );
+  if (coupled_dissipation.size() > c) {
+    nfo.emplace_back( "coupled dissipation depvar", std::string( 1,
+      coupled_dissipation[c] ) );
+    nfo.emplace_back( "coupled dissipation dv of", std::to_string(
+      coupled_dissipation_id[c] ) );
   }
 
   nfo.emplace_back( "kind", "stochastic" );
