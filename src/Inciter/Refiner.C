@@ -364,12 +364,12 @@ Refiner::refine()
 
   }
 
-  for (const auto& e : tk::cref_find(m_bndEdges,thisIndex)) {
-    IGNORE(e);
-    Assert( m_lid.find( e[0] ) != end( m_lid ) &&
-            m_lid.find( e[1] ) != end( m_lid ),
-            "Boundary edge not found after refinement" );
-  }
+//   for (const auto& e : tk::cref_find(m_bndEdges,thisIndex)) {
+//     IGNORE(e);
+//     Assert( m_lid.find( e[0] ) != end( m_lid ) &&
+//             m_lid.find( e[1] ) != end( m_lid ),
+//             "Boundary edge not found after refinement" );
+//   }
 
   // Communicate extra edges
   comExtra();
@@ -386,14 +386,8 @@ Refiner::comExtra()
     correctref();
   else {
     for (auto c : m_ch) {       // for all chares we share at least an edge with
-      // For all boundary edges of chare c, find out if we have added a new
-      // node to it, and if so, export parents->(newid,lock_case,coords) to c.
-      AMR::EdgeData exp;
-      for (const auto& e : tk::cref_find(m_bndEdges,c)) {
-        auto i = m_edgedata.find(e);
-        if (i != end(m_edgedata)) exp[ e ] = i->second;
-      }
-      thisProxy[ c ].addRefBndEdges( thisIndex, exp );
+      // send refinement data of all our edges
+      thisProxy[ c ].addRefBndEdges( thisIndex, m_edgedata );
     }
   }
 }
@@ -427,61 +421,62 @@ Refiner::correctref()
   // Storage for edge data that need correction to yield a conforming mesh
   AMR::EdgeData extra;
 
+  // loop through all edges shared with other chares
   for (const auto& c : m_edgedataCh)       // for all chares we share edges with
     for (const auto& r : c.second) {       // for all edges shared with c.first
       // find local data of remote edge { r.first[0] - r.first[1] }
-      const auto& local = tk::cref_find( m_edgedata, r.first );
-      const auto& remote = r.second;
-      auto local_needs_refining = local.first;
-      auto local_lock_case = local.second;
-      auto remote_needs_refining = remote.first;
-      auto remote_lock_case = remote.second;
+      auto it = m_edgedata.find( r.first );
+      if (it != end(m_edgedata)) {
 
-      auto local_needs_refining_orig = local_needs_refining;
-      auto local_lock_case_orig = local_lock_case;
+        const auto& local = it->second;
+        const auto& remote = r.second;
+        auto local_needs_refining = local.first;
+        auto local_lock_case = local.second;
+        auto remote_needs_refining = remote.first;
+        auto remote_lock_case = remote.second;
 
-      Assert( !(local_lock_case > AMR::Edge_Lock_Case::unlocked &&
-                local_needs_refining),
-              "Invalid local edge: locked & needs refining" );
-      Assert( !(remote_lock_case > AMR::Edge_Lock_Case::unlocked &&
-                remote_needs_refining),
-              "Invalid remote edge: locked & needs refining" );
+        auto local_needs_refining_orig = local_needs_refining;
+        auto local_lock_case_orig = local_lock_case;
 
-      std::cout << thisIndex << " checking edge "
-                << r.first[0] << '-' << r.first[1] << " {"
-                << local.first << ',' << local.second << "}\n";
+        Assert( !(local_lock_case > AMR::Edge_Lock_Case::unlocked &&
+                  local_needs_refining),
+                "Invalid local edge: locked & needs refining" );
+        Assert( !(remote_lock_case > AMR::Edge_Lock_Case::unlocked &&
+                  remote_needs_refining),
+                "Invalid remote edge: locked & needs refining" );
 
-      // compute lock from local and remote locks as most restrictive
-      local_lock_case = std::max( local_lock_case, remote_lock_case );
+        // compute lock from local and remote locks as most restrictive
+        local_lock_case = std::max( local_lock_case, remote_lock_case );
 
-      if (local_lock_case > AMR::Edge_Lock_Case::unlocked)
-        local_needs_refining = false;
+        if (local_lock_case > AMR::Edge_Lock_Case::unlocked)
+          local_needs_refining = false;
 
-      if (local_lock_case == AMR::Edge_Lock_Case::unlocked &&
-          remote_needs_refining)
-        local_needs_refining = true;
+        if (local_lock_case == AMR::Edge_Lock_Case::unlocked &&
+            remote_needs_refining)
+          local_needs_refining = true;
 
-      if (local_lock_case != local_lock_case_orig ||
-          local_needs_refining != local_needs_refining_orig) {
+        if (local_lock_case != local_lock_case_orig ||
+            local_needs_refining != local_needs_refining_orig) {
 
-         auto l1 = tk::cref_find( m_lid, r.first[0] );
-         auto l2 = tk::cref_find( m_lid, r.first[1] );
-         Assert( l1 != l2, "Edge end-points local ids are the same" );
+           auto l1 = tk::cref_find( m_lid, r.first[0] );
+           auto l2 = tk::cref_find( m_lid, r.first[1] );
+           Assert( l1 != l2, "Edge end-points local ids are the same" );
 
-         extra[ {{ std::min(l1,l2), std::max(l1,l2) }} ] =
-           { local_needs_refining, local_lock_case };
+           std::cout << thisIndex << " correcting "
+                     << r.first[0] << '-' << r.first[1] << ": l{"
+                     << local_needs_refining_orig << ',' << local_lock_case_orig
+                     << "} + r{" << remote_needs_refining << ','
+                     << remote_lock_case << "} -> {" << local_needs_refining
+                     << ',' << local_lock_case << "}\n";
+
+           extra[ {{ std::min(l1,l2), std::max(l1,l2) }} ] =
+             { local_needs_refining, local_lock_case };
+         }
 
       }
     }
 
   m_extra = extra.size();
-
-  std::cout << thisIndex << " correcting: " << m_extra << " edges: ";
-  for (const auto& e : extra) {
-    std::cout << e.first[0] << '-' << e.first[1] << '{'
-              << e.second.first << ',' << e.second.second << "} ";
-  }
-  std::cout << std::endl;
 
   correctRefine( extra );
 
