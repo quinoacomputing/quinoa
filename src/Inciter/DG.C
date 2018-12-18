@@ -206,6 +206,52 @@ DG::leakyAdjacency()
   return std::abs(s[0]) > eps || std::abs(s[1]) > eps || std::abs(s[2]) > eps;
 }
 
+bool
+DG::faceMatch()
+// *****************************************************************************
+// Check if esuf of chare-boundary faces matches
+//! \details This function checks each chare-boundary esuf entry for the left
+//!   and right elements. Then, it tries to match all vertices of these
+//!   elements. Exactly three of these vertices must match if the esuf entry
+//!   has been updated correctly at chare-boundaries.
+//! \return True if chare-boundary faces match.
+// *****************************************************************************
+{
+  const auto& esuf = m_fd.Esuf();
+  const auto& inpoel = Disc()->Inpoel();
+  const auto& coord = Disc()->Coord();
+  std::size_t count;
+  bool match(true);
+
+  auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
+
+  for (auto f=m_fd.Ntfac(); f<esuf.size()/2; ++f)
+  {
+    std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+    std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+
+    count = 0;
+
+    for (std::size_t i=0; i<4; ++i)
+    {
+      auto ip = inpoel[4*el+i];
+      for (std::size_t j=0; j<4; ++j)
+      {
+        auto jp = inpoel[4*er+j];
+        auto xdiff = std::abs( coord[0][ip] - coord[0][jp] );
+        auto ydiff = std::abs( coord[1][ip] - coord[1][jp] );
+        auto zdiff = std::abs( coord[2][ip] - coord[2][jp] );
+
+        if ( xdiff<=eps && ydiff<=eps && zdiff<=eps ) ++count;
+      }
+    }
+
+    match = (match && count == 3);
+  }
+
+  return match;
+}
+
 std::unordered_map< int, std::unordered_set< std::size_t > >
 DG::msumset() const
 // *****************************************************************************
@@ -339,7 +385,7 @@ DG::setupGhost()
   const auto& coord = d->Coord();
 
   // Enlarge elements surrounding faces data structure for ghosts
-  m_fd.Esuf().resize( 2*m_nfac, -1 );
+  m_fd.Esuf().resize( 2*m_nfac, -2 );
   m_fd.Inpofa().resize( 3*m_nfac, 0 );
   // Enlarge face geometry data structure for ghosts
   m_geoFace.resize( m_nfac, 0.0 );
@@ -607,7 +653,7 @@ DG::addEsuf( const std::array< std::size_t, 2 >& id, std::size_t ghostid )
   Assert( 2*id[0]+1 < esuf.size(), "Indexing out of esuf" );
 
   // put in inner tet id
-  Assert( esuf[ 2*id[0] ] == -1 && esuf[ 2*id[0]+1 ] == -1, "Updating esuf at "
+  Assert( esuf[ 2*id[0] ] == -2 && esuf[ 2*id[0]+1 ] == -2, "Updating esuf at "
           "wrong location instead of chare-boundary" );
   esuf[ 2*id[0]+0 ] = static_cast< int >( id[1] );
   // put in local id for outer/ghost tet
@@ -734,6 +780,8 @@ DG::adj()
 
   // Perform leak test on face geometry data structure enlarged by ghosts
   Assert( !leakyAdjacency(), "Face adjacency leaky" );
+  Assert( faceMatch(), "Chare-boundary element-face connectivity (esuf) does "
+         "not match" );
 
   // Resize solution vectors, lhs, rhs and limiter function by the number of
   // ghost tets
