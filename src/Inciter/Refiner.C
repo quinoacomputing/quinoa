@@ -428,8 +428,8 @@ Refiner::correctref()
   AMR::EdgeData extra;
 
   for (const auto& c : m_edgedataCh)       // for all chares we share edges with
-    for (const auto& r : c.second) {       // for all refined edges on c.first
-      // find local data of remote edge
+    for (const auto& r : c.second) {       // for all edges shared with c.first
+      // find local data of remote edge { r.first[0] - r.first[1] }
       const auto& local = tk::cref_find( m_edgedata, r.first );
       const auto& remote = r.second;
       auto local_needs_refining = local.first;
@@ -446,6 +446,10 @@ Refiner::correctref()
       Assert( !(remote_lock_case > AMR::Edge_Lock_Case::unlocked &&
                 remote_needs_refining),
               "Invalid remote edge: locked & needs refining" );
+
+      std::cout << thisIndex << " checking edge "
+                << r.first[0] << '-' << r.first[1] << " {"
+                << local.first << ',' << local.second << "}\n";
 
       // compute lock from local and remote locks as most restrictive
       local_lock_case = std::max( local_lock_case, remote_lock_case );
@@ -473,9 +477,10 @@ Refiner::correctref()
   m_extra = extra.size();
 
   std::cout << thisIndex << " correcting: " << m_extra << " edges: ";
-  for (const auto& e : extra)
-     std::cout << e.first[0] << '-' << e.first[1] << '{'
-               << e.second.first << ',' << e.second.second << "} ";
+  for (const auto& e : extra) {
+    std::cout << e.first[0] << '-' << e.first[1] << '{'
+              << e.second.first << ',' << e.second.second << "} ";
+  }
   std::cout << std::endl;
 
   correctRefine( extra );
