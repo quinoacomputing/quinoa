@@ -619,11 +619,47 @@ DG::comGhost( int fromch, const GhostData& ghost )
           ++ncoord;                // increase number of nodes on this chare
         }
       }
+
+      // additional tests to ensure that entries in inpoel and t/inpofa match
+      Assert( nodetripletMatch(id, t) == 3, "Mismatch/Overmatch in inpoel and "
+              "inpofa at chare-boundary face" );
     }
   }
 
   // Signal the runtime system that all workers have received their adjacency
   if (++m_nadj == m_ghostData.size()) adj();
+}
+
+std::size_t
+DG::nodetripletMatch( const std::array< std::size_t, 2 >& id,
+                      const tk::UnsMesh::Face& t )
+// *****************************************************************************
+// Check if entries in inpoel, inpofa and node-triplet are consistent
+//! \param[in] id Local face and (inner) tet id adjacent to it
+//! \param[in] t node-triplet associated with the chare boundary face
+//! \return number of nodes in inpoel that matched with t and inpofa
+// *****************************************************************************
+{
+  const auto& lid = Disc()->Lid();
+  const auto& inpoel = Disc()->Inpoel();
+  const auto& esuf = m_fd.Esuf();
+  const auto& inpofa = m_fd.Inpofa();
+
+  std::size_t counter = 0;
+  for (std::size_t k=0; k<4; ++k)
+  {
+    auto el = esuf[ 2*id[0] ];
+    auto ip = inpoel[ 4*el+k ];
+    Assert( el == static_cast< int >( id[1] ), "Mismatch in id and esuf" );
+    for (std::size_t j=0; j<3; ++j)
+    {
+      auto jp = tk::cref_find( lid, t[j] );
+      auto fp = inpofa[ 3*id[0]+(2-j) ];
+      if (ip == jp && ip == fp) ++counter;
+    }
+  }
+
+  return counter;
 }
 
 void

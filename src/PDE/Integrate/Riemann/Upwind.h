@@ -58,4 +58,4 @@ struct Upwind {
 
 } // inciter::
 
-#endif // HLLC_h
+#endif // Upwind_h

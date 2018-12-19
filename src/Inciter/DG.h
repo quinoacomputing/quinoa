@@ -284,6 +284,11 @@ class DG : public CBase_DG {
     //! Check if esuf of chare-boundary faces matches
     bool faceMatch();
 
+    //! Check if entries in inpoel, inpofa and node-triplet are consistent
+    std::size_t
+    nodetripletMatch( const std::array< std::size_t, 2 >& id,
+                      const tk::UnsMesh::Face& t );
+
     //! Find any chare for face (given by 3 global node IDs)
     int findchare( const tk::UnsMesh::Face& t );
 
