@@ -649,7 +649,7 @@ DG::nodetripletMatch( const std::array< std::size_t, 2 >& id,
   for (std::size_t k=0; k<4; ++k)
   {
     auto el = esuf[ 2*id[0] ];
-    auto ip = inpoel[ 4*el+k ];
+    auto ip = inpoel[ 4*static_cast< std::size_t >( el )+k ];
     Assert( el == static_cast< int >( id[1] ), "Mismatch in id and esuf" );
     for (std::size_t j=0; j<3; ++j)
     {
