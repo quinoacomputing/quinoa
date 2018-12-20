@@ -435,6 +435,8 @@ Refiner::correctref()
 
         auto local_needs_refining_orig = local_needs_refining;
         auto local_lock_case_orig = local_lock_case;
+        auto remote_needs_refining_orig = remote_needs_refining;
+        auto remote_lock_case_orig = remote_lock_case;
 
         Assert( !(local_lock_case > unlocked && local_needs_refining),
                 "Invalid local edge: locked & needs refining" );
@@ -459,11 +461,11 @@ Refiner::correctref()
            Assert( l1 != l2, "Edge end-points local ids are the same" );
 
            std::cout << thisIndex << " correcting "
-                     << r.first[0] << '-' << r.first[1] << ": l{"
-                     << local_needs_refining_orig << ',' << local_lock_case_orig
-                     << "} + r{" << remote_needs_refining << ','
-                     << remote_lock_case << "} -> {" << local_needs_refining
-                     << ',' << local_lock_case << "}\n";
+             << r.first[0] << '-' << r.first[1] << ": l{"
+             << local_needs_refining_orig << ',' << local_lock_case_orig
+             << "} + r{" << remote_needs_refining_orig << ','
+             << remote_lock_case_orig << "} -> {" << local_needs_refining
+             << ',' << local_lock_case << "}\n";
 
            extra[ {{ std::min(l1,l2), std::max(l1,l2) }} ] =
              { local_needs_refining, local_lock_case };
