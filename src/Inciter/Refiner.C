@@ -580,8 +580,9 @@ Refiner::endt0ref()
     m_coordmap, m_belem, m_triinpoel, m_bnode, m_nchare, CkMyPe() );
 
   // Compute final number of cells across whole problem
-  std::vector< std::uint64_t > mesh{ m_ginpoel.size()/4, m_coord[0].size() };
-  contribute( mesh, CkReduction::sum_ulong, m_cbr.get< tag::refined >() );
+  std::size_t nelem = m_ginpoel.size()/4;
+  contribute( sizeof(std::size_t), &nelem, CkReduction::sum_ulong,
+              m_cbr.get< tag::refined >() );
 }
 
 void

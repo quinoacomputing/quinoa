@@ -62,7 +62,7 @@ class Transporter : public CBase_Transporter {
     explicit Transporter();
 
     //! Reduction target: the mesh has been read from file on all PEs
-    void load( uint64_t nelem, uint64_t npoin );
+    void load( std::size_t nelem );
 
     //! \brief Reduction target: all Solver (PEs) have computed the number of
     //!   chares they will recieve contributions from during linear solution
@@ -92,7 +92,7 @@ class Transporter : public CBase_Transporter {
     void matched( std::size_t extra );
 
     //! Reduction target: all PEs have optionally refined their mesh
-    void refined( std::size_t nelem, std::size_t npoin );
+    void refined( std::size_t nelem );
 
     //! \brief Reduction target: all Discretization chares have resized their
     //!    own data after mesh refinement

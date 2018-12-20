@@ -62,7 +62,6 @@ Transporter::Transporter() :
   m_refiner(),
   m_sorter(),
   m_nelem( 0 ),
-  m_npoin( 0 ),
   m_avcost( 0.0 ),
   m_V( 0.0 ),
   m_minstat( {{ 0.0, 0.0, 0.0 }} ),
@@ -312,11 +311,10 @@ Transporter::createPartitioner()
 }
 
 void
-Transporter::load( uint64_t nelem, uint64_t npoin )
+Transporter::load( std::size_t nelem )
 // *****************************************************************************
 // Reduction target: the mesh has been read from file on all PEs
 //! \param[in] nelem Total number of mesh elements (summed across all PEs)
-//! \param[in] npoin Total number of mesh points (summed across all PEs)
 // *****************************************************************************
 {
   // Compute load distribution given total work (nelem) and user-specified
@@ -336,7 +334,6 @@ Transporter::load( uint64_t nelem, uint64_t npoin )
   // Print out mesh graph stats
   m_print.section( "Input mesh graph statistics" );
   m_print.item( "Number of tetrahedra", nelem );
-  m_print.item( "Number of nodes", npoin );
 
   // Print out mesh partitioning configuration
   m_print.section( "Mesh partitioning" );
@@ -418,17 +415,15 @@ Transporter::matched( std::size_t extra )
 }
 
 void
-Transporter::refined( std::size_t nelem, std::size_t npoin )
+Transporter::refined( std::size_t nelem )
 // *****************************************************************************
 // Reduction target: all PEs have refined their mesh
 //! \param[in] nelem Total number of elements in mesh across the whole problem
-//! \param[in] npoin Total number of points in mesh across the whole problem
 // *****************************************************************************
 {
   m_sorter.doneInserting();
 
   m_nelem = nelem;
-  m_npoin = npoin;
 }
 
 void
@@ -491,7 +486,6 @@ Transporter::disccreated()
   if (g_inputdeck.get< tag::amr, tag::t0ref >()) {
     m_print.section( "Initially (t<0) refined mesh graph statistics" );
     m_print.item( "Number of tetrahedra", m_nelem );
-    m_print.item( "Number of nodes", m_npoin );
     m_print.endsubsection();
   }
 

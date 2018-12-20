@@ -15,7 +15,7 @@ module transporter {
 
     chare Transporter {
       entry Transporter();
-      entry [reductiontarget] void load( uint64_t nelem, uint64_t npoin );
+      entry [reductiontarget] void load( std::size_t nelem );
       entry [reductiontarget] void nchare();
       entry [reductiontarget] void bounds();
       entry [reductiontarget] void distributed();
@@ -24,8 +24,7 @@ module transporter {
       entry [reductiontarget] void disccreated();
       entry [reductiontarget] void workinserted();
       entry [reductiontarget] void matched( std::size_t extra );
-      entry [reductiontarget] void refined( std::size_t nelem,
-                                            std::size_t npoin );
+      entry [reductiontarget] void refined( std::size_t nelem );
       entry [reductiontarget] void discresized();
       entry [reductiontarget] void workresized();
       entry [reductiontarget] void comfinal();

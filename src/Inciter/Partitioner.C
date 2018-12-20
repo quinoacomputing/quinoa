@@ -94,7 +94,7 @@ Partitioner::Partitioner(
   tk::MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
   // Read this PE's chunk of the mesh (graph and coords) from file
-  std::vector< size_t > triinpoel;
+  std::vector< std::size_t > triinpoel;
   mr.readMeshPart( m_ginpoel, m_inpoel, triinpoel, m_gid, m_lid, m_coord,
                    CkNumPes(), CkMyPe() );
 
@@ -106,9 +106,9 @@ Partitioner::Partitioner(
   ownBndNodes( m_lid, m_bnode );
 
   // Compute number of cells across whole problem
-  std::vector< std::size_t > meshsize{{ m_ginpoel.size()/4,
-                                        m_coord[0].size() }};
-  contribute( meshsize, CkReduction::sum_ulong, m_cbp.get< tag::load >() );
+  std::size_t nelem = m_ginpoel.size()/4;
+  contribute( sizeof(std::size_t), &nelem, CkReduction::sum_ulong,
+              m_cbp.get< tag::load >() );
 }
 
 void
