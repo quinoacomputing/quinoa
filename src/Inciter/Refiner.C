@@ -690,18 +690,18 @@ Refiner::edgelistRefine()
 
     // Tag edges the user configured
     std::vector< edge_t > edge;
-    //std::cout << thisIndex << ": ";
+    std::cout << thisIndex << ": ";
     for (std::size_t p=0; p<npoin; ++p)        // for all mesh nodes on this chare
       for (auto q : tk::Around(psup,p)) {      // for all nodes surrounding p
         tk::UnsMesh::Edge e{{ m_gid[p], m_gid[q] }};
-        //std::cout << e[0] << ',' << e[1] << ' ';
+        std::cout << e[0] << ',' << e[1] << ' ';
         auto f = useredges.find(e);
         if (f != end(useredges)) { // tag edge if on user's list
           edge.push_back( edge_t(p,q) );
           useredges.erase( f );
         }
       }
-    //std::cout << std::endl;
+    std::cout << std::endl;
 
     std::cout << thisIndex << ": " << edge.size() << std::endl;
 
@@ -709,6 +709,12 @@ Refiner::edgelistRefine()
       std::cout << "Edges tagged but not found on chare " << thisIndex << ": ";
       for (const auto& e : useredges) std::cout << e[0] << ',' << e[1] << ' ';
     }
+    std::cout << std::endl;
+
+    std::cout << thisIndex << " tet store: ";
+    for (const auto& t : m_refiner.tet_store.tets)
+      std::cout << t.second[0] << ',' << t.second[1] << ','
+                << t.second[2] << ',' << t.second[3] << ' ';
     std::cout << std::endl;
 
     // Do error-based refinement
