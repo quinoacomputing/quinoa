@@ -414,6 +414,8 @@ Refiner::correctref()
 //!    a conforming mesh across chare boundaries during a mesh refinement step.
 // *****************************************************************************
 {
+  auto unlocked = AMR::Edge_Lock_Case::unlocked;
+
   // Storage for edge data that need correction to yield a conforming mesh
   AMR::EdgeData extra;
 
@@ -434,21 +436,17 @@ Refiner::correctref()
         auto local_needs_refining_orig = local_needs_refining;
         auto local_lock_case_orig = local_lock_case;
 
-        Assert( !(local_lock_case > AMR::Edge_Lock_Case::unlocked &&
-                  local_needs_refining),
+        Assert( !(local_lock_case > unlocked && local_needs_refining),
                 "Invalid local edge: locked & needs refining" );
-        Assert( !(remote_lock_case > AMR::Edge_Lock_Case::unlocked &&
-                  remote_needs_refining),
+        Assert( !(remote_lock_case > unlocked && remote_needs_refining),
                 "Invalid remote edge: locked & needs refining" );
 
         // compute lock from local and remote locks as most restrictive
         local_lock_case = std::max( local_lock_case, remote_lock_case );
 
-        if (local_lock_case > AMR::Edge_Lock_Case::unlocked)
-          local_needs_refining = false;
+        if (local_lock_case > unlocked) local_needs_refining = false;
 
-        if (local_lock_case == AMR::Edge_Lock_Case::unlocked &&
-            remote_needs_refining)
+        if (local_lock_case == unlocked && remote_needs_refining)
           local_needs_refining = true;
 
         if (local_lock_case != local_lock_case_orig ||
