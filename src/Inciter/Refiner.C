@@ -870,12 +870,12 @@ Refiner::updateMesh()
     m_msum = m_scheme.get()[thisIndex].ckLocal()->Msum();
   }
 
+  // Update mesh connectivity with local node IDs
+  m_inpoel = m_refiner.tet_store.get_active_inpoel();
+
   // Update mesh and solution after refinement
   newVolMesh( old, ref );
   newBndMesh( old, ref );
-
-  // Update mesh connectivity with local node IDs
-  m_inpoel = m_refiner.tet_store.get_active_inpoel();
 
   // Update mesh connectivity with new global node ids
   m_ginpoel = m_inpoel;
