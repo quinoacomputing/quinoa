@@ -156,38 +156,57 @@ class CompFlow {
         { m_bcsym, Symmetry },
         { m_bcextrapolate, Extrapolate } }};
 
-      if (ndof == 1) {  // DG(P0)
+      switch(ndof)
+      {
+        case 1:       // DG(P0)
+          // compute internal surface flux integrals
+          tk::surfIntP0( m_system, m_ncomp, m_offset, fd, geoFace, rieflxfn,
+                         velfn, U, R );
+          // compute source term intehrals
+          tk::srcIntP0( m_system, m_ncomp, m_offset,
+                        t, geoElem, Problem::src, R );
+          // compute boundary surface flux integrals
+          for (const auto& b : bctypes)
+            tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, fd,
+                              geoFace, t, rieflxfn, velfn, b.second, U, R );
+          break;
 
-        // compute internal surface flux integrals
-        tk::surfIntP0( m_system, m_ncomp, m_offset, fd, geoFace, rieflxfn,
-                       velfn, U, R );
-        // compute source term intehrals
-        tk::srcIntP0( m_system, m_ncomp, m_offset,
-                      t, geoElem, Problem::src, R );
-        // compute boundary surface flux integrals
-        for (const auto& b : bctypes)
-          tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, fd,
-            geoFace, t, rieflxfn, velfn, b.second, U, R );
+        case 4:       // DG(P1)
+          // compute internal surface flux integrals
+          tk::surfIntP1( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
+                         rieflxfn, velfn, U, limFunc, R );
+          // compute source term intehrals
+          tk::srcIntP1( m_system, m_ncomp, m_offset,
+                        t, inpoel, coord, geoElem, Problem::src, R );
+          // compute volume integrals
+          tk::volIntP1( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
+                        velfn, U, limFunc, R );
+          // compute boundary surface flux integrals
+          for (const auto& b : bctypes)
+            tk::sidesetIntP1( m_system, m_ncomp, m_offset, b.first, fd, geoFace, inpoel, 
+                              coord, t, rieflxfn, velfn, b.second, U, limFunc, R );
+          break;
 
-      } else if (ndof == 4) {  // DG(P1)
+        case 10:      // DG(P2)
+          // compute internal surface flux integrals
+          tk::surfIntP2( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
+                         rieflxfn, velfn, U, R );
+          // compute source term intehrals
+          tk::srcIntP2( m_system, m_ncomp, m_offset, 
+                        t, inpoel, coord, geoElem, Problem::src, R );
+          // compute volume integrals
+          tk::volIntP2( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
+                        velfn, U, R );
+          // compute boundary surface flux integrals
+          for (const auto& b : bctypes)
+            tk::sidesetIntP2( m_system, m_ncomp, m_offset, b.first, fd, geoFace, inpoel,
+                              coord, t, rieflxfn, velfn, b.second, U, R );
+          break;
 
-        // compute internal surface flux integrals
-        tk::surfIntP1( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                       rieflxfn, velfn, U, limFunc, R );
-        // compute source term intehrals
-        tk::srcIntP1( m_system, m_ncomp, m_offset,
-                      t, inpoel, coord, geoElem, Problem::src, R );
-        // compute volume integrals
-        tk::volIntP1( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
-                      velfn, U, limFunc, R );
-        // compute boundary surface flux integrals
-        for (const auto& b : bctypes)
-          tk::sidesetIntP1( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
-            inpoel, coord, t, rieflxfn, velfn, b.second, U, limFunc, R );
-
-      } else
-        Throw( "dg::Compflow::rhs() not defined for NDOF=" +
+        default:
+          Throw( "dg::Compflow::rhs() not defined for NDOF=" +
                std::to_string(ndof) );
+      }
     }
 
     //! Compute the minimum time step size

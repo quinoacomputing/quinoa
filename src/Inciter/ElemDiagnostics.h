@@ -55,6 +55,13 @@ class ElemDiagnostics {
                     const tk::Fields& geoElem,
                     const tk::Fields& u,
                     std::vector< std::vector< tk::real > >& diag ) const;
+
+    //! Compute diagnostics for DG(P2)
+    void computeP2( Discretization& d,
+                    const std::size_t nchGhost,
+                    const tk::Fields& geoElem,
+                    const tk::Fields& u,
+                    std::vector< std::vector< tk::real > >& diag ) const;
 };
 
 } // inciter::

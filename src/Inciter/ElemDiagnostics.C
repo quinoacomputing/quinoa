@@ -78,13 +78,22 @@ ElemDiagnostics::compute( Discretization& d,
     // Inciter/Diagnostics.h.
     std::vector< std::vector< tk::real > >
       diag( NUMDIAG, std::vector< tk::real >( u.nprop()/ndof, 0.0 ) );
-  
-    if (ndof == 1)
-      computeP0( d, nchGhost, geoElem, u, diag );
-    else if (ndof == 4)
-      computeP1( d, nchGhost, geoElem, u, diag );
-    else Throw( "ElemDiagnostics::compute() not defined for NDOF=" +
-                 std::to_string(ndof) );
+
+    switch(ndof)
+    {
+      case 1:
+        computeP0( d, nchGhost, geoElem, u, diag );
+        break;
+      case 4:
+        computeP1( d, nchGhost, geoElem, u, diag );
+        break;
+      case 10:
+        computeP2( d, nchGhost, geoElem, u, diag );
+        break;
+      default:
+        Throw( "ElemDiagnostics::compute() not defined for NDOF=" +
+                std::to_string(ndof) );
+    }
 
     // Append diagnostics vector with metadata on the current time step
     // ITER: Current iteration count (only the first entry is used)
@@ -238,6 +247,132 @@ ElemDiagnostics::computeP1( Discretization& d,
                    + u(i, mark+1, 0) * B2
                    + u(i, mark+2, 0) * B3
                    + u(i, mark+3, 0) * B4;
+
+        // Compute sum for L2 norm of the numerical solution
+        diag[L2SOL][c] += wt * ugp * ugp;
+
+        // Compute sum for L2 norm of the numerical-analytic solution
+        diag[L2ERR][c] += wt * (ugp-s[c]) * (ugp-s[c]);
+
+        // Compute max for Linf norm of the numerical-analytic solution
+        auto err = std::abs( ugp - s[c] );
+        if (err > diag[LINFERR][c]) diag[LINFERR][c] = err;
+      }
+    }
+  }
+}
+
+void
+ElemDiagnostics::computeP2( Discretization& d,
+                            const std::size_t nchGhost,
+                            const tk::Fields& geoElem,
+                            const tk::Fields& u,
+                            std::vector< std::vector< tk::real > >& diag ) const
+// *****************************************************************************
+//  Compute diagnostics, e.g., residuals, norms of errors, etc. for DG(P2)
+//! \param[in] d Discretization base class to read from
+//! \param[in] nchGhost Number of chare boundary ghost elements
+//! \param[in] geoElem Element geometry
+//! \param[in] u Current solution vector
+//! \param[in,out] diag Diagnostics vector
+//! \return True if diagnostics have been computed
+// *****************************************************************************
+{
+  const auto& inpoel = d.Inpoel();
+  const auto& coord = d.Coord();
+
+  // Number of integration points
+  constexpr std::size_t NG = 14;
+
+  // Quadrature points
+  std::array< std::array< tk::real, NG >, 3 > coordgp;
+  std::array< tk::real, NG > wgp;
+
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  tk::GaussQuadratureTet( coordgp, wgp );
+
+  // Query number of degrees of freedom from user's setting
+  const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+
+  // Put in norms sweeping our mesh chunk
+  for (std::size_t i=0; i<u.nunk()-nchGhost; ++i) {
+
+    auto vole = geoElem(i,0,0);
+
+    auto x1 = cx[ inpoel[4*i]   ];
+    auto y1 = cy[ inpoel[4*i]   ];
+    auto z1 = cz[ inpoel[4*i]   ];
+
+    auto x2 = cx[ inpoel[4*i+1] ];
+    auto y2 = cy[ inpoel[4*i+1] ];
+    auto z2 = cz[ inpoel[4*i+1] ];
+
+    auto x3 = cx[ inpoel[4*i+2] ];
+    auto y3 = cy[ inpoel[4*i+2] ];
+    auto z3 = cz[ inpoel[4*i+2] ];
+
+    auto x4 = cx[ inpoel[4*i+3] ];
+    auto y4 = cy[ inpoel[4*i+3] ];
+    auto z4 = cz[ inpoel[4*i+3] ];
+
+    // Gaussian quadrature
+    for (std::size_t igp=0; igp<NG; ++igp)
+    {
+      auto xi_xi   = coordgp[0][igp] * coordgp[0][igp];
+      auto xi_eta  = coordgp[0][igp] * coordgp[1][igp];
+      auto xi_zeta = coordgp[0][igp] * coordgp[2][igp];
+
+      auto eta_eta  = coordgp[1][igp] * coordgp[1][igp];
+      auto eta_zeta = coordgp[1][igp] * coordgp[2][igp];
+
+      auto zeta_zeta = coordgp[2][igp] * coordgp[2][igp];
+
+      auto xi   = coordgp[0][igp];
+      auto eta  = coordgp[1][igp];
+      auto zeta = coordgp[2][igp];
+
+      auto B2 = 2.0 * xi + eta + zeta - 1.0;
+      auto B3 = 3.0 * eta + zeta - 1.0;
+      auto B4 = 4.0 * zeta - 1.0;
+      auto B5 = 6.0 * xi_xi + eta_eta + zeta_zeta + 6.0 * xi_eta + 6.0 * xi_zeta + 2.0 * eta_zeta - 6.0 * xi - 2.0 * eta - 2.0 * zeta + 1.0;
+      auto B6 = 5.0 * eta_eta + zeta_zeta + 10.0 * xi_eta + 2.0 * xi_zeta + 6.0 * eta_zeta - 2.0 * xi - 6.0 * eta - 2.0 * zeta + 1.0;
+      auto B7 = 6.0 * zeta_zeta + 12.0 * xi_zeta + 6.0 * eta_zeta - 2.0 * xi - eta - 7.0 * zeta + 1.0;
+      auto B8 = 10.0 * eta_eta + zeta_zeta + 8.0 * eta_zeta - 8.0 * eta - 2.0 * zeta + 1.0;
+      auto B9 = 6.0 * zeta_zeta + 18.0 * eta_zeta - 3.0 * eta - 7.0 * zeta + 1.0;
+      auto B10 = 15.0 * zeta_zeta - 10.0 * zeta + 1.0;
+
+      auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp] - coordgp[2][igp];
+      auto shp2 = coordgp[0][igp];
+      auto shp3 = coordgp[1][igp];
+      auto shp4 = coordgp[2][igp];
+
+      auto xgp = x1*shp1 + x2*shp2 + x3*shp3 + x4*shp4;
+      auto ygp = y1*shp1 + y2*shp2 + y3*shp3 + y4*shp4;
+      auto zgp = z1*shp1 + z2*shp2 + z3*shp3 + z4*shp4;
+
+      auto wt = vole * wgp[igp];
+
+      std::vector< tk::real > s;
+
+      for (const auto& eq : g_dgpde)
+        s = eq.analyticSolution( xgp, ygp, zgp, d.T()+d.Dt() );
+
+      for (std::size_t c=0; c<u.nprop()/ndof; ++c)
+      {
+        auto mark = c*ndof;
+        auto ugp =   u(i, mark,   0)
+                   + u(i, mark+1, 0) * B2
+                   + u(i, mark+2, 0) * B3
+                   + u(i, mark+3, 0) * B4
+                   + u(i, mark+4, 0) * B5
+                   + u(i, mark+5, 0) * B6
+                   + u(i, mark+6, 0) * B7
+                   + u(i, mark+7, 0) * B8
+                   + u(i, mark+8, 0) * B9
+                   + u(i, mark+9, 0) * B10;
 
         // Compute sum for L2 norm of the numerical solution
         diag[L2SOL][c] += wt * ugp * ugp;

@@ -52,4 +52,19 @@ tk::mass( ncomp_t ncomp,
       }
     }
   }
+
+  // Augment LHS for DG(P2)
+  if (ndof > 4){
+    for (std::size_t e=0; e<nelem; ++e) {
+      for (ncomp_t c=0; c<5; ++c) {
+        const auto mark = c * ndof;
+        l(e, mark+4, offset) = geoElem(e,0,0) / 35.0;
+        l(e, mark+5, offset) = geoElem(e,0,0) / 21.0;
+        l(e, mark+6, offset) = geoElem(e,0,0) / 14.0;
+        l(e, mark+7, offset) = geoElem(e,0,0) / 7.0;
+        l(e, mark+8, offset) = geoElem(e,0,0) * 3.0/14.0;
+        l(e, mark+9, offset) = geoElem(e,0,0) * 3.0/7.0;
+      }
+    }
+  }
 }
