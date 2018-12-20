@@ -441,6 +441,8 @@ Refiner::correctref()
         Assert( !(remote_lock_case > unlocked && remote_needs_refining),
                 "Invalid remote edge: locked & needs refining" );
 
+        if (remote_lock_case > unlocked) remote_lock_case = unlocked;
+
         // compute lock from local and remote locks as most restrictive
         local_lock_case = std::max( local_lock_case, remote_lock_case );
 
