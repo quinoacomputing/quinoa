@@ -98,9 +98,10 @@ namespace AMR {
     void mesh_adapter_t::uniform_refinement()
     {
         for (auto& kv : tet_store.edge_store.edges) {
-            kv.second.refinement_criteria = 1.0;
+           auto& local = kv.second;
+           if (local.lock_case == Edge_Lock_Case::unlocked)
+             local.needs_refining = true;
         }
-        evaluate_error_estimate();
         mark_refinement();
     }
 
@@ -134,8 +135,8 @@ namespace AMR {
        for (const auto& e : edges)
        {
            auto& edgeref = local.get( e.first );
-           edgeref.needs_refining = std::get<0>(e.second);
-           edgeref.lock_case = std::get<1>(e.second);
+           edgeref.needs_refining = e.second.first;
+           edgeref.lock_case = e.second.second;
        }
        mark_refinement();
     }
