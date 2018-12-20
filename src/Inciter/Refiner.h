@@ -194,6 +194,8 @@ class Refiner : public CBase_Refiner {
     tk::real m_t;
     //! Initial mesh refinement type list (in reverse order)
     std::vector< ctr::AMRInitialType > m_initref;
+    //! Number of initial mesh refinement steps
+    std::size_t m_ninitref;
     //! Mesh refiner (library) object
     AMR::mesh_adapter_t m_refiner;
     //! Counter during distribution of newly added nodes to chare-boundary edges
@@ -243,7 +245,7 @@ class Refiner : public CBase_Refiner {
     void errorRefine();
 
     //! Do mesh refinement based on user explicitly tagging edges
-    void userRefine();
+    void edgelistRefine();
 
     //! Do mesh refinement based on tagging edges based on end-point coordinates
     void coordRefine();

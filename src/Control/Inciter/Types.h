@@ -51,7 +51,7 @@ using amr = tk::tuple::tagged_tuple<
   tag::id,      std::vector< std::size_t >,       //!< List of refvar indices
   tag::error,   AMRErrorType,                     //!< Error estimator for AMR
   //! List of edges-node pairs
-  tag::edge,    std::vector< kw::amr_initref::info::expect::type >,
+  tag::edge,    std::vector< kw::amr_edgelist::info::expect::type >,
   //! Refinement tagging edges with end-point coordinates lower than x coord
   tag::xminus,  kw::amr_xminus::info::expect::type,
   //! Refinement tagging edges with end-point coordinates higher than x coord

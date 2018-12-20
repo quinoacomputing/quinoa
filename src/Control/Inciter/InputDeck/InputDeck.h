@@ -133,7 +133,7 @@ class InputDeck :
                                    kw::amr_jump,
                                    kw::amr_hessian,
                                    kw::amr_refvar,
-                                   kw::amr_initref,
+                                   kw::amr_edgelist,
                                    kw::amr_coordref,
                                    kw::amr_xminus,
                                    kw::amr_xplus,

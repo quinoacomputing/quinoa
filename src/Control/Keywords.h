@@ -4467,7 +4467,7 @@ using amr_initial_conditions =
 
 struct amr_coords_info {
   using code = Code< c >;
-  static std::string name() { return "cooords"; }
+  static std::string name() { return "coords"; }
   static std::string shortDescription() { return
     "Select coordinate-based initial mesh refinement"; }
   static std::string longDescription() { return R"(This keyword is used to
@@ -4520,14 +4520,15 @@ struct amr_refvar_info {
 };
 using amr_refvar = keyword< amr_refvar_info, TAOCPP_PEGTL_STRING("refvar") >;
 
-struct amr_initref_info {
+struct amr_edgelist_info {
+  using code = Code< e >;
   static std::string name() { return "initial refinement edge-nodes"; }
   static std::string shortDescription() { return
     "Configure edge-node pairs for initial refinement"; }
   static std::string longDescription() { return
     R"(This keyword can be used to configure a list of edges that are explicitly
     tagged for initial refinement during setup in inciter. The keyword
-    introduces an initref ... end block within an amr ... end block and must
+    introduces an edgelist ... end block within an amr ... end block and must
     contain a list of integer pairs, i.e., the number of ids must be even,
     denoting the end-points of the nodes (=edge) which should be tagged for
     refinement.)"; }
@@ -4537,7 +4538,8 @@ struct amr_initref_info {
     static std::string description() { return "pairs of integers"; }
   };
 };
-using amr_initref = keyword< amr_initref_info, TAOCPP_PEGTL_STRING("initref") >;
+using amr_edgelist =
+  keyword< amr_edgelist_info, TAOCPP_PEGTL_STRING("edgelist") >;
 
 struct amr_coordref_info {
   static std::string name() {
@@ -4792,7 +4794,7 @@ struct amr_info {
     + amr_refvar::string() + "\' | \'"
     + amr_error::string() + "\' | \'"
     + amr_coordref::string() + "\' | \'"
-    + amr_initref::string() + "\'.";
+    + amr_edgelist::string() + "\'.";
   }
 };
 using amr = keyword< amr_info, TAOCPP_PEGTL_STRING("amr") >;

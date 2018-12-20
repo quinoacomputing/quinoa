@@ -66,6 +66,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_initial( true ),
   m_t( 0.0 ),
   m_initref( g_inputdeck.get< tag::amr, tag::init >() ),
+  m_ninitref( g_inputdeck.get< tag::amr, tag::init >().size() ),
   m_refiner( m_inpoel ),
   m_nref( 0 ),
   m_extra( 0 ),
@@ -100,7 +101,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 
   // If initial mesh refinement is configured, start initial mesh refinement.
   // See also tk::grm::check_amr_errors in Control/Inciter/InputDeck/Ggrammar.h.
-  if (g_inputdeck.get< tag::amr, tag::t0ref >())
+  if (g_inputdeck.get< tag::amr, tag::t0ref >() && m_ninitref > 0)
     t0ref();
   else
     endt0ref();
@@ -195,13 +196,9 @@ Refiner::t0ref()
 // *****************************************************************************
 {
   if (m_initial) {
-    Assert( (!g_inputdeck.get< tag::amr, tag::init >().empty()) ||
-            (!g_inputdeck.get< tag::amr, tag::init >().empty()),
-            "Neither initial mesh refinement type list nor user-defined "
-            "edge list given" );
+    Assert( m_ninitref > 0, "No initial mesh refinement steps configured" );
     // Output initial mesh to file
-    auto n = g_inputdeck.get<tag::amr, tag::init>().size(); // num initref steps
-    auto l = n - m_initref.size();  // num initref steps completed
+    auto l = m_ninitref - m_initref.size();  // num initref steps completed
     auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
     if (l == 0) writeMesh( "t0ref", l, t0-1.0 );
   }
@@ -344,18 +341,17 @@ Refiner::refine()
 
     // Refine mesh based on next initial refinement type
     if (!m_initref.empty()) {
-      auto r = m_initref.back();    // consume (reversed) list from back
+      auto r = m_initref.back();    // consume (reversed) list from its back
       if (r == ctr::AMRInitialType::UNIFORM)
         uniformRefine();
       else if (r == ctr::AMRInitialType::INITIAL_CONDITIONS)
         errorRefine();
       else if (r == ctr::AMRInitialType::COORDINATES)
         coordRefine();
+      else if (r == ctr::AMRInitialType::EDGELIST)
+        edgelistRefine();
       else Throw( "Initial AMR type not implemented" );
     }
-
-    // Additionally refine mesh based on user explicitly tagging edges
-    userRefine();
 
   } else {              // if AMR during time stepping (t>0)
 
@@ -536,11 +532,12 @@ Refiner::eval()
   if (m_initial) {      // if initial (before t=0) AMR
 
     // Output mesh after recent step of initial mesh refinement
-    auto n = g_inputdeck.get<tag::amr, tag::init>().size(); // num initref steps
-    auto l = n - m_initref.size() + 1;  // num initref steps completed
+    auto l = m_ninitref - m_initref.size() + 1;  // num initref steps completed
     auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
-    // Generate times for file output equally subdividing t0-1...t0 to n steps
-    tk::real t = t0 - 1.0 + static_cast<tk::real>(l)/static_cast<tk::real>(n);
+    // Generate times for file output equally subdividing t0-1...t0 to
+    // m_ninitref steps
+    tk::real t = t0 - 1.0 +
+                 static_cast<tk::real>(l)/static_cast<tk::real>(m_ninitref);
     writeMesh( "t0ref", l, t );
     // Remove initial mesh refinement step from list
     if (!m_initref.empty()) m_initref.pop_back();
@@ -667,7 +664,7 @@ Refiner::errorRefine()
 }
 
 void
-Refiner::userRefine()
+Refiner::edgelistRefine()
 // *****************************************************************************
 // Do mesh refinement based on user explicitly tagging edges
 // *****************************************************************************
@@ -682,21 +679,34 @@ Refiner::userRefine()
     auto esup = tk::genEsup( m_inpoel, 4 );
     auto psup = tk::genPsup( m_inpoel, 4, esup );
 
-    tk::UnsMesh::EdgeSet edgeset;
+    tk::UnsMesh::EdgeSet useredges;
     for (std::size_t i=0; i<edgenodelist.size()/2; ++i)
-      edgeset.insert( {{ {edgenodelist[i*2+0], edgenodelist[i*2+1]} }} );
+      useredges.insert( {{ {edgenodelist[i*2+0], edgenodelist[i*2+1]} }} );
 
     using AMR::edge_t;
 
     // Tag edges the user configured
     std::vector< edge_t > edge;
+    //std::cout << thisIndex << ": ";
     for (std::size_t p=0; p<npoin; ++p)        // for all mesh nodes on this chare
       for (auto q : tk::Around(psup,p)) {      // for all nodes surrounding p
-        tk::UnsMesh::Edge e{{p,q}};
-        if (edgeset.find(e) != end(edgeset)) { // tag edge if on user's list
-          edge.push_back( edge_t(e[0],e[1]) );
+        tk::UnsMesh::Edge e{{ m_gid[p], m_gid[q] }};
+        //std::cout << e[0] << ',' << e[1] << ' ';
+        auto f = useredges.find(e);
+        if (f != end(useredges)) { // tag edge if on user's list
+          edge.push_back( edge_t(p,q) );
+          useredges.erase( f );
         }
       }
+    //std::cout << std::endl;
+
+    std::cout << thisIndex << ": " << edge.size() << std::endl;
+
+    if (!useredges.empty()) {
+      std::cout << "Edges tagged but not found on chare " << thisIndex << ": ";
+      for (const auto& e : useredges) std::cout << e[0] << ',' << e[1] << ' ';
+    }
+    std::cout << std::endl;
 
     // Do error-based refinement
     m_refiner.error_refinement( edge );
