@@ -979,12 +979,17 @@ Refiner::boundary()
   using Face = tk::UnsMesh::Face;
   using Tet = tk::UnsMesh::Tet;
 
-  // Generate the inverse of AMR's tets map
+  // Generate the inverse of AMR's active inpoel
   std::unordered_map< Tet,
                       std::size_t,
                       tk::UnsMesh::Hash<4>,
                       tk::UnsMesh::Eq<4> > invtets;
-  for (const auto& t : m_refiner.tet_store.tets) invtets[ t.second ] = t.first;
+  //for (const auto& t : m_refiner.tet_store.tets) invtets[ t.second ] = t.first;
+  const auto& refinpoel = m_refiner.tet_store.get_active_inpoel();
+  for (std::size_t e=0; e<refinpoel.size()/4; ++e) {
+    invtets[ {{ refinpoel[e*4+0], refinpoel[e*4+1],
+                refinpoel[e*4+2], refinpoel[e*4+3] }} ] = e;
+  }
 
   // Generate data structure that associates the pair of side set id and
   // adjacent tet id to a boundary triangle face for all boundary faces. After
@@ -1006,7 +1011,9 @@ Refiner::boundary()
         // associate tet id adjacent to boundary face to boundary face, at this
         // point we fill in -1 for the side set id, since we don't know it yet
         auto i = invtets.find( t );
-        Assert( i != end(invtets), "Tet not found in AMR object" );
+        Assert( i != end(invtets), "Tet not found in AMR object: " +
+                std::to_string(t[0]) + ',' + std::to_string(t[1]) + ',' +
+                std::to_string(t[2]) + ',' + std::to_string(t[3]) );
         bnd[ b ] = { -1, i->second };
       }
     }
