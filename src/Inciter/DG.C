@@ -220,7 +220,6 @@ DG::faceMatch()
   const auto& esuf = m_fd.Esuf();
   const auto& inpoel = Disc()->Inpoel();
   const auto& coord = Disc()->Coord();
-  std::size_t count;
   bool match(true);
 
   auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
@@ -230,7 +229,7 @@ DG::faceMatch()
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
     std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
 
-    count = 0;
+    std::size_t count = 0;
 
     for (std::size_t i=0; i<4; ++i)
     {
