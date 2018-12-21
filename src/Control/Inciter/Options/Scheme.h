@@ -75,7 +75,7 @@ class Scheme : public tk::Toggle< SchemeType > {
       if (type == SchemeType::MatCG || type == SchemeType::DiagCG ||
           type == SchemeType::ALECG )
         return Centering::NODE;
-      else if (type == SchemeType::DG || type == SchemeType::DGP1)
+      else if (type == SchemeType::DG || type == SchemeType::DGP1 || type == SchemeType::DGP2)
         return Centering::ELEM;
       else Throw( "No such scheme centering" );
     }
