@@ -2,6 +2,8 @@ namespace inciter {
 /*!
   \page      inciter_newscheme How to add a new scheme to Inciter
 
+@tableofcontents{xml}
+
 @ref inciter_main supports multiple discretization schemes. This page describes
 how to add a scheme of your choice by walking through an example of adding a
 new one. We also discuss the main steps of the execution logic, which, at a
