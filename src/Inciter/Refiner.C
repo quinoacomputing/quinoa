@@ -93,6 +93,8 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 // *****************************************************************************
 {
   Assert( !m_ginpoel.empty(), "No elements assigned to refiner chare" );
+  Assert( tk::conforming( m_inpoel, m_coord ),
+          "Input mesh to Refiner not conforming" );
 
   usesAtSync = true;    // Enable migration at AtSync
 
@@ -863,6 +865,8 @@ Refiner::updateMesh()
   // Get refined mesh connectivity
   const auto& refinpoel = m_refiner.tet_store.get_active_inpoel();
   Assert( refinpoel.size()%4 == 0, "Inconsistent refined mesh connectivity" );
+  Assert( tk::conforming( m_inpoel, m_coord ),
+          "Mesh not conforming after refinement" );
 
   // Generate unique node lists of old and refined mesh using local ids
   std::unordered_set< std::size_t > old( m_inpoel.cbegin(), m_inpoel.cend() );
@@ -903,6 +907,9 @@ Refiner::updateMesh()
             tk::genEsuelTet( m_inpoel, tk::genEsup(m_inpoel,4) ),
             m_inpoel, m_coord ),
           "Refined mesh partition leaky" );
+
+  Assert( tk::conforming( m_inpoel, m_coord ),
+          "Mesh not conforming after updating mesh after mesh refinement" );
 }
 
 void

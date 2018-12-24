@@ -1540,4 +1540,125 @@ leakyPartition( const std::vector< int >& esueltet,
   return std::abs(s[0]) > eps || std::abs(s[1]) > eps || std::abs(s[2]) > eps;
 }
 
+bool
+conforming( const std::vector< std::size_t >& inpoel,
+            const tk::UnsMesh::Coords& coord,
+            bool cerr )
+// *****************************************************************************
+// Check if mesh (partition) is conforming
+//! \param[in] inpoel Element connectivity
+//! \param[in] coord Node coordinates
+//! \param[in] cerr True if hanging-node edge data should be output to
+//!   std::cerr (true by default)
+//! \return True if mesh (partition) has a hanging node, i.e., non-conforming.
+//! \details A conforming mesh by definition has no hanging nodes. A node is
+//!   hanging if an edge of one element coincides with two edges (of two other
+//!   elements). Thus, testing for conformity relies on checking the coordinates
+//!   of all vertices: if any vertex coincides with that of a mid-point node of
+//!   an edge, that is a hanging node. Note that this assumes that hanging nodes
+//!   can only be at the mid-point of edges. This may happen after a mesh
+//!   refinement step, due to a problem/bug, within the mesh refinement
+//!   algorithm given by J. Waltz, Parallel adaptive refinement for unsteady
+//!   flow calculations on 3D unstructured grids, International Journal for
+//!   Numerical Methods in Fluids, 46: 37–57, 2004, which always adds/removes
+//!   vertices at the mid-points of a tetrahedron mesh within a single
+//!   refinement step. Thus this algorithm is intended for this specific case,
+//!   i.e., test for conformity after a single refinement step and not after
+//!   multiple ones or for detecting hanging nodes in an arbitrary meshes.
+//*****************************************************************************
+{
+  Assert( !inpoel.empty(),
+          "Attempt to call conforming() with empty mesh connectivity" );
+  Assert( inpoel.size() % 4 == 0,
+          "Size of inpoel must be divisible by nnpe" );
+  Assert( *std::min_element( begin(inpoel), end(inpoel) ) == 0,
+          "Node ids should start from zero" );
+  Assert( !coord[0].empty() && !coord[1].empty() && !coord[0].empty(),
+          "Attempt to call conforming() with empty coordinates container" );
+
+  using Coord = UnsMesh::Coord;
+  using Edge = UnsMesh::Edge;
+  using Tet = UnsMesh::Tet;
+
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  // Compare operator to be used as less-than for std::array< tk::real, 3 >,
+  // implemented as a lexicographic ordering.
+  struct CoordLess {
+    const tk::real eps = std::numeric_limits< tk::real >::epsilon();
+    bool operator() ( const Coord& lhs, const Coord& rhs ) const {
+      if (lhs[0] < rhs[0])
+        return true;
+      else if (std::abs(lhs[0]-rhs[0]) < eps && lhs[1] < rhs[1])
+        return true;
+      else if (std::abs(lhs[0]-rhs[0]) < eps &&
+               std::abs(lhs[1]-rhs[1]) < eps &&
+               lhs[2] < rhs[2])
+        return true;
+      else
+        return false;
+    }
+  };
+
+  // Map associating data on potential hanging nodes. Key: coordinates of nodes
+  // of edge-half points, value: tet id (local if in parallel), tet connectivity
+  // (using local ids if in parallel), edge ids (local if in parallel).
+  std::map< Coord,                      // edge-half node coordinates: x, y, z
+            std::tuple< std::size_t,    // element id of edge-half node
+                        Tet,            // element node ids of edge-half node
+                        Edge >,         // edge containing half-node
+            CoordLess > edgeNodes;
+
+  // Compute coordinates of nodes of mid-points of all edges
+  for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+    auto A = inpoel[e*4+0];
+    auto B = inpoel[e*4+1];
+    auto C = inpoel[e*4+2];
+    auto D = inpoel[e*4+3];
+    std::array<Edge,6> edge{{ {{A,B}}, {{B,C}}, {{A,C}},
+                              {{A,D}}, {{B,D}}, {{C,D}} }};
+    for (const auto& n : edge) {
+      Coord en{{ (x[n[0]] + x[n[1]]) / 2.0,
+                 (y[n[0]] + y[n[1]]) / 2.0,
+                 (z[n[0]] + z[n[1]]) / 2.0 }};
+      edgeNodes[ en ] = { e, {A,B,C,D}, n };
+    }
+  }
+
+  // Find hanging nodes. If the coordinates of an element vertex coincide with
+  // that of a mid-point node of an edge, that is a hanging node. If we find one
+  // such node we print out some info on it.
+  auto ix = x.cbegin();
+  auto iy = y.cbegin();
+  auto iz = z.cbegin();
+
+  while (ix != x.cend()) {
+    Coord n{{ *ix, *iy, *iz }};
+    auto i = edgeNodes.find( n );
+    if (i != end(edgeNodes)) {
+      const auto& hanging_node_coord = i->first;
+      const auto& hanging_node_info = i->second;
+      auto tet_id = std::get< 0 >( hanging_node_info );
+      const auto& tet = std::get< 1 >( hanging_node_info );
+      const auto& edge = std::get< 2 >( hanging_node_info );
+      if (cerr) {
+        std::cerr
+          << "Mesh conformity test found hanging node with coordinates"" ("
+          << hanging_node_coord[0] << ", "
+          << hanging_node_coord[1] << ", "
+          << hanging_node_coord[2] << ") of tetrahedron element "
+          << tet_id << " with connectivity (" << tet[0] << ','
+          << tet[1] << ',' << tet[2] << ',' << tet[3] << ") on edge ("
+          << edge[0] << ',' << edge[1] << ")" << std::endl;
+      }
+      return false;
+    }
+    ++ix; ++iy; ++iz;
+  }
+
+  return true;
+}
+
 } // tk::
