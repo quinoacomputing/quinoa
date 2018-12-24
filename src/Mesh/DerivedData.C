@@ -1550,21 +1550,23 @@ conforming( const std::vector< std::size_t >& inpoel,
 //! \param[in] coord Node coordinates
 //! \param[in] cerr True if hanging-node edge data should be output to
 //!   std::cerr (true by default)
-//! \return True if mesh (partition) has a hanging node, i.e., non-conforming.
+//! \return True if mesh (partition) has no hanging nodes and thus the mesh is
+//!   conforming, false if non-conforming.
 //! \details A conforming mesh by definition has no hanging nodes. A node is
-//!   hanging if an edge of one element coincides with two edges (of two other
-//!   elements). Thus, testing for conformity relies on checking the coordinates
-//!   of all vertices: if any vertex coincides with that of a mid-point node of
-//!   an edge, that is a hanging node. Note that this assumes that hanging nodes
-//!   can only be at the mid-point of edges. This may happen after a mesh
-//!   refinement step, due to a problem/bug, within the mesh refinement
-//!   algorithm given by J. Waltz, Parallel adaptive refinement for unsteady
-//!   flow calculations on 3D unstructured grids, International Journal for
-//!   Numerical Methods in Fluids, 46: 37–57, 2004, which always adds/removes
-//!   vertices at the mid-points of a tetrahedron mesh within a single
-//!   refinement step. Thus this algorithm is intended for this specific case,
-//!   i.e., test for conformity after a single refinement step and not after
-//!   multiple ones or for detecting hanging nodes in an arbitrary meshes.
+//!   hanging if an edge of one element coincides with two (or more) edges (of
+//!   two or more other elements). Thus, testing for conformity relies on
+//!   checking the coordinates of all vertices: if any vertex coincides with
+//!   that of a mid-point node of an edge, that is a hanging node. Note that
+//!   this assumes that hanging nodes can only be at the mid-point of edges.
+//!   This may happen after a mesh refinement step, due to a problem/bug,
+//!   within the mesh refinement algorithm given by J. Waltz, Parallel adaptive
+//!   refinement for unsteady flow calculations on 3D unstructured grids,
+//!   International Journal for Numerical Methods in Fluids, 46: 37–57, 2004,
+//!   which always adds/removes vertices at the mid-points of edges of a
+//!   tetrahedron mesh within a single refinement step. Thus this algorithm is
+//!   intended for this specific case, i.e., test for conformity after a
+//!   single refinement step and not after multiple ones or for detecting
+//!   hanging nodes in an arbitrary meshes.
 //*****************************************************************************
 {
   Assert( !inpoel.empty(),
