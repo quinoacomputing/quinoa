@@ -1625,7 +1625,7 @@ conforming( const std::vector< std::size_t >& inpoel,
       Coord en{{ (x[n[0]] + x[n[1]]) / 2.0,
                  (y[n[0]] + y[n[1]]) / 2.0,
                  (z[n[0]] + z[n[1]]) / 2.0 }};
-      edgeNodes[ en ] = { e, {A,B,C,D}, n };
+      edgeNodes[ en ] = { e, {{A,B,C,D}}, n };
     }
   }
 
