@@ -121,7 +121,8 @@ Transporter::Transporter() :
     if (fct)
       m_print.item( "FCT mass diffusion coeff",
                     g_inputdeck.get< tag::discr, tag::ctau >() );
-  } else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1 || scheme == ctr::SchemeType::DGP2) {
+  } else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1 ||
+             scheme == ctr::SchemeType::DGP2) {
     m_print.Item< ctr::Flux, tag::discr, tag::flux >();
   }
   m_print.item( "PE-locality mesh reordering",

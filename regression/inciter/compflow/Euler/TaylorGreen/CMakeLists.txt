@@ -47,8 +47,8 @@ add_regression_test(compflow_euler_taylor_green ${INCITER_EXECUTABLE}
 
 add_regression_test(compflow_euler_taylor_green_dgp2 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES taylor_green_dgp2_pe4.q unitcube_1k.exo
-                    ARGS -c taylor_green_dgp2_pe4.q -i unitcube_1k.exo -v
+                    INPUTFILES taylor_green_dgp2.q unitcube_1k.exo
+                    ARGS -c taylor_green_dgp2.q -i unitcube_1k.exo -v
                     BIN_BASELINE taylor_green_dgp2_pe4.std.exo.0
                                  taylor_green_dgp2_pe4.std.exo.1
                                  taylor_green_dgp2_pe4.std.exo.2
@@ -59,7 +59,7 @@ add_regression_test(compflow_euler_taylor_green_dgp2 ${INCITER_EXECUTABLE}
                                out.e-s.0.4.3
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
-                    TEXT_BASELINE diag_dgp2_pe4.std
+                    TEXT_BASELINE diag_dgp2.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF taylor_green_diag.ndiff.cfg)
 

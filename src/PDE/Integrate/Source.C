@@ -149,7 +149,7 @@ tk::srcIntP2( ncomp_t system,
               const SrcFn& src,
               Fields& R )
 // *****************************************************************************
-//  Compute source term integrals for DG(P1)
+//  Compute source term integrals for DG(P2)
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from

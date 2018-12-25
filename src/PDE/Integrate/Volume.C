@@ -206,7 +206,7 @@ tk::volIntP2( ncomp_t system,
               const Fields& U,
               Fields& R )
 // *****************************************************************************
-//  Compute volume integrals for DG(P1)
+//  Compute volume integrals for DG(P2)
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
@@ -216,7 +216,6 @@ tk::volIntP2( ncomp_t system,
 //! \param[in] flux Flux function to use
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
-//! \param[in] limFunc Limiter function for higher-order solution dofs
 //! \param[in,out] R Right-hand side vector added to
 // *****************************************************************************
 {
@@ -323,17 +322,23 @@ tk::volIntP2( ncomp_t system,
     for (std::size_t igp=0; igp<NG; ++igp)
     {
       // Continue to calculate the derivatives of the basis functions dB/dx for DG(P2)
-      auto db5dxi1 = 12.0 * coordgp[0][igp] + 6.0 * coordgp[1][igp] + 6.0 * coordgp[2][igp] - 6.0;
-      auto db5dxi2 =  6.0 * coordgp[0][igp] + 2.0 * coordgp[1][igp] + 2.0 * coordgp[2][igp] - 2.0;
-      auto db5dxi3 =  6.0 * coordgp[0][igp] + 2.0 * coordgp[1][igp] + 2.0 * coordgp[2][igp] - 2.0;
+      auto db5dxi1 = 12.0 * coordgp[0][igp] + 6.0 * coordgp[1][igp]
+                   +  6.0 * coordgp[2][igp] - 6.0;
+      auto db5dxi2 =  6.0 * coordgp[0][igp] + 2.0 * coordgp[1][igp]
+                   +  2.0 * coordgp[2][igp] - 2.0;
+      auto db5dxi3 =  6.0 * coordgp[0][igp] + 2.0 * coordgp[1][igp]
+                   +  2.0 * coordgp[2][igp] - 2.0;
 
       auto db6dxi1 = 10.0 * coordgp[1][igp] +  2.0 * coordgp[2][igp] - 2.0;
-      auto db6dxi2 = 10.0 * coordgp[0][igp] + 10.0 * coordgp[1][igp] + 6.0 * coordgp[2][igp] - 6.0;
-      auto db6dxi3 =  2.0 * coordgp[0][igp] +  6.0 * coordgp[1][igp] + 2.0 * coordgp[2][igp] - 2.0;
+      auto db6dxi2 = 10.0 * coordgp[0][igp] + 10.0 * coordgp[1][igp]
+                   +  6.0 * coordgp[2][igp] - 6.0;
+      auto db6dxi3 =  2.0 * coordgp[0][igp] +  6.0 * coordgp[1][igp]
+                   +  2.0 * coordgp[2][igp] - 2.0;
 
       auto db7dxi1 = 12.0 * coordgp[2][igp] - 2.0;
       auto db7dxi2 =  6.0 * coordgp[2][igp] - 1.0;
-      auto db7dxi3 = 12.0 * coordgp[0][igp] + 6.0 * coordgp[1][igp] + 12.0 * coordgp[2][igp] - 7.0;
+      auto db7dxi3 = 12.0 * coordgp[0][igp] + 6.0 * coordgp[1][igp]
+                   + 12.0 * coordgp[2][igp] - 7.0;
 
       auto db8dxi1 =  0;
       auto db8dxi2 = 20.0 * coordgp[1][igp] + 8.0 * coordgp[2][igp] - 8.0;
@@ -436,14 +441,16 @@ tk::volIntP2( ncomp_t system,
       auto B2 = 2.0 * xi + eta + zeta - 1.0;
       auto B3 = 3.0 * eta + zeta - 1.0;
       auto B4 = 4.0 * zeta - 1.0;
-      auto B5 = 6.0 * xi_xi + eta_eta + zeta_zeta + 6.0 * xi_eta + 6.0 * xi_zeta + 2.0 * eta_zeta 
-              - 6.0 * xi - 2.0 * eta - 2.0 * zeta + 1.0;
-      auto B6 = 5.0 * eta_eta + zeta_zeta + 10.0 * xi_eta + 2.0 * xi_zeta + 6.0 * eta_zeta 
-              - 2.0 * xi - 6.0 * eta - 2.0 * zeta + 1.0;
-      auto B7 = 6.0 * zeta_zeta + 12.0 * xi_zeta + 6.0 * eta_zeta 
+      auto B5 = 6.0 * xi_xi + eta_eta + zeta_zeta + 6.0 * xi_eta + 6.0 * xi_zeta
+              + 2.0 * eta_zeta - 6.0 * xi - 2.0 * eta - 2.0 * zeta + 1.0;
+      auto B6 = 5.0 * eta_eta + zeta_zeta + 10.0 * xi_eta + 2.0 * xi_zeta
+              + 6.0 * eta_zeta - 2.0 * xi - 6.0 * eta - 2.0 * zeta + 1.0;
+      auto B7 = 6.0 * zeta_zeta + 12.0 * xi_zeta + 6.0 * eta_zeta
               - 2.0 * xi - eta - 7.0 * zeta + 1.0;
-      auto B8 = 10.0 * eta_eta + zeta_zeta + 8.0 * eta_zeta - 8.0 * eta - 2.0 * zeta + 1.0;
-      auto B9 = 6.0 * zeta_zeta + 18.0 * eta_zeta - 3.0 * eta - 7.0 * zeta + 1.0;
+      auto B8 = 10.0 * eta_eta + zeta_zeta + 8.0 * eta_zeta
+              - 8.0 * eta - 2.0 * zeta + 1.0;
+      auto B9 = 6.0 * zeta_zeta + 18.0 * eta_zeta - 3.0 * eta
+              - 7.0 * zeta + 1.0;
       auto B10 = 15.0 * zeta_zeta - 10.0 * zeta + 1.0;
 
       auto wt = wgp[igp] * geoElem(e, 0, 0);

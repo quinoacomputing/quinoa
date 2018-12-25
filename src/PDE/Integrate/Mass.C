@@ -56,7 +56,7 @@ tk::mass( ncomp_t ncomp,
   // Augment LHS for DG(P2)
   if (ndof > 4){
     for (std::size_t e=0; e<nelem; ++e) {
-      for (ncomp_t c=0; c<5; ++c) {
+      for (ncomp_t c=0; c<ncomp; ++c) {
         const auto mark = c * ndof;
         l(e, mark+4, offset) = geoElem(e,0,0) / 35.0;
         l(e, mark+5, offset) = geoElem(e,0,0) / 21.0;
