@@ -289,7 +289,7 @@ tk::surfIntP2( ncomp_t system,
                const Fields& U,
                Fields& R )
 // *****************************************************************************
-//  Compute internal surface flux integrals for DG(P1)
+//  Compute internal surface flux integrals for DG(P2)
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
@@ -300,7 +300,6 @@ tk::surfIntP2( ncomp_t system,
 //! \param[in] flux Riemann flux function to use
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
-//! \param[in] limFunc Limiter function for higher-order solution dofs
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
@@ -422,17 +421,18 @@ tk::surfIntP2( ncomp_t system,
       auto B2l = 2.0 * xi_l + eta_l + zeta_l - 1.0;
       auto B3l = 3.0 * eta_l + zeta_l - 1.0;
       auto B4l = 4.0 * zeta_l - 1.0;
-      auto B5l =  6.0 * xi_xi_l + eta_eta_l + zeta_zeta_l
-                + 6.0 * xi_eta_l + 6.0 * xi_zeta_l + 2.0 * eta_zeta_l
-                - 6.0 * xi_l - 2.0 * eta_l - 2.0 * zeta_l + 1.0;
-      auto B6l =  5.0 * eta_eta_l + zeta_zeta_l
-                + 10.0 * xi_eta_l + 2.0 * xi_zeta_l + 6.0 * eta_zeta_l
-                - 2.0 * xi_l - 6.0 * eta_l - 2.0 * zeta_l + 1.0;
-      auto B7l =  6.0 * zeta_zeta_l + 12.0 * xi_zeta_l + 6.0 * eta_zeta_l
-                - 2.0 * xi_l - eta_l - 7.0 * zeta_l + 1.0;
-      auto B8l =  10.0 * eta_eta_l + zeta_zeta_l + 8.0 * eta_zeta_l
-                - 8.0 * eta_l - 2.0 * zeta_l + 1.0;
-      auto B9l =  6.0 * zeta_zeta_l + 18.0 * eta_zeta_l - 3.0 * eta_l - 7.0 * zeta_l + 1.0;
+      auto B5l = 6.0 * xi_xi_l + eta_eta_l + zeta_zeta_l
+               + 6.0 * xi_eta_l + 6.0 * xi_zeta_l + 2.0 * eta_zeta_l
+               - 6.0 * xi_l - 2.0 * eta_l - 2.0 * zeta_l + 1.0;
+      auto B6l = 5.0 * eta_eta_l + zeta_zeta_l
+               + 10.0 * xi_eta_l + 2.0 * xi_zeta_l + 6.0 * eta_zeta_l
+               - 2.0 * xi_l - 6.0 * eta_l - 2.0 * zeta_l + 1.0;
+      auto B7l = 6.0 * zeta_zeta_l + 12.0 * xi_zeta_l + 6.0 * eta_zeta_l
+               - 2.0 * xi_l - eta_l - 7.0 * zeta_l + 1.0;
+      auto B8l = 10.0 * eta_eta_l + zeta_zeta_l + 8.0 * eta_zeta_l
+               - 8.0 * eta_l - 2.0 * zeta_l + 1.0;
+      auto B9l = 6.0 * zeta_zeta_l + 18.0 * eta_zeta_l - 3.0 * eta_l
+               - 7.0 * zeta_l + 1.0;
       auto B10l = 15.0 * zeta_zeta_l - 10.0 * zeta_l + 1.0;
 
       // transformation of the physical coordinates of the quadrature point
@@ -455,17 +455,18 @@ tk::surfIntP2( ncomp_t system,
       auto B2r = 2.0 * xi_r + eta_r + zeta_r - 1.0;
       auto B3r = 3.0 * eta_r + zeta_r - 1.0;
       auto B4r = 4.0 * zeta_r - 1.0;
-      auto B5r =  6.0 * xi_xi_r + eta_eta_r + zeta_zeta_r
-                + 6.0 * xi_eta_r + 6.0 * xi_zeta_r + 2.0 * eta_zeta_r
-                - 6.0 * xi_r - 2.0 * eta_r - 2.0 * zeta_r + 1.0;
-      auto B6r =  5.0 * eta_eta_r + zeta_zeta_r
-                + 10.0 * xi_eta_r + 2.0 * xi_zeta_r + 6.0 * eta_zeta_r
-                - 2.0 * xi_r - 6.0 * eta_r - 2.0 * zeta_r + 1.0;
-      auto B7r =  6.0 * zeta_zeta_r + 12.0 * xi_zeta_r + 6.0 * eta_zeta_r
-                - 2.0 * xi_r - eta_r - 7.0 * zeta_r + 1.0;
-      auto B8r =  10.0 * eta_eta_r + zeta_zeta_r + 8.0 * eta_zeta_r
-                - 8.0 * eta_r - 2.0 * zeta_r + 1.0;
-      auto B9r =  6.0 * zeta_zeta_r + 18.0 * eta_zeta_r - 3.0 * eta_r - 7.0 * zeta_r + 1.0;
+      auto B5r = 6.0 * xi_xi_r + eta_eta_r + zeta_zeta_r
+               + 6.0 * xi_eta_r + 6.0 * xi_zeta_r + 2.0 * eta_zeta_r
+               - 6.0 * xi_r - 2.0 * eta_r - 2.0 * zeta_r + 1.0;
+      auto B6r = 5.0 * eta_eta_r + zeta_zeta_r
+               + 10.0 * xi_eta_r + 2.0 * xi_zeta_r + 6.0 * eta_zeta_r
+               - 2.0 * xi_r - 6.0 * eta_r - 2.0 * zeta_r + 1.0;
+      auto B7r = 6.0 * zeta_zeta_r + 12.0 * xi_zeta_r + 6.0 * eta_zeta_r
+               - 2.0 * xi_r - eta_r - 7.0 * zeta_r + 1.0;
+      auto B8r = 10.0 * eta_eta_r + zeta_zeta_r + 8.0 * eta_zeta_r
+               - 8.0 * eta_r - 2.0 * zeta_r + 1.0;
+      auto B9r = 6.0 * zeta_zeta_r + 18.0 * eta_zeta_r - 3.0 * eta_r
+               - 7.0 * zeta_r + 1.0;
       auto B10r = 15.0 * zeta_zeta_r - 10.0 * zeta_r + 1.0;
 
       auto wt = wgp[igp] * geoFace(f,0,0);

@@ -252,14 +252,16 @@ tk::initializeP2( ncomp_t system,
       auto B2 = 2.0 * xi + eta + zeta - 1.0;
       auto B3 = 3.0 * eta + zeta - 1.0;
       auto B4 = 4.0 * zeta - 1.0;
-      auto B5 = 6.0 * xi_xi + eta_eta + zeta_zeta + 6.0 * xi_eta + 6.0 * xi_zeta + 2.0 * eta_zeta 
-              - 6.0 * xi - 2.0 * eta - 2.0 * zeta + 1.0;
-      auto B6 = 5.0 * eta_eta + zeta_zeta + 10.0 * xi_eta + 2.0 * xi_zeta + 6.0 * eta_zeta 
-              - 2.0 * xi - 6.0 * eta - 2.0 * zeta + 1.0;
-      auto B7 = 6.0 * zeta_zeta + 12.0 * xi_zeta + 6.0 * eta_zeta 
+      auto B5 = 6.0 * xi_xi + eta_eta + zeta_zeta + 6.0 * xi_eta + 6.0 * xi_zeta
+              + 2.0 * eta_zeta - 6.0 * xi - 2.0 * eta - 2.0 * zeta + 1.0;
+      auto B6 = 5.0 * eta_eta + zeta_zeta + 10.0 * xi_eta + 2.0 * xi_zeta
+              + 6.0 * eta_zeta - 2.0 * xi - 6.0 * eta - 2.0 * zeta + 1.0;
+      auto B7 = 6.0 * zeta_zeta + 12.0 * xi_zeta + 6.0 * eta_zeta
               - 2.0 * xi - eta - 7.0 * zeta + 1.0;
-      auto B8 = 10.0 * eta_eta + zeta_zeta + 8.0 * eta_zeta - 8.0 * eta - 2.0 * zeta + 1.0;
-      auto B9 = 6.0 * zeta_zeta + 18.0 * eta_zeta - 3.0 * eta - 7.0 * zeta + 1.0;
+      auto B8 = 10.0 * eta_eta + zeta_zeta + 8.0 * eta_zeta
+              - 8.0 * eta - 2.0 * zeta + 1.0;
+      auto B9 = 6.0 * zeta_zeta + 18.0 * eta_zeta - 3.0 * eta - 7.0 * zeta
+              + 1.0;
       auto B10 = 15.0 * zeta_zeta - 10.0 * zeta + 1.0;
 
       auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp] - coordgp[2][igp];

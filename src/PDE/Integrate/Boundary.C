@@ -356,7 +356,6 @@ tk::bndSurfIntP2( ncomp_t system,
 //! \param[in] state Function to evaluate the left and right solution state at
 //!   boundaries
 //! \param[in] U Solution vector at recent time step
-//! \param[in] limFunc Limiter function for higher-order solution dofs
 //! \param[in,out] R Right-hand side vector computed
 //! \tparam State Policy class providing the left and right state at
 //!   boundaries by its member function State::LR()
@@ -452,17 +451,18 @@ tk::bndSurfIntP2( ncomp_t system,
       auto B2l = 2.0 * xi_l + eta_l + zeta_l - 1.0;
       auto B3l = 3.0 * eta_l + zeta_l - 1.0;
       auto B4l = 4.0 * zeta_l - 1.0;
-      auto B5l =  6.0 * xi_xi_l + eta_eta_l + zeta_zeta_l
-                + 6.0 * xi_eta_l + 6.0 * xi_zeta_l + 2.0 * eta_zeta_l
-                - 6.0 * xi_l - 2.0 * eta_l - 2.0 * zeta_l + 1.0;
-      auto B6l =  5.0 * eta_eta_l + zeta_zeta_l
-                + 10.0 * xi_eta_l + 2.0 * xi_zeta_l + 6.0 * eta_zeta_l
-                - 2.0 * xi_l - 6.0 * eta_l - 2.0 * zeta_l + 1.0;
-      auto B7l =  6.0 * zeta_zeta_l + 12.0 * xi_zeta_l + 6.0 * eta_zeta_l
-                - 2.0 * xi_l - eta_l - 7.0 * zeta_l + 1.0;
-      auto B8l =  10.0 * eta_eta_l + zeta_zeta_l + 8.0 * eta_zeta_l
-                - 8.0 * eta_l - 2.0 * zeta_l + 1.0;
-      auto B9l =  6.0 * zeta_zeta_l + 18.0 * eta_zeta_l - 3.0 * eta_l - 7.0 * zeta_l + 1.0;
+      auto B5l = 6.0 * xi_xi_l + eta_eta_l + zeta_zeta_l
+               + 6.0 * xi_eta_l + 6.0 * xi_zeta_l + 2.0 * eta_zeta_l
+               - 6.0 * xi_l - 2.0 * eta_l - 2.0 * zeta_l + 1.0;
+      auto B6l = 5.0 * eta_eta_l + zeta_zeta_l
+               + 10.0 * xi_eta_l + 2.0 * xi_zeta_l + 6.0 * eta_zeta_l
+               - 2.0 * xi_l - 6.0 * eta_l - 2.0 * zeta_l + 1.0;
+      auto B7l = 6.0 * zeta_zeta_l + 12.0 * xi_zeta_l + 6.0 * eta_zeta_l
+               - 2.0 * xi_l - eta_l - 7.0 * zeta_l + 1.0;
+      auto B8l = 10.0 * eta_eta_l + zeta_zeta_l + 8.0 * eta_zeta_l
+               - 8.0 * eta_l - 2.0 * zeta_l + 1.0;
+      auto B9l = 6.0 * zeta_zeta_l + 18.0 * eta_zeta_l - 3.0 * eta_l
+               - 7.0 * zeta_l + 1.0;
       auto B10l = 15.0 * zeta_zeta_l - 10.0 * zeta_l + 1.0;
 
       auto wt = wgp[igp] * geoFace(f,0,0);
