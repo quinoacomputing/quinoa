@@ -1582,10 +1582,6 @@ conforming( const std::vector< std::size_t >& inpoel,
   using Edge = UnsMesh::Edge;
   using Tet = UnsMesh::Tet;
 
-  const auto& x = coord[0];
-  const auto& y = coord[1];
-  const auto& z = coord[2];
-
   // Compare operator to be used as less-than for std::array< tk::real, 3 >,
   // implemented as a lexicographic ordering.
   struct CoordLess {
@@ -1612,6 +1608,10 @@ conforming( const std::vector< std::size_t >& inpoel,
                         Tet,            // element node ids of edge-half node
                         Edge >,         // edge containing half-node
             CoordLess > edgeNodes;
+
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
 
   // Compute coordinates of nodes of mid-points of all edges
   for (std::size_t e=0; e<inpoel.size()/4; ++e) {
