@@ -95,6 +95,10 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   Assert( !m_ginpoel.empty(), "No elements assigned to refiner chare" );
   Assert( tk::positiveJacobians( m_inpoel, m_coord ),
           "Input mesh to Refiner Jacobian non-positive" );
+  Assert( !tk::leakyPartition(
+            tk::genEsuelTet( m_inpoel, tk::genEsup(m_inpoel,4) ),
+            m_inpoel, m_coord ),
+          "Input mesh to Refiner leaky" );
   Assert( tk::conforming( m_inpoel, m_coord ),
           "Input mesh to Refiner not conforming" );
 
