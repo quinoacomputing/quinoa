@@ -172,7 +172,7 @@ DG::leakyAdjacency()
 // *****************************************************************************
 // Perform leak-test on chare boundary faces
 //! \details This function computes a surface integral over the boundary of the
-//!   faces after the face adjacency communication map is completed.. A non-zero
+//!   faces after the face adjacency communication map is completed. A non-zero
 //!   vector result indicates a leak, e.g., a hole in the partition (covered by
 //!   the faces of the face adjacency communication map), which indicates an
 //!   error upstream in the code that sets up the face communication data
