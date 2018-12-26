@@ -3774,6 +3774,10 @@ template<> template<>
 void DerivedData_object::test< 72 >() {
   set_test_name( "Mesh conformity, empty inpoel, empty coord" );
 
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+
   try {
     tk::conforming( {}, {} );
     #ifndef NDEBUG        // exception only thrown in DEBUG mode
@@ -3790,6 +3794,10 @@ void DerivedData_object::test< 72 >() {
 template<> template<>
 void DerivedData_object::test< 73 >() {
   set_test_name( "Mesh conformity, empty inpoel, non-empty coord" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   try {
     std::array< std::vector< tk::real >, 3 > coord {{
@@ -3811,7 +3819,11 @@ void DerivedData_object::test< 73 >() {
 //! \details Should throw in DEBUG, skipped in RELEASE.
 template<> template<>
 void DerivedData_object::test< 74 >() {
-  set_test_name( "Mesh conformity, non-zero-based inpoel, empty coord" );
+  set_test_name( "Mesh conformity, non-zero-based inpoel, empty crd" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
@@ -3834,6 +3846,10 @@ void DerivedData_object::test< 74 >() {
 template<> template<>
 void DerivedData_object::test< 75 >() {
   set_test_name( "Mesh conformity, partial inpoel, non-empty coord" );
+
+  // Quiet std::cerr, to quiet exception message during its ctor
+  std::stringstream quiet;
+  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
