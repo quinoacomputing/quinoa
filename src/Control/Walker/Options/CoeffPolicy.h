@@ -20,7 +20,7 @@ namespace walker {
 namespace ctr {
 
 //! Differential equation coefficients policy types
-enum class CoeffPolicyType : uint8_t { CONSTANT=0
+enum class CoeffPolicyType : uint8_t { CONST_COEFF=0
                                      , DECAY
                                      , HOMOGENEOUS
                                      , HOMOGENEOUS_DECAY
@@ -39,7 +39,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = brigand::list< kw::constant
+    using keywords = brigand::list< kw::constcoeff
                                   , kw::decay
                                   , kw::homogeneous
                                   , kw::homdecay
@@ -58,7 +58,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
         //! Group, i.e., options, name
         "Coefficients Policy",
         //! Enums -> names
-        { { CoeffPolicyType::CONSTANT, kw::constant::name() },
+        { { CoeffPolicyType::CONST_COEFF, kw::constcoeff::name() },
           { CoeffPolicyType::DECAY, kw::decay::name() },
           { CoeffPolicyType::HOMOGENEOUS, kw::homogeneous::name() },
           { CoeffPolicyType::HOMOGENEOUS_DECAY, kw::homdecay::name() },
@@ -70,7 +70,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
           { CoeffPolicyType::INSTANTANEOUS_VELOCITY,
             kw::instantaneous_velocity::name() } },
         //! keywords -> Enums
-        {  { kw::constant::string(), CoeffPolicyType::CONSTANT },
+        {  { kw::constcoeff::string(), CoeffPolicyType::CONST_COEFF },
            { kw::decay::string(), CoeffPolicyType::DECAY },
            { kw::homogeneous::string(), CoeffPolicyType::HOMOGENEOUS },
            { kw::homdecay::string(), CoeffPolicyType::HOMOGENEOUS_DECAY },
@@ -111,7 +111,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
 
     //! Enums -> policy code
     std::map< CoeffPolicyType, std::string > policy {
-        { CoeffPolicyType::CONSTANT, *kw::constant::code() }
+        { CoeffPolicyType::CONST_COEFF, *kw::constcoeff::code() }
       , { CoeffPolicyType::DECAY, *kw::decay::code() }
       , { CoeffPolicyType::HOMOGENEOUS, *kw::homogeneous::code() }
       , { CoeffPolicyType::HOMOGENEOUS_DECAY, *kw::homdecay::code() }

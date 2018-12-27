@@ -111,7 +111,8 @@
           static const type lower = 1;
 
           // Optional expected value upper bound
-          static const type upper = std::numeric_limits< tk::real >::digits10 + 1;
+          static const type upper =
+            std::numeric_limits< tk::real >::digits10 + 1;
 
           // Optional expected valid choices description, here giving
           // information on the expected type and the valid bounds. Note that
@@ -1409,21 +1410,22 @@ struct init_info {
 };
 using init = keyword< init_info, TAOCPP_PEGTL_STRING("init") >;
 
-struct const_info {
+struct constcoeff_info {
   using code = Code< C >;
-  static std::string name() { return "constant"; }
+  static std::string name() { return "constant coefficients"; }
   static std::string shortDescription() { return
     "Select constant coefficients policy"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the
-    constant coefficients policy. The coefficients policy is used to specify
-    how the coefficients are set at each time step during time-integration.
-    Example: "coeff const", which selects constant coefficients policy,
+    R"(This keyword is used to select the 'constant coefficients' coefficients
+    policy. A coefficients policy is used to specify how the coefficients are
+    set at each time step during time-integration. Example: "coeff
+    const_coeff", which selects 'constant coefficients' coefficients policy,
     which sets constant coefficients before t = 0 and leaves the coefficients
     unchanged during time integration. Note that this option may behave
     differently depending on the particular equation or physical model.)"; }
 };
-using constant = keyword< const_info, TAOCPP_PEGTL_STRING("const") >;
+using constcoeff =
+  keyword< constcoeff_info, TAOCPP_PEGTL_STRING("const_coeff") >;
 
 struct decay_info {
   using code = Code< D >;
@@ -1603,7 +1605,15 @@ struct coeff_info {
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
-      return '\'' + constant::string() + '\'';
+      return '\'' +
+        kw::constcoeff::string() + "\' | \'" +
+        kw::decay::string() + "\' | \'" +
+        kw::homogeneous::string() + "\' | \'" +
+        kw::homdecay::string() + "\' | \'" +
+        kw::montecarlo_homdecay::string() + "\' | \'" +
+        kw::hydrotimescale::string() + "\' | \'" +
+        kw::const_shear::string() + "\' | \'" +
+        kw::instantaneous_velocity::string() + '\'';
     }
   };
 };

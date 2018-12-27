@@ -134,7 +134,7 @@ class InputDeck :
                                      , kw::boxmuller2
                                      , kw::icdf
                                      #endif
-                                     , kw::constant
+                                     , kw::constcoeff
                                      , kw::decay
                                      , kw::raw
                                      , kw::zero

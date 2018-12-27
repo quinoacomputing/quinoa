@@ -15,7 +15,7 @@ walker
   ornstein-uhlenbeck
     depvar r
     init raw
-    coeff const
+    coeff const_coeff
     ncomp 3
     theta 1.0 2.0 3.0 end
     mu 0.0 0.5 1.0 end

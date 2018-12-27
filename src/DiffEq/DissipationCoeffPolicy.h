@@ -26,7 +26,7 @@
       policy option. Example:
       \code{.cpp}
         static ctr::CoeffPolicyType type() noexcept {
-          return ctr::CoeffPolicyType::CONSTANT;
+          return ctr::CoeffPolicyType::CONST_COEFF;
         }
       \endcode
       which returns the enum value of the option from the underlying option
@@ -46,7 +46,7 @@
 
 namespace walker {
 
-//! Dissipation equation coefficients policy
+//! Dissipation equation coefficients policy keeping the coefficients constant
 class DissipationCoeffConst {
 
   public:
@@ -67,9 +67,12 @@ class DissipationCoeffConst {
       com2 = com2_;
     }
 
+    //! Update turbulence frequency source (no-op for const-coeff policy)
+    static void src( tk::real& ) {}
+
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept
-    { return ctr::CoeffPolicyType::CONSTANT; }
+    { return ctr::CoeffPolicyType::CONST_COEFF; }
 };
 
 //! List of all dissipation eq coefficients policies

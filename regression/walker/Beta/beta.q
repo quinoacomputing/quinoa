@@ -25,7 +25,7 @@ walker
       spike 0.01 0.5 0.99 0.5 end
     end
 
-    coeff const
+    coeff const_coeff
     # alpha = Sb/kappa, beta = (1-S)b/kappa
     # S = 1/(1+\beta/alpha), delta = S/alpha = kappa/b
     kappa 2.0  0.76923  0.5  0.15873  0.5 end
