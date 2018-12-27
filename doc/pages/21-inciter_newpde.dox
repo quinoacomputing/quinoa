@@ -921,7 +921,7 @@ discussion in PDEStack's constructor.
 
 The following diff augments PDEStack with our newly added PDE type.
 
-@subsection inciter_newpde_pdestack PDE/PDEStack.C
+@subsection inciter_newpde_pdestack_pdestack PDE/PDEStack.C
 
 @code{.diff}
 git diff src/PDE/PDEStack.C
