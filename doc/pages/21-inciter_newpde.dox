@@ -2,6 +2,8 @@ namespace inciter {
 /*!
   \page      inciter_newpde How to add a new PDE type to Inciter
 
+@tableofcontents{xml}
+
 This page describes how to add a new PDE type to @ref inciter_main.
 
 @ref inciter_main supports multiple partial differential equation (PDE) types.
