@@ -845,7 +845,7 @@ equations recognized by the parser.
 One last item is to augment the grammar messages data store to include our new
 warning on unspecified number of materials:
 
-@subsection inciter_newpde_grammar_grammar Control/Inciter/InputDeck/Grammar.h
+@subsection inciter_newpde_grammar_common Control/CommonGrammar.h
 
 @code{.diff}
 git diff src/Control/CommonGrammar.h
@@ -921,6 +921,8 @@ discussion in PDEStack's constructor.
 
 The following diff augments PDEStack with our newly added PDE type.
 
+@subsection inciter_newpde_pdestack PDE/PDEStack.C
+
 @code{.diff}
 git diff src/PDE/PDEStack.C
 diff --git a/src/PDE/PDEStack.C b/src/PDE/PDEStack.C
@@ -970,6 +972,8 @@ Before adding the new (skeleton) files for the new PDE type (which will contain
 their actual implementation of the spatial discretization), we add a new object
 file to the PDE build object so that registration of the new PDE into PDEStack
 is complete:
+
+@subsection inciter_newpde_cmake PDE/CMakeLists.txt
 
 @code{.diff}
 git diff src/PDE/CMakeListst.txt
