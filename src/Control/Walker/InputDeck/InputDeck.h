@@ -107,7 +107,7 @@ class InputDeck :
                                      , kw::r123_threefry
                                      , kw::r123_philox
                                      , kw::const_shear
-                                     , kw::const_dissipation
+                                     , kw::stationary
                                      , kw::position
                                      , kw::velocity
                                      , kw::instantaneous_velocity

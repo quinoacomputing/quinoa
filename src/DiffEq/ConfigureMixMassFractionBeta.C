@@ -27,6 +27,8 @@
 #include "MixMassFractionBeta.h"
 #include "MixMassFractionBetaCoeffPolicy.h"
 
+#include "CoupledEq.h"
+
 namespace walker {
 
 void
@@ -64,45 +66,20 @@ infoMixMassFractionBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
   nfo.emplace_back(
     ctr::DiffEq().name( ctr::DiffEqType::MIXMASSFRACBETA ), "" );
 
+  nfo.emplace_back( "kind", "stochastic" );
+  nfo.emplace_back( "dependent variable", std::string( 1,
+    g_inputdeck.get< tag::param, eq, tag::depvar >()[c] ) );
   nfo.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< eq >(c) ) );
   auto ncomp = g_inputdeck.get< tag::component, eq >()[c];
   nfo.emplace_back( "number of components",
     std::to_string( ncomp ) + " (" + std::to_string(ncomp/4) + "*4) " );
 
-  // Optional coupled velocity
-  const auto& coupled_velocity =
-    g_inputdeck.get< tag::param, eq, tag::velocity >();
-  const auto& coupled_velocity_id =
-    g_inputdeck.get< tag::param, eq, tag::velocity_id >();
-  Assert( coupled_velocity.size() == coupled_velocity_id.size(),
-          "Size mismatch" );
+  coupledInfo< eq, tag::velocity, tag::velocity_id >
+             ( c, "velocity", nfo );
+  coupledInfo< eq, tag::dissipation, tag::dissipation_id >
+             ( c, "dissipation", nfo );
 
-  if (coupled_velocity.size() > c) {
-    nfo.emplace_back( "coupled velocity depvar", std::string( 1,
-      coupled_velocity[c] ) );
-    nfo.emplace_back( "coupled velocity depvar offset", std::to_string(
-      coupled_velocity_id[c] ) );
-  }
-
-  // Optional coupled dissipation
-  const auto& coupled_dissipation =
-    g_inputdeck.get< tag::param, eq, tag::dissipation >();
-  const auto& coupled_dissipation_id =
-    g_inputdeck.get< tag::param, eq, tag::dissipation_id >();
-  Assert( coupled_dissipation.size() == coupled_dissipation_id.size(),
-          "Size mismatch" );
-
-  if (coupled_dissipation.size() > c) {
-    nfo.emplace_back( "coupled dissipation depvar", std::string( 1,
-      coupled_dissipation[c] ) );
-    nfo.emplace_back( "coupled dissipation depvar ofs", std::to_string(
-    coupled_dissipation_id[c] ) );
-  }
-
-  nfo.emplace_back( "kind", "stochastic" );
-  nfo.emplace_back( "dependent variable", std::string( 1,
-    g_inputdeck.get< tag::param, eq, tag::depvar >()[c] ) );
   nfo.emplace_back( "initialization policy", ctr::InitPolicy().name(
     g_inputdeck.get< tag::param, eq, tag::initpolicy >()[c] )
   );

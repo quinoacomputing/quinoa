@@ -76,16 +76,16 @@ namespace walker {
 //! \details C0 is user-defined and we prescibe a hard-coded mean shear in the x
 //!   direction
 //! \see kw::const_shear_info
-class Velocity_ConstShear {
+class VelocityCoeffConstShear {
 
   public:
     //! Constructor: initialize coefficients
     //! \param[in] C0_ Value of C0 parameter in the Langevin model
     //! \param[in,out] C0 Value of to set the C0 parameter in the Langevin model
     //! \param[in,out] dU Prescribed mean velocity gradient1
-    Velocity_ConstShear( kw::sde_c0::info::expect::type C0_,
-                         kw::sde_c0::info::expect::type& C0,
-                         std::array< tk::real, 9 >& dU ) :
+    VelocityCoeffConstShear( kw::sde_c0::info::expect::type C0_,
+                             kw::sde_c0::info::expect::type& C0,
+                             std::array< tk::real, 9 >& dU ) :
       m_dU( {{ 0.0, 1.0, 0.0,
                0.0, 0.0, 0.0,
                0.0, 0.0, 0.0 }} )
@@ -140,17 +140,17 @@ class Velocity_ConstShear {
     std::array< tk::real, 9 > m_dU;
 };
 
-//! Velocity equation coefficients policy with prescribed constant dissipation
-//! \details C0 is user-defined and we prescibe a hard-coded dissipation rate
-//! \see kw::const_dissipation_info
-class Velocity_ConstDissipation {
+//! \brief Velocity equation coefficients policy yielding a statistically
+//!   stationary state
+//! \see kw::stationary
+class VelocityCoeffStationary {
 
   public:
     //! Constructor: initialize coefficients
     //! \param[in] C0_ Value of C0 parameter in the Langevin model
     //! \param[in,out] C0 Value of to set the C0 parameter in the Langevin model
     //! \param[in,out] dU Prescribed mean velocity gradient1
-    Velocity_ConstDissipation( kw::sde_c0::info::expect::type C0_,
+    VelocityCoeffStationary( kw::sde_c0::info::expect::type C0_,
                                kw::sde_c0::info::expect::type& C0,
                                std::array< tk::real, 9 >& dU ) :
       m_dU( {{ 0.0, 0.0, 0.0,
@@ -163,7 +163,7 @@ class Velocity_ConstDissipation {
 
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept
-    { return ctr::CoeffPolicyType::CONST_DISSIPATION; }
+    { return ctr::CoeffPolicyType::STATIONARY; }
 
     //! Update the model coefficients (prescribing shear)
     //! \details Update the dissipation rate (eps) and G_{ij} based on the
@@ -182,11 +182,14 @@ class Velocity_ConstDissipation {
       // Compute turbulent kinetic energy
       auto rs = reynoldsStress( depvar, solve, moments );
 
-      // Assign constant mean turbulence frequency
+      // Override unit turbulent kinetic energy to keep PDF stationary
+      tk::real k = 1.0;
+
+      // Override mean turbulence frequency to keep PDF stationary
       tk::real O = 1.0;
 
-      // Assign constant turbulent kinetic energy dissipation rate
-      eps = 1.0;
+      // Compute turbulent kinetic energy dissipation rate
+      eps = O*k;
 
       // update drift tensor based on the Langevin model variant configured
       if (variant == ctr::VelocityVariantType::SLM)     // simplified
@@ -205,15 +208,15 @@ class Velocity_ConstDissipation {
 //! \details C0 is user-defined and we pull in a hydrodynamic timescale from an
 //!   external function (from DNS).
 //! \see kw::hydrotimescale_info
-class Velocity_HydroTimeScale {
+class VelocityCoeffHydroTimeScale {
 
   public:
     //! Constructor: initialize coefficients
     //! \param[in] C0_ Value of C0 parameter in the Langevin model
     //! \param[in,out] C0 Value of to set the C0 parameter in the Langevin model
-    Velocity_HydroTimeScale( kw::sde_c0::info::expect::type C0_,
-                             kw::sde_c0::info::expect::type& C0,
-                             std::array< tk::real, 9 >& )
+    VelocityCoeffHydroTimeScale( kw::sde_c0::info::expect::type C0_,
+                                 kw::sde_c0::info::expect::type& C0,
+                                 std::array< tk::real, 9 >& )
     {
       C0 = C0_;
     }
@@ -259,9 +262,9 @@ class Velocity_HydroTimeScale {
 };
 
 //! List of all Velocity's coefficients policies
-using VelocityCoeffPolicies = brigand::list< Velocity_HydroTimeScale
-                                           , Velocity_ConstShear
-                                           , Velocity_ConstDissipation
+using VelocityCoeffPolicies = brigand::list< VelocityCoeffConstShear
+                                           , VelocityCoeffStationary
+                                           , VelocityCoeffHydroTimeScale
                                            >;
 
 } // walker::

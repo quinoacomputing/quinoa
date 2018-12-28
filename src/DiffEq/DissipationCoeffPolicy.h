@@ -75,8 +75,40 @@ class DissipationCoeffConst {
     { return ctr::CoeffPolicyType::CONST_COEFF; }
 };
 
+//! \brief Dissipation equation coefficients policy keeping the dissipation
+//!   rate in a constant statistically stationary state
+class DissipationCoeffStationary {
+
+  public:
+    //! Constructor: initialize coefficients
+    DissipationCoeffStationary(
+      kw::sde_c3::info::expect::type c3_,
+      kw::sde_c4::info::expect::type c4_,
+      kw::sde_com1::info::expect::type com1_,
+      kw::sde_com2::info::expect::type com2_,
+      kw::sde_c3::info::expect::type& c3,
+      kw::sde_c4::info::expect::type& c4,
+      kw::sde_com1::info::expect::type& com1,
+      kw::sde_com2::info::expect::type& com2 )
+    {
+      c3 = c3_;
+      c4 = c4_;
+      com1 = com1_;
+      com2 = com2_;
+    }
+
+    //! Update turbulence frequency source (zero for const-coeff policy)
+    static void src( tk::real& Som ) { Som = 0.0; }
+
+    //! Coefficients policy type accessor
+    static ctr::CoeffPolicyType type() noexcept
+    { return ctr::CoeffPolicyType::STATIONARY; }
+};
+
 //! List of all dissipation eq coefficients policies
-using DissipationCoeffPolicies = brigand::list< DissipationCoeffConst >;
+using DissipationCoeffPolicies =
+  brigand::list< DissipationCoeffConst
+               , DissipationCoeffStationary >;
 
 } // walker::
 

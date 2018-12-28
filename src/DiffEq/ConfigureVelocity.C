@@ -25,6 +25,8 @@
 #include "Velocity.h"
 #include "VelocityCoeffPolicy.h"
 
+#include "CoupledEq.h"
+
 namespace walker {
 
 void
@@ -51,6 +53,8 @@ infoVelocity( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
 //! \return vector of string pairs describing the SDE configuration
 // *****************************************************************************
 {
+  using eq = tag::velocity;
+
   auto c = ++cnt[ ctr::DiffEqType::VELOCITY ];       // count eqs
   --c;  // used to index vectors starting with 0
 
@@ -59,58 +63,30 @@ infoVelocity( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
   nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::VELOCITY ), "" );
 
   nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::velocity >(c) ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::velocity >()[c];
+    g_inputdeck.get< tag::component >().offset< eq >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component, eq >()[c];
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
 
-  // Required coupled
-  nfo.emplace_back( "coupled position depvar", std::string( 1,
-    g_inputdeck.get< tag::param, tag::velocity, tag::position >()[c] ) );
-  nfo.emplace_back( "coupled position depvar offset", std::to_string(
-    g_inputdeck.get< tag::param, tag::velocity, tag::position_id >()[c] ) );
-
-  // Optional coupled scalar
-  const auto& coupled_mixmassfracbeta =
-    g_inputdeck.get< tag::param, tag::velocity, tag::mixmassfracbeta >();
-  const auto& coupled_mixmassfracbeta_id =
-    g_inputdeck.get< tag::param, tag::velocity, tag::mixmassfracbeta_id >();
-  Assert( coupled_mixmassfracbeta.size() == coupled_mixmassfracbeta_id.size(),
-          "Size mismatch" );
-  if (coupled_mixmassfracbeta.size() > c) {
-    nfo.emplace_back( "coupled mixmassfracbeta depvar", std::string( 1,
-      coupled_mixmassfracbeta[c] ) );
-    nfo.emplace_back( "coupled mixmassfracbeta dv of", std::to_string(
-      coupled_mixmassfracbeta_id[c] ) );
-  }
-
-  // Optional coupled dissipation
-  const auto& coupled_dissipation =
-    g_inputdeck.get< tag::param, tag::velocity, tag::dissipation >();
-  const auto& coupled_dissipation_id =
-    g_inputdeck.get< tag::param, tag::velocity, tag::dissipation_id >();
-  Assert( coupled_dissipation.size() == coupled_dissipation_id.size(),
-          "Size mismatch" );
-  if (coupled_dissipation.size() > c) {
-    nfo.emplace_back( "coupled dissipation depvar", std::string( 1,
-      coupled_dissipation[c] ) );
-    nfo.emplace_back( "coupled dissipation dv of", std::to_string(
-      coupled_dissipation_id[c] ) );
-  }
+  coupledInfo< eq, tag::position, tag::position_id >
+             ( c, "position", nfo );
+  coupledInfo< eq, tag::dissipation, tag::dissipation_id >
+             ( c, "dissipation", nfo );
+  coupledInfo< eq, tag::mixmassfracbeta, tag::mixmassfracbeta_id >
+             ( c, "mixmassfracbeta", nfo );
 
   nfo.emplace_back( "kind", "stochastic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
-    g_inputdeck.get< tag::param, tag::velocity, tag::depvar >()[c] ) );
+    g_inputdeck.get< tag::param, eq, tag::depvar >()[c] ) );
   nfo.emplace_back( "initialization policy", ctr::InitPolicy().name(
-    g_inputdeck.get< tag::param, tag::velocity, tag::initpolicy >()[c] ) );
-  auto cp = g_inputdeck.get< tag::param, tag::velocity, tag::coeffpolicy >()[c];
+    g_inputdeck.get< tag::param, eq, tag::initpolicy >()[c] ) );
+  auto cp = g_inputdeck.get< tag::param, eq, tag::coeffpolicy >()[c];
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name( cp ) );
 
-  auto solve = g_inputdeck.get< tag::param, tag::velocity, tag::solve >()[c];
+  auto solve = g_inputdeck.get< tag::param, eq, tag::solve >()[c];
   auto depvar = ctr::Depvar();
   nfo.emplace_back( depvar.group(), depvar.name(solve) );
 
-  auto variant =
-    g_inputdeck.get< tag::param, tag::velocity, tag::variant >()[c];
+  auto variant = g_inputdeck.get< tag::param, eq, tag::variant >()[c];
   auto velocity = ctr::VelocityVariant();
   nfo.emplace_back( velocity.group(), velocity.name(variant) );
 
@@ -119,20 +95,20 @@ infoVelocity( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
       "inverse hydro time scale",
       options( ctr::HydroTimeScales(),
                g_inputdeck.get< tag::param,
-                                tag::velocity,
+                                eq,
                                 tag::hydrotimescales >().at(c) ) );
     nfo.emplace_back(
       "production/dissipation",
       options( ctr::HydroProductions(),
                g_inputdeck.get< tag::param,
-                                tag::velocity,
+                                eq,
                                 tag::hydroproductions >().at(c) ) );
   }
 
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
-    g_inputdeck.get< tag::param, tag::velocity, tag::rng >()[c] ) );
+    g_inputdeck.get< tag::param, eq, tag::rng >()[c] ) );
   nfo.emplace_back( "coeff C0", std::to_string(
-    g_inputdeck.get< tag::param, tag::velocity, tag::c0 >().at(c) ) );
+    g_inputdeck.get< tag::param, eq, tag::c0 >().at(c) ) );
 
   return nfo;
 }

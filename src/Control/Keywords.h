@@ -1558,23 +1558,19 @@ struct const_shear_info {
 using const_shear =
   keyword< const_shear_info, TAOCPP_PEGTL_STRING("const_shear") >;
 
-struct const_dissipation_info {
-  using code = Code< R >;
-  static std::string name() { return "prescribed constant dissipation"; }
-  static std::string shortDescription() { return "Select constant turbulent "
-     "kinetic energy dissipation rate coefficients policy"; }
+struct stationary_info {
+  using code = Code< B >;
+  static std::string name() { return "stationary"; }
+  static std::string shortDescription() { return
+     "Select the stationary coefficients policy"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the prescribed constant turbulent kinetic
-    energy dissipation rate coefficients policy, used to compute a homogeneous
-    forced turbulent flow using the Langevin model. This policy (or model)
-    prescribes a constant dissipation rate and thus mimics forced statistically
-    stationary turbulence. See also Sec 12.3.1, Stationary istropic turbulence
-    in Pope, S.B. (2000). Turbulent flows (Cambridge: Cambridge University
-    Press).)";
+    R"(This keyword is used to select the stationary coefficients
+    policy. This policy will keep a stochastic differential equation at a
+    constant statistically stationary state.)";
   }
 };
-using const_dissipation =
-  keyword< const_dissipation_info, TAOCPP_PEGTL_STRING("const_dissipation") >;
+using stationary =
+  keyword< stationary_info, TAOCPP_PEGTL_STRING("stationary") >;
 
 struct instantaneous_velocity_info {
   using code = Code< V >;
@@ -1583,7 +1579,9 @@ struct instantaneous_velocity_info {
     "Select the instantaneous velocity coefficients policy"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the instantaneous velocity coefficients
-    policy, used to update Lagrangian particle position.)"; }
+    policy. This is used to prescribe a coupling for instantaneous velocity to
+    some other differential equation, e.g., to update Lagrangian particle
+    position or to couple a mix model to velocity.)"; }
 };
 using instantaneous_velocity =
   keyword< instantaneous_velocity_info,
@@ -1613,6 +1611,7 @@ struct coeff_info {
         kw::montecarlo_homdecay::string() + "\' | \'" +
         kw::hydrotimescale::string() + "\' | \'" +
         kw::const_shear::string() + "\' | \'" +
+        kw::stationary::string() + "\' | \'" +
         kw::instantaneous_velocity::string() + '\'';
     }
   };

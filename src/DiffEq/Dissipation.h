@@ -20,6 +20,7 @@
 #include "DissipationCoeffPolicy.h"
 #include "RNG.h"
 #include "Particles.h"
+#include "CoupledEq.h"
 
 namespace walker {
 
@@ -50,12 +51,11 @@ class Dissipation {
       m_depvar( g_inputdeck.get< tag::param, eq, tag::depvar >().at(c) ),
       m_ncomp( g_inputdeck.get< tag::component >().get< eq >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
-      m_velocity_depvar(
-        g_inputdeck.get< tag::param, eq, tag::velocity >().at(c) ),
-      m_velocity_offset(
-        g_inputdeck.get< tag::param, eq, tag::velocity_id >().at(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, eq, tag::rng >().at(c) ) ) ),
+      m_velocity_coupled( coupled< eq, tag::velocity >( c ) ),
+      m_velocity_depvar( depvar< eq, tag::velocity >( c ) ),
+      m_velocity_offset( offset< eq, tag::velocity, tag::velocity_id >( c ) ),
       m_coeff(
         g_inputdeck.get< tag::param, eq, tag::c3 >().at(c),
         g_inputdeck.get< tag::param, eq, tag::c4 >().at(c),
@@ -114,11 +114,14 @@ class Dissipation {
                      lookup(r33,moments) ) / 2.0;
 
       // Production of turbulent kinetic energy
-      tk::real S = 1.0; // prescribed shear
+      tk::real S = 1.0; // prescribed shear: hard-coded in a single direction
       tk::real P = -lookup(r12,moments)*S;
 
       // Source for turbulent frequency
       tk::real Som = m_com2 - m_com1*P/(O*k);
+
+      // Update source based on coefficients policy
+      Coefficients::src( Som );
 
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
@@ -138,9 +141,12 @@ class Dissipation {
     const char m_depvar;                //!< Dependent variable
     const ncomp_t m_ncomp;              //!< Number of components
     const ncomp_t m_offset;             //!< Offset SDE operates from
+    const tk::RNG& m_rng;               //!< Random number generator
+
+    const bool m_velocity_coupled;      //!< True if coupled to velocity
     const char m_velocity_depvar;       //!< Coupled velocity dependent variable
     const ncomp_t m_velocity_offset;    //!< Offset of coupled velocity eq
-    const tk::RNG& m_rng;               //!< Random number generator
+
 
     //! Coefficients policy
     Coefficients m_coeff;

@@ -83,6 +83,7 @@
 #include "RNG.h"
 #include "Particles.h"
 #include "Table.h"
+#include "CoupledEq.h"
 #include "HydroTimeScales.h"
 #include "HydroProductions.h"
 #include "Walker/Options/HydroTimeScales.h"
@@ -122,7 +123,18 @@ class MixMassFractionBeta {
       m_grad( initScalarGradient() ),
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, eq, tag::rng >().at(c) ) ) ),
-      m_velocity( initCoupledVelocity() ),
+      m_velocity_coupled( coupled< eq, tag::velocity >( c ) ),
+      m_velocity_depvar( depvar< eq, tag::velocity >( c ) ),
+      m_velocity_offset( offset< eq, tag::velocity, tag::velocity_id >( c ) ),
+      m_velocity_solve(
+        m_velocity_coupled ?
+          g_inputdeck.get< tag::param, tag::velocity, tag::solve >().at(
+            system_id< eq, tag::velocity, tag::velocity_id >( c ) ) :
+        ctr::DepvarType::FULLVAR ),
+      m_dissipation_coupled( coupled< eq, tag::dissipation >( c ) ),
+      m_dissipation_depvar( depvar< eq, tag::dissipation >( c ) ),
+      m_dissipation_offset(
+        offset< eq, tag::dissipation, tag::dissipation_id >( c ) ),
       m_bprime(),
       m_S(),
       m_kprime(),
@@ -189,8 +201,9 @@ class MixMassFractionBeta {
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
       // Update SDE coefficients
-      coeff.update( m_depvar, m_ncomp, moments, m_bprime, m_kprime, m_rho2, m_r,
-                    m_hts, m_hp, m_b, m_k, m_S, t );
+      coeff.update( m_depvar, m_dissipation_depvar, m_velocity_depvar,
+                    m_velocity_solve, m_ncomp, moments, m_bprime, m_kprime,
+                    m_rho2, m_r, m_hts, m_hp, m_b, m_k, m_S, t );
       // Advance particles
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
@@ -200,10 +213,10 @@ class MixMassFractionBeta {
 
         // Access coupled particle velocity
         tk::real u = 0.0, v = 0.0, w = 0.0;
-        if (std::get<0>(m_velocity)) {
-          u = particles( p, 0, std::get<2>(m_velocity) );
-          v = particles( p, 1, std::get<2>(m_velocity) );
-          w = particles( p, 2, std::get<2>(m_velocity) );
+        if (m_velocity_coupled) {
+          u = particles( p, 0, m_velocity_offset );
+          v = particles( p, 1, m_velocity_offset );
+          w = particles( p, 2, m_velocity_offset );
         }
 
         // Advance all m_ncomp scalars
@@ -226,9 +239,16 @@ class MixMassFractionBeta {
     const ncomp_t m_offset;             //!< Offset SDE operates from
     const std::vector< tk::real > m_grad; //! Prescribed mean scalar gradient
     const tk::RNG& m_rng;               //!< Random number generator
-    const std::tuple< bool,             //!< True if coupled to velocity model
-                      char,             //!< Coupled velocity dependent variable
-                      ncomp_t > m_velocity;   //!< Offset of coupled velocity eq
+
+    const bool m_velocity_coupled;      //!< True if coupled to velocity
+    const char m_velocity_depvar;       //!< Coupled velocity dependent variable
+    const ncomp_t m_velocity_offset;    //!< Offset of coupled velocity eq
+    //! Quantity the coupled velocity eq solves for
+    const ctr::DepvarType m_velocity_solve;
+
+    const bool m_dissipation_coupled;   //!< True if coupled to dissipation
+    const char m_dissipation_depvar;    //!< Depvar of coupled dissipation eq
+    const ncomp_t m_dissipation_offset; //!< Offset of coupled dissipation eq
 
     //! Coefficients
     std::vector< kw::sde_bprime::info::expect::type > m_bprime;
@@ -296,19 +316,6 @@ class MixMassFractionBeta {
       Assert( mean_gradient.size() == 3,
               "Mean scalar gradient vector size must be 3" );
       return mean_gradient;
-    }
-
-    //! Initialize velocity coupling from user input
-    std::tuple< bool, char, ncomp_t > initCoupledVelocity() const {
-      const auto& vel = g_inputdeck.get< tag::param, eq, tag::velocity >();
-      std::tuple< bool, char, ncomp_t > v{ false, 'a', 0 };
-      if (vel.size() > m_c) {
-        std::get<0>(v) = true;
-        std::get<1>(v) = vel[ m_c ];
-        std::get<2>(v) =
-          g_inputdeck.get< tag::param, eq, tag::velocity_id >()[ m_c ];
-      }
-      return v;
     }
 };
 

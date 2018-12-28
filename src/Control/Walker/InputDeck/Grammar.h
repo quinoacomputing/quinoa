@@ -11,6 +11,9 @@
 #ifndef WalkerInputDeckGrammar_h
 #define WalkerInputDeckGrammar_h
 
+#include <limits>
+#include <algorithm>
+
 #include "Macro.h"
 #include "Exception.h"
 #include "Walker/Types.h"
@@ -260,44 +263,92 @@ namespace grm {
     }
   };
 
-  //! Do error checking on eq coupled to another eq and compute depvar id
-  //! \tparam eq Equation tag of equation
-  //! \tparam coupledeq Equation tag of equation coupled to eq
-  //! \tparam id Equation offsets tag for coupled equation
-  //! \tparam depvar Error message key to use on missing coupled depvar
+  //! Setup coupling between two equations
+  //! \tparam eq Tag of equation to be coupled
+  //! \tparam coupledeq Tag of equation coupled to eq
+  //! \tparam id Tag to vector to hold (relative) system ids of DiffEqs
+  //!   coupled to eq among other DiffEqs of type coupledeq
+  //! \tparam depvar_msg Error message key to use on missing coupled depvar
   //! \param[in] in Parser input
   //! \param[in,out] stack Grammar stack to wrok with
-  //! \param[in] missing Error message key to use on missing coupled equation if
-  //!   the coupling is required, use missing = MsgKey::OPTIONAL is the coupling
-  //!   is optional
-  template< typename eq, typename coupledeq, typename id, MsgKey depvar,
+  //! \param[in] missing Error message key to use on missing coupled equation
+  //!   if the coupling is required. Pass MsgKey::OPTIONAL as missing if the
+  //!   coupling is optional.
+  //! \details This function computes and assigns the relative system id of a
+  //!   an equation coupled to another equation. The two equations being coupled
+  //!   are given by the two template arguments 'eq' and 'coupledeq'. The goal
+  //!   is to compute the id of the coupled eq that identifies it among
+  //!   potentially multiple coupled equations. Ths id is simply an integer
+  //!   which is a relative index, starting from zero, and uniquely identifies
+  //!   the equation system coupled to eq. As a result, when eq is instantiated,
+  //!   this id can be used to query any detail of the user configuration for
+  //!   the coupledeq equation coupled to eq.
+  //! \note This function is intended to be called at the very end of parsing,
+  //!   when all equation systems and their configuration have been parsed so
+  //!   the dependent variables, identifying equation systems, and the
+  //!   specifications of their coupling, via referring to dependent variables
+  //!   of equations coupled, have all been specified and thus known.
+  //! \note This function is intended to be called once per coupling an equation
+  //!   type (a system) to another equation (system). Example: if the velocity
+  //!   eqation is coupled to three other equation systems (say, position,
+  //!   dissipation, mixmassfracbeta, this function must be called three times
+  //!   with eq = velocity, and coupledeq = position, dissipation, and
+  //!   mixmassfracbeta so that the proper coupling information is setup for
+  //!   each of the three couplings.
+  template< typename eq, typename coupledeq, typename id, MsgKey depvar_msg,
             typename Input, typename Stack >
   static void couple( const Input& in, Stack& stack, MsgKey missing )
   {
-    using walker::deck::neq;
-    if (neq.get< coupledeq >() == 0) {    // if no coupldeq block defined
-      if (missing != MsgKey::OPTIONAL) {  // if the coupling is required
-        // error out if <eq> is configured without <coupledeq> model
-        stack.template push_back< tag::error >
-          ( std::string("Parser error: ") + tk::cref_find( message, missing ) );
+    // get coupled eq configuration
+    const auto& ceq = stack.template get< tag::param, eq, coupledeq >();
+    // get dependent variables of coupled equation
+    const auto& coupled_depvar =
+      stack.template get< tag::param, coupledeq, tag::depvar >();
+    // get dependent variables of equation being coupled
+    const auto& depvar =
+      stack.template get< tag::param, eq, tag::depvar >();
+    auto& coupled_eq_id = stack.template get< tag::param, eq, id >();
+
+    // Note that the size of depvar vector must equal the size of the coupledeq
+    // configuration vector, ceq. The depvar stores the dependent variables
+    // (characters) of all the eqs configured, e.g., potentially multiple eqs.
+    // The coupledeq config vector stores the dependent variables each eq is
+    // potentially coupled to. Thus the position/index in these two vectors are
+    // used to identify which system is being coupled to which other system. If
+    // ceq[i] = '-', then eq[i] is NOT coupled to ceq[i]. ceq must be filled
+    // after a particular equation system block is finished parsing by
+    // check_coupling, which does error checking but is supposed to fill in the
+    // coupledeq depvar. If there is no coupling, it must put in '-'.
+    Assert( ceq.size() == depvar.size(), "Size mismatch" );
+
+    // Find relative system ids for all coupledeqs coupled to eqs. Note that we
+    // loop through all ceqs (whose size equals to depvar, the number of eqs
+    // configured) and try to find all ceq depvars among the coupledeq depvars.
+    for (auto ev : ceq) {   // for all depvars coupled to eq
+      std::size_t c = 0;
+      for (auto cv : coupled_depvar) {  // for all depvars of a coupled eq
+        if (ev == cv) coupled_eq_id.push_back( c );
+        ++c;
       }
-    } else {    // Compute depvar id for coupled eq
-      // get coupled eq configuration
-      const auto& ceq = stack.template get< tag::param, eq, coupledeq >();
-      if (ceq.empty() && missing != MsgKey::OPTIONAL) // if !coupled & !optional
-        // error out if <coupledeq> depvar is not selected
-        Message< Stack, ERROR, depvar >( stack, in );
-      else { // find offset (local eq system index among systems) for depvar
-        // get ncomponents object from this input deck
-        const auto& ncomps = stack.template get< tag::component >();
-        // compute offset map associating offsets to dependent variables
-        auto offsetmap = ncomps.offsetmap( stack );
-        // get and save offsets for all depvars for eqs configured
-        for (auto p : ceq)
-          stack.template
-            get< tag::param, eq, id >().
-              push_back( tk::cref_find( offsetmap, p ) );
-      }
+      // If eq is not coupled we put in a large number as a placeholder to
+      // keep the vector sizes of ceq and coupled_eq_id equal, this id
+      // will surely trigger a problem if ends up being used.
+      if (ev == '-')
+        coupled_eq_id.push_back( std::numeric_limits<std::size_t>::max() );
+    }
+
+    // Ensure all coupled ids are filled.
+    Assert( ceq.size() == coupled_eq_id.size(), "Not all coupled eqs found" );
+
+    // Error out if the coupling is required and at least one of the
+    // potentially multiple eqs is not coupled. Since this function is called
+    // for potentially multiple eqs, ceq is a vector. If the coupling between eq
+    // and coupledeq is required, ceq should not contatain a '-'.
+    if ( missing != MsgKey::OPTIONAL &&
+         std::any_of( ceq.cbegin(), ceq.cend(),
+                      []( char v ){ return v == '-'; } ) )
+    {
+      Message< Stack, ERROR, depvar_msg >( stack, in );
     }
   }
 
@@ -342,7 +393,7 @@ namespace grm {
 
   //! Rule used to trigger action
   struct check_position : pegtl::success {};
-  //! \brief Do error checking on the position eq block
+  //! \brief Do error checking on the position eq block and compute coupling
   template<>
   struct action< check_position > {
     template< typename Input, typename Stack >
@@ -365,32 +416,32 @@ namespace grm {
 
   //! Rule used to trigger action
   struct check_dissipation : pegtl::success {};
-  //! \brief Do error checking on the dissipation eq block
+  //! \brief Do error checking on the dissipation eq block and compute coupling
   template<>
   struct action< check_dissipation > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       using walker::deck::neq;
+      using eq = tag::dissipation;
+      using param = tag::param;
       // if there was a dissipation eq block defined
-      if (neq.get< tag::dissipation >() > 0) {
+      if (neq.get< eq >() > 0) {
         // Ensure a coupled velocity model is configured
-        couple< tag::dissipation,
-            tag::velocity, tag::velocity_id, MsgKey::VELOCITY_DEPVAR >
-          ( in, stack, MsgKey::VELOCITY_MISSING );
+        couple< eq, tag::velocity, tag::velocity_id,
+                MsgKey::VELOCITY_DEPVAR >
+              ( in, stack, MsgKey::VELOCITY_MISSING );
         // Set C3 if not specified
-        auto& C3 = stack.template get< tag::param, tag::dissipation, tag::c3 >();
-        if (C3.size() != neq.get< tag::dissipation >()) C3.push_back( 1.0 );
+        auto& C3 = stack.template get< param, eq, tag::c3 >();
+        if (C3.size() != neq.get< eq >()) C3.push_back( 1.0 );
         // Set C4 if not specified
-        auto& C4 = stack.template get< tag::param, tag::dissipation, tag::c4 >();
-        if (C4.size() != neq.get< tag::dissipation >()) C4.push_back( 0.25 );
+        auto& C4 = stack.template get< param, eq, tag::c4 >();
+        if (C4.size() != neq.get< eq >()) C4.push_back( 0.25 );
         // Set COM1 if not specified
-        auto& COM1 =
-          stack.template get< tag::param, tag::dissipation, tag::com1 >();
-        if (COM1.size() != neq.get< tag::dissipation >()) COM1.push_back( 0.44 );
+        auto& COM1 = stack.template get< param, eq, tag::com1 >();
+        if (COM1.size() != neq.get< eq >()) COM1.push_back( 0.44 );
         // Set COM2 if not specified
-        auto& COM2 =
-          stack.template get< tag::param, tag::dissipation, tag::com2 >();
-        if (COM2.size() != neq.get< tag::dissipation >()) COM2.push_back( 0.9 );
+        auto& COM2 = stack.template get< param, eq, tag::com2 >();
+        if (COM2.size() != neq.get< eq >()) COM2.push_back( 0.9 );
       }
     }
   };
@@ -403,17 +454,37 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       using walker::deck::neq;
+      using eq = tag::mixmassfracbeta;
       // if there was a mixmassfracbeta eq block defined
-      if (neq.get< tag::mixmassfracbeta >() > 0) {
+      if (neq.get< eq >() > 0) {
         // Compute equation id if a coupled velocity model is configured
-        couple< tag::mixmassfracbeta,
-            tag::velocity, tag::velocity_id, MsgKey::VELOCITY_DEPVAR >
-          ( in, stack, MsgKey::OPTIONAL );
+        couple< eq, tag::velocity, tag::velocity_id,
+                MsgKey::VELOCITY_DEPVAR >
+              ( in, stack, MsgKey::OPTIONAL );
         // Compute equation id if a coupled dissipation model is configured
-        couple< tag::mixmassfracbeta,
-            tag::dissipation, tag::dissipation_id, MsgKey::DISSIPATION_DEPVAR >
-          ( in, stack, MsgKey::OPTIONAL );
+        couple< eq, tag::dissipation, tag::dissipation_id,
+                MsgKey::DISSIPATION_DEPVAR >
+              ( in, stack, MsgKey::OPTIONAL );
       }
+    }
+  };
+
+  //! Rule used to trigger action
+  template< typename eq, typename coupledeq >
+  struct check_coupling : pegtl::success {};
+  //! Put in coupled eq depvar as '-' if no coupling is given
+  template< typename eq, typename coupledeq >
+  struct action< check_coupling< eq, coupledeq > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input&, Stack& stack ) {
+      auto& ceq = stack.template get< tag::param, eq, coupledeq >();
+      const auto& depvar = stack.template get< tag::param, eq, tag::depvar >();
+      // A depvar of '-' means no coupling. This keeps the coupled eq vector
+      // size the same as that of the depvar vector, so we keep track of which
+      // eq is coupled to which coupled eq (and also which eq is not coupled to
+      // any other eq).
+      if (depvar.size() > ceq.size()) ceq.push_back( '-' );
+      Assert( depvar.size() == ceq.size(), "Vector size mismatch" );
     }
   };
 
@@ -437,13 +508,13 @@ namespace grm {
   struct action< position_defaults > {
     template< typename Input, typename Stack >
     static void apply( const Input&, Stack& stack ) {
-      using walker::deck::neq;
       // Set number of components: always 3 position components
       auto& ncomp = stack.template get< tag::component, tag::position >();
       ncomp.push_back( 3 );
       // Set RNG if no RNG has been selected (not all position models use this,
       // so don't impose on the user to define one). Pick a Random123 generator,
       // as that is always available.
+      using walker::deck::neq;
       auto& rngs = stack.template get< tag::selected, tag::rng >();
       auto& rng = stack.template get< tag::param, tag::position, tag::rng >();
       if (rng.empty() || rng.size() != neq.get< tag::position >()) {
@@ -629,12 +700,12 @@ namespace deck {
          pegtl::seq<
            // register differential equation block
            tk::grm::register_eq< eq >,
+           // performe extra pegtl actions, e.g., performing extra checks
+           extra_checks...,
            // do error checking on this block
            tk::grm::check_eq< eq >,
            // do error checking on the init policy
-           tk::grm::check_init< eq >,
-           // performe extra pegtl actions, e.g., performing extra checks
-           extra_checks... > {};
+           tk::grm::check_init< eq > > {};
 
   //! SDE option vector
   template< class Option, class keyword, class eq, class param,
@@ -1033,7 +1104,11 @@ namespace deck {
                          tk::grm::check_vector_exists<
                            tag::mixmassfracbeta,
                            tag::hydroproductions,
-                           tk::grm::MsgKey::HYDROPRODUCTIONS > > > {};
+                           tk::grm::MsgKey::HYDROPRODUCTIONS >,
+                         tk::grm::check_coupling< tag::mixmassfracbeta,
+                                                  tag::dissipation >,
+                         tk::grm::check_coupling< tag::mixmassfracbeta,
+                                                  tag::velocity > > > {};
 
   //! Gamma SDE
   struct gamma :
@@ -1249,7 +1324,6 @@ namespace deck {
   struct velocity :
          pegtl::if_must<
            scan_sde< use< kw::velocity >, tag::velocity >,
-           tk::grm::velocity_defaults,
            tk::grm::block< use< kw::end >,
                            tk::grm::depvar< use,
                                             tag::velocity,
@@ -1317,13 +1391,19 @@ namespace deck {
                                                   tag::velocity,
                                                   tag::mixmassfracbeta >,
                              pegtl::alpha > >,
-           check_errors< tag::velocity > > {};
+           check_errors< tag::velocity,
+                         tk::grm::velocity_defaults,
+                         tk::grm::check_coupling< tag::velocity,
+                                                  tag::position >,
+                         tk::grm::check_coupling< tag::velocity,
+                                                  tag::dissipation >,
+                         tk::grm::check_coupling< tag::velocity,
+                                                  tag::mixmassfracbeta > > > {};
 
   //! position equation
   struct position :
          pegtl::if_must<
            scan_sde< use< kw::position >, tag::position >,
-           tk::grm::position_defaults,
            tk::grm::block< use< kw::end >,
                            tk::grm::depvar< use,
                                             tag::position,
@@ -1359,13 +1439,15 @@ namespace deck {
                                                   tag::position,
                                                   tag::velocity >,
                              pegtl::alpha > >,
-           check_errors< tag::position > > {};
+           check_errors< tag::position, 
+                         tk::grm::position_defaults,
+                         tk::grm::check_coupling< tag::position,
+                                                  tag::velocity > > > {};
 
   //! dissipation equation
   struct dissipation :
          pegtl::if_must<
            scan_sde< use< kw::dissipation >, tag::dissipation >,
-           tk::grm::dissipation_defaults,
            tk::grm::block< use< kw::end >,
                            tk::grm::depvar< use,
                                             tag::dissipation,
@@ -1416,7 +1498,10 @@ namespace deck {
                                                   tag::dissipation,
                                                   tag::velocity >,
                              pegtl::alpha > >,
-           check_errors< tag::dissipation > > {};
+           check_errors< tag::dissipation,
+                         tk::grm::dissipation_defaults,
+                         tk::grm::check_coupling< tag::dissipation,
+                                                  tag::velocity > > > {};
 
   //! stochastic differential equations
   struct sde :
