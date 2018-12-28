@@ -15,7 +15,6 @@
 #include <list>
 #include <functional>
 
-#include "NoWarning/bind.h"
 #include "NoWarning/factory.h"
 #include "NoWarning/value_factory.h"
 
@@ -121,7 +120,7 @@ void recordModel( Factory& f, const Key& key, ModelConstrArgs&&... args ) {
 //! time when the object is instantiated instead of at the time when it is
 //! registered. This has all the benefits of using a factory and allows passing
 //! information into the model object only when it is available. The late bind
-//! is facilitated via boost::bind instead of std::bind using a placeholder,
+//! is facilitated via std::bind instead of std::bind using a placeholder,
 //! _1, which stands for the first argument (bound later, i.e., not here). The
 //! value of the model constructor argument is then not used here, only its
 //! type, used to perform the late binding. The binding happens to both the
@@ -143,13 +142,14 @@ void recordModel( Factory& f, const Key& key, ModelConstrArgs&&... args ) {
 template< class Host, class ModelConstructor, class Factory, class Key,
           typename ModelConstrArg >
 void recordModelLate( Factory& f, const Key& key, ModelConstrArg ) {
+  using namespace std::placeholders;
   // Prescribe late binding the model constructor to its single argument
   std::function< ModelConstructor(const ModelConstrArg&) > c =
-    boost::bind( boost::value_factory< ModelConstructor >(), boost::arg<1>() );
+    std::bind( boost::value_factory< ModelConstructor >(), _1 );
   // Bind host to std::function of model constructor and place in factory and
   // also explicitly bind single model constructor argument to host constructor
   f.emplace( key,
-    boost::bind( boost::value_factory< Host >(), std::move(c), boost::arg<1>() )
+    std::bind( boost::value_factory< Host >(), std::move(c), _1 )
   );
 }
 
