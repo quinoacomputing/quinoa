@@ -12,8 +12,6 @@
 #include <map>
 #include <functional>
 
-#include "NoWarning/bind.h"
-#include "NoWarning/factory.h"
 #include "NoWarning/value_factory.h"
 
 #include "RiemannSolver.h"
@@ -50,7 +48,7 @@ struct registerRiemannSolver {
      std::function< U() > c = boost::value_factory< U >();
      // Associate constructor function object to flux type in factory
      factory.emplace( U::type(),
-       boost::bind(boost::value_factory< RiemannSolver >(), std::move(c)) );
+       std::bind(boost::value_factory< RiemannSolver >(), std::move(c)) );
   }
 };
 
