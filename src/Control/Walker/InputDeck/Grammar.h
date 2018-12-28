@@ -304,9 +304,7 @@ namespace grm {
     // get dependent variables of coupled equation
     const auto& coupled_depvar =
       stack.template get< tag::param, coupledeq, tag::depvar >();
-    // get dependent variables of equation being coupled
-    const auto& depvar =
-      stack.template get< tag::param, eq, tag::depvar >();
+    // get access to coupled eq relative id vector to be filled
     auto& coupled_eq_id = stack.template get< tag::param, eq, id >();
 
     // Note that the size of depvar vector must equal the size of the coupledeq
@@ -319,7 +317,9 @@ namespace grm {
     // after a particular equation system block is finished parsing by
     // check_coupling, which does error checking but is supposed to fill in the
     // coupledeq depvar. If there is no coupling, it must put in '-'.
-    Assert( ceq.size() == depvar.size(), "Size mismatch" );
+    Assert( ( ceq.size() ==
+              stack.template get< tag::param, eq, tag::depvar >().size() ),
+            "Size mismatch" );
 
     // Find relative system ids for all coupledeqs coupled to eqs. Note that we
     // loop through all ceqs (whose size equals to depvar, the number of eqs
