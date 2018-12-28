@@ -21,6 +21,7 @@ add_regression_test(compflow_euler_nleg_dgp2 ${INCITER_EXECUTABLE}
                     BIN_BASELINE nleg_dgp2.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
+                    BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_dgp2.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF nleg_diag.ndiff.cfg)
