@@ -141,8 +141,11 @@ class CompFlow {
       R.fill(0.0);
 
       // configure Riemann flux function
-      using namespace std::placeholders;
-      auto rieflxfn = std::bind( &RiemannSolver::flux, m_riemann, _1, _2, _3 );
+      auto rieflxfn =
+       [this]( const std::array< tk::real, 3 >& fn,
+               const std::array< std::vector< tk::real >, 2 >& u,
+               const std::vector< std::array< tk::real, 3 > >& v )
+             { return m_riemann.flux( fn, u, v ); };
       // configure a no-op lambda for prescribed velocity
       auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real ){
         return std::vector< std::array< tk::real, 3 > >( this->m_ncomp ); };
