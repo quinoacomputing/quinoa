@@ -118,6 +118,7 @@ struct kappa {};
 struct bprime {};
 struct kappaprime {};
 struct rho2 {};
+struct mean_gradient {};
 struct rcomma {};
 struct r {};
 struct c {};

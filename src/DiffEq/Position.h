@@ -17,6 +17,7 @@
 #include "PositionCoeffPolicy.h"
 #include "RNG.h"
 #include "Particles.h"
+#include "CoupledEq.h"
 
 namespace walker {
 
@@ -33,6 +34,7 @@ class Position {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
+    using eq = tag::position;
 
   public:
     //! \brief Constructor
@@ -43,20 +45,19 @@ class Position {
     //!   the control file.
     explicit Position( ncomp_t c ) :
       m_c( c ),
-      m_depvar(
-        g_inputdeck.get< tag::param, tag::position, tag::depvar >().at(c) ),
-      m_ncomp(
-        g_inputdeck.get< tag::component >().get< tag::position >().at(c) ),
+      m_depvar( g_inputdeck.get< tag::param, eq, tag::depvar >().at(c) ),
+      m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset(
-        g_inputdeck.get< tag::component >().offset< tag::position >(c) ),
-      m_velocity_offset(
-        g_inputdeck.get< tag::param, tag::position, tag::velocity_id >().at(c)),
+        g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::position, tag::rng >().at(c) ) ) ),
+        g_inputdeck.get< tag::param, eq, tag::rng >().at(c) ) ) ),
+      m_velocity_coupled( coupled< eq, tag::velocity >( c ) ),
+      m_velocity_depvar( depvar< eq, tag::velocity >( c ) ),
+      m_velocity_offset( offset< eq, tag::velocity, tag::velocity_id >( c ) ),
       m_coeff( m_dU )
     {
       // Zero prescribed mean velocity gradient if full variable is solved for
-      if (g_inputdeck.get< tag::param, tag::position, tag::solve >().at(c) ==
+      if (g_inputdeck.get< tag::param, eq, tag::solve >().at(c) ==
             ctr::DepvarType::FULLVAR) {
         m_dU.fill( 0.0 );
       }
@@ -68,9 +69,8 @@ class Position {
     //! \param[in,out] particles Array of particle properties
     void initialize( int stream, tk::Particles& particles ) {
       //! Set initial conditions using initialization policy
-      Init::template
-        init< tag::position >
-            ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
+      Init::template init< eq >
+        ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
     }
 
     //! \brief Advance particles according to the system of beta SDEs
@@ -104,8 +104,11 @@ class Position {
     const char m_depvar;                //!< Dependent variable
     const ncomp_t m_ncomp;              //!< Number of components
     const ncomp_t m_offset;             //!< Offset SDE operates from
-    const ncomp_t m_velocity_offset;    //!< Offset for coupled velocity eq
     const tk::RNG& m_rng;               //!< Random number generator
+
+    const bool m_velocity_coupled;      //!< True if coupled to velocity
+    const char m_velocity_depvar;       //!< Coupled velocity dependent variable
+    const ncomp_t m_velocity_offset;    //!< Offset of coupled velocity eq
 
     //! Coefficients policy
     Coefficients m_coeff;

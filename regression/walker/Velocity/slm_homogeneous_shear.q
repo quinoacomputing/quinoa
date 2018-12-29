@@ -54,7 +54,7 @@ walker
     icgamma
       gammapdf 4.0 0.25 end  # mean = 1.0, variance = 0.25
     end
-    coeff const
+    coeff const_coeff
     #C3 1.0     # optional
     #C4 0.25    # optional
     #COM1 0.44  # optional
