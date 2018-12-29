@@ -111,7 +111,8 @@
           static const type lower = 1;
 
           // Optional expected value upper bound
-          static const type upper = std::numeric_limits< tk::real >::digits10 + 1;
+          static const type upper =
+            std::numeric_limits< tk::real >::digits10 + 1;
 
           // Optional expected valid choices description, here giving
           // information on the expected type and the valid bounds. Note that
@@ -1409,21 +1410,22 @@ struct init_info {
 };
 using init = keyword< init_info, TAOCPP_PEGTL_STRING("init") >;
 
-struct const_info {
+struct constcoeff_info {
   using code = Code< C >;
-  static std::string name() { return "constant"; }
+  static std::string name() { return "constant coefficients"; }
   static std::string shortDescription() { return
     "Select constant coefficients policy"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the
-    constant coefficients policy. The coefficients policy is used to specify
-    how the coefficients are set at each time step during time-integration.
-    Example: "coeff const", which selects constant coefficients policy,
+    R"(This keyword is used to select the 'constant coefficients' coefficients
+    policy. A coefficients policy is used to specify how the coefficients are
+    set at each time step during time-integration. Example: "coeff
+    const_coeff", which selects 'constant coefficients' coefficients policy,
     which sets constant coefficients before t = 0 and leaves the coefficients
     unchanged during time integration. Note that this option may behave
     differently depending on the particular equation or physical model.)"; }
 };
-using constant = keyword< const_info, TAOCPP_PEGTL_STRING("const") >;
+using constcoeff =
+  keyword< constcoeff_info, TAOCPP_PEGTL_STRING("const_coeff") >;
 
 struct decay_info {
   using code = Code< D >;
@@ -1556,6 +1558,20 @@ struct const_shear_info {
 using const_shear =
   keyword< const_shear_info, TAOCPP_PEGTL_STRING("const_shear") >;
 
+struct stationary_info {
+  using code = Code< B >;
+  static std::string name() { return "stationary"; }
+  static std::string shortDescription() { return
+     "Select the stationary coefficients policy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the stationary coefficients
+    policy. This policy will keep a stochastic differential equation at a
+    constant statistically stationary state.)";
+  }
+};
+using stationary =
+  keyword< stationary_info, TAOCPP_PEGTL_STRING("stationary") >;
+
 struct instantaneous_velocity_info {
   using code = Code< V >;
   static std::string name() { return "instantaneous velocity"; }
@@ -1563,7 +1579,9 @@ struct instantaneous_velocity_info {
     "Select the instantaneous velocity coefficients policy"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the instantaneous velocity coefficients
-    policy, used to update Lagrangian particle position.)"; }
+    policy. This is used to prescribe a coupling for instantaneous velocity to
+    some other differential equation, e.g., to update Lagrangian particle
+    position or to couple a mix model to velocity.)"; }
 };
 using instantaneous_velocity =
   keyword< instantaneous_velocity_info,
@@ -1585,7 +1603,16 @@ struct coeff_info {
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
-      return '\'' + constant::string() + '\'';
+      return '\'' +
+        kw::constcoeff::string() + "\' | \'" +
+        kw::decay::string() + "\' | \'" +
+        kw::homogeneous::string() + "\' | \'" +
+        kw::homdecay::string() + "\' | \'" +
+        kw::montecarlo_homdecay::string() + "\' | \'" +
+        kw::hydrotimescale::string() + "\' | \'" +
+        kw::const_shear::string() + "\' | \'" +
+        kw::stationary::string() + "\' | \'" +
+        kw::instantaneous_velocity::string() + '\'';
     }
   };
 };
@@ -2356,6 +2383,24 @@ struct sde_rho2_info {
   };
 };
 using sde_rho2 = keyword< sde_rho2_info,  TAOCPP_PEGTL_STRING("rho2") >;
+
+struct mean_gradient_info {
+  static std::string name() { return "Prescribed mean gradient"; }
+  static std::string shortDescription() { return
+    R"(Set prescribed mean gradient)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of real numbers used to
+    parameterize a system of stochastic differential equations. Example:
+    "mean_gradient 1.0 1.0 0.0 end". One use of a mean gradient vector is to
+    specify a prescribed mean scalar gradient in 3 spatial directions for a
+    scalar transprot equation.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using mean_gradient = keyword< mean_gradient_info,
+  TAOCPP_PEGTL_STRING("mean_gradient") >;
 
 struct sde_rcomma_info {
   static std::string name() { return "rcomma"; }

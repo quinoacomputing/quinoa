@@ -14,7 +14,7 @@ walker
   skew-normal
     depvar m
     init zero
-    coeff const
+    coeff const_coeff
     ncomp 2
     T 1.0 3.5 end
     sigmasq 0.04 0.25 end

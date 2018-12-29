@@ -20,6 +20,7 @@ add_library(DiffEq
             ConfigureVelocity.C
             ConfigurePosition.C
             ConfigureDissipation.C
+            Langevin.C
 )
 
 target_include_directories(DiffEq PUBLIC
