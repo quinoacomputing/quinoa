@@ -17,7 +17,7 @@ walker
   dirichlet     # Select Dirichlet SDE
     depvar y
     init zero
-    coeff const
+    coeff const_coeff
     ncomp 2  # = K = N-1
     b     0.1    1.5 end
     S     0.625  0.4 end

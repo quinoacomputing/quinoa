@@ -27,6 +27,8 @@
 #include "MixMassFractionBeta.h"
 #include "MixMassFractionBetaCoeffPolicy.h"
 
+#include "CoupledEq.h"
+
 namespace walker {
 
 void
@@ -54,6 +56,8 @@ infoMixMassFractionBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
 //! \return vector of string pairs describing the SDE configuration
 // *****************************************************************************
 {
+  using eq = tag::mixmassfracbeta;
+
   auto c = ++cnt[ ctr::DiffEqType::MIXMASSFRACBETA ];       // count eqs
   --c;  // used to index vectors starting with 0
 
@@ -62,98 +66,73 @@ infoMixMassFractionBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
   nfo.emplace_back(
     ctr::DiffEq().name( ctr::DiffEqType::MIXMASSFRACBETA ), "" );
 
+  nfo.emplace_back( "kind", "stochastic" );
+  nfo.emplace_back( "dependent variable", std::string( 1,
+    g_inputdeck.get< tag::param, eq, tag::depvar >()[c] ) );
   nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::mixmassfracbeta >(c) ) );
-  auto ncomp =
-    g_inputdeck.get< tag::component >().get< tag::mixmassfracbeta >()[c];
+    g_inputdeck.get< tag::component >().offset< eq >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component, eq >()[c];
   nfo.emplace_back( "number of components",
     std::to_string( ncomp ) + " (" + std::to_string(ncomp/4) + "*4) " );
 
-  // Optional coupled
-  const auto& coupled_velocity =
-    g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::velocity >();
-  const auto& coupled_velocity_id =
-    g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::velocity_id >();
-  Assert( coupled_velocity.size() == coupled_velocity_id.size(),
-          "Size mismatch" );
+  coupledInfo< eq, tag::velocity, tag::velocity_id >
+             ( c, "velocity", nfo );
+  coupledInfo< eq, tag::dissipation, tag::dissipation_id >
+             ( c, "dissipation", nfo );
 
-  if (coupled_velocity.size() > c) {
-    nfo.emplace_back( "coupled velocity depvar", std::string( 1,
-      coupled_velocity[c] ) );
-    nfo.emplace_back( "coupled velocity depvar offset", std::to_string(
-      coupled_velocity_id[c] ) );
-  }
-
-  // Optional coupled
-  const auto& coupled_dissipation =
-    g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::dissipation >();
-  const auto& coupled_dissipation_id =
-    g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::dissipation_id >();
-  Assert( coupled_dissipation.size() == coupled_dissipation_id.size(),
-          "Size mismatch" );
-
-  if (coupled_dissipation.size() > c) {
-    nfo.emplace_back( "coupled dissipation depvar", std::string( 1,
-      coupled_dissipation[c] ) );
-    nfo.emplace_back( "coupled dissipation depvar ofs", std::to_string(
-    coupled_dissipation_id[c] ) );
-  }
-
-  nfo.emplace_back( "kind", "stochastic" );
-  nfo.emplace_back( "dependent variable", std::string( 1,
-    g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::depvar >()[c] ) );
   nfo.emplace_back( "initialization policy", ctr::InitPolicy().name(
-    g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::initpolicy >()[c] )
+    g_inputdeck.get< tag::param, eq, tag::initpolicy >()[c] )
   );
-  auto cp =
-    g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::coeffpolicy >()[c];
+  auto cp = g_inputdeck.get< tag::param, eq, tag::coeffpolicy >()[c];
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name( cp ) );
   if (cp == ctr::CoeffPolicyType::HYDROTIMESCALE) {
     nfo.emplace_back(
       "inverse hydro time scales [" + std::to_string( ncomp/4 ) + "]",
       options( ctr::HydroTimeScales(),
                g_inputdeck.get< tag::param,
-                                tag::mixmassfracbeta,
+                                eq,
                                 tag::hydrotimescales >().at(c) ) );
     nfo.emplace_back(
       "production/dissipation [" + std::to_string( ncomp/4 ) + "]",
       options( ctr::HydroProductions(),
                g_inputdeck.get< tag::param,
-                                tag::mixmassfracbeta,
+                                eq,
                                 tag::hydroproductions >().at(c) ) );
   }
 
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
-    g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::rng >()[c] ) );
+    g_inputdeck.get< tag::param, eq, tag::rng >()[c] ) );
+
+  const auto& mg = g_inputdeck.get< tag::param, eq, tag::mean_gradient >();
+  if (mg.size() > c) {
+    const auto& mean_gradient = mg[c];
+    Assert( mean_gradient.size() == 3, "Mean gradient vector size must be 3" );
+    nfo.emplace_back( "imposed mean gradient", parameters(mean_gradient) );
+  }
+
   nfo.emplace_back(
     "coeff b' [" + std::to_string( ncomp/4 ) + "]",
-    parameters(
-      g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::bprime >().at(c) )
+    parameters( g_inputdeck.get< tag::param, eq, tag::bprime >().at(c) )
   );
   nfo.emplace_back(
     "coeff S [" + std::to_string( ncomp/4 ) + "]",
-    parameters(
-      g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::S >().at(c) )
+    parameters( g_inputdeck.get< tag::param, eq, tag::S >().at(c) )
   );
   nfo.emplace_back(
     "coeff kappa' [" + std::to_string( ncomp/4 ) + "]",
     parameters( g_inputdeck.get< tag::param,
-                                 tag::mixmassfracbeta,
+                                 eq,
                                  tag::kappaprime >().at(c) ) );
   nfo.emplace_back(
     "coeff rho2 [" + std::to_string( ncomp/4 ) + "]",
-    parameters(
-      g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::rho2 >().at(c) ) );
+    parameters( g_inputdeck.get< tag::param, eq, tag::rho2 >().at(c) ) );
   nfo.emplace_back(
     "coeff r [" + std::to_string( ncomp/4 ) + "]",
-    parameters(
-      g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::r >().at(c) )
+    parameters( g_inputdeck.get< tag::param, eq, tag::r >().at(c) )
   );
-  spikes( nfo,
-    g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::spike >().at(c) );
-  betapdfs(
-    nfo,
-    g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::betapdf >().at(c) );
+
+  spikes( nfo, g_inputdeck.get< tag::param, eq, tag::spike >().at(c) );
+  betapdfs( nfo, g_inputdeck.get< tag::param, eq, tag::betapdf >().at(c) );
 
   return nfo;
 }

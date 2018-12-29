@@ -14,7 +14,7 @@ walker
   diag_ou
     depvar o
     init raw
-    coeff const
+    coeff const_coeff
     ncomp 2
     sigmasq 0.25 1.0 end
     theta 1.0 1.0 end
