@@ -19,7 +19,7 @@ walker
                 #   R - density,
                 #   V - specific volume
     init zero
-    coeff const
+    coeff const_coeff
     # alpha = Sb/kappa, beta = (1-S)b/kappa
     kappa 2.0  0.76923  0.5  0.15873  0.1 end
     b     0.4  1.0      1.0  1.0    100.0 end
