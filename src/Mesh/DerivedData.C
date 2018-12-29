@@ -1069,18 +1069,16 @@ genNtfac( std::size_t nfpe,
 
   std::size_t nifac = 0;
 
-  if (nbfac > 0) {
-    // loop through elements surrounding elements to find number of internal faces
-    for (std::size_t e=0; e<nelem; ++e)
+  // loop through elements surrounding elements to find number of internal faces
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    for (std::size_t ip=nfpe*e; ip<nfpe*(e+1); ++ip)
     {
-      for (std::size_t ip=nfpe*e; ip<nfpe*(e+1); ++ip)
+      if (esuelTet[ip] != -1)
       {
-        if (esuelTet[ip] != -1)
+        if ( e<static_cast< std::size_t >(esuelTet[ip]) )
         {
-          if ( e<static_cast< std::size_t >(esuelTet[ip]) )
-          {
-            ++nifac;
-          }
+          ++nifac;
         }
       }
     }
@@ -1117,32 +1115,31 @@ genEsuf( std::size_t nfpe,
 
   std::vector< int > esuf(2*ntfac);
 
-  if (nbfac > 0) {
-    // counters for number of internal and boundary faces
-    std::size_t icoun(2*nbfac), bcoun(0);
+  // counters for number of internal and boundary faces
+  std::size_t icoun(2*nbfac), bcoun(0);
 
-    // loop to get face-element connectivity for internal faces
-    for (std::size_t e=0; e<nelem; ++e) {
-      for (std::size_t ip=nfpe*e; ip<nfpe*(e+1); ++ip) {
-        auto jelem = esuelTet[ip];
-        if (jelem != -1)
+  // loop to get face-element connectivity for internal faces
+  for (std::size_t e=0; e<nelem; ++e) {
+    for (std::size_t ip=nfpe*e; ip<nfpe*(e+1); ++ip) {
+      auto jelem = esuelTet[ip];
+      if (jelem != -1)
+      {
+        if ( e < static_cast< std::size_t >(jelem) )
         {
-          if ( e < static_cast< std::size_t >(jelem) )
-          {
-            esuf[icoun] = static_cast< int >(e);
-            esuf[icoun+1] = static_cast< int >(jelem);
-            icoun = icoun + 2;
-          }
+          esuf[icoun] = static_cast< int >(e);
+          esuf[icoun+1] = static_cast< int >(jelem);
+          icoun = icoun + 2;
         }
       }
     }
+  }
 
-    bcoun = 0;
-    for (auto ie : belem) {
-      esuf[bcoun] = static_cast< int >(ie);
-      esuf[bcoun+1] = -1;  // outside domain
-      bcoun = bcoun + 2;
-    }
+  // loop to get face-element connectivity for physical-boundary faces
+  bcoun = 0;
+  for (auto ie : belem) {
+    esuf[bcoun] = static_cast< int >(ie);
+    esuf[bcoun+1] = -1;  // outside domain
+    bcoun = bcoun + 2;
   }
 
   return esuf;
@@ -1167,55 +1164,52 @@ genInpofaTet( std::size_t ntfac,
 {
   std::vector< std::size_t > inpofa;
 
-  if (nbfac > 0)
+  // set tetrahedron geometry
+  std::size_t nnpe(4), nfpe(4), nnpf(3);
+
+  Assert( esuelTet.size()%nfpe == 0,
+                  "Size of esuelTet must be divisible by nfpe" );
+  Assert( inpoel.size()%nnpe == 0,
+                  "Size of inpoel must be divisible by nnpe" );
+
+  auto nelem = inpoel.size()/nnpe;
+
+  inpofa.resize(nnpf*ntfac);
+
+  // counters for number of internal and boundary faces
+  std::size_t icoun(nnpf*nbfac);
+  std::size_t mark(0);
+
+  // loop over elems to get nodes on faces
+  // this fills the interior face-node connectivity part
+  for (std::size_t e=0; e<nelem; ++e)
   {
-    // set tetrahedron geometry
-    std::size_t nnpe(4), nfpe(4), nnpf(3);
-
-    Assert( esuelTet.size()%nfpe == 0,
-                    "Size of esuelTet must be divisible by nfpe" );
-    Assert( inpoel.size()%nnpe == 0,
-                    "Size of inpoel must be divisible by nnpe" );
-
-    auto nelem = inpoel.size()/nnpe;
-
-    inpofa.resize(nnpf*ntfac);
-
-    // counters for number of internal and boundary faces
-    std::size_t icoun(nnpf*nbfac);
-    std::size_t mark(0);
-
-    // loop over elems to get nodes on faces
-    // this fills the interior face-node connectivity part
-    for (std::size_t e=0; e<nelem; ++e)
+    mark = nnpe*e;
+    for (std::size_t f=0; f<nfpe ; ++f)
     {
-      mark = nnpe*e;
-      for (std::size_t f=0; f<nfpe ; ++f)
+      auto ip = nfpe*e + f;
+      auto jelem = esuelTet[ip];
+      if (jelem != -1)
       {
-        auto ip = nfpe*e + f;
-        auto jelem = esuelTet[ip];
-        if (jelem != -1)
+        if ( e < static_cast< std::size_t >(jelem) )
         {
-          if ( e < static_cast< std::size_t >(jelem) )
-          {
-            inpofa[icoun]   = inpoel[mark+lpofa[f][0]];
-            inpofa[icoun+1] = inpoel[mark+lpofa[f][1]];
-            inpofa[icoun+2] = inpoel[mark+lpofa[f][2]];
-            icoun = icoun + nnpf;
-          }
+          inpofa[icoun]   = inpoel[mark+lpofa[f][0]];
+          inpofa[icoun+1] = inpoel[mark+lpofa[f][1]];
+          inpofa[icoun+2] = inpoel[mark+lpofa[f][2]];
+          icoun = icoun + nnpf;
         }
       }
     }
+  }
 
-    // this fills the boundary face-node connectivity part
-    // consistent with triinpoel
-    for (std::size_t f=0; f<nbfac; ++f)
-    {
-      icoun = nnpf * f;
-      inpofa[icoun+0] = triinpoel[icoun+2];
-      inpofa[icoun+1] = triinpoel[icoun+1];
-      inpofa[icoun+2] = triinpoel[icoun+0];
-    }
+  // this fills the boundary face-node connectivity part
+  // consistent with triinpoel
+  for (std::size_t f=0; f<nbfac; ++f)
+  {
+    icoun = nnpf * f;
+    inpofa[icoun+0] = triinpoel[icoun+2];
+    inpofa[icoun+1] = triinpoel[icoun+1];
+    inpofa[icoun+2] = triinpoel[icoun+0];
   }
 
   return inpofa;
