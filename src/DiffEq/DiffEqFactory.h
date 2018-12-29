@@ -92,7 +92,7 @@ template< typename Info, typename VV >
 void spikes( Info& nfo, const VV& spike ) {
   std::size_t i = 0;
   for (const auto& s : spike)
-    nfo.emplace_back( "delta spikes [comp" + std::to_string(++i) + ":" +
+    nfo.emplace_back( "delta spikes [" + std::to_string(++i) + ":" +
                         std::to_string( s.size()/2 ) + "]",
                       parameters( s ) );
 }
@@ -105,7 +105,7 @@ template< typename Info, typename VV >
 void betapdfs( Info& nfo, const VV& betapdf ) {
   std::size_t i = 0;
   for (const auto& s : betapdf)
-    nfo.emplace_back( "beta pds [comp" + std::to_string(++i) + "]",
+    nfo.emplace_back( "beta pds [" + std::to_string(++i) + "]",
                       parameters( s ) );
 }
 

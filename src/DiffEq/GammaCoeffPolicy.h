@@ -34,7 +34,7 @@
       policy option. Example:
       \code{.cpp}
         static ctr::CoeffPolicyType type() noexcept {
-          return ctr::CoeffPolicyType::CONSTANT;
+          return ctr::CoeffPolicyType::CONST_COEFF;
         }
       \endcode
       which returns the enum value of the option from the underlying option
@@ -79,7 +79,7 @@ class GammaCoeffConst {
     }
 
     static ctr::CoeffPolicyType type() noexcept
-    { return ctr::CoeffPolicyType::CONSTANT; }
+    { return ctr::CoeffPolicyType::CONST_COEFF; }
 };
 
 //! List of all gamma's coefficients policies

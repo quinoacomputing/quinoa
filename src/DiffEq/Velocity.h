@@ -22,6 +22,7 @@
 #include "VelocityCoeffPolicy.h"
 #include "RNG.h"
 #include "Particles.h"
+#include "CoupledEq.h"
 
 namespace walker {
 
@@ -38,37 +39,42 @@ class Velocity {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
+    using eq = tag::velocity;
 
   public:
     //! \brief Constructor
-    //! \param[in] c Index specifying which system of beta SDEs to construct.
-    //!   There can be multiple beta ... end blocks in a control file. This
-    //!   index specifies which beta SDE system to instantiate. The index
-    //!   corresponds to the order in which the beta ... end blocks are given
-    //!   the control file.
+    //! \param[in] c Index specifying which system of velocity SDEs to construct
+    //!   There can be multiple velocity ... end blocks in a control file. This
+    //!   index specifies which velocity SDE system to instantiate. The index
+    //!   corresponds to the order in which the velocity ... end blocks are
+    //!   given the control file.
     explicit Velocity( ncomp_t c ) :
       m_c( c ),
-      m_depvar(
-        g_inputdeck.get< tag::param, tag::velocity, tag::depvar >().at(c) ),
-      m_ncomp(
-        g_inputdeck.get< tag::component >().get< tag::velocity >().at(c) ),
+      m_depvar( g_inputdeck.get< tag::param, eq, tag::depvar >().at(c) ),
+      m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset(
-        g_inputdeck.get< tag::component >().offset< tag::velocity >(c) ),
-      m_dissipation_depvar(
-        g_inputdeck.get< tag::param, tag::velocity, tag::dissipation >().at(c) ),
+        g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::velocity, tag::rng >().at(c) ) ) ),
-      m_solve(g_inputdeck.get< tag::param, tag::velocity, tag::solve >().at(c)),
+        g_inputdeck.get< tag::param, eq, tag::rng >().at(c) ) ) ),
+      m_position_coupled( coupled< eq, tag::position >( c ) ),
+      m_position_depvar( depvar< eq, tag::position >( c ) ),
+      m_position_offset( offset< eq, tag::position, tag::position_id >( c ) ),
+      m_dissipation_coupled( coupled< eq, tag::dissipation >( c ) ),
+      m_dissipation_depvar( depvar< eq, tag::dissipation >( c ) ),
+      m_dissipation_offset(
+        offset< eq, tag::dissipation, tag::dissipation_id >( c ) ),
+      m_mixmassfracbeta_coupled( coupled< eq, tag::mixmassfracbeta >( c ) ),
+      m_mixmassfracbeta_depvar( depvar< eq, tag::mixmassfracbeta >( c ) ),
+      m_mixmassfracbeta_offset(
+        offset< eq, tag::mixmassfracbeta, tag::mixmassfracbeta_id >( c ) ),
+      m_solve(g_inputdeck.get< tag::param, eq, tag::solve >().at(c)),
       m_U( {{ tk::ctr::mean( m_depvar, 0 ),
               tk::ctr::mean( m_depvar, 1 ),
               tk::ctr::mean( m_depvar, 2 ) }} ),
-      m_variant(
-       g_inputdeck.get< tag::param, tag::velocity, tag::variant >().at(c) ),
+      m_variant( g_inputdeck.get< tag::param, eq, tag::variant >().at(c) ),
       m_c0(),
       m_G(),
-      m_coeff( g_inputdeck.get< tag::param, tag::velocity, tag::c0 >().at(c),
-               m_c0,
-               m_dU )
+      m_coeff( g_inputdeck.get< tag::param, eq, tag::c0 >().at(c), m_c0, m_dU )
     {
       Assert( m_ncomp == 3, "Velocity eq number of components must be 3" );
       // Zero prescribed mean velocity gradient if full variable is solved for
@@ -76,9 +82,8 @@ class Velocity {
       // Populate inverse hydrodynamics time scales extracted from DNS
       if ( Coefficients::type() == ctr::CoeffPolicyType::HYDROTIMESCALE ) {
         // Configure inverse hydrodyanmics time scale from DNS
-        const auto& hts = g_inputdeck.get< tag::param,
-                                           tag::velocity,
-                                           tag::hydrotimescales >().at(c);
+        const auto& hts =
+          g_inputdeck.get< tag::param, eq, tag::hydrotimescales >().at(c);
         Assert( hts.size() == 1,
                 "Velocity eq Hydrotimescales vector size must be 1" );
         m_hts = ctr::HydroTimeScales().table( hts[0] );
@@ -90,12 +95,11 @@ class Velocity {
     //! \param[in,out] particles Array of particle properties
     void initialize( int stream, tk::Particles& particles ) {
       // Set initial conditions using initialization policy
-      Init::template
-        init< tag::velocity >
-            ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
+      Init::template init< eq >
+        ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
     }
 
-    //! \brief Advance particles according to the system of beta SDEs
+    //! \brief Advance particles according to the system of velocity SDEs
     //! \param[in,out] particles Array of particle properties
     //! \param[in] stream Thread (or more precisely stream) ID
     //! \param[in] dt Time step size
@@ -152,8 +156,23 @@ class Velocity {
     const char m_depvar;                //!< Dependent variable
     const ncomp_t m_ncomp;              //!< Number of components
     const ncomp_t m_offset;             //!< Offset SDE operates from
-    const char m_dissipation_depvar;    //!< Depvar of coupled dissipation eq
     const tk::RNG& m_rng;               //!< Random number generator
+
+    const bool m_position_coupled;      //!< True if coupled to position
+    const char m_position_depvar;       //!< Coupled position dependent variable
+    const ncomp_t m_position_offset;    //!< Offset of coupled position eq
+
+    const bool m_dissipation_coupled;   //!< True if coupled to dissipation
+    const char m_dissipation_depvar;    //!< Coupled dissipation dependent var
+    const ncomp_t m_dissipation_offset; //!< Offset of coupled dissipation eq
+
+    //! True if coupled to mixmassfracbeta
+    const bool m_mixmassfracbeta_coupled;
+    //! Depvar of coupled mixmassfracbeta eq
+    const char m_mixmassfracbeta_depvar;
+    //! Offset of coupled mixmassfracbeta eq
+    const ncomp_t m_mixmassfracbeta_offset;
+
     const ctr::DepvarType m_solve;      //!< Depndent variable to solve for
     //! Array of tk::ctr::Product used to access the mean velocity
     const std::array< tk::ctr::Product, 3 > m_U;
