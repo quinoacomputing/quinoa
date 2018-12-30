@@ -34,7 +34,7 @@ which at this time gives
 │   │   ├── CGNavierStokes.h
 │   │   ├── DGEuler.h
 │   │   ├── DG.h
-│   │   └── DGMultiMatVelEq.h
+│   │   └── DGNavierStokes.h
 │   ├── Problem
 │   │   ├── NLEnergyGrowth.h
 │   │   ├── RayleighTaylor.h
@@ -46,8 +46,6 @@ which at this time gives
 │   └── Problem.h
 ├── ConfigureCompFlow.C
 ├── ConfigureCompFlow.h
-├── ConfigureMultiMatCompFlow.C
-├── ConfigureMultiMatCompFlow.h
 ├── ConfigureTransport.C
 ├── ConfigureTransport.h
 ├── DGPDE.h
@@ -76,15 +74,6 @@ which at this time gives
 │   └── Volume.h
 ├── Limiter.C
 ├── Limiter.h
-├── MultiMatCompFlow
-│   ├── DGMultiMatCompFlow.h
-│   ├── Physics
-│   │   ├── DG.h
-│   │   └── DGVelEq.h
-│   ├── Problem
-│   │   ├── UserDefined.h
-│   │   └── VorticalFlow.h
-│   └── Problem.h
 ├── PDEFactory.h
 ├── PDEStack.C
 ├── PDEStack.h
@@ -104,7 +93,7 @@ which at this time gives
     │   └── SlotCyl.h
     └── Problem.h
 
-11 directories, 69 files
+8 directories, 61 files
 @endcode
 
 Once can see separate directories for `CompFlow` and `Transport`, each with
@@ -113,7 +102,7 @@ implemented under `CompFlow`: `CGCompFlow` and `DGCompFlow`, using continuous
 and discoontinuous Galerkin finite element (`CG`, `DG`) discretizations,
 respectively,
 
-This page describes how to add a new PDE, such as Transport` or `CompFlow`.
+This page describes how to add a new PDE, such as `Transport` or `CompFlow`.
 
 @section inciter_newpde_rationale Rationale and plan
 
@@ -127,14 +116,14 @@ instantiated from a factory based on user input, similar to the existing PDE
 types. What will _not_ be described are the details of the implementation of
 the discretization of the newly added equation system and its algoritm. We only
 describe how to fit those details into the existing design and thus reuse and
-build on the software infrastructure that support such a new algorithm, e.g.,
+build on the software infrastructure that supports such a new algorithm, e.g.,
 user input, mesh I/O, partitioning using over-decomposition, automatic load
 balancing via migration, etc.
 
 @section inciter_newpde_input 1. Specification of a PDE in the input file
 
 A PDE type, or more precisely, a PDE _system_ is selected by the user via
-specifying a PDE-block in the @ref inciter_main inut file. An example,
+specifying a PDE-block in the @ref inciter_main input file. An example,
 configuring the existing `CompFlow` PDE is given by a `compflow...end` block,
 
 @code{.sh}
@@ -152,22 +141,22 @@ inciter
 end
 @endcode
 
-This is a snippet, configuring inciter to compute a single PDE system giverning
+This is a snippet, configuring inciter to compute a single PDE system governing
 compressible flow. Every PDE type is configured via a physics and a problem
-policy. Here The physics is `euler`, configuring the solution of the Euler
-equations for inviscid flow, and problem is `vortical_flow`, which is a test
+policy. Here the physics is `euler`, configuring the solution of the Euler
+equations for inviscid flow, and the problem is `vortical_flow`, which is a test
 case derived using the method of manufactured solutions, specifying a prescribed
 velocity field with vortices. Since the analytical solution is known for this
 specific case, it can be used to verify the correctness of the implementation of
-the algorithm and the the order of accuracy of the numerical method.
+the algorithm and the order of accuracy of the numerical method.
 
-The important parts of this specification are that
+The important parts of this specification are the following.
 
 1. A new block configures a particular PDE system, such as `compflow...end`.
 There can be multiple such PDE-blocks specified, which then will be integrated
 together in an unsplit strongly-coupled fashion, e.g, `comppflow` + `transport`
-with, say, 12 scalar components, which then together will compreise of a system
-of 17 coupled scalar equations.
+with, say, 12 scalar components, which then together will comprise a system of
+17 coupled scalar equations.
 
 2. The PDE must be specialized with a selected `physics` type. In the example
 above this is `euler`, but this is only the simplest choice. Every PDE has a
@@ -180,13 +169,13 @@ default problem which is selected if no problem is specified.
 4. The `depvar` keyword specifies the dependent variable by a single character
 that is used within the input file to refer to a particular PDE system. Note
 that there can be multiple PDE blocks specified with the same or different
-types, but their depvar must be unique. This `depvar` then may be used
+types, but their `depvar` must be unique. This `depvar` then may be used
 downstream of its specification to configure a scalar component of a given PDE
 to be used as a _refinement variable_ as error indicator for adaptive
 refinement. Another way depvars are used is to specify coupling among PDEs. An
-example in @ref walker_main, where systems of _stochastic_ differential
-equations (SDE) are specified analogously as PDEs in @ref inciter_main, is
-given in
+example in @ref walker_main, which uses the same coupling mechanism in its
+input files and where systems of _stochastic_ differential equations (SDE) are
+specified analogously as PDEs in @ref inciter_main, is given in
 [glm_homogeneous_shear.q](https://github.com/quinoacomputing/quinoa/blob/master/regression/walker/Velocity/glm_homogeneous_shear.q),
 which couples three systems of SDEs to integrate a joint Fokker-Planck equation
 of particle positions, velocities, and turbulent kinetic energy dissipation
@@ -198,11 +187,12 @@ To add a new PDE type, we start by adding a new keyword that will be used to
 designate it in the input file. Since the new PDE is for methods specifialized
 for multi-material compressible flow, we add a new keyword `multimat_compflow`.
 We also add a new keyword for a new `physics` policy, `veleq`, to designate an
-important feature of the new method to be implemented, velocity equilibrium,
-assuming a single velocity field for all materials. Another new keyword we add
-is `nmat` which will be used to specify the number of materials for a
+important feature of the new method to be implemented, _velocity equilibrium_,
+assuming a single velocity field for all materials, while solving for separate
+material fields for mass and internal energy. Another new keyword we add is
+`nmat` which will be used to specify the number of materials for a
 multi-material flow. New keyword definitions with their documentation go to
-src/Control/Keywords.h`.
+src/Control/Keywords.h.
 
 @subsection inciter_newpde_keyword_Keywords Control/Keywords.h
 
@@ -378,7 +368,7 @@ inciter control file keyword 'multimat_compflow'
 Next is to add a new state to the existing PDE option switch, ctr::PDE. This
 "option switch" is really only a fancy enum, used to store, in a type-safe
 manner, the user's choice of the PDE type after parsing a PDE-block, e.g.,
-`compflow ... end` in the control file.  This fancy enum is an option switch
+`compflow ... end`, in the control file.  This fancy enum is an option switch
 because it inherits from tk::Toggle, defined in Control/Toggle.h, which is a
 generic switch (or option), that helps associating enum values to keywords and
 querying one based on the other. Extending the existing PDE option switch is
@@ -491,7 +481,7 @@ index d24ccf1d..f59e85c1 100644
 After adding the new keywords `multimat_compflow`, `nmat`, and `veleq`, we
 have to teach the input file parser to recognize them.
 
-First we augment the data structures that store data parsed associted with the
+First we augment the data structures that store data parsed associated with the
 new keywords. First is the number of scalar components for each PDE type:
 
 @subsection inciter_newpde_grammar_components Control/Inciter/Components.h
@@ -577,8 +567,6 @@ index 4bc3bf64..65a3235f 100644
 +  tag::compflow,             CompFlowPDEParameters,
 +  tag::multimat_compflow,    MultiMatCompFlowPDEParameters
  >;
- 
- //! PEGTL location/position type to use throughout all of Inciter's parsers
 @endcode
 
 Note that in ctr::MultiMatCompFlowPDEParameters every field is a vector, since
@@ -589,9 +577,10 @@ problem-configuration-specific parameters, and the number of materials are all
 store here. This is data that is either parsed from the user or can be computed
 immediately after and based on user input.
 
-After adding a coupled of new tags, `tag::nmat` and `tag::multimat_compflow`,
-behind which the parser stores the tuple ctr::MultiMatCompFlowPDEParameters,
-and the number of materials, respectively,
+Next we add a coupled of new tags (empty structs used as compile-time labels),
+`tag::nmat` and `tag::multimat_compflow`, behind which the parser stores the
+tuple ctr::MultiMatCompFlowPDEParameters, and the number of materials,
+respectively,
 
 @subsection inciter_newpde_grammar_tags Control/Tags.h
 
@@ -648,12 +637,12 @@ index 6b16b623..43a9bba7 100644
 
 The above tagged tuple, deck::neq, stores the number of equations _during_
 parsing the inciter's input file. Since this is part of inciter's parser's
-state, it is static and thus only visible locally -- only used by the grammar
-and not the rest of the code. deck::neq is used to count the number of PDE
-systems parsed.
+state, it is static and thus only visible locally to inciter's grammar and not
+the rest of the code. deck::neq is used to count the number of PDE systems
+parsed.
 
-The code follows is run immediately after the `multimat_compflow...end` block
-is finished parsing, thus it is designed to do error checking and set/verify
+The following code is run immediately after the `multimat_compflow...end` block
+finished parsing, thus it is designed to do error checking and set/verify
 defaults for this particular PDE system.
  
 @code{.diff}
@@ -716,11 +705,11 @@ did not select one, the default is the new `veleq` we are adding.
 @endcode
 
 The number of materials is processed above. If the physics selected is the
-newly added velocity equilibrium _and_ the the user did not specify the number
-of paterials, first we issue a warning, then we set the number of materials
-equal 2. If the user has configured the number materials, we use it, and
-compute the number of scalar components, `ncomp`, for this PDE system, as
-appropriate for the algorithm.
+newly added velocity equilibrium _and_ the user did not specify the number of
+materials, first we issue a warning, then we set the number of materials equal
+to 2. If the user has configured the number materials, we use it, and compute
+the number of scalar components, `ncomp`, for this PDE system, as appropriate
+for the algorithm.
 
 @code{.diff}
 +      // If problem type is not given, default to 'user_defined'
@@ -865,8 +854,7 @@ index 40c0b71d..c2de296e 100644
        "variable to solve for." },
      { MsgKey::NONCOMP, "The number of components has not been specified in the "
        "block preceding this position. This is mandatory for the preceding "
--      "block. Use the keyword 'ncomp' to specify the number of components." },
-+      "block. Use the keyword 'nmat' to specify the number of components." },
+       "block. Use the keyword 'ncomp' to specify the number of components." },
 +    { MsgKey::NONMAT, "The number of materials has not been specified in the "
 +      "block preceding this position. This is mandatory for the preceding "
 +      "block. Use the keyword 'nmat' to specify the number of materials." },
@@ -882,7 +870,7 @@ inciter
   ...
   scheme dg
   ...
-  multimat_compflow
+  multimat_compflow  # configure our new PDE block for compressible multi-material flow
     depvar u    # assign dependent variable 'u' to this PDE
     physics veleq       # select 'euler' as compressible flow physics policy
     problem vortical_flow       # select 'vortical flow` as problem policy
@@ -893,15 +881,15 @@ inciter
 end
 @endcode
 
-@section inciter_newpde_pdestack 5. Augment PDE stack
+@section inciter_newpde_pdestack 5. Augment the PDE stack
 
 Next is to augment inciter's `PDEStack`, a factory from which the PDEs are
-instantiated according to user has configuration.
+instantiated according to user configuration.
 
 Class PDEStack helps with configuring and instantiating PDE class objects from
 factories. There are separate factories for PDEs with continuous Galerkin (CG)
 and discontinuous Galerkin (DG) finite element discretizations, declared in
-PDE/PDEFactory.h: CGFactory and DGFactory. These factories are associative
+PDE/PDEFactory.h: `CGFactory` and `DGFactory`. These factories are associative
 containers that assign PDE class constructors to a key that uniquely identifies
 a given PDE system configured to a given physics and problem policy.
 
@@ -909,15 +897,15 @@ First the constructors of all PDEs with all possible combinations of their
 valid policies are registered into their factory. This is done by PDEStack's
 constructor. Then when user input is known at runtime, i.e., we know what and
 how many PDE systems, with what discretizations, and with what policies the
-user wants to use, we instantiated the selected ones in PDEStack::selectedCG()
+user wants to use, we instantiate the selected ones in PDEStack::selectedCG()
 and PDEStack::selectedDG().
 
-@note All PDE types are polymorphic and must adhere to the concept defined by
-CGPDE and DGPDE. This concept is nothing else but the requirement on defining
-certain member functions with given name, return value, and input arguments
-(function signature). All "child" PDE classes must conform to these concepts so
-they can be used from client code that is uniform, such as in DG. See also the
-discussion in PDEStack's constructor.
+@note All PDE types are polymorphic and must adhere to the concepts defined
+within CGPDE and DGPDE. This concept is nothing else but the requirement on
+defining certain member functions with given name, return value, and input
+arguments (function signature). All "child" PDE classes must conform to these
+concepts so they can be used from client code that is uniform, such as in DG.
+For more details, see also the discussion in PDEStack's constructor.
 
 The following diff augments PDEStack with our newly added PDE type.
 
@@ -997,8 +985,26 @@ index c2ae8d9b..76562c52 100644
 
 Finally, we add a set of new files that will implement the new PDE using DG. As
 an example, we also add a new physics and a couple of new problem policy
-classs: one for a user-defined problem and another one for a verification
-problem using vortical flow.
+classes: one for a user-defined problem and another one for a verification
+problem using a vortical flow setup.
+
+Here are the new files and subdirectories under `src/PDE/`:
+
+@code{.ansi}
+├── ConfigureMultiMatCompFlow.C
+├── ConfigureMultiMatCompFlow.h
+├── MultiMatCompFlow
+│   ├── DGMultiMatCompFlow.h
+│   ├── Physics
+│   │   ├── DG.h
+│   │   └── DGVelEq.h
+│   ├── Problem
+│   │   ├── UserDefined.h
+│   │   └── VorticalFlow.h
+│   └── Problem.h
+@endcode
+
+Click on the filenames for the sources:
 
 For registration into PDEStack and DGFactory:
 - @subpage inciter_newpde_configuremultimatcompflow_h
@@ -1009,10 +1015,10 @@ multi-material compressible flow physics:
 - @subpage inciter_newpde_dgmultimatcompflow_h
 
 Physics configuration:
-- @subpage inciter_newpde_dgveleq_h -
-  a new physics policy specific to velocity equilibrium
 - @subpage inciter_newpde_dg_h -
   list of all MultiMatCompFlow DG physics policies
+- @subpage inciter_newpde_dgveleq_h -
+  a new physics policy specific to velocity equilibrium
 
 Problem configuration:
 - @subpage inciter_newpde_userdefined_h -
