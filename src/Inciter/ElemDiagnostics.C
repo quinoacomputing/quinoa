@@ -195,7 +195,7 @@ ElemDiagnostics::computeP1( Discretization& d,
   // Query number of degrees of freedom from user's setting
   const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
-  // Put in norms sweeping our mesh chunk
+  // Compute norms for our mesh chunk
   for (std::size_t i=0; i<u.nunk()-nchGhost; ++i) {
 
     auto vole = geoElem(i,0,0);
@@ -297,7 +297,7 @@ ElemDiagnostics::computeP2( Discretization& d,
   // Query number of degrees of freedom from user's setting
   const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
-  // Put in norms sweeping our mesh chunk
+  // Compute norms for our mesh chunk
   for (std::size_t i=0; i<u.nunk()-nchGhost; ++i) {
 
     auto vole = geoElem(i,0,0);
