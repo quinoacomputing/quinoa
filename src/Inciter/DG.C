@@ -978,7 +978,12 @@ DG::writeFields( tk::real time )
 {
   auto d = Disc();
 
-  // Save time stamp at which the last field write happened
+  // Only write if the last time is different than the current one
+  if (std::abs(d->LastFieldWriteTime() - time) <
+      std::numeric_limits< tk::real >::epsilon() )
+    return;
+
+ // Save time stamp at which the last field write happened
   d->LastFieldWriteTime() = time;
 
   // Increase field output iteration count
