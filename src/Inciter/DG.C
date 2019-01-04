@@ -54,7 +54,7 @@ DG::DG( const CProxy_Discretization& disc,
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_vol( 0.0 ),
-  m_geoFace( tk::genGeoFaceTri( fd.Ntfac(), fd.Inpofa(), Disc()->Coord()) ),
+  m_geoFace( tk::genGeoFaceTri( fd.Nipfac(), fd.Inpofa(), Disc()->Coord()) ),
   m_geoElem( tk::genGeoElemTet( Disc()->Inpoel(), Disc()->Coord() ) ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
@@ -196,7 +196,7 @@ DG::leakyAdjacency()
   }
 
   // chare-boundary faces
-  for (std::size_t f=m_fd.Ntfac(); f<m_fd.Esuf().size()/2; ++f) {
+  for (std::size_t f=m_fd.Nipfac(); f<m_fd.Esuf().size()/2; ++f) {
     s[0] += m_geoFace(f,0,0) * m_geoFace(f,1,0);
     s[1] += m_geoFace(f,0,0) * m_geoFace(f,2,0);
     s[2] += m_geoFace(f,0,0) * m_geoFace(f,3,0);
@@ -224,7 +224,7 @@ DG::faceMatch()
 
   auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
 
-  for (auto f=m_fd.Ntfac(); f<esuf.size()/2; ++f)
+  for (auto f=m_fd.Nipfac(); f<esuf.size()/2; ++f)
   {
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
     std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);

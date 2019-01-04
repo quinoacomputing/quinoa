@@ -1047,23 +1047,24 @@ genEsuelTet( const std::vector< std::size_t >& inpoel,
 }
 
 std::size_t
-genNtfac( std::size_t nfpe,
-          std::size_t nbfac,
-          const std::vector< int >& esuelTet )
+genNipfac( std::size_t nfpe,
+           std::size_t nbfac,
+           const std::vector< int >& esuelTet )
 // *****************************************************************************
-//  Generate derived data, total number of faces in the mesh
+//  Generate derived data, number of internal and physical-boundary faces in the
+//  mesh. This does not include faces that are on partition/chare-boundaries.
 //! \param[in] nfpe Number of faces per element.
 //! \param[in] nbfac Number of boundary faces.
 //! \param[in] esuelTet Elements surrounding elements.
 //! \return Total number of faces in the mesh
-//! \details The unsigned integer here gives the total number of faces in
-//     the mesh.
+//! \details The unsigned integer here gives the number of internal and
+//     physical-boundary faces in the mesh.
 // *****************************************************************************
 {
-  Assert( !esuelTet.empty(), "Attempt to call genNtfac() with empty esuelTet" );
+  Assert( !esuelTet.empty(), "Attempt to call genNipfac() with empty esuelTet" );
   Assert( esuelTet.size()%nfpe == 0,
                   "Size of esuelTet must be divisible by nfpe" );
-  Assert( nfpe > 0, "Attempt to call genNtfac() with zero faces per element" );
+  Assert( nfpe > 0, "Attempt to call genNipfac() with zero faces per element" );
 
   auto nelem = esuelTet.size()/nfpe;
 
@@ -1089,14 +1090,14 @@ genNtfac( std::size_t nfpe,
 
 std::vector< int >
 genEsuf( std::size_t nfpe,
-         std::size_t ntfac,
+         std::size_t nipfac,
          std::size_t nbfac,
          const std::vector< std::size_t >& belem,
          const std::vector< int >& esuelTet )
 // *****************************************************************************
 //  Generate derived data, elements surrounding faces
 //! \param[in] nfpe  Number of faces per element.
-//! \param[in] ntfac Total number of faces.
+//! \param[in] nipfac Number of internal and physical-boundary faces.
 //! \param[in] nbfac Number of boundary faces.
 //! \param[in] belem Boundary element vector.
 //! \param[in] esuelTet Elements surrounding elements.
@@ -1113,7 +1114,7 @@ genEsuf( std::size_t nfpe,
 
   auto nelem = esuelTet.size()/nfpe;
 
-  std::vector< int > esuf(2*ntfac);
+  std::vector< int > esuf(2*nipfac);
 
   // counters for number of internal and boundary faces
   std::size_t icoun(2*nbfac), bcoun(0);
@@ -1146,14 +1147,14 @@ genEsuf( std::size_t nfpe,
 }
 
 std::vector< std::size_t >
-genInpofaTet( std::size_t ntfac,
+genInpofaTet( std::size_t nipfac,
               std::size_t nbfac,
               const std::vector< std::size_t >& inpoel,
               const std::vector< std::size_t >& triinpoel,
               const std::vector< int >& esuelTet )
 // *****************************************************************************
 //  Generate derived data, points on faces for tetrahedra only
-//! \param[in] ntfac Total number of faces.
+//! \param[in] nipfac Number of internal and physical-boundary faces.
 //! \param[in] nbfac Number of boundary faces.
 //! \param[in] inpoel Element-node connectivity.
 //! \param[in] triinpoel Face-node connectivity.
@@ -1174,7 +1175,7 @@ genInpofaTet( std::size_t ntfac,
 
   auto nelem = inpoel.size()/nnpe;
 
-  inpofa.resize(nnpf*ntfac);
+  inpofa.resize(nnpf*nipfac);
 
   // counters for number of internal and boundary faces
   std::size_t icoun(nnpf*nbfac);
@@ -1222,7 +1223,9 @@ genBelemTet( std::size_t nbfac,
                                std::vector< std::size_t > >& esup )
 // *****************************************************************************
 //  Generate derived data, and array of elements which share one or more of
-//   their faces with the domain boundary (host elements).
+//   their faces with the physical boundary, i.e. where exodus specifies a
+//   side-set for faces. Such elements are sometimes also called host or
+//   boundary elements.
 //! \param[in] nbfac Number of boundary faces.
 //! \param[in] inpofa Face-node connectivity.
 //! \param[in] esup Elements surrounding points as linked lists, see tk::genEsup
@@ -1286,13 +1289,13 @@ genBelemTet( std::size_t nbfac,
 }
         
 tk::Fields
-genGeoFaceTri( std::size_t ntfac,
+genGeoFaceTri( std::size_t nipfac,
                const std::vector< std::size_t >& inpofa,
                const tk::UnsMesh::Coords& coord )
 // *****************************************************************************
 //  Generate derived data, which stores the geometry details both internal and
 //   boundary triangular faces in the mesh.
-//! \param[in] ntfac Total number of faces in the mesh.
+//! \param[in] nipfac Number of internal and physical-boundary faces.
 //! \param[in] inpofa Face-node connectivity.
 //! \param[in] coord Co-ordinates of nodes in this mesh-chunk.
 //! \return Face geometry information. This includes face area, unit normal
@@ -1308,7 +1311,7 @@ genGeoFaceTri( std::size_t ntfac,
 //!            z-coordinate: geoFace(f,6,0).
 // *****************************************************************************
 {
-  tk::Fields geoFace( ntfac, 7 );
+  tk::Fields geoFace( nipfac, 7 );
 
   // set triangle geometry
   std::size_t nnpf(3);
@@ -1316,7 +1319,7 @@ genGeoFaceTri( std::size_t ntfac,
   Assert( inpofa.size()%nnpf == 0,
           "Size of inpofa must be divisible by nnpf" );
 
-  for(std::size_t f=0; f<ntfac; ++f)
+  for(std::size_t f=0; f<nipfac; ++f)
   {
     std::size_t ip1, ip2, ip3;
     tk::real xp1, yp1, zp1,
