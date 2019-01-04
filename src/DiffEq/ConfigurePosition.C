@@ -25,6 +25,8 @@
 #include "Position.h"
 #include "PositionCoeffPolicy.h"
 
+#include "CoupledEq.h"
+
 namespace walker {
 
 void
@@ -51,6 +53,8 @@ infoPosition( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
 //! \return vector of string pairs describing the SDE configuration
 // *****************************************************************************
 {
+  using eq = tag::position;
+
   auto c = ++cnt[ ctr::DiffEqType::POSITION ];       // count eqs
   --c;  // used to index vectors starting with 0
 
@@ -58,29 +62,26 @@ infoPosition( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
 
   nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::POSITION ), "" );
 
-  nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::position >(c) ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::position >()[c];
-  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
-
-  // Required coupled
-  nfo.emplace_back( "coupled velocity depvar", std::string( 1,
-    g_inputdeck.get< tag::param, tag::position, tag::velocity >()[c] ) );
-  nfo.emplace_back( "coupled velocity depvar offset", std::to_string(
-    g_inputdeck.get< tag::param, tag::position, tag::velocity_id >()[c] ) );
-
   nfo.emplace_back( "kind", "deterministic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
-    g_inputdeck.get< tag::param, tag::position, tag::depvar >()[c] ) );
+    g_inputdeck.get< tag::param, eq, tag::depvar >()[c] ) );
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< eq >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component, eq >()[c];
+  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
+  coupledInfo< eq, tag::velocity, tag::velocity_id >
+             ( c, "velocity", nfo );
+
   nfo.emplace_back( "initialization policy", ctr::InitPolicy().name(
-    g_inputdeck.get< tag::param, tag::position, tag::initpolicy >()[c] ) );
+    g_inputdeck.get< tag::param, eq, tag::initpolicy >()[c] ) );
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
-    g_inputdeck.get< tag::param, tag::position, tag::coeffpolicy >()[c] ) );
-  auto solve = g_inputdeck.get< tag::param, tag::position, tag::solve >()[c];
+    g_inputdeck.get< tag::param, eq, tag::coeffpolicy >()[c] ) );
+  auto solve = g_inputdeck.get< tag::param, eq, tag::solve >()[c];
   nfo.emplace_back( "solve for", ctr::Depvar().name( solve ) );
 
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
-    g_inputdeck.get< tag::param, tag::position, tag::rng >()[c] ) );
+    g_inputdeck.get< tag::param, eq, tag::rng >()[c] ) );
 
   return nfo;
 }

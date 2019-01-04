@@ -118,7 +118,9 @@
     with such an approach: (1) std::function is not obvious how to pup, i.e.,
     send across the network, (2) std::bind cannot currently be used to bind a
     variadic number arguments and thus the bind calls would not be very generic,
-    and (3) a runtime associative container would take additional state.
+    and (3) a runtime associative container would take additional state. (Note
+    that problem (2) above could probably be solved with variadic lambdas, but
+    the (1) and (3) remain.)
 
   \see Talk on [Concept-based runtime polymorphism with Charm++ chare arrays
     using value semantics](http://charm.cs.illinois.edu/charmWorkshop/slides/CharmWorkshop2018_bakosi.pdf) at the 16th Annual Workshop on Charm++ and its
