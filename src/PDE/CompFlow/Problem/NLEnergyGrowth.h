@@ -229,15 +229,18 @@ class CompFlowProblemNLEnergyGrowth {
                  const std::array< std::vector< tk::real >, 3 >& coord,
                  tk::Fields& U )
     {
+      // number of degree of freedom
+      const std::size_t ndof =
+        g_inputdeck.get< tag::discr, tag::ndof >();
       // ratio of specific heats
       tk::real g = g_inputdeck.get< tag::param, eq, tag::gamma >()[system];
 
       std::vector< std::vector< tk::real > > out;
-      auto r  = U.extract( 0, offset );
-      auto u = U.extract( 1, offset );
-      auto v = U.extract( 2, offset );
-      auto w = U.extract( 3, offset );
-      auto E = U.extract( 4, offset );
+      auto r = U.extract( 0*ndof, offset );
+      auto u = U.extract( 1*ndof, offset );
+      auto v = U.extract( 2*ndof, offset );
+      auto w = U.extract( 3*ndof, offset );
+      auto E = U.extract( 4*ndof, offset );
 
       // mesh node coordinates
       const auto& x = coord[0];

@@ -54,7 +54,7 @@ DG::DG( const CProxy_Discretization& disc,
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_vol( 0.0 ),
-  m_geoFace( tk::genGeoFaceTri( fd.Ntfac(), fd.Inpofa(), Disc()->Coord()) ),
+  m_geoFace( tk::genGeoFaceTri( fd.Nipfac(), fd.Inpofa(), Disc()->Coord()) ),
   m_geoElem( tk::genGeoElemTet( Disc()->Inpoel(), Disc()->Coord() ) ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
@@ -196,7 +196,7 @@ DG::leakyAdjacency()
   }
 
   // chare-boundary faces
-  for (std::size_t f=m_fd.Ntfac(); f<m_fd.Esuf().size()/2; ++f) {
+  for (std::size_t f=m_fd.Nipfac(); f<m_fd.Esuf().size()/2; ++f) {
     s[0] += m_geoFace(f,0,0) * m_geoFace(f,1,0);
     s[1] += m_geoFace(f,0,0) * m_geoFace(f,2,0);
     s[2] += m_geoFace(f,0,0) * m_geoFace(f,3,0);
@@ -204,6 +204,51 @@ DG::leakyAdjacency()
 
   auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
   return std::abs(s[0]) > eps || std::abs(s[1]) > eps || std::abs(s[2]) > eps;
+}
+
+bool
+DG::faceMatch()
+// *****************************************************************************
+// Check if esuf of chare-boundary faces matches
+//! \details This function checks each chare-boundary esuf entry for the left
+//!   and right elements. Then, it tries to match all vertices of these
+//!   elements. Exactly three of these vertices must match if the esuf entry
+//!   has been updated correctly at chare-boundaries.
+//! \return True if chare-boundary faces match.
+// *****************************************************************************
+{
+  const auto& esuf = m_fd.Esuf();
+  const auto& inpoel = Disc()->Inpoel();
+  const auto& coord = Disc()->Coord();
+  bool match(true);
+
+  auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
+
+  for (auto f=m_fd.Nipfac(); f<esuf.size()/2; ++f)
+  {
+    std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+    std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+
+    std::size_t count = 0;
+
+    for (std::size_t i=0; i<4; ++i)
+    {
+      auto ip = inpoel[4*el+i];
+      for (std::size_t j=0; j<4; ++j)
+      {
+        auto jp = inpoel[4*er+j];
+        auto xdiff = std::abs( coord[0][ip] - coord[0][jp] );
+        auto ydiff = std::abs( coord[1][ip] - coord[1][jp] );
+        auto zdiff = std::abs( coord[2][ip] - coord[2][jp] );
+
+        if ( xdiff<=eps && ydiff<=eps && zdiff<=eps ) ++count;
+      }
+    }
+
+    match = (match && count == 3);
+  }
+
+  return match;
 }
 
 std::unordered_map< int, std::unordered_set< std::size_t > >
@@ -339,7 +384,7 @@ DG::setupGhost()
   const auto& coord = d->Coord();
 
   // Enlarge elements surrounding faces data structure for ghosts
-  m_fd.Esuf().resize( 2*m_nfac, -1 );
+  m_fd.Esuf().resize( 2*m_nfac, -2 );
   m_fd.Inpofa().resize( 3*m_nfac, 0 );
   // Enlarge face geometry data structure for ghosts
   m_geoFace.resize( m_nfac, 0.0 );
@@ -573,11 +618,47 @@ DG::comGhost( int fromch, const GhostData& ghost )
           ++ncoord;                // increase number of nodes on this chare
         }
       }
+
+      // additional tests to ensure that entries in inpoel and t/inpofa match
+      Assert( nodetripletMatch(id, t) == 3, "Mismatch/Overmatch in inpoel and "
+              "inpofa at chare-boundary face" );
     }
   }
 
   // Signal the runtime system that all workers have received their adjacency
   if (++m_nadj == m_ghostData.size()) adj();
+}
+
+std::size_t
+DG::nodetripletMatch( const std::array< std::size_t, 2 >& id,
+                      const tk::UnsMesh::Face& t )
+// *****************************************************************************
+// Check if entries in inpoel, inpofa and node-triplet are consistent
+//! \param[in] id Local face and (inner) tet id adjacent to it
+//! \param[in] t node-triplet associated with the chare boundary face
+//! \return number of nodes in inpoel that matched with t and inpofa
+// *****************************************************************************
+{
+  const auto& lid = Disc()->Lid();
+  const auto& inpoel = Disc()->Inpoel();
+  const auto& esuf = m_fd.Esuf();
+  const auto& inpofa = m_fd.Inpofa();
+
+  std::size_t counter = 0;
+  for (std::size_t k=0; k<4; ++k)
+  {
+    auto el = esuf[ 2*id[0] ];
+    auto ip = inpoel[ 4*static_cast< std::size_t >( el )+k ];
+    Assert( el == static_cast< int >( id[1] ), "Mismatch in id and esuf" );
+    for (std::size_t j=0; j<3; ++j)
+    {
+      auto jp = tk::cref_find( lid, t[j] );
+      auto fp = inpofa[ 3*id[0]+(2-j) ];
+      if (ip == jp && ip == fp) ++counter;
+    }
+  }
+
+  return counter;
 }
 
 void
@@ -607,6 +688,8 @@ DG::addEsuf( const std::array< std::size_t, 2 >& id, std::size_t ghostid )
   Assert( 2*id[0]+1 < esuf.size(), "Indexing out of esuf" );
 
   // put in inner tet id
+  Assert( esuf[ 2*id[0] ] == -2 && esuf[ 2*id[0]+1 ] == -2, "Updating esuf at "
+          "wrong location instead of chare-boundary" );
   esuf[ 2*id[0]+0 ] = static_cast< int >( id[1] );
   // put in local id for outer/ghost tet
   esuf[ 2*id[0]+1 ] = static_cast< int >( ghostid );
@@ -732,6 +815,8 @@ DG::adj()
 
   // Perform leak test on face geometry data structure enlarged by ghosts
   Assert( !leakyAdjacency(), "Face adjacency leaky" );
+  Assert( faceMatch(), "Chare-boundary element-face connectivity (esuf) does "
+         "not match" );
 
   // Resize solution vectors, lhs, rhs and limiter function by the number of
   // ghost tets
@@ -1156,7 +1241,6 @@ DG::solve( tk::real newdt )
   // Enable SDAG wait for building the solution vector
   thisProxy[ thisIndex ].wait4sol();
   thisProxy[ thisIndex ].wait4lim();
-  if (m_stage == 2) thisProxy[ thisIndex ].wait4eval();
 
   auto d = Disc();
 
@@ -1171,15 +1255,14 @@ DG::solve( tk::real newdt )
   m_u =  m_rkcoef[0][m_stage] * m_un
        + m_rkcoef[1][m_stage] * ( m_u + d->Dt() * m_rhs/m_lhs );
 
-  // Increment Runge-Kutta stage counter
-  ++m_stage;
-
-  if (m_stage < 3) {
+  if (m_stage < 2) {
 
     // Continue with next tims step stage
     eval();
 
   } else {
+
+    thisProxy[ thisIndex ].wait4eval();
 
     // Compute diagnostics, e.g., residuals
     auto diag_computed =
@@ -1282,6 +1365,9 @@ DG::eval()
   const auto eps = std::numeric_limits< tk::real >::epsilon();
 
   tk::real fdt = 0.0;
+
+  // Increment Runge-Kutta stage counter
+  ++m_stage;
 
   // If Runge-Kutta stages not complete, continue with dt(), otherwise assess
   // computation completion criteria

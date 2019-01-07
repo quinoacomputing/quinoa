@@ -23,7 +23,8 @@ enum class SchemeType : uint8_t { MatCG
                                 , DiagCG
                                 , ALECG
                                 , DG
-                                , DGP1 };
+                                , DGP1 
+                                , DGP2 };
 
 //! Scheme centering types
 enum class Centering : uint8_t { NODE
@@ -42,6 +43,7 @@ class Scheme : public tk::Toggle< SchemeType > {
                                   , kw::alecg
                                   , kw::dg
                                   , kw::dgp1
+                                  , kw::dgp2
                                   >;
 
     //! \brief Options constructor
@@ -56,13 +58,15 @@ class Scheme : public tk::Toggle< SchemeType > {
           { SchemeType::DiagCG, kw::diagcg::name() },
           { SchemeType::ALECG, kw::alecg::name() },
           { SchemeType::DG, kw::dg::name() },
-          { SchemeType::DGP1, kw::dgp1::name() } },
+          { SchemeType::DGP1, kw::dgp1::name() },
+          { SchemeType::DGP2, kw::dgp2::name() } },
         //! keywords -> Enums
         { { kw::matcg::string(), SchemeType::MatCG },
           { kw::diagcg::string(), SchemeType::DiagCG },
           { kw::alecg::string(), SchemeType::ALECG },
           { kw::dg::string(), SchemeType::DG },
-          { kw::dgp1::string(), SchemeType::DGP1 } } ) {}
+          { kw::dgp1::string(), SchemeType::DGP1 }, 
+          { kw::dgp2::string(), SchemeType::DGP2 } } ) {}
 
     //! Return scheme centering for SchemeType
     //! \param[in] type Scheme type
@@ -71,7 +75,7 @@ class Scheme : public tk::Toggle< SchemeType > {
       if (type == SchemeType::MatCG || type == SchemeType::DiagCG ||
           type == SchemeType::ALECG )
         return Centering::NODE;
-      else if (type == SchemeType::DG || type == SchemeType::DGP1)
+      else if (type == SchemeType::DG || type == SchemeType::DGP1 || type == SchemeType::DGP2)
         return Centering::ELEM;
       else Throw( "No such scheme centering" );
     }

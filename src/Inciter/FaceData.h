@@ -61,7 +61,7 @@ class FaceData {
     std::size_t Nbfac() const { return tk::sumvalsize( m_bface ); }
     const std::vector< int >& Esuel() const { return m_esuel; }
     std::vector< int >& Esuel() { return m_esuel; }
-    std::size_t Ntfac() const { return m_ntfac; }
+    std::size_t Nipfac() const { return m_nipfac; }
     const std::vector< std::size_t >& Inpofa() const { return m_inpofa; }
     std::vector< std::size_t >& Inpofa() { return m_inpofa; }
     const std::vector< std::size_t >& Belem() const { return m_belem; }
@@ -79,7 +79,7 @@ class FaceData {
       p | m_bnode;
       p | m_triinpoel;
       p | m_esuel;
-      p | m_ntfac;
+      p | m_nipfac;
       p | m_inpofa;
       p | m_belem;
       p | m_esuf;
@@ -99,8 +99,8 @@ class FaceData {
     std::vector< std::size_t > m_triinpoel;
     //! Elements surrounding elements
     std::vector< int > m_esuel;
-    //! Rotal number of faces
-    std::size_t m_ntfac;
+    //! Number of internal and physical-boundary faces
+    std::size_t m_nipfac;
     //! Face-node connectivity
     std::vector< std::size_t > m_inpofa;
     //! Boundary element vector

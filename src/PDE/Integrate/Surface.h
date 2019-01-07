@@ -50,6 +50,20 @@ surfIntP1( ncomp_t system,
            const Fields& limFunc,
            Fields& R );
 
+//! Compute internal surface flux integrals for DG(P2)
+void
+surfIntP2( ncomp_t system,
+           ncomp_t ncomp,
+           ncomp_t offset,
+           const std::vector< std::size_t >& inpoel,
+           const UnsMesh::Coords& coord,
+           const inciter::FaceData& fd,
+           const Fields& geoFace,
+           const RiemannFluxFn& flux,
+           const VelFn& vel,
+           const Fields& U,
+           Fields& R );
+
 } // tk::
 
 #endif // Surface_h

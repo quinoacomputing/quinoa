@@ -4990,12 +4990,25 @@ struct dgp1_info {
     "Select 2nd-order discontinuous Galerkin discretization + Runge-Kutta"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the second-order accurate discontinuous
-    Galerkin, DG(P1), spatial discretiztaion used in Inciter.Selecting this
+    Galerkin, DG(P1), spatial discretiztaion used in Inciter. Selecting this
     spatial discretization also selects the Runge-Kutta scheme for time
     discretization. See Control/Inciter/Options/Scheme.h for other
     valid options.)"; }
 };
 using dgp1 = keyword< dgp1_info, TAOCPP_PEGTL_STRING("dgp1") >;
+
+struct dgp2_info {
+  static std::string name() { return "DG(P2) + RK"; }
+  static std::string shortDescription() { return
+    "Select 3nd-order discontinuous Galerkin discretization + Runge-Kutta"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the third-order accurate discontinuous
+    Galerkin, DG(P2), spatial discretiztaion used in Inciter. Selecting this
+    spatial discretization also selects the Runge-Kutta scheme for time
+    discretization. See Control/Inciter/Options/Scheme.h for other
+    valid options.)"; }
+};
+using dgp2 = keyword< dgp2_info, TAOCPP_PEGTL_STRING("dgp2") >;
 
 struct scheme_info {
   static std::string name() { return "Discretization scheme"; }

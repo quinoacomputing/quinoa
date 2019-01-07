@@ -150,6 +150,7 @@ class InputDeck :
                                    kw::alecg,
                                    kw::dg,
                                    kw::dgp1,
+                                   kw::dgp2,
                                    kw::flux,
                                    kw::laxfriedrichs,
                                    kw::hllc,
