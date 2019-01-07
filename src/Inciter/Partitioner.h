@@ -58,6 +58,7 @@ class Partitioner : public CBase_Partitioner {
                  const CProxy_Transporter& host,
                  const CProxy_Refiner& refiner,
                  const CProxy_Sorter& sorter,
+                 const tk::CProxy_MeshWriter& meshwriter,
                  const Scheme& scheme,
                  const std::map< int, std::vector< std::size_t > >& belem,
                  const std::map< int, std::vector< std::size_t > >& faces,
@@ -98,6 +99,8 @@ class Partitioner : public CBase_Partitioner {
     CProxy_Refiner m_refiner;
     //! Mesh sorter proxy
     CProxy_Sorter m_sorter;
+    //! Mesh writer proxy
+    tk::CProxy_MeshWriter m_meshwriter;
     //! Discretization scheme
     Scheme m_scheme;
     //! Element connectivity of this compute node's mesh chunk (global ids)

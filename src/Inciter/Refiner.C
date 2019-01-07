@@ -19,6 +19,7 @@
 #include "DGPDE.h"
 #include "DerivedData.h"
 #include "UnsMesh.h"
+#include "Centering.h"
 #include "Around.h"
 #include "ExodusIIMeshWriter.h"
 #include "HashMapReducer.h"
@@ -38,6 +39,7 @@ using inciter::Refiner;
 
 Refiner::Refiner( const CProxy_Transporter& transporter,
                   const CProxy_Sorter& sorter,
+                  const tk::CProxy_MeshWriter& meshwriter,
                   const Scheme& scheme,
                   const tk::RefinerCallback& cbr,
                   const tk::SorterCallback& cbs,
@@ -49,6 +51,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
                   int nchare ) :
   m_host( transporter ),
   m_sorter( sorter ),
+  m_meshwriter( meshwriter ),
   m_scheme( scheme ),
   m_schemeproxy(),
   m_cbr( cbr ),
@@ -77,6 +80,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 //  Constructor
 //! \param[in] transporter Transporter (host) proxy
 //! \param[in] sorter Mesh reordering (sorter) proxy
+//! \param[in] meshwriter Mesh writer proxy
 //! \param[in] scheme Discretization scheme
 //! \param[in] cbr Charm++ callbacks for Refiner
 //! \param[in] cbs Charm++ callbacks for Sorter
@@ -553,8 +557,8 @@ Refiner::endt0ref()
 // *****************************************************************************
 {
   // create sorter Charm++ chare array elements using dynamic insertion
-  m_sorter[ thisIndex ].insert( m_host, m_cbs, m_scheme, m_ginpoel,
-    m_coordmap, m_belem, m_triinpoel, m_bnode, m_nchare );
+  m_sorter[ thisIndex ].insert( m_host, m_meshwriter, m_cbs, m_scheme,
+    m_ginpoel, m_coordmap, m_belem, m_triinpoel, m_bnode, m_nchare );
 
   // Compute final number of cells across whole problem
   std::vector< std::uint64_t > mesh{ m_ginpoel.size()/4, m_coord[0].size() };
@@ -786,12 +790,12 @@ Refiner::nodeinit( std::size_t npoin,
   // Evaluate ICs differently depending on nodal or cell-centered discretization
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   const auto centering = ctr::Scheme().centering( scheme );
-  if (centering == ctr::Centering::NODE) {
+  if (centering == tk::Centering::NODE) {
 
     // Node-centered: evaluate ICs for all scalar components integrated
     for (const auto& eq : g_cgpde) eq.initialize( m_coord, u, t0 );
 
-  } else if (centering == ctr::Centering::ELEM) {
+  } else if (centering == tk::Centering::ELEM) {
 
     // Initialize cell-based unknowns
     tk::Fields ue( m_inpoel.size()/4, nprop );

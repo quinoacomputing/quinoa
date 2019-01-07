@@ -14,6 +14,7 @@
 #include "Toggle.h"
 #include "Keywords.h"
 #include "PUPUtil.h"
+#include "Centering.h"
 
 namespace inciter {
 namespace ctr {
@@ -23,10 +24,6 @@ enum class SchemeType : uint8_t { DiagCG
                                 , ALECG
                                 , DG
                                 , DGP1 };
-
-//! Scheme centering types
-enum class Centering : uint8_t { NODE
-                               , ELEM };
 
 //! Pack/Unpack SchemeType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, SchemeType& e ) { PUP::pup( p, e ); }
@@ -62,12 +59,12 @@ class Scheme : public tk::Toggle< SchemeType > {
 
     //! Return scheme centering for SchemeType
     //! \param[in] type Scheme type
-    //! \return Centering for scheme type
-    Centering centering( SchemeType type ) {
+    //! \return Mesh centering for scheme type
+    tk::Centering centering( SchemeType type ) {
       if (type == SchemeType::DiagCG || type == SchemeType::ALECG )
-        return Centering::NODE;
+        return tk::Centering::NODE;
       else if (type == SchemeType::DG || type == SchemeType::DGP1)
-        return Centering::ELEM;
+        return tk::Centering::ELEM;
       else Throw( "No such scheme centering" );
     }
 };

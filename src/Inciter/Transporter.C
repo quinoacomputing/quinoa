@@ -56,6 +56,7 @@ Transporter::Transporter() :
   m_scheme( g_inputdeck.get< tag::discr, tag::scheme >() ),
   m_partitioner(),
   m_refiner(),
+  m_meshwriter(),
   m_sorter(),
   m_nelem( 0 ),
   m_npoin( 0 ),
@@ -233,12 +234,12 @@ Transporter::createPartitioner()
   // Read boundary (side set) data from input file
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   const auto centering = ctr::Scheme().centering( scheme );
-  if (centering == ctr::Centering::ELEM) {
+  if (centering == tk::Centering::ELEM) {
     // Read boundary-face connectivity on side sets
     mr.readSidesetFaces( belem, faces );
     // Verify boundarty condition (BC) side sets used exist in mesh file
     matchBCs( g_dgpde, belem );
-  } else if (centering == ctr::Centering::NODE) {
+  } else if (centering == tk::Centering::NODE) {
     // Read node lists on side sets
     bnode = mr.readSidesetNodes();
     // Verify boundarty condition (BC) side sets used exist in mesh file
@@ -279,10 +280,17 @@ Transporter::createPartitioner()
   // Create empty mesh refiner chare array (bound to workers)
   m_refiner = CProxy_Refiner::ckNew( m_scheme.arrayoptions() );
 
-  // Create mesh partitioner Charm++ chare group
+  // Create MeshWriter chare nodegroup
+  m_meshwriter = tk::CProxy_MeshWriter::ckNew(
+                    g_inputdeck.get< tag::cmd, tag::io, tag::output >(),
+                    g_inputdeck.get< tag::selected, tag::filetype >(),
+                    centering,
+                    g_inputdeck.get< tag::cmd, tag::benchmark >() );
+
+  // Create mesh partitioner Charm++ chare nodegroup
   m_partitioner =
-    CProxy_Partitioner::ckNew( cbp, cbr, cbs, thisProxy, m_refiner,
-                               m_sorter, m_scheme, belem, faces, bnode );
+    CProxy_Partitioner::ckNew( cbp, cbr, cbs, thisProxy, m_refiner, m_sorter,
+                               m_meshwriter, m_scheme, belem, faces, bnode );
 }
 
 void

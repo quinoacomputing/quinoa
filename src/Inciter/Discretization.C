@@ -12,23 +12,14 @@
 #include "Vector.h"
 #include "DerivedData.h"
 #include "Discretization.h"
-#include "ExodusIIMeshReader.h"
-#include "ExodusIIMeshWriter.h"
+#include "MeshWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "Inciter/Options/Scheme.h"
-#include "CGPDE.h"
-#include "DGPDE.h"
 #include "Print.h"
-
-#ifdef HAS_ROOT
-  #include "RootMeshWriter.h"
-#endif
 
 namespace inciter {
 
 static CkReduction::reducerType PDFMerger;
-extern std::vector< CGPDE > g_cgpde;
-extern std::vector< DGPDE > g_dgpde;
 extern ctr::InputDeck g_inputdeck;
 
 } // inciter::
@@ -38,6 +29,7 @@ using inciter::Discretization;
 Discretization::Discretization(
   const CProxy_DistFCT& fctproxy,
   const CProxy_Transporter& transporter,
+  const tk::CProxy_MeshWriter& meshwriter,
   const std::vector< std::size_t >& conn,
   const tk::UnsMesh::CoordMap& coordmap,
   const std::map< int, std::unordered_set< std::size_t > >& msum,
@@ -45,13 +37,15 @@ Discretization::Discretization(
   m_nchare( nc ),
   m_it( 0 ),
   m_itr( 0 ),
+  m_itf( 0 ),
   m_initial( 1.0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
+  m_lastDumpTime( -std::numeric_limits< tk::real >::max() ),  
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
-  m_lastFieldWriteTime( -1.0 ),
   m_nvol( 0 ),
   m_fct( fctproxy ),
   m_transporter( transporter ),
+  m_meshwriter( meshwriter ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
   m_coord( setCoord( coordmap ) ),
   m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
@@ -62,8 +56,9 @@ Discretization::Discretization(
   m_timer()
 // *****************************************************************************
 //  Constructor
-//! \param[in] transporter Host (Transporter) proxy
 //! \param[in] fctproxy Distributed FCT proxy
+//! \param[in] transporter Host (Transporter) proxy
+//! \param[in] meshwriter Mesh writer proxy
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
 //! \param[in] coordmap Coordinates of mesh nodes and their global IDs
 //! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
@@ -100,6 +95,22 @@ Discretization::Discretization(
   if (sch == ctr::SchemeType::DiagCG)
     m_fct[ thisIndex ].insert( m_nchare, m_gid.size(), nprop,
                                m_msum, m_bid, m_lid, m_inpoel );
+
+  // Tell the mesh writer the total number of chares. This is used to compute
+  // the filename. Since m_meshwriter is a Charm++ chare group, it never
+  // migrates and an instance is guaranteed on every PE. We index the first PE
+  // on every logical compute node. In Charm++'s non-SMP mode, a node is the
+  // same as a PE, so the index is the same as CkMyPe(). In SMP mode the index
+  // is the first PE on every logical node. In non-SMP mode this yields one or
+  // more output files per PE with zero or non-zero virtualization,
+  // respectively. If there are multiple chares on a PE, the writes are
+  // serialized per PE, since only a single entry method call can be executed
+  // at any given time. In SMP mode, still the same number of files are output
+  // (one per chare), but the output is serialized through the first PE of each
+  // compute node. In SMP mode, channeling multiple files via a single PE on
+  // each node is required by NetCDF and HDF5, as well as ExodusII, since none
+  // of these libraries are thread-safe.
+  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].expect( m_nchare );
 
   contribute( CkCallback(CkReductionTarget(Transporter,disccreated),
               m_transporter) );
@@ -383,179 +394,93 @@ void
 Discretization::writeMesh(
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::vector< std::size_t >& triinpoel,
-  const std::map< int, std::vector< std::size_t > >& bnode )
+  const std::map< int, std::vector< std::size_t > >& bnode ) const
 // *****************************************************************************
-// Output chare element blocks to file
+// Output chare mesh to file
 //! \param[in] bface Map of boundary-face lists mapped to corresponding side set
 //!   ids for this mesh chunk
 //! \param[in] triinpoel Interconnectivity of points and boundary-face in this
 //!   mesh chunk
 //! \param[in] bnode Map of boundary-node lists mapped to corresponding side set
 //!   ids for this mesh chunk
+//! \details Since m_meshwriter is a Charm++ chare group, it never migrates and
+//!   an instance is guaranteed on every PE. We index the first PE on every
+//!   logical compute node. In Charm++'s non-SMP mode, a node is the same as a
+//!   PE, so the index is the same as CkMyPe(). In SMP mode the index is the
+//!   first PE on every logical node. In non-SMP mode this yields one or more
+//!   output files per PE with zero or non-zero virtualization, respectively. If
+//!   there are multiple chares on a PE, the writes are serialized per PE, since
+//!   only a single entry method call can be executed at any given time. In SMP
+//!   mode, still the same number of files are output (one per chare), but the
+//!   output is serialized through the first PE of each compute node. In SMP
+//!   mode, channeling multiple files via a single PE on each node is required
+//!   by NetCDF and HDF5, as well as ExodusII, since none of these libraries are
+//!   thread-safe.
 // *****************************************************************************
 {
-  if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
-
-    #ifdef HAS_ROOT
-    auto filetype = g_inputdeck.get< tag::selected, tag::filetype >();
-
-    if (filetype == tk::ctr::FieldFileType::ROOT) {
-
-      tk::RootMeshWriter rmw( filename(), 0 );
-      rmw.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
-
-    } else
-    #endif
-    {
-      // Create ExodusII writer
-      tk::ExodusIIMeshWriter ew( filename(), tk::ExoWriter::CREATE );
-      // Write chare mesh
-      if (m_nchare == 1) {
-
-        // Do not write side sets in parallel
-        const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-        const auto centering = ctr::Scheme().centering( scheme );
-        if (centering == ctr::Centering::ELEM)
-          ew.writeMesh( m_inpoel, m_coord, bface, triinpoel );
-        else if (centering == ctr::Centering::NODE) {
-          // Convert boundary node lists to local ids for output
-          auto lbnode = bnode;
-          for (auto& s : lbnode)
-            for (auto& p : s.second)
-              p = tk::cref_find(m_lid,p);
-          ew.writeMesh( m_inpoel, m_coord, lbnode );
-        } else Throw( "Scheme centering not handled for writing mesh" );
-
-      } else {
-        ew.writeMesh( m_inpoel, m_coord );
-      }
-    }
-  }
+  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
+    writeMesh( m_itr, thisIndex, m_inpoel, m_coord,
+               bface, triinpoel, bnode, m_lid );
 }
 
 void
-Discretization::writeNodeSolution(
-  const tk::ExodusIIMeshWriter& ew,
-  uint64_t it,
-  const std::vector< std::vector< tk::real > >& u ) const
+Discretization::writeMeta( const std::vector< std::string>& names,
+                           tk::Centering centering ) const
 // *****************************************************************************
-// Output solution to file
-//! \param[in] ew ExodusII mesh-based writer object
-//! \param[in] it Iteration count
-//! \param[in] u Vector of fields to write to file
-// *****************************************************************************
-{
-  int varid = 0;
-  for (const auto& f : u) ew.writeNodeScalar( it, ++varid, f );
-}
-
-#ifdef HAS_ROOT
-void
-Discretization::writeNodeSolution(
-  const tk::RootMeshWriter& rmw,
-  uint64_t it,
-  const std::vector< std::vector< tk::real > >& u ) const
-// *****************************************************************************
-// Output solution to file
-//! \param[in] rmw Root mesh-based writer object
-//! \param[in] it Iteration count
-//! \param[in] u Vector of fields to write to file
+//  Output mesh fields metadata to file
+//! \param[in] names Field output names to output
+//! \param[in] centering The centering that will be associated to the field data
+//!   to be output when writeFields is called next
+//! \details Since m_meshwriter is a Charm++ chare group, it never migrates and
+//!   an instance is guaranteed on every PE. We index the first PE on every
+//!   logical compute node. In Charm++'s non-SMP mode, a node is the same as a
+//!   PE, so the index is the same as CkMyPe(). In SMP mode the index is the
+//!   first PE on every logical node. In non-SMP mode this yields one or more
+//!   output files per PE with zero or non-zero virtualization, respectively. If
+//!   there are multiple chares on a PE, the writes are serialized per PE, since
+//!   only a single entry method call can be executed at any given time. In SMP
+//!   mode, still the same number of files are output (one per chare), but the
+//!   output is serialized through the first PE of each compute node. In SMP
+//!   mode, channeling multiple files via a single PE on each node is required
+//!   by NetCDF and HDF5, as well as ExodusII, since none of these libraries are
+//!   thread-safe.
 // *****************************************************************************
 {
-  int varid = 0;
-  for (const auto& f : u) rmw.writeNodeScalar( it, ++varid, f );
-}
-#endif
-
-void
-Discretization::writeElemSolution(
-  const tk::ExodusIIMeshWriter& ew,
-  uint64_t it,
-  const std::vector< std::vector< tk::real > >& u,
-  const std::vector< std::vector< tk::real > >& /*v*/ ) const
-// *****************************************************************************
-// Output solution to file
-//! \param[in] ew ExodusII mesh-based writer object
-//! \param[in] it Iteration count
-//! \param[in] u Vector of element fields to write to file
-//! \param[in] v Vector of node fields to write to file
-// *****************************************************************************
-{
-  int varid = 0;
-  for (const auto& f : u) ew.writeElemScalar( it, ++varid, f );
-  //varid = 0;
-  //for (const auto& f : v) ew.writeNodeScalar( it, ++varid, f );
+  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
+    writeMeta( m_itr, thisIndex, centering, names );
 }
 
 void
-Discretization::writeNodeMeta() const
+Discretization::writeFields(
+  const std::vector< std::vector< tk::real > >& fields,
+  tk::Centering centering )
 // *****************************************************************************
-// Output mesh-based fields metadata to file
-// *****************************************************************************
-{
-  if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
-
-    #ifdef HAS_ROOT
-    auto filetype = g_inputdeck.get< tag::selected, tag::filetype >();
-
-    if (filetype == tk::ctr::FieldFileType::ROOT) {
- 
-      tk::RootMeshWriter rmw( filename(), 1 );
-
-      // Collect nodal field output names from all PDEs
-      std::vector< std::string > names;
-      for (const auto& eq : g_cgpde) {
-        auto n = eq.fieldNames();
-        names.insert( end(names), begin(n), end(n) );
-      }
-
-      // Write node field names
-      rmw.writeNodeVarNames( names );
-
-    } else
-    #endif
-    {
-
-      // Create ExodusII writer
-      tk::ExodusIIMeshWriter ew( filename(), tk::ExoWriter::OPEN );
-
-      // Collect nodal field output names from all PDEs
-      std::vector< std::string > names;
-      for (const auto& eq : g_cgpde) {
-        auto n = eq.fieldNames();
-        names.insert( end(names), begin(n), end(n) );
-      }
-
-      // Write node field names
-      ew.writeNodeVarNames( names );
-    }
-
-  }
-}
-
-void
-Discretization::writeElemMeta() const
-// *****************************************************************************
-// Output mesh-based element fields metadata to file
+//  Output mesh fields to file
+//! \param[in] fields Mesh field output dump
+//! \param[in] centering The centering that will be associated to the field data
+//!   to be output when writeFields is called next
+//! \details Since m_meshwriter is a Charm++ chare group, it never migrates and
+//!   an instance is guaranteed on every PE. We index the first PE on every
+//!   logical compute node. In Charm++'s non-SMP mode, a node is the same as a
+//!   PE, so the index is the same as CkMyPe(). In SMP mode the index is the
+//!   first PE on every logical node. In non-SMP mode this yields one or more
+//!   output files per PE with zero or non-zero virtualization, respectively. If
+//!   there are multiple chares on a PE, the writes are serialized per PE, since
+//!   only a single entry method call can be executed at any given time. In SMP
+//!   mode, still the same number of files are output (one per chare), but the
+//!   output is serialized through the first PE of each compute node. In SMP
+//!   mode, channeling multiple files via a single PE on each node is required
+//!   by NetCDF and HDF5, as well as ExodusII, since none of these libraries are
+//!   thread-safe.
 // *****************************************************************************
 {
-  if (!g_inputdeck.get< tag::cmd, tag::benchmark >())
-  {
-    // Create ExodusII writer
-    tk::ExodusIIMeshWriter ew( filename(), tk::ExoWriter::OPEN );
+  auto eps = std::numeric_limits< tk::real >::epsilon();
 
-    // Collect elemental field output names from all PDEs
-    std::vector< std::string > names;
-    for (const auto& eq : g_dgpde) {
-      auto n = eq.fieldNames();
-      names.insert( end(names), begin(n), end(n) );
-    }
-
-    // Write element field names
-    ew.writeElemVarNames( names );
-
-    //// Write node field names
-    //ew.writeNodeVarNames( names );
+  if (std::abs(m_lastDumpTime - m_t) > eps ) {
+    m_lastDumpTime = m_t;
+    ++m_itf;
+    m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
+      writeFields( m_itr, m_itf, m_t, thisIndex, centering, fields );
   }
 }
 
@@ -570,42 +495,7 @@ Discretization::setdt( tk::real newdt )
 
   // Truncate the size of last time step
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  if (m_t+m_dt > term) m_dt = term - m_t;;
-}
-
-
-std::string
-Discretization::filename() const
-// *****************************************************************************
-//  Compute ExodusII filename
-//! \details We use a file naming convention for large field output data that
-//!   allows ParaView to glue multiple files into a single simulation output by
-//!   only loading a single file. The base filename is followed by ".e-s.",
-//!   which probably stands for Exodus Sequence, followed by 3 integers:
-//!   (1) {RS}: counts the number of "restart dumps", but we use this for
-//!   counting the number of outputs with a different mesh, e.g., due to
-//!   mesh refinement, thus if this first number is new the mesh is new
-//!   compared to the previous (first) number afer ".e-s.",
-//!   (2) {NP}: total number of partitions (workers, chares), this is more than
-//!   the number of PEs with nonzero virtualization (overdecomposition), and
-//!   (3) {RANK}: worker (chare) id.
-//!   Thus {RANK} does spatial partitioning, while {RS} partitions in time, but
-//!   a single {RS} id may contain multiple time steps, which equals to the
-//!   number of time steps at which field output is saved without refining the
-//!   mesh.
-//! \return Filename computed
-//! \see https://www.paraview.org/Wiki/Restarted_Simulation_Readers
-// *****************************************************************************
-{
-  return g_inputdeck.get< tag::cmd, tag::io, tag::output >() + ".e-s"
-         + '.' + std::to_string( m_itr )        // create new file if new mesh
-         + '.' + std::to_string( m_nchare )     // total number of workers
-         + '.' + std::to_string( thisIndex )    // new file per worker
-         #ifdef HAS_ROOT
-         + (g_inputdeck.get< tag::selected, tag::filetype >() ==
-             tk::ctr::FieldFileType::ROOT ? ".root" : "")
-         #endif
-         ;
+  if (m_t+m_dt > term) m_dt = term - m_t;
 }
 
 void

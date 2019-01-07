@@ -16,6 +16,7 @@ module sorter {
 
     array [1D] Sorter {
       entry Sorter( const CProxy_Transporter& transporter,
+                    const tk::CProxy_MeshWriter& meshwriter,
                     const tk::SorterCallback& cbs,
                     const Scheme& scheme,
                     const std::vector< std::size_t >& ginpoel,

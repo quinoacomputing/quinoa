@@ -29,6 +29,7 @@ module partitioner {
         const CProxy_Transporter& host,
         const CProxy_Refiner& refiner,
         const CProxy_Sorter& sorter,
+        const tk::CProxy_MeshWriter& meshwriter,
         const Scheme& scheme,
         const std::map< int, std::vector< std::size_t > >& belem,
         const std::map< int, std::vector< std::size_t > >& faces,

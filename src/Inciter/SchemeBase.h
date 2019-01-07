@@ -47,16 +47,16 @@ class SchemeBase {
     explicit SchemeBase( ctr::SchemeType scheme ) :
       discproxy( CProxy_Discretization::ckNew() )
     {
-      m_bound.bindTo( discproxy );
+      bound.bindTo( discproxy );
       if (scheme == ctr::SchemeType::DiagCG) {
-        proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(m_bound) );
-        fctproxy= CProxy_DistFCT::ckNew(m_bound);
+        proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(bound) );
+        fctproxy= CProxy_DistFCT::ckNew(bound);
       } else if (scheme == ctr::SchemeType::DG ||
                  scheme == ctr::SchemeType::DGP1)
       {
-        proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(m_bound) );
+        proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(bound) );
       } else if (scheme == ctr::SchemeType::ALECG) {
-        proxy = static_cast< CProxy_ALECG >( CProxy_ALECG::ckNew(m_bound) );
+        proxy = static_cast< CProxy_ALECG >( CProxy_ALECG::ckNew(bound) );
       } else Throw( "Unknown discretization scheme" );
     }
 
@@ -75,7 +75,7 @@ class SchemeBase {
 
     //! Charm++ array options accessor for binding external proxies
     //! \return Charm++ array options object reference
-    const CkArrayOptions& arrayoptions() { return m_bound; }
+    const CkArrayOptions& arrayoptions() { return bound; }
 
     //! Variant type listing all chare proxy types modeling the same concept
     using Proxy =
@@ -94,7 +94,7 @@ class SchemeBase {
     //! Charm++ proxy to flux-corrected transport (FCT) driver class
     CProxy_DistFCT fctproxy;
     //! Charm++ array options for binding chares
-    CkArrayOptions m_bound;
+    CkArrayOptions bound;
 
     //! Generic base for all call_* classes
     //! \details This class stores the entry method arguments and contains a
@@ -154,6 +154,7 @@ class SchemeBase {
       p | proxy;
       p | discproxy;
       p | fctproxy;
+      p | bound;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

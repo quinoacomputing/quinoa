@@ -13,6 +13,7 @@
 #include "DerivedData.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "FaceData.h"
+#include "Centering.h"
 
 namespace inciter {
 
@@ -46,7 +47,7 @@ FaceData::FaceData(
 // *****************************************************************************
 {
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (ctr::Scheme().centering(scheme) == ctr::Centering::ELEM) {
+  if (ctr::Scheme().centering(scheme) == tk::Centering::ELEM) {
     auto el = tk::global2local( ginpoel );   // fills inpoel, m_gid, m_lid
     const auto& inpoel = std::get< 0 >( el );
     const auto& lid = std::get< 2 >( el );

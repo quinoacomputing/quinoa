@@ -21,11 +21,6 @@
 #include "NoWarning/discretization.decl.h"
 #include "NoWarning/refiner.decl.h"
 
-namespace tk {
-  class ExodusIIMeshWriter;
-  class RootMeshWriter;
-}
-
 namespace inciter {
 
 //! \brief Discretization Charm++ chare array holding common functinoality to
@@ -38,6 +33,7 @@ class Discretization : public CBase_Discretization {
       Discretization(
         const CProxy_DistFCT& fctproxy,
         const CProxy_Transporter& transporter,
+        const tk::CProxy_MeshWriter& meshwriter,
         const std::vector< std::size_t >& conn,
         const tk::UnsMesh::CoordMap& coordmap,
         const std::map< int, std::unordered_set< std::size_t > >& msum,
@@ -118,21 +114,16 @@ class Discretization : public CBase_Discretization {
     tk::real T() const { return m_t; }
     //! Iteration count accessor
     uint64_t It() const { return m_it; }
-    //! Total number of chares accessor
-    int nchare() const { return m_nchare; }
 
     //! Non-const-ref refinement iteration count accessor
     uint64_t& Itr() { return m_itr; }
+    //! Non-const-ref field-output iteration count accessor
+    uint64_t& Itf() { return m_itf; }
 
     //! Timer accessor as const-ref
     const tk::Timer& Timer() const { return m_timer; }
     //! Timer accessor as non-const-ref
     tk::Timer& Timer() { return m_timer; }
-
-    //! Time at which field output happened last accessor as const-ref
-    tk::real LastFieldWriteTime() const { return m_lastFieldWriteTime; }
-    //! Time at which field output happened last accessor as non-const-ref
-    tk::real& LastFieldWriteTime() { return m_lastFieldWriteTime; }
 
     //! Transporter proxy accessor as const-ref
     const CProxy_Transporter& Tr() const { return m_transporter; }
@@ -176,28 +167,15 @@ class Discretization : public CBase_Discretization {
     //! Output chare element blocks to output file
     void writeMesh( const std::map< int, std::vector< std::size_t > >& bface,
                     const std::vector< std::size_t >& triinpoel,
-                    const std::map< int, std::vector< std::size_t > >& bnode );
+                    const std::map< int, std::vector< std::size_t > >& bnode ) const;
 
-    //! Output mesh-based fields metadata to file
-    void writeNodeMeta() const;
+    //! Output mesh fields metadata to file
+    void writeMeta( const std::vector< std::string >& names,
+                    tk::Centering centering ) const;
 
-    //! Output mesh-based element fields metadata to file
-    void writeElemMeta() const;
-
-    //! Output solution to file
-    void writeNodeSolution( const tk::ExodusIIMeshWriter& ew,
-                        uint64_t it,
-                        const std::vector< std::vector< tk::real > >& u ) const;
-    #ifdef HAS_ROOT
-    void writeNodeSolution( const tk::RootMeshWriter& rmw,
-                        uint64_t it,
-                        const std::vector< std::vector< tk::real > >& u ) const;
-    #endif
-    void writeElemSolution( const tk::ExodusIIMeshWriter& ew,
-                            uint64_t it,
-                            const std::vector< std::vector< tk::real > >& u,
-                            const std::vector< std::vector< tk::real > >& v )
-                          const;
+    //! Output mesh fields to file
+    void writeFields( const std::vector< std::vector< tk::real > >& fields,
+                      tk::Centering centering );
 
     //! Set time step size
     void setdt( tk::real newdt );
@@ -208,9 +186,6 @@ class Discretization : public CBase_Discretization {
     //! Otput one-liner status report
     void status();
 
-    //! Compute ExodusII filename
-    std::string filename() const;
-
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -219,13 +194,15 @@ class Discretization : public CBase_Discretization {
       p | m_nchare;
       p | m_it;
       p | m_itr;
+      p | m_itf;
       p | m_initial;
       p | m_t;
+      p | m_lastDumpTime;
       p | m_dt;
-      p | m_lastFieldWriteTime;
       p | m_nvol;
       p | m_fct;
       p | m_transporter;
+      p | m_meshwriter;
       p | m_refiner;
       p | m_el;
       if (p.isUnpacking()) {
@@ -258,14 +235,18 @@ class Discretization : public CBase_Discretization {
     //!    an ExodusII sequence
     //! \see https://www.paraview.org/Wiki/Restarted_Simulation_Readers
     uint64_t m_itr;
+    //! Field output iteration count without mesh refinement
+    //! \details Counts the number of field outputs to file during two
+    //!   time steps with mesh efinement
+    uint64_t m_itf;
     //! Flag that is nonzero during setup and zero during time stepping
     tk::real m_initial;
     //! Physical time
     tk::real m_t;
+    //! Physical time at last field output
+    tk::real m_lastDumpTime;
     //! Physical time step size
     tk::real m_dt;
-    //! Physical time at which the last field output was written
-    tk::real m_lastFieldWriteTime;
     //! \brief Number of chares from which we received nodal volume
     //!   contributions on chare boundaries
     std::size_t m_nvol;
@@ -273,6 +254,8 @@ class Discretization : public CBase_Discretization {
     CProxy_DistFCT m_fct;
     //! Transporter proxy
     CProxy_Transporter m_transporter;
+    //! Mesh writer proxy
+    tk::CProxy_MeshWriter m_meshwriter;
     //! Mesh refiner proxy
     CProxy_Refiner m_refiner;
     //! \brief Elements of the mesh chunk we operate on

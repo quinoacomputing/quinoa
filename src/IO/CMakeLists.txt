@@ -15,7 +15,6 @@ target_include_directories(IO PUBLIC
                            ${PEGTL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
                            ${QUINOA_DIRS}
-                           ${SEACASExodus_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_PATH}
                            ${BRIGAND_INCLUDE_DIRS}
@@ -50,7 +49,6 @@ target_include_directories(NativeMeshIO PUBLIC
                            ${CHARM_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
-                           ${SEACASExodus_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_PATH}
                            ${PROJECT_BINARY_DIR}/../Main)
@@ -117,7 +115,6 @@ if (HAS_ROOT)
                              ${QUINOA_SOURCE_DIR}
                              ${QUINOA_SOURCE_DIR}/Base
                              ${QUINOA_SOURCE_DIR}/Mesh
-                             ${SEACASExodus_INCLUDE_DIRS}
                              ${ROOT_INCLUDE_DIRS}
                              ${MPI_CXX_INCLUDE_DIRS}
                              ${MPI_CXX_INCLUDE_PATH})
@@ -166,6 +163,32 @@ INSTALL(TARGETS MeshDetect
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
+
+add_library(MeshWriter
+            MeshWriter.C)
+
+target_include_directories(MeshWriter PUBLIC
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Mesh
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${PROJECT_BINARY_DIR}/../Main
+                           ${PROJECT_BINARY_DIR}/../IO
+                           ${PEGTL_INCLUDE_DIRS}
+                           ${CHARM_INCLUDE_DIRS}
+                           ${ROOT_INCLUDE_DIRS}
+                           ${BRIGAND_INCLUDE_DIRS})
+
+set_target_properties(MeshWriter PROPERTIES LIBRARY_OUTPUT_NAME
+                      quinoa_meshwriter)
+
+INSTALL(TARGETS MeshWriter
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+)
+
+addCharmModule( "meshwriter" "MeshWriter" )
 
 add_library(ParticleIO
             H5PartWriter.C)

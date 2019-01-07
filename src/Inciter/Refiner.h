@@ -43,6 +43,7 @@ class Refiner : public CBase_Refiner {
     //! Constructor
     explicit Refiner( const CProxy_Transporter& transporter,
                       const CProxy_Sorter& sorter,
+                      const tk::CProxy_MeshWriter& meshwriter,
                       const Scheme& scheme,
                       const tk::RefinerCallback& cbr,
                       const tk::SorterCallback& cbs,
@@ -96,6 +97,7 @@ class Refiner : public CBase_Refiner {
     void pup( PUP::er &p ) {
       p | m_host;
       p | m_sorter;
+      p | m_meshwriter;
       p | m_scheme;
       p | m_schemeproxy;
       p | m_cbr;
@@ -149,6 +151,8 @@ class Refiner : public CBase_Refiner {
     CProxy_Transporter m_host;
     //! Mesh sorter proxy
     CProxy_Sorter m_sorter;
+    //! Mesh writer proxy
+    tk::CProxy_MeshWriter m_meshwriter;
     //! Discretization scheme
     Scheme m_scheme;
     //! Variant storing the discretization scheme class we interoperate with

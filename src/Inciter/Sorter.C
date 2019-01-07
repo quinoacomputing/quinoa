@@ -24,6 +24,7 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::Sorter;
 
 Sorter::Sorter( const CProxy_Transporter& transporter,
+                const tk::CProxy_MeshWriter& meshwriter,
                 const tk::SorterCallback& cbs,
                 const Scheme& scheme,
                 const std::vector< std::size_t >& ginpoel,
@@ -33,6 +34,7 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
                 const std::map< int, std::vector< std::size_t > >& bnode,
                 int nchare ) :
   m_host( transporter ),
+  m_meshwriter( meshwriter ),
   m_cbs( cbs ),
   m_scheme( scheme ),
   m_ginpoel( ginpoel ),
@@ -57,6 +59,7 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
 // *****************************************************************************
 //  Constructor: prepare owned mesh node IDs for reordering
 //! \param[in] transporter Transporter (host) Charm++ proxy
+//! \param[in] meshwriter Mesh writer Charm++ proxy
 //! \param[in] cbs Charm++ callbacks for Sorter
 //! \param[in] scheme Discretization scheme
 //! \param[in] ginpoel Mesh connectivity (this chare) using global node IDs
@@ -478,8 +481,8 @@ Sorter::createDiscWorkers()
   // insertion: 1st arg: chare id, last arg: PE chare is created on, middle
   // args: Discretization ctor args. See also Charm++ manual, Sec. "Dynamic
   // Insertion".
-  m_scheme.discInsert( thisIndex, m_host, m_ginpoel, m_coordmap, m_msum,
-                       m_nchare );
+  m_scheme.discInsert( thisIndex, m_host, m_meshwriter, m_ginpoel, m_coordmap,
+                       m_msum, m_nchare );
 
   contribute( m_cbs.get< tag::discinserted >() );
 }

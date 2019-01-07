@@ -16,6 +16,7 @@ mainmodule inciter {
   extern module alecg;
   extern module dg;
   extern module charestatecollector;
+  extern module meshwriter;
 
   readonly CProxy_Main mainProxy;
   readonly tk::CProxy_ChareStateCollector stateProxy;

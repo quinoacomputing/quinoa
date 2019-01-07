@@ -39,6 +39,7 @@ Partitioner::Partitioner(
   const CProxy_Transporter& host,
   const CProxy_Refiner& refiner,
   const CProxy_Sorter& sorter,
+  const tk::CProxy_MeshWriter& meshwriter,
   const Scheme& scheme,
   const std::map< int, std::vector< std::size_t > >& belem,
   const std::map< int, std::vector< std::size_t > >& faces,
@@ -49,6 +50,7 @@ Partitioner::Partitioner(
   m_host( host ),
   m_refiner( refiner ),
   m_sorter( sorter ),
+  m_meshwriter( meshwriter ),
   m_scheme( scheme ),
   m_ginpoel(),
   m_coord(),
@@ -72,6 +74,7 @@ Partitioner::Partitioner(
 //! \param[in] host Host Charm++ proxy we are being called from
 //! \param[in] refiner Mesh refiner proxy
 //! \param[in] sorter Mesh reordering (sorter) proxy
+//! \param[in] meshwriter Mesh writer proxy
 //! \param[in] scheme Discretization scheme
 //! \param[in] belem File-internal elem ids of side sets (whole mesh)
 //! \param[in] faces Elem-relative face ids of side sets (whole mesh)
@@ -271,6 +274,7 @@ Partitioner::refine()
       // create refiner Charm++ chare array element using dynamic insertion
       m_refiner[ cid ].insert( m_host,
                                m_sorter,
+                               m_meshwriter,
                                m_scheme,
                                m_cbr,
                                m_cbs,

@@ -20,7 +20,6 @@
 #include "DerivedData.h"
 #include "ElemDiagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
-#include "ExodusIIMeshWriter.h"
 #include "Refiner.h"
 #include "Limiter.h"
 //#include "ChareStateCollector.h"
@@ -43,7 +42,6 @@ DG::DG( const CProxy_Discretization& disc, const FaceData& fd ) :
   m_nadj( 0 ),
   m_nsol( 0 ),
   m_nlim( 0 ),
-  m_itf( 0 ),
   m_fd( fd ),
   m_u( Disc()->Inpoel().size()/4,
        g_inputdeck.get< tag::discr, tag::ndof >()*
@@ -774,7 +772,7 @@ DG::registerReducers()
 void
 DG::setup( tk::real v )
 // *****************************************************************************
-// Setup rows, query boundary conditions, output mesh, etc.
+// Set initial conditions, generate lhs, output mesh
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
@@ -809,8 +807,6 @@ DG::setup( tk::real v )
 
   // Output chare mesh to file
   d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode() );
-  // Output fields metadata to output file
-  d->writeElemMeta();
 
   // Restore coord and inpoel with ghost data
   std::move( begin(inpoelg), end(inpoelg), std::back_inserter(inpoel) );
@@ -833,8 +829,16 @@ DG::setup( tk::real v )
     for (std::size_t c=0; c<m_limFunc.nprop(); ++c)
       m_limFunc(e,c,0)=1.0;
 
+  // Output fields metadata to output file
+  std::vector< std::string > names;
+  for (const auto& eq : g_dgpde) {
+    auto n = eq.fieldNames();
+    names.insert( end(names), begin(n), end(n) );
+  }
+  d->writeMeta( names, tk::Centering::ELEM );
+
   // Output initial conditions to file (regardless of whether it was requested)
-  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( d->T() );
+  writeFields();
 
   // Start timer measuring time stepping wall clock time
   d->Timer().zero();
@@ -970,53 +974,35 @@ DG::comsol( int fromch,
 }
 
 void
-DG::writeFields( tk::real time )
+DG::writeFields()
 // *****************************************************************************
 // Output mesh-based fields to file
-//! \param[in] time Physical time
 // *****************************************************************************
 {
+
   auto d = Disc();
-
-  // Only write if the last time is different than the current one
-  if (std::abs(d->LastFieldWriteTime() - time) <
-      std::numeric_limits< tk::real >::epsilon() )
-    return;
-
- // Save time stamp at which the last field write happened
-  d->LastFieldWriteTime() = time;
-
-  // Increase field output iteration count
-  ++m_itf;
-
+ 
   // Collect element field output
-  std::vector< std::vector< tk::real > > elemfields;
-  auto u = m_u;   // make a copy as eq::output() may overwrite its arg
+  std::vector< std::vector< tk::real > > output;
+  auto u = m_u;
   for (const auto& eq : g_dgpde) {
-    auto output =
-      eq.fieldOutput( m_lhs, d->Inpoel(), d->Coord(), time, m_geoElem, u );
-
+    auto o =
+      eq.fieldOutput( m_lhs, d->Inpoel(), d->Coord(), d->T(), m_geoElem, u );
     // cut off ghost elements
     const auto& esuel = m_fd.Esuel();
-    for (auto& o : output) o.resize( esuel.size()/4 );
-    elemfields.insert( end(elemfields), begin(output), end(output) );
+    for (auto& f : o) f.resize( esuel.size()/4 );
+    output.insert( end(output), begin(o), end(o) );
   }
-
-  // Collect node field output
-  std::vector< std::vector< tk::real > > nodefields;
-  for (const auto& eq : g_dgpde) {
-    auto output =
-      eq.avgElemToNode( d->Inpoel(), d->Coord(), m_geoElem, m_limFunc, m_u );
-
-    nodefields.insert( end(nodefields), begin(output), end(output) );
-  }
-
-  // Create ExodusII writer
-  tk::ExodusIIMeshWriter ew( d->filename(), tk::ExoWriter::OPEN );
-  // Write time stamp
-  ew.writeTimeStamp( m_itf, time );
-  // Write element and node fields to file
-  d->writeElemSolution( ew, m_itf, elemfields, nodefields );
+ 
+  // // Collect node field output
+  // std::vector< std::vector< tk::real > > nodefields;
+  // for (const auto& eq : g_dgpde) {
+  //   auto output =
+  //     eq.avgElemToNode( d->Inpoel(), d->Coord(), m_geoElem, m_limFunc, m_u );
+  //   nodefields.insert( end(nodefields), begin(output), end(output) );
+  // }
+ 
+  d->writeFields( output, tk::Centering::ELEM );
 }
 
 void
@@ -1027,20 +1013,15 @@ DG::out()
 {
   auto d = Disc();
 
-  // Output field data to file if not in benchmark mode
-  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) {
-
-    if ( !((d->It()) % g_inputdeck.get< tag::interval, tag::field >()) )
-      writeFields( d->T() );
+  if ( !((d->It()) % g_inputdeck.get< tag::interval, tag::field >()) )
+    writeFields();
   
-    // Output final field data to file (regardless of whether it was requested)
-    const auto term = g_inputdeck.get< tag::discr, tag::term >();
-    const auto eps = std::numeric_limits< tk::real >::epsilon();
-    const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-    if ( (std::fabs(d->T()-term) < eps || d->It() >= nstep ) )
-      writeFields( d->T() );
-  
-  }
+  // Output final field data to file (regardless of whether it was requested)
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  if ( (std::fabs(d->T()-term) < eps || d->It() >= nstep ) )
+    writeFields();
 }
 
 void

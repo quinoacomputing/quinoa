@@ -134,7 +134,8 @@ if (ENABLE_UNITTEST)
                              ${QUINOA_SOURCE_DIR}/RNG
                              ${TUT_INCLUDE_DIRS}
                              ${LAPACKE_INCLUDE_DIRS}
-                             ${PROJECT_BINARY_DIR}/../UnitTest)
+                             ${PROJECT_BINARY_DIR}/../UnitTest
+                             ${PROJECT_BINARY_DIR}/../IO)
 
   config_executable(${UNITTEST_EXECUTABLE})
 
@@ -209,6 +210,7 @@ if (ENABLE_INCITER)
                         ${ROOTMESHIO}
                         MeshDetect
                         Mesh
+                        MeshWriter
                         Statistics
                         ${SEACASExodus_LIBRARIES}
                         ${ROOT_LIBRARIES}
@@ -230,6 +232,7 @@ if (ENABLE_INCITER)
   addCharmModule( "inciter" "${INCITER_EXECUTABLE}" )
 
   add_dependencies( "inciterCharmModule" "charestatecollectorCharmModule" )
+  add_dependencies( "inciterCharmModule" "meshwriterCharmModule" )
 
 endif(ENABLE_INCITER)
 

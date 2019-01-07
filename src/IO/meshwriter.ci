@@ -1,0 +1,57 @@
+// *****************************************************************************
+/*!
+  \file      src/IO/meshfieldwriter.ci
+  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \brief     Charm++ module interface file for outputing mesh data to file
+  \details   Charm++ interface file for a group used to output data associated
+     to unstructured meshes to file(s). Charm++ chares (work units) send mesh
+     and field data associated to mesh entities to the MeshWriter class defined
+     here to write the data to file(s).
+*/
+// *****************************************************************************
+
+module meshwriter {
+
+  include "Options/FieldFile.h";
+  include "Centering.h";
+  include "UnsMesh.h";
+
+  namespace tk {
+
+    group MeshWriter {
+
+      entry MeshWriter( const std::string& output_basefilename,
+                        ctr::FieldFileType filetype,
+                        Centering bnd_centering,
+                        bool benchmark );
+
+      entry [sync] void expect( int nchare );
+
+      entry [sync] void writeMesh(
+        uint64_t itr,
+        int chareid,
+        const std::vector< std::size_t >& inpoel,
+        const UnsMesh::Coords& coord,
+        const std::map< int, std::vector< std::size_t > >& bface,
+        const std::vector< std::size_t >& triinpoel,
+        const std::map< int, std::vector< std::size_t > >& bnode,
+        const std::unordered_map< std::size_t, std::size_t >& lid );
+
+      entry [sync] void writeMeta(
+        uint64_t itr,
+        int chareid,
+        Centering centering,
+        const std::vector< std::string >& names );
+
+      entry [sync] void writeFields(
+        uint64_t itr,
+        uint64_t itf,
+        tk::real time,
+        int chareid,
+        Centering centering,
+        const std::vector< std::vector< tk::real > >& fields );
+    };
+
+  } // tk::
+
+}

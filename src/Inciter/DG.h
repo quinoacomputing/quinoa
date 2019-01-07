@@ -148,7 +148,6 @@ class DG : public CBase_DG {
       p | m_nadj;
       p | m_nsol;
       p | m_nlim;
-      p | m_itf;
       p | m_fd;
       p | m_u;
       p | m_un;
@@ -201,8 +200,6 @@ class DG : public CBase_DG {
     std::size_t m_nsol;
     //! Counter signaling that we have received all our limiter function ghost data
     std::size_t m_nlim;
-    //! Field output iteration count
-    uint64_t m_itf;
     //! Face data
     FaceData m_fd;
     //! Vector of unknown/solution average over each mesh element
@@ -305,7 +302,7 @@ class DG : public CBase_DG {
     void out();
 
     //! Output mesh-based fields to file
-    void writeFields( tk::real time );
+    void writeFields();
 
     //! Evaluate whether to continue with next step
     void eval();

@@ -20,7 +20,6 @@
 #include "Reader.h"
 #include "ContainerUtil.h"
 #include "UnsMesh.h"
-#include "ExodusIIMeshWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "DerivedData.h"
 #include "CGPDE.h"
@@ -30,10 +29,6 @@
 #include "NodeBC.h"
 #include "Refiner.h"
 //#include "ChareStateCollector.h"
-
-#ifdef HAS_ROOT
-  #include "RootMeshWriter.h"
-#endif
 
 namespace inciter {
 
@@ -49,7 +44,6 @@ using inciter::DiagCG;
 
 DiagCG::DiagCG( const CProxy_Discretization& disc, const FaceData& fd ) :
   m_disc( disc ),
-  m_itf( 0 ),
   m_initial( true ),
   m_nsol( 0 ),
   m_nlhs( 0 ),
@@ -145,24 +139,28 @@ DiagCG::setup( tk::real v )
   // Store total mesh volume
   m_vol = v;
 
+  // Set initial conditions for all PDEs
+  for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
+
+  // Output chare mesh to file
+  d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode());
+
+  // Output fields metadata to output file
+  std::vector< std::string > names;
+  for (const auto& eq : g_cgpde) {
+    auto n = eq.fieldNames();
+    names.insert( end(names), begin(n), end(n) );
+  }
+  d->writeMeta( names, tk::Centering::NODE );
+
+  // Output initial conditions to file (regardless of whether it was requested)
+  writeFields();
+
   // Activate SDAG waits for computing the left-hand side
   thisProxy[ thisIndex ].wait4lhs();
 
   // Compute left-hand side of PDEs
   lhs();
-
-  // Set initial conditions for all PDEs
-  for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
-
-  // Output initial condition to file (if not in benchmark mode)
-  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) {
-    // Output chare mesh to file
-    d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode());
-    // Output fields metadata to output file
-    d->writeNodeMeta();
-    // Output initial conditions to file (regardless of whether it was requested)
-    writeFields( d->T() );
-  }
 }
 
 void
@@ -499,7 +497,7 @@ DiagCG::solve()
 }
 
 void
-DiagCG::writeFields( tk::real time )
+DiagCG::writeFields()
 // *****************************************************************************
 // Output mesh-based fields to file
 //! \param[in] time Physical time
@@ -507,60 +505,29 @@ DiagCG::writeFields( tk::real time )
 {
   auto d = Disc();
 
-  // Only write if the last time is different than the current one
-  if (std::abs(d->LastFieldWriteTime() - time) <
-      std::numeric_limits< tk::real >::epsilon() )
-    return;
-
-  // Save time stamp at which the last field write happened
-  d->LastFieldWriteTime() = time;
-
-  // Increase field output iteration count
-  ++m_itf;
-
-  // Lambda to collect node fields output from all PDEs
-  auto nodefields = [&]() {
-    auto u = m_u;   // make a copy as eq::output() may overwrite its arg
-    std::vector< std::vector< tk::real > > output;
-    for (const auto& eq : g_cgpde) {
-      auto o = eq.fieldOutput( time, m_vol, d->Coord(), d->V(), u );
-      output.insert( end(output), begin(o), end(o) );
-    }
-    return output;
-  };
-
-  #ifdef HAS_ROOT
-  auto filetype = g_inputdeck.get< tag::selected, tag::filetype >();
-
-  if (filetype == tk::ctr::FieldFileType::ROOT) {
-
-    // Create Root writer
-    tk::RootMeshWriter rmw( d->filename(), 1 );
-    // Write time stamp
-    rmw.writeTimeStamp( m_itf, time );
-    // Write node fields to file
-    d->writeNodeSolution( rmw, m_itf, nodefields() );
-
-  } else
-  #endif
-  {
-
-    // if the previous iteration refined the mesh, start by writing the mesh
-    if (m_itf == 1) {
-      // Output chare mesh to file
-      d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode() );
-      // Output fields metadata to output file
-      d->writeNodeMeta();
-    }
-
-    // Create ExodusII writer
-    tk::ExodusIIMeshWriter ew( d->filename(), tk::ExoWriter::OPEN );
-    // Write time stamp
-    ew.writeTimeStamp( m_itf, time );
-    // Write node fields to file
-    d->writeNodeSolution( ew, m_itf, nodefields() );
-
+  // Collect node field output
+  auto u = m_u;
+  std::vector< std::vector< tk::real > > output;
+  for (const auto& eq : g_cgpde) {
+    auto o = eq.fieldOutput( d->T(), m_vol, d->Coord(), d->V(), u );
+    output.insert( end(output), begin(o), end(o) );
   }
+
+  // if the previous iteration refined the mesh, start by writing the mesh
+  if (d->Itf() == 0) {
+    // Output chare mesh to file
+    d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode() );
+
+    // Output fields metadata to output file
+    std::vector< std::string > names;
+    for (const auto& eq : g_cgpde) {
+      auto n = eq.fieldNames();
+      names.insert( end(names), begin(n), end(n) );
+    }
+    d->writeMeta( names, tk::Centering::NODE );
+  }
+
+  d->writeFields( output, tk::Centering::NODE );
 }
 
 void
@@ -571,20 +538,15 @@ DiagCG::out()
 {
   auto d = Disc();
 
-  // Output field data to file if not in benchmark mode
-  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) {
+  if ( !((d->It()) % g_inputdeck.get< tag::interval, tag::field >()) )
+    writeFields();
 
-    if ( !((d->It()) % g_inputdeck.get< tag::interval, tag::field >()) )
-      writeFields( d->T() );
-
-    // Output final field data to file (regardless of whether it was requested)
-    const auto term = g_inputdeck.get< tag::discr, tag::term >();
-    const auto eps = std::numeric_limits< tk::real >::epsilon();
-    const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-    if ( (std::fabs(d->T()-term) < eps || d->It() >= nstep ) )
-      writeFields( d->T() );
-
-  }
+  // Output final field data to file (regardless of whether it was requested)
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  if ( (std::fabs(d->T()-term) < eps || d->It() >= nstep ) )
+    writeFields();
 }
 
 void
@@ -698,7 +660,7 @@ DiagCG::resize( const tk::UnsMesh::Chunk& chunk,
   m_initial = false;
 
   // Zero field output iteration count between two mesh refinement steps
-  m_itf = 0;
+  d->Itf() = 0;
 
   // Increase number of iterations with mesh refinement
   ++d->Itr();

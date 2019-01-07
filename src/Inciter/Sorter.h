@@ -57,6 +57,7 @@ class Sorter : public CBase_Sorter {
   public:
     //! Constructor
     explicit Sorter( const CProxy_Transporter& transporter,
+                     const tk::CProxy_MeshWriter& meshwriter,
                      const tk::SorterCallback& cbs,
                      const Scheme& scheme,
                      const std::vector< std::size_t >& ginpoel,
@@ -120,6 +121,7 @@ class Sorter : public CBase_Sorter {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_host;
+      p | m_meshwriter;
       p | m_cbs;
       p | m_scheme;
       p | m_ginpoel;
@@ -151,6 +153,8 @@ class Sorter : public CBase_Sorter {
   private:
     //! Host proxy
     CProxy_Transporter m_host;
+    //! MeshWriter proxy
+    tk::CProxy_MeshWriter m_meshwriter;
     //! Charm++ callbacks associated to compile-time tags for sorter
     tk::SorterCallback m_cbs;
     //! Discretization scheme

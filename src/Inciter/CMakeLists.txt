@@ -44,6 +44,7 @@ target_include_directories(Inciter PUBLIC
                            ${MPI_CXX_INCLUDE_PATH}
                            ${PROJECT_BINARY_DIR}/../Inciter
                            ${PROJECT_BINARY_DIR}/../Base
+                           ${PROJECT_BINARY_DIR}/../IO
                            ${PROJECT_BINARY_DIR}/../Main)
 
 add_library(MeshRefinement
@@ -88,9 +89,14 @@ add_dependencies( "Inciter" "inciterCharmModule" )
 #add_dependencies( "transporterCharmModule" "unsmeshmapCharmModule" )
 
 # Add extra dependency of Transporter charm module on Partitioner charm module.
-# This is required so that Partitioner.decl.h and Partitioner.def.h are
+# This is required so that partitioner.decl.h and partitioner.def.h are
 # generated before Transporter including those.
 add_dependencies( "transporterCharmModule" "partitionerCharmModule" )
+
+# Add extra dependency of Discretization charm module on MeshWriter charm
+# module. This is so meshwriter.decl.h and meshwriter.def.h are generated
+# before Discretization which needs meshwriter's type information.
+add_dependencies( "discretizationCharmModule" "meshwriterCharmModule" )
 
 set_target_properties(Inciter PROPERTIES LIBRARY_OUTPUT_NAME quinoa_inciter)
 set_target_properties(MeshRefinement PROPERTIES LIBRARY_OUTPUT_NAME

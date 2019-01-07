@@ -28,6 +28,7 @@ target_include_directories(UnitTest PUBLIC
                            ${MPI_CXX_INCLUDE_PATH}
                            ${PROJECT_BINARY_DIR}/../Base
                            ${PROJECT_BINARY_DIR}/../Main
+                           ${PROJECT_BINARY_DIR}/../IO
                            ${PROJECT_BINARY_DIR}/../LinSys
                            ${PROJECT_BINARY_DIR}/../LoadBalance
                            ${PROJECT_BINARY_DIR}/../UnitTest)

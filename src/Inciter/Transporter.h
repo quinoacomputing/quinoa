@@ -171,8 +171,9 @@ class Transporter : public CBase_Transporter {
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of worker chares
     Scheme m_scheme;                     //!< Discretization scheme
-    CProxy_Partitioner m_partitioner;    //!< Partitioner group proxy
+    CProxy_Partitioner m_partitioner;    //!< Partitioner nodegroup proxy
     CProxy_Refiner m_refiner;            //!< Mesh refiner array proxy
+    tk::CProxy_MeshWriter m_meshwriter;  //!< Mesh writer nodegroup proxy
     CProxy_Sorter m_sorter;              //!< Mesh sorter array proxy
     std::size_t m_nelem;                 //!< Number mesh elements
     std::size_t m_npoin;                 //!< Number mesh points
