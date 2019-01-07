@@ -24,7 +24,7 @@ enum class PhysicsType : uint8_t { ADVECTION,
                                    ADVDIFF,
                                    EULER,
                                    NAVIERSTOKES,
-                                   MULTIMAT_VELEQ };
+                                   VELEQ };
 
 //! Pack/Unpack PhysicsType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, PhysicsType& e ) { PUP::pup( p, e ); }
@@ -36,9 +36,9 @@ class Physics : public tk::Toggle< PhysicsType > {
     //! Valid expected choices to make them also available at compile-time
     using keywords = brigand::list< kw::advection
                                   , kw::advdiff
-                                  , kw::compflow_euler
-                                  , kw::compflow_navierstokes
-                                  , kw::multimat_compflow_veleq
+                                  , kw::euler
+                                  , kw::navierstokes
+                                  , kw::veleq
                                   >;
 
     //! \brief Options constructor
@@ -51,17 +51,16 @@ class Physics : public tk::Toggle< PhysicsType > {
         //! Enums -> names (if defined, policy codes, if not, name)
         { { PhysicsType::ADVECTION, kw::advection::name() },
           { PhysicsType::ADVDIFF, kw::advdiff::name() },
-          { PhysicsType::EULER, kw::compflow_euler::name() },
-          { PhysicsType::NAVIERSTOKES, kw::compflow_navierstokes::name() },
-          { PhysicsType::MULTIMAT_VELEQ, kw::multimat_compflow_veleq::name() }
+          { PhysicsType::EULER, kw::euler::name() },
+          { PhysicsType::NAVIERSTOKES, kw::navierstokes::name() },
+          { PhysicsType::VELEQ, kw::veleq::name() }
         },
         //! keywords -> Enums
         { { kw::advection::string(), PhysicsType::ADVECTION },
           { kw::advdiff::string(), PhysicsType::ADVDIFF },
-          { kw::compflow_euler::string(), PhysicsType::EULER },
-          { kw::compflow_navierstokes::string(), PhysicsType::NAVIERSTOKES },
-          { kw::multimat_compflow_veleq::string(),
-            PhysicsType::MULTIMAT_VELEQ } } )
+          { kw::euler::string(), PhysicsType::EULER },
+          { kw::navierstokes::string(), PhysicsType::NAVIERSTOKES },
+          { kw::veleq::string(), PhysicsType::VELEQ } } )
     {
        brigand::for_each< keywords >( assertPolicyCodes() );
     }
@@ -93,9 +92,9 @@ class Physics : public tk::Toggle< PhysicsType > {
     std::map< PhysicsType, std::string > policy {
         { PhysicsType::ADVECTION, *kw::advection::code() }
       , { PhysicsType::ADVDIFF, *kw::advdiff::code() }
-      , { PhysicsType::EULER, *kw::compflow_euler::code() }
-      , { PhysicsType::NAVIERSTOKES, *kw::compflow_navierstokes::code() }
-      , { PhysicsType::MULTIMAT_VELEQ, *kw::multimat_compflow_veleq::code() }
+      , { PhysicsType::EULER, *kw::euler::code() }
+      , { PhysicsType::NAVIERSTOKES, *kw::navierstokes::code() }
+      , { PhysicsType::VELEQ, *kw::veleq::code() }
     };
 };
 

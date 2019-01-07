@@ -1,17 +1,17 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/MultiMatCompFlow/Problem/UserDefined.h
+  \file      src/PDE/MultiMat/Problem/UserDefined.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Problem configuration for the multi-material compressible flow
     equations
   \details   This file defines a Problem policy class for the multi-material
-    compressible flow equations, defined under PDE/MultiMatCompFlow. See
-    PDE/MultiMatCompFlow/Problem.h for general requirements on Problem policy
-    classes for MultiMatCompFlow.
+    compressible flow equations, defined under PDE/MultiMat. See
+    PDE/MultiMat/Problem.h for general requirements on Problem policy
+    classes for MultiMat.
 */
 // *****************************************************************************
-#ifndef MultiMatCompFlowProblemUserDefined_h
-#define MultiMatCompFlowProblemUserDefined_h
+#ifndef MultiMatProblemUserDefined_h
+#define MultiMatProblemUserDefined_h
 
 #include <string>
 #include <unordered_set>
@@ -22,8 +22,8 @@
 
 namespace inciter {
 
-//! MultiMatCompFlow system of PDEs problem: user defined
-class MultiMatCompFlowProblemUserDefined {
+//! MultiMat system of PDEs problem: user defined
+class MultiMatProblemUserDefined {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
@@ -155,4 +155,4 @@ class MultiMatCompFlowProblemUserDefined {
 };
 } // inciter::
 
-#endif // MultiMatCompFlowProblemUserDefined_h
+#endif // MultiMatProblemUserDefined_h

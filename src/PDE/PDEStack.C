@@ -17,7 +17,7 @@
 
 #include "ConfigureTransport.h"
 #include "ConfigureCompFlow.h"
-#include "ConfigureMultiMatCompFlow.h"
+#include "ConfigureMultiMat.h"
 
 using inciter::PDEStack;
 
@@ -97,7 +97,7 @@ PDEStack::PDEStack() : m_cgfactory(), m_dgfactory(),
 {
   registerTransport( m_cgfactory, m_dgfactory, m_cgEqTypes, m_dgEqTypes );
   registerCompFlow( m_cgfactory, m_dgfactory, m_cgEqTypes, m_dgEqTypes );
-  registerMultiMatCompFlow( m_dgfactory, m_dgEqTypes );
+  registerMultiMat( m_dgfactory, m_dgEqTypes );
 }
 
 std::vector< inciter::CGPDE >
@@ -146,8 +146,8 @@ PDEStack::selectedDG() const
         pdes.push_back( createDG< tag::transport >( d, cnt ) );
       else if (d == ctr::PDEType::COMPFLOW)
         pdes.push_back( createDG< tag::compflow >( d, cnt ) );
-      else if (d == ctr::PDEType::MULTIMAT_COMPFLOW)
-        pdes.push_back( createDG< tag::multimat_compflow >( d, cnt ) );
+      else if (d == ctr::PDEType::MULTIMAT)
+        pdes.push_back( createDG< tag::multimat >( d, cnt ) );
       else Throw( "Can't find selected DGPDE" );
     }
 
@@ -173,8 +173,8 @@ PDEStack::info() const
       nfo.emplace_back( infoTransport( cnt ) );
     else if (d == ctr::PDEType::COMPFLOW)
       nfo.emplace_back( infoCompFlow( cnt ) );
-    else if (d == ctr::PDEType::MULTIMAT_COMPFLOW)
-      nfo.emplace_back( infoMultiMatCompFlow( cnt ) );
+    else if (d == ctr::PDEType::MULTIMAT)
+      nfo.emplace_back( infoMultiMat( cnt ) );
     else Throw( "Can't find selected PDE" );
   }
 

@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/ConfigureMultiMatCompFlow.C
+  \file      src/PDE/ConfigureMultiMat.C
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Register and compile configuration for multi-material compressible
      flow PDE
@@ -21,16 +21,15 @@
 #include "PDEFactory.h"
 #include "Inciter/Options/PDE.h"
 
-#include "ConfigureMultiMatCompFlow.h"
-#include "MultiMatCompFlow/Physics/DG.h"
-#include "MultiMatCompFlow/DGMultiMatCompFlow.h"
-#include "MultiMatCompFlow/Problem.h"
+#include "ConfigureMultiMat.h"
+#include "MultiMat/Physics/DG.h"
+#include "MultiMat/DGMultiMat.h"
+#include "MultiMat/Problem.h"
 
 namespace inciter {
 
 void
-registerMultiMatCompFlow( DGFactory& df,
-                          std::set< ctr::PDEType >& dgt )
+registerMultiMat( DGFactory& df, std::set< ctr::PDEType >& dgt )
 // *****************************************************************************
 // Register multi-material compressible flow PDE into PDE factory
 //! \param[in,out] df Discontinuous Galerkin PDE factory to register to
@@ -38,31 +37,29 @@ registerMultiMatCompFlow( DGFactory& df,
 // *****************************************************************************
 {
   // Construct vector of vectors for all possible policies
-  using DGMultiMatCompFlowPolicies =
-    tk::cartesian_product< dg::MultiMatCompFlowPhysics,
-                           MultiMatCompFlowProblems >;
+  using DGMultiMatPolicies =
+    tk::cartesian_product< dg::MultiMatPhysics, MultiMatProblems >;
   // Register PDEs for all combinations of policies
-  brigand::for_each< DGMultiMatCompFlowPolicies >(
-    registerDG< dg::MultiMatCompFlow >
-              ( df, dgt, ctr::PDEType::MULTIMAT_COMPFLOW ) );
+  brigand::for_each< DGMultiMatPolicies >(
+    registerDG< dg::MultiMat >( df, dgt, ctr::PDEType::MULTIMAT ) );
 }
 
 std::vector< std::pair< std::string, std::string > >
-infoMultiMatCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_type >& cnt )
+infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_type >& cnt )
 // *****************************************************************************
 //  Return information on the compressible flow system of PDEs
 //! \param[inout] cnt std::map of counters for all PDE types
 //! \return vector of string pairs describing the PDE configuration
 // *****************************************************************************
 {
-  using eq = tag::multimat_compflow;
+  using eq = tag::multimat;
 
-  auto c = ++cnt[ ctr::PDEType::MULTIMAT_COMPFLOW ];       // count eqs
+  auto c = ++cnt[ ctr::PDEType::MULTIMAT ];       // count eqs
   --c;  // used to index vectors starting with 0
 
   std::vector< std::pair< std::string, std::string > > nfo;
 
-  nfo.emplace_back( ctr::PDE().name( ctr::PDEType::MULTIMAT_COMPFLOW ), "" );
+  nfo.emplace_back( ctr::PDE().name( ctr::PDEType::MULTIMAT ), "" );
 
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, eq, tag::depvar >()[c] ) );

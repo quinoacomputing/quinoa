@@ -1,6 +1,6 @@
 /*!
-  \page      inciter_newpde_problem_h PDE/MultiMatCompFlow/Problem.h
+  \page      inciter_newpde_problem_h PDE/MultiMat/Problem.h
 
-@include PDE/MultiMatCompFlow/Problem.h
+@include PDE/MultiMat/Problem.h
 
 */

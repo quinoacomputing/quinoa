@@ -1,10 +1,10 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/MultiMatCompFlow/Problem.h
+  \file      src/PDE/MultiMat/Problem.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     All problem configurations for the compressible flow equations
   \details   This file collects all Problem policy classes for the compressible
-    flow equations, defined in PDE/MultiMatCompFlow/MuliMatCompFlow.h.
+    flow equations, defined in PDE/MultiMat/MultiMat.h.
 
     General requirements on MuliMatCompFlow Problem policy classes:
 
@@ -45,8 +45,8 @@
       output.
 */
 // *****************************************************************************
-#ifndef MultiMatCompFlowProblem_h
-#define MultiMatCompFlowProblem_h
+#ifndef MultiMatProblem_h
+#define MultiMatProblem_h
 
 #include <brigand/sequences/list.hpp>
 
@@ -55,11 +55,11 @@
 
 namespace inciter {
 
-//! List of all MultiMatCompFlow Problem policies (defined in the includes above)
-using MultiMatCompFlowProblems =
-  brigand::list< MultiMatCompFlowProblemUserDefined
-               , MultiMatCompFlowProblemVorticalFlow >;
+//! List of all MultiMat Problem policies (defined in the includes above)
+using MultiMatProblems =
+  brigand::list< MultiMatProblemUserDefined
+               , MultiMatProblemVorticalFlow >;
 
 } // inciter::
 
-#endif // MultiMatCompFlowProblem_h
+#endif // MultiMatProblem_h

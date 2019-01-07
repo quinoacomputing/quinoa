@@ -185,7 +185,7 @@ using CompFlowPDEParameters = tk::tuple::tagged_tuple<
 >;
 
 //! Compressible flow equation parameters storage
-using MultiMatCompFlowPDEParameters = tk::tuple::tagged_tuple<
+using MultiMatPDEParameters = tk::tuple::tagged_tuple<
   tag::depvar,        std::vector< char >,
   tag::physics,       std::vector< PhysicsType >,
   tag::problem,       std::vector< ProblemType >,
@@ -221,9 +221,9 @@ using MultiMatCompFlowPDEParameters = tk::tuple::tagged_tuple<
 
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
-  tag::transport,            TransportPDEParameters,
-  tag::compflow,             CompFlowPDEParameters,
-  tag::multimat_compflow,    MultiMatCompFlowPDEParameters
+  tag::transport,     TransportPDEParameters,
+  tag::compflow,      CompFlowPDEParameters,
+  tag::multimat,      MultiMatPDEParameters
 >;
 
 //! PEGTL location/position type to use throughout all of Inciter's parsers

@@ -19,7 +19,7 @@ namespace ctr {
 using ncomps = tk::ctr::ncomponents<
   tag::transport,             std::vector< tk::ctr::ncomp_type >,
   tag::compflow,              std::vector< tk::ctr::ncomp_type >,
-  tag::multimat_compflow,     std::vector< tk::ctr::ncomp_type >
+  tag::multimat,              std::vector< tk::ctr::ncomp_type >
 >;
 
 } // ctr::

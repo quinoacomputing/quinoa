@@ -178,7 +178,7 @@ struct gid {};
 struct transport {};
 struct advection {};
 struct compflow {};
-struct multimat_compflow {};
+struct multimat {};
 struct problem {};
 struct physics {};
 struct diffusivity {};

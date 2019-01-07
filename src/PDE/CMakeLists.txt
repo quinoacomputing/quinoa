@@ -15,7 +15,7 @@ add_library(PDE
             Limiter.C
             ConfigureTransport.C
             ConfigureCompFlow.C
-            ConfigureMultiMatCompFlow.C)
+            ConfigureMultiMat.C)
 
 target_include_directories(PDE PUBLIC
                            ${QUINOA_SOURCE_DIR}

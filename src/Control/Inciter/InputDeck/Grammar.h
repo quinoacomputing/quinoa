@@ -35,9 +35,9 @@ namespace deck {
 
   //! \brief Number of registered equations
   //! \details Counts the number of parsed equation blocks during parsing.
-  static tk::tuple::tagged_tuple< tag::transport,          std::size_t,
-                                  tag::compflow,           std::size_t,
-                                  tag::multimat_compflow,  std::size_t > neq;
+  static tk::tuple::tagged_tuple< tag::transport,   std::size_t,
+                                  tag::compflow,    std::size_t,
+                                  tag::multimat,    std::size_t > neq;
 
 } // ::deck
 } // ::inciter
@@ -203,15 +203,15 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< class eq > struct check_multimat_compflow : pegtl::success {};
+  template< class eq > struct check_multimat : pegtl::success {};
   //! \brief Set defaults and do error checking on the multimaterial
   //!    compressible flow equation block
   //! \details This is error checking that only the multimaterial compressible
   //!   flow equation block must satisfy. Besides error checking we also set
   //!   defaults here as this block is called when parsing of a
-  //!   multimat_compflow...end block has just finished.
+  //!   multimat...end block has just finished.
   template< class eq >
-  struct action< check_multimat_compflow< eq > > {
+  struct action< check_multimat< eq > > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       using inciter::deck::neq;
@@ -224,13 +224,13 @@ namespace grm {
       // If physics type is not given, default to 'veleq'
       auto& physics = stack.template get< tag::param, eq, tag::physics >();
       if (physics.empty() || physics.size() != neq.get< eq >())
-        physics.push_back( inciter::ctr::PhysicsType::MULTIMAT_VELEQ );
+        physics.push_back( inciter::ctr::PhysicsType::VELEQ );
 
       // Set number of scalar components based on number of materials
       auto& nmat = stack.template get< tag::param, eq, tag::nmat >();
       auto& ncomp = stack.template get< tag::component, eq >();
-      if (physics.back() == inciter::ctr::PhysicsType::MULTIMAT_VELEQ) {
-        // physics = multimat_veleq: m-material compressible flow
+      if (physics.back() == inciter::ctr::PhysicsType::VELEQ) {
+        // physics = veleq: m-material compressible flow
         // scalar components: volfrac:m-1 + mass:m + momentum:3 + energy:m
         // if nmat is unspecified, configure it be 2
         if (nmat.empty() || nmat.size() != neq.get< eq >()) {
@@ -256,8 +256,8 @@ namespace grm {
           Message< Stack, ERROR, MsgKey::VORTICAL_UNFINISHED >( stack, in );
       }
 
-      // Error check Dirichlet boundary condition block for all
-      // multimat_compflow configurations
+      // Error check Dirichlet boundary condition block for all multimat
+      // configurations
       for (const auto& s : stack.template get< tag::param, eq, tag::bcdir >())
         if (s.empty())
           Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
@@ -629,53 +629,52 @@ namespace deck {
            check_errors< tag::compflow, tk::grm::check_compflow > > {};
 
   //! compressible multi-material flow
-  struct multimat_compflow :
+  struct multimat :
          pegtl::if_must<
-           scan_eq< use< kw::multimat_compflow >, tag::multimat_compflow >,
+           scan_eq< use< kw::multimat >, tag::multimat >,
            tk::grm::block< use< kw::end >,
                            tk::grm::policy< use,
                                             use< kw::physics >,
                                             ctr::Physics,
-                                            tag::multimat_compflow,
+                                            tag::multimat,
                                             tag::physics >,
                            tk::grm::policy< use,
                                             use< kw::problem >,
                                             ctr::Problem,
-                                            tag::multimat_compflow,
+                                            tag::multimat,
                                             tag::problem >,
                            tk::grm::depvar< use,
-                                            tag::multimat_compflow,
+                                            tag::multimat,
                                             tag::depvar >,
-                           parameter< tag::multimat_compflow,
+                           parameter< tag::multimat,
                                       kw::nmat,
                                       tag::nmat >,
-                           material_properties< tag::multimat_compflow >,
-                           parameter< tag::multimat_compflow,
+                           material_properties< tag::multimat >,
+                           parameter< tag::multimat,
                                       kw::pde_alpha,
                                       tag::alpha >,
-                           parameter< tag::multimat_compflow,
+                           parameter< tag::multimat,
                                       kw::pde_p0,
                                       tag::p0 >,
-                           parameter< tag::multimat_compflow,
+                           parameter< tag::multimat,
                                       kw::pde_beta,
                                       tag::beta >,
                            bc< kw::bc_dirichlet,
-                               tag::multimat_compflow,
+                               tag::multimat,
                                tag::bcdir >,
                            bc< kw::bc_sym,
-                               tag::multimat_compflow,
+                               tag::multimat,
                                tag::bcsym >,
                            bc< kw::bc_inlet,
-                               tag::multimat_compflow,
+                               tag::multimat,
                                tag::bcinlet >,
                            bc< kw::bc_outlet,
-                               tag::multimat_compflow,
+                               tag::multimat,
                                tag::bcoutlet >,
                            bc< kw::bc_extrapolate,
-                               tag::multimat_compflow,
+                               tag::multimat,
                                tag::bcextrapolate > >,
-           check_errors< tag::multimat_compflow,
-                         tk::grm::check_multimat_compflow > > {};
+           check_errors< tag::multimat, tk::grm::check_multimat > > {};
 
   //! partitioning ... end block
   struct partitioning :
@@ -692,7 +691,7 @@ namespace deck {
 
   //! equation types
   struct equations :
-         pegtl::sor< transport, compflow, multimat_compflow > {};
+         pegtl::sor< transport, compflow, multimat > {};
 
   //! refinement variable(s) (refvar) ... end block
   struct refvars :

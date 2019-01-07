@@ -185,8 +185,8 @@ rate in a homogeneous shear-driven turbulent flow.
 
 To add a new PDE type, we start by adding a new keyword that will be used to
 designate it in the input file. Since the new PDE is for methods specifialized
-for multi-material compressible flow, we add a new keyword `multimat_compflow`.
-We also add a new keyword for a new `physics` policy, `veleq`, to designate an
+for multi-material compressible flow, we add a new keyword `multimat`.  We also
+add a new keyword for a new `physics` policy, `veleq`, to designate an
 important feature of the new method to be implemented, _velocity equilibrium_,
 assuming a single velocity field for all materials, while solving for separate
 material fields for mass and internal energy. Another new keyword we add is
@@ -212,8 +212,7 @@ index b3fbcebd..c57c65ce 100644
 +    "Set number of materials for a system of differential equations"; }
 +  static std::string longDescription() { return
 +    R"(This keyword is used to specify the number of materials, e.g., for
-+    multi-material flow, see also the keyword 'multimat_compflow' and
-+    'veleq'.)";
++    multi-material flow, see also the keyword 'multimat' and 'veleq'.)";
 +  }
 +  struct expect {
 +    using type = std::size_t;
@@ -226,11 +225,11 @@ index b3fbcebd..c57c65ce 100644
  struct ttyi_info {
    static std::string name() { return "ttyi"; }
    static std::string shortDescription() { return
-@@ -3769,6 +3786,23 @@ struct compflow_euler_info {
+@@ -3769,6 +3786,23 @@ struct euler_info {
  };
- using compflow_euler = keyword< compflow_euler_info, TAOCPP_PEGTL_STRING("euler") >;
+ using euler = keyword< euler_info, TAOCPP_PEGTL_STRING("euler") >;
  
-+struct multimat_compflow_veleq_info {
++struct veleq_info {
 +  using code = Code< V >;
 +  static std::string name() { return "Velocity equilibrium"; }
 +  static std::string shortDescription() { return "Specify the multi-material "
@@ -238,14 +237,13 @@ index b3fbcebd..c57c65ce 100644
 +  static std::string longDescription() { return
 +    R"(This keyword is used to select a compressible flow algorithm as physics
 +    configuration designed for multiple materials assuming velocity equailibrium
-+    (single velocity). Example: "multimat_compflow physics veleq end")";
++    (single velocity). Example: "multimat physics veleq end")";
 +    }
 +  struct expect {
 +    static std::string description() { return "string"; }
 +  };
 +};
-+using multimat_compflow_veleq =
-+  keyword< multimat_compflow_veleq_info, TAOCPP_PEGTL_STRING("veleq") >;
++using veleq = keyword< veleq_info, TAOCPP_PEGTL_STRING("veleq") >;
 +
  struct advection_info {
    using code = Code< A >;
@@ -254,15 +252,15 @@ index b3fbcebd..c57c65ce 100644
  };
  using compflow = keyword< compflow_info, TAOCPP_PEGTL_STRING("compflow") >;
  
-+struct multimat_compflow_info {
++struct multimat_info {
 +  static std::string name() { return "Compressible multi-material flow"; }
 +  static std::string shortDescription() { return "Start configuration block "
 +    "for the multi-material compressible flow equations"; }
 +  static std::string longDescription() { return
-+    R"(This keyword is used to introduce the multimat_compflow ... end block,
++    R"(This keyword is used to introduce the multimat ... end block,
 +    used to specify the configuration for a system of partial differential
 +    equations, governing multi-material compressible fluid flow. Keywords
-+    allowed in a multimat_compflow ... end block: )" + std::string("\'")
++    allowed in a multimat ... end block: )" + std::string("\'")
 +    + depvar::string()+ "\', \'"
 +    + physics::string() + "\', \'"
 +    + problem::string() + "\', \'"
@@ -282,12 +280,11 @@ index b3fbcebd..c57c65ce 100644
 +    + bc_inlet::string() + "\', \'"
 +    + bc_outlet::string() + "\', \'"
 +    + bc_extrapolate::string() + "\'. "
-+    + R"(For an example multimat_compflow ... end block, see
-+      doc/html/inicter_example_multimat_compflow.html.)";
++    + R"(For an example multimat ... end block, see
++      doc/html/inicter_example_multimat.html.)";
 +  }
 +};
-+using multimat_compflow =
-+  keyword< multimat_compflow_info, TAOCPP_PEGTL_STRING("multimat_compflow") >;
++using multimat = keyword< multimat_info, TAOCPP_PEGTL_STRING("multimat") >;
 +
  struct rcb_info {
    static std::string name() { return "recursive coordinate bisection"; }
@@ -318,15 +315,15 @@ index 39eff786..155c47dc 100644
                                     kw::bc_dirichlet,
                                     kw::sideset,
                                     kw::compflow,
-+                                   kw::multimat_compflow,
++                                   kw::multimat,
                                     kw::ic,
                                     kw::txt_float_format,
                                     kw::txt_float_default,
 @@ -95,6 +97,7 @@ class InputDeck :
                                     kw::advdiff,
-                                    kw::compflow_navierstokes,
-                                    kw::compflow_euler,
-+                                   kw::multimat_compflow_veleq,
+                                    kw::navierstokes,
+                                    kw::euler,
++                                   kw::veleq,
                                     kw::user_defined,
                                     kw::vortical_flow,
                                     kw::pde_alpha,
@@ -342,25 +339,24 @@ inciter executable, so quick help is available at the user's fingertips:
 $ inciter -C
 inciter Control File Keywords:
 ...
-   multimat_compflow            Start configuration block for the multi-material compressible flow equations
+   multimat              Start configuration block for the multi-material compressible flow equations
         navierstokes     string Specify the Navier-Stokes (viscous) compressible flow physics configuration
                ncomp       uint Set number of scalar components for a system of differential equations
     nl_energy_growth     string Select the nonlinear energy growth test problem 
                 nmat       uint Set number of materials for a system of differential equations
 ...
-$ inciter -H multimat_compflow
-inciter control file keyword 'multimat_compflow'
+$ inciter -H multimat
+inciter control file keyword 'multimat'
 
    Start configuration block for the multi-material compressible flow equations
 
-   This keyword is used to introduce the multimat_compflow ... end block, used
-   to specify the configuration for a system of partial differential equations,
-   governing multi-material compressible fluid flow. Keywords allowed in a
-   multimat_compflow ... end block: 'depvar', 'physics', 'problem', 'material',
-   'nmat', 'alpha', 'p0', 'betax', 'betay', 'betaz', 'beta', 'r0', 'ce', 'kappa',
-   'bc_dirichlet', 'bc_sym', 'bc_inlet', 'bc_outlet', 'bc_extrapolate'. For an
-   example multimat_compflow ... end block, see
-   doc/html/inicter_example_multimat_compflow.html.
+   This keyword is used to introduce the multimat ... end block, used to specify
+   the configuration for a system of partial differential equations, governing
+   multi-material compressible fluid flow. Keywords allowed in a multimat ... end
+   block: 'depvar', 'physics', 'problem', 'material', 'nmat', 'alpha', 'p0',
+   'betax', 'betay', 'betaz', 'beta', 'r0', 'ce', 'kappa', 'bc_dirichlet',
+   'bc_sym', 'bc_inlet', 'bc_outlet', 'bc_extrapolate'.For an example multimat ...
+   end block, see doc/html/inicter_example_multimat.html.
 @endcode
 
 @section inciter_newpde_option 3. Add new option switches
@@ -388,7 +384,7 @@ index 2b4af067..84b6d3ff 100644
  enum class PDEType : uint8_t { TRANSPORT=0,
 -                               COMPFLOW };
 +                               COMPFLOW,
-+                               MULTIMAT_COMPFLOW };
++                               MULTIMAT };
  
  //! Pack/Unpack: forward overload to generic enum class packer
  inline void operator|( PUP::er& p, PDEType& e ) { PUP::pup( p, e ); }
@@ -396,7 +392,7 @@ index 2b4af067..84b6d3ff 100644
      // List valid expected choices to make them also available at compile-time
      using keywords = brigand::list< kw::transport
                                    , kw::compflow
-+                                  , kw::multimat_compflow
++                                  , kw::multimat
                                    >;
  
      //! Constructor: pass associations references to base, which will handle
@@ -406,12 +402,12 @@ index 2b4af067..84b6d3ff 100644
          { { PDEType::TRANSPORT, kw::transport::name() },
 -          { PDEType::COMPFLOW, kw::compflow::name() } },
 +          { PDEType::COMPFLOW, kw::compflow::name() },
-+          { PDEType::MULTIMAT_COMPFLOW, kw::multimat_compflow::name() } },
++          { PDEType::MULTIMAT, kw::multimat::name() } },
          //! keywords -> Enums
          { { kw::transport::string(), PDEType::TRANSPORT },
 -          { kw::compflow::string(), PDEType::COMPFLOW } } ) {}
 +          { kw::compflow::string(), PDEType::COMPFLOW },
-+          { kw::multimat_compflow::string(), PDEType::MULTIMAT_COMPFLOW } } ) {}
++          { kw::multimat::string(), PDEType::MULTIMAT } } ) {}
  };
  
  } // ctr::
@@ -433,7 +429,7 @@ index d24ccf1d..f59e85c1 100644
                                     EULER,
 -                                   NAVIERSTOKES };
 +                                   NAVIERSTOKES,
-+                                   MULTIMAT_VELEQ };
++                                   VELEQ };
  
  //! Pack/Unpack PhysicsType: forward overload to generic enum class packer
  inline void operator|( PUP::er& p, PhysicsType& e ) { PUP::pup( p, e ); }
@@ -441,45 +437,44 @@ index d24ccf1d..f59e85c1 100644
      //! Valid expected choices to make them also available at compile-time
      using keywords = brigand::list< kw::advection
                                    , kw::advdiff
--                                  , kw::compflow_navierstokes
-                                   , kw::compflow_euler
-+                                  , kw::compflow_navierstokes
-+                                  , kw::multimat_compflow_veleq
+-                                  , kw::navierstokes
+                                   , kw::euler
++                                  , kw::navierstokes
++                                  , kw::veleq
                                    >;
  
      //! \brief Options constructor
 @@ -50,12 +52,16 @@ class Physics : public tk::Toggle< PhysicsType > {
          { { PhysicsType::ADVECTION, kw::advection::name() },
            { PhysicsType::ADVDIFF, kw::advdiff::name() },
-           { PhysicsType::EULER, kw::compflow_euler::name() },
--          { PhysicsType::NAVIERSTOKES, kw::compflow_navierstokes::name() } },
-+          { PhysicsType::NAVIERSTOKES, kw::compflow_navierstokes::name() },
-+          { PhysicsType::MULTIMAT_VELEQ, kw::multimat_compflow_veleq::name() }
+           { PhysicsType::EULER, kw::euler::name() },
+-          { PhysicsType::NAVIERSTOKES, kw::navierstokes::name() } },
++          { PhysicsType::NAVIERSTOKES, kw::navierstokes::name() },
++          { PhysicsType::VELEQ, kw::veleq::name() }
 +        },
          //! keywords -> Enums
          { { kw::advection::string(), PhysicsType::ADVECTION },
            { kw::advdiff::string(), PhysicsType::ADVDIFF },
-           { kw::compflow_euler::string(), PhysicsType::EULER },
--          { kw::compflow_navierstokes::string(), PhysicsType::NAVIERSTOKES } } )
-+          { kw::compflow_navierstokes::string(), PhysicsType::NAVIERSTOKES },
-+          { kw::multimat_compflow_veleq::string(),
-+            PhysicsType::MULTIMAT_VELEQ } } )
+           { kw::euler::string(), PhysicsType::EULER },
+-          { kw::navierstokes::string(), PhysicsType::NAVIERSTOKES } } )
++          { kw::navierstokes::string(), PhysicsType::NAVIERSTOKES },
++          { kw::veleq::string(), PhysicsType::VELEQ } } )
      {
         brigand::for_each< keywords >( assertPolicyCodes() );
      }
 @@ -89,6 +95,7 @@ class Physics : public tk::Toggle< PhysicsType > {
        , { PhysicsType::ADVDIFF, *kw::advdiff::code() }
-       , { PhysicsType::EULER, *kw::compflow_euler::code() }
-       , { PhysicsType::NAVIERSTOKES, *kw::compflow_navierstokes::code() }
-+      , { PhysicsType::MULTIMAT_VELEQ, *kw::multimat_compflow_veleq::code() }
+       , { PhysicsType::EULER, *kw::euler::code() }
+       , { PhysicsType::NAVIERSTOKES, *kw::navierstokes::code() }
++      , { PhysicsType::VELEQ, *kw::veleq::code() }
      };
  };
 @endcode
 
 @section inciter_newpde_grammar 4. Add parsing/grammar for the new keywords
 
-After adding the new keywords `multimat_compflow`, `nmat`, and `veleq`, we
-have to teach the input file parser to recognize them.
+After adding the new keywords `multimat`, `nmat`, and `veleq`, we have to teach
+the input file parser to recognize them.
 
 First we augment the data structures that store data parsed associated with the
 new keywords. First is the number of scalar components for each PDE type:
@@ -496,11 +491,9 @@ index 64f0696f..ef51a9e9 100644
  
  //! Number of components of partial differential equations
  using ncomps = tk::ctr::ncomponents<
--  tag::transport,    std::vector< tk::ctr::ncomp_type >,
 -  tag::compflow,     std::vector< tk::ctr::ncomp_type >
-+  tag::transport,             std::vector< tk::ctr::ncomp_type >,
-+  tag::compflow,              std::vector< tk::ctr::ncomp_type >,
-+  tag::multimat_compflow,     std::vector< tk::ctr::ncomp_type >
++  tag::compflow,     std::vector< tk::ctr::ncomp_type >,
++  tag::multimat,     std::vector< tk::ctr::ncomp_type >
  >;
  
  } // ctr::
@@ -510,8 +503,8 @@ tk::ctr::ncomponents is a tuple of vectors that stores the number of scalar
 components for each PDE type parsed. It is a vector for each PDE type because
 there can be multiple PDE systems of each type.
 
-We also create a new tuple to store data during parsing the
-`multimat_compflow...end` block:
+We also create a new tuple to store data during parsing the `multimat...end`
+block:
 
 @subsection inciter_newpde_grammar_types Control/Inciter/Types.h
 
@@ -525,7 +518,7 @@ index 4bc3bf64..65a3235f 100644
  >;
  
 +//! Compressible flow equation parameters storage
-+using MultiMatCompFlowPDEParameters = tk::tuple::tagged_tuple<
++using MultiMatPDEParameters = tk::tuple::tagged_tuple<
 +  tag::depvar,        std::vector< char >,
 +  tag::physics,       std::vector< PhysicsType >,
 +  tag::problem,       std::vector< ProblemType >,
@@ -561,15 +554,13 @@ index 4bc3bf64..65a3235f 100644
 +
  //! Parameters storage
  using parameters = tk::tuple::tagged_tuple<
--  tag::transport,   TransportPDEParameters,
 -  tag::compflow,    CompFlowPDEParameters
-+  tag::transport,            TransportPDEParameters,
-+  tag::compflow,             CompFlowPDEParameters,
-+  tag::multimat_compflow,    MultiMatCompFlowPDEParameters
++  tag::compflow,    CompFlowPDEParameters,
++  tag::multimat,    MultiMatPDEParameters
  >;
 @endcode
 
-Note that in ctr::MultiMatCompFlowPDEParameters every field is a vector, since
+Note that in ctr::MultiMatPDEParameters every field is a vector, since
 multiple systems of this PDE type can be configured. Also note that this is
 where the dependent variable, physics policy (ctr::PhysicsType enum), the
 problem policy (ctr::ProblemType enum), boundary conditions,
@@ -578,9 +569,8 @@ stored. This is data that is either parsed from the user or can be computed
 immediately after and based on user input.
 
 Next we add a couple of new tags (empty structs used as compile-time labels),
-`tag::nmat` and `tag::multimat_compflow`, behind which the parser stores the
-tuple ctr::MultiMatCompFlowPDEParameters, and the number of materials,
-respectively,
+`tag::nmat` and `tag::multimat`, behind which the parser stores the tuple
+ctr::MultiMatPDEParameters, and the number of materials, respectively,
 
 @subsection inciter_newpde_grammar_tags Control/Tags.h
 
@@ -602,7 +592,7 @@ index 188a86d0..9c0b7ec6 100644
  struct transport {};
  struct advection {};
  struct compflow {};
-+struct multimat_compflow {};
++struct multimat {};
  struct problem {};
  struct physics {};
  struct diffusivity {};
@@ -624,9 +614,9 @@ index 6b16b623..43a9bba7 100644
    //! \details Counts the number of parsed equation blocks during parsing.
 -  static tk::tuple::tagged_tuple< tag::transport, std::size_t,
 -                                  tag::compflow,  std::size_t > neq;
-+  static tk::tuple::tagged_tuple< tag::transport,          std::size_t,
-+                                  tag::compflow,           std::size_t,
-+                                  tag::multimat_compflow,  std::size_t > neq;
++  static tk::tuple::tagged_tuple< tag::transport, std::size_t,
++                                  tag::compflow,  std::size_t,
++                                  tag::multimat,  std::size_t > neq;
  
  } // ::deck
  } // ::inciter
@@ -641,21 +631,21 @@ parser, it is static and thus only visible locally to inciter's grammar and not
 the rest of the code. deck::neq is used to count the number of PDE systems
 parsed.
 
-The following code is run immediately after the `multimat_compflow...end` block
+The following code is run immediately after the `multimat...end` block
 finished parsing, thus it is designed to do error checking and set/verify
 defaults for this particular PDE system.
  
 @code{.diff}
 +  //! Rule used to trigger action
-+  template< class eq > struct check_multimat_compflow : pegtl::success {};
++  template< class eq > struct check_multimat : pegtl::success {};
 +  //! \brief Set defaults and do error checking on the multimaterial
 +  //!    compressible flow equation block
 +  //! \details This is error checking that only the multimaterial compressible
 +  //!   flow equation block must satisfy. Besides error checking we also set
 +  //!   defaults here as this block is called when parsing of a
-+  //!   multimat_compflow...end block has just finished.
++  //!   multimat...end block has just finished.
 +  template< class eq >
-+  struct action< check_multimat_compflow< eq > > {
++  struct action< check_multimat< eq > > {
 +    template< typename Input, typename Stack >
 +    static void apply( const Input& in, Stack& stack ) {
 +      using inciter::deck::neq;
@@ -679,7 +669,7 @@ finished.
 +      // If physics type is not given, default to 'veleq'
 +      auto& physics = stack.template get< tag::param, eq, tag::physics >();
 +      if (physics.empty() || physics.size() != neq.get< eq >())
-+        physics.push_back( inciter::ctr::PhysicsType::MULTIMAT_VELEQ );
++        physics.push_back( inciter::ctr::PhysicsType::VELEQ );
 +
 @endcode
 
@@ -690,8 +680,8 @@ did not select one, the default is the new `veleq` we are adding.
 +      // Set number of scalar components based on number of materials
 +      auto& nmat = stack.template get< tag::param, eq, tag::nmat >();
 +      auto& ncomp = stack.template get< tag::component, eq >();
-+      if (physics.back() == inciter::ctr::PhysicsType::MULTIMAT_VELEQ) {
-+        // physics = multimat_veleq: m-material compressible flow
++      if (physics.back() == inciter::ctr::PhysicsType::VELEQ) {
++        // physics = veleq: m-material compressible flow
 +        // scalar components: volfrac:m-1 + mass:m + momentum:3 + energy:m
 +        // if nmat is unspecified, configure it be 2
 +        if (nmat.empty() || nmat.size() != neq.get< eq >()) {
@@ -732,8 +722,8 @@ for the algorithm.
 The above is some basic sanity checking on the problem policy selected.
 
 @code{.diff}
-+      // Error check Dirichlet boundary condition block for all
-+      // multimat_compflow configurations
++      // Error check Dirichlet boundary condition block for all multimat
++      // configurations
 +      for (const auto& s : stack.template get< tag::param, eq, tag::bcdir >())
 +        if (s.empty())
 +          Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
@@ -755,63 +745,63 @@ checking will be added.
             check_errors< tag::compflow, tk::grm::check_compflow > > {};
  
 +  //! compressible multi-material flow
-+  struct multimat_compflow :
++  struct multimat :
 +         pegtl::if_must<
-+           scan_eq< use< kw::multimat_compflow >, tag::multimat_compflow >,
++           scan_eq< use< kw::multimat >, tag::multimat >,
 +           tk::grm::block< use< kw::end >,
 +                           tk::grm::policy< use,
 +                                            use< kw::physics >,
 +                                            ctr::Physics,
-+                                            tag::multimat_compflow,
++                                            tag::multimat,
 +                                            tag::physics >,
 +                           tk::grm::policy< use,
 +                                            use< kw::problem >,
 +                                            ctr::Problem,
-+                                            tag::multimat_compflow,
++                                            tag::multimat,
 +                                            tag::problem >,
 +                           tk::grm::depvar< use,
-+                                            tag::multimat_compflow,
++                                            tag::multimat,
 +                                            tag::depvar >,
-+                           parameter< tag::multimat_compflow,
++                           parameter< tag::multimat,
 +                                      kw::nmat,
 +                                      tag::nmat >,
-+                           material_properties< tag::multimat_compflow >,
-+                           parameter< tag::multimat_compflow,
++                           material_properties< tag::multimat >,
++                           parameter< tag::multimat,
 +                                      kw::pde_alpha,
 +                                      tag::alpha >,
-+                           parameter< tag::multimat_compflow,
++                           parameter< tag::multimat,
 +                                      kw::pde_p0,
 +                                      tag::p0 >,
-+                           parameter< tag::multimat_compflow,
++                           parameter< tag::multimat,
 +                                      kw::pde_beta,
 +                                      tag::beta >,
 +                           bc< kw::bc_dirichlet,
-+                               tag::multimat_compflow,
++                               tag::multimat,
 +                               tag::bcdir >,
 +                           bc< kw::bc_sym,
-+                               tag::multimat_compflow,
++                               tag::multimat,
 +                               tag::bcsym >,
 +                           bc< kw::bc_inlet,
-+                               tag::multimat_compflow,
++                               tag::multimat,
 +                               tag::bcinlet >,
 +                           bc< kw::bc_outlet,
-+                               tag::multimat_compflow,
++                               tag::multimat,
 +                               tag::bcoutlet >,
 +                           bc< kw::bc_extrapolate,
-+                               tag::multimat_compflow,
++                               tag::multimat,
 +                               tag::bcextrapolate > >,
-+           check_errors< tag::multimat_compflow,
-+                         tk::grm::check_multimat_compflow > > {};
++           check_errors< tag::multimat,
++                         tk::grm::check_multimat > > {};
 +
 @endcode
 
 The above is the code block that augments inciter's input file grammar with the
-`multimat_compflow` block. The rules of PEGTL (our parser library) is out of
-scope here, but even without knowing the details of _how_ the parsing is done,
-one can surely infer _what_ is (and what is _not_) parsed in this block.
-Examples of what are parsed: physics and problem policies, depvar, etc., and
-what is _NOT_ parsed: number of (scalar) components, c.f., the definition of
-the transport equation grammar block, deck::transport, not listed, in
+`multimat` block. The rules of PEGTL (our parser library) are out of scope
+here, but even without knowing the details of _how_ the parsing is done, one
+can surely infer _what_ is (and what is _not_) parsed in this block.  Examples
+of what are parsed: physics and problem policies, depvar, etc., and what is
+_NOT_ parsed: number of (scalar) components, c.f., the definition of the
+transport equation grammar block, deck::transport, not listed, in
 Control/Inciter/InputDeck/Grammar.h.
 
 @code{.diff}
@@ -823,13 +813,13 @@ Control/Inciter/InputDeck/Grammar.h.
    //! equation types
    struct equations :
 -         pegtl::sor< transport, compflow > {};
-+         pegtl::sor< transport, compflow, multimat_compflow > {};
++         pegtl::sor< transport, compflow, multimat > {};
  
    //! refinement variable(s) (refvar) ... end block
    struct refvars :
 @endcode
 
-We finally include (above) the new `multimat_compflow` grammar block among the
+We finally include (above) the new `multimat` grammar block among the
 equations recognized by the parser.
 
 One last item is to augment the grammar messages data store to include our new
@@ -871,7 +861,7 @@ inciter
   ...
   scheme dg
   ...
-  multimat_compflow  # configure our new PDE block for compressible multi-material flow
+  multimat    # configure our new PDE block for compressible multi-material flow
     depvar u    # assign dependent variable 'u' to this PDE
     physics veleq       # select 'euler' as compressible flow physics policy
     problem vortical_flow       # select 'vortical flow` as problem policy
@@ -922,7 +912,7 @@ index 70036aad..af1a2de7 100644
  
  #include "ConfigureTransport.h"
  #include "ConfigureCompFlow.h"
-+#include "ConfigureMultiMatCompFlow.h"
++#include "ConfigureMultiMat.h"
  
  using inciter::PDEStack;
  
@@ -930,7 +920,7 @@ index 70036aad..af1a2de7 100644
  {
    registerTransport( m_cgfactory, m_dgfactory, m_cgEqTypes, m_dgEqTypes );
    registerCompFlow( m_cgfactory, m_dgfactory, m_cgEqTypes, m_dgEqTypes );
-+  registerMultiMatCompFlow( m_dgfactory, m_dgEqTypes );
++  registerMultiMat( m_dgfactory, m_dgEqTypes );
  }
  
  std::vector< inciter::CGPDE >
@@ -938,8 +928,8 @@ index 70036aad..af1a2de7 100644
          pdes.push_back( createDG< tag::transport >( d, cnt ) );
        else if (d == ctr::PDEType::COMPFLOW)
          pdes.push_back( createDG< tag::compflow >( d, cnt ) );
-+      else if (d == ctr::PDEType::MULTIMAT_COMPFLOW)
-+        pdes.push_back( createDG< tag::multimat_compflow >( d, cnt ) );
++      else if (d == ctr::PDEType::MULTIMAT)
++        pdes.push_back( createDG< tag::multimat >( d, cnt ) );
        else Throw( "Can't find selected DGPDE" );
      }
  
@@ -947,13 +937,13 @@ index 70036aad..af1a2de7 100644
        nfo.emplace_back( infoTransport( cnt ) );
      else if (d == ctr::PDEType::COMPFLOW)
        nfo.emplace_back( infoCompFlow( cnt ) );
-+    else if (d == ctr::PDEType::MULTIMAT_COMPFLOW)
-+      nfo.emplace_back( infoMultiMatCompFlow( cnt ) );
++    else if (d == ctr::PDEType::MULTIMAT)
++      nfo.emplace_back( infoMultiMat( cnt ) );
      else Throw( "Can't find selected PDE" );
    }
 @endcode
 
-registerMultiMatCompFlow() will be defined in ConfigureMultiMatCompFlow.[Ch].
+registerMultiMat() will be defined in ConfigureMultiMat.[Ch].
 
 @section inciter_newpde_buildsystem 6. Augment the PDE build object
 
@@ -976,7 +966,7 @@ index c2ae8d9b..76562c52 100644
              ConfigureTransport.C
 -            ConfigureCompFlow.C)
 +            ConfigureCompFlow.C
-+            ConfigureMultiMatCompFlow.C)
++            ConfigureMultiMat.C)
  
  target_include_directories(PDE PUBLIC
                             ${QUINOA_SOURCE_DIR}
@@ -992,10 +982,10 @@ problem using a vortical flow setup.
 Here are the new files and subdirectories under `src/PDE/`:
 
 @code{.ansi}
-├── ConfigureMultiMatCompFlow.C
-├── ConfigureMultiMatCompFlow.h
-├── MultiMatCompFlow
-│   ├── DGMultiMatCompFlow.h
+├── ConfigureMultiMat.C
+├── ConfigureMultiMat.h
+├── MultiMat
+│   ├── DGMultiMat.h
 │   ├── Physics
 │   │   ├── DG.h
 │   │   └── DGVelEq.h
@@ -1008,16 +998,16 @@ Here are the new files and subdirectories under `src/PDE/`:
 Click on the filenames for the sources:
 
 For registration into PDEStack and DGFactory:
-- @subpage inciter_newpde_configuremultimatcompflow_h
-- @subpage inciter_newpde_configuremultimatcompflow_c
+- @subpage inciter_newpde_configuremultimat_h
+- @subpage inciter_newpde_configuremultimat_c
 
 Implementation and calls to the discretization of _all_ DG operators for
 multi-material compressible flow physics:
-- @subpage inciter_newpde_dgmultimatcompflow_h
+- @subpage inciter_newpde_dgmultimat_h
 
 Physics configuration:
 - @subpage inciter_newpde_dg_h -
-  list of all MultiMatCompFlow DG physics policies
+  list of all MultiMat DG physics policies
 - @subpage inciter_newpde_dgveleq_h -
   a new physics policy specific to velocity equilibrium
 
@@ -1027,7 +1017,7 @@ Problem configuration:
 - @subpage inciter_newpde_vorticalflow_h -
   a new problem policy specialized for the vortical flow verification problem
 - @subpage inciter_newpde_problem_h -
-  list of all MultiMatCompFlow problem policies.
+  list of all MultiMat problem policies.
 
 */
 } // inciter::

@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/ConfigureMultiMatCompFlow.h
+  \file      src/PDE/ConfigureMultiMat.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Register and compile configuration for multi-material compressible
      flow PDE
@@ -8,8 +8,8 @@
      flow PDE.
 */
 // *****************************************************************************
-#ifndef ConfigureMultiMatCompFlow_h
-#define ConfigureMultiMatCompFlow_h
+#ifndef ConfigureMultiMat_h
+#define ConfigureMultiMat_h
 
 #include <set>
 #include <map>
@@ -23,12 +23,12 @@ namespace inciter {
 
 //! Register compressible flow PDEs into PDE factory
 void
-registerMultiMatCompFlow( DGFactory& df, std::set< ctr::PDEType >& dgt );
+registerMultiMat( DGFactory& df, std::set< ctr::PDEType >& dgt );
 
 //! Return information on the multi-material compressible flow PDE
 std::vector< std::pair< std::string, std::string > >
-infoMultiMatCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_type >& cnt );
+infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_type >& cnt );
 
 } // inciter::
 
-#endif // ConfigureMultiMatCompFlow_h
+#endif // ConfigureMultiMat_h

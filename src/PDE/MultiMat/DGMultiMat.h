@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/MultiMatCompFlow/DGMultiMatCompFlow.h
+  \file      src/PDE/MultiMat/DGMultiMat.h
   \copyright Los Alamos National Security, LLC.
   \brief     Compressible multi-material flow using discontinuous Galerkin
     finite elements
@@ -9,8 +9,8 @@
     discretizations.
 */
 // *****************************************************************************
-#ifndef MultiMatDGCompFlow_h
-#define MultiMatDGCompFlow_h
+#ifndef MultiMatDG_h
+#define MultiMatDG_h
 
 #include <cmath>
 #include <algorithm>
@@ -38,20 +38,20 @@ extern ctr::InputDeck g_inputdeck;
 
 namespace dg {
 
-//! \brief MultiMatCompFlow used polymorphically with tk::DGPDE
+//! \brief MultiMat used polymorphically with tk::DGPDE
 //! \details The template arguments specify policies and are used to configure
 //!   the behavior of the class. The policies are:
-//!   - Physics - physics configuration, see PDE/MultiMatCompFlow/Physics.h
-//!   - Problem - problem configuration, see PDE/MultiMatCompFlow/Problem.h
+//!   - Physics - physics configuration, see PDE/MultiMat/Physics.h
+//!   - Problem - problem configuration, see PDE/MultiMat/Problem.h
 //! \note The default physics is velocity equilibrium (veleq), set in
-//!   inciter::deck::check_multimat_compflow()
+//!   inciter::deck::check_multimat()
 template< class Physics, class Problem >
-class MultiMatCompFlow {
+class MultiMat {
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
     using bcconf_t = kw::sideset::info::expect::type;
-    using eq = tag::multimat_compflow;
+    using eq = tag::multimat;
 
     //! Extract BC configuration ignoring if BC not specified
     //! \param[in] c Equation system index (among multiple systems configured)
@@ -73,7 +73,7 @@ class MultiMatCompFlow {
   public:
     //! Constructor
     //! \param[in] c Equation system index (among multiple systems configured)
-    explicit MultiMatCompFlow( ncomp_t c ) :
+    explicit MultiMat( ncomp_t c ) :
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
@@ -707,4 +707,4 @@ class MultiMatCompFlow {
 
 } // inciter::
 
-#endif // MultiMatDGCompFlow_h
+#endif // MultiMatDG_h

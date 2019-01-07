@@ -1,17 +1,17 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/MultiMatCompFlow/Problem/VorticalFlow.h
+  \file      src/PDE/MultiMat/Problem/VorticalFlow.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Problem configuration for the multi-material compressible flow
     equations
   \details   This file defines a Problem policy class for the multi-material
-    compressible flow equations, defined under PDE/MultiMatCompFlow. See
-    PDE/MultiMatCompFlow/Problem.h for general requirements on Problem policy
-    classes for MultiMatCompFlow.
+    compressible flow equations, defined under PDE/MultiMat. See
+    PDE/MultiMat/Problem.h for general requirements on Problem policy classes
+    for MultiMat.
 */
 // *****************************************************************************
-#ifndef MultiMatCompFlowProblemVorticalFlow_h
-#define MultiMatCompFlowProblemVorticalFlow_h
+#ifndef MultiMatProblemVorticalFlow_h
+#define MultiMatProblemVorticalFlow_h
 
 #include <string>
 #include <unordered_set>
@@ -22,15 +22,15 @@
 
 namespace inciter {
 
-//! MultiMatCompFlow system of PDEs problem: vortical flow
+//! MultiMat system of PDEs problem: vortical flow
 //! \see Waltz, et. al, "Manufactured solutions for the three-dimensional Euler
 //!   equations with relevance to Inertial Confinement Fusion", Journal of
 //!   Computational Physics 267 (2014) 196-209.
-class MultiMatCompFlowProblemVorticalFlow {
+class MultiMatProblemVorticalFlow {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
-    using eq = tag::multimat_compflow;
+    using eq = tag::multimat;
 
   public:
     //! Evaluate analytical solution at (x,y,z) for all components
@@ -111,4 +111,4 @@ class MultiMatCompFlowProblemVorticalFlow {
 
 } // inciter::
 
-#endif // MultiMatCompFlowProblemVorticalFlow_h
+#endif // MultiMatProblemVorticalFlow_h
