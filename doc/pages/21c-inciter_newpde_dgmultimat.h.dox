@@ -1,5 +1,5 @@
 /*!
-  \page      inciter_newpde_dgmultimat_h PDE/MultiMatCompFlow/DGMultiMat.h
+  \page      inciter_newpde_dgmultimat_h PDE/MultiMat/DGMultiMat.h
 
 @include PDE/MultiMat/DGMultiMat.h
 

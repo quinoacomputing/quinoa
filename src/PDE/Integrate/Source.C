@@ -234,7 +234,7 @@ tk::srcIntP2( ncomp_t system,
       auto B9 = 6.0 * zeta_zeta + 18.0 * eta_zeta - 3.0 * eta - 7.0 * zeta + 1.0;
       auto B10 = 15.0 * zeta_zeta - 10.0 * zeta + 1.0;
 
-      auto s = src( system, xgp, ygp, zgp, t );
+      auto s = src( system, ncomp, xgp, ygp, zgp, t );
       for (ncomp_t c=0; c<ncomp; ++c) {
         auto mark = c*ndof;
         R(e, mark, offset)   += wt * s[c];
