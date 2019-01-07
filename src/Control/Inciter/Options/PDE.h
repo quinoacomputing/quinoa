@@ -21,7 +21,7 @@ namespace inciter {
 namespace ctr {
 
 //! Differential equation types
-enum class PDEType : uint8_t { TRANSPORT=0,
+enum class PDEType : uint8_t { TRANSPORT,
                                COMPFLOW,
                                MULTIMAT_COMPFLOW };
 

@@ -20,7 +20,7 @@ namespace inciter {
 namespace ctr {
 
 //! Physics types
-enum class PhysicsType : uint8_t { ADVECTION=0,
+enum class PhysicsType : uint8_t { ADVECTION,
                                    ADVDIFF,
                                    EULER,
                                    NAVIERSTOKES,

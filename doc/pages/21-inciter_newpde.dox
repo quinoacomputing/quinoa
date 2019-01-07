@@ -7,13 +7,13 @@ namespace inciter {
 This page describes how to add a new PDE type to @ref inciter_main.
 
 @ref inciter_main supports multiple partial differential equation (PDE) types.
-At the time of this writing there are two PDE types: `Transport` and `CompFlow`.
-The former is specialized to solving transport equations of single or multiple
-independent scalars, governed by a set of independent advection-diffusion
-equations, while the latter is specialized to solving the Euler and
-Navier-Stokes equations for single-material compressible ideal gases.  The
-simplest way to learn about the currently implemented PDE types and how their
-source is organized into directories and files is to do
+At the time this was written, there were two PDE types: `Transport` and
+`CompFlow`.  The former is specialized to solving transport equations of single
+or multiple independent scalars, governed by a set of independent
+advection-diffusion equations, while the latter is specialized to solving the
+Euler and Navier-Stokes equations for single-material compressible ideal gases.
+The simplest way to learn about the currently implemented PDE types and how
+their source is organized into directories and files is to do
 
 ```
 cd <quinoa>/src/PDE
@@ -109,16 +109,16 @@ This page describes how to add a new PDE, such as `Transport` or `CompFlow`.
 This page will discuss how to add a new PDE type by adding one for
 multi-material compressible flow using a `DG` finite element discretization. We
 will explain how and where to create the new files for the PDE class, its
-`Physics` and `Problem` policy classes, and how to define these so the existing
-discontinuous Galerkin integration driver class, DG, can drive it (potentially
-coupled to other existing and future `DG` systems) and so the PDE type can be
-instantiated from a factory based on user input, similar to the existing PDE
-types. What will _not_ be described are the details of the implementation of
-the discretization of the newly added equation system and its algoritm. We only
-describe how to fit those details into the existing design and thus reuse and
-build on the software infrastructure that supports such a new algorithm, e.g.,
-user input, mesh I/O, partitioning using over-decomposition, automatic load
-balancing via migration, etc.
+`Physics` and `Problem` policy classes, and how to define these so that the
+existing discontinuous Galerkin integration driver class, DG, can drive it ,
+potentially coupled to other existing and future `DG` systems. The new PDE type
+will be instantiated from a factory based on user input, similar to the
+existing PDE types. What will _not_ be described are the details of the
+implementation of the discretization of the newly added equation system and its
+algoritm. We describe how to create a skeleton PDE type in the existing
+framework and how to build on the existing software infrastructure that
+supports such a new algorithm, e.g., user input, mesh I/O, partitioning using
+over-decomposition, automatic load balancing via migration, etc.
 
 @section inciter_newpde_input 1. Specification of a PDE in the input file
 
@@ -154,7 +154,7 @@ The important parts of this specification are the following.
 
 1. A new block configures a particular PDE system, such as `compflow...end`.
 There can be multiple such PDE-blocks specified, which then will be integrated
-together in an unsplit strongly-coupled fashion, e.g, `comppflow` + `transport`
+together in an unsplit strongly-coupled fashion, e.g, `compflow` + `transport`
 with, say, 12 scalar components, which then together will comprise a system of
 17 coupled scalar equations.
 
@@ -366,13 +366,13 @@ inciter control file keyword 'multimat_compflow'
 @section inciter_newpde_option 3. Add new option switches
 
 Next is to add a new state to the existing PDE option switch, ctr::PDE. This
-"option switch" is really only a fancy enum, used to store, in a type-safe
-manner, the user's choice of the PDE type after parsing a PDE-block, e.g.,
-`compflow ... end`, in the control file.  This fancy enum is an option switch
-because it inherits from tk::Toggle, defined in Control/Toggle.h, which is a
-generic switch (or option), that helps associating enum values to keywords and
-querying one based on the other. Extending the existing PDE option switch is
-done by extending the list of PDE types in `src/Control/Inciter/Options/PDE.h`:
+"option switch" is really only a fancy enum, used to store the user's choice of
+the PDE type in a type-safe manner, after parsing a PDE-block, e.g., `compflow
+... end`, in the control file.  This fancy enum is an option switch because it
+inherits from tk::Toggle, defined in Control/Toggle.h, which is a generic
+switch (or option), that helps associating enum values to keywords and querying
+one based on the other. Extending the existing PDE option switch is done by
+extending the list of PDE types in `src/Control/Inciter/Options/PDE.h`:
 
 @subsection inciter_newpde_keyword_PDEOptions Control/Inciter/Options/PDE.h
 
@@ -574,10 +574,10 @@ multiple systems of this PDE type can be configured. Also note that this is
 where the dependent variable, physics policy (ctr::PhysicsType enum), the
 problem policy (ctr::ProblemType enum), boundary conditions,
 problem-configuration-specific parameters, and the number of materials are all
-store here. This is data that is either parsed from the user or can be computed
+stored. This is data that is either parsed from the user or can be computed
 immediately after and based on user input.
 
-Next we add a coupled of new tags (empty structs used as compile-time labels),
+Next we add a couple of new tags (empty structs used as compile-time labels),
 `tag::nmat` and `tag::multimat_compflow`, behind which the parser stores the
 tuple ctr::MultiMatCompFlowPDEParameters, and the number of materials,
 respectively,
@@ -636,8 +636,8 @@ index 6b16b623..43a9bba7 100644
 @endcode
 
 The above tagged tuple, deck::neq, stores the number of equations _during_
-parsing the inciter's input file. Since this is part of inciter's parser's
-state, it is static and thus only visible locally to inciter's grammar and not
+parsing the inciter's input file. Since this is part of the state of inciter's
+parser, it is static and thus only visible locally to inciter's grammar and not
 the rest of the code. deck::neq is used to count the number of PDE systems
 parsed.
 
@@ -671,8 +671,9 @@ First we ensure that a dependent variable has been associated. This is
 mandatory, as this identifies the PDE system during parsing. If `depvar` is not
 specified in this equation block or the vector that stores the dependent
 variables for this equation block does not have the same number of entries as
-many PDEs have been configured so far, the variable has not been specified, so
-the parser will issue an error when all parsing has been finished.
+many PDEs have been configured so far, that means the dependent variable has
+not been specified, so the parser will issue an error when all parsing has been
+finished.
 
 @code{.diff}
 +      // If physics type is not given, default to 'veleq'

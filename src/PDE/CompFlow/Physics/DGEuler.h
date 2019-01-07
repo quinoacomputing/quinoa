@@ -3,7 +3,7 @@
   \file      src/PDE/CompFlow/Physics/DGEuler.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Physics policy for the Euler equation governing single-material
-    flow using a continuous Galerkin finite element method
+    flow using a discontinuous Galerkin finite element method
   \details   This file defines a Physics policy class for the compressible
     flow equations class dg::CompFlow, defined in PDE/CompFlow/DGCompFlow.h.
     This specific algorithm assumes single-material flow and uses a
