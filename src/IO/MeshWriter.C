@@ -132,6 +132,7 @@ MeshWriter::writeMeta( uint64_t itr,
 //! \param[in] chareid The chare id the write-to-file request is coming from
 //! \param[in] centering The centering that will be associated to the field data
 //!   to be output when writeFields is called next
+//! \param[in] names Names of fields to be output in next call to writeFields()
 // *****************************************************************************
 {
   if (!m_benchmark) {
@@ -176,7 +177,7 @@ MeshWriter::writeFields( uint64_t itr,
 //  Output field data to file
 //! \param[in] itr Iteration count since a new mesh (New mesh in this context
 //!   means, either the mesh is moved and/or its topology has changed
-//! \arapm[in] itf Field output iteration count
+//! \param[in] itf Field output iteration count
 //! \param[in] time Physical time this at this field output dump
 //! \param[in] chareid The chare id the write-to-file request is coming from
 //! \param[in] centering The centering that will be associated to the field data

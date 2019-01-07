@@ -129,7 +129,7 @@ class DistFCT : public CBase_DistFCT {
     void alw( const tk::Fields& Un,
               const tk::Fields& Ul,
               const tk::Fields& dUl,
-              const CProxy_DiagCG& scheme );
+              const CProxy_DiagCG& host );
 
     //! Resize FCT data structures (e.g., after mesh refinement)
     void resize( std::size_t nu,
