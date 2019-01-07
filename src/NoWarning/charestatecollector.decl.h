@@ -23,6 +23,7 @@
   #pragma clang diagnostic ignored "-Wundefined-func-template"
   #pragma clang diagnostic ignored "-Woverloaded-virtual"
   #pragma clang diagnostic ignored "-Wextra-semi"
+  #pragma clang diagnostic ignored "-Wextra-semi-stmt"
   #pragma clang diagnostic ignored "-Wshadow-field"
   #pragma clang diagnostic ignored "-Wmissing-noreturn"
   #pragma clang diagnostic ignored "-Wdocumentation"

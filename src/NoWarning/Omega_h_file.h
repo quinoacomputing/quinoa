@@ -14,6 +14,7 @@
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wold-style-cast"
+  #pragma clang diagnostic ignored "-Wextra-semi-stmt"
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 3253 )

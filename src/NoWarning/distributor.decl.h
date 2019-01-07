@@ -21,6 +21,7 @@
   #pragma clang diagnostic ignored "-Wsign-conversion"
   #pragma clang diagnostic ignored "-Wsign-compare"
   #pragma clang diagnostic ignored "-Wextra-semi"
+  #pragma clang diagnostic ignored "-Wextra-semi-stmt"
   #pragma clang diagnostic ignored "-Wdouble-promotion"
   #pragma clang diagnostic ignored "-Wunused-private-field"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
