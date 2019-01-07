@@ -74,7 +74,7 @@ void ExceptionMPI_object::test< 3 >() {
   set_test_name( "ErrChkMPI macro throws all false" );
 
   try {
-    ErrChkMPI( 0 == 1, "msg" );
+    ErrChkMPI( 0 == 1, "msg" )
     fail( "should throw excecption" );
   }
   catch ( tk::Exception& ) {
@@ -88,7 +88,7 @@ void ExceptionMPI_object::test< 4 >() {
   set_test_name( "ErrChkMPI macro doesn't throw all true" );
 
   try {
-    ErrChkMPI( 0 != 1, "msg" );
+    ErrChkMPI( 0 != 1, "msg" )
   }
   catch ( tk::Exception& ) {
     fail( "should not throw excecption" );
@@ -103,7 +103,7 @@ void ExceptionMPI_object::test< 5 >() {
   try {
     int peid;
     MPI_Comm_rank( MPI_COMM_WORLD, &peid );
-    ErrChkMPI( peid == 0 ? 0 == 1 : 1 == 1, "msg" );
+    ErrChkMPI( peid == 0 ? 0 == 1 : 1 == 1, "msg" )
     fail( "should throw exception" );
   }
   catch ( tk::Exception& ) {
@@ -122,7 +122,7 @@ void ExceptionMPI_object::test< 6 >() {
     try {
       int peid;
       MPI_Comm_rank( MPI_COMM_WORLD, &peid );
-      ErrChkMPI( peid == 0 ? 1 == 1 : 0 == 1, "msg" );
+      ErrChkMPI( peid == 0 ? 1 == 1 : 0 == 1, "msg" )
       fail( "should throw exception" );
     }
     catch ( tk::Exception& ) {
