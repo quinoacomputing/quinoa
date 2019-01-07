@@ -6,9 +6,6 @@
 #
 ################################################################################
 
-# Regression test runner using the cmake scripting language. See also
-# http://www.cmake.org/Wiki/CMake/Language_Syntax.
-
 # Covert string to list of file names of text baseline(s), text result(s), and
 # file converter input(s) and output(s)
 string(REPLACE " " ";" TEXT_BASELINE "${TEXT_BASELINE}")
@@ -35,11 +32,15 @@ message("  WORKDIR (test run directory)                                : ${WORKD
 message("  RUNNER_REQUIRED (true if a ser/par job runner is required)  : ${RUNNER_REQUIRED}")
 message("  RUNNER (used to run parallel and serial jobs inside cmake)  : ${RUNNER}")
 message("  RUNNER_NCPUS_ARG (used to specify the number of CPUs)       : ${RUNNER_NCPUS_ARG}")
+message("  CHARM_SMP (true/false indicating Charm++ SMP mode)          : ${CHARM_SMP}")
 message("  RUNNER_ARGS (parallel/serial job runner arguments)          : ${RUNNER_ARGS}")
 message("  TEST_EXECUTABLE (executable tested)                         : ${TEST_EXECUTABLE}")
 message("  TEST_EXECUTABLE_ARGS (executable arguments)                 : ${TEST_EXECUTABLE_ARGS}")
 message("  TEST_LABELS (test labels)                                   : ${TEST_LABELS}")
-message("  NUMPES (number of processing elements used for test)        : ${NUMPES}")
+message("  NUMPES (number of processing elements requested for test)   : ${NUMPES}")
+message("  NUMNODES (number of logical nodes, in Charm++'s SMP mode)   : ${NUMNODES}")
+message("  PPN (number of PEs per logical node, in Charm++'s SMP mode) : ${PPN}")
+message("  HARDWARE_NUMPES (number of PEs used in hardware for test)   : ${HARDWARE_NUMPES}")
 message("  POSTPROCESS_PROG (executable to run after test)             : ${POSTPROCESS_PROG}")
 message("  POSTPROCESS_PROG_ARGS (postprocess program arguments)       : ${POSTPROCESS_PROG_ARGS}")
 message("  POSTPROCESS_PROG_OUTPUT (postprocess program output file)   : ${POSTPROCESS_PROG_OUTPUT}")
@@ -66,10 +67,17 @@ if(TEXT_RESULT OR BIN_RESULT OR FILECONV_RESULT OR FILECONV_INPUT)
   file(REMOVE ${TEXT_RESULT} ${BIN_RESULT} ${FILECONV_RESULT} ${FILECONV_INPUT})
 endif()
 
+# Set Charm++'s +ppn argument (if configured, used in SMP mode)
+if (PPN)
+  set(PPN "+ppn;${PPN}")
+endif()
+
 # Configure test run command
 set(test_command ${RUNNER} ${RUNNER_NCPUS_ARG} ${NUMPES} ${RUNNER_ARGS}
-                 ${TEST_EXECUTABLE} ${TEST_EXECUTABLE_ARGS})
+                 ${TEST_EXECUTABLE} ${TEST_EXECUTABLE_ARGS} ${PPN})
+
 string(REPLACE ";" " " test_command_string "${test_command}")
+
 # Run the test
 message("\nRunning test command: '${test_command_string}'\n")
 execute_process(COMMAND ${test_command} RESULT_VARIABLE ERROR)

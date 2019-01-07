@@ -10,7 +10,7 @@
 # Function used to add a regression test to the ctest test suite
 #
 # add_regression_test( <test_name> <executable>
-#                      [NUMPES n]
+#                      [NUMPES n] [PPN p]
 #                      [INPUTFILES file1 file2 ...]
 #                      [ARGS arg1 arg2 ...]
 #                      [LABELS label1 label2 ...]
@@ -32,16 +32,21 @@
 # Mandatory arguments:
 # --------------------
 #
-# <test_name> - Name of the test. Note that "<executable>" will be prefixed and
-#               "_PEs{NUMPES}" will be postfixed to the test name. See also
-#               argument NUMPES below.
+# <test_name> - Name of the test. Note that "<executable>:" will be prefixed
+#               and "_PEs{NUMPES}" will be postfixed to the test name. In
+#               Charm++'s SMP mode, "_ppn{PPN}" will also be postfixed. See
+#               also arguments NUMPES and PPN below.
 #
 # <executable> - Name of the executable to test.
 #
 # Optional arguments:
 # -------------------
 #
-# NUMPES n - The number PEs to pass to charmrun, i.e., +pn. Default: 1.
+# NUMPES n - The number PEs to pass to charmrun, i.e., +p n. Default: 1.
+#
+# PPN p - The number PEs per logical node to pass to charmrun, i.e., +ppn p.
+# Default: NUMPES (yielding a single logical (compute) node in SMP mode. Only
+# used in Charm++'s SMP mode.
 #
 # INPUTFILES file1 file2 ... - Input files required for the test. This list of
 # files includes files needed for running the test, e.g., control file
@@ -109,24 +114,110 @@
 # ##############################################################################
 function(ADD_REGRESSION_TEST test_name executable)
 
-  set(oneValueArgs NUMPES TEXT_DIFF_PROG BIN_DIFF_PROG TEXT_DIFF_PROG_CONF
+  set(oneValueArgs NUMPES PPN TEXT_DIFF_PROG BIN_DIFF_PROG TEXT_DIFF_PROG_CONF
                    FILECONV_PROG POSTPROCESS_PROG POSTPROCESS_PROG_OUTPUT)
   set(multiValueArgs INPUTFILES ARGS TEXT_BASELINE TEXT_RESULT BIN_BASELINE
                      BIN_RESULT LABELS POSTPROCESS_PROG_ARGS BIN_DIFF_PROG_ARGS
                      TEXT_DIFF_PROG_ARGS BIN_DIFF_PROG_CONF FILECONV_RESULT
-		     FILECONV_INPUT)
+                     FILECONV_INPUT)
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}"
                         ${ARGN})
 
   # Will collect test properties
   set(test_properties)
 
-  # Set number of processing elements
-  set(NUMPES 1)
+  # PE specification examples in Charm++ SMP mode:
+  # --------------------------------------------------------------
+  # req - total number of PEs requested by test (REQUESTED_NUMPES)
+  # nod - number of logical nodes (NUMNODES)
+  # ppn - number of PEs per logical node (PPN)
+  # com - number of communication threads per logical node
+  # hw  - total number of PEs used in hardware (HARDWARE_NUMPES)
+  # cmd - Charm++ command line args for SMP mode
+  #
+  # hw = nod * (ppn + com)
+  #
+  # req  nod  ppn  com  hw   cmd
+  #   1    1    1    1   2   +p1
+  #   2    1    2    1   3   +p2 +ppn 2
+  #   3    1    3    1   4   +p3 +ppn 3
+  #   4    1    4    1   5   +p4 +ppn 4
+  #   4    2    2    1   6   +p4 +ppn 2
+  #   5    1    5    1   6   +p5 +ppn 5
+  #   6    1    6    1   7   +p6 +ppn 6
+  #   6    2    3    1   8   +p6 +ppn 3
+  #   6    3    2    1   9   +p6 +ppn 2
+  #   7    1    7    1   8   +p7 +ppn 7
+  #   8    1    8    1   9   +p8 +ppn 8
+  #   8    2    4    1  10   +p8 +ppn 4
+  #   8    4    2    1  12   +p8 +ppn 2
+  #   9    1    9    1  10   +p9 +ppn 9
+  #   9    3    3    1  12   +p9 +ppn 3
+  #  10    1   10    1  11  +p10 +ppn 10
+  #  10    2    5    1  12  +p10 +ppn 5
+  #  10    5    2    1  15  +p10 +ppn 2
+
+  # Set default number of PEs for test (if client code does not specify it)
+  set(REQUESTED_NUMPES 1)
+
+  # Set requested number of PEs if specified by client code as input
   if (ARG_NUMPES)
-    set(NUMPES ${ARG_NUMPES})
-    list(APPEND test_properties PROCESSORS ${ARG_NUMPES})
+    set(REQUESTED_NUMPES ${ARG_NUMPES})
   endif()
+
+  # Set number of PEs used in hardware as the requested number of PEs as
+  # default. This is good for non-SMP mode.
+  set(HARDWARE_NUMPES ${REQUESTED_NUMPES})
+
+  # Configure number of PEs per logical node and total number of PEs used in
+  # hardwared for Charm++'s SMP mode.
+  if (CHARM_SMP)
+
+    # If PPN is set, use it but do error checking compared to NUMPES. If PPN is
+    # not set, setup a test with a single logical node and with the number of
+    # threads equal to the number of requested PEs. This way every parallel
+    # test will exercise SMP mode.
+    if (ARG_PPN)
+      set(PPN "${ARG_PPN}")
+      math(EXPR NUMPES_NOT_DIVISIBLE "${REQUESTED_NUMPES}%${PPN}")
+      if (NUMPES_NOT_DIVISIBLE)
+        message(FATAL_ERROR "Number of PEs requested (${REQUESTED_NUMPES}) for test should be a multiple of the number of PEs per logical node (PPN=${PPN})")
+      endif()
+    else()
+      set(PPN ${REQUESTED_NUMPES})
+    endif()
+
+    # Compute number of logical nodes for test
+    math(EXPR NUMNODES "${REQUESTED_NUMPES}/${PPN}")
+
+    # By default, Charm++ assigns one communication thread for every logical
+    # node. For a single logical node req = ppn. For multiple logical nodes,
+    # req is a multiple of ppn. In both cases, the number of PEs used in
+    # hardware is hw = nod * (ppn + com) = req/ppn * (ppn+1). Note: The +1 in
+    # the denomincator is not really worth it with PPN=1 compared to non-SMP
+    # mode: remove the +1 and the performance is the same between SMP and
+    # non-SMP, otherwise SMP is slower. This is because running the regression
+    # tests is never really compute-, but instead I/O-bound.
+    math(EXPR HARDWARE_NUMPES "${NUMNODES}*(${PPN}+1)")
+
+  else()
+
+    # Set PPN to be empty in non-SMP mode, i.e., ignore PPN argument.
+    set(PPN)
+
+  endif()
+
+  # Prefix executable and append REQUESTED_NUMPES to test name
+  set(test_name "${executable}:${test_name}_pe${REQUESTED_NUMPES}")
+  # In SMP mode, also append ppn to test name
+  if (CHARM_SMP)
+    set(test_name "${test_name}_ppn${PPN}")
+  endif()
+
+  #message("${test_name}: req:${REQUESTED_NUMPES}, nod:${NUMNODES}, ppn:${PPN}, hw:${HARDWARE_NUMPES}")
+
+  # Tell cmake/ctest how many PEs (processors) the test will use
+  list(APPEND test_properties PROCESSORS ${HARDWARE_NUMPES})
 
   # Add labels to test
   set(TEST_LABELS ${executable})        # ${executable} is always a label
@@ -150,9 +241,6 @@ function(ADD_REGRESSION_TEST test_name executable)
   # Set file converter tool
   # FILECONV_EXECUTABLE points to fileconv, refer src/Main/FileConv.C
   set(FILECONV_PROG ${FILECONV_EXECUTABLE})
-
-  # Prefix executable and append NUMPES to test name
-  set(test_name "${executable}:${test_name}_pe${NUMPES}")
 
   # Construct and echo configuration for test being added
   set(msg "Add regression test ${test_name} for ${executable}")
@@ -267,7 +355,10 @@ function(ADD_REGRESSION_TEST test_name executable)
            -DTEST_EXECUTABLE=${CMAKE_BINARY_DIR}/Main/${executable}
            -DTEST_EXECUTABLE_ARGS=${ARGUMENTS}
            -DTEST_LABELS=${ARG_LABELS}
-           -DNUMPES=${NUMPES}
+           -DNUMPES=${REQUESTED_NUMPES}
+           -DNUMNODES=${NUMNODES}
+           -DPPN=${PPN}
+           -DHARDWARE_NUMPES=${HARDWARE_NUMPES}
            -DTEXT_DIFF_PROG=${TEXT_DIFF_PROG}
            -DTEXT_DIFF_PROG_ARGS=${ARG_TEXT_DIFF_PROG_ARGS}
            -DTEXT_DIFF_PROG_CONF=${ARG_TEXT_DIFF_PROG_CONF}
@@ -284,6 +375,7 @@ function(ADD_REGRESSION_TEST test_name executable)
            -DPOSTPROCESS_PROG=${ARG_POSTPROCESS_PROG}
            -DPOSTPROCESS_PROG_ARGS=${ARG_POSTPROCESS_PROG_ARGS}
            -DPOSTPROCESS_PROG_OUTPUT=${ARG_POSTPROCESS_PROG_OUTPUT}
+           -DCHARM_SMP=${CHARM_SMP}
            -P ${TEST_RUNNER}
            WORKING_DIRECTORY ${workdir})
 
