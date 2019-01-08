@@ -14,7 +14,7 @@ walker
   gamma
     depvar l
     init zero
-    coeff const
+    coeff const_coeff
     ncomp 2
     # k = bS/kappa, 1/theta = b(1-S)/kappa
     # <Y> = S/(1-S), <y^2> = kappa/b * <Y>/(1-S)

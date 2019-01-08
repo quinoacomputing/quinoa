@@ -43,6 +43,18 @@ srcIntP1( ncomp_t system,
           const SrcFn& src,
           Fields& R );
 
+//! Compute source term integrals for DG(P2)
+void
+srcIntP2( ncomp_t system,
+          ncomp_t ncomp,
+          ncomp_t offset,
+          real t,
+          const std::vector< std::size_t >& inpoel,
+          const UnsMesh::Coords& coord,
+          const Fields& geoElem,
+          const SrcFn& src,
+          Fields& R );
+
 } // tk::
 
 #endif // Source_h

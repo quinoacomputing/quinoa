@@ -112,23 +112,23 @@ genNbfacTet( std::size_t tnbfac,
              std::vector< std::size_t >& triinpoel,
              std::map< int, std::vector< std::size_t > >& bface );
 
-//! Generate derived data structure, total number of faces
+//! Generate number of internal and physical-boundary faces
 std::size_t
-genNtfac( std::size_t nfpe,
-          std::size_t nbfac,
-          const std::vector< int >& esuelTet );
+genNipfac( std::size_t nfpe,
+           std::size_t nbfac,
+           const std::vector< int >& esuelTet );
 
 //! Generate derived data structure, elements surrounding faces
 std::vector< int >
 genEsuf( std::size_t nfpe,
-         std::size_t ntfac,
+         std::size_t nipfac,
          std::size_t nbfac,
          const std::vector< std::size_t >& belem,
          const std::vector< int >& esuelTet );
 
 //! Generate derived data structure, node-face connectivity
 std::vector< std::size_t >
-genInpofaTet( std::size_t ntfac,
+genInpofaTet( std::size_t nipfac,
               std::size_t nbfac,
               const std::vector< std::size_t >& inpoel,
               const std::vector< std::size_t >& triinpoel,
@@ -143,7 +143,7 @@ genBelemTet( std::size_t nbfac,
 
 //! Generate derived data structure, face geometry
 tk::Fields
-genGeoFaceTri( std::size_t ntfac,
+genGeoFaceTri( std::size_t nipfac,
                const std::vector< std::size_t >& inpofa,
                const tk::UnsMesh::Coords& coord );
 

@@ -2,10 +2,12 @@
 /*!
   \file      src/PDE/CompFlow/Problem/VorticalFlow.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
-  \brief     Problem configuration for the compressible flow equations
-  \details   This file defines a Problem policy class for the compressible flow
-    equations, defined in PDE/CompFlow/CompFlow.h. See PDE/CompFlow/Problems.h
-    for general requirements on Problem policy classes for CompFlow.
+  \brief     Problem configuration for the single-material compressible flow
+    equations
+  \details   This file defines a Problem policy class for the single-material
+    compressible flow equations, defined under PDE/CompFlow/. See
+    PDE/CompFlow/Problem.h for general requirements on Problem policy classes
+    for CompFlow.
 */
 // *****************************************************************************
 #ifndef CompFlowProblemVorticalFlow_h
@@ -71,6 +73,7 @@ class CompFlowProblemVorticalFlow {
     solinc( ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real ) {
       return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
     }
+
     //! Compute and return source term for vortical flow manufactured solution
     //! \param[in] system Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
@@ -80,7 +83,8 @@ class CompFlowProblemVorticalFlow {
     //! \return Array of reals containing the source for all components
     //! \note The function signature must follow tk::SrcFn
     static tk::SrcFn::result_type
-    src( ncomp_t system, tk::real x, tk::real y, tk::real z, tk::real ) {
+    src( ncomp_t system, ncomp_t, tk::real x, tk::real y, tk::real z, tk::real )
+    {
       using tag::param; using tag::compflow;
       // manufactured solution parameters
       const auto& a =
@@ -114,7 +118,7 @@ class CompFlowProblemVorticalFlow {
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
-    static std::vector< std::string > fieldNames() {
+    static std::vector< std::string > fieldNames( ncomp_t ) {
       std::vector< std::string > n;
       n.push_back( "density_numerical" );
       n.push_back( "density_analytical" );
@@ -141,6 +145,7 @@ class CompFlowProblemVorticalFlow {
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t system,
+                 ncomp_t,
                  ncomp_t offset,
                  tk::real,
                  tk::real,
@@ -216,11 +221,11 @@ class CompFlowProblemVorticalFlow {
       out.push_back( P );
 
       return out;
-   }
+    }
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
-    static std::vector< std::string > names()
+    static std::vector< std::string > names( ncomp_t )
     { return { "r", "ru", "rv", "rw", "re" }; }
 
     static ctr::ProblemType type() noexcept

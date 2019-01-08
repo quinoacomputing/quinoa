@@ -19,7 +19,7 @@ namespace inciter {
 namespace ctr {
 
 //! Boundary condition types
-enum class BCType : uint8_t { SYM=0,
+enum class BCType : uint8_t { SYM,
                               INLET,
                               OUTLET,
                               EXTRAPOLATE };

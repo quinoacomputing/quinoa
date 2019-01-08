@@ -29,12 +29,16 @@
 namespace inciter {
 
 void
-registerTransport( CGFactory& cf, DGFactory& df, std::set< ctr::PDEType >& t )
+registerTransport( CGFactory& cf,
+                   DGFactory& df,
+                   std::set< ctr::PDEType >& cgt,
+                   std::set< ctr::PDEType >& dgt )
 // *****************************************************************************
 // Register transport PDE into PDE factory
 //! \param[in,out] cf Continuous Galerkin PDE factory to register to
 //! \param[in,out] df Discontinuous Galerkin PDE factory to register to
-//! \param[in,out] t Counters for equation types registered
+//! \param[in,out] cgt Counters for equation types registered into CG factory
+//! \param[in,out] dgt Counters for equation types registered into DG factory
 // *****************************************************************************
 {
   // Construct vector of vectors for all possible policies
@@ -42,14 +46,14 @@ registerTransport( CGFactory& cf, DGFactory& df, std::set< ctr::PDEType >& t )
     tk::cartesian_product< cg::TransportPhysics, TransportProblems >;
   // Register PDEs for all combinations of policies
   brigand::for_each< CGTransportPolicies >(
-    registerCG< cg::Transport >( cf, t, ctr::PDEType::TRANSPORT ) );
+    registerCG< cg::Transport >( cf, cgt, ctr::PDEType::TRANSPORT ) );
 
   // Construct vector of vectors for all possible policies
   using DGTransportPolicies =
     tk::cartesian_product< dg::TransportPhysics, TransportProblems >;
   // Register PDEs for all combinations of policies
   brigand::for_each< DGTransportPolicies >(
-    registerDG< dg::Transport >( df, t, ctr::PDEType::TRANSPORT ) );
+    registerDG< dg::Transport >( df, dgt, ctr::PDEType::TRANSPORT ) );
 }
 
 std::vector< std::pair< std::string, std::string > >

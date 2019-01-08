@@ -49,6 +49,7 @@ class Transport {
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
     using bcconf_t = kw::sideset::info::expect::type;
+    using eq = tag::transport;
 
     //! Extract BC configuration ignoring if BC not specified
     //! \param[in] c Equation system index (among multiple systems configured)
@@ -62,7 +63,7 @@ class Transport {
     std::vector< bcconf_t >
     config( ncomp_t c ) {
       std::vector< bcconf_t > bc;
-      const auto& v = g_inputdeck.get< tag::param, tag::transport, bctag >();
+      const auto& v = g_inputdeck.get< tag::param, eq, bctag >();
       if (v.size() > c) bc = v[c];
       return bc;
     }
@@ -73,9 +74,9 @@ class Transport {
     explicit Transport( ncomp_t c ) :
       m_system( c ),
       m_ncomp(
-        g_inputdeck.get< tag::component >().get< tag::transport >().at(c) ),
+        g_inputdeck.get< tag::component >().get< eq >().at(c) ),
       m_offset(
-        g_inputdeck.get< tag::component >().offset< tag::transport >(c) ),
+        g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_bcextrapolate( config< tag::bcextrapolate >( c ) ),
       m_bcinlet( config< tag::bcinlet >( c ) ),
       m_bcoutlet( config< tag::bcoutlet >( c ) ),
@@ -208,7 +209,7 @@ class Transport {
     std::vector< std::string > fieldNames() const {
       std::vector< std::string > n;
       const auto& depvar =
-      g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_system);
+      g_inputdeck.get< tag::param, eq, tag::depvar >().at(m_system);
       // will output numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_numerical" );
@@ -281,7 +282,7 @@ class Transport {
     std::vector< std::string > names() const {
       std::vector< std::string > n;
       const auto& depvar =
-      g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_system);
+      g_inputdeck.get< tag::param, eq, tag::depvar >().at(m_system);
       // construct the name of the numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) );

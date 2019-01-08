@@ -53,15 +53,25 @@ class PDEStack {
 
     //! Constant accessor to CGPDE factory
     //! \return Constant reference to the CGPDE factory
-    const CGFactory& factory() const { return m_cgfactory; }
+    const CGFactory& cgfactory() const { return m_cgfactory; }
+
+    //! Constant accessor to DGPDE factory
+    //! \return Constant reference to the DGPDE factory
+    const DGFactory& dgfactory() const { return m_dgfactory; }
 
     //! Return info on selected partial differential equations
     std::vector< std::vector< std::pair< std::string, std::string > > > info()
     const;
 
-    //! \brief Return number of unique equation types registered
-    //! \return The number of unique equation types registered in the factory
-    std::size_t ntypes() const { return m_eqTypes.size(); }
+    //! Return number of unique equation types registered into the CG factory
+    //! \return The number of unique equation types registered into the CG
+    //!   factory the factory
+    std::size_t cgntypes() const { return m_cgEqTypes.size(); }
+
+    //! Return number of unique equation types registered into the DG factory
+    //! \return The number of unique equation types registered into the DG
+    //!   factory the factory
+    std::size_t dgntypes() const { return m_dgEqTypes.size(); }
 
   private:
     //! \brief Instantiate a partial differential equation
@@ -133,8 +143,10 @@ class PDEStack {
     CGFactory m_cgfactory;
     //! PDE factory for discontinuous Galerkin discretization
     DGFactory m_dgfactory;
-    //! Counters for equation types
-    std::set< ctr::PDEType > m_eqTypes;
+    //! Counters for equation types registered into the CG factory
+    std::set< ctr::PDEType > m_cgEqTypes;
+    //! Counters for equation types registered into the DG factory
+    std::set< ctr::PDEType > m_dgEqTypes;
 };
 
 } // inciter::

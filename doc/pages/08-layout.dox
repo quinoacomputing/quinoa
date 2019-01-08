@@ -1,6 +1,8 @@
 /*!
   \page      layout Large-data memory layout for equation systems
 
+@tableofcontents{xml}
+
 This page discusses the requirements, design, implementation, and verification
 of a data container with zero-cost compile-time-configurable memory layout for
 storing a 3-dimensional array of real values. The three dimensions are

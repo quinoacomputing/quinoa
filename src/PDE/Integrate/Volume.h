@@ -35,6 +35,19 @@ volIntP1( ncomp_t system,
           const Fields& limFunc,
           Fields& R );
 
+//! Compute volume integrals for DG(P2)
+void
+volIntP2( ncomp_t system,
+          ncomp_t ncomp,
+          ncomp_t offset,
+          const std::vector< std::size_t >& inpoel,
+          const UnsMesh::Coords& coord,
+          const Fields& geoElem,
+          const FluxFn& flux,
+          const VelFn& vel,
+          const Fields& U,
+          Fields& R );
+
 } // tk::
 
 #endif // Volume_h

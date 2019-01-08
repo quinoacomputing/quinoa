@@ -41,6 +41,18 @@ initializeP1( ncomp_t system,
               Fields& unk,
               real t );
 
+//! Initalize a PDE system for DG(P2)
+void
+initializeP2( ncomp_t system,
+              ncomp_t ncomp,
+              ncomp_t offset,
+              const Fields& L,
+              const std::vector< std::size_t >& inpoel,
+              const UnsMesh::Coords& coord,
+              const SolutionFn& solution,
+              Fields& unk,
+              real t );
+
 //! Initalize a system of PDEs for discontinous Galerkin methods
 void
 initialize( ncomp_t system,

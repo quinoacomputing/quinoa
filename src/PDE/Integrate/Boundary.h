@@ -90,6 +90,41 @@ sidesetIntP1( ncomp_t system,
               const tk::Fields& limFunc,
               tk::Fields& R );
 
+//! Compute boundary surface integral for a number of faces for DG(P2)
+void
+bndSurfIntP2( ncomp_t system,
+              ncomp_t ncomp,
+              ncomp_t offset,
+              const std::vector< std::size_t >& faces,
+              const std::vector< int >& esuf,
+              const tk::Fields& geoFace,
+              const std::vector< std::size_t >& inpoel,
+              const std::vector< std::size_t >& inpofa,
+              const tk::UnsMesh::Coords& coord,
+              tk::real t,
+              const RiemannFluxFn& flux,
+              const VelFn& vel,
+              const StateFn& state,
+              const tk::Fields& U,
+              tk::Fields& R );
+
+//! Compute boundary surface flux integrals for a given boundary type for DG(P2)
+void
+sidesetIntP2( ncomp_t system,
+              ncomp_t ncomp,
+              ncomp_t offset,
+              const std::vector< bcconf_t >& bcconfig,
+              const inciter::FaceData& fd,
+              const tk::Fields& geoFace,
+              const std::vector< std::size_t >& inpoel,
+              const tk::UnsMesh::Coords& coord,
+              tk::real t,
+              const RiemannFluxFn& flux,
+              const VelFn& vel,
+              const StateFn& state,
+              const tk::Fields& U,
+              tk::Fields& R );
+
 } // tk::
 
 #endif // Boundary_h

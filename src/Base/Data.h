@@ -193,7 +193,7 @@ class Data {
     //! \param[in] offset System offset specifying the position of the system of
     //!   equations among other systems
     //! \return A vector of unknowns given by component at offset (length:
-    //!   nunkn(), i.e., the first constructor argument)
+    //!   nunk(), i.e., the first constructor argument)
     std::vector< tk::real >
     extract( ncomp_t component, ncomp_t offset ) const {
       std::vector< tk::real > w( m_nunk );

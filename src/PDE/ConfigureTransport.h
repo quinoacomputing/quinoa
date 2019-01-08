@@ -21,7 +21,10 @@ namespace inciter {
 
 //! Register transport PDEs into PDE factory
 void
-registerTransport( CGFactory& cf, DGFactory& df, std::set< ctr::PDEType >& t );
+registerTransport( CGFactory& cf,
+                   DGFactory& df,
+                   std::set< ctr::PDEType >& cgt,
+                   std::set< ctr::PDEType >& dgt );
 
 //! Return information on the transport PDE
 std::vector< std::pair< std::string, std::string > >
