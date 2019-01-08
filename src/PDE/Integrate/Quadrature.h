@@ -16,6 +16,16 @@
 
 namespace tk {
 
+//! Fourteen Gaussian quadrature points locations and weights for a tetrahedron
+void
+GaussQuadratureTet( std::array< std::array< real, 14 >, 3 >& coordgp,
+                    std::array< real, 14 >& wgp );
+
+//! Eleven Gaussian quadrature points locations and weights for a tetrahedron
+void
+GaussQuadratureTet( std::array< std::array< real, 11 >, 3 >& coordgp,
+                    std::array< real, 11 >& wgp );
+
 //! Five Gaussian quadrature points locations and weights for a tetrahedron
 void
 GaussQuadratureTet( std::array< std::array< real, 5 >, 3 >& coordgp,
@@ -24,6 +34,16 @@ GaussQuadratureTet( std::array< std::array< real, 5 >, 3 >& coordgp,
 //! Four Gaussian quadrature points locations and weights for a tetrahedron
 void
 GaussQuadratureTet( std::array< std::array< real, 4 >, 3 >& coordgp,
+                    std::array< real, 4 >& wgp );
+
+//! Six Gaussian quadrature points locations and weights for a triangle
+void
+GaussQuadratureTri( std::array< std::array< real, 6 >, 2 >& coordgp,
+                    std::array< real, 6 >& wgp );
+
+//! Four Gaussian quadrature points locations and weights for a triangle
+void
+GaussQuadratureTri( std::array< std::array< real, 4 >, 2 >& coordgp,
                     std::array< real, 4 >& wgp );
 
 //! Three Gaussian quadrature points locations and weights for a triangle

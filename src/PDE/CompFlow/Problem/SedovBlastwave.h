@@ -4,7 +4,7 @@
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Problem configuration for Sedov's blastwave
   \details   This file defines a policy class for the compressible flow
-    equations, defined in PDE/CompFlow/CompFlow.h. See PDE/CompFlow/Problems.h
+    equations, defined in PDE/CompFlow/CompFlow.h. See PDE/CompFlow/Problem.h
     for general requirements on Problem policy classes for CompFlow.
 */
 // *****************************************************************************
@@ -25,6 +25,7 @@ class CompFlowProblemSedovBlastwave {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
+    using eq = tag::compflow;
     static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
   public:
@@ -43,10 +44,9 @@ class CompFlowProblemSedovBlastwave {
       Assert( ncomp == m_ncomp, "Number of scalar components must be " +
                                 std::to_string(m_ncomp) );
       IGNORE(ncomp);
-      using tag::param; using tag::compflow;
+      using tag::param;
       // ratio of specific heats
-      const tk::real g =
-        g_inputdeck.get< param, compflow, tag::gamma >()[system];
+      const tk::real g = g_inputdeck.get< param, eq, tag::gamma >()[system];
       tk::real r, p, u, v, w, rE;
       if ( (x<0.05) && (y<0.05) ) {
         // density
@@ -99,7 +99,8 @@ class CompFlowProblemSedovBlastwave {
     //!   problem
     //! \note The function signature must follow tk::SrcFn
     static tk::SrcFn::result_type
-    src( ncomp_t, tk::real, tk::real, tk::real, tk::real ) {
+    src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real )
+    {
       return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
     }
 
@@ -107,19 +108,18 @@ class CompFlowProblemSedovBlastwave {
     //!   in this PDE system
     //! \param[in,out] conf Set of unique side set IDs to add to
     static void side( std::unordered_set< int >& conf ) {
-      using tag::param; using tag::compflow;
+      using tag::param;
 
-      for (const auto& s : g_inputdeck.get< param, compflow,
-                                            tag::bcextrapolate >())
+      for (const auto& s : g_inputdeck.get< param, eq, tag::bcextrapolate >())
         for (const auto& i : s) conf.insert( std::stoi(i) );
 
-      for (const auto& s : g_inputdeck.get< param, compflow, tag::bcsym >())
+      for (const auto& s : g_inputdeck.get< param, eq, tag::bcsym >())
         for (const auto& i : s) conf.insert( std::stoi(i) );
     }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
-    static std::vector< std::string > fieldNames() {
+    static std::vector< std::string > fieldNames( ncomp_t ) {
       std::vector< std::string > n;
       n.push_back( "density_numerical" );
       //n.push_back( "density_analytical" );
@@ -150,6 +150,7 @@ class CompFlowProblemSedovBlastwave {
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t system,
+                 ncomp_t,
                  ncomp_t offset,
                  tk::real,
                  tk::real /*V*/,
@@ -158,8 +159,7 @@ class CompFlowProblemSedovBlastwave {
                  tk::Fields& U )
     {
       // ratio of specific heats
-      tk::real g =
-        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[system];
+      tk::real g = g_inputdeck.get< tag::param, eq, tag::gamma >()[system];
 
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
@@ -240,7 +240,7 @@ class CompFlowProblemSedovBlastwave {
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
-    static std::vector< std::string > names()
+    static std::vector< std::string > names( ncomp_t )
     { return { "r", "ru", "rv", "rw", "re" }; }
 
     static ctr::ProblemType type() noexcept

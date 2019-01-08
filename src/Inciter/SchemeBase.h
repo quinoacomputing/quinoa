@@ -52,7 +52,8 @@ class SchemeBase {
         proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(bound) );
         fctproxy= CProxy_DistFCT::ckNew(bound);
       } else if (scheme == ctr::SchemeType::DG ||
-                 scheme == ctr::SchemeType::DGP1)
+                 scheme == ctr::SchemeType::DGP1 ||
+                 scheme == ctr::SchemeType::DGP2)
       {
         proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(bound) );
       } else if (scheme == ctr::SchemeType::ALECG) {

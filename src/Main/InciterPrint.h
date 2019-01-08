@@ -64,8 +64,8 @@ class InciterPrint : public tk::Print {
         // Default constructor
         explicit Policies() : phys(), prob() {}
         // Initializer constructor
-        explicit Policies( const std::string& h, const std::string& r ) :
-          phys(h), prob(r) {}
+        explicit Policies( const std::string& p, const std::string& t ) :
+          phys(p), prob(t) {}
         // Operator += for adding up two Policies structs
         Policies& operator+= ( const Policies& p ) {
           phys += p.phys;
@@ -77,7 +77,10 @@ class InciterPrint : public tk::Print {
         {
           Policies copy( p );     // copy policies
           copy.unique();          // get rid of duplicate policies
-          os << "h:" << copy.phys << ", r:" << copy.prob;
+          os << static_cast< char >( kw::physics::info::code::value ) << ':'
+             << copy.phys << ", "
+             << static_cast< char >( kw::problem::info::code::value ) << ':'
+             << copy.prob;
           return os;
         }
 
@@ -88,6 +91,9 @@ class InciterPrint : public tk::Print {
         std::string phys;
         std::string prob;
     };
+
+    //! Print PDE factory legend
+    void eqlegend();
 
     //! Print equation list with policies
     //! \param[in] t Section title
@@ -102,28 +108,13 @@ class InciterPrint : public tk::Print {
         section( t );
         item( "Unique equation types", ntypes );
         item( "With all policy combinations", factory.size() );
-        raw( '\n' );
-        raw( m_item_indent + "Legend: equation name : supported policies\n" );
-        raw( '\n' );
-        raw( m_item_indent + "Policy codes:\n" );
-        static_assert( tk::HasTypedefCode< kw::physics::info >::value,
-                       "Policy code undefined for keyword" );
-        static_assert( tk::HasTypedefCode< kw::problem::info >::value,
-                       "Policy code undefined for keyword" );
-        raw( m_item_indent + " * " + *kw::physics::code() + ": "
-                           + kw::physics::name() + ":\n" );
-        brigand::for_each< ctr::Physics::keywords >( echoPolicies( this ) );
-        raw( m_item_indent + " * " + *kw::problem::code() + ": "
-                           + kw::problem::name() + ":\n" );
-        brigand::for_each< ctr::Problem::keywords >( echoPolicies( this ) );
-        raw( '\n' );
-        // extract eqname and supported policies for output
-        const auto h = ctr::Physics();
+         // extract eqname and supported policies for output
+        const auto p = ctr::Physics();
         const auto r = ctr::Problem();
         std::map< std::string, Policies > eqs;      // eqname : policies
         for (const auto& f : factory)
           eqs[ PDEName( f.first ) ] +=
-            Policies( h.code( f.first.template get< tag::physics >() ),
+            Policies( p.code( f.first.template get< tag::physics >() ),
                       r.code( f.first.template get< tag::problem >() ) );
         // output eqname and supported policies
         for (const auto& e : eqs)

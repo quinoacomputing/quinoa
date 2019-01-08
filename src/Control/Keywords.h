@@ -1739,10 +1739,12 @@ using cfl = keyword< cfl_info, TAOCPP_PEGTL_STRING("cfl") >;
 struct ncomp_info {
   static std::string name() { return "ncomp"; }
   static std::string shortDescription() { return
-    "Set number of scalar components for a system of SDEs"; }
+    "Set number of scalar components for a system of differential equations"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify the number of scalar components of a
-    vector.)";
+    R"(This keyword is used to specify the number of scalar
+    components of a vector. 'ncomp' means "number of components". It is also
+    used for specifying the number of scalar components of a transporter scalar
+    (see also the keywords 'transport').)";
   }
   struct expect {
     using type = std::size_t;
@@ -1751,6 +1753,22 @@ struct ncomp_info {
   };
 };
 using ncomp = keyword< ncomp_info,  TAOCPP_PEGTL_STRING("ncomp") >;
+
+struct nmat_info {
+  static std::string name() { return "nmat"; }
+  static std::string shortDescription() { return
+    "Set number of materials for a system of differential equations"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the number of materials, e.g., for
+    multi-material flow, see also the keyword 'multimat' and 'veleq'.)";
+  }
+  struct expect {
+    using type = std::size_t;
+    static constexpr type lower = 1;
+    static std::string description() { return "uint"; }
+  };
+};
+using nmat = keyword< nmat_info,  TAOCPP_PEGTL_STRING("nmat") >;
 
 struct ttyi_info {
   static std::string name() { return "ttyi"; }
@@ -3776,7 +3794,7 @@ using sedov_blastwave =
   keyword< sedov_blastwave_info, TAOCPP_PEGTL_STRING("sedov_blastwave") >;
 
 struct problem_info {
-  using code = Code< r >;
+  using code = Code< t >;
   static std::string name() { return "Test problem"; }
   static std::string shortDescription() { return
     "Specify problem configuration for a partial differential equation solver";
@@ -3804,7 +3822,7 @@ struct problem_info {
 };
 using problem = keyword< problem_info, TAOCPP_PEGTL_STRING("problem") >;
 
-struct compflow_navierstokes_info {
+struct navierstokes_info {
   using code = Code< N >;
   static std::string name() { return "Navier-Stokes"; }
   static std::string shortDescription() { return "Specify the Navier-Stokes "
@@ -3817,10 +3835,10 @@ struct compflow_navierstokes_info {
     static std::string description() { return "string"; }
   };
 };
-using compflow_navierstokes =
-  keyword< compflow_navierstokes_info, TAOCPP_PEGTL_STRING("navierstokes") >;
+using navierstokes =
+  keyword< navierstokes_info, TAOCPP_PEGTL_STRING("navierstokes") >;
 
-struct compflow_euler_info {
+struct euler_info {
   using code = Code< E >;
   static std::string name() { return "Euler"; }
   static std::string shortDescription() { return "Specify the Euler (inviscid) "
@@ -3833,7 +3851,23 @@ struct compflow_euler_info {
     static std::string description() { return "string"; }
   };
 };
-using compflow_euler = keyword< compflow_euler_info, TAOCPP_PEGTL_STRING("euler") >;
+using euler = keyword< euler_info, TAOCPP_PEGTL_STRING("euler") >;
+
+struct veleq_info {
+  using code = Code< V >;
+  static std::string name() { return "Velocity equilibrium"; }
+  static std::string shortDescription() { return "Specify the multi-material "
+    " compressible flow with velocity equilibrium as physics configuration"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select a compressible flow algorithm as physics
+    configuration designed for multiple materials assuming velocity equailibrium
+    (single velocity). Example: "multimat physics veleq end")";
+    }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using veleq = keyword< veleq_info, TAOCPP_PEGTL_STRING("veleq") >;
 
 struct advection_info {
   using code = Code< A >;
@@ -3866,7 +3900,7 @@ struct advdiff_info {
 using advdiff = keyword< advdiff_info, TAOCPP_PEGTL_STRING("advdiff") >;
 
 struct physics_info {
-  using code = Code< h >;
+  using code = Code< p >;
   static std::string name() { return "Physics configuration"; }
   static std::string shortDescription() { return
     "Specify the physics configuration for a system of PDEs"; }
@@ -3881,8 +3915,8 @@ struct physics_info {
     static std::string choices() {
       return '\'' + advection::string() + "\' | \'"
                   + advdiff::string() + "\' | \'"
-                  + compflow_navierstokes::string() + "\' | \'"
-                  + compflow_euler::string() + '\'';
+                  + navierstokes::string() + "\' | \'"
+                  + euler::string() + '\'';
     }
   };
 };
@@ -4401,7 +4435,7 @@ struct velocityic_info {
 using velocityic = keyword< velocityic_info, TAOCPP_PEGTL_STRING("velocity") >;
 
 struct compflow_info {
-  static std::string name() { return "Compressible flow"; }
+  static std::string name() { return "Compressible single-material flow"; }
   static std::string shortDescription() { return
     "Start configuration block for the compressible flow equations"; }
   static std::string longDescription() { return
@@ -4410,13 +4444,63 @@ struct compflow_info {
     governing compressible fluid flow. Keywords allowed in an compflow ... end
     block: )" + std::string("\'")
     + depvar::string()+ "\', \'"
-    + problem::string() + "\', \'"
     + physics::string() + "\', \'"
+    + problem::string() + "\', \'"
+    + material::string() + "\', \'"
+    + npar::string() + "\', \'"
+    + pde_alpha::string() + "\', \'"
+    + pde_p0::string() + "\', \'"
+    + pde_betax::string() + "\', \'"
+    + pde_betay::string() + "\', \'"
+    + pde_betaz::string() + "\', \'"
+    + pde_beta::string() + "\', \'"
+    + pde_r0::string() + "\', \'"
+    + pde_ce::string() + "\', \'"
+    + pde_kappa::string() + "\', \'"
+    + bc_dirichlet::string() + "\', \'"
+    + bc_sym::string() + "\', \'"
+    + bc_inlet::string() + "\', \'"
+    + bc_outlet::string() + "\', \'"
+    + bc_extrapolate::string() + "\'."
     + R"(For an example compflow ... end block, see
       doc/html/inicter_example_compflow.html.)";
   }
 };
 using compflow = keyword< compflow_info, TAOCPP_PEGTL_STRING("compflow") >;
+
+struct multimat_info {
+  static std::string name() { return "Compressible multi-material flow"; }
+  static std::string shortDescription() { return "Start configuration block "
+    "for the multi-material compressible flow equations"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the multimat ... end block,
+    used to specify the configuration for a system of partial differential
+    equations, governing multi-material compressible fluid flow. Keywords
+    allowed in a multimat ... end block: )" + std::string("\'")
+    + depvar::string()+ "\', \'"
+    + physics::string() + "\', \'"
+    + problem::string() + "\', \'"
+    + material::string() + "\', \'"
+    + nmat::string() + "\', \'"
+    + pde_alpha::string() + "\', \'"
+    + pde_p0::string() + "\', \'"
+    + pde_betax::string() + "\', \'"
+    + pde_betay::string() + "\', \'"
+    + pde_betaz::string() + "\', \'"
+    + pde_beta::string() + "\', \'"
+    + pde_r0::string() + "\', \'"
+    + pde_ce::string() + "\', \'"
+    + pde_kappa::string() + "\', \'"
+    + bc_dirichlet::string() + "\', \'"
+    + bc_sym::string() + "\', \'"
+    + bc_inlet::string() + "\', \'"
+    + bc_outlet::string() + "\', \'"
+    + bc_extrapolate::string() + "\'."
+    + R"(For an example multimat ... end block, see
+      doc/html/inicter_example_multimat.html.)";
+  }
+};
+using multimat = keyword< multimat_info, TAOCPP_PEGTL_STRING("multimat") >;
 
 struct rcb_info {
   static std::string name() { return "recursive coordinate bisection"; }
@@ -4913,12 +4997,25 @@ struct dgp1_info {
     "Select 2nd-order discontinuous Galerkin discretization + Runge-Kutta"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the second-order accurate discontinuous
-    Galerkin, DG(P1), spatial discretiztaion used in Inciter.Selecting this
+    Galerkin, DG(P1), spatial discretiztaion used in Inciter. Selecting this
     spatial discretization also selects the Runge-Kutta scheme for time
     discretization. See Control/Inciter/Options/Scheme.h for other
     valid options.)"; }
 };
 using dgp1 = keyword< dgp1_info, TAOCPP_PEGTL_STRING("dgp1") >;
+
+struct dgp2_info {
+  static std::string name() { return "DG(P2) + RK"; }
+  static std::string shortDescription() { return
+    "Select 3nd-order discontinuous Galerkin discretization + Runge-Kutta"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the third-order accurate discontinuous
+    Galerkin, DG(P2), spatial discretiztaion used in Inciter. Selecting this
+    spatial discretization also selects the Runge-Kutta scheme for time
+    discretization. See Control/Inciter/Options/Scheme.h for other
+    valid options.)"; }
+};
+using dgp2 = keyword< dgp2_info, TAOCPP_PEGTL_STRING("dgp2") >;
 
 struct scheme_info {
   static std::string name() { return "Discretization scheme"; }

@@ -20,7 +20,7 @@ namespace inciter {
 namespace ctr {
 
 //! Problem types
-enum class ProblemType : uint8_t { USER_DEFINED=0,
+enum class ProblemType : uint8_t { USER_DEFINED,
                                    SHEAR_DIFF,
                                    VORTICAL_FLOW,
                                    NL_ENERGY_GROWTH,

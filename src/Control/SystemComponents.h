@@ -239,6 +239,8 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
       template< typename U > void operator()( brigand::type_<U> ) const {
         const auto& depvar = deck.template get< tag::param, U, tag::depvar >();
         const auto& ncomps = deck.template get< tag::component >();
+        Assert( ncomps.template get<U>().size() == depvar.size(),
+                "ncomps != depvar" );
         ncomp_type c = 0;
         for (auto v : depvar) map[ v ] = ncomps.template get< U >().at( c++ );
       }

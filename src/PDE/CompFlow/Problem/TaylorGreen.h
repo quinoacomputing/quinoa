@@ -4,7 +4,7 @@
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Problem configuration for the compressible flow equations
   \details   This file defines a policy class for the compressible flow
-    equations, defined in PDE/CompFlow/CompFlow.h. See PDE/CompFlow/Problems.h
+    equations, defined in PDE/CompFlow/CompFlow.h. See PDE/CompFlow/Problem.h
     for general requirements on Problem policy classes for CompFlow.
 */
 // *****************************************************************************
@@ -31,6 +31,7 @@ class CompFlowProblemTaylorGreen {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
+    using eq = tag::compflow;
     static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
   public:
@@ -49,10 +50,9 @@ class CompFlowProblemTaylorGreen {
       Assert( ncomp == m_ncomp, "Number of scalar components must be " +
                                 std::to_string(m_ncomp) );
       IGNORE(ncomp);
-      using tag::param; using tag::compflow; using std::sin; using std::cos;
+      using tag::param; using std::sin; using std::cos;
       // ratio of specific heats
-      const tk::real g =
-        g_inputdeck.get< param, compflow, tag::gamma >()[system];
+      const tk::real g = g_inputdeck.get< param, eq, tag::gamma >()[system];
       // density
       const tk::real r = 1.0;
       // pressure
@@ -80,7 +80,8 @@ class CompFlowProblemTaylorGreen {
     //! \return Array of reals containing the source for all components
     //! \note The function signature must follow tk::SrcFn
     static tk::SrcFn::result_type
-    src( ncomp_t, tk::real x, tk::real y, tk::real, tk::real ) {
+    src( ncomp_t, ncomp_t, tk::real x, tk::real y, tk::real, tk::real )
+    {
       return {{ 0.0, 0.0, 0.0, 0.0,
         3.0*M_PI/8.0*( cos(3.0*M_PI*x)*cos(M_PI*y) -
                        cos(3.0*M_PI*y)*cos(M_PI*x) ) }};
@@ -90,15 +91,15 @@ class CompFlowProblemTaylorGreen {
     //!   in this PDE system
     //! \param[in,out] conf Set of unique side set IDs to add to
     static void side( std::unordered_set< int >& conf ) {
-      using tag::param; using tag::compflow; using tag::bcdir;
-      for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
+      using tag::param; using tag::bcdir;
+      for (const auto& s : g_inputdeck.get< param, eq, bcdir >())
         for (const auto& i : s)
           conf.insert( std::stoi(i) );
     }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
-    static std::vector< std::string > fieldNames() {
+    static std::vector< std::string > fieldNames( ncomp_t ) {
       std::vector< std::string > n;
       n.push_back( "density_numerical" );
       n.push_back( "density_analytical" );
@@ -130,6 +131,7 @@ class CompFlowProblemTaylorGreen {
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t system,
+                 ncomp_t,
                  ncomp_t offset,
                  tk::real,
                  tk::real V,
@@ -137,16 +139,18 @@ class CompFlowProblemTaylorGreen {
                  const std::array< std::vector< tk::real >, 3 >& coord,
                  tk::Fields& U )
     {
+      // number of degree of freedom
+      const std::size_t ndof =
+        g_inputdeck.get< tag::discr, tag::ndof >();
       // ratio of specific heats
-      tk::real g =
-        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[system];
+      tk::real g = g_inputdeck.get< tag::param, eq, tag::gamma >()[system];
 
       std::vector< std::vector< tk::real > > out;
-      const auto r  = U.extract( 0, offset );
-      const auto ru = U.extract( 1, offset );
-      const auto rv = U.extract( 2, offset );
-      const auto rw = U.extract( 3, offset );
-      const auto re = U.extract( 4, offset );
+      const auto r  = U.extract( 0*ndof, offset );
+      const auto ru = U.extract( 1*ndof, offset );
+      const auto rv = U.extract( 2*ndof, offset );
+      const auto rw = U.extract( 3*ndof, offset );
+      const auto re = U.extract( 4*ndof, offset );
 
       // mesh node coordinates
       const auto& x = coord[0];
@@ -223,7 +227,7 @@ class CompFlowProblemTaylorGreen {
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
-    static std::vector< std::string > names()
+    static std::vector< std::string > names( ncomp_t )
     { return { "r", "ru", "rv", "rw", "re" }; }
 
     static ctr::ProblemType type() noexcept

@@ -85,9 +85,12 @@ Transporter::Transporter() :
   // Re-create partial differential equations stack for output
   PDEStack stack;
 
-  // Print out information on factory
-  m_print.eqlist( "Registered partial differential equations",
-                  stack.factory(), stack.ntypes() );
+  // Print out information on PDE factories
+  m_print.eqlegend();
+  m_print.eqlist( "Registered PDEs using continuous Galerkin (CG) methods",
+                  stack.cgfactory(), stack.cgntypes() );
+  m_print.eqlist( "Registered PDEs using discontinuous Galerkin (DG) methods",
+                  stack.dgfactory(), stack.dgntypes() );
   m_print.endpart();
 
   // Print out information on problem
@@ -117,7 +120,8 @@ Transporter::Transporter() :
     if (fct)
       m_print.item( "FCT mass diffusion coeff",
                     g_inputdeck.get< tag::discr, tag::ctau >() );
-  } else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1) {
+  } else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1 ||
+             scheme == ctr::SchemeType::DGP2) {
     m_print.Item< ctr::Flux, tag::discr, tag::flux >();
   }
   m_print.item( "PE-locality mesh reordering",
@@ -523,7 +527,7 @@ Transporter::diagHeader()
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG)
     for (const auto& eq : g_cgpde) varnames( eq, var );
-  else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1)
+  else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1 || scheme == ctr::SchemeType::DGP2)
     for (const auto& eq : g_dgpde) varnames( eq, var );
   else Throw( "Diagnostics header not handled for discretization scheme" );
 

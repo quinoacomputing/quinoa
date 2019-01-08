@@ -2561,18 +2561,18 @@ void DerivedData_object::test< 58 >() {
   auto esuelTet = tk::genEsuelTet( inpoel,
                                    tk::genEsup(inpoel, 4) );
 
-  // Generate number of total and boundary faces
+  // Generate number of internal and physical-boundary faces
   std::size_t nbfac(48);
-  auto ntfac = tk::genNtfac(4, nbfac, esuelTet);
+  auto nipfac = tk::genNipfac(4, nbfac, esuelTet);
 
   // Generate esuf
-  auto esuf = tk::genEsuf(4, ntfac, nbfac, belem, esuelTet);
+  auto esuf = tk::genEsuf(4, nipfac, nbfac, belem, esuelTet);
 
   // this is more of a test on this test
   ensure_equals( "total number of elems is incorrect",
                  esuelTet.size()/4, 73 );
   ensure_equals( "total number of faces is incorrect",
-                 ntfac, 170 );
+                 nipfac, 170 );
   ensure_equals( "number of boundary faces is incorrect",
                  nbfac, 48 );
 
@@ -2845,9 +2845,9 @@ void DerivedData_object::test< 59 >() {
   auto esuelTet = tk::genEsuelTet( inpoel,
                                     tk::genEsup(inpoel, 4) );
 
-  // Generate number of total and boundary faces
+  // Generate number of internal and physical-boundary faces
   std::size_t nbfac(48);
-  auto ntfac = tk::genNtfac(4, nbfac, esuelTet);
+  auto nipfac = tk::genNipfac(4, nbfac, esuelTet);
 
   std::map< int, std::vector< std::size_t > > bface {
           { { 0 }, {0,
@@ -2954,7 +2954,7 @@ void DerivedData_object::test< 59 >() {
   tk::shiftToZero( triinpoel );
 
   // Generate inpofa
-  auto inpofa = tk::genInpofaTet( ntfac, nbfac, inpoel, triinpoel, esuelTet );
+  auto inpofa = tk::genInpofaTet( nipfac, nbfac, inpoel, triinpoel, esuelTet );
 
   // Generate correct solution for elements surrounding faces
   std::vector< int > correct_inpofa {  24,  1,  9,
@@ -3144,7 +3144,7 @@ void DerivedData_object::test< 60 >() {
   set_test_name( "Face-geometry (genGeoFaceTri) for a tetrahedron" );
 
   // total number of faces
-  std::size_t ntfac(4);
+  std::size_t nipfac(4);
 
   // coordinates of tetrahedron vertices
   tk::UnsMesh::Coords coord {{ {1.0, 0.0, 0.0, 0.0},
@@ -3158,7 +3158,7 @@ void DerivedData_object::test< 60 >() {
                                       2, 3, 0 };
 
   // get face-geometries
-  auto geoFace = tk::genGeoFaceTri( ntfac, inpofa, coord );
+  auto geoFace = tk::genGeoFaceTri( nipfac, inpofa, coord );
 
   // correct face-areas
   std::vector< tk::real > correct_farea { 0.5, 0.5, 0.5, 0.8660254037844389 };
@@ -3177,7 +3177,7 @@ void DerivedData_object::test< 60 >() {
 
   tk::real prec = std::numeric_limits< tk::real >::epsilon();
 
-  for(std::size_t f=0 ; f<ntfac; ++f)
+  for(std::size_t f=0 ; f<nipfac; ++f)
   {
     ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-area",
                     geoFace(f,0,0), correct_farea[f], prec);

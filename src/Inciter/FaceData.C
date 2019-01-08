@@ -60,10 +60,10 @@ FaceData::FaceData(
 
     auto nbfac = tk::sumvalsize( m_bface );
 
-    m_ntfac = tk::genNtfac( 4, nbfac, m_esuel );
-    m_inpofa = tk::genInpofaTet( m_ntfac, nbfac, inpoel, m_triinpoel, m_esuel );
+    m_nipfac = tk::genNipfac( 4, nbfac, m_esuel );
+    m_inpofa = tk::genInpofaTet( m_nipfac, nbfac, inpoel, m_triinpoel, m_esuel );
     m_belem =  tk::genBelemTet( nbfac, m_inpofa, esup );
-    m_esuf = tk::genEsuf( 4, m_ntfac, nbfac, m_belem, m_esuel );
+    m_esuf = tk::genEsuf( 4, m_nipfac, nbfac, m_belem, m_esuel );
 
     Assert( m_belem.size() == nbfac,
            "Number of boundary-elements and number of boundary-faces unequal" );

@@ -98,6 +98,7 @@ namespace grm {
     WRONGGAUSSIAN,      //!< Wrong number of parameters configuring a PDF
     NEGATIVEPARAM,      //!< Negative variance given configuring a Gaussian
     NONCOMP,            //!< No number of components selected
+    NONMAT,             //!< No number of materials selected
     NORNG,              //!< No RNG selected
     NODT,               //!< No time-step-size policy selected
     MULDT,              //!< Multiple time-step-size policies selected
@@ -188,6 +189,9 @@ namespace grm {
     { MsgKey::NONCOMP, "The number of components has not been specified in the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'ncomp' to specify the number of components." },
+    { MsgKey::NONMAT, "The number of materials has not been specified in the "
+      "block preceding this position. This is mandatory for the preceding "
+      "block. Use the keyword 'nmat' to specify the number of materials." },
     { MsgKey::NORNG, "The random number generator has not been specified in "
       "the block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'rng' to specify the random number generator." },

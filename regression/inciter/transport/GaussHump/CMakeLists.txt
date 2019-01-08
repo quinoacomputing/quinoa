@@ -91,6 +91,14 @@ add_regression_test(gauss_hump_dg_u0.5 ${INCITER_EXECUTABLE}
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
 
+add_regression_test(gauss_hump_dg_u0.9 ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES gauss_hump_cube.q unitcube_1k.exo diag_cube.std
+                    ARGS -c gauss_hump_cube.q -i unitcube_1k.exo -v -u 0.9
+                    TEXT_BASELINE diag_cube.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
+
 # Parallel + virtualization + migration
 
 add_regression_test(gauss_hump_dg_u0.9_migr ${INCITER_EXECUTABLE}

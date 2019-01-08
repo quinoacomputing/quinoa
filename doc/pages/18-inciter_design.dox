@@ -2,6 +2,8 @@ namespace inciter {
 /**
   @page      inciter_design Inciter software design
 
+@tableofcontents{xml}
+
 This page discusses the high-level software design and some implementation
 aspects of @ref inciter_main. The discussion roughly follows as execution
 happens in time, from program start to finish. On any of the Charm++ concepts

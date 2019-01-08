@@ -23,7 +23,8 @@ namespace ctr {
 enum class SchemeType : uint8_t { DiagCG
                                 , ALECG
                                 , DG
-                                , DGP1 };
+                                , DGP1 
+                                , DGP2 };
 
 //! Pack/Unpack SchemeType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, SchemeType& e ) { PUP::pup( p, e ); }
@@ -37,6 +38,7 @@ class Scheme : public tk::Toggle< SchemeType > {
                                   , kw::alecg
                                   , kw::dg
                                   , kw::dgp1
+                                  , kw::dgp2
                                   >;
 
     //! \brief Options constructor
@@ -50,21 +52,30 @@ class Scheme : public tk::Toggle< SchemeType > {
         { { SchemeType::DiagCG, kw::diagcg::name() },
           { SchemeType::ALECG, kw::alecg::name() },
           { SchemeType::DG, kw::dg::name() },
-          { SchemeType::DGP1, kw::dgp1::name() } },
+          { SchemeType::DGP1, kw::dgp1::name() },
+          { SchemeType::DGP2, kw::dgp2::name() } },
         //! keywords -> Enums
         { { kw::diagcg::string(), SchemeType::DiagCG },
           { kw::alecg::string(), SchemeType::ALECG },
           { kw::dg::string(), SchemeType::DG },
-          { kw::dgp1::string(), SchemeType::DGP1 } } ) {}
+          { kw::dgp1::string(), SchemeType::DGP1 }, 
+          { kw::dgp2::string(), SchemeType::DGP2 } } ) {}
 
     //! Return scheme centering for SchemeType
     //! \param[in] type Scheme type
     //! \return Mesh centering for scheme type
     tk::Centering centering( SchemeType type ) {
-      if (type == SchemeType::DiagCG || type == SchemeType::ALECG )
+      if ( type == SchemeType::DiagCG ||
+           type == SchemeType::ALECG )
+
         return tk::Centering::NODE;
-      else if (type == SchemeType::DG || type == SchemeType::DGP1)
+
+      else if ( type == SchemeType::DG ||
+                type == SchemeType::DGP1 ||
+                type == SchemeType::DGP2 )
+
         return tk::Centering::ELEM;
+
       else Throw( "No such scheme centering" );
     }
 };

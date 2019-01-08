@@ -4,7 +4,7 @@
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Problem configuration for the compressible flow equations
   \details   This file defines a policy class for the compressible flow
-    equations, defined in PDE/CompFlow/CompFlow.h. See PDE/CompFlow/Problems.h
+    equations, defined in PDE/CompFlow/CompFlow.h. See PDE/CompFlow/Problem.h
     for general requirements on Problem policy classes for CompFlow.
 */
 // *****************************************************************************
@@ -28,6 +28,7 @@ class CompFlowProblemRayleighTaylor {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
+    using eq = tag::compflow;
     static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
   public:
@@ -48,17 +49,17 @@ class CompFlowProblemRayleighTaylor {
       Assert( ncomp == m_ncomp, "Number of scalar components must be " +
                                 std::to_string(m_ncomp) );
       IGNORE(ncomp);
-      using tag::param; using tag::compflow; using std::sin; using std::cos;
+      using tag::param; using std::sin; using std::cos;
       // manufactured solution parameters
-      const auto a = g_inputdeck.get< param, compflow, tag::alpha >()[system];
-      const auto bx = g_inputdeck.get< param, compflow, tag::betax >()[system];
-      const auto by = g_inputdeck.get< param, compflow, tag::betay >()[system];
-      const auto bz = g_inputdeck.get< param, compflow, tag::betaz >()[system];
-      const auto p0 = g_inputdeck.get< param, compflow, tag::p0 >()[system];
-      const auto r0 = g_inputdeck.get< param, compflow, tag::r0 >()[system];
-      const auto k = g_inputdeck.get< param, compflow, tag::kappa >()[system];
+      const auto a = g_inputdeck.get< param, eq, tag::alpha >()[system];
+      const auto bx = g_inputdeck.get< param, eq, tag::betax >()[system];
+      const auto by = g_inputdeck.get< param, eq, tag::betay >()[system];
+      const auto bz = g_inputdeck.get< param, eq, tag::betaz >()[system];
+      const auto p0 = g_inputdeck.get< param, eq, tag::p0 >()[system];
+      const auto r0 = g_inputdeck.get< param, eq, tag::r0 >()[system];
+      const auto k = g_inputdeck.get< param, eq, tag::kappa >()[system];
       // ratio of specific heats
-      const tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[system];
+      const tk::real g = g_inputdeck.get< param, eq, tag::gamma >()[system];
       // spatial component of density and pressure fields
       const tk::real gx = bx*x*x + by*y*y + bz*z*z;
       // density
@@ -106,18 +107,20 @@ class CompFlowProblemRayleighTaylor {
     //! \return Array of reals containing the source for all components
     //! \note The function signature must follow tk::SrcFn
     static tk::SrcFn::result_type
-    src( ncomp_t system, tk::real x, tk::real y, tk::real z, tk::real t ) {
-      using tag::param; using tag::compflow; using std::sin; using std::cos;
+    src( ncomp_t system, ncomp_t, tk::real x, tk::real y, tk::real z,
+         tk::real t )
+    {
+      using tag::param; using std::sin; using std::cos;
 
       // manufactured solution parameters
-      auto a = g_inputdeck.get< param, compflow, tag::alpha >()[system];
-      auto bx = g_inputdeck.get< param, compflow, tag::betax >()[system];
-      auto by = g_inputdeck.get< param, compflow, tag::betay >()[system];
-      auto bz = g_inputdeck.get< param, compflow, tag::betaz >()[system];
-      auto k = g_inputdeck.get< param, compflow, tag::kappa >()[system];
-      auto p0 = g_inputdeck.get< param, compflow, tag::p0 >()[system];
+      auto a = g_inputdeck.get< param, eq, tag::alpha >()[system];
+      auto bx = g_inputdeck.get< param, eq, tag::betax >()[system];
+      auto by = g_inputdeck.get< param, eq, tag::betay >()[system];
+      auto bz = g_inputdeck.get< param, eq, tag::betaz >()[system];
+      auto k = g_inputdeck.get< param, eq, tag::kappa >()[system];
+      auto p0 = g_inputdeck.get< param, eq, tag::p0 >()[system];
       // ratio of specific heats
-      tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[system];
+      tk::real g = g_inputdeck.get< param, eq, tag::gamma >()[system];
 
       // evaluate solution at x,y,z,t
       auto s = solution( system, m_ncomp, x, y, z, t );
@@ -175,15 +178,15 @@ class CompFlowProblemRayleighTaylor {
     //!   in this PDE system
     //! \param[in,out] conf Set of unique side set IDs to add to
     static void side( std::unordered_set< int >& conf ) {
-      using tag::param; using tag::compflow; using tag::bcdir;
-      for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
+      using tag::param; using tag::bcdir;
+      for (const auto& s : g_inputdeck.get< param, eq, bcdir >())
         for (const auto& i : s)
           conf.insert( std::stoi(i) );
     }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
-    static std::vector< std::string > fieldNames() {
+    static std::vector< std::string > fieldNames( ncomp_t ) {
       std::vector< std::string > n;
       n.push_back( "density_numerical" );
       n.push_back( "x-velocity_numerical" );
@@ -219,6 +222,7 @@ class CompFlowProblemRayleighTaylor {
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t system,
+                 ncomp_t,
                  ncomp_t offset,
                  tk::real t,
                  tk::real V,
@@ -227,8 +231,7 @@ class CompFlowProblemRayleighTaylor {
                  tk::Fields& U )
     {
       // ratio of specific heats
-      tk::real g =
-        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[system];
+      tk::real g = g_inputdeck.get< tag::param, eq, tag::gamma >()[system];
 
       std::vector< std::vector< tk::real > > out;
       auto r = U.extract( 0, offset );
@@ -298,7 +301,7 @@ class CompFlowProblemRayleighTaylor {
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
-    static std::vector< std::string > names()
+    static std::vector< std::string > names( ncomp_t )
     { return { "r", "ru", "rv", "rw", "re" }; }
 
     static ctr::ProblemType type() noexcept
