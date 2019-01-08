@@ -17,10 +17,12 @@
 
 #include "ConfigureTransport.h"
 #include "ConfigureCompFlow.h"
+#include "ConfigureMultiMat.h"
 
 using inciter::PDEStack;
 
-PDEStack::PDEStack() : m_cgfactory(), m_dgfactory(), m_eqTypes()
+PDEStack::PDEStack() : m_cgfactory(), m_dgfactory(),
+                       m_cgEqTypes(), m_dgEqTypes()
 // *****************************************************************************
 //  Constructor: register all partial differential equations into factory
 //! \details This constructor consists of several blocks, each registering a
@@ -93,8 +95,9 @@ PDEStack::PDEStack() : m_cgfactory(), m_dgfactory(), m_eqTypes()
 //!   purposes.
 // *****************************************************************************
 {
-  registerTransport( m_cgfactory, m_dgfactory, m_eqTypes );
-  registerCompFlow( m_cgfactory, m_dgfactory, m_eqTypes );
+  registerTransport( m_cgfactory, m_dgfactory, m_cgEqTypes, m_dgEqTypes );
+  registerCompFlow( m_cgfactory, m_dgfactory, m_cgEqTypes, m_dgEqTypes );
+  registerMultiMat( m_dgfactory, m_dgEqTypes );
 }
 
 std::vector< inciter::CGPDE >
@@ -144,6 +147,8 @@ PDEStack::selectedDG() const
         pdes.push_back( createDG< tag::transport >( d, cnt ) );
       else if (d == ctr::PDEType::COMPFLOW)
         pdes.push_back( createDG< tag::compflow >( d, cnt ) );
+      else if (d == ctr::PDEType::MULTIMAT)
+        pdes.push_back( createDG< tag::multimat >( d, cnt ) );
       else Throw( "Can't find selected DGPDE" );
     }
 
@@ -169,6 +174,8 @@ PDEStack::info() const
       nfo.emplace_back( infoTransport( cnt ) );
     else if (d == ctr::PDEType::COMPFLOW)
       nfo.emplace_back( infoCompFlow( cnt ) );
+    else if (d == ctr::PDEType::MULTIMAT)
+      nfo.emplace_back( infoMultiMat( cnt ) );
     else Throw( "Can't find selected PDE" );
   }
 

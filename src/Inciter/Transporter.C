@@ -89,9 +89,12 @@ Transporter::Transporter() :
   // Re-create partial differential equations stack for output
   PDEStack stack;
 
-  // Print out information on factory
-  m_print.eqlist( "Registered partial differential equations",
-                  stack.factory(), stack.ntypes() );
+  // Print out information on PDE factories
+  m_print.eqlegend();
+  m_print.eqlist( "Registered PDEs using continuous Galerkin (CG) methods",
+                  stack.cgfactory(), stack.cgntypes() );
+  m_print.eqlist( "Registered PDEs using discontinuous Galerkin (DG) methods",
+                  stack.dgfactory(), stack.dgntypes() );
   m_print.endpart();
 
   // Print out information on problem

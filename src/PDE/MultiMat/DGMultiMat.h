@@ -1,16 +1,16 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/CompFlow/DGCompFlow.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Compressible single-material flow using discontinuous Galerkin
-     finite elements
+  \file      src/PDE/MultiMat/DGMultiMat.h
+  \copyright Los Alamos National Security, LLC.
+  \brief     Compressible multi-material flow using discontinuous Galerkin
+    finite elements
   \details   This file implements calls to the physics operators governing
-    compressible single-material flow using discontinuous Galerkin
+    compressible multi-material flow using discontinuous Galerkin
     discretizations.
 */
 // *****************************************************************************
-#ifndef DGCompFlow_h
-#define DGCompFlow_h
+#ifndef MultiMatDG_h
+#define MultiMatDG_h
 
 #include <cmath>
 #include <algorithm>
@@ -38,19 +38,20 @@ extern ctr::InputDeck g_inputdeck;
 
 namespace dg {
 
-//! \brief CompFlow used polymorphically with tk::DGPDE
+//! \brief MultiMat used polymorphically with tk::DGPDE
 //! \details The template arguments specify policies and are used to configure
 //!   the behavior of the class. The policies are:
-//!   - Physics - physics configuration, see PDE/CompFlow/Physics.h
-//!   - Problem - problem configuration, see PDE/CompFlow/Problem.h
-//! \note The default physics is Euler, set in inciter::deck::check_compflow()
+//!   - Physics - physics configuration, see PDE/MultiMat/Physics.h
+//!   - Problem - problem configuration, see PDE/MultiMat/Problem.h
+//! \note The default physics is velocity equilibrium (veleq), set in
+//!   inciter::deck::check_multimat()
 template< class Physics, class Problem >
-class CompFlow {
+class MultiMat {
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
     using bcconf_t = kw::sideset::info::expect::type;
-    using eq = tag::compflow;
+    using eq = tag::multimat;
 
     //! Extract BC configuration ignoring if BC not specified
     //! \param[in] c Equation system index (among multiple systems configured)
@@ -72,7 +73,7 @@ class CompFlow {
   public:
     //! Constructor
     //! \param[in] c Equation system index (among multiple systems configured)
-    explicit CompFlow( ncomp_t c ) :
+    explicit MultiMat( ncomp_t c ) :
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
@@ -81,8 +82,6 @@ class CompFlow {
       m_bcdir( config< tag::bcdir >( c ) ),
       m_bcsym( config< tag::bcsym >( c ) ),
       m_bcextrapolate( config< tag::bcextrapolate >( c ) )
-      //ErrChk( !m_bcdir.empty() || !m_bcsym.empty() || !m_bcextrapolate.empty(),
-      //        "Boundary conditions not set in control file for DG CompFlow" );
     {}
 
     //! Initalize the compressible flow equations, prepare for time integration
@@ -132,9 +131,9 @@ class CompFlow {
 
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
-      Assert( U.nprop() == ndof*5 && R.nprop() == ndof*5,
+      Assert( U.nprop() == ndof*m_ncomp && R.nprop() == ndof*m_ncomp,
               "Number of components in solution and right-hand side vector "
-              "must equal "+ std::to_string(ndof*5) );
+              "must equal "+ std::to_string(ndof*m_ncomp) );
       Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
               "size" );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
@@ -144,11 +143,8 @@ class CompFlow {
       R.fill(0.0);
 
       // configure Riemann flux function
-      auto rieflxfn =
-       [this]( const std::array< tk::real, 3 >& fn,
-               const std::array< std::vector< tk::real >, 2 >& u,
-               const std::vector< std::array< tk::real, 3 > >& v )
-             { return m_riemann.flux( fn, u, v ); };
+      using namespace std::placeholders;
+      auto rieflxfn = std::bind( &RiemannSolver::flux, m_riemann, _1, _2, _3 );
       // configure a no-op lambda for prescribed velocity
       auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real ){
         return std::vector< std::array< tk::real, 3 > >( this->m_ncomp ); };
@@ -159,57 +155,38 @@ class CompFlow {
         { m_bcsym, Symmetry },
         { m_bcextrapolate, Extrapolate } }};
 
-      switch(ndof)
-      {
-        case 1:       // DG(P0)
-          // compute internal surface flux integrals
-          tk::surfIntP0( m_system, m_ncomp, m_offset, fd, geoFace, rieflxfn,
-                         velfn, U, R );
-          // compute source term intehrals
-          tk::srcIntP0( m_system, m_ncomp, m_offset,
-                        t, geoElem, Problem::src, R );
-          // compute boundary surface flux integrals
-          for (const auto& b : bctypes)
-            tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, fd,
-                              geoFace, t, rieflxfn, velfn, b.second, U, R );
-          break;
+      if (ndof == 1) {  // DG(P0)
 
-        case 4:       // DG(P1)
-          // compute internal surface flux integrals
-          tk::surfIntP1( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                         rieflxfn, velfn, U, limFunc, R );
-          // compute source term intehrals
-          tk::srcIntP1( m_system, m_ncomp, m_offset,
-                        t, inpoel, coord, geoElem, Problem::src, R );
-          // compute volume integrals
-          tk::volIntP1( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
-                        velfn, U, limFunc, R );
-          // compute boundary surface flux integrals
-          for (const auto& b : bctypes)
-            tk::sidesetIntP1( m_system, m_ncomp, m_offset, b.first, fd, geoFace, inpoel, 
-                              coord, t, rieflxfn, velfn, b.second, U, limFunc, R );
-          break;
+        // compute internal surface flux integrals
+        tk::surfIntP0( m_system, m_ncomp, m_offset, fd, geoFace, rieflxfn,
+                       velfn, U, R );
+        // compute source term intehrals
+        tk::srcIntP0( m_system, m_ncomp, m_offset,
+                      t, geoElem, Problem::src, R );
+        // compute boundary surface flux integrals
+        for (const auto& b : bctypes)
+          tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, fd,
+            geoFace, t, rieflxfn, velfn, b.second, U, R );
 
-        case 10:      // DG(P2)
-          // compute internal surface flux integrals
-          tk::surfIntP2( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                         rieflxfn, velfn, U, R );
-          // compute source term intehrals
-          tk::srcIntP2( m_system, m_ncomp, m_offset, 
-                        t, inpoel, coord, geoElem, Problem::src, R );
-          // compute volume integrals
-          tk::volIntP2( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
-                        velfn, U, R );
-          // compute boundary surface flux integrals
-          for (const auto& b : bctypes)
-            tk::sidesetIntP2( m_system, m_ncomp, m_offset, b.first, fd, geoFace, inpoel,
-                              coord, t, rieflxfn, velfn, b.second, U, R );
-          break;
+      } else if (ndof == 4) {  // DG(P1)
 
-        default:
-          Throw( "dg::Compflow::rhs() not defined for NDOF=" +
+        // compute internal surface flux integrals
+        tk::surfIntP1( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
+                       rieflxfn, velfn, U, limFunc, R );
+        // compute source term intehrals
+        tk::srcIntP1( m_system, m_ncomp, m_offset,
+                      t, inpoel, coord, geoElem, Problem::src, R );
+        // compute volume integrals
+        tk::volIntP1( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
+                      velfn, U, limFunc, R );
+        // compute boundary surface flux integrals
+        for (const auto& b : bctypes)
+          tk::sidesetIntP1( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
+            inpoel, coord, t, rieflxfn, velfn, b.second, U, limFunc, R );
+
+      } else
+        Throw( "dg::Compflow::rhs() not defined for NDOF=" +
                std::to_string(ndof) );
-      }
     }
 
     //! Compute the minimum time step size
@@ -328,7 +305,7 @@ class CompFlow {
           std::array< std::vector< tk::real >, 2 > ugp;
 
           // left element
-          for (ncomp_t c=0; c<5; ++c)
+          for (ncomp_t c=0; c<m_ncomp; ++c)
           {
             auto mark = c*ndof;
             auto lmark = c*(ndof-1);
@@ -480,8 +457,8 @@ class CompFlow {
       coord[1] = geoElem.extract(2,0);
       coord[2] = geoElem.extract(3,0);
 
-      return Problem::fieldOutput( m_system, m_ncomp, m_offset, t, 0.0, v,
-                                   coord, U );
+      return Problem::fieldOutput( m_system, m_ncomp, m_offset, t,
+                                   0.0, v, coord, U );
     }
 
     //! Return nodal field output going to file
@@ -654,6 +631,8 @@ class CompFlow {
       fl[3][2] = ugp[3] * w + p;
       fl[4][2] = w * (ugp[4] + p);
 
+      // NEED TO RETURN m_ncomp flux vectors in fl, not 5
+
       return fl;
     }
 
@@ -728,4 +707,4 @@ class CompFlow {
 
 } // inciter::
 
-#endif // DGCompFlow_h
+#endif // MultiMatDG_h
