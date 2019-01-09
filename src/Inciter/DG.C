@@ -80,8 +80,6 @@ DG::DG( const CProxy_Discretization& disc, const FaceData& fd ) :
 //     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
 //                                         "DG" );
 
-  usesAtSync = true;    // Enable migration at AtSync
-
   auto d = Disc();
 
   const auto& gid = d->Gid();
@@ -1371,7 +1369,7 @@ DG::eval()
 
     // If neither max iterations nor max time reached, continue, otherwise finish
     if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
-      AtSync();   // Migrate here if needed
+      d->AtSync();   // Migrate here if needed
       contribute( sizeof(tk::real), &fdt, CkReduction::nop,
                   CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
     } else {

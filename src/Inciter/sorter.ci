@@ -12,6 +12,8 @@ module sorter {
 
   include "Callback.h";
 
+  extern module meshwriter;
+
   namespace inciter {
 
     array [1D] Sorter {

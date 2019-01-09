@@ -66,9 +66,6 @@ ALECG::ALECG( const CProxy_Discretization& disc, const FaceData& fd ) :
 // *****************************************************************************
 //! [Constructor]
 {
-  //! Enable migration at AtSync
-  usesAtSync = true;
-
   // Size communication buffers
   resizeComm();
 
@@ -575,7 +572,7 @@ ALECG::eval()
 
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
-    AtSync();   // Migrate here if needed
+    d->AtSync();   // Migrate here if needed
     dt();
   } else {
     contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );

@@ -167,7 +167,8 @@ class Discretization : public CBase_Discretization {
     //! Output chare element blocks to output file
     void writeMesh( const std::map< int, std::vector< std::size_t > >& bface,
                     const std::vector< std::size_t >& triinpoel,
-                    const std::map< int, std::vector< std::size_t > >& bnode ) const;
+                    const std::map< int, std::vector< std::size_t > >& bnode )
+      const;
 
     //! Output mesh fields metadata to file
     void writeMeta( const std::vector< std::string >& names,

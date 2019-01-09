@@ -12,7 +12,7 @@
 
 void PUP::pup( PUP::er &p, AMR::Refinement_State& s )
 // *****************************************************************************
-//  Pack/Unpack Edge_Refinement
+//  Pack/Unpack Refinement_State
 //! \param[in] p Charm++'s pack/unpack object
 //! \param[in,out] s Refinement_State object reference
 // *****************************************************************************

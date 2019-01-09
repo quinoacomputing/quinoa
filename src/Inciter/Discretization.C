@@ -110,7 +110,9 @@ Discretization::Discretization(
   // compute node. In SMP mode, channeling multiple files via a single PE on
   // each node is required by NetCDF and HDF5, as well as ExodusII, since none
   // of these libraries are thread-safe.
-  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].expect( m_nchare );
+  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].ckLocalBranch()->
+  //m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
+    expect( m_nchare );
 
   contribute( CkCallback(CkReductionTarget(Transporter,disccreated),
               m_transporter) );
@@ -418,7 +420,8 @@ Discretization::writeMesh(
 //!   thread-safe.
 // *****************************************************************************
 {
-  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
+  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].ckLocalBranch()->
+  //m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
     writeMesh( m_itr, thisIndex, m_inpoel, m_coord,
                bface, triinpoel, bnode, m_lid );
 }
@@ -446,7 +449,8 @@ Discretization::writeMeta( const std::vector< std::string>& names,
 //!   thread-safe.
 // *****************************************************************************
 {
-  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
+  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].ckLocalBranch()->
+  //m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
     writeMeta( m_itr, thisIndex, centering, names );
 }
 
@@ -479,7 +483,8 @@ Discretization::writeFields(
   if (std::abs(m_lastDumpTime - m_t) > eps ) {
     m_lastDumpTime = m_t;
     ++m_itf;
-    m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
+    m_meshwriter[ CkNodeFirst( CkMyNode() ) ].ckLocalBranch()->
+    //m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
       writeFields( m_itr, m_itf, m_t, thisIndex, centering, fields );
   }
 }

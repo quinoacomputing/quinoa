@@ -50,7 +50,7 @@ class SchemeBase {
       bound.bindTo( discproxy );
       if (scheme == ctr::SchemeType::DiagCG) {
         proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(bound) );
-        fctproxy= CProxy_DistFCT::ckNew(bound);
+        fctproxy = CProxy_DistFCT::ckNew(bound);
       } else if (scheme == ctr::SchemeType::DG ||
                  scheme == ctr::SchemeType::DGP1 ||
                  scheme == ctr::SchemeType::DGP2)

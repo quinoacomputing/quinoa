@@ -11,6 +11,8 @@ module transporter {
 
   include "Types.h";
 
+  extern module meshwriter;
+
   namespace inciter {
 
     chare Transporter {

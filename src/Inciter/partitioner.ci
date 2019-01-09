@@ -18,6 +18,7 @@ module partitioner {
 
   extern module transporter;
   extern module refiner;
+  extern module meshwriter;
 
   namespace inciter {
 

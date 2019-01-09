@@ -76,8 +76,6 @@ DiagCG::DiagCG( const CProxy_Discretization& disc, const FaceData& fd ) :
 //     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
 //                                         Disc()->It(), "DiagCG" );
 
-  usesAtSync = true;    // Enable migration at AtSync
-
   // Size communication buffers
   resizeComm();
 }
@@ -143,7 +141,7 @@ DiagCG::setup( tk::real v )
   for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
 
   // Output chare mesh to file
-  d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode());
+  d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode() );
 
   // Output fields metadata to output file
   std::vector< std::string > names;
@@ -723,7 +721,7 @@ DiagCG::eval()
 
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
-    AtSync();   // Migrate here if needed
+    d->AtSync();   // Migrate here if needed
     dt();
   } else {
     contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
