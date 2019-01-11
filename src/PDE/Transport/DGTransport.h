@@ -150,33 +150,50 @@ class Transport {
         { m_bcoutlet, Outlet },
         { m_bcdir, Dirichlet } }};
 
-      if (ndof == 1) {  // DG(P0)
+      switch(ndof)
+      {
+        case 1:           //DG(P0)
+          // compute internal surface flux integrals
+          tk::surfIntP0( m_system, m_ncomp, m_offset, fd, geoFace, Upwind::flux,
+                         Problem::prescribedVelocity, U, R );
+          // compute boundary surface flux integrals
+          for (const auto& b : bctypes)
+            tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
+              t, Upwind::flux, Problem::prescribedVelocity, b.second, U, R );
+          break;
+ 
+        case 4:          //DG(P1)
+          // compute internal surface flux integrals
+          tk::surfIntP1( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
+                       Upwind::flux, Problem::prescribedVelocity, U, limFunc, R );
+          // compute volume integrals
+          tk::volIntP1( m_system, m_ncomp, m_offset, inpoel, coord, geoElem,
+                        flux, Problem::prescribedVelocity, U, limFunc, R );
+          // compute boundary surface flux integrals
+          for (const auto& b : bctypes)
+            tk::sidesetIntP1( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
+              inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
+              b.second, U, limFunc, R );
+          break;
 
-        // compute internal surface flux integrals
-        tk::surfIntP0( m_system, m_ncomp, m_offset, fd, geoFace, Upwind::flux,
-                       Problem::prescribedVelocity, U, R );
-        // compute boundary surface flux integrals
-        for (const auto& b : bctypes)
-          tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
-            t, Upwind::flux, Problem::prescribedVelocity, b.second, U, R );
+        case 10:        //DG(P2)
+          // compute internal surface flux integrals
+          tk::surfIntP2( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
+                       Upwind::flux, Problem::prescribedVelocity, U, R );
+          // compute volume integrals
+          tk::volIntP2( m_system, m_ncomp, m_offset, inpoel, coord, geoElem,
+                        flux, Problem::prescribedVelocity, U, R );
+          // compute boundary surface flux integrals
+          for (const auto& b : bctypes)
+            tk::sidesetIntP2( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
+              inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
+              b.second, U, R );
+          break;
 
-      } else if (ndof == 4) {  // DG(P1)
-
-        // compute internal surface flux integrals
-        tk::surfIntP1( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                     Upwind::flux, Problem::prescribedVelocity, U, limFunc, R );
-        // compute volume integrals
-        tk::volIntP1( m_system, m_ncomp, m_offset, inpoel, coord, geoElem,
-                      flux, Problem::prescribedVelocity, U, limFunc, R );
-        // compute boundary surface flux integrals
-        for (const auto& b : bctypes)
-          tk::sidesetIntP1( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
-            inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
-            b.second, U, limFunc, R );
-
-      } else
-        Throw( "dg::Transport::rhs() not defined for NDOF=" +
-               std::to_string(ndof) );
+        default:
+          Throw( "dg::Transport::rhs() not defined for NDOF=" +
+                 std::to_string(ndof) );
+      }
     }
 
     //! Compute the minimum time step size
