@@ -23,46 +23,22 @@ namespace tk {
 using ncomp_t = kw::ncomp::info::expect::type;
 using bcconf_t = kw::sideset::info::expect::type;
 
-//! Compute internal surface flux integrals for DG(P0)
+//! Compute internal surface flux integrals for DG
 void
-surfIntP0( ncomp_t system,
-           ncomp_t ncomp,
-           ncomp_t offset,
-           const inciter::FaceData& fd,
-           const Fields& geoFace,
-           const RiemannFluxFn& flux,
-           const VelFn& vel,
-           const Fields& U,
-           Fields& R );
-
-//! Compute internal surface flux integrals for DG(P1)
-void
-surfIntP1( ncomp_t system,
-           ncomp_t ncomp,
-           ncomp_t offset,
-           const std::vector< std::size_t >& inpoel,
-           const UnsMesh::Coords& coord,
-           const inciter::FaceData& fd,
-           const Fields& geoFace,
-           const RiemannFluxFn& flux,
-           const VelFn& vel,
-           const Fields& U,
-           const Fields& limFunc,
-           Fields& R );
-
-//! Compute internal surface flux integrals for DG(P2)
-void
-surfIntP2( ncomp_t system,
-           ncomp_t ncomp,
-           ncomp_t offset,
-           const std::vector< std::size_t >& inpoel,
-           const UnsMesh::Coords& coord,
-           const inciter::FaceData& fd,
-           const Fields& geoFace,
-           const RiemannFluxFn& flux,
-           const VelFn& vel,
-           const Fields& U,
-           Fields& R );
+surfInt( ncomp_t system,
+         ncomp_t ncomp,
+         ncomp_t offset,
+         const std::vector< real >& coordgp,
+         const real wgp,
+         const std::vector< std::size_t >& inpoel,
+         const UnsMesh::Coords& coord,
+         const inciter::FaceData& fd,
+         const Fields& geoFace,
+         const RiemannFluxFn& flux,
+         const VelFn& vel,
+         const Fields& U,
+         const Fields& limFunc,
+         Fields& R );
 
 } // tk::
 

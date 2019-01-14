@@ -150,12 +150,48 @@ class Transport {
         { m_bcoutlet, Outlet },
         { m_bcdir, Dirichlet } }};
 
+      // Number of integration points
+      std::size_t NGfa;
+
       switch(ndof)
       {
         case 1:           //DG(P0)
-          // compute internal surface flux integrals
-          tk::surfIntP0( m_system, m_ncomp, m_offset, fd, geoFace, Upwind::flux,
-                         Problem::prescribedVelocity, U, R );
+          NGfa = 1;
+          break;
+
+        case 4:           //DG(P1)
+          NGfa = 3;
+          break;
+
+        case 10:          //DG(P2)
+          NGfa = 6;
+          break;
+
+        default:
+          Throw( "dg::Compflow::rhs() not defined for NDOF=" +
+               std::to_string(ndof) );
+      }
+
+      // arrays for quadrature points for face integration
+      std::vector< std::vector< tk::real > > coordgpfa;
+      std::vector< tk::real > wgpfa;
+      coordgpfa.resize( NGfa, std::vector< tk::real >(2) );
+      wgpfa.resize(NGfa);
+
+      // get quadrature point weights and coordinates for triangle
+      tk::GaussQuadratureTri( NGfa, coordgpfa, wgpfa );
+
+      // compute internal surface flux integrals
+      for (std::size_t igp=0; igp<NGfa; ++igp)
+      {
+        tk::surfInt( m_system, m_ncomp, m_offset, coordgpfa[igp], wgpfa[igp], 
+          inpoel, coord, fd, geoFace, Upwind::flux, Problem::prescribedVelocity, 
+          U, limFunc, R );
+      }
+
+      switch(ndof)
+      {
+        case 1:           //DG(P0)
           // compute boundary surface flux integrals
           for (const auto& b : bctypes)
             tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
@@ -163,9 +199,6 @@ class Transport {
           break;
  
         case 4:          //DG(P1)
-          // compute internal surface flux integrals
-          tk::surfIntP1( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                       Upwind::flux, Problem::prescribedVelocity, U, limFunc, R );
           // compute volume integrals
           tk::volIntP1( m_system, m_ncomp, m_offset, inpoel, coord, geoElem,
                         flux, Problem::prescribedVelocity, U, limFunc, R );
@@ -177,9 +210,6 @@ class Transport {
           break;
 
         case 10:        //DG(P2)
-          // compute internal surface flux integrals
-          tk::surfIntP2( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                       Upwind::flux, Problem::prescribedVelocity, U, R );
           // compute volume integrals
           tk::volIntP2( m_system, m_ncomp, m_offset, inpoel, coord, geoElem,
                         flux, Problem::prescribedVelocity, U, R );

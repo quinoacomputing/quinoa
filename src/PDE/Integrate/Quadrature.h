@@ -11,6 +11,7 @@
 #define Quadrature_h
 
 #include <array>
+#include <vector>
 
 #include "Types.h"
 
@@ -36,21 +37,11 @@ void
 GaussQuadratureTet( std::array< std::array< real, 4 >, 3 >& coordgp,
                     std::array< real, 4 >& wgp );
 
-//! Six Gaussian quadrature points locations and weights for a triangle
+//! Initialize Gaussian quadrature points locations and weights for a triangle
 void
-GaussQuadratureTri( std::array< std::array< real, 6 >, 2 >& coordgp,
-                    std::array< real, 6 >& wgp );
-
-//! Four Gaussian quadrature points locations and weights for a triangle
-void
-GaussQuadratureTri( std::array< std::array< real, 4 >, 2 >& coordgp,
-                    std::array< real, 4 >& wgp );
-
-//! Three Gaussian quadrature points locations and weights for a triangle
-void
-GaussQuadratureTri( std::array< std::array< real, 3 >, 2 >& coordgp,
-                    std::array< real, 3 >& wgp );
-
+GaussQuadratureTri( std::size_t NG,
+                    std::vector< std::vector< real > >& coordgp,
+                    std::vector< real >& wgp );
 } // tk::
 
 #endif // Quadrature_h

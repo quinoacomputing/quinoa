@@ -164,8 +164,10 @@ tk::bndSurfIntP1( ncomp_t system,
   constexpr std::size_t NG = 3;
 
   // arrays for quadrature points
-  std::array< std::array< real, NG >, 2 > coordgp;
-  std::array< real, NG > wgp;
+  std::vector< std::vector< tk::real > > coordgp;
+  std::vector< tk::real > wgp;
+  coordgp.resize( NG, std::vector< tk::real >(2) );
+  wgp.resize(NG);
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -174,7 +176,7 @@ tk::bndSurfIntP1( ncomp_t system,
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
 
   // get quadrature point weights and coordinates for triangle
-  GaussQuadratureTri( coordgp, wgp );
+  GaussQuadratureTri( NG, coordgp, wgp );
 
   for (const auto& f : faces) {
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
@@ -216,9 +218,9 @@ tk::bndSurfIntP1( ncomp_t system,
     for (std::size_t igp=0; igp<NG; ++igp)
     {
       // Barycentric coordinates for the triangular face
-      auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];
-      auto shp2 = coordgp[0][igp];
-      auto shp3 = coordgp[1][igp];
+      auto shp1 = 1.0 - coordgp[igp][0] - coordgp[igp][1];
+      auto shp2 = coordgp[igp][0];
+      auto shp3 = coordgp[igp][1];
 
       // transformation of the quadrature point from the 2D reference/master
       // element to physical domain, to obtain its physical (x,y,z)
@@ -365,8 +367,10 @@ tk::bndSurfIntP2( ncomp_t system,
   constexpr std::size_t NG = 6;
 
   // arrays for quadrature points
-  std::array< std::array< real, NG >, 2 > coordgp;
-  std::array< real, NG > wgp;
+  std::vector< std::vector< tk::real > > coordgp;
+  std::vector< tk::real > wgp;
+  coordgp.resize( NG, std::vector< tk::real >(2) );
+  wgp.resize(NG);
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -375,7 +379,7 @@ tk::bndSurfIntP2( ncomp_t system,
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
 
   // get quadrature point weights and coordinates for triangle
-  GaussQuadratureTri( coordgp, wgp );
+  GaussQuadratureTri( NG, coordgp, wgp );
 
   for (const auto& f : faces) {
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
@@ -417,9 +421,9 @@ tk::bndSurfIntP2( ncomp_t system,
     for (std::size_t igp=0; igp<NG; ++igp)
     {
       // Barycentric coordinates for the triangular face
-      auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];
-      auto shp2 = coordgp[0][igp];
-      auto shp3 = coordgp[1][igp];
+      auto shp1 = 1.0 - coordgp[igp][0] - coordgp[igp][1];
+      auto shp2 = coordgp[igp][0];
+      auto shp3 = coordgp[igp][1];
 
       // transformation of the quadrature point from the 2D reference/master
       // element to physical domain, to obtain its physical (x,y,z)
