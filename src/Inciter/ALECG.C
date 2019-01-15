@@ -134,17 +134,6 @@ ALECG::setup( tk::real v )
 
   //! [init and lhs]
 
-  // Output chare mesh to file
-  d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode());
-
-  // Output fields metadata to output file
-  std::vector< std::string > names;
-  for (const auto& eq : g_cgpde) {
-    auto n = eq.fieldNames();
-    names.insert( end(names), begin(n), end(n) );
-  }
-  d->writeMeta( names, tk::Centering::NODE );
-
   // Output initial conditions to file (regardless of whether it was requested)
   writeFields();
 }
@@ -400,29 +389,24 @@ ALECG::writeFields()
 {
   auto d = Disc();
 
-  // Collect node field output
+  // Query and collect field names from PDEs integrated
+  std::vector< std::string > names;
+  for (const auto& eq : g_cgpde) {
+    auto n = eq.fieldNames();
+    names.insert( end(names), begin(n), end(n) );
+  }
+
+  // Collect node field solution
   auto u = m_u;
-  std::vector< std::vector< tk::real > > output;
+  std::vector< std::vector< tk::real > > fields;
   for (const auto& eq : g_cgpde) {
     auto o = eq.fieldOutput( d->T(), m_vol, d->Coord(), d->V(), u );
-    output.insert( end(output), begin(o), end(o) );
+    fields.insert( end(fields), begin(o), end(o) );
   }
 
-  // if the previous iteration refined the mesh, start by writing the mesh
-  if (d->Itf() == 1) {
-    // Output chare mesh to file
-    d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode() );
-
-    // Output fields metadata to output file
-    std::vector< std::string > names;
-    for (const auto& eq : g_cgpde) {
-      auto n = eq.fieldNames();
-      names.insert( end(names), begin(n), end(n) );
-    }
-    d->writeMeta( names, tk::Centering::NODE );
-  }
-
-  d->writeFields( output, tk::Centering::NODE );
+  // Send mesh and fields data (solution dump) for output to file
+  d->write( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode(), names, fields,
+            tk::Centering::NODE );
 }
 
 void
@@ -433,14 +417,15 @@ ALECG::out()
 {
   auto d = Disc();
 
-  if ( !((d->It()) % g_inputdeck.get< tag::interval, tag::field >()) )
-    writeFields();
-
-  // Output final field data to file (regardless of whether it was requested)
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  if ( (std::fabs(d->T()-term) < eps || d->It() >= nstep ) )
+  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
+
+  // Output field data to file if field iteration count is reached or in the
+  // last time step
+  if ( !((d->It()) % fieldfreq) ||
+       (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
     writeFields();
 }
 

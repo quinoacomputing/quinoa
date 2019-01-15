@@ -56,20 +56,31 @@ MeshWriter::nchare( int n )
 }
 
 void
-MeshWriter::writeMesh(
+MeshWriter::write(
+  bool meshoutput,
+  bool fieldoutput,
   uint64_t itr,
+  uint64_t itf,
+  tk::real time,
   int chareid,
+  Centering centering,
   const std::vector< std::size_t >& inpoel,
   const UnsMesh::Coords& coord,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::vector< std::size_t >& triinpoel,
   const std::map< int, std::vector< std::size_t > >& bnode,
-  const std::unordered_map< std::size_t, std::size_t >& lid )
+  const std::unordered_map< std::size_t, std::size_t >& lid,
+  const std::vector< std::string >& names,
+  const std::vector< std::vector< tk::real > >& fields )
 // *****************************************************************************
 //  Output unstructured mesh into file
 //! \param[in] itr Iteration count since a new mesh (New mesh in this context
 //!   means, either the mesh is moved and/or its topology has changed
+//! \param[in] itf Field output iteration count
+//! \param[in] time Physical time this at this field output dump
 //! \param[in] chareid The chare id the write-to-file request is coming from
+//! \param[in] centering The centering that will be associated to the field data
+//!   to be output when writeFields is called next
 //! \param[in] inpoel Mesh connectivity for the mesh chunk to be written
 //! \param[in] coord Node coordinates of the mesh chunk to be written
 //! \param[in] bface Map of boundary-face lists mapped to corresponding side set
@@ -79,22 +90,23 @@ MeshWriter::writeMesh(
 //! \param[in] bnode Map of boundary-node lists mapped to corresponding side set
 //!   ids for this mesh chunk
 //! \param[in] lid Global->local node id map for the mesh chunk to be written
+//! \param[in] names Names of fields to be output in next call to writeFields()
+//! \param[in] fields Field data to output to file
 // *****************************************************************************
 {
-  if (!m_benchmark) {
+  auto f = filename( itr, chareid );
 
-    auto f = filename( itr, chareid );
-  
+  if (meshoutput) {
     #ifdef HAS_ROOT
     if (m_filetype == ctr::FieldFileType::ROOT) {
   
       RootMeshWriter rmw( f, 0 );
       rmw.writeMesh( UnsMesh( inpoel, coord ) );
+      rmw.writeNodeVarNames( names );
   
     } else
     #endif
     if (m_filetype == ctr::FieldFileType::EXODUSII) {
-      // Create ExodusII writer
       ExodusIIMeshWriter ew( f, ExoWriter::CREATE );
       // Write chare mesh (do not write side sets in parallel)
       if (m_nchare == 1) {
@@ -115,104 +127,29 @@ MeshWriter::writeMesh(
         ew.writeMesh( inpoel, coord );
   
       }
-    }
-
-  }
-}
-
-void
-MeshWriter::writeMeta( uint64_t itr,
-                       int chareid,
-                       Centering centering,
-                       const std::vector< std::string >& names )
-// *****************************************************************************
-//  Output metadata (field names) to file
-//! \param[in] itr Iteration count since a new mesh (New mesh in this context
-//!   means, either the mesh is moved and/or its topology has changed
-//! \param[in] chareid The chare id the write-to-file request is coming from
-//! \param[in] centering The centering that will be associated to the field data
-//!   to be output when writeFields is called next
-//! \param[in] names Names of fields to be output in next call to writeFields()
-// *****************************************************************************
-{
-  if (!m_benchmark) {
-
-    auto f = filename( itr, chareid );
-  
-    // Write field names
-    #ifdef HAS_ROOT
-    if (m_filetype == ctr::FieldFileType::ROOT) {
-   
-      // Create ROOT writer
-      RootMeshWriter rmw( f, 1 );
-      // Write node field names
-      rmw.writeNodeVarNames( names );
-  
-    } else
-    #endif
-    if (m_filetype == ctr::FieldFileType::EXODUSII) {
-  
-      // Create ExodusII writer
-      ExodusIIMeshWriter ew( f, ExoWriter::OPEN );
-  
       // Write field names
       if (centering == Centering::ELEM)
         ew.writeElemVarNames( names );
       else if (centering == Centering::NODE)
         ew.writeNodeVarNames( names );
-  
     }
-
   }
-}
 
-void
-MeshWriter::writeFields( uint64_t itr,
-                         uint64_t itf,
-                         tk::real time,
-                         int chareid,
-                         Centering centering,
-                         const std::vector< std::vector< tk::real > >& fields )
-// *****************************************************************************
-//  Output field data to file
-//! \param[in] itr Iteration count since a new mesh (New mesh in this context
-//!   means, either the mesh is moved and/or its topology has changed
-//! \param[in] itf Field output iteration count
-//! \param[in] time Physical time this at this field output dump
-//! \param[in] chareid The chare id the write-to-file request is coming from
-//! \param[in] centering The centering that will be associated to the field data
-//!   to be output when writeFields is called next
-//! \param[in] fields Field data to output to file
-// *****************************************************************************
-{
-  if (!m_benchmark) {
-
-std::cout << "wr: " << thisIndex << ", " << CkMyNode() << ", " << CkMyPe() << ": " << time << std::endl;
-
-    auto f = filename( itr, chareid );
-  
-    // Write field names
+  if (fieldoutput) {
     #ifdef HAS_ROOT
     if (m_filetype == ctr::FieldFileType::ROOT) {
-   
-      // Create ROOT writer
+ 
       RootMeshWriter rw( f, 1 );
-      // Write time stamp
       rw.writeTimeStamp( itf, time );
-      // Write node fields
       int varid = 0;
       for (const auto& v : fields) rw.writeNodeScalar( itf, ++varid, v );
-  
+
     } else
     #endif
     if (m_filetype == ctr::FieldFileType::EXODUSII) {
-  
-      // Create ExodusII writer
+    
       ExodusIIMeshWriter ew( f, ExoWriter::OPEN );
-      // Write time stamp
       ew.writeTimeStamp( itf, time );
-  
-      // Write fields
       if (centering == Centering::ELEM) {
         int varid = 0;
         for (const auto& v : fields) ew.writeElemScalar( itf, ++varid, v );
@@ -220,9 +157,8 @@ std::cout << "wr: " << thisIndex << ", " << CkMyNode() << ", " << CkMyPe() << ":
         int varid = 0;
         for (const auto& v : fields) ew.writeNodeScalar( itf, ++varid, v );
       }
-  
+    
     }
-
   }
 }
 

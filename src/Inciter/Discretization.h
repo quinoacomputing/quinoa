@@ -164,20 +164,6 @@ class Discretization : public CBase_Discretization {
     Psup() { return m_psup; }
     //@}
 
-    //! Output chare element blocks to output file
-    void writeMesh( const std::map< int, std::vector< std::size_t > >& bface,
-                    const std::vector< std::size_t >& triinpoel,
-                    const std::map< int, std::vector< std::size_t > >& bnode )
-      const;
-
-    //! Output mesh fields metadata to file
-    void writeMeta( const std::vector< std::string >& names,
-                    tk::Centering centering ) const;
-
-    //! Output mesh fields to file
-    void writeFields( const std::vector< std::vector< tk::real > >& fields,
-                      tk::Centering centering );
-
     //! Set time step size
     void setdt( tk::real newdt );
 
@@ -186,6 +172,14 @@ class Discretization : public CBase_Discretization {
 
     //! Otput one-liner status report
     void status();
+
+    //! Output mesh and fields data (solution dump) to file(s)
+    void write( const std::map< int, std::vector< std::size_t > >& bface,
+                const std::vector< std::size_t >& triinpoel,
+                const std::map< int, std::vector< std::size_t > >& bnode,
+                const std::vector< std::string >& names,
+                const std::vector< std::vector< tk::real > >& fields,
+                tk::Centering centering );
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

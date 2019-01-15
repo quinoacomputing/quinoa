@@ -375,73 +375,22 @@ Discretization::stat()
 }
 
 void
-Discretization::writeMesh(
+Discretization::write(
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::vector< std::size_t >& triinpoel,
-  const std::map< int, std::vector< std::size_t > >& bnode ) const
+  const std::map< int, std::vector< std::size_t > >& bnode,
+  const std::vector< std::string>& names,
+  const std::vector< std::vector< tk::real > >& fields,
+  tk::Centering centering )
 // *****************************************************************************
-// Output chare mesh to file
+//  Output mesh and fields data (solution dump) to file(s)
 //! \param[in] bface Map of boundary-face lists mapped to corresponding side set
 //!   ids for this mesh chunk
 //! \param[in] triinpoel Interconnectivity of points and boundary-face in this
 //!   mesh chunk
 //! \param[in] bnode Map of boundary-node lists mapped to corresponding side set
 //!   ids for this mesh chunk
-//! \details Since m_meshwriter is a Charm++ chare group, it never migrates and
-//!   an instance is guaranteed on every PE. We index the first PE on every
-//!   logical compute node. In Charm++'s non-SMP mode, a node is the same as a
-//!   PE, so the index is the same as CkMyPe(). In SMP mode the index is the
-//!   first PE on every logical node. In non-SMP mode this yields one or more
-//!   output files per PE with zero or non-zero virtualization, respectively. If
-//!   there are multiple chares on a PE, the writes are serialized per PE, since
-//!   only a single entry method call can be executed at any given time. In SMP
-//!   mode, still the same number of files are output (one per chare), but the
-//!   output is serialized through the first PE of each compute node. In SMP
-//!   mode, channeling multiple files via a single PE on each node is required
-//!   by NetCDF and HDF5, as well as ExodusII, since none of these libraries are
-//!   thread-safe.
-// *****************************************************************************
-{
-  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].ckLocalBranch()->
-  //m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
-    writeMesh( m_itr, thisIndex, m_inpoel, m_coord,
-               bface, triinpoel, bnode, m_lid );
-}
-
-void
-Discretization::writeMeta( const std::vector< std::string>& names,
-                           tk::Centering centering ) const
-// *****************************************************************************
-//  Output mesh fields metadata to file
 //! \param[in] names Field output names to output
-//! \param[in] centering The centering that will be associated to the field data
-//!   to be output when writeFields is called next
-//! \details Since m_meshwriter is a Charm++ chare group, it never migrates and
-//!   an instance is guaranteed on every PE. We index the first PE on every
-//!   logical compute node. In Charm++'s non-SMP mode, a node is the same as a
-//!   PE, so the index is the same as CkMyPe(). In SMP mode the index is the
-//!   first PE on every logical node. In non-SMP mode this yields one or more
-//!   output files per PE with zero or non-zero virtualization, respectively. If
-//!   there are multiple chares on a PE, the writes are serialized per PE, since
-//!   only a single entry method call can be executed at any given time. In SMP
-//!   mode, still the same number of files are output (one per chare), but the
-//!   output is serialized through the first PE of each compute node. In SMP
-//!   mode, channeling multiple files via a single PE on each node is required
-//!   by NetCDF and HDF5, as well as ExodusII, since none of these libraries are
-//!   thread-safe.
-// *****************************************************************************
-{
-  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].ckLocalBranch()->
-  //m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
-    writeMeta( m_itr, thisIndex, centering, names );
-}
-
-void
-Discretization::writeFields(
-  const std::vector< std::vector< tk::real > >& fields,
-  tk::Centering centering )
-// *****************************************************************************
-//  Output mesh fields to file
 //! \param[in] fields Mesh field output dump
 //! \param[in] centering The centering that will be associated to the field data
 //!   to be output when writeFields is called next
@@ -460,15 +409,23 @@ Discretization::writeFields(
 //!   thread-safe.
 // *****************************************************************************
 {
-  auto eps = std::numeric_limits< tk::real >::epsilon();
+  // If the previous iteration refined (or moved) the mesh or this is
+  // this is called before the first time step, we also output the mesh.
+  bool meshoutput = m_itf == 0 ? true : false;
 
+  auto eps = std::numeric_limits< tk::real >::epsilon();
+  bool fieldoutput = false;
+
+  // Output field data only if there is no dump at this physical time yet
   if (std::abs(m_lastDumpTime - m_t) > eps ) {
     m_lastDumpTime = m_t;
     ++m_itf;
-    m_meshwriter[ CkNodeFirst( CkMyNode() ) ].ckLocalBranch()->
-    //m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
-      writeFields( m_itr, m_itf, m_t, thisIndex, centering, fields );
+    fieldoutput = true;
   }
+
+  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].ckLocalBranch()->
+    write( meshoutput, fieldoutput, m_itr, m_itf, m_t, thisIndex, centering,
+           m_inpoel, m_coord, bface, triinpoel, bnode, m_lid, names, fields );
 }
 
 void

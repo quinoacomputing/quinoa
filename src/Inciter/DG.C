@@ -867,68 +867,36 @@ DG::setup( tk::real v )
   tk::destroy(m_msumset);
 
   auto d = Disc();
-  const auto& esuel = m_fd.Esuel();
 
   // Store total mesh volume
   m_vol = v;
 
-  // Extract ghost data from inpoel and coord for writing the mesh
-  auto& inpoel = d->Inpoel();
-  std::vector< std::size_t > inpoelg;
-  for (auto e=esuel.size()/4; e<inpoel.size()/4; ++e)
-    for (std::size_t i=0; i<4; ++i)
-      inpoelg.push_back( inpoel[4*e+i] );
-  inpoel.resize(esuel.size());
-
-  auto& coord = d->Coord();
-  std::array< std::vector< tk::real >, 3 > coordg;
-  for (auto ip=m_ncoord; ip<coord[0].size(); ++ip)
-    for (std::size_t i=0; i<3; ++i)
-      coordg[i].push_back( coord[i][ip] );
-  for (std::size_t i=0; i<3; ++i)
-    coord[i].resize( m_ncoord );
-
-  // Output chare mesh to file
-  d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode() );
-
-  // Restore coord and inpoel with ghost data
-  std::move( begin(inpoelg), end(inpoelg), std::back_inserter(inpoel) );
-  for (std::size_t i=0; i<3; ++i)
-    std::move( begin(coordg[i]), end(coordg[i]), std::back_inserter(coord[i]) );
-
   // Basic error checking on sizes of element geometry data and connectivity
   Assert( m_geoElem.nunk() == m_lhs.nunk(), "Size mismatch in DG::setup()" );
-  Assert( inpoel.size()/4 == m_lhs.nunk(), "Size mismatch in DG::setup()" );
+  Assert( d->Inpoel().size()/4 == m_lhs.nunk(),
+          "Size mismatch in DG::setup()" );
 
   // Compute left-hand side of discrete PDEs
   lhs();
 
   // Set initial conditions for all PDEs
   for (const auto& eq : g_dgpde) 
-    eq.initialize( m_lhs, inpoel, coord, m_u, d->T() );
+    eq.initialize( m_lhs, d->Inpoel(), d->Coord(), m_u, d->T() );
   m_un = m_u;
 
-  for (std::size_t e=0; e<esuel.size()/4; ++e)
+  for (std::size_t e=0; e<m_fd.Esuel().size()/4; ++e)
     for (std::size_t c=0; c<m_limFunc.nprop(); ++c)
       m_limFunc(e,c,0)=1.0;
-
-  // Output fields metadata to output file
-  std::vector< std::string > names;
-  for (const auto& eq : g_dgpde) {
-    auto n = eq.fieldNames();
-    names.insert( end(names), begin(n), end(n) );
-  }
-  d->writeMeta( names, tk::Centering::ELEM );
 
   // Output initial conditions to file (regardless of whether it was requested)
   writeFields();
 
-  // Start timer measuring time stepping wall clock time
-  d->Timer().zero();
-
   // Enable SDAG wait for building the solution vector
   thisProxy[ thisIndex ].wait4sol();
   thisProxy[ thisIndex ].wait4lim();
+
+  // Start timer measuring time stepping wall clock time
+  d->Timer().zero();
 
   // Start time stepping
   advance( 0.0 );
@@ -1062,30 +1030,60 @@ DG::writeFields()
 // Output mesh-based fields to file
 // *****************************************************************************
 {
-
   auto d = Disc();
- 
-  // Collect element field output
-  std::vector< std::vector< tk::real > > output;
+
+  const auto& esuel = m_fd.Esuel();
+
+  // Extract ghost data from inpoel and coord for writing the mesh
+  auto& inpoel = d->Inpoel();
+  std::vector< std::size_t > inpoelg;
+  for (auto e=esuel.size()/4; e<inpoel.size()/4; ++e)
+    for (std::size_t i=0; i<4; ++i)
+      inpoelg.push_back( inpoel[4*e+i] );
+  inpoel.resize(esuel.size());
+
+  auto& coord = d->Coord();
+  std::array< std::vector< tk::real >, 3 > coordg;
+  for (auto ip=m_ncoord; ip<coord[0].size(); ++ip)
+    for (std::size_t i=0; i<3; ++i)
+      coordg[i].push_back( coord[i][ip] );
+  for (std::size_t i=0; i<3; ++i)
+    coord[i].resize( m_ncoord );
+
+  // Query fields names from all PDEs integrated
+  std::vector< std::string > names;
+  for (const auto& eq : g_dgpde) {
+    auto n = eq.fieldNames();
+    names.insert( end(names), begin(n), end(n) );
+  }
+
+  // Collect element field solution
+  std::vector< std::vector< tk::real > > fields;
   auto u = m_u;
   for (const auto& eq : g_dgpde) {
     auto o =
       eq.fieldOutput( m_lhs, d->Inpoel(), d->Coord(), d->T(), m_geoElem, u );
     // cut off ghost elements
-    const auto& esuel = m_fd.Esuel();
-    for (auto& f : o) f.resize( esuel.size()/4 );
-    output.insert( end(output), begin(o), end(o) );
+    for (auto& field : o) field.resize( esuel.size()/4 );
+    fields.insert( end(fields), begin(o), end(o) );
   }
- 
-  // // Collect node field output
+
+  // // Collect node field solution
   // std::vector< std::vector< tk::real > > nodefields;
   // for (const auto& eq : g_dgpde) {
-  //   auto output =
+  //   auto fields =
   //     eq.avgElemToNode( d->Inpoel(), d->Coord(), m_geoElem, m_limFunc, m_u );
-  //   nodefields.insert( end(nodefields), begin(output), end(output) );
+  //   nodefields.insert( end(nodefields), begin(fields), end(fields) );
   // }
- 
-  d->writeFields( output, tk::Centering::ELEM );
+
+  // Output chare mesh and fields metadata to file
+  d->write( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode(), names, fields,
+            tk::Centering::ELEM );
+
+  // Restore coord and inpoel with ghost data
+  std::move( begin(inpoelg), end(inpoelg), std::back_inserter(inpoel) );
+  for (std::size_t i=0; i<3; ++i)
+    std::move( begin(coordg[i]), end(coordg[i]), std::back_inserter(coord[i]) );
 }
 
 void
@@ -1096,14 +1094,15 @@ DG::out()
 {
   auto d = Disc();
 
-  if ( !((d->It()) % g_inputdeck.get< tag::interval, tag::field >()) )
-    writeFields();
-  
-  // Output final field data to file (regardless of whether it was requested)
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  if ( (std::fabs(d->T()-term) < eps || d->It() >= nstep ) )
+  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
+
+  // Output field data to file if field iteration count is reached or in the
+  // last time step
+  if ( !((d->It()) % fieldfreq) ||
+       (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
     writeFields();
 }
 

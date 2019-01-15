@@ -40,28 +40,21 @@ class MeshWriter : public CBase_MeshWriter {
     void nchare( int n );
 
     //! Output unstructured mesh into file
-    void writeMesh( uint64_t itr,
-                    int chareid,
-                    const std::vector< std::size_t >& inpoel,
-                    const UnsMesh::Coords& coord,
-                    const std::map< int, std::vector< std::size_t > >& bface,
-                    const std::vector< std::size_t >& triinpoel,
-                    const std::map< int, std::vector< std::size_t > >& bnode,
-                    const std::unordered_map< std::size_t, std::size_t >& lid );
-
-    //! Output metadata (field names) to file
-    void writeMeta( uint64_t itr,
-                    int chareid,
-                    Centering centering,
-                    const std::vector< std::string >& names );
-
-    //! Output field data to file
-    void writeFields( uint64_t itr,
-                      uint64_t itf,
-                      tk::real time,
-                      int chareid,
-                      Centering centering,
-                      const std::vector< std::vector< tk::real > >& fields );
+    void write( bool meshoutput,
+                bool fieldoutput,
+                uint64_t itr,
+                uint64_t itf,
+                tk::real time,
+                int chareid,
+                Centering centering,
+                const std::vector< std::size_t >& inpoel,
+                const UnsMesh::Coords& coord,
+                const std::map< int, std::vector< std::size_t > >& bface,
+                const std::vector< std::size_t >& triinpoel,
+                const std::map< int, std::vector< std::size_t > >& bnode,
+                const std::unordered_map< std::size_t, std::size_t >& lid,
+                const std::vector< std::string >& names,
+                const std::vector< std::vector< tk::real > >& fields );
 
   private:
     //! String to use as the base of the filename
