@@ -232,7 +232,7 @@ namespace AMR {
                         {
                             // Abort this face
                             num_face_refine_edges = 0;
-                            continue;
+                            break;
                         }
                     }
                     if (num_face_refine_edges >= 2)
