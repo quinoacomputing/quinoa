@@ -46,13 +46,13 @@ MeshWriter::MeshWriter( const std::string& output_basefilename,
 }
 
 void
-MeshWriter::expect( int nchare )
+MeshWriter::nchare( int n )
 // *****************************************************************************
 //  Set the total number of chares
-//! \param[in] nchare Total number of chares across the whole problem
+//! \param[in] n Total number of chares across the whole problem
 // *****************************************************************************
 {
-  m_nchare = nchare;
+  m_nchare = n;
 }
 
 void

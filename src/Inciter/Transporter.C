@@ -339,6 +339,9 @@ Transporter::load( uint64_t nelem, uint64_t npoin )
 
   m_print.endsubsection();
 
+  // Tell meshwriter the total number of chares
+  m_meshwriter.nchare( m_nchare );
+
   // Query number of initial mesh refinement steps
   int nref = 0;
   if (g_inputdeck.get< tag::amr, tag::t0ref >())

@@ -37,7 +37,7 @@ class MeshWriter : public CBase_MeshWriter {
                 bool benchmark );
 
     //! Set the total number of chares
-    void expect( int nchare );
+    void nchare( int n );
 
     //! Output unstructured mesh into file
     void writeMesh( uint64_t itr,

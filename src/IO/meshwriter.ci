@@ -25,7 +25,7 @@ module meshwriter {
                         Centering bnd_centering,
                         bool benchmark );
 
-      entry [sync] void expect( int nchare );
+      entry void nchare( int n );
 
       entry [sync] void writeMesh(
         uint64_t itr,

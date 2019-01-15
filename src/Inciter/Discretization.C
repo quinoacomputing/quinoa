@@ -96,24 +96,6 @@ Discretization::Discretization(
     m_fct[ thisIndex ].insert( m_nchare, m_gid.size(), nprop,
                                m_msum, m_bid, m_lid, m_inpoel );
 
-  // Tell the mesh writer the total number of chares. This is used to compute
-  // the filename. Since m_meshwriter is a Charm++ chare group, it never
-  // migrates and an instance is guaranteed on every PE. We index the first PE
-  // on every logical compute node. In Charm++'s non-SMP mode, a node is the
-  // same as a PE, so the index is the same as CkMyPe(). In SMP mode the index
-  // is the first PE on every logical node. In non-SMP mode this yields one or
-  // more output files per PE with zero or non-zero virtualization,
-  // respectively. If there are multiple chares on a PE, the writes are
-  // serialized per PE, since only a single entry method call can be executed
-  // at any given time. In SMP mode, still the same number of files are output
-  // (one per chare), but the output is serialized through the first PE of each
-  // compute node. In SMP mode, channeling multiple files via a single PE on
-  // each node is required by NetCDF and HDF5, as well as ExodusII, since none
-  // of these libraries are thread-safe.
-  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].ckLocalBranch()->
-  //m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
-    expect( m_nchare );
-
   contribute( CkCallback(CkReductionTarget(Transporter,disccreated),
               m_transporter) );
 }
