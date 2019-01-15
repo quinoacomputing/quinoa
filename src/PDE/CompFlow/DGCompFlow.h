@@ -161,7 +161,7 @@ class CompFlow {
 
       // Number of integration points
       std::size_t NGfa;
-      
+
       switch(ndof)
       {
         case 1:           //DG(P0)
@@ -186,17 +186,17 @@ class CompFlow {
       std::vector< tk::real > wgpfa;
       coordgpfa.resize( NGfa, std::vector< tk::real >(2) );
       wgpfa.resize(NGfa);
-      
+
       // get quadrature point weights and coordinates for triangle
       tk::GaussQuadratureTri( NGfa, coordgpfa, wgpfa );
 
-      // compute internal surface flux integrals      
+      // compute internal surface flux integrals
       for (std::size_t igp=0; igp<NGfa; ++igp)
       {
         tk::surfInt( m_system, m_ncomp, m_offset, coordgpfa[igp], wgpfa[igp],
                      inpoel, coord, fd, geoFace, rieflxfn, velfn, U, limFunc, R );
       }
-      
+
       switch(ndof)
       {
         case 1:       // DG(P0)
@@ -272,7 +272,7 @@ class CompFlow {
       std::vector< tk::real > wgp;
       coordgp.resize( NG, std::vector< tk::real >(2) );
       wgp.resize(NG);
-      
+
       tk::real rho, u, v, w, rhoE, p, a, vn, dSV_l, dSV_r;
       std::vector< tk::real > delt( U.nunk(), 0.0 );
 

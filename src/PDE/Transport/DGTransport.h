@@ -184,8 +184,8 @@ class Transport {
       // compute internal surface flux integrals
       for (std::size_t igp=0; igp<NGfa; ++igp)
       {
-        tk::surfInt( m_system, m_ncomp, m_offset, coordgpfa[igp], wgpfa[igp], 
-          inpoel, coord, fd, geoFace, Upwind::flux, Problem::prescribedVelocity, 
+        tk::surfInt( m_system, m_ncomp, m_offset, coordgpfa[igp], wgpfa[igp],
+          inpoel, coord, fd, geoFace, Upwind::flux, Problem::prescribedVelocity,
           U, limFunc, R );
       }
 

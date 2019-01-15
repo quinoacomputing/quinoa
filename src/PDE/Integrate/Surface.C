@@ -62,8 +62,8 @@ tk::surfInt( ncomp_t system,
   const auto& cy = coord[1];
   const auto& cz = coord[2];
 
-  real B2l, B3l, B4l, B5l, B6l, B7l, B8l, B9l, B10l;
-  real B2r, B3r, B4r, B5r, B6r, B7r, B8r, B9r, B10r;
+  real B2l(0), B3l(0), B4l(0), B5l(0), B6l(0), B7l(0), B8l(0), B9l(0), B10l(0);
+  real B2r(0), B3r(0), B4r(0), B5r(0), B6r(0), B7r(0), B8r(0), B9r(0), B10r(0);
 
   // compute internal surface flux integrals
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
@@ -73,6 +73,30 @@ tk::surfInt( ncomp_t system,
 
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
     std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+
+    auto x1 = cx[ inpofa[3*f]   ];
+    auto y1 = cy[ inpofa[3*f]   ];
+    auto z1 = cz[ inpofa[3*f]   ];
+
+    auto x2 = cx[ inpofa[3*f+1] ];
+    auto y2 = cy[ inpofa[3*f+1] ];
+    auto z2 = cz[ inpofa[3*f+1] ];
+
+    auto x3 = cx[ inpofa[3*f+2] ];
+    auto y3 = cy[ inpofa[3*f+2] ];
+    auto z3 = cz[ inpofa[3*f+2] ];
+
+    // Barycentric coordinates for the triangular face
+    auto shp1 = 1.0 - coordgp[0] - coordgp[1];
+    auto shp2 = coordgp[0];
+    auto shp3 = coordgp[1];
+
+    // transformation of the quadrature point from the 2D reference/master
+    // element to physical domain, to obtain its physical (x,y,z)
+    // coordinates.
+    std::array< real, 3 > gp{{ x1*shp1 + x2*shp2 + x3*shp3,
+                               y1*shp1 + y2*shp2 + y3*shp3,
+                               z1*shp1 + z2*shp2 + z3*shp3 }};
 
     if(ndof > 1)        //DG(P1) or DG(P2)
     {
@@ -108,30 +132,6 @@ tk::surfInt( ncomp_t system,
 
       auto detT_l = Jacobian( p1_l, p2_l, p3_l, p4_l );
       auto detT_r = Jacobian( p1_r, p2_r, p3_r, p4_r );
-
-      auto x1 = cx[ inpofa[3*f]   ];
-      auto y1 = cy[ inpofa[3*f]   ];
-      auto z1 = cz[ inpofa[3*f]   ];
-
-      auto x2 = cx[ inpofa[3*f+1] ];
-      auto y2 = cy[ inpofa[3*f+1] ];
-      auto z2 = cz[ inpofa[3*f+1] ];
-
-      auto x3 = cx[ inpofa[3*f+2] ];
-      auto y3 = cy[ inpofa[3*f+2] ];
-      auto z3 = cz[ inpofa[3*f+2] ];
-
-      // Barycentric coordinates for the triangular face
-      auto shp1 = 1.0 - coordgp[0] - coordgp[1];
-      auto shp2 = coordgp[0];
-      auto shp3 = coordgp[1];
-
-      // transformation of the quadrature point from the 2D reference/master
-      // element to physical domain, to obtain its physical (x,y,z)
-      // coordinates.
-      std::array< real, 3 > gp{{ x1*shp1 + x2*shp2 + x3*shp3,
-                                 y1*shp1 + y2*shp2 + y3*shp3,
-                                 z1*shp1 + z2*shp2 + z3*shp3 }};
 
       // The basis functions chosen for the DG method are the Dubiner
       // basis, which are Legendre polynomials modified for tetrahedra,
@@ -206,7 +206,7 @@ tk::surfInt( ncomp_t system,
         auto eta_eta_r = eta_r * eta_r;
         auto eta_zeta_r = eta_r * zeta_r;
         auto zeta_zeta_r = zeta_r * zeta_r;
-        
+
         B5r = 6.0 * xi_xi_r + eta_eta_r + zeta_zeta_r
             + 6.0 * xi_eta_r + 6.0 * xi_zeta_r + 2.0 * eta_zeta_r
             - 6.0 * xi_r - 2.0 * eta_r - 2.0 * zeta_r + 1.0;
@@ -221,88 +221,88 @@ tk::surfInt( ncomp_t system,
             - 7.0 * zeta_r + 1.0;
         B10r = 15.0 * zeta_zeta_r - 10.0 * zeta_r + 1.0;
       }
+    }
 
-      auto wt = wgp * geoFace(f,0,0);
+    auto wt = wgp * geoFace(f,0,0);
 
-      std::array< std::vector< real >, 2 >
-          state{{ std::vector< real >( ncomp, 0.0 ),
-                std::vector< real >( ncomp, 0.0 ) }};
+    std::array< std::vector< real >, 2 >
+        state{{ std::vector< real >( ncomp, 0.0 ),
+              std::vector< real >( ncomp, 0.0 ) }};
 
-      for (ncomp_t c=0; c<ncomp; ++c)
+    for (ncomp_t c=0; c<ncomp; ++c)
+    {
+      auto mark = c*ndof;
+      state[0][c] = U( el, mark, offset );
+      state[1][c] = U( er, mark, offset );
+
+      if(ndof > 1)        //DG(P1)
       {
-        auto mark = c*ndof;
-        state[0][c] = U( el, mark, offset );
-        state[1][c] = U( er, mark, offset );
+        auto lmark = c*(ndof-1);
+        state[0][c] += limFunc( el, lmark  , 0 ) * U( el, mark+1, offset ) * B2l
+                     + limFunc( el, lmark+1, 0 ) * U( el, mark+2, offset ) * B3l
+                     + limFunc( el, lmark+2, 0 ) * U( el, mark+3, offset ) * B4l;
 
-        if(ndof > 1)        //DG(P1)
-        {
-          auto lmark = c*(ndof-1);
-          state[0][c] += limFunc( el, lmark  , 0 ) * U( el, mark+1, offset ) * B2l
-                       + limFunc( el, lmark+1, 0 ) * U( el, mark+2, offset ) * B3l
-                       + limFunc( el, lmark+2, 0 ) * U( el, mark+3, offset ) * B4l;
-
-          state[1][c] += limFunc( er, lmark  , 0 ) * U( er, mark+1, offset ) * B2r
-                       + limFunc( er, lmark+1, 0 ) * U( er, mark+2, offset ) * B3r
-                       + limFunc( er, lmark+2, 0 ) * U( er, mark+3, offset ) * B4r;
-        }
-
-        if(ndof > 4)        //DG(P2)
-        {
-          state[0][c] += U( el, mark+4, offset ) * B5l
-                       + U( el, mark+5, offset ) * B6l
-                       + U( el, mark+6, offset ) * B7l
-                       + U( el, mark+7, offset ) * B8l
-                       + U( el, mark+8, offset ) * B9l
-                       + U( el, mark+9, offset ) * B10l;
-
-          state[1][c] += U( er, mark+4, offset ) * B5r
-                       + U( er, mark+5, offset ) * B6r
-                       + U( er, mark+6, offset ) * B7r
-                       + U( er, mark+7, offset ) * B8r
-                       + U( er, mark+8, offset ) * B9r
-                       + U( er, mark+9, offset ) * B10r;
-        }
+        state[1][c] += limFunc( er, lmark  , 0 ) * U( er, mark+1, offset ) * B2r
+                     + limFunc( er, lmark+1, 0 ) * U( er, mark+2, offset ) * B3r
+                     + limFunc( er, lmark+2, 0 ) * U( er, mark+3, offset ) * B4r;
       }
 
-      // evaluate prescribed velocity (if any)
-      auto v = vel( system, ncomp, gp[0], gp[1], gp[2] );
-      // compute flux
-      auto fl =
-         flux( {{geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0)}}, state, v );
-      
-      for (ncomp_t c=0; c<ncomp; ++c)
+      if(ndof > 4)        //DG(P2)
       {
-        auto mark = c*ndof;
-        R(el, mark, offset) -= wt * fl[c];
-        R(er, mark, offset) += wt * fl[c];
+        state[0][c] += U( el, mark+4, offset ) * B5l
+                     + U( el, mark+5, offset ) * B6l
+                     + U( el, mark+6, offset ) * B7l
+                     + U( el, mark+7, offset ) * B8l
+                     + U( el, mark+8, offset ) * B9l
+                     + U( el, mark+9, offset ) * B10l;
 
-        if(ndof > 1)          //DG(P1)
-        {
-          R(el, mark+1, offset) -= wt * fl[c] * B2l;
-          R(el, mark+2, offset) -= wt * fl[c] * B3l;
-          R(el, mark+3, offset) -= wt * fl[c] * B4l;
+        state[1][c] += U( er, mark+4, offset ) * B5r
+                     + U( er, mark+5, offset ) * B6r
+                     + U( er, mark+6, offset ) * B7r
+                     + U( er, mark+7, offset ) * B8r
+                     + U( er, mark+8, offset ) * B9r
+                     + U( er, mark+9, offset ) * B10r;
+      }
+    }
 
-          R(er, mark+1, offset) += wt * fl[c] * B2r;
-          R(er, mark+2, offset) += wt * fl[c] * B3r;
-          R(er, mark+3, offset) += wt * fl[c] * B4r;
-        }
+    // evaluate prescribed velocity (if any)
+    auto v = vel( system, ncomp, gp[0], gp[1], gp[2] );
+    // compute flux
+    auto fl =
+       flux( {{geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0)}}, state, v );
 
-        if(ndof > 4)          //DG(P2)
-        {
-          R(el, mark+4, offset) -= wt * fl[c] * B5l;
-          R(el, mark+5, offset) -= wt * fl[c] * B6l;
-          R(el, mark+6, offset) -= wt * fl[c] * B7l;
-          R(el, mark+7, offset) -= wt * fl[c] * B8l;
-          R(el, mark+8, offset) -= wt * fl[c] * B9l;
-          R(el, mark+9, offset) -= wt * fl[c] * B10l;
+    for (ncomp_t c=0; c<ncomp; ++c)
+    {
+      auto mark = c*ndof;
+      R(el, mark, offset) -= wt * fl[c];
+      R(er, mark, offset) += wt * fl[c];
 
-          R(er, mark+4, offset) += wt * fl[c] * B5r;
-          R(er, mark+5, offset) += wt * fl[c] * B6r;
-          R(er, mark+6, offset) += wt * fl[c] * B7r;
-          R(er, mark+7, offset) += wt * fl[c] * B8r;
-          R(er, mark+8, offset) += wt * fl[c] * B9r;
-          R(er, mark+9, offset) += wt * fl[c] * B10r;
-        }
+      if(ndof > 1)          //DG(P1)
+      {
+        R(el, mark+1, offset) -= wt * fl[c] * B2l;
+        R(el, mark+2, offset) -= wt * fl[c] * B3l;
+        R(el, mark+3, offset) -= wt * fl[c] * B4l;
+
+        R(er, mark+1, offset) += wt * fl[c] * B2r;
+        R(er, mark+2, offset) += wt * fl[c] * B3r;
+        R(er, mark+3, offset) += wt * fl[c] * B4r;
+      }
+
+      if(ndof > 4)          //DG(P2)
+      {
+        R(el, mark+4, offset) -= wt * fl[c] * B5l;
+        R(el, mark+5, offset) -= wt * fl[c] * B6l;
+        R(el, mark+6, offset) -= wt * fl[c] * B7l;
+        R(el, mark+7, offset) -= wt * fl[c] * B8l;
+        R(el, mark+8, offset) -= wt * fl[c] * B9l;
+        R(el, mark+9, offset) -= wt * fl[c] * B10l;
+
+        R(er, mark+4, offset) += wt * fl[c] * B5r;
+        R(er, mark+5, offset) += wt * fl[c] * B6r;
+        R(er, mark+6, offset) += wt * fl[c] * B7r;
+        R(er, mark+7, offset) += wt * fl[c] * B8r;
+        R(er, mark+8, offset) += wt * fl[c] * B9r;
+        R(er, mark+9, offset) += wt * fl[c] * B10r;
       }
     }
   }

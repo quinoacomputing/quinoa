@@ -268,7 +268,7 @@ tk::GaussQuadratureTri( std::size_t NG,
 
       coordgp[2][0] = 1.0/6.0;
       coordgp[2][1] = 1.0/6.0;
-      wgp[2]        = 1.0/3.0;     
+      wgp[2]        = 1.0/3.0;
       break;
 
     case 4:
@@ -323,5 +323,5 @@ tk::GaussQuadratureTri( std::size_t NG,
       coordgp[5][1] = c4;
       wgp[5]        = w2;
       break;
-  } 
+  }
 }
