@@ -563,7 +563,6 @@ Transporter::comfinal()
 // *****************************************************************************
 // [Discretization-specific communication maps]
 {
-  CkStartLB();  // start load balancing
   m_progWork.end();
   m_scheme.setup( m_V );
 }

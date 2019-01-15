@@ -95,8 +95,6 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 {
   Assert( !m_ginpoel.empty(), "No elements assigned to refiner chare" );
 
-  usesAtSync = true;    // Enable migration at AtSync
-
   // Reverse initial mesh refinement type list (will pop from back)
   std::reverse( begin(m_initref), end(m_initref) );
 
@@ -484,8 +482,6 @@ Refiner::eval()
 //!   step and the new mesh is sent to the PDE worker (Discretization).
 // *****************************************************************************
 {
-  AtSync();   // Migrate here if needed
-
   // Lambda to write mesh to file after refinement step. Parameters:
   //  * prefix - Prefix to mesh filename
   //  * it - Iteration count to put in filename (This can be the refinement
