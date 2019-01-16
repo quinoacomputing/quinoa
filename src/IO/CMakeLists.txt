@@ -12,6 +12,7 @@ target_include_directories(IO PUBLIC
                            ${QUINOA_SOURCE_DIR}/Base
                            ${QUINOA_SOURCE_DIR}/Control
                            ${QUINOA_SOURCE_DIR}/Statistics
+                           ${SEACASExodus_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
                            ${QUINOA_DIRS}
@@ -45,6 +46,7 @@ target_include_directories(NativeMeshIO PUBLIC
                            ${QUINOA_SOURCE_DIR}/Base
                            ${QUINOA_SOURCE_DIR}/Mesh
                            ${QUINOA_SOURCE_DIR}/Control
+                           ${SEACASExodus_INCLUDE_DIRS}
                            ${TPL_INCLUDE_DIR}
                            ${CHARM_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS}
@@ -174,6 +176,7 @@ target_include_directories(MeshWriter PUBLIC
                            ${QUINOA_SOURCE_DIR}/Control
                            ${PROJECT_BINARY_DIR}/../Main
                            ${PROJECT_BINARY_DIR}/../IO
+                           ${SEACASExodus_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
                            ${ROOT_INCLUDE_DIRS}
