@@ -27,7 +27,6 @@ module dg {
       entry void reqGhost();
       initnode void registerReducers();      
       entry void setup( tk::real v );
-      entry void dt();
       entry void diag();
       entry void comlim( int fromch,
                          const std::vector< std::size_t >& tetid,

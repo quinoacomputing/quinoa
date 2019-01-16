@@ -92,9 +92,6 @@ class DG : public CBase_DG {
     //! Setup: query boundary conditions, output mesh, etc.
     void setup( tk::real v );
 
-    //! Compute time step size
-    void dt();
-
     //! Receive chare-boundary limiter function data from neighboring chares
     void comlim( int fromch,
                  const std::vector< std::size_t >& tetid,
@@ -311,6 +308,9 @@ class DG : public CBase_DG {
 
     //! Output mesh-based fields to file
     void writeFields();
+
+    //! Compute time step size
+    void dt();
 
     //! Evaluate whether to continue with next step
     void eval();
