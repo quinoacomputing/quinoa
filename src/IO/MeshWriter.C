@@ -74,6 +74,8 @@ MeshWriter::write(
   const std::vector< std::vector< tk::real > >& fields )
 // *****************************************************************************
 //  Output unstructured mesh into file
+//! \param[in] meshoutput True if mesh is to be written
+//! \param[in] fieldoutput True if field data is to be written
 //! \param[in] itr Iteration count since a new mesh (New mesh in this context
 //!   means, either the mesh is moved and/or its topology has changed
 //! \param[in] itf Field output iteration count
@@ -94,6 +96,8 @@ MeshWriter::write(
 //! \param[in] fields Field data to output to file
 // *****************************************************************************
 {
+  if (m_benchmark) return;
+
   auto f = filename( itr, chareid );
 
   if (meshoutput) {

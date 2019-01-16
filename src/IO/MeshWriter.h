@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshWriter.h
   \copyright 2016-2018, Los Alamos National Security, LLC.
-  \brief     Charm++ nodegroup for outputing mesh data to file
+  \brief     Charm++ group for outputing mesh data to file
   \details   Charm++ group declaration used to output data associated to
      unstructured meshes to file(s). Charm++ chares (work units) send mesh and
      field data associated to mesh entities to the MeshWriter class defined here
@@ -26,7 +26,7 @@
 
 namespace tk {
 
-//! Charm++ nodegroup used to output particle data to file in parallel
+//! Charm++ group used to output particle data to file in parallel
 class MeshWriter : public CBase_MeshWriter {
 
   public:
