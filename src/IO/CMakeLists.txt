@@ -117,6 +117,7 @@ if (HAS_ROOT)
                              ${QUINOA_SOURCE_DIR}
                              ${QUINOA_SOURCE_DIR}/Base
                              ${QUINOA_SOURCE_DIR}/Mesh
+                             ${SEACASExodus_INCLUDE_DIRS}
                              ${ROOT_INCLUDE_DIRS}
                              ${MPI_CXX_INCLUDE_DIRS}
                              ${MPI_CXX_INCLUDE_PATH})
