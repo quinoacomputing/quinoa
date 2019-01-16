@@ -86,9 +86,6 @@ class ALECG : public CBase_ALECG {
     //! Setup: query boundary conditions, output mesh, etc.
     void setup( tk::real v );
 
-    //! Compute time step size
-    void dt();
-
     //! Advance equations to next time step
     void advance( tk::real newdt );
 
@@ -212,6 +209,9 @@ class ALECG : public CBase_ALECG {
 
     //! Solve low and high order diagonal systems
     void solve();
+
+    //! Compute time step size
+    void dt();
 
     //! Evaluate whether to continue with next step
     void eval();

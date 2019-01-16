@@ -30,7 +30,6 @@ module alecg {
       entry ALECG( const CProxy_Discretization& disc, const FaceData& fd );
       initnode void registerReducers();
       entry void setup( tk::real v );
-      entry void dt();
       entry void diag();
       entry [reductiontarget] void advance( tk::real newdt );
       entry void comlhs( const std::vector< std::size_t >& gid,
