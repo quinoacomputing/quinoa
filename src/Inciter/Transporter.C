@@ -279,7 +279,7 @@ Transporter::createPartitioner()
   m_print.diag( "Reading mesh" );
 
   // Create empty mesh sorter Charm++ chare array
-  m_sorter = CProxy_Sorter::ckNew();
+  m_sorter = CProxy_Sorter::ckNew( m_scheme.arrayoptions() );
 
   // Create empty mesh refiner chare array (bound to workers)
   m_refiner = CProxy_Refiner::ckNew( m_scheme.arrayoptions() );
