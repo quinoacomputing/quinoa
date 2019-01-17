@@ -2,13 +2,14 @@
 # add_regression_test().
 
 # Add an asyncrhonous logic test for a discretization scheme. These tests are
-# run in becnhmar mode, which means no large field output and thus they do not
+# run in becnhmark mode, which means no large field output and thus they do not
 # diff results. The main purpose of these tests is to see if the setup,
 # initialization, and a few time steps go fine without a deadlock or some other
 # problem. This can catch random or deterministic bugs in the asynchronous
 # logic, especially if combined with Charm++'s randomized messsage queues as
-# the tests are generated with number of PEs, degree of virtualization, and
-# number of PEs per logical node (for Charm++'s SMP mode).
+# the tests are generated with a number of different combinations of PEs, degree
+# of virtualization, and number of PEs per logical node (for Charm++'s SMP
+# mode).
 # Arguments:
 #   scheme: which scheme to add a test for
 #   virt: degree of virtualization: 0.0 ... 1.0 (both inclusive)
