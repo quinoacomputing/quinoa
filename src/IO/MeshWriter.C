@@ -10,8 +10,6 @@
 */
 // *****************************************************************************
 
-#include <iostream>     // NOT NEEDED
-
 #include "QuinoaConfig.h"
 #include "MeshWriter.h"
 #include "ExodusIIMeshWriter.h"
