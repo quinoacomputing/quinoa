@@ -423,7 +423,7 @@ Discretization::write(
     fieldoutput = true;
   }
 
-  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].ckLocalBranch()->
+  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
     write( meshoutput, fieldoutput, m_itr, m_itf, m_t, thisIndex, centering,
            m_inpoel, m_coord, bface, triinpoel, bnode, m_lid, names, fields );
 }
