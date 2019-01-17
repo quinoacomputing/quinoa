@@ -4950,8 +4950,7 @@ struct amr_info {
 using amr = keyword< amr_info, TAOCPP_PEGTL_STRING("amr") >;
 
 struct diagcg_info {
-  static std::string name()
-  { return "lumped-mass matrix continuous Galerkin + Lax-Wendroff"; }
+  static std::string name() { return "CG + LW"; }
   static std::string shortDescription() { return "Select continuous Galerkin "
     "+ Lax Wendroff with a lumped-mass matrix LHS"; }
   static std::string longDescription() { return
