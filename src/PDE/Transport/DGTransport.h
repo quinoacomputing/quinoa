@@ -110,8 +110,7 @@ class Transport {
 
     //! Initialization of number of gauss points for face integration
     //! \param[in] ndof Number of degree of freedom
-    constexpr std::size_t NGfa( const std::size_t ndof )
-    {
+    constexpr std::size_t NGfa( const std::size_t ndof ) const {
       return ndof == 1 ? 1 :
              ndof == 4 ? 3 :
              ndof == 10 ? 6 :
