@@ -108,6 +108,16 @@ class Transport {
       tk::mass( m_ncomp, m_offset, geoElem, l );
     }
 
+    //! Initialization of number of gauss points for face integration
+    //! \param[in] ndof Number of degree of freedom
+    constexpr std::size_t NGfa( const std::size_t ndof )
+    {
+      return ndof == 1 ? 1 :
+             ndof == 4 ? 3 :
+             ndof == 10 ? 6 :
+             throw std::logic_error("ndof must be one of 1,4,10");
+    }
+
     //! Compute right hand side
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
@@ -150,44 +160,9 @@ class Transport {
         { m_bcoutlet, Outlet },
         { m_bcdir, Dirichlet } }};
 
-      // Number of integration points
-      std::size_t NGfa;
-
-      switch(ndof)
-      {
-        case 1:           //DG(P0)
-          NGfa = 1;
-          break;
-
-        case 4:           //DG(P1)
-          NGfa = 3;
-          break;
-
-        case 10:          //DG(P2)
-          NGfa = 6;
-          break;
-
-        default:
-          Throw( "dg::Compflow::rhs() not defined for NDOF=" +
-               std::to_string(ndof) );
-      }
-
-      // arrays for quadrature points for face integration
-      std::vector< std::vector< tk::real > > coordgpfa;
-      std::vector< tk::real > wgpfa;
-      coordgpfa.resize( NGfa, std::vector< tk::real >(2) );
-      wgpfa.resize(NGfa);
-
-      // get quadrature point weights and coordinates for triangle
-      tk::GaussQuadratureTri( NGfa, coordgpfa, wgpfa );
-
       // compute internal surface flux integrals
-      for (std::size_t igp=0; igp<NGfa; ++igp)
-      {
-        tk::surfInt( m_system, m_ncomp, m_offset, coordgpfa[igp], wgpfa[igp],
-          inpoel, coord, fd, geoFace, Upwind::flux, Problem::prescribedVelocity,
-          U, limFunc, R );
-      }
+      tk::surfInt( m_system, m_ncomp, m_offset, NGfa(ndof), inpoel, coord, fd, geoFace,
+                   Upwind::flux, Problem::prescribedVelocity, U, limFunc, R );
 
       switch(ndof)
       {

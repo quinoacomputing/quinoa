@@ -108,6 +108,16 @@ class CompFlow {
       tk::mass( m_ncomp, m_offset, geoElem, l );
     }
 
+    //! Initialization of number of gauss points for face integration
+    //! \param[in] ndof Number of degree of freedom
+    constexpr std::size_t NGfa( const std::size_t ndof )
+    {
+      return ndof == 1 ? 1 :
+             ndof == 4 ? 3 :
+             ndof == 10 ? 6 :
+             throw std::logic_error("ndof must be one of 1,4,10");
+    }
+
     //! Compute right hand side
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
@@ -159,43 +169,9 @@ class CompFlow {
         { m_bcsym, Symmetry },
         { m_bcextrapolate, Extrapolate } }};
 
-      // Number of integration points
-      std::size_t NGfa;
-
-      switch(ndof)
-      {
-        case 1:           //DG(P0)
-          NGfa = 1;
-          break;
-
-        case 4:           //DG(P1)
-          NGfa = 3;
-          break;
-
-        case 10:          //DG(P2)
-          NGfa = 6;
-          break;
-
-        default:
-          Throw( "dg::Compflow::rhs() not defined for NDOF=" +
-               std::to_string(ndof) );
-      }
-
-      // arrays for quadrature points for face integration
-      std::vector< std::vector< tk::real > > coordgpfa;
-      std::vector< tk::real > wgpfa;
-      coordgpfa.resize( NGfa, std::vector< tk::real >(2) );
-      wgpfa.resize(NGfa);
-
-      // get quadrature point weights and coordinates for triangle
-      tk::GaussQuadratureTri( NGfa, coordgpfa, wgpfa );
-
       // compute internal surface flux integrals
-      for (std::size_t igp=0; igp<NGfa; ++igp)
-      {
-        tk::surfInt( m_system, m_ncomp, m_offset, coordgpfa[igp], wgpfa[igp],
-                     inpoel, coord, fd, geoFace, rieflxfn, velfn, U, limFunc, R );
-      }
+      tk::surfInt( m_system, m_ncomp, m_offset, NGfa(ndof), inpoel, coord, fd, geoFace,
+                   rieflxfn, velfn, U, limFunc, R );
 
       switch(ndof)
       {
@@ -264,14 +240,11 @@ class CompFlow {
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();
 
-      // Number of integration points
-      constexpr std::size_t NG = 3;
-
       // arrays for quadrature points
       std::vector< std::vector< tk::real > > coordgp;
       std::vector< tk::real > wgp;
-      coordgp.resize( NG, std::vector< tk::real >(2) );
-      wgp.resize(NG);
+      coordgp.resize( 2, std::vector< tk::real >( NGfa(ndof) ) );
+      wgp.resize( NGfa(ndof) );
 
       tk::real rho, u, v, w, rhoE, p, a, vn, dSV_l, dSV_r;
       std::vector< tk::real > delt( U.nunk(), 0.0 );
@@ -281,7 +254,7 @@ class CompFlow {
       const auto& cz = coord[2];
 
       // get quadrature point weights and coordinates for triangle
-      tk::GaussQuadratureTri( NG, coordgp, wgp );
+      tk::GaussQuadratureTri( NGfa(ndof), coordgp, wgp );
 
       // compute internal surface maximum characteristic speed
       for (std::size_t f=0; f<esuf.size()/2; ++f)
@@ -323,12 +296,12 @@ class CompFlow {
         dSV_r = 0.0;
 
         // Gaussian quadrature
-        for (std::size_t igp=0; igp<NG; ++igp)
+        for (std::size_t igp=0; igp<NGfa(ndof); ++igp)
         {
           // Barycentric coordinates for the triangular face
-          auto shp1 = 1.0 - coordgp[igp][0] - coordgp[igp][1];
-          auto shp2 = coordgp[igp][0];
-          auto shp3 = coordgp[igp][1];
+          auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];
+          auto shp2 = coordgp[0][igp];
+          auto shp3 = coordgp[1][igp];
 
           // transformation of the quadrature point from the 2D reference/master
           // element to physical domain, to obtain its physical (x,y,z)

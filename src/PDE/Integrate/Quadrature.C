@@ -253,39 +253,39 @@ tk::GaussQuadratureTri( std::size_t NG,
   {
     case 1:
       coordgp[0][0] = 1.0/3.0;
-      coordgp[0][1] = 1.0/3.0;
+      coordgp[1][0] = 1.0/3.0;
       wgp[0]        = 1.0;
       break;
 
     case 3:
       coordgp[0][0] = 2.0/3.0;
-      coordgp[0][1] = 1.0/6.0;
+      coordgp[1][0] = 1.0/6.0;
       wgp[0]        = 1.0/3.0;
 
-      coordgp[1][0] = 1.0/6.0;
+      coordgp[0][1] = 1.0/6.0;
       coordgp[1][1] = 2.0/3.0;
       wgp[1]        = 1.0/3.0;
 
-      coordgp[2][0] = 1.0/6.0;
-      coordgp[2][1] = 1.0/6.0;
+      coordgp[0][2] = 1.0/6.0;
+      coordgp[1][2] = 1.0/6.0;
       wgp[2]        = 1.0/3.0;
       break;
 
     case 4:
       coordgp[0][0] = 1.0/3.0;
-      coordgp[0][1] = 1.0/3.0;
+      coordgp[1][0] = 1.0/3.0;
       wgp[0]        = -27.0/48.0;
 
-      coordgp[1][0] = 1.0/5.0;
+      coordgp[0][1] = 1.0/5.0;
       coordgp[1][1] = 1.0/5.0;
       wgp[1]        = 25.0/48.0;
 
-      coordgp[2][0] = 3.0/5.0;
-      coordgp[2][1] = 1.0/5.0;
+      coordgp[0][2] = 3.0/5.0;
+      coordgp[1][2] = 1.0/5.0;
       wgp[2]        = 25.0/48.0;
 
-      coordgp[3][0] = 1.0/5.0;
-      coordgp[3][1] = 3.0/5.0;
+      coordgp[0][3] = 1.0/5.0;
+      coordgp[1][3] = 3.0/5.0;
       wgp[3]        = 25.0/48.0;
       break;
 
@@ -300,27 +300,27 @@ tk::GaussQuadratureTri( std::size_t NG,
       const tk::real w2 = 0.1116907969117165 * 2.0;
 
       coordgp[0][0] = c1;
-      coordgp[0][1] = c2;
+      coordgp[1][0] = c2;
       wgp[0]        = w1;
 
-      coordgp[1][0] = c2;
+      coordgp[0][1] = c2;
       coordgp[1][1] = c3;
       wgp[1]        = w1;
 
-      coordgp[2][0] = c3;
-      coordgp[2][1] = c1;
+      coordgp[0][2] = c3;
+      coordgp[1][2] = c1;
       wgp[2]        = w1;
 
-      coordgp[3][0] = c4;
-      coordgp[3][1] = c5;
+      coordgp[0][3] = c4;
+      coordgp[1][3] = c5;
       wgp[3]        = w2;
 
-      coordgp[4][0] = c5;
-      coordgp[4][1] = c6;
+      coordgp[0][4] = c5;
+      coordgp[1][4] = c6;
       wgp[4]        = w2;
 
-      coordgp[5][0] = c6;
-      coordgp[5][1] = c4;
+      coordgp[0][5] = c6;
+      coordgp[1][5] = c4;
       wgp[5]        = w2;
       break;
   }

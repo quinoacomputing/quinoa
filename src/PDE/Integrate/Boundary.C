@@ -166,7 +166,7 @@ tk::bndSurfIntP1( ncomp_t system,
   // arrays for quadrature points
   std::vector< std::vector< tk::real > > coordgp;
   std::vector< tk::real > wgp;
-  coordgp.resize( NG, std::vector< tk::real >(2) );
+  coordgp.resize( 2, std::vector< tk::real >(NG) );
   wgp.resize(NG);
 
   const auto& cx = coord[0];
@@ -218,9 +218,9 @@ tk::bndSurfIntP1( ncomp_t system,
     for (std::size_t igp=0; igp<NG; ++igp)
     {
       // Barycentric coordinates for the triangular face
-      auto shp1 = 1.0 - coordgp[igp][0] - coordgp[igp][1];
-      auto shp2 = coordgp[igp][0];
-      auto shp3 = coordgp[igp][1];
+      auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];
+      auto shp2 = coordgp[0][igp];
+      auto shp3 = coordgp[1][igp];
 
       // transformation of the quadrature point from the 2D reference/master
       // element to physical domain, to obtain its physical (x,y,z)
@@ -369,7 +369,7 @@ tk::bndSurfIntP2( ncomp_t system,
   // arrays for quadrature points
   std::vector< std::vector< tk::real > > coordgp;
   std::vector< tk::real > wgp;
-  coordgp.resize( NG, std::vector< tk::real >(2) );
+  coordgp.resize( 2, std::vector< tk::real >(NG) );
   wgp.resize(NG);
 
   const auto& cx = coord[0];
@@ -421,9 +421,9 @@ tk::bndSurfIntP2( ncomp_t system,
     for (std::size_t igp=0; igp<NG; ++igp)
     {
       // Barycentric coordinates for the triangular face
-      auto shp1 = 1.0 - coordgp[igp][0] - coordgp[igp][1];
-      auto shp2 = coordgp[igp][0];
-      auto shp3 = coordgp[igp][1];
+      auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];
+      auto shp2 = coordgp[0][igp];
+      auto shp3 = coordgp[1][igp];
 
       // transformation of the quadrature point from the 2D reference/master
       // element to physical domain, to obtain its physical (x,y,z)
