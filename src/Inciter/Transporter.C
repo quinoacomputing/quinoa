@@ -286,7 +286,6 @@ Transporter::createPartitioner()
 
   // Create MeshWriter chare nodegroup
   m_meshwriter = tk::CProxy_MeshWriter::ckNew(
-                    g_inputdeck.get< tag::cmd, tag::io, tag::output >(),
                     g_inputdeck.get< tag::selected, tag::filetype >(),
                     centering,
                     g_inputdeck.get< tag::cmd, tag::benchmark >() );

@@ -20,18 +20,15 @@
 
 using tk::MeshWriter;
 
-MeshWriter::MeshWriter( const std::string& output_basefilename,
-                        ctr::FieldFileType filetype,
+MeshWriter::MeshWriter( ctr::FieldFileType filetype,
                         Centering bnd_centering,
                         bool benchmark ) :
-  m_outputBasefilename( output_basefilename ),
   m_filetype( filetype ),
   m_bndCentering( bnd_centering ),
   m_benchmark( benchmark ),
   m_nchare( 0 )
 // *****************************************************************************
 //  Constructor: set some defaults that stay constant at all times
-//! \param[in] output_basefilename String to use as the base of the filename
 //! \param[in] filetype Output file format type
 //! \param[in] bnd_centering Centering to identify what boundary data to write.
 //!   For a nodal scheme, e.g., DiagCG, this is nodal, for a DG scheme, this is
@@ -62,6 +59,7 @@ MeshWriter::write(
   tk::real time,
   int chareid,
   Centering centering,
+  const std::string& basefilename,
   const std::vector< std::size_t >& inpoel,
   const UnsMesh::Coords& coord,
   const std::map< int, std::vector< std::size_t > >& bface,
@@ -74,11 +72,12 @@ MeshWriter::write(
 //  Output unstructured mesh into file
 //! \param[in] meshoutput True if mesh is to be written
 //! \param[in] fieldoutput True if field data is to be written
-//! \param[in] itr Iteration count since a new mesh (New mesh in this context
-//!   means, either the mesh is moved and/or its topology has changed
+//! \param[in] itr Iteration count since a new mesh. New mesh in this context
+//!   means that either the mesh is moved and/or its topology has changed.
 //! \param[in] itf Field output iteration count
 //! \param[in] time Physical time this at this field output dump
 //! \param[in] chareid The chare id the write-to-file request is coming from
+//! \param[in] basefilename String to use as the base of the filename
 //! \param[in] centering The centering that will be associated to the field data
 //!   to be output when writeFields is called next
 //! \param[in] inpoel Mesh connectivity for the mesh chunk to be written
@@ -96,7 +95,7 @@ MeshWriter::write(
 {
   if (m_benchmark) return;
 
-  auto f = filename( itr, chareid );
+  auto f = filename( basefilename, itr, chareid );
 
   if (meshoutput) {
     #ifdef HAS_ROOT
@@ -165,11 +164,13 @@ MeshWriter::write(
 }
 
 std::string
-MeshWriter::filename( uint64_t itr, int chareid ) const
+MeshWriter::filename( const std::string& basefilename,
+                      uint64_t itr,
+                      int chareid ) const
 // *****************************************************************************
 //  Compute filename
-//! \param[in] itr Iteration count since a new mesh (New mesh in this context
-//!   means, either the mesh is moved and/or its topology has changed
+//! \param[in] itr Iteration count since a new mesh. New mesh in this context
+//!   means that either the mesh is moved and/or its topology has changed.
 //! \param[in] chareid The chare id the write-to-file request is coming from
 //! \details We use a file naming convention for large field output data that
 //!   allows ParaView to glue multiple files into a single simulation output by
@@ -190,10 +191,10 @@ MeshWriter::filename( uint64_t itr, int chareid ) const
 //! \see https://www.paraview.org/Wiki/Restarted_Simulation_Readers
 // *****************************************************************************
 {
-  return m_outputBasefilename + ".e-s"
-         + '.' + std::to_string( itr )          // create new file if new mesh
-         + '.' + std::to_string( m_nchare )     // total number of workers
-         + '.' + std::to_string( chareid )      // new file per worker
+  return basefilename + ".e-s"
+         + '.' + std::to_string( itr )        // iteration count with new mesh
+         + '.' + std::to_string( m_nchare )   // total number of workers
+         + '.' + std::to_string( chareid )    // new file per worker
          #ifdef HAS_ROOT
          + (m_filetype == ctr::FieldFileType::ROOT ? ".root" : "")
          #endif

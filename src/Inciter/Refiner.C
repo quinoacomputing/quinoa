@@ -21,7 +21,6 @@
 #include "UnsMesh.h"
 #include "Centering.h"
 #include "Around.h"
-#include "ExodusIIMeshWriter.h"
 #include "HashMapReducer.h"
 #include "Discretization.h"
 
@@ -482,40 +481,39 @@ Refiner::eval()
 //!   step and the new mesh is sent to the PDE worker (Discretization).
 // *****************************************************************************
 {
-  // Lambda to write mesh to file after refinement step. Parameters:
-  //  * prefix - Prefix to mesh filename
-  //  * it - Iteration count to put in filename (This can be the refinement
-  //    level for initial (pre-timestepping) AMR or the physical time for AMR
-  //    during time stepping.
-  auto writeMesh = [this]( const std::string& prefix, const std::string& it ){
-    tk::ExodusIIMeshWriter
-      mw( prefix + ".e-s"
-          + '.' + it                            // create new file for new mesh
-          + '.' + std::to_string( this->m_nchare )   // total number of workers
-          + '.' + std::to_string( this->thisIndex ), // new file per worker
-          tk::ExoWriter::CREATE );
-    // Prepare boundary data for file output
-    decltype(this->m_bnode) bnode;
-    if (this->m_nchare == 1) {  // do not write boundary data in parallel
-      // Convert boundary node lists to local ids for output
-      bnode = m_bnode;
-      for (auto& s : bnode) for (auto& p : s.second) p = tk::cref_find(m_lid,p);
-    }
-    // Output mesh
-    tk::UnsMesh refmesh( this->m_inpoel, this->m_coord, bnode );
-    mw.writeMesh( refmesh );
-    // Output element-centered scalar fields on recent mesh refinement step
-    mw.writeElemVarNames( { "refinement level", "cell type" } );
+  // Lambda to write mesh to file after refinement step
+  auto writeMesh = [this]( const std::string& basefilename,
+                           uint64_t it,
+                           tk::real t )
+  {
+    bool meshoutput = true;
+    bool fieldoutput = true;
+    uint64_t itf = 1;   // field output iteration count
+
+    std::vector< std::string > names{ "refinement level", "cell type" };
     auto& tet_store = this->m_refiner.tet_store;
-    mw.writeElemScalar( 1, 1, tet_store.get_refinement_level_list() );
-    mw.writeElemScalar( 1, 2, tet_store.get_cell_type_list() );
+    std::vector< std::vector< tk::real > > fields{
+      tet_store.get_refinement_level_list(), tet_store.get_cell_type_list() };
+
+    this->m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
+      write( meshoutput, fieldoutput, it, itf, t, this->thisIndex,
+             tk::Centering::ELEM, basefilename, this->m_inpoel, this->m_coord,
+             this->m_belem, this->m_triinpoel, this->m_bnode, this->m_lid,
+             names, fields );
   };
 
   if (m_initial) {      // if initial (before t=0) AMR
 
     // Output mesh after recent step of initial mesh refinement
-    auto level = g_inputdeck.get<tag::amr, tag::init>().size() - m_initref.size();
-    writeMesh( "t0ref", std::to_string(level) );
+    auto ninitref = g_inputdeck.get< tag::amr, tag::init >().size();
+    auto l = ninitref - m_initref.size();  // num initref steps completed
+    auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
+    // Generate times for file output equally subdividing t0-1...t0 to ninitref
+    // steps
+    tk::real t = t0 - 1.0 +
+      static_cast<tk::real>(l)/static_cast<tk::real>(ninitref);
+
+    writeMesh( "t0ref", l, t );
     // Remove initial mesh refinement step from list
     if (!m_initref.empty()) m_initref.pop_back();
     // Continue to next initial AMR step or finish
@@ -524,7 +522,7 @@ Refiner::eval()
   } else {              // if AMR during time stepping (t>0)
 
     // Output mesh after recent step of mesh refinement during time stepping
-    writeMesh( "dtref", std::to_string(m_t) );
+    writeMesh( "dtref", 0, m_t );
 
     // Augment node comm. map with newly added nodes on chare-boundary edges
     for (const auto& c : m_edgenodeCh) {

@@ -20,8 +20,7 @@ module meshwriter {
 
     group MeshWriter {
 
-      entry MeshWriter( const std::string& output_basefilename,
-                        ctr::FieldFileType filetype,
+      entry MeshWriter( ctr::FieldFileType filetype,
                         Centering bnd_centering,
                         bool benchmark );
 
@@ -35,6 +34,7 @@ module meshwriter {
         tk::real time,
         int chareid,
         Centering centering,
+        const std::string& basefilename,
         const std::vector< std::size_t >& inpoel,
         const UnsMesh::Coords& coord,
         const std::map< int, std::vector< std::size_t > >& bface,

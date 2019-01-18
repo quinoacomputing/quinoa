@@ -31,8 +31,7 @@ class MeshWriter : public CBase_MeshWriter {
 
   public:
     //! Constructor: set some defaults that stay constant at all times
-    MeshWriter( const std::string& output_basefilename,
-                ctr::FieldFileType filetype,
+    MeshWriter( ctr::FieldFileType filetype,
                 Centering bnd_centering,
                 bool benchmark );
 
@@ -47,6 +46,7 @@ class MeshWriter : public CBase_MeshWriter {
                 tk::real time,
                 int chareid,
                 Centering centering,
+                const std::string& basefilename,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
                 const std::map< int, std::vector< std::size_t > >& bface,
@@ -57,8 +57,6 @@ class MeshWriter : public CBase_MeshWriter {
                 const std::vector< std::vector< tk::real > >& fields );
 
   private:
-    //! String to use as the base of the filename
-    const std::string m_outputBasefilename;
     //! Output file format type
     const ctr::FieldFileType m_filetype;
     //! Centering to identify what boundary data to write.
@@ -70,7 +68,9 @@ class MeshWriter : public CBase_MeshWriter {
     int m_nchare;
 
     //! Compute filename
-    std::string filename( uint64_t itr, int chareid ) const;
+    std::string filename( const std::string& basefilename,
+                          uint64_t itr,
+                          int chareid ) const;
 };
 
 } // tk::
