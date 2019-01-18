@@ -13,7 +13,7 @@
 #
 #   Run unit-, and regression test suites
 #
-#   run_tests.sh  [ncpus] [runner] [runner_ncpus_arg] [runner_args]\n
+#   run_tests.sh  [ncpus] [runner] [runner_ncpus_arg] [runner_args] [postfix_runner_args]
 #
 #   This script will try to run the test suites in whatever build directory it is
 #   called in.
@@ -32,7 +32,9 @@
 #     [runner_ncpus_arg] - Specify the argument used to specify the number of
 #     CPUs for the runner, given by the [runner] argument.
 #
-#     [runner_args] - Extra runner arguments.
+#     [runner_args] - Extra runner arguments (before the exeuctable).
+#
+#     [postfix_runner_args] - Extra runner arguments (after the exeuctable).
 #
 #   Examples:
 #
@@ -48,6 +50,18 @@
 #     $ run_tests.sh 12 mpirun -n "--bind-to none -oversubscribe"
 #     Use 12 CPUs and use mpirun with -n specifying the number of CPUs and also
 #     pass "--bind-to none -oversubscribe" to the runner.
+#       - Note that the quotes are important so that multiple arguments are
+#       interpreted as (prefix) runner arguments.
+#
+#     $ run_tests.sh 34 ./charmrun +p "--bind-to none -oversubscribe" "+ppn 17"
+#     Use 36 CPUs distributed as 2 logical (compute) nodes x 17 worker threads
+#     + 1 communication thread (2x18) in Charm++'s SMP mode using charmrun as
+#     the runner with +p specifying the total number of worker threads and also
+#     pass "--bind-to none -oversubscribe" to the runner.
+#       - Note that the Charm++ SMP mode argument +ppn must be specified as a
+#       postfix_runner_arg.
+#       - Note that the number of worker threads must be a multiple of the
+#       number of threads specified by the ppn argument.
 #
 #  Note that only the [ncpus] argument affects the regression tests. The runner
 #  and its optional extra arguments to the regression tests are configured by
@@ -90,13 +104,21 @@ else
   RUNNER_ARGS=''
 fi
 
+# If the 5th argument is given, pass that to the runner after the unittest executable
+if [ "$#" -ge 4 ]; then
+  POSTFIX_RUNNER_ARGS=$5
+else
+  POSTFIX_RUNNER_ARGS=''
+fi
+
 echo "RUNNER: ${RUNNER}"
 echo "RUNNER_NCPUS_ARG: ${RUNNER_NCPUS_ARG}"
 echo "NUMPES: ${NUMPES}"
 echo "RUNNER_ARGS: ${RUNNER_ARGS}"
+echo "POSTFIX_RUNNER_ARGS: ${POSTFIX_RUNNER_ARGS}"
 
 # Run unit test suite
-${RUNNER} ${RUNNER_NCPUS_ARG} ${NUMPES} ${RUNNER_ARGS} $PWD/Main/unittest -v -q
+${RUNNER} ${RUNNER_NCPUS_ARG} ${NUMPES} ${RUNNER_ARGS} $PWD/Main/unittest -v -q ${POSTFIX_RUNNER_ARGS}
 
 # Run regression test suite (skip 'extreme' tests that would run very long)
 ctest -j$NUMPES --output-on-failure -LE extreme
