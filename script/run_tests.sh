@@ -62,6 +62,7 @@
 #       postfix_runner_arg.
 #       - Note that the number of worker threads must be a multiple of the
 #       number of threads specified by the ppn argument.
+#       - See also cmake/add_regression_test.cmake.
 #
 #  Note that only the [ncpus] argument affects the regression tests. The runner
 #  and its optional extra arguments to the regression tests are configured by
@@ -111,14 +112,37 @@ else
   POSTFIX_RUNNER_ARGS=''
 fi
 
+HARDWARE_NUMPES=${NUMPES}
+
 echo "RUNNER: ${RUNNER}"
 echo "RUNNER_NCPUS_ARG: ${RUNNER_NCPUS_ARG}"
 echo "NUMPES: ${NUMPES}"
 echo "RUNNER_ARGS: ${RUNNER_ARGS}"
 echo "POSTFIX_RUNNER_ARGS: ${POSTFIX_RUNNER_ARGS}"
 
+# Override HARDWARE_NUMPES with the number of CPUs used in hardware, used for
+# ctest. In Charm++'s SMP mode NUMPES (used in ./charmrun's +p argument) is NOT
+# the total number of PEs used in hardware by unittest because NUMPES does not
+# contain the communication threads (by default one per compute node). Thus if
+# +ppn is given in POSTFIX_RUNNER_ARGS we parse out the ppn value and add the
+# number of communication threads to NUMPES so that ctest uses the same number
+# of PEs as unittest. See also cmake/add_regression_test.cmake.
+if [ -n "${POSTFIX_RUNNER_ARGS}" ]; then
+  case "$POSTFIX_RUNNER_ARGS" in
+    *ppn* ) PPN=`echo $POSTFIX_RUNNER_ARGS | sed -n -e 's/^.*ppn\s//p'`
+            NUMNODES=$(( ${NUMPES} / ${PPN} ))
+            HARDWARE_NUMPES=$(( ${NUMNODES} * (${PPN}+1) ))
+            echo "PPN: ${PPN}"
+            echo "NUMNODES: ${NUMNODES}"
+            echo "HARDWARE_NUMPES: ${HARDWARE_NUMPES} (used for ctest)" ;;
+  esac
+fi
+
+# Echo commands as they are executed starting from here
+set -x
+
 # Run unit test suite
 ${RUNNER} ${RUNNER_NCPUS_ARG} ${NUMPES} ${RUNNER_ARGS} $PWD/Main/unittest -v -q ${POSTFIX_RUNNER_ARGS}
 
 # Run regression test suite (skip 'extreme' tests that would run very long)
-ctest -j$NUMPES --output-on-failure -LE extreme
+ctest -j$HARDWARE_NUMPES --output-on-failure -LE extreme
