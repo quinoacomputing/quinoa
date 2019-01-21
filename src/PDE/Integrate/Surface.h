@@ -12,6 +12,7 @@
 #ifndef Surface_h
 #define Surface_h
 
+#include "Basis.h"
 #include "Types.h"
 #include "Fields.h"
 #include "FaceData.h"
@@ -37,6 +38,18 @@ surfInt( ncomp_t system,
          const Fields& U,
          const Fields& limFunc,
          Fields& R );
+
+// Update the rhs by adding surface integration term
+void
+update_rhs ( ncomp_t ncomp,
+             ncomp_t offset,
+             const tk::real wt,
+             const std::size_t el,
+             const std::size_t er,
+             std::vector< tk::real >& fl,
+             std::array< tk::real, 10>& B_l,
+             std::array< tk::real, 10>& B_r,
+             Fields& R );
 
 } // tk::
 

@@ -72,11 +72,22 @@ tk::surfInt( ncomp_t system,
   const auto& cz = coord[2];
 
   // Basis functions for finite element solution
-  real B2l(0), B3l(0), B4l(0), B5l(0), B6l(0), B7l(0), B8l(0), B9l(0), B10l(0);
-  real B2r(0), B3r(0), B4r(0), B5r(0), B6r(0), B7r(0), B8r(0), B9r(0), B10r(0);
+  std::array< tk::real, 10 > B_l;
+  std::array< tk::real, 10 > B_r;
 
-  // Coordinates of quadrature points at reference domain
+  // Coordinates of quadrature points at 3D physical domain
   std::array< real, 3 > gp;
+
+  // Coordinates of quadrature points at 3D reference domain
+  tk::real xi_l(0), eta_l(0), zeta_l(0);
+  tk::real xi_r(0), eta_r(0), zeta_r(0);
+
+  // Nodal Coordinates of face
+  std::array< std::array< real, 3>, 3 > coordfa;
+
+  // Nodal Coordinates of element
+  std::array< std::array< real, 3>, 4> coordel_l;
+  std::array< std::array< real, 3>, 4> coordel_r;
 
   // compute internal surface flux integrals
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
@@ -87,156 +98,37 @@ tk::surfInt( ncomp_t system,
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
     std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
 
-    // nodal coordinates of the left element
-    std::array< real, 3 >
-      p1_l{{ cx[ inpoel[4*el] ],
-             cy[ inpoel[4*el] ],
-             cz[ inpoel[4*el] ] }},
-      p2_l{{ cx[ inpoel[4*el+1] ],
-             cy[ inpoel[4*el+1] ],
-             cz[ inpoel[4*el+1] ] }},
-      p3_l{{ cx[ inpoel[4*el+2] ],
-             cy[ inpoel[4*el+2] ],
-             cz[ inpoel[4*el+2] ] }},
-      p4_l{{ cx[ inpoel[4*el+3] ],
-             cy[ inpoel[4*el+3] ],
-             cz[ inpoel[4*el+3] ] }};
+    // Compute the determiantion of Jacobian matrix
+    auto detT_l = eval_det( el, cx, cy, cz, inpoel, coordel_l );
+    auto detT_r = eval_det( er, cx, cy, cz, inpoel, coordel_r );
 
-    // nodal coordinates of the right element
-    std::array< real, 3 >
-      p1_r{{ cx[ inpoel[4*er] ],
-             cy[ inpoel[4*er] ],
-             cz[ inpoel[4*er] ] }},
-      p2_r{{ cx[ inpoel[4*er+1] ],
-             cy[ inpoel[4*er+1] ],
-             cz[ inpoel[4*er+1] ] }},
-      p3_r{{ cx[ inpoel[4*er+2] ],
-             cy[ inpoel[4*er+2] ],
-             cz[ inpoel[4*er+2] ] }},
-      p4_r{{ cx[ inpoel[4*er+3] ],
-             cy[ inpoel[4*er+3] ],
-             cz[ inpoel[4*er+3] ] }};
+    coordfa[0][0] = cx[ inpofa[3*f]   ];
+    coordfa[0][1] = cy[ inpofa[3*f]   ];
+    coordfa[0][2] = cz[ inpofa[3*f]   ];
 
-    auto detT_l = Jacobian( p1_l, p2_l, p3_l, p4_l );
-    auto detT_r = Jacobian( p1_r, p2_r, p3_r, p4_r );
+    coordfa[1][0] = cx[ inpofa[3*f+1] ];
+    coordfa[1][1] = cy[ inpofa[3*f+1] ];
+    coordfa[1][2] = cz[ inpofa[3*f+1] ];
 
-    auto x1 = cx[ inpofa[3*f]   ];
-    auto y1 = cy[ inpofa[3*f]   ];
-    auto z1 = cz[ inpofa[3*f]   ];
-
-    auto x2 = cx[ inpofa[3*f+1] ];
-    auto y2 = cy[ inpofa[3*f+1] ];
-    auto z2 = cz[ inpofa[3*f+1] ];
-
-    auto x3 = cx[ inpofa[3*f+2] ];
-    auto y3 = cy[ inpofa[3*f+2] ];
-    auto z3 = cz[ inpofa[3*f+2] ];
+    coordfa[2][0] = cx[ inpofa[3*f+2] ];
+    coordfa[2][1] = cy[ inpofa[3*f+2] ];
+    coordfa[2][2] = cz[ inpofa[3*f+2] ];
 
     // Gaussian quadrature
     for (std::size_t igp=0; igp<tk::NGfa(ndof); ++igp)
     {
       if (ndof > 1)         // DG(P1) or DG(P2)
       {
-        // Barycentric coordinates for the triangular face
-        auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];
-        auto shp2 = coordgp[0][igp];
-        auto shp3 = coordgp[1][igp];
+        // Compute the coordinates of quadrature point at physical domain
+        eval_gp( igp, coordfa, coordgp, gp );
 
-        // transformation of the quadrature point from the 2D reference/master
-        // element to physical domain, to obtain its physical (x,y,z)
-        // coordinates.
-        gp[0] = x1*shp1 + x2*shp2 + x3*shp3;
-        gp[1] = y1*shp1 + y2*shp2 + y3*shp3;
-        gp[2] = z1*shp1 + z2*shp2 + z3*shp3;
+        // Compute the coordinates of quadrature point at referennce domain
+        eval_xi( coordel_l, detT_l, gp, xi_l, eta_l, zeta_l );
+        eval_xi( coordel_r, detT_r, gp, xi_r, eta_r, zeta_r );     
 
-        // The basis functions chosen for the DG method are the Dubiner
-        // basis, which are Legendre polynomials modified for tetrahedra,
-        // which are defined only on the reference/master tetrahedron.
-        // Thus, to determine the high-order solution from the left and right
-        // elements at the surface quadrature points, the basis functions
-        // from the left and right elements are needed. For this, a
-        // transformation to the reference coordinates is necessary, since
-        // the basis functions are defined on the reference tetrahedron only.
-        // Ref: [1] https://doi.org/10.1007/BF01060030
-        //      [2] https://doi.org/10.1093/imamat/hxh111
-
-        real detT_gp = 0.0;
-
-        // transformation of the physical coordinates of the quadrature point
-        // to reference space for the left element to be able to compute
-        // basis functions on the left element.
-        detT_gp = Jacobian( p1_l, gp, p3_l, p4_l );
-        auto xi_l = detT_gp / detT_l;
-        detT_gp = Jacobian( p1_l, p2_l, gp, p4_l );
-        auto eta_l = detT_gp / detT_l;
-        detT_gp = Jacobian( p1_l, p2_l, p3_l, gp );
-        auto zeta_l = detT_gp / detT_l;
-
-        // transformation of the physical coordinates of the quadrature point
-        // to reference space for the right element
-        detT_gp = Jacobian( p1_r, gp, p3_r, p4_r );
-        auto xi_r = detT_gp / detT_r;
-        detT_gp = Jacobian( p1_r, p2_r, gp, p4_r );
-        auto eta_r = detT_gp / detT_r;
-        detT_gp = Jacobian( p1_r, p2_r, p3_r, gp );
-        auto zeta_r = detT_gp / detT_r;
-
-        // basis functions (DGP1) at igp for the left element
-        B2l = 2.0 * xi_l + eta_l + zeta_l - 1.0;
-        B3l = 3.0 * eta_l + zeta_l - 1.0;
-        B4l = 4.0 * zeta_l - 1.0;
-
-        // basis functions (DGP1) at igp for the right element
-        B2r = 2.0 * xi_r + eta_r + zeta_r - 1.0;
-        B3r = 3.0 * eta_r + zeta_r - 1.0;
-        B4r = 4.0 * zeta_r - 1.0;
-
-        if(ndof > 4)        //DG(P2)
-        {
-          // basis functions (DGP2) at igp for the left element
-          auto xi_xi_l = xi_l * xi_l;
-          auto xi_eta_l = xi_l * eta_l;
-          auto xi_zeta_l = xi_l * zeta_l;
-          auto eta_eta_l = eta_l * eta_l;
-          auto eta_zeta_l = eta_l * zeta_l;
-          auto zeta_zeta_l = zeta_l * zeta_l;
-
-          B5l = 6.0 * xi_xi_l + eta_eta_l + zeta_zeta_l
-              + 6.0 * xi_eta_l + 6.0 * xi_zeta_l + 2.0 * eta_zeta_l
-              - 6.0 * xi_l - 2.0 * eta_l - 2.0 * zeta_l + 1.0;
-          B6l = 5.0 * eta_eta_l + zeta_zeta_l
-              + 10.0 * xi_eta_l + 2.0 * xi_zeta_l + 6.0 * eta_zeta_l
-              - 2.0 * xi_l - 6.0 * eta_l - 2.0 * zeta_l + 1.0;
-          B7l = 6.0 * zeta_zeta_l + 12.0 * xi_zeta_l + 6.0 * eta_zeta_l
-              - 2.0 * xi_l - eta_l - 7.0 * zeta_l + 1.0;
-          B8l = 10.0 * eta_eta_l + zeta_zeta_l + 8.0 * eta_zeta_l
-              - 8.0 * eta_l - 2.0 * zeta_l + 1.0;
-          B9l = 6.0 * zeta_zeta_l + 18.0 * eta_zeta_l - 3.0 * eta_l
-              - 7.0 * zeta_l + 1.0;
-          B10l = 15.0 * zeta_zeta_l - 10.0 * zeta_l + 1.0;
-
-          // basis functions (DGP2) at igp for the right element
-          auto xi_xi_r = xi_r * xi_r;
-          auto xi_eta_r = xi_r * eta_r;
-          auto xi_zeta_r = xi_r * zeta_r;
-          auto eta_eta_r = eta_r * eta_r;
-          auto eta_zeta_r = eta_r * zeta_r;
-          auto zeta_zeta_r = zeta_r * zeta_r;
-
-          B5r = 6.0 * xi_xi_r + eta_eta_r + zeta_zeta_r
-              + 6.0 * xi_eta_r + 6.0 * xi_zeta_r + 2.0 * eta_zeta_r
-              - 6.0 * xi_r - 2.0 * eta_r - 2.0 * zeta_r + 1.0;
-          B6r = 5.0 * eta_eta_r + zeta_zeta_r
-              + 10.0 * xi_eta_r + 2.0 * xi_zeta_r + 6.0 * eta_zeta_r
-              - 2.0 * xi_r - 6.0 * eta_r - 2.0 * zeta_r + 1.0;
-          B7r = 6.0 * zeta_zeta_r + 12.0 * xi_zeta_r + 6.0 * eta_zeta_r
-              - 2.0 * xi_r - eta_r - 7.0 * zeta_r + 1.0;
-          B8r = 10.0 * eta_eta_r + zeta_zeta_r + 8.0 * eta_zeta_r
-              - 8.0 * eta_r - 2.0 * zeta_r + 1.0;
-          B9r = 6.0 * zeta_zeta_r + 18.0 * eta_zeta_r - 3.0 * eta_r
-              - 7.0 * zeta_r + 1.0;
-          B10r = 15.0 * zeta_zeta_r - 10.0 * zeta_r + 1.0;
-        }
+        // Compute the basis function
+        eval_basis( xi_l, eta_l, zeta_l, B_l );
+        eval_basis( xi_r, eta_r, zeta_r, B_r );
       }
 
       auto wt = wgp[igp] * geoFace(f,0,0);
@@ -245,82 +137,79 @@ tk::surfInt( ncomp_t system,
           state{{ std::vector< real >( ncomp, 0.0 ),
                 std::vector< real >( ncomp, 0.0 ) }};
 
-      for (ncomp_t c=0; c<ncomp; ++c)
-      {
-        auto mark = c*ndof;
-        state[0][c] = U( el, mark, offset );
-        state[1][c] = U( er, mark, offset );
-
-        if(ndof > 1)        //DG(P1)
-        {
-          auto lmark = c*(ndof-1);
-          state[0][c] += limFunc( el, lmark  , 0 ) * U( el, mark+1, offset ) * B2l
-                       + limFunc( el, lmark+1, 0 ) * U( el, mark+2, offset ) * B3l
-                       + limFunc( el, lmark+2, 0 ) * U( el, mark+3, offset ) * B4l;
-
-          state[1][c] += limFunc( er, lmark  , 0 ) * U( er, mark+1, offset ) * B2r
-                       + limFunc( er, lmark+1, 0 ) * U( er, mark+2, offset ) * B3r
-                       + limFunc( er, lmark+2, 0 ) * U( er, mark+3, offset ) * B4r;
-        }
-
-        if(ndof > 4)        //DG(P2)
-        {
-          state[0][c] += U( el, mark+4, offset ) * B5l
-                       + U( el, mark+5, offset ) * B6l
-                       + U( el, mark+6, offset ) * B7l
-                       + U( el, mark+7, offset ) * B8l
-                       + U( el, mark+8, offset ) * B9l
-                       + U( el, mark+9, offset ) * B10l;
-
-          state[1][c] += U( er, mark+4, offset ) * B5r
-                       + U( er, mark+5, offset ) * B6r
-                       + U( er, mark+6, offset ) * B7r
-                       + U( er, mark+7, offset ) * B8r
-                       + U( er, mark+8, offset ) * B9r
-                       + U( er, mark+9, offset ) * B10r;
-        }
-      }
+      eval_state( ncomp, offset, el, U, limFunc, B_l, state[0] );
+      eval_state( ncomp, offset, er, U, limFunc, B_r, state[1] );
 
       // evaluate prescribed velocity (if any)
       auto v = vel( system, ncomp, gp[0], gp[1], gp[2] );
+
       // compute flux
       auto fl =
          flux( {{geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0)}}, state, v );
 
-      for (ncomp_t c=0; c<ncomp; ++c)
-      {
-        auto mark = c*ndof;
-        R(el, mark, offset) -= wt * fl[c];
-        R(er, mark, offset) += wt * fl[c];
+      // Add the surface integration term to the rhs
+      update_rhs( ncomp, offset, wt, el, er, fl, B_l, B_r, R );
+    }
+  }
+}
 
-        if(ndof > 1)          //DG(P1)
-        {
-          R(el, mark+1, offset) -= wt * fl[c] * B2l;
-          R(el, mark+2, offset) -= wt * fl[c] * B3l;
-          R(el, mark+3, offset) -= wt * fl[c] * B4l;
+void
+tk::update_rhs ( ncomp_t ncomp,
+                 ncomp_t offset,
+                 const tk::real wt,
+                 const std::size_t el,
+                 const std::size_t er,
+                 std::vector< tk::real >& fl,
+                 std::array< tk::real, 10>& B_l,
+                 std::array< tk::real, 10>& B_r,
+                 Fields& R )
+// *****************************************************************************
+//  Update the rhs by adding the surface integration term
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] offset Offset this PDE system operates from
+//! \param[in] wt Weight of gauss quadrature point
+//! \param[in] el Left element index
+//! \param[in] er Right element index
+//! \param[in] fl Surface flux
+//! \param[in] B_l Basis function for the left element
+//! \param[in] B_r Basis function for the right element
+//! \param[in,out] R Right-hand side vector computed
+// *****************************************************************************
+{
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
 
-          R(er, mark+1, offset) += wt * fl[c] * B2r;
-          R(er, mark+2, offset) += wt * fl[c] * B3r;
-          R(er, mark+3, offset) += wt * fl[c] * B4r;
-        }
+  for (ncomp_t c=0; c<ncomp; ++c)
+  {
+    auto mark = c*ndof;
+    R(el, mark, offset) -= wt * fl[c];
+    R(er, mark, offset) += wt * fl[c];
 
-        if(ndof > 4)          //DG(P2)
-        {
-          R(el, mark+4, offset) -= wt * fl[c] * B5l;
-          R(el, mark+5, offset) -= wt * fl[c] * B6l;
-          R(el, mark+6, offset) -= wt * fl[c] * B7l;
-          R(el, mark+7, offset) -= wt * fl[c] * B8l;
-          R(el, mark+8, offset) -= wt * fl[c] * B9l;
-          R(el, mark+9, offset) -= wt * fl[c] * B10l;
+    if(ndof > 1)          //DG(P1)
+    {
+      R(el, mark+1, offset) -= wt * fl[c] * B_l[1];
+      R(el, mark+2, offset) -= wt * fl[c] * B_l[2];
+      R(el, mark+3, offset) -= wt * fl[c] * B_l[3];
 
-          R(er, mark+4, offset) += wt * fl[c] * B5r;
-          R(er, mark+5, offset) += wt * fl[c] * B6r;
-          R(er, mark+6, offset) += wt * fl[c] * B7r;
-          R(er, mark+7, offset) += wt * fl[c] * B8r;
-          R(er, mark+8, offset) += wt * fl[c] * B9r;
-          R(er, mark+9, offset) += wt * fl[c] * B10r;
-        }
-      }
+      R(er, mark+1, offset) += wt * fl[c] * B_r[1];
+      R(er, mark+2, offset) += wt * fl[c] * B_r[2];
+      R(er, mark+3, offset) += wt * fl[c] * B_r[3];
+    }
+
+    if(ndof > 4)          //DG(P2)
+    {
+      R(el, mark+4, offset) -= wt * fl[c] * B_l[4];
+      R(el, mark+5, offset) -= wt * fl[c] * B_l[5];
+      R(el, mark+6, offset) -= wt * fl[c] * B_l[6];
+      R(el, mark+7, offset) -= wt * fl[c] * B_l[7];
+      R(el, mark+8, offset) -= wt * fl[c] * B_l[8];
+      R(el, mark+9, offset) -= wt * fl[c] * B_l[9];
+
+      R(er, mark+4, offset) += wt * fl[c] * B_r[4];
+      R(er, mark+5, offset) += wt * fl[c] * B_r[5];
+      R(er, mark+6, offset) += wt * fl[c] * B_r[6];
+      R(er, mark+7, offset) += wt * fl[c] * B_r[7];
+      R(er, mark+8, offset) += wt * fl[c] * B_r[8];
+      R(er, mark+9, offset) += wt * fl[c] * B_r[9];
     }
   }
 }
