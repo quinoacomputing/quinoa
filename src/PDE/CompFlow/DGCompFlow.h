@@ -108,15 +108,6 @@ class CompFlow {
       tk::mass( m_ncomp, m_offset, geoElem, l );
     }
 
-    //! Initialization of number of gauss points for face integration
-    //! \param[in] ndof Number of degree of freedom
-    constexpr std::size_t NGfa( const std::size_t ndof ) const{
-      return ndof == 1 ? 1 :
-             ndof == 4 ? 3 :
-             ndof == 10 ? 6 :
-             throw std::logic_error("ndof must be one of 1,4,10");
-    }
-
     //! Compute right hand side
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
@@ -169,7 +160,7 @@ class CompFlow {
         { m_bcextrapolate, Extrapolate } }};
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, m_offset, NGfa(ndof), inpoel, coord, fd, geoFace,
+      tk::surfInt( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
                    rieflxfn, velfn, U, limFunc, R );
 
       switch(ndof)
@@ -240,10 +231,12 @@ class CompFlow {
       const auto& inpofa = fd.Inpofa();
 
       // arrays for quadrature points
-      std::vector< std::vector< tk::real > > coordgp;
+      std::array< std::vector< tk::real >, 2 > coordgp;
       std::vector< tk::real > wgp;
-      coordgp.resize( 2, std::vector< tk::real >( NGfa(ndof) ) );
-      wgp.resize( NGfa(ndof) );
+
+      coordgp[0].resize( tk::NGfa(ndof) );
+      coordgp[1].resize( tk::NGfa(ndof) );
+      wgp.resize( tk::NGfa(ndof) );
 
       tk::real rho, u, v, w, rhoE, p, a, vn, dSV_l, dSV_r;
       std::vector< tk::real > delt( U.nunk(), 0.0 );
@@ -253,7 +246,7 @@ class CompFlow {
       const auto& cz = coord[2];
 
       // get quadrature point weights and coordinates for triangle
-      tk::GaussQuadratureTri( NGfa(ndof), coordgp, wgp );
+      tk::GaussQuadratureTri( tk::NGfa(ndof), coordgp, wgp );
 
       // compute internal surface maximum characteristic speed
       for (std::size_t f=0; f<esuf.size()/2; ++f)
@@ -295,7 +288,7 @@ class CompFlow {
         dSV_r = 0.0;
 
         // Gaussian quadrature
-        for (std::size_t igp=0; igp<NGfa(ndof); ++igp)
+        for (std::size_t igp=0; igp<tk::NGfa(ndof); ++igp)
         {
           // Barycentric coordinates for the triangular face
           auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];

@@ -108,15 +108,6 @@ class Transport {
       tk::mass( m_ncomp, m_offset, geoElem, l );
     }
 
-    //! Initialization of number of gauss points for face integration
-    //! \param[in] ndof Number of degree of freedom
-    constexpr std::size_t NGfa( const std::size_t ndof ) const {
-      return ndof == 1 ? 1 :
-             ndof == 4 ? 3 :
-             ndof == 10 ? 6 :
-             throw std::logic_error("ndof must be one of 1,4,10");
-    }
-
     //! Compute right hand side
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
@@ -160,7 +151,7 @@ class Transport {
         { m_bcdir, Dirichlet } }};
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, m_offset, NGfa(ndof), inpoel, coord, fd, geoFace,
+      tk::surfInt( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
                    Upwind::flux, Problem::prescribedVelocity, U, limFunc, R );
 
       switch(ndof)

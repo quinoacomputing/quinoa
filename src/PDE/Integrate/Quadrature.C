@@ -239,8 +239,8 @@ tk::GaussQuadratureTet( std::array< std::array< real, 4 >, 3 >& coordgp,
 }
 
 void
-tk::GaussQuadratureTri( std::size_t NG,
-                        std::vector< std::vector< real > >& coordgp,
+tk::GaussQuadratureTri( const std::size_t NG,
+                        std::array< std::vector< real >, 2>& coordgp,
                         std::vector< real >& wgp )
 // *****************************************************************************
 //! Initialize Gaussian quadrature points locations and weights for a triangle
@@ -249,7 +249,13 @@ tk::GaussQuadratureTri( std::size_t NG,
 //! \param[in,out] wgp 3 weights of quadrature points
 // *****************************************************************************
 {
-  switch(NG)
+  Assert( coordgp.size() == 2, "Coordinates for Gauss points on a face "
+                               "requires 2 spatial coordinates" );
+  Assert( coordgp[0].size() == NG, "Size mismatch" );
+  Assert( coordgp[1].size() == NG, "Size mismatch" );
+  Assert( wgp.size() == NG, "Size mismatch" );
+  
+  switch( NG )
   {
     case 1:
       coordgp[0][0] = 1.0/3.0;

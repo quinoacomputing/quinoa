@@ -27,7 +27,6 @@ void
 tk::surfInt( ncomp_t system,
              ncomp_t ncomp,
              ncomp_t offset,
-             const std::size_t NG,
              const std::vector< std::size_t >& inpoel,
              const UnsMesh::Coords& coord,
              const inciter::FaceData& fd,
@@ -58,13 +57,15 @@ tk::surfInt( ncomp_t system,
   const auto& inpofa = fd.Inpofa();
 
   // arrays for quadrature points
-  std::vector< std::vector< real > > coordgp;
+  std::array< std::vector< real >, 2 > coordgp;
   std::vector< real > wgp;
-  coordgp.resize( 2, std::vector< real >(NG) );
-  wgp.resize( NG );
+
+  coordgp[0].resize( tk::NGfa(ndof) );
+  coordgp[1].resize( tk::NGfa(ndof) );
+  wgp.resize( tk::NGfa(ndof) );
 
   // get quadrature point weights and coordinates for triangle
-  GaussQuadratureTri( NG, coordgp, wgp );
+  GaussQuadratureTri( NGfa(ndof), coordgp, wgp );
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -132,7 +133,7 @@ tk::surfInt( ncomp_t system,
     auto z3 = cz[ inpofa[3*f+2] ];
 
     // Gaussian quadrature
-    for (std::size_t igp=0; igp<NG; ++igp)
+    for (std::size_t igp=0; igp<tk::NGfa(ndof); ++igp)
     {
       if (ndof > 1)         // DG(P1) or DG(P2)
       {
