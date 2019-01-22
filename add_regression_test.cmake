@@ -173,10 +173,10 @@ function(ADD_REGRESSION_TEST test_name executable)
   # hardwared for Charm++'s SMP mode.
   if (CHARM_SMP)
 
-    # If PPN is set, use it but do error checking compared to NUMPES. If PPN is
-    # not set, setup a test with a single logical node and with the number of
-    # threads equal to the number of requested PEs. This way every parallel
-    # test will exercise SMP mode.
+    # If PPN is set, use it but do error checking on its value compared to
+    # NUMPES. If PPN is not set, setup a test with a single logical node and
+    # with the number of threads equal to the number of requested PEs. This way
+    # every parallel test will exercise SMP mode.
     if (ARG_PPN)
       set(PPN "${ARG_PPN}")
       math(EXPR NUMPES_NOT_DIVISIBLE "${REQUESTED_NUMPES}%${PPN}")
@@ -391,7 +391,7 @@ function(ADD_REGRESSION_TEST test_name executable)
   endif()
   # add pass regular expression for exodiff output if needed
   if (ARG_BIN_BASELINE)
-    list(APPEND pass_regexp "exodiff: Files are the same")
+    list(APPEND pass_regexp "Binary diff found match")
   endif()
   # add pass regular expression for when postprocessor not available, if needed
   if (ENABLE_MESHCONV AND NOT GMSH_FOUND)
@@ -406,7 +406,9 @@ function(ADD_REGRESSION_TEST test_name executable)
   endif()
   # add pass regular expression for exodiff output if needed
   if (ARG_BIN_BASELINE)
-    list(APPEND fail_regexp "exodiff: Files are different" "exodiff: ERROR")
+    list(APPEND fail_regexp "Binary diff failed"
+                            "has not been matched to any"
+                            "exodiff: ERROR")
   endif()
   # add fail regular expression to detect cmake error during test run
   list(APPEND fail_regexp "CMake Error")
