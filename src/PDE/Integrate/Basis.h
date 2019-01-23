@@ -28,7 +28,7 @@ namespace tk {
 using ncomp_t = kw::ncomp::info::expect::type;
 using bcconf_t = kw::sideset::info::expect::type;
 
-//! Compute the determination of Jacobian matrix for the tetrahedron element
+//! Compute the determinant of Jacobian matrix for the tetrahedron element
 tk::real
 eval_det ( const std::size_t e,
            const std::vector< tk::real >& cx,

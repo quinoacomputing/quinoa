@@ -61,7 +61,7 @@ tk::eval_gp ( const std::size_t igp,
               const std::array< std::array< tk::real, 3>, 3 >& coordfa,
               const std::array< std::vector< tk::real >, 2 >& coordgp )
 // *****************************************************************************
-//  Compute the coordinates of quadrature points in physical domain
+//  Compute the coordinates of quadrature points in physical space
 //! \param[in] igp Index of quadrature points
 //! \param[in] coordfa Array of nodal coordinates for face element
 //! \param[in] coordgp Array of coordinates for quadrature points in reference space
