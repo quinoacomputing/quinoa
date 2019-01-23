@@ -1347,8 +1347,8 @@ DG::eval()
   // Increment Runge-Kutta stage counter
   ++m_stage;
 
-  // If Runge-Kutta stages not complete, continue with dt(), otherwise assess
-  // computation completion criteria
+  // If Runge-Kutta stages not complete, continue to next time step, otherwise
+  // assess computation completion criteria
   if (m_stage < 3) {
 
     // The following contribute call serves as a global-synchonization which
