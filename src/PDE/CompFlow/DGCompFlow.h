@@ -230,13 +230,16 @@ class CompFlow {
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();
 
+      // Number of quadrature points for  face integration
+      auto ng = tk::NGfa(ndof);
+
       // arrays for quadrature points
       std::array< std::vector< tk::real >, 2 > coordgp;
       std::vector< tk::real > wgp;
 
-      coordgp[0].resize( tk::NGfa(ndof) );
-      coordgp[1].resize( tk::NGfa(ndof) );
-      wgp.resize( tk::NGfa(ndof) );
+      coordgp[0].resize( ng );
+      coordgp[1].resize( ng );
+      wgp.resize( ng );
 
       tk::real rho, u, v, w, rhoE, p, a, vn, dSV_l, dSV_r;
       std::vector< tk::real > delt( U.nunk(), 0.0 );
@@ -246,7 +249,7 @@ class CompFlow {
       const auto& cz = coord[2];
 
       // get quadrature point weights and coordinates for triangle
-      tk::GaussQuadratureTri( tk::NGfa(ndof), coordgp, wgp );
+      tk::GaussQuadratureTri( ng, coordgp, wgp );
 
       // compute internal surface maximum characteristic speed
       for (std::size_t f=0; f<esuf.size()/2; ++f)
@@ -288,7 +291,7 @@ class CompFlow {
         dSV_r = 0.0;
 
         // Gaussian quadrature
-        for (std::size_t igp=0; igp<tk::NGfa(ndof); ++igp)
+        for (std::size_t igp=0; igp<ng; ++igp)
         {
           // Barycentric coordinates for the triangular face
           auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];

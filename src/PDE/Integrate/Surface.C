@@ -56,31 +56,23 @@ tk::surfInt( ncomp_t system,
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
 
+  // Number of quadrature points for face integration
+  auto ng = tk::NGfa(ndof);
+
   // arrays for quadrature points
   std::array< std::vector< real >, 2 > coordgp;
   std::vector< real > wgp;
 
-  coordgp[0].resize( tk::NGfa(ndof) );
-  coordgp[1].resize( tk::NGfa(ndof) );
-  wgp.resize( tk::NGfa(ndof) );
+  coordgp[0].resize( ng );
+  coordgp[1].resize( ng );
+  wgp.resize( ng );
 
   // get quadrature point weights and coordinates for triangle
-  GaussQuadratureTri( NGfa(ndof), coordgp, wgp );
+  GaussQuadratureTri( ng, coordgp, wgp );
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
-
-  // Basis functions for finite element solution
-  std::array< tk::real, 10 > B_l;
-  std::array< tk::real, 10 > B_r;
-
-  // Coordinates of quadrature points at 3D physical domain
-  std::array< real, 3 > gp;
-
-  // Coordinates of quadrature points at 3D reference domain
-  tk::real xi_l(0), eta_l(0), zeta_l(0);
-  tk::real xi_r(0), eta_r(0), zeta_r(0);
 
   // Nodal Coordinates of face
   std::array< std::array< real, 3>, 3 > coordfa;
@@ -98,7 +90,7 @@ tk::surfInt( ncomp_t system,
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
     std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
 
-    // Compute the determiantion of Jacobian matrix
+    // Compute the determinant of Jacobian matrix
     auto detT_l = eval_det( el, cx, cy, cz, inpoel, coordel_l );
     auto detT_r = eval_det( er, cx, cy, cz, inpoel, coordel_r );
 
@@ -115,20 +107,23 @@ tk::surfInt( ncomp_t system,
     coordfa[2][2] = cz[ inpofa[3*f+2] ];
 
     // Gaussian quadrature
-    for (std::size_t igp=0; igp<tk::NGfa(ndof); ++igp)
+    for (std::size_t igp=0; igp<ng; ++igp)
     {
+      // Coordinates of quadrature points at 3D physical domain
+      std::array< real, 3 > gp;
+
+      // Basis functions for finite element solution
+      std::array< tk::real, 10 > B_l;
+      std::array< tk::real, 10 > B_r;
+
       if (ndof > 1)         // DG(P1) or DG(P2)
       {
         // Compute the coordinates of quadrature point at physical domain
-        eval_gp( igp, coordfa, coordgp, gp );
-
-        // Compute the coordinates of quadrature point at referennce domain
-        eval_xi( coordel_l, detT_l, gp, xi_l, eta_l, zeta_l );
-        eval_xi( coordel_r, detT_r, gp, xi_r, eta_r, zeta_r );     
+        gp = eval_gp( igp, coordfa, coordgp );
 
         // Compute the basis function
-        eval_basis( xi_l, eta_l, zeta_l, B_l );
-        eval_basis( xi_r, eta_r, zeta_r, B_r );
+        eval_basis( ndof, coordel_l, detT_l, gp, B_l );
+        eval_basis( ndof, coordel_r, detT_r, gp, B_r );
       }
 
       auto wt = wgp[igp] * geoFace(f,0,0);
@@ -137,8 +132,8 @@ tk::surfInt( ncomp_t system,
           state{{ std::vector< real >( ncomp, 0.0 ),
                 std::vector< real >( ncomp, 0.0 ) }};
 
-      eval_state( ncomp, offset, el, U, limFunc, B_l, state[0] );
-      eval_state( ncomp, offset, er, U, limFunc, B_r, state[1] );
+      eval_state( ncomp, offset, ndof, el, U, limFunc, B_l, state[0] );
+      eval_state( ncomp, offset, ndof, er, U, limFunc, B_r, state[1] );
 
       // evaluate prescribed velocity (if any)
       auto v = vel( system, ncomp, gp[0], gp[1], gp[2] );
@@ -148,7 +143,7 @@ tk::surfInt( ncomp_t system,
          flux( {{geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0)}}, state, v );
 
       // Add the surface integration term to the rhs
-      update_rhs( ncomp, offset, wt, el, er, fl, B_l, B_r, R );
+      update_rhs( ncomp, offset, ndof, wt, el, er, fl, B_l, B_r, R );
     }
   }
 }
@@ -156,17 +151,19 @@ tk::surfInt( ncomp_t system,
 void
 tk::update_rhs ( ncomp_t ncomp,
                  ncomp_t offset,
+                 const std::size_t ndof,
                  const tk::real wt,
                  const std::size_t el,
                  const std::size_t er,
-                 std::vector< tk::real >& fl,
-                 std::array< tk::real, 10>& B_l,
-                 std::array< tk::real, 10>& B_r,
+                 const std::vector< tk::real >& fl,
+                 const std::array< tk::real, 10>& B_l,
+                 const std::array< tk::real, 10>& B_r,
                  Fields& R )
 // *****************************************************************************
 //  Update the rhs by adding the surface integration term
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
+//! \param[in] ndof Number of degree of freedom
 //! \param[in] wt Weight of gauss quadrature point
 //! \param[in] el Left element index
 //! \param[in] er Right element index
@@ -176,8 +173,6 @@ tk::update_rhs ( ncomp_t ncomp,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;

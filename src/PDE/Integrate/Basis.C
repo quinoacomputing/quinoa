@@ -1,24 +1,22 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Integrate/Basis.h
+  \file      src/PDE/Integrate/Basis.C
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Functions for computing the Dubiner basis functions in DG methods
-  \details   This file contains functionality for computing the Dubiner basis
-     functions and relating coordinates transformation functions used in 
-     discontinuous Galerkin methods for variaous orders of numerical representation.
+  \details   This file contains functionality for computing the basis functions
+     and relating coordinates transformation functions used in discontinuous
+     Galerkin methods for variaous orders of numerical representation. The basis
+     functions chosen for the DG method are the Dubiner basis, which are Legendre
+     polynomials modified for tetrahedra, which are defined only on the reference/master
+     tetrahedron.
+  \References: [1] https://doi.org/10.1007/BF01060030
+               [2] https://doi.org/10.1093/imamat/hxh111
 */
 // *****************************************************************************
 
 #include <array>
 
 #include "Basis.h"
-#include "Inciter/InputDeck/InputDeck.h"
-
-namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
-
-} // inciter::
 
 tk::real
 tk::eval_det ( const std::size_t e,
@@ -28,14 +26,14 @@ tk::eval_det ( const std::size_t e,
                const std::vector< std::size_t >& inpoel,
                std::array< std::array< tk::real, 3>, 4 >& coordel )
 // *****************************************************************************
-//  Compute the determination of Jacobian matrix for the tetrahedron element
+//  Compute the determinant of Jacobian matrix for the tetrahedron element
 //! \param[in] e Index for the tetrahedron element
 //! \param[in] cx Vector of x-coordinates of points
 //! \param[in] cy Vector of y-coordinates of points
 //! \param[in] cz Vector of z-coordinates of points
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coordel Array of nodal coordinates for tetrahedron element
-//! \return the determination of Jacobian matrix
+//! \return the determinant of Jacobian matrix
 // *****************************************************************************
 {
   // nodal coordinates of the element
@@ -58,17 +56,16 @@ tk::eval_det ( const std::size_t e,
   return Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 }
 
-void
+std::array< tk::real, 3 >
 tk::eval_gp ( const std::size_t igp,
               const std::array< std::array< tk::real, 3>, 3 >& coordfa,
-              const std::array< std::vector< tk::real >, 2 >& coordgp,
-              std::array < tk::real, 3 >& gp )
+              const std::array< std::vector< tk::real >, 2 >& coordgp )
 // *****************************************************************************
 //  Compute the coordinates of quadrature points in physical domain
 //! \param[in] igp Index of quadrature points
 //! \param[in] coordfa Array of nodal coordinates for face element
-//! \param[in] coordgp Array of coordinates for quadrature points in reference domain
-//! \param[in,out] gp Array of coordinates for quadrature points in physical domian
+//! \param[in] coordgp Array of coordinates for quadrature points in reference space
+//! \param[out] Array of coordinates for quadrature points in physical space
 // *****************************************************************************
 {
   // Barycentric coordinates for the triangular face
@@ -76,64 +73,44 @@ tk::eval_gp ( const std::size_t igp,
   auto shp2 = coordgp[0][igp];
   auto shp3 = coordgp[1][igp];
 
-  // transformation of the quadrature point from the 2D reference/master
-  // element to physical domain, to obtain its physical (x,y,z)
-  // coordinates.
-  gp[0] = coordfa[0][0]*shp1 + coordfa[1][0]*shp2 + coordfa[2][0]*shp3;
-  gp[1] = coordfa[0][1]*shp1 + coordfa[1][1]*shp2 + coordfa[2][1]*shp3;
-  gp[2] = coordfa[0][2]*shp1 + coordfa[1][2]*shp2 + coordfa[2][2]*shp3;
+  // Transformation of the quadrature point from the 2D reference/master
+  // element to physical space, to obtain its physical (x,y,z) coordinates.
+  return {{ coordfa[0][0]*shp1 + coordfa[1][0]*shp2 + coordfa[2][0]*shp3,
+            coordfa[0][1]*shp1 + coordfa[1][1]*shp2 + coordfa[2][1]*shp3,
+            coordfa[0][2]*shp1 + coordfa[1][2]*shp2 + coordfa[2][2]*shp3 }};
 }
 
 void
-tk::eval_xi ( const std::array< std::array< tk::real, 3>, 4 >& coordel,
-              const tk::real detT,
-              const std::array < tk::real, 3 >& gp,
-              tk::real& xi,
-              tk::real& eta,
-              tk::real& zeta )
+tk::eval_basis( const std::size_t ndof,
+                const std::array< std::array< tk::real, 3>, 4 >& coordel,
+                const tk::real detT,
+                const std::array < tk::real, 3 >& gp,
+                std::array< tk::real, 10>& B )
 // *****************************************************************************
-//  Compute the coordinates of quadrature points in reference domian
+//  Compute the Dubiner basis functions
+//! \param[in] ndof Number of degree of freedom
 //! \param[in] coordel Array of nodal coordinates for tetrahedron element
 //! \param[in] detT Determination of Jacobian matrix for tetrahedron element
-//! \param[in] gp Array of coordinates for quadrature points in physical domain
-//! \param[in] xi, eta, zeta Coordinates of quadrature points in reference domain
+//! \param[in] gp Array of coordinates for quadrature points in physical space
+//! \param[in,out] B Array of basis functions
 // *****************************************************************************
 {
-  // The basis functions chosen for the DG method are the Dubiner
-  // basis, which are Legendre polynomials modified for tetrahedra,
-  // which are defined only on the reference/master tetrahedron.
-  // Thus, to determine the high-order solution from the left and right
-  // elements at the surface quadrature points, the basis functions
-  // from the left and right elements are needed. For this, a
-  // transformation to the reference coordinates is necessary, since
-  // the basis functions are defined on the reference tetrahedron only.
-  // Ref: [1] https://doi.org/10.1007/BF01060030
-  //      [2] https://doi.org/10.1093/imamat/hxh111
+  // In order to determine the high-order solution from the left and right
+  // elements at the surface quadrature points, the basis functions from
+  // the left and right elements are needed. For this, a transformation to
+  // the reference coordinates is necessary, since the basis functions are
+  // defined on the reference tetrahedron only.
 
   tk::real detT_gp = 0.0;
 
   // transformation of the physical coordinates of the quadrature point
   // to reference space for the element to be able to compute basis functions.
   detT_gp = Jacobian( coordel[0], gp, coordel[2], coordel[3] );
-  xi = detT_gp / detT;
+  auto xi = detT_gp / detT;
   detT_gp = Jacobian( coordel[0], coordel[1], gp, coordel[3] );
-  eta = detT_gp / detT;
+  auto eta = detT_gp / detT;
   detT_gp = Jacobian( coordel[0], coordel[1], coordel[2], gp );
-  zeta = detT_gp / detT;
-}
-
-void
-tk::eval_basis( const tk::real xi, 
-                const tk::real eta, 
-                const tk::real zeta,
-                std::array< tk::real, 10>& B )
-// *****************************************************************************
-//  Compute the Dubiner basis functions
-//! \param[in] xi, eta, zeta Coordinates of quadrature points in reference domain
-//! \param[in] B Array of basis functions
-// *****************************************************************************
-{
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  auto zeta = detT_gp / detT;
 
   // basis functions (DGP1) at igp for the left element
   B[1] = 2.0 * xi + eta + zeta - 1.0;
@@ -169,15 +146,17 @@ tk::eval_basis( const tk::real xi,
 void
 tk::eval_state ( ncomp_t ncomp,
                  ncomp_t offset,
+                 const std::size_t ndof,
                  const std::size_t e,
                  const Fields& U,
                  const Fields& limFunc,
-                 std::array< tk::real, 10>& B,
+                 const std::array< tk::real, 10>& B,
                  std::vector< tk::real >& state )
 // *****************************************************************************
 //  Compute the state variables for the tetrahedron element
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
+//! \param[in] ndof Number of degree of freedom
 //! \param[in] e Index for the tetrahedron element
 //! \param[in] U Solution vector at recent time step
 //! \param[in] limFunc Limiter function for higher-order solution dofs
@@ -185,13 +164,11 @@ tk::eval_state ( ncomp_t ncomp,
 //! \param[in,out] state Array of state variable for tetrahedron element
 // *****************************************************************************
 {
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
     state[c] = U( e, mark, offset );
-    
+
     if(ndof > 1)        //DG(P1)
     {
       auto lmark = c*(ndof-1);
