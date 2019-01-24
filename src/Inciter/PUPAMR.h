@@ -10,7 +10,6 @@
 #ifndef PUPAMR_h
 #define PUPAMR_h
 
-#include "NoWarning/pup_stl.h"
 #include "Base/PUPUtil.h"
 
 #include "AMR/edge_store.h"
