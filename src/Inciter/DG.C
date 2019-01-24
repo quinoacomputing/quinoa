@@ -22,7 +22,6 @@
 #include "Inciter/InputDeck/InputDeck.h"
 #include "Refiner.h"
 #include "Limiter.h"
-//#include "ChareStateCollector.h"
 
 namespace inciter {
 
@@ -31,8 +30,6 @@ extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< DGPDE > g_dgpde;
 
 } // inciter::
-
-//extern tk::CProxy_ChareStateCollector stateProxy;
 
 using inciter::DG;
 
@@ -269,11 +266,6 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
 //! \param[in] infaces Unique set of faces we potentially share with fromch
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "comfac" );
-
   const auto& esuel = m_fd.Esuel();
 
   // Attempt to find sender chare among chares we potentially share faces with.
@@ -467,11 +459,6 @@ DG::reqGhost()
 // Receive requests for ghost data
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "reqGhost" );
-
   // If every chare we communicate with has requested ghost data from us, we may
   // fulfill the requests, but only if we have already setup our ghost data.
   if (++m_ghostReq == m_msumset.size()) reqghost_complete();
@@ -483,11 +470,6 @@ DG::sendGhost()
 // Send all of our ghost data to fellow chares
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "sendGhost" );
-
   for (const auto& c : m_ghostData)
     thisProxy[ c.first ].comGhost( thisIndex, c.second );
 
@@ -517,11 +499,6 @@ DG::comGhost( int fromch, const GhostData& ghost )
 //! \param[in] ghost Ghost data, see Inciter/FaceData.h for the type
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "comGhost" );
-
   auto d = Disc();
   const auto& lid = d->Lid();
   auto& inpofa = m_fd.Inpofa();
@@ -859,11 +836,6 @@ DG::setup( tk::real v )
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "setup" );
-
   tk::destroy(m_msumset);
 
   auto d = Disc();
@@ -908,11 +880,6 @@ DG::dt()
 // Compute time step size
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "dt" );
-
   auto mindt = std::numeric_limits< tk::real >::max();
 
   auto d = Disc();
@@ -958,11 +925,6 @@ DG::advance( tk::real )
 // Advance equations to next time step
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "advance" );
-
   // communicate solution ghost data (if any)
   if (m_ghostData.empty())
     comsol_complete();
@@ -993,11 +955,6 @@ DG::comsol( int fromch,
 //! \details This function receives contributions to m_u from fellow chares.
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "comsol" );
-
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comsol()" );
 
   // Find local-to-ghost tet id map for sender chare
@@ -1176,11 +1133,6 @@ DG::comlim( int fromch,
 //    chares.
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "comlim" );
-
   Assert( lfn.size() == tetid.size(), "Size mismatch in DG::comlim()" );
 
   // Find local-to-ghost tet id map for sender chare
@@ -1211,11 +1163,6 @@ DG::solve( tk::real newdt )
 //! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "solve" );
-
   // Enable SDAG wait for building the solution vector
   thisProxy[ thisIndex ].wait4sol();
   thisProxy[ thisIndex ].wait4lim();
@@ -1331,11 +1278,6 @@ DG::eval()
 // Evaluate whether to continue with next step
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "eval" );
-
   auto d = Disc();
 
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
