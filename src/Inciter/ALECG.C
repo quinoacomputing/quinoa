@@ -39,8 +39,6 @@ extern std::vector< CGPDE > g_cgpde;
 
 } // inciter::
 
-// extern tk::CProxy_ChareStateCollector stateProxy;
-
 using inciter::ALECG;
 
 ALECG::ALECG( const CProxy_Discretization& disc, const FaceData& fd ) :
