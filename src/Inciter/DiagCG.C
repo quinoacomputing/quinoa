@@ -28,7 +28,6 @@
 #include "DiagReducer.h"
 #include "NodeBC.h"
 #include "Refiner.h"
-//#include "ChareStateCollector.h"
 
 namespace inciter {
 
@@ -37,8 +36,6 @@ extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< CGPDE > g_cgpde;
 
 } // inciter::
-
-// extern tk::CProxy_ChareStateCollector stateProxy;
 
 using inciter::DiagCG;
 
@@ -71,11 +68,6 @@ DiagCG::DiagCG( const CProxy_Discretization& disc, const FaceData& fd ) :
 //! \param[in] fd Face data structures
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
-//                                         Disc()->It(), "DiagCG" );
-
   // Size communication buffers
   resizeComm();
 }
@@ -127,11 +119,6 @@ DiagCG::setup( tk::real v )
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
-//                                         Disc()->It(), "setup" );
-
   auto d = Disc();
 
   // Store total mesh volume
@@ -233,11 +220,6 @@ DiagCG::comlhs( const std::vector< std::size_t >& gid,
 //!   are combined in lhsmerge().
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
-//                                         Disc()->It(), "comlhs" );
-
   Assert( L.size() == gid.size(), "Size mismatch" );
 
   using tk::operator+=;
@@ -262,11 +244,6 @@ DiagCG::dt()
 // Compute time step size
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
-//                                         Disc()->It(), "dt" );
-
   tk::real mindt = std::numeric_limits< tk::real >::max();
 
   auto const_dt = g_inputdeck.get< tag::discr, tag::dt >();
@@ -357,11 +334,6 @@ DiagCG::comrhs( const std::vector< std::size_t >& gid,
 //!   are combined in solve().
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
-//                                         Disc()->It(), "comrhs" );
-
   Assert( R.size() == gid.size(), "Size mismatch" );
 
   using tk::operator+=;
@@ -394,11 +366,6 @@ DiagCG::comdif( const std::vector< std::size_t >& gid,
 //!   are combined in solve().
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
-//                                         Disc()->It(), "comdif" );
-
   Assert( D.size() == gid.size(), "Size mismatch" );
 
   using tk::operator+=;
@@ -538,11 +505,6 @@ DiagCG::advance( tk::real newdt )
 //! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
-//                                         Disc()->It(), "advance" );
-
   auto d = Disc();
 
   // Set new time step size
@@ -688,11 +650,6 @@ DiagCG::eval()
 // Evaluate whether to continue with next step
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
-//                                         Disc()->It(), "eval" );
-
   auto d = Disc();
 
   // Output field data to file
