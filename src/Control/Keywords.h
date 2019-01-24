@@ -4965,7 +4965,7 @@ struct diagcg_info {
 using diagcg = keyword< diagcg_info, TAOCPP_PEGTL_STRING("diagcg") >;
 
 struct alecg_info {
-  static std::string name() { return "ALE-CG with RK"; }
+  static std::string name() { return "ALE-CG + RK"; }
   static std::string shortDescription() { return "Select continuous Galerkin "
     "with ALE + Runge-Kutta"; }
   static std::string longDescription() { return
