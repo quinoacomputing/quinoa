@@ -9,8 +9,8 @@
      functions chosen for the DG method are the Dubiner basis, which are Legendre
      polynomials modified for tetrahedra, which are defined only on the reference/master
      tetrahedron.
-  \References: [1] https://doi.org/10.1007/BF01060030
-               [2] https://doi.org/10.1093/imamat/hxh111
+  \see [1] https://doi.org/10.1007/BF01060030
+  \see [2] https://doi.org/10.1093/imamat/hxh111
 */
 // *****************************************************************************
 
@@ -33,7 +33,7 @@ tk::eval_det ( const std::size_t e,
 //! \param[in] cz Vector of z-coordinates of points
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coordel Array of nodal coordinates for tetrahedron element
-//! \return the determinant of Jacobian matrix
+//! \return The determinant of Jacobian matrix
 // *****************************************************************************
 {
   // nodal coordinates of the element
@@ -65,7 +65,7 @@ tk::eval_gp ( const std::size_t igp,
 //! \param[in] igp Index of quadrature points
 //! \param[in] coordfa Array of nodal coordinates for face element
 //! \param[in] coordgp Array of coordinates for quadrature points in reference space
-//! \param[out] Array of coordinates for quadrature points in physical space
+//! \return Array of coordinates for quadrature points in physical space
 // *****************************************************************************
 {
   // Barycentric coordinates for the triangular face
@@ -80,19 +80,18 @@ tk::eval_gp ( const std::size_t igp,
             coordfa[0][2]*shp1 + coordfa[1][2]*shp2 + coordfa[2][2]*shp3 }};
 }
 
-void
+std::vector< tk::real >
 tk::eval_basis( const std::size_t ndof,
                 const std::array< std::array< tk::real, 3>, 4 >& coordel,
                 const tk::real detT,
-                const std::array < tk::real, 3 >& gp,
-                std::array< tk::real, 10>& B )
+                const std::array < tk::real, 3 >& gp )
 // *****************************************************************************
 //  Compute the Dubiner basis functions
 //! \param[in] ndof Number of degree of freedom
 //! \param[in] coordel Array of nodal coordinates for tetrahedron element
 //! \param[in] detT Determination of Jacobian matrix for tetrahedron element
 //! \param[in] gp Array of coordinates for quadrature points in physical space
-//! \param[in,out] B Array of basis functions
+//! \return Vector of basis functions
 // *****************************************************************************
 {
   // In order to determine the high-order solution from the left and right
@@ -103,7 +102,7 @@ tk::eval_basis( const std::size_t ndof,
 
   tk::real detT_gp = 0.0;
 
-  // transformation of the physical coordinates of the quadrature point
+  // Transformation of the physical coordinates of the quadrature point
   // to reference space for the element to be able to compute basis functions.
   detT_gp = Jacobian( coordel[0], gp, coordel[2], coordel[3] );
   auto xi = detT_gp / detT;
@@ -112,46 +111,53 @@ tk::eval_basis( const std::size_t ndof,
   detT_gp = Jacobian( coordel[0], coordel[1], coordel[2], gp );
   auto zeta = detT_gp / detT;
 
-  // basis functions (DGP1) at igp for the left element
-  B[1] = 2.0 * xi + eta + zeta - 1.0;
-  B[2] = 3.0 * eta + zeta - 1.0;
-  B[3] = 4.0 * zeta - 1.0;
+  // Array of basis functions
+  std::vector< tk::real > B( ndof, 1.0 );
 
-  if(ndof > 4)        //DG(P2)
+  if ( ndof > 1 )           // DG(P1)
   {
-    // basis functions (DGP2) at igp for the left element
-    auto xi_xi = xi * xi;
-    auto xi_eta = xi * eta;
-    auto xi_zeta = xi * zeta;
-    auto eta_eta = eta * eta;
-    auto eta_zeta = eta * zeta;
-    auto zeta_zeta = zeta * zeta;
+    // Basis functions (DGP1) at igp
+    B[1] = 2.0 * xi + eta + zeta - 1.0;
+    B[2] = 3.0 * eta + zeta - 1.0;
+    B[3] = 4.0 * zeta - 1.0;
 
-    B[4] =  6.0 * xi_xi + eta_eta + zeta_zeta
-          + 6.0 * xi_eta + 6.0 * xi_zeta + 2.0 * eta_zeta
-          - 6.0 * xi - 2.0 * eta - 2.0 * zeta + 1.0;
-    B[5] =  5.0 * eta_eta + zeta_zeta
-          + 10.0 * xi_eta + 2.0 * xi_zeta + 6.0 * eta_zeta
-          - 2.0 * xi - 6.0 * eta - 2.0 * zeta + 1.0;
-    B[6] =  6.0 * zeta_zeta + 12.0 * xi_zeta + 6.0 * eta_zeta
-          - 2.0 * xi - eta - 7.0 * zeta + 1.0;
-    B[7] =  10.0 * eta_eta + zeta_zeta + 8.0 * eta_zeta
-          - 8.0 * eta - 2.0 * zeta + 1.0;
-    B[8] =  6.0 * zeta_zeta + 18.0 * eta_zeta - 3.0 * eta
-          - 7.0 * zeta + 1.0;
-    B[9] =  15.0 * zeta_zeta - 10.0 * zeta + 1.0;
+    if( ndof > 4 )         // DG(P2)
+    {
+      // Basis functions (DGP2) at igp
+      auto xi_xi = xi * xi;
+      auto xi_eta = xi * eta;
+      auto xi_zeta = xi * zeta;
+      auto eta_eta = eta * eta;
+      auto eta_zeta = eta * zeta;
+      auto zeta_zeta = zeta * zeta;
+
+      B[4] = 6.0 * xi_xi + eta_eta + zeta_zeta
+           + 6.0 * xi_eta + 6.0 * xi_zeta + 2.0 * eta_zeta
+           - 6.0 * xi - 2.0 * eta - 2.0 * zeta + 1.0;
+      B[5] = 5.0 * eta_eta + zeta_zeta
+           + 10.0 * xi_eta + 2.0 * xi_zeta + 6.0 * eta_zeta
+           - 2.0 * xi - 6.0 * eta - 2.0 * zeta + 1.0;
+      B[6] = 6.0 * zeta_zeta + 12.0 * xi_zeta + 6.0 * eta_zeta
+           - 2.0 * xi - eta - 7.0 * zeta + 1.0;
+      B[7] = 10.0 * eta_eta + zeta_zeta + 8.0 * eta_zeta
+           - 8.0 * eta - 2.0 * zeta + 1.0;
+      B[8] = 6.0 * zeta_zeta + 18.0 * eta_zeta - 3.0 * eta
+           - 7.0 * zeta + 1.0;
+      B[9] = 15.0 * zeta_zeta - 10.0 * zeta + 1.0;
+    }
   }
+
+  return B;
 }
 
-void
+std::vector< tk::real >
 tk::eval_state ( ncomp_t ncomp,
                  ncomp_t offset,
                  const std::size_t ndof,
                  const std::size_t e,
                  const Fields& U,
                  const Fields& limFunc,
-                 const std::array< tk::real, 10>& B,
-                 std::vector< tk::real >& state )
+                 const std::vector< tk::real >& B )
 // *****************************************************************************
 //  Compute the state variables for the tetrahedron element
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -160,10 +166,15 @@ tk::eval_state ( ncomp_t ncomp,
 //! \param[in] e Index for the tetrahedron element
 //! \param[in] U Solution vector at recent time step
 //! \param[in] limFunc Limiter function for higher-order solution dofs
-//! \param[in] B Array of basis functions
-//! \param[in,out] state Array of state variable for tetrahedron element
+//! \param[in] B Vector of basis functions
+//! \return Vector of state variable for tetrahedron element
 // *****************************************************************************
 {
+  Assert( B.size() == ndof, "Size mismatch" );
+
+  // Array of state variable for tetrahedron element
+  std::vector< tk::real > state( ncomp );
+
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
@@ -187,4 +198,6 @@ tk::eval_state ( ncomp_t ncomp,
                 + U( e, mark+9, offset ) * B[9];
     }
   }
+
+  return state;
 }

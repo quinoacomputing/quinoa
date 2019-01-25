@@ -9,8 +9,8 @@
      functions chosen for the DG method are the Dubiner basis, which are Legendre
      polynomials modified for tetrahedra, which are defined only on the reference/master
      tetrahedron.
-  \References: [1] https://doi.org/10.1007/BF01060030
-               [2] https://doi.org/10.1093/imamat/hxh111
+  \see [1] https://doi.org/10.1007/BF01060030
+  \see [2] https://doi.org/10.1093/imamat/hxh111
 */
 // *****************************************************************************
 
@@ -44,23 +44,21 @@ eval_gp ( const std::size_t igp,
           const std::array< std::vector< tk::real >, 2 >& coordgp );
 
 //! Compute the Dubiner basis functions
-void
+std::vector< tk::real >
 eval_basis( const std::size_t ndof,
             const std::array< std::array< tk::real, 3>, 4 >& coordel,
             const tk::real detT,
-            const std::array < tk::real, 3 >& gp,
-            std::array< tk::real, 10>& B );
+            const std::array < tk::real, 3 >& gp );
 
 //! Compute the state variables for the tetrahedron element
-void
+std::vector< tk::real >
 eval_state ( ncomp_t ncomp,
              ncomp_t offset,
              const std::size_t ndof,
              const std::size_t e,
              const Fields& U,
              const Fields& limFunc,
-             const std::array< tk::real, 10>& B,
-             std::vector< tk::real >& state );
+             const std::vector< tk::real >& B );
 
 } // tk::
 

@@ -109,31 +109,22 @@ tk::surfInt( ncomp_t system,
     // Gaussian quadrature
     for (std::size_t igp=0; igp<ng; ++igp)
     {
-      // Coordinates of quadrature points at 3D physical domain
-      std::array< real, 3 > gp;
+      // Compute the coordinates of quadrature point at physical domain
+      auto gp = eval_gp( igp, coordfa, coordgp );
 
-      // Basis functions for finite element solution
-      std::array< tk::real, 10 > B_l;
-      std::array< tk::real, 10 > B_r;
-
-      if (ndof > 1)         // DG(P1) or DG(P2)
-      {
-        // Compute the coordinates of quadrature point at physical domain
-        gp = eval_gp( igp, coordfa, coordgp );
-
-        // Compute the basis function
-        eval_basis( ndof, coordel_l, detT_l, gp, B_l );
-        eval_basis( ndof, coordel_r, detT_r, gp, B_r );
-      }
+      // Compute the basis function
+      auto B_l = eval_basis( ndof, coordel_l, detT_l, gp );
+      auto B_r = eval_basis( ndof, coordel_r, detT_r, gp );
 
       auto wt = wgp[igp] * geoFace(f,0,0);
 
-      std::array< std::vector< real >, 2 >
-          state{{ std::vector< real >( ncomp, 0.0 ),
-                std::vector< real >( ncomp, 0.0 ) }};
+      std::array< std::vector< real >, 2 > state;
 
-      eval_state( ncomp, offset, ndof, el, U, limFunc, B_l, state[0] );
-      eval_state( ncomp, offset, ndof, er, U, limFunc, B_r, state[1] );
+      state[0] = eval_state( ncomp, offset, ndof, el, U, limFunc, B_l );
+      state[1] = eval_state( ncomp, offset, ndof, er, U, limFunc, B_r );
+
+      Assert( state[0].size() == ncomp, "Size mismatch" );
+      Assert( state[1].size() == ncomp, "Size mismatch" );
 
       // evaluate prescribed velocity (if any)
       auto v = vel( system, ncomp, gp[0], gp[1], gp[2] );
@@ -156,8 +147,8 @@ tk::update_rhs ( ncomp_t ncomp,
                  const std::size_t el,
                  const std::size_t er,
                  const std::vector< tk::real >& fl,
-                 const std::array< tk::real, 10>& B_l,
-                 const std::array< tk::real, 10>& B_r,
+                 const std::vector< tk::real >& B_l,
+                 const std::vector< tk::real >& B_r,
                  Fields& R )
 // *****************************************************************************
 //  Update the rhs by adding the surface integration term
@@ -173,6 +164,9 @@ tk::update_rhs ( ncomp_t ncomp,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
+  Assert( B_l.size() == ndof, "Size mismatch" );
+  Assert( B_r.size() == ndof, "Size mismatch" );
+
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;

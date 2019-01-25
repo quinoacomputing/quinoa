@@ -48,8 +48,8 @@ update_rhs ( ncomp_t ncomp,
              const std::size_t el,
              const std::size_t er,
              const std::vector< tk::real >& fl,
-             const std::array< tk::real, 10>& B_l,
-             const std::array< tk::real, 10>& B_r,
+             const std::vector< tk::real >& B_l,
+             const std::vector< tk::real >& B_r,
              Fields& R );
 
 } // tk::
