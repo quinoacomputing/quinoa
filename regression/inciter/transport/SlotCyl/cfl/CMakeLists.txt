@@ -69,7 +69,10 @@ add_regression_test(slotted_cylinder_dg ${INCITER_EXECUTABLE}
                     BIN_BASELINE slot_cyl_dg.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff_dg.cfg)
+                    BIN_DIFF_PROG_CONF exodiff_dg.cfg
+                    TEXT_BASELINE diag_dg.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF slo_cyl_diag.ndiff.cfg)
 
 add_regression_test(slotted_cylinder_dg ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -84,7 +87,10 @@ add_regression_test(slotted_cylinder_dg ${INCITER_EXECUTABLE}
                                out.e-s.0.4.2
                                out.e-s.0.4.3
                     BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff_dg.cfg)
+                    BIN_DIFF_PROG_CONF exodiff_dg.cfg
+                    TEXT_BASELINE diag_dg.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF slo_cyl_diag.ndiff.cfg)
 
 add_regression_test(slotted_cylinder_dgp1 ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -93,7 +99,10 @@ add_regression_test(slotted_cylinder_dgp1 ${INCITER_EXECUTABLE}
                     BIN_BASELINE slot_cyl_dgp1.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff_dg.cfg)
+                    BIN_DIFF_PROG_CONF exodiff_dg.cfg
+                    TEXT_BASELINE diag_dgp1.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF slo_cly_diag.ndiff.cfg)
 
 add_regression_test(slotted_cylinder_dgp1 ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -108,7 +117,10 @@ add_regression_test(slotted_cylinder_dgp1 ${INCITER_EXECUTABLE}
                                out.e-s.0.4.2
                                out.e-s.0.4.3
                     BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff_dg.cfg)
+                    BIN_DIFF_PROG_CONF exodiff_dg.cfg
+                    TEXT_BASELINE diag_dgp1.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF slo_cyl_diag.ndiff.cfg)
 
 # Virtualization = 0.7
 
