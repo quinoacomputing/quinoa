@@ -398,31 +398,29 @@ Refiner::comExtra()
 }
 
 void
-Refiner::addRefBndEdges( int fromch, const AMR::EdgeData& ed, const std::unordered_set<size_t>& intermediates)
+Refiner::addRefBndEdges(
+  int fromch,
+  const AMR::EdgeData& ed,
+  const std::unordered_set< std::size_t >& intermediates )
 // *****************************************************************************
 //! Receive tagged edges on our chare boundary
 //! \param[in] fromch Chare call coming from
 //! \param[in] ed Tagged edges on chare boundary
+//! \param[in] intermediates Intermediate nodes
 // *****************************************************************************
 {
   // Save/augment buffer of edge data for each sender chare
   m_edgedataCh[ fromch ].insert( begin(ed), end(ed) );
 
-  // Try and add the intermediates
-  // -> Convert back to locals
-  for (const auto i : intermediates)
-  {
-      auto l = m_lid.find( i ); // convert to local
-      //auto l1 = tk::cref_find( m_lid, r.first[0] );
-      //auto it = m_edgedata.find( r.first );
-      if (l != end(m_lid)) {
-
-          m_refiner.tet_store.intermediate_list.insert( l->second );
-      }
-
+  // Add the intermediates to mesh refiner lib
+  for (const auto i : intermediates) {
+    auto l = m_lid.find( i ); // convert to local node ids
+    //auto l1 = tk::cref_find( m_lid, r.first[0] );
+    //auto it = m_edgedata.find( r.first );
+    if (l != end(m_lid)) {
+      m_refiner.tet_store.intermediate_list.insert( l->second );
+    }
   }
-
-
 
   // Heard from every worker we share at least a single edge with
   if (++m_nref == m_ch.size()) {
@@ -441,6 +439,7 @@ Refiner::correctref()
 // *****************************************************************************
 {
   m_refiner.lock_intermediates();
+
   auto unlocked = AMR::Edge_Lock_Case::unlocked;
 
   // Storage for edge data that need correction to yield a conforming mesh
@@ -457,7 +456,7 @@ Refiner::correctref()
         const auto& local = it->second;
         const auto& remote = r.second;
         auto local_needs_refining = local.first;
-        size_t local_lock_case = local.second;
+        auto local_lock_case = local.second;
         auto remote_needs_refining = remote.first;
         auto remote_lock_case = remote.second;
 
@@ -471,11 +470,8 @@ Refiner::correctref()
 
         //if (remote_lock_case > unlocked) remote_lock_case = AMR::Edge_Lock_Case::locked;
 
-        auto l1 = tk::cref_find( m_lid, r.first[0] );
-        auto l2 = tk::cref_find( m_lid, r.first[1] );
-
         // compute lock from local and remote locks as most restrictive
-        local_lock_case = std::max( (size_t)local_lock_case, (size_t)remote_lock_case );
+        local_lock_case = std::max( local_lock_case, remote_lock_case );
 
         if (local_lock_case > unlocked) {
             local_needs_refining = false;
@@ -489,6 +485,9 @@ Refiner::correctref()
         if (local_lock_case != local_lock_case_orig ||
             local_needs_refining != local_needs_refining_orig) {
 
+           auto l1 = tk::cref_find( m_lid, r.first[0] );
+           auto l2 = tk::cref_find( m_lid, r.first[1] );
+
            Assert( l1 != l2, "Edge end-points local ids are the same" );
 
            /*
@@ -501,7 +500,7 @@ Refiner::correctref()
            */
 
            extra[ {{ std::min(l1,l2), std::max(l1,l2) }} ] =
-             { local_needs_refining, (AMR::Edge_Lock_Case)local_lock_case };
+             { local_needs_refining, local_lock_case };
          }
 
       }
@@ -552,10 +551,8 @@ Refiner::updateEdgeData()
   }
 
   // Build intermediates to send
-  for (const auto& i : m_refiner.tet_store.intermediate_list)
-  {
-      size_t g = m_gid[ i ];
-      m_intermediates.insert(g);
+  for (const auto& i : m_refiner.tet_store.intermediate_list) {
+     m_intermediates.insert( m_gid[i] );
   }
 }
 
