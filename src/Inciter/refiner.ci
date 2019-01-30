@@ -33,7 +33,6 @@ module refiner {
       initnode void registerReducers();
       entry
         void dtref( tk::real t,
-                    const SchemeBase::Proxy& s,
                     const std::map< int, std::vector< std::size_t > >& bnode );
       entry [reductiontarget] void addBndEdges( CkReductionMsg* msg );
       entry void addRefBndEdges( int fromch,

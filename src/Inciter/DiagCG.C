@@ -572,7 +572,7 @@ DiagCG::refine()
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
-    d->Ref()->dtref( d->T(), thisProxy, m_fd.Bnode() );
+    d->Ref()->dtref( d->T(), m_fd.Bnode() );
 
   } else {      // do not refine
 
