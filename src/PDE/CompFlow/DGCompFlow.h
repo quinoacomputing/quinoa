@@ -163,16 +163,17 @@ class CompFlow {
       tk::surfInt( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
                    rieflxfn, velfn, U, limFunc, R );
 
+      // compute boundary surface flux integrals
+      for (const auto& b : bctypes)
+        tk::sidesetInt( m_system, m_ncomp, m_offset, b.first, fd, geoFace, inpoel,
+                        coord, t, rieflxfn, velfn, b.second, U, limFunc, R );
+
       switch(ndof)
       {
         case 1:       // DG(P0)
           // compute source term intehrals
           tk::srcIntP0( m_system, m_ncomp, m_offset,
                         t, geoElem, Problem::src, R );
-          // compute boundary surface flux integrals
-          for (const auto& b : bctypes)
-            tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, fd,
-                              geoFace, t, rieflxfn, velfn, b.second, U, R );
           break;
 
         case 4:       // DG(P1)
@@ -182,10 +183,6 @@ class CompFlow {
           // compute volume integrals
           tk::volIntP1( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
                         velfn, U, limFunc, R );
-          // compute boundary surface flux integrals
-          for (const auto& b : bctypes)
-            tk::sidesetIntP1( m_system, m_ncomp, m_offset, b.first, fd, geoFace, inpoel, 
-                              coord, t, rieflxfn, velfn, b.second, U, limFunc, R );
           break;
 
         case 10:      // DG(P2)
@@ -195,10 +192,6 @@ class CompFlow {
           // compute volume integrals
           tk::volIntP2( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
                         velfn, U, R );
-          // compute boundary surface flux integrals
-          for (const auto& b : bctypes)
-            tk::sidesetIntP2( m_system, m_ncomp, m_offset, b.first, fd, geoFace, inpoel,
-                              coord, t, rieflxfn, velfn, b.second, U, R );
           break;
 
         default:
