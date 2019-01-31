@@ -1159,7 +1159,28 @@ DG::lim()
   
     const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
     if (limiter == ctr::LimiterType::WENOP1)
+    {
       WENO_P1( m_fd.Esuel(), 0, m_u, m_limFunc );
+
+      const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto ncomp= m_u.nprop()/ndof;
+      // add limiting to the initial solution
+      if (Disc()->It() == 0 && m_stage == 0) 
+      {
+        for (inciter::ncomp_t c=0; c<ncomp; ++c)
+        {
+          auto mark = c*ndof;
+          auto lmark = c*(ndof-1);
+          for (std::size_t e=0; e<m_u.nunk(); ++e)
+          {
+            // add limiting to DGP1 term
+            m_u( e, mark+1, 0 ) = m_limFunc( e, lmark  , 0 ) * m_u( e, mark+1, 0 );
+            m_u( e, mark+2, 0 ) = m_limFunc( e, lmark+1, 0 ) * m_u( e, mark+2, 0 );
+            m_u( e, mark+3, 0 ) = m_limFunc( e, lmark+2, 0 ) * m_u( e, mark+3, 0 );
+          }
+        }
+      }
+    }
   
     // communicate solution ghost data (if any)
     if (m_ghostData.empty())

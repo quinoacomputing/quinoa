@@ -91,7 +91,7 @@ tk::initializeP1( ncomp_t system,
   Assert( L.nunk() == unk.nunk(), "Size mismatch" );
 
   // Number of integration points
-  constexpr std::size_t NG = 5;
+  constexpr std::size_t NG = 14;
 
   // Number of solution degrees of freedom
   constexpr std::size_t ndof = 4;
