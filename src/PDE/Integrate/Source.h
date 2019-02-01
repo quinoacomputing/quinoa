@@ -21,39 +21,28 @@ namespace tk {
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
-//! Compute source term integrals for DG(P0)
+//! Compute source term integrals for DG
 void
-srcIntP0( ncomp_t system,
-          ncomp_t ncomp,
-          ncomp_t offset,
-          real t,
-          const Fields& geoElem,
-          const SrcFn& src,
-          Fields& R );
+srcInt( ncomp_t system,
+        ncomp_t ncomp,
+        ncomp_t offset,
+        real t,
+        const std::vector< std::size_t >& inpoel,
+        const UnsMesh::Coords& coord,
+        const Fields& geoElem,
+        const SrcFn& src,
+        Fields& R );
 
-//! Compute source term integrals for DG(P1)
+//! Update the rhs by adding the source term integrals
 void
-srcIntP1( ncomp_t system,
-          ncomp_t ncomp,
-          ncomp_t offset,
-          real t,
-          const std::vector< std::size_t >& inpoel,
-          const UnsMesh::Coords& coord,
-          const Fields& geoElem,
-          const SrcFn& src,
-          Fields& R );
-
-//! Compute source term integrals for DG(P2)
-void
-srcIntP2( ncomp_t system,
-          ncomp_t ncomp,
-          ncomp_t offset,
-          real t,
-          const std::vector< std::size_t >& inpoel,
-          const UnsMesh::Coords& coord,
-          const Fields& geoElem,
-          const SrcFn& src,
-          Fields& R );
+tk::update_rhs( ncomp_t ncomp,
+                ncomp_t offset,
+                const std::size_t ndof,
+                const tk::real wt,
+                const std::size_t e,
+                const std::vector< tk::real >& B,
+                const std::vector< tk::real >& s,
+                Fields& R );
 
 } // tk::
 
