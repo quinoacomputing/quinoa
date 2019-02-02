@@ -205,12 +205,12 @@ if (ENABLE_INCITER)
                         Config
                         Init
                         IO
+                        MeshWriter
                         ExodusIIMeshIO
                         ${OMEGAHMESHIO}
                         ${ROOTMESHIO}
                         MeshDetect
                         Mesh
-                        MeshWriter
                         Statistics
                         ${SEACASExodus_LIBRARIES}
                         ${ROOT_LIBRARIES}
