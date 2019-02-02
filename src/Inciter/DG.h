@@ -312,6 +312,9 @@ class DG : public CBase_DG {
     //! Compute time step size
     void dt();
 
+    //! Continue to next time step stage
+    void next();
+
     //! Evaluate whether to continue with next step
     void eval();
 };

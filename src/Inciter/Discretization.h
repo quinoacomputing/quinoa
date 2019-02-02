@@ -174,7 +174,9 @@ class Discretization : public CBase_Discretization {
     void status();
 
     //! Output mesh and fields data (solution dump) to file(s)
-    void write( const std::map< int, std::vector< std::size_t > >& bface,
+    void write( const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord,
+                const std::map< int, std::vector< std::size_t > >& bface,
                 const std::vector< std::size_t >& triinpoel,
                 const std::map< int, std::vector< std::size_t > >& bnode,
                 const std::vector< std::string >& names,

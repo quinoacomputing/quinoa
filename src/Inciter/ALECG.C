@@ -64,6 +64,8 @@ ALECG::ALECG( const CProxy_Discretization& disc, const FaceData& fd ) :
 // *****************************************************************************
 //! [Constructor]
 {
+  usesAtSync = true;    // enable migration at AtSync
+
   // Size communication buffers
   resizeComm();
 
@@ -403,8 +405,8 @@ ALECG::writeFields()
   }
 
   // Send mesh and fields data (solution dump) for output to file
-  d->write( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode(), names, fields,
-            tk::Centering::NODE );
+  d->write( d->Inpoel(), d->Coord(), m_fd.Bface(), m_fd.Triinpoel(),
+            m_fd.Bnode(), names, fields, tk::Centering::NODE );
 }
 
 void
@@ -467,7 +469,7 @@ ALECG::refine()
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
-    d->Ref()->dtref( d->T(), thisProxy, m_fd.Bnode() );
+    d->Ref()->dtref( d->T(), m_fd.Bnode() );
 
   } else {      // do not refine
 
@@ -555,7 +557,7 @@ ALECG::eval()
 
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
-    d->AtSync();   // Migrate here if needed
+    AtSync();   // migrate here if needed
     dt();
   } else {
     contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );

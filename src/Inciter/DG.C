@@ -72,10 +72,7 @@ DG::DG( const CProxy_Discretization& disc, const FaceData& fd ) :
 //! \param[in] fd Face data structures
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "DG" );
+  usesAtSync = true;    // enable migration at AtSync
 
   auto d = Disc();
 
@@ -991,21 +988,11 @@ DG::writeFields()
 
   const auto& esuel = m_fd.Esuel();
 
-  // Extract ghost data from inpoel and coord for writing the mesh
-  auto& inpoel = d->Inpoel();
-  std::vector< std::size_t > inpoelg;
-  for (auto e=esuel.size()/4; e<inpoel.size()/4; ++e)
-    for (std::size_t i=0; i<4; ++i)
-      inpoelg.push_back( inpoel[4*e+i] );
-  inpoel.resize(esuel.size());
-
-  auto& coord = d->Coord();
-  std::array< std::vector< tk::real >, 3 > coordg;
-  for (auto ip=m_ncoord; ip<coord[0].size(); ++ip)
-    for (std::size_t i=0; i<3; ++i)
-      coordg[i].push_back( coord[i][ip] );
-  for (std::size_t i=0; i<3; ++i)
-    coord[i].resize( m_ncoord );
+  // Copy mesh form Discretization object and chop off ghosts for dump
+  auto inpoel = d->Inpoel();
+  inpoel.resize( esuel.size() );
+  auto coord = d->Coord();
+  for (std::size_t i=0; i<3; ++i) coord[i].resize( m_ncoord );
 
   // Query fields names from all PDEs integrated
   std::vector< std::string > names;
@@ -1034,13 +1021,8 @@ DG::writeFields()
   // }
 
   // Output chare mesh and fields metadata to file
-  d->write( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode(), names, fields,
-            tk::Centering::ELEM );
-
-  // Restore coord and inpoel with ghost data
-  std::move( begin(inpoelg), end(inpoelg), std::back_inserter(inpoel) );
-  for (std::size_t i=0; i<3; ++i)
-    std::move( begin(coordg[i]), end(coordg[i]), std::back_inserter(coord[i]) );
+  d->write( inpoel, coord, m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode(),
+            names, fields, tk::Centering::ELEM );
 }
 
 void
@@ -1236,7 +1218,7 @@ DG::refine()
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
-    d->Ref()->dtref( d->T(), thisProxy, m_fd.Bnode() );
+    d->Ref()->dtref( d->T(), m_fd.Bnode() );
 
   } else {      // do not refine
 
@@ -1273,6 +1255,19 @@ DG::resize( const tk::UnsMesh::Chunk& /*chunk*/,
 }
 
 void
+DG::next()
+// *****************************************************************************
+//  Continue to next time step stage
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  tk::real fdt = 0.0;
+  d->contribute( sizeof(tk::real), &fdt, CkReduction::nop,
+                 CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
+}
+
+void
 DG::eval()
 // *****************************************************************************
 // Evaluate whether to continue with next step
@@ -1284,8 +1279,6 @@ DG::eval()
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
 
-  tk::real fdt = 0.0;
-
   // Increment Runge-Kutta stage counter
   ++m_stage;
 
@@ -1293,11 +1286,7 @@ DG::eval()
   // assess computation completion criteria
   if (m_stage < 3) {
 
-    // The following contribute call serves as a global-synchonization which
-    // ensures that all chares have completed the 3rd RK stage solution update
-    // before proceeding to DG::advance() to communicate ghost-cell solutions
-    contribute( sizeof(tk::real), &fdt, CkReduction::nop,
-                CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
+    next();
 
   } else {
 
@@ -1310,9 +1299,8 @@ DG::eval()
 
     // If neither max iterations nor max time reached, continue, otherwise finish
     if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
-      d->AtSync();   // Migrate here if needed
-      contribute( sizeof(tk::real), &fdt, CkReduction::nop,
-                  CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
+      AtSync();   // migrate here if needed
+      next();
     } else {
       contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));
     }

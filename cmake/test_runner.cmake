@@ -227,9 +227,9 @@ else() # Test command ran successfully, attempt to do diffs
     # filenames, independent of the order.
 
     set(matched_results)
-    math(EXPR b "-1")
+    set(b "-1")
     foreach(baseline ${BIN_BASELINE})
-      math(EXPR b "${b}+1")
+      math(EXPR b "0${b}+1")
 
       if (nconf EQUAL 1)
         list(GET BIN_DIFF_PROG_CONF 0 conf)
@@ -240,9 +240,9 @@ else() # Test command ran successfully, attempt to do diffs
       set(pass FALSE)
       set(matching_result)
       set(baseline_error)
-      math(EXPR r "-1")
+      set(r "-1")
       foreach(result ${BIN_RESULT})
-        math(EXPR r "${r}+1")
+        math(EXPR r "0${r}+1")
 
         if (NOT CHARM_SMP AND NOT b EQUAL r)
           #message("Charm++ in non-SMP mode: not diffing baseline ${b} with result ${r}")
