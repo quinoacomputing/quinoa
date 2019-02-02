@@ -70,6 +70,8 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
 //! \param[in] nchare Total number of Charm++ Refiner chares
 // *****************************************************************************
 {
+  usesAtSync = true;    // enable migration at AtSync
+
   // Ensure boundary face ids will not index out of face connectivity
   Assert( std::all_of( begin(m_bface), end(m_bface),
             [&](const decltype(m_bface)::value_type& s)

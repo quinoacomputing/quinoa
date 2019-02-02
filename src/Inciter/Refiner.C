@@ -94,6 +94,8 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 {
   Assert( !m_ginpoel.empty(), "No elements assigned to refiner chare" );
 
+  usesAtSync = true;    // enable migration at AtSync
+
   // Reverse initial mesh refinement type list (will pop from back)
   std::reverse( begin(m_initref), end(m_initref) );
 
