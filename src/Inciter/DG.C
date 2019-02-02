@@ -72,11 +72,6 @@ DG::DG( const CProxy_Discretization& disc, const FaceData& fd ) :
 //! \param[in] fd Face data structures
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "DG" );
-
   usesAtSync = true;    // enable migration at AtSync
 
   auto d = Disc();
