@@ -15,7 +15,6 @@ target_include_directories(IO PUBLIC
                            ${SEACASExodus_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
-                           ${QUINOA_DIRS}
                            ${MPI_CXX_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_PATH}
                            ${BRIGAND_INCLUDE_DIRS}
