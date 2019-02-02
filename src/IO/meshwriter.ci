@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/IO/meshfieldwriter.ci
+  \file      src/IO/meshwriter.ci
   \copyright 2016-2018, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for outputing mesh data to file
   \details   Charm++ interface file for a group used to output data associated
