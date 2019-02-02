@@ -413,8 +413,8 @@ Discretization::write(
 //!   thread-safe.
 // *****************************************************************************
 {
-  // If the previous iteration refined (or moved) the mesh or this is
-  // this is called before the first time step, we also output the mesh.
+  // If the previous iteration refined (or moved) the mesh or this is called
+  // before the first time step, we also output the mesh.
   bool meshoutput = m_itf == 0 ? true : false;
 
   auto eps = std::numeric_limits< tk::real >::epsilon();
