@@ -988,21 +988,11 @@ DG::writeFields()
 
   const auto& esuel = m_fd.Esuel();
 
-  // Extract ghost data from inpoel and coord for writing the mesh
-  auto& inpoel = d->Inpoel();
-  std::vector< std::size_t > inpoelg;
-  for (auto e=esuel.size()/4; e<inpoel.size()/4; ++e)
-    for (std::size_t i=0; i<4; ++i)
-      inpoelg.push_back( inpoel[4*e+i] );
-  inpoel.resize(esuel.size());
-
-  auto& coord = d->Coord();
-  std::array< std::vector< tk::real >, 3 > coordg;
-  for (auto ip=m_ncoord; ip<coord[0].size(); ++ip)
-    for (std::size_t i=0; i<3; ++i)
-      coordg[i].push_back( coord[i][ip] );
-  for (std::size_t i=0; i<3; ++i)
-    coord[i].resize( m_ncoord );
+  // Copy mesh form Discretization object and chop off ghosts for dump
+  auto inpoel = d->Inpoel();
+  inpoel.resize( esuel.size() );
+  auto coord = d->Coord();
+  for (std::size_t i=0; i<3; ++i) coord[i].resize( m_ncoord );
 
   // Query fields names from all PDEs integrated
   std::vector< std::string > names;
@@ -1031,13 +1021,8 @@ DG::writeFields()
   // }
 
   // Output chare mesh and fields metadata to file
-  d->write( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode(), names, fields,
-            tk::Centering::ELEM );
-
-  // Restore coord and inpoel with ghost data
-  std::move( begin(inpoelg), end(inpoelg), std::back_inserter(inpoel) );
-  for (std::size_t i=0; i<3; ++i)
-    std::move( begin(coordg[i]), end(coordg[i]), std::back_inserter(coord[i]) );
+  d->write( inpoel, coord, m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode(),
+            names, fields, tk::Centering::ELEM );
 }
 
 void

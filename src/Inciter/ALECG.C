@@ -405,8 +405,8 @@ ALECG::writeFields()
   }
 
   // Send mesh and fields data (solution dump) for output to file
-  d->write( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode(), names, fields,
-            tk::Centering::NODE );
+  d->write( d->Inpoel(), d->Coord(), m_fd.Bface(), m_fd.Triinpoel(),
+            m_fd.Bnode(), names, fields, tk::Centering::NODE );
 }
 
 void

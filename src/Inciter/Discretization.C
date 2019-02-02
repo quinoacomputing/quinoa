@@ -376,6 +376,8 @@ Discretization::stat()
 
 void
 Discretization::write(
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::vector< std::size_t >& triinpoel,
   const std::map< int, std::vector< std::size_t > >& bnode,
@@ -384,6 +386,8 @@ Discretization::write(
   tk::Centering centering )
 // *****************************************************************************
 //  Output mesh and fields data (solution dump) to file(s)
+//! \param[in] inpoel Mesh connectivity for the mesh chunk to be written
+//! \param[in] coord Node coordinates of the mesh chunk to be written
 //! \param[in] bface Map of boundary-face lists mapped to corresponding side set
 //!   ids for this mesh chunk
 //! \param[in] triinpoel Interconnectivity of points and boundary-face in this
@@ -426,7 +430,7 @@ Discretization::write(
 //  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
 //    write( meshoutput, fieldoutput, m_itr, m_itf, m_t, thisIndex, centering,
 //           g_inputdeck.get< tag::cmd, tag::io, tag::output >(),
-//           m_inpoel, m_coord, bface, triinpoel, bnode, m_lid, names, fields );
+//           inpoel, coord, bface, triinpoel, bnode, m_lid, names, fields );
 }
 
 void
