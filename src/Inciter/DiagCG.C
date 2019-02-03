@@ -130,8 +130,15 @@ DiagCG::setup( tk::real v )
   for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
 
   // Output initial conditions to file (regardless of whether it was requested)
-  writeFields( CkCallback(CkCallback::ignore) );
+  writeFields( CkCallback(CkIndex_DiagCG::init(), thisProxy[thisIndex]) );
+}
 
+void
+DiagCG::init()
+// *****************************************************************************
+// Initially compute left hand side diagonal matrix
+// *****************************************************************************
+{
   // Activate SDAG wait for computing the left-hand side
   thisProxy[ thisIndex ].wait4lhs();
 
@@ -274,7 +281,7 @@ DiagCG::dt()
 
   // Actiavate SDAG waits for time step
   thisProxy[ thisIndex ].wait4rhs();
-  thisProxy[ thisIndex ].wait4eval();
+  thisProxy[ thisIndex ].wait4out();
 
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
@@ -482,26 +489,6 @@ DiagCG::writeFields( CkCallback c )
 }
 
 void
-DiagCG::out()
-// *****************************************************************************
-// Output mesh field data
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
-
-  // Output field data to file if field iteration count is reached or in the
-  // last time step
-  if ( !((d->It()) % fieldfreq) ||
-       (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
-    writeFields( CkCallback(CkCallback::ignore) );
-}
-
-void
 DiagCG::advance( tk::real newdt )
 // *****************************************************************************
 // Advance equations to next time step
@@ -648,15 +635,35 @@ DiagCG::resize( const tk::UnsMesh::Chunk& chunk,
 }
 
 void
-DiagCG::eval()
+DiagCG::out()
 // *****************************************************************************
-// Evaluate whether to continue with next step
+// Output mesh field data
 // *****************************************************************************
 {
   auto d = Disc();
 
-  // Output field data to file
-  out();
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
+
+  // output field data if field iteration count is reached or in the last time
+  // step, otherwise continue to next time step
+  if ( !((d->It()) % fieldfreq) ||
+       (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
+    writeFields( CkCallback(CkIndex_DiagCG::step(), thisProxy[thisIndex]) );
+  else
+    step();
+}
+
+void
+DiagCG::step()
+// *****************************************************************************
+// Evaluate whether to continue with next time step
+// *****************************************************************************
+{
+  auto d = Disc();
+
   // Output one-liner status report to screen
   d->status();
 

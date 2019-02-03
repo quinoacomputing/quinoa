@@ -91,6 +91,9 @@ class DiagCG : public CBase_DiagCG {
     //! Setup: query boundary conditions, output mesh, etc.
     void setup( tk::real v );
 
+    // Initially compute left hand side diagonal matrix
+    void init();
+
     //! Advance equations to next time step
     void advance( tk::real newdt );
 
@@ -132,6 +135,9 @@ class DiagCG : public CBase_DiagCG {
 
     //! Resizing data sutrctures after mesh refinement has been completed
     void resized();
+
+    //! Evaluate whether to continue with next time step
+    void step();
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -250,9 +256,6 @@ class DiagCG : public CBase_DiagCG {
 
     //! Compute time step size
     void dt();
-
-    //! Evaluate whether to continue with next step
-    void eval();
 };
 
 } // inciter::
