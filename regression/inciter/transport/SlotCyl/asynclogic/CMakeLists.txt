@@ -16,40 +16,53 @@
 #   npes: total number of PEs to run test with
 #   ppn: number of PEs per logical (compute) node, only used in Charm++'s
 #        SMP mode, ignored in non-SMP mode
-function(add_async_test scheme virt npes ppn)
-  add_regression_test(asynclogic_${scheme}_u${virt} ${INCITER_EXECUTABLE}
+#   migr: 1: enable migration using RandCentLB, 0: no migration
+function(add_async_test scheme virt npes ppn migr)
+  if (migr)
+    set(migr_cmd "+balancer RandCentLB +LBDebug 1 +cs")
+    set(migr_append_name "_migr")
+    set(migr_label "migration")
+  endif()
+  add_regression_test(
+    asynclogic_${scheme}_u${virt}${migr_append_name}
+    ${INCITER_EXECUTABLE}
     NUMPES ${npes} PPN ${ppn}
     INPUTFILES slot_cyl_${scheme}.q unitcube_01_31k.exo
     ARGS -c slot_cyl_${scheme}.q -i unitcube_01_31k.exo -v -u ${virt} -b
+         ${migr_cmd}
     TEXT_BASELINE noop.ndiff.cfg
     TEXT_RESULT diag
     TEXT_DIFF_PROG_ARGS --trunc
-    TEXT_DIFF_PROG_CONF noop.ndiff.cfg)
+    TEXT_DIFF_PROG_CONF noop.ndiff.cfg
+    LABELS ${migr_label})
 endfunction()
 
 foreach(scheme diagcg dg alecg)
   foreach(virt 0.0 0.5 0.9)
+    foreach(migr 0 1)
 
-    # Add some tests across a range of PEs (both non-SMP & SMP)
-    foreach(npes RANGE 1 8)
-      add_async_test(${scheme} ${virt} ${npes} 1)
-    endforeach()
-
-    # In Charm++ SMP mode add some extra tests with npe != ppn
-    if (CHARM_SMP)
-      # Set npes & ppn as 4&2, 6&3, 6&2, 8&4, and 8&2, to correspond to logical
-      # nodes x worker threads as 2x2, 2x3, 3x2, 2x4, and 4x2, respectively. See
-      # also add_regresion_test.cmake for more details on how to set NUMPES and
-      # PPN in SMP mode (npes must be a multiple of ppn).
-      set(npes 4 6 6 8 8)
-      set(ppns 2 3 2 4 2)
-      math(EXPR i "0")
-      foreach(n ${npes})
-        list(GET ppns ${i} p)
-        add_async_test(${scheme} ${virt} ${n} ${p})
-        math(EXPR i "${i}+1")
+      # Add some tests across a range of PEs (both non-SMP & SMP)
+      foreach(npes RANGE 1 8)
+        add_async_test(${scheme} ${virt} ${npes} 1 ${migr})
       endforeach()
-    endif()
 
+      # In Charm++ SMP mode add some extra tests with npe != ppn
+      if (CHARM_SMP)
+        # Set npes & ppn as 4&2, 6&3, 6&2, 8&4, and 8&2, to correspond to
+        # logical nodes x worker threads as 2x2, 2x3, 3x2, 2x4, and 4x2,
+        # respectively. See also add_regresion_test.cmake for more details on
+        # how to set NUMPES and PPN in SMP mode (npes must be a multiple of
+        # ppn).
+        set(npes 4 6 6 8 8)
+        set(ppns 2 3 2 4 2)
+        math(EXPR i "0")
+        foreach(n ${npes})
+          list(GET ppns ${i} p)
+          add_async_test(${scheme} ${virt} ${n} ${p} ${migr})
+          math(EXPR i "${i}+1")
+        endforeach()
+      endif()
+
+    endforeach()
   endforeach()
 endforeach()

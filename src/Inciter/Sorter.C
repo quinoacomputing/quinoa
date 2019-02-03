@@ -67,9 +67,11 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
 //! \param[in] bface Face lists mapped to side set ids
 //! \param[in] triinpoel Interconnectivity of points and boundary-faces
 //! \param[in] bnode Node ids mapped to side set ids
-//! \param[in] nchare Total number of Charm++ Refiner chares
+//! \param[in] nchare Total number of Charm++ worker chares
 // *****************************************************************************
 {
+  usesAtSync = true;    // enable migration at AtSync
+
   // Ensure boundary face ids will not index out of face connectivity
   Assert( std::all_of( begin(m_bface), end(m_bface),
             [&](const decltype(m_bface)::value_type& s)

@@ -68,6 +68,8 @@ DiagCG::DiagCG( const CProxy_Discretization& disc, const FaceData& fd ) :
 //! \param[in] fd Face data structures
 // *****************************************************************************
 {
+  usesAtSync = true;    // enable migration at AtSync
+
   // Size communication buffers
   resizeComm();
 }
@@ -128,8 +130,15 @@ DiagCG::setup( tk::real v )
   for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
 
   // Output initial conditions to file (regardless of whether it was requested)
-  writeFields();
+  writeFields( CkCallback(CkIndex_DiagCG::init(), thisProxy[thisIndex]) );
+}
 
+void
+DiagCG::init()
+// *****************************************************************************
+// Initially compute left hand side diagonal matrix
+// *****************************************************************************
+{
   // Activate SDAG wait for computing the left-hand side
   thisProxy[ thisIndex ].wait4lhs();
 
@@ -272,7 +281,7 @@ DiagCG::dt()
 
   // Actiavate SDAG waits for time step
   thisProxy[ thisIndex ].wait4rhs();
-  thisProxy[ thisIndex ].wait4eval();
+  thisProxy[ thisIndex ].wait4out();
 
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
@@ -447,13 +456,14 @@ DiagCG::solve()
 
   // Continue with FCT
   d->FCT()->aec( *d, m_du, m_u, m_bc );
-  d->FCT()->alw( m_u, m_ul, m_dul, thisProxy );  
+  d->FCT()->alw( m_u, m_ul, m_dul, thisProxy );
 }
 
 void
-DiagCG::writeFields()
+DiagCG::writeFields( CkCallback c )
 // *****************************************************************************
 // Output mesh-based fields to file
+//! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
   auto d = Disc();
@@ -474,28 +484,8 @@ DiagCG::writeFields()
   }
 
   // Send mesh and fields data (solution dump) for output to file
-  d->write( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode(), names, fields,
-            tk::Centering::NODE );
-}
-
-void
-DiagCG::out()
-// *****************************************************************************
-// Output mesh field data
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
-
-  // Output field data to file if field iteration count is reached or in the
-  // last time step
-  if ( !((d->It()) % fieldfreq) ||
-       (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
-    writeFields();
+  d->write( d->Inpoel(), d->Coord(), m_fd.Bface(), m_fd.Triinpoel(),
+            m_fd.Bnode(), names, fields, tk::Centering::NODE, c );
 }
 
 void
@@ -570,7 +560,7 @@ DiagCG::refine()
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
-    d->Ref()->dtref( d->T(), thisProxy, m_fd.Bnode() );
+    d->Ref()->dtref( d->T(), m_fd.Bnode() );
 
   } else {      // do not refine
 
@@ -645,15 +635,35 @@ DiagCG::resize( const tk::UnsMesh::Chunk& chunk,
 }
 
 void
-DiagCG::eval()
+DiagCG::out()
 // *****************************************************************************
-// Evaluate whether to continue with next step
+// Output mesh field data
 // *****************************************************************************
 {
   auto d = Disc();
 
-  // Output field data to file
-  out();
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
+
+  // output field data if field iteration count is reached or in the last time
+  // step, otherwise continue to next time step
+  if ( !((d->It()) % fieldfreq) ||
+       (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
+    writeFields( CkCallback(CkIndex_DiagCG::step(), thisProxy[thisIndex]) );
+  else
+    step();
+}
+
+void
+DiagCG::step()
+// *****************************************************************************
+// Evaluate whether to continue with next time step
+// *****************************************************************************
+{
+  auto d = Disc();
+
   // Output one-liner status report to screen
   d->status();
 
@@ -663,7 +673,7 @@ DiagCG::eval()
 
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
-    d->AtSync();   // Migrate here if needed
+    AtSync();   // migrate here if needed
     dt();
   } else {
     contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );

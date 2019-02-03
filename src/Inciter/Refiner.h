@@ -69,7 +69,6 @@ class Refiner : public CBase_Refiner {
 
     //! Start mesh refinement (during time stepping, t>0)
     void dtref( tk::real t,
-                const SchemeBase::Proxy& s,
                 const std::map< int, std::vector< std::size_t > >& bnode );
 
     //! Receive boundary edges from all PEs (including this one)
@@ -99,7 +98,6 @@ class Refiner : public CBase_Refiner {
       p | m_sorter;
       p | m_meshwriter;
       p | m_scheme;
-      p | m_schemeproxy;
       p | m_cbr;
       p | m_cbs;
       p | m_ginpoel;
@@ -155,8 +153,6 @@ class Refiner : public CBase_Refiner {
     tk::CProxy_MeshWriter m_meshwriter;
     //! Discretization scheme
     Scheme m_scheme;
-    //! Variant storing the discretization scheme class we interoperate with
-    SchemeBase::Proxy m_schemeproxy;
     //! Charm++ callbacks associated to compile-time tags for refiner
     tk::RefinerCallback m_cbr;
     //! Charm++ callbacks associated to compile-time tags for sorter

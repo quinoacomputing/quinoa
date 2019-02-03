@@ -72,10 +72,7 @@ DG::DG( const CProxy_Discretization& disc, const FaceData& fd ) :
 //! \param[in] fd Face data structures
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "DG" );
+  usesAtSync = true;    // enable migration at AtSync
 
   auto d = Disc();
 
@@ -861,14 +858,21 @@ DG::setup( tk::real v )
       m_limFunc(e,c,0)=1.0;
 
   // Output initial conditions to file (regardless of whether it was requested)
-  writeFields();
+  writeFields( CkCallback(CkIndex_DG::start(), thisProxy[thisIndex]) );
+}
 
+void
+DG::start()
+// *****************************************************************************
+//  Start time stepping
+// *****************************************************************************
+{
   // Enable SDAG wait for building the solution vector
   thisProxy[ thisIndex ].wait4sol();
   thisProxy[ thisIndex ].wait4lim();
 
   // Start timer measuring time stepping wall clock time
-  d->Timer().zero();
+  Disc()->Timer().zero();
 
   // Start time stepping
   advance( 0.0 );
@@ -982,30 +986,21 @@ DG::comsol( int fromch,
 }
 
 void
-DG::writeFields()
+DG::writeFields( CkCallback c )
 // *****************************************************************************
 // Output mesh-based fields to file
+//! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
   auto d = Disc();
 
   const auto& esuel = m_fd.Esuel();
 
-  // Extract ghost data from inpoel and coord for writing the mesh
-  auto& inpoel = d->Inpoel();
-  std::vector< std::size_t > inpoelg;
-  for (auto e=esuel.size()/4; e<inpoel.size()/4; ++e)
-    for (std::size_t i=0; i<4; ++i)
-      inpoelg.push_back( inpoel[4*e+i] );
-  inpoel.resize(esuel.size());
-
-  auto& coord = d->Coord();
-  std::array< std::vector< tk::real >, 3 > coordg;
-  for (auto ip=m_ncoord; ip<coord[0].size(); ++ip)
-    for (std::size_t i=0; i<3; ++i)
-      coordg[i].push_back( coord[i][ip] );
-  for (std::size_t i=0; i<3; ++i)
-    coord[i].resize( m_ncoord );
+  // Copy mesh form Discretization object and chop off ghosts for dump
+  auto inpoel = d->Inpoel();
+  inpoel.resize( esuel.size() );
+  auto coord = d->Coord();
+  for (std::size_t i=0; i<3; ++i) coord[i].resize( m_ncoord );
 
   // Query fields names from all PDEs integrated
   std::vector< std::string > names;
@@ -1034,33 +1029,8 @@ DG::writeFields()
   // }
 
   // Output chare mesh and fields metadata to file
-  d->write( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode(), names, fields,
-            tk::Centering::ELEM );
-
-  // Restore coord and inpoel with ghost data
-  std::move( begin(inpoelg), end(inpoelg), std::back_inserter(inpoel) );
-  for (std::size_t i=0; i<3; ++i)
-    std::move( begin(coordg[i]), end(coordg[i]), std::back_inserter(coord[i]) );
-}
-
-void
-DG::out()
-// *****************************************************************************
-// Output mesh field data
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
-
-  // Output field data to file if field iteration count is reached or in the
-  // last time step
-  if ( !((d->It()) % fieldfreq) ||
-       (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
-    writeFields();
+  d->write( inpoel, coord, m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode(),
+            names, fields, tk::Centering::ELEM, c );
 }
 
 void
@@ -1182,12 +1152,12 @@ DG::solve( tk::real newdt )
 
   if (m_stage < 2) {
 
-    // Continue with next tims step stage
-    eval();
+    // continue with next tims step stage
+    stage();
 
   } else {
 
-    thisProxy[ thisIndex ].wait4eval();
+    thisProxy[ thisIndex ].wait4stage();
 
     // Compute diagnostics, e.g., residuals
     auto diag_computed =
@@ -1236,7 +1206,7 @@ DG::refine()
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
-    d->Ref()->dtref( d->T(), thisProxy, m_fd.Bnode() );
+    d->Ref()->dtref( d->T(), m_fd.Bnode() );
 
   } else {      // do not refine
 
@@ -1273,9 +1243,22 @@ DG::resize( const tk::UnsMesh::Chunk& /*chunk*/,
 }
 
 void
-DG::eval()
+DG::next()
 // *****************************************************************************
-// Evaluate whether to continue with next step
+// Continue to next time step stage
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  tk::real fdt = 0.0;
+  d->contribute( sizeof(tk::real), &fdt, CkReduction::nop,
+                 CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
+}
+
+void
+DG::out()
+// *****************************************************************************
+// Output mesh field data
 // *****************************************************************************
 {
   auto d = Disc();
@@ -1283,40 +1266,54 @@ DG::eval()
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
 
-  tk::real fdt = 0.0;
+  // output field data if field iteration count is reached or in the last time
+  // step, otherwise continue to next time step
+  if ( !((d->It()) % fieldfreq) ||
+       (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
+    writeFields( CkCallback(CkIndex_DG::step(), thisProxy[thisIndex]) );
+  else
+    step();
+}
 
+void
+DG::stage()
+// *****************************************************************************
+// Evaluate whether to continue with next time step stage
+// *****************************************************************************
+{
   // Increment Runge-Kutta stage counter
   ++m_stage;
 
-  // If Runge-Kutta stages not complete, continue to next time step, otherwise
-  // assess computation completion criteria
-  if (m_stage < 3) {
+  // if not all Runge-Kutta stages complete, continue to next time stage,
+  // otherwise output field data to file(s)
+  if (m_stage < 3) next(); else out();
+}
 
-    // The following contribute call serves as a global-synchonization which
-    // ensures that all chares have completed the 3rd RK stage solution update
-    // before proceeding to DG::advance() to communicate ghost-cell solutions
-    contribute( sizeof(tk::real), &fdt, CkReduction::nop,
-                CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
+void
+DG::step()
+// *****************************************************************************
+// Evaluate wether to continue with next time step
+// *****************************************************************************
+{
+  auto d = Disc();
 
+  // Output one-liner status report to screen
+  d->status();
+  // Reset Runge-Kutta stage counter
+  m_stage = 0;
+
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+
+  // If neither max iterations nor max time reached, continue, otherwise finish
+  if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
+    AtSync();   // migrate here if needed
+    next();
   } else {
-
-    // Output field data to file
-    out();
-    // Output one-liner status report to screen
-    d->status();
-    // Reset Runge-Kutta stage counter
-    m_stage = 0;
-
-    // If neither max iterations nor max time reached, continue, otherwise finish
-    if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
-      d->AtSync();   // Migrate here if needed
-      contribute( sizeof(tk::real), &fdt, CkReduction::nop,
-                  CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
-    } else {
-      contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));
-    }
-
+    contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));
   }
 }
 

@@ -92,6 +92,9 @@ class DG : public CBase_DG {
     //! Setup: query boundary conditions, output mesh, etc.
     void setup( tk::real v );
 
+    //! Start time stepping
+    void start();
+
     //! Receive chare-boundary limiter function data from neighboring chares
     void comlim( int fromch,
                  const std::vector< std::size_t >& tetid,
@@ -134,6 +137,9 @@ class DG : public CBase_DG {
 
     //! Compute right hand side and solve system
     void solve( tk::real newdt );
+
+    //! Evaluate whether to continue with next time step
+    void step();
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -307,13 +313,16 @@ class DG : public CBase_DG {
     void out();
 
     //! Output mesh-based fields to file
-    void writeFields();
+    void writeFields( CkCallback c );
 
     //! Compute time step size
     void dt();
 
-    //! Evaluate whether to continue with next step
-    void eval();
+    //! Continue to next time step stage
+    void next();
+
+    //! Evaluate whether to continue with next time step stage
+    void stage();
 };
 
 } // inciter::

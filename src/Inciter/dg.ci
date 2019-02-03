@@ -27,6 +27,7 @@ module dg {
       entry void reqGhost();
       initnode void registerReducers();      
       entry void setup( tk::real v );
+      entry void start();
       entry void diag();
       entry void comlim( int fromch,
                          const std::vector< std::size_t >& tetid,
@@ -38,6 +39,7 @@ module dg {
       entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();
       entry void lhs();
+      entry void step();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -52,9 +54,9 @@ module dg {
       entry void wait4lim() {
         when ownlim_complete(), comlim_complete() serial "lim" { dt(); } };
 
-      entry void wait4eval() {
+      entry void wait4stage() {
         when diag_complete(), ref_complete(), lhs_complete(),
-             resize_complete() serial "eval" { eval(); } };
+             resize_complete() serial "stage" { stage(); } };
 
       entry void ownghost_complete();
       entry void reqghost_complete();

@@ -31,7 +31,18 @@ namespace inciter {
 //! Base class for generic forwarding interface to discretization proxies
 class SchemeBase {
 
+  private:
+    //! Variant type listing all chare proxy types modeling the same concept
+    using Proxy =
+      boost::variant< CProxy_DiagCG, CProxy_DG, CProxy_ALECG >;
+
   public:
+    //! Variant type listing all chare element proxy types (behind operator[])
+    using ProxyElem =
+      boost::variant< CProxy_DiagCG::element_t,
+                      CProxy_DG::element_t,
+                      CProxy_ALECG::element_t >;
+
     //! Empty constructor for Charm++
     explicit SchemeBase() {}
 
@@ -62,7 +73,12 @@ class SchemeBase {
     }
 
     //! Get reference to discretization proxy
+    //! \return Discretization Charm++ chare array proxy
     CProxy_Discretization& get() noexcept { return discproxy; }
+
+    //! Get reference to scheme proxy
+    //! \return Variant storing Charm++ chare array proxy configured
+    const Proxy& getProxy() noexcept { return proxy; }
 
     //! Query underlying proxy type
     //! \return Zero-based index into the set of types of Proxy
@@ -77,15 +93,6 @@ class SchemeBase {
     //! Charm++ array options accessor for binding external proxies
     //! \return Charm++ array options object reference
     const CkArrayOptions& arrayoptions() { return bound; }
-
-    //! Variant type listing all chare proxy types modeling the same concept
-    using Proxy =
-      boost::variant< CProxy_DiagCG, CProxy_DG, CProxy_ALECG >;
-    //! Variant type listing all chare element proxy types (behind operator[])
-    using ProxyElem =
-      boost::variant< CProxy_DiagCG::element_t,
-                      CProxy_DG::element_t,
-                      CProxy_ALECG::element_t >;
 
   protected:
     //! Variant storing one proxy to which this class is configured for

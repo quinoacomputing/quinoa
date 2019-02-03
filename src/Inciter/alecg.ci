@@ -30,6 +30,7 @@ module alecg {
       entry ALECG( const CProxy_Discretization& disc, const FaceData& fd );
       initnode void registerReducers();
       entry void setup( tk::real v );
+      entry void init();
       entry void diag();
       entry void advance( tk::real newdt );
       entry void comlhs( const std::vector< std::size_t >& gid,
@@ -38,6 +39,7 @@ module alecg {
                          const std::vector< std::vector< tk::real > >& R );
       entry void resized();
       entry void lhs();
+      entry void step();
       //! [Entry methods]
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
@@ -50,9 +52,9 @@ module alecg {
       entry void wait4rhs() {
         when ownrhs_complete(), comrhs_complete() serial "rhs" { solve(); } };
 
-      entry void wait4eval() {
+      entry void wait4out() {
         when diag_complete(), ref_complete(), lhs_complete(),
-             resize_complete() serial "eval" { eval(); } };
+             resize_complete() serial "out" { out(); } };
 
       entry void ownlhs_complete();
       entry void ownrhs_complete();

@@ -52,7 +52,6 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_sorter( sorter ),
   m_meshwriter( meshwriter ),
   m_scheme( scheme ),
-  m_schemeproxy(),
   m_cbr( cbr ),
   m_cbs( cbs ),
   m_ginpoel( ginpoel ),
@@ -93,6 +92,8 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 // *****************************************************************************
 {
   Assert( !m_ginpoel.empty(), "No elements assigned to refiner chare" );
+
+  usesAtSync = true;    // enable migration at AtSync
 
   // Reverse initial mesh refinement type list (will pop from back)
   std::reverse( begin(m_initref), end(m_initref) );
@@ -166,7 +167,6 @@ Refiner::flatcoord( const tk::UnsMesh::CoordMap& coordmap )
 
 void
 Refiner::dtref( tk::real t,
-                const SchemeBase::Proxy& s,
                 const std::map< int, std::vector< std::size_t > >& bnode )
 // *****************************************************************************
 // Start mesh refinement (during time stepping, t>0)
@@ -180,9 +180,6 @@ Refiner::dtref( tk::real t,
 
   // Update boundary node lists
   m_bnode = bnode;
-
-  // Store discretization scheme proxy
-  m_schemeproxy = s;
 
   t0ref();
 }
@@ -499,7 +496,7 @@ Refiner::eval()
       write( meshoutput, fieldoutput, it, itf, t, this->thisIndex,
              tk::Centering::ELEM, basefilename, this->m_inpoel, this->m_coord,
              this->m_belem, this->m_triinpoel, this->m_bnode, this->m_lid,
-             names, fields );
+             names, fields, CkCallback(CkCallback::ignore) );
   };
 
   if (m_initial) {      // if initial (before t=0) AMR
@@ -534,7 +531,8 @@ Refiner::eval()
     // Send new mesh and solution back to PDE worker
     Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
             "About to use nullptr" );
-    auto e = tk::element< SchemeBase::ProxyElem >( m_schemeproxy, thisIndex );
+    auto e = tk::element< SchemeBase::ProxyElem >
+                        ( m_scheme.getProxy(), thisIndex );
     boost::apply_visitor( Resize(m_el,m_coord,m_u,m_msum,m_bnode), e );
 
   }
@@ -600,7 +598,8 @@ Refiner::errorRefine()
     // Get old solution from worker (pointer to soln from bound array element)
     Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
             "About to use nullptr" );
-    auto e = tk::element< SchemeBase::ProxyElem >( m_schemeproxy, thisIndex );
+    auto e = tk::element< SchemeBase::ProxyElem >
+                        ( m_scheme.getProxy(), thisIndex );
     boost::apply_visitor( Solution(u), e );
 
   }
@@ -864,7 +863,8 @@ Refiner::updateMesh()
   if (!m_initial) {
     Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
             "About to use nullptr" );
-    auto e = tk::element< SchemeBase::ProxyElem >( m_schemeproxy, thisIndex );
+    auto e = tk::element< SchemeBase::ProxyElem >
+                        ( m_scheme.getProxy(), thisIndex );
     boost::apply_visitor( Solution(m_u), e );
     // Get nodal communication map from Discretization worker
     m_msum = m_scheme.get()[thisIndex].ckLocal()->Msum();
