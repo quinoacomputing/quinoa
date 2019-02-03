@@ -130,7 +130,7 @@ DiagCG::setup( tk::real v )
   for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
 
   // Output initial conditions to file (regardless of whether it was requested)
-  writeFields();
+  writeFields( CkCallback(CkCallback::ignore) );
 
   // Activate SDAG wait for computing the left-hand side
   thisProxy[ thisIndex ].wait4lhs();
@@ -453,9 +453,10 @@ DiagCG::solve()
 }
 
 void
-DiagCG::writeFields()
+DiagCG::writeFields( CkCallback c )
 // *****************************************************************************
 // Output mesh-based fields to file
+//! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
   auto d = Disc();
@@ -477,7 +478,7 @@ DiagCG::writeFields()
 
   // Send mesh and fields data (solution dump) for output to file
   d->write( d->Inpoel(), d->Coord(), m_fd.Bface(), m_fd.Triinpoel(),
-            m_fd.Bnode(), names, fields, tk::Centering::NODE );
+            m_fd.Bnode(), names, fields, tk::Centering::NODE, c );
 }
 
 void
@@ -497,7 +498,7 @@ DiagCG::out()
   // last time step
   if ( !((d->It()) % fieldfreq) ||
        (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
-    writeFields();
+    writeFields( CkCallback(CkCallback::ignore) );
 }
 
 void

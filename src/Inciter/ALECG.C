@@ -135,7 +135,7 @@ ALECG::setup( tk::real v )
   //! [init and lhs]
 
   // Output initial conditions to file (regardless of whether it was requested)
-  writeFields();
+  writeFields( CkCallback(CkCallback::ignore) );
 }
 
 //! [Merge lhs and continue]
@@ -382,9 +382,10 @@ ALECG::solve()
 }
 
 void
-ALECG::writeFields()
+ALECG::writeFields( CkCallback c )
 // *****************************************************************************
 // Output mesh-based fields to file
+//! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
   auto d = Disc();
@@ -406,7 +407,7 @@ ALECG::writeFields()
 
   // Send mesh and fields data (solution dump) for output to file
   d->write( d->Inpoel(), d->Coord(), m_fd.Bface(), m_fd.Triinpoel(),
-            m_fd.Bnode(), names, fields, tk::Centering::NODE );
+            m_fd.Bnode(), names, fields, tk::Centering::NODE, c );
 }
 
 void
@@ -426,7 +427,7 @@ ALECG::out()
   // last time step
   if ( !((d->It()) % fieldfreq) ||
        (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
-    writeFields();
+    writeFields( CkCallback(CkCallback::ignore) );
 }
 
 void

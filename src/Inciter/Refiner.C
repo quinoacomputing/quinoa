@@ -496,7 +496,7 @@ Refiner::eval()
       write( meshoutput, fieldoutput, it, itf, t, this->thisIndex,
              tk::Centering::ELEM, basefilename, this->m_inpoel, this->m_coord,
              this->m_belem, this->m_triinpoel, this->m_bnode, this->m_lid,
-             names, fields );
+             names, fields, CkCallback(CkCallback::ignore) );
   };
 
   if (m_initial) {      // if initial (before t=0) AMR

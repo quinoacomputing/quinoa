@@ -181,7 +181,8 @@ class Discretization : public CBase_Discretization {
                 const std::map< int, std::vector< std::size_t > >& bnode,
                 const std::vector< std::string >& names,
                 const std::vector< std::vector< tk::real > >& fields,
-                tk::Centering centering );
+                tk::Centering centering,
+                CkCallback c );
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

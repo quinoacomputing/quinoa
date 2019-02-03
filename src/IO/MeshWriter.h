@@ -54,7 +54,8 @@ class MeshWriter : public CBase_MeshWriter {
                 const std::map< int, std::vector< std::size_t > >& bnode,
                 const std::unordered_map< std::size_t, std::size_t >& lid,
                 const std::vector< std::string >& names,
-                const std::vector< std::vector< tk::real > >& fields );
+                const std::vector< std::vector< tk::real > >& fields,
+                CkCallback c );
 
   private:
     //! Output file format type

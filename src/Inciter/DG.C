@@ -858,14 +858,21 @@ DG::setup( tk::real v )
       m_limFunc(e,c,0)=1.0;
 
   // Output initial conditions to file (regardless of whether it was requested)
-  writeFields();
+  writeFields( CkCallback(CkIndex_DG::start(), thisProxy[thisIndex]) );
+}
 
+void
+DG::start()
+// *****************************************************************************
+//  Start time stepping
+// *****************************************************************************
+{
   // Enable SDAG wait for building the solution vector
   thisProxy[ thisIndex ].wait4sol();
   thisProxy[ thisIndex ].wait4lim();
 
   // Start timer measuring time stepping wall clock time
-  d->Timer().zero();
+  Disc()->Timer().zero();
 
   // Start time stepping
   advance( 0.0 );
@@ -979,9 +986,10 @@ DG::comsol( int fromch,
 }
 
 void
-DG::writeFields()
+DG::writeFields( CkCallback c )
 // *****************************************************************************
 // Output mesh-based fields to file
+//! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
   auto d = Disc();
@@ -1022,27 +1030,7 @@ DG::writeFields()
 
   // Output chare mesh and fields metadata to file
   d->write( inpoel, coord, m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode(),
-            names, fields, tk::Centering::ELEM );
-}
-
-void
-DG::out()
-// *****************************************************************************
-// Output mesh field data
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
-
-  // Output field data to file if field iteration count is reached or in the
-  // last time step
-  if ( !((d->It()) % fieldfreq) ||
-       (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
-    writeFields();
+            names, fields, tk::Centering::ELEM, c );
 }
 
 void
@@ -1164,12 +1152,12 @@ DG::solve( tk::real newdt )
 
   if (m_stage < 2) {
 
-    // Continue with next tims step stage
-    eval();
+    // continue with next tims step stage
+    stage();
 
   } else {
 
-    thisProxy[ thisIndex ].wait4eval();
+    thisProxy[ thisIndex ].wait4stage();
 
     // Compute diagnostics, e.g., residuals
     auto diag_computed =
@@ -1257,7 +1245,7 @@ DG::resize( const tk::UnsMesh::Chunk& /*chunk*/,
 void
 DG::next()
 // *****************************************************************************
-//  Continue to next time step stage
+// Continue to next time step stage
 // *****************************************************************************
 {
   auto d = Disc();
@@ -1268,9 +1256,9 @@ DG::next()
 }
 
 void
-DG::eval()
+DG::out()
 // *****************************************************************************
-// Evaluate whether to continue with next step
+// Output mesh field data
 // *****************************************************************************
 {
   auto d = Disc();
@@ -1278,33 +1266,54 @@ DG::eval()
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
 
+  // output field data if field iteration count is reached or in the last time
+  // step, otherwise continue to next time step
+  if ( !((d->It()) % fieldfreq) ||
+       (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
+    writeFields( CkCallback(CkIndex_DG::step(), thisProxy[thisIndex]) );
+  else
+    step();
+}
+
+void
+DG::stage()
+// *****************************************************************************
+// Evaluate whether to continue with next time step stage
+// *****************************************************************************
+{
   // Increment Runge-Kutta stage counter
   ++m_stage;
 
-  // If Runge-Kutta stages not complete, continue to next time step, otherwise
-  // assess computation completion criteria
-  if (m_stage < 3) {
+  // if not all Runge-Kutta stages complete, continue to next time stage,
+  // otherwise output field data to file(s)
+  if (m_stage < 3) next(); else out();
+}
 
+void
+DG::step()
+// *****************************************************************************
+// Evaluate wether to continue with next time step
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Output one-liner status report to screen
+  d->status();
+  // Reset Runge-Kutta stage counter
+  m_stage = 0;
+
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+
+  // If neither max iterations nor max time reached, continue, otherwise finish
+  if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
+    AtSync();   // migrate here if needed
     next();
-
   } else {
-
-    // Output field data to file
-    out();
-    // Output one-liner status report to screen
-    d->status();
-    // Reset Runge-Kutta stage counter
-    m_stage = 0;
-
-    // If neither max iterations nor max time reached, continue, otherwise finish
-    if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
-      AtSync();   // migrate here if needed
-      next();
-    } else {
-      contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));
-    }
-
+    contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));
   }
 }
 

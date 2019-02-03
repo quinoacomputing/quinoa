@@ -67,7 +67,8 @@ MeshWriter::write(
   const std::map< int, std::vector< std::size_t > >& bnode,
   const std::unordered_map< std::size_t, std::size_t >& lid,
   const std::vector< std::string >& names,
-  const std::vector< std::vector< tk::real > >& fields )
+  const std::vector< std::vector< tk::real > >& fields,
+  CkCallback c )
 // *****************************************************************************
 //  Output unstructured mesh into file
 //! \param[in] meshoutput True if mesh is to be written
@@ -91,76 +92,80 @@ MeshWriter::write(
 //! \param[in] lid Global->local node id map for the mesh chunk to be written
 //! \param[in] names Names of fields to be output in next call to writeFields()
 //! \param[in] fields Field data to output to file
+//! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
-  if (m_benchmark) return;
+  if (!m_benchmark) {
 
-  auto f = filename( basefilename, itr, chareid );
+    auto f = filename( basefilename, itr, chareid );
+  
+    if (meshoutput) {
+      #ifdef HAS_ROOT
+      if (m_filetype == ctr::FieldFileType::ROOT) {
 
-  if (meshoutput) {
-    #ifdef HAS_ROOT
-    if (m_filetype == ctr::FieldFileType::ROOT) {
-  
-      RootMeshWriter rmw( f, 0 );
-      rmw.writeMesh( UnsMesh( inpoel, coord ) );
-      rmw.writeNodeVarNames( names );
-  
-    } else
-    #endif
-    if (m_filetype == ctr::FieldFileType::EXODUSII) {
-      ExodusIIMeshWriter ew( f, ExoWriter::CREATE );
-      // Write chare mesh (do not write side sets in parallel)
-      if (m_nchare == 1) {
-  
-        if (m_bndCentering == Centering::ELEM)
-          ew.writeMesh( inpoel, coord, bface, triinpoel );
-        else if (m_bndCentering == Centering::NODE) {
-          // Convert boundary node lists to local ids for output
-          std::map< int, std::vector< std::size_t > > lbnode = bnode;
-          for (auto& s : lbnode)
-            for (auto& p : s.second)
-              p = cref_find( lid, p );
-          ew.writeMesh( inpoel, coord, lbnode );
-        } else Throw( "Centering not handled for writing mesh" );
-  
-      } else {
-  
-        ew.writeMesh( inpoel, coord );
-  
+        RootMeshWriter rmw( f, 0 );
+        rmw.writeMesh( UnsMesh( inpoel, coord ) );
+        rmw.writeNodeVarNames( names );
+
+      } else
+      #endif
+      if (m_filetype == ctr::FieldFileType::EXODUSII) {
+        ExodusIIMeshWriter ew( f, ExoWriter::CREATE );
+        // Write chare mesh (do not write side sets in parallel)
+        if (m_nchare == 1) {
+
+          if (m_bndCentering == Centering::ELEM)
+            ew.writeMesh( inpoel, coord, bface, triinpoel );
+          else if (m_bndCentering == Centering::NODE) {
+            // Convert boundary node lists to local ids for output
+            std::map< int, std::vector< std::size_t > > lbnode = bnode;
+            for (auto& s : lbnode)
+              for (auto& p : s.second)
+                p = cref_find( lid, p );
+            ew.writeMesh( inpoel, coord, lbnode );
+          } else Throw( "Centering not handled for writing mesh" );
+
+        } else {
+          ew.writeMesh( inpoel, coord );
+
+        }
+        // Write field names
+        if (centering == Centering::ELEM)
+          ew.writeElemVarNames( names );
+        else if (centering == Centering::NODE)
+          ew.writeNodeVarNames( names );
       }
-      // Write field names
-      if (centering == Centering::ELEM)
-        ew.writeElemVarNames( names );
-      else if (centering == Centering::NODE)
-        ew.writeNodeVarNames( names );
     }
+
+    if (fieldoutput) {
+      #ifdef HAS_ROOT
+      if (m_filetype == ctr::FieldFileType::ROOT) {
+
+        RootMeshWriter rw( f, 1 );
+        rw.writeTimeStamp( itf, time );
+        int varid = 0;
+        for (const auto& v : fields) rw.writeNodeScalar( itf, ++varid, v );
+
+      } else
+      #endif
+      if (m_filetype == ctr::FieldFileType::EXODUSII) {
+
+        ExodusIIMeshWriter ew( f, ExoWriter::OPEN );
+        ew.writeTimeStamp( itf, time );
+        if (centering == Centering::ELEM) {
+          int varid = 0;
+          for (const auto& v : fields) ew.writeElemScalar( itf, ++varid, v );
+        } else if (centering == Centering::NODE) {
+          int varid = 0;
+          for (const auto& v : fields) ew.writeNodeScalar( itf, ++varid, v );
+        }
+
+      }
+    }
+
   }
 
-  if (fieldoutput) {
-    #ifdef HAS_ROOT
-    if (m_filetype == ctr::FieldFileType::ROOT) {
- 
-      RootMeshWriter rw( f, 1 );
-      rw.writeTimeStamp( itf, time );
-      int varid = 0;
-      for (const auto& v : fields) rw.writeNodeScalar( itf, ++varid, v );
-
-    } else
-    #endif
-    if (m_filetype == ctr::FieldFileType::EXODUSII) {
-    
-      ExodusIIMeshWriter ew( f, ExoWriter::OPEN );
-      ew.writeTimeStamp( itf, time );
-      if (centering == Centering::ELEM) {
-        int varid = 0;
-        for (const auto& v : fields) ew.writeElemScalar( itf, ++varid, v );
-      } else if (centering == Centering::NODE) {
-        int varid = 0;
-        for (const auto& v : fields) ew.writeNodeScalar( itf, ++varid, v );
-      }
-    
-    }
-  }
+  c.send();
 }
 
 std::string

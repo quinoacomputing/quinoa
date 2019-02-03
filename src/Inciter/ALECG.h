@@ -193,7 +193,7 @@ class ALECG : public CBase_ALECG {
     void out();
 
     //! Output mesh-based fields to file
-    void writeFields();
+    void writeFields( CkCallback c );
 
     //! The own and communication portion of the left-hand side is complete
     void lhsdone();

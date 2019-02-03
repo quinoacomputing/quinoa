@@ -383,7 +383,8 @@ Discretization::write(
   const std::map< int, std::vector< std::size_t > >& bnode,
   const std::vector< std::string>& names,
   const std::vector< std::vector< tk::real > >& fields,
-  tk::Centering centering )
+  tk::Centering centering,
+  CkCallback c )
 // *****************************************************************************
 //  Output mesh and fields data (solution dump) to file(s)
 //! \param[in] inpoel Mesh connectivity for the mesh chunk to be written
@@ -398,6 +399,7 @@ Discretization::write(
 //! \param[in] fields Mesh field output dump
 //! \param[in] centering The centering that will be associated to the field data
 //!   to be output when writeFields is called next
+//! \param[on] c Function to continue with after the write
 //! \details Since m_meshwriter is a Charm++ chare group, it never migrates and
 //!   an instance is guaranteed on every PE. We index the first PE on every
 //!   logical compute node. In Charm++'s non-SMP mode, a node is the same as a
@@ -427,10 +429,10 @@ Discretization::write(
     fieldoutput = true;
   }
 
-//  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
-//    write( meshoutput, fieldoutput, m_itr, m_itf, m_t, thisIndex, centering,
-//           g_inputdeck.get< tag::cmd, tag::io, tag::output >(),
-//           inpoel, coord, bface, triinpoel, bnode, m_lid, names, fields );
+  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
+    write( meshoutput, fieldoutput, m_itr, m_itf, m_t, thisIndex, centering,
+           g_inputdeck.get< tag::cmd, tag::io, tag::output >(),
+           inpoel, coord, bface, triinpoel, bnode, m_lid, names, fields, c );
 }
 
 void
