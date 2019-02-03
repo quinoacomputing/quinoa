@@ -72,6 +72,9 @@ DiagCG::DiagCG( const CProxy_Discretization& disc, const FaceData& fd ) :
 
   // Size communication buffers
   resizeComm();
+
+  // Activate SDAG wait for initially computing the left-hand side
+  thisProxy[ thisIndex ].wait4lhs();
 }
 
 void
@@ -139,10 +142,6 @@ DiagCG::init()
 // Initially compute left hand side diagonal matrix
 // *****************************************************************************
 {
-  // Activate SDAG wait for computing the left-hand side
-  thisProxy[ thisIndex ].wait4lhs();
-
-  // Compute left-hand side of PDEs
   lhs();
 }
 
