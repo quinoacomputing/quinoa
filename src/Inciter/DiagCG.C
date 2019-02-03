@@ -456,7 +456,7 @@ DiagCG::solve()
 
   // Continue with FCT
   d->FCT()->aec( *d, m_du, m_u, m_bc );
-  d->FCT()->alw( m_u, m_ul, m_dul, thisProxy );  
+  d->FCT()->alw( m_u, m_ul, m_dul, thisProxy );
 }
 
 void
