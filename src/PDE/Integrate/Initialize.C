@@ -30,7 +30,8 @@ tk::initialize( ncomp_t system,
                 const UnsMesh::Coords& coord,
                 const SolutionFn& solution,
                 Fields& unk,
-                real t )
+                real t,
+                const std::size_t nielem )
 // *****************************************************************************
 //! Initalize a system of DGPDEs by projection method
 //! \details This is the public interface exposed to client code.

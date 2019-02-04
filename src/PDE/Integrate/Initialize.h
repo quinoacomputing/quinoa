@@ -20,7 +20,6 @@
 namespace tk {
 
 //! Initalize a PDE system for DG
->>>>>>> Refactor Compflow::dt(), MultiMat::dt() and ElemDiagnostics
 void
 initialize( ncomp_t system,
             ncomp_t ncomp,
