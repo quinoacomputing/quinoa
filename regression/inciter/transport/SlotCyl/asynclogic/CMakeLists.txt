@@ -39,7 +39,7 @@ endfunction()
 
 foreach(scheme diagcg dg alecg)
   foreach(virt 0.0 0.5 0.9)
-    foreach(migr 0 1)
+    foreach(migr 0)
 
       # Add some tests across a range of PEs (both non-SMP & SMP)
       foreach(npes RANGE 1 8)
