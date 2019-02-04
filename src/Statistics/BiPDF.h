@@ -93,6 +93,7 @@ class BiPDF {
     //! \return {xmin,xmax,ymin,ymax} Minima and maxima of the bin ids in a
     //!    std::array
     std::array< long, 2*dim > extents() const {
+      Assert( !m_pdf.empty(), "PDF empty" );
       auto x = std::minmax_element( begin(m_pdf), end(m_pdf),
                  []( const pair_type& a, const pair_type& b )
                  { return a.first[0] < b.first[0]; } );

@@ -55,6 +55,8 @@ PDFWriter::writeTxt( const UniPDF& pdf, const tk::ctr::PDFInfo& info ) const
   const auto& name = info.name;
   const auto& uext = info.exts;
   const auto& vars = info.vars;
+  const auto& it = info.it;
+  const auto& time = info.time;
 
   assertSampleSpaceDimensions< 1 >( vars );
   assertSampleSpaceExtents< 1 >( uext );
@@ -78,7 +80,9 @@ PDFWriter::writeTxt( const UniPDF& pdf, const tk::ctr::PDFInfo& info ) const
             << "# Number of bins estimated: " << ext[1] - ext[0] + 1
             << '\n'
             << "# Number of bins output: " << nbi << '\n'
-            << "# Sample space extent: [" << min << " : " << max << "]\n#\n"
+            << "# Sample space extent: [" << min << " : " << max << "]\n"
+            << "# Iteration: " << it << "\n"
+            << "# Physical time: " << time << "\n#\n"
             << "# Example step-by-step visualization with gnuplot\n"
             << "# -----------------------------------------------\n"
             << "# gnuplot> set grid\n"
@@ -124,6 +128,8 @@ PDFWriter::writeTxt( const BiPDF& pdf, const tk::ctr::PDFInfo& info ) const
   const auto& name = info.name;
   const auto& uext = info.exts;
   const auto& vars = info.vars;
+  const auto& it = info.it;
+  const auto& time = info.time;
 
   assertSampleSpaceDimensions< 2 >( vars );
   assertSampleSpaceExtents< 2 >( uext );
@@ -150,7 +156,9 @@ PDFWriter::writeTxt( const BiPDF& pdf, const tk::ctr::PDFInfo& info ) const
             << ext[3] - ext[2] + 1 << '\n'
             << "# Number of bins output: " << nbix << " x " << nbiy << '\n'
             << "# Sample space extents: [" << xmin << " : " << xmax
-            << "], [" << ymin << " : " << ymax << "]\n#\n"
+            << "], [" << ymin << " : " << ymax << "]\n"
+            << "# Iteration: " << it << "\n"
+            << "# Physical time: " << time << "\n#\n"
             << "# Example step-by-step visualization with gnuplot\n"
             << "# -----------------------------------------------\n"
             << "# gnuplot> set grid\n"
@@ -216,6 +224,8 @@ PDFWriter::writeTxt( const TriPDF& pdf, const tk::ctr::PDFInfo& info ) const
   const auto& name = info.name;
   const auto& uext = info.exts;
   const auto& vars = info.vars;
+  const auto& it = info.it;
+  const auto& time = info.time;
 
   assertSampleSpaceDimensions< 3 >( vars );
   assertSampleSpaceExtents< 3 >( uext );
@@ -245,7 +255,9 @@ PDFWriter::writeTxt( const TriPDF& pdf, const tk::ctr::PDFInfo& info ) const
             << nbiz << '\n'
             << "# Sample space extents: [" << xmin << " : " << xmax << "], ["
             << ymin << " : " << ymax << "], [" << zmin << " : " << zmax
-            << "]\n#\n"
+            << "]\n"
+            << "# Iteration: " << it << "\n"
+            << "# Physical time: " << time << "\n#\n"
             << "# Example step-by-step visualization with gnuplot\n"
             << "# -----------------------------------------------\n"
             << "# gnuplot> set grid\n"
@@ -316,6 +328,8 @@ PDFWriter::writeGmshTxt( const BiPDF& pdf,
   const auto& name = info.name;
   const auto& uext = info.exts;
   const auto& vars = info.vars;
+  const auto& it = info.it;
+  const auto& time = info.time;
 
   assertSampleSpaceDimensions< 2 >( vars );
   assertSampleSpaceExtents< 2 >( uext );
@@ -344,6 +358,8 @@ PDFWriter::writeGmshTxt( const BiPDF& pdf,
             << "# Number of bins output: " << nbix << " x " << nbiy << '\n'
             << "# Sample space extents: [" << xmin << " : " << xmax
             << "], [" << ymin << " : " << ymax << "]\n"
+            << "# Iteration: " << it << "\n"
+            << "# Physical time: " << time << "\n"
             << "$EndComments\n";
 
   // Output mesh header: mesh version, file type, data size
@@ -427,6 +443,8 @@ PDFWriter::writeGmshTxt( const TriPDF& pdf,
   const auto& name = info.name;
   const auto& uext = info.exts;
   const auto& vars = info.vars;
+  const auto& it = info.it;
+  const auto& time = info.time;
 
   assertSampleSpaceDimensions< 3 >( vars );
   assertSampleSpaceExtents< 3 >( uext );
@@ -457,6 +475,8 @@ PDFWriter::writeGmshTxt( const TriPDF& pdf,
             << nbiz << '\n'
             << "# Sample space extents: [" << xmin << " : " << xmax << "], ["
             << ymin << " : " << ymax << "], [" << zmin << " : " << zmax << "]\n"
+            << "# Iteration: " << it << "\n"
+            << "# Physical time: " << time << "\n#\n"
             << "$EndComments\n";
 
   // Output mesh header: mesh version, file type, data size
@@ -549,6 +569,8 @@ PDFWriter::writeGmshBin( const BiPDF& pdf,
   const auto& name = info.name;
   const auto& uext = info.exts;
   const auto& vars = info.vars;
+  const auto& it = info.it;
+  const auto& time = info.time;
 
   assertSampleSpaceDimensions< 2 >( vars );
   assertSampleSpaceExtents< 2 >( uext );
@@ -577,6 +599,8 @@ PDFWriter::writeGmshBin( const BiPDF& pdf,
             << "# Number of bins output: " << nbix << " x " << nbiy << '\n'
             << "# Sample space extents: [" << xmin << " : " << xmax
             << "], [" << ymin << " : " << ymax << "]\n"
+            << "# Iteration: " << it << "\n"
+            << "# Physical time: " << time << "\n#\n"
             << "$EndComments\n";
 
   // Output mesh header: mesh version, file type, data size
@@ -691,6 +715,8 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
   const auto& name = info.name;
   const auto& uext = info.exts;
   const auto& vars = info.vars;
+  const auto& it = info.it;
+  const auto& time = info.time;
 
   assertSampleSpaceDimensions< 3 >( vars );
   assertSampleSpaceExtents< 3 >( uext );
@@ -721,6 +747,8 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
             << nbiz << '\n'
             << "# Sample space extents: [" << xmin << " : " << xmax << "], ["
             << ymin << " : " << ymax << "], [" << zmin << " : " << zmax << "]\n"
+            << "# Iteration: " << it << "\n"
+            << "# Physical time: " << time << "\n#\n"
             << "$EndComments\n";
 
   // Output mesh header: mesh version, file type, data size

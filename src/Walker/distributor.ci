@@ -149,7 +149,7 @@ module distributor {
       entry void wait4ord() {
         when estimateOrdDone() serial "accumulateCen" {
           // Start accumulating sums for central moments
-          m_intproxy.accumulateCen( m_it, m_ordinary );
+          m_intproxy.accumulateCen( m_it, m_t, m_dt, m_ordinary );
         }
       };
 

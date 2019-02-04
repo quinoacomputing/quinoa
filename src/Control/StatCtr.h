@@ -250,6 +250,8 @@ struct PDFInfo {
   const std::string& name;                  //!< PDF identifier, i.e., name
   const std::vector< tk::real >& exts;      //!< Sample space extents
   std::vector< std::string > vars;          //!< List of sample space variables
+  std::uint64_t it;                         //!< Iteration count
+  tk::real time;                            //!< Time stamp
 };
 
 //! \brief Find PDF information, see tk::ctr::PDFInfo
@@ -264,6 +266,8 @@ struct PDFInfo {
 //! \param[in] m ORDINARY or CENTRAL PDF we are looking for
 //! \param[in] idx Index of the PDF within the list of matching (based on D and
 //!   m) PDFs requested
+//! \param[in] it Iteration count
+//! \param[in] time Physical time
 //! \return The PDF metadata requested
 //! \details Find PDF information given the sample space dimension (template
 //!   argument D), ordinary or central PDF (m), and the index within the list of
@@ -276,7 +280,9 @@ PDFInfo pdfInfo( const std::vector< std::vector< tk::real > >& binsizes,
                  const std::vector< std::vector< tk::real > >& exts,
                  const std::vector< Probability >& pdfs,
                  tk::ctr::Moment m,
-                 std::size_t idx )
+                 std::size_t idx,
+                 std::uint64_t it,
+                 tk::real time )
 {
   Assert( binsizes.size() == names.size(),
           "Length of binsizes vector and that of PDF names must equal" );
@@ -297,7 +303,7 @@ PDFInfo pdfInfo( const std::vector< std::vector< tk::real > >& binsizes,
       std::vector< std::string > vars;
       for (const auto& term : pdfs[i])
         vars.push_back( term.var + std::to_string(term.field+1) );
-      return { names[i], exts[i], std::move(vars) };
+      return { names[i], exts[i], std::move(vars), it, time };
     }
     ++i;
   }
