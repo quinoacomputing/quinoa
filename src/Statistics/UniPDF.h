@@ -85,6 +85,7 @@ class UniPDF {
     //! Return minimum and maximum bin ids of sample space
     //! \return {min,max} Minimum and maximum of the bin ids
     std::array< long, 2*dim > extents() const {
+      Assert( !m_pdf.empty(), "PDF empty" );
       auto x = std::minmax_element( begin(m_pdf), end(m_pdf),
                  []( const pair_type& a, const pair_type& b )
                  { return a.first < b.first; } );
