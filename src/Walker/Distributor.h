@@ -106,25 +106,36 @@ class Distributor : public CBase_Distributor {
     void outStat();
 
     //! Write univariate PDF to file
-    void writeUniPDF( const tk::UniPDF& p, tk::ctr::Moment m, std::size_t idx );
+    void writeUniPDF( std::uint64_t it,
+                      tk::real t,
+                      const tk::UniPDF& p,
+                      tk::ctr::Moment m,
+                      std::size_t idx );
 
     //! Write bivariate PDF to file
-    void writeBiPDF( const tk::BiPDF& p, tk::ctr::Moment m, std::size_t idx );
+    void writeBiPDF( std::uint64_t it, tk::real t,
+                     const tk::BiPDF& p,
+                     tk::ctr::Moment m,
+                     std::size_t idx );
 
     //! Write trivariate PDF to file
-    void writeTriPDF( const tk::TriPDF& p, tk::ctr::Moment m, std::size_t idx );
+    void writeTriPDF( std::uint64_t it,
+                      tk::real t,
+                      const tk::TriPDF& p,
+                      tk::ctr::Moment m,
+                      std::size_t idx );
 
     //! Output PDFs to file
     void outPDF();
 
     //! Output all requested univariate PDFs to file(s)
-    void outUniPDF();
+    void outUniPDF( std::uint64_t it, tk::real t );
 
     //! Output all requested bivariate PDFs to file(s)
-    void outBiPDF();
+    void outBiPDF( std::uint64_t it, tk::real t );
 
     //! Output all requested trivariate PDFs to file(s)
-    void outTriPDF();
+    void outTriPDF( std::uint64_t it, tk::real t );
 
     //! Evaluate time step, compute new time step size
     void evaluateTime();
