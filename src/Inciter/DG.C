@@ -88,6 +88,10 @@ DG::DG( const CProxy_Discretization& disc, const FaceData& fd ) :
   // Activate SDAG waits for face adjacency map (ghost data) calculation
   thisProxy[ thisIndex ].wait4ghost();
 
+  // Enable SDAG wait for initially building the solution vector
+  thisProxy[ thisIndex ].wait4sol();
+  thisProxy[ thisIndex ].wait4lim();
+
   // Invert inpofa to enable searching for faces based on (global) node triplets
   Assert( inpofa.size() % 3 == 0, "Inpofa must contain triplets" );
   for (std::size_t f=0; f<inpofa.size()/3; ++f)
@@ -867,10 +871,6 @@ DG::start()
 //  Start time stepping
 // *****************************************************************************
 {
-  // Enable SDAG wait for building the solution vector
-  thisProxy[ thisIndex ].wait4sol();
-  thisProxy[ thisIndex ].wait4lim();
-
   // Start timer measuring time stepping wall clock time
   Disc()->Timer().zero();
 
@@ -1133,7 +1133,7 @@ DG::solve( tk::real newdt )
 //! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
-  // Enable SDAG wait for building the solution vector
+  // Enable SDAG wait for building the solution vector during the next stage
   thisProxy[ thisIndex ].wait4sol();
   thisProxy[ thisIndex ].wait4lim();
 
