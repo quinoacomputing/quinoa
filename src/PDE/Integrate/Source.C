@@ -60,7 +60,7 @@ tk::srcInt( ncomp_t system,
   wgp.resize( ng );
 
   // get quadrature point weights and coordinates for triangle
-  GaussQuadratureTri( ng, coordgp, wgp );
+  GaussQuadratureTet( ng, coordgp, wgp );
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -87,10 +87,10 @@ tk::srcInt( ncomp_t system,
     coordel[3][1] = cy[ inpoel[4*e+3] ];
     coordel[3][2] = cz[ inpoel[4*e+3] ];
 
-    for (std::size_t igp=0; igp<NG; ++igp)
+    for (std::size_t igp=0; igp<ng; ++igp)
     {
       // Compute the coordinates of quadrature point at physical domain
-      auto gp = eval_gpvol( igp, coordfa, coordgp );
+      auto gp = eval_gp( igp, coordel, coordgp );
 
       // Compute the basis function
       auto B = eval_basis( ndof, igp, coordgp );

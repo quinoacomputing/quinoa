@@ -22,6 +22,7 @@
 #include "Vector.h"
 #include "Inciter/Options/BC.h"
 #include "UnsMesh.h"
+#include "Integrate/Basis.h"
 #include "Integrate/Quadrature.h"
 #include "Integrate/Initialize.h"
 #include "Integrate/Mass.h"
@@ -155,33 +156,16 @@ class Transport {
       tk::surfInt( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
                    Upwind::flux, Problem::prescribedVelocity, U, limFunc, R );
 
+      if(ndof > 1)
+        // compute volume integrals
+        tk::volInt( m_system, m_ncomp, m_offset, inpoel, coord, geoElem,
+                    flux, Problem::prescribedVelocity, U, limFunc, R );
+
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
         tk::sidesetInt( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
           inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
           b.second, U, limFunc, R );
-
-      switch(ndof)
-      {
-        case 1:           //DG(P0)
-          break;
- 
-        case 4:          //DG(P1)
-          // compute volume integrals
-          tk::volIntP1( m_system, m_ncomp, m_offset, inpoel, coord, geoElem,
-                        flux, Problem::prescribedVelocity, U, limFunc, R );
-          break;
-
-        case 10:        //DG(P2)
-          // compute volume integrals
-          tk::volIntP2( m_system, m_ncomp, m_offset, inpoel, coord, geoElem,
-                        flux, Problem::prescribedVelocity, U, R );
-          break;
-
-        default:
-          Throw( "dg::Transport::rhs() not defined for NDOF=" +
-                 std::to_string(ndof) );
-      }
     }
 
     //! Compute the minimum time step size
@@ -250,7 +234,7 @@ class Transport {
     //!   which provides the vector of field names
     //! \note U is overwritten
     std::vector< std::vector< tk::real > >
-    fieldOutput( const tk::Fields&,
+    fieldOutput( const tk::Fields& L,
                  const std::vector< std::size_t >& inpoel,
                  const tk::UnsMesh::Coords& coord,
                  tk::real t,
@@ -265,8 +249,8 @@ class Transport {
         out.push_back( U.extract( c*ndof, m_offset ) );
       // evaluate analytic solution at time t
       auto E = U;
-      tk::initializeP0( m_system, m_ncomp, m_offset, inpoel, coord,
-                        Problem::solution, E, t, U.nunk() );
+      tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
+                      Problem::solution, E, t );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( E.extract( c*ndof, m_offset ) );
