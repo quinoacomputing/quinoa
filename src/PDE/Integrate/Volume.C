@@ -34,7 +34,7 @@ tk::volInt( ncomp_t system,
             const Fields& limFunc,
             Fields& R )
 // *****************************************************************************
-//  Compute volume integrals for DG(P1)
+//  Compute volume integrals for DG
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
@@ -64,7 +64,7 @@ tk::volInt( ncomp_t system,
   wgp.resize( ng );
 
   // get quadrature point weights and coordinates for triangle
-  GaussQuadratureTri( ng, coordgp, wgp );
+  GaussQuadratureTet( ng, coordgp, wgp );
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -102,16 +102,16 @@ tk::volInt( ncomp_t system,
     dBdx[2].resize( ndof, 0 );
 
     // Compute the derivatives of basis function for DG(P1)
-    eval_dBdx_p1( jacInv, dBdx );
+    eval_dBdx_p1( ndof, jacInv, dBdx );
 
     // Gaussian quadrature
-    for (std::size_t igp=0; igp<NG; ++igp)
+    for (std::size_t igp=0; igp<ng; ++igp)
     {
       if (ndof > 4)
-        eval_dBdx_p2( igp, coordgp, jacInv, dBdx );
+        eval_dBdx_p2( ndof, igp, coordgp, jacInv, dBdx );
 
       // Compute the coordinates of quadrature point at physical domain
-      auto gp = eval_gpvol( igp, coordfa, coordgp );
+      auto gp = eval_gp( igp, coordel, coordgp );
 
       // Compute the basis function
       auto B = eval_basis( ndof, igp, coordgp );
@@ -126,7 +126,7 @@ tk::volInt( ncomp_t system,
       // comput flux
       auto fl = flux( system, ncomp, state, v );
 
-      update_rhs( ncomp, offset, ndof, wt, e, dBdx, fl, R )
+      update_rhs( ncomp, offset, ndof, wt, e, dBdx, fl, R );
     }
   }
 }
@@ -137,8 +137,8 @@ tk::update_rhs( ncomp_t ncomp,
                 const std::size_t ndof,
                 const tk::real wt,
                 const std::size_t e,
-                const std::vector< tk::real >& B,
-                const std::vector< std::array< tk::real, 3 > >& fl
+                const std::array< std::vector<tk::real>, 3 >& dBdx,
+                const std::vector< std::array< tk::real, 3 > >& fl,
                 Fields& R )
 // *****************************************************************************
 //  Update the rhs by adding the source term integrals
@@ -152,8 +152,10 @@ tk::update_rhs( ncomp_t ncomp,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  Assert( B.size() == ndof, "Size mismatch for basis function" );
-  Assert( s.size() == ncomp, "Size mismatch for source term" );
+  Assert( dBdx[0].size() == ndof, "Size mismatch for basis function derivatives" );
+  Assert( dBdx[1].size() == ndof, "Size mismatch for basis function derivatives" );
+  Assert( dBdx[2].size() == ndof, "Size mismatch for basis function derivatives" );
+  Assert( fl.size() == ncomp, "Size mismatch for flux term" );
 
   for (ncomp_t c=0; c<ncomp; ++c)
   {
@@ -176,7 +178,7 @@ tk::update_rhs( ncomp_t ncomp,
       R(e, mark+7, offset) +=
         wt * (fl[c][0]*dBdx[7][0] + fl[c][1]*dBdx[7][1] + fl[c][2]*dBdx[7][2]);
       R(e, mark+8, offset) +=
-        wt * (fl[c][0]*dBdx[8][0] + fl[c][1]*dBdx[8][1] + fl[c][2]*dbdx[8][2]);
+        wt * (fl[c][0]*dBdx[8][0] + fl[c][1]*dBdx[8][1] + fl[c][2]*dBdx[8][2]);
       R(e, mark+9, offset) +=
         wt * (fl[c][0]*dBdx[9][0] + fl[c][1]*dBdx[9][1] + fl[c][2]*dBdx[9][2]);
     }

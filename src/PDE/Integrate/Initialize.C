@@ -22,299 +22,6 @@ extern ctr::InputDeck g_inputdeck;
 } // inciter::
 
 void
-tk::initializeP0( ncomp_t system,
-                  ncomp_t ncomp,
-                  ncomp_t offset,
-                  const std::vector< std::size_t >& inpoel,
-                  const UnsMesh::Coords& coord,
-                  const SolutionFn& solution,
-                  Fields& unk,
-                  real t,
-                  const std::size_t nielem )
-// *****************************************************************************
-//  Initalize a PDE system for DG(P0)
-//! \param[in] system Equation system index
-//! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] offset Offset this PDE system operates from
-//! \param[in] inpoel Element-node connectivity
-//! \param[in] coord Array of nodal coordinates
-//! \param[in] solution Function to call to evaluate known solution or initial
-//!   conditions at x,y,z,t
-//! \param[in,out] unk Array of unknowns
-//! \param[in] t Physical time
-//! \param[in] nielem Number of internal elements
-// *****************************************************************************
-{
-  const auto& x = coord[0];
-  const auto& y = coord[1];
-  const auto& z = coord[2];
-
-  for (std::size_t e=0; e<nielem; ++e) {    // for all tets
-    // node ids
-    const auto A = inpoel[e*4+0];
-    const auto B = inpoel[e*4+1];
-    const auto C = inpoel[e*4+2];
-    const auto D = inpoel[e*4+3];
-    // compute centroid
-    auto xcc = (x[A]+x[B]+x[C]+x[D])/4.0;
-    auto ycc = (y[A]+y[B]+y[C]+y[D])/4.0;
-    auto zcc = (z[A]+z[B]+z[C]+z[D])/4.0;
-    // evaluate solution at centroid
-    const auto s = solution( system, ncomp, xcc, ycc, zcc, t );
-    // initialize unknown vector with solution at centroids
-    for (ncomp_t c=0; c<ncomp; ++c) unk(e, c, offset) = s[c];
-  }
-}
-
-void
-tk::initializeP1( ncomp_t system,
-                  ncomp_t ncomp,
-                  ncomp_t offset,
-                  const Fields& L,
-                  const std::vector< std::size_t >& inpoel,
-                  const UnsMesh::Coords& coord,
-                  const SolutionFn& solution,
-                  Fields& unk,
-                  real t,
-                  const std::size_t nielem )
-// *****************************************************************************
-//  Initalize a PDE system for DG(P1)
-//! \param[in] system Equation system index
-//! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] offset Offset this PDE system operates from
-//! \param[in] L Block diagonal mass matrix
-//! \param[in] inpoel Element-node connectivity
-//! \param[in] coord Array of nodal coordinates
-//! \param[in] solution Function to call to evaluate known solution or initial
-//!   conditions at x,y,z,t
-//! \param[in,out] unk Array of unknowns
-//! \param[in] t Physical time
-//! \param[in] nielem Number of internal elements
-// *****************************************************************************
-{
-  Assert( L.nunk() == unk.nunk(), "Size mismatch" );
-
-  // Number of integration points
-  constexpr std::size_t NG = 14;
-
-  // Number of solution degrees of freedom
-  constexpr std::size_t ndof = 4;
-
-  // arrays for quadrature points
-  std::array< std::array< real, NG >, 3 > coordgp;
-  std::array< real, NG > wgp;
-
-  const auto& cx = coord[0];
-  const auto& cy = coord[1];
-  const auto& cz = coord[2];
-
-  // get quadrature point weights and coordinates for tetrahedron
-  GaussQuadratureTet( coordgp, wgp );
-
-  for (std::size_t e=0; e<nielem; ++e) {    // for all tets
-    auto vole = L(e, 0, offset);
-
-    auto x1 = cx[ inpoel[4*e]   ];
-    auto y1 = cy[ inpoel[4*e]   ];
-    auto z1 = cz[ inpoel[4*e]   ];
-
-    auto x2 = cx[ inpoel[4*e+1] ];
-    auto y2 = cy[ inpoel[4*e+1] ];
-    auto z2 = cz[ inpoel[4*e+1] ];
-
-    auto x3 = cx[ inpoel[4*e+2] ];
-    auto y3 = cy[ inpoel[4*e+2] ];
-    auto z3 = cz[ inpoel[4*e+2] ];
-
-    auto x4 = cx[ inpoel[4*e+3] ];
-    auto y4 = cy[ inpoel[4*e+3] ];
-    auto z4 = cz[ inpoel[4*e+3] ];
-
-    // right hand side vector
-    std::vector< real > R( unk.nprop(), 0.0 );
-
-    // Gaussian quadrature
-    for (std::size_t igp=0; igp<NG; ++igp)
-    {
-      auto B2 = 2.0 * coordgp[0][igp] + coordgp[1][igp] + coordgp[2][igp] - 1.0;
-      auto B3 = 3.0 * coordgp[1][igp] + coordgp[2][igp] - 1.0;
-      auto B4 = 4.0 * coordgp[2][igp] - 1.0;
-
-      auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp] - coordgp[2][igp];
-      auto shp2 = coordgp[0][igp];
-      auto shp3 = coordgp[1][igp];
-      auto shp4 = coordgp[2][igp];
-
-      auto xgp = x1*shp1 + x2*shp2 + x3*shp3 + x4*shp4;
-      auto ygp = y1*shp1 + y2*shp2 + y3*shp3 + y4*shp4;
-      auto zgp = z1*shp1 + z2*shp2 + z3*shp3 + z4*shp4;
-
-      auto wt = vole * wgp[igp];
-
-      const auto s = solution( system, ncomp, xgp, ygp, zgp, t );
-
-      for (ncomp_t c=0; c<ncomp; ++c) {
-        auto mark = c*ndof;
-        R[mark  ] += wt * s[c];
-        R[mark+1] += wt * s[c]*B2;
-        R[mark+2] += wt * s[c]*B3;
-        R[mark+3] += wt * s[c]*B4;
-      }
-    }
-
-    for (ncomp_t c=0; c<ncomp; ++c) {
-      auto mark = c*ndof;
-      unk(e, mark,   offset) = R[mark]   / L(e, mark,   offset);
-      unk(e, mark+1, offset) = R[mark+1] / L(e, mark+1, offset);
-      unk(e, mark+2, offset) = R[mark+2] / L(e, mark+2, offset);
-      unk(e, mark+3, offset) = R[mark+3] / L(e, mark+3, offset);
-    }
-  }
-}
-
-void
-tk::initializeP2( ncomp_t system,
-                  ncomp_t ncomp,
-                  ncomp_t offset,
-                  const Fields& L,
-                  const std::vector< std::size_t >& inpoel,
-                  const UnsMesh::Coords& coord,
-                  const SolutionFn& solution,
-                  Fields& unk,
-                  real t,
-                  const std::size_t nielem )
-// *****************************************************************************
-//  Initalize a PDE system for DG(P1)
-//! \param[in] system Equation system index
-//! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] offset Offset this PDE system operates from
-//! \param[in] L Block diagonal mass matrix
-//! \param[in] inpoel Element-node connectivity
-//! \param[in] coord Array of nodal coordinates
-//! \param[in] solution Function to call to evaluate known solution or initial
-//!   conditions at x,y,z,t
-//! \param[in,out] unk Array of unknowns
-//! \param[in] t Physical time
-//! \param[in] nielem Number of internal elements
-// *****************************************************************************
-{
-  Assert( L.nunk() == unk.nunk(), "Size mismatch" );
-
-  // Number of integration points
-  constexpr std::size_t NG = 14;
-
-  // Number of solution degrees of freedom
-  constexpr std::size_t ndof = 10;
-
-  // arrays for quadrature points
-  std::array< std::array< real, NG >, 3 > coordgp;
-  std::array< real, NG > wgp;
-
-  const auto& cx = coord[0];
-  const auto& cy = coord[1];
-  const auto& cz = coord[2];
-
-  // get quadrature point weights and coordinates for tetrahedron
-  GaussQuadratureTet( coordgp, wgp );
-
-  for (std::size_t e=0; e<nielem; ++e) {    // for all tets
-    auto vole = L(e, 0, offset);
-
-    auto x1 = cx[ inpoel[4*e]   ];
-    auto y1 = cy[ inpoel[4*e]   ];
-    auto z1 = cz[ inpoel[4*e]   ];
-
-    auto x2 = cx[ inpoel[4*e+1] ];
-    auto y2 = cy[ inpoel[4*e+1] ];
-    auto z2 = cz[ inpoel[4*e+1] ];
-
-    auto x3 = cx[ inpoel[4*e+2] ];
-    auto y3 = cy[ inpoel[4*e+2] ];
-    auto z3 = cz[ inpoel[4*e+2] ];
-
-    auto x4 = cx[ inpoel[4*e+3] ];
-    auto y4 = cy[ inpoel[4*e+3] ];
-    auto z4 = cz[ inpoel[4*e+3] ];
-
-    // right hand side vector
-    std::vector< real > R( unk.nprop(), 0.0 );
-
-    // Gaussian quadrature
-    for (std::size_t igp=0; igp<NG; ++igp)
-    {
-      auto xi_xi   = coordgp[0][igp] * coordgp[0][igp];
-      auto xi_eta  = coordgp[0][igp] * coordgp[1][igp];
-      auto xi_zeta = coordgp[0][igp] * coordgp[2][igp];
-
-      auto eta_eta  = coordgp[1][igp] * coordgp[1][igp];
-      auto eta_zeta = coordgp[1][igp] * coordgp[2][igp];
-
-      auto zeta_zeta = coordgp[2][igp] * coordgp[2][igp];
-
-      auto xi   = coordgp[0][igp];
-      auto eta  = coordgp[1][igp];
-      auto zeta = coordgp[2][igp];
-
-      auto B2 = 2.0 * xi + eta + zeta - 1.0;
-      auto B3 = 3.0 * eta + zeta - 1.0;
-      auto B4 = 4.0 * zeta - 1.0;
-      auto B5 = 6.0 * xi_xi + eta_eta + zeta_zeta + 6.0 * xi_eta + 6.0 * xi_zeta
-              + 2.0 * eta_zeta - 6.0 * xi - 2.0 * eta - 2.0 * zeta + 1.0;
-      auto B6 = 5.0 * eta_eta + zeta_zeta + 10.0 * xi_eta + 2.0 * xi_zeta
-              + 6.0 * eta_zeta - 2.0 * xi - 6.0 * eta - 2.0 * zeta + 1.0;
-      auto B7 = 6.0 * zeta_zeta + 12.0 * xi_zeta + 6.0 * eta_zeta
-              - 2.0 * xi - eta - 7.0 * zeta + 1.0;
-      auto B8 = 10.0 * eta_eta + zeta_zeta + 8.0 * eta_zeta
-              - 8.0 * eta - 2.0 * zeta + 1.0;
-      auto B9 = 6.0 * zeta_zeta + 18.0 * eta_zeta - 3.0 * eta - 7.0 * zeta
-              + 1.0;
-      auto B10 = 15.0 * zeta_zeta - 10.0 * zeta + 1.0;
-
-      auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp] - coordgp[2][igp];
-      auto shp2 = coordgp[0][igp];
-      auto shp3 = coordgp[1][igp];
-      auto shp4 = coordgp[2][igp];
-
-      auto xgp = x1*shp1 + x2*shp2 + x3*shp3 + x4*shp4;
-      auto ygp = y1*shp1 + y2*shp2 + y3*shp3 + y4*shp4;
-      auto zgp = z1*shp1 + z2*shp2 + z3*shp3 + z4*shp4;
-
-      auto wt = vole * wgp[igp];
-
-      const auto s = solution( system, ncomp, xgp, ygp, zgp, t );
-
-      for (ncomp_t c=0; c<ncomp; ++c) {
-        auto mark = c*ndof;
-        R[mark  ] += wt * s[c];
-        R[mark+1] += wt * s[c]*B2;
-        R[mark+2] += wt * s[c]*B3;
-        R[mark+3] += wt * s[c]*B4;
-        R[mark+4] += wt * s[c]*B5;
-        R[mark+5] += wt * s[c]*B6;
-        R[mark+6] += wt * s[c]*B7;
-        R[mark+7] += wt * s[c]*B8;
-        R[mark+8] += wt * s[c]*B9;
-        R[mark+9] += wt * s[c]*B10;
-      }
-    }
-
-    for (ncomp_t c=0; c<ncomp; ++c) {
-      auto mark = c*ndof;
-      unk(e, mark,   offset) = R[mark]   / L(e, mark,   offset);
-      unk(e, mark+1, offset) = R[mark+1] / L(e, mark+1, offset);
-      unk(e, mark+2, offset) = R[mark+2] / L(e, mark+2, offset);
-      unk(e, mark+3, offset) = R[mark+3] / L(e, mark+3, offset);
-      unk(e, mark+4, offset) = R[mark+4] / L(e, mark+4, offset);
-      unk(e, mark+5, offset) = R[mark+5] / L(e, mark+5, offset);
-      unk(e, mark+6, offset) = R[mark+6] / L(e, mark+6, offset);
-      unk(e, mark+7, offset) = R[mark+7] / L(e, mark+7, offset);
-      unk(e, mark+8, offset) = R[mark+8] / L(e, mark+8, offset);
-      unk(e, mark+9, offset) = R[mark+9] / L(e, mark+9, offset);
-    }
-  }
-}
-
-void
 tk::initialize( ncomp_t system,
                 ncomp_t ncomp,
                 ncomp_t offset,
@@ -323,10 +30,9 @@ tk::initialize( ncomp_t system,
                 const UnsMesh::Coords& coord,
                 const SolutionFn& solution,
                 Fields& unk,
-                real t,
-                const std::size_t nielem )
+                real t )
 // *****************************************************************************
-//! Initalize a system of DGPDEs
+//! Initalize a system of DGPDEs by projection method
 //! \details This is the public interface exposed to client code.
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -342,21 +48,175 @@ tk::initialize( ncomp_t system,
 // *****************************************************************************
 {
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-  switch(ndof) 
+
+  // Number of quadrature points for volume integration
+  std::size_t ng;
+  switch(ndof)
   {
     case 1:
-      initializeP0( system, ncomp, offset, inpoel, coord, solution, unk, t,
-                    nielem );
+      ng = 1;
       break;
+
     case 4:
-      initializeP1( system, ncomp, offset, L, inpoel, coord, solution, unk, t,
-                    nielem );
+      ng = 14;
       break;
+
     case 10:
-      initializeP2( system, ncomp, offset, L, inpoel, coord, solution, unk, t,
-                    nielem );
+      ng = 14;
       break;
+    
     default:
-      Throw( "initialize() not defined" );
+      Throw( "tk::initialize() not defined for NDOF=" + std::to_string(ndof) );
+  }
+
+  // arrays for quadrature points
+  std::array< std::vector< real >, 3 > coordgp;
+  std::vector< real > wgp;
+
+  coordgp[0].resize( ng );
+  coordgp[1].resize( ng );
+  coordgp[2].resize( ng );
+  wgp.resize( ng );
+
+  // get quadrature point weights and coordinates for triangle
+  GaussQuadratureTet( ng, coordgp, wgp );
+
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  // Nodal Coordinates of the tetrahedron element
+  std::array< std::array< real, 3>, 4 > coordel;
+
+  for (std::size_t e=0; e<nielem; ++e) {    // for all tets
+    // The volume of tetrahedron
+    auto vole = L(e, 0, offset);
+
+    coordel[0][0] = cx[ inpoel[4*e]   ];
+    coordel[0][1] = cy[ inpoel[4*e]   ];
+    coordel[0][2] = cz[ inpoel[4*e]   ];
+
+    coordel[1][0] = cx[ inpoel[4*e+1] ];
+    coordel[1][1] = cy[ inpoel[4*e+1] ];
+    coordel[1][2] = cz[ inpoel[4*e+1] ];
+
+    coordel[2][0] = cx[ inpoel[4*e+2] ];
+    coordel[2][1] = cy[ inpoel[4*e+2] ];
+    coordel[2][2] = cz[ inpoel[4*e+2] ];
+
+    coordel[3][0] = cx[ inpoel[4*e+3] ];
+    coordel[3][1] = cy[ inpoel[4*e+3] ];
+    coordel[3][2] = cz[ inpoel[4*e+3] ];
+
+    // right hand side vector
+    std::vector< real > R( unk.nprop(), 0.0 );
+
+    // Gaussian quadrature
+    for (std::size_t igp=0; igp<ng; ++igp)
+    {
+      // Compute the coordinates of quadrature point at physical domain
+      auto gp = eval_gp( igp, coordel, coordgp );
+
+      // Compute the basis function
+      auto B = eval_basis( ndof, igp, coordgp );
+
+      const auto s = solution( system, ncomp, gp[0], gp[1], gp[2], t );
+
+      auto wt = wgp[igp] * vole;
+
+      update_rhs( ncomp, ndof, wt, B, s, R );
+    }
+
+    // Compute the initial conditions
+    eval_init(ncomp, offset, ndof, e, R, L, unk);
+  }
+}
+
+void
+tk::update_rhs( ncomp_t ncomp,
+                const std::size_t ndof,
+                const tk::real wt,
+                const std::vector< tk::real >& B,
+                const std::vector< tk::real >& s,
+                std::vector< tk::real >& R )
+// *****************************************************************************
+//  Update the rhs by adding the initial analytical solution term
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] ndof Number of degree of freedom
+//! \param[in] wt Weight of gauss quadrature point
+//! \param[in] B Vector of basis functions
+//! \param[in] s Vector of analytical solution at quadrature point
+//! \param[in,out] R Right-hand side vector
+// *****************************************************************************
+{
+  Assert( B.size() == ndof, "Size mismatch for basis function" );
+  Assert( s.size() == ncomp, "Size mismatch for source term" );
+
+  for (ncomp_t c=0; c<ncomp; ++c) 
+  {
+    // DG(P0)
+    auto mark = c*ndof;
+    R[mark] += wt * s[c];
+
+    if(ndof > 1)         //DG(P1)
+    {
+      R[mark+1] += wt * s[c] * B[1];
+      R[mark+2] += wt * s[c] * B[2];
+      R[mark+3] += wt * s[c] * B[3];
+
+      if(ndof > 4)      //DG(P2)
+      {
+        R[mark+4] += wt * s[c] * B[4];
+        R[mark+5] += wt * s[c] * B[5];
+        R[mark+6] += wt * s[c] * B[6];
+        R[mark+7] += wt * s[c] * B[7];
+        R[mark+8] += wt * s[c] * B[8];
+        R[mark+9] += wt * s[c] * B[9];
+      }
+    }
+  }
+}
+
+void
+tk::eval_init( ncomp_t ncomp,
+               ncomp_t offset,
+               const std::size_t ndof,
+               const std::size_t e,
+               const std::vector< tk::real >& R, 
+               const Fields& L,
+               Fields& unk )
+// *****************************************************************************
+//  Compute the initial conditions
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] offset Offset this PDE system operates from
+//! \param[in] ndof Number of degree of freedom
+//! \param[in] e Element index
+//! \param[in] R Right-hand side vector
+//! \param[in] L Block diagonal mass matrix
+//! \param[in,out] unk Array of unknowns
+// *****************************************************************************
+{
+  for (ncomp_t c=0; c<ncomp; ++c) 
+  {
+    // DG(P0)
+    auto mark = c*ndof;
+    unk(e, mark, offset) = R[mark] / L(e, mark,   offset);
+
+    if(ndof > 1)          // DG(P1)
+    {
+      unk(e, mark+1, offset) = R[mark+1] / L(e, mark+1, offset);
+      unk(e, mark+2, offset) = R[mark+2] / L(e, mark+2, offset);
+      unk(e, mark+3, offset) = R[mark+3] / L(e, mark+3, offset);
+    
+      if(ndof > 4)        // DG(P2)
+      {
+        unk(e, mark+4, offset) = R[mark+4] / L(e, mark+4, offset);
+        unk(e, mark+5, offset) = R[mark+5] / L(e, mark+5, offset);
+        unk(e, mark+6, offset) = R[mark+6] / L(e, mark+6, offset);
+        unk(e, mark+7, offset) = R[mark+7] / L(e, mark+7, offset);
+        unk(e, mark+8, offset) = R[mark+8] / L(e, mark+8, offset);
+        unk(e, mark+9, offset) = R[mark+9] / L(e, mark+9, offset);
+      }
+    }
   }
 }

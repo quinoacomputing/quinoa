@@ -23,6 +23,7 @@
 #include "ContainerUtil.h"
 #include "UnsMesh.h"
 #include "Inciter/InputDeck/InputDeck.h"
+#include "Integrate/Basis.h"
 #include "Integrate/Quadrature.h"
 #include "Integrate/Initialize.h"
 #include "Integrate/Mass.h"
@@ -160,29 +161,19 @@ class MultiMat {
       tk::surfInt( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
                    rieflxfn, velfn, U, limFunc, R );
 
+      // compute source term intehrals
+      tk::srcInt( m_system, m_ncomp, m_offset,
+                  t, inpoel, coord, geoElem, Problem::src, R );
+
+      if(ndof > 1)
+        // compute volume integrals
+        tk::volInt( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
+                    velfn, U, limFunc, R );
+
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
         tk::sidesetInt( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
           inpoel, coord, t, rieflxfn, velfn, b.second, U, limFunc, R );
-
-      if (ndof == 1) {  // DG(P0)
-
-        // compute source term intehrals
-        tk::srcIntP0( m_system, m_ncomp, m_offset,
-                      t, geoElem, Problem::src, R );
-
-      } else if (ndof == 4) {  // DG(P1)
-
-        // compute source term intehrals
-        tk::srcIntP1( m_system, m_ncomp, m_offset,
-                      t, inpoel, coord, geoElem, Problem::src, R );
-        // compute volume integrals
-        tk::volIntP1( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
-                      velfn, U, limFunc, R );
-
-      } else
-        Throw( "dg::Compflow::rhs() not defined for NDOF=" +
-               std::to_string(ndof) );
     }
 
     //! Compute the minimum time step size
@@ -229,41 +220,33 @@ class MultiMat {
       // get quadrature point weights and coordinates for triangle
       tk::GaussQuadratureTri( ng, coordgp, wgp );
 
+      // Nodal Coordinates of face
+      std::array< std::array< tk::real, 3>, 3 > coordfa;
+
+      // Nodal Coordinates of the tetrahedron element
+      std::array< std::array< tk::real, 3>, 4> coordel_l;
+      std::array< std::array< tk::real, 3>, 4> coordel_r;
+
       // compute internal surface maximum characteristic speed
       for (std::size_t f=0; f<esuf.size()/2; ++f)
       {
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
         auto er = esuf[2*f+1];
 
-        // nodal coordinates of the left element
-        std::array< tk::real, 3 >
-          p1_l{{ cx[ inpoel[4*el] ],
-                 cy[ inpoel[4*el] ],
-                 cz[ inpoel[4*el] ] }},
-          p2_l{{ cx[ inpoel[4*el+1] ],
-                 cy[ inpoel[4*el+1] ],
-                 cz[ inpoel[4*el+1] ] }},
-          p3_l{{ cx[ inpoel[4*el+2] ],
-                 cy[ inpoel[4*el+2] ],
-                 cz[ inpoel[4*el+2] ] }},
-          p4_l{{ cx[ inpoel[4*el+3] ],
-                 cy[ inpoel[4*el+3] ],
-                 cz[ inpoel[4*el+3] ] }};
+        // Compute the determinant of Jacobian matrix
+        auto detT_l = tk::eval_det( el, cx, cy, cz, inpoel, coordel_l );
 
-        auto detT_l = tk::Jacobian( p1_l, p2_l, p3_l, p4_l );
+        coordfa[0][0] = cx[ inpofa[3*f]   ];
+        coordfa[0][1] = cy[ inpofa[3*f]   ];
+        coordfa[0][2] = cz[ inpofa[3*f]   ];
 
+        coordfa[1][0] = cx[ inpofa[3*f+1] ];
+        coordfa[1][1] = cy[ inpofa[3*f+1] ];
+        coordfa[1][2] = cz[ inpofa[3*f+1] ];
 
-        auto x1 = cx[ inpofa[3*f]   ];
-        auto y1 = cy[ inpofa[3*f]   ];
-        auto z1 = cz[ inpofa[3*f]   ];
-
-        auto x2 = cx[ inpofa[3*f+1] ];
-        auto y2 = cy[ inpofa[3*f+1] ];
-        auto z2 = cz[ inpofa[3*f+1] ];
-
-        auto x3 = cx[ inpofa[3*f+2] ];
-        auto y3 = cy[ inpofa[3*f+2] ];
-        auto z3 = cz[ inpofa[3*f+2] ];
+        coordfa[2][0] = cx[ inpofa[3*f+2] ];
+        coordfa[2][1] = cy[ inpofa[3*f+2] ];
+        coordfa[2][2] = cz[ inpofa[3*f+2] ];
 
         dSV_l = 0.0;
         dSV_r = 0.0;
@@ -271,34 +254,11 @@ class MultiMat {
         // Gaussian quadrature
         for (std::size_t igp=0; igp<ng; ++igp)
         {
-          // Barycentric coordinates for the triangular face
-          auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];
-          auto shp2 = coordgp[0][igp];
-          auto shp3 = coordgp[1][igp];
+          // Compute the coordinates of quadrature point at physical domain
+          auto gp = tk::eval_gp( igp, coordfa, coordgp );
 
-          // transformation of the quadrature point from the 2D reference/master
-          // element to physical domain, to obtain its physical (x,y,z)
-          // coordinates.
-          auto xgp = x1*shp1 + x2*shp2 + x3*shp3;
-          auto ygp = y1*shp1 + y2*shp2 + y3*shp3;
-          auto zgp = z1*shp1 + z2*shp2 + z3*shp3;
-
-          tk::real detT_gp(0);
-
-          // transformation of the physical coordinates of the quadrature point
-          // to reference space for the left element to be able to compute
-          // basis functions on the left element.
-          detT_gp = tk::Jacobian( p1_l, {{ xgp, ygp, zgp }}, p3_l, p4_l );
-          auto xi_l = detT_gp / detT_l;
-          detT_gp = tk::Jacobian( p1_l, p2_l, {{ xgp, ygp, zgp }}, p4_l );
-          auto eta_l = detT_gp / detT_l;
-          detT_gp = tk::Jacobian( p1_l, p2_l, p3_l, {{ xgp, ygp, zgp }} );
-          auto zeta_l = detT_gp / detT_l;
-
-          // basis functions at igp for the left element
-          auto B2l = 2.0 * xi_l + eta_l + zeta_l - 1.0;
-          auto B3l = 3.0 * eta_l + zeta_l - 1.0;
-          auto B4l = 4.0 * zeta_l - 1.0;
+          // Compute the basis function for the left element
+          auto B_l = tk::eval_basis( ndof, coordel_l, detT_l, gp );
 
           auto wt = wgp[igp] * geoFace(f,0,0);
 
@@ -310,9 +270,9 @@ class MultiMat {
             auto mark = c*ndof;
             auto lmark = c*(ndof-1);
             ugp[0].push_back(  U(el, mark,   m_offset)
-                             + limFunc(el, lmark+0, 0) * U(el, mark+1, m_offset) * B2l
-                             + limFunc(el, lmark+1, 0) * U(el, mark+2, m_offset) * B3l
-                             + limFunc(el, lmark+2, 0) * U(el, mark+3, m_offset) * B4l );
+                             + limFunc(el, lmark+0, 0) * U(el, mark+1, m_offset) * B_l[1] 
+                             + limFunc(el, lmark+1, 0) * U(el, mark+2, m_offset) * B_l[2] 
+                             + limFunc(el, lmark+2, 0) * U(el, mark+3, m_offset) * B_l[3]  );
           }
 
           rho = ugp[0][0];
@@ -333,44 +293,24 @@ class MultiMat {
 
             // nodal coordinates of the right element
             std::size_t eR = static_cast< std::size_t >( er );
-            std::array< tk::real, 3 >
-              p1_r{{ cx[ inpoel[4*eR] ],
-                     cy[ inpoel[4*eR] ],
-                     cz[ inpoel[4*eR] ] }},
-              p2_r{{ cx[ inpoel[4*eR+1] ],
-                     cy[ inpoel[4*eR+1] ],
-                     cz[ inpoel[4*eR+1] ] }},
-              p3_r{{ cx[ inpoel[4*eR+2] ],
-                     cy[ inpoel[4*eR+2] ],
-                     cz[ inpoel[4*eR+2] ] }},
-              p4_r{{ cx[ inpoel[4*eR+3] ],
-                     cy[ inpoel[4*eR+3] ],
-                     cz[ inpoel[4*eR+3] ] }};
 
-            auto detT_r = tk::Jacobian( p1_r, p2_r, p3_r, p4_r );
+            // Compute the determinant of Jacobian matrix
+            auto detT_r = tk::eval_det( eR, cx, cy, cz, inpoel, coordel_r );
 
-            // transformation of the physical coordinates of the quadrature
-            // point to reference space for the right element
-            detT_gp = tk::Jacobian( p1_r, {{ xgp, ygp, zgp }}, p3_r, p4_r );
-            auto xi_r = detT_gp / detT_r;
-            detT_gp = tk::Jacobian( p1_r, p2_r, {{ xgp, ygp, zgp }}, p4_r );
-            auto eta_r = detT_gp / detT_r;
-            detT_gp = tk::Jacobian( p1_r, p2_r, p3_r, {{ xgp, ygp, zgp }} );
-            auto zeta_r = detT_gp / detT_r;
+            // Compute the coordinates of quadrature point at physical domain
+            gp = tk::eval_gp( igp, coordfa, coordgp );
 
-            // basis functions at igp for the right element
-            auto B2r = 2.0 * xi_r + eta_r + zeta_r - 1.0;
-            auto B3r = 3.0 * eta_r + zeta_r - 1.0;
-            auto B4r = 4.0 * zeta_r - 1.0;
+            // Compute the basis function for the right element
+            auto B_r = tk::eval_basis( ndof, coordel_r, detT_r, gp );
 
             for (ncomp_t c=0; c<5; ++c)
             {
               auto mark = c*ndof;
               auto lmark = c*(ndof-1);
               ugp[1].push_back(  U(eR, mark,   m_offset)
-                               + limFunc(eR, lmark+0, 0) * U(eR, mark+1, m_offset) * B2r
-                               + limFunc(eR, lmark+1, 0) * U(eR, mark+2, m_offset) * B3r
-                               + limFunc(eR, lmark+2, 0) * U(eR, mark+3, m_offset) * B4r );
+                               + limFunc(eR, lmark+0, 0) * U(eR, mark+1, m_offset) * B_r[1]
+                               + limFunc(eR, lmark+1, 0) * U(eR, mark+2, m_offset) * B_r[2]
+                               + limFunc(eR, lmark+2, 0) * U(eR, mark+3, m_offset) * B_r[3] );
             }
 
             rho = ugp[1][0];
