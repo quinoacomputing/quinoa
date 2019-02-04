@@ -12,6 +12,7 @@
 
 #include <array>
 
+#include "Basis.h"
 #include "Boundary.h"
 #include "Vector.h"
 #include "Quadrature.h"

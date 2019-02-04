@@ -12,6 +12,7 @@
 #ifndef Source_h
 #define Source_h
 
+#include "Basis.h"
 #include "Types.h"
 #include "Fields.h"
 #include "UnsMesh.h"
@@ -35,14 +36,14 @@ srcInt( ncomp_t system,
 
 //! Update the rhs by adding the source term integrals
 void
-tk::update_rhs( ncomp_t ncomp,
-                ncomp_t offset,
-                const std::size_t ndof,
-                const tk::real wt,
-                const std::size_t e,
-                const std::vector< tk::real >& B,
-                const std::vector< tk::real >& s,
-                Fields& R );
+update_rhs( ncomp_t ncomp,
+            ncomp_t offset,
+            const std::size_t ndof,
+            const tk::real wt,
+            const std::size_t e,
+            const std::vector< tk::real >& B,
+            const std::vector< tk::real >& s,
+            Fields& R );
 
 } // tk::
 

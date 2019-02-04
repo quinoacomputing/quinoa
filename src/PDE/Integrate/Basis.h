@@ -37,18 +37,44 @@ eval_det ( const std::size_t e,
            const std::vector< std::size_t >& inpoel,
            std::array< std::array< tk::real, 3>, 4 >& coordel );
 
-//! Compute the coordinates of quadrature points in physical space
-std::array< tk::real, 3>
+//! Compute the coordinates of quadrature points for face integral
+std::array< tk::real, 3 >
 eval_gp ( const std::size_t igp,
           const std::array< std::array< tk::real, 3>, 3 >& coordfa,
           const std::array< std::vector< tk::real >, 2 >& coordgp );
 
-//! Compute the Dubiner basis functions
+//! Compute the coordinates of quadrature points for volume integral
+std::array< tk::real, 3>
+eval_gp ( const std::size_t igp,
+          const std::array< std::array< tk::real, 3>, 4 >& coord,
+          const std::array< std::vector< tk::real >, 3 >& coordgp );
+
+//! Compute the derivatives of basis function for DG(P1)
+void
+eval_dBdx_p1( const std::size_t ndof,
+              const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
+              std::array< std::vector<tk::real>, 3 >& dBdx );
+
+//! Compute the derivatives of basis function for DG(P2)
+void
+eval_dBdx_p2( const std::size_t ndof,
+              const std::size_t igp,
+              const std::array< std::vector< tk::real >, 3 >& coordgp,
+              const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
+              std::array< std::vector<tk::real>, 3 >& dBdx );
+
+//! Compute the Dubiner basis functions for face integrals
 std::vector< tk::real >
 eval_basis( const std::size_t ndof,
             const std::array< std::array< tk::real, 3>, 4 >& coordel,
             const tk::real detT,
             const std::array < tk::real, 3 >& gp );
+
+//! Compute the Dubiner basis functions for volume integrals
+std::vector< tk::real >
+eval_basis( const std::size_t ndof,
+            const std::size_t igp,
+            const std::array< std::vector< tk::real >, 3 >& coordgp );
 
 //! Compute the state variables for the tetrahedron element
 std::vector< tk::real >

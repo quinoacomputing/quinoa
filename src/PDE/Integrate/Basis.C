@@ -83,7 +83,7 @@ tk::eval_gp ( const std::size_t igp,
 std::array< tk::real, 3 >
 tk::eval_gp ( const std::size_t igp,
               const std::array< std::array< tk::real, 3>, 4 >& coord,
-              const std::array< std::vector< tk::real >, 2 >& coordgp )
+              const std::array< std::vector< tk::real >, 3 >& coordgp )
 // *****************************************************************************
 //  Compute the coordinates of quadrature points for volume integral in physical space
 //! \param[in] igp Index of quadrature points
@@ -106,10 +106,12 @@ tk::eval_gp ( const std::size_t igp,
 }
 
 void
-tk::eval_dBdx_p1( const std::array< std::array< real, 3 >, 3 >& jacInv, 
+tk::eval_dBdx_p1( const std::size_t ndof,
+                  const std::array< std::array< tk::real, 3 >, 3 >& jacInv, 
                   std::array< std::vector<tk::real>, 3 >& dBdx )
 // *****************************************************************************
 //  Compute the derivatives of basis function for DG(P1)
+//! \param[in] ndof Number of degree of freedom
 //! \param[in] jacInv Array of the inverse of Jacobian
 //! \param[in,out] dBdx Array of the derivatives of basis function
 // *****************************************************************************
@@ -175,12 +177,14 @@ tk::eval_dBdx_p1( const std::array< std::array< real, 3 >, 3 >& jacInv,
 }
 
 void
-tk::eval_dBdx_p2( const std::size_t igp,
-                  const std::array< std::vector< tk::real >, 2 >& coordgp,
-                  const std::array< std::array< real, 3 >, 3 >& jacInv,
+tk::eval_dBdx_p2( const std::size_t ndof,
+                  const std::size_t igp,
+                  const std::array< std::vector< tk::real >, 3 >& coordgp,
+                  const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
                   std::array< std::vector<tk::real>, 3 >& dBdx )
 // *****************************************************************************
 //  Compute the derivatives of basis function for DG(P2)
+//! \param[in] ndof Number of degree of freedom
 //! \param[in] igp Index of quadrature points
 //! \param[in] coord Array of nodal coordinates for tetrahedron element
 //! \param[in] jacInv Array of the inverse of Jacobian
@@ -300,7 +304,7 @@ tk::eval_basis( const std::size_t ndof,
                 const tk::real detT,
                 const std::array < tk::real, 3 >& gp )
 // *****************************************************************************
-//  Compute the Dubiner basis functions
+//  Compute the Dubiner basis functions for face integrals
 //! \param[in] ndof Number of degree of freedom
 //! \param[in] coordel Array of nodal coordinates for tetrahedron element
 //! \param[in] detT Determination of Jacobian matrix for tetrahedron element
@@ -366,10 +370,10 @@ tk::eval_basis( const std::size_t ndof,
 
 std::vector< tk::real >
 tk::eval_basis( const std::size_t ndof,
-                const std::size_t igp
-                const std::array< std::array< tk::real, 3>, 4 >& coordel )
+                const std::size_t igp,
+                const std::array< std::vector< tk::real >, 3 >& coordgp )
 // *****************************************************************************
-//  Compute the Dubiner basis functions
+//  Compute the Dubiner basis functions for volume integrals
 //! \param[in] ndof Number of degree of freedom
 //! \param[in] igp Index of gauss points
 //! \param[in] coordgp Array of coordinates for quadrature points
