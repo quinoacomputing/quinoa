@@ -377,6 +377,8 @@ Distributor::writeUniPDF( std::uint64_t it,
                           std::size_t idx )
 // *****************************************************************************
 // Write univariate PDF to file
+//! \param[in] it Iteration count to write in output file
+//! \param[in] t Physical time to write in output file
 //! \param[in] p Univariate PDF to output
 //! \param[in] m ORDINARY or CENTRAL PDF we are writing
 //! \param[in] idx Index of the PDF of all ordinary or central PDFs requested
@@ -422,6 +424,8 @@ Distributor::writeBiPDF( std::uint64_t it,
                          std::size_t idx )
 // *****************************************************************************
 // Write bivariate PDF to file
+//! \param[in] it Iteration count to write in output file
+//! \param[in] t Physical time to write in output file
 //! \param[in] p Bivariate PDF to output
 //! \param[in] m ORDINARY or CENTRAL PDF we are writing
 //! \param[in] idx Index of the PDF of all ordinary or central PDFs requested
@@ -486,6 +490,8 @@ Distributor::writeTriPDF( std::uint64_t it,
                           std::size_t idx )
 // *****************************************************************************
 // Write trivariate PDF to file
+//! \param[in] it Iteration count to write in output file
+//! \param[in] t Physical time to write in output file
 //! \param[in] p Trivariate PDF to output
 //! \param[in] m ORDINARY or CENTRAL PDF we are writing
 //! \param[in] idx Index of the PDF of all ordinary or central PDFs requested
@@ -546,6 +552,8 @@ void
 Distributor::outUniPDF( std::uint64_t it, tk::real t )
 // *****************************************************************************
 // Output all requested univariate PDFs to file(s)
+//! \param[in] it Iteration count to write in output file
+//! \param[in] t Physical time to write in output file
 // *****************************************************************************
 {
   std::size_t idx = 0;
@@ -560,6 +568,8 @@ void
 Distributor::outBiPDF( std::uint64_t it, tk::real t )
 // *****************************************************************************
 // Output all requested bivariate PDFs to file(s)
+//! \param[in] it Iteration count to write in output file
+//! \param[in] t Physical time to write in output file
 //! \return Number of PDFs written
 // *****************************************************************************
 {
@@ -576,6 +586,8 @@ void
 Distributor::outTriPDF( std::uint64_t it, tk::real t )
 // *****************************************************************************
 // Output all requested trivariate PDFs to file(s)
+//! \param[in] it Iteration count to write in output file
+//! \param[in] t Physical time to write in output file
 //! \return Number of PDFs written
 // *****************************************************************************
 {
