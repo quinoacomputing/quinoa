@@ -233,9 +233,9 @@ class Transport {
     //!   which provides the vector of field names
     //! \note U is overwritten
     std::vector< std::vector< tk::real > >
-    fieldOutput( const tk::Fields& L,
-                 const std::vector< std::size_t >& inpoel,
-                 const tk::UnsMesh::Coords& coord,
+    fieldOutput( const tk::Fields& ,
+                 const std::vector< std::size_t >& ,
+                 const tk::UnsMesh::Coords& ,
                  tk::real t,
                  const tk::Fields& geoElem,
                  tk::Fields& U ) const
@@ -248,8 +248,13 @@ class Transport {
         out.push_back( U.extract( c*ndof, m_offset ) );
       // evaluate analytic solution at time t
       auto E = U;
-      tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
-                      Problem::solution, E, t );
+      for (std::size_t e=0; e<U.nunk(); ++e)
+      {
+        auto s = Problem::solution( m_system, m_ncomp, geoElem(e,1,0),
+                                    geoElem(e,2,0), geoElem(e,3,0), t );
+        for (ncomp_t c=0; c<m_ncomp; ++c) 
+          E( e, c*ndof, m_offset ) = s[c];
+      }
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( E.extract( c*ndof, m_offset ) );
