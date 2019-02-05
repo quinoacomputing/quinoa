@@ -124,17 +124,22 @@ echo "POSTFIX_RUNNER_ARGS: ${POSTFIX_RUNNER_ARGS}"
 # ctest. In Charm++'s SMP mode NUMPES (used in ./charmrun's +p argument) is NOT
 # the total number of PEs used in hardware by unittest because NUMPES does not
 # contain the communication threads (by default one per compute node). Thus if
-# +ppn is given in POSTFIX_RUNNER_ARGS we parse out the ppn value and add the
+# +ppn is given in POSTFIX_RUNNER_ARGS, we parse out the ppn value and add the
 # number of communication threads to NUMPES so that ctest uses the same number
-# of PEs as unittest. See also cmake/add_regression_test.cmake.
+# of PEs as unittest. For more on SMP, see also cmake/add_regression_test.cmake.
 if [ -n "${POSTFIX_RUNNER_ARGS}" ]; then
   case "$POSTFIX_RUNNER_ARGS" in
     *ppn* ) PPN=`echo $POSTFIX_RUNNER_ARGS | sed -n -e 's/^.*ppn\s//p'`
-            NUMNODES=$(( ${NUMPES} / ${PPN} ))
+            # If the runner is mpirun, -n specifies the number of compute nodes
+            if [[ $RUNNER == *"mpirun"* ]]; then
+              NUMNODES=${NUMPES}
+            else
+              NUMNODES=$(( ${NUMPES} / ${PPN} ))
+            fi
             HARDWARE_NUMPES=$(( ${NUMNODES} * (${PPN}+1) ))
             echo "PPN: ${PPN}"
             echo "NUMNODES: ${NUMNODES}"
-            echo "HARDWARE_NUMPES: ${HARDWARE_NUMPES} (used for ctest)" ;;
+            echo "HARDWARE_NUMPES: ${HARDWARE_NUMPES}" ;;
   esac
 fi
 
