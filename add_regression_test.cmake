@@ -245,12 +245,11 @@ function(ADD_REGRESSION_TEST test_name executable)
   # Construct and echo configuration for test being added
   set(msg "Add regression test ${test_name} for ${executable}")
 
-  # Run all regression tests with quiescence detection (except those that
-  # exercise migration)
-  list(FIND TEST_LABELS migration i)
-  if (${i} EQUAL -1)
+  # Run all regression tests with quiescence detection
+  #list(FIND TEST_LABELS migration i)
+  #if (${i} EQUAL -1) # (except those that exercise migration)
     list(APPEND ARG_ARGS "-q")
-  endif()
+  #endif()
 
   if (ARG_ARGS)
     string(REPLACE ";" " " ARGUMENTS "${ARG_ARGS}")
@@ -347,6 +346,12 @@ function(ADD_REGRESSION_TEST test_name executable)
     # Convert list to space-separated string for passing as arguments to test
     # runner cmake script below
     string(REPLACE ";" " " ARG_BIN_DIFF_PROG_CONF "${ARG_BIN_DIFF_PROG_CONF}")
+  endif()
+
+  if(RUNNER_ARGS)
+    # Convert list to space-separated string for passing as arguments to test
+    # runner cmake script below
+    string(REPLACE ";" " " RUNNER_ARGS "${RUNNER_ARGS}")
   endif()
 
   # Add the test. See test_runner.cmake for documentation of the arguments.
