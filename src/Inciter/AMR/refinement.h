@@ -248,7 +248,7 @@ namespace AMR {
                         //face_refine = true;
                         trace_out << "Accepting face " << face << std::endl;
                         face_refine_id = face;
-                        //break;
+                        break;
                     }
                 }
 
