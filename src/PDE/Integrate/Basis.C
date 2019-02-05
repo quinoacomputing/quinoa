@@ -139,7 +139,7 @@ tk::eval_dBdx_p1( const std::size_t ndof,
   auto db4dxi2 = 0.0;
   auto db4dxi3 = 4.0;
 
-  dBdx[1][0] =  db2dxi1 * jacInv[0][0]
+  dBdx[0][1] =  db2dxi1 * jacInv[0][0]
               + db2dxi2 * jacInv[1][0]
               + db2dxi3 * jacInv[2][0];
 
@@ -147,15 +147,15 @@ tk::eval_dBdx_p1( const std::size_t ndof,
               + db2dxi2 * jacInv[1][1]
               + db2dxi3 * jacInv[2][1];
 
-  dBdx[1][2] =  db2dxi1 * jacInv[0][2]
+  dBdx[2][1] =  db2dxi1 * jacInv[0][2]
               + db2dxi2 * jacInv[1][2]
               + db2dxi3 * jacInv[2][2];
 
-  dBdx[2][0] =  db3dxi1 * jacInv[0][0]
+  dBdx[0][2] =  db3dxi1 * jacInv[0][0]
               + db3dxi2 * jacInv[1][0]
               + db3dxi3 * jacInv[2][0];
 
-  dBdx[2][1] =  db3dxi1 * jacInv[0][1]
+  dBdx[1][2] =  db3dxi1 * jacInv[0][1]
               + db3dxi2 * jacInv[1][1]
               + db3dxi3 * jacInv[2][1];
 
@@ -163,15 +163,15 @@ tk::eval_dBdx_p1( const std::size_t ndof,
               + db3dxi2 * jacInv[1][2]
               + db3dxi3 * jacInv[2][2];
 
-  dBdx[3][0] =  db4dxi1 * jacInv[0][0]
+  dBdx[0][3] =  db4dxi1 * jacInv[0][0]
               + db4dxi2 * jacInv[1][0]
               + db4dxi3 * jacInv[2][0];
 
-  dBdx[3][1] =  db4dxi1 * jacInv[0][1]
+  dBdx[1][3] =  db4dxi1 * jacInv[0][1]
               + db4dxi2 * jacInv[1][1]
               + db4dxi3 * jacInv[2][1];
 
-  dBdx[3][2] =  db4dxi1 * jacInv[0][2]
+  dBdx[2][3] =  db4dxi1 * jacInv[0][2]
               + db4dxi2 * jacInv[1][2]
               + db4dxi3 * jacInv[2][2];
 }
@@ -225,75 +225,75 @@ tk::eval_dBdx_p2( const std::size_t ndof,
   auto db10dxi2 =  0;
   auto db10dxi3 = 30.0 * coordgp[2][igp] - 10.0;
 
-  dBdx[4][0] =  db5dxi1 * jacInv[0][0]
+  dBdx[0][4] =  db5dxi1 * jacInv[0][0]
               + db5dxi2 * jacInv[1][0]
               + db5dxi3 * jacInv[2][0];
 
-  dBdx[4][1] =  db5dxi1 * jacInv[0][1]
+  dBdx[1][4] =  db5dxi1 * jacInv[0][1]
               + db5dxi2 * jacInv[1][1]
               + db5dxi3 * jacInv[2][1];
 
-  dBdx[4][2] =  db5dxi1 * jacInv[0][2]
+  dBdx[2][4] =  db5dxi1 * jacInv[0][2]
               + db5dxi2 * jacInv[1][2]
               + db5dxi3 * jacInv[2][2];
 
-  dBdx[5][0] =  db6dxi1 * jacInv[0][0]
+  dBdx[0][5] =  db6dxi1 * jacInv[0][0]
               + db6dxi2 * jacInv[1][0]
               + db6dxi3 * jacInv[2][0];
 
-  dBdx[5][1] =  db6dxi1 * jacInv[0][1]
+  dBdx[1][5] =  db6dxi1 * jacInv[0][1]
               + db6dxi2 * jacInv[1][1]
               + db6dxi3 * jacInv[2][1];
 
-  dBdx[5][2] =  db6dxi1 * jacInv[0][2]
+  dBdx[2][5] =  db6dxi1 * jacInv[0][2]
               + db6dxi2 * jacInv[1][2]
               + db6dxi3 * jacInv[2][2];
 
-  dBdx[6][0] =  db7dxi1 * jacInv[0][0]
+  dBdx[0][6] =  db7dxi1 * jacInv[0][0]
               + db7dxi2 * jacInv[1][0]
               + db7dxi3 * jacInv[2][0];
 
-  dBdx[6][1] =  db7dxi1 * jacInv[0][1]
+  dBdx[1][6] =  db7dxi1 * jacInv[0][1]
               + db7dxi2 * jacInv[1][1]
               + db7dxi3 * jacInv[2][1];
 
-  dBdx[6][2] =  db7dxi1 * jacInv[0][2]
+  dBdx[2][6] =  db7dxi1 * jacInv[0][2]
               + db7dxi2 * jacInv[1][2]
               + db7dxi3 * jacInv[2][2];
 
-  dBdx[7][0] =  db8dxi1 * jacInv[0][0]
+  dBdx[0][7] =  db8dxi1 * jacInv[0][0]
               + db8dxi2 * jacInv[1][0]
               + db8dxi3 * jacInv[2][0];
 
-  dBdx[7][1] =  db8dxi1 * jacInv[0][1]
+  dBdx[1][7] =  db8dxi1 * jacInv[0][1]
               + db8dxi2 * jacInv[1][1]
               + db8dxi3 * jacInv[2][1];
 
-  dBdx[7][2] =  db8dxi1 * jacInv[0][2]
+  dBdx[2][7] =  db8dxi1 * jacInv[0][2]
               + db8dxi2 * jacInv[1][2]
               + db8dxi3 * jacInv[2][2];
 
-  dBdx[8][0] =  db9dxi1 * jacInv[0][0]
+  dBdx[0][8] =  db9dxi1 * jacInv[0][0]
               + db9dxi2 * jacInv[1][0]
               + db9dxi3 * jacInv[2][0];
 
-  dBdx[8][1] =  db9dxi1 * jacInv[0][1]
+  dBdx[1][8] =  db9dxi1 * jacInv[0][1]
               + db9dxi2 * jacInv[1][1]
               + db9dxi3 * jacInv[2][1];
 
-  dBdx[8][2] =  db9dxi1 * jacInv[0][2]
+  dBdx[2][8] =  db9dxi1 * jacInv[0][2]
               + db9dxi2 * jacInv[1][2]
               + db9dxi3 * jacInv[2][2];
 
-  dBdx[9][0] =  db10dxi1 * jacInv[0][0]
+  dBdx[0][9] =  db10dxi1 * jacInv[0][0]
               + db10dxi2 * jacInv[1][0]
               + db10dxi3 * jacInv[2][0];
 
-  dBdx[9][1] =  db10dxi1 * jacInv[0][1]
+  dBdx[1][9] =  db10dxi1 * jacInv[0][1]
               + db10dxi2 * jacInv[1][1]
               + db10dxi3 * jacInv[2][1];
 
-  dBdx[9][2] =  db10dxi1 * jacInv[0][2]
+  dBdx[2][9] =  db10dxi1 * jacInv[0][2]
               + db10dxi2 * jacInv[1][2]
               + db10dxi3 * jacInv[2][2];
 }
