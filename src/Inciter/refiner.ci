@@ -37,7 +37,8 @@ module refiner {
                     const SchemeBase::Proxy& scheme,
                     const std::map< int, std::vector< std::size_t > >& bnode );
       entry [reductiontarget] void addBndEdges( CkReductionMsg* msg );
-      entry void addRefBndEdges( int fromch, const AMR::EdgeData& en );
+      //entry void addRefBndEdges( int fromch, const AMR::EdgeData& en );
+      entry void addRefBndEdges( int fromch, const AMR::EdgeData& en, const std::unordered_set<size_t> intermediates );
       entry void comExtra();
       entry void eval();
       entry void sendProxy();

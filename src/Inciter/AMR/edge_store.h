@@ -38,6 +38,7 @@ namespace AMR {
              */
             void split(size_t A, size_t B, size_t AB, Edge_Lock_Case lc)
             {
+                trace_out << "Splitting with lock case " << lc << std::endl;
                 generate(A, AB, lc);
                 generate(B, AB, lc);
 

@@ -76,8 +76,10 @@ class Refiner : public CBase_Refiner {
     //! Receive boundary edges from all PEs (including this one)
     void addBndEdges( CkReductionMsg* msg );
 
-    //! Receive newly added mesh node IDs on our chare boundary
-    void addRefBndEdges( int fromch, const AMR::EdgeData& ed );
+    //! Receive newly added mesh edges and locks on our chare boundary
+    void addRefBndEdges( int fromch,
+                         const AMR::EdgeData& ed,
+                         const std::unordered_set<size_t>& intermediates );
 
     //! Correct refinement to arrive at conforming mesh across chare boundaries
     void correctref();
@@ -125,6 +127,7 @@ class Refiner : public CBase_Refiner {
       p | m_ch;
       p | m_edgedata;
       p | m_edgedataCh;
+      p | m_intermediates;
       p | m_bndEdges;
       p | m_u;
       p | m_msum;
@@ -210,6 +213,8 @@ class Refiner : public CBase_Refiner {
     //! \brief Map associating global IDs, lock case, and coordinates of a node
     //!   added to an edge associated to another chare the edge is shared with
     std::unordered_map< int, AMR::EdgeData > m_edgedataCh;
+    //! Intermediate nodes
+    std::unordered_set< size_t> m_intermediates;
     //! Boundary edges associated to chares we share these edges with
     std::unordered_map< int, EdgeSet > m_bndEdges;
     //! Solution vector
