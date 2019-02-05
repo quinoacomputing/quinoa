@@ -131,6 +131,7 @@ class Refiner : public CBase_Refiner {
       p | m_bndEdges;
       p | m_u;
       p | m_msum;
+      p | m_oldTetIdMap;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -224,6 +225,8 @@ class Refiner : public CBase_Refiner {
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
     //!   points
     std::unordered_map< int, std::vector< std::size_t > > m_msum;
+    //! ...
+    std::vector< std::size_t > m_oldTetIdMap;
 
     //! Generate flat coordinate data from coordinate map
     tk::UnsMesh::Coords flatcoord( const tk::UnsMesh::CoordMap& coordmap );
