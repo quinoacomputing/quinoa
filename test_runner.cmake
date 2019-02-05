@@ -73,8 +73,16 @@ if (PPN)
 endif()
 
 # Configure test run command
-set(test_command ${RUNNER} ${RUNNER_NCPUS_ARG} ${NUMPES} ${RUNNER_ARGS}
-                 ${TEST_EXECUTABLE} ${TEST_EXECUTABLE_ARGS} ${PPN})
+
+# In Charm++'s SMP mode, if the runner is mpirun, -n (as RUNNER_NCPUS_ARG)
+# specifies the number of compute nodes.
+if (CHARM_SMP AND RUNNER MATCHES "mpirun")
+  set(test_command ${RUNNER} ${RUNNER_NCPUS_ARG} ${NUMNODES} ${RUNNER_ARGS}
+                   ${TEST_EXECUTABLE} ${TEST_EXECUTABLE_ARGS} ${PPN})
+else()
+  set(test_command ${RUNNER} ${RUNNER_NCPUS_ARG} ${NUMPES} ${RUNNER_ARGS}
+                   ${TEST_EXECUTABLE} ${TEST_EXECUTABLE_ARGS} ${PPN})
+endif()
 
 string(REPLACE ";" " " test_command_string "${test_command}")
 
