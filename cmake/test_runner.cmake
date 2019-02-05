@@ -24,12 +24,14 @@ string(REPLACE " " ";" POSTPROCESS_PROG_ARGS "${POSTPROCESS_PROG_ARGS}")
 string(REPLACE " " ";" TEST_LABELS "${TEST_LABELS}")
 # Covert string to list of test executable arguments
 string(REPLACE " " ";" TEST_EXECUTABLE_ARGS "${TEST_EXECUTABLE_ARGS}")
+# Covert string to list of runner arguments
+string(REPLACE " " ";" RUNNER_ARGS "${RUNNER_ARGS}")
 
 # Print test runner configuration
 message("Test runner configuration:")
 message("  TEST_NAME (name of test)                                    : ${TEST_NAME}")
 message("  WORKDIR (test run directory)                                : ${WORKDIR}")
-message("  RUNNER_REQUIRED (true if a ser/par job runner is required)  : ${RUNNER_REQUIRED}")
+message("  RUNNER_REQUIRED (true if an executable runner is required)  : ${RUNNER_REQUIRED}")
 message("  RUNNER (used to run parallel and serial jobs inside cmake)  : ${RUNNER}")
 message("  RUNNER_NCPUS_ARG (used to specify the number of CPUs)       : ${RUNNER_NCPUS_ARG}")
 message("  CHARM_SMP (true/false indicating Charm++ SMP mode)          : ${CHARM_SMP}")
