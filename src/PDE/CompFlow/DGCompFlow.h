@@ -3,8 +3,10 @@
   \file      src/PDE/CompFlow/DGCompFlow.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Compressible single-material flow using discontinuous Galerkin
-  \details   This file implements the physics operators governing compressible
-    single-material flow using discontinuous Galerkin discretization.
+     finite elements
+  \details   This file implements calls to the physics operators governing
+    compressible single-material flow using discontinuous Galerkin
+    discretizations.
 */
 // *****************************************************************************
 #ifndef DGCompFlow_h
@@ -40,7 +42,7 @@ namespace dg {
 //! \details The template arguments specify policies and are used to configure
 //!   the behavior of the class. The policies are:
 //!   - Physics - physics configuration, see PDE/CompFlow/Physics.h
-//!   - Problem - problem configuration, see PDE/CompFlow/Problems.h
+//!   - Problem - problem configuration, see PDE/CompFlow/Problem.h
 //! \note The default physics is Euler, set in inciter::deck::check_compflow()
 template< class Physics, class Problem >
 class CompFlow {
@@ -48,6 +50,7 @@ class CompFlow {
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
     using bcconf_t = kw::sideset::info::expect::type;
+    using eq = tag::compflow;
 
     //! Extract BC configuration ignoring if BC not specified
     //! \param[in] c Equation system index (among multiple systems configured)
@@ -61,7 +64,7 @@ class CompFlow {
     std::vector< bcconf_t >
     config( ncomp_t c ) {
       std::vector< bcconf_t > bc;
-      const auto& v = g_inputdeck.get< tag::param, tag::compflow, bctag >();
+      const auto& v = g_inputdeck.get< tag::param, eq, bctag >();
       if (v.size() > c) bc = v[c];
       return bc;
     }
@@ -71,8 +74,8 @@ class CompFlow {
     //! \param[in] c Equation system index (among multiple systems configured)
     explicit CompFlow( ncomp_t c ) :
       m_system( c ),
-      m_ncomp( 5 ),
-      m_offset( g_inputdeck.get< tag::component >().offset< tag::compflow >(c) ),
+      m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
+      m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_riemann( tk::cref_find( RiemannSolvers(),
                    g_inputdeck.get< tag::discr, tag::flux >() ) ),
       m_bcdir( config< tag::bcdir >( c ) ),
@@ -141,8 +144,11 @@ class CompFlow {
       R.fill(0.0);
 
       // configure Riemann flux function
-      using namespace std::placeholders;
-      auto rieflxfn = std::bind( &RiemannSolver::flux, m_riemann, _1, _2, _3 );
+      auto rieflxfn =
+       [this]( const std::array< tk::real, 3 >& fn,
+               const std::array< std::vector< tk::real >, 2 >& u,
+               const std::vector< std::array< tk::real, 3 > >& v )
+             { return m_riemann.flux( fn, u, v ); };
       // configure a no-op lambda for prescribed velocity
       auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real ){
         return std::vector< std::array< tk::real, 3 > >( this->m_ncomp ); };
@@ -153,38 +159,57 @@ class CompFlow {
         { m_bcsym, Symmetry },
         { m_bcextrapolate, Extrapolate } }};
 
-      if (ndof == 1) {  // DG(P0)
+      switch(ndof)
+      {
+        case 1:       // DG(P0)
+          // compute internal surface flux integrals
+          tk::surfIntP0( m_system, m_ncomp, m_offset, fd, geoFace, rieflxfn,
+                         velfn, U, R );
+          // compute source term intehrals
+          tk::srcIntP0( m_system, m_ncomp, m_offset,
+                        t, geoElem, Problem::src, R );
+          // compute boundary surface flux integrals
+          for (const auto& b : bctypes)
+            tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, fd,
+                              geoFace, t, rieflxfn, velfn, b.second, U, R );
+          break;
 
-        // compute internal surface flux integrals
-        tk::surfIntP0( m_system, m_ncomp, m_offset, fd, geoFace, rieflxfn,
-                       velfn, U, R );
-        // compute source term intehrals
-        tk::srcIntP0( m_system, m_ncomp, m_offset,
-                      t, geoElem, Problem::src, R );
-        // compute boundary surface flux integrals
-        for (const auto& b : bctypes)
-          tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, fd,
-            geoFace, t, rieflxfn, velfn, b.second, U, R );
+        case 4:       // DG(P1)
+          // compute internal surface flux integrals
+          tk::surfIntP1( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
+                         rieflxfn, velfn, U, limFunc, R );
+          // compute source term intehrals
+          tk::srcIntP1( m_system, m_ncomp, m_offset,
+                        t, inpoel, coord, geoElem, Problem::src, R );
+          // compute volume integrals
+          tk::volIntP1( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
+                        velfn, U, limFunc, R );
+          // compute boundary surface flux integrals
+          for (const auto& b : bctypes)
+            tk::sidesetIntP1( m_system, m_ncomp, m_offset, b.first, fd, geoFace, inpoel, 
+                              coord, t, rieflxfn, velfn, b.second, U, limFunc, R );
+          break;
 
-      } else if (ndof == 4) {  // DG(P1)
+        case 10:      // DG(P2)
+          // compute internal surface flux integrals
+          tk::surfIntP2( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
+                         rieflxfn, velfn, U, R );
+          // compute source term intehrals
+          tk::srcIntP2( m_system, m_ncomp, m_offset, 
+                        t, inpoel, coord, geoElem, Problem::src, R );
+          // compute volume integrals
+          tk::volIntP2( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
+                        velfn, U, R );
+          // compute boundary surface flux integrals
+          for (const auto& b : bctypes)
+            tk::sidesetIntP2( m_system, m_ncomp, m_offset, b.first, fd, geoFace, inpoel,
+                              coord, t, rieflxfn, velfn, b.second, U, R );
+          break;
 
-        // compute internal surface flux integrals
-        tk::surfIntP1( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                       rieflxfn, velfn, U, limFunc, R );
-        // compute source term intehrals
-        tk::srcIntP1( m_system, m_ncomp, m_offset,
-                      t, inpoel, coord, geoElem, Problem::src, R );
-        // compute volume integrals
-        tk::volIntP1( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
-                      velfn, U, limFunc, R );
-        // compute boundary surface flux integrals
-        for (const auto& b : bctypes)
-          tk::sidesetIntP1( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
-            inpoel, coord, t, rieflxfn, velfn, b.second, U, limFunc, R );
-
-      } else
-        Throw( "dg::Compflow::rhs() not defined for NDOF=" +
+        default:
+          Throw( "dg::Compflow::rhs() not defined for NDOF=" +
                std::to_string(ndof) );
+      }
     }
 
     //! Compute the minimum time step size
@@ -205,8 +230,7 @@ class CompFlow {
                  const tk::Fields& U ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      const tk::real g =
-        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
+      const tk::real g = g_inputdeck.get< tag::param, eq, tag::gamma >()[0];
 
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();
@@ -434,7 +458,7 @@ class CompFlow {
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     std::vector< std::string > fieldNames() const
-    { return Problem::fieldNames(); }
+    { return Problem::fieldNames( m_ncomp ); }
 
     //! Return field output going to file
     //! \param[in] t Physical time
@@ -456,7 +480,8 @@ class CompFlow {
       coord[1] = geoElem.extract(2,0);
       coord[2] = geoElem.extract(3,0);
 
-      return Problem::fieldOutput( 0, m_offset, t, 0.0, v, coord, U );
+      return Problem::fieldOutput( m_system, m_ncomp, m_offset, t, 0.0, v,
+                                   coord, U );
     }
 
     //! Return nodal field output going to file
@@ -468,8 +493,7 @@ class CompFlow {
                    const tk::Fields& U ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      const tk::real g =
-        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
+      const tk::real g = g_inputdeck.get< tag::param, eq, tag::gamma >()[0];
 
       const auto& cx = coord[0];
       const auto& cy = coord[1];
@@ -556,7 +580,7 @@ class CompFlow {
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
     std::vector< std::string > names() const
-    { return Problem::names(); }
+    { return Problem::names( m_ncomp ); }
 
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate at which to evaluate the analytic solution
@@ -603,8 +627,7 @@ class CompFlow {
       Assert( ugp.size() == ncomp, "Size mismatch" );
       IGNORE(ncomp);
 
-      const auto g =
-        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[ system ];
+      const auto g = g_inputdeck.get< tag::param, eq, tag::gamma >()[ system ];
 
       auto u = ugp[1] / ugp[0];
       auto v = ugp[2] / ugp[0];

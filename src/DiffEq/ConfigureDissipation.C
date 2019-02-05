@@ -25,6 +25,8 @@
 #include "Dissipation.h"
 #include "DissipationCoeffPolicy.h"
 
+#include "CoupledEq.h"
+
 namespace walker {
 
 void
@@ -51,6 +53,8 @@ infoDissipation( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
 //! \return vector of string pairs describing the SDE configuration
 // *****************************************************************************
 {
+  using eq = tag::dissipation;
+
   auto c = ++cnt[ ctr::DiffEqType::DISSIPATION ];       // count eqs
   --c;  // used to index vectors starting with 0
 
@@ -58,35 +62,32 @@ infoDissipation( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
 
   nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::DISSIPATION ), "" );
 
-  nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::dissipation >(c) ) );
-  nfo.emplace_back( "number of components", std::to_string(
-    g_inputdeck.get< tag::component >().get< tag::dissipation >()[c] ) );
-
-  // Required coupled
-  nfo.emplace_back( "coupled velocity depvar", std::string( 1,
-    g_inputdeck.get< tag::param, tag::dissipation, tag::velocity >()[c] ) );
-  nfo.emplace_back( "coupled velocity depvar offset", std::to_string(
-    g_inputdeck.get< tag::param, tag::dissipation, tag::velocity_id >()[c] ) );
-
   nfo.emplace_back( "kind", "stochastic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
-    g_inputdeck.get< tag::param, tag::dissipation, tag::depvar >()[c] ) );
+    g_inputdeck.get< tag::param, eq, tag::depvar >()[c] ) );
+  nfo.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< eq >(c) ) );
+  nfo.emplace_back( "number of components", std::to_string(
+    g_inputdeck.get< tag::component, eq >()[c] ) );
+
+  coupledInfo< eq, tag::velocity, tag::velocity_id >
+             ( c, "velocity", nfo );
+
   nfo.emplace_back( "initialization policy", ctr::InitPolicy().name(
-    g_inputdeck.get< tag::param, tag::dissipation, tag::initpolicy >()[c] ) );
+    g_inputdeck.get< tag::param, eq, tag::initpolicy >()[c] ) );
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
-    g_inputdeck.get< tag::param, tag::dissipation, tag::coeffpolicy >()[c] ) );
+    g_inputdeck.get< tag::param, eq, tag::coeffpolicy >()[c] ) );
 
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
-    g_inputdeck.get< tag::param, tag::dissipation, tag::rng >()[c] ) );
+    g_inputdeck.get< tag::param, eq, tag::rng >()[c] ) );
   nfo.emplace_back( "coeff C3", std::to_string(
-    g_inputdeck.get< tag::param, tag::dissipation, tag::c3 >().at(c) ) );
+    g_inputdeck.get< tag::param, eq, tag::c3 >().at(c) ) );
   nfo.emplace_back( "coeff C4", std::to_string(
-    g_inputdeck.get< tag::param, tag::dissipation, tag::c4 >().at(c) ) );
+    g_inputdeck.get< tag::param, eq, tag::c4 >().at(c) ) );
   nfo.emplace_back( "coeff COM1", std::to_string(
-    g_inputdeck.get< tag::param, tag::dissipation, tag::com1 >().at(c) ) );
+    g_inputdeck.get< tag::param, eq, tag::com1 >().at(c) ) );
   nfo.emplace_back( "coeff COM2", std::to_string(
-    g_inputdeck.get< tag::param, tag::dissipation, tag::com2 >().at(c) ) );
+    g_inputdeck.get< tag::param, eq, tag::com2 >().at(c) ) );
 
   return nfo;
 }

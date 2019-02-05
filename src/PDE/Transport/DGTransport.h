@@ -49,6 +49,7 @@ class Transport {
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
     using bcconf_t = kw::sideset::info::expect::type;
+    using eq = tag::transport;
 
     //! Extract BC configuration ignoring if BC not specified
     //! \param[in] c Equation system index (among multiple systems configured)
@@ -62,7 +63,7 @@ class Transport {
     std::vector< bcconf_t >
     config( ncomp_t c ) {
       std::vector< bcconf_t > bc;
-      const auto& v = g_inputdeck.get< tag::param, tag::transport, bctag >();
+      const auto& v = g_inputdeck.get< tag::param, eq, bctag >();
       if (v.size() > c) bc = v[c];
       return bc;
     }
@@ -73,9 +74,9 @@ class Transport {
     explicit Transport( ncomp_t c ) :
       m_system( c ),
       m_ncomp(
-        g_inputdeck.get< tag::component >().get< tag::transport >().at(c) ),
+        g_inputdeck.get< tag::component >().get< eq >().at(c) ),
       m_offset(
-        g_inputdeck.get< tag::component >().offset< tag::transport >(c) ),
+        g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_bcextrapolate( config< tag::bcextrapolate >( c ) ),
       m_bcinlet( config< tag::bcinlet >( c ) ),
       m_bcoutlet( config< tag::bcoutlet >( c ) ),
@@ -149,33 +150,50 @@ class Transport {
         { m_bcoutlet, Outlet },
         { m_bcdir, Dirichlet } }};
 
-      if (ndof == 1) {  // DG(P0)
+      switch(ndof)
+      {
+        case 1:           //DG(P0)
+          // compute internal surface flux integrals
+          tk::surfIntP0( m_system, m_ncomp, m_offset, fd, geoFace, Upwind::flux,
+                         Problem::prescribedVelocity, U, R );
+          // compute boundary surface flux integrals
+          for (const auto& b : bctypes)
+            tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
+              t, Upwind::flux, Problem::prescribedVelocity, b.second, U, R );
+          break;
+ 
+        case 4:          //DG(P1)
+          // compute internal surface flux integrals
+          tk::surfIntP1( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
+                       Upwind::flux, Problem::prescribedVelocity, U, limFunc, R );
+          // compute volume integrals
+          tk::volIntP1( m_system, m_ncomp, m_offset, inpoel, coord, geoElem,
+                        flux, Problem::prescribedVelocity, U, limFunc, R );
+          // compute boundary surface flux integrals
+          for (const auto& b : bctypes)
+            tk::sidesetIntP1( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
+              inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
+              b.second, U, limFunc, R );
+          break;
 
-        // compute internal surface flux integrals
-        tk::surfIntP0( m_system, m_ncomp, m_offset, fd, geoFace, Upwind::flux,
-                       Problem::prescribedVelocity, U, R );
-        // compute boundary surface flux integrals
-        for (const auto& b : bctypes)
-          tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
-            t, Upwind::flux, Problem::prescribedVelocity, b.second, U, R );
+        case 10:        //DG(P2)
+          // compute internal surface flux integrals
+          tk::surfIntP2( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
+                       Upwind::flux, Problem::prescribedVelocity, U, R );
+          // compute volume integrals
+          tk::volIntP2( m_system, m_ncomp, m_offset, inpoel, coord, geoElem,
+                        flux, Problem::prescribedVelocity, U, R );
+          // compute boundary surface flux integrals
+          for (const auto& b : bctypes)
+            tk::sidesetIntP2( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
+              inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
+              b.second, U, R );
+          break;
 
-      } else if (ndof == 4) {  // DG(P1)
-
-        // compute internal surface flux integrals
-        tk::surfIntP1( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                     Upwind::flux, Problem::prescribedVelocity, U, limFunc, R );
-        // compute volume integrals
-        tk::volIntP1( m_system, m_ncomp, m_offset, inpoel, coord, geoElem,
-                      flux, Problem::prescribedVelocity, U, limFunc, R );
-        // compute boundary surface flux integrals
-        for (const auto& b : bctypes)
-          tk::sidesetIntP1( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
-            inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
-            b.second, U, limFunc, R );
-
-      } else
-        Throw( "dg::Transport::rhs() not defined for NDOF=" +
-               std::to_string(ndof) );
+        default:
+          Throw( "dg::Transport::rhs() not defined for NDOF=" +
+                 std::to_string(ndof) );
+      }
     }
 
     //! Compute the minimum time step size
@@ -208,7 +226,7 @@ class Transport {
     std::vector< std::string > fieldNames() const {
       std::vector< std::string > n;
       const auto& depvar =
-      g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_system);
+      g_inputdeck.get< tag::param, eq, tag::depvar >().at(m_system);
       // will output numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_numerical" );
@@ -281,7 +299,7 @@ class Transport {
     std::vector< std::string > names() const {
       std::vector< std::string > n;
       const auto& depvar =
-      g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_system);
+      g_inputdeck.get< tag::param, eq, tag::depvar >().at(m_system);
       // construct the name of the numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) );

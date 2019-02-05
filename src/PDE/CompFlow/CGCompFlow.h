@@ -264,10 +264,10 @@ class CompFlow {
 
         // add (optional) source to all equations
         std::array< std::vector< tk::real >, 4 > s{{
-          Problem::src( m_system, x[N[0]], y[N[0]], z[N[0]], t ),
-          Problem::src( m_system, x[N[1]], y[N[1]], z[N[1]], t ),
-          Problem::src( m_system, x[N[2]], y[N[2]], z[N[2]], t ),
-          Problem::src( m_system, x[N[3]], y[N[3]], z[N[3]], t ) }};
+          Problem::src( m_system, m_ncomp, x[N[0]], y[N[0]], z[N[0]], t ),
+          Problem::src( m_system, m_ncomp, x[N[1]], y[N[1]], z[N[1]], t ),
+          Problem::src( m_system, m_ncomp, x[N[2]], y[N[2]], z[N[2]], t ),
+          Problem::src( m_system, m_ncomp, x[N[3]], y[N[3]], z[N[3]], t ) }};
         for (std::size_t c=0; c<5; ++c)
           for (std::size_t a=0; a<4; ++a)
             Ue.var(ue[c],e) += d/4.0 * s[a][c];
@@ -330,7 +330,7 @@ class CompFlow {
         auto xc = (x[N[0]] + x[N[1]] + x[N[2]] + x[N[3]]) / 4.0;
         auto yc = (y[N[0]] + y[N[1]] + y[N[2]] + y[N[3]]) / 4.0;
         auto zc = (z[N[0]] + z[N[1]] + z[N[2]] + z[N[3]]) / 4.0;
-        auto s = Problem::src( 0, xc, yc, zc, t+deltat/2 );
+        auto s = Problem::src( m_system, m_ncomp, xc, yc, zc, t+deltat/2 );
         for (std::size_t c=0; c<5; ++c)
           for (std::size_t a=0; a<4; ++a)
             R.var(r[c],N[a]) += d/4.0 * s[c];
@@ -471,7 +471,7 @@ class CompFlow {
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     std::vector< std::string > fieldNames() const
-    { return Problem::fieldNames(); }
+    { return Problem::fieldNames( m_ncomp ); }
 
     //! Return field output going to file
     //! \param[in] t Physical time
@@ -486,12 +486,15 @@ class CompFlow {
                  const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< tk::real >& v,
                  tk::Fields& U ) const
-    { return Problem::fieldOutput( m_system, m_offset, t, V, v, coord, U ); }
+    {
+      return
+        Problem::fieldOutput( m_system, m_ncomp, m_offset, t, V, v, coord, U );
+    }
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
     std::vector< std::string > names() const
-    { return Problem::names(); }
+    { return Problem::names( m_ncomp ); }
 
   private:
     const ncomp_t m_system;             //!< Equation system index

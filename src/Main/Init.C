@@ -133,7 +133,7 @@ void echoRunEnv( const Print& print, int argc, char** argv,
   print.item( "Work directory", workdir() );
   print.item( "Executable (rel. to work dir)", argv[0] );
 
-  print.item("Command line arguments" );
+  print.item( "Command line arguments" );
   print << '\'';
   if (argc>1) {
     for (auto i=1; i<argc-1; ++i) {

@@ -710,8 +710,8 @@ class Print {
     mutable format m_section_title_fmt = format("\n%s%c %s:\n");
     mutable format m_section_title_value_fmt = format("\n%s%c %s: %s\n");
     mutable format m_subsection_title_fmt = format("%s%c %s >\n");
-    mutable format m_list_item_fmt = format("%s%-30s\n");
-    mutable format m_note_fmt = format("%s%-30s\n");
+    mutable format m_list_item_fmt = format("%s%-40s\n");
+    mutable format m_note_fmt = format("%s%-40s\n");
     mutable format m_diag_fmt = format("Quinoa> %s\n");
     mutable format m_diag_start_fmt = format("Quinoa> %s ");
     mutable format m_charestate_frame_fmt = format(">>> %s\n");
@@ -727,8 +727,8 @@ class Print {
               format("\n%s control file keyword '%s'\n\n");
     mutable format m_helpkw_fmt = format("%s%s\n\n%s%s\n\n");
     mutable format m_description_fmt = format("%s\n\n");
-    mutable format m_item_name_fmt = format("%s%-30s : ");
-    mutable format m_item_name_value_fmt = format("%s%-30s : %s\n");
+    mutable format m_item_name_fmt = format("%s%-40s : ");
+    mutable format m_item_name_value_fmt = format("%s%-40s : %s\n");
     mutable format m_item_name_watch_fmt = format("%s%-75s : %d:%d:%d\n");
     mutable format m_item_name_perf_fmt = format("%s%-75s : %s\n");
     mutable format m_item_widename_value_fmt = format("%s%-75s : %s\n");

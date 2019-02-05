@@ -89,9 +89,12 @@ Transporter::Transporter() :
   // Re-create partial differential equations stack for output
   PDEStack stack;
 
-  // Print out information on factory
-  m_print.eqlist( "Registered partial differential equations",
-                  stack.factory(), stack.ntypes() );
+  // Print out information on PDE factories
+  m_print.eqlegend();
+  m_print.eqlist( "Registered PDEs using continuous Galerkin (CG) methods",
+                  stack.cgfactory(), stack.cgntypes() );
+  m_print.eqlist( "Registered PDEs using discontinuous Galerkin (DG) methods",
+                  stack.dgfactory(), stack.dgntypes() );
   m_print.endpart();
 
   // Print out information on problem
@@ -121,7 +124,8 @@ Transporter::Transporter() :
     if (fct)
       m_print.item( "FCT mass diffusion coeff",
                     g_inputdeck.get< tag::discr, tag::ctau >() );
-  } else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1) {
+  } else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1 ||
+             scheme == ctr::SchemeType::DGP2) {
     m_print.Item< ctr::Flux, tag::discr, tag::flux >();
   }
   m_print.item( "PE-locality mesh reordering",
@@ -527,7 +531,7 @@ Transporter::diagHeader()
   if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG ||
       scheme == ctr::SchemeType::ALECG)
     for (const auto& eq : g_cgpde) varnames( eq, var );
-  else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1)
+  else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1 || scheme == ctr::SchemeType::DGP2)
     for (const auto& eq : g_dgpde) varnames( eq, var );
   else Throw( "Diagnostics header not handled for discretization scheme" );
 
@@ -662,17 +666,20 @@ Transporter::pdfstat( CkReductionMsg* msg )
   // Create new PDF file (overwrite if exists)
   tk::PDFWriter pdfe( "mesh_edge_pdf.txt" );
   // Output edgelength PDF
-  pdfe.writeTxt( pdf[0], tk::ctr::PDFInfo{ {"PDF"}, {}, {"edgelength"} } );
+  pdfe.writeTxt( pdf[0],
+                 tk::ctr::PDFInfo{ {"PDF"}, {}, {"edgelength"}, 0, 0.0 } );
 
   // Create new PDF file (overwrite if exists)
   tk::PDFWriter pdfv( "mesh_vol_pdf.txt" );
   // Output cell volume cubic root PDF
-  pdfv.writeTxt( pdf[1], tk::ctr::PDFInfo{ {"PDF"}, {}, {"V^{1/3}"} } );
+  pdfv.writeTxt( pdf[1],
+                 tk::ctr::PDFInfo{ {"PDF"}, {}, {"V^{1/3}"}, 0, 0.0 } );
 
   // Create new PDF file (overwrite if exists)
   tk::PDFWriter pdfn( "mesh_ntet_pdf.txt" );
   // Output number of cells PDF
-  pdfn.writeTxt( pdf[2], tk::ctr::PDFInfo{ {"PDF"}, {}, {"ntets"} } );
+  pdfn.writeTxt( pdf[2],
+                 tk::ctr::PDFInfo{ {"PDF"}, {}, {"ntets"}, 0, 0.0 } );
 
   pdfstat_complete();
 }

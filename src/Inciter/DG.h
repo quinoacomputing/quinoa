@@ -240,7 +240,7 @@ class DG : public CBase_DG {
     std::unordered_map< int, std::unordered_set< std::size_t > > m_msumset;
     //! Internal + physical boundary faces (inverse of inpofa)
     tk::UnsMesh::FaceSet m_ipface;
-    //! Face * tet IDs associated to global node IDs of the face for each chare
+    //! Face & tet IDs associated to global node IDs of the face for each chare
     //! \details This maps stores not only the unique faces associated to
     //!   fellow chares, but also a newly assigned local face ID and adjacent
     //!   local tet ID.
@@ -280,6 +280,14 @@ class DG : public CBase_DG {
 
     //! Perform leak test on chare-boundary faces
     bool leakyAdjacency();
+
+    //! Check if esuf of chare-boundary faces matches
+    bool faceMatch();
+
+    //! Check if entries in inpoel, inpofa and node-triplet are consistent
+    std::size_t
+    nodetripletMatch( const std::array< std::size_t, 2 >& id,
+                      const tk::UnsMesh::Face& t );
 
     //! Find any chare for face (given by 3 global node IDs)
     int findchare( const tk::UnsMesh::Face& t );

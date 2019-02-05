@@ -35,8 +35,9 @@ namespace deck {
 
   //! \brief Number of registered equations
   //! \details Counts the number of parsed equation blocks during parsing.
-  static tk::tuple::tagged_tuple< tag::transport, std::size_t,
-                                  tag::compflow,  std::size_t > neq;
+  static tk::tuple::tagged_tuple< tag::transport,   std::size_t,
+                                  tag::compflow,    std::size_t,
+                                  tag::multimat,    std::size_t > neq;
 
 } // ::deck
 } // ::inciter
@@ -77,18 +78,22 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       using inciter::deck::neq;
+
       // Error out if no dependent variable has been selected
       auto& depvar = stack.template get< tag::param, eq, tag::depvar >();
       if (depvar.empty() || depvar.size() != neq.get< eq >())
         Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
+
       // If no number of components has been selected, default to 1
       auto& ncomp = stack.template get< tag::component, eq >();
       if (ncomp.empty() || ncomp.size() != neq.get< eq >())
         ncomp.push_back( 1 );
+
       // If physics type is not given, default to 'advection'
       auto& physics = stack.template get< tag::param, eq, tag::physics >();
       if (physics.empty() || physics.size() != neq.get< eq >())
         physics.push_back( inciter::ctr::PhysicsType::ADVECTION );
+
       // If physics type is advection-diffusion, check for correct number of
       // advection velocity, shear, and diffusion coefficients
       if (physics.back() == inciter::ctr::PhysicsType::ADVDIFF) {
@@ -127,16 +132,20 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       using inciter::deck::neq;
+
       // Error out if no dependent variable has been selected
       auto& depvar = stack.template get< tag::param, eq, tag::depvar >();
       if (depvar.empty() || depvar.size() != neq.get< eq >())
         Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
-      // Set number of components to 5 (mass, 3 x mom, energy)
-      stack.template get< tag::component, eq >().push_back( 5 );
+
       // If physics type is not given, default to 'euler'
       auto& physics = stack.template get< tag::param, eq, tag::physics >();
       if (physics.empty() || physics.size() != neq.get< eq >())
         physics.push_back( inciter::ctr::PhysicsType::EULER );
+
+      // Set number of components to 5 (mass, 3 x mom, energy)
+      stack.template get< tag::component, eq >().push_back( 5 );
+
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< tag::param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
@@ -184,7 +193,70 @@ namespace grm {
              r0.size() != problem.size() )
           Message< Stack, ERROR, MsgKey::RT_UNFINISHED >( stack, in);
       }
+
       // Error check Dirichlet boundary condition block for all compflow
+      // configurations
+      for (const auto& s : stack.template get< tag::param, eq, tag::bcdir >())
+        if (s.empty())
+          Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
+    }
+  };
+
+  //! Rule used to trigger action
+  template< class eq > struct check_multimat : pegtl::success {};
+  //! \brief Set defaults and do error checking on the multimaterial
+  //!    compressible flow equation block
+  //! \details This is error checking that only the multimaterial compressible
+  //!   flow equation block must satisfy. Besides error checking we also set
+  //!   defaults here as this block is called when parsing of a
+  //!   multimat...end block has just finished.
+  template< class eq >
+  struct action< check_multimat< eq > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using inciter::deck::neq;
+
+      // Error out if no dependent variable has been selected
+      auto& depvar = stack.template get< tag::param, eq, tag::depvar >();
+      if (depvar.empty() || depvar.size() != neq.get< eq >())
+        Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
+
+      // If physics type is not given, default to 'veleq'
+      auto& physics = stack.template get< tag::param, eq, tag::physics >();
+      if (physics.empty() || physics.size() != neq.get< eq >())
+        physics.push_back( inciter::ctr::PhysicsType::VELEQ );
+
+      // Set number of scalar components based on number of materials
+      auto& nmat = stack.template get< tag::param, eq, tag::nmat >();
+      auto& ncomp = stack.template get< tag::component, eq >();
+      if (physics.back() == inciter::ctr::PhysicsType::VELEQ) {
+        // physics = veleq: m-material compressible flow
+        // scalar components: volfrac:m-1 + mass:m + momentum:3 + energy:m
+        // if nmat is unspecified, configure it be 2
+        if (nmat.empty() || nmat.size() != neq.get< eq >()) {
+          Message< Stack, WARNING, MsgKey::NONMAT >( stack, in );
+          nmat.push_back( 2 );
+        }
+        // set ncomp based on nmat
+        auto m = nmat.back();
+        ncomp.push_back( m-1 + m + 3 + m );
+      }
+
+      // If problem type is not given, default to 'user_defined'
+      auto& problem = stack.template get< tag::param, eq, tag::problem >();
+      if (problem.empty() || problem.size() != neq.get< eq >())
+        problem.push_back( inciter::ctr::ProblemType::USER_DEFINED );
+      else if (problem.back() == inciter::ctr::ProblemType::VORTICAL_FLOW) {
+        const auto& alpha = stack.template get< tag::param, eq, tag::alpha >();
+        const auto& beta = stack.template get< tag::param, eq, tag::beta >();
+        const auto& p0 = stack.template get< tag::param, eq, tag::p0 >();
+        if ( alpha.size() != problem.size() ||
+             beta.size() != problem.size() ||
+             p0.size() != problem.size() )
+          Message< Stack, ERROR, MsgKey::VORTICAL_UNFINISHED >( stack, in );
+      }
+
+      // Error check Dirichlet boundary condition block for all multimat
       // configurations
       for (const auto& s : stack.template get< tag::param, eq, tag::bcdir >())
         if (s.empty())
@@ -238,6 +310,10 @@ namespace grm {
       if (stack.template get< tag::discr, tag::scheme >() ==
            inciter::ctr::SchemeType::DGP1)
         stack.template get< tag::discr, tag::ndof >() = 4;
+      // if DGP2 is configured, set ndofs to be 10
+      if (stack.template get< tag::discr, tag::scheme >() ==
+           inciter::ctr::SchemeType::DGP2)
+        stack.template get< tag::discr, tag::ndof >() = 10;
     }
   };
 
@@ -556,6 +632,54 @@ namespace deck {
                                tag::bcextrapolate > >,
            check_errors< tag::compflow, tk::grm::check_compflow > > {};
 
+  //! compressible multi-material flow
+  struct multimat :
+         pegtl::if_must<
+           scan_eq< use< kw::multimat >, tag::multimat >,
+           tk::grm::block< use< kw::end >,
+                           tk::grm::policy< use,
+                                            use< kw::physics >,
+                                            ctr::Physics,
+                                            tag::multimat,
+                                            tag::physics >,
+                           tk::grm::policy< use,
+                                            use< kw::problem >,
+                                            ctr::Problem,
+                                            tag::multimat,
+                                            tag::problem >,
+                           tk::grm::depvar< use,
+                                            tag::multimat,
+                                            tag::depvar >,
+                           parameter< tag::multimat,
+                                      kw::nmat,
+                                      tag::nmat >,
+                           material_properties< tag::multimat >,
+                           parameter< tag::multimat,
+                                      kw::pde_alpha,
+                                      tag::alpha >,
+                           parameter< tag::multimat,
+                                      kw::pde_p0,
+                                      tag::p0 >,
+                           parameter< tag::multimat,
+                                      kw::pde_beta,
+                                      tag::beta >,
+                           bc< kw::bc_dirichlet,
+                               tag::multimat,
+                               tag::bcdir >,
+                           bc< kw::bc_sym,
+                               tag::multimat,
+                               tag::bcsym >,
+                           bc< kw::bc_inlet,
+                               tag::multimat,
+                               tag::bcinlet >,
+                           bc< kw::bc_outlet,
+                               tag::multimat,
+                               tag::bcoutlet >,
+                           bc< kw::bc_extrapolate,
+                               tag::multimat,
+                               tag::bcextrapolate > >,
+           check_errors< tag::multimat, tk::grm::check_multimat > > {};
+
   //! partitioning ... end block
   struct partitioning :
          pegtl::if_must<
@@ -571,7 +695,7 @@ namespace deck {
 
   //! equation types
   struct equations :
-         pegtl::sor< transport, compflow > {};
+         pegtl::sor< transport, compflow, multimat > {};
 
   //! refinement variable(s) (refvar) ... end block
   struct refvars :

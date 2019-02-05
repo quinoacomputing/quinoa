@@ -29,12 +29,16 @@
 namespace inciter {
 
 void
-registerCompFlow( CGFactory& cf, DGFactory& df, std::set< ctr::PDEType >& t )
+registerCompFlow( CGFactory& cf,
+                  DGFactory& df,
+                  std::set< ctr::PDEType >& cgt,
+                  std::set< ctr::PDEType >& dgt )
 // *****************************************************************************
 // Register compressible flow PDE into PDE factory
 //! \param[in,out] cf Continuous Galerkin PDE factory to register to
 //! \param[in,out] df Discontinuous Galerkin PDE factory to register to
-//! \param[in,out] t Counters for equation types registered
+//! \param[in,out] cgt Counters for equation types registered into CG factory
+//! \param[in,out] dgt Counters for equation types registered into DG factory
 // *****************************************************************************
 {
   // Construct vector of vectors for all possible policies
@@ -42,14 +46,14 @@ registerCompFlow( CGFactory& cf, DGFactory& df, std::set< ctr::PDEType >& t )
     tk::cartesian_product< cg::CompFlowPhysics, CompFlowProblems >;
   // Register PDEs for all combinations of policies
   brigand::for_each< CGCompFlowPolicies >(
-    registerCG< cg::CompFlow >( cf, t, ctr::PDEType::COMPFLOW ) );
+    registerCG< cg::CompFlow >( cf, cgt, ctr::PDEType::COMPFLOW ) );
 
   // Construct vector of vectors for all possible policies
   using DGCompFlowPolicies =
     tk::cartesian_product< dg::CompFlowPhysics, CompFlowProblems >;
   // Register PDEs for all combinations of policies
   brigand::for_each< DGCompFlowPolicies >(
-    registerDG< dg::CompFlow >( df, t, ctr::PDEType::COMPFLOW ) );
+    registerDG< dg::CompFlow >( df, dgt, ctr::PDEType::COMPFLOW ) );
 }
 
 std::vector< std::pair< std::string, std::string > >
@@ -76,11 +80,11 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_type >& cnt )
   nfo.emplace_back( "problem", ctr::Problem().name(
     g_inputdeck.get< tag::param, tag::compflow, tag::problem >()[c] ) );
 
-  nfo.emplace_back( "start offset in unknowns array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::compflow >(c) ) );
-
   auto ncomp = g_inputdeck.get< tag::component >().get< tag::compflow >()[c];
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
+  nfo.emplace_back( "start offset in unknowns array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::compflow >(c) ) );
 
   nfo.emplace_back( "material id", parameters(
     g_inputdeck.get< tag::param, tag::compflow, tag::id >() ) );
