@@ -215,7 +215,6 @@ Refiner::t0ref()
   m_bndEdges.clear();
   m_ch.clear();
   m_edgedataCh.clear();
-  m_intermediates.clear();
 
   updateEdgeData();
 
