@@ -62,7 +62,19 @@
 #       postfix_runner_arg.
 #       - Note that the number of worker threads must be a multiple of the
 #       number of threads specified by the ppn argument.
-#       - See also cmake/add_regression_test.cmake.
+#       - See also cmake/add_regression_test.cmake for more on SMP mode.
+#
+#     $ run_tests.sh 2 mpirun -n "--bind-to none -oversubscribe" "+ppn 17"
+#     Same as above, but use mpirun as the runner for the unit test suite. If
+#     the runner is mpirun, the first argument is interpreted as the number of
+#     compute nodes. Thus this example also uses 36 CPUs distributed as 2
+#     logical (compute) nodes x 17 worker threads + 1 communication thread
+#     (2x18) in Charm++'s SMP mode but using mpirun as the runner with -n
+#     specifying the number of compute nodes and also pass "--bind-to none
+#     -oversubscribe" to the runner.
+#       - Note that the Charm++ SMP mode argument +ppn must be specified as a
+#       postfix_runner_arg.
+#       - See also cmake/add_regression_test.cmake for more on SMP mode.
 #
 #  Note that only the [ncpus] argument affects the regression tests. The runner
 #  and its optional extra arguments to the regression tests are configured by
