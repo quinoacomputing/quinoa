@@ -161,26 +161,26 @@ tk::update_rhs( ncomp_t ncomp,
   {
     auto mark = c*ndof;
     R(e, mark+1, offset) +=
-      wt * (fl[c][0]*dBdx[1][0] + fl[c][1]*dBdx[1][1] + fl[c][2]*dBdx[1][2]);
+      wt * (fl[c][0]*dBdx[0][1] + fl[c][1]*dBdx[1][1] + fl[c][2]*dBdx[2][1]);
     R(e, mark+2, offset) +=
-      wt * (fl[c][0]*dBdx[2][0] + fl[c][1]*dBdx[2][1] + fl[c][2]*dBdx[2][2]);
+      wt * (fl[c][0]*dBdx[0][2] + fl[c][1]*dBdx[1][2] + fl[c][2]*dBdx[2][2]);
     R(e, mark+3, offset) +=
-      wt * (fl[c][0]*dBdx[3][0] + fl[c][1]*dBdx[3][1] + fl[c][2]*dBdx[3][2]);
+      wt * (fl[c][0]*dBdx[0][3] + fl[c][1]*dBdx[1][3] + fl[c][2]*dBdx[2][3]);
 
     if( ndof > 4 )
     {
       R(e, mark+4, offset) +=
-        wt * (fl[c][0]*dBdx[4][0] + fl[c][1]*dBdx[4][1] + fl[c][2]*dBdx[4][2]);
+        wt * (fl[c][0]*dBdx[0][4] + fl[c][1]*dBdx[1][4] + fl[c][2]*dBdx[2][4]);
       R(e, mark+5, offset) +=
-        wt * (fl[c][0]*dBdx[5][0] + fl[c][1]*dBdx[5][1] + fl[c][2]*dBdx[5][2]);
+        wt * (fl[c][0]*dBdx[0][5] + fl[c][1]*dBdx[1][5] + fl[c][2]*dBdx[2][5]);
       R(e, mark+6, offset) +=
-        wt * (fl[c][0]*dBdx[6][0] + fl[c][1]*dBdx[6][1] + fl[c][2]*dBdx[6][2]);
+        wt * (fl[c][0]*dBdx[0][6] + fl[c][1]*dBdx[1][6] + fl[c][2]*dBdx[2][6]);
       R(e, mark+7, offset) +=
-        wt * (fl[c][0]*dBdx[7][0] + fl[c][1]*dBdx[7][1] + fl[c][2]*dBdx[7][2]);
+        wt * (fl[c][0]*dBdx[0][7] + fl[c][1]*dBdx[1][7] + fl[c][2]*dBdx[2][7]);
       R(e, mark+8, offset) +=
-        wt * (fl[c][0]*dBdx[8][0] + fl[c][1]*dBdx[8][1] + fl[c][2]*dBdx[8][2]);
+        wt * (fl[c][0]*dBdx[0][8] + fl[c][1]*dBdx[1][8] + fl[c][2]*dBdx[2][8]);
       R(e, mark+9, offset) +=
-        wt * (fl[c][0]*dBdx[9][0] + fl[c][1]*dBdx[9][1] + fl[c][2]*dBdx[9][2]);
+        wt * (fl[c][0]*dBdx[0][9] + fl[c][1]*dBdx[1][9] + fl[c][2]*dBdx[2][9]);
     }
   }
 }
