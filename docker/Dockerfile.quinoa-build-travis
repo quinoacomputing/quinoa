@@ -9,12 +9,13 @@ ARG COMPILER
 ARG BUILD
 ARG TARGET
 ARG SHARED_LIBS
+ARG SMP
 ARG TRAVIS_BRANCH
 ARG TRAVIS_PULL_REQUEST
 ARG TRAVIS_REPO_SLUG
 ARG TRAVIS_COMMIT
 
-ENV RUNNER_ARGS="-oversubscribe" \
+ENV RUNNER_ARGS="--bind-to none -oversubscribe" \
     OMPI_MCA_plm=isolated \
     PATH=/usr/lib/ccache/bin:/opt/openmpi/${COMPILER}/bin:$PATH
 
@@ -35,7 +36,7 @@ RUN cmake \
     -GNinja \
     -DCMAKE_C_COMPILER=mpicc \
     -DCMAKE_CXX_COMPILER=mpicxx \
-    -DTPL_DIR="/home/quinoa/tpl/${COMPILER}${SHARED_LIBS:+-static}" \
+    -DTPL_DIR="/home/quinoa/tpl/${COMPILER}${SMP:+-smp}${SHARED_LIBS:+-static}" \
     -DCMAKE_CXX_FLAGS="-Werror -Wno-zero-as-null-pointer-constant" \
     -DCMAKE_CXX_FLAGS_DEBUG=-g0 \
     -DCMAKE_BUILD_TYPE="${BUILD}" \
@@ -43,11 +44,12 @@ RUN cmake \
     ${SONARQUBE:+-DCOVERAGE=ON} \
     -DLCOV=/bin/true \
     -DRUNNER_ARGS=${RUNNER_ARGS} \
+    ${SMP:+-DPOSTFIX_RUNNER_ARGS="+setcpuaffinity"} \
     -DGENHTML=/bin/true \
     ../src
 RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} ninja -j2 ${TARGET}
 RUN ccache -s
-RUN if [ ${TARGET} = unittest ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q; fi
+RUN if [ ${TARGET} = unittest ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q ${SMP:++ppn 2}; fi
 RUN if [ -z "${SONARQUBE}" ] && [ ${TARGET} != doc ]; then ctest --output-on-failure -j2 -LE stringent -R ${TARGET}; fi
 RUN if [ ${TARGET} == doc ]; then ninja -j2 doc; fi
 #RUN cd .. && if [ ${SONARQUBE} ]; then \
