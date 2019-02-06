@@ -30,7 +30,6 @@ jobs:
         BUILD: 'Release'
         SHARED_LIBS: 'off'
         DISTRO: 'debian-gnu-static'
-        DOCKERHUB: 'true'
       gnu-debug-smp:
         COMPILER: 'gnu'
         BUILD: 'Debug'
