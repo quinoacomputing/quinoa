@@ -79,7 +79,7 @@ script:
   - if [[ ${TARGET} = doc ]]; then
       export DISTRO=debian-doc;
     else
-      export DISTRO=alpine-${COMPILER}${SHARED_LIBS:+-static}${SONARQUBE:+-sonarqube};
+      export DISTRO=alpine-${COMPILER}${SMP:+-smp}${SHARED_LIBS:+-static}${SONARQUBE:+-sonarqube};
     fi
   - rm -rf tpl
   - cp -vr docker ${HOME}/docker
