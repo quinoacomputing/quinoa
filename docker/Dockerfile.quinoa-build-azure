@@ -23,7 +23,7 @@ RUN cmake \
     -DCMAKE_BUILD_TYPE="${BUILD}" \
     -DCMAKE_CXX_FLAGS_DEBUG=-g0 \
     ${SHARED_LIBS:+-DBUILD_SHARED_LIBS=$SHARED_LIBS} \
-    -DRUNNER=mpirun -DRUNNER_NCPUS_ARG=-n -DRUNNER_ARGS=-oversubscribe \
+    -DRUNNER=mpirun -DRUNNER_NCPUS_ARG=-n -DRUNNER_ARGS="--bind-to none -oversubscribe" \
     ../src
 RUN [ ${DOC} ] && ninja doc || (ninja && ([ ${SMP} ] && ../script/run_tests.sh 1 mpirun -n "--bind-to none -oversubscribe" "+ppn 2" || ../script/run_tests.sh 2 mpirun -n) )
 
