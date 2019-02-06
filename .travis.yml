@@ -25,22 +25,26 @@ env:
     - TARGET=unittest COMPILER=clang BUILD=Release SHARED_LIBS=off
 
     - TARGET=walker COMPILER=gnu BUILD=Debug
+    - TARGET=walker COMPILER=gnu BUILD=Debug SMP=true
     - TARGET=walker COMPILER=gnu BUILD=Debug SHARED_LIBS=off
     - TARGET=walker COMPILER=gnu BUILD=Release
     - TARGET=walker COMPILER=gnu BUILD=Release SMP=true
     - TARGET=walker COMPILER=gnu BUILD=Release SHARED_LIBS=off DOCKERHUB=true
     - TARGET=walker COMPILER=clang BUILD=Debug
+    - TARGET=walker COMPILER=clang BUILD=Debug SMP=true
     - TARGET=walker COMPILER=clang BUILD=Debug SHARED_LIBS=off
     - TARGET=walker COMPILER=clang BUILD=Release
     - TARGET=walker COMPILER=clang BUILD=Release SMP=true
     - TARGET=walker COMPILER=clang BUILD=Release SHARED_LIBS=off
 
     - TARGET=inciter COMPILER=gnu BUILD=Debug
+    - TARGET=inciter COMPILER=gnu BUILD=Debug SMP=true
     - TARGET=inciter COMPILER=gnu BUILD=Debug SHARED_LIBS=off
     - TARGET=inciter COMPILER=gnu BUILD=Release
     - TARGET=inciter COMPILER=gnu BUILD=Release SMP=true
     - TARGET=inciter COMPILER=gnu BUILD=Release SHARED_LIBS=off DOCKERHUB=true
     - TARGET=inciter COMPILER=clang BUILD=Debug
+    - TARGET=inciter COMPILER=clang BUILD=Debug SMP=true
     - TARGET=inciter COMPILER=clang BUILD=Debug SHARED_LIBS=off
     - TARGET=inciter COMPILER=clang BUILD=Release
     - TARGET=inciter COMPILER=clang BUILD=Release SMP=true
