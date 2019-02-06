@@ -663,17 +663,20 @@ Transporter::pdfstat( CkReductionMsg* msg )
   // Create new PDF file (overwrite if exists)
   tk::PDFWriter pdfe( "mesh_edge_pdf.txt" );
   // Output edgelength PDF
-  pdfe.writeTxt( pdf[0], tk::ctr::PDFInfo{ {"PDF"}, {}, {"edgelength"} } );
+  pdfe.writeTxt( pdf[0],
+                 tk::ctr::PDFInfo{ {"PDF"}, {}, {"edgelength"}, 0, 0.0 } );
 
   // Create new PDF file (overwrite if exists)
   tk::PDFWriter pdfv( "mesh_vol_pdf.txt" );
   // Output cell volume cubic root PDF
-  pdfv.writeTxt( pdf[1], tk::ctr::PDFInfo{ {"PDF"}, {}, {"V^{1/3}"} } );
+  pdfv.writeTxt( pdf[1],
+                 tk::ctr::PDFInfo{ {"PDF"}, {}, {"V^{1/3}"}, 0, 0.0 } );
 
   // Create new PDF file (overwrite if exists)
   tk::PDFWriter pdfn( "mesh_ntet_pdf.txt" );
   // Output number of cells PDF
-  pdfn.writeTxt( pdf[2], tk::ctr::PDFInfo{ {"PDF"}, {}, {"ntets"} } );
+  pdfn.writeTxt( pdf[2],
+                 tk::ctr::PDFInfo{ {"PDF"}, {}, {"ntets"}, 0, 0.0 } );
 
   pdfstat_complete();
 }

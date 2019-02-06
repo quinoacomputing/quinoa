@@ -105,22 +105,32 @@ Integrator::advance( tk::real dt,
       CkCallback(CkReductionTarget( Distributor, nostat ), m_hostproxy) );
   } else {
     // Accumulate sums for ordinary moments (every time step)
-    accumulateOrd( it );
+    accumulateOrd( it, t, dt );
   }
 }
 
 void
-Integrator::accumulateOrd( uint64_t it )
+Integrator::accumulateOrd( uint64_t it, tk::real t, tk::real dt )
 // *****************************************************************************
 // Accumulate sums for ordinary moments and ordinary PDFs
 //! \param[in] it Iteration count
+//! \param[in] t Physical time
+//! \param[in] dt Time step size
 // *****************************************************************************
 {
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto pdffreq = g_inputdeck.get< tag::interval, tag::pdf >();
+
   // Accumulate partial sums for ordinary moments
   m_stat.accumulateOrd();
-  // Accumulate sums for ordinary PDFs at select times
+  // Accumulate sums for ordinary PDFs at first and last iterations and at
+  // select times
   if ( g_inputdeck.pdf() &&
-       !((it+1) % g_inputdeck.get< tag::interval, tag::pdf >()) )
+       ( it == 0 ||
+         !((it+1) % pdffreq) ||
+         (std::fabs(t+dt-term) < eps && (it+1) >= nstep) ) )
     m_stat.accumulateOrdPDF();
 
   // Send accumulated ordinary moments and ordinary PDFs to collector for
@@ -132,18 +142,31 @@ Integrator::accumulateOrd( uint64_t it )
 }
 
 void
-Integrator::accumulateCen( uint64_t it, const std::vector< tk::real >& ord )
+Integrator::accumulateCen( uint64_t it,
+                           tk::real t,
+                           tk::real dt,
+                           const std::vector< tk::real >& ord )
 // *****************************************************************************
 // Accumulate sums for central moments and central PDFs
 //! \param[in] it Iteration count
+//! \param[in] t Physical time
+//! \param[in] dt Time step size
 //! \param[in] ord Estimated ordinary moments (collected from all PEs)
 // *****************************************************************************
 {
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto pdffreq = g_inputdeck.get< tag::interval, tag::pdf >();
+
   // Accumulate partial sums for central moments
   m_stat.accumulateCen( ord );
-  // Accumulate partial sums for central PDFs at select times
+  // Accumulate partial sums for central PDFs at first and last iteraions and
+  // at select times
   if ( g_inputdeck.pdf() &&
-       !((it+1) % g_inputdeck.get< tag::interval, tag::pdf >()) )
+       ( it == 0 ||
+         !((it+1) % pdffreq) ||
+         (std::fabs(t+dt-term) < eps && (it+1) >= nstep) ) )
     m_stat.accumulateCenPDF( ord );
 
   // Send accumulated central moments to host for estimation
