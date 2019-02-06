@@ -26,6 +26,8 @@ string(REPLACE " " ";" TEST_LABELS "${TEST_LABELS}")
 string(REPLACE " " ";" TEST_EXECUTABLE_ARGS "${TEST_EXECUTABLE_ARGS}")
 # Covert string to list of runner arguments
 string(REPLACE " " ";" RUNNER_ARGS "${RUNNER_ARGS}")
+# Covert string to list of postfix runner arguments
+string(REPLACE " " ";" POSTFIX_RUNNER_ARGS "${POSTFIX_RUNNER_ARGS}")
 
 # Print test runner configuration
 message("Test runner configuration:")
@@ -36,6 +38,7 @@ message("  RUNNER (used to run parallel and serial jobs inside cmake)  : ${RUNNE
 message("  RUNNER_NCPUS_ARG (used to specify the number of CPUs)       : ${RUNNER_NCPUS_ARG}")
 message("  CHARM_SMP (true/false indicating Charm++ SMP mode)          : ${CHARM_SMP}")
 message("  RUNNER_ARGS (parallel/serial job runner arguments)          : ${RUNNER_ARGS}")
+message("  POSTFIX_RUNNER_ARGS (postfix job runner arguments)          : ${POSTFIX_RUNNER_ARGS}")
 message("  TEST_EXECUTABLE (executable tested)                         : ${TEST_EXECUTABLE}")
 message("  TEST_EXECUTABLE_ARGS (executable arguments)                 : ${TEST_EXECUTABLE_ARGS}")
 message("  TEST_LABELS (test labels)                                   : ${TEST_LABELS}")
@@ -80,10 +83,12 @@ endif()
 # specifies the number of compute nodes.
 if (CHARM_SMP AND RUNNER MATCHES "mpirun")
   set(test_command ${RUNNER} ${RUNNER_NCPUS_ARG} ${NUMNODES} ${RUNNER_ARGS}
-                   ${TEST_EXECUTABLE} ${TEST_EXECUTABLE_ARGS} ${PPN})
+                   ${TEST_EXECUTABLE} ${TEST_EXECUTABLE_ARGS} ${PPN}
+                   ${POSTFIX_RUNNER_ARGS})
 else()
   set(test_command ${RUNNER} ${RUNNER_NCPUS_ARG} ${NUMPES} ${RUNNER_ARGS}
-                   ${TEST_EXECUTABLE} ${TEST_EXECUTABLE_ARGS} ${PPN})
+                   ${TEST_EXECUTABLE} ${TEST_EXECUTABLE_ARGS}
+                   ${POSTFIX_RUNNER_ARGS})
 endif()
 
 string(REPLACE ";" " " test_command_string "${test_command}")

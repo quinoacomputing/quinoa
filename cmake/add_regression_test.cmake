@@ -354,6 +354,12 @@ function(ADD_REGRESSION_TEST test_name executable)
     string(REPLACE ";" " " RUNNER_ARGS "${RUNNER_ARGS}")
   endif()
 
+  if(POSTFIX_RUNNER_ARGS)
+    # Convert list to space-separated string for passing as arguments to test
+    # runner cmake script below
+    string(REPLACE ";" " " POSTFIX_RUNNER_ARGS "${POSTFIX_RUNNER_ARGS}")
+  endif()
+
   # Add the test. See test_runner.cmake for documentation of the arguments.
   add_test(NAME ${test_name}
            COMMAND ${CMAKE_COMMAND}
@@ -363,6 +369,7 @@ function(ADD_REGRESSION_TEST test_name executable)
            -DRUNNER=${RUNNER}
            -DRUNNER_NCPUS_ARG=${RUNNER_NCPUS_ARG}
            -DRUNNER_ARGS=${RUNNER_ARGS}
+           -DPOSTFIX_RUNNER_ARGS=${POSTFIX_RUNNER_ARGS}
            -DTEST_EXECUTABLE=${CMAKE_BINARY_DIR}/Main/${executable}
            -DTEST_EXECUTABLE_ARGS=${ARGUMENTS}
            -DTEST_LABELS=${ARG_LABELS}
