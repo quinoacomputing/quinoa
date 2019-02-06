@@ -443,6 +443,8 @@ set(RUNNER_NCPUS_ARG "+p" CACHE STRING
     "The argument used to specify the number of PEs for the runner")
 set(RUNNER_ARGS "" CACHE STRING
     "Arguments to pass to the parallel/serial job runner, e.g., to mpirun.")
+set(POSTFIX_RUNNER_ARGS "" CACHE STRING
+    "Arguments to pass to the parallel/serial job runner at the end of the command line.")
 
 # Host-, and/or architecture-specifc runner configuration
 if (DEFINED ENV{NERSC_HOST})
@@ -471,6 +473,7 @@ message(STATUS "Parallel/serial job runner required: ${RUNNER_REQUIRED}")
 message(STATUS "Parallel/serial job runner: ${RUNNER}")
 message(STATUS "Parallel job runner ncpus arg: ${RUNNER_NCPUS_ARG}")
 message(STATUS "Parallel/serial job runner args: ${RUNNER_ARGS}")
+message(STATUS "Parallel/serial job runner postfix args: ${POSTFIX_RUNNER_ARGS}")
 
 # Attempt to find tools required for code coverage analysis
 include(DetectCodeCoverage)
