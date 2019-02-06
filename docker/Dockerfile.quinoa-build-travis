@@ -15,7 +15,7 @@ ARG TRAVIS_PULL_REQUEST
 ARG TRAVIS_REPO_SLUG
 ARG TRAVIS_COMMIT
 
-ENV RUNNER_ARGS="--bind-to none -oversubscribe" \
+ENV RUNNER_ARGS=-oversubscribe \
     OMPI_MCA_plm=isolated \
     PATH=/usr/lib/ccache/bin:/opt/openmpi/${COMPILER}/bin:$PATH
 
