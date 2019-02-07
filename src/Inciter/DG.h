@@ -161,6 +161,7 @@ class DG : public CBase_DG {
       p | m_ncomfac;
       p | m_nadj;
       p | m_nsol;
+      p | m_ninitsol;
       p | m_nlim;
       p | m_itf;
       p | m_fd;
@@ -215,6 +216,9 @@ class DG : public CBase_DG {
     std::size_t m_nadj;
     //! Counter signaling that we have received all our solution ghost data
     std::size_t m_nsol;
+    //! \brief Counter signaling that we have received all our solution ghost
+    //!    data during setup
+    std::size_t m_ninitsol;
     //! Counter signaling that we have received all our limiter function ghost data
     std::size_t m_nlim;
     //! Field output iteration count

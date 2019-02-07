@@ -46,6 +46,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_ncomfac( 0 ),
   m_nadj( 0 ),
   m_nsol( 0 ),
+  m_ninitsol( 0 ),
   m_nlim( 0 ),
   m_itf( 0 ),
   m_fd( fd ),
@@ -102,6 +103,9 @@ DG::DG( const CProxy_Discretization& disc,
 
   // Activate SDAG waits for face adjacency map (ghost data) calculation
   thisProxy[ thisIndex ].wait4ghost();
+
+  // Enable SDAG wait for initial solution limiting
+  thisProxy[ thisIndex ].wait4initlim();
 
   // Invert inpofa to enable searching for faces based on (global) node triplets
   Assert( inpofa.size() % 3 == 0, "Inpofa must contain triplets" );
@@ -923,9 +927,6 @@ DG::setup( tk::real v )
     for (std::size_t c=0; c<m_limFunc.nprop(); ++c)
       m_limFunc(e,c,0)=1.0;
 
-  // Enable SDAG wait for initial solution limiting
-  thisProxy[ thisIndex ].wait4initlim();
-
   // Communicate for initial solution limiting
   sendinit();
 }
@@ -1039,11 +1040,11 @@ DG::cominit( int fromch,
 
   // if we have received all solution ghost contributions from those chares we
   // communicate along chare-boundary faces with, solve the system
-  if (++m_nsol == m_ghostData.size()) {
+  if (++m_ninitsol == m_ghostData.size()) {
     Assert( m_exptGhost == m_recvGhost,
             "Expected/received ghost tet id mismatch" );
     m_recvGhost.clear();
-    m_nsol = 0;
+    m_ninitsol = 0;
     cominit_complete();
   }
 }
@@ -1153,8 +1154,6 @@ DG::comsol( int fromch,
     auto j = tk::cref_find( n, tetid[i] );
     Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
     Assert( j < m_u.nunk(), "Indexing out of bounds in DG::comsol()" );
-    Assert( m_recvGhost.insert( j ).second,
-            "Failed to store local tetid of received ghost tetid" );
     for (std::size_t c=0; c<m_u.nprop(); ++c)
       m_u(j,c,0) = u[i][c];
   }
@@ -1162,9 +1161,6 @@ DG::comsol( int fromch,
   // if we have received all solution ghost contributions from those chares we
   // communicate along chare-boundary faces with, solve the system
   if (++m_nsol == m_ghostData.size()) {
-    Assert( m_exptGhost == m_recvGhost,
-            "Expected/received ghost tet id mismatch" );
-    m_recvGhost.clear();
     m_nsol = 0;
     comsol_complete();
   }
