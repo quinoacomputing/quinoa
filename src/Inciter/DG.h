@@ -95,7 +95,7 @@ class DG : public CBase_DG {
     void setup( tk::real v );
 
     //! Limit initial solution and prepare for time stepping
-    void prepareForSolve();
+    void limitIC();
 
     //! Compute time step size
     void dt();

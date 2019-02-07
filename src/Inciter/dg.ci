@@ -62,7 +62,7 @@ module dg {
         { sendGhost(); } };
 
       entry void wait4initlim() {
-        when owninit_complete(), cominit_complete() serial "init" { prepareForSolve(); } };
+        when owninit_complete(), cominit_complete() serial "init" { limitIC(); } };
 
       entry void wait4sol() {
         when ownsol_complete(), comsol_complete() serial "sol" { lim(); } };

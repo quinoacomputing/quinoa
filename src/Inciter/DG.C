@@ -932,7 +932,7 @@ DG::setup( tk::real v )
 }
 
 void
-DG::prepareForSolve()
+DG::limitIC()
 // *****************************************************************************
 //  Limit initial solution and prepare for time stepping
 //! \details This function applies limiter to initial solution and then proceeds
@@ -973,8 +973,10 @@ DG::prepareForSolve()
   thisProxy[ thisIndex ].wait4sol();
   thisProxy[ thisIndex ].wait4lim();
 
+  tk::real fdt = 0.0;
   // Start time stepping
-  advance( 0.0 );
+  contribute( sizeof(tk::real), &fdt, CkReduction::nop,
+              CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
 }
 
 void
