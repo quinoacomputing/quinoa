@@ -26,8 +26,9 @@ RUN cmake \
     -DRUNNER=mpirun \
     -DRUNNER_NCPUS_ARG=-n \
     -DRUNNER_ARGS="--bind-to none -oversubscribe" \
+    ${SMP:+-DPOSTFIX_RUNNER_ARGS="+setcpuaffinity"} \
     ../src
-RUN [ ${DOC} ] && ninja doc || ninja && [ ${SMP} ] && ../script/run_tests.sh 1 mpirun -n "--bind-to none -oversubscribe" "+ppn 2" || ../script/run_tests.sh 2 mpirun -n
+RUN [ ${DOC} ] && ninja doc || (ninja && ([ ${SMP} ] && ../script/run_tests.sh 1 mpirun -n "--bind-to none -oversubscribe" "+ppn 2" || ../script/run_tests.sh 2 mpirun -n) )
 
 USER root
 RUN [ ${DOC} ] || ninja install
