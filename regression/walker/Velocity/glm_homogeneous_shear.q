@@ -8,7 +8,7 @@ title "Coupled position, velocity, dissipation joint PDF computing a
 walker
 
   #nstep 2     # Max number of time steps
-  term  15.0    # Max time
+  term  10.0    # Max time
   dt    0.2   # Time step size
   npar  70000 # Number of particles
   ttyi  1    # TTY output interval
