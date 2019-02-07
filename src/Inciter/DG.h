@@ -94,8 +94,19 @@ class DG : public CBase_DG {
     //! Setup: query boundary conditions, output mesh, etc.
     void setup( tk::real v );
 
+    //! Limit initial solution and prepare for time stepping
+    void prepareForSolve();
+
     //! Compute time step size
     void dt();
+
+    //! Send own chare-boundary data to neighboring chares
+    void sendinit();
+
+    //! Receive chare-boundary ghost data from neighboring chares
+    void cominit( int fromch,
+                  const std::vector< std::size_t >& tetid,
+                  const std::vector< std::vector< tk::real > >& u );
 
     //! Receive chare-boundary limiter function data from neighboring chares
     void comlim( int fromch,
