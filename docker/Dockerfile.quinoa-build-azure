@@ -29,7 +29,10 @@ RUN cmake \
     -DRUNNER_ARGS="${RUNNER_ARGS}" \
     ${SMP:+-DPOSTFIX_RUNNER_ARGS="+setcpuaffinity"} \
     ../src
-RUN [ ${DOC} ] && ninja doc || (ninja && ([ ${SMP} ] && mpirun -n 1 ${RUNNER_ARGS} Main/unittest -v -q +ppn 2 && ctest -j2 --output-on-failure -LE extreme || ../script/run_tests.sh 2 mpirun -n))
+RUN [ ${DOC} ] && ninja doc
+RUN [ ${DOC} ] || ninja
+RUN [ ${DOC} ] || [ ${SMP} ] && mpirun -n 1 ${RUNNER_ARGS} Main/unittest -v -q +ppn 2 && ctest -j2 --output-on-failure -LE extreme
+RUN [ ${DOC} ] || [ ${SMP} ] || ../script/run_tests.sh 2 mpirun -n
 
 USER root
 RUN [ ${DOC} ] || ninja install
