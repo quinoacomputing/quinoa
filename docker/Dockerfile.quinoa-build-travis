@@ -15,7 +15,7 @@ ARG TRAVIS_PULL_REQUEST
 ARG TRAVIS_REPO_SLUG
 ARG TRAVIS_COMMIT
 
-ENV RUNNER_ARGS=-oversubscribe \
+ENV RUNNER_ARGS="--bind-to none -oversubscribe" \
     OMPI_MCA_plm=isolated \
     PATH=/usr/lib/ccache/bin:/opt/openmpi/${COMPILER}/bin:$PATH
 
@@ -43,8 +43,7 @@ RUN cmake \
     ${SHARED_LIBS:+-DBUILD_SHARED_LIBS=$SHARED_LIBS} \
     ${SONARQUBE:+-DCOVERAGE=ON} \
     -DLCOV=/bin/true \
-    -DRUNNER_ARGS=${RUNNER_ARGS} \
-    ${SMP:+-DPOSTFIX_RUNNER_ARGS="+setcpuaffinity"} \
+    -DRUNNER_ARGS="${RUNNER_ARGS}" \
     -DGENHTML=/bin/true \
     ../src
 RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} ninja -j2 ${TARGET}
