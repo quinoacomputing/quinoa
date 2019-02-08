@@ -91,10 +91,6 @@ void Data_object::test< 3 >() {
 
   // Test all template specializations const-ref access
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   try {
     pp( 2, 2, 2 );   // unknown out of bounds
     #ifndef NDEBUG
@@ -267,10 +263,6 @@ void Data_object::test< 5 >() {
   pe( 1, 2, 2 ) = 0.32;
 
   // Test all template specializations const-ref access
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   try {
     // unknown out of bounds

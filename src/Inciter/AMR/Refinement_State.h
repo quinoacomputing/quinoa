@@ -5,7 +5,6 @@
 #ifndef TETAMR_AMR_DATA_H
 #define TETAMR_AMR_DATA_H
 
-#include <vector>
 #include <cstddef>
 
 #include "Types.h"

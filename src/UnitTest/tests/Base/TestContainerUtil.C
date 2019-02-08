@@ -106,10 +106,6 @@ void ContainerUtil_object::test< 3 >() {
   auto two = tk::ref_find(u,2);
   ensure_equals( "ref_find incorrect", two, "two" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   // test if cref_find throws in DEBUG when cannot find key
   try {
     auto three = tk::ref_find(u,3);
@@ -174,10 +170,6 @@ void ContainerUtil_object::test< 6 >() {
                  v1[1], v2[1], precision );
   ensure_equals( "add non-empty vector to empty one, src[2]==dst[2], incorrect",
                  v1[2], v2[2], precision );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   // add empty vector to non-empty one: throw in DEBUG to warn on no-op
   // skipped in RELEASE mode, would yield segmentation fault
@@ -276,10 +268,6 @@ void ContainerUtil_object::test< 7 >() {
   std::map< int, tk::real > q1{ {3,4.0}, {2,2.0} }, q2{ {1,4.0}, {2,3.0} };
   ensure_equals( "keys are equal", tk::keyEqual(q1,q2), false );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   // test if throws in DEBUG to warn on unequal-size containers
   // skipped in RELEASE mode, would yield segmentation fault
   #ifndef NDEBUG        // exception only thrown in DEBUG mode
@@ -318,6 +306,49 @@ void ContainerUtil_object::test< 9 >() {
   std::map< int, std::vector< tk::real > > m{ {3,{4.0,5.0}}, {2,{1.0,2.0}} };
   tk::destroy( m );
   ensure_equals( "destroy yields empty map of vec", m.empty(), true );
+}
+
+//! Test numunique()
+template<> template<>
+void ContainerUtil_object::test< 10 >() {
+  set_test_name( "numunique" );
+
+  // Test a vector of vector of ints
+  std::vector< std::vector< int > > v{ {3,-4}, {2,3,6} };
+  ensure_equals(
+    "number of unique values in container of containers incorrect",
+    tk::numunique( v ), 4 );
+
+  // Test a set of vector of std::size_ts
+  std::set< std::vector< std::size_t > > s{ {1,2}, {3,4,5} };
+  ensure_equals(
+    "number of unique values in container of containers incorrect",
+    tk::numunique( s ), 5 );
+
+  // Test a vector of set of std::size_ts
+  std::vector< std::set< std::size_t > > q{ {1,2}, {1,4,5} };
+  ensure_equals(
+    "number of unique values in container of containers incorrect",
+    tk::numunique( q ), 4 );
+}
+
+//! Test erase_if()
+template<> template<>
+void ContainerUtil_object::test< 11 >() {
+  set_test_name( "erase_if" );
+
+  std::vector< int > v{ 3,-4,2,3,6 };
+  tk::erase_if( v, []( int i ){ return i%2; } );
+  ensure( "erase_if on vector incorrect", v == std::vector<int>{-4,2,6} );
+
+  std::vector< int > w{ 3,-4,2,3,6 };
+  tk::erase_if( w, []( int i ){ return !(i%2); } );
+  ensure( "erase_if on vector incorrect", w == std::vector<int>{3,3} );
+
+  std::map< int, std::vector< std::size_t > > b{ {3,{4,5,6}}, {-2,{3,2,3}} };
+  std::map< int, std::vector< std::size_t > > correct_result{ {3,{4,5,6}} };
+  tk::erase_if( b, []( decltype(b)::value_type& p ){ return p.first<0; } );
+  ensure( "erase_if on map incorrect", b == correct_result );
 }
 
 } // tut::

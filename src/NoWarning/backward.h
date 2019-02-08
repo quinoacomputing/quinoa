@@ -17,6 +17,7 @@
   #pragma clang diagnostic ignored "-Wold-style-cast"
   #pragma clang diagnostic ignored "-Wundef"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
+  #pragma clang diagnostic ignored "-Wextra-semi-stmt"
 #endif
 
 #include "backward.hpp"

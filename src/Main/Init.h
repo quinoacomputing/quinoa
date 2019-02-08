@@ -15,10 +15,11 @@
 #include <string>
 #include <unordered_map>
 
-#include "NoWarning/charm.h"
+#include "NoWarning/charm++.h"
 
-#include "Print.h"
+#include "QuinoaConfig.h"
 #include "Exception.h"
+#include "Print.h"
 #include "ChareStateCollector.h"
 #include "ProcessException.h"
 
@@ -184,6 +185,8 @@ void dumpstate( const CmdLine& cmdline,
 //! \param[in,out] timestamp Vector of time stamps in h:m:s with labels
 //! \param[in] dumpstateTarget Pre-created Charm++ callback to use as the
 //!   target function for dumping chare state
+//! \param[in] clean True if we should exit with a zero exit code, false to
+//!   exit with a nonzero exit code
 template< class CmdLine >
 void finalize( const CmdLine& cmdline,
                const std::vector< tk::Timer >& timer,
@@ -191,22 +194,23 @@ void finalize( const CmdLine& cmdline,
                tk::CProxy_ChareStateCollector& state,
                std::vector< std::pair< std::string,
                                        tk::Timer::Watch > >& timestamp,
-               const CkCallback& dumpstateTarget )
+               const CkCallback& dumpstateTarget,
+               bool clean = true )
 {
   try {
 
-    if (!timer.empty()) {
-      timestamp.emplace_back( "Total runtime", timer[0].hms() );
-      print.time( "Timers (h:m:s)", timestamp );
-      print.endpart();
-      // if quiescence detection is on or user requested it, collect chare
-      // state
+   if (!timer.empty()) {
+     timestamp.emplace_back( "Total runtime", timer[0].hms() );
+     print.time( "Timers (h:m:s)", timestamp );
+     print.endpart();
+     // if quiescence detection is on or user requested it, collect chare state
      if ( cmdline.template get< tag::chare >() ||
-          cmdline.template get< tag::quiescence >() )
+          cmdline.template get< tag::quiescence >() ) {
        state.collect( /* error = */ false, dumpstateTarget );
-     else
-       CkExit(); // tell the Charm++ runtime system to exit with zero exit code
-    }
+     }
+     // tell the Charm++ runtime system to exit with zero exit code
+     if (clean) CkExit(); else CkAbort("Failed");
+   }
 
   } catch (...) { tk::processExceptionCharm(); }
 }

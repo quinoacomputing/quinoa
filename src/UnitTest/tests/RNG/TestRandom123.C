@@ -42,10 +42,6 @@ template<> template<>
 void Random123_object::test< 1 >() {
   set_test_name( "constructor throws with zero threads" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else

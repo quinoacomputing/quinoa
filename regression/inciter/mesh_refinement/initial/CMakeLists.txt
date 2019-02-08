@@ -24,20 +24,9 @@
 #        other possibilities instead of 'dg':
 #        - dgp1 - DG(P1), 2nd-order DG
 #        - diagcg - lumped-mass (diagonal) continuous Galerkin
-#        - matcg - continuous Galerkin with a matrix solver
 # * u0.4 - Non-zero virtualization u = 0.4
 
 # Virtualization = 0
-
-add_regression_test(amr_init_u1_trans_matcg ${INCITER_EXECUTABLE}
-                    NUMPES 1
-                    INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
-                    ARGS -c slot_cyl_amr.q -i unitsquare_01_955.exo -v
-                    BIN_BASELINE slot_cyl_pe1_u0.0.std.exo
-                    BIN_RESULT out.e-s.0.1.0
-                    BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff.cfg
-                    LABELS amr)
 
 add_regression_test(amr_init_u1_trans_diagcg ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -92,22 +81,6 @@ add_regression_test(amr_init_u1_compflow_reord_dg ${INCITER_EXECUTABLE}
 
 # Parallel, no virtualization
 
-add_regression_test(amr_init_u1_trans_matcg ${INCITER_EXECUTABLE}
-                    NUMPES 4
-                    INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
-                    ARGS -c slot_cyl_amr.q -i unitsquare_01_955.exo -v
-                    BIN_BASELINE slot_cyl_pe4_u0.0.std.exo.0
-                                 slot_cyl_pe4_u0.0.std.exo.1
-                                 slot_cyl_pe4_u0.0.std.exo.2
-                                 slot_cyl_pe4_u0.0.std.exo.3
-                    BIN_RESULT out.e-s.0.4.0
-                               out.e-s.0.4.1
-                               out.e-s.0.4.2
-                               out.e-s.0.4.3
-                    BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff.cfg
-                    LABELS amr)
-
 add_regression_test(amr_init_u1_trans_diagcg ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slot_cyl_amr_diagcg.q unitsquare_01_955.exo
@@ -125,57 +98,6 @@ add_regression_test(amr_init_u1_trans_diagcg ${INCITER_EXECUTABLE}
                     LABELS amr)
 
 # Parallel, virtualization = 0.5
-
-add_regression_test(amr_init_u1_trans_matcg_u0.5 ${INCITER_EXECUTABLE}
-                    NUMPES 4
-                    INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
-                    ARGS -c slot_cyl_amr.q -i unitsquare_01_955.exo -v -u 0.5
-                    BIN_BASELINE slot_cyl_pe4_u0.5.std.exo.0
-                                 slot_cyl_pe4_u0.5.std.exo.1
-                                 slot_cyl_pe4_u0.5.std.exo.2
-                                 slot_cyl_pe4_u0.5.std.exo.3
-                                 slot_cyl_pe4_u0.5.std.exo.4
-                                 slot_cyl_pe4_u0.5.std.exo.5
-                                 slot_cyl_pe4_u0.5.std.exo.6
-                                 slot_cyl_pe4_u0.5.std.exo.7
-                    BIN_RESULT out.e-s.0.8.0
-                               out.e-s.0.8.1
-                               out.e-s.0.8.2
-                               out.e-s.0.8.3
-                               out.e-s.0.8.4
-                               out.e-s.0.8.5
-                               out.e-s.0.8.6
-                               out.e-s.0.8.7
-                    BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff.cfg
-                    LABELS amr)
-
-add_regression_test(amr_init_u2_trans_matcg_u0.5 ${INCITER_EXECUTABLE}
-                    NUMPES 4
-                    INPUTFILES slot_cyl_amr_uniform2steps.q
-                               unitsquare_01_955.exo
-                    ARGS -c slot_cyl_amr_uniform2steps.q
-                         -i unitsquare_01_955.exo
-                         -v -u 0.5
-                    BIN_BASELINE slot_cyl_uni2_pe4_u0.5.std.exo.0
-                                 slot_cyl_uni2_pe4_u0.5.std.exo.1
-                                 slot_cyl_uni2_pe4_u0.5.std.exo.2
-                                 slot_cyl_uni2_pe4_u0.5.std.exo.3
-                                 slot_cyl_uni2_pe4_u0.5.std.exo.4
-                                 slot_cyl_uni2_pe4_u0.5.std.exo.5
-                                 slot_cyl_uni2_pe4_u0.5.std.exo.6
-                                 slot_cyl_uni2_pe4_u0.5.std.exo.7
-                    BIN_RESULT out.e-s.0.8.0
-                               out.e-s.0.8.1
-                               out.e-s.0.8.2
-                               out.e-s.0.8.3
-                               out.e-s.0.8.4
-                               out.e-s.0.8.5
-                               out.e-s.0.8.6
-                               out.e-s.0.8.7
-                    BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff.cfg
-                    LABELS amr)
 
 add_regression_test(amr_init_u1_trans_diagcg_u0.5 ${INCITER_EXECUTABLE}
                     NUMPES 4

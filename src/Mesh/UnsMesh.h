@@ -95,7 +95,7 @@ class UnsMesh {
       //! \param[in] r Right element primitive given by array of node IDs
       //! \return True if l = r, false otherwise
       //! \note The order of the nodes does not matter: the IDs are sorted
-      //!   before the primitives, given by the node IDs, is computed.
+      //!   before equality is determined.
       bool operator()( const std::array< std::size_t, N >& l,
                        const std::array< std::size_t, N >& r ) const
       {

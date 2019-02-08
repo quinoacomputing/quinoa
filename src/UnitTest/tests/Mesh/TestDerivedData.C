@@ -115,7 +115,6 @@
 #include "TUTConfig.h"
 #include "DerivedData.h"
 #include "Reorder.h"
-#include "ExodusIIMeshReader.h"
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 
@@ -145,10 +144,6 @@ template<> template<>
 void DerivedData_object::test< 1 >() {
   set_test_name( "genEsup throws with empty inpoel" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -167,10 +162,6 @@ void DerivedData_object::test< 1 >() {
 template<> template<>
 void DerivedData_object::test< 2 >() {
   set_test_name( "genEsup throws on non-positive nnpe" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
@@ -193,10 +184,6 @@ void DerivedData_object::test< 2 >() {
 template<> template<>
 void DerivedData_object::test< 3 >() {
   set_test_name( "genEsup throws on inpoel non-div nnpe" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   try {
     // Partial mesh mesh connectivity
@@ -384,10 +371,6 @@ template<> template<>
 void DerivedData_object::test< 6 >() {
   set_test_name( "genPsup throws with empty inpoel" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -408,10 +391,6 @@ template<> template<>
 void DerivedData_object::test< 7 >() {
   set_test_name( "genPsup throws on non-positive nnpe" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
@@ -430,10 +409,6 @@ void DerivedData_object::test< 7 >() {
 template<> template<>
 void DerivedData_object::test< 8 >() {
   set_test_name( "genPsup throws with empty esup.first" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
@@ -454,10 +429,6 @@ template<> template<>
 void DerivedData_object::test< 9 >() {
   set_test_name( "genPsup throws with empty esup.second" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -477,10 +448,6 @@ void DerivedData_object::test< 9 >() {
 template<> template<>
 void DerivedData_object::test< 10 >() {
   set_test_name( "genPsup throws on inpoel non-div nnpe" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield invalid read" );
@@ -670,10 +637,6 @@ template<> template<>
 void DerivedData_object::test< 13 >() {
   set_test_name( "genEsupel throws with empty inpoel" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -694,10 +657,6 @@ template<> template<>
 void DerivedData_object::test< 14 >() {
   set_test_name( "genEsupel throws on non-positive nnpe" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
@@ -716,10 +675,6 @@ void DerivedData_object::test< 14 >() {
 template<> template<>
 void DerivedData_object::test< 15 >() {
   set_test_name( "genEsupel throws with empty esup.first" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
@@ -740,10 +695,6 @@ template<> template<>
 void DerivedData_object::test< 16 >() {
   set_test_name( "genEsupel throws with empty esup.second" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -763,10 +714,6 @@ void DerivedData_object::test< 16 >() {
 template<> template<>
 void DerivedData_object::test< 17 >() {
   set_test_name( "genEsupel throws on inpoel non-div nnpe" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   try {
     // Partial mesh mesh connectivity
@@ -988,10 +935,6 @@ template<> template<>
 void DerivedData_object::test< 20 >() {
   set_test_name( "genEsuel throws with empty inpoel" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   try {
     std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
     std::vector< std::size_t > empty;
@@ -1010,10 +953,6 @@ void DerivedData_object::test< 20 >() {
 template<> template<>
 void DerivedData_object::test< 21 >() {
   set_test_name( "genEsuel throws on non-positive nnpe" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
@@ -1034,10 +973,6 @@ template<> template<>
 void DerivedData_object::test< 22 >() {
   set_test_name( "genEsuel throws with empty esup.first" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -1056,10 +991,6 @@ void DerivedData_object::test< 22 >() {
 template<> template<>
 void DerivedData_object::test< 23 >() {
   set_test_name( "genEsuel throws with empty esup.second" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
@@ -1080,10 +1011,6 @@ void DerivedData_object::test< 23 >() {
 template<> template<>
 void DerivedData_object::test< 24 >() {
   set_test_name( "genEsuel throws on inpoel non-div nnpe" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield invalid read" );
@@ -1295,10 +1222,6 @@ template<> template<>
 void DerivedData_object::test< 27 >() {
   set_test_name( "genEdsup throws with empty inpoel" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -1318,10 +1241,6 @@ void DerivedData_object::test< 27 >() {
 template<> template<>
 void DerivedData_object::test< 28 >() {
   set_test_name( "genEdsup throws on non-positive nnpe" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
@@ -1343,10 +1262,6 @@ template<> template<>
 void DerivedData_object::test< 29 >() {
   set_test_name( "genEdsup throws on unsupported nnpe" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
@@ -1365,10 +1280,6 @@ void DerivedData_object::test< 29 >() {
 template<> template<>
 void DerivedData_object::test< 30 >() {
   set_test_name( "genEdsup throws with empty esup.first" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
@@ -1389,10 +1300,6 @@ template<> template<>
 void DerivedData_object::test< 31 >() {
   set_test_name( "genEdsup throws with empty esup.second" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -1412,10 +1319,6 @@ void DerivedData_object::test< 31 >() {
 template<> template<>
 void DerivedData_object::test< 32 >() {
   set_test_name( "genEdsup throws on inpoel non-div nnpe" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield invalid read" );
@@ -1627,10 +1530,6 @@ template<> template<>
 void DerivedData_object::test< 35 >() {
   set_test_name( "genInpoed throws with empty inpoel" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -1650,10 +1549,6 @@ void DerivedData_object::test< 35 >() {
 template<> template<>
 void DerivedData_object::test< 36 >() {
   set_test_name( "genInpoed throws on non-positive nnpe" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
@@ -1675,10 +1570,6 @@ template<> template<>
 void DerivedData_object::test< 37 >() {
   set_test_name( "genInpoed throws on unsupported nnpe" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
@@ -1697,10 +1588,6 @@ void DerivedData_object::test< 37 >() {
 template<> template<>
 void DerivedData_object::test< 38 >() {
   set_test_name( "genInpoed throws with empty esup.first" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
@@ -1721,10 +1608,6 @@ template<> template<>
 void DerivedData_object::test< 39 >() {
   set_test_name( "genInpoed throws with empty esup.second" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -1744,10 +1627,6 @@ void DerivedData_object::test< 39 >() {
 template<> template<>
 void DerivedData_object::test< 40 >() {
   set_test_name( "genInpoed throws on inpoel non-div nnpe" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield invalid read" );
@@ -1905,10 +1784,6 @@ template<> template<>
 void DerivedData_object::test< 43 >() {
   set_test_name( "genInedel throws with empty inpoel" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
@@ -1928,10 +1803,6 @@ void DerivedData_object::test< 43 >() {
 template<> template<>
 void DerivedData_object::test< 44 >() {
   set_test_name( "genInpoed throws on non-positive nnpe" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
@@ -1953,10 +1824,6 @@ template<> template<>
 void DerivedData_object::test< 45 >() {
   set_test_name( "genInpoed throws on unsupported nnpe" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
@@ -1975,10 +1842,6 @@ void DerivedData_object::test< 45 >() {
 template<> template<>
 void DerivedData_object::test< 46 >() {
   set_test_name( "genInpoed throws with empty inpoed" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
@@ -1999,10 +1862,6 @@ void DerivedData_object::test< 46 >() {
 template<> template<>
 void DerivedData_object::test< 47 >() {
   set_test_name( "genInedel throws on inpoel non-div nnpe" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield invalid read" );
@@ -2214,10 +2073,6 @@ template<> template<>
 void DerivedData_object::test< 50 >() {
   set_test_name( "genEsued throws with empty inpoel" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -2237,10 +2092,6 @@ void DerivedData_object::test< 50 >() {
 template<> template<>
 void DerivedData_object::test< 51 >() {
   set_test_name( "genEsued throws on non-positive nnpe" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
@@ -2262,10 +2113,6 @@ template<> template<>
 void DerivedData_object::test< 52 >() {
   set_test_name( "genEsued throws on unsupported nnpe" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
@@ -2284,10 +2131,6 @@ void DerivedData_object::test< 52 >() {
 template<> template<>
 void DerivedData_object::test< 53 >() {
   set_test_name( "genEsued throws with empty esup.first" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
@@ -2308,10 +2151,6 @@ template<> template<>
 void DerivedData_object::test< 54 >() {
   set_test_name( "genEsued throws with empty esup.second" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -2331,10 +2170,6 @@ void DerivedData_object::test< 54 >() {
 template<> template<>
 void DerivedData_object::test< 55 >() {
   set_test_name( "genEsued throws on inpoel non-div nnpe" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield invalid read" );
@@ -2585,148 +2420,9 @@ void DerivedData_object::test< 57 >() {
   }
 }
 
-//! Generate and test number of boundary-faces for tet-only mesh
-template<> template<>
-void DerivedData_object::test< 65 >() {
-  set_test_name( "Boundary faces (genNbfacTet) for tetrahedra" );
-
-  std::map< int, std::vector< std::size_t > > bface, t_bface;
-
-  // Create unstructured-mesh object to read into
-  tk::UnsMesh inmesh;
-  // Read in mesh from file
-  std::string infile( tk::regression_dir() +
-                      "/meshconv/gmsh_output/box_24_ss1.exo" );
-  tk::ExodusIIMeshReader er( infile );
-  std::map< int, std::vector< std::size_t > > faceid;
-  er.readSidesetFaces( t_bface, faceid );
-
-  auto tnbfac = tk::sumvalsize( t_bface );
-
-  // Test if the number of boundary faces is correct
-  ensure_equals( "total number of boundary faces incorrect",
-                 tnbfac, 24 );
-
-  // Mesh connectivity for simple tetrahedron-only mesh
-  std::vector< std::size_t > inpoel { 12, 14,  9, 11,
-                                      10, 14, 13, 12,
-                                      14, 13, 12,  9,
-                                      10, 14, 12, 11,
-                                       1, 14,  5, 11,
-                                       7,  6, 10, 12,
-                                      14,  8,  5, 10,
-                                       8,  7, 10, 13,
-                                       7, 13,  3, 12,
-                                       1,  4, 14,  9,
-                                      13,  4,  3,  9,
-                                       3,  2, 12,  9,
-                                       4,  8, 14, 13,
-                                       6,  5, 10, 11,
-                                       1,  2,  9, 11,
-                                       2,  6, 12, 11,
-                                       6, 10, 12, 11,
-                                       2, 12,  9, 11,
-                                       5, 14, 10, 11,
-                                      14,  8, 10, 13,
-                                      13,  3, 12,  9,
-                                       7, 10, 13, 12,
-                                      14,  4, 13,  9,
-                                      14,  1,  9, 11 };
-
-  // Boundary-face node connectivity for the entire mesh
-  std::vector< std::size_t > t_triinpoel {  2,  9,  3,
-                                            1,  9,  2,
-                                            3,  9,  4,
-                                            1,  4,  9,
-                                            7, 10,  6,
-                                            6, 10,  5,
-                                            8, 10,  7,
-                                           10,  8,  5,
-                                            6, 11,  2,
-                                            2, 11,  1,
-                                           11,  6,  5,
-                                           11,  5,  1,
-                                            3, 12,  2,
-                                           12,  6,  2,
-                                            7, 12,  3,
-                                           12,  7,  6,
-                                           13,  7,  3,
-                                            4, 13,  3,
-                                           13,  8,  7,
-                                            8, 13,  4,
-                                            5,  8, 14,
-                                            1,  5, 14,
-                                            4, 14,  8,
-                                            1, 14,  4 };
-
-  // Correct Boundary-face node connectivity
-  std::vector< std::size_t > correct_triinpoel {  7, 10,  6,
-                                                  6, 10,  5,
-                                                  8, 10,  7,
-                                                 10,  8,  5,
-                                                  5,  8, 14,
-                                                  1,  5, 14,
-                                                  4, 14,  8,
-                                                  1, 14,  4,
-                                                  2,  9,  3,
-                                                  1,  9,  2,
-                                                  3,  9,  4,
-                                                  1,  4,  9,
-                                                  3, 12,  2,
-                                                 12,  6,  2,
-                                                  7, 12,  3,
-                                                 12,  7,  6,
-                                                 13,  7,  3,
-                                                  4, 13,  3,
-                                                 13,  8,  7,
-                                                  8, 13,  4,
-                                                  6, 11,  2,
-                                                  2, 11,  1,
-                                                 11,  6,  5,
-                                                 11,  5,  1 };
-
-  std::unordered_map< std::size_t, std::size_t > lid {
-          { {0}, {0} },
-          { {1}, {1} },
-          { {2}, {2} },
-          { {3}, {3} },
-          { {4}, {4} },
-          { {5}, {5} },
-          { {6}, {6} },
-          { {7}, {7} },
-          { {8}, {8} },
-          { {9}, {9} },
-          { {10}, {10} },
-          { {11}, {11} },
-          { {12}, {12} },
-          { {13}, {13} } };
-
-  // Shift node IDs to start from zero
-  tk::shiftToZero( inpoel );
-  tk::shiftToZero( t_triinpoel );
-  tk::shiftToZero( correct_triinpoel );
-
-  std::vector< std::size_t > triinpoel;
-
-  auto nbfac = tk::genNbfacTet( tnbfac, inpoel, t_triinpoel, t_bface, lid,
-                                triinpoel, bface );
-
-  ensure_equals( "number of boundary-faces is incorrect",
-                 nbfac, tnbfac );
-
-  ensure_equals( "total number of entries in triinpoel is incorrect",
-                 triinpoel.size(), correct_triinpoel.size() );
-
-  for(std::size_t i=0 ; i<triinpoel.size(); ++i)
-  {
-    ensure_equals("incorrect entry " + std::to_string(i) + " in triinpoel",
-                    triinpoel[i], correct_triinpoel[i]);
-  }
-}
-
 //! Generate and test face-data structures for tet-only mesh
 template<> template<>
-void DerivedData_object::test< 66 >() {
+void DerivedData_object::test< 58 >() {
   set_test_name( "genEsuf for tetrahedra" );
 
   // Mesh connectivity for simple tetrahedron-only mesh
@@ -3064,7 +2760,7 @@ void DerivedData_object::test< 66 >() {
 
 //! Generate and test face-node connectivities for tet-only mesh
 template<> template<>
-void DerivedData_object::test< 67 >() {
+void DerivedData_object::test< 59 >() {
   set_test_name( "genInpofa for tetrahedra" );
 
   // Mesh connectivity for simple tetrahedron-only mesh
@@ -3261,54 +2957,54 @@ void DerivedData_object::test< 67 >() {
   auto inpofa = tk::genInpofaTet( nipfac, nbfac, inpoel, triinpoel, esuelTet );
 
   // Generate correct solution for elements surrounding faces
-  std::vector< int > correct_inpofa {   9,  1, 24,
-                                       12,  1,  9,
-                                       24,  1, 20,
-                                       20,  1, 12,
-                                       20, 12, 23,
-                                       13, 24, 20,
-                                       13, 20,  5,
-                                        5, 20, 23,
-                                       13,  5, 16,
-                                        5, 23, 16,
-                                       19, 23, 12,
-                                       17, 24, 13,
-                                       21, 12,  9,
-                                       22, 13, 16,
-                                       17,  9, 24,
-                                       19, 16, 23,
-                                       17, 13,  6,
-                                        6, 13, 14,
-                                       12, 21,  4,
-                                        4, 19, 12,
-                                       10, 21,  9,
-                                        9, 17,  2,
-                                        9,  2, 10,
-                                       16, 19,  8,
-                                       16,  8, 15,
-                                       13, 22, 14,
-                                       22, 16, 15,
-                                       17,  6, 14,
-                                       19,  4, 25,
-                                        8, 19, 15,
-                                        2, 17, 10,
-                                       17, 14, 26,
-                                       25,  4, 11,
-                                       11,  4, 21,
-                                       19, 25, 15,
-                                       10, 17, 26,
-                                       11, 21, 10,
-                                        7, 22, 15,
-                                        7, 14, 22,
-                                       18, 15, 25,
-                                       18, 25, 11,
-                                       11, 10,  3,
-                                       10, 26, 18,
-                                       26, 14,  7,
-                                        7, 15, 18,
-                                       18, 11,  3,
-                                       10, 18,  3,
-                                       26,  7, 18,
+  std::vector< int > correct_inpofa {  24,  1,  9,
+                                        9,  1, 12,
+                                       20,  1, 24,
+                                       12,  1, 20,
+                                       23, 12, 20,
+                                       20, 24, 13,
+                                        5, 20, 13,
+                                       23, 20,  5,
+                                       16,  5, 13,
+                                       16, 23,  5,
+                                       12, 23, 19,
+                                       13, 24, 17,
+                                        9, 12, 21,
+                                       16, 13, 22,
+                                       24,  9, 17,
+                                       23, 16, 19,
+                                        6, 13, 17,
+                                       14, 13,  6,
+                                        4, 21, 12,
+                                       12, 19,  4,
+                                        9, 21, 10,
+                                        2, 17,  9,
+                                       10,  2,  9,
+                                        8, 19, 16,
+                                       15,  8, 16,
+                                       14, 22, 13,
+                                       15, 16, 22,
+                                       14,  6, 17,
+                                       25,  4, 19,
+                                       15, 19,  8,
+                                       10, 17,  2,
+                                       26, 14, 17,
+                                       11,  4, 25,
+                                       21,  4, 11,
+                                       15, 25, 19,
+                                       26, 17, 10,
+                                       10, 21, 11,
+                                       15, 22,  7,
+                                       22, 14,  7,
+                                       25, 15, 18,
+                                       11, 25, 18,
+                                        3, 10, 11,
+                                       18, 26, 10,
+                                        7, 14, 26,
+                                       18, 15,  7,
+                                        3, 11, 18,
+                                        3, 18, 10,
+                                       18,  7, 26,
                                         1, 12, 24,
                                        24, 12,  9,
                                        12, 24, 20,
@@ -3442,129 +3138,9 @@ void DerivedData_object::test< 67 >() {
   }
 }
 
-//! Generate and test boundary-element vector for tet-only mesh
-template<> template<>
-void DerivedData_object::test< 68 >() {
-  set_test_name( "genBelemTet for tetrahedra" );
-
-  std::map< int, std::vector< std::size_t > > bface;
-
-  // Create unstructured-mesh object to read into
-  tk::UnsMesh inmesh;
-  // Read in mesh from file
-  std::string infile( tk::regression_dir() +
-                      "/meshconv/gmsh_output/box_24_ss1.exo" );
-  tk::ExodusIIMeshReader er( infile );
-  std::map< int, std::vector< std::size_t > > faceid;
-  er.readSidesetFaces( bface, faceid );
-
-  auto nbfac = tk::sumvalsize(bface);
-
-  // Test if the number of boundary faces is correct
-  ensure_equals( "total number of boundary faces incorrect",
-                 nbfac, 24 );
-
-  // Mesh connectivity for simple tetrahedron-only mesh
-  std::vector< std::size_t > inpoel { 12, 14,  9, 11,
-                                      10, 14, 13, 12,
-                                      14, 13, 12,  9,
-                                      10, 14, 12, 11,
-                                       1, 14,  5, 11,
-                                       7,  6, 10, 12,
-                                      14,  8,  5, 10,
-                                       8,  7, 10, 13,
-                                       7, 13,  3, 12,
-                                       1,  4, 14,  9,
-                                      13,  4,  3,  9,
-                                       3,  2, 12,  9,
-                                       4,  8, 14, 13,
-                                       6,  5, 10, 11,
-                                       1,  2,  9, 11,
-                                       2,  6, 12, 11,
-                                       6, 10, 12, 11,
-                                       2, 12,  9, 11,
-                                       5, 14, 10, 11,
-                                      14,  8, 10, 13,
-                                      13,  3, 12,  9,
-                                       7, 10, 13, 12,
-                                      14,  4, 13,  9,
-                                      14,  1,  9, 11 };
-
-  // Boundary-face node connectivity
-  std::vector< std::size_t > triinpoel {  2,  9,  3,
-                                          1,  9,  2,
-                                          3,  9,  4,
-                                          1,  4,  9,
-                                          7, 10,  6,
-                                          6, 10,  5,
-                                          8, 10,  7,
-                                         10,  8,  5,
-                                          6, 11,  2,
-                                          2, 11,  1,
-                                         11,  6,  5,
-                                         11,  5,  1,
-                                          3, 12,  2,
-                                         12,  6,  2,
-                                          7, 12,  3,
-                                         12,  7,  6,
-                                         13,  7,  3,
-                                          4, 13,  3,
-                                         13,  8,  7,
-                                          8, 13,  4,
-                                          5,  8, 14,
-                                          1,  5, 14,
-                                          4, 14,  8,
-                                          1, 14,  4 };
-
-  // Correct boundary elements
-  std::vector< std::size_t > correct_belem{ 12,
-                                            15,
-                                            11,
-                                            10,
-                                             6,
-                                            14,
-                                             8,
-                                             7,
-                                            16,
-                                            15,
-                                            14,
-                                             5,
-                                            12,
-                                            16,
-                                             9,
-                                             6,
-                                             9,
-                                            11,
-                                             8,
-                                            13,
-                                             7,
-                                             5,
-                                            13,
-                                            10 };
-
-  // Shift node IDs to start from zero
-  tk::shiftToZero( inpoel );
-  tk::shiftToZero( triinpoel );
-
-  auto esup = tk::genEsup( inpoel, 4 );
-  auto esuel = tk::genEsuelTet( inpoel, esup );
-  auto nipfac = tk::genNipfac( 4, nbfac, esuel );
-  auto inpofa = tk::genInpofaTet( nipfac, nbfac, inpoel, triinpoel, esuel );
-  auto belem = tk::genBelemTet( nbfac, inpofa, esup );
-
-  ensure_equals( "total number of entries in belem is incorrect",
-                 belem.size(), correct_belem.size() );
-
-  for(std::size_t i=0 ; i<belem.size(); ++i)
-  {
-    ensure_equals("incorrect entry " + std::to_string(i) + " in belem",
-                    belem[i], correct_belem[i]-1);
-  }
-}
-
 //! Generate and test face-geometry vector for a single tetrahedron
 template<> template<>
-void DerivedData_object::test< 69 >() {
+void DerivedData_object::test< 60 >() {
   set_test_name( "Face-geometry (genGeoFaceTri) for a tetrahedron" );
 
   // total number of faces
@@ -3628,7 +3204,7 @@ void DerivedData_object::test< 69 >() {
 
 //! Generate and test element-geometry vector for a single tetrahedron
 template<> template<>
-void DerivedData_object::test< 70 >() {
+void DerivedData_object::test< 61 >() {
   set_test_name( "Element-geometry (genGeoElemTet) for a tetrahedron" );
 
   // coordinates of tetrahedron vertices
@@ -3774,10 +3350,6 @@ template<> template<>
 void DerivedData_object::test< 72 >() {
   set_test_name( "Mesh conformity, empty inpoel, empty coord" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   try {
     tk::conforming( {}, {} );
     #ifndef NDEBUG        // exception only thrown in DEBUG mode
@@ -3794,10 +3366,6 @@ void DerivedData_object::test< 72 >() {
 template<> template<>
 void DerivedData_object::test< 73 >() {
   set_test_name( "Mesh conformity, empty inpoel, non-empty coord" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   try {
     std::array< std::vector< tk::real >, 3 > coord {{
@@ -3821,10 +3389,6 @@ template<> template<>
 void DerivedData_object::test< 74 >() {
   set_test_name( "Mesh conformity, non-zero-based inpoel, empty crd" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -3846,10 +3410,6 @@ void DerivedData_object::test< 74 >() {
 template<> template<>
 void DerivedData_object::test< 75 >() {
   set_test_name( "Mesh conformity, partial inpoel, non-empty coord" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );

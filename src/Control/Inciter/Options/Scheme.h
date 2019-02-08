@@ -14,21 +14,17 @@
 #include "Toggle.h"
 #include "Keywords.h"
 #include "PUPUtil.h"
+#include "Centering.h"
 
 namespace inciter {
 namespace ctr {
 
 //! Scheme types
-enum class SchemeType : uint8_t { MatCG
-                                , DiagCG
+enum class SchemeType : uint8_t { DiagCG
                                 , ALECG
                                 , DG
                                 , DGP1 
                                 , DGP2 };
-
-//! Scheme centering types
-enum class Centering : uint8_t { NODE
-                               , ELEM };
 
 //! Pack/Unpack SchemeType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, SchemeType& e ) { PUP::pup( p, e ); }
@@ -38,8 +34,7 @@ class Scheme : public tk::Toggle< SchemeType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = brigand::list< kw::matcg
-                                  , kw::diagcg
+    using keywords = brigand::list< kw::diagcg
                                   , kw::alecg
                                   , kw::dg
                                   , kw::dgp1
@@ -54,15 +49,13 @@ class Scheme : public tk::Toggle< SchemeType > {
         //! Group, i.e., options, name
         kw::scheme::name(),
         //! Enums -> names (if defined, policy codes, if not, name)
-        { { SchemeType::MatCG, kw::matcg::name() },
-          { SchemeType::DiagCG, kw::diagcg::name() },
+        { { SchemeType::DiagCG, kw::diagcg::name() },
           { SchemeType::ALECG, kw::alecg::name() },
           { SchemeType::DG, kw::dg::name() },
           { SchemeType::DGP1, kw::dgp1::name() },
           { SchemeType::DGP2, kw::dgp2::name() } },
         //! keywords -> Enums
-        { { kw::matcg::string(), SchemeType::MatCG },
-          { kw::diagcg::string(), SchemeType::DiagCG },
+        { { kw::diagcg::string(), SchemeType::DiagCG },
           { kw::alecg::string(), SchemeType::ALECG },
           { kw::dg::string(), SchemeType::DG },
           { kw::dgp1::string(), SchemeType::DGP1 }, 
@@ -70,13 +63,19 @@ class Scheme : public tk::Toggle< SchemeType > {
 
     //! Return scheme centering for SchemeType
     //! \param[in] type Scheme type
-    //! \return Centering for scheme type
-    Centering centering( SchemeType type ) {
-      if (type == SchemeType::MatCG || type == SchemeType::DiagCG ||
-          type == SchemeType::ALECG )
-        return Centering::NODE;
-      else if (type == SchemeType::DG || type == SchemeType::DGP1 || type == SchemeType::DGP2)
-        return Centering::ELEM;
+    //! \return Mesh centering for scheme type
+    tk::Centering centering( SchemeType type ) {
+      if ( type == SchemeType::DiagCG ||
+           type == SchemeType::ALECG )
+
+        return tk::Centering::NODE;
+
+      else if ( type == SchemeType::DG ||
+                type == SchemeType::DGP1 ||
+                type == SchemeType::DGP2 )
+
+        return tk::Centering::ELEM;
+
       else Throw( "No such scheme centering" );
     }
 };

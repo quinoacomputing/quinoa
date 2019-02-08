@@ -175,7 +175,7 @@ add_regression_test(compflow_euler_vorticalflow_diagcg_u0.9_migr
                     NUMPES 4
                     INPUTFILES vortical_flow_diagcg.q unitcube_1k.exo
                     ARGS -c vortical_flow_diagcg.q -i unitcube_1k.exo -v -u 0.9
-                         +balancer RandCentLB +LBDebug 3 +cs
+                         +balancer RandCentLB +LBDebug 1 +cs
                     BIN_BASELINE vortical_flow_diagcg_pe4_u0.9.std.exo.0
                                  vortical_flow_diagcg_pe4_u0.9.std.exo.1
                                  vortical_flow_diagcg_pe4_u0.9.std.exo.2
