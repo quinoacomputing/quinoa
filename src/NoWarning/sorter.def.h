@@ -18,6 +18,7 @@
   #pragma clang diagnostic ignored "-Wsign-conversion"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
   #pragma clang diagnostic ignored "-Wextra-semi"
+  #pragma clang diagnostic ignored "-Wextra-semi-stmt"
   #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push

@@ -13,14 +13,14 @@ module refiner {
   include "Scheme.h";
 
   extern module sorter;
-  extern module solver;
+  extern module meshwriter;
 
   namespace inciter {
 
     array [1D] Refiner {
       entry Refiner( const CProxy_Transporter& transporter,
                      const CProxy_Sorter& sorter,
-                     const tk::CProxy_Solver& solver,
+                     const tk::CProxy_MeshWriter& meshwriter,
                      const Scheme& scheme,
                      const tk::RefinerCallback& cbr,
                      const tk::SorterCallback& cbs,
@@ -33,7 +33,6 @@ module refiner {
       initnode void registerReducers();
       entry
         void dtref( tk::real t,
-                    const SchemeBase::Proxy& s,
                     const std::map< int, std::vector< std::size_t > >& bnode );
       entry [reductiontarget] void addBndEdges( CkReductionMsg* msg );
       entry void addRefBndEdges( int fromch,

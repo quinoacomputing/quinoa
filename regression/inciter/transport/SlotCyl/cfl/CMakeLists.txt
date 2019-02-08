@@ -22,7 +22,7 @@ if (HAS_OMEGA_H)
 
   # parallel with nranks = nparts
   add_regression_test(cfl_osh ${INCITER_EXECUTABLE}
-                      NUMPES 2
+                      NUMPES 2 PPN 1
                       INPUTFILES slot_cyl_cfl.q box10_2.osh
                       ARGS -c slot_cyl_cfl.q -i box10_2.osh -v
                       BIN_BASELINE slot_cyl_cfl_osh10_pe2.std.exo.0

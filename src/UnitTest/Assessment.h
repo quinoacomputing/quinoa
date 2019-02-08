@@ -27,7 +27,6 @@ void evaluate( std::vector< std::string > status,
 
 //! Echo final assessment after the full unit test suite has finished
 bool assess( const tk::Print& print,
-             std::string suite,
              std::size_t nfail,
              std::size_t nwarn,
              std::size_t nskip,

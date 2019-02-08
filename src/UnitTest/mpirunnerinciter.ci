@@ -1,0 +1,29 @@
+// *****************************************************************************
+/*!
+  \file      src/UnitTest/mpirunnerinciter.ci
+  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \brief     Charm++ module interface file for mpirunner nodegroup
+  \details   Charm++ module interface file for mpirunner nodegroup used to
+             spawn MPI unit tests, including dependencies for inciter.
+*/
+// *****************************************************************************
+
+module mpirunnerinciter {
+
+  extern module tutsuiteinciter;
+
+  namespace unittest {
+
+    // List all possible specializations of templated chare to instantiate
+    // registration and delivery of code for the individual specializations
+    chare MPIRunner< CProxy_TUTSuite >;
+
+    template< class Proxy >
+    nodegroup MPIRunner {
+      entry MPIRunner( const Proxy& proxy );
+      entry [exclusive] void rungroup( const std::string& groupname );
+    }
+
+  } // unittest::
+
+}

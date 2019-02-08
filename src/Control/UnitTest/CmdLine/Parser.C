@@ -74,6 +74,18 @@ CmdLineParser::CmdLineParser( int argc,
   // If we got here, the parser has succeeded
   print.item("Parsed command line", "success");
 
+  // Print out help on all command-line arguments if requested
+  const auto helpcmd = cmdline.get< tag::help >();
+  if (helpcmd)
+    print.help< tk::QUIET >( tk::unittest_executable(),
+                             cmdline.get< tag::cmdinfo >(),
+                             "Command-line Parameters:", "-" );
+
+  // Print out verbose help for a single keyword if requested
+  const auto helpkw = cmdline.get< tag::helpkw >();
+  if (!helpkw.keyword.empty())
+    print.helpkw< tk::QUIET >( tk::unittest_executable(), helpkw );
+
   // Will exit in main chare constructor if any help was output
   if (cmdline.get< tag::help >() ||           // help on all cmdline args
       !cmdline.get< tag::helpkw >().keyword.empty()) // help on a keyword

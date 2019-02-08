@@ -27,7 +27,6 @@
 #include "UnsMesh.h"
 #include "Base/Fields.h"
 #include "SchemeBase.h"
-#include "MatCG.h"
 #include "DiagCG.h"
 #include "ALECG.h"
 #include "DG.h"
@@ -44,7 +43,7 @@ class Refiner : public CBase_Refiner {
     //! Constructor
     explicit Refiner( const CProxy_Transporter& transporter,
                       const CProxy_Sorter& sorter,
-                      const tk::CProxy_Solver& solver,
+                      const tk::CProxy_MeshWriter& meshwriter,
                       const Scheme& scheme,
                       const tk::RefinerCallback& cbr,
                       const tk::SorterCallback& cbs,
@@ -70,7 +69,6 @@ class Refiner : public CBase_Refiner {
 
     //! Start mesh refinement (during time stepping, t>0)
     void dtref( tk::real t,
-                const SchemeBase::Proxy& s,
                 const std::map< int, std::vector< std::size_t > >& bnode );
 
     //! Receive boundary edges from all PEs (including this one)
@@ -95,12 +93,11 @@ class Refiner : public CBase_Refiner {
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &p ) {
+    void pup( PUP::er &p ) override {
       p | m_host;
       p | m_sorter;
-      p | m_solver;
+      p | m_meshwriter;
       p | m_scheme;
-      p | m_schemeproxy;
       p | m_cbr;
       p | m_cbs;
       p | m_ginpoel;
@@ -152,12 +149,10 @@ class Refiner : public CBase_Refiner {
     CProxy_Transporter m_host;
     //! Mesh sorter proxy
     CProxy_Sorter m_sorter;
-    //! Linear soilver proxy
-    tk::CProxy_Solver m_solver;
+    //! Mesh writer proxy
+    tk::CProxy_MeshWriter m_meshwriter;
     //! Discretization scheme
     Scheme m_scheme;
-    //! Variant storing the discretization scheme class we interoperate with
-    SchemeBase::Proxy m_schemeproxy;
     //! Charm++ callbacks associated to compile-time tags for refiner
     tk::RefinerCallback m_cbr;
     //! Charm++ callbacks associated to compile-time tags for sorter

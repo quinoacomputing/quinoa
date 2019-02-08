@@ -68,9 +68,7 @@ class ALECG : public CBase_ALECG {
     #endif
 
     //! Constructor
-    explicit ALECG( const CProxy_Discretization& disc,
-                    const tk::CProxy_Solver& solver,
-                    const FaceData& fd );
+    explicit ALECG( const CProxy_Discretization& disc, const FaceData& fd );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -88,8 +86,8 @@ class ALECG : public CBase_ALECG {
     //! Setup: query boundary conditions, output mesh, etc.
     void setup( tk::real v );
 
-    //! Compute time step size
-    void dt();
+    // Initially compute left hand side diagonal matrix
+    void init();
 
     //! Advance equations to next time step
     void advance( tk::real newdt );
@@ -129,13 +127,15 @@ class ALECG : public CBase_ALECG {
     //! Resizing data sutrctures after mesh refinement has been completed
     void resized();
 
+    //! Evaluate whether to continue with next time step
+    void step();
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_disc;
-      p | m_itf;
       p | m_initial;
       p | m_nsol;
       p | m_nlhs;
@@ -161,10 +161,6 @@ class ALECG : public CBase_ALECG {
 
     //! Discretization proxy
     CProxy_Discretization m_disc;
-    //! Field output iteration count without mesh refinement
-    //! \details Counts the number of field outputs to file during two
-    //!   time steps with mesh efinement
-    uint64_t m_itf;
     //! True if starting time stepping, false if during time stepping
     bool m_initial;
     //! Counter for high order solution vector nodes updated
@@ -203,7 +199,7 @@ class ALECG : public CBase_ALECG {
     void out();
 
     //! Output mesh-based fields to file
-    void writeFields( tk::real time );
+    void writeFields( CkCallback c );
 
     //! The own and communication portion of the left-hand side is complete
     void lhsdone();
@@ -220,8 +216,8 @@ class ALECG : public CBase_ALECG {
     //! Solve low and high order diagonal systems
     void solve();
 
-    //! Evaluate whether to continue with next step
-    void eval();
+    //! Compute time step size
+    void dt();
 };
 
 } // inciter::

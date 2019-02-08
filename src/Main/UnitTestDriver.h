@@ -20,14 +20,11 @@ class UnitTestDriver {
 
   public:
     //! Constructor
-    explicit UnitTestDriver( const UnitTestPrint& print,
+    explicit UnitTestDriver( const UnitTestPrint&,
                              const ctr::CmdLine& cmdline );
 
     //! Execute driver
     void execute() const {}
-
-  private:
-    const UnitTestPrint& m_print;
 };
 
 } // unittest::

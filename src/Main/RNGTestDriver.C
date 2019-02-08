@@ -45,6 +45,7 @@ RNGTestDriver::RNGTestDriver( const RNGTestPrint& print,
   m_print.item( "Control file", cmdline.get< tag::io, tag::control >() );  
   InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );
   m_print.item( "Parsed control file", "success" );  
+
   m_print.endpart();
 }
 

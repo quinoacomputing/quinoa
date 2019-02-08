@@ -20,7 +20,6 @@
 #include "PUPUtil.h"
 #include "Inciter/Options/Scheme.h"
 
-#include "NoWarning/matcg.decl.h"
 #include "NoWarning/diagcg.decl.h"
 #include "NoWarning/alecg.decl.h"
 #include "NoWarning/distfct.decl.h"
@@ -32,7 +31,18 @@ namespace inciter {
 //! Base class for generic forwarding interface to discretization proxies
 class SchemeBase {
 
+  private:
+    //! Variant type listing all chare proxy types modeling the same concept
+    using Proxy =
+      boost::variant< CProxy_DiagCG, CProxy_DG, CProxy_ALECG >;
+
   public:
+    //! Variant type listing all chare element proxy types (behind operator[])
+    using ProxyElem =
+      boost::variant< CProxy_DiagCG::element_t,
+                      CProxy_DG::element_t,
+                      CProxy_ALECG::element_t >;
+
     //! Empty constructor for Charm++
     explicit SchemeBase() {}
 
@@ -48,25 +58,27 @@ class SchemeBase {
     explicit SchemeBase( ctr::SchemeType scheme ) :
       discproxy( CProxy_Discretization::ckNew() )
     {
-      m_bound.bindTo( discproxy );
-      if (scheme == ctr::SchemeType::MatCG) {
-        proxy = static_cast< CProxy_MatCG >( CProxy_MatCG::ckNew(m_bound) );
-        fctproxy = CProxy_DistFCT::ckNew(m_bound);
-      } else if (scheme == ctr::SchemeType::DiagCG) {
-        proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(m_bound) );
-        fctproxy= CProxy_DistFCT::ckNew(m_bound);
+      bound.bindTo( discproxy );
+      if (scheme == ctr::SchemeType::DiagCG) {
+        proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(bound) );
+        fctproxy = CProxy_DistFCT::ckNew(bound);
       } else if (scheme == ctr::SchemeType::DG ||
                  scheme == ctr::SchemeType::DGP1 ||
                  scheme == ctr::SchemeType::DGP2)
       {
-        proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(m_bound) );
+        proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(bound) );
       } else if (scheme == ctr::SchemeType::ALECG) {
-        proxy = static_cast< CProxy_ALECG >( CProxy_ALECG::ckNew(m_bound) );
+        proxy = static_cast< CProxy_ALECG >( CProxy_ALECG::ckNew(bound) );
       } else Throw( "Unknown discretization scheme" );
     }
 
     //! Get reference to discretization proxy
+    //! \return Discretization Charm++ chare array proxy
     CProxy_Discretization& get() noexcept { return discproxy; }
+
+    //! Get reference to scheme proxy
+    //! \return Variant storing Charm++ chare array proxy configured
+    const Proxy& getProxy() noexcept { return proxy; }
 
     //! Query underlying proxy type
     //! \return Zero-based index into the set of types of Proxy
@@ -80,15 +92,7 @@ class SchemeBase {
 
     //! Charm++ array options accessor for binding external proxies
     //! \return Charm++ array options object reference
-    const CkArrayOptions& arrayoptions() { return m_bound; }
-
-    //! Variant type listing all chare proxy types modeling the same concept
-    using Proxy =
-      boost::variant< CProxy_MatCG, CProxy_DiagCG, CProxy_DG, CProxy_ALECG >;
-    //! Variant type listing all chare element proxy types (behind operator[])
-    using ProxyElem =
-      boost::variant< CProxy_MatCG::element_t, CProxy_DiagCG::element_t,
-                      CProxy_DG::element_t, CProxy_ALECG::element_t >;
+    const CkArrayOptions& arrayoptions() { return bound; }
 
   protected:
     //! Variant storing one proxy to which this class is configured for
@@ -98,7 +102,7 @@ class SchemeBase {
     //! Charm++ proxy to flux-corrected transport (FCT) driver class
     CProxy_DistFCT fctproxy;
     //! Charm++ array options for binding chares
-    CkArrayOptions m_bound;
+    CkArrayOptions bound;
 
     //! Generic base for all call_* classes
     //! \details This class stores the entry method arguments and contains a
@@ -158,6 +162,7 @@ class SchemeBase {
       p | proxy;
       p | discproxy;
       p | fctproxy;
+      p | bound;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

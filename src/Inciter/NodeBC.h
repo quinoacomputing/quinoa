@@ -4,7 +4,7 @@
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Boundary conditions for nodal discretizations
   \details   Boundary conditions for nodal discretizations, such as continuous
-    Galerkin finite elements, e.g., MatCG, DiagCG.
+    Galerkin finite elements, e.g., DiagCG.
 */
 // *****************************************************************************
 #ifndef NodeBC_h

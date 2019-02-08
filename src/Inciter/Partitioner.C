@@ -2,15 +2,10 @@
 /*!
   \file      src/Inciter/Partitioner.C
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Charm++ chare partitioner group used to perform mesh partitioning
-  \details   Charm++ chare partitioner group used to parform mesh partitioning.
-
-    The implementation uses the Charm++ runtime system and is fully
-    asynchronous, overlapping computation, communication as well as I/O. The
-    algorithm utilizes the structured dagger (SDAG) Charm++ functionality. The
-    high-level overview of the algorithm structure and how it interfaces with
-    Charm++ is discussed in the Charm++ interface file
-    src/Inciter/partitioner.ci.
+  \brief     Charm++ chare partitioner nodegroup used to perform mesh
+             partitioning
+  \details   Charm++ chare partitioner nodegroup used to perform mesh read and
+             partitioning, one worker per compute node.
 */
 // *****************************************************************************
 
@@ -42,9 +37,9 @@ Partitioner::Partitioner(
   const tk::RefinerCallback& cbr,
   const tk::SorterCallback& cbs,
   const CProxy_Transporter& host,
-  const tk::CProxy_Solver& solver,
   const CProxy_Refiner& refiner,
   const CProxy_Sorter& sorter,
+  const tk::CProxy_MeshWriter& meshwriter,
   const Scheme& scheme,
   const std::map< int, std::vector< std::size_t > >& belem,
   const std::map< int, std::vector< std::size_t > >& faces,
@@ -53,26 +48,22 @@ Partitioner::Partitioner(
   m_cbr( cbr ),
   m_cbs( cbs ),
   m_host( host ),
-  m_solver( solver ),
   m_refiner( refiner ),
   m_sorter( sorter ),
+  m_meshwriter( meshwriter ),
   m_scheme( scheme ),
   m_ginpoel(),
   m_coord(),
   m_inpoel(),
-  m_gid(),
   m_lid(),
-  m_reqNodes(),
-  m_start( 0 ),
   m_ndist( 0 ),
-  m_noffset( 0 ),
-  m_nquery( 0 ),
-  m_nmask( 0 ),
-  m_coordmap(),
   m_nchare( 0 ),
+  m_nface(),
   m_chinpoel(),
   m_chcoordmap(),
-  m_bnodechares(),
+  m_chbface(),
+  m_chtriinpoel(),
+  m_chbnode(),
   m_bface( belem ),
   m_bnode( bnode )
 // *****************************************************************************
@@ -81,9 +72,9 @@ Partitioner::Partitioner(
 //! \param[in] cbr Charm++ callbacks for Refiner
 //! \param[in] cbs Charm++ callbacks for Sorter
 //! \param[in] host Host Charm++ proxy we are being called from
-//! \param[in] solver Linear system solver proxy
 //! \param[in] refiner Mesh refiner proxy
 //! \param[in] sorter Mesh reordering (sorter) proxy
+//! \param[in] meshwriter Mesh writer proxy
 //! \param[in] scheme Discretization scheme
 //! \param[in] belem File-internal elem ids of side sets (whole mesh)
 //! \param[in] faces Elem-relative face ids of side sets (whole mesh)
@@ -93,16 +84,18 @@ Partitioner::Partitioner(
   // Create mesh reader
   tk::MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
-  // Read this PE's chunk of the mesh (graph and coords) from file
+  // Read this compute node's chunk of the mesh (graph and coords) from file
   std::vector< size_t > triinpoel;
-  mr.readMeshPart( m_ginpoel, m_inpoel, triinpoel, m_gid, m_lid, m_coord,
-                   CkNumPes(), CkMyPe() );
+
+  mr.readMeshPart( m_ginpoel, m_inpoel, triinpoel, m_lid, m_coord,
+                   CkNumNodes(), CkMyNode() );
 
   // Compute triangle connectivity for side sets, reduce boundary face for side
-  // sets to this PE only and to PE-local face ids
+  // sets to this compute node only and to compute-node-local face ids
   m_triinpoel = mr.triinpoel( m_bface, faces, m_ginpoel, triinpoel );
 
-  // Reduce boundary node lists (global ids) for side sets to this PE only
+  // Reduce boundary node lists (global ids) for side sets to this compute node
+  // only
   ownBndNodes( m_lid, m_bnode );
 
   // Compute number of cells across whole problem
@@ -116,11 +109,12 @@ Partitioner::ownBndNodes(
   const std::unordered_map< std::size_t, std::size_t >& lid,
   std::map< int, std::vector< std::size_t > >& bnode )
 // *****************************************************************************
-// Keep only those nodes for side sets that reside on this PE
-//! \param[in] lid Global->local node IDs of elements of this PE's mesh chunk
+// Keep only those nodes for side sets that reside on this compute node
+//! \param[in] lid Global->local node IDs of elements of this compute node's
+//!   mesh chunk
 //! \param[in,out] bnode Global ids of nodes for side sets for whole mesh
 //! \details This function overwrites the input boundary node lists map with the
-//!    nodes that reside on the caller PE.
+//!    nodes that reside on the caller compute node.
 // *****************************************************************************
 {
   std::map< int, std::vector< std::size_t > > bnode_own;
@@ -144,11 +138,11 @@ Partitioner::partition( int nchare )
 //! \param[in] nchare Number of parts the mesh will be partitioned into
 //! \details This function calls the mesh partitioner to partition the mesh. The
 //!   number of partitions equals the number nchare argument which must be no
-//!   lower than the number of PEs.
+//!   lower than the number of compute nodes.
 // *****************************************************************************
 {
-  Assert( nchare >= CkNumPes(),
-          "Number of chares must not be lower than the number of PEs" );
+  Assert( nchare >= CkNumNodes(), "Number of chares must not be lower than the "
+                                  "number of compute nodes" );
 
   // Generate element IDs for Zoltan
   std::vector< long > gelemid( m_ginpoel.size()/4 );
@@ -167,59 +161,83 @@ Partitioner::partition( int nchare )
           "of elements) after mesh partitioning does not equal the number of "
           "mesh graph elements" );
 
-  m_chcoordmap.clear();
-  m_chinpoel.clear();
-
   // Categorize mesh elements (given by their gobal node IDs) by target chare
-  // and distribute to their PEs based on mesh partitioning.
-  distribute( categorize( che, m_ginpoel ) );
+  // and distribute to their compute nodes based on mesh partitioning.
+  distribute( categorize( che ) );
 }
 
 void
-Partitioner::addMesh( int frompe,
-                      const std::unordered_map< int,
-                              std::tuple< std::vector< std::size_t >,
-                                          tk::UnsMesh::CoordMap > >& chmesh )
+Partitioner::addMesh(
+  int fromnode,
+  const std::unordered_map< int,        // chare id
+          std::tuple<
+            std::vector< std::size_t >, // tet connectivity
+            tk::UnsMesh::CoordMap,      // node coords
+            std::unordered_map< int, std::vector< std::size_t > >, // bface conn
+            std::unordered_map< int, std::vector< std::size_t > >  // bnodes
+          > >& chmesh )
 // *****************************************************************************
 //  Receive mesh associated to chares we own after refinement
-//! \param[in] frompe PE call coming from
+//! \param[in] fromnode Compute node call coming from
 //! \param[in] chmesh Map associating mesh connectivities to global node ids
 //!   and node coordinates for mesh chunks we are assigned by the partitioner
 // *****************************************************************************
 {
-  // Store mesh connectivity and global node coordinates categorized by chares
+  // Store mesh connectivity and global node coordinates categorized by chares.
+  // The send side also writes to the data written here, so concat.
   for (const auto& c : chmesh) {
-    Assert( pe(c.first) == CkMyPe(), "PE " + std::to_string(CkMyPe()) +
+    Assert( node(c.first) == CkMyNode(), "Compute node "
+            + std::to_string(CkMyNode()) +
             " received a mesh whose chare it does not own" );
-    // The send side also writes to this so append/concat
-    auto& inpoel = m_chinpoel[ c.first ];
-    const auto& mesh = std::get< 0 >( c.second );
-    inpoel.insert( end(inpoel), begin(mesh), end(mesh) );
-    // Store coordinates associated to global node IDs. The send side also
-    // writes to this, so concat.
+    // Store domain element (tetrahedron) connectivity
+    const auto& inpoel = std::get< 0 >( c.second );
+    auto& inp = m_chinpoel[ c.first ];  // will store tetrahedron connectivity
+    inp.insert( end(inp), begin(inpoel), end(inpoel) );
+    // Store mesh node coordinates associated to global node IDs
     const auto& coord = std::get< 1 >( c.second );
-    Assert( tk::uniquecopy(mesh).size() == coord.size(), "Size mismatch" );
-    auto& chcm = m_chcoordmap[ c.first ];  // store node coordinates per chare
+    Assert( tk::uniquecopy(inpoel).size() == coord.size(), "Size mismatch" );
+    auto& chcm = m_chcoordmap[ c.first ];     // will store node coordinates
     chcm.insert( begin(coord), end(coord) );  // concatenate node coords
+    // Store boundary side set id + face ids + face connectivities
+    const auto& bconn = std::get< 2 >( c.second );
+    auto& bface = m_chbface[ c.first ];  // for side set id + boundary face ids
+    auto& t = m_chtriinpoel[ c.first ];  // for boundary face connectivity
+    auto& f = m_nface[ c.first ];        // use counter for chare
+    for (const auto& s : bconn) {
+      auto& b = bface[ s.first ];
+      for (std::size_t i=0; i<s.second.size()/3; ++i) {
+        b.push_back( f++ );
+        t.push_back( s.second[i*3+0] );
+        t.push_back( s.second[i*3+1] );
+        t.push_back( s.second[i*3+2] );
+      }
+    }
+    // Store boundary side set id + node lists
+    const auto& bnode = std::get< 3 >( c.second );
+    auto& nodes = m_chbnode[ c.first ];  // for side set id + boundary nodes
+    for (const auto& s : bnode) {
+      auto& b = nodes[ s.first ];
+      b.insert( end(b), begin(s.second), end(s.second) );
+    }
   }
 
-  thisProxy[ frompe ].recvMesh();
+  thisProxy[ fromnode ].recvMesh();
 }
 
 int
-Partitioner::pe( int id ) const
+Partitioner::node( int id ) const
 // *****************************************************************************
-//  Return processing element for chare id
+//  Return nodegroup id for chare id
 //! \param[in] id Chare id
-//! \return PE that creates the chare
+//! \return Nodegroup that creates the chare
 //! \details This is computed based on a simple contiguous linear
-//!   distribution of chare ids to PEs.
+//!   distribution of chare ids to compute nodes.
 // *****************************************************************************
 {
   Assert( m_nchare > 0, "Number of chares must be a positive number" );
-  auto p = id / (m_nchare / CkNumPes());
-  if (p >= CkNumPes()) p = CkNumPes()-1;
-  Assert( p < CkNumPes(), "Assigning to nonexistent PE" );
+  auto p = id / (m_nchare / CkNumNodes());
+  if (p >= CkNumNodes()) p = CkNumNodes()-1;
+  Assert( p < CkNumNodes(), "Assigning to nonexistent node" );
   return p;
 }
 
@@ -243,29 +261,41 @@ Partitioner::refine()
 {
   auto dist = distribution( m_nchare );
 
-  //m_cbr.get< tag::update >() =
-  //  CkCallback( CkIndex_Partitioner::updateBoundaryMesh(nullptr), thisProxy );
+  int error = 0;
+  if (m_chinpoel.size() < static_cast<std::size_t>(dist[1])) {
 
-  for (int c=0; c<dist[1]; ++c) {
-    // compute chare ID
-    auto cid = CkMyPe() * dist[0] + c;
-    // create refiner Charm++ chare array element using dynamic insertion
-    m_refiner[ cid ].insert( m_host,
-                             m_sorter,
-                             m_solver,
-                             m_scheme,
-                             m_cbr,
-                             m_cbs,
-                             tk::cref_find(m_chinpoel,cid),     // chare mesh
-                             tk::cref_find(m_chcoordmap,cid),   // chare mesh
-                             m_bface,                           // this PE
-                             m_triinpoel,                       // this PE
-                             m_bnode,                           // this PE
-                             m_nchare,
-                             CkMyPe() );
+    error = 1;
+
+  } else {
+
+    for (int c=0; c<dist[1]; ++c) {
+      // compute chare ID
+      auto cid = CkMyNode() * dist[0] + c;
+      // create refiner Charm++ chare array element using dynamic insertion
+      m_refiner[ cid ].insert( m_host,
+                               m_sorter,
+                               m_meshwriter,
+                               m_scheme,
+                               m_cbr,
+                               m_cbs,
+                               tk::cref_find(m_chinpoel,cid),
+                               tk::cref_find(m_chcoordmap,cid),
+                               tk::cref_find(m_chbface,cid),
+                               tk::cref_find(m_chtriinpoel,cid),
+                               tk::cref_find(m_chbnode,cid),
+                               m_nchare );
+    }
+
   }
 
-  contribute( m_cbp.get< tag::refinserted >() );
+  tk::destroy( m_chinpoel );
+  tk::destroy( m_chcoordmap );
+  tk::destroy( m_chbface );
+  tk::destroy( m_chtriinpoel );
+  tk::destroy( m_chbnode );
+
+  contribute( sizeof(int), &error, CkReduction::max_int,
+              m_cbp.get< tag::refinserted >() );
 }
 
 std::array< std::vector< tk::real >, 3 >
@@ -275,7 +305,7 @@ Partitioner::centroids( const std::vector< std::size_t >& inpoel,
 //  Compute element centroid coordinates
 //! \param[in] inpoel Mesh connectivity with local ids
 //! \param[in] coord Node coordinates
-//! \return Centroids for all cells on this PE
+//! \return Centroids for all cells on this compute node
 // *****************************************************************************
 {
   Assert( tk::uniquecopy(inpoel).size() == coord[0].size(), "Size mismatch" );
@@ -308,48 +338,94 @@ Partitioner::centroids( const std::vector< std::size_t >& inpoel,
   return cent;
 }
 
-std::unordered_map< int, std::vector< std::size_t > >
-Partitioner::categorize( const std::vector< std::size_t >& target,
-                         const std::vector< std::size_t >& inpoel ) const
+std::unordered_map< int, Partitioner::MeshData >
+Partitioner::categorize( const std::vector< std::size_t >& target ) const
 // *****************************************************************************
-// Categorize mesh elements (given by their gobal node IDs) by target
-//! \param[in] target Targets (chares or PEs) of mesh elements, size: number of
-//!   elements in the chunk of the mesh graph on this PE.
-//! \param[in] inpoel Mesh connectivity to distribute elemets from
+// Categorize mesh data by target
+//! \param[in] target Target chares of mesh elements, size: number of
+//!   elements in the chunk of the mesh graph on this compute node.
 //! \return Vector of global mesh node ids connecting elements owned by each
-//!   target (chare or PE)
+//!   target chare.
 // *****************************************************************************
 {
-  Assert( target.size() == inpoel.size()/4, "Size mismatch");
+  Assert( target.size() == m_ginpoel.size()/4, "Size mismatch");
 
-  // Categorize global mesh node ids of elements by target
-  std::unordered_map< int, std::vector< std::size_t > > nodes;
+  using Face = tk::UnsMesh::Face;
+
+  // Build hash map associating side set id to boundary faces
+  std::unordered_map< Face, int,
+                      tk::UnsMesh::Hash<3>, tk::UnsMesh::Eq<3> > faceside;
+  for (const auto& s : m_bface)
+    for (auto f : s.second)
+      faceside[ {{ m_triinpoel[f*3+0],
+                   m_triinpoel[f*3+1],
+                   m_triinpoel[f*3+2] }} ] = s.first;
+
+  // Build hash map associating side set ids to boundary nodes
+  std::unordered_map< std::size_t, std::unordered_set< int > > nodeside;
+  for (const auto& s : m_bnode)
+    for (auto n : s.second)
+      nodeside[ n ].insert( s.first );
+
+  // Categorize mesh data (tets, node coordinates, and boundary data) by target
+  // chare based on which chare the partitioner assigned elements (tets) to
+  std::unordered_map< int, MeshData > chmesh;
   for (std::size_t e=0; e<target.size(); ++e) {
-    auto& c = nodes[ static_cast<int>(target[e]) ];
-    for (std::size_t n=0; n<4; ++n) c.push_back( inpoel[e*4+n] );
+    // Construct a tetrahedron with global node ids
+    tk::UnsMesh::Tet t{{ m_ginpoel[e*4+0], m_ginpoel[e*4+1],
+                         m_ginpoel[e*4+2], m_ginpoel[e*4+3] }};
+    // Categorize tetrahedron (domain element) connectivity
+    auto& mesh = chmesh[ static_cast<int>(target[e]) ];
+    auto& inpoel = std::get< 0 >( mesh );
+    inpoel.insert( end(inpoel), begin(t), end(t) );
+    // Categorize boundary face connectivity
+    auto& bconn = std::get< 1 >( mesh );
+    std::array<Face,4> face{{ {{t[0],t[2],t[1]}}, {{t[0],t[1],t[3]}},
+                              {{t[0],t[3],t[2]}}, {{t[1],t[2],t[3]}} }};
+    for (const auto& f : face) {
+      auto it = faceside.find( f );
+      if (it != end(faceside)) {
+        auto& s = bconn[ it->second ];
+        s.insert( end(s), begin(f), end(f) );
+      }
+    }
+    // Categorize boundary node lists
+    auto& bnode = std::get< 2 >( mesh );
+    for (const auto& n : t) {
+      auto it = nodeside.find( n );
+      if (it != end(nodeside))
+        for (auto s : it->second)
+          bnode[ s ].push_back( n );
+    }
   }
 
-  // Make sure all PEs have targets assigned
-  Assert( !nodes.empty(), "No nodes have been assigned to chares on PE " );
+  // Make boundary node lists unique per side set
+  for (auto& c : chmesh)
+    for (auto& n : std::get<2>(c.second))
+       tk::unique( n.second );
+
+  // Make sure all compute nodes have target chares assigned
+  Assert( !chmesh.empty(), "No elements have been assigned to a chare" );
 
   // This check should always be done, hence ErrChk and not Assert, as it
   // can result from particular pathological combinations of (1) too large
-  // degree of virtualization, (2) too many PEs, and/or (3) too small of a
-  // mesh and not due to programmer error.
-  for(const auto& c : nodes)
-    ErrChk( !c.second.empty(),
+  // degree of virtualization, (2) too many compute nodes, and/or (3) too small
+  // of a mesh and not due to programmer error.
+  for(const auto& c : chmesh)
+    ErrChk( !std::get<0>(c.second).empty(),
             "Overdecomposition of the mesh is too large compared to the "
             "number of work units computed based on the degree of "
             "virtualization desired. As a result, there would be at least "
             "one work unit with no mesh elements to work on, i.e., nothing "
             "to do. Solution 1: decrease the virtualization to a lower "
             "value using the command-line argument '-u'. Solution 2: "
-            "decrease the number processing elements (PEs) using the "
-            "charmrun command-line argument '+pN' where N is the number of "
-            "PEs, which implicitly increases the size (and thus decreases "
-            "the number) of work units.)" );
+            "decrease the number processing elements (PEs and/or compute "
+            "nodes) using the charmrun command-line argument '+pN' where N is "
+            "the number of PEs (or in SMP-mode in combination with +ppn to "
+            "reduce the number of compute nodes), which implicitly increases "
+            "the size (and thus decreases the number) of work units.)" );
 
-  return nodes;
+  return chmesh;
 }
 
 tk::UnsMesh::CoordMap
@@ -379,50 +455,85 @@ Partitioner::coordmap( const std::vector< std::size_t >& inpoel )
 }
 
 void
-Partitioner::distribute(
- std::unordered_map< int, std::vector< std::size_t > >&& elems )
+Partitioner::distribute( std::unordered_map< int, MeshData >&& mesh )
 // *****************************************************************************
-// Distribute mesh to target PEs after mesh partitioning
-//! \param[in] elems Mesh cells (with global node IDs) categorized by target
-//!   chares
+// Distribute mesh to target compute nodes after mesh partitioning
+//! \param[in] mesh Mesh data categorized by target by target chares
 // *****************************************************************************
 {
   auto dist = distribution( m_nchare );
 
-  // Extract those mesh connectivities whose chares live on this PE
+  // Extract mesh data whose chares are on ("owned by") this compute node
   for (int c=0; c<dist[1]; ++c) {
-    auto chid = CkMyPe() * dist[0] + c;   // compute owned chare ID
-    const auto it = elems.find( chid );   // attempt to find its nodes
-    if (it != end(elems)) {               // if found
-      auto& inp = m_chinpoel[ chid ];     // store own mesh
-      inp.insert( end(inp), begin(it->second), end(it->second) );
-      auto& chcm = m_chcoordmap[ chid ];         // store own node coordinates
-      auto cm = coordmap( it->second );   // extract node coordinates 
+    auto chid = CkMyNode() * dist[0] + c; // compute owned chare ID
+    const auto it = mesh.find( chid );    // attempt to find its mesh data
+    if (it != end(mesh)) {                // if found
+      // Store own tetrahedron connectivity
+      const auto& inpoel = std::get<0>( it->second );
+      auto& inp = m_chinpoel[ chid ];     // will store own mesh connectivity
+      inp.insert( end(inp), begin(inpoel), end(inpoel) );
+      // Store own node coordinates
+      auto& chcm = m_chcoordmap[ chid ];  // will store own node coordinates
+      auto cm = coordmap( inpoel );       // extract node coordinates 
       chcm.insert( begin(cm), end(cm) );  // concatenate node coords
-      elems.erase( it );                  // remove chare ID and nodes
+      // Store own boundary face connectivity
+      const auto& bconn = std::get<1>( it->second );
+      auto& bface = m_chbface[ chid ];    // will store own boundary faces
+      auto& t = m_chtriinpoel[ chid ];    // wil store own boundary face conn
+      auto& f = m_nface[ chid ];          // use counter for chare
+      for (const auto& s : bconn) {
+        auto& b = bface[ s.first ];
+        for (std::size_t i=0; i<s.second.size()/3; ++i) {
+          b.push_back( f++ );
+          t.push_back( s.second[i*3+0] );
+          t.push_back( s.second[i*3+1] );
+          t.push_back( s.second[i*3+2] );
+        }
+      }
+      // Store own boundary node lists
+      const auto& bnode = std::get<2>( it->second );
+      auto& nodes = m_chbnode[ chid ];    // will store own boundary nodes
+      for (const auto& s : bnode) {
+        auto& b = nodes[ s.first ];
+        b.insert( end(b), begin(s.second), end(s.second) );
+      }
+      // Remove chare ID and mesh data
+      mesh.erase( it );
     }
-    Assert( elems.find(chid) == end(elems), "Not all owned node IDs stored" );
+    Assert( mesh.find(chid) == end(mesh), "Not all owned mesh data stored" );
   }
 
   // Construct export map associating mesh connectivities with global node
-  // indices and node coordinates for mesh chunks associated to chare IDs (inner
-  // key) owned by chares we do not own.
-  std::unordered_map< int,                              // target PE
-    std::unordered_map< int,                            // chare ID
-      std::tuple< std::vector< std::size_t >,           // mesh connectivity
-                  tk::UnsMesh::CoordMap > > > exp;      // node ID & coords
-  for (const auto& c : elems)
-    exp[ pe(c.first) ][ c.first ] =
-      std::make_tuple( c.second, coordmap(c.second) );
+  // indices and node coordinates for mesh chunks associated to chare IDs
+  // owned by chares we do not own.
+  std::unordered_map< int,                     // target compute node
+    std::unordered_map< int,                   // chare ID
+      std::tuple<
+        // (domain-element) tetrahedron connectivity
+        std::vector< std::size_t >,
+        // (domain) node IDs & coordinates
+        tk::UnsMesh::CoordMap,
+        // boundary side set + face connectivity
+        std::unordered_map< int, std::vector< std::size_t > >,
+        // boundary side set + node list
+        std::unordered_map< int, std::vector< std::size_t > >
+      > > > exp;
 
-  // Export chare IDs and mesh we do not own to fellow PEs
+  for (const auto& c : mesh)
+    exp[ node(c.first) ][ c.first ] =
+      std::make_tuple( std::get<0>(c.second),
+                       coordmap(std::get<0>(c.second)),
+                       std::get<1>(c.second),
+                       std::get<2>(c.second) );
+
+  // Export chare IDs and mesh we do not own to fellow compute nodes
   if (exp.empty()) {
     if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pedistributed();
     contribute( m_cbp.get< tag::distributed >() );
   } else {
-     m_ndist = exp.size();
+     m_ndist += exp.size();
      for (const auto& p : exp)
-       thisProxy[ p.first ].addMesh( CkMyPe(), p.second );
+       thisProxy[ p.first ].addMesh( CkMyNode(), p.second );
   }
 }
 
@@ -431,20 +542,20 @@ Partitioner::distribution( int npart ) const
 // *****************************************************************************
 //  Compute chare (partition) distribution
 //! \param[in] npart Total number of chares (partitions) to distribute
-//! \return Chunksize, i.e., number of chares per all PEs except the last
-//!   one, and the number of chares for my PE
-//! \details Chare ids are distributed to PEs in a linear continguous order
-//!   with the last PE taking the remainder if the number of PEs is not
-//!   divisible by the number chares. For example, if nchare=7 and npe=3,
-//!   the chare distribution is PE0: 0 1, PE1: 2 3, and PE2: 4 5 6. As a
-//!   result of this distribution, all PEs will have their chare-categorized
-//!   element connectivity filled with the global mesh node IDs associated
-//!   to the Charm++ chare IDs each PE owns.
+//! \return Chunksize, i.e., number of chares per all compute nodes except the
+//!   last one, and the number of chares for this compute node.
+//! \details Chare ids are distributed to compute nodes in a linear continguous
+//!   order with the last compute node taking the remainder if the number of
+//!   compute nodes is not divisible by the number chares. For example, if
+//!   nchare=7 and nnode=3, the chare distribution is node0: 0 1, node1: 2 3,
+//!   and node2: 4 5 6. As a result of this distribution, all compute nodes will
+//!   have their chare-categorized element connectivity filled with the global
+//!   mesh node IDs associated to the Charm++ chare IDs each compute node owns.
 // *****************************************************************************
 {
-  auto chunksize = npart / CkNumPes();
+  auto chunksize = npart / CkNumNodes();
   auto mynchare = chunksize;
-  if (CkMyPe() == CkNumPes()-1) mynchare += npart % CkNumPes();
+  if (CkMyNode() == CkNumNodes()-1) mynchare += npart % CkNumNodes();
   return {{ chunksize, mynchare }};
 }
 

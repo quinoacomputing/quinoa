@@ -12,39 +12,51 @@ git:
 env:
   matrix:
     - TARGET=unittest COMPILER=gnu BUILD=Debug
+    - TARGET=unittest COMPILER=gnu BUILD=Debug SMP=true
     - TARGET=unittest COMPILER=gnu BUILD=Debug SHARED_LIBS=off
     - TARGET=unittest COMPILER=gnu BUILD=Release
+    - TARGET=unittest COMPILER=gnu BUILD=Release SMP=true
     - TARGET=unittest COMPILER=gnu BUILD=Release SHARED_LIBS=off DOCKERHUB=true
     - TARGET=unittest COMPILER=clang BUILD=Debug
+    - TARGET=unittest COMPILER=clang BUILD=Debug SMP=true
     - TARGET=unittest COMPILER=clang BUILD=Debug SHARED_LIBS=off
     - TARGET=unittest COMPILER=clang BUILD=Release
+    - TARGET=unittest COMPILER=clang BUILD=Release SMP=true
     - TARGET=unittest COMPILER=clang BUILD=Release SHARED_LIBS=off
 
     - TARGET=walker COMPILER=gnu BUILD=Debug
     - TARGET=walker COMPILER=gnu BUILD=Debug SHARED_LIBS=off
     - TARGET=walker COMPILER=gnu BUILD=Release
+    - TARGET=walker COMPILER=gnu BUILD=Release SMP=true
     - TARGET=walker COMPILER=gnu BUILD=Release SHARED_LIBS=off DOCKERHUB=true
     - TARGET=walker COMPILER=clang BUILD=Debug
     - TARGET=walker COMPILER=clang BUILD=Debug SHARED_LIBS=off
     - TARGET=walker COMPILER=clang BUILD=Release
+    - TARGET=walker COMPILER=clang BUILD=Release SMP=true
     - TARGET=walker COMPILER=clang BUILD=Release SHARED_LIBS=off
 
     - TARGET=inciter COMPILER=gnu BUILD=Debug
     - TARGET=inciter COMPILER=gnu BUILD=Debug SHARED_LIBS=off
     - TARGET=inciter COMPILER=gnu BUILD=Release
+    - TARGET=inciter COMPILER=gnu BUILD=Release SMP=true
     - TARGET=inciter COMPILER=gnu BUILD=Release SHARED_LIBS=off DOCKERHUB=true
     - TARGET=inciter COMPILER=clang BUILD=Debug
     - TARGET=inciter COMPILER=clang BUILD=Debug SHARED_LIBS=off
     - TARGET=inciter COMPILER=clang BUILD=Release
+    - TARGET=inciter COMPILER=clang BUILD=Release SMP=true
     - TARGET=inciter COMPILER=clang BUILD=Release SHARED_LIBS=off
 
     - TARGET=rngtest COMPILER=gnu BUILD=Debug
+    - TARGET=rngtest COMPILER=gnu BUILD=Debug SMP=true
     - TARGET=rngtest COMPILER=gnu BUILD=Debug SHARED_LIBS=off
     - TARGET=rngtest COMPILER=gnu BUILD=Release
+    - TARGET=rngtest COMPILER=gnu BUILD=Release SMP=true
     - TARGET=rngtest COMPILER=gnu BUILD=Release SHARED_LIBS=off DOCKERHUB=true
     - TARGET=rngtest COMPILER=clang BUILD=Debug
+    - TARGET=rngtest COMPILER=clang BUILD=Debug SMP=true
     - TARGET=rngtest COMPILER=clang BUILD=Debug SHARED_LIBS=off
     - TARGET=rngtest COMPILER=clang BUILD=Release
+    - TARGET=rngtest COMPILER=clang BUILD=Release SMP=true
     - TARGET=rngtest COMPILER=clang BUILD=Release SHARED_LIBS=off
 
     - TARGET=meshconv COMPILER=gnu BUILD=Debug
@@ -63,7 +75,7 @@ script:
   - if [[ ${TARGET} = doc ]]; then
       export DISTRO=debian-doc;
     else
-      export DISTRO=alpine-${COMPILER}${SHARED_LIBS:+-static}${SONARQUBE:+-sonarqube};
+      export DISTRO=alpine-${COMPILER}${SMP:+-smp}${SHARED_LIBS:+-static}${SONARQUBE:+-sonarqube};
     fi
   - rm -rf tpl
   - cp -vr docker ${HOME}/docker
@@ -76,6 +88,7 @@ script:
                  --build-arg BUILD=${BUILD}
                  --build-arg TARGET=${TARGET}
                  --build-arg SHARED_LIBS="${SHARED_LIBS}"
+                 --build-arg SMP=${SMP}
                  --build-arg SONARQUBE=${SONARQUBE}
                  --build-arg SONARQUBE_TOKEN=${SONARQUBE_TOKEN}
                  --build-arg SONARQUBE_GITHUB_TOKEN=${SONARQUBE_GITHUB_TOKEN}

@@ -94,7 +94,8 @@ namespace AMR {
             }
 
             // TODO: document this
-            bool get_state_changed()
+            // jbakosi changed this to a bool-ref so that the state can be PUPed
+            bool& get_state_changed()
             {
                 return refinement_state_changed;
             }

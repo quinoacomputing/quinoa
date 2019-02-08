@@ -16,15 +16,12 @@
 #include "DG.h"
 #include "Discretization.h"
 #include "DGPDE.h"
-#include "Solver.h"
 #include "DiagReducer.h"
 #include "DerivedData.h"
 #include "ElemDiagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
-#include "ExodusIIMeshWriter.h"
 #include "Refiner.h"
 #include "Limiter.h"
-//#include "ChareStateCollector.h"
 
 namespace inciter {
 
@@ -34,20 +31,14 @@ extern std::vector< DGPDE > g_dgpde;
 
 } // inciter::
 
-//extern tk::CProxy_ChareStateCollector stateProxy;
-
 using inciter::DG;
 
-DG::DG( const CProxy_Discretization& disc,
-        const tk::CProxy_Solver& solver,
-        const FaceData& fd ) :
+DG::DG( const CProxy_Discretization& disc, const FaceData& fd ) :
   m_disc( disc ),
-  m_solver( solver ),
   m_ncomfac( 0 ),
   m_nadj( 0 ),
   m_nsol( 0 ),
   m_nlim( 0 ),
-  m_itf( 0 ),
   m_fd( fd ),
   m_u( Disc()->Inpoel().size()/4,
        g_inputdeck.get< tag::discr, tag::ndof >()*
@@ -78,16 +69,10 @@ DG::DG( const CProxy_Discretization& disc,
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
-//! \param[in] solver Linear system solver (Solver) proxy
 //! \param[in] fd Face data structures
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "DG" );
-
-  usesAtSync = true;    // Enable migration at AtSync
+  usesAtSync = true;    // enable migration at AtSync
 
   auto d = Disc();
 
@@ -102,6 +87,10 @@ DG::DG( const CProxy_Discretization& disc,
 
   // Activate SDAG waits for face adjacency map (ghost data) calculation
   thisProxy[ thisIndex ].wait4ghost();
+
+  // Enable SDAG wait for initially building the solution vector
+  thisProxy[ thisIndex ].wait4sol();
+  thisProxy[ thisIndex ].wait4lim();
 
   // Invert inpofa to enable searching for faces based on (global) node triplets
   Assert( inpofa.size() % 3 == 0, "Inpofa must contain triplets" );
@@ -278,11 +267,6 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
 //! \param[in] infaces Unique set of faces we potentially share with fromch
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "comfac" );
-
   const auto& esuel = m_fd.Esuel();
 
   // Attempt to find sender chare among chares we potentially share faces with.
@@ -476,11 +460,6 @@ DG::reqGhost()
 // Receive requests for ghost data
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "reqGhost" );
-
   // If every chare we communicate with has requested ghost data from us, we may
   // fulfill the requests, but only if we have already setup our ghost data.
   if (++m_ghostReq == m_msumset.size()) reqghost_complete();
@@ -492,11 +471,6 @@ DG::sendGhost()
 // Send all of our ghost data to fellow chares
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "sendGhost" );
-
   for (const auto& c : m_ghostData)
     thisProxy[ c.first ].comGhost( thisIndex, c.second );
 
@@ -526,11 +500,6 @@ DG::comGhost( int fromch, const GhostData& ghost )
 //! \param[in] ghost Ghost data, see Inciter/FaceData.h for the type
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "comGhost" );
-
   auto d = Disc();
   const auto& lid = d->Lid();
   auto& inpofa = m_fd.Inpofa();
@@ -844,7 +813,7 @@ DG::adj()
     }
 
   // Signal the runtime system that all workers have received their adjacency
-  m_solver.ckLocalBranch()->created();
+  contribute(CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()));
 }
 
 void
@@ -864,74 +833,46 @@ DG::registerReducers()
 void
 DG::setup( tk::real v )
 // *****************************************************************************
-// Setup rows, query boundary conditions, output mesh, etc.
+// Set initial conditions, generate lhs, output mesh
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "setup" );
-
   tk::destroy(m_msumset);
 
   auto d = Disc();
-  const auto& esuel = m_fd.Esuel();
 
   // Store total mesh volume
   m_vol = v;
 
-  // Extract ghost data from inpoel and coord for writing the mesh
-  auto& inpoel = d->Inpoel();
-  std::vector< std::size_t > inpoelg;
-  for (auto e=esuel.size()/4; e<inpoel.size()/4; ++e)
-    for (std::size_t i=0; i<4; ++i)
-      inpoelg.push_back( inpoel[4*e+i] );
-  inpoel.resize(esuel.size());
-
-  auto& coord = d->Coord();
-  std::array< std::vector< tk::real >, 3 > coordg;
-  for (auto ip=m_ncoord; ip<coord[0].size(); ++ip)
-    for (std::size_t i=0; i<3; ++i)
-      coordg[i].push_back( coord[i][ip] );
-  for (std::size_t i=0; i<3; ++i)
-    coord[i].resize( m_ncoord );
-
-  // Output chare mesh to file
-  d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode() );
-  // Output fields metadata to output file
-  d->writeElemMeta();
-
-  // Restore coord and inpoel with ghost data
-  std::move( begin(inpoelg), end(inpoelg), std::back_inserter(inpoel) );
-  for (std::size_t i=0; i<3; ++i)
-    std::move( begin(coordg[i]), end(coordg[i]), std::back_inserter(coord[i]) );
-
   // Basic error checking on sizes of element geometry data and connectivity
   Assert( m_geoElem.nunk() == m_lhs.nunk(), "Size mismatch in DG::setup()" );
-  Assert( inpoel.size()/4 == m_lhs.nunk(), "Size mismatch in DG::setup()" );
+  Assert( d->Inpoel().size()/4 == m_lhs.nunk(),
+          "Size mismatch in DG::setup()" );
 
   // Compute left-hand side of discrete PDEs
   lhs();
 
   // Set initial conditions for all PDEs
   for (const auto& eq : g_dgpde) 
-    eq.initialize( m_lhs, inpoel, coord, m_u, d->T() );
+    eq.initialize( m_lhs, d->Inpoel(), d->Coord(), m_u, d->T() );
   m_un = m_u;
 
-  for (std::size_t e=0; e<esuel.size()/4; ++e)
+  for (std::size_t e=0; e<m_fd.Esuel().size()/4; ++e)
     for (std::size_t c=0; c<m_limFunc.nprop(); ++c)
       m_limFunc(e,c,0)=1.0;
 
   // Output initial conditions to file (regardless of whether it was requested)
-  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( d->T() );
+  writeFields( CkCallback(CkIndex_DG::start(), thisProxy[thisIndex]) );
+}
 
+void
+DG::start()
+// *****************************************************************************
+//  Start time stepping
+// *****************************************************************************
+{
   // Start timer measuring time stepping wall clock time
-  d->Timer().zero();
-
-  // Enable SDAG wait for building the solution vector
-  thisProxy[ thisIndex ].wait4sol();
-  thisProxy[ thisIndex ].wait4lim();
+  Disc()->Timer().zero();
 
   // Start time stepping
   advance( 0.0 );
@@ -943,11 +884,6 @@ DG::dt()
 // Compute time step size
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "dt" );
-
   auto mindt = std::numeric_limits< tk::real >::max();
 
   auto d = Disc();
@@ -993,11 +929,6 @@ DG::advance( tk::real )
 // Advance equations to next time step
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "advance" );
-
   // communicate solution ghost data (if any)
   if (m_ghostData.empty())
     comsol_complete();
@@ -1028,11 +959,6 @@ DG::comsol( int fromch,
 //! \details This function receives contributions to m_u from fellow chares.
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "comsol" );
-
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comsol()" );
 
   // Find local-to-ghost tet id map for sender chare
@@ -1060,72 +986,51 @@ DG::comsol( int fromch,
 }
 
 void
-DG::writeFields( tk::real time )
+DG::writeFields( CkCallback c )
 // *****************************************************************************
 // Output mesh-based fields to file
-//! \param[in] time Physical time
+//! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
   auto d = Disc();
 
-  // Save time stamp at which the last field write happened
-  d->LastFieldWriteTime() = time;
+  const auto& esuel = m_fd.Esuel();
 
-  // Increase field output iteration count
-  ++m_itf;
+  // Copy mesh form Discretization object and chop off ghosts for dump
+  auto inpoel = d->Inpoel();
+  inpoel.resize( esuel.size() );
+  auto coord = d->Coord();
+  for (std::size_t i=0; i<3; ++i) coord[i].resize( m_ncoord );
 
-  // Collect element field output
-  std::vector< std::vector< tk::real > > elemfields;
-  auto u = m_u;   // make a copy as eq::output() may overwrite its arg
+  // Query fields names from all PDEs integrated
+  std::vector< std::string > names;
   for (const auto& eq : g_dgpde) {
-    auto output =
-      eq.fieldOutput( m_lhs, d->Inpoel(), d->Coord(), time, m_geoElem, u );
+    auto n = eq.fieldNames();
+    names.insert( end(names), begin(n), end(n) );
+  }
 
+  // Collect element field solution
+  std::vector< std::vector< tk::real > > fields;
+  auto u = m_u;
+  for (const auto& eq : g_dgpde) {
+    auto o =
+      eq.fieldOutput( m_lhs, d->Inpoel(), d->Coord(), d->T(), m_geoElem, u );
     // cut off ghost elements
-    const auto& esuel = m_fd.Esuel();
-    for (auto& o : output) o.resize( esuel.size()/4 );
-    elemfields.insert( end(elemfields), begin(output), end(output) );
+    for (auto& field : o) field.resize( esuel.size()/4 );
+    fields.insert( end(fields), begin(o), end(o) );
   }
 
-  // Collect node field output
-  std::vector< std::vector< tk::real > > nodefields;
-  for (const auto& eq : g_dgpde) {
-    auto output =
-      eq.avgElemToNode( d->Inpoel(), d->Coord(), m_geoElem, m_limFunc, m_u );
+  // // Collect node field solution
+  // std::vector< std::vector< tk::real > > nodefields;
+  // for (const auto& eq : g_dgpde) {
+  //   auto fields =
+  //     eq.avgElemToNode( d->Inpoel(), d->Coord(), m_geoElem, m_limFunc, m_u );
+  //   nodefields.insert( end(nodefields), begin(fields), end(fields) );
+  // }
 
-    nodefields.insert( end(nodefields), begin(output), end(output) );
-  }
-
-  // Create ExodusII writer
-  tk::ExodusIIMeshWriter ew( d->filename(), tk::ExoWriter::OPEN );
-  // Write time stamp
-  ew.writeTimeStamp( m_itf, time );
-  // Write element and node fields to file
-  d->writeElemSolution( ew, m_itf, elemfields, nodefields );
-}
-
-void
-DG::out()
-// *****************************************************************************
-// Output mesh field data
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Output field data to file if not in benchmark mode
-  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) {
-
-    if ( !((d->It()) % g_inputdeck.get< tag::interval, tag::field >()) )
-      writeFields( d->T() );
-  
-    // Output final field data to file (regardless of whether it was requested)
-    const auto term = g_inputdeck.get< tag::discr, tag::term >();
-    const auto eps = std::numeric_limits< tk::real >::epsilon();
-    const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-    if ( (std::fabs(d->T()-term) < eps || d->It() >= nstep ) )
-      writeFields( d->T() );
-  
-  }
+  // Output chare mesh and fields metadata to file
+  d->write( inpoel, coord, m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode(),
+            names, fields, tk::Centering::ELEM, c );
 }
 
 void
@@ -1198,11 +1103,6 @@ DG::comlim( int fromch,
 //    chares.
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "comlim" );
-
   Assert( lfn.size() == tetid.size(), "Size mismatch in DG::comlim()" );
 
   // Find local-to-ghost tet id map for sender chare
@@ -1233,12 +1133,7 @@ DG::solve( tk::real newdt )
 //! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "solve" );
-
-  // Enable SDAG wait for building the solution vector
+  // Enable SDAG wait for building the solution vector during the next stage
   thisProxy[ thisIndex ].wait4sol();
   thisProxy[ thisIndex ].wait4lim();
 
@@ -1257,12 +1152,12 @@ DG::solve( tk::real newdt )
 
   if (m_stage < 2) {
 
-    // Continue with next tims step stage
-    eval();
+    // continue with next tims step stage
+    stage();
 
   } else {
 
-    thisProxy[ thisIndex ].wait4eval();
+    thisProxy[ thisIndex ].wait4stage();
 
     // Compute diagnostics, e.g., residuals
     auto diag_computed =
@@ -1311,7 +1206,7 @@ DG::refine()
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
-    d->Ref()->dtref( d->T(), thisProxy, m_fd.Bnode() );
+    d->Ref()->dtref( d->T(), m_fd.Bnode() );
 
   } else {      // do not refine
 
@@ -1348,55 +1243,77 @@ DG::resize( const tk::UnsMesh::Chunk& /*chunk*/,
 }
 
 void
-DG::eval()
+DG::next()
 // *****************************************************************************
-// Evaluate whether to continue with next step
+// Continue to next time step stage
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "eval" );
+  auto d = Disc();
 
+  tk::real fdt = 0.0;
+  d->contribute( sizeof(tk::real), &fdt, CkReduction::nop,
+                 CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
+}
+
+void
+DG::out()
+// *****************************************************************************
+// Output mesh field data
+// *****************************************************************************
+{
   auto d = Disc();
 
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
 
-  tk::real fdt = 0.0;
+  // output field data if field iteration count is reached or in the last time
+  // step, otherwise continue to next time step
+  if ( !((d->It()) % fieldfreq) ||
+       (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
+    writeFields( CkCallback(CkIndex_DG::step(), thisProxy[thisIndex]) );
+  else
+    step();
+}
 
+void
+DG::stage()
+// *****************************************************************************
+// Evaluate whether to continue with next time step stage
+// *****************************************************************************
+{
   // Increment Runge-Kutta stage counter
   ++m_stage;
 
-  // If Runge-Kutta stages not complete, continue with dt(), otherwise assess
-  // computation completion criteria
-  if (m_stage < 3) {
+  // if not all Runge-Kutta stages complete, continue to next time stage,
+  // otherwise output field data to file(s)
+  if (m_stage < 3) next(); else out();
+}
 
-    // The following contribute call serves as a global-synchonization which
-    // ensures that all chares have completed the 3rd RK stage solution update
-    // before proceeding to DG::advance() to communicate ghost-cell solutions
-    contribute( sizeof(tk::real), &fdt, CkReduction::nop,
-                CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
+void
+DG::step()
+// *****************************************************************************
+// Evaluate wether to continue with next time step
+// *****************************************************************************
+{
+  auto d = Disc();
 
+  // Output one-liner status report to screen
+  d->status();
+  // Reset Runge-Kutta stage counter
+  m_stage = 0;
+
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+
+  // If neither max iterations nor max time reached, continue, otherwise finish
+  if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
+    AtSync();   // migrate here if needed
+    next();
   } else {
-
-    // Output field data to file
-    out();
-    // Output one-liner status report to screen
-    d->status();
-    // Reset Runge-Kutta stage counter
-    m_stage = 0;
-
-    // If neither max iterations nor max time reached, continue, otherwise finish
-    if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
-      AtSync();   // Migrate here if needed
-      contribute( sizeof(tk::real), &fdt, CkReduction::nop,
-                  CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
-    } else {
-      contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));
-    }
-
+    contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));
   }
 }
 

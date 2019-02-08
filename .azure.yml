@@ -30,7 +30,16 @@ jobs:
         BUILD: 'Release'
         SHARED_LIBS: 'off'
         DISTRO: 'debian-gnu-static'
-        DOCKERHUB: 'true'
+      gnu-debug-smp:
+        COMPILER: 'gnu'
+        BUILD: 'Debug'
+        DISTRO: 'debian-gnu-smp'
+        SMP: 'on'
+      gnu-release-smp:
+        COMPILER: 'gnu'
+        BUILD: 'Release'
+        DISTRO: 'debian-gnu-smp'
+        SMP: 'on'
       clang-debug:
         COMPILER: 'clang'
         BUILD: 'Debug'
@@ -49,6 +58,16 @@ jobs:
         BUILD: 'Release'
         SHARED_LIBS: 'off'
         DISTRO: 'debian-clang-static'
+      clang-debug-smp:
+        COMPILER: 'clang'
+        BUILD: 'Debug'
+        DISTRO: 'debian-clang-smp'
+        SMP: 'on'
+      clang-release-smp:
+        COMPILER: 'clang'
+        BUILD: 'Release'
+        DISTRO: 'debian-clang-smp'
+        SMP: 'on'
       doc:
         DOC: true
         DISTRO: 'debian-doc'
@@ -61,5 +80,6 @@ jobs:
                --build-arg BUILD=${BUILD} \
                --build-arg DOC=${DOC} \
                --build-arg SHARED_LIBS="${SHARED_LIBS}" \
+               --build-arg SMP=${SMP} \
                --rm=false -f docker/Dockerfile.quinoa-build-azure -t ${DISTRO} .
       displayName: 'Build & Test'
