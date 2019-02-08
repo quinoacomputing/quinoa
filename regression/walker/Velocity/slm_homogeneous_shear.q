@@ -10,7 +10,7 @@ walker
   #nstep 2     # Max number of time steps
   term  10.0    # Max time
   dt    0.2   # Time step size
-  npar  70000 # Number of particles
+  npar  100000 # Number of particles
   ttyi  1    # TTY output interval
 
   rngs
