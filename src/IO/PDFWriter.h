@@ -12,6 +12,7 @@
 #define PDFWriter_h
 
 #include <string>
+#include <iostream>
 
 #include "Macro.h"
 #include "Writer.h"

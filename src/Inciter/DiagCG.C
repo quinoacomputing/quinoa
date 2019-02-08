@@ -9,19 +9,17 @@
     stepping scheme that is equivalent to the Lax-Wendroff (LW) scheme within
     the unstructured-mesh FE context and treats discontinuities with
     flux-corrected transport (FCT). Only the diagonal entries of the left-hand
-    side matrix are non-zero thus it does not need a mtrix-based linear solver.
+    side matrix are non-zero thus it does not need a matrix-based linear solver.
   \see The documentation in DiagCG.h.
 */
 // *****************************************************************************
 
 #include "QuinoaConfig.h"
 #include "DiagCG.h"
-#include "Solver.h"
 #include "Vector.h"
 #include "Reader.h"
 #include "ContainerUtil.h"
 #include "UnsMesh.h"
-#include "ExodusIIMeshWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "DerivedData.h"
 #include "CGPDE.h"
@@ -30,11 +28,6 @@
 #include "DiagReducer.h"
 #include "NodeBC.h"
 #include "Refiner.h"
-//#include "ChareStateCollector.h"
-
-#ifdef HAS_ROOT
-  #include "RootMeshWriter.h"
-#endif
 
 namespace inciter {
 
@@ -44,15 +37,10 @@ extern std::vector< CGPDE > g_cgpde;
 
 } // inciter::
 
-// extern tk::CProxy_ChareStateCollector stateProxy;
-
 using inciter::DiagCG;
 
-DiagCG::DiagCG( const CProxy_Discretization& disc,
-                const tk::CProxy_Solver& solver,
-                const FaceData& fd ) :
+DiagCG::DiagCG( const CProxy_Discretization& disc, const FaceData& fd ) :
   m_disc( disc ),
-  m_itf( 0 ),
   m_initial( true ),
   m_nsol( 0 ),
   m_nlhs( 0 ),
@@ -77,22 +65,16 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
-//! \param[in] solver Linear system solver (Solver) proxy
 //! \param[in] fd Face data structures
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
-//                                         Disc()->It(), "DiagCG" );
-
-  usesAtSync = true;    // Enable migration at AtSync
+  usesAtSync = true;    // enable migration at AtSync
 
   // Size communication buffers
   resizeComm();
 
-  // Signal the runtime system that the workers have been created
-  solver.ckLocalBranch()->created();
+  // Activate SDAG wait for initially computing the left-hand side
+  thisProxy[ thisIndex ].wait4lhs();
 }
 
 void
@@ -116,6 +98,9 @@ DiagCG::resizeComm()
 
   // Zero communication buffers
   for (auto& b : m_lhsc) std::fill( begin(b), end(b), 0.0 );
+
+  // Signal the runtime system that the workers have been created
+  contribute(CkCallback(CkReductionTarget(Transporter,comfinal), d->Tr()));
 }
 
 void
@@ -139,34 +124,25 @@ DiagCG::setup( tk::real v )
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
-//                                         Disc()->It(), "setup" );
-
   auto d = Disc();
 
   // Store total mesh volume
   m_vol = v;
 
-  // Activate SDAG waits for computing the left-hand side
-  thisProxy[ thisIndex ].wait4lhs();
-
-  // Compute left-hand side of PDEs
-  lhs();
-
   // Set initial conditions for all PDEs
   for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
 
-  // Output initial condition to file (if not in benchmark mode)
-  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) {
-    // Output chare mesh to file
-    d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode());
-    // Output fields metadata to output file
-    d->writeNodeMeta();
-    // Output initial conditions to file (regardless of whether it was requested)
-    writeFields( d->T() );
-  }
+  // Output initial conditions to file (regardless of whether it was requested)
+  writeFields( CkCallback(CkIndex_DiagCG::init(), thisProxy[thisIndex]) );
+}
+
+void
+DiagCG::init()
+// *****************************************************************************
+// Initially compute left hand side diagonal matrix
+// *****************************************************************************
+{
+  lhs();
 }
 
 void
@@ -252,11 +228,6 @@ DiagCG::comlhs( const std::vector< std::size_t >& gid,
 //!   are combined in lhsmerge().
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
-//                                         Disc()->It(), "comlhs" );
-
   Assert( L.size() == gid.size(), "Size mismatch" );
 
   using tk::operator+=;
@@ -281,11 +252,6 @@ DiagCG::dt()
 // Compute time step size
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
-//                                         Disc()->It(), "dt" );
-
   tk::real mindt = std::numeric_limits< tk::real >::max();
 
   auto const_dt = g_inputdeck.get< tag::discr, tag::dt >();
@@ -314,7 +280,7 @@ DiagCG::dt()
 
   // Actiavate SDAG waits for time step
   thisProxy[ thisIndex ].wait4rhs();
-  thisProxy[ thisIndex ].wait4eval();
+  thisProxy[ thisIndex ].wait4out();
 
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
@@ -376,11 +342,6 @@ DiagCG::comrhs( const std::vector< std::size_t >& gid,
 //!   are combined in solve().
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
-//                                         Disc()->It(), "comrhs" );
-
   Assert( R.size() == gid.size(), "Size mismatch" );
 
   using tk::operator+=;
@@ -413,11 +374,6 @@ DiagCG::comdif( const std::vector< std::size_t >& gid,
 //!   are combined in solve().
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
-//                                         Disc()->It(), "comdif" );
-
   Assert( D.size() == gid.size(), "Size mismatch" );
 
   using tk::operator+=;
@@ -499,96 +455,36 @@ DiagCG::solve()
 
   // Continue with FCT
   d->FCT()->aec( *d, m_du, m_u, m_bc );
-  d->FCT()->alw( m_u, m_ul, m_dul, thisProxy );  
+  d->FCT()->alw( m_u, m_ul, m_dul, thisProxy );
 }
 
 void
-DiagCG::writeFields( tk::real time )
+DiagCG::writeFields( CkCallback c )
 // *****************************************************************************
 // Output mesh-based fields to file
-//! \param[in] time Physical time
+//! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
   auto d = Disc();
 
-  // Only write if the last time is different than the current one
-  if (std::abs(d->LastFieldWriteTime() - time) <
-      std::numeric_limits< tk::real >::epsilon() )
-    return;
-
-  // Save time stamp at which the last field write happened
-  d->LastFieldWriteTime() = time;
-
-  // Increase field output iteration count
-  ++m_itf;
-
-  // Lambda to collect node fields output from all PDEs
-  auto nodefields = [&]() {
-    auto u = m_u;   // make a copy as eq::output() may overwrite its arg
-    std::vector< std::vector< tk::real > > output;
-    for (const auto& eq : g_cgpde) {
-      auto o = eq.fieldOutput( time, m_vol, d->Coord(), d->V(), u );
-      output.insert( end(output), begin(o), end(o) );
-    }
-    return output;
-  };
-
-  #ifdef HAS_ROOT
-  auto filetype = g_inputdeck.get< tag::selected, tag::filetype >();
-
-  if (filetype == tk::ctr::FieldFileType::ROOT) {
-
-    // Create Root writer
-    tk::RootMeshWriter rmw( d->filename(), 1 );
-    // Write time stamp
-    rmw.writeTimeStamp( m_itf, time );
-    // Write node fields to file
-    d->writeNodeSolution( rmw, m_itf, nodefields() );
-
-  } else
-  #endif
-  {
-
-    // if the previous iteration refined the mesh, start by writing the mesh
-    if (m_itf == 1) {
-      // Output chare mesh to file
-      d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode() );
-      // Output fields metadata to output file
-      d->writeNodeMeta();
-    }
-
-    // Create ExodusII writer
-    tk::ExodusIIMeshWriter ew( d->filename(), tk::ExoWriter::OPEN );
-    // Write time stamp
-    ew.writeTimeStamp( m_itf, time );
-    // Write node fields to file
-    d->writeNodeSolution( ew, m_itf, nodefields() );
-
+  // Query and collect field names from PDEs integrated
+  std::vector< std::string > names;
+  for (const auto& eq : g_cgpde) {
+    auto n = eq.fieldNames();
+    names.insert( end(names), begin(n), end(n) );
   }
-}
 
-void
-DiagCG::out()
-// *****************************************************************************
-// Output mesh field data
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Output field data to file if not in benchmark mode
-  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) {
-
-    if ( !((d->It()) % g_inputdeck.get< tag::interval, tag::field >()) )
-      writeFields( d->T() );
-
-    // Output final field data to file (regardless of whether it was requested)
-    const auto term = g_inputdeck.get< tag::discr, tag::term >();
-    const auto eps = std::numeric_limits< tk::real >::epsilon();
-    const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-    if ( (std::fabs(d->T()-term) < eps || d->It() >= nstep ) )
-      writeFields( d->T() );
-
+  // Collect node field solution
+  auto u = m_u;
+  std::vector< std::vector< tk::real > > fields;
+  for (const auto& eq : g_cgpde) {
+    auto o = eq.fieldOutput( d->T(), m_vol, d->Coord(), d->V(), u );
+    fields.insert( end(fields), begin(o), end(o) );
   }
+
+  // Send mesh and fields data (solution dump) for output to file
+  d->write( d->Inpoel(), d->Coord(), m_fd.Bface(), m_fd.Triinpoel(),
+            m_fd.Bnode(), names, fields, tk::Centering::NODE, c );
 }
 
 void
@@ -598,11 +494,6 @@ DiagCG::advance( tk::real newdt )
 //! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
-//                                         Disc()->It(), "advance" );
-
   auto d = Disc();
 
   // Set new time step size
@@ -668,7 +559,7 @@ DiagCG::refine()
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
-    d->Ref()->dtref( d->T(), thisProxy, m_fd.Bnode() );
+    d->Ref()->dtref( d->T(), m_fd.Bnode() );
 
   } else {      // do not refine
 
@@ -702,7 +593,7 @@ DiagCG::resize( const tk::UnsMesh::Chunk& chunk,
   m_initial = false;
 
   // Zero field output iteration count between two mesh refinement steps
-  m_itf = 0;
+  d->Itf() = 0;
 
   // Increase number of iterations with mesh refinement
   ++d->Itr();
@@ -743,20 +634,35 @@ DiagCG::resize( const tk::UnsMesh::Chunk& chunk,
 }
 
 void
-DiagCG::eval()
+DiagCG::out()
 // *****************************************************************************
-// Evaluate whether to continue with next step
+// Output mesh field data
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DiagCG", thisIndex, CkMyPe(),
-//                                         Disc()->It(), "eval" );
-
   auto d = Disc();
 
-  // Output field data to file
-  out();
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
+
+  // output field data if field iteration count is reached or in the last time
+  // step, otherwise continue to next time step
+  if ( !((d->It()) % fieldfreq) ||
+       (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
+    writeFields( CkCallback(CkIndex_DiagCG::step(), thisProxy[thisIndex]) );
+  else
+    step();
+}
+
+void
+DiagCG::step()
+// *****************************************************************************
+// Evaluate whether to continue with next time step
+// *****************************************************************************
+{
+  auto d = Disc();
+
   // Output one-liner status report to screen
   d->status();
 
@@ -766,7 +672,7 @@ DiagCG::eval()
 
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
-    AtSync();   // Migrate here if needed
+    AtSync();   // migrate here if needed
     dt();
   } else {
     contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );

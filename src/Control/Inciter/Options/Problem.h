@@ -30,6 +30,7 @@ enum class ProblemType : uint8_t { USER_DEFINED,
                                    GAUSS_HUMP,
                                    CYL_ADVECT,
                                    SOD_SHOCKTUBE,
+                                   ROTATED_SOD_SHOCKTUBE,
                                    SEDOV_BLASTWAVE };
 
 //! Pack/Unpack ProblemType: forward overload to generic enum class packer
@@ -50,6 +51,7 @@ class Problem : public tk::Toggle< ProblemType > {
                                   , kw::gauss_hump
                                   , kw::cyl_advect
                                   , kw::sod_shocktube
+                                  , kw::rotated_sod_shocktube
                                   , kw::sedov_blastwave
                                   >;
 
@@ -71,6 +73,8 @@ class Problem : public tk::Toggle< ProblemType > {
           { ProblemType::GAUSS_HUMP, kw::gauss_hump::name() },
           { ProblemType::CYL_ADVECT, kw::cyl_advect::name() },
           { ProblemType::SOD_SHOCKTUBE, kw::sod_shocktube::name() },
+          { ProblemType::ROTATED_SOD_SHOCKTUBE,
+            kw::rotated_sod_shocktube::name() },
           { ProblemType::SEDOV_BLASTWAVE, kw::sedov_blastwave::name() } },
         //! keywords -> Enums
         { { kw::user_defined::string(), ProblemType::USER_DEFINED },
@@ -82,6 +86,9 @@ class Problem : public tk::Toggle< ProblemType > {
           { kw::slot_cyl::string(), ProblemType::SLOT_CYL },
           { kw::gauss_hump::string(), ProblemType::GAUSS_HUMP },
           { kw::cyl_advect::string(), ProblemType::CYL_ADVECT },
+          { kw::sod_shocktube::string(), ProblemType::SOD_SHOCKTUBE },
+          { kw::rotated_sod_shocktube::string(),
+            ProblemType::ROTATED_SOD_SHOCKTUBE },
           { kw::sod_shocktube::string(), ProblemType::SOD_SHOCKTUBE },
           { kw::sedov_blastwave::string(), ProblemType::SEDOV_BLASTWAVE } } )
     {
@@ -123,6 +130,8 @@ class Problem : public tk::Toggle< ProblemType > {
       , { ProblemType::GAUSS_HUMP, *kw::gauss_hump::code() }
       , { ProblemType::CYL_ADVECT, *kw::cyl_advect::code() }
       , { ProblemType::SOD_SHOCKTUBE, *kw::sod_shocktube::code() }
+      , { ProblemType::ROTATED_SOD_SHOCKTUBE,
+          *kw::rotated_sod_shocktube::code() }
       , { ProblemType::SEDOV_BLASTWAVE, *kw::sedov_blastwave::code() }
     };
 };

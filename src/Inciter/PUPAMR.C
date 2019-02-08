@@ -12,7 +12,7 @@
 
 void PUP::pup( PUP::er &p, AMR::Refinement_State& s )
 // *****************************************************************************
-//  Pack/Unpack Edge_Refinement
+//  Pack/Unpack Refinement_State
 //! \param[in] p Charm++'s pack/unpack object
 //! \param[in,out] s Refinement_State object reference
 // *****************************************************************************
@@ -71,11 +71,12 @@ void PUP::pup( PUP::er &p, AMR::marked_refinements_store_t& m )
 // *****************************************************************************
 {
   p | m.data();
+  p | m.get_state_changed();
 }
 
 void PUP::pup( PUP::er &p, AMR::active_element_store_t& a )
 // *****************************************************************************
-//  Pack/Unpack marked_refinements_store_t
+//  Pack/Unpack active_element_store_t
 //! \param[in] p Charm++'s pack/unpack object
 //! \param[in,out] a active_element_store_t object reference
 // *****************************************************************************
@@ -85,7 +86,7 @@ void PUP::pup( PUP::er &p, AMR::active_element_store_t& a )
 
 void PUP::pup( PUP::er &p, AMR::master_element_store_t& m )
 // *****************************************************************************
-//  Pack/Unpack marked_refinements_store_t
+//  Pack/Unpack master_element_store_t
 //! \param[in] p Charm++'s pack/unpack object
 //! \param[in,out] m master_element_store_t object reference
 // *****************************************************************************
@@ -95,7 +96,7 @@ void PUP::pup( PUP::er &p, AMR::master_element_store_t& m )
 
 void PUP::pup( PUP::er &p, AMR::id_generator_t& i )
 // *****************************************************************************
-//  Pack/Unpack marked_refinements_store_t
+//  Pack/Unpack id_generator_t
 //! \param[in] p Charm++'s pack/unpack object
 //! \param[in,out] i id_generator_t object reference
 // *****************************************************************************
@@ -173,5 +174,5 @@ void PUP::pup( PUP::er &, AMR::refinement_t& )
 //  Pack/Unpack refinement_t
 // *****************************************************************************
 {
-  // no state in refinement_t currently
+  // no non-const state in refinement_t currently
 }

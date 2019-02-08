@@ -23,6 +23,8 @@
   #pragma warning( disable: 1720 )
 #endif
 
+#include <map>
+
 #include <tut/tut_runner.hpp>
 
 #if defined(__clang__)

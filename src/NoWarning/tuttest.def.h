@@ -9,6 +9,7 @@
 // Note the absence of include guards. This is because the Charm++ definition
 // file included below may need to be included multiple times in a single
 // translation unit: one guarded by CK_TEMPLATES_ONLY and one without, where
+// each inclusion will generate different code.
 
 #include "Macro.h"
 #include "QuinoaConfig.h"

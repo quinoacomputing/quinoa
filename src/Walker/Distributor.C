@@ -198,7 +198,6 @@ Distributor::info( uint64_t chunksize, std::size_t nchare )
   m_print.section( "Load distribution" );
   m_print.item( "Virtualization [0.0...1.0]",
                 g_inputdeck.get< tag::cmd, tag::virtualization >() );
-  m_print.item( "Number of processing elements", CkNumPes() );
   m_print.item( "Number of work units", nchare );
   m_print.item( "User load (# of particles)",
                 g_inputdeck.get< tag::discr, tag::npar >() );

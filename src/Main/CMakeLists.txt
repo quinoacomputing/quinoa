@@ -118,6 +118,7 @@ if (ENABLE_UNITTEST)
                  ../UnitTest/tests/LoadBalance/TestUnsMeshMap.C
                  ../UnitTest/tests/Mesh/TestAround.C
                  ../UnitTest/tests/Mesh/TestDerivedData.C
+                 ../UnitTest/tests/Mesh/TestDerivedData_MPISingle.C
                  ../UnitTest/tests/Mesh/TestGradients.C
                  ../UnitTest/tests/Mesh/TestReorder.C
                  ../UnitTest/${TestMKLRNG}
@@ -128,14 +129,13 @@ if (ENABLE_UNITTEST)
   target_include_directories(${UNITTEST_EXECUTABLE} PUBLIC
                              ${QUINOA_SOURCE_DIR}
                              ${QUINOA_SOURCE_DIR}/UnitTest
-                             ${QUINOA_SOURCE_DIR}/LinSys
                              ${QUINOA_SOURCE_DIR}/LoadBalance
                              ${QUINOA_SOURCE_DIR}/IO
                              ${QUINOA_SOURCE_DIR}/RNG
                              ${TUT_INCLUDE_DIRS}
                              ${LAPACKE_INCLUDE_DIRS}
-                             ${PROJECT_BINARY_DIR}/../LinSys
-                             ${PROJECT_BINARY_DIR}/../UnitTest)
+                             ${PROJECT_BINARY_DIR}/../UnitTest
+                             ${PROJECT_BINARY_DIR}/../IO)
 
   config_executable(${UNITTEST_EXECUTABLE})
 
@@ -172,11 +172,13 @@ if (ENABLE_UNITTEST)
   if(ENABLE_INCITER)
     addCharmModule( "unittestinciter" "${UNITTEST_EXECUTABLE}" )
     add_dependencies( "unittestinciterCharmModule"
-                      "charestatecollectorCharmModule" )
+                      "charestatecollectorCharmModule"
+                      "mpirunnerinciterCharmModule" )
   else()
     addCharmModule( "unittest" "${UNITTEST_EXECUTABLE}" )
     add_dependencies( "unittestCharmModule"
-                      "charestatecollectorCharmModule" )
+                      "charestatecollectorCharmModule"
+                      "mpirunnerCharmModule" )
   endif()
 
 endif(ENABLE_UNITTEST)
@@ -199,11 +201,11 @@ if (ENABLE_INCITER)
                         MeshRefinement
                         LoadBalance
                         ZoltanInterOp
-                        LinSys
                         Base
                         Config
                         Init
                         IO
+                        MeshWriter
                         ExodusIIMeshIO
                         ${OMEGAHMESHIO}
                         ${ROOTMESHIO}
@@ -211,7 +213,6 @@ if (ENABLE_INCITER)
                         Mesh
                         Statistics
                         ${SEACASExodus_LIBRARIES}
-                        ${HYPRE_LIBRARIES}
                         ${ROOT_LIBRARIES}
                         ${Zoltan2_LIBRARIES}
                         ${RNGSSE2_LIBRARIES}
@@ -231,6 +232,7 @@ if (ENABLE_INCITER)
   addCharmModule( "inciter" "${INCITER_EXECUTABLE}" )
 
   add_dependencies( "inciterCharmModule" "charestatecollectorCharmModule" )
+  add_dependencies( "inciterCharmModule" "meshwriterCharmModule" )
 
 endif(ENABLE_INCITER)
 

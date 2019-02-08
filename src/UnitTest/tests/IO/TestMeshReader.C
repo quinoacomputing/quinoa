@@ -82,10 +82,10 @@ struct MeshReader_common {
   //! \param[in,out] mr MeshReader object to verify
   void verifyTets( tk::MeshReader& mr ) {
     // Read mesh graph in serial
-    std::vector< std::size_t > ginpoel, inpoel, triinpoel, gid;
+    std::vector< std::size_t > ginpoel, inpoel, triinpoel;
     std::unordered_map< std::size_t, std::size_t > lid;
     tk::UnsMesh::Coords coord;
-    mr.readMeshPart( ginpoel, inpoel, triinpoel, gid, lid, coord );
+    mr.readMeshPart( ginpoel, inpoel, triinpoel, lid, coord );
 
     // Test if the number of elements is correct
     ensure_equals( "number of elements incorrect",
@@ -148,14 +148,16 @@ using MeshReader_group = test_group< MeshReader_common, MAX_TESTS_IN_GROUP >;
 using MeshReader_object = MeshReader_group::object;
 
 //! Define test group
-static MeshReader_group MeshReader( "IO/MeshReader" );
+//! \note Those test groups whose name contains "MPISingle" will be started as
+//!    MPI tests (from a Charm++ nodegroup) and from only a single MPI rank.
+static MeshReader_group MeshReader( "IO/MeshReader_MPISingle" );
 
 //! Test definitions for group
 
 //! Test mesh reader contructor dispatching to ExodusII mesh reader
 template<> template<>
 void MeshReader_object::test< 1 >() {
-  set_test_name( "constructor dispatching to ExodusII reader" );
+  set_test_name( "ctor dispatching to ExodusII reader" );
 
   // Verify the output of mesh reader dispatching to ExodusII reader using two
   // different meshes, one with only tets, one with faces/sidesets.
@@ -166,7 +168,7 @@ void MeshReader_object::test< 1 >() {
 //! Test mesh reader copy constructor dispatching to ExodusII mesh reader
 template<> template<>
 void MeshReader_object::test< 2 >() {
-  set_test_name( "copy constructor dispatching to ExodusII reader" );
+  set_test_name( "copy ctor dispatching to ExodusII reader" );
 
   std::vector< tk::MeshReader > v;
 
@@ -188,7 +190,7 @@ void MeshReader_object::test< 2 >() {
 //! Test mesh reader move constructor dispatching to ExodusII mesh reader
 template<> template<>
 void MeshReader_object::test< 3 >() {
-  set_test_name( "move constructor dispatching to ExodusII reader" );
+  set_test_name( "move ctor dispatching to ExodusII reader" );
 
   std::vector< tk::MeshReader > v;
 
@@ -208,7 +210,7 @@ void MeshReader_object::test< 3 >() {
 //! Test mesh reader copy assignment dispatching to ExodusII mesh reader
 template<> template<>
 void MeshReader_object::test< 4 >() {
-  set_test_name( "copy assignment dispatching to ExodusII reader" );
+  set_test_name( "copy assignment dispatching to ExoII reader" );
 
   // Invoke constructor
   tk::MeshReader q( er );
@@ -232,7 +234,7 @@ void MeshReader_object::test< 4 >() {
 //! Test mesh reader move assignment dispatching to ExodusII mesh reader
 template<> template<>
 void MeshReader_object::test< 5 >() {
-  set_test_name( "move assignment dispatching to ExodusII reader" );
+  set_test_name( "move assignment dispatching to ExoII reader" );
 
   // Invoke move assignment
   auto c = er;
@@ -250,11 +252,7 @@ void MeshReader_object::test< 5 >() {
 //! Test mesh reader contructor throws on undetectable file
 template<> template<>
 void MeshReader_object::test< 6 >() {
-  set_test_name( "constructor throws on input file not detected" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
+  set_test_name( "ctor throws on input file not detected" );
 
   try {
     // Pass a CMakeLists.txt's name as mesh file, should throw

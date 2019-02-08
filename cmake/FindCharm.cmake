@@ -34,6 +34,21 @@ function(_GET_CHARMINC _OUT_INC _charmc)
   endif()
 endfunction()
 
+# find out if Charm++ was built with randomzied message queues
+function(GET_CHARM_QUEUE_TYPE CHARM_RNDQ conv_conf_hdr)
+  file( STRINGS ${conv_conf_hdr} _contents
+        REGEX ".*#define CMK_RANDOMIZED_MSGQ[ \t]+" )
+  if(_contents)
+    string(REGEX REPLACE ".*#define CMK_RANDOMIZED_MSGQ[ \t]+([01]+).*" "\\1" RNDQ "${_contents}")
+    if (RNDQ EQUAL 1)
+      set(CHARM_RNDQ true PARENT_SCOPE)
+      message(STATUS "Charm++ built with randomized message queues")
+    endif()
+  else()
+    message(FATAL_ERROR "Include file ${conv_conf_hdr} does not exist")
+ endif()
+endfunction()
+
 # If already in cache, be silent
 if (CHARM_INCLUDE_DIRS AND CHARM_COMPILER AND CHARM_RUN)
   set (CHARM_FIND_QUIETLY TRUE)
@@ -96,6 +111,15 @@ FIND_PATH(CHARM_INCLUDE_DIR NAMES charm.h
                                   $ENV{CHARM_ROOT}/include
                                   ${CMAKE_INSTALL_PREFIX}/charm/include
                             PATH_SUFFIXES charm)
+
+if(CHARM_INCLUDE_DIR)
+  FIND_PATH(CHARM_CONV_HDR NAMES conv-autoconfig.h
+                           HINTS ${HINTS_CHARMINC}
+                                 ${CHARM_INCLUDE_DIR}
+                           PATH_SUFFIXES ../tmp)
+  GET_CHARM_QUEUE_TYPE(CHARM_QUEUE_TYPE ${CHARM_CONV_HDR}/conv-autoconfig.h)
+endif()
+
 if(CHARM_INCLUDE_DIR)
   set(CHARM_INCLUDE_DIRS ${CHARM_INCLUDE_DIR})
 else()
@@ -112,5 +136,24 @@ if(AMPI_C_COMPILER AND AMPI_CXX_COMPILER)
   set(ENABLE_AMPI true)
 endif()
 
+if(CHARM_COMPILER)
+  include(CheckIncludeFiles)
+  CHECK_INCLUDE_FILES("${CHARM_INCLUDE_DIR}/conv-mach-opt.h"
+                      HAVE_CHARM_CONV_MACH_OPT)
+
+  if (HAVE_CHARM_CONV_MACH_OPT)
+    include(CheckSymbolExists)
+    CHECK_SYMBOL_EXISTS(CMK_SMP "${CHARM_INCLUDE_DIR}/conv-mach-opt.h"
+                        CHARM_SMP)
+    if (CHARM_SMP)
+      message(STATUS "Charm++ built in SMP mode")
+    else()
+      message(STATUS "Charm++ built in non-SMP mode")
+    endif()
+  endif()
+
+endif()
+
 MARK_AS_ADVANCED(CHARM_COMPILER CHARM_INCLUDE_DIRS CHARM_RUN ENABLE_AMPI
-                 AMPI_C_COMPILER AMPI_CXX_COMPILER AMPI_RUN)
+                 AMPI_C_COMPILER AMPI_CXX_COMPILER AMPI_RUN CHARM_SMP
+                 CHARM_QUEUE_TYPE)

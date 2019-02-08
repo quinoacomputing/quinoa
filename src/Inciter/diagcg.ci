@@ -13,7 +13,6 @@ module diagcg {
 
   extern module transporter;
   extern module discretization;
-  extern module solver;
 
   include "UnsMesh.h";
   include "PUPUtil.h";
@@ -22,12 +21,10 @@ module diagcg {
   namespace inciter {
 
     array [1D] DiagCG {
-      entry DiagCG( const CProxy_Discretization& disc,
-                    const tk::CProxy_Solver& solver,
-                    const FaceData& fd );
+      entry DiagCG( const CProxy_Discretization& disc, const FaceData& fd );
       initnode void registerReducers();
       entry void setup( tk::real v );
-      entry void dt();
+      entry void init();
       entry void diag();
       entry void advance( tk::real newdt );
       entry void comlhs( const std::vector< std::size_t >& gid,
@@ -38,6 +35,7 @@ module diagcg {
                          const std::vector< std::vector< tk::real > >& D );
       entry void resized();
       entry void lhs();
+      entry void step();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -49,9 +47,9 @@ module diagcg {
         when ownrhs_complete(), comrhs_complete(),
              owndif_complete(), comdif_complete() serial "rhs" { solve(); } };
 
-      entry void wait4eval() {
+      entry void wait4out() {
         when diag_complete(), ref_complete(), lhs_complete(),
-             resize_complete() serial "eval" { eval(); } };
+             resize_complete() serial "out" { out(); } };
 
       entry void ownlhs_complete();
       entry void ownrhs_complete();

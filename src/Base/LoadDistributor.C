@@ -17,7 +17,7 @@
 namespace tk {
 
 uint64_t
-linearLoadDistributor( tk::real virtualization,
+linearLoadDistributor( real virtualization,
                        uint64_t load,
                        int npe,
                        uint64_t& chunksize,
@@ -58,13 +58,13 @@ linearLoadDistributor( tk::real virtualization,
 //!    - npes = number of hardware processing elements
 // *****************************************************************************
 {
-  Assert( virtualization > -std::numeric_limits< tk::real >::epsilon() &&
-          virtualization < 1.0+std::numeric_limits< tk::real >::epsilon(),
+  Assert( virtualization > -std::numeric_limits< real >::epsilon() &&
+          virtualization < 1.0+std::numeric_limits< real >::epsilon(),
           "Virtualization parameter must be between [0.0...1.0]" );
   Assert( npe > 0, "Number of processing elements must be larger than zero" );
 
   // Compute minimum number of work units
-  const auto n = static_cast< tk::real >( load ) / npe;
+  const auto n = static_cast< real >( load ) / npe;
 
   // Compute work unit size based on the linear formula above
   chunksize = static_cast< uint64_t >( (1.0 - n) * virtualization + n );

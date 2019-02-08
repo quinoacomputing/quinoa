@@ -4,7 +4,7 @@
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Boundary conditions for nodal discretizations
   \details   Boundary conditions for nodal discretizations, such as continuous
-    Galerkin finite elements, e.g., MatCG, DiagCG.
+    Galerkin finite elements, e.g., DiagCG.
 */
 // *****************************************************************************
 
@@ -139,10 +139,7 @@ match( tk::ctr::ncomp_type ncomp,
 
   // Verify the size of each NodeBC vectors. They must have the same lengths and
   // equal to the total number of scalar components for all systems of PDEs
-  // integrated. This is intentional, because this way the linear system solver
-  // does not have to (and does not) know about individual equation systems.
-  // This entire loop is optimized away in RELEASE mode, thus the IGNOREs to
-  // silence compiler warnings.
+  // integrated.
   Assert( std::all_of( begin(dirbc), end(dirbc),
                        [ ncomp ]( const decltype(dirbc)::value_type& n ){
                         return n.second.size() == ncomp; } ),

@@ -65,10 +65,6 @@ class Migrated : public CBase_Migrated {
                          "Charm:migrate enum 2",
                          tut::test_result::result_type::ok );
 
-    // Quiet std::cerr, to quiet exception message during its ctor
-    std::stringstream quiet;
-    tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
     try {
       // Generate error message with expected and actual value in case if fail
       using underlying_type =
@@ -112,10 +108,6 @@ class Migrated : public CBase_Migrated {
     tut::test_result tr( "Base/PUPUtil", 2,
                          "Charm:migrate uint8_t enum 2",
                          tut::test_result::result_type::ok );
-
-    // Quiet std::cerr, to quiet exception message during its ctor
-    std::stringstream quiet;
-    tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
     try {
       // Generate error message with expected and actual value in case if fail
@@ -161,10 +153,6 @@ class Migrated : public CBase_Migrated {
                          "Charm:migrate C-style enum 2",
                          tut::test_result::result_type::ok );
 
-    // Quiet std::cerr, to quiet exception message during its ctor
-    std::stringstream quiet;
-    tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
     try {
       // Generate error message with expected and actual value in case if fail
       std::string expected = std::to_string( charm::Enum_cstyle::F1 );
@@ -204,10 +192,6 @@ class Migrated : public CBase_Migrated {
     tut::test_result tr( "Base/PUPUtil", 4,
                          "Charm:migrate std::pair<int,double> 2",
                          tut::test_result::result_type::ok );
-
-    // Quiet std::cerr, to quiet exception message during its ctor
-    std::stringstream quiet;
-    tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
     try {
       // Generate error message with expected and actual value in case if fail
@@ -251,10 +235,6 @@ class Migrated : public CBase_Migrated {
                          "Charm:migrate std::vector< std::string > 2",
                          tut::test_result::result_type::ok );
 
-    // Quiet std::cerr, to quiet exception message during its ctor
-    std::stringstream quiet;
-    tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
     try {
       // Generate error message with expected and actual value in case if fail
       std::string expected = "[ \"1\", \"blah\", \"boohoo\" ]";
@@ -296,10 +276,6 @@ class Migrated : public CBase_Migrated {
     tut::test_result tr( "Base/PUPUtil", 6,
                          "Charm:migrate std::tuple 2",
                          tut::test_result::result_type::ok );
-
-    // Quiet std::cerr, to quiet exception message during its ctor
-    std::stringstream quiet;
-    tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
     try {
       // Generate error message with expected and actual value in case if fail
@@ -380,10 +356,6 @@ class Migrated : public CBase_Migrated {
                          "Charm:migrate std::array<int,2> 2",
                          tut::test_result::result_type::ok );
 
-    // Quiet std::cerr, to quiet exception message during its ctor
-    std::stringstream quiet;
-    tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
     try {
       // Generate error message with expected and actual value in case if fail
       std::string expected = "[ 12, 2 ]";
@@ -424,10 +396,6 @@ class Migrated : public CBase_Migrated {
     tut::test_result tr( "Base/PUPUtil", 8,
                          "Charm:migrate std::unordered_map<int,str> 2",
                          tut::test_result::result_type::ok );
-
-    // Quiet std::cerr, to quiet exception message during its ctor
-    std::stringstream quiet;
-    tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
     try {
       // Generate error message with expected and actual value in case if fail
@@ -474,10 +442,6 @@ class Migrated : public CBase_Migrated {
                          "Charm:migrate std::unordered_set<int> 2",
                          tut::test_result::result_type::ok );
 
-    // Quiet std::cerr, to quiet exception message during its ctor
-    std::stringstream quiet;
-    tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
     try {
       // Generate error message with expected and actual value in case if fail
       std::string expected = R"([ {11} {12} ])";
@@ -521,10 +485,6 @@ class Migrated : public CBase_Migrated {
                          "Charm:migrate boost::optional<str> 2",
                          tut::test_result::result_type::ok );
 
-    // Quiet std::cerr, to quiet exception message during its ctor
-    std::stringstream quiet;
-    tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
     try {
       // Generate error message with expected and actual value in case if fail
       std::string expected = "blah";
@@ -566,10 +526,6 @@ class Migrated : public CBase_Migrated {
                          "Charm:migrate boost::optional<int> 2",
                          tut::test_result::result_type::ok );
 
-    // Quiet std::cerr, to quiet exception message during its ctor
-    std::stringstream quiet;
-    tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
     try {
       // Generate error message with expected and actual value in case if fail
       std::string expected = "boost::none";
@@ -610,10 +566,6 @@ class Migrated : public CBase_Migrated {
     tut::test_result tr( "Base/PUPUtil", 12,
                          "Charm:migrate tk::tuple::tagged_tuple 2",
                          tut::test_result::result_type::ok );
-
-    // Quiet std::cerr, to quiet exception message during its ctor
-    std::stringstream quiet;
-    tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
     try {
       // Generate error message with expected and actual value in case if fail
@@ -659,10 +611,6 @@ class Migrated : public CBase_Migrated {
                          "Charm:migrate tk::Variant<int,double>(int) 2",
                          tut::test_result::result_type::ok );
 
-    // Quiet std::cerr, to quiet exception message during its ctor
-    std::stringstream quiet;
-    tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
     try {
       // Generate error message with expected and actual value in case if fail
       std::string expected = "[ " + std::to_string(value) + " ]";
@@ -704,10 +652,6 @@ class Migrated : public CBase_Migrated {
     tut::test_result tr( "Base/PUPUtil", 14,
                          "Charm:migrate tk::Variant<int,double>(double) 2",
                          tut::test_result::result_type::ok );
-
-    // Quiet std::cerr, to quiet exception message during its ctor
-    std::stringstream quiet;
-    tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
     try {
       // Generate error message with expected and actual value in case if fail
