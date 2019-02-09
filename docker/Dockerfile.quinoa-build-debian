@@ -44,4 +44,4 @@ RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DENABLE_ROOT=true 
 # Build code
 RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS=-Werror -DCMAKE_BUILD_TYPE=Release -GNinja -DRUNNER=mpirun -DRUNNER_NCPUS_ARG=-n -DRUNNER_ARGS=-oversubscribe ../src && ninja
 # Run tests
-RUN cd quinoa/build && ../script/run_tests.sh $(grep -c processor /proc/cpuinfo) mpirun -n -oversubscribe
+RUN cd quinoa/build && npe=$(grep -c processor /proc/cpuinfo) && ./charmrun +p $npe Main/unittest -v -q && ctest -j $npe --output-on-failure -LE extreme
