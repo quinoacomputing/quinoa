@@ -68,6 +68,7 @@ env:
     - TARGET=meshconv COMPILER=clang BUILD=Release
     - TARGET=meshconv COMPILER=clang BUILD=Release SHARED_LIBS=off
 
+    - TARGET=all COMPILER=gnu BUILD=Debug
     - TARGET=all COMPILER=gnu BUILD=Debug SONARQUBE=ON
     - TARGET=doc
 
