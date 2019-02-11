@@ -382,6 +382,14 @@ MatCG::out()
 }
 
 void
+MatCG::sendinit()
+// *****************************************************************************
+// Send own chare-boundary data to neighboring chares
+// *****************************************************************************
+{
+}
+
+void
 MatCG::advance( tk::real newdt )
 // *****************************************************************************
 // Advance equations to next time step

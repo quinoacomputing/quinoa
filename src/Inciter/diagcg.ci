@@ -29,6 +29,7 @@ module diagcg {
       entry void setup( tk::real v );
       entry void dt();
       entry void diag();
+      entry void sendinit();
       entry void advance( tk::real newdt );
       entry void comlhs( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& L );

@@ -29,7 +29,8 @@ tk::initializeP0( ncomp_t system,
                   const UnsMesh::Coords& coord,
                   const SolutionFn& solution,
                   Fields& unk,
-                  real t )
+                  real t,
+                  const std::size_t nielem )
 // *****************************************************************************
 //  Initalize a PDE system for DG(P0)
 //! \param[in] system Equation system index
@@ -41,13 +42,14 @@ tk::initializeP0( ncomp_t system,
 //!   conditions at x,y,z,t
 //! \param[in,out] unk Array of unknowns
 //! \param[in] t Physical time
+//! \param[in] nielem Number of internal elements
 // *****************************************************************************
 {
   const auto& x = coord[0];
   const auto& y = coord[1];
   const auto& z = coord[2];
 
-  for (std::size_t e=0; e<unk.nunk(); ++e) {    // for all tets
+  for (std::size_t e=0; e<nielem; ++e) {    // for all tets
     // node ids
     const auto A = inpoel[e*4+0];
     const auto B = inpoel[e*4+1];
@@ -73,7 +75,8 @@ tk::initializeP1( ncomp_t system,
                   const UnsMesh::Coords& coord,
                   const SolutionFn& solution,
                   Fields& unk,
-                  real t )
+                  real t,
+                  const std::size_t nielem )
 // *****************************************************************************
 //  Initalize a PDE system for DG(P1)
 //! \param[in] system Equation system index
@@ -86,6 +89,7 @@ tk::initializeP1( ncomp_t system,
 //!   conditions at x,y,z,t
 //! \param[in,out] unk Array of unknowns
 //! \param[in] t Physical time
+//! \param[in] nielem Number of internal elements
 // *****************************************************************************
 {
   Assert( L.nunk() == unk.nunk(), "Size mismatch" );
@@ -107,7 +111,7 @@ tk::initializeP1( ncomp_t system,
   // get quadrature point weights and coordinates for tetrahedron
   GaussQuadratureTet( coordgp, wgp );
 
-  for (std::size_t e=0; e<unk.nunk(); ++e) {    // for all tets
+  for (std::size_t e=0; e<nielem; ++e) {    // for all tets
     auto vole = L(e, 0, offset);
 
     auto x1 = cx[ inpoel[4*e]   ];
@@ -177,7 +181,8 @@ tk::initializeP2( ncomp_t system,
                   const UnsMesh::Coords& coord,
                   const SolutionFn& solution,
                   Fields& unk,
-                  real t )
+                  real t,
+                  const std::size_t nielem )
 // *****************************************************************************
 //  Initalize a PDE system for DG(P1)
 //! \param[in] system Equation system index
@@ -190,6 +195,7 @@ tk::initializeP2( ncomp_t system,
 //!   conditions at x,y,z,t
 //! \param[in,out] unk Array of unknowns
 //! \param[in] t Physical time
+//! \param[in] nielem Number of internal elements
 // *****************************************************************************
 {
   Assert( L.nunk() == unk.nunk(), "Size mismatch" );
@@ -211,7 +217,7 @@ tk::initializeP2( ncomp_t system,
   // get quadrature point weights and coordinates for tetrahedron
   GaussQuadratureTet( coordgp, wgp );
 
-  for (std::size_t e=0; e<unk.nunk(); ++e) {    // for all tets
+  for (std::size_t e=0; e<nielem; ++e) {    // for all tets
     auto vole = L(e, 0, offset);
 
     auto x1 = cx[ inpoel[4*e]   ];
@@ -317,7 +323,8 @@ tk::initialize( ncomp_t system,
                 const UnsMesh::Coords& coord,
                 const SolutionFn& solution,
                 Fields& unk,
-                real t )
+                real t,
+                const std::size_t nielem )
 // *****************************************************************************
 //! Initalize a system of DGPDEs
 //! \details This is the public interface exposed to client code.
@@ -331,19 +338,23 @@ tk::initialize( ncomp_t system,
 //!   conditions at x,y,z,t
 //! \param[in,out] unk Array of unknowns
 //! \param[in] t Physical time
+//! \param[in] nielem Number of internal elements
 // *****************************************************************************
 {
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   switch(ndof) 
   {
     case 1:
-      initializeP0( system, ncomp, offset, inpoel, coord, solution, unk, t );
+      initializeP0( system, ncomp, offset, inpoel, coord, solution, unk, t,
+                    nielem );
       break;
     case 4:
-      initializeP1( system, ncomp, offset, L, inpoel, coord, solution, unk, t );
+      initializeP1( system, ncomp, offset, L, inpoel, coord, solution, unk, t,
+                    nielem );
       break;
     case 10:
-      initializeP2( system, ncomp, offset, L, inpoel, coord, solution, unk, t );
+      initializeP2( system, ncomp, offset, L, inpoel, coord, solution, unk, t,
+                    nielem );
       break;
     default:
       Throw( "initialize() not defined" );

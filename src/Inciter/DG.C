@@ -920,7 +920,7 @@ DG::setup( tk::real v )
 
   // Set initial conditions for all PDEs
   for (const auto& eq : g_dgpde) 
-    eq.initialize( m_lhs, inpoel, coord, m_u, d->T() );
+    eq.initialize( m_lhs, inpoel, coord, m_u, d->T(), esuel.size()/4 );
   m_un = m_u;
 
   for (std::size_t e=0; e<esuel.size()/4; ++e)
@@ -928,7 +928,7 @@ DG::setup( tk::real v )
       m_limFunc(e,c,0)=1.0;
 
   // Communicate for initial solution limiting
-  sendinit();
+  contribute( CkCallback(CkReductionTarget(Transporter,sendinit), d->Tr()) );
 }
 
 void

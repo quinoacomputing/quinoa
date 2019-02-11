@@ -95,10 +95,11 @@ class CompFlow {
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
                      tk::Fields& unk,
-                     tk::real t ) const
+                     tk::real t,
+                     const std::size_t nielem ) const
     {
       tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
-                      Problem::solution, unk, t );
+                      Problem::solution, unk, t, nielem );
     }
 
     //! Compute the left hand side block-diagonal mass matrix

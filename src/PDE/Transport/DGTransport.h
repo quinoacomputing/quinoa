@@ -95,10 +95,11 @@ class Transport {
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
                      tk::Fields& unk,
-                     tk::real t ) const
+                     tk::real t,
+                     const std::size_t nielem ) const
     {
       tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
-                      Problem::solution, unk, t );
+                      Problem::solution, unk, t, nielem );
     }
 
     //! Compute the left hand side mass matrix
@@ -273,7 +274,7 @@ class Transport {
       // evaluate analytic solution at time t
       auto E = U;
       tk::initializeP0( m_system, m_ncomp, m_offset, inpoel, coord,
-                        Problem::solution, E, t );
+                        Problem::solution, E, t, U.nunk() );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( E.extract( c*ndof, m_offset ) );

@@ -41,6 +41,7 @@ module dg {
       entry void cominit( int fromch,
                           const std::vector< std::size_t >& tetid,
                           const std::vector< std::vector< tk::real > >& u );
+      entry void sendinit();
       entry void advance( tk::real );
       entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();

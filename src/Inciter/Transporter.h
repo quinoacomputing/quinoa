@@ -166,6 +166,9 @@ class Transporter : public CBase_Transporter {
     //! Reset linear solver for next time step
     void next();
 
+    //! Reduction target to sync the initial solution before limiting
+    void sendinit();
+
     //! Reduction target computing minimum of dt
     void advance( tk::real dt );
 

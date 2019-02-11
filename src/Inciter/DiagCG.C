@@ -592,6 +592,14 @@ DiagCG::out()
 }
 
 void
+DiagCG::sendinit()
+// *****************************************************************************
+// Send own chare-boundary data to neighboring chares
+// *****************************************************************************
+{
+}
+
+void
 DiagCG::advance( tk::real newdt )
 // *****************************************************************************
 // Advance equations to next time step
