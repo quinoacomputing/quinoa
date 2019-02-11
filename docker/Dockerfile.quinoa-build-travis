@@ -32,7 +32,7 @@ RUN mkdir build
 
 WORKDIR build
 RUN ccache -z
-RUN cmake \
+RUN time cmake \
     -GNinja \
     -DCMAKE_C_COMPILER=mpicc \
     -DCMAKE_CXX_COMPILER=mpicxx \
@@ -47,11 +47,11 @@ RUN cmake \
     ${SMP:+-DPOSTFIX_RUNNER_ARGS="+setcpuaffinity"} \
     -DGENHTML=/bin/true \
     ../src
-RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} ninja -j2 ${TARGET}
+RUN time ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} ninja -j2 ${TARGET}
 RUN ccache -s
 RUN if [ ${TARGET} = unittest ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q ${SMP:++ppn 2}; fi
 RUN if [ ${TARGET} != all ] && [ ${TARGET} != doc ]; then ctest --output-on-failure -j2 -LE stringent -R ${TARGET}; fi
-RUN if [ ${TARGET} = doc ]; then ninja -j2 doc; fi
+RUN if [ ${TARGET} = doc ]; then time ninja -j2 doc; fi
 #RUN cd .. && if [ ${SONARQUBE} ]; then \
 #  python -m coverxygen --xml-dir build/doc/xml/ --src-dir . --output doxygen.coverage.info; \
 #  wget -O codecov.sh https://codecov.io/bash; \
@@ -66,7 +66,7 @@ RUN if [ ${TARGET} = doc ]; then ninja -j2 doc; fi
 #  fi; \
 #fi
 RUN cd .. && if [ ${SONARQUBE} ] && [ -n "${SONARQUBE_GITHUB_TOKEN}" ] && [ -n "${SONARQUBE_TOKEN}" ]; then \
-  sonar-scanner \
+  time sonar-scanner \
     -Dsonar.projectKey=${TRAVIS_REPO_SLUG#*/} \
     -Dsonar.projectName=${TRAVIS_REPO_SLUG#*/} \
     -Dsonar.projectVersion=${TRAVIS_COMMIT} \
@@ -90,7 +90,7 @@ RUN cd .. && if [ ${SONARQUBE} ] && [ -n "${SONARQUBE_GITHUB_TOKEN}" ] && [ -n "
     -Dsonar.login=${SONARQUBE_TOKEN}; \
 fi
 USER root
-RUN if [ ${TARGET} = all ]; then ninja -j2 install; fi
+RUN if [ ${TARGET} = all ]; then time ninja -j2 install; fi
 USER quinoa
 RUN if [ ${TARGET} = all ]; then export PATH=/usr/local/bin:$PATH && unittest -h && inciter && rngtest && meshconv && walker; fi
 WORKDIR /home/quinoa
