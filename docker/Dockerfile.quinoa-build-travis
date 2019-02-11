@@ -49,9 +49,9 @@ RUN cmake \
     ../src
 RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} ninja -j2 ${TARGET}
 RUN ccache -s
-RUN [ ${TARGET} = unittest ] && ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q ${SMP:++ppn 2}
-RUN [ ${TARGET} != all ] && [ ${TARGET} != doc ] && ctest --output-on-failure -j2 -LE stringent -R ${TARGET}
-RUN [ ${TARGET} == doc ] && ninja -j2 doc
+RUN if [ ${TARGET} = unittest ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q ${SMP:++ppn 2}; fi
+RUN if [ ${TARGET} != all ] && [ ${TARGET} != doc ]; then ctest --output-on-failure -j2 -LE stringent -R ${TARGET}; fi
+RUN if [ ${TARGET} = doc ]; then ninja -j2 doc; fi
 #RUN cd .. && if [ ${SONARQUBE} ]; then \
 #  python -m coverxygen --xml-dir build/doc/xml/ --src-dir . --output doxygen.coverage.info; \
 #  wget -O codecov.sh https://codecov.io/bash; \
@@ -90,7 +90,7 @@ RUN cd .. && if [ ${SONARQUBE} ] && [ -n "${SONARQUBE_GITHUB_TOKEN}" ] && [ -n "
     -Dsonar.login=${SONARQUBE_TOKEN}; \
 fi
 USER root
-RUN [ ${TARGET} = all ] && ninja -j2 install
+RUN if [ ${TARGET} = all ]; then ninja -j2 install; fi
 USER quinoa
-RUN [ ${TARGET} = all ] && export PATH=/usr/local/bin:$PATH && unittest -h && inciter && rngtest && meshconv && walker; fi
+RUN if [ ${TARGET} = all ]; then export PATH=/usr/local/bin:$PATH && unittest -h && inciter && rngtest && meshconv && walker; fi
 WORKDIR /home/quinoa
