@@ -158,6 +158,7 @@ class MixMassFractionBeta {
         const auto& hts =
           g_inputdeck.get< tag::param, eq, tag::hydrotimescales >().at(c);
         ctr::HydroTimeScales ot;
+        // cppcheck-suppress useStlAlgorithm
         for (auto t : hts) m_hts.push_back( ot.table(t) );
         Assert( m_hts.size() == m_ncomp, "Number of inverse hydro time scale "
           "tables associated does not match the components integrated" );
@@ -166,6 +167,7 @@ class MixMassFractionBeta {
         const auto& hp =
           g_inputdeck.get< tag::param, eq, tag::hydroproductions >().at(c);
         ctr::HydroProductions op;
+        // cppcheck-suppress useStlAlgorithm
         for (auto t : hp) m_hp.push_back( op.table(t) );
         Assert( m_hp.size() == m_ncomp, "Number of hydro "
           "production/dissipation tables associated does not match the "

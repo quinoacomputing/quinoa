@@ -280,8 +280,7 @@ Sorter::mask()
     }
 
   // Count up total number of nodes this chare will need to receive
-  std::size_t nrecv = 0;
-  for (const auto& u : m_reordcomm) nrecv += u.second.size();
+  auto nrecv = tk::sumvalsize( m_reordcomm );
 
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chmask();
 

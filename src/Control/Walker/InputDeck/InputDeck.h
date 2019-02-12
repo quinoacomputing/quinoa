@@ -256,15 +256,6 @@ class InputDeck :
       return names;
     }
 
-    // Count number requested PDFs with given number of sample space dimensions
-    template< std::size_t d >
-    std::size_t npdf() const {
-      std::size_t n = 0;
-      for (const auto& bs : get< tag::discr, tag::binsize >())
-        if (bs.size() == d) ++n;
-      return n;
-    }
-
     //! Query if there are any statistics or PDFs to estimate
     //! \return True if there are any statistics or PDFs to estimate
     bool stat()

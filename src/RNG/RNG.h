@@ -110,7 +110,7 @@ class RNG {
     //! the virtual functions required by Concept
     template< typename T >
     struct Model : Concept {
-      Model( T x ) : data( std::move(x) ) {}
+      explicit Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
       void uniform( int stream, ncomp_t num, double* r ) const override
       { data.uniform( stream, num, r ); }

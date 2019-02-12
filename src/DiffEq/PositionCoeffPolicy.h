@@ -44,7 +44,7 @@ class Position_InstantaneousVelocity {
 
   public:
     //! Constructor
-    Position_InstantaneousVelocity( std::array< tk::real, 9 >& ) {}
+    explicit Position_InstantaneousVelocity( std::array< tk::real, 9 >& ) {}
 
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept
@@ -58,7 +58,7 @@ class Position_ConstShear {
   public:
     //! Constructor: prescribe mean shear as dU/dy = 1.0
     //! \param[in,out] dU Prescribed mean velocity gradient
-    Position_ConstShear( std::array< tk::real, 9 >& dU ) {
+    explicit Position_ConstShear( std::array< tk::real, 9 >& dU ) {
       dU = {{ 0.0, 1.0, 0.0,
               0.0, 0.0, 0.0,
               0.0, 0.0, 0.0 }};

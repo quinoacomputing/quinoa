@@ -33,7 +33,6 @@
 #include "Types.h"
 #include "Fields.h"
 #include "DerivedData.h"
-#include "VectorReducer.h"
 #include "FluxCorrector.h"
 #include "NodeDiagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
@@ -80,6 +79,7 @@ class DiagCG : public CBase_DiagCG {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
+    // cppcheck-suppress uninitMemberVar
     explicit DiagCG( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop

@@ -44,6 +44,7 @@ class Discretization : public CBase_Discretization {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
+    // cppcheck-suppress uninitMemberVar
     explicit Discretization( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop

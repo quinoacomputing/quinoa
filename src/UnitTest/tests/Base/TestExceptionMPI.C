@@ -54,6 +54,7 @@ void ExceptionMPI_object::test< 2 >() {
   set_test_name( "AssertMPI macro doesn't throw all true" );
 
   try {
+    // cppcheck-suppress duplicateExpression
     AssertMPI( 1 == 1, "msg" );
   }
   catch ( tk::Exception& ) {
@@ -103,6 +104,7 @@ void ExceptionMPI_object::test< 5 >() {
   try {
     int peid;
     MPI_Comm_rank( MPI_COMM_WORLD, &peid );
+    // cppcheck-suppress duplicateExpression
     ErrChkMPI( peid == 0 ? 0 == 1 : 1 == 1, "msg" )
     fail( "should throw exception" );
   }
@@ -122,6 +124,7 @@ void ExceptionMPI_object::test< 6 >() {
     try {
       int peid;
       MPI_Comm_rank( MPI_COMM_WORLD, &peid );
+      // cppcheck-suppress duplicateExpression
       ErrChkMPI( peid == 0 ? 1 == 1 : 0 == 1, "msg" )
       fail( "should throw exception" );
     }

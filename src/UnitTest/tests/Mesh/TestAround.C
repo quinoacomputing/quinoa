@@ -127,8 +127,35 @@ void Around_object::test< 1 >() {
   for (std::size_t p=0; p<npoin; ++p) {
     // extract element ids from generated elements surrounding point p
     std::vector< std::size_t > points;
-    // Iterate through all elements surrounding point p
-    for (auto e : tk::Around(esup,p)) points.push_back(e);
+
+    const auto a = tk::Around(esup,p);
+    // Iterate through all elements surrounding point p using copy/range-for
+    // cppcheck-suppress useStlAlgorithm
+    for (auto e : a) points.push_back(e);
+    // Iterate through all elements surrounding point p using vector::insert
+    // using Around::begin/end
+    decltype(points) points2;
+    points2.insert( end(points2), a.begin(), a.end() );
+    ensure( "Class Around using vector::insert and Around::begin/end incorrect",
+            points2 == points );
+    // Iterate through all elements surrounding point p using vector::insert
+    // and std::begin/end
+    decltype(points) points3;
+    points3.insert( end(points3), std::begin(a), std::end(a) );
+    ensure( "Class Around using vector::insert and std::begin/end incorrect",
+            points3 == points );
+    // Iterate through all elements surrounding point p using vector::insert
+    // using Around::cbegin/cend
+    decltype(points) points4;
+    points4.insert( end(points4), a.cbegin(), a.cend() );
+    ensure( "Class Around using vector::insert and Around::cbegin/cend "
+            "incorrect", points4 == points );
+    // Iterate through all elements surrounding point p using std::copy
+    decltype(points) points5;
+    std::copy( a.begin(), a.end(), std::back_inserter(points5) );
+    ensure( "Class Around using std::copy and std::back_inserter incorrect",
+            points5 == points );
+
     // find correct element ids surrounding point p
     auto it = correct_esup.find( p );
     // test if element ids exist surrounding point p
@@ -185,6 +212,7 @@ void Around_object::test< 2 >() {
     // extract element ids from generated elements surrounding point p
     std::vector< std::size_t > points;
     // Iterate through all elements surrounding point p
+    // cppcheck-suppress useStlAlgorithm
     for (auto e : tk::Around(esup,p)) points.push_back(e);
     // find correct element ids surrounding point p
     auto it = correct_esup.find( p );
@@ -242,6 +270,7 @@ void Around_object::test< 3 >() {
     // extract element ids from generated elements surrounding point p
     std::vector< std::size_t > points;
     // Iterate through all points surrounding point p
+    // cppcheck-suppress useStlAlgorithm
     for (auto i : tk::Around(psup,p)) points.push_back(i);
     // find correct element ids surrounding point p
     auto it = correct_psup.find( p );
@@ -299,6 +328,7 @@ void Around_object::test< 4 >() {
     // extract element ids from generated elements surrounding point p
     std::vector< std::size_t > points;
     // Iterate through all points surrounding point p
+    // cppcheck-suppress useStlAlgorithm
     for (auto i : tk::Around(psup,p)) points.push_back(i);
     // find correct element ids surrounding point p
     auto it = correct_psup.find( p );
@@ -360,6 +390,7 @@ void Around_object::test< 5 >() {
     // extract edge end-point ids from generated edges surrounding points
     std::vector< std::size_t > edge;
     // Iterate through all edges surrounding point p
+    // cppcheck-suppress useStlAlgorithm
     for (auto i : tk::Around(edsup,p)) edge.push_back(i);
     // find correct star-center point id for list of star-end points
     auto it = correct_edsup.find( p );
@@ -427,6 +458,7 @@ void Around_object::test< 6 >() {
     // extract edge end-point ids from generated edges surrounding points
     std::vector< std::size_t > edge;
     // Iterate through all edges surrounding point p
+    // cppcheck-suppress useStlAlgorithm
     for (auto i : tk::Around(edsup,p)) edge.push_back(i);
     // find correct star-center point id for list of star-end points
     auto it = correct_edsup.find( p );
@@ -513,6 +545,7 @@ void Around_object::test< 7 >() {
     // elements
     std::vector< std::size_t > elements;
     // Iterate through all elements surrounding points of elements e
+    // cppcheck-suppress useStlAlgorithm
     for (auto i : tk::Around(esupel,e)) elements.push_back(i);
     // find correct element ids surrounding points of elements e
     auto it = correct_esupel.find( e );
@@ -581,6 +614,7 @@ void Around_object::test< 8 >() {
     // elements
     std::vector< std::size_t > elements;
     // Iterate through all elements surrounding points of elements e
+    // cppcheck-suppress useStlAlgorithm
     for (auto i : tk::Around(esupel,e)) elements.push_back(i);
     // find correct element ids surrounding points of elements e
     auto it = correct_esupel.find( e );
@@ -647,6 +681,7 @@ void Around_object::test< 9 >() {
     // extract element ids from generated elements surrounding elements
     std::vector< std::size_t > elements;
     // Iterate through all elements surrounding element e
+    // cppcheck-suppress useStlAlgorithm
     for (auto i : tk::Around(esuel,e)) elements.push_back(i);
     // find correct element ids surrounding elements e
     auto it = correct_esuel.find( e );
@@ -717,6 +752,7 @@ void Around_object::test< 10 >() {
     // extract element ids from generated elements surrounding elements
     std::vector< std::size_t > elements;
     // Iterate through all elements surrounding element e
+    // cppcheck-suppress useStlAlgorithm
     for (auto i : tk::Around(esuel,e)) elements.push_back(i);
     // find correct element ids surrounding elements e
     auto it = correct_esuel.find( e );
@@ -812,6 +848,7 @@ void Around_object::test< 11 >() {
     // extract element list generated for edge e
     std::vector< std::size_t > elements;
     // Iterate through all elements surrounding edges e
+    // cppcheck-suppress useStlAlgorithm
     for (auto i : tk::Around(esued,e)) elements.push_back(i);
     // store element list as string to output it in case test fails
     std::stringstream ss;
@@ -894,6 +931,7 @@ void Around_object::test< 12 >() {
     // extract element list generated for edge e
     std::vector< std::size_t > elements;
     // Iterate through all elements surrounding edges e
+    // cppcheck-suppress useStlAlgorithm
     for (auto i : tk::Around(esued,e)) elements.push_back(i);
     // store element list as string to output it in case test fails
     std::stringstream ss;

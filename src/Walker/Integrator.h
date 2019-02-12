@@ -48,11 +48,8 @@ class Integrator : public CBase_Integrator {
                          uint64_t npar );
 
     //! Migrate constructor
+    // cppcheck-suppress uninitMemberVar
     explicit Integrator( CkMigrateMessage* ) :
-      // WARNING: This is a "blind" copy of the standard constructor initializer
-      // list - it must be changed for migration to be correct.      
-      m_hostproxy(),
-      m_collproxy(),
       m_particles( 0, g_inputdeck.get< tag::component >().nprop() ),
       m_stat( m_particles,
                 g_inputdeck.get< tag::component >().offsetmap( g_inputdeck ),

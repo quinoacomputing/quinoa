@@ -69,6 +69,7 @@ class DG : public CBase_DG {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
+    // cppcheck-suppress uninitMemberVar
     explicit DG( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop

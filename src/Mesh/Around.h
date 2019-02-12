@@ -31,6 +31,9 @@ class Around {
     using List =
       std::pair< std::vector< std::size_t >, std::vector< std::size_t > >;
 
+    //! Non-const iterator to the item list in List::T1
+    using iterator = List::first_type::iterator;
+
     //! Const iterator to the item list in List::T1
     using const_iterator = List::first_type::const_iterator;
 
@@ -44,17 +47,29 @@ class Around {
     explicit Around( const List& list, std::size_t idx ) :
       m_list( list ), m_idx( idx ) {}
 
+    //! Const iterator to the beginning of the entries of surrounding entries
+    //! \return Iterator to the beginning of the entries of surrounding entries
+    //! \note This class does not allow modifing the underlying linked list, so
+    //!   the begin/end iterators are aliased to cbegin/cend.
+    const_iterator begin() const { return this->cbegin(); }
+
+    //! Const iterator to the entry after the last of the surrounding entries
+    //! \return Iterator to the entry after the last of the surrounding entries
+    //! \note This class does not allow modifing the underlying linked list, so
+    //!   the begin/end iterators are aliased to cbegin/cend.
+    const_iterator end() const { return this->cend(); }
+
     //! Iterator to the beginning of the entries of surrounding entries
     //! \return Iterator to the beginning of the entries of surrounding entries
-    const_iterator begin() {
-      return m_list.first.begin() +
+    const_iterator cbegin() const {
+      return m_list.first.cbegin() +
              static_cast< diff_type >( m_list.second[m_idx] + 1 );
     }
 
     //! Iterator to the entry after the last of the surrounding entries
     //! \return Iterator to the entry after the last of the surrounding entries
-    const_iterator end() {
-      return m_list.first.begin() +
+    const_iterator cend() const {
+      return m_list.first.cbegin() +
              static_cast< diff_type >( m_list.second[m_idx+1] + 1 );
     }
 

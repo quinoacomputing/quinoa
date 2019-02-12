@@ -25,7 +25,7 @@ class ASCMeshReader : public Reader {
 
   public:
     //! Constructor
-    explicit ASCMeshReader( const std::string filename ) :
+    explicit ASCMeshReader( const std::string& filename ) :
       Reader( filename ) {}
 
     //! Read ASC mesh

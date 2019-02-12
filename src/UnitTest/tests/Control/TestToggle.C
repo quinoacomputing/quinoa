@@ -198,6 +198,7 @@ void Toggle_object::test< 11 >() {
                      { { "1st option keyword", Enum::F1 },
                        { "2nd option keyword", Enum::F2 } } );
   // Copy p to c
+  // cppcheck-suppress redundantAssignment
   c = p;
   // c now should have a different group name and should have 3 options mapped
   ensure_equals( "new group name of copy-assigned Toggle",
@@ -220,6 +221,7 @@ void Toggle_object::test< 12 >() {
                      { { "1st option keyword", Enum::F1 },
                        { "2nd option keyword", Enum::F2 } } );
   // Move p to c
+  // cppcheck-suppress redundantAssignment
   c = std::move( p );
   // c now should have a different group name and should have 3 options mapped
   ensure_equals( "new group name of move-assigned Toggle",

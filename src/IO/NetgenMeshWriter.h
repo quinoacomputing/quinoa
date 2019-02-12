@@ -25,7 +25,7 @@ class NetgenMeshWriter : public Writer {
 
   public:
     //! Constructor
-    explicit NetgenMeshWriter( const std::string filename )
+    explicit NetgenMeshWriter( const std::string& filename )
       : Writer( filename ) {}
 
     //! Write Netgen mesh

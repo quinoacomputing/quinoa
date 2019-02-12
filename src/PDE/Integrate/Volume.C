@@ -321,13 +321,12 @@ tk::volIntP2( ncomp_t system,
     // Gaussian quadrature
     for (std::size_t igp=0; igp<NG; ++igp)
     {
-      // Continue to calculate the derivatives of the basis functions dB/dx for DG(P2)
+      // Calculate derivatives of the basis functions dB/dx for DG(P2)
       auto db5dxi1 = 12.0 * coordgp[0][igp] + 6.0 * coordgp[1][igp]
                    +  6.0 * coordgp[2][igp] - 6.0;
       auto db5dxi2 =  6.0 * coordgp[0][igp] + 2.0 * coordgp[1][igp]
                    +  2.0 * coordgp[2][igp] - 2.0;
-      auto db5dxi3 =  6.0 * coordgp[0][igp] + 2.0 * coordgp[1][igp]
-                   +  2.0 * coordgp[2][igp] - 2.0;
+      auto db5dxi3 = db5dxi2;   // = 6.0 * xi1 + 2.0 * xi2 + 2.0 * xi3 - 2.0
 
       auto db6dxi1 = 10.0 * coordgp[1][igp] +  2.0 * coordgp[2][igp] - 2.0;
       auto db6dxi2 = 10.0 * coordgp[0][igp] + 10.0 * coordgp[1][igp]

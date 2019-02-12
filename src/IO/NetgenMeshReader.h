@@ -25,7 +25,7 @@ class NetgenMeshReader : public Reader {
 
   public:
     //! Constructor
-    explicit NetgenMeshReader( const std::string filename ) :
+    explicit NetgenMeshReader( const std::string& filename ) :
       Reader( filename ) {}
 
     //! Read Netgen mesh

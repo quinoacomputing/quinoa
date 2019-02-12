@@ -69,6 +69,8 @@
 #define SystemComponents_h
 
 #include <vector>
+#include <algorithm>
+#include <numeric>
 
 #include <brigand/algorithms/for_each.hpp>
 #include <brigand/sequences/list.hpp>
@@ -132,11 +134,12 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
       //! Need to store reference to host class whose data we operate on
       ncomponents* const m_host;
       //! Constructor: store host object pointer
-      zero( ncomponents* const host ) : m_host( host ) {}
+      explicit zero( ncomponents* const host ) : m_host( host ) {}
       //! Function call operator templated on the type that does the zeroing
       template< typename U > void operator()( brigand::type_<U> ) {
         //! Loop through and zero all elements of the vector for this system
-        for (auto& c : m_host->template get< U >()) c = 0;
+        auto& v = m_host->template get< U >();
+        std::fill( begin(v), end(v), 0 );
       }
     };
 
@@ -154,7 +157,8 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
       //! Function call operator templated on the type that does the counting
       template< typename U > void operator()( brigand::type_<U> ) {
         //! Loop through and add up all elements of the vector for this system
-        for (const auto& c : m_host->template get< U >()) m_nprop += c;
+        const auto& v = m_host->template get< U >();
+        m_nprop = std::accumulate( v.cbegin(), v.cend(), m_nprop );
       }
     };
 
@@ -196,7 +200,8 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
         } else if (!m_found) {
           // If we have not found the tag we are looking for, we add all the
           // number of scalars for that tag to the offset
-          for (const auto& c : m_host->template get< U >()) m_offset += c;
+          const auto& v = m_host->template get< U >();
+          m_offset = std::accumulate( v.cbegin(), v.cend(), m_offset );
         }
       }
     };

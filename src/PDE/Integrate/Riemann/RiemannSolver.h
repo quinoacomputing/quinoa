@@ -103,7 +103,7 @@ class RiemannSolver {
     //!   the virtual functions required by Concept
     template< typename T >
     struct Model : Concept {
-      Model( T x ) : data( std::move(x) ) {}
+      explicit Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
       std::vector< tk::real >
         flux( const std::array< tk::real, 3 >& fn,

@@ -28,7 +28,7 @@ class RootMeshWriter {
 
   public:
     //! Constructor: create/open Root file
-    explicit RootMeshWriter( const std::string filename, int mode );
+    explicit RootMeshWriter( const std::string& filename, int mode );
 
     //! Destructor
     ~RootMeshWriter() noexcept;

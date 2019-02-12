@@ -131,7 +131,7 @@ class Tracker {
                 const ChareArrayProxy& arrayProxy,
                 const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
-                const std::unordered_map<int, std::vector< std::size_t >> msum,
+                const std::unordered_map< int, std::vector<std::size_t> >& msum,
                 int chid,
                 ChareArray* const array,
                 tk::real dt )
@@ -178,8 +178,9 @@ class Tracker {
       if (m_parmiss.empty()) {
         signal2host_parcomcomplete( hostproxy, array );
       } else {
-        std::vector< std::vector< tk::real > > pexp;
-        for (auto i : m_parmiss) pexp.push_back( m_particles[i] );
+        std::vector< std::vector< tk::real > > pexp( m_parmiss.size() );
+        std::size_t j = 0;
+        for (auto i : m_parmiss) pexp[ j++ ] = m_particles[i];
         m_nchpar = 0;
         std::vector< std::size_t > miss( begin(m_parmiss), end(m_parmiss) );
         for (const auto& n : msum)
@@ -223,7 +224,7 @@ class Tracker {
     void
     foundpar( HostProxy& hostproxy,
               ChareArrayProxy& arrayProxy,
-              const std::unordered_map< int, std::vector< std::size_t > > msum,
+              const std::unordered_map< int, std::vector< std::size_t > >& msum,
               ChareArray* const array,
               int chid,
               const std::vector< std::size_t >& found )
@@ -243,8 +244,9 @@ class Tracker {
         if (m_parmiss.empty()) {
           signal2host_parcomcomplete( hostproxy, array );
         } else {
-          std::vector< std::vector< tk::real > > pexp;
-          for (auto i : m_parmiss) pexp.push_back( m_particles[i] );
+          std::vector< std::vector< tk::real > > pexp( m_parmiss.size() );
+          std::size_t j = 0;
+          for (auto i : m_parmiss) pexp[ j++ ] = m_particles[i];
           m_nchpar = 0;
           std::vector< std::size_t > miss( begin(m_parmiss), end(m_parmiss) );
           m_parelse.clear();

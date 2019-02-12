@@ -36,7 +36,6 @@
 #include "Types.h"
 #include "Fields.h"
 #include "DerivedData.h"
-#include "VectorReducer.h"
 #include "FluxCorrector.h"
 #include "Discretization.h"
 #include "DiagCG.h"
@@ -88,6 +87,7 @@ class DistFCT : public CBase_DistFCT {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
+    // cppcheck-suppress uninitMemberVar
     explicit DistFCT( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop

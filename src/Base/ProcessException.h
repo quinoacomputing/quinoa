@@ -27,9 +27,6 @@ int setSignalHandlers();
 //! Process an exception from the Charm++ runtime system
 void processExceptionCharm();
 
-//! Process an exception from the MPI runtime system
-void processExceptionMPI();
-
 } // tk::
 
 #endif // ProcessException_h

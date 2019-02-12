@@ -227,9 +227,11 @@ struct CaseInsensitiveCharLess {
 //! \return Boolean indicating if all terms are ordinary
 static inline bool
 ordinary( const std::vector< ctr::Term >& vec ) {
-  bool ord = true;
-  for (auto& term : vec) if (term.moment == ctr::Moment::CENTRAL) ord = false;
-  return ord;
+  if (std::any_of( vec.cbegin(), vec.cend(),
+        []( const ctr::Term& t ){ return t.moment == ctr::Moment::CENTRAL; } ))
+    return false;
+  else
+    return true;
 }
 
 //! \brief Find out if a vector of Terms contains any central moment terms
@@ -301,8 +303,9 @@ PDFInfo pdfInfo( const std::vector< std::vector< tk::real > >& binsizes,
           (m == Moment::CENTRAL && central(pdfs[i]))) ) ++n;
     if (n == idx+1) {
       std::vector< std::string > vars;
-      for (const auto& term : pdfs[i])
-        vars.push_back( term.var + std::to_string(term.field+1) );
+      std::transform( pdfs[i].cbegin(), pdfs[i].cend(),
+        std::back_inserter(vars), []( const Term& term ){
+          return term.var + std::to_string(term.field+1); } );
       return { names[i], exts[i], std::move(vars), it, time };
     }
     ++i;
