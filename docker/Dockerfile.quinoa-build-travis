@@ -41,7 +41,6 @@ RUN cmake \
     -DCMAKE_CXX_FLAGS_DEBUG=-g0 \
     -DCMAKE_BUILD_TYPE="${BUILD}" \
     ${SHARED_LIBS:+-DBUILD_SHARED_LIBS=$SHARED_LIBS} \
-    ${SONARQUBE:+-DCOVERAGE=ON} \
     -DLCOV=/bin/true \
     -DRUNNER_ARGS="${RUNNER_ARGS}" \
     ${SMP:+-DPOSTFIX_RUNNER_ARGS="+setcpuaffinity"} \
@@ -90,7 +89,7 @@ RUN cd .. && if [ ${SONARQUBE} ] && [ -n "${SONARQUBE_GITHUB_TOKEN}" ] && [ -n "
     -Dsonar.login=${SONARQUBE_TOKEN}; \
 fi
 USER root
-RUN if [ ${TARGET} = all ]; then ninja -j2 install; fi
+RUN if [ ${TARGET} = all ] && [ -z ${SONARQUBE} ]; then ninja -j2 install; fi
 USER quinoa
-RUN if [ ${TARGET} = all ]; then export PATH=/usr/local/bin:$PATH && unittest -h && inciter && rngtest && meshconv && walker; fi
+RUN if [ ${TARGET} = all ] && [ -z ${SONARQUBE} ]; then export PATH=/usr/local/bin:$PATH && unittest -h && inciter && rngtest && meshconv && walker; fi
 WORKDIR /home/quinoa
