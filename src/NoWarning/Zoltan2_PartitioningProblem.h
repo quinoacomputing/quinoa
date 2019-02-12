@@ -53,7 +53,7 @@
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
   #pragma GCC diagnostic ignored "-Wshadow"
   #pragma GCC diagnostic ignored "-Wredundant-decls"
-  #pragma GCC diagnostic ignored "-Werror=suggest-attribute=noreturn"
+  #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
 #endif
 
 #include <Zoltan2_PartitioningProblem.hpp>
