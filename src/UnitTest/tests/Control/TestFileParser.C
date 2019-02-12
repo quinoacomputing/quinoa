@@ -28,7 +28,7 @@ struct FileParser_common {
   // tk::FileParser only has a protected constructor: designed to be used as a
   // base class
   struct parser : tk::FileParser {
-    parser( const std::string& f ) : FileParser( f ) {}
+    explicit parser( const std::string& f ) : FileParser( f ) {}
     void diagnostics( const tk::Print& print,
                       const std::vector< std::string >& messages ) {
       tk::FileParser::diagnostics( print, messages );

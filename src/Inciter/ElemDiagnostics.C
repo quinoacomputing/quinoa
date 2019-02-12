@@ -238,6 +238,7 @@ ElemDiagnostics::computeP1( Discretization& d,
       std::vector< tk::real > s;
 
       for (const auto& eq : g_dgpde)
+        // cppcheck-suppress useStlAlgorithm
         s = eq.analyticSolution( xgp, ygp, zgp, d.T()+d.Dt() );
 
       for (std::size_t c=0; c<u.nprop()/ndof; ++c)
@@ -363,6 +364,7 @@ ElemDiagnostics::computeP2( Discretization& d,
       std::vector< tk::real > s;
 
       for (const auto& eq : g_dgpde)
+        // cppcheck-suppress useStlAlgorithm
         s = eq.analyticSolution( xgp, ygp, zgp, d.T()+d.Dt() );
 
       for (std::size_t c=0; c<u.nprop()/ndof; ++c)

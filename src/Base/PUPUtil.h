@@ -187,6 +187,7 @@ char pup_helper( int& index,
 //! \param[in] var boost::variant< Ts... > of arbitrary types to pack/unpack
 template <class... Ts>
 void pup(PUP::er& p, boost::variant<Ts...>& var) {
+  // cppcheck-suppress variableScope
   int index = 0;
   int send_index = var.which();
   p | send_index;

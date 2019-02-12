@@ -45,6 +45,7 @@ tk::CProxy_ChareStateCollector stateProxy;
 
 //! \brief Charm++ main chare for the mesh converter executable, meshconv.
 //! \details Note that this object should not be in a namespace.
+// cppcheck-suppress noConstructor
 class Main : public CBase_Main {
 
   public:

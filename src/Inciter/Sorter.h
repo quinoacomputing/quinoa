@@ -72,6 +72,7 @@ class Sorter : public CBase_Sorter {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
+    // cppcheck-suppress uninitMemberVarPrivate
     explicit Sorter( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop

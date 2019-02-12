@@ -25,7 +25,7 @@ namespace tut {
 //! All tests in group inherited from this base
 struct Writer_common {
   struct W : public tk::Writer {
-     W( const std::string& filename ) : tk::Writer( filename ) {}
+    explicit W( const std::string& filename ) : tk::Writer( filename ) {}
   };
 };
 

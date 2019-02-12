@@ -63,12 +63,11 @@ TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
 
   // If only select groups to be run, see if there is any that will run
   bool work = false;
-  if (grp.empty())
+  if (grp.empty() ||
+      std::any_of( groups.cbegin(), groups.cend(),
+         [&grp]( const std::string& g )
+         { return g.find(grp) != std::string::npos; } ))
     work = true;
-  else
-    for (const auto& g : groups)
-      if (g.find(grp) != std::string::npos)
-        work = true;
 
   // Quit if there is no work to be done
   if (!work) {

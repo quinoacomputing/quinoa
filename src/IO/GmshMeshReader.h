@@ -29,7 +29,7 @@ class GmshMeshReader : public Reader {
 
   public:
     //! Constructor
-    explicit GmshMeshReader( const std::string filename ) :
+    explicit GmshMeshReader( const std::string& filename ) :
       Reader(filename),
       m_version( 0.0 ),                        // 0.0: uninitialized
       m_datasize( 0 ),                         //   0: uninitialized

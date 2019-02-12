@@ -37,6 +37,11 @@
   #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
   #pragma clang diagnostic ignored "-Wcast-qual"
   #pragma clang diagnostic ignored "-Wunused-template"
+  #pragma clang diagnostic ignored "-Watomic-implicit-seq-cst"
+  #pragma clang diagnostic ignored "-Wcovered-switch-default"
+  #pragma clang diagnostic ignored "-Wused-but-marked-unused"
+  #pragma clang diagnostic ignored "-Wshadow"
+  #pragma clang diagnostic ignored "-Wmissing-noreturn"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -47,6 +52,7 @@
   #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
   #pragma GCC diagnostic ignored "-Wshadow"
+  #pragma GCC diagnostic ignored "-Wredundant-decls"
 #endif
 
 #include <Zoltan2_PartitioningProblem.hpp>

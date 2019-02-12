@@ -34,7 +34,7 @@ const std::array< UnsMesh::Face, 4 >
 
 //! Compute number of points (nodes) in mesh from connectivity
 std::size_t
-npoin( const std::vector< std::size_t >& inpoel );
+npoin_in_graph( const std::vector< std::size_t >& inpoel );
 
 //! Compute the unit normal vector of a triangle
 std::array< tk::real, 3 >

@@ -77,13 +77,14 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
 {
   // Compute load distribution given total work (= number of particles) and
   // user-specified virtualization
-  uint64_t chunksize, remainder;
+  uint64_t chunksize = 0, remainder = 0;
   auto nchare = tk::linearLoadDistributor(
                   g_inputdeck.get< tag::cmd, tag::virtualization >(),
                   g_inputdeck.get< tag::discr, tag::npar >(),
                   CkNumPes(),
                   chunksize,
                   remainder );
+  Assert( chunksize != 0, "Chunksize must not be zero" );
 
   // Compute total number of particles distributed over all workers. Note that
   // this number will not necessarily be the same as given by the user, coming
@@ -239,6 +240,7 @@ Distributor::estimateOrd( tk::real* ord, int n )
   for (std::size_t i=0; i<m_ordinary.size(); ++i) m_ordinary[i] += ord[i];
 
   // Finish computing moments, i.e., divide sums by the number of samples
+  // cppcheck-suppress useStlAlgorithm
   for (auto& m : m_ordinary) m /= m_npar;
 
   // Activate SDAG trigger signaling that ordinary moments have been estimated
@@ -264,6 +266,7 @@ Distributor::estimateCen( tk::real* cen, int n )
   for (std::size_t i=0; i<m_central.size(); ++i) m_central[i] += cen[i];
 
   // Finish computing moments, i.e., divide sums by the number of samples
+  // cppcheck-suppress useStlAlgorithm
   for (auto& m : m_central) m /= m_npar;
 
   // Activate SDAG trigger signaling that central moments have been estimated
@@ -316,9 +319,9 @@ Distributor::outStat()
 {
   // lambda to sample tables to write to statistics file
   auto extra = [this]() -> std::vector< tk::real > {
-    std::vector< tk::real > x;
-    for (const auto& t : this->m_tables.second)
-      x.push_back( tk::sample(m_t,t) );
+    std::vector< tk::real > x( m_tables.second.size() );
+    std::size_t j = 0;
+    for (const auto& t : m_tables.second) x[ j++ ] = tk::sample(m_t,t);
     return x;
   };
 

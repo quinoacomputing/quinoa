@@ -543,7 +543,6 @@ ExodusIIMeshReader::readFaces( std::vector< std::size_t >& conn ) const
   if (nelem(tk::ExoElemType::TRI) == 0) return;
 
   // Read triangle boundary-face connectivity (all the triangle element block)
-  std::vector< std::size_t > l_triinpoel;
   readElements( {{0,nelem(tk::ExoElemType::TRI)-1}}, tk::ExoElemType::TRI,
                 conn );
 }
@@ -620,7 +619,7 @@ ExodusIIMeshReader::readSidesetNodes()
       tk::unique( nodes );
       // Store 0-based node ID list as std::size_t vector instead of ints
       auto& list = side[ i ];
-      for (auto&& n : nodes) list.push_back( static_cast<std::size_t>(n-1) );
+      for (auto n : nodes) list.push_back( static_cast<std::size_t>(n-1) );
     }
   }
 
@@ -835,7 +834,6 @@ ExodusIIMeshReader::nelem( tk::ExoElemType elemtype ) const
 // *****************************************************************************
 {
   auto e = static_cast< std::size_t >( elemtype );
-  std::size_t sum = 0;
-  for (auto n : m_nel[e]) sum += n;
-  return sum;
+  return std::accumulate( m_nel[e].cbegin(), m_nel[e].cend(),
+                          static_cast<std::size_t>(0) );
 }

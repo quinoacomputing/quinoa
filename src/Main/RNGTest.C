@@ -176,6 +176,7 @@ inline void operator|( PUP::er& p, TestStack& stack )
 //! \brief Charm++ main chare for the random number generator test suite
 //!    executable, rngtest.
 //! \details Note that this object should not be in a namespace.
+// cppcheck-suppress noConstructor
 class Main : public CBase_Main {
 
   public:

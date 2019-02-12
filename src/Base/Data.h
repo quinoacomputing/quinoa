@@ -327,6 +327,7 @@ class Data {
     //! \param[in] rhs Scalar to multiply with
     //! \return Reference to ourselves after multiplication
     Data< Layout >& operator*= ( tk::real rhs ) {
+      // cppcheck-suppress useStlAlgorithm
       for (auto& v : m_vec) v *= rhs;
       return *this;
     }
@@ -359,6 +360,7 @@ class Data {
     //! \param[in] rhs Scalar to divide with
     //! \return Reference to ourselves after division
     Data< Layout >& operator/= ( tk::real rhs ) {
+      // cppcheck-suppress useStlAlgorithm
       for (auto& v : m_vec) v /= rhs;
       return *this;
     }

@@ -145,7 +145,7 @@ class MixNumFracBetaCoeffDecay {
         tk::real v = tk::ctr::lookup( tk::ctr::variance(depvar,c), moments );
 
         if (m<1.0e-8 || m>1.0-1.0e-8) m = 0.5;
-        if (v<1.0e-8 && v>1.0-1.0e-8) v = 0.5;
+        if (v<1.0e-8 || v>1.0-1.0e-8) v = 0.5;
 
         b[c] = bprime[c] * (1.0 - v / m / ( 1.0 - m ));
         k[c] = kprime[c] * v;

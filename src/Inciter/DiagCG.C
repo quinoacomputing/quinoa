@@ -206,8 +206,9 @@ DiagCG::lhs()
     comlhs_complete();
   else // send contributions of lhs to chare-boundary nodes to fellow chares
     for (const auto& n : d->Msum()) {
-      std::vector< std::vector< tk::real > > l;
-      for (auto i : n.second) l.push_back( m_lhs[ tk::cref_find(d->Lid(),i) ] );
+      std::vector< std::vector< tk::real > > l( n.second.size() );
+      std::size_t j = 0;
+      for (auto i : n.second) l[ j++ ] = m_lhs[ tk::cref_find(d->Lid(),i) ];
       thisProxy[ n.first ].comlhs( n.second, l );
     }
 
@@ -306,8 +307,9 @@ DiagCG::rhs()
     comrhs_complete();
   else // send contributions of rhs to chare-boundary nodes to fellow chares
     for (const auto& n : d->Msum()) {
-      std::vector< std::vector< tk::real > > r;
-      for (auto i : n.second) r.push_back( m_rhs[ tk::cref_find(d->Lid(),i) ] );
+      std::vector< std::vector< tk::real > > r( n.second.size() );
+      std::size_t j = 0;
+      for (auto i : n.second) r[ j++ ] = m_rhs[ tk::cref_find(d->Lid(),i) ];
       thisProxy[ n.first ].comrhs( n.second, r );
     }
 
@@ -320,8 +322,9 @@ DiagCG::rhs()
     comdif_complete();
   else // send contributions of diff to chare-boundary nodes to fellow chares
     for (const auto& n : d->Msum()) {
-      std::vector< std::vector< tk::real > > D;
-      for (auto i : n.second) D.push_back( m_dif[ tk::cref_find(d->Lid(),i) ] );
+      std::vector< std::vector< tk::real > > D( n.second.size() );
+      std::size_t j = 0;
+      for (auto i : n.second) D[ j++ ] = m_dif[ tk::cref_find(d->Lid(),i) ];
       thisProxy[ n.first ].comdif( n.second, D );
     }
 

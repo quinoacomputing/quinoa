@@ -12,7 +12,7 @@
 
 using tk::STLTxtMeshReader;
 
-STLTxtMeshReader::STLTxtMeshReader( const std::string filename, STLMesh& mesh )
+STLTxtMeshReader::STLTxtMeshReader( const std::string& filename, STLMesh& mesh )
   : Reader( filename ), m_mesh( mesh )
 // *****************************************************************************
 // Constructor

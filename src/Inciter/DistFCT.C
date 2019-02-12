@@ -211,8 +211,9 @@ DistFCT::aec( const Discretization& d,
     comaec_complete();
   else // send contributions to chare-boundary nodes to fellow chares
     for (const auto& n : d.Msum()) {
-      std::vector< std::vector< tk::real > > p;
-      for (auto i : n.second) p.push_back( m_p[ tk::cref_find(m_lid,i) ] );
+      std::vector< std::vector< tk::real > > p( n.second.size() );
+      std::size_t j = 0;
+      for (auto i : n.second) p[ j++ ] = m_p[ tk::cref_find(m_lid,i) ];
       thisProxy[ n.first ].comaec( n.second, p );
     }
 
@@ -284,8 +285,9 @@ DistFCT::alw( const tk::Fields& Un,
     comalw_complete();
   else // send contributions at chare-boundary nodes to fellow chares
     for (const auto& n : m_msum) {
-      std::vector< std::vector< tk::real > > q;
-      for (auto i : n.second) q.push_back( m_q[ tk::cref_find(m_lid,i) ] );
+      std::vector< std::vector< tk::real > > q( n.second.size() );
+      std::size_t j = 0;
+      for (auto i : n.second) q[ j++ ] = m_q[ tk::cref_find(m_lid,i) ];
       thisProxy[ n.first ].comalw( n.second, q );
     }
 
@@ -358,8 +360,9 @@ DistFCT::lim()
     comlim_complete();
   else // send contributions to chare-boundary nodes to fellow chares
     for (const auto& n : m_msum) {
-      std::vector< std::vector< tk::real > > a;
-      for (auto i : n.second) a.push_back( m_a[ tk::cref_find(m_lid,i) ] );
+      std::vector< std::vector< tk::real > > a( n.second.size() );
+      std::size_t j = 0;
+      for (auto i : n.second) a[ j++ ] = m_a[ tk::cref_find(m_lid,i) ];
       thisProxy[ n.first ].comlim( n.second, a );
     }
 

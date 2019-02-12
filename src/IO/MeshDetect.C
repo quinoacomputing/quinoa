@@ -59,6 +59,7 @@ detectInput( const std::string& filename )
     return MeshReaderType::ASC;
   } else {
     try {
+      // cppcheck-suppress ignoredReturnValue
       std::stoi(s);    // try to convert to an integer
     } catch ( const std::invalid_argument& ) {
       Throw( "Input mesh file type could not be determined from header: " +

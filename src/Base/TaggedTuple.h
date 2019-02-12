@@ -63,10 +63,10 @@ struct tt_impl<typelist<Ss...>, typelist<Ts...>> : public std::tuple<Ts...> {
   template<typename S>
   using nT = nth<index<S, Ss...>::value, Ts...>;
   //! Constructor
-  template<typename... Args> tt_impl(Args &&...args) :
+  template<typename... Args> explicit tt_impl(Args &&...args) :
     std::tuple<Ts...>(std::forward<Args>(args)...) {}
   //! PUP::reconstruct constructor
-  template<typename... Args> tt_impl(PUP::reconstruct) {}
+  template<typename... Args> explicit tt_impl(PUP::reconstruct) {}
   //! Const-ref accessor
   template<typename S> constexpr const nT<S>& get() const {
     return std::get<index<S, Ss...>::value>(*this); }
@@ -103,6 +103,7 @@ struct tt_impl<typelist<Ss...>, typelist<Ts...>> : public std::tuple<Ts...> {
 template<typename... Ts> struct tagged_tuple :
   tt_impl<extract<2, 0, Ts...>, extract<2, 1, Ts...>> {
   //! Constructor
+  // cppcheck-suppress noExplicitConstructor
   template<typename... Args> tagged_tuple(Args &&...args) :
     tt_impl<extract<2, 0, Ts...>, extract<2, 1, Ts...>>(
       std::forward<Args>(args)...) {}

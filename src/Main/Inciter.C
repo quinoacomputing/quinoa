@@ -143,6 +143,7 @@ void operator|( PUP::er& p, std::vector< DGPDE >& eqs ) {
 //!   of the Charm++ runtime system is required since the mesh partitioning is
 //!   done by Zoltan, an MPI library. Note that this Charm++ main chare object
 //!   should not be in a namespace.
+// cppcheck-suppress noConstructor
 class Main : public CBase_Main {
 
   public:

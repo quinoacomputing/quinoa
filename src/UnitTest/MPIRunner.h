@@ -25,7 +25,7 @@ class MPIRunner : public CBase_MPIRunner< Proxy > {
 
   public:
     //! Constrcutor: store host proxy
-    MPIRunner( const Proxy& proxy ) : m_host(proxy) {}
+    explicit MPIRunner( const Proxy& proxy ) : m_host(proxy) {}
 
     //! Fire up all tests in a test group
     void rungroup( const std::string& groupname ) {
