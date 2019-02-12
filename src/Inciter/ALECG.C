@@ -486,14 +486,6 @@ ALECG::out()
 }
 
 void
-ALECG::sendinit()
-// *****************************************************************************
-// Send own chare-boundary data to neighboring chares
-// *****************************************************************************
-{
-}
-
-void
 ALECG::advance( tk::real newdt )
 // *****************************************************************************
 // Advance equations to next time step

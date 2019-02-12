@@ -102,7 +102,7 @@ class DiagCG : public CBase_DiagCG {
     void dt();
 
     //! Send own chare-boundary data to neighboring chares
-    void sendinit();
+    void sendinit(){};
 
     //! Advance equations to next time step
     void advance( tk::real newdt );
