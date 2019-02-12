@@ -543,12 +543,42 @@ if (BUILD_SHARED_LIBS)
 endif(BUILD_SHARED_LIBS)
 
 # Components
-add_subdirectory(Base)
-add_subdirectory(Control)
-add_subdirectory(Main)
-add_subdirectory(LoadBalance)
-add_subdirectory(RNG)
-add_subdirectory(Statistics)
+if (CHARM_FOUND AND PSTREAMS_FOUND)
+  add_subdirectory(Base)
+else()
+  PrintMissing(Base "CHARM_FOUND;PSTREAMS_FOUND")
+endif()
+
+if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND)
+  add_subdirectory(Control)
+else()
+  PrintMissing(Control "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
+endif()
+
+if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND AND TUT_FOUND AND
+    PUGIXML_FOUND AND SEACASExodus_FOUND)
+  add_subdirectory(Main)
+else()
+  PrintMissing(Main "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND;TUT_FOUND;PUGIXML_FOUND;SEACASExodus_FOUND")
+endif()
+
+if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND AND Zoltan2_FOUND)
+  add_subdirectory(LoadBalance)
+else()
+  PrintMissing(LoadBalance "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND;Zoltan2_FOUND")
+endif()
+
+if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND)
+  add_subdirectory(RNG)
+else()
+  PrintMissing(RNG "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
+endif()
+
+if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND)
+  add_subdirectory(Statistics)
+else()
+  PrintMissing(Statistics "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
+endif()
 
 if (ENABLE_MESHCONV OR ENABLE_INCITER)
   add_subdirectory(Mesh)
