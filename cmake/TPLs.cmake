@@ -158,14 +158,14 @@ message(STATUS "------------------------------------------")
 
 # Function to print a list of missing library names
 # Arguments:
-#   'executable' a string to use in the error message printed for which libraries are not found
+#   'target' a string to use in the error message printed for which libraries are not found
 #   'reqlibs' list of cmake variables in the form of "CHARM_FOUND", Boost_FOUND, etc.
 # Details: For each variable in 'reqlibs' if evaluates to false, trim the
 # ending "_FOUND", convert to lower case and print an error message with the
 # list of missing variables names. Intended to use after multiple find_package
 # calls, passing all cmake variables named '*_FOUND' for all required libraries
-# for an executable.
-function(PrintMissing executable reqlibs)
+# for a target.
+function(PrintMissing target reqlibs)
   foreach(lib ${reqlibs})
     if(NOT ${lib})
       string(REPLACE "_FOUND" "" lib ${lib})
@@ -174,7 +174,7 @@ function(PrintMissing executable reqlibs)
     endif()
   endforeach()
   string(REPLACE ";" ", " missing "${missing}")
-  message(STATUS "Executable '${executable}' will NOT be configured, missing: ${missing}")
+  message(STATUS "Target '${target}' will NOT be configured, missing: ${missing}")
 endfunction(PrintMissing)
 
 # Enable individual executables based on required TPLs found
