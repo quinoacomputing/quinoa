@@ -1043,10 +1043,10 @@ Refiner::boundary()
         Face b{{ m_ginpoel[ mark+tk::lpofa[f][0] ],
                  m_ginpoel[ mark+tk::lpofa[f][1] ],
                  m_ginpoel[ mark+tk::lpofa[f][2] ] }};
-        Tet t{{ m_oldTetIdMap[m_inpoel[mark+0]],
-                m_oldTetIdMap[m_inpoel[mark+1]],
-                m_oldTetIdMap[m_inpoel[mark+2]],
-                m_oldTetIdMap[m_inpoel[mark+3]] }};
+        Tet t{{ m_inpoel[mark+0],
+                m_inpoel[mark+1],
+                m_inpoel[mark+2],
+                m_inpoel[mark+3] }};
         // associate tet id adjacent to boundary face to boundary face, at this
         // point we fill in -1 for the side set id, since we don't know it yet
         auto i = invtets.find( t );
