@@ -11,21 +11,23 @@ module transporter {
 
   include "Types.h";
 
+  extern module meshwriter;
+
   namespace inciter {
 
     chare Transporter {
       entry Transporter();
       entry [reductiontarget] void load( uint64_t nelem, uint64_t npoin );
-      entry [reductiontarget] void nchare();
-      entry [reductiontarget] void bounds();
       entry [reductiontarget] void distributed();
-      entry [reductiontarget] void refinserted();
+      entry [reductiontarget] void refinserted( int error );
       entry [reductiontarget] void discinserted();
       entry [reductiontarget] void disccreated();
       entry [reductiontarget] void workinserted();
       entry [reductiontarget] void matched( std::size_t extra );
       entry [reductiontarget] void refined( std::size_t nelem,
                                             std::size_t npoin );
+      entry [reductiontarget] void queried();
+      entry [reductiontarget] void responded();
       entry [reductiontarget] void discresized();
       entry [reductiontarget] void workresized();
       entry [reductiontarget] void comfinal();
@@ -40,8 +42,6 @@ module transporter {
                                             tk::real d4, tk::real d5 );
       entry [reductiontarget] void pdfstat( CkReductionMsg* msg );
       entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
-      entry [reductiontarget] void start();
-      entry [reductiontarget] void next();
       entry [reductiontarget] void sendinit();
       entry [reductiontarget] void advance( tk::real );
       entry [reductiontarget] void finish();
@@ -52,7 +52,6 @@ module transporter {
       entry void chcomm();
       entry void chmask();
       entry void chreordered();
-      entry void chbounds();
 
       entry void chcreated();
       entry void chbndface();

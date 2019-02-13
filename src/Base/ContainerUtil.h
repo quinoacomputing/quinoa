@@ -14,6 +14,8 @@
 #include <set>
 #include <algorithm>
 #include <iterator>
+#include <unordered_set>
+#include <type_traits>
 
 #include "Exception.h"
 
@@ -166,6 +168,21 @@ std::size_t sumsize( const Container& c ) {
   std::size_t sum = 0;
   for (const auto& s : c) sum += s.size();
   return sum;
+}
+
+// *****************************************************************************
+//! Compute the number of unique values in a container of containers
+//! \param[in] c Container of containers
+//! \return Number of unique values in a container of containers
+// *****************************************************************************
+template< class Container >
+std::size_t numunique( const Container& c ) {
+  using value_type = typename Container::value_type::value_type;
+  static_assert( std::is_integral<value_type>::value,
+    "Container::value_type::value_type must be an integral type." );
+  std::unordered_set< value_type > u;
+  for (const auto& r : c) u.insert( begin(r), end(r) );
+  return u.size();
 }
 
 // *****************************************************************************

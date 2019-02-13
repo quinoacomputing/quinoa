@@ -26,9 +26,16 @@ namespace tk {
 class ChareStateCollector : public CBase_ChareStateCollector {
 
   public:
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wundefined-func-template"
+    #endif
     //! Constructor
     //! \details Start timer when constructor is called
-    ChareStateCollector() : m_state(), m_timer() {}
+    explicit ChareStateCollector() : m_state(), m_timer() {}
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
 
     //! Configure Charm++ reduction types
     static void registerReducers();

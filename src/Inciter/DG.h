@@ -62,9 +62,7 @@ class DG : public CBase_DG {
     #endif
 
     //! Constructor
-    explicit DG( const CProxy_Discretization& disc,
-                 const tk::CProxy_Solver& solver,
-                 const FaceData& fd );
+    explicit DG( const CProxy_Discretization& disc, const FaceData& fd );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -97,8 +95,8 @@ class DG : public CBase_DG {
     //! Limit initial solution and prepare for time stepping
     void limitIC();
 
-    //! Compute time step size
-    void dt();
+    //! Start time stepping
+    void start();
 
     //! Send own chare-boundary data to neighboring chares
     void sendinit();
@@ -151,19 +149,20 @@ class DG : public CBase_DG {
     //! Compute right hand side and solve system
     void solve( tk::real newdt );
 
+    //! Evaluate whether to continue with next time step
+    void step();
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_disc;
-      p | m_solver;
       p | m_ncomfac;
       p | m_nadj;
       p | m_nsol;
       p | m_ninitsol;
       p | m_nlim;
-      p | m_itf;
       p | m_fd;
       p | m_u;
       p | m_un;
@@ -208,8 +207,6 @@ class DG : public CBase_DG {
 
     //! Discretization proxy
     CProxy_Discretization m_disc;
-    //! Linear system merger and solver proxy, only used to call created()
-    tk::CProxy_Solver m_solver;
     //! Counter for face adjacency communication map
     std::size_t m_ncomfac;
     //! Counter signaling that all ghost data have been received
@@ -221,8 +218,6 @@ class DG : public CBase_DG {
     std::size_t m_ninitsol;
     //! Counter signaling that we have received all our limiter function ghost data
     std::size_t m_nlim;
-    //! Field output iteration count
-    uint64_t m_itf;
     //! Face data
     FaceData m_fd;
     //! Vector of unknown/solution average over each mesh element
@@ -333,10 +328,16 @@ class DG : public CBase_DG {
     void out();
 
     //! Output mesh-based fields to file
-    void writeFields( tk::real time );
+    void writeFields( CkCallback c );
 
-    //! Evaluate whether to continue with next step
-    void eval();
+    //! Compute time step size
+    void dt();
+
+    //! Continue to next time step stage
+    void next();
+
+    //! Evaluate whether to continue with next time step stage
+    void stage();
 };
 
 } // inciter::

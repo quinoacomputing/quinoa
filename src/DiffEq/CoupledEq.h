@@ -26,7 +26,7 @@ void coupledInfo( std::size_t system,
 //! \tparam id Tag to access the coupled equation 'eq' (relative) ids, see
 //!   tk::grm::couple in Control/Walker/InputDeck/Grammar.h
 //! \param[in] system Relative equation system id of equation 'eq'
-//! \param[in] eq_name Coupled equation name
+//! \param[in] coupled_eq_name Coupled equation name
 //! \param[in,out] nfo Info vector to augment
 // *****************************************************************************
 {

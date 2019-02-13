@@ -39,7 +39,6 @@
 #include "VectorReducer.h"
 #include "FluxCorrector.h"
 #include "Discretization.h"
-#include "MatCG.h"
 #include "DiagCG.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
@@ -47,24 +46,9 @@
 
 namespace inciter {
 
-//! DistFCT Charm++ chare array used to advance PDEs in time with MatCG+LW+FCT
+//! DistFCT Charm++ chare array used to advance PDEs in time with DiagCG+LW+FCT
 class DistFCT : public CBase_DistFCT {
 
-  private:
-    //! Variant listing the types of the discretization proxies we work with
-    using SchemeProxy = boost::variant< CProxy_MatCG, CProxy_DiagCG >;
-    //! Variant listing the chare element proxy types of discretization proxies
-    using ProxyElem =
-      boost::variant< CProxy_MatCG::element_t, CProxy_DiagCG::element_t >;
-  
-    //! Functor to call the update() member function behind SchemeProxy
-    struct Update : boost::static_visitor<> {
-      Update( const tk::Fields& a ) : A(a) {}
-      template< typename P >
-        void operator()( const P& p ) const { p.ckLocal()->update( A ); }
-      const tk::Fields& A;
-    };
-  
   public:
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -145,7 +129,7 @@ class DistFCT : public CBase_DistFCT {
     void alw( const tk::Fields& Un,
               const tk::Fields& Ul,
               const tk::Fields& dUl,
-              const SchemeProxy& scheme );
+              const CProxy_DiagCG& host );
 
     //! Resize FCT data structures (e.g., after mesh refinement)
     void resize( std::size_t nu,
@@ -178,7 +162,7 @@ class DistFCT : public CBase_DistFCT {
       p | m_ul;
       p | m_dul;
       p | m_du;
-      p | m_scheme;
+      p | m_host;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -226,15 +210,11 @@ class DistFCT : public CBase_DistFCT {
     //! Pointer to low order solution vector and increment
     //! \note These are copies. Original in (bound) Discretization
     tk::Fields m_ul, m_dul, m_du;
-    //! Variant storing the discretization scheme class we interoperate with
-    SchemeProxy m_scheme;
+    //! Host proxy (DiagCG) we interoperate with
+    CProxy_DiagCG m_host;
 
     //! Size FCT communication buffers
     void resizeComm();
-
-    //! \brief Verify antidiffusive element contributions up to linear solver
-    //!   convergence
-    void verify();
 
     //! Compute the limited antidiffusive element contributions
     void lim();

@@ -45,7 +45,7 @@ namespace tk {
 //!    simpler ErrChk macro suffices.
 #ifdef QUINOA_CONFIG_MPI_ENABLED
 #define ErrChkMPI(expr, ...) \
-{ \
+{\
   int err = (expr) ? 0 : 1; \
   int globalerr; \
   MPI_Allreduce( &err, &globalerr, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD ); \

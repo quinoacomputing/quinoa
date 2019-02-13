@@ -108,34 +108,34 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_type >& cnt )
   if (!npar.empty())
     nfo.emplace_back( "number of tracker particles", parameters( npar ) );
 
-  const auto& alpha = g_inputdeck.get< tag::param, tag::compflow, tag::alpha >();;
+  const auto& alpha = g_inputdeck.get< tag::param, tag::compflow, tag::alpha >();
   if (!alpha.empty()) nfo.emplace_back( "coeff alpha", parameters( alpha ) );
 
   const auto& beta =
-    g_inputdeck.get< tag::param, tag::compflow, tag::beta >();;
+    g_inputdeck.get< tag::param, tag::compflow, tag::beta >();
   if (!beta.empty())
     nfo.emplace_back( "coeff beta", parameters( beta ) );
 
-  const auto& bx = g_inputdeck.get< tag::param, tag::compflow, tag::betax >();;
+  const auto& bx = g_inputdeck.get< tag::param, tag::compflow, tag::betax >();
   if (!bx.empty()) nfo.emplace_back( "coeff betax", parameters( bx ) );
 
-  const auto& by = g_inputdeck.get< tag::param, tag::compflow, tag::betay >();;
+  const auto& by = g_inputdeck.get< tag::param, tag::compflow, tag::betay >();
   if (!by.empty()) nfo.emplace_back( "coeff betay", parameters( by ) );
 
-  const auto& bz = g_inputdeck.get< tag::param, tag::compflow, tag::betaz >();;
+  const auto& bz = g_inputdeck.get< tag::param, tag::compflow, tag::betaz >();
   if (!bz.empty()) nfo.emplace_back( "coeff betaz", parameters( bz ) );
 
-  const auto& r0 = g_inputdeck.get< tag::param, tag::compflow, tag::r0 >();;
+  const auto& r0 = g_inputdeck.get< tag::param, tag::compflow, tag::r0 >();
   if (!r0.empty()) nfo.emplace_back( "coeff r0", parameters( r0 ) );
 
-  const auto& ce = g_inputdeck.get< tag::param, tag::compflow, tag::ce >();;
+  const auto& ce = g_inputdeck.get< tag::param, tag::compflow, tag::ce >();
   if (!ce.empty()) nfo.emplace_back( "coeff ce", parameters( ce ) );
 
   const auto& kappa = g_inputdeck.get< tag::param, tag::compflow, tag::kappa >();
   if (!kappa.empty()) nfo.emplace_back( "coeff k", parameters( kappa ) );
 
   const auto& p0 =
-    g_inputdeck.get< tag::param, tag::compflow, tag::p0 >();;
+    g_inputdeck.get< tag::param, tag::compflow, tag::p0 >();
   if (!p0.empty())
     nfo.emplace_back( "coeff p0", parameters( p0 ) );
 

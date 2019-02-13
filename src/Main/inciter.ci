@@ -12,7 +12,6 @@
 mainmodule inciter {
 
   extern module partitioner;
-  extern module matcg;
   extern module diagcg;
   extern module alecg;
   extern module dg;

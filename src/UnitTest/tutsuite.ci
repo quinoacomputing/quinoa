@@ -20,6 +20,21 @@ module tutsuite {
   // chares.
   extern module tuttest;
 
+  // Note that chare MPIRunner depends on chare TUTTest and in turn MPIRunner
+  // depends on TUTSuite (see also the interface file mpirunner.ci). This is a
+  // mutual dependency and it is made to work with one of the chares (MPIRunner)
+  // being a template chare. Note: if this extern module dependency is removed,
+  // the code still compiles but Charm++ generates the wrong code yielding
+  // segfaults or error messages complaining as
+  //
+  // Charm++: late entry method registration happened after init
+  // Entry point: MPIRunner(const Proxy &proxy), addr: 0x7ffff7dd1270
+  // ------------- Processor 0 Exiting: Called CmiAbort ------------
+  // Reason: Did you forget to instantiate a templated entry method in a .ci file?
+  // 
+  // See also the Charm++ manual on more information on template chares.
+  extern module mpirunner;
+
   // TUTSuite spawns chares defined in the modules defined below as extern. If
   // this is not included, Charm++ generates bad code and valgrind detects
   // memory errors as chares are fired up from unit tests inside TUTSuite.

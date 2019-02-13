@@ -12,6 +12,7 @@
 #include "Macro.h"
 
 #if defined(__clang__)
+  #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wunused-private-field"
   #pragma clang diagnostic ignored "-Wunused-parameter"
   #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
@@ -22,6 +23,7 @@
   #pragma clang diagnostic ignored "-Wundefined-func-template"
   #pragma clang diagnostic ignored "-Woverloaded-virtual"
   #pragma clang diagnostic ignored "-Wextra-semi"
+  #pragma clang diagnostic ignored "-Wextra-semi-stmt"
   #pragma clang diagnostic ignored "-Wshadow-field"
   #pragma clang diagnostic ignored "-Wmissing-noreturn"
   #pragma clang diagnostic ignored "-Wdocumentation"

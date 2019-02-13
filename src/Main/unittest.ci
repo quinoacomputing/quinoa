@@ -11,7 +11,9 @@
 mainmodule unittest {
 
   extern module tutsuite;
+  extern module mpirunner;
   extern module charestatecollector;
+  extern module quietcerr;
 
   readonly CProxy_Main mainProxy;
   readonly tk::CProxy_ChareStateCollector stateProxy;
@@ -23,14 +25,13 @@ mainmodule unittest {
     readonly CProxy_TUTSuite g_suiteProxy;
     readonly std::string g_executable;
     readonly int g_maxTestsInGroup;
-    readonly bool g_charmpass;
 
   } // unittest::
 
   mainchare Main {
     entry Main( CkArgMsg* msg );
     entry void execute();
-    entry void finalize( bool worked, bool pass );
+    entry void finalize( bool pass );
     entry void quiescence();
     entry [reductiontarget] void dumpstate( CkReductionMsg* msg );
   }

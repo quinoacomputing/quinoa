@@ -13,6 +13,7 @@
 #include "DerivedData.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "FaceData.h"
+#include "Centering.h"
 
 namespace inciter {
 
@@ -40,13 +41,13 @@ FaceData::FaceData(
 //!   mesh chunk
 //! \details This class is created per chare-worker in 
 //!   Partitioner::createWorkers(). This is done so that Discretization will 
-//!   not hold all this data unnecessarily, viz. for MatCG and DiagCG, where 
+//!   not hold all this data unnecessarily, viz. for DiagCG, where 
 //!   it's not needed. It will be computed only when DG discretization is 
 //!   chosen.
 // *****************************************************************************
 {
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (ctr::Scheme().centering(scheme) == ctr::Centering::ELEM) {
+  if (ctr::Scheme().centering(scheme) == tk::Centering::ELEM) {
     auto el = tk::global2local( ginpoel );   // fills inpoel, m_gid, m_lid
     const auto& inpoel = std::get< 0 >( el );
     const auto& lid = std::get< 2 >( el );

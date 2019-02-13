@@ -73,7 +73,7 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
     for (std::size_t i=0; i<v.size(); ++i)
       Assert( v[i].size() == w[i].size(),
               "Size mismatch during diagnostics aggregation" );
-    // Apply diagnostics aggregation policy, see also Solver::updateDiag()
+    // Apply diagnostics aggregation policy
     // Sum for L2 normal of the numerical solution for all scalar components
     for (std::size_t i=0; i<v[L2SOL].size(); ++i) v[L2SOL][i] += w[L2SOL][i];
     // Sum for the L2 norm of the numerical - analytical solution for all comps

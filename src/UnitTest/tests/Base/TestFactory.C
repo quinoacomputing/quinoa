@@ -212,10 +212,6 @@ void Factory_object::test< 4 >() {
   Factory_common::Factory f;
   tk::record< Child >( f, 1 );      // key: 1, default ctor
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   try {
     tk::instantiate(f,2);
     fail( "tk::instantiate with non-existent key must throw if DEBUG mode" );

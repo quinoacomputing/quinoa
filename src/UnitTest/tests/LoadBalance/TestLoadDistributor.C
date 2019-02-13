@@ -55,10 +55,6 @@ template<> template<>
 void LoadDistributor_object::test< 2 >() {
   set_test_name( "linear throws on too low virt" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
@@ -82,10 +78,6 @@ void LoadDistributor_object::test< 2 >() {
 template<> template<>
 void LoadDistributor_object::test< 3 >() {
   set_test_name( "linear throws on too high virt" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
@@ -144,10 +136,6 @@ void LoadDistributor_object::test< 6 >() {
 template<> template<>
 void LoadDistributor_object::test< 7 >() {
   set_test_name( "linear throws on garbage npe" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );

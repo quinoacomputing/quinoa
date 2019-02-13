@@ -198,7 +198,6 @@ Distributor::info( uint64_t chunksize, std::size_t nchare )
   m_print.section( "Load distribution" );
   m_print.item( "Virtualization [0.0...1.0]",
                 g_inputdeck.get< tag::cmd, tag::virtualization >() );
-  m_print.item( "Number of processing elements", CkNumPes() );
   m_print.item( "Number of work units", nchare );
   m_print.item( "User load (# of particles)",
                 g_inputdeck.get< tag::discr, tag::npar >() );
@@ -342,21 +341,43 @@ Distributor::outPDF()
 // Output PDFs to file
 // *****************************************************************************
 {
-  // Output PDFs at selected times
-  if ( !((m_it+1) % g_inputdeck.get< tag::interval, tag::pdf >()) ) {
-    outUniPDF();                        // Output univariate PDFs to file(s)
-    outBiPDF();                         // Output bivariate PDFs to file(s)
-    outTriPDF();                        // Output trivariate PDFs to file(s)
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto pdffreq = g_inputdeck.get< tag::interval, tag::pdf >();
+
+  // output PDFs at t=0 (regardless of whether it was requested), or at
+  // selected times, or in the last time step (regardless of whether it was
+  // requested
+  if ( m_it == 0 ||
+       !((m_it+1) % pdffreq) ||
+       (std::fabs(m_t+m_dt-term) < eps || (m_it+1) >= nstep) )
+  {
+    // Generate iteration count and physical time for PDF output. In the first
+    // iteration, the particles are NOT advanced, see Integration::advance(),
+    // and we write it=0 and time=0.0 into the PDF files. For the rest of the
+    // iterations we write the iteration count and the physical time
+    // corresponding to the iteration just completed.
+    auto it = m_it == 0 ? m_it : m_it + 1;
+    auto t = m_it == 0 ? m_t : m_t + m_dt;
+
+    outUniPDF( it, t );                 // Output univariate PDFs to file(s)
+    outBiPDF( it, t );                  // Output bivariate PDFs to file(s)
+    outTriPDF( it, t );                 // Output trivariate PDFs to file(s)
     m_output.get< tag::pdf >() = true;  // Signal that PDFs were written
   }
 }
 
 void
-Distributor::writeUniPDF( const tk::UniPDF& p,
+Distributor::writeUniPDF( std::uint64_t it,
+                          tk::real t,
+                          const tk::UniPDF& p,
                           tk::ctr::Moment m,
                           std::size_t idx )
 // *****************************************************************************
 // Write univariate PDF to file
+//! \param[in] it Iteration count to write in output file
+//! \param[in] t Physical time to write in output file
 //! \param[in] p Univariate PDF to output
 //! \param[in] m ORDINARY or CENTRAL PDF we are writing
 //! \param[in] idx Index of the PDF of all ordinary or central PDFs requested
@@ -369,7 +390,9 @@ Distributor::writeUniPDF( const tk::UniPDF& p,
                            g_inputdeck.get< tag::discr, tag::extent >(),
                            g_inputdeck.get< tag::pdf >(),
                            m,
-                           idx );
+                           idx,
+                           it,
+                           t );
 
   // Construct PDF file name: base name + '_' + pdf name
   std::string filename =
@@ -393,11 +416,15 @@ Distributor::writeUniPDF( const tk::UniPDF& p,
 }
 
 void
-Distributor::writeBiPDF( const tk::BiPDF& p,
+Distributor::writeBiPDF( std::uint64_t it,
+                         tk::real t,
+                         const tk::BiPDF& p,
                          tk::ctr::Moment m,
                          std::size_t idx )
 // *****************************************************************************
 // Write bivariate PDF to file
+//! \param[in] it Iteration count to write in output file
+//! \param[in] t Physical time to write in output file
 //! \param[in] p Bivariate PDF to output
 //! \param[in] m ORDINARY or CENTRAL PDF we are writing
 //! \param[in] idx Index of the PDF of all ordinary or central PDFs requested
@@ -410,7 +437,9 @@ Distributor::writeBiPDF( const tk::BiPDF& p,
                            g_inputdeck.get< tag::discr, tag::extent >(),
                            g_inputdeck.get< tag::pdf >(),
                            m,
-                           idx );
+                           idx,
+                           it,
+                           t );
 
   // Construct PDF file name: base name + '_' + pdf name
   std::string filename =
@@ -453,11 +482,15 @@ Distributor::writeBiPDF( const tk::BiPDF& p,
 }
 
 void
-Distributor::writeTriPDF( const tk::TriPDF& p,
+Distributor::writeTriPDF( std::uint64_t it,
+                          tk::real t,
+                          const tk::TriPDF& p,
                           tk::ctr::Moment m,
                           std::size_t idx )
 // *****************************************************************************
 // Write trivariate PDF to file
+//! \param[in] it Iteration count to write in output file
+//! \param[in] t Physical time to write in output file
 //! \param[in] p Trivariate PDF to output
 //! \param[in] m ORDINARY or CENTRAL PDF we are writing
 //! \param[in] idx Index of the PDF of all ordinary or central PDFs requested
@@ -470,7 +503,9 @@ Distributor::writeTriPDF( const tk::TriPDF& p,
                            g_inputdeck.get< tag::discr, tag::extent >(),
                            g_inputdeck.get< tag::pdf >(),
                            m,
-                           idx );
+                           idx,
+                           it,
+                           t );
 
   // Construct PDF file name: base name + '_' + pdf name
   std::string filename =
@@ -513,49 +548,55 @@ Distributor::writeTriPDF( const tk::TriPDF& p,
 }
 
 void
-Distributor::outUniPDF()
+Distributor::outUniPDF( std::uint64_t it, tk::real t )
 // *****************************************************************************
 // Output all requested univariate PDFs to file(s)
+//! \param[in] it Iteration count to write in output file
+//! \param[in] t Physical time to write in output file
 // *****************************************************************************
 {
   std::size_t idx = 0;
   for (const auto& p : m_ordupdf)
-    writeUniPDF( p, tk::ctr::Moment::ORDINARY, idx++ );
+    writeUniPDF( it, t, p, tk::ctr::Moment::ORDINARY, idx++ );
   idx = 0;
   for (const auto& p : m_cenupdf)
-    writeUniPDF( p, tk::ctr::Moment::CENTRAL, idx++ );
+    writeUniPDF( it, t, p, tk::ctr::Moment::CENTRAL, idx++ );
 }
 
 void
-Distributor::outBiPDF()
+Distributor::outBiPDF( std::uint64_t it, tk::real t )
 // *****************************************************************************
 // Output all requested bivariate PDFs to file(s)
+//! \param[in] it Iteration count to write in output file
+//! \param[in] t Physical time to write in output file
 //! \return Number of PDFs written
 // *****************************************************************************
 {
   std::size_t idx = 0;
   for (const auto& p : m_ordbpdf)
-    writeBiPDF( p, tk::ctr::Moment::ORDINARY, idx++ );
+    writeBiPDF( it, t, p, tk::ctr::Moment::ORDINARY, idx++ );
   idx = 0;
   for (const auto& p : m_cenbpdf) {
-    writeBiPDF( p, tk::ctr::Moment::CENTRAL, idx++ );
+    writeBiPDF( it, t, p, tk::ctr::Moment::CENTRAL, idx++ );
   }
 }
 
 void
-Distributor::outTriPDF()
+Distributor::outTriPDF( std::uint64_t it, tk::real t )
 // *****************************************************************************
 // Output all requested trivariate PDFs to file(s)
+//! \param[in] it Iteration count to write in output file
+//! \param[in] t Physical time to write in output file
 //! \return Number of PDFs written
 // *****************************************************************************
 {
   std::size_t idx = 0;
   for (const auto& p : m_ordtpdf) {
-    writeTriPDF( p, tk::ctr::Moment::ORDINARY, idx++ );
+    writeTriPDF( it, t, p, tk::ctr::Moment::ORDINARY, idx++ );
   }
   idx = 0;
   for (const auto& p : m_centpdf) {
-    writeTriPDF( p, tk::ctr::Moment::CENTRAL, idx++ );
+    writeTriPDF( it, t, p, tk::ctr::Moment::CENTRAL, idx++ );
   }
 }
 

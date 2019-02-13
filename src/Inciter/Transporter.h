@@ -30,7 +30,7 @@ class Transporter : public CBase_Transporter {
 
   private:
     //! Indices for progress report on mesh preparation
-    enum ProgMesh{ PART=0, DIST, REFINE, BND, COMM, MASK, REORD, BOUND };
+    enum ProgMesh{ PART=0, DIST, REFINE, BND, COMM, MASK, REORD };
     //! Indices for progress report on workers preparation
     enum ProgWork{ CREATE=0, BNDFACE, COMFAC, GHOST, ADJ };
 
@@ -66,16 +66,13 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target: all Solver (PEs) have computed the number of
     //!   chares they will recieve contributions from during linear solution
-    void nchare();
-
-    //! Reduction target: all Solver (PEs) have computed their row bounds
-    void bounds();
+    void partition();
 
     //! Reduction target: all PEs have distrbuted their mesh after partitioning
     void distributed();
 
     //! Reduction target: all PEs have created the mesh refiners
-    void refinserted();
+    void refinserted( int error );
 
     //! Reduction target: all Discretization chares have been inserted
     void discinserted();
@@ -93,6 +90,12 @@ class Transporter : public CBase_Transporter {
 
     //! Reduction target: all PEs have optionally refined their mesh
     void refined( std::size_t nelem, std::size_t npoin );
+
+    //! Reduction target: all Sorter chares have queried their boundary nodes
+    void queried();
+    //! \brief Reduction target: all Sorter chares have responded with their
+    //!   boundary nodes
+    void responded();
 
     //! \brief Reduction target: all Discretization chares have resized their
     //!    own data after mesh refinement
@@ -114,8 +117,6 @@ class Transporter : public CBase_Transporter {
     void chmask() { m_progMesh.inc< MASK >(); }
     //! Non-reduction target for receiving progress report on reordering mesh
     void chreordered() { m_progMesh.inc< REORD >(); }
-    //! Non-reduction target for receiving progress report on computing bounds
-    void chbounds() { m_progMesh.inc< BOUND >(); }
 
     //! Non-reduction target for receiving progress report on creating workers
     void chcreated() { m_progWork.inc< CREATE >(); }
@@ -160,12 +161,6 @@ class Transporter : public CBase_Transporter {
     //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );
 
-    //! Start time stepping
-    void start();
-
-    //! Reset linear solver for next time step
-    void next();
-
     //! Reduction target to sync the initial solution before limiting
     void sendinit();
 
@@ -178,17 +173,13 @@ class Transporter : public CBase_Transporter {
   private:
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of worker chares
-    uint64_t m_chunksize;                //!< Number of elements per PE
-    uint64_t m_remainder;                //!< Number elements added to last PE
-    tk::CProxy_Solver m_solver;          //!< Linear system solver group proxy
     Scheme m_scheme;                     //!< Discretization scheme
-    CProxy_Partitioner m_partitioner;    //!< Partitioner group proxy
+    CProxy_Partitioner m_partitioner;    //!< Partitioner nodegroup proxy
     CProxy_Refiner m_refiner;            //!< Mesh refiner array proxy
+    tk::CProxy_MeshWriter m_meshwriter;  //!< Mesh writer nodegroup proxy
     CProxy_Sorter m_sorter;              //!< Mesh sorter array proxy
     std::size_t m_nelem;                 //!< Number mesh elements
     std::size_t m_npoin;                 //!< Number mesh points
-    //! Average communication cost of merging the linear system
-    tk::real m_avcost;
      //! Total mesh volume
     tk::real m_V;
     //! Minimum mesh statistics
@@ -201,22 +192,13 @@ class Transporter : public CBase_Transporter {
     enum class TimerTag { MESH_READ=0 };
     //! Timers
     std::map< TimerTag, tk::Timer > m_timer;
-    //! \brief Aggregate 'old' (as in file) node ID list at which Solver
-    //!   sets boundary conditions, see also Partitioner.h
-    std::vector< std::size_t > m_linsysbc;
     //! Progress object for preparing mesh
-    tk::Progress< 8 > m_progMesh;
+    tk::Progress< 7 > m_progMesh;
     //! Progress object for preparing workers
     tk::Progress< 5 > m_progWork;
 
-    //! Create linear solver group
-    void createSolver();
-
     //! Create mesh partitioner and boundary condition object group
     void createPartitioner();
-
-    //! Start partitioning the mesh
-    void partition();
 
     //! Configure and write diagnostics file header
     void diagHeader();
@@ -264,9 +246,8 @@ class Transporter : public CBase_Transporter {
         if (bnd.find(i) != end(bnd))  // user BC found among side sets in file
           sidesets_as_bc.insert( i );  // store side set id configured as BC
         else {
-          m_print << "\n>>> ERROR: Boundary conditions specified on side set " +
-            std::to_string(i) + " which does not exist in mesh file";
-          finish();
+          Throw( "Boundary conditions specified on side set " +
+            std::to_string(i) + " which does not exist in mesh file" );
         }
       }
       // Remove sidesets not configured as BCs (will not process those further)

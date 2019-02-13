@@ -12,6 +12,8 @@
 //! Tags used as unique-type labels for compile-time code-generation
 namespace tag {
 
+struct low {};
+struct high {};
 struct io {};
 struct quiescence {};
 struct input {};
@@ -198,13 +200,14 @@ struct edge {};
 struct cv {};
 struct k {};
 struct com {};
+struct queried {};
+struct responded {};
 struct coord {};
 struct refinserted {};
 struct discinserted {};
 struct disccreated {};
 struct workinserted {};
 struct distributed {};
-struct flattened {};
 struct load {};
 struct bcast {};
 struct elem {};

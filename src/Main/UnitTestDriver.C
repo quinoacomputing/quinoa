@@ -21,19 +21,14 @@ extern CProxy_TUTSuite g_suiteProxy;
 
 } // unittest::
 
-UnitTestDriver::UnitTestDriver( const UnitTestPrint& print,
-                                const ctr::CmdLine& cmdline ) :
-  m_print( print )
+UnitTestDriver::UnitTestDriver( const UnitTestPrint&,
+                                const ctr::CmdLine& cmdline )
 // *****************************************************************************
 //  Constructor
-//! \param[in] print Pretty printer
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
 // *****************************************************************************
 {
-  // All global-scope data to be migrated to all PEs initialized here (if any)
-  m_print.endpart();
-
   // Instantiate (on PE 0 ) and run unit test suite. We only support Template
   // Unit Test suites at this point, so no factory instantiation, simply fire up
   // a Charm++ chare TUTSuite, which fires up and evaluates all unit tests
