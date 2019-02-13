@@ -555,12 +555,7 @@ else()
   PrintMissing(Control "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
 endif()
 
-if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND AND TUT_FOUND AND
-    PUGIXML_FOUND AND SEACASExodus_FOUND)
-  add_subdirectory(Main)
-else()
-  PrintMissing(Main "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND;TUT_FOUND;PUGIXML_FOUND;SEACASExodus_FOUND")
-endif()
+add_subdirectory(Main)
 
 if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND AND Zoltan2_FOUND)
   add_subdirectory(LoadBalance)
@@ -580,7 +575,7 @@ else()
   PrintMissing(Statistics "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
 endif()
 
-if (ENABLE_MESHCONV OR ENABLE_INCITER)
+if ((ENABLE_MESHCONV OR ENABLE_INCITER) AND BRIGAND_FOUND)
   add_subdirectory(Mesh)
   add_subdirectory(IO)
 endif()
