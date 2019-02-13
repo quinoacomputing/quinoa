@@ -56,8 +56,7 @@ FaceData::FaceData(
     m_esuel = tk::genEsuelTet( inpoel, esup );
 
     // Map face connectivity from global to local ids
-    std::for_each( begin(m_triinpoel), end(m_triinpoel),
-      [&lid]( std::size_t& i ){ i = tk::cref_find(lid,i); } );
+    for (auto& i : m_triinpoel) i = tk::cref_find(lid,i);
 
     auto nbfac = tk::sumvalsize( m_bface );
 
