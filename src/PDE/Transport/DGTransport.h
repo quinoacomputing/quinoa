@@ -95,10 +95,11 @@ class Transport {
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
                      tk::Fields& unk,
-                     tk::real t ) const
+                     tk::real t,
+                     const std::size_t nielem ) const
     {
       tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
-                      Problem::solution, unk, t );
+                      Problem::solution, unk, t, nielem );
     }
 
     //! Compute the left hand side mass matrix
@@ -150,12 +151,13 @@ class Transport {
         { m_bcoutlet, Outlet },
         { m_bcdir, Dirichlet } }};
 
+      // compute internal surface flux integrals
+      tk::surfInt( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
+                   Upwind::flux, Problem::prescribedVelocity, U, limFunc, R );
+
       switch(ndof)
       {
         case 1:           //DG(P0)
-          // compute internal surface flux integrals
-          tk::surfIntP0( m_system, m_ncomp, m_offset, fd, geoFace, Upwind::flux,
-                         Problem::prescribedVelocity, U, R );
           // compute boundary surface flux integrals
           for (const auto& b : bctypes)
             tk::sidesetIntP0( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
@@ -163,9 +165,6 @@ class Transport {
           break;
  
         case 4:          //DG(P1)
-          // compute internal surface flux integrals
-          tk::surfIntP1( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                       Upwind::flux, Problem::prescribedVelocity, U, limFunc, R );
           // compute volume integrals
           tk::volIntP1( m_system, m_ncomp, m_offset, inpoel, coord, geoElem,
                         flux, Problem::prescribedVelocity, U, limFunc, R );
@@ -177,9 +176,6 @@ class Transport {
           break;
 
         case 10:        //DG(P2)
-          // compute internal surface flux integrals
-          tk::surfIntP2( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                       Upwind::flux, Problem::prescribedVelocity, U, R );
           // compute volume integrals
           tk::volIntP2( m_system, m_ncomp, m_offset, inpoel, coord, geoElem,
                         flux, Problem::prescribedVelocity, U, R );
@@ -278,7 +274,7 @@ class Transport {
       // evaluate analytic solution at time t
       auto E = U;
       tk::initializeP0( m_system, m_ncomp, m_offset, inpoel, coord,
-                        Problem::solution, E, t );
+                        Problem::solution, E, t, U.nunk() );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( E.extract( c*ndof, m_offset ) );
