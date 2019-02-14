@@ -133,6 +133,7 @@ namespace grm {
     POSITION_MISSING,   //!< Missing required position model
     VELOCITY_MISSING,   //!< Missing required velocity model
     DISSIPATION_MISSING,//!< Missing required dissipation model
+    MIXDIR_R,           //!< MixDirichlet parameter vector r inconsistent
     T0REFODD,           //!< AMR initref vector size is odd (must be even)
     T0REFNOOP,          //!< AMR t<0 refinement will be no-op
     DTREFNOOP,          //!< AMR t>0 refinement will be no-op
@@ -344,6 +345,9 @@ namespace grm {
     { MsgKey::VELOCITY_MISSING, "Specification for a velocity model missing." },
     { MsgKey::DISSIPATION_MISSING,
       "Specification for a dissipation model missing." },
+    { MsgKey::MIXDIR_R,
+      "The MixDirichlet SDE parameter vector r is inconsistent with parameter "
+      "vector rho. The constraint r_i = rho_N/rho_i - 1 is not satisfied." },
     { MsgKey::T0REFODD, "Error in the preceding line or block. "
       "The number of edge-nodes, marking edges as pairs of nodes, used for "
       "explicit tagging of edges for initial mesh refineoment is odd (it must "

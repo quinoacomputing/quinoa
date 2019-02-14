@@ -470,6 +470,21 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  struct check_mixdirichlet : pegtl::success {};
+  //! \brief Error checks for the mixdirichlet sde
+  template<>
+  struct action< check_mixdirichlet > {
+    template< typename Input, typename Stack >
+    static void apply( const Input&, Stack& stack ) {
+      // Ensure constraint between r_i and rhoN
+      //const auto& rho =
+      //  stack.template get< tag::param, tag::mixdirichlet, tag::rho >().back();
+      //if ()
+      //  Message< Stack, ERROR, MsgKey::MIXDIR_R >( stack, in );
+    }
+  };
+
+  //! Rule used to trigger action
   template< typename eq, typename coupledeq >
   struct check_coupling : pegtl::success {};
   //! Put in coupled eq depvar as '-' if no coupling is given
@@ -1232,14 +1247,15 @@ namespace deck {
                            sde_parameter_vector< kw::sde_kappa,
                                                  tag::mixdirichlet,
                                                  tag::kappa >,
-                           sde_parameter_vector< kw::sde_rho2,
+                           sde_parameter_vector< kw::sde_rho,
                                                  tag::mixdirichlet,
-                                                 tag::rho2 >,
+                                                 tag::rho >,
                            sde_parameter_vector< kw::sde_r,
                                                  tag::mixdirichlet,
                                                  tag::r >
                          >,
-           check_errors< tag::mixdirichlet > > {};
+           check_errors< tag::mixdirichlet,
+                         tk::grm::check_mixdirichlet > > {};
 
   //! Generalized Dirichlet SDE
   struct gendir :

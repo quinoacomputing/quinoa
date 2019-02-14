@@ -89,11 +89,11 @@ infoMixDirichlet( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
       g_inputdeck.get< tag::param, tag::mixdirichlet, tag::kappa >().at(c) )
   );
 
-  const auto& rho2 =
-    g_inputdeck.get< tag::param, tag::mixdirichlet, tag::rho2 >();
-  if (!rho2.empty())
-    nfo.emplace_back( "coeff rho2 [" + std::to_string( ncomp ) + "]",
-                      parameters( rho2.at(c) ) );
+  const auto& rho =
+    g_inputdeck.get< tag::param, tag::mixdirichlet, tag::rho >();
+  if (!rho.empty())
+    nfo.emplace_back( "coeff rho [" + std::to_string( ncomp ) + "]",
+                      parameters( rho.at(c) ) );
   const auto& r = g_inputdeck.get< tag::param, tag::mixdirichlet, tag::r >();
   if (!r.empty())
     nfo.emplace_back( "coeff r [" + std::to_string( ncomp ) + "]",

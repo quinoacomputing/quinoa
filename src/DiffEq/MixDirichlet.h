@@ -93,14 +93,16 @@ class MixDirichlet {
       m_b(),
       m_S(),
       m_k(),
-      m_rho2(),
+      m_rho(),
+      m_r(),
       coeff(
         m_ncomp,
         g_inputdeck.get< tag::param, tag::mixdirichlet, tag::b >().at(c),
         g_inputdeck.get< tag::param, tag::mixdirichlet, tag::S >().at(c),
         g_inputdeck.get< tag::param, tag::mixdirichlet, tag::kappa >().at(c),
-        g_inputdeck.get< tag::param, tag::mixdirichlet, tag::rho2 >().at(c),
-        m_b, m_k, m_S, m_rho2 ) {}
+        g_inputdeck.get< tag::param, tag::mixdirichlet, tag::rho >().at(c),
+        g_inputdeck.get< tag::param, tag::mixdirichlet, tag::r >().at(c),
+        m_b, m_k, m_S, m_rho, m_r ) {}
 
     //! Initalize SDE, prepare for time integration
     //! \param[in] stream Thread (or more precisely stream) ID 
@@ -110,6 +112,23 @@ class MixDirichlet {
       Init::template
         init< tag::mixdirichlet >
             ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
+
+      // Initialize derived instantaneous variables
+      const auto npar = particles.nunk();
+      for (auto p=decltype(npar){0}; p<npar; ++p) {
+        // compute Nth scalar
+        tk::real yn = 1.0 - particles(p, 0, m_offset);
+        for (ncomp_t i=1; i<m_ncomp; ++i)
+          yn -= particles( p, i, m_offset );
+        // compute specific volume
+        tk::real v = 0.0;
+        for (ncomp_t i=0; i<m_ncomp; ++i)
+          v += particles( p, i, m_offset )/m_rho[i];
+        // Finish computing specific volume
+        v += yn/m_rho[m_ncomp];
+        // Compute and store instantaneous density
+        particles( p, m_ncomp, m_offset ) = 1.0 / v;
+      }
     }
 
     //! \brief Advance particles according to the MixDirichlet SDE
@@ -124,7 +143,7 @@ class MixDirichlet {
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
       // Update SDE coefficients
-      coeff.update( m_depvar, m_ncomp, moments, m_rho2, m_S );
+      coeff.update( m_depvar, m_ncomp, moments, m_rho, m_r, m_S );
       // Advance particles
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
@@ -144,10 +163,10 @@ class MixDirichlet {
           tk::real d = m_k[i] * Y * yn * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
           Y += 0.5*m_b[i]*( m_S[i]*yn - (1.0-m_S[i]) * Y )*dt + d*dW[i];
-          v += Y/m_rho2[i]; // sum volume fractions (compute specific volume)
+          v += Y/m_rho[i]; // sum volume fractions (compute specific volume)
         }
         // Finish computing specific volume
-        v += yn/m_rho2[m_ncomp];
+        v += yn/m_rho[m_ncomp];
         // Compute instantaneous density
         particles( p, m_ncomp, m_offset ) = 1.0 / v;
       }
@@ -164,7 +183,8 @@ class MixDirichlet {
     std::vector< kw::sde_b::info::expect::type > m_b;
     std::vector< kw::sde_S::info::expect::type > m_S;
     std::vector< kw::sde_kappa::info::expect::type > m_k;
-    std::vector< kw::sde_rho2::info::expect::type > m_rho2;
+    std::vector< kw::sde_rho::info::expect::type > m_rho;
+    std::vector< kw::sde_r::info::expect::type > m_r;
 
     //! Coefficients policy
     Coefficients coeff;
