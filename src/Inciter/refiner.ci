@@ -32,6 +32,8 @@ module refiner {
                      const std::map< int, std::vector< std::size_t > >& bnode,
                      int nchare );
       initnode void registerReducers();
+      entry void t0refstart();
+      entry void next();
       entry
         void dtref( tk::real t,
                     const std::map< int, std::vector< std::size_t > >& bnode );

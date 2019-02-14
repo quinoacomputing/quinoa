@@ -67,6 +67,12 @@ class Refiner : public CBase_Refiner {
     //! Configure Charm++ reduction types
     static void registerReducers();
 
+    //! Start new step of initial mesh refinement (before t>0)
+    void t0refstart();
+
+    //! Continue after finishing a refinement step
+    void next();
+
     //! Start mesh refinement (during time stepping, t>0)
     void dtref( tk::real t,
                 const std::map< int, std::vector< std::size_t > >& bnode );
@@ -226,7 +232,8 @@ class Refiner : public CBase_Refiner {
     //! Generate flat coordinate data from coordinate map
     tk::UnsMesh::Coords flatcoord( const tk::UnsMesh::CoordMap& coordmap );
 
-    //! Start new step of initial mesh refinement (before t>0)
+    //! \brief Output mesh to file before a new step of initial mesh refinement
+    //!   (before t>0)
     void t0ref();
 
     //! Generate boundary edges and send them to all chares
@@ -288,6 +295,12 @@ class Refiner : public CBase_Refiner {
     tk::Fields nodeinit( std::size_t npoin,
                          const std::pair< std::vector< std::size_t >,
                                           std::vector< std::size_t > >& esup );
+
+    //! Output mesh to file(s)
+    void writeMesh( const std::string& basefilename,
+                    uint64_t it,
+                    tk::real t,
+                    CkCallback c );
 
     //! Functor to call the solution() member function behind SchemeBase::Proxy
     struct Solution : boost::static_visitor<> {

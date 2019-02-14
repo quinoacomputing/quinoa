@@ -196,17 +196,33 @@ Refiner::dtref( tk::real t,
 void
 Refiner::t0ref()
 // *****************************************************************************
-// Start new step of initial mesh refinement (before t>0)
+// Output mesh to file before a new step of initial mesh refinement (before t>0)
 // *****************************************************************************
 {
+  bool wrote = false;
+
   if (m_initial) {
     Assert( m_ninitref > 0, "No initial mesh refinement steps configured" );
     // Output initial mesh to file
-    //auto l = m_ninitref - m_initref.size();  // num initref steps completed
-    //auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
-    //if (l == 0) writeMesh( "t0ref", l, t0-1.0 );
+    auto l = m_ninitref - m_initref.size();  // num initref steps completed
+    auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
+    if (l == 0) {
+       writeMesh( "t0ref", l, t0-1.0,
+                  CkCallback( CkIndex_Refiner::t0refstart(),
+                              thisProxy[thisIndex] ) );
+       wrote = true;
+    }
   }
 
+  if (!wrote) t0refstart();
+}
+
+void
+Refiner::t0refstart()
+// *****************************************************************************
+//  Start new step of initial mesh refinement (before t>0)
+// *****************************************************************************
+{
   m_extra = 0;
   m_bndEdges.clear();
   m_ch.clear();
@@ -514,6 +530,31 @@ Refiner::updateEdgeData()
 }
 
 void
+Refiner::writeMesh( const std::string& basefilename,
+                    uint64_t itr,
+                    tk::real t,
+                    CkCallback c )
+// *****************************************************************************
+//  Output mesh to file(s)
+//! \param[in] basefilename File name to append to
+//! \param[in] itr Iteration count since a new mesh
+//! \param[in] t "Physical time" to write to file. "Time" here is used to
+//!   designate a new time step at which the mesh is saved.
+//! \param[in] c Function to continue with after the write
+// *****************************************************************************
+{
+  std::vector< std::string > names{ "refinement level", "cell type" };
+  auto& tet_store = m_refiner.tet_store;
+  std::vector< std::vector< tk::real > > fields{
+    tet_store.get_refinement_level_list(), tet_store.get_cell_type_list() };
+
+  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
+    write( /*meshoutput = */ true, /*fieldoutput = */ true, itr, 1, t,
+           thisIndex, tk::Centering::ELEM, basefilename, m_inpoel, m_coord,
+           m_belem, m_triinpoel, m_bnode, m_lid, names, fields, c );
+}
+
+void
 Refiner::eval()
 // *****************************************************************************
 // Refine mesh and decide how to continue
@@ -532,48 +573,46 @@ Refiner::eval()
 
   updateMesh();
 
-  // Lambda to write mesh to file after refinement step
-  auto writeMesh = [this]( const std::string& basefilename,
-                           uint64_t it,
-                           tk::real t )
-  {
-    bool meshoutput = true;
-    bool fieldoutput = true;
-    uint64_t itf = 1;   // field output iteration count
-
-    std::vector< std::string > names{ "refinement level", "cell type" };
-    auto& tet_store = this->m_refiner.tet_store;
-    std::vector< std::vector< tk::real > > fields{
-      tet_store.get_refinement_level_list(), tet_store.get_cell_type_list() };
-
-    this->m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
-      write( meshoutput, fieldoutput, it, itf, t, this->thisIndex,
-             tk::Centering::ELEM, basefilename, this->m_inpoel, this->m_coord,
-             this->m_belem, this->m_triinpoel, this->m_bnode, this->m_lid,
-             names, fields, CkCallback(CkCallback::ignore) );
-  };
+  std::string basefilename;
+  std::size_t itr = 0;
+  tk::real t = 0.0;
 
   if (m_initial) {      // if initial (before t=0) AMR
 
-    // Output mesh after recent step of initial mesh refinement
-    auto ninitref = g_inputdeck.get< tag::amr, tag::init >().size();
-    auto l = ninitref - m_initref.size();  // num initref steps completed
+    auto l = m_ninitref - m_initref.size() + 1;  // num initref steps completed
     auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
-    // Generate times for file output equally subdividing t0-1...t0 to ninitref
-    // steps
-    tk::real t = t0 - 1.0 +
-      static_cast<tk::real>(l)/static_cast<tk::real>(ninitref);
+    // Generate times equally subdividing t0-1...t0 to ninitref steps
+    t = t0 - 1.0 + static_cast<tk::real>(l)/static_cast<tk::real>(m_ninitref);
+    itr = l;
+    basefilename = "t0ref";
 
-    writeMesh( "t0ref", l, t );
+  } else {              // if AMR during time stepping (t>0)
+
+    itr = 0;
+    t = m_t;
+    basefilename = "dtref";
+
+  }
+
+  // Output mesh after refinement step
+  writeMesh( basefilename, itr, t,
+             CkCallback( CkIndex_Refiner::next(), thisProxy[thisIndex] ) );
+}
+
+void
+Refiner::next()
+// *****************************************************************************
+// Continue after finishing a refinement step
+// *****************************************************************************
+{
+  if (m_initial) {      // if initial (before t=0) AMR
+
     // Remove initial mesh refinement step from list
     if (!m_initref.empty()) m_initref.pop_back();
     // Continue to next initial AMR step or finish
     if (!m_initref.empty()) t0ref(); else endt0ref();
 
   } else {              // if AMR during time stepping (t>0)
-
-    // Output mesh after recent step of mesh refinement during time stepping
-    writeMesh( "dtref", 0, m_t );
 
 //     // Augment node comm. map with newly added nodes on chare-boundary edges
 //     for (const auto& c : m_edgedataCh) {
@@ -588,7 +627,6 @@ Refiner::eval()
     auto e = tk::element< SchemeBase::ProxyElem >
                         ( m_scheme.getProxy(), thisIndex );
     boost::apply_visitor( Resize(m_el,m_coord,m_u,m_msum,m_bnode), e );
-
   }
 }
 
