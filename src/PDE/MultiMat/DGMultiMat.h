@@ -94,10 +94,11 @@ class MultiMat {
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
                      tk::Fields& unk,
-                     tk::real t ) const
+                     tk::real t,
+                     const std::size_t nielem ) const
     {
       tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
-                      Problem::solution, unk, t );
+                      Problem::solution, unk, t, nielem );
     }
 
     //! Compute the left hand side block-diagonal mass matrix
@@ -155,11 +156,12 @@ class MultiMat {
         { m_bcsym, Symmetry },
         { m_bcextrapolate, Extrapolate } }};
 
+      // compute internal surface flux integrals
+      tk::surfInt( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
+                   rieflxfn, velfn, U, limFunc, R );
+
       if (ndof == 1) {  // DG(P0)
 
-        // compute internal surface flux integrals
-        tk::surfIntP0( m_system, m_ncomp, m_offset, fd, geoFace, rieflxfn,
-                       velfn, U, R );
         // compute source term intehrals
         tk::srcIntP0( m_system, m_ncomp, m_offset,
                       t, geoElem, Problem::src, R );
@@ -170,9 +172,6 @@ class MultiMat {
 
       } else if (ndof == 4) {  // DG(P1)
 
-        // compute internal surface flux integrals
-        tk::surfIntP1( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                       rieflxfn, velfn, U, limFunc, R );
         // compute source term intehrals
         tk::srcIntP1( m_system, m_ncomp, m_offset,
                       t, inpoel, coord, geoElem, Problem::src, R );
@@ -212,12 +211,16 @@ class MultiMat {
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();
 
-      // Number of integration points
-      constexpr std::size_t NG = 3;
+      // Number of quadrature points for face integration
+      auto ng = tk::NGfa(ndof);
 
       // arrays for quadrature points
-      std::array< std::array< tk::real, NG >, 2 > coordgp;
-      std::array< tk::real, NG > wgp;
+      std::array< std::vector< tk::real >, 2 > coordgp;
+      std::vector< tk::real > wgp;
+
+      coordgp[0].resize( ng );
+      coordgp[1].resize( ng );
+      wgp.resize( ng );
 
       tk::real rho, u, v, w, rhoE, p, a, vn, dSV_l, dSV_r;
       std::vector< tk::real > delt( U.nunk(), 0.0 );
@@ -227,7 +230,7 @@ class MultiMat {
       const auto& cz = coord[2];
 
       // get quadrature point weights and coordinates for triangle
-      tk::GaussQuadratureTri( coordgp, wgp );
+      tk::GaussQuadratureTri( ng, coordgp, wgp );
 
       // compute internal surface maximum characteristic speed
       for (std::size_t f=0; f<esuf.size()/2; ++f)
@@ -269,7 +272,7 @@ class MultiMat {
         dSV_r = 0.0;
 
         // Gaussian quadrature
-        for (std::size_t igp=0; igp<NG; ++igp)
+        for (std::size_t igp=0; igp<ng; ++igp)
         {
           // Barycentric coordinates for the triangular face
           auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];

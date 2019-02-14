@@ -92,8 +92,19 @@ class DG : public CBase_DG {
     //! Setup: query boundary conditions, output mesh, etc.
     void setup( tk::real v );
 
+    //! Limit initial solution and prepare for time stepping
+    void limitIC();
+
     //! Start time stepping
     void start();
+
+    //! Send own chare-boundary data to neighboring chares
+    void sendinit();
+
+    //! Receive chare-boundary ghost data from neighboring chares
+    void cominit( int fromch,
+                  const std::vector< std::size_t >& tetid,
+                  const std::vector< std::vector< tk::real > >& u );
 
     //! Receive chare-boundary limiter function data from neighboring chares
     void comlim( int fromch,
@@ -150,6 +161,7 @@ class DG : public CBase_DG {
       p | m_ncomfac;
       p | m_nadj;
       p | m_nsol;
+      p | m_ninitsol;
       p | m_nlim;
       p | m_fd;
       p | m_u;
@@ -201,6 +213,9 @@ class DG : public CBase_DG {
     std::size_t m_nadj;
     //! Counter signaling that we have received all our solution ghost data
     std::size_t m_nsol;
+    //! \brief Counter signaling that we have received all our solution ghost
+    //!    data during setup
+    std::size_t m_ninitsol;
     //! Counter signaling that we have received all our limiter function ghost data
     std::size_t m_nlim;
     //! Face data

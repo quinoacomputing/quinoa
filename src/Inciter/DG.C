@@ -38,6 +38,7 @@ DG::DG( const CProxy_Discretization& disc, const FaceData& fd ) :
   m_ncomfac( 0 ),
   m_nadj( 0 ),
   m_nsol( 0 ),
+  m_ninitsol( 0 ),
   m_nlim( 0 ),
   m_fd( fd ),
   m_u( Disc()->Inpoel().size()/4,
@@ -88,7 +89,8 @@ DG::DG( const CProxy_Discretization& disc, const FaceData& fd ) :
   // Activate SDAG waits for face adjacency map (ghost data) calculation
   thisProxy[ thisIndex ].wait4ghost();
 
-  // Enable SDAG wait for initially building the solution vector
+  // Enable SDAG wait for initially building the solution vector and limiting
+  thisProxy[ thisIndex ].wait4initlim();
   thisProxy[ thisIndex ].wait4sol();
   thisProxy[ thisIndex ].wait4lim();
 
@@ -854,12 +856,47 @@ DG::setup( tk::real v )
 
   // Set initial conditions for all PDEs
   for (const auto& eq : g_dgpde) 
-    eq.initialize( m_lhs, d->Inpoel(), d->Coord(), m_u, d->T() );
+    eq.initialize( m_lhs, d->Inpoel(), d->Coord(), m_u, d->T(),
+                   m_fd.Esuel().size()/4 );
   m_un = m_u;
 
   for (std::size_t e=0; e<m_fd.Esuel().size()/4; ++e)
     for (std::size_t c=0; c<m_limFunc.nprop(); ++c)
       m_limFunc(e,c,0)=1.0;
+
+  // Communicate for initial solution limiting
+  contribute( CkCallback(CkReductionTarget(Transporter,sendinit), d->Tr()) );
+}
+
+void
+DG::limitIC()
+// *****************************************************************************
+//  Limit initial solution and prepare for time stepping
+//! \details This function applies limiter to initial solution and then proceeds
+//!   to communicate this limited solution and begin time stepping
+// *****************************************************************************
+{
+  // Limit initial solution
+  const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
+  if (limiter == ctr::LimiterType::WENOP1)
+  {
+    WENO_P1( m_fd.Esuel(), 0, m_u, m_limFunc );
+
+    const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+    const auto ncomp= m_u.nprop()/ndof;
+    for (inciter::ncomp_t c=0; c<ncomp; ++c)
+    {
+      auto mark = c*ndof;
+      auto lmark = c*(ndof-1);
+      for (std::size_t e=0; e<m_u.nunk(); ++e)
+      {
+        // limit P1 dofs
+        m_u( e, mark+1, 0 ) = m_limFunc( e, lmark  , 0 ) * m_u( e, mark+1, 0 );
+        m_u( e, mark+2, 0 ) = m_limFunc( e, lmark+1, 0 ) * m_u( e, mark+2, 0 );
+        m_u( e, mark+3, 0 ) = m_limFunc( e, lmark+2, 0 ) * m_u( e, mark+3, 0 );
+      }
+    }
+  }
 
   // Output initial conditions to file (regardless of whether it was requested)
   writeFields( CkCallback(CkIndex_DG::start(), thisProxy[thisIndex]) );
@@ -871,11 +908,87 @@ DG::start()
 //  Start time stepping
 // *****************************************************************************
 {
-  // Start timer measuring time stepping wall clock time
-  Disc()->Timer().zero();
+  auto d = Disc();
 
+  // Start timer measuring time stepping wall clock time
+  d->Timer().zero();
+
+  tk::real fdt = 0.0;
   // Start time stepping
-  advance( 0.0 );
+  contribute( sizeof(tk::real), &fdt, CkReduction::nop,
+              CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
+}
+
+void
+DG::sendinit()
+// *****************************************************************************
+// Send own chare-boundary data to neighboring chares
+// *****************************************************************************
+{
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+//                                         "advance" );
+
+  // communicate solution ghost data (if any)
+  if (m_ghostData.empty())
+    cominit_complete();
+  else
+    for(const auto& n : m_ghostData) {
+      std::vector< std::size_t > tetid;
+      std::vector< std::vector< tk::real > > u;
+      for(const auto& i : n.second) {
+        Assert( i.first < m_fd.Esuel().size()/4, "Sending solution ghost data" );
+        tetid.push_back( i.first );
+        u.push_back( m_u[i.first] );
+      }
+      thisProxy[ n.first ].cominit( thisIndex, tetid, u );
+    }
+
+  owninit_complete();
+}
+
+void
+DG::cominit( int fromch,
+             const std::vector< std::size_t >& tetid,
+             const std::vector< std::vector< tk::real > >& u )
+// *****************************************************************************
+//  Receive chare-boundary solution ghost data from neighboring chares
+//! \param[in] fromch Sender chare id
+//! \param[in] tetid Ghost tet ids we receive solution data for
+//! \param[in] u Solution ghost data
+//! \details This function receives contributions to m_u from fellow chares.
+// *****************************************************************************
+{
+//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+//       g_inputdeck.get< tag::cmd, tag::quiescence >())
+//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+//                                         "cominit" );
+
+  Assert( u.size() == tetid.size(), "Size mismatch in DG::cominit()" );
+
+  // Find local-to-ghost tet id map for sender chare
+  const auto& n = tk::cref_find( m_ghost, fromch );
+
+  for (std::size_t i=0; i<tetid.size(); ++i) {
+    auto j = tk::cref_find( n, tetid[i] );
+    Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
+    Assert( j < m_u.nunk(), "Indexing out of bounds in DG::cominit()" );
+    Assert( m_recvGhost.insert( j ).second,
+            "Failed to store local tetid of received ghost tetid" );
+    for (std::size_t c=0; c<m_u.nprop(); ++c)
+      m_u(j,c,0) = u[i][c];
+  }
+
+  // if we have received all solution ghost contributions from those chares we
+  // communicate along chare-boundary faces with, solve the system
+  if (++m_ninitsol == m_ghostData.size()) {
+    Assert( m_exptGhost == m_recvGhost,
+            "Expected/received ghost tet id mismatch" );
+    m_recvGhost.clear();
+    m_ninitsol = 0;
+    cominit_complete();
+  }
 }
 
 void
@@ -968,8 +1081,6 @@ DG::comsol( int fromch,
     auto j = tk::cref_find( n, tetid[i] );
     Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
     Assert( j < m_u.nunk(), "Indexing out of bounds in DG::comsol()" );
-    Assert( m_recvGhost.insert( j ).second,
-            "Failed to store local tetid of received ghost tetid" );
     for (std::size_t c=0; c<m_u.nprop(); ++c)
       m_u(j,c,0) = u[i][c];
   }
@@ -977,9 +1088,6 @@ DG::comsol( int fromch,
   // if we have received all solution ghost contributions from those chares we
   // communicate along chare-boundary faces with, solve the system
   if (++m_nsol == m_ghostData.size()) {
-    Assert( m_exptGhost == m_recvGhost,
-            "Expected/received ghost tet id mismatch" );
-    m_recvGhost.clear();
     m_nsol = 0;
     comsol_complete();
   }

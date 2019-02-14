@@ -160,21 +160,22 @@ tk::bndSurfIntP1( ncomp_t system,
 //!   boundaries by its member function State::LR()
 // *****************************************************************************
 {
-  // Number of integration points
-  constexpr std::size_t NG = 3;
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
 
   // arrays for quadrature points
-  std::array< std::array< real, NG >, 2 > coordgp;
-  std::array< real, NG > wgp;
+  std::array< std::vector< tk::real >, 2 > coordgp;
+  std::vector< tk::real > wgp;
+
+  coordgp[0].resize( tk::NGfa(ndof) );
+  coordgp[1].resize( tk::NGfa(ndof) );
+  wgp.resize( tk::NGfa(ndof) );
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
 
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-
   // get quadrature point weights and coordinates for triangle
-  GaussQuadratureTri( coordgp, wgp );
+  GaussQuadratureTri( tk::NGfa(ndof), coordgp, wgp );
 
   for (const auto& f : faces) {
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
@@ -213,7 +214,7 @@ tk::bndSurfIntP1( ncomp_t system,
       fn{{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }};
 
     // Gaussian quadrature
-    for (std::size_t igp=0; igp<NG; ++igp)
+    for (std::size_t igp=0; igp<tk::NGfa(ndof); ++igp)
     {
       // Barycentric coordinates for the triangular face
       auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];
@@ -361,21 +362,23 @@ tk::bndSurfIntP2( ncomp_t system,
 //!   boundaries by its member function State::LR()
 // *****************************************************************************
 {
-  // Number of integration points
-  constexpr std::size_t NG = 6;
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
 
   // arrays for quadrature points
-  std::array< std::array< real, NG >, 2 > coordgp;
-  std::array< real, NG > wgp;
+  std::array< std::vector< tk::real >, 2 > coordgp;
+  std::vector< tk::real > wgp;
+
+  coordgp[0].resize( tk::NGfa(ndof) );
+  coordgp[1].resize( tk::NGfa(ndof) );
+  wgp.resize( tk::NGfa(ndof) );
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
 
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
 
   // get quadrature point weights and coordinates for triangle
-  GaussQuadratureTri( coordgp, wgp );
+  GaussQuadratureTri( tk::NGfa(ndof), coordgp, wgp );
 
   for (const auto& f : faces) {
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
@@ -414,7 +417,7 @@ tk::bndSurfIntP2( ncomp_t system,
       fn{{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }};
 
     // Gaussian quadrature
-    for (std::size_t igp=0; igp<NG; ++igp)
+    for (std::size_t igp=0; igp<tk::NGfa(ndof); ++igp)
     {
       // Barycentric coordinates for the triangular face
       auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];

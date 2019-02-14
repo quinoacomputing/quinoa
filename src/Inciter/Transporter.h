@@ -161,6 +161,9 @@ class Transporter : public CBase_Transporter {
     //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );
 
+    //! Reduction target to sync the initial solution before limiting
+    void sendinit();
+
     //! Reduction target computing minimum of dt
     void advance( tk::real dt );
 

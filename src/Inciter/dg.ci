@@ -35,6 +35,10 @@ module dg {
       entry void comsol( int fromch,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u );
+      entry void cominit( int fromch,
+                          const std::vector< std::size_t >& tetid,
+                          const std::vector< std::vector< tk::real > >& u );
+      entry void sendinit();
       entry void advance( tk::real );
       entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();
@@ -48,6 +52,9 @@ module dg {
         when ownghost_complete(), reqghost_complete() serial "ghost"
         { sendGhost(); } };
 
+      entry void wait4initlim() {
+        when owninit_complete(), cominit_complete() serial "init" { limitIC(); } };
+
       entry void wait4sol() {
         when ownsol_complete(), comsol_complete() serial "sol" { lim(); } };
 
@@ -60,6 +67,8 @@ module dg {
 
       entry void ownghost_complete();
       entry void reqghost_complete();
+      entry void owninit_complete();
+      entry void cominit_complete();
       entry void ownsol_complete();
       entry void comsol_complete();
       entry void ownlim_complete();
