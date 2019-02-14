@@ -85,7 +85,7 @@ class MixDirichlet {
         g_inputdeck.get< tag::param, tag::mixdirichlet, tag::depvar >().at(c) ),
       // subtract the number of derived variables computed, see advance()
       m_ncomp(
-        g_inputdeck.get< tag::component >().get< tag::mixdirichlet >().at(c)-1 ),
+        g_inputdeck.get< tag::component >().get< tag::mixdirichlet >().at(c)-2 ),
       m_offset(
         g_inputdeck.get< tag::component >().offset< tag::mixdirichlet >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
@@ -121,13 +121,15 @@ class MixDirichlet {
         for (ncomp_t i=1; i<m_ncomp; ++i)
           yn -= particles( p, i, m_offset );
         // compute specific volume
-        tk::real v = 0.0;
+        tk::real v = 1.0;
         for (ncomp_t i=0; i<m_ncomp; ++i)
-          v += particles( p, i, m_offset )/m_rho[i];
+          v += m_r[i]*particles( p, i, m_offset );
         // Finish computing specific volume
-        v += yn/m_rho[m_ncomp];
+        v /= m_rho[m_ncomp];
         // Compute and store instantaneous density
         particles( p, m_ncomp, m_offset ) = 1.0 / v;
+        // Store instantaneous specific volume
+        particles( p, m_ncomp+1, m_offset ) = v;
       }
     }
 
@@ -157,18 +159,20 @@ class MixDirichlet {
         m_rng.gaussian( stream, m_ncomp, dW.data() );
 
         // Advance first m_ncomp (K=N-1) scalars
-        tk::real v = 0.0;
+        tk::real v = 1.0;
         for (ncomp_t i=0; i<m_ncomp; ++i) {
           tk::real& Y = particles( p, i, m_offset );
           tk::real d = m_k[i] * Y * yn * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
           Y += 0.5*m_b[i]*( m_S[i]*yn - (1.0-m_S[i]) * Y )*dt + d*dW[i];
-          v += Y/m_rho[i]; // sum volume fractions (compute specific volume)
+          v += m_r[i]*Y;
         }
         // Finish computing specific volume
-        v += yn/m_rho[m_ncomp];
-        // Compute instantaneous density
+        v /= m_rho[m_ncomp];
+        // Compute and store instantaneous density
         particles( p, m_ncomp, m_offset ) = 1.0 / v;
+        // Store instantaneous specific volume
+        particles( p, m_ncomp+1, m_offset ) = v;
       }
     }
 

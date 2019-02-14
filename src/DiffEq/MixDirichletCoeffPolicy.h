@@ -173,6 +173,7 @@ class MixDirichletHomCoeffConst {
       // sum of Ytc
       tk::real sumYt = 0.0;
       for (ncomp_t c=0; c<ncomp; ++c) sumYt += Yt[c];
+      //std::cout << "sumYt: " << sumYt << '\n';
 
       // Yt|Kc
       std::vector< tk::real > YtK( ncomp, 0.0 );
@@ -191,17 +192,15 @@ class MixDirichletHomCoeffConst {
       auto rhovar = lookup( variance('Y',ncomp), moments );
       //std::cout << "<r^2>: " << rhovar << std::endl;
 
-      auto rhoN = rho[0]*(1.0+r[0]);
-
       // Sc
       for (ncomp_t c=0; c<ncomp; ++c) {
         //S[c] = 1.0/(1.0-YK[c]) - (1.0-Yt[c])/(1.0-YtK[c]);
         //S[c] = YK[c]/(1.0-YK[c]) - (1.0-Yt[c])*YtK[c]/(1.0-YtK[c]) + Yt[c];
         //S[c] = Yt[c] / ( 1.0 - sumYt + Yt[c] );
-//         S[c] = ( -2.0*(r[c]/rhoN*RRY[c])*(1.0-sumYt) +
-//                  (r[c]/rhoN*(rhovar-sumRRY))*Yt[c] ) /
-//                ( -2.0*(r[c]/rhoN*RRY[c])*(1.0-sumYt) -
-//                  (1.0-sumYt-Yt[c])*(r[c]/rhoN*(rhovar-sumRRY)) );
+        S[c] = ( -2.0*(r[c]/rho[ncomp]*RRY[c])*(1.0-sumYt) +
+                 (r[c]/rho[ncomp]*(rhovar-sumRRY))*Yt[c] ) /
+               ( -2.0*(r[c]/rho[ncomp]*RRY[c])*(1.0-sumYt) -
+                 (1.0-sumYt-Yt[c])*(r[c]/rho[ncomp]*(rhovar-sumRRY)) );
         //std::cout << "S: " << S[c] << ", YKc: " << YK[c]
         //          << ", Ytc: " << Yt[c] << ", YtKc: " << YtK[c] << ' ';
       }
