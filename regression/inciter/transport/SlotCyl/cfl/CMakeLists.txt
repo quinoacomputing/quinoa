@@ -47,21 +47,6 @@ if (HAS_OMEGA_H)
 #                      BIN_DIFF_PROG_CONF exodiff.cfg)
 endif()
 
-add_regression_test(cfl ${INCITER_EXECUTABLE}
-                    NUMPES 4
-                    INPUTFILES slot_cyl_cfl.q unitcube_01_31k.exo
-                    ARGS -c slot_cyl_cfl.q -i unitcube_01_31k.exo -v
-                    BIN_BASELINE slot_cyl_cfl_pe4_u0.0.std.exo.0
-                                 slot_cyl_cfl_pe4_u0.0.std.exo.1
-                                 slot_cyl_cfl_pe4_u0.0.std.exo.2
-                                 slot_cyl_cfl_pe4_u0.0.std.exo.3
-                    BIN_RESULT out.e-s.0.4.0
-                               out.e-s.0.4.1
-                               out.e-s.0.4.2
-                               out.e-s.0.4.3
-                    BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff.cfg)
-
 # Virtualization = 0.7
 
 add_regression_test(cfl_u0.7 ${INCITER_EXECUTABLE}
