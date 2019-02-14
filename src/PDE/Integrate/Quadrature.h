@@ -11,10 +11,21 @@
 #define Quadrature_h
 
 #include <array>
+#include <vector>
 
 #include "Types.h"
+#include "Exception.h"
 
 namespace tk {
+
+//! Initialization of number of gauss points for face integration
+//! \param[in] ndof Number of degree of freedom
+constexpr std::size_t NGfa( const std::size_t ndof ) {
+  return ndof == 1 ? 1 :
+         ndof == 4 ? 3 :
+         ndof == 10 ? 6 :
+         throw std::logic_error("ndof must be one of 1,4,10");
+}
 
 //! Fourteen Gaussian quadrature points locations and weights for a tetrahedron
 void
@@ -36,21 +47,11 @@ void
 GaussQuadratureTet( std::array< std::array< real, 4 >, 3 >& coordgp,
                     std::array< real, 4 >& wgp );
 
-//! Six Gaussian quadrature points locations and weights for a triangle
+//! Initialize Gaussian quadrature points locations and weights for a triangle
 void
-GaussQuadratureTri( std::array< std::array< real, 6 >, 2 >& coordgp,
-                    std::array< real, 6 >& wgp );
-
-//! Four Gaussian quadrature points locations and weights for a triangle
-void
-GaussQuadratureTri( std::array< std::array< real, 4 >, 2 >& coordgp,
-                    std::array< real, 4 >& wgp );
-
-//! Three Gaussian quadrature points locations and weights for a triangle
-void
-GaussQuadratureTri( std::array< std::array< real, 3 >, 2 >& coordgp,
-                    std::array< real, 3 >& wgp );
-
+GaussQuadratureTri( std::size_t NG,
+                    std::array< std::vector< real >, 2 >& coordgp,
+                    std::vector< real >& wgp );
 } // tk::
 
 #endif // Quadrature_h
