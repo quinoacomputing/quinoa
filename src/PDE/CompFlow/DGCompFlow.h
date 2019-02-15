@@ -169,7 +169,6 @@ class CompFlow {
       tk::srcInt( m_system, m_ncomp, m_offset,
                   t, inpoel, coord, geoElem, Problem::src, R );
 
-
       if(ndof > 1)
         // compute volume integrals
         tk::volInt( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,

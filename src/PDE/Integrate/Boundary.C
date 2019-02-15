@@ -187,7 +187,7 @@ tk::bndSurfInt( ncomp_t system,
       // Add the surface integration term to the rhs
       update_rhs_bc( ncomp, offset, ndof, wt, el, fl, B_l, R );
     }
-  }
+  } 
 }
 
 void
