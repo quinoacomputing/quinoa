@@ -15,4 +15,4 @@ The images in this repository are configured for a single computer, and thus int
 Run the unit-, and regression tests in the Alpine container on your local machine:
 
     docker run -ti quinoacomputing/quinoa:alpine
-    cd quinoa/build && ../script/run_tests.sh
+    cd quinoa/build && ./charmrun +p 8 Main/unittest -v -q && ctest -j 8 --output-on-failure -LE extreme
