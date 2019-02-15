@@ -65,7 +65,7 @@ tk::initialize( ncomp_t system,
     case 10:
       ng = 14;
       break;
-    
+
     default:
       Throw( "tk::initialize() not defined for NDOF=" + std::to_string(ndof) );
   }
@@ -119,7 +119,8 @@ tk::initialize( ncomp_t system,
       auto gp = eval_gp( igp, coordel, coordgp );
 
       // Compute the basis function
-      auto B = eval_basis( ndof, igp, coordgp );
+      auto B =
+        eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
 
       const auto s = solution( system, ncomp, gp[0], gp[1], gp[2], t );
 
@@ -153,7 +154,7 @@ tk::update_rhs( ncomp_t ncomp,
   Assert( B.size() == ndof, "Size mismatch for basis function" );
   Assert( s.size() == ncomp, "Size mismatch for source term" );
 
-  for (ncomp_t c=0; c<ncomp; ++c) 
+  for (ncomp_t c=0; c<ncomp; ++c)
   {
     // DG(P0)
     auto mark = c*ndof;
@@ -183,7 +184,7 @@ tk::eval_init( ncomp_t ncomp,
                ncomp_t offset,
                const std::size_t ndof,
                const std::size_t e,
-               const std::vector< tk::real >& R, 
+               const std::vector< tk::real >& R,
                const Fields& L,
                Fields& unk )
 // *****************************************************************************
@@ -197,7 +198,7 @@ tk::eval_init( ncomp_t ncomp,
 //! \param[in,out] unk Array of unknowns
 // *****************************************************************************
 {
-  for (ncomp_t c=0; c<ncomp; ++c) 
+  for (ncomp_t c=0; c<ncomp; ++c)
   {
     // DG(P0)
     auto mark = c*ndof;
@@ -208,7 +209,7 @@ tk::eval_init( ncomp_t ncomp,
       unk(e, mark+1, offset) = R[mark+1] / L(e, mark+1, offset);
       unk(e, mark+2, offset) = R[mark+2] / L(e, mark+2, offset);
       unk(e, mark+3, offset) = R[mark+3] / L(e, mark+3, offset);
-    
+ 
       if(ndof > 4)        // DG(P2)
       {
         unk(e, mark+4, offset) = R[mark+4] / L(e, mark+4, offset);

@@ -258,7 +258,7 @@ class MultiMat {
           auto gp = tk::eval_gp( igp, coordfa, coordgp );
 
           // Compute the basis function for the left element
-          auto B_l = tk::eval_basis( ndof, coordel_l, detT_l, gp );
+          auto B_l = tk::eval_basis_fa( ndof, coordel_l, detT_l, gp );
 
           auto wt = wgp[igp] * geoFace(f,0,0);
 
@@ -270,8 +270,8 @@ class MultiMat {
             auto mark = c*ndof;
             auto lmark = c*(ndof-1);
             ugp[0].push_back(  U(el, mark,   m_offset)
-                             + limFunc(el, lmark+0, 0) * U(el, mark+1, m_offset) * B_l[1] 
-                             + limFunc(el, lmark+1, 0) * U(el, mark+2, m_offset) * B_l[2] 
+                             + limFunc(el, lmark+0, 0) * U(el, mark+1, m_offset) * B_l[1]
+                             + limFunc(el, lmark+1, 0) * U(el, mark+2, m_offset) * B_l[2]
                              + limFunc(el, lmark+2, 0) * U(el, mark+3, m_offset) * B_l[3]  );
           }
 
@@ -301,7 +301,7 @@ class MultiMat {
             gp = tk::eval_gp( igp, coordfa, coordgp );
 
             // Compute the basis function for the right element
-            auto B_r = tk::eval_basis( ndof, coordel_r, detT_r, gp );
+            auto B_r = tk::eval_basis_fa( ndof, coordel_r, detT_r, gp );
 
             for (ncomp_t c=0; c<5; ++c)
             {
