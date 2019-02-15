@@ -382,59 +382,6 @@ tk::eval_basis( const std::size_t ndof,
 }
 
 std::vector< tk::real >
-tk::eval_basis( const std::size_t ndof,
-                const std::size_t igp,
-                const std::array< std::vector< tk::real >, 3 >& coordgp )
-// *****************************************************************************
-//  Compute the Dubiner basis functions for volume integrals
-//! \param[in] ndof Number of degree of freedom
-//! \param[in] igp Index of gauss points
-//! \param[in] coordgp Array of coordinates for quadrature points
-//! \return Vector of basis functions
-// *****************************************************************************
-{
-  // Array of basis functions
-  std::vector< tk::real > B( ndof, 1.0 );
-
-  if ( ndof > 1 )           // DG(P1)
-  {
-    auto xi   = coordgp[0][igp];
-    auto eta  = coordgp[1][igp];
-    auto zeta = coordgp[2][igp];
-
-    // Basis functions (DGP1) at igp
-    B[1] = 2.0 * xi + eta + zeta - 1.0;
-    B[2] = 3.0 * eta + zeta - 1.0;
-    B[3] = 4.0 * zeta - 1.0;
-
-    if( ndof > 4 )         // DG(P2)
-    {
-      auto xi_xi   = coordgp[0][igp] * coordgp[0][igp];
-      auto xi_eta  = coordgp[0][igp] * coordgp[1][igp];
-      auto xi_zeta = coordgp[0][igp] * coordgp[2][igp];
-
-      auto eta_eta  = coordgp[1][igp] * coordgp[1][igp];
-      auto eta_zeta = coordgp[1][igp] * coordgp[2][igp];
-
-      auto zeta_zeta = coordgp[2][igp] * coordgp[2][igp];
-
-      // Basis functions (DGP2) at igp
-      B[4] =  6.0 * xi_xi + eta_eta + zeta_zeta + 6.0 * xi_eta + 6.0 * xi_zeta + 2.0 * eta_zeta
-            - 6.0 * xi - 2.0 * eta - 2.0 * zeta + 1.0;
-      B[5] =  5.0 * eta_eta + zeta_zeta + 10.0 * xi_eta + 2.0 * xi_zeta + 6.0 * eta_zeta - 2.0 * xi
-            - 6.0 * eta - 2.0 * zeta + 1.0;
-      B[6] =  6.0 * zeta_zeta + 12.0 * xi_zeta + 6.0 * eta_zeta - 2.0 * xi
-            - eta - 7.0 * zeta + 1.0;
-      B[7] =  10.0 * eta_eta + zeta_zeta + 8.0 * eta_zeta - 8.0 * eta - 2.0 * zeta + 1.0;
-      B[8] =  6.0 * zeta_zeta + 18.0 * eta_zeta - 3.0 * eta - 7.0 * zeta + 1.0;
-      B[9] =  15.0 * zeta_zeta - 10.0 * zeta + 1.0;
-    } 
-  }
-
-  return B;
-}
-
-std::vector< tk::real >
 tk::eval_state ( ncomp_t ncomp,
                  ncomp_t offset,
                  const std::size_t ndof,
