@@ -52,6 +52,26 @@ eval_init( ncomp_t ncomp,
            const Fields& L,
            Fields& unk );
 
+//! Update the rhs by adding the initial analytical solution term
+void
+update_rhs( ncomp_t ncomp,
+            const std::size_t ndof,
+            const tk::real wt,
+            const std::vector< tk::real >& B,
+            const std::vector< tk::real >& s,
+            std::vector< tk::real >& R );
+
+
+//! Compute the initial conditions
+void
+eval_init( ncomp_t ncomp,
+           ncomp_t offset,
+           const std::size_t ndof,
+           const std::size_t e,
+           const std::vector< tk::real >& R,
+           const Fields& L,
+           Fields& unk );
+
 } // tk::
 
 #endif // Initialize_h

@@ -196,8 +196,6 @@ tk::eval_init( ncomp_t ncomp,
 //! \param[in] R Right-hand side vector
 //! \param[in] L Block diagonal mass matrix
 //! \param[in,out] unk Array of unknowns
-//! \param[in] t Physical time
-//! \param[in] nielem Number of internal elements
 // *****************************************************************************
 {
   for (ncomp_t c=0; c<ncomp; ++c)

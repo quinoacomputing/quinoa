@@ -169,7 +169,6 @@ class CompFlow {
       tk::srcInt( m_system, m_ncomp, m_offset,
                   t, inpoel, coord, geoElem, Problem::src, R );
 
-
       if(ndof > 1)
         // compute volume integrals
         tk::volInt( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
@@ -307,7 +306,8 @@ class CompFlow {
 
             // Compute the basis function for the right element
             auto B_r = tk::eval_basis_fa( ndof, coordel_r, detT_r, gp );
- 
+            auto B_r = tk::eval_basis( ndof, coordel_r, detT_r, gp );
+
             for (ncomp_t c=0; c<5; ++c)
             {
               auto mark = c*ndof;
