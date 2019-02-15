@@ -234,9 +234,9 @@ class Transport {
     //!   which provides the vector of field names
     //! \note U is overwritten
     std::vector< std::vector< tk::real > >
-    fieldOutput( const tk::Fields& ,
-                 const std::vector< std::size_t >& ,
-                 const tk::UnsMesh::Coords& ,
+    fieldOutput( const tk::Fields& /*L*/,
+                 const std::vector< std::size_t >& /*inpoel*/,
+                 const tk::UnsMesh::Coords& /*coord*/,
                  tk::real t,
                  const tk::Fields& geoElem,
                  tk::Fields& U ) const

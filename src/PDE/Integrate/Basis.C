@@ -106,8 +106,7 @@ tk::eval_gp ( const std::size_t igp,
 }
 
 void
-tk::eval_dBdx_p1( const std::size_t ndof,
-                  const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
+tk::eval_dBdx_p1( const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
                   std::array< std::vector<tk::real>, 3 >& dBdx )
 // *****************************************************************************
 //  Compute the derivatives of basis function for DG(P1)
@@ -116,10 +115,6 @@ tk::eval_dBdx_p1( const std::size_t ndof,
 //! \param[in,out] dBdx Array of the derivatives of basis function
 // *****************************************************************************
 {
-  Assert( dBdx[0].size() == ndof, "Size mismatch" );
-  Assert( dBdx[1].size() == ndof, "Size mismatch" );
-  Assert( dBdx[2].size() == ndof, "Size mismatch" );
-
   // The derivatives of the basis functions dB/dx are easily calculated
   // via a transformation to the reference space as,
   // dB/dx = dB/dX . dx/dxi,
@@ -177,8 +172,7 @@ tk::eval_dBdx_p1( const std::size_t ndof,
 }
 
 void
-tk::eval_dBdx_p2( const std::size_t ndof,
-                  const std::size_t igp,
+tk::eval_dBdx_p2( const std::size_t igp,
                   const std::array< std::vector< tk::real >, 3 >& coordgp,
                   const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
                   std::array< std::vector<tk::real>, 3 >& dBdx )
@@ -191,10 +185,6 @@ tk::eval_dBdx_p2( const std::size_t ndof,
 //! \param[in,out] dBdx Array of the derivatives of basis function
 // *****************************************************************************
 {
-  Assert( dBdx[0].size() == ndof, "Size mismatch" );
-  Assert( dBdx[1].size() == ndof, "Size mismatch" );
-  Assert( dBdx[2].size() == ndof, "Size mismatch" );
-
   auto db5dxi1 = 12.0 * coordgp[0][igp] + 6.0 * coordgp[1][igp]
                +  6.0 * coordgp[2][igp] - 6.0;
   auto db5dxi2 =  6.0 * coordgp[0][igp] + 2.0 * coordgp[1][igp]

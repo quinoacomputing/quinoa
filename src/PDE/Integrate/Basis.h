@@ -51,14 +51,12 @@ eval_gp ( const std::size_t igp,
 
 //! Compute the derivatives of basis function for DG(P1)
 void
-eval_dBdx_p1( const std::size_t ndof,
-              const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
+eval_dBdx_p1( const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
               std::array< std::vector<tk::real>, 3 >& dBdx );
 
 //! Compute the derivatives of basis function for DG(P2)
 void
-eval_dBdx_p2( const std::size_t ndof,
-              const std::size_t igp,
+eval_dBdx_p2( const std::size_t igp,
               const std::array< std::vector< tk::real >, 3 >& coordgp,
               const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
               std::array< std::vector<tk::real>, 3 >& dBdx );

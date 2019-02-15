@@ -102,13 +102,13 @@ tk::volInt( ncomp_t system,
     dBdx[2].resize( ndof, 0 );
 
     // Compute the derivatives of basis function for DG(P1)
-    eval_dBdx_p1( ndof, jacInv, dBdx );
+    eval_dBdx_p1( jacInv, dBdx );
 
     // Gaussian quadrature
     for (std::size_t igp=0; igp<ng; ++igp)
     {
       if (ndof > 4)
-        eval_dBdx_p2( ndof, igp, coordgp, jacInv, dBdx );
+        eval_dBdx_p2( igp, coordgp, jacInv, dBdx );
 
       // Compute the coordinates of quadrature point at physical domain
       auto gp = eval_gp( igp, coordel, coordgp );
