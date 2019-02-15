@@ -253,7 +253,7 @@ class Transport {
       {
         auto s = Problem::solution( m_system, m_ncomp, geoElem(e,1,0),
                                     geoElem(e,2,0), geoElem(e,3,0), t );
-        for (ncomp_t c=0; c<m_ncomp; ++c) 
+        for (ncomp_t c=0; c<m_ncomp; ++c)
           E( e, c*ndof, m_offset ) = s[c];
       }
       // will output analytic solution for all components

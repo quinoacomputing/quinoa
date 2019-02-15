@@ -160,7 +160,7 @@ class CompFlow {
         { m_bcdir, Dirichlet },
         { m_bcsym, Symmetry },
         { m_bcextrapolate, Extrapolate } }};
-
+ 
       // compute internal surface flux integrals
       tk::surfInt( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
                    rieflxfn, velfn, U, limFunc, R );
@@ -168,6 +168,7 @@ class CompFlow {
       // compute source term intehrals
       tk::srcInt( m_system, m_ncomp, m_offset,
                   t, inpoel, coord, geoElem, Problem::src, R );
+
 
       if(ndof > 1)
         // compute volume integrals
@@ -262,7 +263,7 @@ class CompFlow {
           auto gp = tk::eval_gp( igp, coordfa, coordgp );
 
           // Compute the basis function for the left element
-          auto B_l = tk::eval_basis( ndof, coordel_l, detT_l, gp );
+          auto B_l = tk::eval_basis_fa( ndof, coordel_l, detT_l, gp );
 
           auto wt = wgp[igp] * geoFace(f,0,0);
 
@@ -305,8 +306,8 @@ class CompFlow {
             gp = tk::eval_gp( igp, coordfa, coordgp );
 
             // Compute the basis function for the right element
-            auto B_r = tk::eval_basis( ndof, coordel_r, detT_r, gp );
-            
+            auto B_r = tk::eval_basis_fa( ndof, coordel_r, detT_r, gp );
+ 
             for (ncomp_t c=0; c<5; ++c)
             {
               auto mark = c*ndof;

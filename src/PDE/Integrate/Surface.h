@@ -41,16 +41,16 @@ surfInt( ncomp_t system,
 
 // Update the rhs by adding surface integration term
 void
-update_rhs_fa ( ncomp_t ncomp,
-                ncomp_t offset,
-                const std::size_t ndof,
-                const tk::real wt,
-                const std::size_t el,
-                const std::size_t er,
-                const std::vector< tk::real >& fl,
-                const std::vector< tk::real >& B_l,
-                const std::vector< tk::real >& B_r,
-                Fields& R );
+update_rhs ( ncomp_t ncomp,
+             ncomp_t offset,
+             const std::size_t ndof,
+             const tk::real wt,
+             const std::size_t el,
+             const std::size_t er,
+             const std::vector< tk::real >& fl,
+             const std::vector< tk::real >& B_l,
+             const std::vector< tk::real >& B_r,
+             Fields& R );
 
 } // tk::
 

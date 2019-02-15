@@ -50,7 +50,7 @@ tk::volInt( ncomp_t system,
 {
   using inciter::g_inputdeck;
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-  
+
   // Number of quadrature points for volume integration
   auto ng = tk::NGvol(ndof);
 
@@ -114,7 +114,8 @@ tk::volInt( ncomp_t system,
       auto gp = eval_gp( igp, coordel, coordgp );
 
       // Compute the basis function
-      auto B = eval_basis( ndof, igp, coordgp );
+      auto B =
+        eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
 
       auto wt = wgp[igp] * geoElem(e, 0, 0);
 

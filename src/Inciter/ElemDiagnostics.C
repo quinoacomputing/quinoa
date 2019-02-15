@@ -186,7 +186,8 @@ ElemDiagnostics::compute_diag( Discretization& d,
       auto gp = tk::eval_gp( igp, coordel, coordgp );
 
       // Compute the basis function
-      auto B = tk::eval_basis( ndof, igp, coordgp );
+      auto B =
+        tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
 
       auto wt = wgp[igp] * geoElem(e, 0, 0);
 
@@ -199,13 +200,13 @@ ElemDiagnostics::compute_diag( Discretization& d,
       {
         auto mark = c*ndof;
         auto ugp = u(e, mark, 0);
-        
+
         if(ndof > 1)
         {
           ugp +=  u(e, mark+1, 0) * B[1]
                 + u(e, mark+2, 0) * B[2]
                 + u(e, mark+3, 0) * B[3];
-        
+
           if(ndof > 4)
           {
             ugp +=  u(e, mark+4, 0) * B[4]

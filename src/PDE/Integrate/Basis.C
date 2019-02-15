@@ -97,7 +97,7 @@ tk::eval_gp ( const std::size_t igp,
   auto shp2 = coordgp[0][igp];
   auto shp3 = coordgp[1][igp];
   auto shp4 = coordgp[2][igp];
-   
+ 
   // Transformation of the quadrature point from the reference/master
   // element to physical space, to obtain its physical (x,y,z) coordinates.
   return {{ coord[0][0]*shp1 + coord[1][0]*shp2 + coord[2][0]*shp3 + coord[3][0]*shp4,
@@ -107,7 +107,7 @@ tk::eval_gp ( const std::size_t igp,
 
 void
 tk::eval_dBdx_p1( const std::size_t ndof,
-                  const std::array< std::array< tk::real, 3 >, 3 >& jacInv, 
+                  const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
                   std::array< std::vector<tk::real>, 3 >& dBdx )
 // *****************************************************************************
 //  Compute the derivatives of basis function for DG(P1)
@@ -299,10 +299,10 @@ tk::eval_dBdx_p2( const std::size_t ndof,
 }
 
 std::vector< tk::real >
-tk::eval_basis( const std::size_t ndof,
-                const std::array< std::array< tk::real, 3>, 4 >& coordel,
-                const tk::real detT,
-                const std::array < tk::real, 3 >& gp )
+tk::eval_basis_fa( const std::size_t ndof,
+                   const std::array< std::array< tk::real, 3>, 4 >& coordel,
+                   const tk::real detT,
+                   const std::array < tk::real, 3 >& gp )
 // *****************************************************************************
 //  Compute the Dubiner basis functions for face integrals
 //! \param[in] ndof Number of degree of freedom
@@ -329,54 +329,20 @@ tk::eval_basis( const std::size_t ndof,
   detT_gp = Jacobian( coordel[0], coordel[1], coordel[2], gp );
   auto zeta = detT_gp / detT;
 
-  // Array of basis functions
-  std::vector< tk::real > B( ndof, 1.0 );
-
-  if ( ndof > 1 )           // DG(P1)
-  {
-    // Basis functions (DGP1) at igp
-    B[1] = 2.0 * xi + eta + zeta - 1.0;
-    B[2] = 3.0 * eta + zeta - 1.0;
-    B[3] = 4.0 * zeta - 1.0;
-
-    if( ndof > 4 )         // DG(P2)
-    {
-      // Basis functions (DGP2) at igp
-      auto xi_xi = xi * xi;
-      auto xi_eta = xi * eta;
-      auto xi_zeta = xi * zeta;
-      auto eta_eta = eta * eta;
-      auto eta_zeta = eta * zeta;
-      auto zeta_zeta = zeta * zeta;
-
-      B[4] = 6.0 * xi_xi + eta_eta + zeta_zeta
-           + 6.0 * xi_eta + 6.0 * xi_zeta + 2.0 * eta_zeta
-           - 6.0 * xi - 2.0 * eta - 2.0 * zeta + 1.0;
-      B[5] = 5.0 * eta_eta + zeta_zeta
-           + 10.0 * xi_eta + 2.0 * xi_zeta + 6.0 * eta_zeta
-           - 2.0 * xi - 6.0 * eta - 2.0 * zeta + 1.0;
-      B[6] = 6.0 * zeta_zeta + 12.0 * xi_zeta + 6.0 * eta_zeta
-           - 2.0 * xi - eta - 7.0 * zeta + 1.0;
-      B[7] = 10.0 * eta_eta + zeta_zeta + 8.0 * eta_zeta
-           - 8.0 * eta - 2.0 * zeta + 1.0;
-      B[8] = 6.0 * zeta_zeta + 18.0 * eta_zeta - 3.0 * eta
-           - 7.0 * zeta + 1.0;
-      B[9] = 15.0 * zeta_zeta - 10.0 * zeta + 1.0;
-    }
-  }
+  auto B = eval_basis( ndof, xi, eta, zeta );
 
   return B;
 }
 
 std::vector< tk::real >
 tk::eval_basis( const std::size_t ndof,
-                const std::size_t igp,
-                const std::array< std::vector< tk::real >, 3 >& coordgp )
+                const tk::real xi,
+                const tk::real eta,
+                const tk::real zeta )
 // *****************************************************************************
-//  Compute the Dubiner basis functions for volume integrals
+//  Compute the Dubiner basis functions
 //! \param[in] ndof Number of degree of freedom
-//! \param[in] igp Index of gauss points
-//! \param[in] coordgp Array of coordinates for quadrature points
+//! \param[in] xi,eta,zeta Coordinates for quadrature points in reference space
 //! \return Vector of basis functions
 // *****************************************************************************
 {
@@ -385,27 +351,21 @@ tk::eval_basis( const std::size_t ndof,
 
   if ( ndof > 1 )           // DG(P1)
   {
-    auto xi   = coordgp[0][igp];
-    auto eta  = coordgp[1][igp];
-    auto zeta = coordgp[2][igp];
-
-    // Basis functions (DGP1) at igp
     B[1] = 2.0 * xi + eta + zeta - 1.0;
     B[2] = 3.0 * eta + zeta - 1.0;
     B[3] = 4.0 * zeta - 1.0;
 
     if( ndof > 4 )         // DG(P2)
     {
-      auto xi_xi   = coordgp[0][igp] * coordgp[0][igp];
-      auto xi_eta  = coordgp[0][igp] * coordgp[1][igp];
-      auto xi_zeta = coordgp[0][igp] * coordgp[2][igp];
+      auto xi_xi   = xi * xi;
+      auto xi_eta  = xi * eta;
+      auto xi_zeta = xi * zeta;
 
-      auto eta_eta  = coordgp[1][igp] * coordgp[1][igp];
-      auto eta_zeta = coordgp[1][igp] * coordgp[2][igp];
+      auto eta_eta  = eta * eta;
+      auto eta_zeta = eta * zeta;
 
-      auto zeta_zeta = coordgp[2][igp] * coordgp[2][igp];
+      auto zeta_zeta = zeta * zeta;
 
-      // Basis functions (DGP2) at igp
       B[4] =  6.0 * xi_xi + eta_eta + zeta_zeta + 6.0 * xi_eta + 6.0 * xi_zeta + 2.0 * eta_zeta
             - 6.0 * xi - 2.0 * eta - 2.0 * zeta + 1.0;
       B[5] =  5.0 * eta_eta + zeta_zeta + 10.0 * xi_eta + 2.0 * xi_zeta + 6.0 * eta_zeta - 2.0 * xi
@@ -415,7 +375,7 @@ tk::eval_basis( const std::size_t ndof,
       B[7] =  10.0 * eta_eta + zeta_zeta + 8.0 * eta_zeta - 8.0 * eta - 2.0 * zeta + 1.0;
       B[8] =  6.0 * zeta_zeta + 18.0 * eta_zeta - 3.0 * eta - 7.0 * zeta + 1.0;
       B[9] =  15.0 * zeta_zeta - 10.0 * zeta + 1.0;
-    } 
+    }
   }
 
   return B;

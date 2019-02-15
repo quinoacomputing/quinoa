@@ -113,8 +113,8 @@ tk::surfInt( ncomp_t system,
       auto gp = eval_gp( igp, coordfa, coordgp );
 
       // Compute the basis function
-      auto B_l = eval_basis( ndof, coordel_l, detT_l, gp );
-      auto B_r = eval_basis( ndof, coordel_r, detT_r, gp );
+      auto B_l = eval_basis_fa( ndof, coordel_l, detT_l, gp );
+      auto B_r = eval_basis_fa( ndof, coordel_r, detT_r, gp );
 
       auto wt = wgp[igp] * geoFace(f,0,0);
 
@@ -134,22 +134,22 @@ tk::surfInt( ncomp_t system,
          flux( {{geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0)}}, state, v );
 
       // Add the surface integration term to the rhs
-      update_rhs_fa( ncomp, offset, ndof, wt, el, er, fl, B_l, B_r, R );
+      update_rhs( ncomp, offset, ndof, wt, el, er, fl, B_l, B_r, R );
     }
   }
 }
 
 void
-tk::update_rhs_fa ( ncomp_t ncomp,
-                    ncomp_t offset,
-                    const std::size_t ndof,
-                    const tk::real wt,
-                    const std::size_t el,
-                    const std::size_t er,
-                    const std::vector< tk::real >& fl,
-                    const std::vector< tk::real >& B_l,
-                    const std::vector< tk::real >& B_r,
-                    Fields& R )
+tk::update_rhs ( ncomp_t ncomp,
+                 ncomp_t offset,
+                 const std::size_t ndof,
+                 const tk::real wt,
+                 const std::size_t el,
+                 const std::size_t er,
+                 const std::vector< tk::real >& fl,
+                 const std::vector< tk::real >& B_l,
+                 const std::vector< tk::real >& B_r,
+                 Fields& R )
 // *****************************************************************************
 //  Update the rhs by adding the surface integration term
 //! \param[in] ncomp Number of scalar components in this PDE system

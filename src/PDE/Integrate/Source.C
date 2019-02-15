@@ -93,7 +93,8 @@ tk::srcInt( ncomp_t system,
       auto gp = eval_gp( igp, coordel, coordgp );
 
       // Compute the basis function
-      auto B = eval_basis( ndof, igp, coordgp );
+      auto B =
+        eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
 
       // Compute the source term variable
       auto s = src( system, ncomp, gp[0], gp[1], gp[2], t );
@@ -129,7 +130,7 @@ tk::update_rhs( ncomp_t ncomp,
   Assert( B.size() == ndof, "Size mismatch for basis function" );
   Assert( s.size() == ncomp, "Size mismatch for source term" );
 
-  for (ncomp_t c=0; c<ncomp; ++c) 
+  for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
     R(e, mark, offset)   += wt * s[c];
@@ -139,7 +140,7 @@ tk::update_rhs( ncomp_t ncomp,
       R(e, mark+1, offset) += wt * s[c] * B[1];
       R(e, mark+2, offset) += wt * s[c] * B[2];
       R(e, mark+3, offset) += wt * s[c] * B[3];
-    
+
       if( ndof > 4 )
       {
         R(e, mark+4, offset) += wt * s[c] * B[4];

@@ -65,16 +65,17 @@ eval_dBdx_p2( const std::size_t ndof,
 
 //! Compute the Dubiner basis functions for face integrals
 std::vector< tk::real >
-eval_basis( const std::size_t ndof,
-            const std::array< std::array< tk::real, 3>, 4 >& coordel,
-            const tk::real detT,
-            const std::array < tk::real, 3 >& gp );
+eval_basis_fa( const std::size_t ndof,
+               const std::array< std::array< tk::real, 3>, 4 >& coordel,
+               const tk::real detT,
+               const std::array < tk::real, 3 >& gp );
 
-//! Compute the Dubiner basis functions for volume integrals
+//! Compute the Dubiner basis functions
 std::vector< tk::real >
 eval_basis( const std::size_t ndof,
-            const std::size_t igp,
-            const std::array< std::vector< tk::real >, 3 >& coordgp );
+            const tk::real xi,
+            const tk::real eta,
+            const tk::real zeta );
 
 //! Compute the state variables for the tetrahedron element
 std::vector< tk::real >

@@ -139,7 +139,7 @@ tk::bndSurfInt( ncomp_t system,
   // Nodal Coordinates of the left element
   std::array< std::array< real, 3>, 4> coordel_l;
 
-  for (const auto& f : faces) 
+  for (const auto& f : faces)
   {
     Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
 
@@ -170,7 +170,7 @@ tk::bndSurfInt( ncomp_t system,
       auto gp = eval_gp( igp, coordfa, coordgp );
 
       // Compute the basis function for the left element
-      auto B_l = eval_basis( ndof, coordel_l, detT_l, gp );
+      auto B_l = eval_basis_fa( ndof, coordel_l, detT_l, gp );
 
       auto wt = wgp[igp] * geoFace(f,0,0);
 
@@ -187,7 +187,7 @@ tk::bndSurfInt( ncomp_t system,
       // Add the surface integration term to the rhs
       update_rhs_bc( ncomp, offset, ndof, wt, el, fl, B_l, R );
     }
-  } 
+  }
 }
 
 void
