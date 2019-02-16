@@ -475,12 +475,17 @@ namespace grm {
   template<>
   struct action< check_mixdirichlet > {
     template< typename Input, typename Stack >
-    static void apply( const Input&, Stack& stack ) {
-      // Ensure constraint between r_i and rhoN
-      //const auto& rho =
-      //  stack.template get< tag::param, tag::mixdirichlet, tag::rho >().back();
-      //if ()
-      //  Message< Stack, ERROR, MsgKey::MIXDIR_R >( stack, in );
+    static void apply( const Input& in, Stack& stack ) {
+      const auto& rho =
+        stack.template get< tag::param, tag::mixdirichlet, tag::rho >().back();
+      auto ncomp =
+        stack.template get< tag::component, tag::mixdirichlet >().back();
+      // Ensure correct size for parameter vector rho
+      if (rho.size() != ncomp-1)
+        Message< Stack, ERROR, MsgKey::MIXDIR_RHO >( stack, in );
+      // Ensure parameter vector rho is sorted in increasing order
+      if (!std::is_sorted( rho.cbegin(), rho.cend() ))
+        Message< Stack, ERROR, MsgKey::MIXDIR_RHO >( stack, in );
     }
   };
 
@@ -1249,10 +1254,7 @@ namespace deck {
                                                  tag::kappa >,
                            sde_parameter_vector< kw::sde_rho,
                                                  tag::mixdirichlet,
-                                                 tag::rho >,
-                           sde_parameter_vector< kw::sde_r,
-                                                 tag::mixdirichlet,
-                                                 tag::r >
+                                                 tag::rho >
                          >,
            check_errors< tag::mixdirichlet,
                          tk::grm::check_mixdirichlet > > {};

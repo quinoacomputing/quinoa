@@ -71,7 +71,6 @@ class MixDirichletHomCoeffConst {
       const std::vector< kw::sde_S::info::expect::type >& S_,
       const std::vector< kw::sde_kappa::info::expect::type >& k_,
       const std::vector< kw::sde_rho::info::expect::type >& rho_,
-      const std::vector< kw::sde_r::info::expect::type >& r_,
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_S::info::expect::type >& S,
@@ -84,12 +83,21 @@ class MixDirichletHomCoeffConst {
               "Wrong number of MixDirichlet SDE parameters 'S'");
       ErrChk( k_.size() == ncomp,
               "Wrong number of MixDirichlet SDE parameters 'kappa'");
+      ErrChk( rho_.size() == ncomp+1,
+              "Wrong number of MixDirichlet SDE parameters 'rho'");
 
       b = b_;
       S = S_;
       k = k_;
       rho = rho_;
-      r = r_;
+
+      // Compute parameter vector r based on r_i = rho_N/rho_i - 1
+      Assert( r.empty(), "Parameter vector r must be empty" );
+      r.resize( rho.size()-1 );
+      for (std::size_t i=0; i<rho.size()-1; ++i) {
+        r[i] = rho.back()/rho[i] - 1.0;
+        std::cout << "MixDirichlet r: " << r[i] << '\n';
+      }
     }
 
     static ctr::CoeffPolicyType type() noexcept

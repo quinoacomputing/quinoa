@@ -119,8 +119,6 @@ using MixDirichletParameters = tk::tuple::tagged_tuple<
                       kw::sde_kappa::info::expect::type > >,
   tag::rho,         std::vector< std::vector<
                       kw::sde_rho::info::expect::type > >,
-  tag::r,           std::vector< std::vector<
-                      kw::sde_r::info::expect::type > >,
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <

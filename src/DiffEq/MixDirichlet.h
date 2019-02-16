@@ -61,6 +61,9 @@ namespace walker {
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 
+//! Number of derived variables computed by the MixDirichlet SDE
+const std::size_t MIXDIR_NUMDERIVED = 2;
+
 //! \brief MixDirichlet SDE used polymorphically with DiffEq
 //! \details The template arguments specify policies and are used to configure
 //!   the behavior of the class. The policies are:
@@ -85,7 +88,8 @@ class MixDirichlet {
         g_inputdeck.get< tag::param, tag::mixdirichlet, tag::depvar >().at(c) ),
       // subtract the number of derived variables computed, see advance()
       m_ncomp(
-        g_inputdeck.get< tag::component >().get< tag::mixdirichlet >().at(c)-2 ),
+        g_inputdeck.get< tag::component >().get< tag::mixdirichlet >().at(c) -
+        MIXDIR_NUMDERIVED ),
       m_offset(
         g_inputdeck.get< tag::component >().offset< tag::mixdirichlet >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
@@ -101,7 +105,6 @@ class MixDirichlet {
         g_inputdeck.get< tag::param, tag::mixdirichlet, tag::S >().at(c),
         g_inputdeck.get< tag::param, tag::mixdirichlet, tag::kappa >().at(c),
         g_inputdeck.get< tag::param, tag::mixdirichlet, tag::rho >().at(c),
-        g_inputdeck.get< tag::param, tag::mixdirichlet, tag::r >().at(c),
         m_b, m_k, m_S, m_rho, m_r ) {}
 
     //! Initalize SDE, prepare for time integration
