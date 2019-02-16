@@ -2402,6 +2402,22 @@ struct sde_rho2_info {
 };
 using sde_rho2 = keyword< sde_rho2_info,  TAOCPP_PEGTL_STRING("rho2") >;
 
+struct sde_rho_info {
+  static std::string name() { return "rho"; }
+  static std::string shortDescription() { return
+    R"(Set SDE parameter(s) rho)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of real numbers used to
+    parameterize a system of stochastic differential equations. Example:
+    "rho 5.0 2.0 3.0 end". The length of the vector depends on the particular
+    type of SDE system and is controlled by the preceding keyword 'ncomp'.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using sde_rho = keyword< sde_rho_info,  TAOCPP_PEGTL_STRING("rho") >;
+
 struct mean_gradient_info {
   static std::string name() { return "Prescribed mean gradient"; }
   static std::string shortDescription() { return

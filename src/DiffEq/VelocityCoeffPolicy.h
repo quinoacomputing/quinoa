@@ -182,7 +182,7 @@ class VelocityCoeffStationary {
       // Compute turbulent kinetic energy
       auto rs = reynoldsStress( depvar, solve, moments );
 
-      // Override unit turbulent kinetic energy to keep PDF stationary
+      // Override turbulent kinetic energy to keep PDF stationary
       tk::real k = 1.0;
 
       // Override mean turbulence frequency to keep PDF stationary
