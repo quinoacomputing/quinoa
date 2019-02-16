@@ -64,6 +64,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_nchare( nchare ),
   m_initial( true ),
   m_t( 0.0 ),
+  m_itr( 0 ),
   m_initref( g_inputdeck.get< tag::amr, tag::init >() ),
   m_ninitref( g_inputdeck.get< tag::amr, tag::init >().size() ),
   m_refiner( m_inpoel ),
@@ -74,7 +75,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_edgedataCh(),
   m_bndEdges(),
   m_u(),
-  m_msum(),
+  m_msumset(),
   m_oldTetIdMap()
 // *****************************************************************************
 //  Constructor
@@ -177,15 +178,18 @@ Refiner::flatcoord( const tk::UnsMesh::CoordMap& coordmap )
 
 void
 Refiner::dtref( tk::real t,
+                std::size_t itr,
                 const std::map< int, std::vector< std::size_t > >& bnode )
 // *****************************************************************************
 // Start mesh refinement (during time stepping, t>0)
 //! \param[in] t Physical time
+//! Iteration count with mesh refinement
 //! \param[in] bnode Node lists of side sets
 // *****************************************************************************
 {
   m_initial = false;
   m_t = t;
+  m_itr = itr;
 
   // Update boundary node lists
   m_bnode = bnode;
@@ -578,20 +582,16 @@ Refiner::eval()
   tk::real t = 0.0;
 
   if (m_initial) {      // if initial (before t=0) AMR
-
     auto l = m_ninitref - m_initref.size() + 1;  // num initref steps completed
     auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
     // Generate times equally subdividing t0-1...t0 to ninitref steps
     t = t0 - 1.0 + static_cast<tk::real>(l)/static_cast<tk::real>(m_ninitref);
     itr = l;
     basefilename = "t0ref";
-
   } else {              // if AMR during time stepping (t>0)
-
-    itr = 0;
     t = m_t;
+    itr = m_itr;
     basefilename = "dtref";
-
   }
 
   // Output mesh after refinement step
@@ -614,19 +614,28 @@ Refiner::next()
 
   } else {              // if AMR during time stepping (t>0)
 
-//     // Augment node comm. map with newly added nodes on chare-boundary edges
-//     for (const auto& c : m_edgedataCh) {
-//       auto& nodes = tk::ref_find( m_msum, c.first );
-//       for (const auto& n : c.second)
-//         nodes.push_back( n.second.first );
-//     }
+    // Augment node communication map with newly added nodes on chare-boundary
+    for (const auto& c : m_edgedataCh) {
+      auto& nodes = tk::ref_find( m_msumset, c.first );
+      for (const auto& e : c.second) {
+        if (nodes.find(e.first[0]) != end(nodes) &&
+            nodes.find(e.first[1]) != end(nodes))
+          nodes.insert( tk::UnsMesh::Hash<2>()( e.first ) );
+      }
+    }
 
     // Send new mesh and solution back to PDE worker
     Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
             "About to use nullptr" );
     auto e = tk::element< SchemeBase::ProxyElem >
                         ( m_scheme.getProxy(), thisIndex );
-    boost::apply_visitor( Resize(m_el,m_coord,m_u,m_msum,m_bnode), e );
+    std::unordered_map< int, std::vector< std::size_t > > msum;
+    for (const auto& c : m_msumset) {
+      auto& n = msum[ c.first ];
+      n.insert( end(n), c.second.cbegin(), c.second.cend() );
+    }
+    boost::apply_visitor( Resize(m_el,m_coord,m_u,msum,m_bnode), e );
+
   }
 }
 
@@ -937,7 +946,7 @@ Refiner::updateMesh()
   std::unordered_set< std::size_t > old( m_inpoel.cbegin(), m_inpoel.cend() );
   std::unordered_set< std::size_t > ref( refinpoel.cbegin(), refinpoel.cend() );
 
-  // Get old solution from worker (pointer to soln from bound array element)
+  // Get old solution from worker
   if (!m_initial) {
     Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
             "About to use nullptr" );
@@ -945,7 +954,7 @@ Refiner::updateMesh()
                         ( m_scheme.getProxy(), thisIndex );
     boost::apply_visitor( Solution(m_u), e );
     // Get nodal communication map from Discretization worker
-    m_msum = m_scheme.get()[thisIndex].ckLocal()->Msum();
+    m_msumset = m_scheme.get()[thisIndex].ckLocal()->msumset();
   }
 
   // Update mesh and solution after refinement

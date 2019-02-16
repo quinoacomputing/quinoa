@@ -75,6 +75,9 @@ DiagCG::DiagCG( const CProxy_Discretization& disc, const FaceData& fd ) :
 
   // Activate SDAG wait for initially computing the left-hand side
   thisProxy[ thisIndex ].wait4lhs();
+
+  // Signal the runtime system that the workers have been created
+  contribute(CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()));
 }
 
 void
@@ -98,9 +101,6 @@ DiagCG::resizeComm()
 
   // Zero communication buffers
   for (auto& b : m_lhsc) std::fill( begin(b), end(b), 0.0 );
-
-  // Signal the runtime system that the workers have been created
-  contribute(CkCallback(CkReductionTarget(Transporter,comfinal), d->Tr()));
 }
 
 void
@@ -559,7 +559,7 @@ DiagCG::refine()
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
-    d->Ref()->dtref( d->T(), m_fd.Bnode() );
+    d->Ref()->dtref( d->T(), d->Itr(), m_fd.Bnode() );
 
   } else {      // do not refine
 

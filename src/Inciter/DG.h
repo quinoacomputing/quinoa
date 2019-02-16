@@ -305,10 +305,6 @@ class DG : public CBase_DG {
     //! Setup own ghost data on this chare
     void setupGhost();
 
-    //! Convert chare-node adjacency map to hold sets instead of vectors
-    std::unordered_map< int, std::unordered_set< std::size_t > >
-    msumset() const;
-
     //! Continue after face adjacency communication map completed on this chare
     void adj();
 

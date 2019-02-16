@@ -57,7 +57,7 @@ DG::DG( const CProxy_Discretization& disc, const FaceData& fd ) :
   m_nfac( fd.Inpofa().size()/3 ),
   m_nunk( m_u.nunk() ),
   m_ncoord( Disc()->Coord()[0].size() ),
-  m_msumset( msumset() ),
+  m_msumset( Disc()->msumset() ),
   m_bndFace(),
   m_ghostData(),
   m_ghostReq( 0 ),
@@ -240,25 +240,6 @@ DG::faceMatch()
   }
 
   return match;
-}
-
-std::unordered_map< int, std::unordered_set< std::size_t > >
-DG::msumset() const
-// *****************************************************************************
-// Convert chare-node adjacency map to hold sets instead of vectors
-//! \return Chare-node adjacency map that holds sets instead of vectors
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  std::unordered_map< int, std::unordered_set< std::size_t > > m;
-  for (const auto& n : d->Msum())
-    m[ n.first ].insert( n.second.cbegin(), n.second.cend() );
-
-  Assert( m.find( thisIndex ) == m.cend(),
-          "Chare-node adjacency map should not contain data for own chare ID" );
-
-  return m;
 }
 
 void
@@ -1314,7 +1295,7 @@ DG::refine()
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
-    d->Ref()->dtref( d->T(), m_fd.Bnode() );
+    d->Ref()->dtref( d->T(), d->Itr(), m_fd.Bnode() );
 
   } else {      // do not refine
 

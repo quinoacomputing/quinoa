@@ -184,6 +184,10 @@ class Discretization : public CBase_Discretization {
                 tk::Centering centering,
                 CkCallback c );
 
+    //! Return chare-node adjacency map as sets
+    std::unordered_map< int, std::unordered_set< std::size_t > >
+    msumset() const;
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function

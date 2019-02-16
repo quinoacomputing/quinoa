@@ -75,6 +75,7 @@ class Refiner : public CBase_Refiner {
 
     //! Start mesh refinement (during time stepping, t>0)
     void dtref( tk::real t,
+	        std::size_t dtref,
                 const std::map< int, std::vector< std::size_t > >& bnode );
 
     //! Receive boundary edges from all PEs (including this one)
@@ -123,6 +124,7 @@ class Refiner : public CBase_Refiner {
       p | m_nchare;
       p | m_initial;
       p | m_t;
+      p | m_itr;
       p | m_initref;
       p | m_refiner;
       p | m_nref;
@@ -133,7 +135,7 @@ class Refiner : public CBase_Refiner {
       p | m_intermediates;
       p | m_bndEdges;
       p | m_u;
-      p | m_msum;
+      p | m_msumset;
       p | m_oldTetIdMap;
     }
     //! \brief Pack/Unpack serialize operator|
@@ -195,8 +197,10 @@ class Refiner : public CBase_Refiner {
     int m_nchare;
     //! True if initial AMR, false if during time stepping
     bool m_initial;
-    //! Physical time
+    //! Physical time at which dt>0 mesh refinement is happenning
     tk::real m_t;
+    //! Iteration count at which the mesh has been refinement
+    std::size_t m_itr;
     //! Initial mesh refinement type list (in reverse order)
     std::vector< ctr::AMRInitialType > m_initref;
     //! Number of initial mesh refinement steps
@@ -209,11 +213,9 @@ class Refiner : public CBase_Refiner {
     std::size_t m_extra;
     //! Chares we share at least a single edge with
     std::unordered_set< int > m_ch;
-    //! \brief Map associating global IDs, lock case, and coordinates of a node
-    //!   added to an edge
+    //! Refinement data associated to edges
     AMR::EdgeData m_edgedata;
-    //! \brief Map associating global IDs, lock case, and coordinates of a node
-    //!   added to an edge associated to another chare the edge is shared with
+    //! Refinement data associated to edges shared with other chares
     std::unordered_map< int, AMR::EdgeData > m_edgedataCh;
     //! Intermediate nodes
     std::unordered_set< size_t> m_intermediates;
@@ -222,10 +224,11 @@ class Refiner : public CBase_Refiner {
     //! Solution vector
     tk::Fields m_u;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
-    //!   Discretization chares associated to their chare IDs
+    //!    worker chares associated to their chare IDs
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
-    //!   points
-    std::unordered_map< int, std::vector< std::size_t > > m_msum;
+    //!   points. This is the same data as in Discretization::m_msum, but the
+    //!   nodelist is stored as a set.
+    std::unordered_map< int, std::unordered_set< std::size_t > > m_msumset;
     //! ...
     std::vector< std::size_t > m_oldTetIdMap;
 

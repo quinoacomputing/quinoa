@@ -435,6 +435,23 @@ Discretization::write(
            inpoel, coord, bface, triinpoel, bnode, m_lid, names, fields, c );
 }
 
+std::unordered_map< int, std::unordered_set< std::size_t > >
+Discretization::msumset() const
+// *****************************************************************************
+// Return chare-node adjacency map as sets
+//! \return Chare-node adjacency map that holds sets instead of vectors
+// *****************************************************************************
+{
+  std::unordered_map< int, std::unordered_set< std::size_t > > m;
+  for (const auto& n : m_msum)
+    m[ n.first ].insert( n.second.cbegin(), n.second.cend() );
+
+  Assert( m.find( thisIndex ) == m.cend(),
+          "Chare-node adjacency map should not contain data for own chare ID" );
+
+  return m;
+}
+
 void
 Discretization::setdt( tk::real newdt )
 // *****************************************************************************
