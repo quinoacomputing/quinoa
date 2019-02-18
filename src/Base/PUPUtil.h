@@ -12,9 +12,9 @@
 
 #include <unordered_map>
 #include <unordered_set>
+#include <variant>
 
 #include "NoWarning/optional.h"
-#include "NoWarning/variant.h"
 #include "NoWarning/pup_stl.h"
 
 //! Extensions to Charm++'s Pack/Unpack routines
@@ -140,9 +140,9 @@ inline void pup( PUP::er& p, boost::optional< T >& o ) {
 template< class T >
 inline void operator|( PUP::er& p, boost::optional< T >& o ) { pup( p, o ); }
 
-//////////////////// Serialize boost::variant ////////////////////
+//////////////////// Serialize std::variant ////////////////////
 
-// Since boost::variant (as well as std::variant) when default-constructed is
+// Since std::variant (as well as std::variant) when default-constructed is
 // initialized to hold a value of the first alternative of its type list,
 // calling PUP that works based on a boost::visitor with a templated operator()
 // would always incorrectly trigger the overload for the first type. Thus when
@@ -158,16 +158,16 @@ inline void operator|( PUP::er& p, boost::optional< T >& o ) { pup( p, o ); }
 // See UnitTest/tests/Base/TestPUPUtil.h or Inciter::SchemeBase.h for puping a
 // variant in action.
 
-//! Pack/Unpack helper for boost::variant
+//! Pack/Unpack helper for std::variant
 //! \param[in,out] index Counter (location) for type in variant
 //! \param[in] send_index Target counter (location) for type in variant
 //! \param[in] p Charm++'s pack/unpack object
-//! \param[in] var boost::variant< Ts... > of arbitrary types to pack/unpack
+//! \param[in] var std::variant< Ts... > of arbitrary types to pack/unpack
 template <class T, class... Ts>
-char pup_helper( int& index,
-                 const int send_index,
+char pup_helper( std::size_t& index,
+                 const std::size_t send_index,
                  PUP::er& p,
-                 boost::variant<Ts...>& var )
+                 std::variant<Ts...>& var )
 {
   if (index == send_index) {
     if (p.isUnpacking()) {
@@ -175,30 +175,30 @@ char pup_helper( int& index,
       p | t;
       var = std::move(t);
     } else {
-      p | boost::get<T>(var);
+      p | std::get<T>(var);
     }
   }
   index++;
   return '0';
 }
 
-//! Pack/Unpack boost::variant
+//! Pack/Unpack std::variant
 //! \param[in] p Charm++'s pack/unpack object
-//! \param[in] var boost::variant< Ts... > of arbitrary types to pack/unpack
+//! \param[in] var std::variant< Ts... > of arbitrary types to pack/unpack
 template <class... Ts>
-void pup(PUP::er& p, boost::variant<Ts...>& var) {
-  int index = 0;
-  int send_index = var.which();
+void pup(PUP::er& p, std::variant<Ts...>& var) {
+  std::size_t index = 0;
+  auto send_index = var.index();
   p | send_index;
   (void)std::initializer_list<char>{
       pup_helper<Ts>(index, send_index, p, var)...};
 }
 
-//! Pack/Unpack boost::variant
+//! Pack/Unpack std::variant
 //! \param[in] p Charm++'s pack/unpack object
-//! \param[in] d boost::variant< Ts... > of arbitrary types to pack/unpack
+//! \param[in] d std::variant< Ts... > of arbitrary types to pack/unpack
 template <typename... Ts>
-inline void operator|(PUP::er& p, boost::variant<Ts...>& d) {
+inline void operator|(PUP::er& p, std::variant<Ts...>& d) {
   pup(p, d);
 }
 

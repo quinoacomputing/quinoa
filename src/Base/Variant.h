@@ -2,14 +2,15 @@
 /*!
   \file      src/Base/Variant.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Helpers for operator operator[] using boost::variant
-  \details   Helpers for applying operator[] using boost::variant.
+  \brief     Helpers for operator operator[] using std::variant
+  \details   Helpers for applying operator[] using std::variant.
 */
 // *****************************************************************************
 #ifndef Variant_h
 #define Variant_h
 
-#include "NoWarning/variant.h"
+#include <variant>
+
 #include "NoWarning/charm++.h"
 
 namespace tk {
@@ -20,7 +21,7 @@ namespace tk {
 //!   a type depending on the input proxy, given by P, i.e., overloaded for all
 //!   proxy types the variant supports.
 template< class ProxyElem >
-struct Idx : boost::static_visitor< ProxyElem > {
+struct Idx {
   Idx( const CkArrayIndex1D& idx ) : x(idx) {}
   template< typename P >
     ProxyElem operator()( const P& p ) const { return p[x]; }
@@ -37,7 +38,7 @@ struct Idx : boost::static_visitor< ProxyElem > {
 //!   client code.
 template< class ProxyElem, class Proxy >
 ProxyElem element( const Proxy& proxy, const CkArrayIndex1D& x ) {
-  return boost::apply_visitor( Idx<ProxyElem>(x), proxy );
+  return std::visit( Idx<ProxyElem>(x), proxy );
 }
 
 } // tk::

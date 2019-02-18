@@ -276,7 +276,7 @@ class Refiner : public CBase_Refiner {
                                           std::vector< std::size_t > >& esup );
 
     //! Functor to call the solution() member function behind SchemeBase::Proxy
-    struct Solution : boost::static_visitor<> {
+    struct Solution {
       tk::Fields& U;
       Solution( tk::Fields& u ) : U(u) {}
       template< typename P > void operator()( const P& p ) const {
@@ -285,7 +285,7 @@ class Refiner : public CBase_Refiner {
     };
 
     //! Functor to call the resize() member function behind SchemeBase::Proxy
-    struct Resize : boost::static_visitor<> {
+    struct Resize {
       const tk::UnsMesh::Chunk& Chunk;
       const tk::UnsMesh::Coords& Coord;
       const tk::Fields& U;

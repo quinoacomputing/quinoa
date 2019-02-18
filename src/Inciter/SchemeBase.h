@@ -34,14 +34,14 @@ class SchemeBase {
   private:
     //! Variant type listing all chare proxy types modeling the same concept
     using Proxy =
-      boost::variant< CProxy_DiagCG, CProxy_DG, CProxy_ALECG >;
+      std::variant< CProxy_DiagCG, CProxy_DG, CProxy_ALECG >;
 
   public:
     //! Variant type listing all chare element proxy types (behind operator[])
     using ProxyElem =
-      boost::variant< CProxy_DiagCG::element_t,
-                      CProxy_DG::element_t,
-                      CProxy_ALECG::element_t >;
+      std::variant< CProxy_DiagCG::element_t,
+                    CProxy_DG::element_t,
+                    CProxy_ALECG::element_t >;
 
     //! Empty constructor for Charm++
     explicit SchemeBase() {}
@@ -82,12 +82,12 @@ class SchemeBase {
 
     //! Query underlying proxy type
     //! \return Zero-based index into the set of types of Proxy
-    int which() const noexcept { return proxy.which(); }
+    std::size_t index() const noexcept { return proxy.index(); }
 
     //! Query underlying proxy element type
     //! \return Zero-based index into the set of types of ProxyElem
-    int which_element() const noexcept {
-      return tk::element< ProxyElem >( proxy, 0 ).which();
+    std::size_t index_element() const noexcept {
+      return tk::element< ProxyElem >( proxy, 0 ).index();
     }
 
     //! Charm++ array options accessor for binding external proxies
@@ -116,7 +116,7 @@ class SchemeBase {
     //!   (in class Scheme). Unpacking the tuple to a variadic argument list is
     //!   loosely inspired by https://stackoverflow.com/a/16868151.
     template< class Spec, typename... Args >
-    struct Call : boost::static_visitor<> {
+    struct Call {
       //! Constructor storing called member function arguments in tuple
       Call( Args&&... args ) : arg( std::forward_as_tuple(args...) ) {}
       //! Helper class for unpacking tuple into argument list
@@ -145,11 +145,6 @@ class SchemeBase {
       }
       //! Function call operator overloading all types used with variant visitor
       //! \param[in,out] p Proxy behind which the entry method is called
-      //! \details Classes inheriting from this class should also inherit from
-      //!   boost::static_visitor which requires overloading operator(),
-      //!   unambiguously accepting any value of types Ts over which classes
-      //!   inheriting from this class may be used as functors for static
-      //!   visitor with a variant of types Ts.
       template< typename P > void operator()(P& p) const { invoke(p,arg); }
       //! Tuple storing arguments of the entry method to be called
       std::tuple< Args... > arg;

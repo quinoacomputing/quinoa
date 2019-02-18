@@ -9,7 +9,7 @@
 #ifndef test_MigratedTypes_h
 #define test_MigratedTypes_h
 
-#include "NoWarning/variant.h"
+#include <variant>
 
 #include "PUPUtil.h"
 #include "TaggedTuple.h"
@@ -42,7 +42,7 @@ using BoostOptionalInt = boost::optional< int >;
 using TaggedTuple = tk::tuple::tagged_tuple< tag::name,  std::string,
                                              tag::age,   int,
                                              tag::email, std::string >;
-using Variant = boost::variant< int, double >;
+using Variant = std::variant< int, double >;
 
 //! Pack/Unpack: delegate to PUP::
 inline void operator|( PUP::er& p, Enum_default& e ) { PUP::pup( p, e ); }

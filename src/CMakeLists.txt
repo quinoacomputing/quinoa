@@ -192,7 +192,7 @@ execute_process(COMMAND "date" "+%A, %b %d, %Y"
 string(REGEX REPLACE "[\r\n]" "" BUILD_DATE_SIMPLE "${BUILD_DATE_SIMPLE}")
 
 # Set the requirement for the C++ standard
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 message(STATUS "Required language standard: C++${CMAKE_CXX_STANDARD}")
 

@@ -237,7 +237,7 @@ class Scheme : public SchemeBase {
     //!   as default.
     template< typename... Args >
     void setup( Args&&... args ) {
-      boost::apply_visitor( call_setup<Args...>( std::forward<Args>(args)... ),
+      std::visit( call_setup<Args...>( std::forward<Args>(args)... ),
                             proxy );
     }
 
@@ -249,7 +249,7 @@ class Scheme : public SchemeBase {
     //!   as default.
     template< typename... Args >
     void lhs( Args&&... args ) {
-      boost::apply_visitor( call_lhs<Args...>( std::forward<Args>(args)... ),
+      std::visit( call_lhs<Args...>( std::forward<Args>(args)... ),
                             proxy );
     }
 
@@ -261,7 +261,7 @@ class Scheme : public SchemeBase {
     //!   argument as default.
     template< typename... Args >
     void resized( Args&&... args ) {
-      boost::apply_visitor(
+      std::visit(
         call_resized<Args...>( std::forward<Args>(args)... ), proxy );
     }
 
@@ -273,7 +273,7 @@ class Scheme : public SchemeBase {
     //!    last argument as default.
     template< typename... Args >
     void sendinit( Args&&... args ) {
-      boost::apply_visitor(
+      std::visit(
         call_sendinit<Args...>( std::forward<Args>(args)... ), proxy );
     }
 
@@ -285,7 +285,7 @@ class Scheme : public SchemeBase {
     //!    argument as default.
     template< typename... Args >
     void advance( Args&&... args ) {
-      boost::apply_visitor(
+      std::visit(
         call_advance<Args...>( std::forward<Args>(args)... ), proxy );
     }
 
@@ -298,7 +298,7 @@ class Scheme : public SchemeBase {
     template< class Op, typename... Args, typename std::enable_if<
       std::is_same< Op, tag::bcast >::value, int >::type = 0 >
     void diag( Args&&... args ) {
-      boost::apply_visitor( call_diag<Args...>( std::forward<Args>(args)... ),
+      std::visit( call_diag<Args...>( std::forward<Args>(args)... ),
                             proxy );
     }
 
@@ -312,7 +312,7 @@ class Scheme : public SchemeBase {
     template< typename... Args >
     void insert( const CkArrayIndex1D& x, Args&&... args ) {
       auto e = tk::element< ProxyElem >( proxy, x );
-      boost::apply_visitor( call_insert<Args...>( std::forward<Args>(args)... ),
+      std::visit( call_insert<Args...>( std::forward<Args>(args)... ),
                             e );
     }
 
@@ -325,7 +325,7 @@ class Scheme : public SchemeBase {
     template< class Op, typename... Args, typename std::enable_if<
       std::is_same< Op, tag::bcast >::value, int >::type = 0 >
     void doneInserting( Args&&... args ) {
-      boost::apply_visitor(
+      std::visit(
         call_doneInserting<Args...>( std::forward<Args>(args)... ), proxy );
     }
 
@@ -340,7 +340,7 @@ class Scheme : public SchemeBase {
       std::is_same< Op, tag::elem >::value, int >::type = 0 >
     void newMesh( const CkArrayIndex1D& x, Args&&... args ) {
       auto e = tk::element< ProxyElem >( proxy, x );
-      boost::apply_visitor(
+      std::visit(
         call_newMesh<Args...>( std::forward<Args>(args)... ), e );
     }
 
@@ -359,7 +359,7 @@ class Scheme : public SchemeBase {
   private:
    //! Functor to call the chare entry method 'setup'
    //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
+   //!   and std::visit. The template argument types are the types of the
    //!   arguments to entry method to be invoked behind the variant holding a
    //!   Charm++ proxy.
    //! \see The base class Call for the definition of operator().
@@ -380,7 +380,7 @@ class Scheme : public SchemeBase {
 
    //! Functor to call the chare entry method 'resized'
    //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
+   //!   and std::visit. The template argument types are the types of the
    //!   arguments to entry method to be invoked behind the variant holding a
    //!   Charm++ proxy.
    //! \see The base class Call for the definition of operator().
@@ -401,7 +401,7 @@ class Scheme : public SchemeBase {
 
    //! Functor to call the chare entry method 'lhs'
    //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
+   //!   and std::visit. The template argument types are the types of the
    //!   arguments to entry method to be invoked behind the variant holding a
    //!   Charm++ proxy.
    //! \see The base class Call for the definition of operator().
@@ -422,7 +422,7 @@ class Scheme : public SchemeBase {
 
    //! Functor to call the chare entry method 'sendinit'
    //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
+   //!   and std::visit. The template argument types are the types of the
    //!   arguments to entry method to be invoked behind the variant holding a
    //!   Charm++ proxy.
    //! \see The base class Call for the definition of operator().
@@ -443,7 +443,7 @@ class Scheme : public SchemeBase {
 
    //! Functor to call the chare entry method 'advance'
    //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
+   //!   and std::visit. The template argument types are the types of the
    //!   arguments to entry method to be invoked behind the variant holding a
    //!   Charm++ proxy.
    //! \see The base class Call for the definition of operator().
@@ -464,7 +464,7 @@ class Scheme : public SchemeBase {
 
    //! Functor to call the chare entry method 'insert'
    //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
+   //!   and std::visit. The template argument types are the types of the
    //!   arguments to entry method to be invoked behind the variant holding a
    //!   Charm++ proxy.
    //! \see The base class Call for the definition of operator().
@@ -485,7 +485,7 @@ class Scheme : public SchemeBase {
 
    //! Functor to call the chare entry method 'doneInserting'
    //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
+   //!   and std::visit. The template argument types are the types of the
    //!   arguments to entry method to be invoked behind the variant holding a
    //!   Charm++ proxy.
    //! \see The base class Call for the definition of operator().
@@ -506,7 +506,7 @@ class Scheme : public SchemeBase {
 
    //! Functor to call the chare entry method 'newMesh'
    //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
+   //!   and std::visit. The template argument types are the types of the
    //!   arguments to entry method to be invoked behind the variant holding a
    //!   Charm++ proxy.
    //! \see The base class Call for the definition of operator().
@@ -527,7 +527,7 @@ class Scheme : public SchemeBase {
 
    //! Functor to call the chare entry method 'diag'
    //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
+   //!   and std::visit. The template argument types are the types of the
    //!   arguments to entry method to be invoked behind the variant holding a
    //!   Charm++ proxy.
    //! \see The base class Call for the definition of operator().

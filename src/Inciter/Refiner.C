@@ -533,7 +533,7 @@ Refiner::eval()
             "About to use nullptr" );
     auto e = tk::element< SchemeBase::ProxyElem >
                         ( m_scheme.getProxy(), thisIndex );
-    boost::apply_visitor( Resize(m_el,m_coord,m_u,m_msum,m_bnode), e );
+    std::visit( Resize(m_el,m_coord,m_u,m_msum,m_bnode), e );
 
   }
 }
@@ -600,7 +600,7 @@ Refiner::errorRefine()
             "About to use nullptr" );
     auto e = tk::element< SchemeBase::ProxyElem >
                         ( m_scheme.getProxy(), thisIndex );
-    boost::apply_visitor( Solution(u), e );
+    std::visit( Solution(u), e );
 
   }
 
@@ -866,7 +866,7 @@ Refiner::updateMesh()
             "About to use nullptr" );
     auto e = tk::element< SchemeBase::ProxyElem >
                         ( m_scheme.getProxy(), thisIndex );
-    boost::apply_visitor( Solution(m_u), e );
+    std::visit( Solution(m_u), e );
     // Get nodal communication map from Discretization worker
     m_msum = m_scheme.get()[thisIndex].ckLocal()->Msum();
   }
@@ -985,7 +985,9 @@ Refiner::boundary()
                       std::size_t,
                       tk::UnsMesh::Hash<4>,
                       tk::UnsMesh::Eq<4> > invtets;
-  for (const auto& t : m_refiner.tet_store.tets) invtets[ t.second ] = t.first;
+  //for (const auto& t : m_refiner.tet_store.tets) invtets[ t.second ] = t.first;
+  for (const auto& [key, value] : m_refiner.tet_store.tets)
+    invtets[ value ] = key;
 
   // Generate data structure that associates the pair of side set id and
   // adjacent tet id to a boundary triangle face for all boundary faces. After
