@@ -10,9 +10,9 @@
 #include <cstddef>
 #include <iterator>
 #include <type_traits>
+#include <memory>
 
 #include "VectorReducer.h"
-#include "Make_unique.h"
 #include "ContainerUtil.h"
 
 #include "NoWarning/charm++.h"
@@ -34,7 +34,7 @@ serialize( const std::vector< std::size_t >& v )
   sizer | const_cast< std::vector< std::size_t >& >( v );
 
   // Create raw character stream to store the serialized vectors
-  std::unique_ptr<char[]> flatData = tk::make_unique<char[]>( sizer.size() );
+  std::unique_ptr<char[]> flatData = std::make_unique<char[]>( sizer.size() );
 
   // Serialize vector, each message will contain a vector
   PUP::toMem packer( flatData.get() );

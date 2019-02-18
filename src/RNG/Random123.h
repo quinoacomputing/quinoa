@@ -18,7 +18,6 @@
 #include "NoWarning/beta_distribution.h"
 #include <boost/random/gamma_distribution.hpp>
 
-#include "Make_unique.h"
 #include "Exception.h"
 #include "Keywords.h"
 #include "Macro.h"

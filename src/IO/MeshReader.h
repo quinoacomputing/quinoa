@@ -13,10 +13,10 @@
 #include <vector>
 #include <array>
 #include <string>
+#include <memory>
 
 #include "Types.h"
 #include "MeshDetect.h"
-#include "Make_unique.h"
 #include "ExodusIIMeshReader.h"
 
 #ifdef HAS_OMEGA_H
@@ -45,11 +45,11 @@ class MeshReader {
       auto meshtype = detectInput( filename );
       if (meshtype == MeshReaderType::EXODUSII) {
         using R = ExodusIIMeshReader;
-        self = make_unique< Model<R> >( R(filename) );
+        self = std::make_unique< Model<R> >( R(filename) );
       #ifdef HAS_OMEGA_H
       } else if (meshtype == MeshReaderType::OMEGA_H) {
         using R = Omega_h_MeshReader;
-        self = make_unique< Model<R> >( R(filename) );
+        self = std::make_unique< Model<R> >( R(filename) );
       #endif
       } else Throw( "Mesh type not implemented or not supported" );
     }

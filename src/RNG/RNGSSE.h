@@ -11,11 +11,11 @@
 
 #include <cstring>
 #include <random>
+#include <memory>
 
 #include "NoWarning/beta_distribution.h"
 #include <boost/random/gamma_distribution.hpp>
 
-#include "Make_unique.h"
 #include "Exception.h"
 #include "Macro.h"
 #include "Options/RNGSSESeqLen.h"
@@ -63,7 +63,7 @@ class RNGSSE {
       Assert( m_init != nullptr, "nullptr passed to RNGSSE constructor" );
       Assert( n > 0, "Need at least one thread" );
       // Allocate array of stream-pointers for threads
-      m_stream = tk::make_unique< State[] >( n );
+      m_stream = std::make_unique< State[] >( n );
       // Initialize thread-streams
       for (SeqNumType i=0; i<n; ++i) m_init( &m_stream[i], i );
     }
@@ -170,7 +170,7 @@ class RNGSSE {
     RNGSSE& operator=( const RNGSSE& x ) {
       m_nthreads = x.m_nthreads;
       m_init = x.m_init;
-      m_stream = tk::make_unique< State[] >( x.m_nthreads );
+      m_stream = std::make_unique< State[] >( x.m_nthreads );
       for (SeqNumType i=0; i<x.m_nthreads; ++i) m_init( &m_stream[i], i );
       return *this;
     }
@@ -182,7 +182,7 @@ class RNGSSE {
     RNGSSE& operator=( RNGSSE&& x ) {
       m_nthreads = x.m_nthreads;
       m_init = x.m_init;
-      m_stream = tk::make_unique< State[] >( x.m_nthreads );
+      m_stream = std::make_unique< State[] >( x.m_nthreads );
       for (SeqNumType i=0; i<x.m_nthreads; ++i) {
         m_stream[i] = x.m_stream[i];
         std::memset( &x.m_stream[i], 0, sizeof(x.m_stream[i]) );

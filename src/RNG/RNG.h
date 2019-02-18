@@ -15,8 +15,8 @@
 #define RNG_h
 
 #include <functional>
+#include <memory>
 
-#include "Make_unique.h"
 #include "Keywords.h"
 
 namespace tk {
@@ -39,7 +39,7 @@ class RNG {
     //! \param[in] x Instantiated object of type T given by the template
     //!   argument.
     template< typename T >
-    explicit RNG( T x ) : self( make_unique< Model<T> >( std::move(x) ) ) {}
+    explicit RNG( T x ) : self( std::make_unique< Model<T> >( std::move(x) ) ) {}
 
     //! \brief Constructor taking a function pointer to a constructor of an
     //!   object modeling Concept
@@ -50,7 +50,7 @@ class RNG {
     //!   Concept
     template< typename T >
     explicit RNG( std::function<T()> x ) :
-      self( make_unique< Model<T> >( std::move(x()) ) ) {}
+      self( std::make_unique< Model<T> >( std::move(x()) ) ) {}
 
     //! Public interface to uniform RNG
     void uniform( int stream, ncomp_t num, double* r ) const

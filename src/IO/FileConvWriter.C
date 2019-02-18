@@ -13,8 +13,7 @@
 #include <string>
 #include <numeric>
 #include <iostream>
-
-#include "Make_unique.h"
+#include <memory>
 
 #include "NoWarning/exodusII.h"
 #include "NoWarning/TFile.h"
@@ -37,10 +36,10 @@ FileConvWriter::FileConvWriter( const std::string& file_root,
 // *****************************************************************************
 {
 
-  m_emw = tk::make_unique< tk::ExodusIIMeshWriter >
-                         ( file_exodus.c_str(), tk::ExoWriter::CREATE );
+  m_emw = std::make_unique< tk::ExodusIIMeshWriter >
+                          ( file_exodus.c_str(), tk::ExoWriter::CREATE );
 
-  m_infile = tk::make_unique< TFile >( file_root.c_str() );
+  m_infile = std::make_unique< TFile >( file_root.c_str() );
 
   // If the ROOT file can be opened, fetch the TTree reference  
   if( m_infile == nullptr ){

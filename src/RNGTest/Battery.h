@@ -16,12 +16,12 @@
 #define Battery_h
 
 #include <functional>
+#include <memory>
 
 #include "NoWarning/charm++.h"
 
 #include "Macro.h"
 #include "Has.h"
-#include "Make_unique.h"
 
 namespace rngtest {
 
@@ -41,7 +41,7 @@ class Battery {
     //! \param[in] x Instantiated object of type T given by the template
     //!   argument.
     template< typename T > explicit Battery( T x ) :
-      self( tk::make_unique< Model<T> >( std::move(x) ) ) {}
+      self( std::make_unique< Model<T> >( std::move(x) ) ) {}
 
     //! \brief Constructor taking a std::function holding a constructor bound to
     //!   its arguments of an object modeling Concept.
@@ -53,7 +53,7 @@ class Battery {
     template< typename T,
       typename std::enable_if< !tk::HasTypedefProxy<T>::value, int >::type = 0 >
     explicit Battery( std::function<T()> x ) :
-      self( tk::make_unique< Model<T> >( std::move(x()) ) ) {}
+      self( std::make_unique< Model<T> >( std::move(x()) ) ) {}
 
     //! \brief Constructor taking a function pointer to a constructor of an
     //!    object modeling Concept
@@ -80,7 +80,7 @@ class Battery {
     template< typename T, typename... ConstrArgs,
       typename std::enable_if< tk::HasTypedefProxy<T>::value, int >::type = 0 >
     explicit Battery( std::function<T()> c, ConstrArgs... args ) :
-      self( tk::make_unique< Model< typename T::Proxy > >
+      self( std::make_unique< Model< typename T::Proxy > >
             (std::move(T::Proxy::ckNew(std::forward<ConstrArgs>(args)...))) ) {
       Assert( c == nullptr, "std::function argument to Battery Charm++ "
                             "constructor must be nullptr" );
