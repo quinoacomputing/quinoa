@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <unordered_set>
+#include <functional>
 
 #include "Types.h"
 #include "Make_unique.h"

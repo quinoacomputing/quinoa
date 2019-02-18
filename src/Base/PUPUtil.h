@@ -13,8 +13,8 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <variant>
+#include <optional>
 
-#include "NoWarning/optional.h"
 #include "NoWarning/pup_stl.h"
 
 //! Extensions to Charm++'s Pack/Unpack routines
@@ -121,30 +121,30 @@ inline void operator|( PUP::er& p,
                        std::unordered_set< Key, Hash, KeyEqual >& s )
 { pup( p, s ); }
 
-//////////////////// Serialize boost::optional ////////////////////
+//////////////////// Serialize std::optional ////////////////////
 
-//! Pack/Unpack boost::optional.
+//! Pack/Unpack std::optional
 //! \param[in] p Charm++'s pack/unpack object
-//! \param[in] o boost::optional< T > of arbitrary type T to pack/unpack
+//! \param[in] o std::optional< T > of arbitrary type T to pack/unpack
 template< class T >
-inline void pup( PUP::er& p, boost::optional< T >& o ) {
+inline void pup( PUP::er& p, std::optional< T >& o ) {
   T underlying_value = o ? *o : T();
   bool exist = o ? true : false;
   p | exist;
   p | underlying_value;
-  o = exist ? boost::make_optional(underlying_value) : boost::none;
+  o = exist ? std::make_optional(underlying_value) : std::nullopt;
 }
-//! Pack/Unpack boost::optional.
+//! Pack/Unpack std::optional
 //! \param[in] p Charm++'s pack/unpack object
-//! \param[in] o boost::optional< T > of arbitrary type T to pack/unpack
+//! \param[in] o std::optional< T > of arbitrary type T to pack/unpack
 template< class T >
-inline void operator|( PUP::er& p, boost::optional< T >& o ) { pup( p, o ); }
+inline void operator|( PUP::er& p, std::optional< T >& o ) { pup( p, o ); }
 
 //////////////////// Serialize std::variant ////////////////////
 
 // Since std::variant (as well as std::variant) when default-constructed is
 // initialized to hold a value of the first alternative of its type list,
-// calling PUP that works based on a boost::visitor with a templated operator()
+// calling PUP that works based on a std::visit with a templated operator()
 // would always incorrectly trigger the overload for the first type. Thus when
 // PUPing a variant not only its value but its type must also be sent during
 // migration. The pup operator template below achieves this by reading out not

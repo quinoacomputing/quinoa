@@ -23,8 +23,8 @@ module migrated_base {
       entry Migrated( charm::Array a );
       entry Migrated( charm::UnorderedMap m );
       entry Migrated( charm::UnorderedSet s );
-      entry Migrated( charm::BoostOptionalStr o );
-      entry Migrated( charm::BoostOptionalInt o );
+      entry Migrated( charm::OptionalStr o );
+      entry Migrated( charm::OptionalInt o );
       entry Migrated( charm::TaggedTuple t );
       entry Migrated( charm::Variant v, int value );
       entry Migrated( charm::Variant v, double value );

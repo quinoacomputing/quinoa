@@ -10,6 +10,7 @@
 #define test_MigratedTypes_h
 
 #include <variant>
+#include <optional>
 
 #include "PUPUtil.h"
 #include "TaggedTuple.h"
@@ -37,8 +38,8 @@ using Tuple = std::tuple< int, double, std::vector< std::string >,
 using Array = std::array< int, 2 >;
 using UnorderedMap = std::unordered_map< int, std::string >;
 using UnorderedSet = std::unordered_set< int >;
-using BoostOptionalStr = boost::optional< std::string >;
-using BoostOptionalInt = boost::optional< int >;
+using OptionalStr = std::optional< std::string >;
+using OptionalInt = std::optional< int >;
 using TaggedTuple = tk::tuple::tagged_tuple< tag::name,  std::string,
                                              tag::age,   int,
                                              tag::email, std::string >;
@@ -52,8 +53,8 @@ inline void operator|( PUP::er& p, Tuple& t ) { PUP::pup( p, t ); }
 inline void operator|( PUP::er& p, Array& a ) { PUP::pup( p, a ); }
 inline void operator|( PUP::er& p, UnorderedMap& m ) { PUP::pup( p, m ); }
 inline void operator|( PUP::er& p, UnorderedSet& s ) { PUP::pup( p, s ); }
-inline void operator|( PUP::er& p, BoostOptionalStr& o ) { PUP::pup( p, o ); }
-inline void operator|( PUP::er& p, BoostOptionalInt& o ) { PUP::pup( p, o ); }
+inline void operator|( PUP::er& p, OptionalStr& o ) { PUP::pup( p, o ); }
+inline void operator|( PUP::er& p, OptionalInt& o ) { PUP::pup( p, o ); }
 inline void operator|( PUP::er& p, TaggedTuple& t ) { PUP::pup( p, t ); }
 
 } // charm::

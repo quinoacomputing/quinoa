@@ -3,6 +3,7 @@
 
 #include <map>
 #include <algorithm>
+#include <cassert>
 
 #include "Refinement_State.h"
 #include "AMR/Loggers.h"                   // for trace_out

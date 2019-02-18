@@ -24,7 +24,6 @@
 #include <cstddef>
 
 #include "NoWarning/format.h"
-#include <boost/optional.hpp>
 
 #include "Macro.h"
 #include "Print.h"

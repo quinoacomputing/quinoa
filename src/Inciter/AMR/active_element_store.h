@@ -2,6 +2,7 @@
 #define AMR_active_element_store_h
 
 #include <set>
+#include <cassert>
 
 namespace AMR {
 

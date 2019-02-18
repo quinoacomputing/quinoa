@@ -10,7 +10,7 @@
 #ifndef Keyword_h
 #define Keyword_h
 
-#include "NoWarning/optional.h"
+#include <optional>
 
 #include "NoWarning/pegtl.h"
 
@@ -99,7 +99,7 @@ struct keyword< Info, pegtl::string< Chars... > > {
 
   //! \brief Overloads to optional alias accessor depending on the existence of
   //!   Info::alias
-  //! \return An initialized (or uninitialized) boost::optional< std::string >
+  //! \return An initialized (or uninitialized) std::optional< std::string >
   //! \details As to why type Info has to be aliased to a local type T for
   //!   SFINAE to work, see http://stackoverflow.com/a/22671495. Though an alias
   //!   is only a single character, it returns it as std::string since
@@ -109,17 +109,17 @@ struct keyword< Info, pegtl::string< Chars... > > {
   //! \see http://en.cppreference.com/w/cpp/types/enable_if
   template< typename T = Info, typename std::enable_if<
     tk::HasTypedefAlias< T >::value, int >::type = 0 >
-  static boost::optional< std::string > alias()
+  static std::optional< std::string > alias()
   { return std::string( 1, static_cast<char>( Info::alias::value ) ); }
 
   template< typename T = Info, typename std::enable_if<
     !tk::HasTypedefAlias< T >::value, int >::type = 0 >
-  static boost::optional< std::string > alias()
-  { return boost::none; }
+  static std::optional< std::string > alias()
+  { return std::nullopt; }
 
   //! \brief Overloads to optional policy code accessor depending on the
   //!   existence of Info::Code
-  //! \return An initialized (or uninitialized) boost::optional< std::string >
+  //! \return An initialized (or uninitialized) std::optional< std::string >
   //! \details As to why type Info has to be aliased to a local type T for
   //!   SFINAE to work, see http://stackoverflow.com/a/22671495. Though a code
   //!   is only a single character, it returns it as std::string since
@@ -129,17 +129,17 @@ struct keyword< Info, pegtl::string< Chars... > > {
   //! \see http://en.cppreference.com/w/cpp/types/enable_if
   template< typename T = Info, typename std::enable_if<
     tk::HasTypedefCode< T >::value, int >::type = 0 >
-  static boost::optional< std::string > code()
+  static std::optional< std::string > code()
   { return std::string( 1, Info::code::value ); }
 
   template< typename T = Info, typename std::enable_if<
     !tk::HasTypedefCode< T >::value, int >::type = 0 >
-  static boost::optional< std::string > code()
-  { return boost::none; }
+  static std::optional< std::string > code()
+  { return std::nullopt; }
 
   //! \brief Overloads to optional expected type description depending on the
   //!   existence of Info::expect::description
-  //! \return An initialized (or uninitialized) boost::optional< std::string >
+  //! \return An initialized (or uninitialized) std::optional< std::string >
   //! \details As to why type Info has to be aliased to a local type T for
   //!   SFINAE to work, see http://stackoverflow.com/a/22671495.
   //! \see http://www.boost.org/doc/libs/release/libs/optional/doc/html/index.html
@@ -147,17 +147,17 @@ struct keyword< Info, pegtl::string< Chars... > > {
   //! \see http://en.cppreference.com/w/cpp/types/enable_if
   template< typename T = Info, typename std::enable_if<
     tk::HasFunctionExpectDescription< T >::value, int >::type = 0 >
-  static boost::optional< std::string > expt()
+  static std::optional< std::string > expt()
   { return Info::expect::description(); }
 
   template< typename T = Info, typename std::enable_if<
     !tk::HasFunctionExpectDescription< T >::value, int >::type = 0 >
-  static boost::optional< std::string > expt()
-  { return boost::none; }
+  static std::optional< std::string > expt()
+  { return std::nullopt; }
 
   //! \brief Overloads to optional expected choices description depending on the
   //!   existence of Info::expect::choices
-  //! \return An initialized (or uninitialized) boost::optional< std::string >
+  //! \return An initialized (or uninitialized) std::optional< std::string >
   //! \details As to why type Info has to be aliased to a local type T for
   //!   SFINAE to work, see http://stackoverflow.com/a/22671495.
   //! \see http://www.boost.org/doc/libs/release/libs/optional/doc/html/index.html
@@ -165,13 +165,13 @@ struct keyword< Info, pegtl::string< Chars... > > {
   //! \see http://en.cppreference.com/w/cpp/types/enable_if
   template< typename T = Info, typename std::enable_if<
     tk::HasFunctionExpectChoices< T >::value, int >::type = 0 >
-  static boost::optional< std::string > choices()
+  static std::optional< std::string > choices()
   { return Info::expect::choices(); }
 
   template< typename T = Info, typename std::enable_if<
     !tk::HasFunctionExpectChoices< T >::value, int >::type = 0 >
-  static boost::optional< std::string > choices()
-  { return boost::none; }
+  static std::optional< std::string > choices()
+  { return std::nullopt; }
 };
 
 } // kw::
