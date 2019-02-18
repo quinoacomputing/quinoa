@@ -224,8 +224,6 @@ class Transport {
     }
 
     //! Return field output going to file
-    //! \param[in] inpoel Element-node connectivity
-    //! \param[in] coord Array of nodal coordinates
     //! \param[in] t Physical time
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] U Solution vector at recent time step
@@ -234,10 +232,7 @@ class Transport {
     //!   which provides the vector of field names
     //! \note U is overwritten
     std::vector< std::vector< tk::real > >
-    fieldOutput( const tk::Fields& /*L*/,
-                 const std::vector< std::size_t >& /*inpoel*/,
-                 const tk::UnsMesh::Coords& /*coord*/,
-                 tk::real t,
+    fieldOutput( tk::real t,
                  const tk::Fields& geoElem,
                  tk::Fields& U ) const
     {

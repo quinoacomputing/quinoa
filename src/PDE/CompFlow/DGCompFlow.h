@@ -387,10 +387,7 @@ class CompFlow {
     //! \param[in,out] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
-    fieldOutput( const tk::Fields& /*L*/,
-                 const std::vector< std::size_t >& /*inpoel*/,
-                 const tk::UnsMesh::Coords& /*coord*/,
-                 tk::real t,
+    fieldOutput( tk::real t,
                  const tk::Fields& geoElem,
                  tk::Fields& U ) const
     {
