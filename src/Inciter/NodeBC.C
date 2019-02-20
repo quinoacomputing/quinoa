@@ -141,8 +141,7 @@ match( tk::ctr::ncomp_type ncomp,
   // equal to the total number of scalar components for all systems of PDEs
   // integrated.
   Assert( std::all_of( begin(dirbc), end(dirbc),
-                       [ ncomp ]( const decltype(dirbc)::value_type& n ){
-                        return n.second.size() == ncomp; } ),
+            [ ncomp ]( const auto& n ){ return n.second.size() == ncomp; } ),
           "Size of NodeBC vector incorrect" );
   IGNORE( ncomp );
  

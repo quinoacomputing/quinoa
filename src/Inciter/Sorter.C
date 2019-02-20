@@ -74,10 +74,9 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
 
   // Ensure boundary face ids will not index out of face connectivity
   Assert( std::all_of( begin(m_bface), end(m_bface),
-            [&](const decltype(m_bface)::value_type& s)
+            [&](const auto& s)
             { return std::all_of( begin(s.second), end(s.second),
-                                  [&](decltype(s.second)::value_type f)
-                                  { return f*3+2 < m_triinpoel.size(); } ); } ),
+                       [&](auto f){ return f*3+2 < m_triinpoel.size(); } ); } ),
           "Boundary face data structures inconsistent" );
 }
 
@@ -272,7 +271,7 @@ Sorter::mask()
       auto& n = m_reordcomm[ c->first ];
       for (auto j : c->second)
         if (std::none_of( m_msum.cbegin(), c,
-             [ j ]( const decltype(m_msum)::value_type& s )
+             [ j ]( const auto& s )
              { return s.second.find(j) != end(s.second); } )) {
           n.insert(j);
         }
@@ -340,7 +339,7 @@ Sorter::reorder()
   // assigns its new id.
   auto ownnode = [ this ]( std::size_t p ) {
     return std::all_of( m_reordcomm.cbegin(), m_reordcomm.cend(),
-                        [&](const decltype(m_reordcomm)::value_type& s)
+                        [&](const auto& s)
                         { return s.second.find(p) == s.second.cend(); } );
   };
 

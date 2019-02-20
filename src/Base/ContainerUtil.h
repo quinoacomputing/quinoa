@@ -107,9 +107,8 @@ auto extents( const Container& map )
 //!   copy of a std::array< Value, 2 > is created and returned.
 // *****************************************************************************
 {
-  using pair_type = typename Container::value_type;
   auto x = std::minmax_element( begin(map), end(map),
-             []( const pair_type& a, const pair_type& b )
+             []( const auto& a, const auto& b )
              { return a.second < b.second; } );
   return {{ x.first->second, x.second->second }};
 }
