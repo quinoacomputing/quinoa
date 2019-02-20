@@ -313,9 +313,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
     set_libstdcpp_vs_libcpp(CMAKE_CXX_FLAGS "libc++")
   endif()
 
-  # Use the C++14 standard (CMAKE_CXX_STANDARD does not set this for intel)
-  add_compiler_flag("-std=c++11")
-
   # Compiler flags for intel
   add_compiler_flag("-w3")       # enable diagnostics: remarks, warnings, errors
   add_compiler_flag("-Wremarks") # display remarks and comments
