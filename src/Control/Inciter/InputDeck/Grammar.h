@@ -731,6 +731,9 @@ namespace deck {
                            tk::grm::process< use< kw::amr_dtref >,
                              tk::grm::Store< tag::amr, tag::dtref >,
                              pegtl::alpha >,
+                           tk::grm::process< use< kw::amr_dtref_uniform >,
+                             tk::grm::Store< tag::amr, tag::dtref_uniform >,
+                             pegtl::alpha >,
                            tk::grm::process< use< kw::amr_dtfreq >,
                              tk::grm::Store< tag::amr, tag::dtfreq >,
                              pegtl::digit >

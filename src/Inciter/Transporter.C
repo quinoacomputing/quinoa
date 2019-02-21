@@ -183,7 +183,9 @@ Transporter::Transporter() :
     m_print.item( "Refinement at t > 0", dtref );
     if (dtref) {
       auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
-      m_print.item( "Mesh refinement frequency", dtfreq );
+      m_print.item( "Mesh refinement frequency, t > 0", dtfreq );
+      m_print.item( "Uniform-only mesh refinement, t > 0",
+                    g_inputdeck.get< tag::amr, tag::dtref_uniform >() );
     }
   }
 

@@ -85,6 +85,7 @@ struct pde {};
 struct amr {};
 struct t0ref {};
 struct dtref {};
+struct dtref_uniform {};
 struct dtfreq {};
 struct partitioner {};
 struct scheme {};

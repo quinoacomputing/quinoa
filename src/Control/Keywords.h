@@ -4925,6 +4925,22 @@ struct amr_dtref_info {
 };
 using amr_dtref = keyword< amr_dtref_info, TAOCPP_PEGTL_STRING("dtref") >;
 
+struct amr_dtref_uniform_info {
+  static std::string name() { return "Uniform-only mesh refinement at t>0"; }
+  static std::string shortDescription() { return
+    "Enable mesh refinement at t>0 but only perform uniform refinement"; }
+  static std::string longDescription() { return R"(This keyword is used to force
+    uniform-only soution-adaptive mesh refinement during time stepping.)";
+  }
+  struct expect {
+    using type = bool;
+    static std::string choices() { return "true | false"; }
+    static std::string description() { return "string"; }
+  };
+};
+using amr_dtref_uniform =
+  keyword< amr_dtref_uniform_info, TAOCPP_PEGTL_STRING("dtref_uniform") >;
+
 struct amr_dtfreq_info {
   static std::string name() { return "Mesh refinement frequency"; }
   static std::string shortDescription() { return
@@ -4957,6 +4973,7 @@ struct amr_info {
     in this block: )" + std::string("\'")
     + amr_t0ref::string() + "\' | \'"
     + amr_dtref::string() + "\' | \'"
+    + amr_dtref_uniform::string() + "\' | \'"
     + amr_dtfreq::string() + "\' | \'"
     + amr_initial::string() + "\' | \'"
     + amr_refvar::string() + "\' | \'"
