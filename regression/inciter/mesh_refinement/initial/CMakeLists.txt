@@ -134,7 +134,7 @@ add_regression_test(amr_init_coords ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     LABELS amr)
 
-add_regression_test(amr_ic_ic ${INCITER_EXECUTABLE}
+add_regression_test(amr_init_ic_ic ${INCITER_EXECUTABLE}
                     NUMPES 2
                     INPUTFILES ic_ic.q unitsquare_01_141.exo
                     ARGS -c ic_ic.q -i unitsquare_01_141.exo -v
@@ -147,7 +147,7 @@ add_regression_test(amr_ic_ic ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     LABELS amr)
 
-add_regression_test(amr_ic_uniform ${INCITER_EXECUTABLE}
+add_regression_test(amr_init_ic_uniform ${INCITER_EXECUTABLE}
                     NUMPES 2
                     INPUTFILES ic_uniform.q unitsquare_01_141.exo
                     ARGS -c ic_uniform.q -i unitsquare_01_141.exo -v
