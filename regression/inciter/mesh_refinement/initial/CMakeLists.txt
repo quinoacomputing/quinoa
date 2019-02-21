@@ -3,32 +3,31 @@
 
 # Naming convention for AMR regression tests
 #
-# Example: amr_init_u1_trans_reord_dg_u0.4
+# Example: amr_t0ref_uu_trans_reord_dg_u0.4
 #
 # Legend:
 # * amr - exercising adaptive mesh refinement (AMR)
-# * init - AMR before t=0 (initial AMR),
-#          other possibilities instead of 'init':
-#          - dt - AMR durging time stepping
-# * u1 - uniform refinement (1:8 for all tets), single step
-#        other possibilities instead of 'u':
-#        - i - initial conditions based adaptive refinement,
-#        - c - coordinate based refinement,
+# * t0ref - AMR before t=0 (initial AMR),
+#          other possibilities instead of 't0ref':
+#          - dtref - AMR durging time stepping
+# * uu - uniform refinement (1:8 for all tets), two uniform steps
+#        other possibilities instead of 'uu' are arbitrary combinations of
+#        - i - initial conditions based adaptive refinement
+#        - c - coordinate based refinement
 #        - l - refine a list of tagged edges
-#        - C - combinations of the above
 # * trans - type of physics, e.g., compflow, transport
 #           other possibilities instead of 'trans':
 #           - compflow - compressible flow
 # * reord - perform PE-locality mesh node reordering during setup
 # * dg - discontinuous Galerkin discretization scheme, 1st order, DG = DG(P0),
 #        other possibilities instead of 'dg':
-#        - dgp1 - DG(P1), 2nd-order DG
+#        - dgp1 - DG(P1), dgp2 - 2nd-order DG, etc.
 #        - diagcg - lumped-mass (diagonal) continuous Galerkin
 # * u0.4 - Non-zero virtualization u = 0.4
 
 # Virtualization = 0
 
-add_regression_test(amr_init_u1_trans_diagcg ${INCITER_EXECUTABLE}
+add_regression_test(amr_t0ref_u_trans_diagcg ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES slot_cyl_amr_diagcg.q unitsquare_01_955.exo
                     ARGS -c slot_cyl_amr_diagcg.q -i unitsquare_01_955.exo -v
@@ -40,7 +39,7 @@ add_regression_test(amr_init_u1_trans_diagcg ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF slot_cyl_diagcg.ndiff.cfg
                     LABELS amr)
 
-add_regression_test(amr_init_u1_trans_reord_diagcg ${INCITER_EXECUTABLE}
+add_regression_test(amr_t0ref_u_trans_reord_diagcg ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES slot_cyl_amr_reord_diagcg.q unitsquare_01_955.exo
                     ARGS -c slot_cyl_amr_reord_diagcg.q
@@ -53,7 +52,7 @@ add_regression_test(amr_init_u1_trans_reord_diagcg ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF slot_cyl_diagcg.ndiff.cfg
                     LABELS amr)
 
-add_regression_test(amr_init_u1_compflow_dg ${INCITER_EXECUTABLE}
+add_regression_test(amr_t0ref_u_compflow_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES vortical_flow_dg.q unitcube_1k.exo
                     ARGS -c vortical_flow_dg.q -i unitcube_1k.exo -v
@@ -66,7 +65,7 @@ add_regression_test(amr_init_u1_compflow_dg ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg
                     LABELS amr)
 
-add_regression_test(amr_init_u1_compflow_reord_dg ${INCITER_EXECUTABLE}
+add_regression_test(amr_t0ref_u_compflow_reord_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES vortical_flow_reord_dg.q unitcube_1k.exo
                     ARGS -c vortical_flow_reord_dg.q -i unitcube_1k.exo -v
@@ -81,7 +80,7 @@ add_regression_test(amr_init_u1_compflow_reord_dg ${INCITER_EXECUTABLE}
 
 # Parallel, no virtualization
 
-add_regression_test(amr_init_u1_trans_diagcg ${INCITER_EXECUTABLE}
+add_regression_test(amr_t0ref_u_trans_diagcg ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slot_cyl_amr_diagcg.q unitsquare_01_955.exo
                     ARGS -c slot_cyl_amr_diagcg.q -i unitsquare_01_955.exo -v
@@ -99,7 +98,7 @@ add_regression_test(amr_init_u1_trans_diagcg ${INCITER_EXECUTABLE}
 
 # Parallel, virtualization = 0.5
 
-add_regression_test(amr_init_u1_trans_diagcg_u0.5 ${INCITER_EXECUTABLE}
+add_regression_test(amr_t0ref_u_trans_diagcg_u0.5 ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slot_cyl_amr_diagcg.q unitsquare_01_955.exo
                     ARGS -c slot_cyl_amr_diagcg.q -i unitsquare_01_955.exo
@@ -124,7 +123,7 @@ add_regression_test(amr_init_u1_trans_diagcg_u0.5 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     LABELS amr)
 
-add_regression_test(amr_init_coords ${INCITER_EXECUTABLE}
+add_regression_test(amr_t0ref_cc ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES slot_cyl_amr_coords.q unitcube_01_364.exo
                     ARGS -c slot_cyl_amr_coords.q -i unitcube_01_364.exo -v
@@ -134,7 +133,7 @@ add_regression_test(amr_init_coords ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     LABELS amr)
 
-add_regression_test(amr_init_ic_ic ${INCITER_EXECUTABLE}
+add_regression_test(amr_t0ref_ii ${INCITER_EXECUTABLE}
                     NUMPES 2
                     INPUTFILES ic_ic.q unitsquare_01_141.exo
                     ARGS -c ic_ic.q -i unitsquare_01_141.exo -v
@@ -147,7 +146,7 @@ add_regression_test(amr_init_ic_ic ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     LABELS amr)
 
-add_regression_test(amr_init_ic_uniform ${INCITER_EXECUTABLE}
+add_regression_test(amr_t0ref_iu ${INCITER_EXECUTABLE}
                     NUMPES 2
                     INPUTFILES ic_uniform.q unitsquare_01_141.exo
                     ARGS -c ic_uniform.q -i unitsquare_01_141.exo -v
