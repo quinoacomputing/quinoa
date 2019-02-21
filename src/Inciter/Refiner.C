@@ -333,8 +333,10 @@ Refiner::refine()
 
   } else {              // if AMR during time stepping (t>0)
 
-    //errorRefine();
-    uniformRefine();
+    if (g_inputdeck.get< tag::amr, tag::dtref_uniform >())
+      uniformRefine();
+    else
+      errorRefine();
 
   }
 
