@@ -601,9 +601,14 @@ Refiner::next()
     for (const auto& c : m_edgedataCh) {
       auto& nodes = tk::ref_find( m_msumset, c.first );
       for (const auto& e : c.second) {
+        // If parent nodes were part of the node communication map for chare
         if (nodes.find(e.first[0]) != end(nodes) &&
             nodes.find(e.first[1]) != end(nodes))
-          nodes.insert( tk::UnsMesh::Hash<2>()( e.first ) );
+        {
+          // Add new node if local id was generated for it
+          auto n = tk::UnsMesh::Hash<2>()( e.first );
+          if (m_lid.find(n) != end(m_lid)) nodes.insert( n );
+        }
       }
     }
 
