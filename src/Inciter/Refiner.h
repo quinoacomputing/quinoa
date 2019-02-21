@@ -74,9 +74,7 @@ class Refiner : public CBase_Refiner {
     void next();
 
     //! Start mesh refinement (during time stepping, t>0)
-    void dtref( tk::real t,
-	        std::size_t dtref,
-                const std::map< int, std::vector< std::size_t > >& bnode );
+    void dtref( const std::map< int, std::vector< std::size_t > >& bnode );
 
     //! Receive boundary edges from all PEs (including this one)
     void addBndEdges( CkReductionMsg* msg );
@@ -123,8 +121,6 @@ class Refiner : public CBase_Refiner {
       p | m_bnode;
       p | m_nchare;
       p | m_initial;
-      p | m_t;
-      p | m_itr;
       p | m_initref;
       p | m_refiner;
       p | m_nref;
@@ -197,10 +193,6 @@ class Refiner : public CBase_Refiner {
     int m_nchare;
     //! True if initial AMR, false if during time stepping
     bool m_initial;
-    //! Physical time at which dt>0 mesh refinement is happenning
-    tk::real m_t;
-    //! Iteration count at which the mesh has been refinement
-    std::size_t m_itr;
     //! Initial mesh refinement type list (in reverse order)
     std::vector< ctr::AMRInitialType > m_initref;
     //! Number of initial mesh refinement steps
@@ -235,8 +227,7 @@ class Refiner : public CBase_Refiner {
     //! Generate flat coordinate data from coordinate map
     tk::UnsMesh::Coords flatcoord( const tk::UnsMesh::CoordMap& coordmap );
 
-    //! \brief Output mesh to file before a new step of initial mesh refinement
-    //!   (before t>0)
+    //! Output mesh to file before a new step of mesh refinement
     void t0ref();
 
     //! Generate boundary edges and send them to all chares

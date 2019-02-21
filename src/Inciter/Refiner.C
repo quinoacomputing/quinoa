@@ -63,8 +63,6 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_bnode( bnode ),
   m_nchare( nchare ),
   m_initial( true ),
-  m_t( 0.0 ),
-  m_itr( 0 ),
   m_initref( g_inputdeck.get< tag::amr, tag::init >() ),
   m_ninitref( g_inputdeck.get< tag::amr, tag::init >().size() ),
   m_refiner( m_inpoel ),
@@ -177,19 +175,13 @@ Refiner::flatcoord( const tk::UnsMesh::CoordMap& coordmap )
 }
 
 void
-Refiner::dtref( tk::real t,
-                std::size_t itr,
-                const std::map< int, std::vector< std::size_t > >& bnode )
+Refiner::dtref( const std::map< int, std::vector< std::size_t > >& bnode )
 // *****************************************************************************
 // Start mesh refinement (during time stepping, t>0)
-//! \param[in] t Physical time
-//! Iteration count with mesh refinement
 //! \param[in] bnode Node lists of side sets
 // *****************************************************************************
 {
   m_initial = false;
-  m_t = t;
-  m_itr = itr;
 
   // Update boundary node lists
   m_bnode = bnode;
@@ -200,12 +192,12 @@ Refiner::dtref( tk::real t,
 void
 Refiner::t0ref()
 // *****************************************************************************
-// Output mesh to file before a new step of initial mesh refinement (before t>0)
+// Output mesh to file before a new step mesh refinement
 // *****************************************************************************
 {
   bool wrote = false;
 
-  if (m_initial) {
+  if (m_initial) {      // if initial (before t=0) AMR
     Assert( m_ninitref > 0, "No initial mesh refinement steps configured" );
     // Output initial mesh to file
     auto l = m_ninitref - m_initref.size();  // num initref steps completed
@@ -577,26 +569,17 @@ Refiner::eval()
 
   updateMesh();
 
-  std::string basefilename;
-  std::size_t itr = 0;
-  tk::real t = 0.0;
-
   if (m_initial) {      // if initial (before t=0) AMR
     auto l = m_ninitref - m_initref.size() + 1;  // num initref steps completed
     auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
     // Generate times equally subdividing t0-1...t0 to ninitref steps
-    t = t0 - 1.0 + static_cast<tk::real>(l)/static_cast<tk::real>(m_ninitref);
-    itr = l;
-    basefilename = "t0ref";
-  } else {              // if AMR during time stepping (t>0)
-    t = m_t;
-    itr = m_itr;
-    basefilename = "dtref";
-  }
-
-  // Output mesh after refinement step
-  writeMesh( basefilename, itr, t,
-             CkCallback( CkIndex_Refiner::next(), thisProxy[thisIndex] ) );
+    auto t =
+      t0 - 1.0 + static_cast<tk::real>(l)/static_cast<tk::real>(m_ninitref);
+    auto itr = l;
+    // Output mesh after refinement step
+    writeMesh( "t0ref", itr, t,
+               CkCallback( CkIndex_Refiner::next(), thisProxy[thisIndex] ) );
+  } else next();
 }
 
 void
