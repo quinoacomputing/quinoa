@@ -97,7 +97,7 @@ class DissipationCoeffStationary {
       com2 = com2_;
     }
 
-    //! Update turbulence frequency source (zero for const-coeff policy)
+    //! Update turbulence frequency source (zero for stationary coeff policy)
     static void src( tk::real& Som ) { Som = 0.0; }
 
     //! Coefficients policy type accessor
