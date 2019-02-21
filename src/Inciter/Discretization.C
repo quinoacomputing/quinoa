@@ -115,7 +115,7 @@ Discretization::resize( const tk::UnsMesh::Chunk& chunk,
   // Update volume mesh (connectivity, global<->local id maps and coordinates)
   m_el = chunk;         // updates m_inpoel, m_gid, m_lid
   m_coord = coord;      // update mesh node coordinates
-  m_msum = msum;        // update node communciation map
+  m_msum = msum;        // update node communication map
 
   // Generate local ids for new chare boundary global ids
   std::size_t lid = m_bid.size();
