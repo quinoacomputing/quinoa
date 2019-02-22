@@ -281,13 +281,13 @@ Transporter::createPartitioner()
   // Create mesh partitioner Charm++ chare group and start preparing mesh
   m_print.diag( "Reading mesh" );
 
-  // Create empty mesh sorter Charm++ chare array
+  // Create empty mesh sorter Charm++ chare array (bound to workers)
   m_sorter = CProxy_Sorter::ckNew( m_scheme.arrayoptions() );
 
   // Create empty mesh refiner chare array (bound to workers)
   m_refiner = CProxy_Refiner::ckNew( m_scheme.arrayoptions() );
 
-  // Create MeshWriter chare nodegroup
+  // Create MeshWriter chare group
   m_meshwriter = tk::CProxy_MeshWriter::ckNew(
                     g_inputdeck.get< tag::selected, tag::filetype >(),
                     centering,

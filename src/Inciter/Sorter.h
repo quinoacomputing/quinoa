@@ -60,6 +60,7 @@ class Sorter : public CBase_Sorter {
                      const tk::CProxy_MeshWriter& meshwriter,
                      const tk::SorterCallback& cbs,
                      const Scheme& scheme,
+                     CkCallback reorderRefiner,
                      const std::vector< std::size_t >& ginpoel,
                      const tk::UnsMesh::CoordMap& coordmap,
                      const std::map< int, std::vector< std::size_t > >& bface,
@@ -115,6 +116,11 @@ class Sorter : public CBase_Sorter {
     //! Create worker chare array elements on this PE
     void createWorkers();
 
+    //! Update mesh data we hold for whoever calls this function
+    void mesh( std::vector< std::size_t >& ginpoel,
+               tk::UnsMesh::CoordMap& coordmap,
+               std::vector< std::size_t >& triinpoel );
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -124,6 +130,7 @@ class Sorter : public CBase_Sorter {
       p | m_meshwriter;
       p | m_cbs;
       p | m_scheme;
+      p | m_reorderRefiner;
       p | m_ginpoel;
       p | m_coordmap;
       p | m_nbnd;
@@ -159,6 +166,8 @@ class Sorter : public CBase_Sorter {
     tk::SorterCallback m_cbs;
     //! Discretization scheme
     Scheme m_scheme;
+    //! Callback to send reordered mesh to Refiner
+    CkCallback m_reorderRefiner;
     //! Tetrtahedron element connectivity of our chunk of the mesh (global ids)
     std::vector< std::size_t > m_ginpoel;
     //! Coordinates associated to global node IDs of our mesh chunk

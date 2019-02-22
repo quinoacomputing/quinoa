@@ -49,7 +49,7 @@ class Refiner : public CBase_Refiner {
                       const tk::SorterCallback& cbs,
                       const std::vector< std::size_t >& ginpoel,
                       const tk::UnsMesh::CoordMap& coordmap,
-                      const std::map< int, std::vector< std::size_t > >& belem,
+                      const std::map< int, std::vector< std::size_t > >& bface,
                       const std::vector< std::size_t >& triinpoel,
                       const std::map< int, std::vector< std::size_t > >& bnode,
                       int nchare );
@@ -67,8 +67,11 @@ class Refiner : public CBase_Refiner {
     //! Configure Charm++ reduction types
     static void registerReducers();
 
-    //! Start new step of initial mesh refinement (before t>0)
-    void t0refstart();
+    //! Query Sorter and update local mesh with the reordered one
+    void reorder();
+
+    //! Start new step of initial mesh refinement
+    void start();
 
     //! Continue after finishing a refinement step
     void next();
@@ -116,7 +119,7 @@ class Refiner : public CBase_Refiner {
       }
       p | m_coordmap;
       p | m_coord;
-      p | m_belem;
+      p | m_bface;
       p | m_triinpoel;
       p | m_bnode;
       p | m_nchare;
@@ -184,7 +187,7 @@ class Refiner : public CBase_Refiner {
     //! Coordinates of mesh nodes of our chunk of the mesh
     tk::UnsMesh::Coords m_coord;
     //! List of boundary faces associated to side-set IDs
-    std::map< int, std::vector< std::size_t > > m_belem;
+    std::map< int, std::vector< std::size_t > > m_bface;
     //! Boundary face-node connectivity
     std::vector< std::size_t > m_triinpoel;
     //! List of boundary nodes associated to side-set IDs

@@ -27,6 +27,7 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
                 const tk::CProxy_MeshWriter& meshwriter,
                 const tk::SorterCallback& cbs,
                 const Scheme& scheme,
+                CkCallback reorderRefiner,
                 const std::vector< std::size_t >& ginpoel,
                 const tk::UnsMesh::CoordMap& coordmap,
                 const std::map< int, std::vector< std::size_t > >& bface,
@@ -37,6 +38,7 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
   m_meshwriter( meshwriter ),
   m_cbs( cbs ),
   m_scheme( scheme ),
+  m_reorderRefiner( reorderRefiner ),
   m_ginpoel( ginpoel ),
   m_coordmap( coordmap ),
   m_nbnd( 0 ),
@@ -452,8 +454,8 @@ Sorter::finish()
   }
 
   // Update unique global node IDs of this chare with the reordered node IDs
-  m_nodeset.clear();
-  m_nodeset.insert( begin(m_ginpoel), end(m_ginpoel) );
+  //m_nodeset.clear();
+  //m_nodeset.insert( begin(m_ginpoel), end(m_ginpoel) );
 
   // Update boundary face-node connectivity with the reordered node IDs
   for (auto& p : m_triinpoel) p = tk::cref_find( m_newnodes, p );
@@ -463,10 +465,29 @@ Sorter::finish()
     for (auto& p : s.second)
       p = tk::cref_find( m_newnodes, p );
 
+  // Update mesh in Refiner after reordering
+  m_reorderRefiner.send();
+
   // Progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chreordered();
 
   createDiscWorkers();
+}
+
+void
+Sorter::mesh( std::vector< std::size_t >& ginpoel,
+              tk::UnsMesh::CoordMap& coordmap,
+              std::vector< std::size_t >& triinpoel )
+// *****************************************************************************
+// Update mesh data we hold for whoever calls this function
+//! \param[in,out] ginpoel Mesh connectivity using global IDs
+//! \param[in,out] coordmap Map of mesh node coordinates
+//! \param[in,out] triinpoel Boundary face-node connectivity
+// *****************************************************************************
+{
+  ginpoel = m_ginpoel;
+  coordmap = m_coordmap;
+  triinpoel = m_triinpoel;
 }
 
 void
