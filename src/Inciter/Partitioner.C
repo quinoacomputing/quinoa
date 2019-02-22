@@ -84,10 +84,10 @@ Partitioner::Partitioner(
   // Create mesh reader
   tk::MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
-  // Read this PE's chunk of the mesh (graph and coords) from file
+  // Read this compute node's chunk of the mesh (graph and coords) from file
   std::vector< std::size_t > triinpoel;
   mr.readMeshPart( m_ginpoel, m_inpoel, triinpoel, m_lid, m_coord,
-                   CkNumPes(), CkMyPe() );
+                   CkNumNodes(), CkMyNode() );
 
   // Compute triangle connectivity for side sets, reduce boundary face for side
   // sets to this compute node only and to compute-node-local face ids
