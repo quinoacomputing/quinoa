@@ -68,8 +68,6 @@ DiagCG::DiagCG( const CProxy_Discretization& disc, const FaceData& fd ) :
 //! \param[in] fd Face data structures
 // *****************************************************************************
 {
-  usesAtSync = true;    // enable migration at AtSync
-
   // Size communication buffers
   resizeComm();
 
@@ -672,7 +670,6 @@ DiagCG::step()
 
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
-    AtSync();   // migrate here if needed
     dt();
   } else {
     contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );

@@ -69,8 +69,6 @@ Discretization::Discretization(
   Assert( m_psup.second.size()-1 == m_gid.size(),
           "Number of mesh points and number of global IDs unequal" );
 
-  usesAtSync = true;    // Enable migration at AtSync
-
   // Convert neighbor nodes to vectors from sets
   for (const auto& n : msum) {
     auto& v = m_msum[ n.first ];
