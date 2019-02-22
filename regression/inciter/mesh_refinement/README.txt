@@ -1,3 +1,5 @@
+# vim: filetype=cmake:
+#
 # Naming convention for AMR regression tests
 #
 # Example: amr_t0ref_uu_trans_reord_dg_u0.4
