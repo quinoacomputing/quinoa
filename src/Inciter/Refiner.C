@@ -102,8 +102,6 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   Assert( tk::conforming( m_inpoel, m_coord ),
           "Input mesh to Refiner not conforming" );
 
-  usesAtSync = true;    // enable migration at AtSync
-
   // Reverse initial mesh refinement type list (will pop from back)
   std::reverse( begin(m_initref), end(m_initref) );
 
