@@ -43,12 +43,15 @@ class CompFlowProblemRayleighTaylor {
     //! \return Values of all components evaluated at (x,y,z,t)
     //! \note The function signature must follow tk::SolutionFn
     static tk::SolutionFn::result_type
-    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
+    solution( ncomp_t system,
+              [[maybe_unused]] ncomp_t ncomp,
+              tk::real x,
+              tk::real y,
+              tk::real z,
               tk::real t )
     {
       Assert( ncomp == m_ncomp, "Number of scalar components must be " +
                                 std::to_string(m_ncomp) );
-      IGNORE(ncomp);
       using tag::param; using std::sin; using std::cos;
       // manufactured solution parameters
       const auto a = g_inputdeck.get< param, eq, tag::alpha >()[system];

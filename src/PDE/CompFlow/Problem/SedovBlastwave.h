@@ -35,15 +35,20 @@ class CompFlowProblemSedovBlastwave {
     //! \param[in] ncomp Number of scalar components in this PDE system
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
+    //! \param[in] z Z coordinate where to evaluate the solution
+    //! \param[in] t Time where to evaluate the solution
     //! \return Values of all components evaluated at (x,y,0)
     //! \note The function signature must follow tk::SolutionFn
     static tk::SolutionFn::result_type
-    solution( ncomp_t system, ncomp_t ncomp,
-              tk::real x, tk::real y, tk::real, tk::real )
+    solution( ncomp_t system,
+              [[maybe_unused]] ncomp_t ncomp,
+              tk::real x,
+              tk::real y,
+              [[maybe_unused]] tk::real z,
+              [[maybe_unused]] tk::real t )
     {
       Assert( ncomp == m_ncomp, "Number of scalar components must be " +
                                 std::to_string(m_ncomp) );
-      IGNORE(ncomp);
       using tag::param;
       // ratio of specific heats
       const tk::real g = g_inputdeck.get< param, eq, tag::gamma >()[system];

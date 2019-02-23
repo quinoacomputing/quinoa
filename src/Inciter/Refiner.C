@@ -282,12 +282,10 @@ Refiner::refine()
             m_inpoel, m_coord ),
           "Mesh partition before refinement leaky" );
 
-  for (const auto& e : tk::cref_find(m_bndEdges,thisIndex)) {
-    IGNORE(e);
+  for ([[maybe_unused]] const auto& e : tk::cref_find(m_bndEdges,thisIndex))
     Assert( m_lid.find( e[0] ) != end( m_lid ) &&
             m_lid.find( e[1] ) != end( m_lid ),
             "Boundary edge not found before refinement" );
-  }
 
   if (m_initial) {      // if initial (before t=0) AMR
 
@@ -314,12 +312,10 @@ Refiner::refine()
   }
 
 
-  for (const auto& e : tk::cref_find(m_bndEdges,thisIndex)) {
-    IGNORE(e);
+  for ([[maybe_unused]] const auto& e : tk::cref_find(m_bndEdges,thisIndex))
     Assert( m_lid.find( e[0] ) != end( m_lid ) &&
             m_lid.find( e[1] ) != end( m_lid ),
             "Boundary edge not found after refinement" );
-  }
 
   // Ensure valid mesh after refinement
   Assert( tk::positiveJacobians( m_inpoel, m_coord ),
@@ -1059,9 +1055,10 @@ Refiner::updateBndMesh( const std::unordered_set< std::size_t >& old,
 }
 
 void
-Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
-                         const std::unordered_set< std::size_t >& ref,
-                         const BndFaces& bnd )
+Refiner::updateBndFaces(
+  const std::unordered_set< std::size_t >& old,
+  [[maybe_unused]] const std::unordered_set< std::size_t >& ref,
+  const BndFaces& bnd )
 // *****************************************************************************
 // Regenerate boundary faces after mesh refinement step
 //! \param[in] old Unique nodes of the old (unrefined) mesh using local ids
@@ -1071,8 +1068,6 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
 //!   node IDs.
 // *****************************************************************************
 {
-  IGNORE(ref);  // to avoid compiler warning when asserts are optimized away
-
   using Face = tk::UnsMesh::Face;
 
   // storage for boundary faces associated to side-set IDs of the refined mesh
@@ -1176,9 +1171,10 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
 }
 
 void
-Refiner::updateBndNodes( const std::unordered_set< std::size_t >& old,
-                         const std::unordered_set< std::size_t >& ref,
-                         const Refiner::BndFaces& bnd )
+Refiner::updateBndNodes(
+  const std::unordered_set< std::size_t >& old,
+  [[maybe_unused]] const std::unordered_set< std::size_t >& ref,
+  const Refiner::BndFaces& bnd )
 // *****************************************************************************
 // Update boundary nodes after mesh refinement
 //! \param[in] old Unique nodes of the old (unrefined) mesh using local ids
@@ -1188,8 +1184,6 @@ Refiner::updateBndNodes( const std::unordered_set< std::size_t >& old,
 //!   node IDs.
 // *****************************************************************************
 {
-  IGNORE(ref);  // to avoid compiler warning when asserts are optimized away
-
   using Edge = tk::UnsMesh::Edge;
 
   // storage for boundary nodes associated to side-set IDs of the refined mesh

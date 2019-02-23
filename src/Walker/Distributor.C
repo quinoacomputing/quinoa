@@ -220,17 +220,13 @@ Distributor::computedt()
 }
 
 void
-Distributor::estimateOrd( tk::real* ord, int n )
+Distributor::estimateOrd( tk::real* ord, [[maybe_unused]] int n )
 // *****************************************************************************
 // Estimate ordinary moments
 //! \param[in] ord Ordinary moments (sum) collected over all chares
 //! \param[in] n Number of ordinary moments in array ord
 // *****************************************************************************
 {
-  #ifdef NDEBUG
-  IGNORE(n);
-  #endif
-
   Assert( static_cast<std::size_t>(n) == m_ordinary.size(),
           "Number of ordinary moments contributed not equal to expected" );
 
@@ -245,17 +241,13 @@ Distributor::estimateOrd( tk::real* ord, int n )
 }
 
 void
-Distributor::estimateCen( tk::real* cen, int n )
+Distributor::estimateCen( tk::real* cen, [[maybe_unused]] int n )
 // *****************************************************************************
 // Estimate ordinary moments
 //! \param[in] cen Central moments (sum) collected over all chares
 //! \param[in] n Number of central moments in array cen
 // *****************************************************************************
 {
-  #ifdef NDEBUG
-  IGNORE(n);
-  #endif
-
   Assert( static_cast<std::size_t>(n) == m_central.size(),
           "Number of central moments contributed not equal to expected" );
 

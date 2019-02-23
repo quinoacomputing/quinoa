@@ -71,10 +71,8 @@ class PDFWriter : public tk::Writer {
   private:
     //! Assert the number of sample space dimensions given
     template< std::size_t size, class Container >
-    void assertSampleSpaceDimensions( const Container& c ) const {
-      #ifdef NDEBUG
-      IGNORE(c);
-      #endif
+    void assertSampleSpaceDimensions( [[maybe_unused]] const Container& c )
+    const {
       Assert( c.size() == size,
               "Number of sample space variables must equal " +
               std::to_string( size ) + " in PDF writer." );

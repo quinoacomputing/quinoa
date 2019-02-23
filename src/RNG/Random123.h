@@ -122,15 +122,13 @@ class Random123 {
     //!   of length d(d+1)/2
     //! \param[in,out] r Pointer to memory to write the random numbers to
     //! \warning Not implemented!
-    void gaussianmv( int tid, ncomp_t num, ncomp_t d, const double* const mean,
-                     const double* const cov, double* r ) const
+    void gaussianmv( [[maybe_unused]] int tid,
+                     [[maybe_unused]] ncomp_t num,
+                     [[maybe_unused]] ncomp_t d,
+                     [[maybe_unused]] const double* const mean,
+                     [[maybe_unused]] const double* const cov,
+                     [[maybe_unused]] double* r ) const
     {
-      IGNORE(tid);
-      IGNORE(num);
-      IGNORE(d);
-      IGNORE(mean);
-      IGNORE(cov);
-      IGNORE(r);
     }
 
     //! Beta RNG: Generate beta random numbers

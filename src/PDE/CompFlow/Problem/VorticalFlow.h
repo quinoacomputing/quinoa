@@ -40,15 +40,19 @@ class CompFlowProblemVorticalFlow {
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] z Z coordinate where to evaluate the solution
+    //! \param[in] t Time where to evaluate the solution
     //! \return Values of all components evaluated at (x,y,z)
     //! \note The function signature must follow tk::SolutionFn
     static tk::SolutionFn::result_type
-    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-              tk::real )
+    solution( ncomp_t system,
+              [[maybe_unused]] ncomp_t ncomp,
+              tk::real x,
+              tk::real y,
+              tk::real z,
+              [[maybe_unused]] tk::real t )
     {
       Assert( ncomp == m_ncomp, "Number of scalar components must be " +
                                 std::to_string(m_ncomp) );
-      IGNORE(ncomp);
       using tag::param; using tag::compflow;
       // manufactured solution parameters
       const auto& a =

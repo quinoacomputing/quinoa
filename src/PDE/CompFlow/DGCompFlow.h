@@ -620,12 +620,11 @@ class CompFlow {
     //! \note The function signature must follow tk::FluxFn
     static tk::FluxFn::result_type
     flux( ncomp_t system,
-          ncomp_t ncomp,
+          [[maybe_unused]] ncomp_t ncomp,
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& )
     {
       Assert( ugp.size() == ncomp, "Size mismatch" );
-      IGNORE(ncomp);
 
       const auto g = g_inputdeck.get< tag::param, eq, tag::gamma >()[ system ];
 
