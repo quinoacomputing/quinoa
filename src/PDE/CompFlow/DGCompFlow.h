@@ -152,7 +152,7 @@ class CompFlow {
              { return m_riemann.flux( fn, u, v ); };
       // configure a no-op lambda for prescribed velocity
       auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real ){
-        return std::vector< std::array< tk::real, 3 > >( this->m_ncomp ); };
+        return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
       // supported boundary condition types and associated state functions
       std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > > bctypes{{

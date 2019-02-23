@@ -316,7 +316,7 @@ Distributor::outStat()
   // lambda to sample tables to write to statistics file
   auto extra = [this]() -> std::vector< tk::real > {
     std::vector< tk::real > x;
-    for (const auto& t : this->m_tables.second)
+    for (const auto& t : m_tables.second)
       x.push_back( tk::sample(m_t,t) );
     return x;
   };

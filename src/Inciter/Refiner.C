@@ -488,14 +488,14 @@ Refiner::eval()
     uint64_t itf = 1;   // field output iteration count
 
     std::vector< std::string > names{ "refinement level", "cell type" };
-    auto& tet_store = this->m_refiner.tet_store;
+    auto& tet_store = m_refiner.tet_store;
     std::vector< std::vector< tk::real > > fields{
       tet_store.get_refinement_level_list(), tet_store.get_cell_type_list() };
 
-    this->m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
-      write( meshoutput, fieldoutput, it, itf, t, this->thisIndex,
-             tk::Centering::ELEM, basefilename, this->m_inpoel, this->m_coord,
-             this->m_belem, this->m_triinpoel, this->m_bnode, this->m_lid,
+    m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
+      write( meshoutput, fieldoutput, it, itf, t, thisIndex,
+             tk::Centering::ELEM, basefilename, m_inpoel, m_coord,
+             m_belem, m_triinpoel, m_bnode, m_lid,
              names, fields, CkCallback(CkCallback::ignore) );
   };
 

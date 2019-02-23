@@ -148,7 +148,7 @@ class MultiMat {
       auto rieflxfn = std::bind( &RiemannSolver::flux, m_riemann, _1, _2, _3 );
       // configure a no-op lambda for prescribed velocity
       auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real ){
-        return std::vector< std::array< tk::real, 3 > >( this->m_ncomp ); };
+        return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
       // supported boundary condition types and associated state functions
       std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > > bctypes{{
