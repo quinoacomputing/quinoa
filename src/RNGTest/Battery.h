@@ -58,8 +58,7 @@ class Battery {
     //!    Concept.
     //! \param[in] args Constructor arguments
     //! \see See also tk::recordCharmModel().
-    template< typename T, typename... CtrArgs,
-      typename std::enable_if< tk::HasTypedefProxy<T>::value, int >::type = 0 >
+    template< typename T, typename... CtrArgs >
     explicit Battery( std::function<T()> c [[maybe_unused]], CtrArgs... args ) :
       self( std::make_unique< Model< typename T::Proxy > >
             (std::move(T::Proxy::ckNew(std::forward<CtrArgs>(args)...))) ) {

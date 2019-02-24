@@ -389,8 +389,7 @@ struct VBase {
   //! from an already-bound std::function, we could use those instead of
   //! having to explicitly forward the model constructor arguments via this
   //! host constructor. See also tk::recordCharmModel().
-  template< typename T, typename... CtrArgs,
-    typename std::enable_if< tk::HasTypedefProxy<T>::value, int >::type = 0 >
+  template< typename T, typename... CtrArgs >
   explicit VBase( std::function<T()> c [[maybe_unused]], CtrArgs... args ) :
     self( std::make_unique< Model< typename T::Proxy > >
           (std::move(T::Proxy::ckNew(std::forward<CtrArgs>(args)...))) ) {

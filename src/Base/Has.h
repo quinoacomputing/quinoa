@@ -24,6 +24,10 @@ struct HasTypedefProxy {
     static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
 };
 
+//! Helper variable template for HasTypedefProxy
+template < typename T >
+inline constexpr bool HasTypedefProxy_v = HasTypedefProxy< T >::value;
+
 //! \brief Detect if T defines type "alias"
 //! \see http://stackoverflow.com/a/7235647
 template< typename T >
@@ -36,6 +40,10 @@ struct HasTypedefAlias {
   public:
     static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
 };
+
+//! Helper variable template for HasTypedefAlias
+template < typename T >
+inline constexpr bool HasTypedefAlias_v = HasTypedefAlias< T >::value;
 
 //! \brief Detect if T defines type "code"
 //! \see http://stackoverflow.com/a/7235647
@@ -50,6 +58,10 @@ struct HasTypedefCode {
     static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
 };
 
+//! Helper variable template for HasTypedefCode
+template < typename T >
+inline constexpr bool HasTypedefCode_v = HasTypedefCode< T >::value;
+
 //! \brief Detect if T defines type "expect::type"
 //! \see http://stackoverflow.com/a/7235647
 template< typename T >
@@ -62,6 +74,10 @@ struct HasTypedefExpectType {
   public:
     static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
 };
+
+//! Helper variable template for HasTypedefExpectType
+template < typename T >
+inline constexpr bool HasTypedefExpectType_v = HasTypedefExpectType< T >::value;
 
 //! \brief Detect if T defines function "expect::description"
 //! \see http://stackoverflow.com/a/257382
@@ -76,6 +92,11 @@ struct HasFunctionExpectDescription {
     static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
 };
 
+//! Helper variable template for HasFunctionExpectDescription
+template < typename T >
+inline constexpr bool HasFunctionExpectDescription_v =
+  HasFunctionExpectDescription< T >::value;
+
 //! \brief Detect if T defines function "expect::choices"
 //! \see http://stackoverflow.com/a/257382
 template< typename T >
@@ -88,6 +109,11 @@ struct HasFunctionExpectChoices {
   public:
     static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
 };
+
+//! Helper variable template for HasFunctionExpectChoices
+template < typename T >
+inline constexpr bool HasFunctionExpectChoices_v =
+  HasFunctionExpectChoices< T >::value;
 
 } // tk::
 

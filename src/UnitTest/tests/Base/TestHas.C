@@ -48,7 +48,7 @@ template<> template<>
 void Has_object::test< 1 >() {
   set_test_name( "HasTypedefProxy detects absence" );
 
-  struct no { bool value = tk::HasTypedefProxy< noProxy >::value; };
+  struct no { bool value = tk::HasTypedefProxy_v< noProxy >; };
   ensure_equals( "struct has no Proxy", no().value, false );
 }
 
@@ -57,7 +57,7 @@ template<> template<>
 void Has_object::test< 2 >() {
   set_test_name( "HasTypedefProxy detects presence" );
 
-  struct yes { bool value = tk::HasTypedefProxy< yesProxy >::value; };
+  struct yes { bool value = tk::HasTypedefProxy_v< yesProxy >; };
   ensure_equals( "struct has Proxy", yes().value, true );
 }
 
@@ -66,7 +66,7 @@ template<> template<>
 void Has_object::test< 3 >() {
   set_test_name( "HasTypedefAlias detects absence" );
 
-  struct no { bool value = tk::HasTypedefAlias< noAlias >::value; };
+  struct no { bool value = tk::HasTypedefAlias_v< noAlias >; };
   ensure_equals( "struct has no alias", no().value, false );
 }
 
@@ -75,7 +75,7 @@ template<> template<>
 void Has_object::test< 4 >() {
   set_test_name( "HasTypedefAlias detects presence" );
 
-  struct yes { bool value = tk::HasTypedefAlias< yesAlias >::value; };
+  struct yes { bool value = tk::HasTypedefAlias_v< yesAlias >; };
   ensure_equals( "struct has alias", yes().value, true );
 }
 
@@ -84,7 +84,7 @@ template<> template<>
 void Has_object::test< 5 >() {
   set_test_name( "HasTypedefCode detects absence" );
 
-  struct no { bool value = tk::HasTypedefCode< noCode >::value; };
+  struct no { bool value = tk::HasTypedefCode_v< noCode >; };
   ensure_equals( "struct has no code", no().value, false );
 }
 
@@ -93,7 +93,7 @@ template<> template<>
 void Has_object::test< 6 >() {
   set_test_name( "HasTypedefCode detects presence" );
 
-  struct yes { bool value = tk::HasTypedefCode< yesCode >::value; };
+  struct yes { bool value = tk::HasTypedefCode_v< yesCode >; };
   ensure_equals( "struct has code", yes().value, true );
 }
 
@@ -103,7 +103,7 @@ template<> template<>
 void Has_object::test< 7 >() {
   set_test_name( "HasTypedefExpectType: absence" );
 
-  struct no { bool value = tk::HasTypedefExpectType< noExpectType >::value; };
+  struct no { bool value = tk::HasTypedefExpectType_v< noExpectType >; };
   ensure_equals( "struct has no expect::type", no().value, false );
 }
 
@@ -113,7 +113,7 @@ template<> template<>
 void Has_object::test< 8 >() {
   set_test_name( "HasTypedefExpectType: presence" );
 
-  struct yes { bool value = tk::HasTypedefExpectType< yesExpectType >::value; };
+  struct yes { bool value = tk::HasTypedefExpectType_v< yesExpectType >; };
   ensure_equals( "struct has expect::type", yes().value, true );
 }
 
@@ -124,7 +124,7 @@ void Has_object::test< 9 >() {
   set_test_name( "HasFunctionExpectDescription: absence" );
 
   struct no {
-    bool value = tk::HasFunctionExpectDescription< noExpectDescription >::value;
+    bool value = tk::HasFunctionExpectDescription_v< noExpectDescription >;
   };
   ensure_equals( "struct has no expect::description", no().value, false );
 }
@@ -136,7 +136,7 @@ void Has_object::test< 10 >() {
   set_test_name( "HasFunctionExpectDescription: presence" );
 
   struct yes {
-    bool value = tk::HasFunctionExpectDescription< yesExpectDescription >::value;
+    bool value = tk::HasFunctionExpectDescription_v< yesExpectDescription >;
   };
   ensure_equals( "struct has expect::description", yes().value, true );
 }
@@ -148,7 +148,7 @@ void Has_object::test< 11 >() {
   set_test_name( "HasFunctionExpectChoices: absence" );
 
   struct no {
-    bool value = tk::HasFunctionExpectChoices< noExpectChoices >::value;
+    bool value = tk::HasFunctionExpectChoices_v< noExpectChoices >;
   };
   ensure_equals( "struct has no expect::choices", no().value, false );
 }
@@ -160,7 +160,7 @@ void Has_object::test< 12 >() {
   set_test_name( "HasFunctionExpectChoices: presence" );
 
   struct yes {
-    bool value = tk::HasFunctionExpectChoices< yesExpectChoices >::value;
+    bool value = tk::HasFunctionExpectChoices_v< yesExpectChoices >;
   };
   ensure_equals( "struct has expect::choices", yes().value, true );
 }

@@ -172,21 +172,9 @@ class Scheme : public SchemeBase {
     //! \param[in] args Arguments to member function (entry method) to be called
     //! \details This function calls the stat member function of a chare array
     //!   discproxy and thus equivalent to discproxy.stat(...).
-    template< class Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::bcast >::value, int >::type = 0 >
+    template< typename... Args >
     void stat( Args&&... args ) {
       discproxy.stat( std::forward<Args>(args)... );
-    }
-    //////  discproxy[x].stat(...)
-    //! Function to call the stat() entry method of an element discproxy (p2p)
-    //! \param[in] x Chare array element index
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the stat member function of a chare array
-    //!   element discproxy and thus equivalent to discproxy[x].stat(...).
-    template< typename Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::elem >::value, int >::type = 0 >
-    void stat( const CkArrayIndex1D& x, Args&&... args ) {
-      discproxy[x].stat( std::forward<Args>(args)... );
     }
 
     //////  discproxy[x].insert(...)
@@ -208,8 +196,7 @@ class Scheme : public SchemeBase {
     //! \details This function calls the doneInserting member function of a
     //!   chare array discproxy and thus equivalent to
     //!   discproxy.doneInserting(...).
-    template< class Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::bcast >::value, int >::type = 0 >
+    template< typename... Args >
     void doneDiscInserting( Args&&... args ) {
       discproxy.doneInserting( std::forward<Args>(args)... );
     }
@@ -221,8 +208,7 @@ class Scheme : public SchemeBase {
     //! \details This function calls the doneInserting member function of a
     //!   chare array fctproxy and thus equivalent to
     //!   fctproxy.doneInserting(...).
-    template< class Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::bcast >::value, int >::type = 0 >
+    template< typename... Args >
     void doneDistFCTInserting( Args&&... args ) {
       fctproxy.doneInserting( std::forward<Args>(args)... );
     }
@@ -295,8 +281,7 @@ class Scheme : public SchemeBase {
     //! \details this function calls the diag member function of a chare array
     //!   proxy and thus equivalent to proxy.diag(...), specifying a
     //!   non-default last argument.
-    template< class Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::bcast >::value, int >::type = 0 >
+    template< typename... Args >
     void diag( Args&&... args ) {
       std::visit( call_diag<Args...>( std::forward<Args>(args)... ),
                             proxy );
@@ -322,26 +307,10 @@ class Scheme : public SchemeBase {
     //! \param[in] args Arguments to member function (entry method) to be called
     //! \details This function calls the doneInserting member function of a
     //!   chare array proxy and thus equivalent to proxy.doneInserting(...).
-    template< class Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::bcast >::value, int >::type = 0 >
+    template< typename... Args >
     void doneInserting( Args&&... args ) {
       std::visit(
         call_doneInserting<Args...>( std::forward<Args>(args)... ), proxy );
-    }
-
-    //////  proxy[x].newMesh(...)
-    //! Function to call the newMesh entry method of an element proxy (p2p)
-    //! \param[in] x Chare array element index
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the newMesh member function of a chare
-    //!   array element proxy and thus equivalent to proxy[x].newMesh(...),
-    //!   specifying a non-default last argument.
-    template< typename Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::elem >::value, int >::type = 0 >
-    void newMesh( const CkArrayIndex1D& x, Args&&... args ) {
-      auto e = tk::element< ProxyElem >( proxy, x );
-      std::visit(
-        call_newMesh<Args...>( std::forward<Args>(args)... ), e );
     }
 
     ///@{
@@ -501,27 +470,6 @@ class Scheme : public SchemeBase {
      template< typename P, typename... Args >
      static void invoke( P& p, Args&&... args ) {
        p.doneInserting( std::forward<Args>(args)... );
-     }
-   };
-
-   //! Functor to call the chare entry method 'newMesh'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and std::visit. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_newMesh : Call< call_newMesh<As...>, As... > {
-     using Base = Call< call_newMesh<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.newMesh( std::forward<Args>(args)... );
      }
    };
 

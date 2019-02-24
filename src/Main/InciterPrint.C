@@ -103,9 +103,9 @@ void InciterPrint::eqlegend()
 {
   section( "PDE factory legend, policy codes" );
 
-  static_assert( tk::HasTypedefCode< kw::physics::info >::value,
+  static_assert( tk::HasTypedefCode_v< kw::physics::info >,
                  "Policy code undefined for keyword" );
-  static_assert( tk::HasTypedefCode< kw::problem::info >::value,
+  static_assert( tk::HasTypedefCode_v< kw::problem::info >,
                  "Policy code undefined for keyword" );
 
   raw( m_item_indent + kw::physics::name() +

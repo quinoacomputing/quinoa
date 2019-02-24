@@ -476,7 +476,7 @@ Transporter::discinserted()
 // Reduction target: all Discretization chares have been inserted
 // *****************************************************************************
 {
-  m_scheme.doneDiscInserting< tag::bcast >();
+  m_scheme.doneDiscInserting();
 }
 
 void
@@ -498,7 +498,7 @@ Transporter::disccreated()
 
   auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
   if (sch == ctr::SchemeType::DiagCG)
-    m_scheme.doneDistFCTInserting< tag::bcast >();
+    m_scheme.doneDistFCTInserting();
 
   m_scheme.vol();
 }
@@ -510,7 +510,7 @@ Transporter::workinserted()
 // inserted
 // *****************************************************************************
 {
-  m_scheme.doneInserting< tag::bcast >();
+  m_scheme.doneInserting();
 }
 
 void
@@ -589,7 +589,7 @@ Transporter::totalvol( tk::real v, tk::real initial )
   m_V = v;
 
   if (initial > 0.0)
-    m_scheme.stat< tag::bcast >();
+    m_scheme.stat();
   else
     m_scheme.resized();
 }
@@ -797,7 +797,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
   dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
 
   // Evaluate whether to continue with next step
-  m_scheme.diag< tag::bcast >();
+  m_scheme.diag();
 }
 
 void
