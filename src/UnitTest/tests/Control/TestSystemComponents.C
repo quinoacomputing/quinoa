@@ -29,10 +29,7 @@ struct eq2 {};
 //! All tests in group inherited from this base
 struct SystemComponents_common {
   // Typedef simple set of equations of two types
-  using ncomps = tk::ctr::ncomponents<
-    eq1, std::vector< tk::ctr::ncomp_type >,
-    eq2, std::vector< tk::ctr::ncomp_type >
-  >;
+  using ncomps = tk::ctr::ncomponents< eq1, eq2 >;
   // Typedef vector of all equation tags
   using eqs = brigand::list< eq1, eq2 >;
 

@@ -70,10 +70,12 @@
 
 #include <vector>
 
-#include <brigand/algorithms/for_each.hpp>
 #include <brigand/sequences/list.hpp>
+#include <brigand/algorithms/for_each.hpp>
+#include <brigand/algorithms/wrap.hpp>
 
-#include "NoWarning/remove.h"
+#include "NoWarning/flatten.h"
+#include "NoWarning/transform.h"
 
 #include "TaggedTuple.h"
 #include "StatCtr.h"
@@ -111,20 +113,37 @@ using OffsetMap = std::map< char, ncomp_type, CaseInsensitiveCharLess >;
 //!   consistent with OffsetMap.
 using NcompMap = std::map< char, ncomp_type, CaseInsensitiveCharLess >;
 
+//! Helper for converting a brigand::list to a tagged_tuple
+template< typename... T >
+using tagged_tuple_wrapper = typename tk::tuple::tagged_tuple< T... >;
+
+//! Helper for converting a brigand::list to a tagged_tuple
+template< typename L >
+using as_tagged_tuple = brigand::wrap< L, tagged_tuple_wrapper >;
+
+//! Number of components storage as a vector for a system of equations
+//! \details This is only helper class, defining a type 'type' for
+//!    brigand::apply, so it can be used for defining a base for ncomponents
+struct ComponentVector : public std::vector< ncomp_type > {
+  using type = std::vector< ncomp_type >;
+};
+
 //! \brief Number of components storage
-//! \details All this trickery with boost::mpl allows the code below to be
-//!   generic. As a result, adding a new component requires adding a single line
-//!   (a tag and its type) to the already existing list, see typedefs 'ncomps'.
-//!   The member functions, doing initialization, computing the number of total
-//!   components, the offset for a given tag, and computing the offset map, need
-//!   no change -- even if the order of the number of components change.
+//! \details All this trickery with template meta-programming allows the code
+//!   below to be generic. As a result, adding a new component requires adding a
+//!   single line (a tag and its type) to the already existing list, see
+//!   typedefs 'ncomps'. The member functions, doing initialization, computing
+//!   the number of total components, the offset for a given tag, and computing
+//!   the offset map, need no change -- even if the order of the number of
+//!   components change.
 template< typename... Tags >
-class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
+class ncomponents : public
+  // tk::tuple::tagged_tuple< tag1, vec2, tag2, vec2, ... >
+  as_tagged_tuple< brigand::flatten< brigand::transform< brigand::list< Tags... >,
+    brigand::bind< brigand::list, brigand::_1, ComponentVector > > > > {
 
   public:
-    //! Remove std::vector< ncomp_type > types, i.e., keep only the tags
-    using tags = typename
-      brigand::remove< brigand::list<Tags...>, std::vector<ncomp_type> >;
+    using tags = brigand::list< Tags... >;
 
   private:
     //! Function object for zeroing all number of components
