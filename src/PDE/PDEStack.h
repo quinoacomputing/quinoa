@@ -39,7 +39,7 @@ extern ctr::InputDeck g_inputdeck;
 class PDEStack {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
 
   public:
     //! Constructor: register partial differential equations into factory

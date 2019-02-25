@@ -27,7 +27,7 @@ namespace dg {
 class CompFlowPhysicsEuler {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
 
   public:
     //! Return physics type

@@ -29,7 +29,7 @@ namespace inciter {
 class CompFlowProblemVorticalFlow {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
     static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
   public:

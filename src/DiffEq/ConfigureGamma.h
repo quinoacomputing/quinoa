@@ -24,7 +24,7 @@ void registerGamma( DiffEqFactory& f, std::set< ctr::DiffEqType >& t );
 
 //! Return information on the gamma SDE
 std::vector< std::pair< std::string, std::string > >
-infoGamma( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt );
+infoGamma( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt );
 
 } // walker::
 

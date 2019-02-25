@@ -24,7 +24,7 @@ void registerSkewNormal( DiffEqFactory& f, std::set< ctr::DiffEqType >& t );
 
 //! Return information on the skew-normal SDE
 std::vector< std::pair< std::string, std::string > >
-infoSkewNormal( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt );
+infoSkewNormal( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt );
 
 } // walker::
 

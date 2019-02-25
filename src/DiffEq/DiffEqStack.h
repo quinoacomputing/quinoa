@@ -37,7 +37,7 @@ extern ctr::InputDeck g_inputdeck;
 class DiffEqStack {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
 
   public:
     //! Constructor: register differential equations into factory

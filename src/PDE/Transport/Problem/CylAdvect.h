@@ -27,7 +27,7 @@ namespace inciter {
 class TransportProblemCylAdvect {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
 
   public:
     //! Evaluate analytical solution at (x,y,t) for all components

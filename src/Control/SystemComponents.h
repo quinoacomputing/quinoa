@@ -87,7 +87,7 @@ namespace tk {
 namespace ctr {
 
 //! Inherit type of number of components from keyword 'ncomp'
-using ncomp_type = kw::ncomp::info::expect::type;
+using ncomp_t = kw::ncomp::info::expect::type;
 
 //! \brief Map associating offsets to dependent variables for systems
 //! \details This map associates offsets of systems of differential !
@@ -102,7 +102,7 @@ using ncomp_type = kw::ncomp::info::expect::type;
 //!   and central moments of dependent variables (which are denoted by upper and
 //!   lower case, characters, respectively) for which the offset (for the same
 //!   dependent variable) should be the same.
-using OffsetMap = std::map< char, ncomp_type, CaseInsensitiveCharLess >;
+using OffsetMap = std::map< char, ncomp_t, CaseInsensitiveCharLess >;
 
 //! \brief Map associating number of scalar components to dependent variables
 //!   for systems
@@ -111,7 +111,7 @@ using OffsetMap = std::map< char, ncomp_type, CaseInsensitiveCharLess >;
 //!   system of systems.
 //! \note We use a case-insensitive character comparison functor to be
 //!   consistent with OffsetMap.
-using NcompMap = std::map< char, ncomp_type, CaseInsensitiveCharLess >;
+using NcompMap = std::map< char, ncomp_t, CaseInsensitiveCharLess >;
 
 //! Helper for converting a brigand::list to a tagged_tuple
 template< typename... T >
@@ -124,8 +124,8 @@ using as_tagged_tuple = brigand::wrap< L, tagged_tuple_wrapper >;
 //! Number of components storage as a vector for a system of equations
 //! \details This is only helper class, defining a type 'type' for
 //!    brigand::apply, so it can be used for defining a base for ncomponents
-struct ComponentVector : public std::vector< ncomp_type > {
-  using type = std::vector< ncomp_type >;
+struct ComponentVector : public std::vector< ncomp_t > {
+  using type = std::vector< ncomp_t >;
 };
 
 //! \brief Number of components storage
@@ -165,10 +165,10 @@ class ncomponents : public
       //! Need to store reference to host class whose data we operate on
       const ncomponents* const m_host;
       //! Internal reference used to return the total number of components
-      ncomp_type& m_nprop;
+      ncomp_t& m_nprop;
       //! \brief Constructor: store host object pointer and initially zeroed
       //!   counter reference
-      addncomp( const ncomponents* const host, ncomp_type& nprop ) :
+      addncomp( const ncomponents* const host, ncomp_t& nprop ) :
         m_host( host ), m_nprop( nprop = 0 ) {}
       //! Function call operator templated on the type that does the counting
       template< typename U > void operator()( brigand::type_<U> ) {
@@ -187,17 +187,17 @@ class ncomponents : public
       //! Need to store reference to host class whose data we operate on
       const ncomponents* const m_host;
       //! Internal reference used to return the offset for the tag given
-      ncomp_type& m_offset;
+      ncomp_t& m_offset;
       //! \brief Internal storage for the index of a system within systems
       //! \details Example: I want the second Dirichlet system: m_c = 1.
       //! \see offset().
-      const ncomp_type m_c;
+      const ncomp_t m_c;
       //! Indicates whether the tag (eq system) was found, so it is time to quit
       bool m_found;
       //! \brief Constructor: store host object pointer, initially zeroed offset
       //!   reference, and system index we are looking for
-      addncomp4tag( const ncomponents* const host, ncomp_type& offset,
-                    ncomp_type c ) :
+      addncomp4tag( const ncomponents* const host, ncomp_t& offset,
+                    ncomp_t c ) :
         m_host( host ), m_offset( offset = 0 ), m_c( c ), m_found( false ) {}
       //! \brief Function call operator templated on the type that does the
       //!   offset calculation
@@ -209,7 +209,7 @@ class ncomponents : public
           // If we have found the tag we are looking for, we count up to the
           // given system index (passed in via the constructor) and add those to
           // the offset, then quit
-          for (ncomp_type c=0; c<m_c; ++c)
+          for (ncomp_t c=0; c<m_c; ++c)
             m_offset += m_host->template get<U>()[c];
           m_found = true;
         } else if (!m_found) {
@@ -235,7 +235,7 @@ class ncomponents : public
       //!   differentiated by a different dependent variable.
       template< typename U > void operator()( brigand::type_<U> ) const {
         const auto& depvar = deck.template get< tag::param, U, tag::depvar >();
-        ncomp_type c = 0;
+        ncomp_t c = 0;
         const auto& ncomps = deck.template get< tag::component >();
         for (auto v : depvar) map[ v ] = ncomps.template offset< U >( c++ );
       }
@@ -260,7 +260,7 @@ class ncomponents : public
         const auto& ncomps = deck.template get< tag::component >();
         Assert( ncomps.template get<U>().size() == depvar.size(),
                 "ncomps != depvar" );
-        ncomp_type c = 0;
+        ncomp_t c = 0;
         for (auto v : depvar) map[ v ] = ncomps.template get< U >().at( c++ );
       }
     };
@@ -270,8 +270,8 @@ class ncomponents : public
     ncomponents() { brigand::for_each< tags >( zero( this ) ); }
 
     //! \return Total number of components
-    ncomp_type nprop() const noexcept {
-      ncomp_type n;
+    ncomp_t nprop() const noexcept {
+      ncomp_t n;
       brigand::for_each< tags >( addncomp( this, n ) );
       return n;
     }
@@ -279,8 +279,8 @@ class ncomponents : public
     //! \return offset for tag
     //! \param[in] c Index for system given by template argument tag
     template< typename tag >
-    ncomp_type offset( ncomp_type c ) const noexcept {
-      ncomp_type n;
+    ncomp_t offset( ncomp_t c ) const noexcept {
+      ncomp_t n;
       brigand::for_each< tags >( addncomp4tag< tag >( this, n, c ) );
       return n;
     }

@@ -27,7 +27,7 @@ registerMultiMat( DGFactory& df, std::set< ctr::PDEType >& dgt );
 
 //! Return information on the multi-material compressible flow PDE
 std::vector< std::pair< std::string, std::string > >
-infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_type >& cnt );
+infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt );
 
 } // inciter::
 

@@ -28,7 +28,7 @@ void registerMixMassFractionBeta( DiffEqFactory& f,
 //! Return information on the beta SDE
 std::vector< std::pair< std::string, std::string > >
 infoMixMassFractionBeta( std::map< ctr::DiffEqType,
-                                     tk::ctr::ncomp_type >& cnt );
+                                     tk::ctr::ncomp_t >& cnt );
 
 } // walker::
 

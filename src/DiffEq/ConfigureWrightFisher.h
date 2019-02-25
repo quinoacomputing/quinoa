@@ -24,7 +24,7 @@ void registerWrightFisher( DiffEqFactory& f, std::set< ctr::DiffEqType >& t );
 
 //! Return information on the Wright-Fisher SDE
 std::vector< std::pair< std::string, std::string > >
-infoWrightFisher( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt );
+infoWrightFisher( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt );
 
 } // walker::
 

@@ -25,7 +25,7 @@ void registerMixDirichlet( DiffEqFactory& f, std::set< ctr::DiffEqType >& t );
 
 //! Return information on the MixDirichlet SDE
 std::vector< std::pair< std::string, std::string > >
-infoMixDirichlet( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt );
+infoMixDirichlet( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt );
 
 } // walker::
 

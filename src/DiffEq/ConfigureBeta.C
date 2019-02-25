@@ -44,7 +44,7 @@ registerBeta( DiffEqFactory& f, std::set< ctr::DiffEqType >& t )
 }
 
 std::vector< std::pair< std::string, std::string > >
-infoBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
+infoBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 //  Return information on the beta SDE
 //! \param[inout] cnt std::map of counters for all differential equation types

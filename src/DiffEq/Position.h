@@ -33,7 +33,7 @@ template< class Init, class Coefficients >
 class Position {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::position;
 
   public:

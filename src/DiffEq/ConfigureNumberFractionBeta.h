@@ -25,7 +25,7 @@ void registerNumberFractionBeta( DiffEqFactory& f,
 
 //! Return information on the beta SDE
 std::vector< std::pair< std::string, std::string > >
-infoNumberFractionBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt );
+infoNumberFractionBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt );
 
 } // walker::
 

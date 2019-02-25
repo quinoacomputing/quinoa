@@ -24,7 +24,7 @@ void registerPosition( DiffEqFactory& f, std::set< ctr::DiffEqType >& t );
 
 //! Return information on the position SDE
 std::vector< std::pair< std::string, std::string > >
-infoPosition( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt );
+infoPosition( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt );
 
 } // walker::
 

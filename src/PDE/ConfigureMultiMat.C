@@ -45,7 +45,7 @@ registerMultiMat( DGFactory& df, std::set< ctr::PDEType >& dgt )
 }
 
 std::vector< std::pair< std::string, std::string > >
-infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_type >& cnt )
+infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 //  Return information on the compressible flow system of PDEs
 //! \param[inout] cnt std::map of counters for all PDE types

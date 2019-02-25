@@ -36,7 +36,7 @@ struct SystemComponents_common {
   // Functor verifying the number of components
   struct testncomp {
     const ncomps& m_host;
-    const std::vector< tk::ctr::ncomp_type > m_comps{ 2, 3, 3, 2 };
+    const std::vector< tk::ctr::ncomp_t > m_comps{ 2, 3, 3, 2 };
     std::size_t m_c;
     testncomp( const ncomps& host ) : m_host( host ), m_c( 0 ) {}
     template< typename U > void operator()( brigand::type_<U> ) {
@@ -49,7 +49,7 @@ struct SystemComponents_common {
   // Functor verifying the offset
   struct testoffset {
     const ncomps& m_host;
-    const std::vector< tk::ctr::ncomp_type > m_offs{ 0, 2, 5, 8 };
+    const std::vector< tk::ctr::ncomp_t > m_offs{ 0, 2, 5, 8 };
     std::size_t m_c;
     testoffset( const ncomps& host ) : m_host( host ), m_c( 0 ) {}
     template< typename U > void operator()( brigand::type_<U> ) {

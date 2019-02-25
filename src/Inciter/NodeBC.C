@@ -22,7 +22,7 @@ namespace inciter {
 extern std::vector< CGPDE > g_cgpde;
 
 std::unordered_map< std::size_t, std::vector< std::pair< bool, tk::real > > >
-match( [[maybe_unused]] tk::ctr::ncomp_type ncomp,
+match( [[maybe_unused]] tk::ctr::ncomp_t ncomp,
        tk::real t,
        tk::real dt,
        const tk::UnsMesh::Coords& coord,

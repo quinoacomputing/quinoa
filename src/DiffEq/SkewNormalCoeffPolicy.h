@@ -12,7 +12,7 @@
       coefficients, timescale, sigmasq, and lambda. Required signature:
       \code{.cpp}
         CoeffPolicyName(
-          tk::ctr::ncomp_type ncomp,
+          tk::ctr::ncomp_t ncomp,
           const std::vector< kw::sde_T::info::expect::type >& timescale_,
           const std::vector< kw::sde_sigmasq::info::expect::type >& sigmasq_,
           const std::vector< kw::sde_lambda::info::expect::type >& lambda_,
@@ -58,7 +58,7 @@ class SkewNormalCoeffConst {
   public:
     //! Constructor: initialize coefficients
     SkewNormalCoeffConst(
-      tk::ctr::ncomp_type ncomp,
+      tk::ctr::ncomp_t ncomp,
       const std::vector< kw::sde_T::info::expect::type >& timescale_,
       const std::vector< kw::sde_sigmasq::info::expect::type >& sigmasq_,
       const std::vector< kw::sde_lambda::info::expect::type >& lambda_,

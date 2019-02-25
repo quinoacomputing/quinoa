@@ -17,9 +17,9 @@
                           const tk::RNG& rng,
                           int stream,
                           tk::Particles& particles,
-                          tk::ctr::ncomp_type e,
-                          tk::ctr::ncomp_type ncomp,
-                          tk::ctr::ncomp_type offset );
+                          tk::ctr::ncomp_t e,
+                          tk::ctr::ncomp_t ncomp,
+                          tk::ctr::ncomp_t offset );
       \endcode
       where _deck_ is the input deck from which configuration is read, _rng_ is
       a reference to a random number generator to use, _stream_ is the thread
@@ -71,9 +71,9 @@ struct InitRaw {
                     const tk::RNG&,
                     int,
                     tk::Particles&,
-                    tk::ctr::ncomp_type,
-                    tk::ctr::ncomp_type,
-                    tk::ctr::ncomp_type ) {}
+                    tk::ctr::ncomp_t,
+                    tk::ctr::ncomp_t,
+                    tk::ctr::ncomp_t ) {}
 
   static ctr::InitPolicyType type() noexcept
   { return ctr::InitPolicyType::RAW; }
@@ -88,9 +88,9 @@ struct InitZero {
                     const tk::RNG&,
                     int,
                     tk::Particles& particles,
-                    tk::ctr::ncomp_type,
-                    tk::ctr::ncomp_type,
-                    tk::ctr::ncomp_type )
+                    tk::ctr::ncomp_t,
+                    tk::ctr::ncomp_t,
+                    tk::ctr::ncomp_t )
   {
     particles.fill( 0.0 );
   }
@@ -108,9 +108,9 @@ struct InitDelta {
                     const tk::RNG&,
                     int,
                     tk::Particles& particles,
-                    tk::ctr::ncomp_type e,
-                    tk::ctr::ncomp_type ncomp,
-                    tk::ctr::ncomp_type offset )
+                    tk::ctr::ncomp_t e,
+                    tk::ctr::ncomp_t ncomp,
+                    tk::ctr::ncomp_t offset )
   {
     using ncomp_t = kw::ncomp::info::expect::type;
 
@@ -149,9 +149,9 @@ struct InitBeta {
                     const tk::RNG& rng,
                     int stream,
                     tk::Particles& particles,
-                    tk::ctr::ncomp_type e,
-                    tk::ctr::ncomp_type ncomp,
-                    tk::ctr::ncomp_type offset )
+                    tk::ctr::ncomp_t e,
+                    tk::ctr::ncomp_t ncomp,
+                    tk::ctr::ncomp_t offset )
   {
     using ncomp_t = kw::ncomp::info::expect::type;
 
@@ -190,9 +190,9 @@ struct InitGaussian {
                     const tk::RNG& rng,
                     int stream,
                     tk::Particles& particles,
-                    tk::ctr::ncomp_type e,
-                    tk::ctr::ncomp_type ncomp,
-                    tk::ctr::ncomp_type offset )
+                    tk::ctr::ncomp_t e,
+                    tk::ctr::ncomp_t ncomp,
+                    tk::ctr::ncomp_t offset )
   {
     using ncomp_t = kw::ncomp::info::expect::type;
 
@@ -235,9 +235,9 @@ struct InitCorrGaussian {
                     const tk::RNG& rng,
                     int stream,
                     tk::Particles& particles,
-                    tk::ctr::ncomp_type e,
-                    tk::ctr::ncomp_type ncomp,
-                    tk::ctr::ncomp_type offset )
+                    tk::ctr::ncomp_t e,
+                    tk::ctr::ncomp_t ncomp,
+                    tk::ctr::ncomp_t offset )
   {
     using ncomp_t = kw::ncomp::info::expect::type;
 
@@ -280,9 +280,9 @@ struct InitGamma {
                     const tk::RNG& rng,
                     int stream,
                     tk::Particles& particles,
-                    tk::ctr::ncomp_type e,
-                    tk::ctr::ncomp_type ncomp,
-                    tk::ctr::ncomp_type offset )
+                    tk::ctr::ncomp_t e,
+                    tk::ctr::ncomp_t ncomp,
+                    tk::ctr::ncomp_t offset )
   {
     using ncomp_t = kw::ncomp::info::expect::type;
 

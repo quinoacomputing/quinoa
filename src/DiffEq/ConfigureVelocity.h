@@ -24,7 +24,7 @@ void registerVelocity( DiffEqFactory& f, std::set< ctr::DiffEqType >& t );
 
 //! Return information on the velocity SDE
 std::vector< std::pair< std::string, std::string > >
-infoVelocity( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt );
+infoVelocity( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt );
 
 } // walker::
 

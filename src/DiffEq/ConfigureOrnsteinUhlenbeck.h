@@ -25,7 +25,7 @@ registerOrnsteinUhlenbeck( DiffEqFactory& f, std::set< ctr::DiffEqType >& t );
 
 //! Return information on the Ornstein-Uhlenbeck SDE
 std::vector< std::pair< std::string, std::string > >
-infoOrnsteinUhlenbeck( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt );
+infoOrnsteinUhlenbeck( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt );
 
 } // walker::
 

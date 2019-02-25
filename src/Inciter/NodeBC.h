@@ -22,7 +22,7 @@ namespace inciter {
 
 //! Match user-specified boundary conditions at nodes for side sets
 std::unordered_map< std::size_t, std::vector< std::pair< bool, tk::real > > >
-match( tk::ctr::ncomp_type ncomp,
+match( tk::ctr::ncomp_t ncomp,
        tk::real t,
        tk::real dt,
        const tk::UnsMesh::Coords& coord,

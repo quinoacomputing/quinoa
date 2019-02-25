@@ -46,7 +46,7 @@ registerPosition( DiffEqFactory& f, std::set< ctr::DiffEqType >& t )
 }
 
 std::vector< std::pair< std::string, std::string > >
-infoPosition( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
+infoPosition( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 //  Return information on the position SDE
 //! \param[inout] cnt std::map of counters for all differential equation types

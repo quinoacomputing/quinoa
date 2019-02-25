@@ -25,12 +25,12 @@ namespace inciter {
 //! \brief Factory for PDEs using continuous Galerkin discretization storing
 //!   keys associated to their constructors
 using CGFactory =
-  std::map< ctr::PDEKey, std::function< CGPDE(const tk::ctr::ncomp_type&) > >;
+  std::map< ctr::PDEKey, std::function< CGPDE(const tk::ctr::ncomp_t&) > >;
 
 //! \brief Factory for PDEs using discontinuous Galerkin discretization storing
 //!   keys associated to their constructors
 using DGFactory =
-  std::map< ctr::PDEKey, std::function< DGPDE(const tk::ctr::ncomp_type&) > >;
+  std::map< ctr::PDEKey, std::function< DGPDE(const tk::ctr::ncomp_t&) > >;
 
 //! \brief Function object for registering a partial differential equation
 //!   into the partial differential equation factory
@@ -70,7 +70,7 @@ struct registerPDE {
     ctr::PDEKey key{ type, Physics::type(), Problem::type() };
     // Register equation (with policies given by brigand::list U) into factory
     tk::recordModelLate< PDE, Eq< Physics, Problem > >
-                       ( factory, key, static_cast<tk::ctr::ncomp_type>(0) );
+                       ( factory, key, static_cast<tk::ctr::ncomp_t>(0) );
   }
 };
 
