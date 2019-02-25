@@ -14,7 +14,7 @@
     are functions that operate on this data structure and return, e.g., the
     total number of components in the whole system or the offset in the whole
     data structure for a given tag. The functions should thus be able to operate
-    on a list of types, i.e., a double for loop over all tags and associated
+    on a list of types, i.e., a double for-loop over all tags and associated
     vectors - one at compile-time and the other one at run-time.
 
     _Example:_ An example is to define storage for systems of stochastic
@@ -27,13 +27,10 @@
     example, it is possible to numerically integrate two systems of Dirichlet
     equations, see DiffEq/Dirichlet.h, one with 4, the other one with 5 scalar
     variables, parameterized differently, and estimate their arbitrary coupled
-    statistics and joint PDFs. This requires that each type of system
+    statistics and joint PDFs. This requires that each type of equation system
     has a vector of integers storing the number of scalar variables.
 
-    _Solution:_ Looping through elements of a tuple is done via [Boost]
-    (http://www.boost.org)'s [MetaProgramming Library (MPL)]
-    (http://www.boost.org/doc/libs/release/libs/mpl)'s [for_each]
-    (http://www.boost.org/doc/libs/release/libs/mpl/doc/refmanual/for-each.html).
+    _Solution:_ Loopingthrough list of types is done using fold expressions.
     Such operations on types happen at compile-time, i.e., the code runs inside
     the compiler and only its result gets compiled into code to be run at
     run-time. Advantages are abstraction and generic code that is independent
@@ -69,9 +66,10 @@
 #define SystemComponents_h
 
 #include <vector>
+#include <numeric>
+#include <algorithm>
 
 #include <brigand/sequences/list.hpp>
-#include <brigand/algorithms/for_each.hpp>
 #include <brigand/algorithms/wrap.hpp>
 
 #include "NoWarning/flatten.h"
@@ -139,170 +137,88 @@ struct ComponentVector : public std::vector< ncomp_t > {
 template< typename... Tags >
 class ncomponents : public
   // tk::tuple::tagged_tuple< tag1, vec2, tag2, vec2, ... >
-  as_tagged_tuple< brigand::flatten< brigand::transform< brigand::list< Tags... >,
+  as_tagged_tuple< brigand::flatten< brigand::transform< brigand::list<Tags...>,
     brigand::bind< brigand::list, brigand::_1, ComponentVector > > > > {
 
-  public:
-    using tags = brigand::list< Tags... >;
-
   private:
-    //! Function object for zeroing all number of components
-    struct zero {
-      //! Need to store reference to host class whose data we operate on
-      ncomponents* const m_host;
-      //! Constructor: store host object pointer
-      zero( ncomponents* const host ) : m_host( host ) {}
-      //! Function call operator templated on the type that does the zeroing
-      template< typename U > void operator()( brigand::type_<U> ) {
-        //! Loop through and zero all elements of the vector for this system
-        for (auto& c : m_host->template get< U >()) c = 0;
-      }
-    };
+    //! Access vector of number of components of an eq system as const-ref
+    template< typename Eq >
+    constexpr const auto& vec() const { return this->template get< Eq >(); }
 
-    //! \brief Function object for computing the total number of components
-    //!   (i.e., the sum of all of the number of components)
-    struct addncomp {
-      //! Need to store reference to host class whose data we operate on
-      const ncomponents* const m_host;
-      //! Internal reference used to return the total number of components
-      ncomp_t& m_nprop;
-      //! \brief Constructor: store host object pointer and initially zeroed
-      //!   counter reference
-      addncomp( const ncomponents* const host, ncomp_t& nprop ) :
-        m_host( host ), m_nprop( nprop = 0 ) {}
-      //! Function call operator templated on the type that does the counting
-      template< typename U > void operator()( brigand::type_<U> ) {
-        //! Loop through and add up all elements of the vector for this system
-        for (const auto& c : m_host->template get< U >()) m_nprop += c;
-      }
-    };
-
-    //! \brief Function object for computing the offset for a given tag (i.e.,
-    //!   the sum of the number of components up to a given tag)
-    //! \details This is used to index into the data array (the equation systems
-    //!   operate on during the numerical solution) and get to the beginning of
-    //!   data for a given differential equation system.
-    template< typename tag >
-    struct addncomp4tag {
-      //! Need to store reference to host class whose data we operate on
-      const ncomponents* const m_host;
-      //! Internal reference used to return the offset for the tag given
-      ncomp_t& m_offset;
-      //! \brief Internal storage for the index of a system within systems
-      //! \details Example: I want the second Dirichlet system: m_c = 1.
-      //! \see offset().
-      const ncomp_t m_c;
-      //! Indicates whether the tag (eq system) was found, so it is time to quit
-      bool m_found;
-      //! \brief Constructor: store host object pointer, initially zeroed offset
-      //!   reference, and system index we are looking for
-      addncomp4tag( const ncomponents* const host, ncomp_t& offset,
-                    ncomp_t c ) :
-        m_host( host ), m_offset( offset = 0 ), m_c( c ), m_found( false ) {}
-      //! \brief Function call operator templated on the type that does the
-      //!   offset calculation
-      template< typename U > void operator()( brigand::type_<U> ) {
-        if (std::is_same< tag, U >::value) {
-          // Make sure we are not trying to index beyond the length for this U
-          Assert( m_host->template get<U>().size() >= m_c,
-                  "Indexing out of bounds in addncomp4tag!" );
-          // If we have found the tag we are looking for, we count up to the
-          // given system index (passed in via the constructor) and add those to
-          // the offset, then quit
-          for (ncomp_t c=0; c<m_c; ++c)
-            m_offset += m_host->template get<U>()[c];
-          m_found = true;
-        } else if (!m_found) {
-          // If we have not found the tag we are looking for, we add all the
-          // number of scalars for that tag to the offset
-          for (const auto& c : m_host->template get< U >()) m_offset += c;
-        }
-      }
-    };
-
-    //! Function object for creating offset map: std::map< depvar, offset >
-    template< class InputDeck >
-    struct genOffsetMap {
-      //! Reference to input deck to operate on
-      const InputDeck& deck;
-      //! Internal reference to map we build
-      OffsetMap& map;
-      //! Constructor: store reference to input deck and offset map
-      genOffsetMap( const InputDeck& d, OffsetMap& m ) : deck( d ), map( m ) {}
-      //! \brief Functional call operator templated on the type that computes
-      //!   the offset map for type U.
-      //! \details There can be multiple systems of the same equation type,
-      //!   differentiated by a different dependent variable.
-      template< typename U > void operator()( brigand::type_<U> ) const {
-        const auto& depvar = deck.template get< tag::param, U, tag::depvar >();
-        ncomp_t c = 0;
-        const auto& ncomps = deck.template get< tag::component >();
-        for (auto v : depvar) map[ v ] = ncomps.template offset< U >( c++ );
-      }
-    };
-
-    //! \brief Function object for creating number of properties (scalar
-    //!   components) map: std::map< depvar, offset >
-    template< class InputDeck >
-    struct genNcompMap {
-      //! Reference to input deck to operate on
-      const InputDeck& deck;
-      //! Internal reference to map we build
-      NcompMap& map;
-      //! Constructor: store reference to input deck and offset map
-      genNcompMap( const InputDeck& d, NcompMap& m ) : deck( d ), map( m ) {}
-      //! \brief Functional call operator templated on the type that computes
-      //!   the number of properties (scalar components) map for type U.
-      //! \details There can be multiple systems of the same equation type,
-      //!   differentiated by a different dependent variable.
-      template< typename U > void operator()( brigand::type_<U> ) const {
-        const auto& depvar = deck.template get< tag::param, U, tag::depvar >();
-        const auto& ncomps = deck.template get< tag::component >();
-        Assert( ncomps.template get<U>().size() == depvar.size(),
-                "ncomps != depvar" );
-        ncomp_t c = 0;
-        for (auto v : depvar) map[ v ] = ncomps.template get< U >().at( c++ );
-      }
-    };
+    //! Access vector of number of components of an eq system as reference
+    template< typename Eq >
+    constexpr auto& vec() { return this->template get< Eq >(); }
 
   public:
     //! Default constructor: set defaults to zero for all number of components
-    ncomponents() { brigand::for_each< tags >( zero( this ) ); }
-
-    //! \return Total number of components
-    ncomp_t nprop() const noexcept {
-      ncomp_t n;
-      brigand::for_each< tags >( addncomp( this, n ) );
-      return n;
+    ncomponents() {
+      ( ... , std::fill( begin(vec<Tags>()), end(vec<Tags>()), 0 ) );
     }
 
+    //! Compute total number of components in the systems of systems configured
+    //! \return Total number of components
+    ncomp_t nprop() const noexcept {
+      return (... + std::accumulate(begin(vec<Tags>()), end(vec<Tags>()), 0u));
+    }
+
+    //! \brief Compute the offset for a given equation tag, i.e., the sum of the
+    //!   number of components up to a given tag
     //! \return offset for tag
     //! \param[in] c Index for system given by template argument tag
+    //! \details This offset is used to index into the data array (the equation
+    //!   systems operate on during the numerical solution) and get to the
+    //!   beginning of data for a given differential equation system.
     template< typename tag >
     ncomp_t offset( ncomp_t c ) const noexcept {
-      ncomp_t n;
-      brigand::for_each< tags >( addncomp4tag< tag >( this, n, c ) );
-      return n;
+      ncomp_t offset = 0;
+      bool found = false;
+      ( ... , [&](){
+        if (std::is_same_v< tag, Tags >) {
+          const auto& v = vec<Tags>();
+          // Make sure we are not trying to index beyond the length for this eq
+          Assert( v.size() >= c, "Indexing out of bounds" );
+          // If we have found the tag we are looking for, we count up to the
+          // given system index and add those to the offset
+          for (ncomp_t q=0; q<c; ++q) offset += v[q];
+          found = true;
+        } else if (!found) {
+          // If we have not found the tag we are looking for, we add all the
+          // number of scalars for that tag to the offset
+          const auto& v = vec<Tags>();
+          offset = std::accumulate( begin(v), end(v), offset );
+        } }() );
+      return offset;
     }
 
     //! Compute map of offsets associated to dependent variables
-    //! \param[in] deck Input deck to operate on
+    //! \param[in] d Input deck to operate on
     //! \return Map of offsets associated to dependent variables
     template< class InputDeck >
-    OffsetMap offsetmap( const InputDeck& deck ) const {
+    OffsetMap offsetmap( const InputDeck& d ) const {
       OffsetMap map;
-      brigand::for_each< tags >( genOffsetMap< InputDeck >( deck, map ) );
+      ( ... ,  [&](){
+        const auto& depvar = d.template get< tag::param, Tags, tag::depvar >();
+        ncomp_t c = 0;
+        const auto& ncomps = d.template get< tag::component >();
+        for (auto v : depvar)
+          map[ v ] = ncomps.template offset< Tags >( c++ ); }() );
       return map;
     }
 
     //! \brief Compute map of number of properties (scalar components)
     //!   associated to dependent variables
-    //! \param[in] deck Input deck to operate on
+    //! \param[in] d Input deck to operate on
     //! \return Map of number of properties associated to dependent variables
     template< class InputDeck >
-    NcompMap ncompmap( const InputDeck& deck ) const {
+    NcompMap ncompmap( const InputDeck& d ) const {
       NcompMap map;
-      brigand::for_each< tags >( genNcompMap< InputDeck >( deck, map ) );
+      ( ... , [&](){
+        const auto& depvar = d.template get< tag::param, Tags, tag::depvar >();
+        const auto& ncomps = d.template get< tag::component >();
+        const auto& ncvec = ncomps.template get<Tags>();
+        Assert( ncvec.size() == depvar.size(), "ncompsize != depvarsize" );
+        ncomp_t c = 0;
+        for (auto v : depvar) map[ v ] = ncvec[c++]; }() );
       return map;
     }
 };
