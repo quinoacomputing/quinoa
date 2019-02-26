@@ -377,8 +377,8 @@ Discretization::write(
   const std::vector< std::size_t >& inpoel,
   const tk::UnsMesh::Coords& coord,
   const std::map< int, std::vector< std::size_t > >& bface,
-  const std::vector< std::size_t >& triinpoel,
   const std::map< int, std::vector< std::size_t > >& bnode,
+  const std::vector< std::size_t >& triinpoel,
   const std::vector< std::string>& names,
   const std::vector< std::vector< tk::real > >& fields,
   tk::Centering centering,
@@ -389,10 +389,10 @@ Discretization::write(
 //! \param[in] coord Node coordinates of the mesh chunk to be written
 //! \param[in] bface Map of boundary-face lists mapped to corresponding side set
 //!   ids for this mesh chunk
-//! \param[in] triinpoel Interconnectivity of points and boundary-face in this
-//!   mesh chunk
 //! \param[in] bnode Map of boundary-node lists mapped to corresponding side set
 //!   ids for this mesh chunk
+//! \param[in] triinpoel Interconnectivity of points and boundary-face in this
+//!   mesh chunk
 //! \param[in] names Field output names to output
 //! \param[in] fields Mesh field output dump
 //! \param[in] centering The centering that will be associated to the field data
@@ -430,7 +430,7 @@ Discretization::write(
   m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
     write( meshoutput, fieldoutput, m_itr, m_itf, m_t, thisIndex, centering,
            g_inputdeck.get< tag::cmd, tag::io, tag::output >(),
-           inpoel, coord, bface, triinpoel, bnode, m_lid, names, fields, c );
+           inpoel, coord, bface, bnode, triinpoel, m_lid, names, fields, c );
 }
 
 std::unordered_map< int, std::unordered_set< std::size_t > >

@@ -29,6 +29,11 @@ extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< DGPDE > g_dgpde;
 
+//! Runge-Kutta coefficients
+static const std::array< std::array< tk::real, 3 >, 2 >
+  m_rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
+
+
 } // inciter::
 
 using inciter::DG;
@@ -53,10 +58,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_geoElem( tk::genGeoElemTet( Disc()->Inpoel(), Disc()->Coord() ) ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
-  m_limFunc( (g_inputdeck.get< tag::discr, tag::ndof >() == 1 ? 0 :
-              Disc()->Inpoel().size()/4),
-             (g_inputdeck.get< tag::discr, tag::ndof >()-1)*
-             g_inputdeck.get< tag::component >().nprop() ),
+  m_limFunc( limFunc(Disc()->Inpoel().size()/4) ),
   m_nfac( m_fd.Inpofa().size()/3 ),
   m_nunk( m_u.nunk() ),
   m_ncoord( Disc()->Coord()[0].size() ),
@@ -173,6 +175,19 @@ DG::resizeComm()
     for (const auto& c : m_msumset) {   // for all chares we share nodes with
       thisProxy[ c.first ].comfac( thisIndex, potbndface );
     }
+}
+
+tk::Fields
+DG::limFunc( std::size_t nelem ) const
+// *****************************************************************************
+// Size and create limiter function data container
+//! \param[in] nelem Number elements in mesh
+// *****************************************************************************
+{
+  auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+  auto nprop = g_inputdeck.get< tag::component >().nprop();
+
+  return tk::Fields( (ndof == 1 ? 0 : nelem), (ndof-1)*nprop );
 }
 
 bool
@@ -461,7 +476,10 @@ DG::reqGhost()
 {
   // If every chare we communicate with has requested ghost data from us, we may
   // fulfill the requests, but only if we have already setup our ghost data.
-  if (++m_ghostReq == m_msumset.size()) reqghost_complete();
+  if (++m_ghostReq == m_msumset.size()) {
+    m_ghostReq = 0;
+    reqghost_complete();
+  }
 }
 
 void
@@ -983,6 +1001,7 @@ DG::cominit( int fromch,
   if (++m_ninitsol == m_ghostData.size()) {
     Assert( m_exptGhost == m_recvGhost,
             "Expected/received ghost tet id mismatch" );
+    m_exptGhost.clear();
     m_recvGhost.clear();
     m_ninitsol = 0;
     cominit_complete();
@@ -1135,7 +1154,7 @@ DG::writeFields( CkCallback c )
   // }
 
   // Output chare mesh and fields metadata to file
-  d->write( inpoel, coord, m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode(),
+  d->write( inpoel, coord, m_fd.Bface(), m_fd.Bnode(), m_fd.Triinpoel(),
             names, fields, tk::Centering::ELEM, c );
 }
 
@@ -1312,7 +1331,7 @@ DG::refine()
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
-    d->Ref()->dtref( m_fd.Bnode() );
+    d->Ref()->dtref( m_fd.Bface(), m_fd.Bnode(), m_fd.Triinpoel() );
 
   } else {      // do not refine
 
@@ -1356,23 +1375,32 @@ DG::resize(
   // Resize mesh data structures
   d->resize( chunk, coord, msum );
 
-  // Resize solution vectors
+  // Update state
   auto nelem = d->Inpoel().size()/4;
   auto nprop = m_u.nprop();
   m_u.resize( nelem, nprop );
   m_un.resize( nelem, nprop );
   m_lhs.resize( nelem, nprop );
   m_rhs.resize( nelem, nprop );
-  m_nunk = nelem;
 
-  // Update face data
   m_fd = FaceData( ginpoel, bface, bnode, triinpoel );
+  m_geoFace =
+    tk::Fields( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), coord ) );
+  m_geoElem = tk::Fields( tk::genGeoElemTet( d->Inpoel(), coord ) );
+
+  m_limFunc = limFunc( nelem );
+
+  m_nfac = m_fd.Inpofa().size()/3;
+  m_nunk = nelem;
+  m_ncoord = coord[0].size();
+  m_msumset = d->msumset();
+  m_bndFace.clear();
+  m_ghostData.clear();
+  m_exptNbface = 0;
+  m_ghost.clear();
 
   // Update solution on new mesh
   // ...
-
-  // Update physical-boundary data
-  //m_fd.Bnode() = bnode;
 
   // Resize communication buffers
   resizeComm();

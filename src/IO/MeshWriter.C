@@ -63,8 +63,8 @@ MeshWriter::write(
   const std::vector< std::size_t >& inpoel,
   const UnsMesh::Coords& coord,
   const std::map< int, std::vector< std::size_t > >& bface,
-  const std::vector< std::size_t >& triinpoel,
   const std::map< int, std::vector< std::size_t > >& bnode,
+  const std::vector< std::size_t >& triinpoel,
   const std::unordered_map< std::size_t, std::size_t >& lid,
   const std::vector< std::string >& names,
   const std::vector< std::vector< tk::real > >& fields,
@@ -85,10 +85,10 @@ MeshWriter::write(
 //! \param[in] coord Node coordinates of the mesh chunk to be written
 //! \param[in] bface Map of boundary-face lists mapped to corresponding side set
 //!   ids for this mesh chunk
-//! \param[in] triinpoel Interconnectivity of points and boundary-face in this
-//!   mesh chunk
 //! \param[in] bnode Map of boundary-node lists mapped to corresponding side set
 //!   ids for this mesh chunk
+//! \param[in] triinpoel Interconnectivity of points and boundary-face in this
+//!   mesh chunk
 //! \param[in] lid Global->local node id map for the mesh chunk to be written
 //! \param[in] names Names of fields to be output in next call to writeFields()
 //! \param[in] fields Field data to output to file

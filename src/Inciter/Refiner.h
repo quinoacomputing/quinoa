@@ -77,7 +77,9 @@ class Refiner : public CBase_Refiner {
     void next();
 
     //! Start mesh refinement (during time stepping, t>0)
-    void dtref( const std::map< int, std::vector< std::size_t > >& bnode );
+    void dtref( const std::map< int, std::vector< std::size_t > >& bface,
+                const std::map< int, std::vector< std::size_t > >& bnode,
+                const std::vector< std::size_t >& triinpoel );
 
     //! Receive boundary edges from all PEs (including this one)
     void addBndEdges( CkReductionMsg* msg );
@@ -120,8 +122,8 @@ class Refiner : public CBase_Refiner {
       p | m_coordmap;
       p | m_coord;
       p | m_bface;
-      p | m_triinpoel;
       p | m_bnode;
+      p | m_triinpoel;
       p | m_nchare;
       p | m_initial;
       p | m_initref;
@@ -188,10 +190,10 @@ class Refiner : public CBase_Refiner {
     tk::UnsMesh::Coords m_coord;
     //! List of boundary faces associated to side-set IDs
     std::map< int, std::vector< std::size_t > > m_bface;
-    //! Boundary face-node connectivity
-    std::vector< std::size_t > m_triinpoel;
     //! List of boundary nodes associated to side-set IDs
     std::map< int, std::vector< std::size_t > > m_bnode;
+    //! Boundary face-node connectivity
+    std::vector< std::size_t > m_triinpoel;
     //! Total number of refiner chares
     int m_nchare;
     //! True if initial AMR, false if during time stepping

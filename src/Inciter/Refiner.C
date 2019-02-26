@@ -60,8 +60,8 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_coordmap( coordmap ),
   m_coord( flatcoord(coordmap) ),
   m_bface( bface ),
-  m_triinpoel( triinpoel ),
   m_bnode( bnode ),
+  m_triinpoel( triinpoel ),
   m_nchare( nchare ),
   m_initial( true ),
   m_initref( g_inputdeck.get< tag::amr, tag::init >() ),
@@ -87,8 +87,8 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 //! \param[in] ginpoel Mesh connectivity (this chare) using global node IDs
 //! \param[in] coordmap Mesh node coordinates (this chare) for global node IDs
 //! \param[in] bface File-internal elem ids of side sets
-//! \param[in] triinpoel Triangle face connectivity with global IDs
 //! \param[in] bnode Node lists of side sets
+//! \param[in] triinpoel Triangle face connectivity with global IDs
 //! \param[in] nchare Total number of refiner chares (chare array elements)
 // *****************************************************************************
 {
@@ -192,16 +192,22 @@ Refiner::flatcoord( const tk::UnsMesh::CoordMap& coordmap )
 }
 
 void
-Refiner::dtref( const std::map< int, std::vector< std::size_t > >& bnode )
+Refiner::dtref( const std::map< int, std::vector< std::size_t > >& bface,
+                const std::map< int, std::vector< std::size_t > >& bnode,
+                const std::vector< std::size_t >& triinpoel )
 // *****************************************************************************
 // Start mesh refinement (during time stepping, t>0)
-//! \param[in] bnode Node lists of side sets
+//! \param[in] bface Boundary-faces mapped to side set ids
+//! \param[in] bnode Boundary-node lists mapped to side set ids
+//! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
   m_initial = false;
 
   // Update boundary node lists
+  m_bface = bface;
   m_bnode = bnode;
+  m_triinpoel = triinpoel;
 
   start();
 }
@@ -559,7 +565,7 @@ Refiner::writeMesh( const std::string& basefilename,
   m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
     write( /*meshoutput = */ true, /*fieldoutput = */ true, itr, 1, t,
            thisIndex, tk::Centering::ELEM, basefilename, m_inpoel, m_coord,
-           m_bface, m_triinpoel, m_bnode, m_lid, names, fields, c );
+           m_bface, m_bnode, m_triinpoel, m_lid, names, fields, c );
 }
 
 void
