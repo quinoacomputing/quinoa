@@ -144,21 +144,20 @@ inline void operator|( PUP::er& p, std::optional< T >& o ) { pup( p, o ); }
 
 //////////////////// Serialize std::variant ////////////////////
 
-// Since std::variant (as well as std::variant) when default-constructed is
-// initialized to hold a value of the first alternative of its type list,
-// calling PUP that works based on a std::visit with a templated operator()
-// would always incorrectly trigger the overload for the first type. Thus when
-// PUPing a variant not only its value but its type must also be sent during
-// migration. The pup operator template below achieves this by reading out not
-// only the value but also its zero-based index of the type alternative that is
-// currently held by the variant passed to its initializer constructor.  The
-// index and the variant are then PUPed and when unpacking, as an additional
-// step, the variant is reconstructed using the index and the value in the
-// variant. This latter is done by invoking an expansion of an initializer list,
-// guaranteed to happen in order, stepping through the typelist in the variant.
-// Thanks to Nils Deppe for simplifying the original version of this operation.
-// See UnitTest/tests/Base/TestPUPUtil.h or Inciter::SchemeBase.h for puping a
-// variant in action.
+// Since std::variant when default-constructed is initialized to hold a value of
+// the first alternative of its type list, calling PUP that works based on a
+// std::visit with a templated operator() would always incorrectly trigger the
+// overload for the first type. Thus when PUPing a variant not only its value
+// but its type must also be sent during migration. The pup operator template
+// below achieves this by reading out not only the value but also its zero-based
+// index of the type alternative that is currently held by the variant passed to
+// its initializer constructor. The index and the variant are then PUPed and
+// when unpacking, as an additional step, the variant is reconstructed using the
+// index and the value in the variant. This latter is done by invoking an
+// expansion of an initializer list, guaranteed to happen in order, stepping
+// through the typelist in the variant.  Thanks to Nils Deppe for simplifying
+// the original version of this operation. See UnitTest/tests/Base/TestPUPUtil.h
+// or Inciter::SchemeBase.h for puping a variant in action.
 
 //! Pack/Unpack helper for std::variant
 //! \param[in,out] index Counter (location) for type in variant
