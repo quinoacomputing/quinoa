@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/FileConvWriter.C
-  \copyright 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2016-2017, Triad National Security, LLC.
   \brief     Converter Writer Files
   \details   Convert the input file written by RootMeshWriter into ExodusII 
              layout. We make use of the ExodusIIMeshWriter class to write the 

@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/Limiter.C
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Limiters for DG
   \details   This file contains functions that provide limiter function
     calculations for maintaining monotonicity near solution discontinuities

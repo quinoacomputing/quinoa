@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/MixDirichlet.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Mixture Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs), whose invariant is the [Dirichlet

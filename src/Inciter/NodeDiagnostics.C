@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/NodeDiagnostics.C
-  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Triad National Security, LLC.
   \brief     NodeDiagnostics class for collecting nodal diagnostics
   \details   NodeDiagnostics class for collecting nodal diagnostics, e.g.,
     residuals, and various norms of errors while solving partial differential

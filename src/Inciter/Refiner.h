@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Refiner.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Mesh refiner for interfacing the mesh refinement library
   \details   Mesh refiner is a Charm++ chare array and is used to interface the
    mesh refinement object which does not know about parallelization and thus the

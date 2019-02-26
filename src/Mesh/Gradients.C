@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Mesh/Gradients.C
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Triad National Security, LLC.
   \brief     Functions computing gradients on unstructured meshes for tetrahedra
   \details   Functions computing gradients using linear finite element shape
              functions on unstructured meshes for tetrahedra.

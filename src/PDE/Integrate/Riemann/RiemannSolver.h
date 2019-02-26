@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/Integrate/Riemann/RiemannSolver.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Riemann solver interface class for various Riemann solvers
   \details   This file defines a generic Riemann solver interface class. The
     class uses runtime polymorphism without client-side inheritance: inheritance

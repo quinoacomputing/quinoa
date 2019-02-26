@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/CompFlow/Physics/DG.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Physics configurations for compressible flow using discontinuous
     Galerkin finite element methods
   \details   This file configures all Physics policy classes for compressible

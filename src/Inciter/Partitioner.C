@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Partitioner.C
-  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Triad National Security, LLC.
   \brief     Charm++ chare partitioner nodegroup used to perform mesh
              partitioning
   \details   Charm++ chare partitioner nodegroup used to perform mesh read and

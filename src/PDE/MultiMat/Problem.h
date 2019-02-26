@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/MultiMat/Problem.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     All problem configurations for the compressible flow equations
   \details   This file collects all Problem policy classes for the compressible
     flow equations, defined in PDE/MultiMat/MultiMat.h.

@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Diagnostics.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Common data for collecting diagnostics
   \details   Common data for collecting (node-, elem-, etc) diagnostics, e.g.,
     residuals, and various norms of errors while solving partial differential

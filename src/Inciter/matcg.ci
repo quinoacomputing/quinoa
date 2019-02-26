@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/matcg.ci
-  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Triad National Security, LLC.
   \brief     Charm++ module interface file for continuous Galerkin FEM w/ matrix
   \details   Charm++ module interface file for the continuous Galerkin (CG)
      discretization scheme using a compressed sparse row (CSR) matrix for the

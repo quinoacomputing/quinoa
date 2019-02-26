@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/NoWarning/fileconv.def.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Include fileconv.def.h with turning off specific compiler
              warnings
 */

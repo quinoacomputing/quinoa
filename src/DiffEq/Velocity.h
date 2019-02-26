@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/Velocity.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     A model for velocity in variable-density turbulence
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs) to model the fluctuating velocity components

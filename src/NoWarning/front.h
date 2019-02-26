@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/NoWarning/front.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Include brigand/sequences/front.hpp with turning off specific
              compiler warnings
 */

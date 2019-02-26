@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/VelocityCoeffPolicy.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Velocity equation coefficients policies
   \details   This file defines coefficients policy classes for the velocity
      equation for the fluctuating velocity in variable-density turbulence,

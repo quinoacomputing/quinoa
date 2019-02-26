@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/FileConv/CmdLine/Parser.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     FileConv's command line parser
   \details   This file declares the command-line argument parser for the mesh
      file converter, FileConv.

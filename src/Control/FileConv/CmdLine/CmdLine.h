@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/FileConv/CmdLine/CmdLine.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     FileConv's command line definition
   \details   This file defines the heterogeneous stack that is used for storing
      the data from user input during the command-line parsing of the file

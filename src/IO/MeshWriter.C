@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/MeshWriter.C
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Charm++ group for outputing mesh data to file
   \details   Charm++ group definition used to output data associated to
      unstructured meshes to file(s). Charm++ chares (work units) send mesh and

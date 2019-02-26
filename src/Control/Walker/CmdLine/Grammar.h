@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Walker/CmdLine/Grammar.h
-  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Triad National Security, LLC.
   \brief     Walker's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
   Expression Grammar Template Library (PEGTL) to create the grammar and the

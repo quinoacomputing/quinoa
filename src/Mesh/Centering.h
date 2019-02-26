@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Mesh/Centering.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Mesh solution location (centering)
   \details   Mesh solution location (centering) enum type.
 */

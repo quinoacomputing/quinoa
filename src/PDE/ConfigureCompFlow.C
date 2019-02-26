@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/ConfigureCompFlow.C
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Register and compile configuration for compressible flow PDE
   \details   Register and compile configuration for compressible flow PDE.
 */

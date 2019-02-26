@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/Langevin.C
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Functionality implementing Langevin models for the velocity
   \details   Functionality implementing Langevin models for the velocity.
 */

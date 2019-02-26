@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/CompFlow/Problem/TaylorGreen.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Problem configuration for the compressible flow equations
   \details   This file defines a policy class for the compressible flow
     equations, defined in PDE/CompFlow/CompFlow.h. See PDE/CompFlow/Problem.h

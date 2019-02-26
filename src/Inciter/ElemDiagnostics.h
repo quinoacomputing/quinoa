@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/ElemDiagnostics.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     ElemDiagnostics class for collecting diagnostics
   \details   ElemDiagnostics class for collecting diagnostics, e.g., residuals,
     and various norms of errors while solving partial differential equations.

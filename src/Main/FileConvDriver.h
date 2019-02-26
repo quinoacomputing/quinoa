@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Main/FileConvDriver.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     File converter driver
   \details   File converter driver.
 */

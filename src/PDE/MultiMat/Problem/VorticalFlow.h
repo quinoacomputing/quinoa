@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/MultiMat/Problem/VorticalFlow.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Problem configuration for the multi-material compressible flow
     equations
   \details   This file defines a Problem policy class for the multi-material

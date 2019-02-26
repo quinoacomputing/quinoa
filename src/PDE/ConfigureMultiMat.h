@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/ConfigureMultiMat.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Register and compile configuration for multi-material compressible
      flow PDE
   \details   Register and compile configuration for compressible multi-material

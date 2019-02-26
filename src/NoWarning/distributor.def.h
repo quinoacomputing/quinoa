@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/NoWarning/distributor.def.h
-  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Triad National Security, LLC.
   \brief     Include distributor.def.h with turning off specific compiler
              warnings
 */

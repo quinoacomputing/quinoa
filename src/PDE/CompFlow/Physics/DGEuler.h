@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/CompFlow/Physics/DGEuler.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Physics policy for the Euler equation governing single-material
     flow using a discontinuous Galerkin finite element method
   \details   This file defines a Physics policy class for the compressible

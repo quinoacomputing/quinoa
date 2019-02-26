@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/Integrate/Basis.C
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Functions for computing the Dubiner basis functions in DG methods
   \details   This file contains functionality for computing the basis functions
      and relating coordinates transformation functions used in discontinuous

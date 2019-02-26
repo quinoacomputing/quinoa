@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/Options/AMRError.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Triad National Security, LLC.
   \brief     Options for computing error estimates for adaptive mesh refinement
   \details   Options for computing error estimates for adaptive mesh refinement.
 */

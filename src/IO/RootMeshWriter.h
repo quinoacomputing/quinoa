@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/RootMeshWriter.h
-  \copyright 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2016-2017, Triad National Security, LLC.
   \brief     Root mesh-based data writer
   \details   Root mesh-based data writer class declaration.
 */

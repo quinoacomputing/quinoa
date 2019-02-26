@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/Options/Limiter.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Limiter options for DG
   \details   Limiter options for DG
 */

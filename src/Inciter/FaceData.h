@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/FaceData.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \details   Face-data used only in discontinuous Galerkin discretization scheme
 */
 // *****************************************************************************

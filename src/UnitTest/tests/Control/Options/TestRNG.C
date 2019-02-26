@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Control/Options/TestRNG.C
-  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Triad National Security, LLC.
   \brief     Unit tests for Control/Options/RNG
   \details   Unit tests for Control/Options/RNG
 */

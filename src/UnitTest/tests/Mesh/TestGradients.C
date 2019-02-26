@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Mesh/TestGradients.C
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Triad National Security, LLC.
   \brief     Unit tests for Mesh/Gradients
   \details   Unit tests for Mesh/Gradients. All unit tests start from simple
      mesh connectivities defined in the code. The tetrahedron mesh in Gmsh ASCII

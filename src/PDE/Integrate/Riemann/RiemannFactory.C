@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/Integrate/Riemann/RiemannFactory.C
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Register available Riemann solvers into a factory
   \details   Register available Riemann solvers into a factory.
 */

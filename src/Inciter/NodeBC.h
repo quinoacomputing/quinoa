@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/NodeBC.h
-  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Triad National Security, LLC.
   \brief     Boundary conditions for nodal discretizations
   \details   Boundary conditions for nodal discretizations, such as continuous
     Galerkin finite elements, e.g., DiagCG.

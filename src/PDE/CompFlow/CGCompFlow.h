@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/CompFlow/CGCompFlow.h
-  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Triad National Security, LLC.
   \brief     Compressible single-material flow using continuous Galerkin
   \details   This file implements the physics operators governing compressible
     single-material flow using continuous Galerkin discretization.

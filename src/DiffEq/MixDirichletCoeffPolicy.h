@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/MixDirichletCoeffPolicy.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     MixDirichlet coefficients policies
   \details   This file defines coefficients policy classes for the MixDirichlet
     SDE, defined in DiffEq/MixDirichlet.h.

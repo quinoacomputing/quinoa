@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/DG.C
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     DG advances a system of PDEs with the discontinuous Galerkin scheme
   \details   DG advances a system of partial differential equations (PDEs) using
     discontinuous Galerkin (DG) finite element (FE) spatial discretization (on

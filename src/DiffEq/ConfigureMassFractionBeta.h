@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/ConfigureMassFractionBeta.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Register and compile configuration on the number fraction beta SDE
   \details   Register and compile configuration on the number fraction beta SDE.
 */

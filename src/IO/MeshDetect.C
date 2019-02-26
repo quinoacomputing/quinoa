@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/MeshDetect.C
-  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Triad National Security, LLC.
   \brief     Unstructured mesh file format detection
   \details   Unstructured mesh file format detection functions.
 */

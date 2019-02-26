@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Options/MKLGammaMethod.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Intel MKL Gamma RNG method options
   \details   Intel MKL Gamma RNG method options
 */

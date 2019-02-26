@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/FileConv/CmdLine/Grammar.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     FileConv's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
   Expression Grammar Template Library (PEGTL) to create the grammar and the

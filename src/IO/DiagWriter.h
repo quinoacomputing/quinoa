@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/DiagWriter.h
-  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Triad National Security, LLC.
   \brief     Text diagnostics writer declaration
   \details   This file declares the ASCII diagnostics writer class that
      facilitates outputing diagnostics to text files.

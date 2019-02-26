@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/Integrate/Quadrature.C
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Quadrature coordinates and weights for numerical integration
   \details   This file contains functions that provide Gauss quadrature
     coordinates and weights for numerical integration.

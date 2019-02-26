@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Main/fileconv.ci
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Charm++ module interface file for fileconv
   \details   Charm++ module interface file for the file converter, fileconv.
   \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html

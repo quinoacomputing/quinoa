@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Main/Init.C
-  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Triad National Security, LLC.
   \brief     Common initialization routines for main() functions for multiple
      exectuables
   \details   Common initialization routines for main() functions for multiple

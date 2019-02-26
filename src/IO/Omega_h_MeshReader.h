@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/Omega_h_MeshReader.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Omega_h mesh reader
   \details   Omega_h mesh reader class declaration.
 */

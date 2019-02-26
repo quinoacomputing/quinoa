@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Walker/Options/VelocityVariant.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Velocity model variants
   \details   Velocity model variants for walker.
 */

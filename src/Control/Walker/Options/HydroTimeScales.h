@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Walker/Options/HydroTimeScales.h
-  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Triad National Security, LLC.
   \brief     Inverse hydrodynamics time scale options
   \details   Inverse hydrodynamics time scale options
 */

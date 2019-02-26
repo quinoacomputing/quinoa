@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/Dissipation.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     A dissipation model for Lagrangian particles
   \details   This file implements the time integration of a system of
     stochastic differential equations to model fluctuating

@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/Transport/CGTransport.h
-  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Triad National Security, LLC.
   \brief     Scalar transport using continous Galerkin discretization
   \details   This file implements the physics operators governing transported
      scalars using continuous Galerkin discretization.

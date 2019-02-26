@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Inciter/AMR/TestError.C
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Triad National Security, LLC.
   \brief     Unit tests for AMR error indicators in Inciter/AMR/Error.h
   \details   Unit tests for AMR error indicators in Inciter/AMR/Error.h. All
      unit tests start from simple mesh connectivities defined in the code. The

@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/alecg.ci
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Charm++ module interface for continuous Galerkin + ALE + RK
   \details   Charm++ module interface file for the continuous Galerkin (CG)
              finite element scheme in the arbitrary Lagrangian-Eulerian (ALE)

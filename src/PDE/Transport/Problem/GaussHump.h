@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/Transport/Problem/GaussHump.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Problem configuration for transport equations
   \details   This file defines a Problem policy class for the scalar transport
     equation, defined in PDE/Transport/Transport.h. See

@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/Integrate/Volume.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Functions for computing volume integrals for a system of PDEs in DG
      methods
   \details   This file contains functionality for computing volume integrals for

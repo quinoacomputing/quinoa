@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/FileConvWriter.h
-  \copyright 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2016-2017, Triad National Security, LLC.
   \brief     Convert the input files to output file format  
   \details   Convert the input file in ROOT format to the ExodusII layout
 	     The next step post the output would be to utilize exodiff utility.

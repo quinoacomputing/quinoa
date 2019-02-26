@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Callback.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Tagged tuple types used for passing Charm++ callbacks
   \details   Tagged tuple types used for passing Charm++ callbacks.
 */

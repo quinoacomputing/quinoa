@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/Options/Flux.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Flux function options for inciter
   \details   Flux function options for inciter
 */

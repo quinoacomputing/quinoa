@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/sorter.ci
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Charm++ module interface file for mesh sorter
   \details   Charm++ module interface file for mesh sorter.
   \see       Sorter.h and Sorter.C for more info.

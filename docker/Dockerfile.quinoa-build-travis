@@ -2,7 +2,7 @@
 # vim: filetype=dockerfile:
 #
 # \file      docker/Dockerfile.quinoa-build-travis
-# \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
+# \copyright 2012-2015, J. Bakosi, 2016-2019, Triad National Security, LLC.
 # \brief     Dockerfile for continuous integration with TravisCI
 # \details   Dockerfile for continuous integration with TravisCI
 #

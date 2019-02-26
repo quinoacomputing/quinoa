@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/Integrate/Boundary.C
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Functions for computing physical boundary surface integrals of a
      system of PDEs in DG methods
   \details   This file contains functionality for computing physical boundary

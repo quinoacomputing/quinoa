@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/QuietCerr.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Charm++ nodegroup to quiet std::cerr in a thread-safe fashion
   \details   Charm++ nodegroup to quiet std::cerr in a thread-safe fashion.
 */

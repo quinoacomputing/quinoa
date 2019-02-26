@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/FunctionPrototypes.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Function prototypes used in PDE classes
   \details   This file defines prototypes used in PDE classes. Examples include
      functions used for evaluating known (e.g., analytical) solutions or setting

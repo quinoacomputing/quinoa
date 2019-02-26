@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/DissipationCoeffPolicy.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Particle dissipation equation coefficients policies
   \details   This file defines coefficients policy classes for the Lagrangian
     particle dissipation equation defined in DiffEq/Dissipation.h.

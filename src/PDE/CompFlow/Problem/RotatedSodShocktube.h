@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/CompFlow/Problem/RotatedSodShocktube.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Triad National Security, LLC.
   \brief     Problem configuration for rotated Sod's shock-tube
   \details   This file defines a policy class for the compressible flow
     equations, defined in PDE/CompFlow/CompFlow.h. See PDE/CompFlow/Problems.h
