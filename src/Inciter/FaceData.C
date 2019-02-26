@@ -27,7 +27,7 @@ FaceData::FaceData(
   const std::vector< std::size_t >& ginpoel,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& bnode,
-  std::vector< std::size_t >& triinpoel )
+  const std::vector< std::size_t >& triinpoel )
   : m_bface( bface ), m_bnode( bnode ), m_triinpoel( triinpoel )
 // *****************************************************************************
 //  Constructor

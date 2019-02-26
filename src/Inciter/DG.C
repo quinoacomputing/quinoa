@@ -33,20 +33,23 @@ extern std::vector< DGPDE > g_dgpde;
 
 using inciter::DG;
 
-DG::DG( const CProxy_Discretization& disc, const FaceData& fd ) :
+DG::DG( const CProxy_Discretization& disc,
+        const std::vector< std::size_t >& ginpoel,
+        const std::map< int, std::vector< std::size_t > >& bface,
+        const std::map< int, std::vector< std::size_t > >& bnode,
+        const std::vector< std::size_t >& triinpoel ) :
   m_disc( disc ),
   m_ncomfac( 0 ),
   m_nadj( 0 ),
   m_nsol( 0 ),
   m_ninitsol( 0 ),
   m_nlim( 0 ),
-  m_fd( fd ),
+  m_fd( ginpoel, bface, bnode, triinpoel ),
   m_u( Disc()->Inpoel().size()/4,
        g_inputdeck.get< tag::discr, tag::ndof >()*
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
-  m_vol( 0.0 ),
-  m_geoFace( tk::genGeoFaceTri( fd.Nipfac(), fd.Inpofa(), Disc()->Coord()) ),
+  m_geoFace( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), Disc()->Coord()) ),
   m_geoElem( tk::genGeoElemTet( Disc()->Inpoel(), Disc()->Coord() ) ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
@@ -54,7 +57,7 @@ DG::DG( const CProxy_Discretization& disc, const FaceData& fd ) :
               Disc()->Inpoel().size()/4),
              (g_inputdeck.get< tag::discr, tag::ndof >()-1)*
              g_inputdeck.get< tag::component >().nprop() ),
-  m_nfac( fd.Inpofa().size()/3 ),
+  m_nfac( m_fd.Inpofa().size()/3 ),
   m_nunk( m_u.nunk() ),
   m_ncoord( Disc()->Coord()[0].size() ),
   m_msumset( Disc()->msumset() ),
@@ -70,20 +73,37 @@ DG::DG( const CProxy_Discretization& disc, const FaceData& fd ) :
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
-//! \param[in] fd Face data structures
+//! \param[in] ginpoel Mesh element connectivity owned (global IDs) mesh chunk
+//!   this chare operates on
+//! \param[in] bface Map of boundary-face lists mapped to corresponding
+//!   side set ids for this mesh chunk
+//! \param[in] bnode Map of boundary-node lists mapped to corresponding
+//!   side set ids for this mesh chunk
+//! \param[in] triinpoel Interconnectivity of points and boundary-face in this
+//!   mesh chunk
 // *****************************************************************************
 {
   usesAtSync = true;    // enable migration at AtSync
 
+  // Size communication buffers and setup ghost data
+  resizeComm();
+}
+
+void
+DG::resizeComm()
+// *****************************************************************************
+//  Start sizing communication buffers and setting up ghost data
+// *****************************************************************************
+{
   auto d = Disc();
 
   const auto& gid = d->Gid();
   const auto& inpoel = d->Inpoel();
-  const auto& inpofa = fd.Inpofa();
+  const auto& inpofa = m_fd.Inpofa();
   const auto& esuel = m_fd.Esuel();
 
   // Perform leak test on mesh partition
-  Assert( !tk::leakyPartition( esuel, inpoel, d->Coord()),
+  Assert( !tk::leakyPartition( esuel, inpoel, d->Coord() ),
           "Mesh partition leaky" );
 
   // Activate SDAG waits for face adjacency map (ghost data) calculation
@@ -287,9 +307,8 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
   // if we have heard from all fellow chares that we share at least a single
   // node, edge, or face with
   if (++m_ncomfac == m_msumset.size()) {
-
+    m_ncomfac = 0;
     if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) d->Tr().chcomfac();
-
     tk::destroy(m_ipface);
 
     // Error checking on the number of expected vs received/found chare-boundary
@@ -733,6 +752,8 @@ DG::adj()
 //!    on this chare.
 // *****************************************************************************
 {
+  m_nadj = 0;
+
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) Disc()->Tr().chadj();
 
   tk::destroy(m_bndFace);
@@ -820,12 +841,11 @@ DG::setup( tk::real v )
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
+  IGNORE(v);
+
   tk::destroy(m_msumset);
 
   auto d = Disc();
-
-  // Store total mesh volume
-  m_vol = v;
 
   // Basic error checking on sizes of element geometry data and connectivity
   Assert( m_geoElem.nunk() == m_lhs.nunk(), "Size mismatch in DG::setup()" );
@@ -1308,10 +1328,10 @@ DG::refine()
 
 void
 DG::resize(
-  const tk::UnsMesh::Chunk& /*chunk*/,
-  const tk::UnsMesh::Coords& /*coord*/,
+  const tk::UnsMesh::Chunk& chunk,
+  const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /*addedNodes*/,
-  const std::unordered_map< int, std::vector< std::size_t > >& /*msum*/,
+  const std::unordered_map< int, std::vector< std::size_t > >& msum,
   const std::map< int, std::vector< std::size_t > >& /*bnode*/ )
 // *****************************************************************************
 //  Receive new mesh from refiner
@@ -1319,50 +1339,37 @@ DG::resize(
 //! \param[in] coord New mesh node coordinates
 //! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
 //! \param[in] msum New node communication map
-//! \param[in] bnode Map of boundary-node lists mapped to corresponding
-//!   side set ids for this mesh chunk
+//! \param[in] bnode Boundary-node lists mapped to corresponding side set ids
 // *****************************************************************************
 {
   auto d = Disc();
-//
-//  // Set flag that indicates that we are during time stepping
-//  m_initial = false;
-//
-//  // Zero field output iteration count between two mesh refinement steps
-//  d->Itf() = 0;
-//
-//  // Increase number of iterations with mesh refinement
-//  ++d->Itr();
-//
-//  // Resize mesh data structures
-//  d->resize( chunk, coord, msum );
-//
-//  // Update (resize) solution on new mesh
-//  m_u = u;
-//
-//  // Resize auxiliary solution vectors
-//  auto nelem = d->Inpoel().size()/4;
-//  auto npoin = coord[0].size();
-//  auto nprop = m_u.nprop();
-//  m_ul.resize( npoin, nprop );
-//  m_du.resize( npoin, nprop );
-//  m_dul.resize( npoin, nprop );
-//  m_ue.resize( nelem, nprop );
-//  m_lhs.resize( npoin, nprop );
-//  m_rhs.resize( npoin, nprop );
-//  m_dif.resize( npoin, nprop );
-//
-//  // Update physical-boundary node lists
-//  m_fd.Bnode() = bnode;
-//
-//  // Resize communication buffers
-//  resizeComm();
-//
-//  // Resize FCT data structures
-//  d->FCT()->resize( npoin, msum, d->Bid(), d->Lid(), d->Inpoel() );
-//
-//  // Activate SDAG waits for re-computing the left-hand side
-//  thisProxy[ thisIndex ].wait4lhs();
+
+  // Zero field output iteration count between two mesh refinement steps
+  d->Itf() = 0;
+
+  // Increase number of iterations with mesh refinement
+  ++d->Itr();
+
+  // Resize mesh data structures
+  d->resize( chunk, coord, msum );
+
+  // Resize auxiliary solution vectors
+  auto nelem = d->Inpoel().size()/4;
+  auto nprop = m_u.nprop();
+  m_u.resize( nelem, nprop );
+  m_un.resize( nelem, nprop );
+  m_lhs.resize( nelem, nprop );
+  m_rhs.resize( nelem, nprop );
+  m_nunk = nelem;
+
+  // Update solution on new mesh
+  // ...
+
+  // Update physical-boundary data
+  //m_fd.Bnode() = bnode;
+
+  // Resize communication buffers
+  resizeComm();
 
   ref_complete();
 

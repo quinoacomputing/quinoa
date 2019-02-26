@@ -514,25 +514,15 @@ Sorter::createWorkers()
 //  Create worker chare array element
 // *****************************************************************************
 {
-  // If there was no reordering, assign a one-to-one node-map
-  //if (m_newnodes.empty()) for (auto n : m_nodeset) m_newnodes[ n ] = n;
-
-  // The above, in some form, might be still necessary to remap the boundary
-  // data if reordering was done and will probably go into finish(), together
-  // with remapping other mesh data.
-
-  // Create face data
-  FaceData fd( m_ginpoel, m_bface, m_bnode, m_triinpoel );
-
   // Make sure (bound) base is already created and accessible
   Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
           "About to pass nullptr" );
 
   // Create worker array element using Charm++ dynamic chare array element
-  // insertion: 1st arg: chare id, last arg: PE chare is created on, middle
-  // args: Discretization's child ctor args. See also Charm++ manual, Sec.
-  // "Dynamic Insertion".
-  m_scheme.insert( thisIndex, m_scheme.get(), fd );
+  // insertion: 1st arg: chare id, other args: Discretization's child ctor args.
+  // See also Charm++ manual, Sec. "Dynamic Insertion".
+  m_scheme.insert( thisIndex, m_scheme.get(),
+                   m_ginpoel, m_bface, m_bnode, m_triinpoel );
 
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chcreated();
 

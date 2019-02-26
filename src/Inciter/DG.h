@@ -62,7 +62,11 @@ class DG : public CBase_DG {
     #endif
 
     //! Constructor
-    explicit DG( const CProxy_Discretization& disc, const FaceData& fd );
+    explicit DG( const CProxy_Discretization& disc,
+                 const std::vector< std::size_t >& ginpoel,
+                 const std::map< int, std::vector< std::size_t > >& bface,
+                 const std::map< int, std::vector< std::size_t > >& bnode,
+                 const std::vector< std::size_t >& triinpoel );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -166,7 +170,6 @@ class DG : public CBase_DG {
       p | m_fd;
       p | m_u;
       p | m_un;
-      p | m_vol;
       p | m_geoFace;
       p | m_geoElem;
       p | m_lhs;
@@ -224,8 +227,6 @@ class DG : public CBase_DG {
     tk::Fields m_u;
     //! Vector of unknown at previous time-step
     tk::Fields m_un;
-    //! Total mesh volume
-    tk::real m_vol;
     //! Face geometry
     tk::Fields m_geoFace;
     //! Element geometry
@@ -285,8 +286,8 @@ class DG : public CBase_DG {
       return m_disc[ thisIndex ].ckLocal();
     }
 
-    //! Perform leak test on mesh partition
-    bool leakyPartition();
+    //! Start sizing communication buffers and setting up ghost data
+    void resizeComm();
 
     //! Perform leak test on chare-boundary faces
     bool leakyAdjacency();

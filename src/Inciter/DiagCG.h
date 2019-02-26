@@ -73,7 +73,11 @@ class DiagCG : public CBase_DiagCG {
     #endif
 
     //! Constructor
-    explicit DiagCG( const CProxy_Discretization& disc, const FaceData& fd );
+    explicit DiagCG( const CProxy_Discretization& disc,
+                     const std::vector< std::size_t >& ginpoel,
+                     const std::map< int, std::vector< std::size_t > >& bface,
+                     const std::map< int, std::vector< std::size_t > >& bnode,
+                     const std::vector< std::size_t >& triinpoel );
 
     #if defined(__clang__)
       #pragma clang diagnostic push

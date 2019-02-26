@@ -41,13 +41,17 @@ extern std::vector< CGPDE > g_cgpde;
 
 using inciter::ALECG;
 
-ALECG::ALECG( const CProxy_Discretization& disc, const FaceData& fd ) :
+ALECG::ALECG( const CProxy_Discretization& disc,
+              const std::vector< std::size_t >& ginpoel,
+              const std::map< int, std::vector< std::size_t > >& bface,
+              const std::map< int, std::vector< std::size_t > >& bnode,
+              const std::vector< std::size_t >& triinpoel ) :
   m_disc( disc ),
   m_initial( true ),
   m_nsol( 0 ),
   m_nlhs( 0 ),
   m_nrhs( 0 ),
-  m_fd( fd ),
+  m_fd( ginpoel, bface, bnode, triinpoel ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_du( m_u.nunk(), m_u.nprop() ),
@@ -60,7 +64,14 @@ ALECG::ALECG( const CProxy_Discretization& disc, const FaceData& fd ) :
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
-//! \param[in] fd Face data structures
+//! \param[in] ginpoel Mesh element connectivity owned (global IDs) mesh chunk
+//!   this chare operates on
+//! \param[in] bface Map of boundary-face lists mapped to corresponding
+//!   side set ids for this mesh chunk
+//! \param[in] bnode Map of boundary-node lists mapped to corresponding
+//!   side set ids for this mesh chunk
+//! \param[in] triinpoel Interconnectivity of points and boundary-face in this
+//!   mesh chunk
 // *****************************************************************************
 //! [Constructor]
 {
@@ -482,8 +493,7 @@ ALECG::resize(
 //! \param[in] u New solution on new mesh
 //! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
 //! \param[in] msum New node communication map
-//! \param[in] bnode Map of boundary-node lists mapped to corresponding
-//!   side set ids for this mesh chunk
+//! \param[in] bnode Boundary-node lists mapped to corresponding side set ids
 // *****************************************************************************
 {
   auto d = Disc();
