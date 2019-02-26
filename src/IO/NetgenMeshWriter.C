@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/NetgenMeshWriter.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
   \brief     Netgen mesh writer class definition
   \details   Netgen mesh writer class definition. Only supports tetrahedra.
 */

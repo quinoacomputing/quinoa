@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Particles.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
   \brief     Particles used to store particle data.
   \details   Particles used to store data at particles as a specialization of
     tk::Data. See also Base/Data.h and the rationale discussed in the

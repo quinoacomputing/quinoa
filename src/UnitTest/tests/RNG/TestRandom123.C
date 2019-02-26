@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/RNG/TestRandom123.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
   \brief     Unit tests for RNG/Random123.h
   \details   Unit tests for RNG/Random123.h
 */

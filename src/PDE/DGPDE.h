@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/DGPDE.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
   \brief     Partial differential equation base for discontinuous Galerkin PDEs
   \details   This file defines a generic partial differential equation (PDE)
     class for PDEs that use discontinuous Galerkin spatial discretization.

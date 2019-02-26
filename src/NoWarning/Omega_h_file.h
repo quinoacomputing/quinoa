@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/NoWarning/Omega_h_file.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
   \brief     Include Omega_h_file.hpp with turning off specific compiler
              warnings
 */

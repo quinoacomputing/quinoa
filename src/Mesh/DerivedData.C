@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Mesh/DerivedData.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
      of an unstructured mesh.

@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Get_Tuple.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
   \brief     Define std::get<T>(std::tuple) until C++14
   \details   Define std::get<T>(std::tuple) until C++14. When we switch to
     C++14, this can go away. The code below is from

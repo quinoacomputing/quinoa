@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/CommonGrammar.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
   \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the Parsing Expression Grammar
     Template Library (PEGTL) to create the grammar and the associated parser.

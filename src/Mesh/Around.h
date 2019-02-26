@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Mesh/Around.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
   \brief     Helper class for iterating through linked lists of derived data
   \details   Helper class for iterating through every item in a linked list data
     structure derived from unstructured mesh connectivity.

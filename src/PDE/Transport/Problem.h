@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/Transport/Problem.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2019, Los Alamos National Security, LLC.
   \brief     All problem configurations for the scalar transport equations
   \details   This file collects all Problem policy classes for the scalar
     transport equations, defined in PDE/Transport/Transport.h.
