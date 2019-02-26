@@ -133,9 +133,9 @@ class Refiner : public CBase_Refiner {
       p | m_edgedataCh;
       p | m_intermediates;
       p | m_bndEdges;
-      p | m_u;
       p | m_msumset;
       p | m_oldTetIdMap;
+      p | m_addedNodes;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -216,8 +216,6 @@ class Refiner : public CBase_Refiner {
     std::unordered_set< size_t> m_intermediates;
     //! Boundary edges associated to chares we share these edges with
     std::unordered_map< int, EdgeSet > m_bndEdges;
-    //! Solution vector
-    tk::Fields m_u;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!    worker chares associated to their chare IDs
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
@@ -226,6 +224,8 @@ class Refiner : public CBase_Refiner {
     std::unordered_map< int, std::unordered_set< std::size_t > > m_msumset;
     //! ...
     std::vector< std::size_t > m_oldTetIdMap;
+    //! Newly added mesh nodes (local id) and their parents (local ids)
+    std::unordered_map< std::size_t, tk::UnsMesh::Edge > m_addedNodes;
 
     //! Generate flat coordinate data from coordinate map
     tk::UnsMesh::Coords flatcoord( const tk::UnsMesh::CoordMap& coordmap );
@@ -299,31 +299,23 @@ class Refiner : public CBase_Refiner {
                     tk::real t,
                     CkCallback c );
 
-    //! Functor to call the solution() member function behind SchemeBase::Proxy
-    struct Solution : boost::static_visitor<> {
-      tk::Fields& U;
-      Solution( tk::Fields& u ) : U(u) {}
-      template< typename P > void operator()( const P& p ) const {
-         p.ckLocal()->solution( U );
-      }
-    };
-
     //! Functor to call the resize() member function behind SchemeBase::Proxy
     struct Resize : boost::static_visitor<> {
       const tk::UnsMesh::Chunk& Chunk;
       const tk::UnsMesh::Coords& Coord;
-      const tk::Fields& U;
+      const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& AddedNodes;
       const std::unordered_map< int, std::vector< std::size_t > >& Msum;
       const std::map< int, std::vector< std::size_t > > Bnode;
-      Resize( const tk::UnsMesh::Chunk& chunk,
-              const tk::UnsMesh::Coords& coord,
-              const tk::Fields& u,
-              const std::unordered_map< int,
-                      std::vector< std::size_t > >& msum,
-              const std::map< int, std::vector< std::size_t > >& bnode )
-        : Chunk(chunk), Coord(coord), U(u), Msum(msum), Bnode(bnode) {}
+      Resize(
+        const tk::UnsMesh::Chunk& chunk,
+        const tk::UnsMesh::Coords& coord,
+        const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addednodes,
+        const std::unordered_map< int, std::vector< std::size_t > >& msum,
+        const std::map< int, std::vector< std::size_t > >& bnode )
+        : Chunk(chunk), Coord(coord), AddedNodes(addednodes), Msum(msum),
+          Bnode(bnode) {}
       template< typename P > void operator()( const P& p ) const {
-        p.ckLocal()->resize( Chunk, Coord, U, Msum, Bnode );
+        p.ckLocal()->resize( Chunk, Coord, AddedNodes, Msum, Bnode );
       }
     };
 };

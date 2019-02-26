@@ -1307,28 +1307,66 @@ DG::refine()
 }
 
 void
-DG::resize( const tk::UnsMesh::Chunk& /*chunk*/,
-            const tk::UnsMesh::Coords& /*coord*/,
-            const tk::Fields& /*u*/,
-            const std::unordered_map< int,
-                    std::vector< std::size_t > >& /*msum*/,
-            const std::map< int, std::vector< std::size_t > >& /*bnode*/ )
+DG::resize(
+  const tk::UnsMesh::Chunk& /*chunk*/,
+  const tk::UnsMesh::Coords& /*coord*/,
+  const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /*addedNodes*/,
+  const std::unordered_map< int, std::vector< std::size_t > >& /*msum*/,
+  const std::map< int, std::vector< std::size_t > >& /*bnode*/ )
 // *****************************************************************************
 //  Receive new mesh from refiner
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
 //! \param[in] coord New mesh node coordinates
-//! \param[in] u New solution on new mesh
+//! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
 //! \param[in] msum New node communication map
 //! \param[in] bnode Map of boundary-node lists mapped to corresponding
 //!   side set ids for this mesh chunk
 // *****************************************************************************
 {
-  //auto d = Disc();
-
-  //d->Inpoel() = inpoel;
-  //d->Coord() = coord;
+  auto d = Disc();
+//
+//  // Set flag that indicates that we are during time stepping
+//  m_initial = false;
+//
+//  // Zero field output iteration count between two mesh refinement steps
+//  d->Itf() = 0;
+//
+//  // Increase number of iterations with mesh refinement
+//  ++d->Itr();
+//
+//  // Resize mesh data structures
+//  d->resize( chunk, coord, msum );
+//
+//  // Update (resize) solution on new mesh
+//  m_u = u;
+//
+//  // Resize auxiliary solution vectors
+//  auto nelem = d->Inpoel().size()/4;
+//  auto npoin = coord[0].size();
+//  auto nprop = m_u.nprop();
+//  m_ul.resize( npoin, nprop );
+//  m_du.resize( npoin, nprop );
+//  m_dul.resize( npoin, nprop );
+//  m_ue.resize( nelem, nprop );
+//  m_lhs.resize( npoin, nprop );
+//  m_rhs.resize( npoin, nprop );
+//  m_dif.resize( npoin, nprop );
+//
+//  // Update physical-boundary node lists
+//  m_fd.Bnode() = bnode;
+//
+//  // Resize communication buffers
+//  resizeComm();
+//
+//  // Resize FCT data structures
+//  d->FCT()->resize( npoin, msum, d->Bid(), d->Lid(), d->Inpoel() );
+//
+//  // Activate SDAG waits for re-computing the left-hand side
+//  thisProxy[ thisIndex ].wait4lhs();
 
   ref_complete();
+
+  contribute( CkCallback(CkReductionTarget(Transporter,workresized), d->Tr()) );
 }
 
 void

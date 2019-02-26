@@ -32,6 +32,17 @@ add_regression_test(amr_dtref_u_trans_reord_diagcg ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF slot_cyl_diagcg.ndiff.cfg
                     LABELS amr)
 
+# add_regression_test(amr_dtref_u_trans_gauss_hump_dg ${INCITER_EXECUTABLE}
+#                     NUMPES 1
+#                     INPUTFILES gauss_hump.q unitsquare_01_3.6k.exo
+#                     ARGS -c gauss_hump.q -i unitsquare_01_3.6k.exo -v
+#                     BIN_BASELINE gauss_hump.std.exo
+#                     BIN_RESULT out.e-s.0.1.0
+#                     BIN_DIFF_PROG_CONF exodiff_gauss_hump_dg.cfg
+#                     TEXT_BASELINE gauss_hump_dg.std
+#                     TEXT_RESULT diag
+#                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
+
 # Parallel, no virtualization
 
 add_regression_test(amr_dtref_u_trans_diagcg ${INCITER_EXECUTABLE}

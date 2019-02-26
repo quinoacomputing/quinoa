@@ -99,10 +99,10 @@ Discretization::Discretization(
 }
 
 void
-Discretization::resize( const tk::UnsMesh::Chunk& chunk,
-                        const tk::UnsMesh::Coords& coord,
-                        const std::unordered_map< int,
-                                std::vector< std::size_t > >& msum )
+Discretization::resize(
+  const tk::UnsMesh::Chunk& chunk,
+  const tk::UnsMesh::Coords& coord,
+  const std::unordered_map< int, std::vector< std::size_t > >& msum )
 // *****************************************************************************
 //  Resize mesh data structures (e.g., after mesh refinement)
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)

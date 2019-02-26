@@ -73,9 +73,9 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_edgedata(),
   m_edgedataCh(),
   m_bndEdges(),
-  m_u(),
   m_msumset(),
-  m_oldTetIdMap()
+  m_oldTetIdMap(),
+  m_addedNodes()
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Transporter (host) proxy
@@ -634,7 +634,7 @@ Refiner::next()
       auto& n = msum[ c.first ];
       n.insert( end(n), c.second.cbegin(), c.second.cend() );
     }
-    boost::apply_visitor( Resize(m_el,m_coord,m_u,msum,m_bnode), e );
+    boost::apply_visitor( Resize(m_el,m_coord,m_addedNodes,msum,m_bnode), e );
 
   }
 }
@@ -698,12 +698,7 @@ Refiner::errorRefine()
 
   } else {              // if AMR during time stepping (t>0)
 
-    // Get old solution from worker (pointer to soln from bound array element)
-    Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
-            "About to use nullptr" );
-    auto e = tk::element< SchemeBase::ProxyElem >
-                        ( m_scheme.getProxy(), thisIndex );
-    boost::apply_visitor( Solution(u), e );
+    // ...
 
   }
 
@@ -947,16 +942,8 @@ Refiner::updateMesh()
   std::unordered_set< std::size_t > old( m_inpoel.cbegin(), m_inpoel.cend() );
   std::unordered_set< std::size_t > ref( refinpoel.cbegin(), refinpoel.cend() );
 
-  // Get old solution from worker
-  if (!m_initial) {
-    Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
-            "About to use nullptr" );
-    auto e = tk::element< SchemeBase::ProxyElem >
-                        ( m_scheme.getProxy(), thisIndex );
-    boost::apply_visitor( Solution(m_u), e );
-    // Get nodal communication map from Discretization worker
-    m_msumset = m_scheme.get()[thisIndex].ckLocal()->msumset();
-  }
+  // Get nodal communication map from Discretization worker
+  if (!m_initial) m_msumset = m_scheme.get()[thisIndex].ckLocal()->msumset();
 
   // Update mesh and solution after refinement
   newVolMesh( old, ref );
@@ -1001,14 +988,13 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
   auto& y = m_coord[1];
   auto& z = m_coord[2];
 
-  // Resize node coordinates, global ids, and solution vector
+  // Resize node coordinates, global ids, and added-nodes map
   auto npoin = ref.size();
-  auto nprop = g_inputdeck.get<tag::component>().nprop();
   x.resize( npoin );
   y.resize( npoin );
   z.resize( npoin );
   m_gid.resize( npoin, std::numeric_limits< std::size_t >::max() );
-  if (!m_initial) m_u.resize( npoin, nprop );
+  m_addedNodes.clear();
 
   // Generate coordinates and ids to newly added nodes after refinement step
   for (auto r : ref) {               // for all unique nodes of the refined mesh
@@ -1031,10 +1017,8 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
         x[r] = (x[p[0]] + x[p[1]])/2.0;
         y[r] = (y[p[0]] + y[p[1]])/2.0;
         z[r] = (z[p[0]] + z[p[1]])/2.0;
-        // generate solution for newly added node
-        if (!m_initial)   // only during t>0 refinement
-          for (std::size_t c=0; c<nprop; ++c)
-            m_u(r,c,0) = (m_u(p[0],c,0) + m_u(p[1],c,0))/2.0;
+        // store newly added node id and their parent ids (local ids)
+        m_addedNodes[r] = p;
         // assign new global ids to local->global and to global->local maps
         m_gid[r] = g;
         Assert( m_lid.find(g) == end(m_lid),

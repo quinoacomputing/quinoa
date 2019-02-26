@@ -116,12 +116,12 @@ class ALECG : public CBase_ALECG {
     void refine();
 
     //! Receive new mesh from refiner
-    void resize( const tk::UnsMesh::Chunk& chunk,
-                 const tk::UnsMesh::Coords& coord,
-                 const tk::Fields& u,
-                 const std::unordered_map< int,
-                         std::vector< std::size_t > >& msum,
-                 const std::map< int, std::vector< std::size_t > >& bnode );
+    void resize(
+      const tk::UnsMesh::Chunk& chunk,
+      const tk::UnsMesh::Coords& coord,
+      const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
+      const std::unordered_map< int, std::vector< std::size_t > >& msum,
+      const std::map< int, std::vector< std::size_t > >& bnode );
 
     //! Const-ref access to current solution
     //! \param[in,out] u Reference to update with current solution
