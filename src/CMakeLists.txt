@@ -453,12 +453,6 @@ if (DEFINED ENV{NERSC_HOST})
   set(RUNNER_NCPUS_ARG "-n")
   set(RUNNER_REQUIRED true)
 
-elseif(ARCH MATCHES "ppc64")
-
-  find_program(RUNNER ${CMAKE_CURRENT_SOURCE_DIR}/../script/cobalt-runjob.sh)
-  set(RUNNER_NCPUS_ARG "--np")
-  set(RUNNER_REQUIRED true)
-
 elseif(DEFINED ENV{CRAY_PRGENVPGI} OR
        DEFINED ENV{CRAY_PRGENVGNU} OR
        DEFINED ENV{CRAY_PRGENVCRAY} OR
