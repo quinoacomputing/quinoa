@@ -301,21 +301,28 @@ class Refiner : public CBase_Refiner {
 
     //! Functor to call the resize() member function behind SchemeBase::Proxy
     struct Resize : boost::static_visitor<> {
+      const std::vector< std::size_t >& Ginpoel;
       const tk::UnsMesh::Chunk& Chunk;
       const tk::UnsMesh::Coords& Coord;
       const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& AddedNodes;
       const std::unordered_map< int, std::vector< std::size_t > >& Msum;
+      const std::map< int, std::vector< std::size_t > > Bface;
       const std::map< int, std::vector< std::size_t > > Bnode;
+      const std::vector< std::size_t > Triinpoel;
       Resize(
+        const std::vector< std::size_t >& ginpoel,
         const tk::UnsMesh::Chunk& chunk,
         const tk::UnsMesh::Coords& coord,
         const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addednodes,
         const std::unordered_map< int, std::vector< std::size_t > >& msum,
-        const std::map< int, std::vector< std::size_t > >& bnode )
-        : Chunk(chunk), Coord(coord), AddedNodes(addednodes), Msum(msum),
-          Bnode(bnode) {}
+        const std::map< int, std::vector< std::size_t > >& bface,
+        const std::map< int, std::vector< std::size_t > >& bnode,
+        const std::vector< std::size_t >& triinpoel )
+        : Ginpoel(ginpoel), Chunk(chunk), Coord(coord), AddedNodes(addednodes),
+          Msum(msum), Bface(bface), Bnode(bnode), Triinpoel(triinpoel) {}
       template< typename P > void operator()( const P& p ) const {
-        p.ckLocal()->resize( Chunk, Coord, AddedNodes, Msum, Bnode );
+        p.ckLocal()->resize( Ginpoel, Chunk, Coord, AddedNodes, Msum, Bface,
+                             Bnode, Triinpoel );
       }
     };
 };

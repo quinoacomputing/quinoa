@@ -75,12 +75,9 @@ DG::DG( const CProxy_Discretization& disc,
 //! \param[in] disc Discretization proxy
 //! \param[in] ginpoel Mesh element connectivity owned (global IDs) mesh chunk
 //!   this chare operates on
-//! \param[in] bface Map of boundary-face lists mapped to corresponding
-//!   side set ids for this mesh chunk
-//! \param[in] bnode Map of boundary-node lists mapped to corresponding
-//!   side set ids for this mesh chunk
-//! \param[in] triinpoel Interconnectivity of points and boundary-face in this
-//!   mesh chunk
+//! \param[in] bface Boundary-faces mapped to side set ids
+//! \param[in] bnode Boundary-node lists mapped to side set ids
+//! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
   usesAtSync = true;    // enable migration at AtSync
@@ -1328,18 +1325,24 @@ DG::refine()
 
 void
 DG::resize(
+  const std::vector< std::size_t >& ginpoel,
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /*addedNodes*/,
   const std::unordered_map< int, std::vector< std::size_t > >& msum,
-  const std::map< int, std::vector< std::size_t > >& /*bnode*/ )
+  const std::map< int, std::vector< std::size_t > >& bface,
+  const std::map< int, std::vector< std::size_t > >& bnode,
+  const std::vector< std::size_t >& triinpoel )
 // *****************************************************************************
 //  Receive new mesh from refiner
+//! \param[in] ginpoel Mesh connectivity with global node ids
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
 //! \param[in] coord New mesh node coordinates
 //! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
 //! \param[in] msum New node communication map
-//! \param[in] bnode Boundary-node lists mapped to corresponding side set ids
+//! \param[in] bface Boundary-faces mapped to side set ids
+//! \param[in] bnode Boundary-node lists mapped to side set ids
+//! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
   auto d = Disc();
@@ -1353,7 +1356,7 @@ DG::resize(
   // Resize mesh data structures
   d->resize( chunk, coord, msum );
 
-  // Resize auxiliary solution vectors
+  // Resize solution vectors
   auto nelem = d->Inpoel().size()/4;
   auto nprop = m_u.nprop();
   m_u.resize( nelem, nprop );
@@ -1361,6 +1364,9 @@ DG::resize(
   m_lhs.resize( nelem, nprop );
   m_rhs.resize( nelem, nprop );
   m_nunk = nelem;
+
+  // Update face data
+  m_fd = FaceData( ginpoel, bface, bnode, triinpoel );
 
   // Update solution on new mesh
   // ...
