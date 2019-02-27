@@ -717,6 +717,19 @@ namespace AMR {
                 {
                     //tet_store.erase(c);
                     tet_store.deactivate(c);
+
+                    /*
+                    auto children = tet_store.data(c).children;
+                    // Debug printing
+                    std::cout << "tet " << c << "has ";
+                    for (auto child : children)
+                    {
+                        std::cout << " _child " << child;
+                    }
+                    */
+
+                    std::cout << std::endl;
+
                     parent.num_children--; // Could directly set to 0
                 }
                 parent.children.clear();
@@ -881,6 +894,20 @@ namespace AMR {
             }
 
 
+            // HERE BE DRAGONS! THIS IS DANGEROUS IF YOU USE IT WRONG
+            // For every child of parent_id, set his children to our won
+            // TODO: set a flag for the curious user to know we trashed the children
+            void overwrite_children(
+                    tet_store_t& tet_store,
+                    child_id_list_t to_be_replaced,
+                    child_id_list_t replace_with
+            )
+            {
+                for (auto c : to_be_replaced)
+                {
+                    tet_store.data(c).children = replace_with;
+                }
+            }
 
     };
 }

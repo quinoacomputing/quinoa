@@ -459,6 +459,9 @@ namespace AMR {
         {
             trace_out << "round two i " << i << std::endl;
 
+            // Cache children as we're about to change this data
+            auto former_children = tet_store.data(i).children;
+
             AMR::Refinement_State& element = tet_store.data(i);
 
             if (element.num_children == 2)
@@ -477,6 +480,14 @@ namespace AMR {
             }
 
             refiner.refine_one_to_eight(tet_store,node_connectivity,i);
+
+            // Grab children after it has been updated
+            auto current_children = tet_store.data(i).children;
+
+            // I want to set the children stored in *my* own children, to be
+            // the value of my new children....
+            refiner.overwrite_children(tet_store, former_children, current_children);
+
             tet_store.unset_marked_children(i); // FIXME: This will not work well in parallel
             element.refinement_case = AMR::Refinement_Case::one_to_eight;
         }
