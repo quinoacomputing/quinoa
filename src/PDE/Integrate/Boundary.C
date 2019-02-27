@@ -25,7 +25,7 @@ extern ctr::InputDeck g_inputdeck;
 } // inciter::
 
 void
-tk::sidesetInt( ncomp_t system,
+tk::bndSurfInt( ncomp_t system,
                 ncomp_t ncomp,
                 ncomp_t offset,
                 const std::vector< bcconf_t >& bcconfig,
@@ -64,55 +64,8 @@ tk::sidesetInt( ncomp_t system,
 // *****************************************************************************
 {
   const auto& bface = fd.Bface();
-
-  for (const auto& s : bcconfig) {       // for all bc sidesets
-    auto bc = bface.find( std::stoi(s) );// faces for side set
-    if (bc != end(bface))
-      bndSurfInt( system, ncomp, offset, bc->second, fd.Esuf(), geoFace,
-        inpoel, fd.Inpofa(), coord, t, flux, vel, state, U, limFunc, R );
-  }
-}
-
-void
-tk::bndSurfInt( ncomp_t system,
-                ncomp_t ncomp,
-                ncomp_t offset,
-                const std::vector< std::size_t >& faces,
-                const std::vector< int >& esuf,
-                const Fields& geoFace,
-                const std::vector< std::size_t >& inpoel,
-                const std::vector< std::size_t >& inpofa,
-                const UnsMesh::Coords& coord,
-                real t,
-                const RiemannFluxFn& flux,
-                const VelFn& vel,
-                const StateFn& state,
-                const Fields& U,
-                const Fields& limFunc,
-                Fields& R )
-// *****************************************************************************
-//  Compute boundary surface integral for a number of faces for DG
-//! \param[in] system Equation system index
-//! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] offset Offset this PDE system operates from
-//! \param[in] faces Face IDs at which to compute surface integral
-//! \param[in] esuf Elements surrounding face, see tk::genEsuf()
-//! \param[in] geoFace Face geometry array
-//! \param[in] inpoel Element-node connectivity
-//! \param[in] inpofa Face-node connectivity
-//! \param[in] coord Array of nodal coordinates
-//! \param[in] t Physical time
-//! \param[in] flux Riemann flux function to use
-//! \param[in] vel Function to use to query prescribed velocity (if any)
-//! \param[in] state Function to evaluate the left and right solution state at
-//!   boundaries
-//! \param[in] U Solution vector at recent time step
-//! \param[in] limFunc Limiter function for higher-order solution dofs
-//! \param[in,out] R Right-hand side vector computed
-//! \tparam State Policy class providing the left and right state at
-//!   boundaries by its member function State::LR()
-// *****************************************************************************
-{
+  const auto& esuf = fd.Esuf();
+  const auto& inpofa = fd.Inpofa();
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
 
   // Number of quadrature points for face integration
@@ -133,61 +86,66 @@ tk::bndSurfInt( ncomp_t system,
   const auto& cy = coord[1];
   const auto& cz = coord[2];
 
-  // Nodal Coordinates of face
-  std::array< std::array< real, 3>, 3 > coordfa;
-
-  // Nodal Coordinates of the left element
-  std::array< std::array< real, 3>, 4> coordel_l;
-
-  for (const auto& f : faces)
-  {
-    Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
-
-    std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-
-    // Compute the determinant of Jacobian matrix
-    auto detT_l = eval_det( el, cx, cy, cz, inpoel, coordel_l );
-
-    coordfa[0][0] = cx[ inpofa[3*f]   ];
-    coordfa[0][1] = cy[ inpofa[3*f]   ];
-    coordfa[0][2] = cz[ inpofa[3*f]   ];
-
-    coordfa[1][0] = cx[ inpofa[3*f+1] ];
-    coordfa[1][1] = cy[ inpofa[3*f+1] ];
-    coordfa[1][2] = cz[ inpofa[3*f+1] ];
-
-    coordfa[2][0] = cx[ inpofa[3*f+2] ];
-    coordfa[2][1] = cy[ inpofa[3*f+2] ];
-    coordfa[2][2] = cz[ inpofa[3*f+2] ];
-
-    std::array< real, 3 >
-      fn{{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }};
-
-    // Gaussian quadrature
-    for (std::size_t igp=0; igp<ng; ++igp)
+  for (const auto& s : bcconfig) {       // for all bc sidesets
+    auto bc = bface.find( std::stoi(s) );// faces for side set
+    if (bc != end(bface))
     {
-      // Compute the coordinates of quadrature point at physical domain
-      auto gp = eval_gp( igp, coordfa, coordgp );
+      for (const auto& f : bc->second)
+      {
+        Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
 
-      // Compute the basis function for the left element
-      auto B_l = eval_basis_fa( ndof, coordel_l, detT_l, gp );
+        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
 
-      auto wt = wgp[igp] * geoFace(f,0,0);
+        // Extract the left element coordinates
+        std::array< std::array< tk::real, 3>, 4 > coordel_l {{
+        { cx[ inpoel[4*el  ] ], cy[ inpoel[4*el  ] ], cz[ inpoel[4*el  ] ] },
+        { cx[ inpoel[4*el+1] ], cy[ inpoel[4*el+1] ], cz[ inpoel[4*el+1] ] },
+        { cx[ inpoel[4*el+2] ], cy[ inpoel[4*el+2] ], cz[ inpoel[4*el+2] ] },
+        { cx[ inpoel[4*el+3] ], cy[ inpoel[4*el+3] ], cz[ inpoel[4*el+3] ] } }};
 
-      // Compute the state variables at the left element
-      auto ugp = eval_state( ncomp, offset, ndof, el, U, limFunc, B_l );
+        // Compute the determinant of Jacobian matrix
+        auto detT_l =
+          Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
 
-      Assert( ugp.size() == ncomp, "Size mismatch" );
+        // Extract the face coordinates
+        std::array< std::array< tk::real, 3>, 3 > coordfa {{
+          { cx[ inpofa[3*f  ] ], cy[ inpofa[3*f  ] ], cz[ inpofa[3*f  ] ] },
+          { cx[ inpofa[3*f+1] ], cy[ inpofa[3*f+1] ], cz[ inpofa[3*f+1] ] },
+          { cx[ inpofa[3*f+2] ], cy[ inpofa[3*f+2] ], cz[ inpofa[3*f+2] ] } }};
 
-      // Compute the numerical flux
-      auto fl = flux( fn,
+        std::array< real, 3 >
+          fn{{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }};
+
+        // Gaussian quadrature
+        for (std::size_t igp=0; igp<ng; ++igp)
+        {
+          // Compute the coordinates of quadrature point at physical domain
+          auto gp = eval_gp( igp, coordfa, coordgp );
+
+          //Compute the basis functions for the left element
+          auto B_l = eval_basis( ndof,
+            Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
+            Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
+            Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l );
+
+          auto wt = wgp[igp] * geoFace(f,0,0);
+
+          // Compute the state variables at the left element
+          auto ugp = eval_state( ncomp, offset, ndof, el, U, limFunc, B_l );
+
+          Assert( ugp.size() == ncomp, "Size mismatch" );
+
+          // Compute the numerical flux
+          auto fl = flux( fn,
                       state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn ),
                       vel( system, ncomp, gp[0], gp[1], gp[2] ) );
 
-      // Add the surface integration term to the rhs
-      update_rhs_bc( ncomp, offset, ndof, wt, el, fl, B_l, R );
+          // Add the surface integration term to the rhs
+          update_rhs_bc( ncomp, offset, ndof, wt, el, fl, B_l, R );
+        }
+      }
     }
-  } 
+  }
 }
 
 void

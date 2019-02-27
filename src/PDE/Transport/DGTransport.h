@@ -163,7 +163,7 @@ class Transport {
 
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
-        tk::sidesetInt( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
+        tk::bndSurfInt( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
           inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
           b.second, U, limFunc, R );
     }

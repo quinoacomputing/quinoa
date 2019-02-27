@@ -172,7 +172,7 @@ class MultiMat {
 
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
-        tk::sidesetInt( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
+        tk::bndSurfInt( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
           inpoel, coord, t, rieflxfn, velfn, b.second, U, limFunc, R );
     }
 
@@ -220,33 +220,28 @@ class MultiMat {
       // get quadrature point weights and coordinates for triangle
       tk::GaussQuadratureTri( ng, coordgp, wgp );
 
-      // Nodal Coordinates of face
-      std::array< std::array< tk::real, 3>, 3 > coordfa;
-
-      // Nodal Coordinates of the tetrahedron element
-      std::array< std::array< tk::real, 3>, 4> coordel_l;
-      std::array< std::array< tk::real, 3>, 4> coordel_r;
-
       // compute internal surface maximum characteristic speed
       for (std::size_t f=0; f<esuf.size()/2; ++f)
       {
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
         auto er = esuf[2*f+1];
 
+        // Extract the left element coordinates
+        std::array< std::array< tk::real, 3>, 4 > coordel_l {{
+          { cx[inpoel[4*el  ]], cy[inpoel[4*el  ]], cz[inpoel[4*el  ]] },
+          { cx[inpoel[4*el+1]], cy[inpoel[4*el+1]], cz[inpoel[4*el+1]] },
+          { cx[inpoel[4*el+1]], cy[inpoel[4*el+1]], cz[inpoel[4*el+1]] },
+          { cx[inpoel[4*el+1]], cy[inpoel[4*el+1]], cz[inpoel[4*el+1]] } }};
+
         // Compute the determinant of Jacobian matrix
-        auto detT_l = tk::eval_det( el, cx, cy, cz, inpoel, coordel_l );
+        auto detT_l =
+          tk::Jacobian(coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3]);
 
-        coordfa[0][0] = cx[ inpofa[3*f]   ];
-        coordfa[0][1] = cy[ inpofa[3*f]   ];
-        coordfa[0][2] = cz[ inpofa[3*f]   ];
-
-        coordfa[1][0] = cx[ inpofa[3*f+1] ];
-        coordfa[1][1] = cy[ inpofa[3*f+1] ];
-        coordfa[1][2] = cz[ inpofa[3*f+1] ];
-
-        coordfa[2][0] = cx[ inpofa[3*f+2] ];
-        coordfa[2][1] = cy[ inpofa[3*f+2] ];
-        coordfa[2][2] = cz[ inpofa[3*f+2] ];
+        // Extract the face coordinates
+        std::array< std::array< tk::real, 3>, 3 > coordfa {{
+          { cx[ inpofa[3*f  ] ], cy[ inpofa[3*f  ] ], cz[ inpofa[3*f  ] ] },
+          { cx[ inpofa[3*f+1] ], cy[ inpofa[3*f+1] ], cz[ inpofa[3*f+1] ] },
+          { cx[ inpofa[3*f+2] ], cy[ inpofa[3*f+2] ], cz[ inpofa[3*f+2] ] } }};
 
         dSV_l = 0.0;
         dSV_r = 0.0;
@@ -258,7 +253,10 @@ class MultiMat {
           auto gp = tk::eval_gp( igp, coordfa, coordgp );
 
           // Compute the basis function for the left element
-          auto B_l = tk::eval_basis_fa( ndof, coordel_l, detT_l, gp );
+          auto B_l = tk::eval_basis( ndof,
+            tk::Jacobian(coordel_l[0], gp, coordel_l[2], coordel_l[3])/detT_l,
+            tk::Jacobian(coordel_l[0], coordel_l[1], gp, coordel_l[3])/detT_l,
+            tk::Jacobian(coordel_l[0], coordel_l[1], coordel_l[2], gp)/detT_l );
 
           auto wt = wgp[igp] * geoFace(f,0,0);
 
@@ -294,14 +292,25 @@ class MultiMat {
             // nodal coordinates of the right element
             std::size_t eR = static_cast< std::size_t >( er );
 
+            // Extract the right element coordinates
+            std::array< std::array< tk::real, 3>, 4 > coordel_r {{
+              { cx[inpoel[4*eR  ]], cy[inpoel[4*eR  ]], cz[inpoel[4*eR  ]] },
+              { cx[inpoel[4*eR+1]], cy[inpoel[4*eR+1]], cz[inpoel[4*eR+1]] },
+              { cx[inpoel[4*eR+1]], cy[inpoel[4*eR+1]], cz[inpoel[4*eR+1]] },
+              { cx[inpoel[4*eR+1]], cy[inpoel[4*eR+1]], cz[inpoel[4*eR+1]] } }};
+
             // Compute the determinant of Jacobian matrix
-            auto detT_r = tk::eval_det( eR, cx, cy, cz, inpoel, coordel_r );
+            auto detT_r =
+              tk::Jacobian(coordel_r[0],coordel_r[1],coordel_r[2],coordel_r[3]);
 
             // Compute the coordinates of quadrature point at physical domain
             gp = tk::eval_gp( igp, coordfa, coordgp );
 
             // Compute the basis function for the right element
-            auto B_r = tk::eval_basis_fa( ndof, coordel_r, detT_r, gp );
+            auto B_r = tk::eval_basis( ndof,
+              tk::Jacobian(coordel_r[0], gp, coordel_r[2], coordel_r[3])/detT_r,
+              tk::Jacobian(coordel_r[0], coordel_r[1], gp, coordel_r[3])/detT_r,
+              tk::Jacobian(coordel_r[0], coordel_r[1], coordel_r[2], gp)/detT_r );
 
             for (ncomp_t c=0; c<5; ++c)
             {

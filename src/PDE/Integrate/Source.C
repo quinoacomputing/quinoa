@@ -66,26 +66,14 @@ tk::srcInt( ncomp_t system,
   const auto& cy = coord[1];
   const auto& cz = coord[2];
 
-  // Nodal Coordinates of the tetrahedron element
-  std::array< std::array< real, 3>, 4 > coordel;
-
   for (std::size_t e=0; e<geoElem.nunk(); ++e)
   {
-    coordel[0][0] = cx[ inpoel[4*e]   ];
-    coordel[0][1] = cy[ inpoel[4*e]   ];
-    coordel[0][2] = cz[ inpoel[4*e]   ];
-
-    coordel[1][0] = cx[ inpoel[4*e+1] ];
-    coordel[1][1] = cy[ inpoel[4*e+1] ];
-    coordel[1][2] = cz[ inpoel[4*e+1] ];
-
-    coordel[2][0] = cx[ inpoel[4*e+2] ];
-    coordel[2][1] = cy[ inpoel[4*e+2] ];
-    coordel[2][2] = cz[ inpoel[4*e+2] ];
-
-    coordel[3][0] = cx[ inpoel[4*e+3] ];
-    coordel[3][1] = cy[ inpoel[4*e+3] ];
-    coordel[3][2] = cz[ inpoel[4*e+3] ];
+    // Extract the element coordinates
+    std::array< std::array< real, 3>, 4 > coordel {{
+      { cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] },
+      { cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] },
+      { cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] },
+      { cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] } }};
 
     for (std::size_t igp=0; igp<ng; ++igp)
     {

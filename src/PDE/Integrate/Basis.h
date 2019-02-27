@@ -28,15 +28,6 @@ namespace tk {
 using ncomp_t = kw::ncomp::info::expect::type;
 using bcconf_t = kw::sideset::info::expect::type;
 
-//! Compute the determinant of Jacobian matrix for the tetrahedron element
-tk::real
-eval_det ( const std::size_t e,
-           const std::vector< tk::real >& cx,
-           const std::vector< tk::real >& cy,
-           const std::vector< tk::real >& cz,
-           const std::vector< std::size_t >& inpoel,
-           std::array< std::array< tk::real, 3>, 4 >& coordel );
-
 //! Compute the coordinates of quadrature points for face integral
 std::array< tk::real, 3 >
 eval_gp ( const std::size_t igp,
@@ -60,13 +51,6 @@ eval_dBdx_p2( const std::size_t igp,
               const std::array< std::vector< tk::real >, 3 >& coordgp,
               const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
               std::array< std::vector<tk::real>, 3 >& dBdx );
-
-//! Compute the Dubiner basis functions for face integrals
-std::vector< tk::real >
-eval_basis_fa( const std::size_t ndof,
-               const std::array< std::array< tk::real, 3>, 4 >& coordel,
-               const tk::real detT,
-               const std::array < tk::real, 3 >& gp );
 
 //! Compute the Dubiner basis functions
 std::vector< tk::real >

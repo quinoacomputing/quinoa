@@ -23,6 +23,7 @@ tk::GaussQuadratureTet( const std::size_t NG,
 {
   Assert( coordgp[0].size() == NG, "Size mismatch" );
   Assert( coordgp[1].size() == NG, "Size mismatch" );
+  Assert( coordgp[1].size() == NG, "Size mismatch" );
   Assert( wgp.size() == NG, "Size mismatch" );
 
   switch( NG )

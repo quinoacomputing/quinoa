@@ -18,44 +18,6 @@
 
 #include "Basis.h"
 
-tk::real
-tk::eval_det ( const std::size_t e,
-               const std::vector< tk::real >& cx,
-               const std::vector< tk::real >& cy,
-               const std::vector< tk::real >& cz,
-               const std::vector< std::size_t >& inpoel,
-               std::array< std::array< tk::real, 3>, 4 >& coordel )
-// *****************************************************************************
-//  Compute the determinant of Jacobian matrix for the tetrahedron element
-//! \param[in] e Index for the tetrahedron element
-//! \param[in] cx Vector of x-coordinates of points
-//! \param[in] cy Vector of y-coordinates of points
-//! \param[in] cz Vector of z-coordinates of points
-//! \param[in] inpoel Element-node connectivity
-//! \param[in] coordel Array of nodal coordinates for tetrahedron element
-//! \return The determinant of Jacobian matrix
-// *****************************************************************************
-{
-  // nodal coordinates of the element
-  coordel[0][0] = cx[ inpoel[4*e] ];
-  coordel[0][1] = cy[ inpoel[4*e] ];
-  coordel[0][2] = cz[ inpoel[4*e] ];
-
-  coordel[1][0] = cx[ inpoel[4*e+1] ];
-  coordel[1][1] = cy[ inpoel[4*e+1] ];
-  coordel[1][2] = cz[ inpoel[4*e+1] ];
-
-  coordel[2][0] = cx[ inpoel[4*e+2] ];
-  coordel[2][1] = cy[ inpoel[4*e+2] ];
-  coordel[2][2] = cz[ inpoel[4*e+2] ];
-
-  coordel[3][0] = cx[ inpoel[4*e+3] ];
-  coordel[3][1] = cy[ inpoel[4*e+3] ];
-  coordel[3][2] = cz[ inpoel[4*e+3] ];
-
-  return Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
-}
-
 std::array< tk::real, 3 >
 tk::eval_gp ( const std::size_t igp,
               const std::array< std::array< tk::real, 3>, 3 >& coordfa,
@@ -289,42 +251,6 @@ tk::eval_dBdx_p2( const std::size_t igp,
 }
 
 std::vector< tk::real >
-tk::eval_basis_fa( const std::size_t ndof,
-                   const std::array< std::array< tk::real, 3>, 4 >& coordel,
-                   const tk::real detT,
-                   const std::array < tk::real, 3 >& gp )
-// *****************************************************************************
-//  Compute the Dubiner basis functions for face integrals
-//! \param[in] ndof Number of degree of freedom
-//! \param[in] coordel Array of nodal coordinates for tetrahedron element
-//! \param[in] detT Determination of Jacobian matrix for tetrahedron element
-//! \param[in] gp Array of coordinates for quadrature points in physical space
-//! \return Vector of basis functions
-// *****************************************************************************
-{
-  // In order to determine the high-order solution from the left and right
-  // elements at the surface quadrature points, the basis functions from
-  // the left and right elements are needed. For this, a transformation to
-  // the reference coordinates is necessary, since the basis functions are
-  // defined on the reference tetrahedron only.
-
-  tk::real detT_gp = 0.0;
-
-  // Transformation of the physical coordinates of the quadrature point
-  // to reference space for the element to be able to compute basis functions.
-  detT_gp = Jacobian( coordel[0], gp, coordel[2], coordel[3] );
-  auto xi = detT_gp / detT;
-  detT_gp = Jacobian( coordel[0], coordel[1], gp, coordel[3] );
-  auto eta = detT_gp / detT;
-  detT_gp = Jacobian( coordel[0], coordel[1], coordel[2], gp );
-  auto zeta = detT_gp / detT;
-
-  auto B = eval_basis( ndof, xi, eta, zeta );
-
-  return B;
-}
-
-std::vector< tk::real >
 tk::eval_basis( const std::size_t ndof,
                 const tk::real xi,
                 const tk::real eta,
@@ -356,13 +282,16 @@ tk::eval_basis( const std::size_t ndof,
 
       auto zeta_zeta = zeta * zeta;
 
-      B[4] =  6.0 * xi_xi + eta_eta + zeta_zeta + 6.0 * xi_eta + 6.0 * xi_zeta + 2.0 * eta_zeta
+      B[4] =  6.0 * xi_xi + eta_eta + zeta_zeta 
+            + 6.0 * xi_eta + 6.0 * xi_zeta + 2.0 * eta_zeta
             - 6.0 * xi - 2.0 * eta - 2.0 * zeta + 1.0;
-      B[5] =  5.0 * eta_eta + zeta_zeta + 10.0 * xi_eta + 2.0 * xi_zeta + 6.0 * eta_zeta - 2.0 * xi
-            - 6.0 * eta - 2.0 * zeta + 1.0;
+      B[5] =  5.0 * eta_eta + zeta_zeta 
+            + 10.0 * xi_eta + 2.0 * xi_zeta + 6.0 * eta_zeta
+            - 2.0 * xi - 6.0 * eta - 2.0 * zeta + 1.0;
       B[6] =  6.0 * zeta_zeta + 12.0 * xi_zeta + 6.0 * eta_zeta - 2.0 * xi
             - eta - 7.0 * zeta + 1.0;
-      B[7] =  10.0 * eta_eta + zeta_zeta + 8.0 * eta_zeta - 8.0 * eta - 2.0 * zeta + 1.0;
+      B[7] =  10.0 * eta_eta + zeta_zeta + 8.0 * eta_zeta 
+            - 8.0 * eta - 2.0 * zeta + 1.0;
       B[8] =  6.0 * zeta_zeta + 18.0 * eta_zeta - 3.0 * eta - 7.0 * zeta + 1.0;
       B[9] =  15.0 * zeta_zeta - 10.0 * zeta + 1.0;
     }

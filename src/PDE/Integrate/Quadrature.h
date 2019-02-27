@@ -17,8 +17,8 @@
 #include "Exception.h"
 
 namespace tk {
-//! Initialization of number of gauss points for face integration
-//! \param[in] ndof Number of degree of freedom
+//! Initialization of number of gauss points for volume integration
+//! \param[in] ndof Number of degrees of freedom
 constexpr std::size_t NGvol( const std::size_t ndof ) {
   return ndof == 1 ? 1 :
          ndof == 4 ? 5 :
@@ -28,11 +28,31 @@ constexpr std::size_t NGvol( const std::size_t ndof ) {
 
 
 //! Initialization of number of gauss points for face integration
-//! \param[in] ndof Number of degree of freedom
+//! \param[in] ndof Number of degrees of freedom
 constexpr std::size_t NGfa( const std::size_t ndof ) {
   return ndof == 1 ? 1 :
          ndof == 4 ? 3 :
          ndof == 10 ? 6 :
+         throw std::logic_error("ndof must be one of 1,4,10");
+}
+
+//! Initialization of number of gauss points for volume integration
+//! in error estimation
+//! \param[in] ndof Number of degrees of freedom
+constexpr std::size_t NGdiag( const std::size_t ndof ) {
+  return ndof == 1 ? 1 :
+         ndof == 4 ? 4 :
+         ndof == 10 ? 14 :
+         throw std::logic_error("ndof must be one of 1,4,10");
+}
+
+//! Initialization of number of gauss points for volume integration
+//! in DG initialization
+//! \param[in] ndof Number of degrees of freedom
+constexpr std::size_t NGinit( const std::size_t ndof ) {
+  return ndof == 1 ? 1 :
+         ndof == 4 ? 14 :
+         ndof == 10 ? 14 :
          throw std::logic_error("ndof must be one of 1,4,10");
 }
 

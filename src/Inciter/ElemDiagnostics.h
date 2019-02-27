@@ -11,6 +11,7 @@
 #define ElemDiagnostics_h
 
 #include <unordered_set>
+#include <array>
 
 #include "Discretization.h"
 #include "PUPUtil.h"
@@ -43,7 +44,7 @@ class ElemDiagnostics {
 
   private:
     //! Compute diagnostics for DG
-    void compute_diag( Discretization& d,
+    void compute_diag( const Discretization& d,
                        const std::size_t ndof,
                        const std::size_t nchGhost,
                        const tk::Fields& geoElem,

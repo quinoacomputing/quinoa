@@ -27,32 +27,13 @@ using bcconf_t = kw::sideset::info::expect::type;
 
 //! Compute boundary surface flux integrals for a given boundary type for DG
 void
-sidesetInt( ncomp_t system,
+bndSurfInt( ncomp_t system,
             ncomp_t ncomp,
             ncomp_t offset,
             const std::vector< bcconf_t >& bcconfig,
             const inciter::FaceData& fd,
             const Fields& geoFace,
             const std::vector< std::size_t >& inpoel,
-            const UnsMesh::Coords& coord,
-            real t,
-            const RiemannFluxFn& flux,
-            const VelFn& vel,
-            const StateFn& state,
-            const Fields& U,
-            const Fields& limFunc,
-            Fields& R );
-
-//! Compute boundary surface integral for a number of faces for DG
-void
-bndSurfInt( ncomp_t system,
-            ncomp_t ncomp,
-            ncomp_t offset,
-            const std::vector< std::size_t >& faces,
-            const std::vector< int >& esuf,
-            const Fields& geoFace,
-            const std::vector< std::size_t >& inpoel,
-            const std::vector< std::size_t >& inpofa,
             const UnsMesh::Coords& coord,
             real t,
             const RiemannFluxFn& flux,
