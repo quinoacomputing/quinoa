@@ -35,7 +35,8 @@ tk::initialize( ncomp_t system,
                 real t,
                 const std::size_t nielem )
 // *****************************************************************************
-//! Initalize a system of DGPDEs by projection method
+//! Initalize a system of DGPDEs by projecting the exact solution in the DG
+//! solution space
 //! \details This is the public interface exposed to client code.
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system

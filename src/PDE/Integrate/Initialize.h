@@ -19,7 +19,8 @@
 
 namespace tk {
 
-//! Initalize a PDE system for DG
+//! Initalize a PDE system for DG by projecting the exact solution
+//! in the DG solution space
 void
 initialize( ncomp_t system,
             ncomp_t ncomp,
