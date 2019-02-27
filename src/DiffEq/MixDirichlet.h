@@ -74,6 +74,7 @@ class MixDirichlet {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
+    using eq = tag::mixdirichlet;
 
   public:
     //! \brief Constructor
@@ -84,37 +85,34 @@ class MixDirichlet {
     //!   control file.
     explicit MixDirichlet( ncomp_t c ) :
       m_c( c ),
-      m_depvar(
-        g_inputdeck.get< tag::param, tag::mixdirichlet, tag::depvar >().at(c) ),
+      m_depvar( g_inputdeck.get< tag::param, eq, tag::depvar >().at(c) ),
       // subtract the number of derived variables computed, see advance()
-      m_ncomp(
-        g_inputdeck.get< tag::component >().get< tag::mixdirichlet >().at(c) -
-        MIXDIR_NUMDERIVED ),
+      m_ncomp( g_inputdeck.get< tag::component >().get< eq >().at(c) -
+               MIXDIR_NUMDERIVED ),
       m_offset(
-        g_inputdeck.get< tag::component >().offset< tag::mixdirichlet >(c) ),
+        g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::mixdirichlet, tag::rng >().at(c) ) ) ),
+        g_inputdeck.get< tag::param, eq, tag::rng >().at(c) ) ) ),
       m_b(),
       m_S(),
+      m_kprime(),
       m_k(),
       m_rho(),
       m_r(),
-      coeff(
-        m_ncomp,
-        g_inputdeck.get< tag::param, tag::mixdirichlet, tag::b >().at(c),
-        g_inputdeck.get< tag::param, tag::mixdirichlet, tag::S >().at(c),
-        g_inputdeck.get< tag::param, tag::mixdirichlet, tag::kappa >().at(c),
-        g_inputdeck.get< tag::param, tag::mixdirichlet, tag::rho >().at(c),
-        m_b, m_k, m_S, m_rho, m_r ) {}
+      coeff( m_ncomp,
+             g_inputdeck.get< tag::param, eq, tag::b >().at(c),
+             g_inputdeck.get< tag::param, eq, tag::S >().at(c),
+             g_inputdeck.get< tag::param, eq, tag::kappaprime >().at(c),
+             g_inputdeck.get< tag::param, eq, tag::rho >().at(c),
+             m_b, m_kprime, m_S, m_rho, m_r, m_k ) {}
 
     //! Initalize SDE, prepare for time integration
     //! \param[in] stream Thread (or more precisely stream) ID 
     //! \param[in,out] particles Array of particle properties 
     void initialize( int stream, tk::Particles& particles ) {
       //! Set initial conditions using initialization policy
-      Init::template
-        init< tag::mixdirichlet >
-            ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
+      Init::template init< eq >( g_inputdeck, m_rng, stream, particles, m_c,
+                                 m_ncomp, m_offset );
 
       // Initialize derived instantaneous variables
       const auto npar = particles.nunk();
@@ -148,7 +146,8 @@ class MixDirichlet {
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
       // Update SDE coefficients
-      coeff.update( m_depvar, m_ncomp, moments, m_rho, m_r, m_S );
+      coeff.update( m_depvar, m_ncomp, moments, m_rho, m_r, m_kprime, m_k,
+                    m_S );
       // Advance particles
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
@@ -189,6 +188,7 @@ class MixDirichlet {
     //! Coefficients
     std::vector< kw::sde_b::info::expect::type > m_b;
     std::vector< kw::sde_S::info::expect::type > m_S;
+    std::vector< kw::sde_kappa::info::expect::type > m_kprime;
     std::vector< kw::sde_kappa::info::expect::type > m_k;
     std::vector< kw::sde_rho::info::expect::type > m_rho;
     std::vector< kw::sde_r::info::expect::type > m_r;

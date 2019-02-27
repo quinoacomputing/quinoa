@@ -1249,9 +1249,9 @@ namespace deck {
                            sde_parameter_vector< kw::sde_S,
                                                  tag::mixdirichlet,
                                                  tag::S >,
-                           sde_parameter_vector< kw::sde_kappa,
+                           sde_parameter_vector< kw::sde_kappaprime,
                                                  tag::mixdirichlet,
-                                                 tag::kappa >,
+                                                 tag::kappaprime >,
                            sde_parameter_vector< kw::sde_rho,
                                                  tag::mixdirichlet,
                                                  tag::rho >
