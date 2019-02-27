@@ -27,7 +27,8 @@ initializeP0( ncomp_t system,
               const UnsMesh::Coords& coord,
               const SolutionFn& solution,
               Fields& unk,
-              real t );
+              real t,
+              const std::size_t nielem );
 
 //! Initalize a PDE system for DG(P1)
 void
@@ -39,7 +40,8 @@ initializeP1( ncomp_t system,
               const UnsMesh::Coords& coord,
               const SolutionFn& solution,
               Fields& unk,
-              real t );
+              real t,
+              const std::size_t nielem );
 
 //! Initalize a PDE system for DG(P2)
 void
@@ -51,7 +53,8 @@ initializeP2( ncomp_t system,
               const UnsMesh::Coords& coord,
               const SolutionFn& solution,
               Fields& unk,
-              real t );
+              real t,
+              const std::size_t nielem );
 
 //! Initalize a system of PDEs for discontinous Galerkin methods
 void
@@ -63,7 +66,8 @@ initialize( ncomp_t system,
             const UnsMesh::Coords& coord,
             const SolutionFn& solution,
             Fields& unk,
-            real t );
+            real t,
+            const std::size_t nielem );
 
 } // tk::
 

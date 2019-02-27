@@ -45,7 +45,8 @@ using amr = tk::tuple::tagged_tuple<
   tag::amr,     bool,                             //!< AMR on/off
   tag::t0ref,   bool,                             //!< AMR before t<0 on/off
   tag::dtref,   bool,                             //!< AMR during t>0 on/off
-  tag::dtfreq,  kw::amr_dtfreq::info::expect::type, //!< refinement frequency
+  tag::dtref_uniform, bool,                       //!< Force dtref uniform-only
+  tag::dtfreq,  kw::amr_dtfreq::info::expect::type, //!< Refinement frequency
   tag::init,    std::vector< AMRInitialType >,    //!< List of initial AMR types
   tag::refvar,  std::vector< std::string >,       //!< List of refinement vars
   tag::id,      std::vector< std::size_t >,       //!< List of refvar indices

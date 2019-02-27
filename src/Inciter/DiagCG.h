@@ -73,7 +73,11 @@ class DiagCG : public CBase_DiagCG {
     #endif
 
     //! Constructor
-    explicit DiagCG( const CProxy_Discretization& disc, const FaceData& fd );
+    explicit DiagCG( const CProxy_Discretization& disc,
+                     const std::vector< std::size_t >& ginpoel,
+                     const std::map< int, std::vector< std::size_t > >& bface,
+                     const std::map< int, std::vector< std::size_t > >& bnode,
+                     const std::vector< std::size_t >& triinpoel );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -93,6 +97,9 @@ class DiagCG : public CBase_DiagCG {
 
     // Initially compute left hand side diagonal matrix
     void init();
+
+    //! Send own chare-boundary data to neighboring chares
+    void sendinit(){}
 
     //! Advance equations to next time step
     void advance( tk::real newdt );
@@ -122,12 +129,15 @@ class DiagCG : public CBase_DiagCG {
     void refine();
 
     //! Receive new mesh from refiner
-    void resize( const tk::UnsMesh::Chunk& chunk,
-                 const tk::UnsMesh::Coords& coord,
-                 const tk::Fields& u,
-                 const std::unordered_map< int,
-                         std::vector< std::size_t > >& msum,
-                 const std::map< int, std::vector< std::size_t > >& bnode );
+    void resize(
+      const std::vector< std::size_t >& ginpoel,
+      const tk::UnsMesh::Chunk& chunk,
+      const tk::UnsMesh::Coords& coord,
+      const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
+      const std::unordered_map< int, std::vector< std::size_t > >& msum,
+      const std::map< int, std::vector< std::size_t > >& bface,
+      const std::map< int, std::vector< std::size_t > >& bnode,
+      const std::vector< std::size_t >& triinpoel );
 
     //! Const-ref access to current solution
     //! \param[in,out] u Reference to update with current solution
@@ -229,7 +239,7 @@ class DiagCG : public CBase_DiagCG {
     //! Size communication buffers
     void resizeComm();
 
-    //! Output mesh and particle fields to files
+    //! Output mesh fields to files
     void out();
 
     //! Output mesh-based fields to file

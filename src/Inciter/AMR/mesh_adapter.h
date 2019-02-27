@@ -38,8 +38,8 @@ namespace AMR {
             void init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z);
 
             // FIXME: Set these in a better way
-            const real_t derefinement_cut_off = 0.2;
-            const real_t refinement_cut_off = 0.9;
+            real_t derefinement_cut_off = 0.2;
+            real_t refinement_cut_off = 0.9;
 
             AMR::tet_store_t tet_store;
             AMR::node_connectivity_t node_connectivity;

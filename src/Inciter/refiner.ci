@@ -32,14 +32,14 @@ module refiner {
                      const std::map< int, std::vector< std::size_t > >& bnode,
                      int nchare );
       initnode void registerReducers();
-      entry
-        void dtref( tk::real t,
-                    const std::map< int, std::vector< std::size_t > >& bnode );
+      entry void start();
+      entry void reorder();
+      entry void next();
       entry [reductiontarget] void addBndEdges( CkReductionMsg* msg );
       entry void addRefBndEdges(
         int fromch,
         const AMR::EdgeData& en,
-        const std::unordered_set<size_t> intermediates );
+        const std::unordered_set< std::size_t > intermediates );
       entry void comExtra();
       entry void eval();
       entry void sendProxy();

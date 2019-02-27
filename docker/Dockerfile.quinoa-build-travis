@@ -41,7 +41,6 @@ RUN cmake \
     -DCMAKE_CXX_FLAGS_DEBUG=-g0 \
     -DCMAKE_BUILD_TYPE="${BUILD}" \
     ${SHARED_LIBS:+-DBUILD_SHARED_LIBS=$SHARED_LIBS} \
-    ${SONARQUBE:+-DCOVERAGE=ON} \
     -DLCOV=/bin/true \
     -DRUNNER_ARGS="${RUNNER_ARGS}" \
     ${SMP:+-DPOSTFIX_RUNNER_ARGS="+setcpuaffinity"} \
@@ -50,8 +49,8 @@ RUN cmake \
 RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} ninja -j2 ${TARGET}
 RUN ccache -s
 RUN if [ ${TARGET} = unittest ]; then ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v -q ${SMP:++ppn 2}; fi
-RUN if [ -z "${SONARQUBE}" ] && [ ${TARGET} != doc ]; then ctest --output-on-failure -j2 -LE stringent -R ${TARGET}; fi
-RUN if [ ${TARGET} == doc ]; then ninja -j2 doc; fi
+RUN if [ ${TARGET} != all ] && [ ${TARGET} != doc ]; then ctest --output-on-failure -j2 -LE stringent -R ${TARGET}; fi
+RUN if [ ${TARGET} = doc ]; then ninja -j2 doc; fi
 #RUN cd .. && if [ ${SONARQUBE} ]; then \
 #  python -m coverxygen --xml-dir build/doc/xml/ --src-dir . --output doxygen.coverage.info; \
 #  wget -O codecov.sh https://codecov.io/bash; \
@@ -90,7 +89,7 @@ RUN cd .. && if [ ${SONARQUBE} ] && [ -n "${SONARQUBE_GITHUB_TOKEN}" ] && [ -n "
     -Dsonar.login=${SONARQUBE_TOKEN}; \
 fi
 USER root
-RUN if [ ${SONARQUBE} ]; then ninja -j2 install; fi
+RUN if [ ${TARGET} = all ] && [ -z ${SONARQUBE} ]; then ninja -j2 install; fi
 USER quinoa
-RUN if [ ${SONARQUBE} ]; then export PATH=/usr/local/bin:$PATH && unittest -h && inciter && rngtest && meshconv && walker; fi
+RUN if [ ${TARGET} = all ] && [ -z ${SONARQUBE} ]; then export PATH=/usr/local/bin:$PATH && unittest -h && inciter && rngtest && meshconv && walker; fi
 WORKDIR /home/quinoa

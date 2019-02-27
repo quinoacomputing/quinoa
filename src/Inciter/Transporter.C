@@ -183,7 +183,9 @@ Transporter::Transporter() :
     m_print.item( "Refinement at t > 0", dtref );
     if (dtref) {
       auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
-      m_print.item( "Mesh refinement frequency", dtfreq );
+      m_print.item( "Mesh refinement frequency, t > 0", dtfreq );
+      m_print.item( "Uniform-only mesh refinement, t > 0",
+                    g_inputdeck.get< tag::amr, tag::dtref_uniform >() );
     }
   }
 
@@ -279,13 +281,13 @@ Transporter::createPartitioner()
   // Create mesh partitioner Charm++ chare group and start preparing mesh
   m_print.diag( "Reading mesh" );
 
-  // Create empty mesh sorter Charm++ chare array
+  // Create empty mesh sorter Charm++ chare array (bound to workers)
   m_sorter = CProxy_Sorter::ckNew( m_scheme.arrayoptions() );
 
   // Create empty mesh refiner chare array (bound to workers)
   m_refiner = CProxy_Refiner::ckNew( m_scheme.arrayoptions() );
 
-  // Create MeshWriter chare nodegroup
+  // Create MeshWriter chare group
   m_meshwriter = tk::CProxy_MeshWriter::ckNew(
                     g_inputdeck.get< tag::selected, tag::filetype >(),
                     centering,
@@ -724,6 +726,16 @@ Transporter::stat()
                     {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
   // Create "derived-class" workers
   m_sorter.createWorkers();
+}
+
+void
+Transporter::sendinit()
+// *****************************************************************************
+// Reduction target to sync the initial solution before limiting
+// *****************************************************************************
+{
+  // send initial solution to neighboring chares
+  m_scheme.sendinit();
 }
 
 void

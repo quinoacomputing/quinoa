@@ -47,7 +47,7 @@ class FaceData {
     FaceData( const std::vector< std::size_t >& ginpoel,
               const std::map< int, std::vector< std::size_t > >& bface,
               const std::map< int, std::vector< std::size_t > >& bnode,
-              std::vector< std::size_t >& triinpoel );
+              const std::vector< std::size_t >& triinpoel );
 
     /** @name Accessors
       * */

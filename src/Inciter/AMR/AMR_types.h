@@ -96,31 +96,13 @@ using edge_list_ids_t  = std::array<std::size_t, NUM_TET_EDGES>;
 
 using coord_type = std::vector< tk::real >;
 
-//! Edge lock case associated to an edge given by global parent IDs
+//! \brief Needs refinement and edge lock case associated to an edge given by global
+//!    parent IDs
 using EdgeData =
    std::unordered_map< tk::UnsMesh::Edge,
                        std::pair< bool, Edge_Lock_Case >,
                        tk::UnsMesh::Hash<2>,
                        tk::UnsMesh::Eq<2> >;
-
-// *ALWAYS* send { edge, needs_refining, locked_case }.
-//
-// If locked_case => unlocked and needs_refining = false, we probably don’t need to send it.
-//
-// Now let’s have some variables:
-//
-// Local_needs refining, local_lock_case
-// Remote_needs_refining, remote_lock_case
-//
-// // Assuming any changes to “local” variables are written back to AMR. I think ths works:
-//
-// Assert( !(remote_lock_case == locked (or intermediate) && remote_refinement_decision == true));
-//
-// local_lock_case = std::max(local_lock_case, remote_lock_case)
-//
-// if (local_lock_case == locked (or intermediate)) { local_needs_refining = false; }
-//
-// if (local_lock_case == unlocked && remote_needs_refining == true) { local_needs_refining = true; }
 
 }  // AMR::
 

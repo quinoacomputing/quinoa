@@ -68,7 +68,11 @@ class ALECG : public CBase_ALECG {
     #endif
 
     //! Constructor
-    explicit ALECG( const CProxy_Discretization& disc, const FaceData& fd );
+    explicit ALECG( const CProxy_Discretization& disc,
+                    const std::vector< std::size_t >& ginpoel,
+                    const std::map< int, std::vector< std::size_t > >& bface,
+                    const std::map< int, std::vector< std::size_t > >& bnode,
+                    const std::vector< std::size_t >& triinpoel );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -88,6 +92,9 @@ class ALECG : public CBase_ALECG {
 
     // Initially compute left hand side diagonal matrix
     void init();
+
+    //! Send own chare-boundary data to neighboring chares
+    void sendinit(){}
 
     //! Advance equations to next time step
     void advance( tk::real newdt );
@@ -113,12 +120,15 @@ class ALECG : public CBase_ALECG {
     void refine();
 
     //! Receive new mesh from refiner
-    void resize( const tk::UnsMesh::Chunk& chunk,
-                 const tk::UnsMesh::Coords& coord,
-                 const tk::Fields& u,
-                 const std::unordered_map< int,
-                         std::vector< std::size_t > >& msum,
-                 const std::map< int, std::vector< std::size_t > >& bnode );
+    void resize(
+      const std::vector< std::size_t >& ginpoel,
+      const tk::UnsMesh::Chunk& chunk,
+      const tk::UnsMesh::Coords& coord,
+      const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
+      const std::unordered_map< int, std::vector< std::size_t > >& msum,
+      const std::map< int, std::vector< std::size_t > >& bface,
+      const std::map< int, std::vector< std::size_t > >& bnode,
+      const std::vector< std::size_t >& triinpoel );
 
     //! Const-ref access to current solution
     //! \param[in,out] u Reference to update with current solution

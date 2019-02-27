@@ -20,12 +20,12 @@ namespace AMR {
     class refinement_t {
         private:
 
-            const size_t DEFAULT_REFINEMENT_LEVEL = 0; //TODO: Is this in the right place?
-            const size_t MIN_REFINEMENT_LEVEL = DEFAULT_REFINEMENT_LEVEL;
+            size_t DEFAULT_REFINEMENT_LEVEL = 0; //TODO: Is this in the right place?
+            size_t MIN_REFINEMENT_LEVEL = DEFAULT_REFINEMENT_LEVEL;
 
         public:
 
-            const size_t MAX_REFINEMENT_LEVEL = 4;
+            size_t MAX_REFINEMENT_LEVEL = 4;
 
             // TODO: Document this
             child_id_list_t generate_child_ids( tet_store_t& tet_store, size_t parent_id, size_t count = MAX_CHILDREN)

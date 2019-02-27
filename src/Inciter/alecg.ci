@@ -27,11 +27,16 @@ module alecg {
     array [1D] ALECG {
     //! [1D Charm++ chare array]
       //! [Entry methods]
-      entry ALECG( const CProxy_Discretization& disc, const FaceData& fd );
+      entry ALECG( const CProxy_Discretization& disc,
+                   const std::vector< std::size_t >& ginpoel,
+                   const std::map< int, std::vector< std::size_t > >& bface,
+                   const std::map< int, std::vector< std::size_t > >& bnode,
+                   const std::vector< std::size_t >& triinpoel );
       initnode void registerReducers();
       entry void setup( tk::real v );
       entry void init();
       entry void diag();
+      entry void sendinit();
       entry void advance( tk::real newdt );
       entry void comlhs( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& L );

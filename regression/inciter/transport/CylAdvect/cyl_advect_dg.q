@@ -9,7 +9,6 @@ inciter
   nstep 100   # Max number of time steps
   dt   1.0e-3 # Time step size
   ttyi 10     # TTY output interval
-  ctau 1.0    # FCT mass diffusivity
   scheme dg
 
   transport

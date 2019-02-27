@@ -21,6 +21,7 @@
 #include "UnsMesh.h"
 #include "Centering.h"
 #include "Around.h"
+#include "Sorter.h"
 #include "HashMapReducer.h"
 #include "Discretization.h"
 
@@ -44,7 +45,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
                   const tk::SorterCallback& cbs,
                   const std::vector< std::size_t >& ginpoel,
                   const tk::UnsMesh::CoordMap& coordmap,
-                  const std::map< int, std::vector< std::size_t > >& belem,
+                  const std::map< int, std::vector< std::size_t > >& bface,
                   const std::vector< std::size_t >& triinpoel,
                   const std::map< int, std::vector< std::size_t > >& bnode,
                   int nchare ) :
@@ -58,12 +59,11 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_el( tk::global2local( ginpoel ) ),     // fills m_inpoel, m_gid, m_lid
   m_coordmap( coordmap ),
   m_coord( flatcoord(coordmap) ),
-  m_belem( belem ),
-  m_triinpoel( triinpoel ),
+  m_bface( bface ),
   m_bnode( bnode ),
+  m_triinpoel( triinpoel ),
   m_nchare( nchare ),
   m_initial( true ),
-  m_t( 0.0 ),
   m_initref( g_inputdeck.get< tag::amr, tag::init >() ),
   m_ninitref( g_inputdeck.get< tag::amr, tag::init >().size() ),
   m_refiner( m_inpoel ),
@@ -73,9 +73,9 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_edgedata(),
   m_edgedataCh(),
   m_bndEdges(),
-  m_u(),
-  m_msum(),
-  m_oldTetIdMap()
+  m_msumset(),
+  m_oldTetIdMap(),
+  m_addedNodes()
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Transporter (host) proxy
@@ -86,10 +86,9 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
 //! \param[in] cbs Charm++ callbacks for Sorter
 //! \param[in] ginpoel Mesh connectivity (this chare) using global node IDs
 //! \param[in] coordmap Mesh node coordinates (this chare) for global node IDs
-//! \param[in] belem File-internal elem ids of side sets (creator compute node)
-//! \param[in] triinpoel Triangle face connectivity with global IDs (creator
-//!   compute node)
-//! \param[in] bnode Node lists of side sets (creator compute node)
+//! \param[in] bface File-internal elem ids of side sets
+//! \param[in] bnode Node lists of side sets
+//! \param[in] triinpoel Triangle face connectivity with global IDs
 //! \param[in] nchare Total number of refiner chares (chare array elements)
 // *****************************************************************************
 {
@@ -102,8 +101,6 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
           "Input mesh to Refiner leaky" );
   Assert( tk::conforming( m_inpoel, m_coord ),
           "Input mesh to Refiner not conforming" );
-
-  usesAtSync = true;    // enable migration at AtSync
 
   // Reverse initial mesh refinement type list (will pop from back)
   std::reverse( begin(m_initref), end(m_initref) );
@@ -148,6 +145,25 @@ Refiner::registerReducers()
                                       decltype(m_bndEdges)::mapped_type > );
 }
 
+void
+Refiner::reorder()
+// *****************************************************************************
+// Query Sorter and update local mesh with the reordered one
+// *****************************************************************************
+{
+  m_sorter[thisIndex].ckLocal()->mesh( m_ginpoel, m_coordmap, m_triinpoel );
+
+  // Update local mesh data based on data just received from Sorter
+  m_el = tk::global2local( m_ginpoel );     // fills m_inpoel, m_gid, m_lid
+  m_coord = flatcoord( m_coordmap );
+
+  // WARNING: This re-creates the AMR lib which is probably not what we
+  // ultimately want, beacuse this deletes its history recorded during initial
+  // (t<0) refinement. However, this appears to correctly update the local mesh
+  // based on the reordered one (from Sorter) at least when t0ref is off.
+  m_refiner = AMR::mesh_adapter_t( m_inpoel );
+}
+
 tk::UnsMesh::Coords
 Refiner::flatcoord( const tk::UnsMesh::CoordMap& coordmap )
 // *****************************************************************************
@@ -176,37 +192,49 @@ Refiner::flatcoord( const tk::UnsMesh::CoordMap& coordmap )
 }
 
 void
-Refiner::dtref( tk::real t,
-                const std::map< int, std::vector< std::size_t > >& bnode )
+Refiner::dtref( const std::map< int, std::vector< std::size_t > >& bface,
+                const std::map< int, std::vector< std::size_t > >& bnode,
+                const std::vector< std::size_t >& triinpoel )
 // *****************************************************************************
 // Start mesh refinement (during time stepping, t>0)
-//! \param[in] t Physical time
-//! \param[in] bnode Node lists of side sets
+//! \param[in] bface Boundary-faces mapped to side set ids
+//! \param[in] bnode Boundary-node lists mapped to side set ids
+//! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
   m_initial = false;
-  m_t = t;
 
   // Update boundary node lists
+  m_bface = bface;
   m_bnode = bnode;
+  m_triinpoel = triinpoel;
 
-  t0ref();
+  start();
 }
 
 void
 Refiner::t0ref()
 // *****************************************************************************
-// Start new step of initial mesh refinement (before t>0)
+// Output mesh to file before a new step mesh refinement
 // *****************************************************************************
 {
-  if (m_initial) {
-    Assert( m_ninitref > 0, "No initial mesh refinement steps configured" );
-    // Output initial mesh to file
-    //auto l = m_ninitref - m_initref.size();  // num initref steps completed
-    //auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
-    //if (l == 0) writeMesh( "t0ref", l, t0-1.0 );
-  }
+  Assert( m_ninitref > 0, "No initial mesh refinement steps configured" );
+  // Output initial mesh to file
+  auto l = m_ninitref - m_initref.size();  // num initref steps completed
+  auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
+  if (l == 0)
+    writeMesh( "t0ref", l, t0-1.0,
+      CkCallback( CkIndex_Refiner::start(), thisProxy[thisIndex] ) );
+  else
+    start();
+}
 
+void
+Refiner::start()
+// *****************************************************************************
+//  Start new step of initial mesh refinement (before t>0)
+// *****************************************************************************
+{
   m_extra = 0;
   m_bndEdges.clear();
   m_ch.clear();
@@ -321,8 +349,10 @@ Refiner::refine()
 
   } else {              // if AMR during time stepping (t>0)
 
-    //errorRefine();
-    uniformRefine();
+    if (g_inputdeck.get< tag::amr, tag::dtref_uniform >())
+      uniformRefine();
+    else
+      errorRefine();
 
   }
 
@@ -514,6 +544,31 @@ Refiner::updateEdgeData()
 }
 
 void
+Refiner::writeMesh( const std::string& basefilename,
+                    uint64_t itr,
+                    tk::real t,
+                    CkCallback c )
+// *****************************************************************************
+//  Output mesh to file(s)
+//! \param[in] basefilename File name to append to
+//! \param[in] itr Iteration count since a new mesh
+//! \param[in] t "Physical time" to write to file. "Time" here is used to
+//!   designate a new time step at which the mesh is saved.
+//! \param[in] c Function to continue with after the write
+// *****************************************************************************
+{
+  std::vector< std::string > names{ "refinement level", "cell type" };
+  auto& tet_store = m_refiner.tet_store;
+  std::vector< std::vector< tk::real > > fields{
+    tet_store.get_refinement_level_list(), tet_store.get_cell_type_list() };
+
+  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
+    write( /*meshoutput = */ true, /*fieldoutput = */ true, itr, 1, t,
+           thisIndex, tk::Centering::ELEM, basefilename, m_inpoel, m_coord,
+           m_bface, m_bnode, m_triinpoel, m_lid, names, fields, c );
+}
+
+void
 Refiner::eval()
 // *****************************************************************************
 // Refine mesh and decide how to continue
@@ -532,39 +587,27 @@ Refiner::eval()
 
   updateMesh();
 
-  // Lambda to write mesh to file after refinement step
-  auto writeMesh = [this]( const std::string& basefilename,
-                           uint64_t it,
-                           tk::real t )
-  {
-    bool meshoutput = true;
-    bool fieldoutput = true;
-    uint64_t itf = 1;   // field output iteration count
+  if (m_initial) {      // if initial (before t=0) AMR
+    auto l = m_ninitref - m_initref.size() + 1;  // num initref steps completed
+    auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
+    // Generate times equally subdividing t0-1...t0 to ninitref steps
+    auto t =
+      t0 - 1.0 + static_cast<tk::real>(l)/static_cast<tk::real>(m_ninitref);
+    auto itr = l;
+    // Output mesh after refinement step
+    writeMesh( "t0ref", itr, t,
+               CkCallback( CkIndex_Refiner::next(), thisProxy[thisIndex] ) );
+  } else next();
+}
 
-    std::vector< std::string > names{ "refinement level", "cell type" };
-    auto& tet_store = this->m_refiner.tet_store;
-    std::vector< std::vector< tk::real > > fields{
-      tet_store.get_refinement_level_list(), tet_store.get_cell_type_list() };
-
-    this->m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
-      write( meshoutput, fieldoutput, it, itf, t, this->thisIndex,
-             tk::Centering::ELEM, basefilename, this->m_inpoel, this->m_coord,
-             this->m_belem, this->m_triinpoel, this->m_bnode, this->m_lid,
-             names, fields, CkCallback(CkCallback::ignore) );
-  };
-
+void
+Refiner::next()
+// *****************************************************************************
+// Continue after finishing a refinement step
+// *****************************************************************************
+{
   if (m_initial) {      // if initial (before t=0) AMR
 
-    // Output mesh after recent step of initial mesh refinement
-    auto ninitref = g_inputdeck.get< tag::amr, tag::init >().size();
-    auto l = ninitref - m_initref.size();  // num initref steps completed
-    auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
-    // Generate times for file output equally subdividing t0-1...t0 to ninitref
-    // steps
-    tk::real t = t0 - 1.0 +
-      static_cast<tk::real>(l)/static_cast<tk::real>(ninitref);
-
-    writeMesh( "t0ref", l, t );
     // Remove initial mesh refinement step from list
     if (!m_initref.empty()) m_initref.pop_back();
     // Continue to next initial AMR step or finish
@@ -572,22 +615,34 @@ Refiner::eval()
 
   } else {              // if AMR during time stepping (t>0)
 
-    // Output mesh after recent step of mesh refinement during time stepping
-    writeMesh( "dtref", 0, m_t );
-
-//     // Augment node comm. map with newly added nodes on chare-boundary edges
-//     for (const auto& c : m_edgedataCh) {
-//       auto& nodes = tk::ref_find( m_msum, c.first );
-//       for (const auto& n : c.second)
-//         nodes.push_back( n.second.first );
-//     }
+    // Augment node communication map with newly added nodes on chare-boundary
+    for (const auto& c : m_edgedataCh) {
+      auto& nodes = tk::ref_find( m_msumset, c.first );
+      for (const auto& e : c.second) {
+        // If parent nodes were part of the node communication map for chare
+        if (nodes.find(e.first[0]) != end(nodes) &&
+            nodes.find(e.first[1]) != end(nodes))
+        {
+          // Add new node if local id was generated for it
+          auto n = tk::UnsMesh::Hash<2>()( e.first );
+          if (m_lid.find(n) != end(m_lid)) nodes.insert( n );
+        }
+      }
+    }
 
     // Send new mesh and solution back to PDE worker
     Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
             "About to use nullptr" );
     auto e = tk::element< SchemeBase::ProxyElem >
                         ( m_scheme.getProxy(), thisIndex );
-    boost::apply_visitor( Resize(m_el,m_coord,m_u,m_msum,m_bnode), e );
+    std::unordered_map< int, std::vector< std::size_t > > msum;
+    for (const auto& c : m_msumset) {
+      auto& n = msum[ c.first ];
+      n.insert( end(n), c.second.cbegin(), c.second.cend() );
+    }
+    boost::apply_visitor(
+      Resize( m_ginpoel, m_el, m_coord, m_addedNodes, msum,
+              m_bface, m_bnode, m_triinpoel ), e );
 
   }
 }
@@ -604,7 +659,8 @@ Refiner::endt0ref()
 {
   // create sorter Charm++ chare array elements using dynamic insertion
   m_sorter[ thisIndex ].insert( m_host, m_meshwriter, m_cbs, m_scheme,
-    m_ginpoel, m_coordmap, m_belem, m_triinpoel, m_bnode, m_nchare );
+    CkCallback( CkIndex_Refiner::reorder(), thisProxy[thisIndex] ),
+    m_ginpoel, m_coordmap, m_bface, m_triinpoel, m_bnode, m_nchare );
 
   // Compute final number of cells across whole problem
   std::vector< std::size_t > meshsize{{ m_ginpoel.size()/4,
@@ -650,12 +706,7 @@ Refiner::errorRefine()
 
   } else {              // if AMR during time stepping (t>0)
 
-    // Get old solution from worker (pointer to soln from bound array element)
-    Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
-            "About to use nullptr" );
-    auto e = tk::element< SchemeBase::ProxyElem >
-                        ( m_scheme.getProxy(), thisIndex );
-    boost::apply_visitor( Solution(u), e );
+    // ...
 
   }
 
@@ -850,6 +901,7 @@ Refiner::nodeinit( std::size_t npoin,
 
   } else if (centering == tk::Centering::ELEM) {
 
+    auto esuel = tk::genEsuelTet( m_inpoel, esup ); // elems surrounding elements
     // Initialize cell-based unknowns
     tk::Fields ue( m_inpoel.size()/4, nprop );
     auto lhs = ue;
@@ -857,7 +909,7 @@ Refiner::nodeinit( std::size_t npoin,
     for (const auto& eq : g_dgpde)
       eq.lhs( geoElem, lhs );
     for (const auto& eq : g_dgpde)
-      eq.initialize( lhs, m_inpoel, m_coord, ue, t0 );
+      eq.initialize( lhs, m_inpoel, m_coord, ue, t0, esuel.size()/4 );
 
     // Transfer initial conditions from cells to nodes
     for (std::size_t p=0; p<npoin; ++p) {    // for all mesh nodes on this chare
@@ -898,16 +950,8 @@ Refiner::updateMesh()
   std::unordered_set< std::size_t > old( m_inpoel.cbegin(), m_inpoel.cend() );
   std::unordered_set< std::size_t > ref( refinpoel.cbegin(), refinpoel.cend() );
 
-  // Get old solution from worker (pointer to soln from bound array element)
-  if (!m_initial) {
-    Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
-            "About to use nullptr" );
-    auto e = tk::element< SchemeBase::ProxyElem >
-                        ( m_scheme.getProxy(), thisIndex );
-    boost::apply_visitor( Solution(m_u), e );
-    // Get nodal communication map from Discretization worker
-    m_msum = m_scheme.get()[thisIndex].ckLocal()->Msum();
-  }
+  // Get nodal communication map from Discretization worker
+  if (!m_initial) m_msumset = m_scheme.get()[thisIndex].ckLocal()->msumset();
 
   // Update mesh and solution after refinement
   newVolMesh( old, ref );
@@ -952,14 +996,13 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
   auto& y = m_coord[1];
   auto& z = m_coord[2];
 
-  // Resize node coordinates, global ids, and solution vector
+  // Resize node coordinates, global ids, and added-nodes map
   auto npoin = ref.size();
-  auto nprop = g_inputdeck.get<tag::component>().nprop();
   x.resize( npoin );
   y.resize( npoin );
   z.resize( npoin );
   m_gid.resize( npoin, std::numeric_limits< std::size_t >::max() );
-  if (!m_initial) m_u.resize( npoin, nprop );
+  m_addedNodes.clear();
 
   // Generate coordinates and ids to newly added nodes after refinement step
   for (auto r : ref) {               // for all unique nodes of the refined mesh
@@ -982,10 +1025,8 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
         x[r] = (x[p[0]] + x[p[1]])/2.0;
         y[r] = (y[p[0]] + y[p[1]])/2.0;
         z[r] = (z[p[0]] + z[p[1]])/2.0;
-        // generate solution for newly added node
-        if (!m_initial)   // only during t>0 refinement
-          for (std::size_t c=0; c<nprop; ++c)
-            m_u(r,c,0) = (m_u(p[0],c,0) + m_u(p[1],c,0))/2.0;
+        // store newly added node id and their parent ids (local ids)
+        m_addedNodes[r] = p;
         // assign new global ids to local->global and to global->local maps
         m_gid[r] = g;
         Assert( m_lid.find(g) == end(m_lid),
@@ -1059,10 +1100,10 @@ Refiner::boundary()
   }
 
   // Assign side set ids to faces on the physical boundary only. Note that
-  // m_belem may be empty and that is okay, in that case bnd will contain data
+  // m_bface may be empty and that is okay, in that case bnd will contain data
   // on both chare as well as physical boundaries and the side set id in the map
   // value will stay at -1.
-  for (const auto& ss : m_belem)  // for all phsyical boundaries (sidesets)
+  for (const auto& ss : m_bface)  // for all phsyical boundaries (sidesets)
     for (auto f : ss.second) {    // for all faces on this physical boundary
       Face t{{ m_triinpoel[f*3+0], m_triinpoel[f*3+1], m_triinpoel[f*3+2] }};
       auto cf = bnd.find( t );
@@ -1070,10 +1111,10 @@ Refiner::boundary()
     }
 
   // Remove chare-boundary faces (to which the above loop did not assign set
-  // id), but only if the above loop was run, i.e., if m_belem was not empty.
+  // id), but only if the above loop was run, i.e., if m_bface was not empty.
   // This results in removing the chare-boundary faces keeping only the physical
   // boundary faces (and their associated side set id and tet id).
-  if (!m_belem.empty()) {
+  if (!m_bface.empty()) {
     auto bndcopy = bnd;
     for (const auto& f : bndcopy)
       if (f.second.first == -1)
@@ -1119,7 +1160,7 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
   using Face = tk::UnsMesh::Face;
 
   // storage for boundary faces associated to side-set IDs of the refined mesh
-  decltype(m_belem) belem;              // will become m_belem
+  decltype(m_bface) bface;              // will become m_bface
   // storage for boundary faces-node connectivity of the refined mesh
   decltype(m_triinpoel) triinpoel;      // will become m_triinpoel
   // face id counter
@@ -1170,7 +1211,7 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
                      tk::cref_find( m_lid, f.first[1] ),
                      tk::cref_find( m_lid, f.first[2] ) }};
       // will associate to side set id of old (unrefined) mesh boundary face
-      auto& sideface = belem[ f.second.first ];
+      auto& sideface = bface[ f.second.first ];
       // query number of children of boundary tet adjacent to boundary face
       auto nc = m_refiner.tet_store.data( f.second.second ).num_children;
       if (nc == 0) {    // if boundary tet is not refined, add its boundary face
@@ -1214,7 +1255,7 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
     }
 
   // Update boundary face data structures
-  m_belem = std::move(belem);
+  m_bface = std::move(bface);
   m_triinpoel = std::move(triinpoel);
 }
 

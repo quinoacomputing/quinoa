@@ -78,8 +78,9 @@ class DGPDE {
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
                      tk::Fields& unk,
-                     tk::real t ) const
-    { self->initialize( L, inpoel, coord, unk, t ); }
+                     tk::real t,
+                     const std::size_t nielem ) const
+    { self->initialize( L, inpoel, coord, unk, t, nielem ); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
@@ -163,7 +164,8 @@ class DGPDE {
                                const std::vector< std::size_t >&,
                                const tk::UnsMesh::Coords&,
                                tk::Fields&,
-                               tk::real ) const = 0;
+                               tk::real,
+                               const std::size_t nielem ) const = 0;
       virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
                         const tk::Fields&,
@@ -211,8 +213,9 @@ class DGPDE {
                        const std::vector< std::size_t >& inpoel,
                        const tk::UnsMesh::Coords& coord,
                        tk::Fields& unk,
-                       tk::real t )
-      const override { data.initialize( L, inpoel, coord, unk, t ); }
+                       tk::real t,
+                       const std::size_t nielem )
+      const override { data.initialize( L, inpoel, coord, unk, t, nielem ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
       void rhs( tk::real t,

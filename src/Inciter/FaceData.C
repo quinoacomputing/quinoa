@@ -27,18 +27,15 @@ FaceData::FaceData(
   const std::vector< std::size_t >& ginpoel,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& bnode,
-  std::vector< std::size_t >& triinpoel )
+  const std::vector< std::size_t >& triinpoel )
   : m_bface( bface ), m_bnode( bnode ), m_triinpoel( triinpoel )
 // *****************************************************************************
 //  Constructor
 //! \param[in] ginpoel Mesh element connectivity owned (global IDs) mesh chunk
 //!   this chare operates on
-//! \param[in] bface Map of boundary-face lists mapped to corresponding 
-//!   side set ids for this mesh chunk
-//! \param[in] bnode Map of boundary-node lists mapped to corresponding 
-//!   side set ids for this mesh chunk
-//! \param[in] triinpoel Interconnectivity of points and boundary-face in this
-//!   mesh chunk
+//! \param[in] bface Boundary-faces mapped to side set ids
+//! \param[in] bnode Boundary-node lists mapped to side set ids
+//! \param[in] triinpoel Boundary-face connectivity
 //! \details This class is created per chare-worker in 
 //!   Partitioner::createWorkers(). This is done so that Discretization will 
 //!   not hold all this data unnecessarily, viz. for DiagCG, where 
