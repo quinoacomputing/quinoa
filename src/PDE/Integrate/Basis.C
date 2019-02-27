@@ -67,14 +67,14 @@ tk::eval_gp ( const std::size_t igp,
             coord[0][2]*shp1 + coord[1][2]*shp2 + coord[2][2]*shp3 + coord[3][2]*shp4 }};
 }
 
-void
-tk::eval_dBdx_p1( const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
-                  std::array< std::vector<tk::real>, 3 >& dBdx )
+std::array< std::vector<tk::real>, 3 >
+tk::eval_dBdx_p1( const std::size_t ndof,
+                  const std::array< std::array< tk::real, 3 >, 3 >& jacInv )
 // *****************************************************************************
 //  Compute the derivatives of basis function for DG(P1)
 //! \param[in] ndof Number of degree of freedom
 //! \param[in] jacInv Array of the inverse of Jacobian
-//! \param[in,out] dBdx Array of the derivatives of basis function
+//! \return Array of the derivatives of basis function
 // *****************************************************************************
 {
   // The derivatives of the basis functions dB/dx are easily calculated
@@ -84,6 +84,12 @@ tk::eval_dBdx_p1( const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
   //        xi = (xi, eta, zeta) are the reference coordinates.
   // The matrix dx/dxi is the inverse of the Jacobian of transformation
   // and the matrix vector product has to be calculated. This follows.
+
+  std::array< std::vector<tk::real>, 3 > dBdx;
+  dBdx[0].resize( ndof, 0 );
+  dBdx[1].resize( ndof, 0 );
+  dBdx[2].resize( ndof, 0 );
+
   auto db2dxi1 = 2.0;
   auto db2dxi2 = 1.0;
   auto db2dxi3 = 1.0;
@@ -131,6 +137,8 @@ tk::eval_dBdx_p1( const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
   dBdx[2][3] =  db4dxi1 * jacInv[0][2]
               + db4dxi2 * jacInv[1][2]
               + db4dxi3 * jacInv[2][2];
+
+  return dBdx;
 }
 
 void

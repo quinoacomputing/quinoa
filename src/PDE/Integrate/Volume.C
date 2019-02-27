@@ -83,13 +83,8 @@ tk::volInt( ncomp_t system,
     auto jacInv = 
             inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
-    std::array< std::vector<tk::real>, 3 > dBdx;
-    dBdx[0].resize( ndof, 0 );
-    dBdx[1].resize( ndof, 0 );
-    dBdx[2].resize( ndof, 0 );
-
     // Compute the derivatives of basis function for DG(P1)
-    eval_dBdx_p1( jacInv, dBdx );
+    auto dBdx = eval_dBdx_p1( ndof, jacInv );
 
     // Gaussian quadrature
     for (std::size_t igp=0; igp<ng; ++igp)
