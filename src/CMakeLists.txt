@@ -154,6 +154,12 @@ endif()
 
 add_definitions(-DQUINOA_CONFIG_MPI_ENABLED)
 
+option(ENABLE_AMR_TRACE OFF)
+
+if(ENABLE_AMR_TRACE)
+    add_definitions(-DENABLE_TRACE)
+endif(ENABLE_AMR_TRACE)
+
 # Set compilers
 set(COMPILER ${UNDERLYING_CXX_COMPILER})
 set(MPI_COMPILER ${MPI_CXX_COMPILER})
