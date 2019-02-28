@@ -61,6 +61,9 @@ namespace walker {
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 
+//! Number of derived variables computed by the MixDirichlet SDE
+const std::size_t MIXDIR_NUMDERIVED = 2;
+
 //! \brief MixDirichlet SDE used polymorphically with DiffEq
 //! \details The template arguments specify policies and are used to configure
 //!   the behavior of the class. The policies are:
@@ -85,7 +88,8 @@ class MixDirichlet {
         g_inputdeck.get< tag::param, tag::mixdirichlet, tag::depvar >().at(c) ),
       // subtract the number of derived variables computed, see advance()
       m_ncomp(
-        g_inputdeck.get< tag::component >().get< tag::mixdirichlet >().at(c)-1 ),
+        g_inputdeck.get< tag::component >().get< tag::mixdirichlet >().at(c) -
+        MIXDIR_NUMDERIVED ),
       m_offset(
         g_inputdeck.get< tag::component >().offset< tag::mixdirichlet >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
@@ -93,14 +97,15 @@ class MixDirichlet {
       m_b(),
       m_S(),
       m_k(),
-      m_rho2(),
+      m_rho(),
+      m_r(),
       coeff(
         m_ncomp,
         g_inputdeck.get< tag::param, tag::mixdirichlet, tag::b >().at(c),
         g_inputdeck.get< tag::param, tag::mixdirichlet, tag::S >().at(c),
         g_inputdeck.get< tag::param, tag::mixdirichlet, tag::kappa >().at(c),
-        g_inputdeck.get< tag::param, tag::mixdirichlet, tag::rho2 >().at(c),
-        m_b, m_k, m_S, m_rho2 ) {}
+        g_inputdeck.get< tag::param, tag::mixdirichlet, tag::rho >().at(c),
+        m_b, m_k, m_S, m_rho, m_r ) {}
 
     //! Initalize SDE, prepare for time integration
     //! \param[in] stream Thread (or more precisely stream) ID 
@@ -110,6 +115,25 @@ class MixDirichlet {
       Init::template
         init< tag::mixdirichlet >
             ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
+
+      // Initialize derived instantaneous variables
+      const auto npar = particles.nunk();
+      for (auto p=decltype(npar){0}; p<npar; ++p) {
+        // compute Nth scalar
+        tk::real yn = 1.0 - particles(p, 0, m_offset);
+        for (ncomp_t i=1; i<m_ncomp; ++i)
+          yn -= particles( p, i, m_offset );
+        // compute specific volume
+        tk::real v = 1.0;
+        for (ncomp_t i=0; i<m_ncomp; ++i)
+          v += m_r[i]*particles( p, i, m_offset );
+        // Finish computing specific volume
+        v /= m_rho[m_ncomp];
+        // Compute and store instantaneous density
+        particles( p, m_ncomp, m_offset ) = 1.0 / v;
+        // Store instantaneous specific volume
+        particles( p, m_ncomp+1, m_offset ) = v;
+      }
     }
 
     //! \brief Advance particles according to the MixDirichlet SDE
@@ -124,7 +148,7 @@ class MixDirichlet {
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
       // Update SDE coefficients
-      coeff.update( m_depvar, m_ncomp, moments, m_rho2, m_S );
+      coeff.update( m_depvar, m_ncomp, moments, m_rho, m_r, m_S );
       // Advance particles
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
@@ -138,18 +162,20 @@ class MixDirichlet {
         m_rng.gaussian( stream, m_ncomp, dW.data() );
 
         // Advance first m_ncomp (K=N-1) scalars
-        tk::real v = 0.0;
+        tk::real v = 1.0;
         for (ncomp_t i=0; i<m_ncomp; ++i) {
           tk::real& Y = particles( p, i, m_offset );
           tk::real d = m_k[i] * Y * yn * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
           Y += 0.5*m_b[i]*( m_S[i]*yn - (1.0-m_S[i]) * Y )*dt + d*dW[i];
-          v += Y/m_rho2[i]; // sum volume fractions (compute specific volume)
+          v += m_r[i]*Y;
         }
         // Finish computing specific volume
-        v += yn/m_rho2[m_ncomp];
-        // Compute instantaneous density
+        v /= m_rho[m_ncomp];
+        // Compute and store instantaneous density
         particles( p, m_ncomp, m_offset ) = 1.0 / v;
+        // Store instantaneous specific volume
+        particles( p, m_ncomp+1, m_offset ) = v;
       }
     }
 
@@ -164,7 +190,8 @@ class MixDirichlet {
     std::vector< kw::sde_b::info::expect::type > m_b;
     std::vector< kw::sde_S::info::expect::type > m_S;
     std::vector< kw::sde_kappa::info::expect::type > m_k;
-    std::vector< kw::sde_rho2::info::expect::type > m_rho2;
+    std::vector< kw::sde_rho::info::expect::type > m_rho;
+    std::vector< kw::sde_r::info::expect::type > m_r;
 
     //! Coefficients policy
     Coefficients coeff;
