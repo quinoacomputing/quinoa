@@ -40,7 +40,6 @@ DG::DG( const CProxy_Discretization& disc, const FaceData& fd ) :
   m_nsol( 0 ),
   m_ninitsol( 0 ),
   m_nlim( 0 ),
-  //m_balancing( false ),
   m_fd( fd ),
   m_u( Disc()->Inpoel().size()/4,
        g_inputdeck.get< tag::discr, tag::ndof >()*
@@ -841,10 +840,7 @@ DG::ResumeFromSync()
 //!   this function does not affect whether or not we block on LB.
 // *****************************************************************************
 {
-  //std::cout << thisIndex << ": resume, it = " << Disc()->It() << "\n";
-
-  //m_balancing = false;
-  if (Disc()->It() > 0) thisProxy[thisIndex].next();
+  if (Disc()->It() > 0 && g_inputdeck.get< tag::cmd, tag::blocking >()) next();
 }
 
 void
@@ -1376,8 +1372,6 @@ DG::next()
   tk::real fdt = 0.0;
   d->contribute( sizeof(tk::real), &fdt, CkReduction::nop,
                  CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
-
-  //std::cout << thisIndex << ": next, it = " << d->It() << ", stage = " << m_stage << "\n";
 }
 
 void
@@ -1413,7 +1407,7 @@ DG::stage()
 
   // if not all Runge-Kutta stages complete, continue to next time stage,
   // otherwise output field data to file(s)
-  if (m_stage < 3) thisProxy[thisIndex].next(); else out();
+  if (m_stage < 3) next(); else out();
 }
 
 void
@@ -1436,12 +1430,8 @@ DG::step()
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
 
-    // Only call AtSync if we are not already balancing
-    //if (!m_balancing) {
-      //m_balancing = true;
-      AtSync();
-      //std::cout << thisIndex << ": step called AtSync, it = " << d->It() << "\n";
-    //} else std::cout << thisIndex << ": step did NOT call AtSync, it = " << d->It() << "\n";
+    AtSync();
+    if (!g_inputdeck.get< tag::cmd, tag::blocking >()) next();
 
   } else {
     contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));

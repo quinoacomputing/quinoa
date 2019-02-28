@@ -1,0 +1,20 @@
+// *****************************************************************************
+/*!
+  \file      src/Base/lbswitch.ci
+  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \brief     Charm++ module interface file for the load balancer switch group
+  \details   Charm++ module interface file for the load balancer switch group
+*/
+// *****************************************************************************
+
+module lbswitch {
+
+  namespace tk {
+
+    group LBSwitch {
+      entry LBSwitch( bool verbose );
+      initproc void off();
+    };
+
+  } // tk::
+}

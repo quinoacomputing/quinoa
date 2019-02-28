@@ -190,6 +190,7 @@ if (ENABLE_INCITER)
   add_executable(${INCITER_EXECUTABLE}
                  InciterDriver.C
                  InciterPrint.C
+                 LBSwitch.C
                  Inciter.C)
 
   config_executable(${INCITER_EXECUTABLE})
@@ -228,9 +229,10 @@ if (ENABLE_INCITER)
                         ${BACKWARD_LIBRARIES}
                         ${OMEGA_H_LIBRARIES})
 
-  # Add custom dependencies for Inciter's main Charm++ module
   addCharmModule( "inciter" "${INCITER_EXECUTABLE}" )
+  addCharmModule( "lbswitch" "${INCITER_EXECUTABLE}" )
 
+  # Add custom dependencies for Inciter's main Charm++ module
   add_dependencies( "inciterCharmModule" "charestatecollectorCharmModule" )
   add_dependencies( "inciterCharmModule" "meshwriterCharmModule" )
 
@@ -265,9 +267,9 @@ if (ENABLE_RNGTEST)
                         ${RNGSSE2_LIBRARIES}
                         ${BACKWARD_LIBRARIES})
 
-  # Add custom dependencies for RNGTest's main Charm++ module
   addCharmModule( "rngtest" "${RNGTEST_EXECUTABLE}" )
 
+  # Add custom dependencies for RNGTest's main Charm++ module
   add_dependencies( "rngtestCharmModule" "charestatecollectorCharmModule" )
 
 endif(ENABLE_RNGTEST)
@@ -303,9 +305,9 @@ if (ENABLE_MESHCONV)
                         ${BACKWARD_LIBRARIES}
                         ${OMEGA_H_LIBRARIES})
 
-  # Add custom dependencies for MeshConv's main Charm++ module
   addCharmModule( "meshconv" "${MESHCONV_EXECUTABLE}" )
 
+  # Add custom dependencies for MeshConv's main Charm++ module
   add_dependencies( "meshconvCharmModule" "charestatecollectorCharmModule" )
 
 endif(ENABLE_MESHCONV)
@@ -343,9 +345,9 @@ if (ENABLE_WALKER)
                         ${AEC_LIBRARIES}          # only for static link
                         ${BACKWARD_LIBRARIES})
 
-  # Add custom dependencies for Walker's main Charm++ module
   addCharmModule( "walker" "${WALKER_EXECUTABLE}" )
 
+  # Add custom dependencies for Walker's main Charm++ module
   add_dependencies( "walkerCharmModule" "charestatecollectorCharmModule" )
 
 endif(ENABLE_WALKER)
@@ -377,9 +379,9 @@ if (ENABLE_FILECONV)
                         ${BACKWARD_LIBRARIES}
                         ${OMEGA_H_LIBRARIES})
 
-  # Add custom dependencies for FileConv's main Charm++ module
   addCharmModule( "fileconv" "${FILECONV_EXECUTABLE}" )
 
+  # Add custom dependencies for FileConv's main Charm++ module
   add_dependencies( "fileconvCharmModule" "charestatecollectorCharmModule" )
 
 endif(ENABLE_FILECONV)

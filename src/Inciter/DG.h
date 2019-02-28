@@ -155,9 +155,6 @@ class DG : public CBase_DG {
     //! Evaluate whether to continue with next time step
     void step();
 
-    //! Continue to next time step stage
-    void next();
-
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -169,7 +166,6 @@ class DG : public CBase_DG {
       p | m_nsol;
       p | m_ninitsol;
       p | m_nlim;
-      //p | m_balancing;
       p | m_fd;
       p | m_u;
       p | m_un;
@@ -225,8 +221,6 @@ class DG : public CBase_DG {
     std::size_t m_ninitsol;
     //! Counter signaling that we have received all our limiter function ghost data
     std::size_t m_nlim;
-    //! Flag to ensure we don't call AtSync when LB is already running
-    //bool m_balancing;
     //! Face data
     FaceData m_fd;
     //! Vector of unknown/solution average over each mesh element
@@ -344,6 +338,9 @@ class DG : public CBase_DG {
 
     //! Evaluate whether to continue with next time step stage
     void stage();
+
+    //! Continue to next time step stage
+    void next();
 };
 
 } // inciter::

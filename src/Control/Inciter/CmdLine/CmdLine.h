@@ -36,6 +36,7 @@ class CmdLine : public tk::Control<
                   tag::virtualization, kw::virtualization::info::expect::type,
                   tag::verbose,        bool,
                   tag::chare,          bool,
+                  tag::blocking,       bool,
                   tag::benchmark,      bool,
                   tag::feedback,       bool,
                   tag::help,           bool,
@@ -51,6 +52,7 @@ class CmdLine : public tk::Control<
     //! \see tk::grm::use and its documentation
     using keywords = brigand::set< kw::verbose
                                  , kw::charestate
+                                 , kw::blocking
                                  , kw::benchmark
                                  , kw::feedback
                                  , kw::virtualization
@@ -101,6 +103,7 @@ class CmdLine : public tk::Control<
       set< tag::virtualization >( 0.0 );
       set< tag::verbose >( false ); // Quiet output by default
       set< tag::chare >( false ); // No chare state output by default
+      set< tag::blocking>( false ); // Non-blocking migration by default
       set< tag::benchmark >( false ); // No benchmark mode by default
       set< tag::feedback >( false ); // No detailed feedback by default
       // Initialize help: fill from own keywords + add map passed in
@@ -117,6 +120,7 @@ class CmdLine : public tk::Control<
                    tag::virtualization, kw::virtualization::info::expect::type,
                    tag::verbose,        bool,
                    tag::chare,          bool,
+                   tag::blocking,       bool,
                    tag::benchmark,      bool,
                    tag::feedback,       bool,
                    tag::help,           bool,

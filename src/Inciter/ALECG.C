@@ -64,6 +64,8 @@ ALECG::ALECG( const CProxy_Discretization& disc, const FaceData& fd ) :
 // *****************************************************************************
 //! [Constructor]
 {
+  usesAtSync = true;    // enable migration at AtSync
+
   // Size communication buffers
   resizeComm();
 
@@ -108,6 +110,17 @@ ALECG::registerReducers()
 // *****************************************************************************
 {
   NodeDiagnostics::registerReducers();
+}
+
+void
+ALECG::ResumeFromSync()
+// *****************************************************************************
+//  Return from migration
+//! \details This is called when load balancing (LB) completes. The presence of
+//!   this function does not affect whether or not we block on LB.
+// *****************************************************************************
+{
+  if (Disc()->It() > 0 && g_inputdeck.get< tag::cmd, tag::blocking >()) dt();
 }
 
 void
@@ -561,9 +574,12 @@ ALECG::step()
 
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
-    dt();
+
+    AtSync();
+    if (!g_inputdeck.get< tag::cmd, tag::blocking >()) dt();
+
   } else {
-    contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
+    d->contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
   }
 }
 
