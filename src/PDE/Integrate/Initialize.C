@@ -54,7 +54,7 @@ tk::initialize( ncomp_t system,
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
 
   // Number of quadrature points for volume integration
-  auto ng = tk::NGfa(ndof);
+  auto ng = tk::NGinit(ndof);
 
   // arrays for quadrature points
   std::array< std::vector< real >, 3 > coordgp;
