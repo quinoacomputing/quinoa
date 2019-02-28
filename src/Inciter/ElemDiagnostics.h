@@ -10,9 +10,6 @@
 #ifndef ElemDiagnostics_h
 #define ElemDiagnostics_h
 
-#include <unordered_set>
-#include <array>
-
 #include "Discretization.h"
 #include "PUPUtil.h"
 #include "Diagnostics.h"

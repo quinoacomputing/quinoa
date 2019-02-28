@@ -6,9 +6,9 @@
   \details   This file contains functionality for computing the basis functions
      and relating coordinates transformation functions used in discontinuous
      Galerkin methods for variaous orders of numerical representation. The basis
-     functions chosen for the DG method are the Dubiner basis, which are Legendre
-     polynomials modified for tetrahedra, which are defined only on the reference/master
-     tetrahedron.
+     functions chosen for the DG method are the Dubiner basis, which are
+     Legendre polynomials modified for tetrahedra, which are defined only on
+     the reference/master tetrahedron.
   \see [1] https://doi.org/10.1007/BF01060030
   \see [2] https://doi.org/10.1093/imamat/hxh111
 */
@@ -23,10 +23,12 @@ tk::eval_gp ( const std::size_t igp,
               const std::array< std::array< tk::real, 3>, 3 >& coordfa,
               const std::array< std::vector< tk::real >, 2 >& coordgp )
 // *****************************************************************************
-//  Compute the coordinates of quadrature points for face integral in physical space
+//  Compute the coordinates of quadrature points for face integral in physical
+//  space
 //! \param[in] igp Index of quadrature points
 //! \param[in] coordfa Array of nodal coordinates for face element
-//! \param[in] coordgp Array of coordinates for quadrature points in reference space
+//! \param[in] coordgp Array of coordinates for quadrature points in reference
+//!   space
 //! \return Array of coordinates for quadrature points in physical space
 // *****************************************************************************
 {
@@ -47,7 +49,8 @@ tk::eval_gp ( const std::size_t igp,
               const std::array< std::array< tk::real, 3>, 4 >& coord,
               const std::array< std::vector< tk::real >, 3 >& coordgp )
 // *****************************************************************************
-//  Compute the coordinates of quadrature points for volume integral in physical space
+//  Compute the coordinates of quadrature points for volume integral in
+//  physical space
 //! \param[in] igp Index of quadrature points
 //! \param[in] coord Array of nodal coordinates for tetrahedron element
 //! \param[in] coordgp Array of coordinates for quadrature points in reference space
@@ -62,19 +65,20 @@ tk::eval_gp ( const std::size_t igp,
 
   // Transformation of the quadrature point from the reference/master
   // element to physical space, to obtain its physical (x,y,z) coordinates.
-  return {{ coord[0][0]*shp1 + coord[1][0]*shp2 + coord[2][0]*shp3 + coord[3][0]*shp4,
-            coord[0][1]*shp1 + coord[1][1]*shp2 + coord[2][1]*shp3 + coord[3][1]*shp4,
-            coord[0][2]*shp1 + coord[1][2]*shp2 + coord[2][2]*shp3 + coord[3][2]*shp4 }};
+  return {{
+   coord[0][0]*shp1 + coord[1][0]*shp2 + coord[2][0]*shp3 + coord[3][0]*shp4,
+   coord[0][1]*shp1 + coord[1][1]*shp2 + coord[2][1]*shp3 + coord[3][1]*shp4,
+   coord[0][2]*shp1 + coord[1][2]*shp2 + coord[2][2]*shp3 + coord[3][2]*shp4 }};
 }
 
 std::array< std::vector<tk::real>, 3 >
 tk::eval_dBdx_p1( const std::size_t ndof,
                   const std::array< std::array< tk::real, 3 >, 3 >& jacInv )
 // *****************************************************************************
-//  Compute the derivatives of basis function for DG(P1)
+//  Compute the derivatives of basis functions for DG(P1)
 //! \param[in] ndof Number of degree of freedom
 //! \param[in] jacInv Array of the inverse of Jacobian
-//! \return Array of the derivatives of basis function
+//! \return Array of the derivatives of basis functions
 // *****************************************************************************
 {
   // The derivatives of the basis functions dB/dx are easily calculated
@@ -281,27 +285,19 @@ tk::eval_basis( const std::size_t ndof,
 
     if( ndof > 4 )         // DG(P2)
     {
-      auto xi_xi   = xi * xi;
-      auto xi_eta  = xi * eta;
-      auto xi_zeta = xi * zeta;
-
-      auto eta_eta  = eta * eta;
-      auto eta_zeta = eta * zeta;
-
-      auto zeta_zeta = zeta * zeta;
-
-      B[4] =  6.0 * xi_xi + eta_eta + zeta_zeta 
-            + 6.0 * xi_eta + 6.0 * xi_zeta + 2.0 * eta_zeta
+      B[4] =  6.0 * xi * xi + eta * eta + zeta * zeta
+            + 6.0 * xi * eta + 6.0 * xi * zeta + 2.0 * eta * zeta
             - 6.0 * xi - 2.0 * eta - 2.0 * zeta + 1.0;
-      B[5] =  5.0 * eta_eta + zeta_zeta 
-            + 10.0 * xi_eta + 2.0 * xi_zeta + 6.0 * eta_zeta
+      B[5] =  5.0 * eta * eta + zeta * zeta
+            + 10.0 * xi * eta + 2.0 * xi * zeta + 6.0 * eta * zeta
             - 2.0 * xi - 6.0 * eta - 2.0 * zeta + 1.0;
-      B[6] =  6.0 * zeta_zeta + 12.0 * xi_zeta + 6.0 * eta_zeta - 2.0 * xi
+      B[6] =  6.0 * zeta * zeta + 12.0 * xi * zeta + 6.0 * eta * zeta - 2.0 * xi
             - eta - 7.0 * zeta + 1.0;
-      B[7] =  10.0 * eta_eta + zeta_zeta + 8.0 * eta_zeta 
+      B[7] =  10.0 * eta * eta + zeta * zeta + 8.0 * eta * zeta
             - 8.0 * eta - 2.0 * zeta + 1.0;
-      B[8] =  6.0 * zeta_zeta + 18.0 * eta_zeta - 3.0 * eta - 7.0 * zeta + 1.0;
-      B[9] =  15.0 * zeta_zeta - 10.0 * zeta + 1.0;
+      B[8] =  6.0 * zeta * zeta + 18.0 * eta * zeta - 3.0 * eta - 7.0 * zeta
+            + 1.0;
+      B[9] =  15.0 * zeta * zeta - 10.0 * zeta + 1.0;
     }
   }
 

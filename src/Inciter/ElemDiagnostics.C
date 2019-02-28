@@ -9,6 +9,10 @@
 */
 // *****************************************************************************
 
+#include <array>
+#include <vector>
+#include <cmath>
+
 #include "DGPDE.h"
 #include "ElemDiagnostics.h"
 #include "DiagReducer.h"
