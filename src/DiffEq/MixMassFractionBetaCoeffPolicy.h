@@ -737,7 +737,7 @@ class MixMassFracBetaCoeffInstVel {
         // Compute turbulent kinetic energy
         //auto K = tke( velocity_depvar, velocity_solve, moments );
 
-        auto pe = 1.0; // hydroproductions: P/eps = (dk/dt+eps)/eps
+        auto pe = 1.0; // hydroproductions: P/eps = 1.0 (equilibrium)
 
         tk::real a = r[c]/(1.0+r[c]*yt);
         tk::real bnm = a*a*yt*(1.0-yt);
@@ -771,20 +771,6 @@ class MixMassFracBetaCoeffInstVel {
 
       ++m_it;
     }
-
-    //! Sample the inverse hydrodynamics time scale at time t
-    //! \param[in] t Time at which to sample inverse hydrodynamics time scale
-    //! \param[in] ts Hydro time scale table to sample
-    //! \return Sampled value from discrete table of inverse hydro time scale
-    tk::real hydrotimescale( tk::real t, const tk::Table& ts ) const
-    { return tk::sample( t, ts ); }
-
-    //! Sample the hydrodynamics production/dissipation rate (P/e) at time t
-    //! \param[in] t Time at which to sample hydrodynamics P/e
-    //! \param[in] p P/e table to sample
-    //! \return Sampled value from discrete table of P/e
-    tk::real hydroproduction( tk::real t, const tk::Table& p ) const
-    { return tk::sample( t, p ); }
 
     mutable std::size_t m_it = 0;
     mutable std::vector< tk::real > m_s;

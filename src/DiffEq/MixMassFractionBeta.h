@@ -227,7 +227,7 @@ class MixMassFractionBeta {
           tk::real d = m_k[i] * Y * (1.0 - Y) * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
           Y += 0.5*m_b[i]*(m_S[i] - Y)*dt + d*dW[i]
-               + m_grad[0]*u + m_grad[1]*v + m_grad[2]*w;
+               - m_grad[0]*u - m_grad[1]*v - m_grad[2]*w;
           // Compute instantaneous values derived from updated Y
           derived( particles, p, i );
         }

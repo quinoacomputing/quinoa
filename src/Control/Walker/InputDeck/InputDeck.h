@@ -152,6 +152,7 @@ class InputDeck :
                                      , kw::txt_float_scientific
                                      , kw::numfracbeta
                                      , kw::sde_rho2
+                                     , kw::sde_rho
                                      , kw::sde_rcomma
                                      , kw::icdelta
                                      , kw::spike
