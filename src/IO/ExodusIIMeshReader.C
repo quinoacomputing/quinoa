@@ -834,6 +834,5 @@ ExodusIIMeshReader::nelem( tk::ExoElemType elemtype ) const
 // *****************************************************************************
 {
   auto e = static_cast< std::size_t >( elemtype );
-  return std::accumulate( m_nel[e].cbegin(), m_nel[e].cend(),
-                          static_cast<std::size_t>(0) );
+  return std::accumulate( m_nel[e].cbegin(), m_nel[e].cend(), 0u );
 }

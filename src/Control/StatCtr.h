@@ -303,9 +303,8 @@ PDFInfo pdfInfo( const std::vector< std::vector< tk::real > >& binsizes,
           (m == Moment::CENTRAL && central(pdfs[i]))) ) ++n;
     if (n == idx+1) {
       std::vector< std::string > vars;
-      std::transform( pdfs[i].cbegin(), pdfs[i].cend(),
-        std::back_inserter(vars), []( const Term& term ){
-          return term.var + std::to_string(term.field+1); } );
+      for (const auto& term : pdfs[i])
+        vars.push_back( term.var + std::to_string(term.field+1) );
       return { names[i], exts[i], std::move(vars), it, time };
     }
     ++i;
