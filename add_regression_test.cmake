@@ -245,11 +245,13 @@ function(ADD_REGRESSION_TEST test_name executable)
   # Construct and echo configuration for test being added
   set(msg "Add regression test ${test_name} for ${executable}")
 
-  # Run all regression tests with quiescence detection
-  #list(FIND TEST_LABELS migration i)
-  #if (${i} EQUAL -1) # (except those that exercise migration)
+  # Run all regression tests with quiescence detection except those that
+  # exercise blocking migration
+  list(FIND ARG_ARGS "-m" b1)
+  list(FIND ARG_ARGS "--blocking" b2)
+  if (${b1} EQUAL -1 AND ${b2} EQUAL -1)
     list(APPEND ARG_ARGS "-q")
-  #endif()
+  endif()
 
   if (ARG_ARGS)
     string(REPLACE ";" " " ARGUMENTS "${ARG_ARGS}")
@@ -354,6 +356,12 @@ function(ADD_REGRESSION_TEST test_name executable)
     string(REPLACE ";" " " RUNNER_ARGS "${RUNNER_ARGS}")
   endif()
 
+  if(POSTFIX_RUNNER_ARGS)
+    # Convert list to space-separated string for passing as arguments to test
+    # runner cmake script below
+    string(REPLACE ";" " " POSTFIX_RUNNER_ARGS "${POSTFIX_RUNNER_ARGS}")
+  endif()
+
   # Add the test. See test_runner.cmake for documentation of the arguments.
   add_test(NAME ${test_name}
            COMMAND ${CMAKE_COMMAND}
@@ -363,6 +371,7 @@ function(ADD_REGRESSION_TEST test_name executable)
            -DRUNNER=${RUNNER}
            -DRUNNER_NCPUS_ARG=${RUNNER_NCPUS_ARG}
            -DRUNNER_ARGS=${RUNNER_ARGS}
+           -DPOSTFIX_RUNNER_ARGS=${POSTFIX_RUNNER_ARGS}
            -DTEST_EXECUTABLE=${CMAKE_BINARY_DIR}/Main/${executable}
            -DTEST_EXECUTABLE_ARGS=${ARGUMENTS}
            -DTEST_LABELS=${ARG_LABELS}
