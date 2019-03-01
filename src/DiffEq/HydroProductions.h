@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/HydroProductions.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Hydrodynamics (turbulent kinetic energy) production divided by the
     dissipation rate from DNS for the homogeneous Rayleigh-Taylor instability.
   \details   Hydrodynamics (turbulent kinetic energy) production divided by the
