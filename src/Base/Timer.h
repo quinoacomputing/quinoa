@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Timer.h
-  \copyright 2012-2015, J. Bakosi, 2016-2019, Triad National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Timer declaration
   \details   Timer declaration. Timer is a simple class to do timing various
     parts of the code in a portable way. The functionality is intended to be

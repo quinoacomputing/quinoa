@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/NoWarning/integrator.decl.h
-  \copyright 2012-2015, J. Bakosi, 2016-2019, Triad National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Include integrator.decl.h with turning off specific compiler
              warnings
 */

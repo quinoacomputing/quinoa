@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Main/UnitTest.C
-  \copyright 2012-2015, J. Bakosi, 2016-2019, Triad National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
     the definition of the Charm++ main chare, equivalent to main() in Charm++-

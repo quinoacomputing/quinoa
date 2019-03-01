@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/HydroTimeScales.h
-  \copyright 2012-2015, J. Bakosi, 2016-2019, Triad National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Inverse hydrodynamics time scales from DNS for the homogeneous
     Rayleigh-Taylor instability.
   \details   Inverse hydrodynamics time scales from direct numerical simulation

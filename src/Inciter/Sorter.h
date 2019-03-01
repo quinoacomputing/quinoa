@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Sorter.h
-  \copyright 2016-2018, Triad National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Mesh sorter for global distributed mesh reordering
   \details   Mesh sorter is Charm++ chare array and is used to do global
     distributed mesh node reordering that yields consecutive unique global node

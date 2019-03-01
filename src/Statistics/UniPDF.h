@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Statistics/UniPDF.h
-  \copyright 2012-2015, J. Bakosi, 2016-2019, Triad National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator. This class can be used to estimate a
     probability density function of (PDF) a scalar variable from an ensemble.

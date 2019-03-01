@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/ALECG.C
-  \copyright 2016-2018, Triad National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     ALECG for a PDE system with continuous Galerkin + ALE + RK
   \details   ALECG advances a system of partial differential equations (PDEs)
     using a continuous Galerkin (CG) finite element (FE) spatial discretization
