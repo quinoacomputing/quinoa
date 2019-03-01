@@ -232,10 +232,10 @@ class CompFlow {
 
         // Extract the left element coordinates
         std::array< std::array< tk::real, 3>, 4 > coordel_l {{
-          { cx[inpoel[4*el  ]], cy[inpoel[4*el  ]], cz[inpoel[4*el  ]] },
-          { cx[inpoel[4*el+1]], cy[inpoel[4*el+1]], cz[inpoel[4*el+1]] },
-          { cx[inpoel[4*el+2]], cy[inpoel[4*el+2]], cz[inpoel[4*el+2]] },
-          { cx[inpoel[4*el+3]], cy[inpoel[4*el+3]], cz[inpoel[4*el+3]] } }};
+          {{ cx[inpoel[4*el  ]], cy[inpoel[4*el  ]], cz[inpoel[4*el  ]] }},
+          {{ cx[inpoel[4*el+1]], cy[inpoel[4*el+1]], cz[inpoel[4*el+1]] }},
+          {{ cx[inpoel[4*el+2]], cy[inpoel[4*el+2]], cz[inpoel[4*el+2]] }},
+          {{ cx[inpoel[4*el+3]], cy[inpoel[4*el+3]], cz[inpoel[4*el+3]] }} }};
 
         // Compute the determinant of Jacobian matrix
         auto detT_l = 
@@ -243,9 +243,10 @@ class CompFlow {
 
         // Extract the face coordinates
         std::array< std::array< tk::real, 3>, 3 > coordfa {{
-          { cx[ inpofa[3*f  ] ], cy[ inpofa[3*f  ] ], cz[ inpofa[3*f  ] ] },
-          { cx[ inpofa[3*f+1] ], cy[ inpofa[3*f+1] ], cz[ inpofa[3*f+1] ] },
-          { cx[ inpofa[3*f+2] ], cy[ inpofa[3*f+2] ], cz[ inpofa[3*f+2] ] } }};
+          {{ cx[ inpofa[3*f  ] ], cy[ inpofa[3*f  ] ], cz[ inpofa[3*f  ] ] }},
+          {{ cx[ inpofa[3*f+1] ], cy[ inpofa[3*f+1] ], cz[ inpofa[3*f+1] ] }},
+          {{ cx[ inpofa[3*f+2] ], cy[ inpofa[3*f+2] ], cz[ inpofa[3*f+2] ] }}
+        }};
 
         dSV_l = 0.0;
         dSV_r = 0.0;
@@ -271,10 +272,10 @@ class CompFlow {
           {
             auto mark = c*ndof;
             auto lmark = c*(ndof-1);
-            ugp[0].push_back(  U(el, mark,   m_offset)
-                             + limFunc(el, lmark+0, 0) * U(el, mark+1, m_offset) * B_l[1]
-                             + limFunc(el, lmark+1, 0) * U(el, mark+2, m_offset) * B_l[2]
-                             + limFunc(el, lmark+2, 0) * U(el, mark+3, m_offset) * B_l[3] );
+            ugp[0].push_back( U(el, mark, m_offset)
+                + limFunc(el, lmark+0, 0) * U(el, mark+1, m_offset) * B_l[1]
+                + limFunc(el, lmark+1, 0) * U(el, mark+2, m_offset) * B_l[2]
+                + limFunc(el, lmark+2, 0) * U(el, mark+3, m_offset) * B_l[3] );
           }
 
           rho = ugp[0][0];
@@ -298,10 +299,11 @@ class CompFlow {
 
             // Extract the left element coordinates
             std::array< std::array< tk::real, 3>, 4 > coordel_r {{
-              { cx[inpoel[4*eR  ]], cy[inpoel[4*eR  ]], cz[inpoel[4*eR  ]] },
-              { cx[inpoel[4*eR+1]], cy[inpoel[4*eR+1]], cz[inpoel[4*eR+1]] },
-              { cx[inpoel[4*eR+2]], cy[inpoel[4*eR+2]], cz[inpoel[4*eR+2]] },
-              { cx[inpoel[4*eR+3]], cy[inpoel[4*eR+3]], cz[inpoel[4*eR+3]] } }};
+              {{ cx[inpoel[4*eR  ]], cy[inpoel[4*eR  ]], cz[inpoel[4*eR  ]] }},
+              {{ cx[inpoel[4*eR+1]], cy[inpoel[4*eR+1]], cz[inpoel[4*eR+1]] }},
+              {{ cx[inpoel[4*eR+2]], cy[inpoel[4*eR+2]], cz[inpoel[4*eR+2]] }},
+              {{ cx[inpoel[4*eR+3]], cy[inpoel[4*eR+3]], cz[inpoel[4*eR+3]] }}
+            }};
 
             // Compute the determinant of Jacobian matrix
             auto detT_r = 
@@ -321,9 +323,9 @@ class CompFlow {
               auto mark = c*ndof;
               auto lmark = c*(ndof-1);
               ugp[1].push_back(  U(eR, mark,   m_offset)
-                               + limFunc(eR, lmark+0, 0) * U(eR, mark+1, m_offset) * B_r[1]
-                               + limFunc(eR, lmark+1, 0) * U(eR, mark+2, m_offset) * B_r[2]
-                               + limFunc(eR, lmark+2, 0) * U(eR, mark+3, m_offset) * B_r[3] );
+                 + limFunc(eR, lmark+0, 0) * U(eR, mark+1, m_offset) * B_r[1]
+                 + limFunc(eR, lmark+1, 0) * U(eR, mark+2, m_offset) * B_r[2]
+                 + limFunc(eR, lmark+2, 0) * U(eR, mark+3, m_offset) * B_r[3] );
             }
 
             rho = ugp[1][0];
