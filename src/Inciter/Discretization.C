@@ -399,7 +399,7 @@ Discretization::write(
 //! \param[in] fields Mesh field output dump
 //! \param[in] centering The centering that will be associated to the field data
 //!   to be output when writeFields is called next
-//! \param[on] c Function to continue with after the write
+//! \param[in] c Function to continue with after the write
 //! \details Since m_meshwriter is a Charm++ chare group, it never migrates and
 //!   an instance is guaranteed on every PE. We index the first PE on every
 //!   logical compute node. In Charm++'s non-SMP mode, a node is the same as a

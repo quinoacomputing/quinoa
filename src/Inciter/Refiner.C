@@ -171,7 +171,6 @@ Refiner::dtref( tk::real t,
 // *****************************************************************************
 // Start mesh refinement (during time stepping, t>0)
 //! \param[in] t Physical time
-//! \param[in] s Discretization scheme Charm++ proxy we interoperate with
 //! \param[in] bnode Node lists of side sets
 // *****************************************************************************
 {
