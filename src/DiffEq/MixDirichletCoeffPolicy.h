@@ -56,7 +56,7 @@
 namespace walker {
 
 
-std::vector< kw::sde_r::info::expect::type >
+static std::vector< kw::sde_r::info::expect::type >
 MixDir_r( const std::vector< kw::sde_rho::info::expect::type >& rho )
 // *****************************************************************************
 //  Compute parameter vector r based on r_i = rho_N/rho_i - 1
