@@ -13,8 +13,6 @@
 #ifndef ElemDiagnostics_h
 #define ElemDiagnostics_h
 
-#include <unordered_set>
-
 #include "Discretization.h"
 #include "PUPUtil.h"
 #include "Diagnostics.h"
@@ -45,26 +43,13 @@ class ElemDiagnostics {
     //@}
 
   private:
-    //! Compute diagnostics for DG(P0)
-    void computeP0( Discretization& d,
-                    const std::size_t nchGhost,
-                    const tk::Fields& geoElem,
-                    const tk::Fields& u,
-                    std::vector< std::vector< tk::real > >& diag ) const;
-
-    //! Compute diagnostics for DG(P1)
-    void computeP1( Discretization& d,
-                    const std::size_t nchGhost,
-                    const tk::Fields& geoElem,
-                    const tk::Fields& u,
-                    std::vector< std::vector< tk::real > >& diag ) const;
-
-    //! Compute diagnostics for DG(P2)
-    void computeP2( Discretization& d,
-                    const std::size_t nchGhost,
-                    const tk::Fields& geoElem,
-                    const tk::Fields& u,
-                    std::vector< std::vector< tk::real > >& diag ) const;
+    //! Compute diagnostics for DG
+    void compute_diag( const Discretization& d,
+                       const std::size_t ndof,
+                       const std::size_t nchGhost,
+                       const tk::Fields& geoElem,
+                       const tk::Fields& u,
+                       std::vector< std::vector< tk::real > >& diag ) const;
 };
 
 } // inciter::

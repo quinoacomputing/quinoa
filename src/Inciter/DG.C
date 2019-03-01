@@ -1125,7 +1125,7 @@ DG::writeFields( CkCallback c )
   auto u = m_u;
   for (const auto& eq : g_dgpde) {
     auto o =
-      eq.fieldOutput( m_lhs, d->Inpoel(), d->Coord(), d->T(), m_geoElem, u );
+      eq.fieldOutput( d->T(), m_geoElem, u );
     // cut off ghost elements
     for (auto& field : o) field.resize( esuel.size()/4 );
     fields.insert( end(fields), begin(o), end(o) );

@@ -20,9 +20,18 @@
 #include "Exception.h"
 
 namespace tk {
+//! Initialization of number of Gauss points for volume integration
+//! \param[in] ndof Number of degrees of freedom
+constexpr std::size_t NGvol( const std::size_t ndof ) {
+  return ndof == 1 ? 1 :
+         ndof == 4 ? 5 :
+         ndof == 10 ? 11 :
+         throw std::logic_error("ndof must be one of 1,4,10");
+}
 
-//! Initialization of number of gauss points for face integration
-//! \param[in] ndof Number of degree of freedom
+
+//! Initialization of number of Gauss points for face integration
+//! \param[in] ndof Number of degrees of freedom
 constexpr std::size_t NGfa( const std::size_t ndof ) {
   return ndof == 1 ? 1 :
          ndof == 4 ? 3 :
@@ -30,25 +39,31 @@ constexpr std::size_t NGfa( const std::size_t ndof ) {
          throw std::logic_error("ndof must be one of 1,4,10");
 }
 
-//! Fourteen Gaussian quadrature points locations and weights for a tetrahedron
-void
-GaussQuadratureTet( std::array< std::array< real, 14 >, 3 >& coordgp,
-                    std::array< real, 14 >& wgp );
+//! \brief Initialization of number of Gauss points for volume integration
+//!   in error estimation
+//! \param[in] ndof Number of degrees of freedom
+constexpr std::size_t NGdiag( const std::size_t ndof ) {
+  return ndof == 1 ? 1 :
+         ndof == 4 ? 4 :
+         ndof == 10 ? 14 :
+         throw std::logic_error("ndof must be one of 1,4,10");
+}
 
-//! Eleven Gaussian quadrature points locations and weights for a tetrahedron
-void
-GaussQuadratureTet( std::array< std::array< real, 11 >, 3 >& coordgp,
-                    std::array< real, 11 >& wgp );
+//! \brief Initialization of number of Gauss points for volume integration
+//!   in DG initialization
+//! \param[in] ndof Number of degrees of freedom
+constexpr std::size_t NGinit( const std::size_t ndof ) {
+  return ndof == 1 ? 1 :
+         ndof == 4 ? 14 :
+         ndof == 10 ? 14 :
+         throw std::logic_error("ndof must be one of 1,4,10");
+}
 
-//! Five Gaussian quadrature points locations and weights for a tetrahedron
+//! Initialize Gaussian quadrature points locations and weights for a tetrahedron
 void
-GaussQuadratureTet( std::array< std::array< real, 5 >, 3 >& coordgp,
-                    std::array< real, 5 >& wgp );
-
-//! Four Gaussian quadrature points locations and weights for a tetrahedron
-void
-GaussQuadratureTet( std::array< std::array< real, 4 >, 3 >& coordgp,
-                    std::array< real, 4 >& wgp );
+GaussQuadratureTet( std::size_t NG,
+                    std::array< std::vector< real >, 3 >& coordgp,
+                    std::vector< real >& wgp );
 
 //! Initialize Gaussian quadrature points locations and weights for a triangle
 void
