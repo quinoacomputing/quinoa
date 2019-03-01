@@ -12,6 +12,7 @@
 #ifndef Volume_h
 #define Volume_h
 
+#include "Basis.h"
 #include "Types.h"
 #include "Fields.h"
 #include "UnsMesh.h"
@@ -21,32 +22,30 @@ namespace tk {
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
-//! Compute volume integrals for DG(P1)
+//! Compute volume integrals for DG
 void
-volIntP1( ncomp_t system,
-          ncomp_t ncomp,
-          ncomp_t offset,
-          const std::vector< std::size_t >& inpoel,
-          const UnsMesh::Coords& coord,
-          const Fields& geoElem,
-          const FluxFn& flux,
-          const VelFn& vel,
-          const Fields& U,
-          const Fields& limFunc,
-          Fields& R );
+volInt( ncomp_t system,
+        ncomp_t ncomp,
+        ncomp_t offset,
+        const std::vector< std::size_t >& inpoel,
+        const UnsMesh::Coords& coord,
+        const Fields& geoElem,
+        const FluxFn& flux,
+        const VelFn& vel,
+        const Fields& U,
+        const Fields& limFunc,
+        Fields& R );
 
-//! Compute volume integrals for DG(P2)
+//! Update the rhs by adding the source term integrals
 void
-volIntP2( ncomp_t system,
-          ncomp_t ncomp,
-          ncomp_t offset,
-          const std::vector< std::size_t >& inpoel,
-          const UnsMesh::Coords& coord,
-          const Fields& geoElem,
-          const FluxFn& flux,
-          const VelFn& vel,
-          const Fields& U,
-          Fields& R );
+update_rhs( ncomp_t ncomp,
+            ncomp_t offset,
+            const std::size_t ndof,
+            const tk::real wt,
+            const std::size_t e,
+            const std::array< std::vector<tk::real>, 3 >& dBdx,
+            const std::vector< std::array< tk::real, 3 > >& fl,
+            Fields& R );
 
 } // tk::
 
