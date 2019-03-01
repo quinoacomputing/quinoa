@@ -37,7 +37,6 @@
 #include "FluxCorrector.h"
 #include "NodeDiagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
-#include "FaceData.h"
 
 #include "NoWarning/diagcg.decl.h"
 
@@ -74,10 +73,9 @@ class DiagCG : public CBase_DiagCG {
 
     //! Constructor
     explicit DiagCG( const CProxy_Discretization& disc,
-                     const std::vector< std::size_t >& ginpoel,
-                     const std::map< int, std::vector< std::size_t > >& bface,
+                     const std::map< int, std::vector< std::size_t > >& /* bface */,
                      const std::map< int, std::vector< std::size_t > >& bnode,
-                     const std::vector< std::size_t >& triinpoel );
+                     const std::vector< std::size_t >& /* triinpoel */ );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -135,9 +133,9 @@ class DiagCG : public CBase_DiagCG {
       const tk::UnsMesh::Coords& coord,
       const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
       const std::unordered_map< int, std::vector< std::size_t > >& msum,
-      const std::map< int, std::vector< std::size_t > >& bface,
+      const std::map< int, std::vector< std::size_t > >& /* bface */,
       const std::map< int, std::vector< std::size_t > >& bnode,
-      const std::vector< std::size_t >& triinpoel );
+      const std::vector< std::size_t >& /* triinpoel */ );
 
     //! Const-ref access to current solution
     //! \param[in,out] u Reference to update with current solution
@@ -160,7 +158,7 @@ class DiagCG : public CBase_DiagCG {
       p | m_nlhs;
       p | m_nrhs;
       p | m_ndif;
-      p | m_fd;
+      p | m_bnode;
       p | m_u;
       p | m_ul;
       p | m_du;
@@ -188,7 +186,7 @@ class DiagCG : public CBase_DiagCG {
     //! Discretization proxy
     CProxy_Discretization m_disc;
     //! True if starting time stepping, false if during time stepping
-    bool m_initial;
+    int m_initial;
     //! Counter for high order solution vector nodes updated
     std::size_t m_nsol;
     //! Counter for left-hand side matrix (vector) nodes updated
@@ -197,8 +195,8 @@ class DiagCG : public CBase_DiagCG {
     std::size_t m_nrhs;
     //! Counter for right-hand side masss-diffusion vector nodes updated
     std::size_t m_ndif;
-    //! Face data
-    FaceData m_fd;
+    //! Boundary node lists mapped to side set ids
+    std::map< int, std::vector< std::size_t > > m_bnode;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
     //! Unknown/solution vector at mesh nodes (low orderd)

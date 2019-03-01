@@ -130,7 +130,7 @@ class Transporter : public CBase_Transporter {
     void chadj() { m_progWork.inc< ADJ >(); }
 
     //! Reduction target indicating that the communication maps have been setup
-    void comfinal();
+    void comfinal( int initial );
 
     //! Reduction target summing total mesh volume
     void totalvol( tk::real v, tk::real initial );

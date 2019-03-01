@@ -30,7 +30,7 @@ module transporter {
       entry [reductiontarget] void responded();
       entry [reductiontarget] void discresized();
       entry [reductiontarget] void workresized();
-      entry [reductiontarget] void comfinal();
+      entry [reductiontarget] void comfinal( int initial );
       entry [reductiontarget] void totalvol( tk::real v, tk::real initial );
       entry [reductiontarget] void vol();
       entry [reductiontarget] void minstat( tk::real d0, tk::real d1,

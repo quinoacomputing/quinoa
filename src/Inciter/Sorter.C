@@ -521,8 +521,7 @@ Sorter::createWorkers()
   // Create worker array element using Charm++ dynamic chare array element
   // insertion: 1st arg: chare id, other args: Discretization's child ctor args.
   // See also Charm++ manual, Sec. "Dynamic Insertion".
-  m_scheme.insert( thisIndex, m_scheme.get(),
-                   m_ginpoel, m_bface, m_bnode, m_triinpoel );
+  m_scheme.insert( thisIndex, m_scheme.get(), m_bface, m_bnode, m_triinpoel );
 
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chcreated();
 

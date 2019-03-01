@@ -63,9 +63,8 @@ class DG : public CBase_DG {
 
     //! Constructor
     explicit DG( const CProxy_Discretization& disc,
-                 const std::vector< std::size_t >& ginpoel,
                  const std::map< int, std::vector< std::size_t > >& bface,
-                 const std::map< int, std::vector< std::size_t > >& bnode,
+                 const std::map< int, std::vector< std::size_t > >& /* bnode */,
                  const std::vector< std::size_t >& triinpoel );
 
     #if defined(__clang__)
@@ -192,6 +191,7 @@ class DG : public CBase_DG {
       p | m_recvGhost;
       p | m_diag;
       p | m_stage;
+      p | m_initial;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -278,6 +278,8 @@ class DG : public CBase_DG {
     ElemDiagnostics m_diag;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
+    //! True if starting time stepping, false if during time stepping
+    int m_initial;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -290,6 +292,9 @@ class DG : public CBase_DG {
 
     //! Start sizing communication buffers and setting up ghost data
     void resizeComm();
+
+    //! ...
+    void reghost();
 
     //! Perform leak test on chare-boundary faces
     bool leakyAdjacency();

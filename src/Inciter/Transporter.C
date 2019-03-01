@@ -234,7 +234,7 @@ Transporter::createPartitioner()
   // Create mesh reader for reading side sets from file
   tk::MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
-  std::map< int, std::vector< std::size_t > > belem;
+  std::map< int, std::vector< std::size_t > > bface;
   std::map< int, std::vector< std::size_t > > faces;
   std::map< int, std::vector< std::size_t > > bnode;
 
@@ -243,9 +243,9 @@ Transporter::createPartitioner()
   const auto centering = ctr::Scheme().centering( scheme );
   if (centering == tk::Centering::ELEM) {
     // Read boundary-face connectivity on side sets
-    mr.readSidesetFaces( belem, faces );
+    mr.readSidesetFaces( bface, faces );
     // Verify boundarty condition (BC) side sets used exist in mesh file
-    matchBCs( g_dgpde, belem );
+    matchBCs( g_dgpde, bface );
   } else if (centering == tk::Centering::NODE) {
     // Read node lists on side sets
     bnode = mr.readSidesetNodes();
@@ -296,7 +296,7 @@ Transporter::createPartitioner()
   // Create mesh partitioner Charm++ chare nodegroup
   m_partitioner =
     CProxy_Partitioner::ckNew( cbp, cbr, cbs, thisProxy, m_refiner, m_sorter,
-                               m_meshwriter, m_scheme, belem, faces, bnode );
+                               m_meshwriter, m_scheme, bface, faces, bnode );
 }
 
 void
@@ -477,7 +477,10 @@ Transporter::resized()
 // *****************************************************************************
 {
   m_scheme.vol();
-  m_scheme.lhs();
+  
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG)
+    m_scheme.lhs();
 }
 
 void
@@ -538,7 +541,8 @@ Transporter::diagHeader()
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG)
     for (const auto& eq : g_cgpde) varnames( eq, var );
-  else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1 || scheme == ctr::SchemeType::DGP2)
+  else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1 ||
+           scheme == ctr::SchemeType::DGP2)
     for (const auto& eq : g_dgpde) varnames( eq, var );
   else Throw( "Diagnostics header not handled for discretization scheme" );
 
@@ -565,14 +569,20 @@ Transporter::diagHeader()
 }
 
 void
-Transporter::comfinal()
+Transporter::comfinal( int initial )
 // *****************************************************************************
 // Reduction target indicating that communication maps have been setup
+//! \param[in] initial Sum of contributions from all chares. If larger than
+//!    zero, we are during time stepping and if zero we are during setup.
 // *****************************************************************************
 // [Discretization-specific communication maps]
 {
-  m_progWork.end();
-  m_scheme.setup( m_V );
+  if (initial > 0) {
+    m_progWork.end();
+    m_scheme.setup( m_V );
+  } else {
+    m_scheme.lhs();
+  }
 }
 // [Discretization-specific communication maps]
 

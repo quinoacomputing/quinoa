@@ -42,16 +42,15 @@ extern std::vector< CGPDE > g_cgpde;
 using inciter::ALECG;
 
 ALECG::ALECG( const CProxy_Discretization& disc,
-              const std::vector< std::size_t >& ginpoel,
-              const std::map< int, std::vector< std::size_t > >& bface,
+              const std::map< int, std::vector< std::size_t > >& /* bface */,
               const std::map< int, std::vector< std::size_t > >& bnode,
-              const std::vector< std::size_t >& triinpoel ) :
+              const std::vector< std::size_t >& /* triinpoel */ ) :
   m_disc( disc ),
-  m_initial( true ),
+  m_initial( 1 ),
   m_nsol( 0 ),
   m_nlhs( 0 ),
   m_nrhs( 0 ),
-  m_fd( ginpoel, bface, bnode, triinpoel ),
+  m_bnode( bnode ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_du( m_u.nunk(), m_u.nprop() ),
@@ -64,8 +63,6 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
-//! \param[in] ginpoel Mesh element connectivity owned (global IDs) mesh chunk
-//!   this chare operates on
 //! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] bnode Boundary-node lists mapped to side set ids
 //! \param[in] triinpoel Boundary-face connectivity
@@ -81,7 +78,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   thisProxy[ thisIndex ].wait4lhs();
 
   // Signal the runtime system that the workers have been created
-  contribute(CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()));
+  contribute( sizeof(int), &m_initial, CkReduction::sum_int,
+    CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
 }
 //! [Constructor]
 
@@ -419,8 +417,8 @@ ALECG::writeFields( CkCallback c )
   }
 
   // Send mesh and fields data (solution dump) for output to file
-  d->write( d->Inpoel(), d->Coord(), m_fd.Bface(), m_fd.Bnode(),
-            m_fd.Triinpoel(), names, fields, tk::Centering::NODE, c );
+  d->write( d->Inpoel(), d->Coord(), {}, m_bnode, {}, names, fields,
+            tk::Centering::NODE, c );
 }
 
 void
@@ -463,7 +461,7 @@ ALECG::refine()
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
-    d->Ref()->dtref( m_fd.Bface(), m_fd.Bnode(), m_fd.Triinpoel() );
+    d->Ref()->dtref( {}, m_bnode, {} );
 
   } else {      // do not refine
 
@@ -501,7 +499,7 @@ ALECG::resize(
   auto d = Disc();
 
   // Set flag that indicates that we are during time stepping
-  m_initial = false;
+  m_initial = 0;
 
   // Zero field output iteration count between two mesh refinement steps
   d->Itf() = 0;
@@ -526,7 +524,7 @@ ALECG::resize(
       m_u(n.first,c,0) = (m_u(n.second[0],c,0) + m_u(n.second[1],c,0))/2.0;
 
   // Update physical-boundary node lists
-  m_fd.Bnode() = bnode;
+  m_bnode = bnode;
 
   // Resize communication buffers
   resizeComm();

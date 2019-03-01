@@ -41,7 +41,7 @@ Partitioner::Partitioner(
   const CProxy_Sorter& sorter,
   const tk::CProxy_MeshWriter& meshwriter,
   const Scheme& scheme,
-  const std::map< int, std::vector< std::size_t > >& belem,
+  const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& faces,
   const std::map< int, std::vector< std::size_t > >& bnode ) :
   m_cbp( cbp ),
@@ -64,7 +64,7 @@ Partitioner::Partitioner(
   m_chbface(),
   m_chtriinpoel(),
   m_chbnode(),
-  m_bface( belem ),
+  m_bface( bface ),
   m_bnode( bnode )
 // *****************************************************************************
 //  Constructor
@@ -76,7 +76,7 @@ Partitioner::Partitioner(
 //! \param[in] sorter Mesh reordering (sorter) proxy
 //! \param[in] meshwriter Mesh writer proxy
 //! \param[in] scheme Discretization scheme
-//! \param[in] belem File-internal elem ids of side sets (whole mesh)
+//! \param[in] bface File-internal elem ids of side sets (whole mesh)
 //! \param[in] faces Elem-relative face ids of side sets (whole mesh)
 //! \param[in] bnode Node lists of side sets (whole mesh)
 // *****************************************************************************

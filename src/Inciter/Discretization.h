@@ -34,7 +34,7 @@ class Discretization : public CBase_Discretization {
         const CProxy_DistFCT& fctproxy,
         const CProxy_Transporter& transporter,
         const tk::CProxy_MeshWriter& meshwriter,
-        const std::vector< std::size_t >& conn,
+        const std::vector< std::size_t >& ginpoel,
         const tk::UnsMesh::CoordMap& coordmap,
         const std::map< int, std::unordered_set< std::size_t > >& msum,
         int nc );

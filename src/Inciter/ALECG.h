@@ -32,7 +32,6 @@
 #include "FluxCorrector.h"
 #include "NodeDiagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
-#include "FaceData.h"
 
 #include "NoWarning/alecg.decl.h"
 
@@ -69,10 +68,9 @@ class ALECG : public CBase_ALECG {
 
     //! Constructor
     explicit ALECG( const CProxy_Discretization& disc,
-                    const std::vector< std::size_t >& ginpoel,
-                    const std::map< int, std::vector< std::size_t > >& bface,
+                    const std::map< int, std::vector< std::size_t > >& /* bface */,
                     const std::map< int, std::vector< std::size_t > >& bnode,
-                    const std::vector< std::size_t >& triinpoel );
+                    const std::vector< std::size_t >& /* triinpoel */ );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -126,9 +124,9 @@ class ALECG : public CBase_ALECG {
       const tk::UnsMesh::Coords& coord,
       const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
       const std::unordered_map< int, std::vector< std::size_t > >& msum,
-      const std::map< int, std::vector< std::size_t > >& bface,
+      const std::map< int, std::vector< std::size_t > >& /* bface */,
       const std::map< int, std::vector< std::size_t > >& bnode,
-      const std::vector< std::size_t >& triinpoel );
+      const std::vector< std::size_t >& /* triinpoel */ );
 
     //! Const-ref access to current solution
     //! \param[in,out] u Reference to update with current solution
@@ -150,7 +148,7 @@ class ALECG : public CBase_ALECG {
       p | m_nsol;
       p | m_nlhs;
       p | m_nrhs;
-      p | m_fd;
+      p | m_bnode;
       p | m_u;
       p | m_du;
       p | m_lhs;
@@ -172,15 +170,15 @@ class ALECG : public CBase_ALECG {
     //! Discretization proxy
     CProxy_Discretization m_disc;
     //! True if starting time stepping, false if during time stepping
-    bool m_initial;
+    int m_initial;
     //! Counter for high order solution vector nodes updated
     std::size_t m_nsol;
     //! Counter for left-hand side matrix (vector) nodes updated
     std::size_t m_nlhs;
     //! Counter for right-hand side vector nodes updated
     std::size_t m_nrhs;
-    //! Face data
-    FaceData m_fd;
+    //! Boundary node lists mapped to side set ids
+    std::map< int, std::vector< std::size_t > > m_bnode;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
     //! Unknown/solution vector increment (high order)

@@ -127,7 +127,6 @@ MeshWriter::write(
 
         } else {
           ew.writeMesh( inpoel, coord );
-
         }
         // Write field names
         if (centering == Centering::ELEM)

@@ -22,6 +22,7 @@
 #include "Inciter/InputDeck/InputDeck.h"
 #include "Refiner.h"
 #include "Limiter.h"
+#include "Reorder.h"
 
 namespace inciter {
 
@@ -33,15 +34,13 @@ extern std::vector< DGPDE > g_dgpde;
 static const std::array< std::array< tk::real, 3 >, 2 >
   m_rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
 
-
 } // inciter::
 
 using inciter::DG;
 
 DG::DG( const CProxy_Discretization& disc,
-        const std::vector< std::size_t >& ginpoel,
         const std::map< int, std::vector< std::size_t > >& bface,
-        const std::map< int, std::vector< std::size_t > >& bnode,
+        const std::map< int, std::vector< std::size_t > >& /* bnode */,
         const std::vector< std::size_t >& triinpoel ) :
   m_disc( disc ),
   m_ncomfac( 0 ),
@@ -49,7 +48,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_nsol( 0 ),
   m_ninitsol( 0 ),
   m_nlim( 0 ),
-  m_fd( ginpoel, bface, bnode, triinpoel ),
+  m_fd( Disc()->Inpoel(), bface, tk::remap(triinpoel,Disc()->Lid()) ),
   m_u( Disc()->Inpoel().size()/4,
        g_inputdeck.get< tag::discr, tag::ndof >()*
        g_inputdeck.get< tag::component >().nprop() ),
@@ -71,14 +70,12 @@ DG::DG( const CProxy_Discretization& disc,
   m_exptGhost(),
   m_recvGhost(),
   m_diag(),
-  m_stage( 0 )
+  m_stage( 0 ),
+  m_initial( 1 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
-//! \param[in] ginpoel Mesh element connectivity owned (global IDs) mesh chunk
-//!   this chare operates on
 //! \param[in] bface Boundary-faces mapped to side set ids
-//! \param[in] bnode Boundary-node lists mapped to side set ids
 //! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
@@ -109,9 +106,11 @@ DG::resizeComm()
   thisProxy[ thisIndex ].wait4ghost();
 
   // Enable SDAG wait for initially building the solution vector and limiting
-  thisProxy[ thisIndex ].wait4initlim();
-  thisProxy[ thisIndex ].wait4sol();
-  thisProxy[ thisIndex ].wait4lim();
+  if (m_initial) {
+    thisProxy[ thisIndex ].wait4initlim();
+    thisProxy[ thisIndex ].wait4sol();
+    thisProxy[ thisIndex ].wait4lim();
+  }
 
   // Invert inpofa to enable searching for faces based on (global) node triplets
   Assert( inpofa.size() % 3 == 0, "Inpofa must contain triplets" );
@@ -323,10 +322,14 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
     if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) d->Tr().chcomfac();
     tk::destroy(m_ipface);
 
-    // Error checking on the number of expected vs received/found chare-boundary
-    // faces
+    // Ensure correct number of expected vs received/found chare-boundary faces
+
+    if ( m_exptNbface != tk::sumvalsize(m_bndFace) )
+      std::cout << thisIndex << ", error: " << m_exptNbface << ", " << tk::sumvalsize(m_bndFace) << std::endl;
+
     Assert( m_exptNbface == tk::sumvalsize(m_bndFace), 
             "Expected and received number of boundary faces mismatch" );
+    m_exptNbface = 0;
 
     // Basic error checking on chare-boundary-face map
     Assert( m_bndFace.find( thisIndex ) == m_bndFace.cend(),
@@ -832,7 +835,8 @@ DG::adj()
     }
 
   // Signal the runtime system that all workers have received their adjacency
-  contribute(CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()));
+  contribute( sizeof(int), &m_initial, CkReduction::sum_int,
+    CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
 }
 
 void
@@ -941,11 +945,6 @@ DG::sendinit()
 // Send own chare-boundary data to neighboring chares
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "advance" );
-
   // communicate solution ghost data (if any)
   if (m_ghostData.empty())
     cominit_complete();
@@ -976,11 +975,6 @@ DG::cominit( int fromch,
 //! \details This function receives contributions to m_u from fellow chares.
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "cominit" );
-
   Assert( u.size() == tetid.size(), "Size mismatch in DG::cominit()" );
 
   // Find local-to-ghost tet id map for sender chare
@@ -1154,8 +1148,8 @@ DG::writeFields( CkCallback c )
   // }
 
   // Output chare mesh and fields metadata to file
-  d->write( inpoel, coord, m_fd.Bface(), m_fd.Bnode(), m_fd.Triinpoel(),
-            names, fields, tk::Centering::ELEM, c );
+  d->write( inpoel, coord, m_fd.Bface(), {}, m_fd.Triinpoel(), names,
+            fields, tk::Centering::ELEM, c );
 }
 
 void
@@ -1165,6 +1159,14 @@ DG::lhs()
 // *****************************************************************************
 {
   for (const auto& eq : g_dgpde) eq.lhs( m_geoElem, m_lhs );
+
+  if (!m_initial) {
+
+    // Update solution on new mesh
+    // ...
+
+    stage();
+  }
 }
 
 void
@@ -1282,7 +1284,7 @@ DG::solve( tk::real newdt )
 
   } else {
 
-    thisProxy[ thisIndex ].wait4stage();
+    thisProxy[ thisIndex ].wait4reghost();
 
     // Compute diagnostics, e.g., residuals
     auto diag_computed =
@@ -1331,12 +1333,11 @@ DG::refine()
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
-    d->Ref()->dtref( m_fd.Bface(), m_fd.Bnode(), m_fd.Triinpoel() );
+    d->Ref()->dtref( m_fd.Bface(), {}, m_fd.Triinpoel() );
 
   } else {      // do not refine
 
     ref_complete();
-    lhs_complete();
     resize_complete();
 
   }
@@ -1350,7 +1351,7 @@ DG::resize(
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /*addedNodes*/,
   const std::unordered_map< int, std::vector< std::size_t > >& msum,
   const std::map< int, std::vector< std::size_t > >& bface,
-  const std::map< int, std::vector< std::size_t > >& bnode,
+  const std::map< int, std::vector< std::size_t > >& /* bnode */,
   const std::vector< std::size_t >& triinpoel )
 // *****************************************************************************
 //  Receive new mesh from refiner
@@ -1365,6 +1366,9 @@ DG::resize(
 // *****************************************************************************
 {
   auto d = Disc();
+
+  // Set flag that indicates that we are during time stepping
+  m_initial = 0;
 
   // Zero field output iteration count between two mesh refinement steps
   d->Itf() = 0;
@@ -1383,7 +1387,14 @@ DG::resize(
   m_lhs.resize( nelem, nprop );
   m_rhs.resize( nelem, nprop );
 
-  m_fd = FaceData( ginpoel, bface, bnode, triinpoel );
+  m_fd = FaceData( d->Inpoel(), bface, tk::remap(triinpoel,d->Lid()) );
+
+std::cout << ginpoel.size()/4 << ", " << triinpoel.size()/3 << std::endl;
+
+std::cout << "bface: ";
+for (const auto& s : bface) std::cout << s.first << ':' << s.second.size() << ' ';
+std::cout << '\n';
+
   m_geoFace =
     tk::Fields( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), coord ) );
   m_geoElem = tk::Fields( tk::genGeoElemTet( d->Inpoel(), coord ) );
@@ -1396,18 +1407,27 @@ DG::resize(
   m_msumset = d->msumset();
   m_bndFace.clear();
   m_ghostData.clear();
-  m_exptNbface = 0;
   m_ghost.clear();
-
-  // Update solution on new mesh
-  // ...
-
-  // Resize communication buffers
-  resizeComm();
 
   ref_complete();
 
   contribute( CkCallback(CkReductionTarget(Transporter,workresized), d->Tr()) );
+}
+
+void
+DG::reghost()
+// *****************************************************************************
+// ...
+// *****************************************************************************
+{
+  auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
+  auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
+
+  // if t>0 refinement enabled and we hit the frequency
+  if (dtref && !(Disc()->It() % dtfreq))  // refined
+    resizeComm();
+  else  // did not refine
+    stage();
 }
 
 void

@@ -30,7 +30,7 @@ Discretization::Discretization(
   const CProxy_DistFCT& fctproxy,
   const CProxy_Transporter& transporter,
   const tk::CProxy_MeshWriter& meshwriter,
-  const std::vector< std::size_t >& conn,
+  const std::vector< std::size_t >& ginpoel,
   const tk::UnsMesh::CoordMap& coordmap,
   const std::map< int, std::unordered_set< std::size_t > >& msum,
   int nc ) :
@@ -46,7 +46,7 @@ Discretization::Discretization(
   m_fct( fctproxy ),
   m_transporter( transporter ),
   m_meshwriter( meshwriter ),
-  m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
+  m_el( tk::global2local( ginpoel ) ),     // fills m_inpoel, m_gid, m_lid
   m_coord( setCoord( coordmap ) ),
   m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
   m_v( m_gid.size(), 0.0 ),
@@ -59,7 +59,7 @@ Discretization::Discretization(
 //! \param[in] fctproxy Distributed FCT proxy
 //! \param[in] transporter Host (Transporter) proxy
 //! \param[in] meshwriter Mesh writer proxy
-//! \param[in] conn Vector of mesh element connectivity owned (global IDs)
+//! \param[in] ginpoel Vector of mesh element connectivity owned (global IDs)
 //! \param[in] coordmap Coordinates of mesh nodes and their global IDs
 //! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
 //!   mesh chunk we operate on
@@ -110,7 +110,6 @@ Discretization::resize(
 //! \param[in] msum New node communication map
 // *****************************************************************************
 {
-  // Update volume mesh (connectivity, global<->local id maps and coordinates)
   m_el = chunk;         // updates m_inpoel, m_gid, m_lid
   m_coord = coord;      // update mesh node coordinates
   m_msum = msum;        // update node communication map
