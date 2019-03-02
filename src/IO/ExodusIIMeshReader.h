@@ -123,6 +123,8 @@ class ExodusIIMeshReader {
     std::size_t nelem( tk::ExoElemType elemtype ) const;
 
     //! Copy assignment
+    // cppcheck-suppress operatorEqVarError
+    // cppcheck-suppress operatorEqMissingReturnStatement
     ExodusIIMeshReader& operator=( const ExodusIIMeshReader& x ) {
       m_filename = x.m_filename;
       m_cpuwordsize = x.m_cpuwordsize;
@@ -145,9 +147,12 @@ class ExodusIIMeshReader {
     }
 
     //! Copy constructor: in terms of copy assignment
+    // cppcheck-suppress uninitMemberVar
     ExodusIIMeshReader( const ExodusIIMeshReader& x ) { operator=(x); }
 
     //! Move assignment
+    // cppcheck-suppress operatorEqMissingReturnStatement
+    // cppcheck-suppress operatorEqVarError
     ExodusIIMeshReader& operator=( ExodusIIMeshReader&& x ) {
       m_filename = x.m_filename;
       m_cpuwordsize = x.m_cpuwordsize;

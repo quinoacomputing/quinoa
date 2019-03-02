@@ -108,9 +108,9 @@ class TestU01Suite : public CBase_TestU01Suite {
       std::string test;         //!< Test name
       std::string rng;          //!< RNG tested
       std::string pval;         //!< Resulting p-value
-      //! Constructor with moving test name and pval string, copy RNG name
+      //! Constructor
       Failed( std::string t, std::string r, std::string p ) :
-        test( std::move(t) ), rng( r ), pval( std::move(p) ) {}
+        test( std::move(t) ), rng( std::move(r) ), pval( std::move(p) ) {}
     };
     std::vector< Failed > m_failed;    //!< Details of failed tests
 };

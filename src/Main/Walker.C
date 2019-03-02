@@ -158,6 +158,7 @@ void operator|( PUP::er& p, std::vector< DiffEq >& eqs ) {
 
 //! \brief Charm++ main chare for the random walker executable, walker.
 //! \details Note that this object should not be in a namespace.
+// cppcheck-suppress noConstructor
 class Main : public CBase_Main {
 
   public:

@@ -29,7 +29,7 @@
 namespace tk {
 
 std::size_t
-npoin( const std::vector< std::size_t >& inpoel )
+npoin_in_graph( const std::vector< std::size_t >& inpoel )
 // *****************************************************************************
 // Compute number of points (nodes) in mesh from connectivity
 //! \param[in] inpoel Inteconnectivity of points and elements. These are the
@@ -312,7 +312,7 @@ genEdsup( const std::vector< std::size_t >& inpoel,
   for (auto p : star) {
     std::sort( begin(p.second), end(p.second) );
     edsup2.push_back( edsup2.back() + p.second.size() );
-    for (auto e : p.second) edsup1.push_back( e );
+    edsup1.insert( end(edsup1), begin(p.second), end(p.second) );
   }
   // fill up index array with the last index for points with no new edges
   for (std::size_t i=0; i<npoin-star.size(); ++i)
@@ -489,7 +489,7 @@ genEsupel( const std::vector< std::size_t >& inpoel,
       // erase element whose surrounding elements are considered
       esuel.erase( e/nnpe-1 );
       // store unique element ids in esupel1
-      for (auto i : esuel) esupel1.push_back( i );
+      esupel1.insert( end(esupel1), begin(esuel), end(esuel) );
       // store end-index for element used to address into esupel1
       esupel2.push_back( esupel2.back() + esuel.size() );
       esuel.clear();
@@ -582,7 +582,7 @@ genEsuel( const std::vector< std::size_t >& inpoel,
   // store elements surrounding elements in linked lists
   for (auto e : es) {
     esuel2.push_back( esuel2.back() + e.second.size() );
-    for (auto s : e.second) esuel1.push_back( s );
+    esuel1.insert( end(esuel1), begin(e.second), end(e.second) );
   }
 
   // Return (move out) linked lists
@@ -700,10 +700,11 @@ genInedel( const std::vector< std::size_t >& inpoel,
     }
 
   // linear vector to store the edge ids of all elements
-  std::vector< std::size_t > inedel;
+  std::vector< std::size_t > inedel( sumvalsize(edges) );
 
   // store edge ids of elements in linear vector
-  for (auto e : edges) for (auto p : e.second) inedel.push_back( p );
+  std::size_t j = 0;
+  for (auto e : edges) for (auto p : e.second) inedel[ j++ ] = p;
 
   // Return (move out) vector
   return inedel;
@@ -815,7 +816,7 @@ genEsued( const std::vector< std::size_t >& inpoel,
   for (auto p : revolver) {
     std::sort( begin(p.second), end(p.second) );
     esued2.push_back( esued2.back() + p.second.size() );
-    for (auto e : p.second) esued1.push_back( e );
+    esued1.insert( end(esued1), begin(p.second), end(p.second) );
   }
 
   // Return (move out) linked lists
@@ -904,10 +905,9 @@ genNbfacTet( std::size_t tnbfac,
     {
       icoun = f*nnpf;
       tag = 0;
-      for (std::size_t i=0; i<nnpf; ++i)
-      {
-        for (auto j : nptri_chunk)
-        {
+      for (std::size_t i=0; i<nnpf; ++i) {
+        for (auto j : nptri_chunk) {
+          // cppcheck-suppress useStlAlgorithm
           if (triinpoel_complete[icoun+i] == j) ++tag;
         }
       }
@@ -1176,19 +1176,16 @@ genInpofaTet( std::size_t nipfac,
   Assert( inpoel.size()%nnpe == 0,
                   "Size of inpoel must be divisible by nnpe" );
 
-  auto nelem = inpoel.size()/nnpe;
-
   inpofa.resize(nnpf*nipfac);
 
   // counters for number of internal and boundary faces
   std::size_t icoun(nnpf*nbfac);
-  std::size_t mark(0);
 
   // loop over elems to get nodes on faces
   // this fills the interior face-node connectivity part
-  for (std::size_t e=0; e<nelem; ++e)
+  for (std::size_t e=0; e<inpoel.size()/nnpe; ++e)
   {
-    mark = nnpe*e;
+    auto mark = nnpe*e;
     for (std::size_t f=0; f<nfpe ; ++f)
     {
       auto ip = nfpe*e + f;

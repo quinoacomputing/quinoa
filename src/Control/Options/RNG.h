@@ -268,7 +268,8 @@ class RNG : public tk::Toggle< RNGType > {
     bool supportsOpt( RNGType rng, const OptionType& option ) const {
       auto it = support.find( rng );
       if ( it != end( support ) ) {
-        for (auto& o : it->second)
+        for (auto o : it->second)
+          // cppcheck-suppress useStlAlgorithm
           if (o == option) return true;
       }
       return false;

@@ -98,6 +98,7 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     # Echo what is being done
     COMMENT "Quinoa ${suite} test code coverage report"
+    VERBATIM USES_TERMINAL
   )
 
   # Make test coverage target dependent on optional dependencies passed in using
@@ -203,6 +204,7 @@ FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     # Echo what is being done
     COMMENT "Quinoa ${suite} test code coverage report"
+    VERBATIM USES_TERMINAL
   )
 
   # Make test coverage target dependent on optional dependencies passed in using

@@ -135,7 +135,7 @@ class StatTest {
     //! the virtual functions required by Concept
     template< typename T >
     struct Model : Concept {
-      Model( T x ) : data( std::move(x) ) {}
+      explicit Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
       void npval() override { data.npval(); }
       void names() override { data.names(); }

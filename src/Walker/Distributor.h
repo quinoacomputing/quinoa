@@ -40,6 +40,7 @@
 namespace walker {
 
 //! Distributor drives the time integration of differential equations
+// cppcheck-suppress noConstructor
 class Distributor : public CBase_Distributor {
 
   #if defined(__clang__)

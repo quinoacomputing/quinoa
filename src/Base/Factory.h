@@ -145,15 +145,14 @@ void recordModel( Factory& f, const Key& key, ModelConstrArgs&&... args ) {
 template< class Host, class ModelConstructor, class Factory, class Key,
           typename ModelConstrArg >
 void recordModelLate( Factory& f, const Key& key, ModelConstrArg ) {
-  using namespace std::placeholders;
   // Prescribe late binding the model constructor to its single argument
   std::function< ModelConstructor(const ModelConstrArg&) > c =
-    std::bind( boost::value_factory< ModelConstructor >(), _1 );
+    std::bind( boost::value_factory< ModelConstructor >(),
+               std::placeholders::_1 );
   // Bind host to std::function of model constructor and place in factory and
   // also explicitly bind single model constructor argument to host constructor
-  f.emplace( key,
-    std::bind( boost::value_factory< Host >(), std::move(c), _1 )
-  );
+  f.emplace( key, std::bind( boost::value_factory< Host >(), std::move(c),
+                             std::placeholders::_1 ) );
 }
 
 //! Register Charm++ model class of host into factory with given key. We bind a

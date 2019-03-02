@@ -21,7 +21,6 @@
 #include "Types.h"
 #include "InciterPrint.h"
 #include "Partitioner.h"
-#include "VectorReducer.h"
 #include "Progress.h"
 #include "Scheme.h"
 #include "ContainerUtil.h"

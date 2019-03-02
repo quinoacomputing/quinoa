@@ -32,6 +32,7 @@ namespace tut {
 
 //! All tests in group inherited from this base
 struct Timer_common {
+  // cppcheck-suppress unusedStructMember
   double precision = 1.0e-3;    // required precision in seconds for timings
 };
 
@@ -158,7 +159,7 @@ void Timer_object::test< 5 >() {
 //! Charm chare having a tk::Timer object
 class CharmTimer : public CBase_CharmTimer {
   public:
-  CharmTimer( const tk::Timer& timer ) {
+  explicit CharmTimer( const tk::Timer& timer ) {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/Timer", 7,
                          "Charm:migrate tk::Timer 2",
