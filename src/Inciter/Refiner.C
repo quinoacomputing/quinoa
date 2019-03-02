@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Refiner.C
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Mesh refiner for interfacing the mesh refinement library
   \see       Refiner.h for more info.
 */
@@ -169,7 +172,6 @@ Refiner::dtref( tk::real t,
 // *****************************************************************************
 // Start mesh refinement (during time stepping, t>0)
 //! \param[in] t Physical time
-//! \param[in] s Discretization scheme Charm++ proxy we interoperate with
 //! \param[in] bnode Node lists of side sets
 // *****************************************************************************
 {
