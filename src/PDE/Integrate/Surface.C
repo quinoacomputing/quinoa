@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/Integrate/Surface.C
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Functions for computing internal surface integrals of a system
      of PDEs in DG methods
   \details   This file contains functionality for computing internal surface
@@ -74,13 +77,6 @@ tk::surfInt( ncomp_t system,
   const auto& cy = coord[1];
   const auto& cz = coord[2];
 
-  // Nodal Coordinates of face
-  std::array< std::array< real, 3>, 3 > coordfa;
-
-  // Nodal Coordinates of element
-  std::array< std::array< real, 3>, 4> coordel_l;
-  std::array< std::array< real, 3>, 4> coordel_r;
-
   // compute internal surface flux integrals
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
   {
@@ -90,21 +86,30 @@ tk::surfInt( ncomp_t system,
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
     std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
 
+    // Extract the element coordinates
+    std::array< std::array< tk::real, 3>, 4 > coordel_l {{ 
+      {{ cx[ inpoel[4*el  ] ], cy[ inpoel[4*el  ] ], cz[ inpoel[4*el  ] ] }},
+      {{ cx[ inpoel[4*el+1] ], cy[ inpoel[4*el+1] ], cz[ inpoel[4*el+1] ] }},
+      {{ cx[ inpoel[4*el+2] ], cy[ inpoel[4*el+2] ], cz[ inpoel[4*el+2] ] }},
+      {{ cx[ inpoel[4*el+3] ], cy[ inpoel[4*el+3] ], cz[ inpoel[4*el+3] ] }} }};
+
+    std::array< std::array< tk::real, 3>, 4 > coordel_r {{ 
+      {{ cx[ inpoel[4*er  ] ], cy[ inpoel[4*er  ] ], cz[ inpoel[4*er  ] ] }},
+      {{ cx[ inpoel[4*er+1] ], cy[ inpoel[4*er+1] ], cz[ inpoel[4*er+1] ] }},
+      {{ cx[ inpoel[4*er+2] ], cy[ inpoel[4*er+2] ], cz[ inpoel[4*er+2] ] }},
+      {{ cx[ inpoel[4*er+3] ], cy[ inpoel[4*er+3] ], cz[ inpoel[4*er+3] ] }} }};
+
     // Compute the determinant of Jacobian matrix
-    auto detT_l = eval_det( el, cx, cy, cz, inpoel, coordel_l );
-    auto detT_r = eval_det( er, cx, cy, cz, inpoel, coordel_r );
+    auto detT_l = 
+      Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
+    auto detT_r =
+      Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], coordel_r[3] );
 
-    coordfa[0][0] = cx[ inpofa[3*f]   ];
-    coordfa[0][1] = cy[ inpofa[3*f]   ];
-    coordfa[0][2] = cz[ inpofa[3*f]   ];
-
-    coordfa[1][0] = cx[ inpofa[3*f+1] ];
-    coordfa[1][1] = cy[ inpofa[3*f+1] ];
-    coordfa[1][2] = cz[ inpofa[3*f+1] ];
-
-    coordfa[2][0] = cx[ inpofa[3*f+2] ];
-    coordfa[2][1] = cy[ inpofa[3*f+2] ];
-    coordfa[2][2] = cz[ inpofa[3*f+2] ];
+    // Extract the face coordinates
+    std::array< std::array< tk::real, 3>, 3 > coordfa {{
+      {{ cx[ inpofa[3*f  ] ], cy[ inpofa[3*f  ] ], cz[ inpofa[3*f  ] ] }},
+      {{ cx[ inpofa[3*f+1] ], cy[ inpofa[3*f+1] ], cz[ inpofa[3*f+1] ] }},
+      {{ cx[ inpofa[3*f+2] ], cy[ inpofa[3*f+2] ], cz[ inpofa[3*f+2] ] }} }};
 
     // Gaussian quadrature
     for (std::size_t igp=0; igp<ng; ++igp)
@@ -112,9 +117,25 @@ tk::surfInt( ncomp_t system,
       // Compute the coordinates of quadrature point at physical domain
       auto gp = eval_gp( igp, coordfa, coordgp );
 
-      // Compute the basis function
-      auto B_l = eval_basis( ndof, coordel_l, detT_l, gp );
-      auto B_r = eval_basis( ndof, coordel_r, detT_r, gp );
+      // In order to determine the high-order solution from the left and right
+      // elements at the surface quadrature points, the basis functions from
+      // the left and right elements are needed. For this, a transformation to
+      // the reference coordinates is necessary, since the basis functions are
+      // defined on the reference tetrahedron only.
+      // The transformation relations are shown below:
+      //  xi   = Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT
+      //  eta  = Jacobian( coordel[0], coordel[2], gp, coordel[3] ) / detT
+      //  zeta = Jacobian( coordel[0], coordel[2], coordel[3], gp ) / detT
+
+      //Compute the basis functions
+      auto B_l = eval_basis( ndof,
+            Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
+            Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
+            Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l );
+      auto B_r = eval_basis( ndof,
+            Jacobian( coordel_r[0], gp, coordel_r[2], coordel_r[3] ) / detT_r,
+            Jacobian( coordel_r[0], coordel_r[1], gp, coordel_r[3] ) / detT_r,
+            Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r );
 
       auto wt = wgp[igp] * geoFace(f,0,0);
 
@@ -134,22 +155,22 @@ tk::surfInt( ncomp_t system,
          flux( {{geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0)}}, state, v );
 
       // Add the surface integration term to the rhs
-      update_rhs( ncomp, offset, ndof, wt, el, er, fl, B_l, B_r, R );
+      update_rhs_fa( ncomp, offset, ndof, wt, el, er, fl, B_l, B_r, R );
     }
   }
 }
 
 void
-tk::update_rhs ( ncomp_t ncomp,
-                 ncomp_t offset,
-                 const std::size_t ndof,
-                 const tk::real wt,
-                 const std::size_t el,
-                 const std::size_t er,
-                 const std::vector< tk::real >& fl,
-                 const std::vector< tk::real >& B_l,
-                 const std::vector< tk::real >& B_r,
-                 Fields& R )
+tk::update_rhs_fa ( ncomp_t ncomp,
+                    ncomp_t offset,
+                    const std::size_t ndof,
+                    const tk::real wt,
+                    const std::size_t el,
+                    const std::size_t er,
+                    const std::vector< tk::real >& fl,
+                    const std::vector< tk::real >& B_l,
+                    const std::vector< tk::real >& B_r,
+                    Fields& R )
 // *****************************************************************************
 //  Update the rhs by adding the surface integration term
 //! \param[in] ncomp Number of scalar components in this PDE system

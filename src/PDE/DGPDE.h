@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/DGPDE.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Partial differential equation base for discontinuous Galerkin PDEs
   \details   This file defines a generic partial differential equation (PDE)
     class for PDEs that use discontinuous Galerkin spatial discretization.
@@ -120,13 +123,10 @@ class DGPDE {
 
     //! Public interface to returning field output
     std::vector< std::vector< tk::real > > fieldOutput(
-      const tk::Fields& L,
-      const std::vector< std::size_t >& inpoel,
-      const tk::UnsMesh::Coords& coord,
       tk::real t,
       const tk::Fields& geoElem,
       tk::Fields& U ) const
-    { return self->fieldOutput( L, inpoel, coord, t, geoElem, U ); }
+    { return self->fieldOutput( t, geoElem, U ); }
 
     //! Public interface to returning nodal field output
     std::vector< std::vector< tk::real > > avgElemToNode(
@@ -187,9 +187,6 @@ class DGPDE {
       virtual std::vector< std::string > fieldNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > fieldOutput(
-        const tk::Fields&,
-        const std::vector< std::size_t >&,
-        const tk::UnsMesh::Coords&,
         tk::real,
         const tk::Fields&,
         tk::Fields& ) const = 0;
@@ -243,13 +240,10 @@ class DGPDE {
       std::vector< std::string > names() const override
       { return data.names(); }
       std::vector< std::vector< tk::real > > fieldOutput(
-        const tk::Fields& L,
-        const std::vector< std::size_t >& inpoel,
-        const tk::UnsMesh::Coords& coord,
         tk::real t,
         const tk::Fields& geoElem,
         tk::Fields& U ) const override
-      { return data.fieldOutput( L, inpoel, coord, t, geoElem, U ); }
+      { return data.fieldOutput( t, geoElem, U ); }
       std::vector< std::vector< tk::real > > avgElemToNode(
         const std::vector< std::size_t >& inpoel,
         const tk::UnsMesh::Coords& coord,
