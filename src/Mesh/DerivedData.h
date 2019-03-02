@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Mesh/DerivedData.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
      of an unstructured mesh.
@@ -34,7 +37,7 @@ const std::array< UnsMesh::Face, 4 >
 
 //! Compute number of points (nodes) in mesh from connectivity
 std::size_t
-npoin( const std::vector< std::size_t >& inpoel );
+npoin_in_graph( const std::vector< std::size_t >& inpoel );
 
 //! Compute the unit normal vector of a triangle
 std::array< tk::real, 3 >

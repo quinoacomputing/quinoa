@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/IO/TestExodusIIMeshReader.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for the ExodusII unstructured-mesh reader
   \details   Unit tests for the ExodusII unstructured-mesh reader
 */
@@ -1690,6 +1693,7 @@ void ExodusIIMeshReader_object::test< 7 >() {
 
   try {
     // Attempt to read mesh passing non-empty container
+    // cppcheck-suppress constStatement
     decltype(ginpoel) i{ 0 };
     er.readMeshPart( i, inpoel, triinpoel, lid, coord );
 
@@ -1704,6 +1708,7 @@ void ExodusIIMeshReader_object::test< 7 >() {
 
   try {
     // Attempt to read mesh passing non-empty container
+    // cppcheck-suppress constStatement
     decltype(inpoel) i{ 0 };
     er.readMeshPart( ginpoel, i, triinpoel, lid, coord );
 
@@ -1732,6 +1737,7 @@ void ExodusIIMeshReader_object::test< 7 >() {
 
   try {
     // Attempt to read mesh passing non-empty container
+    // cppcheck-suppress constStatement
     decltype(coord) c{{ {0.0}, {0.0}, {0.0} }};
     er.readMeshPart( ginpoel, inpoel, triinpoel, lid, c );
 

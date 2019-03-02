@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Transporter.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
     The implementation uses the Charm++ runtime system and is fully asynchronous,
@@ -663,6 +666,7 @@ Transporter::pdfstat( CkReductionMsg* msg )
   // Create new PDF file (overwrite if exists)
   tk::PDFWriter pdfe( "mesh_edge_pdf.txt" );
   // Output edgelength PDF
+  // cppcheck-suppress containerOutOfBounds
   pdfe.writeTxt( pdf[0],
                  tk::ctr::PDFInfo{ {"PDF"}, {}, {"edgelength"}, 0, 0.0 } );
 

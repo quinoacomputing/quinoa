@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/IO/STLTxtMeshReader.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     ASCII STL (STereoLithography) reader class definition
   \details   ASCII STL (STereoLithography) reader class definition.
 */
@@ -12,7 +15,7 @@
 
 using tk::STLTxtMeshReader;
 
-STLTxtMeshReader::STLTxtMeshReader( const std::string filename, STLMesh& mesh )
+STLTxtMeshReader::STLTxtMeshReader( const std::string& filename, STLMesh& mesh )
   : Reader( filename ), m_mesh( mesh )
 // *****************************************************************************
 // Constructor

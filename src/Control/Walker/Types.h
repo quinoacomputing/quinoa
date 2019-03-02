@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Walker/Types.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Types for Walker's parsers
   \details   Types for Walker's parsers. This file defines the components of the
     tagged tuple that stores heteroegeneous objects in a hierarchical way. These

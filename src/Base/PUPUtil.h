@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Base/PUPUtil.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Charm++ Pack/UnPack utilities
   \details   This file contains some extensions to Charm++'s Pack/UnPack
     routines.
@@ -187,6 +190,7 @@ char pup_helper( int& index,
 //! \param[in] var boost::variant< Ts... > of arbitrary types to pack/unpack
 template <class... Ts>
 void pup(PUP::er& p, boost::variant<Ts...>& var) {
+  // cppcheck-suppress variableScope
   int index = 0;
   int send_index = var.which();
   p | send_index;

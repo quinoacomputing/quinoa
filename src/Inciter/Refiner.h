@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Refiner.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Mesh refiner for interfacing the mesh refinement library
   \details   Mesh refiner is a Charm++ chare array and is used to interface the
    mesh refinement object which does not know about parallelization and thus the
@@ -59,6 +62,7 @@ class Refiner : public CBase_Refiner {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
+    // cppcheck-suppress uninitMemberVar
     explicit Refiner( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
@@ -278,7 +282,7 @@ class Refiner : public CBase_Refiner {
     //! Functor to call the solution() member function behind SchemeBase::Proxy
     struct Solution : boost::static_visitor<> {
       tk::Fields& U;
-      Solution( tk::Fields& u ) : U(u) {}
+      explicit Solution( tk::Fields& u ) : U(u) {}
       template< typename P > void operator()( const P& p ) const {
          p.ckLocal()->solution( U );
       }
@@ -291,7 +295,7 @@ class Refiner : public CBase_Refiner {
       const tk::Fields& U;
       const std::unordered_map< int, std::vector< std::size_t > >& Msum;
       const std::map< int, std::vector< std::size_t > > Bnode;
-      Resize( const tk::UnsMesh::Chunk& chunk,
+      explicit Resize( const tk::UnsMesh::Chunk& chunk,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& u,
               const std::unordered_map< int,

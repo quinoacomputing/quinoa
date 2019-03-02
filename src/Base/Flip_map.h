@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Flip_map.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Flip a std::map yielding a multimap sorted by std::map::value_type
   \details   Flip a std::map yielding a multimap sorted by std::map::value_type.
     Credit goes to Oli Charlesworth: http://stackoverflow.com/a/5056797

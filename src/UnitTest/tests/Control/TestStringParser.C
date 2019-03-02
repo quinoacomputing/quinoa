@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Control/TestStringParser.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for Control/StringParser
   \details   Unit tests for Control/StringParser
 */
@@ -21,8 +24,8 @@ struct StringParser_common {
   // tk::StringParser only has a protected constructor: designed to be used as a
   // base class
   struct parser : tk::StringParser {
-    parser( const std::string& f ) : StringParser( f ) {}
-    parser( int argc, char** argv ) : StringParser( argc, argv ) {}
+    explicit parser( const std::string& f ) : StringParser( f ) {}
+    explicit parser( int argc, char** argv ) : StringParser( argc, argv ) {}
     const std::string& string() const { return m_string; }
   };
 };

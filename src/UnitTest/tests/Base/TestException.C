@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestException.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for Base/Exception.h
   \details   Unit tests for Base/Exception.h
 */
@@ -62,6 +65,7 @@ void Exception_object::test< 3 >() {
   set_test_name( "Throw macro" );
 
   try {
+    // cppcheck-suppress unreachableCode
     Throw( "msg" );
     fail( "should throw exception" );
   }
@@ -97,6 +101,7 @@ void Exception_object::test< 5 >() {
   set_test_name( "Assert macro doesn't throw if cond is true" );
 
   try {
+    // cppcheck-suppress duplicateExpression
     Assert( 1 == 1, "msg" );
   }
   catch ( tk::Exception& ) {

@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestTaggedTuple.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for Base/TaggedTuple.h
   \details   Unit tests for Base/TaggedTuple.h
 */
@@ -48,7 +51,7 @@ void TaggedTuple_object::test< 1 >() {
 
   // Define a struct holding a record with const-ref accessors
   struct A {
-    A( const record& r ) : m_rec( r ) {}
+    explicit A( const record& r ) : m_rec( r ) {}
     const std::string& getName() const { return m_rec.get< name >(); }
     const int& getAge() const { return m_rec.get< age >(); }
     const std::string& getEmail() const { return m_rec.get< email >(); }
@@ -121,8 +124,12 @@ void TaggedTuple_object::test< 6 >() {
   t.set< name >( std::move(n) );           // rvalue reference
   ensure_equals( "get() after set(std::string)", t.get< name >(), "Alice" );
   // n here should still be in a valid but unspecified state, so we try to use
-  // it, if that's not the case, the constructor or the copy assignment throws
+  // it, if that's not the case, the constructor or the copy assignment throws.
+  // Also suppress cppcheck warning on accessing a moved-from variable, because
+  // here we are testing if the moved-from variable, n, is still in a valid
+  // state after the move and wether if equating n with k really zeroes k out.
   std::string k( "abc" );
+  // cppcheck-suppress accessMoved
   k = n;
   ensure_equals( "original source in valid but unspecified state", k, n );
 }

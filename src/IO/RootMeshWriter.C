@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/IO/RootMeshWriter.C
-  \copyright 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Root mesh-based data writer
   \details   Root mesh-based data writer class definition.
 */
@@ -19,7 +22,7 @@
 
 using tk::RootMeshWriter;
 
-RootMeshWriter::RootMeshWriter( const std::string filename, int mode ) :
+RootMeshWriter::RootMeshWriter( const std::string& filename, int mode ) :
   m_filename( filename )
 // *****************************************************************************
 //  Constructor: create/open Root file

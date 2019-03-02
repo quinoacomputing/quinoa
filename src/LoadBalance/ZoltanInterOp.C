@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/LoadBalance/ZoltanInterOp.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh graph
     partitioning.
@@ -11,10 +14,7 @@
 #include <stddef.h>
 #include <string>
 
-#include "NoWarning/Zoltan2_MeshAdapter.h"
 #include "NoWarning/Zoltan2_PartitioningProblem.h"
-#include "Zoltan2_PartitioningSolution.hpp"
-#include "Teuchos_ParameterList.hpp"
 
 #include "ZoltanInterOp.h"
 
@@ -53,23 +53,27 @@ class GeometricMeshElemAdapter : public Zoltan2::MeshAdapter< ZoltanTypes > {
 
     //! Returns the number of mesh entities on this rank
     //! \return Number of mesh elements on this rank
+    // cppcheck-suppress unusedFunction
     std::size_t getLocalNumOf( MeshEntityType ) const override
     { return m_nelem; }
 
     //! Provide a pointer to this rank's identifiers
     //! \param[in,out] Ids Pointer to the list of global element Ids on this
     //!   rank
+    // cppcheck-suppress unusedFunction
     void getIDsViewOf( MeshEntityType, const gno_t*& Ids) const override
     { Ids = m_elemid.data(); }
 
     //! Provide a pointer to the entity topology types
     //! \param Types Pointer to the list of entity topology types on this rank
+    // cppcheck-suppress unusedFunction
     void getTopologyViewOf( MeshEntityType,
                             const EntityTopologyType*& Types ) const override
     { Types = &m_topology; }
 
     //! Return dimensionality of the mesh
     //! \return Number of mesh dimension
+    // cppcheck-suppress unusedFunction
     int getDimension() const override { return 3; }
 
     //! Provide a pointer to one dimension of mesh element coordinates
@@ -81,6 +85,7 @@ class GeometricMeshElemAdapter : public Zoltan2::MeshAdapter< ZoltanTypes > {
     //!   coords[2*i]
     //! \param dim Value from 0 to one less than getEntityCoordinateDimension()
     //!   specifying which dimension is being provided in the coords list
+    // cppcheck-suppress unusedFunction
     void getCoordinatesViewOf( MeshEntityType,
                                const scalar_t*& coords,
                                int &stride,

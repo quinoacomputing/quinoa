@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/Integrate/Source.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Functions for computing integrals of an arbitrary source term of a
      system of PDEs in DG methods
   \details   This file contains functionality for computing integrals of an

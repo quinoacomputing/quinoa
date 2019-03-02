@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/TUTSuite.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Template Unit Test suite class definition
   \details   Template Unit Test suite class definition. In principle there can
     be unit test suites other than this one which uses the Template Unit Test
@@ -63,12 +66,11 @@ TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
 
   // If only select groups to be run, see if there is any that will run
   bool work = false;
-  if (grp.empty())
+  if (grp.empty() ||
+      std::any_of( groups.cbegin(), groups.cend(),
+         [&grp]( const std::string& g )
+         { return g.find(grp) != std::string::npos; } ))
     work = true;
-  else
-    for (const auto& g : groups)
-      if (g.find(grp) != std::string::npos)
-        work = true;
 
   // Quit if there is no work to be done
   if (!work) {

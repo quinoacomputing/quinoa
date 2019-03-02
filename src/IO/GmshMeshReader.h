@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/IO/GmshMeshReader.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Gmsh mesh reader class declaration
   \details   Gmsh mesh reader class declaration. Currently, this class supports
     line, triangle, tetrahedron, and point Gmsh element types.
@@ -29,7 +32,7 @@ class GmshMeshReader : public Reader {
 
   public:
     //! Constructor
-    explicit GmshMeshReader( const std::string filename ) :
+    explicit GmshMeshReader( const std::string& filename ) :
       Reader(filename),
       m_version( 0.0 ),                        // 0.0: uninitialized
       m_datasize( 0 ),                         //   0: uninitialized

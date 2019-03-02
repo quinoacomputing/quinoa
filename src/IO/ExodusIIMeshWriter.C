@@ -1,11 +1,16 @@
 // *****************************************************************************
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     ExodusII mesh-based data writer
   \details   ExodusII mesh-based data writer class definition.
 */
 // *****************************************************************************
+
+#include <numeric>
 
 #include "NoWarning/exodusII.h"
 
@@ -119,7 +124,7 @@ ExodusIIMeshWriter::writeMesh(
   for (const auto& s : bface) {
     auto& b = bface_exo[ s.first ];
     b.resize( s.second.size() );
-    for (auto& t : b) t = i++;
+    std::iota( begin(b), end(b), i );
   }
 
   // Write mesh
@@ -278,8 +283,9 @@ const
     m_filename );
 
   // Write element connectivity with 1-based node ids
-  std::vector< int > inp;
-  for (auto p : inpoel) inp.push_back( static_cast< int >( p+1 ) );
+  std::vector< int > inp( inpoel.size() );
+  std::size_t i = 0;
+  for (auto p : inpoel) inp[ i++ ] = static_cast< int >( p+1 );
   ErrChk( ex_put_conn( m_outFile, EX_ELEM_BLOCK, elclass, inp.data(),
                        nullptr, nullptr ) == 0,
           "Failed to write " + eltype + " element connectivity to ExodusII "
@@ -301,12 +307,14 @@ ExodusIIMeshWriter::writeSidesets( const UnsMesh& mesh ) const
       "Failed to write side set parameters to ExodusII file: " + m_filename );
 
     // ExodusII wants 32-bit integers as IDs of element ids
-    std::vector< int > bface;
-    for (auto f : s.second) bface.push_back( static_cast<int>(f)+1 );
+    std::vector< int > bface( s.second.size() );
+    std::size_t i = 0;
+    for (auto f : s.second) bface[ i++ ] = static_cast<int>(f)+1;
     // ExodusII wants 32-bit integers as element-relative face IDs
-    std::vector< int > faceid;
-    for (auto f : tk::cref_find( mesh.faceid(), s.first ))
-      faceid.push_back( static_cast<int>(f)+1 );
+    const auto& fi = tk::cref_find( mesh.faceid(), s.first );
+    std::vector< int > faceid( fi.size() );
+    i = 0;
+    for (auto f : fi) faceid[ i++ ] = static_cast<int>(f)+1;
 
     // Write side set data: ExodusII-file internal element ids adjacent to side
     // set and face id relative to element indicating which face is aligned with
@@ -332,8 +340,9 @@ ExodusIIMeshWriter::writeNodesets( const UnsMesh& mesh ) const
       "Failed to write side set parameters to ExodusII file: " + m_filename );
 
     // ExodusII wants 32-bit integers as IDs of node ids
-    std::vector< int > bnode;
-    for (auto n : s.second) bnode.push_back( static_cast<int>(n)+1 );
+    std::vector< int > bnode( s.second.size() );
+    std::size_t i = 0;
+    for (auto n : s.second) bnode[ i++ ] = static_cast<int>(n)+1;
 
     // Write side set data
     ErrChk( ex_put_set( m_outFile, EX_NODE_SET, s.first, bnode.data(),

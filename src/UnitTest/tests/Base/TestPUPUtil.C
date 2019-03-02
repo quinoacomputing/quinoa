@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestPUPUtil.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for Base/PUPUtil.h
   \details   Unit tests for Base/PUPUtil.h
 */
@@ -402,6 +405,7 @@ class Migrated : public CBase_Migrated {
       std::string expected = R"([ {11, "eleven"} {12, "twelve"} ])";
       std::string actual = "[ ";
       for (const auto& n : m_unordered_map) {
+        // cppcheck-suppress useStlAlgorithm
         actual += "{" + std::to_string(n.first) + ", " + n.second + "} ";
       }
       actual += "]";

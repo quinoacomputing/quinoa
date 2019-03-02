@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/ElemDiagnostics.C
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     ElemDiagnostics class for collecting element diagnostics
   \details   ElemDiagnostics class for collecting element diagnostics, e.g.,
     residuals, and various norms of errors while solving partial differential
@@ -169,6 +172,7 @@ ElemDiagnostics::compute_diag( const Discretization& d,
       std::vector< tk::real > s;
 
       for (const auto& eq : g_dgpde)
+        // cppcheck-suppress useStlAlgorithm
         s = eq.analyticSolution( gp[0], gp[1], gp[2], d.T()+d.Dt() );
 
       for (std::size_t c=0; c<u.nprop()/ndof; ++c)

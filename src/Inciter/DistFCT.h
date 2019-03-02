@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/DistFCT.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Charm++ module interface for distributed flux-corrected transport
   \details   Charm++ module interface file for asynchronous distributed
     flux-corrected transport (FCT).
@@ -36,7 +39,6 @@
 #include "Types.h"
 #include "Fields.h"
 #include "DerivedData.h"
-#include "VectorReducer.h"
 #include "FluxCorrector.h"
 #include "Discretization.h"
 #include "DiagCG.h"
@@ -88,6 +90,7 @@ class DistFCT : public CBase_DistFCT {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
+    // cppcheck-suppress uninitMemberVar
     explicit DistFCT( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop

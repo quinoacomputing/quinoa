@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Discretization.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \details   Data and functionality common to all discretization schemes
   \see       Discretization.h and Discretization.C for more info.
 */
@@ -79,8 +82,9 @@ Discretization::Discretization(
 
   // Count the number of mesh nodes at which we receive data from other chares
   // and compute map associating boundary-chare node ID associated to global ID
-  std::vector< std::size_t > c;
-  for (const auto& n : m_msum) for (auto i : n.second) c.push_back( i );
+  std::vector< std::size_t > c( tk::sumvalsize( m_msum ) );
+  std::size_t j = 0;
+  for (const auto& n : m_msum) for (auto i : n.second) c[ j++ ] = i;
   tk::unique( c );
   m_bid = tk::assignLid( c );
 
@@ -241,8 +245,9 @@ Discretization::vol()
     contribute( CkCallback(CkReductionTarget(Transporter,vol), m_transporter) );
   else
     for (const auto& n : m_msum) {
-      std::vector< tk::real > v;
-      for (auto i : n.second) v.push_back( m_vol[ tk::cref_find(m_lid,i) ] );
+      std::vector< tk::real > v( n.second.size() );
+      std::size_t j = 0;
+      for (auto i : n.second) v[ j++ ] = m_vol[ tk::cref_find(m_lid,i) ];
       thisProxy[ n.first ].comvol( n.second, v );
     }
 }
@@ -399,7 +404,7 @@ Discretization::write(
 //! \param[in] fields Mesh field output dump
 //! \param[in] centering The centering that will be associated to the field data
 //!   to be output when writeFields is called next
-//! \param[on] c Function to continue with after the write
+//! \param[in] c Function to continue with after the write
 //! \details Since m_meshwriter is a Charm++ chare group, it never migrates and
 //!   an instance is guaranteed on every PE. We index the first PE on every
 //!   logical compute node. In Charm++'s non-SMP mode, a node is the same as a

@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/ALECG.C
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     ALECG for a PDE system with continuous Galerkin + ALE + RK
   \details   ALECG advances a system of partial differential equations (PDEs)
     using a continuous Galerkin (CG) finite element (FE) spatial discretization
@@ -206,8 +209,9 @@ ALECG::lhs()
     comlhs_complete();
   else // send contributions of lhs to chare-boundary nodes to fellow chares
     for (const auto& n : d->Msum()) {
-      std::vector< std::vector< tk::real > > l;
-      for (auto i : n.second) l.push_back( m_lhs[ tk::cref_find(d->Lid(),i) ] );
+      std::vector< std::vector< tk::real > > l( n.second.size() );
+      std::size_t j = 0;
+      for (auto i : n.second) l[ j++ ] = m_lhs[ tk::cref_find(d->Lid(),i) ];
       thisProxy[ n.first ].comlhs( n.second, l );
     }
 
@@ -310,8 +314,9 @@ ALECG::rhs()
     comrhs_complete();
   else // send contributions of rhs to chare-boundary nodes to fellow chares
     for (const auto& n : d->Msum()) {
-      std::vector< std::vector< tk::real > > r;
-      for (auto i : n.second) r.push_back( m_rhs[ tk::cref_find(d->Lid(),i) ] );
+      std::vector< std::vector< tk::real > > r( n.second.size() );
+      std::size_t j = 0;
+      for (auto i : n.second) r[ j++ ] = m_rhs[ tk::cref_find(d->Lid(),i) ];
       thisProxy[ n.first ].comrhs( n.second, r );
     }
 

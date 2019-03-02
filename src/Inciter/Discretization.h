@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Discretization.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \details   Data and functionality common to all discretization schemes
      The Discretization class contains data and functionality common to all
      discretization schemes.
@@ -44,6 +47,7 @@ class Discretization : public CBase_Discretization {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
+    // cppcheck-suppress uninitMemberVar
     explicit Discretization( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop

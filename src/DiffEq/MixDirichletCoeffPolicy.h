@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/MixDirichletCoeffPolicy.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     MixDirichlet coefficients policies
   \details   This file defines coefficients policy classes for the MixDirichlet
     SDE, defined in DiffEq/MixDirichlet.h.
@@ -187,13 +190,13 @@ class MixDirichletHomCoeffConst {
       tk::real sumY = 0.0;
       for (ncomp_t c=0; c<ncomp; ++c) sumY += Y[c];
 
-      // Y|Kc
-      std::vector< tk::real > YK( ncomp, 0.0 );
-      for (ncomp_t c=0; c<ncomp; ++c) {
-        YK[c] = sumY - lookup( mean(depvar,c), moments );
-        //std::cout << "YK: " << YK[c] << ' ';
-      }
-      //std::cout << std::endl;
+//      // Y|Kc
+//      std::vector< tk::real > YK( ncomp, 0.0 );
+//      for (ncomp_t c=0; c<ncomp; ++c) {
+//        YK[c] = sumY - lookup( mean(depvar,c), moments );
+//        //std::cout << "YK: " << YK[c] << ' ';
+//      }
+//      //std::cout << std::endl;
 
       // Favre means
 
@@ -210,13 +213,13 @@ class MixDirichletHomCoeffConst {
       for (ncomp_t c=0; c<ncomp; ++c) sumYt += Yt[c];
       //std::cout << "sumYt: " << sumYt << '\n';
 
-      // Yt|Kc
-      std::vector< tk::real > YtK( ncomp, 0.0 );
-      for (ncomp_t c=0; c<ncomp; ++c) {
-        YtK[c] = sumYt - Yt[c];
-        //std::cout << "YtK: " << YtK[c] << ' ';
-      }
-      //std::cout << std::endl;
+//      // Yt|Kc
+//      std::vector< tk::real > YtK( ncomp, 0.0 );
+//      for (ncomp_t c=0; c<ncomp; ++c) {
+//        YtK[c] = sumYt - Yt[c];
+//        //std::cout << "YtK: " << YtK[c] << ' ';
+//      }
+//      //std::cout << std::endl;
 
       // sum of <R^2Yc>
       tk::real sumRRY = 0.0;

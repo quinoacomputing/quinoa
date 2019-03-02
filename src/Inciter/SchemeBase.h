@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/SchemeBase.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Base class to Scheme, a generic interface to discretization proxies
   \details   This file defines the base class to Scheme, a generic interface to
     discretization proxies. This class is intended to be used in conjunction
@@ -118,7 +121,7 @@ class SchemeBase {
     template< class Spec, typename... Args >
     struct Call : boost::static_visitor<> {
       //! Constructor storing called member function arguments in tuple
-      Call( Args&&... args ) : arg( std::forward_as_tuple(args...) ) {}
+      explicit Call( Args&&... args ) : arg( std::forward_as_tuple(args...) ) {}
       //! Helper class for unpacking tuple into argument list
       template< typename P, typename Tuple, bool Done, int Total, int... N >
       struct invoke_impl {

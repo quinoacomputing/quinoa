@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/DG.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     DG advances a system of PDEs with the discontinuous Galerkin scheme
   \details   DG advances a system of partial differential equations (PDEs) using
     discontinuous Galerkin (DG) finite element (FE) spatial discretization (on
@@ -69,6 +72,7 @@ class DG : public CBase_DG {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
+    // cppcheck-suppress uninitMemberVar
     explicit DG( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop

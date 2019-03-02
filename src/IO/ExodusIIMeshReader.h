@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/IO/ExodusIIMeshReader.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class declaration.
 */
@@ -120,6 +123,8 @@ class ExodusIIMeshReader {
     std::size_t nelem( tk::ExoElemType elemtype ) const;
 
     //! Copy assignment
+    // cppcheck-suppress operatorEqVarError
+    // cppcheck-suppress operatorEqMissingReturnStatement
     ExodusIIMeshReader& operator=( const ExodusIIMeshReader& x ) {
       m_filename = x.m_filename;
       m_cpuwordsize = x.m_cpuwordsize;
@@ -142,9 +147,12 @@ class ExodusIIMeshReader {
     }
 
     //! Copy constructor: in terms of copy assignment
+    // cppcheck-suppress uninitMemberVar
     ExodusIIMeshReader( const ExodusIIMeshReader& x ) { operator=(x); }
 
     //! Move assignment
+    // cppcheck-suppress operatorEqMissingReturnStatement
+    // cppcheck-suppress operatorEqVarError
     ExodusIIMeshReader& operator=( ExodusIIMeshReader&& x ) {
       m_filename = x.m_filename;
       m_cpuwordsize = x.m_cpuwordsize;

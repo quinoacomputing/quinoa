@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/MixMassFractionBetaCoeffPolicy.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Mix mass-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mix
     mass-fraction beta SDE, defined in DiffEq/MixMassFractionBeta.h.
@@ -186,7 +189,7 @@ class MixMassFracBetaCoeffDecay {
         tk::real v = tk::ctr::lookup( tk::ctr::variance(depvar,c), moments );
 
         if (m<1.0e-8 || m>1.0-1.0e-8) m = 0.5;
-        if (v<1.0e-8 && v>1.0-1.0e-8) v = 0.5;
+        if (v<1.0e-8 || v>1.0-1.0e-8) v = 0.5;
 
         b[c] = bprime[c] * (1.0 - v / m / ( 1.0 - m ));
         k[c] = kprime[c] * v;
@@ -286,7 +289,7 @@ class MixMassFracBetaCoeffHomDecay {
         tk::real d3 = lookup( cen3(depvar,c+ncomp), moments );     // <r^3>
 
         if (m<1.0e-8 || m>1.0-1.0e-8) m = 0.5;
-        if (v<1.0e-8 && v>1.0-1.0e-8) v = 0.5;
+        if (v<1.0e-8 || v>1.0-1.0e-8) v = 0.5;
         b[c] = bprime[c] * (1.0 - v/m/(1.0-m));
         //b[c] = bprime[c] * (1.0 - v/M[c]/(1.0-M[c]));
         k[c] = kprime[c] * v;

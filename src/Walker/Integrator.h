@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Walker/Integrator.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
     large number of Integrator Charm++ chares created by Distributor. Each
@@ -48,11 +51,8 @@ class Integrator : public CBase_Integrator {
                          uint64_t npar );
 
     //! Migrate constructor
+    // cppcheck-suppress uninitMemberVar
     explicit Integrator( CkMigrateMessage* ) :
-      // WARNING: This is a "blind" copy of the standard constructor initializer
-      // list - it must be changed for migration to be correct.      
-      m_hostproxy(),
-      m_collproxy(),
       m_particles( 0, g_inputdeck.get< tag::component >().nprop() ),
       m_stat( m_particles,
                 g_inputdeck.get< tag::component >().offsetmap( g_inputdeck ),

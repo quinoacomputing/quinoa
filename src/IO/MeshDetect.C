@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/IO/MeshDetect.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unstructured mesh file format detection
   \details   Unstructured mesh file format detection functions.
 */
@@ -59,6 +62,7 @@ detectInput( const std::string& filename )
     return MeshReaderType::ASC;
   } else {
     try {
+      // cppcheck-suppress ignoredReturnValue
       std::stoi(s);    // try to convert to an integer
     } catch ( const std::invalid_argument& ) {
       Throw( "Input mesh file type could not be determined from header: " +

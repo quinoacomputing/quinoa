@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/IO/HyperMeshReader.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Hyper mesh reader class declaration
   \details   Hyper mesh reader class declaration. Only supports tetrahedra.
 */
@@ -26,7 +29,7 @@ class HyperMeshReader : public Reader {
 
   public:
     //! Constructor
-    explicit HyperMeshReader( const std::string filename ) :
+    explicit HyperMeshReader( const std::string& filename ) :
       Reader( filename ) {}
 
     //! Read Hyper mesh

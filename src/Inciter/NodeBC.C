@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/NodeBC.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Boundary conditions for nodal discretizations
   \details   Boundary conditions for nodal discretizations, such as continuous
     Galerkin finite elements, e.g., DiagCG.
@@ -26,7 +29,7 @@ match( tk::ctr::ncomp_type ncomp,
        tk::real t,
        tk::real dt,
        const tk::UnsMesh::Coords& coord,
-       const std::vector< std::size_t > gid,
+       const std::vector< std::size_t >& gid,
        const std::unordered_map< std::size_t, std::size_t >& lid,
        const std::map< int, std::vector< std::size_t > >& sidenodes )
 // *****************************************************************************

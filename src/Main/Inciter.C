@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Main/Inciter.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
   \details   Inciter, computational shock hydrodynamics tool, Charm++ main
@@ -143,6 +146,7 @@ void operator|( PUP::er& p, std::vector< DGPDE >& eqs ) {
 //!   of the Charm++ runtime system is required since the mesh partitioning is
 //!   done by Zoltan, an MPI library. Note that this Charm++ main chare object
 //!   should not be in a namespace.
+// cppcheck-suppress noConstructor
 class Main : public CBase_Main {
 
   public:

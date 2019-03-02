@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/MPIRunner.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Charm++ nodegroup to run MPI unit tests
   \details   Charm++ nodegroup to run MPI unit tests.
 */
@@ -25,7 +28,7 @@ class MPIRunner : public CBase_MPIRunner< Proxy > {
 
   public:
     //! Constrcutor: store host proxy
-    MPIRunner( const Proxy& proxy ) : m_host(proxy) {}
+    explicit MPIRunner( const Proxy& proxy ) : m_host(proxy) {}
 
     //! Fire up all tests in a test group
     void rungroup( const std::string& groupname ) {

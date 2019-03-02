@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Walker/InputDeck/InputDeck.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Walker's input deck
   \details   Walker's input deck
 */
@@ -255,15 +258,6 @@ class InputDeck :
         }
       }
       return names;
-    }
-
-    // Count number requested PDFs with given number of sample space dimensions
-    template< std::size_t d >
-    std::size_t npdf() const {
-      std::size_t n = 0;
-      for (const auto& bs : get< tag::discr, tag::binsize >())
-        if (bs.size() == d) ++n;
-      return n;
     }
 
     //! Query if there are any statistics or PDFs to estimate

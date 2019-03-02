@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
      the data from user input during the control file parsing of the
@@ -172,7 +175,7 @@ class InputDeck :
     //! \param[in] cl Previously parsed and store command line
     //! \details Anything not set here is initialized by the compiler using the
     //!   default constructor for the corresponding type.
-    InputDeck( const CmdLine& cl = {} ) {
+    explicit InputDeck( const CmdLine& cl = {} ) {
       // Set previously parsed command line
       set< tag::cmd >( cl );
       // Default discretization parameters

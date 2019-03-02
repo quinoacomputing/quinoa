@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/IO/H5PartWriter.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     H5Part particles data writer
   \details   H5Part particles data writer class declaration, facilitating
     writing particle coordinates and associated particle fields into HDF5-based

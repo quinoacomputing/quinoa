@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Sorter.C
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Mesh sorter for global distributed mesh reordering
   \see       Sorter.h for more info.
 */
@@ -280,8 +283,7 @@ Sorter::mask()
     }
 
   // Count up total number of nodes this chare will need to receive
-  std::size_t nrecv = 0;
-  for (const auto& u : m_reordcomm) nrecv += u.second.size();
+  auto nrecv = tk::sumvalsize( m_reordcomm );
 
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chmask();
 

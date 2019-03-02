@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/MultiMat/DGMultiMat.h
-  \copyright Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Compressible multi-material flow using discontinuous Galerkin
     finite elements
   \details   This file implements calls to the physics operators governing

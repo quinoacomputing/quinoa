@@ -1,13 +1,16 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/FaceData.C
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \details   Face-data used only in discontinuous Galerkin discretization scheme
   \see       FaceData.h for more info.
 */
 // *****************************************************************************
 
-#include <numeric>
+#include <algorithm>
 
 #include "Reorder.h"
 #include "DerivedData.h"

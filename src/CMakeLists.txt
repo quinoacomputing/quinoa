@@ -1,8 +1,11 @@
 ################################################################################
 #
 # \file      src/CMakeLists.txt
-# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-# \brief     Build quinoa
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
+# \brief     Build Quinoa
 #
 ################################################################################
 
@@ -453,12 +456,6 @@ if (DEFINED ENV{NERSC_HOST})
   set(RUNNER_NCPUS_ARG "-n")
   set(RUNNER_REQUIRED true)
 
-elseif(ARCH MATCHES "ppc64")
-
-  find_program(RUNNER ${CMAKE_CURRENT_SOURCE_DIR}/../script/cobalt-runjob.sh)
-  set(RUNNER_NCPUS_ARG "--np")
-  set(RUNNER_REQUIRED true)
-
 elseif(DEFINED ENV{CRAY_PRGENVPGI} OR
        DEFINED ENV{CRAY_PRGENVGNU} OR
        DEFINED ENV{CRAY_PRGENVCRAY} OR
@@ -543,14 +540,39 @@ if (BUILD_SHARED_LIBS)
 endif(BUILD_SHARED_LIBS)
 
 # Components
-add_subdirectory(Base)
-add_subdirectory(Control)
-add_subdirectory(Main)
-add_subdirectory(LoadBalance)
-add_subdirectory(RNG)
-add_subdirectory(Statistics)
+if (CHARM_FOUND AND PSTREAMS_FOUND)
+  add_subdirectory(Base)
+else()
+  PrintMissing(Base "CHARM_FOUND;PSTREAMS_FOUND")
+endif()
 
-if (ENABLE_MESHCONV OR ENABLE_INCITER)
+if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND)
+  add_subdirectory(Control)
+else()
+  PrintMissing(Control "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
+endif()
+
+add_subdirectory(Main)
+
+if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND AND Zoltan2_FOUND)
+  add_subdirectory(LoadBalance)
+else()
+  PrintMissing(LoadBalance "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND;Zoltan2_FOUND")
+endif()
+
+if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND)
+  add_subdirectory(RNG)
+else()
+  PrintMissing(RNG "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
+endif()
+
+if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND)
+  add_subdirectory(Statistics)
+else()
+  PrintMissing(Statistics "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
+endif()
+
+if ((ENABLE_MESHCONV OR ENABLE_INCITER) AND BRIGAND_FOUND)
   add_subdirectory(Mesh)
   add_subdirectory(IO)
 endif()

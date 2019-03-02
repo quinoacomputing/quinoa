@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/Integrate/Riemann/RiemannFactory.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Register available Riemann solvers into a factory
   \details   Register available Riemann solvers into a factory.
 */
@@ -37,7 +40,7 @@ struct registerRiemannSolver {
   RiemannFactory& factory;
   //! Constructor
   //! \param[in] f Factory
-  registerRiemannSolver( RiemannFactory& f ) : factory( f ) {}
+  explicit registerRiemannSolver( RiemannFactory& f ) : factory( f ) {}
   //! \brief Function call operator templated on the type that implements
   //!   a specific Riemann solver
   template< typename U > void operator()( brigand::type_<U> ) {
