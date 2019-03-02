@@ -31,7 +31,6 @@
 #include "Types.h"
 #include "Fields.h"
 #include "DerivedData.h"
-#include "VectorReducer.h"
 #include "FluxCorrector.h"
 #include "NodeDiagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
@@ -78,6 +77,7 @@ class ALECG : public CBase_ALECG {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
+    // cppcheck-suppress uninitMemberVar
     explicit ALECG( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop

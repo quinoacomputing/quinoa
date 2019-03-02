@@ -29,6 +29,7 @@ namespace tut {
 
 //! All tests in group inherited from this base
 struct ContainerUtil_common {
+  // cppcheck-suppress unusedStructMember
   double precision = 1.0e-15;    // required floating-point precision
 };
 
@@ -179,6 +180,7 @@ void ContainerUtil_object::test< 6 >() {
   #ifndef NDEBUG        // exception only thrown in DEBUG mode
   try {
     std::vector< tk::real > r1{{ 4.0, 9.0, 2.0 }}, r2;
+    // cppcheck-suppress unreadVariable
     r1 += r2;
     fail( "should throw exception in DEBUG mode" );
   }
@@ -192,6 +194,7 @@ void ContainerUtil_object::test< 6 >() {
   #ifndef NDEBUG        // exception only thrown in DEBUG mode
   try {
     std::vector< tk::real > q1, q2;
+    // cppcheck-suppress unreadVariable
     q1 += q2;
     fail( "should throw exception in DEBUG mode" );
   }
@@ -249,6 +252,7 @@ void ContainerUtil_object::test< 6 >() {
   #ifndef NDEBUG        // exception only thrown in DEBUG mode
   try {
     std::vector< tk::real > n1{{ 4.0, 9.0, 2.0 }}, n2{{ 3.0, -3.0 }};
+    // cppcheck-suppress unreadVariable
     n1 += n2;
     fail( "should throw exception in DEBUG mode" );
   }

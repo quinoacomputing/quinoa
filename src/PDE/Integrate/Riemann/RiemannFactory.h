@@ -40,7 +40,7 @@ struct registerRiemannSolver {
   RiemannFactory& factory;
   //! Constructor
   //! \param[in] f Factory
-  registerRiemannSolver( RiemannFactory& f ) : factory( f ) {}
+  explicit registerRiemannSolver( RiemannFactory& f ) : factory( f ) {}
   //! \brief Function call operator templated on the type that implements
   //!   a specific Riemann solver
   template< typename U > void operator()( brigand::type_<U> ) {

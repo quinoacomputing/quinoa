@@ -668,6 +668,7 @@ Transporter::pdfstat( CkReductionMsg* msg )
   // Create new PDF file (overwrite if exists)
   tk::PDFWriter pdfe( "mesh_edge_pdf.txt" );
   // Output edgelength PDF
+  // cppcheck-suppress containerOutOfBounds
   pdfe.writeTxt( pdf[0],
                  tk::ctr::PDFInfo{ {"PDF"}, {}, {"edgelength"}, 0, 0.0 } );
 

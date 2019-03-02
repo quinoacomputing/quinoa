@@ -84,6 +84,7 @@ class CmdLine : public tk::Control<
     //!   contains a copy of the command-line stack, the command-line stack must
     //!   be possible to be instantiated without passing the ctrinfo map,
     //!   otherwise it would be a mutual dependency.
+    // cppcheck-suppress noExplicitConstructor
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
       set< tag::verbose >( false ); // Use quiet output by default
       set< tag::chare >( false ); // No chare state output by default

@@ -65,6 +65,7 @@ void Exception_object::test< 3 >() {
   set_test_name( "Throw macro" );
 
   try {
+    // cppcheck-suppress unreachableCode
     Throw( "msg" );
     fail( "should throw exception" );
   }
@@ -100,6 +101,7 @@ void Exception_object::test< 5 >() {
   set_test_name( "Assert macro doesn't throw if cond is true" );
 
   try {
+    // cppcheck-suppress duplicateExpression
     Assert( 1 == 1, "msg" );
   }
   catch ( tk::Exception& ) {

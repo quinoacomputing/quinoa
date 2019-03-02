@@ -121,7 +121,7 @@ class SchemeBase {
     template< class Spec, typename... Args >
     struct Call : boost::static_visitor<> {
       //! Constructor storing called member function arguments in tuple
-      Call( Args&&... args ) : arg( std::forward_as_tuple(args...) ) {}
+      explicit Call( Args&&... args ) : arg( std::forward_as_tuple(args...) ) {}
       //! Helper class for unpacking tuple into argument list
       template< typename P, typename Tuple, bool Done, int Total, int... N >
       struct invoke_impl {

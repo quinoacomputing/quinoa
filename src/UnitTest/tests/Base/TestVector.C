@@ -24,6 +24,7 @@ namespace tut {
 
 //! All tests in group inherited from this base
 struct Vector_common {
+  // cppcheck-suppress unusedStructMember
   double precision = 1.0e-15;    // required floating-point precision
 };
 

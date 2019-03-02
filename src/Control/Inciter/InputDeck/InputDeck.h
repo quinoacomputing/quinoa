@@ -175,7 +175,7 @@ class InputDeck :
     //! \param[in] cl Previously parsed and store command line
     //! \details Anything not set here is initialized by the compiler using the
     //!   default constructor for the corresponding type.
-    InputDeck( const CmdLine& cl = {} ) {
+    explicit InputDeck( const CmdLine& cl = {} ) {
       // Set previously parsed command line
       set< tag::cmd >( cl );
       // Default discretization parameters
