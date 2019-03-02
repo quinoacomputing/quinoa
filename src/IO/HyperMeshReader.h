@@ -29,7 +29,7 @@ class HyperMeshReader : public Reader {
 
   public:
     //! Constructor
-    explicit HyperMeshReader( const std::string filename ) :
+    explicit HyperMeshReader( const std::string& filename ) :
       Reader( filename ) {}
 
     //! Read Hyper mesh

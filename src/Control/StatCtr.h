@@ -230,9 +230,11 @@ struct CaseInsensitiveCharLess {
 //! \return Boolean indicating if all terms are ordinary
 static inline bool
 ordinary( const std::vector< ctr::Term >& vec ) {
-  bool ord = true;
-  for (auto& term : vec) if (term.moment == ctr::Moment::CENTRAL) ord = false;
-  return ord;
+  if (std::any_of( vec.cbegin(), vec.cend(),
+        []( const ctr::Term& t ){ return t.moment == ctr::Moment::CENTRAL; } ))
+    return false;
+  else
+    return true;
 }
 
 //! \brief Find out if a vector of Terms contains any central moment terms

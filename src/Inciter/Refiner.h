@@ -62,6 +62,7 @@ class Refiner : public CBase_Refiner {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
+    // cppcheck-suppress uninitMemberVar
     explicit Refiner( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop

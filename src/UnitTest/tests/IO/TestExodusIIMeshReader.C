@@ -1693,6 +1693,7 @@ void ExodusIIMeshReader_object::test< 7 >() {
 
   try {
     // Attempt to read mesh passing non-empty container
+    // cppcheck-suppress constStatement
     decltype(ginpoel) i{ 0 };
     er.readMeshPart( i, inpoel, triinpoel, lid, coord );
 
@@ -1707,6 +1708,7 @@ void ExodusIIMeshReader_object::test< 7 >() {
 
   try {
     // Attempt to read mesh passing non-empty container
+    // cppcheck-suppress constStatement
     decltype(inpoel) i{ 0 };
     er.readMeshPart( ginpoel, i, triinpoel, lid, coord );
 
@@ -1735,6 +1737,7 @@ void ExodusIIMeshReader_object::test< 7 >() {
 
   try {
     // Attempt to read mesh passing non-empty container
+    // cppcheck-suppress constStatement
     decltype(coord) c{{ {0.0}, {0.0}, {0.0} }};
     er.readMeshPart( ginpoel, inpoel, triinpoel, lid, c );
 

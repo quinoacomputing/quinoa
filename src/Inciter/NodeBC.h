@@ -29,7 +29,7 @@ match( tk::ctr::ncomp_type ncomp,
        tk::real t,
        tk::real dt,
        const tk::UnsMesh::Coords& coord,
-       const std::vector< std::size_t > gid,
+       const std::vector< std::size_t >& gid,
        const std::unordered_map< std::size_t, std::size_t >& lid,
        const std::map< int, std::vector< std::size_t > >& sidenodes );
 

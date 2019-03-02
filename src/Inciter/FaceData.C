@@ -10,7 +10,7 @@
 */
 // *****************************************************************************
 
-#include <numeric>
+#include <algorithm>
 
 #include "Reorder.h"
 #include "DerivedData.h"

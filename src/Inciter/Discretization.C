@@ -80,8 +80,9 @@ Discretization::Discretization(
 
   // Count the number of mesh nodes at which we receive data from other chares
   // and compute map associating boundary-chare node ID associated to global ID
-  std::vector< std::size_t > c;
-  for (const auto& n : m_msum) for (auto i : n.second) c.push_back( i );
+  std::vector< std::size_t > c( tk::sumvalsize( m_msum ) );
+  std::size_t j = 0;
+  for (const auto& n : m_msum) for (auto i : n.second) c[ j++ ] = i;
   tk::unique( c );
   m_bid = tk::assignLid( c );
 
@@ -241,8 +242,9 @@ Discretization::vol()
     contribute( CkCallback(CkReductionTarget(Transporter,vol), m_transporter) );
   else
     for (const auto& n : m_msum) {
-      std::vector< tk::real > v;
-      for (auto i : n.second) v.push_back( m_vol[ tk::cref_find(m_lid,i) ] );
+      std::vector< tk::real > v( n.second.size() );
+      std::size_t j = 0;
+      for (auto i : n.second) v[ j++ ] = m_vol[ tk::cref_find(m_lid,i) ];
       thisProxy[ n.first ].comvol( n.second, v );
     }
 }

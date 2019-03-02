@@ -128,10 +128,9 @@ class Print {
     //! \param[in] t Part title to be printed
     template< Style s = VERBOSE >
     void part( const std::string& t ) const {
-      using std::operator+;
       std::size_t half_length = t.size()/2;
       std::string left( half_length+1, '-' );
-      std::string right( t.size()%2 ? half_length+1 : half_length, '-' );
+      std::string right( (t.size()%2) ? (half_length+1) : half_length, '-' );
       std::string underline( left + " o " + right );
       std::string upper( t );
       std::transform( begin(t), end(t), begin(upper), ::toupper );
@@ -410,7 +409,7 @@ class Print {
     //! \param[in] pfx Prefix in front of alias, double prefix in front of
     //!   keyword
     template< Style s = VERBOSE, class Help >
-    void help( std::string executable,
+    void help( const std::string& executable,
                const Help& pool,
                const std::string& msg,
                const std::string& pfx = "" ) const
@@ -433,7 +432,7 @@ class Print {
     //! \param[in] executable Name of executable to output help for
     //! \param[in] kw Keyword help struct on which help is to be printed
     template< Style s = VERBOSE, class HelpKw >
-    void helpkw( std::string executable, const HelpKw& kw ) const {
+    void helpkw( const std::string& executable, const HelpKw& kw ) const {
       Assert( !kw.keyword.empty(), "Empty keyword in Print::helpkw()" );
       const auto& info = kw.info;
       const auto& alias = info.alias;
@@ -498,7 +497,7 @@ class Print {
       //! Need to store reference to host class whose data we operate on
       const Print* const m_host;
       //! Constructor: store host object pointer
-      echoPolicies( const Print* const host ) : m_host( host ) {}
+      explicit echoPolicies( const Print* const host ) : m_host( host ) {}
       //! Function call operator templated on the type that echos a policy
       template< typename U > void operator()( brigand::type_<U> ) {
         static_assert( tk::HasTypedefCode< typename U::info >::value,
@@ -754,7 +753,7 @@ class Print {
     // TODO A line longer than 'width' will cause a hang!
     std::string splitLines( std::string str,
                             std::string indent,
-                            std::string name = "",
+                            const std::string& name = "",
                             std::size_t width = 80 ) const {
       // remove form feeds, line feeds, carriage returns, horizontal tabs,
       // vertical tabs, see http://en.cppreference.com/w/cpp/string/byte/isspace
@@ -770,14 +769,13 @@ class Print {
       // format str to 'width'-character-long lines with indent
       str.insert( 0, indent + name );
       std::size_t currIndex = width - 1;
-      std::size_t sizeToElim;
       while ( currIndex < str.length() ) {
         const std::string whitespace = " ";
         currIndex = str.find_last_of( whitespace, currIndex + 1 );
         if ( currIndex == std::string::npos ) break;
         currIndex = str.find_last_not_of( whitespace, currIndex );
         if ( currIndex == std::string::npos ) break;
-        sizeToElim =
+        auto sizeToElim =
           str.find_first_not_of( whitespace, currIndex + 1 ) - currIndex - 1;
         str.replace( currIndex + 1, sizeToElim , "\n" + indent );
         currIndex += width + indent.length() + 1;

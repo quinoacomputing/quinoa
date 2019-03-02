@@ -240,7 +240,7 @@ class MKLRNG {
       for (int i=0; i<m_nthreads; ++i) {
         auto I = static_cast< std::size_t >( i );
         if (m_stream[I]) {
-          errchk( vslDeleteStream( &m_stream[I] ) );
+          vslDeleteStream( &m_stream[I] );
           m_stream[I] = nullptr;
         }
       }
@@ -252,8 +252,8 @@ class MKLRNG {
     //!   mode as an error here can result due to user input incompatible with
     //!   the MKL library.
     void errchk( int err ) {
-       ErrChk( err == VSL_STATUS_OK, "MKL VSL Error Code: " +
-               std::to_string(err) + ", see mkl_vsl_defines.h for more info" );
+      ErrChk( err == VSL_STATUS_OK, "MKL VSL Error Code: " +
+              std::to_string(err) + ", see mkl_vsl_defines.h for more info" );
     }
 
     int m_brng;                                      //!< MKL RNG id

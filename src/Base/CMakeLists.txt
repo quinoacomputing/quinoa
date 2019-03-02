@@ -13,7 +13,6 @@ add_library(Base
             Timer.C
             Reader.C
             Writer.C
-            VectorReducer.C
             Table.C
             Vector.C
             ChareStateCollector.C

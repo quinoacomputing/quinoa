@@ -695,7 +695,7 @@ Refiner::errorRefine()
 // *****************************************************************************
 {
   // Find number of nodes in old mesh
-  auto npoin = tk::npoin( m_inpoel );
+  auto npoin = tk::npoin_in_graph( m_inpoel );
   // Generate edges surrounding points in old mesh
   auto esup = tk::genEsup( m_inpoel, 4 );
   auto psup = tk::genPsup( m_inpoel, 4, esup );
@@ -759,7 +759,7 @@ Refiner::edgelistRefine()
 
   if (!edgenodelist.empty()) {  // if user explicitly tagged edges
     // Find number of nodes in old mesh
-    auto npoin = tk::npoin( m_inpoel );
+    auto npoin = tk::npoin_in_graph( m_inpoel );
     // Generate edges surrounding points in old mesh
     auto esup = tk::genEsup( m_inpoel, 4 );
     auto psup = tk::genPsup( m_inpoel, 4, esup );
@@ -841,7 +841,7 @@ Refiner::coordRefine()
 
   if (xm || xp || ym || yp || zm || zp) {       // if any half-world configured
     // Find number of nodes in old mesh
-    auto npoin = tk::npoin( m_inpoel );
+    auto npoin = tk::npoin_in_graph( m_inpoel );
     // Generate edges surrounding points in old mesh
     auto esup = tk::genEsup( m_inpoel, 4 );
     auto psup = tk::genPsup( m_inpoel, 4, esup );
@@ -967,6 +967,7 @@ Refiner::updateMesh()
   m_ginpoel = m_inpoel;
   Assert( tk::uniquecopy(m_ginpoel).size() == m_coord[0].size(),
           "Size mismatch" );
+  // cppcheck-suppress useStlAlgorithm
   for (auto& i : m_ginpoel) i = m_gid[i];
 
   // Update flat coordinates storage

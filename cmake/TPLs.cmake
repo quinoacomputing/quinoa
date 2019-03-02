@@ -158,14 +158,14 @@ message(STATUS "------------------------------------------")
 
 # Function to print a list of missing library names
 # Arguments:
-#   'executable' a string to use in the error message printed for which libraries are not found
+#   'target' a string to use in the error message printed for which libraries are not found
 #   'reqlibs' list of cmake variables in the form of "CHARM_FOUND", Boost_FOUND, etc.
 # Details: For each variable in 'reqlibs' if evaluates to false, trim the
 # ending "_FOUND", convert to lower case and print an error message with the
 # list of missing variables names. Intended to use after multiple find_package
 # calls, passing all cmake variables named '*_FOUND' for all required libraries
-# for an executable.
-function(PrintMissing executable reqlibs)
+# for a target.
+function(PrintMissing target reqlibs)
   foreach(lib ${reqlibs})
     if(NOT ${lib})
       string(REPLACE "_FOUND" "" lib ${lib})
@@ -174,17 +174,18 @@ function(PrintMissing executable reqlibs)
     endif()
   endforeach()
   string(REPLACE ";" ", " missing "${missing}")
-  message(STATUS "Executable '${executable}' will NOT be configured, missing: ${missing}")
+  message(STATUS "Target '${target}' will NOT be configured, missing: ${missing}")
 endfunction(PrintMissing)
 
 # Enable individual executables based on required TPLs found
 
 if (CHARM_FOUND AND PUGIXML_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND
-    HDF5_FOUND AND BRIGAND_FOUND AND TUT_FOUND AND PEGTL_FOUND AND Boost_FOUND)
+    HDF5_FOUND AND BRIGAND_FOUND AND TUT_FOUND AND PEGTL_FOUND AND Boost_FOUND
+    AND (MKL_FOUND OR LAPACKE_FOUND))
   set(ENABLE_UNITTEST "true")
   set(UNITTEST_EXECUTABLE unittest)
 else()
-  PrintMissing(unittest "CHARM_FOUND;PUGIXML_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;HDF5_FOUND;BRIGAND_FOUND;TUT_FOUND;PEGTL_FOUND;Boost_FOUND")
+  PrintMissing(unittest "CHARM_FOUND;PUGIXML_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;HDF5_FOUND;BRIGAND_FOUND;TUT_FOUND;PEGTL_FOUND;Boost_FOUND;MKL_FOUND;LAPACKE_FOUND")
 endif()
 
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND HYPRE_FOUND AND
@@ -197,21 +198,21 @@ else()
 endif()
 
 if (CHARM_FOUND AND TESTU01_FOUND AND BRIGAND_FOUND AND PEGTL_FOUND AND
-    RANDOM123_FOUND AND Boost_FOUND)
+    RANDOM123_FOUND AND Boost_FOUND AND (MKL_FOUND OR LAPACKE_FOUND))
   set(ENABLE_RNGTEST "true")
   set(RNGTEST_EXECUTABLE rngtest)
   set(RNGTEST_SRC_DIR ${QUINOA_SOURCE_DIR}/RNGTest)
   set(RNGTEST_BIN_DIR ${PROJECT_BINARY_DIR}/RNGTest)
 else()
-  PrintMissing(rngtest "CHARM_FOUND;TESTU01_FOUND;BRIGAND_FOUND;PEGTL_FOUND;RANDOM123_FOUND;Boost_FOUND")
+  PrintMissing(rngtest "CHARM_FOUND;TESTU01_FOUND;BRIGAND_FOUND;PEGTL_FOUND;RANDOM123_FOUND;Boost_FOUND;MKL_FOUND;LAPACKE_FOUND")
 endif()
 
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND PEGTL_FOUND AND
-    PUGIXML_FOUND AND HDF5_FOUND AND Boost_FOUND)
+    PUGIXML_FOUND AND HDF5_FOUND AND Boost_FOUND AND BRIGAND_FOUND)
   set(ENABLE_MESHCONV "true")
   set(MESHCONV_EXECUTABLE meshconv)
 else()
-  PrintMissing(meshconv "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;PEGTL_FOUND;PUGIXML_FOUND;HDF5_FOUND;Boost_FOUND")
+  PrintMissing(meshconv "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;PEGTL_FOUND;PUGIXML_FOUND;HDF5_FOUND;Boost_FOUND;BRIGAND_FOUND")
 endif()
 
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND PEGTL_FOUND AND

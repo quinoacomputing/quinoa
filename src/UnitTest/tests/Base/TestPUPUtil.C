@@ -405,6 +405,7 @@ class Migrated : public CBase_Migrated {
       std::string expected = R"([ {11, "eleven"} {12, "twelve"} ])";
       std::string actual = "[ ";
       for (const auto& n : m_unordered_map) {
+        // cppcheck-suppress useStlAlgorithm
         actual += "{" + std::to_string(n.first) + ", " + n.second + "} ";
       }
       actual += "]";

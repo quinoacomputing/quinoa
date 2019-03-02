@@ -884,6 +884,7 @@ namespace grm {
       // error out if chosen item does not exist in selected vector
       bool exists = false;
       for (const auto& r : stack.template get< sel, vec >()) {
+        // cppcheck-suppress useStlAlgorithm
         if (Option().value(in.string()) == r) exists = true;
       }
       if (exists)

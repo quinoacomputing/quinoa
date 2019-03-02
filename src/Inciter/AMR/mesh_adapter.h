@@ -29,7 +29,7 @@ namespace AMR {
 
             //! Constructor taking a mesh graph
             mesh_adapter_t( const std::vector< std::size_t >& inpoel ) :
-                node_connectivity( tk::npoin(inpoel) )
+                node_connectivity( tk::npoin_in_graph(inpoel) )
             {
                 consume_tets( inpoel );
                 tet_store.generate_edges();

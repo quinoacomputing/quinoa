@@ -24,8 +24,8 @@ struct StringParser_common {
   // tk::StringParser only has a protected constructor: designed to be used as a
   // base class
   struct parser : tk::StringParser {
-    parser( const std::string& f ) : StringParser( f ) {}
-    parser( int argc, char** argv ) : StringParser( argc, argv ) {}
+    explicit parser( const std::string& f ) : StringParser( f ) {}
+    explicit parser( int argc, char** argv ) : StringParser( argc, argv ) {}
     const std::string& string() const { return m_string; }
   };
 };
