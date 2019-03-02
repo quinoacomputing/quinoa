@@ -40,9 +40,12 @@ InciterDriver::InciterDriver( const InciterPrint& print,
 {
   // All global-scope data to be migrated to all PEs initialized here (if any)
 
-  // Parse input deck into g_inputdeck
   print.item( "Blocking migration, -" + *kw::blocking::alias(),
                cmdline.get< tag::blocking >() ? "on" : "off" );
+  print.item( "Benchmark mode, -" + *kw::benchmark::alias(),
+               cmdline.get< tag::benchmark >() ? "on" : "off" );
+
+  // Parse input deck into g_inputdeck
   m_print.item( "Control file", cmdline.get< tag::io, tag::control >() );  
   InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );
   m_print.item( "Parsed control file", "success" );  
