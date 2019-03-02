@@ -168,6 +168,7 @@ bool keyEqual( const C1& a, const C2& b ) {
 template< class Container >
 std::size_t sumsize( const Container& c ) {
   std::size_t sum = 0;
+  // cppcheck-suppress useStlAlgorithm
   for (const auto& s : c) sum += s.size();
   return sum;
 }
@@ -196,6 +197,7 @@ std::size_t numunique( const Container& c ) {
 template< class Map >
 std::size_t sumvalsize( const Map& c ) {
   std::size_t sum = 0;
+  // cppcheck-suppress useStlAlgorithm
   for (const auto& s : c) sum += s.second.size();
   return sum;
 }

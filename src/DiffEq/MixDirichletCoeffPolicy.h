@@ -163,13 +163,13 @@ class MixDirichletHomCoeffConst {
       tk::real sumY = 0.0;
       for (ncomp_t c=0; c<ncomp; ++c) sumY += Y[c];
 
-      // Y|Kc
-      std::vector< tk::real > YK( ncomp, 0.0 );
-      for (ncomp_t c=0; c<ncomp; ++c) {
-        YK[c] = sumY - lookup( mean(depvar,c), moments );
-        //std::cout << "YK: " << YK[c] << ' ';
-      }
-      //std::cout << std::endl;
+//      // Y|Kc
+//      std::vector< tk::real > YK( ncomp, 0.0 );
+//      for (ncomp_t c=0; c<ncomp; ++c) {
+//        YK[c] = sumY - lookup( mean(depvar,c), moments );
+//        //std::cout << "YK: " << YK[c] << ' ';
+//      }
+//      //std::cout << std::endl;
 
       // Favre means
 
@@ -186,13 +186,13 @@ class MixDirichletHomCoeffConst {
       for (ncomp_t c=0; c<ncomp; ++c) sumYt += Yt[c];
       //std::cout << "sumYt: " << sumYt << '\n';
 
-      // Yt|Kc
-      std::vector< tk::real > YtK( ncomp, 0.0 );
-      for (ncomp_t c=0; c<ncomp; ++c) {
-        YtK[c] = sumYt - Yt[c];
-        //std::cout << "YtK: " << YtK[c] << ' ';
-      }
-      //std::cout << std::endl;
+//      // Yt|Kc
+//      std::vector< tk::real > YtK( ncomp, 0.0 );
+//      for (ncomp_t c=0; c<ncomp; ++c) {
+//        YtK[c] = sumYt - Yt[c];
+//        //std::cout << "YtK: " << YtK[c] << ' ';
+//      }
+//      //std::cout << std::endl;
 
       // sum of <R^2Yc>
       tk::real sumRRY = 0.0;

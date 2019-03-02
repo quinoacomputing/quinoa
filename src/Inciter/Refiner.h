@@ -62,6 +62,7 @@ class Refiner : public CBase_Refiner {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
+    // cppcheck-suppress uninitMemberVar
     explicit Refiner( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
@@ -281,7 +282,7 @@ class Refiner : public CBase_Refiner {
     //! Functor to call the solution() member function behind SchemeBase::Proxy
     struct Solution {
       tk::Fields& U;
-      Solution( tk::Fields& u ) : U(u) {}
+      explicit Solution( tk::Fields& u ) : U(u) {}
       template< typename P > void operator()( const P& p ) const {
          p.ckLocal()->solution( U );
       }
@@ -294,7 +295,7 @@ class Refiner : public CBase_Refiner {
       const tk::Fields& U;
       const std::unordered_map< int, std::vector< std::size_t > >& Msum;
       const std::map< int, std::vector< std::size_t > > Bnode;
-      Resize( const tk::UnsMesh::Chunk& chunk,
+      explicit Resize( const tk::UnsMesh::Chunk& chunk,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& u,
               const std::unordered_map< int,

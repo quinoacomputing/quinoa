@@ -47,7 +47,7 @@ class Receiver : public CBase_Receiver {
     //! Constructor taking (and migrating) a Scheme
     explicit Receiver( const inciter::Scheme& s,
                        int expected,
-                       std::string label )
+                       const std::string& label )
     {
       // Create test result struct, assume test is ok
       tut::test_result tr( "Inciter/Scheme", 1,

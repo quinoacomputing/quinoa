@@ -41,7 +41,7 @@ struct SystemComponents_common {
     const ncomps& m_host;
     const std::vector< tk::ctr::ncomp_t > m_comps{ 2, 3, 3, 2 };
     std::size_t m_c;
-    testncomp( const ncomps& host ) : m_host( host ), m_c( 0 ) {}
+    explicit testncomp( const ncomps& host ) : m_host( host ), m_c( 0 ) {}
     template< typename U > void operator()( brigand::type_<U> ) {
       for (const auto& c : m_host.get< U >())
         ensure_equals( "number of components for c=" + std::to_string(c),
@@ -54,7 +54,7 @@ struct SystemComponents_common {
     const ncomps& m_host;
     const std::vector< tk::ctr::ncomp_t > m_offs{ 0, 2, 5, 8 };
     std::size_t m_c;
-    testoffset( const ncomps& host ) : m_host( host ), m_c( 0 ) {}
+    explicit testoffset( const ncomps& host ) : m_host( host ), m_c( 0 ) {}
     template< typename U > void operator()( brigand::type_<U> ) {
       for (std::size_t c=0; c<m_host.get< U >().size(); ++c)
         ensure_equals( "offset for c=" + std::to_string(c),

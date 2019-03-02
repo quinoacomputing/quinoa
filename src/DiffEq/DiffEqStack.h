@@ -140,14 +140,18 @@ class DiffEqStack {
                                                EqTag,
                                                tag::hydrotimescales >().at(c);
             ctr::HydroTimeScales ot;
+            // cppcheck-suppress useStlAlgorithm
             for (auto t : hts) tab.push_back( ot.table(t) );
+            // cppcheck-suppress useStlAlgorithm
             for (auto t : hts) nam.push_back( ot.name(t) );
   
             const auto& hp = g_inputdeck.get< tag::param,
                                               EqTag,
                                               tag::hydroproductions >().at(c);
             ctr::HydroProductions op;
+            // cppcheck-suppress useStlAlgorithm
             for (auto t : hp) tab.push_back( op.table(t) );
+            // cppcheck-suppress useStlAlgorithm
             for (auto t : hp) nam.push_back( op.name(t) );
   
           }

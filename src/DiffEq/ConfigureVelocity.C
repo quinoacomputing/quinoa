@@ -86,8 +86,8 @@ infoVelocity( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name( cp ) );
 
   auto solve = g_inputdeck.get< tag::param, eq, tag::solve >()[c];
-  auto depvar = ctr::Depvar();
-  nfo.emplace_back( depvar.group(), depvar.name(solve) );
+  auto dv = ctr::Depvar();
+  nfo.emplace_back( dv.group(), dv.name(solve) );
 
   auto variant = g_inputdeck.get< tag::param, eq, tag::variant >()[c];
   auto velocity = ctr::VelocityVariant();

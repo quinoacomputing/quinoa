@@ -69,8 +69,8 @@
 #define SystemComponents_h
 
 #include <vector>
-#include <numeric>
 #include <algorithm>
+#include <numeric>
 
 #include <brigand/sequences/list.hpp>
 #include <brigand/algorithms/wrap.hpp>

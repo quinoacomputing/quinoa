@@ -43,12 +43,12 @@ struct Factory_common {
 
   // For testing boost::factory (runtime polymorphism using reference semantics)
   struct Base {
-    Base( std::string init ) : type( init ) {}
+    explicit Base( const std::string& init ) : type( init ) {}
     std::string type;
   };
   struct Child : Base {
-    Child() : Base( "def" ) {}
-    Child( int ) : Base( "int" ) {}
+    explicit Child() : Base( "def" ) {}
+    explicit Child( int ) : Base( "int" ) {}
   };
   using Factory = std::map< int, std::function< Base*() > >;
 
@@ -114,7 +114,7 @@ struct Factory_common {
     //! the virtual functions required by Concept
     template< typename T >
     struct Model : Concept {
-      Model( T x ) : data( std::move(x) ) {}
+      explicit Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
       std::string Type() const override { return data.Type(); }
       T data;
@@ -127,8 +127,8 @@ struct Factory_common {
 
   //! Child struct used polymorphically with VBase
   struct VChild {
-    VChild() : type( "def" ) {}
-    VChild( int ) : type( "int" ) {}
+    explicit VChild() : type( "def" ) {}
+    explicit VChild( int ) : type( "int" ) {}
     std::string Type() const { return type; }
     std::string type;
   };
@@ -420,8 +420,8 @@ struct VBase {
   //! the virtual functions required by Concept
   template< typename T >
   struct Model : Concept {
-    Model( T x ) : data( std::move(x) ) {}
-    Concept* copy() const { return new Model( *this ); }
+    explicit Model( T x ) : data( std::move(x) ) {}
+    Concept* copy() const override { return new Model( *this ); }
     T data;
   };
   std::unique_ptr< Concept > self;    //!< VBase pointer used polymorphically
@@ -432,7 +432,7 @@ struct VBase {
 class CharmChild : public CBase_CharmChild {
   public:
   using Proxy = CProxy_CharmChild;
-  CharmChild() {
+  explicit CharmChild() {
     // If we got here, the second part of this test succeeded. Construct and
     // send back a new test result, with tag "2", signaling the second part.
     tut::test_result tr( "Base/Factory", 7, 
@@ -442,7 +442,7 @@ class CharmChild : public CBase_CharmChild {
       { tr.group, tr.name, std::to_string(tr.result), tr.message,
         tr.exception_typeid } );
   }
-  CharmChild( tk::real ) {
+  explicit CharmChild( tk::real ) {
     // If we got here, the second part of this test succeeded. Construct and
     // send back a new test result, with tag "2", signaling the second part.
     tut::test_result tr( "Base/Factory", 8, 

@@ -92,7 +92,7 @@ struct Info {
   //! Store reference to map we are filling
   tk::ctr::HelpFactory& m_factory;
   //! Constructor: store reference to map to fill
-  Info( tk::ctr::HelpFactory& factory ) : m_factory( factory ) {}
+  explicit Info( tk::ctr::HelpFactory& factory ) : m_factory( factory ) {}
   //! \brief Function call operator templated on the type that does the filling
   template< typename U > void operator()( brigand::type_<U> ) {
     m_factory[ U::string() ] = { U::shortDescription(),

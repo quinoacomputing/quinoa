@@ -522,8 +522,9 @@ Refiner::eval()
     // Augment node comm. map with newly added nodes on chare-boundary edges
     for (const auto& c : m_edgenodeCh) {
       auto& nodes = tk::ref_find( m_msum, c.first );
-      for (const auto& n : c.second)
-        nodes.push_back( std::get<0>(n.second) );
+      std::size_t j = nodes.size();
+      nodes.reserve( j + c.second.size() );
+      for (const auto& n : c.second) nodes[ j++ ] = std::get<0>(n.second);
     }
 
     // Send new mesh and solution back to PDE worker
@@ -579,7 +580,7 @@ Refiner::errorRefine()
 // *****************************************************************************
 {
   // Find number of nodes in old mesh
-  auto npoin = tk::npoin( m_inpoel );
+  auto npoin = tk::npoin_in_graph( m_inpoel );
   // Generate edges surrounding points in old mesh
   auto esup = tk::genEsup( m_inpoel, 4 );
   auto psup = tk::genPsup( m_inpoel, 4, esup );
@@ -652,7 +653,7 @@ Refiner::userRefine()
 
   if (!edgenodelist.empty()) {  // if user explicitly tagged edges
     // Find number of nodes in old mesh
-    auto npoin = tk::npoin( m_inpoel );
+    auto npoin = tk::npoin_in_graph( m_inpoel );
     // Generate edges surrounding points in old mesh
     auto esup = tk::genEsup( m_inpoel, 4 );
     auto psup = tk::genPsup( m_inpoel, 4, esup );
@@ -719,7 +720,7 @@ Refiner::coordRefine()
 
   if (xm || xp || ym || yp || zm || zp) {       // if any half-world configured
     // Find number of nodes in old mesh
-    auto npoin = tk::npoin( m_inpoel );
+    auto npoin = tk::npoin_in_graph( m_inpoel );
     // Generate edges surrounding points in old mesh
     auto esup = tk::genEsup( m_inpoel, 4 );
     auto psup = tk::genPsup( m_inpoel, 4, esup );
@@ -832,8 +833,9 @@ Refiner::correctRefine( const tk::UnsMesh::EdgeSet& extra )
 
   if (!extra.empty()) {
     // Generate list of edges that need to be corrected
-    std::vector< edge_t > edge;
-    for (const auto& e : extra) edge.push_back( edge_t(e[0],e[1]) );
+    std::vector< edge_t > edge( extra.size() );
+    std::size_t j = 0;
+    for (const auto& e : extra) edge[ j++ ] = edge_t(e[0],e[1]);
     std::vector< tk::real > crit( edge.size(), 1.0 );
 
     // Do refinement including edges that need to be corrected
@@ -880,6 +882,7 @@ Refiner::updateMesh()
   m_ginpoel = m_inpoel;
   Assert( tk::uniquecopy(m_ginpoel).size() == m_coord[0].size(),
           "Size mismatch" );
+  // cppcheck-suppress useStlAlgorithm
   for (auto& i : m_ginpoel) i = m_gid[i];
 
   // Update flat coordinates storage

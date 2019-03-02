@@ -43,7 +43,7 @@ class Collector : public CBase_Collector {
 
   public:
     //! Constructor
-    Collector( CProxy_Distributor hostproxy ) :
+    explicit Collector( CProxy_Distributor hostproxy ) :
       m_hostproxy( hostproxy ),
       m_nchare( 0 ),
       m_nord( 0 ),

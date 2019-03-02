@@ -31,7 +31,7 @@ class STLTxtMeshReader : public Reader {
 
   public:
     //! Constructor
-    explicit STLTxtMeshReader( const std::string filename, STLMesh& mesh );
+    explicit STLTxtMeshReader( const std::string& filename, STLMesh& mesh );
 
     //! Read ASCII STL mesh
     void readMesh();

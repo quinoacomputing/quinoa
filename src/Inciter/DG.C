@@ -491,6 +491,7 @@ DG::findchare( const tk::UnsMesh::Face& t )
 // *****************************************************************************
 {
   for (const auto& cf : m_bndFace)
+    // cppcheck-suppress useStlAlgorithm
     if (cf.second.find(t) != end(cf.second))
       return cf.first;
   return -1;

@@ -75,8 +75,8 @@ FileParser::diagnostics( const tk::Print& print,
     std::string parsed;                      //!< original line parsed
     std::string underline;                   //!< underline
     std::vector< std::string > msg;          //!< error or warning messages
-    ErroneousLine() : dlnum(0), parsed(), underline(), msg() {}
-    ErroneousLine( const std::string& m ) :
+    explicit ErroneousLine() : dlnum(0), parsed(), underline(), msg() {}
+    explicit ErroneousLine( const std::string& m ) :
       dlnum(0), parsed(), underline(), msg({{m}}) {}
   };
 
