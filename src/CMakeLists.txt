@@ -1,8 +1,11 @@
 ################################################################################
 #
 # \file      src/CMakeLists.txt
-# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-# \brief     Build quinoa
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
+# \brief     Build Quinoa
 #
 ################################################################################
 
@@ -448,12 +451,6 @@ if (DEFINED ENV{NERSC_HOST})
 
   set(RUNNER "srun")
   set(RUNNER_NCPUS_ARG "-n")
-  set(RUNNER_REQUIRED true)
-
-elseif(ARCH MATCHES "ppc64")
-
-  find_program(RUNNER ${CMAKE_CURRENT_SOURCE_DIR}/../script/cobalt-runjob.sh)
-  set(RUNNER_NCPUS_ARG "--np")
   set(RUNNER_REQUIRED true)
 
 elseif(DEFINED ENV{CRAY_PRGENVPGI} OR

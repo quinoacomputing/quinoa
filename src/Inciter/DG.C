@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/DG.C
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     DG advances a system of PDEs with the discontinuous Galerkin scheme
   \details   DG advances a system of partial differential equations (PDEs) using
     discontinuous Galerkin (DG) finite element (FE) spatial discretization (on
@@ -1115,7 +1118,7 @@ DG::writeFields( CkCallback c )
   auto u = m_u;
   for (const auto& eq : g_dgpde) {
     auto o =
-      eq.fieldOutput( m_lhs, d->Inpoel(), d->Coord(), d->T(), m_geoElem, u );
+      eq.fieldOutput( d->T(), m_geoElem, u );
     // cut off ghost elements
     for (auto& field : o) field.resize( esuel.size()/4 );
     fields.insert( end(fields), begin(o), end(o) );

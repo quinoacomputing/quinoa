@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/Integrate/Surface.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Functions for computing internal surface integrals of a system
      of PDEs in DG methods
   \details   This file contains functionality for computing internal surface
@@ -41,16 +44,16 @@ surfInt( ncomp_t system,
 
 // Update the rhs by adding surface integration term
 void
-update_rhs ( ncomp_t ncomp,
-             ncomp_t offset,
-             const std::size_t ndof,
-             const tk::real wt,
-             const std::size_t el,
-             const std::size_t er,
-             const std::vector< tk::real >& fl,
-             const std::vector< tk::real >& B_l,
-             const std::vector< tk::real >& B_r,
-             Fields& R );
+update_rhs_fa ( ncomp_t ncomp,
+                ncomp_t offset,
+                const std::size_t ndof,
+                const tk::real wt,
+                const std::size_t el,
+                const std::size_t er,
+                const std::vector< tk::real >& fl,
+                const std::vector< tk::real >& B_l,
+                const std::vector< tk::real >& B_r,
+                Fields& R );
 
 } // tk::
 

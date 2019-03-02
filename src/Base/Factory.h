@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Factory.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Factory utilities
   \details   Factory utilities. The functions defined in this file help
     interfacing with object factories. For a short introduction on what
