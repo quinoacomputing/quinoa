@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Main/Inciter.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
   \details   Inciter, computational shock hydrodynamics tool, Charm++ main

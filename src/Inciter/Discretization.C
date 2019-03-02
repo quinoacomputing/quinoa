@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Discretization.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \details   Data and functionality common to all discretization schemes
   \see       Discretization.h and Discretization.C for more info.
 */
@@ -401,7 +404,7 @@ Discretization::write(
 //! \param[in] fields Mesh field output dump
 //! \param[in] centering The centering that will be associated to the field data
 //!   to be output when writeFields is called next
-//! \param[on] c Function to continue with after the write
+//! \param[in] c Function to continue with after the write
 //! \details Since m_meshwriter is a Charm++ chare group, it never migrates and
 //!   an instance is guaranteed on every PE. We index the first PE on every
 //!   logical compute node. In Charm++'s non-SMP mode, a node is the same as a

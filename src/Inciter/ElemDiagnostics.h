@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/ElemDiagnostics.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     ElemDiagnostics class for collecting diagnostics
   \details   ElemDiagnostics class for collecting diagnostics, e.g., residuals,
     and various norms of errors while solving partial differential equations.
@@ -9,8 +12,6 @@
 // *****************************************************************************
 #ifndef ElemDiagnostics_h
 #define ElemDiagnostics_h
-
-#include <unordered_set>
 
 #include "Discretization.h"
 #include "PUPUtil.h"
@@ -42,26 +43,13 @@ class ElemDiagnostics {
     //@}
 
   private:
-    //! Compute diagnostics for DG(P0)
-    void computeP0( Discretization& d,
-                    const std::size_t nchGhost,
-                    const tk::Fields& geoElem,
-                    const tk::Fields& u,
-                    std::vector< std::vector< tk::real > >& diag ) const;
-
-    //! Compute diagnostics for DG(P1)
-    void computeP1( Discretization& d,
-                    const std::size_t nchGhost,
-                    const tk::Fields& geoElem,
-                    const tk::Fields& u,
-                    std::vector< std::vector< tk::real > >& diag ) const;
-
-    //! Compute diagnostics for DG(P2)
-    void computeP2( Discretization& d,
-                    const std::size_t nchGhost,
-                    const tk::Fields& geoElem,
-                    const tk::Fields& u,
-                    std::vector< std::vector< tk::real > >& diag ) const;
+    //! Compute diagnostics for DG
+    void compute_diag( const Discretization& d,
+                       const std::size_t ndof,
+                       const std::size_t nchGhost,
+                       const tk::Fields& geoElem,
+                       const tk::Fields& u,
+                       std::vector< std::vector< tk::real > >& diag ) const;
 };
 
 } // inciter::
