@@ -87,7 +87,7 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.lcov.prolog
             ${CMAKE_BINARY_DIR}
     # Generate HTML report
-    COMMAND ${GENHTML} --legend --branch-coverage --demangle-cpp --css-file quinoa.gcov.css --html-prolog quinoa.lcov.prolog --title "${GIT_SHA1}" -o ${OUTPUT} ${OUTPUT}.filtered.info
+    COMMAND ${GENHTML} --legend --branch-coverage --demangle-cpp --css-file quinoa.gcov.css --ignore-errors source --html-prolog quinoa.lcov.prolog --title "${GIT_SHA1}" -o ${OUTPUT} ${OUTPUT}.filtered.info
     # Customize page headers in generated html to own
     COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs ${SED} -i 's/LCOV - code coverage report/Quinoa ${suite} test code coverage report/g'
     COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs ${SED} -i 's/<td class="headerItem">Test:<\\/td>/<td class="headerItem">Commit:<\\/td>/g'
@@ -193,7 +193,7 @@ FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.lcov.prolog
             ${CMAKE_BINARY_DIR}
     # Generate HTML report
-    COMMAND ${GENHTML} --legend --branch-coverage --demangle-cpp --css-file quinoa.gcov.css --html-prolog quinoa.lcov.prolog --title "${GIT_SHA1}" -o ${OUTPUT} ${OUTPUT}.filtered.info
+    COMMAND ${GENHTML} --legend --branch-coverage --demangle-cpp --css-file quinoa.gcov.css --ignore-errors source --html-prolog quinoa.lcov.prolog --title "${GIT_SHA1}" -o ${OUTPUT} ${OUTPUT}.filtered.info
     # Customize page headers in generated html to own
     COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs ${SED} -i 's/LCOV - code coverage report/Quinoa ${suite} test code coverage report/g'
     COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs ${SED} -i 's/<td class="headerItem">Test:<\\/td>/<td class="headerItem">Commit:<\\/td>/g'
