@@ -855,6 +855,11 @@ DG::setup( tk::real v )
   Assert( d->Inpoel().size()/4 == m_lhs.nunk(),
           "Size mismatch in DG::setup()" );
 
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto psign = inciter::g_inputdeck.get< tag::discr, tag::psign >();
+  std::cout << "ndof = " << ndof << std::endl;
+  std::cout << "psign = " << psign << std::endl;
+
   // Compute left-hand side of discrete PDEs
   lhs();
 
