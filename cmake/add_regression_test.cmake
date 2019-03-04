@@ -245,11 +245,13 @@ function(ADD_REGRESSION_TEST test_name executable)
   # Construct and echo configuration for test being added
   set(msg "Add regression test ${test_name} for ${executable}")
 
-  # Run all regression tests with quiescence detection
-  #list(FIND TEST_LABELS migration i)
-  #if (${i} EQUAL -1) # (except those that exercise migration)
+  # Run all regression tests with quiescence detection except those that
+  # exercise blocking migration
+  list(FIND ARG_ARGS "-m" b1)
+  list(FIND ARG_ARGS "--blocking" b2)
+  if (${b1} EQUAL -1 AND ${b2} EQUAL -1)
     list(APPEND ARG_ARGS "-q")
-  #endif()
+  endif()
 
   if (ARG_ARGS)
     string(REPLACE ";" " " ARGUMENTS "${ARG_ARGS}")
