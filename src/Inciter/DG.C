@@ -17,6 +17,7 @@
 #include <numeric>
 
 #include "DG.h"
+#include "Vector.h"
 #include "Discretization.h"
 #include "DGPDE.h"
 #include "DiagReducer.h"
@@ -800,6 +801,8 @@ DG::adj()
   m_lhs.resize( m_nunk );
   m_rhs.resize( m_nunk );
   m_limFunc.resize( m_nunk );
+  m_pIndex.resize(m_nunk,1);
+  std::cout << "This m_nunk = " << m_nunk << std::endl;
 
   // Ensure that we also have all the geometry and connectivity data 
   // (including those of ghosts)
@@ -1279,6 +1282,10 @@ DG::solve( tk::real newdt )
     // Compute diagnostics, e.g., residuals
     auto diag_computed =
       m_diag.compute( *d, m_u.nunk()-m_fd.Esuel().size()/4, m_geoElem, m_u );
+
+    eval_pIndex(m_u, m_pIndex);
+    correct(m_u, m_pIndex);
+
     // Increase number of iterations and physical time
     d->next();
     // Update Un
@@ -1431,6 +1438,141 @@ DG::step()
     next();
   } else {
     contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));
+  }
+}
+
+void DG::eval_pIndex( const tk::Fields& U,
+                      std::vector< std::size_t >& pIndex)
+// *****************************************************************************
+//  Calculate the element mark for p-adaptive
+//! \param[in] U Numerical solutions
+//! \param[in,out] pIndex Vector of element mark
+// *****************************************************************************
+{
+  const auto& esuf = m_fd.Esuf();
+  const auto& esuel = m_fd.Esuel();
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto ncomp= U.nprop()/ndof;
+  const auto& inpoel = Disc()->Inpoel();
+  const auto& coord = Disc()->Coord();
+
+  //Assert( pIndex.size() == esuel.size()/4, "Size not match for pIndex in eval_pIndex");
+  //std::cout << "esuel.size()/4 = " << esuel.size()/4 << std::endl;
+
+  std::size_t it(0);
+
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  // Nodal Coordinates of the tetrahedron element
+  std::array< std::array< tk::real, 3>, 4 > coordel;
+
+  std::array< std::array< tk::real, 3 >, 3 > jacInv;
+
+  std::array< std::array< tk::real, 3 >, 5 > dudxi;
+  std::array< std::array< tk::real, 3 >, 5 > dudx;
+
+  for (std::size_t e=0; e<esuel.size()/4; ++e)
+  {
+    //std::cout << "size = " << esuel.size()/4 << std::endl;
+    std::size_t sign(0);
+    if(pIndex[e] == 1)
+    {
+      coordel[0][0] = cx[ inpoel[4*e]   ];
+      coordel[0][1] = cy[ inpoel[4*e]   ];
+      coordel[0][2] = cz[ inpoel[4*e]   ];
+
+      coordel[1][0] = cx[ inpoel[4*e+1] ];
+      coordel[1][1] = cy[ inpoel[4*e+1] ];
+      coordel[1][2] = cz[ inpoel[4*e+1] ];
+
+      coordel[2][0] = cx[ inpoel[4*e+2] ];
+      coordel[2][1] = cy[ inpoel[4*e+2] ];
+      coordel[2][2] = cz[ inpoel[4*e+2] ];
+
+      coordel[3][0] = cx[ inpoel[4*e+3] ];
+      coordel[3][1] = cy[ inpoel[4*e+3] ];
+      coordel[3][2] = cz[ inpoel[4*e+3] ];
+
+      jacInv = tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+      for (std::size_t c=0; c<ncomp; ++c)
+      {
+        auto mark = c*4;
+
+        dudxi[c][0] = 2 * U(e, mark+1, 0);
+        dudxi[c][1] = U(e, mark+1, 0) + 3.0 * U(e, mark+2, 0);
+        dudxi[c][2] = U(e, mark+1, 0) + U(e, mark+2, 0) + 4.0 * U(e, mark+3, 0);
+
+        dudx[c][0] =   dudxi[c][0] * jacInv[0][0]
+                     + dudxi[c][1] * jacInv[1][0]
+                     + dudxi[c][2] * jacInv[2][0];
+
+        dudx[c][1] =   dudxi[c][0] * jacInv[0][1]
+                     + dudxi[c][1] * jacInv[1][1]
+                     + dudxi[c][2] * jacInv[2][1];
+
+        dudx[c][2] =   dudxi[c][0] * jacInv[0][2]
+                     + dudxi[c][1] * jacInv[1][2]
+                     + dudxi[c][2] * jacInv[2][2];
+
+        auto grad = sqrt( dudx[c][0] * dudx[c][0] + dudx[c][1] * dudx[c][1] + dudx[c][2] * dudx[c][2] );
+        //std::cout << "grad = " << grad << std::endl;
+
+        if( grad > 0.1 )
+          sign++;
+      }
+      it++;
+    }
+    if(sign > 0)
+      pIndex[e] = 1;
+    else
+      pIndex[e] = 0;
+  }
+  //std::cout << "it = " << it << std::endl;
+
+  auto pIndex_u = pIndex;
+
+  for( auto f=m_fd.Nbfac(); f<esuf.size()/2; ++f )
+  {
+    std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+    std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+
+    if (pIndex[el] == 1)
+      pIndex_u[er] = 1;
+    if (pIndex[er] == 1)
+      pIndex_u[el] = 1;
+  }
+  pIndex = pIndex_u;
+}
+
+void DG::correct( tk::Fields& U,
+                  const std::vector< std::size_t >& pIndex)
+// *****************************************************************************
+//  Correct the solution for high order term
+//! \param[in,out] U Numerical solutions
+//! \param[in] pIndex Vector of element mark
+// *****************************************************************************
+{
+  const auto& esuel = m_fd.Esuel();
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto ncomp= U.nprop()/ndof;
+
+  //Assert( pIndex.size() == esuel.size()/4, "Size not match for pIndex");
+
+  for (std::size_t e=0; e<esuel.size()/4; ++e)
+  {
+    if(pIndex[e] == 0)
+    {
+      for (std::size_t c=0; c<ncomp; ++c)
+      {
+        auto mark = c*4;
+        U(e, mark+1, 0) = 0;
+        U(e, mark+2, 0) = 0;
+        U(e, mark+3, 0) = 0;
+      }
+    }
   }
 }
 

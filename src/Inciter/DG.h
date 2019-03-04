@@ -191,6 +191,7 @@ class DG : public CBase_DG {
       p | m_diag;
       p | m_stage;
       p | m_rkcoef;
+      p | m_pIndex;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -282,6 +283,8 @@ class DG : public CBase_DG {
     //! Runge-Kutta coefficients
     std::array< std::array< tk::real, 3 >, 2 >
       m_rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
+    //! Vector of element mark for p-adaptive
+    std::vector< std::size_t > m_pIndex;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -342,6 +345,14 @@ class DG : public CBase_DG {
 
     //! Evaluate whether to continue with next time step stage
     void stage();
+
+    //! Calculate the element mark for p-adaptive
+    void eval_pIndex( const tk::Fields& U,
+                      std::vector< std::size_t >& pIndex);
+
+    //! Correct the solution for high order term
+    void correct( tk::Fields& U,
+                  const std::vector< std::size_t >& pIndex);
 };
 
 } // inciter::
