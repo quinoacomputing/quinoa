@@ -125,6 +125,7 @@ ExodusIIMeshWriter::writeMesh(
     auto& b = bface_exo[ s.first ];
     b.resize( s.second.size() );
     std::iota( begin(b), end(b), i );
+    i += b.size();
   }
 
   // Write mesh
