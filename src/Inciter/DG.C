@@ -801,6 +801,8 @@ DG::adj()
   m_lhs.resize( m_nunk );
   m_rhs.resize( m_nunk );
   m_limFunc.resize( m_nunk );
+  m_pIndex.resize(m_nunk,1);
+  std::cout << "This m_nunk = " << m_nunk << std::endl;
 
   // Ensure that we also have all the geometry and connectivity data 
   // (including those of ghosts)
@@ -1478,6 +1480,7 @@ DG::step()
   }
 }
 
+<<<<<<< HEAD
 void DG::eval_ndofel()
 // *****************************************************************************
 //  Calculate the element mark for p-adaptive
@@ -1488,6 +1491,27 @@ void DG::eval_ndofel()
   const auto ncomp= m_u.nprop()/ndof;
   const auto& inpoel = Disc()->Inpoel();
   const auto& coord = Disc()->Coord();
+
+=======
+void DG::eval_pIndex( const tk::Fields& U,
+                      std::vector< std::size_t >& pIndex)
+// *****************************************************************************
+//  Calculate the element mark for p-adaptive
+//! \param[in] U Numerical solutions
+//! \param[in,out] pIndex Vector of element mark
+// *****************************************************************************
+{
+  const auto& esuf = m_fd.Esuf();
+  const auto& esuel = m_fd.Esuel();
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto ncomp= U.nprop()/ndof;
+  const auto& inpoel = Disc()->Inpoel();
+  const auto& coord = Disc()->Coord();
+
+  //Assert( pIndex.size() == esuel.size()/4, "Size not match for pIndex in eval_pIndex");
+  //std::cout << "esuel.size()/4 = " << esuel.size()/4 << std::endl;
+
+  std::size_t it(0);
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -1523,6 +1547,7 @@ void DG::eval_ndofel()
 
         // Gradient of unkowns in physical space
         std::array< std::array< tk::real, 3 >, 5 > dudx;
+
         dudx[c][0] =   dudxi[c][0] * jacInv[0][0]
                      + dudxi[c][1] * jacInv[1][0]
                      + dudxi[c][2] * jacInv[2][0];
