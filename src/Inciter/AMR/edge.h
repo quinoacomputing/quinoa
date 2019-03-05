@@ -27,11 +27,12 @@ class edge_t {
         edge_t()
         {
         }
-        edge_t(size_t A, size_t B)
+
+        edge_t(size_t A, size_t B) : data( {{std::min(A,B), std::max(A,B)}} )
         {
-            data = {{ std::min(A,B), std::max(A,B) }};
         }
-        edge_t( edge_ e ) : data( std::move(e) ) {}
+
+        explicit edge_t( edge_ e ) : data( std::move(e) ) {}
 
         // Operators
             // Piggy back underlying edge_ type where possible

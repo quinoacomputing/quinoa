@@ -18,7 +18,7 @@ namespace AMR {
             size_t next_tet_id;
 
             // Constructor
-            id_generator_t(size_t start_tet_id = 0) :
+            explicit id_generator_t(size_t start_tet_id = 0) :
                 start_id(start_tet_id),
                 next_tet_id(start_id)
             {
@@ -49,10 +49,13 @@ namespace AMR {
                 child_id_list_t c;
                 c.resize(count);
                 c[0] = parent_id; // FIXME: Remove this hack which suppresses warning
+
+                // cppcheck-suppress useStlAlgorithm
                 for (auto& i : c)
                 {
                     i = get_next_tet_id();
                 }
+
                 return c;
             }
     };
