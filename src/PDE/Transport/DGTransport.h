@@ -131,6 +131,7 @@ class Transport {
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& limFunc,
+              const std::vector< std::size_t >& pIndex,
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
@@ -155,20 +156,27 @@ class Transport {
         { m_bcoutlet, Outlet },
         { m_bcdir, Dirichlet } }};
 
+      //std::cout << "start surfInt" << std::endl;
       // compute internal surface flux integrals
       tk::surfInt( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                   Upwind::flux, Problem::prescribedVelocity, U, limFunc, R );
+                   Upwind::flux, Problem::prescribedVelocity, U, limFunc, 
+                   pIndex, R );
+      //std::cout << "finish surfInt" << std::endl;
 
+      //std::cout << "start volfInt" << std::endl;
       if(ndof > 1)
         // compute volume integrals
         tk::volInt( m_system, m_ncomp, m_offset, inpoel, coord, geoElem,
-                    flux, Problem::prescribedVelocity, U, limFunc, R );
+                    flux, Problem::prescribedVelocity, U, limFunc, pIndex, R );
+      //std::cout << "finish volfInt" << std::endl;
 
+      //std::cout << "start bndfInt" << std::endl;
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
         tk::bndSurfInt( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
           inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
-          b.second, U, limFunc, R );
+          b.second, U, limFunc, pIndex, R );
+      //std::cout << "finish bndfInt" << std::endl;
     }
 
     //! Compute the minimum time step size

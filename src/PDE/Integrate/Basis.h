@@ -66,7 +66,7 @@ eval_basis( const std::size_t ndof,
 std::vector< tk::real >
 eval_state ( ncomp_t ncomp,
              ncomp_t offset,
-             const std::size_t ndof,
+             const std::size_t ndof_el,
              const std::size_t e,
              const Fields& U,
              const Fields& limFunc,

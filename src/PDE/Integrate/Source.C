@@ -34,6 +34,7 @@ tk::srcInt( ncomp_t system,
             const UnsMesh::Coords& coord,
             const Fields& geoElem,
             const SrcFn& src,
+            const std::vector< std::size_t >& pIndex,
             Fields& R )
 // *****************************************************************************
 //  Compute source term integrals for DG
@@ -48,22 +49,22 @@ tk::srcInt( ncomp_t system,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  //const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
 
-  // Number of quadrature points for volume integration
-  auto ng = tk::NGvol(ndof);
+  //// Number of quadrature points for volume integration
+  //auto ng = tk::NGvol(ndof);
 
-  // arrays for quadrature points
-  std::array< std::vector< real >, 3 > coordgp;
-  std::vector< real > wgp;
+  //// arrays for quadrature points
+  //std::array< std::vector< real >, 3 > coordgp;
+  //std::vector< real > wgp;
 
-  coordgp[0].resize( ng );
-  coordgp[1].resize( ng );
-  coordgp[2].resize( ng );
-  wgp.resize( ng );
+  //coordgp[0].resize( ng );
+  //coordgp[1].resize( ng );
+  //coordgp[2].resize( ng );
+  //wgp.resize( ng );
 
-  // get quadrature point weights and coordinates for triangle
-  GaussQuadratureTet( ng, coordgp, wgp );
+  //// get quadrature point weights and coordinates for triangle
+  //GaussQuadratureTet( ng, coordgp, wgp );
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -71,6 +72,31 @@ tk::srcInt( ncomp_t system,
 
   for (std::size_t e=0; e<geoElem.nunk(); ++e)
   {
+    std::size_t ndof_el;
+    switch(pIndex[e])
+    {
+      case 0:
+        ndof_el = 1;
+        break;
+      case 1:
+        ndof_el = 4;
+        break;
+    }
+
+    auto ng = tk::NGvol(ndof_el);
+    
+    //std::size_t ng = 5; 
+    // arrays for quadrature points
+    std::array< std::vector< real >, 3 > coordgp;
+    std::vector< real > wgp;
+    
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    coordgp[2].resize( ng );
+    wgp.resize( ng );
+    
+    GaussQuadratureTet( ng, coordgp, wgp );
+
     // Extract the element coordinates
     std::array< std::array< real, 3>, 4 > coordel {{
       {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
@@ -85,14 +111,14 @@ tk::srcInt( ncomp_t system,
 
       // Compute the basis function
       auto B =
-        eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+        eval_basis( ndof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
 
       // Compute the source term variable
       auto s = src( system, ncomp, gp[0], gp[1], gp[2], t );
 
       auto wt = wgp[igp] * geoElem(e, 0, 0);
 
-      update_rhs( ncomp, offset, ndof, wt, e, B, s, R );
+      update_rhs( ncomp, offset, ndof_el, wt, e, B, s, R );
     }
   }
 }
@@ -100,7 +126,7 @@ tk::srcInt( ncomp_t system,
 void
 tk::update_rhs( ncomp_t ncomp,
                 ncomp_t offset,
-                const std::size_t ndof,
+                const std::size_t ndof_el,
                 const tk::real wt,
                 const std::size_t e,
                 const std::vector< tk::real >& B,
@@ -118,7 +144,9 @@ tk::update_rhs( ncomp_t ncomp,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  Assert( B.size() == ndof, "Size mismatch for basis function" );
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+
+  Assert( B.size() == ndof_el, "Size mismatch for basis function" );
   Assert( s.size() == ncomp, "Size mismatch for source term" );
 
   for (ncomp_t c=0; c<ncomp; ++c)
@@ -126,13 +154,13 @@ tk::update_rhs( ncomp_t ncomp,
     auto mark = c*ndof;
     R(e, mark, offset)   += wt * s[c];
 
-    if ( ndof > 1 )
+    if ( ndof_el > 1 )
     {
       R(e, mark+1, offset) += wt * s[c] * B[1];
       R(e, mark+2, offset) += wt * s[c] * B[2];
       R(e, mark+3, offset) += wt * s[c] * B[3];
 
-      if( ndof > 4 )
+      if( ndof_el > 4 )
       {
         R(e, mark+4, offset) += wt * s[c] * B[4];
         R(e, mark+5, offset) += wt * s[c] * B[5];

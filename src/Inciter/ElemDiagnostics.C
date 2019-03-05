@@ -54,6 +54,7 @@ bool
 ElemDiagnostics::compute( Discretization& d,
                           const std::size_t nchGhost,
                           const tk::Fields& geoElem,
+                          const std::vector< std::size_t >& pIndex,
                           const tk::Fields& u ) const
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc.
@@ -88,7 +89,7 @@ ElemDiagnostics::compute( Discretization& d,
       diag( NUMDIAG, std::vector< tk::real >( u.nprop()/ndof, 0.0 ) );
 
     // Compute diagnostics for DG
-    compute_diag(d, ndof, nchGhost, geoElem, u, diag);
+    compute_diag(d, ndof, nchGhost, geoElem, pIndex, u, diag);
 
     // Append diagnostics vector with metadata on the current time step
     // ITER: Current iteration count (only the first entry is used)
@@ -115,6 +116,7 @@ ElemDiagnostics::compute_diag( const Discretization& d,
                                const std::size_t ndof,
                                const std::size_t nchGhost,
                                const tk::Fields& geoElem,
+                               const std::vector< std::size_t >& pIndex,
                                const tk::Fields& u,
                                std::vector< std::vector< tk::real > >& diag ) const
 // *****************************************************************************
@@ -130,20 +132,20 @@ ElemDiagnostics::compute_diag( const Discretization& d,
   const auto& inpoel = d.Inpoel();
   const auto& coord = d.Coord();
 
-  // Number of quadrature points for volume integration
-  auto ng = tk::NGdiag(ndof);
+  //// Number of quadrature points for volume integration
+  //auto ng = tk::NGdiag(ndof);
 
-  // arrays for quadrature points
-  std::array< std::vector< tk::real >, 3 > coordgp;
-  std::vector< tk::real > wgp;
+  //// arrays for quadrature points
+  //std::array< std::vector< tk::real >, 3 > coordgp;
+  //std::vector< tk::real > wgp;
 
-  coordgp[0].resize( ng );
-  coordgp[1].resize( ng );
-  coordgp[2].resize( ng );
-  wgp.resize( ng );
+  //coordgp[0].resize( ng );
+  //coordgp[1].resize( ng );
+  //coordgp[2].resize( ng );
+  //wgp.resize( ng );
 
-  // get quadrature point weights and coordinates for triangle
-  tk::GaussQuadratureTet( ng, coordgp, wgp );
+  //// get quadrature point weights and coordinates for triangle
+  //tk::GaussQuadratureTet( ng, coordgp, wgp );
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -151,6 +153,30 @@ ElemDiagnostics::compute_diag( const Discretization& d,
 
   for (std::size_t e=0; e<u.nunk()-nchGhost; ++e)
   {
+    std::size_t ndof_el;
+    switch(pIndex[e])
+    { 
+      case 0:
+        ndof_el = 1;
+        break;
+      case 1:
+        ndof_el = 4;
+        break;
+    } 
+    
+    auto ng = tk::NGdiag(ndof_el);
+    
+    // arrays for quadrature points
+    std::array< std::vector< tk::real >, 3 > coordgp;
+    std::vector< tk::real > wgp;
+    
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    coordgp[2].resize( ng );
+    wgp.resize( ng );
+
+    tk::GaussQuadratureTet( ng, coordgp, wgp );
+
     // Extract the element coordinates
     std::array< std::array< tk::real, 3>, 4 > coordel {{
       {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
@@ -180,13 +206,13 @@ ElemDiagnostics::compute_diag( const Discretization& d,
         auto mark = c*ndof;
         auto ugp = u(e, mark, 0);
 
-        if(ndof > 1)
+        if(ndof_el > 1)
         {
           ugp +=  u(e, mark+1, 0) * B[1]
                 + u(e, mark+2, 0) * B[2]
                 + u(e, mark+3, 0) * B[3];
 
-          if(ndof > 4)
+          if(ndof_el > 4)
           {
             ugp +=  u(e, mark+4, 0) * B[4]
                   + u(e, mark+5, 0) * B[5]

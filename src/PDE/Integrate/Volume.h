@@ -37,13 +37,14 @@ volInt( ncomp_t system,
         const VelFn& vel,
         const Fields& U,
         const Fields& limFunc,
+        const std::vector< std::size_t >& pIndex,
         Fields& R );
 
 //! Update the rhs by adding the source term integrals
 void
 update_rhs( ncomp_t ncomp,
             ncomp_t offset,
-            const std::size_t ndof,
+            const std::size_t ndof_el,
             const tk::real wt,
             const std::size_t e,
             const std::array< std::vector<tk::real>, 3 >& dBdx,

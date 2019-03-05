@@ -35,6 +35,7 @@ tk::volInt( ncomp_t system,
             const VelFn& vel,
             const Fields& U,
             const Fields& limFunc,
+            const std::vector< std::size_t >& pIndex,
             Fields& R )
 // *****************************************************************************
 //  Compute volume integrals for DG
@@ -51,77 +52,116 @@ tk::volInt( ncomp_t system,
 //! \param[in,out] R Right-hand side vector added to
 // *****************************************************************************
 {
-  using inciter::g_inputdeck;
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  //using inciter::g_inputdeck;
+  //const auto ndof_el = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
 
-  // Number of quadrature points for volume integration
-  auto ng = tk::NGvol(ndof);
+  //// Number of quadrature points for volume integration
+  //auto ng = tk::NGvol(ndof_el);
 
-  // arrays for quadrature points
-  std::array< std::vector< real >, 3 > coordgp;
-  std::vector< real > wgp;
+  //// arrays for quadrature points
+  //std::array< std::vector< real >, 3 > coordgp;
+  //std::vector< real > wgp;
 
-  coordgp[0].resize( ng );
-  coordgp[1].resize( ng );
-  coordgp[2].resize( ng );
-  wgp.resize( ng );
+  //coordgp[0].resize( ng );
+  //coordgp[1].resize( ng );
+  //coordgp[2].resize( ng );
+  //wgp.resize( ng );
 
-  // get quadrature point weights and coordinates for triangle
-  GaussQuadratureTet( ng, coordgp, wgp );
+  //// get quadrature point weights and coordinates for triangle
+  //GaussQuadratureTet( ng, coordgp, wgp );
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
 
+  //std::cout << "start gp for volint " << std::endl;
+  //std::cout << "U.nunk() = " << U.nunk() << std::endl;
+  //std::cout << "pIndex.size() = " << pIndex.size() << std::endl;
   // compute volume integrals
   for (std::size_t e=0; e<U.nunk(); ++e)
   {
-    // Extract the element coordinates
-    std::array< std::array< real, 3>, 4 > coordel {{
-      {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
-      {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
-      {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
-      {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
-    }};
-
-    auto jacInv = 
-            inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
-
-    // Compute the derivatives of basis function for DG(P1)
-    auto dBdx = eval_dBdx_p1( ndof, jacInv );
-
-    // Gaussian quadrature
-    for (std::size_t igp=0; igp<ng; ++igp)
+    //std::cout << "start inside gp for volint " << std::endl;
+    //std::cout << "e = " << e << std::endl;
+    std::size_t ndof_el;
+    switch(pIndex[e])
     {
-      if (ndof > 4)
-        eval_dBdx_p2( igp, coordgp, jacInv, dBdx );
+      case 0:
+        ndof_el = 1;
+        break;
+      case 1:
+        ndof_el = 4;
+        break;
+    }
 
-      // Compute the coordinates of quadrature point at physical domain
-      auto gp = eval_gp( igp, coordel, coordgp );
+    if(ndof_el > 1)
+    {
+      auto ng = tk::NGvol(ndof_el);
+      //std::size_t ng = 1;
+      //std::cout << "finish gp for volint " << std::endl;
+      //std::cout << "ng = " << ng << std::endl;   
+ 
+      //std::size_t ng = 5; 
+      // arrays for quadrature points
+      std::array< std::vector< real >, 3 > coordgp;
+      std::vector< real > wgp;
+      
+      coordgp[0].resize( ng );
+      coordgp[1].resize( ng );
+      coordgp[2].resize( ng );
+      wgp.resize( ng );
+      
+      GaussQuadratureTet( ng, coordgp, wgp );
 
-      // Compute the basis function
-      auto B =
-        eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+      // Extract the element coordinates
+      std::array< std::array< real, 3>, 4 > coordel {{
+        {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+        {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+        {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+        {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
+      }};
 
-      auto wt = wgp[igp] * geoElem(e, 0, 0);
+      auto jacInv = 
+              inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
-      auto state = eval_state( ncomp, offset, ndof, e, U, limFunc, B );
+      // Compute the derivatives of basis function for DG(P1)
+      auto dBdx = eval_dBdx_p1( ndof_el, jacInv );
 
-      // evaluate prescribed velocity (if any)
-      auto v = vel( system, ncomp, gp[0], gp[1], gp[2] );
+      //std::cout << "start the gauss int for vol" << std::endl;
+      // Gaussian quadrature
+      for (std::size_t igp=0; igp<ng; ++igp)
+      {
+        if (ndof_el > 4)
+          eval_dBdx_p2( igp, coordgp, jacInv, dBdx );
 
-      // comput flux
-      auto fl = flux( system, ncomp, state, v );
+        // Compute the coordinates of quadrature point at physical domain
+        auto gp = eval_gp( igp, coordel, coordgp );
 
-      update_rhs( ncomp, offset, ndof, wt, e, dBdx, fl, R );
+        // Compute the basis function
+        auto B =
+          eval_basis( ndof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+
+        auto wt = wgp[igp] * geoElem(e, 0, 0);
+
+        auto state = eval_state( ncomp, offset, ndof_el, e, U, limFunc, B );
+
+        // evaluate prescribed velocity (if any)
+        auto v = vel( system, ncomp, gp[0], gp[1], gp[2] );
+
+        // comput flux
+        auto fl = flux( system, ncomp, state, v );
+
+        update_rhs( ncomp, offset, ndof_el, wt, e, dBdx, fl, R );
+      }
+      //std::cout << "finish the gauss int for vol when e = " << e << std::endl;
     }
   }
+  //std::cout << "finishe the vol loop for e" << std::endl;
 }
 
 void
 tk::update_rhs( ncomp_t ncomp,
                 ncomp_t offset,
-                const std::size_t ndof,
+                const std::size_t ndof_el,
                 const tk::real wt,
                 const std::size_t e,
                 const std::array< std::vector<tk::real>, 3 >& dBdx,
@@ -139,9 +179,11 @@ tk::update_rhs( ncomp_t ncomp,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  Assert( dBdx[0].size() == ndof, "Size mismatch for basis function derivatives" );
-  Assert( dBdx[1].size() == ndof, "Size mismatch for basis function derivatives" );
-  Assert( dBdx[2].size() == ndof, "Size mismatch for basis function derivatives" );
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+
+  Assert( dBdx[0].size() == ndof_el, "Size mismatch for basis function derivatives" );
+  Assert( dBdx[1].size() == ndof_el, "Size mismatch for basis function derivatives" );
+  Assert( dBdx[2].size() == ndof_el, "Size mismatch for basis function derivatives" );
   Assert( fl.size() == ncomp, "Size mismatch for flux term" );
 
   for (ncomp_t c=0; c<ncomp; ++c)
@@ -154,7 +196,7 @@ tk::update_rhs( ncomp_t ncomp,
     R(e, mark+3, offset) +=
       wt * (fl[c][0]*dBdx[0][3] + fl[c][1]*dBdx[1][3] + fl[c][2]*dBdx[2][3]);
 
-    if( ndof > 4 )
+    if( ndof_el > 4 )
     {
       R(e, mark+4, offset) +=
         wt * (fl[c][0]*dBdx[0][4] + fl[c][1]*dBdx[1][4] + fl[c][2]*dBdx[2][4]);
