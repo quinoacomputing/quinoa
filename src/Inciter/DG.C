@@ -1349,7 +1349,7 @@ DG::refine()
 
 void
 DG::resize(
-  const std::vector< std::size_t >& ginpoel,
+  const std::vector< std::size_t >& /*ginpoel*/,
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /*addedNodes*/,
@@ -1391,13 +1391,8 @@ DG::resize(
   m_lhs.resize( nelem, nprop );
   m_rhs.resize( nelem, nprop );
 
+
   m_fd = FaceData( d->Inpoel(), bface, tk::remap(triinpoel,d->Lid()) );
-
-std::cout << ginpoel.size()/4 << ", " << triinpoel.size()/3 << std::endl;
-
-std::cout << "bface: ";
-for (const auto& s : bface) std::cout << s.first << ':' << s.second.size() << ' ';
-std::cout << '\n';
 
   m_geoFace =
     tk::Fields( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), coord ) );

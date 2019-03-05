@@ -1073,56 +1073,22 @@ Refiner::boundary()
                       tk::UnsMesh::Eq<4> > invtets;
   for (const auto& t : m_refiner.tet_store.tets) invtets[ t.second ] = t.first;
 
-  // Generate data structure that associates the pair of side set id and
-  // adjacent tet id to a boundary triangle face for all boundary faces. After
-  // this loop we will have all tets adjacent to boundary faces, where the
-  // boundary includes all physical boundaries (where the user may assign
-  // boundary conditions via side sets from the mesh file) as well as
-  // chare-boundaries due to domain decomposition.
+  // Generate data structure that associates the id of a tet adjacent to a
+  // boundary triangle face for all (physical and chare) boundary faces
   BndFaces bnd;
   auto oldesuel = tk::genEsuelTet( m_inpoel, tk::genEsup(m_inpoel,4) );
-  for (std::size_t e=0; e<oldesuel.size()/4; ++e) {    // for tets on this chare
-    auto mark = e*4;
+  for (std::size_t e=0; e<oldesuel.size()/4; ++e) {
+    auto m = e*4;
     for (std::size_t f=0; f<4; ++f) {
-      if (oldesuel[mark+f] == -1) {  // if a face does not have an adjacent tet
-        Face b{{ m_ginpoel[ mark+tk::lpofa[f][0] ],
-                 m_ginpoel[ mark+tk::lpofa[f][1] ],
-                 m_ginpoel[ mark+tk::lpofa[f][2] ] }};
-        Tet t{{ m_inpoel[mark+0],
-                m_inpoel[mark+1],
-                m_inpoel[mark+2],
-                m_inpoel[mark+3] }};
-        // associate tet id adjacent to boundary face to boundary face, at this
-        // point we fill in -1 for the side set id, since we don't know it yet
-        auto i = invtets.find( t );
-        Assert( i != end(invtets), "Tet not found in AMR object: " +
-                std::to_string(t[0]) + ',' + std::to_string(t[1]) + ',' +
-                std::to_string(t[2]) + ',' + std::to_string(t[3]) );
-        bnd[ b ] = { -1, i->second };
+      if (oldesuel[m+f] == -1) {  // if a face does not have an adjacent tet
+        Face b{{ m_ginpoel[ m+tk::lpofa[f][0] ],
+                 m_ginpoel[ m+tk::lpofa[f][1] ],
+                 m_ginpoel[ m+tk::lpofa[f][2] ] }};
+        Tet t{{ m_inpoel[m+0], m_inpoel[m+1], m_inpoel[m+2], m_inpoel[m+3] }};
+        // associate tet id to adjacent (physical or chare) boundary face
+        bnd[b] = tk::cref_find(invtets,t);
       }
     }
-  }
-
-  // Assign side set ids to faces on the physical boundary only. Note that
-  // m_bface may be empty and that is okay, in that case bnd will contain data
-  // on both chare as well as physical boundaries and the side set id in the map
-  // value will stay at -1.
-  for (const auto& ss : m_bface)  // for all phsyical boundaries (sidesets)
-    for (auto f : ss.second) {    // for all faces on this physical boundary
-      Face t{{ m_triinpoel[f*3+0], m_triinpoel[f*3+1], m_triinpoel[f*3+2] }};
-      auto cf = bnd.find( t );
-      if (cf != end(bnd)) cf->second.first = ss.first;
-    }
-
-  // Remove chare-boundary faces (to which the above loop did not assign set
-  // id), but only if the above loop was run, i.e., if m_bface was not empty.
-  // This results in removing the chare-boundary faces keeping only the physical
-  // boundary faces (and their associated side set id and tet id).
-  if (!m_bface.empty()) {
-    auto bndcopy = bnd;
-    for (const auto& f : bndcopy)
-      if (f.second.first == -1)
-        bnd.erase( f.first );
   }
 
   return bnd;
@@ -1170,6 +1136,15 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
   // face id counter
   std::size_t facecnt = 0;
 
+  // Generate unique set of faces for each side set
+  std::unordered_map< int, tk::UnsMesh::FaceSet > bfaceset;
+  for (const auto& ss : m_bface) {  // for all phsyical boundaries (sidesets)
+    auto& faces = bfaceset[ ss.first ];
+    for (auto f : ss.second)
+      faces.insert(
+        {{ m_triinpoel[f*3+0], m_triinpoel[f*3+1], m_triinpoel[f*3+2] }} );
+  }
+
   // Lambda to associate a boundary face and connectivity to a side set.
   // Parameter 's' is the list of faces (ids) to add new face to. Parameter 'f'
   // is the triangle face connecttivity to add.
@@ -1178,6 +1153,17 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
   {
     s.push_back( facecnt++ );
     triinpoel.insert( end(triinpoel), begin(f), end(f) );
+  };
+
+  // Lambda to find a boundary face among the face lists of side sets. Return
+  // side set id as a vector in which the face is found (or an empty vector if
+  // the node was not found).
+  auto bndFace = [ &bfaceset ]( const tk::UnsMesh::Face& t ){
+    std::vector< int > ss;
+    for (const auto& s : bfaceset)  // for all phsyical boundaries (sidesets)
+      if (s.second.find(t) != end(s.second))
+        ss.push_back( s.first );
+    return ss;
   };
 
   // Lambda to find the nodes of the parent face of a child face. Argument
@@ -1208,23 +1194,23 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
   };
 
   // Regenerate boundary faces after refinement step
-  for (const auto& f : bnd)     // for all boundary faces
-    if (f.second.first != -1) { // for all physical boundary faces
+  for (const auto& f : bnd) {  // for all boundary faces
+    for (const auto& ss : bndFace(f.first)) {  // for side sets of face f.first
       // construct face of old mesh boundary face using local ids
       Face oldface{{ tk::cref_find( m_lid, f.first[0] ),
                      tk::cref_find( m_lid, f.first[1] ),
                      tk::cref_find( m_lid, f.first[2] ) }};
       // will associate to side set id of old (unrefined) mesh boundary face
-      auto& sideface = bface[ f.second.first ];
+      auto& sideface = bface[ ss ];
       // query number of children of boundary tet adjacent to boundary face
-      auto nc = m_refiner.tet_store.data( f.second.second ).num_children;
+      auto nc = m_refiner.tet_store.data( f.second ).num_children;
       if (nc == 0) {    // if boundary tet is not refined, add its boundary face
         addBndFace( sideface, f.first );
       } else {          // if boundary tet is refined
         const auto& tets = m_refiner.tet_store.tets;
         for (decltype(nc) i=0; i<nc; ++i ) {      // for all child tets
           // get child tet id
-          auto childtet = m_refiner.tet_store.get_child_id( f.second.second, i );
+          auto childtet = m_refiner.tet_store.get_child_id( f.second, i );
           auto ct = tets.find( childtet );
           Assert( ct != end(tets), "Child tet not found" );
           // ensure all nodes of child tet are in refined mesh
@@ -1257,6 +1243,7 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
         }
       }
     }
+  }
 
   // Update boundary face data structures
   m_bface = std::move(bface);
@@ -1280,9 +1267,6 @@ Refiner::updateBndNodes( const std::unordered_set< std::size_t >& old,
 
   using Edge = tk::UnsMesh::Edge;
 
-  // storage for boundary nodes associated to side-set IDs of the refined mesh
-  decltype(m_bnode) bnode;              // will become m_node
-
   // Generate unique set of nodes for each side set
   std::unordered_map< int, std::unordered_set< std::size_t > > bnodeset;
   for (const auto& ss : m_bnode)  // for all phsyical boundaries (sidesets)
@@ -1298,7 +1282,7 @@ Refiner::updateBndNodes( const std::unordered_set< std::size_t >& old,
 
   // Lambda to find a global node ID among the nodelists of side sets. Return
   // all side set ids in which the node is found (or an empty vector if the
-  // node was not found.
+  // node was not found).
   auto bndNode = [ &bnodeset ]( std::size_t p ){
     std::vector< int > ss;
     for (const auto& s : bnodeset)  // for all phsyical boundaries (sidesets)
@@ -1307,11 +1291,13 @@ Refiner::updateBndNodes( const std::unordered_set< std::size_t >& old,
     return ss;
   };
 
+  // storage for boundary nodes associated to side-set IDs of the refined mesh
+  decltype(m_bnode) bnode;              // will become m_node
 
   // Regenerate boundary node lists after refinement step
   for (const auto& f : bnd) {
     // query number of children of boundary tet adjacent to boundary face
-    auto nc = m_refiner.tet_store.data( f.second.second ).num_children;
+    auto nc = m_refiner.tet_store.data( f.second ).num_children;
     if (nc == 0) {  // if boundary tet is not refined, add its boundary node
       for (auto n : f.first) {
         auto ss = bndNode( n );
@@ -1321,7 +1307,7 @@ Refiner::updateBndNodes( const std::unordered_set< std::size_t >& old,
       const auto& tets = m_refiner.tet_store.tets;
       for (decltype(nc) i=0; i<nc; ++i ) {      // for all child tets
         // get child tet id
-        auto childtet = m_refiner.tet_store.get_child_id( f.second.second, i );
+        auto childtet = m_refiner.tet_store.get_child_id( f.second, i );
         auto ct = tets.find( childtet );
         Assert( ct != end(tets), "Child tet not found" );
         // ensure all nodes of child tet are in refined mesh

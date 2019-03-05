@@ -150,17 +150,11 @@ class Refiner : public CBase_Refiner {
     //@}
 
   private:
-    //! \brief Used to associate a pair of side set id and adjacent tet id to a
-    //!   boundary triangle face
+    //! Used to associate a tet id (value) to a boundary triangle face (key)
     using BndFaces = std::unordered_map< tk::UnsMesh::Face,
-                                         std::pair< int, std::size_t >,
+                                         std::size_t,
                                          tk::UnsMesh::Hash<3>,
                                          tk::UnsMesh::Eq<3> >;
-
-    //! Unique set of edges
-    using EdgeSet = std::unordered_set< tk::UnsMesh::Edge,
-                                        tk::UnsMesh::Hash<2>,
-                                        tk::UnsMesh::Eq<2> >;
 
     //! Host proxy
     CProxy_Transporter m_host;
@@ -221,7 +215,7 @@ class Refiner : public CBase_Refiner {
     //! Intermediate nodes
     std::unordered_set< size_t> m_intermediates;
     //! Boundary edges associated to chares we share these edges with
-    std::unordered_map< int, EdgeSet > m_bndEdges;
+    std::unordered_map< int, tk::UnsMesh::EdgeSet > m_bndEdges;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!    worker chares associated to their chare IDs
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
