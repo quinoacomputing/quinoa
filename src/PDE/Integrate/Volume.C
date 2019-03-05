@@ -91,16 +91,15 @@ tk::volInt( ncomp_t system,
       case 1:
         ndof_el = 4;
         break;
+      case 2:
+        ndof_el = 10;
+        break;
     }
 
     if(ndof_el > 1)
     {
       auto ng = tk::NGvol(ndof_el);
-      //std::size_t ng = 1;
-      //std::cout << "finish gp for volint " << std::endl;
-      //std::cout << "ng = " << ng << std::endl;   
  
-      //std::size_t ng = 5; 
       // arrays for quadrature points
       std::array< std::vector< real >, 3 > coordgp;
       std::vector< real > wgp;

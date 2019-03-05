@@ -162,6 +162,9 @@ ElemDiagnostics::compute_diag( const Discretization& d,
       case 1:
         ndof_el = 4;
         break;
+      case 2:
+        ndof_el = 10;
+        break;
     } 
     
     auto ng = tk::NGdiag(ndof_el);
