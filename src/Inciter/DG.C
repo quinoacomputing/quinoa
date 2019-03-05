@@ -801,7 +801,7 @@ DG::adj()
   m_lhs.resize( m_nunk );
   m_rhs.resize( m_nunk );
   m_limFunc.resize( m_nunk );
-  m_pIndex.resize(m_nunk,1);
+  //m_pIndex.resize( m_nunk,1 );
   //std::cout << "This m_nunk = " << m_nunk << std::endl;
 
   // Ensure that we also have all the geometry and connectivity data 
@@ -1480,7 +1480,6 @@ DG::step()
   }
 }
 
-<<<<<<< HEAD
 void DG::eval_ndofel()
 // *****************************************************************************
 //  Calculate the element mark for p-adaptive
@@ -1491,27 +1490,6 @@ void DG::eval_ndofel()
   const auto ncomp= m_u.nprop()/ndof;
   const auto& inpoel = Disc()->Inpoel();
   const auto& coord = Disc()->Coord();
-
-=======
-void DG::eval_pIndex( const tk::Fields& U,
-                      std::vector< std::size_t >& pIndex)
-// *****************************************************************************
-//  Calculate the element mark for p-adaptive
-//! \param[in] U Numerical solutions
-//! \param[in,out] pIndex Vector of element mark
-// *****************************************************************************
-{
-  const auto& esuf = m_fd.Esuf();
-  const auto& esuel = m_fd.Esuel();
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-  const auto ncomp= U.nprop()/ndof;
-  const auto& inpoel = Disc()->Inpoel();
-  const auto& coord = Disc()->Coord();
-
-  //Assert( pIndex.size() == esuel.size()/4, "Size not match for pIndex in eval_pIndex");
-  //std::cout << "esuel.size()/4 = " << esuel.size()/4 << std::endl;
-
-  std::size_t it(0);
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
