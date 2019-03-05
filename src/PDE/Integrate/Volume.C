@@ -57,6 +57,9 @@ tk::volInt( ncomp_t system,
   const auto& cy = coord[1];
   const auto& cz = coord[2];
 
+  //std::cout << "start gp for volint " << std::endl;
+  //std::cout << "U.nunk() = " << U.nunk() << std::endl;
+  //std::cout << "pIndex.size() = " << pIndex.size() << std::endl;
   // compute volume integrals
   for (std::size_t e=0; e<U.nunk(); ++e)
   {
