@@ -20,6 +20,13 @@
 #include <array>
 
 #include "Basis.h"
+#include "Inciter/InputDeck/InputDeck.h"
+
+namespace inciter {
+
+extern ctr::InputDeck g_inputdeck;
+
+} // inciter::
 
 std::array< tk::real, 3 >
 tk::eval_gp ( const std::size_t igp,
@@ -310,7 +317,7 @@ tk::eval_basis( const std::size_t ndof,
 std::vector< tk::real >
 tk::eval_state ( ncomp_t ncomp,
                  ncomp_t offset,
-                 const std::size_t ndof,
+                 const std::size_t ndof_el,
                  const std::size_t e,
                  const Fields& U,
                  const Fields& limFunc,
@@ -327,7 +334,9 @@ tk::eval_state ( ncomp_t ncomp,
 //! \return Vector of state variable for tetrahedron element
 // *****************************************************************************
 {
-  Assert( B.size() == ndof, "Size mismatch" );
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+
+  Assert( B.size() == ndof_el, "Size mismatch" );
 
   // Array of state variable for tetrahedron element
   std::vector< tk::real > state( ncomp );
@@ -337,7 +346,7 @@ tk::eval_state ( ncomp_t ncomp,
     auto mark = c*ndof;
     state[c] = U( e, mark, offset );
 
-    if(ndof > 1)        //DG(P1)
+    if(ndof_el > 1)        //DG(P1)
     {
       auto lmark = c*(ndof-1);
       state[c] += limFunc( e, lmark  , 0 ) * U( e, mark+1, offset ) * B[1]
@@ -345,7 +354,7 @@ tk::eval_state ( ncomp_t ncomp,
                 + limFunc( e, lmark+2, 0 ) * U( e, mark+3, offset ) * B[3];
     }
 
-    if(ndof > 4)        //DG(P2)
+    if(ndof_el > 4)        //DG(P2)
     {
       state[c] += U( e, mark+4, offset ) * B[4]
                 + U( e, mark+5, offset ) * B[5]

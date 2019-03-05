@@ -42,6 +42,7 @@ tk::bndSurfInt( ncomp_t system,
                 const StateFn& state,
                 const Fields& U,
                 const Fields& limFunc,
+                const std::vector< std::size_t >& pIndex,
                 Fields& R )
 // *****************************************************************************
 //! Compute boundary surface flux integrals for a given boundary type for DG
@@ -69,21 +70,21 @@ tk::bndSurfInt( ncomp_t system,
   const auto& bface = fd.Bface();
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  //const auto ndof_l = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
 
-  // Number of quadrature points for face integration
-  auto ng = tk::NGfa(ndof);
+  //// Number of quadrature points for face integration
+  //auto ng = tk::NGfa(ndof_l);
 
-  // arrays for quadrature points
-  std::array< std::vector< real >, 2 > coordgp;
-  std::vector< real > wgp;
+  //// arrays for quadrature points
+  //std::array< std::vector< real >, 2 > coordgp;
+  //std::vector< real > wgp;
 
-  coordgp[0].resize( ng );
-  coordgp[1].resize( ng );
-  wgp.resize( ng );
+  //coordgp[0].resize( ng );
+  //coordgp[1].resize( ng );
+  //wgp.resize( ng );
 
-  // get quadrature point weights and coordinates for triangle
-  GaussQuadratureTri( ng, coordgp, wgp );
+  //// get quadrature point weights and coordinates for triangle
+  //GaussQuadratureTri( ng, coordgp, wgp );
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -98,6 +99,33 @@ tk::bndSurfInt( ncomp_t system,
         Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
 
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+
+        std::size_t ndof_l;
+        switch(pIndex[el])
+        {   
+          case 0:
+            ndof_l = 1;
+            break;
+          case 1:
+            ndof_l = 4;
+            break; 
+        }   
+
+        //if(ndof_l != 1)
+          //std::cout << "ng is wrong" << std::endl;
+
+        auto ng = tk::NGfa(ndof_l);
+
+        // arrays for quadrature points
+        std::array< std::vector< real >, 2 > coordgp;
+        std::vector< real > wgp;
+
+        coordgp[0].resize( ng );
+        coordgp[1].resize( ng );
+        wgp.resize( ng );
+
+        // get quadrature point weights and coordinates for triangle
+        GaussQuadratureTri( ng, coordgp, wgp );
 
         // Extract the left element coordinates
         std::array< std::array< tk::real, 3>, 4 > coordel_l {{
@@ -126,7 +154,7 @@ tk::bndSurfInt( ncomp_t system,
           auto gp = eval_gp( igp, coordfa, coordgp );
 
           //Compute the basis functions for the left element
-          auto B_l = eval_basis( ndof,
+          auto B_l = eval_basis( ndof_l,
             Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
             Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
             Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l );
@@ -134,7 +162,7 @@ tk::bndSurfInt( ncomp_t system,
           auto wt = wgp[igp] * geoFace(f,0,0);
 
           // Compute the state variables at the left element
-          auto ugp = eval_state( ncomp, offset, ndof, el, U, limFunc, B_l );
+          auto ugp = eval_state( ncomp, offset, ndof_l, el, U, limFunc, B_l );
 
           Assert( ugp.size() == ncomp, "Size mismatch" );
 
@@ -144,7 +172,7 @@ tk::bndSurfInt( ncomp_t system,
                       vel( system, ncomp, gp[0], gp[1], gp[2] ) );
 
           // Add the surface integration term to the rhs
-          update_rhs_bc( ncomp, offset, ndof, wt, el, fl, B_l, R );
+          update_rhs_bc( ncomp, offset, ndof_l, wt, el, fl, B_l, R );
         }
       }
     }
@@ -154,7 +182,7 @@ tk::bndSurfInt( ncomp_t system,
 void
 tk::update_rhs_bc ( ncomp_t ncomp,
                     ncomp_t offset,
-                    const std::size_t ndof,
+                    const std::size_t ndof_l,
                     const tk::real wt,
                     const std::size_t el,
                     const std::vector< tk::real >& fl,
@@ -172,21 +200,23 @@ tk::update_rhs_bc ( ncomp_t ncomp,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  Assert( B_l.size() == ndof, "Size mismatch" );
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+ 
+  Assert( B_l.size() == ndof_l, "Size mismatch" );
 
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
     R(el, mark, offset) -= wt * fl[c];
 
-    if(ndof > 1)          //DG(P1)
+    if(ndof_l > 1)          //DG(P1)
     {
       R(el, mark+1, offset) -= wt * fl[c] * B_l[1];
       R(el, mark+2, offset) -= wt * fl[c] * B_l[2];
       R(el, mark+3, offset) -= wt * fl[c] * B_l[3];
     }
 
-    if(ndof > 4)          //DG(P2)
+    if(ndof_l > 4)          //DG(P2)
     {
       R(el, mark+4, offset) -= wt * fl[c] * B_l[4];
       R(el, mark+5, offset) -= wt * fl[c] * B_l[5];
