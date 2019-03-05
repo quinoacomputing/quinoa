@@ -1150,6 +1150,12 @@ DG::writeFields( CkCallback c )
   for (const auto& eq : g_dgpde) {
     auto o =
       eq.fieldOutput( d->T(), m_geoElem, u );
+
+    // Add adaptive indicator array to output
+    std::vector<tk::real> pIndex_f(m_nunk,0);
+    std::copy ( begin(m_pIndex), end(m_pIndex), begin(pIndex_f) );
+    o.push_back(pIndex_f);
+
     // cut off ghost elements
     for (auto& field : o) field.resize( esuel.size()/4 );
     fields.insert( end(fields), begin(o), end(o) );
