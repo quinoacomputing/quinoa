@@ -108,6 +108,9 @@ tk::bndSurfInt( ncomp_t system,
             break;
           case 1:
             ndof_l = 4;
+            break;
+          case 2:
+            ndof_l = 10;
             break; 
         }   
 

@@ -801,7 +801,7 @@ DG::adj()
   m_lhs.resize( m_nunk );
   m_rhs.resize( m_nunk );
   m_limFunc.resize( m_nunk );
-  m_pIndex.resize(m_nunk,1);
+  //m_pIndex.resize( m_nunk,1 );
   //std::cout << "This m_nunk = " << m_nunk << std::endl;
 
   // Ensure that we also have all the geometry and connectivity data 
@@ -873,8 +873,23 @@ DG::setup( tk::real v )
 
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   const auto psign = inciter::g_inputdeck.get< tag::discr, tag::psign >();
-  std::cout << "ndof = " << ndof << std::endl;
-  std::cout << "psign = " << psign << std::endl;
+
+  //m_pIndex.resize( m_nunk,1 );
+  // Initialize the array of adaptive indicator
+  if( psign == true )             // Adaptive on
+    m_pIndex.resize( m_nunk,1 );
+  else                            // Adaptive off
+  {
+    switch(ndof)
+    {
+      case 1: m_pIndex.resize( m_nunk,0 );
+              break;
+      case 4: m_pIndex.resize( m_nunk,1 );
+              break;
+      case 10: m_pIndex.resize( m_nunk,2 );
+               break;
+    }
+  }
 
   // Compute left-hand side of discrete PDEs
   lhs();
@@ -1298,8 +1313,13 @@ DG::solve( tk::real newdt )
     auto diag_computed = m_diag.compute( *d, m_u.nunk()-m_fd.Esuel().size()/4,
                                          m_geoElem, m_pIndex, m_u );
 
-    eval_pIndex(m_u, m_pIndex);
-    correct(m_u, m_pIndex);
+    const auto psign = inciter::g_inputdeck.get< tag::discr, tag::psign >();
+
+    if(psign == true)
+    {
+      eval_pIndex(m_u, m_pIndex);
+      correct(m_u, m_pIndex);
+    }
 
     // Increase number of iterations and physical time
     d->next();
