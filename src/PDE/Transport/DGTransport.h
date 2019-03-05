@@ -207,6 +207,7 @@ class Transport {
     //! \details This functions should be written in conjunction with
     //!   fieldOutput(), which provides the vector of fields to be output
     std::vector< std::string > fieldNames() const {
+      const auto psign = g_inputdeck.get< tag::discr, tag::psign >();
       std::vector< std::string > n;
       const auto& depvar =
       g_inputdeck.get< tag::param, eq, tag::depvar >().at(m_system);
@@ -219,6 +220,9 @@ class Transport {
       // will output error for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_error" );
+      if(psign == true)           // Adaptive DG on
+        // will output adaptive indicator
+        n.push_back( "Adaptive indicator" );
       return n;
     }
 
