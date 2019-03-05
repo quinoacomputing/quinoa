@@ -130,6 +130,7 @@ class MultiMat {
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& limFunc,
+              const std::vector< std::size_t >& pIndex,
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
@@ -162,21 +163,22 @@ class MultiMat {
 
       // compute internal surface flux integrals
       tk::surfInt( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                   rieflxfn, velfn, U, limFunc, R );
+                   rieflxfn, velfn, U, limFunc, pIndex, R );
 
       // compute source term intehrals
       tk::srcInt( m_system, m_ncomp, m_offset,
-                  t, inpoel, coord, geoElem, Problem::src, R );
+                  t, inpoel, coord, geoElem, Problem::src, pIndex, R );
 
       if(ndof > 1)
         // compute volume integrals
         tk::volInt( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
-                    velfn, U, limFunc, R );
+                    velfn, U, limFunc, pIndex, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
         tk::bndSurfInt( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
-          inpoel, coord, t, rieflxfn, velfn, b.second, U, limFunc, R );
+                        inpoel, coord, t, rieflxfn, velfn, b.second, U, 
+                        limFunc, pIndex, R );
     }
 
     //! Compute the minimum time step size

@@ -38,6 +38,7 @@ tk::surfInt( ncomp_t system,
              const VelFn& vel,
              const Fields& U,
              const Fields& limFunc,
+             const std::vector< std::size_t >& pIndex,
              Fields& R )
 // *****************************************************************************
 //  Compute internal surface flux integrals
@@ -55,23 +56,23 @@ tk::surfInt( ncomp_t system,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  //const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
 
-  // Number of quadrature points for face integration
-  auto ng = tk::NGfa(ndof);
+  //// Number of quadrature points for face integration
+  //auto ng = tk::NGfa(ndof);
 
-  // arrays for quadrature points
-  std::array< std::vector< real >, 2 > coordgp;
-  std::vector< real > wgp;
+  //// arrays for quadrature points
+  //std::array< std::vector< real >, 2 > coordgp;
+  //std::vector< real > wgp;
 
-  coordgp[0].resize( ng );
-  coordgp[1].resize( ng );
-  wgp.resize( ng );
+  //coordgp[0].resize( ng );
+  //coordgp[1].resize( ng );
+  //wgp.resize( ng );
 
-  // get quadrature point weights and coordinates for triangle
-  GaussQuadratureTri( ng, coordgp, wgp );
+  //// get quadrature point weights and coordinates for triangle
+  //GaussQuadratureTri( ng, coordgp, wgp );
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -85,6 +86,44 @@ tk::surfInt( ncomp_t system,
 
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
     std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+
+    std::size_t ndof_l, ndof_r;
+    switch(pIndex[el])
+    {   
+      case 0:
+        ndof_l = 1;
+        break;
+      case 1:
+        ndof_l = 4;
+        break; 
+    }   
+
+    switch(pIndex[er])
+    {
+      case 0:
+        ndof_r = 1;
+        break;
+      case 1:
+        ndof_r = 4;
+        break;
+    }
+
+    std::size_t ng;
+    if(pIndex[el] == 0 && pIndex[er] == 0)
+      ng = tk::NGfa(1);
+    else
+      ng = tk::NGfa(4);
+
+    // arrays for quadrature points
+    std::array< std::vector< real >, 2 > coordgp;
+    std::vector< real > wgp;
+
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    wgp.resize( ng );
+
+    // get quadrature point weights and coordinates for triangle
+    GaussQuadratureTri( ng, coordgp, wgp );
 
     // Extract the element coordinates
     std::array< std::array< tk::real, 3>, 4 > coordel_l {{ 
@@ -128,11 +167,11 @@ tk::surfInt( ncomp_t system,
       //  zeta = Jacobian( coordel[0], coordel[2], coordel[3], gp ) / detT
 
       //Compute the basis functions
-      auto B_l = eval_basis( ndof,
+      auto B_l = eval_basis( ndof_l,
             Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
             Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
             Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l );
-      auto B_r = eval_basis( ndof,
+      auto B_r = eval_basis( ndof_r,
             Jacobian( coordel_r[0], gp, coordel_r[2], coordel_r[3] ) / detT_r,
             Jacobian( coordel_r[0], coordel_r[1], gp, coordel_r[3] ) / detT_r,
             Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r );
@@ -141,8 +180,8 @@ tk::surfInt( ncomp_t system,
 
       std::array< std::vector< real >, 2 > state;
 
-      state[0] = eval_state( ncomp, offset, ndof, el, U, limFunc, B_l );
-      state[1] = eval_state( ncomp, offset, ndof, er, U, limFunc, B_r );
+      state[0] = eval_state( ncomp, offset, ndof_l, el, U, limFunc, B_l );
+      state[1] = eval_state( ncomp, offset, ndof_r, er, U, limFunc, B_r );
 
       Assert( state[0].size() == ncomp, "Size mismatch" );
       Assert( state[1].size() == ncomp, "Size mismatch" );
@@ -155,7 +194,7 @@ tk::surfInt( ncomp_t system,
          flux( {{geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0)}}, state, v );
 
       // Add the surface integration term to the rhs
-      update_rhs_fa( ncomp, offset, ndof, wt, el, er, fl, B_l, B_r, R );
+      update_rhs_fa( ncomp, offset, ndof_l, ndof_r, wt, el, er, fl, B_l, B_r, R );
     }
   }
 }
@@ -163,7 +202,8 @@ tk::surfInt( ncomp_t system,
 void
 tk::update_rhs_fa ( ncomp_t ncomp,
                     ncomp_t offset,
-                    const std::size_t ndof,
+                    const std::size_t ndof_l,
+                    const std::size_t ndof_r,
                     const tk::real wt,
                     const std::size_t el,
                     const std::size_t er,
@@ -185,8 +225,10 @@ tk::update_rhs_fa ( ncomp_t ncomp,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  Assert( B_l.size() == ndof, "Size mismatch" );
-  Assert( B_r.size() == ndof, "Size mismatch" );
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+
+  Assert( B_l.size() == ndof_l, "Size mismatch" );
+  Assert( B_r.size() == ndof_r, "Size mismatch" );
 
   for (ncomp_t c=0; c<ncomp; ++c)
   {
@@ -194,18 +236,21 @@ tk::update_rhs_fa ( ncomp_t ncomp,
     R(el, mark, offset) -= wt * fl[c];
     R(er, mark, offset) += wt * fl[c];
 
-    if(ndof > 1)          //DG(P1)
+    if(ndof_l > 1)          //DG(P1)
     {
       R(el, mark+1, offset) -= wt * fl[c] * B_l[1];
       R(el, mark+2, offset) -= wt * fl[c] * B_l[2];
       R(el, mark+3, offset) -= wt * fl[c] * B_l[3];
+    }
 
+    if(ndof_r > 1)          //DG(P1)
+    {
       R(er, mark+1, offset) += wt * fl[c] * B_r[1];
       R(er, mark+2, offset) += wt * fl[c] * B_r[2];
       R(er, mark+3, offset) += wt * fl[c] * B_r[3];
     }
 
-    if(ndof > 4)          //DG(P2)
+    if(ndof_l > 4)          //DG(P2)
     {
       R(el, mark+4, offset) -= wt * fl[c] * B_l[4];
       R(el, mark+5, offset) -= wt * fl[c] * B_l[5];
@@ -213,7 +258,10 @@ tk::update_rhs_fa ( ncomp_t ncomp,
       R(el, mark+7, offset) -= wt * fl[c] * B_l[7];
       R(el, mark+8, offset) -= wt * fl[c] * B_l[8];
       R(el, mark+9, offset) -= wt * fl[c] * B_l[9];
+    }
 
+    if(ndof_r > 4)          //DG(P2)
+    {
       R(er, mark+4, offset) += wt * fl[c] * B_r[4];
       R(er, mark+5, offset) += wt * fl[c] * B_r[5];
       R(er, mark+6, offset) += wt * fl[c] * B_r[6];

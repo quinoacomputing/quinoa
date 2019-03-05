@@ -802,7 +802,7 @@ DG::adj()
   m_rhs.resize( m_nunk );
   m_limFunc.resize( m_nunk );
   m_pIndex.resize(m_nunk,1);
-  std::cout << "This m_nunk = " << m_nunk << std::endl;
+  //std::cout << "This m_nunk = " << m_nunk << std::endl;
 
   // Ensure that we also have all the geometry and connectivity data 
   // (including those of ghosts)
@@ -1275,9 +1275,11 @@ DG::solve( tk::real newdt )
   // Set new time step size
   d->setdt( newdt );
 
+  //std::cout << "start eq.rhs" << std::endl;
   for (const auto& eq : g_dgpde)
-    eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(), m_u,
-            m_limFunc, m_rhs );
+  eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(), m_u,
+          m_limFunc, m_pIndex, m_rhs );
+  //std::cout << "finish eq.rhs" << std::endl;
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   m_u =  m_rkcoef[0][m_stage] * m_un
@@ -1293,8 +1295,8 @@ DG::solve( tk::real newdt )
     thisProxy[ thisIndex ].wait4stage();
 
     // Compute diagnostics, e.g., residuals
-    auto diag_computed =
-      m_diag.compute( *d, m_u.nunk()-m_fd.Esuel().size()/4, m_geoElem, m_u );
+    auto diag_computed = m_diag.compute( *d, m_u.nunk()-m_fd.Esuel().size()/4,
+                                         m_geoElem, m_pIndex, m_u );
 
     eval_pIndex(m_u, m_pIndex);
     correct(m_u, m_pIndex);

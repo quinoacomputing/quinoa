@@ -44,13 +44,14 @@ bndSurfInt( ncomp_t system,
             const StateFn& state,
             const Fields& U,
             const Fields& limFunc,
+            const std::vector< std::size_t >& pIndex,
             Fields& R );
 
 //! Update the rhs by adding the boundary surface integration term
 void
 update_rhs_bc ( ncomp_t ncomp,
                 ncomp_t offset,
-                const std::size_t ndof,
+                const std::size_t ndof_l,
                 const tk::real wt,
                 const std::size_t el,
                 const std::vector< tk::real >& fl,
