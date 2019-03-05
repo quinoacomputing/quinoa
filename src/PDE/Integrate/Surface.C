@@ -95,6 +95,9 @@ tk::surfInt( ncomp_t system,
         break;
       case 1:
         ndof_l = 4;
+        break;
+      case 2:
+        ndof_l = 10;
         break; 
     }   
 
@@ -106,13 +109,18 @@ tk::surfInt( ncomp_t system,
       case 1:
         ndof_r = 4;
         break;
+      case 2:
+        ndof_r = 10;
+        break;
     }
 
+    auto ng_l = tk::NGfa(ndof_l);
+    auto ng_r = tk::NGfa(ndof_r);
     std::size_t ng;
-    if(pIndex[el] == 0 && pIndex[er] == 0)
-      ng = tk::NGfa(1);
+    if( ng_l > ng_r )
+      ng = ng_l;
     else
-      ng = tk::NGfa(4);
+      ng = ng_r;
 
     // arrays for quadrature points
     std::array< std::vector< real >, 2 > coordgp;

@@ -81,6 +81,9 @@ tk::srcInt( ncomp_t system,
       case 1:
         ndof_el = 4;
         break;
+      case 2:
+        ndof_el = 10;
+        break;
     }
 
     auto ng = tk::NGvol(ndof_el);
