@@ -52,6 +52,7 @@ namespace AMR {
                 assert( master_element.refinement_case !=
                         Refinement_Case::one_to_four);
 
+                // cppcheck-suppress assertWithSideEffect
                 assert( tet_store.is_active(tet_id) );
 
                 // Check this won't take us past the max refinement level

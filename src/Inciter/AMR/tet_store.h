@@ -133,6 +133,7 @@ namespace AMR {
              */
             void insert(size_t id, tet_t t)
             {
+                // cppcheck-suppress assertWithSideEffect
                 assert( !exists(id) );
                 tets.insert( std::pair<size_t, tet_t>(id, t));
             }
@@ -146,6 +147,7 @@ namespace AMR {
              */
             tet_t get( size_t id )
             {
+                // cppcheck-suppress assertWithSideEffect
                 assert( exists(id) );
                 return tets.at(id);
             }
@@ -326,6 +328,7 @@ namespace AMR {
              */
             void add_center(size_t id)
             {
+                // cppcheck-suppress assertWithSideEffect
                 assert( !is_center(id) );
                 center_tets.insert(id);
             }

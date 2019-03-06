@@ -134,7 +134,7 @@ namespace AMR {
        auto& local = tet_store.edge_store;
        for (const auto& e : edges)
        {
-           auto& edgeref = local.get( e.first );
+           auto& edgeref = local.get( edge_t(e.first) );
            edgeref.needs_refining = e.second.first;
            edgeref.lock_case = e.second.second;
        }
@@ -277,7 +277,6 @@ namespace AMR {
 
                 // Only apply checks to tets on the active list
                 if (tet_store.is_active(tet_id)) {
-                    int compatibility = 1;
                     int num_locked_edges = 0;
                     int num_intermediate_edges = 0;
 
@@ -337,7 +336,7 @@ namespace AMR {
                     {
                         //Determine compatibility case
 
-                        compatibility = detect_compatibility(num_locked_edges,
+                        int compatibility = detect_compatibility(num_locked_edges,
                                 num_intermediate_edges, refinement_case, normal);
 
                         trace_out << "Compat " << compatibility << std::endl;
@@ -418,7 +417,6 @@ namespace AMR {
         for (const auto& kv : tet_store.tets)
         {
             size_t tet_id = kv.first;
-            size_t parent_id = 0;
 
             trace_out << "Do refine of " << tet_id << std::endl;
             if (tet_store.has_refinement_decision(tet_id))
@@ -435,12 +433,11 @@ namespace AMR {
                         refiner.refine_one_to_eight(tet_store,node_connectivity,tet_id);
                         break;
                     case AMR::Refinement_Case::two_to_eight:
-                        parent_id = tet_store.get_parent_id(tet_id);
-                        round_two.insert(parent_id);
+                        tet_store.get_parent_id(tet_id);
+                        round_two.insert( tet_store.get_parent_id(tet_id) );
                         break;
                     case AMR::Refinement_Case::four_to_eight:
-                        parent_id = tet_store.get_parent_id(tet_id);
-                        round_two.insert(parent_id);
+                        round_two.insert( tet_store.get_parent_id(tet_id));
                         break;
                     case AMR::Refinement_Case::initial_grid:
                         // Do nothing

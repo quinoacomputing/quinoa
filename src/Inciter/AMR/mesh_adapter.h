@@ -28,7 +28,7 @@ namespace AMR {
             mesh_adapter_t() {}
 
             //! Constructor taking a mesh graph
-            mesh_adapter_t( const std::vector< std::size_t >& inpoel ) :
+            explicit mesh_adapter_t( const std::vector< std::size_t >& inpoel ) :
                 node_connectivity( tk::npoin_in_graph(inpoel) )
             {
                 consume_tets( inpoel );

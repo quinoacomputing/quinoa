@@ -205,6 +205,7 @@ namespace AMR {
              */
             coordinate_t id_to_coordinate(size_t id)
             {
+                // cppcheck-suppress assertWithSideEffect
                 assert( id < size());
 
                 // Note: extra braces are to appease Clangs warning generator.

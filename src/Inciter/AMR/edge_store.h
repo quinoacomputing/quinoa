@@ -93,11 +93,12 @@ namespace AMR {
             Edge_Refinement& get(edge_t key)
             {
                 //trace_out << "get edge " << key << std::endl;
+                // cppcheck-suppress assertWithSideEffect
                 assert( exists(key) );
                 return edges[key];
             }
 
-            Edge_Lock_Case lock_case(edge_t key)
+            Edge_Lock_Case lock_case(const edge_t& key)
             {
                 return get(key).lock_case;
             }
@@ -194,10 +195,11 @@ namespace AMR {
              *
              * @param key The edge key to mark as refinement
              */
-            void mark_for_refinement(edge_t key)
+            void mark_for_refinement(const edge_t& key)
             {
-                    assert( exists(key) );
-                    get(key).needs_refining = true;
+                // cppcheck-suppress assertWithSideEffect
+                assert( exists(key) );
+                get(key).needs_refining = true;
             }
 
             /**
@@ -205,10 +207,11 @@ namespace AMR {
              *
              * @param key The key representing the edge to unmark
              */
-            void unmark_for_refinement(edge_t key)
+            void unmark_for_refinement(const edge_t& key)
             {
-                    assert( exists(key) );
-                    get(key).needs_refining = false;
+                // cppcheck-suppress assertWithSideEffect
+                assert( exists(key) );
+                get(key).needs_refining = false;
             }
 
             /**
@@ -225,7 +228,7 @@ namespace AMR {
                     mark_edge_for_derefinement(key);
                 }
             }
-            void mark_edge_for_derefinement(edge_t key) {
+            void mark_edge_for_derefinement(const edge_t& key) {
                     get(key).needs_derefining = true;
             }
 
