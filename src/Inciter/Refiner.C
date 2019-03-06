@@ -78,7 +78,9 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_bndEdges(),
   m_msumset(),
   m_oldTetIdMap(),
-  m_addedNodes()
+  m_oldTets(),
+  m_addedNodes(),
+  m_addedTets()
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Transporter (host) proxy
@@ -586,6 +588,10 @@ Refiner::eval()
   // Save old tet id map before performing refinement
   m_oldTetIdMap = m_refiner.tet_store.get_active_id_mapping();
 
+  // Save old tet ids before performing refinement
+  m_oldTets.clear();
+  for (const auto& t : m_refiner.tet_store.tets) m_oldTets.insert( t.first );
+
   m_refiner.perform_refinement();
 
   updateMesh();
@@ -644,7 +650,7 @@ Refiner::next()
       n.insert( end(n), c.second.cbegin(), c.second.cend() );
     }
     boost::apply_visitor(
-      Resize( m_ginpoel, m_el, m_coord, m_addedNodes, msum,
+      Resize( m_ginpoel, m_el, m_coord, m_addedNodes, m_addedTets, msum,
               m_bface, m_bnode, m_triinpoel ), e );
 
   }
@@ -1049,6 +1055,33 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
   Assert( std::none_of( begin(m_gid), end(m_gid), [](std::size_t i){
             return i == std::numeric_limits< std::size_t >::max(); } ),
           "Not all local->global node IDs have been assigned" );
+
+  // Extract new tet ids from AMR object after refinement step
+  const auto& tet_store = m_refiner.tet_store;
+  std::vector< std::size_t > newtets;
+  for (const auto& t : tet_store.tets)
+    if (m_oldTets.find(t.first) == end(m_oldTets))
+      newtets.push_back( t.first );
+
+  // Invert AMR's tet id map
+  std::unordered_map< std::size_t, std::size_t > newids;
+  std::size_t j = 0;
+  for (auto t : m_refiner.tet_store.get_active_id_mapping())
+    newids[t] = j++;
+
+  // Generate child->parent tet id map after refinement step
+  m_addedTets.clear();
+  for (auto n : newtets) {
+     auto parent = tet_store.data( n ).parent_id;
+     Assert( parent < m_oldTets.size(),
+             "Parent tet id will index out of old solution vector" );
+     auto child = tk::cref_find(newids,n);
+     Assert( child < m_oldTets.size() + newtets.size(),
+             "New tet id will index out of new solution vector" );
+     m_addedTets[ child ] = parent;
+  }
+
+  std::cout << thisIndex << ": " << m_addedTets.size() << '\n';
 }
 
 Refiner::BndFaces
@@ -1138,11 +1171,11 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
 
   // Generate unique set of faces for each side set
   std::unordered_map< int, tk::UnsMesh::FaceSet > bfaceset;
-  for (const auto& ss : m_bface) {  // for all phsyical boundaries (sidesets)
-    auto& faces = bfaceset[ ss.first ];
-    for (auto f : ss.second)
+  for (const auto& s : m_bface) {  // for all phsyical boundaries (sidesets)
+    auto& faces = bfaceset[ s.first ];
+    for (auto f : s.second)
       faces.insert(
-        {{ m_triinpoel[f*3+0], m_triinpoel[f*3+1], m_triinpoel[f*3+2] }} );
+        {{{ m_triinpoel[f*3+0], m_triinpoel[f*3+1], m_triinpoel[f*3+2] }}} );
   }
 
   // Lambda to associate a boundary face and connectivity to a side set.
@@ -1156,9 +1189,9 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
   };
 
   // Lambda to find a boundary face among the face lists of side sets. Return
-  // side set id as a vector in which the face is found (or an empty vector if
-  // the node was not found).
-  auto bndFace = [ &bfaceset ]( const tk::UnsMesh::Face& t ){
+  // side set id as a vector of side set ids in which the face is found (or an
+  // empty vector if the node was not found).
+  auto bndFace = [ &bfaceset ]( const Face& t ){
     std::vector< int > ss;
     for (const auto& s : bfaceset)  // for all phsyical boundaries (sidesets)
       if (s.second.find(t) != end(s.second))

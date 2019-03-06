@@ -38,6 +38,11 @@ remap( std::vector< tk::real >& r, const std::vector< std::size_t >& map );
 //! Create remapped vector of indices
 std::vector< std::size_t >
 remap( const std::vector< std::size_t >& id,
+       const std::vector< std::size_t >& map );
+
+//! Create remapped vector of indices
+std::vector< std::size_t >
+remap( const std::vector< std::size_t >& id,
        const std::unordered_map< std::size_t, std::size_t >& map );
 
 //! Reorder mesh points with the advancing front technique

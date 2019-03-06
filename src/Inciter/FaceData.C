@@ -25,7 +25,7 @@ FaceData::FaceData(
 //  Constructor: compute (element-face) data on domain boundary
 //! \param[in] inpoel Mesh connectivity with local IDs
 //! \param[in] bface Boundary-faces mapped to side set ids
-//! \param[in] triinpoel Boundary-face connectivity
+//! \param[in] triinpoel Boundary-face connectivity with local IDs
 // *****************************************************************************
 {
   auto esup = tk::genEsup( inpoel, 4 );

@@ -123,6 +123,11 @@ namespace AMR {
                 return master_elements.get(id);
             }
 
+            const Refinement_State& data(size_t id) const
+            {
+                return master_elements.get(id);
+            }
+
             /**
              * @brief Method to insert tet into the tet store, so the
              * underlying data structure doesn't have to be interfaced with

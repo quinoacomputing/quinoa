@@ -138,6 +138,7 @@ class DG : public CBase_DG {
       const tk::UnsMesh::Chunk& chunk,
       const tk::UnsMesh::Coords& coord,
       const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
+      const std::unordered_map< std::size_t, std::size_t >& addedTets,
       const std::unordered_map< int, std::vector< std::size_t > >& msum,
       const std::map< int, std::vector< std::size_t > >& bface,
       const std::map< int, std::vector< std::size_t > >& bnode,
@@ -196,6 +197,7 @@ class DG : public CBase_DG {
       p | m_diag;
       p | m_stage;
       p | m_initial;
+      p | m_refined;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -282,8 +284,10 @@ class DG : public CBase_DG {
     ElemDiagnostics m_diag;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
-    //! True if starting time stepping, false if during time stepping
+    //! 1 if starting time stepping, 0 if during time stepping
     int m_initial;
+    //! 1 if mesh was refined in a time step, 0 if it was not
+    int m_refined;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

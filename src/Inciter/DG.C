@@ -74,7 +74,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_recvGhost(),
   m_diag(),
   m_stage( 0 ),
-  m_initial( 1 )
+  m_initial( 1 ),
+  m_refined( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -326,10 +327,6 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
     tk::destroy(m_ipface);
 
     // Ensure correct number of expected vs received/found chare-boundary faces
-
-    if ( m_exptNbface != tk::sumvalsize(m_bndFace) )
-      std::cout << thisIndex << ", error: " << m_exptNbface << ", " << tk::sumvalsize(m_bndFace) << std::endl;
-
     Assert( m_exptNbface == tk::sumvalsize(m_bndFace), 
             "Expected and received number of boundary faces mismatch" );
     m_exptNbface = 0;
@@ -1164,13 +1161,7 @@ DG::lhs()
 {
   for (const auto& eq : g_dgpde) eq.lhs( m_geoElem, m_lhs );
 
-  if (!m_initial) {
-
-    // Update solution on new mesh
-    // ...
-
-    stage();
-  }
+  if (!m_initial) stage();
 }
 
 void
@@ -1337,12 +1328,14 @@ DG::refine()
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
-    d->Ref()->dtref( m_fd.Bface(), {}, m_fd.Triinpoel() );
+    d->Ref()->dtref( m_fd.Bface(), {}, tk::remap(m_fd.Triinpoel(),d->Gid()) );
+    m_refined = 1;
 
   } else {      // do not refine
 
     ref_complete();
     resize_complete();
+    m_refined = 0;
 
   }
 }
@@ -1353,6 +1346,7 @@ DG::resize(
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /*addedNodes*/,
+  const std::unordered_map< std::size_t, std::size_t >& addedTets,
   const std::unordered_map< int, std::vector< std::size_t > >& msum,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& /* bnode */,
@@ -1363,6 +1357,7 @@ DG::resize(
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
 //! \param[in] coord New mesh node coordinates
 //! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
+//! \param[in] addedTets Newly added mesh cells and their parents (local ids)
 //! \param[in] msum New node communication map
 //! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] bnode Boundary-node lists mapped to side set ids
@@ -1379,6 +1374,10 @@ DG::resize(
 
   // Increase number of iterations with mesh refinement
   ++d->Itr();
+
+  // Save old number of elements
+  auto oldNelem = d->Inpoel().size()/4;
+  IGNORE(oldNelem);
 
   // Resize mesh data structures
   d->resize( chunk, coord, msum );
@@ -1408,6 +1407,15 @@ DG::resize(
   m_ghostData.clear();
   m_ghost.clear();
 
+  // Update solution on new mesh, P0 (cell center value) only for now
+  for (const auto& e : addedTets) {
+    Assert( e.first < nelem, "Indexing out of new solution vector" );
+    Assert( e.second < oldNelem, "Indexing out of old solution vector" );
+    for (std::size_t c=0; c<nprop; ++c)
+      m_u(e.first,c,0) = m_u(e.second,c,0);
+  }
+  m_un = m_u;
+
   ref_complete();
 
   contribute( CkCallback(CkReductionTarget(Transporter,workresized), d->Tr()) );
@@ -1419,14 +1427,7 @@ DG::reghost()
 // ...
 // *****************************************************************************
 {
-  auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
-  auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
-
-  // if t>0 refinement enabled and we hit the frequency
-  if (dtref && !(Disc()->It() % dtfreq))  // refined
-    resizeComm();
-  else  // did not refine
-    stage();
+  if (m_refined) resizeComm(); else stage();
 }
 
 void

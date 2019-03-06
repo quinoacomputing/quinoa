@@ -116,6 +116,12 @@ namespace AMR {
                 return master_elements.at(id);
             }
 
+            const Refinement_State& get(size_t id) const
+            {
+                assert( exists(id) );
+                return master_elements.at(id);
+            }
+
             /**
              * @brief Function to check if master element entry exists. Useful
              * for debugging access to invalid elements, or trying to re-create
@@ -125,7 +131,7 @@ namespace AMR {
              *
              * @return Bool stating if the element already exists
              */
-            bool exists(size_t id)
+            bool exists(size_t id) const
             {
                 auto f = master_elements.find(id);
                 if (f != master_elements.end())
