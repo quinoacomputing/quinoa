@@ -52,7 +52,7 @@ namespace AMR {
                     size_t active_element_number_in,
                     Refinement_Case refinement_case_in,
                     size_t num_children_in,
-                    child_id_list_t children_in,
+                    const child_id_list_t& children_in,
                     size_t refinement_level_in,
                     size_t child_number_in,
                     size_t parent_id_in

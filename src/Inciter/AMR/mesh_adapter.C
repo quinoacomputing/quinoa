@@ -36,15 +36,15 @@ namespace AMR {
      */
     // TODO: remove graph size and use m.size()
     // TODO: remove these pointers
-    void mesh_adapter_t::init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z)
-    {
-        assert( m_x->size() == m_y->size() );
-        assert( m_x->size() == m_z->size() );
+    //void mesh_adapter_t::init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z)
+    //{
+    //    assert( m_x->size() == m_y->size() );
+    //    assert( m_x->size() == m_z->size() );
 
-        node_store.set_x(*m_x);
-        node_store.set_y(*m_y);
-        node_store.set_z(*m_z);
-    }
+    //    node_store.set_x(*m_x);
+    //    node_store.set_y(*m_y);
+    //    node_store.set_z(*m_z);
+    //}
 #endif
 
     /** @brief Consume an existing mesh, and turn it into the AMRs
@@ -75,22 +75,22 @@ namespace AMR {
      * @brief Place holder function to evaluate error estimate at
      * nodes, and therefor mark things as needing to be refined
      */
-    void mesh_adapter_t::evaluate_error_estimate() {
-        for (auto& kv : tet_store.edge_store.edges)
-        {
-            // Mark them as needing refinement
-            if (kv.second.refinement_criteria > refinement_cut_off)
-            {
-                kv.second.needs_refining = true;
-            }
-            else
-            {
-                // TODO: Check this won't be overwriting valuable
-                // information from last iteration
-                kv.second.needs_refining = false;
-            }
-        }
-    }
+    //void mesh_adapter_t::evaluate_error_estimate() {
+    //    for (auto& kv : tet_store.edge_store.edges)
+    //    {
+    //        // Mark them as needing refinement
+    //        if (kv.second.refinement_criteria > refinement_cut_off)
+    //        {
+    //            kv.second.needs_refining = true;
+    //        }
+    //        else
+    //        {
+    //            // TODO: Check this won't be overwriting valuable
+    //            // information from last iteration
+    //            kv.second.needs_refining = false;
+    //        }
+    //    }
+    //}
 
     /**
      * @brief Helper function to apply uniform refinement to all tets
@@ -1024,21 +1024,21 @@ namespace AMR {
         }
 
     }
-    void mesh_adapter_t::reset_intermediate_edges()
-    {
-        for (const auto& kv : tet_store.tets)
-        {
-            size_t tet_id = kv.first;
+    //void mesh_adapter_t::reset_intermediate_edges()
+    //{
+    //    for (const auto& kv : tet_store.tets)
+    //    {
+    //        size_t tet_id = kv.first;
 
-            trace_out << "Process tet reset " << tet_id << std::endl;
+    //        trace_out << "Process tet reset " << tet_id << std::endl;
 
-            // Only apply checks to tets on the active list
-            if (tet_store.is_active(tet_id)) {
-                // change it from intermediate to locked
-                update_tet_edges_lock_type(tet_id, AMR::Edge_Lock_Case::intermediate, AMR::Edge_Lock_Case::locked);
-            }
-        }
-    }
+    //        // Only apply checks to tets on the active list
+    //        if (tet_store.is_active(tet_id)) {
+    //            // change it from intermediate to locked
+    //            update_tet_edges_lock_type(tet_id, AMR::Edge_Lock_Case::intermediate, AMR::Edge_Lock_Case::locked);
+    //        }
+    //    }
+    //}
 
     void mesh_adapter_t::update_tet_edges_lock_type(size_t tet_id, AMR::Edge_Lock_Case check, AMR::Edge_Lock_Case new_case) {
         edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);

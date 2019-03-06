@@ -50,9 +50,9 @@ namespace AMR {
                 c.resize(count);
                 c[0] = parent_id; // FIXME: Remove this hack which suppresses warning
 
-                // cppcheck-suppress useStlAlgorithm
                 for (auto& i : c)
                 {
+                    // cppcheck-suppress useStlAlgorithm
                     i = get_next_tet_id();
                 }
 

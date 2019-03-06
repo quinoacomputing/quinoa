@@ -1573,7 +1573,7 @@ conforming( const std::vector< std::size_t >& inpoel,
           "Size of inpoel must be divisible by nnpe" );
   Assert( *std::min_element( begin(inpoel), end(inpoel) ) == 0,
           "Node ids should start from zero" );
-  Assert( !coord[0].empty() && !coord[1].empty() && !coord[0].empty(),
+  Assert( !coord[0].empty() && !coord[1].empty() && !coord[2].empty(),
           "Attempt to call conforming() with empty coordinates container" );
 
   using Coord = UnsMesh::Coord;

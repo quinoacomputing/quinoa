@@ -900,8 +900,8 @@ namespace AMR {
             // TODO: set a flag for the curious user to know we trashed the children
             void overwrite_children(
                     tet_store_t& tet_store,
-                    child_id_list_t to_be_replaced,
-                    child_id_list_t replace_with
+                    const child_id_list_t& to_be_replaced,
+                    const child_id_list_t& replace_with
             )
             {
                 for (auto c : to_be_replaced)

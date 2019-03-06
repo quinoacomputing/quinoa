@@ -1335,6 +1335,7 @@ namespace grm {
   //!   between values
   template< class key, class insert, class endkeyword,
             class starter, class value = number >
+  // cppcheck-suppress syntaxError
   struct vector :
          pegtl::seq<
            act< readkw< typename key::pegtl_string >, starter >,

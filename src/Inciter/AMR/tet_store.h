@@ -215,7 +215,7 @@ namespace AMR {
 
             void add(
                     size_t id,
-                    tet_t nodes,
+                    const tet_t& nodes,
                     Refinement_Case refinement_case,
                     size_t parent_id
             )
@@ -247,7 +247,7 @@ namespace AMR {
              * @param refinement_case The refinement case which caused this tet
              * to be generated
             */
-            void add(size_t id, tet_t nodes, Refinement_Case refinement_case)
+            void add(size_t id, const tet_t& nodes, Refinement_Case refinement_case)
             {
                 store_tet(id, nodes);
 
@@ -261,7 +261,7 @@ namespace AMR {
                 active_elements.add(id);
             }
 
-            void add(tet_t nodes, Refinement_Case refinement_case)
+            void add(const tet_t& nodes, Refinement_Case refinement_case)
             {
                 size_t id = id_generator.get_next_tet_id();
                 add(id, nodes, refinement_case);
