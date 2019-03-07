@@ -14,7 +14,7 @@ if(CPPCHECK AND CPPCHECK_HTMLREPORT)
   ADD_CUSTOM_TARGET(cppcheck
     # Run cppcheck static analysis
     COMMAND ${CPPCHECK} --inline-suppr --enable=all --force
-                        --error-exitcode=1
+                        --error-exitcode=1 -j${PROCESSOR_COUNT}
                         -I${QUINOA_SOURCE_DIR}/Base
                         -I${QUINOA_SOURCE_DIR}/Control
                         -I${QUINOA_SOURCE_DIR}/NoWarning
@@ -38,7 +38,7 @@ if(CPPCHECK AND CPPCHECK_HTMLREPORT)
     ADD_CUSTOM_TARGET(cppcheck-xml
       # Run cppcheck static analysis
       COMMAND ${CPPCHECK} --inline-suppr --enable=all --force
-                          --xml --xml-version=2
+                          --xml --xml-version=2 -j${PROCESSOR_COUNT}
                           -I${QUINOA_SOURCE_DIR}/Base
                           -I${QUINOA_SOURCE_DIR}/Control
                           -I${QUINOA_SOURCE_DIR}/NoWarning
