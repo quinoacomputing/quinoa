@@ -295,19 +295,19 @@ Refiner::addBndEdges( CkReductionMsg* msg )
 //! \param[in] msg Charm++ message containing the aggregated map of bnd edges
 // *****************************************************************************
 {
-   PUP::fromMem creator( msg->getData() );
-   creator | m_bndEdges;
-   delete msg;
+  PUP::fromMem creator( msg->getData() );
+  creator | m_bndEdges;
+  delete msg;
 
-   // Compute unique set of chares that share at least a single edge with us
-   const auto& ownedges = tk::cref_find( m_bndEdges, thisIndex );
-   for (const auto& p : m_bndEdges)    // for all chares
-     if (p.first != thisIndex)         // for all chares other than this one
-       for (const auto& e : p.second)  // for all boundary edges
-         if (ownedges.find(e) != end(ownedges))
-           m_ch.insert( p.first );     // if edge is shared, store its chare id
+  // Compute unique set of chares that share at least a single edge with us
+  const auto& ownedges = tk::cref_find( m_bndEdges, thisIndex );
+  for (const auto& p : m_bndEdges)    // for all chares
+    if (p.first != thisIndex)         // for all chares other than this one
+      for (const auto& e : p.second)  // for all boundary edges
+        if (ownedges.find(e) != end(ownedges))
+          m_ch.insert( p.first );     // if edge is shared, store its chare id
 
-   refine();
+  contribute( m_cbr.get< tag::edges >() );
 }
 
 void

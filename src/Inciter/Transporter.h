@@ -86,6 +86,10 @@ class Transporter : public CBase_Transporter {
     //!   been inserted
     void workinserted();
 
+    //! \brief Reduction target: all mesh refiner chares have setup their
+    //!   boundary edges
+    void edges();
+
     //! \brief Reduction target: all mesh refiner chares have distributed their
     //!   newly added node IDs that are shared among chares
     void matched( std::size_t extra );

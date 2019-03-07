@@ -88,6 +88,9 @@ class Refiner : public CBase_Refiner {
     //! Receive boundary edges from all PEs (including this one)
     void addBndEdges( CkReductionMsg* msg );
 
+    //! Refine mesh
+    void refine();
+
     //! Receive newly added mesh edges and locks on our chare boundary
     void addRefBndEdges( int fromch,
                          const AMR::EdgeData& ed,
@@ -241,9 +244,6 @@ class Refiner : public CBase_Refiner {
 
     //! Generate boundary edges and send them to all chares
     void bndEdges();
-
-    //! Refine mesh
-    void refine();
 
     //! Finish initiel mesh refinement
     void endt0ref();

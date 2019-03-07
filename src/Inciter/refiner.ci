@@ -43,6 +43,7 @@ module refiner {
         int fromch,
         const AMR::EdgeData& en,
         const std::unordered_set< std::size_t > intermediates );
+      entry void refine();
       entry void comExtra();
       entry void eval();
       entry void sendProxy();

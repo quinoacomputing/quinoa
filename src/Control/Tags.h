@@ -105,6 +105,7 @@ struct ctau {};
 struct npar {};
 struct refined {};
 struct matched {};
+struct edges {};
 struct part {};
 struct centroid {};
 struct ncomp {};
