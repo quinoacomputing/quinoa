@@ -43,7 +43,7 @@ if(CPPCHECK AND CPPCHECK_HTMLREPORT)
                           -I${QUINOA_SOURCE_DIR}/Control
                           -I${QUINOA_SOURCE_DIR}/NoWarning
                           -I${PROJECT_BINARY_DIR}/Main
-                          ${CMAKE_CURRENT_SOURCE_DIR}/Main
+                          ${CMAKE_CURRENT_SOURCE_DIR}
                           2> doc/cppcheck/cppcheck-report.xml
       # Generate html output
       COMMAND ${CPPCHECK_HTMLREPORT} --file=doc/cppcheck/cppcheck-report.xml
