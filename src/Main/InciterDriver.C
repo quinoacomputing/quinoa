@@ -40,8 +40,8 @@ InciterDriver::InciterDriver( const InciterPrint& print,
 {
   // All global-scope data to be migrated to all PEs initialized here (if any)
 
-  print.item( "Blocking migration, -" + *kw::blocking::alias(),
-               cmdline.get< tag::blocking >() ? "on" : "off" );
+  print.item( "Non-blocking migration, -" + *kw::nonblocking::alias(),
+               cmdline.get< tag::nonblocking >() ? "on" : "off" );
   print.item( "Benchmark mode, -" + *kw::benchmark::alias(),
                cmdline.get< tag::benchmark >() ? "on" : "off" );
 

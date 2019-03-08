@@ -42,7 +42,7 @@ struct rngsse {};
 struct rng123 {};
 struct seqlen {};
 struct verbose {};
-struct blocking {};
+struct nonblocking {};
 struct benchmark {};
 struct lboff {};
 struct feedback {};

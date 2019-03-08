@@ -3394,17 +3394,19 @@ struct benchmark_info {
 
 using benchmark = keyword< benchmark_info, TAOCPP_PEGTL_STRING("benchmark") >;
 
-struct blocking_info {
-  static std::string name() { return "blocking"; }
-  static std::string shortDescription() { return "Select blocking migration"; }
+struct nonblocking_info {
+  static std::string name() { return "nonblocking"; }
+  static std::string shortDescription()
+  { return "Select non-blocking migration"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select blocking, instead of the default
-       non-blocking, migration.)";
+    R"(This keyword is used to select non-blocking, instead of the default
+       blocking, migration.)";
   }
-  using alias = Alias< m >;
+  using alias = Alias< n >;
 };
 
-using blocking = keyword< blocking_info, TAOCPP_PEGTL_STRING("blocking") >;
+using nonblocking =
+  keyword< nonblocking_info, TAOCPP_PEGTL_STRING("nonblocking") >;
 
 struct feedback_info {
   static std::string name() { return "feedback"; }

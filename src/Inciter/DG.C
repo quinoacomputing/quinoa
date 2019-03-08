@@ -846,7 +846,7 @@ DG::ResumeFromSync()
 {
   if (Disc()->It() == 0) Throw( "it = 0 in ResumeFromSync()" );
 
-  if (g_inputdeck.get< tag::cmd, tag::blocking >()) next();
+  if (!g_inputdeck.get< tag::cmd, tag::nonblocking >()) next();
 }
 
 void
@@ -1437,7 +1437,7 @@ DG::step()
   if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
 
     AtSync();
-    if (!g_inputdeck.get< tag::cmd, tag::blocking >()) next();
+    if (g_inputdeck.get< tag::cmd, tag::nonblocking >()) next();
 
   } else {
     contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));

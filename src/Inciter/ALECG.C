@@ -125,7 +125,7 @@ ALECG::ResumeFromSync()
 {
   if (Disc()->It() == 0) Throw( "it = 0 in ResumeFromSync()" );
 
-  if (g_inputdeck.get< tag::cmd, tag::blocking >()) dt();
+  if (!g_inputdeck.get< tag::cmd, tag::nonblocking >()) dt();
 }
 
 void
@@ -583,7 +583,7 @@ ALECG::step()
   if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
 
     AtSync();
-    if (!g_inputdeck.get< tag::cmd, tag::blocking >()) dt();
+    if (g_inputdeck.get< tag::cmd, tag::nonblocking >()) dt();
 
   } else {
     d->contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
