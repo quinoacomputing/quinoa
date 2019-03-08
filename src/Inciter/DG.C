@@ -874,7 +874,9 @@ DG::setup( tk::real v )
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   const auto psign = inciter::g_inputdeck.get< tag::discr, tag::psign >();
 
-  //m_pIndex.resize( m_nunk,1 );
+  std::cout << "m_nunk = " << m_nunk << std::endl;
+  std::cout << "cell size = " << m_fd.Esuel().size()/4 << std::endl;
+
   // Initialize the array of adaptive indicator
   if( psign == true )             // Adaptive on
     m_pIndex.resize( m_nunk,1 );
@@ -1167,10 +1169,12 @@ DG::writeFields( CkCallback c )
     // Add adaptive indicator array to output
     std::vector<tk::real> pIndex_f(m_nunk,0);
     std::copy ( begin(m_pIndex), end(m_pIndex), begin(pIndex_f) );
-    o.push_back(pIndex_f);
+    //o.push_back(pIndex_f);
 
     // cut off ghost elements
     for (auto& field : o) field.resize( esuel.size()/4 );
+    pIndex_f.resize( esuel.size()/4 );
+    o.push_back(pIndex_f);
     fields.insert( end(fields), begin(o), end(o) );
   }
 
@@ -1523,7 +1527,8 @@ void DG::eval_pIndex( const tk::Fields& U,
   std::array< std::array< tk::real, 3 >, 5 > dudxi;
   std::array< std::array< tk::real, 3 >, 5 > dudx;
 
-  for (std::size_t e=0; e<esuel.size()/4; ++e)
+  //for (std::size_t e=0; e<esuel.size()/4; ++e)
+  for (std::size_t e=0; e<m_nunk; ++e)
   {
     //std::cout << "size = " << esuel.size()/4 << std::endl;
     std::size_t sign(0);
@@ -1611,7 +1616,8 @@ void DG::correct( tk::Fields& U,
 
   //Assert( pIndex.size() == esuel.size()/4, "Size not match for pIndex");
 
-  for (std::size_t e=0; e<esuel.size()/4; ++e)
+  //for (std::size_t e=0; e<esuel.size()/4; ++e)
+  for (std::size_t e=0; e<m_nunk; ++e)
   {
     if(pIndex[e] == 0)
     {
