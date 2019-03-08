@@ -55,6 +55,12 @@
   #pragma GCC diagnostic ignored "-Wshadow"
   #pragma GCC diagnostic ignored "-Wunused-parameter"
   #pragma GCC diagnostic ignored "-Wfloat-equal"
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( push )
+  #pragma warning( disable: 181 )
+  #pragma warning( disable: 1125 )
+  #pragma warning( disable: 1720 )
+  #pragma warning( disable: 2282 )
 #endif
 
 #include "../Main/lbswitch.decl.h"
@@ -63,6 +69,8 @@
   #pragma clang diagnostic pop
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( pop )
 #endif
 
 #endif // nowarning_lbswitch_decl_h
