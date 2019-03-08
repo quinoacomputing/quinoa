@@ -119,6 +119,11 @@ class CompFlowProblemTaylorGreen {
       n.push_back( "err(E)" );
       n.push_back( "pressure_numerical" );
       n.push_back( "pressure_analytical" );
+
+      const auto psign = g_inputdeck.get< tag::discr, tag::psign >();
+      if(psign == true)           // Adaptive DG on
+        // will output adaptive indicator
+        n.push_back( "Adaptive indicator" );
       return n;
     }
 

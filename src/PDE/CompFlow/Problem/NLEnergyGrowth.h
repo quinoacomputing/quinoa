@@ -208,6 +208,11 @@ class CompFlowProblemNLEnergyGrowth {
       n.push_back( "pressure_analytical" );
       n.push_back( "err(rho)" );
       n.push_back( "err(e)" );
+
+      const auto psign = g_inputdeck.get< tag::discr, tag::psign >();
+      if(psign == true)           // Adaptive DG on
+        // will output adaptive indicator
+        n.push_back( "Adaptive indicator" );
       return n;
     }
 
