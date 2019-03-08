@@ -610,7 +610,6 @@ find_package(MCSS)
 if(DOXYGEN_FOUND AND MCSS_FOUND AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND JINJA2_FOUND AND LATEX_FOUND)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.doxy
                  ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
-  configure_file(${CMAKE_SOURCE_DIR}/../LICENSE ${CMAKE_BINARY_DIR}/doc COPYONLY)
   add_custom_command(OUTPUT xml
                      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
                      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy
