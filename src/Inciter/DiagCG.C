@@ -128,7 +128,9 @@ DiagCG::ResumeFromSync()
 //!   this function does not affect whether or not we block on LB.
 // *****************************************************************************
 {
-  if (Disc()->It() > 0 && g_inputdeck.get< tag::cmd, tag::blocking >()) dt();
+  if (Disc()->It() == 0) Throw( "it = 0 in ResumeFromSync()" );
+
+  if (g_inputdeck.get< tag::cmd, tag::blocking >()) dt();
 }
 
 void

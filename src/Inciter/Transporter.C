@@ -568,7 +568,6 @@ Transporter::comfinal()
 
   // Turn on automatic load balancing
   tk::CProxy_LBSwitch::ckNew( g_inputdeck.get<tag::cmd,tag::verbose>() );
-  CkStartLB();	// start load balancing
 }
 // [Discretization-specific communication maps]
 

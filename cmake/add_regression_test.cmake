@@ -253,6 +253,13 @@ function(ADD_REGRESSION_TEST test_name executable)
     list(APPEND ARG_ARGS "-q")
   endif()
 
+  # Run all regression tests with quiescence detection except those that
+  # exercise migration
+  # list(FIND TEST_LABELS migration i)
+  # if (${i} EQUAL -1)
+  #   list(APPEND ARG_ARGS "-q")
+  # endif()
+
   if (ARG_ARGS)
     string(REPLACE ";" " " ARGUMENTS "${ARG_ARGS}")
     string(CONCAT msg "${msg}, args: '${ARGUMENTS}'")
