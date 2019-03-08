@@ -209,6 +209,11 @@ class CompFlowProblemRayleighTaylor {
       n.push_back( "err(u)" );
       n.push_back( "err(v)" );
       n.push_back( "err(w)" );
+
+      const auto psign = g_inputdeck.get< tag::discr, tag::psign >();
+      if(psign == true)           // Adaptive DG on
+        // will output adaptive indicator
+        n.push_back( "Adaptive indicator" );
       return n;
     }
 
