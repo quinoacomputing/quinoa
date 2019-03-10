@@ -22,6 +22,7 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${MKL_CORE_LIBRARY}
+                      ${MKL_INTERFACE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${RNGSSE2_LIBRARIES}
                       ${BACKWARD_LIBRARIES})

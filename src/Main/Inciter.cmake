@@ -33,6 +33,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${MKL_CORE_LIBRARY}
+                      ${MKL_INTERFACE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
