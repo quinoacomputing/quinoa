@@ -32,6 +32,7 @@
 #include "Inciter/CmdLine/CmdLine.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "ChareStateCollector.h"
+#include "LBSwitch.h"
 
 #include "NoWarning/inciter.decl.h"
 
@@ -46,6 +47,9 @@ CProxy_Main mainProxy;
 
 //! Chare state collector Charm++ chare group proxy
 tk::CProxy_ChareStateCollector stateProxy;
+
+//! Load balancer switch group proxy
+tk::CProxy_LBSwitch LBSwitchProxy;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

@@ -78,6 +78,9 @@ class DG : public CBase_DG {
       #pragma clang diagnostic pop
     #endif
 
+    //! Return from migration
+    void ResumeFromSync() override;
+
     //! Receive unique set of faces we potentially share with/from another chare
     void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
 
@@ -340,9 +343,6 @@ class DG : public CBase_DG {
     //! Compute time step size
     void dt();
 
-    //! Continue to next time step stage
-    void next();
-
     //! Evaluate whether to continue with next time step stage
     void stage();
 
@@ -351,6 +351,9 @@ class DG : public CBase_DG {
 
     //! Correct the solution for high order term
     void correct();
+
+    //! Continue to next time step stage
+    void next();
 };
 
 } // inciter::

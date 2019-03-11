@@ -838,6 +838,19 @@ DG::registerReducers()
 }
 
 void
+DG::ResumeFromSync()
+// *****************************************************************************
+//  Return from migration
+//! \details This is called when load balancing (LB) completes. The presence of
+//!   this function does not affect whether or not we block on LB.
+// *****************************************************************************
+{
+  if (Disc()->It() == 0) Throw( "it = 0 in ResumeFromSync()" );
+
+  if (!g_inputdeck.get< tag::cmd, tag::nonblocking >()) next();
+}
+
+void
 DG::setup( tk::real v )
 // *****************************************************************************
 // Set initial conditions, generate lhs, output mesh
@@ -1449,8 +1462,10 @@ DG::step()
 
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
-    AtSync();   // migrate here if needed
-    next();
+
+    AtSync();
+    if (g_inputdeck.get< tag::cmd, tag::nonblocking >()) next();
+
   } else {
     contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));
   }

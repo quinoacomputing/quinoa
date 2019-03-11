@@ -116,6 +116,19 @@ ALECG::registerReducers()
 }
 
 void
+ALECG::ResumeFromSync()
+// *****************************************************************************
+//  Return from migration
+//! \details This is called when load balancing (LB) completes. The presence of
+//!   this function does not affect whether or not we block on LB.
+// *****************************************************************************
+{
+  if (Disc()->It() == 0) Throw( "it = 0 in ResumeFromSync()" );
+
+  if (!g_inputdeck.get< tag::cmd, tag::nonblocking >()) dt();
+}
+
+void
 ALECG::setup( tk::real v )
 // *****************************************************************************
 // Setup rows, query boundary conditions, output mesh, etc.
@@ -568,10 +581,12 @@ ALECG::step()
 
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
-    AtSync();   // migrate here if needed
-    dt();
+
+    AtSync();
+    if (g_inputdeck.get< tag::cmd, tag::nonblocking >()) dt();
+
   } else {
-    contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
+    d->contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
   }
 }
 
