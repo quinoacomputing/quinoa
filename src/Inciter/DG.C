@@ -801,8 +801,6 @@ DG::adj()
   m_lhs.resize( m_nunk );
   m_rhs.resize( m_nunk );
   m_limFunc.resize( m_nunk );
-  //m_pIndex.resize( m_nunk,1 );
-  //std::cout << "This m_nunk = " << m_nunk << std::endl;
 
   // Ensure that we also have all the geometry and connectivity data 
   // (including those of ghosts)
