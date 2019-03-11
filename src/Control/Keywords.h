@@ -3394,6 +3394,20 @@ struct benchmark_info {
 
 using benchmark = keyword< benchmark_info, TAOCPP_PEGTL_STRING("benchmark") >;
 
+struct nonblocking_info {
+  static std::string name() { return "nonblocking"; }
+  static std::string shortDescription()
+  { return "Select non-blocking migration"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select non-blocking, instead of the default
+       blocking, migration.)";
+  }
+  using alias = Alias< n >;
+};
+
+using nonblocking =
+  keyword< nonblocking_info, TAOCPP_PEGTL_STRING("nonblocking") >;
+
 struct feedback_info {
   static std::string name() { return "feedback"; }
   static std::string shortDescription() { return "Enable on-screen feedback"; }
