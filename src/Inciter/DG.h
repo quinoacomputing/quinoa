@@ -347,13 +347,9 @@ class DG : public CBase_DG {
     void stage();
 
     //! Calculate the local number of degrees of freedom for each element
-    //void eval_ndof( const tk::Fields& U,
-    //                  std::vector< std::size_t >& ndof_el);
     void eval_ndofel();
 
     //! Correct the solution for high order term
-    //void correct( tk::Fields& U,
-    //              const std::vector< std::size_t >& ndof_el);
     void correct();
 };
 
