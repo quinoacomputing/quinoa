@@ -1456,12 +1456,9 @@ DG::step()
   }
 }
 
-void DG::eval_ndofel( /*const tk::Fields& U,
-                      std::vector< std::size_t >& pIndex*/)
+void DG::eval_ndofel()
 // *****************************************************************************
 //  Calculate the element mark for p-adaptive
-//! \param[in] U Numerical solutions
-//! \param[in,out] pIndex Vector of element mark
 // *****************************************************************************
 {
   const auto& esuf = m_fd.Esuf();
@@ -1551,12 +1548,9 @@ void DG::eval_ndofel( /*const tk::Fields& U,
   m_ndofel = ndofel;
 }
 
-void DG::correct( /*tk::Fields& U,
-                  const std::vector< std::size_t >& pIndex*/)
+void DG::correct()
 // *****************************************************************************
 //  Correct the solution for high order term
-//! \param[in,out] U Numerical solutions
-//! \param[in] pIndex Vector of element mark
 // *****************************************************************************
 {
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
