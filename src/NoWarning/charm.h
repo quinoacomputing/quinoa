@@ -38,7 +38,6 @@
   #pragma warning( push )
   #pragma warning( disable: 2282 )
 #endif
-#endif
 
 #include <charm.h>
 
