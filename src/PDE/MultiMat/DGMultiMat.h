@@ -121,6 +121,7 @@ class MultiMat {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
     //! \param[in] limFunc Limiter function for higher-order solution dofs
+    //! \param[in] ndofel Vector of local number of degrees of freedome
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -130,7 +131,7 @@ class MultiMat {
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& limFunc,
-              const std::vector< std::size_t >& pIndex,
+              const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
@@ -163,22 +164,22 @@ class MultiMat {
 
       // compute internal surface flux integrals
       tk::surfInt( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                   rieflxfn, velfn, U, limFunc, pIndex, R );
+                   rieflxfn, velfn, U, limFunc, ndofel, R );
 
       // compute source term intehrals
       tk::srcInt( m_system, m_ncomp, m_offset,
-                  t, inpoel, coord, geoElem, Problem::src, pIndex, R );
+                  t, inpoel, coord, geoElem, Problem::src, ndofel, R );
 
       if(ndof > 1)
         // compute volume integrals
         tk::volInt( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
-                    velfn, U, limFunc, pIndex, R );
+                    velfn, U, limFunc, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
         tk::bndSurfInt( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
                         inpoel, coord, t, rieflxfn, velfn, b.second, U, 
-                        limFunc, pIndex, R );
+                        limFunc, ndofel, R );
     }
 
     //! Compute the minimum time step size
