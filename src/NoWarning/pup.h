@@ -34,6 +34,9 @@
   #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
   #pragma GCC diagnostic ignored "-Wshadow"
   #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( push )
+  #pragma warning( disable: 2282 )
 #endif
 
 #include <pup.h>
@@ -42,6 +45,8 @@
   #pragma clang diagnostic pop
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( pop )
 #endif
 
 #endif // nowarning_pup_h
