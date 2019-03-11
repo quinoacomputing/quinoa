@@ -34,7 +34,7 @@ tk::srcInt( ncomp_t system,
             const UnsMesh::Coords& coord,
             const Fields& geoElem,
             const SrcFn& src,
-            const std::vector< std::size_t >& pIndex,
+            const std::vector< std::size_t >& ndofel,
             Fields& R )
 // *****************************************************************************
 //  Compute source term integrals for DG
@@ -46,49 +46,18 @@ tk::srcInt( ncomp_t system,
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] geoElem Element geometry array
 //! \param[in] src Source function to use
+//! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  //const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-
-  //// Number of quadrature points for volume integration
-  //auto ng = tk::NGvol(ndof);
-
-  //// arrays for quadrature points
-  //std::array< std::vector< real >, 3 > coordgp;
-  //std::vector< real > wgp;
-
-  //coordgp[0].resize( ng );
-  //coordgp[1].resize( ng );
-  //coordgp[2].resize( ng );
-  //wgp.resize( ng );
-
-  //// get quadrature point weights and coordinates for triangle
-  //GaussQuadratureTet( ng, coordgp, wgp );
-
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
 
   for (std::size_t e=0; e<geoElem.nunk(); ++e)
   {
-    std::size_t ndof_el;
-    switch(pIndex[e])
-    {
-      case 0:
-        ndof_el = 1;
-        break;
-      case 1:
-        ndof_el = 4;
-        break;
-      case 2:
-        ndof_el = 10;
-        break;
-    }
-
-    auto ng = tk::NGvol(ndof_el);
+    auto ng = tk::NGvol(ndofel[e]);
     
-    //std::size_t ng = 5; 
     // arrays for quadrature points
     std::array< std::vector< real >, 3 > coordgp;
     std::vector< real > wgp;
@@ -114,14 +83,14 @@ tk::srcInt( ncomp_t system,
 
       // Compute the basis function
       auto B =
-        eval_basis( ndof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+        eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
 
       // Compute the source term variable
       auto s = src( system, ncomp, gp[0], gp[1], gp[2], t );
 
       auto wt = wgp[igp] * geoElem(e, 0, 0);
 
-      update_rhs( ncomp, offset, ndof_el, wt, e, B, s, R );
+      update_rhs( ncomp, offset, ndofel[e], wt, e, B, s, R );
     }
   }
 }
@@ -139,7 +108,7 @@ tk::update_rhs( ncomp_t ncomp,
 //  Update the rhs by adding the source term integrals
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
-//! \param[in] ndof Number of degree of freedom
+//! \param[in] ndof_el Number of degree of freedom for local element
 //! \param[in] wt Weight of gauss quadrature point
 //! \param[in] e Element index
 //! \param[in] B Vector of basis functions

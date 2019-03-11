@@ -35,7 +35,7 @@ tk::volInt( ncomp_t system,
             const VelFn& vel,
             const Fields& U,
             const Fields& limFunc,
-            const std::vector< std::size_t >& pIndex,
+            const std::vector< std::size_t >& ndofel,
             Fields& R )
 // *****************************************************************************
 //  Compute volume integrals for DG
@@ -49,56 +49,20 @@ tk::volInt( ncomp_t system,
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
 //! \param[in] limFunc Limiter function for higher-order solution dofs
+//! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in,out] R Right-hand side vector added to
 // *****************************************************************************
 {
-  //using inciter::g_inputdeck;
-  //const auto ndof_el = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-
-  //// Number of quadrature points for volume integration
-  //auto ng = tk::NGvol(ndof_el);
-
-  //// arrays for quadrature points
-  //std::array< std::vector< real >, 3 > coordgp;
-  //std::vector< real > wgp;
-
-  //coordgp[0].resize( ng );
-  //coordgp[1].resize( ng );
-  //coordgp[2].resize( ng );
-  //wgp.resize( ng );
-
-  //// get quadrature point weights and coordinates for triangle
-  //GaussQuadratureTet( ng, coordgp, wgp );
-
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
 
-  //std::cout << "start gp for volint " << std::endl;
-  //std::cout << "U.nunk() = " << U.nunk() << std::endl;
-  //std::cout << "pIndex.size() = " << pIndex.size() << std::endl;
   // compute volume integrals
   for (std::size_t e=0; e<U.nunk(); ++e)
   {
-    //std::cout << "start inside gp for volint " << std::endl;
-    //std::cout << "e = " << e << std::endl;
-    std::size_t ndof_el;
-    switch(pIndex[e])
+    if(ndofel[e] > 1)
     {
-      case 0:
-        ndof_el = 1;
-        break;
-      case 1:
-        ndof_el = 4;
-        break;
-      case 2:
-        ndof_el = 10;
-        break;
-    }
-
-    if(ndof_el > 1)
-    {
-      auto ng = tk::NGvol(ndof_el);
+      auto ng = tk::NGvol(ndofel[e]);
  
       // arrays for quadrature points
       std::array< std::vector< real >, 3 > coordgp;
@@ -123,13 +87,12 @@ tk::volInt( ncomp_t system,
               inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
       // Compute the derivatives of basis function for DG(P1)
-      auto dBdx = eval_dBdx_p1( ndof_el, jacInv );
+      auto dBdx = eval_dBdx_p1( ndofel[e], jacInv );
 
-      //std::cout << "start the gauss int for vol" << std::endl;
       // Gaussian quadrature
       for (std::size_t igp=0; igp<ng; ++igp)
       {
-        if (ndof_el > 4)
+        if (ndofel[e] > 4)
           eval_dBdx_p2( igp, coordgp, jacInv, dBdx );
 
         // Compute the coordinates of quadrature point at physical domain
@@ -137,11 +100,11 @@ tk::volInt( ncomp_t system,
 
         // Compute the basis function
         auto B =
-          eval_basis( ndof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+          eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
 
         auto wt = wgp[igp] * geoElem(e, 0, 0);
 
-        auto state = eval_state( ncomp, offset, ndof_el, e, U, limFunc, B );
+        auto state = eval_state( ncomp, offset, ndofel[e], e, U, limFunc, B );
 
         // evaluate prescribed velocity (if any)
         auto v = vel( system, ncomp, gp[0], gp[1], gp[2] );
@@ -149,12 +112,10 @@ tk::volInt( ncomp_t system,
         // comput flux
         auto fl = flux( system, ncomp, state, v );
 
-        update_rhs( ncomp, offset, ndof_el, wt, e, dBdx, fl, R );
+        update_rhs( ncomp, offset, ndofel[e], wt, e, dBdx, fl, R );
       }
-      //std::cout << "finish the gauss int for vol when e = " << e << std::endl;
     }
   }
-  //std::cout << "finishe the vol loop for e" << std::endl;
 }
 
 void
@@ -170,7 +131,7 @@ tk::update_rhs( ncomp_t ncomp,
 //  Update the rhs by adding the source term integrals
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
-//! \param[in] ndof Number of degree of freedom
+//! \param[in] ndof_el Number of degree of freedom for local element
 //! \param[in] wt Weight of gauss quadrature point
 //! \param[in] e Element index
 //! \param[in] B Vector of basis functions

@@ -38,7 +38,7 @@ tk::surfInt( ncomp_t system,
              const VelFn& vel,
              const Fields& U,
              const Fields& limFunc,
-             const std::vector< std::size_t >& pIndex,
+             const std::vector< std::size_t >& ndofel,
              Fields& R )
 // *****************************************************************************
 //  Compute internal surface flux integrals
@@ -53,26 +53,12 @@ tk::surfInt( ncomp_t system,
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
 //! \param[in] limFunc Limiter function for higher-order solution dofs
+//! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  //const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
-
-  //// Number of quadrature points for face integration
-  //auto ng = tk::NGfa(ndof);
-
-  //// arrays for quadrature points
-  //std::array< std::vector< real >, 2 > coordgp;
-  //std::vector< real > wgp;
-
-  //coordgp[0].resize( ng );
-  //coordgp[1].resize( ng );
-  //wgp.resize( ng );
-
-  //// get quadrature point weights and coordinates for triangle
-  //GaussQuadratureTri( ng, coordgp, wgp );
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -87,35 +73,11 @@ tk::surfInt( ncomp_t system,
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
     std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
 
-    std::size_t ndof_l, ndof_r;
-    switch(pIndex[el])
-    {   
-      case 0:
-        ndof_l = 1;
-        break;
-      case 1:
-        ndof_l = 4;
-        break;
-      case 2:
-        ndof_l = 10;
-        break; 
-    }   
+    auto ng_l = tk::NGfa(ndofel[el]);
+    auto ng_r = tk::NGfa(ndofel[er]);
 
-    switch(pIndex[er])
-    {
-      case 0:
-        ndof_r = 1;
-        break;
-      case 1:
-        ndof_r = 4;
-        break;
-      case 2:
-        ndof_r = 10;
-        break;
-    }
-
-    auto ng_l = tk::NGfa(ndof_l);
-    auto ng_r = tk::NGfa(ndof_r);
+    // When the number of gauss points for the left and right element are 
+    // different, choose the larger ng
     std::size_t ng;
     if( ng_l > ng_r )
       ng = ng_l;
@@ -175,11 +137,11 @@ tk::surfInt( ncomp_t system,
       //  zeta = Jacobian( coordel[0], coordel[2], coordel[3], gp ) / detT
 
       //Compute the basis functions
-      auto B_l = eval_basis( ndof_l,
+      auto B_l = eval_basis( ndofel[el],
             Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
             Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
             Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l );
-      auto B_r = eval_basis( ndof_r,
+      auto B_r = eval_basis( ndofel[er],
             Jacobian( coordel_r[0], gp, coordel_r[2], coordel_r[3] ) / detT_r,
             Jacobian( coordel_r[0], coordel_r[1], gp, coordel_r[3] ) / detT_r,
             Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r );
@@ -188,8 +150,8 @@ tk::surfInt( ncomp_t system,
 
       std::array< std::vector< real >, 2 > state;
 
-      state[0] = eval_state( ncomp, offset, ndof_l, el, U, limFunc, B_l );
-      state[1] = eval_state( ncomp, offset, ndof_r, er, U, limFunc, B_r );
+      state[0] = eval_state( ncomp, offset, ndofel[el], el, U, limFunc, B_l );
+      state[1] = eval_state( ncomp, offset, ndofel[er], er, U, limFunc, B_r );
 
       Assert( state[0].size() == ncomp, "Size mismatch" );
       Assert( state[1].size() == ncomp, "Size mismatch" );
@@ -202,7 +164,8 @@ tk::surfInt( ncomp_t system,
          flux( {{geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0)}}, state, v );
 
       // Add the surface integration term to the rhs
-      update_rhs_fa( ncomp, offset, ndof_l, ndof_r, wt, el, er, fl, B_l, B_r, R );
+      update_rhs_fa( ncomp, offset, ndofel[el], ndofel[er], wt, el, er, fl,
+                     B_l, B_r, R );
     }
   }
 }

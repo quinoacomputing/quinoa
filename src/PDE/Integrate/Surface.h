@@ -40,7 +40,7 @@ surfInt( ncomp_t system,
          const VelFn& vel,
          const Fields& U,
          const Fields& limFunc,
-         const std::vector< std::size_t >& pIndex,
+         const std::vector< std::size_t >& ndofel,
          Fields& R );
 
 // Update the rhs by adding surface integration term
