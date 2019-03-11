@@ -122,6 +122,7 @@ class Transport {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
     //! \param[in] limFunc Limiter function for higher-order solution dofs
+    //! \param[in] ndofel Vector of local number of degrees of freedome
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -131,7 +132,7 @@ class Transport {
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& limFunc,
-              const std::vector< std::size_t >& pIndex,
+              const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
@@ -156,27 +157,21 @@ class Transport {
         { m_bcoutlet, Outlet },
         { m_bcdir, Dirichlet } }};
 
-      //std::cout << "start surfInt" << std::endl;
       // compute internal surface flux integrals
       tk::surfInt( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
                    Upwind::flux, Problem::prescribedVelocity, U, limFunc, 
-                   pIndex, R );
-      //std::cout << "finish surfInt" << std::endl;
+                   ndofel, R );
 
-      //std::cout << "start volfInt" << std::endl;
       if(ndof > 1)
         // compute volume integrals
         tk::volInt( m_system, m_ncomp, m_offset, inpoel, coord, geoElem,
-                    flux, Problem::prescribedVelocity, U, limFunc, pIndex, R );
-      //std::cout << "finish volfInt" << std::endl;
+                    flux, Problem::prescribedVelocity, U, limFunc, ndofel, R );
 
-      //std::cout << "start bndfInt" << std::endl;
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
         tk::bndSurfInt( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
           inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
-          b.second, U, limFunc, pIndex, R );
-      //std::cout << "finish bndfInt" << std::endl;
+          b.second, U, limFunc, ndofel, R );
     }
 
     //! Compute the minimum time step size

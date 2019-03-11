@@ -35,7 +35,7 @@ srcInt( ncomp_t system,
         const UnsMesh::Coords& coord,
         const Fields& geoElem,
         const SrcFn& src,
-        const std::vector< std::size_t >& pIndex,
+        const std::vector< std::size_t >& ndofel,
         Fields& R );
 
 //! Update the rhs by adding the source term integrals

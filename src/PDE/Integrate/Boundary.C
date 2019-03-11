@@ -42,7 +42,7 @@ tk::bndSurfInt( ncomp_t system,
                 const StateFn& state,
                 const Fields& U,
                 const Fields& limFunc,
-                const std::vector< std::size_t >& pIndex,
+                const std::vector< std::size_t >& ndofel,
                 Fields& R )
 // *****************************************************************************
 //! Compute boundary surface flux integrals for a given boundary type for DG
@@ -64,27 +64,13 @@ tk::bndSurfInt( ncomp_t system,
 //!   boundaries
 //! \param[in] U Solution vector at recent time step
 //! \param[in] limFunc Limiter function for higher-order solution dofs
+//! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
   const auto& bface = fd.Bface();
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
-  //const auto ndof_l = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-
-  //// Number of quadrature points for face integration
-  //auto ng = tk::NGfa(ndof_l);
-
-  //// arrays for quadrature points
-  //std::array< std::vector< real >, 2 > coordgp;
-  //std::vector< real > wgp;
-
-  //coordgp[0].resize( ng );
-  //coordgp[1].resize( ng );
-  //wgp.resize( ng );
-
-  //// get quadrature point weights and coordinates for triangle
-  //GaussQuadratureTri( ng, coordgp, wgp );
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -100,24 +86,7 @@ tk::bndSurfInt( ncomp_t system,
 
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
 
-        std::size_t ndof_l;
-        switch(pIndex[el])
-        {   
-          case 0:
-            ndof_l = 1;
-            break;
-          case 1:
-            ndof_l = 4;
-            break;
-          case 2:
-            ndof_l = 10;
-            break; 
-        }   
-
-        //if(ndof_l != 1)
-          //std::cout << "ng is wrong" << std::endl;
-
-        auto ng = tk::NGfa(ndof_l);
+        auto ng = tk::NGfa(ndofel[el]);
 
         // arrays for quadrature points
         std::array< std::vector< real >, 2 > coordgp;
@@ -157,7 +126,7 @@ tk::bndSurfInt( ncomp_t system,
           auto gp = eval_gp( igp, coordfa, coordgp );
 
           //Compute the basis functions for the left element
-          auto B_l = eval_basis( ndof_l,
+          auto B_l = eval_basis( ndofel[el],
             Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
             Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
             Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l );
@@ -165,7 +134,7 @@ tk::bndSurfInt( ncomp_t system,
           auto wt = wgp[igp] * geoFace(f,0,0);
 
           // Compute the state variables at the left element
-          auto ugp = eval_state( ncomp, offset, ndof_l, el, U, limFunc, B_l );
+          auto ugp = eval_state( ncomp, offset, ndofel[el], el, U, limFunc, B_l );
 
           Assert( ugp.size() == ncomp, "Size mismatch" );
 
@@ -175,7 +144,7 @@ tk::bndSurfInt( ncomp_t system,
                       vel( system, ncomp, gp[0], gp[1], gp[2] ) );
 
           // Add the surface integration term to the rhs
-          update_rhs_bc( ncomp, offset, ndof_l, wt, el, fl, B_l, R );
+          update_rhs_bc( ncomp, offset, ndofel[el], wt, el, fl, B_l, R );
         }
       }
     }

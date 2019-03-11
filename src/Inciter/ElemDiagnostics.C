@@ -54,13 +54,14 @@ bool
 ElemDiagnostics::compute( Discretization& d,
                           const std::size_t nchGhost,
                           const tk::Fields& geoElem,
-                          const std::vector< std::size_t >& pIndex,
+                          const std::vector< std::size_t >& ndofel,
                           const tk::Fields& u ) const
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc.
 //! \param[in] d Discretization base class to read from
 //! \param[in] nchGhost Number of chare boundary ghost elements
 //! \param[in] geoElem Element geometry
+//! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in] u Current solution vector
 //! \return True if diagnostics have been computed
 //! \details Diagnostics are defined as some norm, e.g., L2 norm, of a quantity,
@@ -89,7 +90,7 @@ ElemDiagnostics::compute( Discretization& d,
       diag( NUMDIAG, std::vector< tk::real >( u.nprop()/ndof, 0.0 ) );
 
     // Compute diagnostics for DG
-    compute_diag(d, ndof, nchGhost, geoElem, pIndex, u, diag);
+    compute_diag(d, ndof, nchGhost, geoElem, ndofel, u, diag);
 
     // Append diagnostics vector with metadata on the current time step
     // ITER: Current iteration count (only the first entry is used)
@@ -116,7 +117,7 @@ ElemDiagnostics::compute_diag( const Discretization& d,
                                const std::size_t ndof,
                                const std::size_t nchGhost,
                                const tk::Fields& geoElem,
-                               const std::vector< std::size_t >& pIndex,
+                               const std::vector< std::size_t >& ndofel,
                                const tk::Fields& u,
                                std::vector< std::vector< tk::real > >& diag ) const
 // *****************************************************************************
@@ -125,6 +126,7 @@ ElemDiagnostics::compute_diag( const Discretization& d,
 //! \param[in] ndof Number of degree of freedom
 //! \param[in] nchGhost Number of chare boundary ghost elements
 //! \param[in] geoElem Element geometry
+//! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in] u Current solution vector
 //! \param[in,out] diag Diagnostics vector
 // *****************************************************************************
@@ -132,42 +134,13 @@ ElemDiagnostics::compute_diag( const Discretization& d,
   const auto& inpoel = d.Inpoel();
   const auto& coord = d.Coord();
 
-  //// Number of quadrature points for volume integration
-  //auto ng = tk::NGdiag(ndof);
-
-  //// arrays for quadrature points
-  //std::array< std::vector< tk::real >, 3 > coordgp;
-  //std::vector< tk::real > wgp;
-
-  //coordgp[0].resize( ng );
-  //coordgp[1].resize( ng );
-  //coordgp[2].resize( ng );
-  //wgp.resize( ng );
-
-  //// get quadrature point weights and coordinates for triangle
-  //tk::GaussQuadratureTet( ng, coordgp, wgp );
-
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
 
   for (std::size_t e=0; e<u.nunk()-nchGhost; ++e)
   {
-    std::size_t ndof_el;
-    switch(pIndex[e])
-    { 
-      case 0:
-        ndof_el = 1;
-        break;
-      case 1:
-        ndof_el = 4;
-        break;
-      case 2:
-        ndof_el = 10;
-        break;
-    } 
-    
-    auto ng = tk::NGdiag(ndof_el);
+    auto ng = tk::NGdiag(ndofel[e]);
     
     // arrays for quadrature points
     std::array< std::vector< tk::real >, 3 > coordgp;
@@ -194,7 +167,7 @@ ElemDiagnostics::compute_diag( const Discretization& d,
 
       // Compute the basis function
       auto B =
-        tk::eval_basis(ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]);
+        tk::eval_basis(ndofel[e], coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]);
 
       auto wt = wgp[igp] * geoElem(e, 0, 0);
 
@@ -209,13 +182,13 @@ ElemDiagnostics::compute_diag( const Discretization& d,
         auto mark = c*ndof;
         auto ugp = u(e, mark, 0);
 
-        if(ndof_el > 1)
+        if(ndofel[e] > 1)
         {
           ugp +=  u(e, mark+1, 0) * B[1]
                 + u(e, mark+2, 0) * B[2]
                 + u(e, mark+3, 0) * B[3];
 
-          if(ndof_el > 4)
+          if(ndofel[e] > 4)
           {
             ugp +=  u(e, mark+4, 0) * B[4]
                   + u(e, mark+5, 0) * B[5]

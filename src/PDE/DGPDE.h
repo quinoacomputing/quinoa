@@ -98,11 +98,11 @@ class DGPDE {
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& limFunc,
-              const std::vector< std::size_t >& pIndex,
+              const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     { 
       self->rhs( t, geoFace, geoElem, fd, inpoel, coord, U, limFunc, 
-                 pIndex, R );
+                 ndofel, R );
     }
 
     //! Public interface for computing the minimum time step size
@@ -228,11 +228,11 @@ class DGPDE {
                 const tk::UnsMesh::Coords& coord,
                 const tk::Fields& U,
                 const tk::Fields& limFunc,
-                const std::vector< std::size_t >& pIndex,
+                const std::vector< std::size_t >& ndofel,
                 tk::Fields& R ) const override
       { 
         data.rhs( t, geoFace, geoElem, fd, inpoel, coord, U, limFunc,
-                  pIndex, R );
+                  ndofel, R );
       }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
