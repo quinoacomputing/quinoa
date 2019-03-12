@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/CmdLine/Grammar.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Inciter's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
   Expression Grammar Template Library (PEGTL) to create the grammar and the
@@ -35,6 +38,12 @@ namespace cmd {
   struct charestate :
          tk::grm::process_cmd_switch< use< kw::charestate >,
                                       tag::chare > {};
+
+  //! Match and set non-blocking (migration) switch
+  struct nonblocking :
+         tk::grm::process_cmd_switch< use< kw::nonblocking >,
+                                      tag::nonblocking > {};
+
 
   //! Match and set benchmark switch (i.e., benchmark mode)
   struct benchmark :
@@ -84,6 +93,7 @@ namespace cmd {
   struct keywords :
          pegtl::sor< verbose,
                      charestate,
+                     nonblocking,
                      benchmark,
                      feedback,
                      virtualization,

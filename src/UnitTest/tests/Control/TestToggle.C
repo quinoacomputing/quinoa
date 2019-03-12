@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Control/TestToggle.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for Control/Toggle
   \details   Unit tests for Control/Toggle
 */
@@ -56,10 +59,6 @@ template<> template<>
 void Toggle_object::test< 1 >() {
   set_test_name( "ctor throws if maps aren't the same size" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   try {
 
     toggle t( "some switch name describing the option",
@@ -102,10 +101,6 @@ template<> template<>
 void Toggle_object::test< 4 >() {
   set_test_name( "value() throws if can't find keyword" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   try {
 
     p.value("bogus keyword");
@@ -134,10 +129,6 @@ void Toggle_object::test< 5 >() {
 template<> template<>
 void Toggle_object::test< 6 >() {
   set_test_name( "name() throws if can't find value" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   try {
 
@@ -210,6 +201,7 @@ void Toggle_object::test< 11 >() {
                      { { "1st option keyword", Enum::F1 },
                        { "2nd option keyword", Enum::F2 } } );
   // Copy p to c
+  // cppcheck-suppress redundantAssignment
   c = p;
   // c now should have a different group name and should have 3 options mapped
   ensure_equals( "new group name of copy-assigned Toggle",
@@ -232,6 +224,7 @@ void Toggle_object::test< 12 >() {
                      { { "1st option keyword", Enum::F1 },
                        { "2nd option keyword", Enum::F2 } } );
   // Move p to c
+  // cppcheck-suppress redundantAssignment
   c = std::move( p );
   // c now should have a different group name and should have 3 options mapped
   ensure_equals( "new group name of move-assigned Toggle",

@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/RNG/TestMKLRNG.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for RNG/MKLRNG.h
   \details   Unit tests for RNG/MKLRNG.h
 */
@@ -39,10 +42,6 @@ template<> template<>
 void MKLRNG_object::test< 1 >() {
   set_test_name( "constructor throws with zero threads" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -65,10 +64,6 @@ void MKLRNG_object::test< 1 >() {
 template<> template<>
 void MKLRNG_object::test< 2 >() {
   set_test_name( "constructor throws with crap brng" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
@@ -96,10 +91,6 @@ void MKLRNG_object::test< 2 >() {
 template<> template<>
 void MKLRNG_object::test< 3 >() {
   set_test_name( "ctor throws w/ multiple threads if leapfrog unsupported" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   // Attempt to instantiate MKLRNG with multiple threads and a basic RNG that
   // does not support leapfrogging, i.e., multiple streams

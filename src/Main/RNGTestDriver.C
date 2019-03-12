@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Main/RNGTestDriver.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Random number generator test suite driver
   \details   Random number generator test suite driver.
 */
@@ -45,6 +48,7 @@ RNGTestDriver::RNGTestDriver( const RNGTestPrint& print,
   m_print.item( "Control file", cmdline.get< tag::io, tag::control >() );  
   InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );
   m_print.item( "Parsed control file", "success" );  
+
   m_print.endpart();
 }
 

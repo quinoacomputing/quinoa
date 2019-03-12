@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Control/RNGTest/CmdLine/CmdLine.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     RNGTest's command line
   \details   This file defines the heterogeneous stack that is used for storing
      the data from user input during the command-line parsing of the
@@ -81,6 +84,7 @@ class CmdLine : public tk::Control<
     //!   contains a copy of the command-line stack, the command-line stack must
     //!   be possible to be instantiated without passing the ctrinfo map,
     //!   otherwise it would be a mutual dependency.
+    // cppcheck-suppress noExplicitConstructor
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
       set< tag::verbose >( false ); // Use quiet output by default
       set< tag::chare >( false ); // No chare state output by default

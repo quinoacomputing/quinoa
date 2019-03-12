@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Main/inciter.ci
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Charm++ module interface file for inciter
   \details   Charm++ module interface file for the computational shock
     hydrodynamics tool, inciter. 
@@ -12,14 +15,15 @@
 mainmodule inciter {
 
   extern module partitioner;
-  extern module matcg;
   extern module diagcg;
   extern module alecg;
   extern module dg;
   extern module charestatecollector;
+  extern module lbswitch;
 
   readonly CProxy_Main mainProxy;
   readonly tk::CProxy_ChareStateCollector stateProxy;
+  readonly tk::CProxy_LBSwitch LBSwitchProxy;
 
   namespace inciter {
 

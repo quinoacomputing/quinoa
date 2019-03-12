@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/PositionCoeffPolicy.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Particle position equation coefficients policies
   \details   This file defines coefficients policy classes for the Lagrangian
     particle position equation defined in DiffEq/Position.h.
@@ -44,7 +47,7 @@ class Position_InstantaneousVelocity {
 
   public:
     //! Constructor
-    Position_InstantaneousVelocity( std::array< tk::real, 9 >& ) {}
+    explicit Position_InstantaneousVelocity( std::array< tk::real, 9 >& ) {}
 
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept
@@ -58,7 +61,7 @@ class Position_ConstShear {
   public:
     //! Constructor: prescribe mean shear as dU/dy = 1.0
     //! \param[in,out] dU Prescribed mean velocity gradient
-    Position_ConstShear( std::array< tk::real, 9 >& dU ) {
+    explicit Position_ConstShear( std::array< tk::real, 9 >& dU ) {
       dU = {{ 0.0, 1.0, 0.0,
               0.0, 0.0, 0.0,
               0.0, 0.0, 0.0 }};

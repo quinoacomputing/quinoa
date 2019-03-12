@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestReader.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for Base/Reader
   \details   Unit tests for Base/Reader
 */
@@ -49,10 +52,6 @@ template<> template<>
 void Reader_object::test< 2 >() {
   set_test_name( "ctor throws if filename empty" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   // Correctly throws exception in DEBUG mode if empty filename string is given
   try {
 
@@ -82,10 +81,6 @@ template<> template<>
 void Reader_object::test< 3 >() {
   set_test_name( "ctor throws if file doesn't exist" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   // Correctly throws exception if file does not exist
   try {
 
@@ -108,10 +103,6 @@ void Reader_object::test< 3 >() {
 template<> template<>
 void Reader_object::test< 4 >() {
   set_test_name( "ctor throws if cannot read from file" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   // Correctly throws exception if cannot read from file
   try {

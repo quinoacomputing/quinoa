@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Discretization.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \details   Data and functionality common to all discretization schemes
   \see       Discretization.h and Discretization.C for more info.
 */
@@ -12,23 +15,14 @@
 #include "Vector.h"
 #include "DerivedData.h"
 #include "Discretization.h"
-#include "ExodusIIMeshReader.h"
-#include "ExodusIIMeshWriter.h"
+#include "MeshWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "Inciter/Options/Scheme.h"
-#include "CGPDE.h"
-#include "DGPDE.h"
 #include "Print.h"
-
-#ifdef HAS_ROOT
-  #include "RootMeshWriter.h"
-#endif
 
 namespace inciter {
 
 static CkReduction::reducerType PDFMerger;
-extern std::vector< CGPDE > g_cgpde;
-extern std::vector< DGPDE > g_dgpde;
 extern ctr::InputDeck g_inputdeck;
 
 } // inciter::
@@ -38,20 +32,23 @@ using inciter::Discretization;
 Discretization::Discretization(
   const CProxy_DistFCT& fctproxy,
   const CProxy_Transporter& transporter,
+  const tk::CProxy_MeshWriter& meshwriter,
   const std::vector< std::size_t >& conn,
   const tk::UnsMesh::CoordMap& coordmap,
   const std::map< int, std::unordered_set< std::size_t > >& msum,
-  int nchare ) :
-  m_nchare( nchare ),
+  int nc ) :
+  m_nchare( nc ),
   m_it( 0 ),
   m_itr( 0 ),
+  m_itf( 0 ),
   m_initial( 1.0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
+  m_lastDumpTime( -std::numeric_limits< tk::real >::max() ),  
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
-  m_lastFieldWriteTime( -1.0 ),
   m_nvol( 0 ),
   m_fct( fctproxy ),
   m_transporter( transporter ),
+  m_meshwriter( meshwriter ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
   m_coord( setCoord( coordmap ) ),
   m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
@@ -62,27 +59,18 @@ Discretization::Discretization(
   m_timer()
 // *****************************************************************************
 //  Constructor
-//! \param[in] transporter Host (Transporter) proxy
 //! \param[in] fctproxy Distributed FCT proxy
+//! \param[in] transporter Host (Transporter) proxy
+//! \param[in] meshwriter Mesh writer proxy
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
 //! \param[in] coordmap Coordinates of mesh nodes and their global IDs
 //! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
 //!   mesh chunk we operate on
-//! \param[in] nchare Total number of Discretization chares
-//! \details "Contiguous-row-id" here means that the numbering of the mesh nodes
-//!   (which corresponds to rows in the linear system) are (approximately)
-//!   contiguous (as much as this can be done with an unstructured mesh) as the
-//!   problem is distirbuted across PEs, held by Solver objects. This ordering
-//!   is in start contrast with "as-in-file" ordering, which is the ordering of
-//!   the mesh nodes as it is stored in the file from which the mesh is read in.
-//!   The as-in-file ordering is highly non-contiguous across the distributed
-//!   problem.
+//! \param[in] nc Total number of Discretization chares
 // *****************************************************************************
 {
   Assert( m_psup.second.size()-1 == m_gid.size(),
           "Number of mesh points and number of global IDs unequal" );
-
-  usesAtSync = true;    // Enable migration at AtSync
 
   // Convert neighbor nodes to vectors from sets
   for (const auto& n : msum) {
@@ -92,8 +80,9 @@ Discretization::Discretization(
 
   // Count the number of mesh nodes at which we receive data from other chares
   // and compute map associating boundary-chare node ID associated to global ID
-  std::vector< std::size_t > c;
-  for (const auto& n : m_msum) for (auto i : n.second) c.push_back( i );
+  std::vector< std::size_t > c( tk::sumvalsize( m_msum ) );
+  std::size_t j = 0;
+  for (const auto& n : m_msum) for (auto i : n.second) c[ j++ ] = i;
   tk::unique( c );
   m_bid = tk::assignLid( c );
 
@@ -102,13 +91,12 @@ Discretization::Discretization(
 
   // Insert DistFCT chare array element if FCT is needed. Note that even if FCT
   // is configured false in the input deck, at this point, we still need the FCT
-  // object as FCT is still being performed, only its results are ignored. See
-  // also, e.g., MatCG::next().
+  // object as FCT is still being performed, only its results are ignored.
   const auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
   const auto nprop = g_inputdeck.get< tag::component >().nprop();
-  if ((sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG))
-    m_fct[ thisIndex ].insert( nchare, m_gid.size(), nprop,
-                               m_msum, m_bid, m_lid, m_inpoel, CkMyPe() );
+  if (sch == ctr::SchemeType::DiagCG)
+    m_fct[ thisIndex ].insert( m_nchare, m_gid.size(), nprop,
+                               m_msum, m_bid, m_lid, m_inpoel );
 
   contribute( CkCallback(CkReductionTarget(Transporter,disccreated),
               m_transporter) );
@@ -255,8 +243,9 @@ Discretization::vol()
     contribute( CkCallback(CkReductionTarget(Transporter,vol), m_transporter) );
   else
     for (const auto& n : m_msum) {
-      std::vector< tk::real > v;
-      for (auto i : n.second) v.push_back( m_vol[ tk::cref_find(m_lid,i) ] );
+      std::vector< tk::real > v( n.second.size() );
+      std::size_t j = 0;
+      for (auto i : n.second) v[ j++ ] = m_vol[ tk::cref_find(m_lid,i) ];
       thisProxy[ n.first ].comvol( n.second, v );
     }
 }
@@ -389,183 +378,64 @@ Discretization::stat()
 }
 
 void
-Discretization::writeMesh(
+Discretization::write(
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::vector< std::size_t >& triinpoel,
-  const std::map< int, std::vector< std::size_t > >& bnode )
+  const std::map< int, std::vector< std::size_t > >& bnode,
+  const std::vector< std::string>& names,
+  const std::vector< std::vector< tk::real > >& fields,
+  tk::Centering centering,
+  CkCallback c )
 // *****************************************************************************
-// Output chare element blocks to file
+//  Output mesh and fields data (solution dump) to file(s)
+//! \param[in] inpoel Mesh connectivity for the mesh chunk to be written
+//! \param[in] coord Node coordinates of the mesh chunk to be written
 //! \param[in] bface Map of boundary-face lists mapped to corresponding side set
 //!   ids for this mesh chunk
 //! \param[in] triinpoel Interconnectivity of points and boundary-face in this
 //!   mesh chunk
 //! \param[in] bnode Map of boundary-node lists mapped to corresponding side set
 //!   ids for this mesh chunk
+//! \param[in] names Field output names to output
+//! \param[in] fields Mesh field output dump
+//! \param[in] centering The centering that will be associated to the field data
+//!   to be output when writeFields is called next
+//! \param[in] c Function to continue with after the write
+//! \details Since m_meshwriter is a Charm++ chare group, it never migrates and
+//!   an instance is guaranteed on every PE. We index the first PE on every
+//!   logical compute node. In Charm++'s non-SMP mode, a node is the same as a
+//!   PE, so the index is the same as CkMyPe(). In SMP mode the index is the
+//!   first PE on every logical node. In non-SMP mode this yields one or more
+//!   output files per PE with zero or non-zero virtualization, respectively. If
+//!   there are multiple chares on a PE, the writes are serialized per PE, since
+//!   only a single entry method call can be executed at any given time. In SMP
+//!   mode, still the same number of files are output (one per chare), but the
+//!   output is serialized through the first PE of each compute node. In SMP
+//!   mode, channeling multiple files via a single PE on each node is required
+//!   by NetCDF and HDF5, as well as ExodusII, since none of these libraries are
+//!   thread-safe.
 // *****************************************************************************
 {
-  if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
+  // If the previous iteration refined (or moved) the mesh or this is called
+  // before the first time step, we also output the mesh.
+  bool meshoutput = m_itf == 0 ? true : false;
 
-    #ifdef HAS_ROOT
-    auto filetype = g_inputdeck.get< tag::selected, tag::filetype >();
+  auto eps = std::numeric_limits< tk::real >::epsilon();
+  bool fieldoutput = false;
 
-    if (filetype == tk::ctr::FieldFileType::ROOT) {
-
-      tk::RootMeshWriter rmw( filename(), 0 );
-      rmw.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
-
-    } else
-    #endif
-    {
-      // Create ExodusII writer
-      tk::ExodusIIMeshWriter ew( filename(), tk::ExoWriter::CREATE );
-      // Write chare mesh
-      if (m_nchare == 1) {
-
-        // Do not write side sets in parallel
-        const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-        const auto centering = ctr::Scheme().centering( scheme );
-        if (centering == ctr::Centering::ELEM)
-          ew.writeMesh( m_inpoel, m_coord, bface, triinpoel );
-        else if (centering == ctr::Centering::NODE) {
-          // Convert boundary node lists to local ids for output
-          auto lbnode = bnode;
-          for (auto& s : lbnode)
-            for (auto& p : s.second)
-              p = tk::cref_find(m_lid,p);
-          ew.writeMesh( m_inpoel, m_coord, lbnode );
-        } else Throw( "Scheme centering not handled for writing mesh" );
-
-      } else {
-        ew.writeMesh( m_inpoel, m_coord );
-      }
-    }
+  // Output field data only if there is no dump at this physical time yet
+  if (std::abs(m_lastDumpTime - m_t) > eps ) {
+    m_lastDumpTime = m_t;
+    ++m_itf;
+    fieldoutput = true;
   }
-}
 
-void
-Discretization::writeNodeSolution(
-  const tk::ExodusIIMeshWriter& ew,
-  uint64_t it,
-  const std::vector< std::vector< tk::real > >& u ) const
-// *****************************************************************************
-// Output solution to file
-//! \param[in] ew ExodusII mesh-based writer object
-//! \param[in] it Iteration count
-//! \param[in] u Vector of fields to write to file
-// *****************************************************************************
-{
-  int varid = 0;
-  for (const auto& f : u) ew.writeNodeScalar( it, ++varid, f );
-}
-
-#ifdef HAS_ROOT
-void
-Discretization::writeNodeSolution(
-  const tk::RootMeshWriter& rmw,
-  uint64_t it,
-  const std::vector< std::vector< tk::real > >& u ) const
-// *****************************************************************************
-// Output solution to file
-//! \param[in] rmw Root mesh-based writer object
-//! \param[in] it Iteration count
-//! \param[in] u Vector of fields to write to file
-// *****************************************************************************
-{
-  int varid = 0;
-  for (const auto& f : u) rmw.writeNodeScalar( it, ++varid, f );
-}
-#endif
-
-void
-Discretization::writeElemSolution(
-  const tk::ExodusIIMeshWriter& ew,
-  uint64_t it,
-  const std::vector< std::vector< tk::real > >& u,
-  const std::vector< std::vector< tk::real > >& /*v*/ ) const
-// *****************************************************************************
-// Output solution to file
-//! \param[in] ew ExodusII mesh-based writer object
-//! \param[in] it Iteration count
-//! \param[in] u Vector of element fields to write to file
-//! \param[in] v Vector of node fields to write to file
-// *****************************************************************************
-{
-  int varid = 0;
-  for (const auto& f : u) ew.writeElemScalar( it, ++varid, f );
-  //varid = 0;
-  //for (const auto& f : v) ew.writeNodeScalar( it, ++varid, f );
-}
-
-void
-Discretization::writeNodeMeta() const
-// *****************************************************************************
-// Output mesh-based fields metadata to file
-// *****************************************************************************
-{
-  if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
-
-    #ifdef HAS_ROOT
-    auto filetype = g_inputdeck.get< tag::selected, tag::filetype >();
-
-    if (filetype == tk::ctr::FieldFileType::ROOT) {
- 
-      tk::RootMeshWriter rmw( filename(), 1 );
-
-      // Collect nodal field output names from all PDEs
-      std::vector< std::string > names;
-      for (const auto& eq : g_cgpde) {
-        auto n = eq.fieldNames();
-        names.insert( end(names), begin(n), end(n) );
-      }
-
-      // Write node field names
-      rmw.writeNodeVarNames( names );
-
-    } else
-    #endif
-    {
-
-      // Create ExodusII writer
-      tk::ExodusIIMeshWriter ew( filename(), tk::ExoWriter::OPEN );
-
-      // Collect nodal field output names from all PDEs
-      std::vector< std::string > names;
-      for (const auto& eq : g_cgpde) {
-        auto n = eq.fieldNames();
-        names.insert( end(names), begin(n), end(n) );
-      }
-
-      // Write node field names
-      ew.writeNodeVarNames( names );
-    }
-
-  }
-}
-
-void
-Discretization::writeElemMeta() const
-// *****************************************************************************
-// Output mesh-based element fields metadata to file
-// *****************************************************************************
-{
-  if (!g_inputdeck.get< tag::cmd, tag::benchmark >())
-  {
-    // Create ExodusII writer
-    tk::ExodusIIMeshWriter ew( filename(), tk::ExoWriter::OPEN );
-
-    // Collect elemental field output names from all PDEs
-    std::vector< std::string > names;
-    for (const auto& eq : g_dgpde) {
-      auto n = eq.fieldNames();
-      names.insert( end(names), begin(n), end(n) );
-    }
-
-    // Write element field names
-    ew.writeElemVarNames( names );
-
-    //// Write node field names
-    //ew.writeNodeVarNames( names );
-  }
+  m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
+    write( meshoutput, fieldoutput, m_itr, m_itf, m_t, thisIndex, centering,
+           g_inputdeck.get< tag::cmd, tag::io, tag::output >(),
+           inpoel, coord, bface, triinpoel, bnode, m_lid, names, fields, c );
 }
 
 void
@@ -579,42 +449,7 @@ Discretization::setdt( tk::real newdt )
 
   // Truncate the size of last time step
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  if (m_t+m_dt > term) m_dt = term - m_t;;
-}
-
-
-std::string
-Discretization::filename() const
-// *****************************************************************************
-//  Compute ExodusII filename
-//! \details We use a file naming convention for large field output data that
-//!   allows ParaView to glue multiple files into a single simulation output by
-//!   only loading a single file. The base filename is followed by ".e-s.",
-//!   which probably stands for Exodus Sequence, followed by 3 integers:
-//!   (1) {RS}: counts the number of "restart dumps", but we use this for
-//!   counting the number of outputs with a different mesh, e.g., due to
-//!   mesh refinement, thus if this first number is new the mesh is new
-//!   compared to the previous (first) number afer ".e-s.",
-//!   (2) {NP}: total number of partitions (workers, chares), this is more than
-//!   the number of PEs with nonzero virtualization (overdecomposition), and
-//!   (3) {RANK}: worker (chare) id.
-//!   Thus {RANK} does spatial partitioning, while {RS} partitions in time, but
-//!   a single {RS} id may contain multiple time steps, which equals to the
-//!   number of time steps at which field output is saved without refining the
-//!   mesh.
-//! \return Filename computed
-//! \see https://www.paraview.org/Wiki/Restarted_Simulation_Readers
-// *****************************************************************************
-{
-  return g_inputdeck.get< tag::cmd, tag::io, tag::output >() + ".e-s"
-         + '.' + std::to_string( m_itr )        // create new file if new mesh
-         + '.' + std::to_string( m_nchare )     // total number of workers
-         + '.' + std::to_string( thisIndex )    // new file per worker
-         #ifdef HAS_ROOT
-         + (g_inputdeck.get< tag::selected, tag::filetype >() ==
-             tk::ctr::FieldFileType::ROOT ? ".root" : "")
-         #endif
-         ;
+  if (m_t+m_dt > term) m_dt = term - m_t;
 }
 
 void

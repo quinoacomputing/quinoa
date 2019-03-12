@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Options/RNG.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Random number generator options and associations
   \details   Random number generator options and associations
 */
@@ -265,7 +268,8 @@ class RNG : public tk::Toggle< RNGType > {
     bool supportsOpt( RNGType rng, const OptionType& option ) const {
       auto it = support.find( rng );
       if ( it != end( support ) ) {
-        for (auto& o : it->second)
+        for (auto o : it->second)
+          // cppcheck-suppress useStlAlgorithm
           if (o == option) return true;
       }
       return false;

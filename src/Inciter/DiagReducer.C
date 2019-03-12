@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/DiagReducer.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Custom Charm++ reducer for merging std::vectors across PEs
   \details   Custom Charm++ reducer for merging std::vectors across PEs.
 */
@@ -73,7 +76,7 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
     for (std::size_t i=0; i<v.size(); ++i)
       Assert( v[i].size() == w[i].size(),
               "Size mismatch during diagnostics aggregation" );
-    // Apply diagnostics aggregation policy, see also Solver::updateDiag()
+    // Apply diagnostics aggregation policy
     // Sum for L2 normal of the numerical solution for all scalar components
     for (std::size_t i=0; i<v[L2SOL].size(); ++i) v[L2SOL][i] += w[L2SOL][i];
     // Sum for the L2 norm of the numerical - analytical solution for all comps

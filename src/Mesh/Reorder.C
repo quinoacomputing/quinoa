@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Mesh/Reorder.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Mesh reordering routines for unstructured meshes
   \details   Mesh reordering routines for unstructured meshes.
 */
@@ -39,6 +42,7 @@ shiftToZero( std::vector< std::size_t >& inpoel )
   auto minId = *std::min_element( begin(inpoel), end(inpoel) );
 
   // shift node ids to start from zero
+  // cppcheck-suppress useStlAlgorithm
   for (auto& n : inpoel) n -= minId;
 
   return minId;
@@ -66,6 +70,7 @@ remap( std::vector< std::size_t >& id, const std::vector< std::size_t >& map )
           "Indexing out of bounds" );
 
   // remap integer IDs in vector id
+  // cppcheck-suppress useStlAlgorithm
   for (auto& i : id) i = map[i];
 }
 
@@ -180,11 +185,12 @@ global2local( const std::vector< std::size_t >& ginpoel )
   // Assign local node ids to global node ids
   const auto lid = tk::assignLid( gid );
 
-  // Generate element connectivity using local node ids
-  std::vector< std::size_t > inpoel;
-  for (auto p : ginpoel) inpoel.push_back( tk::cref_find( lid, p ) );
-
   Assert( gid.size() == lid.size(), "Size mismatch" );
+
+  // Generate element connectivity using local node ids
+  std::vector< std::size_t > inpoel( ginpoel.size() );
+  std::size_t j = 0;
+  for (auto p : ginpoel) inpoel[ j++ ] = tk::cref_find( lid, p );
 
   // Return element connectivty with local node IDs
   return std::make_tuple( inpoel, gid, lid );

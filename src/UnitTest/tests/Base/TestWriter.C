@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestWriter.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for Base/Writer
   \details   Unit tests for Base/Writer
 */
@@ -25,7 +28,7 @@ namespace tut {
 //! All tests in group inherited from this base
 struct Writer_common {
   struct W : public tk::Writer {
-     W( const std::string& filename ) : tk::Writer( filename ) {}
+    explicit W( const std::string& filename ) : tk::Writer( filename ) {}
   };
 };
 

@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/RNG/RNG.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Random number generator
   \details   This file defines a generic random number generator class. The
     class uses runtime polymorphism without client-side inheritance: inheritance
@@ -110,7 +113,7 @@ class RNG {
     //! the virtual functions required by Concept
     template< typename T >
     struct Model : Concept {
-      Model( T x ) : data( std::move(x) ) {}
+      explicit Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
       void uniform( int stream, ncomp_t num, double* r ) const override
       { data.uniform( stream, num, r ); }

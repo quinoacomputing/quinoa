@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/DiffEqFactory.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Differential equations factory
   \details   This file declares the type for a differential equations factory.
 */
@@ -92,6 +95,7 @@ template< typename Info, typename VV >
 void spikes( Info& nfo, const VV& spike ) {
   std::size_t i = 0;
   for (const auto& s : spike)
+    // cppcheck-suppress useStlAlgorithm
     nfo.emplace_back( "delta spikes [" + std::to_string(++i) + ":" +
                         std::to_string( s.size()/2 ) + "]",
                       parameters( s ) );
@@ -105,6 +109,7 @@ template< typename Info, typename VV >
 void betapdfs( Info& nfo, const VV& betapdf ) {
   std::size_t i = 0;
   for (const auto& s : betapdf)
+    // cppcheck-suppress useStlAlgorithm
     nfo.emplace_back( "beta pds [" + std::to_string(++i) + "]",
                       parameters( s ) );
 }

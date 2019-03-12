@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Base/ProcessException.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Process an exception
   \details   This file contains the implementation of processing an exception.
     Logically, it would make sense to put this into Exception.C, however,
@@ -119,55 +122,6 @@ processExceptionCharm()
 
   // Tell the runtime system to exit with a nonzero exit code
   CkExit(1);
-}
-
-void
-processExceptionMPI()
-// *****************************************************************************
-//  Process an exception from the MPI runtime system
-//! \details See Josuttis, The C++ Standard Library - A Tutorial and Reference,
-//!    2nd Edition, 2012.
-// *****************************************************************************
-{
-  int peid;
-
-  #if defined(__clang__)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wold-style-cast"
-  #endif
-  MPI_Comm_rank( MPI_COMM_WORLD, &peid );  
-  #if defined(__clang__)
-    #pragma GCC diagnostic pop
-  #endif
-
-  try {
-    throw;      // rethrow exception to deal with it here
-  }
-  // Catch tk::Exception
-  catch ( tk::Exception& qe ) {
-    if (peid == 0) qe.handleException();
-  }
-  // Catch std::exception and transform it into tk::Exception without
-  // file:line:func information
-  catch ( std::exception& se ) {
-    tk::Exception qe( se.what() );
-    if (peid == 0) qe.handleException();
-  }
-  // Catch uncaught exception
-  catch (...) {
-    tk::Exception qe( "Non-standard exception" );
-    if (peid == 0) qe.handleException();
-  }
-
-  #if defined(__clang__)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wold-style-cast"
-  #endif
-  // Tell the runtime system to exit with error code
-  MPI_Abort( MPI_COMM_WORLD, tk::ErrCode::FAILURE );
-  #if defined(__clang__)
-    #pragma GCC diagnostic pop
-  #endif
 }
 
 } // tk::

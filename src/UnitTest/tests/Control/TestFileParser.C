@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Control/TestFileParser.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for Control/FileParser
   \details   Unit tests for Control/FileParser
 */
@@ -28,7 +31,7 @@ struct FileParser_common {
   // tk::FileParser only has a protected constructor: designed to be used as a
   // base class
   struct parser : tk::FileParser {
-    parser( const std::string& f ) : FileParser( f ) {}
+    explicit parser( const std::string& f ) : FileParser( f ) {}
     void diagnostics( const tk::Print& print,
                       const std::vector< std::string >& messages ) {
       tk::FileParser::diagnostics( print, messages );
@@ -59,10 +62,6 @@ template<> template<>
 void FileParser_object::test< 2 >() {
   set_test_name( "ctor throws if filename empty" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   // Correctly throws exception in DEBUG mode if empty filename string is given
   try {
 
@@ -90,10 +89,6 @@ template<> template<>
 void FileParser_object::test< 3 >() {
   set_test_name( "ctor throws if file doesn't exist" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   // Correctly throws exception if file does not exist
   try {
 
@@ -115,10 +110,6 @@ template<> template<>
 void FileParser_object::test< 4 >() {
   set_test_name( "ctor throws if cannot read from file" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   // Correctly throws exception if cannot read from file
   try {
 
@@ -137,10 +128,6 @@ void FileParser_object::test< 4 >() {
 template<> template<>
 void FileParser_object::test< 5 >() {
   set_test_name( "diagnostics throws on error" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   // Correctly throws exception on error
   try {
@@ -166,10 +153,6 @@ template<> template<>
 void FileParser_object::test< 6 >() {
   set_test_name( "diagnostics doesn't throw on warning" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   // Does not throw exception on warning
   try {
 
@@ -187,10 +170,6 @@ void FileParser_object::test< 6 >() {
 template<> template<>
 void FileParser_object::test< 7 >() {
   set_test_name( "diagnostics with no messages" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   // Does not throw exception on warning
   try {

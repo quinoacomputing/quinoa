@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestTimer.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for Base/Timer.h
   \details   Unit tests for Base/Timer.h
 */
@@ -29,6 +32,7 @@ namespace tut {
 
 //! All tests in group inherited from this base
 struct Timer_common {
+  // cppcheck-suppress unusedStructMember
   double precision = 1.0e-3;    // required precision in seconds for timings
 };
 
@@ -155,15 +159,11 @@ void Timer_object::test< 5 >() {
 //! Charm chare having a tk::Timer object
 class CharmTimer : public CBase_CharmTimer {
   public:
-  CharmTimer( const tk::Timer& timer ) {
+  explicit CharmTimer( const tk::Timer& timer ) {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/Timer", 7,
                          "Charm:migrate tk::Timer 2",
                          tut::test_result::result_type::ok );
-
-    // Quiet std::cerr, to quiet exception message during its ctor
-    std::stringstream quiet;
-    tk::cerr_redirect( quiet.rdbuf() );
 
     // Evaluate test: The incoming timer's time point is queried here that
     // includes the time elapsed before the Charm++ chare has been created + the
@@ -223,10 +223,6 @@ void Timer_object::test< 7 >() {
 template<> template<>
 void Timer_object::test< 8 >() {
   set_test_name( "query throws with non-existent key" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   try {
     std::map< std::string, tk::Timer > timer;

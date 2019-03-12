@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/IO/MeshReader.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Polymorphic mesh reader class for connecting to various readers
   \brief     Polymorphic mesh reader class for connecting to various lower
     level, specific mesh readers.
@@ -60,12 +63,10 @@ class MeshReader {
     void readMeshPart( std::vector< std::size_t >& ginpoel,
                        std::vector< std::size_t >& inpoel,
                        std::vector< std::size_t >& triinp,
-                       std::vector< std::size_t >& gid,
                        std::unordered_map< std::size_t, std::size_t >& lid,
                        tk::UnsMesh::Coords& coord, 
                        int numpes=1, int mype=0 )
-    { self->readMeshPart( ginpoel, inpoel, triinp, gid, lid, coord, numpes,
-                          mype ); }
+    { self->readMeshPart( ginpoel, inpoel, triinp, lid, coord, numpes, mype ); }
     //! ...
     std::vector< std::size_t > triinpoel(
      std::map< int, std::vector< std::size_t > >& bface,
@@ -110,7 +111,6 @@ class MeshReader {
                      std::vector< std::size_t >&,
                      std::vector< std::size_t >&,
                      std::vector< std::size_t >&,
-                     std::vector< std::size_t >&,
                      std::unordered_map< std::size_t, std::size_t >&,
                      tk::UnsMesh::Coords&,
                      int, int ) = 0;
@@ -136,12 +136,11 @@ class MeshReader {
       void readMeshPart( std::vector< std::size_t >& ginpoel,
                          std::vector< std::size_t >& inpoel,
                          std::vector< std::size_t >& triinp,
-                         std::vector< std::size_t >& gid,
                          std::unordered_map< std::size_t, std::size_t >& lid,
                          tk::UnsMesh::Coords& coord, 
                          int numpes, int mype ) override
-        { data.readMeshPart( ginpoel, inpoel, triinp, gid, lid, coord,
-                             numpes, mype ); }
+        { data.readMeshPart( ginpoel, inpoel, triinp, lid, coord, numpes,
+                             mype ); }
       std::vector< std::size_t > triinpoel(
         std::map< int, std::vector< std::size_t > >& bface,
         const std::map< int, std::vector< std::size_t > >& faceid,

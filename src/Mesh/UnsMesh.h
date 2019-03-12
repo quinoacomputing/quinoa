@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Mesh/UnsMesh.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration. This mesh class currently
     supports line, triangle, and tetrahedron elements.
@@ -95,7 +98,7 @@ class UnsMesh {
       //! \param[in] r Right element primitive given by array of node IDs
       //! \return True if l = r, false otherwise
       //! \note The order of the nodes does not matter: the IDs are sorted
-      //!   before the primitives, given by the node IDs, is computed.
+      //!   before equality is determined.
       bool operator()( const std::array< std::size_t, N >& l,
                        const std::array< std::size_t, N >& r ) const
       {

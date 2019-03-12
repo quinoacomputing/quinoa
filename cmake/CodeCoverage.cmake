@@ -78,7 +78,7 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
     # Combine trace files
     COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --add-tracefile ${OUTPUT}.base.info --add-tracefile ${OUTPUT}.test.info --output-file ${OUTPUT}.total.info
     # Filter out unwanted files
-    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info 'UnitTest/tests/*' '*/c++/*' '*/include/*' '*/boost/*' '*/charm/*' '*.decl.h' '*.def.h' '*/STDIN' '*/openmpi/*' '*/pstreams/*' '*/Random123/*' '*/pegtl/*' '*/tut/*' '*/highwayhash/*' '*/moduleinit*' --output-file ${OUTPUT}.filtered.info
+    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info "UnitTest/tests/*" "*/c++/*" "*/include/*" "*/boost/*" "*/charm/*" "*.decl.h" "*.def.h" "*/STDIN" "*/openmpi/*" "*/pstreams/*" "*/Random123/*" "*/pegtl/*" "*/tut/*" "*/highwayhash/*" "*/moduleinit*" --output-file ${OUTPUT}.filtered.info
     # Copy over report customization files for genhtml
     COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.gcov.css
@@ -87,17 +87,18 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.lcov.prolog
             ${CMAKE_BINARY_DIR}
     # Generate HTML report
-    COMMAND ${GENHTML} --legend --branch-coverage --demangle-cpp --css-file quinoa.gcov.css --html-prolog quinoa.lcov.prolog --title "${GIT_SHA1}" -o ${OUTPUT} ${OUTPUT}.filtered.info
+    COMMAND ${GENHTML} --legend --branch-coverage --demangle-cpp --css-file quinoa.gcov.css --ignore-errors source --html-prolog quinoa.lcov.prolog --title "${GIT_SHA1}" -o ${OUTPUT} ${OUTPUT}.filtered.info
     # Customize page headers in generated html to own
-    COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs ${SED} -i 's/LCOV - code coverage report/Quinoa ${suite} test code coverage report/g'
-    COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs ${SED} -i 's/<td class="headerItem">Test:<\\/td>/<td class="headerItem">Commit:<\\/td>/g'
-    COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs ${SED} -i 's/Quinoa_v\\\(.*\\\)-\\\(.*\\\)-g\\\(.*\\\)<\\/td>/<a href="https:\\/\\/github.com\\/quinoacomputing\\/quinoa\\/commit\\/\\3">Quinoa_v\\1-\\2-g\\3<\\/a><\\/td>/g'
+    COMMAND find ${OUTPUT} -type f -exec ${SED} -i "s/LCOV - code coverage report/Quinoa ${suite} test code coverage report/g" {} +
+    COMMAND find ${OUTPUT} -type f -exec ${SED} -i "s/<td class=\"headerItem\">Test:<\\/td>/<td class=\"headerItem\">Commit:<\\/td>/g" {} +
+    COMMAND find ${OUTPUT} -type f -exec ${SED} -i "s/Quinoa_v\\\(.*\\\)-\\\(.*\\\)-g\\\(.*\\\)<\\/td>/<a href=\"https:\\/\\/github.com\\/quinoacomputing\\/quinoa\\/commit\\/\\3\">Quinoa_v\\1-\\2-g\\3<\\/a><\\/td>/g" {} +
     # Cleanup intermediate data
     COMMAND ${CMAKE_COMMAND} -E remove ${OUTPUT}.base.info ${OUTPUT}.test.info ${OUTPUT}.total.info ${OUTPUT}.filtered.info
     # Set work directory for target
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     # Echo what is being done
     COMMENT "Quinoa ${suite} test code coverage report"
+    VERBATIM USES_TERMINAL
   )
 
   # Make test coverage target dependent on optional dependencies passed in using
@@ -183,7 +184,7 @@ FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner
     # Combine trace files
     COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --add-tracefile ${OUTPUT}.base.info --add-tracefile ${OUTPUT}.test.info --output-file ${OUTPUT}.total.info
     # Filter out unwanted files
-    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info 'UnitTest/tests/*' '*/c++/*' '*/include/*' '*/boost/*' '*/charm/*' '*.decl.h' '*.def.h' '*/STDIN' '*/openmpi/*' '*/pstreams/*' '*/Random123/*' '*/pegtl/*' '*/tut/*' '*/highwayhash/*' '*/moduleinit*' --output-file ${OUTPUT}.filtered.info
+    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info "UnitTest/tests/*" "*/c++/*" "*/include/*" "*/boost/*" "*/charm/*" "*.decl.h" "*.def.h" "*/STDIN" "*/openmpi/*" "*/pstreams/*" "*/Random123/*" "*/pegtl/*" "*/tut/*" "*/highwayhash/*" "*/moduleinit*" --output-file ${OUTPUT}.filtered.info
     # Copy over report customization files for genhtml
     COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.gcov.css
@@ -192,17 +193,18 @@ FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.lcov.prolog
             ${CMAKE_BINARY_DIR}
     # Generate HTML report
-    COMMAND ${GENHTML} --legend --branch-coverage --demangle-cpp --css-file quinoa.gcov.css --html-prolog quinoa.lcov.prolog --title "${GIT_SHA1}" -o ${OUTPUT} ${OUTPUT}.filtered.info
+    COMMAND ${GENHTML} --legend --branch-coverage --demangle-cpp --css-file quinoa.gcov.css --ignore-errors source --html-prolog quinoa.lcov.prolog --title "${GIT_SHA1}" -o ${OUTPUT} ${OUTPUT}.filtered.info
     # Customize page headers in generated html to own
-    COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs ${SED} -i 's/LCOV - code coverage report/Quinoa ${suite} test code coverage report/g'
-    COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs ${SED} -i 's/<td class="headerItem">Test:<\\/td>/<td class="headerItem">Commit:<\\/td>/g'
-    COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs ${SED} -i 's/Quinoa_v\\\(.*\\\)-\\\(.*\\\)-g\\\(.*\\\)<\\/td>/<a href="https:\\/\\/github.com\\/quinoacomputing\\/quinoa\\/commit\\/\\3">Quinoa_v\\1-\\2-g\\3<\\/a><\\/td>/g'
+    COMMAND find ${OUTPUT} -type f -exec ${SED} -i "s/LCOV - code coverage report/Quinoa ${suite} test code coverage report/g" {} +
+    COMMAND find ${OUTPUT} -type f -exec ${SED} -i "s/<td class=\"headerItem\">Test:<\\/td>/<td class=\"headerItem\">Commit:<\\/td>/g" {} +
+    COMMAND find ${OUTPUT} -type f -exec ${SED} -i "s/Quinoa_v\\\(.*\\\)-\\\(.*\\\)-g\\\(.*\\\)<\\/td>/<a href=\"https:\\/\\/github.com\\/quinoacomputing\\/quinoa\\/commit\\/\\3\">Quinoa_v\\1-\\2-g\\3<\\/a><\\/td>/g" {} +
     # Cleanup intermediate data
     COMMAND ${CMAKE_COMMAND} -E remove ${OUTPUT}.base.info ${OUTPUT}.test.info ${OUTPUT}.total.info ${OUTPUT}.filtered.info
     # Set work directory for target
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     # Echo what is being done
     COMMENT "Quinoa ${suite} test code coverage report"
+    VERBATIM USES_TERMINAL
   )
 
   # Make test coverage target dependent on optional dependencies passed in using

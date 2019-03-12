@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/MatCG.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     MatCG for a PDE system with continuous Galerkin with a matrix
   \details   MatCG advances a system of partial differential equations (PDEs)
     using continuous Galerkin (CG) finite element (FE) spatial discretization
@@ -90,6 +93,9 @@ class MatCG : public CBase_MatCG {
 
     //! Compute time step size
     void dt();
+
+    //! Send own chare-boundary data to neighboring chares
+    void sendinit(){}
 
     //! Advance equations to next time step
     void advance( tk::real newdt );

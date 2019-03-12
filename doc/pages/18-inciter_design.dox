@@ -96,10 +96,6 @@ Here are the important classes that interoperate within inciter:
    - `DiagCG` (chare _array_, PDE solver child class, specialized to continuous
      Galerkin finite element discretization scheme with a lumped-mass left-hand
      side and flux-corrected transport combined with Lax-Wendroff time stepping),
-   - `MatCG` (chare _array_, PDE solver child class, specialized to continuous
-     Galerkin finite element discretization in space with a consistent-mass
-     left-hand side and a linear solver with flux-corrected transport combined
-     with Lax-Wendroff time stepping),
    - `DG` (chare _array_, PDE solver child class, specialized to discontinuous
      Galerkin finite element discretization scheme with a diagonal left-hand
      side with Runge-Kutta time stepping),
@@ -195,7 +191,7 @@ time stepping.
 operators for partial differential equations, are not yet created - not all
 information is available for those yet. However, their Charm++ proxies are
 created and encapsulated within SchemeBase. These _worker proxies_, `DiagCG`,
-`MatCG`, etc., together with their "base" class, `Discretization`, are bound
+etc., together with their "base" class, `Discretization`, are bound
 together so that the runtime system migrates them together during load
 balancing. This is because the "child" is designed to be able to directly
 access data from its base, as in usual runtime polymorphism. For more details
@@ -321,11 +317,8 @@ as a starting point for setting up face and ghost communication data structures
 for cell-centered DG.
 
 `Sorter` performs optional PE-locality mesh node reordering in parallel. This
-reordering is optional and is off by default unless `MatCG` is configured by
-the user. The reordering assigns new global mesh node IDs that roughly increase
-with chare ID. This enables optimal communication for `MatCG` when
-contributions to the linear system are communicated and assembled for a linear
-solution in tk::Solver.
+reordering is optional and is off by default. The reordering assigns new global
+mesh node IDs that roughly increase with chare ID.
 
 Whether node reordering is to be performed or not is evaluated in
 Sorter::start().  If reordering is done, it starts in Sorter::mask(). If

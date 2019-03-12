@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/IO/TestMesh.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for unstructured-mesh reader and writers in IO
   \details   Unit tests for unstructured-mesh reader and writers in IO
 */
@@ -177,7 +180,9 @@ using Mesh_group = test_group< Mesh_common, MAX_TESTS_IN_GROUP >;
 using Mesh_object = Mesh_group::object;
 
 //! Define test group
-static Mesh_group Mesh( "IO/Mesh" );
+//! \note Those test groups whose name contains "MPISingle" will be started as
+//!    MPI tests (from a Charm++ nodegroup) and from only a single MPI rank.
+static Mesh_group Mesh( "IO/Mesh_MPISingle" );
 
 //! Test definitions for group
 

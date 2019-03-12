@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/IO/Omega_h_MeshReader.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Omega_h mesh reader
   \details   Omega_h mesh reader class declaration.
 */
@@ -37,7 +40,6 @@ class Omega_h_MeshReader {
     void readMeshPart( std::vector< std::size_t >& ginpoel,
                        std::vector< std::size_t >& inpoel,
                        std::vector< std::size_t >& triinp,
-                       std::vector< std::size_t >& gid,
                        std::unordered_map< std::size_t, std::size_t >& lid,
                        tk::UnsMesh::Coords& coord,
                        int numpes=1, int mype=0 );

@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/NoWarning/backward.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Include backward.hpp with turning off specific compiler warnings
 */
 // *****************************************************************************
@@ -17,6 +20,7 @@
   #pragma clang diagnostic ignored "-Wold-style-cast"
   #pragma clang diagnostic ignored "-Wundef"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
+  #pragma clang diagnostic ignored "-Wextra-semi-stmt"
 #endif
 
 #include "backward.hpp"

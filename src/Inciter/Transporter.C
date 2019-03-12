@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Transporter.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
     The implementation uses the Charm++ runtime system and is fully asynchronous,
@@ -53,26 +56,22 @@ using inciter::Transporter;
 Transporter::Transporter() :
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_nchare( 0 ),
-  m_chunksize( 0 ),
-  m_remainder( 0 ),
-  m_solver(),
   m_scheme( g_inputdeck.get< tag::discr, tag::scheme >() ),
   m_partitioner(),
   m_refiner(),
+  m_meshwriter(),
   m_sorter(),
   m_nelem( 0 ),
   m_npoin( 0 ),
-  m_avcost( 0.0 ),
   m_V( 0.0 ),
   m_minstat( {{ 0.0, 0.0, 0.0 }} ),
   m_maxstat( {{ 0.0, 0.0, 0.0 }} ),
   m_avgstat( {{ 0.0, 0.0, 0.0 }} ),
   m_timer(),
-  m_linsysbc(),
   m_progMesh( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-              {{ "p", "d", "r", "b", "c", "m", "r", "b" }},
+              {{ "p", "d", "r", "b", "c", "m", "r" }},
               {{ "partition", "distribute", "refine", "bnd", "comm", "mask",
-                  "reorder", "bounds"}} ),
+                  "reorder" }} ),
   m_progWork( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
               {{ "c", "b", "f", "g", "a" }},
               {{ "create", "bndface", "comfac", "ghost", "adj" }} )
@@ -118,7 +117,7 @@ Transporter::Transporter() :
   m_print.section( "Discretization parameters" );
   m_print.Item< ctr::Scheme, tag::discr, tag::scheme >();
 
-  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG) {
+  if (scheme == ctr::SchemeType::DiagCG) {
     auto fct = g_inputdeck.get< tag::discr, tag::fct >();
     m_print.item( "Flux-corrected transport (FCT)", fct );
     if (fct)
@@ -198,7 +197,7 @@ Transporter::Transporter() :
   // constdt is zero, see inciter::ctr::InputDeck::InputDeck().
   if ( nstep != 0 && term > t0 && constdt < term-t0 ) {
 
-    // Enable SDAG waits
+    // Enable SDAG waits for collecting mesh statistics
     thisProxy.wait4stat();
 
     // Print I/O filenames
@@ -218,34 +217,10 @@ Transporter::Transporter() :
     // Configure and write diagnostics file header
     diagHeader();
 
-    // Create linear system solver group
-    createSolver();
-
     // Create mesh partitioner AND boundary condition object group
     createPartitioner();
 
   } else finish();      // stop if no time stepping requested
-}
-
-void
-Transporter::createSolver()
-// *****************************************************************************
-// Create linear solver
-// *****************************************************************************
-{
-  // Create linear system solver callbacks
-  tk::SolverCallback cbs{
-      CkCallback( CkReductionTarget(Transporter,nchare), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,bounds), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,comfinal), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,disccreated), thisProxy )
-  };
-
-  // Create linear system solver Charm++ chare group
-  m_solver = tk::CProxy_Solver::
-               ckNew( tk::CProxy_SolverShadow::ckNew(),
-                      cbs,
-                      g_inputdeck.get< tag::component >().nprop() );
 }
 
 void
@@ -264,12 +239,12 @@ Transporter::createPartitioner()
   // Read boundary (side set) data from input file
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   const auto centering = ctr::Scheme().centering( scheme );
-  if (centering == ctr::Centering::ELEM) {
+  if (centering == tk::Centering::ELEM) {
     // Read boundary-face connectivity on side sets
     mr.readSidesetFaces( belem, faces );
     // Verify boundarty condition (BC) side sets used exist in mesh file
     matchBCs( g_dgpde, belem );
-  } else if (centering == ctr::Centering::NODE) {
+  } else if (centering == tk::Centering::NODE) {
     // Read node lists on side sets
     bnode = mr.readSidesetNodes();
     // Verify boundarty condition (BC) side sets used exist in mesh file
@@ -292,7 +267,9 @@ Transporter::createPartitioner()
 
   // Create sorter callbacks (order matters)
   tk::SorterCallback cbs {
-      CkCallback( CkReductionTarget(Transporter,discinserted), thisProxy )
+      CkCallback( CkReductionTarget(Transporter,queried), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,responded), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,discinserted), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,workinserted), thisProxy )
   };
 
@@ -302,16 +279,22 @@ Transporter::createPartitioner()
   // Create mesh partitioner Charm++ chare group and start preparing mesh
   m_print.diag( "Reading mesh" );
 
-  // Create empty mesh sorter chare array
-  m_sorter = CProxy_Sorter::ckNew();
+  // Create empty mesh sorter Charm++ chare array
+  m_sorter = CProxy_Sorter::ckNew( m_scheme.arrayoptions() );
 
   // Create empty mesh refiner chare array (bound to workers)
   m_refiner = CProxy_Refiner::ckNew( m_scheme.arrayoptions() );
 
-  // Create mesh partitioner Charm++ chare group
+  // Create MeshWriter chare nodegroup
+  m_meshwriter = tk::CProxy_MeshWriter::ckNew(
+                    g_inputdeck.get< tag::selected, tag::filetype >(),
+                    centering,
+                    g_inputdeck.get< tag::cmd, tag::benchmark >() );
+
+  // Create mesh partitioner Charm++ chare nodegroup
   m_partitioner =
-    CProxy_Partitioner::ckNew( cbp, cbr, cbs, thisProxy, m_solver, m_refiner,
-                               m_sorter, m_scheme, belem, faces, bnode );
+    CProxy_Partitioner::ckNew( cbp, cbr, cbs, thisProxy, m_refiner, m_sorter,
+                               m_meshwriter, m_scheme, belem, faces, bnode );
 }
 
 void
@@ -322,15 +305,16 @@ Transporter::load( uint64_t nelem, uint64_t npoin )
 //! \param[in] npoin Total number of mesh points (summed across all PEs)
 // *****************************************************************************
 {
+  // Store total number of nodes in mesh
+  m_npoin = npoin;
+
   // Compute load distribution given total work (nelem) and user-specified
   // virtualization
+  uint64_t chunksize, remainder;
   m_nchare = static_cast<int>(
                tk::linearLoadDistributor(
                  g_inputdeck.get< tag::cmd, tag::virtualization >(),
-                 nelem, CkNumPes(), m_chunksize, m_remainder ) );
-
-  // Send total number of chares to all linear solver PEs
-  m_solver.nchare( m_nchare );
+                 nelem, CkNumPes(), chunksize, remainder ) );
 
   // Start timer measuring preparation of the mesh for partitioning
   const auto& timer = tk::cref_find( m_timer, TimerTag::MESH_READ );
@@ -351,14 +335,12 @@ Transporter::load( uint64_t nelem, uint64_t npoin )
   m_print.item( "Virtualization [0.0...1.0]",
                 g_inputdeck.get< tag::cmd, tag::virtualization >() );
   m_print.item( "Number of tetrahedra", nelem );
-  m_print.item( "Number of processing elements", CkNumPes() );
-  m_print.item( "Number of work units",
-                std::to_string( m_nchare ) + " (" +
-                std::to_string( m_nchare-1 ) + "*" +
-                std::to_string( m_chunksize ) + "+" +
-                std::to_string( m_chunksize+m_remainder ) + ')' );
+  m_print.item( "Number of work units", m_nchare );
 
   m_print.endsubsection();
+
+  // Tell meshwriter the total number of chares
+  m_meshwriter.nchare( m_nchare );
 
   // Query number of initial mesh refinement steps
   int nref = 0;
@@ -366,16 +348,9 @@ Transporter::load( uint64_t nelem, uint64_t npoin )
     nref = static_cast<int>( g_inputdeck.get< tag::amr, tag::init >().size() );
 
   m_progMesh.start( "Preparing mesh", {{ CkNumPes(), CkNumPes(), nref,
-    m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
-}
+    m_nchare, m_nchare, m_nchare, m_nchare }} );
 
-void
-Transporter::nchare()
-// *****************************************************************************
-// Reduction target: Reduction target: all Solver (PEs) have computed the number
-// of chares they will recieve contributions from during linear solution
-// *****************************************************************************
-{
+  // Partition the mesh
   m_partitioner.partition( m_nchare );
 }
 
@@ -389,12 +364,28 @@ Transporter::distributed()
 }
 
 void
-Transporter::refinserted()
+Transporter::refinserted( int error )
 // *****************************************************************************
 // Reduction target: all PEs have created the mesh refiners
+//! \param[in] error aggregated across all PEs with operator max
 // *****************************************************************************
 {
-  m_refiner.doneInserting();
+  if (error) {
+    m_print << "\n>>> ERROR: A worker chare was not assigned any mesh "
+               "elements. This can happen in SMP-mode with a large +ppn "
+               "parameter (number of worker threads per logical node) and is "
+               "most likely the fault of the mesh partitioning algorithm not "
+               "tolerating the case when it is asked to divide the "
+               "computational domain into a number of partitions different "
+               "than the number of ranks it is called on, i.e., in case of "
+               "overdecomposition and/or calling the partitioner in SMP mode "
+               "with +ppn larger than 1. Solution 1: Try a different "
+               "partitioning algorithm (e.g., rcb instead of mj). Solution 2: "
+               "Decrease +ppn.";
+    finish();
+  } else {
+     m_refiner.doneInserting();
+  }
 }
 
 void
@@ -418,7 +409,7 @@ Transporter::matched( std::size_t extra )
 }
 
 void
-Transporter::refined( std::size_t nelem, std::size_t npoin )
+Transporter::refined( std::size_t nelem, std::size_t /*npoin*/ )
 // *****************************************************************************
 // Reduction target: all PEs have refined their mesh
 //! \param[in] nelem Total number of elements in mesh across the whole problem
@@ -426,9 +417,27 @@ Transporter::refined( std::size_t nelem, std::size_t npoin )
 // *****************************************************************************
 {
   m_sorter.doneInserting();
-
   m_nelem = nelem;
-  m_npoin = npoin;
+  //m_npoin = npoin; /// This currently would double-count the boundary nodes.
+  m_sorter.setup( m_npoin );
+}
+
+void
+Transporter::queried()
+// *****************************************************************************
+// Reduction target: all Sorter chares have queried their boundary nodes
+// *****************************************************************************
+{
+  m_sorter.response();
+}
+
+void
+Transporter::responded()
+// *****************************************************************************
+// Reduction target: all Sorter chares have responded with their boundary nodes
+// *****************************************************************************
+{
+  m_sorter.start();
 }
 
 void
@@ -463,15 +472,6 @@ Transporter::resized()
 }
 
 void
-Transporter::bounds()
-// *****************************************************************************
-// Reduction target: all Solver (PEs) have computed their row bounds
-// *****************************************************************************
-{
-  m_sorter.createDiscWorkers();
-}
-
-void
 Transporter::discinserted()
 // *****************************************************************************
 // Reduction target: all Discretization chares have been inserted
@@ -498,7 +498,7 @@ Transporter::disccreated()
   m_refiner.sendProxy();
 
   auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG)
+  if (sch == ctr::SchemeType::DiagCG)
     m_scheme.doneDistFCTInserting< tag::bcast >();
 
   m_scheme.vol();
@@ -528,8 +528,7 @@ Transporter::diagHeader()
   // Collect variables names for integral/diagnostics output
   std::vector< std::string > var;
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG ||
-      scheme == ctr::SchemeType::ALECG)
+  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG)
     for (const auto& eq : g_cgpde) varnames( eq, var );
   else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1 || scheme == ctr::SchemeType::DGP2)
     for (const auto& eq : g_dgpde) varnames( eq, var );
@@ -564,9 +563,11 @@ Transporter::comfinal()
 // *****************************************************************************
 // [Discretization-specific communication maps]
 {
-  CkStartLB();  // start load balancing
   m_progWork.end();
   m_scheme.setup( m_V );
+
+  // Turn on automatic load balancing
+  tk::CProxy_LBSwitch::ckNew( g_inputdeck.get<tag::cmd,tag::verbose>() );
 }
 // [Discretization-specific communication maps]
 
@@ -666,6 +667,7 @@ Transporter::pdfstat( CkReductionMsg* msg )
   // Create new PDF file (overwrite if exists)
   tk::PDFWriter pdfe( "mesh_edge_pdf.txt" );
   // Output edgelength PDF
+  // cppcheck-suppress containerOutOfBounds
   pdfe.writeTxt( pdf[0],
                  tk::ctr::PDFInfo{ {"PDF"}, {}, {"edgelength"}, 0, 0.0 } );
 
@@ -723,23 +725,13 @@ Transporter::stat()
 }
 
 void
-Transporter::start()
+Transporter::sendinit()
 // *****************************************************************************
-// Start time stepping
-//! \note Only called if MatCG/DiagG is used
-// *****************************************************************************
-{
-  m_scheme.dt< tag::bcast >();
-}
-
-void
-Transporter::next()
-// *****************************************************************************
-// Reset linear solver for next time step
-//! \note Only called if MatCG is used
+// Reduction target to sync the initial solution before limiting
 // *****************************************************************************
 {
-  m_solver.next();
+  // send initial solution to neighboring chares
+  m_scheme.sendinit();
 }
 
 void

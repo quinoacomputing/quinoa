@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/IO/ASCMeshReader.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     ASC mesh reader class declaration
   \details   ASC mesh reader class declaration. Mesh reader facilitating reading
              a mesh from a simple text file used by Jacob Waltz's Chicoma code.
@@ -25,7 +28,7 @@ class ASCMeshReader : public Reader {
 
   public:
     //! Constructor
-    explicit ASCMeshReader( const std::string filename ) :
+    explicit ASCMeshReader( const std::string& filename ) :
       Reader( filename ) {}
 
     //! Read ASC mesh

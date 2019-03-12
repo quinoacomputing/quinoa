@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Keywords.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
     of command-line argument parsers as well as input, i.e., control, file
@@ -2402,6 +2405,22 @@ struct sde_rho2_info {
 };
 using sde_rho2 = keyword< sde_rho2_info,  TAOCPP_PEGTL_STRING("rho2") >;
 
+struct sde_rho_info {
+  static std::string name() { return "rho"; }
+  static std::string shortDescription() { return
+    R"(Set SDE parameter(s) rho)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of real numbers used to
+    parameterize a system of stochastic differential equations. Example:
+    "rho 5.0 2.0 3.0 end". The length of the vector depends on the particular
+    type of SDE system and is controlled by the preceding keyword 'ncomp'.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using sde_rho = keyword< sde_rho_info,  TAOCPP_PEGTL_STRING("rho") >;
+
 struct mean_gradient_info {
   static std::string name() { return "Prescribed mean gradient"; }
   static std::string shortDescription() { return
@@ -3375,6 +3394,20 @@ struct benchmark_info {
 
 using benchmark = keyword< benchmark_info, TAOCPP_PEGTL_STRING("benchmark") >;
 
+struct nonblocking_info {
+  static std::string name() { return "nonblocking"; }
+  static std::string shortDescription()
+  { return "Select non-blocking migration"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select non-blocking, instead of the default
+       blocking, migration.)";
+  }
+  using alias = Alias< n >;
+};
+
+using nonblocking =
+  keyword< nonblocking_info, TAOCPP_PEGTL_STRING("nonblocking") >;
+
 struct feedback_info {
   static std::string name() { return "feedback"; }
   static std::string shortDescription() { return "Enable on-screen feedback"; }
@@ -3525,9 +3558,7 @@ struct reorder_info {
     do (or not do) a global distributed mesh reordering across all PEs that
     yields an approximately continous mesh node ID order as mesh partitions are
     assigned to PEs after mesh partitioning. Reordering is optional in meshconv
-    and optional in inciter if the DiagCG or the DG discretization schemes are
-    configured and mandatory (i.e., on independent of the user setting in the
-    input file) if MatCG is configured.)";
+    and inciter.)";
   }
   using alias = Alias< r >;
   struct expect {
@@ -3754,6 +3785,30 @@ struct sod_shocktube_info {
 using sod_shocktube =
   keyword< sod_shocktube_info, TAOCPP_PEGTL_STRING("sod_shocktube") >;
 
+struct sod_rotated_shocktube_info {
+  using code = Code< O >;
+  static std::string name() { return "Rotated Sod shock-tube"; }
+  static std::string shortDescription() { return
+    "Select the rotated Sod shock-tube test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the rotated Sod shock-tube test problem.
+    This the same as Sod shocktube but the geometry is rotated about X, Y, Z
+    each by 45 degrees (in that order) so that none of the domain boundary align
+    with any of the coordinate directions. The purpose of this test problem is
+    to test the correctness of the approximate Riemann solver and its shock and
+    interface capturing capabilities in an arbitrarily oriented geometry.
+    Example: "problem rotated_sod_shocktube". For more details on the Sod
+    problem, see G. A. Sod, "A Survey of Several Finite Difference Methods for
+    Systems of Nonlinear Hyperbolic Conservation Laws", J. Comput. Phys., 27
+    (1978) 1–31.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using rotated_sod_shocktube =
+  keyword< sod_rotated_shocktube_info,
+           TAOCPP_PEGTL_STRING("rotated_sod_shocktube") >;
+
 struct sedov_blastwave_info {
   using code = Code< B >;
   static std::string name() { return "Sedov blast-wave"; }
@@ -3793,7 +3848,8 @@ struct problem_info {
                   + nl_energy_growth::string() + "\' | \'"
                   + rayleigh_taylor::string() + "\' | \'"
                   + taylor_green::string() + "\' | \'"
-                  + sod_shocktube::string() + '\'';
+                  + sod_shocktube::string() + "\' | \'"
+                  + rotated_sod_shocktube::string() + '\'';
     }
   };
 };
@@ -4926,25 +4982,8 @@ struct amr_info {
 };
 using amr = keyword< amr_info, TAOCPP_PEGTL_STRING("amr") >;
 
-struct matcg_info {
-  static std::string name()
-  { return "consistent-mass continuous Galerkin + Lax-Wendroff"; }
-  static std::string shortDescription() { return "Select continuous Galerkin "
-    "+ Lax Wendroff with consistent-mass matrix LHS"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select the consistent-mass matrix continuous
-    Galerkin (CG) finite element spatial discretiztaion used in inciter. CG is
-    combined with a Lax-Wendroff scheme for time discretization and
-    flux-corrected transport (FCT) for treating discontinuous solutions. This
-    option selects the scheme that stores the left-hand side matrix as a
-    compressed sparse row (CSR) storage consistent-mass matrix and uses a linear
-    solver. See Control/Inciter/Options/Scheme.h for other valid options.)"; }
-};
-using matcg = keyword< matcg_info, TAOCPP_PEGTL_STRING("matcg") >;
-
 struct diagcg_info {
-  static std::string name()
-  { return "lumped-mass matrix continuous Galerkin + Lax-Wendroff"; }
+  static std::string name() { return "CG + LW"; }
   static std::string shortDescription() { return "Select continuous Galerkin "
     "+ Lax Wendroff with a lumped-mass matrix LHS"; }
   static std::string longDescription() { return
@@ -4959,7 +4998,7 @@ struct diagcg_info {
 using diagcg = keyword< diagcg_info, TAOCPP_PEGTL_STRING("diagcg") >;
 
 struct alecg_info {
-  static std::string name() { return "ALE-CG with RK"; }
+  static std::string name() { return "ALE-CG + RK"; }
   static std::string shortDescription() { return "Select continuous Galerkin "
     "with ALE + Runge-Kutta"; }
   static std::string longDescription() { return
@@ -5021,8 +5060,7 @@ struct scheme_info {
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
-      return '\'' + matcg::string() + "\' | \'"
-                  + diagcg::string() + "\' | \'"
+      return '\'' + diagcg::string() + "\' | \'"
                   + dg::string() + '\'';
     }
   };
@@ -5135,7 +5173,7 @@ struct fct_info {
   static std::string longDescription() { return
     R"(This keyword can be used to turn on/off flux-corrected transport (FCT).
     Note that FCT is only used in conjunction with continuous Galerkin finite
-    element discretization, configured by schemes matcg or diagcg and it has no
+    element discretization, configured by scheme diagcg and it has no
     effect when the discontinuous Galerkin (DG) scheme is used, configured by
     'scheme dg'. Also note that even if FCT is turned off, it is still
     performed, only its result is not applied.)"; }

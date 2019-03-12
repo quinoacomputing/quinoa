@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/dg.ci
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Charm++ module interface file for the discontinuous Galerkin scheme
   \details   Charm++ module interface file for the discontinuous Galerking
              scheme.
@@ -13,7 +16,6 @@ module dg {
 
   extern module transporter;
   extern module discretization;
-  extern module solver;
 
   include "UnsMesh.h";
   include "PUPUtil.h";
@@ -22,15 +24,13 @@ module dg {
   namespace inciter {
 
     array [1D] DG {
-      entry DG( const CProxy_Discretization& disc,
-                const tk::CProxy_Solver&,
-                const FaceData& fd );
+      entry DG( const CProxy_Discretization& disc, const FaceData& fd );
       entry void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
       entry void comGhost( int fromch, const GhostData& ghost );
       entry void reqGhost();
       initnode void registerReducers();      
       entry void setup( tk::real v );
-      entry void dt();
+      entry void start();
       entry void diag();
       entry void comlim( int fromch,
                          const std::vector< std::size_t >& tetid,
@@ -38,25 +38,25 @@ module dg {
       entry void comsol( int fromch,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u );
+      entry void cominit( int fromch,
+                          const std::vector< std::size_t >& tetid,
+                          const std::vector< std::vector< tk::real > >& u );
+      entry void sendinit();
       entry void advance( tk::real );
       entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();
       entry void lhs();
+      entry void step();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
-      // If we have computed our own ghost data in setupGhost(), and every chare
-      // we communicate with has requested ghost data from us, we fulfill the
-      // requests and send out ghost data.
-      //
-      // We only perform solution of the linear system if both the own and
-      // communicated (ghost) portion of the unknown/solution vector are
-      // complete.
-
       entry void wait4ghost() {
         when ownghost_complete(), reqghost_complete() serial "ghost"
         { sendGhost(); } };
+
+      entry void wait4initlim() {
+        when owninit_complete(), cominit_complete() serial "init" { limitIC(); } };
 
       entry void wait4sol() {
         when ownsol_complete(), comsol_complete() serial "sol" { lim(); } };
@@ -64,12 +64,14 @@ module dg {
       entry void wait4lim() {
         when ownlim_complete(), comlim_complete() serial "lim" { dt(); } };
 
-      entry void wait4eval() {
+      entry void wait4stage() {
         when diag_complete(), ref_complete(), lhs_complete(),
-             resize_complete() serial "eval" { eval(); } };
+             resize_complete() serial "stage" { stage(); } };
 
       entry void ownghost_complete();
       entry void reqghost_complete();
+      entry void owninit_complete();
+      entry void cominit_complete();
       entry void ownsol_complete();
       entry void comsol_complete();
       entry void ownlim_complete();

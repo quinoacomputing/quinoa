@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Sorter.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Mesh sorter for global distributed mesh reordering
   \details   Mesh sorter is Charm++ chare array and is used to do global
     distributed mesh node reordering that yields consecutive unique global node
@@ -57,7 +60,7 @@ class Sorter : public CBase_Sorter {
   public:
     //! Constructor
     explicit Sorter( const CProxy_Transporter& transporter,
-                     const tk::CProxy_Solver& solver,
+                     const tk::CProxy_MeshWriter& meshwriter,
                      const tk::SorterCallback& cbs,
                      const Scheme& scheme,
                      const std::vector< std::size_t >& ginpoel,
@@ -72,6 +75,7 @@ class Sorter : public CBase_Sorter {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
+    // cppcheck-suppress uninitMemberVarPrivate
     explicit Sorter( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
@@ -80,18 +84,23 @@ class Sorter : public CBase_Sorter {
     //! Configure Charm++ reduction types
     static void registerReducers();
 
-    //! Create worker chare array elements on this PE
-    void createWorkers();
+    //! Setup chare mesh boundary node communication map
+    void setup( std::size_t npoin );
+    //! \brief Incoming query for a list mesh nodes for which this chare
+    //!   compiles node communication maps
+    void query( int fromch, const std::vector< std::size_t >& nodes );
+    //! Report receipt of boundary node lists
+    void recvquery();
+    //! Respond to boundary node list queries
+    void response();
+    //! Receive boundary node communication maps for our mesh chunk
+    void bnd( int fromch, const std::map< int,
+                            std::unordered_set< std::size_t > >& msum );
+    //! Receive receipt of boundary node communication map
+    void recvbnd();
 
-    //! Receive aggregated chare boundary nodes associated to chares
-    void comChBndNode( CkReductionMsg* msg );
-
-    //! Receive aggregated boundary nodes for side sets
-    void comnode( CkReductionMsg* msg );
-
-    //! \brief Receive aggregated boundary faces (and triangle connectivity)
-    //!    for side sets
-    void comface( CkReductionMsg* msg );
+    //! Start reordering (if user enabled it)
+    void start();
 
     //! \brief Receive number of uniquely assigned global mesh node IDs from
     //!   chares with lower indices
@@ -107,8 +116,8 @@ class Sorter : public CBase_Sorter {
     void neworder( const std::unordered_map< std::size_t,
            std::tuple< std::size_t, tk::UnsMesh::Coord > >& nodes );
 
-    //! Create Discretization chare array elements on this PE
-    void createDiscWorkers();
+    //! Create worker chare array elements on this PE
+    void createWorkers();
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -116,17 +125,20 @@ class Sorter : public CBase_Sorter {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_host;
-      p | m_solver;
+      p | m_meshwriter;
       p | m_cbs;
       p | m_scheme;
       p | m_ginpoel;
       p | m_coordmap;
+      p | m_nbnd;
       p | m_bface;
       p | m_triinpoel;
       p | m_bnode;
       p | m_nchare;
       p | m_nodeset;
       p | m_noffset;
+      p | m_nodech;
+      p | m_chnode;
       p | m_msum;
       p | m_reordcomm;
       p | m_start;
@@ -145,8 +157,8 @@ class Sorter : public CBase_Sorter {
   private:
     //! Host proxy
     CProxy_Transporter m_host;
-    //! Linear system solver proxy
-    tk::CProxy_Solver m_solver;
+    //! MeshWriter proxy
+    tk::CProxy_MeshWriter m_meshwriter;
     //! Charm++ callbacks associated to compile-time tags for sorter
     tk::SorterCallback m_cbs;
     //! Discretization scheme
@@ -155,6 +167,8 @@ class Sorter : public CBase_Sorter {
     std::vector< std::size_t > m_ginpoel;
     //! Coordinates associated to global node IDs of our mesh chunk
     tk::UnsMesh::CoordMap m_coordmap;
+    //! Counter for number of chares contributing to chare boundary nodes
+    std::size_t m_nbnd;
     //! List of boundary faces associated to side-set IDs
     std::map< int, std::vector< std::size_t > > m_bface;
     //! Boundary face-node connectivity
@@ -168,14 +182,19 @@ class Sorter : public CBase_Sorter {
     //! \brief Counter for the number of chares from which this chare has
     //!   received node reordering offsets from
     int m_noffset;
+    //! Node->chare map used to build boundary node communication maps
+    std::unordered_map< std::size_t, std::vector< int > > m_nodech;
+    //! Chare->node map used to build boundary node communication maps
+    std::unordered_map< int, std::vector< std::size_t > > m_chnode;
     //! \brief Symmetric communication map associating global mesh node IDs to
     //!    chare IDs this chare shares the node IDs with
     std::map< int, std::unordered_set< std::size_t > > m_msum;
     //! \brief Communication map used for distributed mesh node reordering
     //! \details This map associates the list of global mesh point
-    //!   indices to fellow chare IDs from which this chare receives new node IDs
-    //!   during reordering. Only data that will be received from chares with a
-    //!   lower index are stored, thus this is an asymmetric communication map.
+    //!   indices to fellow chare IDs from which this chare receives new node
+    //!   IDs during reordering. Only data that will be received from chares
+    //!   with a lower index are stored, thus this is an asymmetric
+    //!   communication map.
     std::unordered_map< int, std::unordered_set< std::size_t > > m_reordcomm;
     //! \brief Starting global mesh node ID for node reordering on this chare
     //!   during mesh node reordering
@@ -191,9 +210,6 @@ class Sorter : public CBase_Sorter {
     //! Upper bound of node IDs this chare contributes to in a linear system
     std::size_t m_upper;
 
-    //! Start reordering (if user enabled it)
-    void start();
-
     //! Start preparing for mesh node reordering in parallel
     void mask();
 
@@ -206,12 +222,8 @@ class Sorter : public CBase_Sorter {
     //! Compute final result of reordering
     void finish();
 
-    //! Compute lower and upper bounds of reordered node IDs our PE operates on
-    void bounds();
-
-    //! \brief Create chare array elements on this PE and assign the global mesh
-    //!   element IDs they will operate on
-    void create();
+    //! Create Discretization chare array elements on this PE
+    void createDiscWorkers();
 };
 
 } // inciter::

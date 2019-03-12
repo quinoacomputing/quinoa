@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Base/ExceptionMPI.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Exception macros interoperating with MPI
   \details   Exception macros interoperating with MPI.
 */
@@ -45,7 +48,7 @@ namespace tk {
 //!    simpler ErrChk macro suffices.
 #ifdef QUINOA_CONFIG_MPI_ENABLED
 #define ErrChkMPI(expr, ...) \
-{ \
+{\
   int err = (expr) ? 0 : 1; \
   int globalerr; \
   MPI_Allreduce( &err, &globalerr, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD ); \

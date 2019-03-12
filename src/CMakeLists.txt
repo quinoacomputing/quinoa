@@ -1,8 +1,11 @@
 ################################################################################
 #
 # \file      src/CMakeLists.txt
-# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-# \brief     Build quinoa
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
+# \brief     Build Quinoa
 #
 ################################################################################
 
@@ -178,6 +181,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(CMAKE_EXE_LINKER_FLAGS
       "${CMAKE_EXE_LINKER_FLAGS} -Wl,-no_compact_unwind" )
 
+  # Set minimum OSX SDK target version
+  set(CMAKE_OSX_DEPLOYMENT_TARGET 10.7 CACHE STRING "Minimum OS X version to target for deployment (at runtime); newer APIs weak linked. Set to empty string for default value." FORCE)
+
 endif()
 
 # Query build hostname
@@ -299,6 +305,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wno-int-in-bool-context")
   add_compiler_flag("-Wno-cast-function-type")
   add_compiler_flag("-Wno-format-overflow")
+  add_compiler_flag("-Wno-pragmas")
 
   # Linker flags for gcc
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wno-unused-parameter")
@@ -443,18 +450,14 @@ set(RUNNER_NCPUS_ARG "+p" CACHE STRING
     "The argument used to specify the number of PEs for the runner")
 set(RUNNER_ARGS "" CACHE STRING
     "Arguments to pass to the parallel/serial job runner, e.g., to mpirun.")
+set(POSTFIX_RUNNER_ARGS "" CACHE STRING
+    "Arguments to pass to the parallel/serial job runner at the end of the command line.")
 
 # Host-, and/or architecture-specifc runner configuration
 if (DEFINED ENV{NERSC_HOST})
 
   set(RUNNER "srun")
   set(RUNNER_NCPUS_ARG "-n")
-  set(RUNNER_REQUIRED true)
-
-elseif(ARCH MATCHES "ppc64")
-
-  find_program(RUNNER ${CMAKE_CURRENT_SOURCE_DIR}/../script/cobalt-runjob.sh)
-  set(RUNNER_NCPUS_ARG "--np")
   set(RUNNER_REQUIRED true)
 
 elseif(DEFINED ENV{CRAY_PRGENVPGI} OR
@@ -471,6 +474,7 @@ message(STATUS "Parallel/serial job runner required: ${RUNNER_REQUIRED}")
 message(STATUS "Parallel/serial job runner: ${RUNNER}")
 message(STATUS "Parallel job runner ncpus arg: ${RUNNER_NCPUS_ARG}")
 message(STATUS "Parallel/serial job runner args: ${RUNNER_ARGS}")
+message(STATUS "Parallel/serial job runner postfix args: ${POSTFIX_RUNNER_ARGS}")
 
 # Attempt to find tools required for code coverage analysis
 include(DetectCodeCoverage)
@@ -540,14 +544,39 @@ if (BUILD_SHARED_LIBS)
 endif(BUILD_SHARED_LIBS)
 
 # Components
-add_subdirectory(Base)
-add_subdirectory(Control)
-add_subdirectory(Main)
-add_subdirectory(LoadBalance)
-add_subdirectory(RNG)
-add_subdirectory(Statistics)
+if (CHARM_FOUND AND PSTREAMS_FOUND)
+  add_subdirectory(Base)
+else()
+  PrintMissing(Base "CHARM_FOUND;PSTREAMS_FOUND")
+endif()
 
-if (ENABLE_MESHCONV OR ENABLE_INCITER)
+if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND)
+  add_subdirectory(Control)
+else()
+  PrintMissing(Control "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
+endif()
+
+add_subdirectory(Main)
+
+if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND AND Zoltan2_FOUND)
+  add_subdirectory(LoadBalance)
+else()
+  PrintMissing(LoadBalance "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND;Zoltan2_FOUND")
+endif()
+
+if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND)
+  add_subdirectory(RNG)
+else()
+  PrintMissing(RNG "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
+endif()
+
+if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND)
+  add_subdirectory(Statistics)
+else()
+  PrintMissing(Statistics "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
+endif()
+
+if ((ENABLE_MESHCONV OR ENABLE_INCITER) AND BRIGAND_FOUND)
   add_subdirectory(Mesh)
   add_subdirectory(IO)
 endif()
@@ -555,7 +584,6 @@ endif()
 if (ENABLE_INCITER)
   add_subdirectory(PDE)
   add_subdirectory(Inciter)
-  add_subdirectory(LinSys)
 endif()
 
 if (ENABLE_UNITTEST)

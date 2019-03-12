@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/LoadBalance/TestLoadDistributor.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for LoadBalance/LoadDistributor
   \details   Unit tests for LoadBalance/LoadDistributor
 */
@@ -55,10 +58,6 @@ template<> template<>
 void LoadDistributor_object::test< 2 >() {
   set_test_name( "linear throws on too low virt" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
@@ -82,10 +81,6 @@ void LoadDistributor_object::test< 2 >() {
 template<> template<>
 void LoadDistributor_object::test< 3 >() {
   set_test_name( "linear throws on too high virt" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );
@@ -144,10 +139,6 @@ void LoadDistributor_object::test< 6 >() {
 template<> template<>
 void LoadDistributor_object::test< 7 >() {
   set_test_name( "linear throws on garbage npe" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield floating point exception" );

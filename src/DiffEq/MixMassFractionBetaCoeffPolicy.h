@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/MixMassFractionBetaCoeffPolicy.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Mix mass-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mix
     mass-fraction beta SDE, defined in DiffEq/MixMassFractionBeta.h.
@@ -186,7 +189,7 @@ class MixMassFracBetaCoeffDecay {
         tk::real v = tk::ctr::lookup( tk::ctr::variance(depvar,c), moments );
 
         if (m<1.0e-8 || m>1.0-1.0e-8) m = 0.5;
-        if (v<1.0e-8 && v>1.0-1.0e-8) v = 0.5;
+        if (v<1.0e-8 || v>1.0-1.0e-8) v = 0.5;
 
         b[c] = bprime[c] * (1.0 - v / m / ( 1.0 - m ));
         k[c] = kprime[c] * v;
@@ -286,7 +289,7 @@ class MixMassFracBetaCoeffHomDecay {
         tk::real d3 = lookup( cen3(depvar,c+ncomp), moments );     // <r^3>
 
         if (m<1.0e-8 || m>1.0-1.0e-8) m = 0.5;
-        if (v<1.0e-8 && v>1.0-1.0e-8) v = 0.5;
+        if (v<1.0e-8 || v>1.0-1.0e-8) v = 0.5;
         b[c] = bprime[c] * (1.0 - v/m/(1.0-m));
         //b[c] = bprime[c] * (1.0 - v/M[c]/(1.0-M[c]));
         k[c] = kprime[c] * v;
@@ -737,7 +740,7 @@ class MixMassFracBetaCoeffInstVel {
         // Compute turbulent kinetic energy
         //auto K = tke( velocity_depvar, velocity_solve, moments );
 
-        auto pe = 1.0; // hydroproductions: P/eps = (dk/dt+eps)/eps
+        auto pe = 1.0; // hydroproductions: P/eps = 1.0 (equilibrium)
 
         tk::real a = r[c]/(1.0+r[c]*yt);
         tk::real bnm = a*a*yt*(1.0-yt);
@@ -771,20 +774,6 @@ class MixMassFracBetaCoeffInstVel {
 
       ++m_it;
     }
-
-    //! Sample the inverse hydrodynamics time scale at time t
-    //! \param[in] t Time at which to sample inverse hydrodynamics time scale
-    //! \param[in] ts Hydro time scale table to sample
-    //! \return Sampled value from discrete table of inverse hydro time scale
-    tk::real hydrotimescale( tk::real t, const tk::Table& ts ) const
-    { return tk::sample( t, ts ); }
-
-    //! Sample the hydrodynamics production/dissipation rate (P/e) at time t
-    //! \param[in] t Time at which to sample hydrodynamics P/e
-    //! \param[in] p P/e table to sample
-    //! \return Sampled value from discrete table of P/e
-    tk::real hydroproduction( tk::real t, const tk::Table& p ) const
-    { return tk::sample( t, p ); }
 
     mutable std::size_t m_it = 0;
     mutable std::vector< tk::real > m_s;

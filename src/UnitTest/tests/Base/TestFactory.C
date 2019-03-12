@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestFactory.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for Base/Factory.h
   \details   Unit tests for Base/Factory.h
 */
@@ -40,12 +43,12 @@ struct Factory_common {
 
   // For testing boost::factory (runtime polymorphism using reference semantics)
   struct Base {
-    Base( std::string init ) : type( init ) {}
+    explicit Base( const std::string& init ) : type( init ) {}
     std::string type;
   };
   struct Child : Base {
-    Child() : Base( "def" ) {}
-    Child( int ) : Base( "int" ) {}
+    explicit Child() : Base( "def" ) {}
+    explicit Child( int ) : Base( "int" ) {}
   };
   using Factory = std::map< int, std::function< Base*() > >;
 
@@ -111,7 +114,7 @@ struct Factory_common {
     //! the virtual functions required by Concept
     template< typename T >
     struct Model : Concept {
-      Model( T x ) : data( std::move(x) ) {}
+      explicit Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
       std::string Type() const override { return data.Type(); }
       T data;
@@ -124,8 +127,8 @@ struct Factory_common {
 
   //! Child struct used polymorphically with VBase
   struct VChild {
-    VChild() : type( "def" ) {}
-    VChild( int ) : type( "int" ) {}
+    explicit VChild() : type( "def" ) {}
+    explicit VChild( int ) : type( "int" ) {}
     std::string Type() const { return type; }
     std::string type;
   };
@@ -211,10 +214,6 @@ void Factory_object::test< 4 >() {
   #ifndef NDEBUG
   Factory_common::Factory f;
   tk::record< Child >( f, 1 );      // key: 1, default ctor
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   try {
     tk::instantiate(f,2);
@@ -425,8 +424,8 @@ struct VBase {
   //! the virtual functions required by Concept
   template< typename T >
   struct Model : Concept {
-    Model( T x ) : data( std::move(x) ) {}
-    Concept* copy() const { return new Model( *this ); }
+    explicit Model( T x ) : data( std::move(x) ) {}
+    Concept* copy() const override { return new Model( *this ); }
     T data;
   };
   std::unique_ptr< Concept > self;    //!< VBase pointer used polymorphically
@@ -437,7 +436,7 @@ struct VBase {
 class CharmChild : public CBase_CharmChild {
   public:
   using Proxy = CProxy_CharmChild;
-  CharmChild() {
+  explicit CharmChild() {
     // If we got here, the second part of this test succeeded. Construct and
     // send back a new test result, with tag "2", signaling the second part.
     tut::test_result tr( "Base/Factory", 7, 
@@ -447,7 +446,7 @@ class CharmChild : public CBase_CharmChild {
       { tr.group, tr.name, std::to_string(tr.result), tr.message,
         tr.exception_typeid } );
   }
-  CharmChild( tk::real ) {
+  explicit CharmChild( tk::real ) {
     // If we got here, the second part of this test succeeded. Construct and
     // send back a new test result, with tag "2", signaling the second part.
     tut::test_result tr( "Base/Factory", 8, 

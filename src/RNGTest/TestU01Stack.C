@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/RNGTest/TestU01Stack.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Stack of TestU01 RNG statistical tests
   \details   Stack of TestU01 RNG statistical tests
 */
@@ -106,10 +109,6 @@ TestU01Stack::TestU01Stack() : m_generator()
       addRNG< raw(RNGType::RNGSSE_LFSR113) >( r );
     else if (r == RNGType::RNGSSE_MRG32K3A)
       addRNG< raw(RNGType::RNGSSE_MRG32K3A) >( r );
-    else if (r == RNGType::R123_THREEFRY)
-      addRNG< raw(RNGType::R123_THREEFRY) >( r );
-    else if (r == RNGType::R123_PHILOX)
-      addRNG< raw(RNGType::R123_PHILOX) >( r );
     else
     #endif
     if (r == RNGType::R123_THREEFRY)

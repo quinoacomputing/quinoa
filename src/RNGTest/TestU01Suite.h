@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/RNGTest/TestU01Suite.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     TestU01 random number generator test suite
   \details   This file declares the TestU01 random number generator test suite,
     which facilitates subjecting any supported random number generator to a
@@ -105,9 +108,9 @@ class TestU01Suite : public CBase_TestU01Suite {
       std::string test;         //!< Test name
       std::string rng;          //!< RNG tested
       std::string pval;         //!< Resulting p-value
-      //! Constructor with moving test name and pval string, copy RNG name
+      //! Constructor
       Failed( std::string t, std::string r, std::string p ) :
-        test( std::move(t) ), rng( r ), pval( std::move(p) ) {}
+        test( std::move(t) ), rng( std::move(r) ), pval( std::move(p) ) {}
     };
     std::vector< Failed > m_failed;    //!< Details of failed tests
 };

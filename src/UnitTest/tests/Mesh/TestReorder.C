@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Mesh/TestReorder.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for Mesh/Reorder
   \details   Unit tests for Mesh/Reorder. All unit tests start from simple mesh
      connectivities defined in the code. The tetrahedron mesh in Gmsh ASCII
@@ -411,10 +414,6 @@ template<> template<>
 void Reorder_object::test< 9 >() {
   set_test_name( "positiveJacobians throws on inpoel non-div nnpe" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield invalid read" );
   #else
@@ -436,10 +435,6 @@ template<> template<>
 void Reorder_object::test< 10 >() {
   set_test_name( "positivaJacobians throws with empty inpoel" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -459,10 +454,6 @@ template<> template<>
 void Reorder_object::test< 11 >() {
   set_test_name( "positivaJacobians throws with empty coord" );
 
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
-
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
@@ -481,10 +472,6 @@ void Reorder_object::test< 11 >() {
 template<> template<>
 void Reorder_object::test< 12 >() {
   set_test_name( "positivaJacobians throws w inconsistent inpoel & coord" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
@@ -509,10 +496,6 @@ void Reorder_object::test< 12 >() {
 template<> template<>
 void Reorder_object::test< 13 >() {
   set_test_name( "positivaJacobians throws with non-zero-based inpoel" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );

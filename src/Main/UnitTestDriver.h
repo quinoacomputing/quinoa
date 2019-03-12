@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Main/UnitTestDriver.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit test driver
   \details   Unit test driver.
 */
@@ -20,14 +23,11 @@ class UnitTestDriver {
 
   public:
     //! Constructor
-    explicit UnitTestDriver( const UnitTestPrint& print,
+    explicit UnitTestDriver( const UnitTestPrint&,
                              const ctr::CmdLine& cmdline );
 
     //! Execute driver
     void execute() const {}
-
-  private:
-    const UnitTestPrint& m_print;
 };
 
 } // unittest::

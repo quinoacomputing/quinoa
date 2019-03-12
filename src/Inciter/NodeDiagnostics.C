@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/NodeDiagnostics.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     NodeDiagnostics class for collecting nodal diagnostics
   \details   NodeDiagnostics class for collecting nodal diagnostics, e.g.,
     residuals, and various norms of errors while solving partial differential
@@ -14,6 +17,7 @@
 #include "DiagReducer.h"
 #include "Discretization.h"
 #include "Inciter/InputDeck/InputDeck.h"
+#include "Refiner.h"
 
 namespace inciter {
 
@@ -128,7 +132,7 @@ NodeDiagnostics::compute( Discretization& d, const tk::Fields& u ) const
 
     // Contribute to diagnostics
     auto stream = serialize( diag );
-    d.contribute( stream.first, stream.second.get(), DiagMerger,
+    d.Ref()->contribute( stream.first, stream.second.get(), DiagMerger,
       CkCallback(CkIndex_Transporter::diagnostics(nullptr), d.Tr()) );
 
     return true;        // diagnostics have been computed

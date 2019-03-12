@@ -89,14 +89,14 @@ For larger problems and computers, however, you should build from source.
 
 - Install prerequisites: _Mac OS X_ (line 1: required, line 2: recommended)
 
-       port install cmake openmpi-gcc8 && port select gcc mp-gcc8 && port select mpi openmpi-gcc8-fortran
-       port install gmsh pugixml lapack hdf5
+       port install openmpi-clang60 & port select clang mp-clang-6.0 && port select mpi openmpi-clang60-fortran
+       port install pugixml hdf5 +openmpi+clang60+hl
 
 - Clone, build third-party libraries, build & test
 
        git clone --recurse-submodules https://github.com/quinoacomputing/quinoa.git; cd quinoa
-       mkdir tpl/build; cd tpl/build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 ..; make; cd -
-       mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src; make; ../script/run_tests.sh
+       mkdir tpl/build; cd tpl/build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 .. && make; cd -
+       mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src && make && ./charmrun +p 8 Main/unittest -v -q && ctest -j 8 --output-on-failure -LE extreme
 
 All executables will be under `build/Main/`.
 
@@ -165,51 +165,12 @@ Contributions and collaborators are welcome. Contact us via
 - Codecov --- https://codecov.io/gh/quinoacomputing/quinoa/commits
 - Sonarqube --- https://sonarqube.com/organizations/quinoacomputing
 - Docker --- https://hub.docker.com/r/quinoacomputing/quinoa
-- Travis --- https://travis-ci.org/quinoacomputing/quinoa/builds
 - Azure --- https://dev.azure.com/quinoacomputing/Quinoa
 - Analytics --- http://www.openhub.net/p/quinoacomputing
 - Cite --- https://zenodo.org/badge/latestdoi/38454430
 
 @section mainpage_license License
 
-> Copyright (c) 2016-2018, Los Alamos National Security, LLC
-> All rights reserved.
-> 
-> Copyright 2016-2018. Los Alamos National Security, LLC. This software was
-> produced under U.S. Government contract DE-AC52-06NA25396 for Los Alamos
-> National Laboratory (LANL), which is operated by Los Alamos National Security,
-> LLC for the U.S. Department of Energy. The U.S. Government has rights to use,
-> reproduce, and distribute this software. NEITHER THE GOVERNMENT NOR LOS ALAMOS
-> NATIONAL SECURITY, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY
-> LIABILITY FOR THE USE OF THIS SOFTWARE. If software is modified to produce
-> derivative works, such modified software should be clearly marked, so as not to
-> confuse it with the version available from LANL.
->  
-> Additionally, redistribution and use in source and binary forms, with or without
-> modification, are permitted provided that the following conditions are met:
-> 
-> 1. Redistributions of source code must retain the above copyright notice, this
-> list of conditions and the following disclaimer.
-> 
-> 2. Redistributions in binary form must reproduce the above copyright notice,
-> this list of conditions and the following disclaimer in the documentation and/or
-> other materials provided with the distribution.
-> 
-> 3. Neither the name of Los Alamos National Security, LLC, Los Alamos National
-> Laboratory, LANL, the U.S. Government, nor the names of its contributors may be
-> used to endorse or promote products derived from this software without specific
-> prior written permission.
-> 
-> THIS SOFTWARE IS PROVIDED BY LOS ALAMOS NATIONAL SECURITY, LLC AND CONTRIBUTORS
-> "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-> THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-> ARE DISCLAIMED. IN NO EVENT SHALL LOS ALAMOS NATIONAL SECURITY, LLC OR
-> CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-> OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-> SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-> INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-> CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-> IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
-> OF SUCH DAMAGE.
+@include LICENSE
 
 */

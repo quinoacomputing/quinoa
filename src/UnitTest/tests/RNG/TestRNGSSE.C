@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/RNG/TestRNGSSE.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for RNG/RNGSSE.h
   \details   Unit tests for RNG/RNGSSE.h
 */
@@ -45,10 +48,6 @@ static RNGSSE_group RNGSSE( "RNG/RNGSSE" );
 template<> template<>
 void RNGSSE_object::test< 1 >() {
   set_test_name( "constructor throws with zero threads" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   // Test all possible specializations
 

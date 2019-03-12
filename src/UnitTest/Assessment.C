@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/Assessment.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit test suite assessment
   \details   Unit test suite assessment.
 */
@@ -49,7 +52,6 @@ evaluate( std::vector< std::string > status,
 
 bool
 assess( const tk::Print& print,
-        std::string suite,
         std::size_t nfail,
         std::size_t nwarn,
         std::size_t nskip,
@@ -58,7 +60,6 @@ assess( const tk::Print& print,
 // *****************************************************************************
 // Echo final assessment after the full unit test suite has finished
 //! \param[in] print Pretty printer
-//! \param[in] suite Name of the test suite
 //! \param[in] nfail Number of failed tests
 //! \param[in] nwarn Number of tests with a warning
 //! \param[in] nskip Number of skipped tests
@@ -70,7 +71,7 @@ assess( const tk::Print& print,
 {
   if (!nfail && !nwarn && !nskip && !nexcp) {
     print.note< tk::QUIET >
-      ( "All " + std::to_string(ncomplete) + " " + suite + " tests passed" );
+              ( "All " + std::to_string(ncomplete) + " tests passed" );
   } else {
     std::string skip, warn, fail, excp;
     if (nwarn) warn = "finished with a warning: " + std::to_string(nwarn);
@@ -81,8 +82,8 @@ assess( const tk::Print& print,
     if (nfail) fail = std::string(nexcp || nskip || nwarn ?
                       ", " : "") + "failed: " + std::to_string(nfail);
     print.note< tk::QUIET >
-              ( "Of " + std::to_string(ncomplete) + " " + suite +
-                " tests total: " + warn + skip + excp + fail );
+              ( "Of " + std::to_string(ncomplete) + " tests total: "
+                + warn + skip + excp + fail );
   }
 
   return (nfail || nexcp) ? false : true;

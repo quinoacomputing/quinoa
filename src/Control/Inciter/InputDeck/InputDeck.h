@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
      the data from user input during the control file parsing of the
@@ -145,7 +148,6 @@ class InputDeck :
                                    kw::amr_zminus,
                                    kw::amr_zplus,
                                    kw::scheme,
-                                   kw::matcg,
                                    kw::diagcg,
                                    kw::alecg,
                                    kw::dg,
@@ -164,6 +166,7 @@ class InputDeck :
                                    kw::bc_outlet,
                                    kw::bc_extrapolate,
                                    kw::gauss_hump,
+                                   kw::rotated_sod_shocktube,
                                    kw::cyl_advect,
                                    kw::sod_shocktube,
                                    kw::sedov_blastwave >;
@@ -172,7 +175,7 @@ class InputDeck :
     //! \param[in] cl Previously parsed and store command line
     //! \details Anything not set here is initialized by the compiler using the
     //!   default constructor for the corresponding type.
-    InputDeck( const CmdLine& cl = {} ) {
+    explicit InputDeck( const CmdLine& cl = {} ) {
       // Set previously parsed command line
       set< tag::cmd >( cl );
       // Default discretization parameters
@@ -186,7 +189,7 @@ class InputDeck :
       set< tag::discr, tag::fct >( true );
       set< tag::discr, tag::reorder >( false );
       set< tag::discr, tag::ctau >( 1.0 );
-      set< tag::discr, tag::scheme >( SchemeType::MatCG );
+      set< tag::discr, tag::scheme >( SchemeType::DiagCG );
       set< tag::discr, tag::flux >( FluxType::HLLC );
       set< tag::discr, tag::ndof >( 1 );
       set< tag::discr, tag::limiter >( LimiterType::NOLIMITER );

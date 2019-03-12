@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Refiner.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Mesh refiner for interfacing the mesh refinement library
   \details   Mesh refiner is a Charm++ chare array and is used to interface the
    mesh refinement object which does not know about parallelization and thus the
@@ -27,7 +30,6 @@
 #include "UnsMesh.h"
 #include "Base/Fields.h"
 #include "SchemeBase.h"
-#include "MatCG.h"
 #include "DiagCG.h"
 #include "ALECG.h"
 #include "DG.h"
@@ -44,7 +46,7 @@ class Refiner : public CBase_Refiner {
     //! Constructor
     explicit Refiner( const CProxy_Transporter& transporter,
                       const CProxy_Sorter& sorter,
-                      const tk::CProxy_Solver& solver,
+                      const tk::CProxy_MeshWriter& meshwriter,
                       const Scheme& scheme,
                       const tk::RefinerCallback& cbr,
                       const tk::SorterCallback& cbs,
@@ -60,6 +62,7 @@ class Refiner : public CBase_Refiner {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
+    // cppcheck-suppress uninitMemberVar
     explicit Refiner( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
@@ -70,7 +73,6 @@ class Refiner : public CBase_Refiner {
 
     //! Start mesh refinement (during time stepping, t>0)
     void dtref( tk::real t,
-                const SchemeBase::Proxy& s,
                 const std::map< int, std::vector< std::size_t > >& bnode );
 
     //! Receive boundary edges from all PEs (including this one)
@@ -95,12 +97,11 @@ class Refiner : public CBase_Refiner {
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &p ) {
+    void pup( PUP::er &p ) override {
       p | m_host;
       p | m_sorter;
-      p | m_solver;
+      p | m_meshwriter;
       p | m_scheme;
-      p | m_schemeproxy;
       p | m_cbr;
       p | m_cbs;
       p | m_ginpoel;
@@ -152,12 +153,10 @@ class Refiner : public CBase_Refiner {
     CProxy_Transporter m_host;
     //! Mesh sorter proxy
     CProxy_Sorter m_sorter;
-    //! Linear soilver proxy
-    tk::CProxy_Solver m_solver;
+    //! Mesh writer proxy
+    tk::CProxy_MeshWriter m_meshwriter;
     //! Discretization scheme
     Scheme m_scheme;
-    //! Variant storing the discretization scheme class we interoperate with
-    SchemeBase::Proxy m_schemeproxy;
     //! Charm++ callbacks associated to compile-time tags for refiner
     tk::RefinerCallback m_cbr;
     //! Charm++ callbacks associated to compile-time tags for sorter
@@ -283,7 +282,7 @@ class Refiner : public CBase_Refiner {
     //! Functor to call the solution() member function behind SchemeBase::Proxy
     struct Solution : boost::static_visitor<> {
       tk::Fields& U;
-      Solution( tk::Fields& u ) : U(u) {}
+      explicit Solution( tk::Fields& u ) : U(u) {}
       template< typename P > void operator()( const P& p ) const {
          p.ckLocal()->solution( U );
       }
@@ -296,7 +295,7 @@ class Refiner : public CBase_Refiner {
       const tk::Fields& U;
       const std::unordered_map< int, std::vector< std::size_t > >& Msum;
       const std::map< int, std::vector< std::size_t > > Bnode;
-      Resize( const tk::UnsMesh::Chunk& chunk,
+      explicit Resize( const tk::UnsMesh::Chunk& chunk,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& u,
               const std::unordered_map< int,

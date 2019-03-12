@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/NoWarning/Zoltan2_PartitioningProblem.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Include Zoltan2_PartitioningProblem.hpp with turning off specific
              compiler warnings
 */
@@ -14,6 +17,7 @@
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wextra-semi"
+  #pragma clang diagnostic ignored "-Wextra-semi-stmt"
   #pragma clang diagnostic ignored "-Wunused-parameter"
   #pragma clang diagnostic ignored "-Wsign-conversion"
   #pragma clang diagnostic ignored "-Wsign-compare"
@@ -36,6 +40,11 @@
   #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
   #pragma clang diagnostic ignored "-Wcast-qual"
   #pragma clang diagnostic ignored "-Wunused-template"
+  #pragma clang diagnostic ignored "-Watomic-implicit-seq-cst"
+  #pragma clang diagnostic ignored "-Wcovered-switch-default"
+  #pragma clang diagnostic ignored "-Wused-but-marked-unused"
+  #pragma clang diagnostic ignored "-Wshadow"
+  #pragma clang diagnostic ignored "-Wmissing-noreturn"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -46,6 +55,11 @@
   #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
   #pragma GCC diagnostic ignored "-Wshadow"
+  #pragma GCC diagnostic ignored "-Wredundant-decls"
+  #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( push )
+  #pragma warning( disable: 239 )
 #endif
 
 #include <Zoltan2_PartitioningProblem.hpp>
@@ -54,6 +68,8 @@
   #pragma clang diagnostic pop
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( pop )
 #endif
 
 #endif // nowarning_Zoltan2_PartitioningProblem_h

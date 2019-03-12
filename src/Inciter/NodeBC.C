@@ -1,10 +1,13 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/NodeBC.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Boundary conditions for nodal discretizations
   \details   Boundary conditions for nodal discretizations, such as continuous
-    Galerkin finite elements, e.g., MatCG, DiagCG.
+    Galerkin finite elements, e.g., DiagCG.
 */
 // *****************************************************************************
 
@@ -26,7 +29,7 @@ match( tk::ctr::ncomp_type ncomp,
        tk::real t,
        tk::real dt,
        const tk::UnsMesh::Coords& coord,
-       const std::vector< std::size_t > gid,
+       const std::vector< std::size_t >& gid,
        const std::unordered_map< std::size_t, std::size_t >& lid,
        const std::map< int, std::vector< std::size_t > >& sidenodes )
 // *****************************************************************************
@@ -139,10 +142,7 @@ match( tk::ctr::ncomp_type ncomp,
 
   // Verify the size of each NodeBC vectors. They must have the same lengths and
   // equal to the total number of scalar components for all systems of PDEs
-  // integrated. This is intentional, because this way the linear system solver
-  // does not have to (and does not) know about individual equation systems.
-  // This entire loop is optimized away in RELEASE mode, thus the IGNOREs to
-  // silence compiler warnings.
+  // integrated.
   Assert( std::all_of( begin(dirbc), end(dirbc),
                        [ ncomp ]( const decltype(dirbc)::value_type& n ){
                         return n.second.size() == ncomp; } ),

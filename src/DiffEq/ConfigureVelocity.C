@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/ConfigureVelocity.C
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Register and compile configuration on the velocity SDE
   \details   Register and compile configuration on the velocity SDE.
 */
@@ -83,8 +86,8 @@ infoVelocity( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name( cp ) );
 
   auto solve = g_inputdeck.get< tag::param, eq, tag::solve >()[c];
-  auto depvar = ctr::Depvar();
-  nfo.emplace_back( depvar.group(), depvar.name(solve) );
+  auto dv = ctr::Depvar();
+  nfo.emplace_back( dv.group(), dv.name(solve) );
 
   auto variant = g_inputdeck.get< tag::param, eq, tag::variant >()[c];
   auto velocity = ctr::VelocityVariant();

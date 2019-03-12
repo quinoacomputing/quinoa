@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestProcessControl.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for Base/ProcessControl.h
   \details   Unit tests for Base/ProcessControl.h
 */
@@ -34,10 +37,6 @@ static ProcessControl_group ProcessControl( "Base/ProcessControl" );
 template<> template<>
 void ProcessControl_object::test< 1 >() {
   set_test_name( "rm throws on empty argument" );
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect q( quiet.rdbuf() );
 
   try {
     tk::rm( "" );

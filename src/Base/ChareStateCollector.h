@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Base/ChareStateCollector.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Charm++ chare state collector group
   \details   Charm++ chare state collectory group used for debugging.
 */
@@ -26,9 +29,16 @@ namespace tk {
 class ChareStateCollector : public CBase_ChareStateCollector {
 
   public:
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wundefined-func-template"
+    #endif
     //! Constructor
     //! \details Start timer when constructor is called
-    ChareStateCollector() : m_state(), m_timer() {}
+    explicit ChareStateCollector() : m_state(), m_timer() {}
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
 
     //! Configure Charm++ reduction types
     static void registerReducers();

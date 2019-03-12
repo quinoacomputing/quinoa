@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Control/CommonGrammar.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the Parsing Expression Grammar
     Template Library (PEGTL) to create the grammar and the associated parser.
@@ -133,6 +136,7 @@ namespace grm {
     POSITION_MISSING,   //!< Missing required position model
     VELOCITY_MISSING,   //!< Missing required velocity model
     DISSIPATION_MISSING,//!< Missing required dissipation model
+    MIXDIR_RHO,         //!< MixDirichlet parameter vector rho inconsistent
     T0REFODD,           //!< AMR initref vector size is odd (must be even)
     T0REFNOOP,          //!< AMR t<0 refinement will be no-op
     DTREFNOOP,          //!< AMR t>0 refinement will be no-op
@@ -344,6 +348,9 @@ namespace grm {
     { MsgKey::VELOCITY_MISSING, "Specification for a velocity model missing." },
     { MsgKey::DISSIPATION_MISSING,
       "Specification for a dissipation model missing." },
+    { MsgKey::MIXDIR_RHO,
+      "The MixDirichlet SDE parameter vector rho is inconsistent. Its size "
+      "must be ncomp-1 and must be listed in non-decreasing order." },
     { MsgKey::T0REFODD, "Error in the preceding line or block. "
       "The number of edge-nodes, marking edges as pairs of nodes, used for "
       "explicit tagging of edges for initial mesh refineoment is odd (it must "
@@ -879,6 +886,7 @@ namespace grm {
       // error out if chosen item does not exist in selected vector
       bool exists = false;
       for (const auto& r : stack.template get< sel, vec >()) {
+        // cppcheck-suppress useStlAlgorithm
         if (Option().value(in.string()) == r) exists = true;
       }
       if (exists)

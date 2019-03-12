@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/refiner.ci
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Charm++ module interface file for mesh refiner
   \details   Charm++ module interface file for mesh refiner.
   \see       Refiner.h and Refiner.C for more info.
@@ -13,14 +16,14 @@ module refiner {
   include "Scheme.h";
 
   extern module sorter;
-  extern module solver;
+  extern module meshwriter;
 
   namespace inciter {
 
     array [1D] Refiner {
       entry Refiner( const CProxy_Transporter& transporter,
                      const CProxy_Sorter& sorter,
-                     const tk::CProxy_Solver& solver,
+                     const tk::CProxy_MeshWriter& meshwriter,
                      const Scheme& scheme,
                      const tk::RefinerCallback& cbr,
                      const tk::SorterCallback& cbs,
@@ -33,7 +36,6 @@ module refiner {
       initnode void registerReducers();
       entry
         void dtref( tk::real t,
-                    const SchemeBase::Proxy& s,
                     const std::map< int, std::vector< std::size_t > >& bnode );
       entry [reductiontarget] void addBndEdges( CkReductionMsg* msg );
       entry void addRefBndEdges( int fromch,

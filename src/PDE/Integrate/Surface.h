@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/Integrate/Surface.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Functions for computing internal surface integrals of a system
      of PDEs in DG methods
   \details   This file contains functionality for computing internal surface
@@ -12,6 +15,7 @@
 #ifndef Surface_h
 #define Surface_h
 
+#include "Basis.h"
 #include "Types.h"
 #include "Fields.h"
 #include "FaceData.h"
@@ -23,46 +27,33 @@ namespace tk {
 using ncomp_t = kw::ncomp::info::expect::type;
 using bcconf_t = kw::sideset::info::expect::type;
 
-//! Compute internal surface flux integrals for DG(P0)
+//! Compute internal surface flux integrals for DG
 void
-surfIntP0( ncomp_t system,
-           ncomp_t ncomp,
-           ncomp_t offset,
-           const inciter::FaceData& fd,
-           const Fields& geoFace,
-           const RiemannFluxFn& flux,
-           const VelFn& vel,
-           const Fields& U,
-           Fields& R );
+surfInt( ncomp_t system,
+         ncomp_t ncomp,
+         ncomp_t offset,
+         const std::vector< std::size_t >& inpoel,
+         const UnsMesh::Coords& coord,
+         const inciter::FaceData& fd,
+         const Fields& geoFace,
+         const RiemannFluxFn& flux,
+         const VelFn& vel,
+         const Fields& U,
+         const Fields& limFunc,
+         Fields& R );
 
-//! Compute internal surface flux integrals for DG(P1)
+// Update the rhs by adding surface integration term
 void
-surfIntP1( ncomp_t system,
-           ncomp_t ncomp,
-           ncomp_t offset,
-           const std::vector< std::size_t >& inpoel,
-           const UnsMesh::Coords& coord,
-           const inciter::FaceData& fd,
-           const Fields& geoFace,
-           const RiemannFluxFn& flux,
-           const VelFn& vel,
-           const Fields& U,
-           const Fields& limFunc,
-           Fields& R );
-
-//! Compute internal surface flux integrals for DG(P2)
-void
-surfIntP2( ncomp_t system,
-           ncomp_t ncomp,
-           ncomp_t offset,
-           const std::vector< std::size_t >& inpoel,
-           const UnsMesh::Coords& coord,
-           const inciter::FaceData& fd,
-           const Fields& geoFace,
-           const RiemannFluxFn& flux,
-           const VelFn& vel,
-           const Fields& U,
-           Fields& R );
+update_rhs_fa ( ncomp_t ncomp,
+                ncomp_t offset,
+                const std::size_t ndof,
+                const tk::real wt,
+                const std::size_t el,
+                const std::size_t er,
+                const std::vector< tk::real >& fl,
+                const std::vector< tk::real >& B_l,
+                const std::vector< tk::real >& B_r,
+                Fields& R );
 
 } // tk::
 

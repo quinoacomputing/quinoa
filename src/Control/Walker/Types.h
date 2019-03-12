@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Walker/Types.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Types for Walker's parsers
   \details   Types for Walker's parsers. This file defines the components of the
     tagged tuple that stores heteroegeneous objects in a hierarchical way. These
@@ -117,10 +120,10 @@ using MixDirichletParameters = tk::tuple::tagged_tuple<
                       kw::sde_S::info::expect::type > >,
   tag::kappa,       std::vector< std::vector<
                       kw::sde_kappa::info::expect::type > >,
-  tag::rho2,        std::vector< std::vector<
-                      kw::sde_rho2::info::expect::type > >,
-  tag::r,           std::vector< std::vector<
-                      kw::sde_r::info::expect::type > >,
+  tag::kappaprime,  std::vector< std::vector<
+                      kw::sde_kappaprime::info::expect::type > >,
+  tag::rho,         std::vector< std::vector<
+                      kw::sde_rho::info::expect::type > >,
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <

@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/ALECG.C
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     ALECG for a PDE system with continuous Galerkin + ALE + RK
   \details   ALECG advances a system of partial differential equations (PDEs)
     using a continuous Galerkin (CG) finite element (FE) spatial discretization
@@ -14,7 +17,6 @@
 
 #include "QuinoaConfig.h"
 #include "ALECG.h"
-#include "Solver.h"
 #include "Vector.h"
 #include "Reader.h"
 #include "ContainerUtil.h"
@@ -40,15 +42,10 @@ extern std::vector< CGPDE > g_cgpde;
 
 } // inciter::
 
-// extern tk::CProxy_ChareStateCollector stateProxy;
-
 using inciter::ALECG;
 
-ALECG::ALECG( const CProxy_Discretization& disc,
-              const tk::CProxy_Solver& solver,
-              const FaceData& fd ) :
+ALECG::ALECG( const CProxy_Discretization& disc, const FaceData& fd ) :
   m_disc( disc ),
-  m_itf( 0 ),
   m_initial( true ),
   m_nsol( 0 ),
   m_nlhs( 0 ),
@@ -66,19 +63,20 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
-//! \param[in] solver Linear system solver (Solver) proxy
 //! \param[in] fd Face data structures
 // *****************************************************************************
 //! [Constructor]
 {
-  //! Enable migration at AtSync
-  usesAtSync = true;
+  usesAtSync = true;    // enable migration at AtSync
 
   // Size communication buffers
   resizeComm();
 
+  // Activate SDAG wait for initially computing the left-hand side
+  thisProxy[ thisIndex ].wait4lhs();
+
   // Signal the runtime system that the workers have been created
-  solver.ckLocalBranch()->created();
+  contribute(CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()));
 }
 //! [Constructor]
 
@@ -118,6 +116,19 @@ ALECG::registerReducers()
 }
 
 void
+ALECG::ResumeFromSync()
+// *****************************************************************************
+//  Return from migration
+//! \details This is called when load balancing (LB) completes. The presence of
+//!   this function does not affect whether or not we block on LB.
+// *****************************************************************************
+{
+  if (Disc()->It() == 0) Throw( "it = 0 in ResumeFromSync()" );
+
+  if (!g_inputdeck.get< tag::cmd, tag::nonblocking >()) dt();
+}
+
+void
 ALECG::setup( tk::real v )
 // *****************************************************************************
 // Setup rows, query boundary conditions, output mesh, etc.
@@ -129,29 +140,24 @@ ALECG::setup( tk::real v )
   // Store total mesh volume
   m_vol = v;
 
-  //! [init and lhs]
-
-  // Activate SDAG waits for computing the left-hand side
-  thisProxy[ thisIndex ].wait4lhs();
-
-  // Compute left-hand side of PDEs
-  lhs();
-
   // Set initial conditions for all PDEs
   for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
 
-  //! [init and lhs]
-
-  // Output initial condition to file (if not in benchmark mode)
-  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) {
-    // Output chare mesh to file
-    d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode());
-    // Output fields metadata to output file
-    d->writeNodeMeta();
-    // Output initial conditions to file (regardless of whether it was requested)
-    writeFields( d->T() );
-  }
+  // Output initial conditions to file (regardless of whether it was requested)
+  writeFields( CkCallback(CkIndex_ALECG::init(), thisProxy[thisIndex]) );
 }
+
+//! [init and lhs]
+void
+ALECG::init()
+// *****************************************************************************
+// Initially compute left hand side diagonal matrix
+// *****************************************************************************
+{
+  // Compute left-hand side of PDEs
+  lhs();
+}
+//! [init and lhs]
 
 //! [Merge lhs and continue]
 void
@@ -216,8 +222,9 @@ ALECG::lhs()
     comlhs_complete();
   else // send contributions of lhs to chare-boundary nodes to fellow chares
     for (const auto& n : d->Msum()) {
-      std::vector< std::vector< tk::real > > l;
-      for (auto i : n.second) l.push_back( m_lhs[ tk::cref_find(d->Lid(),i) ] );
+      std::vector< std::vector< tk::real > > l( n.second.size() );
+      std::size_t j = 0;
+      for (auto i : n.second) l[ j++ ] = m_lhs[ tk::cref_find(d->Lid(),i) ];
       thisProxy[ n.first ].comlhs( n.second, l );
     }
 
@@ -296,7 +303,7 @@ ALECG::dt()
   //! [Advance]
   // Actiavate SDAG waits for time step
   thisProxy[ thisIndex ].wait4rhs();
-  thisProxy[ thisIndex ].wait4eval();
+  thisProxy[ thisIndex ].wait4out();
 
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
@@ -320,8 +327,9 @@ ALECG::rhs()
     comrhs_complete();
   else // send contributions of rhs to chare-boundary nodes to fellow chares
     for (const auto& n : d->Msum()) {
-      std::vector< std::vector< tk::real > > r;
-      for (auto i : n.second) r.push_back( m_rhs[ tk::cref_find(d->Lid(),i) ] );
+      std::vector< std::vector< tk::real > > r( n.second.size() );
+      std::size_t j = 0;
+      for (auto i : n.second) r[ j++ ] = m_rhs[ tk::cref_find(d->Lid(),i) ];
       thisProxy[ n.first ].comrhs( n.second, r );
     }
 
@@ -397,92 +405,32 @@ ALECG::solve()
 }
 
 void
-ALECG::writeFields( tk::real time )
+ALECG::writeFields( CkCallback c )
 // *****************************************************************************
 // Output mesh-based fields to file
-//! \param[in] time Physical time
+//! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
   auto d = Disc();
 
-  // Only write if the last time is different than the current one
-  if (std::abs(d->LastFieldWriteTime() - time) <
-      std::numeric_limits< tk::real >::epsilon() )
-    return;
-
-  // Save time stamp at which the last field write happened
-  d->LastFieldWriteTime() = time;
-
-  // Increase field output iteration count
-  ++m_itf;
-
-  // Lambda to collect node fields output from all PDEs
-  auto nodefields = [&]() {
-    auto u = m_u;   // make a copy as eq::output() may overwrite its arg
-    std::vector< std::vector< tk::real > > output;
-    for (const auto& eq : g_cgpde) {
-      auto o = eq.fieldOutput( time, m_vol, d->Coord(), d->V(), u );
-      output.insert( end(output), begin(o), end(o) );
-    }
-    return output;
-  };
-
-  #ifdef HAS_ROOT
-  auto filetype = g_inputdeck.get< tag::selected, tag::filetype >();
-
-  if (filetype == tk::ctr::FieldFileType::ROOT) {
-
-    // Create Root writer
-    tk::RootMeshWriter rmw( d->filename(), 1 );
-    // Write time stamp
-    rmw.writeTimeStamp( m_itf, time );
-    // Write node fields to file
-    d->writeNodeSolution( rmw, m_itf, nodefields() );
-
-  } else
-  #endif
-  {
-
-    // if the previous iteration refined the mesh, start by writing the mesh
-    if (m_itf == 1) {
-      // Output chare mesh to file
-      d->writeMesh( m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode() );
-      // Output fields metadata to output file
-      d->writeNodeMeta();
-    }
-
-    // Create ExodusII writer
-    tk::ExodusIIMeshWriter ew( d->filename(), tk::ExoWriter::OPEN );
-    // Write time stamp
-    ew.writeTimeStamp( m_itf, time );
-    // Write node fields to file
-    d->writeNodeSolution( ew, m_itf, nodefields() );
-
+  // Query and collect field names from PDEs integrated
+  std::vector< std::string > names;
+  for (const auto& eq : g_cgpde) {
+    auto n = eq.fieldNames();
+    names.insert( end(names), begin(n), end(n) );
   }
-}
 
-void
-ALECG::out()
-// *****************************************************************************
-// Output mesh field data
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Output field data to file if not in benchmark mode
-  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) {
-
-    if ( !((d->It()) % g_inputdeck.get< tag::interval, tag::field >()) )
-      writeFields( d->T() );
-
-    // Output final field data to file (regardless of whether it was requested)
-    const auto term = g_inputdeck.get< tag::discr, tag::term >();
-    const auto eps = std::numeric_limits< tk::real >::epsilon();
-    const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-    if ( (std::fabs(d->T()-term) < eps || d->It() >= nstep ) )
-      writeFields( d->T() );
-
+  // Collect node field solution
+  auto u = m_u;
+  std::vector< std::vector< tk::real > > fields;
+  for (const auto& eq : g_cgpde) {
+    auto o = eq.fieldOutput( d->T(), m_vol, d->Coord(), d->V(), u );
+    fields.insert( end(fields), begin(o), end(o) );
   }
+
+  // Send mesh and fields data (solution dump) for output to file
+  d->write( d->Inpoel(), d->Coord(), m_fd.Bface(), m_fd.Triinpoel(),
+            m_fd.Bnode(), names, fields, tk::Centering::NODE, c );
 }
 
 void
@@ -525,7 +473,7 @@ ALECG::refine()
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
-    d->Ref()->dtref( d->T(), thisProxy, m_fd.Bnode() );
+    d->Ref()->dtref( d->T(), m_fd.Bnode() );
 
   } else {      // do not refine
 
@@ -561,7 +509,7 @@ ALECG::resize( const tk::UnsMesh::Chunk& chunk,
   m_initial = false;
 
   // Zero field output iteration count between two mesh refinement steps
-  m_itf = 0;
+  d->Itf() = 0;
 
   // Increase number of iterations with mesh refinement
   ++d->Itr();
@@ -595,15 +543,35 @@ ALECG::resize( const tk::UnsMesh::Chunk& chunk,
 //! [Resize]
 
 void
-ALECG::eval()
+ALECG::out()
+// *****************************************************************************
+// Output mesh field data
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
+
+  // output field data if field iteration count is reached or in the last time
+  // step
+  if ( !((d->It()) % fieldfreq) ||
+       (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
+    writeFields( CkCallback(CkIndex_ALECG::step(), thisProxy[thisIndex]) );
+  else
+    step();
+}
+
+void
+ALECG::step()
 // *****************************************************************************
 // Evaluate whether to continue with next step
 // *****************************************************************************
 {
   auto d = Disc();
 
-  // Output field data to file
-  out();
   // Output one-liner status report to screen
   d->status();
 
@@ -613,10 +581,12 @@ ALECG::eval()
 
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
-    AtSync();   // Migrate here if needed
-    dt();
+
+    AtSync();
+    if (g_inputdeck.get< tag::cmd, tag::nonblocking >()) dt();
+
   } else {
-    contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
+    d->contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
   }
 }
 

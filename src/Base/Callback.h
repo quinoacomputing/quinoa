@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Callback.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Tagged tuple types used for passing Charm++ callbacks
   \details   Tagged tuple types used for passing Charm++ callbacks.
 */
@@ -28,15 +31,10 @@ using RefinerCallback =
                          , tag::refined,        CkCallback
                          >;
 
-using SolverCallback =
-  tk::tuple::tagged_tuple< tag::nchare,         CkCallback
-                         , tag::bounds,         CkCallback
-                         , tag::com,            CkCallback
-                         , tag::disccreated,    CkCallback
-                         >;
-
 using SorterCallback =
-  tk::tuple::tagged_tuple< tag::discinserted,   CkCallback
+  tk::tuple::tagged_tuple< tag::queried,        CkCallback
+                         , tag::responded,      CkCallback
+                         , tag::discinserted,   CkCallback
                          , tag::workinserted,   CkCallback
                          >;
 

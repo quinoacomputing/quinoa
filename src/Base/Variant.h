@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Variant.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Helpers for operator operator[] using boost::variant
   \details   Helpers for applying operator[] using boost::variant.
 */
@@ -21,7 +24,7 @@ namespace tk {
 //!   proxy types the variant supports.
 template< class ProxyElem >
 struct Idx : boost::static_visitor< ProxyElem > {
-  Idx( const CkArrayIndex1D& idx ) : x(idx) {}
+  explicit Idx( const CkArrayIndex1D& idx ) : x(idx) {}
   template< typename P >
     ProxyElem operator()( const P& p ) const { return p[x]; }
   CkArrayIndex1D x;

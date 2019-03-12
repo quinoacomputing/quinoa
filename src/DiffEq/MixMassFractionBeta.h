@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/MixMassFractionBeta.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     System of mix mass-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs) with linear drift and quadratic diagonal
@@ -158,6 +161,7 @@ class MixMassFractionBeta {
         const auto& hts =
           g_inputdeck.get< tag::param, eq, tag::hydrotimescales >().at(c);
         ctr::HydroTimeScales ot;
+        // cppcheck-suppress useStlAlgorithm
         for (auto t : hts) m_hts.push_back( ot.table(t) );
         Assert( m_hts.size() == m_ncomp, "Number of inverse hydro time scale "
           "tables associated does not match the components integrated" );
@@ -166,6 +170,7 @@ class MixMassFractionBeta {
         const auto& hp =
           g_inputdeck.get< tag::param, eq, tag::hydroproductions >().at(c);
         ctr::HydroProductions op;
+        // cppcheck-suppress useStlAlgorithm
         for (auto t : hp) m_hp.push_back( op.table(t) );
         Assert( m_hp.size() == m_ncomp, "Number of hydro "
           "production/dissipation tables associated does not match the "
@@ -225,7 +230,7 @@ class MixMassFractionBeta {
           tk::real d = m_k[i] * Y * (1.0 - Y) * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
           Y += 0.5*m_b[i]*(m_S[i] - Y)*dt + d*dW[i]
-               + m_grad[0]*u + m_grad[1]*v + m_grad[2]*w;
+               - m_grad[0]*u - m_grad[1]*v - m_grad[2]*w;
           // Compute instantaneous values derived from updated Y
           derived( particles, p, i );
         }

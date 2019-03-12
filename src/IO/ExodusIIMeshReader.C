@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/IO/ExodusIIMeshReader.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition.
 */
@@ -90,7 +93,6 @@ ExodusIIMeshReader::readMeshPart(
   std::vector< std::size_t >& ginpoel,
   std::vector< std::size_t >& inpoel,
   std::vector< std::size_t >& triinp,
-  std::vector< std::size_t >& gid,
   std::unordered_map< std::size_t, std::size_t >& lid,
   tk::UnsMesh::Coords& coord,
   int numpes, int mype )
@@ -102,8 +104,6 @@ ExodusIIMeshReader::readMeshPart(
 //!   node IDs of this PE's mesh chunk
 //! \param[in,out] triinp Container to store triangle element connectivity
 //!   (if exists in file) with global node indices
-//! \param[in,out] gid Container to store global node IDs of elements of this
-//!   PE's mesh chunk
 //! \param[in,out] lid Container to store global->local node IDs of elements of
 //!   this PE's mesh chunk
 //! \param[in,out] coord Container to store coordinates of mesh nodes of this
@@ -113,7 +113,7 @@ ExodusIIMeshReader::readMeshPart(
 // *****************************************************************************
 {
   Assert( mype < numpes, "Invalid input: PE id must be lower than NumPEs" );
-  Assert( ginpoel.empty() && inpoel.empty() && gid.empty() && lid.empty() &&
+  Assert( ginpoel.empty() && inpoel.empty() && lid.empty() &&
           coord[0].empty() && coord[1].empty() && coord[2].empty(),
           "Containers to store mesh must be empty" );
 
@@ -134,6 +134,7 @@ ExodusIIMeshReader::readMeshPart(
   readElements( {{m_from, m_till-1}}, tk::ExoElemType::TET, ginpoel );
 
   // Compute local data from global mesh connectivity
+  std::vector< std::size_t > gid;
   std::tie( inpoel, gid, lid ) = tk::global2local( ginpoel );
 
   // Read this PE's chunk of the mesh node coordinates from file
@@ -545,7 +546,6 @@ ExodusIIMeshReader::readFaces( std::vector< std::size_t >& conn ) const
   if (nelem(tk::ExoElemType::TRI) == 0) return;
 
   // Read triangle boundary-face connectivity (all the triangle element block)
-  std::vector< std::size_t > l_triinpoel;
   readElements( {{0,nelem(tk::ExoElemType::TRI)-1}}, tk::ExoElemType::TRI,
                 conn );
 }
@@ -622,7 +622,7 @@ ExodusIIMeshReader::readSidesetNodes()
       tk::unique( nodes );
       // Store 0-based node ID list as std::size_t vector instead of ints
       auto& list = side[ i ];
-      for (auto&& n : nodes) list.push_back( static_cast<std::size_t>(n-1) );
+      for (auto n : nodes) list.push_back( static_cast<std::size_t>(n-1) );
     }
   }
 
@@ -753,7 +753,7 @@ ExodusIIMeshReader::triinpoel(
 // *****************************************************************************
 {
   Assert( !(m_from == 0 && m_till == 0),
-          "Lower and upper tetrahedron id bounds must both be zero" );
+          "Lower and upper tetrahedron id bounds must not both be zero" );
 
   // This will contain one of our final results: face (triangle) connectivity
   // for the side sets only. The difference between bnd_triinpoel and triinpoel
@@ -804,8 +804,8 @@ ExodusIIMeshReader::triinpoel(
           // generate triangle (face) connectivity using global node ids, note
           // the switched node order, 0,2,1, as lpofa is different from expofa
           bnd_triinpoel.push_back( ginpoel[ t*4 + tri[0] ] );
-          bnd_triinpoel.push_back( ginpoel[ t*4 + tri[2] ] );
           bnd_triinpoel.push_back( ginpoel[ t*4 + tri[1] ] );
+          bnd_triinpoel.push_back( ginpoel[ t*4 + tri[2] ] );
           localface = true;
         }
 
@@ -837,7 +837,5 @@ ExodusIIMeshReader::nelem( tk::ExoElemType elemtype ) const
 // *****************************************************************************
 {
   auto e = static_cast< std::size_t >( elemtype );
-  std::size_t sum = 0;
-  for (auto n : m_nel[e]) sum += n;
-  return sum;
+  return std::accumulate( m_nel[e].cbegin(), m_nel[e].cend(), 0u );
 }

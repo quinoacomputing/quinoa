@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Main/Init.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Common initialization routines for main() functions for multiple
      exectuables
   \details   Common initialization routines for main() functions for multiple
@@ -145,6 +148,10 @@ void echoRunEnv( const Print& print, int argc, char** argv,
 
   print.item( "Screen output, -" + *kw::verbose::alias(),
               verbose ? "verbose" : "quiet" );
+  print.item( "Number of processing elements",
+              std::to_string( CkNumPes() ) + " (" +
+              std::to_string( CkNumNodes() ) + 'x' +
+              std::to_string( CkNumPes()/CkNumNodes() ) + ')' );
   print.item( "Quiescence detection, -" + *kw::quiescence::alias(),
               quiescence ? "on" : "off" );
   print.item( "Chare state output, -" + *kw::charestate::alias(),

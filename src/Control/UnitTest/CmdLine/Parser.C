@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Control/UnitTest/CmdLine/Parser.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     UnitTest's command line parser
   \details   This file defines the command-line argument parser for the unit
      test suite, UnitTest.
@@ -73,6 +76,18 @@ CmdLineParser::CmdLineParser( int argc,
 
   // If we got here, the parser has succeeded
   print.item("Parsed command line", "success");
+
+  // Print out help on all command-line arguments if requested
+  const auto helpcmd = cmdline.get< tag::help >();
+  if (helpcmd)
+    print.help< tk::QUIET >( tk::unittest_executable(),
+                             cmdline.get< tag::cmdinfo >(),
+                             "Command-line Parameters:", "-" );
+
+  // Print out verbose help for a single keyword if requested
+  const auto helpkw = cmdline.get< tag::helpkw >();
+  if (!helpkw.keyword.empty())
+    print.helpkw< tk::QUIET >( tk::unittest_executable(), helpkw );
 
   // Will exit in main chare constructor if any help was output
   if (cmdline.get< tag::help >() ||           // help on all cmdline args

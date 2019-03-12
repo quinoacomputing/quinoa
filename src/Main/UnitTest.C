@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Main/UnitTest.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
     the definition of the Charm++ main chare, equivalent to main() in Charm++-
@@ -17,14 +20,8 @@
 #include <utility>
 #include <cstddef>
 
-#include "NoWarning/tut_result.h"
 #include "NoWarning/tut_runner.h"
 
-#include "NoWarning/charm.h"
-#include "NoWarning/mpi.h"
-#include "NoWarning/mpi-interoperate.h"
-
-#include "QuinoaConfig.h"
 #include "NoWarning/tutsuite.decl.h"
 #include "NoWarning/unittest.decl.h"
 
@@ -43,6 +40,7 @@
 #include "UnitTest/CmdLine/Parser.h"
 #include "TUTConfig.h"
 #include "ChareStateCollector.h"
+#include "QuietCerr.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -89,9 +87,6 @@ std::string g_executable;
 //! Max number of tests in every group
 int g_maxTestsInGroup = tut::MAX_TESTS_IN_GROUP;
 
-//! Bool indicating whether all Charm++ and serial tests have passed
-bool g_charmpass = true;
-
 #if defined(__clang__)
   #pragma clang diagnostic pop
 #endif
@@ -115,6 +110,7 @@ inline void operator|( PUP::er& p, tut::test_runner_singleton& runner )
 
 //! \brief Charm++ main chare for the unit test suite executable, unittest.
 //! \details Note that this object should not be in a namespace.
+// cppcheck-suppress noConstructor
 class Main : public CBase_Main {
 
   public:
@@ -164,6 +160,8 @@ class Main : public CBase_Main {
       tk::MainCtor< CProxy_execute >
         ( msg, mainProxy, thisProxy, stateProxy, m_timer, m_cmdline,
           CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
+      // Quiet std::cerr
+      tk::CProxy_QuietCerr::ckNew();
     } catch (...) { tk::processExceptionCharm(); }
 
     void execute() {
@@ -173,25 +171,11 @@ class Main : public CBase_Main {
       } catch (...) { tk::processExceptionCharm(); }
     }
 
-    void finalize( bool worked, bool pass ) {
-      try {
-        if (worked && !m_timer.empty()) {
-          m_timestamp.emplace_back( "Serial and Charm++ tests runtime",
-                                    m_timer[0].hms() );
-          m_print.time( "Serial and Charm++ test suite timers (h:m:s)",
-                        m_timestamp );
-          m_print.endpart();
-        }
-        // Set global bool indicating whether all tests have passed
-        unittest::g_charmpass = pass;
-        // If quiescence detection is on or user requested it, collect chare
-        // state
-        if (m_cmdline.get< tag::chare >()||m_cmdline.get< tag::quiescence >())
-          stateProxy.collect( /* error = */ false,
-            CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
-        else
-          CkExit(); // tell the Charm++ runtime system to exit w/ zero exit code
-      } catch (...) { tk::processExceptionCharm(); }
+    //! Towards normal exit but collect chare state first (if any)
+    void finalize( bool pass ) {
+      tk::finalize( m_cmdline, m_timer, m_print, stateProxy, m_timestamp,
+                    CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ),
+                    pass );
     }
 
     //! Entry method triggered when quiescence is detected
@@ -225,164 +209,7 @@ class Main : public CBase_Main {
 //!    has finished migrating all global-scoped read-only objects which happens
 //!    after the main chare constructor has finished.
 class execute : public CBase_execute {
- public: execute() { mainProxy.execute(); }
+  public: execute() { mainProxy.execute(); }
 };
-
-#if defined(STRICT_GNUC)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wreturn-type"
-#endif
-
-//! \brief UnitTest main()
-//! \details UnitTest does have a main() function so that we can have tests
-//!   calling MPI functions. Thus we are using Charm++'s MPI-interoperation
-//!   capability as would have to be done with interoperation with an MPI
-//!   library. This is necessary, since MPI_Init() is a bit adamant about
-//!   capturing resources it wants and hence it has to be called before Charm is
-//!   initialized.
-int main( int argc, char **argv ) {
-
-  int peid, numpes;
-  
-  #if defined(__clang__)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wold-style-cast"
-  #endif
-
-  // Initialize MPI
-  MPI_Init( &argc, &argv );
-  MPI_Comm_rank( MPI_COMM_WORLD, &peid );
-  MPI_Comm_size( MPI_COMM_WORLD, &numpes );
-
-  // Run serial and Charm++ unit test suite
-  CharmLibInit( MPI_COMM_WORLD, argc, argv );
-  CharmLibExit();
-
-  bool mpipass = true;
-
-  // Lambda to compute exit code based on test failures and exit. This is the
-  // single exit point and we must exit from the program.
-  auto stop = [numpes](int pass) {
-    // Combine pass-status from Charm++/serial and MPI suites
-    int mypass = unittest::g_charmpass && pass ? 1 : 0;
-    // Add up every PE's pass status
-    int g = 0;
-    MPI_Allreduce( &mypass, &g, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
-    // Exit code: g==numpes: pass, g<numpes: fail
-    g /= numpes;
-    if (g == 1)
-      MPI_Finalize();   // will pass exit code 0 to shell
-    else
-      MPI_Abort( MPI_COMM_WORLD, tk::ErrCode::FAILURE ); // nonzero exit code
-    // Since this is an MPI program, the exit code passed to exit() does not
-    // matter, however, calling exit() here is important, because we must exit.
-    exit( tk::ErrCode::SUCCESS );
-  };
-
-  #if defined(__clang__)
-    #pragma clang diagnostic pop
-  #endif
-
-  // Run MPI test suite
-  try {
-
-    tk::Print print;    // quiet output by default using print, see ctor
-    unittest::ctr::CmdLine cmdline;
-    bool helped;
-    unittest::CmdLineParser cmdParser( argc, argv, print, cmdline, helped );
-
-    // Print out help on all command-line arguments if help was requested
-    const auto helpcmd = cmdline.get< tag::help >();
-    if (peid == 0 && helpcmd)
-      print.help< tk::QUIET >( tk::unittest_executable(),
-                               cmdline.get< tag::cmdinfo >(),
-                               "Command-line Parameters:", "-" );
-
-    // Print out verbose help for a single keyword if requested
-    const auto helpkw = cmdline.get< tag::helpkw >();
-    if (peid == 0 && !helpkw.keyword.empty())
-      print.helpkw< tk::QUIET >( tk::unittest_executable(), helpkw );
-
-    // Immediately exit if any help was output
-    if (helpcmd || !helpkw.keyword.empty()) stop( mpipass );
-
-    unittest::UnitTestPrint
-      uprint( cmdline.get< tag::verbose >() ? std::cout : std::clog );
-
-    const auto& groups = unittest::g_runner.get().list_groups();
-
-    // Get group name string passed in by -g
-    const auto grp = cmdline.get< tag::group >();
-
-    // If only select groups to be run, see if there is any that will run
-    bool work = false;
-    if (grp.empty())
-      work = true;
-    else
-      for (const auto& g : groups)
-        if ( g.find("MPI") != std::string::npos &&  // only consider MPI groups
-             g.find(grp) != std::string::npos )
-          work = true;
-
-    // Quit if there is no work to be done
-    if (!work) {
-      if (peid == 0)
-        uprint.note( "\nNo MPI test groups to be executed because no test "
-                     "group names match '" + grp + "'.\n" );
-      stop( mpipass );
-    }
-
-    if (peid == 0) {
-      uprint.endpart();
-      uprint.part( "MPI unit test suite" );
-      uprint.unithead( "Unit tests computed", cmdline.get< tag::group >() );
-    }
-
-    std::size_t nrun=0, ncomplete=0, nwarn=0, nskip=0, nexcp=0, nfail=0;
-    tk::Timer timer;  // start new timer measuring the MPI-suite runtime
-
-    // Lambda to fire up all tests in a test group
-    auto spawngrp = [&]( const std::string& g ) {
-      for (int t=1; t<=unittest::g_maxTestsInGroup; ++t) {
-        tut::test_result tr;
-        unittest::g_runner.get().run_test( g, t, tr );
-        if (peid == 0) {
-          ++nrun;
-          std::vector< std::string > status
-            { tr.group, tr.name, std::to_string(tr.result), tr.message,
-              tr.exception_typeid };
-          unittest::evaluate( status, ncomplete, nwarn, nskip, nexcp, nfail );
-          uprint.test( ncomplete, nfail, status );
-        }
-      }
-    };
-
-    // Fire up all tests in all test groups exercising MPI on rank 0
-    for (const auto& g : groups)
-      if (g.find("MPI") != std::string::npos) { // only start MPI test groups
-        if (grp.empty()) {                        // consider all test groups
-          spawngrp( g );
-        } else if (g.find(grp) != std::string::npos) {
-          // spawn only the groups that match the string specified via -g string
-          spawngrp( g );
-        }
-      }
-
-    if (peid == 0) {
-      mpipass =
-       unittest::assess( uprint, "MPI", nfail, nwarn, nskip, nexcp, ncomplete );
-      std::vector< std::pair< std::string, tk::Timer::Watch > > timestamp;
-      timestamp.emplace_back( "MPI tests runtime", timer.hms() );
-      uprint.time( "MPI test suite timers (h:m:s)", timestamp );
-    }
-
-  } catch (...) { tk::processExceptionMPI(); }
-
-  stop( mpipass );
-}
-
-#if defined(STRICT_GNUC)
-  #pragma GCC diagnostic pop
-#endif
 
 #include "NoWarning/unittest.def.h"

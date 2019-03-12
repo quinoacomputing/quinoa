@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/PDEStack.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Stack of partial differential equations
   \details   This file defines class PDEStack, which implements various
     functionality related to registering and instantiating partial differential
@@ -111,9 +114,7 @@ PDEStack::selectedCG() const
   std::vector< CGPDE > pdes;                // will store instantiated PDEs
 
   const auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG ||
-      sch == ctr::SchemeType::ALECG)
-  {
+  if (sch == ctr::SchemeType::DiagCG || sch == ctr::SchemeType::ALECG) {
 
     for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
       if (d == ctr::PDEType::TRANSPORT)

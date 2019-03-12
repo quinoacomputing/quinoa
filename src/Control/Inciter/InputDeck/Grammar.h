@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
   Expression Grammar Template Library (PEGTL) to create the grammar and the
@@ -302,10 +305,6 @@ namespace grm {
           std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
             std::numeric_limits< tk::real >::epsilon() )
         Message< Stack, WARNING, MsgKey::MULDT >( stack, in );
-      // if MatCG is configured, turn on reordering
-      if (stack.template get< tag::discr, tag::scheme >() ==
-           inciter::ctr::SchemeType::MatCG)
-        stack.template get< tag::discr, tag::reorder >() = true;
       // if DGP1 is configured, set ndofs to be 4
       if (stack.template get< tag::discr, tag::scheme >() ==
            inciter::ctr::SchemeType::DGP1)

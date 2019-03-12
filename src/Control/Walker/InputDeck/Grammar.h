@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the Parsing
     Expression Grammar Template Library (PEGTL) to create the grammar and the
@@ -466,6 +469,26 @@ namespace grm {
                 MsgKey::DISSIPATION_DEPVAR >
               ( in, stack, MsgKey::OPTIONAL );
       }
+    }
+  };
+
+  //! Rule used to trigger action
+  struct check_mixdirichlet : pegtl::success {};
+  //! \brief Error checks for the mixdirichlet sde
+  template<>
+  struct action< check_mixdirichlet > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      const auto& rho =
+        stack.template get< tag::param, tag::mixdirichlet, tag::rho >().back();
+      auto ncomp =
+        stack.template get< tag::component, tag::mixdirichlet >().back();
+      // Ensure correct size for parameter vector rho
+      if (rho.size() != ncomp-1)
+        Message< Stack, ERROR, MsgKey::MIXDIR_RHO >( stack, in );
+      // Ensure parameter vector rho is sorted in increasing order
+      if (!std::is_sorted( rho.cbegin(), rho.cend() ))
+        Message< Stack, ERROR, MsgKey::MIXDIR_RHO >( stack, in );
     }
   };
 
@@ -1229,17 +1252,15 @@ namespace deck {
                            sde_parameter_vector< kw::sde_S,
                                                  tag::mixdirichlet,
                                                  tag::S >,
-                           sde_parameter_vector< kw::sde_kappa,
+                           sde_parameter_vector< kw::sde_kappaprime,
                                                  tag::mixdirichlet,
-                                                 tag::kappa >,
-                           sde_parameter_vector< kw::sde_rho2,
+                                                 tag::kappaprime >,
+                           sde_parameter_vector< kw::sde_rho,
                                                  tag::mixdirichlet,
-                                                 tag::rho2 >,
-                           sde_parameter_vector< kw::sde_r,
-                                                 tag::mixdirichlet,
-                                                 tag::r >
+                                                 tag::rho >
                          >,
-           check_errors< tag::mixdirichlet > > {};
+           check_errors< tag::mixdirichlet,
+                         tk::grm::check_mixdirichlet > > {};
 
   //! Generalized Dirichlet SDE
   struct gendir :

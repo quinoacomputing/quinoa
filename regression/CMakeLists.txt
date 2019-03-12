@@ -1,7 +1,10 @@
 ################################################################################
 #
 # \file      src/regression/CMakeLists.txt
-# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
 # \brief     Cmake code common to all regression testing
 #
 ################################################################################
@@ -56,9 +59,10 @@ endif()
 # Inciter regression tests
 if(ENABLE_INCITER)
   message(STATUS "Adding regression tests for ${INCITER_EXECUTABLE}")
-  add_subdirectory(inciter/transport/SlotCyl/asynclogic)
+  add_subdirectory(inciter/transport/SlotCyl)
   add_subdirectory(inciter/transport/SlotCyl/fct)
   add_subdirectory(inciter/transport/SlotCyl/cfl)
+  add_subdirectory(inciter/transport/SlotCyl/asynclogic)
   add_subdirectory(inciter/transport/ShearDiff)
   add_subdirectory(inciter/transport/GaussHump)
   add_subdirectory(inciter/transport/CylAdvect)

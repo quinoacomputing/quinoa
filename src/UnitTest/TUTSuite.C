@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/TUTSuite.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Template Unit Test suite class definition
   \details   Template Unit Test suite class definition. In principle there can
     be unit test suites other than this one which uses the Template Unit Test
@@ -20,6 +23,7 @@
 #include "Tags.h"
 #include "TUTSuite.h"
 #include "TUTTest.h"
+#include "MPIRunner.h"
 #include "Assessment.h"
 
 #include "NoWarning/unittest.decl.h"
@@ -36,6 +40,7 @@ extern int g_maxTestsInGroup;
 using unittest::TUTSuite;
 
 TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
+  m_mpirunner(),
   m_print( cmdline.get< tag::verbose >() ? std::cout : std::clog ),
   m_nrun( 0 ),
   m_ngroup( 0 ),
@@ -61,37 +66,37 @@ TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
 
   // If only select groups to be run, see if there is any that will run
   bool work = false;
-  if (grp.empty())
+  if (grp.empty() ||
+      std::any_of( groups.cbegin(), groups.cend(),
+         [&grp]( const std::string& g )
+         { return g.find(grp) != std::string::npos; } ))
     work = true;
-  else
-    for (const auto& g : groups)
-      if ( g.find("MPI") == std::string::npos &&   // don't consider MPI groups
-           g.find(grp) != std::string::npos )
-          work = true;
 
   // Quit if there is no work to be done
   if (!work) {
 
-    m_print.note( "\nNo serial or Charm++ test groups to be executed because "
-                  "no test group names match '" + grp + "'.\n" );
-    mainProxy.finalize( false, true );
+    m_print.note( "\nNo test groups to be executed because no test group "
+                  "names match '" + grp + "'.\n" );
+    mainProxy.finalize( true );
 
   } else {
 
     m_print.endpart();
-    m_print.part( "Serial and Charm++ unit test suite" );
+    m_print.part( "Serial, Charm++, and MPI unit test suites" );
     m_print.unithead( "Unit tests computed", grp );
 
+    // Create MPI unit test runner nodegroup
+    m_mpirunner = CProxy_MPIRunner< CProxy_TUTSuite >::ckNew( thisProxy );
+
     // Fire up all tests in all groups using the Charm++ runtime system
-    for (const auto& g : groups)
-      if (g.find("MPI") == std::string::npos) {   // don't start MPI test groups
-        if (grp.empty()) {                        // consider all test groups
-          spawngrp( g );
-        } else if (g.find(grp) != std::string::npos) {
-          // spawn only the groups that match the string specified via -g string
-          spawngrp( g );
-        }
+    for (const auto& g : groups) {
+      if (grp.empty()) {                        // consider all test groups
+        spawngrp( g );
+      } else if (g.find(grp) != std::string::npos) {
+        // spawn only the groups that match the string specified via -g string
+        spawngrp( g );
       }
+    }
 
   }
 }
@@ -105,18 +110,25 @@ TUTSuite::spawngrp( const std::string& g )
 {
   ++m_ngroup;         // increase number of test groups to run
 
-  // Add up number of Charm++ migration tests (this is so we know how many to
-  // expect results from)
-  const auto it = m_migrations.find( g );
-  if (it != m_migrations.end()) m_nmigr += it->second;
+  if (g.find("MPI") != std::string::npos)
 
-  // Asynchronously fire up all tests in test group
-  for (int t=1; t<=g_maxTestsInGroup; ++t) {
-    auto i = m_fromPE0.find( g );
-    if (i != end(m_fromPE0))
-      CProxy_TUTTest< CProxy_TUTSuite >::ckNew( thisProxy, g, t, 0 );
-    else
-      CProxy_TUTTest< CProxy_TUTSuite >::ckNew( thisProxy, g, t );
+    m_mpirunner.rungroup( g );
+
+  else {
+
+    // Add up number of Charm++ migration tests (this is so we know how many to
+    // expect results from)
+    const auto it = m_migrations.find( g );
+    if (it != m_migrations.end()) m_nmigr += it->second;
+  
+    // Asynchronously fire up all tests in test group
+    for (int t=1; t<=g_maxTestsInGroup; ++t) {
+      auto i = m_fromPE0.find( g );
+      if (i != end(m_fromPE0))
+        CProxy_TUTTest< CProxy_TUTSuite >::ckNew( thisProxy, g, t, 0 );
+      else
+        CProxy_TUTTest< CProxy_TUTSuite >::ckNew( thisProxy, g, t );
+    }
   }
 }
 
@@ -141,10 +153,9 @@ TUTSuite::evaluate( std::vector< std::string > status )
   if (m_nrun == m_ngroup*static_cast<std::size_t>(g_maxTestsInGroup) + m_nmigr)
   {
     auto pass =
-      assess( m_print, "serial and Charm++", m_nfail, m_nwarn, m_nskip, m_nexcp,
-              m_ncomplete );
+      assess( m_print, m_nfail, m_nwarn, m_nskip, m_nexcp, m_ncomplete );
     // Quit
-    mainProxy.finalize( true, pass );
+    mainProxy.finalize( pass );
   }
 }
 

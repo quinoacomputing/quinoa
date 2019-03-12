@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/DistFCT.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Charm++ module interface for distributed flux-corrected transport
   \details   Charm++ module interface file for asynchronous distributed
     flux-corrected transport (FCT).
@@ -70,8 +73,6 @@ DistFCT::DistFCT( int nchare,
 //! \param[in] inpoel Mesh connectivity of our chunk of the mesh
 // *****************************************************************************
 {
-  usesAtSync = true;    // Enable migration at AtSync
-
   resizeComm();         // Size communication buffers
 }
 
@@ -158,9 +159,6 @@ DistFCT::next()
 // Prepare for next time step stage
 // *****************************************************************************
 {
-  #ifndef NDEBUG
-  thisProxy[ thisIndex ].wait4ver();
-  #endif
   thisProxy[ thisIndex ].wait4fct();
   thisProxy[ thisIndex ].wait4app();
 
@@ -214,15 +212,13 @@ DistFCT::aec( const Discretization& d,
     comaec_complete();
   else // send contributions to chare-boundary nodes to fellow chares
     for (const auto& n : d.Msum()) {
-      std::vector< std::vector< tk::real > > p;
-      for (auto i : n.second) p.push_back( m_p[ tk::cref_find(m_lid,i) ] );
+      std::vector< std::vector< tk::real > > p( n.second.size() );
+      std::size_t j = 0;
+      for (auto i : n.second) p[ j++ ] = m_p[ tk::cref_find(m_lid,i) ];
       thisProxy[ n.first ].comaec( n.second, p );
     }
 
   ownaec_complete();
-  #ifndef NDEBUG
-  ownaec_complete();
-  #endif
 }
 
 void
@@ -261,13 +257,13 @@ void
 DistFCT::alw( const tk::Fields& Un,
               const tk::Fields& Ul,
               const tk::Fields& dUl,
-              const SchemeProxy& scheme )
+              const CProxy_DiagCG& host )
 // *****************************************************************************
 //  Compute the maximum and minimum unknowns of elements surrounding nodes
 //! \param[in] Un Solution at the previous time step
 //! \param[in] Ul Low order solution
 //! \param[in] dUl Low order solution increment
-//! \param[in] scheme Discretization scheme Charm++ proxy we interoperate with
+//! \param[in] host DiagCG Charm++ proxy we interoperate with
 //! \details This function computes and starts communicating m_q, which stores
 //!    the maximum and mimimum unknowns of all elements surrounding each node
 //!    (Lohner: u^{max,min}_i), see also FluxCorrector::alw().
@@ -278,7 +274,7 @@ DistFCT::alw( const tk::Fields& Un,
   m_dul = dUl;
 
   // Store discretization scheme proxy
-  m_scheme = scheme;
+  m_host = host;
 
   // Compute the maximum and minimum unknowns of all elements surrounding nodes
   // Note that the maximum and minimum unknowns are complete on nodes that are
@@ -290,15 +286,13 @@ DistFCT::alw( const tk::Fields& Un,
     comalw_complete();
   else // send contributions at chare-boundary nodes to fellow chares
     for (const auto& n : m_msum) {
-      std::vector< std::vector< tk::real > > q;
-      for (auto i : n.second) q.push_back( m_q[ tk::cref_find(m_lid,i) ] );
+      std::vector< std::vector< tk::real > > q( n.second.size() );
+      std::size_t j = 0;
+      for (auto i : n.second) q[ j++ ] = m_q[ tk::cref_find(m_lid,i) ];
       thisProxy[ n.first ].comalw( n.second, q );
     }
 
   ownalw_complete();
-  #ifndef NDEBUG
-  ownalw_complete();
-  #endif
 }
 
 void
@@ -346,6 +340,8 @@ DistFCT::lim()
 //!   (Lohner: AEC^c), see also FluxCorrector::limit().
 // *****************************************************************************
 {
+  m_fluxcorrector.verify( m_nchare, m_inpoel, m_du, m_dul );
+
   // Combine own and communicated contributions to P and Q
   for (const auto& b : m_bid) {
     auto lid = tk::cref_find( m_lid, b.first );
@@ -365,8 +361,9 @@ DistFCT::lim()
     comlim_complete();
   else // send contributions to chare-boundary nodes to fellow chares
     for (const auto& n : m_msum) {
-      std::vector< std::vector< tk::real > > a;
-      for (auto i : n.second) a.push_back( m_a[ tk::cref_find(m_lid,i) ] );
+      std::vector< std::vector< tk::real > > a( n.second.size() );
+      std::size_t j = 0;
+      for (auto i : n.second) a[ j++ ] = m_a[ tk::cref_find(m_lid,i) ];
       thisProxy[ n.first ].comlim( n.second, a );
     }
 
@@ -407,15 +404,6 @@ DistFCT::comlim( const std::vector< std::size_t >& gid,
 }
 
 void
-DistFCT::verify()
-// *****************************************************************************
-// Verify antidiffusive element contributions up to linear solver convergence
-// *****************************************************************************
-{
-  m_fluxcorrector.verify( m_nchare, m_inpoel, m_du, m_dul );
-}
-
-void
 DistFCT::apply()
 // *****************************************************************************
 // Apply limited antidiffusive element contributions
@@ -428,12 +416,8 @@ DistFCT::apply()
     for (ncomp_t c=0; c<m_a.nprop(); ++c) m_a(lid,c,0) += bac[c];
   }
 
-  // Prepare for next time step. The code below is equivalent to the function
-  // call m_scheme[ thisIndex ].ckLocal()->update( m_a ). The call is done via a
-  // variant to facilitate calling back to chare arrays of different types,
-  // e.g., MatCG or DiagCG. See also DistFCT::SchemeProxy.
-  auto e = tk::element< ProxyElem >( m_scheme, thisIndex );
-  boost::apply_visitor( Update(m_a), e );
+  // Update solution in host
+  m_host[ thisIndex ].ckLocal()->update(m_a);
 }
 
 #include "NoWarning/distfct.def.h"

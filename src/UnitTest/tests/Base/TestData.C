@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestData.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for Base/Data.h
   \details   Unit tests for Base/Data.h
 */
@@ -90,10 +93,6 @@ void Data_object::test< 3 >() {
   pe( 1, 2, 2 ) = 0.32;
 
   // Test all template specializations const-ref access
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   try {
     pp( 2, 2, 2 );   // unknown out of bounds
@@ -267,10 +266,6 @@ void Data_object::test< 5 >() {
   pe( 1, 2, 2 ) = 0.32;
 
   // Test all template specializations const-ref access
-
-  // Quiet std::cerr, to quiet exception message during its ctor
-  std::stringstream quiet;
-  tk::cerr_redirect cerr_quiet( quiet.rdbuf() );
 
   try {
     // unknown out of bounds

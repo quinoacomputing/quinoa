@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/discretization.ci
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Charm++ module interface file for common stuff to discretizations
   \details   Charm++ module interface file for common stuff to discretizations.
   \see       Discretization.h and Discretization.C for more info.
@@ -11,6 +14,7 @@
 module discretization {
 
   extern module transporter;
+  extern module meshwriter;
   extern module distfct;
 
   include "UnsMesh.h";
@@ -18,18 +22,25 @@ module discretization {
   namespace inciter {
 
     array [1D] Discretization {
+
       entry Discretization(
         const CProxy_DistFCT& fctproxy,
         const CProxy_Transporter& transporter,
+        const tk::CProxy_MeshWriter& meshwriter,
         const std::vector< std::size_t >& conn,
         const tk::UnsMesh::CoordMap& coordmap,
         const std::map< int, std::unordered_set< std::size_t > >& msum,
         int nchare );
+
       initnode void registerReducers();
+
       entry void vol();
+
       entry void comvol( const std::vector< std::size_t >& gid,
                          const std::vector< tk::real >& nodevol );
+
       entry void totalvol();
+
       entry void stat();
     };
 

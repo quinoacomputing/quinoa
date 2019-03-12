@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Data.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Generic data storage with different memory layouts
   \details   Generic data storage with different memory layouts. See also the
     rationale discussed in the [design](layout.html) document.
@@ -327,6 +330,7 @@ class Data {
     //! \param[in] rhs Scalar to multiply with
     //! \return Reference to ourselves after multiplication
     Data< Layout >& operator*= ( tk::real rhs ) {
+      // cppcheck-suppress useStlAlgorithm
       for (auto& v : m_vec) v *= rhs;
       return *this;
     }
@@ -359,6 +363,7 @@ class Data {
     //! \param[in] rhs Scalar to divide with
     //! \return Reference to ourselves after division
     Data< Layout >& operator/= ( tk::real rhs ) {
+      // cppcheck-suppress useStlAlgorithm
       for (auto& v : m_vec) v /= rhs;
       return *this;
     }

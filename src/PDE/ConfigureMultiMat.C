@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/ConfigureMultiMat.C
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Register and compile configuration for multi-material compressible
      flow PDE
   \details   Register and compile configuration for compressible multi-material
@@ -85,16 +88,14 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_type >& cnt )
   nfo.emplace_back( "ratio of specific heats", parameters(
     g_inputdeck.get< tag::param, eq, tag::gamma >() ) );
 
-  const auto& alpha = g_inputdeck.get< tag::param, eq, tag::alpha >();;
+  const auto& alpha = g_inputdeck.get< tag::param, eq, tag::alpha >();
   if (!alpha.empty()) nfo.emplace_back( "coeff alpha", parameters( alpha ) );
 
-  const auto& beta =
-    g_inputdeck.get< tag::param, eq, tag::beta >();;
+  const auto& beta = g_inputdeck.get< tag::param, eq, tag::beta >();
   if (!beta.empty())
     nfo.emplace_back( "coeff beta", parameters( beta ) );
 
-  const auto& p0 =
-    g_inputdeck.get< tag::param, eq, tag::p0 >();;
+  const auto& p0 = g_inputdeck.get< tag::param, eq, tag::p0 >();
   if (!p0.empty())
     nfo.emplace_back( "coeff p0", parameters( p0 ) );
 

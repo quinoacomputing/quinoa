@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/Assessment.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Unit test suite assessment
   \details   Unit test suite assessment.
 */
@@ -27,7 +30,6 @@ void evaluate( std::vector< std::string > status,
 
 //! Echo final assessment after the full unit test suite has finished
 bool assess( const tk::Print& print,
-             std::string suite,
              std::size_t nfail,
              std::size_t nwarn,
              std::size_t nskip,

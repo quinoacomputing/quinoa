@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Exception.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Exception class declaration
   \details   Exception class declaration. The basic functionality provided by
     the Exception class is to facilitate printing out a message, together with
@@ -15,8 +18,7 @@
 #define Exception_h
 
 #include <exception>
-#include <cstdlib>
-#include <iostream>
+#include <string>
 
 //! Toolkit declarations and definitions for general purpose utilities
 namespace tk {
@@ -113,20 +115,6 @@ class Exception : public std::exception {
     void* m_addrList[128];      //!< Call-stack before exception
     int m_addrLength;           //!< Number of stack frames
     char** m_symbolList;        //!< Symbol list of stack entries
-};
-
-//! Helper for redirecting std::cerr to a stringstream's buffer
-struct cerr_redirect {
-  //! Constructor: redirect std::cerr to a std::streambuf
-  //! \param[in] new_buffer Stream buffer to redirect std::cerr to
-  cerr_redirect( std::streambuf * new_buffer ) :
-    old( std::cerr.rdbuf( new_buffer ) ) {}
-
-  //! Destructor: restore previous state of std::cerr
-  ~cerr_redirect( ) { std::cerr.rdbuf( old ); }
-
-private:
-  std::streambuf * old; //!< store previous state of std::cerr
 };
 
 } // tk::

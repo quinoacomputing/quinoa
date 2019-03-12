@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Tags.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.
 */
@@ -12,6 +15,8 @@
 //! Tags used as unique-type labels for compile-time code-generation
 namespace tag {
 
+struct low {};
+struct high {};
 struct io {};
 struct quiescence {};
 struct input {};
@@ -37,6 +42,7 @@ struct rngsse {};
 struct rng123 {};
 struct seqlen {};
 struct verbose {};
+struct nonblocking {};
 struct benchmark {};
 struct lboff {};
 struct feedback {};
@@ -117,6 +123,7 @@ struct kappa {};
 struct bprime {};
 struct kappaprime {};
 struct rho2 {};
+struct rho {};
 struct mean_gradient {};
 struct rcomma {};
 struct r {};
@@ -198,13 +205,14 @@ struct edge {};
 struct cv {};
 struct k {};
 struct com {};
+struct queried {};
+struct responded {};
 struct coord {};
 struct refinserted {};
 struct discinserted {};
 struct disccreated {};
 struct workinserted {};
 struct distributed {};
-struct flattened {};
 struct load {};
 struct bcast {};
 struct elem {};

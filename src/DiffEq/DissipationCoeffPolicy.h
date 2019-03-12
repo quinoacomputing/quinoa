@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/DissipationCoeffPolicy.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Particle dissipation equation coefficients policies
   \details   This file defines coefficients policy classes for the Lagrangian
     particle dissipation equation defined in DiffEq/Dissipation.h.
@@ -97,7 +100,7 @@ class DissipationCoeffStationary {
       com2 = com2_;
     }
 
-    //! Update turbulence frequency source (zero for const-coeff policy)
+    //! Update turbulence frequency source (zero for stationary coeff policy)
     static void src( tk::real& Som ) { Som = 0.0; }
 
     //! Coefficients policy type accessor

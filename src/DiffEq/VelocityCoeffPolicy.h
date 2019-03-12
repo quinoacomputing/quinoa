@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/VelocityCoeffPolicy.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Velocity equation coefficients policies
   \details   This file defines coefficients policy classes for the velocity
      equation for the fluctuating velocity in variable-density turbulence,
@@ -182,7 +185,7 @@ class VelocityCoeffStationary {
       // Compute turbulent kinetic energy
       auto rs = reynoldsStress( depvar, solve, moments );
 
-      // Override unit turbulent kinetic energy to keep PDF stationary
+      // Override turbulent kinetic energy to keep PDF stationary
       tk::real k = 1.0;
 
       // Override mean turbulence frequency to keep PDF stationary

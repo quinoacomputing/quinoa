@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/NoWarning/charm++.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Include charm++.h with turning off specific compiler warnings
 */
 // *****************************************************************************
@@ -22,6 +25,7 @@
   #pragma clang diagnostic ignored "-Wheader-hygiene"
   #pragma clang diagnostic ignored "-Wunused-variable"
   #pragma clang diagnostic ignored "-Wextra-semi"
+  #pragma clang diagnostic ignored "-Wextra-semi-stmt"
   #pragma clang diagnostic ignored "-Wdouble-promotion"
   #pragma clang diagnostic ignored "-Wfloat-equal"
   #pragma clang diagnostic ignored "-Wnon-virtual-dtor"

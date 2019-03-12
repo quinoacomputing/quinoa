@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/IO/Omega_h_MeshReader.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Omega_h mesh reader
   \details   Omega_h mesh reader class definition.
 */
@@ -21,7 +24,6 @@ Omega_h_MeshReader::readMeshPart(
   std::vector< std::size_t >& ginpoel,
   std::vector< std::size_t >& inpoel,
   std::vector< std::size_t >& triinp,
-  std::vector< std::size_t >& gid,
   std::unordered_map< std::size_t, std::size_t >& lid,
   tk::UnsMesh::Coords& coord,
   int numpes, int mype )
@@ -33,8 +35,6 @@ Omega_h_MeshReader::readMeshPart(
 //!   node IDs of this PE's mesh chunk
 //! \param[in,out] triinp Container to store triangle element connectivity
 //!   (if exists in file) with global node indices
-//! \param[in,out] gid Container to store global node IDs of elements of this
-//!   PE's mesh chunk
 //! \param[in,out] lid Container to store global->local node IDs of elements of
 //!   this PE's mesh chunk
 //! \param[in,out] coord Container to store coordinates of mesh nodes of this
@@ -54,7 +54,7 @@ Omega_h_MeshReader::readMeshPart(
   IGNORE( triinp );
 
   Assert( mype < numpes, "Invalid input: PE id must be lower than NumPEs" );
-  Assert( ginpoel.empty() && inpoel.empty() && gid.empty() && lid.empty() &&
+  Assert( ginpoel.empty() && inpoel.empty() && lid.empty() &&
           coord[0].empty() && coord[1].empty() && coord[2].empty(),
           "Containers to store mesh must be empty" );
 
@@ -125,6 +125,7 @@ Omega_h_MeshReader::readMeshPart(
   }
 
   // Compute local data from global mesh connectivity
+  std::vector< std::size_t > gid;
   std::tie( inpoel, gid, lid ) = tk::global2local( ginpoel );
 }
 

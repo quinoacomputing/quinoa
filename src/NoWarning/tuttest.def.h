@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/NoWarning/tuttest.def.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Include tuttest.def.h with turning off specific compiler warnings
 */
 // *****************************************************************************
@@ -9,6 +12,7 @@
 // Note the absence of include guards. This is because the Charm++ definition
 // file included below may need to be included multiple times in a single
 // translation unit: one guarded by CK_TEMPLATES_ONLY and one without, where
+// each inclusion will generate different code.
 
 #include "Macro.h"
 #include "QuinoaConfig.h"

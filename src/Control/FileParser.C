@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Control/FileParser.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     File parser base class definition
   \details   File parser base class defintion. File parser base serves as a
     base class for various file parsers, e.g., input deck parsers. It does
@@ -72,8 +75,8 @@ FileParser::diagnostics( const tk::Print& print,
     std::string parsed;                      //!< original line parsed
     std::string underline;                   //!< underline
     std::vector< std::string > msg;          //!< error or warning messages
-    ErroneousLine() : dlnum(0), parsed(), underline(), msg() {}
-    ErroneousLine( const std::string& m ) :
+    explicit ErroneousLine() : dlnum(0), parsed(), underline(), msg() {}
+    explicit ErroneousLine( const std::string& m ) :
       dlnum(0), parsed(), underline(), msg({{m}}) {}
   };
 

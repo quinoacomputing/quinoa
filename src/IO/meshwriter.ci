@@ -1,0 +1,54 @@
+// *****************************************************************************
+/*!
+  \file      src/IO/meshwriter.ci
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
+  \brief     Charm++ module interface file for outputing mesh data to file
+  \details   Charm++ interface file for a group used to output data associated
+     to unstructured meshes to file(s). Charm++ chares (work units) send mesh
+     and field data associated to mesh entities to the MeshWriter class defined
+     here to write the data to file(s).
+*/
+// *****************************************************************************
+
+module meshwriter {
+
+  include "Options/FieldFile.h";
+  include "Centering.h";
+  include "UnsMesh.h";
+
+  namespace tk {
+
+    group MeshWriter {
+
+      entry MeshWriter( ctr::FieldFileType filetype,
+                        Centering bnd_centering,
+                        bool benchmark );
+
+      entry void nchare( int n );
+
+      entry void write(
+        bool meshoutput,
+        bool fieldoutput,
+        uint64_t itr,
+        uint64_t itf,
+        tk::real time,
+        int chareid,
+        Centering centering,
+        const std::string& basefilename,
+        const std::vector< std::size_t >& inpoel,
+        const UnsMesh::Coords& coord,
+        const std::map< int, std::vector< std::size_t > >& bface,
+        const std::vector< std::size_t >& triinpoel,
+        const std::map< int, std::vector< std::size_t > >& bnode,
+        const std::unordered_map< std::size_t, std::size_t >& lid,
+        const std::vector< std::string >& names,
+        const std::vector< std::vector< tk::real > >& fields,
+        CkCallback c );
+    };
+
+  } // tk::
+
+}

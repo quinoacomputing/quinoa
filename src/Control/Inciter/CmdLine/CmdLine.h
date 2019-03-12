@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/CmdLine/CmdLine.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Inciter's command line definition
   \details   This file defines the heterogeneous stack that is used for storing
      the data from user input during the command-line parsing of the
@@ -36,6 +39,7 @@ class CmdLine : public tk::Control<
                   tag::virtualization, kw::virtualization::info::expect::type,
                   tag::verbose,        bool,
                   tag::chare,          bool,
+                  tag::nonblocking,    bool,
                   tag::benchmark,      bool,
                   tag::feedback,       bool,
                   tag::help,           bool,
@@ -51,6 +55,7 @@ class CmdLine : public tk::Control<
     //! \see tk::grm::use and its documentation
     using keywords = brigand::set< kw::verbose
                                  , kw::charestate
+                                 , kw::nonblocking
                                  , kw::benchmark
                                  , kw::feedback
                                  , kw::virtualization
@@ -94,6 +99,7 @@ class CmdLine : public tk::Control<
     //!   contains a copy of the command-line stack, the command-line stack must
     //!   be possible to be instantiated without passing the ctrinfo map,
     //!   otherwise it would be a mutual dependency.
+    // cppcheck-suppress noExplicitConstructor
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
       set< tag::io, tag::output >( "out" );
       set< tag::io, tag::diag >( "diag" );
@@ -101,6 +107,7 @@ class CmdLine : public tk::Control<
       set< tag::virtualization >( 0.0 );
       set< tag::verbose >( false ); // Quiet output by default
       set< tag::chare >( false ); // No chare state output by default
+      set< tag::nonblocking>( false ); // Blocking migration by default
       set< tag::benchmark >( false ); // No benchmark mode by default
       set< tag::feedback >( false ); // No detailed feedback by default
       // Initialize help: fill from own keywords + add map passed in
@@ -117,6 +124,7 @@ class CmdLine : public tk::Control<
                    tag::virtualization, kw::virtualization::info::expect::type,
                    tag::verbose,        bool,
                    tag::chare,          bool,
+                   tag::nonblocking,    bool,
                    tag::benchmark,      bool,
                    tag::feedback,       bool,
                    tag::help,           bool,

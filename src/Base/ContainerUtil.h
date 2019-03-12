@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Base/ContainerUtil.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Various STL container utilities
   \details   Various STL container utilities.
 */
@@ -14,6 +17,8 @@
 #include <set>
 #include <algorithm>
 #include <iterator>
+#include <unordered_set>
+#include <type_traits>
 
 #include "Exception.h"
 
@@ -164,8 +169,24 @@ bool keyEqual( const C1& a, const C2& b ) {
 template< class Container >
 std::size_t sumsize( const Container& c ) {
   std::size_t sum = 0;
+  // cppcheck-suppress useStlAlgorithm
   for (const auto& s : c) sum += s.size();
   return sum;
+}
+
+// *****************************************************************************
+//! Compute the number of unique values in a container of containers
+//! \param[in] c Container of containers
+//! \return Number of unique values in a container of containers
+// *****************************************************************************
+template< class Container >
+std::size_t numunique( const Container& c ) {
+  using value_type = typename Container::value_type::value_type;
+  static_assert( std::is_integral<value_type>::value,
+    "Container::value_type::value_type must be an integral type." );
+  std::unordered_set< value_type > u;
+  for (const auto& r : c) u.insert( begin(r), end(r) );
+  return u.size();
 }
 
 // *****************************************************************************
@@ -177,6 +198,7 @@ std::size_t sumsize( const Container& c ) {
 template< class Map >
 std::size_t sumvalsize( const Map& c ) {
   std::size_t sum = 0;
+  // cppcheck-suppress useStlAlgorithm
   for (const auto& s : c) sum += s.second.size();
   return sum;
 }

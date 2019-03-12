@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/CompFlow/Problem.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     All problem configurations for the compressible flow equations
   \details   This file collects all Problem policy classes for the compressible
     flow equations, defined in PDE/CompFlow/CompFlow.h.
@@ -56,6 +59,7 @@
 #include "Problem/RayleighTaylor.h"
 #include "Problem/TaylorGreen.h"
 #include "Problem/SodShocktube.h"
+#include "Problem/RotatedSodShocktube.h"
 #include "Problem/SedovBlastwave.h"
 
 namespace inciter {
@@ -67,6 +71,7 @@ using CompFlowProblems = brigand::list< CompFlowProblemUserDefined
                                       , CompFlowProblemRayleighTaylor
                                       , CompFlowProblemTaylorGreen
                                       , CompFlowProblemSodShocktube
+                                      , CompFlowProblemRotatedSodShocktube
                                       , CompFlowProblemSedovBlastwave >;
 
 } // inciter::

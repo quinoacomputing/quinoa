@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Exception.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Exception class definition
   \details   Exception class definition
 */
@@ -57,7 +60,7 @@ try :
   m_message = s.str();
 
   // Uses streams (std::cerr) so it can be redirected
-  std::cerr << ">>> Exception: " << m_message.c_str() << '\n';
+  std::cerr << ">>> Exception: " << m_message << std::endl;
 
   // Save call-trace
   saveTrace();

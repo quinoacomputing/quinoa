@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/DG.h
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     DG advances a system of PDEs with the discontinuous Galerkin scheme
   \details   DG advances a system of partial differential equations (PDEs) using
     discontinuous Galerkin (DG) finite element (FE) spatial discretization (on
@@ -62,19 +65,21 @@ class DG : public CBase_DG {
     #endif
 
     //! Constructor
-    explicit DG( const CProxy_Discretization& disc,
-                 const tk::CProxy_Solver& solver,
-                 const FaceData& fd );
+    explicit DG( const CProxy_Discretization& disc, const FaceData& fd );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
+    // cppcheck-suppress uninitMemberVar
     explicit DG( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
+
+    //! Return from migration
+    void ResumeFromSync() override;
 
     //! Receive unique set of faces we potentially share with/from another chare
     void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
@@ -94,8 +99,19 @@ class DG : public CBase_DG {
     //! Setup: query boundary conditions, output mesh, etc.
     void setup( tk::real v );
 
-    //! Compute time step size
-    void dt();
+    //! Limit initial solution and prepare for time stepping
+    void limitIC();
+
+    //! Start time stepping
+    void start();
+
+    //! Send own chare-boundary data to neighboring chares
+    void sendinit();
+
+    //! Receive chare-boundary ghost data from neighboring chares
+    void cominit( int fromch,
+                  const std::vector< std::size_t >& tetid,
+                  const std::vector< std::vector< tk::real > >& u );
 
     //! Receive chare-boundary limiter function data from neighboring chares
     void comlim( int fromch,
@@ -140,18 +156,20 @@ class DG : public CBase_DG {
     //! Compute right hand side and solve system
     void solve( tk::real newdt );
 
+    //! Evaluate whether to continue with next time step
+    void step();
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_disc;
-      p | m_solver;
       p | m_ncomfac;
       p | m_nadj;
       p | m_nsol;
+      p | m_ninitsol;
       p | m_nlim;
-      p | m_itf;
       p | m_fd;
       p | m_u;
       p | m_un;
@@ -196,18 +214,17 @@ class DG : public CBase_DG {
 
     //! Discretization proxy
     CProxy_Discretization m_disc;
-    //! Linear system merger and solver proxy, only used to call created()
-    tk::CProxy_Solver m_solver;
     //! Counter for face adjacency communication map
     std::size_t m_ncomfac;
     //! Counter signaling that all ghost data have been received
     std::size_t m_nadj;
     //! Counter signaling that we have received all our solution ghost data
     std::size_t m_nsol;
+    //! \brief Counter signaling that we have received all our solution ghost
+    //!    data during setup
+    std::size_t m_ninitsol;
     //! Counter signaling that we have received all our limiter function ghost data
     std::size_t m_nlim;
-    //! Field output iteration count
-    uint64_t m_itf;
     //! Face data
     FaceData m_fd;
     //! Vector of unknown/solution average over each mesh element
@@ -318,10 +335,16 @@ class DG : public CBase_DG {
     void out();
 
     //! Output mesh-based fields to file
-    void writeFields( tk::real time );
+    void writeFields( CkCallback c );
 
-    //! Evaluate whether to continue with next step
-    void eval();
+    //! Compute time step size
+    void dt();
+
+    //! Evaluate whether to continue with next time step stage
+    void stage();
+
+    //! Continue to next time step stage
+    void next();
 };
 
 } // inciter::

@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/alecg.ci
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Charm++ module interface for continuous Galerkin + ALE + RK
   \details   Charm++ module interface file for the continuous Galerkin (CG)
              finite element scheme in the arbitrary Lagrangian-Eulerian (ALE)
@@ -27,20 +30,20 @@ module alecg {
     array [1D] ALECG {
     //! [1D Charm++ chare array]
       //! [Entry methods]
-      entry ALECG( const CProxy_Discretization& disc,
-                   const tk::CProxy_Solver& solver,
-                   const FaceData& fd );
+      entry ALECG( const CProxy_Discretization& disc, const FaceData& fd );
       initnode void registerReducers();
       entry void setup( tk::real v );
-      entry void dt();
+      entry void init();
       entry void diag();
-      entry [reductiontarget] void advance( tk::real newdt );
+      entry void sendinit();
+      entry void advance( tk::real newdt );
       entry void comlhs( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& L );
       entry void comrhs( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& R );
       entry void resized();
       entry void lhs();
+      entry void step();
       //! [Entry methods]
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
@@ -53,9 +56,9 @@ module alecg {
       entry void wait4rhs() {
         when ownrhs_complete(), comrhs_complete() serial "rhs" { solve(); } };
 
-      entry void wait4eval() {
+      entry void wait4out() {
         when diag_complete(), ref_complete(), lhs_complete(),
-             resize_complete() serial "eval" { eval(); } };
+             resize_complete() serial "out" { out(); } };
 
       entry void ownlhs_complete();
       entry void ownrhs_complete();

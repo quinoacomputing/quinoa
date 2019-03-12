@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/FluxCorrector.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     FluxCorrector performs limiting for transport equations
   \details   FluxCorrector performs limiting for transport equations. Each
     FluxCorrector object performs the limiting procedure, according to a
@@ -71,7 +74,6 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
 {
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
   auto ctau = g_inputdeck.get< tag::discr, tag::ctau >();
-  auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
 
   Assert( vol.size() == coord[0].size(), "Nodal volume vector size mismatch" );
   Assert( m_aec.nunk() == inpoel.size() && m_aec.nprop() == ncomp,
@@ -109,11 +111,10 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
 
     // access solution at element nodes at time n
     std::vector< std::array< tk::real, 4 > > un( ncomp );
+    // access high-order solution increment at element nodes: duh = 0 for
+    // lumped-mass CG
     for (ncomp_t c=0; c<ncomp; ++c) un[c] = Un.extract( c, 0, N );
-    // access high-order solution increment at element nodes
     std::vector< std::array< tk::real, 4 > > duh( ncomp, {{0,0,0,0}} );
-    if (sch == ctr::SchemeType::MatCG)  // duh = 0 for lumped-mass CG
-      for (ncomp_t c=0; c<ncomp; ++c) duh[c] = dUh.extract( c, 0, N );
 
     // Compute antidiffusive element contributions (AEC). The high order system
     // is M_c * dUh = r, where M_c is the consistent mass matrix and r is the
@@ -220,10 +221,10 @@ FluxCorrector::verify( std::size_t nchare,
       const auto& dul = dUl.data();
       const auto& u = U.data();
       std::stringstream ss;
-      ss << "maximum difference at " << d.first << ": " << d.second
+      ss << "maximum difference at mesh node " << d.first << ": " << d.second
          << ", dUh:" << duh[d.first] << ", dUl:" << dul[d.first]
          << ", dUh-dUl:" << duh[d.first] - dul[d.first]
-         << ", AEC:" << u[d.first] << '\n';
+         << ", AEC:" << u[d.first];
       Throw( "Assembled AEC does not equal dUh-dUl: " + ss.str() );
     }
 

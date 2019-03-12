@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Control/HelpFactory.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Command-line and input deck help factory
   \details   This file contains some types that facilitate the generation of
      on-screen help.
@@ -91,7 +94,7 @@ struct Info {
   //! Store reference to map we are filling
   tk::ctr::HelpFactory& m_factory;
   //! Constructor: store reference to map to fill
-  Info( tk::ctr::HelpFactory& factory ) : m_factory( factory ) {}
+  explicit Info( tk::ctr::HelpFactory& factory ) : m_factory( factory ) {}
   //! \brief Function call operator templated on the type that does the filling
   template< typename U > void operator()( brigand::type_<U> ) {
     m_factory[ U::string() ] = { U::shortDescription(),

@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/ConfigureMixDirichlet.C
-  \copyright 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Register and compile configuration on the MixDirichlet SDE
   \details   Register and compile configuration on the MixDirichlet SDE.
 */
@@ -51,6 +54,8 @@ infoMixDirichlet( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
 //! \return vector of string pairs describing the SDE configuration
 // *****************************************************************************
 {
+  using eq = tag::mixdirichlet;
+
   auto c = ++cnt[ ctr::DiffEqType::MIXDIRICHLET ];       // count eqs
   --c;  // used to index vectors starting with 0
 
@@ -59,45 +64,40 @@ infoMixDirichlet( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
   nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::MIXDIRICHLET ), "" );
 
   nfo.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::mixdirichlet >(c) ) );
-  const auto ncomp =
-    g_inputdeck.get< tag::component >().get< tag::mixdirichlet >()[c];
+    g_inputdeck.get< tag::component >().offset< eq >(c) ) );
+  const auto ncomp = g_inputdeck.get< tag::component >().get< eq >()[c];
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
 
   nfo.emplace_back( "kind", "stochastic" );
   nfo.emplace_back( "dependent variable", std::string( 1,
-    g_inputdeck.get< tag::param, tag::mixdirichlet, tag::depvar >()[c] ) );
+    g_inputdeck.get< tag::param, eq, tag::depvar >()[c] ) );
   nfo.emplace_back( "initialization policy", ctr::InitPolicy().name(
-    g_inputdeck.get< tag::param, tag::mixdirichlet, tag::initpolicy >()[c] ) );
+    g_inputdeck.get< tag::param, eq, tag::initpolicy >()[c] ) );
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
-    g_inputdeck.get< tag::param, tag::mixdirichlet, tag::coeffpolicy >()[c] ) );
+    g_inputdeck.get< tag::param, eq, tag::coeffpolicy >()[c] ) );
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
-    g_inputdeck.get< tag::param, tag::mixdirichlet, tag::rng >()[c] ) );
-  nfo.emplace_back(
-    "coeff b [" + std::to_string( ncomp ) + "]",
-    parameters(
-      g_inputdeck.get< tag::param, tag::mixdirichlet, tag::b >().at(c) )
+    g_inputdeck.get< tag::param, eq, tag::rng >()[c] ) );
+
+  auto K = ncomp - MIXDIR_NUMDERIVED;
+  auto N = K + 1;
+
+  nfo.emplace_back( "coeff b [" + std::to_string(K) + "]",
+    parameters( g_inputdeck.get< tag::param, eq, tag::b >().at(c) )
   );
-  nfo.emplace_back(
-    "coeff S [" + std::to_string( ncomp ) + "]",
-    parameters(
-      g_inputdeck.get< tag::param, tag::mixdirichlet, tag::S >().at(c) )
+  nfo.emplace_back( "coeff S [" + std::to_string(K) + "]",
+    parameters( g_inputdeck.get< tag::param, eq, tag::S >().at(c) )
   );
-  nfo.emplace_back(
-    "coeff kappa [" + std::to_string( ncomp ) + "]",
-    parameters(
-      g_inputdeck.get< tag::param, tag::mixdirichlet, tag::kappa >().at(c) )
+  nfo.emplace_back( "coeff kappaprime [" + std::to_string(K) + "]",
+    parameters( g_inputdeck.get< tag::param, eq, tag::kappaprime >().at(c) )
   );
 
-  const auto& rho2 =
-    g_inputdeck.get< tag::param, tag::mixdirichlet, tag::rho2 >();
-  if (!rho2.empty())
-    nfo.emplace_back( "coeff rho2 [" + std::to_string( ncomp ) + "]",
-                      parameters( rho2.at(c) ) );
-  const auto& r = g_inputdeck.get< tag::param, tag::mixdirichlet, tag::r >();
-  if (!r.empty())
-    nfo.emplace_back( "coeff r [" + std::to_string( ncomp ) + "]",
-                      parameters( r.at(c) ) );
+  const auto& rho = g_inputdeck.get< tag::param, eq, tag::rho >();
+  if (!rho.empty()) {
+    nfo.emplace_back( "coeff rho [" + std::to_string(N) + "]",
+                      parameters( rho.at(c) ) );
+    nfo.emplace_back( "coeff r [" + std::to_string(K) + "]",
+                      parameters( MixDir_r(rho[c]) ) );
+  }
 
   return nfo;
 }

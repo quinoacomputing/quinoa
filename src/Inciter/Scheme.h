@@ -1,7 +1,10 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Scheme.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
   \brief     Generic forwarding interface to discretization proxies
   \details   This file defines a generic interface to discretization proxies.
 
@@ -265,6 +268,18 @@ class Scheme : public SchemeBase {
         call_resized<Args...>( std::forward<Args>(args)... ), proxy );
     }
 
+    //////  proxy.sendinit(...)
+    //! Function to call the sendinit entry method of an array proxy (broadcast)
+    //! \param[in] args Arguments to member function entry method to be called
+    //! \details This function calls the sendinit member function of a chare
+    //!    array proxy and thus equivalent to proxy.sendinit(...), using the
+    //!    last argument as default.
+    template< typename... Args >
+    void sendinit( Args&&... args ) {
+      boost::apply_visitor(
+        call_sendinit<Args...>( std::forward<Args>(args)... ), proxy );
+    }
+
     //////  proxy.advance(...)
     //! Function to call the advance entry method of an array proxy (broadcast)
     //! \param[in] args Arguments to member function entry method to be called
@@ -275,33 +290,6 @@ class Scheme : public SchemeBase {
     void advance( Args&&... args ) {
       boost::apply_visitor(
         call_advance<Args...>( std::forward<Args>(args)... ), proxy );
-    }
-
-    //////  proxy.dt(...)
-    //! function to call the dt entry method of an array proxy (broadcast)
-    //! \param[in] args arguments to member function (entry method) to be called
-    //! \details this function calls the dt member function of a chare array
-    //!   proxy and thus equivalent to proxy.dt(...), specifying a
-    //!   non-default last argument.
-    template< class Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::bcast >::value, int >::type = 0 >
-    void dt( Args&&... args ) {
-      boost::apply_visitor( call_dt<Args...>( std::forward<Args>(args)... ),
-                            proxy );
-    }
-    //////  proxy[x].dt(...)
-    //! Function to call the dt entry method of an element proxy (p2p)
-    //! \param[in] x Chare array element index
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the dt member function of a chare array
-    //!   element proxy and thus equivalent to proxy[x].dt(...), specifying a
-    //!   non-default last argument.
-    template< typename Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::elem >::value, int >::type = 0 >
-    void dt( const CkArrayIndex1D& x, Args&&... args ) {
-      auto e = tk::element< ProxyElem >( proxy, x );
-      boost::apply_visitor( call_dt<Args...>( std::forward<Args>(args)... ),
-                            e );
     }
 
     //////  proxy.diag(...)
@@ -435,6 +423,27 @@ class Scheme : public SchemeBase {
      }
    };
 
+   //! Functor to call the chare entry method 'sendinit'
+   //! \details This class is intended to be used in conjunction with variant
+   //!   and boost::visitor. The template argument types are the types of the
+   //!   arguments to entry method to be invoked behind the variant holding a
+   //!   Charm++ proxy.
+   //! \see The base class Call for the definition of operator().
+   template< typename... As >
+   struct call_sendinit : Call< call_sendinit<As...>, As... > {
+     using Base = Call< call_sendinit<As...>, As... >;
+     using Base::Base; // inherit base constructors
+     //! Invoke the entry method
+     //! \param[in,out] p Proxy behind which the entry method is called
+     //! \param[in] args Function arguments passed to entry method
+     //! \details P is the proxy type, Args are the types of the arguments of
+     //!   the entry method to be called.
+     template< typename P, typename... Args >
+     static void invoke( P& p, Args&&... args ) {
+       p.sendinit( std::forward<Args>(args)... );
+     }
+   };
+
    //! Functor to call the chare entry method 'advance'
    //! \details This class is intended to be used in conjunction with variant
    //!   and boost::visitor. The template argument types are the types of the
@@ -495,27 +504,6 @@ class Scheme : public SchemeBase {
      template< typename P, typename... Args >
      static void invoke( P& p, Args&&... args ) {
        p.doneInserting( std::forward<Args>(args)... );
-     }
-   };
-
-   //! Functor to call the chare entry method 'dt'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_dt : Call< call_dt<As...>, As... > {
-     using Base = Call< call_dt<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.dt( std::forward<Args>(args)... );
      }
    };
 
