@@ -19,9 +19,11 @@ mainmodule inciter {
   extern module alecg;
   extern module dg;
   extern module charestatecollector;
+  extern module lbswitch;
 
   readonly CProxy_Main mainProxy;
   readonly tk::CProxy_ChareStateCollector stateProxy;
+  readonly tk::CProxy_LBSwitch LBSwitchProxy;
 
   namespace inciter {
 

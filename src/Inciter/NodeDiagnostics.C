@@ -17,6 +17,7 @@
 #include "DiagReducer.h"
 #include "Discretization.h"
 #include "Inciter/InputDeck/InputDeck.h"
+#include "Refiner.h"
 
 namespace inciter {
 
@@ -131,7 +132,7 @@ NodeDiagnostics::compute( Discretization& d, const tk::Fields& u ) const
 
     // Contribute to diagnostics
     auto stream = serialize( diag );
-    d.contribute( stream.first, stream.second.get(), DiagMerger,
+    d.Ref()->contribute( stream.first, stream.second.get(), DiagMerger,
       CkCallback(CkIndex_Transporter::diagnostics(nullptr), d.Tr()) );
 
     return true;        // diagnostics have been computed

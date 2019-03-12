@@ -209,8 +209,6 @@ Transporter::Transporter() :
                            + ".<chareid>" );
     m_print.item( "Diagnostics",
                   g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
-    if (g_inputdeck.get< tag::cmd, tag::benchmark >())
-      m_print.item( "Benchmark mode", "on" );
 
     // Print output intervals
     m_print.section( "Output intervals" );
@@ -593,6 +591,8 @@ Transporter::comfinal( int initial )
   if (initial > 0) {
     m_progWork.end();
     m_scheme.setup( m_V );
+    // Turn on automatic load balancing
+    tk::CProxy_LBSwitch::ckNew( g_inputdeck.get<tag::cmd,tag::verbose>() );
   } else {
     m_scheme.lhs();
   }

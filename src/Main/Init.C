@@ -148,14 +148,14 @@ void echoRunEnv( const Print& print, int argc, char** argv,
 
   print.item( "Screen output, -" + *kw::verbose::alias(),
               verbose ? "verbose" : "quiet" );
-  print.item( "Quiescence detection, -" + *kw::quiescence::alias(),
-              quiescence ? "on" : "off" );
-  print.item( "Chare state output, -" + *kw::charestate::alias(),
-              charestate ? "on" : "off" );
   print.item( "Number of processing elements",
               std::to_string( CkNumPes() ) + " (" +
               std::to_string( CkNumNodes() ) + 'x' +
               std::to_string( CkNumPes()/CkNumNodes() ) + ')' );
+  print.item( "Quiescence detection, -" + *kw::quiescence::alias(),
+              quiescence ? "on" : "off" );
+  print.item( "Chare state output, -" + *kw::charestate::alias(),
+              charestate ? "on" : "off" );
 }
 
 } // tk::

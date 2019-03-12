@@ -93,6 +93,9 @@ class DiagCG : public CBase_DiagCG {
     //! Configure Charm++ custom reduction types initiated from this chare array
     static void registerReducers();
 
+    //! Return from migration
+    void ResumeFromSync() override;
+
     //! Setup: query boundary conditions, output mesh, etc.
     void setup( tk::real v );
 
