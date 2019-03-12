@@ -147,6 +147,7 @@ class Refiner : public CBase_Refiner {
       p | m_oldTets;
       p | m_addedNodes;
       p | m_addedTets;
+      p | m_prevnTets;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -229,12 +230,14 @@ class Refiner : public CBase_Refiner {
     std::unordered_map< int, std::unordered_set< std::size_t > > m_msumset;
     //! ...
     std::vector< std::size_t > m_oldTetIdMap;
-    //! ...
+    //! Local tetrahedron IDs before refinement step
     std::unordered_set< std::size_t > m_oldTets;
     //! Newly added mesh nodes (local id) and their parents (local ids)
     std::unordered_map< std::size_t, tk::UnsMesh::Edge > m_addedNodes;
     //! Newly added mesh cells (local id) and their parent (local ids)
     std::unordered_map< std::size_t, std::size_t > m_addedTets;
+    //! Number of tetrahedra in the mesh before refinement
+    std::size_t m_prevnTets;
 
     //! Generate flat coordinate data from coordinate map
     tk::UnsMesh::Coords flatcoord( const tk::UnsMesh::CoordMap& coordmap );

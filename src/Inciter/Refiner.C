@@ -80,7 +80,8 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_oldTetIdMap(),
   m_oldTets(),
   m_addedNodes(),
-  m_addedTets()
+  m_addedTets(),
+  m_prevnTets( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Transporter (host) proxy
@@ -589,6 +590,7 @@ Refiner::eval()
   m_oldTetIdMap = m_refiner.tet_store.get_active_id_mapping();
 
   // Save old tet ids before performing refinement
+  m_prevnTets = m_oldTets.size();       // save number tets before refinement
   m_oldTets.clear();
   for (const auto& t : m_refiner.tet_store.tets) m_oldTets.insert( t.first );
 
@@ -1075,13 +1077,11 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
      auto parent = tet_store.data( n ).parent_id;
      Assert( parent < m_oldTets.size(),
              "Parent tet id will index out of old solution vector" );
-     auto child = tk::cref_find(newids,n);
+     auto child = tk::cref_find( newids, n );
      Assert( child < m_oldTets.size() + newtets.size(),
              "New tet id will index out of new solution vector" );
-     m_addedTets[ child ] = parent;
+     m_addedTets[ child ] = parent - m_prevnTets;
   }
-
-  std::cout << thisIndex << ": " << m_addedTets.size() << '\n';
 }
 
 Refiner::BndFaces

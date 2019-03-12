@@ -1389,8 +1389,8 @@ DG::resize(
   ++d->Itr();
 
   // Save old number of elements
-  auto oldNelem = d->Inpoel().size()/4;
-  IGNORE(oldNelem);
+  auto old_nelem = d->Inpoel().size()/4;
+  IGNORE(old_nelem);
 
   // Resize mesh data structures
   d->resize( chunk, coord, msum );
@@ -1423,7 +1423,7 @@ DG::resize(
   // Update solution on new mesh, P0 (cell center value) only for now
   for (const auto& e : addedTets) {
     Assert( e.first < nelem, "Indexing out of new solution vector" );
-    Assert( e.second < oldNelem, "Indexing out of old solution vector" );
+    Assert( e.second < old_nelem, "Indexing out of old solution vector" );
     for (std::size_t c=0; c<nprop; ++c)
       m_u(e.first,c,0) = m_u(e.second,c,0);
   }
