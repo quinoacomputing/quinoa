@@ -107,41 +107,41 @@ add_regression_test(amr_dtref_u_compflow_nleg_diagcg ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF nleg_diagcg_amr.ndiff.cfg
                     LABELS amr)
 
-#add_regression_test(amr_dtref_u_compflow_nleg_diagcg_migr ${INCITER_EXECUTABLE}
-#                    NUMPES 4
-#                    INPUTFILES nleg_diagcg_amr.q unitcube_1k.exo
-#                    ARGS -c nleg_diagcg_amr.q -i unitcube_1k.exo -v
-#                         +balancer RandCentLB +LBDebug 1 +cs
-#                    BIN_BASELINE nleg_diagcg_pe4_u.std.e-s.0.4.0
-#                                 nleg_diagcg_pe4_u.std.e-s.0.4.1
-#                                 nleg_diagcg_pe4_u.std.e-s.0.4.2
-#                                 nleg_diagcg_pe4_u.std.e-s.0.4.3
-#                                 nleg_diagcg_pe4_u.std.e-s.1.4.0
-#                                 nleg_diagcg_pe4_u.std.e-s.1.4.1
-#                                 nleg_diagcg_pe4_u.std.e-s.1.4.2
-#                                 nleg_diagcg_pe4_u.std.e-s.1.4.3
-#                                 nleg_diagcg_pe4_u.std.e-s.2.4.0
-#                                 nleg_diagcg_pe4_u.std.e-s.2.4.1
-#                                 nleg_diagcg_pe4_u.std.e-s.2.4.2
-#                                 nleg_diagcg_pe4_u.std.e-s.2.4.3
-#                    BIN_RESULT out.e-s.0.4.0
-#                               out.e-s.0.4.1
-#                               out.e-s.0.4.2
-#                               out.e-s.0.4.3
-#                               out.e-s.1.4.0
-#                               out.e-s.1.4.1
-#                               out.e-s.1.4.2
-#                               out.e-s.1.4.3
-#                               out.e-s.2.4.0
-#                               out.e-s.2.4.1
-#                               out.e-s.2.4.2
-#                               out.e-s.2.4.3
-#                    BIN_DIFF_PROG_CONF exodiff_nleg_amr_diagcg.cfg
-#                    BIN_DIFF_PROG_ARGS -m
-#                    TEXT_BASELINE nleg_diagcg_amr.std
-#                    TEXT_RESULT diag
-#                    TEXT_DIFF_PROG_CONF nleg_diagcg_amr.ndiff.cfg
-#                    LABELS amr migration)
+add_regression_test(amr_dtref_u_compflow_nleg_diagcg_migr ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES nleg_diagcg_amr.q unitcube_1k.exo
+                    ARGS -c nleg_diagcg_amr.q -i unitcube_1k.exo -v
+                         +balancer RandCentLB +LBDebug 1 +cs
+                    BIN_BASELINE nleg_diagcg_pe4_u.std.e-s.0.4.0
+                                 nleg_diagcg_pe4_u.std.e-s.0.4.1
+                                 nleg_diagcg_pe4_u.std.e-s.0.4.2
+                                 nleg_diagcg_pe4_u.std.e-s.0.4.3
+                                 nleg_diagcg_pe4_u.std.e-s.1.4.0
+                                 nleg_diagcg_pe4_u.std.e-s.1.4.1
+                                 nleg_diagcg_pe4_u.std.e-s.1.4.2
+                                 nleg_diagcg_pe4_u.std.e-s.1.4.3
+                                 nleg_diagcg_pe4_u.std.e-s.2.4.0
+                                 nleg_diagcg_pe4_u.std.e-s.2.4.1
+                                 nleg_diagcg_pe4_u.std.e-s.2.4.2
+                                 nleg_diagcg_pe4_u.std.e-s.2.4.3
+                    BIN_RESULT out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
+                               out.e-s.1.4.0
+                               out.e-s.1.4.1
+                               out.e-s.1.4.2
+                               out.e-s.1.4.3
+                               out.e-s.2.4.0
+                               out.e-s.2.4.1
+                               out.e-s.2.4.2
+                               out.e-s.2.4.3
+                    BIN_DIFF_PROG_CONF exodiff_nleg_amr_diagcg.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE nleg_diagcg_amr.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF nleg_diagcg_amr.ndiff.cfg
+                    LABELS amr migration)
 
 add_regression_test(amr_dtref_u_compflow_nleg_reord_diagcg ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -178,42 +178,42 @@ add_regression_test(amr_dtref_u_compflow_nleg_reord_diagcg ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF nleg_diagcg_amr.ndiff.cfg
                     LABELS amr)
 
-# add_regression_test(amr_dtref_u_compflow_nleg_reord_diagcg_migr
-#                     ${INCITER_EXECUTABLE}
-#                     NUMPES 4
-#                     INPUTFILES nleg_reord_diagcg_amr.q unitcube_1k.exo
-#                     ARGS -c nleg_reord_diagcg_amr.q -i unitcube_1k.exo -v
-#                          +balancer RandCentLB +LBDebug 1 +cs
-#                     BIN_BASELINE nleg_diagcg_pe4_u.std.e-s.0.4.0
-#                                  nleg_diagcg_pe4_u.std.e-s.0.4.1
-#                                  nleg_diagcg_pe4_u.std.e-s.0.4.2
-#                                  nleg_diagcg_pe4_u.std.e-s.0.4.3
-#                                  nleg_diagcg_pe4_u.std.e-s.1.4.0
-#                                  nleg_diagcg_pe4_u.std.e-s.1.4.1
-#                                  nleg_diagcg_pe4_u.std.e-s.1.4.2
-#                                  nleg_diagcg_pe4_u.std.e-s.1.4.3
-#                                  nleg_diagcg_pe4_u.std.e-s.2.4.0
-#                                  nleg_diagcg_pe4_u.std.e-s.2.4.1
-#                                  nleg_diagcg_pe4_u.std.e-s.2.4.2
-#                                  nleg_diagcg_pe4_u.std.e-s.2.4.3
-#                     BIN_RESULT out.e-s.0.4.0
-#                                out.e-s.0.4.1
-#                                out.e-s.0.4.2
-#                                out.e-s.0.4.3
-#                                out.e-s.1.4.0
-#                                out.e-s.1.4.1
-#                                out.e-s.1.4.2
-#                                out.e-s.1.4.3
-#                                out.e-s.2.4.0
-#                                out.e-s.2.4.1
-#                                out.e-s.2.4.2
-#                                out.e-s.2.4.3
-#                     BIN_DIFF_PROG_CONF exodiff_nleg_amr_diagcg.cfg
-#                     BIN_DIFF_PROG_ARGS -m
-#                     TEXT_BASELINE nleg_diagcg_amr.std
-#                     TEXT_RESULT diag
-#                     TEXT_DIFF_PROG_CONF nleg_diagcg_amr.ndiff.cfg
-#                     LABELS amr migration)
+ add_regression_test(amr_dtref_u_compflow_nleg_reord_diagcg_migr
+                     ${INCITER_EXECUTABLE}
+                     NUMPES 4
+                     INPUTFILES nleg_reord_diagcg_amr.q unitcube_1k.exo
+                     ARGS -c nleg_reord_diagcg_amr.q -i unitcube_1k.exo -v
+                          +balancer RandCentLB +LBDebug 1 +cs
+                     BIN_BASELINE nleg_diagcg_pe4_u.std.e-s.0.4.0
+                                  nleg_diagcg_pe4_u.std.e-s.0.4.1
+                                  nleg_diagcg_pe4_u.std.e-s.0.4.2
+                                  nleg_diagcg_pe4_u.std.e-s.0.4.3
+                                  nleg_diagcg_pe4_u.std.e-s.1.4.0
+                                  nleg_diagcg_pe4_u.std.e-s.1.4.1
+                                  nleg_diagcg_pe4_u.std.e-s.1.4.2
+                                  nleg_diagcg_pe4_u.std.e-s.1.4.3
+                                  nleg_diagcg_pe4_u.std.e-s.2.4.0
+                                  nleg_diagcg_pe4_u.std.e-s.2.4.1
+                                  nleg_diagcg_pe4_u.std.e-s.2.4.2
+                                  nleg_diagcg_pe4_u.std.e-s.2.4.3
+                     BIN_RESULT out.e-s.0.4.0
+                                out.e-s.0.4.1
+                                out.e-s.0.4.2
+                                out.e-s.0.4.3
+                                out.e-s.1.4.0
+                                out.e-s.1.4.1
+                                out.e-s.1.4.2
+                                out.e-s.1.4.3
+                                out.e-s.2.4.0
+                                out.e-s.2.4.1
+                                out.e-s.2.4.2
+                                out.e-s.2.4.3
+                     BIN_DIFF_PROG_CONF exodiff_nleg_amr_diagcg.cfg
+                     BIN_DIFF_PROG_ARGS -m
+                     TEXT_BASELINE nleg_diagcg_amr.std
+                     TEXT_RESULT diag
+                     TEXT_DIFF_PROG_CONF nleg_diagcg_amr.ndiff.cfg
+                     LABELS amr migration)
 
 # Parallel, virtualization
 
@@ -305,90 +305,90 @@ add_regression_test(amr_dtref_u_trans_diagcg_u0.8 ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF slot_cyl_diagcg.ndiff.cfg
                     LABELS amr)
 
-#add_regression_test(amr_dtref_u_trans_diagcg_u0.8_migr ${INCITER_EXECUTABLE}
-#                    NUMPES 4
-#                    INPUTFILES slot_cyl_amr_diagcg.q unitsquare_01_955.exo
-#                    ARGS -c slot_cyl_amr_diagcg.q -i unitsquare_01_955.exo -v
-#                         -u 0.8 +balancer RandCentLB +LBDebug 1 +cs
-#                    BIN_BASELINE slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.0
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.1
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.2
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.3
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.4
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.5
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.6
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.7
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.8
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.9
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.10
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.11
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.12
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.13
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.14
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.15
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.16
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.17
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.18
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.0
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.1
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.2
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.3
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.4
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.5
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.6
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.7
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.8
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.9
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.10
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.11
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.12
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.13
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.14
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.15
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.16
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.17
-#                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.18
-#                    BIN_RESULT out.e-s.0.19.0
-#                               out.e-s.0.19.1
-#                               out.e-s.0.19.2
-#                               out.e-s.0.19.3
-#                               out.e-s.0.19.4
-#                               out.e-s.0.19.5
-#                               out.e-s.0.19.6
-#                               out.e-s.0.19.7
-#                               out.e-s.0.19.8
-#                               out.e-s.0.19.9
-#                               out.e-s.0.19.10
-#                               out.e-s.0.19.11
-#                               out.e-s.0.19.12
-#                               out.e-s.0.19.13
-#                               out.e-s.0.19.14
-#                               out.e-s.0.19.15
-#                               out.e-s.0.19.16
-#                               out.e-s.0.19.17
-#                               out.e-s.0.19.18
-#                               out.e-s.1.19.0
-#                               out.e-s.1.19.1
-#                               out.e-s.1.19.2
-#                               out.e-s.1.19.3
-#                               out.e-s.1.19.4
-#                               out.e-s.1.19.5
-#                               out.e-s.1.19.6
-#                               out.e-s.1.19.7
-#                               out.e-s.1.19.8
-#                               out.e-s.1.19.9
-#                               out.e-s.1.19.10
-#                               out.e-s.1.19.11
-#                               out.e-s.1.19.12
-#                               out.e-s.1.19.13
-#                               out.e-s.1.19.14
-#                               out.e-s.1.19.15
-#                               out.e-s.1.19.16
-#                               out.e-s.1.19.17
-#                               out.e-s.1.19.18
-#                    BIN_DIFF_PROG_CONF exodiff_slot_cyl_amr_diagcg.cfg
-#                    BIN_DIFF_PROG_ARGS -m
-#                    TEXT_BASELINE slot_cyl_amr_diagcg.std
-#                    TEXT_RESULT diag
-#                    TEXT_DIFF_PROG_CONF slot_cyl_diagcg.ndiff.cfg
-#                    LABELS amr migration)
+add_regression_test(amr_dtref_u_trans_diagcg_u0.8_migr ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES slot_cyl_amr_diagcg.q unitsquare_01_955.exo
+                    ARGS -c slot_cyl_amr_diagcg.q -i unitsquare_01_955.exo -v
+                         -u 0.8 +balancer RandCentLB +LBDebug 1 +cs
+                    BIN_BASELINE slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.0
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.1
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.2
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.3
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.4
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.5
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.6
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.7
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.8
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.9
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.10
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.11
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.12
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.13
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.14
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.15
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.16
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.17
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.18
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.0
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.1
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.2
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.3
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.4
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.5
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.6
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.7
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.8
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.9
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.10
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.11
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.12
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.13
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.14
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.15
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.16
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.17
+                                 slot_cyl_diagcg_pe4_u_u0.8.std.e-s.1.19.18
+                    BIN_RESULT out.e-s.0.19.0
+                               out.e-s.0.19.1
+                               out.e-s.0.19.2
+                               out.e-s.0.19.3
+                               out.e-s.0.19.4
+                               out.e-s.0.19.5
+                               out.e-s.0.19.6
+                               out.e-s.0.19.7
+                               out.e-s.0.19.8
+                               out.e-s.0.19.9
+                               out.e-s.0.19.10
+                               out.e-s.0.19.11
+                               out.e-s.0.19.12
+                               out.e-s.0.19.13
+                               out.e-s.0.19.14
+                               out.e-s.0.19.15
+                               out.e-s.0.19.16
+                               out.e-s.0.19.17
+                               out.e-s.0.19.18
+                               out.e-s.1.19.0
+                               out.e-s.1.19.1
+                               out.e-s.1.19.2
+                               out.e-s.1.19.3
+                               out.e-s.1.19.4
+                               out.e-s.1.19.5
+                               out.e-s.1.19.6
+                               out.e-s.1.19.7
+                               out.e-s.1.19.8
+                               out.e-s.1.19.9
+                               out.e-s.1.19.10
+                               out.e-s.1.19.11
+                               out.e-s.1.19.12
+                               out.e-s.1.19.13
+                               out.e-s.1.19.14
+                               out.e-s.1.19.15
+                               out.e-s.1.19.16
+                               out.e-s.1.19.17
+                               out.e-s.1.19.18
+                    BIN_DIFF_PROG_CONF exodiff_slot_cyl_amr_diagcg.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE slot_cyl_amr_diagcg.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF slot_cyl_diagcg.ndiff.cfg
+                    LABELS amr migration)

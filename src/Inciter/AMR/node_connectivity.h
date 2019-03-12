@@ -24,10 +24,10 @@ namespace AMR {
 
             node_list_t nodes;
 
+        public:
+
             size_t empty_node_count = 0;
 
-
-        public:
 
             node_connectivity_t() { } // default cons
 
