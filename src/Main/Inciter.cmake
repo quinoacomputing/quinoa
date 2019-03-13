@@ -3,6 +3,7 @@
 add_executable(${INCITER_EXECUTABLE}
                InciterDriver.C
                InciterPrint.C
+               LBSwitch.C
                Inciter.C)
 
 config_executable(${INCITER_EXECUTABLE})
@@ -33,6 +34,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${MKL_CORE_LIBRARY}
+                      ${MKL_INTERFACE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
@@ -43,6 +45,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
 
 # Add custom dependencies for Inciter's main Charm++ module
 addCharmModule( "inciter" "${INCITER_EXECUTABLE}" )
+addCharmModule( "lbswitch" "${INCITER_EXECUTABLE}" )
 
 add_dependencies( "inciterCharmModule" "charestatecollectorCharmModule" )
 add_dependencies( "inciterCharmModule" "meshwriterCharmModule" )

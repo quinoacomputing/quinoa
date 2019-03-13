@@ -58,9 +58,27 @@
 
 namespace walker {
 
+
+static std::vector< kw::sde_r::info::expect::type >
+MixDir_r( const std::vector< kw::sde_rho::info::expect::type >& rho )
+// *****************************************************************************
+//  Compute parameter vector r based on r_i = rho_N/rho_i - 1
+//! \param[in] rho Parameter vector rho to MixDirichlet
+//! \return Parameter vector r, determined by parameter vector rho
+// *****************************************************************************
+{
+  Assert( rho.size() > 1, "Parameter vector rho must not be empty" );
+
+  std::vector< kw::sde_r::info::expect::type > r( rho.size()-1 );
+
+  for (std::size_t i=0; i<rho.size()-1; ++i) r[i] = rho.back()/rho[i] - 1.0;
+
+  return r;
+}
+
 //! MixDirichlet coefficients policity: constants in time + mean(rho) = const
-//! \details User-defined parameters b and kappa are constant vectors in time
-//!   and, S is constrained to make \f$\mathrm{d}<rho>/\mathrm{d}t = 0\f$.
+//! \details User-defined parameters b and kappaprime are constant vectors in
+//!   time and, S is constrained to make \f$\mathrm{d}<rho>/\mathrm{d}t = 0\f$.
 class MixDirichletHomCoeffConst {
 
   private:
@@ -72,35 +90,33 @@ class MixDirichletHomCoeffConst {
       tk::ctr::ncomp_t ncomp,
       const std::vector< kw::sde_b::info::expect::type >& b_,
       const std::vector< kw::sde_S::info::expect::type >& S_,
-      const std::vector< kw::sde_kappa::info::expect::type >& k_,
+      const std::vector< kw::sde_kappa::info::expect::type >& kprime_,
       const std::vector< kw::sde_rho::info::expect::type >& rho_,
       std::vector< kw::sde_b::info::expect::type  >& b,
-      std::vector< kw::sde_kappa::info::expect::type >& k,
+      std::vector< kw::sde_kappa::info::expect::type >& kprime,
       std::vector< kw::sde_S::info::expect::type >& S,
       std::vector< kw::sde_rho::info::expect::type >& rho,
-      std::vector< kw::sde_r::info::expect::type >& r )
+      std::vector< kw::sde_r::info::expect::type >& r,
+      std::vector< kw::sde_kappa::info::expect::type >& k )
     {
       ErrChk( b_.size() == ncomp,
               "Wrong number of MixDirichlet SDE parameters 'b'");
       ErrChk( S_.size() == ncomp,
               "Wrong number of MixDirichlet SDE parameters 'S'");
-      ErrChk( k_.size() == ncomp,
-              "Wrong number of MixDirichlet SDE parameters 'kappa'");
+      ErrChk( kprime_.size() == ncomp,
+              "Wrong number of MixDirichlet SDE parameters 'kappaprime'");
       ErrChk( rho_.size() == ncomp+1,
               "Wrong number of MixDirichlet SDE parameters 'rho'");
 
       b = b_;
       S = S_;
-      k = k_;
+      kprime = kprime_;
       rho = rho_;
+      k.resize( kprime.size() );
 
       // Compute parameter vector r based on r_i = rho_N/rho_i - 1
       Assert( r.empty(), "Parameter vector r must be empty" );
-      r.resize( rho.size()-1 );
-      for (std::size_t i=0; i<rho.size()-1; ++i) {
-        r[i] = rho.back()/rho[i] - 1.0;
-        std::cout << "MixDirichlet r: " << r[i] << '\n';
-      }
+      r = MixDir_r( rho );
     }
 
     static ctr::CoeffPolicyType type() noexcept
@@ -113,6 +129,8 @@ class MixDirichletHomCoeffConst {
       const std::map< tk::ctr::Product, tk::real >& moments,
       const std::vector< kw::sde_rho::info::expect::type >& rho,
       const std::vector< kw::sde_r::info::expect::type >& r,
+      const std::vector< kw::sde_kappa::info::expect::type >& kprime,
+      std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_kappa::info::expect::type >& S ) const
     {
       using tk::ctr::lookup;
@@ -138,11 +156,20 @@ class MixDirichletHomCoeffConst {
       tk::real R = lookup( mean(depvar,ncomp), moments );
       if (R < 1.0e-8) R = 1.0;
 
+      // b = -<rv>, density-specific-volume covariance
+      Term rhoprime( static_cast<char>(std::tolower(depvar)),
+                     ncomp, Moment::CENTRAL );
+      Term vprime( static_cast<char>(std::tolower(depvar)),
+                   ncomp+1, Moment::CENTRAL );
+      auto ds = -lookup( Product({rhoprime,vprime}), moments );
+
       std::vector< tk::real > RY( ncomp, 0.0 );
       std::vector< tk::real > RRY( ncomp, 0.0 );
       for (ncomp_t c=0; c<ncomp; ++c) {
-        Term tR( 'Y', ncomp, Moment::ORDINARY );
-        Term tY( 'Y', c, Moment::ORDINARY );
+        Term tR( static_cast<char>(std::toupper(depvar)),
+                 ncomp, Moment::ORDINARY );
+        Term tY( static_cast<char>(std::toupper(depvar)),
+                 c, Moment::ORDINARY );
         RY[c] = lookup( Product({tR,tY}), moments );    // <RYc>
         RRY[c] = lookup( Product({tR,tR,tY}), moments ); // <R^2Yc>
         //std::cout << "RRY: " << RRY[c] << ' ';
@@ -200,10 +227,10 @@ class MixDirichletHomCoeffConst {
       //std::cout << "sumRRY: " << sumRRY << std::endl;
 
       // <r^2>, density variance
-      auto rhovar = lookup( variance('Y',ncomp), moments );
+      auto rhovar = lookup(
+        variance(static_cast<char>(std::tolower(depvar)),ncomp), moments );
       //std::cout << "<r^2>: " << rhovar << std::endl;
 
-      // Sc
       for (ncomp_t c=0; c<ncomp; ++c) {
         //S[c] = 1.0/(1.0-YK[c]) - (1.0-Yt[c])/(1.0-YtK[c]);
         //S[c] = YK[c]/(1.0-YK[c]) - (1.0-Yt[c])*YtK[c]/(1.0-YtK[c]) + Yt[c];
@@ -214,12 +241,13 @@ class MixDirichletHomCoeffConst {
                  (1.0-sumYt-Yt[c])*(r[c]/rho[ncomp]*(rhovar-sumRRY)) );
         //std::cout << "S: " << S[c] << ", YKc: " << YK[c]
         //          << ", Ytc: " << Yt[c] << ", YtKc: " << YtK[c] << ' ';
+        k[c] = kprime[c] * ds;
       }
       //std::cout << std::endl;
 
       for (ncomp_t c=0; c<ncomp; ++c) {
         if (S[c] < 0.0 || S[c] > 1.0) {
-          std::cout << "S[" << c << "] bounds violated: " << S[c] << '\n';
+          //std::cout << "S[" << c << "] bounds violated: " << S[c] << '\n';
           //S[c] = 0.5;
         }
       }

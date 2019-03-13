@@ -39,6 +39,12 @@ namespace cmd {
          tk::grm::process_cmd_switch< use< kw::charestate >,
                                       tag::chare > {};
 
+  //! Match and set non-blocking (migration) switch
+  struct nonblocking :
+         tk::grm::process_cmd_switch< use< kw::nonblocking >,
+                                      tag::nonblocking > {};
+
+
   //! Match and set benchmark switch (i.e., benchmark mode)
   struct benchmark :
          tk::grm::process_cmd_switch< use< kw::benchmark >,
@@ -87,6 +93,7 @@ namespace cmd {
   struct keywords :
          pegtl::sor< verbose,
                      charestate,
+                     nonblocking,
                      benchmark,
                      feedback,
                      virtualization,

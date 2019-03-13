@@ -73,8 +73,6 @@ DistFCT::DistFCT( int nchare,
 //! \param[in] inpoel Mesh connectivity of our chunk of the mesh
 // *****************************************************************************
 {
-  usesAtSync = true;    // enable migration at AtSync
-
   resizeComm();         // Size communication buffers
 }
 
