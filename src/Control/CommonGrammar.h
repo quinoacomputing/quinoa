@@ -1327,6 +1327,7 @@ namespace grm {
          pegtl::until<
            readkw< typename endkeyword::pegtl_string >,
            pegtl::sor< comment,
+                       ignore,
                        tokens...,
                        unknown< ERROR, MsgKey::KEYWORD > > > {};
 
