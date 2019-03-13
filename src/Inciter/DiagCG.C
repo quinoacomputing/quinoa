@@ -692,8 +692,13 @@ DiagCG::step()
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
 
-    AtSync();
-    if (g_inputdeck.get< tag::cmd, tag::nonblocking >()) dt();
+    if ( (d->It()) % (g_inputdeck.get< tag::cmd, tag::lbfreq >()) == 0 ) {
+      AtSync();
+      if (g_inputdeck.get< tag::cmd, tag::nonblocking >()) dt();
+    }
+    else {
+      dt();
+    }
 
   } else {
     d->contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );

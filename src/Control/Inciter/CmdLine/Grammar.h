@@ -89,6 +89,12 @@ namespace cmd {
          tk::grm::process_cmd_switch< use< kw::quiescence >,
                                       tag::quiescence > {};
 
+  //! Match and set load-balancing frequency
+  struct lbfreq :
+         tk::grm::process_cmd< use< kw::lbfreq >,
+                               tk::grm::Store< tag::lbfreq >,
+                               tk::grm::number > {};
+
   //! Match all command line keywords
   struct keywords :
          pegtl::sor< verbose,
@@ -101,6 +107,7 @@ namespace cmd {
                      helpctr,
                      helpkw,
                      quiescence,
+                     lbfreq,
                      io< use< kw::control >, tag::control >,
                      io< use< kw::input >, tag::input >,
                      io< use< kw::output >, tag::output >,
