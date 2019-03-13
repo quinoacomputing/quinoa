@@ -3411,11 +3411,14 @@ using nonblocking =
 struct lbfreq_info {
   static std::string name() { return "lbfreq"; }
   static std::string shortDescription()
-  { return "Set load-balancing frequency during time-stepping"; }
+  { return "Set load-balancing frequency during time stepping"; }
   static std::string longDescription() { return
     R"(This keyword is used to set frequency of load-balancing during
-       time-stepping. The default is 1, which means that load-balancing will be
-       performed every time-step.)";
+       time stepping. The default is 1, which means that load balancing is
+       initiated every time step. Note, however, that this does not necessarily
+       mean that load balancing will be performed by the runtime system every
+       time step, only that the Charm++ load-balancer is initiated. For more
+       information, see the Charm++ manual.)";
   }
   using alias = Alias< l >;
   struct expect {
