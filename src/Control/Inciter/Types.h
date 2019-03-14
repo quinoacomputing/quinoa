@@ -101,7 +101,8 @@ using floatformat = tk::tuple::tagged_tuple<
 using intervals = tk::tuple::tagged_tuple<
   tag::tty,   kw::ttyi::info::expect::type,       //!< TTY output interval
   tag::field, kw::interval::info::expect::type,   //!< Field output interval
-  tag::diag,  kw::interval::info::expect::type    //!< Diags output interval
+  tag::diag,  kw::interval::info::expect::type,   //!< Diags output interval
+  tag::lbfreq,kw::lbfreq::info::expect::type      //!< load-balancing frequency
 >;
 
 //! IO parameters storage

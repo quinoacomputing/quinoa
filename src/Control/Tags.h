@@ -48,6 +48,7 @@ struct lboff {};
 struct feedback {};
 struct reorder {};
 struct error {};
+struct lbfreq {};
 struct pdf {};
 struct ordpdf {};
 struct cenpdf {};
