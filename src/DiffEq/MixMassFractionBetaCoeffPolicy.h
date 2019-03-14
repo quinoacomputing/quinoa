@@ -683,7 +683,7 @@ class MixMassFracBetaCoeffInstVel {
       ctr::DepvarType /*velocity_solve*/,
       ncomp_t ncomp,
       const std::map< tk::ctr::Product, tk::real >& moments,
-      const std::vector< kw::sde_bprime::info::expect::type  >& bprime,
+      const std::vector< kw::sde_bprime::info::expect::type  >& /*bprime*/,
       const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
       const std::vector< kw::sde_rho2::info::expect::type >& rho2,
       const std::vector< kw::sde_r::info::expect::type >& r,
@@ -732,7 +732,7 @@ class MixMassFracBetaCoeffInstVel {
         tk::real d = lookup( mean(depvar,c+ncomp), moments );      // <R>
         tk::real d2 = lookup( variance(depvar,c+ncomp), moments ); // <r^2>
         tk::real d3 = lookup( cen3(depvar,c+ncomp), moments );     // <r^3>
-        tk::real yt = ry/d;
+        //tk::real yt = ry/d;
 
         // Compute turbulent kinetic energy
         // auto K = tke( velocity_depvar, velocity_solve, moments );
@@ -740,7 +740,7 @@ class MixMassFracBetaCoeffInstVel {
         // hydroptimescale: eps/k = <O>
         tk::real ts = lookup( mean(dissipation_depvar,0), moments );
 
-        auto pe = 1.0; // hydroproductions: P/eps = 1.0 (equilibrium)
+        //auto pe = 1.0; // hydroproductions: P/eps = 1.0 (equilibrium)
 
         // tk::real a = r[c]/(1.0+r[c]*yt);
         // tk::real bnm = a*a*yt*(1.0-yt);
