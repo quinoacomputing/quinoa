@@ -10,4 +10,4 @@ For more details on philosophy, documentation, software design, journal papers, 
 [documentation](https://quinoacomputing.github.io).
 
 ### How to use these images
-The images in this repository are used for automated testing at [Travis](https://travis-ci.org/quinoacomputing/quinoa/builds) and [Azure](https://dev.azure.com/quinoacomputing/Quinoa). See https://quinoacomputing.github.io for more details.
+The images in this repository are used for automated testing at [Azure](https://dev.azure.com/quinoacomputing/Quinoa). See https://quinoacomputing.github.io for more details.
