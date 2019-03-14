@@ -39,6 +39,12 @@ namespace cmd {
          tk::grm::process_cmd_switch< use< kw::charestate >,
                                       tag::chare > {};
 
+  //! Match and set non-blocking (migration) switch
+  struct nonblocking :
+         tk::grm::process_cmd_switch< use< kw::nonblocking >,
+                                      tag::nonblocking > {};
+
+
   //! Match and set benchmark switch (i.e., benchmark mode)
   struct benchmark :
          tk::grm::process_cmd_switch< use< kw::benchmark >,
@@ -83,10 +89,17 @@ namespace cmd {
          tk::grm::process_cmd_switch< use< kw::quiescence >,
                                       tag::quiescence > {};
 
+  //! Match and set load-balancing frequency
+  struct lbfreq :
+         tk::grm::process_cmd< use< kw::lbfreq >,
+                               tk::grm::Store< tag::lbfreq >,
+                               tk::grm::number > {};
+
   //! Match all command line keywords
   struct keywords :
          pegtl::sor< verbose,
                      charestate,
+                     nonblocking,
                      benchmark,
                      feedback,
                      virtualization,
@@ -94,6 +107,7 @@ namespace cmd {
                      helpctr,
                      helpkw,
                      quiescence,
+                     lbfreq,
                      io< use< kw::control >, tag::control >,
                      io< use< kw::input >, tag::input >,
                      io< use< kw::output >, tag::output >,

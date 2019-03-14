@@ -39,6 +39,7 @@ class CmdLine : public tk::Control<
                   tag::virtualization, kw::virtualization::info::expect::type,
                   tag::verbose,        bool,
                   tag::chare,          bool,
+                  tag::nonblocking,    bool,
                   tag::benchmark,      bool,
                   tag::feedback,       bool,
                   tag::help,           bool,
@@ -47,13 +48,15 @@ class CmdLine : public tk::Control<
                   tag::cmdinfo,        tk::ctr::HelpFactory,
                   tag::ctrinfo,        tk::ctr::HelpFactory,
                   tag::helpkw,         tk::ctr::HelpKw,
-                  tag::error,          std::vector< std::string > > {
+                  tag::error,          std::vector< std::string >,
+                  tag::lbfreq,         kw::lbfreq::info::expect::type > {
 
   public:
     //! \brief Inciter command-line keywords
     //! \see tk::grm::use and its documentation
     using keywords = brigand::set< kw::verbose
                                  , kw::charestate
+                                 , kw::nonblocking
                                  , kw::benchmark
                                  , kw::feedback
                                  , kw::virtualization
@@ -65,6 +68,7 @@ class CmdLine : public tk::Control<
                                  , kw::output
                                  , kw::diagnostics
                                  , kw::quiescence
+                                 , kw::lbfreq
                                  >;
 
     //! \brief Constructor: set all defaults.
@@ -105,8 +109,10 @@ class CmdLine : public tk::Control<
       set< tag::virtualization >( 0.0 );
       set< tag::verbose >( false ); // Quiet output by default
       set< tag::chare >( false ); // No chare state output by default
+      set< tag::nonblocking>( false ); // Blocking migration by default
       set< tag::benchmark >( false ); // No benchmark mode by default
       set< tag::feedback >( false ); // No detailed feedback by default
+      set< tag::lbfreq >( 1 ); // Load balancing every time-step by default
       // Initialize help: fill from own keywords + add map passed in
       brigand::for_each< keywords >( tk::ctr::Info( get< tag::cmdinfo >() ) );
       get< tag::ctrinfo >() = std::move( ctrinfo );
@@ -121,6 +127,7 @@ class CmdLine : public tk::Control<
                    tag::virtualization, kw::virtualization::info::expect::type,
                    tag::verbose,        bool,
                    tag::chare,          bool,
+                   tag::nonblocking,    bool,
                    tag::benchmark,      bool,
                    tag::feedback,       bool,
                    tag::help,           bool,
@@ -129,7 +136,8 @@ class CmdLine : public tk::Control<
                    tag::cmdinfo,        tk::ctr::HelpFactory,
                    tag::ctrinfo,        tk::ctr::HelpFactory,
                    tag::helpkw,         tk::ctr::HelpKw,
-                   tag::error,          std::vector< std::string > >::pup(p);
+                   tag::error,          std::vector< std::string >,
+                   tag::lbfreq,         kw::lbfreq::info::expect::type >::pup(p);
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

@@ -40,6 +40,19 @@ InciterDriver::InciterDriver( const InciterPrint& print,
 {
   // All global-scope data to be migrated to all PEs initialized here (if any)
 
+  print.item( "Non-blocking migration, -" + *kw::nonblocking::alias(),
+               cmdline.get< tag::nonblocking >() ? "on" : "off" );
+  print.item( "Benchmark mode, -" + *kw::benchmark::alias(),
+               cmdline.get< tag::benchmark >() ? "on" : "off" );
+
+  auto lbfreq = cmdline.get< tag::lbfreq >();
+  if ( lbfreq < kw::lbfreq::info::expect::lower ||
+       lbfreq > kw::lbfreq::info::expect::upper ) {
+    Throw( "Load-balancing frequency should be greater than 0." );
+  }
+  print.item( "Load-balancing frequency, -" + *kw::lbfreq::alias(),
+               std::to_string(cmdline.get< tag::lbfreq >()) );
+
   // Parse input deck into g_inputdeck
   m_print.item( "Control file", cmdline.get< tag::io, tag::control >() );  
   InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );

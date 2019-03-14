@@ -3394,6 +3394,46 @@ struct benchmark_info {
 
 using benchmark = keyword< benchmark_info, TAOCPP_PEGTL_STRING("benchmark") >;
 
+struct nonblocking_info {
+  static std::string name() { return "nonblocking"; }
+  static std::string shortDescription()
+  { return "Select non-blocking migration"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select non-blocking, instead of the default
+       blocking, migration.)";
+  }
+  using alias = Alias< n >;
+};
+
+using nonblocking =
+  keyword< nonblocking_info, TAOCPP_PEGTL_STRING("nonblocking") >;
+
+struct lbfreq_info {
+  static std::string name() { return "lbfreq"; }
+  static std::string shortDescription()
+  { return "Set load-balancing frequency during time stepping"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to set frequency of load-balancing during
+       time stepping. The default is 1, which means that load balancing is
+       initiated every time step. Note, however, that this does not necessarily
+       mean that load balancing will be performed by the runtime system every
+       time step, only that the Charm++ load-balancer is initiated. For more
+       information, see the Charm++ manual.)";
+  }
+  using alias = Alias< l >;
+  struct expect {
+    using type = std::size_t;
+    static constexpr type lower = 1;
+    static constexpr type upper = std::numeric_limits< tk::real >::digits10 + 1;
+    static std::string description() { return "int"; }
+    static std::string choices() {
+      return "integer between [" + std::to_string(lower) + "..." +
+             std::to_string(upper) + "] (both inclusive)";
+    }
+  };
+};
+using lbfreq = keyword< lbfreq_info, TAOCPP_PEGTL_STRING("lbfreq") >;
+
 struct feedback_info {
   static std::string name() { return "feedback"; }
   static std::string shortDescription() { return "Enable on-screen feedback"; }

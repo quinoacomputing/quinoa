@@ -181,6 +181,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(CMAKE_EXE_LINKER_FLAGS
       "${CMAKE_EXE_LINKER_FLAGS} -Wl,-no_compact_unwind" )
 
+  # Set minimum OSX SDK target version
+  set(CMAKE_OSX_DEPLOYMENT_TARGET 10.7 CACHE STRING "Minimum OS X version to target for deployment (at runtime); newer APIs weak linked. Set to empty string for default value." FORCE)
+
 endif()
 
 # Query build hostname
@@ -302,6 +305,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wno-int-in-bool-context")
   add_compiler_flag("-Wno-cast-function-type")
   add_compiler_flag("-Wno-format-overflow")
+  add_compiler_flag("-Wno-pragmas")
 
   # Linker flags for gcc
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wno-unused-parameter")
