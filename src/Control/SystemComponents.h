@@ -74,6 +74,7 @@
 #include <vector>
 #include <algorithm>
 #include <numeric>
+#include <string>
 
 #include <brigand/algorithms/for_each.hpp>
 #include <brigand/sequences/list.hpp>
@@ -246,11 +247,35 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
       //!   differentiated by a different dependent variable.
       template< typename U > void operator()( brigand::type_<U> ) const {
         const auto& depvar = deck.template get< tag::param, U, tag::depvar >();
-        const auto& ncomps = deck.template get< tag::component >();
-        Assert( ncomps.template get<U>().size() == depvar.size(),
-                "ncomps != depvar" );
+        const auto& ncomps = deck.template get< tag::component, U >();
+        Assert( ncomps.size() == depvar.size(), "ncomps != depvar" );
         ncomp_type c = 0;
-        for (auto v : depvar) map[ v ] = ncomps.template get< U >().at( c++ );
+        for (auto v : depvar) map[ v ] = ncomps.at( c++ );
+      }
+    };
+
+    //! Function object for collecting depdent variables for all components
+    template< class InputDeck >
+    struct collect_depvars {
+      //! Reference to input deck to operate on
+      const InputDeck& deck;
+      //! Internal reference to depvar vector to fill
+      std::vector< std::string >& depvar;
+      //! Constructor: store host object pointer
+      explicit collect_depvars( const InputDeck& d,
+                                std::vector< std::string >& dv ) :
+        deck( d ), depvar( dv ) {}
+      //! Function call operator templated on the type that does the collecting
+      template< typename U > void operator()( brigand::type_<U> ) {
+        const auto& dveq = deck.template get< tag::param, U, tag::depvar >();
+        const auto& nceq = deck.template get< tag::component, U >();
+        Assert( dveq.size() == nceq.size(), "Size mismatch" );
+        std::size_t e = 0;
+        for (auto v : dveq) {
+          for (std::size_t c=0; c<nceq[e]; ++c )
+            depvar.push_back( v + std::to_string(c+1) );
+          ++e;
+        }
       }
     };
 
@@ -293,6 +318,21 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
       NcompMap map;
       brigand::for_each< tags >( genNcompMap< InputDeck >( deck, map ) );
       return map;
+    }
+
+    //! \brief Return vector of dependent variables + component id for all
+    //!   equations configured
+    //! \param[in] deck Input deck to operate on
+    //! \return Vector of dependent variables + comopnent id for all equations
+    //!   configured. The length of this vector equals the total number of
+    //!   components configured, see nprop(), containing the depvar + the
+    //!   component index relative to the given equation. E.g., c1, c2, u1, u2,
+    //!   u3, u4, u5.
+    template< class InputDeck >
+    std::vector< std::string > depvar( const InputDeck& deck ) const {
+      std::vector< std::string > d;
+      brigand::for_each< tags >( collect_depvars< InputDeck >( deck, d ) );
+      return d;
     }
 };
 

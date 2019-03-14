@@ -420,23 +420,23 @@ ALECG::writeFields( CkCallback c )
   auto d = Disc();
 
   // Query and collect field names from PDEs integrated
-  std::vector< std::string > names;
+  std::vector< std::string > nodefieldnames;
   for (const auto& eq : g_cgpde) {
     auto n = eq.fieldNames();
-    names.insert( end(names), begin(n), end(n) );
+    nodefieldnames.insert( end(nodefieldnames), begin(n), end(n) );
   }
 
   // Collect node field solution
   auto u = m_u;
-  std::vector< std::vector< tk::real > > fields;
+  std::vector< std::vector< tk::real > > nodefields;
   for (const auto& eq : g_cgpde) {
     auto o = eq.fieldOutput( d->T(), m_vol, d->Coord(), d->V(), u );
-    fields.insert( end(fields), begin(o), end(o) );
+    nodefields.insert( end(nodefields), begin(o), end(o) );
   }
 
   // Send mesh and fields data (solution dump) for output to file
-  d->write( d->Inpoel(), d->Coord(), {}, m_bnode, {}, names, fields,
-            tk::Centering::NODE, c );
+  d->write( d->Inpoel(), d->Coord(), {}, m_bnode, {}, {}, nodefieldnames, {},
+            nodefields, c );
 }
 
 void

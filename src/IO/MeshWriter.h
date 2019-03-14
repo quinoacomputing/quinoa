@@ -48,7 +48,6 @@ class MeshWriter : public CBase_MeshWriter {
                 uint64_t itf,
                 tk::real time,
                 int chareid,
-                Centering centering,
                 const std::string& basefilename,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
@@ -56,8 +55,10 @@ class MeshWriter : public CBase_MeshWriter {
                 const std::map< int, std::vector< std::size_t > >& bnode,
                 const std::vector< std::size_t >& triinpoel,
                 const std::unordered_map< std::size_t, std::size_t >& lid,
-                const std::vector< std::string >& names,
-                const std::vector< std::vector< tk::real > >& fields,
+                const std::vector< std::string >& elemfieldnames,
+                const std::vector< std::string >& nodefieldnames,
+                const std::vector< std::vector< tk::real > >& elemfields,
+                const std::vector< std::vector< tk::real > >& nodefields,
                 CkCallback c );
 
   private:

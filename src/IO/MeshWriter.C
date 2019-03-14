@@ -61,7 +61,6 @@ MeshWriter::write(
   uint64_t itf,
   tk::real time,
   int chareid,
-  Centering centering,
   const std::string& basefilename,
   const std::vector< std::size_t >& inpoel,
   const UnsMesh::Coords& coord,
@@ -69,8 +68,10 @@ MeshWriter::write(
   const std::map< int, std::vector< std::size_t > >& bnode,
   const std::vector< std::size_t >& triinpoel,
   const std::unordered_map< std::size_t, std::size_t >& lid,
-  const std::vector< std::string >& names,
-  const std::vector< std::vector< tk::real > >& fields,
+  const std::vector< std::string >& elemfieldnames,
+  const std::vector< std::string >& nodefieldnames,
+  const std::vector< std::vector< tk::real > >& elemfields,
+  const std::vector< std::vector< tk::real > >& nodefields,
   CkCallback c )
 // *****************************************************************************
 //  Output unstructured mesh into file
@@ -82,8 +83,6 @@ MeshWriter::write(
 //! \param[in] time Physical time this at this field output dump
 //! \param[in] chareid The chare id the write-to-file request is coming from
 //! \param[in] basefilename String to use as the base of the filename
-//! \param[in] centering The centering that will be associated to the field data
-//!   to be output when writeFields is called next
 //! \param[in] inpoel Mesh connectivity for the mesh chunk to be written
 //! \param[in] coord Node coordinates of the mesh chunk to be written
 //! \param[in] bface Map of boundary-face lists mapped to corresponding side set
@@ -93,8 +92,10 @@ MeshWriter::write(
 //! \param[in] triinpoel Interconnectivity of points and boundary-face in this
 //!   mesh chunk
 //! \param[in] lid Global->local node id map for the mesh chunk to be written
-//! \param[in] names Names of fields to be output in next call to writeFields()
-//! \param[in] fields Field data to output to file
+//! \param[in] elemfieldnames Names of element fields to be output to file
+//! \param[in] nodefieldnames Names of node fields to be output to file
+//! \param[in] elemfields Field data in mesh elements to output to file
+//! \param[in] nodefields Field data in mesh nodes to output to file
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
@@ -108,7 +109,7 @@ MeshWriter::write(
 
         RootMeshWriter rmw( f, 0 );
         rmw.writeMesh( UnsMesh( inpoel, coord ) );
-        rmw.writeNodeVarNames( names );
+        rmw.writeNodeVarNames( nodefieldnames );
 
       } else
       #endif
@@ -132,10 +133,8 @@ MeshWriter::write(
           ew.writeMesh( inpoel, coord );
         }
         // Write field names
-        if (centering == Centering::ELEM)
-          ew.writeElemVarNames( names );
-        else if (centering == Centering::NODE)
-          ew.writeNodeVarNames( names );
+        ew.writeElemVarNames( elemfieldnames );
+        ew.writeNodeVarNames( nodefieldnames );
       }
     }
 
@@ -146,7 +145,7 @@ MeshWriter::write(
         RootMeshWriter rw( f, 1 );
         rw.writeTimeStamp( itf, time );
         int varid = 0;
-        for (const auto& v : fields) rw.writeNodeScalar( itf, ++varid, v );
+        for (const auto& v : nodefields) rw.writeNodeScalar( itf, ++varid, v );
 
       } else
       #endif
@@ -154,13 +153,10 @@ MeshWriter::write(
 
         ExodusIIMeshWriter ew( f, ExoWriter::OPEN );
         ew.writeTimeStamp( itf, time );
-        if (centering == Centering::ELEM) {
-          int varid = 0;
-          for (const auto& v : fields) ew.writeElemScalar( itf, ++varid, v );
-        } else if (centering == Centering::NODE) {
-          int varid = 0;
-          for (const auto& v : fields) ew.writeNodeScalar( itf, ++varid, v );
-        }
+        int varid = 0;
+        for (const auto& v : elemfields) ew.writeElemScalar( itf, ++varid, v );
+        varid = 0;
+        for (const auto& v : nodefields) ew.writeNodeScalar( itf, ++varid, v );
 
       }
     }

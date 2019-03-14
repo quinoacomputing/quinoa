@@ -183,9 +183,10 @@ class Discretization : public CBase_Discretization {
                 const std::map< int, std::vector< std::size_t > >& bface,
                 const std::map< int, std::vector< std::size_t > >& bnode,
                 const std::vector< std::size_t >& triinpoel,
-                const std::vector< std::string >& names,
-                const std::vector< std::vector< tk::real > >& fields,
-                tk::Centering centering,
+                const std::vector< std::string>& elemfieldnames,
+                const std::vector< std::string>& nodefieldnames,
+                const std::vector< std::vector< tk::real > >& elemfields,
+                const std::vector< std::vector< tk::real > >& nodefields,
                 CkCallback c );
 
     //! Return chare-node adjacency map as sets

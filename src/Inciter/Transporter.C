@@ -57,6 +57,7 @@ Transporter::Transporter() :
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_nchare( 0 ),
   m_ncit( 0 ),
+  m_nrit( 0 ),
   m_scheme( g_inputdeck.get< tag::discr, tag::scheme >() ),
   m_partitioner(),
   m_refiner(),
@@ -402,22 +403,25 @@ Transporter::edges()
 }
 
 void
-Transporter::matched( std::size_t extra )
+Transporter::matched( std::size_t nextra, std::size_t nedge )
 // *****************************************************************************
-// Reduction target: all mesh refiner chares have distributed their newly added
-// node IDs that are shared among chares
-//! \param[in] extra Max number of edges/chare collected across all chares that
-//!   correction due to refinement along chare boundaries
+//  Reduction target: all mesh refiner chares have performed a step of matching
+//  chare-boundary edges
+//! \param[in] nextra Sum (across all chares) of the number of edges on each
+//!   chare that need correction along chare boundaries
+//! \param[in] nedge Sum (across all chares) of number of edges on each chare.
+//!   This is not really used for anything meaningful (as it is multiply-counted
+//!   in parallel), only as a feedback during initial mesh refinement.
 // *****************************************************************************
 {
   // If at least a single edge on a chare still needs correction, do correction,
   // otherwise, this initial mesh refinement step is complete
-  if (extra > 0) {
+  if (nextra > 0) {
     ++m_ncit;
     m_refiner.comExtra();
   } else {
-    m_print.diag( "Number of correction iterations: " +
-                  std::to_string( m_ncit ) );
+    if (!g_inputdeck.get< tag::cmd, tag::feedback >())
+      m_print.diag( { "t0ref", "nedge", "ncorr" }, { ++m_nrit, nedge, m_ncit } );
     m_ncit = 0;
     m_progMesh.inc< REFINE >();
     m_refiner.eval();
@@ -740,8 +744,8 @@ Transporter::stat()
   "       ETE - estimated time elapsed (h:m:s)\n"
   "       ETA - estimated time for accomplishment (h:m:s)\n"
   "       out - output-saved flags\n"
-  "             F - field\n"
-  "             D - diagnostics\n"
+  "             f - field\n"
+  "             d - diagnostics\n"
   "             h - h-refinement\n",
   "\n      it             t            dt        ETE        ETA   out\n"
     " ---------------------------------------------------------------\n" );

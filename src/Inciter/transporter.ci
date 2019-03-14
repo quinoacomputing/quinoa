@@ -27,9 +27,10 @@ module transporter {
       entry [reductiontarget] void disccreated();
       entry [reductiontarget] void workinserted();
       entry [reductiontarget] void edges();
-      entry [reductiontarget] void matched( std::size_t extra );
-      entry [reductiontarget]
-        void refined( std::size_t nelem, std::size_t npoin );
+      entry [reductiontarget] void matched( std::size_t nextra,
+                                            std::size_t nedge );
+      entry [reductiontarget] void refined( std::size_t nelem,
+                                            std::size_t npoin );
       entry [reductiontarget] void queried();
       entry [reductiontarget] void responded();
       entry [reductiontarget] void discresized();

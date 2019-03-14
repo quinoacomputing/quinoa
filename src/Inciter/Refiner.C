@@ -504,8 +504,8 @@ Refiner::correctref()
   correctRefine( extra );
 
   // Aggregate number of extra edges that still need correction
-  contribute( sizeof(std::size_t), &m_extra, CkReduction::max_ulong,
-              m_cbr.get< tag::matched >() );
+  std::vector< std::size_t > m{ m_extra, m_edgedata.size() };
+  contribute( m, CkReduction::sum_ulong, m_cbr.get< tag::matched >() );
 }
 
 void
@@ -563,15 +563,44 @@ Refiner::writeMesh( const std::string& basefilename,
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
-  std::vector< std::string > names{ "refinement level", "cell type" };
+  // Prepare element and node fields
+  std::vector< std::string > elemfieldnames{ "refinement level", "cell type" };
   auto& tet_store = m_refiner.tet_store;
-  std::vector< std::vector< tk::real > > fields{
+  std::vector< std::vector< tk::real > > elemfields{
     tet_store.get_refinement_level_list(), tet_store.get_cell_type_list() };
 
+  auto nprop = g_inputdeck.get< tag::component >().nprop();
+  auto nodefieldnames = g_inputdeck.get<tag::component>().depvar( g_inputdeck );
+  Assert( nodefieldnames.size() == nprop, "Size mismatch" );
+
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+  const auto centering = ctr::Scheme().centering( scheme );
+  auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
+
+  std::vector< std::vector< tk::real > > nodefields;
+
+  if (centering == tk::Centering::NODE) {
+
+    // Evaluate initial conditions on current mesh at t0
+    tk::Fields u( m_coord[0].size(), nprop );
+    for (const auto& eq : g_cgpde) eq.initialize( m_coord, u, t0 );
+
+    // Extract all scalar components from solution for output to file
+    for (std::size_t i=0; i<nprop; ++i)
+      nodefields.push_back( u.extract( i, 0 ) );
+
+  } else if (centering == tk::Centering::ELEM) {
+
+    // ...
+
+  }
+
+  // Output mesh
   m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
     write( /*meshoutput = */ true, /*fieldoutput = */ true, itr, 1, t,
-           thisIndex, tk::Centering::ELEM, basefilename, m_inpoel, m_coord,
-           m_bface, m_bnode, m_triinpoel, m_lid, names, fields, c );
+           thisIndex, basefilename, m_inpoel, m_coord, m_bface, m_bnode,
+           m_triinpoel, m_lid, elemfieldnames, nodefieldnames, elemfields,
+           nodefields, c );
 }
 
 void

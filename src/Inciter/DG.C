@@ -1136,21 +1136,21 @@ DG::writeFields( CkCallback c )
   for (std::size_t i=0; i<3; ++i) coord[i].resize( m_ncoord );
 
   // Query fields names from all PDEs integrated
-  std::vector< std::string > names;
+  std::vector< std::string > elemfieldnames;
   for (const auto& eq : g_dgpde) {
     auto n = eq.fieldNames();
-    names.insert( end(names), begin(n), end(n) );
+    elemfieldnames.insert( end(elemfieldnames), begin(n), end(n) );
   }
 
   // Collect element field solution
-  std::vector< std::vector< tk::real > > fields;
+  std::vector< std::vector< tk::real > > elemfields;
   auto u = m_u;
   for (const auto& eq : g_dgpde) {
     auto o =
       eq.fieldOutput( d->T(), m_geoElem, u );
     // cut off ghost elements
     for (auto& field : o) field.resize( esuel.size()/4 );
-    fields.insert( end(fields), begin(o), end(o) );
+    elemfields.insert( end(elemfields), begin(o), end(o) );
   }
 
   // // Collect node field solution
@@ -1162,8 +1162,8 @@ DG::writeFields( CkCallback c )
   // }
 
   // Output chare mesh and fields metadata to file
-  d->write( inpoel, coord, m_fd.Bface(), {}, m_fd.Triinpoel(), names,
-            fields, tk::Centering::ELEM, c );
+  d->write( inpoel, coord, m_fd.Bface(), {}, m_fd.Triinpoel(), elemfieldnames,
+            {}, elemfields, {}, c );
 }
 
 void
