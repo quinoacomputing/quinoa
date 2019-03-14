@@ -346,6 +346,12 @@ class DG : public CBase_DG {
     //! Evaluate whether to continue with next time step stage
     void stage();
 
+    //! Calculate the local number of degrees of freedom for each element
+    void eval_ndofel();
+
+    //! Correct the solution for high order term
+    void correct();
+
     //! Continue to next time step stage
     void next();
 
