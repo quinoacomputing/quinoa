@@ -253,6 +253,9 @@ class MixDirichletHomCoeffConst {
         //std::cout << "S: " << S[c] << ", YKc: " << YK[c]
         //          << ", Ytc: " << Yt[c] << ", YtKc: " << YtK[c] << ' ';
         k[c] = kprime[c] * bc[c];
+        //if (k[c] < 0.0)
+        // std::cout << "Positivity of k[" << c << "] violated: "
+        //           << k[c] << '\n';
       }
       //std::cout << std::endl;
 
