@@ -712,12 +712,12 @@ class MixMassFracBetaCoeffInstVel {
       // <R> = mean density,
       for (ncomp_t c=0; c<ncomp; ++c) {
 
-        const tk::ctr::Term Y( static_cast<char>(std::toupper(depvar)),
-                               c,
-                               tk::ctr::Moment::ORDINARY );
-        const tk::ctr::Term dens( static_cast<char>(std::toupper(depvar)),
-                                  c+ncomp,
-                                  tk::ctr::Moment::ORDINARY );
+        // const tk::ctr::Term Y( static_cast<char>(std::toupper(depvar)),
+        //                        c,
+        //                        tk::ctr::Moment::ORDINARY );
+        // const tk::ctr::Term dens( static_cast<char>(std::toupper(depvar)),
+        //                           c+ncomp,
+        //                           tk::ctr::Moment::ORDINARY );
         const tk::ctr::Term s1( static_cast<char>(std::tolower(depvar)),
                                 c+ncomp,
                                 tk::ctr::Moment::CENTRAL );
@@ -725,8 +725,8 @@ class MixMassFracBetaCoeffInstVel {
                                 c+ncomp*2,
                                 tk::ctr::Moment::CENTRAL );
 
-        const auto RY = tk::ctr::Product( { dens, Y } );
-        tk::real ry = lookup( RY, moments );                       // <RY>
+        //const auto RY = tk::ctr::Product( { dens, Y } );
+        //tk::real ry = lookup( RY, moments );                       // <RY>
         const auto dscorr = tk::ctr::Product( { s1, s2 } );
         tk::real ds = -lookup( dscorr, moments );                  // b = -<rv>
         tk::real d = lookup( mean(depvar,c+ncomp), moments );      // <R>
