@@ -54,7 +54,6 @@ class MeshWriter : public CBase_MeshWriter {
                 const std::map< int, std::vector< std::size_t > >& bface,
                 const std::map< int, std::vector< std::size_t > >& bnode,
                 const std::vector< std::size_t >& triinpoel,
-                const std::unordered_map< std::size_t, std::size_t >& lid,
                 const std::vector< std::string >& elemfieldnames,
                 const std::vector< std::string >& nodefieldnames,
                 const std::vector< std::vector< tk::real > >& elemfields,

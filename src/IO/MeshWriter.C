@@ -67,7 +67,6 @@ MeshWriter::write(
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& bnode,
   const std::vector< std::size_t >& triinpoel,
-  const std::unordered_map< std::size_t, std::size_t >& lid,
   const std::vector< std::string >& elemfieldnames,
   const std::vector< std::string >& nodefieldnames,
   const std::vector< std::vector< tk::real > >& elemfields,
@@ -83,15 +82,15 @@ MeshWriter::write(
 //! \param[in] time Physical time this at this field output dump
 //! \param[in] chareid The chare id the write-to-file request is coming from
 //! \param[in] basefilename String to use as the base of the filename
-//! \param[in] inpoel Mesh connectivity for the mesh chunk to be written
+//! \param[in] inpoel Mesh connectivity for the mesh chunk to be written with
+//!   local ids
 //! \param[in] coord Node coordinates of the mesh chunk to be written
 //! \param[in] bface Map of boundary-face lists mapped to corresponding side set
 //!   ids for this mesh chunk
 //! \param[in] bnode Map of boundary-node lists mapped to corresponding side set
-//!   ids for this mesh chunk
+//!   ids for this mesh chunk with local ids
 //! \param[in] triinpoel Interconnectivity of points and boundary-face in this
-//!   mesh chunk
-//! \param[in] lid Global->local node id map for the mesh chunk to be written
+//!   mesh chunk with local ids
 //! \param[in] elemfieldnames Names of element fields to be output to file
 //! \param[in] nodefieldnames Names of node fields to be output to file
 //! \param[in] elemfields Field data in mesh elements to output to file
@@ -120,14 +119,9 @@ MeshWriter::write(
 
           if (m_bndCentering == Centering::ELEM)
             ew.writeMesh( inpoel, coord, bface, triinpoel );
-          else if (m_bndCentering == Centering::NODE) {
-            // Convert boundary node lists to local ids for output
-            std::map< int, std::vector< std::size_t > > lbnode = bnode;
-            for (auto& s : lbnode)
-              for (auto& p : s.second)
-                p = cref_find( lid, p );
-            ew.writeMesh( inpoel, coord, lbnode );
-          } else Throw( "Centering not handled for writing mesh" );
+          else if (m_bndCentering == Centering::NODE)
+            ew.writeMesh( inpoel, coord, bnode );
+          else Throw( "Centering not handled for writing mesh" );
 
         } else {
           ew.writeMesh( inpoel, coord );

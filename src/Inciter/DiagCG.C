@@ -31,6 +31,7 @@
 #include "DiagReducer.h"
 #include "NodeBC.h"
 #include "Refiner.h"
+#include "Reorder.h"
 
 namespace inciter {
 
@@ -484,7 +485,7 @@ DiagCG::solve()
 }
 
 void
-DiagCG::writeFields( CkCallback c )
+DiagCG::writeFields( CkCallback c ) const
 // *****************************************************************************
 // Output mesh-based fields to file
 //! \param[in] c Function to continue with after the write
@@ -508,8 +509,8 @@ DiagCG::writeFields( CkCallback c )
   }
 
   // Send mesh and fields data (solution dump) for output to file
-  d->write( d->Inpoel(), d->Coord(), {}, m_bnode, {}, {}, nodefieldnames, {},
-            nodefields, c );
+  d->write( d->Inpoel(), d->Coord(), {}, tk::remap(m_bnode,d->Lid()), {}, {},
+            nodefieldnames, {}, nodefields, c );
 }
 
 void

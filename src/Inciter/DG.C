@@ -1119,7 +1119,7 @@ DG::comsol( int fromch,
 }
 
 void
-DG::writeFields( CkCallback c )
+DG::writeFields( CkCallback c ) const
 // *****************************************************************************
 // Output mesh-based fields to file
 //! \param[in] c Function to continue with after the write

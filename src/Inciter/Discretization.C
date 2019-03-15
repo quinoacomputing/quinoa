@@ -435,7 +435,7 @@ Discretization::write(
   m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
     write( meshoutput, fieldoutput, m_itr, m_itf, m_t, thisIndex,
            g_inputdeck.get< tag::cmd, tag::io, tag::output >(),
-           inpoel, coord, bface, bnode, triinpoel, m_lid, elemfieldnames,
+           inpoel, coord, bface, bnode, triinpoel, elemfieldnames,
            nodefieldnames, elemfields, nodefields, c );
 }
 

@@ -248,7 +248,7 @@ class DiagCG : public CBase_DiagCG {
     void out();
 
     //! Output mesh-based fields to file
-    void writeFields( CkCallback c );
+    void writeFields( CkCallback c ) const;
 
     //! \brief Extract node IDs from side set node lists and match to
     //    user-specified boundary conditions

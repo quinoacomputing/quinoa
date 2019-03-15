@@ -623,7 +623,7 @@ Refiner::writeMesh( const std::string& basefilename,
   m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
     write( /*meshoutput = */ true, /*fieldoutput = */ true, itr, 1, t,
            thisIndex, basefilename, m_inpoel, m_coord, m_bface, m_bnode,
-           tk::remap(m_triinpoel,m_lid), m_lid, elemfieldnames, nodefieldnames,
+           tk::remap(m_triinpoel,m_lid), elemfieldnames, nodefieldnames,
            elemfields, nodefields, c );
 }
 

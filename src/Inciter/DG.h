@@ -343,7 +343,7 @@ class DG : public CBase_DG {
     void out();
 
     //! Output mesh-based fields to file
-    void writeFields( CkCallback c );
+    void writeFields( CkCallback c ) const;
 
     //! Compute time step size
     void dt();
