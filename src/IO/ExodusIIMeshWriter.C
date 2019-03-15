@@ -111,7 +111,7 @@ ExodusIIMeshWriter::writeMesh(
 //! \param[in] triinp Triangle face connectivity (for all faces in bface)
 // *****************************************************************************
 {
-  // Fill element-relative face ids (0,1,2,3) for all side sets with 0 (= will
+  // Fill element-relative face ids (0,1,2,3) for all side sets with 0 (will
   // use triangles as face elements for side sets)
   std::map< int, std::vector< std::size_t > > faceid;
   for (const auto& s : bface) faceid[s.first].resize( s.second.size(), 0 );
