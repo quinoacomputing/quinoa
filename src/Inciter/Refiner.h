@@ -306,7 +306,7 @@ class Refiner : public CBase_Refiner {
     void writeMesh( const std::string& basefilename,
                     uint64_t it,
                     tk::real t,
-                    CkCallback c );
+                    CkCallback c ) const;
 
     //! Functor to call the resize() member function behind SchemeBase::Proxy
     struct Resize : boost::static_visitor<> {

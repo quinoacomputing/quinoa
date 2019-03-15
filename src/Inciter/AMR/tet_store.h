@@ -25,10 +25,6 @@ namespace AMR {
             AMR::active_element_store_t active_elements;
             AMR::master_element_store_t master_elements;
 
-
-            std::vector<real_t> cell_type_list;
-            std::vector<real_t> refinement_level_list;
-
             std::vector< std::size_t > active_tetinpoel;
             std::set< std::size_t > active_nodes;
 
@@ -360,9 +356,9 @@ namespace AMR {
              *
              * @return Vector containing refinement levels of tets
              */
-            std::vector< real_t >& get_refinement_level_list()
+            std::vector< real_t > get_refinement_level_list() const
             {
-                refinement_level_list.clear();
+                std::vector<real_t> refinement_level_list;
 
                 for (const auto& kv : tets)
                 {
@@ -383,9 +379,9 @@ namespace AMR {
              *
              * @return Vector listening the types of cells
              */
-            std::vector< real_t >& get_cell_type_list()
+            std::vector< real_t > get_cell_type_list() const
             {
-                cell_type_list.clear();
+                std::vector<real_t> cell_type_list;
 
                 for (const auto& kv : tets)
                 {

@@ -553,7 +553,7 @@ void
 Refiner::writeMesh( const std::string& basefilename,
                     uint64_t itr,
                     tk::real t,
-                    CkCallback c )
+                    CkCallback c ) const
 // *****************************************************************************
 //  Output mesh to file(s)
 //! \param[in] basefilename File name to append to
@@ -563,23 +563,30 @@ Refiner::writeMesh( const std::string& basefilename,
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
-  // Prepare element and node fields
+  // Prepare element fields with mesh refinement data
   std::vector< std::string > elemfieldnames{ "refinement level", "cell type" };
   auto& tet_store = m_refiner.tet_store;
   std::vector< std::vector< tk::real > > elemfields{
     tet_store.get_refinement_level_list(), tet_store.get_cell_type_list() };
 
+  // Prepare solution field names: depvar + component id for all eqs
   auto nprop = g_inputdeck.get< tag::component >().nprop();
-  auto nodefieldnames = g_inputdeck.get<tag::component>().depvar( g_inputdeck );
-  Assert( nodefieldnames.size() == nprop, "Size mismatch" );
+  auto solfieldnames = g_inputdeck.get<tag::component>().depvar( g_inputdeck );
+  Assert( solfieldnames.size() == nprop, "Size mismatch" );
 
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   const auto centering = ctr::Scheme().centering( scheme );
   auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
 
   std::vector< std::vector< tk::real > > nodefields;
+  std::vector< std::string > nodefieldnames;
 
+  // Prepare node or element fields for output to file
   if (centering == tk::Centering::NODE) {
+
+    // Augment element field names with solution variable names + field ids
+    nodefieldnames.insert( end(nodefieldnames),
+                           begin(solfieldnames), end(solfieldnames) );
 
     // Evaluate initial conditions on current mesh at t0
     tk::Fields u( m_coord[0].size(), nprop );
@@ -591,16 +598,33 @@ Refiner::writeMesh( const std::string& basefilename,
 
   } else if (centering == tk::Centering::ELEM) {
 
-    // ...
+    // Augment element field names with solution variable names + field ids
+    elemfieldnames.insert( end(elemfieldnames),
+                           begin(solfieldnames), end(solfieldnames) );
 
+    auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+    tk::Fields lhs( m_inpoel.size()/4, ndof*nprop );
+
+    // Generate left hand side for DG initialize
+    auto geoElem = tk::genGeoElemTet( m_inpoel, m_coord );
+    for (const auto& eq : g_dgpde) eq.lhs( geoElem, lhs );
+
+    // Evaluate initial conditions on current mesh at t0
+    auto u = lhs;
+    for (const auto& eq : g_dgpde)
+      eq.initialize( lhs, m_inpoel, m_coord, u, t0, m_inpoel.size()/4 );
+
+    // Extract all scalar components from solution for output to file
+    for (std::size_t i=0; i<nprop; ++i)
+      elemfields.push_back( u.extract( i, 0 ) );
   }
 
   // Output mesh
   m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
     write( /*meshoutput = */ true, /*fieldoutput = */ true, itr, 1, t,
            thisIndex, basefilename, m_inpoel, m_coord, m_bface, m_bnode,
-           m_triinpoel, m_lid, elemfieldnames, nodefieldnames, elemfields,
-           nodefields, c );
+           tk::remap(m_triinpoel,m_lid), m_lid, elemfieldnames, nodefieldnames,
+           elemfields, nodefields, c );
 }
 
 void
