@@ -39,7 +39,7 @@ if (ENABLE_WALKER)
   add_subdirectory(walker/NumFracBeta)
   add_subdirectory(walker/MassFracBeta)
   add_subdirectory(walker/MixMassFracBeta)
-  add_subdirectory(walker/Velocity)
+  #add_subdirectory(walker/Velocity)
 endif()
 
 # RNGTest regression tests
