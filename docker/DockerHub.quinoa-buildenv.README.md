@@ -10,9 +10,4 @@ For more details on philosophy, documentation, software design, journal papers, 
 [documentation](https://quinoacomputing.github.io).
 
 ### How to use these images
-The images in this repository are configured for a single computer, and thus intended to quickly try the pre-built executables on a multi-core workstation. For production runs on clusters of networked compute nodes you should build from source. See https://quinoacomputing.github.io for more details.
-
-Run the unit-, and regression tests in the Alpine container on your local machine:
-
-    docker run -ti quinoacomputing/quinoa:alpine
-    cd quinoa/build && ./charmrun +p 8 Main/unittest -v -q && ctest -j 8 --output-on-failure -LE extreme
+The images in this repository are used for automated testing at [Azure](https://dev.azure.com/quinoacomputing/Quinoa). See https://quinoacomputing.github.io for more details.
