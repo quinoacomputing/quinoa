@@ -19,5 +19,24 @@ using hardware resources efficiently, even for problems with _a priori_
 unknown, heterogeneous, and dynamic load distribution.
 
 For more details on philosophy, documentation, software design, journal papers,
-license, contributing see the
+license, and contributing see the
 [documentation](https://quinoacomputing.github.io).
+
+## Directory layout
+
+ - `README.md` - This file, rendered at https://github.com/quinoacomputing/quinoa.
+ - `LICENSE` - Copyright and license.
+
+ - `cmake/` - CMake code shared between [external
+   packages](https://github.com/quinoacomputing/quinoa-tpl) (third-party
+   libraries) and `src/`.
+ - `src/` - Compilable sources. For a more detailed description of the contents
+   of the `src/` directory and its subdirectories, see
+   `docs/pages/directories.dox`, rendered at
+   https://quinoacomputing.github.io/files.html.
+ - `docs/` - Documentation, rendered at https://quinoacomputing.github.io.
+ - `tests/` - Unit-, and regression tests.
+ - `tools/` - Development utilities and docker files.
+ - `external/` - External packages (third-party libraries) pulled in as git
+   submodules.
+
