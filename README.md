@@ -20,21 +20,21 @@ unknown, heterogeneous, and dynamic load distribution.
 
 ## Directory layout
 
- - `README.md` - This file, rendered at https://github.com/quinoacomputing/quinoa.
- - `LICENSE` - Copyright and license.
-
  - `cmake/` - CMake code shared between [external
    packages](https://github.com/quinoacomputing/quinoa-tpl) (third-party
    libraries) and `src/`.
+ - `doc/` - Documentation, rendered at https://quinoacomputing.github.io.
+ - `external/` - External packages (third-party libraries) pulled in as git
+   submodules.
  - `src/` - Compilable sources. For a more detailed description of the contents
    of the `src/` directory and its subdirectories, see
    `docs/pages/directories.dox`, rendered at
    https://quinoacomputing.github.io/files.html.
- - `docs/` - Documentation, rendered at https://quinoacomputing.github.io.
  - `tests/` - Unit-, and regression tests.
  - `tools/` - Development utilities and docker files.
- - `external/` - External packages (third-party libraries) pulled in as git
-   submodules.
+
+ - `LICENSE` - Copyright and license.
+ - `README.md` - This file, rendered at https://github.com/quinoacomputing/quinoa.
 
 ## More info
 
