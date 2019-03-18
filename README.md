@@ -18,10 +18,6 @@ problems with a production-quality code that is extensible and maintainable,
 using hardware resources efficiently, even for problems with _a priori_
 unknown, heterogeneous, and dynamic load distribution.
 
-For more details on philosophy, documentation, software design, journal papers,
-license, and contributing see the
-[documentation](https://quinoacomputing.github.io).
-
 ## Directory layout
 
  - `README.md` - This file, rendered at https://github.com/quinoacomputing/quinoa.
@@ -39,4 +35,10 @@ license, and contributing see the
  - `tools/` - Development utilities and docker files.
  - `external/` - External packages (third-party libraries) pulled in as git
    submodules.
+
+## More info
+
+For more details on philosophy, documentation, software design, journal papers,
+license, and contributing see the
+[documentation](https://quinoacomputing.github.io).
 
