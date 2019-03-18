@@ -73,7 +73,7 @@ jobs:
         DISTRO: 'debian-doc'
   steps:
     - bash: |
-        cp -vr docker $(HOME)/docker
+        cp -vr tools/docker $(HOME)/docker
         sed -i "/^FROM/s/debian/${DISTRO}/" docker/Dockerfile.quinoa-build-azure
         docker build \
                --build-arg COMPILER=${COMPILER} \

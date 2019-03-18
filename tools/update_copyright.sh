@@ -1,7 +1,7 @@
 #!/bin/bash -e
 ################################################################################
 #
-# \file      script/update_copyright.sh
+# \file      tools/update_copyright.sh
 # \brief     Switch copyright year in all files
 # \copyright 2012-2015 J. Bakosi,
 #            2016-2018 Los Alamos National Security, LLC.,
@@ -11,7 +11,7 @@
 
 # Suggested argument directories:
 #
-#   quinoa: doc docker tests script src
+#   quinoa: doc tests tools src
 #   quinoa-tpl: docker
 #   quinoa-cmake: .
 
