@@ -108,6 +108,11 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
   include(DetectCompilerVersion)
 endif()
 
+set(ENABLE_TESTS true CACHE BOOL "Enable unit-, and regression tests, as well as building the unit test hardness.")
+if (NOT ENABLE_TESTS)
+  message(STATUS "Tests disabled.")
+endif()
+
 # Include third-party libraries configuration
 include(TPLs)
 
@@ -586,7 +591,7 @@ if (ENABLE_INCITER)
   add_subdirectory(Inciter)
 endif()
 
-if (ENABLE_UNITTEST)
+if (ENABLE_UNITTEST AND ENABLE_TESTS)
   add_subdirectory(UnitTest)
 endif()
 
@@ -633,12 +638,14 @@ include(CppCheck)
 enable_testing()
 
 # Include cmake code common to all regression tests
-add_subdirectory(${REGRESSION_DIR}
-                 ${CMAKE_BINARY_DIR}/tests
-                 EXCLUDE_FROM_ALL)
+if (ENABLE_TESTS)
+  add_subdirectory(${REGRESSION_DIR}
+                   ${CMAKE_BINARY_DIR}/tests
+                   EXCLUDE_FROM_ALL)
+endif()
 
 # Setup code coverage for unit tests
-if(CODE_COVERAGE)
+if(CODE_COVERAGE AND ENABLE_TESTS)
   # Setup test coverage target. Make it dependend on all quinoa executables.
   setup_target_for_coverage(unit doc/html unittest_coverage ${RUNNER}
                             TESTRUNNER_ARGS ${RUNNER_NCPUS_ARG}
@@ -650,7 +657,7 @@ if(CODE_COVERAGE)
 endif()
 
 # Setup code coverage for regression tests
-if(CODE_COVERAGE)
+if(CODE_COVERAGE AND ENABLE_TESTS)
   # Setup test coverage target. Make it dependend on all quinoa executables.
   setup_target_for_coverage(regression doc/html regression_coverage
                             ${CMAKE_CTEST_COMMAND}
@@ -663,7 +670,7 @@ if(CODE_COVERAGE)
 endif()
 
 # Setup code coverage for all individual coverage targets included
-if(CODE_COVERAGE)
+if(CODE_COVERAGE AND ENABLE_TESTS)
   setup_target_for_all_coverage(all doc/html test_coverage
                                 ${RUNNER} ${RUNNER_NCPUS_ARG}
                                 DEPENDS ${NONTEST_EXECUTABLES}

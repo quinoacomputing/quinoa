@@ -69,7 +69,7 @@ endif()
 
 # Configure executable targets
 
-if (ENABLE_UNITTEST)
+if (ENABLE_UNITTEST AND ENABLE_TESTS)
   include("UnitTest.cmake")
 endif()
 

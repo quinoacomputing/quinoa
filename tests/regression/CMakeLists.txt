@@ -9,9 +9,6 @@
 #
 ################################################################################
 
-# Quinoa cmake modules directory
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
-
 # Set paths required for running tests
 set(TEST_RUNNER ${CMAKE_SOURCE_DIR}/../cmake/test_runner.cmake)
 
