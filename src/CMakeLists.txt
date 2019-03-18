@@ -70,7 +70,7 @@ string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 # Set build type (will be exported to the source)
 set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
 # Query regression tests directory (will be exported to the source)
-set(REGRESSION_DIR "${PROJECT_SOURCE_DIR}/../regression")
+set(REGRESSION_DIR "${PROJECT_SOURCE_DIR}/../tests/regression")
 
 # Query target architecture
 include(TargetArch)
@@ -633,8 +633,8 @@ include(CppCheck)
 enable_testing()
 
 # Include cmake code common to all regression tests
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../regression
-                 ${CMAKE_BINARY_DIR}/regression
+add_subdirectory(${REGRESSION_DIR}
+                 ${CMAKE_BINARY_DIR}/tests
                  EXCLUDE_FROM_ALL)
 
 # Setup code coverage for unit tests

@@ -11,7 +11,7 @@
 
 # Suggested argument directories:
 #
-#   quinoa: doc docker regression script src
+#   quinoa: doc docker tests script src
 #   quinoa-tpl: docker
 #   quinoa-cmake: .
 
