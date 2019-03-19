@@ -176,7 +176,7 @@ class ALECG : public CBase_ALECG {
 
     //! Discretization proxy
     CProxy_Discretization m_disc;
-    //! True if starting time stepping, false if during time stepping
+    //! 1 if starting time stepping, 0 if during time stepping
     int m_initial;
     //! Counter for high order solution vector nodes updated
     std::size_t m_nsol;

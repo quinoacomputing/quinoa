@@ -35,7 +35,7 @@ extern std::vector< DGPDE > g_dgpde;
 
 //! Runge-Kutta coefficients
 static const std::array< std::array< tk::real, 3 >, 2 >
-  m_rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
+  rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
 
 } // inciter::
 
@@ -1282,8 +1282,8 @@ DG::solve( tk::real newdt )
             m_limFunc, m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
-  m_u =  m_rkcoef[0][m_stage] * m_un
-       + m_rkcoef[1][m_stage] * ( m_u + d->Dt() * m_rhs/m_lhs );
+  m_u =  rkcoef[0][m_stage] * m_un
+       + rkcoef[1][m_stage] * ( m_u + d->Dt() * m_rhs/m_lhs );
 
   if (m_stage < 2) {
 
