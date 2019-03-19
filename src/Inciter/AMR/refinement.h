@@ -907,6 +907,7 @@ namespace AMR {
                 for (auto c : to_be_replaced)
                 {
                     tet_store.data(c).children = replace_with;
+                    tet_store.data(c).num_children = tet_store.data(c).children.size();
                 }
             }
 
