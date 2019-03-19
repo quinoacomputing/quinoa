@@ -25,7 +25,7 @@ namespace cmd {
 
   //! \brief Specialization of tk::grm::use for MeshConv's command line parser
   template< typename keyword >
-  using use = tk::grm::use< keyword, ctr::CmdLine::keywords >;
+  using use = tk::grm::use< keyword, ctr::CmdLine::keywords::set >;
 
   // MeshConv's CmdLine state
 

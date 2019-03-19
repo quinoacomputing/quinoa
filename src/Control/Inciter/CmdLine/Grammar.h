@@ -25,7 +25,7 @@ namespace cmd {
 
   //! Specialization of tk::grm::use for Inciter's command line parser
   template< typename keyword >
-  using use = tk::grm::use< keyword, ctr::CmdLine::keywords >;
+  using use = tk::grm::use< keyword, ctr::CmdLine::keywords::set >;
 
   // Inciter's CmdLine grammar
 

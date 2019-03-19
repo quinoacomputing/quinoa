@@ -18,8 +18,6 @@
 
 #include <brigand/algorithms/for_each.hpp>
 
-#include "NoWarning/set.h"
-
 #include "Control.h"
 #include "HelpFactory.h"
 #include "Keywords.h"
@@ -54,22 +52,22 @@ class CmdLine : public tk::Control<
   public:
     //! \brief Inciter command-line keywords
     //! \see tk::grm::use and its documentation
-    using keywords = brigand::set< kw::verbose
-                                 , kw::charestate
-                                 , kw::nonblocking
-                                 , kw::benchmark
-                                 , kw::feedback
-                                 , kw::virtualization
-                                 , kw::help
-                                 , kw::helpctr
-                                 , kw::helpkw
-                                 , kw::control
-                                 , kw::input
-                                 , kw::output
-                                 , kw::diagnostics
-                                 , kw::quiescence
-                                 , kw::lbfreq
-                                 >;
+    using keywords = tk::cmd_keywords< kw::verbose
+                                     , kw::charestate
+                                     , kw::nonblocking
+                                     , kw::benchmark
+                                     , kw::feedback
+                                     , kw::virtualization
+                                     , kw::help
+                                     , kw::helpctr
+                                     , kw::helpkw
+                                     , kw::control
+                                     , kw::input
+                                     , kw::output
+                                     , kw::diagnostics
+                                     , kw::quiescence
+                                     , kw::lbfreq
+                                     >;
 
     //! \brief Constructor: set all defaults.
     //! \param[in] ctrinfo std::map of control file keywords and their info
@@ -103,8 +101,6 @@ class CmdLine : public tk::Control<
     //!   otherwise it would be a mutual dependency.
     // cppcheck-suppress noExplicitConstructor
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
-      // Require an alias for all command line keywords
-      brigand::for_each< keywords >( kw::HasAlias() );
       set< tag::io, tag::output >( "out" );
       set< tag::io, tag::diag >( "diag" );
       set< tag::io, tag::part >( "track.h5part" );
@@ -116,7 +112,7 @@ class CmdLine : public tk::Control<
       set< tag::feedback >( false ); // No detailed feedback by default
       set< tag::lbfreq >( 1 ); // Load balancing every time-step by default
       // Initialize help: fill from own keywords + add map passed in
-      brigand::for_each< keywords >( tk::ctr::Info( get< tag::cmdinfo >() ) );
+      brigand::for_each< keywords::set >( tk::ctr::Info(get<tag::cmdinfo>()) );
       get< tag::ctrinfo >() = std::move( ctrinfo );
     }
 

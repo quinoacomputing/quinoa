@@ -18,8 +18,6 @@
 
 #include <brigand/algorithms/for_each.hpp>
 
-#include "NoWarning/set.h"
-
 #include "Macro.h"
 #include "Control.h"
 #include "Keywords.h"
@@ -42,24 +40,24 @@ class CmdLine :
                       tag::chare,      bool,
                       tag::reorder,    bool,
                       tag::help,       bool,
-                      tag::helpctr,    bool,
                       tag::quiescence, bool,
                       tag::cmdinfo,    tk::ctr::HelpFactory,
                       tag::ctrinfo,    tk::ctr::HelpFactory,
                       tag::helpkw,     tk::ctr::HelpKw,
                       tag::error,      std::vector< std::string > > {
   public:
+
     //! \brief MeshConv command-line keywords
     //! \see tk::grm::use and its documentation
-    using keywords = brigand::set< kw::verbose
-                                 , kw::charestate
-                                 , kw::help
-                                 , kw::helpkw
-                                 , kw::input
-                                 , kw::output
-                                 , kw::reorder
-                                 , kw::quiescence
-                                 >;
+    using keywords = tk::cmd_keywords< kw::verbose
+                                     , kw::charestate
+                                     , kw::help
+                                     , kw::helpkw
+                                     , kw::input
+                                     , kw::output
+                                     , kw::reorder
+                                     , kw::quiescence
+                                     >;
 
     //! \brief Constructor: set defaults.
     //! \details Anything not set here is initialized by the compiler using the
@@ -68,13 +66,11 @@ class CmdLine :
     //!   control file parser.
     //! \see walker::ctr::CmdLine
     CmdLine() {
-      // Require an alias for all command line keywords
-      brigand::for_each< keywords >( kw::HasAlias() );
       set< tag::verbose >( false ); // Use quiet output by default
       set< tag::chare >( false ); // No chare state output by default
       set< tag::reorder >( false ); // Do not reorder by default
       // Initialize help: fill from own keywords
-      brigand::for_each< keywords >( tk::ctr::Info( get< tag::cmdinfo >() ) );
+      brigand::for_each< keywords::set >( tk::ctr::Info(get<tag::cmdinfo>()) );
     }
 
     /** @name Pack/Unpack: Serialize CmdLine object for Charm++ */
@@ -87,7 +83,6 @@ class CmdLine :
                    tag::chare,      bool,
                    tag::reorder,    bool,
                    tag::help,       bool,
-                   tag::helpctr,    bool,
                    tag::quiescence, bool,
                    tag::cmdinfo,    tk::ctr::HelpFactory,
                    tag::ctrinfo,    tk::ctr::HelpFactory,

@@ -13,27 +13,32 @@
 #ifndef Keyword_h
 #define Keyword_h
 
-#include <brigand/types/type.hpp>
-
+#include "NoWarning/set.h"
 #include "NoWarning/optional.h"
-
 #include "NoWarning/pegtl.h"
 
 #include "Has.h"
 #include "Escaper.h"
 
+namespace tk {
+
+//! Helper to declare a set of command line keywords
+//! \details This ensures that a compile-error is generated if there is no alias
+//!    defined for the keyword, and also if the aliases are non-unique.
+template< typename... T >
+class cmd_keywords {
+  public:
+    using set = brigand::set< T... >;
+  private:
+    template< typename K > using alias = typename K::info::alias::type;
+    using aliases = brigand::set< alias<T>... >;
+};
+
+} // tk::
+
 namespace kw {
 
 using namespace tao;
-
-
-//! Function object to ensure that an alias is defined for a keyword
-struct HasAlias {
-  template< typename U > void operator()( brigand::type_<U> ) {
-    static_assert( tk::HasTypedefAlias< typename U::info >::value,
-                   "No alias defined for keyword" );
-  }
-};
 
 //! \brief Keyword alias helper
 //! \details This struct is used to define both a type and a value for a keyword
