@@ -66,6 +66,8 @@ class CmdLine :
     //!   control file parser.
     //! \see walker::ctr::CmdLine
     CmdLine() {
+      // Require an alias for all command line keywords
+      brigand::for_each< keywords >( kw::HasAlias() );
       set< tag::verbose >( false ); // Use quiet output by default
       set< tag::chare >( false ); // No chare state output by default
       // Initialize help: fill from own keywords

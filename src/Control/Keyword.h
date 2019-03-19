@@ -13,6 +13,8 @@
 #ifndef Keyword_h
 #define Keyword_h
 
+#include <brigand/types/type.hpp>
+
 #include "NoWarning/optional.h"
 
 #include "NoWarning/pegtl.h"
@@ -23,6 +25,15 @@
 namespace kw {
 
 using namespace tao;
+
+
+//! Function object to ensure that an alias is defined for a keyword
+struct HasAlias {
+  template< typename U > void operator()( brigand::type_<U> ) {
+    static_assert( tk::HasTypedefAlias< typename U::info >::value,
+                   "No alias defined for keyword" );
+  }
+};
 
 //! \brief Keyword alias helper
 //! \details This struct is used to define both a type and a value for a keyword

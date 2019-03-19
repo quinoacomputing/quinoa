@@ -88,6 +88,8 @@ class CmdLine : public tk::Control<
     //!   otherwise it would be a mutual dependency.
     // cppcheck-suppress noExplicitConstructor
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
+      // Require an alias for all command line keywords
+      brigand::for_each< keywords >( kw::HasAlias() );
       set< tag::io, tag::output >( "out" );
       set< tag::io, tag::pdf >( "pdf" );
       set< tag::io, tag::stat >( "stat.txt" );
