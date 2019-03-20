@@ -1786,6 +1786,7 @@ namespace grm {
   //!   walker::cmd::use in Control/Walker/CmdLine/Grammar.h and its keywords
   //!   pool, walker::ctr::CmdLine::keywords, in
   //!   Control/Walker/CmdLine/CmdLine.h.
+  //! \see http://en.cppreference.com/w/cpp/types/conditional
   //! TODO It still would be nice to generate a more developer-friendly
   //!    compiler error if the keyword is not in the pool.
   template< typename keyword, typename pool >
