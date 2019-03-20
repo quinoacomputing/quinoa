@@ -113,7 +113,7 @@ For larger problems and computers, however, you should build from source.
 - Clone, build third-party libraries, build & test
 
        git clone --recurse-submodules https://github.com/quinoacomputing/quinoa.git; cd quinoa
-       mkdir tpl/build; cd tpl/build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 .. && make; cd -
+       mkdir external/build; cd external/build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 .. && make; cd -
        mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src && make && ./charmrun +p 8 Main/unittest -v -q && ctest -j 8 --output-on-failure -LE extreme
 
 All executables will be under `build/Main/`.
@@ -123,7 +123,7 @@ some optional libraries will _not_ be built. If you are building on a different
 system, you might have to experiment with your package manager a bit to get all
 required @ref licenses "libraries" built. The following may help with building in
 various environments:
-- https://github.com/quinoacomputing/quinoa/tree/master/docker
+- https://github.com/quinoacomputing/quinoa/tree/master/tools/docker
 - https://github.com/quinoacomputing/quinoa-tpl/tree/master/docker
 - https://github.com/quinoacomputing/buildenv
 
