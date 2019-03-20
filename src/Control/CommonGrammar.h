@@ -934,7 +934,7 @@ namespace grm {
   //! Rule used to trigger action
   template< class keyword, typename tag, typename... tags >
   struct check_upper_bound : pegtl::success {};
-  //! Check if value is larger than lower bound
+  //! Check if value is lower than upper bound
   template< class keyword, typename tag, typename... tags >
   struct action< check_upper_bound< keyword, tag, tags... > > {
     template< typename Input, typename Stack >
