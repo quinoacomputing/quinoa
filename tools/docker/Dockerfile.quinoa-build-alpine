@@ -50,7 +50,7 @@ RUN git clone --recursive http://github.com/quinoacomputing/quinoa.git
 ARG COMMIT
 RUN cd quinoa && git checkout $COMMIT
 # Update submodules
-RUN cd quinoa && git submodule update --recursive && cd external && git submodule init && git submodule update --recursive && cd .. && git submodule status --recursive
+RUN cd quinoa && git submodule init && git submodule update --recursive && cd external && git submodule init && git submodule update --recursive && cd .. && git submodule status --recursive
 # Build TPLs
 RUN cd quinoa && mkdir -p external/build && cd external/build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off .. && make -sj$(grep -c processor /proc/cpuinfo)
 # Build quinoa

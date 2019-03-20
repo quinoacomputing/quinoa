@@ -123,7 +123,7 @@ some optional libraries will _not_ be built. If you are building on a different
 system, you might have to experiment with your package manager a bit to get all
 required @ref licenses "libraries" built. The following may help with building in
 various environments:
-- https://github.com/quinoacomputing/quinoa/tree/master/docker
+- https://github.com/quinoacomputing/quinoa/tree/master/tools/docker
 - https://github.com/quinoacomputing/quinoa-tpl/tree/master/docker
 - https://github.com/quinoacomputing/buildenv
 
