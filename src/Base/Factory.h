@@ -35,7 +35,7 @@ namespace tk {
 //! and thus facilitates runtime polymorphism. This function works in conjunction
 //! with boost::factory, i.e., uses reference semantics (works with storing
 //! pointers of objects). For a simple example on how to use this function, see
-//! UnitTest/tests/Base/Factory.h.
+//! tests/unit/Base/Factory.h.
 //! \param[in] f Factory to register to (std::map with value using reference
 //!   semantics)
 //! \param[in] key Key used to identify the entry in the factory
@@ -62,7 +62,7 @@ void record( Factory& f, const Key& key, ConstructorArgs&&... args ) {
 //! object instantiated is of type Child class. This function works in
 //! conjunction with boost::factory, i.e., uses reference semantics (works with
 //! storing pointers of objects). For a simple example on how to
-//! use this function, see UnitTest/tests/Base/Factory.h.
+//! use this function, see tests/unit//Base/Factory.h.
 //! \param[in] f Factory to instantiate object from (std::map with value using
 //!   reference semantics)
 //! \param[in] key Key used to identify the object to instantiate from factory
@@ -94,7 +94,7 @@ std::unique_ptr< Obj > instantiate( const Factory& f, const Key& key ) {
 //! as the "derived" (or child) class. This wrapper function works in
 //! conjunction with boost::value_factory, i.e., uses value semantics (works
 //! with storing objects instead of object pointers). For a simple example on
-//! how to use this function, see UnitTest/tests/Base/Factory.h.
+//! how to use this function, see tests/unit//Base/Factory.h.
 //! \param[in] f Factory to register to (std::map with value using value
 //!   semantics)
 //! \param[in] key Key used to identify the entry in the factory
@@ -168,7 +168,7 @@ void recordModelLate( Factory& f, const Key& key, ModelConstrArg ) {
 //! that is only called at a later point in time. This can then be used by those
 //! constructors of hosts that invoke the model constructors' proxies' ckNew()
 //! and ignore the std::function. See, e.g., rngtest::Battery() and the
-//! associated unit tests in UnitTest/tests/Base/Factory.h.
+//! associated unit tests in tests/unit//Base/Factory.h.
 //! \param[in] f Factory to register to (std::map with value using value
 //!   semantics)
 //! \param[in] key Key used to identify the entry in the factory
