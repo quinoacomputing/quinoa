@@ -32,38 +32,41 @@ namespace cmd {
 
   //! \brief Match and set verbose switch (i.e., verbose or quiet output)
   struct verbose :
-         tk::grm::process_cmd_switch< use< kw::verbose >,
+         tk::grm::process_cmd_switch< use, kw::verbose,
                                       tag::verbose > {};
 
   //! Match and set chare state switch
   struct charestate :
-         tk::grm::process_cmd_switch< use< kw::charestate >,
+         tk::grm::process_cmd_switch< use, kw::charestate,
                                       tag::chare > {};
 
   //! \brief Match and set control (i.e., input deck) file name
   struct control :
-         tk::grm::process_cmd< use< kw::control >,
-                               tk::grm::Store< tag::io, tag::control > > {};
+         tk::grm::process_cmd< use, kw::control,
+                               tk::grm::Store< tag::io, tag::control >,
+                               pegtl::any,
+                               tag::io, tag::control > {};
 
   //! \brief Match help on control file keywords
   struct helpctr :
-         tk::grm::process_cmd_switch< use< kw::helpctr >,
+         tk::grm::process_cmd_switch< use, kw::helpctr,
                                       tag::helpctr > {};
 
   //! \brief Match help on command-line parameters
   struct help :
-         tk::grm::process_cmd_switch< use< kw::help >,
+         tk::grm::process_cmd_switch< use, kw::help,
                                       tag::help > {};
 
   //! \brief Match help on a command-line keyword
   struct helpkw :
-         tk::grm::process_cmd< use< kw::helpkw >,
+         tk::grm::process_cmd< use, kw::helpkw,
                                tk::grm::helpkw,
-                               pegtl::alnum > {};
+                               pegtl::alnum,
+                               tag::discr /* = unused */ > {};
 
   //! Match help on control file keywords
   struct quiescence :
-         tk::grm::process_cmd_switch< use< kw::quiescence >,
+         tk::grm::process_cmd_switch< use, kw::quiescence,
                                       tag::quiescence > {};
 
   //! Match all command line keywords

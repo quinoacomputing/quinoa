@@ -31,43 +31,48 @@ namespace cmd {
 
   //! verbose (i.e., verbose or quiet output)
   struct verbose :
-         tk::grm::process_cmd_switch< use< kw::verbose >,
+         tk::grm::process_cmd_switch< use, kw::verbose,
                                       tag::verbose > {};
 
   //! Match and set chare state switch
   struct charestate :
-         tk::grm::process_cmd_switch< use< kw::charestate >,
+         tk::grm::process_cmd_switch< use, kw::charestate,
                                       tag::chare > {};
 
   //! virtualization parameter
   struct virtualization :
-         tk::grm::process_cmd< use< kw::virtualization >,
+         tk::grm::process_cmd< use, kw::virtualization,
                                tk::grm::Store< tag::virtualization >,
-                               tk::grm::number > {};
+                               tk::grm::number,
+                               tag::virtualization > {};
 
   //! io parameter
   template< typename keyword, typename io_tag >
   struct io :
-         tk::grm::process_cmd< keyword, tk::grm::Store< tag::io, io_tag > > {};
+         tk::grm::process_cmd< use, keyword,
+                               tk::grm::Store< tag::io, io_tag >,
+                               pegtl::any,
+                               tag::io, io_tag > {};
 
   //! help on control file keywords
   struct helpctr :
-         tk::grm::process_cmd_switch< use< kw::helpctr >,
+         tk::grm::process_cmd_switch< use, kw::helpctr,
                                       tag::helpctr > {};
 
   //! help on command-line parameters
   struct help :
-         tk::grm::process_cmd_switch< use< kw::help >, tag::help > {};
+         tk::grm::process_cmd_switch< use, kw::help, tag::help > {};
 
   //! help on a command-line keyword
   struct helpkw :
-         tk::grm::process_cmd< use< kw::helpkw >,
+         tk::grm::process_cmd< use, kw::helpkw,
                                tk::grm::helpkw,
-                               pegtl::alnum > {};
+                               pegtl::alnum,
+                               tag::discr /* = unused */ > {};
 
   //! Match help on control file keywords
   struct quiescence :
-         tk::grm::process_cmd_switch< use< kw::quiescence >,
+         tk::grm::process_cmd_switch< use, kw::quiescence,
                                       tag::quiescence > {};
 
   //! command line keywords
@@ -79,9 +84,9 @@ namespace cmd {
                      helpkw,
                      virtualization,
                      quiescence,
-                     io< use< kw::control >, tag::control >,
-                     io< use< kw::pdf >, tag::pdf >,
-                     io< use< kw::stat >, tag::stat > > {};
+                     io< kw::control, tag::control >,
+                     io< kw::pdf, tag::pdf >,
+                     io< kw::stat, tag::stat > > {};
 
   //! entry point: parse keywords and until end of string
   struct read_string :

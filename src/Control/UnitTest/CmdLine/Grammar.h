@@ -33,33 +33,36 @@ namespace cmd {
 
   //! \brief Match and set verbose switch (i.e., verbose or quiet output)
   struct verbose :
-         tk::grm::process_cmd_switch< use< kw::verbose >,
+         tk::grm::process_cmd_switch< use, kw::verbose,
                                       tag::verbose > {};
 
   //! Match and set chare state switch
   struct charestate :
-         tk::grm::process_cmd_switch< use< kw::charestate >,
+         tk::grm::process_cmd_switch< use, kw::charestate,
                                       tag::chare > {};
 
   //! \brief Match help on command-line parameters
   struct help :
-         tk::grm::process_cmd_switch< use< kw::help >,
+         tk::grm::process_cmd_switch< use, kw::help,
                                       tag::help > {};
 
   //! \brief Match help on a command-line keyword
   struct helpkw :
-         tk::grm::process_cmd< use< kw::helpkw >,
+         tk::grm::process_cmd< use, kw::helpkw,
                                tk::grm::helpkw,
-                               pegtl::alnum > {};
+                               pegtl::alnum,
+                               tag::discr /* = unused */ > {};
 
   //! \brief Match test group name(s) and only run those
   struct group :
-         tk::grm::process_cmd< use< kw::group >,
-                               tk::grm::Store< tag::group > > {};
+         tk::grm::process_cmd< use, kw::group,
+                               tk::grm::Store< tag::group >,
+                               pegtl::any,
+                               tag::group > {};
 
   //! Match help on control file keywords
   struct quiescence :
-         tk::grm::process_cmd_switch< use< kw::quiescence >,
+         tk::grm::process_cmd_switch< use, kw::quiescence,
                                       tag::quiescence > {};
 
   //! \brief Match all command line keywords
