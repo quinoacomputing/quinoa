@@ -647,9 +647,11 @@ DiagCG::resize(
   m_dif.resize( npoin, nprop );
 
   // Update solution on new mesh
-  for (const auto& n : addedNodes)
-    for (std::size_t c=0; c<nprop; ++c)
+  for (const auto& n : addedNodes) {
+    for (std::size_t c=0; c<nprop; ++c) {
       m_u(n.first,c,0) = (m_u(n.second[0],c,0) + m_u(n.second[1],c,0))/2.0;
+    }
+  }
 
   // Update physical-boundary node lists
   m_bnode = bnode;
