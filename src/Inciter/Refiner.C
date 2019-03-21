@@ -655,8 +655,8 @@ Refiner::next()
       n.insert( end(n), c.second.cbegin(), c.second.cend() );
     }
     boost::apply_visitor(
-      Resize( m_ginpoel, m_el, m_coord, m_addedNodes, m_addedTets, msum,
-              m_bface, m_bnode, m_triinpoel ), e );
+      ResizeAfterRefined( m_ginpoel, m_el, m_coord, m_addedNodes, m_addedTets,
+        msum, m_bface, m_bnode, m_triinpoel ), e );
 
   }
 }
