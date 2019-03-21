@@ -305,7 +305,7 @@ class DG : public CBase_DG {
     void resizeComm();
 
     //! Start recomputing ghost data after a mesh refinement step
-    void recompGhost();
+    void recompGhostRefined();
 
     //! Perform leak test on chare-boundary faces
     bool leakyAdjacency();
