@@ -39,7 +39,9 @@ struct KeywordInfo {
   std::string longDescription;            //!< Long description
   std::optional< std::string > alias;     //!< Keyword alias
   std::optional< std::string > expt;      //!< Expected type description
-  std::optional< std::string > choices;   //!< Expected choices descr.
+  std::optional< std::string > lower;     //!< Lower bound as string
+  std::optional< std::string > upper;     //!< Upper bound as string
+  std::optional< std::string > choices;   //!< Expected choices description
 
   /** @name Pack/Unpack: Serialize KeywordInfo object for Charm++ */
   ///@{
@@ -50,6 +52,8 @@ struct KeywordInfo {
     p | longDescription;
     p | alias;
     p | expt;
+    p | lower;
+    p | upper;
     p | choices;
   }
   //! \brief Pack/Unpack serialize operator|
@@ -99,6 +103,8 @@ struct Info {
                                  U::longDescription(),
                                  U::alias(),
                                  U::expt(),
+                                 U::lower(),
+                                 U::upper(),
                                  U::choices() };
   }
 };

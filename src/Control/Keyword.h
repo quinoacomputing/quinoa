@@ -15,10 +15,27 @@
 
 #include <optional>
 
+#include "NoWarning/set.h"
 #include "NoWarning/pegtl.h"
 
 #include "Has.h"
 #include "Escaper.h"
+
+namespace tk {
+
+//! Helper to declare a set of command line keywords
+//! \details This ensures that a compile-error is generated if there is no alias
+//!    defined for the keyword, and also if the aliases are non-unique.
+template< typename... T >
+class cmd_keywords {
+  public:
+    using set = brigand::set< T... >;
+  private:
+    template< typename K > using alias = typename K::info::alias::type;
+    using aliases = brigand::set< alias<T>... >;
+};
+
+} // tk::
 
 namespace kw {
 
@@ -138,6 +155,26 @@ struct keyword< Info, pegtl::string< Chars... > > {
   static std::optional< std::string > choices() {
     if constexpr( tk::HasFunctionExpectChoices_v< T > )
       return Info::expect::choices();
+    else
+      return std::nullopt;
+  }
+
+  //! Expected lower bound accessor for a keyword
+  //! \return An initialized (or uninitialized) std::optional< std::string >
+  template< typename T = Info >
+  static std::optional< std::string > lower() {
+    if constexpr( tk::HasVarExpectLower_v< T > )
+      return std::to_string( Info::expect::lower );
+    else
+      return std::nullopt;
+  }
+
+  //! Expected upper bound accessor for a keyword
+  //! \return An initialized (or uninitialized) std::optional< std::string >
+  template< typename T = Info >
+  static std::optional< std::string > upper() {
+    if constexpr( tk::HasVarExpectUpper_v< T > )
+      return std::to_string( Info::expect::upper );
     else
       return std::nullopt;
   }

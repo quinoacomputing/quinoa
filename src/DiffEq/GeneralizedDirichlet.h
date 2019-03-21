@@ -165,8 +165,8 @@ class GeneralizedDirichlet {
         std::vector< tk::real > U( m_ncomp );
         U[m_ncomp-1] = 1.0;
         for (long i=static_cast<long>(m_ncomp)-2; i>=0; --i) {
-          auto I = static_cast< std::size_t >( i );
-          U[I] = U[I+1]/Y[I];
+          auto j = static_cast< std::size_t >( i );
+          U[j] = U[j+1]/Y[j];
         }
 
         // Generate Gaussian random numbers with zero mean and unit variance

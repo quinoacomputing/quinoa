@@ -100,6 +100,42 @@ template < typename T >
 inline constexpr bool HasFunctionExpectDescription_v =
   HasFunctionExpectDescription< T >::value;
 
+//! \brief Detect if T defines variable "expect::lower"
+//! \see http://stackoverflow.com/a/257382
+template< typename T >
+struct HasVarExpectLower {
+  private:
+    typedef char                      yes;
+    typedef struct { char array[2]; } no;
+    template<typename C> static yes test(decltype(&C::expect::lower));
+    template<typename C> static no  test(...);
+  public:
+    static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
+};
+
+//! Helper variable template for HasVarExpectLower
+template < typename T >
+inline constexpr bool HasVarExpectLower_v =
+  HasVarExpectLower< T >::value;
+
+//! \brief Detect if T defines variable "expect::upper"
+//! \see http://stackoverflow.com/a/257382
+template< typename T >
+struct HasVarExpectUpper {
+  private:
+    typedef char                      yes;
+    typedef struct { char array[2]; } no;
+    template<typename C> static yes test(decltype(&C::expect::upper));
+    template<typename C> static no  test(...);
+  public:
+    static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
+};
+
+//! Helper variable template for HasVarExpectUpper
+template < typename T >
+inline constexpr bool HasVarExpectUpper_v =
+  HasVarExpectUpper< T >::value;
+
 //! \brief Detect if T defines function "expect::choices"
 //! \see http://stackoverflow.com/a/257382
 template< typename T >
