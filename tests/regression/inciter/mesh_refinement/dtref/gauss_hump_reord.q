@@ -32,10 +32,6 @@ inciter
       sideset 3 end
     end
 
-#    bc_dirichlet
-#      sideset 1 2 3 4 5 6 end
-#    end
-
   end
 
   amr

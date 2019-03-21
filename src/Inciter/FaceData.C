@@ -22,7 +22,8 @@ FaceData::FaceData(
   const std::vector< std::size_t >& triinpoel )
   : m_bface( bface ), m_triinpoel( triinpoel )
 // *****************************************************************************
-//  Constructor: compute (element-face) data on domain boundary
+//  Constructor: compute (element-face) data for internal and domain-boundary
+//  faces
 //! \param[in] inpoel Mesh connectivity with local IDs
 //! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] triinpoel Boundary-face connectivity with local IDs
