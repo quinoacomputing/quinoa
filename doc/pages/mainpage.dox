@@ -96,7 +96,7 @@ For larger problems and computers, however, you should build from source.
  - `tools/` - Development utilities and docker files.
 
  - `LICENSE` - Copyright and license.
- - `README.md` - This file, rendered at https://github.com/quinoacomputing/quinoa.
+ - `README.md` - Top-level README file, rendered at https://github.com/quinoacomputing/quinoa.
 
 @section mainpage_build Build
 
