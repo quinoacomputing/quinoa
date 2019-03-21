@@ -18,6 +18,7 @@ target_include_directories(Mesh PUBLIC
                            ${PROJECT_BINARY_DIR}/../Main
                            ${TPL_INCLUDE_DIR}
                            ${PEGTL_INCLUDE_DIRS}
+                           ${BRIGAND_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS})
 
 set_target_properties(Mesh PROPERTIES LIBRARY_OUTPUT_NAME quinoa_mesh)
