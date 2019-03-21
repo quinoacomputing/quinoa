@@ -12,7 +12,7 @@
 
 module migrated_base {
 
-  include "tests/Base/MigratedTypes.h";
+  include "../../tests/unit/Base/MigratedTypes.h";
 
   namespace tut {
 

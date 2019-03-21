@@ -157,11 +157,22 @@ class MixDirichletHomCoeffConst {
       if (R < 1.0e-8) R = 1.0;
 
       // b = -<rv>, density-specific-volume covariance
-      Term rhoprime( static_cast<char>(std::tolower(depvar)),
-                     ncomp, Moment::CENTRAL );
-      Term vprime( static_cast<char>(std::tolower(depvar)),
-                   ncomp+1, Moment::CENTRAL );
-      auto ds = -lookup( Product({rhoprime,vprime}), moments );
+      // Term rhoprime( static_cast<char>(std::tolower(depvar)),
+      //                ncomp, Moment::CENTRAL );
+      // Term vprime( static_cast<char>(std::tolower(depvar)),
+      //              ncomp+1, Moment::CENTRAL );
+      // auto ds = -lookup( Product({rhoprime,vprime}), moments );
+
+      // b. = -<ry.>/<R>
+      std::vector< tk::real > bc( ncomp, 0.0 );
+      for (ncomp_t c=0; c<ncomp; ++c) {
+        Term tr( static_cast<char>(std::tolower(depvar)),
+                 ncomp, Moment::CENTRAL );
+        Term ty( static_cast<char>(std::tolower(depvar)),
+                 c, Moment::CENTRAL );
+        bc[c] = -lookup( Product({tr,ty}), moments ) / R; // -<ryc>/<R>
+        //std::cout << "RRY: " << RRY[c] << ' ';
+      }
 
       std::vector< tk::real > RY( ncomp, 0.0 );
       std::vector< tk::real > RRY( ncomp, 0.0 );
@@ -241,7 +252,10 @@ class MixDirichletHomCoeffConst {
                  (1.0-sumYt-Yt[c])*(r[c]/rho[ncomp]*(rhovar-sumRRY)) );
         //std::cout << "S: " << S[c] << ", YKc: " << YK[c]
         //          << ", Ytc: " << Yt[c] << ", YtKc: " << YtK[c] << ' ';
-        k[c] = kprime[c] * ds;
+        k[c] = kprime[c] * bc[c];
+        //if (k[c] < 0.0)
+        // std::cout << "Positivity of k[" << c << "] violated: "
+        //           << k[c] << '\n';
       }
       //std::cout << std::endl;
 

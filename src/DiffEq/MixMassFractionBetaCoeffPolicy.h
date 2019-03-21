@@ -683,7 +683,7 @@ class MixMassFracBetaCoeffInstVel {
       ctr::DepvarType /*velocity_solve*/,
       ncomp_t ncomp,
       const std::map< tk::ctr::Product, tk::real >& moments,
-      const std::vector< kw::sde_bprime::info::expect::type  >& bprime,
+      const std::vector< kw::sde_bprime::info::expect::type  >& /*bprime*/,
       const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
       const std::vector< kw::sde_rho2::info::expect::type >& rho2,
       const std::vector< kw::sde_r::info::expect::type >& r,
@@ -712,12 +712,12 @@ class MixMassFracBetaCoeffInstVel {
       // <R> = mean density,
       for (ncomp_t c=0; c<ncomp; ++c) {
 
-        const tk::ctr::Term Y( static_cast<char>(std::toupper(depvar)),
-                               c,
-                               tk::ctr::Moment::ORDINARY );
-        const tk::ctr::Term dens( static_cast<char>(std::toupper(depvar)),
-                                  c+ncomp,
-                                  tk::ctr::Moment::ORDINARY );
+        // const tk::ctr::Term Y( static_cast<char>(std::toupper(depvar)),
+        //                        c,
+        //                        tk::ctr::Moment::ORDINARY );
+        // const tk::ctr::Term dens( static_cast<char>(std::toupper(depvar)),
+        //                           c+ncomp,
+        //                           tk::ctr::Moment::ORDINARY );
         const tk::ctr::Term s1( static_cast<char>(std::tolower(depvar)),
                                 c+ncomp,
                                 tk::ctr::Moment::CENTRAL );
@@ -725,38 +725,38 @@ class MixMassFracBetaCoeffInstVel {
                                 c+ncomp*2,
                                 tk::ctr::Moment::CENTRAL );
 
-        const auto RY = tk::ctr::Product( { dens, Y } );
-        tk::real ry = lookup( RY, moments );                       // <RY>
+        //const auto RY = tk::ctr::Product( { dens, Y } );
+        //tk::real ry = lookup( RY, moments );                       // <RY>
         const auto dscorr = tk::ctr::Product( { s1, s2 } );
         tk::real ds = -lookup( dscorr, moments );                  // b = -<rv>
         tk::real d = lookup( mean(depvar,c+ncomp), moments );      // <R>
         tk::real d2 = lookup( variance(depvar,c+ncomp), moments ); // <r^2>
         tk::real d3 = lookup( cen3(depvar,c+ncomp), moments );     // <r^3>
-        tk::real yt = ry/d;
+        //tk::real yt = ry/d;
 
-        // Access mean turbulence frequency from coupled dissipation model,
+        // Compute turbulent kinetic energy
+        // auto K = tke( velocity_depvar, velocity_solve, moments );
+        // Access mean turbulence frequency from coupled dissipation model
         // hydroptimescale: eps/k = <O>
         tk::real ts = lookup( mean(dissipation_depvar,0), moments );
-        // Compute turbulent kinetic energy
-        //auto K = tke( velocity_depvar, velocity_solve, moments );
 
-        auto pe = 1.0; // hydroproductions: P/eps = 1.0 (equilibrium)
+        //auto pe = 1.0; // hydroproductions: P/eps = 1.0 (equilibrium)
 
-        tk::real a = r[c]/(1.0+r[c]*yt);
-        tk::real bnm = a*a*yt*(1.0-yt);
-        tk::real thetab = 1.0 - ds/bnm;
-        tk::real f2 =
-          1.0 / std::pow(1.0 + std::pow(pe-1.0,2.0)*std::pow(ds,0.25),0.5);
-        tk::real b1 = m_s[0];
-        tk::real b2 = m_s[1];
-        tk::real b3 = m_s[2];
-        tk::real eta = d2/d/d/ds;
-        tk::real beta2 = b2*(1.0+eta*ds);
-        tk::real Thetap = thetab*0.5*(1.0+eta/(1.0+eta*ds));
-        tk::real beta3 = b3*(1.0+eta*ds);
-        tk::real beta10 = b1 * (1.0+ds)/(1.0+eta*ds);
-        tk::real beta1 = bprime[c] * 2.0/(1.0+eta+eta*ds) *
-                      (beta10 + beta2*Thetap*f2 + beta3*Thetap*(1.0-Thetap)*f2);
+        // tk::real a = r[c]/(1.0+r[c]*yt);
+        // tk::real bnm = a*a*yt*(1.0-yt);
+        // tk::real thetab = 1.0 - ds/bnm;
+        // tk::real f2 =
+        //   1.0 / std::pow(1.0 + std::pow(pe-1.0,2.0)*std::pow(ds,0.25),0.5);
+        // tk::real b1 = m_s[0];
+        // tk::real b2 = m_s[1];
+        // tk::real b3 = m_s[2];
+        // tk::real eta = d2/d/d/ds;
+        // tk::real beta2 = b2*(1.0+eta*ds);
+        // tk::real Thetap = thetab*0.5*(1.0+eta/(1.0+eta*ds));
+        // tk::real beta3 = b3*(1.0+eta*ds);
+        // tk::real beta10 = b1 * (1.0+ds)/(1.0+eta*ds);
+        tk::real beta1 = 2.0;//bprime[c] * 2.0/(1.0+eta+eta*ds) *
+                      //(beta10 + beta2*Thetap*f2 + beta3*Thetap*(1.0-Thetap)*f2);
         b[c] = beta1 * ts;
         k[c] = kprime[c] * beta1 * ts * ds * ds;
 

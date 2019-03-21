@@ -139,7 +139,7 @@ geomPartMesh( tk::ctr::PartitioningAlgorithmType algorithm,
   //    the application, i.e., quinoa, and Zoltan2 to represent global
   //    identifiers and global counts
   // See also
-  // tpl/src/trilinos/packages/zoltan2/src/input/Zoltan2_InputTraits.hpp
+  // external/src/trilinos/packages/zoltan2/src/input/Zoltan2_InputTraits.hpp
   using ZoltanTypes = Zoltan2::BasicUserTypes< tk::real, long, long >;
 
   // Create mesh adapter for Zoltan for mesh element partitioning

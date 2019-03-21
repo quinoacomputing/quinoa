@@ -33,7 +33,8 @@
     statistics and joint PDFs. This requires that each type of equation system
     has a vector of integers storing the number of scalar variables.
 
-    _Solution:_ Loopingthrough list of types is done using fold expressions.
+    _Solution:_ Looping through a list of types is done using the [Brigand]
+    (https://github.com/edouarda/brigand)'s [MetaProgramming Library].
     Such operations on types happen at compile-time, i.e., the code runs inside
     the compiler and only its result gets compiled into code to be run at
     run-time. Advantages are abstraction and generic code that is independent
