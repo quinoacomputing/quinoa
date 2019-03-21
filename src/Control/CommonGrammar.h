@@ -13,6 +13,7 @@
 #ifndef CommonGrammar_h
 #define CommonGrammar_h
 
+#include <type_traits>
 #include <sstream>
 
 #include <brigand/algorithms/for_each.hpp>
@@ -120,6 +121,7 @@ namespace grm {
     PDF,                //!< PDF specification syntax error
     PDFEXISTS,          //!< PDF identifier already defined
     BADPRECISION,       //!< Floating point precision specification incorrect
+    BOUNDS,             //!< Specified value out of bounds
     PRECISIONBOUNDS,    //!< Floating point precision spec out of bounds
     UNFINISHED,         //!< Unfinished block
     VORTICAL_UNFINISHED,//!< Vortical flow problem configuration unfinished
@@ -299,6 +301,8 @@ namespace grm {
     { MsgKey::BADPRECISION, "Precision specification invalid. It should be a "
       "positive integer or the word \'max\', selecting the maximum number of "
       "digits for the underyling floating point type."},
+    { MsgKey::BOUNDS, "Specified value out of bounds. For the bounds on a "
+      "keyword, run '<executable> -H <keyword>'."},
     { MsgKey::PRECISIONBOUNDS, "Precision specification out of bounds. It "
       "should be a positive integer between 1 and the maximum number of digits "
       "for the underyling floating point type on the machine. (Set \'max\' for "
@@ -379,7 +383,7 @@ namespace grm {
       "not optional (which is an error)." }
   };
 
-  //! \brief Parser error and warning message handler.
+  //! Parser error and warning message handler.
   //! \details This function is used to associated and dispatch an error or a
   //!   warning during parsing. After finding the error message corresponding to
   //!   a key, it pushes back the message to a std::vector of std::string, which
@@ -420,7 +424,7 @@ namespace grm {
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
   #endif
-  //! \brief Compile-time test functor verifying that type U is a keyword
+  //! Compile-time test functor verifying that type U is a keyword
   //! \details This functor is used for triggering a compiler error if any of
   //!   the expected option values is not in the keywords pool of the grammar.
   //!   It is used inside of a brigand::for_each to run a compile-time loop
@@ -527,7 +531,7 @@ namespace grm {
 
   //! Rule used to trigger action
   template< MsgType, MsgKey > struct msg : pegtl::success {};
-  //! \brief Error message dispatch
+  //! Error message dispatch
   //! \details This struct and its apply function are used to dispatch a message
   //!   (e.g., error, waring) from the parser. It is simply an interface to
   //!   Message. See This struct is practically used as a functor, i.e., a
@@ -545,7 +549,7 @@ namespace grm {
 
   //! Rule used to trigger action
   template< typename tag, typename... tags > struct Set : pegtl::success {};
-  //! \brief Put value in state at position given by tags without conversion
+  //! Put value in state at position given by tags without conversion
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for calling the set member function of the underlying grammar
   //!    stack, tk::Control::set.
@@ -559,7 +563,7 @@ namespace grm {
 
   //! Rule used to trigger action
   template< typename tag, typename... tags > struct Store : pegtl::success {};
-  //! \brief Put value in state at position given by tags with conversion
+  //! Put value in state at position given by tags with conversion
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for calling the store member function of the underlying grammar
   //!    stack, tk::Control::store.
@@ -624,7 +628,7 @@ namespace grm {
   //! Rule used to trigger action
   template< typename... tags >
   struct Store_switch : pegtl::success {};
-  //! \brief Put true in switch in state at position given by tags
+  //! Put true in switch in state at position given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for setting a boolean value to true in the underlying grammar
   //!    stack via the member function tk::Control::set.
@@ -640,7 +644,7 @@ namespace grm {
   template< template < class > class use, class Option,
             typename tag, typename... tags >
   struct store_back_option : pegtl::success {};
-  //! \brief Push back option to vector in state at position given by tags
+  //! Push back option to vector in state at position given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!   wrapper for pushing back an option (an object deriving from
   //!   tk::Toggle) into a vector in the grammar stack. See walker::ctr::DiffEq
@@ -877,7 +881,7 @@ namespace grm {
   template< template< class > class use, class Option, typename sel,
             typename vec, typename... tags >
   struct check_store_option : pegtl::success {};
-  //! \brief Put option in state at position given by tags if among the selected
+  //! Put option in state at position given by tags if among the selected
   template< template < class > class use, class Option, typename sel,
             typename vec, typename... tags >
   struct action< check_store_option< use, Option, sel, vec, tags... > > {
@@ -898,7 +902,7 @@ namespace grm {
 
   //! Rule used to trigger action
   struct add_depvar : pegtl::success {};
-  //! \brief Add depvar (dependent variable) to the selected ones
+  //! Add depvar (dependent variable) to the selected ones
   template<>
   struct action< add_depvar > {
     template< typename Input, typename Stack >
@@ -914,9 +918,37 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  template< class keyword, typename tag, typename... tags >
+  struct check_lower_bound : pegtl::success {};
+  //! Check if value is larger than lower bound
+  template< class keyword, typename tag, typename... tags >
+  struct action< check_lower_bound< keyword, tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      auto lower = keyword::info::expect::lower;
+      auto val = stack.template get< tag, tags... >();
+      if (val < lower) Message< Stack, WARNING, MsgKey::BOUNDS >( stack, in );
+    }
+  };
+
+  //! Rule used to trigger action
+  template< class keyword, typename tag, typename... tags >
+  struct check_upper_bound : pegtl::success {};
+  //! Check if value is lower than upper bound
+  template< class keyword, typename tag, typename... tags >
+  struct action< check_upper_bound< keyword, tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      auto upper = keyword::info::expect::upper;
+      auto val = stack.template get< tag, tags... >();
+      if (val > upper) Message< Stack, WARNING, MsgKey::BOUNDS >( stack, in );
+    }
+  };
+
+  //! Rule used to trigger action
   template< typename tag, typename... tags >
   struct start_vector : pegtl::success {};
-  //! \brief Start new vector in vector
+  //! Start new vector in vector
   template< class tag, class... tags >
   struct action< start_vector< tag, tags... > > {
     template< typename Input, typename Stack >
@@ -928,7 +960,7 @@ namespace grm {
   //! Rule used to trigger action
   template< typename tag, typename... tags >
   struct start_vector_back : pegtl::success {};
-  //! \brief Start new vector in back of a vector
+  //! Start new vector in back of a vector
   template< class tag, class... tags >
   struct action< start_vector_back< tag, tags... > > {
     template< typename Input, typename Stack >
@@ -941,7 +973,7 @@ namespace grm {
   //! Rule used to trigger action
   template< typename tk::ctr::Moment, char var = '\0' >
   struct push_term : pegtl::success {};
-  //! \brief Add matched value as Term into vector of vector of statistics
+  //! Add matched value as Term into vector of vector of statistics
   template< tk::ctr::Moment m, char var >
   struct action< push_term< m, var > > {
     template< typename Input, typename Stack >
@@ -965,7 +997,7 @@ namespace grm {
 
   //! Rule used to trigger action
   template< tk::ctr::Moment m > struct push_sample : pegtl::success {};
-  //! \brief Add matched value as Term into vector of vector of PDFs
+  //! Add matched value as Term into vector of vector of PDFs
   template< tk::ctr::Moment m >
   struct action< push_sample< m > > {
     template< typename Input, typename Stack >
@@ -998,7 +1030,7 @@ namespace grm {
 
   //! Rule used to trigger action
   struct push_binsize : pegtl::success {};
-  //! \brief Push matched value into vector of vector binsizes
+  //! Push matched value into vector of vector binsizes
   template<>
   struct action< push_binsize > {
     template< typename Input, typename Stack >
@@ -1020,7 +1052,7 @@ namespace grm {
 
   //! Rule used to trigger action
   struct push_extents : pegtl::success {};
-  //! \brief Push matched value into vector of PDF extents
+  //! Push matched value into vector of PDF extents
   template<>
   struct action< push_extents > {
     template< typename Input, typename Stack >
@@ -1043,7 +1075,7 @@ namespace grm {
 
   //! Rule used to trigger action
   template< class eq, class param > struct check_vector : pegtl::success {};
-  //! \brief Check parameter vector
+  //! Check parameter vector
   template< class eq, class param >
   struct action< check_vector< eq, param > > {
     template< typename Input, typename Stack >
@@ -1052,7 +1084,7 @@ namespace grm {
 
   //! Rule used to trigger action
   template< class eq, class param > struct check_spikes : pegtl::success {};
-  //! \brief Check if the spikes parameter vector specifications are correct
+  //! Check if the spikes parameter vector specifications are correct
   //! \details Spikes are used to specify sample-space locations and relative
   //!    probability heights for a joint-delta PDF.
   template< class eq, class param >
@@ -1080,7 +1112,7 @@ namespace grm {
 
   //! Rule used to trigger action
   template< class eq, class param > struct check_betapdfs : pegtl::success {};
-  //! \brief Check if the betapdf parameter vector specifications are correct
+  //! Check if the betapdf parameter vector specifications are correct
   //! \details Betapdf vectors are used to configure univariate beta
   //!   distributions.
   template< class eq, class param >
@@ -1097,7 +1129,7 @@ namespace grm {
 
   //! Rule used to trigger action
   template< class eq, class param > struct check_gammapdfs : pegtl::success {};
-  //! \brief Check if the gammapdf parameter vector specifications are correct
+  //! Check if the gammapdf parameter vector specifications are correct
   //! \details gammapdf vectors are used to configure univariate gamma
   //!   distributions.
   template< class eq, class param >
@@ -1137,7 +1169,7 @@ namespace grm {
 
   //! Rule used to trigger action
   struct check_expectation : pegtl::success {};
-  //! \brief Check if there is at least one variable in expectation
+  //! Check if there is at least one variable in expectation
   template<>
   struct action< check_expectation > {
     template< typename Input, typename Stack >
@@ -1149,8 +1181,7 @@ namespace grm {
 
   //! Rule used to trigger action
   struct check_binsizes : pegtl::success {};
-  //! \brief Check if the number of binsizes equal the PDF sample space
-  //!   variables
+  //! Check if the number of binsizes equal the PDF sample space variables
   template<>
   struct action< check_binsizes > {
     template< typename Input, typename Stack >
@@ -1163,8 +1194,7 @@ namespace grm {
 
   //! Rule used to trigger action
   struct check_extents : pegtl::success {};
-  //! \brief Check if the number of extents equal 2 * the PDF sample space
-  //!    variables
+  //! Check if the number of extents equal 2 * the PDF sample space variables
   template<>
   struct action< check_extents > {
     template< typename Input, typename Stack >
@@ -1188,7 +1218,7 @@ namespace grm {
 
   //! Rule used to trigger action
   struct check_samples : pegtl::success {};
-  //! \brief Check if there is at least one sample space variable in PDF
+  //! Check if there is at least one sample space variable in PDF
   template<>
   struct action< check_samples > {
     template< typename Input, typename Stack >
@@ -1200,7 +1230,7 @@ namespace grm {
 
   //! Rule used to trigger action
   struct save_field : pegtl::success {};
-  //! \brief Save field ID to parser's state so push_term can pick it up
+  //! Save field ID to parser's state so push_term can pick it up
   template<>
   struct action< save_field > {
     template< typename Input, typename Stack >
@@ -1215,7 +1245,7 @@ namespace grm {
 
   // Common grammar (grammar that is reused by multiple grammars)
 
-  //! \brief Read 'token' until 'erased' trimming, i.e., not consuming, 'erased'
+  //! Read 'token' until 'erased' trimming, i.e., not consuming, 'erased'
   template< class token, class erased >
   struct trim :
          pegtl::seq< token,
@@ -1223,7 +1253,7 @@ namespace grm {
                        pegtl::until< pegtl::at< erased > >,
                        msg< ERROR, MsgKey::PREMATURE > > > {};
 
-  //! \brief Match unknown keyword and handle error
+  //! Match unknown keyword and handle error
   template< MsgType type, MsgKey key >
   struct unknown :
          pegtl::pad< pegtl::seq< trim< pegtl::any, pegtl::space >,
@@ -1231,7 +1261,7 @@ namespace grm {
                      pegtl::blank,
                      pegtl::space > {};
 
-  //! \brief Match alias cmdline keyword
+  //! Match alias cmdline keyword
   //! \details An alias command line keyword is prefixed by a single dash, '-'.
   template< class keyword >
   struct alias :
@@ -1241,7 +1271,7 @@ namespace grm {
            pegtl::sor< pegtl::space,
                        msg< ERROR, MsgKey::ALIAS > >  > {};
 
-  //! \brief Match verbose cmdline keyword
+  //! Match verbose cmdline keyword
   //! \details A verbose command line keyword is prefixed by a double-dash,
   //!   '--'.
   template< class keyword >
@@ -1250,20 +1280,20 @@ namespace grm {
                      typename keyword::pegtl_string,
                      pegtl::space > {};
 
-  //! \brief Read keyword 'token' padded by blank at left and space at right
+  //! Read keyword 'token' padded by blank at left and space at right
   template< class token >
   struct readkw :
          pegtl::pad< trim< token, pegtl::space >,
                      pegtl::blank,
                      pegtl::space > {};
 
-  //! \brief Read command line 'keyword' in verbose form, i.e., '--keyword'
+  //! Read command line 'keyword' in verbose form, i.e., '--keyword'
   //! \details This version is used if no alias is defined for the given keyword
   template< class keyword, typename = void >
   struct readcmd :
          verbose< keyword > {};
 
-  //! \brief Read command line 'keyword' in either verbose or alias form
+  //! Read command line 'keyword' in either verbose or alias form
   //! \details This version is used if an alias is defined for the given
   //!   keyword, in which case either the verbose or the alias form of the
   //!   keyword is matched, i.e., either '--keyword' or '-a', where 'a' is the
@@ -1307,23 +1337,23 @@ namespace grm {
                      pegtl::blank,
                      pegtl::space > {};
 
-  //! \brief Parse comment: start with '#' until eol
+  //! Parse comment: start with '#' until eol
   struct comment :
          pegtl::pad< trim< pegtl::one<'#'>, pegtl::eol >,
                      pegtl::blank,
                      pegtl::eol > {};
 
-  //! \brief Ignore comments and empty lines
+  //! Ignore comments and empty lines
   struct ignore :
          pegtl::sor< comment, pegtl::until< pegtl::eol, pegtl::space > > {};
 
-  //! \brief Parse a number: an optional sign followed by digits
+  //! Parse a number: an optional sign followed by digits
   struct number :
          pegtl::seq< pegtl::opt< pegtl::sor< pegtl::one<'+'>,
                                              pegtl::one<'-'> > >,
                      pegtl::digit > {};
 
-  //! \brief Plow through 'tokens' until 'endkeyword'
+  //! Plow through 'tokens' until 'endkeyword'
   template< class endkeyword, typename... tokens >
   struct block :
          pegtl::until<
@@ -1332,7 +1362,7 @@ namespace grm {
                        tokens...,
                        unknown< ERROR, MsgKey::KEYWORD > > > {};
 
-  //! \brief Plow through vector of values between keywords 'key' and
+  //! Plow through vector of values between keywords 'key' and
   //!   'endkeyword', calling 'insert' for each if matches and allow comments
   //!   between values
   template< class key, class insert, class endkeyword,
@@ -1356,7 +1386,7 @@ namespace grm {
                               insert >,
                          pegtl::one< rbound > > {};
 
-  //! \brief Process 'keyword' and call its 'insert' action if matches 'kw_type'
+  //! Process 'keyword' and call its 'insert' action if matches 'kw_type'
   template< class keyword, class insert, class kw_type = pegtl::digit >
   struct process :
          pegtl::if_must<
@@ -1366,20 +1396,28 @@ namespace grm {
 
   //! \brief Process command line 'keyword' and call its 'insert' action if
   //!   matches 'kw_type'
-  template< class keyword, class insert, class kw_type = pegtl::any >
+  template< template< class > class use, class keyword, class insert,
+            class kw_type, class tag, class... tags>
   struct process_cmd :
-         pegtl::if_must< readcmd< keyword >,
-                         scan< pegtl::sor<
-                                 kw_type,
-                                 msg< ERROR, MsgKey::MISSING > >,
-                               insert > > {};
+         pegtl::if_must<
+           readcmd< use< keyword > >,
+           scan< pegtl::sor< kw_type, msg< ERROR, MsgKey::MISSING > >, insert >,
+           typename std::conditional<
+             tk::HasVarExpectLower< typename keyword::info >::value,
+             check_lower_bound< keyword, tag, tags... >,
+             pegtl::success >::type,
+           typename std::conditional<
+             tk::HasVarExpectUpper< typename keyword::info >::value,
+             check_upper_bound< keyword, tag, tags... >,
+             pegtl::success >::type > {};
 
-  //! \brief Process command line switch 'keyword'
+  //! Process command line switch 'keyword'
   //! \details The value of a command line switch is a boolean, i.e., it can be
   //!    either set or unset.
-  template< class keyword, typename tag, typename... tags >
+  template< template< class > class use, class keyword, typename tag,
+            typename... tags >
   struct process_cmd_switch :
-         pegtl::seq< readcmd< keyword >, Store_switch< tag, tags... > > {};
+         pegtl::seq< readcmd< use<keyword> >, Store_switch< tag, tags... > > {};
 
   //! \brief Generic file parser entry point: parse 'keywords' and 'ignore'
   //!   until end of file
@@ -1391,13 +1429,12 @@ namespace grm {
                          ign...,
                          unknown< ERROR, MsgKey::KEYWORD > > > {};
 
-  //! \brief Process but ignore Charm++'s charmrun arguments starting with '+'
+  //! Process but ignore Charm++'s charmrun arguments starting with '+'
   struct charmarg :
          pegtl::seq< pegtl::one<'+'>,
                      unknown< WARNING, MsgKey::CHARMARG > > {};
 
-  //! \brief Generic string parser entry point: parse 'keywords' until end of
-  //!   string
+  //! Generic string parser entry point: parse 'keywords' until end of string
   template< typename keywords >
   struct read_string :
          pegtl::until< pegtl::eof,
@@ -1406,7 +1443,7 @@ namespace grm {
                          charmarg,
                          unknown< ERROR, MsgKey::KEYWORD > > > {};
 
-  //! \brief Insert RNG parameter
+  //! Insert RNG parameter
   //! \details A parameter here is always an option. An option is an object
   //!   deriving from tk::Toggle. See, e.g., walker::ctr::DiffEq for an example
   //!   specialization of tk::Toggle to see how an option is created from
@@ -1419,16 +1456,16 @@ namespace grm {
                   insert_option< use, option, field, sel, vec, tags... >,
                   pegtl::alpha > {};
 
-  //! \brief fieldvar: a character, denoting a variable, optionally followed by
-  //!   a digit
+  //! \brief Match fieldvar: a character, denoting a variable, optionally
+  //!   followed by a digit
   template< typename var >
   struct fieldvar :
          pegtl::sor<
            pegtl::seq< var, act< pegtl::plus< pegtl::digit >, save_field > >,
            var > {};
 
-  //! \brief term: upper or lowercase fieldvar matched to selected depvars for
-  //!   stats
+  //! \brief Match  term: upper or lowercase fieldvar matched to selected
+  //!    depvars for stats
   struct term :
          pegtl::sor<
            act< fieldvar< pegtl::upper >,
@@ -1444,41 +1481,41 @@ namespace grm {
            match_depvar< push_sample< m > >,
            pegtl::one<':'> > {};
 
-  //! \brief samples: sample space variables optionally separated by fillers
+  //! Match samples: sample space variables optionally separated by fillers
   struct samples :
          pegtl::sor<
            sample_space_var< pegtl::upper, tk::ctr::Moment::ORDINARY >,
            sample_space_var< pegtl::lower, tk::ctr::Moment::CENTRAL >
          > {};
 
-  //! \brief bin(sizes): real numbers as many sample space dimensions were given
+  //! Match bin(sizes): real numbers as many sample space dimensions were given
   struct bins :
          pegtl::sor<
            scan_until< number, push_binsize, pegtl::one<')'> >,
            act< pegtl::until< pegtl::at< pegtl::one<')'> >, pegtl::any >,
                 msg< ERROR, MsgKey::INVALIDBINSIZE > > > {};
 
-  //! \brief plow through expectations between characters '<' and '>'
+  //! Plow through expectations between characters '<' and '>'
   struct parse_expectations :
          readkw< pegtl::seq< act< pegtl::one<'<'>, start_vector< tag::stat > >,
                              pegtl::until< pegtl::one<'>'>, term >,
                              check_expectation > > {};
 
-  //! \brief list of sample space variables with error checking
+  //! Match list of sample space variables with error checking
   struct sample_space :
          pegtl::seq<
            start_vector< tag::pdf >,
            pegtl::until< pegtl::one<':'>, samples >,
            check_samples > {};
 
-  //! \brief extents: optional user-specified extents of PDF sample space
+  //! Match extents: optional user-specified extents of PDF sample space
   struct extents :
          pegtl::sor<
            scan_until< number, push_extents, pegtl::one<')'> >,
            act< pegtl::until< pegtl::at< pegtl::one<')'> >, pegtl::any >,
                 msg< ERROR, MsgKey::INVALIDEXTENT > > > {};
 
-  //! \brief binsizes followed by optional extents with error checking
+  //! Match binsizes followed by optional extents with error checking
   struct bins_exts :
          pegtl::seq<
            start_vector< tag::discr, tag::binsize >,
@@ -1505,37 +1542,45 @@ namespace grm {
              pegtl::sor< pegtl::seq< sample_space, bins_exts >,
                          msg< ERROR, MsgKey::INVALIDSAMPLESPACE > > > > {};
 
-  //! \brief Match precision of floating-point numbers in digits (for text
-  //!   output)
+  //! Match precision of floating-point numbers in digits (for text output)
   template< template< class > class use, class prec >
   struct precision :
          process< use< kw::precision >,
                   store_precision< prec >,
                   pegtl::alnum > {};
 
-  //! \brief Match control parameter
+  //! Match control parameter, enforce bounds if defined
   template< typename keyword, class kw_type, typename... tags >
   struct control :
-         process< keyword, Store< tags... >, kw_type > {};
+         pegtl::if_must<
+           process< keyword, Store< tags... >, kw_type >,
+           typename std::conditional<
+             tk::HasVarExpectLower< typename keyword::info >::value,
+             check_lower_bound< keyword, tags... >,
+             pegtl::success >::type,
+           typename std::conditional<
+             tk::HasVarExpectUpper< typename keyword::info >::value,
+             check_upper_bound< keyword, tags... >,
+             pegtl::success >::type > {};
 
   //! Match discretization control parameter
   template< template< class > class use, typename keyword, typename Tag >
   struct discrparam :
-         control< use< keyword >, pegtl::digit, tag::discr, Tag > {};
+           control< use< keyword >, pegtl::digit, tag::discr, Tag > {};
 
-  //! \brief Match component control parameter
+  //! Match component control parameter
   template< typename keyword, typename Tag >
   struct component :
          process< keyword,
                   Store_back< tag::component, Tag >,
                   pegtl::digit > {};
 
-  //! \brief Match interval control parameter
+  //! Match interval control parameter
   template< typename keyword, typename Tag >
   struct interval :
          control< keyword, pegtl::digit, tag::interval, Tag > {};
 
-  //! \brief Parse statistics ... end block
+  //! Parse statistics ... end block
   template< template< class > class use, template< class... Ts > class store >
   struct statistics :
          pegtl::if_must< readkw< typename use< kw::statistics >::pegtl_string >,
@@ -1550,7 +1595,7 @@ namespace grm {
                                 precision< use, tag::stat >,
                                 parse_expectations > > {};
 
-  //! \brief Parse diagnostics ... end block
+  //! Parse diagnostics ... end block
   template< template< class > class use, template< class... Ts > class store >
   struct diagnostics :
          pegtl::if_must< readkw< typename use< kw::diagnostics >::pegtl_string >,
@@ -1570,12 +1615,12 @@ namespace grm {
                                          pegtl::alpha >,
                                 precision< use, tag::diag > > > {};
 
-  //! \brief Match model parameter
+  //! Match model parameter
   template< typename keyword, typename kw_type, typename model, typename Tag >
   struct parameter :
          control< keyword, kw_type, tag::param, model, Tag > {};
 
-  //! \brief Match rng parameter
+  //! Match rng parameter
   template< template< class > class use, typename keyword,
             typename option, typename model, typename... tags >
   struct rng :
@@ -1587,14 +1632,14 @@ namespace grm {
                                       tag::param, model, tags... >,
                   pegtl::alpha > {};
 
-  //! \brief Match rngs ... end block
+  //! Match rngs ... end block
   template< template< class > class use, class rngs >
   struct rngblock :
          pegtl::if_must< readkw< typename use< kw::rngs >::pegtl_string >,
                          block< use< kw::end >, rngs > > {};
 
 
-  //! \brief Match equation/model parameter vector
+  //! Match equation/model parameter vector
   //! \details This structure is used to match a keyword ... end block that
   //!   contains a list (i.e., a vector) of numbers. The keyword that starts the
   //!   block is passed in via the 'keyword' template argument. The 'store'
@@ -1621,7 +1666,7 @@ namespace grm {
                                  start< tag::param, eq, param > >,
                          check< eq, param > > {};
 
-  //! \brief Match equation/model option vector
+  //! Match equation/model option vector
   //! \details This structure is used to match a keyword ... end block that
   //!   contains a list (i.e., a vector) of numbers. The keyword that starts the
   //!   block is passed in via the 'keyword' template argument. The 'store'
@@ -1652,7 +1697,7 @@ namespace grm {
              pegtl::alpha >,
            check< eq, param > > {};
 
-  //! \brief Match model parameter dependent variable
+  //! Match model parameter dependent variable
   template< template< class > class use, typename model, typename Tag >
   struct depvar :
          pegtl::if_must<
@@ -1661,13 +1706,13 @@ namespace grm {
                  Store_back< tag::param, model, Tag >,
                  add_depvar > > {};
 
-  //! \brief Match and set keyword 'title'
+  //! Match and set keyword 'title'
   template< template< class > class use >
   struct title :
          pegtl::if_must< readkw< typename use< kw::title >::pegtl_string >,
                          quoted< Set< tag::title > > > {};
 
-  //! \brief Match and set policy parameter
+  //! Match and set policy parameter
   template< template< class > class use, typename keyword,
             typename option, typename p, typename... tags >
   struct policy :
@@ -1676,12 +1721,12 @@ namespace grm {
            store_back_option< use, option, tag::param, p, tags... >,
            pegtl::alpha > {};
 
-  //! \brief Match and set a PDF option
+  //! Match and set a PDF option
   template< class keyword, class store >
   struct pdf_option :
          process< keyword, store, pegtl::alpha > {};
 
-  //! \brief Match pdfs ... end block
+  //! Match pdfs ... end block
   template< template< class > class use, template< class... Ts > class store >
   struct pdfs :
          pegtl::if_must<
@@ -1708,7 +1753,7 @@ namespace grm {
              precision< use, tag::pdf >,
              parse_pdf > > {};
 
-  //! \brief Ensures that a grammar only uses keywords from a pool of
+  //! \brief Ensure that a grammar only uses keywords from a pool of
   //!   pre-defined keywords
   //! \details In grammar definitions, every keyword should be wrapped around
   //!   this use template, which conditionally inherits the keyword type its
