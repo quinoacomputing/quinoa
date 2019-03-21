@@ -13,12 +13,28 @@
 #ifndef Keyword_h
 #define Keyword_h
 
+#include "NoWarning/set.h"
 #include "NoWarning/optional.h"
-
 #include "NoWarning/pegtl.h"
 
 #include "Has.h"
 #include "Escaper.h"
+
+namespace tk {
+
+//! Helper to declare a set of command line keywords
+//! \details This ensures that a compile-error is generated if there is no alias
+//!    defined for the keyword, and also if the aliases are non-unique.
+template< typename... T >
+class cmd_keywords {
+  public:
+    using set = brigand::set< T... >;
+  private:
+    template< typename K > using alias = typename K::info::alias::type;
+    using aliases = brigand::set< alias<T>... >;
+};
+
+} // tk::
 
 namespace kw {
 
@@ -156,6 +172,42 @@ struct keyword< Info, pegtl::string< Chars... > > {
   template< typename T = Info, typename std::enable_if<
     !tk::HasFunctionExpectDescription< T >::value, int >::type = 0 >
   static boost::optional< std::string > expt()
+  { return boost::none; }
+
+  //! \brief Overloads to optional lower bound as a string depending on the
+  //!   existence of Info::expect::lower
+  //! \return An initialized (or uninitialized) boost::optional< std::string >
+  //! \details As to why type Info has to be aliased to a local type T for
+  //!   SFINAE to work, see http://stackoverflow.com/a/22671495.
+  //! \see http://www.boost.org/doc/libs/release/libs/optional/doc/html/index.html
+  //! \see http://en.cppreference.com/w/cpp/language/sfinae
+  //! \see http://en.cppreference.com/w/cpp/types/enable_if
+  template< typename T = Info, typename std::enable_if<
+    tk::HasVarExpectLower< T >::value, int >::type = 0 >
+  static boost::optional< std::string > lower()
+  { return std::to_string( Info::expect::lower ); }
+
+  template< typename T = Info, typename std::enable_if<
+    !tk::HasVarExpectLower< T >::value, int >::type = 0 >
+  static boost::optional< std::string > lower()
+  { return boost::none; }
+
+  //! \brief Overloads to optional upper bound as a string depending on the
+  //!   existence of Info::expect::upper
+  //! \return An initialized (or uninitialized) boost::optional< std::string >
+  //! \details As to why type Info has to be aliased to a local type T for
+  //!   SFINAE to work, see http://stackoverflow.com/a/22671495.
+  //! \see http://www.boost.org/doc/libs/release/libs/optional/doc/html/index.html
+  //! \see http://en.cppreference.com/w/cpp/language/sfinae
+  //! \see http://en.cppreference.com/w/cpp/types/enable_if
+  template< typename T = Info, typename std::enable_if<
+    tk::HasVarExpectUpper< T >::value, int >::type = 0 >
+  static boost::optional< std::string > upper()
+  { return std::to_string( Info::expect::upper ); }
+
+  template< typename T = Info, typename std::enable_if<
+    !tk::HasVarExpectUpper< T >::value, int >::type = 0 >
+  static boost::optional< std::string > upper()
   { return boost::none; }
 
   //! \brief Overloads to optional expected choices description depending on the

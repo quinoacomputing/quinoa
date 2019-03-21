@@ -447,6 +447,17 @@ class Print {
       }
     }
 
+    //! Print lower and upper bounds for a keyword if defined
+    template< Style s = VERBOSE, typename Info >
+    void bounds( const Info& info ) const {
+      if (info.lower)
+        stream<s>() << m_description_fmt
+          % splitLines( *info.lower, m_subsection_indent, "Lower bound: " );
+      if (info.upper)
+        stream<s>() << m_description_fmt
+          % splitLines( *info.upper, m_subsection_indent, "Upper bound: " );
+    }
+
     //! \brief Formatted print of verbose help on a single command-line
     //!   parameter or control file keywords
     //! \param[in] executable Name of executable to output help for
@@ -479,6 +490,8 @@ class Print {
         stream<s>() << m_description_fmt
                        % splitLines( *expt, m_subsection_indent,
                                      "Expected type: " );
+      // print lower bound if defined
+      bounds< s >( info );
       // print expected valied choices
       if (choices)
         stream<s>() << m_description_fmt

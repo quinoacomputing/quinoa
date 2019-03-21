@@ -149,6 +149,8 @@
 #ifndef Keywords_h
 #define Keywords_h
 
+#include <limits>
+
 #include <pegtl/contrib/alphabet.hpp>
 
 #include "Types.h"
@@ -1751,7 +1753,7 @@ struct ncomp_info {
   }
   struct expect {
     using type = std::size_t;
-    static constexpr type lower = 0;
+    static constexpr type lower = 1;
     static std::string description() { return "uint"; }
   };
 };
@@ -3424,7 +3426,7 @@ struct lbfreq_info {
   struct expect {
     using type = std::size_t;
     static constexpr type lower = 1;
-    static constexpr type upper = std::numeric_limits< tk::real >::digits10 + 1;
+    static constexpr type upper = std::numeric_limits< type >::max()-1;
     static std::string description() { return "int"; }
     static std::string choices() {
       return "integer between [" + std::to_string(lower) + "..." +
@@ -4996,7 +4998,7 @@ struct amr_dtfreq_info {
   struct expect {
     using type = std::size_t;
     static constexpr type lower = 1;
-    static constexpr type upper = std::numeric_limits< tk::real >::digits10 + 1;
+    static constexpr type upper = std::numeric_limits< type >::max();
     static std::string description() { return "int"; }
     static std::string choices() {
       return "integer between [" + std::to_string(lower) + "..." +
