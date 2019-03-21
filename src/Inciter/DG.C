@@ -1292,7 +1292,7 @@ DG::solve( tk::real newdt )
 
   } else {
 
-    thisProxy[ thisIndex ].wait4reghost();
+    thisProxy[ thisIndex ].wait4recompghost();
 
     // Compute diagnostics, e.g., residuals
     auto diag_computed =
@@ -1436,9 +1436,9 @@ DG::resize(
 }
 
 void
-DG::reghost()
+DG::recompGhost()
 // *****************************************************************************
-// ...
+// Start recomputing ghost data after a mesh refinement step
 // *****************************************************************************
 {
   if (m_refined) resizeComm(); else stage();

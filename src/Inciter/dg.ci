@@ -70,9 +70,9 @@ module dg {
         when ownlim_complete(), comlim_complete() serial "lim"
         { dt(); } };
 
-      entry void wait4reghost() {
-        when diag_complete(), ref_complete(), resize_complete() serial "reghost"
-        { reghost(); } };
+      entry void wait4recompghost() {
+        when diag_complete(), ref_complete(), resize_complete() serial
+        "recomputeGhost" { recompGhost(); } };
 
       entry void ownghost_complete();
       entry void reqghost_complete();

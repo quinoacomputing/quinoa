@@ -467,7 +467,7 @@ Transporter::discresized()
 // mesh refinement
 // *****************************************************************************
 {
-  disc_resized();
+  discresize_complete();
 }
 
 void
@@ -477,7 +477,7 @@ Transporter::workresized()
 // mesh refinement
 // *****************************************************************************
 {
-  work_resized();
+  workresize_complete();
 }
 
 void

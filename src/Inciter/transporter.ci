@@ -71,14 +71,15 @@ module transporter {
              pdfstat_complete() serial "stat" { stat(); } };
 
       entry void wait4resize() {
-        when disc_resized(), work_resized() serial "resize" { resized(); } };
+        when discresize_complete(), workresize_complete() serial "resize"
+        { resized(); } };
 
       entry void minstat_complete();
       entry void maxstat_complete();
       entry void sumstat_complete();
       entry void pdfstat_complete();
-      entry void disc_resized();
-      entry void work_resized();
+      entry void discresize_complete();
+      entry void workresize_complete();
     }
 
   } // inciter::
