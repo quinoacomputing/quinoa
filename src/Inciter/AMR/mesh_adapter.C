@@ -95,7 +95,7 @@ namespace AMR {
     /**
      * @brief Helper function to apply uniform refinement to all tets
      */
-    void mesh_adapter_t::uniform_refinement()
+    void mesh_adapter_t::mark_uniform_refinement()
     {
         for (auto& kv : tet_store.edge_store.edges) {
            auto& local = kv.second;
@@ -113,7 +113,7 @@ namespace AMR {
      * @param crit values to set to corresponding edges refinement criteria
      * @param lock values of lock case to set for edges
      */
-    void mesh_adapter_t::error_refinement(
+    void mesh_adapter_t::mark_error_refinement(
             const std::vector< edge_t >& remote )
     {
        for (std::size_t e=0; e<remote.size(); e++)
@@ -128,7 +128,7 @@ namespace AMR {
        mark_refinement();
     }
 
-   void mesh_adapter_t::error_refinement_corr(
+   void mesh_adapter_t::mark_error_refinement_corr(
             const EdgeData& edges )
     {
        auto& local = tet_store.edge_store;

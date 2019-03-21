@@ -515,7 +515,7 @@ Refiner::correctRefine( const AMR::EdgeData& extra )
 {
   if (!extra.empty()) {
     // Do refinement including edges that need to be corrected
-    m_refiner.error_refinement_corr( extra );
+    m_refiner.mark_error_refinement_corr( extra );
     // Update our extra-edge store based on refiner
     updateEdgeData();
   }
@@ -708,8 +708,8 @@ Refiner::next()
       n.insert( end(n), c.second.cbegin(), c.second.cend() );
     }
     boost::apply_visitor(
-      Resize( m_ginpoel, m_el, m_coord, m_addedNodes, m_addedTets, msum,
-              m_bface, m_bnode, m_triinpoel ), e );
+      ResizeAfterRefined( m_ginpoel, m_el, m_coord, m_addedNodes, m_addedTets,
+        msum, m_bface, m_bnode, m_triinpoel ), e );
 
   }
 }
@@ -742,7 +742,7 @@ Refiner::uniformRefine()
 // *****************************************************************************
 {
   // Do uniform refinement
-  m_refiner.uniform_refinement();
+  m_refiner.mark_uniform_refinement();
 
   // Update our extra-edge store based on refiner
   updateEdgeData();
@@ -803,7 +803,7 @@ Refiner::errorRefine()
   }
 
   // Do error-based refinement
-  m_refiner.error_refinement( edge );
+  m_refiner.mark_error_refinement( edge );
 
   // Update our extra-edge store based on refiner
   updateEdgeData();
@@ -864,7 +864,7 @@ Refiner::edgelistRefine()
     std::cout << std::endl;
 
     // Do error-based refinement
-    m_refiner.error_refinement( edge );
+    m_refiner.mark_error_refinement( edge );
 
     // Update our extra-edge store based on refiner
     updateEdgeData();
@@ -931,7 +931,7 @@ Refiner::coordRefine()
       }
 
     // Do error-based refinement
-    m_refiner.error_refinement( edge );
+    m_refiner.mark_error_refinement( edge );
 
     // Update our extra-edge store based on refiner
     updateEdgeData();

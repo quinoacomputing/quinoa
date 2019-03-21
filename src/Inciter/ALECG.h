@@ -124,7 +124,7 @@ class ALECG : public CBase_ALECG {
     void refine();
 
     //! Receive new mesh from refiner
-    void resize(
+    void resizeAfterRefined(
       const std::vector< std::size_t >& ginpoel,
       const tk::UnsMesh::Chunk& chunk,
       const tk::UnsMesh::Coords& coord,

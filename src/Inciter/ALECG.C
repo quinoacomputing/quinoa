@@ -494,7 +494,7 @@ ALECG::refine()
 
 //! [Resize]
 void
-ALECG::resize(
+ALECG::resizeAfterRefined(
   const std::vector< std::size_t >& /*ginpoel*/,
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,

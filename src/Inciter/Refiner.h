@@ -309,7 +309,7 @@ class Refiner : public CBase_Refiner {
                     CkCallback c ) const;
 
     //! Functor to call the resize() member function behind SchemeBase::Proxy
-    struct Resize : boost::static_visitor<> {
+    struct ResizeAfterRefined : boost::static_visitor<> {
       const std::vector< std::size_t >& Ginpoel;
       const tk::UnsMesh::Chunk& Chunk;
       const tk::UnsMesh::Coords& Coord;
@@ -319,7 +319,7 @@ class Refiner : public CBase_Refiner {
       const std::map< int, std::vector< std::size_t > > Bface;
       const std::map< int, std::vector< std::size_t > > Bnode;
       const std::vector< std::size_t > Triinpoel;
-      Resize(
+      ResizeAfterRefined(
         const std::vector< std::size_t >& ginpoel,
         const tk::UnsMesh::Chunk& chunk,
         const tk::UnsMesh::Coords& coord,
@@ -333,8 +333,8 @@ class Refiner : public CBase_Refiner {
           AddedTets(addedtets), Msum(msum), Bface(bface), Bnode(bnode),
           Triinpoel(triinpoel) {}
       template< typename P > void operator()( const P& p ) const {
-        p.ckLocal()->resize( Ginpoel, Chunk, Coord, AddedNodes, AddedTets,
-                             Msum, Bface, Bnode, Triinpoel );
+        p.ckLocal()->resizeAfterRefined( Ginpoel, Chunk, Coord, AddedNodes,
+          AddedTets, Msum, Bface, Bnode, Triinpoel );
       }
     };
 };
