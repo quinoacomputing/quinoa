@@ -45,7 +45,8 @@ add_regression_test(amr_dtref_u_trans_gauss_hump_dg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE gauss_hump_dg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
+                    LABELS amr)
 
 add_regression_test(amr_dtref_u_trans_reord_gauss_hump_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -59,7 +60,8 @@ add_regression_test(amr_dtref_u_trans_reord_gauss_hump_dg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE gauss_hump_dg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
+                    LABELS amr)
 
 # Parallel, no virtualization
 
