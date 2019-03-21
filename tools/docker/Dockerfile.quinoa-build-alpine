@@ -1,0 +1,75 @@
+################################################################################
+# vim: filetype=dockerfile:
+#
+# \file      tools/docker/Dockerfile.quinoa-build-alpine
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
+# \brief     Dockerfile for a static build of Quinoa
+# \details   Dockerfile for a static build of Quinoa, i.e., all executables
+# statically linked to all libraries.
+#
+# We start from a minimalistic official Alpine Linux distribution (which is
+# based on busybox and musl-libc) and install all prerequisites, OpenMPI, etc.
+# This docker image creates statically built release executables requiring
+# absolutely no dependencies.
+#
+################################################################################
+
+FROM alpine:latest
+
+# Install system-wide prerequisites
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && cat /etc/apk/repositories
+RUN apk update && apk add patch libtool autoconf automake gfortran gcc g++ make boost-dev bash m4 file git cmake perl grep zlib-dev libexecinfo-dev ninja graphviz libelf-dev binutils-dev flex bison vim
+
+# Install OpenMPI
+ADD http://download.open-mpi.org/release/open-mpi/v3.1/openmpi-3.1.1.tar.gz /openmpi/
+RUN cd /openmpi/ && tar xzf openmpi-3.1.1.tar.gz && cd openmpi-3.1.1 && ./configure --enable-shared --enable-static --prefix=/opt/openmpi && make -sj$(grep -c processor /proc/cpuinfo) install
+ENV PATH /opt/openmpi/bin:$PATH
+ENV LD_LIBRARY_PATH /opt/openmpi/lib:$LD_LIBRARY_PATH
+ENV OMPI_MCA_plm isolated
+RUN rm -rf /openmpi
+
+# Remove /install - no more installs after this line
+RUN rm -rf /install
+
+# Create symbolic link to /lib/cpp for the charm++ build, see
+# https://lists.cs.illinois.edu/lists/arc/charm/2016-05/msg00013.html
+RUN ln -s /usr/bin/cpp /lib/cpp
+
+# Setup user
+RUN addgroup quinoa && adduser -S quinoa quinoa && chown -R quinoa:quinoa /home/quinoa
+USER quinoa
+WORKDIR /home/quinoa
+CMD ["/bin/sh"]
+
+# Clone quinoa
+RUN git clone --recursive http://github.com/quinoacomputing/quinoa.git
+# Checkout commit to be tested
+ARG COMMIT
+RUN cd quinoa && git checkout $COMMIT
+# Update submodules
+RUN cd quinoa && git submodule init && git submodule update --recursive && cd external && git submodule init && git submodule update --recursive && cd .. && git submodule status --recursive
+# Build TPLs
+RUN cd quinoa && mkdir -p external/build && cd external/build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off .. && make -sj$(grep -c processor /proc/cpuinfo)
+# Build quinoa
+RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off -DCMAKE_CXX_FLAGS=-Werror -DRUNNER_ARGS="--bind-to none -oversubscribe" ../src && make -sj$(grep -c processor /proc/cpuinfo) && npe=$(grep -c processor /proc/cpuinfo) && ./charmrun +p $npe Main/unittest -v -q && ctest -j $npe --output-on-failure -LE extreme
+
+# Ensure all executables are statically linked
+RUN cd quinoa/build && \
+    if ! ldd Main/unittest | grep -v ldd | wc -l > /dev/null; then \
+      echo "Non-static executable: unittest"; exit 1; \
+    fi && \
+    if ! ldd Main/inciter | grep -v ldd | wc -l > /dev/null; then \
+      echo "Non-static executable: inciter"; exit 1; \
+    fi && \
+    if ! ldd Main/rngtest | grep -v ldd | wc -l > /dev/null; then \
+      echo "Non-static executable: rngtest"; exit 1; \
+    fi && \
+    if ! ldd Main/meshconv | grep -v ldd | wc -l > /dev/null; then \
+      echo "Non-static executable: meshconv"; exit 1; \
+    fi && \
+    if ! ldd Main/walker | grep -v ldd | wc -l > /dev/null; then \
+      echo "Non-static executable: walker"; exit 1; \
+    fi

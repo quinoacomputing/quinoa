@@ -1739,10 +1739,6 @@ namespace grm {
   //!   pool, walker::ctr::CmdLine::keywords, in
   //!   Control/Walker/CmdLine/CmdLine.h.
   //! \see http://en.cppreference.com/w/cpp/types/conditional
-  //! \see http://www.boost.org/doc/libs/release/libs/mpl/doc/refmanual/set.html
-  //! \see http://www.boost.org/doc/libs/release/libs/mpl/doc/refmanual/has_key.html
-  //! \see http://www.boost.org/doc/libs/release/libs/mpl/doc/refmanual/or.html
-  //! \see http://www.boost.org/doc/libs/release/libs/mpl/doc/refmanual/limit-metafunction-arity.html
   //! TODO It still would be nice to generate a more developer-friendly
   //!    compiler error if the keyword is not in the pool.
   template< typename keyword, typename pool >

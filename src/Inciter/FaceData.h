@@ -44,7 +44,8 @@ class FaceData {
     //! Empty constructor for Charm++
     explicit FaceData() {}
 
-    //! Constructor: compute (element-face) data on domain boundary
+    //! \brief Constructor: compute (element-face) data for internal and
+    //!   domain-boundary faces
     explicit
     FaceData( const std::vector< std::size_t >& inpoel,
               const std::map< int, std::vector< std::size_t > >& bface,

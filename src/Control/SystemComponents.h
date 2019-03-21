@@ -33,10 +33,8 @@
     statistics and joint PDFs. This requires that each type of system
     has a vector of integers storing the number of scalar variables.
 
-    _Solution:_ Looping through elements of a tuple is done via [Boost]
-    (http://www.boost.org)'s [MetaProgramming Library (MPL)]
-    (http://www.boost.org/doc/libs/release/libs/mpl)'s [for_each]
-    (http://www.boost.org/doc/libs/release/libs/mpl/doc/refmanual/for-each.html).
+    _Solution:_ Looping through elements of a tuple is done via [Brigand]
+    (https://github.com/edouarda/brigand)'s [MetaProgramming Library].
     Such operations on types happen at compile-time, i.e., the code runs inside
     the compiler and only its result gets compiled into code to be run at
     run-time. Advantages are abstraction and generic code that is independent

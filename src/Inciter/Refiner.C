@@ -238,7 +238,7 @@ Refiner::t0ref()
 void
 Refiner::start()
 // *****************************************************************************
-//  Start new step of initial mesh refinement (before t>0)
+//  Start new step of initial mesh refinement
 // *****************************************************************************
 {
   m_extra = 0;
@@ -461,8 +461,6 @@ Refiner::correctref()
         Assert( !(remote_lock_case > unlocked && remote_needs_refining),
                 "Invalid remote edge: locked & needs refining" );
 
-        //if (remote_lock_case > unlocked) remote_lock_case = AMR::Edge_Lock_Case::locked;
-
         // compute lock from local and remote locks as most restrictive
         local_lock_case = std::max( local_lock_case, remote_lock_case );
 
@@ -536,6 +534,9 @@ Refiner::updateEdgeData()
   m_edgedata.clear();
   m_intermediates.clear();
 
+  // This currently takes ALL edges from the AMR lib, i.e., on the whole
+  // domain. We should eventually only collect edges here that are shared with
+  // other chares.
   for (const auto& e : ref_edges) {
     const auto& ed = e.first.get_data();
     const auto ged = Edge{{ m_gid[ ed[0] ], m_gid[ ed[1] ] }};
@@ -543,7 +544,9 @@ Refiner::updateEdgeData()
     m_edgedata[ ged ] = { e.second.needs_refining, e.second.lock_case };
   }
 
-  // Build intermediates to send
+  // Build intermediates to send. This currently takes ALL intermediates from
+  // the AMR lib, i.e., on the whole domain. We should eventually only collect
+  // edges here that are shared with other chares.
   for (const auto& i : m_refiner.tet_store.intermediate_list) {
      m_intermediates.insert( m_gid[i] );
   }
