@@ -72,7 +72,7 @@ module dg {
 
       entry void wait4recompghost() {
         when diag_complete(), ref_complete(), resize_complete() serial
-        "recomputeGhost" { recompGhost(); } };
+        "recomputeGhostRefined" { recompGhostRefined(); } };
 
       entry void ownghost_complete();
       entry void reqghost_complete();

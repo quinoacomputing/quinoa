@@ -1437,7 +1437,7 @@ DG::resize(
 }
 
 void
-DG::recompGhost()
+DG::recompGhostRefined()
 // *****************************************************************************
 // Start recomputing ghost data after a mesh refinement step
 // *****************************************************************************
