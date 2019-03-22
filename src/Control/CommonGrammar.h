@@ -361,14 +361,12 @@ namespace grm {
       "be even)." },
     { MsgKey::T0REFNOOP, "Initial (t<0) mesh refinement configuration will be a"
       " no-op. Initial mesh refinement requires in the amr ... end block: (1) "
-      "'" +  kw::amr_t0ref::string() + " true' and one of the following: (A) "
-      "at least one initial refinement type, e.g., '" +
-      kw::amr_initial::string() + ' ' + kw::amr_uniform::string() + "', or "
-      "(B) an initial refinement edge list, e.g., '" + kw::amr_initref::string()
-      + " 1 2 3 4 end'." },
+      "'" +  kw::amr_t0ref::string() + " true' and at least one initial "
+      "refinement type, e.g., '" + kw::amr_initial::string() + ' ' +
+      kw::amr_uniform::string() + "'." },
     { MsgKey::DTREFNOOP, "Mesh refinement configuration for t>0 will be a "
       "no-op. During-timestepping (t>0) mesh refinement configuration "
-      "requires in the amr ... end block: (1) '" + kw::amr_dtref::string() +
+      "requires in the amr ... end block: '" + kw::amr_dtref::string() +
       " true' and (2) a specification of at least one refinement variable, "
       "e.g., '" + kw::amr_refvar::string() + " c end'." },
     { MsgKey::CHARMARG, "Arguments starting with '+' are assumed to be inteded "
@@ -1367,11 +1365,13 @@ namespace grm {
   //!   between values
   template< class key, class insert, class endkeyword,
             class starter, class value = number >
+  // cppcheck-suppress syntaxError
   struct vector :
          pegtl::seq<
            act< readkw< typename key::pegtl_string >, starter >,
            pegtl::until< readkw< typename endkeyword::pegtl_string >,
                          pegtl::sor< comment,
+                                     pegtl::plus< pegtl::space >,
                                      scan< value, insert >,
                                      unknown< ERROR, MsgKey::LIST > > > > {};
 

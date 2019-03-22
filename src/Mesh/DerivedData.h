@@ -167,6 +167,12 @@ leakyPartition( const std::vector< int >& esueltet,
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord );
 
+//! Check if mesh (partition) is conforming
+bool
+conforming( const std::vector< std::size_t >& inpoel,
+            const tk::UnsMesh::Coords& coord,
+            bool cerr = true );
+
 } // tk::
 
 #endif // DerivedData_h

@@ -21,9 +21,9 @@ namespace AMR {
 
             node_store_t() { } // default cons
 
-            void set_x(coord_type x_in) { m_x = x_in; }
-            void set_y(coord_type y_in) { m_y = y_in; }
-            void set_z(coord_type z_in) { m_z = z_in; }
+            void set_x(const coord_type& x_in) { m_x = x_in; }
+            void set_y(const coord_type& y_in) { m_y = y_in; }
+            void set_z(const coord_type& z_in) { m_z = z_in; }
 
             /**
              * @brief Function to add x coordinate data
@@ -46,13 +46,13 @@ namespace AMR {
              */
             void add_z(real_t zc) { m_z.push_back(zc); }
 
-            coord_type get_x_array() {
+            const coord_type& get_x_array() {
                 return m_x;
             }
-            coord_type get_y_array() {
+            const coord_type& get_y_array() {
                 return m_y;
             }
-            coord_type get_z_array() {
+            const coord_type& get_z_array() {
                 return m_z;
             }
 
@@ -205,6 +205,7 @@ namespace AMR {
              */
             coordinate_t id_to_coordinate(size_t id)
             {
+                // cppcheck-suppress assertWithSideEffect
                 assert( id < size());
 
                 // Note: extra braces are to appease Clangs warning generator.

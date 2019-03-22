@@ -25,6 +25,7 @@ namespace ctr {
 //! Initial AMR types
 enum class AMRInitialType : uint8_t { UNIFORM
                                     , INITIAL_CONDITIONS
+                                    , EDGELIST
                                     , COORDINATES };
 
 //! Pack/Unpack AMRInitialType: forward overload to generic enum class packer
@@ -38,6 +39,7 @@ class AMRInitial : public tk::Toggle< AMRInitialType > {
     //! Valid expected choices to make them also available at compile-time
     using keywords = brigand::list< kw::amr_uniform
                                   , kw::amr_initial_conditions
+                                  , kw::amr_edgelist
                                   , kw::amr_coords >;
 
     //! \brief Options constructor
@@ -51,11 +53,13 @@ class AMRInitial : public tk::Toggle< AMRInitialType > {
         { { AMRInitialType::UNIFORM, kw::amr_uniform::name() },
           { AMRInitialType::INITIAL_CONDITIONS,
             kw::amr_initial_conditions::name() },
+          { AMRInitialType::EDGELIST, kw::amr_edgelist::name() },
           { AMRInitialType::COORDINATES, kw::amr_coords::name() } },
         //! keywords -> Enums
         { { kw::amr_uniform::string(), AMRInitialType::UNIFORM },
           { kw::amr_initial_conditions::string(),
             AMRInitialType::INITIAL_CONDITIONS },
+          { kw::amr_edgelist::string(), AMRInitialType::EDGELIST },
           { kw::amr_coords::string(), AMRInitialType::COORDINATES } } )
     {
        brigand::for_each< keywords >( assertPolicyCodes() );
@@ -89,6 +93,7 @@ class AMRInitial : public tk::Toggle< AMRInitialType > {
         { AMRInitialType::UNIFORM, *kw::amr_uniform::code() }
       , { AMRInitialType::INITIAL_CONDITIONS,
           *kw::amr_initial_conditions::code() }
+      , { AMRInitialType::EDGELIST, *kw::amr_edgelist::code() }
       , { AMRInitialType::COORDINATES, *kw::amr_coords::code() }
     };
 };
