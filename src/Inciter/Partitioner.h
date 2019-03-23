@@ -63,7 +63,7 @@ class Partitioner : public CBase_Partitioner {
                  const CProxy_Sorter& sorter,
                  const tk::CProxy_MeshWriter& meshwriter,
                  const Scheme& scheme,
-                 const std::map< int, std::vector< std::size_t > >& belem,
+                 const std::map< int, std::vector< std::size_t > >& bface,
                  const std::map< int, std::vector< std::size_t > >& faces,
                  const std::map< int, std::vector< std::size_t > >& bnode );
 

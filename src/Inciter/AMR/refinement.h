@@ -20,12 +20,12 @@ namespace AMR {
     class refinement_t {
         private:
 
-            const size_t DEFAULT_REFINEMENT_LEVEL = 0; //TODO: Is this in the right place?
-            const size_t MIN_REFINEMENT_LEVEL = DEFAULT_REFINEMENT_LEVEL;
+            size_t DEFAULT_REFINEMENT_LEVEL = 0; //TODO: Is this in the right place?
+            size_t MIN_REFINEMENT_LEVEL = DEFAULT_REFINEMENT_LEVEL;
 
         public:
 
-            const size_t MAX_REFINEMENT_LEVEL = 4;
+            size_t MAX_REFINEMENT_LEVEL = 4;
 
             // TODO: Document this
             child_id_list_t generate_child_ids( tet_store_t& tet_store, size_t parent_id, size_t count = MAX_CHILDREN)
@@ -52,6 +52,7 @@ namespace AMR {
                 assert( master_element.refinement_case !=
                         Refinement_Case::one_to_four);
 
+                // cppcheck-suppress assertWithSideEffect
                 assert( tet_store.is_active(tet_id) );
 
                 // Check this won't take us past the max refinement level
@@ -187,6 +188,7 @@ namespace AMR {
                 // Deactivate parent tet?
                 tet_store.deactivate(tet_id);
                 //lock_edges_from_node(new_node_id, Edge_Lock_Case::intermediate);
+                trace_out << "Adding " << new_node_id << " to intermediate list " << std::endl;
                 tet_store.intermediate_list.insert(new_node_id);
             }
 
@@ -196,7 +198,7 @@ namespace AMR {
              *
              * @param tet_id The id to refine 1:4
             */
-            void refine_one_to_four( tet_store_t& tet_store, 
+            void refine_one_to_four( tet_store_t& tet_store,
                     node_connectivity_t& node_connectivity, size_t tet_id)
             {
                 trace_out << "do refine 1:4 " << std::endl;
@@ -218,12 +220,16 @@ namespace AMR {
 
                     edge_list_t face_edge_list = AMR::edge_store_t::generate_keys_from_face_ids(face_ids);
                     // For this face list, see which ones need refining
+                    trace_out << "Looping to " << NUM_FACE_NODES << std::endl;
                     for (size_t k = 0; k < NUM_FACE_NODES; k++)
                     {
+                        trace_out << "nodes " << k << std::endl;
+
                         edge_t edge = face_edge_list[k];
                         if (tet_store.edge_store.get(edge).needs_refining == true)
                         {
                             num_face_refine_edges++;
+                            trace_out << "Ref " << edge << " Num face => " << num_face_refine_edges << std::endl;
                         }
 
                         // Check for locked edges
@@ -231,14 +237,17 @@ namespace AMR {
                         if (tet_store.edge_store.lock_case(edge) != Edge_Lock_Case::unlocked)
                         {
                             // Abort this face
+                            trace_out << "Face has lock it's not this one " << face << std::endl;
                             num_face_refine_edges = 0;
-                            continue;
+                            break;
                         }
+                        trace_out << "Num face => " << num_face_refine_edges << std::endl;
                     }
                     if (num_face_refine_edges >= 2)
                     {
                         assert(num_face_refine_edges < 4);
                         //face_refine = true;
+                        trace_out << "Accepting face " << face << std::endl;
                         face_refine_id = face;
                         break;
                     }
@@ -390,8 +399,11 @@ namespace AMR {
                 lock_edges_from_node(BC, Edge_Lock_Case::intermediate);
                 */
 
+                trace_out << "Adding " << AB << " to intermediate list " << std::endl;
                 tet_store.intermediate_list.insert(AB);
+                trace_out << "Adding " << AC << " to intermediate list " << std::endl;
                 tet_store.intermediate_list.insert(AC);
+                trace_out << "Adding " << BC << " to intermediate list " << std::endl;
                 tet_store.intermediate_list.insert(BC);
 
             }
@@ -492,7 +504,7 @@ namespace AMR {
                 // C CA CB CD - C
                 // D DA DB DC - D
                 // -
-                // Internal (for a face BDC, it's the intermediat and mid opposite)
+                // Internal (for a face BDC, it's the intermediate and mid opposite)
                 // BC CD DB AC - BDC
                 // AB BD AD AC - ABD
                 // AB AC BC BD - ABC
@@ -632,6 +644,7 @@ namespace AMR {
                             (intermediate_list.count(k2))
                        )
                     {
+                        trace_out << "Locking intermediate " << e << " from " << k1 << " and " << k2 << std::endl;
                         tet_store.edge_store.get(e).lock_case = lock_case;
                     }
                 }
@@ -703,7 +716,21 @@ namespace AMR {
                 Refinement_State& parent = tet_store.data(parent_id);
                 for (auto c : parent.children)
                 {
-                    tet_store.erase(c);
+                    //tet_store.erase(c);
+                    tet_store.deactivate(c);
+
+                    /*
+                    auto children = tet_store.data(c).children;
+                    // Debug printing
+                    std::cout << "tet " << c << "has ";
+                    for (auto child : children)
+                    {
+                        std::cout << " _child " << child;
+                    }
+                    */
+
+                    std::cout << std::endl;
+
                     parent.num_children--; // Could directly set to 0
                 }
                 parent.children.clear();
@@ -868,6 +895,21 @@ namespace AMR {
             }
 
 
+            // HERE BE DRAGONS! THIS IS DANGEROUS IF YOU USE IT WRONG
+            // For every child of parent_id, set his children to our won
+            // TODO: set a flag for the curious user to know we trashed the children
+            void overwrite_children(
+                    tet_store_t& tet_store,
+                    const child_id_list_t& to_be_replaced,
+                    const child_id_list_t& replace_with
+            )
+            {
+                for (auto c : to_be_replaced)
+                {
+                    tet_store.data(c).children = replace_with;
+                    tet_store.data(c).num_children = tet_store.data(c).children.size();
+                }
+            }
 
     };
 }

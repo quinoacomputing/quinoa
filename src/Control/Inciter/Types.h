@@ -48,13 +48,14 @@ using amr = tk::tuple::tagged_tuple<
   tag::amr,     bool,                             //!< AMR on/off
   tag::t0ref,   bool,                             //!< AMR before t<0 on/off
   tag::dtref,   bool,                             //!< AMR during t>0 on/off
-  tag::dtfreq,  kw::amr_dtfreq::info::expect::type, //!< refinement frequency
+  tag::dtref_uniform, bool,                       //!< Force dtref uniform-only
+  tag::dtfreq,  kw::amr_dtfreq::info::expect::type, //!< Refinement frequency
   tag::init,    std::vector< AMRInitialType >,    //!< List of initial AMR types
   tag::refvar,  std::vector< std::string >,       //!< List of refinement vars
   tag::id,      std::vector< std::size_t >,       //!< List of refvar indices
   tag::error,   AMRErrorType,                     //!< Error estimator for AMR
   //! List of edges-node pairs
-  tag::edge,    std::vector< kw::amr_initref::info::expect::type >,
+  tag::edge,    std::vector< kw::amr_edgelist::info::expect::type >,
   //! Refinement tagging edges with end-point coordinates lower than x coord
   tag::xminus,  kw::amr_xminus::info::expect::type,
   //! Refinement tagging edges with end-point coordinates higher than x coord
@@ -100,7 +101,8 @@ using floatformat = tk::tuple::tagged_tuple<
 using intervals = tk::tuple::tagged_tuple<
   tag::tty,   kw::ttyi::info::expect::type,       //!< TTY output interval
   tag::field, kw::interval::info::expect::type,   //!< Field output interval
-  tag::diag,  kw::interval::info::expect::type    //!< Diags output interval
+  tag::diag,  kw::interval::info::expect::type,   //!< Diags output interval
+  tag::lbfreq,kw::lbfreq::info::expect::type      //!< load-balancing frequency
 >;
 
 //! IO parameters storage

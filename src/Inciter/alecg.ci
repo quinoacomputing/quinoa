@@ -21,7 +21,6 @@ module alecg {
 
   include "UnsMesh.h";
   include "PUPUtil.h";
-  include "FaceData.h";
   //! [External modules and includes]
 
   namespace inciter {
@@ -30,7 +29,10 @@ module alecg {
     array [1D] ALECG {
     //! [1D Charm++ chare array]
       //! [Entry methods]
-      entry ALECG( const CProxy_Discretization& disc, const FaceData& fd );
+      entry ALECG( const CProxy_Discretization& disc,
+                   const std::map< int, std::vector< std::size_t > >& /* bface */,
+                   const std::map< int, std::vector< std::size_t > >& bnode,
+                   const std::vector< std::size_t >& /* triinpoel */ );
       initnode void registerReducers();
       entry void setup( tk::real v );
       entry void init();

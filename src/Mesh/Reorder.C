@@ -56,7 +56,7 @@ remap( std::vector< std::size_t >& id, const std::vector< std::size_t >& map )
 //! \param[in] map Array of indices creating a new order
 //! \details This function applies a mapping (reordering) to the integer IDs
 //!   passed in using the map passed in. The mapping is expressed between the
-//!   array index ands its value. The function overwrites every value, i, of
+//!   array index and its value. The function overwrites every value, i, of
 //!   vector id with map[i].
 //! \note The sizes of id and map need not equal. Only the maximum index in id
 //!   must be lower than the size of map.
@@ -82,7 +82,7 @@ remap( std::vector< tk::real >& r, const std::vector< std::size_t >& map )
 //! \param[in] map Array of indices creating a new order
 //! \details This function applies a mapping (reordering) to the real values
 //!   passed in using the map passed in. The mapping is expressed between the
-//!   array index ands its value. The function moves every value r[i] to
+//!   array index and its value. The function moves every value r[i] to
 //!   r[ map[i] ].
 //! \note The sizes of r and map must be equal and the maximum index in map must
 //!   be lower than the size of map.
@@ -99,6 +99,67 @@ remap( std::vector< tk::real >& r, const std::vector< std::size_t >& map )
   // remap real numbers in vector
   auto m = r;
   for (std::size_t i=0; i<map.size(); ++i) r[ map[i] ] = m[i];
+}
+
+std::vector< std::size_t >
+remap( const std::vector< std::size_t >& id,
+       const std::vector< std::size_t >& map )
+// *****************************************************************************
+//  Create remapped vector of indices
+//! \param[in] id Vector of integer IDs to remap
+//! \param[in] map Array of indices creating a new order
+//! \return Remapped vector of ids
+//! \details This function applies a mapping (reordering) to the integer IDs
+//!   passed in using the map passed in. The mapping is expressed between the
+//!   array index and its value. The function creates and returns a new container
+//!   with remapped ids of identical size of the origin id container.
+//! \note The sizes of id and map must be equal and the maximum index in map
+//!   must be lower than the size of map.
+//! \note It is okay to call this function with either of the containers empty;
+//!   it will simply return without throwing an exception.
+// *****************************************************************************
+{
+  if (id.empty() || map.empty()) return {};
+
+  Assert( *max_element( begin(id), end(id) ) < map.size(),
+          "Indexing out of bounds" );
+
+  std::vector< std::size_t > newids( id.size() );
+
+  std::size_t j = 0;
+  for (auto i : id) newids[ j++ ] = map[i];
+
+  return newids;
+}
+
+std::vector< std::size_t >
+remap( const std::vector< std::size_t >& id,
+       const std::unordered_map< std::size_t, std::size_t >& map )
+// *****************************************************************************
+//  Create remapped vector of indices
+//! \param[in] id Vector of integer IDs to create new container of ids from
+//! \param[in] map Hash-map of key->value creating a new order
+//! \return Remapped vector of ids
+//! \details This function applies a mapping (reordering) to the integer IDs
+//!   passed in using the map passed in. The mapping is expressed as a hash-map
+//!   of key->value pairs, where the key is the original and the value is the
+//!   new id of the mapping. The function creates and returns a new container
+//!   with the remapped ids of identical size of the original id container.
+//! \note All ids in the input id container must have a key in the map.
+//!   Otherwise and exception is thrown.
+//! \note It is okay to call this function with either of the containers empty;
+//!   it will simply return with and empty container without throwing and
+//!   exception.
+// *****************************************************************************
+{
+  Assert( !map.empty(), "Map must not be empty" );
+
+  std::vector< std::size_t > newids( id.size() );
+
+  std::size_t j = 0;
+  for (auto i : id) newids[ j++ ] = tk::cref_find( map, i );
+
+  return newids;
 }
 
 std::vector< std::size_t >

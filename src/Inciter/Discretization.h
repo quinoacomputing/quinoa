@@ -37,7 +37,7 @@ class Discretization : public CBase_Discretization {
         const CProxy_DistFCT& fctproxy,
         const CProxy_Transporter& transporter,
         const tk::CProxy_MeshWriter& meshwriter,
-        const std::vector< std::size_t >& conn,
+        const std::vector< std::size_t >& ginpoel,
         const tk::UnsMesh::CoordMap& coordmap,
         const std::map< int, std::unordered_set< std::size_t > >& msum,
         int nc );
@@ -181,12 +181,16 @@ class Discretization : public CBase_Discretization {
     void write( const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::map< int, std::vector< std::size_t > >& bface,
-                const std::vector< std::size_t >& triinpoel,
                 const std::map< int, std::vector< std::size_t > >& bnode,
+                const std::vector< std::size_t >& triinpoel,
                 const std::vector< std::string >& names,
                 const std::vector< std::vector< tk::real > >& fields,
                 tk::Centering centering,
                 CkCallback c );
+
+    //! Return chare-node adjacency map as sets
+    std::unordered_map< int, std::unordered_set< std::size_t > >
+    msumset() const;
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

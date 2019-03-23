@@ -52,9 +52,9 @@ class UnsMesh {
     using CoordMap = std::unordered_map< std::size_t, Coord >;
 
     //! Alias for storing a mesh chunk
-    //! \details The first vector is the element connectivity (local IDs), the
-    //!   second vector is the global node IDs of owned elements, while the
-    //!   third one is a map of global->local node IDs.
+    //! \details The first vector is the element connectivity (local mesh node
+    //!   IDs), the second vector is the global node IDs of owned elements,
+    //!   while the third one is a map of global(key)->local(value) node IDs.
     using Chunk = std::tuple< std::vector< std::size_t >,
                               std::vector< std::size_t >,
                               std::unordered_map< std::size_t, std::size_t > >;
@@ -108,13 +108,6 @@ class UnsMesh {
         return s == p;
       }
     };
-
-    //! Map associating the ID and the coordinates of a node to an edge
-    using EdgeNodeCoord =
-       std::unordered_map< Edge,
-                           std::tuple< std::size_t, real, real, real >,
-                           Hash<2>,
-                           Eq<2> >;
 
     //! Unique set of edges
     using EdgeSet = std::unordered_set< Edge, Hash<2>, Eq<2> >;

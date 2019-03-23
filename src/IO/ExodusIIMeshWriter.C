@@ -111,25 +111,36 @@ ExodusIIMeshWriter::writeMesh(
 //! \param[in] triinp Triangle face connectivity (for all faces in bface)
 // *****************************************************************************
 {
-  // Fill element-relative face ids for all side sets with 0
-  // (will use triangles as face elements for side sets)
+  // Fill element-relative face ids (0,1,2,3) for all side sets with 0 (= will
+  // use triangles as face elements for side sets)
   std::map< int, std::vector< std::size_t > > faceid;
   for (const auto& s : bface) faceid[s.first].resize( s.second.size(), 0 );
 
-  // Generate face internal Exodus element ids for all faces of all side sets
+  // Generate file-internal Exodus (triangle face) element ids for all faces of
+  // all side sets. bface_exo:: face ids for each side set, triinpoel: triangle
+  // face connectivity for all side sets.
   std::map< int, std::vector< std::size_t > > bface_exo;
-  // Start face ids from max number of tetrahedra because tet elem blocks will
-  // be written out first
-  std::size_t i = tetinp.size() / 4;
+  std::vector< std::size_t > triinpoel( triinp.size() );
+  // Generate/start exodus-file-face ids from max number of tetrahedra because
+  // tet elem blocks will be written out first
+  std::size_t exo_faceid = tetinp.size() / 4;
   for (const auto& s : bface) {
     auto& b = bface_exo[ s.first ];
     b.resize( s.second.size() );
-    std::iota( begin(b), end(b), i );
-    i += b.size();
+    std::size_t j = 0;  // side-set-relative face id
+    for (auto f : s.second) {   // for all faces on side set s.first
+      b[ j++ ] = exo_faceid;    // generate exo-file face id
+      auto k = exo_faceid - tetinp.size()/4;
+      // copy over triangle connectivity in order
+      triinpoel[ k*3+0 ] = triinp[ f*3+0 ];
+      triinpoel[ k*3+1 ] = triinp[ f*3+1 ];
+      triinpoel[ k*3+2 ] = triinp[ f*3+2 ];
+      ++exo_faceid;
+    }
   }
 
   // Write mesh
-  writeMesh( tk::UnsMesh( tetinp, coord, bface_exo, triinp, faceid ) );
+  writeMesh( tk::UnsMesh( tetinp, coord, bface_exo, triinpoel, faceid ) );
 }
 
 void
@@ -361,7 +372,7 @@ ExodusIIMeshWriter::writeTimeStamp( uint64_t it, tk::real time ) const
 // *****************************************************************************
 {
   ErrChk( ex_put_time( m_outFile, static_cast<int>(it), &time ) == 0,
-          "Failed to time stamp to ExodusII file: " + m_filename );
+          "Failed to write time stamp to ExodusII file: " + m_filename );
 }
 
 void

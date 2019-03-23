@@ -7,6 +7,7 @@
 
 #include "../Base/Types.h"
 #include "edge.h"
+#include "UnsMesh.h"
 
 // TODO: Do we need to merge this with Base/Types.h?
 
@@ -86,6 +87,7 @@ struct Edge_Refinement {
         // Could add logic here to reconcile needs_refining and needs_derefining
     }
 };
+
 // Complex types
 struct Edge_Refinement; // forward declare
 using edges_t = std::map<edge_t, Edge_Refinement>;
@@ -93,6 +95,14 @@ using edge_list_t  = std::array<edge_t, NUM_TET_EDGES>;
 using edge_list_ids_t  = std::array<std::size_t, NUM_TET_EDGES>;
 
 using coord_type = std::vector< tk::real >;
+
+//! \brief Needs refinement and edge lock case associated to an edge given by global
+//!    parent IDs
+using EdgeData =
+   std::unordered_map< tk::UnsMesh::Edge,
+                       std::pair< bool, Edge_Lock_Case >,
+                       tk::UnsMesh::Hash<2>,
+                       tk::UnsMesh::Eq<2> >;
 
 }  // AMR::
 

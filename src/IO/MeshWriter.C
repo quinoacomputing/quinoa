@@ -66,8 +66,8 @@ MeshWriter::write(
   const std::vector< std::size_t >& inpoel,
   const UnsMesh::Coords& coord,
   const std::map< int, std::vector< std::size_t > >& bface,
-  const std::vector< std::size_t >& triinpoel,
   const std::map< int, std::vector< std::size_t > >& bnode,
+  const std::vector< std::size_t >& triinpoel,
   const std::unordered_map< std::size_t, std::size_t >& lid,
   const std::vector< std::string >& names,
   const std::vector< std::vector< tk::real > >& fields,
@@ -88,10 +88,10 @@ MeshWriter::write(
 //! \param[in] coord Node coordinates of the mesh chunk to be written
 //! \param[in] bface Map of boundary-face lists mapped to corresponding side set
 //!   ids for this mesh chunk
-//! \param[in] triinpoel Interconnectivity of points and boundary-face in this
-//!   mesh chunk
 //! \param[in] bnode Map of boundary-node lists mapped to corresponding side set
 //!   ids for this mesh chunk
+//! \param[in] triinpoel Interconnectivity of points and boundary-face in this
+//!   mesh chunk
 //! \param[in] lid Global->local node id map for the mesh chunk to be written
 //! \param[in] names Names of fields to be output in next call to writeFields()
 //! \param[in] fields Field data to output to file
@@ -130,7 +130,6 @@ MeshWriter::write(
 
         } else {
           ew.writeMesh( inpoel, coord );
-
         }
         // Write field names
         if (centering == Centering::ELEM)
@@ -177,6 +176,7 @@ MeshWriter::filename( const std::string& basefilename,
                       int chareid ) const
 // *****************************************************************************
 //  Compute filename
+//! \param[in basefilename File name to append to
 //! \param[in] itr Iteration count since a new mesh. New mesh in this context
 //!   means that either the mesh is moved and/or its topology has changed.
 //! \param[in] chareid The chare id the write-to-file request is coming from

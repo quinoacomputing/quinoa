@@ -23,7 +23,6 @@
   #pragma GCC diagnostic ignored "-Wpedantic"
 #endif
 
-#undef I
 #include <brigand/sequences/set.hpp>
 
 #if defined(__clang__)

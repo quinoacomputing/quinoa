@@ -62,14 +62,14 @@ if (HAS_OMEGA_H)
 endif()
 
 if (ENABLE_INCITER)
-  set(TestError "../UnitTest/tests/Inciter/AMR/TestError.C")
-  set(TestScheme "../UnitTest/tests/Inciter/TestScheme.C")
+  set(TestError "../../tests/unit/Inciter/AMR/TestError.C")
+  set(TestScheme "../../tests/unit/Inciter/TestScheme.C")
   set(MESHREFINEMENT "MeshRefinement")
 endif()
 
 # Configure executable targets
 
-if (ENABLE_UNITTEST)
+if (ENABLE_UNITTEST AND ENABLE_TESTS)
   include("UnitTest.cmake")
 endif()
 
