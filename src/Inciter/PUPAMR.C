@@ -137,13 +137,13 @@ void PUP::pup( PUP::er &p, AMR::mesh_adapter_t& m )
 //! \param[in,out] m mesh_adapter_t object reference
 // *****************************************************************************
 {
+  p | m.derefinement_cut_off;
+  p | m.refinement_cut_off;
   p | m.tet_store;
   p | m.node_connectivity;
-
 #ifdef ENABLE_NODE_STORE
   p | m.node_store;
 #endif
-
   p | m.refiner;
 }
 
@@ -170,6 +170,7 @@ void PUP::pup( PUP::er &p, AMR::node_connectivity_t& n )
 // *****************************************************************************
 {
   p | n.data();
+  p | n.empty_node_count;
 }
 
 void PUP::pup( PUP::er &, AMR::refinement_t& )

@@ -162,6 +162,12 @@ endif()
 
 add_definitions(-DQUINOA_CONFIG_MPI_ENABLED)
 
+option(ENABLE_AMR_TRACE OFF)
+
+if(ENABLE_AMR_TRACE)
+    add_definitions(-DENABLE_TRACE)
+endif(ENABLE_AMR_TRACE)
+
 # Set compilers
 set(COMPILER ${UNDERLYING_CXX_COMPILER})
 set(MPI_COMPILER ${MPI_CXX_COMPILER})
@@ -360,7 +366,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #  3280: declaration hides member
   #  3346: dynamic exception specifications are deprecated
   #  3656: variable may be used before its value is set
-  add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,869,981,1418,1419,1572,2259,2407,2415,2547,2557,3280,3346,3656")
+  #  10120: overriding '-O3' with '-O2'
+  add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,869,981,1418,1419,1572,2259,2407,2415,2547,2557,3280,3346,3656,10120")
 
   # Compiler flags for optimization report
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopt-report=0 -qopt-report-phase=loop,vec -qopt-report-file=stderr")

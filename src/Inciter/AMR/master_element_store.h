@@ -111,6 +111,13 @@ namespace AMR {
              */
             Refinement_State& get(size_t id)
             {
+                // cppcheck-suppress assertWithSideEffect
+                assert( exists(id) );
+                return master_elements.at(id);
+            }
+
+            const Refinement_State& get(size_t id) const
+            {
                 assert( exists(id) );
                 return master_elements.at(id);
             }
@@ -124,7 +131,7 @@ namespace AMR {
              *
              * @return Bool stating if the element already exists
              */
-            bool exists(size_t id)
+            bool exists(size_t id) const
             {
                 auto f = master_elements.find(id);
                 if (f != master_elements.end())
@@ -157,6 +164,7 @@ namespace AMR {
              */
             size_t get_child_id(size_t parent_id, size_t offset)
             {
+                // cppcheck-suppress assertWithSideEffect
                 assert(offset < get(parent_id).children.size());
                 return get(parent_id).children[offset];
             }
@@ -181,6 +189,8 @@ namespace AMR {
             {
                 get(parent_id).children.push_back(child_id);
                 get(parent_id).num_children++;
+
+                // cppcheck-suppress assertWithSideEffect
                 assert( get(parent_id).num_children <= 8);
             }
 

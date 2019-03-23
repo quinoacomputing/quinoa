@@ -37,7 +37,6 @@ using GhostData =
                         // inpoel of said tet
                         std::array< std::size_t, 4 > > >;
 
-
 //! FaceData class holding face-connectivity data useful for DG discretization
 class FaceData {
 
@@ -45,21 +44,18 @@ class FaceData {
     //! Empty constructor for Charm++
     explicit FaceData() {}
 
-    //! Constructor
+    //! \brief Constructor: compute (element-face) data for internal and
+    //!   domain-boundary faces
     explicit
-    FaceData( const std::vector< std::size_t >& ginpoel,
+    FaceData( const std::vector< std::size_t >& inpoel,
               const std::map< int, std::vector< std::size_t > >& bface,
-              const std::map< int, std::vector< std::size_t > >& bnode,
-              std::vector< std::size_t >& triinpoel );
+              const std::vector< std::size_t >& triinpoel );
 
     /** @name Accessors
       * */
     ///@{
     const std::map< int, std::vector< std::size_t > >& Bface() const
     { return m_bface; }
-    const std::map< int, std::vector< std::size_t > >& Bnode() const
-    { return m_bnode; }
-    std::map< int, std::vector< std::size_t > >& Bnode() { return m_bnode; }
     const std::vector< std::size_t >& Triinpoel() const { return m_triinpoel; }
     std::size_t Nbfac() const { return tk::sumvalsize( m_bface ); }
     const std::vector< int >& Esuel() const { return m_esuel; }
@@ -79,7 +75,6 @@ class FaceData {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
       p | m_bface;
-      p | m_bnode;
       p | m_triinpoel;
       p | m_esuel;
       p | m_nipfac;
@@ -96,8 +91,6 @@ class FaceData {
   private:
     //! Boundary faces side-set information
     std::map< int, std::vector< std::size_t > > m_bface;
-    //! Boundary nodes side-set information
-    std::map< int, std::vector< std::size_t > > m_bnode;
     //! Triangle face connecitivity
     std::vector< std::size_t > m_triinpoel;
     //! Elements surrounding elements

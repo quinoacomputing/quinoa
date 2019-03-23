@@ -385,15 +385,14 @@ namespace grm {
                stack.template get< tag::amr, tag::id >().size()),
               "The size of refvar and refidx vectors must equal" );
       const auto& initref = stack.template get< tag::amr, tag::init >();
-      const auto& edgeref = stack.template get< tag::amr, tag::edge >();
       const auto& refvar = stack.template get< tag::amr, tag::refvar >();
+      const auto& edgelist = stack.template get< tag::amr, tag::edge >();
       // Error out if initref edge list is not divisible by 2 (user error)
-      if (edgeref.size() % 2 == 1)
+      if (edgelist.size() % 2 == 1)
         Message< Stack, ERROR, MsgKey::T0REFODD >( stack, in );
-      // Error out if initial AMR will be a no-op (user error)
-      if ( stack.template get< tag::amr, tag::t0ref >() &&
-           initref.empty() && edgeref.empty() )
-        Message< Stack, ERROR, MsgKey::T0REFNOOP >( stack, in );
+      // Warn if initial AMR will be a no-op
+      if ( stack.template get< tag::amr, tag::t0ref >() && initref.empty() )
+        Message< Stack, WARNING, MsgKey::T0REFNOOP >( stack, in );
       // Error out if timestepping AMR will be a no-op (user error)
       if ( stack.template get< tag::amr, tag::dtref >() && refvar.empty() )
         Message< Stack, ERROR, MsgKey::DTREFNOOP >( stack, in );
@@ -490,9 +489,9 @@ namespace deck {
                                         eq,
                                         param > > > {};
 
-  //! initref ... end block
-  struct initref :
-         tk::grm::vector< use< kw::amr_initref >,
+  //! edgelist ... end block
+  struct edgelist :
+         tk::grm::vector< use< kw::amr_edgelist >,
                           tk::grm::Store_back< tag::amr, tag::edge >,
                           use< kw::end >,
                           tk::grm::check_vector< tag::amr, tag::edge > > {};
@@ -714,7 +713,7 @@ namespace deck {
            tk::grm::enable_amr, // enable AMR if amr...end block encountered
            tk::grm::block< use< kw::end >,
                            refvars,
-                           initref,
+                           edgelist,
                            coordref,
                            tk::grm::process<
                              use< kw::amr_initial >,
@@ -731,6 +730,9 @@ namespace deck {
                              pegtl::alpha >,
                            tk::grm::process< use< kw::amr_t0ref >,
                              tk::grm::Store< tag::amr, tag::t0ref >,
+                             pegtl::alpha >,
+                           tk::grm::process< use< kw::amr_dtref_uniform >,
+                             tk::grm::Store< tag::amr, tag::dtref_uniform >,
                              pegtl::alpha >,
                            tk::grm::process< use< kw::amr_dtref >,
                              tk::grm::Store< tag::amr, tag::dtref >,

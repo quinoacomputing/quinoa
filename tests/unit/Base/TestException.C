@@ -57,6 +57,7 @@ void Exception_object::test< 2 >() {
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wunreachable-code"
+  #pragma clang diagnostic ignored "-Wcomma"
 #endif
 
 //! Test Throw macro
@@ -65,9 +66,8 @@ void Exception_object::test< 3 >() {
   set_test_name( "Throw macro" );
 
   try {
-    // cppcheck-suppress unreachableCode
-    Throw( "msg" );
-    fail( "should throw exception" );
+    // Use the comma operator to make cppcheck ignore unreachable code error
+    Throw( "msg" ), fail( "should throw exception" );
   }
   catch ( tk::Exception& ) {
     // exception thrown, test ok

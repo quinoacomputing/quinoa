@@ -44,13 +44,16 @@ extern std::vector< CGPDE > g_cgpde;
 
 using inciter::ALECG;
 
-ALECG::ALECG( const CProxy_Discretization& disc, const FaceData& fd ) :
+ALECG::ALECG( const CProxy_Discretization& disc,
+              const std::map< int, std::vector< std::size_t > >& /* bface */,
+              const std::map< int, std::vector< std::size_t > >& bnode,
+              const std::vector< std::size_t >& /* triinpoel */ ) :
   m_disc( disc ),
-  m_initial( true ),
+  m_initial( 1 ),
   m_nsol( 0 ),
   m_nlhs( 0 ),
   m_nrhs( 0 ),
-  m_fd( fd ),
+  m_bnode( bnode ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_du( m_u.nunk(), m_u.nprop() ),
@@ -63,7 +66,9 @@ ALECG::ALECG( const CProxy_Discretization& disc, const FaceData& fd ) :
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
-//! \param[in] fd Face data structures
+//! \param[in] bface Boundary-faces mapped to side set ids
+//! \param[in] bnode Boundary-node lists mapped to side set ids
+//! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 //! [Constructor]
 {
@@ -76,7 +81,8 @@ ALECG::ALECG( const CProxy_Discretization& disc, const FaceData& fd ) :
   thisProxy[ thisIndex ].wait4lhs();
 
   // Signal the runtime system that the workers have been created
-  contribute(CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()));
+  contribute( sizeof(int), &m_initial, CkReduction::sum_int,
+    CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
 }
 //! [Constructor]
 
@@ -429,8 +435,8 @@ ALECG::writeFields( CkCallback c )
   }
 
   // Send mesh and fields data (solution dump) for output to file
-  d->write( d->Inpoel(), d->Coord(), m_fd.Bface(), m_fd.Triinpoel(),
-            m_fd.Bnode(), names, fields, tk::Centering::NODE, c );
+  d->write( d->Inpoel(), d->Coord(), {}, m_bnode, {}, names, fields,
+            tk::Centering::NODE, c );
 }
 
 void
@@ -473,7 +479,7 @@ ALECG::refine()
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
-    d->Ref()->dtref( d->T(), m_fd.Bnode() );
+    d->Ref()->dtref( {}, m_bnode, {} );
 
   } else {      // do not refine
 
@@ -487,26 +493,33 @@ ALECG::refine()
 
 //! [Resize]
 void
-ALECG::resize( const tk::UnsMesh::Chunk& chunk,
-               const tk::UnsMesh::Coords& coord,
-               const tk::Fields& u,
-               const std::unordered_map< int,
-                     std::vector< std::size_t > >& msum,
-               const std::map< int, std::vector< std::size_t > >& bnode )
+ALECG::resizeAfterRefined(
+  const std::vector< std::size_t >& /*ginpoel*/,
+  const tk::UnsMesh::Chunk& chunk,
+  const tk::UnsMesh::Coords& coord,
+  const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
+  const std::unordered_map< std::size_t, std::size_t >& /*addedTets*/,
+  const std::unordered_map< int, std::vector< std::size_t > >& msum,
+  const std::map< int, std::vector< std::size_t > >& /*bface*/,
+  const std::map< int, std::vector< std::size_t > >& bnode,
+  const std::vector< std::size_t >& /*triinpoel*/ )
 // *****************************************************************************
 //  Receive new mesh from Refiner
+//! \param[in] ginpoel Mesh connectivity with global node ids
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
 //! \param[in] coord New mesh node coordinates
-//! \param[in] u New solution on new mesh
+//! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
+//! \param[in] addedTets Newly added mesh cells and their parents (local ids)
 //! \param[in] msum New node communication map
-//! \param[in] bnode Map of boundary-node lists mapped to corresponding
-//!   side set ids for this mesh chunk
+//! \param[in] bface Boundary-faces mapped to side set ids
+//! \param[in] bnode Boundary-node lists mapped to side set ids
+//! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
   auto d = Disc();
 
   // Set flag that indicates that we are during time stepping
-  m_initial = false;
+  m_initial = 0;
 
   // Zero field output iteration count between two mesh refinement steps
   d->Itf() = 0;
@@ -517,18 +530,21 @@ ALECG::resize( const tk::UnsMesh::Chunk& chunk,
   // Resize mesh data structures
   d->resize( chunk, coord, msum );
 
-  // Update (resize) solution on new mesh
-  m_u = u;
-
   // Resize auxiliary solution vectors
   auto npoin = coord[0].size();
   auto nprop = m_u.nprop();
+  m_u.resize( npoin, nprop );
   m_du.resize( npoin, nprop );
   m_lhs.resize( npoin, nprop );
   m_rhs.resize( npoin, nprop );
 
+  // Update solution on new mesh
+  for (const auto& n : addedNodes)
+    for (std::size_t c=0; c<nprop; ++c)
+      m_u(n.first,c,0) = (m_u(n.second[0],c,0) + m_u(n.second[1],c,0))/2.0;
+
   // Update physical-boundary node lists
-  m_fd.Bnode() = bnode;
+  m_bnode = bnode;
 
   // Resize communication buffers
   resizeComm();
