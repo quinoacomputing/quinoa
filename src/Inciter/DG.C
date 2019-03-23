@@ -861,14 +861,11 @@ DG::ResumeFromSync()
 }
 
 void
-DG::setup( tk::real v )
+DG::setup( tk::real )
 // *****************************************************************************
 // Set initial conditions, generate lhs, output mesh
-//! \param[in] v Total mesh volume
 // *****************************************************************************
 {
-  IGNORE(v);
-
   tk::destroy(m_msumset);
 
   auto d = Disc();
@@ -1382,8 +1379,7 @@ DG::resizeAfterRefined(
   ++d->Itr();
 
   // Save old number of elements
-  auto old_nelem = d->Inpoel().size()/4;
-  IGNORE(old_nelem);
+  [[maybe_unused]] auto old_nelem = d->Inpoel().size()/4;
 
   // Resize mesh data structures
   d->resize( chunk, coord, msum );
