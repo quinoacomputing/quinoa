@@ -3303,7 +3303,7 @@ void DerivedData_object::test< 72 >() {
   set_test_name( "Mesh conformity, empty inpoel, empty coord" );
 
   try {
-    tk::conforming( {}, {} );
+    tk::conforming( std::vector< std::size_t >(), tk::UnsMesh::Coords() );
     #ifndef NDEBUG        // exception only thrown in DEBUG mode
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -3325,7 +3325,7 @@ void DerivedData_object::test< 73 >() {
       {{ 1, 0, 1, 1, 0, 0, 1, 1, 0.5, 0.5, 0,   0.5, 1,   0.5 }},
       {{ 1, 0, 0, 0, 1, 1, 1, 1, 0,   1,   0.5, 0.5, 0.5, 0.5 }} }};
 
-    tk::conforming( {}, coord );
+    tk::conforming( std::vector< std::size_t >(), coord );
     #ifndef NDEBUG        // exception only thrown in DEBUG mode
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -3348,7 +3348,7 @@ void DerivedData_object::test< 74 >() {
     // Partial mesh non-zero based mesh connectivity for tetrahedron-mesh
     std::vector< std::size_t > inpoel { 12, 14,  9, 11,
                                         14,  4, 13,  9 };
-    tk::conforming( inpoel, {} );
+    tk::conforming( inpoel, tk::UnsMesh::Coords() );
     fail( "should throw exception in DEBUG mode" );
   }
   catch ( tk::Exception& ) {
@@ -3370,7 +3370,7 @@ void DerivedData_object::test< 75 >() {
     // Partial mesh connectivity with partial tet for tetrahedron-mesh
     std::vector< std::size_t > inpoel { 1, 14,  9, 11,
                                         14,  4, 13 };
-    tk::conforming( inpoel, {} );
+    tk::conforming( inpoel, tk::UnsMesh::Coords() );
     fail( "should throw exception in DEBUG mode" );
   }
   catch ( tk::Exception& ) {

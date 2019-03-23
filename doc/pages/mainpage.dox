@@ -114,7 +114,7 @@ For larger problems and computers, however, you should build from source.
 
        git clone --recurse-submodules https://github.com/quinoacomputing/quinoa.git; cd quinoa
        mkdir external/build; cd external/build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 .. && make; cd -
-       mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src && make && ./charmrun +p 8 Main/unittest -v -q && ctest -j 8 --output-on-failure -LE extreme
+       mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release ../src && make -sj8 && ./charmrun +p8 Main/unittest -v -q && ctest -j8 --output-on-failure -LE extreme
 
 All executables will be under `build/Main/`.
 
