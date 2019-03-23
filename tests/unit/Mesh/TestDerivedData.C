@@ -3193,6 +3193,192 @@ void DerivedData_object::test< 61 >() {
                   geoElem(0,3,0), correct_ecent[2][0], prec);
 }
 
+// Test conform() repeatedly on meshes refining an edge
+template<> template<>
+void DerivedData_object::test< 71 >() {
+  set_test_name( "Mesh conformity during 1:2 refinement" );
+
+  // Mesh connectivity for simple tetrahedron-only mesh
+  std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                      10, 14, 13, 12,
+                                      14, 13, 12,  9,
+                                      10, 14, 12, 11,
+                                      1,  14,  5, 11,
+                                      7,   6, 10, 12,
+                                      14,  8,  5, 10,
+                                      8,   7, 10, 13,
+                                      7,  13,  3, 12,
+                                      1,   4, 14,  9,
+                                      13,  4,  3,  9,
+                                      3,   2, 12,  9,
+                                      4,   8, 14, 13,
+                                      6,   5, 10, 11,
+                                      1,   2,  9, 11,
+                                      2,   6, 12, 11,
+                                      6,  10, 12, 11,
+                                      2,  12,  9, 11,
+                                      5,  14, 10, 11,
+                                      14,  8, 10, 13,
+                                      13,  3, 12,  9,
+                                      7,  10, 13, 12,
+                                      14,  4, 13,  9,
+                                      14,  1,  9, 11 };
+
+  // Mesh node coordinates for simple tet mesh above
+  std::array< std::vector< tk::real >, 3 > coord {{
+    {{ 0, 1, 1, 0, 0, 1, 1, 0, 0.5, 0.5, 0.5, 1,   0.5, 0 }},
+    {{ 0, 0, 1, 1, 0, 0, 1, 1, 0.5, 0.5, 0,   0.5, 1,   0.5 }},
+    {{ 0, 0, 0, 0, 1, 1, 1, 1, 0,   1,   0.5, 0.5, 0.5, 0.5 }} }};
+
+  // Shift node IDs to start from zero
+  tk::shiftToZero( inpoel );
+
+  // Test that mesh is conforming
+  ensure( "Conforming mesh not conforming", tk::conforming(inpoel,coord) );
+
+  // Add a new node to edge (1-5) and two new tets replacing tet (1,14,5,11),
+  // yielding a conforming refined mesh.
+
+  // Add new node halving edge (1-5)
+  coord[0].push_back( 0.0 );
+  coord[1].push_back( 0.0 );
+  coord[2].push_back( 0.5 );
+
+  // Add two new tets as a result of refining edge (1-5)
+  std::size_t old_elem_id = 4;     // overwrite an old tet with a new one
+  inpoel[ old_elem_id*4+0 ] = 0;   // to keep inpoel contiguous
+  inpoel[ old_elem_id*4+1 ] = 14;
+  inpoel[ old_elem_id*4+2 ] = 10;
+  inpoel[ old_elem_id*4+3 ] = 13;
+  inpoel.push_back( 4 );
+  inpoel.push_back( 10 );
+  inpoel.push_back( 14 );
+  inpoel.push_back( 13 );
+
+  // Test that refined mesh is still conforming
+  ensure( "Refined mesh not conforming", tk::conforming(inpoel,coord) );
+
+  // Remove last (child) tet, mesh is still conforming but no longer a cube
+  inpoel.pop_back();
+  inpoel.pop_back();
+  inpoel.pop_back();
+  inpoel.pop_back();
+
+  // Test that mesh is still conforming
+  ensure( "Mesh with only one child element not conforming",
+          tk::conforming(inpoel,coord) );
+
+  // Add back original tet that was just refined and add back one child tet,
+  // yielding a hanging node and thus a nonconforming mesh
+  inpoel[ old_elem_id*4+0 ] = 0;
+  inpoel[ old_elem_id*4+1 ] = 13;
+  inpoel[ old_elem_id*4+2 ] = 4;
+  inpoel[ old_elem_id*4+3 ] = 10;
+  inpoel.push_back( 4 );
+  inpoel.push_back( 10 );
+  inpoel.push_back( 14 );
+  inpoel.push_back( 13 );
+
+  // Test that mesh is now NOT conforming
+  ensure( "Mesh with hanging node conforming",
+          !tk::conforming(inpoel,coord,false) );
+
+  // Remove child tet and added node to get back the original (conforming) mesh
+  inpoel.pop_back();
+  inpoel.pop_back();
+  inpoel.pop_back();
+  inpoel.pop_back();
+  coord[0].pop_back();
+  coord[1].pop_back();
+  coord[1].pop_back();
+
+  // Test that (original) unrefined mesh is conforming again
+  ensure( "Unrefined mesh not conforming", tk::conforming(inpoel,coord) );
+}
+
+// Test conform() with empty inpoel and empty coord.
+//! \details Should throw in DEBUG, and gracefully do nothing in RELEASE mode.
+template<> template<>
+void DerivedData_object::test< 72 >() {
+  set_test_name( "Mesh conformity, empty inpoel, empty coord" );
+
+  try {
+    tk::conforming( std::vector< std::size_t >(), tk::UnsMesh::Coords() );
+    #ifndef NDEBUG        // exception only thrown in DEBUG mode
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+}
+
+// Test conform() with empty inpoel and non-empty coord.
+//! \details Should throw in DEBUG, and gracefully do nothing in RELEASE mode.
+template<> template<>
+void DerivedData_object::test< 73 >() {
+  set_test_name( "Mesh conformity, empty inpoel, non-empty coord" );
+
+  try {
+    std::array< std::vector< tk::real >, 3 > coord {{
+      {{ 1, 1, 1, 0, 0, 1, 1, 0, 0.5, 0.5, 0.5, 1,   0.5, 0 }},
+      {{ 1, 0, 1, 1, 0, 0, 1, 1, 0.5, 0.5, 0,   0.5, 1,   0.5 }},
+      {{ 1, 0, 0, 0, 1, 1, 1, 1, 0,   1,   0.5, 0.5, 0.5, 0.5 }} }};
+
+    tk::conforming( std::vector< std::size_t >(), coord );
+    #ifndef NDEBUG        // exception only thrown in DEBUG mode
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+}
+
+// Test conform() with non-zero-based inpoel.
+//! \details Should throw in DEBUG, skipped in RELEASE.
+template<> template<>
+void DerivedData_object::test< 74 >() {
+  set_test_name( "Mesh conformity, non-zero-based inpoel, empty crd" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
+  try {
+    // Partial mesh non-zero based mesh connectivity for tetrahedron-mesh
+    std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                        14,  4, 13,  9 };
+    tk::conforming( inpoel, tk::UnsMesh::Coords() );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
+}
+
+// Test conform() with partial inpoel.
+//! \details Should throw in DEBUG, skipped in RELEASE.
+template<> template<>
+void DerivedData_object::test< 75 >() {
+  set_test_name( "Mesh conformity, partial inpoel, non-empty coord" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
+  try {
+    // Partial mesh connectivity with partial tet for tetrahedron-mesh
+    std::vector< std::size_t > inpoel { 1, 14,  9, 11,
+                                        14,  4, 13 };
+    tk::conforming( inpoel, tk::UnsMesh::Coords() );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
+}
+
 #if defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif

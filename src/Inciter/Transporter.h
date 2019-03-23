@@ -64,7 +64,7 @@ class Transporter : public CBase_Transporter {
     explicit Transporter();
 
     //! Reduction target: the mesh has been read from file on all PEs
-    void load( uint64_t nelem, uint64_t npoin );
+    void load( std::size_t nelem, std::size_t nnode );
 
     //! \brief Reduction target: all Solver (PEs) have computed the number of
     //!   chares they will recieve contributions from during linear solution
@@ -85,6 +85,10 @@ class Transporter : public CBase_Transporter {
     //! \brief Reduction target: all worker (derived discretization) chares have
     //!   been inserted
     void workinserted();
+
+    //! \brief Reduction target: all mesh refiner chares have setup their
+    //!   boundary edges
+    void edges();
 
     //! \brief Reduction target: all mesh refiner chares have distributed their
     //!   newly added node IDs that are shared among chares
@@ -132,7 +136,7 @@ class Transporter : public CBase_Transporter {
     void chadj() { m_progWork.inc< ADJ >(); }
 
     //! Reduction target indicating that the communication maps have been setup
-    void comfinal();
+    void comfinal( int initial );
 
     //! Reduction target summing total mesh volume
     void totalvol( tk::real v, tk::real initial );
@@ -175,13 +179,14 @@ class Transporter : public CBase_Transporter {
   private:
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of worker chares
+    std::size_t m_ncit;                  //!< Number of mesh ref corr iter
     Scheme m_scheme;                     //!< Discretization scheme
     CProxy_Partitioner m_partitioner;    //!< Partitioner nodegroup proxy
     CProxy_Refiner m_refiner;            //!< Mesh refiner array proxy
     tk::CProxy_MeshWriter m_meshwriter;  //!< Mesh writer nodegroup proxy
     CProxy_Sorter m_sorter;              //!< Mesh sorter array proxy
-    std::size_t m_nelem;                 //!< Number mesh elements
-    std::size_t m_npoin;                 //!< Number mesh points
+    std::size_t m_nelem;                 //!< Number of mesh elements
+    std::size_t m_npoin_larger;          //!< Total number mesh points
      //! Total mesh volume
     tk::real m_V;
     //! Minimum mesh statistics

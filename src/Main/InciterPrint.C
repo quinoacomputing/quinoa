@@ -94,7 +94,7 @@ void InciterPrint::edgeref( const std::vector< std::size_t >& edgenodes )
 
    std::string c;
    for (auto i : edgenodes) c += std::to_string(i) + ' ';
-   auto name = kw::amr_initref::name();
+   auto name = kw::amr_edgelist::name();
    name[0] = static_cast< char >( std::toupper( name[0] ) );
    item( name, c );
 }

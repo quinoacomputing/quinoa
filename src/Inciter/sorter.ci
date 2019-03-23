@@ -24,6 +24,7 @@ module sorter {
                     const tk::CProxy_MeshWriter& meshwriter,
                     const tk::SorterCallback& cbs,
                     const Scheme& scheme,
+                    CkCallback reorderRefiner,
                     const std::vector< std::size_t >& ginpoel,
                     const tk::UnsMesh::CoordMap& coordmap,
                     const std::map< int, std::vector< std::size_t > >& bface,

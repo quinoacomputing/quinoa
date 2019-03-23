@@ -52,7 +52,7 @@ class Refiner : public CBase_Refiner {
                       const tk::SorterCallback& cbs,
                       const std::vector< std::size_t >& ginpoel,
                       const tk::UnsMesh::CoordMap& coordmap,
-                      const std::map< int, std::vector< std::size_t > >& belem,
+                      const std::map< int, std::vector< std::size_t > >& bface,
                       const std::vector< std::size_t >& triinpoel,
                       const std::map< int, std::vector< std::size_t > >& bnode,
                       int nchare );
@@ -71,21 +71,36 @@ class Refiner : public CBase_Refiner {
     //! Configure Charm++ reduction types
     static void registerReducers();
 
+    //! Query Sorter and update local mesh with the reordered one
+    void reorder();
+
+    //! Start new step of initial mesh refinement
+    void start();
+
+    //! Continue after finishing a refinement step
+    void next();
+
     //! Start mesh refinement (during time stepping, t>0)
-    void dtref( tk::real t,
-                const std::map< int, std::vector< std::size_t > >& bnode );
+    void dtref( const std::map< int, std::vector< std::size_t > >& bface,
+                const std::map< int, std::vector< std::size_t > >& bnode,
+                const std::vector< std::size_t >& triinpoel );
 
     //! Receive boundary edges from all PEs (including this one)
     void addBndEdges( CkReductionMsg* msg );
 
-    //! Receive newly added mesh node IDs on our chare boundary
-    void addRefBndEdges( int fromch, const tk::UnsMesh::EdgeNodeCoord& ed );
+    //! Refine mesh
+    void refine();
 
-    //! Acknowledge received newly added nodes shared with other chares
-    void recvRefBndEdges();
+    //! Receive newly added mesh edges and locks on our chare boundary
+    void addRefBndEdges( int fromch,
+                         const AMR::EdgeData& ed,
+                         const std::unordered_set<size_t>& intermediates );
 
     //! Correct refinement to arrive at conforming mesh across chare boundaries
     void correctref();
+
+    //! Communicate refined edges after a refinement step
+    void comExtra();
 
     //! Decide what to do after a mesh refinement step
     void eval();
@@ -113,22 +128,26 @@ class Refiner : public CBase_Refiner {
       }
       p | m_coordmap;
       p | m_coord;
-      p | m_belem;
-      p | m_triinpoel;
+      p | m_bface;
       p | m_bnode;
+      p | m_triinpoel;
       p | m_nchare;
       p | m_initial;
-      p | m_t;
       p | m_initref;
       p | m_refiner;
       p | m_nref;
       p | m_extra;
       p | m_ch;
-      p | m_edgenode;
-      p | m_edgenodeCh;
+      p | m_edgedata;
+      p | m_edgedataCh;
+      p | m_intermediates;
       p | m_bndEdges;
-      p | m_u;
-      p | m_msum;
+      p | m_msumset;
+      p | m_oldTetIdMap;
+      p | m_oldTets;
+      p | m_addedNodes;
+      p | m_addedTets;
+      p | m_prevnTets;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -137,17 +156,11 @@ class Refiner : public CBase_Refiner {
     //@}
 
   private:
-    //! \brief Used to associate a pair of side set id and adjacent tet id to a
-    //!   boundary triangle face
+    //! Used to associate a tet id (value) to a boundary triangle face (key)
     using BndFaces = std::unordered_map< tk::UnsMesh::Face,
-                                         std::pair< int, std::size_t >,
+                                         std::size_t,
                                          tk::UnsMesh::Hash<3>,
                                          tk::UnsMesh::Eq<3> >;
-
-    //! Unique set of edges
-    using EdgeSet = std::unordered_set< tk::UnsMesh::Edge,
-                                        tk::UnsMesh::Hash<2>,
-                                        tk::UnsMesh::Eq<2> >;
 
     //! Host proxy
     CProxy_Transporter m_host;
@@ -180,19 +193,19 @@ class Refiner : public CBase_Refiner {
     //! Coordinates of mesh nodes of our chunk of the mesh
     tk::UnsMesh::Coords m_coord;
     //! List of boundary faces associated to side-set IDs
-    std::map< int, std::vector< std::size_t > > m_belem;
-    //! Boundary face-node connectivity
-    std::vector< std::size_t > m_triinpoel;
+    std::map< int, std::vector< std::size_t > > m_bface;
     //! List of boundary nodes associated to side-set IDs
     std::map< int, std::vector< std::size_t > > m_bnode;
+    //! Boundary face-node connectivity
+    std::vector< std::size_t > m_triinpoel;
     //! Total number of refiner chares
     int m_nchare;
     //! True if initial AMR, false if during time stepping
     bool m_initial;
-    //! Physical time
-    tk::real m_t;
     //! Initial mesh refinement type list (in reverse order)
     std::vector< ctr::AMRInitialType > m_initref;
+    //! Number of initial mesh refinement steps
+    std::size_t m_ninitref;
     //! Mesh refiner (library) object
     AMR::mesh_adapter_t m_refiner;
     //! Counter during distribution of newly added nodes to chare-boundary edges
@@ -201,35 +214,39 @@ class Refiner : public CBase_Refiner {
     std::size_t m_extra;
     //! Chares we share at least a single edge with
     std::unordered_set< int > m_ch;
-    //! Map associating global IDs and coordinates of a node added to an edge
-    tk::UnsMesh::EdgeNodeCoord m_edgenode;
-    //! \brief Map associating global IDs and coordinates of a node added to an
-    //!   edge associated to another chare the edge is shared with
-    std::unordered_map< int, tk::UnsMesh::EdgeNodeCoord > m_edgenodeCh;
+    //! Refinement data associated to edges
+    AMR::EdgeData m_edgedata;
+    //! Refinement data associated to edges shared with other chares
+    std::unordered_map< int, AMR::EdgeData > m_edgedataCh;
+    //! Intermediate nodes
+    std::unordered_set< size_t> m_intermediates;
     //! Boundary edges associated to chares we share these edges with
-    std::unordered_map< int, EdgeSet > m_bndEdges;
-    //! Solution vector
-    tk::Fields m_u;
+    std::unordered_map< int, tk::UnsMesh::EdgeSet > m_bndEdges;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
-    //!   Discretization chares associated to their chare IDs
+    //!    worker chares associated to their chare IDs
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
-    //!   points
-    std::unordered_map< int, std::vector< std::size_t > > m_msum;
+    //!   points. This is the same data as in Discretization::m_msum, but the
+    //!   nodelist is stored as a set.
+    std::unordered_map< int, std::unordered_set< std::size_t > > m_msumset;
+    //! ...
+    std::vector< std::size_t > m_oldTetIdMap;
+    //! Local tetrahedron IDs before refinement step
+    std::unordered_set< std::size_t > m_oldTets;
+    //! Newly added mesh nodes (local id) and their parents (local ids)
+    std::unordered_map< std::size_t, tk::UnsMesh::Edge > m_addedNodes;
+    //! Newly added mesh cells (local id) and their parent (local ids)
+    std::unordered_map< std::size_t, std::size_t > m_addedTets;
+    //! Number of tetrahedra in the mesh before refinement
+    std::size_t m_prevnTets;
 
     //! Generate flat coordinate data from coordinate map
     tk::UnsMesh::Coords flatcoord( const tk::UnsMesh::CoordMap& coordmap );
 
-    //! Start new step of initial mesh refinement (before t>0)
+    //! Output mesh to file before a new step of mesh refinement
     void t0ref();
 
     //! Generate boundary edges and send them to all chares
     void bndEdges();
-
-    //! Refine mesh
-    void refine();
-
-    //! Communicate refined edges after a refinement step
-    void comExtra();
 
     //! Finish initiel mesh refinement
     void endt0ref();
@@ -241,24 +258,30 @@ class Refiner : public CBase_Refiner {
     void errorRefine();
 
     //! Do mesh refinement based on user explicitly tagging edges
-    void userRefine();
+    void edgelistRefine();
 
     //! Do mesh refinement based on tagging edges based on end-point coordinates
     void coordRefine();
 
     //! Do mesh refinement correcting PE-boundary edges
-    void correctRefine( const EdgeSet& extra );
+    void correctRefine( const AMR::EdgeData& extra );
 
-    //! Update mesh after refinement
+    //! ...
+    void updateEdgeData();
+
+    //! Aggregate number of extra edges across all chares
+    void matched();
+
+    //! Update old mesh after refinement
     void updateMesh();
 
     //! Update volume mesh after mesh refinement
-    void updateVolMesh( const std::unordered_set< std::size_t >& old,
-                        const std::unordered_set< std::size_t >& ref );
+    void newVolMesh( const std::unordered_set< std::size_t >& old,
+                     const std::unordered_set< std::size_t >& ref );
 
     //! Update boundary data structures after mesh refinement
-    void updateBndMesh( const std::unordered_set< std::size_t >& old,
-                        const std::unordered_set< std::size_t >& ref );
+    void newBndMesh( const std::unordered_set< std::size_t >& old,
+                     const std::unordered_set< std::size_t >& ref );
 
     //! \brief Generate boundary data structure used to update refined
     //!   boundary faces and nodes assigned to side sets
@@ -279,31 +302,39 @@ class Refiner : public CBase_Refiner {
                          const std::pair< std::vector< std::size_t >,
                                           std::vector< std::size_t > >& esup );
 
-    //! Functor to call the solution() member function behind SchemeBase::Proxy
-    struct Solution {
-      tk::Fields& U;
-      explicit Solution( tk::Fields& u ) : U(u) {}
-      template< typename P > void operator()( const P& p ) const {
-         p.ckLocal()->solution( U );
-      }
-    };
+    //! Output mesh to file(s)
+    void writeMesh( const std::string& basefilename,
+                    uint64_t it,
+                    tk::real t,
+                    CkCallback c );
 
     //! Functor to call the resize() member function behind SchemeBase::Proxy
-    struct Resize {
+    struct ResizeAfterRefined {
+      const std::vector< std::size_t >& Ginpoel;
       const tk::UnsMesh::Chunk& Chunk;
       const tk::UnsMesh::Coords& Coord;
-      const tk::Fields& U;
+      const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& AddedNodes;
+      const std::unordered_map< std::size_t, std::size_t >& AddedTets;
       const std::unordered_map< int, std::vector< std::size_t > >& Msum;
+      const std::map< int, std::vector< std::size_t > > Bface;
       const std::map< int, std::vector< std::size_t > > Bnode;
-      explicit Resize( const tk::UnsMesh::Chunk& chunk,
-              const tk::UnsMesh::Coords& coord,
-              const tk::Fields& u,
-              const std::unordered_map< int,
-                      std::vector< std::size_t > >& msum,
-              const std::map< int, std::vector< std::size_t > >& bnode )
-        : Chunk(chunk), Coord(coord), U(u), Msum(msum), Bnode(bnode) {}
+      const std::vector< std::size_t > Triinpoel;
+      ResizeAfterRefined(
+        const std::vector< std::size_t >& ginpoel,
+        const tk::UnsMesh::Chunk& chunk,
+        const tk::UnsMesh::Coords& coord,
+        const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addednodes,
+        const std::unordered_map< std::size_t, std::size_t >& addedtets,
+        const std::unordered_map< int, std::vector< std::size_t > >& msum,
+        const std::map< int, std::vector< std::size_t > >& bface,
+        const std::map< int, std::vector< std::size_t > >& bnode,
+        const std::vector< std::size_t >& triinpoel )
+        : Ginpoel(ginpoel), Chunk(chunk), Coord(coord), AddedNodes(addednodes),
+          AddedTets(addedtets), Msum(msum), Bface(bface), Bnode(bnode),
+          Triinpoel(triinpoel) {}
       template< typename P > void operator()( const P& p ) const {
-        p.ckLocal()->resize( Chunk, Coord, U, Msum, Bnode );
+        p.ckLocal()->resizeAfterRefined( Ginpoel, Chunk, Coord, AddedNodes,
+          AddedTets, Msum, Bface, Bnode, Triinpoel );
       }
     };
 };

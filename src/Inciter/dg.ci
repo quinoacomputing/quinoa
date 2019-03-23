@@ -24,7 +24,10 @@ module dg {
   namespace inciter {
 
     array [1D] DG {
-      entry DG( const CProxy_Discretization& disc, const FaceData& fd );
+      entry DG( const CProxy_Discretization& disc,
+                const std::map< int, std::vector< std::size_t > >& bface,
+                const std::map< int, std::vector< std::size_t > >& /* bnode */,
+                const std::vector< std::size_t >& triinpoel );
       entry void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
       entry void comGhost( int fromch, const GhostData& ghost );
       entry void reqGhost();
@@ -56,17 +59,20 @@ module dg {
         { sendGhost(); } };
 
       entry void wait4initlim() {
-        when owninit_complete(), cominit_complete() serial "init" { limitIC(); } };
+        when owninit_complete(), cominit_complete() serial "init"
+        { limitIC(); } };
 
       entry void wait4sol() {
-        when ownsol_complete(), comsol_complete() serial "sol" { lim(); } };
+        when ownsol_complete(), comsol_complete() serial "sol"
+        { lim(); } };
 
       entry void wait4lim() {
-        when ownlim_complete(), comlim_complete() serial "lim" { dt(); } };
+        when ownlim_complete(), comlim_complete() serial "lim"
+        { dt(); } };
 
-      entry void wait4stage() {
-        when diag_complete(), ref_complete(), lhs_complete(),
-             resize_complete() serial "stage" { stage(); } };
+      entry void wait4recompghost() {
+        when diag_complete(), ref_complete(), resize_complete() serial
+        "recomputeGhostRefined" { recompGhostRefined(); } };
 
       entry void ownghost_complete();
       entry void reqghost_complete();
@@ -78,7 +84,6 @@ module dg {
       entry void comlim_complete();
       entry void diag_complete();
       entry void ref_complete();
-      entry void lhs_complete();
       entry void resize_complete();
     };
 

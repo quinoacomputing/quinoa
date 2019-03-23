@@ -65,7 +65,10 @@ class DG : public CBase_DG {
     #endif
 
     //! Constructor
-    explicit DG( const CProxy_Discretization& disc, const FaceData& fd );
+    explicit DG( const CProxy_Discretization& disc,
+                 const std::map< int, std::vector< std::size_t > >& bface,
+                 const std::map< int, std::vector< std::size_t > >& /* bnode */,
+                 const std::vector< std::size_t >& triinpoel );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -133,12 +136,16 @@ class DG : public CBase_DG {
     void refine();
 
     //! Receive new mesh from refiner
-    void resize( const tk::UnsMesh::Chunk& chunk,
-                 const tk::UnsMesh::Coords& coord,
-                 const tk::Fields& u,
-                 const std::unordered_map< int,
-                         std::vector< std::size_t > >& msum,
-                 const std::map< int, std::vector< std::size_t > >& bnode );
+    void resizeAfterRefined(
+      const std::vector< std::size_t >& ginpoel,
+      const tk::UnsMesh::Chunk& chunk,
+      const tk::UnsMesh::Coords& coord,
+      const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
+      const std::unordered_map< std::size_t, std::size_t >& addedTets,
+      const std::unordered_map< int, std::vector< std::size_t > >& msum,
+      const std::map< int, std::vector< std::size_t > >& bface,
+      const std::map< int, std::vector< std::size_t > >& bnode,
+      const std::vector< std::size_t >& triinpoel );
 
     //! Compute left hand side
     void lhs();
@@ -173,7 +180,6 @@ class DG : public CBase_DG {
       p | m_fd;
       p | m_u;
       p | m_un;
-      p | m_vol;
       p | m_geoFace;
       p | m_geoElem;
       p | m_lhs;
@@ -193,7 +199,8 @@ class DG : public CBase_DG {
       p | m_recvGhost;
       p | m_diag;
       p | m_stage;
-      p | m_rkcoef;
+      p | m_initial;
+      p | m_refined;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -231,8 +238,6 @@ class DG : public CBase_DG {
     tk::Fields m_u;
     //! Vector of unknown at previous time-step
     tk::Fields m_un;
-    //! Total mesh volume
-    tk::real m_vol;
     //! Face geometry
     tk::Fields m_geoFace;
     //! Element geometry
@@ -282,9 +287,10 @@ class DG : public CBase_DG {
     ElemDiagnostics m_diag;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
-    //! Runge-Kutta coefficients
-    std::array< std::array< tk::real, 3 >, 2 >
-      m_rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
+    //! 1 if starting time stepping, 0 if during time stepping
+    int m_initial;
+    //! 1 if mesh was refined in a time step, 0 if it was not
+    int m_refined;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -292,8 +298,14 @@ class DG : public CBase_DG {
       return m_disc[ thisIndex ].ckLocal();
     }
 
-    //! Perform leak test on mesh partition
-    bool leakyPartition();
+    //! Size and create limiter function data container
+    tk::Fields limFunc( std::size_t nelem ) const;
+
+    //! Start sizing communication buffers and setting up ghost data
+    void resizeComm();
+
+    //! Start recomputing ghost data after a mesh refinement step
+    void recompGhostRefined();
 
     //! Perform leak test on chare-boundary faces
     bool leakyAdjacency();
@@ -311,10 +323,6 @@ class DG : public CBase_DG {
 
     //! Setup own ghost data on this chare
     void setupGhost();
-
-    //! Convert chare-node adjacency map to hold sets instead of vectors
-    std::unordered_map< int, std::unordered_set< std::size_t > >
-    msumset() const;
 
     //! Continue after face adjacency communication map completed on this chare
     void adj();

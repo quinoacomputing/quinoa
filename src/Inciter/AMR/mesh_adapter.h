@@ -28,7 +28,7 @@ namespace AMR {
             mesh_adapter_t() {}
 
             //! Constructor taking a mesh graph
-            mesh_adapter_t( const std::vector< std::size_t >& inpoel ) :
+            explicit mesh_adapter_t( const std::vector< std::size_t >& inpoel ) :
                 node_connectivity( tk::npoin_in_graph(inpoel) )
             {
                 consume_tets( inpoel );
@@ -38,8 +38,8 @@ namespace AMR {
             void init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z);
 
             // FIXME: Set these in a better way
-            const real_t derefinement_cut_off = 0.2;
-            const real_t refinement_cut_off = 0.9;
+            real_t derefinement_cut_off = 0.2;
+            real_t refinement_cut_off = 0.9;
 
             AMR::tet_store_t tet_store;
             AMR::node_connectivity_t node_connectivity;
@@ -54,10 +54,10 @@ namespace AMR {
             void consume_tets(const std::vector<std::size_t>& tetinpoel );
 
             void evaluate_error_estimate();
-            void uniform_refinement();
-            void error_refinement( const std::vector< edge_t >& edge,
-                    const std::vector< real_t >& criteria );
+            void mark_uniform_refinement();
+            void mark_error_refinement( const std::vector< edge_t >& edge );
 
+            void mark_error_refinement_corr( const EdgeData& edges );
             int detect_compatibility(
                     int num_locked_edges,
                     int num_intermediate_edges,

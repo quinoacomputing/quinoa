@@ -307,6 +307,7 @@ PDFInfo pdfInfo( const std::vector< std::vector< tk::real > >& binsizes,
     if (n == idx+1) {
       std::vector< std::string > vars;
       for (const auto& term : pdfs[i])
+        // cppcheck-suppress useStlAlgorithm
         vars.push_back( term.var + std::to_string(term.field+1) );
       return { names[i], exts[i], std::move(vars), it, time };
     }
