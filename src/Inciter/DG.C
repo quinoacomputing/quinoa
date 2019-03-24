@@ -1081,7 +1081,7 @@ DG::advance( tk::real )
     for(const auto& n : m_ghostData) {
       std::vector< std::size_t > tetid;
       std::vector< std::vector< tk::real > > u;
-      std::vector< tk::real > ndofel;
+      std::vector< std::size_t > ndofel;
       for(const auto& i : n.second) {
         Assert( i.first < m_fd.Esuel().size()/4, "Sending solution ghost data" );
         tetid.push_back( i.first );
@@ -1098,7 +1098,7 @@ void
 DG::comsol( int fromch,
             const std::vector< std::size_t >& tetid,
             const std::vector< std::vector< tk::real > >& u,
-            const std::vector< tk::real >& ndofel )
+            const std::vector< std::size_t >& ndofel )
 // *****************************************************************************
 //  Receive chare-boundary solution ghost data from neighboring chares
 //! \param[in] fromch Sender chare id
@@ -1117,8 +1117,7 @@ DG::comsol( int fromch,
     auto j = tk::cref_find( n, tetid[i] );
     Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
     Assert( j < m_u.nunk(), "Indexing out of bounds in DG::comsol()" );
-    for (std::size_t c=0; c<m_u.nprop(); ++c)
-      m_u(j,c,0) = u[i][c];
+    for (std::size_t c=0; c<m_u.nprop(); ++c) m_u(j,c,0) = u[i][c];
     m_ndofel[j] = ndofel[i];
   }
 

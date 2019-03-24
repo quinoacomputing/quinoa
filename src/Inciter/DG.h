@@ -125,7 +125,7 @@ class DG : public CBase_DG {
     void comsol( int fromch,
                  const std::vector< std::size_t >& tetid,
                  const std::vector< std::vector< tk::real > >& u,
-                 const std::vector< tk::real >& ndofel );
+                 const std::vector< std::size_t >& ndofel );
 
     //! Advance equations to next time step
     void advance( tk::real );
