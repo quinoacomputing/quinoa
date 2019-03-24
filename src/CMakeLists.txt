@@ -70,7 +70,7 @@ string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 # Set build type (will be exported to the source)
 set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
 # Query regression tests directory (will be exported to the source)
-set(REGRESSION_DIR "${PROJECT_SOURCE_DIR}/../regression")
+set(REGRESSION_DIR "${PROJECT_SOURCE_DIR}/../tests/regression")
 
 # Query target architecture
 include(TargetArch)
@@ -92,7 +92,7 @@ endif()
 # directory based on cmake-supplied compiler ID
 if (NOT TPL_DIR)
   string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
-  set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../tpl/install/${COMP}-${ARCH})
+  set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../external/install/${COMP}-${ARCH})
   get_filename_component(ABS_TPL_DIR ${REL_TPL_DIR} ABSOLUTE)
   set(TPL_DIR ${ABS_TPL_DIR} CACHE STRING "Third-party libraries directory.")
 endif()
@@ -106,6 +106,11 @@ endif()
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
     CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   include(DetectCompilerVersion)
+endif()
+
+set(ENABLE_TESTS true CACHE BOOL "Enable unit-, and regression tests, as well as building the unit test hardness.")
+if (NOT ENABLE_TESTS)
+  message(STATUS "Tests disabled.")
 endif()
 
 # Include third-party libraries configuration
@@ -156,6 +161,12 @@ if (EXTRA_LINK_ARGS)
 endif()
 
 add_definitions(-DQUINOA_CONFIG_MPI_ENABLED)
+
+option(ENABLE_AMR_TRACE OFF)
+
+if(ENABLE_AMR_TRACE)
+    add_definitions(-DENABLE_TRACE)
+endif(ENABLE_AMR_TRACE)
 
 # Set compilers
 set(COMPILER ${UNDERLYING_CXX_COMPILER})
@@ -355,7 +366,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #  3280: declaration hides member
   #  3346: dynamic exception specifications are deprecated
   #  3656: variable may be used before its value is set
-  add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,869,981,1418,1419,1572,2259,2407,2415,2547,2557,3280,3346,3656")
+  #  10120: overriding '-O3' with '-O2'
+  add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,869,981,1418,1419,1572,2259,2407,2415,2547,2557,3280,3346,3656,10120")
 
   # Compiler flags for optimization report
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopt-report=0 -qopt-report-phase=loop,vec -qopt-report-file=stderr")
@@ -586,7 +598,7 @@ if (ENABLE_INCITER)
   add_subdirectory(Inciter)
 endif()
 
-if (ENABLE_UNITTEST)
+if (ENABLE_UNITTEST AND ENABLE_TESTS)
   add_subdirectory(UnitTest)
 endif()
 
@@ -633,12 +645,14 @@ include(CppCheck)
 enable_testing()
 
 # Include cmake code common to all regression tests
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../regression
-                 ${CMAKE_BINARY_DIR}/regression
-                 EXCLUDE_FROM_ALL)
+if (ENABLE_TESTS)
+  add_subdirectory(${REGRESSION_DIR}
+                   ${CMAKE_BINARY_DIR}/tests
+                   EXCLUDE_FROM_ALL)
+endif()
 
 # Setup code coverage for unit tests
-if(CODE_COVERAGE)
+if(CODE_COVERAGE AND ENABLE_TESTS)
   # Setup test coverage target. Make it dependend on all quinoa executables.
   setup_target_for_coverage(unit doc/html unittest_coverage ${RUNNER}
                             TESTRUNNER_ARGS ${RUNNER_NCPUS_ARG}
@@ -650,7 +664,7 @@ if(CODE_COVERAGE)
 endif()
 
 # Setup code coverage for regression tests
-if(CODE_COVERAGE)
+if(CODE_COVERAGE AND ENABLE_TESTS)
   # Setup test coverage target. Make it dependend on all quinoa executables.
   setup_target_for_coverage(regression doc/html regression_coverage
                             ${CMAKE_CTEST_COMMAND}
@@ -663,7 +677,7 @@ if(CODE_COVERAGE)
 endif()
 
 # Setup code coverage for all individual coverage targets included
-if(CODE_COVERAGE)
+if(CODE_COVERAGE AND ENABLE_TESTS)
   setup_target_for_all_coverage(all doc/html test_coverage
                                 ${RUNNER} ${RUNNER_NCPUS_ARG}
                                 DEPENDS ${NONTEST_EXECUTABLES}

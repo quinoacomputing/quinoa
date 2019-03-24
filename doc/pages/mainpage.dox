@@ -18,7 +18,7 @@ across the simulation distributed across many computers.
 Our ultimate goal is to simulate large and complex engineering multiphysics
 problems with a production-quality code that is extensible and maintainable,
 using hardware resources efficiently, even for problems with _a priori_
-unknown, heterogeneous, and dynamic load distribution.  Read more at our @ref
+unknown, heterogeneous, and dynamic load distribution. Read more at our @ref
 why page.
 
 @section mainpage_tools Tools
@@ -80,6 +80,24 @@ container](https://hub.docker.com/r/quinoacomputing/quinoa). See also
 
 For larger problems and computers, however, you should build from source.
 
+@section mainpage_directory_layout Directory layout
+
+ - `cmake/` - CMake code shared between [external
+   packages](https://github.com/quinoacomputing/quinoa-tpl) (third-party
+   libraries) and `src/`.
+ - `doc/` - Documentation, rendered at https://quinoacomputing.github.io.
+ - `external/` - External packages (third-party libraries) pulled in as git
+   submodules.
+ - `src/` - Compilable sources. For a more detailed description of the contents
+   of the `src/` directory and its subdirectories, see
+   `docs/pages/directories.dox`, rendered at
+   https://quinoacomputing.github.io/files.html.
+ - `tests/` - Unit-, and regression tests.
+ - `tools/` - Development utilities and docker files.
+
+ - `LICENSE` - Copyright and license.
+ - `README.md` - Top-level README file, rendered at https://github.com/quinoacomputing/quinoa.
+
 @section mainpage_build Build
 
 - Install prerequisites: _Debian/Ubuntu linux_ (line 1: required, line 2: recommended)
@@ -95,8 +113,8 @@ For larger problems and computers, however, you should build from source.
 - Clone, build third-party libraries, build & test
 
        git clone --recurse-submodules https://github.com/quinoacomputing/quinoa.git; cd quinoa
-       mkdir tpl/build; cd tpl/build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 .. && make; cd -
-       mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src && make && ./charmrun +p 8 Main/unittest -v -q && ctest -j 8 --output-on-failure -LE extreme
+       mkdir external/build; cd external/build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 .. && make; cd -
+       mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release ../src && make -sj8 && ./charmrun +p8 Main/unittest -v -q && ctest -j8 --output-on-failure -LE extreme
 
 All executables will be under `build/Main/`.
 
@@ -105,7 +123,7 @@ some optional libraries will _not_ be built. If you are building on a different
 system, you might have to experiment with your package manager a bit to get all
 required @ref licenses "libraries" built. The following may help with building in
 various environments:
-- https://github.com/quinoacomputing/quinoa/tree/master/docker
+- https://github.com/quinoacomputing/quinoa/tree/master/tools/docker
 - https://github.com/quinoacomputing/quinoa-tpl/tree/master/docker
 - https://github.com/quinoacomputing/buildenv
 

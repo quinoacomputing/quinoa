@@ -36,15 +36,15 @@ namespace AMR {
      */
     // TODO: remove graph size and use m.size()
     // TODO: remove these pointers
-    void mesh_adapter_t::init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z)
-    {
-        assert( m_x->size() == m_y->size() );
-        assert( m_x->size() == m_z->size() );
+    //void mesh_adapter_t::init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z)
+    //{
+    //    assert( m_x->size() == m_y->size() );
+    //    assert( m_x->size() == m_z->size() );
 
-        node_store.set_x(*m_x);
-        node_store.set_y(*m_y);
-        node_store.set_z(*m_z);
-    }
+    //    node_store.set_x(*m_x);
+    //    node_store.set_y(*m_y);
+    //    node_store.set_z(*m_z);
+    //}
 #endif
 
     /** @brief Consume an existing mesh, and turn it into the AMRs
@@ -75,34 +75,34 @@ namespace AMR {
      * @brief Place holder function to evaluate error estimate at
      * nodes, and therefor mark things as needing to be refined
      */
-    void mesh_adapter_t::evaluate_error_estimate() {
-        for (auto& kv : tet_store.edge_store.edges)
-        {
-            // Mark them as needing refinement
-            if (kv.second.refinement_criteria > refinement_cut_off)
-            {
-                kv.second.needs_refining = true;
-            }
-            else
-            {
-                // TODO: Check this won't be overwriting valuable
-                // information from last iteration
-                kv.second.needs_refining = false;
-            }
-        }
-    }
+    //void mesh_adapter_t::evaluate_error_estimate() {
+    //    for (auto& kv : tet_store.edge_store.edges)
+    //    {
+    //        // Mark them as needing refinement
+    //        if (kv.second.refinement_criteria > refinement_cut_off)
+    //        {
+    //            kv.second.needs_refining = true;
+    //        }
+    //        else
+    //        {
+    //            // TODO: Check this won't be overwriting valuable
+    //            // information from last iteration
+    //            kv.second.needs_refining = false;
+    //        }
+    //    }
+    //}
 
     /**
      * @brief Helper function to apply uniform refinement to all tets
      */
-    void mesh_adapter_t::uniform_refinement()
+    void mesh_adapter_t::mark_uniform_refinement()
     {
         for (auto& kv : tet_store.edge_store.edges) {
-            kv.second.refinement_criteria = 1.0;
+           auto& local = kv.second;
+           if (local.lock_case == Edge_Lock_Case::unlocked)
+             local.needs_refining = true;
         }
-        evaluate_error_estimate();
         mark_refinement();
-        perform_refinement();
     }
 
     /**
@@ -111,22 +111,34 @@ namespace AMR {
      *
      * @param edge vector of edges to set the refinement criteria of
      * @param crit values to set to corresponding edges refinement criteria
+     * @param lock values of lock case to set for edges
      */
-    void mesh_adapter_t::error_refinement(
-            const std::vector< edge_t >& edge,
-            const std::vector< real_t >& crit
-    )
+    void mesh_adapter_t::mark_error_refinement(
+            const std::vector< edge_t >& remote )
     {
-       assert( edge.size() == crit.size()); //, "edges and crit size mismatch" );
-       for (std::size_t e=0; e<edge.size(); e++)
+       for (std::size_t e=0; e<remote.size(); e++)
        {
-           trace_out << "Mark edge " << e << " as " << crit[e] << std::endl;
-           tet_store.edge_store.get( edge[e] ).refinement_criteria = crit[e];
+           auto& local = tet_store.edge_store.get( remote[e] );
+           if (local.lock_case > Edge_Lock_Case::unlocked)
+             local.needs_refining = false;
+           else
+             local.needs_refining = true;
        }
 
-        evaluate_error_estimate();
-        mark_refinement();
-        perform_refinement();
+       mark_refinement();
+    }
+
+   void mesh_adapter_t::mark_error_refinement_corr(
+            const EdgeData& edges )
+    {
+       auto& local = tet_store.edge_store;
+       for (const auto& e : edges)
+       {
+           auto& edgeref = local.get( edge_t(e.first) );
+           edgeref.needs_refining = e.second.first;
+           edgeref.lock_case = e.second.second;
+       }
+       mark_refinement();
     }
 
     /**
@@ -265,7 +277,6 @@ namespace AMR {
 
                 // Only apply checks to tets on the active list
                 if (tet_store.is_active(tet_id)) {
-                    int compatibility = 1;
                     int num_locked_edges = 0;
                     int num_intermediate_edges = 0;
 
@@ -325,7 +336,7 @@ namespace AMR {
                     {
                         //Determine compatibility case
 
-                        compatibility = detect_compatibility(num_locked_edges,
+                        int compatibility = detect_compatibility(num_locked_edges,
                                 num_intermediate_edges, refinement_case, normal);
 
                         trace_out << "Compat " << compatibility << std::endl;
@@ -406,7 +417,6 @@ namespace AMR {
         for (const auto& kv : tet_store.tets)
         {
             size_t tet_id = kv.first;
-            size_t parent_id = 0;
 
             trace_out << "Do refine of " << tet_id << std::endl;
             if (tet_store.has_refinement_decision(tet_id))
@@ -423,12 +433,11 @@ namespace AMR {
                         refiner.refine_one_to_eight(tet_store,node_connectivity,tet_id);
                         break;
                     case AMR::Refinement_Case::two_to_eight:
-                        parent_id = tet_store.get_parent_id(tet_id);
-                        round_two.insert(parent_id);
+                        tet_store.get_parent_id(tet_id);
+                        round_two.insert( tet_store.get_parent_id(tet_id) );
                         break;
                     case AMR::Refinement_Case::four_to_eight:
-                        parent_id = tet_store.get_parent_id(tet_id);
-                        round_two.insert(parent_id);
+                        round_two.insert( tet_store.get_parent_id(tet_id));
                         break;
                     case AMR::Refinement_Case::initial_grid:
                         // Do nothing
@@ -446,6 +455,9 @@ namespace AMR {
         for (const auto i : round_two)
         {
             trace_out << "round two i " << i << std::endl;
+
+            // Cache children as we're about to change this data
+            auto former_children = tet_store.data(i).children;
 
             AMR::Refinement_State& element = tet_store.data(i);
 
@@ -465,6 +477,14 @@ namespace AMR {
             }
 
             refiner.refine_one_to_eight(tet_store,node_connectivity,i);
+
+            // Grab children after it has been updated
+            auto current_children = tet_store.data(i).children;
+
+            // I want to set the children stored in *my* own children, to be
+            // the value of my new children....
+            refiner.overwrite_children(tet_store, former_children, current_children);
+
             tet_store.unset_marked_children(i); // FIXME: This will not work well in parallel
             element.refinement_case = AMR::Refinement_Case::one_to_eight;
         }
@@ -1004,21 +1024,21 @@ namespace AMR {
         }
 
     }
-    void mesh_adapter_t::reset_intermediate_edges()
-    {
-        for (const auto& kv : tet_store.tets)
-        {
-            size_t tet_id = kv.first;
+    //void mesh_adapter_t::reset_intermediate_edges()
+    //{
+    //    for (const auto& kv : tet_store.tets)
+    //    {
+    //        size_t tet_id = kv.first;
 
-            trace_out << "Process tet reset " << tet_id << std::endl;
+    //        trace_out << "Process tet reset " << tet_id << std::endl;
 
-            // Only apply checks to tets on the active list
-            if (tet_store.is_active(tet_id)) {
-                // change it from intermediate to locked
-                update_tet_edges_lock_type(tet_id, AMR::Edge_Lock_Case::intermediate, AMR::Edge_Lock_Case::locked);
-            }
-        }
-    }
+    //        // Only apply checks to tets on the active list
+    //        if (tet_store.is_active(tet_id)) {
+    //            // change it from intermediate to locked
+    //            update_tet_edges_lock_type(tet_id, AMR::Edge_Lock_Case::intermediate, AMR::Edge_Lock_Case::locked);
+    //        }
+    //    }
+    //}
 
     void mesh_adapter_t::update_tet_edges_lock_type(size_t tet_id, AMR::Edge_Lock_Case check, AMR::Edge_Lock_Case new_case) {
         edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);

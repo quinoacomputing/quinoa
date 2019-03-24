@@ -73,13 +73,12 @@ jobs:
         DISTRO: 'debian-doc'
   steps:
     - bash: |
-        cp -vr docker $(HOME)/docker
-        sed -i "/^FROM/s/debian/${DISTRO}/" docker/Dockerfile.quinoa-build-azure
+        sed -i "/^FROM/s/debian/${DISTRO}/" tools/docker/Dockerfile.quinoa-build-azure
         docker build \
                --build-arg COMPILER=${COMPILER} \
                --build-arg BUILD=${BUILD} \
                --build-arg DOC=${DOC} \
                --build-arg SHARED_LIBS="${SHARED_LIBS}" \
                --build-arg SMP=${SMP} \
-               --rm=false -f docker/Dockerfile.quinoa-build-azure -t ${DISTRO} .
+               --rm=false -f tools/docker/Dockerfile.quinoa-build-azure -t ${DISTRO} .
       displayName: 'Build & Test'

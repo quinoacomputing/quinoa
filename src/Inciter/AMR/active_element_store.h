@@ -21,6 +21,7 @@ namespace AMR {
             void add(size_t id)
             {
                 // Check if that active element already exists
+                // cppcheck-suppress assertWithSideEffect
                 assert( !exists(id) );
                 active_elements.insert(id);
             }

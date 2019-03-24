@@ -1,63 +1,63 @@
 ## UnitTest executable ########################################################
 
 if (HAS_MKL)
-  set(TestMKLBetaMethod "tests/Control/Options/TestMKLBetaMethod.C")
-  set(TestMKLGammaMethod "tests/Control/Options/TestMKLGammaMethod.C")
-  set(TestMKLGaussianMethod "tests/Control/Options/TestMKLGaussianMethod.C")
-  set(TestMKLUniformMethod "tests/Control/Options/TestMKLUniformMethod.C")
-  set(TestMKLRNG "tests/RNG/TestMKLRNG.C")
+  set(TestMKLBetaMethod "Control/Options/TestMKLBetaMethod.C")
+  set(TestMKLGammaMethod "Control/Options/TestMKLGammaMethod.C")
+  set(TestMKLGaussianMethod "Control/Options/TestMKLGaussianMethod.C")
+  set(TestMKLUniformMethod "Control/Options/TestMKLUniformMethod.C")
+  set(TestMKLRNG "RNG/TestMKLRNG.C")
 endif()
 
 if(HAS_RNGSSE2)
-  set(TestRNGSSE "tests/RNG/TestRNGSSE.C")
+  set(TestRNGSSE "RNG/TestRNGSSE.C")
 endif()
 
 add_executable(${UNITTEST_EXECUTABLE}
                UnitTestDriver.C
                UnitTest.C
-               ../UnitTest/tests/Base/TestContainerUtil.C
-               ../UnitTest/tests/Base/TestData.C
-               ../UnitTest/tests/Base/TestException.C
-               ../UnitTest/tests/Base/TestExceptionMPI.C
-               ../UnitTest/tests/Base/TestFactory.C
-               ../UnitTest/tests/Base/TestFlip_map.C
-               ../UnitTest/tests/Base/TestHas.C
-               ../UnitTest/tests/Base/TestPrint.C
-               ../UnitTest/tests/Base/TestProcessControl.C
-               ../UnitTest/tests/Base/TestPUPUtil.C
-               ../UnitTest/tests/Base/TestReader.C
-               ../UnitTest/tests/Base/TestStrConvUtil.C
-               ../UnitTest/tests/Base/TestTaggedTuple.C
-               ../UnitTest/tests/Base/TestTimer.C
-               ../UnitTest/tests/Base/TestVector.C
-               ../UnitTest/tests/Base/TestWriter.C
-               ../UnitTest/${TestMKLUniformMethod}
-               ../UnitTest/${TestMKLGaussianMethod}
-               ../UnitTest/${TestMKLBetaMethod}
-               ../UnitTest/${TestMKLGammaMethod}
-               ../UnitTest/tests/Control/Options/TestRNG.C
-               ../UnitTest/tests/Control/TestControl.C
-               ../UnitTest/tests/Control/TestFileParser.C
-               ../UnitTest/tests/Control/TestStringParser.C
-               ../UnitTest/tests/Control/TestSystemComponents.C
-               ../UnitTest/tests/Control/TestToggle.C
-               ../UnitTest/${TestScheme}
-               ../UnitTest/${TestError}
-               ../UnitTest/tests/IO/TestExodusIIMeshReader.C
-               ../UnitTest/tests/IO/TestMesh.C
-               ../UnitTest/tests/IO/TestMeshReader.C
-               ../UnitTest/tests/LoadBalance/TestLinearMap.C
-               ../UnitTest/tests/LoadBalance/TestLoadDistributor.C
-               ../UnitTest/tests/LoadBalance/TestUnsMeshMap.C
-               ../UnitTest/tests/Mesh/TestAround.C
-               ../UnitTest/tests/Mesh/TestDerivedData.C
-               ../UnitTest/tests/Mesh/TestDerivedData_MPISingle.C
-               ../UnitTest/tests/Mesh/TestGradients.C
-               ../UnitTest/tests/Mesh/TestReorder.C
-               ../UnitTest/${TestMKLRNG}
-               ../UnitTest/${TestRNGSSE}
-               ../UnitTest/tests/RNG/TestRNG.C
-               ../UnitTest/tests/RNG/TestRandom123.C)
+               ../../tests/unit/Base/TestContainerUtil.C
+               ../../tests/unit/Base/TestData.C
+               ../../tests/unit/Base/TestException.C
+               ../../tests/unit/Base/TestExceptionMPI.C
+               ../../tests/unit/Base/TestFactory.C
+               ../../tests/unit/Base/TestFlip_map.C
+               ../../tests/unit/Base/TestHas.C
+               ../../tests/unit/Base/TestPrint.C
+               ../../tests/unit/Base/TestProcessControl.C
+               ../../tests/unit/Base/TestPUPUtil.C
+               ../../tests/unit/Base/TestReader.C
+               ../../tests/unit/Base/TestStrConvUtil.C
+               ../../tests/unit/Base/TestTaggedTuple.C
+               ../../tests/unit/Base/TestTimer.C
+               ../../tests/unit/Base/TestVector.C
+               ../../tests/unit/Base/TestWriter.C
+               ../../tests/unit/${TestMKLUniformMethod}
+               ../../tests/unit/${TestMKLGaussianMethod}
+               ../../tests/unit/${TestMKLBetaMethod}
+               ../../tests/unit/${TestMKLGammaMethod}
+               ../../tests/unit/Control/Options/TestRNG.C
+               ../../tests/unit/Control/TestControl.C
+               ../../tests/unit/Control/TestFileParser.C
+               ../../tests/unit/Control/TestStringParser.C
+               ../../tests/unit/Control/TestSystemComponents.C
+               ../../tests/unit/Control/TestToggle.C
+               ../../tests/unit/${TestScheme}
+               ../../tests/unit/${TestError}
+               ../../tests/unit/IO/TestExodusIIMeshReader.C
+               ../../tests/unit/IO/TestMesh.C
+               ../../tests/unit/IO/TestMeshReader.C
+               ../../tests/unit/LoadBalance/TestLinearMap.C
+               ../../tests/unit/LoadBalance/TestLoadDistributor.C
+               ../../tests/unit/LoadBalance/TestUnsMeshMap.C
+               ../../tests/unit/Mesh/TestAround.C
+               ../../tests/unit/Mesh/TestDerivedData.C
+               ../../tests/unit/Mesh/TestDerivedData_MPISingle.C
+               ../../tests/unit/Mesh/TestGradients.C
+               ../../tests/unit/Mesh/TestReorder.C
+               ../../tests/unit/${TestMKLRNG}
+               ../../tests/unit/${TestRNGSSE}
+               ../../tests/unit/RNG/TestRNG.C
+               ../../tests/unit/RNG/TestRandom123.C)
 
 target_include_directories(${UNITTEST_EXECUTABLE} PUBLIC
                            ${QUINOA_SOURCE_DIR}

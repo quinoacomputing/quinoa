@@ -56,13 +56,14 @@ using inciter::Transporter;
 Transporter::Transporter() :
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_nchare( 0 ),
+  m_ncit( 0 ),
   m_scheme( g_inputdeck.get< tag::discr, tag::scheme >() ),
   m_partitioner(),
   m_refiner(),
   m_meshwriter(),
   m_sorter(),
   m_nelem( 0 ),
-  m_npoin( 0 ),
+  m_npoin_larger( 0 ),
   m_V( 0.0 ),
   m_minstat( {{ 0.0, 0.0, 0.0 }} ),
   m_maxstat( {{ 0.0, 0.0, 0.0 }} ),
@@ -186,7 +187,9 @@ Transporter::Transporter() :
     m_print.item( "Refinement at t > 0", dtref );
     if (dtref) {
       auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
-      m_print.item( "Mesh refinement frequency", dtfreq );
+      m_print.item( "Mesh refinement frequency, t > 0", dtfreq );
+      m_print.item( "Uniform-only mesh refinement, t > 0",
+                    g_inputdeck.get< tag::amr, tag::dtref_uniform >() );
     }
   }
 
@@ -233,7 +236,7 @@ Transporter::createPartitioner()
   // Create mesh reader for reading side sets from file
   tk::MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
-  std::map< int, std::vector< std::size_t > > belem;
+  std::map< int, std::vector< std::size_t > > bface;
   std::map< int, std::vector< std::size_t > > faces;
   std::map< int, std::vector< std::size_t > > bnode;
 
@@ -242,9 +245,9 @@ Transporter::createPartitioner()
   const auto centering = ctr::Scheme().centering( scheme );
   if (centering == tk::Centering::ELEM) {
     // Read boundary-face connectivity on side sets
-    mr.readSidesetFaces( belem, faces );
+    mr.readSidesetFaces( bface, faces );
     // Verify boundarty condition (BC) side sets used exist in mesh file
-    matchBCs( g_dgpde, belem );
+    matchBCs( g_dgpde, bface );
   } else if (centering == tk::Centering::NODE) {
     // Read node lists on side sets
     bnode = mr.readSidesetNodes();
@@ -262,7 +265,8 @@ Transporter::createPartitioner()
 
   // Create refiner callbacks (order matters)
   tk::RefinerCallback cbr {
-      CkCallback( CkReductionTarget(Transporter,matched), thisProxy )
+      CkCallback( CkReductionTarget(Transporter,edges), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,matched), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
   };
 
@@ -280,13 +284,13 @@ Transporter::createPartitioner()
   // Create mesh partitioner Charm++ chare group and start preparing mesh
   m_print.diag( "Reading mesh" );
 
-  // Create empty mesh sorter Charm++ chare array
+  // Create empty mesh sorter Charm++ chare array (bound to workers)
   m_sorter = CProxy_Sorter::ckNew( m_scheme.arrayoptions() );
 
   // Create empty mesh refiner chare array (bound to workers)
   m_refiner = CProxy_Refiner::ckNew( m_scheme.arrayoptions() );
 
-  // Create MeshWriter chare nodegroup
+  // Create MeshWriter chare group
   m_meshwriter = tk::CProxy_MeshWriter::ckNew(
                     g_inputdeck.get< tag::selected, tag::filetype >(),
                     centering,
@@ -295,19 +299,20 @@ Transporter::createPartitioner()
   // Create mesh partitioner Charm++ chare nodegroup
   m_partitioner =
     CProxy_Partitioner::ckNew( cbp, cbr, cbs, thisProxy, m_refiner, m_sorter,
-                               m_meshwriter, m_scheme, belem, faces, bnode );
+                               m_meshwriter, m_scheme, bface, faces, bnode );
 }
 
 void
-Transporter::load( uint64_t nelem, uint64_t npoin )
+Transporter::load( std::size_t nelem, std::size_t npoin )
 // *****************************************************************************
 // Reduction target: the mesh has been read from file on all PEs
 //! \param[in] nelem Total number of mesh elements (summed across all PEs)
-//! \param[in] npoin Total number of mesh points (summed across all PEs)
+//! \param[in] npoin Total number of mesh nodes (summed across all PEs). Note
+//!    that in parallel this is larger than the total number of points in the
+//!    mesh, because the boundary nodes are double-counted.
 // *****************************************************************************
 {
-  // Store total number of nodes in mesh
-  m_npoin = npoin;
+  m_npoin_larger = npoin;
 
   // Compute load distribution given total work (nelem) and user-specified
   // virtualization
@@ -324,7 +329,6 @@ Transporter::load( uint64_t nelem, uint64_t npoin )
   // Print out mesh graph stats
   m_print.section( "Input mesh graph statistics" );
   m_print.item( "Number of tetrahedra", nelem );
-  m_print.item( "Number of nodes", npoin );
 
   // Print out mesh partitioning configuration
   m_print.section( "Mesh partitioning" );
@@ -390,6 +394,15 @@ Transporter::refinserted( int error )
 }
 
 void
+Transporter::edges()
+// *****************************************************************************
+// Reduction target: all mesh refiner chares have setup their boundary edges
+// *****************************************************************************
+{
+  m_refiner.refine();
+}
+
+void
 Transporter::matched( std::size_t extra )
 // *****************************************************************************
 // Reduction target: all mesh refiner chares have distributed their newly added
@@ -398,29 +411,36 @@ Transporter::matched( std::size_t extra )
 //!   correction due to refinement along chare boundaries
 // *****************************************************************************
 {
-//std::cout << "max extra: " << extra << '\n';
   // If at least a single edge on a chare still needs correction, do correction,
   // otherwise, this initial mesh refinement step is complete
-  if (extra > 0)
-    m_refiner.correctref();
-  else {
+  if (extra > 0) {
+    ++m_ncit;
+    m_refiner.comExtra();
+  } else {
+    m_print.diag( "Number of correction iterations: " +
+                  std::to_string( m_ncit ) );
+    m_ncit = 0;
     m_progMesh.inc< REFINE >();
     m_refiner.eval();
   }
 }
 
 void
-Transporter::refined( std::size_t nelem, std::size_t /*npoin*/ )
+Transporter::refined( std::size_t nelem, std::size_t npoin )
 // *****************************************************************************
 // Reduction target: all PEs have refined their mesh
 //! \param[in] nelem Total number of elements in mesh across the whole problem
-//! \param[in] npoin Total number of points in mesh across the whole problem
+//! \param[in] npoin Total number of mesh nodes (summed across all PEs). Note
+//!    that in parallel this is larger than the total number of points in the
+//!    mesh, because the boundary nodes are double-counted.
 // *****************************************************************************
 {
   m_sorter.doneInserting();
+
   m_nelem = nelem;
-  //m_npoin = npoin; /// This currently would double-count the boundary nodes.
-  m_sorter.setup( m_npoin );
+  m_npoin_larger = npoin;
+
+  m_sorter.setup( m_npoin_larger );
 }
 
 void
@@ -448,7 +468,7 @@ Transporter::discresized()
 // mesh refinement
 // *****************************************************************************
 {
-  disc_resized();
+  discresize_complete();
 }
 
 void
@@ -458,7 +478,7 @@ Transporter::workresized()
 // mesh refinement
 // *****************************************************************************
 {
-  work_resized();
+  workresize_complete();
 }
 
 void
@@ -469,7 +489,10 @@ Transporter::resized()
 // *****************************************************************************
 {
   m_scheme.vol();
-  m_scheme.lhs();
+  
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG)
+    m_scheme.lhs();
 }
 
 void
@@ -492,7 +515,6 @@ Transporter::disccreated()
   if (g_inputdeck.get< tag::amr, tag::t0ref >()) {
     m_print.section( "Initially (t<0) refined mesh graph statistics" );
     m_print.item( "Number of tetrahedra", m_nelem );
-    m_print.item( "Number of nodes", m_npoin );
     m_print.endsubsection();
   }
 
@@ -559,17 +581,22 @@ Transporter::diagHeader()
 }
 
 void
-Transporter::comfinal()
+Transporter::comfinal( int initial )
 // *****************************************************************************
 // Reduction target indicating that communication maps have been setup
+//! \param[in] initial Sum of contributions from all chares. If larger than
+//!    zero, we are during time stepping and if zero we are during setup.
 // *****************************************************************************
 // [Discretization-specific communication maps]
 {
-  m_progWork.end();
-  m_scheme.setup( m_V );
-
-  // Turn on automatic load balancing
-  tk::CProxy_LBSwitch::ckNew( g_inputdeck.get<tag::cmd,tag::verbose>() );
+  if (initial > 0) {
+    m_progWork.end();
+    m_scheme.setup( m_V );
+    // Turn on automatic load balancing
+    tk::CProxy_LBSwitch::ckNew( g_inputdeck.get<tag::cmd,tag::verbose>() );
+  } else {
+    m_scheme.lhs();
+  }
 }
 // [Discretization-specific communication maps]
 

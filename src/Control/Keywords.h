@@ -149,6 +149,8 @@
 #ifndef Keywords_h
 #define Keywords_h
 
+#include <limits>
+
 #include <pegtl/contrib/alphabet.hpp>
 
 #include "Types.h"
@@ -1751,7 +1753,7 @@ struct ncomp_info {
   }
   struct expect {
     using type = std::size_t;
-    static constexpr type lower = 0;
+    static constexpr type lower = 1;
     static std::string description() { return "uint"; }
   };
 };
@@ -3424,7 +3426,7 @@ struct lbfreq_info {
   struct expect {
     using type = std::size_t;
     static constexpr type lower = 1;
-    static constexpr type upper = std::numeric_limits< tk::real >::digits10 + 1;
+    static constexpr type upper = std::numeric_limits< type >::max()-1;
     static std::string description() { return "int"; }
     static std::string choices() {
       return "integer between [" + std::to_string(lower) + "..." +
@@ -4678,7 +4680,7 @@ using amr_initial_conditions =
 
 struct amr_coords_info {
   using code = Code< c >;
-  static std::string name() { return "cooords"; }
+  static std::string name() { return "coords"; }
   static std::string shortDescription() { return
     "Select coordinate-based initial mesh refinement"; }
   static std::string longDescription() { return R"(This keyword is used to
@@ -4731,14 +4733,15 @@ struct amr_refvar_info {
 };
 using amr_refvar = keyword< amr_refvar_info, TAOCPP_PEGTL_STRING("refvar") >;
 
-struct amr_initref_info {
+struct amr_edgelist_info {
+  using code = Code< e >;
   static std::string name() { return "initial refinement edge-nodes"; }
   static std::string shortDescription() { return
     "Configure edge-node pairs for initial refinement"; }
   static std::string longDescription() { return
     R"(This keyword can be used to configure a list of edges that are explicitly
     tagged for initial refinement during setup in inciter. The keyword
-    introduces an initref ... end block within an amr ... end block and must
+    introduces an edgelist ... end block within an amr ... end block and must
     contain a list of integer pairs, i.e., the number of ids must be even,
     denoting the end-points of the nodes (=edge) which should be tagged for
     refinement.)"; }
@@ -4748,7 +4751,8 @@ struct amr_initref_info {
     static std::string description() { return "pairs of integers"; }
   };
 };
-using amr_initref = keyword< amr_initref_info, TAOCPP_PEGTL_STRING("initref") >;
+using amr_edgelist =
+  keyword< amr_edgelist_info, TAOCPP_PEGTL_STRING("edgelist") >;
 
 struct amr_coordref_info {
   static std::string name() {
@@ -4966,6 +4970,22 @@ struct amr_dtref_info {
 };
 using amr_dtref = keyword< amr_dtref_info, TAOCPP_PEGTL_STRING("dtref") >;
 
+struct amr_dtref_uniform_info {
+  static std::string name() { return "Uniform-only mesh refinement at t>0"; }
+  static std::string shortDescription() { return
+    "Enable mesh refinement at t>0 but only perform uniform refinement"; }
+  static std::string longDescription() { return R"(This keyword is used to force
+    uniform-only soution-adaptive mesh refinement during time stepping.)";
+  }
+  struct expect {
+    using type = bool;
+    static std::string choices() { return "true | false"; }
+    static std::string description() { return "string"; }
+  };
+};
+using amr_dtref_uniform =
+  keyword< amr_dtref_uniform_info, TAOCPP_PEGTL_STRING("dtref_uniform") >;
+
 struct amr_dtfreq_info {
   static std::string name() { return "Mesh refinement frequency"; }
   static std::string shortDescription() { return
@@ -4978,7 +4998,7 @@ struct amr_dtfreq_info {
   struct expect {
     using type = std::size_t;
     static constexpr type lower = 1;
-    static constexpr type upper = std::numeric_limits< tk::real >::digits10 + 1;
+    static constexpr type upper = std::numeric_limits< type >::max();
     static std::string description() { return "int"; }
     static std::string choices() {
       return "integer between [" + std::to_string(lower) + "..." +
@@ -4998,12 +5018,13 @@ struct amr_info {
     in this block: )" + std::string("\'")
     + amr_t0ref::string() + "\' | \'"
     + amr_dtref::string() + "\' | \'"
+    + amr_dtref_uniform::string() + "\' | \'"
     + amr_dtfreq::string() + "\' | \'"
     + amr_initial::string() + "\' | \'"
     + amr_refvar::string() + "\' | \'"
     + amr_error::string() + "\' | \'"
     + amr_coordref::string() + "\' | \'"
-    + amr_initref::string() + "\'.";
+    + amr_edgelist::string() + "\'.";
   }
 };
 using amr = keyword< amr_info, TAOCPP_PEGTL_STRING("amr") >;

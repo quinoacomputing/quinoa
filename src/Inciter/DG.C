@@ -26,6 +26,7 @@
 #include "Inciter/InputDeck/InputDeck.h"
 #include "Refiner.h"
 #include "Limiter.h"
+#include "Reorder.h"
 
 namespace inciter {
 
@@ -33,35 +34,38 @@ extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< DGPDE > g_dgpde;
 
+//! Runge-Kutta coefficients
+static const std::array< std::array< tk::real, 3 >, 2 >
+  rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
+
 } // inciter::
 
 using inciter::DG;
 
-DG::DG( const CProxy_Discretization& disc, const FaceData& fd ) :
+DG::DG( const CProxy_Discretization& disc,
+        const std::map< int, std::vector< std::size_t > >& bface,
+        const std::map< int, std::vector< std::size_t > >& /* bnode */,
+        const std::vector< std::size_t >& triinpoel ) :
   m_disc( disc ),
   m_ncomfac( 0 ),
   m_nadj( 0 ),
   m_nsol( 0 ),
   m_ninitsol( 0 ),
   m_nlim( 0 ),
-  m_fd( fd ),
+  m_fd( Disc()->Inpoel(), bface, tk::remap(triinpoel,Disc()->Lid()) ),
   m_u( Disc()->Inpoel().size()/4,
        g_inputdeck.get< tag::discr, tag::ndof >()*
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
-  m_vol( 0.0 ),
-  m_geoFace( tk::genGeoFaceTri( fd.Nipfac(), fd.Inpofa(), Disc()->Coord()) ),
+  m_geoFace( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), Disc()->Coord()) ),
   m_geoElem( tk::genGeoElemTet( Disc()->Inpoel(), Disc()->Coord() ) ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
-  m_limFunc( (g_inputdeck.get< tag::discr, tag::ndof >() == 1 ? 0 :
-              Disc()->Inpoel().size()/4),
-             (g_inputdeck.get< tag::discr, tag::ndof >()-1)*
-             g_inputdeck.get< tag::component >().nprop() ),
-  m_nfac( fd.Inpofa().size()/3 ),
+  m_limFunc( limFunc(Disc()->Inpoel().size()/4) ),
+  m_nfac( m_fd.Inpofa().size()/3 ),
   m_nunk( m_u.nunk() ),
   m_ncoord( Disc()->Coord()[0].size() ),
-  m_msumset( msumset() ),
+  m_msumset( Disc()->msumset() ),
   m_bndFace(),
   m_ghostData(),
   m_ghostReq( 0 ),
@@ -70,33 +74,49 @@ DG::DG( const CProxy_Discretization& disc, const FaceData& fd ) :
   m_exptGhost(),
   m_recvGhost(),
   m_diag(),
-  m_stage( 0 )
+  m_stage( 0 ),
+  m_ndofel(),
+  m_initial( 1 ),
+  m_refined( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
-//! \param[in] fd Face data structures
+//! \param[in] bface Boundary-faces mapped to side set ids
+//! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
   usesAtSync = true;    // enable migration at AtSync
 
+  // Size communication buffers and setup ghost data
+  resizeComm();
+}
+
+void
+DG::resizeComm()
+// *****************************************************************************
+//  Start sizing communication buffers and setting up ghost data
+// *****************************************************************************
+{
   auto d = Disc();
 
   const auto& gid = d->Gid();
   const auto& inpoel = d->Inpoel();
-  const auto& inpofa = fd.Inpofa();
+  const auto& inpofa = m_fd.Inpofa();
   const auto& esuel = m_fd.Esuel();
 
   // Perform leak test on mesh partition
-  Assert( !tk::leakyPartition( esuel, inpoel, d->Coord()),
+  Assert( !tk::leakyPartition( esuel, inpoel, d->Coord() ),
           "Mesh partition leaky" );
 
   // Activate SDAG waits for face adjacency map (ghost data) calculation
   thisProxy[ thisIndex ].wait4ghost();
 
   // Enable SDAG wait for initially building the solution vector and limiting
-  thisProxy[ thisIndex ].wait4initlim();
-  thisProxy[ thisIndex ].wait4sol();
-  thisProxy[ thisIndex ].wait4lim();
+  if (m_initial) {
+    thisProxy[ thisIndex ].wait4initlim();
+    thisProxy[ thisIndex ].wait4sol();
+    thisProxy[ thisIndex ].wait4lim();
+  }
 
   // Invert inpofa to enable searching for faces based on (global) node triplets
   Assert( inpofa.size() % 3 == 0, "Inpofa must contain triplets" );
@@ -162,12 +182,25 @@ DG::DG( const CProxy_Discretization& disc, const FaceData& fd ) :
     }
 }
 
+tk::Fields
+DG::limFunc( std::size_t nelem ) const
+// *****************************************************************************
+// Size and create limiter function data container
+//! \param[in] nelem Number elements in mesh
+// *****************************************************************************
+{
+  auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+  auto nprop = g_inputdeck.get< tag::component >().nprop();
+
+  return tk::Fields( (ndof == 1 ? 0 : nelem), (ndof-1)*nprop );
+}
+
 bool
 DG::leakyAdjacency()
 // *****************************************************************************
 // Perform leak-test on chare boundary faces
 //! \details This function computes a surface integral over the boundary of the
-//!   faces after the face adjacency communication map is completed.. A non-zero
+//!   faces after the face adjacency communication map is completed. A non-zero
 //!   vector result indicates a leak, e.g., a hole in the partition (covered by
 //!   the faces of the face adjacency communication map), which indicates an
 //!   error upstream in the code that sets up the face communication data
@@ -246,25 +279,6 @@ DG::faceMatch()
   return match;
 }
 
-std::unordered_map< int, std::unordered_set< std::size_t > >
-DG::msumset() const
-// *****************************************************************************
-// Convert chare-node adjacency map to hold sets instead of vectors
-//! \return Chare-node adjacency map that holds sets instead of vectors
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  std::unordered_map< int, std::unordered_set< std::size_t > > m;
-  for (const auto& n : d->Msum())
-    m[ n.first ].insert( n.second.cbegin(), n.second.cend() );
-
-  Assert( m.find( thisIndex ) == m.cend(),
-          "Chare-node adjacency map should not contain data for own chare ID" );
-
-  return m;
-}
-
 void
 DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
 // *****************************************************************************
@@ -310,15 +324,14 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
   // if we have heard from all fellow chares that we share at least a single
   // node, edge, or face with
   if (++m_ncomfac == m_msumset.size()) {
-
+    m_ncomfac = 0;
     if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) d->Tr().chcomfac();
-
     tk::destroy(m_ipface);
 
-    // Error checking on the number of expected vs received/found chare-boundary
-    // faces
+    // Ensure correct number of expected vs received/found chare-boundary faces
     Assert( m_exptNbface == tk::sumvalsize(m_bndFace), 
             "Expected and received number of boundary faces mismatch" );
+    m_exptNbface = 0;
 
     // Basic error checking on chare-boundary-face map
     Assert( m_bndFace.find( thisIndex ) == m_bndFace.cend(),
@@ -468,7 +481,10 @@ DG::reqGhost()
 {
   // If every chare we communicate with has requested ghost data from us, we may
   // fulfill the requests, but only if we have already setup our ghost data.
-  if (++m_ghostReq == m_msumset.size()) reqghost_complete();
+  if (++m_ghostReq == m_msumset.size()) {
+    m_ghostReq = 0;
+    reqghost_complete();
+  }
 }
 
 void
@@ -757,6 +773,8 @@ DG::adj()
 //!    on this chare.
 // *****************************************************************************
 {
+  m_nadj = 0;
+
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) Disc()->Tr().chadj();
 
   tk::destroy(m_bndFace);
@@ -820,7 +838,8 @@ DG::adj()
     }
 
   // Signal the runtime system that all workers have received their adjacency
-  contribute(CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()));
+  contribute( sizeof(int), &m_initial, CkReduction::sum_int,
+    CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
 }
 
 void
@@ -857,12 +876,11 @@ DG::setup( tk::real v )
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
+  IGNORE(v);
+
   tk::destroy(m_msumset);
 
   auto d = Disc();
-
-  // Store total mesh volume
-  m_vol = v;
 
   // Basic error checking on sizes of element geometry data and connectivity
   Assert( m_geoElem.nunk() == m_lhs.nunk(), "Size mismatch in DG::setup()" );
@@ -948,11 +966,6 @@ DG::sendinit()
 // Send own chare-boundary data to neighboring chares
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "advance" );
-
   // communicate solution ghost data (if any)
   if (m_ghostData.empty())
     cominit_complete();
@@ -983,11 +996,6 @@ DG::cominit( int fromch,
 //! \details This function receives contributions to m_u from fellow chares.
 // *****************************************************************************
 {
-//   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-//       g_inputdeck.get< tag::cmd, tag::quiescence >())
-//     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-//                                         "cominit" );
-
   Assert( u.size() == tetid.size(), "Size mismatch in DG::cominit()" );
 
   // Find local-to-ghost tet id map for sender chare
@@ -1008,6 +1016,7 @@ DG::cominit( int fromch,
   if (++m_ninitsol == m_ghostData.size()) {
     Assert( m_exptGhost == m_recvGhost,
             "Expected/received ghost tet id mismatch" );
+    m_exptGhost.clear();
     m_recvGhost.clear();
     m_ninitsol = 0;
     cominit_complete();
@@ -1175,8 +1184,8 @@ DG::writeFields( CkCallback c )
   // }
 
   // Output chare mesh and fields metadata to file
-  d->write( inpoel, coord, m_fd.Bface(), m_fd.Triinpoel(), m_fd.Bnode(),
-            names, fields, tk::Centering::ELEM, c );
+  d->write( inpoel, coord, m_fd.Bface(), {}, m_fd.Triinpoel(), names,
+            fields, tk::Centering::ELEM, c );
 }
 
 void
@@ -1186,6 +1195,8 @@ DG::lhs()
 // *****************************************************************************
 {
   for (const auto& eq : g_dgpde) eq.lhs( m_geoElem, m_lhs );
+
+  if (!m_initial) stage();
 }
 
 void
@@ -1293,8 +1304,8 @@ DG::solve( tk::real newdt )
           m_limFunc, m_ndofel, m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
-  m_u =  m_rkcoef[0][m_stage] * m_un
-       + m_rkcoef[1][m_stage] * ( m_u + d->Dt() * m_rhs/m_lhs );
+  m_u =  rkcoef[0][m_stage] * m_un
+       + rkcoef[1][m_stage] * ( m_u + d->Dt() * m_rhs/m_lhs );
 
   if (m_stage < 2) {
 
@@ -1303,7 +1314,7 @@ DG::solve( tk::real newdt )
 
   } else {
 
-    thisProxy[ thisIndex ].wait4stage();
+    thisProxy[ thisIndex ].wait4recompghost();
 
     // Compute diagnostics, e.g., residuals
     auto diag_computed = m_diag.compute( *d, m_u.nunk()-m_fd.Esuel().size()/4,
@@ -1360,40 +1371,107 @@ DG::refine()
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
-    d->Ref()->dtref( d->T(), m_fd.Bnode() );
+    d->Ref()->dtref( m_fd.Bface(), {}, tk::remap(m_fd.Triinpoel(),d->Gid()) );
+    m_refined = 1;
 
   } else {      // do not refine
 
     ref_complete();
-    lhs_complete();
     resize_complete();
+    m_refined = 0;
 
   }
 }
 
 void
-DG::resize( const tk::UnsMesh::Chunk& /*chunk*/,
-            const tk::UnsMesh::Coords& /*coord*/,
-            const tk::Fields& /*u*/,
-            const std::unordered_map< int,
-                    std::vector< std::size_t > >& /*msum*/,
-            const std::map< int, std::vector< std::size_t > >& /*bnode*/ )
+DG::resizeAfterRefined(
+  const std::vector< std::size_t >& /*ginpoel*/,
+  const tk::UnsMesh::Chunk& chunk,
+  const tk::UnsMesh::Coords& coord,
+  const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /*addedNodes*/,
+  const std::unordered_map< std::size_t, std::size_t >& addedTets,
+  const std::unordered_map< int, std::vector< std::size_t > >& msum,
+  const std::map< int, std::vector< std::size_t > >& bface,
+  const std::map< int, std::vector< std::size_t > >& /* bnode */,
+  const std::vector< std::size_t >& triinpoel )
 // *****************************************************************************
 //  Receive new mesh from refiner
+//! \param[in] ginpoel Mesh connectivity with global node ids
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
 //! \param[in] coord New mesh node coordinates
-//! \param[in] u New solution on new mesh
+//! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
+//! \param[in] addedTets Newly added mesh cells and their parents (local ids)
 //! \param[in] msum New node communication map
-//! \param[in] bnode Map of boundary-node lists mapped to corresponding
-//!   side set ids for this mesh chunk
+//! \param[in] bface Boundary-faces mapped to side set ids
+//! \param[in] bnode Boundary-node lists mapped to side set ids
+//! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
-  //auto d = Disc();
+  auto d = Disc();
 
-  //d->Inpoel() = inpoel;
-  //d->Coord() = coord;
+  // Set flag that indicates that we are during time stepping
+  m_initial = 0;
+
+  // Zero field output iteration count between two mesh refinement steps
+  d->Itf() = 0;
+
+  // Increase number of iterations with mesh refinement
+  ++d->Itr();
+
+  // Save old number of elements
+  auto old_nelem = d->Inpoel().size()/4;
+  IGNORE(old_nelem);
+
+  // Resize mesh data structures
+  d->resize( chunk, coord, msum );
+
+  // Update state
+  auto nelem = d->Inpoel().size()/4;
+  auto nprop = m_u.nprop();
+  m_u.resize( nelem, nprop );
+  m_un.resize( nelem, nprop );
+  m_lhs.resize( nelem, nprop );
+  m_rhs.resize( nelem, nprop );
+
+
+  m_fd = FaceData( d->Inpoel(), bface, tk::remap(triinpoel,d->Lid()) );
+
+  m_geoFace =
+    tk::Fields( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), coord ) );
+  m_geoElem = tk::Fields( tk::genGeoElemTet( d->Inpoel(), coord ) );
+
+  m_limFunc = limFunc( nelem );
+
+  m_nfac = m_fd.Inpofa().size()/3;
+  m_nunk = nelem;
+  m_ncoord = coord[0].size();
+  m_msumset = d->msumset();
+  m_bndFace.clear();
+  m_ghostData.clear();
+  m_ghost.clear();
+
+  // Update solution on new mesh, P0 (cell center value) only for now
+  m_un = m_u;
+  for (const auto& e : addedTets) {
+    Assert( e.first < nelem, "Indexing out of new solution vector" );
+    Assert( e.second < old_nelem, "Indexing out of old solution vector" );
+    for (std::size_t c=0; c<nprop; ++c)
+      m_u(e.first,c,0) = m_un(e.second,c,0);
+  }
+  m_un = m_u;
 
   ref_complete();
+
+  contribute( CkCallback(CkReductionTarget(Transporter,workresized), d->Tr()) );
+}
+
+void
+DG::recompGhostRefined()
+// *****************************************************************************
+// Start recomputing ghost data after a mesh refinement step
+// *****************************************************************************
+{
+  if (m_refined) resizeComm(); else stage();
 }
 
 void

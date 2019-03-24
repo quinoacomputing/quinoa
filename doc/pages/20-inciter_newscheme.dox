@@ -769,10 +769,10 @@ We also add a bunch of new regression tests that stress-test the asynchronous
 logic in the discretization scheme classes:
 
 @code{.diff}
-$ git diff regression/inciter/transport/SlotCyl/asynclogic/CMakeLists.txt
+$ git diff tests/regression/inciter/transport/SlotCyl/asynclogic/CMakeLists.txt
 index b54a207d..62732129 100644
---- a/regression/inciter/transport/SlotCyl/asynclogic/CMakeLists.txt
-+++ b/regression/inciter/transport/SlotCyl/asynclogic/CMakeLists.txt
+--- a/tests/regression/inciter/transport/SlotCyl/asynclogic/CMakeLists.txt
++++ b/tests/regression/inciter/transport/SlotCyl/asynclogic/CMakeLists.txt
 @@ -1,7 +1,7 @@
  # See cmake/add_regression_test.cmake for documentation on the arguments to
  # add_regression_test().

@@ -130,6 +130,7 @@ class InputDeck :
                                    kw::amr,
                                    kw::amr_t0ref,
                                    kw::amr_dtref,
+                                   kw::amr_dtref_uniform,
                                    kw::amr_dtfreq,
                                    kw::amr_initial,
                                    kw::amr_uniform,
@@ -139,7 +140,7 @@ class InputDeck :
                                    kw::amr_jump,
                                    kw::amr_hessian,
                                    kw::amr_refvar,
-                                   kw::amr_initref,
+                                   kw::amr_edgelist,
                                    kw::amr_coordref,
                                    kw::amr_xminus,
                                    kw::amr_xplus,
@@ -202,6 +203,7 @@ class InputDeck :
       set< tag::amr, tag::amr >( false );
       set< tag::amr, tag::t0ref >( false );
       set< tag::amr, tag::dtref >( false );
+      set< tag::amr, tag::dtref_uniform >( false );
       set< tag::amr, tag::dtfreq >( 3 );
       set< tag::amr, tag::error >( AMRErrorType::JUMP );
       auto rmax =
