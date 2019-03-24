@@ -1072,12 +1072,14 @@ DG::advance( tk::real )
     for(const auto& n : m_ghostData) {
       std::vector< std::size_t > tetid;
       std::vector< std::vector< tk::real > > u;
+      std::vector< tk::real > ndofel;
       for(const auto& i : n.second) {
         Assert( i.first < m_fd.Esuel().size()/4, "Sending solution ghost data" );
         tetid.push_back( i.first );
         u.push_back( m_u[i.first] );
+        ndofel.push_back( m_ndofel[i.first] );
       }
-      thisProxy[ n.first ].comsol( thisIndex, tetid, u );
+      thisProxy[ n.first ].comsol( thisIndex, tetid, u, ndofel );
     }
 
   ownsol_complete();
@@ -1086,12 +1088,14 @@ DG::advance( tk::real )
 void
 DG::comsol( int fromch,
             const std::vector< std::size_t >& tetid,
-            const std::vector< std::vector< tk::real > >& u )
+            const std::vector< std::vector< tk::real > >& u,
+            const std::vector< tk::real >& ndofel )
 // *****************************************************************************
 //  Receive chare-boundary solution ghost data from neighboring chares
 //! \param[in] fromch Sender chare id
 //! \param[in] tetid Ghost tet ids we receive solution data for
 //! \param[in] u Solution ghost data
+//! \param[in] ndofel Number of degrees of freedom for chare-boundary element
 //! \details This function receives contributions to m_u from fellow chares.
 // *****************************************************************************
 {
@@ -1106,6 +1110,7 @@ DG::comsol( int fromch,
     Assert( j < m_u.nunk(), "Indexing out of bounds in DG::comsol()" );
     for (std::size_t c=0; c<m_u.nprop(); ++c)
       m_u(j,c,0) = u[i][c];
+    m_ndofel[j] = ndofel[i];
   }
 
   // if we have received all solution ghost contributions from those chares we
@@ -1283,11 +1288,9 @@ DG::solve( tk::real newdt )
   // Set new time step size
   d->setdt( newdt );
 
-  //std::cout << "start eq.rhs" << std::endl;
   for (const auto& eq : g_dgpde)
   eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(), m_u,
           m_limFunc, m_ndofel, m_rhs );
-  //std::cout << "finish eq.rhs" << std::endl;
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   m_u =  m_rkcoef[0][m_stage] * m_un
@@ -1322,7 +1325,6 @@ DG::solve( tk::real newdt )
     if (!diag_computed) diag();
     // Optionally refine mesh
     refine();
-
   }
 }
 
@@ -1483,6 +1485,7 @@ void DG::eval_ndofel()
 //  Calculate the element mark for p-adaptive
 // *****************************************************************************
 {
+  const auto& esuel = m_fd.Esuel();
   const auto& esuf = m_fd.Esuf();
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   const auto ncomp= m_u.nprop()/ndof;
@@ -1493,7 +1496,7 @@ void DG::eval_ndofel()
   const auto& cy = coord[1];
   const auto& cz = coord[2];
 
-  for (std::size_t e=0; e<m_nunk; ++e)
+  for (std::size_t e=0; e<esuel.size()/4; ++e)
   {
     if(m_ndofel[e] == 4)
     {
@@ -1505,7 +1508,7 @@ void DG::eval_ndofel()
         {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
       }};
 
-      auto jacInv = 
+      auto jacInv =
         tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
       std::size_t sign(0);
@@ -1536,8 +1539,8 @@ void DG::eval_ndofel()
                      + dudxi[c][1] * jacInv[1][2]
                      + dudxi[c][2] * jacInv[2][2];
 
-        auto grad = sqrt(  dudx[c][0] * dudx[c][0] 
-                         + dudx[c][1] * dudx[c][1] 
+        auto grad = sqrt(  dudx[c][0] * dudx[c][0]
+                         + dudx[c][1] * dudx[c][1]
                          + dudx[c][2] * dudx[c][2] );
 
         if( grad > 0.1 )
@@ -1578,8 +1581,9 @@ void DG::correct()
 {
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   const auto ncomp= m_u.nprop()/ndof;
+  const auto& esuel = m_fd.Esuel();
 
-  for (std::size_t e=0; e<m_nunk; ++e)
+  for (std::size_t e=0; e<esuel.size()/4; ++e)
   {
     // When DGP0 is applied, all the high order term should be set to 0
     if(m_ndofel[e] == 1)

@@ -173,7 +173,7 @@ tk::update_rhs_bc ( ncomp_t ncomp,
 // *****************************************************************************
 {
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
- 
+
   Assert( B_l.size() == ndof_l, "Size mismatch" );
 
   for (ncomp_t c=0; c<ncomp; ++c)

@@ -37,7 +37,8 @@ module dg {
                          const std::vector< std::vector< tk::real > >& lfn );
       entry void comsol( int fromch,
                          const std::vector< std::size_t >& tetid,
-                         const std::vector< std::vector< tk::real > >& u );
+                         const std::vector< std::vector< tk::real > >& u,
+                         const std::vector< tk::real >& ndofel );
       entry void cominit( int fromch,
                           const std::vector< std::size_t >& tetid,
                           const std::vector< std::vector< tk::real > >& u );

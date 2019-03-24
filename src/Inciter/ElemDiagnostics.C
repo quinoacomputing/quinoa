@@ -141,11 +141,11 @@ ElemDiagnostics::compute_diag( const Discretization& d,
   for (std::size_t e=0; e<u.nunk()-nchGhost; ++e)
   {
     auto ng = tk::NGdiag(ndofel[e]);
-    
+ 
     // arrays for quadrature points
     std::array< std::vector< tk::real >, 3 > coordgp;
     std::vector< tk::real > wgp;
-    
+
     coordgp[0].resize( ng );
     coordgp[1].resize( ng );
     coordgp[2].resize( ng );

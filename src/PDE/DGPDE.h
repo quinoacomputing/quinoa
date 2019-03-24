@@ -100,8 +100,8 @@ class DGPDE {
               const tk::Fields& limFunc,
               const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
-    { 
-      self->rhs( t, geoFace, geoElem, fd, inpoel, coord, U, limFunc, 
+    {
+      self->rhs( t, geoFace, geoElem, fd, inpoel, coord, U, limFunc,
                  ndofel, R );
     }
 

@@ -121,7 +121,8 @@ class DG : public CBase_DG {
     //! Receive chare-boundary ghost data from neighboring chares
     void comsol( int fromch,
                  const std::vector< std::size_t >& tetid,
-                 const std::vector< std::vector< tk::real > >& u );
+                 const std::vector< std::vector< tk::real > >& u,
+                 const std::vector< tk::real >& ndofel );
 
     //! Advance equations to next time step
     void advance( tk::real );

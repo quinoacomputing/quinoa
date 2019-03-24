@@ -159,7 +159,7 @@ class Transport {
 
       // compute internal surface flux integrals
       tk::surfInt( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                   Upwind::flux, Problem::prescribedVelocity, U, limFunc, 
+                   Upwind::flux, Problem::prescribedVelocity, U, limFunc,
                    ndofel, R );
 
       if(ndof > 1)

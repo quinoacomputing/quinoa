@@ -63,16 +63,16 @@ tk::volInt( ncomp_t system,
     if(ndofel[e] > 1)
     {
       auto ng = tk::NGvol(ndofel[e]);
- 
+
       // arrays for quadrature points
       std::array< std::vector< real >, 3 > coordgp;
       std::vector< real > wgp;
-      
+
       coordgp[0].resize( ng );
       coordgp[1].resize( ng );
       coordgp[2].resize( ng );
       wgp.resize( ng );
-      
+
       GaussQuadratureTet( ng, coordgp, wgp );
 
       // Extract the element coordinates
@@ -83,7 +83,7 @@ tk::volInt( ncomp_t system,
         {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
       }};
 
-      auto jacInv = 
+      auto jacInv =
               inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
       // Compute the derivatives of basis function for DG(P1)

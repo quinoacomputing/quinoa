@@ -57,16 +57,16 @@ tk::srcInt( ncomp_t system,
   for (std::size_t e=0; e<geoElem.nunk(); ++e)
   {
     auto ng = tk::NGvol(ndofel[e]);
-    
+
     // arrays for quadrature points
     std::array< std::vector< real >, 3 > coordgp;
     std::vector< real > wgp;
-    
+
     coordgp[0].resize( ng );
     coordgp[1].resize( ng );
     coordgp[2].resize( ng );
     wgp.resize( ng );
-    
+
     GaussQuadratureTet( ng, coordgp, wgp );
 
     // Extract the element coordinates

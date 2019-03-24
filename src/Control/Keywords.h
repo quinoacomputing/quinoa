@@ -5081,8 +5081,8 @@ struct pdg_info {
     "Select adaptive discontinuous Galerkin discretization + Runge-Kutta"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the adaptive discontinuous Galerkin
-    spatial discretiztaion used in Inciter. Selecting this spatial 
-    discretization also selects the Runge-Kutta scheme for time 
+    spatial discretiztaion used in Inciter. Selecting this spatial
+    discretization also selects the Runge-Kutta scheme for time
     discretization. See Control/Inciter/Options/Scheme.h for other valid
     options.)"; }
 };

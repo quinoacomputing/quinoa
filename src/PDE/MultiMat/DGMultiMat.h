@@ -178,7 +178,7 @@ class MultiMat {
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
         tk::bndSurfInt( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
-                        inpoel, coord, t, rieflxfn, velfn, b.second, U, 
+                        inpoel, coord, t, rieflxfn, velfn, b.second, U,
                         limFunc, ndofel, R );
     }
 
