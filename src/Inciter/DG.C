@@ -812,12 +812,13 @@ DG::adj()
   Assert( faceMatch(), "Chare-boundary element-face connectivity (esuf) does "
          "not match" );
 
-  // Resize solution vectors, lhs, rhs and limiter function by the number of
-  // ghost tets
+  // Resize solution vectors by the number of ghost tets
   m_u.resize( m_nunk );
   m_un.resize( m_nunk );
   m_lhs.resize( m_nunk );
   m_rhs.resize( m_nunk );
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  m_ndofel.resize( m_nunk, ndof );
   m_limFunc.resize( m_nunk );
 
   // Ensure that we also have all the geometry and connectivity data 
@@ -887,9 +888,8 @@ DG::setup( tk::real v )
   Assert( d->Inpoel().size()/4 == m_lhs.nunk(),
           "Size mismatch in DG::setup()" );
 
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-
   // Initialize the array of adaptive indicator
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   m_ndofel.resize( m_nunk, ndof );
 
   // Compute left-hand side of discrete PDEs
@@ -1432,7 +1432,8 @@ DG::resizeAfterRefined(
   m_un.resize( nelem, nprop );
   m_lhs.resize( nelem, nprop );
   m_rhs.resize( nelem, nprop );
-
+  auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+  m_ndofel.resize( nelem, ndof );
 
   m_fd = FaceData( d->Inpoel(), bface, tk::remap(triinpoel,d->Lid()) );
 
