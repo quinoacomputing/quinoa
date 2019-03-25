@@ -169,6 +169,7 @@ void PUP::pup( PUP::er &p, AMR::node_connectivity_t& n )
 // *****************************************************************************
 {
   p | n.data();
+  p | n.inv_data();
   p | n.empty_node_count;
 }
 
