@@ -188,10 +188,9 @@ namespace AMR {
             void add_child(size_t parent_id, size_t child_id)
             {
                 get(parent_id).children.push_back(child_id);
-                get(parent_id).num_children++;
 
                 // cppcheck-suppress assertWithSideEffect
-                assert( get(parent_id).num_children <= 8);
+                assert( get(parent_id).children.size() <= 8);
             }
 
             /**
