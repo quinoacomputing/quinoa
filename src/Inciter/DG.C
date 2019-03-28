@@ -1160,16 +1160,15 @@ DG::writeFields( CkCallback c )
     auto o =
       eq.fieldOutput( d->T(), m_geoElem, u );
 
-    // cut off ghost elements
-    for (auto& field : o) field.resize( esuel.size()/4 );
-
     // Vector ndofel_f stores the real type data of ndofel
-    std::vector<tk::real> ndofel_f( m_nunk, 0 );
-    std::copy ( begin(m_ndofel), end(m_ndofel), begin(ndofel_f) );
+    std::vector<tk::real> ndofel( m_nunk, 0 );
+    std::copy ( begin(m_ndofel), end(m_ndofel), begin(ndofel) );
 
     // Add adaptive indicator array to output
-    ndofel_f.resize( esuel.size()/4 );
-    o.push_back( ndofel_f );
+    o.push_back( ndofel );
+
+    // cut off ghost elements
+    for (auto& field : o) field.resize( esuel.size()/4 );
 
     fields.insert( end(fields), begin(o), end(o) );
   }
@@ -1322,13 +1321,14 @@ DG::solve( tk::real newdt )
     const auto psign = inciter::g_inputdeck.get< tag::discr, tag::psign >();
 
     if(psign == true)
-    {
       eval_ndofel();
-      correct();
-    }
 
     // Increase number of iterations and physical time
     d->next();
+
+    if(psign == true)
+      thisProxy[ thisIndex ].wait4adjrefine();
+
     // Update Un
     m_un = m_u;
     // Signal that diagnostics have been computed (or in this case, skipped)
@@ -1468,7 +1468,7 @@ DG::resizeAfterRefined(
 void
 DG::recompGhostRefined()
 // *****************************************************************************
-// Start recomputing ghost data after a mesh refinement step
+// Start recomputing ghost data after a mesh eefinement step
 // *****************************************************************************
 {
   if (m_refined) resizeComm(); else stage();
@@ -1564,7 +1564,6 @@ void DG::eval_ndofel()
 // *****************************************************************************
 {
   const auto& esuel = m_fd.Esuel();
-  const auto& esuf = m_fd.Esuf();
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   const auto ncomp= m_u.nprop()/ndof;
   const auto& inpoel = Disc()->Inpoel();
@@ -1593,7 +1592,7 @@ void DG::eval_ndofel()
 
       for (std::size_t c=0; c<ncomp; ++c)
       {
-        auto mark = c*4;
+        auto mark = c*ndof;
 
         // Gradient of unkowns in reference space
         std::array< std::array< tk::real, 3 >, 5 > dudxi;
@@ -1628,15 +1627,34 @@ void DG::eval_ndofel()
       if(sign > 0)
         m_ndofel[e] = 4;
       else
+      {
         m_ndofel[e] = 1;
+
+        // When the element are coarsened, high oreder term should be zero
+        for (std::size_t c=0; c<ncomp; ++c)
+        {
+          auto mark = c*ndof;
+          m_u(e, mark+1, 0) = 0;
+          m_u(e, mark+2, 0) = 0;
+          m_u(e, mark+3, 0) = 0;
+        }
+      }
     }
   }
+}
+
+void DG::adjrefine()
+// *****************************************************************************
+//  The adjacent element of P1 element are refined
+// *****************************************************************************
+{
+  const auto& esuf = m_fd.Esuf();
 
   // Copy m_ndofel
   auto ndofel = m_ndofel;
 
-  // Make sure all the neighbooring element of the p1 element
-  // are set to be applied DGP1
+  // Make sure all the neighbooring element of the p1 element are set to be
+  // applied DGP1
   for( auto f=m_fd.Nbfac(); f<esuf.size()/2; ++f )
   {
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
@@ -1650,31 +1668,6 @@ void DG::eval_ndofel()
   }
   // Copy the updated version of ndofel to m_ndofel
   m_ndofel = ndofel;
-}
-
-void DG::correct()
-// *****************************************************************************
-//  Correct the solution for high order term
-// *****************************************************************************
-{
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-  const auto ncomp= m_u.nprop()/ndof;
-  const auto& esuel = m_fd.Esuel();
-
-  for (std::size_t e=0; e<esuel.size()/4; ++e)
-  {
-    // When DGP0 is applied, all the high order term should be set to 0
-    if(m_ndofel[e] == 1)
-    {
-      for (std::size_t c=0; c<ncomp; ++c)
-      {
-        auto mark = c*ndof;
-        m_u(e, mark+1, 0) = 0;
-        m_u(e, mark+2, 0) = 0;
-        m_u(e, mark+3, 0) = 0;
-      }
-    }
-  }
 }
 
 #include "NoWarning/dg.def.h"

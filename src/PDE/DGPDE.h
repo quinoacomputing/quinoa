@@ -230,7 +230,7 @@ class DGPDE {
                 const tk::Fields& limFunc,
                 const std::vector< std::size_t >& ndofel,
                 tk::Fields& R ) const override
-      { 
+      {
         data.rhs( t, geoFace, geoElem, fd, inpoel, coord, U, limFunc,
                   ndofel, R );
       }

@@ -361,8 +361,10 @@ class DG : public CBase_DG {
     //! Calculate the local number of degrees of freedom for each element
     void eval_ndofel();
 
-    //! Correct the solution for high order term
-    void correct();
+    ////! Correct the solution for high order term
+    //void correct();
+    //! The adjacent element of P1 element are refined
+    void adjrefine();
 };
 
 } // inciter::
