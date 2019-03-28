@@ -817,9 +817,12 @@ DG::adj()
   m_un.resize( m_nunk );
   m_lhs.resize( m_nunk );
   m_rhs.resize( m_nunk );
+  m_limFunc.resize( m_nunk );
+
+  // Initialize the array of adaptive indicator
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   m_ndofel.resize( m_nunk, ndof );
-  m_limFunc.resize( m_nunk );
+  
 
   // Ensure that we also have all the geometry and connectivity data 
   // (including those of ghosts)
@@ -887,10 +890,6 @@ DG::setup( tk::real v )
   Assert( m_geoElem.nunk() == m_lhs.nunk(), "Size mismatch in DG::setup()" );
   Assert( d->Inpoel().size()/4 == m_lhs.nunk(),
           "Size mismatch in DG::setup()" );
-
-  // Initialize the array of adaptive indicator
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-  m_ndofel.resize( m_nunk, ndof );
 
   // Compute left-hand side of discrete PDEs
   lhs();
@@ -1431,6 +1430,7 @@ DG::resizeAfterRefined(
   m_un.resize( nelem, nprop );
   m_lhs.resize( nelem, nprop );
   m_rhs.resize( nelem, nprop );
+
   auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
   m_ndofel.resize( nelem, ndof );
 
