@@ -21,8 +21,10 @@ namespace AMR {
             using node_list_key_t = node_pair_t;
             using node_list_value_t = size_t;
             using node_list_t = std::unordered_map<node_list_key_t, node_list_value_t,  tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2>>;
+            using inv_node_list_t = std::unordered_map<node_list_value_t, node_list_key_t>;
 
             node_list_t nodes;
+            inv_node_list_t inv_nodes;
 
         public:
 
@@ -34,6 +36,7 @@ namespace AMR {
             //! Non-const-ref accessor to state
             //! \return  All node pairs
             node_list_t& data() { return nodes; }
+            inv_node_list_t& inv_data() { return inv_nodes; }
 
             /**
              * @brief Method to add initial nodes to the store
@@ -76,14 +79,17 @@ namespace AMR {
                 // Ban getting of a node whos parents are {0,0}
                 assert(id > empty_node_count-1); //[0..empty_node_counts)
 
-                // TODO: this is now a linear search..
-                    // replace with a inverse map to search both ways
+                auto iter = inv_nodes.find(id);
+
+                /* old linear search code
                 auto it = nodes.begin();
                 for (; it != nodes.end(); ++it) {
                     if (it->second == id) break;
                 }
-                assert(it != nodes.end());
-                return it->first;
+                */
+
+                assert(iter != inv_nodes.end());
+                return iter->second;
             }
 
             /**
@@ -167,6 +173,7 @@ namespace AMR {
                     // if not in map
                     node_list_value_t value = nodes.size() + empty_node_count;
                     nodes[key] = value;
+                    inv_nodes[value] = key;
                     trace_out << "Made new node " << value << std::endl;
                     return value;
                 }
