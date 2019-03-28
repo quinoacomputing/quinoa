@@ -727,9 +727,8 @@ namespace AMR {
                     {
                         std::cout << " _child " << child;
                     }
-                    */
-
                     std::cout << std::endl;
+                    */
                 }
                 parent.children.clear();
             }

@@ -738,12 +738,12 @@ namespace AMR {
             {
                 return id_generator.generate_child_ids(parent_id, count);
             }
-            size_t get_child_id(size_t parent_id, size_t offset)
+            size_t get_child_id(size_t parent_id, size_t offset) const
             {
                 return master_elements.get_child_id(parent_id, offset);
             }
 
-            size_t get_parent_id(size_t id)
+            size_t get_parent_id(size_t id) const
             {
                 return master_elements.get_parent(id);
             }
