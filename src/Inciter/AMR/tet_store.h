@@ -235,8 +235,7 @@ namespace AMR {
                 // Deal with updating parent
                 master_elements.add_child(parent_id, id);
 
-                trace_out << "Added child " << id << " (" <<
-                    master_elements.get(parent_id).num_children << ")" << std::endl;
+                trace_out << "Added child " << id << std::endl;
             }
 
             /**
