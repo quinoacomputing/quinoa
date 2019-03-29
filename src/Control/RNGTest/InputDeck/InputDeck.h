@@ -18,26 +18,29 @@
 
 #include "NoWarning/set.h"
 
-#include "Control.h"
 #include "QuinoaConfig.h"
+#include "TaggedTuple.h"
 #include "RNGTest/CmdLine/CmdLine.h"
 
 namespace rngtest {
 namespace ctr {
 
-//! \brief InputDeck : Control< specialized to RNGTest >, see Types.h
+//! Member data for tagged tuple
+using InputDeckMembers = brigand::list<
+    tag::title,      kw::title::info::expect::type
+  , tag::selected,   selects
+  , tag::io,         ios
+  , tag::cmd,        CmdLine
+  , tag::param,      parameters
+  , tag::error,      std::vector< std::string >
+>;
+
+//! \brief InputDeck is a TaggedTuple specialized to RNGTest
 //! \details The stack is a tagged tuple, a hierarchical heterogeneous data
 //!    structure where all parsed information is stored.
 //! \see Base/TaggedTuple.h
 //! \see Control/RNGTest/Types.h
-class InputDeck : public tk::Control<
-                    // tag           type
-                    tag::title,      kw::title::info::expect::type,
-                    tag::selected,   selects,
-                    tag::io,         ios,
-                    tag::cmd,        CmdLine,
-                    tag::param,      parameters,
-                    tag::error,      std::vector< std::string > > {
+class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
 
   public:
     //! \brief RNGTest input deck keywords
@@ -100,7 +103,7 @@ class InputDeck : public tk::Control<
     //!   default constructor for the corresponding type.
     explicit InputDeck( const CmdLine& cl = {} ) {
       // Set previously parsed command line
-      set< tag::cmd >( cl );
+      get< tag::cmd >() = cl;
       // Initialize help
       const auto& ctrinfoFill = tk::ctr::Info( get< tag::cmd, tag::ctrinfo >() );
       brigand::for_each< keywords >( ctrinfoFill );
@@ -110,14 +113,7 @@ class InputDeck : public tk::Control<
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er& p ) {
-      tk::Control< tag::title,      kw::title::info::expect::type,
-                   tag::selected,   selects,
-                   tag::io,         ios,
-                   tag::cmd,        CmdLine,
-                   tag::param,      parameters,
-                   tag::error,      std::vector< std::string > >::pup(p);
-    }
+    void pup( PUP::er& p ) { tk::TaggedTuple< InputDeckMembers >::pup(p); }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \param[in,out] i InputDeck object reference

@@ -117,14 +117,14 @@ using NcompMap = std::map< char, ncomp_t, CaseInsensitiveCharLess >;
 
 //! Helper for converting a brigand::list to a tagged_tuple
 template< typename... T >
-using tagged_tuple_wrapper = typename tk::tuple::tagged_tuple< T... >;
+using tagged_tuple_wrapper = typename tk::TaggedTuple< brigand::list<T...> >;
 
 //! Helper for converting a brigand::list to a tagged_tuple
 template< typename L >
 using as_tagged_tuple = brigand::wrap< L, tagged_tuple_wrapper >;
 
 //! Number of components storage as a vector for a system of equations
-//! \details This is only helper class, defining a type 'type' for
+//! \details This is only a helper class, defining a type 'type' for
 //!    brigand::apply, so it can be used for defining a base for ncomponents
 struct ComponentVector : public std::vector< ncomp_t > {
   using type = std::vector< ncomp_t >;
@@ -140,7 +140,9 @@ struct ComponentVector : public std::vector< ncomp_t > {
 //!   components change.
 template< typename... Tags >
 class ncomponents : public
-  // tk::tuple::tagged_tuple< tag1, vec2, tag2, vec2, ... >
+  // tk::tuple::tagged_tuple< tag1, vec1, tag2, vec2, ... >
+  //as_tagged_tuple< brigand::flatten< brigand::transform< brigand::list<Tags...>,
+  //  brigand::bind< brigand::list, brigand::_1, ComponentVector > > > > {
   as_tagged_tuple< brigand::flatten< brigand::transform< brigand::list<Tags...>,
     brigand::bind< brigand::list, brigand::_1, ComponentVector > > > > {
 

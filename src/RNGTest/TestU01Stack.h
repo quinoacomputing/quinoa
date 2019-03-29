@@ -227,11 +227,11 @@ class TestU01Stack {
     template< class... Args > using FnPtr = std::vector<double>(*)( Args... );
 
     //! \brief Compile-time tag-based access to individual test wrappers.
-    //! \details This tagged_tuple is practically a compile-time map that
+    //! \details This tagged tuple is practically a compile-time map that
     //!   associates tags (empty structs) to test wrappers. This is used to find
     //!   the test wrapper function pointers after migration over the network.
     //! \see See also TestU01Props::pup().
-    tk::tuple::tagged_tuple<
+    tk::TaggedTuple< brigand::list<
 
       tag::BirthdaySpacings,                                // tag
       FnPtr< unif01_Gen*, sres_Poisson*,
@@ -365,7 +365,7 @@ class TestU01Stack {
       FnPtr< unif01_Gen*, sres_Basic*,
              const std::tuple<long, long, int, int, int>& >
 
-    > runner {
+    > > runner {{
 
       BirthdaySpacings,   // Initialize by binding to member function wrappers.
       Collision,          // Obviously the order here is important.
@@ -401,7 +401,7 @@ class TestU01Stack {
       StringRun,
       AutoCorr
 
-    };
+    }};
 
     //! Find RNG properties based on RNG id
     unif01_Gen* generator( tk::ctr::RNGType r ) const;

@@ -185,7 +185,8 @@ void RNGOptions_object::test< 13 >() {
 
   // specify sequence length parameter for RNGSSE rng
   std::map< tk::ctr::RNGType, tk::ctr::RNGSSEParam > b {
-    { tk::ctr::RNGType::RNGSSE_GQ581, { 12, tk::ctr::RNGSSESeqLenType::LONG } }
+    { tk::ctr::RNGType::RNGSSE_GQ581,
+      tk::ctr::RNGSSEParam{{12, tk::ctr::RNGSSESeqLenType::LONG}} }
   };
   ensure( "does not return specified sequence length for RNGSSE rng",
           m.param< tag::seqlen >                    // query this field

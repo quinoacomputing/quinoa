@@ -53,7 +53,7 @@ using walker::Distributor;
 Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   __dep(),
   m_print( cmdline.get< tag::verbose >() ? std::cout : std::clog ),
-  m_output( false, false ),
+  m_output( { false, false } ),
   m_it( 0 ),
   m_npar( 0 ),
   m_t( 0.0 ),

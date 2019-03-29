@@ -578,9 +578,9 @@ class Migrated : public CBase_Migrated {
         std::to_string( m_tagged_tuple.get< charm::tag::age >() ) +
         m_tagged_tuple.get< charm::tag::email >() + " ]";
       // Evaluate test
-      ensure( "tk::tuple::tagged_tuple different after migrated: "
-              "expected `" + expected + "` actual `" + actual + "`",
-              m_tagged_tuple == charm::TaggedTuple{ "Bob", 32, "bob@bob.bob"} );
+      ensure("tk::tuple::tagged_tuple different after migrated: "
+             "expected `" + expected + "` actual `" + actual + "`",
+             m_tagged_tuple == charm::TaggedTuple{{"Bob", 32, "bob@bob.bob"}});
     } catch ( const failure& ex ) {
       tr.result = ex.result();
       tr.exception_typeid = ex.type();
@@ -936,7 +936,7 @@ void PUPUtil_object::test< 12 >() {
   // executes, the suite will hang waiting for that chare to call back.
   set_test_name( "Charm:migrate tk::tuple::tagged_tuple 1" );
 
-  CProxy_Migrated::ckNew( charm::TaggedTuple{ "Bob", 32, "bob@bob.bob" } );
+  CProxy_Migrated::ckNew( charm::TaggedTuple{{"Bob", 32, "bob@bob.bob"}} );
 }
 
 //! Test Pack/Unpack of std::variant<int,double> holding an int

@@ -33,9 +33,11 @@ inline void operator|( PUP::er& p, PDEType& e ) { PUP::pup( p, e ); }
 
 //! Differential equation key used to access a diff eq in a factory
 using PDEKey =
-  tk::tuple::tagged_tuple< tag::pde,         PDEType,
-                           tag::physics,     ctr::PhysicsType,
-                           tag::problem,     ctr::ProblemType >;
+  tk::TaggedTuple< brigand::list<
+      tag::pde,         PDEType
+    , tag::physics,     ctr::PhysicsType
+    , tag::problem,     ctr::ProblemType
+  > >;
 
 //! Class with base templated on the above enum class with associations
 class PDE : public tk::Toggle< PDEType > {

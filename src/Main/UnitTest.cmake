@@ -36,7 +36,6 @@ add_executable(${UNITTEST_EXECUTABLE}
                ../../tests/unit/${TestMKLBetaMethod}
                ../../tests/unit/${TestMKLGammaMethod}
                ../../tests/unit/Control/Options/TestRNG.C
-               ../../tests/unit/Control/TestControl.C
                ../../tests/unit/Control/TestFileParser.C
                ../../tests/unit/Control/TestStringParser.C
                ../../tests/unit/Control/TestSystemComponents.C

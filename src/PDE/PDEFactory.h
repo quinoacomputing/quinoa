@@ -70,7 +70,7 @@ struct registerPDE {
     // Get problem policy: last type of brigand::list U
     using Problem = typename brigand::back< U >;
     // Build differential equation key
-    ctr::PDEKey key{ type, Physics::type(), Problem::type() };
+    ctr::PDEKey key{{ type, Physics::type(), Problem::type() }};
     // Register equation (with policies given by brigand::list U) into factory
     tk::recordModelLate< PDE, Eq< Physics, Problem > >
                        ( factory, key, static_cast<tk::ctr::ncomp_t>(0) );

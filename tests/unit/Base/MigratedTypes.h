@@ -43,9 +43,9 @@ using UnorderedMap = std::unordered_map< int, std::string >;
 using UnorderedSet = std::unordered_set< int >;
 using OptionalStr = std::optional< std::string >;
 using OptionalInt = std::optional< int >;
-using TaggedTuple = tk::tuple::tagged_tuple< tag::name,  std::string,
-                                             tag::age,   int,
-                                             tag::email, std::string >;
+using TaggedTuple = tk::TaggedTuple< brigand::list< tag::name,  std::string,
+                                                    tag::age,   int,
+                                                    tag::email, std::string > >;
 using Variant = std::variant< int, double >;
 
 //! Pack/Unpack: delegate to PUP::
@@ -58,7 +58,6 @@ inline void operator|( PUP::er& p, UnorderedMap& m ) { PUP::pup( p, m ); }
 inline void operator|( PUP::er& p, UnorderedSet& s ) { PUP::pup( p, s ); }
 inline void operator|( PUP::er& p, OptionalStr& o ) { PUP::pup( p, o ); }
 inline void operator|( PUP::er& p, OptionalInt& o ) { PUP::pup( p, o ); }
-inline void operator|( PUP::er& p, TaggedTuple& t ) { PUP::pup( p, t ); }
 
 } // charm::
 } // tut::

@@ -255,27 +255,27 @@ Transporter::createPartitioner()
   }
 
   // Create partitioner callbacks (order matters)
-  tk::PartitionerCallback cbp {
+  tk::PartitionerCallback cbp {{
       CkCallback( CkReductionTarget(Transporter,load), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refinserted), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
-  };
+  }};
 
   // Create refiner callbacks (order matters)
-  tk::RefinerCallback cbr {
+  tk::RefinerCallback cbr {{
       CkCallback( CkReductionTarget(Transporter,edges), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,matched), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
-  };
+  }};
 
   // Create sorter callbacks (order matters)
-  tk::SorterCallback cbs {
+  tk::SorterCallback cbs {{
       CkCallback( CkReductionTarget(Transporter,queried), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,responded), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,discinserted), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,workinserted), thisProxy )
-  };
+  }};
 
   // Start timer measuring preparation of the mesh for partitioning
   m_timer[ TimerTag::MESH_READ ];

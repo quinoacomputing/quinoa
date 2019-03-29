@@ -85,9 +85,9 @@ class DiffEqStack {
       --c;                    // used to index vectors starting with 0
       if ( g_inputdeck.get< tag::component, EqTag >()[c] ) {
         // create key and search for it
-        ctr::DiffEqKey key{ eq,
+        ctr::DiffEqKey key{{ eq,
           g_inputdeck.get< tag::param, EqTag, tag::initpolicy >()[c],
-          g_inputdeck.get< tag::param, EqTag, tag::coeffpolicy >()[c] };
+          g_inputdeck.get< tag::param, EqTag, tag::coeffpolicy >()[c] }};
         const auto it = m_factory.find( key );
         Assert( it != end( m_factory ),
                 "Can't find eq '" + ctr::DiffEq().name( eq ) +

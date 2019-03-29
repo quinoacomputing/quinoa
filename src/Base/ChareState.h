@@ -21,14 +21,14 @@
 namespace tk {
 
 //! Chare state
-using ChareState = tuple::tagged_tuple<
-                     tag::ch,   std::string     // chare name
-                   , tag::id,   int             // thisIndex
-                   , tag::pe,   int             // PE
-                   , tag::it,   uint64_t        // iteration count
-                   , tag::fn,   std::string     // member function name
-                   , tag::time, tk::real        // time stamp
-                   >;
+using ChareState = TaggedTuple< brigand::list<
+    tag::ch,   std::string   // chare name
+  , tag::id,   int           // thisIndex
+  , tag::pe,   int           // PE
+  , tag::it,   uint64_t      // iteration count
+  , tag::fn,   std::string   // member function name
+  , tag::time, tk::real      // time stamp
+> >;
 
 } // tk::
 

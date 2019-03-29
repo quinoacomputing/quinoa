@@ -20,24 +20,27 @@
 namespace tk {
 
 using PartitionerCallback =
-  tk::tuple::tagged_tuple< tag::load,           CkCallback
-                         , tag::distributed,    CkCallback
-                         , tag::refinserted,    CkCallback
-                         , tag::refined,        CkCallback
-                         >;
+  tk::TaggedTuple< brigand::list<
+      tag::load,           CkCallback
+    , tag::distributed,    CkCallback
+    , tag::refinserted,    CkCallback
+    , tag::refined,        CkCallback
+  > >;
 
 using RefinerCallback =
-  tk::tuple::tagged_tuple< tag::edges,          CkCallback
-                         , tag::matched,        CkCallback
-                         , tag::refined,        CkCallback
-                         >;
+  tk::TaggedTuple< brigand::list<
+      tag::edges,          CkCallback
+    , tag::matched,        CkCallback
+    , tag::refined,        CkCallback
+  > >;
 
 using SorterCallback =
-  tk::tuple::tagged_tuple< tag::queried,        CkCallback
-                         , tag::responded,      CkCallback
-                         , tag::discinserted,   CkCallback
-                         , tag::workinserted,   CkCallback
-                         >;
+  tk::TaggedTuple< brigand::list<
+      tag::queried,        CkCallback
+    , tag::responded,      CkCallback
+    , tag::discinserted,   CkCallback
+    , tag::workinserted,   CkCallback
+  > >;
 
 } // tk::
 

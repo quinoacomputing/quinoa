@@ -19,7 +19,6 @@
 #include "SystemComponents.h"
 #include "TaggedTuple.h"
 #include "Tags.h"
-#include "Control.h"
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 
@@ -150,22 +149,22 @@ void SystemComponents_object::test< 4 >() {
   nc.get< eq2 >().push_back( 2 );
 
   // Dependent variables (as the only parameters) for two equation systems
-  using eq1_parameters = tk::tuple::tagged_tuple<
+  using eq1_parameters = tk::TaggedTuple< brigand::list<
     tag::depvar, std::vector< char >
-  >;
-  using eq2_parameters = tk::tuple::tagged_tuple<
+  > >;
+  using eq2_parameters = tk::TaggedTuple< brigand::list<
     tag::depvar, std::vector< char >
-  >;
+  > >;
 
   // Parameters for two equation systems
-  using parameters = tk::tuple::tagged_tuple<
+  using parameters = tk::TaggedTuple< brigand::list<
     eq1, eq1_parameters,
     eq2, eq2_parameters
-  >;
+  > >;
 
   // Crate mock input deck with two systems of eqations with dependent variables
-  tk::Control< tag::component, ncomps,
-               tag::param, parameters > deck;
+  tk::TaggedTuple< brigand::list< tag::component, ncomps,
+                                  tag::param, parameters > > deck;
 
   // Assign ncomps to deck
   deck.get< tag::component >() = std::move( nc );
@@ -197,22 +196,22 @@ void SystemComponents_object::test< 5 >() {
   nc.get< eq2 >().push_back( 8 );
 
   // Dependent variables (as the only parameters) for two equation systems
-  using eq1_parameters = tk::tuple::tagged_tuple<
+  using eq1_parameters = tk::TaggedTuple< brigand::list<
     tag::depvar, std::vector< char >
-  >;
-  using eq2_parameters = tk::tuple::tagged_tuple<
+  > >;
+  using eq2_parameters = tk::TaggedTuple< brigand::list<
     tag::depvar, std::vector< char >
-  >;
+  > >;
 
   // Parameters for two equation systems
-  using parameters = tk::tuple::tagged_tuple<
+  using parameters = tk::TaggedTuple< brigand::list<
     eq1, eq1_parameters,
     eq2, eq2_parameters
-  >;
+  > >;
 
   // Crate mock input deck with two systems of eqations with dependent variables
-  tk::Control< tag::component, ncomps,
-               tag::param, parameters > deck;
+  tk::TaggedTuple< brigand::list< tag::component, ncomps,
+                                  tag::param, parameters > > deck;
 
   // Assign ncomps to deck
   deck.get< tag::component >() = std::move( nc );

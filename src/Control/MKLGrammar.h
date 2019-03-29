@@ -48,8 +48,7 @@ namespace mkl {
             typename vec, typename... tags >
   struct seed :
          tk::grm::process< use< kw::seed >,
-                           tk::grm::Insert_field< tag::seed,
-                                                  sel, vec, tags... > > {};
+                           tk::grm::insert_seed< sel, vec, tags... > > {};
 
   //! \brief Match and set MKL uniform method algorithm
   template< template< class > class use, typename sel,

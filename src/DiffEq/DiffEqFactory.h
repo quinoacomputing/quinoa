@@ -54,7 +54,7 @@ struct registerDiffEq {
     // Get coefficients policy: last type of brigand::list U
     using CoeffPolicy = typename brigand::back< U >;
     // Build differential equation key
-    ctr::DiffEqKey key{ type, InitPolicy::type(), CoeffPolicy::type() };
+    ctr::DiffEqKey key{{ type, InitPolicy::type(), CoeffPolicy::type() }};
     // Register equation (with policies given by brigand::list U) into
     // factory
     tk::recordModelLate< DiffEq, Eq< InitPolicy, CoeffPolicy > >
