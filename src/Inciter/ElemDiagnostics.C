@@ -61,7 +61,7 @@ ElemDiagnostics::compute( Discretization& d,
 //! \param[in] d Discretization base class to read from
 //! \param[in] nchGhost Number of chare boundary ghost elements
 //! \param[in] geoElem Element geometry
-//! \param[in] ndofel Vector of local number of degrees of freedome
+//! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] u Current solution vector
 //! \return True if diagnostics have been computed
 //! \details Diagnostics are defined as some norm, e.g., L2 norm, of a quantity,
@@ -126,7 +126,7 @@ ElemDiagnostics::compute_diag( const Discretization& d,
 //! \param[in] ndof Number of degree of freedom
 //! \param[in] nchGhost Number of chare boundary ghost elements
 //! \param[in] geoElem Element geometry
-//! \param[in] ndofel Vector of local number of degrees of freedome
+//! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] u Current solution vector
 //! \param[in,out] diag Diagnostics vector
 // *****************************************************************************
@@ -140,6 +140,7 @@ ElemDiagnostics::compute_diag( const Discretization& d,
 
   for (std::size_t e=0; e<u.nunk()-nchGhost; ++e)
   {
+    // Number of quadrature points for volume integration
     auto ng = tk::NGdiag(ndofel[e]);
 
     // arrays for quadrature points

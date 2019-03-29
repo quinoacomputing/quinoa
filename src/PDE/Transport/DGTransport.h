@@ -122,7 +122,7 @@ class Transport {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
     //! \param[in] limFunc Limiter function for higher-order solution dofs
-    //! \param[in] ndofel Vector of local number of degrees of freedome
+    //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
               const tk::Fields& geoFace,

@@ -1297,8 +1297,8 @@ DG::solve( tk::real newdt )
   d->setdt( newdt );
 
   for (const auto& eq : g_dgpde)
-  eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(), m_u,
-          m_limFunc, m_ndofel, m_rhs );
+    eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(), m_u,
+            m_limFunc, m_ndofel, m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   m_u =  rkcoef[0][m_stage] * m_un
@@ -1468,7 +1468,7 @@ DG::resizeAfterRefined(
 void
 DG::recompGhostRefined()
 // *****************************************************************************
-// Start recomputing ghost data after a mesh eefinement step
+// Start recomputing ghost data after a mesh refinement step
 // *****************************************************************************
 {
   if (m_refined) resizeComm(); else stage();
@@ -1560,7 +1560,8 @@ DG::step()
 
 void DG::eval_ndofel()
 // *****************************************************************************
-//  Calculate the element mark for p-adaptive
+//  Determine order of solution polynomial for each element for p-adaptive DG,
+//  using an error indicator based on the magnitude of solution gradient
 // *****************************************************************************
 {
   const auto& esuel = m_fd.Esuel();
@@ -1630,7 +1631,7 @@ void DG::eval_ndofel()
       {
         m_ndofel[e] = 1;
 
-        // When the element are coarsened, high oreder term should be zero
+        // When the element are coarsened, high order term should be zero
         for (std::size_t c=0; c<ncomp; ++c)
         {
           auto mark = c*ndof;
@@ -1653,8 +1654,8 @@ void DG::adjrefine()
   // Copy m_ndofel
   auto ndofel = m_ndofel;
 
-  // Make sure all the neighbooring element of the p1 element are set to be
-  // applied DGP1
+  // Ensure all neighboring elements for p-refined elements (DGP0->DGP1) are
+  // also p-refined (DGP0 -> DGP1)"
   for( auto f=m_fd.Nbfac(); f<esuf.size()/2; ++f )
   {
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
