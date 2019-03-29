@@ -148,6 +148,7 @@ class Refiner : public CBase_Refiner {
       p | m_addedNodes;
       p | m_addedTets;
       p | m_prevnTets;
+      p | m_grand;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -156,11 +157,21 @@ class Refiner : public CBase_Refiner {
     //@}
 
   private:
-    //! Used to associate a tet id (value) to a boundary triangle face (key)
-    using BndFaces = std::unordered_map< tk::UnsMesh::Face,
-                                         std::size_t,
-                                         tk::UnsMesh::Hash<3>,
-                                         tk::UnsMesh::Eq<3> >;
+    //! Used to associate tet id (value) to a boundary triangle face (key)
+    using BndFaceTets =
+      std::unordered_map< tk::UnsMesh::Face, std::size_t,
+                          tk::UnsMesh::Hash<3>, tk::UnsMesh::Eq<3> >;
+
+    //! Used to associate side set ids (value) to a boundary triangle face (key)
+    using BndFaceSides =
+      std::unordered_map< tk::UnsMesh::Face, std::unordered_set< int >,
+                          tk::UnsMesh::Hash<3>, tk::UnsMesh::Eq<3> >;
+
+    //! Used to associate a unique set of faces (3 node ids) to side sets
+    using BndFaceSets = std::unordered_map< int, tk::UnsMesh::FaceSet >;
+
+    //! Boundary face data bundle
+    using BndFaceData = std::tuple< BndFaceTets, BndFaceSides, BndFaceSets >;
 
     //! Host proxy
     CProxy_Transporter m_host;
@@ -238,6 +249,8 @@ class Refiner : public CBase_Refiner {
     std::unordered_map< std::size_t, std::size_t > m_addedTets;
     //! Number of tetrahedra in the mesh before refinement
     std::size_t m_prevnTets;
+    //! Unique nodes of the mesh before a refinement step with local ids
+    std::unordered_set< std::size_t > m_grand;
 
     //! Generate flat coordinate data from coordinate map
     tk::UnsMesh::Coords flatcoord( const tk::UnsMesh::CoordMap& coordmap );
@@ -283,19 +296,19 @@ class Refiner : public CBase_Refiner {
     void newBndMesh( const std::unordered_set< std::size_t >& old,
                      const std::unordered_set< std::size_t >& ref );
 
-    //! \brief Generate boundary data structure used to update refined
-    //!   boundary faces and nodes assigned to side sets
-    BndFaces boundary();
+    //! \brief Generate boundary data structures used to update refined
+    //!   boundary faces and nodes of side sets
+    BndFaceData boundary();
 
     //! Regenerate boundary faces after mesh refinement step
     void updateBndFaces( const std::unordered_set< std::size_t >& old,
                          const std::unordered_set< std::size_t >& ref,
-                         const BndFaces& bnd );
+                         const BndFaceData& bnd );
 
     //! Regenerate boundary nodes after mesh refinement step
     void updateBndNodes( const std::unordered_set< std::size_t >& old,
                          const std::unordered_set< std::size_t >& ref,
-                         const BndFaces& bnd );
+                         const BndFaceData& bnd );
 
     //! Evaluate initial conditions (IC) at mesh nodes
     tk::Fields nodeinit( std::size_t npoin,
@@ -308,7 +321,47 @@ class Refiner : public CBase_Refiner {
                     tk::real t,
                     CkCallback c ) const;
 
-    //! Functor to call the resize() member function behind SchemeBase::Proxy
+    //! Find parents of a list of nodes
+    //! \tparam Container Container whose value_type is std::size_t
+    //! \param[in] oldmesh Unique nodes of the old mesh using local ids
+    //! \param[in] nodes A container of node ids. The ids must have a type of
+    //!   std::size_t.
+    //! \return A unique set of nodes ids of the parents of the input nodes
+    //! \details Parameter 'oldmesh' defines the old mesh, i.e., the mesh that
+    //!   is considered as the parent mesh in which if nodes are found during
+    //!   the search, they are considered parents of themselves. In other words,
+    //!   parent lookup in the h-refinement hierarchy stops at the mesh whose
+    //!   unique node ids are passed in in oldmesh.
+    template< class Container >
+    std::unordered_set< std::size_t >
+    parents( const std::unordered_set< std::size_t >& oldmesh,
+             const Container& nodes )
+    {
+      static_assert(
+        std::is_same< typename Container::value_type, std::size_t >::value,
+        "Container::value_type must be of type std::size_t" );
+      std::unordered_set< std::size_t > s;
+      for (auto n : nodes) {
+        if (oldmesh.find(n) != end(oldmesh)) {
+          s.insert( n );
+        } else {
+          auto p = m_refiner.node_connectivity.get( n );
+          s.insert( begin(p), end(p) );
+        }
+      }
+      // Ensure all parent nodes are in the old mesh
+      Assert( std::all_of( begin(s), end(s), [ &oldmesh ]( std::size_t j ){
+                return oldmesh.find(j) != end(oldmesh); } ),
+              "Old face nodes not in old mesh" );
+      return s;
+    }
+
+    //! Return a set of side set ids for a face, given by 3 node ids
+    std::unordered_set< int >
+    faceSides( const BndFaceSets& facesets, const tk::UnsMesh::Face& t );
+
+    //! \brief Function class to call the resizeAfterREfined() member function
+    //!   behind SchemeBase::Proxy
     struct ResizeAfterRefined : boost::static_visitor<> {
       const std::vector< std::size_t >& Ginpoel;
       const tk::UnsMesh::Chunk& Chunk;
