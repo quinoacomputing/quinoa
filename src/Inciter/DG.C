@@ -287,14 +287,13 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
 {
   const auto& esuel = m_fd.Esuel();
 
-  // Attempt to find sender chare among chares we potentially share faces with.
-  // Note that it is feasible that a sender chare called us but we do not have a
-  // set of faces associated to that chare. This can happen if we only share a
-  // single node or an edge but note a face with that chare.
+  // Find sender chare among chares we potentially share faces with. Note that
+  // it is feasible that a sender chare called us but we do not have a set of
+  // faces associated to that chare. This can happen if we only share a single
+  // node or an edge but not a face with that chare.
   auto& bndface = m_bndFace[ fromch ];  // will associate to sender chare
   // Try to find incoming faces on our chare boundary with other chares. If
-  // found, generate and assign new local ID to face, associated to sender
-  // chare.
+  // found, generate and assign new local face ID, associated to sender chare.
   auto d = Disc();
   const auto& gid = d->Gid();
   const auto& inpoel = d->Inpoel();
@@ -327,6 +326,7 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
     tk::destroy(m_ipface);
 
     // Ensure correct number of expected vs received/found chare-boundary faces
+    std::cout << thisIndex << " expt: " << m_exptNbface << ", " << tk::sumvalsize(m_bndFace) << '\n';
     Assert( m_exptNbface == tk::sumvalsize(m_bndFace), 
             "Expected and received number of boundary faces mismatch" );
     m_exptNbface = 0;
@@ -795,6 +795,7 @@ DG::adj()
     for (std::size_t f=0; f<4; ++f)
       if (esuel[4*e+f] == -1) ++nbound;
   }
+  std::cout << thisIndex << " ghost: " << nbound << ", " << m_fd.Nbfac() << '\n';
   Assert( nbound == m_fd.Nbfac(), "Incorrect number of ghost-element -1's in "
          "updated esuel" );
 

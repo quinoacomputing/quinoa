@@ -263,7 +263,7 @@ class DG : public CBase_DG {
     //! Internal + physical boundary faces (inverse of inpofa)
     tk::UnsMesh::FaceSet m_ipface;
     //! Face & tet IDs associated to global node IDs of the face for each chare
-    //! \details This maps stores not only the unique faces associated to
+    //! \details This map stores not only the unique faces associated to
     //!   fellow chares, but also a newly assigned local face ID and adjacent
     //!   local tet ID.
     std::unordered_map< int, FaceMap > m_bndFace;

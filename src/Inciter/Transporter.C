@@ -145,12 +145,12 @@ Transporter::Transporter() :
   // Print out adaptive mesh refinement configuration
   const auto amr = g_inputdeck.get< tag::amr, tag::amr >();
   if (amr) {
-    m_print.section( "Adaptive mesh refinement (h-ref)" );
+    m_print.section( "Mesh refinement (h-ref)" );
     m_print.refvar( g_inputdeck.get< tag::amr, tag::refvar >(),
                     g_inputdeck.get< tag::amr, tag::id >() );
     m_print.Item< ctr::AMRError, tag::amr, tag::error >();
     auto t0ref = g_inputdeck.get< tag::amr, tag::t0ref >();
-    m_print.item( "Refinement at t < 0 (t0ref)", t0ref );
+    m_print.item( "Refinement at t<0 (t0ref)", t0ref );
     if (t0ref) {
       const auto& initref = g_inputdeck.get< tag::amr, tag::init >();
       m_print.item( "Initial refinement steps", initref.size() );
@@ -184,7 +184,7 @@ Transporter::Transporter() :
         m_print.item( "Initial refinement z+", zplus );
     }
     auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
-    m_print.item( "Refinement at t > 0 (dtref)", dtref );
+    m_print.item( "Refinement at t>0 (dtref)", dtref );
     if (dtref) {
       auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
       m_print.item( "Mesh refinement frequency, t > 0", dtfreq );

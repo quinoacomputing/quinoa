@@ -1207,7 +1207,7 @@ Refiner::boundary()
     auto nc = tet_store.data( f.second ).children.size();
     if (nc > 0) {  // if tet is refined
       auto ss = faceSides( facesets, f.first );    // query side sets for face
-      for (decltype(nc) i=0; i<nc; ++i ) {  // for all child tets
+      for (decltype(nc) i=0; i<nc; ++i) {  // for all child tets
         auto childtet = tet_store.get_child_id( f.second, i );
         auto parent = tet_store.get_parent_id( childtet );
         if (parent != f.second) {  // detect backtrackers: 2->8 or 4->8
@@ -1286,8 +1286,8 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
   decltype(m_triinpoel) triinpoel;      // will become m_triinpoel
   // face id counter
   std::size_t facecnt = 0;
-  // will collect unique faces added
-  tk::UnsMesh::FaceSet faceset;
+  // will collect unique faces added for each side set
+  BndFaceSets bndfacesets;
 
   // See Refiner::boundary()
   const auto& facetets = std::get< 0 >( bnd );
@@ -1296,22 +1296,27 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
 
   // Lambda to associate a boundary face and connectivity to a side set.
   // Argument 's' is the list of faces (ids) to add the new face to. Argument
-  // 'f' is the triangle face connectivity to add.
-  auto addBndFace = [ &facecnt, &triinpoel, &faceset ]
-                    ( std::vector< std::size_t >& s, const Face& f )
+  // 'ss' is the side set id to which the face is added. Argument 'f' is the
+  // triangle face connectivity to add.
+  auto addBndFace = [&]( std::vector< std::size_t >& s, int ss, const Face& f )
   {
-    if (faceset.insert(f).second) {
+    // only add face if it has not yet been aded to this side set
+    if (bndfacesets[ ss ].insert( f ).second) {
       s.push_back( facecnt++ );
       triinpoel.insert( end(triinpoel), begin(f), end(f) );
     }
   };
 
   // Lambda to evaluate and optionally add a child face to a side set if its
-  // grandparent was on the side set.
+  // grandparent was on the side set. Argument 'par' is the unique set of nodes
+  // of the face to search for in the grandparent mesh using loca ids. Argument
+  // 'childface' is the 3 local node ids of the child's face to add. Argument
+  // 'ss' is the side set id to which the face is being added. Argument faces
+  // is the list of faces to add to.
   auto evalGrandFace = [&]( const std::unordered_set< std::size_t >& par,
                             const Face& childface,
                             int ss,
-                            std::vector< std::size_t >& sideface )
+                            std::vector< std::size_t >& faces )
   {
     Assert( par.size() == 3, "Node list to search for grandparent must be a"
             " face with exactly 3 nodes" );
@@ -1324,12 +1329,13 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
     // If the face was found among the grandparents and the grandparent was on
     // the same side side set, add child face to the side set.
     if (p != end(grandfacesides) && p->second.find(ss) != end(p->second)) {
-      addBndFace( sideface, {{ m_gid[ childface[0] ],
-                               m_gid[ childface[1] ],
-                               m_gid[ childface[2] ] }} );
+      std::cout << 'g';
+      addBndFace( faces, ss, {{ m_gid[ childface[0] ], m_gid[ childface[1] ],
+                                m_gid[ childface[2] ] }} );
     }
   };
 
+  std::cout << thisIndex << ':';
   // Regenerate boundary faces after refinement step
   const auto& tet_store = m_refiner.tet_store;
   for (const auto& f : facetets) {  // for all boundary faces in old mesh
@@ -1340,11 +1346,11 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
     // for all side sets of the face, match children's faces to side sets
     for (const auto& ss : faceSides(facesets,f.first)) {
       // will associate to side set id of old (unrefined) mesh boundary face
-      auto& sideface = bface[ ss ];
+      auto& faces = bface[ ss ];
       // query number of children of boundary tet adjacent to boundary face
       auto nc = tet_store.data( f.second ).children.size();
       if (nc == 0) {    // if boundary tet is not refined, add its boundary face
-        addBndFace( sideface, f.first );
+        addBndFace( faces, ss, f.first );
       } else {          // if boundary tet is refined
         const auto& tets = tet_store.tets;
         for (decltype(nc) i=0; i<nc; ++i ) {      // for all child tets
@@ -1353,10 +1359,8 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
           auto ct = tets.find( childtet );
           Assert( ct != end(tets), "Child tet not found" );
           // ensure all nodes of child tet are in refined mesh
-          Assert( ref.find(ct->second[0]) != end(ref) &&
-                  ref.find(ct->second[1]) != end(ref) &&
-                  ref.find(ct->second[2]) != end(ref) &&
-                  ref.find(ct->second[3]) != end(ref),
+          Assert( std::all_of( begin(ct->second), end(ct->second),
+                    [&]( std::size_t n ){ return ref.find(n) != end(ref); } ),
                   "Boundary child tet node id not found in refined mesh" );
           // get nodes of child tet
           auto A = ct->second[0];
@@ -1372,17 +1376,16 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
             if (par.size() == 3) {
               if (std::all_of( begin(oldFace), end(oldFace),
                     [&]( std::size_t n ){ return par.find(n) != end(par); } ))
-              {
-                // If all 3 nodes of the old mesh boundary face are the same as
+              { // If all 3 nodes of the old mesh boundary face are the same as
                 // those of the child's parent face, the child's face is also
                 // on the same side set as the parent's face.
-                addBndFace( sideface, {{m_gid[rf[0]],m_gid[rf[1]],m_gid[rf[2]]}} );
+                addBndFace(faces,ss,{{m_gid[rf[0]],m_gid[rf[1]],m_gid[rf[2]]}});
               } else {
                 // If the number of the child's nodes' parent nodes are 3 but
                 // they are not all the 3 nodes of the old mesh boundary face,
                 // the child face nodes may still match a boundary face of the
                 // parent of the old (i.e., the grandparent) mesh.
-                evalGrandFace( par, rf, ss, sideface );
+                evalGrandFace( par, rf, ss, faces );
               }
             } else if (par.size() == 4) {
               // If the number of the child's node's parent nodes are 4, the
@@ -1390,13 +1393,14 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
               // of the old (i.e., the grandparent) mesh, but only if number of
               // the nodes of the grandparent face of the child's face is 3.
               auto pf = parents( m_grand, par );
-              if (pf.size() == 3) evalGrandFace( pf, rf, ss, sideface );
+              if (pf.size() == 3) evalGrandFace( pf, rf, ss, faces );
             }
           }
         }
       }
     }
   }
+  std::cout << '\n';
 
   // Update boundary face data structures
   m_bface = std::move(bface);
