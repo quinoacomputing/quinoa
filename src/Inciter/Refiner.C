@@ -1235,7 +1235,7 @@ Refiner::updateBndFaces(
       // will associate to side set id of old (unrefined) mesh boundary face
       auto& sideface = bface[ ss ];
       // query number of children of boundary tet adjacent to boundary face
-      auto nc = m_refiner.tet_store.data( f.second ).num_children;
+      auto nc = m_refiner.tet_store.data( f.second ).children.size();
       if (nc == 0) {    // if boundary tet is not refined, add its boundary face
         addBndFace( sideface, f.first );
       } else {          // if boundary tet is refined
@@ -1328,7 +1328,7 @@ Refiner::updateBndNodes(
   // Regenerate boundary node lists after refinement step
   for (const auto& f : bnd) {
     // query number of children of boundary tet adjacent to boundary face
-    auto nc = m_refiner.tet_store.data( f.second ).num_children;
+    auto nc = m_refiner.tet_store.data( f.second ).children.size();
     if (nc == 0) {  // if boundary tet is not refined, add its boundary node
       for (auto n : f.first) {
         auto ss = bndNode( n );

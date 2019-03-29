@@ -461,18 +461,18 @@ namespace AMR {
 
             AMR::Refinement_State& element = tet_store.data(i);
 
-            if (element.num_children == 2)
+            if (element.children.size() == 2)
             {
                 trace_out << "perform 2:8" << std::endl;
                 refiner.derefine_two_to_one(tet_store,i);
             }
-            else if (element.num_children == 4)
+            else if (element.children.size() == 4)
             {
                 trace_out << "perform 4:8" << std::endl;
                 refiner.derefine_four_to_one(tet_store,i);
             }
             else {
-                std::cout << "num children " << element.num_children << std::endl;
+                std::cout << "num children " << element.children.size() << std::endl;
                 assert(0);
             }
 

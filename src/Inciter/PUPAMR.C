@@ -22,7 +22,6 @@ void PUP::pup( PUP::er &p, AMR::Refinement_State& s )
 {
   p | s.active_element_number;
   p | s.refinement_case;
-  p | s.num_children;
   p | s.children;
   p | s.refinement_level;
   p | s.child_number;
@@ -170,6 +169,7 @@ void PUP::pup( PUP::er &p, AMR::node_connectivity_t& n )
 // *****************************************************************************
 {
   p | n.data();
+  p | n.inv_data();
   p | n.empty_node_count;
 }
 
