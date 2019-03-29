@@ -1202,6 +1202,10 @@ DG::lim()
 // Compute limiter function
 // *****************************************************************************
 {
+  const auto psign = inciter::g_inputdeck.get< tag::discr, tag::psign >();
+
+  if (psign == true) adjdofel();
+
   if (g_inputdeck.get< tag::discr, tag::ndof >() > 1) {
   
     Assert( m_u.nunk() == m_limFunc.nunk(), "Number of unknowns in solution "
@@ -1324,9 +1328,6 @@ DG::solve( tk::real newdt )
 
     // Increase number of iterations and physical time
     d->next();
-
-    if(psign == true)
-      thisProxy[ thisIndex ].wait4adjrefine();
 
     // Update Un
     m_un = m_u;
@@ -1644,9 +1645,11 @@ void DG::eval_ndofel()
   }
 }
 
-void DG::adjrefine()
+void DG::adjdofel()
 // *****************************************************************************
-//  The adjacent element of P1 element are refined
+//  p-refine all elements that are adjacent to p-refined elements
+//! \details This function p-refines all the neighbors of an element that has
+//!   been p-refined as a result of an error indicator.
 // *****************************************************************************
 {
   const auto& esuf = m_fd.Esuf();
@@ -1654,8 +1657,8 @@ void DG::adjrefine()
   // Copy m_ndofel
   auto ndofel = m_ndofel;
 
-  // Ensure all neighboring elements for p-refined elements (DGP0->DGP1) are
-  // also p-refined (DGP0 -> DGP1)"
+  // p-refine (DGP0 -> DGP1) all neighboring elements of elements that have
+  // been p-refined (DGP0 -> DGP1) as a result of error indicators
   for( auto f=m_fd.Nbfac(); f<esuf.size()/2; ++f )
   {
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
