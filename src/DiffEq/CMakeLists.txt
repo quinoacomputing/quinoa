@@ -4,23 +4,23 @@ project(DiffEq CXX)
 
 add_library(DiffEq
             DiffEqStack.C
-            ConfigureDirichlet.C
-            ConfigureMixDirichlet.C
-            ConfigureGeneralizedDirichlet.C
-            ConfigureWrightFisher.C
-            ConfigureOrnsteinUhlenbeck.C
-            ConfigureDiagOrnsteinUhlenbeck.C
-            ConfigureBeta.C
-            ConfigureNumberFractionBeta.C
-            ConfigureMassFractionBeta.C
-            ConfigureMixNumberFractionBeta.C
-            ConfigureMixMassFractionBeta.C
-            ConfigureGamma.C
-            ConfigureSkewNormal.C
-            ConfigureVelocity.C
-            ConfigurePosition.C
-            ConfigureDissipation.C
-            Langevin.C
+            Dirichlet/ConfigureDirichlet.C
+            Dirichlet/ConfigureMixDirichlet.C
+            Dirichlet/ConfigureGeneralizedDirichlet.C
+            WrightFisher/ConfigureWrightFisher.C
+            OrnsteinUhlenbeck/ConfigureOrnsteinUhlenbeck.C
+            OrnsteinUhlenbeck/ConfigureDiagOrnsteinUhlenbeck.C
+            Beta/ConfigureBeta.C
+            Beta/ConfigureNumberFractionBeta.C
+            Beta/ConfigureMassFractionBeta.C
+            Beta/ConfigureMixNumberFractionBeta.C
+            Beta/ConfigureMixMassFractionBeta.C
+            Gamma/ConfigureGamma.C
+            SkewNormal/ConfigureSkewNormal.C
+            Velocity/ConfigureVelocity.C
+            Position/ConfigurePosition.C
+            Velocity/Langevin.C
+            Dissipation/ConfigureDissipation.C
 )
 
 target_include_directories(DiffEq PUBLIC
@@ -29,6 +29,16 @@ target_include_directories(DiffEq PUBLIC
                            ${QUINOA_SOURCE_DIR}/RNG
                            ${QUINOA_SOURCE_DIR}/Control
                            ${QUINOA_SOURCE_DIR}/Statistics
+                           ${QUINOA_SOURCE_DIR}/DiffEq
+                           ${QUINOA_SOURCE_DIR}/DiffEq/Dirichlet
+                           ${QUINOA_SOURCE_DIR}/DiffEq/WrightFisher
+                           ${QUINOA_SOURCE_DIR}/DiffEq/OrnsteinUhlenbeck
+                           ${QUINOA_SOURCE_DIR}/DiffEq/Beta
+                           ${QUINOA_SOURCE_DIR}/DiffEq/Gamma
+                           ${QUINOA_SOURCE_DIR}/DiffEq/SkewNormal
+                           ${QUINOA_SOURCE_DIR}/DiffEq/Velocity
+                           ${QUINOA_SOURCE_DIR}/DiffEq/Position
+                           ${QUINOA_SOURCE_DIR}/DiffEq/Dissipation
                            ${PROJECT_BINARY_DIR}/../Main
                            ${PEGTL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
