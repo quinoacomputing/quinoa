@@ -38,37 +38,47 @@ class CompFlowPhysicsEuler {
 
   public:
     //! Add viscous stress contribution to momentum and energy rhs (no-op)
-    static void
+    void
     viscousRhs( tk::real,
+                tk::real,
                 tk::real,
                 const std::array< std::size_t, 4 >&,
                 const std::array< std::array< tk::real, 3 >, 4 >&,
                 const std::array< std::array< tk::real, 4 >, 5 >&,
                 const std::array< const tk::real*, 5 >&,
-                tk::Fields& ) {}
+                tk::Fields& ) const {}
 
     //! Compute the minimum time step size based on the viscous force
     //! \return A large time step size, i.e., ignore
-    static tk::real
-    viscous_dt( tk::real, const std::array< std::array< tk::real, 4 >, 5 >& )
+    tk::real
+    viscous_dt( tk::real,
+                tk::real,
+                const std::array< std::array< tk::real, 4 >, 5 >& ) const
     { return std::numeric_limits< tk::real >::max(); }
 
     //! Add heat conduction contribution to energy rhs (no-op)
-    static void
+    void
     conductRhs( tk::real,
+                tk::real,
+                tk::real,
                 tk::real,
                 const std::array< std::size_t, 4 >&,
                 const std::array< std::array< tk::real, 3 >, 4 >&,
                 const std::array< std::array< tk::real, 4 >, 5 >&,
                 const std::array< const tk::real*, 5 >&,
-                tk::Fields& ) {}
+                tk::Fields& ) const {}
 
     //! Compute the minimum time step size based on thermal diffusion
     //! \return A large time step size, i.e., ignore
-    static tk::real
-    conduct_dt( tk::real,  const std::array< std::array< tk::real, 4 >, 5 >& )
+    tk::real
+    conduct_dt( tk::real,
+                tk::real,
+                tk::real,
+                tk::real,
+                const std::array< std::array< tk::real, 4 >, 5 >& ) const
     { return std::numeric_limits< tk::real >::max(); }
 
+    //! Return phsyics type
     static ctr::PhysicsType type() noexcept
     { return ctr::PhysicsType::EULER; }
 };

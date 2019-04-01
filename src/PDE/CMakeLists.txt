@@ -13,6 +13,7 @@ add_library(PDE
             Integrate/Source.C
             Integrate/Basis.C
             Integrate/Riemann/RiemannFactory.C
+            CompFlow/Physics/CGNavierStokes.C
             Limiter.C
             ConfigureTransport.C
             ConfigureCompFlow.C

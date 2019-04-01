@@ -44,6 +44,7 @@ class CompFlow {
     //! \brief Constructor
     //! \param[in] c Equation system index (among multiple systems configured)
     explicit CompFlow( ncomp_t c ) :
+      m_physics( Physics() ),
       m_system( c ),
       m_ncomp(
         g_inputdeck.get< tag::component >().get< tag::compflow >().at(c) ),
@@ -339,10 +340,12 @@ class CompFlow {
             R.var(r[c],N[a]) += d/4.0 * s[c];
 
       }
+//         // dynamic viscosity
+//         auto mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >()[0];
 //         // add viscous stress contribution to momentum and energy rhs
-//         Physics::viscousRhs( deltat, J, N, grad, u, r, R );
+//         m_physics.viscousRhs( deltat, J, mu, N, grad, u, r, R );
 //         // add heat conduction contribution to energy rhs
-//         Physics::conductRhs( deltat, J, N, grad, u, r, R );
+//         m_physics.conductRhs( deltat, J, N, grad, u, r, R );
     }
 
     //! Compute the minimum time step size
@@ -390,12 +393,18 @@ class CompFlow {
           auto v = std::sqrt((ru*ru + rv*rv + rw*rw)/r/r) + c; // char. velocity
           if (v > maxvel) maxvel = v;
         }
+        // dynamic viscosity
+        auto mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >()[0];
+        // specific heat at constant volume
+        auto cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >()[0];
+        // thermal conductivity
+        auto kc = g_inputdeck.get< tag::param, tag::compflow, tag::k >()[0];
         // compute element dt for the Euler equations
         auto euler_dt = L / maxvel;
         // compute element dt based on the viscous force
-        auto viscous_dt = Physics::viscous_dt( L, u );
+        auto viscous_dt = m_physics.viscous_dt( L, mu, u );
         // compute element dt based on thermal diffusion
-        auto conduct_dt = Physics::conduct_dt( L, u );
+        auto conduct_dt = m_physics.conduct_dt( L, g, cv, kc, u );
         // compute minimum element dt
         auto elemdt = std::min( euler_dt, std::min( viscous_dt, conduct_dt ) );
         // find minimum dt across all elements
@@ -500,6 +509,7 @@ class CompFlow {
     { return Problem::names( m_ncomp ); }
 
   private:
+    const Physics m_physics;            //!< Physics policy
     const ncomp_t m_system;             //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     const ncomp_t m_offset;             //!< Offset PDE operates from
