@@ -730,8 +730,6 @@ namespace AMR {
                     */
 
                     std::cout << std::endl;
-
-                    parent.num_children--; // Could directly set to 0
                 }
                 parent.children.clear();
             }
@@ -907,7 +905,6 @@ namespace AMR {
                 for (auto c : to_be_replaced)
                 {
                     tet_store.data(c).children = replace_with;
-                    tet_store.data(c).num_children = tet_store.data(c).children.size();
                 }
             }
 
