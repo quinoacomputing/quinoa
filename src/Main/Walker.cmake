@@ -8,6 +8,7 @@ add_executable(${WALKER_EXECUTABLE}
 config_executable(${WALKER_EXECUTABLE})
 
 target_link_libraries(${WALKER_EXECUTABLE}
+                      DiffEq
                       Beta
                       Dirichlet
                       WrightFisher
@@ -17,7 +18,6 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       Velocity
                       Position
                       Dissipation
-                      DiffEq
                       RNG
                       Walker
                       Statistics
