@@ -45,6 +45,7 @@ class CompFlow {
     //! \param[in] c Equation system index (among multiple systems configured)
     explicit CompFlow( ncomp_t c ) :
       m_physics( Physics() ),
+      m_problem( Problem() ),
       m_system( c ),
       m_ncomp(
         g_inputdeck.get< tag::component >().get< tag::compflow >().at(c) ),
@@ -340,10 +341,8 @@ class CompFlow {
             R.var(r[c],N[a]) += d/4.0 * s[c];
 
       }
-//         // dynamic viscosity
-//         auto mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >()[0];
 //         // add viscous stress contribution to momentum and energy rhs
-//         m_physics.viscousRhs( deltat, J, mu, N, grad, u, r, R );
+//         m_physics.viscousRhs( deltat, J, N, grad, u, r, R );
 //         // add heat conduction contribution to energy rhs
 //         m_physics.conductRhs( deltat, J, N, grad, u, r, R );
     }
@@ -393,18 +392,12 @@ class CompFlow {
           auto v = std::sqrt((ru*ru + rv*rv + rw*rw)/r/r) + c; // char. velocity
           if (v > maxvel) maxvel = v;
         }
-        // dynamic viscosity
-        auto mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >()[0];
-        // specific heat at constant volume
-        auto cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >()[0];
-        // thermal conductivity
-        auto kc = g_inputdeck.get< tag::param, tag::compflow, tag::k >()[0];
         // compute element dt for the Euler equations
         auto euler_dt = L / maxvel;
         // compute element dt based on the viscous force
-        auto viscous_dt = m_physics.viscous_dt( L, mu, u );
+        auto viscous_dt = m_physics.viscous_dt( L, u );
         // compute element dt based on thermal diffusion
-        auto conduct_dt = m_physics.conduct_dt( L, g, cv, kc, u );
+        auto conduct_dt = m_physics.conduct_dt( L, g, u );
         // compute minimum element dt
         auto elemdt = std::min( euler_dt, std::min( viscous_dt, conduct_dt ) );
         // find minimum dt across all elements
@@ -440,7 +433,7 @@ class CompFlow {
     //!   in this PDE system
     //! \param[in,out] conf Set of unique side set IDs to add to
     void side( std::unordered_set< int >& conf ) const
-    { Problem::side( conf ); }
+    { m_problem.side( conf ); }
 
     //! \brief Query Dirichlet boundary condition value on a given side set for
     //!    all components in this PDE system
@@ -472,7 +465,7 @@ class CompFlow {
           if (std::stoi(b) == ss.first)
             for (auto n : ss.second) {
               Assert( x.size() > n, "Indexing out of coordinate array" );
-              auto s = Problem::solinc( 0, x[n], y[n], z[n], t, deltat );
+              auto s = m_problem.solinc( 0, x[n], y[n], z[n], t, deltat );
               bc[n] = {{ {true,s[0]}, {true,s[1]}, {true,s[2]}, {true,s[3]},
                          {true,s[4]} }};
             }
@@ -483,7 +476,7 @@ class CompFlow {
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     std::vector< std::string > fieldNames() const
-    { return Problem::fieldNames( m_ncomp ); }
+    { return m_problem.fieldNames( m_ncomp ); }
 
     //! Return field output going to file
     //! \param[in] t Physical time
@@ -500,16 +493,17 @@ class CompFlow {
                  tk::Fields& U ) const
     {
       return
-        Problem::fieldOutput( m_system, m_ncomp, m_offset, t, V, v, coord, U );
+        m_problem.fieldOutput( m_system, m_ncomp, m_offset, t, V, v, coord, U );
     }
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
     std::vector< std::string > names() const
-    { return Problem::names( m_ncomp ); }
+    { return m_problem.names( m_ncomp ); }
 
   private:
     const Physics m_physics;            //!< Physics policy
+    const Problem m_problem;            //!< Problem policy
     const ncomp_t m_system;             //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     const ncomp_t m_offset;             //!< Offset PDE operates from

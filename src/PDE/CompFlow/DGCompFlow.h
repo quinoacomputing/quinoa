@@ -78,6 +78,7 @@ class CompFlow {
     //! \param[in] c Equation system index (among multiple systems configured)
     explicit CompFlow( ncomp_t c ) :
       m_physics( Physics() ),
+      m_problem( Problem() ),
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
@@ -151,10 +152,10 @@ class CompFlow {
 
       // configure Riemann flux function
       auto rieflxfn =
-       [this]( const std::array< tk::real, 3 >& fn,
-               const std::array< std::vector< tk::real >, 2 >& u,
-               const std::vector< std::array< tk::real, 3 > >& v )
-             { return m_riemann.flux( fn, u, v ); };
+        [this]( const std::array< tk::real, 3 >& fn,
+                const std::array< std::vector< tk::real >, 2 >& u,
+                const std::vector< std::array< tk::real, 3 > >& v )
+              { return m_riemann.flux( fn, u, v ); };
       // configure a no-op lambda for prescribed velocity
       auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real ){
         return std::vector< std::array< tk::real, 3 > >( this->m_ncomp ); };
@@ -170,8 +171,8 @@ class CompFlow {
                    rieflxfn, velfn, U, limFunc, R );
 
       // compute source term intehrals
-      tk::srcInt( m_system, m_ncomp, m_offset,
-                  t, inpoel, coord, geoElem, Problem::src, R );
+      tk::srcInt( m_system, m_ncomp, m_offset, t, inpoel, coord, geoElem,
+                  Problem::src, R );
 
       if(ndof > 1)
         // compute volume integrals
@@ -389,12 +390,12 @@ class CompFlow {
     //!   in this PDE system
     //! \param[in,out] conf Set of unique side set IDs to add to
     void side( std::unordered_set< int >& conf ) const
-    { Problem::side( conf ); }
+    { m_problem.side( conf ); }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     std::vector< std::string > fieldNames() const
-    { return Problem::fieldNames( m_ncomp ); }
+    { return m_problem.fieldNames( m_ncomp ); }
 
     //! Return field output going to file
     //! \param[in] t Physical time
@@ -413,8 +414,8 @@ class CompFlow {
       coord[1] = geoElem.extract(2,0);
       coord[2] = geoElem.extract(3,0);
 
-      return Problem::fieldOutput( m_system, m_ncomp, m_offset, t, 0.0, v,
-                                   coord, U );
+      return m_problem.fieldOutput( m_system, m_ncomp, m_offset, t, 0.0, v,
+                                    coord, U );
     }
 
     //! Return nodal field output going to file
@@ -513,7 +514,7 @@ class CompFlow {
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
     std::vector< std::string > names() const
-    { return Problem::names( m_ncomp ); }
+    { return m_problem.names( m_ncomp ); }
 
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate at which to evaluate the analytic solution
@@ -531,6 +532,8 @@ class CompFlow {
   private:
     //! Physics policy
     const Physics m_physics;
+    //! Problem policy
+    const Problem m_problem;
     //! Equation system index
     const ncomp_t m_system;
     //! Number of components in this PDE system

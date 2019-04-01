@@ -26,8 +26,6 @@
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
-
 namespace cg {
 
 //! CompFlow system of PDEs problem: Euler (inviscid flow)
@@ -41,7 +39,6 @@ class CompFlowPhysicsEuler {
     void
     viscousRhs( tk::real,
                 tk::real,
-                tk::real,
                 const std::array< std::size_t, 4 >&,
                 const std::array< std::array< tk::real, 3 >, 4 >&,
                 const std::array< std::array< tk::real, 4 >, 5 >&,
@@ -52,15 +49,12 @@ class CompFlowPhysicsEuler {
     //! \return A large time step size, i.e., ignore
     tk::real
     viscous_dt( tk::real,
-                tk::real,
                 const std::array< std::array< tk::real, 4 >, 5 >& ) const
     { return std::numeric_limits< tk::real >::max(); }
 
     //! Add heat conduction contribution to energy rhs (no-op)
     void
     conductRhs( tk::real,
-                tk::real,
-                tk::real,
                 tk::real,
                 const std::array< std::size_t, 4 >&,
                 const std::array< std::array< tk::real, 3 >, 4 >&,
@@ -72,8 +66,6 @@ class CompFlowPhysicsEuler {
     //! \return A large time step size, i.e., ignore
     tk::real
     conduct_dt( tk::real,
-                tk::real,
-                tk::real,
                 tk::real,
                 const std::array< std::array< tk::real, 4 >, 5 >& ) const
     { return std::numeric_limits< tk::real >::max(); }

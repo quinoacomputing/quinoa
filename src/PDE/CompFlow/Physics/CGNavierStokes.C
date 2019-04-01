@@ -18,13 +18,18 @@
 
 #include "CGNavierStokes.h"
 
+namespace inciter {
+
+extern ctr::InputDeck g_inputdeck;
+
+} // inciter::
+
 using inciter::cg::CompFlowPhysicsNavierStokes;
 
 void
 CompFlowPhysicsNavierStokes::viscousRhs(
   tk::real dt,
   tk::real J,
-  tk::real mu,
   const std::array< std::size_t, 4 >& N,
   const std::array< std::array< tk::real, 3 >, 4 >& grad,
   const std::array< std::array< tk::real, 4 >, 5 >& u,
@@ -34,7 +39,6 @@ CompFlowPhysicsNavierStokes::viscousRhs(
 //  Add viscous stress contribution to momentum and energy rhs
 //! \param[in] dt Size of time step
 //! \param[in] J Element Jacobi determinant
-//! \param[in] mu Dynamic viscosity
 //! \param[in] N Element node indices
 //! \param[in] grad Shape function derivatives, nnode*ndim [4][3]
 //! \param[in] u Solution at element nodes at recent time step
@@ -42,6 +46,9 @@ CompFlowPhysicsNavierStokes::viscousRhs(
 //! \param[in,out] R Right-hand side vector contributing to
 // *****************************************************************************
 {
+  // dynamic viscosity
+  auto mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >()[0];
+
   // add deviatoric viscous stress contribution to momentum rhs
   auto c = dt * J/6.0 * mu;
   for (std::size_t i=0; i<3; ++i)
@@ -103,16 +110,17 @@ CompFlowPhysicsNavierStokes::viscousRhs(
 tk::real
 CompFlowPhysicsNavierStokes::viscous_dt(
   tk::real L,
-  tk::real mu,
   const std::array< std::array< tk::real, 4 >, 5 >& u ) const
 // *****************************************************************************
 //  Compute the minimum time step size based on the viscous force
 //! \param[in] L Characteristic length scale
-//! \param[in] mu Dynamic viscosity
 //! \param[in] u Solution at element nodes at recent time step
 //! \return Minimum time step size based on viscous force
 // *****************************************************************************
 {
+  // dynamic viscosity
+  auto mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >()[0];
+
   // compute the minimum viscous time step size across the four nodes
   tk::real mindt = std::numeric_limits< tk::real >::max();
   for (std::size_t j=0; j<4; ++j) {
@@ -127,8 +135,6 @@ void
 CompFlowPhysicsNavierStokes::conductRhs(
   tk::real dt,
   tk::real J,
-  tk::real cv,
-  tk::real kc,
   const std::array< std::size_t, 4 >& N,
   const std::array< std::array< tk::real, 3 >, 4 >& grad,
   const std::array< std::array< tk::real, 4 >, 5 >& u,
@@ -138,8 +144,6 @@ CompFlowPhysicsNavierStokes::conductRhs(
 //! Add heat conduction contribution to the energy rhs
 //! \param[in] dt Size of time step
 //! \param[in] J Element Jacobi determinant
-//! \param[in] cv Specific heat at constant volume
-//! \param[in] kc Thermal conductivity
 //! \param[in] N Element node indices
 //! \param[in] grad Shape function derivatives, nnode*ndim [4][3]
 //! \param[in] u Solution at element nodes at recent time step
@@ -147,6 +151,11 @@ CompFlowPhysicsNavierStokes::conductRhs(
 //! \param[in,out] R Right-hand side vector contributing to
 // *****************************************************************************
 {
+  // specific heat at constant volume
+  auto cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >()[0];
+  // thermal conductivity
+  auto kc = g_inputdeck.get< tag::param, tag::compflow, tag::k >()[0];
+
   // compute temperature
   std::array< tk::real, 4 > T;
   for (std::size_t i=0; i<4; ++i)
@@ -168,8 +177,6 @@ tk::real
 CompFlowPhysicsNavierStokes::conduct_dt(
   tk::real L,
   tk::real g,
-  tk::real cv,
-  tk::real kc,
   const std::array< std::array< tk::real, 4 >, 5 >& u ) const
 // *****************************************************************************
 //! Compute the minimum time step size based on thermal diffusion
@@ -181,8 +188,13 @@ CompFlowPhysicsNavierStokes::conduct_dt(
 //! \return Minimum time step size based on thermal diffusion
 // *****************************************************************************
 {
+  // specific heat at constant volume
+  auto cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >()[0];
+  // thermal conductivity
+  auto kc = g_inputdeck.get< tag::param, tag::compflow, tag::k >()[0];
   // specific heat at constant pressure
   auto cp = g * cv;
+
   // compute the minimum conduction time step size across the four nodes
   tk::real mindt = std::numeric_limits< tk::real >::max();
   for (std::size_t j=0; j<4; ++j) {

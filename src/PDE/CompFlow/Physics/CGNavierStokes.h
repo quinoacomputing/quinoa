@@ -42,7 +42,6 @@ class CompFlowPhysicsNavierStokes {
     void
     viscousRhs( tk::real dt,
                 tk::real J,
-                tk::real mu,
                 const std::array< std::size_t, 4 >& N,
                 const std::array< std::array< tk::real, 3 >, 4 >& grad,
                 const std::array< std::array< tk::real, 4 >, 5 >& u,
@@ -52,15 +51,12 @@ class CompFlowPhysicsNavierStokes {
     //! Compute the minimum time step size based on the viscous force
     tk::real
     viscous_dt( tk::real L,
-                tk::real mu,
                 const std::array< std::array< tk::real, 4 >, 5 >& u ) const;
 
     //! Add heat conduction contribution to the energy rhs
     void
     conductRhs( tk::real dt,
                 tk::real J,
-                tk::real cv,
-                tk::real kc,
                 const std::array< std::size_t, 4 >& N,
                 const std::array< std::array< tk::real, 3 >, 4 >& grad,
                 const std::array< std::array< tk::real, 4 >, 5 >& u,
@@ -71,8 +67,6 @@ class CompFlowPhysicsNavierStokes {
     tk::real
     conduct_dt( tk::real L,
                 tk::real g,
-                tk::real cv,
-                tk::real kc,
                 const std::array< std::array< tk::real, 4 >, 5 >& u ) const;
 
     //! Return phsyics type

@@ -14,6 +14,14 @@ add_library(PDE
             Integrate/Basis.C
             Integrate/Riemann/RiemannFactory.C
             CompFlow/Physics/CGNavierStokes.C
+            CompFlow/Problem/NLEnergyGrowth.C
+            CompFlow/Problem/RayleighTaylor.C
+            CompFlow/Problem/SodShocktube.C
+            CompFlow/Problem/RotatedSodShocktube.C
+            CompFlow/Problem/SedovBlastwave.C
+            CompFlow/Problem/TaylorGreen.C
+            CompFlow/Problem/UserDefined.C
+            CompFlow/Problem/VorticalFlow.C
             Limiter.C
             ConfigureTransport.C
             ConfigureCompFlow.C

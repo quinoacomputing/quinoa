@@ -11,6 +11,7 @@
 // *****************************************************************************
 
 #include <array>
+#include <cmath>
 
 #include "Vector.h"
 
@@ -72,11 +73,65 @@ tk::triple( const std::array< real, 3 >& v1,
   return dot( v1, cross(v2,v3) );
 }
 
+std::array< tk::real, 3 >
+tk::rotateX( const std::array< real, 3 >& v, real angle )
+// *****************************************************************************
+//! Rotate vector about X axis by -45 degress
+//! \param[in] v Vector to rotate
+//! \return Rotated vector
+// *****************************************************************************
+{
+  using std::cos;  using std::sin;
+
+  std::array< std::array< real, 3 >, 3 >
+    R{{ {{ 1.0,         0.0,          0.0 }},
+        {{ 0.0,   cos(angle), -sin(angle) }},
+        {{ 0.0,   sin(angle),  cos(angle) }} }};
+
+  return {{ dot(R[0],v), dot(R[1],v), dot(R[2],v) }};
+}
+
+std::array< tk::real, 3 >
+tk::rotateY( const std::array< real, 3 >& v, real angle )
+// *****************************************************************************
+//! Rotate vector about Y axis by -45 degress
+//! \param[in] v Vector to rotate
+//! \return Rotated vector
+// *****************************************************************************
+{
+  using std::cos;  using std::sin;
+
+  std::array< std::array< real, 3 >, 3 >
+    R{{ {{ cos(angle),  0.0, sin(angle) }},
+        {{ 0.0,         1.0,        0.0 }},
+        {{ -sin(angle), 0.0, cos(angle) }} }};
+
+  return {{ dot(R[0],v), dot(R[1],v), dot(R[2],v) }};
+}
+
+std::array< tk::real, 3 >
+tk::rotateZ( const std::array< real, 3 >& v, real angle )
+// *****************************************************************************
+//! Rotate vector about Z axis by -45 degress
+//! \param[in] v Vector to rotate
+//! \return Rotated vector
+// *****************************************************************************
+{
+  using std::cos;  using std::sin;
+
+  std::array< std::array< real, 3 >, 3 >
+    R{{ {{ cos(angle), -sin(angle), 0.0 }},
+        {{ sin(angle),  cos(angle), 0.0 }},
+        {{ 0.0,         0.0,        1.0 }} }};
+
+  return {{ dot(R[0],v), dot(R[1],v), dot(R[2],v) }};
+}
+
 tk::real
-tk::Jacobian( const std::array< tk::real, 3 >& v1,
-              const std::array< tk::real, 3 >& v2,
-              const std::array< tk::real, 3 >& v3,
-              const std::array< tk::real, 3 >& v4 )
+tk::Jacobian( const std::array< real, 3 >& v1,
+              const std::array< real, 3 >& v2,
+              const std::array< real, 3 >& v3,
+              const std::array< real, 3 >& v4 )
 // *****************************************************************************
 //  Compute the determinant of the Jacobian of a coordinate transformation over
 //  a tetrahedron
@@ -88,17 +143,17 @@ tk::Jacobian( const std::array< tk::real, 3 >& v1,
 //!   tetrahedron to reference (xi, eta, zeta) space
 // *****************************************************************************
 {
-  std::array< tk::real, 3 > ba{{ v2[0]-v1[0], v2[1]-v1[1], v2[2]-v1[2] }},
-                            ca{{ v3[0]-v1[0], v3[1]-v1[1], v3[2]-v1[2] }},
-                            da{{ v4[0]-v1[0], v4[1]-v1[1], v4[2]-v1[2] }};
-  return tk::triple( ba, ca, da );
+  std::array< real, 3 > ba{{ v2[0]-v1[0], v2[1]-v1[1], v2[2]-v1[2] }},
+                        ca{{ v3[0]-v1[0], v3[1]-v1[1], v3[2]-v1[2] }},
+                        da{{ v4[0]-v1[0], v4[1]-v1[1], v4[2]-v1[2] }};
+  return triple( ba, ca, da );
 }
 
 std::array< std::array< tk::real, 3 >, 3 >
-tk::inverseJacobian( const std::array< tk::real, 3 >& v1,
-                     const std::array< tk::real, 3 >& v2,
-                     const std::array< tk::real, 3 >& v3,
-                     const std::array< tk::real, 3 >& v4 )
+tk::inverseJacobian( const std::array< real, 3 >& v1,
+                     const std::array< real, 3 >& v2,
+                     const std::array< real, 3 >& v3,
+                     const std::array< real, 3 >& v4 )
 // *****************************************************************************
 // Compute the inverse of the Jacobian of a coordinate transformation over a
 // tetrahedron
@@ -110,9 +165,9 @@ tk::inverseJacobian( const std::array< tk::real, 3 >& v1,
 //!   tetrahedron to reference (xi, eta, zeta) space
 // *****************************************************************************
 {
-  std::array< std::array< tk::real, 3 >, 3 > jacInv;
+  std::array< std::array< real, 3 >, 3 > jacInv;
 
-  auto detJ = tk::Jacobian( v1, v2, v3, v4 );
+  auto detJ = Jacobian( v1, v2, v3, v4 );
 
   jacInv[0][0] =  (  (v3[1]-v1[1])*(v4[2]-v1[2])
                    - (v4[1]-v1[1])*(v3[2]-v1[2])) / detJ;

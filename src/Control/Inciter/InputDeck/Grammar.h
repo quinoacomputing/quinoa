@@ -143,8 +143,9 @@ namespace grm {
 
       // If physics type is not given, default to 'euler'
       auto& physics = stack.template get< tag::param, eq, tag::physics >();
-      if (physics.empty() || physics.size() != neq.get< eq >())
+      if (physics.empty() || physics.size() != neq.get< eq >()) {
         physics.push_back( inciter::ctr::PhysicsType::EULER );
+      }
 
       // Set number of components to 5 (mass, 3 x mom, energy)
       stack.template get< tag::component, eq >().push_back( 5 );
