@@ -69,28 +69,7 @@ class OrnsteinUhlenbeckCoeffConst {
       const std::vector< kw::sde_mu::info::expect::type >& mu_,
       std::vector< kw::sde_sigmasq::info::expect::type >& sigmasq,
       std::vector< kw::sde_theta::info::expect::type >& theta,
-      std::vector< kw::sde_mu::info::expect::type >& mu )
-    {
-      ErrChk( sigmasq_.size() == ncomp*(ncomp+1)/2,
-              "Wrong number of Ornstein-Uhlenbeck SDE parameters 'sigmasq'");
-      ErrChk( theta_.size() == ncomp,
-              "Wrong number of Ornstein-Uhlenbeck SDE parameters 'theta'");
-      ErrChk( mu_.size() == ncomp,
-              "Wrong number of Ornstein-Uhlenbeck SDE parameters 'mu'");
-
-      // Prepare upper triangle for Cholesky-decomposition using LAPACK
-      sigmasq.resize( ncomp * ncomp );
-      std::size_t c = 0;
-      for (tk::ctr::ncomp_type i=0; i<ncomp; ++i)
-        for (tk::ctr::ncomp_type j=0; j<ncomp; ++j)
-          if (i<=j)
-            sigmasq[ i*ncomp+j ] = sigmasq_[ c++ ];
-          else
-            sigmasq[ i*ncomp+j ] = 0.0;
-
-      theta = theta_;
-      mu = mu_;
-    }
+      std::vector< kw::sde_mu::info::expect::type >& mu );
 
     static ctr::CoeffPolicyType type() noexcept
     { return ctr::CoeffPolicyType::CONST_COEFF; }

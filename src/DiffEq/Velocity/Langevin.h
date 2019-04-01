@@ -15,6 +15,7 @@
 #include <array>
 
 #include "Types.h"
+#include "StatCtr.h"
 #include "Walker/Options/Depvar.h"
 
 namespace walker {

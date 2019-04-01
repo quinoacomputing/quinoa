@@ -43,11 +43,11 @@
 namespace walker {
 
 //! Position equation coefficients policy given by the instantaneous velocity
-class Position_InstantaneousVelocity {
+class PositionInstVel {
 
   public:
     //! Constructor
-    explicit Position_InstantaneousVelocity( std::array< tk::real, 9 >& ) {}
+    explicit PositionInstVel( std::array< tk::real, 9 >& );
 
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept
@@ -56,16 +56,11 @@ class Position_InstantaneousVelocity {
 
 //! \brief Position equation coefficients policy using a prescribed constant
 //!   mean velocity gradient for homogeneous shear flow
-class Position_ConstShear {
+class PositionConstShear {
 
   public:
-    //! Constructor: prescribe mean shear as dU/dy = 1.0
-    //! \param[in,out] dU Prescribed mean velocity gradient
-    explicit Position_ConstShear( std::array< tk::real, 9 >& dU ) {
-      dU = {{ 0.0, 1.0, 0.0,
-              0.0, 0.0, 0.0,
-              0.0, 0.0, 0.0 }};
-    }
+    //! Constructor: prescribe mean shear
+    explicit PositionConstShear( std::array< tk::real, 9 >& dU );
 
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept
@@ -73,8 +68,8 @@ class Position_ConstShear {
 };
 
 //! List of all position eq coefficients policies
-using PositionCoeffPolicies = brigand::list< Position_InstantaneousVelocity
-                                           , Position_ConstShear
+using PositionCoeffPolicies = brigand::list< PositionInstVel
+                                           , PositionConstShear
                                            >;
 
 } // walker::

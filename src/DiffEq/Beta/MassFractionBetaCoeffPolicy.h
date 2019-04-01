@@ -6,10 +6,10 @@
              2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Mass-fraction beta SDE coefficients policies
-  \details   This file defines coefficients policy classes for the
-    number-fraction beta SDE, defined in DiffEq/MassFractionBeta.h.
+  \details   This file declares coefficients policy classes for the
+    mass-fraction beta SDE, defined in DiffEq/Beta/MassFractionBeta.h.
 
-    General requirements on number-fraction beta SDE coefficients policy
+    General requirements on mass-fraction beta SDE coefficients policy
     classes:
 
     - Must define a _constructor_, which is used to initialize the SDE
@@ -30,10 +30,10 @@
       \endcode
       where
       - ncomp denotes the number of scalar components of the system of
-        number-fraction beta SDEs.
+        mass-fraction beta SDEs.
       - Constant references to b_, S_, k_, rho2_, and r_, which denote five
         vectors of real values used to initialize the parameter vectors of the
-        system of number-fraction beta SDEs. The length of the vectors must be
+        system of mass-fraction beta SDEs. The length of the vectors must be
         equal to the number of components given by ncomp.
       - References to b, S, k, rho2_, and r, which denote the parameter vectors
         to be initialized based on b_, S_, k_, rho2_, and r_.
@@ -76,25 +76,7 @@ class MassFractionBetaCoeffConst {
       std::vector< kw::sde_S::info::expect::type >& S,
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_rho2::info::expect::type >& rho2,
-      std::vector< kw::sde_r::info::expect::type >& r )
-    {
-      ErrChk( b_.size() == ncomp,
-              "Wrong number of number-fraction beta SDE parameters 'b'");
-      ErrChk( S_.size() == ncomp,
-              "Wrong number of number-fraction beta SDE parameters 'S'");
-      ErrChk( k_.size() == ncomp,
-              "Wrong number of number-fraction beta SDE parameters 'kappa'");
-      ErrChk( rho2_.size() == ncomp,
-              "Wrong number of number-fraction beta SDE parameters 'rho2'");
-      ErrChk( r_.size() == ncomp,
-              "Wrong number of number-fraction beta SDE parameters 'r'");
-
-      b = b_;
-      S = S_;
-      k = k_;
-      rho2 = rho2_;
-      r = r_;
-    }
+      std::vector< kw::sde_r::info::expect::type >& r );
 
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept

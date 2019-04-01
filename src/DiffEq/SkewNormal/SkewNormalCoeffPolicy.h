@@ -67,19 +67,7 @@ class SkewNormalCoeffConst {
       const std::vector< kw::sde_lambda::info::expect::type >& lambda_,
       std::vector< kw::sde_T::info::expect::type >& timescale,
       std::vector< kw::sde_sigmasq::info::expect::type >& sigmasq,
-      std::vector< kw::sde_lambda::info::expect::type >& lambda )
-    {
-      ErrChk( timescale_.size() == ncomp,
-        "Wrong number of diagonal Skew-normal SDE parameters 'timescale'");
-      ErrChk( sigmasq_.size() == ncomp,
-        "Wrong number of diagonal Skew-normal SDE parameters 'sigmasq'");
-      ErrChk( lambda_.size() == ncomp,
-        "Wrong number of diagonal Skew-normal SDE parameters 'lambda'");
-
-      timescale = timescale_;
-      sigmasq = sigmasq_;
-      lambda = lambda_;
-    }
+      std::vector< kw::sde_lambda::info::expect::type >& lambda );
 
     static ctr::CoeffPolicyType type() noexcept
     { return ctr::CoeffPolicyType::CONST_COEFF; }

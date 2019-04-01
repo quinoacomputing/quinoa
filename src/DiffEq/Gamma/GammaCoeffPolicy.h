@@ -67,19 +67,7 @@ class GammaCoeffConst {
       const std::vector< kw::sde_kappa::info::expect::type >& k_,
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_S::info::expect::type >& S,
-      std::vector< kw::sde_kappa::info::expect::type >& k )
-    {
-      ErrChk( b_.size() == ncomp,
-              "Wrong number of gamma SDE parameters 'b'");
-      ErrChk( S_.size() == ncomp,
-              "Wrong number of gamma SDE parameters 'S'");
-      ErrChk( k_.size() == ncomp,
-              "Wrong number of gamma SDE parameters 'kappa'");
-
-      b = b_;
-      S = S_;
-      k = k_;
-    }
+      std::vector< kw::sde_kappa::info::expect::type >& k );
 
     static ctr::CoeffPolicyType type() noexcept
     { return ctr::CoeffPolicyType::CONST_COEFF; }

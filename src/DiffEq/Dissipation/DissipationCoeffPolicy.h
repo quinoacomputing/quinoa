@@ -34,6 +34,14 @@
       \endcode
       which returns the enum value of the option from the underlying option
       class, collecting all possible options for coefficients policies.
+
+    - Must define the static function _src()_, with the signature
+      \code{.cpp}
+        void src( tk::real& Som () {}
+      \endcode
+      which sets its argument _Som_ to the level of the source of the
+      dissipation equation. This member function must be static as it is called
+      without an object instance.
 */
 // *****************************************************************************
 #ifndef DissipationCoeffPolicy_h
@@ -62,13 +70,7 @@ class DissipationCoeffConst {
       kw::sde_c3::info::expect::type& c3,
       kw::sde_c4::info::expect::type& c4,
       kw::sde_com1::info::expect::type& com1,
-      kw::sde_com2::info::expect::type& com2 )
-    {
-      c3 = c3_;
-      c4 = c4_;
-      com1 = com1_;
-      com2 = com2_;
-    }
+      kw::sde_com2::info::expect::type& com2 );
 
     //! Update turbulence frequency source (no-op for const-coeff policy)
     static void src( tk::real& ) {}
@@ -92,13 +94,7 @@ class DissipationCoeffStationary {
       kw::sde_c3::info::expect::type& c3,
       kw::sde_c4::info::expect::type& c4,
       kw::sde_com1::info::expect::type& com1,
-      kw::sde_com2::info::expect::type& com2 )
-    {
-      c3 = c3_;
-      c4 = c4_;
-      com1 = com1_;
-      com2 = com2_;
-    }
+      kw::sde_com2::info::expect::type& com2 );
 
     //! Update turbulence frequency source (zero for stationary coeff policy)
     static void src( tk::real& Som ) { Som = 0.0; }

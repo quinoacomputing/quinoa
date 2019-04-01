@@ -68,19 +68,7 @@ class DiagOrnsteinUhlenbeckCoeffConst {
       const std::vector< kw::sde_mu::info::expect::type >& mu_,
       std::vector< kw::sde_sigmasq::info::expect::type >& sigmasq,
       std::vector< kw::sde_theta::info::expect::type >& theta,
-      std::vector< kw::sde_mu::info::expect::type >& mu )
-    {
-      ErrChk( sigmasq_.size() == ncomp,
-       "Wrong number of diagonal Ornstein-Uhlenbeck SDE parameters 'sigmasq'");
-      ErrChk( theta_.size() == ncomp,
-       "Wrong number of diagonal Ornstein_uhlenbeck SDE parameters 'theta'");
-      ErrChk( mu_.size() == ncomp,
-       "Wrong number of diagonal Ornstein_uhlenbeck SDE parameters 'mu'");
-
-      sigmasq = sigmasq_;
-      theta = theta_;
-      mu = mu_;
-    }
+      std::vector< kw::sde_mu::info::expect::type >& mu );
 
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept

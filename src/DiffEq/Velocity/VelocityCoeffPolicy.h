@@ -69,8 +69,10 @@
 #include <brigand/sequences/list.hpp>
 
 #include "Types.h"
+#include "Table.h"
 #include "SystemComponents.h"
 #include "Walker/Options/CoeffPolicy.h"
+#include "Walker/Options/VelocityVariant.h"
 #include "Langevin.h"
 
 namespace walker {
@@ -83,27 +85,15 @@ class VelocityCoeffConstShear {
 
   public:
     //! Constructor: initialize coefficients
-    //! \param[in] C0_ Value of C0 parameter in the Langevin model
-    //! \param[in,out] C0 Value of to set the C0 parameter in the Langevin model
-    //! \param[in,out] dU Prescribed mean velocity gradient1
     VelocityCoeffConstShear( kw::sde_c0::info::expect::type C0_,
                              kw::sde_c0::info::expect::type& C0,
-                             std::array< tk::real, 9 >& dU ) :
-      m_dU( {{ 0.0, 1.0, 0.0,
-               0.0, 0.0, 0.0,
-               0.0, 0.0, 0.0 }} )
-    {
-      C0 = C0_;
-      dU = m_dU;
-    }
-
+                             std::array< tk::real, 9 >& dU );
+      
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept
     { return ctr::CoeffPolicyType::CONST_SHEAR; }
 
     //! Update the model coefficients (prescribing shear)
-    //! \details Update the dissipation rate (eps) and G_{ij} based on the
-    //!   turbulent kinetic energy (k) for a prescribed honmogeneous shear flow.
     void update( char depvar,
                  char dissipation_depvar,
                  const std::map< tk::ctr::Product, tk::real >& moments,
@@ -113,30 +103,7 @@ class VelocityCoeffConstShear {
                  kw::sde_c0::info::expect::type C0,
                  tk::real,
                  tk::real& eps,
-                 std::array< tk::real, 9 >& G ) const
-    {
-      using tk::ctr::lookup;
-      using tk::ctr::mean;
-
-      // Compute turbulent kinetic energy
-      auto rs = reynoldsStress( depvar, solve, moments );
-
-      // Compute turbulent kinetic energy
-      auto k = (rs[0] + rs[1] + rs[2]) / 2.0;
-
-      // Access mean turbulence frequency
-      tk::real O = lookup( mean(dissipation_depvar,0), moments );
-
-      // compute turbulent kinetic energy dissipation rate
-      eps = O*k;
-
-      // update drift tensor based on the Langevin model variant configured
-      if (variant == ctr::VelocityVariantType::SLM)     // simplified
-        G = slm( O, C0 );
-      else if (variant == ctr::VelocityVariantType::GLM)// generalized
-        G = glm( O, C0, rs, m_dU );
-      else Throw( "Velocity variant type not implemented" );
-    }
+                 std::array< tk::real, 9 >& G ) const;
 
   private:
     //! Mean velocity gradient prescribed for simpled 1D homogeneous shear
@@ -150,19 +117,9 @@ class VelocityCoeffStationary {
 
   public:
     //! Constructor: initialize coefficients
-    //! \param[in] C0_ Value of C0 parameter in the Langevin model
-    //! \param[in,out] C0 Value of to set the C0 parameter in the Langevin model
-    //! \param[in,out] dU Prescribed mean velocity gradient1
     VelocityCoeffStationary( kw::sde_c0::info::expect::type C0_,
                                kw::sde_c0::info::expect::type& C0,
-                               std::array< tk::real, 9 >& dU ) :
-      m_dU( {{ 0.0, 0.0, 0.0,
-               0.0, 0.0, 0.0,
-               0.0, 0.0, 0.0 }} )
-    {
-      C0 = C0_;
-      dU = m_dU;
-    }
+                               std::array< tk::real, 9 >& dU );
 
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept
@@ -180,27 +137,7 @@ class VelocityCoeffStationary {
                  kw::sde_c0::info::expect::type C0,
                  tk::real,
                  tk::real& eps,
-                 std::array< tk::real, 9 >& G ) const
-    {
-      // Compute turbulent kinetic energy
-      auto rs = reynoldsStress( depvar, solve, moments );
-
-      // Override turbulent kinetic energy to keep PDF stationary
-      tk::real k = 1.0;
-
-      // Override mean turbulence frequency to keep PDF stationary
-      tk::real O = 1.0;
-
-      // Compute turbulent kinetic energy dissipation rate
-      eps = O*k;
-
-      // update drift tensor based on the Langevin model variant configured
-      if (variant == ctr::VelocityVariantType::SLM)     // simplified
-        G = slm( O, C0 );
-      else if (variant == ctr::VelocityVariantType::GLM)// generalized
-        G = glm( O, C0, rs, m_dU );
-      else Throw( "Velocity variant type not implemented" );
-    }
+                 std::array< tk::real, 9 >& G ) const;
 
   private:
     //! Mean velocity gradient prescribed for simpled 1D homogeneous shear
@@ -215,22 +152,15 @@ class VelocityCoeffHydroTimeScale {
 
   public:
     //! Constructor: initialize coefficients
-    //! \param[in] C0_ Value of C0 parameter in the Langevin model
-    //! \param[in,out] C0 Value of to set the C0 parameter in the Langevin model
     VelocityCoeffHydroTimeScale( kw::sde_c0::info::expect::type C0_,
                                  kw::sde_c0::info::expect::type& C0,
-                                 std::array< tk::real, 9 >& )
-    {
-      C0 = C0_;
-    }
+                                 std::array< tk::real, 9 >& );
 
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept
     { return ctr::CoeffPolicyType::HYDROTIMESCALE; }
 
     //! \brief Update the model coefficients
-    //! \details Update the dissipation rate (eps) based on eps/k (from DNS) and
-    //!    the turbulent kinetic energy (k) (from the SDE)
     void update( char depvar,
                  char,
                  const std::map< tk::ctr::Product, tk::real >& moments,
@@ -240,28 +170,7 @@ class VelocityCoeffHydroTimeScale {
                  kw::sde_c0::info::expect::type C0,
                  tk::real t,
                  tk::real& eps,
-                 std::array< tk::real, 9 >& G ) const
-    {
-      // Compute turbulent kinetic energy
-      auto k = tke( depvar, solve, moments );
-
-      // Sample hydrodynamics timescale and prod/diss at time t
-      auto ts = hydrotimescale( t, hts );  // eps/k
-
-      // compute turbulent kinetic energy dissipation rate
-      eps = ts * k;
-
-      // update drift tensor based on the simplified Langevin model
-      G.fill( 0.0 );
-      G[0] = G[4] = G[8] = -(0.5+0.75*C0) * ts;
-    }
-
-    //! Sample the inverse hydrodynamics time scale at time t
-    //! \param[in] t Time at which to sample inverse hydrodynamics time scale
-    //! \param[in] ts Hydro time scale table to sample
-    //! \return Sampled value from discrete table of inverse hydro time scale
-    tk::real hydrotimescale( tk::real t, const tk::Table& ts ) const
-    { return tk::sample( t, ts ); }
+                 std::array< tk::real, 9 >& G ) const;
 };
 
 //! List of all Velocity's coefficients policies

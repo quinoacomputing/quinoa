@@ -62,40 +62,22 @@ namespace walker {
 
 //! \brief Number-fraction beta SDE constant coefficients policity: constants in
 //!   time
-class NumberFractionBetaCoeffConst {
+class NumFracBetaCoeffConst {
 
   public:
     //! Constructor: initialize coefficients
-    NumberFractionBetaCoeffConst(
+    NumFracBetaCoeffConst(
       tk::ctr::ncomp_type ncomp,
       const std::vector< kw::sde_b::info::expect::type >& b_,
       const std::vector< kw::sde_S::info::expect::type >& S_,
       const std::vector< kw::sde_kappa::info::expect::type >& k_,
       const std::vector< kw::sde_rho2::info::expect::type >& rho2_,
       const std::vector< kw::sde_rcomma::info::expect::type >& rcomma_,
-      std::vector< kw::sde_b::info::expect::type  >& b,
+      std::vector< kw::sde_b::info::expect::type >& b,
       std::vector< kw::sde_S::info::expect::type >& S,
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_rho2::info::expect::type >& rho2,
-      std::vector< kw::sde_rcomma::info::expect::type >& rcomma )
-    {
-      ErrChk( b_.size() == ncomp,
-              "Wrong number of number-fraction beta SDE parameters 'b'");
-      ErrChk( S_.size() == ncomp,
-              "Wrong number of number-fraction beta SDE parameters 'S'");
-      ErrChk( k_.size() == ncomp,
-              "Wrong number of number-fraction beta SDE parameters 'kappa'");
-      ErrChk( rho2_.size() == ncomp,
-              "Wrong number of number-fraction beta SDE parameters 'rho2'");
-      ErrChk( rcomma_.size() == ncomp,
-              "Wrong number of number-fraction beta SDE parameters 'rcomma'");
-
-      b = b_;
-      S = S_;
-      k = k_;
-      rho2 = rho2_;
-      rcomma = rcomma_;
-    }
+      std::vector< kw::sde_rcomma::info::expect::type >& rcomma );
 
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept
@@ -104,7 +86,7 @@ class NumberFractionBetaCoeffConst {
 
 //! List of all number-fraction beta's coefficients policies
 using NumberFractionBetaCoeffPolicies =
-  brigand::list< NumberFractionBetaCoeffConst >;
+  brigand::list< NumFracBetaCoeffConst >;
 
 } // walker::
 

@@ -107,7 +107,7 @@ class MixDirichlet {
              g_inputdeck.get< tag::param, eq, tag::S >().at(c),
              g_inputdeck.get< tag::param, eq, tag::kappaprime >().at(c),
              g_inputdeck.get< tag::param, eq, tag::rho >().at(c),
-             m_b, m_kprime, m_S, m_rho, m_r, m_k ) {}
+             m_b, m_S, m_kprime, m_rho, m_r, m_k ) {}
 
     //! Initalize SDE, prepare for time integration
     //! \param[in] stream Thread (or more precisely stream) ID 

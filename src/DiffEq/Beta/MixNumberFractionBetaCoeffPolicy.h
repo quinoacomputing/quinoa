@@ -103,37 +103,13 @@ class MixNumFracBetaCoeffDecay {
       std::vector< kw::sde_rho2::info::expect::type >& rho2,
       std::vector< kw::sde_rcomma::info::expect::type >& rcomma,
       std::vector< kw::sde_b::info::expect::type  >& b,
-      std::vector< kw::sde_kappa::info::expect::type >& k )
-    {
-      ErrChk( bprime_.size() == ncomp,
-        "Wrong number of mix number-fraction beta SDE parameters 'b''");
-      ErrChk( S_.size() == ncomp,
-        "Wrong number of mix number-fraction beta SDE parameters 'S'");
-      ErrChk( kprime_.size() == ncomp,
-        "Wrong number of mix number-fraction beta SDE parameters 'kappa''");
-      ErrChk( rho2_.size() == ncomp,
-        "Wrong number of mix number-fraction beta SDE parameters 'rho2'");
-      ErrChk( rcomma_.size() == ncomp,
-        "Wrong number of mix number-fraction beta SDE parameters 'rcomma'");
-
-      bprime = bprime_;
-      S = S_;
-      kprime = kprime_;
-      rho2 = rho2_;
-      rcomma = rcomma_;
-
-      b.resize( bprime.size() );
-      k.resize( kprime.size() );
-    }
+      std::vector< kw::sde_kappa::info::expect::type >& k );
 
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept
     { return ctr::CoeffPolicyType::DECAY; }
 
-    //! \brief Update coefficients using constant coefficients for b' and kappa'
-    //! \details This where the mix number-fraction beta SDE is made consistent
-    //!   with the no-mix and fully mixed limits by specifying the SDE
-    //!   coefficients, b and kappa as functions of b' and kappa'.
+    //! \brief Update coefficients
     void update(
       char depvar,
       ncomp_t ncomp,
@@ -141,19 +117,7 @@ class MixNumFracBetaCoeffDecay {
       const std::vector< kw::sde_bprime::info::expect::type  >& bprime,
       const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
       std::vector< kw::sde_b::info::expect::type  >& b,
-      std::vector< kw::sde_kappa::info::expect::type >& k ) const
-    {
-      for (ncomp_t c=0; c<ncomp; ++c) {
-        tk::real m = tk::ctr::lookup( tk::ctr::mean(depvar,c), moments );
-        tk::real v = tk::ctr::lookup( tk::ctr::variance(depvar,c), moments );
-
-        if (m<1.0e-8 || m>1.0-1.0e-8) m = 0.5;
-        if (v<1.0e-8 || v>1.0-1.0e-8) v = 0.5;
-
-        b[c] = bprime[c] * (1.0 - v / m / ( 1.0 - m ));
-        k[c] = kprime[c] * v;
-      }
-    }
+      std::vector< kw::sde_kappa::info::expect::type >& k ) const;
 };
 
 //! List of all mix numberf-fraction beta's coefficients policies

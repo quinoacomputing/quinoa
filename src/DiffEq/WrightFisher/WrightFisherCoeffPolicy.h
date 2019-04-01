@@ -46,6 +46,7 @@
 
 #include "Types.h"
 #include "Walker/Options/CoeffPolicy.h"
+#include "SystemComponents.h"
 
 namespace walker {
 
@@ -57,13 +58,7 @@ class WrightFisherCoeffConst {
     WrightFisherCoeffConst(
       tk::ctr::ncomp_type ncomp,
       const std::vector< kw::sde_omega::info::expect::type >& omega_,
-      std::vector< kw::sde_omega::info::expect::type >& omega )
-    {
-      ErrChk( omega_.size() == ncomp,
-              "Wrong number of Wright-Fisher SDE parameters 'omega'");
-
-      omega = omega_;
-    }
+      std::vector< kw::sde_omega::info::expect::type >& omega );
 
     static ctr::CoeffPolicyType type() noexcept
     { return ctr::CoeffPolicyType::CONST_COEFF; }

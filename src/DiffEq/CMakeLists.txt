@@ -7,20 +7,36 @@ add_library(DiffEq
             Dirichlet/ConfigureDirichlet.C
             Dirichlet/ConfigureMixDirichlet.C
             Dirichlet/ConfigureGeneralizedDirichlet.C
+            Dirichlet/DirichletCoeffPolicy.C
+            Dirichlet/GeneralizedDirichletCoeffPolicy.C
+            Dirichlet/MixDirichletCoeffPolicy.C
             WrightFisher/ConfigureWrightFisher.C
+            WrightFisher/WrightFisherCoeffPolicy.C
             OrnsteinUhlenbeck/ConfigureOrnsteinUhlenbeck.C
             OrnsteinUhlenbeck/ConfigureDiagOrnsteinUhlenbeck.C
+            OrnsteinUhlenbeck/DiagOrnsteinUhlenbeckCoeffPolicy.C
+            OrnsteinUhlenbeck/OrnsteinUhlenbeckCoeffPolicy.C
             Beta/ConfigureBeta.C
+            Beta/BetaCoeffPolicy.C
+            Beta/MassFractionBetaCoeffPolicy.C
+            Beta/MixMassFractionBetaCoeffPolicy.C
+            Beta/MixNumberFractionBetaCoeffPolicy.C
+            Beta/NumberFractionBetaCoeffPolicy.C
             Beta/ConfigureNumberFractionBeta.C
             Beta/ConfigureMassFractionBeta.C
             Beta/ConfigureMixNumberFractionBeta.C
             Beta/ConfigureMixMassFractionBeta.C
             Gamma/ConfigureGamma.C
+            Gamma/GammaCoeffPolicy.C
             SkewNormal/ConfigureSkewNormal.C
+            SkewNormal/SkewNormalCoeffPolicy.C
             Velocity/ConfigureVelocity.C
-            Position/ConfigurePosition.C
+            Velocity/VelocityCoeffPolicy.C
             Velocity/Langevin.C
+            Position/ConfigurePosition.C
+            Position/PositionCoeffPolicy.C
             Dissipation/ConfigureDissipation.C
+            Dissipation/DissipationCoeffPolicy.C
 )
 
 target_include_directories(DiffEq PUBLIC
