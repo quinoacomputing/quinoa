@@ -4,39 +4,6 @@ project(DiffEq CXX)
 
 add_library(DiffEq
             DiffEqStack.C
-            Dirichlet/ConfigureDirichlet.C
-            Dirichlet/ConfigureMixDirichlet.C
-            Dirichlet/ConfigureGeneralizedDirichlet.C
-            Dirichlet/DirichletCoeffPolicy.C
-            Dirichlet/GeneralizedDirichletCoeffPolicy.C
-            Dirichlet/MixDirichletCoeffPolicy.C
-            WrightFisher/ConfigureWrightFisher.C
-            WrightFisher/WrightFisherCoeffPolicy.C
-            OrnsteinUhlenbeck/ConfigureOrnsteinUhlenbeck.C
-            OrnsteinUhlenbeck/ConfigureDiagOrnsteinUhlenbeck.C
-            OrnsteinUhlenbeck/DiagOrnsteinUhlenbeckCoeffPolicy.C
-            OrnsteinUhlenbeck/OrnsteinUhlenbeckCoeffPolicy.C
-            Beta/ConfigureBeta.C
-            Beta/BetaCoeffPolicy.C
-            Beta/MassFractionBetaCoeffPolicy.C
-            Beta/MixMassFractionBetaCoeffPolicy.C
-            Beta/MixNumberFractionBetaCoeffPolicy.C
-            Beta/NumberFractionBetaCoeffPolicy.C
-            Beta/ConfigureNumberFractionBeta.C
-            Beta/ConfigureMassFractionBeta.C
-            Beta/ConfigureMixNumberFractionBeta.C
-            Beta/ConfigureMixMassFractionBeta.C
-            Gamma/ConfigureGamma.C
-            Gamma/GammaCoeffPolicy.C
-            SkewNormal/ConfigureSkewNormal.C
-            SkewNormal/SkewNormalCoeffPolicy.C
-            Velocity/ConfigureVelocity.C
-            Velocity/VelocityCoeffPolicy.C
-            Velocity/Langevin.C
-            Position/ConfigurePosition.C
-            Position/PositionCoeffPolicy.C
-            Dissipation/ConfigureDissipation.C
-            Dissipation/DissipationCoeffPolicy.C
 )
 
 target_include_directories(DiffEq PUBLIC
@@ -46,10 +13,10 @@ target_include_directories(DiffEq PUBLIC
                            ${QUINOA_SOURCE_DIR}/Control
                            ${QUINOA_SOURCE_DIR}/Statistics
                            ${QUINOA_SOURCE_DIR}/DiffEq
+                           ${QUINOA_SOURCE_DIR}/DiffEq/Beta
                            ${QUINOA_SOURCE_DIR}/DiffEq/Dirichlet
                            ${QUINOA_SOURCE_DIR}/DiffEq/WrightFisher
                            ${QUINOA_SOURCE_DIR}/DiffEq/OrnsteinUhlenbeck
-                           ${QUINOA_SOURCE_DIR}/DiffEq/Beta
                            ${QUINOA_SOURCE_DIR}/DiffEq/Gamma
                            ${QUINOA_SOURCE_DIR}/DiffEq/SkewNormal
                            ${QUINOA_SOURCE_DIR}/DiffEq/Velocity
@@ -70,3 +37,14 @@ INSTALL(TARGETS DiffEq
   	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
  	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
+
+# Configure build targets for stochastic differential equation types
+add_subdirectory(Beta)
+add_subdirectory(Dirichlet)
+add_subdirectory(WrightFisher)
+add_subdirectory(OrnsteinUhlenbeck)
+add_subdirectory(Gamma)
+add_subdirectory(SkewNormal)
+add_subdirectory(Velocity)
+add_subdirectory(Position)
+add_subdirectory(Dissipation)

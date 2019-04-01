@@ -8,6 +8,15 @@ add_executable(${WALKER_EXECUTABLE}
 config_executable(${WALKER_EXECUTABLE})
 
 target_link_libraries(${WALKER_EXECUTABLE}
+                      Beta
+                      Dirichlet
+                      WrightFisher
+                      OrnsteinUhlenbeck
+                      Gamma
+                      SkewNormal
+                      Velocity
+                      Position
+                      Dissipation
                       DiffEq
                       RNG
                       Walker
