@@ -21,8 +21,8 @@ module testu01suite {
   // chares.
   extern module testu01;
 
-  include "Types.h";
-  include "RNGTest/Options/Battery.h";
+  include "Types.hpp";
+  include "RNGTest/Options/Battery.hpp";
 
   namespace rngtest {
 

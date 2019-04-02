@@ -12,8 +12,8 @@
 #ifndef nowarning_mpirunner_decl_h
 #define nowarning_mpirunner_decl_h
 
-#include "Macro.h"
-#include "QuinoaConfig.h"
+#include "Macro.hpp"
+#include "QuinoaConfig.hpp"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

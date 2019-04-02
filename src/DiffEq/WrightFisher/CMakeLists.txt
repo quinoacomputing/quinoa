@@ -1,6 +1,6 @@
 add_library(WrightFisher
-            WrightFisherCoeffPolicy.C
-            ConfigureWrightFisher.C
+            WrightFisherCoeffPolicy.cpp
+            ConfigureWrightFisher.cpp
 )
 
 target_include_directories(WrightFisher PUBLIC

@@ -1,6 +1,6 @@
 add_library(Dissipation
-            DissipationCoeffPolicy.C
-            ConfigureDissipation.C
+            DissipationCoeffPolicy.cpp
+            ConfigureDissipation.cpp
 )
 
 target_include_directories(Dissipation PUBLIC

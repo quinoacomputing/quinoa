@@ -6,12 +6,12 @@ project(RNGTest CXX)
 include(charm)
 
 add_library(RNGTest
-            TestU01.C
-            TestU01Stack.C
-            TestU01Suite.C
-            SmallCrush.C
-            Crush.C
-            BigCrush.C)
+            TestU01.cpp
+            TestU01Stack.cpp
+            TestU01Suite.cpp
+            SmallCrush.cpp
+            Crush.cpp
+            BigCrush.cpp)
 
 target_include_directories(RNGTest PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -32,8 +32,8 @@ addCharmModule( "testu01" "RNGTest" )
 addCharmModule( "testu01suite" "RNGTest" )
 
 # Add extra dependency of RNGTest on rngtestCharmModule. This is required as one
-# of the dependencies of RNGTest, e.g., TestU01Suite, refers to the main Charm++
-# proxy defined in the Charm++ module rngtest (in Main/RNGTest.C).
+# of the dependencies of RNGTest, eg., TestU01Suite, refers to the main .cppharm++
+# proxy defined in the Charm++ module rngtest (in Main/RNGTest.cpp).
 add_dependencies("RNGTest" "rngtestCharmModule")
 
 set_target_properties(RNGTest PROPERTIES LIBRARY_OUTPUT_NAME quinoa_rngtest)

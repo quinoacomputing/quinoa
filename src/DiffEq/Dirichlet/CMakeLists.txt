@@ -1,10 +1,10 @@
 add_library(Dirichlet
-            DirichletCoeffPolicy.C
-            GeneralizedDirichletCoeffPolicy.C
-            MixDirichletCoeffPolicy.C
-            ConfigureDirichlet.C
-            ConfigureMixDirichlet.C
-            ConfigureGeneralizedDirichlet.C
+            DirichletCoeffPolicy.cpp
+            GeneralizedDirichletCoeffPolicy.cpp
+            MixDirichletCoeffPolicy.cpp
+            ConfigureDirichlet.cpp
+            ConfigureMixDirichlet.cpp
+            ConfigureGeneralizedDirichlet.cpp
 )
 
 target_include_directories(Dirichlet PUBLIC

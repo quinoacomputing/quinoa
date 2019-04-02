@@ -1,13 +1,13 @@
 add_library(Integrate
-            Quadrature.C
-            Initialize.C
-            Mass.C
-            Surface.C
-            Boundary.C
-            Volume.C
-            Source.C
-            Basis.C
-            Riemann/RiemannFactory.C)
+            Quadrature.cpp
+            Initialize.cpp
+            Mass.cpp
+            Surface.cpp
+            Boundary.cpp
+            Volume.cpp
+            Source.cpp
+            Basis.cpp
+            Riemann/RiemannFactory.cpp)
 
 target_include_directories(Integrate PUBLIC
                            ${QUINOA_SOURCE_DIR}

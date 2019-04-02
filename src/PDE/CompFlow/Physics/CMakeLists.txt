@@ -1,5 +1,5 @@
 add_library(CGCompFlowPhysics
-            CGNavierStokes.C)
+            CGNavierStokes.cpp)
 
 target_include_directories(CGCompFlowPhysics PUBLIC
                            ${QUINOA_SOURCE_DIR}

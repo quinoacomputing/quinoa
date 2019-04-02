@@ -1,14 +1,14 @@
 add_library(Beta
-            BetaCoeffPolicy.C
-            MassFractionBetaCoeffPolicy.C
-            MixMassFractionBetaCoeffPolicy.C
-            MixNumberFractionBetaCoeffPolicy.C
-            NumberFractionBetaCoeffPolicy.C
-            ConfigureBeta.C
-            ConfigureNumberFractionBeta.C
-            ConfigureMassFractionBeta.C
-            ConfigureMixNumberFractionBeta.C
-            ConfigureMixMassFractionBeta.C
+            BetaCoeffPolicy.cpp
+            MassFractionBetaCoeffPolicy.cpp
+            MixMassFractionBetaCoeffPolicy.cpp
+            MixNumberFractionBetaCoeffPolicy.cpp
+            NumberFractionBetaCoeffPolicy.cpp
+            ConfigureBeta.cpp
+            ConfigureNumberFractionBeta.cpp
+            ConfigureMassFractionBeta.cpp
+            ConfigureMixNumberFractionBeta.cpp
+            ConfigureMixMassFractionBeta.cpp
 )
 
 target_include_directories(Beta PUBLIC

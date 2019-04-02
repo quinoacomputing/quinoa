@@ -12,7 +12,7 @@
 
 module transporter {
 
-  include "Types.h";
+  include "Types.hpp";
 
   extern module meshwriter;
 

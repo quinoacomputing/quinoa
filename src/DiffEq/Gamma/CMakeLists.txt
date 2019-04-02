@@ -1,6 +1,6 @@
 add_library(Gamma
-            GammaCoeffPolicy.C
-            ConfigureGamma.C
+            GammaCoeffPolicy.cpp
+            ConfigureGamma.cpp
 )
 
 target_include_directories(Gamma PUBLIC

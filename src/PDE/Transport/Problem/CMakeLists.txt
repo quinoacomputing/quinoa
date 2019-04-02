@@ -1,8 +1,8 @@
 add_library(TransportProblem
-            CylAdvect.C
-            GaussHump.C
-            ShearDiff.C
-            SlotCyl.C)
+            CylAdvect.cpp
+            GaussHump.cpp
+            ShearDiff.cpp
+            SlotCyl.cpp)
 
 target_include_directories(TransportProblem PUBLIC
                            ${QUINOA_SOURCE_DIR}

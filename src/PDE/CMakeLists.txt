@@ -3,11 +3,11 @@ cmake_minimum_required(VERSION 2.8.5)
 project(PDE CXX)
 
 add_library(PDE
-            PDEStack.C
-            Limiter.C
-            ConfigureTransport.C
-            ConfigureCompFlow.C
-            ConfigureMultiMat.C)
+            PDEStack.cpp
+            Limiter.cpp
+            ConfigureTransport.cpp
+            ConfigureCompFlow.cpp
+            ConfigureMultiMat.cpp)
 
 target_include_directories(PDE PUBLIC
                            ${QUINOA_SOURCE_DIR}

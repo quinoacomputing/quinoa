@@ -1,0 +1,62 @@
+// *****************************************************************************
+/*!
+  \file      src/PDE/Transport/Physics/DGAdvection.hpppp
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
+  \brief     Physics policy for advection using continuous Galerkin (no-op)
+  \details   This file defines a Physics policy class for scalar transport using
+     discontinuous Galerkin discretization, defined in
+     PDE/Transport/DGTransport.h. The class defined here is used to configure
+     the behavior of DGTransport. See PDE/Transport/Physics/DG.h for general
+     requirements on Physics policy classes for DGTransport.
+*/
+// *****************************************************************************
+#ifndef TransportPhysicsDGAdvection_h
+#define TransportPhysicsDGAdvection_h
+
+#include <limits>
+
+#include "Types.hpp"
+#include "Inciter/Options/Physics.hpp"
+
+namespace inciter {
+namespace dg {
+
+//! Physics policy for advection using continuous Galerkin (no-op)
+//! \details This class is a no-op, consistent with no additional physics needed
+//!   to make the basic implementation in Transport the advection equation.
+class TransportPhysicsAdvection {
+
+  public:
+
+    //! Add diffusion contribution to rhs at 2nd step stage (no-op)
+    void
+    diffusionRhs( tk::ctr::ncomp_type,
+                  tk::ctr::ncomp_type,
+                  tk::real,
+                  tk::real,
+                  const std::array< std::array< tk::real, 3 >, 4 >&,
+                  const std::array< std::size_t, 4 >&,
+                  const std::vector< std::array< tk::real, 4 > >&,
+                  const std::vector< const tk::real* >&,
+                  tk::Fields& ) const {}
+
+    //! Compute the minimum time step size based on the diffusion
+    //! \return A large time step size, i.e., ignore
+    tk::real
+    diffusion_dt( tk::ctr::ncomp_type,
+                  tk::ctr::ncomp_type,
+                  tk::real,
+                  const std::vector< std::array< tk::real, 4 > >& ) const
+    { return std::numeric_limits< tk::real >::max(); }
+
+    static ctr::PhysicsType type() noexcept
+    { return ctr::PhysicsType::ADVECTION; }
+};
+
+} // dg::
+} // inciter::
+
+#endif // TransportPhysicsDGAdvection_h

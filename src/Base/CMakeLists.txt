@@ -6,16 +6,16 @@ project(Base CXX)
 include(charm)
 
 add_library(Base
-            Exception.C
-            ProcessException.C
-            ProcessControl.C
-            LoadDistributor.C
-            Timer.C
-            Reader.C
-            Writer.C
-            Table.C
-            Vector.C
-            ChareStateCollector.C
+            Exception.cpp
+            ProcessException.cpp
+            ProcessControl.cpp
+            LoadDistributor.cpp
+            Timer.cpp
+            Reader.cpp
+            Writer.cpp
+            Table.cpp
+            Vector.cpp
+            ChareStateCollector.cpp
 )
 
 target_include_directories(Base PUBLIC

@@ -1,7 +1,7 @@
 add_library(Velocity
-            ConfigureVelocity.C
-            VelocityCoeffPolicy.C
-            Langevin.C
+            ConfigureVelocity.cpp
+            VelocityCoeffPolicy.cpp
+            Langevin.cpp
 )
 
 target_include_directories(Velocity PUBLIC
