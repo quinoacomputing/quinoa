@@ -692,7 +692,9 @@ walker::MixMassFracBetaCoeffInstVel::update(
     // auto K = tke( velocity_depvar, velocity_solve, moments );
     // Access mean turbulence frequency from coupled dissipation model
     // hydroptimescale: eps/k = <O>
-    tk::real ts = lookup( mean(dissipation_depvar,0), moments );
+    tk::real ts = 1.0;
+    if (dissipation_depvar != '-')      // only if dissipation is coupled
+      ts = lookup( mean(dissipation_depvar,0), moments );
 
     //auto pe = 1.0; // hydroproductions: P/eps = 1.0 (equilibrium)
 
