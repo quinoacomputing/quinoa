@@ -134,13 +134,13 @@ DG::resizeComm()
     auto mark = e*4;
     for (std::size_t f=0; f<4; ++f)     // for all tet faces
       if (esuel[mark+f] == -1) {        // if face has no outside-neighbor tet
-        // if does not exist in among the internal and physical boundary faces,
+        // if does not exist among the internal and physical boundary faces,
         // store as a potential chare-boundary face
         tk::UnsMesh::Face t{{ gid[ inpoel[ mark + tk::lpofa[f][0] ] ],
                               gid[ inpoel[ mark + tk::lpofa[f][1] ] ],
                               gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
         if (m_ipface.find(t) == end(m_ipface)) {
-          Assert( ++m_exptNbface, "Sum up expected number of boundary faces" );
+          Assert( ++m_exptNbface, "Sum up expected chare-boundary faces" );
           potbndface.insert( t );
         }
       }
