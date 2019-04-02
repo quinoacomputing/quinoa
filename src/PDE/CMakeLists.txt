@@ -13,19 +13,6 @@ add_library(PDE
             Integrate/Source.C
             Integrate/Basis.C
             Integrate/Riemann/RiemannFactory.C
-            Transport/Problem/CylAdvect.C
-            Transport/Problem/GaussHump.C
-            Transport/Problem/ShearDiff.C
-            Transport/Problem/SlotCyl.C
-            CompFlow/Physics/CGNavierStokes.C
-            CompFlow/Problem/NLEnergyGrowth.C
-            CompFlow/Problem/RayleighTaylor.C
-            CompFlow/Problem/SodShocktube.C
-            CompFlow/Problem/RotatedSodShocktube.C
-            CompFlow/Problem/SedovBlastwave.C
-            CompFlow/Problem/TaylorGreen.C
-            CompFlow/Problem/UserDefined.C
-            CompFlow/Problem/VorticalFlow.C
             Limiter.C
             ConfigureTransport.C
             ConfigureCompFlow.C
@@ -48,5 +35,10 @@ set_target_properties(PDE PROPERTIES LIBRARY_OUTPUT_NAME quinoa_pde)
 INSTALL(TARGETS PDE
   	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
   	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
- 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-)
+ 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
+
+# Configure targets for physics and problem types
+add_subdirectory(Transport/Physics)
+add_subdirectory(Transport/Problem)
+add_subdirectory(CompFlow/Physics)
+add_subdirectory(CompFlow/Problem)

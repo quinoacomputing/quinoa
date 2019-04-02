@@ -23,6 +23,7 @@
 #include "Macro.h"
 #include "Exception.h"
 #include "Vector.h"
+#include "Inciter/InputDeck/InputDeck.h"
 
 namespace inciter {
 

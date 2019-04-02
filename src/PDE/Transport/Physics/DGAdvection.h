@@ -32,7 +32,7 @@ class TransportPhysicsAdvection {
   public:
 
     //! Add diffusion contribution to rhs at 2nd step stage (no-op)
-    static void
+    void
     diffusionRhs( tk::ctr::ncomp_type,
                   tk::ctr::ncomp_type,
                   tk::real,
@@ -41,16 +41,15 @@ class TransportPhysicsAdvection {
                   const std::array< std::size_t, 4 >&,
                   const std::vector< std::array< tk::real, 4 > >&,
                   const std::vector< const tk::real* >&,
-                  tk::Fields& )
-    {}
+                  tk::Fields& ) const {}
 
     //! Compute the minimum time step size based on the diffusion
     //! \return A large time step size, i.e., ignore
-    static tk::real
+    tk::real
     diffusion_dt( tk::ctr::ncomp_type,
                   tk::ctr::ncomp_type,
                   tk::real,
-                  const std::vector< std::array< tk::real, 4 > >& )
+                  const std::vector< std::array< tk::real, 4 > >& ) const
     { return std::numeric_limits< tk::real >::max(); }
 
     static ctr::PhysicsType type() noexcept

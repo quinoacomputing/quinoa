@@ -23,10 +23,10 @@
       which returns the enum value of the option from the underlying option
       class, collecting all possible options for Physics policies.
 
-    - Must define the static function _diffusionRhs()_, adding diffusion terms
+    - Must define the function _diffusionRhs()_, adding diffusion terms
       to the right hand side.
 
-    - Must define the static function _diffusion_dt()_, computing the minumum
+    - Must define the function _diffusion_dt()_, computing the minumum
       time step size based on the diffusion term.
 */
 // *****************************************************************************
