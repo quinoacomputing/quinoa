@@ -16,6 +16,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       CGTransportPhysics
                       CompFlowProblem
                       CGCompFlowPhysics
+                      Integrate
                       MeshRefinement
                       LoadBalance
                       ZoltanInterOp

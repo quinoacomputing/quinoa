@@ -4,15 +4,6 @@ project(PDE CXX)
 
 add_library(PDE
             PDEStack.C
-            Integrate/Quadrature.C
-            Integrate/Initialize.C
-            Integrate/Mass.C
-            Integrate/Surface.C
-            Integrate/Boundary.C
-            Integrate/Volume.C
-            Integrate/Source.C
-            Integrate/Basis.C
-            Integrate/Riemann/RiemannFactory.C
             Limiter.C
             ConfigureTransport.C
             ConfigureCompFlow.C
@@ -36,6 +27,9 @@ INSTALL(TARGETS PDE
   	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
   	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
  	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
+
+# Configure target for numerical integrals
+add_subdirectory(Integrate)
 
 # Configure targets for physics and problem types
 add_subdirectory(Transport/Physics)
