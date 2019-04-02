@@ -13,6 +13,10 @@ add_library(PDE
             Integrate/Source.C
             Integrate/Basis.C
             Integrate/Riemann/RiemannFactory.C
+            Transport/Problem/CylAdvect.C
+            Transport/Problem/GaussHump.C
+            Transport/Problem/ShearDiff.C
+            Transport/Problem/SlotCyl.C
             CompFlow/Physics/CGNavierStokes.C
             CompFlow/Problem/NLEnergyGrowth.C
             CompFlow/Problem/RayleighTaylor.C

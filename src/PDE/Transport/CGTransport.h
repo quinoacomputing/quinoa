@@ -47,13 +47,15 @@ class Transport {
     //! Constructor
     //! \param[in] c Equation system index (among multiple systems configured)
     explicit Transport( ncomp_t c ) :
+      m_physics( Physics() ),
+      m_problem( Problem() ),
       m_system( c ),
       m_ncomp(
         g_inputdeck.get< tag::component >().get< tag::transport >().at(c) ),
       m_offset(
         g_inputdeck.get< tag::component >().offset< tag::transport >(c) )
     {
-      Problem::errchk( m_system, m_ncomp );
+      m_problem.errchk( m_system, m_ncomp );
     }
 
     //! Initalize the transport equations using problem policy
@@ -308,7 +310,8 @@ class Transport {
               R.var(r[c],N[a]) += d * grad[a][j] * vel[c][j]*ue[c];
 
         // add (optional) diffusion contribution to right hand side
-        Physics::diffusionRhs( m_system, m_ncomp, deltat, J, grad, N, u, r, R );
+        m_physics.diffusionRhs( m_system, m_ncomp, deltat, J, grad,
+                                N, u, r, R );
 
       }
     }
@@ -365,7 +368,7 @@ class Transport {
         // compute element dt for the advection
         auto advection_dt = L / maxvel;
         // compute element dt based on diffusion
-        auto diffusion_dt = Physics::diffusion_dt( m_system, m_ncomp, L, u );
+        auto diffusion_dt = m_physics.diffusion_dt( m_system, m_ncomp, L, u );
         // compute minimum element dt
         auto elemdt = std::min( advection_dt, diffusion_dt );
         // find minimum dt across all elements
@@ -378,7 +381,7 @@ class Transport {
     //!   in this PDE system
     //! \param[in,out] conf Set of unique side set IDs to add to
     void side( std::unordered_set< int >& conf ) const
-    { Problem::side( conf ); }
+    { m_problem.side( conf ); }
 
     //! \brief Query Dirichlet boundary condition value on a given side set for
     //!    all components in this PDE system
@@ -410,8 +413,8 @@ class Transport {
           if (std::stoi(b) == ss.first)
             for (auto n : ss.second) {
               Assert( x.size() > n, "Indexing out of coordinate array" );
-              const auto s = Problem::solinc( m_system, m_ncomp,
-                                              x[n], y[n], z[n], t, deltat );
+              const auto s = m_problem.solinc( m_system, m_ncomp,
+                                               x[n], y[n], z[n], t, deltat );
               auto& nbc = bc[n] = NodeBC( m_ncomp );
               for (ncomp_t c=0; c<m_ncomp; ++c)
                 nbc[c] = { true, s[c] };
@@ -495,6 +498,8 @@ class Transport {
     }
 
   private:
+    const Physics m_physics;            //!< Physics policy
+    const Problem m_problem;            //!< Problem policy
     const ncomp_t m_system;             //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     const ncomp_t m_offset;             //!< Offset this PDE operates from
