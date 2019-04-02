@@ -12,6 +12,11 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       InciterControl
                       Inciter
                       PDE
+                      TransportProblem
+                      CGTransportPhysics
+                      CompFlowProblem
+                      CGCompFlowPhysics
+                      Integrate
                       MeshRefinement
                       LoadBalance
                       ZoltanInterOp

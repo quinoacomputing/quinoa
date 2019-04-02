@@ -76,6 +76,8 @@ class Transport {
     //! Constructor
     //! \param[in] c Equation system index (among multiple systems configured)
     explicit Transport( ncomp_t c ) :
+      m_physics( Physics() ),
+      m_problem( Problem() ),
       m_system( c ),
       m_ncomp(
         g_inputdeck.get< tag::component >().get< eq >().at(c) ),
@@ -86,7 +88,7 @@ class Transport {
       m_bcoutlet( config< tag::bcoutlet >( c ) ),
       m_bcdir( config< tag::bcdir >( c ) )
     {
-      Problem::errchk( m_system, m_ncomp );
+      m_problem.errchk( m_system, m_ncomp );
     }
 
     //! Initalize the transport equations for DG
@@ -192,7 +194,7 @@ class Transport {
     //!   in this PDE system
     //! \param[in,out] conf Set of unique side set IDs to add to
     void side( std::unordered_set< int >& conf ) const
-    { Problem::side( conf ); }
+    { m_problem.side( conf ); }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
@@ -292,6 +294,8 @@ class Transport {
     { return Problem::solution( m_system, m_ncomp, xi, yi, zi, t ); }
 
   private:
+    const Physics m_physics;            //!< Physics policy
+    const Problem m_problem;            //!< Problem policy
     const ncomp_t m_system;             //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     const ncomp_t m_offset;             //!< Offset this PDE operates from

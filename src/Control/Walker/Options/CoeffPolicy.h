@@ -85,7 +85,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
            { kw::instantaneous_velocity::string(),
              CoeffPolicyType::INSTANTANEOUS_VELOCITY } } )
     {
-       brigand::for_each< keywords >( assertPolicyCodes() );
+      brigand::for_each< keywords >( assertPolicyCodes() );
     }
 
     //! \brief Return policy code based on Enum

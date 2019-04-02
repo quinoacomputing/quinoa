@@ -4,23 +4,6 @@ project(DiffEq CXX)
 
 add_library(DiffEq
             DiffEqStack.C
-            ConfigureDirichlet.C
-            ConfigureMixDirichlet.C
-            ConfigureGeneralizedDirichlet.C
-            ConfigureWrightFisher.C
-            ConfigureOrnsteinUhlenbeck.C
-            ConfigureDiagOrnsteinUhlenbeck.C
-            ConfigureBeta.C
-            ConfigureNumberFractionBeta.C
-            ConfigureMassFractionBeta.C
-            ConfigureMixNumberFractionBeta.C
-            ConfigureMixMassFractionBeta.C
-            ConfigureGamma.C
-            ConfigureSkewNormal.C
-            ConfigureVelocity.C
-            ConfigurePosition.C
-            ConfigureDissipation.C
-            Langevin.C
 )
 
 target_include_directories(DiffEq PUBLIC
@@ -29,6 +12,16 @@ target_include_directories(DiffEq PUBLIC
                            ${QUINOA_SOURCE_DIR}/RNG
                            ${QUINOA_SOURCE_DIR}/Control
                            ${QUINOA_SOURCE_DIR}/Statistics
+                           ${QUINOA_SOURCE_DIR}/DiffEq
+                           ${QUINOA_SOURCE_DIR}/DiffEq/Beta
+                           ${QUINOA_SOURCE_DIR}/DiffEq/Dirichlet
+                           ${QUINOA_SOURCE_DIR}/DiffEq/WrightFisher
+                           ${QUINOA_SOURCE_DIR}/DiffEq/OrnsteinUhlenbeck
+                           ${QUINOA_SOURCE_DIR}/DiffEq/Gamma
+                           ${QUINOA_SOURCE_DIR}/DiffEq/SkewNormal
+                           ${QUINOA_SOURCE_DIR}/DiffEq/Velocity
+                           ${QUINOA_SOURCE_DIR}/DiffEq/Position
+                           ${QUINOA_SOURCE_DIR}/DiffEq/Dissipation
                            ${PROJECT_BINARY_DIR}/../Main
                            ${PEGTL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
@@ -44,3 +37,14 @@ INSTALL(TARGETS DiffEq
   	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
  	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
+
+# Configure build targets for stochastic differential equation types
+add_subdirectory(Beta)
+add_subdirectory(Dirichlet)
+add_subdirectory(WrightFisher)
+add_subdirectory(OrnsteinUhlenbeck)
+add_subdirectory(Gamma)
+add_subdirectory(SkewNormal)
+add_subdirectory(Velocity)
+add_subdirectory(Position)
+add_subdirectory(Dissipation)

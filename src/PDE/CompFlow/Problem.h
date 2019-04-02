@@ -21,30 +21,30 @@
       which returns the enum value of the option from the underlying option
       class, collecting all possible options for problem policies.
 
-    - Must define the static function _names()_, returning the names of integral
+    - Must define the function _names()_, returning the names of integral
       variables to be output to diagnostics file.
 
     - Must define the static function _solution()_, used for initialization of
       the computed fields and/or sampling the analytical solution (if exist) at
       time t.
 
-    - Must define the static function _solinc()_, used to evaluate the increment
+    - Must define the function _solinc()_, used to evaluate the increment
       from t to t+dt of the analytic solution (if defined).
 
     - Must define the static function _src()_, used for adding source terms to
       the righ hand side.
 
-    - Must define the static function _side()_,  used to query all side set IDs
+    - Must define the function _side()_,  used to query all side set IDs
       the user has configured for all components.
 
-    - Must define the static function _dirbc()_,  used to query Dirichlet
+    - Must define the function _dirbc()_,  used to query Dirichlet
       boundary condition value on a given side set for all components in the PDE
       system.
 
-    - Must define the static function _fieldNames()_, used to provide the field
+    - Must define the function _fieldNames()_, used to provide the field
       names to be output to file.
 
-    - Must define the static function _fieldOutput()_, used to provide the field
+    - Must define the function _fieldOutput()_, used to provide the field
       output.
 */
 // *****************************************************************************
@@ -72,7 +72,8 @@ using CompFlowProblems = brigand::list< CompFlowProblemUserDefined
                                       , CompFlowProblemTaylorGreen
                                       , CompFlowProblemSodShocktube
                                       , CompFlowProblemRotatedSodShocktube
-                                      , CompFlowProblemSedovBlastwave >;
+                                      , CompFlowProblemSedovBlastwave
+                                      >;
 
 } // inciter::
 

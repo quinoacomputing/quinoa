@@ -6,7 +6,7 @@
              2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Physics configurations for compressible single-material flow using
-    continuous Galerkin
+    continuous Galerkin discretization
   \details   This file configures all Physics policy classes for compressible
     single-material flow implementied using continuous Galerkin discretization,
     defined in PDE/CompFlow/CGCompFlow.h.
@@ -23,16 +23,16 @@
       which returns the enum value of the option from the underlying option
       class, collecting all possible options for Physics policies.
 
-    - Must define the static function _viscousRhs()_, adding the viscous terms
+    - Must define the function _viscousRhs()_, adding the viscous terms
       to the right hand side.
 
-    - Must define the static function _viscous_dt()_, computing the minumum time
+    - Must define the function _viscous_dt()_, computing the minumum time
       step size based on the viscous term.
 
-    - Must define the static function _conductRhs()_, adding the heat conduction
+    - Must define the function _conductRhs()_, adding the heat conduction
       terms to the right hand side.
 
-    - Must define the static function _conduct_dt()_, computing the minumum time
+    - Must define the function _conduct_dt()_, computing the minumum time
       step size based on the heat diffusion term.
 */
 // *****************************************************************************

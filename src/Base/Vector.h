@@ -19,28 +19,40 @@
 namespace tk {
 
 //! Compute the cross-product of two vectors
-std::array< tk::real, 3 >
+std::array< real, 3 >
 cross( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 );
 
 //! Compute the cross-product of two vectors divided by a scalar
-std::array< tk::real, 3 >
+std::array< real, 3 >
 crossdiv( const std::array< real, 3 >& v1,
           const std::array< real, 3 >& v2,
           real j );
 
 //! Compute the dot-product of two vectors
-tk::real
+real
 dot( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 );
 
 //! Compute the triple-product of three vectors
-tk::real
+real
 triple( const std::array< real, 3 >& v1,
         const std::array< real, 3 >& v2,
         const std::array< real, 3 >& v3 );
 
+//! Rotate vector about X axis
+std::array< real, 3 >
+rotateX( const std::array< real, 3 >& v, real angle );
+
+//! Rotate vector about Y axis
+std::array< real, 3 >
+rotateY( const std::array< real, 3 >& v, real angle );
+
+//! Rotate vector about Z axis
+std::array< real, 3 >
+rotateZ( const std::array< real, 3 >& v, real angle );
+
 //! \brief Compute the determinant of the Jacobian of a coordinate
 //!  transformation over a tetrahedron
-tk::real
+real
 Jacobian( const std::array< real, 3 >& v1,
           const std::array< real, 3 >& v2,
           const std::array< real, 3 >& v3,
@@ -48,11 +60,11 @@ Jacobian( const std::array< real, 3 >& v1,
 
 //! \brief Compute the inverse of the Jacobian of a coordinate transformation
 //!   over a tetrahedron
-std::array< std::array< tk::real, 3 >, 3 >
-inverseJacobian( const std::array< tk::real, 3 >& v1,
-                 const std::array< tk::real, 3 >& v2,
-                 const std::array< tk::real, 3 >& v3,
-                 const std::array< tk::real, 3 >& v4 );
+std::array< std::array< real, 3 >, 3 >
+inverseJacobian( const std::array< real, 3 >& v1,
+                 const std::array< real, 3 >& v2,
+                 const std::array< real, 3 >& v3,
+                 const std::array< real, 3 >& v4 );
 
 } // tk::
 
