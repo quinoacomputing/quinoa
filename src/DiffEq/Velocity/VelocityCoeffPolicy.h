@@ -130,10 +130,10 @@ class VelocityCoeffStationary {
     //!   turbulent kinetic energy (k) for a prescribed honmogeneous shear flow.
     void update( char depvar,
                  char,
-                 const std::map< tk::ctr::Product, tk::real >& moments,
+                 const std::map< tk::ctr::Product, tk::real >&,
                  const tk::Table&,
-                 ctr::DepvarType solve,
-                 ctr::VelocityVariantType variant,
+                 ctr::DepvarType,
+                 ctr::VelocityVariantType,
                  kw::sde_c0::info::expect::type C0,
                  tk::real,
                  tk::real& eps,
