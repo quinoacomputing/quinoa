@@ -13,4 +13,4 @@
 
 #include "ParticleWriter.hpp"
 
-#include "particlewriter.def.hpp"
+#include "particlewriter.def.h"

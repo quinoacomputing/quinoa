@@ -19,8 +19,8 @@
 #include "Exception.hpp"
 #include "H5PartWriter.hpp"
 
-#include "NoWarning/particlewriter.decl.hpp"
-#include "NoWarning/transporter.decl.hpp"
+#include "NoWarning/particlewriter.decl.h"
+#include "NoWarning/transporter.decl.h"
 
 namespace tk {
 
@@ -166,7 +166,7 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
 } // tk::
 
 #define CK_TEMPLATES_ONLY
-#include "NoWarning/particlewriter.def.hpp"
+#include "NoWarning/particlewriter.def.h"
 #undef CK_TEMPLATES_ONLY
 
 #endif // ParticleWriter_h

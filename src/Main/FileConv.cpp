@@ -28,7 +28,7 @@
 #include "ChareStateCollector.hpp"
 
 #include "NoWarning/charm.hpp"
-#include "NoWarning/fileconv.decl.hpp"
+#include "NoWarning/fileconv.decl.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -147,4 +147,4 @@ class execute : public CBase_execute {
   public: execute() { mainProxy.execute(); }
 };
 
-#include "NoWarning/fileconv.def.hpp"
+#include "NoWarning/fileconv.def.h"
