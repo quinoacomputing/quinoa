@@ -18,7 +18,7 @@
 #include "FileConvDriver.hpp"
 #include "FileConvWriter.hpp"
 
-#include "NoWarning/fileconv.decl.hpp"
+#include "NoWarning/fileconv.decl.h"
 
 using fileconv::FileConvDriver;
 
