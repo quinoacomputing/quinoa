@@ -6,9 +6,9 @@ project(Walker CXX)
 include(charm)
 
 add_library(Walker
-            Distributor.C
-            Collector.C
-            Integrator.C)
+            Distributor.cpp
+            Collector.cpp
+            Integrator.cpp)
 
 target_include_directories(Walker PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -32,7 +32,7 @@ addCharmModule( "integrator" "Walker" )
 
 # Add extra dependency of Walker on walkerCharmModule. This is required as
 # Walker refers to the main Charm++ proxy defined in the Charm++ module
-# walker (in Main/Walker.C).
+# walker (in Main/Walker.cpp).
 add_dependencies( "Walker" "walkerCharmModule" )
 
 set_target_properties(Walker PROPERTIES LIBRARY_OUTPUT_NAME quinoa_walker)

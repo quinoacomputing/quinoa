@@ -4,7 +4,7 @@
 # \copyright 2012-2015 J. Bakosi,
 #            2016-2018 Los Alamos National Security, LLC.,
 #            2019 Triad National Security, LLC.
-#            All rights reserved. See the LICENSE file for details.
+#            All rights reserved See the LI.cppENSE file for details.
 # \brief     Build Quinoa
 #
 ################################################################################
@@ -92,7 +92,7 @@ endif()
 # directory based on cmake-supplied compiler ID
 if (NOT TPL_DIR)
   string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
-  set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../external/install/${COMP}-${ARCH})
+  set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/./external/install/${COMP}-${AR.cppH})
   get_filename_component(ABS_TPL_DIR ${REL_TPL_DIR} ABSOLUTE)
   set(TPL_DIR ${ABS_TPL_DIR} CACHE STRING "Third-party libraries directory.")
 endif()
@@ -131,7 +131,7 @@ include(TPLs)
 # Find MPI and get its underlying compilers. If a traditional MPI (e.g.,
 # OpenMPI) is used, the get_mpi_compilers cmake function uses the built-in CMake
 # functionality to find the MPI wrappers and based on the wrappers detects the
-# underyling compilers. If Charm++'s Adaptive MPI (AMPI) is used, the Charm++
+# underyling compilers If Charm++'s Adaptive MPI (AMPI) is used, the .cppharm++
 # TPL build builds Charm++ as well as AMPI and we use the AMPI wrappers to build
 # MPI libraries.
 if(NOT ENABLE_AMPI)
@@ -193,7 +193,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       "${CMAKE_EXE_LINKER_FLAGS} -Wl,-no_compact_unwind" )
 
   # Set minimum OSX SDK target version
-  set(CMAKE_OSX_DEPLOYMENT_TARGET 10.7 CACHE STRING "Minimum OS X version to target for deployment (at runtime); newer APIs weak linked. Set to empty string for default value." FORCE)
+  set(CMAKE_OSX_DEPLOYMENT_TARGET 107 CACHE STRING "Minimum OS X version to target for deployment (at runtime); newer APIs weak linked. Set to empty string for default value." FOR.cppE)
 
 endif()
 
@@ -523,10 +523,10 @@ set(EXECUTABLES ${INCITER_EXECUTABLE}
                 ${FILECONV_EXECUTABLE})
 
 # Configure cmake variable to pass to the code
-configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.h.in"
-                "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.h" )
-configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.C.in"
-                "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.C" )
+configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.hpp.in"
+                "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.hpp" )
+configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.cpp.in"
+                "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.cpp" )
 
 # Remove build hostname from cmake cache
 unset(HOSTNAME CACHE)

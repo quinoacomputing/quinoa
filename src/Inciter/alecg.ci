@@ -19,8 +19,8 @@ module alecg {
   extern module transporter;
   extern module discretization;
 
-  include "UnsMesh.h";
-  include "PUPUtil.h";
+  include "UnsMesh.hpp";
+  include "PUPUtil.hpp";
   //! [External modules and includes]
 
   namespace inciter {

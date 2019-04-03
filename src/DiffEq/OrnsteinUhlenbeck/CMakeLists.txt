@@ -1,8 +1,8 @@
 add_library(OrnsteinUhlenbeck
-            ConfigureOrnsteinUhlenbeck.C
-            ConfigureDiagOrnsteinUhlenbeck.C
-            DiagOrnsteinUhlenbeckCoeffPolicy.C
-            OrnsteinUhlenbeckCoeffPolicy.C
+            ConfigureOrnsteinUhlenbeck.cpp
+            ConfigureDiagOrnsteinUhlenbeck.cpp
+            DiagOrnsteinUhlenbeckCoeffPolicy.cpp
+            OrnsteinUhlenbeckCoeffPolicy.cpp
 )
 
 target_include_directories(OrnsteinUhlenbeck PUBLIC

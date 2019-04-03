@@ -1,6 +1,6 @@
 add_library(SkewNormal
-            SkewNormalCoeffPolicy.C
-            ConfigureSkewNormal.C
+            SkewNormalCoeffPolicy.cpp
+            ConfigureSkewNormal.cpp
 )
 
 target_include_directories(SkewNormal PUBLIC

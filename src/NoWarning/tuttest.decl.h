@@ -11,8 +11,8 @@
 #ifndef nowarning_tuttest_decl_h
 #define nowarning_tuttest_decl_h
 
-#include "Macro.h"
-#include "QuinoaConfig.h"
+#include "Macro.hpp"
+#include "QuinoaConfig.hpp"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

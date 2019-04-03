@@ -1,12 +1,12 @@
 add_library(CompFlowProblem
-            NLEnergyGrowth.C
-            RayleighTaylor.C
-            SodShocktube.C
-            RotatedSodShocktube.C
-            SedovBlastwave.C
-            TaylorGreen.C
-            UserDefined.C
-            VorticalFlow.C)
+            NLEnergyGrowth.cpp
+            RayleighTaylor.cpp
+            SodShocktube.cpp
+            RotatedSodShocktube.cpp
+            SedovBlastwave.cpp
+            TaylorGreen.cpp
+            UserDefined.cpp
+            VorticalFlow.cpp)
 
 target_include_directories(CompFlowProblem PUBLIC
                            ${QUINOA_SOURCE_DIR}

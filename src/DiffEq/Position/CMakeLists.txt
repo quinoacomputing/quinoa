@@ -1,6 +1,6 @@
 add_library(Position
-            PositionCoeffPolicy.C
-            ConfigurePosition.C
+            PositionCoeffPolicy.cpp
+            ConfigurePosition.cpp
 )
 
 target_include_directories(Position PUBLIC

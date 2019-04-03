@@ -1,0 +1,34 @@
+// *****************************************************************************
+/*!
+  \file      src/PDE/Limiter.hpppp
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
+  \brief     Limiters for discontinous Galerkin methods
+  \details   This file contains functions that provide limiter function
+    calculations for maintaining monotonicity near solution discontinuities
+    for the DG discretization.
+*/
+// *****************************************************************************
+#ifndef Limiter_h
+#define Limiter_h
+
+#include "Types.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Fields.hpp"
+
+namespace inciter {
+
+using ncomp_t = kw::ncomp::info::expect::type;
+
+//! Weighted Essentially Non-Oscillatory (WENO) limiter for DGP1
+void
+WENO_P1( const std::vector< int >& esuel,
+         inciter::ncomp_t offset,
+         const tk::Fields& U,
+         tk::Fields& limFunc );
+
+} // inciter::
+
+#endif // Limiter_h

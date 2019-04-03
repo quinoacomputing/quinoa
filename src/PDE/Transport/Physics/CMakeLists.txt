@@ -1,5 +1,5 @@
 add_library(CGTransportPhysics
-            CGAdvDiff.C)
+            CGAdvDiff.cpp)
 
 target_include_directories(CGTransportPhysics PUBLIC
                            ${QUINOA_SOURCE_DIR}

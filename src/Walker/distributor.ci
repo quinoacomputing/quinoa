@@ -12,10 +12,10 @@
 
 module distributor {
 
-  include "UniPDF.h";
-  include "BiPDF.h";
-  include "TriPDF.h";
-  include "Walker/CmdLine/CmdLine.h";
+  include "UniPDF.hpp";
+  include "BiPDF.hpp";
+  include "TriPDF.hpp";
+  include "Walker/CmdLine/CmdLine.hpp";
 
   namespace walker {
 
