@@ -1221,6 +1221,12 @@ Refiner::boundary()
     }
   }
 
+  // Generate unique set of nodes for each side set
+  BndNodeSets nodesets;
+  for (const auto& s : m_bnode) {  // for all phsyical boundaries (sidesets)
+    nodesets[ s.first ].insert( begin(s.second), end(s.second) );
+  }
+
   // Associate a unique set of side set ids to boundary faces of the parents of
   // backtrackers (that underwent a 2->8 or a 4->8 refinement). Note that this
   // will only store data for backtrackers and will associate side set ids to
@@ -1230,7 +1236,7 @@ Refiner::boundary()
   for (const auto& f : facetets) {
     auto nc = tet_store.data( f.second ).children.size();
     if (nc > 0) {  // if tet is refined
-      auto ss = faceSides( facesets, f.first );    // query side sets for face
+      auto ss = sides( facesets, f.first );    // query side sets for face
       for (decltype(nc) i=0; i<nc; ++i) {  // for all child tets
         auto childtet = tet_store.get_child_id( f.second, i );
         auto parent = tet_store.get_parent_id( childtet );
@@ -1249,26 +1255,7 @@ Refiner::boundary()
     }
   }
 
-  return { facetets, grandfacesides, facesets };
-}
-
-std::unordered_set< int >
-Refiner::faceSides( const BndFaceSets& facesets, const tk::UnsMesh::Face& t )
-// *****************************************************************************
-//  Return a set of side set ids for a face, given by 3 node ids
-//! \param[in] facesets Boundary face sets to search in
-//! \param[in] t Triangle face, given by 3 node ids
-//! \return A unique set of side set ids in which the face is found or an empty
-//!    set if the face was not found.
-// *****************************************************************************
-{
-  std::unordered_set< int > ss;
-
-  for (const auto& s : facesets)  // for all phsyical boundaries
-    if (s.second.find(t) != end(s.second))
-      ss.insert( s.first );
-
-  return ss;
+  return { facetets, grandfacesides, facesets, nodesets };
 }
 
 void
@@ -1368,7 +1355,7 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
                    tk::cref_find( m_lid, f.first[1] ),
                    tk::cref_find( m_lid, f.first[2] ) }};
     // for all side sets of the face, match children's faces to side sets
-    for (const auto& ss : faceSides(facesets,f.first)) {
+    for (const auto& ss : sides(facesets,f.first)) {
       // will associate to side set id of old (unrefined) mesh boundary face
       auto& faces = bface[ ss ];
       // query number of children of boundary tet adjacent to boundary face
@@ -1452,56 +1439,42 @@ Refiner::updateBndNodes( const std::unordered_set< std::size_t >& old,
 
   using Edge = tk::UnsMesh::Edge;
 
-  // Generate unique set of nodes for each side set
-  std::unordered_map< int, std::unordered_set< std::size_t > > bnodeset;
-  for (const auto& ss : m_bnode)  // for all phsyical boundaries (sidesets)
-    bnodeset[ ss.first ].insert( begin(ss.second), end(ss.second) );
-
   // Lambda to find the nodes of the parent edge of a node
-  auto parentEdge = [ &old, this ]( std::size_t c ) -> Edge {
-    if (old.find(c) != end(old)) // if node is in old mesh, return doubled input
-      return {{ c, c }};
-    else
+  auto parentEdge = [this]( const std::unordered_set< std::size_t >& oldmesh,
+                            std::size_t c ) -> Edge
+  {
+    if (oldmesh.find(c) != end(oldmesh))
+      return {{ c, c }};  // if node is in old mesh, return doubled input
+    else                  // otherwise, return parent edge end-point ids
       return this->m_refiner.node_connectivity.get( c );
-  };
-
-  // Lambda to find a global node ID among the nodelists of side sets. Return
-  // all side set ids in which the node is found (or an empty vector if the
-  // node was not found).
-  auto bndNode = [ &bnodeset ]( std::size_t p ){
-    std::vector< int > ss;
-    for (const auto& s : bnodeset)  // for all phsyical boundaries (sidesets)
-      if (s.second.find(p) != end(s.second))
-        ss.push_back( s.first );
-    return ss;
   };
 
   // storage for boundary nodes associated to side-set IDs of the refined mesh
   decltype(m_bnode) bnode;              // will become m_node
 
   const auto& facetets = std::get< 0 >( bnd );
+  const auto& nodesets = std::get< 3 >( bnd );
 
   // Regenerate boundary node lists after refinement step
+  const auto& tet_store = m_refiner.tet_store;
   for (const auto& f : facetets) {  // for all boundary faces in old mesh
     // query number of children of boundary tet adjacent to boundary face
-    auto nc = m_refiner.tet_store.data( f.second ).children.size();
+    auto nc = tet_store.data( f.second ).children.size();
     if (nc == 0) {  // if boundary tet is not refined, add its boundary node
       for (auto n : f.first) {
-        auto ss = bndNode( n );
+        auto ss = sides( nodesets, n );
         for (auto s : ss) bnode[ s ].push_back( n );
       }
     } else {        // if boundary tet is refined
-      const auto& tets = m_refiner.tet_store.tets;
+      const auto& tets = tet_store.tets;
       for (decltype(nc) i=0; i<nc; ++i ) {      // for all child tets
         // get child tet id
-        auto childtet = m_refiner.tet_store.get_child_id( f.second, i );
+        auto childtet = tet_store.get_child_id( f.second, i );
         auto ct = tets.find( childtet );
         Assert( ct != end(tets), "Child tet not found" );
         // ensure all nodes of child tet are in refined mesh
-        Assert( ref.find(ct->second[0]) != end(ref) &&
-                ref.find(ct->second[1]) != end(ref) &&
-                ref.find(ct->second[2]) != end(ref) &&
-                ref.find(ct->second[3]) != end(ref),
+        Assert( std::all_of( begin(ct->second), end(ct->second),
+                  [&]( std::size_t n ){ return ref.find(n) != end(ref); } ),
                 "Boundary child tet node id not found in refined mesh" );
         // get nodes of child tet
         auto A = ct->second[0];
@@ -1511,16 +1484,17 @@ Refiner::updateBndNodes( const std::unordered_set< std::size_t >& old,
         // form all 6 edges of child tet
         std::array<Edge,6> edge{{ {{A,B}}, {{B,C}}, {{A,C}},
                                   {{A,D}}, {{B,D}}, {{C,D}} }};
-        for (const auto& re : edge)
+        for (const auto& re : edge) {
           for (auto c : re) {
-            auto p = parentEdge( c );
-            auto ss1 = bndNode( m_gid[p[0]] );
-            auto ss2 = bndNode( m_gid[p[1]] );
-            for (auto s1 : ss1)
-              for (auto s2 : ss2)
-                if (s1 == s2)
-                  bnode[ s1 ].push_back( m_gid[c] );
+            auto p = parentEdge( old, c );
+            auto ss1 = sides( nodesets, m_gid[p[0]] );
+            auto ss2 = sides( nodesets, m_gid[p[1]] );
+            for (auto s1 : ss1) {
+              if (ss2.find(s1) != end(ss2))
+                bnode[ s1 ].push_back( m_gid[c] );
+            }
           }
+        }
       }
     }
   }

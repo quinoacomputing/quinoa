@@ -175,8 +175,13 @@ class Refiner : public CBase_Refiner {
     //! Used to associate a unique set of faces (3 node ids) to side sets
     using BndFaceSets = std::unordered_map< int, tk::UnsMesh::FaceSet >;
 
+    //! Used to associate a unique set of nodes to side sets
+    using BndNodeSets =
+      std::unordered_map< int, std::unordered_set< std::size_t > >;
+
     //! Boundary face data bundle
-    using BndFaceData = std::tuple< BndFaceTets, BndFaceSides, BndFaceSets >;
+    using BndFaceData =
+      std::tuple< BndFaceTets, BndFaceSides, BndFaceSets, BndNodeSets >;
 
     //! Host proxy
     CProxy_Transporter m_host;
@@ -361,9 +366,26 @@ class Refiner : public CBase_Refiner {
       return s;
     }
 
-    //! Return a set of side set ids for a face, given by 3 node ids
+    //! Return a set of side set ids for a primitive
+    //! \tparam BndSets Type of map of sets we search for the primitive
+    //! \tparam Primitive The primitive (face/node) we search for
+    //! \note that BndSets::mapped_type == Primitive must be true
+    //! \param[in] sets Map of sets we search in
+    //! \param[in] p Primitive (face or node) we search for
+    //! \return A unique set of side set ids in which the primitive (face/node)
+    //!    is found or an empty set if the primitive was not found.
+    template< class BndSets, class Primitive >
     std::unordered_set< int >
-    faceSides( const BndFaceSets& facesets, const tk::UnsMesh::Face& t );
+    sides( const BndSets& sets, const Primitive& p ) {
+      static_assert( std::is_same< typename BndSets::mapped_type::value_type,
+        Primitive >::value, "Type of primitive (face/node) in map of sets must "
+        "be the same as the type of primitive (face/node) that is searched" );
+      std::unordered_set< int > ss;
+      for (const auto& s : sets)
+        if (s.second.find(p) != end(s.second))
+          ss.insert( s.first );
+      return ss;
+    }
 
     //! \brief Function class to call the resizeAfterREfined() member function
     //!   behind SchemeBase::Proxy
