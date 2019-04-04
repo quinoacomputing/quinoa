@@ -17,6 +17,7 @@ mainmodule fileconv {
 
   readonly CProxy_Main mainProxy;
   readonly tk::CProxy_ChareStateCollector stateProxy;
+  readonly bool g_trace;
 
   mainchare Main {
     entry Main( CkArgMsg* msg );

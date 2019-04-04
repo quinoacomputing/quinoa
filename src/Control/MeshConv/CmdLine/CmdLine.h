@@ -41,6 +41,7 @@ class CmdLine :
                       tag::reorder,    bool,
                       tag::help,       bool,
                       tag::quiescence, bool,
+                      tag::trace,      bool,
                       tag::cmdinfo,    tk::ctr::HelpFactory,
                       tag::ctrinfo,    tk::ctr::HelpFactory,
                       tag::helpkw,     tk::ctr::HelpKw,
@@ -57,6 +58,7 @@ class CmdLine :
                                      , kw::output
                                      , kw::reorder
                                      , kw::quiescence
+                                     , kw::trace
                                      >;
 
     //! \brief Constructor: set defaults.
@@ -69,6 +71,7 @@ class CmdLine :
       set< tag::verbose >( false ); // Use quiet output by default
       set< tag::chare >( false ); // No chare state output by default
       set< tag::reorder >( false ); // Do not reorder by default
+      set< tag::trace >( true ); // Output call and stack trace by default
       // Initialize help: fill from own keywords
       brigand::for_each< keywords::set >( tk::ctr::Info(get<tag::cmdinfo>()) );
     }
@@ -84,6 +87,7 @@ class CmdLine :
                    tag::reorder,    bool,
                    tag::help,       bool,
                    tag::quiescence, bool,
+                   tag::trace,      bool,
                    tag::cmdinfo,    tk::ctr::HelpFactory,
                    tag::ctrinfo,    tk::ctr::HelpFactory,
                    tag::helpkw,     tk::ctr::HelpKw,

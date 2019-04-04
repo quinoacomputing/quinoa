@@ -51,6 +51,9 @@ tk::CProxy_ChareStateCollector stateProxy;
 //! Load balancer switch group proxy
 tk::CProxy_LBSwitch LBSwitchProxy;
 
+//! If true, call and stack traces are to be output with exceptions
+bool g_trace;
+
 #if defined(__clang__)
   #pragma clang diagnostic pop
 #endif
@@ -191,6 +194,7 @@ class Main : public CBase_Main {
       m_timer(1),
       m_timestamp()
     {
+      g_trace = m_cmdline.get< tag::trace >();
       tk::MainCtor< CProxy_execute >
         ( msg, mainProxy, thisProxy, stateProxy, m_timer, m_cmdline,
           CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
