@@ -56,7 +56,8 @@ Discretization::Discretization(
   m_vol( m_gid.size(), 0.0 ),
   m_volc(),
   m_bid(),
-  m_timer()
+  m_timer(),
+  m_refined( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] fctproxy Distributed FCT proxy
@@ -496,8 +497,6 @@ Discretization::status()
     const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
     const auto field = g_inputdeck.get< tag::interval,tag::field >();
     const auto diag = g_inputdeck.get< tag::interval, tag::diag >();
-    const auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
-    const auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
 
     // estimate time elapsed and time for accomplishment
@@ -522,7 +521,7 @@ Discretization::status()
     // Augment one-liner with output indicators
     if (!(m_it % field)) print << 'f';
     if (!(m_it % diag)) print << 'd';
-    if (dtref && !(m_it % dtfreq)) print << 'h';
+    if (m_refined) print << 'h';
   
     print << std::endl;
   }

@@ -108,6 +108,11 @@ class Refiner : public CBase_Refiner {
     //! Send Refiner proxy to Discretization objects
     void sendProxy();
 
+    //! Get refinement field data in mesh cells
+    std::tuple< std::vector< std::string >,
+                std::vector< std::vector< tk::real > > >
+    refinementFields() const;
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -388,6 +393,14 @@ class Refiner : public CBase_Refiner {
       template< typename P > void operator()( const P& p ) const {
         p.ckLocal()->resizeAfterRefined( Ginpoel, Chunk, Coord, AddedNodes,
           AddedTets, Msum, Bface, Bnode, Triinpoel );
+      }
+    };
+
+    //! \brief Function class to call the solution() member function
+    //!   behind SchemeBase::Proxy
+    struct solution : boost::static_visitor< tk::Fields > {
+      template< typename P > const tk::Fields& operator()( const P& p ) const {
+        return p.ckLocal()->solution();
       }
     };
 };

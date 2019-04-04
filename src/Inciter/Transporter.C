@@ -57,7 +57,8 @@ Transporter::Transporter() :
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_nchare( 0 ),
   m_ncit( 0 ),
-  m_nrit( 0 ),
+  m_nt0rit( 0 ),
+  m_ndtrit( 0 ),
   m_scheme( g_inputdeck.get< tag::discr, tag::scheme >() ),
   m_partitioner(),
   m_refiner(),
@@ -187,8 +188,8 @@ Transporter::Transporter() :
     m_print.item( "Refinement at t>0 (dtref)", dtref );
     if (dtref) {
       auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
-      m_print.item( "Mesh refinement frequency, t > 0", dtfreq );
-      m_print.item( "Uniform-only mesh refinement, t > 0",
+      m_print.item( "Mesh refinement frequency, t>0", dtfreq );
+      m_print.item( "Uniform-only mesh refinement, t>0",
                     g_inputdeck.get< tag::amr, tag::dtref_uniform >() );
     }
   }
@@ -403,7 +404,9 @@ Transporter::edges()
 }
 
 void
-Transporter::matched( std::size_t nextra, std::size_t nedge )
+Transporter::matched( std::size_t nextra,
+                      std::size_t nedge,
+                      std::size_t initial )
 // *****************************************************************************
 //  Reduction target: all mesh refiner chares have performed a step of matching
 //  chare-boundary edges
@@ -411,20 +414,38 @@ Transporter::matched( std::size_t nextra, std::size_t nedge )
 //!   chare that need correction along chare boundaries
 //! \param[in] nedge Sum (across all chares) of number of edges on each chare.
 //!   This is not really used for anything meaningful (as it is multiply-counted
-//!   in parallel), only as a feedback during initial mesh refinement.
+//!   in parallel), only as a feedback during  mesh refinement.
+//! \param[in] initial Sum of contributions from all chares. If larger than
+//!    zero, we are during time stepping and if zero we are during setup.
 // *****************************************************************************
 {
   // If at least a single edge on a chare still needs correction, do correction,
-  // otherwise, this initial mesh refinement step is complete
+  // otherwise, this mesh refinement step is complete
   if (nextra > 0) {
+
     ++m_ncit;
     m_refiner.comExtra();
+
   } else {
-    if (!g_inputdeck.get< tag::cmd, tag::feedback >())
-      m_print.diag( { "t0ref", "nedge", "ncorr" }, { ++m_nrit, nedge, m_ncit } );
+
+    if (initial > 0) {
+
+      if (!g_inputdeck.get< tag::cmd, tag::feedback >()) {
+        m_print.diag( { "t0ref", "nedge", "ncorr" },
+                      { ++m_nt0rit, nedge, m_ncit } );
+      }
+      m_progMesh.inc< REFINE >();
+
+    } else {
+
+      m_print.diag( { "dtref", "nedge", "ncorr" },
+                    { ++m_ndtrit, nedge, m_ncit }, false );
+
+    }
+
     m_ncit = 0;
-    m_progMesh.inc< REFINE >();
     m_refiner.eval();
+
   }
 }
 

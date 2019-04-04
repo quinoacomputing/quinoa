@@ -147,6 +147,10 @@ class DG : public CBase_DG {
       const std::map< int, std::vector< std::size_t > >& bnode,
       const std::vector< std::size_t >& triinpoel );
 
+    //! Const-ref access to current solution
+    //! \return Const-ref to current solution
+    const tk::Fields& solution() const { return m_u; }
+
     //! Compute left hand side
     void lhs();
 
@@ -200,7 +204,6 @@ class DG : public CBase_DG {
       p | m_diag;
       p | m_stage;
       p | m_initial;
-      p | m_refined;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -289,8 +292,6 @@ class DG : public CBase_DG {
     std::size_t m_stage;
     //! 1 if starting time stepping, 0 if during time stepping
     int m_initial;
-    //! 1 if mesh was refined in a time step, 0 if it was not
-    int m_refined;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

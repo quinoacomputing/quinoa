@@ -508,9 +508,12 @@ DiagCG::writeFields( CkCallback c ) const
     nodefields.insert( end(nodefields), begin(o), end(o) );
   }
 
+  // Query refinement data
+  auto r = d->Ref()->refinementFields();
+
   // Send mesh and fields data (solution dump) for output to file
-  d->write( d->Inpoel(), d->Coord(), {}, tk::remap(m_bnode,d->Lid()), {}, {},
-            nodefieldnames, {}, nodefields, c );
+  d->write( d->Inpoel(), d->Coord(), {}, tk::remap(m_bnode,d->Lid()), {},
+            std::get<0>(r), nodefieldnames, std::get<1>(r), nodefields, c );
 }
 
 void
@@ -582,16 +585,18 @@ DiagCG::refine()
   auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
   auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
 
-  // if t>0 refinement enabled and we hit the frequency
+  // if t>0 refinement enabled and we hit the dtref frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
     d->Ref()->dtref( {}, m_bnode, {} );
+    d->refined() = 1;
 
   } else {      // do not refine
 
     ref_complete();
     lhs_complete();
     resize_complete();
+    d->refined() = 0;
 
   }
 }

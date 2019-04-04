@@ -92,7 +92,7 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target: all mesh refiner chares have performed a step
     //!   of matching chare-boundary edges
-    void matched( std::size_t nextra, std::size_t nedge );
+    void matched( std::size_t nextra, std::size_t nedge, std::size_t initial );
 
     //! Reduction target: all PEs have optionally refined their mesh
     void refined( std::size_t nelem, std::size_t npoin );
@@ -180,7 +180,8 @@ class Transporter : public CBase_Transporter {
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of worker chares
     std::size_t m_ncit;                  //!< Number of mesh ref corr iter
-    std::size_t m_nrit;                  //!< Number of initial mesh ref iter
+    std::size_t m_nt0rit;                //!< Number of (t<0) mesh ref iters
+    std::size_t m_ndtrit;                //!< Number of (t>0) mesh ref iters
     Scheme m_scheme;                     //!< Discretization scheme
     CProxy_Partitioner m_partitioner;    //!< Partitioner nodegroup proxy
     CProxy_Refiner m_refiner;            //!< Mesh refiner array proxy

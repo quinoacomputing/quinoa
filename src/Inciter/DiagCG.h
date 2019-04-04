@@ -145,8 +145,8 @@ class DiagCG : public CBase_DiagCG {
       const std::vector< std::size_t >& /* triinpoel */ );
 
     //! Const-ref access to current solution
-    //! \param[in,out] u Reference to update with current solution
-    void solution( tk::Fields& u ) const { u = m_u; }
+    //! \return Const-ref to current solution
+    const tk::Fields& solution() const { return m_u; }
 
     //! Resizing data sutrctures after mesh refinement has been completed
     void resized();

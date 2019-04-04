@@ -74,8 +74,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_recvGhost(),
   m_diag(),
   m_stage( 0 ),
-  m_initial( 1 ),
-  m_refined( 0 )
+  m_initial( 1 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -1340,17 +1339,17 @@ DG::refine()
   auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
   auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
 
-  // if t>0 refinement enabled and we hit the frequency
+  // if t>0 refinement enabled and we hit the dtref frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
     d->Ref()->dtref( m_fd.Bface(), {}, tk::remap(m_fd.Triinpoel(),d->Gid()) );
-    m_refined = 1;
+    d->refined() = 1;
 
   } else {      // do not refine
 
     ref_complete();
     resize_complete();
-    m_refined = 0;
+    d->refined() = 0;
 
   }
 }
@@ -1443,7 +1442,7 @@ DG::recompGhostRefined()
 // Start recomputing ghost data after a mesh refinement step
 // *****************************************************************************
 {
-  if (m_refined) resizeComm(); else stage();
+  if (Disc()->refined()) resizeComm(); else stage();
 }
 
 void

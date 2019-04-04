@@ -503,7 +503,7 @@ Refiner::correctref()
   correctRefine( extra );
 
   // Aggregate number of extra edges that still need correction
-  std::vector< std::size_t > m{ m_extra, m_edgedata.size() };
+  std::vector< std::size_t > m{ m_extra, m_edgedata.size(), m_initial };
   contribute( m, CkReduction::sum_ulong, m_cbr.get< tag::matched >() );
 }
 
@@ -553,6 +553,24 @@ Refiner::updateEdgeData()
   }
 }
 
+std::tuple< std::vector< std::string >,
+                std::vector< std::vector< tk::real > > >
+Refiner::refinementFields() const
+// *****************************************************************************
+//  Output mesh to file(s)
+//! \return The names and fields of mesh refinement data in mesh cells, ready
+//!   for file output
+// *****************************************************************************
+{
+  // Prepare element fields with mesh refinement data
+  std::vector< std::string > elemfieldnames{ "refinement level", "cell type" };
+  auto& tet_store = m_refiner.tet_store;
+  std::vector< std::vector< tk::real > > elemfields{
+    tet_store.get_refinement_level_list(), tet_store.get_cell_type_list() };
+
+  return { elemfieldnames, elemfields };
+}
+
 void
 Refiner::writeMesh( const std::string& basefilename,
                     uint64_t itr,
@@ -567,11 +585,9 @@ Refiner::writeMesh( const std::string& basefilename,
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
-  // Prepare element fields with mesh refinement data
-  std::vector< std::string > elemfieldnames{ "refinement level", "cell type" };
-  auto& tet_store = m_refiner.tet_store;
-  std::vector< std::vector< tk::real > > elemfields{
-    tet_store.get_refinement_level_list(), tet_store.get_cell_type_list() };
+  auto r = refinementFields();
+  auto elemfieldnames = std::get< 0 >( r );
+  auto elemfields = std::get< 1 >( r );
 
   // Prepare solution field names: depvar + component id for all eqs
   auto nprop = g_inputdeck.get< tag::component >().nprop();
@@ -768,14 +784,24 @@ Refiner::errorRefine()
 
   // Get solution whose error to evaluate
   tk::Fields u;
-  if (m_initial) {      // if initial (before t=0) AMR
+  if (m_initial) {      // initial (before t=0) AMR
 
     // Evaluate initial conditions at mesh nodes
     u = nodeinit( npoin, esup );
 
-  } else {              // if AMR during time stepping (t>0)
+  } else {              // AMR during time stepping (t>0)
 
-    // ...
+    // Query current solution
+    auto e = tk::element< SchemeBase::ProxyElem >
+                        ( m_scheme.getProxy(), thisIndex );
+    u = boost::apply_visitor( solution(), e );
+ 
+    const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+    const auto centering = ctr::Scheme().centering( scheme );
+    if (centering == tk::Centering::ELEM) {
+
+
+    }
 
   }
 
@@ -789,19 +815,17 @@ Refiner::errorRefine()
   // Compute errors in ICs and define refinement criteria for edges
   std::vector< edge_t > edge;
   AMR::Error error;
-  for (std::size_t p=0; p<npoin; ++p)   // for all mesh nodes on this chare
-  {
+  for (std::size_t p=0; p<npoin; ++p) { // for all mesh nodes on this chare
     for (auto q : tk::Around(psup,p)) { // for all nodes surrounding p
-       tk::real cmax = 0.0;
-       edge_t e(p,q);
-       for (auto i : refidx) {          // for all refinement variables
-         auto c = error.scalar( u, e, i, m_coord, m_inpoel, esup, errtype );
-         if (c > cmax) cmax = c;        // find max error at edge
-       }
-       if (cmax > 0.8) {         // if nonzero error, will pass edge to refiner
-         edge.push_back( e );
-       }
-     }
+      tk::real cmax = 0.0;
+      edge_t e(p,q);
+      for (auto i : refidx) {          // for all refinement variables
+        auto c = error.scalar( u, e, i, m_coord, m_inpoel, esup, errtype );
+        if (c > cmax) cmax = c;        // find max error at edge
+      }
+      // if error is large, will pass edge to refiner
+      if (cmax > 0.8)edge.push_back( e );
+    }
   }
 
   // Do error-based refinement
@@ -965,7 +989,7 @@ Refiner::nodeinit( std::size_t npoin,
   const auto centering = ctr::Scheme().centering( scheme );
   if (centering == tk::Centering::NODE) {
 
-    // Node-centered: evaluate ICs for all scalar components integrated
+    // Evaluate ICs for all scalar components integrated
     for (const auto& eq : g_cgpde) eq.initialize( m_coord, u, t0 );
 
   } else if (centering == tk::Centering::ELEM) {
@@ -1335,7 +1359,7 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
     }
   };
 
-  std::cout << thisIndex << ':';
+  //std::cout << thisIndex << ':';
   // Regenerate boundary faces after refinement step
   const auto& tet_store = m_refiner.tet_store;
   for (const auto& f : facetets) {  // for all boundary faces in old mesh
@@ -1400,13 +1424,13 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
       }
     }
   }
-  std::cout << '\n';
+  //std::cout << '\n';
 
   // Update boundary face data structures
   m_bface = std::move(bface);
   m_triinpoel = std::move(triinpoel);
 
-std::cout << thisIndex << " update: " << tk::sumvalsize(m_bface) << '\n';
+//std::cout << thisIndex << " update: " << tk::sumvalsize(m_bface) << '\n';
 }
 
 void
