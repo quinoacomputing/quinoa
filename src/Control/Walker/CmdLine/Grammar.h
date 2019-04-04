@@ -70,10 +70,15 @@ namespace cmd {
                                pegtl::alnum,
                                tag::discr /* = unused */ > {};
 
-  //! Match help on control file keywords
+  //! Match switch on quiescence
   struct quiescence :
          tk::grm::process_cmd_switch< use, kw::quiescence,
                                       tag::quiescence > {};
+
+  //! Match switch on trace output
+  struct trace :
+         tk::grm::process_cmd_switch< use, kw::trace,
+                                      tag::trace > {};
 
   //! command line keywords
   struct keywords :
@@ -84,6 +89,7 @@ namespace cmd {
                      helpkw,
                      virtualization,
                      quiescence,
+                     trace,
                      io< kw::control, tag::control >,
                      io< kw::pdf, tag::pdf >,
                      io< kw::stat, tag::stat > > {};
