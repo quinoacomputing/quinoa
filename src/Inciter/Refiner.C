@@ -714,17 +714,18 @@ Refiner::next()
       }
     }
 
-    // Send new mesh and solution back to PDE worker
-    Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
-            "About to use nullptr" );
-    auto e = tk::element< SchemeBase::ProxyElem >
-                        ( m_scheme.getProxy(), thisIndex );
+    // Regerate node communication map containing vectors on refined mesh
     std::unordered_map< int, std::vector< std::size_t > > msum;
     for (const auto& c : m_msumset) {
       auto& n = msum[ c.first ];
       n.insert( end(n), c.second.cbegin(), c.second.cend() );
     }
 
+    // Send new mesh and solution back to PDE worker
+    Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
+            "About to use nullptr" );
+    auto e = tk::element< SchemeBase::ProxyElem >
+                        ( m_scheme.getProxy(), thisIndex );
     boost::apply_visitor(
       ResizeAfterRefined( m_ginpoel, m_el, m_coord, m_addedNodes, m_addedTets,
         msum, m_bface, m_bnode, m_triinpoel ), e );
