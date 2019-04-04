@@ -47,7 +47,7 @@ void echoBuildEnv( const Print& print, const std::string& executable );
 
 //! Echo runtime environment
 void echoRunEnv( const Print& print, int argc, char** argv,
-                 bool verbose, bool quiescence, bool charestate );
+                 bool verbose, bool quiescence, bool charestate, bool trace );
 
 //! \brief Generic Main() used for all executables for code-reuse and a uniform
 //!    output
@@ -85,7 +85,8 @@ Driver Main( int argc, char* argv[],
   // Runtime environment
   echoRunEnv( print, argc, argv, cmdline.template get< tag::verbose >(),
               cmdline.template get< tag::quiescence >(),
-              cmdline.template get< tag::chare >() );
+              cmdline.template get< tag::chare >(),
+              cmdline.template get< tag::trace >() );
 
   // Create and return driver
   return Driver( print, cmdline );

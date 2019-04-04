@@ -36,6 +36,7 @@ class CmdLine : public tk::Control<
                   tag::help,       bool,
                   tag::helpctr,    bool,
                   tag::quiescence, bool,
+                  tag::trace,      bool,
                   tag::cmdinfo,    tk::ctr::HelpFactory,
                   tag::ctrinfo,    tk::ctr::HelpFactory,
                   tag::helpkw,     tk::ctr::HelpKw,
@@ -50,6 +51,7 @@ class CmdLine : public tk::Control<
                                      , kw::helpctr
                                      , kw::helpkw
                                      , kw::quiescence
+                                     , kw::trace
                                      >;
 
     //! \brief Constructor: set all defaults.
@@ -86,6 +88,7 @@ class CmdLine : public tk::Control<
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
       set< tag::verbose >( false ); // Use quiet output by default
       set< tag::chare >( false ); // No chare state output by default
+      set< tag::trace >( true ); // Output call and stack trace by default
       // Initialize help: fill from own keywords + add map passed in
       brigand::for_each< keywords::set >( tk::ctr::Info( get<tag::cmdinfo>()) );
       get< tag::ctrinfo >() = std::move( ctrinfo );
@@ -102,6 +105,7 @@ class CmdLine : public tk::Control<
                    tag::help,       bool,
                    tag::helpctr,    bool,
                    tag::quiescence, bool,
+                   tag::trace,      bool,
                    tag::cmdinfo,    tk::ctr::HelpFactory,
                    tag::ctrinfo,    tk::ctr::HelpFactory,
                    tag::helpkw,     tk::ctr::HelpKw,
