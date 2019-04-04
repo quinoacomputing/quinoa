@@ -54,6 +54,9 @@ CProxy_Main mainProxy;
 //! Chare state collector Charm++ chare group proxy
 tk::CProxy_ChareStateCollector stateProxy;
 
+//! If true, call and stack traces are to be output with exceptions
+bool g_trace;
+
 #if defined(__clang__)
   #pragma clang diagnostic pop
 #endif
@@ -199,6 +202,7 @@ class Main : public CBase_Main {
       m_timer(1),       // start new timer measuring the total runtime
       m_timestamp()
     {
+      g_trace = m_cmdline.get< tag::trace >();
       tk::MainCtor< CProxy_execute >
         ( msg, mainProxy, thisProxy, stateProxy, m_timer, m_cmdline,
           CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
