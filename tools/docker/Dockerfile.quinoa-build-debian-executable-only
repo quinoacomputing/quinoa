@@ -40,7 +40,7 @@ RUN cd quinoa && git checkout $COMMIT && git log -1 HEAD
 RUN cd quinoa && git submodule init && git submodule update --recursive && cd external && git submodule init && git submodule update --recursive && cd .. && git submodule status --recursive
 ARG EXECUTABLE
 # Build TPLs
-RUN cd quinoa && mkdir -p external/build && cd external/build && cmake -D${EXECUTABLE}_ONLY=true -DCMAKE_BUILD_TYPE=Release .. && make -sj$(grep -c processor /proc/cpuinfo)
+RUN cd quinoa && mkdir -p external/build && cd external/build && cmake -D$EXECUTABLE_ONLY=true -DCMAKE_BUILD_TYPE=Release .. && make -sj$(grep -c processor /proc/cpuinfo)
 # Build code
 RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS=-Werror -DCMAKE_BUILD_TYPE=Release -GNinja -DRUNNER=mpirun -DRUNNER_NCPUS_ARG=-n -DRUNNER_ARGS=-oversubscribe ../src && ninja
 # Run tests
