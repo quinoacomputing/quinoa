@@ -16,10 +16,7 @@
 #
 # This docker image is intended to test and demonstrate a simple way of building
 # Quinoa. It creates dynamically built executables which require runtime
-# libraries. At the end we clean the clone, preparing the ground for development
-# via a docker host mount. The container still contains the full operating
-# system, compilers, and libraries. The image is intended as a complete
-# development environment using the system-wide GNU compilers and OpenMPI.
+# libraries.
 #
 ################################################################################
 
