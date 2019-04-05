@@ -68,6 +68,8 @@ tk::bndSurfInt( ncomp_t system,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+
   const auto& bface = fd.Bface();
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
@@ -134,7 +136,8 @@ tk::bndSurfInt( ncomp_t system,
           auto wt = wgp[igp] * geoFace(f,0,0);
 
           // Compute the state variables at the left element
-          auto ugp = eval_state( ncomp, offset, ndofel[el], el, U, limFunc, B_l );
+          auto ugp =
+            eval_state( ncomp, offset, ndof, ndofel[el], el, U, limFunc, B_l );
 
           Assert( ugp.size() == ncomp, "Size mismatch" );
 
@@ -144,7 +147,7 @@ tk::bndSurfInt( ncomp_t system,
                       vel( system, ncomp, gp[0], gp[1], gp[2] ) );
 
           // Add the surface integration term to the rhs
-          update_rhs_bc( ncomp, offset, ndofel[el], wt, el, fl, B_l, R );
+          update_rhs_bc( ncomp, offset, ndof, ndofel[el], wt, el, fl, B_l, R );
         }
       }
     }
@@ -154,6 +157,7 @@ tk::bndSurfInt( ncomp_t system,
 void
 tk::update_rhs_bc ( ncomp_t ncomp,
                     ncomp_t offset,
+                    const std::size_t ndof,
                     const std::size_t ndof_l,
                     const tk::real wt,
                     const std::size_t el,
@@ -164,7 +168,8 @@ tk::update_rhs_bc ( ncomp_t ncomp,
 //  Update the rhs by adding the boundary surface integration term
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
-//! \param[in] ndof Number of degree of freedom
+//! \param[in] ndof Global number of degrees of freedom
+//! \param[in] ndof_l Number of degrees of freedom for the left element
 //! \param[in] wt Weight of gauss quadrature point
 //! \param[in] el Left element index
 //! \param[in] fl Surface flux
@@ -172,8 +177,6 @@ tk::update_rhs_bc ( ncomp_t ncomp,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-
   Assert( B_l.size() == ndof_l, "Size mismatch" );
 
   for (ncomp_t c=0; c<ncomp; ++c)

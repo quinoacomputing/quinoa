@@ -75,7 +75,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_recvGhost(),
   m_diag(),
   m_stage( 0 ),
-  m_ndofel(),
+  m_ndof(),
   m_initial( 1 ),
   m_refined( 0 )
 // *****************************************************************************
@@ -821,7 +821,7 @@ DG::adj()
 
   // Initialize the array of adaptive indicator
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-  m_ndofel.resize( m_nunk, ndof );
+  m_ndof.resize( m_nunk, ndof );
   
 
   // Ensure that we also have all the geometry and connectivity data 
@@ -1080,14 +1080,14 @@ DG::advance( tk::real )
     for(const auto& n : m_ghostData) {
       std::vector< std::size_t > tetid;
       std::vector< std::vector< tk::real > > u;
-      std::vector< std::size_t > ndofel;
+      std::vector< std::size_t > ndof;
       for(const auto& i : n.second) {
         Assert( i.first < m_fd.Esuel().size()/4, "Sending solution ghost data" );
         tetid.push_back( i.first );
         u.push_back( m_u[i.first] );
-        ndofel.push_back( m_ndofel[i.first] );
+        ndof.push_back( m_ndof[i.first] );
       }
-      thisProxy[ n.first ].comsol( thisIndex, tetid, u, ndofel );
+      thisProxy[ n.first ].comsol( thisIndex, tetid, u, ndof );
     }
 
   ownsol_complete();
@@ -1097,13 +1097,13 @@ void
 DG::comsol( int fromch,
             const std::vector< std::size_t >& tetid,
             const std::vector< std::vector< tk::real > >& u,
-            const std::vector< std::size_t >& ndofel )
+            const std::vector< std::size_t >& ndof )
 // *****************************************************************************
 //  Receive chare-boundary solution ghost data from neighboring chares
 //! \param[in] fromch Sender chare id
 //! \param[in] tetid Ghost tet ids we receive solution data for
 //! \param[in] u Solution ghost data
-//! \param[in] ndofel Number of degrees of freedom for chare-boundary element
+//! \param[in] ndof Number of degrees of freedom for chare-boundary elements
 //! \details This function receives contributions to m_u from fellow chares.
 // *****************************************************************************
 {
@@ -1117,7 +1117,7 @@ DG::comsol( int fromch,
     Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
     Assert( j < m_u.nunk(), "Indexing out of bounds in DG::comsol()" );
     for (std::size_t c=0; c<m_u.nprop(); ++c) m_u(j,c,0) = u[i][c];
-    m_ndofel[j] = ndofel[i];
+    m_ndof[j] = ndof[i];
   }
 
   // if we have received all solution ghost contributions from those chares we
@@ -1159,12 +1159,10 @@ DG::writeFields( CkCallback c )
     auto o =
       eq.fieldOutput( d->T(), m_geoElem, u );
 
-    // Vector ndofel_f stores the real type data of ndofel
-    std::vector<tk::real> ndofel( m_nunk, 0 );
-    std::copy ( begin(m_ndofel), end(m_ndofel), begin(ndofel) );
+    std::vector<tk::real> ndof( begin(m_ndof), end(m_ndof) );
 
     // Add adaptive indicator array to output
-    o.push_back( ndofel );
+    o.push_back( ndof );
 
     // cut off ghost elements
     for (auto& field : o) field.resize( esuel.size()/4 );
@@ -1204,7 +1202,7 @@ DG::lim()
 {
   const auto psign = inciter::g_inputdeck.get< tag::discr, tag::psign >();
 
-  if (psign == true) adjdofel();
+  if (psign) propagate_ndof();
 
   if (g_inputdeck.get< tag::discr, tag::ndof >() > 1) {
   
@@ -1302,7 +1300,7 @@ DG::solve( tk::real newdt )
 
   for (const auto& eq : g_dgpde)
     eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(), m_u,
-            m_limFunc, m_ndofel, m_rhs );
+            m_limFunc, m_ndof, m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   m_u =  rkcoef[0][m_stage] * m_un
@@ -1319,12 +1317,11 @@ DG::solve( tk::real newdt )
 
     // Compute diagnostics, e.g., residuals
     auto diag_computed = m_diag.compute( *d, m_u.nunk()-m_fd.Esuel().size()/4,
-                                         m_geoElem, m_ndofel, m_u );
+                                         m_geoElem, m_ndof, m_u );
 
     const auto psign = inciter::g_inputdeck.get< tag::discr, tag::psign >();
 
-    if(psign == true)
-      eval_ndofel();
+    if(psign) eval_ndof();
 
     // Increase number of iterations and physical time
     d->next();
@@ -1433,7 +1430,7 @@ DG::resizeAfterRefined(
   m_rhs.resize( nelem, nprop );
 
   auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-  m_ndofel.resize( nelem, ndof );
+  m_ndof.resize( nelem, ndof );
 
   m_fd = FaceData( d->Inpoel(), bface, tk::remap(triinpoel,d->Lid()) );
 
@@ -1559,7 +1556,7 @@ DG::step()
   }
 }
 
-void DG::eval_ndofel()
+void DG::eval_ndof()
 // *****************************************************************************
 //  Determine order of solution polynomial for each element for p-adaptive DG,
 //  using an error indicator based on the magnitude of solution gradient
@@ -1577,7 +1574,7 @@ void DG::eval_ndofel()
 
   for (std::size_t e=0; e<esuel.size()/4; ++e)
   {
-    if(m_ndofel[e] == 4)
+    if(m_ndof[e] == 4)
     {
       // Extract the element coordinates
       std::array< std::array< tk::real, 3>, 4 > coordel {{
@@ -1627,10 +1624,10 @@ void DG::eval_ndofel()
       }
 
       if(sign > 0)
-        m_ndofel[e] = 4;
+        m_ndof[e] = 4;
       else
       {
-        m_ndofel[e] = 1;
+        m_ndof[e] = 1;
 
         // When the element are coarsened, high order term should be zero
         for (std::size_t c=0; c<ncomp; ++c)
@@ -1645,7 +1642,7 @@ void DG::eval_ndofel()
   }
 }
 
-void DG::adjdofel()
+void DG::propagate_ndof()
 // *****************************************************************************
 //  p-refine all elements that are adjacent to p-refined elements
 //! \details This function p-refines all the neighbors of an element that has
@@ -1654,8 +1651,8 @@ void DG::adjdofel()
 {
   const auto& esuf = m_fd.Esuf();
 
-  // Copy m_ndofel
-  auto ndofel = m_ndofel;
+  // Copy m_ndof
+  auto ndof = m_ndof;
 
   // p-refine (DGP0 -> DGP1) all neighboring elements of elements that have
   // been p-refined (DGP0 -> DGP1) as a result of error indicators
@@ -1664,14 +1661,14 @@ void DG::adjdofel()
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
     std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
 
-    if (m_ndofel[el] == 4)
-      ndofel[er] = 4;
+    if (m_ndof[el] == 4)
+      ndof[er] = 4;
 
-    if (m_ndofel[er] == 4)
-      ndofel[el] = 4;
+    if (m_ndof[er] == 4)
+      ndof[el] = 4;
   }
-  // Copy the updated version of ndofel to m_ndofel
-  m_ndofel = ndofel;
+  // Copy the updated version of ndof to m_ndof
+  m_ndof = ndof;
 }
 
 #include "NoWarning/dg.def.h"

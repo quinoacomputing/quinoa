@@ -137,9 +137,8 @@ class CompFlowProblemVorticalFlow {
       n.push_back( "pressure_analytical" );
 
       const auto psign = g_inputdeck.get< tag::discr, tag::psign >();
-      if(psign == true)           // Adaptive DG on
-        // will output adaptive indicator
-        n.push_back( "Adaptive indicator" );
+      if(psign)           // Adaptive DG on
+        n.push_back( "ndof" );
       return n;
     }
 
@@ -168,7 +167,7 @@ class CompFlowProblemVorticalFlow {
         g_inputdeck.get< tag::param, tag::compflow, tag::beta >()[system];
       const auto& p0 =
         g_inputdeck.get< tag::param, tag::compflow, tag::p0 >()[system];
-      // number of degree of freedom
+      // number of degrees of freedom
       const std::size_t ndof = 
         g_inputdeck.get< tag::discr, tag::ndof >();
       // ratio of specific heats

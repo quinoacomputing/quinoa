@@ -215,9 +215,8 @@ class Transport {
       // will output error for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_error" );
-      if(psign == true)           // Adaptive DG on
-        // will output adaptive indicator
-        n.push_back( "Adaptive indicator" );
+      if(psign)           // Adaptive DG on
+        n.push_back( "ndof" );
       return n;
     }
 

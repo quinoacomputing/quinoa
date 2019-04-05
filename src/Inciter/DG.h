@@ -125,7 +125,7 @@ class DG : public CBase_DG {
     void comsol( int fromch,
                  const std::vector< std::size_t >& tetid,
                  const std::vector< std::vector< tk::real > >& u,
-                 const std::vector< std::size_t >& ndofel );
+                 const std::vector< std::size_t >& ndof );
 
     //! Advance equations to next time step
     void advance( tk::real );
@@ -200,7 +200,7 @@ class DG : public CBase_DG {
       p | m_recvGhost;
       p | m_diag;
       p | m_stage;
-      p | m_ndofel;
+      p | m_ndof;
       p | m_initial;
       p | m_refined;
     }
@@ -290,7 +290,7 @@ class DG : public CBase_DG {
     //! Runge-Kutta stage counter
     std::size_t m_stage;
     //! Vector of local number of degrees of freedom for each element
-    std::vector< std::size_t > m_ndofel;
+    std::vector< std::size_t > m_ndof;
     //! 1 if starting time stepping, 0 if during time stepping
     int m_initial;
     //! 1 if mesh was refined in a time step, 0 if it was not
@@ -358,11 +358,12 @@ class DG : public CBase_DG {
     //! Continue to next time step stage
     void next();
 
-    //! Calculate the local number of degrees of freedom for each element
-    void eval_ndofel();
+    //! Determine order of solution polynomial for each element for p-adaptive
+    //! DG, using an error indicator based on the magnitude of solution gradient
+    void eval_ndof();
 
     //! p-refine all elements that are adjacent to p-refined elements
-    void adjdofel();
+    void propagate_ndof();
 };
 
 } // inciter::

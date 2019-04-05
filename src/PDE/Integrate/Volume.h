@@ -44,6 +44,7 @@ volInt( ncomp_t system,
 void
 update_rhs( ncomp_t ncomp,
             ncomp_t offset,
+            const std::size_t ndof,
             const std::size_t ndof_e,
             const tk::real wt,
             const std::size_t e,

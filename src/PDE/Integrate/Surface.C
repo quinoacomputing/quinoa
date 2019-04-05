@@ -57,6 +57,8 @@ tk::surfInt( ncomp_t system,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
 
@@ -150,8 +152,10 @@ tk::surfInt( ncomp_t system,
 
       std::array< std::vector< real >, 2 > state;
 
-      state[0] = eval_state( ncomp, offset, ndofel[el], el, U, limFunc, B_l );
-      state[1] = eval_state( ncomp, offset, ndofel[er], er, U, limFunc, B_r );
+      state[0] =
+        eval_state( ncomp, offset, ndof, ndofel[el], el, U, limFunc, B_l );
+      state[1] =
+        eval_state( ncomp, offset, ndof, ndofel[er], er, U, limFunc, B_r );
 
       Assert( state[0].size() == ncomp, "Size mismatch" );
       Assert( state[1].size() == ncomp, "Size mismatch" );
@@ -164,8 +168,8 @@ tk::surfInt( ncomp_t system,
          flux( {{geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0)}}, state, v );
 
       // Add the surface integration term to the rhs
-      update_rhs_fa( ncomp, offset, ndofel[el], ndofel[er], wt, el, er, fl,
-                     B_l, B_r, R );
+      update_rhs_fa( ncomp, offset, ndof, ndofel[el], ndofel[er], wt, el, er,
+                     fl, B_l, B_r, R );
     }
   }
 }
@@ -173,6 +177,7 @@ tk::surfInt( ncomp_t system,
 void
 tk::update_rhs_fa ( ncomp_t ncomp,
                     ncomp_t offset,
+                    const std::size_t ndof,
                     const std::size_t ndof_l,
                     const std::size_t ndof_r,
                     const tk::real wt,
@@ -186,7 +191,9 @@ tk::update_rhs_fa ( ncomp_t ncomp,
 //  Update the rhs by adding the surface integration term
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
-//! \param[in] ndof Number of degree of freedom
+//! \param[in] ndof Global number of degrees of freedom
+//! \param[in] ndof_l Number of degrees of freedom for left element
+//! \param[in] ndof_r Number of degrees of freedom for right element
 //! \param[in] wt Weight of gauss quadrature point
 //! \param[in] el Left element index
 //! \param[in] er Right element index
@@ -196,8 +203,6 @@ tk::update_rhs_fa ( ncomp_t ncomp,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-
   Assert( B_l.size() == ndof_l, "Size mismatch" );
   Assert( B_r.size() == ndof_r, "Size mismatch" );
 

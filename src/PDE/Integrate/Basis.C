@@ -20,13 +20,6 @@
 #include <array>
 
 #include "Basis.h"
-#include "Inciter/InputDeck/InputDeck.h"
-
-namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
-
-} // inciter::
 
 std::array< tk::real, 3 >
 tk::eval_gp ( const std::size_t igp,
@@ -86,7 +79,7 @@ tk::eval_dBdx_p1( const std::size_t ndof,
                   const std::array< std::array< tk::real, 3 >, 3 >& jacInv )
 // *****************************************************************************
 //  Compute the derivatives of basis functions for DG(P1)
-//! \param[in] ndof Number of degree of freedom
+//! \param[in] ndof Number of degrees of freedom
 //! \param[in] jacInv Array of the inverse of Jacobian
 //! \return Array of the derivatives of basis functions
 // *****************************************************************************
@@ -162,7 +155,7 @@ tk::eval_dBdx_p2( const std::size_t igp,
                   std::array< std::vector<tk::real>, 3 >& dBdx )
 // *****************************************************************************
 //  Compute the derivatives of basis function for DG(P2)
-//! \param[in] ndof Number of degree of freedom
+//! \param[in] ndof Number of degrees of freedom
 //! \param[in] igp Index of quadrature points
 //! \param[in] coord Array of nodal coordinates for tetrahedron element
 //! \param[in] jacInv Array of the inverse of Jacobian
@@ -279,7 +272,7 @@ tk::eval_basis( const std::size_t ndof,
                 const tk::real zeta )
 // *****************************************************************************
 //  Compute the Dubiner basis functions
-//! \param[in] ndof Number of degree of freedom
+//! \param[in] ndof Number of degrees of freedom
 //! \param[in] xi,eta,zeta Coordinates for quadrature points in reference space
 //! \return Vector of basis functions
 // *****************************************************************************
@@ -317,6 +310,7 @@ tk::eval_basis( const std::size_t ndof,
 std::vector< tk::real >
 tk::eval_state ( ncomp_t ncomp,
                  ncomp_t offset,
+                 const std::size_t ndof,
                  const std::size_t ndof_el,
                  const std::size_t e,
                  const Fields& U,
@@ -326,7 +320,8 @@ tk::eval_state ( ncomp_t ncomp,
 //  Compute the state variables for the tetrahedron element
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
-//! \param[in] ndof Number of degree of freedom
+//! \param[in] ndof Global number of degrees of freedom
+//! \param[in] ndof_el Number of degrees of freedom for the local element
 //! \param[in] e Index for the tetrahedron element
 //! \param[in] U Solution vector at recent time step
 //! \param[in] limFunc Limiter function for higher-order solution dofs
@@ -334,8 +329,6 @@ tk::eval_state ( ncomp_t ncomp,
 //! \return Vector of state variable for tetrahedron element
 // *****************************************************************************
 {
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-
   Assert( B.size() == ndof_el, "Size mismatch" );
 
   // Array of state variable for tetrahedron element

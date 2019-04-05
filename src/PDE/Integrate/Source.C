@@ -108,7 +108,7 @@ tk::update_rhs( ncomp_t ncomp,
 //  Update the rhs by adding the source term integrals
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
-//! \param[in] ndof_el Number of degree of freedom for local element
+//! \param[in] ndof_el Number of degrees of freedom for local element
 //! \param[in] wt Weight of gauss quadrature point
 //! \param[in] e Element index
 //! \param[in] B Vector of basis functions

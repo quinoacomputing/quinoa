@@ -47,6 +47,7 @@ surfInt( ncomp_t system,
 void
 update_rhs_fa ( ncomp_t ncomp,
                 ncomp_t offset,
+                const std::size_t ndof,
                 const std::size_t ndof_l,
                 const std::size_t ndof_r,
                 const tk::real wt,

@@ -140,9 +140,8 @@ class CompFlowProblemSedovBlastwave {
       //n.push_back( "pressure_analytical" );
 
       const auto psign = g_inputdeck.get< tag::discr, tag::psign >();
-      if(psign == true)           // Adaptive DG on
-        // will output adaptive indicator
-        n.push_back( "Adaptive indicator" );
+      if(psign)           // Adaptive DG on
+        n.push_back( "ndof" );
       return n;
     }
 

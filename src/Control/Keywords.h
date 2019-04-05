@@ -5111,7 +5111,7 @@ struct dgp2_info {
 using dgp2 = keyword< dgp2_info, TAOCPP_PEGTL_STRING("dgp2") >;
 
 struct pdg_info {
-  static std::string name() { return "p-Adaptive DG + RK"; }
+  static std::string name() { return "p-adaptive DG + RK"; }
   static std::string shortDescription() { return
     "Select adaptive discontinuous Galerkin discretization + Runge-Kutta"; }
   static std::string longDescription() { return

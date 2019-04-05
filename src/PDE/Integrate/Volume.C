@@ -53,6 +53,8 @@ tk::volInt( ncomp_t system,
 //! \param[in,out] R Right-hand side vector added to
 // *****************************************************************************
 {
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
@@ -104,7 +106,7 @@ tk::volInt( ncomp_t system,
 
         auto wt = wgp[igp] * geoElem(e, 0, 0);
 
-        auto state = eval_state( ncomp, offset, ndofel[e], e, U, limFunc, B );
+        auto state = eval_state( ncomp, offset, ndof, ndofel[e], e, U, limFunc, B );
 
         // evaluate prescribed velocity (if any)
         auto v = vel( system, ncomp, gp[0], gp[1], gp[2] );
@@ -112,7 +114,7 @@ tk::volInt( ncomp_t system,
         // comput flux
         auto fl = flux( system, ncomp, state, v );
 
-        update_rhs( ncomp, offset, ndofel[e], wt, e, dBdx, fl, R );
+        update_rhs( ncomp, offset, ndof, ndofel[e], wt, e, dBdx, fl, R );
       }
     }
   }
@@ -121,6 +123,7 @@ tk::volInt( ncomp_t system,
 void
 tk::update_rhs( ncomp_t ncomp,
                 ncomp_t offset,
+                const std::size_t ndof,
                 const std::size_t ndof_el,
                 const tk::real wt,
                 const std::size_t e,
@@ -131,7 +134,8 @@ tk::update_rhs( ncomp_t ncomp,
 //  Update the rhs by adding the source term integrals
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
-//! \param[in] ndof_el Number of degree of freedom for local element
+//! \param[in] ndof Global number of degrees of freedom
+//! \param[in] ndof_el Number of degrees of freedom for local element
 //! \param[in] wt Weight of gauss quadrature point
 //! \param[in] e Element index
 //! \param[in] B Vector of basis functions
@@ -139,8 +143,6 @@ tk::update_rhs( ncomp_t ncomp,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-
   Assert( dBdx[0].size() == ndof_el, "Size mismatch for basis function derivatives" );
   Assert( dBdx[1].size() == ndof_el, "Size mismatch for basis function derivatives" );
   Assert( dBdx[2].size() == ndof_el, "Size mismatch for basis function derivatives" );

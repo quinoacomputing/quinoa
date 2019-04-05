@@ -123,7 +123,7 @@ ElemDiagnostics::compute_diag( const Discretization& d,
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc. for DG
 //! \param[in] d Discretization base class to read from
-//! \param[in] ndof Number of degree of freedom
+//! \param[in] ndof Number of degrees of freedom
 //! \param[in] nchGhost Number of chare boundary ghost elements
 //! \param[in] geoElem Element geometry
 //! \param[in] ndofel Vector of local number of degrees of freedom
