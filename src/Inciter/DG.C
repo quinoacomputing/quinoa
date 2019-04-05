@@ -1562,8 +1562,8 @@ DG::step()
 
 void DG::eval_ndof()
 // *****************************************************************************
-//  Determine order of solution polynomial for each element for p-adaptive DG,
-//  using an error indicator based on the magnitude of solution gradient
+// Calculate the local number of degrees of freedom for each element for
+// p-adaptive DG
 // *****************************************************************************
 {
   const auto& esuel = m_fd.Esuel();
