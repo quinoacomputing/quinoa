@@ -18,18 +18,12 @@
 #include "Surface.h"
 #include "Vector.h"
 #include "Quadrature.h"
-#include "Inciter/InputDeck/InputDeck.h"
-
-namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
-
-} // inciter::
 
 void
 tk::surfInt( ncomp_t system,
              ncomp_t ncomp,
              ncomp_t offset,
+             const std::size_t ndof,
              const std::vector< std::size_t >& inpoel,
              const UnsMesh::Coords& coord,
              const inciter::FaceData& fd,
@@ -45,6 +39,7 @@ tk::surfInt( ncomp_t system,
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
+//! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] fd Face connectivity and boundary conditions object
@@ -57,8 +52,6 @@ tk::surfInt( ncomp_t system,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
 
@@ -191,7 +184,7 @@ tk::update_rhs_fa ( ncomp_t ncomp,
 //  Update the rhs by adding the surface integration term
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
-//! \param[in] ndof Global number of degrees of freedom
+//! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] ndof_l Number of degrees of freedom for left element
 //! \param[in] ndof_r Number of degrees of freedom for right element
 //! \param[in] wt Weight of gauss quadrature point

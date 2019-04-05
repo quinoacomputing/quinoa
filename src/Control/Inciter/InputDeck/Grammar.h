@@ -314,12 +314,12 @@ namespace grm {
            inciter::ctr::SchemeType::DGP2)
         stack.template get< tag::discr, tag::ndof >() = 10;
       // if pDG is configured, set ndofs to be 4 and the adaptive indicator
-      // psign set to be 1 (temporary for P0/P1 adaptive)
+      // pref set to be true (temporary for P0/P1 adaptive)
       if (stack.template get< tag::discr, tag::scheme >() ==
            inciter::ctr::SchemeType::PDG)
       {
         stack.template get< tag::discr, tag::ndof >() = 4;
-        stack.template get< tag::discr, tag::psign >() = 1;
+        stack.template get< tag::discr, tag::pref >() = true;
       }
     }
   };

@@ -19,18 +19,12 @@
 #include "Boundary.h"
 #include "Vector.h"
 #include "Quadrature.h"
-#include "Inciter/InputDeck/InputDeck.h"
-
-namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
-
-} // inciter::
 
 void
 tk::bndSurfInt( ncomp_t system,
                 ncomp_t ncomp,
                 ncomp_t offset,
+                const std::size_t ndof,
                 const std::vector< bcconf_t >& bcconfig,
                 const inciter::FaceData& fd,
                 const Fields& geoFace,
@@ -52,6 +46,7 @@ tk::bndSurfInt( ncomp_t system,
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
+//! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] bcconfig BC configuration vector for multiple side sets
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
@@ -68,8 +63,6 @@ tk::bndSurfInt( ncomp_t system,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-
   const auto& bface = fd.Bface();
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
@@ -168,7 +161,7 @@ tk::update_rhs_bc ( ncomp_t ncomp,
 //  Update the rhs by adding the boundary surface integration term
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
-//! \param[in] ndof Global number of degrees of freedom
+//! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] ndof_l Number of degrees of freedom for the left element
 //! \param[in] wt Weight of gauss quadrature point
 //! \param[in] el Left element index

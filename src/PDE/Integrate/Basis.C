@@ -320,7 +320,7 @@ tk::eval_state ( ncomp_t ncomp,
 //  Compute the state variables for the tetrahedron element
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
-//! \param[in] ndof Global number of degrees of freedom
+//! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] ndof_el Number of degrees of freedom for the local element
 //! \param[in] e Index for the tetrahedron element
 //! \param[in] U Solution vector at recent time step

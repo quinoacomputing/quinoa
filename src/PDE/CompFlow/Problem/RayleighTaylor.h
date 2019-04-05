@@ -210,8 +210,8 @@ class CompFlowProblemRayleighTaylor {
       n.push_back( "err(v)" );
       n.push_back( "err(w)" );
 
-      const auto psign = g_inputdeck.get< tag::discr, tag::psign >();
-      if(psign)           // Adaptive DG on
+      const auto pref = g_inputdeck.get< tag::discr, tag::pref >();
+      if(pref)           // Adaptive DG on
         n.push_back( "ndof" );
       return n;
     }

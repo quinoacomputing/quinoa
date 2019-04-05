@@ -158,18 +158,18 @@ class Transport {
         { m_bcdir, Dirichlet } }};
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                   Upwind::flux, Problem::prescribedVelocity, U, limFunc,
-                   ndofel, R );
+      tk::surfInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, fd,
+                   geoFace, Upwind::flux, Problem::prescribedVelocity, U,
+                   limFunc, ndofel, R );
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, inpoel, coord, geoElem,
+        tk::volInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, geoElem,
                     flux, Problem::prescribedVelocity, U, limFunc, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
-        tk::bndSurfInt( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
+        tk::bndSurfInt( m_system, m_ncomp, m_offset, ndof, b.first, fd, geoFace,
           inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
           b.second, U, limFunc, ndofel, R );
     }
@@ -202,7 +202,7 @@ class Transport {
     //! \details This functions should be written in conjunction with
     //!   fieldOutput(), which provides the vector of fields to be output
     std::vector< std::string > fieldNames() const {
-      const auto psign = g_inputdeck.get< tag::discr, tag::psign >();
+      const auto pref = g_inputdeck.get< tag::discr, tag::pref >();
       std::vector< std::string > n;
       const auto& depvar =
       g_inputdeck.get< tag::param, eq, tag::depvar >().at(m_system);
@@ -215,7 +215,7 @@ class Transport {
       // will output error for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_error" );
-      if(psign)           // Adaptive DG on
+      if(pref)           // Adaptive DG on
         n.push_back( "ndof" );
       return n;
     }

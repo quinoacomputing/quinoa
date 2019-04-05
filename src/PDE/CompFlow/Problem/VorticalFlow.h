@@ -136,8 +136,8 @@ class CompFlowProblemVorticalFlow {
       n.push_back( "pressure_numerical" );
       n.push_back( "pressure_analytical" );
 
-      const auto psign = g_inputdeck.get< tag::discr, tag::psign >();
-      if(psign)           // Adaptive DG on
+      const auto pref = g_inputdeck.get< tag::discr, tag::pref >();
+      if(pref)           // Adaptive DG on
         n.push_back( "ndof" );
       return n;
     }

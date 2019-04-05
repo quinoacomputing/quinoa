@@ -224,7 +224,7 @@ struct avecost {};
 struct stdcost {};
 struct flux {};
 struct ndof{};
-struct psign{};
+struct pref{};
 struct limiter {};
 struct cweight {};
 struct update {};

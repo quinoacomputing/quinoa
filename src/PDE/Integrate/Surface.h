@@ -32,6 +32,7 @@ void
 surfInt( ncomp_t system,
          ncomp_t ncomp,
          ncomp_t offset,
+         const std::size_t ndof,
          const std::vector< std::size_t >& inpoel,
          const UnsMesh::Coords& coord,
          const inciter::FaceData& fd,

@@ -358,8 +358,8 @@ class DG : public CBase_DG {
     //! Continue to next time step stage
     void next();
 
-    //! Determine order of solution polynomial for each element for p-adaptive
-    //! DG, using an error indicator based on the magnitude of solution gradient
+    //! Calculate the local number of degrees of freedom for each element for
+    //! p-adaptive DG
     void eval_ndof();
 
     //! p-refine all elements that are adjacent to p-refined elements

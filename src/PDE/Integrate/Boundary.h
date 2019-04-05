@@ -33,6 +33,7 @@ void
 bndSurfInt( ncomp_t system,
             ncomp_t ncomp,
             ncomp_t offset,
+            const std::size_t ndof,
             const std::vector< bcconf_t >& bcconfig,
             const inciter::FaceData& fd,
             const Fields& geoFace,

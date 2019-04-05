@@ -85,7 +85,7 @@ using discretization = tk::tuple::tagged_tuple<
   tag::cweight,kw::cweight::info::expect::type, //!< WENO central stencil weight
   tag::flux,   inciter::ctr::FluxType,          //!< Flux function type
   tag::ndof,   std::size_t,                     //!< Number of solution DOFs
-  tag::psign,  bool                             //!< Adaptive DG on/off
+  tag::pref,   bool                             //!< Adaptive DG on/off
 >;
 
 //! ASCII output floating-point precision in digits

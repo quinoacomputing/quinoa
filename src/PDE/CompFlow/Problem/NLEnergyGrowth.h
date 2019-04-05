@@ -209,8 +209,8 @@ class CompFlowProblemNLEnergyGrowth {
       n.push_back( "err(rho)" );
       n.push_back( "err(e)" );
 
-      const auto psign = g_inputdeck.get< tag::discr, tag::psign >();
-      if(psign)           // Adaptive DG on
+      const auto pref = g_inputdeck.get< tag::discr, tag::pref >();
+      if(pref)           // Adaptive DG on
         n.push_back( "ndof" );
       return n;
     }

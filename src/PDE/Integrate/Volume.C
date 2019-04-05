@@ -16,18 +16,12 @@
 #include "Volume.h"
 #include "Vector.h"
 #include "Quadrature.h"
-#include "Inciter/InputDeck/InputDeck.h"
-
-namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
-
-} // inciter::
 
 void
 tk::volInt( ncomp_t system,
             ncomp_t ncomp,
             ncomp_t offset,
+            const std::size_t ndof,
             const std::vector< std::size_t >& inpoel,
             const UnsMesh::Coords& coord,
             const Fields& geoElem,
@@ -42,6 +36,7 @@ tk::volInt( ncomp_t system,
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
+//! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] geoElem Element geometry array
@@ -53,8 +48,6 @@ tk::volInt( ncomp_t system,
 //! \param[in,out] R Right-hand side vector added to
 // *****************************************************************************
 {
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
@@ -134,7 +127,7 @@ tk::update_rhs( ncomp_t ncomp,
 //  Update the rhs by adding the source term integrals
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
-//! \param[in] ndof Global number of degrees of freedom
+//! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] ndof_el Number of degrees of freedom for local element
 //! \param[in] wt Weight of gauss quadrature point
 //! \param[in] e Element index

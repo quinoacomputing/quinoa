@@ -1073,6 +1073,8 @@ DG::advance( tk::real )
 // Advance equations to next time step
 // *****************************************************************************
 {
+  const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
+
   // communicate solution ghost data (if any)
   if (m_ghostData.empty())
     comsol_complete();
@@ -1085,7 +1087,7 @@ DG::advance( tk::real )
         Assert( i.first < m_fd.Esuel().size()/4, "Sending solution ghost data" );
         tetid.push_back( i.first );
         u.push_back( m_u[i.first] );
-        ndof.push_back( m_ndof[i.first] );
+        if (pref) ndof.push_back( m_ndof[i.first] );
       }
       thisProxy[ n.first ].comsol( thisIndex, tetid, u, ndof );
     }
@@ -1109,6 +1111,8 @@ DG::comsol( int fromch,
 {
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comsol()" );
 
+  const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
+
   // Find local-to-ghost tet id map for sender chare
   const auto& n = tk::cref_find( m_ghost, fromch );
 
@@ -1117,7 +1121,7 @@ DG::comsol( int fromch,
     Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
     Assert( j < m_u.nunk(), "Indexing out of bounds in DG::comsol()" );
     for (std::size_t c=0; c<m_u.nprop(); ++c) m_u(j,c,0) = u[i][c];
-    m_ndof[j] = ndof[i];
+    if (pref) m_ndof[j] = ndof[i];
   }
 
   // if we have received all solution ghost contributions from those chares we
@@ -1200,9 +1204,9 @@ DG::lim()
 // Compute limiter function
 // *****************************************************************************
 {
-  const auto psign = inciter::g_inputdeck.get< tag::discr, tag::psign >();
+  const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
 
-  if (psign) propagate_ndof();
+  if (pref && m_stage==0) propagate_ndof();
 
   if (g_inputdeck.get< tag::discr, tag::ndof >() > 1) {
   
@@ -1319,9 +1323,9 @@ DG::solve( tk::real newdt )
     auto diag_computed = m_diag.compute( *d, m_u.nunk()-m_fd.Esuel().size()/4,
                                          m_geoElem, m_ndof, m_u );
 
-    const auto psign = inciter::g_inputdeck.get< tag::discr, tag::psign >();
+    const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
 
-    if(psign) eval_ndof();
+    if(pref) eval_ndof();
 
     // Increase number of iterations and physical time
     d->next();

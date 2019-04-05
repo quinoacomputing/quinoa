@@ -163,21 +163,21 @@ class MultiMat {
         { m_bcextrapolate, Extrapolate } }};
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                   rieflxfn, velfn, U, limFunc, ndofel, R );
+      tk::surfInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, fd,
+                   geoFace, rieflxfn, velfn, U, limFunc, ndofel, R );
 
       // compute source term intehrals
-      tk::srcInt( m_system, m_ncomp, m_offset,
-                  t, inpoel, coord, geoElem, Problem::src, ndofel, R );
+      tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, inpoel, coord, geoElem,
+                  Problem::src, ndofel, R );
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
-                    velfn, U, limFunc, ndofel, R );
+        tk::volInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, geoElem,
+                    flux, velfn, U, limFunc, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
-        tk::bndSurfInt( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
+        tk::bndSurfInt( m_system, m_ncomp, m_offset, ndof, b.first, fd, geoFace,
                         inpoel, coord, t, rieflxfn, velfn, b.second, U,
                         limFunc, ndofel, R );
     }
