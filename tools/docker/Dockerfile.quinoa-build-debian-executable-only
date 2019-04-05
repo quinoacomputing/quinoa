@@ -30,6 +30,7 @@ WORKDIR /home/quinoa
 USER quinoa
 WORKDIR /home/quinoa
 CMD ["/bin/bash"]
+SHELL ["/bin/bash", "-c"]
 
 # Clone quinoa
 RUN git clone --recurse-submodules http://github.com/quinoacomputing/quinoa.git
