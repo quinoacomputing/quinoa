@@ -33,6 +33,7 @@ using CmdLineMembers = brigand::list<
   , tag::help,           bool
   , tag::helpctr,        bool
   , tag::quiescence,     bool
+  , tag::trace,          bool
   , tag::cmdinfo,        tk::ctr::HelpFactory
   , tag::ctrinfo,        tk::ctr::HelpFactory
   , tag::helpkw,         tk::ctr::HelpKw
@@ -53,6 +54,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::control
                                      , kw::pdf
                                      , kw::stat
+                                     , kw::trace
                                      , kw::quiescence
                                      >;
 
@@ -94,6 +96,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
       get< tag::virtualization >() = 0.0;
       get< tag::verbose >() = false; // Quiet output by default
       get< tag::chare >() = false; // No chare state output by default
+      get< tag::trace >() = true; // Output call and stack trace by default
       // Initialize help: fill from own keywords + add map passed in
       brigand::for_each< keywords::set >( tk::ctr::Info(get<tag::cmdinfo>()) );
       get< tag::ctrinfo >() = std::move( ctrinfo );

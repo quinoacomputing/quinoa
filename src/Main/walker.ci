@@ -18,6 +18,7 @@ mainmodule walker {
 
   readonly CProxy_Main mainProxy;
   readonly tk::CProxy_ChareStateCollector stateProxy;
+  readonly bool g_trace;
 
   namespace walker {
 

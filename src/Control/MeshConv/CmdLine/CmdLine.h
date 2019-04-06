@@ -36,6 +36,7 @@ using CmdLineMembers = brigand::list<
   , tag::reorder,    bool
   , tag::help,       bool
   , tag::quiescence, bool
+  , tag::trace,      bool
   , tag::cmdinfo,    tk::ctr::HelpFactory
   , tag::ctrinfo,    tk::ctr::HelpFactory
   , tag::helpkw,     tk::ctr::HelpKw
@@ -60,6 +61,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::output
                                      , kw::reorder
                                      , kw::quiescence
+                                     , kw::trace
                                      >;
 
     //! \brief Constructor: set defaults.
@@ -72,6 +74,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
       get< tag::verbose >() = false; // Use quiet output by default
       get< tag::chare >() = false; // No chare state output by default
       get< tag::reorder >() = false; // Do not reorder by default
+      get< tag::trace >() = true; // Output call and stack trace by default
       // Initialize help: fill from own keywords
       brigand::for_each< keywords::set >( tk::ctr::Info(get<tag::cmdinfo>()) );
     }

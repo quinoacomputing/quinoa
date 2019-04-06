@@ -38,6 +38,7 @@ using CmdLineMembers = brigand::list<
   , tag::help,           bool
   , tag::helpctr,        bool
   , tag::quiescence,     bool
+  , tag::trace,          bool
   , tag::cmdinfo,        tk::ctr::HelpFactory
   , tag::ctrinfo,        tk::ctr::HelpFactory
   , tag::helpkw,         tk::ctr::HelpKw
@@ -69,6 +70,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::diagnostics
                                      , kw::quiescence
                                      , kw::lbfreq
+                                     , kw::trace
                                      >;
 
     //! \brief Constructor: set all defaults.
@@ -113,6 +115,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
       get< tag::benchmark >() = false; // No benchmark mode by default
       get< tag::feedback >() = false; // No detailed feedback by default
       get< tag::lbfreq >() = 1; // Load balancing every time-step by default
+      get< tag::trace >() = true; // Output call and stack trace by default
       // Initialize help: fill from own keywords + add map passed in
       brigand::for_each< keywords::set >( tk::ctr::Info(get<tag::cmdinfo>()) );
       get< tag::ctrinfo >() = std::move( ctrinfo );

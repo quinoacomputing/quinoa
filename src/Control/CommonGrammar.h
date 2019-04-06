@@ -625,16 +625,16 @@ namespace grm {
 
   //! Rule used to trigger action
   template< typename... tags >
-  struct Store_switch : pegtl::success {};
-  //! Put true in switch in state at position given by tags
+  struct Invert_switch : pegtl::success {};
+  //! Invert bool in switch at position given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for setting a boolean value to true in the underlying grammar
   //!    stack via the member function tk::Control::set.
   template< typename... tags >
-  struct action< Store_switch< tags... > > {
+  struct action< Invert_switch< tags... > > {
     template< typename Input, typename Stack >
     static void apply( const Input&, Stack& stack ) {
-      stack.template get< tags... >() = true;
+      stack.template get< tags... >() = !stack.template get< tags... >();
     }
   };
 
@@ -1407,7 +1407,7 @@ namespace grm {
   template< template< class > class use, class keyword, typename tag,
             typename... tags >
   struct process_cmd_switch :
-         pegtl::seq< readcmd< use<keyword> >, Store_switch< tag, tags... > > {};
+         pegtl::seq<readcmd< use<keyword> >, Invert_switch< tag, tags... >> {};
 
   //! \brief Generic file parser entry point: parse 'keywords' and 'ignore'
   //!   until end of file

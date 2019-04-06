@@ -15,6 +15,7 @@
 #include <cxxabi.h>
 #include <execinfo.h>
 #include <sstream>
+#include <iostream>
 
 #include "QuinoaConfig.h"
 #include "Exception.h"
@@ -22,6 +23,8 @@
 #ifdef HAS_BACKWARD
   #include "NoWarning/backward.h"
 #endif
+
+extern bool g_trace;
 
 using tk::Exception;
 
@@ -180,18 +183,20 @@ Exception::handleException() noexcept
 //!   throws exceptions.
 // *****************************************************************************
 {
-  if (m_addrLength > 0) {
+  if (m_addrLength > 0 && g_trace) {
     fprintf( stderr, ">>>\n>>> =========== CALL TRACE ===========\n>>>\n" );
     echoTrace();
     fprintf( stderr, ">>>\n>>> ======= END OF CALL TRACE ========\n>>>\n" );
   }
 
   #ifdef HAS_BACKWARD
-  fprintf( stderr, ">>>\n>>> =========== STACK TRACE ==========\n>>>\n" );
-  using namespace backward;
-  StackTrace st; st.load_here(64);
-  Printer p; p.print( st, stderr );
-  fprintf( stderr, ">>>\n>>> ======= END OF STACK TRACE =======\n>>>\n" );
+  if (g_trace) {
+    fprintf( stderr, ">>>\n>>> =========== STACK TRACE ==========\n>>>\n" );
+    using namespace backward;
+    StackTrace st; st.load_here(64);
+    Printer p; p.print( st, stderr );
+    fprintf( stderr, ">>>\n>>> ======= END OF STACK TRACE =======\n>>>\n" );
+  }
   #endif
  
   return tk::ErrCode::FAILURE;
