@@ -3449,6 +3449,20 @@ struct feedback_info {
 
 using feedback = keyword< feedback_info, TAOCPP_PEGTL_STRING("feedback") >;
 
+struct trace_info {
+  static std::string name() { return "trace"; }
+  static std::string shortDescription()
+  { return "Disable call and stack trace"; }
+  static std::string longDescription() { return R"(This keyword can be used to
+    disable the on-screen call trace and stack trace after an exception is
+    thrown. Trace output is on by default and in some cases, the call and
+    stack trace can be huge and not very helpful, hence this command line
+    option.)"; }
+  using alias = Alias< t >;
+};
+
+using trace = keyword< trace_info, TAOCPP_PEGTL_STRING("trace") >;
+
 struct quiescence_info {
   static std::string name() { return "quiescence"; }
   static std::string shortDescription()

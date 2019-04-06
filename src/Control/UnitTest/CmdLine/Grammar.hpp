@@ -60,14 +60,20 @@ namespace cmd {
                                pegtl::any,
                                tag::group > {};
 
-  //! Match help on control file keywords
+  //! Match switch on quiescence
   struct quiescence :
          tk::grm::process_cmd_switch< use, kw::quiescence,
                                       tag::quiescence > {};
 
+  //! Match switch on trace output
+  struct trace :
+         tk::grm::process_cmd_switch< use, kw::trace,
+                                      tag::trace > {};
+
   //! \brief Match all command line keywords
   struct keywords :
-         pegtl::sor< verbose, charestate, help, helpkw, group, quiescence > {};
+         pegtl::sor< verbose, charestate, help, helpkw, group,
+                     trace, quiescence > {};
 
   //! \brief Grammar entry point: parse keywords until end of string
   struct read_string :
