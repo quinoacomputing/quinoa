@@ -15,6 +15,7 @@
 #include <cxxabi.h>
 #include <execinfo.h>
 #include <sstream>
+#include <iostream>
 
 #include "QuinoaConfig.h"
 #include "Exception.h"
