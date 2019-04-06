@@ -1,12 +1,15 @@
 ################################################################################
 #
-# \file      cmake/FindH5Part.cmake
-# \copyright 2016, Los Alamos National Security, LLC.
+# \file      FindH5Part.cmake
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
 # \brief     Find the H5Part library
 #
 ################################################################################
 
-# Find H5Part headers and libraries
+# H5Part: https://dav.lbl.gov/archive/Research/AcceleratorSAPP
 #
 #  H5PART_FOUND        - True if H5Part is found
 #  H5PART_INCLUDE_DIRS - H5Part include files paths
