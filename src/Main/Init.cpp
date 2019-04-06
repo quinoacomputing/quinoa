@@ -119,7 +119,7 @@ void echoBuildEnv( const Print& print, const std::string& executable )
 }
 
 void echoRunEnv( const Print& print, int argc, char** argv,
-                 bool verbose, bool quiescence, bool charestate )
+                 bool verbose, bool quiescence, bool charestate, bool trace )
 // *****************************************************************************
 //  Echo runtime environment
 //! \param[in] print Pretty printer
@@ -128,6 +128,7 @@ void echoRunEnv( const Print& print, int argc, char** argv,
 //! \param[in] verbose True for verbose screen-output
 //! \param[in] quiescence True if quiescence detection is enabled
 //! \param[in] charestate True if chare state collection is enabled
+//! \param[in] trace True if call and stack trace output is enabled
 // *****************************************************************************
 {
   print.section( "Run-time environment" );
@@ -156,6 +157,8 @@ void echoRunEnv( const Print& print, int argc, char** argv,
               quiescence ? "on" : "off" );
   print.item( "Chare state output, -" + *kw::charestate::alias(),
               charestate ? "on" : "off" );
+  print.item( "Call and stack trace, -" + *kw::trace::alias(),
+              trace ? "on" : "off" );
 }
 
 } // tk::

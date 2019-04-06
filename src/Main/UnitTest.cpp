@@ -54,6 +54,9 @@ CProxy_Main mainProxy;
 //! Chare state collector Charm++ chare group proxy
 tk::CProxy_ChareStateCollector stateProxy;
 
+//! If true, call and stack traces are to be output with exceptions
+bool g_trace;
+
 #if defined(__clang__)
   #pragma clang diagnostic pop
 #endif
@@ -152,6 +155,7 @@ class Main : public CBase_Main {
       m_timer(1), // Start new timer measuring the serial+Charm++ runtime
       m_timestamp()
     {
+      g_trace = m_cmdline.get< tag::trace >();
       // Immediately exit if any help was requested; help is printed in main()
       if (m_helped) CkExit();
       // Save executable name to global-scope string so FileParser can access it

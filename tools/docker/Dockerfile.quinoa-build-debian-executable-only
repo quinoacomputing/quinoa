@@ -14,9 +14,9 @@
 # prerequisites, then build the required but missing third-party libraries,
 # build the code, and test.
 #
-# This docker image is intended to test and demonstrate a simple way of building
-# Quinoa. It creates dynamically built executables which require runtime
-# libraries.
+# This docker image is intended to test building a single executable, preceded
+# by building only those third-party libraries that are required for the
+# executable.
 #
 ################################################################################
 
@@ -31,6 +31,7 @@ WORKDIR /home/quinoa
 USER quinoa
 WORKDIR /home/quinoa
 CMD ["/bin/bash"]
+SHELL ["/bin/bash", "-c"]
 
 # Clone quinoa
 RUN git clone --recurse-submodules http://github.com/quinoacomputing/quinoa.git
@@ -40,8 +41,10 @@ RUN cd quinoa && git checkout $COMMIT && git log -1 HEAD
 # Update submodules
 RUN cd quinoa && git submodule init && git submodule update --recursive && cd external && git submodule init && git submodule update --recursive && cd .. && git submodule status --recursive
 # Build TPLs
-RUN cd quinoa && mkdir -p external/build && cd external/build && cmake -DENABLE_ROOT=true -DENABLE_OMEGA_H=true -DCMAKE_BUILD_TYPE=Release .. && make -sj$(grep -c processor /proc/cpuinfo)
+ARG EXECUTABLE
+ENV EXECUTABLE $EXECUTABLE
+RUN cd quinoa && mkdir -p external/build && cd external/build && cmake -D${EXECUTABLE^^}_ONLY=true -DCMAKE_BUILD_TYPE=Release .. && make -sj$(grep -c processor /proc/cpuinfo)
 # Build code
-RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS=-Werror -DCMAKE_BUILD_TYPE=Release -GNinja -DRUNNER=mpirun -DRUNNER_NCPUS_ARG=-n -DRUNNER_ARGS=-oversubscribe ../src && ninja
+RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS=-Werror -DCMAKE_BUILD_TYPE=Release -GNinja -DRUNNER=mpirun -DRUNNER_NCPUS_ARG=-n -DRUNNER_ARGS=-oversubscribe ../src && ninja ${EXECUTABLE,,}
 # Run tests
-RUN cd quinoa/build && npe=$(grep -c processor /proc/cpuinfo) && mpirun -n $npe Main/unittest -v -q && ctest -j $npe --output-on-failure -LE extreme
+RUN cd quinoa/build && npe=$(grep -c processor /proc/cpuinfo) && if [ ${EXECUTABLE} = unittest ]; then mpirun -n $npe Main/unittest -v -q; else ctest -j $npe --output-on-failure -LE extreme -R ${EXECUTABLE,,}; fi

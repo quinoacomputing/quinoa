@@ -43,6 +43,7 @@ class CmdLine : public tk::Control<
                   tag::help,           bool,
                   tag::helpctr,        bool,
                   tag::quiescence,     bool,
+                  tag::trace,          bool,
                   tag::cmdinfo,        tk::ctr::HelpFactory,
                   tag::ctrinfo,        tk::ctr::HelpFactory,
                   tag::helpkw,         tk::ctr::HelpKw,
@@ -67,6 +68,7 @@ class CmdLine : public tk::Control<
                                      , kw::diagnostics
                                      , kw::quiescence
                                      , kw::lbfreq
+                                     , kw::trace
                                      >;
 
     //! \brief Constructor: set all defaults.
@@ -111,6 +113,7 @@ class CmdLine : public tk::Control<
       set< tag::benchmark >( false ); // No benchmark mode by default
       set< tag::feedback >( false ); // No detailed feedback by default
       set< tag::lbfreq >( 1 ); // Load balancing every time-step by default
+      set< tag::trace >( true ); // Output call and stack trace by default
       // Initialize help: fill from own keywords + add map passed in
       brigand::for_each< keywords::set >( tk::ctr::Info(get<tag::cmdinfo>()) );
       get< tag::ctrinfo >() = std::move( ctrinfo );
@@ -131,6 +134,7 @@ class CmdLine : public tk::Control<
                    tag::help,           bool,
                    tag::helpctr,        bool,
                    tag::quiescence,     bool,
+                   tag::trace,          bool,
                    tag::cmdinfo,        tk::ctr::HelpFactory,
                    tag::ctrinfo,        tk::ctr::HelpFactory,
                    tag::helpkw,         tk::ctr::HelpKw,
