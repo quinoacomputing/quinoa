@@ -1,12 +1,15 @@
 ################################################################################
 #
-# \file      cmake/FindOmega_h.cmake
-# \copyright 2016-2018, Los Alamos National Security, LLC.
+# \file      FindOmega_h.cmake
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
 # \brief     Find the Omega_h library
 #
 ################################################################################
 
-# Find Omega_h headers and libraries
+# Omega_h: https://github.com/SNLComputation/omega_h
 #
 #  OMEGA_H_FOUND        - True if Omega_h is found
 #  OMEGA_H_INCLUDE_DIRS - Omega_h include files paths

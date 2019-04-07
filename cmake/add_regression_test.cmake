@@ -1,14 +1,16 @@
 ################################################################################
 #
-# \file      cmake/add_regression_test.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+# \file      add_regression_test.cmake
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
 # \brief     Function used to add a regression test to the ctest test suite
 #
 ################################################################################
 
 # ##############################################################################
 # Function used to add a regression test to the ctest test suite
-#
 # add_regression_test( <test_name> <executable>
 #                      [NUMPES n] [PPN p]
 #                      [INPUTFILES file1 file2 ...]
@@ -108,8 +110,6 @@
 #
 # POSTPROCESS_PROG_OUTPUT file - Filename to save the results of the
 # postprocessor program. Default: "".
-#
-# Author: J. Bakosi
 #
 # ##############################################################################
 function(ADD_REGRESSION_TEST test_name executable)

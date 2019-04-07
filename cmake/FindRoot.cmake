@@ -1,25 +1,27 @@
 ################################################################################
 #
-# \file      cmake/FindRoot.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+# \file      FindRoot.cmake
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
 # \brief     Find the Root library from CERN
 #
 ################################################################################
 
-# Find the Root library from CERN
-
+# Root library from CERN: https://root.cern.ch
+#
 #  Set ROOT_ROOT before calling find_package to a path to add an additional
 #  search path, e.g.,
 #
 #  Usage:
 #
 #  set(ROOT_ROOT "/path/to/custom/root") # prefer over system
-
+#
 #  find_package(ROOT COMPONENTS RIO Core Tree Hist)
 #  if(ROOT_FOUND)
 #    target_link_libraries(TARGET ${ROOT_LIBRARIES})
 #  endif()
-
 
 # If already in cache, be silent
 if(ROOT_INCLUDE_DIRS AND ROOT_LIBRARIES)
