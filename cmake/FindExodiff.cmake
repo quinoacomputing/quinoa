@@ -1,8 +1,11 @@
 ################################################################################
 #
-# \file      cmake/FindExodiff.cmake
-# \copyright 2016, Los Alamos National Security, LLC.
-# \brief     Find the Adaptive Entropy Coding library
+# \file      FindExodiff.cmake
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
+# \brief     Find Exodiff
 #
 ################################################################################
 

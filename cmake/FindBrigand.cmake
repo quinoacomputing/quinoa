@@ -1,12 +1,15 @@
 ################################################################################
 #
-# \file      cmake/FindBrigand.cmake
-# \copyright 2016-2018, Los Alamos National Security, LLC.
-# \brief     Find Brigand
+# \file      FindBrigand.cmake
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
+# \brief     Find the Brigand template metaprogramming library
 #
 ################################################################################
 
-# See Brigand: https://github.com/edouarda/brigand
+# Brigand: https://github.com/edouarda/brigand
 #
 #  BRIGAND_FOUND - System has Brigand
 #  BRIGAND_INCLUDE_DIRS - The Brigand include directory

@@ -1,13 +1,15 @@
 ################################################################################
 #
-# \file      cmake/FindLibCXX.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+# \file      FindLibCXX.cmake
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
 # \brief     Find libc++
 #
 ################################################################################
 
-# Find libc++.
-# See libc++: http://libcxx.llvm.org, libc++abi: http://libcxxabi.llvm.org.
+# libc++: http://libcxx.llvm.org, libc++abi: http://libcxxabi.llvm.org
 #
 #  LIBCXX_FOUND - System has libc++
 #  LIBCXX_INCLUDE_DIRS - The libc++ include directory
