@@ -1,12 +1,15 @@
 ################################################################################
 #
-# \file      cmake/FindMCSS.cmake
-# \copyright 2016-2018, Los Alamos National Security, LLC.
+# \file      FindMCSS.cmake
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
 # \brief     Find m.css
 #
 ################################################################################
 
-# Find m.css (http://mcss.mosra.cz)
+# m.css: http://mcss.mosra.cz
 #
 #  MCSS_FOUND - System has numdiff
 #  MCSS_DOX2HTML5 - The dox2html5 python script

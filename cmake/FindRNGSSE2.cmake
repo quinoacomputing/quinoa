@@ -1,12 +1,15 @@
 ################################################################################
 #
-# \file      cmake/FindRNGSSE2.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+# \file      FindRNGSSE2.cmake
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
 # \brief     Find the RNGSSE2 library
 #
 ################################################################################
 
-# Find the RNGSSE2 library
+# RNGSSE2: http://cpc.cs.qub.ac.uk/summaries/AEIT_v2_0.html
 #
 #  RNGSSE2_FOUND - System has RNGSSE2
 #  RNGSSE2_INCLUDE_DIRS - The RNGSSE2 include directories
