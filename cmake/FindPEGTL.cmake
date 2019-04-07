@@ -1,12 +1,15 @@
 ################################################################################
 #
-# \file      cmake/FindPEGTL.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+# \file      FindPEGTL.cmake
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
 # \brief     Find PEGTL
 #
 ################################################################################
 
-# See PEGTL: https://github.com/ColinH/PEGTL
+# PEGTL: https://github.com/taocpp/PEGTL
 #
 #  PEGTL_FOUND - System has PEGTL
 #  PEGTL_INCLUDE_DIRS - The PEGTL include directory
