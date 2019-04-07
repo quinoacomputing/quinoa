@@ -694,7 +694,7 @@ void Reorder_object::test< 17 >() {
   // feed empty map
   try {
     const std::vector< std::size_t > a1{ 1, 2, 3 };
-    const std::unordered_map< std::size_t, std::size_t > re;
+    const std::unordered_map< std::size_t, std::size_t > re{};
     auto b2 = tk::remap( a1, re );
     fail( "should throw exception" );
   }
