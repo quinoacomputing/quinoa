@@ -1,12 +1,15 @@
 ################################################################################
 #
-# \file      cmake/FindHighwayHash.cmake
-# \copyright 2016-2018, Los Alamos National Security, LLC.
+# \file      FindHighwayHash.cmake
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
 # \brief     Find HighwayHash
 #
 ################################################################################
 
-# See HighwayHash: https://github.com/google/highwayhash
+# HighwayHash: https://github.com/google/highwayhash
 #
 #  HighwayHash_FOUND - System has HighwayHash
 #  HIGHWAYHASH_INCLUDE_DIRS - The HighwayHash include directory

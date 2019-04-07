@@ -1,20 +1,23 @@
 ################################################################################
 #
-# \file      cmake/FindGmsh.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+# \file      FindGmsh.cmake
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
 # \brief     Find Gmsh
 #
 ################################################################################
 
-# Find Gmsh
+# Gmsh: http://gmsh.info
 #
-#  GMSH_FOUND - System has gmsh
-#  GMSH_EXECUTABLE - The gmsh executable
+# GMSH_FOUND - System has gmsh
+# GMSH_EXECUTABLE - The gmsh executable
 #
-#  Usage:
+# Usage:
 #
-#  set(GMSH_ROOT "/path/to/custom/gmsh") # prefer over system
-#  find_package(Gmsh)
+# set(GMSH_ROOT "/path/to/custom/gmsh") # prefer over system
+# find_package(Gmsh)
 
 if(GMSH_EXECUTABLE)
   # Already in cache, be silent

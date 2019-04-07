@@ -1,7 +1,10 @@
 ################################################################################
 #
-# \file      cmake/CodeCoverage.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+# \file      CodeCoverage.cmake
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
 # \brief     Setup target for code coverage analysis
 #
 ################################################################################
@@ -36,8 +39,6 @@
 # Default: "". Here all dependencies should be given that should be covered by
 # the test suite the coverage is being setup for, as well as those that are
 # required for successfully building the tests and the test runner.
-#
-# Author: J. Bakosi
 #
 # ##############################################################################
 FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
@@ -143,8 +144,6 @@ ENDFUNCTION()
 # Default: "". Here all dependencies should be given that should be covered by
 # the test suite the coverage is being setup for, as well as those that are
 # required for successfully building the tests and the test runner.
-#
-# Author: J. Bakosi
 #
 # ##############################################################################
 FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner

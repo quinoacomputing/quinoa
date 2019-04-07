@@ -1,12 +1,15 @@
 ################################################################################
 #
-# \file      cmake/FindLPstreams.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+# \file      FindLPstreams.cmake
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
 # \brief     Find the Pstreams library
 #
 ################################################################################
 
-# Find the Pstreams library
+# Pstreams: http://pstreams.sourceforge.net/
 #
 #  PSTREAMS_FOUND - System has pstreams
 #  PSTREAMS_INCLUDE_DIRS - The pstreams include directories
