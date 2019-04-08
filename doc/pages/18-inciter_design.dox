@@ -47,8 +47,8 @@ _Read-only Data_ in the Charm++ manual.
 
 @subsection inciter_startup_polymorphism Global scope data for runtime polymorphism
 
-Two other global scope vectors are `g_cgpde` and `g_dgpde`.  These two vectors
-hold base classes for partial differential equations (PDE) that can be
+Two global scope vectors in inciter are `g_cgpde` and `g_dgpde`.  These two
+vectors hold base classes for partial differential equations (PDE) that can be
 specialized to different types of derived PDEs that use continuous Galerkin
 finite element (FE) discretizations (CGPDE) and discontinuous Galerkin FE
 discretizations (DGPDE). These two vectors are global scope because they hold
@@ -67,8 +67,10 @@ on runtime polymorphism without client-side inheritance, the style in which the
 client code, see Sean Parent's talk on [concept-based
 polymorphism](http://sean-parent.stlab.cc/papers-and-presentations/#value-semantics-and-concept-based-polymorphism).
 For more details on concept-based runtime polymorphism with migratable Charm++
-chare arrays using value semantics, see Inciter/Scheme.h and [this
-talk](http://charm.cs.illinois.edu/charmWorkshop/slides/CharmWorkshop2018_bakosi.pdf).
+chare arrays using value semantics, see Inciter/Scheme.h and the talk, titled
+_Concept-based runtime polymorphism with Charm++ chare arrays using value
+semantics_, given at the [16th Annual Workshop on Charm++ and its
+Applications](http://charm.cs.illinois.edu/workshops/charmWorkshop2018/program.php).
 
 @subsection inciter_startup_transporter Create inciter's driver, single Charm++ chare Transporter
 
@@ -88,20 +90,21 @@ system to exit.
 Here are the important classes that interoperate within inciter:
 
  - `Transporter` (single chare, driver)
- - `tk::Solver` (chare _group_, linear system solver)
- - `Partitioner` (chare _group_, mesh partitioner)
+ - `Partitioner` (chare _nodegroup_, mesh partitioner)
+ - `MeshWriter` (chare _group_, mesh writer, performing file output in parallel)
  - `Refiner` (chare _array_, mesh refiner)
  - `Sorter` (chare _array_, performs mesh reordering)
  - `Discretization` (chare _array_, generic PDE solver base class)
-   - `DiagCG` (chare _array_, PDE solver child class, specialized to continuous
+   - `DiagCG` (chare _array_, PDE solver child class, specialized to a continuous
      Galerkin finite element discretization scheme with a lumped-mass left-hand
-     side and flux-corrected transport combined with Lax-Wendroff time stepping),
-   - `DG` (chare _array_, PDE solver child class, specialized to discontinuous
+     side and flux-corrected transport combined with Lax-Wendroff-like explicit
+     time stepping scheme that is second order accurate in space and time),
+   - `DG` (chare _array_, PDE solver child class, specialized to a discontinuous
      Galerkin finite element discretization scheme with a diagonal left-hand
-     side with Runge-Kutta time stepping),
+     side with explicit Runge-Kutta time stepping),
    - ... (more hydro schemes to be added in the future)
  - `DistFCT` (chare _array_, performs distributed-memory flux-corrected
-   transport, if used by a specific discretization scheme)
+   transport, if used by a specific discretization scheme, e.g., `DiagCG`)
 
 _Chare_ above means a single Charm++ chare. There is a single instance of this
 class. By design, `Transporter` is a single chare and is used as a driver that
@@ -112,45 +115,56 @@ screen, collects statistics, and is the end-point of execution in
 
 _Group_ above means a Charm++ chare group. A group is a processor-aware chare
 collection, which means that there is guaranteed to be a single instance of a
-group per PE which does _not_ migrate. Examples in inciter are `tk::Solver` and
-`Partitioner` both of which are groups because they call MPI-only libraries,
-which require calls from PEs.
+group per PE which does _not_ migrate. `MeshWriter` is a group because it calls
+the MPI-only library, ExodusII, for outputing mesh and mesh-based solution
+field data to files. Note that while `MeshWriter` is a group, the way we use it
+makes it similar to a nodegroup but with group semantics: we call its Charm++
+entry method `MeshWriter::write()` from multiple array elements (from
+Discretization) targeting ony the first PE of each logical node. This yields
+"serializing" every call per node, required for the underlying non-thread-safe
+NetCDF/HDF5 library calls, made by ExodusII. This way writing large solution
+data works in both non-SMP and SMP mode correctly and efficiently, since
+parallel output load is configurable separately from the number of work-units
+for computation.
 
-@note Charm++ chare groups `tk::Solver` and `Partitioner` are currently in the
-process of being converted to Charm++ `nodegroup`s, which are similar to groups
-in that they are processor-aware but instead of one per PE, nodegroups are
-guaranteed to be one per logical (compute) node, where a _compute node_ is
-understood to be a logical node which may or may not be equivalent to a
-physical compute node (i.e., a shared-memory node), depending on how a given
-execution environment is configured in Charm++'s symmetric multi-processing
-mode (SMP) mode. (For example, a run in SMP mode can be configured with a
-logical node corresponding to a shared-memory compute node or to a socket
-within a compute node). Similar to groups, nodegroups do not migrate but there
-are significant differences in their parallel computing semantics in how the
-runtime system invokes their member functions compared to groups. In
-particular, while member functions of chare arrays and groups execute
-exclusively in a single instance, node groups allow multiple _non-exclusive_
-member functions to execute concurrently in a single nodegroup instance. Note
-that there is no difference between groups and nodegroups if Charm++ is built
-in non-SMP mode, which is currently the default. For more details see the
-Charm++ manual.
+_Nodegroup_ above means a Charm++ chare nodegroup. A nodegroup is a
+processor-aware chare collection, which means that there is guaranteed to be a
+single instance of a nodegroup per logical (e.g., compute) node which does
+_not_ migrate. `Partitioner` is a nodegroup because it calls MPI-only
+libraries.
+
+@note Charm++ `nodegroup`s, are similar to groups in that they are
+processor-aware but instead of one per PE, nodegroups are guaranteed to be one
+per logical (compute) node, where a _compute node_ is understood to be a
+logical node which may or may not be equivalent to a physical compute node
+(i.e., a shared-memory node), depending on how a given execution environment is
+configured in Charm++'s symmetric multi-processing mode (SMP) mode. (For
+example, a run in SMP mode can be configured with a logical node corresponding
+to a shared-memory compute node or to a socket within a compute node). Similar
+to groups, nodegroups do not migrate but there are significant differences in
+their parallel computing semantics in how the runtime system invokes their
+member functions compared to groups. In particular, while member functions of
+chare arrays and groups execute exclusively in a single instance, node groups
+allow multiple _non-exclusive_ member functions to execute concurrently in a
+single nodegroup instance. Note that there is no difference between groups and
+nodegroups if Charm++ is built in non-SMP mode, which is currently the default.
+For more details see the Charm++ manual.
 
 _Array_ above means a Charm++ chare array, whose elements can migrate (if
 enabled) and thus they actively participate in automatic load balancing. With
-nonzero overdecomposition, configured with the `-u` command line argument,
-there may be more array elements (workers) than the number of available PEs.
-Arrays do the bulk of the heavy lifting in a calculation, i.e., computing
-right-hand sides for PDE operators, and hold the bulk of unknown/solution
-arrays. The degree of overdecomposition can be specified by the `-u` command
-line argument. This argument accepts a real value between 0.0 and 1.0,
-inclusive. 0.0 means no overdecomposition, which corresponds to partitioning
-the mesh into a number of pieces equalling the number of PEs available. (`-u
-0.0` yields an execution style that is most similar to how MPI codes are
-traditionally used, which is the default.) Nonzero overdecomposition yields
-larger number of mesh partitions than the available PEs. The extreme of `1.0`
-represents the largest degree of overdecomposition, which also results in the
-smallest work units. For a discussion on the effects of overdecomposition, see
-the page on @ref inciter_performance.
+nonzero overdecomposition, there may be more array elements (workers) than the
+number of available PEs.  Arrays do the bulk of the heavy lifting in a
+calculation, i.e., computing right-hand sides for PDE operators, and hold the
+bulk of unknown/solution arrays. The degree of overdecomposition can be
+specified by the `-u` command line argument. This argument accepts a real value
+between 0.0 and 1.0, inclusive. 0.0 means no overdecomposition, which
+corresponds to partitioning the mesh into a number of pieces equalling the
+number of PEs available. (`-u 0.0` yields an execution style that is most
+similar to how MPI codes are traditionally used, which is the default.) Nonzero
+overdecomposition yields larger number of mesh partitions than the available
+PEs. The extreme of `1.0` represents the largest degree of overdecomposition,
+which also results in the smallest work units. For a discussion on the effects
+of overdecomposition, see the page on @ref inciter_performance.
 
 _Bound arrays_: `Discretization` and its specialized children, `DiagCG`, `DG`,
 etc., `Refiner`, and, if used/created, `DistFCT` are _bound_ arrays. This means
@@ -183,19 +197,22 @@ adhering to the
 [RAII](https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization)
 idiom of the object oriented paradigm, which helps writing correct code.
 
-Transporter thus creates tk::Solver, Sorter, Refiner, and Partitioner. These
-classes play an importart role during setup, but some are also (re-)used during
-time stepping.
+Transporter thus creates tk::MeshWriter, Sorter, Refiner, and Partitioner.
+These classes play an importart role during setup, but some are also (re-)used
+during time stepping.
 
 @note The classes that eventually do most of the heavy-lifting of computing
 operators for partial differential equations, are not yet created - not all
 information is available for those yet. However, their Charm++ proxies are
 created and encapsulated within SchemeBase. These _worker proxies_, `DiagCG`,
-etc., together with their "base" class, `Discretization`, are bound
-together so that the runtime system migrates them together during load
-balancing. This is because the "child" is designed to be able to directly
-access data from its base, as in usual runtime polymorphism. For more details
-on Scheme, SchemeBase, Discretization, and its children, see Inciter/Scheme.h.
+etc., together with their "base" class, `Discretization`, are bound together so
+that the runtime system migrates them together during load balancing. This is
+because the "child" is designed to be able to directly access data from its
+base, as in usual runtime polymorphism. Such direct access of (large) data
+allows not having to create copies and allows reducing communication costs,
+while still allos modularizing code operating on the same data. For more
+details on Scheme, SchemeBase, Discretization, and its children, see
+Inciter/Scheme.h.
 
 In many cases, we pass a number of callbacks to chare arrays and groups when
 their Charm++ proxy is created with `ckNew()`. These callbacks are of type
@@ -203,25 +220,29 @@ their Charm++ proxy is created with `ckNew()`. These callbacks are of type
 that these classes can interoperate with each other as well as with their host,
 Transporter. This helps resolving cyclic include dependencies. These callbacks
 mostly denote reduction targets to `Transporter`, that are necessary
-synchronization points during setup.
+synchronization points during setup. A `CkCallback` is similar to std::function
+or a C-style function pointer, but can also store a callback to a Charm++ chare
+object that happens to reside across the network, i.e., an entry method call
+via a proxy.
 
 @subsection inciter_partitioner_ctor Partitioner constructor
 
 While from `Transporter`'s constructor we create a number of Charm++ chare
-arrays and groups, most of them are empty to start with, except `Partitioner`,
+arrays, most of them are empty to start with. An exception is `Partitioner`,
 whose constructor starts by reading a different chunk of the mesh in blocks as
 they appear in the file. We read a chunk of the mesh and associated node
-coordinates for all mesh cells that are in the chunk read.  `Partitioner`'s
+coordinates for all mesh cells that are in the chunk read. `Partitioner`'s
 constructor also reads/computes the triangle element connectivity associated to
 side sets as well as the node lists associated to side sets. Note that only the
-portion of all this data is read in on a group that belongs to a given chunk of
-the mesh. At this point this results in a simple partitioning which almost
-certainly _not_ ideal for computing equations later, because of a large
-surface-area-to-volume ratio of these partitions, since we cannot assume that
-the ordering in the mesh file also corresponds to close physical-space
-proximity. `Partitioner`'s constructor finishes with a global reduction to
-`Transporter::load()`, which sums the number of elements and the number of
-nodes (points) in the complete problem (read in in a distributed fashion).
+portion of all this data is read in on a nodegroup that belongs to a given
+chunk of the mesh. At this point this results in a simple partitioning which
+almost certainly _not_ ideal for computing equations later, because of a large
+surface-area-to-volume ratio of these partitions of the computational domain,
+since we cannot assume that the ordering in the mesh file also corresponds to
+close physical-space proximity. `Partitioner`'s constructor finishes with a
+global reduction to `Transporter::load()`, which sums the number of elements
+and the number of nodes (points) in the complete problem (read in in a
+distributed fashion).
 
 @subsection inciter_transporter_load Compute total load and overdecomposition
 
@@ -229,11 +250,9 @@ After reading the mesh in a distributed fashion, we now know the total number
 of cells and points and `Transporter::load()` computes the total number of
 worker chares that will be used to partition the problem into. If there is a
 nonzero overdecomposition configured by the command line argument `-u`, the
-number of chares (partitions) may be more than than the available PEs. This is
-computed by tk::linearLoadDistributor(). We then send the number of chares to
-the linear solver, tk::Solver, which then calls back Transporter::nchare(),
-which starts mesh partitioning by issuing a broadcast to
-Partitioner::partition().
+number of chares (partitions) may be more than the available PEs. This is
+computed by tk::linearLoadDistributor(). We then start mesh partitioning by
+issuing a broadcast to Partitioner::partition().
 
 @subsection inciter_partitioner_partition Mesh partitioning
 
@@ -267,7 +286,7 @@ connectivity and boundary node lists associated to multiple side sets are also
 passed to Refiner, and only those portions of these data structures that belong
 to the particular `Refiner` chare. (Boundary face connectivity is used for
 cell-based discretization schemes, such as `DG`, while boundary node lists are
-used for nodal discretizations, such as `CG` to set boundary conditions.)
+used for nodal discretizations, such as `DiagCG` to set boundary conditions.)
 
 @note As usual, dynamic insertion calls are asynchronous, i.e., the calls are
 really only signals to the runtime system that it is time to start calling
@@ -285,14 +304,13 @@ There are two ways Refiner is used:
 2. Mesh refinement during time stepping (t>0), `dtref`.
 
 Initial mesh refinement consists of potentially multiple steps of different
-refinement types: `uniform`, `ic`, `coordref`, which respectively stand for
-uniform refinement, i.e., split each tetrahedron into 8 new ones,
+refinement types, e.g., `uniform`, `ic`, `coordref`, which respectively stand
+for uniform refinement, i.e., split each tetrahedron into 8 new ones,
 initial-conditions-based, i.e., non-uniform refinement based on estimating the
 error in the initial conditions on a given initial mesh, and coordinate-based,
 which allows specifying planes and simple extents in 3 dimensional space and
 allows tagging edges for refinement between two extremes. Additionally the user
-can also tag edges manually, using the `initref` keyword and creating a list of
-pairs of global node ids.
+can also tag edges manually, creating a list of pairs of global node ids.
 
 Refiner::eval() evaluates, at the end of each initial refinement step, if a
 next initial refinement step is to be performed. In the last step, execution
@@ -301,8 +319,7 @@ continues to Refiner::endt0ref(), which creates Sorter.
 Refiner::endt0ref() not only creates the `Sorter` array chares but also reports
 back to Transporter::refined(), signaling the end of the initial mesh
 refinement. In this reduction target the final number of mesh cells and nodes
-are also aggregated across the whole problem and are stored in
-`Transporter::m_nelem` and `Transporter::m_npoin`.
+are also aggregated across the whole problem.
 
 @subsection inciter_reorder Optional PE-locality mesh node reordering
 
@@ -322,9 +339,9 @@ mesh node IDs that roughly increase with chare ID.
 
 Whether node reordering is to be performed or not is evaluated in
 Sorter::start().  If reordering is done, it starts in Sorter::mask(). If
-reordering is not done, we skip to Sorter::create(), which starts creating the
-worker chares, that will eventually perform the heavy lifting during time
-stepping: computing the PDE operators and time integration.
+reordering is not done, we skip to Sorter::createDiscWorkers(), which starts
+creating the worker chares, that will eventually perform the heavy lifting
+during time stepping: computing the PDE operators during time integration.
 
 @subsection inciter_create Creating workers
 
@@ -344,14 +361,15 @@ the OOP sense, derived (or child) classes are the classes that implement a
 particular discretization scheme, e.g., DiagCG or DG.
 
 @note For more details on runtime polymorphism with migratable Charm++ chare
-arrays using value semantics, see Inciter/Scheme.h and [this
-talk](http://charm.cs.illinois.edu/charmWorkshop/slides/CharmWorkshop2018_bakosi.pdf).
+arrays using value semantics, see Inciter/Scheme.h and the talk, titled
+_Concept-based runtime polymorphism with Charm++ chare arrays using value
+semantics_, given at the [16th Annual Workshop on Charm++ and its
+Applications](http://charm.cs.illinois.edu/workshops/charmWorkshop2018/program.php).
 
-Sorter::create() starts creating the `Discretization` chares in
-Sorter::createDiscWorkers(). This is done via the usual Charm++ dynamic array
-insertion passing the mesh chunk and associated data structures to their
-constructors. Eventually, this is followed by creating the child workers in
-Sorter::createWorkers().
+Sorter::createDiscWorkers() starts creating the `Discretization` chares. This
+is done via the usual Charm++ dynamic array insertion passing the mesh chunk
+and associated data structures to their constructors. Eventually, this is
+followed by creating the child workers in Sorter::createWorkers().
 
 Execution from the `Discretization` constructor follows to
 Transporter::disccreated() which fires up `Discretization::vol()`, which
