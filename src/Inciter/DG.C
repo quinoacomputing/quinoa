@@ -1309,7 +1309,7 @@ DG::solve( tk::real newdt )
   auto d = Disc();
 
   // Set new time step size
-  d->setdt( newdt );
+  if (m_stage == 0) d->setdt( newdt );
 
   for (const auto& eq : g_dgpde)
     eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(), m_u,
