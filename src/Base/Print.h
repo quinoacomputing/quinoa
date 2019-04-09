@@ -315,7 +315,7 @@ class Print {
         for (std::size_t i=1; i<labels.size(); ++i)
           stream<s>() <<
             m_inprog_extra_diag_fmt % labels[i] % std::to_string(values[i]);
-        stream<s>() << (precr ? "" : "\n") << std::flush;
+        stream<s>() << (precr ? " " : "\n") << std::flush;
       }
     }
 

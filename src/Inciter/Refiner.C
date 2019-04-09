@@ -73,8 +73,8 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_nref( 0 ),
   m_extra( 0 ),
   m_ch(),
-  m_edgedata(),
-  m_edgedataCh(),
+  m_localEdgeData(),
+  m_remoteEdgeData(),
   m_bndEdges(),
   m_msumset(),
   m_oldTetIdMap(),
@@ -245,7 +245,7 @@ Refiner::start()
   m_extra = 0;
   m_bndEdges.clear();
   m_ch.clear();
-  m_edgedataCh.clear();
+  m_remoteEdgeData.clear();
 
   updateEdgeData();
 
@@ -338,7 +338,7 @@ Refiner::refine()
             "Boundary edge not found before refinement" );
   }
 
-  if (m_initial) {      // if initial (before t=0) AMR
+  if (m_initial) {      // if initial (t<0) AMR (t0ref)
 
     // Refine mesh based on next initial refinement type
     if (!m_initref.empty()) {
@@ -354,7 +354,7 @@ Refiner::refine()
       else Throw( "Initial AMR type not implemented" );
     }
 
-  } else {              // if AMR during time stepping (t>0)
+  } else {              // if during time stepping (t>0) AMR (dtref)
 
     if (g_inputdeck.get< tag::amr, tag::dtref_uniform >())
       uniformRefine();
@@ -386,7 +386,7 @@ Refiner::comExtra()
   else {
     for (auto c : m_ch) {       // for all chares we share at least an edge with
       // send refinement data of all our edges
-      thisProxy[ c ].addRefBndEdges( thisIndex, m_edgedata, m_intermediates );
+      thisProxy[ c ].addRefBndEdges( thisIndex, m_localEdgeData, m_intermediates );
     }
   }
 }
@@ -403,14 +403,24 @@ Refiner::addRefBndEdges(
 //! \param[in] intermediates Intermediate nodes
 // *****************************************************************************
 {
+  /*for (const auto& e : ed) {
+    auto l1 = m_lid.find( e.first[0] );
+    auto l2 = m_lid.find( e.first[1] );
+    if (l1 != end(m_lid) && l1->second == 401 &&
+        l2 != end(m_lid) && l2->second == 403)
+      std::cout << thisIndex << " recv from " << fromch << " 401-403: gid: "
+                << m_gid[401] << '-' << m_gid[403] << ": "
+                << e.second.first << ',' << e.second.second << '\n';
+  }*/
+
   // Save/augment buffer of edge data for each sender chare
-  m_edgedataCh[ fromch ].insert( begin(ed), end(ed) );
+  m_remoteEdgeData[ fromch ].insert( begin(ed), end(ed) );
 
   // Add the intermediates to mesh refiner lib
   for (const auto i : intermediates) {
     auto l = m_lid.find( i ); // convert to local node ids
     //auto l1 = tk::cref_find( m_lid, r.first[0] );
-    //auto it = m_edgedata.find( r.first );
+    //auto it = m_localEdgeData.find( r.first );
     if (l != end(m_lid)) {
       m_refiner.tet_store.intermediate_list.insert( l->second );
     }
@@ -419,7 +429,15 @@ Refiner::addRefBndEdges(
   // Heard from every worker we share at least a single edge with
   if (++m_nref == m_ch.size()) {
     m_nref = 0;
-    correctref();
+    //correctref();
+    auto localedges = m_localEdgeData;
+    m_refiner.lock_intermediates();
+    updateEdgeData();
+    std::cout << thisIndex << ": " << m_localEdgeData.size() << '\n';
+    if (localedges != m_localEdgeData)
+      contribute( m_cbr.get< tag::p0 >() );
+    else
+      correctref();
   }
 }
 
@@ -432,7 +450,13 @@ Refiner::correctref()
 //!    a conforming mesh across chare boundaries during a mesh refinement step.
 // *****************************************************************************
 {
-  m_refiner.lock_intermediates();
+  //if (m_edges != m_refiner.tet_store.edge_store.edges)
+  //  std::cout << thisIndex << " before, not same\n";
+
+  //m_refiner.lock_intermediates();
+
+  //if (m_edges != m_refiner.tet_store.edge_store.edges)
+  //  std::cout << thisIndex << " after, not same\n";
 
   auto unlocked = AMR::Edge_Lock_Case::unlocked;
 
@@ -440,12 +464,13 @@ Refiner::correctref()
   AMR::EdgeData extra;
 
   // loop through all edges shared with other chares
-  for (const auto& c : m_edgedataCh)       // for all chares we share edges with
+  for (const auto& c : m_remoteEdgeData)   // for all chares we share edges with
     for (const auto& r : c.second) {       // for all edges shared with c.first
-      // find local data of remote edge { r.first[0] - r.first[1] }
-      auto it = m_edgedata.find( r.first );
 
-      if (it != end(m_edgedata))
+      // find local data of remote edge { r.first[0] - r.first[1] }
+      auto it = m_localEdgeData.find( r.first );
+
+      if (it != end(m_localEdgeData))
       {
         const auto& local = it->second;
         const auto& remote = r.second;
@@ -466,12 +491,12 @@ Refiner::correctref()
         local_lock_case = std::max( local_lock_case, remote_lock_case );
 
         if (local_lock_case > unlocked) {
-            local_needs_refining = false;
+            local_needs_refining = 0;
         }
 
         if (local_lock_case == unlocked && remote_needs_refining)
         {
-          local_needs_refining = true;
+          local_needs_refining = 1;
         }
 
         if (local_lock_case != local_lock_case_orig ||
@@ -482,44 +507,33 @@ Refiner::correctref()
 
            Assert( l1 != l2, "Edge end-points local ids are the same" );
 
-           /*
-           std::cout << thisIndex << " correcting "
-             << r.first[0] << '-' << r.first[1] << ": l{"
+           /*std::cout << thisIndex << " correcting "
+             << r.first[0] << '-' << r.first[1] << ", edge lid: " << l1
+             << '-' << l2 << ": l{"
              << local_needs_refining_orig << ',' << local_lock_case_orig
-             << "} + r{" << remote_needs_refining_orig << ','
-             << remote_lock_case_orig << "} -> {" << local_needs_refining
-             << ',' << local_lock_case << "}\n";
-           */
+             << "} + r{" << remote_needs_refining << ','
+             << remote_lock_case << "} -> {" << local_needs_refining
+             << ',' << local_lock_case << "}\n";*/
 
            extra[ {{ std::min(l1,l2), std::max(l1,l2) }} ] =
              { local_needs_refining, local_lock_case };
-         }
-
+        }
       }
     }
 
   m_extra = extra.size();
 
-  correctRefine( extra );
-
-  // Aggregate number of extra edges that still need correction
-  std::vector< std::size_t > m{ m_extra, m_edgedata.size(), m_initial };
-  contribute( m, CkReduction::sum_ulong, m_cbr.get< tag::matched >() );
-}
-
-void
-Refiner::correctRefine( const AMR::EdgeData& extra )
-// *****************************************************************************
-// Do mesh refinement correcting chare-boundary edges
-//! \param[in] extra Unique edges that need a new node on chare boundaries
-// *****************************************************************************
-{
   if (!extra.empty()) {
     // Do refinement including edges that need to be corrected
-    m_refiner.mark_error_refinement_corr( extra );
+    m_refiner.mark_error_refinement_corr( thisIndex, extra );
     // Update our extra-edge store based on refiner
     updateEdgeData();
+    //m_refiner.lock_intermediates();
   }
+
+  // Aggregate number of extra edges that still need correction
+  std::vector< std::size_t > m{ m_extra, m_localEdgeData.size(), m_initial };
+  contribute( m, CkReduction::sum_ulong, m_cbr.get< tag::matched >() );
 }
 
 void
@@ -528,11 +542,12 @@ Refiner::updateEdgeData()
 // Query AMR lib and update our local store of edge data
 // *****************************************************************************
 {
-
   using Edge = tk::UnsMesh::Edge;
   const auto& ref_edges = m_refiner.tet_store.edge_store.edges;
 
-  m_edgedata.clear();
+  m_edges = m_refiner.tet_store.edge_store.edges;
+
+  m_localEdgeData.clear();
   m_intermediates.clear();
 
   // This currently takes ALL edges from the AMR lib, i.e., on the whole
@@ -541,8 +556,14 @@ Refiner::updateEdgeData()
   for (const auto& e : ref_edges) {
     const auto& ed = e.first.get_data();
     const auto ged = Edge{{ m_gid[ ed[0] ], m_gid[ ed[1] ] }};
+
+    /*if (ged[0] == 826257351239659353 && ged[1] == 7550549276832629626)
+      std::cout << thisIndex << " send 401-403, gid: "
+                << ged[0] << '-' << ged[1] << ": "
+                << e.second.needs_refining << ',' << e.second.lock_case << '\n';*/
+
     //std::cout << "Building to send " << ed[0] << "-" << ed[1] << " aka " << m_gid[ ed[0] ] << "-" << m_gid[ ed[1] ] << " val " << e.second.needs_refining << " and " << e.second.lock_case <<  std::endl;
-    m_edgedata[ ged ] = { e.second.needs_refining, e.second.lock_case };
+    m_localEdgeData[ ged ] = { e.second.needs_refining, e.second.lock_case };
   }
 
   // Build intermediates to send. This currently takes ALL intermediates from
@@ -667,6 +688,7 @@ Refiner::eval()
   m_oldTets.clear();
   for (const auto& t : m_refiner.tet_store.tets) m_oldTets.insert( t.first );
 
+  //std::cout << thisIndex << " perform refinement\n";
   m_refiner.perform_refinement();
 
   updateMesh();
@@ -700,7 +722,7 @@ Refiner::next()
   } else {              // if AMR during time stepping (t>0)
 
     // Augment node communication map with newly added nodes on chare-boundary
-    for (const auto& c : m_edgedataCh) {
+    for (const auto& c : m_remoteEdgeData) {
       auto& nodes = tk::ref_find( m_msumset, c.first );
       for (const auto& e : c.second) {
         // If parent nodes were part of the node communication map for chare
@@ -806,6 +828,8 @@ Refiner::errorRefine()
 
   }
 
+  Assert( u.nunk() == npoin, "Solution uninitialized or wrong size" );
+
   // Get the indices (in the system of systems) of refinement variables and the
   // error indicator configured
   const auto& refidx = g_inputdeck.get< tag::amr, tag::id >();
@@ -814,7 +838,7 @@ Refiner::errorRefine()
   using AMR::edge_t;
 
   // Compute errors in ICs and define refinement criteria for edges
-  std::vector< edge_t > edge;
+  std::vector< edge_t > tagged_edges;
   AMR::Error error;
   for (std::size_t p=0; p<npoin; ++p) { // for all mesh nodes on this chare
     for (auto q : tk::Around(psup,p)) { // for all nodes surrounding p
@@ -825,12 +849,12 @@ Refiner::errorRefine()
         if (c > cmax) cmax = c;        // find max error at edge
       }
       // if error is large, will pass edge to refiner
-      if (cmax > 0.8)edge.push_back( e );
+      if (cmax > 0.8) tagged_edges.push_back( e );
     }
   }
 
   // Do error-based refinement
-  m_refiner.mark_error_refinement( edge );
+  m_refiner.mark_error_refinement( tagged_edges );
 
   // Update our extra-edge store based on refiner
   updateEdgeData();
@@ -1341,7 +1365,7 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
     // If the face was found among the grandparents and the grandparent was on
     // the same side side set, add child face to the side set.
     if (p != end(grandfacesides) && p->second.find(ss) != end(p->second)) {
-      std::cout << 'g';
+      //std::cout << 'g';
       addBndFace( faces, ss, {{ m_gid[ childface[0] ], m_gid[ childface[1] ],
                                 m_gid[ childface[2] ] }} );
     }

@@ -143,8 +143,8 @@ class Refiner : public CBase_Refiner {
       p | m_nref;
       p | m_extra;
       p | m_ch;
-      p | m_edgedata;
-      p | m_edgedataCh;
+      p | m_localEdgeData;
+      p | m_remoteEdgeData;
       p | m_intermediates;
       p | m_bndEdges;
       p | m_msumset;
@@ -236,9 +236,9 @@ class Refiner : public CBase_Refiner {
     //! Chares we share at least a single edge with
     std::unordered_set< int > m_ch;
     //! Refinement data associated to edges
-    AMR::EdgeData m_edgedata;
+    AMR::EdgeData m_localEdgeData;
     //! Refinement data associated to edges shared with other chares
-    std::unordered_map< int, AMR::EdgeData > m_edgedataCh;
+    std::unordered_map< int, AMR::EdgeData > m_remoteEdgeData;
     //! Intermediate nodes
     std::unordered_set< size_t> m_intermediates;
     //! Boundary edges associated to chares we share these edges with
@@ -261,6 +261,9 @@ class Refiner : public CBase_Refiner {
     std::size_t m_prevnTets;
     //! Unique nodes of the mesh before a refinement step with local ids
     std::unordered_set< std::size_t > m_grand;
+
+    std::map<AMR::edge_t, AMR::Edge_Refinement> m_edges;
+    tk::Fields nu;
 
     //! Generate flat coordinate data from coordinate map
     tk::UnsMesh::Coords flatcoord( const tk::UnsMesh::CoordMap& coordmap );
@@ -285,9 +288,6 @@ class Refiner : public CBase_Refiner {
 
     //! Do mesh refinement based on tagging edges based on end-point coordinates
     void coordRefine();
-
-    //! Do mesh refinement correcting PE-boundary edges
-    void correctRefine( const AMR::EdgeData& extra );
 
     //! ...
     void updateEdgeData();

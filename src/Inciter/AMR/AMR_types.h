@@ -46,7 +46,7 @@ struct Edge_Refinement {
     size_t A;
     size_t B;
     real_t refinement_criteria;
-    bool needs_refining; // TODO: This could possibly be deduced implicitly
+    int needs_refining; // TODO: This could possibly be deduced implicitly
     bool needs_derefining; // TODO: Marge this with needs_refining
     bool is_dead;
     Edge_Lock_Case lock_case; // TODO: Refactor this to match _ style?
@@ -56,12 +56,20 @@ struct Edge_Refinement {
         A(0),
         B(0),
         refinement_criteria(0.0),
-        needs_refining(false),
+        needs_refining(0),
         needs_derefining(false),
         is_dead(false),
         lock_case(Edge_Lock_Case::unlocked)
     {
         // Empty
+    }
+
+    bool operator==( const Edge_Refinement& r ) const {
+      return A==r.A && B==r.B &&
+             std::abs(refinement_criteria-r.refinement_criteria) < 1.0e-12 &&
+             needs_refining==r.needs_refining &&
+             needs_derefining==r.needs_derefining && is_dead==r.is_dead &&
+             lock_case==r.lock_case;
     }
 
     // This abstraction is hardly any better than using an explicit initialisation
@@ -70,7 +78,7 @@ struct Edge_Refinement {
             size_t A_in,
             size_t B_in,
             real_t refinement_criteria_in,
-            bool needs_refining_in,
+            int needs_refining_in,
             bool needs_derefining_in,
             bool is_dead_in,
             Edge_Lock_Case lock_case_in
@@ -100,7 +108,7 @@ using coord_type = std::vector< tk::real >;
 //!    parent IDs
 using EdgeData =
    std::unordered_map< tk::UnsMesh::Edge,
-                       std::pair< bool, Edge_Lock_Case >,
+                       std::pair< int, Edge_Lock_Case >,
                        tk::UnsMesh::Hash<2>,
                        tk::UnsMesh::Eq<2> >;
 

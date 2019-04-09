@@ -267,6 +267,7 @@ Transporter::createPartitioner()
   // Create refiner callbacks (order matters)
   tk::RefinerCallback cbr {
       CkCallback( CkReductionTarget(Transporter,edges), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,bnded), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,matched), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
   };
@@ -401,6 +402,15 @@ Transporter::edges()
 // *****************************************************************************
 {
   m_refiner.refine();
+}
+
+void
+Transporter::bnded()
+// *****************************************************************************
+// Reduction target: all mesh refiner chares have setup their boundary edges
+// *****************************************************************************
+{
+  m_refiner.comExtra();
 }
 
 void

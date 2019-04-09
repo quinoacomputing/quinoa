@@ -89,6 +89,7 @@ class Transporter : public CBase_Transporter {
     //! \brief Reduction target: all mesh refiner chares have setup their
     //!   boundary edges
     void edges();
+    void bnded();
 
     //! \brief Reduction target: all mesh refiner chares have performed a step
     //!   of matching chare-boundary edges

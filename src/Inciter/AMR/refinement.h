@@ -226,7 +226,7 @@ namespace AMR {
                         trace_out << "nodes " << k << std::endl;
 
                         edge_t edge = face_edge_list[k];
-                        if (tet_store.edge_store.get(edge).needs_refining == true)
+                        if (tet_store.edge_store.get(edge).needs_refining == 1)
                         {
                             num_face_refine_edges++;
                             trace_out << "Ref " << edge << " Num face => " << num_face_refine_edges << std::endl;
@@ -606,7 +606,7 @@ namespace AMR {
                 {
                     edge_t edge = edge_list[k];
 
-                    if (tet_store.edge_store.get(edge).needs_refining == true)
+                    if (tet_store.edge_store.get(edge).needs_refining == 1)
                     {
                         returned_nodes[0] = edge.first();
                         returned_nodes[1] = edge.second();
@@ -646,6 +646,7 @@ namespace AMR {
                     {
                         trace_out << "Locking intermediate " << e << " from " << k1 << " and " << k2 << std::endl;
                         tet_store.edge_store.get(e).lock_case = lock_case;
+                        tet_store.edge_store.get(e).needs_refining = 0;
                     }
                 }
 
@@ -675,32 +676,33 @@ namespace AMR {
                         if ((edge_node_A_id == node_id) || (edge_node_B_id == node_id)) {
                             trace_out << " found node in " << edge_node_A_id << " - " << edge_node_B_id << " set to " << lock_case << std::endl;
                             tet_store.edge_store.get(edge).lock_case = lock_case;
+                            tet_store.edge_store.get(edge).needs_refining = 0;
                         }
                     }
                 }
             }
-            void lock_edges_from_node(
-                    tet_store_t& tet_store,
-                    size_t tet_id,
-                    size_t node_id,
-                    Edge_Lock_Case lock_case
-            )
-            {
-                // Iterate over edges of of tet
-                edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
-                for (size_t k = 0; k < NUM_TET_EDGES; k++)
-                {
-                    // If it contains that node id, mark it using lock_case
-                    edge_t edge = edge_list[k];
-
-                    size_t edge_node_A_id = edge.first();
-                    size_t edge_node_B_id = edge.second();
-
-                    if ((edge_node_A_id == node_id) || (edge_node_B_id == node_id)) {
-                        tet_store.edge_store.get(edge).lock_case = lock_case;
-                    }
-                }
-            }
+//            void lock_edges_from_node(
+//                    tet_store_t& tet_store,
+//                    size_t tet_id,
+//                    size_t node_id,
+//                    Edge_Lock_Case lock_case
+//            )
+//            {
+//                // Iterate over edges of of tet
+//                edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
+//                for (size_t k = 0; k < NUM_TET_EDGES; k++)
+//                {
+//                    // If it contains that node id, mark it using lock_case
+//                    edge_t edge = edge_list[k];
+//
+//                    size_t edge_node_A_id = edge.first();
+//                    size_t edge_node_B_id = edge.second();
+//
+//                    if ((edge_node_A_id == node_id) || (edge_node_B_id == node_id)) {
+//                        tet_store.edge_store.get(edge).lock_case = lock_case;
+//                    }
+//                }
+//            }
 
 
             ///// DEREFINEMENT STARTS HERE /////
