@@ -405,6 +405,8 @@ namespace AMR {
                             case Refinement_Case::initial_grid:
                                 val = 1.0;
                                 break;
+                            // TODO: this will never actually happen, as a 2:8 currently views
+                            // itself as a 1:8 (as it did a 2:1, and a 1:8)
                             case Refinement_Case::two_to_eight:
                                 val = 2.8;
                                 break;
