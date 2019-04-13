@@ -1199,7 +1199,7 @@ Refiner::ancestors( std::size_t n )
   auto p = m_refiner.node_connectivity.get( n );
   std::unordered_set< std::size_t > s;
 
-  if (p != AMR::node_pair_t{n,n}) {
+  if (p != AMR::node_pair_t{{n,n}}) {
     auto q = ancestors( p[0] );
     s.insert( begin(q), end(q) );
     auto r = ancestors( p[1] );
@@ -1369,7 +1369,7 @@ Refiner::updateBndFaces(
             a.insert( begin(c), end(c) );
             if (a.size() == 3) {
               std::vector< std::size_t > p( begin(a), end(a) );
-              Face par{ m_gid[p[0]], m_gid[p[1]], m_gid[p[2]] };
+              Face par{{ m_gid[p[0]], m_gid[p[1]], m_gid[p[2]] }};
               auto it = coarsefaces.find( par );
               if (it != end(coarsefaces))
                 addBndFace(faces,ss,{{m_gid[rf[0]],m_gid[rf[1]],m_gid[rf[2]]}});
