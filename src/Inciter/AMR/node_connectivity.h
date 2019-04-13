@@ -90,7 +90,7 @@ namespace AMR {
 
                 //assert(iter != inv_nodes.end());
                 //return iter->second;
-                return (iter != inv_nodes.end() ? iter->second : node_pair_t{id,id});
+                return (iter != inv_nodes.end() ? iter->second : node_pair_t{{id,id}});
             }
 
             /**
