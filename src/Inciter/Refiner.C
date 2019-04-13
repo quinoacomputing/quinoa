@@ -77,12 +77,12 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_remoteEdgeData(),
   m_bndEdges(),
   m_msumset(),
-  m_oldTetIdMap(),
   m_oldTets(),
   m_addedNodes(),
   m_addedTets(),
   m_prevnTets( 0 ),
-  m_grand( begin(m_inpoel), end(m_inpoel) )
+  m_coarseBndFaces(),
+  m_coarseBndNodes()
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Transporter (host) proxy
@@ -112,12 +112,39 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   // Reverse initial mesh refinement type list (will pop from back)
   std::reverse( begin(m_initref), end(m_initref) );
 
+  // Generate boundary data structures for coarse mesh
+  coarseBnd();
+
   // If initial mesh refinement is configured, start initial mesh refinement.
   // See also tk::grm::check_amr_errors in Control/Inciter/InputDeck/Ggrammar.h.
   if (g_inputdeck.get< tag::amr, tag::t0ref >() && m_ninitref > 0)
     t0ref();
   else
     endt0ref();
+}
+
+
+void
+Refiner::coarseBnd()
+// *****************************************************************************
+// (Re-)generate boundary data structures for coarse mesh
+// *****************************************************************************
+{
+  // Generate unique set of faces for each side set of the input (coarsest) mesh
+  m_coarseBndFaces.clear();
+  for (const auto& s : m_bface) {  // for all phsyical boundaries (sidesets)
+    auto& faces = m_coarseBndFaces[ s.first ];
+    for (auto f : s.second) {
+      faces.insert(
+        {{{ m_triinpoel[f*3+0], m_triinpoel[f*3+1], m_triinpoel[f*3+2] }}} );
+    }
+  }
+
+  // Generate unique set of nodes for each side set of the input (coarsest) mesh
+  m_coarseBndNodes.clear();
+  for (const auto& s : m_bnode) {  // for all phsyical boundaries (sidesets)
+    m_coarseBndNodes[ s.first ].insert( begin(s.second), end(s.second) );
+  }
 }
 
 void
@@ -158,11 +185,15 @@ Refiner::reorder()
 // Query Sorter and update local mesh with the reordered one
 // *****************************************************************************
 {
-  m_sorter[thisIndex].ckLocal()->mesh( m_ginpoel, m_coordmap, m_triinpoel );
+  m_sorter[thisIndex].ckLocal()->
+    mesh( m_ginpoel, m_coordmap, m_triinpoel, m_bnode );
 
   // Update local mesh data based on data just received from Sorter
   m_el = tk::global2local( m_ginpoel );     // fills m_inpoel, m_gid, m_lid
   m_coord = flatcoord( m_coordmap );
+
+  // Re-generate boundary data structures for coarse mesh
+  coarseBnd();
 
   // WARNING: This re-creates the AMR lib which is probably not what we
   // ultimately want, beacuse this deletes its history recorded during initial
@@ -246,10 +277,11 @@ Refiner::start()
   m_bndEdges.clear();
   m_ch.clear();
   m_remoteEdgeData.clear();
+  m_remoteEdges.clear();
 
   updateEdgeData();
 
-  // Generate boundary edges
+  // Generate and communicate boundary edges
   bndEdges();
 }
 
@@ -303,11 +335,15 @@ Refiner::addBndEdges( CkReductionMsg* msg )
 
   // Compute unique set of chares that share at least a single edge with us
   const auto& ownedges = tk::cref_find( m_bndEdges, thisIndex );
-  for (const auto& p : m_bndEdges)    // for all chares
-    if (p.first != thisIndex)         // for all chares other than this one
-      for (const auto& e : p.second)  // for all boundary edges
-        if (ownedges.find(e) != end(ownedges))
-          m_ch.insert( p.first );     // if edge is shared, store its chare id
+  for (const auto& c : m_bndEdges) {   // for all chares
+    if (c.first != thisIndex) {        // for all chares other than this one
+      for (const auto& e : c.second) { // for all boundary edges
+        if (ownedges.find(e) != end(ownedges)) {
+          m_ch.insert( c.first );     // if edge is shared, store its chare id
+        }
+      }
+    }
+  }
 
   contribute( m_cbr.get< tag::edges >() );
 }
@@ -363,13 +399,6 @@ Refiner::refine()
 
   }
 
-//   for (const auto& e : tk::cref_find(m_bndEdges,thisIndex)) {
-//     IGNORE(e);
-//     Assert( m_lid.find( e[0] ) != end( m_lid ) &&
-//             m_lid.find( e[1] ) != end( m_lid ),
-//             "Boundary edge not found after refinement" );
-//   }
-
   // Communicate extra edges
   comExtra();
 }
@@ -381,12 +410,11 @@ Refiner::comExtra()
 // *****************************************************************************
 {
   // Export extra added nodes on our mesh chunk boundary to other chares
-  if (m_ch.empty())
+  if (m_ch.empty()) {
     correctref();
-  else {
-    for (auto c : m_ch) {       // for all chares we share at least an edge with
-      // send refinement data of all our edges
-      thisProxy[ c ].addRefBndEdges( thisIndex, m_localEdgeData, m_intermediates );
+  } else {
+    for (auto c : m_ch) {  // for all chares we share at least an edge with
+      thisProxy[c].addRefBndEdges(thisIndex, m_localEdgeData, m_intermediates);
     }
   }
 }
@@ -397,30 +425,23 @@ Refiner::addRefBndEdges(
   const AMR::EdgeData& ed,
   const std::unordered_set< std::size_t >& intermediates )
 // *****************************************************************************
-//! Receive tagged edges on our chare boundary
+//! Receive edges on our chare boundary from other chares
 //! \param[in] fromch Chare call coming from
-//! \param[in] ed Tagged edges on chare boundary
+//! \param[in] ed Edges on chare boundary
 //! \param[in] intermediates Intermediate nodes
 // *****************************************************************************
 {
-  /*for (const auto& e : ed) {
-    auto l1 = m_lid.find( e.first[0] );
-    auto l2 = m_lid.find( e.first[1] );
-    if (l1 != end(m_lid) && l1->second == 401 &&
-        l2 != end(m_lid) && l2->second == 403)
-      std::cout << thisIndex << " recv from " << fromch << " 401-403: gid: "
-                << m_gid[401] << '-' << m_gid[403] << ": "
-                << e.second.first << ',' << e.second.second << '\n';
-  }*/
-
-  // Save/augment buffer of edge data for each sender chare
-  m_remoteEdgeData[ fromch ].insert( begin(ed), end(ed) );
+  // Save/augment buffers of edge data for each sender chare
+  auto& red = m_remoteEdgeData[ fromch ];
+  auto& re = m_remoteEdges[ fromch ];
+  for (const auto& e : ed) {
+    red.push_back( { e.first, e.second.first, e.second.second } );
+    re.push_back( e.first );
+  }
 
   // Add the intermediates to mesh refiner lib
   for (const auto i : intermediates) {
     auto l = m_lid.find( i ); // convert to local node ids
-    //auto l1 = tk::cref_find( m_lid, r.first[0] );
-    //auto it = m_localEdgeData.find( r.first );
     if (l != end(m_lid)) {
       m_refiner.tet_store.intermediate_list.insert( l->second );
     }
@@ -429,15 +450,20 @@ Refiner::addRefBndEdges(
   // Heard from every worker we share at least a single edge with
   if (++m_nref == m_ch.size()) {
     m_nref = 0;
-    //correctref();
-    auto localedges = m_localEdgeData;
+    // Add intermediates to refiner lib
+    auto localedges_orig = m_localEdgeData;
+    //auto intermediates_orig = m_intermediates;
     m_refiner.lock_intermediates();
+    // Run compatibility algorithm
+    m_refiner.mark_refinement();
+    // Update edge data from mesh refiner
     updateEdgeData();
-    std::cout << thisIndex << ": " << m_localEdgeData.size() << '\n';
-    if (localedges != m_localEdgeData)
-      contribute( m_cbr.get< tag::p0 >() );
-    else
-      correctref();
+    // If refiner lib modified our edges, need to recommunicate
+    int modified = (localedges_orig != m_localEdgeData ? 1 : 0);
+    //int modified = ( (localedges_orig != m_localEdgeData ||
+    //                  intermediates_orig != m_intermediates) ? 1 : 0 );
+    contribute( sizeof(int), &modified, CkReduction::sum_int,
+                m_cbr.get< tag::compatibility >() );
   }
 }
 
@@ -450,34 +476,24 @@ Refiner::correctref()
 //!    a conforming mesh across chare boundaries during a mesh refinement step.
 // *****************************************************************************
 {
-  //if (m_edges != m_refiner.tet_store.edge_store.edges)
-  //  std::cout << thisIndex << " before, not same\n";
-
-  //m_refiner.lock_intermediates();
-
-  //if (m_edges != m_refiner.tet_store.edge_store.edges)
-  //  std::cout << thisIndex << " after, not same\n";
-
   auto unlocked = AMR::Edge_Lock_Case::unlocked;
 
   // Storage for edge data that need correction to yield a conforming mesh
   AMR::EdgeData extra;
 
   // loop through all edges shared with other chares
-  for (const auto& c : m_remoteEdgeData)   // for all chares we share edges with
+  for (const auto& c : m_remoteEdgeData) { // for all chares we share edges with
     for (const auto& r : c.second) {       // for all edges shared with c.first
-
-      // find local data of remote edge { r.first[0] - r.first[1] }
-      auto it = m_localEdgeData.find( r.first );
-
+      const auto& edge = std::get< 0 >( r );
+      // find local data of remote edge
+      auto it = m_localEdgeData.find( edge );
       if (it != end(m_localEdgeData))
       {
-        const auto& local = it->second;
-        const auto& remote = r.second;
-        auto local_needs_refining = local.first;
-        auto local_lock_case = local.second;
-        auto remote_needs_refining = remote.first;
-        auto remote_lock_case = remote.second;
+        auto& local = it->second;
+        auto& local_needs_refining = local.first;
+        auto& local_lock_case = local.second;
+        auto remote_needs_refining = std::get<1>(r);
+        auto remote_lock_case = std::get<2>(r);
 
         auto local_needs_refining_orig = local_needs_refining;
         auto local_lock_case_orig = local_lock_case;
@@ -490,45 +506,41 @@ Refiner::correctref()
         // compute lock from local and remote locks as most restrictive
         local_lock_case = std::max( local_lock_case, remote_lock_case );
 
-        if (local_lock_case > unlocked) {
-            local_needs_refining = 0;
-        }
+        if (local_lock_case > unlocked)
+          local_needs_refining = 0;
 
         if (local_lock_case == unlocked && remote_needs_refining)
-        {
           local_needs_refining = 1;
-        }
 
-        if (local_lock_case != local_lock_case_orig ||
-            local_needs_refining != local_needs_refining_orig) {
-
-           auto l1 = tk::cref_find( m_lid, r.first[0] );
-           auto l2 = tk::cref_find( m_lid, r.first[1] );
-
-           Assert( l1 != l2, "Edge end-points local ids are the same" );
-
-           /*std::cout << thisIndex << " correcting "
-             << r.first[0] << '-' << r.first[1] << ", edge lid: " << l1
-             << '-' << l2 << ": l{"
-             << local_needs_refining_orig << ',' << local_lock_case_orig
-             << "} + r{" << remote_needs_refining << ','
-             << remote_lock_case << "} -> {" << local_needs_refining
-             << ',' << local_lock_case << "}\n";*/
-
+        // if the remote sent us data that makes us change our local state,
+        // e.g., local{0,0} + remote(1,0} -> local{1,0}, i.e., I changed my
+        // state I need to tell the world about it
+        if ( (local_lock_case != local_lock_case_orig ||
+              local_needs_refining != local_needs_refining_orig) ||
+        // or if the remote data is inconsistent with what I think, e.g.,
+        // local{1,0} + remote(0,0} -> local{1,0}, i.e., the remote does not
+        // yet agree, I need to tell the world about it
+             (local_lock_case != remote_lock_case ||
+              local_needs_refining != remote_needs_refining) )
+        {
+          auto l1 = tk::cref_find( m_lid, std::get<0>(r)[0] );
+          auto l2 = tk::cref_find( m_lid, std::get<0>(r)[1] );
+          Assert( l1 != l2, "Edge end-points local ids are the same" );
            extra[ {{ std::min(l1,l2), std::max(l1,l2) }} ] =
              { local_needs_refining, local_lock_case };
         }
       }
     }
+  }
 
+  m_remoteEdgeData.clear();
   m_extra = extra.size();
 
   if (!extra.empty()) {
     // Do refinement including edges that need to be corrected
-    m_refiner.mark_error_refinement_corr( thisIndex, extra );
+    m_refiner.mark_error_refinement_corr( extra );
     // Update our extra-edge store based on refiner
     updateEdgeData();
-    //m_refiner.lock_intermediates();
   }
 
   // Aggregate number of extra edges that still need correction
@@ -545,8 +557,6 @@ Refiner::updateEdgeData()
   using Edge = tk::UnsMesh::Edge;
   const auto& ref_edges = m_refiner.tet_store.edge_store.edges;
 
-  m_edges = m_refiner.tet_store.edge_store.edges;
-
   m_localEdgeData.clear();
   m_intermediates.clear();
 
@@ -556,13 +566,6 @@ Refiner::updateEdgeData()
   for (const auto& e : ref_edges) {
     const auto& ed = e.first.get_data();
     const auto ged = Edge{{ m_gid[ ed[0] ], m_gid[ ed[1] ] }};
-
-    /*if (ged[0] == 826257351239659353 && ged[1] == 7550549276832629626)
-      std::cout << thisIndex << " send 401-403, gid: "
-                << ged[0] << '-' << ged[1] << ": "
-                << e.second.needs_refining << ',' << e.second.lock_case << '\n';*/
-
-    //std::cout << "Building to send " << ed[0] << "-" << ed[1] << " aka " << m_gid[ ed[0] ] << "-" << m_gid[ ed[1] ] << " val " << e.second.needs_refining << " and " << e.second.lock_case <<  std::endl;
     m_localEdgeData[ ged ] = { e.second.needs_refining, e.second.lock_case };
   }
 
@@ -680,15 +683,11 @@ Refiner::eval()
 //!   (Discretization).
 // *****************************************************************************
 {
-  // Save old tet id map before performing refinement
-  m_oldTetIdMap = m_refiner.tet_store.get_active_id_mapping();
-
   // Save old tet ids before performing refinement
   m_prevnTets = m_oldTets.size();       // save number tets before refinement
   m_oldTets.clear();
   for (const auto& t : m_refiner.tet_store.tets) m_oldTets.insert( t.first );
 
-  //std::cout << thisIndex << " perform refinement\n";
   m_refiner.perform_refinement();
 
   updateMesh();
@@ -722,28 +721,26 @@ Refiner::next()
   } else {              // if AMR during time stepping (t>0)
 
     // Augment node communication map with newly added nodes on chare-boundary
-    for (const auto& c : m_remoteEdgeData) {
+    for (const auto& c : m_remoteEdges) {
       auto& nodes = tk::ref_find( m_msumset, c.first );
       for (const auto& e : c.second) {
         // If parent nodes were part of the node communication map for chare
-        if (nodes.find(e.first[0]) != end(nodes) &&
-            nodes.find(e.first[1]) != end(nodes))
-        {
+        if (nodes.find(e[0]) != end(nodes) && nodes.find(e[1]) != end(nodes)) {
           // Add new node if local id was generated for it
-          auto n = tk::UnsMesh::Hash<2>()( e.first );
+          auto n = tk::UnsMesh::Hash<2>()( e );
           if (m_lid.find(n) != end(m_lid)) nodes.insert( n );
         }
       }
     }
 
-    // Regerate node communication map containing vectors on refined mesh
+    // Convert to node communication map to vectors
     std::unordered_map< int, std::vector< std::size_t > > msum;
     for (const auto& c : m_msumset) {
       auto& n = msum[ c.first ];
       n.insert( end(n), c.second.cbegin(), c.second.cend() );
     }
 
-    // Send new mesh and solution back to PDE worker
+    // Send new mesh, solution, and communication data back to PDE worker
     Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
             "About to use nullptr" );
     auto e = tk::element< SchemeBase::ProxyElem >
@@ -1073,13 +1070,7 @@ Refiner::updateMesh()
 
   // Update mesh and solution after refinement
   newVolMesh( old, ref );
-  newBndMesh( old, ref );
-
-  // Save/update unique nodes of the current 'old' mesh that will become a
-  // 'grandparent' mesh in the next refinement step with local ids. This mesh is
-  // used in the next refinement step (if any) to find parent nodes of faces of
-  // backtracker tets that will have undergone 2->8 or 4->8 refinement.
-  m_grand = old;
+  newBndMesh( ref );
 
   // Update mesh connectivity with local node IDs
   m_inpoel = m_refiner.tet_store.get_active_inpoel();
@@ -1197,12 +1188,35 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
   }
 }
 
+std::unordered_set< std::size_t >
+Refiner::ancestors( std::size_t n )
+// *****************************************************************************
+// Find the oldest parents of a mesh node in the AMR hierarchy
+//! \param[in] n Local node id whose ancestors to search
+//! \return Parents of local node id from the coarsest (original) mesh
+// *****************************************************************************
+{
+  auto p = m_refiner.node_connectivity.get( n );
+  std::unordered_set< std::size_t > s;
+
+  if (p != AMR::node_pair_t{n,n}) {
+    auto q = ancestors( p[0] );
+    s.insert( begin(q), end(q) );
+    auto r = ancestors( p[1] );
+    s.insert( begin(r), end(r) );
+  } else {
+    s.insert( begin(p), end(p) );
+  }
+
+  return s;
+}
+
 Refiner::BndFaceData
 Refiner::boundary()
 // *****************************************************************************
 //  Generate boundary data structures used to update refined boundary faces and
 //  nodes of side sets
-//! \return A tuple of boundary face data. See type definition.
+//! \return A tuple of boundary face data
 //! \details The output of this function is used to regenerate physical boundary
 //!   face and node data structures after refinement, see updateBndFaces() and
 //!   updateBndNodes().
@@ -1219,8 +1233,11 @@ Refiner::boundary()
   for (const auto& t : m_refiner.tet_store.tets) invtets[ t.second ] = t.first;
 
   // Generate data structure that associates the id of a tet adjacent to a
-  // boundary triangle face for all (physical and chare) boundary faces.
-  BndFaceTets facetets;
+  // boundary triangle face for all (physical and chare) boundary faces
+  std::unordered_map< Face,
+                      std::size_t,
+                      tk::UnsMesh::Hash<3>,
+                      tk::UnsMesh::Eq<3> > pcFaceTets;
   auto oldesuel = tk::genEsuelTet( m_inpoel, tk::genEsup(m_inpoel,4) );
   for (std::size_t e=0; e<oldesuel.size()/4; ++e) {
     auto m = e*4;
@@ -1231,64 +1248,35 @@ Refiner::boundary()
                  m_ginpoel[ m+tk::lpofa[f][2] ] }};
         Tet t{{ m_inpoel[m+0], m_inpoel[m+1], m_inpoel[m+2], m_inpoel[m+3] }};
         // associate tet id to adjacent (physical or chare) boundary face
-        facetets[b] = tk::cref_find(invtets,t);
+        pcFaceTets[b] = tk::cref_find(invtets,t);
       }
     }
   }
 
   // Generate unique set of faces for each side set
-  BndFaceSets facesets;
+  std::unordered_map< int, tk::UnsMesh::FaceSet > bndFaces;
   for (const auto& s : m_bface) {  // for all phsyical boundaries (sidesets)
-    auto& faces = facesets[ s.first ];
+    auto& faces = bndFaces[ s.first ];
     for (auto f : s.second) {
       faces.insert(
         {{{ m_triinpoel[f*3+0], m_triinpoel[f*3+1], m_triinpoel[f*3+2] }}} );
     }
   }
 
-  // Generate unique set of nodes for each side set
-  BndNodeSets nodesets;
-  for (const auto& s : m_bnode) {  // for all phsyical boundaries (sidesets)
-    nodesets[ s.first ].insert( begin(s.second), end(s.second) );
-  }
+  // Generate data structure that associates the id of a tet adjacent to a
+  // boundary triangle face for only physical boundary faces.
+  decltype(pcFaceTets) bndFaceTets;
+  for (const auto& f : pcFaceTets)
+    if (!keys(bndFaces,f.first).empty())
+      bndFaceTets.insert( f );
 
-  // Associate a unique set of side set ids to boundary faces of the parents of
-  // backtrackers (that underwent a 2->8 or a 4->8 refinement). Note that this
-  // will only store data for backtrackers and will associate side set ids to
-  // faces of the grandparent mesh.
-  const auto& tet_store = m_refiner.tet_store;
-  BndFaceSides grandfacesides;
-  for (const auto& f : facetets) {
-    auto nc = tet_store.data( f.second ).children.size();
-    if (nc > 0) {  // if tet is refined
-      auto ss = sides( facesets, f.first );    // query side sets for face
-      for (decltype(nc) i=0; i<nc; ++i) {  // for all child tets
-        auto childtet = tet_store.get_child_id( f.second, i );
-        auto parent = tet_store.get_parent_id( childtet );
-        if (parent != f.second) {  // detect backtrackers: 2->8 or 4->8
-          // construct face of old mesh boundary face using local ids
-          Face face{{ tk::cref_find( m_lid, f.first[0] ),
-                      tk::cref_find( m_lid, f.first[1] ),
-                      tk::cref_find( m_lid, f.first[2] ) }};
-          auto par = parents( m_grand, face );  // find parent nodes of face
-          if (par.size() == 3) {
-            std::vector< std::size_t > g( begin(par), end(par) );
-            grandfacesides[ {{ m_gid[g[0]], m_gid[g[1]], m_gid[g[2]] }} ] = ss;
-          }
-        }
-      }
-    }
-  }
-
-  return { facetets, grandfacesides, facesets, nodesets };
+  return { bndFaceTets, bndFaces, pcFaceTets };
 }
 
 void
-Refiner::newBndMesh( const std::unordered_set< std::size_t >& old,
-                     const std::unordered_set< std::size_t >& ref )
+Refiner::newBndMesh( const std::unordered_set< std::size_t >& ref )
 // *****************************************************************************
 // Update boundary data structures after mesh refinement
-//! \param[in] old Unique nodes of the old (unrefined) mesh using local ids
 //! \param[in] ref Unique nodes of the refined mesh using local ids
 // *****************************************************************************
 {
@@ -1297,19 +1285,22 @@ Refiner::newBndMesh( const std::unordered_set< std::size_t >& old,
   auto bnd = boundary();
 
   // Regerate boundary faces and nodes after mesh refinement
-  updateBndFaces( old, ref, bnd );
-  updateBndNodes( old, ref, bnd );
+  updateBndFaces( ref, std::get<0>(bnd), std::get<1>(bnd) );
+  updateBndNodes( ref, std::get<2>(bnd) );
 }
 
 void
-Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
-                         const std::unordered_set< std::size_t >& ref,
-                         const BndFaceData& bnd )
+Refiner::updateBndFaces(
+  const std::unordered_set< std::size_t >& ref,
+  const std::unordered_map< tk::UnsMesh::Face, std::size_t,
+                        tk::UnsMesh::Hash<3>, tk::UnsMesh::Eq<3> >& bndFaceTets,
+  const std::unordered_map< int, tk::UnsMesh::FaceSet >& bndFaces )
 // *****************************************************************************
 // Regenerate boundary faces after mesh refinement step
-//! \param[in] old Unique nodes of the old (unrefined) mesh using local ids
 //! \param[in] ref Unique nodes of the refined mesh using local ids
-//! \param[in] bnd Tuple of boundary face data. See type definition.
+//! \param[in] bndFaceTets Map associating the id of a tet adjacent to a
+//!   boundary triangle face for only physical boundary faces.
+//! \param[in] bndFaces Unique set of faces for each side set
 // *****************************************************************************
 {
   IGNORE(ref);  // to avoid compiler warning when asserts are optimized away
@@ -1323,12 +1314,7 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
   // face id counter
   std::size_t facecnt = 0;
   // will collect unique faces added for each side set
-  BndFaceSets bndfacesets;
-
-  // See Refiner::boundary()
-  const auto& facetets = std::get< 0 >( bnd );
-  const auto& grandfacesides = std::get< 1 >( bnd );
-  const auto& facesets = std::get< 2 >( bnd );
+  std::unordered_map< int, tk::UnsMesh::FaceSet > bnd;
 
   // Lambda to associate a boundary face and connectivity to a side set.
   // Argument 's' is the list of faces (ids) to add the new face to. Argument
@@ -1337,52 +1323,20 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
   auto addBndFace = [&]( std::vector< std::size_t >& s, int ss, const Face& f )
   {
     // only add face if it has not yet been aded to this side set
-    if (bndfacesets[ ss ].insert( f ).second) {
+    if (bnd[ ss ].insert( f ).second) {
       s.push_back( facecnt++ );
       triinpoel.insert( end(triinpoel), begin(f), end(f) );
     }
   };
 
-  // Lambda to evaluate and optionally add a child face to a side set if its
-  // grandparent was on the side set. Argument 'par' is the unique set of nodes
-  // of the face to search for in the grandparent mesh using loca ids. Argument
-  // 'childface' is the 3 local node ids of the child's face to add. Argument
-  // 'ss' is the side set id to which the face is being added. Argument faces
-  // is the list of faces to add to.
-  auto evalGrandFace = [&]( const std::unordered_set< std::size_t >& par,
-                            const Face& childface,
-                            int ss,
-                            std::vector< std::size_t >& faces )
-  {
-    Assert( par.size() == 3, "Node list to search for grandparent must be a"
-            " face with exactly 3 nodes" );
-    // Construct a vector from the set of nodes passed in
-    std::vector< std::size_t > g( begin(par), end(par) );
-    // Construct a face from the set of nodes passed in using global ids
-    Face gf{{ m_gid[g[0]], m_gid[g[1]], m_gid[g[2]] }};
-    // Attempt to find parents of nodes of the face in the grandparent mesh
-    auto p = grandfacesides.find( gf );
-    // If the face was found among the grandparents and the grandparent was on
-    // the same side side set, add child face to the side set.
-    if (p != end(grandfacesides) && p->second.find(ss) != end(p->second)) {
-      //std::cout << 'g';
-      addBndFace( faces, ss, {{ m_gid[ childface[0] ], m_gid[ childface[1] ],
-                                m_gid[ childface[2] ] }} );
-    }
-  };
-
-  //std::cout << thisIndex << ':';
   // Regenerate boundary faces after refinement step
   const auto& tet_store = m_refiner.tet_store;
-  for (const auto& f : facetets) {  // for all boundary faces in old mesh
-    // construct face of old mesh boundary face using local ids
-    Face oldFace{{ tk::cref_find( m_lid, f.first[0] ),
-                   tk::cref_find( m_lid, f.first[1] ),
-                   tk::cref_find( m_lid, f.first[2] ) }};
+  for (const auto& f : bndFaceTets) {  // for all boundary faces in old mesh
     // for all side sets of the face, match children's faces to side sets
-    for (const auto& ss : sides(facesets,f.first)) {
+    for (const auto& ss : keys(bndFaces,f.first)) {
       // will associate to side set id of old (unrefined) mesh boundary face
       auto& faces = bface[ ss ];
+      const auto& coarsefaces = tk::cref_find( m_coarseBndFaces, ss );
       // query number of children of boundary tet adjacent to boundary face
       auto nc = tet_store.data( f.second ).children.size();
       if (nc == 0) {    // if boundary tet is not refined, add its boundary face
@@ -1405,91 +1359,139 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& old,
           auto D = ct->second[3];
           // form all 4 faces of child tet
           std::array<Face,4> face{{{{A,C,B}}, {{A,B,D}}, {{A,D,C}}, {{B,C,D}}}};
-          // search all faces of all children and match them to side sets
+          // search all faces of child tet and match them to side sets of the
+          // original (coarsest) mesh
           for (const auto& rf : face) {   // for all faces of child tet
-            // find nodes of the parent face of child face
-            auto par = parents( old, rf );
-            if (par.size() == 3) {
-              if (std::all_of( begin(oldFace), end(oldFace),
-                    [&]( std::size_t n ){ return par.find(n) != end(par); } ))
-              { // If all 3 nodes of the old mesh boundary face are the same as
-                // those of the child's parent face, the child's face is also
-                // on the same side set as the parent's face.
+            auto a = ancestors( rf[0] );
+            auto b = ancestors( rf[1] );
+            auto c = ancestors( rf[2] );
+            a.insert( begin(b), end(b) );
+            a.insert( begin(c), end(c) );
+            if (a.size() == 3) {
+              std::vector< std::size_t > p( begin(a), end(a) );
+              Face par{ m_gid[p[0]], m_gid[p[1]], m_gid[p[2]] };
+              auto it = coarsefaces.find( par );
+              if (it != end(coarsefaces))
                 addBndFace(faces,ss,{{m_gid[rf[0]],m_gid[rf[1]],m_gid[rf[2]]}});
-              } else {
-                // If the number of the child's nodes' parent nodes are 3 but
-                // they are not all the 3 nodes of the old mesh boundary face,
-                // the child face nodes may still match a boundary face of the
-                // parent of the old (i.e., the grandparent) mesh.
-                evalGrandFace( par, rf, ss, faces );
-              }
-            } else if (par.size() == 4) {
-              // If the number of the child's node's parent nodes are 4, the
-              // child face nodes may still match a boundary face of the parent
-              // of the old (i.e., the grandparent) mesh, but only if number of
-              // the nodes of the grandparent face of the child's face is 3.
-              auto pf = parents( m_grand, par );
-              if (pf.size() == 3) evalGrandFace( pf, rf, ss, faces );
             }
           }
         }
       }
     }
   }
-  //std::cout << '\n';
 
   // Update boundary face data structures
   m_bface = std::move(bface);
   m_triinpoel = std::move(triinpoel);
 
-//std::cout << thisIndex << " update: " << tk::sumvalsize(m_bface) << '\n';
+  // Perform leak-test on boundary face data just updated (only in DEBUG)
+  Assert( bndIntegral(), "Partial boundary integral" );
+}
+
+bool
+Refiner::bndIntegral()
+// *****************************************************************************
+//  Compute partial boundary surface integral and sum across all chares
+//! \return true so we don't trigger assert in client code
+//! \details This function computes a partial surface integral over the boundary
+//!   of the faces of this mesh partition then sends its contribution to perform
+//!   the integral acorss the total problem boundary. After the global sum a
+//!   non-zero vector result indicates a leak, e.g., a hole in the boundary
+//!   which indicates an error in the boundary face data structures used to
+//!   compute the partial surface integrals.
+// *****************************************************************************
+{
+  const auto& x = m_coord[0];
+  const auto& y = m_coord[1];
+  const auto& z = m_coord[2];
+
+  std::vector< tk::real > s{{ 0.0, 0.0, 0.0 }};
+
+  for (const auto& ss : m_bface) {
+    for (auto f : ss.second) {
+      auto A = tk::cref_find( m_lid, m_triinpoel[f*3+0] );
+      auto B = tk::cref_find( m_lid, m_triinpoel[f*3+1] );
+      auto C = tk::cref_find( m_lid, m_triinpoel[f*3+2] );
+      // Compute geometry data for face
+      auto geoface = tk::geoFaceTri( {{x[A], x[B], x[C]}},
+                                     {{y[A], y[B], y[C]}},
+                                     {{z[A], z[B], z[C]}} );
+      // Sum up face area * face unit-normal
+      s[0] += geoface(0,0,0) * geoface(0,1,0);
+      s[1] += geoface(0,0,0) * geoface(0,2,0);
+      s[2] += geoface(0,0,0) * geoface(0,3,0);
+    }
+  }
+
+  // Send contribution to host summing partial surface integrals
+  contribute( s, CkReduction::sum_double, m_cbr.get< tag::bndint >() );
+
+  return true;  // don't trigger the assert in client code
 }
 
 void
-Refiner::updateBndNodes( const std::unordered_set< std::size_t >& old,
-                         const std::unordered_set< std::size_t >& ref,
-                         const BndFaceData& bnd )
+Refiner::updateBndNodes(
+  const std::unordered_set< std::size_t >& ref,
+  const std::unordered_map< tk::UnsMesh::Face, std::size_t,
+                        tk::UnsMesh::Hash<3>, tk::UnsMesh::Eq<3> >& pcFaceTets )
 // *****************************************************************************
 // Update boundary nodes after mesh refinement
-//! \param[in] old Unique nodes of the old (unrefined) mesh using local ids
 //! \param[in] ref Unique nodes of the refined mesh using local ids
-//! \return Two maps, both associating a pair of side set id and adjacent tet id
-//!   (value) to a partition-boundary triangle face (key) given by three global
-//!   node IDs. The first map contains face -> tet id for the old (unrefined
-//!   mesh) and the second one contains face -> tet id for parents of tets that
-//!   underwent 2->8 or 4->8 refinement before the old mesh, i.e., backtrackers.
+//! \param[in] pcFaceTets Map that associates the id of a tet adjacent to a
+//!   boundary triangle face for all (physical and chare) boundary faces
 // *****************************************************************************
 {
   IGNORE(ref);  // to avoid compiler warning when asserts are optimized away
 
-  using Edge = tk::UnsMesh::Edge;
-
-  // Lambda to find the nodes of the parent edge of a node
-  auto parentEdge = [this]( const std::unordered_set< std::size_t >& oldmesh,
-                            std::size_t c ) -> Edge
-  {
-    if (oldmesh.find(c) != end(oldmesh))
-      return {{ c, c }};  // if node is in old mesh, return doubled input
-    else                  // otherwise, return parent edge end-point ids
-      return this->m_refiner.node_connectivity.get( c );
-  };
-
   // storage for boundary nodes associated to side-set IDs of the refined mesh
   decltype(m_bnode) bnode;              // will become m_node
 
-  const auto& facetets = std::get< 0 >( bnd );
-  const auto& nodesets = std::get< 3 >( bnd );
+  // Lambda to search the parents in the coarsest mesh of a mesh node and if
+  // found, add its global id to boundary node lists associated to the side
+  // set(s) of its parents. Argument 'n' is the local id of the mesh node id
+  // whose parents to search.
+  auto search = [&]( std::size_t n ){
+    auto a = ancestors( n );  // find parents of n in coarse mesh
+    if (a.size() == 1) {
+      // node was part of the coarse mesh
+      auto ss = keys( m_coarseBndNodes, m_gid[*a.cbegin()] );
+      for (auto s : ss)
+        bnode[ s ].push_back( m_gid[n] );
+    } else if (a.size() == 2) {
+      // node was added to an edge of a coarse face
+      std::vector< std::size_t > p( begin(a), end(a) );
+      auto ss1 = keys( m_coarseBndNodes, m_gid[p[0]] );
+      auto ss2 = keys( m_coarseBndNodes, m_gid[p[1]] );
+      for (auto s : ss1) {
+        if (ss2.find(s) != end(ss2)) {
+          bnode[ s ].push_back( m_gid[n] );
+        }
+      }
+    } else if (a.size() == 3) {
+      // node was added inside of a coarse face
+      std::vector< std::size_t > p( begin(a), end(a) );
+      auto ss1 = keys( m_coarseBndNodes, m_gid[p[0]] );
+      auto ss2 = keys( m_coarseBndNodes, m_gid[p[1]] );
+      auto ss3 = keys( m_coarseBndNodes, m_gid[p[2]] );
+      for (auto s : ss1) {
+        if (ss2.find(s) != end(ss2) && ss3.find(s) != end(ss3)) {
+          bnode[ s ].push_back( m_gid[n] );
+        }
+      }
+    }
+  };
 
   // Regenerate boundary node lists after refinement step
   const auto& tet_store = m_refiner.tet_store;
-  for (const auto& f : facetets) {  // for all boundary faces in old mesh
+  for (const auto& f : pcFaceTets) {  // for all boundary faces in old mesh
     // query number of children of boundary tet adjacent to boundary face
     auto nc = tet_store.data( f.second ).children.size();
-    if (nc == 0) {  // if boundary tet is not refined, add its boundary node
-      for (auto n : f.first) {
-        auto ss = sides( nodesets, n );
-        for (auto s : ss) bnode[ s ].push_back( n );
-      }
+    if (nc == 0) {
+      // if boundary tet is not refined, add its boundary nodes to the side
+      // set(s) of their parent (in coarse mesh) nodes
+      auto t = f.first;
+      for (auto& n : t) n = tk::cref_find( m_lid, n );
+      addBndNodes( t, search );
     } else {        // if boundary tet is refined
       const auto& tets = tet_store.tets;
       for (decltype(nc) i=0; i<nc; ++i ) {      // for all child tets
@@ -1501,25 +1503,9 @@ Refiner::updateBndNodes( const std::unordered_set< std::size_t >& old,
         Assert( std::all_of( begin(ct->second), end(ct->second),
                   [&]( std::size_t n ){ return ref.find(n) != end(ref); } ),
                 "Boundary child tet node id not found in refined mesh" );
-        // get nodes of child tet
-        auto A = ct->second[0];
-        auto B = ct->second[1];
-        auto C = ct->second[2];
-        auto D = ct->second[3];
-        // form all 6 edges of child tet
-        std::array<Edge,6> edge{{ {{A,B}}, {{B,C}}, {{A,C}},
-                                  {{A,D}}, {{B,D}}, {{C,D}} }};
-        for (const auto& re : edge) {
-          for (auto c : re) {
-            auto p = parentEdge( old, c );
-            auto ss1 = sides( nodesets, m_gid[p[0]] );
-            auto ss2 = sides( nodesets, m_gid[p[1]] );
-            for (auto s1 : ss1) {
-              if (ss2.find(s1) != end(ss2))
-                bnode[ s1 ].push_back( m_gid[c] );
-            }
-          }
-        }
+        // search each child tet of refined boundary tet and add their boundary
+        // nodes to the side set(s) of their parent (in coarse mesh) nodes
+        addBndNodes( ct->second, search );
       }
     }
   }

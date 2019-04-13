@@ -197,13 +197,13 @@ class DG : public CBase_DG {
       p | m_bndFace;
       p | m_ghostData;
       p | m_ghostReq;
-      p | m_exptNbface;
       p | m_ghost;
       p | m_exptGhost;
       p | m_recvGhost;
       p | m_diag;
       p | m_stage;
       p | m_initial;
+      p | m_expChBndFace;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -274,8 +274,6 @@ class DG : public CBase_DG {
     std::unordered_map< int, GhostData > m_ghostData;
     //! Number of chares requesting ghost data
     std::size_t m_ghostReq;
-    //! Expected number of boundary faces (used only in DEBUG)
-    std::size_t m_exptNbface;
     //! Local element id associated to ghost remote id charewise
     //! \details This map associates the local element id (inner map value) to
     //!    the (remote) element id of the ghost (inner map key) based on the
@@ -292,6 +290,8 @@ class DG : public CBase_DG {
     std::size_t m_stage;
     //! 1 if starting time stepping, 0 if during time stepping
     int m_initial;
+    //! Unique set of chare-boundary faces this chare is expected to receive
+    tk::UnsMesh::FaceSet m_expChBndFace;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -313,6 +313,9 @@ class DG : public CBase_DG {
 
     //! Check if esuf of chare-boundary faces matches
     bool faceMatch();
+
+    //! Verify that all chare-boundary faces have been received
+    bool receivedChBndFaces();
 
     //! Check if entries in inpoel, inpofa and node-triplet are consistent
     std::size_t

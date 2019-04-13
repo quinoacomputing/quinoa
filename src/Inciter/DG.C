@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <sstream>
 
 #include "DG.h"
 #include "Discretization.h"
@@ -68,13 +69,13 @@ DG::DG( const CProxy_Discretization& disc,
   m_bndFace(),
   m_ghostData(),
   m_ghostReq( 0 ),
-  m_exptNbface( 0 ),
   m_ghost(),
   m_exptGhost(),
   m_recvGhost(),
   m_diag(),
   m_stage( 0 ),
-  m_initial( 1 )
+  m_initial( 1 ),
+  m_expChBndFace()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -139,7 +140,8 @@ DG::resizeComm()
                               gid[ inpoel[ mark + tk::lpofa[f][1] ] ],
                               gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
         if (m_ipface.find(t) == end(m_ipface)) {
-          Assert( ++m_exptNbface, "Sum up expected chare-boundary faces" );
+          Assert( m_expChBndFace.insert(t).second,
+                  "Store expected chare-boundary face" );
           potbndface.insert( t );
         }
       }
@@ -306,15 +308,16 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
         // if found among the incoming faces and if not one of our internal nor
         // physical boundary faces
         if ( infaces.find(t) != end(infaces) &&
-             m_ipface.find(t) == end(m_ipface) )
+             m_ipface.find(t) == end(m_ipface) ) {
           bndface[t][0] = m_nfac++;    // assign new local face ID
+        }
       }
     }
   }
-  // If at this point we have not found any face among our faces we potentially
-  // share with fromch, there is no need to keep an empty set of faces
-  // associated to fromch as we only share nodes or edges with it, but not
-  // faces.
+  // If at this point if we have not found any face among our faces we
+  // potentially share with fromch, there is no need to keep an empty set of
+  // faces associated to fromch as we only share nodes or edges with it, but
+  // not faces.
   if (bndface.empty()) m_bndFace.erase( fromch );
 
   // if we have heard from all fellow chares that we share at least a single
@@ -324,11 +327,9 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
     if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) d->Tr().chcomfac();
     tk::destroy(m_ipface);
 
-    // Ensure correct number of expected vs received/found chare-boundary faces
-    std::cout << thisIndex << " expt: " << m_exptNbface << ", " << tk::sumvalsize(m_bndFace) << '\n';
-    Assert( m_exptNbface == tk::sumvalsize(m_bndFace), 
-            "Expected and received number of boundary faces mismatch" );
-    m_exptNbface = 0;
+    // Ensure all expected faces have been received
+    Assert( receivedChBndFaces(),
+            "Expected and received chare boundary faces mismatch" );
 
     // Basic error checking on chare-boundary-face map
     Assert( m_bndFace.find( thisIndex ) == m_bndFace.cend(),
@@ -369,6 +370,51 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
     // fullfilled based on m_ghostData.
     for (const auto& c : m_msumset)     // for all chares we share nodes with
       thisProxy[ c.first ].reqGhost();
+  }
+}
+
+bool
+DG::receivedChBndFaces()
+// *****************************************************************************
+// Verify that all chare-boundary faces have been received
+//! \return True of all chare-boundary faces have been received
+// *****************************************************************************
+{
+  auto d = Disc();
+  tk::UnsMesh::FaceSet recvBndFace;
+
+  // Collect chare-boundary faces that have been received and expected
+  for (const auto& c : m_bndFace)
+    for (const auto& f : c.second)
+      if (m_expChBndFace.find(f.first) != end(m_expChBndFace))
+        recvBndFace.insert(f.first);
+
+   // Collect info on expected but not received faces
+   std::stringstream msg;
+   for (const auto& f : m_expChBndFace)
+     if (recvBndFace.find(f) == end(recvBndFace)) {
+       const auto& coord = d->Coord();
+       const auto& x = coord[0];
+       const auto& y = coord[1];
+       const auto& z = coord[2];
+       auto A = tk::cref_find( d->Lid(), f[0] );
+       auto B = tk::cref_find( d->Lid(), f[1] );
+       auto C = tk::cref_find( d->Lid(), f[2] );
+       msg << '{' << A << ',' << B << ',' << C << "}:("
+           << x[A] << ',' << y[A] << ',' << z[A] << ' '
+           << x[B] << ',' << y[B] << ',' << z[B] << ' '
+           << x[C] << ',' << y[C] << ',' << z[C] << ") ";
+     }
+
+  tk::destroy( m_expChBndFace );
+
+  // Error out with info on missing faces
+  auto s = msg.str();
+  if (!s.empty()) {
+    Throw( "DG chare " + std::to_string(thisIndex) +
+           " missing face(s) {local node ids} (node coords): " + s );
+  } else {
+    return true;
   }
 }
 
@@ -794,7 +840,6 @@ DG::adj()
     for (std::size_t f=0; f<4; ++f)
       if (esuel[4*e+f] == -1) ++nbound;
   }
-  std::cout << thisIndex << " ghost: " << nbound << ", " << m_fd.Nbfac() << '\n';
   Assert( nbound == m_fd.Nbfac(), "Incorrect number of ghost-element -1's in "
          "updated esuel" );
 

@@ -89,11 +89,17 @@ class Transporter : public CBase_Transporter {
     //! \brief Reduction target: all mesh refiner chares have setup their
     //!   boundary edges
     void edges();
-    void bnded();
+
+    //! \brief Reduction target: all mesh refiner chares have received a round
+    //!   of edges, and ran their compatibility algorithm
+    void compatibility( int modified );
 
     //! \brief Reduction target: all mesh refiner chares have performed a step
     //!   of matching chare-boundary edges
     void matched( std::size_t nextra, std::size_t nedge, std::size_t initial );
+
+    //! Compute surface integral across the whole problem and perform leak-test
+    void bndint( tk::real sx, tk::real sy, tk::real sz );
 
     //! Reduction target: all PEs have optionally refined their mesh
     void refined( std::size_t nelem, std::size_t npoin );
@@ -180,6 +186,7 @@ class Transporter : public CBase_Transporter {
   private:
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of worker chares
+    std::size_t m_nbit;                  //!< Number of mesh edge com iter
     std::size_t m_ncit;                  //!< Number of mesh ref corr iter
     std::size_t m_nt0rit;                //!< Number of (t<0) mesh ref iters
     std::size_t m_ndtrit;                //!< Number of (t>0) mesh ref iters

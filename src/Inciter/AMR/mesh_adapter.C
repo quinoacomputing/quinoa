@@ -128,50 +128,14 @@ namespace AMR {
        mark_refinement();
     }
 
-   void mesh_adapter_t::mark_error_refinement_corr( int pe,
-            const EdgeData& edges )
+   void mesh_adapter_t::mark_error_refinement_corr( const EdgeData& edges )
     {
-       auto unlocked = AMR::Edge_Lock_Case::unlocked;
-
        for (const auto& r : edges)
        {
-           //auto& edgeref = tet_store.edge_store.get( edge_t(r.first) );
-           //edgeref.needs_refining = r.second.first;
-           //assert(edgeref.lock_case <= r.second.second);
-           //edgeref.lock_case = r.second.second;
-           
-           auto& local = tet_store.edge_store.get( edge_t(r.first) );
-
-           const auto& remote = r.second;
-           auto remote_needs_refining = remote.first;
-           auto remote_lock_case = remote.second;
-
-           auto local_needs_refining_orig = local.needs_refining;
-           auto local_lock_case_orig = local.lock_case;
-
-           // compute lock from local and remote locks as most restrictive
-           local.lock_case = std::max( local.lock_case, remote_lock_case );
-
-           if (local.lock_case > unlocked) {
-               local.needs_refining = 0;
-           }
-
-           if (local.lock_case == unlocked && remote_needs_refining)
-           {
-             local.needs_refining = 1;
-           }
-
-           if (local.lock_case != local_lock_case_orig ||
-               local.needs_refining != local_needs_refining_orig) {
-
-             if (local.lock_case > remote_lock_case)
-               std::cout << pe << " about to overwrite lock case " << local.lock_case
-                         << " with " << remote_lock_case << " for edge "
-                         << r.first[0] << '-' << r.first[1] << '\n';
-
-             assert(local.lock_case <= remote_lock_case);
-
-           }
+           auto& edgeref = tet_store.edge_store.get( edge_t(r.first) );
+           edgeref.needs_refining = r.second.first;
+           assert(edgeref.lock_case <= r.second.second);
+           edgeref.lock_case = r.second.second;
        }
        mark_refinement();
     }

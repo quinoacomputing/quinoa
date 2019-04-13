@@ -77,7 +77,7 @@ namespace AMR {
                 //trace_out << "PROBLEM FINDING ID " << id << std::endl;
 
                 // Ban getting of a node whos parents are {0,0}
-                assert(id > empty_node_count-1); //[0..empty_node_counts)
+                //assert(id > empty_node_count-1); //[0..empty_node_counts)
 
                 auto iter = inv_nodes.find(id);
 
@@ -88,8 +88,9 @@ namespace AMR {
                 }
                 */
 
-                assert(iter != inv_nodes.end());
-                return iter->second;
+                //assert(iter != inv_nodes.end());
+                //return iter->second;
+                return (iter != inv_nodes.end() ? iter->second : node_pair_t{id,id});
             }
 
             /**

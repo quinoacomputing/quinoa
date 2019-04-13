@@ -267,7 +267,8 @@ Transporter::createPartitioner()
   // Create refiner callbacks (order matters)
   tk::RefinerCallback cbr {
       CkCallback( CkReductionTarget(Transporter,edges), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,bnded), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,compatibility), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,bndint), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,matched), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
   };
@@ -405,12 +406,22 @@ Transporter::edges()
 }
 
 void
-Transporter::bnded()
+Transporter::compatibility( int modified )
 // *****************************************************************************
-// Reduction target: all mesh refiner chares have setup their boundary edges
+// Reduction target: all mesh refiner chares have received a round of edges,
+// and ran their compatibility algorithm
+//! \param[in] Sum acorss all workers, if nonzero, mesh is modified
+//! \details This is called iteratively, until convergence by Refiner. At this
+//!   point all Refiner chares have received a round of edge data (tags whether
+//!   an edge needs to be refined, etc.), applied the compatibility algorithm.
+//!   We keep going until the mesh is no longer modified by the compatibility
+//!   algorithm.
 // *****************************************************************************
 {
-  m_refiner.comExtra();
+  if (modified)
+    m_refiner.comExtra();
+  else
+    m_refiner.correctref();
 }
 
 void
@@ -457,6 +468,23 @@ Transporter::matched( std::size_t nextra,
     m_refiner.eval();
 
   }
+}
+
+void
+Transporter::bndint( tk::real sx, tk::real sy, tk::real sz )
+// *****************************************************************************
+// Compute surface integral across the whole problem and perform leak-test
+//! \details This function aggregates partial surface integrals across the
+//!   boundary faces of the whole problem. After this global sum a
+//!   non-zero vector result indicates a leak, e.g., a hole in the boundary,
+//!   which indicates an error in the boundary face data structures used to
+//!   compute the partial surface integrals.
+// *****************************************************************************
+{
+  auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
+  if (std::abs(sx) > eps || std::abs(sy) > eps || std::abs(sz) > eps)
+    Throw( "Mesh boundary leaky, t0ref: " + std::to_string(m_nt0rit) +
+           ", dtref: " + std::to_string(m_ndtrit) );
 }
 
 void

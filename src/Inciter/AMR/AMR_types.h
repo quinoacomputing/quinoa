@@ -64,13 +64,15 @@ struct Edge_Refinement {
         // Empty
     }
 
-    bool operator==( const Edge_Refinement& r ) const {
-      return A==r.A && B==r.B &&
-             std::abs(refinement_criteria-r.refinement_criteria) < 1.0e-12 &&
-             needs_refining==r.needs_refining &&
-             needs_derefining==r.needs_derefining && is_dead==r.is_dead &&
-             lock_case==r.lock_case;
-    }
+   // bool operator==( const Edge_Refinement& r ) const {
+   //   return A == r.A &&
+   //          B == r.B &&
+   //          //std::abs(refinement_criteria-r.refinement_criteria) < 1.0e-12 &&
+   //          needs_refining == r.needs_refining &&
+   //          needs_derefining == r.needs_derefining &&
+   //          is_dead == r.is_dead &&
+   //          lock_case == r.lock_case;
+   // }
 
     // This abstraction is hardly any better than using an explicit initialisation
     // list but it makes it easier if we decide to add/remove a parameter
