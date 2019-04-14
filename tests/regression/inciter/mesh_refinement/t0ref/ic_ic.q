@@ -50,7 +50,7 @@ inciter
 #      #y+ 0.25 y- 0.75
 #    end
 
-    #initref
+    #edgelist
     # 1 2 3
     #end
 

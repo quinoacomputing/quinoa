@@ -111,7 +111,7 @@ ExodusIIMeshWriter::writeMesh(
 //! \param[in] triinp Triangle face connectivity (for all faces in bface)
 // *****************************************************************************
 {
-  // Fill element-relative face ids (0,1,2,3) for all side sets with 0 (= will
+  // Fill element-relative face ids (0,1,2,3) for all side sets with 0 (will
   // use triangles as face elements for side sets)
   std::map< int, std::vector< std::size_t > > faceid;
   for (const auto& s : bface) faceid[s.first].resize( s.second.size(), 0 );
@@ -383,37 +383,40 @@ const
 //! \param[in] nv Nodal variable names
 // *****************************************************************************
 {
-  #if defined(__clang__)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wvla"
-    #pragma clang diagnostic ignored "-Wvla-extension"
-  #elif defined(STRICT_GNUC)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wvla"
-  #endif
+  if (!nv.empty()) {
 
-  ErrChk(
-    ex_put_variable_param( m_outFile, EX_NODE_BLOCK,
-                           static_cast< int >( nv.size() ) ) == 0,
-    "Failed to write nodal output variable parameters to ExodusII file: " +
-    m_filename );
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wvla"
+      #pragma clang diagnostic ignored "-Wvla-extension"
+    #elif defined(STRICT_GNUC)
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wvla"
+    #endif
 
-  char* names[ nv.size() ];
-  std::size_t i = 0;
-  for (const auto& n : nv) names[ i++ ] = const_cast< char* >( n.c_str() );
+    ErrChk(
+      ex_put_variable_param( m_outFile, EX_NODE_BLOCK,
+                             static_cast< int >( nv.size() ) ) == 0,
+      "Failed to write nodal output variable parameters to ExodusII file: " +
+      m_filename );
 
-  ErrChk( ex_put_variable_names( m_outFile,
-                                 EX_NODE_BLOCK,
-                                 static_cast< int >( nv.size() ),
-                                 names ) == 0,
-          "Failed to write nodal output variable names to ExodusII file: " +
-          m_filename );
+    char* names[ nv.size() ];
+    std::size_t i = 0;
+    for (const auto& n : nv) names[ i++ ] = const_cast< char* >( n.c_str() );
 
-  #if defined(__clang__)
-    #pragma clang diagnostic pop
-  #elif defined(STRICT_GNUC)
-    #pragma GCC diagnostic pop
-  #endif
+    ErrChk( ex_put_variable_names( m_outFile,
+                                   EX_NODE_BLOCK,
+                                   static_cast< int >( nv.size() ),
+                                   names ) == 0,
+            "Failed to write nodal output variable names to ExodusII file: " +
+            m_filename );
+
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #elif defined(STRICT_GNUC)
+      #pragma GCC diagnostic pop
+    #endif
+  }
 }
 
 void
@@ -424,37 +427,40 @@ const
 //! \param[in] ev Elem variable names
 // *****************************************************************************
 {
-  #if defined(__clang__)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wvla"
-    #pragma clang diagnostic ignored "-Wvla-extension"
-  #elif defined(STRICT_GNUC)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wvla"
-  #endif
+  if (!ev.empty()) {
 
-  ErrChk(
-    ex_put_variable_param( m_outFile, EX_ELEM_BLOCK,
-                           static_cast< int >( ev.size() ) ) == 0,
-    "Failed to write element output variable parameters to ExodusII file: " +
-    m_filename );
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wvla"
+      #pragma clang diagnostic ignored "-Wvla-extension"
+    #elif defined(STRICT_GNUC)
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wvla"
+    #endif
 
-  char* names[ ev.size() ];
-  std::size_t i = 0;
-  for (const auto& n : ev) names[ i++ ] = const_cast< char* >( n.c_str() );
+    ErrChk(
+      ex_put_variable_param( m_outFile, EX_ELEM_BLOCK,
+                             static_cast< int >( ev.size() ) ) == 0,
+      "Failed to write element output variable parameters to ExodusII file: " +
+      m_filename );
 
-  ErrChk( ex_put_variable_names( m_outFile,
-                                 EX_ELEM_BLOCK,
-                                 static_cast< int >( ev.size() ),
-                                 names ) == 0,
-          "Failed to write element output variable names to ExodusII file: " +
-          m_filename );
+    char* names[ ev.size() ];
+    std::size_t i = 0;
+    for (const auto& n : ev) names[ i++ ] = const_cast< char* >( n.c_str() );
 
-  #if defined(__clang__)
-    #pragma clang diagnostic pop
-  #elif defined(STRICT_GNUC)
-    #pragma GCC diagnostic pop
-  #endif
+    ErrChk( ex_put_variable_names( m_outFile,
+                                   EX_ELEM_BLOCK,
+                                   static_cast< int >( ev.size() ),
+                                   names ) == 0,
+            "Failed to write element output variable names to ExodusII file: " +
+            m_filename );
+
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #elif defined(STRICT_GNUC)
+      #pragma GCC diagnostic pop
+    #endif
+  }
 }
 
 void
@@ -468,14 +474,16 @@ ExodusIIMeshWriter::writeNodeScalar( uint64_t it,
 //! \param[in] var Vector of variable to output
 // *****************************************************************************
 {
-  ErrChk( ex_put_var( m_outFile,
-                      static_cast< int >( it ),
-                      EX_NODE_BLOCK,
-                      varid,
-                      1,
-                      static_cast< int64_t >( var.size() ),
-                      var.data() ) == 0,
-          "Failed to write node scalar to ExodusII file: " + m_filename );
+  if (!var.empty()) {
+    ErrChk( ex_put_var( m_outFile,
+                        static_cast< int >( it ),
+                        EX_NODE_BLOCK,
+                        varid,
+                        1,
+                        static_cast< int64_t >( var.size() ),
+                        var.data() ) == 0,
+            "Failed to write node scalar to ExodusII file: " + m_filename );
+  }
 }
 
 void
@@ -489,12 +497,14 @@ ExodusIIMeshWriter::writeElemScalar( uint64_t it,
 //! \param[in] var Vector of variable to output
 // *****************************************************************************
 {
-  ErrChk( ex_put_var( m_outFile,
-                      static_cast< int >( it ),
-                      EX_ELEM_BLOCK,
-                      varid,
-                      1,
-                      static_cast< int64_t >( var.size() ),
-                      var.data() ) == 0,
-          "Failed to write elem scalar to ExodusII file: " + m_filename );
+  if (!var.empty()) {
+    ErrChk( ex_put_var( m_outFile,
+                        static_cast< int >( it ),
+                        EX_ELEM_BLOCK,
+                        varid,
+                        1,
+                        static_cast< int64_t >( var.size() ),
+                        var.data() ) == 0,
+            "Failed to write elem scalar to ExodusII file: " + m_filename );
+  }
 }

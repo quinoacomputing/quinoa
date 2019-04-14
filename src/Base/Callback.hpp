@@ -28,6 +28,8 @@ using PartitionerCallback =
 
 using RefinerCallback =
   tk::tuple::tagged_tuple< tag::edges,          CkCallback
+                         , tag::compatibility,  CkCallback
+                         , tag::bndint,         CkCallback
                          , tag::matched,        CkCallback
                          , tag::refined,        CkCallback
                          >;

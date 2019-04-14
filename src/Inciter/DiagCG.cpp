@@ -31,6 +31,7 @@
 #include "DiagReducer.hpp"
 #include "NodeBC.hpp"
 #include "Refiner.hpp"
+#include "Reorder.hpp"
 
 namespace inciter {
 
@@ -484,7 +485,7 @@ DiagCG::solve()
 }
 
 void
-DiagCG::writeFields( CkCallback c )
+DiagCG::writeFields( CkCallback c ) const
 // *****************************************************************************
 // Output mesh-based fields to file
 //! \param[in] c Function to continue with after the write
@@ -493,23 +494,26 @@ DiagCG::writeFields( CkCallback c )
   auto d = Disc();
 
   // Query and collect field names from PDEs integrated
-  std::vector< std::string > names;
+  std::vector< std::string > nodefieldnames;
   for (const auto& eq : g_cgpde) {
     auto n = eq.fieldNames();
-    names.insert( end(names), begin(n), end(n) );
+    nodefieldnames.insert( end(nodefieldnames), begin(n), end(n) );
   }
 
   // Collect node field solution
   auto u = m_u;
-  std::vector< std::vector< tk::real > > fields;
+  std::vector< std::vector< tk::real > > nodefields;
   for (const auto& eq : g_cgpde) {
     auto o = eq.fieldOutput( d->T(), m_vol, d->Coord(), d->V(), u );
-    fields.insert( end(fields), begin(o), end(o) );
+    nodefields.insert( end(nodefields), begin(o), end(o) );
   }
 
+  // Query refinement data
+  auto r = d->Ref()->refinementFields();
+
   // Send mesh and fields data (solution dump) for output to file
-  d->write( d->Inpoel(), d->Coord(), {}, m_bnode, {}, names, fields,
-            tk::Centering::NODE, c );
+  d->write( d->Inpoel(), d->Coord(), {}, tk::remap(m_bnode,d->Lid()), {},
+            std::get<0>(r), nodefieldnames, std::get<1>(r), nodefields, c );
 }
 
 void
@@ -581,16 +585,18 @@ DiagCG::refine()
   auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
   auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
 
-  // if t>0 refinement enabled and we hit the frequency
+  // if t>0 refinement enabled and we hit the dtref frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
     d->Ref()->dtref( {}, m_bnode, {} );
+    d->refined() = 1;
 
   } else {      // do not refine
 
     ref_complete();
     lhs_complete();
     resize_complete();
+    d->refined() = 0;
 
   }
 }

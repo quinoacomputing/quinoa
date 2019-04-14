@@ -129,6 +129,11 @@ class Discretization : public CBase_Discretization {
     //! Timer accessor as non-const-ref
     tk::Timer& Timer() { return m_timer; }
 
+    //! Accessor to flag indicating if the mesh was refined as a value
+    int refined() const { return m_refined; }
+    //! Accessor to flag indicating if the mesh was refined as non-const-ref
+    int& refined() { return m_refined; }
+
     //! Transporter proxy accessor as const-ref
     const CProxy_Transporter& Tr() const { return m_transporter; }
     //! Transporter proxy accessor as non-const-ref
@@ -183,9 +188,10 @@ class Discretization : public CBase_Discretization {
                 const std::map< int, std::vector< std::size_t > >& bface,
                 const std::map< int, std::vector< std::size_t > >& bnode,
                 const std::vector< std::size_t >& triinpoel,
-                const std::vector< std::string >& names,
-                const std::vector< std::vector< tk::real > >& fields,
-                tk::Centering centering,
+                const std::vector< std::string>& elemfieldnames,
+                const std::vector< std::string>& nodefieldnames,
+                const std::vector< std::vector< tk::real > >& elemfields,
+                const std::vector< std::vector< tk::real > >& nodefields,
                 CkCallback c );
 
     //! Return chare-node adjacency map as sets
@@ -224,6 +230,7 @@ class Discretization : public CBase_Discretization {
       p | m_volc;
       p | m_bid;
       p | m_timer;
+      p | m_refined;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -308,6 +315,8 @@ class Discretization : public CBase_Discretization {
     std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Timer measuring a time step
     tk::Timer m_timer;
+    //! 1 if mesh was refined in a time step, 0 if it was not
+    int m_refined;
 
     //! Set mesh coordinates based on coordinates map
     tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );

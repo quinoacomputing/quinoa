@@ -117,8 +117,6 @@ void PUP::pup( PUP::er &p, AMR::tet_store_t& t )
   p | t.center_tets;
   p | t.active_elements.data();
   p | t.master_elements.data();
-  p | t.cell_type_list;
-  p | t.refinement_level_list;
   p | t.active_tetinpoel;
   p | t.active_nodes;
   p | t.id_generator;
