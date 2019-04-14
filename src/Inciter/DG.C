@@ -1121,6 +1121,8 @@ DG::advance( tk::real )
 {
   const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
 
+  if (pref && m_stage == 0) eval_ndof();
+
   // communicate solution ghost data (if any)
   if (m_ghostData.empty())
     comsol_complete();
@@ -1133,7 +1135,7 @@ DG::advance( tk::real )
         Assert( i.first < m_fd.Esuel().size()/4, "Sending solution ghost data" );
         tetid.push_back( i.first );
         u.push_back( m_u[i.first] );
-        if (pref) ndof.push_back( m_ndof[i.first] );
+        if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
       }
       thisProxy[ n.first ].comsol( thisIndex, tetid, u, ndof );
     }
@@ -1167,7 +1169,7 @@ DG::comsol( int fromch,
     Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
     Assert( j < m_u.nunk(), "Indexing out of bounds in DG::comsol()" );
     for (std::size_t c=0; c<m_u.nprop(); ++c) m_u(j,c,0) = u[i][c];
-    if (pref) m_ndof[j] = ndof[i];
+    if (pref && m_stage == 0) m_ndof[j] = ndof[i];
   }
 
   // if we have received all solution ghost contributions from those chares we
@@ -1277,12 +1279,14 @@ DG::lim()
       for(const auto& n : m_ghostData) {
         std::vector< std::size_t > tetid;
         std::vector< std::vector< tk::real > > limfunc;
+        std::vector< std::size_t > ndof;
         for(const auto& i : n.second) {
           Assert( i.first < m_fd.Esuel().size()/4, "Sending limiter ghost data" );
           tetid.push_back( i.first );
           limfunc.push_back( m_limFunc[i.first] );
+          if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
         }
-        thisProxy[ n.first ].comlim( thisIndex, tetid, limfunc );
+        thisProxy[ n.first ].comlim( thisIndex, tetid, limfunc, ndof );
       }
 
   } else {
@@ -1297,17 +1301,21 @@ DG::lim()
 void
 DG::comlim( int fromch,
             const std::vector< std::size_t >& tetid,
-            const std::vector< std::vector< tk::real > >& lfn )
+            const std::vector< std::vector< tk::real > >& lfn,
+            const std::vector< std::size_t >& ndof )
 // *****************************************************************************
 //  Receive chare-boundary limiter ghost data from neighboring chares
 //! \param[in] fromch Sender chare id
 //! \param[in] tetid Ghost tet ids we receive solution data for
 //! \param[in] lfn Limiter function ghost data
+//! \param[in] ndof Number of degrees of freedom for chare-boundary elements
 //! \details This function receives contributions to m_limFunc from fellow
 //    chares.
 // *****************************************************************************
 {
   Assert( lfn.size() == tetid.size(), "Size mismatch in DG::comlim()" );
+
+  const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
 
   // Find local-to-ghost tet id map for sender chare
   const auto& n = tk::cref_find( m_ghost, fromch );
@@ -1320,6 +1328,7 @@ DG::comlim( int fromch,
            "limfunc in DG::comlim()" );
     for (std::size_t c=0; c<m_limFunc.nprop(); ++c)
       m_limFunc(j,c,0) = lfn[i][c];
+    if (pref && m_stage == 0) m_ndof[j] = ndof[i];
   }
 
   // if we have received all solution ghost contributions from those chares we
@@ -1344,7 +1353,7 @@ DG::solve( tk::real newdt )
   auto d = Disc();
 
   // Set new time step size
-  d->setdt( newdt );
+  if (m_stage == 0) d->setdt( newdt );
 
   for (const auto& eq : g_dgpde)
     eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(), m_u,
@@ -1366,10 +1375,6 @@ DG::solve( tk::real newdt )
     // Compute diagnostics, e.g., residuals
     auto diag_computed = m_diag.compute( *d, m_u.nunk()-m_fd.Esuel().size()/4,
                                          m_geoElem, m_ndof, m_u );
-
-    const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
-
-    if(pref) eval_ndof();
 
     // Increase number of iterations and physical time
     d->next();

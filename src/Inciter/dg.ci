@@ -37,7 +37,8 @@ module dg {
       entry void diag();
       entry void comlim( int fromch,
                          const std::vector< std::size_t >& tetid,
-                         const std::vector< std::vector< tk::real > >& lfn );
+                         const std::vector< std::vector< tk::real > >& lfn,
+                         const std::vector< std::size_t >& ndof );
       entry void comsol( int fromch,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u,

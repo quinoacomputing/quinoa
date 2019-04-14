@@ -119,7 +119,8 @@ class DG : public CBase_DG {
     //! Receive chare-boundary limiter function data from neighboring chares
     void comlim( int fromch,
                  const std::vector< std::size_t >& tetid,
-                 const std::vector< std::vector< tk::real > >& lfn );
+                 const std::vector< std::vector< tk::real > >& lfn,
+                 const std::vector< std::size_t >& ndof );
 
     //! Receive chare-boundary ghost data from neighboring chares
     void comsol( int fromch,
