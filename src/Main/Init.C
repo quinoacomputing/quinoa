@@ -135,7 +135,7 @@ void echoRunEnv( const Print& print, int argc, char** argv,
 
   print.item( "Date, time", curtime() );
   print.item( "Work directory", workdir() );
-  print.item( "Executable (rel. to work dir)", argv[0] );
+  print.item( "Executable (relative to work dir)", argv[0] );
 
   print.item( "Command line arguments" );
   print << '\'';

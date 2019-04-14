@@ -145,8 +145,8 @@ class DiagCG : public CBase_DiagCG {
       const std::vector< std::size_t >& /* triinpoel */ );
 
     //! Const-ref access to current solution
-    //! \param[in,out] u Reference to update with current solution
-    void solution( tk::Fields& u ) const { u = m_u; }
+    //! \return Const-ref to current solution
+    const tk::Fields& solution() const { return m_u; }
 
     //! Resizing data sutrctures after mesh refinement has been completed
     void resized();
@@ -248,7 +248,7 @@ class DiagCG : public CBase_DiagCG {
     void out();
 
     //! Output mesh-based fields to file
-    void writeFields( CkCallback c );
+    void writeFields( CkCallback c ) const;
 
     //! \brief Extract node IDs from side set node lists and match to
     //    user-specified boundary conditions

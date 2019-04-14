@@ -471,7 +471,7 @@ void Reorder_object::test< 11 >() {
 //! Test if positiveJacobians throws on unique(inpoel).size != coord.size
 template<> template<>
 void Reorder_object::test< 12 >() {
-  set_test_name( "positivaJacobians throws w inconsistent inpoel & coord" );
+  set_test_name( "posJacobians throws w inconsistent inp & crd" );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
@@ -512,7 +512,7 @@ void Reorder_object::test< 13 >() {
   #endif
 }
 
-//! In-place remap vector of reals
+//! In-place remap vector of reals using a vector
 template<> template<>
 void Reorder_object::test< 14 >() {
   set_test_name( "in-place remap vector of reals" );
@@ -569,43 +569,155 @@ void Reorder_object::test< 14 >() {
   #endif
 }
 
-//! Out-of-place remap vector of unsigned longs using a hash-map
+//! In-place remap vector of unsigned longs using a vector
 template<> template<>
 void Reorder_object::test< 15 >() {
-  set_test_name( "remap vector of unsigned longs using a hash-map" );
+  set_test_name( "in-place remap vector of unsigned longs using a vector" );
 
   // feed empty data
   std::vector< std::size_t > ae{};
-  std::unordered_map< std::size_t, std::size_t > r1{{0,3}, {1,1}, {2,0}, {3,2}};
+  const std::vector< std::size_t > r1{3,1,0,2};
+  tk::remap( ae, r1 );
+  // source/destination data still empty
+  ensure( "remap of empty ulong vector modified", ae.empty() );
+  // source map intact
+  ensure( "map not intact after remap of empty ulong vector",
+          r1 == std::vector< std::size_t >{3,1,0,2} );
+
+  // feed empty map
+  std::vector< std::size_t > a1{ 1, 2, 3 };
+  const std::vector< std::size_t > re;
+  tk::remap( a1, re );
+  // source/destination data intact
+  ensure( "data modified after remap with empty map",
+          a1 == std::vector< std::size_t >{1,2,3} );
+  // source map intact
+  ensure( "map not empty after remap with empty map", re.empty() );
+
+  // feed good data, test correct result
+  std::vector< std::size_t > a{ 0, 1, 2, 3 };
+  const std::vector< std::size_t > r{ 3, 1, 0, 2 };
+  tk::remap( a, r );
+
+  ensure( "map after remap of ulong vector modified",
+          r == std::vector< std::size_t >{ 3, 1, 0, 2 } );
+  ensure( "remap of ulong vector incorrect",
+          a == std::vector< std::size_t >{ 3, 1, 0, 2 } );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
+  // feed bad map
+  try {
+    std::vector< std::size_t > a2{ 1, 2, 4 };    // 4 will index out of map
+    const std::vector< std::size_t > rr{ 3, 1, 2, 0 };
+    tk::remap( a2, rr );
+    fail( "should throw exception" );
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
+}
+
+//! Out-of-place remap vector of unsigned longs using a vector
+template<> template<>
+void Reorder_object::test< 16 >() {
+  set_test_name( "remap vector of unsigned longs using a vector" );
+
+  // feed empty data
+  const std::vector< std::size_t > ae{};
+  const std::vector< std::size_t > r1{3,1,0,2};
+  auto b1 = tk::remap( ae, r1 );
+  // return empty vector
+  ensure( "return of non-empty vector from remap of empty input", b1.empty() );
+  // source data still empty
+  ensure( "remap of empty ulong vector modified", ae.empty() );
+  // source map intact
+  ensure( "map not intact after remap of empty ulong vector",
+          r1 == std::vector< std::size_t >{3,1,0,2} );
+
+  // feed empty map
+  const std::vector< std::size_t > a1{ 1, 2, 3 };
+  const std::vector< std::size_t > re;
+  auto b2 = tk::remap( a1, re );
+  // return source vector
+  ensure( "src and returned vector differs after remap with empty map",
+          b2 == a1 );
+  // source data intact
+  ensure( "src data modified after remap with empty map",
+          a1 == std::vector< std::size_t >{1,2,3} );
+  // source map intact
+  ensure( "map not empty after remap with empty map", re.empty() );
+
+  // feed good data, test correct result
+  const std::vector< std::size_t > a{ 0, 1, 2, 3 };
+  const std::vector< std::size_t > r{ 3, 1, 0, 2 };
+  auto b = tk::remap( a, r );
+
+  ensure( "src data after remap of ulong vector modified",
+          a == std::vector< std::size_t >{ 0, 1, 2, 3 } );
+  ensure( "map after remap of ulong vector modified",
+          r == std::vector< std::size_t >{ 3, 1, 0, 2 } );
+  ensure( "remap of ulong vector incorrect",
+          b == std::vector< std::size_t >{ 3, 1, 0, 2 } );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
+  // feed bad map
+  try {
+    const std::vector< std::size_t > a2{ 1, 2, 4 };    // 4 will index out of map
+    const std::vector< std::size_t > rr{ 3, 1, 2, 0 };
+    auto b3 = tk::remap( a2, rr );
+    fail( "should throw exception" );
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
+}
+
+//! Out-of-place remap vector of unsigned longs using a hash-map
+template<> template<>
+void Reorder_object::test< 17 >() {
+  set_test_name( "remap vector of unsigned longs using a hash-map" );
+
+  // feed empty data
+  const std::vector< std::size_t > ae{};
+  const std::unordered_map< std::size_t, std::size_t >
+    r1{{0,3}, {1,1}, {2,0}, {3,2}};
   auto b1 = tk::remap( ae, r1 );
   // data still empty
   ensure( "remap of empty ulong vector modified", ae.empty() );
 
   // feed empty map
   try {
-    std::vector< std::size_t > a1{ 1, 2, 3 };
-    std::unordered_map< std::size_t, std::size_t > re;
+    const std::vector< std::size_t > a1{ 1, 2, 3 };
+    const std::unordered_map< std::size_t, std::size_t > re{};
     auto b2 = tk::remap( a1, re );
     fail( "should throw exception" );
   }
   catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
+    // exception thrown, test ok
   }
 
   // feed bad map
   try {
-    std::vector< std::size_t > a1{ 1, 2, 4 };    // 4 is not in map keys
-    std::unordered_map< std::size_t, std::size_t > rr{{0,3},{1,1},{2,0},{3,2}};
+    const std::vector< std::size_t > a1{ 1, 2, 4 }; // 4 is not in map keys
+    const std::unordered_map< std::size_t, std::size_t >
+            rr{{0,3},{1,1},{2,0},{3,2}};
     auto b3 = tk::remap( a1, rr );
     fail( "should throw exception" );
   }
   catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
+    // exception thrown, test ok
   }
 
   // feed good data, test correct result
-  std::vector< std::size_t > a{ 0, 1, 2, 3 };
-  std::unordered_map< std::size_t, std::size_t > r{{0,3},{1,1},{2,0},{3,2}};
+  const std::vector< std::size_t > a{ 0, 1, 2, 3 };
+  const std::unordered_map< std::size_t, std::size_t >
+          r{{0,3},{1,1},{2,0},{3,2}};
   auto b = tk::remap( a, r );
 
   ensure( "src data after remap of ulong vector modified",
@@ -617,50 +729,63 @@ void Reorder_object::test< 15 >() {
           b == std::vector< std::size_t >{ 3, 1, 0, 2 } );
 }
 
-//! Out-of-place remap vector of unsigned longs using a vector
+//! Out-of-place remap map of vectors of unsigned longs using a hash-map
 template<> template<>
-void Reorder_object::test< 16 >() {
-  set_test_name( "in-place remap vector of unsigned longs using a vector" );
+void Reorder_object::test< 18 >() {
+  set_test_name( "remap map of vectors of ulongs using a hash-map" );
 
   // feed empty data
-  std::vector< std::size_t > ae{};
-  std::vector< std::size_t > r1{ 3, 1, 2, 0 };
-  tk::remap( ae, r1 );
+  std::map< int, std::vector< std::size_t > > ae{};
+  std::unordered_map< std::size_t, std::size_t > r1{{0,3}, {1,1}, {2,0}, {3,2}};
+  auto b1 = tk::remap( ae, r1 );
   // data still empty
-  ensure( "in-place remap of empty ulong vector modified", ae.empty() );
+  ensure( "remap of empty ulong vector modified", ae.empty() );
+  // return container of ids empty
+  ensure( "remap of empty map non-empty", b1.empty() );
+  // map intact
+  ensure( "map modified after remap of empty map of vectors of ulongs",
+          r1 == std::unordered_map< std::size_t, std::size_t >
+                                  {{0,3}, {1,1}, {2,0}, {3,2}} );
 
   // feed empty map
-  std::vector< std::size_t > a1{ 1, 2, 3 };
-  std::vector< std::size_t > re;
-  tk::remap( a1, re );
-  // data intact
-  ensure( "in-place remap of empty ulong vector modified",
-          a1 == std::vector< std::size_t >{ 1, 2, 3 } );
-
-  // feed good data, test correct result
-  std::vector< std::size_t > a2{ 0, 2, 3, 1 };
-  std::vector< std::size_t > r2{ 4, 1, 0, 2 };
-  tk::remap( a2, r2 );
-
-  ensure( "map after in-place remap of ulong vector modified",
-          r2 == std::vector< std::size_t >{ 4, 1, 0, 2 } );
-  ensure( "remap of ulong vector incorrect",
-          a2 == std::vector< std::size_t >{ 4, 0, 2, 1 } );
-
-  #ifdef NDEBUG        // exception only thrown in DEBUG mode
-    skip( "in RELEASE mode, would yield segmentation fault" );
-  #else
-  // feed bad map
   try {
-    std::vector< std::size_t > a{ 1, 2, 4, 3 };  // 4 would index out of map
-    std::vector< std::size_t > r{ 4, 1, 0, 2 };
-    tk::remap( a, r );
-    fail( "should throw exception in DEBUG mode" );
+    std::map< int, std::vector< std::size_t > > a1{{0,{1}}, {42,{2}}, {23,{3}}};
+    std::unordered_map< std::size_t, std::size_t > re;
+    auto b2 = tk::remap( a1, re );
+    fail( "should throw exception" );
   }
   catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
+    // exception thrown, test ok
   }
-  #endif
+
+  // feed bad map
+  try {
+    // id 4 is not in map keys
+    std::map< int, std::vector< std::size_t > >
+      a1{ {0,{1}}, {42,{2,1}}, {23,{4}} };
+    std::unordered_map< std::size_t, std::size_t > rr{{0,3},{1,1},{2,0},{3,2}};
+    auto b3 = tk::remap( a1, rr );
+    fail( "should throw exception" );
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown, test ok
+  }
+
+  // feed good data, test correct result
+  std::map< int, std::vector< std::size_t > > a{
+    {1,{0,1,2,3}}, {32,{1,2,3,0}}, {42,{2,0,1}}, {12,{3,1,2,0}} };
+  std::unordered_map< std::size_t, std::size_t > r{{0,3},{1,1},{2,0},{3,2}};
+  auto b = tk::remap( a, r );
+
+  ensure( "src data after remap of map of ulong vectors modified",
+          a == std::map< int, std::vector< std::size_t > >{
+             {1,{0,1,2,3}}, {32,{1,2,3,0}}, {42,{2,0,1}}, {12,{3,1,2,0}} } );
+  ensure( "map after remap of map of ulong vectors modified",
+          r == std::unordered_map< std::size_t, std::size_t >
+               {{0,3},{1,1},{2,0},{3,2}} );
+  ensure( "remap of map of ulong vectors incorrect",
+          b == std::map< int, std::vector< std::size_t > >{
+             {1,{3,1,0,2}}, {32,{1,0,2,3}}, {42,{0,3,1}}, {12,{2,1,0,3}} } );
 }
 
 #if defined(STRICT_GNUC)
