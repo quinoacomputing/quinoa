@@ -25,10 +25,6 @@ namespace AMR {
             AMR::active_element_store_t active_elements;
             AMR::master_element_store_t master_elements;
 
-
-            std::vector<real_t> cell_type_list;
-            std::vector<real_t> refinement_level_list;
-
             std::vector< std::size_t > active_tetinpoel;
             std::set< std::size_t > active_nodes;
 
@@ -359,9 +355,9 @@ namespace AMR {
              *
              * @return Vector containing refinement levels of tets
              */
-            std::vector< real_t >& get_refinement_level_list()
+            std::vector< real_t > get_refinement_level_list() const
             {
-                refinement_level_list.clear();
+                std::vector<real_t> refinement_level_list;
 
                 for (const auto& kv : tets)
                 {
@@ -382,9 +378,9 @@ namespace AMR {
              *
              * @return Vector listening the types of cells
              */
-            std::vector< real_t >& get_cell_type_list()
+            std::vector< real_t > get_cell_type_list() const
             {
-                cell_type_list.clear();
+                std::vector<real_t> cell_type_list;
 
                 for (const auto& kv : tets)
                 {
@@ -409,6 +405,8 @@ namespace AMR {
                             case Refinement_Case::initial_grid:
                                 val = 1.0;
                                 break;
+                            // TODO: this will never actually happen, as a 2:8 currently views
+                            // itself as a 1:8 (as it did a 2:1, and a 1:8)
                             case Refinement_Case::two_to_eight:
                                 val = 2.8;
                                 break;
@@ -742,12 +740,12 @@ namespace AMR {
             {
                 return id_generator.generate_child_ids(parent_id, count);
             }
-            size_t get_child_id(size_t parent_id, size_t offset)
+            size_t get_child_id(size_t parent_id, size_t offset) const
             {
                 return master_elements.get_child_id(parent_id, offset);
             }
 
-            size_t get_parent_id(size_t id)
+            size_t get_parent_id(size_t id) const
             {
                 return master_elements.get_parent(id);
             }

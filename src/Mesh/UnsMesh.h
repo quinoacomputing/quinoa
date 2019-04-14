@@ -69,7 +69,7 @@ class UnsMesh {
     using Tet = std::array< std::size_t, 4 >;
     ///@}
 
-    //! Hash functor for element primitives, given by node IDs
+    //! Hash function class for element primitives, given by node IDs
     //! \tparam N Number of nodes describing element primitive. E.g., Edge:2,
     //!    Face:3, Tet:4.
     template< std::size_t N >
@@ -88,7 +88,7 @@ class UnsMesh {
       }
     };
 
-    //! Comparitor functor for element primitives, given by node IDs
+    //! Comparitor function class for element primitives, given by node IDs
     //! \tparam N Number of nodes describing element primitive. E.g., Edge:2,
     //!    Face:3, Tet:4.
     template< std::size_t N >

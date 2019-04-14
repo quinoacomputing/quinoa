@@ -298,6 +298,28 @@ class Print {
     void diag( const std::string& msg ) const
     { stream<s>() << m_diag_fmt % msg << std::flush; }
 
+    //! Echo formatted print of a diagnostics message within a progress section
+    //! \param[in] labels Label parts of diagnostics message
+    //! \param[in] values Value parts of diagnostics message
+    //! \param[in] precr If true start with a CR/LF, if false end with it
+    //! \note The number of labels and values must equal.
+    template< Style s = VERBOSE >
+    void diag( const std::vector< std::string >& labels,
+               const std::vector< std::size_t >& values,
+               bool precr = true ) const
+    {
+      Assert( labels.size() == values.size(), "Size mismatch" );
+      if (!labels.empty()) {
+        stream<s>() << (precr ? "\n" : "") <<
+          m_inprog_diag_fmt % labels[0] % std::to_string(values[0]);
+        for (std::size_t i=1; i<labels.size(); ++i)
+          stream<s>() <<
+            m_inprog_extra_diag_fmt % labels[i] % std::to_string(values[i]);
+        stream<s>() << (precr ? " " : "\n") << std::flush;
+      }
+    }
+
+    //! Start formatted print of a diagnostics message
     //! Start formatted print of a diagnostics message
     //! \param[in] msg First part of message to print as a diagnostics message
     template< Style s = VERBOSE >
@@ -729,6 +751,8 @@ class Print {
     mutable format m_note_fmt = format("%s%-40s\n");
     mutable format m_diag_fmt = format("Quinoa> %s\n");
     mutable format m_diag_start_fmt = format("Quinoa> %s ");
+    mutable format m_inprog_diag_fmt = format("Quinoa> %s: %s");
+    mutable format m_inprog_extra_diag_fmt = format(", %s: %s");
     mutable format m_charestate_frame_fmt = format(">>> %s\n");
     mutable format m_charestate_fmt =
               format(">>> %s(%d)::%|-15| PE:%|-4| it:%|-5| t:%f\n");

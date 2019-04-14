@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <iterator>
 #include <unordered_map>
+#include <map>
 #include <tuple>
 #include <cstddef>
 
@@ -49,29 +50,29 @@ shiftToZero( std::vector< std::size_t >& inpoel )
 }
 
 void
-remap( std::vector< std::size_t >& id, const std::vector< std::size_t >& map )
+remap( std::vector< std::size_t >& ids, const std::vector< std::size_t >& map )
 // *****************************************************************************
 //  Apply new maping to vector of indices
-//! \param[inout] id Vector of integer IDs to remap
+//! \param[inout] ids Vector of integer IDs to remap
 //! \param[in] map Array of indices creating a new order
 //! \details This function applies a mapping (reordering) to the integer IDs
 //!   passed in using the map passed in. The mapping is expressed between the
 //!   array index and its value. The function overwrites every value, i, of
-//!   vector id with map[i].
-//! \note The sizes of id and map need not equal. Only the maximum index in id
+//!   vector ids with map[i].
+//! \note The sizes of ids and map need not equal. Only the maximum index in ids
 //!   must be lower than the size of map.
 //! \note It is okay to call this function with either of the containers empty;
 //!   it will simply return without throwing an exception.
 // *****************************************************************************
 {
-  if (id.empty() || map.empty()) return;
+  if (ids.empty() || map.empty()) return;
 
-  Assert( *max_element( begin(id), end(id) ) < map.size(),
+  Assert( *max_element( begin(ids), end(ids) ) < map.size(),
           "Indexing out of bounds" );
 
-  // remap integer IDs in vector id
+  // remap integer IDs in vector ids
   // cppcheck-suppress useStlAlgorithm
-  for (auto& i : id) i = map[i];
+  for (auto& i : ids) i = map[i];
 }
 
 void
@@ -98,66 +99,112 @@ remap( std::vector< tk::real >& r, const std::vector< std::size_t >& map )
 
   // remap real numbers in vector
   auto m = r;
-  for (std::size_t i=0; i<map.size(); ++i) r[ map[i] ] = m[i];
+  for (std::size_t i=0; i<map.size(); ++i) r[ map[i] ] = m[ i ];
 }
 
 std::vector< std::size_t >
-remap( const std::vector< std::size_t >& id,
+remap( const std::vector< std::size_t >& ids,
        const std::vector< std::size_t >& map )
 // *****************************************************************************
-//  Create remapped vector of indices
-//! \param[in] id Vector of integer IDs to remap
+//  Create remapped vector of indices using a vector
+//! \param[in] ids Vector of integer IDs to remap
 //! \param[in] map Array of indices creating a new order
 //! \return Remapped vector of ids
 //! \details This function applies a mapping (reordering) to the integer IDs
 //!   passed in using the map passed in. The mapping is expressed between the
 //!   array index and its value. The function creates and returns a new container
-//!   with remapped ids of identical size of the origin id container.
-//! \note The sizes of id and map must be equal and the maximum index in map
+//!   with remapped ids of identical size of the origin ids container.
+//! \note The sizes of ids and map must be equal and the maximum index in map
 //!   must be lower than the size of map.
 //! \note It is okay to call this function with either of the containers empty;
-//!   it will simply return without throwing an exception.
+//!   if ids is empty, it returns an empty container; if map is empty, it will
+//!   return the original container.
 // *****************************************************************************
 {
-  if (id.empty() || map.empty()) return {};
+  if (ids.empty()) return {};
+  if (map.empty()) return ids;
 
-  Assert( *max_element( begin(id), end(id) ) < map.size(),
+  Assert( *max_element( begin(ids), end(ids) ) < map.size(),
           "Indexing out of bounds" );
 
-  std::vector< std::size_t > newids( id.size() );
-
-  std::size_t j = 0;
-  for (auto i : id) newids[ j++ ] = map[i];
+  // in terms of the in-place remap of a vector usinga vector
+  auto newids = ids;
+  remap( newids, map );
 
   return newids;
 }
 
-std::vector< std::size_t >
-remap( const std::vector< std::size_t >& id,
+void
+remap( std::vector< std::size_t >& ids,
        const std::unordered_map< std::size_t, std::size_t >& map )
 // *****************************************************************************
-//  Create remapped vector of indices
-//! \param[in] id Vector of integer IDs to create new container of ids from
+//  In-place remap vector of indices using a map
+//! \param[in] ids Vector of integer IDs to remap
+//! \param[in] map Hash-map of key->value creating a new order
+//! \details This function applies a mapping (reordering) to the integer IDs
+//!   passed in using the map passed in. The mapping is expressed as a hash-map
+//!   of key->value pairs, where the key is the original and the value is the
+//!   new ids of the mapping. The function overwrites the ids container with the
+//!   remapped ids of identical size.
+//! \note All ids in the input ids container must have a key in the map.
+//!   Otherwise an exception is thrown.
+//! \note It is okay to call this function with the ids container empty but not
+//!   okay to pass an empty map.
+// *****************************************************************************
+{
+  Assert( !map.empty(), "Map must not be empty" );
+
+  for (auto& i : ids) i = tk::cref_find( map, i );
+}
+
+std::vector< std::size_t >
+remap( const std::vector< std::size_t >& ids,
+       const std::unordered_map< std::size_t, std::size_t >& map )
+// *****************************************************************************
+//  Create remapped vector of indices using a map
+//! \param[in] ids Vector of integer IDs to create new container of ids from
 //! \param[in] map Hash-map of key->value creating a new order
 //! \return Remapped vector of ids
 //! \details This function applies a mapping (reordering) to the integer IDs
 //!   passed in using the map passed in. The mapping is expressed as a hash-map
 //!   of key->value pairs, where the key is the original and the value is the
-//!   new id of the mapping. The function creates and returns a new container
-//!   with the remapped ids of identical size of the original id container.
-//! \note All ids in the input id container must have a key in the map.
-//!   Otherwise and exception is thrown.
-//! \note It is okay to call this function with either of the containers empty;
-//!   it will simply return with and empty container without throwing and
-//!   exception.
+//!   new ids of the mapping. The function creates and returns a new container
+//!   with the remapped ids of identical size of the original ids container.
+//! \note All ids in the input ids container must have a key in the map.
+//!   Otherwise an exception is thrown.
+//! \note It is okay to call this function with the ids container empty but not
+//!   okay to pass an empty map.
 // *****************************************************************************
 {
   Assert( !map.empty(), "Map must not be empty" );
 
-  std::vector< std::size_t > newids( id.size() );
+  // in terms of the in-place remap of a vector using a map
+  auto newids = ids;
+  remap( newids, map );
 
-  std::size_t j = 0;
-  for (auto i : id) newids[ j++ ] = tk::cref_find( map, i );
+  return newids;
+}
+
+std::map< int, std::vector< std::size_t > >
+remap( const std::map< int, std::vector< std::size_t > >& ids,
+       const std::unordered_map< std::size_t, std::size_t >& map )
+// *****************************************************************************
+//  Create remapped map of vector of indices using a map
+//! \param[in] ids Map of vector of integer IDs to create new container of ids
+//!   from
+//! \param[in] map Hash-map of key->value creating a new order
+//! \return Remapped vector of ids
+//! \details This function applies a mapping (reordering) to the map of integer
+//!   IDs passed in using the map passed in by applying remap(vector,map) on
+//!   each vector of ids. The keys in the returned map will be the same as in
+//!   ids.
+// *****************************************************************************
+{
+  Assert( !map.empty(), "Map must not be empty" );
+
+  // in terms of the in-place remap of a vector using a map
+  auto newids = ids;
+  for (auto& m : newids) remap( m.second, map );
 
   return newids;
 }

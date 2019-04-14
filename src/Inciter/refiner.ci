@@ -37,6 +37,7 @@ module refiner {
       initnode void registerReducers();
       entry void start();
       entry void reorder();
+      entry void correctref();
       entry void next();
       entry [reductiontarget] void addBndEdges( CkReductionMsg* msg );
       entry void addRefBndEdges(

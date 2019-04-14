@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <sstream>
 
 #include "DG.h"
 #include "Discretization.h"
@@ -68,14 +69,13 @@ DG::DG( const CProxy_Discretization& disc,
   m_bndFace(),
   m_ghostData(),
   m_ghostReq( 0 ),
-  m_exptNbface( 0 ),
   m_ghost(),
   m_exptGhost(),
   m_recvGhost(),
   m_diag(),
   m_stage( 0 ),
   m_initial( 1 ),
-  m_refined( 0 )
+  m_expChBndFace()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -134,13 +134,14 @@ DG::resizeComm()
     auto mark = e*4;
     for (std::size_t f=0; f<4; ++f)     // for all tet faces
       if (esuel[mark+f] == -1) {        // if face has no outside-neighbor tet
-        // if does not exist in among the internal and physical boundary faces,
+        // if does not exist among the internal and physical boundary faces,
         // store as a potential chare-boundary face
         tk::UnsMesh::Face t{{ gid[ inpoel[ mark + tk::lpofa[f][0] ] ],
                               gid[ inpoel[ mark + tk::lpofa[f][1] ] ],
                               gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
         if (m_ipface.find(t) == end(m_ipface)) {
-          Assert( ++m_exptNbface, "Sum up expected number of boundary faces" );
+          Assert( m_expChBndFace.insert(t).second,
+                  "Store expected chare-boundary face" );
           potbndface.insert( t );
         }
       }
@@ -287,14 +288,13 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
 {
   const auto& esuel = m_fd.Esuel();
 
-  // Attempt to find sender chare among chares we potentially share faces with.
-  // Note that it is feasible that a sender chare called us but we do not have a
-  // set of faces associated to that chare. This can happen if we only share a
-  // single node or an edge but note a face with that chare.
+  // Find sender chare among chares we potentially share faces with. Note that
+  // it is feasible that a sender chare called us but we do not have a set of
+  // faces associated to that chare. This can happen if we only share a single
+  // node or an edge but not a face with that chare.
   auto& bndface = m_bndFace[ fromch ];  // will associate to sender chare
   // Try to find incoming faces on our chare boundary with other chares. If
-  // found, generate and assign new local ID to face, associated to sender
-  // chare.
+  // found, generate and assign new local face ID, associated to sender chare.
   auto d = Disc();
   const auto& gid = d->Gid();
   const auto& inpoel = d->Inpoel();
@@ -308,15 +308,16 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
         // if found among the incoming faces and if not one of our internal nor
         // physical boundary faces
         if ( infaces.find(t) != end(infaces) &&
-             m_ipface.find(t) == end(m_ipface) )
+             m_ipface.find(t) == end(m_ipface) ) {
           bndface[t][0] = m_nfac++;    // assign new local face ID
+        }
       }
     }
   }
-  // If at this point we have not found any face among our faces we potentially
-  // share with fromch, there is no need to keep an empty set of faces
-  // associated to fromch as we only share nodes or edges with it, but not
-  // faces.
+  // If at this point if we have not found any face among our faces we
+  // potentially share with fromch, there is no need to keep an empty set of
+  // faces associated to fromch as we only share nodes or edges with it, but
+  // not faces.
   if (bndface.empty()) m_bndFace.erase( fromch );
 
   // if we have heard from all fellow chares that we share at least a single
@@ -326,10 +327,9 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
     if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) d->Tr().chcomfac();
     tk::destroy(m_ipface);
 
-    // Ensure correct number of expected vs received/found chare-boundary faces
-    Assert( m_exptNbface == tk::sumvalsize(m_bndFace), 
-            "Expected and received number of boundary faces mismatch" );
-    m_exptNbface = 0;
+    // Ensure all expected faces have been received
+    Assert( receivedChBndFaces(),
+            "Expected and received chare boundary faces mismatch" );
 
     // Basic error checking on chare-boundary-face map
     Assert( m_bndFace.find( thisIndex ) == m_bndFace.cend(),
@@ -370,6 +370,51 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
     // fullfilled based on m_ghostData.
     for (const auto& c : m_msumset)     // for all chares we share nodes with
       thisProxy[ c.first ].reqGhost();
+  }
+}
+
+bool
+DG::receivedChBndFaces()
+// *****************************************************************************
+// Verify that all chare-boundary faces have been received
+//! \return True of all chare-boundary faces have been received
+// *****************************************************************************
+{
+  auto d = Disc();
+  tk::UnsMesh::FaceSet recvBndFace;
+
+  // Collect chare-boundary faces that have been received and expected
+  for (const auto& c : m_bndFace)
+    for (const auto& f : c.second)
+      if (m_expChBndFace.find(f.first) != end(m_expChBndFace))
+        recvBndFace.insert(f.first);
+
+   // Collect info on expected but not received faces
+   std::stringstream msg;
+   for (const auto& f : m_expChBndFace)
+     if (recvBndFace.find(f) == end(recvBndFace)) {
+       const auto& coord = d->Coord();
+       const auto& x = coord[0];
+       const auto& y = coord[1];
+       const auto& z = coord[2];
+       auto A = tk::cref_find( d->Lid(), f[0] );
+       auto B = tk::cref_find( d->Lid(), f[1] );
+       auto C = tk::cref_find( d->Lid(), f[2] );
+       msg << '{' << A << ',' << B << ',' << C << "}:("
+           << x[A] << ',' << y[A] << ',' << z[A] << ' '
+           << x[B] << ',' << y[B] << ',' << z[B] << ' '
+           << x[C] << ',' << y[C] << ',' << z[C] << ") ";
+     }
+
+  tk::destroy( m_expChBndFace );
+
+  // Error out with info on missing faces
+  auto s = msg.str();
+  if (!s.empty()) {
+    Throw( "DG chare " + std::to_string(thisIndex) +
+           " missing face(s) {local node ids} (node coords): " + s );
+  } else {
+    return true;
   }
 }
 
@@ -911,23 +956,24 @@ DG::limitIC()
 // *****************************************************************************
 {
   // Limit initial solution
-  const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
-  if (limiter == ctr::LimiterType::WENOP1)
-  {
-    WENO_P1( m_fd.Esuel(), 0, m_u, m_limFunc );
+  if (g_inputdeck.get< tag::discr, tag::ndof >() > 1) {
+    const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
+    if (limiter == ctr::LimiterType::WENOP1) {
+      WENO_P1( m_fd.Esuel(), 0, m_u, m_limFunc );
 
-    const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-    const auto ncomp= m_u.nprop()/ndof;
-    for (inciter::ncomp_t c=0; c<ncomp; ++c)
-    {
-      auto mark = c*ndof;
-      auto lmark = c*(ndof-1);
-      for (std::size_t e=0; e<m_u.nunk(); ++e)
+      const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto ncomp= m_u.nprop()/ndof;
+      for (inciter::ncomp_t c=0; c<ncomp; ++c)
       {
-        // limit P1 dofs
-        m_u( e, mark+1, 0 ) = m_limFunc( e, lmark  , 0 ) * m_u( e, mark+1, 0 );
-        m_u( e, mark+2, 0 ) = m_limFunc( e, lmark+1, 0 ) * m_u( e, mark+2, 0 );
-        m_u( e, mark+3, 0 ) = m_limFunc( e, lmark+2, 0 ) * m_u( e, mark+3, 0 );
+        auto mark = c*ndof;
+        auto lmark = c*(ndof-1);
+        for (std::size_t e=0; e<m_u.nunk(); ++e)
+        {
+          // limit P1 dofs
+          m_u(e, mark+1, 0) = m_limFunc( e, lmark  , 0 ) * m_u( e, mark+1, 0 );
+          m_u(e, mark+2, 0) = m_limFunc( e, lmark+1, 0 ) * m_u( e, mark+2, 0 );
+          m_u(e, mark+3, 0) = m_limFunc( e, lmark+2, 0 ) * m_u( e, mark+3, 0 );
+        }
       }
     }
   }
@@ -1119,7 +1165,7 @@ DG::comsol( int fromch,
 }
 
 void
-DG::writeFields( CkCallback c )
+DG::writeFields( CkCallback c ) const
 // *****************************************************************************
 // Output mesh-based fields to file
 //! \param[in] c Function to continue with after the write
@@ -1136,21 +1182,21 @@ DG::writeFields( CkCallback c )
   for (std::size_t i=0; i<3; ++i) coord[i].resize( m_ncoord );
 
   // Query fields names from all PDEs integrated
-  std::vector< std::string > names;
+  std::vector< std::string > elemfieldnames;
   for (const auto& eq : g_dgpde) {
     auto n = eq.fieldNames();
-    names.insert( end(names), begin(n), end(n) );
+    elemfieldnames.insert( end(elemfieldnames), begin(n), end(n) );
   }
 
   // Collect element field solution
-  std::vector< std::vector< tk::real > > fields;
+  std::vector< std::vector< tk::real > > elemfields;
   auto u = m_u;
   for (const auto& eq : g_dgpde) {
     auto o =
       eq.fieldOutput( d->T(), m_geoElem, u );
     // cut off ghost elements
     for (auto& field : o) field.resize( esuel.size()/4 );
-    fields.insert( end(fields), begin(o), end(o) );
+    elemfields.insert( end(elemfields), begin(o), end(o) );
   }
 
   // // Collect node field solution
@@ -1162,8 +1208,8 @@ DG::writeFields( CkCallback c )
   // }
 
   // Output chare mesh and fields metadata to file
-  d->write( inpoel, coord, m_fd.Bface(), {}, m_fd.Triinpoel(), names,
-            fields, tk::Centering::ELEM, c );
+  d->write( inpoel, coord, m_fd.Bface(), {}, m_fd.Triinpoel(), elemfieldnames,
+            {}, elemfields, {}, c );
 }
 
 void
@@ -1338,17 +1384,17 @@ DG::refine()
   auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
   auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
 
-  // if t>0 refinement enabled and we hit the frequency
+  // if t>0 refinement enabled and we hit the dtref frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
     d->Ref()->dtref( m_fd.Bface(), {}, tk::remap(m_fd.Triinpoel(),d->Gid()) );
-    m_refined = 1;
+    d->refined() = 1;
 
   } else {      // do not refine
 
     ref_complete();
     resize_complete();
-    m_refined = 0;
+    d->refined() = 0;
 
   }
 }
@@ -1441,7 +1487,7 @@ DG::recompGhostRefined()
 // Start recomputing ghost data after a mesh refinement step
 // *****************************************************************************
 {
-  if (m_refined) resizeComm(); else stage();
+  if (Disc()->refined()) resizeComm(); else stage();
 }
 
 void
