@@ -199,7 +199,7 @@ namespace AMR {
             {
                 // cppcheck-suppress assertWithSideEffect
                 assert( exists(key) );
-                get(key).needs_refining = true;
+                get(key).needs_refining = 1;
             }
 
             /**
@@ -211,7 +211,7 @@ namespace AMR {
             {
                 // cppcheck-suppress assertWithSideEffect
                 assert( exists(key) );
-                get(key).needs_refining = false;
+                get(key).needs_refining = 0;
             }
 
             /**

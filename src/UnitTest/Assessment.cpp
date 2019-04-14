@@ -76,7 +76,7 @@ assess( const tk::Print& print,
     std::string skip, warn, fail, excp;
     if (nwarn) warn = "finished with a warning: " + std::to_string(nwarn);
     if (nskip) skip = std::string(nwarn ? ", " : "") +
-                      "skipped: " + std::to_string(nskip);
+                      "(fully or partially) skipped: " + std::to_string(nskip);
     if (nexcp) excp = std::string(nskip || nwarn ? ", " : "") +
                       "threw exception: " + std::to_string(nexcp);
     if (nfail) fail = std::string(nexcp || nskip || nwarn ?

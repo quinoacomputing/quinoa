@@ -109,6 +109,8 @@ struct npar {};
 struct refined {};
 struct matched {};
 struct edges {};
+struct compatibility {};
+struct bndint {};
 struct part {};
 struct centroid {};
 struct ncomp {};

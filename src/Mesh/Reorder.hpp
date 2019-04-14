@@ -16,6 +16,7 @@
 #include <utility>
 #include <tuple>
 #include <unordered_map>
+#include <map>
 #include <cstddef>
 #include <array>
 
@@ -35,14 +36,24 @@ remap( std::vector< std::size_t >& id, const std::vector< std::size_t >& map );
 void
 remap( std::vector< tk::real >& r, const std::vector< std::size_t >& map );
 
-//! Create remapped vector of indices
+//! Create remapped vector of indices using a vector
 std::vector< std::size_t >
 remap( const std::vector< std::size_t >& id,
        const std::vector< std::size_t >& map );
 
-//! Create remapped vector of indices
+//! In-place remap vector of indices using a map
+void
+remap( std::vector< std::size_t >& id,
+       const std::unordered_map< std::size_t, std::size_t >& map );
+
+//! Create remapped vector of indices using a map
 std::vector< std::size_t >
 remap( const std::vector< std::size_t >& id,
+       const std::unordered_map< std::size_t, std::size_t >& map );
+
+//! Create remapped map of vector of indices using a map
+std::map< int, std::vector< std::size_t > >
+remap( const std::map< int, std::vector< std::size_t > >& id,
        const std::unordered_map< std::size_t, std::size_t >& map );
 
 //! Reorder mesh points with the advancing front technique

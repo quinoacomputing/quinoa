@@ -477,17 +477,20 @@ Sorter::finish()
 void
 Sorter::mesh( std::vector< std::size_t >& ginpoel,
               tk::UnsMesh::CoordMap& coordmap,
-              std::vector< std::size_t >& triinpoel )
+              std::vector< std::size_t >& triinpoel,
+              std::map< int, std::vector< std::size_t > >& bnode )
 // *****************************************************************************
 // Update mesh data we hold for whoever calls this function
 //! \param[in,out] ginpoel Mesh connectivity using global IDs
 //! \param[in,out] coordmap Map of mesh node coordinates
 //! \param[in,out] triinpoel Boundary face-node connectivity
+//! \param[in] bnode Node lists of side sets
 // *****************************************************************************
 {
   ginpoel = m_ginpoel;
   coordmap = m_coordmap;
   triinpoel = m_triinpoel;
+  bnode = m_bnode;
 }
 
 void
