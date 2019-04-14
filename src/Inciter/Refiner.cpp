@@ -434,8 +434,9 @@ Refiner::addRefBndEdges(
   // Save/augment buffers of edge data for each sender chare
   auto& red = m_remoteEdgeData[ fromch ];
   auto& re = m_remoteEdges[ fromch ];
+  using edge_data_t = std::tuple< tk::UnsMesh::Edge, int, AMR::Edge_Lock_Case >;
   for (const auto& e : ed) {
-    red.push_back( { e.first, e.second.first, e.second.second } );
+    red.push_back( edge_data_t{ e.first, e.second.first, e.second.second } );
     re.push_back( e.first );
   }
 
@@ -1270,7 +1271,7 @@ Refiner::boundary()
     if (!keys(bndFaces,f.first).empty())
       bndFaceTets.insert( f );
 
-  return { bndFaceTets, bndFaces, pcFaceTets };
+  return BndFaceData{ bndFaceTets, bndFaces, pcFaceTets };
 }
 
 void
