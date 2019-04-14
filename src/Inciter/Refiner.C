@@ -435,7 +435,7 @@ Refiner::addRefBndEdges(
   auto& red = m_remoteEdgeData[ fromch ];
   auto& re = m_remoteEdges[ fromch ];
   for (const auto& e : ed) {
-    red.push_back( { e.first, e.second.first, e.second.second } );
+    red.push_back( {{ e.first, e.second.first, e.second.second }} );
     re.push_back( e.first );
   }
 
