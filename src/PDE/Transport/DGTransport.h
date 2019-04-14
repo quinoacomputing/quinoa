@@ -95,6 +95,7 @@ class Transport {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
+    //! \param[in] nielem Number of internal elements
     void initialize( const tk::Fields& L,
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,

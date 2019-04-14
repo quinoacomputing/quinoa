@@ -108,6 +108,11 @@ class Refiner : public CBase_Refiner {
     //! Send Refiner proxy to Discretization objects
     void sendProxy();
 
+    //! Get refinement field data in mesh cells
+    std::tuple< std::vector< std::string >,
+                std::vector< std::vector< tk::real > > >
+    refinementFields() const;
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -138,16 +143,18 @@ class Refiner : public CBase_Refiner {
       p | m_nref;
       p | m_extra;
       p | m_ch;
-      p | m_edgedata;
-      p | m_edgedataCh;
+      p | m_localEdgeData;
+      p | m_remoteEdgeData;
+      p | m_remoteEdges;
       p | m_intermediates;
       p | m_bndEdges;
-      p | m_msumset;
-      p | m_oldTetIdMap;
       p | m_oldTets;
       p | m_addedNodes;
       p | m_addedTets;
       p | m_prevnTets;
+      p | m_coarseBndFaces;
+      p | m_coarseBndNodes;
+      p | m_msumset;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -156,11 +163,13 @@ class Refiner : public CBase_Refiner {
     //@}
 
   private:
-    //! Used to associate a tet id (value) to a boundary triangle face (key)
-    using BndFaces = std::unordered_map< tk::UnsMesh::Face,
-                                         std::size_t,
-                                         tk::UnsMesh::Hash<3>,
-                                         tk::UnsMesh::Eq<3> >;
+    //! Boundary face data bundle
+    using BndFaceData = std::tuple<
+      std::unordered_map< tk::UnsMesh::Face, std::size_t,
+                          tk::UnsMesh::Hash<3>, tk::UnsMesh::Eq<3> >,
+      std::unordered_map< int, tk::UnsMesh::FaceSet >,
+      std::unordered_map< tk::UnsMesh::Face, std::size_t,
+                          tk::UnsMesh::Hash<3>, tk::UnsMesh::Eq<3> > >;
 
     //! Host proxy
     CProxy_Transporter m_host;
@@ -215,21 +224,22 @@ class Refiner : public CBase_Refiner {
     //! Chares we share at least a single edge with
     std::unordered_set< int > m_ch;
     //! Refinement data associated to edges
-    AMR::EdgeData m_edgedata;
+    AMR::EdgeData m_localEdgeData;
     //! Refinement data associated to edges shared with other chares
-    std::unordered_map< int, AMR::EdgeData > m_edgedataCh;
+    std::unordered_map< int, std::vector< std::tuple<
+      tk::UnsMesh::Edge, int, AMR::Edge_Lock_Case > > > m_remoteEdgeData;
+    //! Edges received from other chares
+    std::unordered_map< int, std::vector< tk::UnsMesh::Edge > > m_remoteEdges;
     //! Intermediate nodes
     std::unordered_set< size_t> m_intermediates;
     //! Boundary edges associated to chares we share these edges with
     std::unordered_map< int, tk::UnsMesh::EdgeSet > m_bndEdges;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
-    //!    worker chares associated to their chare IDs
+    //!    worker chares associated to their chare IDs for the coarse mesh
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
     //!   points. This is the same data as in Discretization::m_msum, but the
-    //!   nodelist is stored as a set.
+    //!   nodelist is stored as a hash-set for faster searches.
     std::unordered_map< int, std::unordered_set< std::size_t > > m_msumset;
-    //! ...
-    std::vector< std::size_t > m_oldTetIdMap;
     //! Local tetrahedron IDs before refinement step
     std::unordered_set< std::size_t > m_oldTets;
     //! Newly added mesh nodes (local id) and their parents (local ids)
@@ -238,6 +248,14 @@ class Refiner : public CBase_Refiner {
     std::unordered_map< std::size_t, std::size_t > m_addedTets;
     //! Number of tetrahedra in the mesh before refinement
     std::size_t m_prevnTets;
+    //! A unique set of faces associated to side sets of the coarsest mesh
+    std::unordered_map< int, tk::UnsMesh::FaceSet > m_coarseBndFaces;
+    //! A unique set of nodes associated to side sets of the coarsest mesh
+    std::unordered_map< int, std::unordered_set< std::size_t > >
+      m_coarseBndNodes;
+
+    //! (Re-)generate boundary data structures for coarse mesh
+    void coarseBnd();
 
     //! Generate flat coordinate data from coordinate map
     tk::UnsMesh::Coords flatcoord( const tk::UnsMesh::CoordMap& coordmap );
@@ -263,10 +281,7 @@ class Refiner : public CBase_Refiner {
     //! Do mesh refinement based on tagging edges based on end-point coordinates
     void coordRefine();
 
-    //! Do mesh refinement correcting PE-boundary edges
-    void correctRefine( const AMR::EdgeData& extra );
-
-    //! ...
+    //! Query AMR lib and update our local store of edge data
     void updateEdgeData();
 
     //! Aggregate number of extra edges across all chares
@@ -280,22 +295,24 @@ class Refiner : public CBase_Refiner {
                      const std::unordered_set< std::size_t >& ref );
 
     //! Update boundary data structures after mesh refinement
-    void newBndMesh( const std::unordered_set< std::size_t >& old,
-                     const std::unordered_set< std::size_t >& ref );
+    void newBndMesh( const std::unordered_set< std::size_t >& ref );
 
-    //! \brief Generate boundary data structure used to update refined
-    //!   boundary faces and nodes assigned to side sets
-    BndFaces boundary();
+    //! \brief Generate boundary data structures used to update refined
+    //!   boundary faces and nodes of side sets
+    BndFaceData boundary();
 
     //! Regenerate boundary faces after mesh refinement step
-    void updateBndFaces( const std::unordered_set< std::size_t >& old,
-                         const std::unordered_set< std::size_t >& ref,
-                         const BndFaces& bnd );
+    void updateBndFaces(
+      const std::unordered_set< std::size_t >& ref,
+      const std::unordered_map< tk::UnsMesh::Face, std::size_t,
+                        tk::UnsMesh::Hash<3>, tk::UnsMesh::Eq<3> >& bndFaceTets,
+      const std::unordered_map< int, tk::UnsMesh::FaceSet >& bndFaces );
 
     //! Regenerate boundary nodes after mesh refinement step
-    void updateBndNodes( const std::unordered_set< std::size_t >& old,
-                         const std::unordered_set< std::size_t >& ref,
-                         const BndFaces& bnd );
+    void updateBndNodes(
+      const std::unordered_set< std::size_t >& ref,
+      const std::unordered_map< tk::UnsMesh::Face, std::size_t,
+                      tk::UnsMesh::Hash<3>, tk::UnsMesh::Eq<3> >& pcFaceTets );
 
     //! Evaluate initial conditions (IC) at mesh nodes
     tk::Fields nodeinit( std::size_t npoin,
@@ -306,9 +323,51 @@ class Refiner : public CBase_Refiner {
     void writeMesh( const std::string& basefilename,
                     uint64_t it,
                     tk::real t,
-                    CkCallback c );
+                    CkCallback c ) const;
 
-    //! Functor to call the resize() member function behind SchemeBase::Proxy
+    //! Compute partial boundary surface integral and sum across all chares
+    bool bndIntegral();
+
+    //! Find the oldest parents of a mesh node in the AMR hierarchy
+    std::unordered_set< std::size_t >
+    ancestors( std::size_t n );
+
+    //! Return a set of keys among whose values a primitive is found
+    //! \tparam Sets Type of map of sets we search for the primitive
+    //! \tparam Primitive The primitive we search for in the sets
+    //! \note Sets::mapped_type == Primitive
+    //! \param[in] sets Map of sets we search in
+    //! \param[in] p Primitive we search for
+    //! \return A unique set of set ids in which the primitive is found or
+    //!   an empty set if the primitive was not found.
+    //! \details This function searches a map of sets for an item (a primitive,
+    //!   e.g., a single id or a face given by 3 node ids) and returns a
+    //!   unique set of keys behind whose associated sets the item was found.
+    template< class Sets, class Primitive >
+    std::unordered_set< int >
+    keys( const Sets& sets, const Primitive& p ) {
+      static_assert( std::is_same< typename Sets::mapped_type::value_type,
+        Primitive >::value, "Type of primitive (face/node) in map of sets must "
+        "be the same as the type of primitive (face/node) that is searched" );
+      std::unordered_set< int > ss;
+      for (const auto& s : sets)
+        if (s.second.find(p) != end(s.second))
+          ss.insert( s.first );
+      return ss;
+    }
+
+    //! Call a function on each item of an array
+    //! \tparam N Number of nodes in array
+    //! \tparam F Function to pass each item to
+    //! \param[in] array Array whose items to pass to function
+    //! \param[in] f Function to pass each item of array to
+    template< std::size_t N, class F >
+    void addBndNodes( const std::array< std::size_t, N >& array, F f ) {
+      for (auto n : array) f( n );
+    }
+
+    //! \brief Function class to call the resizeAfterRefined() member function
+    //!   behind SchemeBase::Proxy
     struct ResizeAfterRefined : boost::static_visitor<> {
       const std::vector< std::size_t >& Ginpoel;
       const tk::UnsMesh::Chunk& Chunk;
@@ -335,6 +394,14 @@ class Refiner : public CBase_Refiner {
       template< typename P > void operator()( const P& p ) const {
         p.ckLocal()->resizeAfterRefined( Ginpoel, Chunk, Coord, AddedNodes,
           AddedTets, Msum, Bface, Bnode, Triinpoel );
+      }
+    };
+
+    //! \brief Function class to call the solution() member function
+    //!   behind SchemeBase::Proxy
+    struct solution : boost::static_visitor< tk::Fields > {
+      template< typename P > const tk::Fields& operator()( const P& p ) const {
+        return p.ckLocal()->solution();
       }
     };
 };

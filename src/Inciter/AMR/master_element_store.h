@@ -149,7 +149,7 @@ namespace AMR {
              *
              * @return ID of parent
              */
-            size_t get_parent(size_t id)
+            size_t get_parent(size_t id) const
             {
                 return get(id).parent_id;
             }
@@ -162,7 +162,7 @@ namespace AMR {
              *
              * @return ID of the child
              */
-            size_t get_child_id(size_t parent_id, size_t offset)
+            size_t get_child_id(size_t parent_id, size_t offset) const
             {
                 // cppcheck-suppress assertWithSideEffect
                 assert(offset < get(parent_id).children.size());
