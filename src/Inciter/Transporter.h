@@ -186,10 +186,9 @@ class Transporter : public CBase_Transporter {
   private:
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of worker chares
-    std::size_t m_nbit;                  //!< Number of mesh edge com iter
     std::size_t m_ncit;                  //!< Number of mesh ref corr iter
-    std::size_t m_nt0rit;                //!< Number of (t<0) mesh ref iters
-    std::size_t m_ndtrit;                //!< Number of (t>0) mesh ref iters
+    std::size_t m_nt0refit;              //!< Number of (t<0) mesh ref iters
+    std::size_t m_ndtrefit;              //!< Number of (t>0) mesh ref iters
     Scheme m_scheme;                     //!< Discretization scheme
     CProxy_Partitioner m_partitioner;    //!< Partitioner nodegroup proxy
     CProxy_Refiner m_refiner;            //!< Mesh refiner array proxy

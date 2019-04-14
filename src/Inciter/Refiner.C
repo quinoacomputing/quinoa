@@ -581,7 +581,7 @@ std::tuple< std::vector< std::string >,
                 std::vector< std::vector< tk::real > > >
 Refiner::refinementFields() const
 // *****************************************************************************
-//  Output mesh to file(s)
+//  Collect mesh output fields from refiner lib
 //! \return The names and fields of mesh refinement data in mesh cells, ready
 //!   for file output
 // *****************************************************************************

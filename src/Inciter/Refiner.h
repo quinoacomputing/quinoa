@@ -340,7 +340,7 @@ class Refiner : public CBase_Refiner {
     //! \param[in] p Primitive we search for
     //! \return A unique set of set ids in which the primitive is found or
     //!   an empty set if the primitive was not found.
-    //! \details This function searches a map of sets for a item (a primitive,
+    //! \details This function searches a map of sets for an item (a primitive,
     //!   e.g., a single id or a face given by 3 node ids) and returns a
     //!   unique set of keys behind whose associated sets the item was found.
     template< class Sets, class Primitive >
@@ -366,7 +366,7 @@ class Refiner : public CBase_Refiner {
       for (auto n : array) f( n );
     }
 
-    //! \brief Function class to call the resizeAfterREfined() member function
+    //! \brief Function class to call the resizeAfterRefined() member function
     //!   behind SchemeBase::Proxy
     struct ResizeAfterRefined : boost::static_visitor<> {
       const std::vector< std::size_t >& Ginpoel;

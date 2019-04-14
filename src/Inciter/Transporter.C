@@ -57,8 +57,8 @@ Transporter::Transporter() :
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_nchare( 0 ),
   m_ncit( 0 ),
-  m_nt0rit( 0 ),
-  m_ndtrit( 0 ),
+  m_nt0refit( 0 ),
+  m_ndtrefit( 0 ),
   m_scheme( g_inputdeck.get< tag::discr, tag::scheme >() ),
   m_partitioner(),
   m_refiner(),
@@ -413,9 +413,10 @@ Transporter::compatibility( int modified )
 //! \param[in] Sum acorss all workers, if nonzero, mesh is modified
 //! \details This is called iteratively, until convergence by Refiner. At this
 //!   point all Refiner chares have received a round of edge data (tags whether
-//!   an edge needs to be refined, etc.), applied the compatibility algorithm.
-//!   We keep going until the mesh is no longer modified by the compatibility
-//!   algorithm.
+//!   an edge needs to be refined, etc.), and applied the compatibility
+//!   algorithm independent of other Refiner chares. We keep going until the
+//!   mesh is no longer modified by the compatibility algorithm (based on a new
+//!   round of edge data communication started in Refiner::comExtra().
 // *****************************************************************************
 {
   if (modified)
@@ -453,14 +454,14 @@ Transporter::matched( std::size_t nextra,
 
       if (!g_inputdeck.get< tag::cmd, tag::feedback >()) {
         m_print.diag( { "t0ref", "nedge", "ncorr" },
-                      { ++m_nt0rit, nedge, m_ncit } );
+                      { ++m_nt0refit, nedge, m_ncit } );
       }
       m_progMesh.inc< REFINE >();
 
     } else {
 
       m_print.diag( { "dtref", "nedge", "ncorr" },
-                    { ++m_ndtrit, nedge, m_ncit }, false );
+                    { ++m_ndtrefit, nedge, m_ncit }, false );
 
     }
 
@@ -483,8 +484,8 @@ Transporter::bndint( tk::real sx, tk::real sy, tk::real sz )
 {
   auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
   if (std::abs(sx) > eps || std::abs(sy) > eps || std::abs(sz) > eps)
-    Throw( "Mesh boundary leaky, t0ref: " + std::to_string(m_nt0rit) +
-           ", dtref: " + std::to_string(m_ndtrit) );
+    Throw( "Mesh boundary leaky, t0ref: " + std::to_string(m_nt0refit) +
+           ", dtref: " + std::to_string(m_ndtrefit) );
 }
 
 void
