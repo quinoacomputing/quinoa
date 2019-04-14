@@ -1271,7 +1271,7 @@ Refiner::boundary()
     if (!keys(bndFaces,f.first).empty())
       bndFaceTets.insert( f );
 
-  return { bndFaceTets, bndFaces, pcFaceTets };
+  return BndFaceData{ bndFaceTets, bndFaces, pcFaceTets };
 }
 
 void
