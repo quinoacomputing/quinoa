@@ -579,7 +579,7 @@ Refiner::updateEdgeData()
 }
 
 std::tuple< std::vector< std::string >,
-                std::vector< std::vector< tk::real > > >
+            std::vector< std::vector< tk::real > > >
 Refiner::refinementFields() const
 // *****************************************************************************
 //  Collect mesh output fields from refiner lib
@@ -593,7 +593,9 @@ Refiner::refinementFields() const
   std::vector< std::vector< tk::real > > elemfields{
     tet_store.get_refinement_level_list(), tet_store.get_cell_type_list() };
 
-  return { elemfieldnames, elemfields };
+  using tuple_t = std::tuple< std::vector< std::string >,
+                              std::vector< std::vector< tk::real > > >;
+  return tuple_t{ elemfieldnames, elemfields };
 }
 
 void
