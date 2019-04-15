@@ -434,8 +434,9 @@ Refiner::addRefBndEdges(
   // Save/augment buffers of edge data for each sender chare
   auto& red = m_remoteEdgeData[ fromch ];
   auto& re = m_remoteEdges[ fromch ];
+  using edge_data_t = std::tuple< tk::UnsMesh::Edge, int, AMR::Edge_Lock_Case >;
   for (const auto& e : ed) {
-    red.push_back( { e.first, e.second.first, e.second.second } );
+    red.push_back( edge_data_t{ e.first, e.second.first, e.second.second } );
     re.push_back( e.first );
   }
 
@@ -578,7 +579,7 @@ Refiner::updateEdgeData()
 }
 
 std::tuple< std::vector< std::string >,
-                std::vector< std::vector< tk::real > > >
+            std::vector< std::vector< tk::real > > >
 Refiner::refinementFields() const
 // *****************************************************************************
 //  Collect mesh output fields from refiner lib
@@ -592,7 +593,9 @@ Refiner::refinementFields() const
   std::vector< std::vector< tk::real > > elemfields{
     tet_store.get_refinement_level_list(), tet_store.get_cell_type_list() };
 
-  return { elemfieldnames, elemfields };
+  using tuple_t = std::tuple< std::vector< std::string >,
+                              std::vector< std::vector< tk::real > > >;
+  return tuple_t{ elemfieldnames, elemfields };
 }
 
 void
@@ -1270,7 +1273,7 @@ Refiner::boundary()
     if (!keys(bndFaces,f.first).empty())
       bndFaceTets.insert( f );
 
-  return { bndFaceTets, bndFaces, pcFaceTets };
+  return BndFaceData{ bndFaceTets, bndFaces, pcFaceTets };
 }
 
 void
