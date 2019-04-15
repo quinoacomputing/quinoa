@@ -1355,6 +1355,31 @@ DG::solve( tk::real newdt )
   // Set new time step size
   if (m_stage == 0) d->setdt( newdt );
 
+  const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
+  if (pref && m_stage == 0)
+  {
+    // When the element are coarsened, high order term should be zero
+    for(int e = 0; e < m_nunk; e++)
+    {
+      const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto ncomp= m_u.nprop()/ndof;
+      if(m_ndof[e] == 1)
+      {
+        for (std::size_t c=0; c<ncomp; ++c)
+        {
+          auto mark = c*ndof;
+          m_u(e, mark+1, 0) = 0;
+          m_u(e, mark+2, 0) = 0;
+          m_u(e, mark+3, 0) = 0;
+        }
+      }
+    }
+  }
+
+  // Update Un
+  if(m_stage == 0)
+    m_un = m_u;
+
   for (const auto& eq : g_dgpde)
     eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(), m_u,
             m_limFunc, m_ndof, m_rhs );
@@ -1679,18 +1704,7 @@ void DG::eval_ndof()
       if(sign > 0)
         m_ndof[e] = 4;
       else
-      {
         m_ndof[e] = 1;
-
-        // When the element are coarsened, high order term should be zero
-        for (std::size_t c=0; c<ncomp; ++c)
-        {
-          auto mark = c*ndof;
-          m_u(e, mark+1, 0) = 0;
-          m_u(e, mark+2, 0) = 0;
-          m_u(e, mark+3, 0) = 0;
-        }
-      }
     }
   }
 }
