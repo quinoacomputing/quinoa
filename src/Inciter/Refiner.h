@@ -110,6 +110,8 @@ class Refiner : public CBase_Refiner {
 
     //! Get refinement field data in mesh cells
     std::tuple< std::vector< std::string >,
+                std::vector< std::vector< tk::real > >,
+                std::vector< std::string >,
                 std::vector< std::vector< tk::real > > >
     refinementFields() const;
 
@@ -148,13 +150,14 @@ class Refiner : public CBase_Refiner {
       p | m_remoteEdges;
       p | m_intermediates;
       p | m_bndEdges;
+      p | m_msumset;
       p | m_oldTets;
       p | m_addedNodes;
       p | m_addedTets;
       p | m_prevnTets;
       p | m_coarseBndFaces;
       p | m_coarseBndNodes;
-      p | m_msumset;
+      p | m_error;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -253,6 +256,8 @@ class Refiner : public CBase_Refiner {
     //! A unique set of nodes associated to side sets of the coarsest mesh
     std::unordered_map< int, std::unordered_set< std::size_t > >
       m_coarseBndNodes;
+    //! Error used to tag edges
+    std::vector< tk::real > m_error;
 
     //! (Re-)generate boundary data structures for coarse mesh
     void coarseBnd();

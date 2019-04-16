@@ -82,7 +82,8 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_addedTets(),
   m_prevnTets( 0 ),
   m_coarseBndFaces(),
-  m_coarseBndNodes()
+  m_coarseBndNodes(),
+  m_error()
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Transporter (host) proxy
@@ -579,6 +580,8 @@ Refiner::updateEdgeData()
 }
 
 std::tuple< std::vector< std::string >,
+            std::vector< std::vector< tk::real > >,
+            std::vector< std::string >,
             std::vector< std::vector< tk::real > > >
 Refiner::refinementFields() const
 // *****************************************************************************
@@ -593,9 +596,15 @@ Refiner::refinementFields() const
   std::vector< std::vector< tk::real > > elemfields{
     tet_store.get_refinement_level_list(), tet_store.get_cell_type_list() };
 
+  // Add error used to tag edges to node field output
+  std::vector< std::string > nodefieldnames{ "error" };
+  std::vector< std::vector< tk::real > > nodefields{ m_error };
+
   using tuple_t = std::tuple< std::vector< std::string >,
+                              std::vector< std::vector< tk::real > >,
+                              std::vector< std::string >,
                               std::vector< std::vector< tk::real > > >;
-  return tuple_t{ elemfieldnames, elemfields };
+  return tuple_t{ elemfieldnames, elemfields, nodefieldnames, nodefields };
 }
 
 void
@@ -613,8 +622,10 @@ Refiner::writeMesh( const std::string& basefilename,
 // *****************************************************************************
 {
   auto r = refinementFields();
-  auto elemfieldnames = std::get< 0 >( r );
-  auto elemfields = std::get< 1 >( r );
+  auto& elemfieldnames = std::get< 0 >( r );
+  auto& elemfields = std::get< 1 >( r );
+  auto& nodefieldnames = std::get< 2 >( r );
+  auto& nodefields = std::get< 3 >( r );
 
   // Prepare solution field names: depvar + component id for all eqs
   auto nprop = g_inputdeck.get< tag::component >().nprop();
@@ -624,9 +635,6 @@ Refiner::writeMesh( const std::string& basefilename,
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   const auto centering = ctr::Scheme().centering( scheme );
   auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
-
-  std::vector< std::vector< tk::real > > nodefields;
-  std::vector< std::string > nodefieldnames;
 
   // Prepare node or element fields for output to file
   if (centering == tk::Centering::NODE) {
@@ -840,6 +848,8 @@ Refiner::errorRefine()
   // Compute errors in ICs and define refinement criteria for edges
   std::vector< edge_t > tagged_edges;
   AMR::Error error;
+  m_error.resize( npoin, 0.0 );
+  tk::real nedge = 0.0;
   for (std::size_t p=0; p<npoin; ++p) { // for all mesh nodes on this chare
     for (auto q : tk::Around(psup,p)) { // for all nodes surrounding p
       tk::real cmax = 0.0;
@@ -848,9 +858,13 @@ Refiner::errorRefine()
         auto c = error.scalar( u, e, i, m_coord, m_inpoel, esup, errtype );
         if (c > cmax) cmax = c;        // find max error at edge
       }
+      // average error to nodes
+      m_error[p] += cmax;
+      nedge += 1.0;
       // if error is large, will pass edge to refiner
       if (cmax > 0.8) tagged_edges.push_back( e );
     }
+    m_error[p] /= nedge;
   }
 
   // Do error-based refinement
