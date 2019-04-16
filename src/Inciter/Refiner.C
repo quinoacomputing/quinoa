@@ -842,6 +842,7 @@ Refiner::errorRefine()
   // error indicator configured
   const auto& refidx = g_inputdeck.get< tag::amr, tag::id >();
   auto errtype = g_inputdeck.get< tag::amr, tag::error >();
+  auto tolref = g_inputdeck.get< tag::amr, tag::tolref >();
 
   using AMR::edge_t;
 
@@ -861,8 +862,8 @@ Refiner::errorRefine()
       // average error to nodes
       m_error[p] += cmax;
       nedge += 1.0;
-      // if error is large, will pass edge to refiner
-      if (cmax > 0.8) tagged_edges.push_back( e );
+      // if error exceeds refinement tolerance, will pass edge to refiner
+      if (cmax > tolref) tagged_edges.push_back( e );
     }
     m_error[p] /= nedge;
   }

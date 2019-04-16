@@ -89,6 +89,8 @@ struct hydroproductions {};
 struct diffeq {};
 struct pde {};
 struct amr {};
+struct tolref {};
+struct tolderef {};
 struct t0ref {};
 struct dtref {};
 struct dtref_uniform {};

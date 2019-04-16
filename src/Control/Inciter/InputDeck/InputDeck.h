@@ -140,6 +140,8 @@ class InputDeck :
                                    kw::amr_jump,
                                    kw::amr_hessian,
                                    kw::amr_refvar,
+                                   kw::amr_tolref,
+                                   kw::amr_tolderef,
                                    kw::amr_edgelist,
                                    kw::amr_coordref,
                                    kw::amr_xminus,
@@ -204,6 +206,8 @@ class InputDeck :
       set< tag::amr, tag::dtref_uniform >( false );
       set< tag::amr, tag::dtfreq >( 3 );
       set< tag::amr, tag::error >( AMRErrorType::JUMP );
+      set< tag::amr, tag::tolref >( 0.2 );
+      set< tag::amr, tag::tolderef >( 0.05 );
       auto rmax =
         std::numeric_limits< kw::amr_xminus::info::expect::type >::max();
       set< tag::amr, tag::xminus >( rmax );

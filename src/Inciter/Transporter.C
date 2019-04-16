@@ -192,6 +192,10 @@ Transporter::Transporter() :
       m_print.item( "Uniform-only mesh refinement, t>0",
                     g_inputdeck.get< tag::amr, tag::dtref_uniform >() );
     }
+    m_print.item( "Refinement tolerance",
+                  g_inputdeck.get< tag::amr, tag::tolref >() );
+    m_print.item( "De-refinement tolerance",
+                  g_inputdeck.get< tag::amr, tag::tolderef >() );
   }
 
   // If the desired max number of time steps is larger than zero, and the

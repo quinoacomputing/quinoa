@@ -53,6 +53,8 @@ using amr = tk::tuple::tagged_tuple<
   tag::init,    std::vector< AMRInitialType >,    //!< List of initial AMR types
   tag::refvar,  std::vector< std::string >,       //!< List of refinement vars
   tag::id,      std::vector< std::size_t >,       //!< List of refvar indices
+  tag::tolref,  tk::real,                         //!< Refine tolerance
+  tag::tolderef, tk::real,                        //!< De-refine tolerance
   tag::error,   AMRErrorType,                     //!< Error estimator for AMR
   //! List of edges-node pairs
   tag::edge,    std::vector< kw::amr_edgelist::info::expect::type >,
