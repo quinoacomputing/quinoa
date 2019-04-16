@@ -1374,11 +1374,12 @@ DG::solve( tk::real newdt )
         }
       }
     }
+    m_un = m_u;
   }
 
   // Update Un
-  if(m_stage == 0)
-    m_un = m_u;
+  //if(m_stage == 0)
+    //m_un = m_u;
 
   for (const auto& eq : g_dgpde)
     eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(), m_u,
@@ -1405,7 +1406,7 @@ DG::solve( tk::real newdt )
     d->next();
 
     // Update Un
-    m_un = m_u;
+    if(pref == false) m_un = m_u;
     // Signal that diagnostics have been computed (or in this case, skipped)
     if (!diag_computed) diag();
     // Optionally refine mesh
