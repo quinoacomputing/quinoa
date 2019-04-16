@@ -1359,7 +1359,7 @@ DG::solve( tk::real newdt )
   if (pref && m_stage == 0)
   {
     // When the element are coarsened, high order term should be zero
-    for(int e = 0; e < m_nunk; e++)
+    for(std::size_t e = 0; e < m_nunk; e++)
     {
       const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
       const auto ncomp= m_u.nprop()/ndof;
