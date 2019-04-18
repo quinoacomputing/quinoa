@@ -82,8 +82,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_addedTets(),
   m_prevnTets( 0 ),
   m_coarseBndFaces(),
-  m_coarseBndNodes(),
-  m_error()
+  m_coarseBndNodes()
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Transporter (host) proxy
@@ -586,25 +585,50 @@ std::tuple< std::vector< std::string >,
 Refiner::refinementFields() const
 // *****************************************************************************
 //  Collect mesh output fields from refiner lib
-//! \return The names and fields of mesh refinement data in mesh cells, ready
-//!   for file output
+//! \return Names and fields of mesh refinement data in mesh cells and nodes
 // *****************************************************************************
 {
+  // Find number of nodes in current mesh
+  auto npoin = tk::npoin_in_graph( m_inpoel );
+  // Generate edges surrounding points in current mesh
+  auto esup = tk::genEsup( m_inpoel, 4 );
+
+  // Update solution on current mesh
+  auto u = solution( npoin, esup );
+  Assert( u.nunk() == npoin, "Solution uninitialized or wrong size" );
+
+  // Compute error in edges on current mesh
+  auto edgeError = errorsInEdges( npoin, esup, u );
+
+  // Transfer error from edges to cells for field output
+  using Edge = tk::UnsMesh::Edge;
+  std::vector< tk::real > error( m_inpoel.size()/4, 0.0 );
+  for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
+    auto A = m_inpoel[e*4+0];
+    auto B = m_inpoel[e*4+1];
+    auto C = m_inpoel[e*4+2];
+    auto D = m_inpoel[e*4+3];
+    std::array<Edge,6> edges{{ {{A,B}}, {{B,C}}, {{A,C}},
+                               {{A,D}}, {{B,D}}, {{C,D}} }};
+    // sum error from edges to elements
+    for (const auto& ed : edges) error[e] += tk::cref_find( edgeError, ed );
+    error[e] /= 6.0;    // assign edge-average error to element
+  }
+
   // Prepare element fields with mesh refinement data
-  std::vector< std::string > elemfieldnames{ "refinement level", "cell type" };
+  std::vector< std::string >
+    elemfieldnames{ "refinement level", "cell type", "error" };
   auto& tet_store = m_refiner.tet_store;
   std::vector< std::vector< tk::real > > elemfields{
-    tet_store.get_refinement_level_list(), tet_store.get_cell_type_list() };
-
-  // Add error used to tag edges to node field output
-  std::vector< std::string > nodefieldnames{ "error" };
-  std::vector< std::vector< tk::real > > nodefields{ m_error };
+    tet_store.get_refinement_level_list(),
+    tet_store.get_cell_type_list(),
+    error };
 
   using tuple_t = std::tuple< std::vector< std::string >,
                               std::vector< std::vector< tk::real > >,
                               std::vector< std::string >,
                               std::vector< std::vector< tk::real > > >;
-  return tuple_t{ elemfieldnames, elemfields, nodefieldnames, nodefields };
+  return tuple_t{ elemfieldnames, elemfields, {}, {} };
 }
 
 void
@@ -801,20 +825,61 @@ Refiner::uniformRefine()
   m_extra = 0;
 }
 
-void
-Refiner::errorRefine()
+Refiner::EdgeError
+Refiner::errorsInEdges(
+  std::size_t npoin,
+  const std::pair< std::vector<std::size_t>, std::vector<std::size_t> >& esup,
+  const tk::Fields& u ) const
 // *****************************************************************************
-// Do error-based mesh refinement
+//  Compute errors in edges
+//! \param[in] npoint Number nodes in current mesh (partition)
+//! \param[in] esup Elements surrounding points linked vectors
+//! \param[in] u Solution evaluated at mesh nodes for all scalar components
+//! \return A map associating errors (real values between 0.0 and 1.0 incusive)
+//!   to edges (2 local node IDs)
 // *****************************************************************************
 {
-  // Find number of nodes in old mesh
-  auto npoin = tk::npoin_in_graph( m_inpoel );
-  // Generate edges surrounding points in old mesh
-  auto esup = tk::genEsup( m_inpoel, 4 );
+  // Get the indices (in the system of systems) of refinement variables and the
+  // error indicator configured
+  const auto& refidx = g_inputdeck.get< tag::amr, tag::id >();
+  auto errtype = g_inputdeck.get< tag::amr, tag::error >();
+
+  // Compute points surrounding points
   auto psup = tk::genPsup( m_inpoel, 4, esup );
 
+  // Compute errors in ICs and define refinement criteria for edges
+  AMR::Error error;
+  EdgeError edgeError;
+
+  for (std::size_t p=0; p<npoin; ++p) { // for all mesh nodes on this chare
+    for (auto q : tk::Around(psup,p)) { // for all nodes surrounding p
+      tk::real cmax = 0.0;
+      AMR::edge_t e(p,q);
+      for (auto i : refidx) {          // for all refinement variables
+        auto c = error.scalar( u, e, i, m_coord, m_inpoel, esup, errtype );
+        if (c > cmax) cmax = c;        // find max error at edge
+      }
+      edgeError[ {p,q} ] = cmax;       // associate error to edge
+    }
+  }
+
+  return edgeError;
+}
+
+tk::Fields
+Refiner::solution( std::size_t npoin,
+                   const std::pair< std::vector< std::size_t >,
+                                    std::vector< std::size_t > >& esup ) const
+// *****************************************************************************
+//  Update (or evaluate) solution on current mesh
+//! \param[in] npoint Number nodes in current mesh (partition)
+//! \param[in] esup Elements surrounding points linked vectors
+//! \return Solution updated/evaluated for all scalar components
+// *****************************************************************************
+{
   // Get solution whose error to evaluate
   tk::Fields u;
+
   if (m_initial) {      // initial (before t=0) AMR
 
     // Evaluate initial conditions at mesh nodes
@@ -825,47 +890,42 @@ Refiner::errorRefine()
     // Query current solution
     auto e = tk::element< SchemeBase::ProxyElem >
                         ( m_scheme.getProxy(), thisIndex );
-    u = boost::apply_visitor( solution(), e );
+    u = boost::apply_visitor( Solution(), e );
  
     const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
     const auto centering = ctr::Scheme().centering( scheme );
     if (centering == tk::Centering::ELEM) {
 
+      // ...
 
     }
 
   }
 
+  return u;
+}
+
+void
+Refiner::errorRefine()
+// *****************************************************************************
+// Do error-based mesh refinement
+// *****************************************************************************
+{
+  // Find number of nodes in old mesh
+  auto npoin = tk::npoin_in_graph( m_inpoel );
+  // Generate edges surrounding points in old mesh
+  auto esup = tk::genEsup( m_inpoel, 4 );
+
+  // Update solution on current mesh
+  auto u = solution( npoin, esup );
   Assert( u.nunk() == npoin, "Solution uninitialized or wrong size" );
 
-  // Get the indices (in the system of systems) of refinement variables and the
-  // error indicator configured
-  const auto& refidx = g_inputdeck.get< tag::amr, tag::id >();
-  auto errtype = g_inputdeck.get< tag::amr, tag::error >();
+  // Compute error in edges. tag edge if error exceeds refinement tolerance
   auto tolref = g_inputdeck.get< tag::amr, tag::tolref >();
-
-  using AMR::edge_t;
-
-  // Compute errors in ICs and define refinement criteria for edges
-  std::vector< edge_t > tagged_edges;
-  AMR::Error error;
-  m_error.resize( npoin, 0.0 );
-  tk::real nedge = 0.0;
-  for (std::size_t p=0; p<npoin; ++p) { // for all mesh nodes on this chare
-    for (auto q : tk::Around(psup,p)) { // for all nodes surrounding p
-      tk::real cmax = 0.0;
-      edge_t e(p,q);
-      for (auto i : refidx) {          // for all refinement variables
-        auto c = error.scalar( u, e, i, m_coord, m_inpoel, esup, errtype );
-        if (c > cmax) cmax = c;        // find max error at edge
-      }
-      // average error to nodes
-      m_error[p] += cmax;
-      nedge += 1.0;
-      // if error exceeds refinement tolerance, will pass edge to refiner
-      if (cmax > tolref) tagged_edges.push_back( e );
-    }
-    m_error[p] /= nedge;
+  std::vector< AMR::edge_t > tagged_edges;
+  for (const auto& e : errorsInEdges(npoin,esup,u)) {
+    if (e.second > tolref)
+      tagged_edges.push_back( AMR::edge_t(e.first[0],e.first[1]) );
   }
 
   // Do error-based refinement
@@ -1010,7 +1070,7 @@ Refiner::coordRefine()
 tk::Fields
 Refiner::nodeinit( std::size_t npoin,
                    const std::pair< std::vector< std::size_t >,
-                                    std::vector< std::size_t > >& esup )
+                                    std::vector< std::size_t > >& esup ) const
 // *****************************************************************************
 // Evaluate initial conditions (IC) at mesh nodes
 //! \param[in] npoin Number points in mesh (on this chare)

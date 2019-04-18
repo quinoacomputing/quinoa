@@ -157,7 +157,6 @@ class Refiner : public CBase_Refiner {
       p | m_prevnTets;
       p | m_coarseBndFaces;
       p | m_coarseBndNodes;
-      p | m_error;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -173,6 +172,12 @@ class Refiner : public CBase_Refiner {
       std::unordered_map< int, tk::UnsMesh::FaceSet >,
       std::unordered_map< tk::UnsMesh::Face, std::size_t,
                           tk::UnsMesh::Hash<3>, tk::UnsMesh::Eq<3> > >;
+
+    //! Associate error to edges
+    using EdgeError = std::unordered_map< tk::UnsMesh::Edge,
+                                          tk::real,
+                                          tk::UnsMesh::Hash<2>,
+                                          tk::UnsMesh::Eq<2> >;
 
     //! Host proxy
     CProxy_Transporter m_host;
@@ -256,8 +261,6 @@ class Refiner : public CBase_Refiner {
     //! A unique set of nodes associated to side sets of the coarsest mesh
     std::unordered_map< int, std::unordered_set< std::size_t > >
       m_coarseBndNodes;
-    //! Error used to tag edges
-    std::vector< tk::real > m_error;
 
     //! (Re-)generate boundary data structures for coarse mesh
     void coarseBnd();
@@ -279,6 +282,19 @@ class Refiner : public CBase_Refiner {
 
     //! Do error-based mesh refinement
     void errorRefine();
+
+    //! Compute errors in edges
+    EdgeError
+    errorsInEdges( std::size_t npoin,
+                   const std::pair< std::vector< std::size_t >,
+                                    std::vector< std::size_t > >& esup,
+                   const tk::Fields& u ) const;
+
+    //! Update (or evaluate) solution on current mesh
+    tk::Fields
+    solution( std::size_t npoin,
+              const std::pair< std::vector< std::size_t >,
+                               std::vector< std::size_t > >& esup ) const;
 
     //! Do mesh refinement based on user explicitly tagging edges
     void edgelistRefine();
@@ -320,9 +336,10 @@ class Refiner : public CBase_Refiner {
                       tk::UnsMesh::Hash<3>, tk::UnsMesh::Eq<3> >& pcFaceTets );
 
     //! Evaluate initial conditions (IC) at mesh nodes
-    tk::Fields nodeinit( std::size_t npoin,
-                         const std::pair< std::vector< std::size_t >,
-                                          std::vector< std::size_t > >& esup );
+    tk::Fields
+    nodeinit( std::size_t npoin,
+              const std::pair< std::vector< std::size_t >,
+                               std::vector< std::size_t > >& esup ) const;
 
     //! Output mesh to file(s)
     void writeMesh( const std::string& basefilename,
@@ -404,7 +421,7 @@ class Refiner : public CBase_Refiner {
 
     //! \brief Function class to call the solution() member function
     //!   behind SchemeBase::Proxy
-    struct solution : boost::static_visitor< tk::Fields > {
+    struct Solution : boost::static_visitor< tk::Fields > {
       template< typename P > const tk::Fields& operator()( const P& p ) const {
         return p.ckLocal()->solution();
       }
