@@ -859,7 +859,7 @@ Refiner::errorsInEdges(
         auto c = error.scalar( u, e, i, m_coord, m_inpoel, esup, errtype );
         if (c > cmax) cmax = c;        // find max error at edge
       }
-      edgeError[ {p,q} ] = cmax;       // associate error to edge
+      edgeError[ {{p,q}} ] = cmax;       // associate error to edge
     }
   }
 
