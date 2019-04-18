@@ -78,7 +78,8 @@ namespace AMR {
             void deactivate_tet_edges(size_t tet_id);
             bool check_valid_refinement_case(size_t child_id);
 
-            void check_derefinement();
+            void mark_derefinement();
+            void perform_derefinement();
             //std::vector< std::size_t >& get_active_inpoel();
 
             void print_tets();
@@ -87,6 +88,12 @@ namespace AMR {
             void update_tet_edges_lock_type(size_t tet_id, AMR::Edge_Lock_Case check, AMR::Edge_Lock_Case new_case);
             void remove_edge_locks(int intermediate = 0);
             void remove_normals();
+
+            size_t convert_derefine_edges_to_points(
+                    size_t num_edges_to_derefine,
+                    AMR::Refinement_Case  refinement_case);
+
+            std::unordered_set<size_t> child_exclusive_nodes(size_t tet_id);
 
     };
 }

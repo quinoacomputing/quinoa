@@ -1,24 +1,31 @@
 #ifndef AMR_marked_refinements_store_h
 #define AMR_marked_refinements_store_h
 
-#include <map>
+#include <unordered_map>
 #include "Refinement_State.h"
 
 namespace AMR {
 
-    class marked_refinements_store_t {
+    /**
+     * @brief This class stores the decisions made during the iterative AMR
+     * algorithm.
+     *
+     * The template parameter determines the internal enum type.
+     */
+    template<class case_t> class marked_refinements_store_t {
         private:
-            std::map<size_t, Refinement_Case> marked_refinements;
+            // TODO: make this have a more generic name
+            std::unordered_map<size_t, case_t> marked_refinements;
 
-            // TODO: This probably isn't the right place for this
+            // TODO: This may not be right place for this
             // We will use this variable to check if anything has changed
             // during a round of refinement marking
-            bool refinement_state_changed = false;
+            bool state_changed = false;
 
         public:
             //! Non-const-ref access to state
             //! \return Map of marked refinements
-            std::map<size_t, Refinement_Case>& data() {
+            std::map<size_t, case_t>& data() {
               return marked_refinements;
             }
 
@@ -50,14 +57,18 @@ namespace AMR {
              *
              * @return The marked refinement case for the given tet
              */
-            Refinement_Case& get(size_t id)
+            case_t& get(size_t id)
             {
+                // TODO: is there any performance hit for at?
                 return marked_refinements.at(id);
             }
 
             void erase(size_t id)
             {
-                marked_refinements[id] = Refinement_Case::none;
+                //marked_refinements[id] = case_t::none;
+
+                // Changing to actually erase
+                marked_refinements.erase(id);
             }
 
             /**
@@ -67,7 +78,7 @@ namespace AMR {
              * @param id The id of the tet to mark
              * @param r The refinement decision for the tet
              */
-            void add(size_t id, Refinement_Case r)
+            void add(size_t id, case_t r)
             {
                 // Check if that active element already exists
                 if (exists(id))
@@ -80,7 +91,7 @@ namespace AMR {
                         marked_refinements[id] = r;
 
                         // TODO :Find a better way to handle/update this global
-                        refinement_state_changed = true;
+                        state_changed = true;
                     }
                     else {
                         trace_out << "Not setting marked refinement val as same val"<< std::endl;
@@ -88,31 +99,29 @@ namespace AMR {
                 }
                 else {
                     trace_out << "Adding new marked value " << id << " = " << r << std::endl;
-                    marked_refinements.insert( std::pair<size_t, Refinement_Case>(id, r));
-                    refinement_state_changed = true;
+                    marked_refinements.insert( std::pair<size_t, case_t>(id, r));
+                    state_changed = true;
                 }
             }
 
-            // TODO: document this
-            // jbakosi changed this to a bool-ref so that the state can be PUPed
-            bool& get_state_changed()
+            /**
+             * @brief Accessor for variable which tracks state change
+             *
+             * @return Bool stating is the state has changed
+             */
+            bool get_state_changed()
             {
-                return refinement_state_changed;
+                return state_changed;
             }
 
-            // TODO: document this
+            /**
+             * @brief Setter for variable which tracks state change
+             *
+             * @param t State to set change variable to
+             */
             void set_state_changed(bool t)
             {
-                refinement_state_changed = t;
-            }
-
-            void replace(size_t old_id, size_t new_id)
-            {
-                // Swap id out in map
-                auto i = marked_refinements.find(old_id);
-                auto value = i->second;
-                marked_refinements.erase(i);
-                marked_refinements[new_id] = value;
+                state_changed = t;
             }
     };
 }

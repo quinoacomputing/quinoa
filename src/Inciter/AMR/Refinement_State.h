@@ -20,6 +20,9 @@ namespace AMR {
     enum Refinement_Case { initial_grid = 0, one_to_two, one_to_four, one_to_eight,
         two_to_eight, four_to_eight, none };
 
+    enum Derefinement_Case { two_to_one = 0, four_to_one, four_to_two,
+        eight_to_one, eight_to_two, eight_to_four, skip };
+
     class Refinement_State {
 
         public:

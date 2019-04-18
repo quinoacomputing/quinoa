@@ -779,24 +779,27 @@ namespace AMR {
             }
 
             // TODO: Document This.
-            /*
-            void derefine_four_to_two(size_t parent_id)
+            void derefine_four_to_two(tet_store_t& tet_store, size_t parent_id)
             {
-                assert(0);
+                derefine_four_to_one(tet_store,parent_id);
+                // TODO: actually do the refinement
+                //refine_one_to_two( tet_store, node_connectivity, parent_id);
             }
 
             // TODO: Document This.
-            void derefine_eight_to_two(size_t parent_id)
+            void derefine_eight_to_two(tet_store_t& tet_store, size_t parent_id)
             {
-                assert(0);
+                derefine_eight_to_one(tet_store,parent_id);
+                //refine_one_to_two( tet_store, node_connectivity, parent_id);
             }
 
             // TODO: Document This.
-            void derefine_eight_to_four(size_t parent_id)
+            void derefine_eight_to_four(tet_store_t& tet_store, size_t parent_id)
             {
-                assert(0);
+                // TODO: think about if the logic for these derefs are right
+                derefine_eight_to_one(tet_store,parent_id);
+                //refine_one_to_four( tet_store, node_connectivity, parent_id);
             }
-            */
 
             /**
              * @brief Loop over children and delete all intermediate edges
