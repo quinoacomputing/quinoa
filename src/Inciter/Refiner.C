@@ -381,6 +381,8 @@ Refiner::refine()
       auto r = m_initref.back();    // consume (reversed) list from its back
       if (r == ctr::AMRInitialType::UNIFORM)
         uniformRefine();
+      else if (r == ctr::AMRInitialType::UNIFORM_DEREFINE)
+        uniformDeRefine();
       else if (r == ctr::AMRInitialType::INITIAL_CONDITIONS)
         errorRefine();
       else if (r == ctr::AMRInitialType::COORDINATES)
@@ -724,6 +726,7 @@ Refiner::eval()
   for (const auto& t : m_refiner.tet_store.tets) m_oldTets.insert( t.first );
 
   m_refiner.perform_refinement();
+  m_refiner.perform_derefinement();
 
   updateMesh();
 
@@ -816,6 +819,23 @@ Refiner::uniformRefine()
 {
   // Do uniform refinement
   m_refiner.mark_uniform_refinement();
+
+  // Update our extra-edge store based on refiner
+  updateEdgeData();
+
+  // Set number of extra edges to be zero, skipping correction (if this is the
+  // only step in this refinement step)
+  m_extra = 0;
+}
+
+void
+Refiner::uniformDeRefine()
+// *****************************************************************************
+// Do uniform mesh derefinement
+// *****************************************************************************
+{
+  // Do uniform derefinement
+  m_refiner.mark_uniform_derefinement();
 
   // Update our extra-edge store based on refiner
   updateEdgeData();

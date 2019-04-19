@@ -106,6 +106,20 @@ namespace AMR {
     }
 
     /**
+     * @brief Helper function to apply uniform derefinement to all tets
+     */
+    void mesh_adapter_t::mark_uniform_derefinement()
+    {
+        for (auto& kv : tet_store.edge_store.edges) {
+           auto& local = kv.second;
+           if (local.lock_case == Edge_Lock_Case::unlocked)
+             local.needs_derefining = 1;
+        }
+        mark_derefinement();
+    }
+
+
+    /**
      * @brief For a given set of edges, set their refinement criteria for
      * refinement
      *

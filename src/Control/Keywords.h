@@ -4680,6 +4680,17 @@ struct amr_uniform_info {
 };
 using amr_uniform = keyword< amr_uniform_info, TAOCPP_PEGTL_STRING("uniform") >;
 
+struct amr_uniform_derefine_info {
+  using code = Code< d >;
+  static std::string name() { return "uniform_derefine"; }
+  static std::string shortDescription() { return
+    "Select uniform initial mesh de-refinement"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select uniform initial mesh de-refinement.)"; }
+};
+using amr_uniform_derefine =
+  keyword< amr_uniform_derefine_info, TAOCPP_PEGTL_STRING("uniform_derefine") >;
+
 struct amr_initial_conditions_info {
   using code = Code< i >;
   static std::string name() { return "ic"; }

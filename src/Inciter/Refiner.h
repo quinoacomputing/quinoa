@@ -280,6 +280,9 @@ class Refiner : public CBase_Refiner {
     //! Do uniform mesh refinement
     void uniformRefine();
 
+    //! Do uniform mesh derefinement
+    void uniformDeRefine();
+
     //! Do error-based mesh refinement
     void errorRefine();
 

@@ -134,6 +134,7 @@ class InputDeck :
                                    kw::amr_dtfreq,
                                    kw::amr_initial,
                                    kw::amr_uniform,
+                                   kw::amr_uniform_derefine,
                                    kw::amr_initial_conditions,
                                    kw::amr_coords,
                                    kw::amr_error,

@@ -55,6 +55,7 @@ namespace AMR {
 
             void evaluate_error_estimate();
             void mark_uniform_refinement();
+            void mark_uniform_derefinement();
             void mark_error_refinement( const std::vector< edge_t >& edge );
 
             void mark_error_refinement_corr( const EdgeData& edges );
