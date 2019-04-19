@@ -265,7 +265,7 @@ namespace AMR {
         for (iter = 0; iter < max_num_rounds; iter++)
         {
 
-            tet_store.marked_refinements.set_state_changed(false);
+            tet_store.marked_refinements.get_state_changed() = false;
 
             // Loop over Tets.
             for (const auto& kv : tet_store.tets)
@@ -1069,7 +1069,7 @@ namespace AMR {
             auto child_tet = tet_store.get( children[i] );
 
             // Look at nodes, if not present add to set
-            for (int j = 0; j < NUM_TET_NODES; j++)
+            for (std::size_t j = 0; j < NUM_TET_NODES; j++)
             {
                 auto node = child_tet[j];
                 if (parent_set.count(node) == 0)
@@ -1093,7 +1093,7 @@ namespace AMR {
         //Iterate until convergence
         for (iter = 0; iter < max_num_rounds; iter++)
         {
-            tet_store.marked_derefinements.set_state_changed(false);
+            tet_store.marked_derefinements.get_state_changed() = false;
 
             // Loop over tets
             for (const auto& kv : tet_store.tets)
@@ -1106,7 +1106,7 @@ namespace AMR {
 
                 // This is useful for later inspection
                 //edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
-                int num_to_derefine = 0; // Nodes
+                std::size_t num_to_derefine = 0; // Nodes
 
                 // Do number of points
                 std::unordered_set<size_t> derefine_node_set;
@@ -1307,7 +1307,7 @@ namespace AMR {
         for (const auto& kv : tet_store.tets)
         {
             size_t tet_id = kv.first;
-            size_t parent_id = 0;
+            //size_t parent_id = 0;
 
             // TODO: Do I really want to loop all tets?
 
@@ -1337,9 +1337,9 @@ namespace AMR {
                     case AMR::Derefinement_Case::eight_to_four:
                         refiner.derefine_eight_to_four(tet_store,tet_id);
                         break;
-                   default:
-                        // We have a problem
-                        assert(0);
+                    case AMR::Derefinement_Case::skip:
+                        // What do we do with skip?
+                        break;
                 }
                 // Mark tet as not needing refinement
                 tet_store.marked_derefinements.erase(tet_id);

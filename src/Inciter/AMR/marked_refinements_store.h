@@ -25,7 +25,7 @@ namespace AMR {
         public:
             //! Non-const-ref access to state
             //! \return Map of marked refinements
-            std::map<size_t, case_t>& data() {
+            std::unordered_map<size_t, case_t>& data() {
               return marked_refinements;
             }
 
@@ -109,19 +109,9 @@ namespace AMR {
              *
              * @return Bool stating is the state has changed
              */
-            bool get_state_changed()
+            bool& get_state_changed()
             {
                 return state_changed;
-            }
-
-            /**
-             * @brief Setter for variable which tracks state change
-             *
-             * @param t State to set change variable to
-             */
-            void set_state_changed(bool t)
-            {
-                state_changed = t;
             }
     };
 }

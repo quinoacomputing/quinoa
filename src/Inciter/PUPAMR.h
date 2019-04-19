@@ -72,11 +72,18 @@ inline void operator|( PUP::er& p, AMR::edge_t& e ) { pup(p,e); }
 /** @name Charm++ pack/unpack serializer member functions for marked_refinements_store_t */
 ///@{
 //! Pack/Unpack marked_refinements_store_t
-void pup( PUP::er &p, AMR::marked_refinements_store_t& m );
+//! \param[in] p Charm++'s pack/unpack object
+//! \param[in,out] m marked_refinements_store_t object reference
+template< class case_t >
+void pup( PUP::er &p, AMR::marked_refinements_store_t< case_t >& m ) {
+  p | m.data();
+  p | m.get_state_changed();
+}
 //! Pack/Unpack serialize operator|
 //! \param[in,out] p Charm++'s PUP::er serializer object reference
 //! \param[in,out] m marked_refinements_store_t object reference
-inline void operator|( PUP::er& p, AMR::marked_refinements_store_t& m )
+template< class case_t >
+inline void operator|( PUP::er& p, AMR::marked_refinements_store_t<case_t>& m )
 { pup(p,m); }
 //@}
 
