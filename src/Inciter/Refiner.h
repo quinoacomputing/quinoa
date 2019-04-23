@@ -88,7 +88,7 @@ class Refiner : public CBase_Refiner {
     //! Receive boundary edges from all PEs (including this one)
     void addBndEdges( CkReductionMsg* msg );
 
-    //! Refine mesh
+    //! Do a single step of mesh refinement (really, only tag edges)
     void refine();
 
     //! Receive newly added mesh edges and locks on our chare boundary
@@ -102,8 +102,8 @@ class Refiner : public CBase_Refiner {
     //! Communicate refined edges after a refinement step
     void comExtra();
 
-    //! Decide what to do after a mesh refinement step
-    void eval();
+    //! Perform mesh refinement and decide how to continue
+    void perform();
 
     //! Send Refiner proxy to Discretization objects
     void sendProxy();

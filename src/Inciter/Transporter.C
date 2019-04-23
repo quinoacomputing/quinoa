@@ -470,7 +470,7 @@ Transporter::matched( std::size_t nextra,
     }
 
     m_ncit = 0;
-    m_refiner.eval();
+    m_refiner.perform();
 
   }
 }

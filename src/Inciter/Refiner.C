@@ -359,7 +359,7 @@ Refiner::addBndEdges( CkReductionMsg* msg )
 void
 Refiner::refine()
 // *****************************************************************************
-//  Do a single step of mesh refinement
+//  Do a single step of mesh refinement (really, only tag edges)
 //! \details During initial (t<0) mesh refinement, this is a single step in a
 //!   potentially multiple-entry list of initial adaptive mesh refinement steps.
 //!   Distribution of the chare-boundary edges must have preceded this step, so
@@ -721,9 +721,9 @@ Refiner::writeMesh( const std::string& basefilename,
 }
 
 void
-Refiner::eval()
+Refiner::perform()
 // *****************************************************************************
-// Refine mesh and decide how to continue
+// Perform mesh refinement and decide how to continue
 //! \details First the mesh refiner object is called to perform a single step
 //!   of mesh refinement. Then, if this function is called during a step
 //!   (potentially multiple levels of) initial AMR, it evaluates whether to do
