@@ -52,6 +52,7 @@ module dg {
       entry void resized();
       entry void lhs();
       entry void step();
+      entry void contin();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -66,7 +67,7 @@ module dg {
 
       entry void wait4sol() {
         when ownsol_complete(), comsol_complete() serial "sol"
-        { lim(); } };
+        { contribute( CkCallback(CkReductionTarget(Transporter,someFn), Disc()->Tr())) ; } };
 
       entry void wait4lim() {
         when ownlim_complete(), comlim_complete() serial "lim"

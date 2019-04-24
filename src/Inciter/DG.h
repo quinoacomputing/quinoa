@@ -172,6 +172,8 @@ class DG : public CBase_DG {
     //! Evaluate whether to continue with next time step
     void step();
 
+   void contin() { lim(); }
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function

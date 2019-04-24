@@ -614,4 +614,8 @@ ALECG::step()
   }
 }
 
+void ALECG::contin()
+{
+}
+
 #include "NoWarning/alecg.def.h"
