@@ -182,7 +182,7 @@ class Refiner : public CBase_Refiner {
     //! Boundary face data bundle, see boundary()
     using BndFaceData = std::tuple<
       std::unordered_map< Face, std::size_t, Hash<3>, Eq<3> >,
-      std::unordered_map< Face, std::array<Face,4>, Hash<3>, Eq<3> >,
+      std::unordered_map< Face, Tet, Hash<3>, Eq<3> >,
       std::unordered_map< int, FaceSet >
     >;
 
