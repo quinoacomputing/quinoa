@@ -33,7 +33,6 @@ module matcg {
       entry void setup( tk::real v );
       entry void dt();
       entry void diag();
-      entry void sendinit();
       entry void advance( tk::real newdt );
       entry void updateSol( const std::vector< std::size_t >& gid,
                             const std::vector< tk::real >& sol );

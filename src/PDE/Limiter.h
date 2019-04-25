@@ -26,8 +26,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 void
 WENO_P1( const std::vector< int >& esuel,
          inciter::ncomp_t offset,
-         const tk::Fields& U,
-         tk::Fields& limFunc );
+         tk::Fields& U );
 
 } // inciter::
 

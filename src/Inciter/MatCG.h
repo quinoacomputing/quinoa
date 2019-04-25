@@ -94,9 +94,6 @@ class MatCG : public CBase_MatCG {
     //! Compute time step size
     void dt();
 
-    //! Send own chare-boundary data to neighboring chares
-    void sendinit(){}
-
     //! Advance equations to next time step
     void advance( tk::real newdt );
 

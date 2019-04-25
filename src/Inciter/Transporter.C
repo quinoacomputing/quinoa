@@ -817,16 +817,6 @@ Transporter::stat()
 }
 
 void
-Transporter::sendinit()
-// *****************************************************************************
-// Reduction target to sync the initial solution before limiting
-// *****************************************************************************
-{
-  // send initial solution to neighboring chares
-  m_scheme.sendinit();
-}
-
-void
 Transporter::advance( tk::real dt )
 // *****************************************************************************
 // Reduction target computing the minimum of dt

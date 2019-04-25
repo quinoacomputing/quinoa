@@ -25,18 +25,20 @@ extern ctr::InputDeck g_inputdeck;
 void
 WENO_P1( const std::vector< int >& esuel,
          inciter::ncomp_t offset,
-         const tk::Fields& U,
-         tk::Fields& limFunc )
+         tk::Fields& U )
 // *****************************************************************************
 //  Weighted Essentially Non-Oscillatory (WENO) limiter for DGP1
 //! \param[in] esuel Elements surrounding elements
 //! \param[in] offset Index for equation systems
-//! \param[in] U High-order solution vector
-//! \param[in,out] limFunc Limiter function
+//! \param[in,out] U High-order solution vector which gets limited
 // *****************************************************************************
 {
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   const auto cweight = inciter::g_inputdeck.get< tag::discr, tag::cweight >();
+  std::array< std::vector< tk::real >, 3 > limU;
+  limU[0].resize( U.nunk() );
+  limU[1].resize( U.nunk() );
+  limU[2].resize( U.nunk() );
 
   std::size_t ncomp = U.nprop()/ndof;
 
@@ -46,7 +48,6 @@ WENO_P1( const std::vector< int >& esuel,
   for (inciter::ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
-    auto lmark = c*(ndof-1);
 
     for (std::size_t e=0; e<esuel.size()/4; ++e)
     {
@@ -123,22 +124,26 @@ WENO_P1( const std::vector< int >& esuel,
         wtDof[is] = wtDof[is]/wtotal;
       }
 
-      limFunc(e, lmark+0, 0) = 0.0;
-      limFunc(e, lmark+1, 0) = 0.0;
-      limFunc(e, lmark+2, 0) = 0.0;
+      limU[0][e] = 0.0;
+      limU[1][e] = 0.0;
+      limU[2][e] = 0.0;
 
       // limiter function
       for (std::size_t is=0; is<5; ++is)
       {
         // A small number (1.0e-12) is needed here to avoid dividing by a zero
         // in the case of a constant solution, where gradu would be zero.
-        limFunc(e, lmark+0, 0) += wtDof[is]*gradu[is][0]
-                         / ( gradu[0][0] + std::copysign(1.0e-12,gradu[0][0]) );
-        limFunc(e, lmark+1, 0) += wtDof[is]*gradu[is][1]
-                         / ( gradu[0][1] + std::copysign(1.0e-12,gradu[0][1]) );
-        limFunc(e, lmark+2, 0) += wtDof[is]*gradu[is][2]
-                         / ( gradu[0][2] + std::copysign(1.0e-12,gradu[0][2]) );
+        limU[0][e] += wtDof[is]*gradu[is][0];
+        limU[1][e] += wtDof[is]*gradu[is][1];
+        limU[2][e] += wtDof[is]*gradu[is][2];
       }
+    }
+
+    for (std::size_t e=0; e<esuel.size()/4; ++e)
+    {
+      U(e, mark+1, offset) = limU[0][e];
+      U(e, mark+2, offset) = limU[1][e];
+      U(e, mark+3, offset) = limU[2][e];
     }
   }
 }
