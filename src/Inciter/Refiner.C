@@ -1358,9 +1358,11 @@ Refiner::boundary()
 
   // Generate data structure pcReFaceTets, that associates the id of a tet
   // adjacent to a refined boundary triangle face for all (physical and chare)
-  // boundary faces. Also generate data structure pcDeFaceTets, that associates
-  // the four faces of the parent tetrahedron adjacent to a derefined boundary
-  // face for all (physical and chare) boundary.
+  // boundary faces in the old mesh (i.e., before the current
+  // refinement/derefinement step). Also generate data structure pcDeFaceTets,
+  // that associates the four faces of the parent tetrahedron adjacent to a
+  // derefined boundary face for all (physical and chare) boundary faces in the
+  // old mesh (i.e., before the current refinement/derefinement step).
   std::unordered_map< Face, std::size_t, Hash<3>, Eq<3> > pcReFaceTets;
   std::unordered_map< Face, std::array<Face,4>, Hash<3>, Eq<3> > pcDeFaceTets;
   auto oldesuel = tk::genEsuelTet( m_inpoel, tk::genEsup(m_inpoel,4) );
