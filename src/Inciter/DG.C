@@ -1125,9 +1125,13 @@ DG::lim()
 {
   if (g_inputdeck.get< tag::discr, tag::ndof >() > 1) {
 
+    auto d = Disc();
+
     const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
     if (limiter == ctr::LimiterType::WENOP1)
       WENO_P1( m_fd.Esuel(), 0, m_u );
+    else if (limiter == ctr::LimiterType::SUPERBEEP1)
+      Superbee_P1( m_fd.Esuel(), d->Inpoel(), 0, d->Coord(), m_u );
   
     // communicate solution ghost data (if any)
     if (m_ghostData.empty())
