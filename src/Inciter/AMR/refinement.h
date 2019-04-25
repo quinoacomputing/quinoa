@@ -718,8 +718,8 @@ namespace AMR {
                 Refinement_State& parent = tet_store.data(parent_id);
                 for (auto c : parent.children)
                 {
-                    //tet_store.erase(c);
-                    tet_store.deactivate(c);
+                    tet_store.erase(c);
+                    //tet_store.deactivate(c);
 
                     /*
                     auto children = tet_store.data(c).children;
@@ -764,7 +764,7 @@ namespace AMR {
             // TODO: Document This.
             void derefine_eight_to_one(tet_store_t& tet_store, size_t parent_id)
             {
-                generic_derefine(tet_store,parent_id);
+                // TODO: Do we delete the nodes? Do we even have nodes?
 
                 // Delete the center edges
                     // If edge isn't in the parent, delete it? Is there a better way?
@@ -776,6 +776,8 @@ namespace AMR {
                     edge_list_t child_edges = tet_store.generate_edge_keys(c);
                     delete_non_matching_edges( tet_store, child_edges, parent_edges);
                 }
+
+                generic_derefine(tet_store,parent_id);
             }
 
             // TODO: Document This.
