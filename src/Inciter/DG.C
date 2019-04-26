@@ -922,25 +922,24 @@ DG::setup( tk::real v )
                    m_fd.Esuel().size()/4 );
   m_un = m_u;
 
+  // Start timer measuring time stepping wall clock time
+  d->Timer().zero();
+
   // Output initial conditions to file (regardless of whether it was requested)
-  writeFields( CkCallback(CkIndex_DG::start(), thisProxy[thisIndex]) );
+  writeFields( CkCallback(CkIndex_DG::next(), thisProxy[thisIndex]) );
 }
 
 void
-DG::start()
+DG::next()
 // *****************************************************************************
-//  Start time stepping
+// Continue to next time step stage
 // *****************************************************************************
 {
   auto d = Disc();
 
-  // Start timer measuring time stepping wall clock time
-  d->Timer().zero();
-
   tk::real fdt = 0.0;
-  // Start time stepping
-  contribute( sizeof(tk::real), &fdt, CkReduction::nop,
-              CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
+  d->contribute( sizeof(tk::real), &fdt, CkReduction::nop,
+                 CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
 }
 
 void
@@ -1359,19 +1358,6 @@ DG::recompGhostRefined()
 // *****************************************************************************
 {
   if (Disc()->refined()) resizeComm(); else stage();
-}
-
-void
-DG::next()
-// *****************************************************************************
-// Continue to next time step stage
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  tk::real fdt = 0.0;
-  d->contribute( sizeof(tk::real), &fdt, CkReduction::nop,
-                 CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
 }
 
 void

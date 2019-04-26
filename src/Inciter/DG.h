@@ -102,8 +102,8 @@ class DG : public CBase_DG {
     //! Setup: query boundary conditions, output mesh, etc.
     void setup( tk::real v );
 
-    //! Start time stepping
-    void start();
+    //! Continue to next time step stage
+    void next();
 
     //! Receive chare-boundary limiter function data from neighboring chares
     void comlim( int fromch,
@@ -337,9 +337,6 @@ class DG : public CBase_DG {
 
     //! Evaluate whether to continue with next time step stage
     void stage();
-
-    //! Continue to next time step stage
-    void next();
 };
 
 } // inciter::
