@@ -750,6 +750,7 @@ namespace AMR {
             // TODO: Document This.
             void derefine_two_to_one(tet_store_t& tet_store, size_t parent_id)
             {
+                if (!check_allowed_derefinement(tet_store,parent_id)) return;
                 delete_intermediates_of_children( tet_store, parent_id);
                 generic_derefine(tet_store,parent_id);
             }
@@ -757,6 +758,7 @@ namespace AMR {
             // TODO: Document This.
             void derefine_four_to_one(tet_store_t& tet_store, size_t parent_id)
             {
+                if (!check_allowed_derefinement(tet_store,parent_id)) return;
                 delete_intermediates_of_children(tet_store, parent_id);
                 generic_derefine(tet_store,parent_id);
             }
@@ -764,6 +766,8 @@ namespace AMR {
             // TODO: Document This.
             void derefine_eight_to_one(tet_store_t& tet_store, size_t parent_id)
             {
+                if (!check_allowed_derefinement(tet_store,parent_id)) return;
+
                 // TODO: Do we delete the nodes? Do we even have nodes?
 
                 // Delete the center edges

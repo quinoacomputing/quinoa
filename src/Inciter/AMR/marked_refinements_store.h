@@ -23,6 +23,12 @@ namespace AMR {
             bool state_changed = false;
 
         public:
+            //! Const-ref access to number of tets
+            //! \return Map of marked refinements
+            std::size_t size() const {
+              return marked_refinements.size();
+            }
+
             //! Non-const-ref access to state
             //! \return Map of marked refinements
             std::unordered_map<size_t, case_t>& data() {

@@ -557,8 +557,13 @@ Refiner::correctref()
     updateEdgeData();
   }
 
-  // Aggregate number of extra edges that still need correction
-  std::vector< std::size_t > m{ m_extra, m_localEdgeData.size(), m_initial };
+  // Aggregate number of extra edges that still need correction and some
+  // refinement/derefinement statistics
+  const auto& tet_store = m_refiner.tet_store;
+  std::vector< std::size_t > m{ m_extra,
+                                tet_store.marked_refinements.size(),
+                                tet_store.marked_derefinements.size(),
+                                m_initial };
   contribute( m, CkReduction::sum_ulong, m_cbr.get< tag::matched >() );
 }
 
@@ -939,7 +944,7 @@ Refiner::solution( std::size_t npoin,
 void
 Refiner::errorRefine()
 // *****************************************************************************
-// Do error-based mesh refinement
+// Do error-based mesh refinement and derefinement
 // *****************************************************************************
 {
   // Find number of nodes in old mesh
@@ -952,13 +957,22 @@ Refiner::errorRefine()
   Assert( u.nunk() == npoin, "Solution uninitialized or wrong size" );
 
   using AMR::edge_t;
+  using AMR::edge_tag;
 
-  // Compute error in edges. tag edge if error exceeds refinement tolerance
+  // Compute error in edges. Tag edge for refinement if error exceeds
+  // refinement tolerance, tag edge for derefinement if error is below
+  // derefinement tolerance.
   auto tolref = g_inputdeck.get< tag::amr, tag::tolref >();
-  std::vector< edge_t > tagged_edges;
+  auto tolderef = g_inputdeck.get< tag::amr, tag::tolderef >();
+  std::vector< std::pair< edge_t, edge_tag > > tagged_edges;
   for (const auto& e : errorsInEdges(npoin,esup,u)) {
-    if (e.second > tolref)
-      tagged_edges.push_back( edge_t( m_rid[e.first[0]], m_rid[e.first[1]] ) );
+    if (e.second > tolref) {
+      tagged_edges.push_back( { edge_t( m_rid[e.first[0]], m_rid[e.first[1]] ),
+                                edge_tag::REFINE } );
+    } else if (e.second < tolderef) {
+      tagged_edges.push_back( { edge_t( m_rid[e.first[0]], m_rid[e.first[1]] ),
+                                edge_tag::DEREFINE } );
+    }
   }
 
   // Do error-based refinement
@@ -992,21 +1006,23 @@ Refiner::edgelistRefine()
       useredges.insert( {{ {edgenodelist[i*2+0], edgenodelist[i*2+1]} }} );
 
     using AMR::edge_t;
+    using AMR::edge_tag;
 
     // Tag edges the user configured
-    std::vector< edge_t > edge;
+    std::vector< std::pair< edge_t, edge_tag > > tagged_edges;
     for (std::size_t p=0; p<npoin; ++p)        // for all mesh nodes on this chare
       for (auto q : tk::Around(psup,p)) {      // for all nodes surrounding p
         Edge e{{ m_gid[p], m_gid[q] }};
         auto f = useredges.find(e);
         if (f != end(useredges)) { // tag edge if on user's list
-          edge.push_back( edge_t( m_rid[p], m_rid[q] ) );
+          tagged_edges.push_back( { edge_t( m_rid[p], m_rid[q] ),
+                                    edge_tag::REFINE } );
           useredges.erase( f );
         }
       }
 
     // Do error-based refinement
-    m_refiner.mark_error_refinement( edge );
+    m_refiner.mark_error_refinement( tagged_edges );
 
     // Update our extra-edge store based on refiner
     updateEdgeData();
@@ -1044,6 +1060,7 @@ Refiner::coordRefine()
   bool zp = std::abs(zplus - rmax) > eps ? true : false;
 
   using AMR::edge_t;
+  using AMR::edge_tag;
 
   if (xm || xp || ym || yp || zm || zp) {       // if any half-world configured
     // Find number of nodes in old mesh
@@ -1056,7 +1073,7 @@ Refiner::coordRefine()
     const auto& y = m_coord[1];
     const auto& z = m_coord[2];
     // Compute edges to be tagged for refinement
-    std::vector< edge_t > edge;
+    std::vector< std::pair< edge_t, edge_tag > > tagged_edges;
     for (std::size_t p=0; p<npoin; ++p)        // for all mesh nodes on this chare
       for (auto q : tk::Around(psup,p)) {      // for all nodes surrounding p
         Edge e{{p,q}};
@@ -1069,11 +1086,14 @@ Refiner::coordRefine()
         if (zm) { if (z[p]>zminus && z[q]>zminus) t = false; }
         if (zp) { if (z[p]<zplus && z[q]<zplus) t = false; }
 
-        if (t) edge.push_back( edge_t( m_rid[e[0]], m_rid[e[1]] ) );
+        if (t) {
+          tagged_edges.push_back( { edge_t( m_rid[e[0]], m_rid[e[1]] ),
+                                    edge_tag::REFINE } );
+        }
       }
 
     // Do error-based refinement
-    m_refiner.mark_error_refinement( edge );
+    m_refiner.mark_error_refinement( tagged_edges );
 
     // Update our extra-edge store based on refiner
     updateEdgeData();

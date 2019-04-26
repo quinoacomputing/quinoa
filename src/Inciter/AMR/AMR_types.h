@@ -114,6 +114,9 @@ using EdgeData =
                        tk::UnsMesh::Hash<2>,
                        tk::UnsMesh::Eq<2> >;
 
+//! Enum used to tag an edge for refinement or derefinement
+enum class edge_tag : uint8_t { REFINE, DEREFINE };
+
 }  // AMR::
 
 #endif
