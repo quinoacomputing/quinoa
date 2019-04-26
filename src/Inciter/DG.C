@@ -179,19 +179,6 @@ DG::resizeComm()
     }
 }
 
-tk::Fields
-DG::limFunc( std::size_t nelem ) const
-// *****************************************************************************
-// Size and create limiter function data container
-//! \param[in] nelem Number elements in mesh
-// *****************************************************************************
-{
-  auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-  auto nprop = g_inputdeck.get< tag::component >().nprop();
-
-  return tk::Fields( (ndof == 1 ? 0 : nelem), (ndof-1)*nprop );
-}
-
 bool
 DG::leakyAdjacency()
 // *****************************************************************************

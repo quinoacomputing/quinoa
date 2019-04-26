@@ -199,8 +199,10 @@ Superbee_P1( const std::vector< int >& esuel,
       for (inciter::ncomp_t c=0; c<ncomp; ++c)
       {
         auto mark = c*ndof;
-        uMin[c] = std::min(uMin[c], U(nel, mark, offset));
-        uMax[c] = std::max(uMax[c], U(nel, mark, offset));
+        uMin[c] = std::min(uMin[c],
+                           U( static_cast< std::size_t >(nel), mark, offset ));
+        uMax[c] = std::max(uMax[c],
+                           U( static_cast< std::size_t >(nel), mark, offset ));
       }
     }
 
@@ -263,9 +265,7 @@ Superbee_P1( const std::vector< int >& esuel,
               tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
               tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
 
-        std::vector< tk::real > state;
-
-        state = tk::eval_state( ncomp, offset, ndof, e, U, B_l );
+        auto state = tk::eval_state( ncomp, offset, ndof, e, U, B_l );
 
         Assert( state.size() == ncomp, "Size mismatch" );
 

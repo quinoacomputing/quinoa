@@ -177,7 +177,6 @@ class DG : public CBase_DG {
       p | m_geoElem;
       p | m_lhs;
       p | m_rhs;
-      p | m_limFunc;
       p | m_nfac;
       p | m_nunk;
       p | m_ncoord;
@@ -238,8 +237,6 @@ class DG : public CBase_DG {
     tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
-    //! Vector of limiter function values
-    tk::Fields m_limFunc;
     //! Counter for number of faces on this chare (including chare boundaries)
     std::size_t m_nfac;
     //! Counter for number of unknowns on this chare (including ghosts)
@@ -287,9 +284,6 @@ class DG : public CBase_DG {
       Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
       return m_disc[ thisIndex ].ckLocal();
     }
-
-    //! Size and create limiter function data container
-    tk::Fields limFunc( std::size_t nelem ) const;
 
     //! Start sizing communication buffers and setting up ghost data
     void resizeComm();
