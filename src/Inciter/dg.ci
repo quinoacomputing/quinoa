@@ -35,6 +35,7 @@ module dg {
       entry void setup( tk::real v );
       entry void next();
       entry void diag();
+      entry [reductiontarget] void sendLim();
       entry void comlim( int fromch,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& lfn );

@@ -146,6 +146,9 @@ class DG : public CBase_DG {
     //! Compute limiter function
     void lim();
 
+    //! Send limited solution to neighboring chares
+    void sendLim();
+
     //! Const-ref access to current solution
     //! \param[in,out] u Reference to update with current solution
     void solution( tk::Fields& u ) const { u = m_u; }
