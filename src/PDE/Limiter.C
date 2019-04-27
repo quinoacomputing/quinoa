@@ -87,9 +87,10 @@ WENO_P1( const std::vector< int >& esuel,
           continue;
         }
 
-        gradu[is][0] = U( static_cast< std::size_t >(nel), mark+1, offset );
-        gradu[is][1] = U( static_cast< std::size_t >(nel), mark+2, offset );
-        gradu[is][2] = U( static_cast< std::size_t >(nel), mark+3, offset );
+        std::size_t n = static_cast< std::size_t >( nel );
+        gradu[is][0] = U(n, mark+1, offset);
+        gradu[is][1] = U(n, mark+2, offset);
+        gradu[is][2] = U(n, mark+3, offset);
         wtStencil[is] = 1.0;
       }
 
@@ -131,8 +132,6 @@ WENO_P1( const std::vector< int >& esuel,
       // limiter function
       for (std::size_t is=0; is<5; ++is)
       {
-        // A small number (1.0e-12) is needed here to avoid dividing by a zero
-        // in the case of a constant solution, where gradu would be zero.
         limU[0][e] += wtDof[is]*gradu[is][0];
         limU[1][e] += wtDof[is]*gradu[is][1];
         limU[2][e] += wtDof[is]*gradu[is][2];
@@ -199,10 +198,9 @@ Superbee_P1( const std::vector< int >& esuel,
       for (inciter::ncomp_t c=0; c<ncomp; ++c)
       {
         auto mark = c*ndof;
-        uMin[c] = std::min(uMin[c],
-                           U( static_cast< std::size_t >(nel), mark, offset ));
-        uMax[c] = std::max(uMax[c],
-                           U( static_cast< std::size_t >(nel), mark, offset ));
+        std::size_t n = static_cast< std::size_t >( nel );
+        uMin[c] = std::min(uMin[c], U(n, mark, offset));
+        uMax[c] = std::max(uMax[c], U(n, mark, offset));
       }
     }
 
