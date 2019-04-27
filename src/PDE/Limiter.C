@@ -242,9 +242,9 @@ Superbee_P1( const std::vector< int >& esuel,
     for (std::size_t lf=0; lf<4; ++lf)
     {
       // Extract the face coordinates
-      std::array< std::size_t, 3 > inpofa_l { inpoel[4*e+tk::lpofa[lf][0]],
-                                              inpoel[4*e+tk::lpofa[lf][1]],
-                                              inpoel[4*e+tk::lpofa[lf][2]] };
+      std::array< std::size_t, 3 > inpofa_l {{ inpoel[4*e+tk::lpofa[lf][0]],
+                                               inpoel[4*e+tk::lpofa[lf][1]],
+                                               inpoel[4*e+tk::lpofa[lf][2]] }};
 
       std::array< std::array< tk::real, 3>, 3 > coordfa {{
         {{ cx[ inpofa_l[0] ], cy[ inpofa_l[0] ], cz[ inpofa_l[0] ] }},
