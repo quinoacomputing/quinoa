@@ -1347,6 +1347,7 @@ namespace grm {
          pegtl::until<
            readkw< typename endkeyword::pegtl_string >,
            pegtl::sor< comment,
+                       ignore,
                        tokens...,
                        unknown< ERROR, MsgKey::KEYWORD > > > {};
 
@@ -1359,11 +1360,7 @@ namespace grm {
   struct vector :
          pegtl::seq<
            act< readkw< typename key::pegtl_string >, starter >,
-           pegtl::until< readkw< typename endkeyword::pegtl_string >,
-                         pegtl::sor< comment,
-                                     pegtl::plus< pegtl::space >,
-                                     scan< value, insert >,
-                                     unknown< ERROR, MsgKey::LIST > > > > {};
+           block< endkeyword, scan< value, insert > > > {};
 
   //! \brief Scan string between characters 'lbound' and 'rbound' and if matches
   //!   apply action 'insert'

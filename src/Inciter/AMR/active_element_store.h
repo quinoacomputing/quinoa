@@ -40,7 +40,7 @@ namespace AMR {
              *
              * @return A bool for if the element was found or no
              */
-            bool exists(size_t id)
+            bool exists(size_t id) const
             {
                 if (active_elements.find(id) != active_elements.end())
                 {

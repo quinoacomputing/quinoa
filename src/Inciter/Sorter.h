@@ -123,7 +123,8 @@ class Sorter : public CBase_Sorter {
     //! Update mesh data we hold for whoever calls this function
     void mesh( std::vector< std::size_t >& ginpoel,
                tk::UnsMesh::CoordMap& coordmap,
-               std::vector< std::size_t >& triinpoel );
+               std::vector< std::size_t >& triinpoel,
+               std::map< int, std::vector< std::size_t > >& bnode );
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

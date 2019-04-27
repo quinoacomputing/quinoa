@@ -56,7 +56,8 @@ Discretization::Discretization(
   m_vol( m_gid.size(), 0.0 ),
   m_volc(),
   m_bid(),
-  m_timer()
+  m_timer(),
+  m_refined( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] fctproxy Distributed FCT proxy
@@ -383,9 +384,10 @@ Discretization::write(
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& bnode,
   const std::vector< std::size_t >& triinpoel,
-  const std::vector< std::string>& names,
-  const std::vector< std::vector< tk::real > >& fields,
-  tk::Centering centering,
+  const std::vector< std::string>& elemfieldnames,
+  const std::vector< std::string>& nodefieldnames,
+  const std::vector< std::vector< tk::real > >& elemfields,
+  const std::vector< std::vector< tk::real > >& nodefields,
   CkCallback c )
 // *****************************************************************************
 //  Output mesh and fields data (solution dump) to file(s)
@@ -397,10 +399,10 @@ Discretization::write(
 //!   ids for this mesh chunk
 //! \param[in] triinpoel Interconnectivity of points and boundary-face in this
 //!   mesh chunk
-//! \param[in] names Field output names to output
-//! \param[in] fields Mesh field output dump
-//! \param[in] centering The centering that will be associated to the field data
-//!   to be output when writeFields is called next
+//! \param[in] elemfieldnames Names of element fields to be output to file
+//! \param[in] nodefieldnames Names of node fields to be output to file
+//! \param[in] elemfields Field data in mesh elements to output to file
+//! \param[in] nodefields Field data in mesh node to output to file
 //! \param[in] c Function to continue with after the write
 //! \details Since m_meshwriter is a Charm++ chare group, it never migrates and
 //!   an instance is guaranteed on every PE. We index the first PE on every
@@ -432,9 +434,10 @@ Discretization::write(
   }
 
   m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
-    write( meshoutput, fieldoutput, m_itr, m_itf, m_t, thisIndex, centering,
+    write( meshoutput, fieldoutput, m_itr, m_itf, m_t, thisIndex,
            g_inputdeck.get< tag::cmd, tag::io, tag::output >(),
-           inpoel, coord, bface, bnode, triinpoel, m_lid, names, fields, c );
+           inpoel, coord, bface, bnode, triinpoel, elemfieldnames,
+           nodefieldnames, elemfields, nodefields, c );
 }
 
 std::unordered_map< int, std::unordered_set< std::size_t > >
@@ -494,7 +497,6 @@ Discretization::status()
     const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
     const auto field = g_inputdeck.get< tag::interval,tag::field >();
     const auto diag = g_inputdeck.get< tag::interval, tag::diag >();
-    const auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
 
     // estimate time elapsed and time for accomplishment
@@ -517,9 +519,9 @@ Discretization::status()
           << std::setw(2) << eta.sec.count() << "  ";
   
     // Augment one-liner with output indicators
-    if (!(m_it % field)) print << 'F';
-    if (!(m_it % diag)) print << 'D';
-    if (!(m_it % dtfreq)) print << 'h';
+    if (!(m_it % field)) print << 'f';
+    if (!(m_it % diag)) print << 'd';
+    if (m_refined) print << 'h';
   
     print << std::endl;
   }

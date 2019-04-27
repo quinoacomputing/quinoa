@@ -57,6 +57,8 @@ Transporter::Transporter() :
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_nchare( 0 ),
   m_ncit( 0 ),
+  m_nt0refit( 0 ),
+  m_ndtrefit( 0 ),
   m_scheme( g_inputdeck.get< tag::discr, tag::scheme >() ),
   m_partitioner(),
   m_refiner(),
@@ -144,12 +146,12 @@ Transporter::Transporter() :
   // Print out adaptive mesh refinement configuration
   const auto amr = g_inputdeck.get< tag::amr, tag::amr >();
   if (amr) {
-    m_print.section( "Adaptive mesh refinement (AMR)" );
+    m_print.section( "Mesh refinement (h-ref)" );
     m_print.refvar( g_inputdeck.get< tag::amr, tag::refvar >(),
                     g_inputdeck.get< tag::amr, tag::id >() );
     m_print.Item< ctr::AMRError, tag::amr, tag::error >();
     auto t0ref = g_inputdeck.get< tag::amr, tag::t0ref >();
-    m_print.item( "Refinement at t < 0", t0ref );
+    m_print.item( "Refinement at t<0 (t0ref)", t0ref );
     if (t0ref) {
       const auto& initref = g_inputdeck.get< tag::amr, tag::init >();
       m_print.item( "Initial refinement steps", initref.size() );
@@ -183,11 +185,11 @@ Transporter::Transporter() :
         m_print.item( "Initial refinement z+", zplus );
     }
     auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
-    m_print.item( "Refinement at t > 0", dtref );
+    m_print.item( "Refinement at t>0 (dtref)", dtref );
     if (dtref) {
       auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
-      m_print.item( "Mesh refinement frequency, t > 0", dtfreq );
-      m_print.item( "Uniform-only mesh refinement, t > 0",
+      m_print.item( "Mesh refinement frequency, t>0", dtfreq );
+      m_print.item( "Uniform-only mesh refinement, t>0",
                     g_inputdeck.get< tag::amr, tag::dtref_uniform >() );
     }
   }
@@ -265,6 +267,8 @@ Transporter::createPartitioner()
   // Create refiner callbacks (order matters)
   tk::RefinerCallback cbr {{
       CkCallback( CkReductionTarget(Transporter,edges), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,compatibility), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,bndint), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,matched), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
   }};
@@ -402,26 +406,86 @@ Transporter::edges()
 }
 
 void
-Transporter::matched( std::size_t extra )
+Transporter::compatibility( int modified )
 // *****************************************************************************
-// Reduction target: all mesh refiner chares have distributed their newly added
-// node IDs that are shared among chares
-//! \param[in] extra Max number of edges/chare collected across all chares that
-//!   correction due to refinement along chare boundaries
+// Reduction target: all mesh refiner chares have received a round of edges,
+// and ran their compatibility algorithm
+//! \param[in] Sum acorss all workers, if nonzero, mesh is modified
+//! \details This is called iteratively, until convergence by Refiner. At this
+//!   point all Refiner chares have received a round of edge data (tags whether
+//!   an edge needs to be refined, etc.), and applied the compatibility
+//!   algorithm independent of other Refiner chares. We keep going until the
+//!   mesh is no longer modified by the compatibility algorithm (based on a new
+//!   round of edge data communication started in Refiner::comExtra().
+// *****************************************************************************
+{
+  if (modified)
+    m_refiner.comExtra();
+  else
+    m_refiner.correctref();
+}
+
+void
+Transporter::matched( std::size_t nextra,
+                      std::size_t nedge,
+                      std::size_t initial )
+// *****************************************************************************
+//  Reduction target: all mesh refiner chares have performed a step of matching
+//  chare-boundary edges
+//! \param[in] nextra Sum (across all chares) of the number of edges on each
+//!   chare that need correction along chare boundaries
+//! \param[in] nedge Sum (across all chares) of number of edges on each chare.
+//!   This is not really used for anything meaningful (as it is multiply-counted
+//!   in parallel), only as a feedback during  mesh refinement.
+//! \param[in] initial Sum of contributions from all chares. If larger than
+//!    zero, we are during time stepping and if zero we are during setup.
 // *****************************************************************************
 {
   // If at least a single edge on a chare still needs correction, do correction,
-  // otherwise, this initial mesh refinement step is complete
-  if (extra > 0) {
+  // otherwise, this mesh refinement step is complete
+  if (nextra > 0) {
+
     ++m_ncit;
     m_refiner.comExtra();
+
   } else {
-    m_print.diag( "Number of correction iterations: " +
-                  std::to_string( m_ncit ) );
+
+    if (initial > 0) {
+
+      if (!g_inputdeck.get< tag::cmd, tag::feedback >()) {
+        m_print.diag( { "t0ref", "nedge", "ncorr" },
+                      { ++m_nt0refit, nedge, m_ncit } );
+      }
+      m_progMesh.inc< REFINE >();
+
+    } else {
+
+      m_print.diag( { "dtref", "nedge", "ncorr" },
+                    { ++m_ndtrefit, nedge, m_ncit }, false );
+
+    }
+
     m_ncit = 0;
-    m_progMesh.inc< REFINE >();
     m_refiner.eval();
+
   }
+}
+
+void
+Transporter::bndint( tk::real sx, tk::real sy, tk::real sz )
+// *****************************************************************************
+// Compute surface integral across the whole problem and perform leak-test
+//! \details This function aggregates partial surface integrals across the
+//!   boundary faces of the whole problem. After this global sum a
+//!   non-zero vector result indicates a leak, e.g., a hole in the boundary,
+//!   which indicates an error in the boundary face data structures used to
+//!   compute the partial surface integrals.
+// *****************************************************************************
+{
+  auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
+  if (std::abs(sx) > eps || std::abs(sy) > eps || std::abs(sz) > eps)
+    Throw( "Mesh boundary leaky, t0ref: " + std::to_string(m_nt0refit) +
+           ", dtref: " + std::to_string(m_ndtrefit) );
 }
 
 void
@@ -740,8 +804,8 @@ Transporter::stat()
   "       ETE - estimated time elapsed (h:m:s)\n"
   "       ETA - estimated time for accomplishment (h:m:s)\n"
   "       out - output-saved flags\n"
-  "             F - field\n"
-  "             D - diagnostics\n"
+  "             f - field\n"
+  "             d - diagnostics\n"
   "             h - h-refinement\n",
   "\n      it             t            dt        ETE        ETA   out\n"
     " ---------------------------------------------------------------\n" );

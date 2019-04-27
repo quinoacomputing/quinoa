@@ -72,6 +72,7 @@
 #include <vector>
 #include <algorithm>
 #include <numeric>
+#include <string>
 
 #include <brigand/sequences/list.hpp>
 #include <brigand/algorithms/wrap.hpp>
@@ -226,6 +227,30 @@ class ncomponents : public
         ncomp_t c = 0;
         for (auto v : depvar) map[ v ] = ncvec[c++]; }() );
       return map;
+    }
+
+    //! \brief Return vector of dependent variables + component id for all
+    //!   equations configured
+    //! \param[in] deck Input deck to operate on
+    //! \return Vector of dependent variables + comopnent id for all equations
+    //!   configured. The length of this vector equals the total number of
+    //!   components configured, see nprop(), containing the depvar + the
+    //!   component index relative to the given equation. E.g., c1, c2, u1, u2,
+    //!   u3, u4, u5.
+    template< class InputDeck >
+    std::vector< std::string > depvar( const InputDeck& deck ) const {
+      std::vector< std::string > d;
+      ( ..., [&](){
+        const auto& dveq = deck.template get< tag::param, Tags, tag::depvar >();
+        const auto& nceq = deck.template get< tag::component, Tags >();
+        Assert( dveq.size() == nceq.size(), "Size mismatch" );
+        std::size_t e = 0;
+        for (auto v : dveq) {
+          for (std::size_t c=0; c<nceq[e]; ++c )
+            d.push_back( v + std::to_string(c+1) );
+          ++e;
+        } }() );
+      return d;
     }
 };
 
