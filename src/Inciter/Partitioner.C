@@ -121,13 +121,13 @@ Partitioner::ownBndNodes(
 {
   std::map< int, std::vector< std::size_t > > bnode_own;
 
-  for (const auto& s : bnode) {
-    auto& b = bnode_own[ s.first ];
-    for (auto n : s.second) {
+  for (const auto& [ setid, nodes ] : bnode) {
+    auto& b = bnode_own[ setid ];
+    for (auto n : nodes) {
       auto i = lid.find( n );
       if (i != end(lid)) b.push_back( n );
     }
-    if (b.empty()) bnode_own.erase( s.first );
+    if (b.empty()) bnode_own.erase( setid );
   }
 
   bnode = std::move(bnode_own);
@@ -187,39 +187,39 @@ Partitioner::addMesh(
 {
   // Store mesh connectivity and global node coordinates categorized by chares.
   // The send side also writes to the data written here, so concat.
-  for (const auto& c : chmesh) {
-    Assert( node(c.first) == CkMyNode(), "Compute node "
+  for (const auto& [ chareid, chunk ] : chmesh) {
+    Assert( node(chareid) == CkMyNode(), "Compute node "
             + std::to_string(CkMyNode()) +
             " received a mesh whose chare it does not own" );
     // Store domain element (tetrahedron) connectivity
-    const auto& inpoel = std::get< 0 >( c.second );
-    auto& inp = m_chinpoel[ c.first ];  // will store tetrahedron connectivity
+    const auto& inpoel = std::get< 0 >( chunk );
+    auto& inp = m_chinpoel[ chareid ];  // will store tetrahedron connectivity
     inp.insert( end(inp), begin(inpoel), end(inpoel) );
     // Store mesh node coordinates associated to global node IDs
-    const auto& coord = std::get< 1 >( c.second );
+    const auto& coord = std::get< 1 >( chunk );
     Assert( tk::uniquecopy(inpoel).size() == coord.size(), "Size mismatch" );
-    auto& chcm = m_chcoordmap[ c.first ];     // will store node coordinates
+    auto& chcm = m_chcoordmap[ chareid ];     // will store node coordinates
     chcm.insert( begin(coord), end(coord) );  // concatenate node coords
     // Store boundary side set id + face ids + face connectivities
-    const auto& bconn = std::get< 2 >( c.second );
-    auto& bface = m_chbface[ c.first ];  // for side set id + boundary face ids
-    auto& t = m_chtriinpoel[ c.first ];  // for boundary face connectivity
-    auto& f = m_nface[ c.first ];        // use counter for chare
-    for (const auto& s : bconn) {
-      auto& b = bface[ s.first ];
-      for (std::size_t i=0; i<s.second.size()/3; ++i) {
+    const auto& bconn = std::get< 2 >( chunk );
+    auto& bface = m_chbface[ chareid ];  // for side set id + boundary face ids
+    auto& t = m_chtriinpoel[ chareid ];  // for boundary face connectivity
+    auto& f = m_nface[ chareid ];        // use counter for chare
+    for (const auto& [ setid, faceids ] : bconn) {
+      auto& b = bface[ setid ];
+      for (std::size_t i=0; i<faceids.size()/3; ++i) {
         b.push_back( f++ );
-        t.push_back( s.second[i*3+0] );
-        t.push_back( s.second[i*3+1] );
-        t.push_back( s.second[i*3+2] );
+        t.push_back( faceids[i*3+0] );
+        t.push_back( faceids[i*3+1] );
+        t.push_back( faceids[i*3+2] );
       }
     }
     // Store boundary side set id + node lists
-    const auto& bnode = std::get< 3 >( c.second );
-    auto& nodes = m_chbnode[ c.first ];  // for side set id + boundary nodes
-    for (const auto& s : bnode) {
-      auto& b = nodes[ s.first ];
-      b.insert( end(b), begin(s.second), end(s.second) );
+    const auto& bnode = std::get< 3 >( chunk );
+    auto& nodes = m_chbnode[ chareid ];  // for side set id + boundary nodes
+    for (const auto& [ setid, bnodes ] : bnode) {
+      auto& b = nodes[ setid ];
+      b.insert( end(b), begin(bnodes), end(bnodes) );
     }
   }
 
@@ -357,17 +357,17 @@ Partitioner::categorize( const std::vector< std::size_t >& target ) const
   // Build hash map associating side set id to boundary faces
   std::unordered_map< Face, int,
                       tk::UnsMesh::Hash<3>, tk::UnsMesh::Eq<3> > faceside;
-  for (const auto& s : m_bface)
-    for (auto f : s.second)
+  for (const auto& [ setid, faceids ] : m_bface)
+    for (auto f : faceids)
       faceside[ {{ m_triinpoel[f*3+0],
                    m_triinpoel[f*3+1],
-                   m_triinpoel[f*3+2] }} ] = s.first;
+                   m_triinpoel[f*3+2] }} ] = setid;
 
   // Build hash map associating side set ids to boundary nodes
   std::unordered_map< std::size_t, std::unordered_set< int > > nodeside;
-  for (const auto& s : m_bnode)
-    for (auto n : s.second)
-      nodeside[ n ].insert( s.first );
+  for (const auto& [ setid, nodes ] : m_bnode)
+    for (auto n : nodes)
+      nodeside[ n ].insert( setid );
 
   // Categorize mesh data (tets, node coordinates, and boundary data) by target
   // chare based on which chare the partitioner assigned elements (tets) to
@@ -483,21 +483,21 @@ Partitioner::distribute( std::unordered_map< int, MeshData >&& mesh )
       auto& bface = m_chbface[ chid ];    // will store own boundary faces
       auto& t = m_chtriinpoel[ chid ];    // wil store own boundary face conn
       auto& f = m_nface[ chid ];          // use counter for chare
-      for (const auto& s : bconn) {
-        auto& b = bface[ s.first ];
-        for (std::size_t i=0; i<s.second.size()/3; ++i) {
+      for (const auto& [ setid, faceids ] : bconn) {
+        auto& b = bface[ setid ];
+        for (std::size_t i=0; i<faceids.size()/3; ++i) {
           b.push_back( f++ );
-          t.push_back( s.second[i*3+0] );
-          t.push_back( s.second[i*3+1] );
-          t.push_back( s.second[i*3+2] );
+          t.push_back( faceids[i*3+0] );
+          t.push_back( faceids[i*3+1] );
+          t.push_back( faceids[i*3+2] );
         }
       }
       // Store own boundary node lists
       const auto& bnode = std::get<2>( it->second );
       auto& nodes = m_chbnode[ chid ];    // will store own boundary nodes
-      for (const auto& s : bnode) {
-        auto& b = nodes[ s.first ];
-        b.insert( end(b), begin(s.second), end(s.second) );
+      for (const auto& [ setid, nodeids ] : bnode) {
+        auto& b = nodes[ setid ];
+        b.insert( end(b), begin(nodeids), end(nodeids) );
       }
       // Remove chare ID and mesh data
       mesh.erase( it );
@@ -534,8 +534,8 @@ Partitioner::distribute( std::unordered_map< int, MeshData >&& mesh )
     contribute( m_cbp.get< tag::distributed >() );
   } else {
      m_ndist += exp.size();
-     for (const auto& p : exp)
-       thisProxy[ p.first ].addMesh( CkMyNode(), p.second );
+     for (const auto& [ targetchare, chunk ] : exp)
+       thisProxy[ targetchare ].addMesh( CkMyNode(), chunk );
   }
 }
 
