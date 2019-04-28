@@ -107,23 +107,15 @@
     hard-coded in the SFINAE construct, but should also be straightforward to
     modify if necessary.
 
-    The functors named as call_* are used to dispatch (at compile time) entry
-    method calls behind proxy, whose type is different depending on what
-    specific discretization type is configured in the constructor. All common
-    functionality in the call_* functors are lifted over to SchemeBase::Call.
-    This helps keeping the function-call-specific code in Scheme minimal and
-    reuses the generic part in SchemeBase.
-
-    Note that another way of doing the dispatch, that is now done using the
-    call_* functors, could have been implemented using a (compile-, or runtime)
-    associative container storing std::function objects which would store
-    pre-bound function arguments. That would work, but there are three problems
-    with such an approach: (1) std::function is not obvious how to pup, i.e.,
-    send across the network, (2) std::bind cannot currently be used to bind a
-    variadic number arguments and thus the bind calls would not be very generic,
-    and (3) a runtime associative container would take additional state. (Note
-    that problem (2) above could probably be solved with variadic lambdas, but
-    the (1) and (3) remain.)
+    Note that another way of doing the dispatch could have been implemented
+    using a (compile-, or runtime) associative container storing std::function
+    objects which would store pre-bound function arguments. That would work, but
+    there are three problems with such an approach: (1) std::function is not
+    obvious how to pup, i.e., send across the network, (2) std::bind cannot
+    currently be used to bind a variadic number arguments and thus the bind
+    calls would not be very generic, and (3) a runtime associative container
+    would take additional state. (Note that problem (2) above could probably be
+    solved with variadic lambdas, but the (1) and (3) remain.)
 
   \see Talk on [Concept-based runtime polymorphism with Charm++ chare arrays
     using value semantics](http://charm.cs.illinois.edu/charmWorkshop/slides/CharmWorkshop2018_bakosi.pdf) at the 16th Annual Workshop on Charm++ and its
@@ -226,8 +218,8 @@ class Scheme : public SchemeBase {
     //!   as default.
     template< typename... Args >
     void setup( Args&&... args ) {
-      std::visit( call_setup<Args...>( std::forward<Args>(args)... ),
-                            proxy );
+      std::visit( [&]( auto& p ){ p.setup(std::forward<Args>(args)...); },
+                  proxy );
     }
 
     //////  proxy.lhs(...)
@@ -238,8 +230,8 @@ class Scheme : public SchemeBase {
     //!   as default.
     template< typename... Args >
     void lhs( Args&&... args ) {
-      std::visit( call_lhs<Args...>( std::forward<Args>(args)... ),
-                            proxy );
+      std::visit( [&]( auto& p ){ p.lhs(std::forward<Args>(args)...); },
+                  proxy );
     }
 
     //////  proxy.resized(...)
@@ -250,8 +242,8 @@ class Scheme : public SchemeBase {
     //!   argument as default.
     template< typename... Args >
     void resized( Args&&... args ) {
-      std::visit(
-        call_resized<Args...>( std::forward<Args>(args)... ), proxy );
+      std::visit( [&]( auto& p ){ p.resized(std::forward<Args>(args)...); },
+                  proxy );
     }
 
     //////  proxy.sendinit(...)
@@ -262,8 +254,8 @@ class Scheme : public SchemeBase {
     //!    last argument as default.
     template< typename... Args >
     void sendinit( Args&&... args ) {
-      std::visit(
-        call_sendinit<Args...>( std::forward<Args>(args)... ), proxy );
+      std::visit( [&]( auto& p ){ p.sendinit(std::forward<Args>(args)...); },
+                  proxy );
     }
 
     //////  proxy.advance(...)
@@ -274,8 +266,8 @@ class Scheme : public SchemeBase {
     //!    argument as default.
     template< typename... Args >
     void advance( Args&&... args ) {
-      std::visit(
-        call_advance<Args...>( std::forward<Args>(args)... ), proxy );
+      std::visit( [&]( auto& p ){ p.advance(std::forward<Args>(args)...); },
+                  proxy );
     }
 
     //////  proxy.diag(...)
@@ -286,8 +278,8 @@ class Scheme : public SchemeBase {
     //!   non-default last argument.
     template< typename... Args >
     void diag( Args&&... args ) {
-      std::visit( call_diag<Args...>( std::forward<Args>(args)... ),
-                            proxy );
+      std::visit( [&]( auto& p ){ p.diag(std::forward<Args>(args)...); },
+                  proxy );
     }
 
     //////  proxy[x].insert(...)
@@ -300,20 +292,17 @@ class Scheme : public SchemeBase {
     template< typename... Args >
     void insert( const CkArrayIndex1D& x, Args&&... args ) {
       auto e = tk::element< ProxyElem >( proxy, x );
-      std::visit( call_insert<Args...>( std::forward<Args>(args)... ),
-                            e );
+      std::visit( [&]( auto& p ){ p.insert(std::forward<Args>(args)...); },
+                  e );
     }
 
     //////  proxy.doneInserting(...)
     //! \brief Function to call the doneInserting entry method of an array proxy
     //!   (broadcast)
-    //! \param[in] args Arguments to member function (entry method) to be called
     //! \details This function calls the doneInserting member function of a
     //!   chare array proxy and thus equivalent to proxy.doneInserting(...).
-    template< typename... Args >
-    void doneInserting( Args&&... args ) {
-      std::visit(
-        call_doneInserting<Args...>( std::forward<Args>(args)... ), proxy );
+    void doneInserting() {
+      std::visit( [&]( auto& p ){ p.doneInserting(); }, proxy );
     }
 
     ///@{
@@ -327,175 +316,6 @@ class Scheme : public SchemeBase {
     //! \param[in,out] s Scheme object reference
     friend void operator|( PUP::er& p, Scheme& s ) { s.pup(p); }
     //@}
-
-  private:
-   //! Functor to call the chare entry method 'setup'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and std::visit. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_setup : Call< call_setup<As...>, As... > {
-     using Base = Call< call_setup<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.setup( std::forward<Args>(args)... );
-     }
-   };
-
-   //! Functor to call the chare entry method 'resized'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and std::visit. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_resized : Call< call_resized<As...>, As... > {
-     using Base = Call< call_resized<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.resized( std::forward<Args>(args)... );
-     }
-   };
-
-   //! Functor to call the chare entry method 'lhs'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and std::visit. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_lhs : Call< call_lhs<As...>, As... > {
-     using Base = Call< call_lhs<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.lhs( std::forward<Args>(args)... );
-     }
-   };
-
-   //! Functor to call the chare entry method 'sendinit'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and std::visit. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_sendinit : Call< call_sendinit<As...>, As... > {
-     using Base = Call< call_sendinit<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.sendinit( std::forward<Args>(args)... );
-     }
-   };
-
-   //! Functor to call the chare entry method 'advance'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and std::visit. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_advance : Call< call_advance<As...>, As... > {
-     using Base = Call< call_advance<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.advance( std::forward<Args>(args)... );
-     }
-   };
-
-   //! Functor to call the chare entry method 'insert'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and std::visit. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_insert : Call< call_insert<As...>, As... > {
-     using Base = Call< call_insert<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.insert( std::forward<Args>(args)... );
-     }
-   };
-
-   //! Functor to call the chare entry method 'doneInserting'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and std::visit. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_doneInserting : Call< call_doneInserting<As...>, As... > {
-     using Base = Call< call_doneInserting<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.doneInserting( std::forward<Args>(args)... );
-     }
-   };
-
-   //! Functor to call the chare entry method 'diag'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and std::visit. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_diag : Call< call_diag<As...>, As... > {
-     using Base = Call< call_diag<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.diag( std::forward<Args>(args)... );
-     }
-   };
 };
 
 } // inciter::

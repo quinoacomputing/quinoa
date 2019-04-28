@@ -107,52 +107,6 @@ class SchemeBase {
     //! Charm++ array options for binding chares
     CkArrayOptions bound;
 
-    //! Generic base for all call_* classes
-    //! \details This class stores the entry method arguments and contains a
-    //!   helper function and classes that facilitate unpacking the tuple into a
-    //!   variadic list of arguments passed to the called entry method. The Spec
-    //!   template argument is the class inheriting from this class (see CRTP at
-    //!   https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern),
-    //!   specializing functionality of this class. CRTP enables hiding all
-    //!   generic functionality here while exposing only the specialized one
-    //!   (the actual function call) to the base, which minimizes client code
-    //!   (in class Scheme). Unpacking the tuple to a variadic argument list is
-    //!   loosely inspired by https://stackoverflow.com/a/16868151.
-    template< class Spec, typename... Args >
-    struct Call {
-      //! Constructor storing called member function arguments in tuple
-      explicit Call( Args&&... args ) : arg( std::forward_as_tuple(args...) ) {}
-      //! Helper class for unpacking tuple into argument list
-      template< typename P, typename Tuple, bool Done, int Total, int... N >
-      struct invoke_impl {
-        static void invoke( P& p, Tuple&& t ) {
-          invoke_impl< P, Tuple, Total == 1 + sizeof...(N), Total, N...,
-                     sizeof...(N) >::invoke( p, std::forward<Tuple>(t) );
-        }
-      };
-      //! Helper class for unpacking tuple into argument list (end of list)
-      template< typename P, typename Tuple, int Total, int... N >
-      struct invoke_impl< P, Tuple, true, Total, N... > {
-        static void invoke( P& p, Tuple&& t ) {
-          Spec::invoke( p, std::get< N >( std::forward<Tuple>(t) )... );
-        }
-      };
-      //! Invoke member function with arguments from tuple
-      //! \param[in,out] p Proxy behind which the entry method is called
-      //! \param[in] t Optional tuple holding argments to be passed to the call
-      template< typename P, typename Tuple = std::tuple<int> >
-      static void invoke( P& p, Tuple&& t = {} ) {
-        typedef typename std::decay<Tuple>::type ttype;
-        invoke_impl< P, Tuple, std::tuple_size<ttype>::value == 0,
-          std::tuple_size<ttype>::value >::invoke( p, std::forward<Tuple>(t) );
-      }
-      //! Function call operator overloading all types used with variant visitor
-      //! \param[in,out] p Proxy behind which the entry method is called
-      template< typename P > void operator()(P& p) const { invoke(p,arg); }
-      //! Tuple storing arguments of the entry method to be called
-      std::tuple< Args... > arg;
-    };
-
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
