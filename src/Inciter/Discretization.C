@@ -19,6 +19,7 @@
 #include "Inciter/InputDeck/InputDeck.h"
 #include "Inciter/Options/Scheme.h"
 #include "Print.h"
+#include "Around.h"
 
 namespace inciter {
 
@@ -74,9 +75,9 @@ Discretization::Discretization(
           "Number of mesh points and number of global IDs unequal" );
 
   // Convert neighbor nodes to vectors from sets
-  for (const auto& n : msum) {
-    auto& v = m_msum[ n.first ];
-    v.insert( end(v), begin(n.second), end(n.second) );
+  for (const auto& [ neighborchare, sharednodes ] : msum) {
+    auto& v = m_msum[ neighborchare ];
+    v.insert( end(v), begin(sharednodes), end(sharednodes) );
   }
 
   // Count the number of mesh nodes at which we receive data from other chares
@@ -121,8 +122,8 @@ Discretization::resize(
 
   // Generate local ids for new chare boundary global ids
   std::size_t lid = m_bid.size();
-  for (const auto& c : m_msum)
-    for (auto g : c.second)
+  for (const auto& [ neighborchare, sharednodes ] : m_msum)
+    for (auto g : sharednodes)
       if (m_bid.find( g ) == end(m_bid))
         m_bid[ g ] = lid++;
 
@@ -172,11 +173,11 @@ Discretization::setCoord( const tk::UnsMesh::CoordMap& coordmap )
   coord[1].resize( coordmap.size() );
   coord[2].resize( coordmap.size() );
 
-  for (const auto& p : coordmap) {
-    auto i = tk::cref_find( m_lid, p.first );
-    coord[0][i] = p.second[0];
-    coord[1][i] = p.second[1];
-    coord[2][i] = p.second[2];
+  for (const auto& [ gid, coords ] : coordmap) {
+    auto i = tk::cref_find( m_lid, gid );
+    coord[0][i] = coords[0];
+    coord[1][i] = coords[1];
+    coord[2][i] = coords[2];
   }
 
   return coord;
@@ -242,11 +243,11 @@ Discretization::vol()
   if (m_msum.empty())
     contribute( CkCallback(CkReductionTarget(Transporter,vol), m_transporter) );
   else
-    for (const auto& n : m_msum) {
-      std::vector< tk::real > v( n.second.size() );
+    for (const auto& [ neighborchare, sharednodes ] : m_msum) {
+      std::vector< tk::real > v( sharednodes.size() );
       std::size_t j = 0;
-      for (auto i : n.second) v[ j++ ] = m_vol[ tk::cref_find(m_lid,i) ];
-      thisProxy[ n.first ].comvol( n.second, v );
+      for (auto i : sharednodes) v[ j++ ] = m_vol[ tk::cref_find(m_lid,i) ];
+      thisProxy[ neighborchare ].comvol( sharednodes, v );
     }
 }
 
@@ -285,9 +286,9 @@ Discretization::totalvol()
 // *****************************************************************************
 {
   // Combine own and communicated contributions of nodal volumes
-  for (const auto& b : m_bid) {
-    auto lid = tk::cref_find( m_lid, b.first );
-    m_vol[ lid ] += m_volc[ b.second ];
+  for (const auto& [ gid, bid ] : m_bid) {
+    auto lid = tk::cref_find( m_lid, gid );
+    m_vol[ lid ] += m_volc[ bid ];
   }
 
   // Sum mesh volume to host
@@ -327,10 +328,10 @@ Discretization::stat()
   // small differences. For reproducible average edge lengths and edge length
   // PDFs, run the mesh in serial.
   for (std::size_t p=0; p<m_gid.size(); ++p)
-    for (auto i=m_psup.second[p]+1; i<=m_psup.second[p+1]; ++i) {
-       const auto dx = x[ m_psup.first[i] ] - x[ p ];
-       const auto dy = y[ m_psup.first[i] ] - y[ p ];
-       const auto dz = z[ m_psup.first[i] ] - z[ p ];
+    for (auto i : tk::Around(m_psup,p)) {
+       const auto dx = x[ i ] - x[ p ];
+       const auto dy = y[ i ] - y[ p ];
+       const auto dz = z[ i ] - z[ p ];
        const auto length = std::sqrt( dx*dx + dy*dy + dz*dz );
        if (length < min[0]) min[0] = length;
        if (length > max[0]) max[0] = length;
@@ -448,8 +449,8 @@ Discretization::msumset() const
 // *****************************************************************************
 {
   std::unordered_map< int, std::unordered_set< std::size_t > > m;
-  for (const auto& n : m_msum)
-    m[ n.first ].insert( n.second.cbegin(), n.second.cend() );
+  for (const auto& [ neighborchare, sharednodes ] : m_msum)
+    m[ neighborchare ].insert( begin(sharednodes), end(sharednodes) );
 
   Assert( m.find( thisIndex ) == m.cend(),
           "Chare-node adjacency map should not contain data for own chare ID" );
