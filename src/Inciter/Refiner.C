@@ -747,10 +747,9 @@ Refiner::next()
             "About to use nullptr" );
     auto e = tk::element< SchemeBase::ProxyElem >
                         ( m_scheme.getProxy(), thisIndex );
-    std::visit(
-      ResizeAfterRefined( m_ginpoel, m_el, m_coord, m_addedNodes, m_addedTets,
-        msum, m_bface, m_bnode, m_triinpoel ), e );
-
+    std::visit( [&]( const auto& p ){
+      p.ckLocal()->resizeAfterRefined( m_ginpoel, m_el, m_coord, m_addedNodes,
+        m_addedTets, msum, m_bface, m_bnode, m_triinpoel ); }, e );
   }
 }
 
@@ -816,7 +815,7 @@ Refiner::errorRefine()
     // Query current solution
     auto e = tk::element< SchemeBase::ProxyElem >
                         ( m_scheme.getProxy(), thisIndex );
-    u = std::visit( Solution(), e );
+    u = std::visit( []( const auto& p ){ return p.ckLocal()->solution(); }, e );
  
     const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
     const auto centering = ctr::Scheme().centering( scheme );
