@@ -497,11 +497,10 @@ Sorter::createDiscWorkers()
 // *****************************************************************************
 {
   // Create worker array element using Charm++ dynamic chare array element
-  // insertion: 1st arg: chare id, last arg: PE chare is created on, middle
-  // args: Discretization ctor args. See also Charm++ manual, Sec. "Dynamic
-  // Insertion".
-  m_scheme.discInsert( thisIndex, m_host, m_meshwriter, m_ginpoel, m_coordmap,
-                       m_msum, m_nchare );
+  // insertion: last arg: PE chare is created on. See also Charm++ manual, Sec.
+  // "Dynamic Insertion".
+  m_scheme.disc()[ thisIndex ].insert( m_scheme.fct(), m_host, m_meshwriter,
+    m_ginpoel, m_coordmap, m_msum, m_nchare );
 
   contribute( m_cbs.get< tag::discinserted >() );
 }
@@ -513,13 +512,13 @@ Sorter::createWorkers()
 // *****************************************************************************
 {
   // Make sure (bound) base is already created and accessible
-  Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
+  Assert( m_scheme.disc()[thisIndex].ckLocal() != nullptr,
           "About to pass nullptr" );
 
   // Create worker array element using Charm++ dynamic chare array element
   // insertion: 1st arg: chare id, other args: Discretization's child ctor args.
   // See also Charm++ manual, Sec. "Dynamic Insertion".
-  m_scheme.insert( thisIndex, m_scheme.get(), m_bface, m_bnode, m_triinpoel );
+  m_scheme.insert( thisIndex, m_scheme.disc(), m_bface, m_bnode, m_triinpoel );
 
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chcreated();
 

@@ -551,7 +551,7 @@ Transporter::resized()
 // mesh refinement
 // *****************************************************************************
 {
-  m_scheme.vol();
+  m_scheme.disc().vol();
   
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG)
@@ -564,7 +564,7 @@ Transporter::discinserted()
 // Reduction target: all Discretization chares have been inserted
 // *****************************************************************************
 {
-  m_scheme.doneDiscInserting();
+  m_scheme.disc().doneInserting();
 }
 
 void
@@ -584,10 +584,9 @@ Transporter::disccreated()
   m_refiner.sendProxy();
 
   auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (sch == ctr::SchemeType::DiagCG)
-    m_scheme.doneDistFCTInserting();
+  if (sch == ctr::SchemeType::DiagCG) m_scheme.fct().doneInserting();
 
-  m_scheme.vol();
+  m_scheme.disc().vol();
 }
 
 void
@@ -670,7 +669,7 @@ Transporter::vol()
 // computing/receiving their part of the nodal volumes
 // *****************************************************************************
 {
-  m_scheme.totalvol();
+  m_scheme.disc().totalvol();
 }
 
 void
@@ -685,7 +684,7 @@ Transporter::totalvol( tk::real v, tk::real initial )
   m_V = v;
 
   if (initial > 0.0)
-    m_scheme.stat();
+    m_scheme.disc().stat();
   else
     m_scheme.resized();
 }

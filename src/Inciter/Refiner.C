@@ -156,11 +156,11 @@ Refiner::sendProxy()
 // *****************************************************************************
 {
   // Make sure (bound) Discretization chare is already created and accessible
-  Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
+  Assert( m_scheme.disc()[thisIndex].ckLocal() != nullptr,
           "About to dereference nullptr" );
 
   // Pass Refiner Charm++ chare proxy to fellow (bound) Discretization object
-  m_scheme.get()[thisIndex].ckLocal()->setRefiner( thisProxy );
+  m_scheme.disc()[thisIndex].ckLocal()->setRefiner( thisProxy );
 }
 
 void
@@ -743,7 +743,7 @@ Refiner::next()
     }
 
     // Send new mesh, solution, and communication data back to PDE worker
-    Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
+    Assert( m_scheme.disc()[thisIndex].ckLocal() != nullptr,
             "About to use nullptr" );
     auto e = tk::element< SchemeBase::ProxyElem >
                         ( m_scheme.getProxy(), thisIndex );
@@ -1056,7 +1056,7 @@ Refiner::updateMesh()
   std::unordered_set< std::size_t > ref( begin(refinpoel), end(refinpoel) );
 
   // Get nodal communication map from Discretization worker
-  if (!m_initial) m_msumset = m_scheme.get()[thisIndex].ckLocal()->msumset();
+  if (!m_initial) m_msumset = m_scheme.disc()[thisIndex].ckLocal()->msumset();
 
   // Update mesh and solution after refinement
   newVolMesh( old, ref );

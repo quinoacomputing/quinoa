@@ -77,7 +77,11 @@ class SchemeBase {
 
     //! Get reference to discretization proxy
     //! \return Discretization Charm++ chare array proxy
-    CProxy_Discretization& get() noexcept { return discproxy; }
+    CProxy_Discretization& disc() noexcept { return discproxy; }
+
+    //! Get reference to DistFCT proxy
+    //! \return DistFCT Charm++ chare array proxy
+    CProxy_DistFCT& fct() noexcept { return fctproxy; }
 
     //! Get reference to scheme proxy
     //! \return Variant storing Charm++ chare array proxy configured
