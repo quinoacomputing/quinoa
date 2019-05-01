@@ -1143,7 +1143,7 @@ DG::lim()
     if (limiter == ctr::LimiterType::WENOP1)
       WENO_P1( m_fd.Esuel(), 0, m_u );
     else if (limiter == ctr::LimiterType::SUPERBEEP1)
-      Superbee_P1( m_fd.Esuel(), d->Inpoel(), 0, d->Coord(), m_u );
+      Superbee_P1( m_fd.Esuel(), d->Inpoel(), m_ndof, 0, d->Coord(), m_u );
   }
 
   contribute( CkCallback( CkReductionTarget(DG,sendLim), thisProxy ) );
@@ -1155,6 +1155,8 @@ DG::sendLim()
 // Send limited solution to neighboring chares
 // *****************************************************************************
 {
+  const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
+
   if (g_inputdeck.get< tag::discr, tag::ndof >() > 1) {
     if (m_ghostData.empty())
       comlim_complete();
