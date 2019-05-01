@@ -7,7 +7,7 @@ title "Sedov blast wave"
 inciter
 
   nstep 20   # Max number of time steps
-  cfl 0.1
+  cfl 0.3
   ttyi 5      # TTY output interval
   scheme dgp1
   limiter superbeep1
