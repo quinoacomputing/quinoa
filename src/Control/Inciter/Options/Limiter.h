@@ -23,7 +23,8 @@ namespace ctr {
 
 //! Limiter types
 enum class LimiterType : uint8_t { NOLIMITER
-                                 , WENOP1 };
+                                 , WENOP1
+                                 , SUPERBEEP1 };
 
 //! Pack/Unpack LimiterType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, LimiterType& e ) { PUP::pup( p, e ); }
@@ -35,6 +36,7 @@ class Limiter : public tk::Toggle< LimiterType > {
     //! Valid expected choices to make them also available at compile-time
     using keywords = brigand::list< kw::nolimiter
                                   , kw::wenop1
+                                  , kw::superbeep1
                                   >;
 
     //! \brief Options constructor
@@ -46,10 +48,12 @@ class Limiter : public tk::Toggle< LimiterType > {
         kw::limiter::name(),
         //! Enums -> names (if defined, policy codes, if not, name)
         { { LimiterType::NOLIMITER, kw::nolimiter::name() },
-          { LimiterType::WENOP1, kw::wenop1::name() } },
+          { LimiterType::WENOP1, kw::wenop1::name() },
+          { LimiterType::SUPERBEEP1, kw::superbeep1::name() } },
         //! keywords -> Enums
         { { kw::nolimiter::string(), LimiterType::NOLIMITER },
-          { kw::wenop1::string(), LimiterType::WENOP1 } } )
+          { kw::wenop1::string(), LimiterType::WENOP1 },
+          { kw::superbeep1::string(), LimiterType::SUPERBEEP1 } } )
     {}
 
 };

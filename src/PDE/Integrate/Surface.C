@@ -31,7 +31,6 @@ tk::surfInt( ncomp_t system,
              const RiemannFluxFn& flux,
              const VelFn& vel,
              const Fields& U,
-             const Fields& limFunc,
              const std::vector< std::size_t >& ndofel,
              Fields& R )
 // *****************************************************************************
@@ -47,7 +46,6 @@ tk::surfInt( ncomp_t system,
 //! \param[in] flux Riemann flux function to use
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
-//! \param[in] limFunc Limiter function for higher-order solution dofs
 //! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
@@ -145,10 +143,8 @@ tk::surfInt( ncomp_t system,
 
       std::array< std::vector< real >, 2 > state;
 
-      state[0] =
-        eval_state( ncomp, offset, ndof, ndofel[el], el, U, limFunc, B_l );
-      state[1] =
-        eval_state( ncomp, offset, ndof, ndofel[er], er, U, limFunc, B_r );
+      state[0] = eval_state( ncomp, offset, ndof, ndofel[el], el, U, B_l );
+      state[1] = eval_state( ncomp, offset, ndof, ndofel[er], er, U, B_r );
 
       Assert( state[0].size() == ncomp, "Size mismatch" );
       Assert( state[1].size() == ncomp, "Size mismatch" );

@@ -314,7 +314,6 @@ tk::eval_state ( ncomp_t ncomp,
                  const std::size_t ndof_el,
                  const std::size_t e,
                  const Fields& U,
-                 const Fields& limFunc,
                  const std::vector< tk::real >& B )
 // *****************************************************************************
 //  Compute the state variables for the tetrahedron element
@@ -324,7 +323,6 @@ tk::eval_state ( ncomp_t ncomp,
 //! \param[in] ndof_el Number of degrees of freedom for the local element
 //! \param[in] e Index for the tetrahedron element
 //! \param[in] U Solution vector at recent time step
-//! \param[in] limFunc Limiter function for higher-order solution dofs
 //! \param[in] B Vector of basis functions
 //! \return Vector of state variable for tetrahedron element
 // *****************************************************************************
@@ -341,10 +339,9 @@ tk::eval_state ( ncomp_t ncomp,
 
     if(ndof_el > 1)        //DG(P1)
     {
-      auto lmark = c*(ndof-1);
-      state[c] += limFunc( e, lmark  , 0 ) * U( e, mark+1, offset ) * B[1]
-                + limFunc( e, lmark+1, 0 ) * U( e, mark+2, offset ) * B[2]
-                + limFunc( e, lmark+2, 0 ) * U( e, mark+3, offset ) * B[3];
+      state[c] += U( e, mark+1, offset ) * B[1]
+                + U( e, mark+2, offset ) * B[2]
+                + U( e, mark+3, offset ) * B[3];
     }
 
     if(ndof_el > 4)        //DG(P2)

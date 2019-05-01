@@ -268,18 +268,6 @@ class Scheme : public SchemeBase {
         call_resized<Args...>( std::forward<Args>(args)... ), proxy );
     }
 
-    //////  proxy.sendinit(...)
-    //! Function to call the sendinit entry method of an array proxy (broadcast)
-    //! \param[in] args Arguments to member function entry method to be called
-    //! \details This function calls the sendinit member function of a chare
-    //!    array proxy and thus equivalent to proxy.sendinit(...), using the
-    //!    last argument as default.
-    template< typename... Args >
-    void sendinit( Args&&... args ) {
-      boost::apply_visitor(
-        call_sendinit<Args...>( std::forward<Args>(args)... ), proxy );
-    }
-
     //////  proxy.advance(...)
     //! Function to call the advance entry method of an array proxy (broadcast)
     //! \param[in] args Arguments to member function entry method to be called
@@ -432,27 +420,6 @@ class Scheme : public SchemeBase {
      template< typename P, typename... Args >
      static void invoke( P& p, Args&&... args ) {
        p.lhs( std::forward<Args>(args)... );
-     }
-   };
-
-   //! Functor to call the chare entry method 'sendinit'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_sendinit : Call< call_sendinit<As...>, As... > {
-     using Base = Call< call_sendinit<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.sendinit( std::forward<Args>(args)... );
      }
    };
 

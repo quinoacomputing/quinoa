@@ -44,7 +44,6 @@ bndSurfInt( ncomp_t system,
             const VelFn& vel,
             const StateFn& state,
             const Fields& U,
-            const Fields& limFunc,
             const std::vector< std::size_t >& ndofel,
             Fields& R );
 

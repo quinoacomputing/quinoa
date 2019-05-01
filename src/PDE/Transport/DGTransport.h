@@ -122,7 +122,6 @@ class Transport {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
-    //! \param[in] limFunc Limiter function for higher-order solution dofs
     //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
@@ -132,7 +131,6 @@ class Transport {
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
-              const tk::Fields& limFunc,
               const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     {
@@ -161,18 +159,18 @@ class Transport {
       // compute internal surface flux integrals
       tk::surfInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, fd,
                    geoFace, Upwind::flux, Problem::prescribedVelocity, U,
-                   limFunc, ndofel, R );
+                   ndofel, R );
 
       if(ndof > 1)
         // compute volume integrals
         tk::volInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, geoElem,
-                    flux, Problem::prescribedVelocity, U, limFunc, ndofel, R );
+                    flux, Problem::prescribedVelocity, U, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
         tk::bndSurfInt( m_system, m_ncomp, m_offset, ndof, b.first, fd, geoFace,
           inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
-          b.second, U, limFunc, ndofel, R );
+          b.second, U, ndofel, R );
     }
 
     //! Compute the minimum time step size
@@ -185,7 +183,6 @@ class Transport {
                  const inciter::FaceData& /*fd*/,
                  const tk::Fields& /*geoFace*/,
                  const tk::Fields& /*geoElem*/,
-                 const tk::Fields& /*limFunc*/,
                  const tk::Fields& /*U*/ ) const
     {
       tk::real mindt = std::numeric_limits< tk::real >::max();
@@ -226,7 +223,6 @@ class Transport {
     avgElemToNode( const std::vector< std::size_t >& /*inpoel*/,
                    const tk::UnsMesh::Coords& /*coord*/,
                    const tk::Fields& /*geoElem*/,
-                   const tk::Fields& /*limFunc*/,
                    const tk::Fields& /*U*/ ) const
     {
       std::vector< std::vector< tk::real > > out;

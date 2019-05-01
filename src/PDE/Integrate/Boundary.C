@@ -35,7 +35,6 @@ tk::bndSurfInt( ncomp_t system,
                 const VelFn& vel,
                 const StateFn& state,
                 const Fields& U,
-                const Fields& limFunc,
                 const std::vector< std::size_t >& ndofel,
                 Fields& R )
 // *****************************************************************************
@@ -58,7 +57,6 @@ tk::bndSurfInt( ncomp_t system,
 //! \param[in] state Function to evaluate the left and right solution state at
 //!   boundaries
 //! \param[in] U Solution vector at recent time step
-//! \param[in] limFunc Limiter function for higher-order solution dofs
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
@@ -129,8 +127,7 @@ tk::bndSurfInt( ncomp_t system,
           auto wt = wgp[igp] * geoFace(f,0,0);
 
           // Compute the state variables at the left element
-          auto ugp =
-            eval_state( ncomp, offset, ndof, ndofel[el], el, U, limFunc, B_l );
+          auto ugp = eval_state( ncomp, offset, ndof, ndofel[el], el, U, B_l );
 
           Assert( ugp.size() == ncomp, "Size mismatch" );
 

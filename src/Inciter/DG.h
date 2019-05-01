@@ -102,19 +102,8 @@ class DG : public CBase_DG {
     //! Setup: query boundary conditions, output mesh, etc.
     void setup( tk::real v );
 
-    //! Limit initial solution and prepare for time stepping
-    void limitIC();
-
-    //! Start time stepping
-    void start();
-
-    //! Send own chare-boundary data to neighboring chares
-    void sendinit();
-
-    //! Receive chare-boundary ghost data from neighboring chares
-    void cominit( int fromch,
-                  const std::vector< std::size_t >& tetid,
-                  const std::vector< std::vector< tk::real > >& u );
+    //! Continue to next time step stage
+    void next();
 
     //! Receive chare-boundary limiter function data from neighboring chares
     void comlim( int fromch,
@@ -159,6 +148,9 @@ class DG : public CBase_DG {
     //! Compute limiter function
     void lim();
 
+    //! Send limited solution to neighboring chares
+    void sendLim();
+
     //! Const-ref access to current solution
     //! \param[in,out] u Reference to update with current solution
     void solution( tk::Fields& u ) const { u = m_u; }
@@ -192,7 +184,6 @@ class DG : public CBase_DG {
       p | m_geoElem;
       p | m_lhs;
       p | m_rhs;
-      p | m_limFunc;
       p | m_nfac;
       p | m_nunk;
       p | m_ncoord;
@@ -254,8 +245,6 @@ class DG : public CBase_DG {
     tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
-    //! Vector of limiter function values
-    tk::Fields m_limFunc;
     //! Counter for number of faces on this chare (including chare boundaries)
     std::size_t m_nfac;
     //! Counter for number of unknowns on this chare (including ghosts)
@@ -305,9 +294,6 @@ class DG : public CBase_DG {
       Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
       return m_disc[ thisIndex ].ckLocal();
     }
-
-    //! Size and create limiter function data container
-    tk::Fields limFunc( std::size_t nelem ) const;
 
     //! Start sizing communication buffers and setting up ghost data
     void resizeComm();
@@ -361,9 +347,6 @@ class DG : public CBase_DG {
 
     //! Evaluate whether to continue with next time step stage
     void stage();
-
-    //! Continue to next time step stage
-    void next();
 
     //! Calculate the local number of degrees of freedom for each element for
     //! p-adaptive DG
