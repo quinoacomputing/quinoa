@@ -406,12 +406,12 @@ namespace grm {
         ss << typestr << " while parsing at " << pos.line << ','
            << pos.byte_in_line << ". " << msg->second;
       }
-      stack.template push_back< tag::error >( ss.str() );
+      stack.template get< tag::error >().push_back( ss.str() );
     } else {
-      stack.template push_back< tag::error >
-        ( std::string("Unknown parser ") +
-          (type == MsgType::ERROR ? "error" : "warning" ) +
-          " with no location information." );
+      stack.template get< tag::error >().push_back(
+        std::string("Unknown parser ") +
+        (type == MsgType::ERROR ? "error" : "warning" ) +
+        " with no location information." );
     }
   }
 
@@ -658,7 +658,7 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       Option opt;
       if (opt.exist(in.string())) {
-        stack.template push_back<tag,tags...>( opt.value( in.string() ) );
+        stack.template get<tag,tags...>().push_back( opt.value( in.string() ) );
       } else {
         Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
       }
@@ -691,7 +691,8 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       Option opt;
       if (opt.exist(in.string())) {
-        stack.template push_back_back<tag,tags...>( opt.value( in.string() ) );
+        stack.template get<tag,tags...>().back().
+              push_back( opt.value( in.string() ) );
       } else {
         Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
       }
@@ -857,8 +858,8 @@ namespace grm {
       // find matched name in set of registered ones
       if (pdfnames.find( in.string() ) == pdfnames.end()) {
         pdfnames.insert( in.string() );
-        stack.template
-          push_back< tag::cmd, tag::io, tag::pdfnames >( in.string() );
+        stack.template get< tag::cmd, tag::io, tag::pdfnames >().
+          push_back( in.string() );
       }
       else  // error out if name matched var is already registered
         Message< Stack, ERROR, MsgKey::PDFEXISTS >( stack, in );
@@ -941,7 +942,7 @@ namespace grm {
   struct action< start_vector< tag, tags... > > {
     template< typename Input, typename Stack >
     static void apply( const Input&, Stack& stack ) {
-      stack.template push_back< tag, tags... >();
+      stack.template get< tag, tags... >().push_back( {} );
     }
   };
 
@@ -954,7 +955,7 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input&, Stack& stack ) {
       // no arg: use default ctor
-      stack.template push_back_back< tag, tags... >();
+      stack.template get< tag, tags... >().back().push_back( {} );
     }
   };
 

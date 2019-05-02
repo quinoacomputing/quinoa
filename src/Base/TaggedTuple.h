@@ -65,11 +65,23 @@ class TaggedTuple{
     //! Tuple of member types
     using Tuple = brigand::as_tuple< Data >;
 
+    //! False-overload for detecting if T is a tagged tuple
+    template< typename T, typename = std::void_t<> >
+    struct is_tagged_tuple : std::false_type {};
+
+    //! True-overload for detecting if T is a tagged tuple
+    template< typename T >
+    struct is_tagged_tuple< T, std::void_t< typename T::i_am_tagged_tuple > >
+     : std::true_type {};
+
     //! Member data as a tuple
     Tuple m_members;
 
   public:
-    //! Acces type in tuple behing tag
+    //! Typedef defining self
+    using i_am_tagged_tuple = void;
+
+    //! Acces type in tuple behind tag
     template< typename Tag >
     using TupleElement =
       std::tuple_element_t< brigand::index_of<Keys,Tag>::value, Tuple >;
@@ -81,198 +93,101 @@ class TaggedTuple{
 
     //! Const-ref access to member tuple
     const Tuple& tuple() const { return m_members; }
- 
-    //! Const-ref data member accessor
-    template< typename Tag >
+
+    //! Const-reference data member accessor of field of tagged tuple at depth
+    template< typename Tag, typename... Tags >
     const auto& get() const noexcept {
-      return std::get< brigand::index_of<Keys,Tag>::value >( m_members );
+      constexpr std::size_t idx = brigand::index_of< Keys, Tag >::value;
+      if constexpr( is_tagged_tuple<std::decay_t<TupleElement<Tag>>>::value and
+                    sizeof...(Tags) != 0 )
+        return std::get< idx >( m_members ).template get< Tags... >();
+      else
+        return std::get< idx >( m_members );
     }
-    //! Non-const-ref data member accessor
-    template< typename Tag >
+
+    //! Reference data member accessor of field of tagged tuple at depth
+    template< typename Tag, typename... Tags >
     auto& get() noexcept {
-      return std::get< brigand::index_of<Keys,Tag>::value >( m_members );
+      constexpr std::size_t idx = brigand::index_of< Keys, Tag >::value;
+      if constexpr( is_tagged_tuple<std::decay_t<TupleElement<Tag>>>::value and
+                    sizeof...(Tags) != 0 )
+        return std::get< idx >( m_members ).template get< Tags... >();
+      else
+        return std::get< idx >( m_members );
     }
 
-    //! Const-ref data member access behind nested tuple
-    template< typename Tag1, typename Tag2 >
-    auto& get() noexcept {
-      return get< Tag1 >().template get< Tag2 >();
-    }
-    //! Non-const-ref data member access behind nested tuple
-    template< typename Tag1, typename Tag2 >
-    const auto& get() const noexcept {
-      return get< Tag1 >().template get< Tag2 >();
-    }
-
-    //! Const-ref data member access behind nested tuple
-    template< typename Tag1, typename Tag2, typename Tag3 >
-    auto& get() noexcept {
-      return get< Tag1 >().template get< Tag2 >().template get< Tag3 >();
-    }
-    //! Non-const-ref data member access behind nested tuple
-    template< typename Tag1, typename Tag2, typename Tag3 >
-    const auto& get() const noexcept {
-      return get< Tag1 >().template get< Tag2 >().template get< Tag3 >();
-    }
-
-    //! Push back value to vector
-    //! \param[in] value Value to push back
-    template< typename Tag >
-    void push_back( const typename TupleElement< Tag >::
-                          value_type& value = {} )
-    {
-      get< Tag >().push_back( value );
-    }
-    //! Push back value to vector
-    //! \param[in] value Value to push back
-    template< typename Tag, typename Tag2 >
-    void push_back( const typename TupleElement< Tag >::
-                          template TupleElement< Tag2 >::
-                          value_type& value = {} )
-    {
-      get< Tag, Tag2 >().push_back( value );
-    }
-    //! Push back value to vector
-    //! \param[in] value Value to push back
-    template< typename Tag, typename Tag2, typename Tag3 >
-    void push_back( const typename TupleElement< Tag >::
-                          template TupleElement< Tag2 >::
-                          template TupleElement< Tag3 >::
-                          value_type& value = {} )
-    {
-      get< Tag, Tag2, Tag3 >().push_back( value );
-    }
-
-    //! Push back value to back of nested vector
-    //! \param[in] value Value to push back
-    template< typename Tag >
-    void push_back_back( const typename TupleElement< Tag >::
-                               value_type::value_type& value = {} )
-    {
-      get< Tag >().back().push_back( value );
-    }
-    //! Push back value to back of nested vector
-    //! \param[in] value Value to push back
-    template< typename Tag, typename Tag2 >
-    void push_back_back( const typename TupleElement< Tag >::
-                               template TupleElement< Tag2 >::
-                               value_type::value_type& value = {} )
-    {
-      get< Tag, Tag2 >().back().push_back( value );
-    }
-    //! Push back value to back of nested vector
-    //! \param[in] value Value to push back
-    template< typename Tag, typename Tag2, typename Tag3 >
-    void push_back_back( const typename TupleElement< Tag >::
-                               template TupleElement< Tag2 >::
-                               template TupleElement< Tag3 >::
-                               value_type::value_type& value = {} )
-    {
-      get< Tag, Tag2, Tag3 >().back().push_back( value );
-    }
-
-    //! Convert and store value converting from string
+    //! Convert and store value converting from string at depth
     //! \param[in] value Value to convert and store
-    template< typename Tag >
+    template< typename Tag, typename... Tags >
     void store( const std::string& value ) noexcept {
-      get< Tag >() = convert< TupleElement<Tag> >( value );
-    }
-    //! Convert and store value converting from string
-    //! \param[in] value Value to convert and store
-    template< typename Tag, typename Tag2 >
-    void store( const std::string& value ) noexcept {
-      using T = typename TupleElement<Tag>::template TupleElement<Tag2>;
-      get< Tag, Tag2 >() = convert< T >( value );
-    }
-    //! Convert and store value converting from string
-    //! \param[in] value Value to convert and store
-    template< typename Tag, typename Tag2, typename Tag3 >
-    void store( const std::string& value ) noexcept {
-      using T = typename TupleElement<Tag>::
-                template TupleElement<Tag2>::
-                template TupleElement<Tag3>;
-      get< Tag, Tag2, Tag3 >() = convert< T >( value );
+      if constexpr( is_tagged_tuple<std::decay_t<TupleElement<Tag>>>::value and
+                    sizeof...(Tags) != 0 )
+      {
+        using T = std::remove_reference_t< decltype( get<Tag,Tags...>() ) >;
+        get< Tag, Tags... >() = convert< T >( value );
+      } else {
+        using T = std::remove_reference_t< decltype( get< Tag >() ) >;
+        get< Tag >() = convert< T >( value );
+      }
     }
 
     //! Convert and push back value, converting from string, to vector
     //! \param[in] value Value to convert and store
-    template< typename Tag >
+    template< typename Tag, typename... Tags >
     void store_back( const std::string& value ) noexcept {
-      using T = typename TupleElement<Tag>::value_type;
-      get< Tag >().push_back( convert< T >( value ) );
-    }
-    //! Convert and push back value, converting from string, to vector
-    //! \param[in] value Value to convert and store
-    template< typename Tag, typename Tag2 >
-    void store_back( const std::string& value ) noexcept {
-      using T = typename TupleElement<Tag>::
-                template TupleElement<Tag2>::value_type;
-      get< Tag, Tag2 >().push_back( convert< T >( value ) );
-    }
-    //! Convert and push back value, converting from string, to vector
-    //! \param[in] value Value to convert and store
-    template< typename Tag, typename Tag2, typename Tag3 >
-    void store_back( const std::string& value ) noexcept {
-      using T = typename TupleElement<Tag>::
-                template TupleElement<Tag2>::
-                template TupleElement<Tag3>::value_type;
-      get< Tag, Tag2, Tag3 >().push_back( convert< T >( value ) );
+      if constexpr( is_tagged_tuple<std::decay_t<TupleElement<Tag>>>::value and
+                    sizeof...(Tags) != 0 )
+      {
+        using T = typename std::remove_reference_t<
+                    decltype( get<Tag,Tags...>() ) >::value_type;
+        get< Tag, Tags... >().push_back( convert< T >( value ) );
+      } else {
+        using T = typename std::remove_reference_t<
+                    decltype( get<Tag>() ) >::value_type;
+        get< Tag >().push_back( convert< T >( value ) );
+      }
     }
 
     //! \brief Convert and push back value, converting from string, to back of
     //!   a nested vector
     //! \param[in] value Value to convert and store
-    template< typename Tag >
+    template< typename Tag, typename... Tags >
     void store_back_back( const std::string& value ) noexcept {
-      using T = typename TupleElement<Tag>::value_type::value_type;
-      get< Tag >().back().push_back( convert< T >( value ) );
-    }
-    //! \brief Convert and push back value, converting from string, to back of
-    //!   a nested vector
-    //! \param[in] value Value to convert and store
-    template< typename Tag, typename Tag2 >
-    void store_back_back( const std::string& value ) noexcept {
-      using T = typename TupleElement<Tag>::
-                template TupleElement<Tag2>::value_type::value_type;
-      get< Tag, Tag2 >().back().push_back( convert< T >( value ) );
-    }
-    //! \brief Convert and push back value, converting from string, to back of
-    //!   a nested vector
-    //! \param[in] value Value to convert and store
-    template< typename Tag, typename Tag2, typename Tag3 >
-    void store_back_back( const std::string& value ) noexcept {
-      using T = typename TupleElement<Tag>::
-                template TupleElement<Tag2>::
-                template TupleElement<Tag3>::value_type::value_type;
-      get< Tag, Tag2, Tag3 >().back().push_back( convert< T >( value ) );
+      if constexpr( is_tagged_tuple<std::decay_t<TupleElement<Tag>>>::value and
+                    sizeof...(Tags) != 0 )
+      {
+        using T = typename std::remove_reference_t<
+                    decltype( get<Tag,Tags...>() ) >::value_type::value_type;
+        get< Tag, Tags... >().back().push_back( convert< T >( value ) );
+      } else {
+        using T = typename std::remove_reference_t<
+                    decltype( get<Tag>() ) >::value_type::value_type;
+        get< Tag >().back().push_back( convert< T >( value ) );
+      }
     }
 
     //! \brief Convert and push back value, converting from string, to back of
     //!   a doubly nested vector
     //! \param[in] value Value to convert and store
-    template< typename Tag >
+    template< typename Tag, typename... Tags >
     void store_back_back_back( const std::string& value ) noexcept {
-      using T = typename TupleElement<Tag>::value_type::value_type::value_type;
-      get< Tag >().back().back().push_back( convert< T >( value ) );
+      if constexpr( is_tagged_tuple<std::decay_t<TupleElement<Tag>>>::value and
+                    sizeof...(Tags) != 0 )
+      {
+        using T = typename std::remove_reference_t<
+          decltype( get<Tag,Tags...>() ) >::value_type::value_type::value_type;
+        get< Tag, Tags... >().back().back().push_back( convert< T >( value ) );
+      } else {
+        using T = typename std::remove_reference_t<
+          decltype( get<Tag>() ) >::value_type::value_type::value_type;
+        get< Tag >().back().back().push_back( convert< T >( value ) );
+      }
     }
-    //! \brief Convert and push back value, converting from string, to back of
-    //!   a doubly nested vector
-    //! \param[in] value Value to convert and store
-    template< typename Tag, typename Tag2 >
-    void store_back_back_back( const std::string& value ) noexcept {
-      using T = typename TupleElement<Tag>::
-                template TupleElement<Tag2>::value_type::value_type::value_type;
-      get< Tag, Tag2 >().back().back().push_back( convert< T >( value ) );
-    }
-    //! \brief Convert and push back value, converting from string, to back of
-    //!   a doubly nested vector
-    //! \param[in] value Value to convert and store
-    template< typename Tag, typename Tag2, typename Tag3 >
-    void store_back_back_back( const std::string& value ) noexcept {
-      using T = typename TupleElement<Tag>::
-                template TupleElement<Tag2>::
-                template TupleElement<Tag3>::value_type::value_type::value_type;
-      get< Tag, Tag2, Tag3 >().back().back().push_back( convert< T >( value ) );
+
+    //! Insert key-value pair, converting value from string, to map
+    template< typename Tag, typename... Tags, typename Key, typename Value >
+    void insert( const Key& key, const Value& value ) {
+      get< Tag, Tags... >()[ key ] = value;
     }
 
     //! Insert key-value pair to map of nested TaggedTuple
@@ -289,12 +204,6 @@ class TaggedTuple{
     void insert_field( const Key& key, const std::string& value ) {
       get< Tag, Tags... >()[ key ].template get< FieldTag >() =
         convert< FieldType >( value );
-    }
-
-    //! Insert key-value pair, converting value from string, to map
-    template< typename Tag, typename... Tags, typename Key, typename Value >
-    void insert( const Key& key, const Value& value ) {
-      get< Tag, Tags... >()[ key ] = value;
     }
 
     //! Operator == between two TaggedTuple objects

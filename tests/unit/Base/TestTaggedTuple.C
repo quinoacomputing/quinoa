@@ -252,12 +252,12 @@ void TaggedTuple_object::test< 11 >() {
   set_test_name( "push_back() at three depths" );
 
   control c;
-  c.push_back< tag5 >( 1 );
-  c.push_back< tag5 >( 1 );
-  c.push_back< tag3, tag5 >( 2 );
-  c.push_back< tag3, tag5 >( 2 );
-  c.push_back< tag4, tag3, tag5 >( 3 );
-  c.push_back< tag4, tag3, tag5 >( 3 );
+  c.get< tag5 >().push_back( 1 );
+  c.get< tag5 >().push_back( 1 );
+  c.get< tag3, tag5 >().push_back( 2 );
+  c.get< tag3, tag5 >().push_back( 2 );
+  c.get< tag4, tag3, tag5 >().push_back( 3 );
+  c.get< tag4, tag3, tag5 >().push_back( 3 );
 
   ensure_equals( "vector size at 1st level", c.get< tag5 >().size(), 2 );
   ensure_equals( "vector size at 2nd level", c.get< tag3, tag5 >().size(), 2 );
@@ -278,15 +278,15 @@ void TaggedTuple_object::test< 12 >() {
   set_test_name( "push_back_back() at three depths" );
 
   control c;
-  c.push_back< tag6 >();  // create an outer vector element
-  c.push_back_back< tag6 >( 1 );     // push to inner vector
-  c.push_back_back< tag6 >( 1 );
-  c.push_back< tag3, tag6 >( );
-  c.push_back_back< tag3, tag6 >( 2 );
-  c.push_back_back< tag3, tag6 >( 2 );
-  c.push_back< tag4, tag3, tag6 >();
-  c.push_back_back< tag4, tag3, tag6 >( 3 );
-  c.push_back_back< tag4, tag3, tag6 >( 3 );
+  c.get< tag6 >().push_back( {} );  // create an outer vector element
+  c.get< tag6 >().back().push_back( 1 );     // push to inner vector
+  c.get< tag6 >().back().push_back( 1 );
+  c.get< tag3, tag6 >().push_back( {} );
+  c.get< tag3, tag6 >().back().push_back( 2 );
+  c.get< tag3, tag6 >().back().push_back( 2 );
+  c.get< tag4, tag3, tag6 >().push_back( {} );
+  c.get< tag4, tag3, tag6 >().back().push_back( 3 );
+  c.get< tag4, tag3, tag6 >().back().push_back( 3 );
 
   ensure_equals( "vector size at 1st level",
                  c.get< tag6 >().back().size(), 2 );
@@ -335,13 +335,13 @@ void TaggedTuple_object::test< 14 >() {
   set_test_name( "store_back_back() at three depths" );
 
   control c;
-  c.push_back< tag6 >();  // create an outer vector element
+  c.get< tag6 >().push_back( {} );  // create an outer vector element
   c.store_back_back< tag6 >( "1" );     // push to inner vector
   c.store_back_back< tag6 >( "1" );
-  c.push_back< tag3, tag6 >();
+  c.get< tag3, tag6 >().push_back( {} );
   c.store_back_back< tag3, tag6 >( "2" );
   c.store_back_back< tag3, tag6 >( "2" );
-  c.push_back< tag4, tag3, tag6 >();
+  c.get< tag4, tag3, tag6 >().push_back( {} );
   c.store_back_back< tag4, tag3, tag6 >( "3" );
   c.store_back_back< tag4, tag3, tag6 >( "3" );
 
@@ -366,16 +366,16 @@ void TaggedTuple_object::test< 15 >() {
   set_test_name( "store_back_back_back() at three depths" );
 
   control c;
-  c.push_back< tag9 >();
-  c.push_back_back< tag9 >();
+  c.get< tag9 >().push_back( {} );
+  c.get< tag9 >().back().push_back( {} );
   c.store_back_back_back< tag9 >( "1" );
   c.store_back_back_back< tag9 >( "1" );
-  c.push_back< tag3, tag9 >();
-  c.push_back_back< tag3, tag9 >();
+  c.get< tag3, tag9 >().push_back( {} );
+  c.get< tag3, tag9 >().back().push_back( {} );
   c.store_back_back_back< tag3, tag9 >( "2" );
   c.store_back_back_back< tag3, tag9 >( "2" );
-  c.push_back< tag4, tag3, tag9 >();
-  c.push_back_back< tag4, tag3, tag9 >();
+  c.get< tag4, tag3, tag9 >().push_back( {} );
+  c.get< tag4, tag3, tag9 >().back().push_back( {} );
   c.store_back_back_back< tag4, tag3, tag9 >( "3" );
   c.store_back_back_back< tag4, tag3, tag9 >( "3" );
 
