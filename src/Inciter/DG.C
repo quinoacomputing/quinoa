@@ -984,7 +984,8 @@ DG::dt()
         dgp = 2.0;
       }
 
-      // Scale smallest dt with CFL coefficient
+      // Scale smallest dt with CFL coefficient and the CFL is scaled by (2*p+1)
+      // where p is the order of the DG polynomial by linear stability theory.
       mindt *= g_inputdeck.get< tag::discr, tag::cfl >()
                / (2.0*dgp + 1.0);
 
