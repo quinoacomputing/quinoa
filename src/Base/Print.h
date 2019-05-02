@@ -535,7 +535,7 @@ class Print {
       explicit echoPolicies( const Print* const host ) : m_host( host ) {}
       //! Function call operator templated on the type that echos a policy
       template< typename U > void operator()( brigand::type_<U> ) {
-        static_assert( tk::HasTypedefCode_v< typename U::info >,
+        static_assert( tk::HasTypedef_code_v< typename U::info >,
                        "Policy code undefined for keyword" );
         // Print policy code - policy name
         m_host->raw( m_host->m_item_indent + "   " +

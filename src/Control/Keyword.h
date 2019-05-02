@@ -123,7 +123,7 @@ struct keyword< Info, pegtl::string< Chars... > > {
   //!   std::string since pegtl::string returns std::string.
   template< typename T = Info >
   static std::optional< std::string > alias() {
-    if constexpr( tk::HasTypedefAlias_v< T > )
+    if constexpr( tk::HasTypedef_alias_v< T > )
       return std::string( 1, static_cast<char>( Info::alias::value ) );
     else
       return std::nullopt;
@@ -133,7 +133,7 @@ struct keyword< Info, pegtl::string< Chars... > > {
   //! \return An initialized (or uninitialized) std::optional< std::string >
   template< typename T = Info >
   static std::optional< std::string > code() {
-    if constexpr( tk::HasTypedefCode_v< T > )
+    if constexpr( tk::HasTypedef_code_v< T > )
       return std::string( 1, Info::code::value );
     else
       return std::nullopt;
@@ -143,7 +143,7 @@ struct keyword< Info, pegtl::string< Chars... > > {
   //! \return An initialized (or uninitialized) std::optional< std::string >
   template< typename T = Info >
   static std::optional< std::string > expt() {
-    if constexpr( tk::HasFunctionExpectDescription_v< T > )
+    if constexpr( tk::HasFunction_expect_description_v< T > )
       return Info::expect::description();
     else
       return std::nullopt;
@@ -153,7 +153,7 @@ struct keyword< Info, pegtl::string< Chars... > > {
   //! \return An initialized (or uninitialized) std::optional< std::string >
   template< typename T = Info >
   static std::optional< std::string > choices() {
-    if constexpr( tk::HasFunctionExpectChoices_v< T > )
+    if constexpr( tk::HasFunction_expect_choices_v< T > )
       return Info::expect::choices();
     else
       return std::nullopt;
@@ -163,7 +163,7 @@ struct keyword< Info, pegtl::string< Chars... > > {
   //! \return An initialized (or uninitialized) std::optional< std::string >
   template< typename T = Info >
   static std::optional< std::string > lower() {
-    if constexpr( tk::HasVarExpectLower_v< T > )
+    if constexpr( tk::HasVar_expect_lower_v< T > )
       return std::to_string( Info::expect::lower );
     else
       return std::nullopt;
@@ -173,7 +173,7 @@ struct keyword< Info, pegtl::string< Chars... > > {
   //! \return An initialized (or uninitialized) std::optional< std::string >
   template< typename T = Info >
   static std::optional< std::string > upper() {
-    if constexpr( tk::HasVarExpectUpper_v< T > )
+    if constexpr( tk::HasVar_expect_upper_v< T > )
       return std::to_string( Info::expect::upper );
     else
       return std::nullopt;

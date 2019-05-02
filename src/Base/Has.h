@@ -12,147 +12,86 @@
 #ifndef Has_h
 #define Has_h
 
+#include <type_traits>
+
 namespace tk {
 
-//! \brief Detect if T defines type "Proxy"
-//! \see http://stackoverflow.com/a/7235647
+//! Detect if a type defines type 'alias'
+template< typename, typename = std::void_t<> >
+struct HasTypedef_alias : std::false_type {};
+
 template< typename T >
-struct HasTypedefProxy {
-  private:
-    typedef char                      yes;
-    typedef struct { char array[2]; } no;
-    template<typename C> static yes test(typename C::Proxy*);
-    template<typename C> static no  test(...);
-  public:
-    static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
-};
+struct HasTypedef_alias< T, std::void_t< typename T::alias > >
+  : std::true_type {};
 
-//! Helper variable template for HasTypedefProxy
 template < typename T >
-inline constexpr bool HasTypedefProxy_v = HasTypedefProxy< T >::value;
+inline constexpr bool HasTypedef_alias_v = HasTypedef_alias< T >::value;
 
-//! \brief Detect if T defines type "alias"
-//! \see http://stackoverflow.com/a/7235647
+
+//! Detect if a type defines type 'code'
+template< typename, typename = std::void_t<> >
+struct HasTypedef_code : std::false_type {};
+
 template< typename T >
-struct HasTypedefAlias {
-  private:
-    typedef char                      yes;
-    typedef struct { char array[2]; } no;
-    template<typename C> static yes test(typename C::alias*);
-    template<typename C> static no  test(...);
-  public:
-    static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
-};
+struct HasTypedef_code< T, std::void_t< typename T::code > >
+  : std::true_type {};
 
-//! Helper variable template for HasTypedefAlias
 template < typename T >
-inline constexpr bool HasTypedefAlias_v = HasTypedefAlias< T >::value;
+inline constexpr bool HasTypedef_code_v = HasTypedef_code< T >::value;
 
-//! \brief Detect if T defines type "code"
-//! \see http://stackoverflow.com/a/7235647
+
+//! Detect if a type defines function 'expect::description()'
+template< typename, typename = std::void_t<> >
+struct HasFunction_expect_description : std::false_type {};
+
 template< typename T >
-struct HasTypedefCode {
-  private:
-    typedef char                      yes;
-    typedef struct { char array[2]; } no;
-    template<typename C> static yes test(typename C::code*);
-    template<typename C> static no  test(...);
-  public:
-    static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
-};
+struct HasFunction_expect_description< T,
+  std::void_t< decltype(std::declval<typename T::expect>().description()) > >
+  : std::true_type {};
 
-//! Helper variable template for HasTypedefCode
 template < typename T >
-inline constexpr bool HasTypedefCode_v = HasTypedefCode< T >::value;
+inline constexpr bool HasFunction_expect_description_v =
+  HasFunction_expect_description< T >::value;
 
-//! \brief Detect if T defines type "expect::type"
-//! \see http://stackoverflow.com/a/7235647
+
+//! Detect if a type defines variable 'expect::lower'
+template< typename, typename = std::void_t<> >
+struct HasVar_expect_lower : std::false_type {};
+
 template< typename T >
-struct HasTypedefExpectType {
-  private:
-    typedef char                      yes;
-    typedef struct { char array[2]; } no;
-    template<typename C> static yes test(typename C::expect::type*);
-    template<typename C> static no  test(...);
-  public:
-    static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
-};
+struct HasVar_expect_lower< T,
+  std::void_t< decltype(std::declval<typename T::expect>().lower) > >
+  : std::true_type {};
 
-//! Helper variable template for HasTypedefExpectType
 template < typename T >
-inline constexpr bool HasTypedefExpectType_v = HasTypedefExpectType< T >::value;
+inline constexpr bool HasVar_expect_lower_v = HasVar_expect_lower< T >::value;
 
-//! \brief Detect if T defines function "expect::description"
-//! \see http://stackoverflow.com/a/257382
+
+//! Detect if a type defines variable 'expect::upper'
+template< typename, typename = std::void_t<> >
+struct HasVar_expect_upper : std::false_type {};
+
 template< typename T >
-struct HasFunctionExpectDescription {
-  private:
-    typedef char                      yes;
-    typedef struct { char array[2]; } no;
-    template<typename C> static yes test(decltype(&C::expect::description));
-    template<typename C> static no  test(...);
-  public:
-    static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
-};
+struct HasVar_expect_upper< T,
+  std::void_t< decltype(std::declval<typename T::expect>().upper) > >
+  : std::true_type {};
 
-//! Helper variable template for HasFunctionExpectDescription
 template < typename T >
-inline constexpr bool HasFunctionExpectDescription_v =
-  HasFunctionExpectDescription< T >::value;
+inline constexpr bool HasVar_expect_upper_v = HasVar_expect_upper< T >::value;
 
-//! \brief Detect if T defines variable "expect::lower"
-//! \see http://stackoverflow.com/a/257382
+
+//! Detect if a type defines function 'expect::choices()'
+template< typename, typename = std::void_t<> >
+struct HasFunction_expect_choices : std::false_type {};
+
 template< typename T >
-struct HasVarExpectLower {
-  private:
-    typedef char                      yes;
-    typedef struct { char array[2]; } no;
-    template<typename C> static yes test(decltype(&C::expect::lower));
-    template<typename C> static no  test(...);
-  public:
-    static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
-};
+struct HasFunction_expect_choices< T,
+  std::void_t< decltype(std::declval<typename T::expect>().choices()) > >
+  : std::true_type {};
 
-//! Helper variable template for HasVarExpectLower
 template < typename T >
-inline constexpr bool HasVarExpectLower_v =
-  HasVarExpectLower< T >::value;
-
-//! \brief Detect if T defines variable "expect::upper"
-//! \see http://stackoverflow.com/a/257382
-template< typename T >
-struct HasVarExpectUpper {
-  private:
-    typedef char                      yes;
-    typedef struct { char array[2]; } no;
-    template<typename C> static yes test(decltype(&C::expect::upper));
-    template<typename C> static no  test(...);
-  public:
-    static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
-};
-
-//! Helper variable template for HasVarExpectUpper
-template < typename T >
-inline constexpr bool HasVarExpectUpper_v =
-  HasVarExpectUpper< T >::value;
-
-//! \brief Detect if T defines function "expect::choices"
-//! \see http://stackoverflow.com/a/257382
-template< typename T >
-struct HasFunctionExpectChoices {
-  private:
-    typedef char                      yes;
-    typedef struct { char array[2]; } no;
-    template<typename C> static yes test(decltype(&C::expect::choices));
-    template<typename C> static no  test(...);
-  public:
-    static const bool value = sizeof(test<T>(nullptr)) == sizeof(yes);
-};
-
-//! Helper variable template for HasFunctionExpectChoices
-template < typename T >
-inline constexpr bool HasFunctionExpectChoices_v =
-  HasFunctionExpectChoices< T >::value;
+inline constexpr bool HasFunction_expect_choices_v =
+  HasFunction_expect_choices< T >::value;
 
 } // tk::
 

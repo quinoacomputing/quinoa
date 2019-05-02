@@ -1391,11 +1391,11 @@ namespace grm {
            readcmd< use< keyword > >,
            scan< pegtl::sor< kw_type, msg< ERROR, MsgKey::MISSING > >, insert >,
            typename std::conditional<
-             tk::HasVarExpectLower< typename keyword::info >::value,
+             tk::HasVar_expect_lower< typename keyword::info >::value,
              check_lower_bound< keyword, tag, tags... >,
              pegtl::success >::type,
            typename std::conditional<
-             tk::HasVarExpectUpper< typename keyword::info >::value,
+             tk::HasVar_expect_upper< typename keyword::info >::value,
              check_upper_bound< keyword, tag, tags... >,
              pegtl::success >::type > {};
 
@@ -1543,11 +1543,11 @@ namespace grm {
          pegtl::if_must<
            process< keyword, Store< tags... >, kw_type >,
            typename std::conditional<
-             tk::HasVarExpectLower< typename keyword::info >::value,
+             tk::HasVar_expect_lower< typename keyword::info >::value,
              check_lower_bound< keyword, tags... >,
              pegtl::success >::type,
            typename std::conditional<
-             tk::HasVarExpectUpper< typename keyword::info >::value,
+             tk::HasVar_expect_upper< typename keyword::info >::value,
              check_upper_bound< keyword, tags... >,
              pegtl::success >::type > {};
 

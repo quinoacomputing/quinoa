@@ -83,7 +83,7 @@ class AMRInitial : public tk::Toggle< AMRInitialType > {
       //! \brief Function call operator templated on the type to assert the
       //!   existence of a policy code
       template< typename U > void operator()( brigand::type_<U> ) {
-        static_assert( tk::HasTypedefCode_v< typename U::info >,
+        static_assert( tk::HasTypedef_code_v< typename U::info >,
                        "Policy code undefined for keyword" );
       }
     };
