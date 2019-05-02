@@ -972,24 +972,21 @@ DG::dt()
         if (eqdt < mindt) mindt = eqdt;
       }
 
-      auto dgp = g_inputdeck.get< tag::discr, tag::ndof >();
+      auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      tk::real dgp = 0.0;
 
-      if (dgp == 4)
+      if (ndof == 4)
       {
-        dgp = 1;
+        dgp = 1.0;
       }
-      else if (dgp == 10)
+      else if (ndof == 10)
       {
-        dgp = 2;
-      }
-      else
-      {
-        dgp = 0;
+        dgp = 2.0;
       }
 
       // Scale smallest dt with CFL coefficient
       mindt *= g_inputdeck.get< tag::discr, tag::cfl >()
-               / (2.0*static_cast< tk::real >(dgp) + 1.0);
+               / (2.0*dgp + 1.0);
 
     }
   }
