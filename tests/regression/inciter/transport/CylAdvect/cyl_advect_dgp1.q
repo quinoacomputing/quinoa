@@ -10,8 +10,7 @@ inciter
   dt   1.0e-3 # Time step size
   ttyi 10     # TTY output interval
   scheme dgp1
-  limiter wenop1
-  cweight 100.0
+  limiter superbeep1
 
   transport
     physics advection

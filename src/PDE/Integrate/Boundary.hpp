@@ -43,7 +43,6 @@ bndSurfInt( ncomp_t system,
             const VelFn& vel,
             const StateFn& state,
             const Fields& U,
-            const Fields& limFunc,
             Fields& R );
 
 //! Update the rhs by adding the boundary surface integration term

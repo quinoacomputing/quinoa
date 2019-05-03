@@ -34,7 +34,6 @@ tk::volInt( ncomp_t system,
             const FluxFn& flux,
             const VelFn& vel,
             const Fields& U,
-            const Fields& limFunc,
             Fields& R )
 // *****************************************************************************
 //  Compute volume integrals for DG
@@ -47,7 +46,6 @@ tk::volInt( ncomp_t system,
 //! \param[in] flux Flux function to use
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
-//! \param[in] limFunc Limiter function for higher-order solution dofs
 //! \param[in,out] R Right-hand side vector added to
 // *****************************************************************************
 {
@@ -105,7 +103,7 @@ tk::volInt( ncomp_t system,
 
       auto wt = wgp[igp] * geoElem(e, 0, 0);
 
-      auto state = eval_state( ncomp, offset, ndof, e, U, limFunc, B );
+      auto state = eval_state( ncomp, offset, ndof, e, U, B );
 
       // evaluate prescribed velocity (if any)
       auto v = vel( system, ncomp, gp[0], gp[1], gp[2] );

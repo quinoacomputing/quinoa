@@ -39,7 +39,6 @@ surfInt( ncomp_t system,
          const RiemannFluxFn& flux,
          const VelFn& vel,
          const Fields& U,
-         const Fields& limFunc,
          Fields& R );
 
 // Update the rhs by adding surface integration term
