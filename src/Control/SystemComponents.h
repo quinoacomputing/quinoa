@@ -142,8 +142,6 @@ struct ComponentVector : public std::vector< ncomp_t > {
 template< typename... Tags >
 class ncomponents : public
   // tk::tuple::tagged_tuple< tag1, vec1, tag2, vec2, ... >
-  //as_tagged_tuple< brigand::flatten< brigand::transform< brigand::list<Tags...>,
-  //  brigand::bind< brigand::list, brigand::_1, ComponentVector > > > > {
   as_tagged_tuple< brigand::flatten< brigand::transform< brigand::list<Tags...>,
     brigand::bind< brigand::list, brigand::_1, ComponentVector > > > > {
 

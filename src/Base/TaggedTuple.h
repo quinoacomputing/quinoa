@@ -78,7 +78,7 @@ class TaggedTuple{
     Tuple m_members;
 
   public:
-    //! Typedef defining self
+    //! Typedef defining self for identifying self
     using i_am_tagged_tuple = void;
 
     //! Acces type in tuple behind tag
