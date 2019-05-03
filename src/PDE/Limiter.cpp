@@ -5,7 +5,7 @@
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Limiters for DG
+  \brief     Limiters for discontinous Galerkin methods
   \details   This file contains functions that provide limiter function
     calculations for maintaining monotonicity near solution discontinuities
     for the DG discretization.
@@ -17,6 +17,10 @@
 
 #include "Vector.hpp"
 #include "Limiter.hpp"
+#include "DerivedData.hpp"
+#include "Integrate/Quadrature.hpp"
+#include "Integrate/Basis.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
 
@@ -25,18 +29,20 @@ extern ctr::InputDeck g_inputdeck;
 void
 WENO_P1( const std::vector< int >& esuel,
          inciter::ncomp_t offset,
-         const tk::Fields& U,
-         tk::Fields& limFunc )
+         tk::Fields& U )
 // *****************************************************************************
 //  Weighted Essentially Non-Oscillatory (WENO) limiter for DGP1
 //! \param[in] esuel Elements surrounding elements
 //! \param[in] offset Index for equation systems
-//! \param[in] U High-order solution vector
-//! \param[in,out] limFunc Limiter function
+//! \param[in,out] U High-order solution vector which gets limited
 // *****************************************************************************
 {
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   const auto cweight = inciter::g_inputdeck.get< tag::discr, tag::cweight >();
+  std::array< std::vector< tk::real >, 3 > limU;
+  limU[0].resize( U.nunk() );
+  limU[1].resize( U.nunk() );
+  limU[2].resize( U.nunk() );
 
   std::size_t ncomp = U.nprop()/ndof;
 
@@ -46,7 +52,6 @@ WENO_P1( const std::vector< int >& esuel,
   for (inciter::ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
-    auto lmark = c*(ndof-1);
 
     for (std::size_t e=0; e<esuel.size()/4; ++e)
     {
@@ -86,9 +91,10 @@ WENO_P1( const std::vector< int >& esuel,
           continue;
         }
 
-        gradu[is][0] = U( static_cast< std::size_t >(nel), mark+1, offset );
-        gradu[is][1] = U( static_cast< std::size_t >(nel), mark+2, offset );
-        gradu[is][2] = U( static_cast< std::size_t >(nel), mark+3, offset );
+        std::size_t n = static_cast< std::size_t >( nel );
+        gradu[is][0] = U(n, mark+1, offset);
+        gradu[is][1] = U(n, mark+2, offset);
+        gradu[is][2] = U(n, mark+3, offset);
         wtStencil[is] = 1.0;
       }
 
@@ -123,22 +129,181 @@ WENO_P1( const std::vector< int >& esuel,
         wtDof[is] = wtDof[is]/wtotal;
       }
 
-      limFunc(e, lmark+0, 0) = 0.0;
-      limFunc(e, lmark+1, 0) = 0.0;
-      limFunc(e, lmark+2, 0) = 0.0;
+      limU[0][e] = 0.0;
+      limU[1][e] = 0.0;
+      limU[2][e] = 0.0;
 
       // limiter function
       for (std::size_t is=0; is<5; ++is)
       {
-        // A small number (1.0e-12) is needed here to avoid dividing by a zero
-        // in the case of a constant solution, where gradu would be zero.
-        limFunc(e, lmark+0, 0) += wtDof[is]*gradu[is][0]
-                         / ( gradu[0][0] + std::copysign(1.0e-12,gradu[0][0]) );
-        limFunc(e, lmark+1, 0) += wtDof[is]*gradu[is][1]
-                         / ( gradu[0][1] + std::copysign(1.0e-12,gradu[0][1]) );
-        limFunc(e, lmark+2, 0) += wtDof[is]*gradu[is][2]
-                         / ( gradu[0][2] + std::copysign(1.0e-12,gradu[0][2]) );
+        limU[0][e] += wtDof[is]*gradu[is][0];
+        limU[1][e] += wtDof[is]*gradu[is][1];
+        limU[2][e] += wtDof[is]*gradu[is][2];
       }
+    }
+
+    for (std::size_t e=0; e<esuel.size()/4; ++e)
+    {
+      U(e, mark+1, offset) = limU[0][e];
+      U(e, mark+2, offset) = limU[1][e];
+      U(e, mark+3, offset) = limU[2][e];
+    }
+  }
+}
+
+void
+Superbee_P1( const std::vector< int >& esuel,
+             const std::vector< std::size_t >& inpoel,
+             inciter::ncomp_t offset,
+             const tk::UnsMesh::Coords& coord,
+             tk::Fields& U )
+// *****************************************************************************
+//  Superbee limiter for DGP1
+//! \param[in] esuel Elements surrounding elements
+//! \param[in] inpoel Element connectivity
+//! \param[in] offset Index for equation systems
+//! \param[in] coord Array of nodal coordinates
+//! \param[in,out] U High-order solution vector which gets limited
+// *****************************************************************************
+{
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  std::size_t ncomp = U.nprop()/ndof;
+
+  auto beta_lim = 2.0;
+
+  for (std::size_t e=0; e<esuel.size()/4; ++e)
+  {
+    // Superbee is a TVD limiter, which uses min-max bounds that the
+    // high-order solution should satisfy, to ensure TVD properties. For a
+    // high-order method like DG, this involves 3 steps:
+    // 1. Find min-max bounds in the immediate neighborhood of cell.
+    // 2. Calculate the Superbee function for all the points where solution
+    //    needs to be reconstructed to (all quadrature points). From these, use
+    //    the minimum value of the limiter function.
+    // 3. Limit the high-order terms using this function.
+
+    std::vector< tk::real > uMin(ncomp, 0.0), uMax(ncomp, 0.0);
+
+    for (inciter::ncomp_t c=0; c<ncomp; ++c)
+    {
+      auto mark = c*ndof;
+      uMin[c] = U(e, mark, offset);
+      uMax[c] = U(e, mark, offset);
+    }
+
+    // ----- Step-1: find min/max in the neighborhood
+    for (std::size_t is=0; is<4; ++is)
+    {
+      auto nel = esuel[ 4*e+is ];
+
+      // ignore physical domain ghosts
+      if (nel == -1) continue;
+
+      for (inciter::ncomp_t c=0; c<ncomp; ++c)
+      {
+        auto mark = c*ndof;
+        std::size_t n = static_cast< std::size_t >( nel );
+        uMin[c] = std::min(uMin[c], U(n, mark, offset));
+        uMax[c] = std::max(uMax[c], U(n, mark, offset));
+      }
+    }
+
+    // ----- Step-2: loop over all quadrature points to get limiter function
+
+    // to loop over all the quadrature points of all faces of element e,
+    // coordinates of the quadrature points are needed.
+    // Number of quadrature points for face integration
+    auto ng = tk::NGfa(ndof);
+
+    // arrays for quadrature points
+    std::array< std::vector< tk::real >, 2 > coordgp;
+    std::vector< tk::real > wgp;
+
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    wgp.resize( ng );
+
+    // get quadrature point weights and coordinates for triangle
+    tk::GaussQuadratureTri( ng, coordgp, wgp );
+
+    const auto& cx = coord[0];
+    const auto& cy = coord[1];
+    const auto& cz = coord[2];
+
+    // Extract the element coordinates
+    std::array< std::array< tk::real, 3>, 4 > coordel {{
+      {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+      {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+      {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+      {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
+
+    // Compute the determinant of Jacobian matrix
+    auto detT =
+      tk::Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+    // initialize limiter function
+    std::vector< tk::real > phi(ncomp, 1.0);
+    for (std::size_t lf=0; lf<4; ++lf)
+    {
+      // Extract the face coordinates
+      std::array< std::size_t, 3 > inpofa_l {{ inpoel[4*e+tk::lpofa[lf][0]],
+                                               inpoel[4*e+tk::lpofa[lf][1]],
+                                               inpoel[4*e+tk::lpofa[lf][2]] }};
+
+      std::array< std::array< tk::real, 3>, 3 > coordfa {{
+        {{ cx[ inpofa_l[0] ], cy[ inpofa_l[0] ], cz[ inpofa_l[0] ] }},
+        {{ cx[ inpofa_l[1] ], cy[ inpofa_l[1] ], cz[ inpofa_l[1] ] }},
+        {{ cx[ inpofa_l[2] ], cy[ inpofa_l[2] ], cz[ inpofa_l[2] ] }} }};
+
+      // Gaussian quadrature
+      for (std::size_t igp=0; igp<ng; ++igp)
+      {
+        // Compute the coordinates of quadrature point at physical domain
+        auto gp = tk::eval_gp( igp, coordfa, coordgp );
+
+        //Compute the basis functions
+        auto B_l = tk::eval_basis( ndof,
+              tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
+              tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
+              tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
+
+        auto state = tk::eval_state( ncomp, offset, ndof, e, U, B_l );
+
+        Assert( state.size() == ncomp, "Size mismatch" );
+
+        // compute the limiter function
+        for (inciter::ncomp_t c=0; c<ncomp; ++c)
+        {
+          auto phi_gp = 1.0;
+          auto mark = c*ndof;
+          auto uNeg = state[c] - U(e, mark, offset);
+          if (uNeg > 1.0e-14)
+          {
+            phi_gp = std::min( 1.0, (uMax[c]-U(e, mark, offset))/(2.0*uNeg) );
+          }
+          else if (uNeg < -1.0e-14)
+          {
+            phi_gp = std::min( 1.0, (uMin[c]-U(e, mark, offset))/(2.0*uNeg) );
+          }
+          else
+          {
+            phi_gp = 1.0;
+          }
+          phi_gp = std::max( 0.0,
+                             std::max( std::min(beta_lim*phi_gp, 1.0),
+                                       std::min(phi_gp, beta_lim) ) );
+          phi[c] = std::min( phi[c], phi_gp );
+        }
+      }
+    }
+
+    // ----- Step-3: apply limiter function
+    for (inciter::ncomp_t c=0; c<ncomp; ++c)
+    {
+      auto mark = c*ndof;
+      U(e, mark+1, offset) = phi[c] * U(e, mark+1, offset);
+      U(e, mark+2, offset) = phi[c] * U(e, mark+2, offset);
+      U(e, mark+3, offset) = phi[c] * U(e, mark+3, offset);
     }
   }
 }

@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Limiter.hpppp
+  \file      src/PDE/Limiter.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
@@ -15,8 +15,8 @@
 #define Limiter_h
 
 #include "Types.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Fields.hpp"
+#include "UnsMesh.hpp"
 
 namespace inciter {
 
@@ -26,8 +26,15 @@ using ncomp_t = kw::ncomp::info::expect::type;
 void
 WENO_P1( const std::vector< int >& esuel,
          inciter::ncomp_t offset,
-         const tk::Fields& U,
-         tk::Fields& limFunc );
+         tk::Fields& U );
+
+//! Superbee limiter for DGP1
+void
+Superbee_P1( const std::vector< int >& esuel,
+             const std::vector< std::size_t >& inpoel,
+             inciter::ncomp_t offset,
+             const tk::UnsMesh::Coords& coord,
+             tk::Fields& U );
 
 } // inciter::
 
