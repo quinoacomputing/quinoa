@@ -164,6 +164,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::cweight,
                                    kw::nolimiter,
                                    kw::wenop1,
+                                   kw::superbeep1,
                                    kw::bc_sym,
                                    kw::bc_inlet,
                                    kw::bc_outlet,

@@ -61,7 +61,6 @@ DG::DG( const CProxy_Discretization& disc,
   m_geoElem( tk::genGeoElemTet( Disc()->Inpoel(), Disc()->Coord() ) ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
-  m_limFunc( limFunc(Disc()->Inpoel().size()/4) ),
   m_nfac( m_fd.Inpofa().size()/3 ),
   m_nunk( m_u.nunk() ),
   m_ncoord( Disc()->Coord()[0].size() ),
@@ -111,7 +110,6 @@ DG::resizeComm()
 
   // Enable SDAG wait for initially building the solution vector and limiting
   if (m_initial) {
-    thisProxy[ thisIndex ].wait4initlim();
     thisProxy[ thisIndex ].wait4sol();
     thisProxy[ thisIndex ].wait4lim();
   }
@@ -179,19 +177,6 @@ DG::resizeComm()
     for (const auto& c : m_msumset) {   // for all chares we share nodes with
       thisProxy[ c.first ].comfac( thisIndex, potbndface );
     }
-}
-
-tk::Fields
-DG::limFunc( std::size_t nelem ) const
-// *****************************************************************************
-// Size and create limiter function data container
-//! \param[in] nelem Number elements in mesh
-// *****************************************************************************
-{
-  auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-  auto nprop = g_inputdeck.get< tag::component >().nprop();
-
-  return tk::Fields( (ndof == 1 ? 0 : nelem), (ndof-1)*nprop );
 }
 
 bool
@@ -850,13 +835,11 @@ DG::adj()
   Assert( faceMatch(), "Chare-boundary element-face connectivity (esuf) does "
          "not match" );
 
-  // Resize solution vectors, lhs, rhs and limiter function by the number of
-  // ghost tets
+  // Resize solution vectors, lhs and rhs by the number of ghost tets
   m_u.resize( m_nunk );
   m_un.resize( m_nunk );
   m_lhs.resize( m_nunk );
   m_rhs.resize( m_nunk );
-  m_limFunc.resize( m_nunk );
 
   // Ensure that we also have all the geometry and connectivity data 
   // (including those of ghosts)
@@ -929,127 +912,24 @@ DG::setup( tk::real )
                    m_fd.Esuel().size()/4 );
   m_un = m_u;
 
-  for (std::size_t e=0; e<m_fd.Esuel().size()/4; ++e)
-    for (std::size_t c=0; c<m_limFunc.nprop(); ++c)
-      m_limFunc(e,c,0)=1.0;
-
-  // Communicate for initial solution limiting
-  contribute( CkCallback(CkReductionTarget(Transporter,sendinit), d->Tr()) );
-}
-
-void
-DG::limitIC()
-// *****************************************************************************
-//  Limit initial solution and prepare for time stepping
-//! \details This function applies limiter to initial solution and then proceeds
-//!   to communicate this limited solution and begin time stepping
-// *****************************************************************************
-{
-  // Limit initial solution
-  if (g_inputdeck.get< tag::discr, tag::ndof >() > 1) {
-    const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
-    if (limiter == ctr::LimiterType::WENOP1) {
-      WENO_P1( m_fd.Esuel(), 0, m_u, m_limFunc );
-
-      const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-      const auto ncomp= m_u.nprop()/ndof;
-      for (inciter::ncomp_t c=0; c<ncomp; ++c)
-      {
-        auto mark = c*ndof;
-        auto lmark = c*(ndof-1);
-        for (std::size_t e=0; e<m_u.nunk(); ++e)
-        {
-          // limit P1 dofs
-          m_u(e, mark+1, 0) = m_limFunc( e, lmark  , 0 ) * m_u( e, mark+1, 0 );
-          m_u(e, mark+2, 0) = m_limFunc( e, lmark+1, 0 ) * m_u( e, mark+2, 0 );
-          m_u(e, mark+3, 0) = m_limFunc( e, lmark+2, 0 ) * m_u( e, mark+3, 0 );
-        }
-      }
-    }
-  }
+  // Start timer measuring time stepping wall clock time
+  d->Timer().zero();
 
   // Output initial conditions to file (regardless of whether it was requested)
-  writeFields( CkCallback(CkIndex_DG::start(), thisProxy[thisIndex]) );
+  writeFields( CkCallback(CkIndex_DG::next(), thisProxy[thisIndex]) );
 }
 
 void
-DG::start()
+DG::next()
 // *****************************************************************************
-//  Start time stepping
+// Continue to next time step stage
 // *****************************************************************************
 {
   auto d = Disc();
 
-  // Start timer measuring time stepping wall clock time
-  d->Timer().zero();
-
   tk::real fdt = 0.0;
-  // Start time stepping
-  contribute( sizeof(tk::real), &fdt, CkReduction::nop,
-              CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
-}
-
-void
-DG::sendinit()
-// *****************************************************************************
-// Send own chare-boundary data to neighboring chares
-// *****************************************************************************
-{
-  // communicate solution ghost data (if any)
-  if (m_ghostData.empty())
-    cominit_complete();
-  else
-    for(const auto& n : m_ghostData) {
-      std::vector< std::size_t > tetid;
-      std::vector< std::vector< tk::real > > u;
-      for(const auto& i : n.second) {
-        Assert( i.first < m_fd.Esuel().size()/4, "Sending solution ghost data" );
-        tetid.push_back( i.first );
-        u.push_back( m_u[i.first] );
-      }
-      thisProxy[ n.first ].cominit( thisIndex, tetid, u );
-    }
-
-  owninit_complete();
-}
-
-void
-DG::cominit( int fromch,
-             const std::vector< std::size_t >& tetid,
-             const std::vector< std::vector< tk::real > >& u )
-// *****************************************************************************
-//  Receive chare-boundary solution ghost data from neighboring chares
-//! \param[in] fromch Sender chare id
-//! \param[in] tetid Ghost tet ids we receive solution data for
-//! \param[in] u Solution ghost data
-//! \details This function receives contributions to m_u from fellow chares.
-// *****************************************************************************
-{
-  Assert( u.size() == tetid.size(), "Size mismatch in DG::cominit()" );
-
-  // Find local-to-ghost tet id map for sender chare
-  const auto& n = tk::cref_find( m_ghost, fromch );
-
-  for (std::size_t i=0; i<tetid.size(); ++i) {
-    auto j = tk::cref_find( n, tetid[i] );
-    Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
-    Assert( j < m_u.nunk(), "Indexing out of bounds in DG::cominit()" );
-    Assert( m_recvGhost.insert( j ).second,
-            "Failed to store local tetid of received ghost tetid" );
-    for (std::size_t c=0; c<m_u.nprop(); ++c)
-      m_u(j,c,0) = u[i][c];
-  }
-
-  // if we have received all solution ghost contributions from those chares we
-  // communicate along chare-boundary faces with, solve the system
-  if (++m_ninitsol == m_ghostData.size()) {
-    Assert( m_exptGhost == m_recvGhost,
-            "Expected/received ghost tet id mismatch" );
-    m_exptGhost.clear();
-    m_recvGhost.clear();
-    m_ninitsol = 0;
-    cominit_complete();
-  }
+  d->contribute( sizeof(tk::real), &fdt, CkReduction::nop,
+                 CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
 }
 
 void
@@ -1078,12 +958,26 @@ DG::dt()
       // find the minimum dt across all PDEs integrated
       for (const auto& eq : g_dgpde) {
         auto eqdt = eq.dt( d->Coord(), d->Inpoel(), m_fd, m_geoFace, m_geoElem,
-                           m_limFunc, m_u );
+                           m_u );
         if (eqdt < mindt) mindt = eqdt;
       }
 
-      // Scale smallest dt with CFL coefficient
-      mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
+      auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      tk::real dgp = 0.0;
+
+      if (ndof == 4)
+      {
+        dgp = 1.0;
+      }
+      else if (ndof == 10)
+      {
+        dgp = 2.0;
+      }
+
+      // Scale smallest dt with CFL coefficient and the CFL is scaled by (2*p+1)
+      // where p is the order of the DG polynomial by linear stability theory.
+      mindt *= g_inputdeck.get< tag::discr, tag::cfl >()
+               / (2.0*dgp + 1.0);
 
     }
   }
@@ -1193,7 +1087,7 @@ DG::writeFields( CkCallback c ) const
   // std::vector< std::vector< tk::real > > nodefields;
   // for (const auto& eq : g_dgpde) {
   //   auto fields =
-  //     eq.avgElemToNode( d->Inpoel(), d->Coord(), m_geoElem, m_limFunc, m_u );
+  //     eq.avgElemToNode( d->Inpoel(), d->Coord(), m_geoElem, m_u );
   //   nodefields.insert( end(nodefields), begin(fields), end(fields) );
   // }
 
@@ -1220,36 +1114,38 @@ DG::lim()
 // *****************************************************************************
 {
   if (g_inputdeck.get< tag::discr, tag::ndof >() > 1) {
-  
-    Assert( m_u.nunk() == m_limFunc.nunk(), "Number of unknowns in solution "
-            "vector and limiter at recent time step incorrect" );
-  
-    Assert( m_u.nprop() == m_limFunc.nprop() + 
-            (m_u.nprop()/g_inputdeck.get< tag::discr, tag::ndof >()),
-            "Number of components in solution vector and limiter at recent "
-            "time step incorrect" );
 
-    for (std::size_t e=0; e<m_fd.Esuel().size()/4; ++e)
-      for (std::size_t c=0; c<m_limFunc.nprop(); ++c)
-        m_limFunc(e,c,0)=1.0;
-  
+    auto d = Disc();
+
     const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
     if (limiter == ctr::LimiterType::WENOP1)
-      WENO_P1( m_fd.Esuel(), 0, m_u, m_limFunc );
-  
-    // communicate solution ghost data (if any)
+      WENO_P1( m_fd.Esuel(), 0, m_u );
+    else if (limiter == ctr::LimiterType::SUPERBEEP1)
+      Superbee_P1( m_fd.Esuel(), d->Inpoel(), 0, d->Coord(), m_u );
+  }
+
+  contribute( CkCallback( CkReductionTarget(DG,sendLim), thisProxy ) );
+}
+
+void
+DG::sendLim()
+// *****************************************************************************
+// Send limited solution to neighboring chares
+// *****************************************************************************
+{
+  if (g_inputdeck.get< tag::discr, tag::ndof >() > 1) {
     if (m_ghostData.empty())
       comlim_complete();
     else
       for(const auto& n : m_ghostData) {
         std::vector< std::size_t > tetid;
-        std::vector< std::vector< tk::real > > limfunc;
+        std::vector< std::vector< tk::real > > limU;
         for(const auto& i : n.second) {
           Assert( i.first < m_fd.Esuel().size()/4, "Sending limiter ghost data" );
           tetid.push_back( i.first );
-          limfunc.push_back( m_limFunc[i.first] );
+          limU.push_back( m_u[i.first] );
         }
-        thisProxy[ n.first ].comlim( thisIndex, tetid, limfunc );
+        thisProxy[ n.first ].comlim( thisIndex, tetid, limU );
       }
 
   } else {
@@ -1269,9 +1165,8 @@ DG::comlim( int fromch,
 //  Receive chare-boundary limiter ghost data from neighboring chares
 //! \param[in] fromch Sender chare id
 //! \param[in] tetid Ghost tet ids we receive solution data for
-//! \param[in] lfn Limiter function ghost data
-//! \details This function receives contributions to m_limFunc from fellow
-//    chares.
+//! \param[in] lfn Limited high-order solution
+//! \details This function receives contributions to m_u from fellow chares.
 // *****************************************************************************
 {
   Assert( lfn.size() == tetid.size(), "Size mismatch in DG::comlim()" );
@@ -1282,11 +1177,11 @@ DG::comlim( int fromch,
   for (std::size_t i=0; i<tetid.size(); ++i) {
     auto j = tk::cref_find( n, tetid[i] );
     Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
-    Assert( j < m_limFunc.nunk(), "Indexing out of bounds in DG::comlim()" );
-    Assert( lfn[i].size() == m_limFunc.nprop(), "size mismatch in received "
-           "limfunc in DG::comlim()" );
-    for (std::size_t c=0; c<m_limFunc.nprop(); ++c)
-      m_limFunc(j,c,0) = lfn[i][c];
+    Assert( j < m_u.nunk(), "Indexing out of bounds in DG::comlim()" );
+    Assert( lfn[i].size() == m_u.nprop(), "size mismatch in received "
+           "limU in DG::comlim()" );
+    for (std::size_t c=0; c<m_u.nprop(); ++c)
+      m_u(j,c,0) = lfn[i][c];
   }
 
   // if we have received all solution ghost contributions from those chares we
@@ -1313,9 +1208,12 @@ DG::solve( tk::real newdt )
   // Set new time step size
   d->setdt( newdt );
 
+  // Update Un
+  if (m_stage == 0) m_un = m_u;
+
   for (const auto& eq : g_dgpde)
     eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(), m_u,
-            m_limFunc, m_rhs );
+            m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   m_u =  rkcoef[0][m_stage] * m_un
@@ -1335,8 +1233,6 @@ DG::solve( tk::real newdt )
       m_diag.compute( *d, m_u.nunk()-m_fd.Esuel().size()/4, m_geoElem, m_u );
     // Increase number of iterations and physical time
     d->next();
-    // Update Un
-    m_un = m_u;
     // Signal that diagnostics have been computed (or in this case, skipped)
     if (!diag_computed) diag();
     // Optionally refine mesh
@@ -1445,8 +1341,6 @@ DG::resizeAfterRefined(
     tk::Fields( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), coord ) );
   m_geoElem = tk::Fields( tk::genGeoElemTet( d->Inpoel(), coord ) );
 
-  m_limFunc = limFunc( nelem );
-
   m_nfac = m_fd.Inpofa().size()/3;
   m_nunk = nelem;
   m_ncoord = coord[0].size();
@@ -1477,19 +1371,6 @@ DG::recompGhostRefined()
 // *****************************************************************************
 {
   if (Disc()->refined()) resizeComm(); else stage();
-}
-
-void
-DG::next()
-// *****************************************************************************
-// Continue to next time step stage
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  tk::real fdt = 0.0;
-  d->contribute( sizeof(tk::real), &fdt, CkReduction::nop,
-                 CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
 }
 
 void

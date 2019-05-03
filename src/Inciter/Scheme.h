@@ -175,18 +175,6 @@ class Scheme : public SchemeBase {
                   proxy );
     }
 
-    //////  proxy.sendinit(...)
-    //! Function to call the sendinit entry method of an array proxy (broadcast)
-    //! \param[in] args Arguments to member function entry method to be called
-    //! \details This function calls the sendinit member function of a chare
-    //!    array proxy and thus equivalent to proxy.sendinit(...), using the
-    //!    last argument as default.
-    template< typename... Args >
-    void sendinit( Args&&... args ) {
-      std::visit( [&]( auto& p ){ p.sendinit(std::forward<Args>(args)...); },
-                  proxy );
-    }
-
     //////  proxy.advance(...)
     //! Function to call the advance entry method of an array proxy (broadcast)
     //! \param[in] args Arguments to member function entry method to be called
@@ -221,8 +209,7 @@ class Scheme : public SchemeBase {
     template< typename... Args >
     void insert( const CkArrayIndex1D& x, Args&&... args ) {
       auto e = tk::element< ProxyElem >( proxy, x );
-      std::visit( [&]( auto& p ){ p.insert(std::forward<Args>(args)...); },
-                  e );
+      std::visit( [&]( auto& p ){ p.insert(std::forward<Args>(args)...); }, e );
     }
 
     //////  proxy.doneInserting(...)

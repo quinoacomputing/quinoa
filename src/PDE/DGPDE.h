@@ -98,9 +98,8 @@ class DGPDE {
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
-              const tk::Fields& limFunc,
               tk::Fields& R ) const
-    { self->rhs( t, geoFace, geoElem, fd, inpoel, coord, U, limFunc, R ); }
+    { self->rhs( t, geoFace, geoElem, fd, inpoel, coord, U, R ); }
 
     //! Public interface for computing the minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -108,9 +107,8 @@ class DGPDE {
                  const inciter::FaceData& fd,
                  const tk::Fields& geoFace,
                  const tk::Fields& geoElem,
-                 const tk::Fields& limFunc,
                  const tk::Fields& U ) const
-    { return self->dt( coord, inpoel, fd, geoFace, geoElem, limFunc, U ); }
+    { return self->dt( coord, inpoel, fd, geoFace, geoElem, U ); }
 
     //! \brief Public interface for collecting all side set IDs the user has
     //!   configured for all components of a PDE system
@@ -134,9 +132,8 @@ class DGPDE {
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
       const tk::Fields& geoElem,
-      const tk::Fields& limFunc,
       const tk::Fields& U ) const
-    { return self->avgElemToNode( inpoel, coord, geoElem, limFunc, U ); }
+    { return self->avgElemToNode( inpoel, coord, geoElem, U ); }
 
     //! Public interface to returning analytic solution
     std::vector< tk::real >
@@ -175,12 +172,10 @@ class DGPDE {
                         const std::vector< std::size_t >&,
                         const tk::UnsMesh::Coords&,
                         const tk::Fields&,
-                        const tk::Fields&,
                         tk::Fields& ) const = 0;
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
                            const std::vector< std::size_t >&,
                            const inciter::FaceData&,
-                           const tk::Fields&,
                            const tk::Fields&,
                            const tk::Fields&,
                            const tk::Fields& ) const = 0;
@@ -194,7 +189,6 @@ class DGPDE {
       virtual std::vector< std::vector< tk::real > > avgElemToNode(
         const std::vector< std::size_t >&,
         const tk::UnsMesh::Coords&,
-        const tk::Fields&,
         const tk::Fields&,
         const tk::Fields& ) const = 0;
       virtual std::vector< tk::real > analyticSolution(
@@ -223,17 +217,15 @@ class DGPDE {
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const tk::Fields& U,
-                const tk::Fields& limFunc,
                 tk::Fields& R ) const override
-      { data.rhs( t, geoFace, geoElem, fd, inpoel, coord, U, limFunc, R ); }
+      { data.rhs( t, geoFace, geoElem, fd, inpoel, coord, U, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const inciter::FaceData& fd,
                    const tk::Fields& geoFace,
                    const tk::Fields& geoElem,
-                   const tk::Fields& limFunc,
                    const tk::Fields& U ) const override
-      { return data.dt( coord, inpoel, fd, geoFace, geoElem, limFunc, U ); }
+      { return data.dt( coord, inpoel, fd, geoFace, geoElem, U ); }
       void side( std::unordered_set< int >& conf ) const override
       { data.side( conf ); }
       std::vector< std::string > fieldNames() const override
@@ -249,9 +241,8 @@ class DGPDE {
         const std::vector< std::size_t >& inpoel,
         const tk::UnsMesh::Coords& coord,
         const tk::Fields& geoElem,
-        const tk::Fields& limFunc,
         const tk::Fields& U ) const override
-      { return data.avgElemToNode( inpoel, coord, geoElem, limFunc, U ); }
+      { return data.avgElemToNode( inpoel, coord, geoElem, U ); }
       std::vector< tk::real >
       analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
        const override { return data.analyticSolution( xi, yi, zi, t ); }
