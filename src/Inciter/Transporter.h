@@ -180,8 +180,6 @@ class Transporter : public CBase_Transporter {
     //! Normal finish of time stepping
     void finish();
 
-    void someFn() { m_scheme.contin(); };
-
   private:
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of worker chares

@@ -142,8 +142,6 @@ class ALECG : public CBase_ALECG {
     //! Evaluate whether to continue with next time step
     void step();
 
-    void contin();
-
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
