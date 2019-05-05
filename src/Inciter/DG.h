@@ -108,7 +108,7 @@ class DG : public CBase_DG {
     //! Receive chare-boundary limiter function data from neighboring chares
     void comlim( int fromch,
                  const std::vector< std::size_t >& tetid,
-                 const std::vector< std::vector< tk::real > >& lfn,
+                 const std::vector< std::vector< tk::real > >& u,
                  const std::vector< std::size_t >& ndof );
 
     //! Receive chare-boundary ghost data from neighboring chares
@@ -147,9 +147,6 @@ class DG : public CBase_DG {
 
     //! Compute limiter function
     void lim();
-
-    //! Send limited solution to neighboring chares
-    void sendLim();
 
     //! Const-ref access to current solution
     //! \param[in,out] u Reference to update with current solution
@@ -196,6 +193,9 @@ class DG : public CBase_DG {
       p | m_diag;
       p | m_stage;
       p | m_ndof;
+      p | m_bid;
+      p | m_uc;
+      p | m_ndofc;
       p | m_initial;
       p | m_expChBndFace;
     }
@@ -282,6 +282,12 @@ class DG : public CBase_DG {
     std::size_t m_stage;
     //! Vector of local number of degrees of freedom for each element
     std::vector< std::size_t > m_ndof;
+    //! Map local ghost tet ids (value) and zero-based boundary ids (key)
+    std::unordered_map< std::size_t, std::size_t > m_bid;
+    //! Solution receive buffer for ghosts only
+    std::vector< std::vector< tk::real > > m_uc;
+    //! Number of degrees of freedom (for p-adaptive) receive buffer ghosts only
+    std::vector< std::size_t > m_ndofc;
     //! 1 if starting time stepping, 0 if during time stepping
     int m_initial;
     //! Unique set of chare-boundary faces this chare is expected to receive
