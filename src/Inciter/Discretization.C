@@ -83,7 +83,7 @@ Discretization::Discretization(
   // and compute map associating boundary-chare node ID associated to global ID
   std::vector< std::size_t > c( tk::sumvalsize( m_msum ) );
   std::size_t j = 0;
-  for (const auto& n : m_msum) for (auto i : n.second) c[ j++ ] = i;
+  for (const auto& n : m_msum) for (auto i : n.second) c[j++] = i;
   tk::unique( c );
   m_bid = tk::assignLid( c );
 
