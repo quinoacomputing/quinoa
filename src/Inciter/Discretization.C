@@ -147,7 +147,7 @@ void
 Discretization::registerReducers()
 // *****************************************************************************
 //  Configure Charm++ reduction types
-//!  \details Since this is a [nodeinit] routine, see cg.ci, the
+//!  \details Since this is a [initnode] routine, see the .ci file, the
 //!   Charm++ runtime system executes the routine exactly once on every
 //!   logical node early on in the Charm++ init sequence. Must be static as
 //!   it is called without an object. See also: Section "Initializations at
