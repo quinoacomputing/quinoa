@@ -441,7 +441,7 @@ DG::setupGhost()
         // looping through all of our tets and interrogating all faces that do
         // not have neighboring tets but we only care about chare-boundary faces
         // here as only those need ghost data. (esuel may also contain
-        // physical boundary faces.)
+        // physical boundary faces)
         if (c > -1) {
           // Will store ghost data associated to neighbor chare
           auto& ghost = m_ghostData[ c ];
@@ -863,8 +863,8 @@ DG::adj()
           "Ghost id map should not contain data for own chare ID" );
 
   // Store expected ghost tet IDs
-  for (const auto& c : m_ghost)
-    for (const auto& g : c.second) {
+  for (const auto& n : m_ghost)
+    for (const auto& g : n.second) {
       IGNORE(g);
       Assert( m_exptGhost.insert( g.second ).second,
               "Failed to store local tetid as exptected ghost id" );
@@ -1080,8 +1080,7 @@ DG::eval_ndof()
                          + dudx[c][1] * dudx[c][1]
                          + dudx[c][2] * dudx[c][2] );
 
-        if( grad > 0.1 )
-          sign++;
+        if (grad > 0.1) ++sign;
       }
 
       if(sign > 0)
@@ -1372,9 +1371,9 @@ DG::solve( tk::real newdt )
         for (std::size_t c=0; c<ncomp; ++c)
         {
           auto mark = c*ndof;
-          m_u(e, mark+1, 0) = 0;
-          m_u(e, mark+2, 0) = 0;
-          m_u(e, mark+3, 0) = 0;
+          m_u(e, mark+1, 0) = 0.0;
+          m_u(e, mark+2, 0) = 0.0;
+          m_u(e, mark+3, 0) = 0.0;
         }
       }
     }
