@@ -57,10 +57,10 @@ class Discretization : public CBase_Discretization {
     static void registerReducers();
 
     //! Resize mesh data structures (e.g., after mesh refinement)
-    void resize( const tk::UnsMesh::Chunk& chunk,
-                 const tk::UnsMesh::Coords& coord,
-                 const std::unordered_map< int,
-                         std::vector< std::size_t > >& msum );
+    void resizePostAMR( const tk::UnsMesh::Chunk& chunk,
+                        const tk::UnsMesh::Coords& coord,
+                        const std::unordered_map< int,
+                                std::vector< std::size_t > >& msum );
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();

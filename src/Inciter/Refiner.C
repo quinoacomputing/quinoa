@@ -749,7 +749,7 @@ Refiner::next()
     auto e = tk::element< SchemeBase::ProxyElem >
                         ( m_scheme.getProxy(), thisIndex );
     boost::apply_visitor(
-      ResizeAfterRefined( m_ginpoel, m_el, m_coord, m_addedNodes, m_addedTets,
+      ResizePostAMR( m_ginpoel, m_el, m_coord, m_addedNodes, m_addedTets,
         msum, m_bface, m_bnode, m_triinpoel ), e );
 
   }

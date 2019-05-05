@@ -526,40 +526,6 @@ Transporter::responded()
 }
 
 void
-Transporter::discresized()
-// *****************************************************************************
-// Reduction target: all Discretization chares have resized their own data after
-// mesh refinement
-// *****************************************************************************
-{
-  discresize_complete();
-}
-
-void
-Transporter::workresized()
-// *****************************************************************************
-// Reduction target: all worker chares have resized their own data after
-// mesh refinement
-// *****************************************************************************
-{
-  workresize_complete();
-}
-
-void
-Transporter::resized()
-// *****************************************************************************
-// Reduction target: all worker chares have resized their own data after
-// mesh refinement
-// *****************************************************************************
-{
-  m_scheme.vol();
-  
-  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG)
-    m_scheme.lhs();
-}
-
-void
 Transporter::discinserted()
 // *****************************************************************************
 // Reduction target: all Discretization chares have been inserted
@@ -823,9 +789,6 @@ Transporter::advance( tk::real dt )
 // Reduction target computing the minimum of dt
 // *****************************************************************************
 {
-  // Enable SDAG waits for resize operations after mesh refinement
-  thisProxy.wait4resize();
-
   // Comptue size of next time step
   m_scheme.advance( dt );
 }

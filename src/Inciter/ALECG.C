@@ -494,7 +494,7 @@ ALECG::refine()
 
 //! [Resize]
 void
-ALECG::resizeAfterRefined(
+ALECG::resizePostAMR(
   const std::vector< std::size_t >& /*ginpoel*/,
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,
@@ -529,7 +529,9 @@ ALECG::resizeAfterRefined(
   ++d->Itr();
 
   // Resize mesh data structures
-  d->resize( chunk, coord, msum );
+  d->resizePostAMR( chunk, coord, msum );
+  // Recompute mesh volumes and statistics
+  d->vol();
 
   // Resize auxiliary solution vectors
   auto npoin = coord[0].size();
@@ -553,9 +555,10 @@ ALECG::resizeAfterRefined(
   // Activate SDAG waits for re-computing the left-hand side
   thisProxy[ thisIndex ].wait4lhs();
 
-  ref_complete();
+  // Recompute the lhs on the new mesh
+  lhs();
 
-  contribute( CkCallback(CkReductionTarget(Transporter,workresized), d->Tr()) );
+  ref_complete();
 }
 //! [Resize]
 

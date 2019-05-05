@@ -1478,7 +1478,7 @@ DG::refine()
 }
 
 void
-DG::resizeAfterRefined(
+DG::resizePostAMR(
   const std::vector< std::size_t >& /*ginpoel*/,
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,
@@ -1517,7 +1517,9 @@ DG::resizeAfterRefined(
   IGNORE(old_nelem);
 
   // Resize mesh data structures
-  d->resize( chunk, coord, msum );
+  d->resizePostAMR( chunk, coord, msum );
+  // Recompute mesh volumes and statistics
+  d->vol();
 
   // Update state
   auto nelem = d->Inpoel().size()/4;
@@ -1555,8 +1557,6 @@ DG::resizeAfterRefined(
   m_un = m_u;
 
   ref_complete();
-
-  contribute( CkCallback(CkReductionTarget(Transporter,workresized), d->Tr()) );
 }
 
 void

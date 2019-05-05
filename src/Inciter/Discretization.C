@@ -104,7 +104,7 @@ Discretization::Discretization(
 }
 
 void
-Discretization::resize(
+Discretization::resizePostAMR(
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< int, std::vector< std::size_t > >& msum )
@@ -138,9 +138,6 @@ Discretization::resize(
   m_vol.resize( m_gid.size(), 0.0 );
 
   m_nvol = 0;
-
-  contribute( CkCallback(CkReductionTarget(Transporter,discresized),
-              m_transporter) );
 }
 
 void
