@@ -29,6 +29,7 @@
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wunused-variable"
+  #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 
 #include "../Inciter/dg.def.h"
