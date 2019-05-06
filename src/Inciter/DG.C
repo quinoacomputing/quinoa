@@ -1642,7 +1642,8 @@ DG::step()
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
 
-    if ( (d->It()) % lbfreq == 0 ) {
+    // Load balancing if user frequency is reached or after the second time-step
+    if ( (d->It()) % lbfreq == 0 || d->It() == 2 ) {
       AtSync();
       if (nonblocking) next();
     }
