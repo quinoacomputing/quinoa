@@ -22,7 +22,7 @@
 
 namespace inciter {
 
-//! Data associated to a tetrahedron cell id used to comunicate across faces
+//! Data associated to a tetrahedron cell id used to communicate across faces
 using GhostData =
   std::unordered_map< std::size_t, // tet id
                       std::tuple<

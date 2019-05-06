@@ -20,6 +20,7 @@ module dg {
   include "UnsMesh.h";
   include "PUPUtil.h";
   include "FaceData.h";
+  include "Fields.h";
 
   namespace inciter {
 
@@ -35,10 +36,9 @@ module dg {
       entry void setup( tk::real v );
       entry void next();
       entry void diag();
-      entry [reductiontarget] void sendLim();
       entry void comlim( int fromch,
                          const std::vector< std::size_t >& tetid,
-                         const std::vector< std::vector< tk::real > >& lfn,
+                         const std::vector< std::vector< tk::real > >& u,
                          const std::vector< std::size_t >& ndof );
       entry void comsol( int fromch,
                          const std::vector< std::size_t >& tetid,
@@ -62,8 +62,10 @@ module dg {
         { lim(); } }
 
       entry void wait4lim() {
-        when ownlim_complete(), comlim_complete() serial "lim"
-        { dt(); } }
+        when ownlim_complete( const tk::Fields& u,
+                              const std::vector< std::size_t >& ndofl ),
+             comlim_complete()
+        serial "lim" { dt( u, ndofl ); } }
 
       entry void wait4recompghost() {
         when diag_complete(), ref_complete(), resize_complete() serial
@@ -73,7 +75,8 @@ module dg {
       entry void reqghost_complete();
       entry void ownsol_complete();
       entry void comsol_complete();
-      entry void ownlim_complete();
+      entry void ownlim_complete( const tk::Fields& u,
+                                  const std::vector< std::size_t >& ndofl );
       entry void comlim_complete();
       entry void diag_complete();
       entry void ref_complete();

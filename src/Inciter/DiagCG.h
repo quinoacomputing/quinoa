@@ -130,7 +130,7 @@ class DiagCG : public CBase_DiagCG {
     void refine();
 
     //! Receive new mesh from refiner
-    void resizeAfterRefined(
+    void resizePostAMR(
       const std::vector< std::size_t >& ginpoel,
       const tk::UnsMesh::Chunk& chunk,
       const tk::UnsMesh::Coords& coord,

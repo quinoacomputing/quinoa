@@ -83,7 +83,7 @@ Discretization::Discretization(
   // and compute map associating boundary-chare node ID associated to global ID
   std::vector< std::size_t > c( tk::sumvalsize( m_msum ) );
   std::size_t j = 0;
-  for (const auto& n : m_msum) for (auto i : n.second) c[ j++ ] = i;
+  for (const auto& n : m_msum) for (auto i : n.second) c[j++] = i;
   tk::unique( c );
   m_bid = tk::assignLid( c );
 
@@ -104,7 +104,7 @@ Discretization::Discretization(
 }
 
 void
-Discretization::resize(
+Discretization::resizePostAMR(
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< int, std::vector< std::size_t > >& msum )
@@ -138,16 +138,13 @@ Discretization::resize(
   m_vol.resize( m_gid.size(), 0.0 );
 
   m_nvol = 0;
-
-  contribute( CkCallback(CkReductionTarget(Transporter,discresized),
-              m_transporter) );
 }
 
 void
 Discretization::registerReducers()
 // *****************************************************************************
 //  Configure Charm++ reduction types
-//!  \details Since this is a [nodeinit] routine, see cg.ci, the
+//!  \details Since this is a [initnode] routine, see the .ci file, the
 //!   Charm++ runtime system executes the routine exactly once on every
 //!   logical node early on in the Charm++ init sequence. Must be static as
 //!   it is called without an object. See also: Section "Initializations at

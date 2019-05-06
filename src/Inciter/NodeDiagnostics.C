@@ -34,8 +34,8 @@ void
 NodeDiagnostics::registerReducers()
 // *****************************************************************************
 //  Configure Charm++ reduction types
-//! \details This routine is supposed to be called from a Charm++ nodeinit
-//!   routine. Since the runtime system executes nodeinit routines exactly once
+//! \details This routine is supposed to be called from a Charm++ initnode
+//!   routine. Since the runtime system executes initnode routines exactly once
 //!   on every logical node early on in the Charm++ init sequence, they must be
 //!   static as they are called without an object. See also: Section
 //!   "Initializations at Program Startup" at in the Charm++ manual

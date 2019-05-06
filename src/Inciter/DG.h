@@ -108,7 +108,7 @@ class DG : public CBase_DG {
     //! Receive chare-boundary limiter function data from neighboring chares
     void comlim( int fromch,
                  const std::vector< std::size_t >& tetid,
-                 const std::vector< std::vector< tk::real > >& lfn,
+                 const std::vector< std::vector< tk::real > >& u,
                  const std::vector< std::size_t >& ndof );
 
     //! Receive chare-boundary ghost data from neighboring chares
@@ -127,7 +127,7 @@ class DG : public CBase_DG {
     void refine();
 
     //! Receive new mesh from refiner
-    void resizeAfterRefined(
+    void resizePostAMR(
       const std::vector< std::size_t >& ginpoel,
       const tk::UnsMesh::Chunk& chunk,
       const tk::UnsMesh::Coords& coord,
@@ -147,9 +147,6 @@ class DG : public CBase_DG {
 
     //! Compute limiter function
     void lim();
-
-    //! Send limited solution to neighboring chares
-    void sendLim();
 
     //! Const-ref access to current solution
     //! \param[in,out] u Reference to update with current solution
@@ -196,6 +193,9 @@ class DG : public CBase_DG {
       p | m_diag;
       p | m_stage;
       p | m_ndof;
+      p | m_bid;
+      p | m_uc;
+      p | m_ndofc;
       p | m_initial;
       p | m_expChBndFace;
     }
@@ -282,6 +282,13 @@ class DG : public CBase_DG {
     std::size_t m_stage;
     //! Vector of local number of degrees of freedom for each element
     std::vector< std::size_t > m_ndof;
+    //! Map local ghost tet ids (value) and zero-based boundary ids (key)
+    std::unordered_map< std::size_t, std::size_t > m_bid;
+    //! Solution receive buffers for ghosts only
+    std::array< std::vector< std::vector< tk::real > >, 2 > m_uc;
+    //! \brief Number of degrees of freedom (for p-adaptive) receive buffers
+    //!   for ghosts only
+    std::array< std::vector< std::size_t >, 2 > m_ndofc;
     //! 1 if starting time stepping, 0 if during time stepping
     int m_initial;
     //! Unique set of chare-boundary faces this chare is expected to receive
@@ -341,7 +348,7 @@ class DG : public CBase_DG {
     void writeFields( CkCallback c ) const;
 
     //! Compute time step size
-    void dt();
+    void dt( const tk::Fields& ul, const std::vector< std::size_t >& ndofl );
 
     //! Evaluate whether to continue with next time step stage
     void stage();
@@ -351,7 +358,7 @@ class DG : public CBase_DG {
     void eval_ndof();
 
     //! p-refine all elements that are adjacent to p-refined elements
-    void propagate_ndof();
+    void propagate_ndof( std::vector< std::size_t >& ndofl );
 };
 
 } // inciter::

@@ -117,7 +117,7 @@ void
 DiagCG::registerReducers()
 // *****************************************************************************
 //  Configure Charm++ reduction types initiated from this chare array
-//! \details Since this is a [nodeinit] routine, the runtime system executes the
+//! \details Since this is a [initnode] routine, the runtime system executes the
 //!   routine exactly once on every logical node early on in the Charm++ init
 //!   sequence. Must be static as it is called without an object. See also:
 //!   Section "Initializations at Program Startup" at in the Charm++ manual
@@ -602,7 +602,7 @@ DiagCG::refine()
 }
 
 void
-DiagCG::resizeAfterRefined(
+DiagCG::resizePostAMR(
   const std::vector< std::size_t >& /*ginpoel*/,
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,
@@ -637,7 +637,9 @@ DiagCG::resizeAfterRefined(
   ++d->Itr();
 
   // Resize mesh data structures
-  d->resize( chunk, coord, msum );
+  d->resizePostAMR( chunk, coord, msum );
+  // Recompute mesh volumes and statistics
+  d->vol();
 
   // Resize auxiliary solution vectors
   auto nelem = d->Inpoel().size()/4;
@@ -671,9 +673,10 @@ DiagCG::resizeAfterRefined(
   // Activate SDAG waits for re-computing the left-hand side
   thisProxy[ thisIndex ].wait4lhs();
 
-  ref_complete();
+  // Recompute the lhs on the new mesh
+  lhs();
 
-  contribute( CkCallback(CkReductionTarget(Transporter,workresized), d->Tr()) );
+  ref_complete();
 }
 
 void

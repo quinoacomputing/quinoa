@@ -38,8 +38,6 @@ module transporter {
                                             std::size_t npoin );
       entry [reductiontarget] void queried();
       entry [reductiontarget] void responded();
-      entry [reductiontarget] void discresized();
-      entry [reductiontarget] void workresized();
       entry [reductiontarget] void comfinal( int initial );
       entry [reductiontarget] void totalvol( tk::real v, tk::real initial );
       entry [reductiontarget] void vol();
@@ -75,16 +73,10 @@ module transporter {
         when minstat_complete(), maxstat_complete(), sumstat_complete(),
              pdfstat_complete() serial "stat" { stat(); } };
 
-      entry void wait4resize() {
-        when discresize_complete(), workresize_complete() serial "resize"
-        { resized(); } };
-
       entry void minstat_complete();
       entry void maxstat_complete();
       entry void sumstat_complete();
       entry void pdfstat_complete();
-      entry void discresize_complete();
-      entry void workresize_complete();
     }
 
   } // inciter::
