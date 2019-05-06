@@ -200,10 +200,10 @@ Superbee_P1( const std::vector< int >& esuel,
         // ignore physical domain ghosts
         if (nel == -1) continue;
 
+        auto n = static_cast< std::size_t >( nel );
         for (inciter::ncomp_t c=0; c<ncomp; ++c)
         {
           auto mark = c*ndof;
-          std::size_t n = static_cast< std::size_t >( nel );
           uMin[c] = std::min(uMin[c], U(n, mark, offset));
           uMax[c] = std::max(uMax[c], U(n, mark, offset));
         }

@@ -862,8 +862,8 @@ DG::adj()
   m_bid = tk::assignLid( c );
 
   // Size communication buffer that receives number of degrees of freedom
-  m_ndofc.resize( m_bid.size() );
-  m_uc.resize( m_bid.size() );
+  for (auto& n : m_ndofc) n.resize( m_bid.size() );
+  for (auto& u : m_uc) u.resize( m_bid.size() );
 
   // Initialize number of degrees of freedom in mesh elements
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
@@ -958,11 +958,7 @@ DG::next()
 // Continue to next time step stage
 // *****************************************************************************
 {
-  auto d = Disc();
-
-  tk::real fdt = 0.0;
-  d->contribute( sizeof(tk::real), &fdt, CkReduction::nop,
-                 CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
+  advance( 0.0 );
 }
 
 void
@@ -1008,7 +1004,8 @@ DG::comsol( int fromch,
 //! \param[in] tetid Ghost tet ids we receive solution data for
 //! \param[in] u Solution ghost data
 //! \param[in] ndof Number of degrees of freedom for chare-boundary elements
-//! \details This function receives contributions to m_u from fellow chares.
+//! \details This function receives contributions to the unlimited solution
+//!   from fellow chares.
 // *****************************************************************************
 {
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comsol()" );
@@ -1021,10 +1018,13 @@ DG::comsol( int fromch,
   for (std::size_t i=0; i<tetid.size(); ++i) {
     auto j = tk::cref_find( n, tetid[i] );
     Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
-    Assert( j < m_u.nunk(), "Indexing out of bounds in DG::comsol()" );
-    Assert( u[i].size() == m_u.nprop(), "ncomp size mismatch" );
-    for (std::size_t c=0; c<m_u.nprop(); ++c) m_u(j,c,0) = u[i][c];
-    if (pref && m_stage == 0) m_ndof[j] = ndof[i];
+    auto b = tk::cref_find( m_bid, j );
+    Assert( b < m_uc[0].size(), "Indexing out of bounds" );
+    m_uc[0][b] = u[i];
+    if (pref && m_stage == 0) {
+      Assert( b < m_ndofc[0].size(), "Indexing out of bounds" );
+      m_ndofc[0][b] = ndof[i];
+    }
   }
 
   // if we have received all solution ghost contributions from those chares we
@@ -1044,7 +1044,7 @@ DG::eval_ndof()
 {
   const auto& esuel = m_fd.Esuel();
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-  const auto ncomp= m_u.nprop()/ndof;
+  const auto ncomp = m_u.nprop()/ndof;
   const auto& inpoel = Disc()->Inpoel();
   const auto& coord = Disc()->Coord();
 
@@ -1182,7 +1182,21 @@ DG::lim()
 {
   const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
 
-  if (pref && m_stage==0) propagate_ndof();
+  // Combine own and communicated contributions of unlimited solution and
+  // degrees of freedom in cells (if p-adaptive)
+  auto ul = m_u;
+  auto ndofl = m_ndof;
+  for (const auto& b : m_bid) {
+    Assert( m_uc[0][b.second].size() == ul.nprop(), "ncomp size mismatch" );
+    for (std::size_t c=0; c<ul.nprop(); ++c) {
+      ul(b.first,c,0) = m_uc[0][b.second][c];
+    }
+    if (pref && m_stage == 0) {
+      ndofl[ b.first ] = m_ndofc[0][ b.second ];
+    }
+  }
+
+  if (pref && m_stage==0) propagate_ndof( ndofl );
 
   if (g_inputdeck.get< tag::discr, tag::ndof >() > 1) {
 
@@ -1190,9 +1204,9 @@ DG::lim()
 
     const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
     if (limiter == ctr::LimiterType::WENOP1)
-      WENO_P1( m_fd.Esuel(), 0, m_u );
+      WENO_P1( m_fd.Esuel(), 0, ul );
     else if (limiter == ctr::LimiterType::SUPERBEEP1)
-      Superbee_P1( m_fd.Esuel(), d->Inpoel(), m_ndof, 0, d->Coord(), m_u );
+      Superbee_P1( m_fd.Esuel(), d->Inpoel(), ndofl, 0, d->Coord(), ul );
   }
 
   // Send limited solution to neighboring chares
@@ -1201,34 +1215,35 @@ DG::lim()
   else
     for(const auto& n : m_ghostData) {
       std::vector< std::size_t > tetid( n.second.size() );
-      std::vector< std::vector< tk::real > > limU( n.second.size() );
+      std::vector< std::vector< tk::real > > u( n.second.size() );
       std::vector< std::size_t > ndof;
       std::size_t j = 0;
       for(const auto& i : n.second) {
         Assert( i.first < m_fd.Esuel().size()/4, "Sending limiter ghost data" );
         tetid[j] = i.first;
-        limU[j] = m_u[i.first];
-        if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
+        u[j] = ul[i.first];
+        if (pref && m_stage == 0) ndof.push_back( ndofl[i.first] );
         ++j;
       }
-      thisProxy[ n.first ].comlim( thisIndex, tetid, limU, ndof );
+      thisProxy[ n.first ].comlim( thisIndex, tetid, u, ndof );
     }
 
-  ownlim_complete();
+  ownlim_complete( ul, ndofl );
 }
 
 void
-DG::propagate_ndof()
+DG::propagate_ndof( std::vector< std::size_t >& ndofl )
 // *****************************************************************************
 //  p-refine all elements that are adjacent to p-refined elements
+//! \param[in] ndofl Number of degrees of freedom for each cell
 //! \details This function p-refines all the neighbors of an element that has
 //!   been p-refined as a result of an error indicator.
 // *****************************************************************************
 {
   const auto& esuf = m_fd.Esuf();
 
-  // Copy m_ndof
-  auto ndof = m_ndof;
+  // Copy number of degrees of freedom for each cell
+  auto ndof = ndofl;
 
   // p-refine (DGP0 -> DGP1) all neighboring elements of elements that have
   // been p-refined (DGP0 -> DGP1) as a result of error indicators
@@ -1237,15 +1252,15 @@ DG::propagate_ndof()
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
     std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
 
-    if (m_ndof[el] == 4)
+    if (ndofl[el] == 4)
       ndof[er] = 4;
 
-    if (m_ndof[er] == 4)
+    if (ndofl[er] == 4)
       ndof[el] = 4;
   }
 
-  // Copy the updated version of ndof to m_ndof
-  m_ndof = ndof;
+  // Update number of degrees of freedom for each cell
+  ndofl = ndof;
 }
 
 void
@@ -1259,7 +1274,8 @@ DG::comlim( int fromch,
 //! \param[in] tetid Ghost tet ids we receive solution data for
 //! \param[in] u Limited high-order solution
 //! \param[in] ndof Number of degrees of freedom for chare-boundary elements
-//! \details This function receives contributions to m_u from fellow chares.
+//! \details This function receives contributions to the limited solution from
+//!   fellow chares.
 // *****************************************************************************
 {
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comlim()" );
@@ -1273,11 +1289,11 @@ DG::comlim( int fromch,
     auto j = tk::cref_find( n, tetid[i] );
     Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
     auto b = tk::cref_find( m_bid, j );
-    Assert( b < m_uc.size(), "Indexing out of bounds" );
-    m_uc[b] = u[i];
+    Assert( b < m_uc[1].size(), "Indexing out of bounds" );
+    m_uc[1][b] = u[i];
     if (pref && m_stage == 0) {
-      Assert( b < m_ndofc.size(), "Indexing out of bounds" );
-      m_ndofc[b] = ndof[i];
+      Assert( b < m_ndofc[1].size(), "Indexing out of bounds" );
+      m_ndofc[1][b] = ndof[i];
     }
   }
 
@@ -1290,9 +1306,11 @@ DG::comlim( int fromch,
 }
 
 void
-DG::dt()
+DG::dt( const tk::Fields& ul, const std::vector< std::size_t >& ndofl )
 // *****************************************************************************
 // Compute time step size
+//! \param[in] ul Limited solution
+//! \param[in] ndofl Number of degrees of freedom for each cell
 // *****************************************************************************
 {
   const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
@@ -1301,13 +1319,15 @@ DG::dt()
 
   // Combine own and communicated contributions of limited solution and degrees
   // of freedom in cells (if p-adaptive)
+  m_u = ul;
+  m_ndof = ndofl;
   for (const auto& b : m_bid) {
-    Assert( m_uc[b.second].size() == m_u.nprop(), "ncomp size mismatch" );
+    Assert( m_uc[1][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
     for (std::size_t c=0; c<m_u.nprop(); ++c) {
-      m_u(b.first,c,0) = m_uc[b.second][c];
+      m_u(b.first,c,0) = m_uc[1][b.second][c];
     }
     if (pref && m_stage == 0) {
-      m_ndof[ b.first ] = m_ndofc[ b.second ];
+      m_ndof[ b.first ] = m_ndofc[1][ b.second ];
     }
   }
 
@@ -1328,8 +1348,8 @@ DG::dt()
 
       // find the minimum dt across all PDEs integrated
       for (const auto& eq : g_dgpde) {
-        auto eqdt = eq.dt( d->Coord(), d->Inpoel(), m_fd, m_geoFace, m_geoElem,
-                           m_u );
+        auto eqdt =
+          eq.dt( d->Coord(), d->Inpoel(), m_fd, m_geoFace, m_geoElem, m_u );
         if (eqdt < mindt) mindt = eqdt;
       }
 
@@ -1347,8 +1367,7 @@ DG::dt()
 
       // Scale smallest dt with CFL coefficient and the CFL is scaled by (2*p+1)
       // where p is the order of the DG polynomial by linear stability theory.
-      mindt *= g_inputdeck.get< tag::discr, tag::cfl >()
-               / (2.0*dgp + 1.0);
+      mindt *= g_inputdeck.get< tag::discr, tag::cfl >() / (2.0*dgp + 1.0);
 
     }
   }
@@ -1528,9 +1547,6 @@ DG::resizePostAMR(
   m_un.resize( nelem, nprop );
   m_lhs.resize( nelem, nprop );
   m_rhs.resize( nelem, nprop );
-
-  auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-  m_ndof.resize( nelem, ndof );
 
   m_fd = FaceData( d->Inpoel(), bface, tk::remap(triinpoel,d->Lid()) );
 
