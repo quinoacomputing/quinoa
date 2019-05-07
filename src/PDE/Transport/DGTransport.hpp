@@ -124,6 +124,7 @@ class Transport {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -132,6 +133,7 @@ class Transport {
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
+              const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
@@ -157,19 +159,20 @@ class Transport {
         { m_bcdir, Dirichlet } }};
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                   Upwind::flux, Problem::prescribedVelocity, U, R );
+      tk::surfInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, fd,
+                   geoFace, Upwind::flux, Problem::prescribedVelocity, U,
+                   ndofel, R );
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, inpoel, coord, geoElem,
-                    flux, Problem::prescribedVelocity, U, R );
+        tk::volInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, geoElem,
+                    flux, Problem::prescribedVelocity, U, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
-        tk::bndSurfInt( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
+        tk::bndSurfInt( m_system, m_ncomp, m_offset, ndof, b.first, fd, geoFace,
           inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
-          b.second, U, R );
+          b.second, U, ndofel, R );
     }
 
     //! Compute the minimum time step size
@@ -199,6 +202,7 @@ class Transport {
     //! \details This functions should be written in conjunction with
     //!   fieldOutput(), which provides the vector of fields to be output
     std::vector< std::string > fieldNames() const {
+      const auto pref = g_inputdeck.get< tag::discr, tag::pref >();
       std::vector< std::string > n;
       const auto& depvar =
       g_inputdeck.get< tag::param, eq, tag::depvar >().at(m_system);
@@ -211,6 +215,8 @@ class Transport {
       // will output error for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_error" );
+      if(pref)           // Adaptive DG on
+        n.push_back( "ndof" );
       return n;
     }
 

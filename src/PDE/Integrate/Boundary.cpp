@@ -19,18 +19,12 @@
 #include "Boundary.hpp"
 #include "Vector.hpp"
 #include "Quadrature.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
-
-namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
-
-} // inciter::
 
 void
 tk::bndSurfInt( ncomp_t system,
                 ncomp_t ncomp,
                 ncomp_t offset,
+                const std::size_t ndof,
                 const std::vector< bcconf_t >& bcconfig,
                 const inciter::FaceData& fd,
                 const Fields& geoFace,
@@ -41,6 +35,7 @@ tk::bndSurfInt( ncomp_t system,
                 const VelFn& vel,
                 const StateFn& state,
                 const Fields& U,
+                const std::vector< std::size_t >& ndofel,
                 Fields& R )
 // *****************************************************************************
 //! Compute boundary surface flux integrals for a given boundary type for DG
@@ -50,6 +45,7 @@ tk::bndSurfInt( ncomp_t system,
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
+//! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] bcconfig BC configuration vector for multiple side sets
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
@@ -61,27 +57,13 @@ tk::bndSurfInt( ncomp_t system,
 //! \param[in] state Function to evaluate the left and right solution state at
 //!   boundaries
 //! \param[in] U Solution vector at recent time step
+//! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
   const auto& bface = fd.Bface();
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-
-  // Number of quadrature points for face integration
-  auto ng = tk::NGfa(ndof);
-
-  // arrays for quadrature points
-  std::array< std::vector< real >, 2 > coordgp;
-  std::vector< real > wgp;
-
-  coordgp[0].resize( ng );
-  coordgp[1].resize( ng );
-  wgp.resize( ng );
-
-  // get quadrature point weights and coordinates for triangle
-  GaussQuadratureTri( ng, coordgp, wgp );
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -96,6 +78,19 @@ tk::bndSurfInt( ncomp_t system,
         Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
 
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+
+        auto ng = tk::NGfa(ndofel[el]);
+
+        // arrays for quadrature points
+        std::array< std::vector< real >, 2 > coordgp;
+        std::vector< real > wgp;
+
+        coordgp[0].resize( ng );
+        coordgp[1].resize( ng );
+        wgp.resize( ng );
+
+        // get quadrature point weights and coordinates for triangle
+        GaussQuadratureTri( ng, coordgp, wgp );
 
         // Extract the left element coordinates
         std::array< std::array< tk::real, 3>, 4 > coordel_l {{
@@ -124,7 +119,7 @@ tk::bndSurfInt( ncomp_t system,
           auto gp = eval_gp( igp, coordfa, coordgp );
 
           //Compute the basis functions for the left element
-          auto B_l = eval_basis( ndof,
+          auto B_l = eval_basis( ndofel[el],
             Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
             Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
             Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l );
@@ -132,7 +127,7 @@ tk::bndSurfInt( ncomp_t system,
           auto wt = wgp[igp] * geoFace(f,0,0);
 
           // Compute the state variables at the left element
-          auto ugp = eval_state( ncomp, offset, ndof, el, U, B_l );
+          auto ugp = eval_state( ncomp, offset, ndof, ndofel[el], el, U, B_l );
 
           Assert( ugp.size() == ncomp, "Size mismatch" );
 
@@ -142,7 +137,7 @@ tk::bndSurfInt( ncomp_t system,
                       vel( system, ncomp, gp[0], gp[1], gp[2] ) );
 
           // Add the surface integration term to the rhs
-          update_rhs_bc( ncomp, offset, ndof, wt, el, fl, B_l, R );
+          update_rhs_bc( ncomp, offset, ndof, ndofel[el], wt, el, fl, B_l, R );
         }
       }
     }
@@ -153,6 +148,7 @@ void
 tk::update_rhs_bc ( ncomp_t ncomp,
                     ncomp_t offset,
                     const std::size_t ndof,
+                    const std::size_t ndof_l,
                     const tk::real wt,
                     const std::size_t el,
                     const std::vector< tk::real >& fl,
@@ -162,7 +158,8 @@ tk::update_rhs_bc ( ncomp_t ncomp,
 //  Update the rhs by adding the boundary surface integration term
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
-//! \param[in] ndof Number of degree of freedom
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] ndof_l Number of degrees of freedom for the left element
 //! \param[in] wt Weight of gauss quadrature point
 //! \param[in] el Left element index
 //! \param[in] fl Surface flux
@@ -170,21 +167,21 @@ tk::update_rhs_bc ( ncomp_t ncomp,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  Assert( B_l.size() == ndof, "Size mismatch" );
+  Assert( B_l.size() == ndof_l, "Size mismatch" );
 
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
     R(el, mark, offset) -= wt * fl[c];
 
-    if(ndof > 1)          //DG(P1)
+    if(ndof_l > 1)          //DG(P1)
     {
       R(el, mark+1, offset) -= wt * fl[c] * B_l[1];
       R(el, mark+2, offset) -= wt * fl[c] * B_l[2];
       R(el, mark+3, offset) -= wt * fl[c] * B_l[3];
     }
 
-    if(ndof > 4)          //DG(P2)
+    if(ndof_l > 4)          //DG(P2)
     {
       R(el, mark+4, offset) -= wt * fl[c] * B_l[4];
       R(el, mark+5, offset) -= wt * fl[c] * B_l[5];

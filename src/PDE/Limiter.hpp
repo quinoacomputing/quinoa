@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Limiter.hpppp
+  \file      src/PDE/Limiter.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
@@ -32,6 +32,7 @@ WENO_P1( const std::vector< int >& esuel,
 void
 Superbee_P1( const std::vector< int >& esuel,
              const std::vector< std::size_t >& inpoel,
+             const std::vector< std::size_t >& ndofel,
              inciter::ncomp_t offset,
              const tk::UnsMesh::Coords& coord,
              tk::Fields& U );

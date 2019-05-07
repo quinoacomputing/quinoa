@@ -27,6 +27,7 @@
 #include "Refiner.hpp"
 #include "Limiter.hpp"
 #include "Reorder.hpp"
+#include "Vector.hpp"
 
 namespace inciter {
 
@@ -73,6 +74,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_recvGhost(),
   m_diag(),
   m_stage( 0 ),
+  m_ndof(),
   m_initial( 1 ),
   m_expChBndFace()
 // *****************************************************************************
@@ -846,6 +848,11 @@ DG::adj()
   m_lhs.resize( m_nunk );
   m_rhs.resize( m_nunk );
 
+  // Initialize the array of adaptive indicator
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  m_ndof.resize( m_nunk, ndof );
+  
+
   // Ensure that we also have all the geometry and connectivity data 
   // (including those of ghosts)
   Assert( m_geoElem.nunk() == m_u.nunk(), "GeoElem unknowns size mismatch" );
@@ -943,6 +950,341 @@ DG::next()
 }
 
 void
+DG::advance( tk::real )
+// *****************************************************************************
+// Advance equations to next time step
+// *****************************************************************************
+{
+  const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
+
+  if (pref && m_stage == 0) eval_ndof();
+
+  // communicate solution ghost data (if any)
+  if (m_ghostData.empty())
+    comsol_complete();
+  else
+    for(const auto& n : m_ghostData) {
+      std::vector< std::size_t > tetid;
+      std::vector< std::vector< tk::real > > u;
+      std::vector< std::size_t > ndof;
+      for(const auto& i : n.second) {
+        Assert( i.first < m_fd.Esuel().size()/4, "Sending solution ghost data" );
+        tetid.push_back( i.first );
+        u.push_back( m_u[i.first] );
+        if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
+      }
+      thisProxy[ n.first ].comsol( thisIndex, tetid, u, ndof );
+    }
+
+  ownsol_complete();
+}
+
+void
+DG::comsol( int fromch,
+            const std::vector< std::size_t >& tetid,
+            const std::vector< std::vector< tk::real > >& u,
+            const std::vector< std::size_t >& ndof )
+// *****************************************************************************
+//  Receive chare-boundary solution ghost data from neighboring chares
+//! \param[in] fromch Sender chare id
+//! \param[in] tetid Ghost tet ids we receive solution data for
+//! \param[in] u Solution ghost data
+//! \param[in] ndof Number of degrees of freedom for chare-boundary elements
+//! \details This function receives contributions to m_u from fellow chares.
+// *****************************************************************************
+{
+  Assert( u.size() == tetid.size(), "Size mismatch in DG::comsol()" );
+
+  const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
+
+  // Find local-to-ghost tet id map for sender chare
+  const auto& n = tk::cref_find( m_ghost, fromch );
+
+  for (std::size_t i=0; i<tetid.size(); ++i) {
+    auto j = tk::cref_find( n, tetid[i] );
+    Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
+    Assert( j < m_u.nunk(), "Indexing out of bounds in DG::comsol()" );
+    for (std::size_t c=0; c<m_u.nprop(); ++c) m_u(j,c,0) = u[i][c];
+    if (pref && m_stage == 0) m_ndof[j] = ndof[i];
+  }
+
+  // if we have received all solution ghost contributions from those chares we
+  // communicate along chare-boundary faces with, solve the system
+  if (++m_nsol == m_ghostData.size()) {
+    m_nsol = 0;
+    comsol_complete();
+  }
+}
+
+void
+DG::eval_ndof()
+// *****************************************************************************
+// Calculate the local number of degrees of freedom for each element for
+// p-adaptive DG
+// *****************************************************************************
+{
+  const auto& esuel = m_fd.Esuel();
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto ncomp= m_u.nprop()/ndof;
+  const auto& inpoel = Disc()->Inpoel();
+  const auto& coord = Disc()->Coord();
+
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  for (std::size_t e=0; e<esuel.size()/4; ++e)
+  {
+    if(m_ndof[e] == 4)
+    {
+      // Extract the element coordinates
+      std::array< std::array< tk::real, 3>, 4 > coordel {{
+        {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+        {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+        {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+        {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
+      }};
+
+      auto jacInv =
+        tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+      std::size_t sign(0);
+
+      for (std::size_t c=0; c<ncomp; ++c)
+      {
+        auto mark = c*ndof;
+
+        // Gradient of unkowns in reference space
+        std::array< std::array< tk::real, 3 >, 5 > dudxi;
+
+        dudxi[c][0] = 2 * m_u(e, mark+1, 0);
+        dudxi[c][1] = m_u(e, mark+1, 0) + 3.0 * m_u(e, mark+2, 0);
+        dudxi[c][2] = m_u(e, mark+1, 0) + m_u(e, mark+2, 0) + 4.0 * m_u(e, mark+3, 0);
+
+        // Gradient of unkowns in physical space
+        std::array< std::array< tk::real, 3 >, 5 > dudx;
+
+        dudx[c][0] =   dudxi[c][0] * jacInv[0][0]
+                     + dudxi[c][1] * jacInv[1][0]
+                     + dudxi[c][2] * jacInv[2][0];
+
+        dudx[c][1] =   dudxi[c][0] * jacInv[0][1]
+                     + dudxi[c][1] * jacInv[1][1]
+                     + dudxi[c][2] * jacInv[2][1];
+
+        dudx[c][2] =   dudxi[c][0] * jacInv[0][2]
+                     + dudxi[c][1] * jacInv[1][2]
+                     + dudxi[c][2] * jacInv[2][2];
+
+        auto grad = sqrt(  dudx[c][0] * dudx[c][0]
+                         + dudx[c][1] * dudx[c][1]
+                         + dudx[c][2] * dudx[c][2] );
+
+        if( grad > 0.1 )
+          sign++;
+      }
+
+      if(sign > 0)
+        m_ndof[e] = 4;
+      else
+        m_ndof[e] = 1;
+    }
+  }
+}
+
+void
+DG::writeFields( CkCallback c ) const
+// *****************************************************************************
+// Output mesh-based fields to file
+//! \param[in] c Function to continue with after the write
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  const auto& esuel = m_fd.Esuel();
+
+  // Copy mesh form Discretization object and chop off ghosts for dump
+  auto inpoel = d->Inpoel();
+  inpoel.resize( esuel.size() );
+  auto coord = d->Coord();
+  for (std::size_t i=0; i<3; ++i) coord[i].resize( m_ncoord );
+
+  // Query fields names from all PDEs integrated
+  std::vector< std::string > elemfieldnames;
+  for (const auto& eq : g_dgpde) {
+    auto n = eq.fieldNames();
+    elemfieldnames.insert( end(elemfieldnames), begin(n), end(n) );
+  }
+
+  // Collect element field solution
+  std::vector< std::vector< tk::real > > elemfields;
+  auto u = m_u;
+  for (const auto& eq : g_dgpde) {
+    auto o = eq.fieldOutput( d->T(), m_geoElem, u );
+
+    // cut off ghost elements
+    for (auto& f : o) f.resize( esuel.size()/4 );
+    elemfields.insert( end(elemfields), begin(o), end(o) );
+  }
+
+  // Add adaptive indicator array to element-centered field output
+  std::vector<tk::real> ndof( begin(m_ndof), end(m_ndof) );
+  ndof.resize( esuel.size()/4 );  // cut off ghosts
+  elemfields.push_back( ndof );
+
+  // // Collect node field solution
+  // std::vector< std::vector< tk::real > > nodefields;
+  // for (const auto& eq : g_dgpde) {
+  //   auto fields =
+  //     eq.avgElemToNode( d->Inpoel(), d->Coord(), m_geoElem, m_u );
+  //   nodefields.insert( end(nodefields), begin(fields), end(fields) );
+  // }
+
+  // Output chare mesh and fields metadata to file
+  d->write( inpoel, coord, m_fd.Bface(), {}, m_fd.Triinpoel(), elemfieldnames,
+            {}, elemfields, {}, c );
+}
+
+void
+DG::lhs()
+// *****************************************************************************
+// Compute left-hand side of discrete transport equations
+// *****************************************************************************
+{
+  for (const auto& eq : g_dgpde) eq.lhs( m_geoElem, m_lhs );
+
+  if (!m_initial) stage();
+}
+
+void
+DG::lim()
+// *****************************************************************************
+// Compute limiter function
+// *****************************************************************************
+{
+  const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
+
+  if (pref && m_stage==0) propagate_ndof();
+
+  if (g_inputdeck.get< tag::discr, tag::ndof >() > 1) {
+
+    auto d = Disc();
+
+    const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
+    if (limiter == ctr::LimiterType::WENOP1)
+      WENO_P1( m_fd.Esuel(), 0, m_u );
+    else if (limiter == ctr::LimiterType::SUPERBEEP1)
+      Superbee_P1( m_fd.Esuel(), d->Inpoel(), m_ndof, 0, d->Coord(), m_u );
+  }
+
+  contribute( CkCallback( CkReductionTarget(DG,sendLim), thisProxy ) );
+}
+
+void
+DG::propagate_ndof()
+// *****************************************************************************
+//  p-refine all elements that are adjacent to p-refined elements
+//! \details This function p-refines all the neighbors of an element that has
+//!   been p-refined as a result of an error indicator.
+// *****************************************************************************
+{
+  const auto& esuf = m_fd.Esuf();
+
+  // Copy m_ndof
+  auto ndof = m_ndof;
+
+  // p-refine (DGP0 -> DGP1) all neighboring elements of elements that have
+  // been p-refined (DGP0 -> DGP1) as a result of error indicators
+  for( auto f=m_fd.Nbfac(); f<esuf.size()/2; ++f )
+  {
+    std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+    std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+
+    if (m_ndof[el] == 4)
+      ndof[er] = 4;
+
+    if (m_ndof[er] == 4)
+      ndof[el] = 4;
+  }
+  // Copy the updated version of ndof to m_ndof
+  m_ndof = ndof;
+}
+
+void
+DG::sendLim()
+// *****************************************************************************
+// Send limited solution to neighboring chares
+// *****************************************************************************
+{
+  const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
+
+  if (g_inputdeck.get< tag::discr, tag::ndof >() > 1) {
+    if (m_ghostData.empty())
+      comlim_complete();
+    else
+      for(const auto& n : m_ghostData) {
+        std::vector< std::size_t > tetid;
+        std::vector< std::vector< tk::real > > limU;
+        std::vector< std::size_t > ndof;
+        for(const auto& i : n.second) {
+          Assert( i.first < m_fd.Esuel().size()/4, "Sending limiter ghost data" );
+          tetid.push_back( i.first );
+          limU.push_back( m_u[i.first] );
+          if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
+        }
+        thisProxy[ n.first ].comlim( thisIndex, tetid, limU, ndof );
+      }
+
+  } else {
+
+    comlim_complete();
+
+  }
+
+  ownlim_complete();
+}
+
+void
+DG::comlim( int fromch,
+            const std::vector< std::size_t >& tetid,
+            const std::vector< std::vector< tk::real > >& lfn,
+            const std::vector< std::size_t >& ndof )
+// *****************************************************************************
+//  Receive chare-boundary limiter ghost data from neighboring chares
+//! \param[in] fromch Sender chare id
+//! \param[in] tetid Ghost tet ids we receive solution data for
+//! \param[in] lfn Limited high-order solution
+//! \param[in] ndof Number of degrees of freedom for chare-boundary elements
+//! \details This function receives contributions to m_u from fellow chares.
+// *****************************************************************************
+{
+  Assert( lfn.size() == tetid.size(), "Size mismatch in DG::comlim()" );
+
+  const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
+
+  // Find local-to-ghost tet id map for sender chare
+  const auto& n = tk::cref_find( m_ghost, fromch );
+
+  for (std::size_t i=0; i<tetid.size(); ++i) {
+    auto j = tk::cref_find( n, tetid[i] );
+    Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
+    Assert( j < m_u.nunk(), "Indexing out of bounds in DG::comlim()" );
+    Assert( lfn[i].size() == m_u.nprop(), "size mismatch in received "
+           "limU in DG::comlim()" );
+    for (std::size_t c=0; c<m_u.nprop(); ++c)
+      m_u(j,c,0) = lfn[i][c];
+    if (pref && m_stage == 0) m_ndof[j] = ndof[i];
+  }
+
+  // if we have received all solution ghost contributions from those chares we
+  // communicate along chare-boundary faces with, solve the system
+  if (++m_nlim == m_ghostData.size()) {
+    m_nlim = 0;
+    comlim_complete();
+  }
+}
+
+void
 DG::dt()
 // *****************************************************************************
 // Compute time step size
@@ -1002,207 +1344,6 @@ DG::dt()
 }
 
 void
-DG::advance( tk::real )
-// *****************************************************************************
-// Advance equations to next time step
-// *****************************************************************************
-{
-  // communicate solution ghost data (if any)
-  if (m_ghostData.empty())
-    comsol_complete();
-  else
-    for(const auto& n : m_ghostData) {
-      std::vector< std::size_t > tetid;
-      std::vector< std::vector< tk::real > > u;
-      for(const auto& i : n.second) {
-        Assert( i.first < m_fd.Esuel().size()/4, "Sending solution ghost data" );
-        tetid.push_back( i.first );
-        u.push_back( m_u[i.first] );
-      }
-      thisProxy[ n.first ].comsol( thisIndex, tetid, u );
-    }
-
-  ownsol_complete();
-}
-
-void
-DG::comsol( int fromch,
-            const std::vector< std::size_t >& tetid,
-            const std::vector< std::vector< tk::real > >& u )
-// *****************************************************************************
-//  Receive chare-boundary solution ghost data from neighboring chares
-//! \param[in] fromch Sender chare id
-//! \param[in] tetid Ghost tet ids we receive solution data for
-//! \param[in] u Solution ghost data
-//! \details This function receives contributions to m_u from fellow chares.
-// *****************************************************************************
-{
-  Assert( u.size() == tetid.size(), "Size mismatch in DG::comsol()" );
-
-  // Find local-to-ghost tet id map for sender chare
-  const auto& n = tk::cref_find( m_ghost, fromch );
-
-  for (std::size_t i=0; i<tetid.size(); ++i) {
-    auto j = tk::cref_find( n, tetid[i] );
-    Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
-    Assert( j < m_u.nunk(), "Indexing out of bounds in DG::comsol()" );
-    for (std::size_t c=0; c<m_u.nprop(); ++c)
-      m_u(j,c,0) = u[i][c];
-  }
-
-  // if we have received all solution ghost contributions from those chares we
-  // communicate along chare-boundary faces with, solve the system
-  if (++m_nsol == m_ghostData.size()) {
-    m_nsol = 0;
-    comsol_complete();
-  }
-}
-
-void
-DG::writeFields( CkCallback c ) const
-// *****************************************************************************
-// Output mesh-based fields to file
-//! \param[in] c Function to continue with after the write
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  const auto& esuel = m_fd.Esuel();
-
-  // Copy mesh form Discretization object and chop off ghosts for dump
-  auto inpoel = d->Inpoel();
-  inpoel.resize( esuel.size() );
-  auto coord = d->Coord();
-  for (std::size_t i=0; i<3; ++i) coord[i].resize( m_ncoord );
-
-  // Query fields names from all PDEs integrated
-  std::vector< std::string > elemfieldnames;
-  for (const auto& eq : g_dgpde) {
-    auto n = eq.fieldNames();
-    elemfieldnames.insert( end(elemfieldnames), begin(n), end(n) );
-  }
-
-  // Collect element field solution
-  std::vector< std::vector< tk::real > > elemfields;
-  auto u = m_u;
-  for (const auto& eq : g_dgpde) {
-    auto o =
-      eq.fieldOutput( d->T(), m_geoElem, u );
-    // cut off ghost elements
-    for (auto& field : o) field.resize( esuel.size()/4 );
-    elemfields.insert( end(elemfields), begin(o), end(o) );
-  }
-
-  // // Collect node field solution
-  // std::vector< std::vector< tk::real > > nodefields;
-  // for (const auto& eq : g_dgpde) {
-  //   auto fields =
-  //     eq.avgElemToNode( d->Inpoel(), d->Coord(), m_geoElem, m_u );
-  //   nodefields.insert( end(nodefields), begin(fields), end(fields) );
-  // }
-
-  // Output chare mesh and fields metadata to file
-  d->write( inpoel, coord, m_fd.Bface(), {}, m_fd.Triinpoel(), elemfieldnames,
-            {}, elemfields, {}, c );
-}
-
-void
-DG::lhs()
-// *****************************************************************************
-// Compute left-hand side of discrete transport equations
-// *****************************************************************************
-{
-  for (const auto& eq : g_dgpde) eq.lhs( m_geoElem, m_lhs );
-
-  if (!m_initial) stage();
-}
-
-void
-DG::lim()
-// *****************************************************************************
-// Compute limiter function
-// *****************************************************************************
-{
-  if (g_inputdeck.get< tag::discr, tag::ndof >() > 1) {
-
-    auto d = Disc();
-
-    const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
-    if (limiter == ctr::LimiterType::WENOP1)
-      WENO_P1( m_fd.Esuel(), 0, m_u );
-    else if (limiter == ctr::LimiterType::SUPERBEEP1)
-      Superbee_P1( m_fd.Esuel(), d->Inpoel(), 0, d->Coord(), m_u );
-  }
-
-  contribute( CkCallback( CkReductionTarget(DG,sendLim), thisProxy ) );
-}
-
-void
-DG::sendLim()
-// *****************************************************************************
-// Send limited solution to neighboring chares
-// *****************************************************************************
-{
-  if (g_inputdeck.get< tag::discr, tag::ndof >() > 1) {
-    if (m_ghostData.empty())
-      comlim_complete();
-    else
-      for(const auto& n : m_ghostData) {
-        std::vector< std::size_t > tetid;
-        std::vector< std::vector< tk::real > > limU;
-        for(const auto& i : n.second) {
-          Assert( i.first < m_fd.Esuel().size()/4, "Sending limiter ghost data" );
-          tetid.push_back( i.first );
-          limU.push_back( m_u[i.first] );
-        }
-        thisProxy[ n.first ].comlim( thisIndex, tetid, limU );
-      }
-
-  } else {
-
-    comlim_complete();
-
-  }
-
-  ownlim_complete();
-}
-
-void
-DG::comlim( int fromch,
-            const std::vector< std::size_t >& tetid,
-            const std::vector< std::vector< tk::real > >& lfn )
-// *****************************************************************************
-//  Receive chare-boundary limiter ghost data from neighboring chares
-//! \param[in] fromch Sender chare id
-//! \param[in] tetid Ghost tet ids we receive solution data for
-//! \param[in] lfn Limited high-order solution
-//! \details This function receives contributions to m_u from fellow chares.
-// *****************************************************************************
-{
-  Assert( lfn.size() == tetid.size(), "Size mismatch in DG::comlim()" );
-
-  // Find local-to-ghost tet id map for sender chare
-  const auto& n = tk::cref_find( m_ghost, fromch );
-
-  for (std::size_t i=0; i<tetid.size(); ++i) {
-    auto j = tk::cref_find( n, tetid[i] );
-    Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
-    Assert( j < m_u.nunk(), "Indexing out of bounds in DG::comlim()" );
-    Assert( lfn[i].size() == m_u.nprop(), "size mismatch in received "
-           "limU in DG::comlim()" );
-    for (std::size_t c=0; c<m_u.nprop(); ++c)
-      m_u(j,c,0) = lfn[i][c];
-  }
-
-  // if we have received all solution ghost contributions from those chares we
-  // communicate along chare-boundary faces with, solve the system
-  if (++m_nlim == m_ghostData.size()) {
-    m_nlim = 0;
-    comlim_complete();
-  }
-}
-
-void
 DG::solve( tk::real newdt )
 // *****************************************************************************
 // Compute right-hand side of discrete transport equations
@@ -1216,14 +1357,35 @@ DG::solve( tk::real newdt )
   auto d = Disc();
 
   // Set new time step size
-  d->setdt( newdt );
+  if (m_stage == 0) d->setdt( newdt );
+
+  const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
+  if (pref && m_stage == 0)
+  {
+    // When the element are coarsened, high order term should be zero
+    for(std::size_t e = 0; e < m_nunk; e++)
+    {
+      const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto ncomp= m_u.nprop()/ndof;
+      if(m_ndof[e] == 1)
+      {
+        for (std::size_t c=0; c<ncomp; ++c)
+        {
+          auto mark = c*ndof;
+          m_u(e, mark+1, 0) = 0;
+          m_u(e, mark+2, 0) = 0;
+          m_u(e, mark+3, 0) = 0;
+        }
+      }
+    }
+  }
 
   // Update Un
   if (m_stage == 0) m_un = m_u;
 
   for (const auto& eq : g_dgpde)
     eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(), m_u,
-            m_rhs );
+            m_ndof, m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   m_u =  rkcoef[0][m_stage] * m_un
@@ -1239,15 +1401,16 @@ DG::solve( tk::real newdt )
     thisProxy[ thisIndex ].wait4recompghost();
 
     // Compute diagnostics, e.g., residuals
-    auto diag_computed =
-      m_diag.compute( *d, m_u.nunk()-m_fd.Esuel().size()/4, m_geoElem, m_u );
+    auto diag_computed = m_diag.compute( *d, m_u.nunk()-m_fd.Esuel().size()/4,
+                                         m_geoElem, m_ndof, m_u );
+
     // Increase number of iterations and physical time
     d->next();
+
     // Signal that diagnostics have been computed (or in this case, skipped)
     if (!diag_computed) diag();
     // Optionally refine mesh
     refine();
-
   }
 }
 
@@ -1345,6 +1508,8 @@ DG::resizeAfterRefined(
   m_lhs.resize( nelem, nprop );
   m_rhs.resize( nelem, nprop );
 
+  auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+  m_ndof.resize( nelem, ndof );
 
   m_fd = FaceData( d->Inpoel(), bface, tk::remap(triinpoel,d->Lid()) );
 
@@ -1442,7 +1607,8 @@ DG::step()
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
 
-    if ( (d->It()) % lbfreq == 0 ) {
+    // Load balancing if user frequency is reached or after the second time-step
+    if ( (d->It()) % lbfreq == 0 || d->It() == 2 ) {
       AtSync();
       if (nonblocking) next();
     }

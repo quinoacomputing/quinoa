@@ -5110,6 +5110,19 @@ struct dgp2_info {
 };
 using dgp2 = keyword< dgp2_info, TAOCPP_PEGTL_STRING("dgp2") >;
 
+struct pdg_info {
+  static std::string name() { return "p-adaptive DG + RK"; }
+  static std::string shortDescription() { return
+    "Select adaptive discontinuous Galerkin discretization + Runge-Kutta"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the adaptive discontinuous Galerkin
+    spatial discretizaion used in Inciter. Selecting this spatial
+    discretization also selects the Runge-Kutta scheme for time
+    discretization. See Control/Inciter/Options/Scheme.h for other valid
+    options.)"; }
+};
+using pdg = keyword< pdg_info, TAOCPP_PEGTL_STRING("pdg") >;
+
 struct scheme_info {
   static std::string name() { return "Discretization scheme"; }
   static std::string shortDescription() { return

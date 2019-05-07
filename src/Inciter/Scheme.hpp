@@ -335,6 +335,18 @@ class Scheme : public SchemeBase {
         call_newMesh<Args...>( std::forward<Args>(args)... ), e );
     }
 
+    //////  proxy.contin(...)
+    //! Function to call the contin entry method of an array proxy (broadcast)
+    //! \param[in] args Arguments to member function (entry method) to be called
+    //! \details This function calls the contin member function of a chare array
+    //!   proxy and thus equivalent to proxy.contin(...), using the last argument
+    //!   as default.
+    template< typename... Args >
+    void contin( Args&&... args ) {
+      boost::apply_visitor( call_contin<Args...>( std::forward<Args>(args)... ),
+                            proxy );
+    }
+
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -492,6 +504,27 @@ class Scheme : public SchemeBase {
      template< typename P, typename... Args >
      static void invoke( P& p, Args&&... args ) {
        p.newMesh( std::forward<Args>(args)... );
+     }
+   };
+
+   //! Functor to call the chare entry method 'contin'
+   //! \details This class is intended to be used in conjunction with variant
+   //!   and boost::visitor. The template argument types are the types of the
+   //!   arguments to entry method to be invoked behind the variant holding a
+   //!   Charm++ proxy.
+   //! \see The base class Call for the definition of operator().
+   template< typename... As >
+   struct call_contin : Call< call_contin<As...>, As... > {
+     using Base = Call< call_contin<As...>, As... >;
+     using Base::Base; // inherit base constructors
+     //! Invoke the entry method
+     //! \param[in,out] p Proxy behind which the entry method is called
+     //! \param[in] args Function arguments passed to entry method
+     //! \details P is the proxy type, Args are the types of the arguments of
+     //!   the entry method to be called.
+     template< typename P, typename... Args >
+     static void invoke( P& p, Args&&... args ) {
+       p.contin( std::forward<Args>(args)... );
      }
    };
 

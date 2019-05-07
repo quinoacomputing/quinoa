@@ -30,12 +30,14 @@ void
 volInt( ncomp_t system,
         ncomp_t ncomp,
         ncomp_t offset,
+        const std::size_t ndof,
         const std::vector< std::size_t >& inpoel,
         const UnsMesh::Coords& coord,
         const Fields& geoElem,
         const FluxFn& flux,
         const VelFn& vel,
         const Fields& U,
+        const std::vector< std::size_t >& ndofel,
         Fields& R );
 
 //! Update the rhs by adding the source term integrals
@@ -43,6 +45,7 @@ void
 update_rhs( ncomp_t ncomp,
             ncomp_t offset,
             const std::size_t ndof,
+            const std::size_t ndof_e,
             const tk::real wt,
             const std::size_t e,
             const std::array< std::vector<tk::real>, 3 >& dBdx,
