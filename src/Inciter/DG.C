@@ -1012,6 +1012,9 @@ DG::comsol( int fromch,
 
   const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
 
+  if (pref && m_stage == 0)
+    Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comsol()" );
+
   // Find local-to-ghost tet id map for sender chare
   const auto& n = tk::cref_find( m_ghost, fromch );
 
@@ -1282,6 +1285,9 @@ DG::comlim( int fromch,
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comlim()" );
 
   const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
+
+  if (pref && m_stage == 0)
+    Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comlim()" );
 
   // Find local-to-ghost tet id map for sender chare
   const auto& n = tk::cref_find( m_ghost, fromch );
