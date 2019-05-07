@@ -154,6 +154,7 @@ class InputDeck :
                                    kw::dg,
                                    kw::dgp1,
                                    kw::dgp2,
+                                   kw::pdg,
                                    kw::flux,
                                    kw::laxfriedrichs,
                                    kw::hllc,
@@ -162,6 +163,7 @@ class InputDeck :
                                    kw::cweight,
                                    kw::nolimiter,
                                    kw::wenop1,
+                                   kw::superbeep1,
                                    kw::bc_sym,
                                    kw::bc_inlet,
                                    kw::bc_outlet,
@@ -193,6 +195,7 @@ class InputDeck :
       set< tag::discr, tag::scheme >( SchemeType::DiagCG );
       set< tag::discr, tag::flux >( FluxType::HLLC );
       set< tag::discr, tag::ndof >( 1 );
+      set< tag::discr, tag::pref >( false );
       set< tag::discr, tag::limiter >( LimiterType::NOLIMITER );
       set< tag::discr, tag::cweight >( 1.0 );
       // Default field output file type

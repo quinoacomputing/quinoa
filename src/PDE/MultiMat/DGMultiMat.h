@@ -120,7 +120,7 @@ class MultiMat {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
-    //! \param[in] limFunc Limiter function for higher-order solution dofs
+    //! \param[in] ndofel Vector of local number of degrees of freedome
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -129,7 +129,7 @@ class MultiMat {
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
-              const tk::Fields& limFunc,
+              const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
@@ -161,22 +161,23 @@ class MultiMat {
         { m_bcextrapolate, Extrapolate } }};
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                   rieflxfn, velfn, U, limFunc, R );
+      tk::surfInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, fd,
+                   geoFace, rieflxfn, velfn, U, ndofel, R );
 
       // compute source term intehrals
-      tk::srcInt( m_system, m_ncomp, m_offset,
-                  t, inpoel, coord, geoElem, Problem::src, R );
+      tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, inpoel, coord, geoElem,
+                  Problem::src, ndofel, R );
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
-                    velfn, U, limFunc, R );
+        tk::volInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, geoElem,
+                    flux, velfn, U, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
-        tk::bndSurfInt( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
-          inpoel, coord, t, rieflxfn, velfn, b.second, U, limFunc, R );
+        tk::bndSurfInt( m_system, m_ncomp, m_offset, ndof, b.first, fd, geoFace,
+                        inpoel, coord, t, rieflxfn, velfn, b.second, U,
+                        ndofel, R );
     }
 
     //! Compute the minimum time step size
@@ -185,7 +186,6 @@ class MultiMat {
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
-    //! \param[in] limFunc Limiter function for higher-order solution dofs
     //! \param[in] U Solution vector at recent time step
     //! \return Minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -193,7 +193,6 @@ class MultiMat {
                  const inciter::FaceData& fd,
                  const tk::Fields& geoFace,
                  const tk::Fields& geoElem,
-                 const tk::Fields& limFunc,
                  const tk::Fields& U ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
@@ -270,11 +269,10 @@ class MultiMat {
           for (ncomp_t c=0; c<m_ncomp; ++c)
           {
             auto mark = c*ndof;
-            auto lmark = c*(ndof-1);
             ugp[0].push_back( U(el, mark, m_offset)
-                + limFunc(el, lmark+0, 0) * U(el, mark+1, m_offset) * B_l[1]
-                + limFunc(el, lmark+1, 0) * U(el, mark+2, m_offset) * B_l[2]
-                + limFunc(el, lmark+2, 0) * U(el, mark+3, m_offset) * B_l[3] );
+                            + U(el, mark+1, m_offset) * B_l[1]
+                            + U(el, mark+2, m_offset) * B_l[2]
+                            + U(el, mark+3, m_offset) * B_l[3] );
           }
 
           rho = ugp[0][0];
@@ -320,11 +318,10 @@ class MultiMat {
             for (ncomp_t c=0; c<5; ++c)
             {
               auto mark = c*ndof;
-              auto lmark = c*(ndof-1);
               ugp[1].push_back( U(eR, mark, m_offset)
-                  + limFunc(eR, lmark+0, 0) * U(eR, mark+1, m_offset) * B_r[1]
-                  + limFunc(eR, lmark+1, 0) * U(eR, mark+2, m_offset) * B_r[2]
-                  + limFunc(eR, lmark+2, 0) * U(eR, mark+3, m_offset) * B_r[3]);
+                              + U(eR, mark+1, m_offset) * B_r[1]
+                              + U(eR, mark+2, m_offset) * B_r[2]
+                              + U(eR, mark+3, m_offset) * B_r[3]);
             }
 
             rho = ugp[1][0];
@@ -417,7 +414,6 @@ class MultiMat {
     avgElemToNode( const std::vector< std::size_t >& inpoel,
                    const tk::UnsMesh::Coords& coord,
                    const tk::Fields& /*geoElem*/,
-                   const tk::Fields& limFunc,
                    const tk::Fields& U ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
@@ -474,11 +470,10 @@ class MultiMat {
               ugp[c] =  U(e, c, m_offset);
             } else {
               auto mark = c*ndof;
-              auto lmark = c*(ndof-1);
               ugp[c] =  U(e, mark,   m_offset)
-                      + limFunc(e, lmark+0, 0) * U(e, mark+1, m_offset) * B2
-                      + limFunc(e, lmark+1, 0) * U(e, mark+2, m_offset) * B3
-                      + limFunc(e, lmark+2, 0) * U(e, mark+3, m_offset) * B4;
+                      + U(e, mark+1, m_offset) * B2
+                      + U(e, mark+2, m_offset) * B3
+                      + U(e, mark+3, m_offset) * B4;
             }
           }
 

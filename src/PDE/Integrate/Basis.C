@@ -79,7 +79,7 @@ tk::eval_dBdx_p1( const std::size_t ndof,
                   const std::array< std::array< tk::real, 3 >, 3 >& jacInv )
 // *****************************************************************************
 //  Compute the derivatives of basis functions for DG(P1)
-//! \param[in] ndof Number of degree of freedom
+//! \param[in] ndof Number of degrees of freedom
 //! \param[in] jacInv Array of the inverse of Jacobian
 //! \return Array of the derivatives of basis functions
 // *****************************************************************************
@@ -155,7 +155,7 @@ tk::eval_dBdx_p2( const std::size_t igp,
                   std::array< std::vector<tk::real>, 3 >& dBdx )
 // *****************************************************************************
 //  Compute the derivatives of basis function for DG(P2)
-//! \param[in] ndof Number of degree of freedom
+//! \param[in] ndof Number of degrees of freedom
 //! \param[in] igp Index of quadrature points
 //! \param[in] coord Array of nodal coordinates for tetrahedron element
 //! \param[in] jacInv Array of the inverse of Jacobian
@@ -272,7 +272,7 @@ tk::eval_basis( const std::size_t ndof,
                 const tk::real zeta )
 // *****************************************************************************
 //  Compute the Dubiner basis functions
-//! \param[in] ndof Number of degree of freedom
+//! \param[in] ndof Number of degrees of freedom
 //! \param[in] xi,eta,zeta Coordinates for quadrature points in reference space
 //! \return Vector of basis functions
 // *****************************************************************************
@@ -311,23 +311,23 @@ std::vector< tk::real >
 tk::eval_state ( ncomp_t ncomp,
                  ncomp_t offset,
                  const std::size_t ndof,
+                 const std::size_t ndof_el,
                  const std::size_t e,
                  const Fields& U,
-                 const Fields& limFunc,
                  const std::vector< tk::real >& B )
 // *****************************************************************************
 //  Compute the state variables for the tetrahedron element
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
-//! \param[in] ndof Number of degree of freedom
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] ndof_el Number of degrees of freedom for the local element
 //! \param[in] e Index for the tetrahedron element
 //! \param[in] U Solution vector at recent time step
-//! \param[in] limFunc Limiter function for higher-order solution dofs
 //! \param[in] B Vector of basis functions
 //! \return Vector of state variable for tetrahedron element
 // *****************************************************************************
 {
-  Assert( B.size() == ndof, "Size mismatch" );
+  Assert( B.size() == ndof_el, "Size mismatch" );
 
   // Array of state variable for tetrahedron element
   std::vector< tk::real > state( ncomp );
@@ -337,15 +337,14 @@ tk::eval_state ( ncomp_t ncomp,
     auto mark = c*ndof;
     state[c] = U( e, mark, offset );
 
-    if(ndof > 1)        //DG(P1)
+    if(ndof_el > 1)        //DG(P1)
     {
-      auto lmark = c*(ndof-1);
-      state[c] += limFunc( e, lmark  , 0 ) * U( e, mark+1, offset ) * B[1]
-                + limFunc( e, lmark+1, 0 ) * U( e, mark+2, offset ) * B[2]
-                + limFunc( e, lmark+2, 0 ) * U( e, mark+3, offset ) * B[3];
+      state[c] += U( e, mark+1, offset ) * B[1]
+                + U( e, mark+2, offset ) * B[2]
+                + U( e, mark+3, offset ) * B[3];
     }
 
-    if(ndof > 4)        //DG(P2)
+    if(ndof_el > 4)        //DG(P2)
     {
       state[c] += U( e, mark+4, offset ) * B[4]
                 + U( e, mark+5, offset ) * B[5]

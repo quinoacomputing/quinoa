@@ -127,7 +127,8 @@ Transporter::Transporter() :
       m_print.item( "FCT mass diffusion coeff",
                     g_inputdeck.get< tag::discr, tag::ctau >() );
   } else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1 ||
-             scheme == ctr::SchemeType::DGP2) {
+             scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG)
+  {
     m_print.Item< ctr::Flux, tag::discr, tag::flux >();
   }
   m_print.item( "PE-locality mesh reordering",
@@ -617,7 +618,7 @@ Transporter::diagHeader()
   if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG)
     for (const auto& eq : g_cgpde) varnames( eq, var );
   else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1 ||
-           scheme == ctr::SchemeType::DGP2)
+           scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG)
     for (const auto& eq : g_dgpde) varnames( eq, var );
   else Throw( "Diagnostics header not handled for discretization scheme" );
 
@@ -814,16 +815,6 @@ Transporter::stat()
                     {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
   // Create "derived-class" workers
   m_sorter.createWorkers();
-}
-
-void
-Transporter::sendinit()
-// *****************************************************************************
-// Reduction target to sync the initial solution before limiting
-// *****************************************************************************
-{
-  // send initial solution to neighboring chares
-  m_scheme.sendinit();
 }
 
 void

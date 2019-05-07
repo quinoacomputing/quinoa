@@ -102,9 +102,6 @@ class DiagCG : public CBase_DiagCG {
     // Initially compute left hand side diagonal matrix
     void init();
 
-    //! Send own chare-boundary data to neighboring chares
-    void sendinit(){}
-
     //! Advance equations to next time step
     void advance( tk::real newdt );
 

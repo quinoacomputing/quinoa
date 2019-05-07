@@ -102,29 +102,20 @@ class DG : public CBase_DG {
     //! Setup: query boundary conditions, output mesh, etc.
     void setup( tk::real v );
 
-    //! Limit initial solution and prepare for time stepping
-    void limitIC();
-
-    //! Start time stepping
-    void start();
-
-    //! Send own chare-boundary data to neighboring chares
-    void sendinit();
-
-    //! Receive chare-boundary ghost data from neighboring chares
-    void cominit( int fromch,
-                  const std::vector< std::size_t >& tetid,
-                  const std::vector< std::vector< tk::real > >& u );
+    //! Continue to next time step stage
+    void next();
 
     //! Receive chare-boundary limiter function data from neighboring chares
     void comlim( int fromch,
                  const std::vector< std::size_t >& tetid,
-                 const std::vector< std::vector< tk::real > >& lfn );
+                 const std::vector< std::vector< tk::real > >& lfn,
+                 const std::vector< std::size_t >& ndof );
 
     //! Receive chare-boundary ghost data from neighboring chares
     void comsol( int fromch,
                  const std::vector< std::size_t >& tetid,
-                 const std::vector< std::vector< tk::real > >& u );
+                 const std::vector< std::vector< tk::real > >& u,
+                 const std::vector< std::size_t >& ndof );
 
     //! Advance equations to next time step
     void advance( tk::real );
@@ -157,6 +148,9 @@ class DG : public CBase_DG {
     //! Compute limiter function
     void lim();
 
+    //! Send limited solution to neighboring chares
+    void sendLim();
+
     //! Const-ref access to current solution
     //! \param[in,out] u Reference to update with current solution
     void solution( tk::Fields& u ) const { u = m_u; }
@@ -188,7 +182,6 @@ class DG : public CBase_DG {
       p | m_geoElem;
       p | m_lhs;
       p | m_rhs;
-      p | m_limFunc;
       p | m_nfac;
       p | m_nunk;
       p | m_ncoord;
@@ -202,6 +195,7 @@ class DG : public CBase_DG {
       p | m_recvGhost;
       p | m_diag;
       p | m_stage;
+      p | m_ndof;
       p | m_initial;
       p | m_expChBndFace;
     }
@@ -249,8 +243,6 @@ class DG : public CBase_DG {
     tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
-    //! Vector of limiter function values
-    tk::Fields m_limFunc;
     //! Counter for number of faces on this chare (including chare boundaries)
     std::size_t m_nfac;
     //! Counter for number of unknowns on this chare (including ghosts)
@@ -288,6 +280,8 @@ class DG : public CBase_DG {
     ElemDiagnostics m_diag;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
+    //! Vector of local number of degrees of freedom for each element
+    std::vector< std::size_t > m_ndof;
     //! 1 if starting time stepping, 0 if during time stepping
     int m_initial;
     //! Unique set of chare-boundary faces this chare is expected to receive
@@ -298,9 +292,6 @@ class DG : public CBase_DG {
       Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
       return m_disc[ thisIndex ].ckLocal();
     }
-
-    //! Size and create limiter function data container
-    tk::Fields limFunc( std::size_t nelem ) const;
 
     //! Start sizing communication buffers and setting up ghost data
     void resizeComm();
@@ -355,8 +346,12 @@ class DG : public CBase_DG {
     //! Evaluate whether to continue with next time step stage
     void stage();
 
-    //! Continue to next time step stage
-    void next();
+    //! Calculate the local number of degrees of freedom for each element for
+    //! p-adaptive DG
+    void eval_ndof();
+
+    //! p-refine all elements that are adjacent to p-refined elements
+    void propagate_ndof();
 };
 
 } // inciter::

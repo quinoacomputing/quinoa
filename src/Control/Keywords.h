@@ -5110,6 +5110,19 @@ struct dgp2_info {
 };
 using dgp2 = keyword< dgp2_info, TAOCPP_PEGTL_STRING("dgp2") >;
 
+struct pdg_info {
+  static std::string name() { return "p-adaptive DG + RK"; }
+  static std::string shortDescription() { return
+    "Select adaptive discontinuous Galerkin discretization + Runge-Kutta"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the adaptive discontinuous Galerkin
+    spatial discretizaion used in Inciter. Selecting this spatial
+    discretization also selects the Runge-Kutta scheme for time
+    discretization. See Control/Inciter/Options/Scheme.h for other valid
+    options.)"; }
+};
+using pdg = keyword< pdg_info, TAOCPP_PEGTL_STRING("pdg") >;
+
 struct scheme_info {
   static std::string name() { return "Discretization scheme"; }
   static std::string shortDescription() { return
@@ -5209,6 +5222,17 @@ struct wenop1_info {
 };
 using wenop1 = keyword< wenop1_info, TAOCPP_PEGTL_STRING("wenop1") >;
 
+struct superbeep1_info {
+  static std::string name() { return "SUPERBEEP1"; }
+  static std::string shortDescription() { return
+    "Select the Superbee limiter for DGP1"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Superbee limiter used for
+    discontinuous Galerkin (DG) P1 spatial discretization used in inciter.
+    See Control/Inciter/Options/Limiter.h for other valid options.)"; }
+};
+using superbeep1 = keyword< superbeep1_info, TAOCPP_PEGTL_STRING("superbeep1") >;
+
 struct limiter_info {
   static std::string name() { return "Limiter function"; }
   static std::string shortDescription() { return
@@ -5221,7 +5245,8 @@ struct limiter_info {
     static std::string description() { return "string"; }
     static std::string choices() {
       return '\'' + nolimiter::string() + "\' | \'"
-                  + wenop1::string() + '\'';
+                  + wenop1::string() + "\' | \'"
+                  + superbeep1::string() + '\'';
     }
   };
 };
