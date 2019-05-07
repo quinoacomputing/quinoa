@@ -31,6 +31,29 @@ namespace inciter {
 class Discretization : public CBase_Discretization {
 
   public:
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wunused-parameter"
+      #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    #elif defined(STRICT_GNUC)
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wunused-parameter"
+      #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    #elif defined(__INTEL_COMPILER)
+      #pragma warning( push )
+      #pragma warning( disable: 1478 )
+    #endif
+    // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
+    // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+    Discretization_SDAG_CODE
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #elif defined(STRICT_GNUC)
+      #pragma GCC diagnostic pop
+    #elif defined(__INTEL_COMPILER)
+      #pragma warning( pop )
+    #endif
+
     //! Constructor
     explicit
       Discretization(
@@ -303,12 +326,12 @@ class Discretization : public CBase_Discretization {
     //!   elements (sum of surrounding cell volumes / 4) with contributions from
     //!   other chares on chare-boundaries
     std::vector< tk::real > m_vol;
-    //! Receive buffer for volume of nodes
+    //! Receive buffer for volume of nodes (with global node id as key)
     //! \details This is a communication buffer used to compute the volume of
     //!   the mesh associated to nodes of owned elements (sum of surrounding
     //!   cell volumes / 4) with contributions from other chares on
     //!   chare-boundaries.
-    std::vector< tk::real > m_volc;
+    std::unordered_map< std::size_t, tk::real > m_volc;
     //! \brief Local chare-boundary mesh node IDs at which we receive
     //!   contributions associated to global mesh node IDs of mesh elements we
     //!   contribute to

@@ -73,6 +73,9 @@ Discretization::Discretization(
   Assert( m_psup.second.size()-1 == m_gid.size(),
           "Number of mesh points and number of global IDs unequal" );
 
+  // Enable SDAG wait for computing nodal volumes
+  thisProxy[ thisIndex ].wait4vol();
+
   // Convert neighbor nodes to vectors from sets
   for (const auto& n : msum) {
     auto& v = m_msum[ n.first ];
@@ -86,9 +89,6 @@ Discretization::Discretization(
   for (const auto& n : m_msum) for (auto i : n.second) c[j++] = i;
   tk::unique( c );
   m_bid = tk::assignLid( c );
-
-  // Allocate receive buffer for nodal volumes
-  m_volc.resize( m_bid.size(), 0.0 );
 
   // Insert DistFCT chare array element if FCT is needed. Note that even if FCT
   // is configured false in the input deck, at this point, we still need the FCT
@@ -126,9 +126,8 @@ Discretization::resizePostAMR(
       if (m_bid.find( g ) == end(m_bid))
         m_bid[ g ] = lid++;
 
-  // Resize receive buffer for nodal volumes
-  std::fill( begin(m_volc), end(m_volc), 0.0 );
-  m_volc.resize( m_bid.size(), 0.0 );
+  // Clear receive buffer that will be used for collecting nodal volumes
+  m_volc.clear();
 
   // Set flag that indicates that we are during time stepping
   m_initial = 0.0;
@@ -245,6 +244,8 @@ Discretization::vol()
       for (auto i : n.second) v[ j++ ] = m_vol[ tk::cref_find(m_lid,i) ];
       thisProxy[ n.first ].comvol( n.second, v );
     }
+
+  ownvol_complete();
 }
 
 void
@@ -258,20 +259,17 @@ Discretization::comvol( const std::vector< std::size_t >& gid,
 //! \details This function receives contributions to m_vol, which stores the
 //!   nodal volumes. While m_vol stores own contributions, m_volc collects the
 //!   neighbor chare contributions during communication. This way work on m_vol
-//!   and m_volc is overlapped. The two are combined in totalvol().
+//!   and m_volc is overlapped. The contributions are applied in totalvol().
 // *****************************************************************************
 {
   Assert( nodevol.size() == gid.size(), "Size mismatch" );
 
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( m_bid, gid[i] );
-    Assert( bid < m_volc.size(), "Indexing out of bounds" );
-    m_volc[ bid ] += nodevol[i];
-  }
+  for (std::size_t i=0; i<gid.size(); ++i)
+    m_volc[ gid[i] ] += nodevol[i];
 
   if (++m_nvol == m_msum.size()) {
     m_nvol = 0;
-    contribute( CkCallback(CkReductionTarget(Transporter,vol), m_transporter) );
+    comvol_complete();
   }
 }
 
@@ -281,11 +279,12 @@ Discretization::totalvol()
 // Sum mesh volumes and contribute own mesh volume to total volume
 // *****************************************************************************
 {
-  // Combine own and communicated contributions of nodal volumes
-  for (const auto& b : m_bid) {
-    auto lid = tk::cref_find( m_lid, b.first );
-    m_vol[ lid ] += m_volc[ b.second ];
-  }
+  // Applied received contributions to nodal volumes
+  for (const auto& v : m_volc)
+    m_vol[ tk::cref_find(m_lid,v.first) ] += v.second;
+
+  // Clear receive buffer
+  tk::destroy(m_volc);
 
   // Sum mesh volume to host
   std::vector< tk::real > tvol{ 0.0, m_initial };

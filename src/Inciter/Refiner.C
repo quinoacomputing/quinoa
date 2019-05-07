@@ -247,6 +247,9 @@ Refiner::dtref( const std::map< int, std::vector< std::size_t > >& bface,
   m_bnode = bnode;
   m_triinpoel = triinpoel;
 
+  // Enable SDAG wait for recomputing nodal volumes in Discretization
+  m_scheme.get()[thisIndex].wait4vol();
+
   start();
 }
 
