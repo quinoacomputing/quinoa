@@ -121,7 +121,7 @@ tk::update_rhs( ncomp_t ncomp,
 // *****************************************************************************
 //  Update the rhs by adding the initial analytical solution term
 //! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] ndof Number of degree of freedom
+//! \param[in] ndof Number of degrees of freedom
 //! \param[in] wt Weight of gauss quadrature point
 //! \param[in] B Vector of basis functions
 //! \param[in] s Vector of analytical solution at quadrature point
@@ -168,7 +168,7 @@ tk::eval_init( ncomp_t ncomp,
 //  Compute the initial conditions
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
-//! \param[in] ndof Number of degree of freedom
+//! \param[in] ndof Number of degrees of freedom
 //! \param[in] e Element index
 //! \param[in] R Right-hand side vector
 //! \param[in] L Block diagonal mass matrix

@@ -120,6 +120,7 @@ class MultiMat {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] ndofel Vector of local number of degrees of freedome
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -128,6 +129,7 @@ class MultiMat {
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
+              const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
@@ -159,22 +161,23 @@ class MultiMat {
         { m_bcextrapolate, Extrapolate } }};
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, m_offset, inpoel, coord, fd, geoFace,
-                   rieflxfn, velfn, U, R );
+      tk::surfInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, fd,
+                   geoFace, rieflxfn, velfn, U, ndofel, R );
 
       // compute source term intehrals
-      tk::srcInt( m_system, m_ncomp, m_offset,
-                  t, inpoel, coord, geoElem, Problem::src, R );
+      tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, inpoel, coord, geoElem,
+                  Problem::src, ndofel, R );
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, inpoel, coord, geoElem, flux,
-                    velfn, U, R );
+        tk::volInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, geoElem,
+                    flux, velfn, U, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
-        tk::bndSurfInt( m_system, m_ncomp, m_offset, b.first, fd, geoFace,
-          inpoel, coord, t, rieflxfn, velfn, b.second, U, R );
+        tk::bndSurfInt( m_system, m_ncomp, m_offset, ndof, b.first, fd, geoFace,
+                        inpoel, coord, t, rieflxfn, velfn, b.second, U,
+                        ndofel, R );
     }
 
     //! Compute the minimum time step size

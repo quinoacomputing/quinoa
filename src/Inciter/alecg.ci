@@ -52,14 +52,14 @@ module alecg {
 
       //! [DAG]
       entry void wait4lhs() {
-        when ownlhs_complete(), comlhs_complete() serial "lhs" { lhsmerge(); } };
+        when ownlhs_complete(), comlhs_complete() serial "lhs" { lhsmerge(); } }
 
       entry void wait4rhs() {
-        when ownrhs_complete(), comrhs_complete() serial "rhs" { solve(); } };
+        when ownrhs_complete(), comrhs_complete() serial "rhs" { solve(); } }
 
       entry void wait4out() {
         when diag_complete(), ref_complete(), lhs_complete(),
-             resize_complete() serial "out" { out(); } };
+             resize_complete() serial "out" { out(); } }
 
       entry void ownlhs_complete();
       entry void ownrhs_complete();
@@ -70,7 +70,7 @@ module alecg {
       entry void lhs_complete();
       entry void resize_complete();
       //! [DAG]
-    };
+    }
 
   } // inciter::
 
