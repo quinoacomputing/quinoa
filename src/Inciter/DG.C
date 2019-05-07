@@ -1078,7 +1078,8 @@ DG::eval_ndof()
 
         dudxi[c][0] = 2 * m_u(e, mark+1, 0);
         dudxi[c][1] = m_u(e, mark+1, 0) + 3.0 * m_u(e, mark+2, 0);
-        dudxi[c][2] = m_u(e, mark+1, 0) + m_u(e, mark+2, 0) + 4.0 * m_u(e, mark+3, 0);
+        dudxi[c][2] = m_u(e, mark+1, 0) + m_u(e, mark+2, 0)
+                      + 4.0 * m_u(e, mark+3, 0);
 
         // Gradient of unkowns in physical space
         std::array< std::array< tk::real, 3 >, 5 > dudx;
