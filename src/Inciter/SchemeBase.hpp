@@ -67,7 +67,8 @@ class SchemeBase {
         fctproxy = CProxy_DistFCT::ckNew(bound);
       } else if (scheme == ctr::SchemeType::DG ||
                  scheme == ctr::SchemeType::DGP1 ||
-                 scheme == ctr::SchemeType::DGP2)
+                 scheme == ctr::SchemeType::DGP2 ||
+                 scheme == ctr::SchemeType::PDG)
       {
         proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(bound) );
       } else if (scheme == ctr::SchemeType::ALECG) {

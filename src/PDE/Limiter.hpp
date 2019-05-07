@@ -32,6 +32,7 @@ WENO_P1( const std::vector< int >& esuel,
 void
 Superbee_P1( const std::vector< int >& esuel,
              const std::vector< std::size_t >& inpoel,
+             const std::vector< std::size_t >& ndofel,
              inciter::ncomp_t offset,
              const tk::UnsMesh::Coords& coord,
              tk::Fields& U );
