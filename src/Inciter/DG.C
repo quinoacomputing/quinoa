@@ -987,7 +987,7 @@ DG::advance( tk::real )
         if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
         ++j;
       }
-      thisProxy[ n.first ].comsol( thisIndex, tetid, u, ndof );
+      thisProxy[ n.first ].comsol( thisIndex, m_stage, tetid, u, ndof );
     }
 
   ownsol_complete();
@@ -995,12 +995,14 @@ DG::advance( tk::real )
 
 void
 DG::comsol( int fromch,
+            std::size_t fromstage,
             const std::vector< std::size_t >& tetid,
             const std::vector< std::vector< tk::real > >& u,
             const std::vector< std::size_t >& ndof )
 // *****************************************************************************
 //  Receive chare-boundary solution ghost data from neighboring chares
 //! \param[in] fromch Sender chare id
+//! \param[in] fromstage Sender chare time step stage
 //! \param[in] tetid Ghost tet ids we receive solution data for
 //! \param[in] u Solution ghost data
 //! \param[in] ndof Number of degrees of freedom for chare-boundary elements
@@ -1012,7 +1014,7 @@ DG::comsol( int fromch,
 
   const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
 
-  if (pref && m_stage == 0)
+  if (pref && fromstage == 0)
     Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comsol()" );
 
   // Find local-to-ghost tet id map for sender chare
@@ -1024,7 +1026,7 @@ DG::comsol( int fromch,
     auto b = tk::cref_find( m_bid, j );
     Assert( b < m_uc[0].size(), "Indexing out of bounds" );
     m_uc[0][b] = u[i];
-    if (pref && m_stage == 0) {
+    if (pref && fromstage == 0) {
       Assert( b < m_ndofc[0].size(), "Indexing out of bounds" );
       m_ndofc[0][b] = ndof[i];
     }
