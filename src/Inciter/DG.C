@@ -367,7 +367,7 @@ bool
 DG::receivedChBndFaces()
 // *****************************************************************************
 // Verify that all chare-boundary faces have been received
-//! \return True of all chare-boundary faces have been received
+//! \return True if all chare-boundary faces have been received
 // *****************************************************************************
 {
   auto d = Disc();
