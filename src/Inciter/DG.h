@@ -108,12 +108,14 @@ class DG : public CBase_DG {
     //! Receive chare-boundary limiter function data from neighboring chares
     void comlim( int fromch,
                  const std::vector< std::size_t >& tetid,
-                 const std::vector< std::vector< tk::real > >& lfn );
+                 const std::vector< std::vector< tk::real > >& lfn,
+                 const std::vector< std::size_t >& ndof );
 
     //! Receive chare-boundary ghost data from neighboring chares
     void comsol( int fromch,
                  const std::vector< std::size_t >& tetid,
-                 const std::vector< std::vector< tk::real > >& u );
+                 const std::vector< std::vector< tk::real > >& u,
+                 const std::vector< std::size_t >& ndof );
 
     //! Advance equations to next time step
     void advance( tk::real );
@@ -193,6 +195,7 @@ class DG : public CBase_DG {
       p | m_recvGhost;
       p | m_diag;
       p | m_stage;
+      p | m_ndof;
       p | m_initial;
       p | m_expChBndFace;
     }
@@ -277,6 +280,8 @@ class DG : public CBase_DG {
     ElemDiagnostics m_diag;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
+    //! Vector of local number of degrees of freedom for each element
+    std::vector< std::size_t > m_ndof;
     //! 1 if starting time stepping, 0 if during time stepping
     int m_initial;
     //! Unique set of chare-boundary faces this chare is expected to receive
@@ -340,6 +345,13 @@ class DG : public CBase_DG {
 
     //! Evaluate whether to continue with next time step stage
     void stage();
+
+    //! Calculate the local number of degrees of freedom for each element for
+    //! p-adaptive DG
+    void eval_ndof();
+
+    //! p-refine all elements that are adjacent to p-refined elements
+    void propagate_ndof();
 };
 
 } // inciter::

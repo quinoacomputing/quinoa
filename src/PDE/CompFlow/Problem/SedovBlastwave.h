@@ -143,6 +143,10 @@ class CompFlowProblemSedovBlastwave {
       //n.push_back( "err(E)" );
       n.push_back( "pressure_numerical" );
       //n.push_back( "pressure_analytical" );
+
+      const auto pref = g_inputdeck.get< tag::discr, tag::pref >();
+      if(pref)           // Adaptive DG on
+        n.push_back( "ndof" );
       return n;
     }
 

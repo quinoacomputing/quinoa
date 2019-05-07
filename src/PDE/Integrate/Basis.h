@@ -67,6 +67,7 @@ std::vector< tk::real >
 eval_state ( ncomp_t ncomp,
              ncomp_t offset,
              const std::size_t ndof,
+             const std::size_t ndof_el,
              const std::size_t e,
              const Fields& U,
              const std::vector< tk::real >& B );

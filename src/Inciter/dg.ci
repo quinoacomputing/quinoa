@@ -38,10 +38,12 @@ module dg {
       entry [reductiontarget] void sendLim();
       entry void comlim( int fromch,
                          const std::vector< std::size_t >& tetid,
-                         const std::vector< std::vector< tk::real > >& lfn );
+                         const std::vector< std::vector< tk::real > >& lfn,
+                         const std::vector< std::size_t >& ndof );
       entry void comsol( int fromch,
                          const std::vector< std::size_t >& tetid,
-                         const std::vector< std::vector< tk::real > >& u );
+                         const std::vector< std::vector< tk::real > >& u,
+                         const std::vector< std::size_t >& ndofel );
       entry void advance( tk::real );
       entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();
@@ -53,19 +55,19 @@ module dg {
 
       entry void wait4ghost() {
         when ownghost_complete(), reqghost_complete() serial "ghost"
-        { sendGhost(); } };
+        { sendGhost(); } }
 
       entry void wait4sol() {
         when ownsol_complete(), comsol_complete() serial "sol"
-        { lim(); } };
+        { lim(); } }
 
       entry void wait4lim() {
         when ownlim_complete(), comlim_complete() serial "lim"
-        { dt(); } };
+        { dt(); } }
 
       entry void wait4recompghost() {
         when diag_complete(), ref_complete(), resize_complete() serial
-        "recomputeGhostRefined" { recompGhostRefined(); } };
+        "recomputeGhostRefined" { recompGhostRefined(); } }
 
       entry void ownghost_complete();
       entry void reqghost_complete();
@@ -76,7 +78,7 @@ module dg {
       entry void diag_complete();
       entry void ref_complete();
       entry void resize_complete();
-    };
+    }
 
   } // inciter::
 
