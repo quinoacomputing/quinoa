@@ -5,7 +5,7 @@
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Limiters for discontinous Galerkin methods
+  \brief     Limiters for discontiunous Galerkin methods
   \details   This file contains functions that provide limiter function
     calculations for maintaining monotonicity near solution discontinuities
     for the DG discretization.
