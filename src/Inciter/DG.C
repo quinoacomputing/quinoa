@@ -89,6 +89,9 @@ DG::DG( const CProxy_Discretization& disc,
 {
   usesAtSync = true;    // enable migration at AtSync
 
+  // Enable SDAG wait for setting up chare boundary faces
+  thisProxy[ thisIndex ].wait4fac();
+
   // Size communication buffers and setup ghost data
   resizeComm();
 }
@@ -182,6 +185,8 @@ DG::resizeComm()
     for (const auto& c : m_msumset) {   // for all chares we share nodes with
       thisProxy[ c.first ].comfac( thisIndex, potbndface );
     }
+
+  ownfac_complete();
 }
 
 bool
@@ -276,56 +281,39 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
 //! \param[in] infaces Unique set of faces we potentially share with fromch
 // *****************************************************************************
 {
-  const auto& esuel = m_fd.Esuel();
-
-  // Find sender chare among chares we potentially share faces with. Note that
-  // it is feasible that a sender chare called us but we do not have a set of
-  // faces associated to that chare. This can happen if we only share a single
-  // node or an edge but not a face with that chare.
-  auto& bndface = m_bndFace[ fromch ];  // will associate to sender chare
-  // Try to find incoming faces on our chare boundary with other chares. If
-  // found, generate and assign new local face ID, associated to sender chare.
-  auto d = Disc();
-  const auto& gid = d->Gid();
-  const auto& inpoel = d->Inpoel();
-  for (std::size_t e=0; e<esuel.size()/4; ++e) {  // for all our tets
-    auto mark = e*4;
-    for (std::size_t f=0; f<4; ++f) {  // for all cell faces
-      if (esuel[mark+f] == -1) {  // if face has no outside-neighbor tet
-        tk::UnsMesh::Face t{{ gid[ inpoel[ mark + tk::lpofa[f][0] ] ],
-                              gid[ inpoel[ mark + tk::lpofa[f][1] ] ],
-                              gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
-        // if found among the incoming faces and if not one of our internal nor
-        // physical boundary faces
-        if ( infaces.find(t) != end(infaces) &&
-             m_ipface.find(t) == end(m_ipface) ) {
-          bndface[t][0] = m_nfac++;    // assign new local face ID
-        }
-      }
-    }
-  }
-  // If at this point if we have not found any face among our faces we
-  // potentially share with fromch, there is no need to keep an empty set of
-  // faces associated to fromch as we only share nodes or edges with it, but
-  // not faces.
-  if (bndface.empty()) m_bndFace.erase( fromch );
+  // Buffer up incoming data
+  m_infaces[ fromch ] = infaces;
 
   // if we have heard from all fellow chares that we share at least a single
   // node, edge, or face with
   if (++m_ncomfac == m_msumset.size()) {
     m_ncomfac = 0;
-    if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) d->Tr().chcomfac();
-    tk::destroy(m_ipface);
+    comfac_complete();
+  }
+}
 
-    // Ensure all expected faces have been received
-    Assert( receivedChBndFaces(),
-            "Expected and received chare boundary faces mismatch" );
+void
+DG::bndFaces()
+// *****************************************************************************
+// Compute chare-boundary faces
+//! \details This is called when both send and receives are completed on a
+//!  chare and thus we are ready to compute chare-boundary faces and ghost data.
+// *****************************************************************************
+{
+  auto d = Disc();
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) d->Tr().chcomfac();
+  const auto& esuel = m_fd.Esuel();
+  const auto& gid = d->Gid();
+  const auto& inpoel = d->Inpoel();
 
-    // Basic error checking on chare-boundary-face map
-    Assert( m_bndFace.find( thisIndex ) == m_bndFace.cend(),
-            "Face-communication map should not contain data for own chare ID" );
-
-    // Store (local) tet ID adjacent to our chare boundary from the inside
+  for (const auto& in : m_infaces) {
+    // Find sender chare among chares we potentially share faces with. Note that
+    // it is feasible that a sender chare called us but we do not have a set of
+    // faces associated to that chare. This can happen if we only share a single
+    // node or an edge but not a face with that chare.
+    auto& bndface = m_bndFace[ in.first ];  // will associate to sender chare
+    // Try to find incoming faces on our chare boundary with other chares. If
+    // found, generate and assign new local face ID, associated to sender chare.
     for (std::size_t e=0; e<esuel.size()/4; ++e) {  // for all our tets
       auto mark = e*4;
       for (std::size_t f=0; f<4; ++f) {  // for all cell faces
@@ -333,34 +321,68 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
           tk::UnsMesh::Face t{{ gid[ inpoel[ mark + tk::lpofa[f][0] ] ],
                                 gid[ inpoel[ mark + tk::lpofa[f][1] ] ],
                                 gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
-          auto c = findchare( t );
-          if (c > -1) {
-            auto& lbndface = tk::ref_find( m_bndFace, c );
-            auto& face = tk::ref_find( lbndface, t );
-            face[1] = e;  // store (local) inner tet ID adjacent to face
+          // if found among the incoming faces and if not one of our internal
+          // nor physical boundary faces
+          if ( in.second.find(t) != end(in.second) &&
+               m_ipface.find(t) == end(m_ipface) ) {
+            bndface[t][0] = m_nfac++;    // assign new local face ID
           }
         }
       }
     }
-
-    // At this point m_bndFace is complete on this PE. This means that starting
-    // from the sets of faces we potentially share with fellow chares we now
-    // only have those faces we actually share faces with (through which we need
-    // to communicate later). Also, m_bndFace not only has the unique faces
-    // associated to fellow chares, but also a newly assigned local face ID as
-    // well as the local id of the inner tet adjacent to the face. Continue by
-    // starting setting up ghost data
-    setupGhost();
-    // Besides setting up our own ghost data, we also issue requests (for ghost
-    // data) to those chares which we share faces with. Note that similar to
-    // comfac() we are calling reqGhost() by going through msumset instead,
-    // which may send requests to those chare we do not share faces with. This
-    // is so that we can test for completing by querying the size of the already
-    // complete msumset in reqGhost. Requests in sendGhost will only be
-    // fullfilled based on m_ghostData.
-    for (const auto& c : m_msumset)     // for all chares we share nodes with
-      thisProxy[ c.first ].reqGhost();
+    // If at this point if we have not found any face among our faces we
+    // potentially share with fromch, there is no need to keep an empty set of
+    // faces associated to fromch as we only share nodes or edges with it, but
+    // not faces.
+    if (bndface.empty()) m_bndFace.erase( in.first );
   }
+
+  tk::destroy(m_ipface);
+  tk::destroy(m_infaces);
+
+  // Ensure all expected faces have been received
+  Assert( receivedChBndFaces(),
+          "Expected and received chare boundary faces mismatch" );
+
+  // Basic error checking on chare-boundary-face map
+  Assert( m_bndFace.find( thisIndex ) == m_bndFace.cend(),
+          "Face-communication map should not contain data for own chare ID" );
+
+  // Store (local) tet ID adjacent to our chare boundary from the inside
+  for (std::size_t e=0; e<esuel.size()/4; ++e) {  // for all our tets
+    auto mark = e*4;
+    for (std::size_t f=0; f<4; ++f) {  // for all cell faces
+      if (esuel[mark+f] == -1) {  // if face has no outside-neighbor tet
+        tk::UnsMesh::Face t{{ gid[ inpoel[ mark + tk::lpofa[f][0] ] ],
+                              gid[ inpoel[ mark + tk::lpofa[f][1] ] ],
+                              gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
+        auto c = findchare( t );
+        if (c > -1) {
+          auto& lbndface = tk::ref_find( m_bndFace, c );
+          auto& face = tk::ref_find( lbndface, t );
+          face[1] = e;  // store (local) inner tet ID adjacent to face
+        }
+      }
+    }
+  }
+
+  // At this point m_bndFace is complete on this PE. This means that starting
+  // from the sets of faces we potentially share with fellow chares we now
+  // only have those faces we actually share faces with (through which we need
+  // to communicate later). Also, m_bndFace not only has the unique faces
+  // associated to fellow chares, but also a newly assigned local face ID as
+  // well as the local id of the inner tet adjacent to the face. Continue by
+  // starting setting up ghost data
+  setupGhost();
+  // Besides setting up our own ghost data, we also issue requests (for ghost
+  // data) to those chares which we share faces with. Note that similar to
+  // comfac() we are calling reqGhost() by going through msumset instead,
+  // which may send requests to those chare we do not share faces with. This
+  // is so that we can test for completing by querying the size of the already
+  // complete msumset in reqGhost. Requests in sendGhost will only be
+  // fullfilled based on m_ghostData.
+  for (const auto& c : m_msumset)     // for all chares we share nodes with
+    thisProxy[ c.first ].reqGhost();
 }
 
 bool
@@ -1546,8 +1568,6 @@ DG::resizePostAMR(
 
   // Resize mesh data structures
   d->resizePostAMR( chunk, coord, msum );
-  // Recompute mesh volumes and statistics
-  d->vol();
 
   // Update state
   auto nelem = d->Inpoel().size()/4;
@@ -1581,6 +1601,13 @@ DG::resizePostAMR(
   }
   m_un = m_u;
 
+  // Enable SDAG wait for setting up chare boundary faces
+  thisProxy[ thisIndex ].wait4fac();
+
+  // Recompute mesh volumes and statistics
+  d->vol();
+
+  // Size communication buffers and setup ghost data
   ref_complete();
 }
 

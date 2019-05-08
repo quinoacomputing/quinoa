@@ -199,6 +199,7 @@ class DG : public CBase_DG {
       p | m_ndofc;
       p | m_initial;
       p | m_expChBndFace;
+      p | m_infaces;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -294,6 +295,8 @@ class DG : public CBase_DG {
     int m_initial;
     //! Unique set of chare-boundary faces this chare is expected to receive
     tk::UnsMesh::FaceSet m_expChBndFace;
+    //! Incoming communication buffer during chare-boundary face communication
+    std::unordered_map< int, tk::UnsMesh::FaceSet > m_infaces;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -303,6 +306,9 @@ class DG : public CBase_DG {
 
     //! Start sizing communication buffers and setting up ghost data
     void resizeComm();
+
+    //! Compute chare-boundary faces
+    void bndFaces();
 
     //! Start recomputing ghost data after a mesh refinement step
     void recompGhostRefined();
