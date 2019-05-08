@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/tut_result.hpppp
+  \file      src/NoWarning/tut_result.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
