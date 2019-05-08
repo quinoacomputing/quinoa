@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/Base/Macro.hpppp
+  \file      src/Base/Macro.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
