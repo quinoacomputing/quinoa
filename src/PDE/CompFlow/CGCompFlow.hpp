@@ -44,8 +44,8 @@ class CompFlow {
     //! \brief Constructor
     //! \param[in] c Equation system index (among multiple systems configured)
     explicit CompFlow( ncomp_t c ) :
-      m_physics( Physics() ),
-      m_problem( Problem() ),
+      m_physics(),
+      m_problem(),
       m_system( c ),
       m_ncomp(
         g_inputdeck.get< tag::component >().get< tag::compflow >().at(c) ),
