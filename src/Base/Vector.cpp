@@ -78,6 +78,7 @@ tk::rotateX( const std::array< real, 3 >& v, real angle )
 // *****************************************************************************
 //! Rotate vector about X axis by -45 degress
 //! \param[in] v Vector to rotate
+//! \param[in] angle Angle to use to rotate with
 //! \return Rotated vector
 // *****************************************************************************
 {
@@ -96,6 +97,7 @@ tk::rotateY( const std::array< real, 3 >& v, real angle )
 // *****************************************************************************
 //! Rotate vector about Y axis by -45 degress
 //! \param[in] v Vector to rotate
+//! \param[in] angle Angle to use to rotate with
 //! \return Rotated vector
 // *****************************************************************************
 {
@@ -114,6 +116,7 @@ tk::rotateZ( const std::array< real, 3 >& v, real angle )
 // *****************************************************************************
 //! Rotate vector about Z axis by -45 degress
 //! \param[in] v Vector to rotate
+//! \param[in] angle Angle to use to rotate with
 //! \return Rotated vector
 // *****************************************************************************
 {
