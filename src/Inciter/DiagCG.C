@@ -169,30 +169,6 @@ DiagCG::init()
 }
 
 void
-DiagCG::lhsmerge()
-// *****************************************************************************
-// The own and communication portion of the left-hand side is complete
-// *****************************************************************************
-{
-  // Combine own and communicated contributions to left hand side
-  auto d = Disc();
-
-  // Combine own and communicated contributions to LHS and ICs
-  for (const auto& b : d->Bid()) {
-    auto lid = tk::cref_find( d->Lid(), b.first );
-    const auto& blhsc = m_lhsc[ b.second ];
-    for (ncomp_t c=0; c<m_lhs.nprop(); ++c) m_lhs(lid,c,0) += blhsc[c];
-  }
-
-  // Zero communication buffers for next time step (rhs, mass diffusion rhs)
-  for (auto& b : m_rhsc) std::fill( begin(b), end(b), 0.0 );
-  for (auto& b : m_difc) std::fill( begin(b), end(b), 0.0 );
-
-  // Continue after lhs is complete
-  if (m_initial) start(); else lhs_complete();
-}
-
-void
 DiagCG::start()
 // *****************************************************************************
 //  Start time stepping
@@ -259,6 +235,30 @@ DiagCG::comlhs( const std::vector< std::size_t >& gid,
     m_nlhs = 0;
     comlhs_complete();
   }
+}
+
+void
+DiagCG::lhsmerge()
+// *****************************************************************************
+// The own and communication portion of the left-hand side is complete
+// *****************************************************************************
+{
+  // Combine own and communicated contributions to left hand side
+  auto d = Disc();
+
+  // Combine own and communicated contributions to LHS and ICs
+  for (const auto& b : d->Bid()) {
+    auto lid = tk::cref_find( d->Lid(), b.first );
+    const auto& blhsc = m_lhsc[ b.second ];
+    for (ncomp_t c=0; c<m_lhs.nprop(); ++c) m_lhs(lid,c,0) += blhsc[c];
+  }
+
+  // Zero communication buffers for next time step (rhs, mass diffusion rhs)
+  for (auto& b : m_rhsc) std::fill( begin(b), end(b), 0.0 );
+  for (auto& b : m_difc) std::fill( begin(b), end(b), 0.0 );
+
+  // Continue after lhs is complete
+  if (m_initial) start(); else lhs_complete();
 }
 
 void
