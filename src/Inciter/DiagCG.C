@@ -102,15 +102,10 @@ DiagCG::resizeComm()
 
   auto np = m_u.nprop();
   auto nb = d->Bid().size();
-  m_lhsc.resize( nb );
-  for (auto& b : m_lhsc) b.resize( np );
   m_rhsc.resize( nb );
   for (auto& b : m_rhsc) b.resize( np );
   m_difc.resize( nb );
   for (auto& b : m_difc) b.resize( np );
-
-  // Zero communication buffers
-  for (auto& b : m_lhsc) std::fill( begin(b), end(b), 0.0 );
 }
 
 void
@@ -225,11 +220,8 @@ DiagCG::comlhs( const std::vector< std::size_t >& gid,
 
   auto d = Disc();
 
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( d->Bid(), gid[i] );
-    Assert( bid < m_lhsc.size(), "Indexing out of bounds" );
-    m_lhsc[ bid ] += L[i];
-  }
+  for (std::size_t i=0; i<gid.size(); ++i)
+    m_lhsc[ gid[i] ] += L[i];
 
   if (++m_nlhs == d->Msum().size()) {
     m_nlhs = 0;
@@ -247,11 +239,14 @@ DiagCG::lhsmerge()
   auto d = Disc();
 
   // Combine own and communicated contributions to LHS and ICs
-  for (const auto& b : d->Bid()) {
+  for (const auto& b : m_lhsc) {
     auto lid = tk::cref_find( d->Lid(), b.first );
-    const auto& blhsc = m_lhsc[ b.second ];
-    for (ncomp_t c=0; c<m_lhs.nprop(); ++c) m_lhs(lid,c,0) += blhsc[c];
+    for (ncomp_t c=0; c<m_lhs.nprop(); ++c)
+      m_lhs(lid,c,0) += b.second[c];
   }
+
+  // Clear receive buffer
+  tk::destroy(m_lhsc);
 
   // Zero communication buffers for next time step (rhs, mass diffusion rhs)
   for (auto& b : m_rhsc) std::fill( begin(b), end(b), 0.0 );
