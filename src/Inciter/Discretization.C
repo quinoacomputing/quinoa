@@ -73,14 +73,14 @@ Discretization::Discretization(
   Assert( m_psup.second.size()-1 == m_gid.size(),
           "Number of mesh points and number of global IDs unequal" );
 
-  // Enable SDAG wait for computing nodal volumes
-  thisProxy[ thisIndex ].wait4vol();
-
   // Convert neighbor nodes to vectors from sets
   for (const auto& n : msum) {
     auto& v = m_msum[ n.first ];
     v.insert( end(v), begin(n.second), end(n.second) );
   }
+
+  // Get ready for computing/communicating nodal volumes
+  startvol();
 
   // Count the number of mesh nodes at which we receive data from other chares
   // and compute map associating boundary-chare node ID associated to global ID
@@ -135,8 +135,16 @@ Discretization::resizePostAMR(
   // Update mesh volume
   std::fill( begin(m_vol), end(m_vol), 0.0 );
   m_vol.resize( m_gid.size(), 0.0 );
+}
 
+void
+Discretization::startvol()
+// *****************************************************************************
+//  Get ready for (re-)computing/communicating nodal volumes
+// *****************************************************************************
+{
   m_nvol = 0;
+  thisProxy[ thisIndex ].wait4vol();
 }
 
 void
@@ -236,7 +244,7 @@ Discretization::vol()
 
   // Send our nodal volume contributions to neighbor chares
   if (m_msum.empty())
-    contribute( CkCallback(CkReductionTarget(Transporter,vol), m_transporter) );
+   totalvol();
   else
     for (const auto& n : m_msum) {
       std::vector< tk::real > v( n.second.size() );

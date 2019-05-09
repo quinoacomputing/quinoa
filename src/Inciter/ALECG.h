@@ -114,9 +114,6 @@ class ALECG : public CBase_ALECG {
     //! Update solution at the end of time step
     void update( const tk::Fields& a );
 
-    //! Signal the runtime system that diagnostics have been computed
-    void diag();
-
     //! Optionally refine/derefine mesh
     void refine();
 

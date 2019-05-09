@@ -85,6 +85,9 @@ class Discretization : public CBase_Discretization {
                         const std::unordered_map< int,
                                 std::vector< std::size_t > >& msum );
 
+    //! Get ready for (re-)computing/communicating nodal volumes
+    void startvol();
+
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();
 

@@ -121,9 +121,6 @@ class DG : public CBase_DG {
     //! Advance equations to next time step
     void advance( tk::real );
 
-    //! Signal the runtime system that diagnostics have been computed
-    void diag();
-
     //! Optionally refine/derefine mesh
     void refine();
 
@@ -309,9 +306,6 @@ class DG : public CBase_DG {
 
     //! Compute chare-boundary faces
     void bndFaces();
-
-    //! Start recomputing ghost data after a mesh refinement step
-    void recompGhostRefined();
 
     //! Perform leak test on chare-boundary faces
     bool leakyAdjacency();

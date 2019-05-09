@@ -140,10 +140,6 @@ class Transporter : public CBase_Transporter {
     //! Reduction target summing total mesh volume
     void totalvol( tk::real v, tk::real initial );
 
-    //! \brief Reduction target indicating that all workers have finished
-    //!   computing/receiving their part of the nodal volumes
-    void vol();
-
     //! \brief Reduction target yielding the minimum mesh statistics across
     //!   all workers
     void minstat( tk::real d0, tk::real d1, tk::real d2 );

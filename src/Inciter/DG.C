@@ -1467,8 +1467,6 @@ DG::solve( tk::real newdt )
 
   } else {
 
-    thisProxy[ thisIndex ].wait4recompghost();
-
     // Compute diagnostics, e.g., residuals
     auto diag_computed = m_diag.compute( *d, m_u.nunk()-m_fd.Esuel().size()/4,
                                          m_geoElem, m_ndof, m_u );
@@ -1476,29 +1474,10 @@ DG::solve( tk::real newdt )
     // Increase number of iterations and physical time
     d->next();
 
-    // Signal that diagnostics have been computed (or in this case, skipped)
-    if (!diag_computed) diag();
-    // Optionally refine mesh
-    refine();
+    // Continue to mesh refinement (if configured)
+    if (!diag_computed) refine();
+
   }
-}
-
-void
-DG::resized()
-// *****************************************************************************
-// Resizing data sutrctures after mesh refinement has been completed
-// *****************************************************************************
-{
-  resize_complete();
-}
-
-void
-DG::diag()
-// *****************************************************************************
-// Signal the runtime system that diagnostics have been computed
-// *****************************************************************************
-{
-  diag_complete();
 }
 
 void
@@ -1515,14 +1494,14 @@ DG::refine()
   // if t>0 refinement enabled and we hit the dtref frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
+    d->startvol();
     d->Ref()->dtref( m_fd.Bface(), {}, tk::remap(m_fd.Triinpoel(),d->Gid()) );
     d->refined() = 1;
 
   } else {      // do not refine
 
-    ref_complete();
-    resize_complete();
     d->refined() = 0;
+    resized();
 
   }
 }
@@ -1606,13 +1585,10 @@ DG::resizePostAMR(
 
   // Recompute mesh volumes and statistics
   d->vol();
-
-  // Size communication buffers and setup ghost data
-  ref_complete();
 }
 
 void
-DG::recompGhostRefined()
+DG::resized()
 // *****************************************************************************
 // Start recomputing ghost data after a mesh refinement step
 // *****************************************************************************

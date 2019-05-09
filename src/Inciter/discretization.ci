@@ -34,17 +34,13 @@ module discretization {
       entry void vol();
       entry void comvol( const std::vector< std::size_t >& gid,
                          const std::vector< tk::real >& nodevol );
-      entry void totalvol();
       entry void stat();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
       entry void wait4vol() {
-        when ownvol_complete(), comvol_complete() serial "vol" {
-          contribute( CkCallback(CkReductionTarget(Transporter,vol),
-                                 m_transporter) ); }
-        }
+        when ownvol_complete(), comvol_complete() serial "vol" { totalvol(); } }
 
       entry void ownvol_complete();
       entry void comvol_complete();

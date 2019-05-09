@@ -30,7 +30,7 @@ module diagcg {
       initnode void registerReducers();
       entry void setup( tk::real v );
       entry void init();
-      entry void diag();
+      entry void refine();
       entry void advance( tk::real newdt );
       entry void comlhs( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& L );
@@ -53,8 +53,7 @@ module diagcg {
              owndif_complete(), comdif_complete() serial "rhs" { solve(); } }
 
       entry void wait4out() {
-        when diag_complete(), ref_complete(), lhs_complete(),
-             resize_complete() serial "out" { out(); } }
+        when lhs_complete(), resize_complete() serial "out" { out(); } }
 
       entry void ownlhs_complete();
       entry void ownrhs_complete();
@@ -62,8 +61,6 @@ module diagcg {
       entry void comlhs_complete();
       entry void comrhs_complete();
       entry void comdif_complete();
-      entry void diag_complete();
-      entry void ref_complete();
       entry void lhs_complete();
       entry void resize_complete();
     }

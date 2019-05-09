@@ -192,15 +192,6 @@ ALECG::lhsmerge()
 //! [Merge lhs and continue]
 
 void
-ALECG::resized()
-// *****************************************************************************
-// Resizing data sutrctures after mesh refinement has been completed
-// *****************************************************************************
-{
-  resize_complete();
-}
-
-void
 ALECG::start()
 // *****************************************************************************
 //  Start time stepping
@@ -404,11 +395,116 @@ ALECG::solve()
   auto diag_computed = m_diag.compute( *d, m_u );
   // Increase number of iterations and physical time
   d->next();
-  // Signal that diagnostics have been computed (or in this case, skipped)
-  if (!diag_computed) diag();
-  // Optionally refine mesh
-  refine();
+  // Continue to mesh refinement (if configured)
+  if (!diag_computed) refine();
   //! [Continue after solve]
+}
+
+void
+ALECG::refine()
+// *****************************************************************************
+// Optionally refine/derefine mesh
+// *****************************************************************************
+{
+  //! [Refine]
+  auto d = Disc();
+
+  auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
+  auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
+
+  // if t>0 refinement enabled and we hit the frequency
+  if (dtref && !(d->It() % dtfreq)) {   // refine
+
+    d->startvol();
+    d->Ref()->dtref( {}, m_bnode, {} );
+    d->refined() = 1;
+
+  } else {      // do not refine
+
+    d->refined() = 0;
+    lhs_complete();
+    resized();
+
+  }
+  //! [Refine]
+}
+
+//! [Resize]
+void
+ALECG::resizePostAMR(
+  const std::vector< std::size_t >& /*ginpoel*/,
+  const tk::UnsMesh::Chunk& chunk,
+  const tk::UnsMesh::Coords& coord,
+  const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
+  const std::unordered_map< std::size_t, std::size_t >& /*addedTets*/,
+  const std::unordered_map< int, std::vector< std::size_t > >& msum,
+  const std::map< int, std::vector< std::size_t > >& /*bface*/,
+  const std::map< int, std::vector< std::size_t > >& bnode,
+  const std::vector< std::size_t >& /*triinpoel*/ )
+// *****************************************************************************
+//  Receive new mesh from Refiner
+//! \param[in] ginpoel Mesh connectivity with global node ids
+//! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
+//! \param[in] coord New mesh node coordinates
+//! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
+//! \param[in] addedTets Newly added mesh cells and their parents (local ids)
+//! \param[in] msum New node communication map
+//! \param[in] bface Boundary-faces mapped to side set ids
+//! \param[in] bnode Boundary-node lists mapped to side set ids
+//! \param[in] triinpoel Boundary-face connectivity
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Set flag that indicates that we are during time stepping
+  m_initial = 0;
+
+  // Zero field output iteration count between two mesh refinement steps
+  d->Itf() = 0;
+
+  // Increase number of iterations with mesh refinement
+  ++d->Itr();
+
+  // Resize mesh data structures
+  d->resizePostAMR( chunk, coord, msum );
+
+  // Resize auxiliary solution vectors
+  auto npoin = coord[0].size();
+  auto nprop = m_u.nprop();
+  m_u.resize( npoin, nprop );
+  m_du.resize( npoin, nprop );
+  m_lhs.resize( npoin, nprop );
+  m_rhs.resize( npoin, nprop );
+
+  // Update solution on new mesh
+  for (const auto& n : addedNodes)
+    for (std::size_t c=0; c<nprop; ++c)
+      m_u(n.first,c,0) = (m_u(n.second[0],c,0) + m_u(n.second[1],c,0))/2.0;
+
+  // Update physical-boundary node lists
+  m_bnode = bnode;
+
+  // Resize communication buffers
+  resizeComm();
+
+  // Activate SDAG waits for re-computing the left-hand side
+  thisProxy[ thisIndex ].wait4lhs();
+
+  // Recompute the lhs on the new mesh
+  lhs();
+
+  // Recompute mesh volumes and statistics
+  d->vol();
+}
+//! [Resize]
+
+void
+ALECG::resized()
+// *****************************************************************************
+// Resizing data sutrctures after mesh refinement has been completed
+// *****************************************************************************
+{
+  resize_complete();
 }
 
 void
@@ -455,112 +551,6 @@ ALECG::advance( tk::real newdt )
   // Compute rhs for next time step
   rhs();
 }
-
-void
-ALECG::diag()
-// *****************************************************************************
-// Signal the runtime system that diagnostics have been computed
-// *****************************************************************************
-{
-  diag_complete();
-}
-
-void
-ALECG::refine()
-// *****************************************************************************
-// Optionally refine/derefine mesh
-// *****************************************************************************
-{
-  //! [Refine]
-  auto d = Disc();
-
-  auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
-  auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
-
-  // if t>0 refinement enabled and we hit the frequency
-  if (dtref && !(d->It() % dtfreq)) {   // refine
-
-    d->Ref()->dtref( {}, m_bnode, {} );
-
-  } else {      // do not refine
-
-    ref_complete();
-    lhs_complete();
-    resize_complete();
-
-  }
-  //! [Refine]
-}
-
-//! [Resize]
-void
-ALECG::resizePostAMR(
-  const std::vector< std::size_t >& /*ginpoel*/,
-  const tk::UnsMesh::Chunk& chunk,
-  const tk::UnsMesh::Coords& coord,
-  const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
-  const std::unordered_map< std::size_t, std::size_t >& /*addedTets*/,
-  const std::unordered_map< int, std::vector< std::size_t > >& msum,
-  const std::map< int, std::vector< std::size_t > >& /*bface*/,
-  const std::map< int, std::vector< std::size_t > >& bnode,
-  const std::vector< std::size_t >& /*triinpoel*/ )
-// *****************************************************************************
-//  Receive new mesh from Refiner
-//! \param[in] ginpoel Mesh connectivity with global node ids
-//! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
-//! \param[in] coord New mesh node coordinates
-//! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
-//! \param[in] addedTets Newly added mesh cells and their parents (local ids)
-//! \param[in] msum New node communication map
-//! \param[in] bface Boundary-faces mapped to side set ids
-//! \param[in] bnode Boundary-node lists mapped to side set ids
-//! \param[in] triinpoel Boundary-face connectivity
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Set flag that indicates that we are during time stepping
-  m_initial = 0;
-
-  // Zero field output iteration count between two mesh refinement steps
-  d->Itf() = 0;
-
-  // Increase number of iterations with mesh refinement
-  ++d->Itr();
-
-  // Resize mesh data structures
-  d->resizePostAMR( chunk, coord, msum );
-  // Recompute mesh volumes and statistics
-  d->vol();
-
-  // Resize auxiliary solution vectors
-  auto npoin = coord[0].size();
-  auto nprop = m_u.nprop();
-  m_u.resize( npoin, nprop );
-  m_du.resize( npoin, nprop );
-  m_lhs.resize( npoin, nprop );
-  m_rhs.resize( npoin, nprop );
-
-  // Update solution on new mesh
-  for (const auto& n : addedNodes)
-    for (std::size_t c=0; c<nprop; ++c)
-      m_u(n.first,c,0) = (m_u(n.second[0],c,0) + m_u(n.second[1],c,0))/2.0;
-
-  // Update physical-boundary node lists
-  m_bnode = bnode;
-
-  // Resize communication buffers
-  resizeComm();
-
-  // Activate SDAG waits for re-computing the left-hand side
-  thisProxy[ thisIndex ].wait4lhs();
-
-  // Recompute the lhs on the new mesh
-  lhs();
-
-  ref_complete();
-}
-//! [Resize]
 
 void
 ALECG::out()

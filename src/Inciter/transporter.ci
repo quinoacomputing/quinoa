@@ -40,7 +40,6 @@ module transporter {
       entry [reductiontarget] void responded();
       entry [reductiontarget] void comfinal( int initial );
       entry [reductiontarget] void totalvol( tk::real v, tk::real initial );
-      entry [reductiontarget] void vol();
       entry [reductiontarget] void minstat( tk::real d0, tk::real d1,
                                             tk::real d2);
       entry [reductiontarget] void maxstat( tk::real d0, tk::real d1,

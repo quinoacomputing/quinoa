@@ -193,15 +193,6 @@ DiagCG::lhsmerge()
 }
 
 void
-DiagCG::resized()
-// *****************************************************************************
-// Resizing data sutrctures after mesh refinement has been completed
-// *****************************************************************************
-{
-  resize_complete();
-}
-
-void
 DiagCG::start()
 // *****************************************************************************
 //  Start time stepping
@@ -559,19 +550,8 @@ DiagCG::update( const tk::Fields& a )
   auto diag_computed = m_diag.compute( *d, m_u );
   // Increase number of iterations and physical time
   d->next();
-  // Signal that diagnostics have been computed (or in this case, skipped)
-  if (!diag_computed) diag();
-  // Optionally refine mesh
-  refine();
-}
-
-void
-DiagCG::diag()
-// *****************************************************************************
-// Signal the runtime system that diagnostics have been computed
-// *****************************************************************************
-{
-  diag_complete();
+  // Continue to mesh refinement (if configured)
+  if (!diag_computed) refine();
 }
 
 void
@@ -588,15 +568,15 @@ DiagCG::refine()
   // if t>0 refinement enabled and we hit the dtref frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
+    d->startvol();
     d->Ref()->dtref( {}, m_bnode, {} );
     d->refined() = 1;
 
   } else {      // do not refine
 
-    ref_complete();
-    lhs_complete();
-    resize_complete();
     d->refined() = 0;
+    lhs_complete();
+    resized();
 
   }
 }
@@ -638,8 +618,6 @@ DiagCG::resizePostAMR(
 
   // Resize mesh data structures
   d->resizePostAMR( chunk, coord, msum );
-  // Recompute mesh volumes and statistics
-  d->vol();
 
   // Resize auxiliary solution vectors
   auto nelem = d->Inpoel().size()/4;
@@ -676,7 +654,17 @@ DiagCG::resizePostAMR(
   // Recompute the lhs on the new mesh
   lhs();
 
-  ref_complete();
+  // Recompute mesh volumes and statistics
+  d->vol();
+}
+
+void
+DiagCG::resized()
+// *****************************************************************************
+// Resizing data sutrctures after mesh refinement has been completed
+// *****************************************************************************
+{
+  resize_complete();
 }
 
 void

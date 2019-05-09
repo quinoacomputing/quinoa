@@ -631,16 +631,6 @@ Transporter::comfinal( int initial )
 // [Discretization-specific communication maps]
 
 void
-Transporter::vol()
-// *****************************************************************************
-// Reduction target indicating that all workers have finished
-// computing/receiving their part of the nodal volumes
-// *****************************************************************************
-{
-  m_scheme.totalvol();
-}
-
-void
 Transporter::totalvol( tk::real v, tk::real initial )
 // *****************************************************************************
 // Reduction target summing total mesh volume across all workers
@@ -848,7 +838,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
   dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
 
   // Evaluate whether to continue with next step
-  m_scheme.diag< tag::bcast >();
+  m_scheme.refine();
 }
 
 void
