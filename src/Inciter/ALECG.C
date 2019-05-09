@@ -99,13 +99,8 @@ ALECG::resizeComm()
 
   auto np = m_u.nprop();
   auto nb = d->Bid().size();
-  m_lhsc.resize( nb );
-  for (auto& b : m_lhsc) b.resize( np );
   m_rhsc.resize( nb );
   for (auto& b : m_rhsc) b.resize( np );
-
-  // Zero communication buffers
-  for (auto& b : m_lhsc) std::fill( begin(b), end(b), 0.0 );
 }
 
 void
@@ -165,31 +160,6 @@ ALECG::init()
   lhs();
 }
 //! [init and lhs]
-
-//! [Merge lhs and continue]
-void
-ALECG::lhsmerge()
-// *****************************************************************************
-// The own and communication portion of the left-hand side is complete
-// *****************************************************************************
-{
-  // Combine own and communicated contributions to left hand side
-  auto d = Disc();
-
-  // Combine own and communicated contributions to LHS and ICs
-  for (const auto& b : d->Bid()) {
-    auto lid = tk::cref_find( d->Lid(), b.first );
-    const auto& blhsc = m_lhsc[ b.second ];
-    for (ncomp_t c=0; c<m_lhs.nprop(); ++c) m_lhs(lid,c,0) += blhsc[c];
-  }
-
-  // Zero communication buffers for next time step
-  for (auto& b : m_rhsc) std::fill( begin(b), end(b), 0.0 );
-
-  // Continue after lhs is complete
-  if (m_initial) start(); else lhs_complete();
-}
-//! [Merge lhs and continue]
 
 void
 ALECG::start()
@@ -252,9 +222,7 @@ ALECG::comlhs( const std::vector< std::size_t >& gid,
   auto d = Disc();
 
   for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( d->Bid(), gid[i] );
-    Assert( bid < m_lhsc.size(), "Indexing out of bounds" );
-    m_lhsc[ bid ] += L[i];
+    m_lhsc[ gid[i] ] += L[i];
   }
 
   // When we have heard from all chares we communicate with, this chare is done
@@ -264,6 +232,34 @@ ALECG::comlhs( const std::vector< std::size_t >& gid,
   }
 }
 //! [Receive lhs on chare-boundary]
+
+//! [Merge lhs and continue]
+void
+ALECG::lhsmerge()
+// *****************************************************************************
+// The own and communication portion of the left-hand side is complete
+// *****************************************************************************
+{
+  // Combine own and communicated contributions to left hand side
+  auto d = Disc();
+
+  // Combine own and communicated contributions to LHS and ICs
+  for (const auto& b : m_lhsc) {
+    auto lid = tk::cref_find( d->Lid(), b.first );
+    for (ncomp_t c=0; c<m_lhs.nprop(); ++c)
+      m_lhs(lid,c,0) += b.second[c];
+  }
+
+  // Clear receive buffer
+  tk::destroy(m_lhsc);
+
+  // Zero communication buffers for next time step
+  for (auto& b : m_rhsc) std::fill( begin(b), end(b), 0.0 );
+
+  // Continue after lhs is complete
+  if (m_initial) start(); else lhs_complete();
+}
+//! [Merge lhs and continue]
 
 void
 ALECG::dt()

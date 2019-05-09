@@ -188,8 +188,11 @@ class ALECG : public CBase_ALECG {
     tk::Fields m_lhs;
     //! Right-hand side vector (for the high order system)
     tk::Fields m_rhs;
-    //! Receive buffers for communication
-    std::vector< std::vector< tk::real > > m_lhsc, m_rhsc;
+    //! Receive buffer for communication of the left hand side
+    //! \details Key: chare id, value: lhs for all scalar components per node
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_lhsc;
+    //! Receive buffer for communicating the right hand side vector
+    std::vector< std::vector< tk::real > > m_rhsc;
     //! Total mesh volume
     tk::real m_vol;
     //! Diagnostics object
