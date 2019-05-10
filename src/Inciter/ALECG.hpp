@@ -191,8 +191,9 @@ class ALECG : public CBase_ALECG {
     //! Receive buffer for communication of the left hand side
     //! \details Key: chare id, value: lhs for all scalar components per node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_lhsc;
-    //! Receive buffer for communicating the right hand side vector
-    std::vector< std::vector< tk::real > > m_rhsc;
+    //! Receive buffer for communication of the right hand side
+    //! \details Key: chare id, value: rhs for all scalar components per node
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_rhsc;
     //! Total mesh volume
     tk::real m_vol;
     //! Diagnostics object
@@ -203,9 +204,6 @@ class ALECG : public CBase_ALECG {
       Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
       return m_disc[ thisIndex ].ckLocal();
     }
-
-    //! Size communication buffers
-    void resizeComm();
 
     //! Output mesh and particle fields to files
     void out();

@@ -225,8 +225,12 @@ class DiagCG : public CBase_DiagCG {
     //! Receive buffer for communication of the left hand side
     //! \details Key: chare id, value: lhs for all scalar components per node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_lhsc;
-    //! Receive buffers for communication
-    std::vector< std::vector< tk::real > > m_rhsc, m_difc;
+    //! Receive buffer for communication of the right hand side
+    //! \details Key: chare id, value: rhs for all scalar components per node
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_rhsc;
+    //! Receive buffer for communication of mass diffusion on the hand side
+    //! \details Key: chare id, value: dif for all scalar components per node
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_difc;
     //! Total mesh volume
     tk::real m_vol;
     //! Diagnostics object
@@ -237,9 +241,6 @@ class DiagCG : public CBase_DiagCG {
       Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
       return m_disc[ thisIndex ].ckLocal();
     }
-
-    //! Size communication buffers
-    void resizeComm();
 
     //! Output mesh fields to files
     void out();

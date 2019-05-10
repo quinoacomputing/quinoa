@@ -79,33 +79,12 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 {
   usesAtSync = true;    // enable migration at AtSync
 
-  // Size communication buffers
-  resizeComm();
-
   // Activate SDAG wait for initially computing the left-hand side
   thisProxy[ thisIndex ].wait4lhs();
 
   // Signal the runtime system that the workers have been created
   contribute( sizeof(int), &m_initial, CkReduction::sum_int,
     CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
-}
-
-void
-DiagCG::resizeComm()
-// *****************************************************************************
-//  Size communication buffers
-//! \details The size of the communication buffers are determined based on
-//!    Disc()->Bid.size() and m_u.nprop().
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  auto np = m_u.nprop();
-  auto nb = d->Bid().size();
-  m_rhsc.resize( nb );
-  for (auto& b : m_rhsc) b.resize( np );
-  m_difc.resize( nb );
-  for (auto& b : m_difc) b.resize( np );
 }
 
 void
@@ -218,12 +197,10 @@ DiagCG::comlhs( const std::vector< std::size_t >& gid,
 
   using tk::operator+=;
 
-  auto d = Disc();
-
   for (std::size_t i=0; i<gid.size(); ++i)
     m_lhsc[ gid[i] ] += L[i];
 
-  if (++m_nlhs == d->Msum().size()) {
+  if (++m_nlhs == Disc()->Msum().size()) {
     m_nlhs = 0;
     comlhs_complete();
   }
@@ -236,21 +213,14 @@ DiagCG::lhsmerge()
 // *****************************************************************************
 {
   // Combine own and communicated contributions to left hand side
-  auto d = Disc();
-
-  // Combine own and communicated contributions to LHS and ICs
   for (const auto& b : m_lhsc) {
-    auto lid = tk::cref_find( d->Lid(), b.first );
+    auto lid = tk::cref_find( Disc()->Lid(), b.first );
     for (ncomp_t c=0; c<m_lhs.nprop(); ++c)
       m_lhs(lid,c,0) += b.second[c];
   }
 
   // Clear receive buffer
   tk::destroy(m_lhsc);
-
-  // Zero communication buffers for next time step (rhs, mass diffusion rhs)
-  for (auto& b : m_rhsc) std::fill( begin(b), end(b), 0.0 );
-  for (auto& b : m_difc) std::fill( begin(b), end(b), 0.0 );
 
   // Continue after lhs is complete
   if (m_initial) start(); else lhs_complete();
@@ -358,15 +328,10 @@ DiagCG::comrhs( const std::vector< std::size_t >& gid,
 
   using tk::operator+=;
 
-  auto d = Disc();
+  for (std::size_t i=0; i<gid.size(); ++i)
+    m_rhsc[ gid[i] ] += R[i];
 
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( d->Bid(), gid[i] );
-    Assert( bid < m_rhsc.size(), "Indexing out of bounds" );
-    m_rhsc[ bid ] += R[i];
-  }
-
-  if (++m_nrhs == d->Msum().size()) {
+  if (++m_nrhs == Disc()->Msum().size()) {
     m_nrhs = 0;
     comrhs_complete();
   }
@@ -390,15 +355,10 @@ DiagCG::comdif( const std::vector< std::size_t >& gid,
 
   using tk::operator+=;
 
-  auto d = Disc();
+  for (std::size_t i=0; i<gid.size(); ++i)
+    m_difc[ gid[i] ] += D[i];
 
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( d->Bid(), gid[i] );
-    Assert( bid < m_difc.size(), "Indexing out of bounds" );
-    m_difc[ bid ] += D[i];
-  }
-
-  if (++m_ndif == d->Msum().size()) {
+  if (++m_ndif == Disc()->Msum().size()) {
     m_ndif = 0;
     comdif_complete();
   }
@@ -427,18 +387,21 @@ DiagCG::solve()
 
   auto d = Disc();
 
-  // Combine own and communicated contributions to rhs and mass diffusion
-  for (const auto& b : d->Bid()) {
+  // Combine own and communicated contributions to rhs
+  for (const auto& b : m_rhsc) {
     auto lid = tk::cref_find( d->Lid(), b.first );
-    const auto& brhsc = m_rhsc[ b.second ];
-    for (ncomp_t c=0; c<ncomp; ++c) m_rhs(lid,c,0) += brhsc[c];
-    const auto& bdifc = m_difc[ b.second ];
-    for (ncomp_t c=0; c<ncomp; ++c) m_dif(lid,c,0) += bdifc[c];
+    for (ncomp_t c=0; c<ncomp; ++c) m_rhs(lid,c,0) += b.second[c];
   }
 
-  // Zero communication buffers for next time step (rhs, mass diffusion rhs)
-  for (auto& b : m_rhsc) std::fill( begin(b), end(b), 0.0 );
-  for (auto& b : m_difc) std::fill( begin(b), end(b), 0.0 );
+  // Combine own and communicated contributions to mass diffusion
+  for (const auto& b : m_difc) {
+    auto lid = tk::cref_find( d->Lid(), b.first );
+    for (ncomp_t c=0; c<ncomp; ++c) m_dif(lid,c,0) += b.second[c];
+  }
+
+  // clear receive buffers
+  tk::destroy(m_rhsc);
+  tk::destroy(m_difc);
 
   // Set Dirichlet BCs for lhs and both low and high order rhs vectors. Note
   // that the low order rhs (more prcisely the mass-diffusion term) is set to
@@ -639,9 +602,6 @@ DiagCG::resizePostAMR(
 
   // Update physical-boundary node lists
   m_bnode = bnode;
-
-  // Resize communication buffers
-  resizeComm();
 
   // Resize FCT data structures
   d->FCT()->resize( npoin, msum, d->Bid(), d->Lid(), d->Inpoel() );

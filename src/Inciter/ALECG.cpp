@@ -75,9 +75,6 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 {
   usesAtSync = true;    // enable migration at AtSync
 
-  // Size communication buffers
-  resizeComm();
-
   // Activate SDAG wait for initially computing the left-hand side
   thisProxy[ thisIndex ].wait4lhs();
 
@@ -86,22 +83,6 @@ ALECG::ALECG( const CProxy_Discretization& disc,
     CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
 }
 //! [Constructor]
-
-void
-ALECG::resizeComm()
-// *****************************************************************************
-//  Size communication buffers
-//! \details The size of the communication buffers are determined based on
-//!    Disc()->Bid.size() and m_u.nprop().
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  auto np = m_u.nprop();
-  auto nb = d->Bid().size();
-  m_rhsc.resize( nb );
-  for (auto& b : m_rhsc) b.resize( np );
-}
 
 void
 ALECG::registerReducers()
@@ -253,9 +234,6 @@ ALECG::lhsmerge()
   // Clear receive buffer
   tk::destroy(m_lhsc);
 
-  // Zero communication buffers for next time step
-  for (auto& b : m_rhsc) std::fill( begin(b), end(b), 0.0 );
-
   // Continue after lhs is complete
   if (m_initial) start(); else lhs_complete();
 }
@@ -301,7 +279,7 @@ ALECG::dt()
 
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-              CkCallback(CkReductionTarget(DiagCG,advance), thisProxy) );
+              CkCallback(CkReductionTarget(ALECG,advance), thisProxy) );
   //! [Advance]
 }
 
@@ -348,16 +326,12 @@ ALECG::comrhs( const std::vector< std::size_t >& gid,
 
   using tk::operator+=;
 
-  auto d = Disc();
-
   for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( d->Bid(), gid[i] );
-    Assert( bid < m_rhsc.size(), "Indexing out of bounds" );
-    m_rhsc[ bid ] += R[i];
+    m_rhsc[ gid[i] ] += R[i];
   }
 
   // When we have heard from all chares we communicate with, this chare is done
-  if (++m_nrhs == d->Msum().size()) {
+  if (++m_nrhs == Disc()->Msum().size()) {
     m_nrhs = 0;
     comrhs_complete();
   }
@@ -374,14 +348,13 @@ ALECG::solve()
   auto d = Disc();
 
   // Combine own and communicated contributions to rhs
-  for (const auto& b : d->Bid()) {
+  for (const auto& b : m_rhsc) {
     auto lid = tk::cref_find( d->Lid(), b.first );
-    const auto& brhsc = m_rhsc[ b.second ];
-    for (ncomp_t c=0; c<ncomp; ++c) m_rhs(lid,c,0) += brhsc[c];
+    for (ncomp_t c=0; c<ncomp; ++c) m_rhs(lid,c,0) += b.second[c];
   }
 
-  // Zero communication buffers for next time step
-  for (auto& b : m_rhsc) std::fill( begin(b), end(b), 0.0 );
+  // clear receive buffer
+  tk::destroy(m_rhsc);  
 
   // Solve sytem
   // m_du = m_rhs / m_lhs;
@@ -482,9 +455,6 @@ ALECG::resizePostAMR(
 
   // Update physical-boundary node lists
   m_bnode = bnode;
-
-  // Resize communication buffers
-  resizeComm();
 
   // Recompute the lhs on the new mesh
   lhs();
