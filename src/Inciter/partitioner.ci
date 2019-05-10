@@ -13,11 +13,11 @@
 
 module partitioner {
 
-  include "Types.h";
-  include "UnsMesh.h";
-  include "Scheme.h";
-  include "FaceData.h";
-  include "Callback.h";
+  include "Types.hpp";
+  include "UnsMesh.hpp";
+  include "Scheme.hpp";
+  include "FaceData.hpp";
+  include "Callback.hpp";
 
   extern module transporter;
   extern module refiner;
