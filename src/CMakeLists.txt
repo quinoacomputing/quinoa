@@ -92,15 +92,15 @@ endif()
 # directory based on cmake-supplied compiler ID
 if (NOT TPL_DIR)
   string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
-  set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/./external/install/${COMP}-${ARCH})
+  set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../external/install/${COMP}-${ARCH})
   get_filename_component(ABS_TPL_DIR ${REL_TPL_DIR} ABSOLUTE)
   set(TPL_DIR ${ABS_TPL_DIR} CACHE STRING "Third-party libraries directory.")
 endif()
 
 if (EXISTS ${TPL_DIR}/include)
   set(TPL_INCLUDE_DIR ${TPL_DIR}/include)
-  message(STATUS "Third-party library dir: " ${TPL_DIR})
 endif()
+message(STATUS "Third-party library dir: " ${TPL_DIR})
 
 # Detect compiler version
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
@@ -193,7 +193,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       "${CMAKE_EXE_LINKER_FLAGS} -Wl,-no_compact_unwind" )
 
   # Set minimum OSX SDK target version
-  set(CMAKE_OSX_DEPLOYMENT_TARGET 107 CACHE STRING "Minimum OS X version to target for deployment (at runtime); newer APIs weak linked. Set to empty string for default value." FORCE)
+  #set(CMAKE_OSX_DEPLOYMENT_TARGET 107 CACHE STRING "Minimum OS X version to target for deployment (at runtime); newer APIs weak linked. Set to empty string for default value." FORCE)
 
 endif()
 
