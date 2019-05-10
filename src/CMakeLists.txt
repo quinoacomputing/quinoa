@@ -193,7 +193,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       "${CMAKE_EXE_LINKER_FLAGS} -Wl,-no_compact_unwind" )
 
   # Set minimum OSX SDK target version
-  set(CMAKE_OSX_DEPLOYMENT_TARGET 107 CACHE STRING "Minimum OS X version to target for deployment (at runtime); newer APIs weak linked. Set to empty string for default value." FORCE)
+  #set(CMAKE_OSX_DEPLOYMENT_TARGET 107 CACHE STRING "Minimum OS X version to target for deployment (at runtime); newer APIs weak linked. Set to empty string for default value." FORCE)
 
 endif()
 
