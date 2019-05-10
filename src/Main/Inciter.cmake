@@ -1,10 +1,10 @@
 ## Inciter executable ##########################################################
 
 add_executable(${INCITER_EXECUTABLE}
-               InciterDriver.C
-               InciterPrint.C
-               LBSwitch.C
-               Inciter.C)
+               InciterDriver.cpp
+               InciterPrint.cpp
+               LBSwitch.cpp
+               Inciter.cpp)
 
 config_executable(${INCITER_EXECUTABLE})
 
@@ -12,6 +12,11 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       InciterControl
                       Inciter
                       PDE
+                      TransportProblem
+                      CGTransportPhysics
+                      CompFlowProblem
+                      CGCompFlowPhysics
+                      Integrate
                       MeshRefinement
                       LoadBalance
                       ZoltanInterOp

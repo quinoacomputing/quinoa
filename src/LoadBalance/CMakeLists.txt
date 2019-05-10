@@ -5,8 +5,8 @@ project(LoadBalance CXX)
 include(charm)
 
 add_library(LoadBalance
-            LinearMap.C
-            UnsMeshMap.C
+            LinearMap.cpp
+            UnsMeshMap.cpp
 )
 
 target_include_directories(LoadBalance PUBLIC
@@ -28,7 +28,7 @@ INSTALL(TARGETS LoadBalance
 )
 
 add_library(ZoltanInterOp
-            ZoltanInterOp.C)
+            ZoltanInterOp.cpp)
 
 target_include_directories(ZoltanInterOp PUBLIC
                            ${QUINOA_SOURCE_DIR}

@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8.5)
 project(Particles CXX)
 
 add_library(Particles
-            Tracker.C
+            Tracker.cpp
 )
 
 set_target_properties(Particles PROPERTIES

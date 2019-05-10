@@ -17,7 +17,7 @@ module discretization {
   extern module meshwriter;
   extern module distfct;
 
-  include "UnsMesh.h";
+  include "UnsMesh.hpp";
 
   namespace inciter {
 

@@ -19,7 +19,7 @@ include(ConfigExecutable)
 
 # Configure configuration library
 if (BRIGAND_FOUND)
-  add_library(Config ${PROJECT_BINARY_DIR}/QuinoaConfig.C)
+  add_library(Config ${PROJECT_BINARY_DIR}/QuinoaConfig.cpp)
 
   set_target_properties(Config PROPERTIES LIBRARY_OUTPUT_NAME quinoa_config)
 
@@ -29,7 +29,7 @@ if (BRIGAND_FOUND)
           ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
 
   # Configure executable initialization library
-  add_library(Init Init.C)
+  add_library(Init Init.cpp)
 
   set_target_properties(Init PROPERTIES LIBRARY_OUTPUT_NAME quinoa_init)
 
@@ -62,8 +62,8 @@ if (HAS_OMEGA_H)
 endif()
 
 if (ENABLE_INCITER)
-  set(TestError "../../tests/unit/Inciter/AMR/TestError.C")
-  set(TestScheme "../../tests/unit/Inciter/TestScheme.C")
+  set(TestError "../../tests/unit/Inciter/AMR/TestError.cpp")
+  set(TestScheme "../../tests/unit/Inciter/TestScheme.cpp")
   set(MESHREFINEMENT "MeshRefinement")
 endif()
 

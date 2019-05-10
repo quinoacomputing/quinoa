@@ -17,10 +17,10 @@ module dg {
   extern module transporter;
   extern module discretization;
 
-  include "UnsMesh.h";
-  include "PUPUtil.h";
-  include "FaceData.h";
-  include "Fields.h";
+  include "UnsMesh.hpp";
+  include "PUPUtil.hpp";
+  include "FaceData.hpp";
+  include "Fields.hpp";
 
   namespace inciter {
 

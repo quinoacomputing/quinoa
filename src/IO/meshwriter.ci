@@ -15,9 +15,9 @@
 
 module meshwriter {
 
-  include "Options/FieldFile.h";
-  include "Centering.h";
-  include "UnsMesh.h";
+  include "Options/FieldFile.hpp";
+  include "Centering.hpp";
+  include "UnsMesh.hpp";
 
   namespace tk {
 
