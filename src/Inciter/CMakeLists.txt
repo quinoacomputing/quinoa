@@ -6,21 +6,21 @@ project(Inciter CXX)
 include(charm)
 
 add_library(Inciter
-            Transporter.C
-            Partitioner.C
-            FaceData.C
-            Discretization.C
-            Refiner.C
-            Sorter.C
-            DiagCG.C
-            ALECG.C
-            DG.C
-            FluxCorrector.C
-            DistFCT.C
-            DiagReducer.C
-            NodeDiagnostics.C
-            ElemDiagnostics.C
-            NodeBC.C)
+            Transporter.cpp
+            Partitioner.cpp
+            FaceData.cpp
+            Discretization.cpp
+            Refiner.cpp
+            Sorter.cpp
+            DiagCG.cpp
+            ALECG.cpp
+            DG.cpp
+            FluxCorrector.cpp
+            DistFCT.cpp
+            DiagReducer.cpp
+            NodeDiagnostics.cpp
+            ElemDiagnostics.cpp
+            NodeBC.cpp)
 
 target_include_directories(Inciter PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -48,11 +48,11 @@ target_include_directories(Inciter PUBLIC
                            ${PROJECT_BINARY_DIR}/../Main)
 
 add_library(MeshRefinement
-            PUPAMR.C
-            AMR/mesh_adapter.C
-            AMR/util.C
-            AMR/edge.C
-            AMR/Error.C)
+            PUPAMR.cpp
+            AMR/mesh_adapter.cpp
+            AMR/util.cpp
+            AMR/edge.cpp
+            AMR/Error.cpp)
 
 target_include_directories(MeshRefinement PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -78,7 +78,7 @@ addCharmModule( "dg" "Inciter" )
 
 # Add extra dependency of Inciter on inciterCharmModule. This is required as
 # Inciter refers to the main Charm++ proxy defined in the Charm++ module
-# inciter (in Main/Inciter.C).
+# inciter (in Main/Inciter.cpp).
 add_dependencies( "Inciter" "inciterCharmModule" )
 
 ## Add extra dependency of Transporter charm module on charm modules implementing

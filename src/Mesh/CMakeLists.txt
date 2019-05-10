@@ -5,10 +5,10 @@ project(Mesh CXX)
 include(charm)
 
 add_library(Mesh
-            DerivedData.C
-            Gradients.C
-            Reorder.C
-            STLMesh.C
+            DerivedData.cpp
+            Gradients.cpp
+            Reorder.cpp
+            STLMesh.cpp
 )
 
 target_include_directories(Mesh PUBLIC

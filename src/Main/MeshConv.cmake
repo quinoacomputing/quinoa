@@ -1,8 +1,8 @@
 ### MeshConv executable ########################################################
 
 add_executable(${MESHCONV_EXECUTABLE}
-               MeshConvDriver.C
-               MeshConv.C)
+               MeshConvDriver.cpp
+               MeshConv.cpp)
 
 config_executable(${MESHCONV_EXECUTABLE})
 

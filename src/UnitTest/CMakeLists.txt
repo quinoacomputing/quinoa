@@ -6,11 +6,11 @@ project(UnitTest CXX)
 include(charm)
 
 add_library(UnitTest
-            Assessment.C
-            TUTSuite.C
-            TUTTest.C
-            QuietCerr.C
-            MPIRunner.C)
+            Assessment.cpp
+            TUTSuite.cpp
+            TUTTest.cpp
+            QuietCerr.cpp
+            MPIRunner.cpp)
 
 target_include_directories(UnitTest PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -54,7 +54,7 @@ endif()
 
 # Add extra dependency of UnitTest on unittestCharmModule. This is required as a
 # dependency of UnitTest, TUTSuite, refers to the main Charm++ proxy defined in
-# the Charm++ module unittest (in Main/UnitTest.C).
+# the Charm++ module unittest (in Main/UnitTest.cpp).
 if (ENABLE_INCITER)
   add_dependencies("UnitTest" "unittestinciterCharmModule")
 else()

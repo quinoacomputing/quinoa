@@ -13,7 +13,7 @@
 
 module sorter {
 
-  include "Callback.h";
+  include "Callback.hpp";
 
   extern module meshwriter;
 

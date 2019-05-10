@@ -15,7 +15,7 @@
 // translation unit: one guarded by CK_TEMPLATES_ONLY and one without, where
 // each inclusion will generate different code.
 
-#include "Macro.h"
+#include "Macro.hpp"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

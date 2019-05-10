@@ -13,8 +13,8 @@
 
 module refiner {
 
-  include "Scheme.h";
-  include "AMR/AMR_types.h";
+  include "Scheme.hpp";
+  include "AMR/AMR_types.hpp";
 
   extern module sorter;
   extern module meshwriter;

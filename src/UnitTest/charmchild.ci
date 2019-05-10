@@ -12,7 +12,7 @@
 
 module charmchild {
 
-  include "Types.h";
+  include "Types.hpp";
 
   namespace tut {
 
