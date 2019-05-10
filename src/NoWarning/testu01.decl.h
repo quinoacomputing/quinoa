@@ -11,7 +11,7 @@
 #ifndef nowarning_testu01_decl_h
 #define nowarning_testu01_decl_h
 
-#include "Macro.h"
+#include "Macro.hpp"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

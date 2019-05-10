@@ -3,9 +3,9 @@ cmake_minimum_required(VERSION 2.8.5)
 project(IO CXX)
 
 add_library(IO
-            PDFWriter.C
-            TxtStatWriter.C
-            DiagWriter.C)
+            PDFWriter.cpp
+            TxtStatWriter.cpp
+            DiagWriter.cpp)
 
 target_include_directories(IO PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -30,14 +30,14 @@ INSTALL(TARGETS IO
 
 # Native IO libraries do not require third-party libraries
 add_library(NativeMeshIO
-            MeshFactory.C
-            GmshMeshReader.C
-            STLTxtMeshReader.C
-            NetgenMeshReader.C
-            ASCMeshReader.C
-            GmshMeshWriter.C
-            NetgenMeshWriter.C
-            #SiloWriter.C
+            MeshFactory.cpp
+            GmshMeshReader.cpp
+            STLTxtMeshReader.cpp
+            NetgenMeshReader.cpp
+            ASCMeshReader.cpp
+            GmshMeshWriter.cpp
+            NetgenMeshWriter.cpp
+            #SiloWriter.cpp
 )
 
 target_include_directories(NativeMeshIO PUBLIC
@@ -64,8 +64,8 @@ INSTALL(TARGETS NativeMeshIO
 )
 
 add_library(ExodusIIMeshIO
-            ExodusIIMeshReader.C
-            ExodusIIMeshWriter.C)
+            ExodusIIMeshReader.cpp
+            ExodusIIMeshWriter.cpp)
 
 target_include_directories(ExodusIIMeshIO PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -86,7 +86,7 @@ INSTALL(TARGETS ExodusIIMeshIO
 
 if (HAS_OMEGA_H)
   add_library(OmegaHMeshIO
-              Omega_h_MeshReader.C)
+              Omega_h_MeshReader.cpp)
 
   target_include_directories(OmegaHMeshIO PUBLIC
                              ${QUINOA_SOURCE_DIR}
@@ -109,8 +109,8 @@ endif()
 
 if (HAS_ROOT)
   add_library(RootMeshIO
-              FileConvWriter.C
-              RootMeshWriter.C)
+              FileConvWriter.cpp
+              RootMeshWriter.cpp)
   
   target_include_directories(RootMeshIO PUBLIC
                              ${QUINOA_SOURCE_DIR}
@@ -132,7 +132,7 @@ if (HAS_ROOT)
 endif()
 
 add_library(HyperMeshIO
-            HyperMeshReader.C)
+            HyperMeshReader.cpp)
 
 target_include_directories(HyperMeshIO PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -151,7 +151,7 @@ INSTALL(TARGETS HyperMeshIO
 )
 
 add_library(MeshDetect
-            MeshDetect.C)
+            MeshDetect.cpp)
 
 target_include_directories(MeshDetect PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -167,7 +167,7 @@ INSTALL(TARGETS MeshDetect
 )
 
 add_library(MeshWriter
-            MeshWriter.C)
+            MeshWriter.cpp)
 
 target_include_directories(MeshWriter PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -194,7 +194,7 @@ INSTALL(TARGETS MeshWriter
 addCharmModule( "meshwriter" "MeshWriter" )
 
 add_library(ParticleIO
-            H5PartWriter.C)
+            H5PartWriter.cpp)
 
 target_include_directories(ParticleIO PUBLIC
                            ${QUINOA_SOURCE_DIR}

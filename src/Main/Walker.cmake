@@ -1,14 +1,23 @@
 ### Walker executable ##########################################################
 
 add_executable(${WALKER_EXECUTABLE}
-               WalkerDriver.C
-               WalkerPrint.C
-               Walker.C)
+               WalkerDriver.cpp
+               WalkerPrint.cpp
+               Walker.cpp)
 
 config_executable(${WALKER_EXECUTABLE})
 
 target_link_libraries(${WALKER_EXECUTABLE}
                       DiffEq
+                      Beta
+                      Dirichlet
+                      WrightFisher
+                      OrnsteinUhlenbeck
+                      Gamma
+                      SkewNormal
+                      Velocity
+                      Position
+                      Dissipation
                       RNG
                       Walker
                       Statistics
