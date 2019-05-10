@@ -411,6 +411,9 @@ ALECG::refine()
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
+    // Activate SDAG waits for re-computing the left-hand side
+    thisProxy[ thisIndex ].wait4lhs();
+
     d->startvol();
     d->Ref()->dtref( {}, m_bnode, {} );
     d->refined() = 1;
@@ -482,9 +485,6 @@ ALECG::resizePostAMR(
 
   // Resize communication buffers
   resizeComm();
-
-  // Activate SDAG waits for re-computing the left-hand side
-  thisProxy[ thisIndex ].wait4lhs();
 
   // Recompute the lhs on the new mesh
   lhs();

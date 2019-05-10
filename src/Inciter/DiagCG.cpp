@@ -563,6 +563,9 @@ DiagCG::refine()
   // if t>0 refinement enabled and we hit the dtref frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
+    // Activate SDAG waits for re-computing the left-hand side
+    thisProxy[ thisIndex ].wait4lhs();
+
     d->startvol();
     d->Ref()->dtref( {}, m_bnode, {} );
     d->refined() = 1;
@@ -642,9 +645,6 @@ DiagCG::resizePostAMR(
 
   // Resize FCT data structures
   d->FCT()->resize( npoin, msum, d->Bid(), d->Lid(), d->Inpoel() );
-
-  // Activate SDAG waits for re-computing the left-hand side
-  thisProxy[ thisIndex ].wait4lhs();
 
   // Recompute the lhs on the new mesh
   lhs();
