@@ -118,9 +118,6 @@ class DG : public CBase_DG {
                  const std::vector< std::vector< tk::real > >& u,
                  const std::vector< std::size_t >& ndof );
 
-    //! Advance equations to next time step
-    void advance( tk::real );
-
     //! Optionally refine/derefine mesh
     void refine();
 

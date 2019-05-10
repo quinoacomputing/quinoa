@@ -44,7 +44,6 @@ module dg {
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u,
                          const std::vector< std::size_t >& ndofel );
-      entry void advance( tk::real );
       entry void refine();
       entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();

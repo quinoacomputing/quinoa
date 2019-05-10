@@ -774,16 +774,6 @@ Transporter::stat()
 }
 
 void
-Transporter::advance( tk::real dt )
-// *****************************************************************************
-// Reduction target computing the minimum of dt
-// *****************************************************************************
-{
-  // Comptue size of next time step
-  m_scheme.advance( dt );
-}
-
-void
 Transporter::diagnostics( CkReductionMsg* msg )
 // *****************************************************************************
 // Reduction target optionally collecting diagnostics, e.g., residuals

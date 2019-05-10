@@ -37,7 +37,7 @@ module alecg {
       entry void setup( tk::real v );
       entry void init();
       entry void refine();
-      entry void advance( tk::real newdt );
+      entry [reductiontarget] void advance( tk::real newdt );
       entry void comlhs( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& L );
       entry void comrhs( const std::vector< std::size_t >& gid,

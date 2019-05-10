@@ -294,7 +294,7 @@ DiagCG::dt()
 
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-              CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
+              CkCallback(CkReductionTarget(DiagCG,advance), thisProxy) );
 }
 
 void

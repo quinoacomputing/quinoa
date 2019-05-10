@@ -162,9 +162,6 @@ class Transporter : public CBase_Transporter {
     //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );
 
-    //! Reduction target computing minimum of dt
-    void advance( tk::real dt );
-
     //! Normal finish of time stepping
     void finish();
 
