@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 2.8.5)
 project(Statistics CXX)
 
 add_library(Statistics
-            Statistics.C
-            PDFReducer.C)
+            Statistics.cpp
+            PDFReducer.cpp)
 
 target_include_directories(Statistics PUBLIC
                            ${QUINOA_SOURCE_DIR}

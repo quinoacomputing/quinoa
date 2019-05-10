@@ -12,7 +12,7 @@
 
 module tutsuite {
 
-  include "UnitTest/CmdLine/CmdLine.h";
+  include "UnitTest/CmdLine/CmdLine.hpp";
 
   // Note that chare TUTSuite depends on chare TUTTest and in turn TUTTest
   // depends on TUTSuite (see also the interface file tuttest.ci). This is a

@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8.5)
 project(RNG CXX)
 
 add_library(RNG
-            RNGStack.C
+            RNGStack.cpp
 )
 
 target_include_directories(RNG PUBLIC

@@ -1,9 +1,9 @@
 ### RNGTest executable #########################################################
 
 add_executable(${RNGTEST_EXECUTABLE}
-               RNGTestDriver.C
-               RNGPrint.C
-               RNGTest.C)
+               RNGTestDriver.cpp
+               RNGPrint.cpp
+               RNGTest.cpp)
 
 target_include_directories(${RNGTEST_EXECUTABLE} PUBLIC
                            ${QUINOA_SOURCE_DIR}/RNGTest

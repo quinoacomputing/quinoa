@@ -14,8 +14,8 @@
 // translation unit: one guarded by CK_TEMPLATES_ONLY and one without, where
 // each inclusion will generate different code.
 
-#include "Macro.h"
-#include "QuinoaConfig.h"
+#include "Macro.hpp"
+#include "QuinoaConfig.hpp"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
