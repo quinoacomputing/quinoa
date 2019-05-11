@@ -21,14 +21,14 @@ unknown, heterogeneous, and dynamic load distribution.
 ## Directory layout
 
     quinoa
-      ├── cmake/ - CMake code shared between github.com/quinoacomputing/quinoa-tpl and src/.
-      ├── doc/ - Documentation, rendered at quinoacomputing.org.
-      ├── external/ - External packages pulled in as submodules from github.com/quinoacomputing/quinoa-tpl.
-      ├── src/ - Compilable sources. For details see quinoacomputing.org/files.html.
-      ├── tests/ - Unit-, and regression tests.
-      ├── tools/ - Development utilities and docker files.
-      ├── LICENSE - Copyright and license.
-      └── README.md - This file, rendered at github.com/quinoacomputing/quinoa.
+      ├── cmake/ - CMake code shared between github.com/quinoacomputing/quinoa-tpl and src/
+      ├── doc/ - Documentation, rendered at quinoacomputing.org
+      ├── external/ - External packages pulled in as submodules from github.com/quinoacomputing/quinoa-tpl
+      ├── src/ - Compilable sources. For details see quinoacomputing.org/files.html
+      ├── tests/ - Unit-, and regression tests
+      ├── tools/ - Development utilities and docker files
+      ├── LICENSE - Copyright and license
+      └── README.md - This file, rendered at github.com/quinoacomputing/quinoa
 
 ## More info
 
