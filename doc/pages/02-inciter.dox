@@ -30,7 +30,7 @@ high-load-imbalance simulations, representative of production multiphysics
 codes, to large problems on large computers using Charm++'s automatic load
 balancing capabilities.
 
-@section inciter_pages Other pages related to inciter
+@section inciter_pages Related pages
 - @ref inciter_performance "Performance"
 - @ref inciter_design "Software design"
 - @ref inciter_newscheme "How to add a new scheme"
