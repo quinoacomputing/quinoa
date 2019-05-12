@@ -12,7 +12,7 @@
 #ifndef nowarning_meshconv_def_h
 #define nowarning_meshconv_def_h
 
-#include "Macro.h"
+#include "Macro.hpp"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

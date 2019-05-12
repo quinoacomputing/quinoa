@@ -208,6 +208,10 @@ class CompFlowProblemNLEnergyGrowth {
       n.push_back( "pressure_analytical" );
       n.push_back( "err(rho)" );
       n.push_back( "err(e)" );
+
+      const auto pref = g_inputdeck.get< tag::discr, tag::pref >();
+      if(pref)           // Adaptive DG on
+        n.push_back( "ndof" );
       return n;
     }
 
@@ -232,7 +236,7 @@ class CompFlowProblemNLEnergyGrowth {
                  const std::array< std::vector< tk::real >, 3 >& coord,
                  tk::Fields& U )
     {
-      // number of degree of freedom
+      // number of degrees of freedom
       const std::size_t ndof =
         g_inputdeck.get< tag::discr, tag::ndof >();
       // ratio of specific heats

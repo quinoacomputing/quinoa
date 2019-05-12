@@ -333,19 +333,17 @@ potentially across the network, from another processing element (PE). Entry
 methods are always _public_ in the C++ object-oriented programming (OOP) sense.
 Note that there can be other member functions of ALECG. These are simple C++
 class member functions and are usually not _public_ but _private_, such as
-`ALECG::rhs()`. Note also that there are `[reductiontarget]` entry methods,
-e.g., `ALECG::advance()` which can be designated as the _target_ entry method of
-a reduction operation across the chare array elements. There is also an
-`initnode` entry method, `ALECG::registerReducers()` which is a special member
-function that is also declared as _static_ in the C++ sense (see ALECG.h). This
-is static because the runtime system must be able to call this function without
-creating an object and a lot earlier than the actual ALECG chare array elements
-are created. This is how _custom reducers_ can be associated in Charm++ to a
-chare array. Such custom reducers are an excellent way to rely on the
-asynchronous, tree-based implementation of parallel reductions in Charm++ yet
-still do it on custom, arbitrarily complex data types, e.g., a hash-map that
-holds vectors, as long as one defines how aggregation is to be performed when
-merging such data. Such an example is given in Inciter/DiagReducer.C.
+`ALECG::rhs()`. Note also that there is an `initnode` entry method,
+`ALECG::registerReducers()` which is a special member function that is also
+declared as _static_ in the C++ sense (see ALECG.h). This is static because the
+runtime system must be able to call this function without creating an object and
+a lot earlier than the actual ALECG chare array elements are created. This is
+how _custom reducers_ can be associated in Charm++ to a chare array. Such custom
+reducers are an excellent way to rely on the asynchronous, tree-based
+implementation of parallel reductions in Charm++ yet still do it on custom,
+arbitrarily complex data types, e.g., a hash-map that holds vectors, as long as
+one defines how aggregation is to be performed when merging such data. Such an
+example is given in Inciter/DiagReducer.C.
 
 @subsubsection inciter_newscheme_chare_alecg_sdag Inciter/alecg.ci -- Structured DAG
 
@@ -454,13 +452,14 @@ buffer on the receiving side, which would lead to corrupt data and errors.
 
 @snippet Inciter/ALECG.C init and lhs
 
-In the ALECG::setup() code snippet above we first tell the runtime system to
+In the ALECG::setup() code snippet above we call ALECG::lhs() which starts by
+computing the own contribution of the lhs followed by sending out contributions
+to those chares the given chare shares at least a single mesh node with.
+Previously, during ALECG's constructor, we already told the runtime system to
 start listening for the completion of tasks leading to computing the left-hand
 side (lhs). This is done by the call `wait4lhs()`, which activates the relevant
 part of the DAG, discussed above in Section @ref
-inciter_newscheme_chare_alecg_sdag. Then we call ALECG::lhs() which starts by
-computing the own contribution of the lhs followed by sending out contributions
-to those chares the given chare shares at least a single mesh node with.
+inciter_newscheme_chare_alecg_sdag. Then
 
 @subsection inciter_newscheme_class_lhs ALECG::lhs() -- Compute own and send lhs on chare-boundary
 
@@ -471,9 +470,9 @@ check if the node communication map is empty. If so, we are running in serial
 and the communication part is a no-op -- we call `comlhs_complete()` right away.
 If the map is not empty, we loop through the map and for each chare the given
 chare shares a node (or multiple nodes) with we collect the values of the lhs in
-those nodes into a vector and send it to the given destination chare. The send
-is done via the entry method function call `thisProxy[n.first].comlhs()`, which
-sends its arguments to chare id `n.first` in a point-point fashion.
+those nodes into a vector and send them to the given destination chare. The send
+is done via the entry method function call `thisProxy[ targetchare ].comlhs()`,
+which sends its arguments to chare id 'target'chare' in a point-point fashion.
 
 @subsection inciter_newscheme_class_comlhs ALECG::comlhs() -- Receive left hand side on chare boundary
 
@@ -512,7 +511,7 @@ during time stepping. If `lhsmerge()` was called during the first step, we call
 ALECG::start() but if it was called during time stepping, we just tell the
 runtime system that the lhs is complete. (This latter happens after a mesh
 refinement step, in which case we need to regenerate the lhs, and in that case,
-completing the lhs is only part of a DAG, `wait4eval`, waiting for multiple
+completing the lhs is only part of a DAG, `wait4out`, waiting for multiple
 overlapping tasks, required for continuing.) ALECG::start() calls ALECG::dt(),
 which is the first step in a time step.
 
@@ -571,8 +570,8 @@ with its frequency configured by the user. If the mesh is _not_ refined, we
 simply enable the SDAG waits associated to the tasks of the mesh refinement
 step. If the mesh _is_ refined, we call a member function of the mesh refiner
 object held by Discretization, Refiner::dtref(), which when done, eventually
-calls back to ALECG::resize(), passing back the new mesh and associated data
-structures.
+calls back to ALECG::resizeAfterRefined(), passing back the new mesh and
+associated data structures.
 
 @subsection inciter_newscheme_class_resize ALECG::resize() -- Resize data after mesh refinement
 
@@ -609,16 +608,18 @@ Transporter::totalvol(). During time stepping these bools are false, and ALECG
 enables `lhs_complete()`, while Transporter calls ALECG::resized() which
 enables `resize_complete()`.
 
-When all the end-of-time-step, independent threads have finished, we call
-ALECG::eval(), which decides whether we start a new time step or call
-Transporter::finish() for terminating at the end of time stepping.  These
-end-of-time-step threads are (1) computing diagnostics, discussed above, (2)
+The end-of-time-step threads are (1) computing diagnostics, discussed above, (2)
 mesh refinement (and resizing of _some_ of the mesh data structures), (3)
-resized (complete resize of mesh data structures, i.e., also those that require
-communication, e.g., nodal volumes), and (4) recomputing the lhs. The
+resized (complete resizeing of mesh data structures, i.e., also those that
+require communication, e.g., nodal volumes), and (4) recomputing the lhs. The
 code-snippet on Inciter/alecg.ci in Section @ref
 inciter_newscheme_chare_alecg_sdag, above shows the DAG that tells the runtime
 system this logic, involving the four tasks.
+
+When all the end-of-time-step, independent threads have finished, we call
+ALECG::out(), which after optionally outputing field data, calls ALECG::step(),
+which decides whether we start a new time step or call Transporter::finish() for
+terminating at the end of time stepping.
 
 @section inciter_newscheme_work 6. Making it all work
 
@@ -745,7 +746,9 @@ index 6dc48c75..e4acfce4 100644
 +}
 @endcode
 
-Now that we will test ALECG using the unit test harness, @ref unittest_main, we also have to make the UnitTest build target depend on the new ALECG Charm++ module:
+Now that we will test ALECG using the unit test harness, @ref unittest_main, we
+also have to make the UnitTest build target depend on the new ALECG Charm++
+module:
 
 @code{.diff}
 $ git diff src/UnitTest/CMakeLists.txt
@@ -765,8 +768,8 @@ index bb740285..e0ea47fe 100644
 
 @section inciter_newscheme_regression 8. Add new regression tests
 
-We also add a bunch of new regression tests that stress-test the asynchronous
-logic in the discretization scheme classes:
+Finally, we also add a bunch of new regression tests that stress-test the
+asynchronous logic in the discretization scheme classes:
 
 @code{.diff}
 $ git diff tests/regression/inciter/transport/SlotCyl/asynclogic/CMakeLists.txt

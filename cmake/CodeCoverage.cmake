@@ -1,7 +1,10 @@
 ################################################################################
 #
-# \file      cmake/CodeCoverage.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+# \file      CodeCoverage.cmake
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
 # \brief     Setup target for code coverage analysis
 #
 ################################################################################
@@ -36,8 +39,6 @@
 # Default: "". Here all dependencies should be given that should be covered by
 # the test suite the coverage is being setup for, as well as those that are
 # required for successfully building the tests and the test runner.
-#
-# Author: J. Bakosi
 #
 # ##############################################################################
 FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
@@ -78,7 +79,7 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
     # Combine trace files
     COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --add-tracefile ${OUTPUT}.base.info --add-tracefile ${OUTPUT}.test.info --output-file ${OUTPUT}.total.info
     # Filter out unwanted files
-    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info "UnitTest/tests/*" "*/c++/*" "*/include/*" "*/boost/*" "*/charm/*" "*.decl.h" "*.def.h" "*/STDIN" "*/openmpi/*" "*/pstreams/*" "*/Random123/*" "*/pegtl/*" "*/tut/*" "*/highwayhash/*" "*/moduleinit*" --output-file ${OUTPUT}.filtered.info
+    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info "*/tests/*" "*/c++/*" "*/include/*" "*/boost/*" "*/charm/*" "*.decl.h" "*.def.h" "*/STDIN" "*/openmpi/*" "*/pstreams/*" "*/Random123/*" "*/pegtl/*" "*/tut/*" "*/highwayhash/*" "*/moduleinit*" --output-file ${OUTPUT}.filtered.info
     # Copy over report customization files for genhtml
     COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.gcov.css
@@ -144,8 +145,6 @@ ENDFUNCTION()
 # the test suite the coverage is being setup for, as well as those that are
 # required for successfully building the tests and the test runner.
 #
-# Author: J. Bakosi
-#
 # ##############################################################################
 FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner
                                        unittestrunner_ncpus_arg)
@@ -184,7 +183,7 @@ FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner
     # Combine trace files
     COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --add-tracefile ${OUTPUT}.base.info --add-tracefile ${OUTPUT}.test.info --output-file ${OUTPUT}.total.info
     # Filter out unwanted files
-    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info "UnitTest/tests/*" "*/c++/*" "*/include/*" "*/boost/*" "*/charm/*" "*.decl.h" "*.def.h" "*/STDIN" "*/openmpi/*" "*/pstreams/*" "*/Random123/*" "*/pegtl/*" "*/tut/*" "*/highwayhash/*" "*/moduleinit*" --output-file ${OUTPUT}.filtered.info
+    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info "*/tests/*" "*/c++/*" "*/include/*" "*/boost/*" "*/charm/*" "*.decl.h" "*.def.h" "*/STDIN" "*/openmpi/*" "*/pstreams/*" "*/Random123/*" "*/pegtl/*" "*/tut/*" "*/highwayhash/*" "*/moduleinit*" --output-file ${OUTPUT}.filtered.info
     # Copy over report customization files for genhtml
     COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.gcov.css

@@ -1,12 +1,15 @@
 ################################################################################
 #
-# \file      cmake/FindTestU01.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+# \file      FindTestU01.cmake
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
 # \brief     Find the TestU01 library
 #
 ################################################################################
 
-# Find the TestU01 library
+# TestU01: http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
 #
 #  TESTU01_FOUND - System has TestU01
 #  TESTU01_INCLUDE_DIRS - The TestU01 include directories

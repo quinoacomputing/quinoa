@@ -12,7 +12,7 @@
 
 module transporter {
 
-  include "Types.h";
+  include "Types.hpp";
 
   extern module meshwriter;
 
@@ -27,9 +27,15 @@ module transporter {
       entry [reductiontarget] void disccreated();
       entry [reductiontarget] void workinserted();
       entry [reductiontarget] void edges();
-      entry [reductiontarget] void matched( std::size_t extra );
-      entry [reductiontarget]
-        void refined( std::size_t nelem, std::size_t npoin );
+      entry [reductiontarget] void compatibility( int modified );
+      entry [reductiontarget] void matched( std::size_t nextra,
+                                            std::size_t nedge,
+                                            std::size_t initial );
+      entry [reductiontarget] void bndint( tk::real sx,
+                                           tk::real sy,
+                                           tk::real sz );
+      entry [reductiontarget] void refined( std::size_t nelem,
+                                            std::size_t npoin );
       entry [reductiontarget] void queried();
       entry [reductiontarget] void responded();
       entry [reductiontarget] void discresized();
@@ -46,7 +52,6 @@ module transporter {
                                             tk::real d4, tk::real d5 );
       entry [reductiontarget] void pdfstat( CkReductionMsg* msg );
       entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
-      entry [reductiontarget] void sendinit();
       entry [reductiontarget] void advance( tk::real );
       entry [reductiontarget] void finish();
 

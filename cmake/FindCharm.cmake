@@ -1,12 +1,15 @@
 ################################################################################
 #
-# \file      cmake/FindCharm.cmake
-# \copyright 2016, Los Alamos National Security, LLC.
-# \brief     Find the Charm++
+# \file      FindCharm.cmake
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
+# \brief     Find Charm++
 #
 ################################################################################
 
-# Find Charm++
+# Charm++: http://charmplusplus.org
 #
 #  CHARM_FOUND        - True if the charmc compiler wrapper was found
 #  CHARM_INCLUDE_DIRS - Charm++ include files paths

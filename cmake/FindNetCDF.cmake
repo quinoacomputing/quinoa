@@ -1,13 +1,15 @@
 ################################################################################
 #
 # \file      cmake/FindLNetCDF.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
 # \brief     Find NetCDF
 #
 ################################################################################
 
-# - Find NetCDF
-# Find the native NetCDF includes and library
+# NetCDF: https://www.unidata.ucar.edu/software/netcdf
 #
 #  NETCDF_INCLUDES     - where to find netcdf.h, etc
 #  NETCDF_LIBRARIES    - Link these libraries when using NetCDF

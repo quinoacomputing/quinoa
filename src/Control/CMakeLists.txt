@@ -8,10 +8,10 @@ include(charm)
 
 #### Inciter control ###########################################################
 add_library(InciterControl
-            FileParser.C
-            StringParser.C
-            Inciter/InputDeck/Parser.C
-            Inciter/CmdLine/Parser.C)
+            FileParser.cpp
+            StringParser.cpp
+            Inciter/InputDeck/Parser.cpp
+            Inciter/CmdLine/Parser.cpp)
 
 target_include_directories(InciterControl PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -35,10 +35,10 @@ INSTALL(TARGETS InciterControl
 project(RNGTestControl CXX)
 
 add_library(RNGTestControl
-            FileParser.C
-            StringParser.C
-            RNGTest/InputDeck/Parser.C
-            RNGTest/CmdLine/Parser.C)
+            FileParser.cpp
+            StringParser.cpp
+            RNGTest/InputDeck/Parser.cpp
+            RNGTest/CmdLine/Parser.cpp)
 
 target_include_directories(RNGTestControl PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -62,9 +62,9 @@ INSTALL(TARGETS RNGTestControl
 project(UnitTestControl CXX)
 
 add_library(UnitTestControl
-            StringParser.C
-            FileParser.C
-            UnitTest/CmdLine/Parser.C)
+            StringParser.cpp
+            FileParser.cpp
+            UnitTest/CmdLine/Parser.cpp)
 
 target_include_directories(UnitTestControl PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -88,8 +88,8 @@ INSTALL(TARGETS UnitTestControl
 project(MeshConvControl CXX)
 
 add_library(MeshConvControl
-            StringParser.C
-            MeshConv/CmdLine/Parser.C)
+            StringParser.cpp
+            MeshConv/CmdLine/Parser.cpp)
 
 target_include_directories(MeshConvControl PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -113,8 +113,8 @@ INSTALL(TARGETS MeshConvControl
 project(FileConvControl CXX)
 
 add_library(FileConvControl
-            StringParser.C
-            FileConv/CmdLine/Parser.C)
+            StringParser.cpp
+            FileConv/CmdLine/Parser.cpp)
 
 target_include_directories(FileConvControl PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -135,10 +135,10 @@ INSTALL(TARGETS FileConvControl
 
 #### Walker control ############################################################
 add_library(WalkerControl
-            FileParser.C
-            StringParser.C
-            Walker/InputDeck/Parser.C
-            Walker/CmdLine/Parser.C)
+            FileParser.cpp
+            StringParser.cpp
+            Walker/InputDeck/Parser.cpp
+            Walker/CmdLine/Parser.cpp)
 
 target_include_directories(WalkerControl PUBLIC
                            ${QUINOA_SOURCE_DIR}

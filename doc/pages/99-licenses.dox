@@ -202,7 +202,7 @@ files, only build it and use it as a separate (external) executable.
   - Web: https://git-scm.com
 
 \subsection numdiff_web Numdiff for comparison of text files with numerical content
-  - Web: http://svn.cern.ch/guest/madx/trunk/madX/tools/numdiff
+  - Web: https://github.com/MethodicalAcceleratorDesign/MAD-X/tree/master/tools/numdiff
 
 \subsection mcss_web M.CSS for improving on Doxygen output
   - Web: http://mcss.mosra.cz/doxygen

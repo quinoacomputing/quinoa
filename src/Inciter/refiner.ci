@@ -13,8 +13,8 @@
 
 module refiner {
 
-  include "Scheme.h";
-  include "AMR/AMR_types.h";
+  include "Scheme.hpp";
+  include "AMR/AMR_types.hpp";
 
   extern module sorter;
   extern module meshwriter;
@@ -37,6 +37,7 @@ module refiner {
       initnode void registerReducers();
       entry void start();
       entry void reorder();
+      entry void correctref();
       entry void next();
       entry [reductiontarget] void addBndEdges( CkReductionMsg* msg );
       entry void addRefBndEdges(

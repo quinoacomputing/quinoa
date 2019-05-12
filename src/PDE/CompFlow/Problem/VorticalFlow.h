@@ -135,6 +135,10 @@ class CompFlowProblemVorticalFlow {
       n.push_back( "specific_total_energy_analytical" );
       n.push_back( "pressure_numerical" );
       n.push_back( "pressure_analytical" );
+
+      const auto pref = g_inputdeck.get< tag::discr, tag::pref >();
+      if(pref)           // Adaptive DG on
+        n.push_back( "ndof" );
       return n;
     }
 
@@ -163,7 +167,7 @@ class CompFlowProblemVorticalFlow {
         g_inputdeck.get< tag::param, tag::compflow, tag::beta >()[system];
       const auto& p0 =
         g_inputdeck.get< tag::param, tag::compflow, tag::p0 >()[system];
-      // number of degree of freedom
+      // number of degrees of freedom
       const std::size_t ndof = 
         g_inputdeck.get< tag::discr, tag::ndof >();
       // ratio of specific heats
