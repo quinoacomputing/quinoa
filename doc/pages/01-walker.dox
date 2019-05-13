@@ -229,7 +229,7 @@ beta variables are mass-fractions. For more details on the beta SDE, see
 @section walker_ex Examples
 \subpage walker_examples
 
-@section walker_pages Other pages related to walker
+@section walker_pages Related pages
  - @ref diffeq
  - @ref concurrency
  - @ref inhomogeneity
