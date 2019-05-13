@@ -114,10 +114,7 @@ class DiagCG : public CBase_DiagCG {
 
     //! Receive contributions to right-hand side vector on chare-boundaries
     void comrhs( const std::vector< std::size_t >& gid,
-                 const std::vector< std::vector< tk::real > >& R );
-
-    //!  Receive contributions to RHS mass diffusion on chare-boundaries
-    void comdif( const std::vector< std::size_t >& gid,
+                 const std::vector< std::vector< tk::real > >& R,
                  const std::vector< std::vector< tk::real > >& D );
 
     //! Update solution at the end of time step
@@ -158,7 +155,6 @@ class DiagCG : public CBase_DiagCG {
       p | m_nsol;
       p | m_nlhs;
       p | m_nrhs;
-      p | m_ndif;
       p | m_bnode;
       p | m_u;
       p | m_ul;
@@ -194,8 +190,6 @@ class DiagCG : public CBase_DiagCG {
     std::size_t m_nlhs;
     //! Counter for right-hand side vector nodes updated
     std::size_t m_nrhs;
-    //! Counter for right-hand side masss-diffusion vector nodes updated
-    std::size_t m_ndif;
     //! Boundary node lists mapped to side set ids
     std::map< int, std::vector< std::size_t > > m_bnode;
     //! Unknown/solution vector at mesh nodes
@@ -247,10 +241,6 @@ class DiagCG : public CBase_DiagCG {
 
     //! Output mesh-based fields to file
     void writeFields( CkCallback c ) const;
-
-    //! \brief Extract node IDs from side set node lists and match to
-    //    user-specified boundary conditions
-    void bc();
 
     //! The own and communication portion of the left-hand side is complete
     void lhsdone();

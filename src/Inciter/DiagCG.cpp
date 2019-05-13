@@ -52,7 +52,6 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_nsol( 0 ),
   m_nlhs( 0 ),
   m_nrhs( 0 ),
-  m_ndif( 0 ),
   m_bnode( bnode ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
@@ -268,6 +267,25 @@ DiagCG::dt()
 }
 
 void
+DiagCG::advance( tk::real newdt )
+// *****************************************************************************
+// Advance equations to next time step
+//! \param[in] newdt Size of this new time step
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Set new time step size
+  d->setdt( newdt );
+
+  // Activate SDAG-waits for FCT
+  d->FCT()->next();
+
+  // Compute rhs for next time step
+  rhs();
+}
+
+void
 DiagCG::rhs()
 // *****************************************************************************
 // Compute right-hand side of transport equations
@@ -279,102 +297,66 @@ DiagCG::rhs()
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_u, m_ue, m_rhs );
 
+  // Compute mass diffusion rhs contribution required for the low order solution
+  m_dif = d->FCT()->diff( *d, m_u );
+
   // Query and match user-specified boundary conditions to side sets
-  bc();
+  m_bc = match( m_u.nprop(), d->T(), d->Dt(), d->Coord(), d->Gid(),
+                d->Lid(), m_bnode );
 
   if (d->Msum().empty())
     comrhs_complete();
   else // send contributions of rhs to chare-boundary nodes to fellow chares
     for (const auto& n : d->Msum()) {
       std::vector< std::vector< tk::real > > r( n.second.size() );
+      std::vector< std::vector< tk::real > > D( n.second.size() );
       std::size_t j = 0;
-      for (auto i : n.second) r[ j++ ] = m_rhs[ tk::cref_find(d->Lid(),i) ];
-      thisProxy[ n.first ].comrhs( n.second, r );
+      for (auto i : n.second) {
+        auto lid = tk::cref_find( d->Lid(), i );
+        r[ j ] = m_rhs[ lid ];
+        D[ j ] = m_dif[ lid ];
+        ++j;
+      }
+      thisProxy[ n.first ].comrhs( n.second, r, D );
     }
 
   ownrhs_complete();
-
-  // Compute mass diffusion rhs contribution required for the low order solution
-  m_dif = d->FCT()->diff( *d, m_u );
-
-  if (d->Msum().empty())
-    comdif_complete();
-  else // send contributions of diff to chare-boundary nodes to fellow chares
-    for (const auto& n : d->Msum()) {
-      std::vector< std::vector< tk::real > > D( n.second.size() );
-      std::size_t j = 0;
-      for (auto i : n.second) D[ j++ ] = m_dif[ tk::cref_find(d->Lid(),i) ];
-      thisProxy[ n.first ].comdif( n.second, D );
-    }
-
-  owndif_complete();
 }
 
 void
 DiagCG::comrhs( const std::vector< std::size_t >& gid,
-                const std::vector< std::vector< tk::real > >& R )
+                const std::vector< std::vector< tk::real > >& R,
+                const std::vector< std::vector< tk::real > >& D )
 // *****************************************************************************
 //  Receive contributions to right-hand side vector on chare-boundaries
 //! \param[in] gid Global mesh node IDs at which we receive RHS contributions
 //! \param[in] R Partial contributions of RHS to chare-boundary nodes
+//! \param[in] D Partial contributions to chare-boundary nodes
 //! \details This function receives contributions to m_rhs, which stores the
 //!   right hand side vector at mesh nodes. While m_rhs stores own
 //!   contributions, m_rhsc collects the neighbor chare contributions during
 //!   communication. This way work on m_rhs and m_rhsc is overlapped. The two
-//!   are combined in solve().
+//!   are combined in solve(). This function also receives contributions to
+//!   m_dif, which stores the mass diffusion right hand side vector at mesh
+//!   nodes. While m_dif stores own contributions, m_difc collects the neighbor
+//!   chare contributions during communication. This way work on m_dif and
+//!   m_difc is overlapped. The two are combined in solve().
 // *****************************************************************************
 {
   Assert( R.size() == gid.size(), "Size mismatch" );
+  Assert( D.size() == gid.size(), "Size mismatch" );
 
   using tk::operator+=;
 
-  for (std::size_t i=0; i<gid.size(); ++i)
+  for (std::size_t i=0; i<gid.size(); ++i) {
     m_rhsc[ gid[i] ] += R[i];
+    m_difc[ gid[i] ] += D[i];
+  }
 
   if (++m_nrhs == Disc()->Msum().size()) {
     m_nrhs = 0;
     comrhs_complete();
   }
-}
-
-void
-DiagCG::comdif( const std::vector< std::size_t >& gid,
-                const std::vector< std::vector< tk::real > >& D )
-// *****************************************************************************
-//  Receive contributions to right-hand side mass diffusion on chare-boundaries
-//! \param[in] gid Global mesh node IDs at which we receive ontributions
-//! \param[in] D Partial contributions to chare-boundary nodes
-//! \details This function receives contributions to m_dif, which stores the
-//!   mass diffusion right hand side vector at mesh nodes. While m_dif stores
-//!   own contributions, m_difc collects the neighbor chare contributions during
-//!   communication. This way work on m_dif and m_difc is overlapped. The two
-//!   are combined in solve().
-// *****************************************************************************
-{
-  Assert( D.size() == gid.size(), "Size mismatch" );
-
-  using tk::operator+=;
-
-  for (std::size_t i=0; i<gid.size(); ++i)
-    m_difc[ gid[i] ] += D[i];
-
-  if (++m_ndif == Disc()->Msum().size()) {
-    m_ndif = 0;
-    comdif_complete();
-  }
-}
-
-void
-DiagCG::bc()
-// *****************************************************************************
-// Query and match user-specified boundary conditions to side sets
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Match user-specified boundary conditions to side sets
-  m_bc = match( m_u.nprop(), d->T(), d->Dt(), d->Coord(), d->Gid(),
-                d->Lid(), m_bnode );
 }
 
 void
@@ -399,7 +381,7 @@ DiagCG::solve()
     for (ncomp_t c=0; c<ncomp; ++c) m_dif(lid,c,0) += b.second[c];
   }
 
-  // clear receive buffers
+  // Clear receive buffers
   tk::destroy(m_rhsc);
   tk::destroy(m_difc);
 
@@ -463,25 +445,6 @@ DiagCG::writeFields( CkCallback c ) const
   // Send mesh and fields data (solution dump) for output to file
   d->write( d->Inpoel(), d->Coord(), {}, tk::remap(m_bnode,d->Lid()), {},
             std::get<0>(r), nodefieldnames, std::get<1>(r), nodefields, c );
-}
-
-void
-DiagCG::advance( tk::real newdt )
-// *****************************************************************************
-// Advance equations to next time step
-//! \param[in] newdt Size of this new time step
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Set new time step size
-  d->setdt( newdt );
-
-  // Activate SDAG-waits for FCT
-  d->FCT()->next();
-
-  // Compute rhs for next time step
-  rhs();
 }
 
 void
