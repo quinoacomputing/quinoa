@@ -118,7 +118,7 @@ class DiagCG : public CBase_DiagCG {
                  const std::vector< std::vector< tk::real > >& D );
 
     //! Update solution at the end of time step
-    void update( const tk::Fields& a, const tk::Fields& dUl );
+    void update( const tk::Fields& a, tk::Fields&& dUl );
 
     //! Optionally refine/derefine mesh
     void refine();

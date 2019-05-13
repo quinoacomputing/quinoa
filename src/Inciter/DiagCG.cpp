@@ -408,7 +408,7 @@ DiagCG::solve( tk::Fields& dif )
 
   // Continue with FCT
   d->FCT()->aec( *d, m_du, m_u, m_bc );
-  d->FCT()->alw( m_u, m_ul, dul, thisProxy );
+  d->FCT()->alw( m_u, m_ul, std::move(dul), thisProxy );
 }
 
 void
@@ -444,7 +444,7 @@ DiagCG::writeFields( CkCallback c ) const
 }
 
 void
-DiagCG::update( const tk::Fields& a, const tk::Fields& dul )
+DiagCG::update( const tk::Fields& a, tk::Fields&& dul )
 // *****************************************************************************
 // Prepare for next step
 //! \param[in] a Limited antidiffusive element contributions
