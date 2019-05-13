@@ -34,7 +34,7 @@ module discretization {
       entry void vol();
       entry void comvol( const std::vector< std::size_t >& gid,
                          const std::vector< tk::real >& nodevol );
-      entry void stat();
+      entry void stat( tk::real meshvol );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".

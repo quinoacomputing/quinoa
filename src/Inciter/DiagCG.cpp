@@ -64,7 +64,6 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_lhsc(),
   m_rhsc(),
   m_difc(),
-  m_vol( 0.0 ),
   m_diag()
 // *****************************************************************************
 //  Constructor
@@ -112,16 +111,13 @@ DiagCG::ResumeFromSync()
 }
 
 void
-DiagCG::setup( tk::real v )
+DiagCG::setup()
 // *****************************************************************************
-// Setup rows, query boundary conditions, output mesh, etc.
+// Set and output initial conditions and mesh to file
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
   auto d = Disc();
-
-  // Store total mesh volume
-  m_vol = v;
 
   // Set initial conditions for all PDEs
   for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
@@ -431,7 +427,7 @@ DiagCG::writeFields( CkCallback c ) const
   auto u = m_u;
   std::vector< std::vector< tk::real > > nodefields;
   for (const auto& eq : g_cgpde) {
-    auto o = eq.fieldOutput( d->T(), m_vol, d->Coord(), d->V(), u );
+    auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord(), d->V(), u );
     nodefields.insert( end(nodefields), begin(o), end(o) );
   }
 
@@ -565,11 +561,7 @@ DiagCG::resizePostAMR(
   // Resize FCT data structures
   d->FCT()->resize( npoin, msum, d->Bid(), d->Lid(), d->Inpoel() );
 
-  // Recompute the lhs on the new mesh
-  lhs();
-
-  // Recompute mesh volumes and statistics
-  d->vol();
+  contribute( CkCallback(CkReductionTarget(Transporter,resized), d->Tr()) );
 }
 
 void

@@ -941,14 +941,11 @@ DG::ResumeFromSync()
 }
 
 void
-DG::setup( tk::real v )
+DG::setup()
 // *****************************************************************************
 // Set initial conditions, generate lhs, output mesh
-//! \param[in] v Total mesh volume
 // *****************************************************************************
 {
-  IGNORE(v);
-
   tk::destroy(m_msumset);
 
   auto d = Disc();

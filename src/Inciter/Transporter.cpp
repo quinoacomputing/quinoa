@@ -66,7 +66,7 @@ Transporter::Transporter() :
   m_sorter(),
   m_nelem( 0 ),
   m_npoin_larger( 0 ),
-  m_V( 0.0 ),
+  m_meshvol( 0.0 ),
   m_minstat( {{ 0.0, 0.0, 0.0 }} ),
   m_maxstat( {{ 0.0, 0.0, 0.0 }} ),
   m_avgstat( {{ 0.0, 0.0, 0.0 }} ),
@@ -621,7 +621,7 @@ Transporter::comfinal( int initial )
 {
   if (initial > 0) {
     m_progWork.end();
-    m_scheme.setup( m_V );
+    m_scheme.setup();
     // Turn on automatic load balancing
     tk::CProxy_LBSwitch::ckNew( g_inputdeck.get<tag::cmd,tag::verbose>() );
   } else {
@@ -639,12 +639,24 @@ Transporter::totalvol( tk::real v, tk::real initial )
 //!    zero, we are during time stepping and if zero we are during setup.
 // *****************************************************************************
 {
-  m_V = v;
+  m_meshvol = v;
 
   if (initial > 0.0)
-    m_scheme.stat< tag::bcast >();
+    m_scheme.stat< tag::bcast >( m_meshvol );
   else
     m_scheme.resized();
+}
+
+void
+Transporter::resized()
+// *****************************************************************************
+// Reduction target: all worker chares have resized their own data after
+// mesh refinement
+//! \note Only used for DiagCG and ALECG
+// *****************************************************************************
+{
+  m_scheme.vol();
+  m_scheme.lhs();
 }
 
 void
@@ -801,7 +813,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
 
   // Finish computing diagnostics
   for (std::size_t i=0; i<d[L2SOL].size(); ++i)
-    diag[i] = sqrt( d[L2SOL][i] / m_V );
+    diag[i] = sqrt( d[L2SOL][i] / m_meshvol );
   
   // Query user-requested error types to output
   const auto& error = g_inputdeck.get< tag::diag, tag::error >();
@@ -812,7 +824,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
     if (e == tk::ctr::ErrorType::L2) {
       // Finish computing the L2 norm of the numerical - analytical solution
      for (std::size_t i=0; i<d[L2ERR].size(); ++i)
-       diag.push_back( sqrt( d[L2ERR][i] / m_V ) );
+       diag.push_back( sqrt( d[L2ERR][i] / m_meshvol ) );
     } else if (e == tk::ctr::ErrorType::LINF) {
       // Finish computing the Linf norm of the numerical - analytical solution
       for (std::size_t i=0; i<d[LINFERR].size(); ++i)

@@ -52,6 +52,7 @@ Discretization::Discretization(
   m_el( tk::global2local( ginpoel ) ),     // fills m_inpoel, m_gid, m_lid
   m_coord( setCoord( coordmap ) ),
   m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
+  m_meshvol( 0.0 ),
   m_v( m_gid.size(), 0.0 ),
   m_vol( m_gid.size(), 0.0 ),
   m_volc(),
@@ -302,11 +303,15 @@ Discretization::totalvol()
 }
 
 void
-Discretization::stat()
+Discretization::stat( tk::real meshvol )
 // *****************************************************************************
 // Compute mesh cell statistics
+//! \param[in] Total mesh volume
 // *****************************************************************************
 {
+  // Store total mesh volume
+  m_meshvol = meshvol;
+
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];

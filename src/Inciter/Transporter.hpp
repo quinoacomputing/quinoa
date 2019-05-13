@@ -104,6 +104,10 @@ class Transporter : public CBase_Transporter {
     //! Reduction target: all PEs have optionally refined their mesh
     void refined( std::size_t nelem, std::size_t npoin );
 
+    //! \brief Reduction target: all worker chares have resized their own data
+    //!   after mesh refinement
+    void resized();
+
     //! Reduction target: all Sorter chares have queried their boundary nodes
     void queried();
     //! \brief Reduction target: all Sorter chares have responded with their
@@ -179,7 +183,7 @@ class Transporter : public CBase_Transporter {
     std::size_t m_nelem;                 //!< Number of mesh elements
     std::size_t m_npoin_larger;          //!< Total number mesh points
      //! Total mesh volume
-    tk::real m_V;
+    tk::real m_meshvol;
     //! Minimum mesh statistics
     std::array< tk::real, 3 > m_minstat;
     //! Maximum mesh statistics

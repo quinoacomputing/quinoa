@@ -33,7 +33,7 @@ module dg {
       entry void comGhost( int fromch, const GhostData& ghost );
       entry void reqGhost();
       initnode void registerReducers();      
-      entry void setup( tk::real v );
+      entry void setup();
       entry void next();
       entry void comlim( int fromch,
                          const std::vector< std::size_t >& tetid,

@@ -62,7 +62,6 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_lhsc(),
   m_rhsc(),
-  m_vol( 0.0 ),
   m_diag()
 // *****************************************************************************
 //  Constructor
@@ -112,16 +111,13 @@ ALECG::ResumeFromSync()
 }
 
 void
-ALECG::setup( tk::real v )
+ALECG::setup()
 // *****************************************************************************
 // Setup rows, query boundary conditions, output mesh, etc.
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
   auto d = Disc();
-
-  // Store total mesh volume
-  m_vol = v;
 
   // Set initial conditions for all PDEs
   for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
@@ -456,11 +452,7 @@ ALECG::resizePostAMR(
   // Update physical-boundary node lists
   m_bnode = bnode;
 
-  // Recompute the lhs on the new mesh
-  lhs();
-
-  // Recompute mesh volumes and statistics
-  d->vol();
+  contribute( CkCallback(CkReductionTarget(Transporter,resized), d->Tr()) );
 }
 //! [Resize]
 
@@ -493,7 +485,7 @@ ALECG::writeFields( CkCallback c ) const
   auto u = m_u;
   std::vector< std::vector< tk::real > > nodefields;
   for (const auto& eq : g_cgpde) {
-    auto o = eq.fieldOutput( d->T(), m_vol, d->Coord(), d->V(), u );
+    auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord(), d->V(), u );
     nodefields.insert( end(nodefields), begin(o), end(o) );
   }
 

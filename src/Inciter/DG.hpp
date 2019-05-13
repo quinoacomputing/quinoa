@@ -100,7 +100,7 @@ class DG : public CBase_DG {
     static void registerReducers();
 
     //! Setup: query boundary conditions, output mesh, etc.
-    void setup( tk::real v );
+    void setup();
 
     //! Continue to next time step stage
     void next();

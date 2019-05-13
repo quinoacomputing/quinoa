@@ -102,7 +102,7 @@ class Discretization : public CBase_Discretization {
     void totalvol();
 
     //! Compute mesh cell statistics
-    void stat();
+    void stat( tk::real meshvol );
 
     /** @name Accessors */
     ///@{
@@ -128,9 +128,12 @@ class Discretization : public CBase_Discretization {
     //!    non-const-ref
     std::vector< std::size_t >& Inpoel() { return m_inpoel; }
 
-    //! Total mesh volume accessors const-ref
+    //! Total mesh volume accessor
+    tk::real meshvol() const { return m_meshvol; }
+
+    //! Nodal mesh volume accessors const-ref
     const std::vector< tk::real >& V() const { return m_v; }
-    //! Total mesh volume accessors non-const-ref
+    //! Nodal mesh volume accessors non-const-ref
     std::vector< tk::real >& V() { return m_v; }
 
     //! Nodal mesh volumes accessors as const-ref
@@ -251,6 +254,7 @@ class Discretization : public CBase_Discretization {
       p | m_coord;
       p | m_psup;
       p | m_msum;
+      p | m_meshvol;
       p | m_v;
       p | m_vol;
       p | m_volc;
@@ -319,6 +323,8 @@ class Discretization : public CBase_Discretization {
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
     //!   points
     std::unordered_map< int, std::vector< std::size_t > > m_msum;
+    //! Total mesh volume
+    tk::real m_meshvol;
     //! Nodal mesh volumes
     //! \details This is the volume of the mesh associated to nodes of owned
     //!   elements (sum of surrounding cell volumes / 4) without contributions

@@ -92,7 +92,7 @@ class ALECG : public CBase_ALECG {
     void ResumeFromSync() override;
 
     //! Setup: query boundary conditions, output mesh, etc.
-    void setup( tk::real v );
+    void setup();
 
     // Initially compute left hand side diagonal matrix
     void init();
@@ -156,7 +156,6 @@ class ALECG : public CBase_ALECG {
       p | m_rhs;
       p | m_lhsc;
       p | m_rhsc;
-      p | m_vol;
       p | m_diag;
     }
     //! \brief Pack/Unpack serialize operator|
@@ -194,8 +193,6 @@ class ALECG : public CBase_ALECG {
     //! Receive buffer for communication of the right hand side
     //! \details Key: chare id, value: rhs for all scalar components per node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_rhsc;
-    //! Total mesh volume
-    tk::real m_vol;
     //! Diagnostics object
     NodeDiagnostics m_diag;
 
@@ -210,9 +207,6 @@ class ALECG : public CBase_ALECG {
 
     //! Output mesh-based fields to file
     void writeFields( CkCallback c ) const;
-
-    //! The own and communication portion of the left-hand side is complete
-    void lhsdone();
 
     //! Combine own and communicated contributions to left hand side
     void lhsmerge();

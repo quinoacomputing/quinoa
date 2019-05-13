@@ -97,7 +97,7 @@ class DiagCG : public CBase_DiagCG {
     void ResumeFromSync() override;
 
     //! Setup: query boundary conditions, output mesh, etc.
-    void setup( tk::real v );
+    void setup();
 
     // Initially compute left hand side diagonal matrix
     void init();
