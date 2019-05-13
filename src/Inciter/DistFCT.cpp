@@ -417,7 +417,7 @@ DistFCT::apply()
   }
 
   // Update solution in host
-  m_host[ thisIndex ].ckLocal()->update(m_a);
+  m_host[ thisIndex ].ckLocal()->update( m_a, m_dul );
 }
 
 #include "NoWarning/distfct.def.h"

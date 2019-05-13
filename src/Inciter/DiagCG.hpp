@@ -118,7 +118,7 @@ class DiagCG : public CBase_DiagCG {
                  const std::vector< std::vector< tk::real > >& D );
 
     //! Update solution at the end of time step
-    void update( const tk::Fields& a );
+    void update( const tk::Fields& a, const tk::Fields& dUl );
 
     //! Optionally refine/derefine mesh
     void refine();
@@ -159,7 +159,6 @@ class DiagCG : public CBase_DiagCG {
       p | m_u;
       p | m_ul;
       p | m_du;
-      p | m_dul;
       p | m_ue;
       p | m_lhs;
       p | m_rhs;
@@ -197,8 +196,6 @@ class DiagCG : public CBase_DiagCG {
     tk::Fields m_ul;
     //! Unknown/solution vector increment (high order)
     tk::Fields m_du;
-    //! Unknown/solution vector increment (low order)
-    tk::Fields m_dul;
     //! Unknown/solution vector at mesh cells
     tk::Fields m_ue;
     //! Lumped lhs mass matrix

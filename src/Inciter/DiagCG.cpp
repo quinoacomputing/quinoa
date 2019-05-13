@@ -57,7 +57,6 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
        g_inputdeck.get< tag::component >().nprop() ),
   m_ul( m_u.nunk(), m_u.nprop() ),
   m_du( m_u.nunk(), m_u.nprop() ),
-  m_dul( m_u.nunk(), m_u.nprop() ),
   m_ue( m_disc[thisIndex].ckLocal()->Inpoel().size()/4, m_u.nprop() ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
@@ -403,13 +402,13 @@ DiagCG::solve( tk::Fields& dif )
   }
 
   // Solve low and high order diagonal systems and update low order solution
-  m_dul = (m_rhs + dif) / m_lhs;
-  m_ul = m_u + m_dul;
+  auto dul = (m_rhs + dif) / m_lhs;
+  m_ul = m_u + dul;
   m_du = m_rhs / m_lhs;
 
   // Continue with FCT
   d->FCT()->aec( *d, m_du, m_u, m_bc );
-  d->FCT()->alw( m_u, m_ul, m_dul, thisProxy );
+  d->FCT()->alw( m_u, m_ul, dul, thisProxy );
 }
 
 void
@@ -445,18 +444,20 @@ DiagCG::writeFields( CkCallback c ) const
 }
 
 void
-DiagCG::update( const tk::Fields& a )
+DiagCG::update( const tk::Fields& a, const tk::Fields& dul )
 // *****************************************************************************
 // Prepare for next step
 //! \param[in] a Limited antidiffusive element contributions
+//! \param[in] dul Low order solution increment
 // *****************************************************************************
 {
   auto d = Disc();
 
   // Verify that the change in the solution at those nodes where Dirichlet
   // boundary conditions are set is exactly the amount the BCs prescribe
-  Assert( correctBC( a, m_dul, m_bc, d->Lid() ),
+  Assert( correctBC( a, dul, m_bc, d->Lid() ),
           "Dirichlet boundary condition incorrect" );
+  IGNORE( dul );
 
   // Apply limited antidiffusive element contributions to low order solution
   if (g_inputdeck.get< tag::discr, tag::fct >())
@@ -547,7 +548,6 @@ DiagCG::resizePostAMR(
   m_u.resize( npoin, nprop );
   m_ul.resize( npoin, nprop );
   m_du.resize( npoin, nprop );
-  m_dul.resize( npoin, nprop );
   m_ue.resize( nelem, nprop );
   m_lhs.resize( npoin, nprop );
   m_rhs.resize( npoin, nprop );
