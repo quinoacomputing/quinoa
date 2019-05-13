@@ -163,7 +163,6 @@ class DiagCG : public CBase_DiagCG {
       p | m_ue;
       p | m_lhs;
       p | m_rhs;
-      p | m_dif;
       p | m_bc;
       p | m_lhsc;
       p | m_rhsc;
@@ -206,8 +205,6 @@ class DiagCG : public CBase_DiagCG {
     tk::Fields m_lhs;
     //! Right-hand side vector (for the high order system)
     tk::Fields m_rhs;
-    //! Mass diffusion right-hand side vector (for the low order system)
-    tk::Fields m_dif;
     //! Boundary conditions evaluated and assigned to mesh node IDs
     //! \details Vector of pairs of bool and boundary condition value associated
     //!   to meshnode IDs at which the user has set Dirichlet boundary
@@ -255,7 +252,7 @@ class DiagCG : public CBase_DiagCG {
     void start();
 
     //! Solve low and high order diagonal systems
-    void solve();
+    void solve( tk::Fields& dif );
 
     //! Compute time step size
     void dt();

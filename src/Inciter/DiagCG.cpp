@@ -61,7 +61,6 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_ue( m_disc[thisIndex].ckLocal()->Inpoel().size()/4, m_u.nprop() ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
-  m_dif( m_u.nunk(), m_u.nprop() ),
   m_bc(),
   m_lhsc(),
   m_rhsc(),
@@ -298,7 +297,7 @@ DiagCG::rhs()
     eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_u, m_ue, m_rhs );
 
   // Compute mass diffusion rhs contribution required for the low order solution
-  m_dif = d->FCT()->diff( *d, m_u );
+  auto dif = d->FCT()->diff( *d, m_u );
 
   // Query and match user-specified boundary conditions to side sets
   m_bc = match( m_u.nprop(), d->T(), d->Dt(), d->Coord(), d->Gid(),
@@ -314,13 +313,13 @@ DiagCG::rhs()
       for (auto i : n.second) {
         auto lid = tk::cref_find( d->Lid(), i );
         r[ j ] = m_rhs[ lid ];
-        D[ j ] = m_dif[ lid ];
+        D[ j ] = dif[ lid ];
         ++j;
       }
       thisProxy[ n.first ].comrhs( n.second, r, D );
     }
 
-  ownrhs_complete();
+  ownrhs_complete( dif );
 }
 
 void
@@ -337,10 +336,7 @@ DiagCG::comrhs( const std::vector< std::size_t >& gid,
 //!   contributions, m_rhsc collects the neighbor chare contributions during
 //!   communication. This way work on m_rhs and m_rhsc is overlapped. The two
 //!   are combined in solve(). This function also receives contributions to
-//!   m_dif, which stores the mass diffusion right hand side vector at mesh
-//!   nodes. While m_dif stores own contributions, m_difc collects the neighbor
-//!   chare contributions during communication. This way work on m_dif and
-//!   m_difc is overlapped. The two are combined in solve().
+//!   mass diffusion term of the right hand side vector at mesh nodes.
 // *****************************************************************************
 {
   Assert( R.size() == gid.size(), "Size mismatch" );
@@ -360,9 +356,10 @@ DiagCG::comrhs( const std::vector< std::size_t >& gid,
 }
 
 void
-DiagCG::solve()
+DiagCG::solve( tk::Fields& dif )
 // *****************************************************************************
 //  Solve low and high order diagonal systems
+//! \param[in,out] dif Mass diffusion own contribution
 // *****************************************************************************
 {
   const auto ncomp = m_rhs.nprop();
@@ -378,7 +375,7 @@ DiagCG::solve()
   // Combine own and communicated contributions to mass diffusion
   for (const auto& b : m_difc) {
     auto lid = tk::cref_find( d->Lid(), b.first );
-    for (ncomp_t c=0; c<ncomp; ++c) m_dif(lid,c,0) += b.second[c];
+    for (ncomp_t c=0; c<ncomp; ++c) dif(lid,c,0) += b.second[c];
   }
 
   // Clear receive buffers
@@ -400,13 +397,13 @@ DiagCG::solve()
         if (n.second[c].first) {
           m_lhs( id, c, 0 ) = 1.0;
           m_rhs( id, c, 0 ) = n.second[c].second;
-          m_dif( id, c, 0 ) = 0.0;
+          dif( id, c, 0 ) = 0.0;
         }
     }
   }
 
   // Solve low and high order diagonal systems and update low order solution
-  m_dul = (m_rhs + m_dif) / m_lhs;
+  m_dul = (m_rhs + dif) / m_lhs;
   m_ul = m_u + m_dul;
   m_du = m_rhs / m_lhs;
 
@@ -554,7 +551,6 @@ DiagCG::resizePostAMR(
   m_ue.resize( nelem, nprop );
   m_lhs.resize( npoin, nprop );
   m_rhs.resize( npoin, nprop );
-  m_dif.resize( npoin, nprop );
 
   // Update solution on new mesh
   for (const auto& n : addedNodes) {

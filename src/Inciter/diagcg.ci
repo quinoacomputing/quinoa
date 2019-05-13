@@ -19,6 +19,7 @@ module diagcg {
 
   include "UnsMesh.hpp";
   include "PUPUtil.hpp";
+  include "Fields.hpp";
 
   namespace inciter {
 
@@ -48,7 +49,8 @@ module diagcg {
         when ownlhs_complete(), comlhs_complete() serial "lhs" { lhsmerge(); } }
 
       entry void wait4rhs() {
-        when ownrhs_complete(), comrhs_complete() serial "rhs" { solve(); } }
+        when ownrhs_complete( tk::Fields& dif ), comrhs_complete()
+        serial "rhs" { solve( dif ); } }
 
       entry void wait4out() {
         when lhs_complete(), resize_complete() serial "out" { out(); } }
@@ -56,7 +58,7 @@ module diagcg {
       entry void ownlhs_complete();
       entry void comlhs_complete();
       entry void lhs_complete();
-      entry void ownrhs_complete();
+      entry void ownrhs_complete( tk::Fields& dif );
       entry void comrhs_complete();
       entry void resize_complete();
     }
