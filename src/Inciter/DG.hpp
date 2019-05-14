@@ -147,8 +147,8 @@ class DG : public CBase_DG {
     //! \param[in,out] u Reference to update with current solution
     void solution( tk::Fields& u ) const { u = m_u; }
 
-    //! Resizing data sutrctures after mesh refinement has been completed
-    void resized();
+    //! Unused in DG
+    void resized() {}
 
     //! Compute right hand side and solve system
     void solve( tk::real newdt );

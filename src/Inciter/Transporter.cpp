@@ -652,7 +652,7 @@ Transporter::resized()
 // *****************************************************************************
 // Reduction target: all worker chares have resized their own data after
 // mesh refinement
-//! \note Only used for DiagCG and ALECG
+//! \note Only used for nodal schemes
 // *****************************************************************************
 {
   m_scheme.vol();
@@ -790,6 +790,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
 // *****************************************************************************
 // Reduction target optionally collecting diagnostics, e.g., residuals
 //! \param[in] msg Serialized diagnostics vector aggregated across all PEs
+//! \note Only used for nodal schemes
 // *****************************************************************************
 {
   std::vector< std::vector< tk::real > > d;

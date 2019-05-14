@@ -1489,7 +1489,7 @@ DG::refine()
   } else {      // do not refine
 
     d->refined() = 0;
-    resized();
+    stage();
 
   }
 }
@@ -1571,17 +1571,8 @@ DG::resizePostAMR(
   // Enable SDAG wait for setting up chare boundary faces
   thisProxy[ thisIndex ].wait4fac();
 
-  // Recompute mesh volumes and statistics
-  d->vol();
-}
-
-void
-DG::resized()
-// *****************************************************************************
-// Start recomputing ghost data after a mesh refinement step
-// *****************************************************************************
-{
-  if (Disc()->refined()) resizeComm(); else stage();
+  // Resize communication buffers
+  resizeComm();
 }
 
 void
