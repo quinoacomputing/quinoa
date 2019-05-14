@@ -149,7 +149,7 @@ class MixDirichlet {
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
       // Update SDE coefficients
-      coeff.update( m_depvar, m_ncomp, moments, m_rho, m_r, m_kprime, m_k,
+      coeff.update( m_depvar, m_ncomp, moments, m_rho, m_r, m_kprime, m_b, m_k,
                     m_S );
       // Advance particles
       const auto npar = particles.nunk();

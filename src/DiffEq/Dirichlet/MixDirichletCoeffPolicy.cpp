@@ -13,6 +13,8 @@
 */
 // *****************************************************************************
 
+#include <iostream>
+
 #include "MixDirichletCoeffPolicy.hpp"
 
 std::vector< kw::sde_r::info::expect::type >
@@ -86,6 +88,7 @@ walker::MixDirichletHomCoeffConst::update(
   const std::vector< kw::sde_rho::info::expect::type >& rho,
   const std::vector< kw::sde_r::info::expect::type >& r,
   const std::vector< kw::sde_kappa::info::expect::type >& kprime,
+  const std::vector< kw::sde_b::info::expect::type >& b,
   std::vector< kw::sde_kappa::info::expect::type >& k,
   std::vector< kw::sde_kappa::info::expect::type >& S ) const
 // *****************************************************************************
@@ -96,6 +99,7 @@ walker::MixDirichletHomCoeffConst::update(
 //! \param[in] rho Coefficient vector
 //! \param[in] r Coefficient Vector
 //! \param[in] kprime Coefficient vector
+//! \param[in] b Coefficient vector
 //! \param[in,out] k Coefficient vector to be updated
 //! \param[in,out] S Coefficient vector to be updated
 // *****************************************************************************
@@ -138,19 +142,25 @@ walker::MixDirichletHomCoeffConst::update(
     Term ty( static_cast<char>(std::tolower(depvar)),
              c, Moment::CENTRAL );
     bc[c] = -lookup( Product({tr,ty}), moments ) / R; // -<ryc>/<R>
-    //std::cout << "RRY: " << RRY[c] << ' ';
   }
 
+  Term tR( static_cast<char>(std::toupper(depvar)), ncomp, Moment::ORDINARY );
+
   std::vector< tk::real > RY( ncomp, 0.0 );
-  std::vector< tk::real > RRY( ncomp, 0.0 );
+  std::vector< tk::real > R2Y( ncomp, 0.0 );
+  std::vector< tk::real > R3Y( ncomp, 0.0 );
+  std::vector< tk::real > R3Y2( ncomp*ncomp, 0.0 );
   for (ncomp_t c=0; c<ncomp; ++c) {
-    Term tR( static_cast<char>(std::toupper(depvar)),
-             ncomp, Moment::ORDINARY );
-    Term tY( static_cast<char>(std::toupper(depvar)),
-             c, Moment::ORDINARY );
-    RY[c] = lookup( Product({tR,tY}), moments );    // <RYc>
-    RRY[c] = lookup( Product({tR,tR,tY}), moments ); // <R^2Yc>
-    //std::cout << "RRY: " << RRY[c] << ' ';
+    Term tYc( static_cast<char>(std::toupper(depvar)), c, Moment::ORDINARY );
+    RY[c] = lookup( Product({tR,tYc}), moments );    // <RYc>
+    R2Y[c] = lookup( Product({tR,tR,tYc}), moments ); // <R^2Yc>
+    R3Y[c] = lookup( Product({tR,tR,tR,tYc}), moments ); // <R^3Yc>
+    for (ncomp_t d=0; d<ncomp; ++d) {
+      Term tYd( static_cast<char>(std::toupper(depvar)), d, Moment::ORDINARY );
+      // <R^3YcYd>
+      R3Y2[c*ncomp+d] = lookup( Product({tR,tR,tR,tYc,tYd}), moments );
+    }
+    //std::cout << "R2Y: " << R2Y[c] << ' ';
   }
   //std::cout << std::endl;
 
@@ -200,37 +210,53 @@ walker::MixDirichletHomCoeffConst::update(
 //      //std::cout << std::endl;
 
   // sum of <R^2Yc>
-  tk::real sumRRY = 0.0;
-  for (ncomp_t c=0; c<ncomp; ++c) sumRRY += RRY[c];
-  //std::cout << "sumRRY: " << sumRRY << std::endl;
+  tk::real sumR2Y = 0.0;
+  std::vector< tk::real > sumR3Y2( ncomp, 0.0 );
+  for (ncomp_t c=0; c<ncomp; ++c) {
+    sumR2Y += R2Y[c];
+    for (ncomp_t d=0; d<ncomp; ++d) sumR3Y2[c] += R3Y2[c*ncomp+d];
+  }
+  //std::cout << "sumR2Y: " << sumR2Y << std::endl;
 
   // <r^2>, density variance
-  auto rhovar = lookup(
-    variance(static_cast<char>(std::tolower(depvar)),ncomp), moments );
+  //auto rhovar = lookup(
+  //  variance(static_cast<char>(std::tolower(depvar)),ncomp), moments );
   //std::cout << "<r^2>: " << rhovar << std::endl;
 
+  // <R^2>
+  auto R2 = lookup( Product({tR,tR}), moments );
+
   for (ncomp_t c=0; c<ncomp; ++c) {
-    //S[c] = 1.0/(1.0-YK[c]) - (1.0-Yt[c])/(1.0-YtK[c]);
-    //S[c] = YK[c]/(1.0-YK[c]) - (1.0-Yt[c])*YtK[c]/(1.0-YtK[c]) + Yt[c];
-    //S[c] = Yt[c] / ( 1.0 - sumYt + Yt[c] );
-    S[c] = ( -2.0*(r[c]/rho[ncomp]*RRY[c])*(1.0-sumYt) +
-             (r[c]/rho[ncomp]*(rhovar-sumRRY))*Yt[c] ) /
-           ( -2.0*(r[c]/rho[ncomp]*RRY[c])*(1.0-sumYt) -
-             (1.0-sumYt-Yt[c])*(r[c]/rho[ncomp]*(rhovar-sumRRY)) );
-    //std::cout << "S: " << S[c] << ", YKc: " << YK[c]
-    //          << ", Ytc: " << Yt[c] << ", YtKc: " << YtK[c] << ' ';
+
     k[c] = kprime[c] * bc[c];
     //if (k[c] < 0.0)
     // std::cout << "Positivity of k[" << c << "] violated: "
     //           << k[c] << '\n';
+
+    //S[c] = 1.0/(1.0-YK[c]) - (1.0-Yt[c])/(1.0-YtK[c]);
+    //S[c] = YK[c]/(1.0-YK[c]) - (1.0-Yt[c])*YtK[c]/(1.0-YtK[c]) + Yt[c];
+    //S[c] = Yt[c] / ( 1.0 - sumYt + Yt[c] );
+    //S[c] = ( -2.0*(r[c]/rho[ncomp]*R2Y[c])*(1.0-sumYt) +
+    //         (r[c]/rho[ncomp]*(rhovar-sumR2Y))*Yt[c] ) /
+    //       ( -2.0*(r[c]/rho[ncomp]*R2Y[c])*(1.0-sumYt) -
+    //         (1.0-sumYt-Yt[c])*(r[c]/rho[ncomp]*(rhovar-sumR2Y)) );
+
+    // correlation of density gradient wrt Y_alpha and Y_alpha (Y_alpha = Yc)
+    tk::real drYcYc = -r[c]/rho[ncomp]*R2Y[c];
+    tk::real drYcYN = -r[c]/rho[ncomp]*(R2-sumR2Y);
+    tk::real drYc2YcYN = 2.0*std::pow(r[c]/rho[ncomp],2.0)*(R3Y[c]-sumR3Y2[c]);
+    S[c] = drYcYc / (drYcYN + drYcYc) - k[c]/b[c]*drYc2YcYN / (drYcYN + drYcYc);
+    std::cout << "S[" << c << "] = " << S[c] << ", using " << b[c] << ", "
+              << drYc2YcYN << ", " << drYcYN << ", " << drYcYc << '\n';
+
   }
-  //std::cout << std::endl;
+  std::cout << std::endl;
 
   for (ncomp_t c=0; c<ncomp; ++c) {
     if (S[c] < 0.0 || S[c] > 1.0) {
-      //std::cout << "S[" << c << "] bounds violated: " << S[c] << '\n';
+      std::cout << "S[" << c << "] bounds violated: " << S[c] << '\n';
       //S[c] = 0.5;
     }
   }
-  //std::cout << std::endl;
+  std::cout << std::endl;
 }
