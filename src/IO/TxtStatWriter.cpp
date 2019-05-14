@@ -24,7 +24,7 @@ TxtStatWriter::TxtStatWriter( const std::string& filename,
                               std::ios_base::openmode mode ) :
   Writer( filename, mode ),
   m_precision( static_cast<int>(precision) ),
-  m_width( std::max( 16, m_precision+8 ) )
+  m_width( std::max( 20, m_precision+8 ) )
 // *****************************************************************************
 //  Constructor
 //! \param[in] filename Output filename to which output the statistics
