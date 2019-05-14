@@ -11,9 +11,9 @@ time while RNGTest was converted from OpenMPI to Charm++ parallelism.
 Currently Intel's MKL's vector statistical library (VSL) RNGs, RNGSSE's RNGs,
 and a couple of Random123 RNGs are interfaced. References:
 
-- MKL: https://software.intel.com/en-us/intel-mkl,
+- MKL: https://software.intel.com/en-us/intel-mkl
 - RNGSSE: https://doi.org/10.1016/j.cpc.2011.03.022 and
-  https://doi.org/10.1016/j.cpc.2013.04.007,
+  https://doi.org/10.1016/j.cpc.2013.04.007
 - Random123: http://www.thesalmons.org/john/random123/releases/latest/docs/index.html
 
 @m_div{m-block m-right-m m-note}
