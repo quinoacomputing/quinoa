@@ -93,6 +93,9 @@ walker::VelocityCoeffStationary::VelocityCoeffStationary(
 //! \param[in] C0_ Value of C0 parameter in the Langevin model
 //! \param[in,out] C0 Value of to set the C0 parameter in the Langevin model
 //! \param[in,out] dU Prescribed mean velocity gradient
+//! \details Prescribe no shear.The value of C0 is insignificant for a forced
+//!   stationary velocity PDF because drift and diffusion are in balance, so
+//!   that dk/dt = 0.
 // *****************************************************************************
 {
   C0 = C0_;
@@ -101,47 +104,43 @@ walker::VelocityCoeffStationary::VelocityCoeffStationary(
 
 void
 walker::VelocityCoeffStationary::update(
-  char depvar,
   char,
-  const std::map< tk::ctr::Product, tk::real >& moments,
+  char,
+  const std::map< tk::ctr::Product, tk::real >&,
   const tk::Table&,
-  ctr::DepvarType solve,
-  ctr::VelocityVariantType variant,
+  ctr::DepvarType,
+  ctr::VelocityVariantType,
   kw::sde_c0::info::expect::type C0,
   tk::real,
   tk::real& eps,
   std::array< tk::real, 9 >& G ) const
 // *****************************************************************************
 //! Update the model coefficients (prescribing shear)
-//! \param[in] depvar Dependent variable for of this SDE
-//! \param[in] moments Map of statistical moments
-//! \param[in] solve Configured dependent variable to solve for
-//! \param[in] variant Velocity model variant configured
-//! \param[in] C0 Coefficient C0 in the Langevin model
-//! \param[in,out] eps Dissipation rate of turbulent kinetic energy
+//! \param[in] C0 Coefficient C0 in the Langevin model, should not affect the
+//!   solution for forced velocity PDF
+//! \param[in,out] eps Dissipation rate of turbulent kinetic energy, force = 1
 //! \param[in,out] G Coefficient tensor (3x3) in the Langevin equation
-//! \details Update the dissipation rate (eps) and G_{ij} based on the
-//!   turbulent kinetic energy (k) for a prescribed honmogeneous shear flow.
+//! \details Update the dissipation rate (eps) and G_{ij} so that the velocity
+//!   PDF is stationary..The value of C0 is insignificant for a forced
+//!   stationary velocity PDF because drift and diffusion are in balance, so
+//!   that dk/dt = 0.
 // *****************************************************************************
 {
-  // Compute turbulent kinetic energy
-  auto rs = reynoldsStress( depvar, solve, moments );
-
-  // Override turbulent kinetic energy to keep PDF stationary
+  // Override turbulent kinetic energy to keep the velocity PDF exactly
+  // stationary
   tk::real k = 1.0;
 
-  // Override mean turbulence frequency to keep PDF stationary
+  // Do not couple a dissipation eq for forced velocity PDF, but set to unity
+  // and keep the PDF stationary.
   tk::real O = 1.0;
 
   // Compute turbulent kinetic energy dissipation rate
   eps = O*k;
 
-  // update drift tensor based on the Langevin model variant configured
-  if (variant == ctr::VelocityVariantType::SLM)     // simplified
-    G = slm( O, C0 );
-  else if (variant == ctr::VelocityVariantType::GLM)// generalized
-    G = glm( O, C0, rs, m_dU );
-  else Throw( "Velocity variant type not implemented" );
+  // Update drift tensor to force the velocity PDF stationary, see Pope,
+  // Turbulent Flows, 2000, Eq.12.100.
+  G.fill( 0.0 );
+  G[0] = G[4] = G[8] = -0.75*C0*O;
 }
 
 walker::VelocityCoeffHydroTimeScale::VelocityCoeffHydroTimeScale(
