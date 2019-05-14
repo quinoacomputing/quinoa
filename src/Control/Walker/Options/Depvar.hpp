@@ -43,7 +43,7 @@ class Depvar : public tk::Toggle< DepvarType > {
     explicit Depvar() :
       tk::Toggle< DepvarType >(
         //! Group, i.e., options, name
-        "Solver for",
+        "Solve for",
         //! Enums -> names
         { { DepvarType::FULLVAR, kw::fullvar::name() },
           { DepvarType::FLUCTUATION, kw::fluctuation::name() } },
