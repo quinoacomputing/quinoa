@@ -191,7 +191,7 @@ Note that the above is optional, since it may also be installed by the TPL
 build, see @ref build_default, but depending on your system you may have better
 luck with one or the other.
 
-@section build_clang Build using clang or Intel copilers
+@section build_clang Build using clang or Intel compilers
 
 The default build process on Linux, described in @ref build_default, uses the
 system-wide gnu compiler suite. If you want, you can also use the clang or the
@@ -199,7 +199,7 @@ Intel compilers. We do this by either building OpenMPI using clang or Intel or
 by using the machine-specific MPI wrappers pointing to the compiler and then
 use the build process given in @ref build_default.
 
-@section build_rndq Build using Charm++'s randomize message queues
+@section build_rndq Build using Charm++'s randomized message queues
 
 For serious development work, especially involving asynchronous parallel
 programming, we also build Charm++ using randomized message queues. This
