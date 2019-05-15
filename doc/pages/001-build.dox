@@ -326,7 +326,7 @@ Quinoa build. See also the page on @ref git_submodules_subtrees.
 - For the list of TPLs searched (and if not found, built) by default, see
   `<quinoa-tpl>/CMakeListst.txt`, section starting by the comment line
 
-       # Set which librariesare built/searched by default
+       # Set which libraries are built/searched by default
 
 - Currently, MPI is required and Charm++ is built on top of MPI.
 
