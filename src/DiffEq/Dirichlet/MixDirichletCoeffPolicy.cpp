@@ -128,11 +128,11 @@ walker::MixDirichletHomCoeffConst::update(
   if (R < 1.0e-8) R = 1.0;
 
   // b = -<rv>, density-specific-volume covariance
-  // Term rhoprime( static_cast<char>(std::tolower(depvar)),
-  //                ncomp, Moment::CENTRAL );
-  // Term vprime( static_cast<char>(std::tolower(depvar)),
-  //              ncomp+1, Moment::CENTRAL );
-  // auto ds = -lookup( Product({rhoprime,vprime}), moments );
+  Term rhoprime( static_cast<char>(std::tolower(depvar)),
+                 ncomp, Moment::CENTRAL );
+  Term vprime( static_cast<char>(std::tolower(depvar)),
+               ncomp+1, Moment::CENTRAL );
+  auto ds = -lookup( Product({rhoprime,vprime}), moments );
 
   // b. = -<ry.>/<R>
   std::vector< tk::real > bc( ncomp, 0.0 );
@@ -146,11 +146,14 @@ walker::MixDirichletHomCoeffConst::update(
 
   Term tR( static_cast<char>(std::toupper(depvar)), ncomp, Moment::ORDINARY );
 
+  std::vector< tk::real > y2( ncomp, 0.0 );
   std::vector< tk::real > RY( ncomp, 0.0 );
   std::vector< tk::real > R2Y( ncomp, 0.0 );
   std::vector< tk::real > R3Y( ncomp, 0.0 );
   std::vector< tk::real > R3Y2( ncomp*ncomp, 0.0 );
   for (ncomp_t c=0; c<ncomp; ++c) {
+    y2[c] = lookup(
+      variance(static_cast<char>(std::tolower(depvar)),c), moments );
     Term tYc( static_cast<char>(std::toupper(depvar)), c, Moment::ORDINARY );
     RY[c] = lookup( Product({tR,tYc}), moments );    // <RYc>
     R2Y[c] = lookup( Product({tR,tR,tYc}), moments ); // <R^2Yc>
@@ -219,8 +222,8 @@ walker::MixDirichletHomCoeffConst::update(
   //std::cout << "sumR2Y: " << sumR2Y << std::endl;
 
   // <r^2>, density variance
-  //auto rhovar = lookup(
-  //  variance(static_cast<char>(std::tolower(depvar)),ncomp), moments );
+  auto rhovar = lookup(
+    variance(static_cast<char>(std::tolower(depvar)),ncomp), moments );
   //std::cout << "<r^2>: " << rhovar << std::endl;
 
   // <R^2>
@@ -228,7 +231,9 @@ walker::MixDirichletHomCoeffConst::update(
 
   for (ncomp_t c=0; c<ncomp; ++c) {
 
-    k[c] = kprime[c] * bc[c];
+    //k[c] = kprime[c] * bc[c];
+    //k[c] = kprime[c] * ds;
+    k[c] = kprime[c] * y2[c];
     //if (k[c] < 0.0)
     // std::cout << "Positivity of k[" << c << "] violated: "
     //           << k[c] << '\n';
@@ -246,17 +251,18 @@ walker::MixDirichletHomCoeffConst::update(
     tk::real drYcYN = -r[c]/rho[ncomp]*(R2-sumR2Y);
     tk::real drYc2YcYN = 2.0*std::pow(r[c]/rho[ncomp],2.0)*(R3Y[c]-sumR3Y2[c]);
     S[c] = drYcYc / (drYcYN + drYcYc) - k[c]/b[c]*drYc2YcYN / (drYcYN + drYcYc);
-    std::cout << "S[" << c << "] = " << S[c] << ", using " << b[c] << ", "
-              << drYc2YcYN << ", " << drYcYN << ", " << drYcYc << '\n';
+    //S[c] = Yt[c] / ( 1.0 - sumYt + Yt[c] ) - k[c]/b[c]*drYc2YcYN / (drYcYN + drYcYc);
+    //std::cout << "S[" << c << "] = " << S[c] << ", using " << b[c] << ", "
+    //          << drYc2YcYN << ", " << drYcYN << ", " << drYcYc << '\n';
 
   }
-  std::cout << std::endl;
+  //std::cout << std::endl;
 
   for (ncomp_t c=0; c<ncomp; ++c) {
     if (S[c] < 0.0 || S[c] > 1.0) {
-      std::cout << "S[" << c << "] bounds violated: " << S[c] << '\n';
-      //S[c] = 0.5;
+      //std::cout << "S[" << c << "] bounds violated: " << S[c] << '\n';
+      S[c] = 0.5;
     }
   }
-  std::cout << std::endl;
+  //std::cout << std::endl;
 }
