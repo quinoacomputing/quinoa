@@ -490,7 +490,10 @@ Transporter::bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb )
   auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
 
   if (std::abs(sx) > eps || std::abs(sy) > eps || std::abs(sz) > eps)
-    Throw( "Mesh boundary leaky" );
+    Throw( "Mesh boundary leaky. This may happen during mesh refinement if "
+    "there is a problem during updating the side sets used to specify boundary "
+    "conditions, or due to incorrect or incompletely specified boundary "
+    " conditions for a given mesh." );
 
   if (cb > 0.0) m_scheme.resizeComm();
 }
