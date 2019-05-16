@@ -489,11 +489,18 @@ Transporter::bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb )
 {
   auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
 
+  std::string err;
+  if (cb < 0.0)  // called from Refiner
+    err = "Mesh boundary leaky after mesh refinement step; this is due to a "
+     "problem during updating the side sets used to specify boundary "
+      "conditions on faces, required for DG methods";
+  else if (cb > 0.0)  // called from DG
+    err = "Mesh boundary leaky initialization of the DG algorithm; this is due "
+    "to incorrect or incompletely specified boundary conditions for a given "
+    "input mesh";
+
   if (std::abs(sx) > eps || std::abs(sy) > eps || std::abs(sz) > eps)
-    Throw( "Mesh boundary leaky. This may happen during mesh refinement if "
-    "there is a problem during updating the side sets used to specify boundary "
-    "conditions, or due to incorrect or incompletely specified boundary "
-    "conditions for a given mesh." );
+    Throw( std::move(err) );
 
   if (cb > 0.0) m_scheme.resizeComm();
 }
