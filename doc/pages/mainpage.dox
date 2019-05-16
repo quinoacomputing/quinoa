@@ -86,7 +86,7 @@ For larger problems and computers, however, you should build from source.
     quinoa
       ├── cmake/ - CMake code, shared between github.com/quinoacomputing/quinoa-tpl and src/
       ├── doc/ - Documentation, rendered at quinoacomputing.org
-      ├── external/ - External packages, pulled in as submodules from github.com/quinoacomputing/quinoa-tpl
+      ├── external/ - External packages from github.com/quinoacomputing/quinoa-tpl
       ├── src/ - Compilable sources, see quinoacomputing.org/files.html
       ├── tests/ - Unit-, and regression tests
       ├── tools/ - Development utilities and docker files
@@ -99,7 +99,7 @@ For larger problems and computers, however, you should build from source.
 - Install prerequisites: _Debian/Ubuntu linux_ (line 1: required, line 2: recommended)
 
        apt-get install cmake gfortran gcc g++ openmpi-bin libopenmpi-dev
-       apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhypre-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev binutils-dev flex bison python3-pygments python3-jinja2 texlive-latex-base libdw-dev
+       apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev binutils-dev flex bison python3-pygments python3-jinja2 texlive-latex-base libdw-dev
 
 - Install prerequisites: _Mac OS X_ (line 1: required, line 2: recommended)
 
@@ -112,16 +112,8 @@ For larger problems and computers, however, you should build from source.
        mkdir external/build; cd external/build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 .. && make; cd -
        mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release ../src && make -sj8 && ./charmrun +p8 Main/unittest -v -q && ctest -j8 --output-on-failure -LE extreme
 
-All executables will be under `build/Main/`.
-
-@note The above is only the simplest way to build from source and by default
-some optional libraries will _not_ be built. If you are building on a different
-system, you might have to experiment with your package manager a bit to get all
-required @ref licenses "libraries" built. The following may help with building in
-various environments:
-- https://github.com/quinoacomputing/quinoa/tree/master/tools/docker
-- https://github.com/quinoacomputing/quinoa-tpl/tree/master/docker
-- https://github.com/quinoacomputing/buildenv
+All executables will be under `build/Main/`. For more information on how to
+build, see the page on @ref build.
 
 We roughly follow the development model described
 [here](http://nvie.com/posts/a-successful-git-branching-model). As a
@@ -134,10 +126,6 @@ edge) branch. If you want the latest, clone with
 ```
 git clone --recurse-submodules --branch=develop https://github.com/quinoacomputing/quinoa.git
 ```
-
-Read more about other ways of cloning and working with [quinoa's
-repositories](https://github.com/quinoacomputing) on the page detailing @ref
-git_submodules_subtrees.
 
 @section mainpage_contributing Contribute
 
