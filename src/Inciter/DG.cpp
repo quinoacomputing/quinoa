@@ -90,7 +90,9 @@ DG::DG( const CProxy_Discretization& disc,
   Assert( !tk::leakyPartition(m_fd.Esuel(), Disc()->Inpoel(), Disc()->Coord()),
           "Input mesh to DG leaky" );
 
-  // Ensure that mesh physical boundary is not leaky
+  // Ensure mesh physical boundary for the entire problem not leaky,
+  // effectively checking if the user has specified boundary conditions on all
+  // physical boundary faces
   bndIntegral();
 }
 
