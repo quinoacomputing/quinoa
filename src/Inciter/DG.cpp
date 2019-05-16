@@ -1200,19 +1200,17 @@ DG::lim()
 
   // Combine own and communicated contributions of unlimited solution and
   // degrees of freedom in cells (if p-adaptive)
-  auto ul = m_u;
-  auto ndofl = m_ndof;
   for (const auto& b : m_bid) {
-    Assert( m_uc[0][b.second].size() == ul.nprop(), "ncomp size mismatch" );
-    for (std::size_t c=0; c<ul.nprop(); ++c) {
-      ul(b.first,c,0) = m_uc[0][b.second][c];
+    Assert( m_uc[0][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
+    for (std::size_t c=0; c<m_u.nprop(); ++c) {
+      m_u(b.first,c,0) = m_uc[0][b.second][c];
     }
     if (pref && m_stage == 0) {
-      ndofl[ b.first ] = m_ndofc[0][ b.second ];
+      m_ndof[ b.first ] = m_ndofc[0][ b.second ];
     }
   }
 
-  if (pref && m_stage==0) propagate_ndof( ndofl );
+  if (pref && m_stage==0) propagate_ndof();
 
   if (g_inputdeck.get< tag::discr, tag::ndof >() > 1) {
 
@@ -1220,9 +1218,9 @@ DG::lim()
 
     const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
     if (limiter == ctr::LimiterType::WENOP1)
-      WENO_P1( m_fd.Esuel(), 0, ul );
+      WENO_P1( m_fd.Esuel(), 0, m_u );
     else if (limiter == ctr::LimiterType::SUPERBEEP1)
-      Superbee_P1( m_fd.Esuel(), d->Inpoel(), ndofl, 0, d->Coord(), ul );
+      Superbee_P1( m_fd.Esuel(), d->Inpoel(), m_ndof, 0, d->Coord(), m_u );
   }
 
   // Send limited solution to neighboring chares
@@ -1237,21 +1235,20 @@ DG::lim()
       for(const auto& i : n.second) {
         Assert( i.first < m_fd.Esuel().size()/4, "Sending limiter ghost data" );
         tetid[j] = i.first;
-        u[j] = ul[i.first];
-        if (pref && m_stage == 0) ndof.push_back( ndofl[i.first] );
+        u[j] = m_u[i.first];
+        if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
         ++j;
       }
       thisProxy[ n.first ].comlim( thisIndex, tetid, u, ndof );
     }
 
-  ownlim_complete( ul, ndofl );
+  ownlim_complete();
 }
 
 void
-DG::propagate_ndof( std::vector< std::size_t >& ndofl )
+DG::propagate_ndof()
 // *****************************************************************************
 //  p-refine all elements that are adjacent to p-refined elements
-//! \param[in] ndofl Number of degrees of freedom for each cell
 //! \details This function p-refines all the neighbors of an element that has
 //!   been p-refined as a result of an error indicator.
 // *****************************************************************************
@@ -1259,7 +1256,7 @@ DG::propagate_ndof( std::vector< std::size_t >& ndofl )
   const auto& esuf = m_fd.Esuf();
 
   // Copy number of degrees of freedom for each cell
-  auto ndof = ndofl;
+  auto ndof = m_ndof;
 
   // p-refine (DGP0 -> DGP1) all neighboring elements of elements that have
   // been p-refined (DGP0 -> DGP1) as a result of error indicators
@@ -1268,15 +1265,15 @@ DG::propagate_ndof( std::vector< std::size_t >& ndofl )
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
     std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
 
-    if (ndofl[el] == 4)
+    if (m_ndof[el] == 4)
       ndof[er] = 4;
 
-    if (ndofl[er] == 4)
+    if (m_ndof[er] == 4)
       ndof[el] = 4;
   }
 
   // Update number of degrees of freedom for each cell
-  ndofl = ndof;
+  m_ndof = ndof;
 }
 
 void
@@ -1325,11 +1322,9 @@ DG::comlim( int fromch,
 }
 
 void
-DG::dt( const tk::Fields& ul, const std::vector< std::size_t >& ndofl )
+DG::dt()
 // *****************************************************************************
 // Compute time step size
-//! \param[in] ul Limited solution
-//! \param[in] ndofl Number of degrees of freedom for each cell
 // *****************************************************************************
 {
   const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
@@ -1338,8 +1333,6 @@ DG::dt( const tk::Fields& ul, const std::vector< std::size_t >& ndofl )
 
   // Combine own and communicated contributions of limited solution and degrees
   // of freedom in cells (if p-adaptive)
-  m_u = ul;
-  m_ndof = ndofl;
   for (const auto& b : m_bid) {
     Assert( m_uc[1][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
     for (std::size_t c=0; c<m_u.nprop(); ++c) {

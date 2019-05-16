@@ -20,7 +20,6 @@ module dg {
   include "UnsMesh.hpp";
   include "PUPUtil.hpp";
   include "FaceData.hpp";
-  include "Fields.hpp";
 
   namespace inciter {
 
@@ -43,7 +42,7 @@ module dg {
                          std::size_t fromstage,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u,
-                         const std::vector< std::size_t >& ndofel );
+                         const std::vector< std::size_t >& ndof );
       entry void refine();
       entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();
@@ -66,10 +65,7 @@ module dg {
         { lim(); } }
 
       entry void wait4lim() {
-        when ownlim_complete( const tk::Fields& u,
-                              const std::vector< std::size_t >& ndofl ),
-             comlim_complete()
-        serial "lim" { dt( u, ndofl ); } }
+        when ownlim_complete(), comlim_complete() serial "lim" { dt(); } }
 
       entry void ownfac_complete();
       entry void comfac_complete();
@@ -77,8 +73,7 @@ module dg {
       entry void reqghost_complete();
       entry void ownsol_complete();
       entry void comsol_complete();
-      entry void ownlim_complete( const tk::Fields& u,
-                                  const std::vector< std::size_t >& ndofl );
+      entry void ownlim_complete();
       entry void comlim_complete();
     }
 

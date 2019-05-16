@@ -346,7 +346,7 @@ class DG : public CBase_DG {
     void writeFields( CkCallback c ) const;
 
     //! Compute time step size
-    void dt( const tk::Fields& ul, const std::vector< std::size_t >& ndofl );
+    void dt();
 
     //! Evaluate whether to continue with next time step stage
     void stage();
@@ -356,7 +356,7 @@ class DG : public CBase_DG {
     void eval_ndof();
 
     //! p-refine all elements that are adjacent to p-refined elements
-    void propagate_ndof( std::vector< std::size_t >& ndofl );
+    void propagate_ndof();
 };
 
 } // inciter::
