@@ -86,8 +86,41 @@ DG::DG( const CProxy_Discretization& disc,
 {
   usesAtSync = true;    // enable migration at AtSync
 
-  // Size communication buffers and setup ghost data
-  resizeComm();
+  // Ensure that mesh partition is not leaky
+  Assert( !tk::leakyPartition(m_fd.Esuel(), Disc()->Inpoel(), Disc()->Coord()),
+          "Input mesh to DG leaky" );
+
+  // Ensure that mesh physical boundary is not leaky
+  bndIntegral();
+}
+
+void
+DG::bndIntegral()
+// *****************************************************************************
+//  Compute partial boundary surface integral and sum across all chares
+//! \details This function computes a partial surface integral over the boundary
+//!   of the faces of this mesh partition then sends its contribution to perform
+//!   the integral acorss the total problem boundary. After the global sum a
+//!   non-zero vector result indicates a leak, e.g., a hole in the boundary
+//!   which indicates an error in the boundary face data structures used to
+//!   compute the partial surface integrals.
+// *****************************************************************************
+{
+  // Storage for surface integral over our mesh chunk physical boundary
+  std::vector< tk::real > s{{ 0.0, 0.0, 0.0 }};
+
+  // Integrate over all physical boundary faces
+  for (std::size_t f=0; f<m_fd.Nbfac(); ++f) {
+    s[0] += m_geoFace(f,0,0) * m_geoFace(f,1,0);
+    s[1] += m_geoFace(f,0,0) * m_geoFace(f,2,0);
+    s[2] += m_geoFace(f,0,0) * m_geoFace(f,3,0);
+  }
+
+  s.push_back( 1.0 );  // positive: call-back to resizeComm() after reduction
+
+  // Send contribution to host summing partial surface integrals
+  contribute( s, CkReduction::sum_double,
+    CkCallback(CkReductionTarget(Transporter,bndint), Disc()->Tr()) );
 }
 
 void
@@ -200,7 +233,7 @@ DG::leakyAdjacency()
 // *****************************************************************************
 {
   // Storage for surface integral over our chunk of the adjacency
-  std::array< tk::real, 3 > s{{ 0.0, 0.0, 0.0}};
+  std::array< tk::real, 3 > s{{ 0.0, 0.0, 0.0 }};
 
   // physical boundary faces
   for (std::size_t f=0; f<m_fd.Nbfac(); ++f) {
