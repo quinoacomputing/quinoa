@@ -28,6 +28,7 @@ module diagcg {
                     const std::map< int, std::vector< std::size_t > >& bnode,
                     const std::vector< std::size_t >& /* triinpoel */ );
       initnode void registerReducers();
+      entry void resizeComm();
       entry void setup( tk::real v );
       entry void init();
       entry void diag();
