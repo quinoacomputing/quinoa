@@ -96,6 +96,9 @@ class DiagCG : public CBase_DiagCG {
     //! Return from migration
     void ResumeFromSync() override;
 
+    //! Size communication buffers (no-op)
+    void resizeComm() {}
+
     //! Setup: query boundary conditions, output mesh, etc.
     void setup();
 

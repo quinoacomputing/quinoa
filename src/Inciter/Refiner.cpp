@@ -1426,6 +1426,8 @@ Refiner::bndIntegral()
     }
   }
 
+  s.push_back( -1.0 );  // negative: no call-back after reduction
+
   // Send contribution to host summing partial surface integrals
   contribute( s, CkReduction::sum_double, m_cbr.get< tag::bndint >() );
 

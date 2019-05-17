@@ -233,6 +233,18 @@ class Scheme : public SchemeBase {
                             proxy );
     }
 
+    //////  proxy.resizeComm(...)
+    //! Function to call the resizeComm entry method of an array proxy
+    //! \param[in] args Arguments to member function (entry method) to be called
+    //! \details This function calls the resizeComm member function of a chare
+    //!   array proxy and thus equivalent to proxy.resizeComm(...), using the
+    //!   last argument as default.
+    template< typename... Args >
+    void resizeComm( Args&&... args ) {
+      boost::apply_visitor( call_resizeComm<Args...>( std::forward<Args>(args)... ),
+                            proxy );
+    }
+
     //////  proxy.lhs(...)
     //! Function to call the lhs entry method of an array proxy (broadcast)
     //! \param[in] args Arguments to member function (entry method) to be called
@@ -367,6 +379,27 @@ class Scheme : public SchemeBase {
      template< typename P, typename... Args >
      static void invoke( P& p, Args&&... args ) {
        p.setup( std::forward<Args>(args)... );
+     }
+   };
+
+   //! Functor to call the chare entry method 'resizeComm'
+   //! \details This class is intended to be used in conjunction with variant
+   //!   and boost::visitor. The template argument types are the types of the
+   //!   arguments to entry method to be invoked behind the variant holding a
+   //!   Charm++ proxy.
+   //! \see The base class Call for the definition of operator().
+   template< typename... As >
+   struct call_resizeComm : Call< call_resizeComm<As...>, As... > {
+     using Base = Call< call_resizeComm<As...>, As... >;
+     using Base::Base; // inherit base constructors
+     //! Invoke the entry method
+     //! \param[in,out] p Proxy behind which the entry method is called
+     //! \param[in] args Function arguments passed to entry method
+     //! \details P is the proxy type, Args are the types of the arguments of
+     //!   the entry method to be called.
+     template< typename P, typename... Args >
+     static void invoke( P& p, Args&&... args ) {
+       p.resizeComm( std::forward<Args>(args)... );
      }
    };
 

@@ -91,6 +91,9 @@ class ALECG : public CBase_ALECG {
     //! Return from migration
     void ResumeFromSync() override;
 
+    //! Size communication buffers (no-op)
+    void resizeComm() {}
+
     //! Setup: query boundary conditions, output mesh, etc.
     void setup();
 

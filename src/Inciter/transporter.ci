@@ -33,7 +33,8 @@ module transporter {
                                             std::size_t initial );
       entry [reductiontarget] void bndint( tk::real sx,
                                            tk::real sy,
-                                           tk::real sz );
+                                           tk::real sz,
+                                           tk::real cb );
       entry [reductiontarget] void refined( std::size_t nelem,
                                             std::size_t npoin );
       entry [reductiontarget] void resized();

@@ -30,6 +30,7 @@ module diagcg {
                     const std::vector< std::size_t >& /* triinpoel */ );
       initnode void registerReducers();
       entry void setup();
+      entry void resizeComm();
       entry void init();
       entry void refine();
       entry [reductiontarget] void advance( tk::real newdt );
