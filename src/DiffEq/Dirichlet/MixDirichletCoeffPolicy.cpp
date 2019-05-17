@@ -73,7 +73,7 @@ walker::MixDirichletHomCoeffConst::MixDirichletHomCoeffConst(
   S = S_;
   kprime = kprime_;
   rho = rho_;
-  k.resize( kprime.size() );
+  k.resize( kprime.size(), 0.0 );
 
   // Compute parameter vector r based on r_i = rho_N/rho_i - 1
   Assert( r.empty(), "Parameter vector r must be empty" );

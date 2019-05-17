@@ -121,9 +121,9 @@ class MixDirichlet {
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // compute Nth scalar
-        tk::real yn = 1.0 - particles(p, 0, m_offset);
+        tk::real Yn = 1.0 - particles(p, 0, m_offset);
         for (ncomp_t i=1; i<m_ncomp; ++i)
-          yn -= particles( p, i, m_offset );
+          Yn -= particles( p, i, m_offset );
         // compute specific volume
         tk::real v = 1.0;
         for (ncomp_t i=0; i<m_ncomp; ++i)
@@ -155,9 +155,9 @@ class MixDirichlet {
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Compute Nth scalar
-        tk::real yn = 1.0 - particles(p, 0, m_offset);
+        tk::real Yn = 1.0 - particles(p, 0, m_offset);
         for (ncomp_t i=1; i<m_ncomp; ++i)
-          yn -= particles( p, i, m_offset );
+          Yn -= particles( p, i, m_offset );
 
         // Generate Gaussian random numbers with zero mean and unit variance
         std::vector< tk::real > dW( m_ncomp );
@@ -165,15 +165,23 @@ class MixDirichlet {
 
         // Advance first m_ncomp (K=N-1) scalars
         tk::real v = 1.0;
+        tk::real rho = 0.0;
         for (ncomp_t i=0; i<m_ncomp; ++i) {
           tk::real& Y = particles( p, i, m_offset );
-          tk::real d = m_k[i] * Y * yn * dt;
+          tk::real d = m_k[i] * Y * Yn * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
-          Y += 0.5*m_b[i]*( m_S[i]*yn - (1.0-m_S[i]) * Y )*dt + d*dW[i];
+          Y += 0.5*m_b[i]*( m_S[i]*Yn - (1.0-m_S[i]) * Y )*dt + d*dW[i];
           v += m_r[i]*Y;
+          rho += Y/m_rho[i];
         }
         // Finish computing specific volume
         v /= m_rho[m_ncomp];
+
+        // Finish computing density
+        rho += Yn/m_rho[m_ncomp];
+        if (std::abs(rho-1.0/v) < std::numeric_limits< tk::real >::epsilon())
+          Throw("rho != 1/v");
+
         // Compute and store instantaneous density
         particles( p, m_ncomp, m_offset ) = 1.0 / v;
         // Store instantaneous specific volume
