@@ -91,6 +91,9 @@ class ALECG : public CBase_ALECG {
     //! Return from migration
     void ResumeFromSync() override;
 
+    //! Size communication buffers
+    void resizeComm();
+
     //! Setup: query boundary conditions, output mesh, etc.
     void setup( tk::real v );
 
@@ -203,9 +206,6 @@ class ALECG : public CBase_ALECG {
       Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
       return m_disc[ thisIndex ].ckLocal();
     }
-
-    //! Size communication buffers
-    void resizeComm();
 
     //! Output mesh and particle fields to files
     void out();
