@@ -477,9 +477,13 @@ Transporter::matched( std::size_t nextra,
 }
 
 void
-Transporter::bndint( tk::real sx, tk::real sy, tk::real sz )
+Transporter::bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb )
 // *****************************************************************************
 // Compute surface integral across the whole problem and perform leak-test
+//! \param[in] sx X component of vector summed
+//! \param[in] sy Y component of vector summed
+//! \param[in] sz Z component of vector summed
+//! \param[in] cb Invoke callback if positive
 //! \details This function aggregates partial surface integrals across the
 //!   boundary faces of the whole problem. After this global sum a
 //!   non-zero vector result indicates a leak, e.g., a hole in the boundary,
@@ -488,9 +492,21 @@ Transporter::bndint( tk::real sx, tk::real sy, tk::real sz )
 // *****************************************************************************
 {
   auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
+
+  std::string err;
+  if (cb < 0.0)  // called from Refiner
+    err = "Mesh boundary leaky after mesh refinement step; this is due to a "
+     "problem with updating the side sets used to specify boundary conditions "
+     "on faces, required for DG methods";
+  else if (cb > 0.0)  // called from DG
+    err = "Mesh boundary leaky during initialization of the DG algorithm; this "
+    "is due to incorrect or incompletely specified boundary conditions for a "
+    "given input mesh";
+
   if (std::abs(sx) > eps || std::abs(sy) > eps || std::abs(sz) > eps)
-    Throw( "Mesh boundary leaky, t0ref: " + std::to_string(m_nt0refit) +
-           ", dtref: " + std::to_string(m_ndtrefit) );
+    Throw( std::move(err) );
+
+  if (cb > 0.0) m_scheme.resizeComm();
 }
 
 void

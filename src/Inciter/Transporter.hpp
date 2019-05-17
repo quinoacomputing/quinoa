@@ -101,7 +101,7 @@ class Transporter : public CBase_Transporter {
                   std::size_t initial );
 
     //! Compute surface integral across the whole problem and perform leak-test
-    void bndint( tk::real sx, tk::real sy, tk::real sz );
+    void bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb );
 
     //! Reduction target: all PEs have optionally refined their mesh
     void refined( std::size_t nelem, std::size_t npoin );
