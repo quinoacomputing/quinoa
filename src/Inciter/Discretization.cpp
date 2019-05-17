@@ -71,6 +71,11 @@ Discretization::Discretization(
 //! \param[in] nc Total number of Discretization chares
 // *****************************************************************************
 {
+  Assert( !ginpoel.empty(), "No elements assigned to Discretization chare" );
+  Assert( tk::positiveJacobians( m_inpoel, m_coord ),
+          "Jacobian in input mesh to Discretization non-positive" );
+  Assert( tk::conforming( m_inpoel, m_coord ),
+          "Input mesh to Discretization not conforming" );
   Assert( m_psup.second.size()-1 == m_gid.size(),
           "Number of mesh points and number of global IDs unequal" );
 

@@ -84,6 +84,9 @@ class DG : public CBase_DG {
     //! Return from migration
     void ResumeFromSync() override;
 
+    //! Start sizing communication buffers and setting up ghost data
+    void resizeComm();
+
     //! Receive unique set of faces we potentially share with/from another chare
     void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
 
@@ -293,8 +296,8 @@ class DG : public CBase_DG {
       return m_disc[ thisIndex ].ckLocal();
     }
 
-    //! Start sizing communication buffers and setting up ghost data
-    void resizeComm();
+    //! Compute partial boundary surface integral and sum across all chares
+    void bndIntegral();
 
     //! Start recomputing ghost data after a mesh refinement step
     void recompGhostRefined();

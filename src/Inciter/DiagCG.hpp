@@ -96,6 +96,9 @@ class DiagCG : public CBase_DiagCG {
     //! Return from migration
     void ResumeFromSync() override;
 
+    //! Size communication buffers
+    void resizeComm();
+
     //! Setup: query boundary conditions, output mesh, etc.
     void setup( tk::real v );
 
@@ -237,9 +240,6 @@ class DiagCG : public CBase_DiagCG {
       Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
       return m_disc[ thisIndex ].ckLocal();
     }
-
-    //! Size communication buffers
-    void resizeComm();
 
     //! Output mesh fields to files
     void out();

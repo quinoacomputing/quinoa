@@ -151,6 +151,18 @@ class Scheme : public SchemeBase {
                   proxy );
     }
 
+    //////  proxy.resizeComm(...)
+    //! Function to call the resizeComm entry method of an array proxy
+    //! \param[in] args Arguments to member function (entry method) to be called
+    //! \details This function calls the resizeComm member function of a chare
+    //!   array proxy and thus equivalent to proxy.resizeComm(...), using the
+    //!   last argument as default.
+    template< typename... Args >
+    void resizeComm( Args&&... args ) {
+      std::visit( [&]( auto& p ){ p.resizeComm(std::forward<Args>(args)...); },
+                  proxy );
+    }
+
     //////  proxy.lhs(...)
     //! Function to call the lhs entry method of an array proxy (broadcast)
     //! \param[in] args Arguments to member function (entry method) to be called
