@@ -745,8 +745,7 @@ Refiner::next()
     // Send new mesh, solution, and communication data back to PDE worker
     Assert( m_scheme.disc()[thisIndex].ckLocal() != nullptr,
             "About to use nullptr" );
-    auto e = tk::element< SchemeBase::ProxyElem >
-                        ( m_scheme.getProxy(), thisIndex );
+    auto e = tk::element< Scheme::ProxyElem >( m_scheme.getProxy(), thisIndex );
     std::visit( [&]( const auto& p ){
       p.ckLocal()->resizeAfterRefined( m_ginpoel, m_el, m_coord, m_addedNodes,
         m_addedTets, msum, m_bface, m_bnode, m_triinpoel ); }, e );
@@ -813,8 +812,7 @@ Refiner::errorRefine()
   } else {              // AMR during time stepping (t>0)
 
     // Query current solution
-    auto e = tk::element< SchemeBase::ProxyElem >
-                        ( m_scheme.getProxy(), thisIndex );
+    auto e = tk::element< Scheme::ProxyElem >( m_scheme.getProxy(), thisIndex );
     u = std::visit( []( const auto& p ){ return p.ckLocal()->solution(); }, e );
  
     const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();

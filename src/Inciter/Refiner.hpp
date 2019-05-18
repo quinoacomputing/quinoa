@@ -29,7 +29,7 @@
 #include "Callback.hpp"
 #include "UnsMesh.hpp"
 #include "Base/Fields.hpp"
-#include "SchemeBase.hpp"
+#include "Scheme.hpp"
 #include "DiagCG.hpp"
 #include "ALECG.hpp"
 #include "DG.hpp"

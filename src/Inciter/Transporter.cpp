@@ -502,7 +502,7 @@ Transporter::bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb )
   if (std::abs(sx) > eps || std::abs(sy) > eps || std::abs(sz) > eps)
     Throw( std::move(err) );
 
-  if (cb > 0.0) m_scheme.resizeComm();
+  if (cb > 0.0) m_scheme.bcast< Scheme::resizeComm >();
 }
 
 void
@@ -569,10 +569,10 @@ Transporter::resized()
 // *****************************************************************************
 {
   m_scheme.disc().vol();
-  
+
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG)
-    m_scheme.lhs();
+    m_scheme.bcast< Scheme::lhs >();
 }
 
 void
@@ -613,7 +613,7 @@ Transporter::workinserted()
 // inserted
 // *****************************************************************************
 {
-  m_scheme.doneInserting();
+  m_scheme.bcast< Scheme::doneInserting >();
 }
 
 void
@@ -670,11 +670,11 @@ Transporter::comfinal( int initial )
 {
   if (initial > 0) {
     m_progWork.end();
-    m_scheme.setup( m_V );
+    m_scheme.bcast< Scheme::setup >( m_V );
     // Turn on automatic load balancing
     tk::CProxy_LBSwitch::ckNew( g_inputdeck.get<tag::cmd,tag::verbose>() );
   } else {
-    m_scheme.lhs();
+    m_scheme.bcast< Scheme::lhs >();
   }
 }
 // [Discretization-specific communication maps]
@@ -703,7 +703,7 @@ Transporter::totalvol( tk::real v, tk::real initial )
   if (initial > 0.0)
     m_scheme.disc().stat();
   else
-    m_scheme.resized();
+    m_scheme.bcast< Scheme::resized >();
 }
 
 void
@@ -842,7 +842,7 @@ Transporter::advance( tk::real dt )
   thisProxy.wait4resize();
 
   // Comptue size of next time step
-  m_scheme.advance( dt );
+  m_scheme.bcast< Scheme::advance >( dt );
 }
 
 void
@@ -900,7 +900,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
   dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
 
   // Evaluate whether to continue with next step
-  m_scheme.diag();
+  m_scheme.bcast< Scheme::diag >();
 }
 
 void
