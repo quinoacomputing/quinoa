@@ -102,7 +102,7 @@ class Discretization : public CBase_Discretization {
     void totalvol();
 
     //! Compute mesh cell statistics
-    void stat( tk::real meshvol );
+    void stat( tk::real mesh_volume );
 
     /** @name Accessors */
     ///@{

@@ -308,14 +308,14 @@ Discretization::totalvol()
 }
 
 void
-Discretization::stat( tk::real meshvol )
+Discretization::stat( tk::real mesh_volume )
 // *****************************************************************************
 // Compute mesh cell statistics
-//! \param[in] Total mesh volume
+//! \param[in] mesh_volume Total mesh volume
 // *****************************************************************************
 {
   // Store total mesh volume
-  m_meshvol = meshvol;
+  m_meshvol = mesh_volume;
 
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
