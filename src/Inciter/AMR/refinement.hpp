@@ -768,6 +768,8 @@ namespace AMR {
             {
                 if (!check_allowed_derefinement(tet_store,parent_id)) return;
 
+                generic_derefine(tet_store,parent_id);
+
                 // TODO: Do we delete the nodes? Do we even have nodes?
 
                 // Delete the center edges
@@ -780,8 +782,6 @@ namespace AMR {
                     edge_list_t child_edges = tet_store.generate_edge_keys(c);
                     delete_non_matching_edges( tet_store, child_edges, parent_edges);
                 }
-
-                generic_derefine(tet_store,parent_id);
             }
 
             // TODO: Document This.
