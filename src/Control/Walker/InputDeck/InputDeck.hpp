@@ -181,6 +181,7 @@ class InputDeck :
                                      , kw::gaussian
                                      , kw::dissipation
                                      , kw::jointgamma
+                                     , kw::jointdirichlet
                                      , kw::hydrotimescales
                                      , kw::hydroproductions
                                      , kw::eq_A005H
@@ -205,7 +206,9 @@ class InputDeck :
                                      , kw::gnorm_accurate
                                      , kw::gamma_method
                                      , kw::icgamma
+                                     , kw::icdirichlet
                                      , kw::gammapdf
+                                     , kw::dirichletpdf
                                      , kw::sde_c3
                                      , kw::sde_c4
                                      , kw::sde_com1

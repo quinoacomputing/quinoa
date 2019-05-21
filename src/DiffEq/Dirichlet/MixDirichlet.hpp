@@ -117,23 +117,44 @@ class MixDirichlet {
       Init::template init< eq >( g_inputdeck, m_rng, stream, particles, m_c,
                                  m_ncomp, m_offset );
 
+    tk::real eps = std::numeric_limits<tk::real>::epsilon() * 100.0;
+
+//std::cout << "rho: " << m_rho[0] << ", " << m_rho[1] << ", " << m_rho[2] << '\n';
+//std::cout << "r: " << m_r[0] << ", " << m_r[1] << ", " << m_r[2] << '\n';
+//std::cout << "Y: ";
       // Initialize derived instantaneous variables
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
+        // start computing specific volume
+        tk::real v = -1.0;
+        // start computing density
+        tk::real rho = 0.0;
+        for (ncomp_t i=0; i<m_ncomp; ++i) {
+          auto Y = particles( p, i, m_offset );
+//std::cout << Y << ", ";
+          if (Y < 0.0 || Y > 1.0) {
+            std::cout << "IC Y out of bounds: " << Y << '\n';
+          }
+          v += m_r[i] * Y;
+          rho += Y / m_rho[i];
+        }
         // compute Nth scalar
-        tk::real Yn = 1.0 - particles(p, 0, m_offset);
-        for (ncomp_t i=1; i<m_ncomp; ++i)
-          Yn -= particles( p, i, m_offset );
-        // compute specific volume
-        tk::real v = 1.0;
-        for (ncomp_t i=0; i<m_ncomp; ++i)
-          v += m_r[i]*particles( p, i, m_offset );
-        // Finish computing specific volume
+        tk::real Yn = 1.0 - particles( p, 0, m_offset );
+        for (ncomp_t i=1; i<m_ncomp; ++i) Yn -= particles( p, i, m_offset );
+//std::cout << Yn << '\n';
+        // finish computing specific volume
+        v += m_r[m_ncomp] * Yn;
         v /= m_rho[m_ncomp];
+        // finish computing density
+        rho += Yn / m_rho[m_ncomp];
+        rho = 1.0 / rho;
+        if (std::abs(rho-1.0/v) > eps)
+          std::cout << "IC: rho != 1/v, rho = " << rho << ", v = " << v
+                    << ", rho-1/v = " << rho - 1.0/v << '\n';
         // Compute and store instantaneous density
-        particles( p, m_ncomp, m_offset ) = 1.0 / v;
+        particles( p, m_ncomp, m_offset ) = rho; //1.0/v;
         // Store instantaneous specific volume
-        particles( p, m_ncomp+1, m_offset ) = v;
+        particles( p, m_ncomp+1, m_offset ) = 1.0/rho; //v;
       }
     }
 
@@ -148,44 +169,51 @@ class MixDirichlet {
                   tk::real,
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
+      tk::real eps = std::numeric_limits<tk::real>::epsilon() * 100.0;
+
       // Update SDE coefficients
       coeff.update( m_depvar, m_ncomp, moments, m_rho, m_r, m_kprime, m_b, m_k,
                     m_S );
       // Advance particles
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
-        // Compute Nth scalar
-        tk::real Yn = 1.0 - particles(p, 0, m_offset);
-        for (ncomp_t i=1; i<m_ncomp; ++i)
-          Yn -= particles( p, i, m_offset );
-
         // Generate Gaussian random numbers with zero mean and unit variance
         std::vector< tk::real > dW( m_ncomp );
         m_rng.gaussian( stream, m_ncomp, dW.data() );
-
-        // Advance first m_ncomp (K=N-1) scalars
-        tk::real v = 1.0;
+        // compute Nth scalar
+        tk::real Yn = 1.0 - particles(p, 0, m_offset);
+        for (ncomp_t i=1; i<m_ncomp; ++i) Yn -= particles( p, i, m_offset );
+        // start computing specific volume
+        tk::real v = -1.0;
+        // start computing density
         tk::real rho = 0.0;
+        // Advance first m_ncomp (K=N-1) scalars
         for (ncomp_t i=0; i<m_ncomp; ++i) {
           tk::real& Y = particles( p, i, m_offset );
           tk::real d = m_k[i] * Y * Yn * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
           Y += 0.5*m_b[i]*( m_S[i]*Yn - (1.0-m_S[i]) * Y )*dt + d*dW[i];
-          v += m_r[i]*Y;
-          rho += Y/m_rho[i];
+          if (Y < eps) Y = eps;
+          if (Y > 1.0-eps) Y = 1.0-eps;
+          v += m_r[i] * Y;
+          rho += Y / m_rho[i];
         }
+        // recompute Nth scalar after time step just taken
+        Yn = 1.0 - particles(p, 0, m_offset);
+        for (ncomp_t i=1; i<m_ncomp; ++i) Yn -= particles( p, i, m_offset );
         // Finish computing specific volume
+        v += m_r[m_ncomp] * Yn;
         v /= m_rho[m_ncomp];
-
         // Finish computing density
-        rho += Yn/m_rho[m_ncomp];
-        if (std::abs(rho-1.0/v) < std::numeric_limits< tk::real >::epsilon())
-          Throw("rho != 1/v");
-
+        rho += Yn / m_rho[m_ncomp];
+        rho = 1.0 / rho;
+        if (std::abs(rho-1.0/v) > eps)
+          std::cout << "rho != 1/v, rho = " << rho << ", v = " << v
+                    << ", rho-1/v = " << rho - 1.0/v << '\n';
         // Compute and store instantaneous density
-        particles( p, m_ncomp, m_offset ) = 1.0 / v;
+        particles( p, m_ncomp, m_offset ) = rho; //1.0/v;
         // Store instantaneous specific volume
-        particles( p, m_ncomp+1, m_offset ) = v;
+        particles( p, m_ncomp+1, m_offset ) = 1.0/rho; //v;
       }
     }
 

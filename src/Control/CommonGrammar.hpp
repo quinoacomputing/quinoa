@@ -97,10 +97,11 @@ namespace grm {
     NOMEAN,             //!< No mean when initpolicy = jointcorrgaussian
     NOCOV,              //!< No cov when initpolicy = jointcorrgaussian
     NOMKLRNG,           //!< No MKL RNG configured
-    WRONGBETAPDF,       //!< Wrong number of parameters configuring a beta pdf
-    WRONGGAMMAPDF,      //!< Wrong number of parameters configuring a gamma pdf
-    WRONGGAUSSIAN,      //!< Wrong number of parameters configuring a PDF
-    NEGATIVEPARAM,      //!< Negative variance given configuring a Gaussian
+    WRONGBETAPDF,       //!< Wrong number of parameters for a beta pdf
+    WRONGGAMMAPDF,      //!< Wrong number of parameters for a gamma pdf
+    WRONGGAUSSIAN,      //!< Wrong number of parameters for a Gaussian PDF
+    WRONGDIRICHLET,     //!< Wrong number of parameters for a Dirichlet PDF
+    NEGATIVEPARAM,      //!< Negative parameter given configuring a PDF
     NONCOMP,            //!< No number of components selected
     NONMAT,             //!< No number of materials selected
     NORNG,              //!< No RNG selected
@@ -260,6 +261,8 @@ namespace grm {
     { MsgKey::WRONGGAUSSIAN, "Wrong number of Gaussian distribution "
       "parameters. A Gaussian distribution must be configured by exactly 2 "
       "real numbers in a gaussian...end block." },
+    { MsgKey::WRONGDIRICHLET, "Wrong number of Dirichlet distribution "
+      "parameters." },
     { MsgKey::NEGATIVEPARAM, "Negative distribution parameter (e.g., variance, "
       "shape, scale) specified configuring a probabililty distribution." },
     { MsgKey::NOTERMS, "Statistic requires at least one variable." },
@@ -1142,6 +1145,31 @@ namespace grm {
       // Error out if the specified shape or scale parameter negative
       if (gamma[0] < 0.0 || gamma[1] < 0.0)
         Message< Stack, ERROR, MsgKey::NEGATIVEPARAM >( stack, in );
+    }
+  };
+
+  //! Rule used to trigger action
+  template< class eq, class param >
+  struct check_dirichletpdf : pegtl::success {};
+  //! Check if the dirichletpdf parameter vector specifications are correct
+  //! \details dirichletpdf vectors are used to configure multivariate
+  //!    Dirichlet distributions.
+  template< class eq, class param >
+  struct action< check_dirichletpdf< eq, param > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      const auto& dir =
+        stack.template get< tag::param, eq, param >().back();
+      // get recently configured eq block number of scalar components
+      auto ncomp =
+        stack.template get< tag::component >().template get< eq >().back();
+      // Error out if the number parameters does not equal ncomp
+      if (dir.size() != ncomp-1)
+        Message< Stack, ERROR, MsgKey::WRONGDIRICHLET >( stack, in );
+      // Error out if the specified shape or scale parameter negative
+      for (auto a : dir)
+        if (a < 0.0)
+          Message< Stack, ERROR, MsgKey::NEGATIVEPARAM >( stack, in );
     }
   };
 

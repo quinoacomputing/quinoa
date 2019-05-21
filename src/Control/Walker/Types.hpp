@@ -98,6 +98,8 @@ using DirichletParameters = tk::tuple::tagged_tuple<
                       kw::betapdf::info::expect::type > > >,
   tag::gamma,       std::vector< std::vector< std::vector <
                       kw::gammapdf::info::expect::type > > >,
+  tag::dirichlet,   std::vector< std::vector<
+                      kw::dirichletpdf::info::expect::type > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::mean,        std::vector< std::vector<
@@ -130,6 +132,8 @@ using MixDirichletParameters = tk::tuple::tagged_tuple<
                       kw::betapdf::info::expect::type > > >,
   tag::gamma,       std::vector< std::vector< std::vector <
                       kw::gammapdf::info::expect::type > > >,
+  tag::dirichlet,   std::vector< std::vector<
+                      kw::dirichletpdf::info::expect::type > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::mean,        std::vector< std::vector<
@@ -160,6 +164,8 @@ using GenDirichletParameters = tk::tuple::tagged_tuple<
                       kw::betapdf::info::expect::type > > >,
   tag::gamma,       std::vector< std::vector< std::vector <
                       kw::gammapdf::info::expect::type > > >,
+  tag::dirichlet,   std::vector< std::vector<
+                      kw::dirichletpdf::info::expect::type > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::mean,        std::vector< std::vector<
@@ -184,6 +190,8 @@ using WrightFisherParameters = tk::tuple::tagged_tuple<
                       kw::betapdf::info::expect::type > > >,
   tag::gamma,       std::vector< std::vector< std::vector <
                       kw::gammapdf::info::expect::type > > >,
+  tag::dirichlet,   std::vector< std::vector<
+                      kw::dirichletpdf::info::expect::type > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::mean,        std::vector< std::vector<
@@ -212,6 +220,8 @@ using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
                       kw::betapdf::info::expect::type > > >,
   tag::gamma,       std::vector< std::vector< std::vector <
                       kw::gammapdf::info::expect::type > > >,
+  tag::dirichlet,   std::vector< std::vector<
+                      kw::dirichletpdf::info::expect::type > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::mean,        std::vector< std::vector<
@@ -240,6 +250,8 @@ using DiagOrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
                       kw::betapdf::info::expect::type > > >,
   tag::gamma,       std::vector< std::vector< std::vector <
                       kw::gammapdf::info::expect::type > > >,
+  tag::dirichlet,   std::vector< std::vector<
+                      kw::dirichletpdf::info::expect::type > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::mean,        std::vector< std::vector<
@@ -268,6 +280,8 @@ using SkewNormalParameters = tk::tuple::tagged_tuple<
                       kw::betapdf::info::expect::type > > >,
   tag::gamma,       std::vector< std::vector< std::vector <
                       kw::gammapdf::info::expect::type > > >,
+  tag::dirichlet,   std::vector< std::vector<
+                      kw::dirichletpdf::info::expect::type > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::mean,        std::vector< std::vector<
@@ -296,6 +310,8 @@ using GammaParameters = tk::tuple::tagged_tuple<
                       kw::betapdf::info::expect::type > > >,
   tag::gamma,       std::vector< std::vector< std::vector <
                       kw::gammapdf::info::expect::type > > >,
+  tag::dirichlet,   std::vector< std::vector<
+                      kw::dirichletpdf::info::expect::type > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::mean,        std::vector< std::vector<
@@ -324,6 +340,8 @@ using BetaParameters = tk::tuple::tagged_tuple<
                       kw::betapdf::info::expect::type > > >,
   tag::gamma,       std::vector< std::vector< std::vector <
                       kw::gammapdf::info::expect::type > > >,
+  tag::dirichlet,   std::vector< std::vector<
+                      kw::dirichletpdf::info::expect::type > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::mean,        std::vector< std::vector<
@@ -356,6 +374,8 @@ using NumberFractionBetaParameters = tk::tuple::tagged_tuple<
                       kw::betapdf::info::expect::type > > >,
   tag::gamma,       std::vector< std::vector< std::vector <
                       kw::gammapdf::info::expect::type > > >,
+  tag::dirichlet,   std::vector< std::vector<
+                      kw::dirichletpdf::info::expect::type > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::mean,        std::vector< std::vector<
@@ -388,6 +408,8 @@ using MassFractionBetaParameters = tk::tuple::tagged_tuple<
                       kw::betapdf::info::expect::type > > >,
   tag::gamma,       std::vector< std::vector< std::vector <
                       kw::gammapdf::info::expect::type > > >,
+  tag::dirichlet,   std::vector< std::vector<
+                      kw::dirichletpdf::info::expect::type > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::mean,        std::vector< std::vector<
@@ -420,6 +442,8 @@ using MixNumberFractionBetaParameters = tk::tuple::tagged_tuple<
                       kw::betapdf::info::expect::type > > >,
   tag::gamma,       std::vector< std::vector< std::vector <
                       kw::gammapdf::info::expect::type > > >,
+  tag::dirichlet,   std::vector< std::vector<
+                      kw::dirichletpdf::info::expect::type > >,
   tag::gaussian,    std::vector< std::vector< std::vector <
                       kw::gaussian::info::expect::type > > >,
   tag::mean,        std::vector< std::vector<
@@ -452,6 +476,8 @@ using MixMassFractionBetaParameters = tk::tuple::tagged_tuple<
                           kw::betapdf::info::expect::type > > >,
   tag::gamma,           std::vector< std::vector< std::vector <
                           kw::gammapdf::info::expect::type > > >,
+  tag::dirichlet,       std::vector< std::vector<
+                          kw::dirichletpdf::info::expect::type > >,
   tag::gaussian,        std::vector< std::vector< std::vector <
                           kw::gaussian::info::expect::type > > >,
   tag::mean,            std::vector< std::vector<
@@ -494,6 +520,8 @@ using VelocityParameters = tk::tuple::tagged_tuple<
                           kw::betapdf::info::expect::type > > >,
   tag::gamma,           std::vector< std::vector< std::vector <
                           kw::gammapdf::info::expect::type > > >,
+  tag::dirichlet,       std::vector< std::vector<
+                          kw::dirichletpdf::info::expect::type > >,
   tag::gaussian,        std::vector< std::vector< std::vector <
                           kw::gaussian::info::expect::type > > >,
   tag::mean,            std::vector< std::vector<
@@ -521,14 +549,16 @@ using PositionParameters = tk::tuple::tagged_tuple<
                           kw::betapdf::info::expect::type > > >,
   tag::gamma,           std::vector< std::vector< std::vector <
                           kw::gammapdf::info::expect::type > > >,
+  tag::dirichlet,       std::vector< std::vector<
+                          kw::dirichletpdf::info::expect::type > >,
   tag::gaussian,        std::vector< std::vector< std::vector <
                           kw::gaussian::info::expect::type > > >,
-  tag::mean,           std::vector< std::vector<
-                         kw::sde_mu::info::expect::type > >,
-  tag::cov,            std::vector< std::vector<
-                         kw::sde_cov::info::expect::type > >,
-  tag::jointgaussian,  std::vector< std::vector< std::vector <
-                         kw::gaussian::info::expect::type > > >
+  tag::mean,            std::vector< std::vector<
+                          kw::sde_mu::info::expect::type > >,
+  tag::cov,             std::vector< std::vector<
+                          kw::sde_cov::info::expect::type > >,
+  tag::jointgaussian,   std::vector< std::vector< std::vector <
+                          kw::gaussian::info::expect::type > > >
 >;
 
 //! Dissipation parameters storage
@@ -549,6 +579,8 @@ using DissipationParameters = tk::tuple::tagged_tuple<
                           kw::betapdf::info::expect::type > > >,
   tag::gamma,           std::vector< std::vector< std::vector <
                           kw::gammapdf::info::expect::type > > >,
+  tag::dirichlet,       std::vector< std::vector<
+                          kw::dirichletpdf::info::expect::type > >,
   tag::gaussian,        std::vector< std::vector< std::vector <
                           kw::gaussian::info::expect::type > > >,
   tag::mean,            std::vector< std::vector<

@@ -487,7 +487,12 @@ namespace grm {
       if (rho.size() != ncomp-1)
         Message< Stack, ERROR, MsgKey::MIXDIR_RHO >( stack, in );
       // Ensure parameter vector rho is sorted in increasing order
-      if (!std::is_sorted( rho.cbegin(), rho.cend() ))
+      //if (!std::is_sorted( rho.cbegin(), rho.cend() ))
+      //  Message< Stack, ERROR, MsgKey::MIXDIR_RHO >( stack, in );
+      // Ensure parameter vector rho is sorted in decreasing order
+      auto r = rho;
+      std::reverse( begin(r), end(r) );
+      if (!std::is_sorted( r.cbegin(), r.cend() ))
         Message< Stack, ERROR, MsgKey::MIXDIR_RHO >( stack, in );
     }
   };
@@ -628,6 +633,19 @@ namespace deck {
                                           tag::selected, tag::rng,
                                           tag::param, tag::rng123 > > {};
 
+  //! SDE parameter vector
+  template< class keyword, class eq, class param,
+            template< class, class > class check_vector =
+              tk::grm::check_vector >
+  struct sde_parameter_vector :
+         tk::grm::parameter_vector< use,
+                                    use< keyword >,
+                                    tk::grm::Store_back_back,
+                                    tk::grm::start_vector,
+                                    check_vector,
+                                    eq,
+                                    param > {};
+
   //! scan icdelta ... end block
   template< class eq >
   struct icdelta :
@@ -676,6 +694,19 @@ namespace deck {
                              eq,
                              tag::gamma > > > {};
 
+  //! scan icdirichlet ... end block
+  template< class eq >
+  struct icdirichlet :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::icdirichlet >::pegtl_string >,
+           // parse a dirichletpdf ... end block (there can be multiple)
+           tk::grm::block<
+             use< kw::end >,
+             sde_parameter_vector< kw::dirichletpdf,
+                                   eq,
+                                   tag::dirichlet,
+                                   tk::grm::check_dirichletpdf > > > {};
+
   //! scan icgaussian ... end block
   template< class eq >
   struct icgaussian :
@@ -691,19 +722,6 @@ namespace deck {
                              tk::grm::check_gaussians,
                              eq,
                              tag::gaussian > > > {};
-
-  //! SDE parameter vector
-  template< class keyword, class eq, class param,
-            template< class, class > class check_vector =
-              tk::grm::check_vector >
-  struct sde_parameter_vector :
-         tk::grm::parameter_vector< use,
-                                    use< keyword >,
-                                    tk::grm::Store_back_back,
-                                    tk::grm::start_vector,
-                                    check_vector,
-                                    eq,
-                                    param > {};
 
   //! scan icjointgaussian ... end block
   template< class eq >
@@ -1244,6 +1262,7 @@ namespace deck {
                            icdelta< tag::mixdirichlet >,
                            icbeta< tag::mixdirichlet >,
                            icgamma< tag::mixdirichlet >,
+                           icdirichlet< tag::mixdirichlet >,
                            icgaussian< tag::mixdirichlet >,
                            icjointgaussian< tag::mixdirichlet >,
                            sde_parameter_vector< kw::sde_b,

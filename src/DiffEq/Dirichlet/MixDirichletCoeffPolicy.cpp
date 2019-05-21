@@ -29,7 +29,12 @@ walker::MixDir_r( const std::vector< kw::sde_rho::info::expect::type >& rho )
 
   std::vector< kw::sde_r::info::expect::type > r( rho.size()-1 );
 
-  for (std::size_t i=0; i<rho.size()-1; ++i) r[i] = rho.back()/rho[i] - 1.0;
+  for (std::size_t i=0; i<rho.size()-1; ++i) {
+    //r[i] = rho.back()/rho[i] - 1.0;
+    r[i] = rho.back()/rho[i] + 1.0;
+  }
+
+  r.push_back( 2.0 );
 
   return r;
 }
@@ -260,8 +265,8 @@ walker::MixDirichletHomCoeffConst::update(
 
   for (ncomp_t c=0; c<ncomp; ++c) {
     if (S[c] < 0.0 || S[c] > 1.0) {
-      //std::cout << "S[" << c << "] bounds violated: " << S[c] << '\n';
-      S[c] = 0.5;
+      std::cout << "S[" << c << "] bounds violated: " << S[c] << '\n';
+      //S[c] = 0.5;
     }
   }
   //std::cout << std::endl;
