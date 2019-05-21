@@ -741,8 +741,12 @@ Refiner::perform()
   for (const auto& t : m_refiner.tet_store.tets)
     m_oldTets.insert( t.second );
 
+  //auto& tet_store = m_refiner.tet_store;
+  //std::cout << "before ref: " << tet_store.marked_refinements.size() << ", " << tet_store.marked_derefinements.size() << ", " << tet_store.size() << ", " << tet_store.get_active_inpoel().size() << '\n';
   m_refiner.perform_refinement();
+  //std::cout << "after ref: " << tet_store.marked_refinements.size() << ", " << tet_store.marked_derefinements.size() << ", " << tet_store.size() << ", " << tet_store.get_active_inpoel().size() << '\n';
   m_refiner.perform_derefinement();
+  //std::cout << "after deref: " << tet_store.marked_refinements.size() << ", " << tet_store.marked_derefinements.size() << ", " << tet_store.size() << ", " << tet_store.get_active_inpoel().size() << '\n';
 
   updateMesh();
 

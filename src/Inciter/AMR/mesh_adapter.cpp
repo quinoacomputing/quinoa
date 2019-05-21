@@ -483,12 +483,12 @@ namespace AMR {
             if (element.children.size() == 2)
             {
                 trace_out << "perform 2:8" << std::endl;
-                refiner.derefine_two_to_one(tet_store,i);
+                refiner.derefine_two_to_one(tet_store,node_connectivity,i);
             }
             else if (element.children.size() == 4)
             {
                 trace_out << "perform 4:8" << std::endl;
-                refiner.derefine_four_to_one(tet_store,i);
+                refiner.derefine_four_to_one(tet_store,node_connectivity,i);
             }
             else {
                 std::cout << "num children " << element.children.size() << std::endl;
@@ -1338,22 +1338,22 @@ namespace AMR {
                 switch(tet_store.marked_derefinements.get(tet_id))
                 {
                     case AMR::Derefinement_Case::two_to_one:
-                        refiner.derefine_two_to_one(tet_store,tet_id);
+                        refiner.derefine_two_to_one(tet_store,node_connectivity,tet_id);
                         break;
                     case AMR::Derefinement_Case::four_to_one:
-                        refiner.derefine_four_to_one(tet_store,tet_id);
+                        refiner.derefine_four_to_one(tet_store,node_connectivity,tet_id);
                         break;
                     case AMR::Derefinement_Case::four_to_two:
-                        refiner.derefine_four_to_two(tet_store,tet_id);
+                        refiner.derefine_four_to_two(tet_store,node_connectivity,tet_id);
                         break;
                     case AMR::Derefinement_Case::eight_to_one:
-                        refiner.derefine_eight_to_one(tet_store,tet_id);
+                        refiner.derefine_eight_to_one(tet_store,node_connectivity,tet_id);
                         break;
                     case AMR::Derefinement_Case::eight_to_two:
-                        refiner.derefine_eight_to_two(tet_store,tet_id);
+                        refiner.derefine_eight_to_two(tet_store,node_connectivity,tet_id);
                         break;
                     case AMR::Derefinement_Case::eight_to_four:
-                        refiner.derefine_eight_to_four(tet_store,tet_id);
+                        refiner.derefine_eight_to_four(tet_store,node_connectivity,tet_id);
                         break;
                     case AMR::Derefinement_Case::skip:
                         // What do we do with skip?
