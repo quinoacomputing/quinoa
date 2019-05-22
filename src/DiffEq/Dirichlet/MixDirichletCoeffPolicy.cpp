@@ -255,7 +255,7 @@ walker::MixDirichletHomCoeffConst::update(
     tk::real drYcYc = -r[c]/rho[ncomp]*R2Y[c];
     tk::real drYcYN = -r[c]/rho[ncomp]*(R2-sumR2Y);
     tk::real drYc2YcYN = 2.0*std::pow(r[c]/rho[ncomp],2.0)*(R3Y[c]-sumR3Y2[c]);
-    S[c] = drYcYc / (drYcYN + drYcYc) - k[c]/b[c]*drYc2YcYN / (drYcYN + drYcYc);
+    S[c] = (drYcYc - k[c]/b[c]*drYc2YcYN) / (drYcYN + drYcYc);
     //S[c] = Yt[c] / ( 1.0 - sumYt + Yt[c] ) - k[c]/b[c]*drYc2YcYN / (drYcYN + drYcYc);
     //std::cout << "S[" << c << "] = " << S[c] << ", using " << b[c] << ", "
     //          << drYc2YcYN << ", " << drYcYN << ", " << drYcYc << '\n';
