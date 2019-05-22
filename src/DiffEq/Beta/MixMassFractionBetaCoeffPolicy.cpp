@@ -485,6 +485,7 @@ walker::MixMassFracBetaCoeffHydroTimeScale::update(
   using tk::ctr::mean;
   using tk::ctr::variance;
   using tk::ctr::cen3;
+  using tk::ctr::Product;
 
   if (m_it == 0)
     for (ncomp_t c=0; c<ncomp; ++c)
@@ -553,6 +554,19 @@ walker::MixMassFracBetaCoeffHydroTimeScale::update(
       D*d*d*d*(1.0 + 3.0*d2/d/d + d3/d/d/d)/rho2[c]/rho2[c]/rho2[c];
     S[c] = (rho2[c]/d/R +
            2.0*k[c]/b[c]*rho2[c]*rho2[c]/d/d*r[c]*r[c]/R*diff - 1.0) / r[c];
+
+
+    // Implementation of a constraint for MixDirichlet for S_al to keep
+    // d<rho>/dt = 0 to verify its behavior for beta (binary case). As input
+    // file use mixmassfractbeta_mmS_A0.75.q.
+    // auto R2 = lookup( Product({dens,dens}), moments ); // <R^2>
+    // auto R2Yc = lookup( Product({dens,dens,Y}), moments ); // <R^2Yc>
+    // auto R3Yc = lookup( Product({dens,dens,dens,Y}), moments ); // <R^3Yc>
+    // auto R3Y2c = lookup( Product({dens,dens,dens,Y,Y}), moments ); // <R^3Y^2>
+    // tk::real drYc = -r[c]/rho2[c]*R2;
+    // tk::real drYcYc = -r[c]/rho2[c]*R2Yc;
+    // tk::real drYc2YcYN = 2.0*std::pow(r[c]/rho2[c],2.0)*(R3Yc-R3Y2c);
+    // S[c] = (drYcYc - k[c]/b[c]*drYc2YcYN) / drYc;
   }
 
   ++m_it;
