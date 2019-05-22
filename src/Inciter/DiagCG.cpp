@@ -52,22 +52,18 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_nsol( 0 ),
   m_nlhs( 0 ),
   m_nrhs( 0 ),
-  m_ndif( 0 ),
   m_bnode( bnode ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_ul( m_u.nunk(), m_u.nprop() ),
   m_du( m_u.nunk(), m_u.nprop() ),
-  m_dul( m_u.nunk(), m_u.nprop() ),
   m_ue( m_disc[thisIndex].ckLocal()->Inpoel().size()/4, m_u.nprop() ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
-  m_dif( m_u.nunk(), m_u.nprop() ),
   m_bc(),
   m_lhsc(),
   m_rhsc(),
   m_difc(),
-  m_vol( 0.0 ),
   m_diag()
 // *****************************************************************************
 //  Constructor
@@ -79,9 +75,6 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 {
   usesAtSync = true;    // enable migration at AtSync
 
-  // Size communication buffers
-  resizeComm();
-
   // Activate SDAG wait for initially computing the left-hand side
   thisProxy[ thisIndex ].wait4lhs();
 
@@ -91,33 +84,10 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 }
 
 void
-DiagCG::resizeComm()
-// *****************************************************************************
-//  Size communication buffers
-//! \details The size of the communication buffers are determined based on
-//!    Disc()->Bid.size() and m_u.nprop().
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  auto np = m_u.nprop();
-  auto nb = d->Bid().size();
-  m_lhsc.resize( nb );
-  for (auto& b : m_lhsc) b.resize( np );
-  m_rhsc.resize( nb );
-  for (auto& b : m_rhsc) b.resize( np );
-  m_difc.resize( nb );
-  for (auto& b : m_difc) b.resize( np );
-
-  // Zero communication buffers
-  for (auto& b : m_lhsc) std::fill( begin(b), end(b), 0.0 );
-}
-
-void
 DiagCG::registerReducers()
 // *****************************************************************************
 //  Configure Charm++ reduction types initiated from this chare array
-//! \details Since this is a [nodeinit] routine, the runtime system executes the
+//! \details Since this is a [initnode] routine, the runtime system executes the
 //!   routine exactly once on every logical node early on in the Charm++ init
 //!   sequence. Must be static as it is called without an object. See also:
 //!   Section "Initializations at Program Startup" at in the Charm++ manual
@@ -141,16 +111,13 @@ DiagCG::ResumeFromSync()
 }
 
 void
-DiagCG::setup( tk::real v )
+DiagCG::setup()
 // *****************************************************************************
-// Setup rows, query boundary conditions, output mesh, etc.
+// Set and output initial conditions and mesh to file
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
   auto d = Disc();
-
-  // Store total mesh volume
-  m_vol = v;
 
   // Set initial conditions for all PDEs
   for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
@@ -166,39 +133,6 @@ DiagCG::init()
 // *****************************************************************************
 {
   lhs();
-}
-
-void
-DiagCG::lhsmerge()
-// *****************************************************************************
-// The own and communication portion of the left-hand side is complete
-// *****************************************************************************
-{
-  // Combine own and communicated contributions to left hand side
-  auto d = Disc();
-
-  // Combine own and communicated contributions to LHS and ICs
-  for (const auto& b : d->Bid()) {
-    auto lid = tk::cref_find( d->Lid(), b.first );
-    const auto& blhsc = m_lhsc[ b.second ];
-    for (ncomp_t c=0; c<m_lhs.nprop(); ++c) m_lhs(lid,c,0) += blhsc[c];
-  }
-
-  // Zero communication buffers for next time step (rhs, mass diffusion rhs)
-  for (auto& b : m_rhsc) std::fill( begin(b), end(b), 0.0 );
-  for (auto& b : m_difc) std::fill( begin(b), end(b), 0.0 );
-
-  // Continue after lhs is complete
-  if (m_initial) start(); else lhs_complete();
-}
-
-void
-DiagCG::resized()
-// *****************************************************************************
-// Resizing data sutrctures after mesh refinement has been completed
-// *****************************************************************************
-{
-  resize_complete();
 }
 
 void
@@ -256,18 +190,33 @@ DiagCG::comlhs( const std::vector< std::size_t >& gid,
 
   using tk::operator+=;
 
-  auto d = Disc();
+  for (std::size_t i=0; i<gid.size(); ++i)
+    m_lhsc[ gid[i] ] += L[i];
 
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( d->Bid(), gid[i] );
-    Assert( bid < m_lhsc.size(), "Indexing out of bounds" );
-    m_lhsc[ bid ] += L[i];
-  }
-
-  if (++m_nlhs == d->Msum().size()) {
+  if (++m_nlhs == Disc()->Msum().size()) {
     m_nlhs = 0;
     comlhs_complete();
   }
+}
+
+void
+DiagCG::lhsmerge()
+// *****************************************************************************
+// The own and communication portion of the left-hand side is complete
+// *****************************************************************************
+{
+  // Combine own and communicated contributions to left hand side
+  for (const auto& b : m_lhsc) {
+    auto lid = tk::cref_find( Disc()->Lid(), b.first );
+    for (ncomp_t c=0; c<m_lhs.nprop(); ++c)
+      m_lhs(lid,c,0) += b.second[c];
+  }
+
+  // Clear receive buffer
+  tk::destroy(m_lhsc);
+
+  // Continue after lhs is complete
+  if (m_initial) start(); else lhs_complete();
 }
 
 void
@@ -308,7 +257,26 @@ DiagCG::dt()
 
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-              CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
+              CkCallback(CkReductionTarget(DiagCG,advance), thisProxy) );
+}
+
+void
+DiagCG::advance( tk::real newdt )
+// *****************************************************************************
+// Advance equations to next time step
+//! \param[in] newdt Size of this new time step
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Set new time step size
+  d->setdt( newdt );
+
+  // Activate SDAG-waits for FCT
+  d->FCT()->next();
+
+  // Compute rhs for next time step
+  rhs();
 }
 
 void
@@ -323,136 +291,91 @@ DiagCG::rhs()
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_u, m_ue, m_rhs );
 
+  // Compute mass diffusion rhs contribution required for the low order solution
+  auto dif = d->FCT()->diff( *d, m_u );
+
   // Query and match user-specified boundary conditions to side sets
-  bc();
+  m_bc = match( m_u.nprop(), d->T(), d->Dt(), d->Coord(), d->Gid(),
+                d->Lid(), m_bnode );
 
   if (d->Msum().empty())
     comrhs_complete();
   else // send contributions of rhs to chare-boundary nodes to fellow chares
     for (const auto& n : d->Msum()) {
       std::vector< std::vector< tk::real > > r( n.second.size() );
-      std::size_t j = 0;
-      for (auto i : n.second) r[ j++ ] = m_rhs[ tk::cref_find(d->Lid(),i) ];
-      thisProxy[ n.first ].comrhs( n.second, r );
-    }
-
-  ownrhs_complete();
-
-  // Compute mass diffusion rhs contribution required for the low order solution
-  m_dif = d->FCT()->diff( *d, m_u );
-
-  if (d->Msum().empty())
-    comdif_complete();
-  else // send contributions of diff to chare-boundary nodes to fellow chares
-    for (const auto& n : d->Msum()) {
       std::vector< std::vector< tk::real > > D( n.second.size() );
       std::size_t j = 0;
-      for (auto i : n.second) D[ j++ ] = m_dif[ tk::cref_find(d->Lid(),i) ];
-      thisProxy[ n.first ].comdif( n.second, D );
+      for (auto i : n.second) {
+        auto lid = tk::cref_find( d->Lid(), i );
+        r[ j ] = m_rhs[ lid ];
+        D[ j ] = dif[ lid ];
+        ++j;
+      }
+      thisProxy[ n.first ].comrhs( n.second, r, D );
     }
 
-  owndif_complete();
+  ownrhs_complete( dif );
 }
 
 void
 DiagCG::comrhs( const std::vector< std::size_t >& gid,
-                const std::vector< std::vector< tk::real > >& R )
+                const std::vector< std::vector< tk::real > >& R,
+                const std::vector< std::vector< tk::real > >& D )
 // *****************************************************************************
 //  Receive contributions to right-hand side vector on chare-boundaries
 //! \param[in] gid Global mesh node IDs at which we receive RHS contributions
 //! \param[in] R Partial contributions of RHS to chare-boundary nodes
+//! \param[in] D Partial contributions to chare-boundary nodes
 //! \details This function receives contributions to m_rhs, which stores the
 //!   right hand side vector at mesh nodes. While m_rhs stores own
 //!   contributions, m_rhsc collects the neighbor chare contributions during
 //!   communication. This way work on m_rhs and m_rhsc is overlapped. The two
-//!   are combined in solve().
+//!   are combined in solve(). This function also receives contributions to
+//!   mass diffusion term of the right hand side vector at mesh nodes.
 // *****************************************************************************
 {
   Assert( R.size() == gid.size(), "Size mismatch" );
+  Assert( D.size() == gid.size(), "Size mismatch" );
 
   using tk::operator+=;
 
-  auto d = Disc();
-
   for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( d->Bid(), gid[i] );
-    Assert( bid < m_rhsc.size(), "Indexing out of bounds" );
-    m_rhsc[ bid ] += R[i];
+    m_rhsc[ gid[i] ] += R[i];
+    m_difc[ gid[i] ] += D[i];
   }
 
-  if (++m_nrhs == d->Msum().size()) {
+  if (++m_nrhs == Disc()->Msum().size()) {
     m_nrhs = 0;
     comrhs_complete();
   }
 }
 
 void
-DiagCG::comdif( const std::vector< std::size_t >& gid,
-                const std::vector< std::vector< tk::real > >& D )
-// *****************************************************************************
-//  Receive contributions to right-hand side mass diffusion on chare-boundaries
-//! \param[in] gid Global mesh node IDs at which we receive ontributions
-//! \param[in] D Partial contributions to chare-boundary nodes
-//! \details This function receives contributions to m_dif, which stores the
-//!   mass diffusion right hand side vector at mesh nodes. While m_dif stores
-//!   own contributions, m_difc collects the neighbor chare contributions during
-//!   communication. This way work on m_dif and m_difc is overlapped. The two
-//!   are combined in solve().
-// *****************************************************************************
-{
-  Assert( D.size() == gid.size(), "Size mismatch" );
-
-  using tk::operator+=;
-
-  auto d = Disc();
-
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( d->Bid(), gid[i] );
-    Assert( bid < m_difc.size(), "Indexing out of bounds" );
-    m_difc[ bid ] += D[i];
-  }
-
-  if (++m_ndif == d->Msum().size()) {
-    m_ndif = 0;
-    comdif_complete();
-  }
-}
-
-void
-DiagCG::bc()
-// *****************************************************************************
-// Query and match user-specified boundary conditions to side sets
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Match user-specified boundary conditions to side sets
-  m_bc = match( m_u.nprop(), d->T(), d->Dt(), d->Coord(), d->Gid(),
-                d->Lid(), m_bnode );
-}
-
-void
-DiagCG::solve()
+DiagCG::solve( tk::Fields& dif )
 // *****************************************************************************
 //  Solve low and high order diagonal systems
+//! \param[in,out] dif Mass diffusion own contribution
 // *****************************************************************************
 {
   const auto ncomp = m_rhs.nprop();
 
   auto d = Disc();
 
-  // Combine own and communicated contributions to rhs and mass diffusion
-  for (const auto& b : d->Bid()) {
+  // Combine own and communicated contributions to rhs
+  for (const auto& b : m_rhsc) {
     auto lid = tk::cref_find( d->Lid(), b.first );
-    const auto& brhsc = m_rhsc[ b.second ];
-    for (ncomp_t c=0; c<ncomp; ++c) m_rhs(lid,c,0) += brhsc[c];
-    const auto& bdifc = m_difc[ b.second ];
-    for (ncomp_t c=0; c<ncomp; ++c) m_dif(lid,c,0) += bdifc[c];
+    for (ncomp_t c=0; c<ncomp; ++c) m_rhs(lid,c,0) += b.second[c];
   }
 
-  // Zero communication buffers for next time step (rhs, mass diffusion rhs)
-  for (auto& b : m_rhsc) std::fill( begin(b), end(b), 0.0 );
-  for (auto& b : m_difc) std::fill( begin(b), end(b), 0.0 );
+  // Combine own and communicated contributions to mass diffusion
+  for (const auto& b : m_difc) {
+    auto lid = tk::cref_find( d->Lid(), b.first );
+    for (ncomp_t c=0; c<ncomp; ++c) dif(lid,c,0) += b.second[c];
+  }
+
+  // Clear receive buffers
+  tk::destroy(m_rhsc);
+  tk::destroy(m_difc);
 
   // Set Dirichlet BCs for lhs and both low and high order rhs vectors. Note
   // that the low order rhs (more prcisely the mass-diffusion term) is set to
@@ -469,19 +392,19 @@ DiagCG::solve()
         if (n.second[c].first) {
           m_lhs( id, c, 0 ) = 1.0;
           m_rhs( id, c, 0 ) = n.second[c].second;
-          m_dif( id, c, 0 ) = 0.0;
+          dif( id, c, 0 ) = 0.0;
         }
     }
   }
 
   // Solve low and high order diagonal systems and update low order solution
-  m_dul = (m_rhs + m_dif) / m_lhs;
-  m_ul = m_u + m_dul;
+  auto dul = (m_rhs + dif) / m_lhs;
+  m_ul = m_u + dul;
   m_du = m_rhs / m_lhs;
 
   // Continue with FCT
   d->FCT()->aec( *d, m_du, m_u, m_bc );
-  d->FCT()->alw( m_u, m_ul, m_dul, thisProxy );
+  d->FCT()->alw( m_u, m_ul, std::move(dul), thisProxy );
 }
 
 void
@@ -504,7 +427,7 @@ DiagCG::writeFields( CkCallback c ) const
   auto u = m_u;
   std::vector< std::vector< tk::real > > nodefields;
   for (const auto& eq : g_cgpde) {
-    auto o = eq.fieldOutput( d->T(), m_vol, d->Coord(), d->V(), u );
+    auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord(), d->V(), u );
     nodefields.insert( end(nodefields), begin(o), end(o) );
   }
 
@@ -541,37 +464,20 @@ DiagCG::writeFields( CkCallback c ) const
 }
 
 void
-DiagCG::advance( tk::real newdt )
-// *****************************************************************************
-// Advance equations to next time step
-//! \param[in] newdt Size of this new time step
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Set new time step size
-  d->setdt( newdt );
-
-  // Activate SDAG-waits for FCT
-  d->FCT()->next();
-
-  // Compute rhs for next time step
-  rhs();
-}
-
-void
-DiagCG::update( const tk::Fields& a )
+DiagCG::update( const tk::Fields& a, tk::Fields&& dul )
 // *****************************************************************************
 // Prepare for next step
 //! \param[in] a Limited antidiffusive element contributions
+//! \param[in] dul Low order solution increment
 // *****************************************************************************
 {
   auto d = Disc();
 
   // Verify that the change in the solution at those nodes where Dirichlet
   // boundary conditions are set is exactly the amount the BCs prescribe
-  Assert( correctBC( a, m_dul, m_bc, d->Lid() ),
+  Assert( correctBC( a, dul, m_bc, d->Lid() ),
           "Dirichlet boundary condition incorrect" );
+  IGNORE( dul );
 
   // Apply limited antidiffusive element contributions to low order solution
   if (g_inputdeck.get< tag::discr, tag::fct >())
@@ -583,19 +489,8 @@ DiagCG::update( const tk::Fields& a )
   auto diag_computed = m_diag.compute( *d, m_u );
   // Increase number of iterations and physical time
   d->next();
-  // Signal that diagnostics have been computed (or in this case, skipped)
-  if (!diag_computed) diag();
-  // Optionally refine mesh
-  refine();
-}
-
-void
-DiagCG::diag()
-// *****************************************************************************
-// Signal the runtime system that diagnostics have been computed
-// *****************************************************************************
-{
-  diag_complete();
+  // Continue to mesh refinement (if configured)
+  if (!diag_computed) refine();
 }
 
 void
@@ -612,21 +507,24 @@ DiagCG::refine()
   // if t>0 refinement enabled and we hit the dtref frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
+    // Activate SDAG waits for re-computing the left-hand side
+    thisProxy[ thisIndex ].wait4lhs();
+
+    d->startvol();
     d->Ref()->dtref( {}, m_bnode, {} );
     d->refined() = 1;
 
   } else {      // do not refine
 
-    ref_complete();
-    lhs_complete();
-    resize_complete();
     d->refined() = 0;
+    lhs_complete();
+    resized();
 
   }
 }
 
 void
-DiagCG::resizeAfterRefined(
+DiagCG::resizePostAMR(
   const std::vector< std::size_t >& /*ginpoel*/,
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,
@@ -661,7 +559,7 @@ DiagCG::resizeAfterRefined(
   ++d->Itr();
 
   // Resize mesh data structures
-  d->resize( chunk, coord, msum );
+  d->resizePostAMR( chunk, coord, msum );
 
   // Resize auxiliary solution vectors
   auto nelem = d->Inpoel().size()/4;
@@ -670,11 +568,9 @@ DiagCG::resizeAfterRefined(
   m_u.resize( npoin, nprop );
   m_ul.resize( npoin, nprop );
   m_du.resize( npoin, nprop );
-  m_dul.resize( npoin, nprop );
   m_ue.resize( nelem, nprop );
   m_lhs.resize( npoin, nprop );
   m_rhs.resize( npoin, nprop );
-  m_dif.resize( npoin, nprop );
 
   // Update solution on new mesh
   for (const auto& n : addedNodes) {
@@ -686,18 +582,19 @@ DiagCG::resizeAfterRefined(
   // Update physical-boundary node lists
   m_bnode = bnode;
 
-  // Resize communication buffers
-  resizeComm();
-
   // Resize FCT data structures
   d->FCT()->resize( npoin, msum, d->Bid(), d->Lid(), d->Inpoel() );
 
-  // Activate SDAG waits for re-computing the left-hand side
-  thisProxy[ thisIndex ].wait4lhs();
+  contribute( CkCallback(CkReductionTarget(Transporter,resized), d->Tr()) );
+}
 
-  ref_complete();
-
-  contribute( CkCallback(CkReductionTarget(Transporter,workresized), d->Tr()) );
+void
+DiagCG::resized()
+// *****************************************************************************
+// Resizing data sutrctures after mesh refinement has been completed
+// *****************************************************************************
+{
+  resize_complete();
 }
 
 void

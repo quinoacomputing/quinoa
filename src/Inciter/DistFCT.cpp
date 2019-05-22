@@ -256,7 +256,7 @@ DistFCT::comaec( const std::vector< std::size_t >& gid,
 void
 DistFCT::alw( const tk::Fields& Un,
               const tk::Fields& Ul,
-              const tk::Fields& dUl,
+              tk::Fields&& dUl,
               const CProxy_DiagCG& host )
 // *****************************************************************************
 //  Compute the maximum and minimum unknowns of elements surrounding nodes
@@ -271,7 +271,7 @@ DistFCT::alw( const tk::Fields& Un,
 {
   // Store a copy of the low order solution vector and its increment for later
   m_ul = Ul;
-  m_dul = dUl;
+  m_dul = std::move(dUl);
 
   // Store discretization scheme proxy
   m_host = host;
@@ -417,7 +417,7 @@ DistFCT::apply()
   }
 
   // Update solution in host
-  m_host[ thisIndex ].ckLocal()->update(m_a);
+  m_host[ thisIndex ].ckLocal()->update( m_a, std::move(m_dul) );
 }
 
 #include "NoWarning/distfct.def.h"

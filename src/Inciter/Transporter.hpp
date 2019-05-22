@@ -106,19 +106,15 @@ class Transporter : public CBase_Transporter {
     //! Reduction target: all PEs have optionally refined their mesh
     void refined( std::size_t nelem, std::size_t npoin );
 
+    //! \brief Reduction target: all worker chares have resized their own data
+    //!   after mesh refinement
+    void resized();
+
     //! Reduction target: all Sorter chares have queried their boundary nodes
     void queried();
     //! \brief Reduction target: all Sorter chares have responded with their
     //!   boundary nodes
     void responded();
-
-    //! \brief Reduction target: all Discretization chares have resized their
-    //!    own data after mesh refinement
-    void discresized();
-
-    //! \brief Reduction target: all worker chares have resized their own data
-    //!   after mesh refinement
-    void workresized();
 
     //! Non-reduction target for receiving progress report on partitioning mesh
     void pepartitioned() { m_progMesh.inc< PART >(); }
@@ -150,10 +146,6 @@ class Transporter : public CBase_Transporter {
     //! Reduction target summing total mesh volume
     void totalvol( tk::real v, tk::real initial );
 
-    //! \brief Reduction target indicating that all workers have finished
-    //!   computing/receiving their part of the nodal volumes
-    void vol();
-
     //! \brief Reduction target yielding the minimum mesh statistics across
     //!   all workers
     void minstat( tk::real d0, tk::real d1, tk::real d2 );
@@ -176,9 +168,6 @@ class Transporter : public CBase_Transporter {
     //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );
 
-    //! Reduction target computing minimum of dt
-    void advance( tk::real dt );
-
     //! Normal finish of time stepping
     void finish();
 
@@ -196,7 +185,7 @@ class Transporter : public CBase_Transporter {
     std::size_t m_nelem;                 //!< Number of mesh elements
     std::size_t m_npoin_larger;          //!< Total number mesh points
      //! Total mesh volume
-    tk::real m_V;
+    tk::real m_meshvol;
     //! Minimum mesh statistics
     std::array< tk::real, 3 > m_minstat;
     //! Maximum mesh statistics
@@ -220,10 +209,6 @@ class Transporter : public CBase_Transporter {
 
     //! Echo diagnostics on mesh statistics
     void stat();
-
-    //! \brief All Discretization and worker chares have resized their own data
-    //!   after mesh refinement
-    void resized();
 
     //! Query variable names for all equation systems to be integrated
     //! \param[in] eq Equation system whose variable names to query

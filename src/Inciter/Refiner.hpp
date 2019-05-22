@@ -405,9 +405,9 @@ class Refiner : public CBase_Refiner {
       for (auto n : array) f( n );
     }
 
-    //! \brief Function class to call the resizeAfterRefined() member function
+    //! \brief Function class to call the resizePostAMR() member function
     //!   behind SchemeBase::Proxy
-    struct ResizeAfterRefined : boost::static_visitor<> {
+    struct ResizePostAMR: boost::static_visitor<> {
       const std::vector< std::size_t >& Ginpoel;
       const tk::UnsMesh::Chunk& Chunk;
       const tk::UnsMesh::Coords& Coord;
@@ -417,7 +417,7 @@ class Refiner : public CBase_Refiner {
       const std::map< int, std::vector< std::size_t > > Bface;
       const std::map< int, std::vector< std::size_t > > Bnode;
       const std::vector< std::size_t > Triinpoel;
-      ResizeAfterRefined(
+      ResizePostAMR(
         const std::vector< std::size_t >& ginpoel,
         const tk::UnsMesh::Chunk& chunk,
         const tk::UnsMesh::Coords& coord,
@@ -431,7 +431,7 @@ class Refiner : public CBase_Refiner {
           AddedTets(addedtets), Msum(msum), Bface(bface), Bnode(bnode),
           Triinpoel(triinpoel) {}
       template< typename P > void operator()( const P& p ) const {
-        p.ckLocal()->resizeAfterRefined( Ginpoel, Chunk, Coord, AddedNodes,
+        p.ckLocal()->resizePostAMR( Ginpoel, Chunk, Coord, AddedNodes,
           AddedTets, Msum, Bface, Bnode, Triinpoel );
       }
     };

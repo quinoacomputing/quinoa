@@ -175,7 +175,7 @@ void
 Refiner::registerReducers()
 // *****************************************************************************
 //  Configure Charm++ reduction types
-//! \details Since this is a [nodeinit] routine, the runtime system executes the
+//! \details Since this is a [initnode] routine, the runtime system executes the
 //!   routine exactly once on every logical node early on in the Charm++ init
 //!   sequence. Must be static as it is called without an object. See also:
 //!   Section "Initializations at Program Startup" at in the Charm++ manual
@@ -804,7 +804,7 @@ Refiner::next()
     auto e = tk::element< SchemeBase::ProxyElem >
                         ( m_scheme.getProxy(), thisIndex );
     boost::apply_visitor(
-      ResizeAfterRefined( m_ginpoel, m_el, m_coord, m_addedNodes, m_addedTets,
+      ResizePostAMR( m_ginpoel, m_el, m_coord, m_addedNodes, m_addedTets,
         msum, m_bface, m_bnode, m_triinpoel ), e );
 
   }

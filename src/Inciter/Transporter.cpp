@@ -66,7 +66,7 @@ Transporter::Transporter() :
   m_sorter(),
   m_nelem( 0 ),
   m_npoin_larger( 0 ),
-  m_V( 0.0 ),
+  m_meshvol( 0.0 ),
   m_minstat( {{ 0.0, 0.0, 0.0 }} ),
   m_maxstat( {{ 0.0, 0.0, 0.0 }} ),
   m_avgstat( {{ 0.0, 0.0, 0.0 }} ),
@@ -546,40 +546,6 @@ Transporter::responded()
 }
 
 void
-Transporter::discresized()
-// *****************************************************************************
-// Reduction target: all Discretization chares have resized their own data after
-// mesh refinement
-// *****************************************************************************
-{
-  discresize_complete();
-}
-
-void
-Transporter::workresized()
-// *****************************************************************************
-// Reduction target: all worker chares have resized their own data after
-// mesh refinement
-// *****************************************************************************
-{
-  workresize_complete();
-}
-
-void
-Transporter::resized()
-// *****************************************************************************
-// Reduction target: all worker chares have resized their own data after
-// mesh refinement
-// *****************************************************************************
-{
-  m_scheme.vol();
-  
-  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG)
-    m_scheme.lhs();
-}
-
-void
 Transporter::discinserted()
 // *****************************************************************************
 // Reduction target: all Discretization chares have been inserted
@@ -675,7 +641,7 @@ Transporter::comfinal( int initial )
 {
   if (initial > 0) {
     m_progWork.end();
-    m_scheme.setup( m_V );
+    m_scheme.setup();
     // Turn on automatic load balancing
     tk::CProxy_LBSwitch::ckNew( g_inputdeck.get<tag::cmd,tag::verbose>() );
   } else {
@@ -683,16 +649,6 @@ Transporter::comfinal( int initial )
   }
 }
 // [Discretization-specific communication maps]
-
-void
-Transporter::vol()
-// *****************************************************************************
-// Reduction target indicating that all workers have finished
-// computing/receiving their part of the nodal volumes
-// *****************************************************************************
-{
-  m_scheme.totalvol();
-}
 
 void
 Transporter::totalvol( tk::real v, tk::real initial )
@@ -703,12 +659,24 @@ Transporter::totalvol( tk::real v, tk::real initial )
 //!    zero, we are during time stepping and if zero we are during setup.
 // *****************************************************************************
 {
-  m_V = v;
+  m_meshvol = v;
 
   if (initial > 0.0)
-    m_scheme.stat< tag::bcast >();
+    m_scheme.stat< tag::bcast >( m_meshvol );
   else
     m_scheme.resized();
+}
+
+void
+Transporter::resized()
+// *****************************************************************************
+// Reduction target: all worker chares have resized their own data after
+// mesh refinement
+//! \note Only used for nodal schemes
+// *****************************************************************************
+{
+  m_scheme.vol();
+  m_scheme.lhs();
 }
 
 void
@@ -838,23 +806,11 @@ Transporter::stat()
 }
 
 void
-Transporter::advance( tk::real dt )
-// *****************************************************************************
-// Reduction target computing the minimum of dt
-// *****************************************************************************
-{
-  // Enable SDAG waits for resize operations after mesh refinement
-  thisProxy.wait4resize();
-
-  // Comptue size of next time step
-  m_scheme.advance( dt );
-}
-
-void
 Transporter::diagnostics( CkReductionMsg* msg )
 // *****************************************************************************
 // Reduction target optionally collecting diagnostics, e.g., residuals
 //! \param[in] msg Serialized diagnostics vector aggregated across all PEs
+//! \note Only used for nodal schemes
 // *****************************************************************************
 {
   std::vector< std::vector< tk::real > > d;
@@ -878,7 +834,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
 
   // Finish computing diagnostics
   for (std::size_t i=0; i<d[L2SOL].size(); ++i)
-    diag[i] = sqrt( d[L2SOL][i] / m_V );
+    diag[i] = sqrt( d[L2SOL][i] / m_meshvol );
   
   // Query user-requested error types to output
   const auto& error = g_inputdeck.get< tag::diag, tag::error >();
@@ -889,7 +845,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
     if (e == tk::ctr::ErrorType::L2) {
       // Finish computing the L2 norm of the numerical - analytical solution
      for (std::size_t i=0; i<d[L2ERR].size(); ++i)
-       diag.push_back( sqrt( d[L2ERR][i] / m_V ) );
+       diag.push_back( sqrt( d[L2ERR][i] / m_meshvol ) );
     } else if (e == tk::ctr::ErrorType::LINF) {
       // Finish computing the Linf norm of the numerical - analytical solution
       for (std::size_t i=0; i<d[LINFERR].size(); ++i)
@@ -905,7 +861,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
   dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
 
   // Evaluate whether to continue with next step
-  m_scheme.diag< tag::bcast >();
+  m_scheme.refine();
 }
 
 void
