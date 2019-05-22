@@ -22,7 +22,6 @@ module discretization {
   namespace inciter {
 
     array [1D] Discretization {
-
       entry Discretization(
         const CProxy_DistFCT& fctproxy,
         const CProxy_Transporter& transporter,
@@ -31,18 +30,21 @@ module discretization {
         const tk::UnsMesh::CoordMap& coordmap,
         const std::map< int, std::unordered_set< std::size_t > >& msum,
         int nchare );
-
       initnode void registerReducers();
-
       entry void vol();
-
       entry void comvol( const std::vector< std::size_t >& gid,
                          const std::vector< tk::real >& nodevol );
+      entry void stat( tk::real mesh_volume );
 
-      entry void totalvol();
+      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
-      entry void stat();
-    };
+      entry void wait4vol() {
+        when ownvol_complete(), comvol_complete() serial "vol" { totalvol(); } }
+
+      entry void ownvol_complete();
+      entry void comvol_complete();
+    }
 
   } // inciter::
 
