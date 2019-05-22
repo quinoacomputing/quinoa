@@ -158,17 +158,6 @@ class Scheme : public SchemeBase {
       discproxy.vol( std::forward<Args>(args)... );
     }
 
-    //////  discproxy.totalvol(...)
-    //! \brief Function to call the totalvol() entry method of an array
-    //!   discproxy (broadcast)
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the totalvol member function of a chare
-    //!   array discproxy and thus equivalent to discproxy.totalvol(...).
-    template< typename... Args >
-    void totalvol( Args&&... args ) {
-      discproxy.totalvol( std::forward<Args>(args)... );
-    }
-
     //////  discproxy.stat(...)
     //! \brief Function to call the stat() entry method of an array discproxy
     //!   (broadcast)
@@ -268,6 +257,18 @@ class Scheme : public SchemeBase {
                             proxy );
     }
 
+    //////  proxy.refine(...)
+    //! Function to call the resized entry method of an array proxy (broadcast)
+    //! \param[in] args Arguments to member function (entry method) to be called
+    //! \details This function calls the resized member function of a chare
+    //!   array proxy and thus equivalent to proxy.refine(...), using the last
+    //!   argument as default.
+    template< typename... Args >
+    void refine( Args&&... args ) {
+      boost::apply_visitor(
+        call_refine<Args...>( std::forward<Args>(args)... ), proxy );
+    }
+
     //////  proxy.resized(...)
     //! Function to call the resized entry method of an array proxy (broadcast)
     //! \param[in] args Arguments to member function (entry method) to be called
@@ -278,18 +279,6 @@ class Scheme : public SchemeBase {
     void resized( Args&&... args ) {
       boost::apply_visitor(
         call_resized<Args...>( std::forward<Args>(args)... ), proxy );
-    }
-
-    //////  proxy.advance(...)
-    //! Function to call the advance entry method of an array proxy (broadcast)
-    //! \param[in] args Arguments to member function entry method to be called
-    //! \details This function calls the advance member function of a chare
-    //!    array proxy and thus equivalent to proxy.advance(...), using the last
-    //!    argument as default.
-    template< typename... Args >
-    void advance( Args&&... args ) {
-      boost::apply_visitor(
-        call_advance<Args...>( std::forward<Args>(args)... ), proxy );
     }
 
     //////  proxy.diag(...)
@@ -414,6 +403,27 @@ class Scheme : public SchemeBase {
      }
    };
 
+   //! Functor to call the chare entry method 'refine'
+   //! \details This class is intended to be used in conjunction with variant
+   //!   and boost::visitor. The template argument types are the types of the
+   //!   arguments to entry method to be invoked behind the variant holding a
+   //!   Charm++ proxy.
+   //! \see The base class Call for the definition of operator().
+   template< typename... As >
+   struct call_refine : Call< call_refine<As...>, As... > {
+     using Base = Call< call_refine<As...>, As... >;
+     using Base::Base; // inherit base constructors
+     //! Invoke the entry method
+     //! \param[in,out] p Proxy behind which the entry method is called
+     //! \param[in] args Function arguments passed to entry method
+     //! \details P is the proxy type, Args are the types of the arguments of
+     //!   the entry method to be called.
+     template< typename P, typename... Args >
+     static void invoke( P& p, Args&&... args ) {
+       p.refine( std::forward<Args>(args)... );
+     }
+   };
+
    //! Functor to call the chare entry method 'resized'
    //! \details This class is intended to be used in conjunction with variant
    //!   and boost::visitor. The template argument types are the types of the
@@ -453,27 +463,6 @@ class Scheme : public SchemeBase {
      template< typename P, typename... Args >
      static void invoke( P& p, Args&&... args ) {
        p.lhs( std::forward<Args>(args)... );
-     }
-   };
-
-   //! Functor to call the chare entry method 'advance'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_advance : Call< call_advance<As...>, As... > {
-     using Base = Call< call_advance<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.advance( std::forward<Args>(args)... );
      }
    };
 
