@@ -62,7 +62,6 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_lhsc(),
   m_rhsc(),
-  m_vol( 0.0 ),
   m_diag()
 // *****************************************************************************
 //  Constructor
@@ -75,9 +74,6 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 {
   usesAtSync = true;    // enable migration at AtSync
 
-  // Size communication buffers
-  resizeComm();
-
   // Activate SDAG wait for initially computing the left-hand side
   thisProxy[ thisIndex ].wait4lhs();
 
@@ -88,31 +84,10 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 //! [Constructor]
 
 void
-ALECG::resizeComm()
-// *****************************************************************************
-//  Size communication buffers
-//! \details The size of the communication buffers are determined based on
-//!    Disc()->Bid.size() and m_u.nprop().
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  auto np = m_u.nprop();
-  auto nb = d->Bid().size();
-  m_lhsc.resize( nb );
-  for (auto& b : m_lhsc) b.resize( np );
-  m_rhsc.resize( nb );
-  for (auto& b : m_rhsc) b.resize( np );
-
-  // Zero communication buffers
-  for (auto& b : m_lhsc) std::fill( begin(b), end(b), 0.0 );
-}
-
-void
 ALECG::registerReducers()
 // *****************************************************************************
 //  Configure Charm++ reduction types initiated from this chare array
-//! \details Since this is a [nodeinit] routine, the runtime system executes the
+//! \details Since this is a [initnode] routine, the runtime system executes the
 //!   routine exactly once on every logical node early on in the Charm++ init
 //!   sequence. Must be static as it is called without an object. See also:
 //!   Section "Initializations at Program Startup" at in the Charm++ manual
@@ -136,16 +111,13 @@ ALECG::ResumeFromSync()
 }
 
 void
-ALECG::setup( tk::real v )
+ALECG::setup()
 // *****************************************************************************
 // Setup rows, query boundary conditions, output mesh, etc.
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
   auto d = Disc();
-
-  // Store total mesh volume
-  m_vol = v;
 
   // Set initial conditions for all PDEs
   for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
@@ -165,40 +137,6 @@ ALECG::init()
   lhs();
 }
 //! [init and lhs]
-
-//! [Merge lhs and continue]
-void
-ALECG::lhsmerge()
-// *****************************************************************************
-// The own and communication portion of the left-hand side is complete
-// *****************************************************************************
-{
-  // Combine own and communicated contributions to left hand side
-  auto d = Disc();
-
-  // Combine own and communicated contributions to LHS and ICs
-  for (const auto& b : d->Bid()) {
-    auto lid = tk::cref_find( d->Lid(), b.first );
-    const auto& blhsc = m_lhsc[ b.second ];
-    for (ncomp_t c=0; c<m_lhs.nprop(); ++c) m_lhs(lid,c,0) += blhsc[c];
-  }
-
-  // Zero communication buffers for next time step
-  for (auto& b : m_rhsc) std::fill( begin(b), end(b), 0.0 );
-
-  // Continue after lhs is complete
-  if (m_initial) start(); else lhs_complete();
-}
-//! [Merge lhs and continue]
-
-void
-ALECG::resized()
-// *****************************************************************************
-// Resizing data sutrctures after mesh refinement has been completed
-// *****************************************************************************
-{
-  resize_complete();
-}
 
 void
 ALECG::start()
@@ -261,9 +199,7 @@ ALECG::comlhs( const std::vector< std::size_t >& gid,
   auto d = Disc();
 
   for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( d->Bid(), gid[i] );
-    Assert( bid < m_lhsc.size(), "Indexing out of bounds" );
-    m_lhsc[ bid ] += L[i];
+    m_lhsc[ gid[i] ] += L[i];
   }
 
   // When we have heard from all chares we communicate with, this chare is done
@@ -273,6 +209,31 @@ ALECG::comlhs( const std::vector< std::size_t >& gid,
   }
 }
 //! [Receive lhs on chare-boundary]
+
+//! [Merge lhs and continue]
+void
+ALECG::lhsmerge()
+// *****************************************************************************
+// The own and communication portion of the left-hand side is complete
+// *****************************************************************************
+{
+  // Combine own and communicated contributions to left hand side
+  auto d = Disc();
+
+  // Combine own and communicated contributions to LHS and ICs
+  for (const auto& b : m_lhsc) {
+    auto lid = tk::cref_find( d->Lid(), b.first );
+    for (ncomp_t c=0; c<m_lhs.nprop(); ++c)
+      m_lhs(lid,c,0) += b.second[c];
+  }
+
+  // Clear receive buffer
+  tk::destroy(m_lhsc);
+
+  // Continue after lhs is complete
+  if (m_initial) start(); else lhs_complete();
+}
+//! [Merge lhs and continue]
 
 void
 ALECG::dt()
@@ -314,7 +275,7 @@ ALECG::dt()
 
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-              CkCallback(CkReductionTarget(Transporter,advance), d->Tr()) );
+              CkCallback(CkReductionTarget(ALECG,advance), thisProxy) );
   //! [Advance]
 }
 
@@ -361,16 +322,12 @@ ALECG::comrhs( const std::vector< std::size_t >& gid,
 
   using tk::operator+=;
 
-  auto d = Disc();
-
   for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( d->Bid(), gid[i] );
-    Assert( bid < m_rhsc.size(), "Indexing out of bounds" );
-    m_rhsc[ bid ] += R[i];
+    m_rhsc[ gid[i] ] += R[i];
   }
 
   // When we have heard from all chares we communicate with, this chare is done
-  if (++m_nrhs == d->Msum().size()) {
+  if (++m_nrhs == Disc()->Msum().size()) {
     m_nrhs = 0;
     comrhs_complete();
   }
@@ -387,14 +344,13 @@ ALECG::solve()
   auto d = Disc();
 
   // Combine own and communicated contributions to rhs
-  for (const auto& b : d->Bid()) {
+  for (const auto& b : m_rhsc) {
     auto lid = tk::cref_find( d->Lid(), b.first );
-    const auto& brhsc = m_rhsc[ b.second ];
-    for (ncomp_t c=0; c<ncomp; ++c) m_rhs(lid,c,0) += brhsc[c];
+    for (ncomp_t c=0; c<ncomp; ++c) m_rhs(lid,c,0) += b.second[c];
   }
 
-  // Zero communication buffers for next time step
-  for (auto& b : m_rhsc) std::fill( begin(b), end(b), 0.0 );
+  // clear receive buffer
+  tk::destroy(m_rhsc);  
 
   // Solve sytem
   // m_du = m_rhs / m_lhs;
@@ -404,65 +360,9 @@ ALECG::solve()
   auto diag_computed = m_diag.compute( *d, m_u );
   // Increase number of iterations and physical time
   d->next();
-  // Signal that diagnostics have been computed (or in this case, skipped)
-  if (!diag_computed) diag();
-  // Optionally refine mesh
-  refine();
+  // Continue to mesh refinement (if configured)
+  if (!diag_computed) refine();
   //! [Continue after solve]
-}
-
-void
-ALECG::writeFields( CkCallback c ) const
-// *****************************************************************************
-// Output mesh-based fields to file
-//! \param[in] c Function to continue with after the write
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Query and collect field names from PDEs integrated
-  std::vector< std::string > nodefieldnames;
-  for (const auto& eq : g_cgpde) {
-    auto n = eq.fieldNames();
-    nodefieldnames.insert( end(nodefieldnames), begin(n), end(n) );
-  }
-
-  // Collect node field solution
-  auto u = m_u;
-  std::vector< std::vector< tk::real > > nodefields;
-  for (const auto& eq : g_cgpde) {
-    auto o = eq.fieldOutput( d->T(), m_vol, d->Coord(), d->V(), u );
-    nodefields.insert( end(nodefields), begin(o), end(o) );
-  }
-
-  // Send mesh and fields data (solution dump) for output to file
-  d->write( d->Inpoel(), d->Coord(), {}, tk::remap(m_bnode,d->Lid()), {}, {},
-            nodefieldnames, {}, nodefields, c );
-}
-
-void
-ALECG::advance( tk::real newdt )
-// *****************************************************************************
-// Advance equations to next time step
-//! \param[in] newdt Size of this new time step
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Set new time step size
-  d->setdt( newdt );
-
-  // Compute rhs for next time step
-  rhs();
-}
-
-void
-ALECG::diag()
-// *****************************************************************************
-// Signal the runtime system that diagnostics have been computed
-// *****************************************************************************
-{
-  diag_complete();
 }
 
 void
@@ -480,13 +380,18 @@ ALECG::refine()
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
+    // Activate SDAG waits for re-computing the left-hand side
+    thisProxy[ thisIndex ].wait4lhs();
+
+    d->startvol();
     d->Ref()->dtref( {}, m_bnode, {} );
+    d->refined() = 1;
 
   } else {      // do not refine
 
-    ref_complete();
+    d->refined() = 0;
     lhs_complete();
-    resize_complete();
+    resized();
 
   }
   //! [Refine]
@@ -494,7 +399,7 @@ ALECG::refine()
 
 //! [Resize]
 void
-ALECG::resizeAfterRefined(
+ALECG::resizePostAMR(
   const std::vector< std::size_t >& /*ginpoel*/,
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,
@@ -529,7 +434,7 @@ ALECG::resizeAfterRefined(
   ++d->Itr();
 
   // Resize mesh data structures
-  d->resize( chunk, coord, msum );
+  d->resizePostAMR( chunk, coord, msum );
 
   // Resize auxiliary solution vectors
   auto npoin = coord[0].size();
@@ -547,17 +452,63 @@ ALECG::resizeAfterRefined(
   // Update physical-boundary node lists
   m_bnode = bnode;
 
-  // Resize communication buffers
-  resizeComm();
-
-  // Activate SDAG waits for re-computing the left-hand side
-  thisProxy[ thisIndex ].wait4lhs();
-
-  ref_complete();
-
-  contribute( CkCallback(CkReductionTarget(Transporter,workresized), d->Tr()) );
+  contribute( CkCallback(CkReductionTarget(Transporter,resized), d->Tr()) );
 }
 //! [Resize]
+
+void
+ALECG::resized()
+// *****************************************************************************
+// Resizing data sutrctures after mesh refinement has been completed
+// *****************************************************************************
+{
+  resize_complete();
+}
+
+void
+ALECG::writeFields( CkCallback c ) const
+// *****************************************************************************
+// Output mesh-based fields to file
+//! \param[in] c Function to continue with after the write
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Query and collect field names from PDEs integrated
+  std::vector< std::string > nodefieldnames;
+  for (const auto& eq : g_cgpde) {
+    auto n = eq.fieldNames();
+    nodefieldnames.insert( end(nodefieldnames), begin(n), end(n) );
+  }
+
+  // Collect node field solution
+  auto u = m_u;
+  std::vector< std::vector< tk::real > > nodefields;
+  for (const auto& eq : g_cgpde) {
+    auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord(), d->V(), u );
+    nodefields.insert( end(nodefields), begin(o), end(o) );
+  }
+
+  // Send mesh and fields data (solution dump) for output to file
+  d->write( d->Inpoel(), d->Coord(), {}, tk::remap(m_bnode,d->Lid()), {}, {},
+            nodefieldnames, {}, nodefields, c );
+}
+
+void
+ALECG::advance( tk::real newdt )
+// *****************************************************************************
+// Advance equations to next time step
+//! \param[in] newdt Size of this new time step
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Set new time step size
+  d->setdt( newdt );
+
+  // Compute rhs for next time step
+  rhs();
+}
 
 void
 ALECG::out()
