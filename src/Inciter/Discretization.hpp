@@ -317,6 +317,8 @@ class Discretization : public CBase_Discretization {
     tk::Timer m_timer;
     //! 1 if mesh was refined in a time step, 0 if it was not
     int m_refined;
+    //! Time point storing clock state at status()
+    std::chrono::high_resolution_clock::time_point m_prevstatus;
 
     //! Set mesh coordinates based on coordinates map
     tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );
