@@ -31,6 +31,29 @@ namespace inciter {
 class Discretization : public CBase_Discretization {
 
   public:
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wunused-parameter"
+      #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    #elif defined(STRICT_GNUC)
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wunused-parameter"
+      #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    #elif defined(__INTEL_COMPILER)
+      #pragma warning( push )
+      #pragma warning( disable: 1478 )
+    #endif
+    // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
+    // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+    Discretization_SDAG_CODE
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #elif defined(STRICT_GNUC)
+      #pragma GCC diagnostic pop
+    #elif defined(__INTEL_COMPILER)
+      #pragma warning( pop )
+    #endif
+
     //! Constructor
     explicit
       Discretization(
@@ -57,10 +80,13 @@ class Discretization : public CBase_Discretization {
     static void registerReducers();
 
     //! Resize mesh data structures (e.g., after mesh refinement)
-    void resize( const tk::UnsMesh::Chunk& chunk,
-                 const tk::UnsMesh::Coords& coord,
-                 const std::unordered_map< int,
-                         std::vector< std::size_t > >& msum );
+    void resizePostAMR( const tk::UnsMesh::Chunk& chunk,
+                        const tk::UnsMesh::Coords& coord,
+                        const std::unordered_map< int,
+                                std::vector< std::size_t > >& msum );
+
+    //! Get ready for (re-)computing/communicating nodal volumes
+    void startvol();
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();
@@ -76,7 +102,7 @@ class Discretization : public CBase_Discretization {
     void totalvol();
 
     //! Compute mesh cell statistics
-    void stat();
+    void stat( tk::real mesh_volume );
 
     /** @name Accessors */
     ///@{
@@ -102,9 +128,12 @@ class Discretization : public CBase_Discretization {
     //!    non-const-ref
     std::vector< std::size_t >& Inpoel() { return m_inpoel; }
 
-    //! Total mesh volume accessors const-ref
+    //! Total mesh volume accessor
+    tk::real meshvol() const { return m_meshvol; }
+
+    //! Nodal mesh volume accessors const-ref
     const std::vector< tk::real >& V() const { return m_v; }
-    //! Total mesh volume accessors non-const-ref
+    //! Nodal mesh volume accessors non-const-ref
     std::vector< tk::real >& V() { return m_v; }
 
     //! Nodal mesh volumes accessors as const-ref
@@ -225,6 +254,7 @@ class Discretization : public CBase_Discretization {
       p | m_coord;
       p | m_psup;
       p | m_msum;
+      p | m_meshvol;
       p | m_v;
       p | m_vol;
       p | m_volc;
@@ -293,6 +323,8 @@ class Discretization : public CBase_Discretization {
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
     //!   points
     std::unordered_map< int, std::vector< std::size_t > > m_msum;
+    //! Total mesh volume
+    tk::real m_meshvol;
     //! Nodal mesh volumes
     //! \details This is the volume of the mesh associated to nodes of owned
     //!   elements (sum of surrounding cell volumes / 4) without contributions
@@ -303,12 +335,12 @@ class Discretization : public CBase_Discretization {
     //!   elements (sum of surrounding cell volumes / 4) with contributions from
     //!   other chares on chare-boundaries
     std::vector< tk::real > m_vol;
-    //! Receive buffer for volume of nodes
+    //! Receive buffer for volume of nodes (with global node id as key)
     //! \details This is a communication buffer used to compute the volume of
     //!   the mesh associated to nodes of owned elements (sum of surrounding
     //!   cell volumes / 4) with contributions from other chares on
     //!   chare-boundaries.
-    std::vector< tk::real > m_volc;
+    std::unordered_map< std::size_t, tk::real > m_volc;
     //! \brief Local chare-boundary mesh node IDs at which we receive
     //!   contributions associated to global mesh node IDs of mesh elements we
     //!   contribute to

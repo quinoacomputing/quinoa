@@ -140,6 +140,7 @@ class Scheme {
     struct advance {};
     struct resized {};
     struct resizeComm {};
+    struct refine {};
     struct lhs {};
     struct diag {};
     struct doneInserting {};
@@ -162,6 +163,8 @@ class Scheme {
             p.resized( std::forward< Args >( args )... );
           else if constexpr( std::is_same_v< Fn, resizeComm > )
             p.resizeComm( std::forward< Args >( args )... );
+          else if constexpr( std::is_same_v< Fn, refine > )
+            p.refine( std::forward< Args >( args )... );
           else if constexpr( std::is_same_v< Fn, lhs > )
             p.lhs( std::forward< Args >( args )... );
           else if constexpr( std::is_same_v< Fn, diag > )

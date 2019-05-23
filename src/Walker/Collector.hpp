@@ -77,7 +77,7 @@ class Collector : public CBase_Collector {
     {}
 
     //! \brief Configure Charm++ reduction types for collecting PDFs
-    //! \details Since this is a [nodeinit] routine, see collector.ci, the
+    //! \details Since this is a [initnode] routine, see collector.ci, the
     //!   Charm++ runtime system executes the routine exactly once on every
     //!   logical node early on in the Charm++ init sequence. Must be static as
     //!   it is called without an object. See also: Section "Initializations at

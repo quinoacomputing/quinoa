@@ -96,11 +96,11 @@ class DiagCG : public CBase_DiagCG {
     //! Return from migration
     void ResumeFromSync() override;
 
-    //! Size communication buffers
-    void resizeComm();
+    //! Size communication buffers (no-op)
+    void resizeComm() {}
 
     //! Setup: query boundary conditions, output mesh, etc.
-    void setup( tk::real v );
+    void setup();
 
     // Initially compute left hand side diagonal matrix
     void init();
@@ -117,23 +117,17 @@ class DiagCG : public CBase_DiagCG {
 
     //! Receive contributions to right-hand side vector on chare-boundaries
     void comrhs( const std::vector< std::size_t >& gid,
-                 const std::vector< std::vector< tk::real > >& R );
-
-    //!  Receive contributions to RHS mass diffusion on chare-boundaries
-    void comdif( const std::vector< std::size_t >& gid,
+                 const std::vector< std::vector< tk::real > >& R,
                  const std::vector< std::vector< tk::real > >& D );
 
     //! Update solution at the end of time step
-    void update( const tk::Fields& a );
-
-    //! Signal the runtime system that diagnostics have been computed
-    void diag();
+    void update( const tk::Fields& a, tk::Fields&& dUl );
 
     //! Optionally refine/derefine mesh
     void refine();
 
     //! Receive new mesh from refiner
-    void resizeAfterRefined(
+    void resizePostAMR(
       const std::vector< std::size_t >& ginpoel,
       const tk::UnsMesh::Chunk& chunk,
       const tk::UnsMesh::Coords& coord,
@@ -164,16 +158,13 @@ class DiagCG : public CBase_DiagCG {
       p | m_nsol;
       p | m_nlhs;
       p | m_nrhs;
-      p | m_ndif;
       p | m_bnode;
       p | m_u;
       p | m_ul;
       p | m_du;
-      p | m_dul;
       p | m_ue;
       p | m_lhs;
       p | m_rhs;
-      p | m_dif;
       p | m_bc;
       p | m_lhsc;
       p | m_rhsc;
@@ -200,8 +191,6 @@ class DiagCG : public CBase_DiagCG {
     std::size_t m_nlhs;
     //! Counter for right-hand side vector nodes updated
     std::size_t m_nrhs;
-    //! Counter for right-hand side masss-diffusion vector nodes updated
-    std::size_t m_ndif;
     //! Boundary node lists mapped to side set ids
     std::map< int, std::vector< std::size_t > > m_bnode;
     //! Unknown/solution vector at mesh nodes
@@ -210,16 +199,12 @@ class DiagCG : public CBase_DiagCG {
     tk::Fields m_ul;
     //! Unknown/solution vector increment (high order)
     tk::Fields m_du;
-    //! Unknown/solution vector increment (low order)
-    tk::Fields m_dul;
     //! Unknown/solution vector at mesh cells
     tk::Fields m_ue;
     //! Lumped lhs mass matrix
     tk::Fields m_lhs;
     //! Right-hand side vector (for the high order system)
     tk::Fields m_rhs;
-    //! Mass diffusion right-hand side vector (for the low order system)
-    tk::Fields m_dif;
     //! Boundary conditions evaluated and assigned to mesh node IDs
     //! \details Vector of pairs of bool and boundary condition value associated
     //!   to meshnode IDs at which the user has set Dirichlet boundary
@@ -228,8 +213,15 @@ class DiagCG : public CBase_DiagCG {
     //!   the increment (from t to dt) in the BC specified for a component.
     std::unordered_map< std::size_t,
       std::vector< std::pair< bool, tk::real > > > m_bc;
-    //! Receive buffers for communication
-    std::vector< std::vector< tk::real > > m_lhsc, m_rhsc, m_difc;
+    //! Receive buffer for communication of the left hand side
+    //! \details Key: chare id, value: lhs for all scalar components per node
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_lhsc;
+    //! Receive buffer for communication of the right hand side
+    //! \details Key: chare id, value: rhs for all scalar components per node
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_rhsc;
+    //! Receive buffer for communication of mass diffusion on the hand side
+    //! \details Key: chare id, value: dif for all scalar components per node
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_difc;
     //! Total mesh volume
     tk::real m_vol;
     //! Diagnostics object
@@ -247,10 +239,6 @@ class DiagCG : public CBase_DiagCG {
     //! Output mesh-based fields to file
     void writeFields( CkCallback c ) const;
 
-    //! \brief Extract node IDs from side set node lists and match to
-    //    user-specified boundary conditions
-    void bc();
-
     //! The own and communication portion of the left-hand side is complete
     void lhsdone();
 
@@ -264,7 +252,7 @@ class DiagCG : public CBase_DiagCG {
     void start();
 
     //! Solve low and high order diagonal systems
-    void solve();
+    void solve( tk::Fields& dif );
 
     //! Compute time step size
     void dt();

@@ -33,19 +33,18 @@ module dg {
       entry void comGhost( int fromch, const GhostData& ghost );
       entry void reqGhost();
       initnode void registerReducers();      
-      entry void setup( tk::real );
+      entry void setup();
       entry void next();
-      entry void diag();
-      entry [reductiontarget] void sendLim();
       entry void comlim( int fromch,
                          const std::vector< std::size_t >& tetid,
-                         const std::vector< std::vector< tk::real > >& lfn,
+                         const std::vector< std::vector< tk::real > >& u,
                          const std::vector< std::size_t >& ndof );
       entry void comsol( int fromch,
+                         std::size_t fromstage,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u,
-                         const std::vector< std::size_t >& ndofel );
-      entry void advance( tk::real );
+                         const std::vector< std::size_t >& ndof );
+      entry void refine();
       entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();
       entry void lhs();
@@ -53,6 +52,10 @@ module dg {
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+      entry void wait4fac() {
+        when ownfac_complete(), comfac_complete() serial "bndfaces"
+        { bndFaces(); } }
 
       entry void wait4ghost() {
         when ownghost_complete(), reqghost_complete() serial "ghost"
@@ -63,22 +66,16 @@ module dg {
         { lim(); } }
 
       entry void wait4lim() {
-        when ownlim_complete(), comlim_complete() serial "lim"
-        { dt(); } }
+        when ownlim_complete(), comlim_complete() serial "lim" { dt(); } }
 
-      entry void wait4recompghost() {
-        when diag_complete(), ref_complete(), resize_complete() serial
-        "recomputeGhostRefined" { recompGhostRefined(); } }
-
+      entry void ownfac_complete();
+      entry void comfac_complete();
       entry void ownghost_complete();
       entry void reqghost_complete();
       entry void ownsol_complete();
       entry void comsol_complete();
       entry void ownlim_complete();
       entry void comlim_complete();
-      entry void diag_complete();
-      entry void ref_complete();
-      entry void resize_complete();
     }
 
   } // inciter::
