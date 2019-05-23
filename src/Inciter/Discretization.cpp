@@ -59,7 +59,8 @@ Discretization::Discretization(
   m_volc(),
   m_bid(),
   m_timer(),
-  m_refined( 0 )
+  m_refined( 0 ),
+  m_prevstatus( std::chrono::high_resolution_clock::now() )
 // *****************************************************************************
 //  Constructor
 //! \param[in] fctproxy Distributed FCT proxy
@@ -518,6 +519,14 @@ Discretization::status()
     tk::Timer::Watch ete, eta;
     m_timer.eta( term-t0, m_t-t0, nstep, m_it, ete, eta );
  
+    // estimate grind time (taken between this and the previous status line
+    // measurement) in milliseconds
+    using std::chrono::duration_cast;
+    using ms = std::chrono::milliseconds;
+    using clock = std::chrono::high_resolution_clock;
+    auto grind_time = duration_cast< ms >( clock::now() - m_prevstatus ).count();
+    m_prevstatus = clock::now();
+
     tk::Print print( verbose ? std::cout : std::clog );
  
     // Output one-liner
@@ -531,7 +540,9 @@ Discretization::status()
           << std::setw(2) << ete.sec.count() << "  "
           << std::setw(3) << eta.hrs.count() << ":"
           << std::setw(2) << eta.min.count() << ":"
-          << std::setw(2) << eta.sec.count() << "  ";
+          << std::setw(2) << eta.sec.count() << "  "
+          << std::scientific << std::setprecision(6) << std::setfill(' ')
+          << std::setw(9) << grind_time << "  ";
   
     // Augment one-liner with output indicators
     if (!(m_it % field)) print << 'f';
