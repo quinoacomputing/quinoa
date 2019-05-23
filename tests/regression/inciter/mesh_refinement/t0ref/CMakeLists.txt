@@ -105,29 +105,32 @@ add_regression_test(amr_t0ref_u_trans_reord_dg ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
                     LABELS amr)
 
-# add_regression_test(amr_t0ref_udu_trans_dg ${INCITER_EXECUTABLE}
-#                     NUMPES 1
-#                     INPUTFILES gauss_hump_dg_uniform_deref.q
-#                                unitsquare_01_955_ss3.exo
-#                     ARGS -c gauss_hump_dg_uniform_deref.q
-#                          -i unitsquare_01_955_ss3.exo -v
-#                     BIN_BASELINE gauss_hump_dg_t0ref.std.e-s.0.1.0
-#                                  gauss_hump_dg_t0ref.std.e-s.1.1.0
-#                                  gauss_hump_dg_t0ref.std.e-s.2.1.0
-#                                  gauss_hump_dg.std.exo
-#                     BIN_RESULT t0ref.e-s.0.1.0
-#                                t0ref.e-s.1.1.0
-#                                t0ref.e-s.2.1.0
-#                                out.e-s.0.1.0
-#                     BIN_DIFF_PROG_CONF exodiff_gauss_hump_dg.t0ref.cfg
-#                                        exodiff_gauss_hump_dg.t0ref.cfg
-#                                        exodiff_gauss_hump_dg.t0ref.cfg
-#                                        exodiff_gauss_hump_dg.cfg
-#                     BIN_DIFF_PROG_ARGS -m
-#                     TEXT_BASELINE diag_gauss_hump_dg.std
-#                     TEXT_RESULT diag
-#                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
-#                     LABELS amr)
+add_regression_test(amr_t0ref_udu_trans_dg ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES gauss_hump_dg_uniform_deref.q
+                               unitsquare_01_955_ss3.exo
+                    ARGS -c gauss_hump_dg_uniform_deref.q
+                         -i unitsquare_01_955_ss3.exo -v
+                    BIN_BASELINE gauss_hump_dg_uniform_deref_t0ref.std.e-s.0.1.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.1.1.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.2.1.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.3.1.0
+                                 gauss_hump_dg.std.exo
+                    BIN_RESULT t0ref.e-s.0.1.0
+                               t0ref.e-s.1.1.0
+                               t0ref.e-s.2.1.0
+                               t0ref.e-s.3.1.0
+                               out.e-s.0.1.0
+                    BIN_DIFF_PROG_CONF exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_gauss_hump_dg.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
+                    LABELS amr)
 
 # Parallel, no virtualization
 
