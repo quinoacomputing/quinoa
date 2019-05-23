@@ -225,7 +225,7 @@ function(ADD_REGRESSION_TEST test_name executable)
     list(APPEND TEST_LABELS ${ARG_LABELS})
   endif()
   # prepare test labels to pass as cmake script arguments
-  set(ARG_LABELS LABELS ${TEST_LABELS})
+  set(ARG_LABELS ${TEST_LABELS})
   string(REPLACE ";" " " ARG_LABELS "${ARG_LABELS}")
 
   # Set textual diff tool
