@@ -788,12 +788,13 @@ Transporter::stat()
   "        dt - time step size\n"
   "       ETE - estimated time elapsed (h:m:s)\n"
   "       ETA - estimated time for accomplishment (h:m:s)\n"
+  "       EGT - estimated grind time (ms/status)\n"
   "       out - output-saved flags\n"
   "             f - field\n"
   "             d - diagnostics\n"
   "             h - h-refinement\n",
-  "\n      it             t            dt        ETE        ETA   out\n"
-    " ---------------------------------------------------------------\n" );
+  "\n      it             t            dt        ETE        ETA        EGT  out\n"
+    " -------------------------------------------------------------------------\n" );
 
   m_progWork.start( "Preparing workers",
                     {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
