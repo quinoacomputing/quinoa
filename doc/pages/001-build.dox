@@ -158,6 +158,16 @@ etc.  When the TPL sources are, again, no longer needed, we de-populate it:
        cd quinoa
        git submodule deinit --all
 
+@note To effect code-reuse between
+[quinoa](https://github.com/quinoacomputing/quinoa) and
+[quinoa-tpl](https://github.com/quinoacomputing/quinoa-tpl) the `cmake/`
+directory is pulled into _quinoa_ as a git subtree, (and as a submodule into
+_quinoa-tpl_) whose origin is https://github.com/quinoacomputing/cmake-modules.
+Therefore changes to files under `cmake/` should be made to the
+[cmake-modules](https://github.com/quinoacomputing/cmake-modules) repository
+and then pulled in to _quinoa_ and _quinoa-tpl_. See also the page on on @ref
+git_submodules_subtrees.
+
 @section build_systemlibs Using system-wide packages
 
 The default build process, described in @ref build_default, attempts to find
