@@ -573,19 +573,28 @@ Refiner::updateEdgeData()
 // Query AMR lib and update our local store of edge data
 // *****************************************************************************
 {
-  const auto& ref_edges = m_refiner.tet_store.edge_store.edges;
-
   m_localEdgeData.clear();
   m_intermediates.clear();
 
   // This currently takes ALL edges from the AMR lib, i.e., on the whole
   // domain. We should eventually only collect edges here that are shared with
   // other chares.
-  for (const auto& e : ref_edges) {
-    const auto& ed = e.first.get_data();
-    const auto ged = Edge{{ m_gid[ tk::cref_find( m_lref, ed[0] ) ],
-                            m_gid[ tk::cref_find( m_lref, ed[1] ) ] }};
-    m_localEdgeData[ ged ] = { e.second.needs_refining, e.second.lock_case };
+  const auto& ref_edges = m_refiner.tet_store.edge_store.edges;
+  const auto& refinpoel = m_refiner.tet_store.get_active_inpoel();
+  for (std::size_t e=0; e<refinpoel.size()/4; ++e) {
+    auto A = refinpoel[e*4+0];
+    auto B = refinpoel[e*4+1];
+    auto C = refinpoel[e*4+2];
+    auto D = refinpoel[e*4+3];
+    std::array<Edge,6> edges{{ {{A,B}}, {{B,C}}, {{A,C}},
+                               {{A,D}}, {{B,D}}, {{C,D}} }};
+    for (const auto& ed : edges) {
+      auto ae = AMR::edge_t{{ std::min(ed[0],ed[1]), std::max(ed[0],ed[1]) }};
+      auto r = tk::cref_find( ref_edges, ae );
+      const auto ged = Edge{{ m_gid[ tk::cref_find( m_lref, ed[0] ) ],
+                              m_gid[ tk::cref_find( m_lref, ed[1] ) ] }};
+      m_localEdgeData[ ged ] = { r.needs_refining, r.lock_case };
+    }
   }
 
   // Build intermediates to send. This currently takes ALL intermediates from

@@ -718,8 +718,8 @@ namespace AMR {
                 Refinement_State& parent = tet_store.data(parent_id);
                 for (auto c : parent.children)
                 {
-                    //tet_store.erase(c);
-                    tet_store.deactivate(c);
+                    tet_store.erase(c);
+                    //tet_store.deactivate(c);
 
                     /*
                     auto children = tet_store.data(c).children;
