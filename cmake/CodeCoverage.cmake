@@ -47,8 +47,8 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}"
                         ${ARGN})
 
-  IF(NOT LCOV)
-    MESSAGE(FATAL_ERROR "lcov not found! Aborting...")
+  IF(NOT FASTCOV)
+    MESSAGE(FATAL_ERROR "fastcov not found! Aborting...")
   ENDIF()
 
   IF(NOT GENHTML)
@@ -68,18 +68,12 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
 
   # Setup code coverage target
   ADD_CUSTOM_TARGET(${targetname}
-    # Cleanup lcov
-    COMMAND ${LCOV} --gcov-tool ${GCOV} --directory . --zerocounters
-    # Capture initial state yielding zero coverage baseline
-    COMMAND ${LCOV} --gcov-tool ${GCOV} --capture --initial --directory . --output-file ${OUTPUT}.base.info
+    # Zero coverage counters
+    COMMAND ${FASTCOV} --zerocounters
     # Run test suite
     COMMAND ${testrunner} ${ARG_TESTRUNNER_ARGS}
-    # Capture lcov counters
-    COMMAND ${LCOV} --gcov-tool ${GCOV}  --capture --rc lcov_branch_coverage=0 --directory . --output-file ${OUTPUT}.test.info
-    # Combine trace files
-    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=0 --add-tracefile ${OUTPUT}.base.info --add-tracefile ${OUTPUT}.test.info --output-file ${OUTPUT}.total.info
-    # Filter out unwanted files
-    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=0 --remove ${OUTPUT}.total.info "*/tests/*" "*/c++/*" "*/include/*" "*/boost/*" "*/charm/*" "*.decl.h" "*.def.h" "*/STDIN" "*/openmpi/*" "*/pstreams/*" "*/Random123/*" "*/pegtl/*" "*/tut/*" "*/highwayhash/*" "*/moduleinit*" --output-file ${OUTPUT}.filtered.info
+    # Process gcov output for genhtml
+    COMMAND ${FASTCOV} --branch-coverage --exceptional-branch-coverage --lcov -o ${OUTPUT}.info --exclude tests/ c++/ include/ boost/ charm/ decl.h def.h openmpi pstreams Random123 pegtl tut/ highwayhash/ moduleinit
     # Copy over report customization files for genhtml
     COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.gcov.css
@@ -88,13 +82,13 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.lcov.prolog
             ${CMAKE_BINARY_DIR}
     # Generate HTML report
-    COMMAND ${GENHTML} --legend --demangle-cpp --css-file quinoa.gcov.css --ignore-errors source --html-prolog quinoa.lcov.prolog --title "${GIT_SHA1}" -o ${OUTPUT} ${OUTPUT}.filtered.info
+    COMMAND ${GENHTML} --legend --rc genhtml_branch_coverage=1 --demangle-cpp --css-file quinoa.gcov.css --ignore-errors source --html-prolog quinoa.lcov.prolog --title "${GIT_SHA1}" -o ${OUTPUT} ${OUTPUT}.info
     # Customize page headers in generated html to own
     COMMAND find ${OUTPUT} -type f -exec ${SED} -i "s/LCOV - code coverage report/Quinoa ${suite} test code coverage report/g" {} +
     COMMAND find ${OUTPUT} -type f -exec ${SED} -i "s/<td class=\"headerItem\">Test:<\\/td>/<td class=\"headerItem\">Commit:<\\/td>/g" {} +
     COMMAND find ${OUTPUT} -type f -exec ${SED} -i "s/Quinoa_v\\\(.*\\\)-\\\(.*\\\)-g\\\(.*\\\)<\\/td>/<a href=\"https:\\/\\/github.com\\/quinoacomputing\\/quinoa\\/commit\\/\\3\">Quinoa_v\\1-\\2-g\\3<\\/a><\\/td>/g" {} +
     # Cleanup intermediate data
-    COMMAND ${CMAKE_COMMAND} -E remove ${OUTPUT}.base.info ${OUTPUT}.test.info ${OUTPUT}.total.info ${OUTPUT}.filtered.info
+    COMMAND ${CMAKE_COMMAND} -E remove ${OUTPUT}.info
     # Set work directory for target
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     # Echo what is being done
@@ -153,8 +147,8 @@ FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}"
                         ${ARGN})
 
-  IF(NOT LCOV)
-    MESSAGE(FATAL_ERROR "lcov not found! Aborting...")
+  IF(NOT FASTCOV)
+    MESSAGE(FATAL_ERROR "fastcov not found! Aborting...")
   ENDIF()
 
   IF(NOT GENHTML)
@@ -171,19 +165,13 @@ FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner
 
   # Setup code coverage target
   ADD_CUSTOM_TARGET(${targetname}
-    # Cleanup lcov
-    COMMAND ${LCOV} --gcov-tool ${GCOV} --directory . --zerocounters
-    # Capture initial state yielding zero coverage baseline
-    COMMAND ${LCOV} --gcov-tool ${GCOV} --capture --initial --directory . --output-file ${OUTPUT}.base.info
+    # Zero coverage counters
+    COMMAND ${FASTCOV} --zerocounters
     # Run all test suites
     COMMAND ${unittestrunner} ${unittestrunner_ncpus_arg} ${PROCESSOR_COUNT} Main/${UNITTEST_EXECUTABLE} -v
     COMMAND ${CMAKE_CTEST_COMMAND} -j${PROCESSOR_COUNT}
-    # Capture lcov counters
-    COMMAND ${LCOV} --gcov-tool ${GCOV} --capture --rc lcov_branch_coverage=0 --directory . --output-file ${OUTPUT}.test.info
-    # Combine trace files
-    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=0 --add-tracefile ${OUTPUT}.base.info --add-tracefile ${OUTPUT}.test.info --output-file ${OUTPUT}.total.info
-    # Filter out unwanted files
-    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=0 --remove ${OUTPUT}.total.info "*/tests/*" "*/c++/*" "*/include/*" "*/boost/*" "*/charm/*" "*.decl.h" "*.def.h" "*/STDIN" "*/openmpi/*" "*/pstreams/*" "*/Random123/*" "*/pegtl/*" "*/tut/*" "*/highwayhash/*" "*/moduleinit*" --output-file ${OUTPUT}.filtered.info
+    # Process gcov output for genhtml
+    COMMAND ${FASTCOV} --branch-coverage --exceptional-branch-coverage --lcov -o ${OUTPUT}.info --exclude tests/ c++/ include/ boost/ charm/ decl.h def.h openmpi pstreams Random123 pegtl tut/ highwayhash/ moduleinit
     # Copy over report customization files for genhtml
     COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.gcov.css
@@ -192,13 +180,13 @@ FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.lcov.prolog
             ${CMAKE_BINARY_DIR}
     # Generate HTML report
-    COMMAND ${GENHTML} --legend --demangle-cpp --css-file quinoa.gcov.css --ignore-errors source --html-prolog quinoa.lcov.prolog --title "${GIT_SHA1}" -o ${OUTPUT} ${OUTPUT}.filtered.info
+    COMMAND ${GENHTML} --legend --rc genhtml_branch_coverage=1 --demangle-cpp --css-file quinoa.gcov.css --ignore-errors source --html-prolog quinoa.lcov.prolog --title "${GIT_SHA1}" -o ${OUTPUT} ${OUTPUT}.info
     # Customize page headers in generated html to own
     COMMAND find ${OUTPUT} -type f -exec ${SED} -i "s/LCOV - code coverage report/Quinoa ${suite} test code coverage report/g" {} +
     COMMAND find ${OUTPUT} -type f -exec ${SED} -i "s/<td class=\"headerItem\">Test:<\\/td>/<td class=\"headerItem\">Commit:<\\/td>/g" {} +
     COMMAND find ${OUTPUT} -type f -exec ${SED} -i "s/Quinoa_v\\\(.*\\\)-\\\(.*\\\)-g\\\(.*\\\)<\\/td>/<a href=\"https:\\/\\/github.com\\/quinoacomputing\\/quinoa\\/commit\\/\\3\">Quinoa_v\\1-\\2-g\\3<\\/a><\\/td>/g" {} +
     # Cleanup intermediate data
-    COMMAND ${CMAKE_COMMAND} -E remove ${OUTPUT}.base.info ${OUTPUT}.test.info ${OUTPUT}.total.info ${OUTPUT}.filtered.info
+    COMMAND ${CMAKE_COMMAND} -E remove ${OUTPUT}.info
     # Set work directory for target
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     # Echo what is being done
