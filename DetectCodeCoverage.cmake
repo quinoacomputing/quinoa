@@ -17,7 +17,10 @@ elseif( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
   find_program( GCOV gcov )
 endif()
 
-find_program( LCOV lcov )
+# Find Python 3, required by fastcov
+find_package(PythonInterp 3)
+
+find_program( FASTCOV fastcov.py )
 find_program( GENHTML genhtml )
 find_program( SED sed )
 
@@ -25,13 +28,13 @@ find_program( SED sed )
 # has requested it via the cmake variable COVERAGE=on..
 if ( COVERAGE AND
      GCOV AND
-     LCOV AND
+     FASTCOV AND
      GENHTML AND
      SED AND
      ( CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
        CMAKE_CXX_COMPILER_ID STREQUAL "GNU" ) )
 
-  message(STATUS "Code coverage analysis enabled: All prerequisites found: COVERAGE:${COVERAGE}, compiler:${CMAKE_CXX_COMPILER_ID}, gcov:${GCOV}, lcov:${LCOV}, genhtml:${GENHTML}, sed:${SED}")
+  message(STATUS "Code coverage analysis enabled")
 
   # Enable code coverage analysis.
   SET(CODE_COVERAGE ON)
@@ -44,6 +47,6 @@ if ( COVERAGE AND
 
 else()
 
-  message(STATUS "Code coverage analysis disabled. Not all prerequisites found: COVERAGE:${COVERAGE}, compiler:${CMAKE_CXX_COMPILER_ID}, gcov:${GCOV}, lcov:${LCOV}, genhtml:${GENHTML}, sed:${SED}")
+  message(STATUS "Code coverage analysis disabled. Not all prerequisites found: COVERAGE (must be true/on):${COVERAGE}, compiler (must be GNU/Clang):${CMAKE_CXX_COMPILER_ID}, and the following must be found: gcov:${GCOV}, fastcov:${FASTCOV}, genhtml:${GENHTML}, sed:${SED}")
 
 endif()
