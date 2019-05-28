@@ -85,10 +85,10 @@ infoGamma( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
     "coeff kappa [" + std::to_string( ncomp ) + "]",
     parameters( g_inputdeck.get< tag::param, tag::gamma, tag::kappa >().at(c) )
   );
-  spikes( nfo, g_inputdeck.get< tag::param, tag::gamma, tag::spike >().at(c) );
-  betapdfs(
-    nfo,
-    g_inputdeck.get< tag::param, tag::gamma, tag::betapdf >().at(c) );
+  spikes( nfo, g_inputdeck.get< tag::param, tag::gamma, tag::init,
+                                tag::spike >().at(c) );
+  betapdfs( nfo, g_inputdeck.get< tag::param, tag::gamma, tag::init,
+                                  tag::betapdf >().at(c) );
 
   return nfo;
 }

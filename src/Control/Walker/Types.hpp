@@ -83,15 +83,8 @@ using ios = tk::tuple::tagged_tuple<
   tag::pdfnames,        std::vector< std::string >    //!< PDF identifiers
 >;
 
-//! Dirichlet parameters storage
-using DirichletParameters = tk::tuple::tagged_tuple<
-  tag::depvar,      std::vector< char >,
-  tag::b,           std::vector< std::vector<
-                      kw::sde_b::info::expect::type > >,
-  tag::S,           std::vector< std::vector<
-                      kw::sde_S::info::expect::type > >,
-  tag::kappa,       std::vector< std::vector<
-                      kw::sde_kappa::info::expect::type > >,
+//! Data for initialization (SDE initial conditions)
+using Init = tk::tuple::tagged_tuple<
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
   tag::betapdf,     std::vector< std::vector< std::vector <
@@ -107,7 +100,19 @@ using DirichletParameters = tk::tuple::tagged_tuple<
   tag::cov,         std::vector< std::vector<
                       kw::sde_cov::info::expect::type > >,
   tag::jointgaussian, std::vector< std::vector< std::vector <
-                        kw::gaussian::info::expect::type > > >,
+                        kw::gaussian::info::expect::type > > >
+>;
+
+//! Dirichlet parameters storage
+using DirichletParameters = tk::tuple::tagged_tuple<
+  tag::depvar,      std::vector< char >,
+  tag::b,           std::vector< std::vector<
+                      kw::sde_b::info::expect::type > >,
+  tag::S,           std::vector< std::vector<
+                      kw::sde_S::info::expect::type > >,
+  tag::kappa,       std::vector< std::vector<
+                      kw::sde_kappa::info::expect::type > >,
+  tag::init,        Init,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -126,22 +131,7 @@ using MixDirichletParameters = tk::tuple::tagged_tuple<
                       kw::sde_kappaprime::info::expect::type > >,
   tag::rho,         std::vector< std::vector<
                       kw::sde_rho::info::expect::type > >,
-  tag::spike,       std::vector< std::vector< std::vector <
-                      kw::spike::info::expect::type > > >,
-  tag::betapdf,     std::vector< std::vector< std::vector <
-                      kw::betapdf::info::expect::type > > >,
-  tag::gamma,       std::vector< std::vector< std::vector <
-                      kw::gammapdf::info::expect::type > > >,
-  tag::dirichlet,   std::vector< std::vector<
-                      kw::dirichletpdf::info::expect::type > >,
-  tag::gaussian,    std::vector< std::vector< std::vector <
-                      kw::gaussian::info::expect::type > > >,
-  tag::mean,        std::vector< std::vector<
-                      kw::sde_mu::info::expect::type > >,
-  tag::cov,         std::vector< std::vector<
-                      kw::sde_cov::info::expect::type > >,
-  tag::jointgaussian, std::vector< std::vector< std::vector <
-                        kw::gaussian::info::expect::type > > >,
+  tag::init,        Init,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -158,22 +148,7 @@ using GenDirichletParameters = tk::tuple::tagged_tuple<
                       kw::sde_kappa::info::expect::type > >,
   tag::c,           std::vector< std::vector<
                       kw::sde_c::info::expect::type > >,
-  tag::spike,       std::vector< std::vector< std::vector <
-                      kw::spike::info::expect::type > > >,
-  tag::betapdf,     std::vector< std::vector< std::vector <
-                      kw::betapdf::info::expect::type > > >,
-  tag::gamma,       std::vector< std::vector< std::vector <
-                      kw::gammapdf::info::expect::type > > >,
-  tag::dirichlet,   std::vector< std::vector<
-                      kw::dirichletpdf::info::expect::type > >,
-  tag::gaussian,    std::vector< std::vector< std::vector <
-                      kw::gaussian::info::expect::type > > >,
-  tag::mean,        std::vector< std::vector<
-                      kw::sde_mu::info::expect::type > >,
-  tag::cov,         std::vector< std::vector<
-                      kw::sde_cov::info::expect::type > >,
-  tag::jointgaussian, std::vector< std::vector< std::vector <
-                        kw::gaussian::info::expect::type > > >,
+  tag::init,        Init,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -184,22 +159,7 @@ using WrightFisherParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
   tag::omega,       std::vector< std::vector<
                       kw::sde_omega::info::expect::type > >,
-  tag::spike,       std::vector< std::vector< std::vector <
-                      kw::spike::info::expect::type > > >,
-  tag::betapdf,     std::vector< std::vector< std::vector <
-                      kw::betapdf::info::expect::type > > >,
-  tag::gamma,       std::vector< std::vector< std::vector <
-                      kw::gammapdf::info::expect::type > > >,
-  tag::dirichlet,   std::vector< std::vector<
-                      kw::dirichletpdf::info::expect::type > >,
-  tag::gaussian,    std::vector< std::vector< std::vector <
-                      kw::gaussian::info::expect::type > > >,
-  tag::mean,        std::vector< std::vector<
-                      kw::sde_mu::info::expect::type > >,
-  tag::cov,         std::vector< std::vector<
-                      kw::sde_cov::info::expect::type > >,
-  tag::jointgaussian, std::vector< std::vector< std::vector <
-                        kw::gaussian::info::expect::type > > >,
+  tag::init,        Init,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -214,22 +174,7 @@ using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
                       kw::sde_theta::info::expect::type > >,
   tag::mu,          std::vector< std::vector<
                       kw::sde_mu::info::expect::type > >,
-  tag::spike,       std::vector< std::vector< std::vector <
-                      kw::spike::info::expect::type > > >,
-  tag::betapdf,     std::vector< std::vector< std::vector <
-                      kw::betapdf::info::expect::type > > >,
-  tag::gamma,       std::vector< std::vector< std::vector <
-                      kw::gammapdf::info::expect::type > > >,
-  tag::dirichlet,   std::vector< std::vector<
-                      kw::dirichletpdf::info::expect::type > >,
-  tag::gaussian,    std::vector< std::vector< std::vector <
-                      kw::gaussian::info::expect::type > > >,
-  tag::mean,        std::vector< std::vector<
-                      kw::sde_mu::info::expect::type > >,
-  tag::cov,         std::vector< std::vector<
-                      kw::sde_cov::info::expect::type > >,
-  tag::jointgaussian, std::vector< std::vector< std::vector <
-                        kw::gaussian::info::expect::type > > >,
+  tag::init,        Init,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -244,22 +189,7 @@ using DiagOrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
                       kw::sde_theta::info::expect::type > >,
   tag::mu,          std::vector< std::vector<
                       kw::sde_mu::info::expect::type > >,
-  tag::spike,       std::vector< std::vector< std::vector <
-                      kw::spike::info::expect::type > > >,
-  tag::betapdf,     std::vector< std::vector< std::vector <
-                      kw::betapdf::info::expect::type > > >,
-  tag::gamma,       std::vector< std::vector< std::vector <
-                      kw::gammapdf::info::expect::type > > >,
-  tag::dirichlet,   std::vector< std::vector<
-                      kw::dirichletpdf::info::expect::type > >,
-  tag::gaussian,    std::vector< std::vector< std::vector <
-                      kw::gaussian::info::expect::type > > >,
-  tag::mean,        std::vector< std::vector<
-                      kw::sde_mu::info::expect::type > >,
-  tag::cov,         std::vector< std::vector<
-                      kw::sde_cov::info::expect::type > >,
-  tag::jointgaussian, std::vector< std::vector< std::vector <
-                        kw::gaussian::info::expect::type > > >,
+  tag::init,        Init,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -274,22 +204,7 @@ using SkewNormalParameters = tk::tuple::tagged_tuple<
                       kw::sde_sigmasq::info::expect::type > >,
   tag::lambda,      std::vector< std::vector<
                       kw::sde_lambda::info::expect::type > >,
-  tag::spike,       std::vector< std::vector< std::vector <
-                      kw::spike::info::expect::type > > >,
-  tag::betapdf,     std::vector< std::vector< std::vector <
-                      kw::betapdf::info::expect::type > > >,
-  tag::gamma,       std::vector< std::vector< std::vector <
-                      kw::gammapdf::info::expect::type > > >,
-  tag::dirichlet,   std::vector< std::vector<
-                      kw::dirichletpdf::info::expect::type > >,
-  tag::gaussian,    std::vector< std::vector< std::vector <
-                      kw::gaussian::info::expect::type > > >,
-  tag::mean,        std::vector< std::vector<
-                      kw::sde_mu::info::expect::type > >,
-  tag::cov,         std::vector< std::vector<
-                      kw::sde_cov::info::expect::type > >,
-  tag::jointgaussian, std::vector< std::vector< std::vector <
-                        kw::gaussian::info::expect::type > > >,
+  tag::init,        Init,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -304,22 +219,7 @@ using GammaParameters = tk::tuple::tagged_tuple<
                       kw::sde_S::info::expect::type > >,
   tag::kappa,       std::vector< std::vector<
                       kw::sde_kappa::info::expect::type > >,
-  tag::spike,       std::vector< std::vector< std::vector <
-                      kw::spike::info::expect::type > > >,
-  tag::betapdf,     std::vector< std::vector< std::vector <
-                      kw::betapdf::info::expect::type > > >,
-  tag::gamma,       std::vector< std::vector< std::vector <
-                      kw::gammapdf::info::expect::type > > >,
-  tag::dirichlet,   std::vector< std::vector<
-                      kw::dirichletpdf::info::expect::type > >,
-  tag::gaussian,    std::vector< std::vector< std::vector <
-                      kw::gaussian::info::expect::type > > >,
-  tag::mean,        std::vector< std::vector<
-                      kw::sde_mu::info::expect::type > >,
-  tag::cov,         std::vector< std::vector<
-                      kw::sde_cov::info::expect::type > >,
-  tag::jointgaussian, std::vector< std::vector< std::vector <
-                        kw::gaussian::info::expect::type > > >,
+  tag::init,        Init,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -334,22 +234,7 @@ using BetaParameters = tk::tuple::tagged_tuple<
                       kw::sde_S::info::expect::type > >,
   tag::kappa,       std::vector< std::vector<
                       kw::sde_kappa::info::expect::type > >,
-  tag::spike,       std::vector< std::vector< std::vector <
-                      kw::spike::info::expect::type > > >,
-  tag::betapdf,     std::vector< std::vector< std::vector <
-                      kw::betapdf::info::expect::type > > >,
-  tag::gamma,       std::vector< std::vector< std::vector <
-                      kw::gammapdf::info::expect::type > > >,
-  tag::dirichlet,   std::vector< std::vector<
-                      kw::dirichletpdf::info::expect::type > >,
-  tag::gaussian,    std::vector< std::vector< std::vector <
-                      kw::gaussian::info::expect::type > > >,
-  tag::mean,        std::vector< std::vector<
-                      kw::sde_mu::info::expect::type > >,
-  tag::cov,         std::vector< std::vector<
-                      kw::sde_cov::info::expect::type > >,
-  tag::jointgaussian, std::vector< std::vector< std::vector <
-                        kw::gaussian::info::expect::type > > >,
+  tag::init,        Init,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -368,22 +253,7 @@ using NumberFractionBetaParameters = tk::tuple::tagged_tuple<
                       kw::sde_rho2::info::expect::type > >,
   tag::rcomma,      std::vector< std::vector<
                       kw::sde_rcomma::info::expect::type > >,
-  tag::spike,       std::vector< std::vector< std::vector <
-                      kw::spike::info::expect::type > > >,
-  tag::betapdf,     std::vector< std::vector< std::vector <
-                      kw::betapdf::info::expect::type > > >,
-  tag::gamma,       std::vector< std::vector< std::vector <
-                      kw::gammapdf::info::expect::type > > >,
-  tag::dirichlet,   std::vector< std::vector<
-                      kw::dirichletpdf::info::expect::type > >,
-  tag::gaussian,    std::vector< std::vector< std::vector <
-                      kw::gaussian::info::expect::type > > >,
-  tag::mean,        std::vector< std::vector<
-                      kw::sde_mu::info::expect::type > >,
-  tag::cov,         std::vector< std::vector<
-                      kw::sde_cov::info::expect::type > >,
-  tag::jointgaussian, std::vector< std::vector< std::vector <
-                        kw::gaussian::info::expect::type > > >,
+  tag::init,        Init,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -402,22 +272,7 @@ using MassFractionBetaParameters = tk::tuple::tagged_tuple<
                       kw::sde_rho2::info::expect::type > >,
   tag::r,           std::vector< std::vector<
                       kw::sde_rcomma::info::expect::type > >,
-  tag::spike,       std::vector< std::vector< std::vector <
-                      kw::spike::info::expect::type > > >,
-  tag::betapdf,     std::vector< std::vector< std::vector <
-                      kw::betapdf::info::expect::type > > >,
-  tag::gamma,       std::vector< std::vector< std::vector <
-                      kw::gammapdf::info::expect::type > > >,
-  tag::dirichlet,   std::vector< std::vector<
-                      kw::dirichletpdf::info::expect::type > >,
-  tag::gaussian,    std::vector< std::vector< std::vector <
-                      kw::gaussian::info::expect::type > > >,
-  tag::mean,        std::vector< std::vector<
-                      kw::sde_mu::info::expect::type > >,
-  tag::cov,         std::vector< std::vector<
-                      kw::sde_cov::info::expect::type > >,
-  tag::jointgaussian, std::vector< std::vector< std::vector <
-                        kw::gaussian::info::expect::type > > >,
+  tag::init,        Init,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -436,22 +291,7 @@ using MixNumberFractionBetaParameters = tk::tuple::tagged_tuple<
                       kw::sde_rho2::info::expect::type > >,
   tag::rcomma,      std::vector< std::vector<
                       kw::sde_rcomma::info::expect::type > >,
-  tag::spike,       std::vector< std::vector< std::vector <
-                      kw::spike::info::expect::type > > >,
-  tag::betapdf,     std::vector< std::vector< std::vector <
-                      kw::betapdf::info::expect::type > > >,
-  tag::gamma,       std::vector< std::vector< std::vector <
-                      kw::gammapdf::info::expect::type > > >,
-  tag::dirichlet,   std::vector< std::vector<
-                      kw::dirichletpdf::info::expect::type > >,
-  tag::gaussian,    std::vector< std::vector< std::vector <
-                      kw::gaussian::info::expect::type > > >,
-  tag::mean,        std::vector< std::vector<
-                      kw::sde_mu::info::expect::type > >,
-  tag::cov,         std::vector< std::vector<
-                      kw::sde_cov::info::expect::type > >,
-  tag::jointgaussian, std::vector< std::vector< std::vector <
-                        kw::gaussian::info::expect::type > > >,
+  tag::init,        Init,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
@@ -470,22 +310,7 @@ using MixMassFractionBetaParameters = tk::tuple::tagged_tuple<
                           kw::sde_rho2::info::expect::type > >,
   tag::r,               std::vector< std::vector<
                           kw::sde_r::info::expect::type > >,
-  tag::spike,           std::vector< std::vector< std::vector <
-                          kw::spike::info::expect::type > > >,
-  tag::betapdf,         std::vector< std::vector< std::vector <
-                          kw::betapdf::info::expect::type > > >,
-  tag::gamma,           std::vector< std::vector< std::vector <
-                          kw::gammapdf::info::expect::type > > >,
-  tag::dirichlet,       std::vector< std::vector<
-                          kw::dirichletpdf::info::expect::type > >,
-  tag::gaussian,        std::vector< std::vector< std::vector <
-                          kw::gaussian::info::expect::type > > >,
-  tag::mean,            std::vector< std::vector<
-                          kw::sde_mu::info::expect::type > >,
-  tag::cov,             std::vector< std::vector<
-                          kw::sde_cov::info::expect::type > >,
-  tag::jointgaussian,   std::vector< std::vector< std::vector <
-                          kw::gaussian::info::expect::type > > >,
+  tag::init,        Init,
   tag::mean_gradient,   std::vector< std::vector<
                           kw::mean_gradient::info::expect::type > >,
   tag::hydrotimescales, std::vector< std::vector< ctr::HydroTimeScalesType > >,
@@ -514,22 +339,7 @@ using VelocityParameters = tk::tuple::tagged_tuple<
   tag::coeffpolicy,     std::vector< ctr::CoeffPolicyType >,
   tag::solve,           std::vector< ctr::DepvarType >,
   tag::variant,         std::vector< ctr::VelocityVariantType >,
-  tag::spike,           std::vector< std::vector< std::vector <
-                          kw::spike::info::expect::type > > >,
-  tag::betapdf,         std::vector< std::vector< std::vector <
-                          kw::betapdf::info::expect::type > > >,
-  tag::gamma,           std::vector< std::vector< std::vector <
-                          kw::gammapdf::info::expect::type > > >,
-  tag::dirichlet,       std::vector< std::vector<
-                          kw::dirichletpdf::info::expect::type > >,
-  tag::gaussian,        std::vector< std::vector< std::vector <
-                          kw::gaussian::info::expect::type > > >,
-  tag::mean,            std::vector< std::vector<
-                          kw::sde_mu::info::expect::type > >,
-  tag::cov,             std::vector< std::vector<
-                          kw::sde_cov::info::expect::type > >,
-  tag::jointgaussian,   std::vector< std::vector< std::vector <
-                          kw::gaussian::info::expect::type > > >,
+  tag::init,        Init,
   tag::hydrotimescales, std::vector< std::vector< ctr::HydroTimeScalesType > >,
   tag::hydroproductions,std::vector< std::vector< ctr::HydroProductionsType > >
 >;
@@ -543,22 +353,7 @@ using PositionParameters = tk::tuple::tagged_tuple<
   tag::initpolicy,      std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy,     std::vector< ctr::CoeffPolicyType >,
   tag::solve,           std::vector< ctr::DepvarType >,
-  tag::spike,           std::vector< std::vector< std::vector <
-                          kw::spike::info::expect::type > > >,
-  tag::betapdf,         std::vector< std::vector< std::vector <
-                          kw::betapdf::info::expect::type > > >,
-  tag::gamma,           std::vector< std::vector< std::vector <
-                          kw::gammapdf::info::expect::type > > >,
-  tag::dirichlet,       std::vector< std::vector<
-                          kw::dirichletpdf::info::expect::type > >,
-  tag::gaussian,        std::vector< std::vector< std::vector <
-                          kw::gaussian::info::expect::type > > >,
-  tag::mean,            std::vector< std::vector<
-                          kw::sde_mu::info::expect::type > >,
-  tag::cov,             std::vector< std::vector<
-                          kw::sde_cov::info::expect::type > >,
-  tag::jointgaussian,   std::vector< std::vector< std::vector <
-                          kw::gaussian::info::expect::type > > >
+  tag::init,        Init
 >;
 
 //! Dissipation parameters storage
@@ -573,22 +368,7 @@ using DissipationParameters = tk::tuple::tagged_tuple<
   tag::rng,             std::vector< tk::ctr::RNGType >,
   tag::initpolicy,      std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy,     std::vector< ctr::CoeffPolicyType >,
-  tag::spike,           std::vector< std::vector< std::vector <
-                          kw::spike::info::expect::type > > >,
-  tag::betapdf,         std::vector< std::vector< std::vector <
-                          kw::betapdf::info::expect::type > > >,
-  tag::gamma,           std::vector< std::vector< std::vector <
-                          kw::gammapdf::info::expect::type > > >,
-  tag::dirichlet,       std::vector< std::vector<
-                          kw::dirichletpdf::info::expect::type > >,
-  tag::gaussian,        std::vector< std::vector< std::vector <
-                          kw::gaussian::info::expect::type > > >,
-  tag::mean,            std::vector< std::vector<
-                          kw::sde_mu::info::expect::type > >,
-  tag::cov,             std::vector< std::vector<
-                          kw::sde_cov::info::expect::type > >,
-  tag::jointgaussian,  std::vector< std::vector< std::vector <
-                         kw::gaussian::info::expect::type > > >
+  tag::init,        Init
 >;
 
 //! Parameters storage

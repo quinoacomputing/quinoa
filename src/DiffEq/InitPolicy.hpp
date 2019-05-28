@@ -117,7 +117,8 @@ struct InitDelta {
   {
     using ncomp_t = kw::ncomp::info::expect::type;
 
-    const auto& spike = deck.template get< tag::param, eq, tag::spike >().at(e);
+    const auto& spike =
+      deck.template get< tag::param, eq, tag::init, tag::spike >().at(e);
 
     // use only the first ncomp spikes if there are more than the equation is
     // configured for
@@ -159,7 +160,7 @@ struct InitBeta {
     using ncomp_t = kw::ncomp::info::expect::type;
 
     const auto& betapdf =
-      deck.template get< tag::param, eq, tag::betapdf >().at(e);
+      deck.template get< tag::param, eq, tag::init, tag::betapdf >().at(e);
 
     // use only the first ncomp betapdfs if there are more than the equation is
     // configured for
@@ -200,7 +201,7 @@ struct InitGaussian {
     using ncomp_t = kw::ncomp::info::expect::type;
 
     const auto& gaussian =
-      deck.template get< tag::param, eq, tag::gaussian >().at(e);
+      deck.template get< tag::param, eq, tag::init, tag::gaussian >().at(e);
 
     // use only the first ncomp gaussian if there are more than the equation is
     // configured for
@@ -244,9 +245,11 @@ struct InitCorrGaussian {
   {
     using ncomp_t = kw::ncomp::info::expect::type;
 
-    const auto& mean = deck.template get< tag::param, eq, tag::mean >().at(e);
+    const auto& mean =
+      deck.template get< tag::param, eq, tag::init, tag::mean >().at(e);
     Assert( mean.size() == ncomp, "Size mismatch" );
-    const auto& cov_ = deck.template get< tag::param, eq, tag::cov >().at(e);
+    const auto& cov_ =
+      deck.template get< tag::param, eq, tag::init, tag::cov >().at(e);
     Assert( cov_.size() == ncomp*(ncomp+1)/2, "Size mismatch" );
 
     // Compute covariance matrix using Cholesky-decompositionm, see Intel MKL
@@ -290,7 +293,7 @@ struct InitGamma {
     using ncomp_t = kw::ncomp::info::expect::type;
 
     const auto& gamma =
-      deck.template get< tag::param, eq, tag::gamma >().at(e);
+      deck.template get< tag::param, eq, tag::init, tag::gamma >().at(e);
 
     // use only the first ncomp gamma if there are more than the equation is
     // configured for
@@ -327,7 +330,7 @@ struct InitDirichlet {
   {
     using ncomp_t = kw::ncomp::info::expect::type;
     const auto& dir =
-      deck.template get< tag::param, eq, tag::dirichlet >().at(e);
+      deck.template get< tag::param, eq, tag::init, tag::dirichlet >().at(e);
     tk::real eps = std::numeric_limits<tk::real>::epsilon() * 100.0;
     Assert( dir.size() == ncomp+1, "Size mismatch" );
     IGNORE(ncomp);
