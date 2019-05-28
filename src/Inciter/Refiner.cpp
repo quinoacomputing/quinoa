@@ -589,7 +589,7 @@ Refiner::updateEdgeData()
     std::array<Edge,6> edges{{ {{A,B}}, {{B,C}}, {{A,C}},
                                {{A,D}}, {{B,D}}, {{C,D}} }};
     for (const auto& ed : edges) {
-      auto ae = AMR::edge_t{{ std::min(ed[0],ed[1]), std::max(ed[0],ed[1]) }};
+      auto ae = AMR::edge_t{{{ std::min(ed[0],ed[1]), std::max(ed[0],ed[1]) }}};
       auto r = tk::cref_find( ref_edges, ae );
       const auto ged = Edge{{ m_gid[ tk::cref_find( m_lref, ed[0] ) ],
                               m_gid[ tk::cref_find( m_lref, ed[1] ) ] }};
