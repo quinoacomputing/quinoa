@@ -74,24 +74,6 @@ The default install directory is `/usr/local`, which usually needs root
 permissions. You can change that by configuring a different path in the
 `CMAKE_INSTALL_PREFIX` cmake variable.
 
-@section build_specific_executables Building specific executables only
-
-The default build process, described in @ref build_default builds all
-executables. If you only care about a particular tool, e.g., @ref inciter, you
-can tell the build system to build only that by setting the `INCITER_ONLY`
-cmake variable to `true`:
-
-       cd quinoa
-       mkdir external/build
-       cd external/build
-       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_BUILD_TYPE=Release -DINCITER_ONLY=true ..
-       make -sj$(grep -c processor /proc/cpuinfo)
-
-This will build only the TPLs required for inciter. The rest of the build
-process is the same as in @ref build_default : running cmake configuring Quinoa
-will enable only those build targets for which it finds the required TPLs.
-Such `*_ONLY` cmake variables are defined for all executable targets.
-
 @section build_nonrecursive Working with a non-recursive clone
 
 The default build process, described in @ref build_default, instructs you to do
@@ -157,6 +139,63 @@ etc.  When the TPL sources are, again, no longer needed, we de-populate it:
 
        cd quinoa
        git submodule deinit --all
+
+@section build_specific_executables Building specific executables only
+
+The default build process, described in @ref build_default, does a recursive
+clone of _most_ TPLs and builds _all_ executables. If you only care about a
+particular tool, e.g., @ref inciter, you can
+
+ 1. Clone only those TPLs that are required for the given tool (instead of
+    cloning them all), e.g.,
+
+         git clone https://github.com/quinoacomputing/quinoa.git
+         git submodule init && git submodule update && cd external
+         git -c submodule."src/pstreams".update=none -c submodule."src/pugixml".update=none -c submodule."src/rngsse2".update=none -c submodule."src/testu01".update=none -c submodule."src/tut".update=none -c submodule."src/backward-cpp".update=none -c submodule."src/omega_h".update=none -c submodule."src/doxygen".update=none -c submodule."src/m.css".update=none -c submodule."src/root".update=none -c submodule."src/aec".update=none submodule update --init --recursive
+
+ 2. Build only those TPLs that are required for the given executable by setting
+    the `<executable>_ONLY` cmake variable to `true`, e.g.,
+
+         cd quinoa
+         mkdir external/build
+         cd external/build
+         cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_BUILD_TYPE=Release -DINCITER_ONLY=true ..
+         make -sj$(grep -c processor /proc/cpuinfo)
+
+This will build only the TPLs required for @ref inciter. The rest of the build
+process is the same as in @ref build_default : running cmake configuring Quinoa
+will enable only those build targets for which it finds the required TPLs.
+Such `*_ONLY` cmake variables are defined for all executable targets in
+`<quinoa-tpl>/CMakeListst.txt`, in the section starting by the comment line
+
+       # Set which libraries are built/searched by default
+
+Here are the `git submodule update` commands that pull in _only_ the TPLs
+required for the given tool for all the executables:
+
+@ref walker
+
+       git -c submodule."src/pstreams".update=none -c submodule."src/pugixml".update=none -c submodule."src/rngsse2".update=none -c submodule."src/aec".update=none -c submodule."src/h5part".update=none -c submodule."src/testu01".update=none -c submodule."src/tut".update=none -c submodule."src/root".update=none -c submodule."src/backward-cpp".update=none -c submodule."src/highwayhash".update=none -c submodule."src/omega_h".update=none -c submodule."src/doxygen".update=none -c submodule."src/m.css".update=none submodule update --init --recursive
+
+@ref inciter
+
+       git -c submodule."src/pstreams".update=none -c submodule."src/pugixml".update=none -c submodule."src/rngsse2".update=none -c submodule."src/testu01".update=none -c submodule."src/tut".update=none -c submodule."src/backward-cpp".update=none -c submodule."src/omega_h".update=none -c submodule."src/doxygen".update=none -c submodule."src/m.css".update=none -c submodule."src/root".update=none -c submodule."src/aec".update=none submodule update --init --recursive
+
+@ref rngtest
+
+       git -c submodule."src/pstreams".update=none -c submodule."src/hdf5".update=none -c submodule."src/netcdf".update=none -c submodule."src/pstreams".update=none -c submodule."src/pugixml".update=none -c submodule."src/h5part".update=none -c submodule."src/trilinos".update=none -c submodule."src/tut".update=none -c submodule."src/numdiff".update=none -c submodule."src/root".update=none -c submodule."src/backward-cpp".update=none -c submodule."src/highwayhash".update=none -c submodule."src/omega_h".update=none -c submodule."src/doxygen".update=none -c submodule."src/m.css".update=none -c submodule."src/aec".update=none submodule update --init --recursive
+
+@ref unittest
+
+       git -c submodule."src/pstreams".update=none -c submodule."src/rngsse2".update=none -c submodule."src/testu01".update=none -c submodule."src/numdiff".update=none -c submodule."src/root".update=none  -c submodule."src/backward-cpp".update=none -c submodule."src/omega_h".update=none -c submodule."src/doxygen".update=none  -c submodule."src/m.css".update=none -c submodule."src/aec".update=none submodule update --init --recursive
+
+@ref meshconv
+
+       git -c submodule."src/pstreams".update=none -c submodule."src/random123".update=none -c submodule."src/rngsse2".update=none -c submodule."src/lapack".update=none -c submodule."src/aec".update=none -c submodule."src/h5part".update=none -c submodule."src/testu01".update=none -c submodule."src/tut".update=none -c submodule."src/root".update=none -c submodule."src/backward-cpp".update=none -c submodule."src/omega_h".update=none -c submodule."src/doxygen".update=none -c submodule."src/m.css".update=none submodule update --init --recursive
+
+fileconv
+
+       git -c submodule."src/pstreams".update=none -c submodule."src/random123".update=none -c submodule."src/rngsse2".update=none -c submodule."src/lapack".update=none -c submodule."src/aec".update=none -c submodule."src/h5part".update=none -c submodule."src/testu01".update=none -c submodule."src/tut".update=none -c submodule."src/numdiff".update=none -c submodule."src/backward-cpp".update=none -c submodule."src/omega_h".update=none -c submodule."src/doxygen".update=none -c submodule."src/m.css".update=none submodule update --init --recursive
 
 @section build_systemlibs Using system-wide packages
 
