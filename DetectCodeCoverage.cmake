@@ -34,7 +34,7 @@ if ( COVERAGE AND
      ( CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
        CMAKE_CXX_COMPILER_ID STREQUAL "GNU" ) )
 
-  message(STATUS "Code coverage analysis enabled")
+  message(STATUS "Code coverage analysis enabled with compiler:${CMAKE_CXX_COMPILER_ID}, gcov:${GCOV}, lcov:${LCOV}, genhtml:${GENHTML}, sed:${SED}")
 
   # Enable code coverage analysis.
   SET(CODE_COVERAGE ON)
