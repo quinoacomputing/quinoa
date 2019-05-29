@@ -27,7 +27,6 @@
 #include <cstddef>
 
 #include "NoWarning/format.hpp"
-#include <boost/optional.hpp>
 
 #include "Macro.hpp"
 #include "Print.hpp"

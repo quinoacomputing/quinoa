@@ -48,6 +48,7 @@
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wunused-parameter"
+  #pragma GCC diagnostic ignored "-Wdeprecated-copy"
   #pragma GCC diagnostic ignored "-Wfloat-equal"
   #pragma GCC diagnostic ignored "-Wpedantic"
   #pragma GCC diagnostic ignored "-Wshadow"
