@@ -488,6 +488,9 @@ message(STATUS "Parallel job runner ncpus arg: ${RUNNER_NCPUS_ARG}")
 message(STATUS "Parallel/serial job runner args: ${RUNNER_ARGS}")
 message(STATUS "Parallel/serial job runner postfix args: ${POSTFIX_RUNNER_ARGS}")
 
+# Find Python: required for code coverage (fastcov) and doc (m.css)
+find_package(PythonInterp 3.6)
+
 # Attempt to find tools required for code coverage analysis
 include(DetectCodeCoverage)
 
