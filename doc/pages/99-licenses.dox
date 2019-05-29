@@ -217,8 +217,8 @@ files, only build it and use it as a separate (external) executable.
 \subsection gcov_web Gcov for unit test coverage analysis
   - Web: https://gcc.gnu.org/onlinedocs/gcc/Gcov.html
 
-\subsection lcov_web Lcov for unit test coverage analysis report
-  - Web: http://ltp.sourceforge.net/coverage/lcov.php
+\subsection fastcov_web FastCov for unit test coverage analysis report
+  - Web: https://github.com/RPGillespie6/fastcov
 
 \subsection git_web Git for source code version control
   - Web: https://git-scm.com
