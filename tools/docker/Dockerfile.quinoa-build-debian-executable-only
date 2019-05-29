@@ -23,9 +23,6 @@
 
 FROM debian:stable
 
-ARG COMMIT
-ARG EXECUTABLE
-
 # Install system-wide prerequisites
 RUN apt-get update -y && apt-get install -y m4 autoconf git cmake gfortran gcc g++ openmpi-bin libopenmpi-dev gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhypre-dev zlib1g-dev libhdf5-dev libhdf5-openmpi-dev binutils-dev libx11-dev libxpm-dev libxft-dev libxext-dev ninja-build flex bison libdw-dev libdwarf-dev vim wget
 
@@ -39,9 +36,11 @@ SHELL ["/bin/bash", "-c"]
 # Clone quinoa non-recursively
 RUN git clone http://github.com/quinoacomputing/quinoa.git
 # Checkout commit to be tested
+ARG COMMIT
 RUN cd quinoa && git checkout $COMMIT && git log -1 HEAD
 # Update submodules required by executable tested
 RUN wget https://raw.githubusercontent.com/quinoacomputing/quinoa/$COMMIT/doc/pages/001-build.dox
+ARG EXECUTABLE
 ENV EXECUTABLE $EXECUTABLE
 # Get git update submodule command for executable
 RUN grep "^@ref $EXECUTABLE" 001-build.dox -A2 | grep -v $EXECUTABLE | grep -v -e "^$" > submodule_update.sh
