@@ -11,7 +11,6 @@
 // *****************************************************************************
 
 #include "NoWarning/replace.hpp"
-#include <boost/iterator/iterator_traits.hpp>
 
 #include "CGPDE.hpp"
 #include "InciterPrint.hpp"
