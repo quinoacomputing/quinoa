@@ -229,4 +229,19 @@ files, only build it and use it as a separate (external) executable.
 \subsection mcss_web M.CSS for improving on Doxygen output
   - Web: http://mcss.mosra.cz/doxygen
 
+\subsection teamcity_web TeamCity for continuous integration
+  - Web: https://www.jetbrains.com/?from=quinoa
+
+\subsection azure_web Azure DevOps for continuous integration
+  - Web: https://azure.microsoft.com/en-us/services/devops
+
+\subsection codecov_web Codecov for test coverage analysis
+  - Web: https://codecov.io
+
+\subsection sonarqube_web SonarQube for code quality analysis
+  - Web: https://www.sonarqube.org
+
+\subsection docker_web Docker for containers and testing
+  - Web: https://www.docker.com
+
 */
