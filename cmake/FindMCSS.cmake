@@ -24,9 +24,6 @@ if(MCSS_DOX2HTML5 AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND JINJA2_FOUND AND
   set (MCSS_FIND_QUIETLY TRUE)
 endif()
 
-# Find Python 3 and prerequisites for m.css
-find_package(PythonInterp 3.6)
-
 if (PYTHONINTERP_FOUND)
 
   execute_process( COMMAND ${PYTHON_EXECUTABLE} -c "import pygments"

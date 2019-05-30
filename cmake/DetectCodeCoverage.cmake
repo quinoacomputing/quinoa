@@ -17,9 +17,6 @@ elseif( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
   find_program( GCOV gcov )
 endif()
 
-# Find Python 3, required by fastcov
-find_package(PythonInterp 3)
-
 find_program( FASTCOV fastcov.py )
 find_program( GENHTML genhtml )
 find_program( SED sed )
