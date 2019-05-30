@@ -258,26 +258,14 @@ class Scheme {
     //! Charm++ array options for binding chares
     CkArrayOptions bound;
 
-    //! Function class to dereference operator[] of chare proxy inside a variant
-    //! \details Since the chare array proxy is behind a variant, the returning
-    //!   element proxy from operator() is also a variant, defined by ProxyElem
-    //!   with a type depending on the input proxy, given by P, i.e., overloaded
-    //!   for all proxy types the variant supports.
-    template< class ProxyElem >
-    struct Idx {
-      explicit Idx( const CkArrayIndex1D& idx ) : x(idx) {}
-      template< typename P >
-        ProxyElem operator()( const P& p ) const { return p[x]; }
-      CkArrayIndex1D x;
-    };
-
     //! Function dereferencing operator[] of chare proxy inside variant
     //! \param[in] x Chare array element index
     //! \return Chare array element proxy as a variant, defined by ProxyElem
     //! \details The returning element proxy is a variant, depending on the
     //!   input proxy.
     ProxyElem element( const CkArrayIndex1D& x ) const {
-      return std::visit( Idx< ProxyElem >( x ), proxy );
+      return std::visit( [&]( const auto& p ){
+               return static_cast< ProxyElem >( p[x] ); }, proxy );
     }
 };
 
