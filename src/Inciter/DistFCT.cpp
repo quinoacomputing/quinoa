@@ -21,7 +21,6 @@
 #include "QuinoaConfig.hpp"
 #include "ContainerUtil.hpp"
 #include "DistFCT.hpp"
-#include "Variant.hpp"
 
 namespace inciter {
 

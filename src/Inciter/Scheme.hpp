@@ -75,7 +75,6 @@
 #ifndef Scheme_h
 #define Scheme_h
 
-#include "Variant.hpp"
 #include "Exception.hpp"
 #include "PUPUtil.hpp"
 #include "Inciter/Options/Scheme.hpp"
@@ -135,7 +134,7 @@ class Scheme {
       } else Throw( "Unknown discretization scheme" );
     }
 
-    //! Entry method tags for specific Scheme classes
+    //! Entry method tags for specific Scheme classes to use with bcast()
     struct setup {};
     struct advance {};
     struct resized {};
@@ -144,7 +143,6 @@ class Scheme {
     struct lhs {};
     struct diag {};
     struct doneInserting {};
-
     //! Issue broadcast to Scheme entry method
     //! \tparam Fn Function tag identifying the entry method to call
     //! \tparam Args Types of arguments to pass to entry method
@@ -174,6 +172,29 @@ class Scheme {
         }, proxy );
     }
 
+    //! Entry method tags for specific Scheme classes to use with ckLocal()
+    struct resizePostAMR {};
+    struct solution {};
+    //! Call Scheme entry method via Charm++ chare array element's ckLocal()
+    //! \tparam Fn Function tag identifying the entry method to call
+    //! \tparam Args Types of arguments to pass to entry method
+    //! \param[in] x Chare array element index
+    //! \param[in] args Arguments to member function entry method to be called
+    //! \details This function calls a member function via Charm++'s ckLocal()
+    //!    behind the element proxy configured, indexed by the array index x.
+    //!    Since the call is behind ckLocal(), the member function does not have
+    //!    to be a Charm++ entry method.
+    template< typename Fn, typename... Args >
+    auto ckLocal( const CkArrayIndex1D& x, Args&&... args ) {
+      auto e = element( x );
+      return std::visit( [&]( auto& p ){
+          if constexpr( std::is_same_v< Fn, resizePostAMR > )
+            return p.ckLocal()->resizePostAMR( std::forward<Args>(args)... );
+          else if constexpr( std::is_same_v< Fn, solution > )
+            return p.ckLocal()->solution( std::forward<Args>(args)... );
+        }, e );
+    }
+
     //! Function to call the insert entry method of an element proxy
     //! \param[in] x Chare array element index
     //! \param[in] args Arguments to member function (entry method) to be called
@@ -182,7 +203,7 @@ class Scheme {
     //!   last argument as default.
     template< typename... Args >
     void insert( const CkArrayIndex1D& x, Args&&... args ) {
-      auto e = tk::element< ProxyElem >( proxy, x );
+      auto e = element( x );
       std::visit( [&]( auto& p ){ p.insert(std::forward<Args>(args)...); }, e );
     }
 
@@ -205,7 +226,7 @@ class Scheme {
     //! Query underlying proxy element type
     //! \return Zero-based index into the set of types of ProxyElem
     std::size_t index_element() const noexcept {
-      return tk::element< ProxyElem >( proxy, 0 ).index();
+      return element( 0 ).index();
     }
 
     //! Charm++ array options accessor for binding external proxies
@@ -236,6 +257,28 @@ class Scheme {
     CProxy_DistFCT fctproxy;
     //! Charm++ array options for binding chares
     CkArrayOptions bound;
+
+    //! Function class to dereference operator[] of chare proxy inside a variant
+    //! \details Since the chare array proxy is behind a variant, the returning
+    //!   element proxy from operator() is also a variant, defined by ProxyElem
+    //!   with a type depending on the input proxy, given by P, i.e., overloaded
+    //!   for all proxy types the variant supports.
+    template< class ProxyElem >
+    struct Idx {
+      explicit Idx( const CkArrayIndex1D& idx ) : x(idx) {}
+      template< typename P >
+        ProxyElem operator()( const P& p ) const { return p[x]; }
+      CkArrayIndex1D x;
+    };
+
+    //! Function dereferencing operator[] of chare proxy inside variant
+    //! \param[in] x Chare array element index
+    //! \return Chare array element proxy as a variant, defined by ProxyElem
+    //! \details The returning element proxy is a variant, depending on the
+    //!   input proxy.
+    ProxyElem element( const CkArrayIndex1D& x ) const {
+      return std::visit( Idx< ProxyElem >( x ), proxy );
+    }
 };
 
 } // inciter::
