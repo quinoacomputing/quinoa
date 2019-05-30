@@ -214,10 +214,10 @@ files, only build it and use it as a separate (external) executable.
 \subsection gold_web Gold for linking
   - Web: http://www.gnu.org/software/binutils
 
-\subsection gcov_web Gcov for unit test coverage analysis
+\subsection gcov_web Gcov for test coverage analysis
   - Web: https://gcc.gnu.org/onlinedocs/gcc/Gcov.html
 
-\subsection fastcov_web FastCov for unit test coverage analysis report
+\subsection fastcov_web FastCov for test coverage analysis report
   - Web: https://github.com/RPGillespie6/fastcov
 
 \subsection git_web Git for source code version control
@@ -228,5 +228,20 @@ files, only build it and use it as a separate (external) executable.
 
 \subsection mcss_web M.CSS for improving on Doxygen output
   - Web: http://mcss.mosra.cz/doxygen
+
+\subsection teamcity_web TeamCity for continuous integration
+  - Web: https://www.jetbrains.com/?from=quinoa
+
+\subsection azure_web Azure DevOps for continuous integration
+  - Web: https://azure.microsoft.com/en-us/services/devops
+
+\subsection codecov_web Codecov for test coverage analysis
+  - Web: https://codecov.io
+
+\subsection sonarqube_web SonarQube for code quality analysis
+  - Web: https://www.sonarqube.org
+
+\subsection docker_web Docker for containers and testing
+  - Web: https://www.docker.com
 
 */
