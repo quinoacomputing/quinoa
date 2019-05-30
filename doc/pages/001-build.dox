@@ -265,7 +265,7 @@ The above example will use 36 PEs, distributed into 2 logical (compute) nodes.
 See also the Charm++ manual on how to run in SMP mode. Note that SMP mode
 configures more regression tests compared to non-SMP mode.
 
-@note Multiple extra arguments to the Charm++ can also be passed to the cmake
+@note Multiple extra arguments to the Charm++ build can be passed to the cmake
 variable CMAKE_EXTRA_ARGS separated by semi-colons.
 
 @section build_static Static build
