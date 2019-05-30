@@ -485,6 +485,9 @@ message(STATUS "Parallel job runner ncpus arg: ${RUNNER_NCPUS_ARG}")
 message(STATUS "Parallel/serial job runner args: ${RUNNER_ARGS}")
 message(STATUS "Parallel/serial job runner postfix args: ${POSTFIX_RUNNER_ARGS}")
 
+# Find Python: required for code coverage (fastcov) and doc (m.css)
+find_package(PythonInterp 3.6)
+
 # Attempt to find tools required for code coverage analysis
 include(DetectCodeCoverage)
 
@@ -666,7 +669,7 @@ if(CODE_COVERAGE AND ENABLE_TESTS)
   setup_target_for_coverage(regression doc/html regression_coverage
                             ${CMAKE_CTEST_COMMAND}
                             TESTRUNNER_ARGS -j${PROCESSOR_COUNT}
-                                            ${REGRESSION_COVERAGE_ARGS}
+                                            ${REGRESSION_COVERAGE_ARGS} -LE insane
                             DEPENDS ${NONTEST_EXECUTABLES})
   if (REGRESSION_COVERAGE_ARGS)
     message(STATUS "Regression coverage test-runner arguments: '${REGRESSION_COVERAGE_ARGS}'")
