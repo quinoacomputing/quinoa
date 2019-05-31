@@ -342,7 +342,8 @@ All libraries, required or optional, are listed on page @ref licenses.
 
 Similar to other cmake projects, Quinoa can be configured for `Debug`,
 `Release`, or other types of builds cmake supports. As usual, this is done by
-setting the `CMAKE_BUILD_TYPE` variable, e.g., `-DCMAKE_BUILD_TYPE=Debug`.
+setting the `CMAKE_BUILD_TYPE` variable, e.g., `-DCMAKE_BUILD_TYPE=Debug`. The
+default is `Release`.
 
 @section build_disable Disabling packages
 
@@ -375,6 +376,8 @@ section on @ref build_stages.
 General requirements for configuring the TPL as well as Quinoa builds:
 
 - In-source builds are not allowed.
+
+- The default build type for both TPLs and Quinoa is `Release`.
 
 - Shared cmake code is in https://github.com/quinoacomputing/cmake-modules.git,
 pulled in as a git submodule into the TPL build and a git subtree into the
