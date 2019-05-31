@@ -6,6 +6,37 @@
 This page discusses various ways of building Quinoa, including requirements,
 optional libraries, defaults, and build system options.
 
+@section build_quick Quick start
+
+See section @ref mainpage_build on the main page.
+
+@section build_requirements Minimum requirements
+
+ - Fortran compiler
+ - C and C++ compilers, the latter implementing the C++11 standard
+ - Message Passing Interface library, e.g., [OpenMPI](https://www.open-mpi.org)
+
+@section build_supported Routinely tested
+
+ Compilers:
+ - GNU
+ - Clang
+ - Intel
+
+ C++ standard library:
+ - libc++
+ - libstdc++
+
+ MPI:
+ - OpenMPI
+ - Intel MPI
+
+ Operating systems:
+ - Debian Linux
+ - Alpine Linux
+ - RedHat Enterprise Linux
+ - MacOS
+
 @section build_stages Two-stage build
 
 Quinoa is built in two stages, of which the first one may be optional:
@@ -27,10 +58,10 @@ single executable, see @ref build_specific_executables, or a build
 configured for only building the documentation, see
 https://github.com/quinoacomputing/buildenv/blob/master/debian-doc.
 
-@section build_default Quick start
+@section build_default Build using the defaults
 
 The easiest, but not necessarily the quickest, way to build Quinoa is to use the
-defaults. At the minimum cmake, Fortran, C, C++ compilers, and MPI are required.
+defaults.
 
 To install these on a Debian-based Linux do
 
@@ -46,7 +77,7 @@ Next is to build the TPLs in an empty directory:
        cd quinoa
        mkdir external/build
        cd external/build
-       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_BUILD_TYPE=Release ..
+       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 ..
        make -sj$(grep -c processor /proc/cpuinfo)
 
 If the above went fine, we build the code, in a new empty build directory:
@@ -54,7 +85,7 @@ If the above went fine, we build the code, in a new empty build directory:
        cd quinoa
        mkdir build
        cd build
-       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release ../src
+       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src
        make -sj$(grep -c processor /proc/cpuinfo)
 
 If this also went fine, let's run the unit-, and regression tests in the build
@@ -68,7 +99,7 @@ This will run all tests, except those that would take a long time. If all of the
 above steps finished without error, you have successfully built Quinoa. You can
 run the executables from `build/Main` or install them with
 
-        cmake install
+        make install
 
 The default install directory is `/usr/local`, which usually needs root
 permissions. You can change that by configuring a different path in the
@@ -76,13 +107,13 @@ permissions. You can change that by configuring a different path in the
 
 @section build_nonrecursive Working with a non-recursive clone
 
-The default build process, described in @ref build_default, instructs you to do
-a _recursive_ clone, which clones not only the source code for Quinoa but also
-all external packages (third-party libraries, TPLs). The TPLs are pulled in to
-directory `external/` as git submodules and contain significantly more data and
-files than the Quinoa source. If you plan to do code development, it is quicker
-to work with the repository (changing branches, stashing, etc.) if you work
-with a _non-recursive_ clone.
+The default build process, described in section @ref build_default, instructs
+you to do a _recursive_ clone, which clones not only the source code for Quinoa
+but also all external packages (third-party libraries, TPLs). The TPLs are
+pulled in to directory `external/` as git submodules and contain significantly
+more data and files than the Quinoa source. If you plan to do code development,
+it is quicker to work with the repository (changing branches, stashing, etc.)
+if you work with a _non-recursive_ clone.
 
 To make this work, we need to clone the TPLs separately:
 
@@ -93,7 +124,7 @@ Then build the TPLs using a similar process as in @ref build_default :
        cd quinoa-tpl
        mkdir build
        cd build
-       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_BUILD_TYPE=Release ..
+       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 ..
        make -sj$(grep -c processor /proc/cpuinfo)
 
 By default, this will install all TPLs in
@@ -108,12 +139,12 @@ cmake using the cmake variable `TPL_DIR`:
        cd quinoa
        mkdir build
        cd build
-       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release -DTPL_DIR=<path-to-quinoa-tpl>/install/gnu-x86_64/ ../src
+       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DTPL_DIR=<path-to-quinoa-tpl>/install/gnu-x86_64/ ../src
        make -sj$(grep -c processor /proc/cpuinfo)
 
-Since the Quinoa clone no longer contain initialized submodules, git
-operations are faster. This difference can be significant on network-mounted
-drives.
+Since the Quinoa clone no longer contains initialized submodules, git
+operations are faster. This difference can be significant on network-mounted or
+shared drives.
 
 If the need arises, e.g., to pull in changes from the TPL submodules into such a
 non-recursive clone, the `external/` directory can still be populated under the
@@ -128,8 +159,8 @@ quinoa clone by initializing the submodules:
        cd ..
        git submodule status --recursive
 
-As you can see form the above, there are two layers of git sumbodules. You can
-just use the above as a single, chained command:
+As you can see form the output of the commands above, there are two layers of
+git submodules. You can also just use the above as a single, chained command:
 
        cd quinoa
        git submodule init && git submodule update --recursive && cd external && git submodule init && git submodule update --recursive && cd .. && git submodule status --recursive
@@ -140,11 +171,11 @@ etc.  When the TPL sources are, again, no longer needed, we de-populate it:
        cd quinoa
        git submodule deinit --all
 
-@section build_specific_executables Building specific executables only
+@section build_specific_executables Build specific executables only
 
-The default build process, described in @ref build_default, does a recursive
-clone of _most_ TPLs and builds _all_ executables. If you only care about a
-particular tool, e.g., @ref inciter_main, you can
+The default build process, described in section @ref build_default, does a
+recursive clone of _most_ TPLs and builds _all_ executables. If you only care
+about a particular tool, e.g., @ref inciter_main, you can
 
  1. Clone only those TPLs that are required for the given tool (instead of
     cloning them all), e.g.,
@@ -159,14 +190,14 @@ particular tool, e.g., @ref inciter_main, you can
          cd quinoa
          mkdir external/build
          cd external/build
-         cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_BUILD_TYPE=Release -DINCITER_ONLY=true ..
+         cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DINCITER_ONLY=true ..
          make -sj$(grep -c processor /proc/cpuinfo)
 
 This will build only the TPLs required for @ref inciter_main. The rest of the
 build process is the same as in @ref build_default : running cmake configuring
 Quinoa will enable only those build targets for which it finds the required
 TPLs.  Such `*_ONLY` cmake variables are defined for all executable targets in
-`<quinoa-tpl>/CMakeListst.txt`, in the section starting by the comment line
+`<quinoa-tpl>/CMakeListst.txt`, in the section starting with the comment line
 
        # Set which libraries are built/searched by default
 
@@ -199,10 +230,10 @@ required for the given tool for each executable:
 
 @section build_systemlibs Using system-wide packages
 
-The default build process, described in @ref build_default, attempts to find
-(and if not found, build) all required and optional packages that are enabled
-by default. See the section on @ref build_optional for what packages are
-enabled by default.  In some platforms, it is advantageous (and could be
+The default build process, described in section @ref build_default, attempts to
+find (and if not found, build) all required and most optional packages that are
+enabled by default. See the section on @ref build_optional for what packages
+are enabled by default. In some platforms, it is advantageous (and could be
 faster) to use the packages provided by the system.
 
 On a Debian-based Linux you can pre-install the packages given in
@@ -213,7 +244,7 @@ On Alpine Linux you can pre-install the packages given in
 
        quinoa/tools/docker/Dockerfile.quinoa-build-alpine
 
-@section build_mac Building on Mac OS
+@section build_mac Build on Mac OS
 
 On Mac OS we do _not_ recommend using the system-wide compilers. Instead, we
 use [macports](https://www.macports.org/) to install compilers and OpenMPI:
@@ -232,49 +263,51 @@ luck with one or the other.
 
 @section build_clang Build using clang or Intel compilers
 
-The default build process on Linux, described in @ref build_default, uses the
-system-wide gnu compiler suite. If you want, you can also use the clang or the
+The default build process on Linux, described in section @ref build_default,
+uses the system-wide gnu compiler suite. You can also use the clang or the
 Intel compilers. We do this by either building OpenMPI using clang or Intel or
 by using the machine-specific MPI wrappers pointing to the compiler and then
-use the build process given in @ref build_default.
+use the build process given in section @ref build_default.
 
 @section build_rndq Build using Charm++'s randomized message queues
 
 For serious development work, especially involving asynchronous parallel
-programming, we also build Charm++ using randomized message queues. This
-enables more thorough testing of the available space for scheduling messages
-and thus more heavily testing the asynchronous logic. We do this by configuring
-the TPL build as
+programming, we also build and test with Charm++ using randomized message
+queues. This enables more thorough testing of the available space for
+scheduling messages and thus more heavily testing the asynchronous logic. We do
+this by configuring the TPL build as
 
        cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DCHARM_EXTRA_ARGS="--enable-error-checking;--with-prio-type=int;--enable-randomized-msgq;--suffix;randq-debug" <path-to-TPL-CMakeLists.txt>
 
 @section build_smp Build using Charm++'s SMP mode
 
 For better performance computing large problems using many threads, Quinoa can
-also be used using Charm++'s symmetric multi-processing (SMP) mode. This is can
-be done by configuring the TPL build as
+also be used using Charm++'s symmetric multi-processing (SMP) mode. This can be
+done by configuring the TPL build as
 
        cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DCHARM_EXTRA_ARGS="smp" <path-to-TPL-CMakeLists.txt>
+
+@note Multiple extra arguments to the Charm++ build can be passed to the cmake
+variable `CMAKE_EXTRA_ARGS` separated by semi-colons.
 
 You can run the unit-, and regression tests in SMP mode as, e.g.,
 
        ./charmrun +p 34 --bind-to none Main/unittest -v -q +ppn 17
        ctest -j 36 --output-on-failure -LE extreme
 
-The above example will use 36 PEs, distributed into 2 logical (compute) nodes.
-See also the Charm++ manual on how to run in SMP mode. Note that SMP mode
-configures more regression tests compared to non-SMP mode.
+The above will use 36 PEs, distributed into two logical (compute) nodes. See
+also the Charm++ manual on how to run in SMP mode.
 
-@note Multiple extra arguments to the Charm++ build can be passed to the cmake
-variable CMAKE_EXTRA_ARGS separated by semi-colons.
+@note SMP mode configures more regression tests, specifically exercising SMP,
+compared to non-SMP mode, thus enables a more thorough testing.
 
 @section build_static Static build
 
 Some machines, e.g., Crays, prefer builds using static libraries. This can be
 done by passing the cmake argument `-DBUILD_SHARED_LIBS=off` to _both_ TPL and
-Quinoa configure steps. See also @ref build_default.
+Quinoa configure steps. See also section @ref build_default.
 
-@section build_projections Building with Charm++'s Projections enabled
+@section build_projections Build with Charm++'s Projections enabled
 
 To use Charm++'s performance analysis tool, Projections, you can build Charm++
 with
@@ -283,30 +316,29 @@ with
 
 Then configure the Quinoa build with the extra link arguments:
 
-       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release -DEXTRA_LINK_ARGS="-tracemode projections" <path-to-Quinoa-src-CMakeLists.txt>
+       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DEXTRA_LINK_ARGS="-tracemode projections" <path-to-Quinoa-src-CMakeLists.txt>
 
 See also the Charm++ Projections manual.
 
 @section build_ninja Using ninja instead of make
 
-Similar to other CMake/C++ projects, Quinoa can also be built with ninja instead
-of make, by configuring the Quinoa build with
+Similar to other CMake/C++ projects, Quinoa can also be built with
+[ninja](https://ninja-build.org) instead of make, by configuring the Quinoa
+build with
 
-       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release -GNinja <path-to-Quinoa-src-CMakeLists.txt>
+       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -GNinja <path-to-Quinoa-src-CMakeLists.txt>
 
 @section build_optional Optional third-party libraries
 
-The default build process, described in @ref build_default, will attempt to
-build a set of default TPLs. Not all TPLs are required, some are optional and
-some must be specifically enabled if needed. Then Quinoa can be configured to
-build whatever it can based on the libraries it can find. See also the section
-on @ref build_specific_executables.
+The default build process, described in section @ref build_default, will
+attempt to build a set of default TPLs. Not all TPLs are required: some are
+optional, some must be specifically enabled if needed. Then Quinoa can be
+configured to build whatever it can based on the libraries it can find. See
+also the section on @ref build_specific_executables.
 
-All libraries, whether they are required or optional, and whether they are
-search for and built by default or expected to be available system-wide, are
-listed on page @ref licenses.
+All libraries, required or optional, are listed on page @ref licenses.
 
-@section build_debug Building in Debug mode
+@section build_debug Build in Debug mode
 
 Similar to other cmake projects, Quinoa can be configured for `Debug`,
 `Release`, or other types of builds cmake supports. As usual, this is done by
@@ -355,19 +387,21 @@ Quinoa build. See also the page on @ref git_submodules_subtrees.
 - If unspecified, the default install directory, configured by the cmake
   variable `CMAKE_INSTALL_PREFIX`, for the TPL build is
   `<root>/install/<compiler>-<architecture>/`, where `<root>` is the root of the
-  TPL repository clone. In a recursive clone `<root>` is `quinoa/external`.
+  TPL repository clone. In a recursive clone `<root>` is `quinoa/external`. See
+  also the section on @ref build_nonrecursive.
 
 - If unspecified, the default TPL directory, configured by the cmake variable
   `TPL_DIR`, for the Quinoa build is
   `<root>/external/install/<compiler>-architecture>/`, where `<root>` is the
-  root of the Quinoa repository clone.
+  root of the Quinoa repository clone. See also the section on @ref
+  build_nonrecursive.
 
 - For the list of TPLs searched (and if not found, built) by default, see
-  `<quinoa-tpl>/CMakeListst.txt`, section starting by the comment line
+  [<quinoa-tpl>/CMakeLists.txt](https://github.com/quinoacomputing/quinoa-tpl/blob/master/CMakeLists.txt), section starting with the comment line
 
        # Set which libraries are built/searched by default
 
-- Currently, MPI is required and Charm++ is built on top of MPI.
+- MPI is required and Charm++ is built on top of MPI.
 
 - The default C++ standard library is _libstdc++_ for gnu compilers, and
   _libc++_ for clang and Intel.
@@ -384,7 +418,7 @@ docker images:
 @section build_cmake Main cmake files
 
 The most important (top-level) files responsible for configuring the build
-system described here are:
+system are
 
 - [cmake/TPLs.cmake](https://github.com/quinoacomputing/quinoa/blob/develop/cmake/TPLs.cmake)
 - [external/CMakeLists.txt](https://github.com/quinoacomputing/quinoa-tpl/blob/master/CMakeLists.txt)
