@@ -63,16 +63,15 @@ https://github.com/quinoacomputing/buildenv/blob/master/debian-doc.
 The easiest, but not necessarily the quickest, way to build Quinoa is to use the
 defaults.
 
-To install these on a Debian-based Linux do
+Install the prerequisites on a Debian-based Linux do
 
        sudo apt-get install cmake gfortran gcc g++ openmpi-bin libopenmpi-dev
 
-If you have not yet, clone the code with the external packages (third party
-libraries, TPLs):
+Clone the code with the external packages (third party libraries, TPLs):
 
        git clone --recurse-submodules https://github.com/quinoacomputing/quinoa.git
 
-Next is to build the TPLs in an empty directory:
+Build the TPLs in an empty directory:
 
        cd quinoa
        mkdir external/build
@@ -207,7 +206,8 @@ This will build only the TPLs required for @ref inciter_main. The rest of the
 build process is the same as in @ref build_default : running cmake configuring
 Quinoa will enable only those build targets for which it finds the required
 TPLs.  Such `*_ONLY` cmake variables are defined for all executable targets in
-`<quinoa-tpl>/CMakeListst.txt`, in the section starting with the comment line
+[<quinoa-tpl>/CMakeLists.txt](https://github.com/quinoacomputing/quinoa-tpl/blob/master/CMakeLists.txt),
+in the section starting with the comment line
 
        # Set which libraries are built/searched by default
 
@@ -243,7 +243,7 @@ required for the given tool for each executable:
 The default build process, described in section @ref build_default, attempts to
 find (and if not found, build) all required and most optional packages that are
 enabled by default. See the section on @ref build_optional for what packages
-are enabled by default. In some platforms, it is advantageous (and could be
+are enabled by default. On some platforms, it is advantageous (and could be
 faster) to use the packages provided by the system.
 
 On a Debian-based Linux you can pre-install the packages given in
@@ -271,7 +271,7 @@ Note that the above is optional, since it may also be installed by the TPL
 build, see @ref build_default, but depending on your system you may have better
 luck with one or the other.
 
-@section build_clang Build using clang or Intel compilers
+@section build_clang Build using Clang or Intel compilers
 
 The default build process on Linux, described in section @ref build_default,
 uses the system-wide gnu compiler suite. You can also use the clang or the
@@ -374,8 +374,8 @@ or
 
        -DSTDLIBCPP=libstdc++
 
-@note The `STDLIBCPP` cmake variable is ignored if the gnu compiler is used,
-for which it is always _libstdc++_ is used.
+@note The `STDLIBCPP` cmake variable is ignored if the gnu compiler is used.
+With the gnu compilers _libstdc++_ is the only option.
 
 @warning The configuration for the standard library must be specified so that
 _both_ the TPL and the Quinoa builds use the same implementation. See the
@@ -390,8 +390,8 @@ General requirements for configuring the TPL as well as Quinoa builds:
 - The default build type for both TPLs and Quinoa is `Release`.
 
 - Shared cmake code is in https://github.com/quinoacomputing/cmake-modules.git,
-pulled in as a git submodule into the TPL build and a git subtree into the
-Quinoa build. See also the page on @ref git_submodules_subtrees.
+  pulled in as a git submodule into the TPL build and as a git subtree into the
+  Quinoa build. See also the page on @ref git_submodules_subtrees.
 
 - The TPL build requires a Fortran, C, and a C++ compiler.
 
@@ -433,8 +433,8 @@ docker images:
 The most important (top-level) files responsible for configuring the build
 system are
 
-- [cmake/TPLs.cmake](https://github.com/quinoacomputing/quinoa/blob/develop/cmake/TPLs.cmake)
 - [external/CMakeLists.txt](https://github.com/quinoacomputing/quinoa-tpl/blob/master/CMakeLists.txt)
+- [cmake/TPLs.cmake](https://github.com/quinoacomputing/quinoa/blob/develop/cmake/TPLs.cmake)
 - [src/CMakeLists.txt](https://github.com/quinoacomputing/quinoa/blob/develop/src/CMakeLists.txt)
 
 If you have questions not answered here, consult the above.
