@@ -29,7 +29,8 @@ enum class InitPolicyType : uint8_t { RAW=0,
                                       JOINTGAUSSIAN,
                                       JOINTCORRGAUSSIAN,
                                       JOINTBETA,
-                                      JOINTGAMMA };
+                                      JOINTGAMMA,
+                                      JOINTDIRICHLET };
 
 //! Pack/Unpack InitPolicyType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, InitPolicyType& e ) { PUP::pup( p, e ); }
@@ -46,6 +47,7 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
                                   , kw::jointcorrgaussian
                                   , kw::jointbeta
                                   , kw::jointgamma
+                                  , kw::jointdirichlet
                                   >;
 
     //! \brief Options constructor
@@ -62,7 +64,8 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
           { InitPolicyType::JOINTGAUSSIAN, kw::jointgaussian::name() },
           { InitPolicyType::JOINTCORRGAUSSIAN, kw::jointcorrgaussian::name() },
           { InitPolicyType::JOINTBETA, kw::jointbeta::name() },
-          { InitPolicyType::JOINTGAMMA, kw::jointgamma::name() } },
+          { InitPolicyType::JOINTGAMMA, kw::jointgamma::name() },
+          { InitPolicyType::JOINTDIRICHLET, kw::jointdirichlet::name() } },
         //! keywords -> Enums
         { { kw::raw::string(), InitPolicyType::RAW },
           { kw::zero::string(), InitPolicyType::ZERO },
@@ -71,7 +74,8 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
           { kw::jointcorrgaussian::string(),
             InitPolicyType::JOINTCORRGAUSSIAN },
           { kw::jointbeta::string(), InitPolicyType::JOINTBETA },
-          { kw::jointgamma::string(), InitPolicyType::JOINTGAMMA } } )
+          { kw::jointgamma::string(), InitPolicyType::JOINTGAMMA },
+          { kw::jointdirichlet::string(), InitPolicyType::JOINTDIRICHLET } } )
     {
        brigand::for_each< keywords >( assertPolicyCodes() );
     }
@@ -108,6 +112,7 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
       , { InitPolicyType::JOINTCORRGAUSSIAN, *kw::jointcorrgaussian::code() }
       , { InitPolicyType::JOINTBETA, *kw::jointbeta::code() }
       , { InitPolicyType::JOINTGAMMA, *kw::jointgamma::code() }
+      , { InitPolicyType::JOINTDIRICHLET, *kw::jointdirichlet::code() }
     };
 };
 

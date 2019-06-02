@@ -71,6 +71,23 @@ class Control : public tuple::tagged_tuple<Ts...> {
                     template get<subtag>().
                     template get<subsubtag>();
     }
+    //! \brief Const-ref accessor to single element at 4th level
+    //! \return A constant reference behind a tag, subtag, subsubtag given by
+    //! the template arguments
+    // TODO Combine the three overloads into a single variadic one
+    //! \note All this will be gone with C++17
+    template< typename tag, typename subtag, typename subsubtag,
+              typename subsubsubtag >
+    constexpr const typename Tuple::template nT<tag>
+                                  ::template nT<subtag>
+                                  ::template nT<subsubtag>
+                                  ::template nT<subsubsubtag>&
+    get() const noexcept {
+      return Tuple::template get<tag>().
+                    template get<subtag>().
+                    template get<subsubtag>().
+                    template get<subsubsubtag>();
+    }
     ///@}
 
     /** @name Rvalue accessors at three different depths */
@@ -215,6 +232,27 @@ class Control : public tuple::tagged_tuple<Ts...> {
              template get<subtag>().
              template get<subsubtag>().push_back( value );
     }
+    //! \brief Push back value to vector at tag at 3rd level without conversion
+    //! \param[in] value Value to push back behind tag, subtag, and subsubtag
+    //!   given by the template argument
+    //! \note All this will be gone with C++17
+    template< typename tag, typename subtag, typename subsubtag,
+              typename subsubsubtag >
+    void push_back( const typename Tuple::template nT<tag>
+                                        ::template nT<subtag>
+                                        ::template nT<subsubtag>
+                                        ::template nT<subsubsubtag>
+                                        ::value_type& value =
+                          typename Tuple::template nT<tag>
+                                        ::template nT<subtag>
+                                        ::template nT<subsubtag>
+                                        ::template nT<subsubsubtag>
+                                        ::value_type() ) {
+      Tuple::template get<tag>().
+             template get<subtag>().
+             template get<subsubtag>().
+             template get<subsubsubtag>().push_back( value );
+    }
     ///@}
 
     /** @name Push back value to vector of back of vector at tag at three different depths */
@@ -268,6 +306,30 @@ class Control : public tuple::tagged_tuple<Ts...> {
       Tuple::template get<tag>().
              template get<subtag>().
              template get<subsubtag>().back().push_back( value );
+    }
+    //! \brief Push back value to vector of back of vector at tag at 3rd level
+    //!   without conversion
+    //! \details This is similar to store_back_back but performes no conversion.
+    //!   no conversion.
+    //! \param[in] value Value to push back behind tag, subtag, and subsubtag
+    //!   given by the template argument
+    //! \note All this will be gone with C++17
+    template< typename tag, typename subtag, typename subsubtag,
+              typename subsubsubtag >
+    void push_back_back( const typename Tuple::template nT<tag>
+                                             ::template nT<subtag>
+                                             ::template nT<subsubtag>
+                                             ::template nT<subsubsubtag>
+                                             ::value_type::value_type& value =
+                          typename Tuple::template nT<tag>
+                                        ::template nT<subtag>
+                                        ::template nT<subsubtag>
+                                        ::template nT<subsubsubtag>
+                                        ::value_type::value_type() ) {
+      Tuple::template get<tag>().
+             template get<subtag>().
+             template get<subsubtag>().
+             template get<subsubsubtag>().back().push_back( value );
     }
     ///@}
 
@@ -353,6 +415,24 @@ class Control : public tuple::tagged_tuple<Ts...> {
                               ::template nT<subsubtag>
                               ::value_type::value_type>( value ) );
     }
+    //! \brief Convert and push back value to vector of back of vector at tag at
+    //!   3rd level
+    //! \param[in] value Value to convert and push back behind tag, subtag, and
+    //!   subsubtag given by the template arguments
+    //! \note All this will be gone with C++17
+    template< typename tag, typename subtag, typename subsubtag,
+              typename subsubsubtag >
+    void store_back_back(const std::string& value) {
+      Tuple::template get<tag>().
+             template get<subtag>().
+             template get<subsubtag>().
+             template get<subsubsubtag>().back().push_back(
+        convert<typename Tuple::template nT<tag>
+                              ::template nT<subtag>
+                              ::template nT<subsubtag>
+                              ::template nT<subsubsubtag>
+                              ::value_type::value_type>( value ) );
+    }
     ///@}
 
     /** @name Convert and push back value to vector of back of vector of back of vector at tag at three different depths */
@@ -394,6 +474,24 @@ class Control : public tuple::tagged_tuple<Ts...> {
         convert<typename Tuple::template nT<tag>
                               ::template nT<subtag>
                               ::template nT<subsubtag>
+                              ::value_type::value_type::value_type>( value ) );
+    }
+    //! \brief Convert and push back value to vector of back of vector of back
+    //!    of vector at tag at 3rd level
+    //! \param[in] value Value to convert and push back behind tag, subtag, and
+    //!   subsubtag given by the template arguments
+    //! \note All this will be gone with C++17
+    template< typename tag, typename subtag, typename subsubtag,
+              typename subsubsubtag >
+    void store_back_back_back(const std::string& value) {
+      Tuple::template get<tag>().
+             template get<subtag>().
+             template get<subsubtag>().
+             template get<subsubsubtag>().back().back().push_back(
+        convert<typename Tuple::template nT<tag>
+                              ::template nT<subtag>
+                              ::template nT<subsubtag>
+                              ::template nT<subsubsubtag>
                               ::value_type::value_type::value_type>( value ) );
     }
     ///@}

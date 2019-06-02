@@ -67,6 +67,7 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
 //! \param[in] meshwriter Mesh writer Charm++ proxy
 //! \param[in] cbs Charm++ callbacks for Sorter
 //! \param[in] scheme Discretization scheme
+//! \param[in] reorderRefiner Callback to use to send reordered mesh to Refiner
 //! \param[in] ginpoel Mesh connectivity (this chare) using global node IDs
 //! \param[in] coordmap Mesh node coordinates (this chare) for global node IDs
 //! \param[in] bface Face lists mapped to side set ids

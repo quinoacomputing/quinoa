@@ -126,14 +126,14 @@ class DG : public CBase_DG {
 
     //! Receive new mesh from refiner
     void resizePostAMR(
-      const std::vector< std::size_t >& ginpoel,
+      const std::vector< std::size_t >& /* ginpoel */,
       const tk::UnsMesh::Chunk& chunk,
       const tk::UnsMesh::Coords& coord,
-      const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
+      const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /* addedNodes */,
       const std::unordered_map< std::size_t, std::size_t >& addedTets,
       const std::unordered_map< int, std::vector< std::size_t > >& msum,
       const std::map< int, std::vector< std::size_t > >& bface,
-      const std::map< int, std::vector< std::size_t > >& bnode,
+      const std::map< int, std::vector< std::size_t > >& /* bnode */,
       const std::vector< std::size_t >& triinpoel );
 
     //! Const-ref access to current solution

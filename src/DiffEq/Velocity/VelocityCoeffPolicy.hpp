@@ -128,7 +128,7 @@ class VelocityCoeffStationary {
     //! Update the model coefficients (prescribing shear)
     //! \details Update the dissipation rate (eps) and G_{ij} based on the
     //!   turbulent kinetic energy (k) for a prescribed honmogeneous shear flow.
-    void update( char depvar,
+    void update( char,
                  char,
                  const std::map< tk::ctr::Product, tk::real >&,
                  const tk::Table&,

@@ -320,7 +320,7 @@ capability, with no large separate documents to open or print. Documentation is
 added via editing the source itself and [looks great on any
 device](http://mcss.mosra.cz/doxygen/#features), including
 [figures](walker_example_ou.html#walker_example_ou_pdf) and
-[math](_generalized_dirichlet_8h.html#details).
+[math](_generalized_dirichlet_8hpp.html).
 
 @m_div{m-col-t-4 m-col-m-2 m-right-t}
 <img src="Happy-Penguin.svg"/>

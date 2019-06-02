@@ -148,6 +148,33 @@ existing equation types and adding new ones.
 
 @see @ref diffeq
 
+@dir src/DiffEq/Beta
+@brief Time integrators for stochastic differential equations based on the beta PDF
+
+@dir src/DiffEq/Dirichlet
+@brief Time integrators for stochastic differential equations based on the Dirichlet PDF
+
+@dir src/DiffEq/Dissipation
+@brief Time integrators for stochastic differential equations modeling the dissipation rate of turbulent kinetic energy in turbulent flows
+
+@dir src/DiffEq/Gamma
+@brief Time integrators for stochastic differential equations based on the gamma PDF
+
+@dir src/DiffEq/OrnsteinUhlenbeck
+@brief Time integrators for stochastic differential equations based on the Ornstein-Uhlenbeck process
+
+@dir src/DiffEq/Position
+@brief Time integrators for stochastic differential equations modeling the stochastic particle positions in turbulent flows
+
+@dir src/DiffEq/SkewNormal
+@brief Time integrators for stochastic differential equations based on the skew-normal PDF
+
+@dir src/DiffEq/Velocity
+@brief Time integrators for stochastic differential equations modeling the stochastic particle velocities in turbulent flows
+
+@dir src/DiffEq/WrightFisher
+@brief Time integrators for stochastic differential equations based on the Wright-Fisher process
+
 @dir src/PDE
 @brief Partial differential equations
 
@@ -204,7 +231,7 @@ for verification or a user-defined problem).
 
 @details This directory contains code for discretizing a system of conservation
 equations that govern compressible flow. The subdirectories `Physics` and
-`Problem` contain various ways to the compressible flow solver with respect to
+`Problem` contain various ways configure the compressible flow solver with respect to
 the type of physics solved (e.g., inviscid or viscous) and with respect to the
 type of problem solved (e.g., a predefined problem with an analytical solution
 for verification or a user-defined problem).
@@ -214,6 +241,23 @@ for verification or a user-defined problem).
 
 @dir src/PDE/CompFlow/Problem
 @brief Problem configurations for compressible flow
+
+@dir src/PDE/MultiMat
+@brief Partial differential equations for compressible multi-material flow
+
+@details This directory contains code for discretizing a system of conservation
+equations that govern compressible multi-material flow. The subdirectories
+`Physics` and `Problem` contain various ways to configure the compressible
+multi-material flow solver with respect to the type of physics solved (e.g.,
+inviscid or viscous) and with respect to the type of problem solved (e.g., a
+predefined problem with an analytical solution for verification or a
+user-defined problem).
+
+@dir src/PDE/MultiMat/Physics
+@brief Physics configurations for compressible multi-material flow
+
+@dir src/PDE/MultiMat/Problem
+@brief Problem configurations for compressible multi-material flow
 
 @dir src/PDE/Integrate
 @brief Integrals of various PDE operators used in discontinuous Galerkin methods
@@ -278,37 +322,37 @@ subdirectory structure relative to `src/UnitTest/tests` mirrors that of the
 root source directory, `src`, and contain unit test definitions for the given
 subdirectories mirrored.
 
-@dir src/UnitTest/tests
-@brief Unit test root
+@dir tests/unit
+@brief Root directory of all unit tests
 
-@dir src/UnitTest/tests/Base
+@dir tests/unit/Base
 @brief Unit tests for subdirectory _Base_
 
-@dir src/UnitTest/tests/Control
+@dir tests/unit/Control
 @brief Unit tests for subdirectory _Control_
 
-@dir src/UnitTest/tests/Control/Options
+@dir tests/unit/Control/Options
 @brief Unit tests for subdirectory _Control/Options_
 
-@dir src/UnitTest/tests/Control/Options
+@dir tests/unit/Control/Options
 @brief Unit tests for subdirectory _Control/Options_
 
-@dir src/UnitTest/tests/Inciter
+@dir tests/unit/Inciter
 @brief Unit tests for subdirectory _Inciter_
 
-@dir src/UnitTest/tests/Inciter/AMR
+@dir tests/unit/Inciter/AMR
 @brief Unit tests for subdirectory _Inciter/AMR_
 
-@dir src/UnitTest/tests/IO
+@dir tests/unit/IO
 @brief Unit tests for subdirectory _IO_
 
-@dir src/UnitTest/tests/LoadBalance
+@dir tests/unit/LoadBalance
 @brief Unit tests for subdirectory _LoadBalance_
 
-@dir src/UnitTest/tests/Mesh
+@dir tests/unit/Mesh
 @brief Unit tests for subdirectory _Mesh_
 
-@dir src/UnitTest/tests/RNG
+@dir tests/unit/RNG
 @brief Unit tests for subdirectory _RNG_
 
 @dir src/Particles

@@ -166,7 +166,7 @@ MeshWriter::filename( const std::string& basefilename,
                       int chareid ) const
 // *****************************************************************************
 //  Compute filename
-//! \param[in basefilename File name to append to
+//! \param[in] basefilename String use as the base filename.
 //! \param[in] itr Iteration count since a new mesh. New mesh in this context
 //!   means that either the mesh is moved and/or its topology has changed.
 //! \param[in] chareid The chare id the write-to-file request is coming from

@@ -57,6 +57,7 @@
                const std::vector< kw::sde_rho::info::expect::type >& rho,
                const std::vector< kw::sde_r::info::expect::type >& r,
                const std::vector< kw::sde_kappa::info::expect::type >& kprime,
+               const std::vector< kw::sde_b::info::expect::type >& b,
                std::vector< kw::sde_kappa::info::expect::type >& k,
                std::vector< kw::sde_kappa::info::expect::type >& S ) const {}
       \endcode
@@ -64,7 +65,7 @@
       Dirichlet SDE, specified in the control file by the user, _ncomp_
       is the number of components in the system, _moments_ is the map
       associating moment IDs (tk::ctr::vector< tk::ctr::Term >) to values of
-      statistical moments, _rho_, _r_, and _kprime_ are user-defined
+      statistical moments, _rho_, _r_, _b_, and _kprime_ are user-defined
       parameters, and _k_ and _S_ are the SDE parameters computed, see
       DiffEq/DiffEq/MixDirichlet.h.
 */
@@ -118,6 +119,7 @@ class MixDirichletHomCoeffConst {
       const std::vector< kw::sde_rho::info::expect::type >& rho,
       const std::vector< kw::sde_r::info::expect::type >& r,
       const std::vector< kw::sde_kappa::info::expect::type >& kprime,
+      const std::vector< kw::sde_b::info::expect::type >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_kappa::info::expect::type >& S ) const;
 };

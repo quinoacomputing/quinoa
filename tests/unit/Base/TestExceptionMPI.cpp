@@ -1,12 +1,12 @@
 // *****************************************************************************
 /*!
-  \file      tests/unit/Base/TestExceptionMPI.C
+  \file      tests/unit/Base/TestExceptionMPI.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Unit tests for Base/TestExceptionMPI.h
-  \details   Unit tests for Base/TestExceptionMPI.h
+  \brief     Unit tests for Base/TestExceptionMPI.hpp
+  \details   Unit tests for Base/TestExceptionMPI.hpp
 */
 // *****************************************************************************
 

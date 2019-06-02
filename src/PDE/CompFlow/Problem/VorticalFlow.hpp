@@ -71,7 +71,6 @@ class CompFlowProblemVorticalFlow {
                  tk::Fields& U ) const;
 
     //! Return names of integral variables to be output to diagnostics file
-    //! \return Vector of strings labelling integral variables output
     std::vector< std::string > names( ncomp_t ) const;
 
     //! Return problem type

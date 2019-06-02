@@ -1535,14 +1535,11 @@ DG::resizePostAMR(
   const std::vector< std::size_t >& triinpoel )
 // *****************************************************************************
 //  Receive new mesh from refiner
-//! \param[in] ginpoel Mesh connectivity with global node ids
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
 //! \param[in] coord New mesh node coordinates
-//! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
 //! \param[in] addedTets Newly added mesh cells and their parents (local ids)
 //! \param[in] msum New node communication map
 //! \param[in] bface Boundary-faces mapped to side set ids
-//! \param[in] bnode Boundary-node lists mapped to side set ids
 //! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {

@@ -54,7 +54,6 @@ class CompFlowProblemSedovBlastwave {
     void side( std::unordered_set< int >& conf ) const;
 
     //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
     std::vector< std::string > fieldNames( ncomp_t ) const;
 
     //! Return field output going to file

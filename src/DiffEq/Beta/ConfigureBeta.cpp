@@ -86,9 +86,9 @@ infoBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
     parameters( g_inputdeck.get< tag::param, tag::beta, tag::kappa >().at(c) )
   );
   spikes( nfo,
-          g_inputdeck.get< tag::param, tag::beta, tag::spike >().at(c) );
+    g_inputdeck.get< tag::param, tag::beta, tag::init, tag::spike >().at(c) );
   betapdfs( nfo,
-            g_inputdeck.get< tag::param, tag::beta, tag::betapdf >().at(c) );
+    g_inputdeck.get< tag::param, tag::beta, tag::init, tag::betapdf >().at(c) );
 
   return nfo;
 }

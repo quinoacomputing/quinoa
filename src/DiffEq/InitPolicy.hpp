@@ -117,7 +117,8 @@ struct InitDelta {
   {
     using ncomp_t = kw::ncomp::info::expect::type;
 
-    const auto& spike = deck.template get< tag::param, eq, tag::spike >().at(e);
+    const auto& spike =
+      deck.template get< tag::param, eq, tag::init, tag::spike >().at(e);
 
     // use only the first ncomp spikes if there are more than the equation is
     // configured for
@@ -159,7 +160,7 @@ struct InitBeta {
     using ncomp_t = kw::ncomp::info::expect::type;
 
     const auto& betapdf =
-      deck.template get< tag::param, eq, tag::betapdf >().at(e);
+      deck.template get< tag::param, eq, tag::init, tag::betapdf >().at(e);
 
     // use only the first ncomp betapdfs if there are more than the equation is
     // configured for
@@ -200,7 +201,7 @@ struct InitGaussian {
     using ncomp_t = kw::ncomp::info::expect::type;
 
     const auto& gaussian =
-      deck.template get< tag::param, eq, tag::gaussian >().at(e);
+      deck.template get< tag::param, eq, tag::init, tag::gaussian >().at(e);
 
     // use only the first ncomp gaussian if there are more than the equation is
     // configured for
@@ -244,9 +245,11 @@ struct InitCorrGaussian {
   {
     using ncomp_t = kw::ncomp::info::expect::type;
 
-    const auto& mean = deck.template get< tag::param, eq, tag::mean >().at(e);
+    const auto& mean =
+      deck.template get< tag::param, eq, tag::init, tag::mean >().at(e);
     Assert( mean.size() == ncomp, "Size mismatch" );
-    const auto& cov_ = deck.template get< tag::param, eq, tag::cov >().at(e);
+    const auto& cov_ =
+      deck.template get< tag::param, eq, tag::init, tag::cov >().at(e);
     Assert( cov_.size() == ncomp*(ncomp+1)/2, "Size mismatch" );
 
     // Compute covariance matrix using Cholesky-decompositionm, see Intel MKL
@@ -290,7 +293,7 @@ struct InitGamma {
     using ncomp_t = kw::ncomp::info::expect::type;
 
     const auto& gamma =
-      deck.template get< tag::param, eq, tag::gamma >().at(e);
+      deck.template get< tag::param, eq, tag::init, tag::gamma >().at(e);
 
     // use only the first ncomp gamma if there are more than the equation is
     // configured for
@@ -311,6 +314,55 @@ struct InitGamma {
   { return ctr::InitPolicyType::JOINTGAMMA; }
 };
 
+//! Dirichlet initialization policy: generate samples from a Dirichlet PDF
+struct InitDirichlet {
+
+  //! Initialize particle properties (zero)
+  //! \see https://en.wikipedia.org/wiki/Dirichlet_distribution#Random_number_generation
+  template< class eq >
+  static void init( const ctr::InputDeck& deck,
+                    const tk::RNG& rng,
+                    int stream,
+                    tk::Particles& particles,
+                    tk::ctr::ncomp_type e,
+                    tk::ctr::ncomp_type ncomp,
+                    tk::ctr::ncomp_type offset )
+  {
+    using ncomp_t = kw::ncomp::info::expect::type;
+    const auto& dir =
+      deck.template get< tag::param, eq, tag::init, tag::dirichlet >().at(e);
+    tk::real eps = std::numeric_limits<tk::real>::epsilon() * 100.0;
+    Assert( dir.size() == ncomp+1, "Size mismatch" );
+    IGNORE(ncomp);
+    std::vector< tk::real > Y( dir.size() );
+
+    for (ncomp_t p=0; p<particles.nunk(); ++p) {
+
+      // Generate N gamma-distributed random numbers with prescribed shape and
+      // scale = 1.0.
+      for (std::size_t c=0; c<Y.size(); ++c) {
+        rng.gamma( stream, 1, dir[c], 1.0, Y.data()+c );
+      }
+
+      auto Ysum = std::accumulate( begin(Y), end(Y), 0.0 );
+
+      // Assign K=N-1 particle values by dividing the gamma-distributed numbers
+      // by the sum of the N vlues, which yields a Dirichlet distribution.
+      for (std::size_t c=0; c<Y.size()-1; ++c) {
+        auto y = Y[c] / Ysum;
+        if (y < eps) y = eps;
+        if (y > 1.0-eps) y = 1.0-eps;
+        particles( p, c, offset ) = y;
+      }
+
+    }
+
+  }
+
+  static ctr::InitPolicyType type() noexcept
+  { return ctr::InitPolicyType::JOINTDIRICHLET; }
+};
+
 //! List of all initialization policies
 using InitPolicies = brigand::list< InitRaw
                                   , InitZero
@@ -319,6 +371,7 @@ using InitPolicies = brigand::list< InitRaw
                                   , InitGaussian
                                   , InitCorrGaussian
                                   , InitGamma
+                                  , InitDirichlet
                                   >;
 
 } // walker::

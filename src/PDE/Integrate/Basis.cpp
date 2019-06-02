@@ -155,9 +155,8 @@ tk::eval_dBdx_p2( const std::size_t igp,
                   std::array< std::vector<tk::real>, 3 >& dBdx )
 // *****************************************************************************
 //  Compute the derivatives of basis function for DG(P2)
-//! \param[in] ndof Number of degrees of freedom
 //! \param[in] igp Index of quadrature points
-//! \param[in] coord Array of nodal coordinates for tetrahedron element
+//! \param[in] coordgp Gauss point coordinates for tetrahedron element
 //! \param[in] jacInv Array of the inverse of Jacobian
 //! \param[in,out] dBdx Array of the derivatives of basis function
 // *****************************************************************************

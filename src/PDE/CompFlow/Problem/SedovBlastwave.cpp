@@ -25,11 +25,11 @@ using inciter::CompFlowProblemSedovBlastwave;
 
 tk::SolutionFn::result_type
 CompFlowProblemSedovBlastwave::solution( ncomp_t system,
-                                       ncomp_t ncomp,
-                                       tk::real x,
-                                       tk::real y,
-                                       tk::real,
-                                       tk::real )
+                                         ncomp_t ncomp,
+                                         tk::real x,
+                                         tk::real y,
+                                         tk::real,
+                                         tk::real )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -37,7 +37,6 @@ CompFlowProblemSedovBlastwave::solution( ncomp_t system,
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
-//! \param[in] t Physical time at which to evaluate the solution
 //! \return Values of all components evaluated at (x)
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
