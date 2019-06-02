@@ -38,6 +38,7 @@ namespace AMR {
              * @brief function to detect when an invalid refinement is
              * invoked
              *
+             * @param tet_store Tet store to use
              * @param tet_id Id the of the tet which will be refined
              *
              * @return A bool stating if the tet can be validly refined
@@ -70,6 +71,8 @@ namespace AMR {
              * @brief Method which takes a tet id, and deduces the other
              * parameters needed to perform a 1:2
              *
+             * @param tet_store Tet store to use
+             * @param node_connectivity Mesh node connectivity (graph)
              * @param tet_id The id to refine 1:2
              */
             void refine_one_to_two( tet_store_t& tet_store, node_connectivity_t& node_connectivity, size_t tet_id)
@@ -79,13 +82,10 @@ namespace AMR {
                 refine_one_to_two( tet_store, node_connectivity, tet_id, nodes[0], nodes[1]);
             }
 
-            /**
-             * @brief Method which takes a tet id, and transforms arguments
-             * into the form needed for the main 1:2 refinement method
-             *
-             * @param tet_id The id to refine 1:2
-             */
 /*
+            //! @brief Method which takes a tet id, and transforms arguments
+            //!   into the form needed for the main 1:2 refinement method
+            //! @param tet_id The id to refine 1:2
             void refine_one_to_two(
                     size_t tet_id,
                     std::string edge_key
@@ -101,6 +101,8 @@ namespace AMR {
              * @brief Refine a given tet id into 2 children.
              * NOTE: Does not do any validity checking (currently?)
              *
+             * @param tet_store Tet store to use
+             * @param node_connectivity Mesh node connectivity (graph)
              * @param tet_id Id of tet to refine
              * @param edge_node_A_id The first node of id of the edge which
              * will be split
@@ -196,6 +198,8 @@ namespace AMR {
              * @brief Method which takes a tet id, and deduces the other
              * parameters needed to perform a 1:4
              *
+             * @param tet_store Tet store to use
+             * @param node_connectivity Mesh node connectivity (graph)
              * @param tet_id The id to refine 1:4
             */
             void refine_one_to_four( tet_store_t& tet_store,
@@ -272,6 +276,8 @@ namespace AMR {
              * @brief Refine a given tet id into 4 children.
              * NOTE: Does not do any validity checking (currently?)
              *
+             * @param tet_store Tet store to use
+             * @param node_connectivity Mesh node connectivity (graph)
              * @param tet_id The id of the tet to refine
              * @param face_ids The ids which make the face to be split
              * @param opposite_id The remaining id which is "opposite" the
@@ -412,6 +418,8 @@ namespace AMR {
              * @brief Refine a given tet id into 8 children.
              * NOTE: Does not do any validity checking (currently?)
              *
+             * @param tet_store Tet store to use
+             * @param node_connectivity Mesh node connectivity (graph)
              * @param tet_id Id of tet to refine
              */
             void refine_one_to_eight( tet_store_t& tet_store,
@@ -578,6 +586,7 @@ namespace AMR {
              * // NOTE: this is _currently_ trivial, but will be nice if we for
              * example swap data stores to a map
              *
+             * @param tet_store Tet store to use
              * @param tet tet of the tet to look for
              * @param element offset into that tet to look at
              *
@@ -593,6 +602,7 @@ namespace AMR {
              * single (or first?º edge which needs to be refined in an given
              * edge_list
              *
+             * @param tet_store Tet store to use
              * @param edge_list The edge list to search for a refinement edge
              *
              * @return The node pair which represent the edge which needs
@@ -709,6 +719,7 @@ namespace AMR {
             /**
              * @brief Function to iterate over children and remove them
              *
+             * @param tet_store Tet store to use
              * @param parent_id Id of the parent for whom you will delete the
              * children
              */
@@ -739,6 +750,7 @@ namespace AMR {
              * @brief Common code for derefinement. Deactives the children and
              * actives the parent
              *
+             * @param tet_store Tet store to use
              * @param parent_id The id of the parent
              */
             void generic_derefine(tet_store_t& tet_store, size_t parent_id)
@@ -747,21 +759,36 @@ namespace AMR {
                 tet_store.activate(parent_id);
             }
 
-            // TODO: Document This.
+            /**
+             * @brief Perform 2->1 derefinement on tet
+             *
+             * @param tet_store Tet store to use
+             * @param parent_id The id of the parent
+             */
             void derefine_two_to_one(tet_store_t& tet_store, size_t parent_id)
             {
                 delete_intermediates_of_children( tet_store, parent_id);
                 generic_derefine(tet_store,parent_id);
             }
 
-            // TODO: Document This.
+            /**
+             * @brief Perform 4->1 derefinement on tet
+             *
+             * @param tet_store Tet store to use
+             * @param parent_id The id of the parent
+             */
             void derefine_four_to_one(tet_store_t& tet_store, size_t parent_id)
             {
                 delete_intermediates_of_children(tet_store, parent_id);
                 generic_derefine(tet_store,parent_id);
             }
 
-            // TODO: Document This.
+            /**
+             * @brief Perform 8->1 derefinement on tet
+             *
+             * @param tet_store Tet store to use
+             * @param parent_id The id of the parent
+             */
             void derefine_eight_to_one(tet_store_t& tet_store, size_t parent_id)
             {
                 generic_derefine(tet_store,parent_id);
@@ -801,6 +828,7 @@ namespace AMR {
             /**
              * @brief Loop over children and delete all intermediate edges
              *
+             * @param tet_store Tet store to use
              * @param parent_id Id of parent
              */
             void delete_intermediates_of_children( tet_store_t& tet_store, size_t parent_id)
@@ -812,7 +840,12 @@ namespace AMR {
                 }
             }
 
-            // TODO: Document this
+            /**
+             * @brief TODO: Document this!
+             *
+             * @param tet_store Tet store to use
+             * @param tet_id TODO: document this!
+             */
             void delete_intermediates( tet_store_t& tet_store, size_t tet_id)
             {
                 edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
@@ -833,6 +866,7 @@ namespace AMR {
              * @brief If edge in candidate is not present in basis, delete the
              * edge (candidate) from the main edge store
              *
+             * @param tet_store Tet store to use
              * @param candidate The edge list which is to be searched and deleted
              * @param basis The edge list to check against
              */
@@ -874,6 +908,7 @@ namespace AMR {
              * @brief function to detect when an invalid derefinement is
              * invoked
              *
+             * @param tet_store Tet store to use
              * @param tet_id Id the of the tet which will be de-refined
              *
              * @return A bool stating if the tet can be validly de-refined

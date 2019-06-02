@@ -30,7 +30,7 @@ class ElemDiagnostics {
     bool compute( Discretization& d,
                   const std::size_t nchGhost,
                   const tk::Fields& geoElem,
-                  const std::vector< std::size_t >& pIndex,
+                  const std::vector< std::size_t >& ndofel,
                   const tk::Fields& u ) const;
 
     /** @name Charm++ pack/unpack serializer member functions */
@@ -46,7 +46,7 @@ class ElemDiagnostics {
   private:
     //! Compute diagnostics for DG
     void compute_diag( const Discretization& d,
-                       const std::size_t ndof,
+                       const std::size_t ndofel,
                        const std::size_t nchGhost,
                        const tk::Fields& geoElem,
                        const std::vector< std::size_t >& pIndex,

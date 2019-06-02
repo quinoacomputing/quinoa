@@ -66,9 +66,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
-//! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] bnode Boundary-node lists mapped to side set ids
-//! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 //! [Constructor]
 {
@@ -114,7 +112,6 @@ void
 ALECG::setup()
 // *****************************************************************************
 // Setup rows, query boundary conditions, output mesh, etc.
-//! \param[in] v Total mesh volume
 // *****************************************************************************
 {
   auto d = Disc();
@@ -417,9 +414,7 @@ ALECG::resizePostAMR(
 //! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
 //! \param[in] addedTets Newly added mesh cells and their parents (local ids)
 //! \param[in] msum New node communication map
-//! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] bnode Boundary-node lists mapped to side set ids
-//! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
   auto d = Disc();

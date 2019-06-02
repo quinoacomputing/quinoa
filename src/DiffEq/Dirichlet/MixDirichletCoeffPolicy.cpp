@@ -61,6 +61,7 @@ walker::MixDirichletHomCoeffConst::MixDirichletHomCoeffConst(
 //! \param[in,out] b Coefficient vector to be initialized
 //! \param[in,out] S Coefficient vector to be initialized
 //! \param[in,out] kprime Coefficient vector to be initialized
+//! \param[in,out] rho Coefficient vector to be initialized
 //! \param[in,out] r Coefficient vector to be initialized
 //! \param[in,out] k Coefficient vector to be initialized
 // *****************************************************************************
@@ -137,7 +138,7 @@ walker::MixDirichletHomCoeffConst::update(
                  ncomp, Moment::CENTRAL );
   Term vprime( static_cast<char>(std::tolower(depvar)),
                ncomp+1, Moment::CENTRAL );
-  auto ds = -lookup( Product({rhoprime,vprime}), moments );
+  //auto ds = -lookup( Product({rhoprime,vprime}), moments );
 
   // b. = -<ry.>/<R>
   std::vector< tk::real > bc( ncomp, 0.0 );
@@ -227,8 +228,8 @@ walker::MixDirichletHomCoeffConst::update(
   //std::cout << "sumR2Y: " << sumR2Y << std::endl;
 
   // <r^2>, density variance
-  auto rhovar = lookup(
-    variance(static_cast<char>(std::tolower(depvar)),ncomp), moments );
+  //auto rhovar = lookup(
+  //  variance(static_cast<char>(std::tolower(depvar)),ncomp), moments );
   //std::cout << "<r^2>: " << rhovar << std::endl;
 
   // <R^2>

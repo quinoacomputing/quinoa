@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/DiffEq/Beta/MixMassFracBetaCoeffPolicy.cpp
+  \file      src/DiffEq/Beta/MixMassFractionBetaCoeffPolicy.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
@@ -471,9 +471,12 @@ walker::MixMassFracBetaCoeffHydroTimeScale::update(
 //! \param[in] kprime Coefficient vector kappa'
 //! \param[in] rho2 Coefficient vector rho2
 //! \param[in] r Coefficient vector r
+//! \param[in] hts (Inverse) hydrodynamics time scale (as input from DNS)
+//! \param[in] hp Production/dissipation (as input from DNS)
 //! \param[in,out] b Coefficient vector to be updated
 //! \param[in,out] k Coefficient vector to be updated
 //! \param[in,out] S Coefficient vector to be updated
+//! \param[in] t Physical time at which to update coefficients
 //! \details This where the mix mass-fraction beta SDE is made consistent
 //!   with the no-mix and fully mixed limits by specifying the SDE
 //!   coefficients, b and kappa as functions of b' and kappa'. Additionally,
@@ -645,9 +648,9 @@ walker::MixMassFracBetaCoeffInstVel::update(
 // *****************************************************************************
 //  Update coefficients
 //! \param[in] depvar Dependent variable
+//! \param[in] dissipation_depvar Dependent variable of coupled dissipation eq
 //! \param[in] ncomp Number of scalar components in this SDE system
 //! \param[in] moments Map of statistical moments estimated
-//! \param[in] bprime Coefficient vector b'
 //! \param[in] kprime Coefficient vector kappa'
 //! \param[in] rho2 Coefficient vector rho2
 //! \param[in] r Coefficient vector r
