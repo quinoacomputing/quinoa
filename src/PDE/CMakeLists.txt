@@ -7,7 +7,8 @@ add_library(PDE
             Limiter.cpp
             ConfigureTransport.cpp
             ConfigureCompFlow.cpp
-            ConfigureMultiMat.cpp)
+            ConfigureMultiMat.cpp
+            EoS/EoS.cpp)
 
 target_include_directories(PDE PUBLIC
                            ${QUINOA_SOURCE_DIR}

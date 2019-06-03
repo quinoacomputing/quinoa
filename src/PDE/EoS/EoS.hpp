@@ -1,0 +1,46 @@
+// *****************************************************************************
+/*!
+  \file      src/PDE/CompFlow/EoS/EoS.hpp
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
+  \brief     Equation of state class
+  \details   This file defines functions for equations of state for the
+    compressible flow equations.
+*/
+// *****************************************************************************
+#ifndef EoS_h
+#define EoS_h
+
+#include "Data.hpp"
+
+namespace inciter {
+
+using ncomp_t = kw::ncomp::info::expect::type;
+
+  //! Calculate pressure from the material density, momentum and total energy
+  //! using the stiffened-gas equation of state
+  tk::real eos_pressure( ncomp_t system,
+                         tk::real rho,
+                         tk::real rhou,
+                         tk::real rhov,
+                         tk::real rhow,
+                         tk::real rhoE );
+
+  //! Calculate speed of sound from the material density and material pressure
+  tk::real eos_soundspeed( ncomp_t system, tk::real rho, tk::real pr );
+
+
+  //! Calculate material specific total energy from the material density,
+  //! momentum and material pressure
+  tk::real eos_totalenergy( ncomp_t system,
+                            tk::real rho,
+                            tk::real rhou,
+                            tk::real rhov,
+                            tk::real rhow,
+                            tk::real pr );
+
+} //inciter::
+
+#endif // EoS_h

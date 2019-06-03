@@ -14,6 +14,7 @@
 
 #include "VorticalFlow.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "EoS/EoS.hpp"
 
 namespace inciter {
 
@@ -235,7 +236,8 @@ CompFlowProblemVorticalFlow::fieldOutput(
 
    std::vector< tk::real > P( r.size(), 0.0 );
    for (std::size_t i=0; i<P.size(); ++i)
-     P[i] = (g-1.0)*(re[i] - r[i]*(u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
+     P[i] = eos_pressure( system, r[i], r[i]*u[i], r[i]*v[i], r[i]*w[i],
+                          re[i] );
    out.push_back( P );
    for (std::size_t i=0; i<P.size(); ++i)
      P[i] = p0 - 2.0*a*a*z[i]*z[i];

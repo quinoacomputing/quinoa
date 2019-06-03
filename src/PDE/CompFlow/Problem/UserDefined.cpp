@@ -14,6 +14,7 @@
 
 #include "UserDefined.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "EoS/EoS.hpp"
 
 namespace inciter {
 
@@ -152,9 +153,8 @@ CompFlowProblemUserDefined::fieldOutput(
   out.push_back( E );
 
   std::vector< tk::real > p = r;
-  tk::real g = g_inputdeck.get< tag::param, eq, tag::gamma >()[0];
   for (std::size_t i=0; i<p.size(); ++i)
-    p[i] = (g-1.0)*r[i]*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
+    p[i] = eos_pressure( 0, r[i], r[i]*u[i], r[i]*v[i], r[i]*w[i], r[i]*E[i] );
   out.push_back( p );
 
   std::vector< tk::real > T = r;
