@@ -411,7 +411,7 @@ Transporter::compatibility( int modified )
 // *****************************************************************************
 // Reduction target: all mesh refiner chares have received a round of edges,
 // and ran their compatibility algorithm
-//! \param[in] Sum acorss all workers, if nonzero, mesh is modified
+//! \param[in] modified Sum acorss all workers, if nonzero, mesh is modified
 //! \details This is called iteratively, until convergence by Refiner. At this
 //!   point all Refiner chares have received a round of edge data (tags whether
 //!   an edge needs to be refined, etc.), and applied the compatibility

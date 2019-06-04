@@ -55,10 +55,6 @@ class CompFlowProblemUserDefined {
     void side( std::unordered_set< int >& conf ) const;
 
     //! Return field output going to file
-    //! \param[in] offset System offset specifying the position of the system of
-    //!   PDEs among other systems
-    //! \param[in] U Solution vector at recent time step
-    //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t,
                  ncomp_t,

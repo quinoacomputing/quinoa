@@ -134,8 +134,10 @@ infoMixMassFractionBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
     parameters( g_inputdeck.get< tag::param, eq, tag::r >().at(c) )
   );
 
-  spikes( nfo, g_inputdeck.get< tag::param, eq, tag::spike >().at(c) );
-  betapdfs( nfo, g_inputdeck.get< tag::param, eq, tag::betapdf >().at(c) );
+  spikes( nfo,
+    g_inputdeck.get< tag::param, eq, tag::init, tag::spike >().at(c) );
+  betapdfs( nfo,
+    g_inputdeck.get< tag::param, eq, tag::init, tag::betapdf >().at(c) );
 
   return nfo;
 }

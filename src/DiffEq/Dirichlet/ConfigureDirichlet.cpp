@@ -95,15 +95,14 @@ infoDirichlet( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
   if (init == ctr::InitPolicyType::JOINTCORRGAUSSIAN) {
     nfo.emplace_back(
       "coeff mean [" + std::to_string( ncomp ) + "]",
-      parameters(
-        g_inputdeck.get< tag::param, tag::dirichlet, tag::mean >().at(c) )
-    );
+      parameters( g_inputdeck.get< tag::param, tag::dirichlet, tag::init,
+                  tag::mean >().at(c) ) );
     auto n = std::to_string( ncomp );
     nfo.emplace_back(
       "coeff cov [" + n + '(' + n + "+1)/2="
                     + std::to_string( ncomp*(ncomp+1)/2 ) + "]",
-      parameters(
-        g_inputdeck.get< tag::param, tag::dirichlet, tag::cov >().at(c) )
+      parameters( g_inputdeck.get< tag::param, tag::dirichlet, tag::init,
+                  tag::cov >().at(c) )
     );
   }
 

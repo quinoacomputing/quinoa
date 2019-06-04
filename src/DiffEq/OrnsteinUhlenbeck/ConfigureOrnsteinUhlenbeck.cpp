@@ -83,9 +83,10 @@ infoOrnsteinUhlenbeck( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
     parameters( g_inputdeck.get< tag::param, tag::ou, tag::theta >().at(c) ) );
   nfo.emplace_back( "coeff mu [" + std::to_string( ncomp ) + "]",
     parameters( g_inputdeck.get< tag::param, tag::ou, tag::mu >().at(c) ) );
-  spikes( nfo, g_inputdeck.get< tag::param, tag::ou, tag::spike >().at(c) );
-  betapdfs( nfo,
-            g_inputdeck.get< tag::param, tag::ou, tag::betapdf >().at(c) );
+  spikes( nfo, g_inputdeck.get< tag::param, tag::ou, tag::init,
+                                tag::spike >().at(c) );
+  betapdfs( nfo, g_inputdeck.get< tag::param, tag::ou, tag::init,
+                                  tag::betapdf >().at(c) );
 
   return nfo;
 }

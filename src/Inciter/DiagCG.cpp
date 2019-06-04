@@ -68,9 +68,7 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
-//! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] bnode Boundary-node lists mapped to side set ids
-//! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
   usesAtSync = true;    // enable migration at AtSync
@@ -114,7 +112,6 @@ void
 DiagCG::setup()
 // *****************************************************************************
 // Set and output initial conditions and mesh to file
-//! \param[in] v Total mesh volume
 // *****************************************************************************
 {
   auto d = Disc();
@@ -517,9 +514,7 @@ DiagCG::resizePostAMR(
 //! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
 //! \param[in] addedTets Newly added mesh cells and their parents (local ids)
 //! \param[in] msum New node communication map
-//! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] bnode Boundary-node lists mapped to side set ids
-//! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
   auto d = Disc();

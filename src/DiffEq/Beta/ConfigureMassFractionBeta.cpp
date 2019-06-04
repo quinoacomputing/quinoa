@@ -97,12 +97,10 @@ infoMassFractionBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
     "coeff r [" + std::to_string( ncomp ) + "]",
     parameters(
       g_inputdeck.get< tag::param, tag::massfracbeta, tag::r >().at(c) ) );
-  spikes(
-    nfo,
-    g_inputdeck.get< tag::param, tag::massfracbeta, tag::spike >().at(c) );
-  betapdfs(
-    nfo,
-    g_inputdeck.get< tag::param, tag::massfracbeta, tag::betapdf >().at(c) );
+  spikes( nfo, g_inputdeck.get< tag::param, tag::massfracbeta, tag::init,
+                 tag::spike >().at(c) );
+  betapdfs( nfo, g_inputdeck.get< tag::param, tag::massfracbeta, tag::init,
+                   tag::betapdf >().at(c) );
 
   return nfo;
 }

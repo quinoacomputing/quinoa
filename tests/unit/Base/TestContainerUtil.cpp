@@ -1,12 +1,12 @@
 // *****************************************************************************
 /*!
-  \file      tests/unit/Base/TestContainerUtil.C
+  \file      tests/unit/Base/TestContainerUtil.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Unit tests for Base/ContainerUtil.h
-  \details   Unit tests for Base/ContainerUtil.h
+  \brief     Unit tests for Base/ContainerUtil.hpp
+  \details   Unit tests for Base/ContainerUtil.hpp
 */
 // *****************************************************************************
 

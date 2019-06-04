@@ -171,7 +171,7 @@ class Sorter : public CBase_Sorter {
     tk::SorterCallback m_cbs;
     //! Discretization scheme
     Scheme m_scheme;
-    //! Callback to send reordered mesh to Refiner
+    //! Callback to use to send reordered mesh to Refiner
     CkCallback m_reorderRefiner;
     //! Tetrtahedron element connectivity of our chunk of the mesh (global ids)
     std::vector< std::size_t > m_ginpoel;

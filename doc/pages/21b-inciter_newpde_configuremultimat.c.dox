@@ -1,6 +1,6 @@
 /*!
-  \page      inciter_newpde_configuremultimat_c PDE/ConfigureMultiMat.C
+  \page      inciter_newpde_configuremultimat_c PDE/ConfigureMultiMat.cpp
 
-@include PDE/ConfigureMultiMat.C
+@include PDE/ConfigureMultiMat.cpp
 
 */

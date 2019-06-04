@@ -182,8 +182,6 @@ CompFlowPhysicsNavierStokes::conduct_dt(
 //! Compute the minimum time step size based on thermal diffusion
 //! \param[in] L Characteristic length scale
 //! \param[in] g Ratio of specific heats
-//! \param[in] cv Specific heat at constant volume
-//! \param[in] kc Thermal conductivity
 //! \param[in] u Solution at element nodes at recent time step
 //! \return Minimum time step size based on thermal diffusion
 // *****************************************************************************

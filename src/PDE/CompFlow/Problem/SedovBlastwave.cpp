@@ -37,7 +37,6 @@ CompFlowProblemSedovBlastwave::solution( ncomp_t system,
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
-//! \param[in] t Physical time at which to evaluate the solution
 //! \return Values of all components evaluated at (x)
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************

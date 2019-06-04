@@ -79,12 +79,11 @@ infoWrightFisher( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
     "coeff omega [" + std::to_string( ncomp ) + "]",
     parameters(
       g_inputdeck.get< tag::param, tag::wrightfisher, tag::omega >().at(c) ) );
-  spikes( nfo,
-          g_inputdeck.get< tag::param, tag::wrightfisher, tag::spike >().at(c)
+  spikes( nfo, g_inputdeck.get< tag::param, tag::wrightfisher, tag::init,
+                                tag::spike >().at(c)
   );
-  betapdfs(
-    nfo,
-    g_inputdeck.get< tag::param, tag::wrightfisher, tag::betapdf >().at(c) );
+  betapdfs( nfo, g_inputdeck.get< tag::param, tag::wrightfisher, tag::init,
+                                  tag::betapdf >().at(c) );
 
   return nfo;
 }

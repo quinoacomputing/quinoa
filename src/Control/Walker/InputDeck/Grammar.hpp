@@ -218,47 +218,48 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       using walker::deck::neq;
-      const auto& init =
+      const auto& initpolicy =
         stack.template get< tag::param, eq, tag::initpolicy >();
       // Error checks for joint delta initpolicy
-      if (init.size() == neq.get< eq >() &&
-          init.back() == walker::ctr::InitPolicyType::JOINTDELTA) {
+      if (initpolicy.size() == neq.get< eq >() &&
+          initpolicy.back() == walker::ctr::InitPolicyType::JOINTDELTA) {
         // Make sure there was an icdelta...end block with at least a single
         // spike...end block
-        const auto& spike = stack.template get< tag::param, eq, tag::spike >();
+        const auto& spike =
+          stack.template get< tag::param, eq, tag::init, tag::spike >();
         if (!spike.empty() && spike.back().empty())
           Message< Stack, ERROR, MsgKey::NODELTA >( stack, in );
       }
       // Error checks for joint beta initpolicy
-      if (init.size() == neq.get< eq >() &&
-          init.back() == walker::ctr::InitPolicyType::JOINTBETA) {
+      if (initpolicy.size() == neq.get< eq >() &&
+          initpolicy.back() == walker::ctr::InitPolicyType::JOINTBETA) {
         // Make sure there was an icbeta...end block with at least a single
         // betapdf...end block
         const auto& betapdf =
-          stack.template get< tag::param, eq, tag::betapdf >();
+          stack.template get< tag::param, eq, tag::init, tag::betapdf >();
         if (!betapdf.empty() && betapdf.back().empty())
           Message< Stack, ERROR, MsgKey::NOBETA >( stack, in );
       }
       // Error checks for joint gamma initpolicy
-      if (init.size() == neq.get< eq >() &&
-          init.back() == walker::ctr::InitPolicyType::JOINTGAMMA) {
+      if (initpolicy.size() == neq.get< eq >() &&
+          initpolicy.back() == walker::ctr::InitPolicyType::JOINTGAMMA) {
         // Make sure there was an icgamma...end block with at least a single
         // gammapdf...end block
         const auto& gammapdf =
-          stack.template get< tag::param, eq, tag::gamma >();
+          stack.template get< tag::param, eq, tag::init, tag::gamma >();
         if (!gammapdf.empty() && gammapdf.back().empty())
           Message< Stack, ERROR, MsgKey::NOGAMMA >( stack, in );
       }
       // Error checks for joint correlated Gaussian initpolicy
-      if (init.size() == neq.get< eq >() &&
-          init.back() == walker::ctr::InitPolicyType::JOINTCORRGAUSSIAN) {
+      if (initpolicy.size() == neq.get< eq >() &&
+          initpolicy.back() == walker::ctr::InitPolicyType::JOINTCORRGAUSSIAN) {
         // Ensure there was a mean vector and covaraiance matrix configured
         const auto& mean =
-          stack.template get< tag::param, eq, tag::mean >();
+          stack.template get< tag::param, eq, tag::init, tag::mean >();
         if (mean.empty() || mean.back().empty())
           Message< Stack, ERROR, MsgKey::NOMEAN >( stack, in );
         const auto& cov =
-          stack.template get< tag::param, eq, tag::cov >();
+          stack.template get< tag::param, eq, tag::init, tag::cov >();
         if (cov.empty() || cov.back().empty())
           Message< Stack, ERROR, MsgKey::NOCOV >( stack, in );
         // Ensure that an MKL RNG is configured if initpolicy is corr-Gaussian
@@ -490,7 +491,12 @@ namespace grm {
       if (rho.size() != ncomp-1)
         Message< Stack, ERROR, MsgKey::MIXDIR_RHO >( stack, in );
       // Ensure parameter vector rho is sorted in increasing order
-      if (!std::is_sorted( rho.cbegin(), rho.cend() ))
+      //if (!std::is_sorted( rho.cbegin(), rho.cend() ))
+      //  Message< Stack, ERROR, MsgKey::MIXDIR_RHO >( stack, in );
+      // Ensure parameter vector rho is sorted in decreasing order
+      auto r = rho;
+      std::reverse( begin(r), end(r) );
+      if (!std::is_sorted( r.cbegin(), r.cend() ))
         Message< Stack, ERROR, MsgKey::MIXDIR_RHO >( stack, in );
     }
   };
@@ -589,21 +595,25 @@ namespace deck {
                         // jointdelta initpolicy
                         tk::grm::start_vector< tag::param,
                                                eq,
+                                               tag::init,
                                                tag::spike >,
                         // start new vector or vectors of beta parameters for a
                         // potential jointbeta initpolicy
                         tk::grm::start_vector< tag::param,
                                                eq,
+                                               tag::init,
                                                tag::betapdf >,
                         // start new vector or vectors of gamma parameters for a
                         // potential jointgamma initpolicy
                         tk::grm::start_vector< tag::param,
                                                eq,
+                                               tag::init,
                                                tag::gamma >,
                         // start new vector or vectors of gaussian parameters
                         // for a potential jointgaussian initpolicy
                         tk::grm::start_vector< tag::param,
                                                eq,
+                                               tag::init,
                                                tag::gaussian > > {};
 
   //! Discretization parameters
@@ -631,6 +641,20 @@ namespace deck {
                                           tag::selected, tag::rng,
                                           tag::param, tag::rng123 > > {};
 
+  //! SDE parameter vector
+  template< class keyword,
+            template< class, class, class... > class check_vector,
+            class eq, class param, class... xparams >
+  struct sde_parameter_vector :
+         tk::grm::parameter_vector< use,
+                                    use< keyword >,
+                                    tk::grm::Store_back_back,
+                                    tk::grm::start_vector,
+                                    check_vector,
+                                    eq,
+                                    param,
+                                    xparams... > {};
+
   //! scan icdelta ... end block
   template< class eq >
   struct icdelta :
@@ -645,6 +669,7 @@ namespace deck {
                              tk::grm::start_vector_back,
                              tk::grm::check_spikes,
                              eq,
+                             tag::init,
                              tag::spike > > > {};
 
   //! scan icbeta ... end block
@@ -661,6 +686,7 @@ namespace deck {
                              tk::grm::start_vector_back,
                              tk::grm::check_betapdfs,
                              eq,
+                             tag::init,
                              tag::betapdf > > > {};
 
   //! scan icgamma ... end block
@@ -677,7 +703,22 @@ namespace deck {
                              tk::grm::start_vector_back,
                              tk::grm::check_gammapdfs,
                              eq,
+                             tag::init,
                              tag::gamma > > > {};
+
+  //! scan icdirichlet ... end block
+  template< class eq >
+  struct icdirichlet :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::icdirichlet >::pegtl_string >,
+           // parse a dirichletpdf ... end block (there can be multiple)
+           tk::grm::block<
+             use< kw::end >,
+             sde_parameter_vector< kw::dirichletpdf,
+                                   tk::grm::check_dirichletpdf,
+                                   eq,
+                                   tag::init,
+                                   tag::dirichlet > > > {};
 
   //! scan icgaussian ... end block
   template< class eq >
@@ -693,20 +734,8 @@ namespace deck {
                              tk::grm::start_vector_back,
                              tk::grm::check_gaussians,
                              eq,
+                             tag::init,
                              tag::gaussian > > > {};
-
-  //! SDE parameter vector
-  template< class keyword, class eq, class param,
-            template< class, class > class check_vector =
-              tk::grm::check_vector >
-  struct sde_parameter_vector :
-         tk::grm::parameter_vector< use,
-                                    use< keyword >,
-                                    tk::grm::Store_back_back,
-                                    tk::grm::start_vector,
-                                    check_vector,
-                                    eq,
-                                    param > {};
 
   //! scan icjointgaussian ... end block
   template< class eq >
@@ -715,9 +744,15 @@ namespace deck {
            tk::grm::readkw< use< kw::icjointgaussian >::pegtl_string >,
            // parse a jointgaussian ... end block
            tk::grm::block< use< kw::end >,
-                           sde_parameter_vector< kw::sde_mean, eq, tag::mean >,
-                           sde_parameter_vector< kw::sde_cov,
+                           sde_parameter_vector< kw::sde_mean,
+                                                 tk::grm::check_vector,
                                                  eq,
+                                                 tag::init,
+                                                 tag::mean >,
+                           sde_parameter_vector< kw::sde_cov,
+                                                 tk::grm::check_vector,
+                                                 eq,
+                                                 tag::init,
                                                  tag::cov > > > {};
 
   //! Error checks after an equation ... end block has been parsed
@@ -777,12 +812,15 @@ namespace deck {
                            icgaussian< tag::diagou >,
                            icjointgaussian< tag::diagou >,
                            sde_parameter_vector< kw::sde_sigmasq,
+                                                 tk::grm::check_vector,
                                                  tag::diagou,
                                                  tag::sigmasq >,
                            sde_parameter_vector< kw::sde_theta,
+                                                 tk::grm::check_vector,
                                                  tag::diagou,
                                                  tag::theta >,
                            sde_parameter_vector< kw::sde_mu,
+                                                 tk::grm::check_vector,
                                                  tag::diagou,
                                                  tag::mu > >,
            check_errors< tag::diagou > > {};
@@ -818,12 +856,15 @@ namespace deck {
                            icgaussian< tag::ou >,
                            icjointgaussian< tag::ou >,
                            sde_parameter_vector< kw::sde_sigmasq,
+                                                 tk::grm::check_vector,
                                                  tag::ou,
                                                  tag::sigmasq >,
                            sde_parameter_vector< kw::sde_theta,
+                                                 tk::grm::check_vector,
                                                  tag::ou,
                                                  tag::theta >,
                            sde_parameter_vector< kw::sde_mu,
+                                                 tk::grm::check_vector,
                                                  tag::ou,
                                                  tag::mu > >,
            check_errors< tag::ou > > {};
@@ -859,12 +900,15 @@ namespace deck {
                            icgaussian< tag::skewnormal >,
                            icjointgaussian< tag::skewnormal >,
                            sde_parameter_vector< kw::sde_T,
+                                                 tk::grm::check_vector,
                                                  tag::skewnormal,
                                                  tag::timescale >,
                            sde_parameter_vector< kw::sde_sigmasq,
+                                                 tk::grm::check_vector,
                                                  tag::skewnormal,
                                                  tag::sigmasq >,
                            sde_parameter_vector< kw::sde_lambda,
+                                                 tk::grm::check_vector,
                                                  tag::skewnormal,
                                                  tag::lambda > >,
            check_errors< tag::skewnormal > > {};
@@ -900,12 +944,15 @@ namespace deck {
                            icgaussian< tag::beta >,
                            icjointgaussian< tag::beta >,
                            sde_parameter_vector< kw::sde_b,
+                                                 tk::grm::check_vector,
                                                  tag::beta,
                                                  tag::b >,
                            sde_parameter_vector< kw::sde_S,
+                                                 tk::grm::check_vector,
                                                  tag::beta,
                                                  tag::S >,
                            sde_parameter_vector< kw::sde_kappa,
+                                                 tk::grm::check_vector,
                                                  tag::beta,
                                                  tag::kappa > >,
            check_errors< tag::beta > > {};
@@ -941,18 +988,23 @@ namespace deck {
                            icgaussian< tag::numfracbeta >,
                            icjointgaussian< tag::numfracbeta >,
                            sde_parameter_vector< kw::sde_b,
+                                                 tk::grm::check_vector,
                                                  tag::numfracbeta,
                                                  tag::b >,
                            sde_parameter_vector< kw::sde_S,
+                                                 tk::grm::check_vector,
                                                  tag::numfracbeta,
                                                  tag::S >,
                            sde_parameter_vector< kw::sde_kappa,
+                                                 tk::grm::check_vector,
                                                  tag::numfracbeta,
                                                  tag::kappa >,
                            sde_parameter_vector< kw::sde_rho2,
+                                                 tk::grm::check_vector,
                                                  tag::numfracbeta,
                                                  tag::rho2 >,
                            sde_parameter_vector< kw::sde_rcomma,
+                                                 tk::grm::check_vector,
                                                  tag::numfracbeta,
                                                  tag::rcomma > >,
            check_errors< tag::numfracbeta > > {};
@@ -988,18 +1040,23 @@ namespace deck {
                            icgaussian< tag::massfracbeta >,
                            icjointgaussian< tag::massfracbeta >,
                            sde_parameter_vector< kw::sde_b,
+                                                 tk::grm::check_vector,
                                                  tag::massfracbeta,
                                                  tag::b >,
                            sde_parameter_vector< kw::sde_S,
+                                                 tk::grm::check_vector,
                                                  tag::massfracbeta,
                                                  tag::S >,
                            sde_parameter_vector< kw::sde_kappa,
+                                                 tk::grm::check_vector,
                                                  tag::massfracbeta,
                                                  tag::kappa >,
                            sde_parameter_vector< kw::sde_rho2,
+                                                 tk::grm::check_vector,
                                                  tag::massfracbeta,
                                                  tag::rho2 >,
                            sde_parameter_vector< kw::sde_r,
+                                                 tk::grm::check_vector,
                                                  tag::massfracbeta,
                                                  tag::r > >,
            check_errors< tag::massfracbeta > > {};
@@ -1035,18 +1092,23 @@ namespace deck {
                            icgaussian< tag::mixnumfracbeta >,
                            icjointgaussian< tag::mixnumfracbeta >,
                            sde_parameter_vector< kw::sde_bprime,
+                                                 tk::grm::check_vector,
                                                  tag::mixnumfracbeta,
                                                  tag::bprime >,
                            sde_parameter_vector< kw::sde_S,
+                                                 tk::grm::check_vector,
                                                  tag::mixnumfracbeta,
                                                  tag::S >,
                            sde_parameter_vector< kw::sde_kappaprime,
+                                                 tk::grm::check_vector,
                                                  tag::mixnumfracbeta,
                                                  tag::kappaprime >,
                            sde_parameter_vector< kw::sde_rho2,
+                                                 tk::grm::check_vector,
                                                  tag::mixnumfracbeta,
                                                  tag::rho2 >,
                            sde_parameter_vector< kw::sde_rcomma,
+                                                 tk::grm::check_vector,
                                                  tag::mixnumfracbeta,
                                                  tag::rcomma > >,
            check_errors< tag::mixnumfracbeta > > {};
@@ -1092,24 +1154,29 @@ namespace deck {
                                               tag::hydroproductions,
                                               tk::grm::check_vector_size >,
                            sde_parameter_vector< kw::sde_bprime,
+                                                 tk::grm::check_vector,
                                                  tag::mixmassfracbeta,
                                                  tag::bprime >,
                            sde_parameter_vector< kw::sde_S,
+                                                 tk::grm::check_vector,
                                                  tag::mixmassfracbeta,
                                                  tag::S >,
                            sde_parameter_vector< kw::sde_kappaprime,
+                                                 tk::grm::check_vector,
                                                  tag::mixmassfracbeta,
                                                  tag::kappaprime >,
                            sde_parameter_vector< kw::sde_rho2,
+                                                 tk::grm::check_vector,
                                                  tag::mixmassfracbeta,
                                                  tag::rho2 >,
                            sde_parameter_vector< kw::sde_r,
+                                                 tk::grm::check_vector,
                                                  tag::mixmassfracbeta,
                                                  tag::r >,
                            sde_parameter_vector< kw::mean_gradient,
+                                                 tk::grm::check_mean_gradient,
                                                  tag::mixmassfracbeta,
-                                                 tag::mean_gradient,
-                                                 tk::grm::check_mean_gradient >,
+                                                 tag::mean_gradient >,
                            tk::grm::process<
                              use< kw::velocity >,
                              tk::grm::Store_back< tag::param,
@@ -1167,12 +1234,15 @@ namespace deck {
                            icgaussian< tag::gamma >,
                            icjointgaussian< tag::gamma >,
                            sde_parameter_vector< kw::sde_b,
+                                                 tk::grm::check_vector,
                                                  tag::gamma,
                                                  tag::b >,
                            sde_parameter_vector< kw::sde_S,
+                                                 tk::grm::check_vector,
                                                  tag::gamma,
                                                  tag::S >,
                            sde_parameter_vector< kw::sde_kappa,
+                                                 tk::grm::check_vector,
                                                  tag::gamma,
                                                  tag::kappa > >,
            check_errors< tag::gamma > > {};
@@ -1208,12 +1278,15 @@ namespace deck {
                            icgaussian< tag::dirichlet >,
                            icjointgaussian< tag::dirichlet >,
                            sde_parameter_vector< kw::sde_b,
+                                                 tk::grm::check_vector,
                                                  tag::dirichlet,
                                                  tag::b >,
                            sde_parameter_vector< kw::sde_S,
+                                                 tk::grm::check_vector,
                                                  tag::dirichlet,
                                                  tag::S >,
                            sde_parameter_vector< kw::sde_kappa,
+                                                 tk::grm::check_vector,
                                                  tag::dirichlet,
                                                  tag::kappa >
                          >,
@@ -1247,18 +1320,23 @@ namespace deck {
                            icdelta< tag::mixdirichlet >,
                            icbeta< tag::mixdirichlet >,
                            icgamma< tag::mixdirichlet >,
+                           icdirichlet< tag::mixdirichlet >,
                            icgaussian< tag::mixdirichlet >,
                            icjointgaussian< tag::mixdirichlet >,
                            sde_parameter_vector< kw::sde_b,
+                                                 tk::grm::check_vector,
                                                  tag::mixdirichlet,
                                                  tag::b >,
                            sde_parameter_vector< kw::sde_S,
+                                                 tk::grm::check_vector,
                                                  tag::mixdirichlet,
                                                  tag::S >,
                            sde_parameter_vector< kw::sde_kappaprime,
+                                                 tk::grm::check_vector,
                                                  tag::mixdirichlet,
                                                  tag::kappaprime >,
                            sde_parameter_vector< kw::sde_rho,
+                                                 tk::grm::check_vector,
                                                  tag::mixdirichlet,
                                                  tag::rho >
                          >,
@@ -1296,15 +1374,19 @@ namespace deck {
                            icgaussian< tag::gendir >,
                            icjointgaussian< tag::gendir >,
                            sde_parameter_vector< kw::sde_b,
+                                                 tk::grm::check_vector,
                                                  tag::gendir,
                                                  tag::b >,
                            sde_parameter_vector< kw::sde_S,
+                                                 tk::grm::check_vector,
                                                  tag::gendir,
                                                  tag::S >,
                            sde_parameter_vector< kw::sde_kappa,
+                                                 tk::grm::check_vector,
                                                  tag::gendir,
                                                  tag::kappa >,
                            sde_parameter_vector< kw::sde_c,
+                                                 tk::grm::check_vector,
                                                  tag::gendir,
                                                  tag::c > >,
            check_errors< tag::gendir > > {};
@@ -1340,6 +1422,7 @@ namespace deck {
                            icgaussian< tag::wrightfisher >,
                            icjointgaussian< tag::wrightfisher >,
                            sde_parameter_vector< kw::sde_omega,
+                                                 tk::grm::check_vector,
                                                  tag::wrightfisher,
                                                  tag::omega > >,
            check_errors< tag::wrightfisher > > {};

@@ -176,11 +176,14 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::jointdelta
                                  , kw::jointgaussian
                                  , kw::jointcorrgaussian
+                                 , kw::jointdirichlet
                                  , kw::icbeta
                                  , kw::betapdf
+                                 , kw::dirichletpdf
                                  , kw::sde_c0
                                  , kw::icgaussian
                                  , kw::icjointgaussian
+                                 , kw::icdirichlet
                                  , kw::gaussian
                                  , kw::dissipation
                                  , kw::jointgamma
