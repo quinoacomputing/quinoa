@@ -4483,6 +4483,21 @@ struct mat_gamma_info {
 };
 using mat_gamma = keyword< mat_gamma_info, TAOCPP_PEGTL_STRING("gamma") >;
 
+struct mat_pstiff_info {
+  static std::string name() { return "pstiff"; }
+  static std::string shortDescription() { return "EoS stiffness parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property, stiffness
+       parameter in the material EoS.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using mat_pstiff = keyword< mat_pstiff_info, TAOCPP_PEGTL_STRING("pstiff") >;
+
 struct mat_mu_info {
   static std::string name() { return "mu"; }
   static std::string shortDescription() { return "dynamic viscosity"; }
@@ -4539,6 +4554,7 @@ struct material_info {
     block: )" + std::string("\'")
     + id::string()+ "\', \'"
     + mat_gamma::string()+ "\', \'"
+    + mat_pstiff::string()+ "\', \'"
     + mat_mu::string()+ "\', \'"
     + mat_cv::string()+ "\', \'"
     + mat_k::string() + "\'. "

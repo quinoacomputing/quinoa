@@ -19,8 +19,8 @@ namespace inciter {
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
-  //! Calculate pressure from the material density, momentum and total energy
-  //! using the stiffened-gas equation of state
+  //! \brief Calculate pressure from the material density, momentum and total energy
+  //!   using the stiffened-gas equation of state
   tk::real eos_pressure( ncomp_t system,
                          tk::real rho,
                          tk::real rhou,
@@ -32,8 +32,8 @@ using ncomp_t = kw::ncomp::info::expect::type;
   tk::real eos_soundspeed( ncomp_t system, tk::real rho, tk::real pr );
 
 
-  //! Calculate material specific total energy from the material density,
-  //! momentum and material pressure
+  //! \brief Calculate material specific total energy from the material density,
+  //!   momentum and material pressure
   tk::real eos_totalenergy( ncomp_t system,
                             tk::real rho,
                             tk::real rhou,

@@ -27,8 +27,8 @@ tk::real inciter::eos_pressure( ncomp_t system,
                                 tk::real rhow,
                                 tk::real rhoE )
 // *****************************************************************************
-//  Calculate pressure from the material density, momentum and total energy
-//  using the stiffened-gas equation of state
+//  \brief Calculate pressure from the material density, momentum and total energy
+//    using the stiffened-gas equation of state
 //! \param[in] system Equation system index
 //! \param[in] rho Material density
 //! \param[in] rhou X-momentum
@@ -72,8 +72,8 @@ tk::real inciter::eos_totalenergy( ncomp_t system,
                                    tk::real rhow,
                                    tk::real pr )
 // *****************************************************************************
-//  Calculate material specific total energy from the material density, momentum
-//  and material pressure
+//  \brief Calculate material specific total energy from the material density, momentum
+//    and material pressure
 //  using the stiffened-gas equation of state
 //! \param[in] system Equation system index
 //! \param[in] rho Material density
