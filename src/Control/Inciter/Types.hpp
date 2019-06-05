@@ -213,18 +213,12 @@ using MultiMatPDEParameters = tk::tuple::tagged_tuple<
   tag::beta,          std::vector< kw::pde_beta::info::expect::type >,
   //! Parameter vector (for specific, e.g., verification problems)
   tag::p0,            std::vector< kw::pde_p0::info::expect::type >,
-  //! Material ID
-  tag::id,            std::vector< kw::id::info::expect::type >,
   //! Ratio of spec heats
-  tag::gamma,         std::vector< kw::mat_gamma::info::expect::type >,
-  //! Dynamic viscosity
-  tag::mu,            std::vector< kw::mat_mu::info::expect::type >,
+  tag::gamma,         std::vector< std::vector< kw::mat_gamma::info::expect::type > >,
   //! EoS stiffness parameter
-  tag::pstiff,        std::vector< kw::mat_pstiff::info::expect::type >,
+  tag::pstiff,        std::vector< std::vector< kw::mat_pstiff::info::expect::type > >,
   //! Spec. heat at const vol.
-  tag::cv,            std::vector< kw::mat_cv::info::expect::type >,
-  //! Heat conductivity
-  tag::k,             std::vector< kw::mat_k::info::expect::type >,
+  tag::cv,            std::vector< std::vector< kw::mat_cv::info::expect::type > >,
   //! number of materials
   tag::nmat,          std::vector< kw::nmat::info::expect::type >
 >;

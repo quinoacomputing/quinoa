@@ -556,6 +556,25 @@ namespace deck {
                              material_property< eq, kw::mat_cv, tag::cv >,
                              material_property< eq, kw::mat_k, tag::k > > > {};
 
+  //! put in multi-material property for equation matching keyword
+  template< typename eq, typename keyword, typename property >
+  struct multimaterial_property :
+                           pde_parameter_vector< keyword,
+                                                 tag::multimat,
+                                                 property > {};
+         //tk::grm::process< use< keyword >,
+         //  tk::grm::Store_back< tag::param, eq, property > > {};
+
+  //! Multi-material properties block for multi-material compressible flow
+  template< class eq >
+  struct multimaterial_properties :
+           pegtl::if_must<
+             tk::grm::readkw< use< kw::material >::pegtl_string >,
+             tk::grm::block< use< kw::end >,
+                      multimaterial_property< eq, kw::mat_gamma, tag::gamma >,
+                      multimaterial_property< eq, kw::mat_pstiff, tag::pstiff >,
+                      multimaterial_property< eq, kw::mat_cv, tag::cv > > > {};
+
   //! put in PDE parameter for equation matching keyword
   template< typename eq, typename keyword, typename p,
             class kw_type = tk::grm::number >
@@ -661,7 +680,7 @@ namespace deck {
                            parameter< tag::multimat,
                                       kw::nmat,
                                       tag::nmat >,
-                           material_properties< tag::multimat >,
+                           multimaterial_properties< tag::multimat >,
                            parameter< tag::multimat,
                                       kw::pde_alpha,
                                       tag::alpha >,

@@ -82,11 +82,8 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_type >& cnt )
   nfo.emplace_back( "start offset in unknowns array", std::to_string(
     g_inputdeck.get< tag::component >().offset< eq >(c) ) );
 
-  nfo.emplace_back( "material id", parameters(
-    g_inputdeck.get< tag::param, eq, tag::id >() ) );
-
   nfo.emplace_back( "ratio of specific heats", parameters(
-    g_inputdeck.get< tag::param, eq, tag::gamma >() ) );
+    g_inputdeck.get< tag::param, eq, tag::gamma >()[c] ) );
 
   const auto& alpha = g_inputdeck.get< tag::param, eq, tag::alpha >();
   if (!alpha.empty()) nfo.emplace_back( "coeff alpha", parameters( alpha ) );
@@ -98,6 +95,10 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_type >& cnt )
   const auto& p0 = g_inputdeck.get< tag::param, eq, tag::p0 >();
   if (!p0.empty())
     nfo.emplace_back( "coeff p0", parameters( p0 ) );
+
+  const auto& pstiff = g_inputdeck.get< tag::param, eq, tag::pstiff >()[c];
+  if (!pstiff.empty())
+    nfo.emplace_back( "coeff pstiff", parameters( pstiff ) );
 
   return nfo;
 }
