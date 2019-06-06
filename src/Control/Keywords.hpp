@@ -4488,7 +4488,7 @@ struct mat_pstiff_info {
   static std::string shortDescription() { return "EoS stiffness parameter"; }
   static std::string longDescription() { return
     R"(This keyword is used to specify the material property, stiffness
-       parameter in the material EoS.)";
+       parameter in the stiffened gas equation of state.)";
   }
   struct expect {
     using type = tk::real;
