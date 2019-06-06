@@ -246,6 +246,24 @@ namespace grm {
         ncomp.push_back( m-1 + m + 3 + m );
       }
 
+      // Verify correct number of multi-material properties configured
+      auto& gamma = stack.template get< tag::param, eq, tag::gamma >();
+      if (gamma.empty() || gamma.back().size() != nmat.back())
+        Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
+
+      auto& cv = stack.template get< tag::param, eq, tag::cv >();
+      if (cv.empty() || cv.back().size() != nmat.back())
+        Message< Stack, ERROR, MsgKey::EOSCV >( stack, in );
+
+      // If stiffness coefficients are not given, set defaults
+      using pstiff_t = kw::mat_pstiff::info::expect::type;
+      auto& pstiff = stack.template get< tag::param, eq, tag::pstiff >();
+      if (pstiff.empty())
+        pstiff.push_back( std::vector< pstiff_t >( nmat.back(), 0.0 ) );
+      // If stiffness coefficient vector is wrong size, error out
+      if (pstiff.back().size() != nmat.back())
+        Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
+
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< tag::param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
@@ -548,32 +566,29 @@ namespace deck {
   struct material_properties :
            pegtl::if_must<
              tk::grm::readkw< use< kw::material >::pegtl_string >,
-             tk::grm::block< use< kw::end >,
-                             material_property< eq, kw::id, tag::id >,
-                             material_property< eq, kw::mat_gamma, tag::gamma >,
-                             material_property< eq, kw::mat_pstiff, tag::pstiff >,
-                             material_property< eq, kw::mat_mu, tag::mu >,
-                             material_property< eq, kw::mat_cv, tag::cv >,
-                             material_property< eq, kw::mat_k, tag::k > > > {};
+             tk::grm::block<
+               use< kw::end >,
+               material_property< eq, kw::mat_gamma, tag::gamma >,
+               material_property< eq, kw::mat_pstiff, tag::pstiff >,
+               material_property< eq, kw::mat_mu, tag::mu >,
+               material_property< eq, kw::mat_cv, tag::cv >,
+               material_property< eq, kw::mat_k, tag::k > > > {};
 
   //! put in multi-material property for equation matching keyword
   template< typename eq, typename keyword, typename property >
   struct multimaterial_property :
-                           pde_parameter_vector< keyword,
-                                                 tag::multimat,
-                                                 property > {};
-         //tk::grm::process< use< keyword >,
-         //  tk::grm::Store_back< tag::param, eq, property > > {};
+         pde_parameter_vector< keyword, tag::multimat, property > {};
 
   //! Multi-material properties block for multi-material compressible flow
   template< class eq >
   struct multimaterial_properties :
            pegtl::if_must<
              tk::grm::readkw< use< kw::material >::pegtl_string >,
-             tk::grm::block< use< kw::end >,
-                      multimaterial_property< eq, kw::mat_gamma, tag::gamma >,
-                      multimaterial_property< eq, kw::mat_pstiff, tag::pstiff >,
-                      multimaterial_property< eq, kw::mat_cv, tag::cv > > > {};
+             tk::grm::block<
+               use< kw::end >,
+               multimaterial_property< eq, kw::mat_gamma, tag::gamma >,
+               multimaterial_property< eq, kw::mat_pstiff, tag::pstiff >,
+               multimaterial_property< eq, kw::mat_cv, tag::cv > > > {};
 
   //! put in PDE parameter for equation matching keyword
   template< typename eq, typename keyword, typename p,

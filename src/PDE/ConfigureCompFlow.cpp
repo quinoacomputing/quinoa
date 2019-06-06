@@ -89,9 +89,6 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_type >& cnt )
   nfo.emplace_back( "start offset in unknowns array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::compflow >(c) ) );
 
-  nfo.emplace_back( "material id", parameters(
-    g_inputdeck.get< tag::param, tag::compflow, tag::id >() ) );
-
   nfo.emplace_back( "ratio of specific heats", parameters(
     g_inputdeck.get< tag::param, tag::compflow, tag::gamma >() ) );
 
