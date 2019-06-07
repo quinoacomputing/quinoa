@@ -164,7 +164,9 @@ namespace AMR {
      * of intermediate edges
      *
      * @param num_locked_edges The number of locked edges
+     * @param num_intermediate_edges The number of intermediate edges
      * @param refinement_case The refinement case of the tet
+     * @param normal TODO: Document this!
      *
      * @return The compatibili4y class of the current scenario
      */
@@ -545,7 +547,6 @@ namespace AMR {
      * @brief A method implementing "Algorithm 1" from the paper
      *
      * @param num_to_refine Number of edges to refine
-     * @param edge_list The list of the edges for the tet
      * @param tet_id The id of the given tet
      */
     void mesh_adapter_t::refinement_class_one(int num_to_refine, size_t tet_id)

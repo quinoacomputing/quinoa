@@ -97,10 +97,11 @@ namespace grm {
     NOMEAN,             //!< No mean when initpolicy = jointcorrgaussian
     NOCOV,              //!< No cov when initpolicy = jointcorrgaussian
     NOMKLRNG,           //!< No MKL RNG configured
-    WRONGBETAPDF,       //!< Wrong number of parameters configuring a beta pdf
-    WRONGGAMMAPDF,      //!< Wrong number of parameters configuring a gamma pdf
-    WRONGGAUSSIAN,      //!< Wrong number of parameters configuring a PDF
-    NEGATIVEPARAM,      //!< Negative variance given configuring a Gaussian
+    WRONGBETAPDF,       //!< Wrong number of parameters for a beta pdf
+    WRONGGAMMAPDF,      //!< Wrong number of parameters for a gamma pdf
+    WRONGGAUSSIAN,      //!< Wrong number of parameters for a Gaussian PDF
+    WRONGDIRICHLET,     //!< Wrong number of parameters for a Dirichlet PDF
+    NEGATIVEPARAM,      //!< Negative parameter given configuring a PDF
     NONCOMP,            //!< No number of components selected
     NONMAT,             //!< No number of materials selected
     NORNG,              //!< No RNG selected
@@ -260,6 +261,8 @@ namespace grm {
     { MsgKey::WRONGGAUSSIAN, "Wrong number of Gaussian distribution "
       "parameters. A Gaussian distribution must be configured by exactly 2 "
       "real numbers in a gaussian...end block." },
+    { MsgKey::WRONGDIRICHLET, "Wrong number of Dirichlet distribution "
+      "parameters." },
     { MsgKey::NEGATIVEPARAM, "Negative distribution parameter (e.g., variance, "
       "shape, scale) specified configuring a probabililty distribution." },
     { MsgKey::NOTERMS, "Statistic requires at least one variable." },
@@ -1072,25 +1075,27 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< class eq, class param > struct check_vector : pegtl::success {};
+  template< class eq, class param, class... xparam >
+  struct check_vector : pegtl::success {};
   //! Check parameter vector
-  template< class eq, class param >
-  struct action< check_vector< eq, param > > {
+  template< class eq, class param, class... xparam >
+  struct action< check_vector< eq, param, xparam... > > {
     template< typename Input, typename Stack >
     static void apply( const Input&, Stack& ) {}
   };
 
   //! Rule used to trigger action
-  template< class eq, class param > struct check_spikes : pegtl::success {};
+  template< class eq, class param, class... xparam >
+  struct check_spikes : pegtl::success {};
   //! Check if the spikes parameter vector specifications are correct
   //! \details Spikes are used to specify sample-space locations and relative
   //!    probability heights for a joint-delta PDF.
-  template< class eq, class param >
-  struct action< check_spikes< eq, param > > {
+  template< class eq, class param, class... xparam >
+  struct action< check_spikes< eq, param, xparam... > > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       const auto& spike =
-        stack.template get< tag::param, eq, param >().back().back();
+        stack.template get< tag::param, eq, param, xparam... >().back().back();
       // Error out if the number of spikes-vector is odd
       if (spike.size() % 2)
         Message< Stack, ERROR, MsgKey::ODDSPIKES >( stack, in );
@@ -1109,16 +1114,17 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< class eq, class param > struct check_betapdfs : pegtl::success {};
+  template< class eq, class param, class... xparam >
+  struct check_betapdfs : pegtl::success {};
   //! Check if the betapdf parameter vector specifications are correct
   //! \details Betapdf vectors are used to configure univariate beta
   //!   distributions.
-  template< class eq, class param >
-  struct action< check_betapdfs< eq, param > > {
+  template< class eq, class param, class... xparam >
+  struct action< check_betapdfs< eq, param, xparam... > > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       const auto& betapdf =
-        stack.template get< tag::param, eq, param >().back().back();
+        stack.template get< tag::param, eq, param, xparam... >().back().back();
       // Error out if the number parameters is not four
       if (betapdf.size() != 4)
         Message< Stack, ERROR, MsgKey::WRONGBETAPDF >( stack, in );
@@ -1126,16 +1132,17 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< class eq, class param > struct check_gammapdfs : pegtl::success {};
+  template< class eq, class param, class... xparam >
+  struct check_gammapdfs : pegtl::success {};
   //! Check if the gammapdf parameter vector specifications are correct
   //! \details gammapdf vectors are used to configure univariate gamma
   //!   distributions.
-  template< class eq, class param >
-  struct action< check_gammapdfs< eq, param > > {
+  template< class eq, class param, class... xparam >
+  struct action< check_gammapdfs< eq, param, xparam... > > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       const auto& gamma =
-        stack.template get< tag::param, eq, param >().back().back();
+        stack.template get< tag::param, eq, param, xparam... >().back().back();
       // Error out if the number parameters is not two
       if (gamma.size() != 2)
         Message< Stack, ERROR, MsgKey::WRONGGAMMAPDF >( stack, in );
@@ -1146,16 +1153,42 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< class eq, class param > struct check_gaussians : pegtl::success {};
+  template< class eq, class param, class... xparam >
+  struct check_dirichletpdf : pegtl::success {};
+  //! Check if the dirichletpdf parameter vector specifications are correct
+  //! \details dirichletpdf vectors are used to configure multivariate
+  //!    Dirichlet distributions.
+  template< class eq, class param, class... xparam >
+  struct action< check_dirichletpdf< eq, param, xparam... > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      const auto& dir =
+        stack.template get< tag::param, eq, param, xparam... >().back();
+      // get recently configured eq block number of scalar components
+      auto ncomp =
+        stack.template get< tag::component >().template get< eq >().back();
+      // Error out if the number parameters does not equal ncomp
+      if (dir.size() != ncomp-1)
+        Message< Stack, ERROR, MsgKey::WRONGDIRICHLET >( stack, in );
+      // Error out if the specified shape or scale parameter negative
+      for (auto a : dir)
+        if (a < 0.0)
+          Message< Stack, ERROR, MsgKey::NEGATIVEPARAM >( stack, in );
+    }
+  };
+
+  //! Rule used to trigger action
+  template< class eq, class param, class... xparam >
+  struct check_gaussians : pegtl::success {};
   //! Check if the Gaussian PDF parameter vector specifications are correct
   //! \details Gaussian vectors are used to configure univariate Gaussian
   //!   distributions.
-  template< class eq, class param >
-  struct action< check_gaussians< eq, param > > {
+  template< class eq, class param, class... xparam >
+  struct action< check_gaussians< eq, param, xparam... > > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       const auto& gaussian =
-        stack.template get< tag::param, eq, param >().back().back();
+        stack.template get< tag::param, eq, param, xparam... >().back().back();
       // Error out if the number parameters is not two
       if (gaussian.size() != 2)
         Message< Stack, ERROR, MsgKey::WRONGGAUSSIAN >( stack, in );
@@ -1653,15 +1686,16 @@ namespace grm {
             typename keyword,
             template< class, class... > class store,
             template< class, class... > class start,
-            template< class, class > class check,
+            template< class, class, class... > class check,
             typename eq,
-            typename param >
+            typename param,
+            typename... xparams >
   struct parameter_vector :
          pegtl::if_must< vector< keyword,
-                                 store< tag::param, eq, param >,
+                                 store< tag::param, eq, param, xparams... >,
                                  use< kw::end >,
-                                 start< tag::param, eq, param > >,
-                         check< eq, param > > {};
+                                 start< tag::param, eq, param, xparams... > >,
+                         check< eq, param, xparams... > > {};
 
   //! Match equation/model option vector
   //! \details This structure is used to match a keyword ... end block that

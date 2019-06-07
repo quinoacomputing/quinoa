@@ -14,6 +14,7 @@
 
 #include "RayleighTaylor.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "EoS/EoS.hpp"
 
 namespace inciter {
 
@@ -56,8 +57,6 @@ CompFlowProblemRayleighTaylor::solution( ncomp_t system,
   const auto p0 = g_inputdeck.get< param, eq, tag::p0 >()[system];
   const auto r0 = g_inputdeck.get< param, eq, tag::r0 >()[system];
   const auto k = g_inputdeck.get< param, eq, tag::kappa >()[system];
-  // ratio of specific heats
-  const tk::real g = g_inputdeck.get< param, eq, tag::gamma >()[system];
   // spatial component of density and pressure fields
   const tk::real gx = bx*x*x + by*y*y + bz*z*z;
   // density
@@ -70,7 +69,7 @@ CompFlowProblemRayleighTaylor::solution( ncomp_t system,
   const tk::real v = ft*z*cos(M_PI*y);
   const tk::real w = ft*(-0.5*M_PI*z*z*(cos(M_PI*x)-sin(M_PI*y)));
   // total specific energy
-  const tk::real rE = p/(g-1.0) + 0.5*r*(u*u + v*v + w*w);
+  const tk::real rE = eos_totalenergy( system, r, r*u, r*v, r*w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
 }
@@ -247,9 +246,6 @@ CompFlowProblemRayleighTaylor::fieldOutput(
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
 {
-  // ratio of specific heats
-  tk::real g = g_inputdeck.get< tag::param, eq, tag::gamma >()[system];
-
   std::vector< std::vector< tk::real > > out;
   auto r = U.extract( 0, offset );
   auto u = U.extract( 1, offset );
@@ -278,7 +274,8 @@ CompFlowProblemRayleighTaylor::fieldOutput(
 
   auto p = r;
   for (std::size_t i=0; i<r.size(); ++i)
-    p[i] = (g-1.0)*r[i]*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
+    p[i] = eos_pressure( system, r[i], r[i]*u[i], r[i]*v[i], r[i]*w[i],
+                         r[i]*E[i] );
   out.push_back( p );
 
   auto er = r, ee = r, ep = r, eu = r, ev = r, ew = r;
@@ -289,13 +286,14 @@ CompFlowProblemRayleighTaylor::fieldOutput(
     eu[i] = std::pow( u[i] - s[1]/s[0], 2.0 ) * vol[i] / V;
     ev[i] = std::pow( v[i] - s[2]/s[0], 2.0 ) * vol[i] / V;
     ew[i] = std::pow( w[i] - s[3]/s[0], 2.0 ) * vol[i] / V;
-    auto ap = (g-1.0)*(s[4] - (s[1]*s[1] + s[2]*s[2] + s[3]*s[3])/2.0/s[0]);
+    auto ap = eos_pressure( system, s[0], s[1], s[2], s[3], s[4] );
     r[i] = s[0];
     u[i] = s[1]/s[0];
     v[i] = s[2]/s[0];
     w[i] = s[3]/s[0];
     E[i] = s[4]/s[0];
-    p[i] = (g-1.0)*r[i]*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
+    p[i] = eos_pressure( system, r[i], r[i]*u[i], r[i]*v[i], r[i]*w[i],
+                         r[i]*E[i] );
     ep[i] = std::pow( ap - p[i], 2.0 ) * vol[i] / V;
   }
 

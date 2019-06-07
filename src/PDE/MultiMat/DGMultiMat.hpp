@@ -35,6 +35,7 @@
 #include "Integrate/Volume.hpp"
 #include "Integrate/Source.hpp"
 #include "Integrate/Riemann/RiemannFactory.hpp"
+#include "EoS/EoS.hpp"
 
 namespace inciter {
 
@@ -94,6 +95,7 @@ class MultiMat {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
+    //! \param[in] nielem Number of internal elements
     void initialize( const tk::Fields& L,
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
@@ -196,7 +198,6 @@ class MultiMat {
                  const tk::Fields& U ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      const tk::real g = g_inputdeck.get< tag::param, eq, tag::gamma >()[0];
 
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();
@@ -280,9 +281,9 @@ class MultiMat {
           v = ugp[0][2]/rho;
           w = ugp[0][3]/rho;
           rhoE = ugp[0][4];
-          p = (g-1.0)*(rhoE - rho*(u*u + v*v + w*w)/2.0);
+          p = eos_pressure( 0, rho, ugp[0][1], ugp[0][2], ugp[0][3], rhoE );
 
-          a = std::sqrt(g * p / rho);
+          a = eos_soundspeed( 0, rho, p );
 
           vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
 
@@ -329,9 +330,9 @@ class MultiMat {
             v = ugp[1][2]/rho;
             w = ugp[1][3]/rho;
             rhoE = ugp[1][4];
-            p = (g-1.0)*(rhoE - rho*(u*u + v*v + w*w)/2.0);
+            p = eos_pressure( 0, rho, ugp[1][1], ugp[1][2], ugp[1][3], rhoE );
 
-            a = std::sqrt(g * p / rho);
+            a = eos_soundspeed( 0, rho, p );
 
             vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
 
@@ -417,7 +418,6 @@ class MultiMat {
                    const tk::Fields& U ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      const tk::real g = g_inputdeck.get< tag::param, eq, tag::gamma >()[0];
 
       const auto& cx = coord[0];
       const auto& cy = coord[1];
@@ -480,7 +480,7 @@ class MultiMat {
           auto u = ugp[1] / ugp[0];
           auto v = ugp[2] / ugp[0];
           auto w = ugp[3] / ugp[0];
-          auto p = (g - 1) * (ugp[4] - 0.5 * ugp[0] * (u*u + v*v + w*w) );
+          auto p = eos_pressure( 0, ugp[0], ugp[1], ugp[2], ugp[3], ugp[4] );
 
           out[0][ inpoel[4*e+i] ] += ugp[0];
           out[1][ inpoel[4*e+i] ] += u;
@@ -550,12 +550,10 @@ class MultiMat {
       Assert( ugp.size() == ncomp, "Size mismatch" );
       IGNORE(ncomp);
 
-      const auto g = g_inputdeck.get< tag::param, eq, tag::gamma >()[ system ];
-
       auto u = ugp[1] / ugp[0];
       auto v = ugp[2] / ugp[0];
       auto w = ugp[3] / ugp[0];
-      auto p = (g - 1) * (ugp[4] - 0.5 * ugp[0] * (u*u + v*v + w*w) );
+      auto p = eos_pressure( system, ugp[0], ugp[1], ugp[2], ugp[3], ugp[4] );
 
       std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
 

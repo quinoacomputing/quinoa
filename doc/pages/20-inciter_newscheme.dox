@@ -231,7 +231,7 @@ We create the following new files:
 - Inciter/alecg.ci, Charm++ interface file for ALECG,
 - NoWarning/alecg.decl.h and NoWarning/alecg.def.h, which help ignore compiler
   warnings in Charm++-generated code, and
-- Inciter/ALECG.h and Inciter/ALECG.C, header and implementation of ALECG.
+- Inciter/ALECG.h and Inciter/ALECG.cpp, header and implementation of ALECG.
 
 Before we discuss the details of the above new files, let's get a couple of
 simple things out of the way. We also need to add the new include to `Refiner.h`
@@ -266,12 +266,12 @@ index 141055ec..e339b65b 100644
 --- a/src/Inciter/CMakeLists.txt
 +++ b/src/Inciter/CMakeLists.txt
 @@ -14,6 +14,7 @@ add_library(Inciter
-             Sorter.C
-             DiagCG.C
-+            ALECG.C
-             DG.C
-             FluxCorrector.C
-             DistFCT.C
+             Sorter.cpp
+             DiagCG.cpp
++            ALECG.cpp
+             DG.cpp
+             FluxCorrector.cpp
+             DistFCT.cpp
 @@ -74,6 +75,7 @@ addCharmModule( "refiner" "Inciter" )
  addCharmModule( "sorter" "Inciter" )
  addCharmModule( "matcg" "Inciter" )
@@ -343,7 +343,7 @@ reducers are an excellent way to rely on the asynchronous, tree-based
 implementation of parallel reductions in Charm++ yet still do it on custom,
 arbitrarily complex data types, e.g., a hash-map that holds vectors, as long as
 one defines how aggregation is to be performed when merging such data. Such an
-example is given in Inciter/DiagReducer.C.
+example is given in Inciter/DiagReducer.cpp.
 
 @subsubsection inciter_newscheme_chare_alecg_sdag Inciter/alecg.ci -- Structured DAG
 
@@ -379,7 +379,7 @@ will not discuss them here further. Full listings are at
 
 @section inciter_newscheme_class 5. New C++ class
 
-Next are the newly added Inciter/ALECG.h and Inciter/ALECG.C, header and
+Next are the newly added Inciter/ALECG.h and Inciter/ALECG.cpp, header and
 implementation of ALECG. The full listings are at
 @subpage inciter_newscheme_header_page and
 @subpage inciter_newscheme_class_page, some of
@@ -387,7 +387,7 @@ whose details are discussed below, rougly in order of execution.
 
 @subsection inciter_newscheme_class_constructor ALECG::ALECG -- Constructor
 
-@snippet Inciter/ALECG.C Constructor
+@snippet Inciter/ALECG.cpp Constructor
 
 As discussed in Section @ref inciter_create on the @ref inciter_design page, the
 worker chare array elements, such as ALECG, are created using Charm++'s dynamic
@@ -420,7 +420,7 @@ targeting `Transporter::comfinal()`.
 
 @subsection inciter_newscheme_class_comfinal Transporter::comfinal() -- Complete communication maps
 
-@snippet Inciter/Transporter.C Discretization-specific communication maps
+@snippet Inciter/Transporter.cpp Discretization-specific communication maps
 
 Though asynchronously executed, the reduction operation targeting
 `Transporter::comfinal()` is a global synchronization point: all chares arrive
@@ -450,7 +450,7 @@ buffer on the receiving side, which would lead to corrupt data and errors.
 
 @subsection inciter_newscheme_class_setup ALECG::setup() -- Set initial conditions and compute the left hand side
 
-@snippet Inciter/ALECG.C init and lhs
+@snippet Inciter/ALECG.cpp init and lhs
 
 In the ALECG::setup() code snippet above we call ALECG::lhs() which starts by
 computing the own contribution of the lhs followed by sending out contributions
@@ -463,7 +463,7 @@ inciter_newscheme_chare_alecg_sdag. Then
 
 @subsection inciter_newscheme_class_lhs ALECG::lhs() -- Compute own and send lhs on chare-boundary
 
-@snippet Inciter/ALECG.C Compute own and send lhs on chare-boundary
+@snippet Inciter/ALECG.cpp Compute own and send lhs on chare-boundary
 
 As the above ALECG::lhs() code snippet shows, to communicate the lhs first we
 check if the node communication map is empty. If so, we are running in serial
@@ -476,7 +476,7 @@ which sends its arguments to chare id 'target'chare' in a point-point fashion.
 
 @subsection inciter_newscheme_class_comlhs ALECG::comlhs() -- Receive left hand side on chare boundary
 
-@snippet Inciter/ALECG.C Receive lhs on chare-boundary
+@snippet Inciter/ALECG.cpp Receive lhs on chare-boundary
 
 The above code snippet from ALECG::comlhs() shows the implementation of the
 receive side of the lhs communication step. The function receives two vectors:
@@ -498,7 +498,7 @@ of the lhs are complete, the runtime system calls `lhsmerge`().
 
 @subsection inciter_newscheme_class_lhsmerge ALECG::lhsmerge() -- Merge left hand side and continue
 
-@snippet Inciter/ALECG.C Merge lhs and continue
+@snippet Inciter/ALECG.cpp Merge lhs and continue
 
 When the own and communicated contributions to the lhs are in place, the
 communication buffer for the lhs, `ALECG::m_lhsc`, is merged into
@@ -517,13 +517,13 @@ which is the first step in a time step.
 
 @subsection inciter_newscheme_class_dt ALECG::dt() -- Start time step
 
-@snippet Inciter/ALECG.C Find the minimum dt across all PDEs integrated
+@snippet Inciter/ALECG.cpp Find the minimum dt across all PDEs integrated
 
 The above code snippet from ALECG::dt() shows a `for` loop that calls the the
 `dt()` member function of all types of PDEs configured by the user and finds the
 minimum size of the time step.
 
-@snippet Inciter/ALECG.C Advance
+@snippet Inciter/ALECG.cpp Advance
 
 Once we have the time step size, we enable a couple of SDAG waits and issue a
 reduction to Transporter::advance() which yields the global minimum across all
@@ -542,11 +542,11 @@ combines the own and received contributions then solves the system.
 
 @subsection inciter_newscheme_class_solve ALECG::solve() -- Solve, diagnostics, refine
 
-@snippet Inciter/ALECG.C Continue after solve
+@snippet Inciter/ALECG.cpp Continue after solve
 
 The above code snippet shows what happens immediately after solving the linear
 system on a chare. First we compute _diagnostics_, which is a catch-all phrase
-for various norms and integral quantities, see Inciter/NodeDiagnostics.C for
+for various norms and integral quantities, see Inciter/NodeDiagnostics.cpp for
 details. Note that computing diagnostics only happens every few time step,
 depending on user configuration. If `m_diag.compute()` returns true, diagnostics
 have been computed in this time step. If diagnostics have been computed, their
@@ -563,7 +563,7 @@ ALECG::refine().
 
 @subsection inciter_newscheme_class_refine ALECG::refine() -- Optionally refine mesh
 
-@snippet Inciter/ALECG.C Refine
+@snippet Inciter/ALECG.cpp Refine
 
 The above snippet shows that mesh refinement happens only at every few time step
 with its frequency configured by the user. If the mesh is _not_ refined, we
@@ -575,7 +575,7 @@ associated data structures.
 
 @subsection inciter_newscheme_class_resize ALECG::resize() -- Resize data after mesh refinement
 
-@snippet Inciter/ALECG.C Resize
+@snippet Inciter/ALECG.cpp Resize
 
 The above snippet shows ALECG::resize() called by Refiner when it finished mesh
 refinement. Besides resizing the mesh-related data held locally by ALECG, e.g.,
@@ -653,14 +653,14 @@ will be a node-centered scheme, we assign it to use the CGPDE polymorphic
 interface (instead of DGPDE, which is tailored for cell-centered
 discretizations).
 
-@subsection inciter_newscheme_work_PDEStack PDE/PDEStack.C
+@subsection inciter_newscheme_work_PDEStack PDE/PDEStack.cpp
 
 @code{.diff}
-$ git diff src/PDE/PDEStack.C
-diff --git a/src/PDE/PDEStack.C b/src/PDE/PDEStack.C
+$ git diff src/PDE/PDEStack.cpp
+diff --git a/src/PDE/PDEStack.cpp b/src/PDE/PDEStack.cpp
 index 438cb5e3..9b2e14e7 100644
---- a/src/PDE/PDEStack.C
-+++ b/src/PDE/PDEStack.C
+--- a/src/PDE/PDEStack.cpp
++++ b/src/PDE/PDEStack.cpp
 @@ -108,7 +108,9 @@ PDEStack::selectedCG() const
    std::vector< CGPDE > pdes;                // will store instantiated PDEs
 
@@ -685,7 +685,7 @@ Though this is not strictly necessary, we also augment the unit tests of Scheme
 exercising our new discretization scheme:
 
 @code{.diff}
-$ git diff develop src/UnitTest/TUTSuite.h src/UnitTest/tests/Inciter/TestScheme.C
+$ git diff develop src/UnitTest/TUTSuite.h src/UnitTest/tests/Inciter/TestScheme.cpp
 diff --git a/src/UnitTest/TUTSuite.h b/src/UnitTest/TUTSuite.h
 index 191b3972..dd904b02 100644
 --- a/src/UnitTest/TUTSuite.h
@@ -699,10 +699,10 @@ index 191b3972..dd904b02 100644
      };
 
      // Tests that must be run on PE 0
-diff --git a/src/UnitTest/tests/Inciter/TestScheme.C b/src/UnitTest/tests/Inciter/TestScheme.C
+diff --git a/src/UnitTest/tests/Inciter/TestScheme.cpp b/src/UnitTest/tests/Inciter/TestScheme.cpp
 index 6dc48c75..e4acfce4 100644
---- a/src/UnitTest/tests/Inciter/TestScheme.C
-+++ b/src/UnitTest/tests/Inciter/TestScheme.C
+--- a/src/UnitTest/tests/Inciter/TestScheme.cpp
++++ b/src/UnitTest/tests/Inciter/TestScheme.cpp
 @@ -84,6 +84,8 @@ void Scheme_object::test< 1 >() {
    ensure_equals( "Underlying type", c.which(), 1 );
    inciter::Scheme d( inciter::ctr::SchemeType::DG );

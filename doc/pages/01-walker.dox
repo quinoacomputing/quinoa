@@ -113,66 +113,66 @@ diffusion, whose invariant is the joint beta distribution. For more details on
 the beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](https://doi.org/10.1080/14685248.2010.510843).
 
    - For a short overview of the equation and its implementation, see
-     DiffEq/Beta.h.
-   - For initialization policies, see DiffEq/InitPolicy.h.
-   - For coefficients policies, see DiffEq/BetaCoeffPolicy.h.
+     DiffEq/Beta/Beta.hpp.
+   - For initialization policies, see DiffEq/InitPolicy.hpp.
+   - For coefficients policies, see DiffEq/Beta/BetaCoeffPolicy.hpp.
 
 2. __Diagonal Ornstein-Uhlenbeck__ --- A system of SDEs with linear drift and
 constant diagonal diffusion, whose invariant is the joint normal distribution.
 
    - For a short overview of the equation and its implementation, see
-     DiffEq/DiagOrnsteinUhlenbeck.h.
-   - For initialization policies, see DiffEq/InitPolicy.h.
-   - For coefficients policies, see DiffEq/DiagOrnsteinUhlenbeckCoeffPolicy.h.
+     DiffEq/OrnsteinUhlenbeck/DiagOrnsteinUhlenbeck.hpp.
+   - For initialization policies, see DiffEq/InitPolicy.hpp.
+   - For coefficients policies, see DiffEq/OrnsteinUhlenbeck/DiagOrnsteinUhlenbeckCoeffPolicy.hpp.
 
 3. __Ornstein-Uhlenbeck__ --- A system of SDEs with linear drift and constant
 diffusion, whose invariant is the joint normal distribution.
 
    - For a short overview of the equation and its implementation, see
-     DiffEq/OrnsteinUhlenbeck.h.
+     DiffEq/OrnsteinUhlenbeck/OrnsteinUhlenbeck.hpp.
    - For initialization policies, see DiffEq/InitPolicy.h.
-   - For coefficients policies, see DiffEq/OrnsteinUhlenbeckCoeffPolicy.h.
+   - For coefficients policies, see DiffEq/OrnsteinUhlenbeck/OrnsteinUhlenbeckCoeffPolicy.hpp.
 
 4. __Dirichlet__ --- A system of SDEs, whose invariant is the Dirichlet
 distribution. For more details on the Dirichlet SDE, see [Bakosi, Ristorcelli, A Stochastic Diffusion Process for the Dirichlet Distribution, Int. J. Stoch. Anal., 2013](https://doi.org/10.1155/2013/842981).
 
    - For a short overview of the equation and its implementation, see
-     DiffEq/Dirichlet.h.
-   - For initialization policies, see DiffEq/InitPolicy.h.
-   - For coefficients policies, see DiffEq/DirichletCoeffPolicy.h.
+     DiffEq/Dirichlet/Dirichlet.hpp.
+   - For initialization policies, see DiffEq/InitPolicy.hpp.
+   - For coefficients policies, see DiffEq/Dirichlet/DirichletCoeffPolicy.hpp.
 
 5. __Generalized Dirichlet__ --- A system of SDEs, whose invariant is Lochner's
 generalized Dirichlet distribution. For more details on the generalized
 Dirichlet SDE, see [Bakosi, Ristorcelli, A Stochastic Diffusion Process for Lochner's generalized Dirichlet distribution, J. Math. Phys., 2013](https://doi.org/10.1063/1.4822416).
 
    - For a short overview of the equation and its the implementation, see
-     DiffEq/GeneralizedDirichlet.h.
-   - For initialization policies, see DiffEq/InitPolicy.h.
-   - For coefficients policies, see DiffEq/GeneralizedDirichletCoeffPolicy.h.
+     DiffEq/Dirichlet/GeneralizedDirichlet.hpp.
+   - For initialization policies, see DiffEq/InitPolicy.hpp.
+   - For coefficients policies, see DiffEq/Dirichlet/GeneralizedDirichletCoeffPolicy.hpp.
 
 6. __Gamma__ --- A system of SDEs, with linear drift and linear diagonal
 diffusion, whose invariant is the joint gamma distribution.
 
    - For a short overview of the equation and its implementation, see
-     DiffEq/Gamma.h.
-   - For initialization policies, see DiffEq/InitPolicy.h.
-   - For coefficients policies, see DiffEq/GammaCoeffPolicy.h.
+     DiffEq/Gamma/Gamma.hpp.
+   - For initialization policies, see DiffEq/InitPolicy.hpp.
+   - For coefficients policies, see DiffEq/Gamma/GammaCoeffPolicy.hpp.
 
 7. __Skew-normal__ --- A system of SDEs, whose invariant is the joint
 skew-normal distribution. For more details on the skew-normal distribution, see
 [Azzalini, Dalla Valle, The Multivariate Skew-Normal Distribution](http://www.jstor.org/stable/2337278).
 
    - For a short overview of the equation and its implementation, see
-     see DiffEq/SkewNormal.h.
-   - For initialization policies, see DiffEq/InitPolicy.h.
-   - For coefficients policies, see DiffEq/SkewNormalCoeffPolicy.h.
+     see DiffEq/SkewNormal/SkewNormal.hpp.
+   - For initialization policies, see DiffEq/InitPolicy.hpp.
+   - For coefficients policies, see DiffEq/SkewNormal/SkewNormalCoeffPolicy.hpp.
 
 8. __Wright-Fisher__ --- A system of SDEs, whose invariant is the Dirichlet
 distribution. For more details on the Wright-Fisher SDE, see [Steinrucken, et al., An explicit transition density expansion for a multi-allelic Wright–Fisher diffusion with general diploid selection, Theor. Popul. Biol., 2013](http://www.sciencedirect.com/science/article/pii/S0040580912001013).
 
-   - For the implementation, see DiffEq/WrightFisher.h.
-   - For initialization policies, see DiffEq/InitPolicy.h.
-   - For coefficients policies, see DiffEq/WrightFisherCoeffPolicy.h.
+   - For the implementation, see DiffEq/WrightFisher/WrightFisher.hpp.
+   - For initialization policies, see DiffEq/InitPolicy.hpp.
+   - For coefficients policies, see DiffEq/WrightFisher/WrightFisherCoeffPolicy.hpp.
 
 9. __Number-fraction beta__ --- A system of SDEs, with linear drift and
 quadratic diagonal diffusion, whose invariant is the joint beta distribution.
@@ -182,9 +182,9 @@ integrated, assuming that the beta variables are number, or mole-, fractions.
 For more details on the beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](https://doi.org/10.1080/14685248.2010.510843).
 
    - For a short overview of the equation and its implementation, see
-     DiffEq/NumberFractionBeta.h.
-   - For initialization policies, see DiffEq/InitPolicy.h.
-   - For coefficients policies, see DiffEq/NumberFractionBetaCoeffPolicy.h.
+     DiffEq/Beta/NumberFractionBeta.hpp.
+   - For initialization policies, see DiffEq/InitPolicy.hpp.
+   - For coefficients policies, see DiffEq/Beta/NumberFractionBetaCoeffPolicy.hpp.
 
 10. __Mass-fraction beta__ --- A system of SDEs, with linear drift and quadratic
 diagonal diffusion, whose invariant is the joint beta distribution.  The
@@ -194,9 +194,9 @@ assuming that the beta variables are mass-fractions. For more details on the
 beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](https://doi.org/10.1080/14685248.2010.510843).
 
    - For a short overview of the equation and its implementation, see
-     DiffEq/MassFractionBeta.h.
-   - For initialization policies, see DiffEq/InitPolicy.h.
-   - For coefficients policies, see DiffEq/MassFractionBetaCoeffPolicy.h.
+     DiffEq/Beta/MassFractionBeta.hpp.
+   - For initialization policies, see DiffEq/InitPolicy.hpp.
+   - For coefficients policies, see DiffEq/Beta/MassFractionBetaCoeffPolicy.hpp.
 
 11. __Mix number-fraction beta__ --- A system of SDEs, with linear drift and
 quadratic diagonal diffusion, whose invariant is the joint beta distribution.
@@ -208,9 +208,9 @@ beta variables are number, or mole-, fractions. For more details on the beta
 SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](https://doi.org/10.1080/14685248.2010.510843).
 
    - For a short overview of the equation and its implementation, see
-     DiffEq/MixNumberFractionBeta.h.
-   - For initialization policies, see DiffEq/InitPolicy.h.
-   - For coefficients policies, see DiffEq/MixNumberFractionBetaCoeffPolicy.h.
+     DiffEq/Beta/MixNumberFractionBeta.hpp.
+   - For initialization policies, see DiffEq/InitPolicy.hpp.
+   - For coefficients policies, see DiffEq/Beta/MixNumberFractionBetaCoeffPolicy.hpp.
 
 12. __Mix mass-fraction beta__ --- A system of SDEs, with linear drift and
 quadratic diagonal diffusion, whose invariant is the joint beta distribution.
@@ -222,9 +222,9 @@ beta variables are mass-fractions. For more details on the beta SDE, see
 [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](https://doi.org/10.1080/14685248.2010.510843).
 
    - For a short overview of the equation and its implementation, see
-     DiffEq/MixMassFractionBeta.h.
-   - For initialization policies, see DiffEq/InitPolicy.h.
-   - For coefficients policies, see DiffEq/MixMassFractionBetaCoeffPolicy.h.
+     DiffEq/Beta/MixMassFractionBeta.hpp.
+   - For initialization policies, see DiffEq/InitPolicy.hpp.
+   - For coefficients policies, see DiffEq/Beta/MixMassFractionBetaCoeffPolicy.hpp.
 
 @section walker_ex Examples
 \subpage walker_examples

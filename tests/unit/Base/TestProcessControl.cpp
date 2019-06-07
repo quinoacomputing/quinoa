@@ -1,12 +1,12 @@
 // *****************************************************************************
 /*!
-  \file      tests/unit/Base/TestProcessControl.C
+  \file      tests/unit/Base/TestProcessControl.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Unit tests for Base/ProcessControl.h
-  \details   Unit tests for Base/ProcessControl.h
+  \brief     Unit tests for Base/ProcessControl.hpp
+  \details   Unit tests for Base/ProcessControl.hpp
 */
 // *****************************************************************************
 

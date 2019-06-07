@@ -21,7 +21,7 @@
     compile-time (which is not possible in a straightforward manner at this
     time). This could also be done with C-style const char* as well. The
     '*_info' structs store these strings, which then is used to specialize the
-    _kw::keyword_ template, defined in Control/Keyword.h. Specializing the
+    _kw::keyword_ template, defined in Control/Keyword.hpp. Specializing the
     _keyword_ template also requires a specification of the precise string of
     characters that make up a keyword eventually matched by the parsers. Since
     these are all template arguments, the construction of keywords, their help,
@@ -123,7 +123,7 @@
           // at least some information on the bounds, as below, since the bounds
           // are NOT displayed in the help for a keyword. This decision keeps
           // the bounds specifications generic since they can be any type. As a
-          // result, the help structures, defined in HelpFactory.h, are simpler
+          // result, the help structures, defined in HelpFactory.hpp, are simpler
           // as they do not have to be parameterized by the type of the bounds,
           // which greatly simplifies that code.
           static std::string choices() {
@@ -142,8 +142,8 @@
       // keyword 'kw', matching the keyword 'KeYwOrD'.
       using kw = keyword< keyword_info, K,e,Y,w,O,r,D >;
     \endcode
-  \see Control/Keyword.h
-  \see Control/HelpFactory.h
+  \see Control/Keyword.hpp
+  \see Control/HelpFactory.hpp
 */
 // *****************************************************************************
 #ifndef Keywords_h
@@ -1246,7 +1246,7 @@ struct raw_info {
     Example: "init raw", which selects raw initialization policy, which
     leaves the memory uninitialized. Note that this option may behave
     differently depending on the particular equation or physical model. See the
-    the init policies in DiffEq/InitPolicy.h for valid options.)"; }
+    the init policies in DiffEq/InitPolicy.hpp for valid options.)"; }
 };
 using raw = keyword< raw_info, TAOCPP_PEGTL_STRING("raw") >;
 
@@ -1262,7 +1262,7 @@ struct zero_info {
     Example: "init zero", which selects zero initialization policy, which
     puts zeros in memory. Note that this option may behave differently
     depending on the particular equation or physical model. See the init
-    policies in DiffEq/InitPolicy.h for valid options.)"; }
+    policies in DiffEq/InitPolicy.hpp for valid options.)"; }
 };
 using zero = keyword< zero_info, TAOCPP_PEGTL_STRING("zero") >;
 
@@ -1278,7 +1278,7 @@ struct jointdelta_info {
     zero initialization policy, which puts zeros in memory. Note that this
     option may behave differently depending on the particular equation or
     physical model. For an example, see tk::InitPolicies in
-    DiffEq/InitPolicy.h for valid options.) The joint delta initialization
+    DiffEq/InitPolicy.hpp for valid options.) The joint delta initialization
     policy can be used to prescribe delta-spikes on the sample space with given
     heights, i.e., probabilities. Example: "init jointdelta" - select delta
     init-policy, "delta spike 0.1 0.3 0.8 0.7 end end" - prescribe two
@@ -1300,7 +1300,7 @@ struct jointgaussian_info {
     zero initialization policy, which puts zeros in memory. Note that this
     option may behave differently depending on the particular equation or
     physical model. For an example, see tk::InitPolicies in
-    DiffEq/InitPolicy.h for valid options.) The joint Gaussian initialization
+    DiffEq/InitPolicy.hpp for valid options.) The joint Gaussian initialization
     policy can be used to prescribe a joint Gaussian (joint Gaussian) on the
     sample space with given variances. Example: "init jointgaussian" - select
     (joint) Gaussian init-policy, "gaussian 0.1 0.3 0.8 0.7 end" - prescribe two
@@ -1325,7 +1325,7 @@ struct jointcorrgaussian_info {
     zero initialization policy, which puts zeros in memory. Note that this
     option may behave differently depending on the particular equation or
     physical model. For an example, see tk::InitPolicies in
-    DiffEq/InitPolicy.h for valid options.) The joint correlated Gaussian
+    DiffEq/InitPolicy.hpp for valid options.) The joint correlated Gaussian
     initialization policy can be used to prescribe a joint correlated Gaussian
     on the sample space with a given covariance matrix. Example:
      "init jointcorrgaussian
@@ -1353,7 +1353,7 @@ struct jointbeta_info {
     zero initialization policy, which puts zeros in memory. Note that this
     option may behave differently depending on the particular equation or
     physical model. For an example, see tk::InitPolicies in
-    DiffEq/InitPolicy.h for valid options.) The joint beta initialization
+    DiffEq/InitPolicy.hpp for valid options.) The joint beta initialization
     policy can be used to prescribe a multi-dimensional sample space where the
     samples are generated from a joint beta distribution with independent
     marginal univariate beta distributions.)";
@@ -1373,7 +1373,7 @@ struct jointgamma_info {
     zero initialization policy, which puts zeros in memory. Note that this
     option may behave differently depending on the particular equation or
     physical model. For an example, see tk::InitPolicies in
-    DiffEq/InitPolicy.h for valid options.) The joint gamma initialization
+    DiffEq/InitPolicy.hpp for valid options.) The joint gamma initialization
     policy can be used to prescribe a joint gamma distribution on the
     sample space with given shape and scale parameters. Example: "init
     jointgamma" - select the (joint) gamma init-policy, "gammapdf 0.1 0.3
@@ -1387,6 +1387,28 @@ struct jointgamma_info {
 using jointgamma =
   keyword< jointgamma_info, TAOCPP_PEGTL_STRING("jointgamma") >;
 
+struct jointdirichlet_info {
+  using code = Code< I >;
+  static std::string name() { return "Dirichlet"; }
+  static std::string shortDescription() { return
+    "Select the Dirichlet initialization policy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Dirichlet initialization policy.
+    The initialization policy is used to specify how the initial conditions are
+    set at t = 0 before time-integration. Example: "init zero", which selects
+    zero initialization policy, which puts zeros in memory. Note that this
+    option may behave differently depending on the particular equation or
+    physical model. For an example, see tk::InitPolicies in
+    DiffEq/InitPolicy.hpp for valid options.) The Dirichlet initialization
+    policy can be used to prescribe a Dirichlet distribution on the
+    sample space with given shape parameters. Example: "init
+    jointdirichlet" - select the Dirichlet init-policy, "dirichletpdf 0.1 0.3
+    0.2 end" - prescribe a Dirichlet distribution with shape parameters 0.1,
+    0.3, and 0.2. All shape parameters must be positive.)"; }
+};
+using jointdirichlet =
+  keyword< jointdirichlet_info, TAOCPP_PEGTL_STRING("jointdirichlet") >;
+
 struct init_info {
   using code = Code< i >;
   static std::string name() { return "initialization policy"; }
@@ -1399,7 +1421,7 @@ struct init_info {
     selects raw initialization policy, which leaves the memory uninitialized.
     Note that this option may behave differently depending on the particular
     equation or physical model. See the init policies in
-    DiffEq/InitPolicy.h for valid options.)"; }
+    DiffEq/InitPolicy.hpp for valid options.)"; }
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
@@ -2370,6 +2392,36 @@ struct icgamma_info {
 };
 using icgamma = keyword< icgamma_info, TAOCPP_PEGTL_STRING("icgamma") >;
 
+struct dirichletpdf_info {
+  static std::string name() { return "dirichletpdf"; }
+  static std::string shortDescription() { return
+    R"(Configure a Dirichlet distribution)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the configuration of a Dirichlet
+    distribution for the Dirichlet initialization policy. The configuration is
+    given by a vector of positive real numbers inside a dirichletpdf...end
+    block. Example: "dirichletpdf 0.1 0.3 0.2 end" - prescribe a Dirichlet
+    distribution with shape parameters 0.1, 0.3, and 0.2. See also the help on
+    keyword icdirichlet.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "vector of reals"; }
+  };
+};
+using dirichletpdf =
+  keyword< dirichletpdf_info, TAOCPP_PEGTL_STRING("dirichletpdf") >;
+
+struct icdirichlet_info {
+  static std::string name() { return "icdirichlet"; }
+  static std::string shortDescription() { return R"(Introduce an
+    icdirichlet...end block used to configure a Dirichlet distribution)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an icdirichlet...end block in which a
+    Dirichlet distribution is configured for the Dirichlet initialization
+    policy)"; }
+};
+using icdirichlet =
+  keyword< icdirichlet_info, TAOCPP_PEGTL_STRING("icdirichlet") >;
 
 struct ic_info {
   static std::string name() { return "ic"; }
@@ -2609,8 +2661,8 @@ struct beta_info {
     the configuration of a system of stochastic differential equations (SDEs),
     with linear drift and quadratic diagonal diffusion, whose invariant is the
     joint beta distribution. For more details on the beta SDE, see
-    https://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
-    allowed in a beta ... end block: )" + std::string("\'")
+    https://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta/Beta.hpp.
+    Keywords allowed in a beta ... end block: )" + std::string("\'")
     + depvar::string()+ "\', \'"
     + ncomp::string() + "\', \'"
     + rng::string() + "\', \'"
@@ -2641,7 +2693,7 @@ struct numfracbeta_info {
     V(X), where both rho and V are random variables, computed by rho(X) = rho2
     ( 1 - r' X ), and V(X) = 1 / [ rho2 ( 1 - r'X ) ]. For more details on the
     beta SDE, see https://doi.org/10.1080/14685248.2010.510843 and
-    src/DiffEq/Beta.h. Keywords allowed in a numfracbeta ... end block: )"
+    src/DiffEq/Beta/Beta.hpp. Keywords allowed in a numfracbeta ... end block: )"
     + std::string("\'")
     + depvar::string()+ "\', \'"
     + ncomp::string() + "\', \'"
@@ -2674,7 +2726,8 @@ struct massfracbeta_info {
     beta SDE, then the mass-fraction beta SDE additionally governs rho(Y) and
     V(Y), where both rho and V are random variables, computed by rho(Y) = rho2 /
     ( 1 + r Y ), and V(Y) = ( 1 + r Y ) / rho2. For more details on the beta
-    SDE, see https://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h.
+    SDE, see
+    https://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta/Beta.hpp.
     Keywords allowed in a massfracbeta ... end block: )"
     + std::string("\'")
     + depvar::string()+ "\', \'"
@@ -2716,8 +2769,8 @@ struct mixnumfracbeta_info {
     random variables computed besides, X, and they are rho(X) and V(X). For more
     detail on the number-fraction beta SDE, see the help on keyword
     'numfracbeta'. For more details on the beta SDE, see
-    https://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
-    allowed in a mixnumfracbeta ... end block: )"
+    https://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta/Beta.h.
+    Keywords allowed in a mixnumfracbeta ... end block: )"
     + std::string("\'")
     + depvar::string()+ "\', \'"
     + ncomp::string() + "\', \'"
@@ -2838,9 +2891,9 @@ struct hydrotimescales_info {
     hydrotimescales ... end  block to be in effect. The 'hydrotimescales'
     keyword is then used to specify a list of strings, each specifying which
     inverse time scale should be used for the particular component integrated.
-    Available time scales are defined in src/DiffEq/HydroTimescales.h. Example:
-    "hydrotimescales eq_A05S eq_A05H eq_A05L eq_A05S eq_A05S end", which
-    configures five inverse hydrodynamics time scales associated to 5
+    Available time scales are defined in src/DiffEq/HydroTimescales.hpp.
+    Example: "hydrotimescales eq_A05S eq_A05H eq_A05L eq_A05S eq_A05S end",
+    which configures five inverse hydrodynamics time scales associated to 5
     components, i.e., 5 scalar stochastic differential equations, integrated,
     specified and configured within the given mixmassfracbeta ... end block. The
     length of the hydrotimescales vector depends on the number of scalar
@@ -2848,8 +2901,8 @@ struct hydrotimescales_info {
     mixmassfracbeta, ncomp is the actual number of scalar components * 4, since
     mixmassfractionbeta always computes 4 additional derived stochastic
     variables (in a diagnostic) fashion. See also MixMassFractionBeta::derived()
-    in src/DiffEq/MixMassFractionBeta.h. Keywords allowed in a hydrotimescales
-    ... end block: )" + std::string("\'")
+    in src/DiffEq/Beta/MixMassFractionBeta.hpp. Keywords allowed in a
+    hydrotimescales ... end block: )" + std::string("\'")
     + eq_A005H::string() + "\', \'"
     + eq_A005S::string() + "\', \'"
     + eq_A005L::string() + "\', \'"
@@ -2973,7 +3026,7 @@ struct hydroproductions_info {
     turbulent kinetic energy production dividied by the dissipation rate (P/eps)
     data (from direct numerical simulations) should be used for the particular
     component integrated. Available P/eps data are defined in
-    src/DiffEq/HydroProductions.h. Example: "productions prod_A05S prod_A05H
+    src/DiffEq/HydroProductions.hpp. Example: "productions prod_A05S prod_A05H
     prod_A05L prod_A05S prod_A05S end", which
     configures five P/eps data sets associated to 5 components, i.e., 5 scalar
     stochastic differential equations, integrated, specified and configured
@@ -2983,7 +3036,7 @@ struct hydroproductions_info {
     the actual number of scalar components * 4, since mixmassfractionbeta always
     computes 4 additional derived stochastic variables (in a diagnostic)
     fashion. See also MixMassFractionBeta::derived() in
-    src/DiffEq/MixMassFractionBeta.h. Keywords allowed in a hydroproductions
+    src/DiffEq/MixMassFractionBeta.hpp. Keywords allowed in a hydroproductions
     ... end block: )" + std::string("\'")
     + prod_A005H::string() + "\', \'"
     + prod_A005S::string() + "\', \'"
@@ -3027,8 +3080,8 @@ struct mixmassfracbeta_info {
     additional random variables computed besides, Y, and they are rho(Y) and
     V(Y). For more detail on the mass-fraction beta SDE, see the help on keyword
     'massfracbeta'. For more details on the beta SDE, see
-    https://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
-    allowed in a mixmassfracbeta ... end block: )"
+    https://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta/Beta.hpp.
+    Keywords allowed in a mixmassfracbeta ... end block: )"
     + std::string("\'")
     + depvar::string()+ "\', \'"
     + ncomp::string() + "\', \'"
@@ -3210,7 +3263,8 @@ struct velocity_info {
     fluctuating velocity in homogeneous variable-density turbulence. For more
     details on this Langevin model, see
     https://doi.org/10.1080/14685248.2011.554419 and
-    src/DiffEq/Velocity.h. Keywords allowed in a velocity ... end block: )" +
+    src/DiffEq/Velocity/Velocity.hpp. Keywords allowed in a velocity ... end
+    block: )" +
     std::string("\'")
     + depvar::string()+ "\', \'"
     + rng::string() + "\', \'"
@@ -3373,9 +3427,9 @@ struct charestate_info {
     screen output. The chare state is displayed after a run is finished and the
     data collected is grouped by chare id (thisIndex), and within groups data
     is ordered by the time-stamp when a given chare member function is
-    called. See src/Base/ChareState.h for details on what is collected. Note
-    that to collect chare state, the given chare must be instrumented. For an
-    example, see src/Inciter/DG.h. Note that if quescence detection is enabled,
+    called. See src/Base/ChareState.hpp for details on what is collected. Note
+    that to collect chare state, the given chare must be instrumented. Note that
+    if quescence detection is enabled,
     chare state collection is also automatically enabled, but the chare state is
     only output if quiescence is detected (which also triggers an error).)";
   }
@@ -4429,6 +4483,21 @@ struct mat_gamma_info {
 };
 using mat_gamma = keyword< mat_gamma_info, TAOCPP_PEGTL_STRING("gamma") >;
 
+struct mat_pstiff_info {
+  static std::string name() { return "pstiff"; }
+  static std::string shortDescription() { return "EoS stiffness parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property, stiffness
+       parameter in the stiffened gas equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using mat_pstiff = keyword< mat_pstiff_info, TAOCPP_PEGTL_STRING("pstiff") >;
+
 struct mat_mu_info {
   static std::string name() { return "mu"; }
   static std::string shortDescription() { return "dynamic viscosity"; }
@@ -4485,6 +4554,7 @@ struct material_info {
     block: )" + std::string("\'")
     + id::string()+ "\', \'"
     + mat_gamma::string()+ "\', \'"
+    + mat_pstiff::string()+ "\', \'"
     + mat_mu::string()+ "\', \'"
     + mat_cv::string()+ "\', \'"
     + mat_k::string() + "\'. "
@@ -4585,7 +4655,7 @@ struct rcb_info {
     R"(This keyword is used to select the recursive coordinate bisection (RCB)
     mesh partitioner. RCB is a geometry-based partitioner used to distribute an
     input mesh among processing elements. See
-    Control/Options/PartitioningAlgorithm.h for other valid options.)"; }
+    Control/Options/PartitioningAlgorithm.hpp for other valid options.)"; }
 };
 using rcb = keyword< rcb_info, TAOCPP_PEGTL_STRING("rcb") >;
 
@@ -4597,7 +4667,7 @@ struct rib_info {
     R"(This keyword is used to select the recursive inertial bisection (RIB)
     mesh partitioner. RIB is a geometry-based partitioner used to distribute an
     input mesh among processing elements. See
-    Control/Options/PartitioningAlgorithm.h for other valid options.)"; }
+    Control/Options/PartitioningAlgorithm.hpp for other valid options.)"; }
 };
 using rib = keyword< rib_info, TAOCPP_PEGTL_STRING("rib") >;
 
@@ -4609,7 +4679,7 @@ struct hsfc_info {
     R"(This keyword is used to select the Hilbert Space Filling Curve (HSFC)
     mesh partitioner. HSFC is a geometry-based partitioner used to distribute an
     input mesh among processing elements. See
-    Control/Options/PartitioningAlgorithm.h for other valid options.)"; }
+    Control/Options/PartitioningAlgorithm.hpp for other valid options.)"; }
 };
 using hsfc = keyword< hsfc_info, TAOCPP_PEGTL_STRING("hsfc") >;
 
@@ -4621,7 +4691,7 @@ struct mj_info {
     R"(This keyword is used to select the multi-jagged (MJ) mesh partitioner.
     MJ is a geometry-based partitioner used to distribute an input mesh among
     processing elements. See
-    Control/Options/PartitioningAlgorithm.h for other valid options.)"; }
+    Control/Options/PartitioningAlgorithm.hpp for other valid options.)"; }
 };
 using mj = keyword< mj_info, TAOCPP_PEGTL_STRING("mj") >;
 
@@ -4633,7 +4703,7 @@ struct phg_info {
     R"(This keyword is used to select the parallel hypergraph (PHG)
     mesh partitioner. PHG is a graph-based partitioner used to distribute an
     input mesh among processing elements. See
-    Control/Options/PartitioningAlgorithm.h for other valid options.)"; }
+    Control/Options/PartitioningAlgorithm.hpp for other valid options.)"; }
 };
 using phg = keyword< phg_info, TAOCPP_PEGTL_STRING("phg") >;
 
@@ -4643,7 +4713,7 @@ struct algorithm_info {
     "Select mesh partitioning algorithm"; }
   static std::string longDescription() { return
     R"(This keyword is used to select a mesh partitioning algorithm. See
-    Control/Options/PartitioningAlgorithm.h for valid options.)"; }
+    Control/Options/PartitioningAlgorithm.hpp for valid options.)"; }
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
@@ -5108,7 +5178,7 @@ struct diagcg_info {
     transport (FCT) for treating discontinuous solutions. This option selects
     the scheme that stores the left-hand side matrix lumped, i.e., only the
     diagonal elements stored and thus does not require a linear solver. See
-    Control/Inciter/Options/Scheme.h for other valid options.)"; }
+    Control/Inciter/Options/Scheme.hpp for other valid options.)"; }
 };
 using diagcg = keyword< diagcg_info, TAOCPP_PEGTL_STRING("diagcg") >;
 
@@ -5119,7 +5189,7 @@ struct alecg_info {
   static std::string longDescription() { return
     R"(This keyword is used to select the continuous Galerkin finite element
     scheme in the arbitrary Lagrangian-Eulerian (ALE) reference frame combined
-    with Runge-Kutta (RK) time stepping. See Control/Inciter/Options/Scheme.h
+    with Runge-Kutta (RK) time stepping. See Control/Inciter/Options/Scheme.hpp
     for other valid options.)"; }
 };
 using alecg = keyword< alecg_info, TAOCPP_PEGTL_STRING("alecg") >;
@@ -5133,7 +5203,7 @@ struct dg_info {
     Galerkin, DG(P0), spatial discretiztaion used in Inciter. As this is first
     order accurate, it is intended for testing and debugging purposes only.
     Selecting this spatial discretization also selects the Runge-Kutta scheme
-    for time discretization. See Control/Inciter/Options/Scheme.h for other
+    for time discretization. See Control/Inciter/Options/Scheme.hpp for other
     valid options.)"; }
 };
 using dg = keyword< dg_info, TAOCPP_PEGTL_STRING("dg") >;
@@ -5146,7 +5216,7 @@ struct dgp1_info {
     R"(This keyword is used to select the second-order accurate discontinuous
     Galerkin, DG(P1), spatial discretiztaion used in Inciter. Selecting this
     spatial discretization also selects the Runge-Kutta scheme for time
-    discretization. See Control/Inciter/Options/Scheme.h for other
+    discretization. See Control/Inciter/Options/Scheme.hpp for other
     valid options.)"; }
 };
 using dgp1 = keyword< dgp1_info, TAOCPP_PEGTL_STRING("dgp1") >;
@@ -5159,7 +5229,7 @@ struct dgp2_info {
     R"(This keyword is used to select the third-order accurate discontinuous
     Galerkin, DG(P2), spatial discretiztaion used in Inciter. Selecting this
     spatial discretization also selects the Runge-Kutta scheme for time
-    discretization. See Control/Inciter/Options/Scheme.h for other
+    discretization. See Control/Inciter/Options/Scheme.hpp for other
     valid options.)"; }
 };
 using dgp2 = keyword< dgp2_info, TAOCPP_PEGTL_STRING("dgp2") >;
@@ -5172,7 +5242,7 @@ struct pdg_info {
     R"(This keyword is used to select the adaptive discontinuous Galerkin
     spatial discretizaion used in Inciter. Selecting this spatial
     discretization also selects the Runge-Kutta scheme for time
-    discretization. See Control/Inciter/Options/Scheme.h for other valid
+    discretization. See Control/Inciter/Options/Scheme.hpp for other valid
     options.)"; }
 };
 using pdg = keyword< pdg_info, TAOCPP_PEGTL_STRING("pdg") >;
@@ -5184,7 +5254,7 @@ struct scheme_info {
   static std::string longDescription() { return
     R"(This keyword is used to select a spatial discretization scheme,
     necessarily connected to the teporal discretization scheme. See
-    Control/Inciter/Options/Scheme.h for valid options.)"; }
+    Control/Inciter/Options/Scheme.hpp for valid options.)"; }
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
@@ -5202,7 +5272,7 @@ struct laxfriedrichs_info {
   static std::string longDescription() { return
     R"(This keyword is used to select the Lax-Friedrichs flux function used for
     discontinuous Galerkin (DG) spatial discretization used in inciter. See
-    Control/Inciter/Options/Flux.h for other valid options.)"; }
+    Control/Inciter/Options/Flux.hpp for other valid options.)"; }
 };
 using laxfriedrichs =
   keyword< laxfriedrichs_info, TAOCPP_PEGTL_STRING("laxfriedrichs") >;
@@ -5214,7 +5284,7 @@ struct hllc_info {
   static std::string longDescription() { return
     R"(This keyword is used to select the Harten-Lax-van Leer-Contact flux
     function used for discontinuous Galerkin (DG) spatial discretization
-    used in inciter. See Control/Inciter/Options/Flux.h for other valid
+    used in inciter. See Control/Inciter/Options/Flux.hpp for other valid
     options.)"; }
 };
 using hllc = keyword< hllc_info, TAOCPP_PEGTL_STRING("hllc") >;
@@ -5228,7 +5298,7 @@ struct upwind_info {
     function used for discontinuous Galerkin (DG) spatial discretization
     used in inciter. It is really only useful for scalar transport, it is thus
     not selectable for anything else, and for scalar transport it is the
-    hardcoded flux type. See Control/Inciter/Options/Flux.h for other valid
+    hardcoded flux type. See Control/Inciter/Options/Flux.hpp for other valid
     options.)"; }
 };
 using upwind = keyword< upwind_info, TAOCPP_PEGTL_STRING("upwind") >;
@@ -5240,7 +5310,7 @@ struct flux_info {
   static std::string longDescription() { return
     R"(This keyword is used to select a fllux function, used for
     discontinuous Galerkin (DG) spatial discretization used in inciter. See
-    Control/Inciter/Options/Flux.h for valid options.)"; }
+    Control/Inciter/Options/Flux.hpp for valid options.)"; }
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
@@ -5259,7 +5329,7 @@ struct nolimiter_info {
   static std::string longDescription() { return
     R"(This keyword is used for discontinuous Galerkin (DG) spatial
     discretization without any limiter in inciter. See
-    Control/Inciter/Options/Limiter.h for other valid options.)"; }
+    Control/Inciter/Options/Limiter.hpp for other valid options.)"; }
 };
 using nolimiter =
   keyword< nolimiter_info, TAOCPP_PEGTL_STRING("nolimiter") >;
@@ -5271,7 +5341,7 @@ struct wenop1_info {
   static std::string longDescription() { return
     R"(This keyword is used to select the Weighted Essentially Non-Oscillatory
     limiter used for discontinuous Galerkin (DG) P1 spatial discretization
-    used in inciter. See Control/Inciter/Options/Limiter.h for other valid
+    used in inciter. See Control/Inciter/Options/Limiter.hpp for other valid
     options.)"; }
 };
 using wenop1 = keyword< wenop1_info, TAOCPP_PEGTL_STRING("wenop1") >;
@@ -5283,7 +5353,7 @@ struct superbeep1_info {
   static std::string longDescription() { return
     R"(This keyword is used to select the Superbee limiter used for
     discontinuous Galerkin (DG) P1 spatial discretization used in inciter.
-    See Control/Inciter/Options/Limiter.h for other valid options.)"; }
+    See Control/Inciter/Options/Limiter.hpp for other valid options.)"; }
 };
 using superbeep1 = keyword< superbeep1_info, TAOCPP_PEGTL_STRING("superbeep1") >;
 
@@ -5294,7 +5364,7 @@ struct limiter_info {
   static std::string longDescription() { return
     R"(This keyword is used to select a limiter function, used for
     discontinuous Galerkin (DG) spatial discretization used in inciter. See
-    Control/Inciter/Options/Limiter.h for valid options.)"; }
+    Control/Inciter/Options/Limiter.hpp for valid options.)"; }
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {

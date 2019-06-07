@@ -1,6 +1,6 @@
 /*!
-  \page      inciter_newscheme_header_page Inciter/ALECG.h
+  \page      inciter_newscheme_header_page Inciter/ALECG.hpp
 
-@include Inciter/ALECG.h
+@include Inciter/ALECG.hpp
 
 */

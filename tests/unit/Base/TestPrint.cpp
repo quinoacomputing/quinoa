@@ -1,12 +1,12 @@
 // *****************************************************************************
 /*!
-  \file      tests/unit/Base/TestPrint.C
+  \file      tests/unit/Base/TestPrint.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Unit tests for Base/Print.h
-  \details   Unit tests for Base/Print.h
+  \brief     Unit tests for Base/Print.pp
+  \details   Unit tests for Base/Print.pp
 */
 // *****************************************************************************
 

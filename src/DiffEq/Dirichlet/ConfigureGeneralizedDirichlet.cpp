@@ -88,10 +88,10 @@ infoGenDir( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
   nfo.emplace_back(
     "coeff c [" + std::to_string( ncomp*(ncomp-1)/2 ) + "]",
     parameters( g_inputdeck.get< tag::param, tag::gendir, tag::c >().at(c) ) );
-  spikes( nfo,
-          g_inputdeck.get< tag::param, tag::gendir, tag::spike >().at(c) );
-  betapdfs( nfo,
-            g_inputdeck.get< tag::param, tag::gendir, tag::betapdf >().at(c) );
+  spikes( nfo, g_inputdeck.get< tag::param, tag::gendir, tag::init,
+                                tag::spike >().at(c) );
+  betapdfs( nfo, g_inputdeck.get< tag::param, tag::gendir, tag::init,
+                                  tag::betapdf >().at(c) );
 
   return nfo;
 }

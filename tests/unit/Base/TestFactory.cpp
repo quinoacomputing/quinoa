@@ -1,12 +1,12 @@
 // *****************************************************************************
 /*!
-  \file      tests/unit/Base/TestFactory.C
+  \file      tests/unit/Base/TestFactory.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Unit tests for Base/Factory.h
-  \details   Unit tests for Base/Factory.h
+  \brief     Unit tests for Base/Factory.hpp
+  \details   Unit tests for Base/Factory.hpp
 */
 // *****************************************************************************
 

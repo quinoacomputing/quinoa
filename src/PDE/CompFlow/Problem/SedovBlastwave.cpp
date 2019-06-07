@@ -14,6 +14,7 @@
 
 #include "SedovBlastwave.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "EoS/EoS.hpp"
 
 namespace inciter {
 
@@ -25,11 +26,11 @@ using inciter::CompFlowProblemSedovBlastwave;
 
 tk::SolutionFn::result_type
 CompFlowProblemSedovBlastwave::solution( ncomp_t system,
-                                       ncomp_t ncomp,
-                                       tk::real x,
-                                       tk::real y,
-                                       tk::real,
-                                       tk::real )
+                                         ncomp_t ncomp,
+                                         tk::real x,
+                                         tk::real y,
+                                         tk::real,
+                                         tk::real )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -37,7 +38,6 @@ CompFlowProblemSedovBlastwave::solution( ncomp_t system,
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
-//! \param[in] t Physical time at which to evaluate the solution
 //! \return Values of all components evaluated at (x)
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
@@ -47,8 +47,6 @@ CompFlowProblemSedovBlastwave::solution( ncomp_t system,
   IGNORE(ncomp);
   using tag::param;
 
-  // ratio of specific heats
-  const tk::real g = g_inputdeck.get< param, eq, tag::gamma >()[system];
   tk::real r, p, u, v, w, rE;
   if ( (x<0.05) && (y<0.05) ) {
     // density
@@ -71,7 +69,7 @@ CompFlowProblemSedovBlastwave::solution( ncomp_t system,
     w = 0.0;
   }
   // total specific energy
-  rE = p/(g-1.0) + 0.5*r*(u*u + v*v + w*w);
+  rE = eos_totalenergy( system, r, r*u, r*v, r*w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
 }
@@ -177,9 +175,6 @@ CompFlowProblemSedovBlastwave::fieldOutput(
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
 {
-  // ratio of specific heats
-  tk::real g = g_inputdeck.get< tag::param, eq, tag::gamma >()[system];
-
   const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
   std::vector< std::vector< tk::real > > out;
@@ -250,7 +245,7 @@ CompFlowProblemSedovBlastwave::fieldOutput(
 
   std::vector< tk::real > P( r.size(), 0.0 );
   for (std::size_t i=0; i<P.size(); ++i)
-    P[i] = (g-1.0)*r[i]*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
+    P[i] = eos_pressure( system, r[i], ru[i], rv[i], rw[i], re[i] );
   out.push_back( P );
   //out.push_back( Pa );
 

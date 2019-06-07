@@ -82,6 +82,7 @@ struct mixnumfracbeta {};
 struct mixmassfracbeta {};
 struct alpha {};
 struct gamma {};
+struct pstiff {};
 struct spike {};
 struct betapdf {};
 struct hydrotimescales {};
