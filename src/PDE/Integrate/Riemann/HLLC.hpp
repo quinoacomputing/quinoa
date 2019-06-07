@@ -19,12 +19,10 @@
 #include "Fields.hpp"
 #include "Tags.hpp"
 #include "FunctionPrototypes.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/Options/Flux.hpp"
+#include "EoS/EoS.hpp"
 
 namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
 
 //! HLLC approximate Riemann solver
 //! \details This class can be used polymorphically with inciter::RiemannSolver
@@ -42,23 +40,15 @@ struct HLLC {
   {
     std::vector< tk::real > flx( u[0].size(), 0 );
 
-    // ratio of specific heats
-    auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
-
     // Primitive variables
     auto rhol = u[0][0];
     auto rhor = u[1][0];
 
-    auto pl = (g-1.0)*(u[0][4] - (u[0][1]*u[0][1] +
-                                  u[0][2]*u[0][2] +
-                                  u[0][3]*u[0][3]) / (2.0*rhol));
+    auto pl = eos_pressure( 0, rhol, u[0][1], u[0][2], u[0][3], u[0][4] );
+    auto pr = eos_pressure( 0, rhor, u[1][1], u[1][2], u[1][3], u[1][4] );
 
-    auto pr = (g-1.0)*(u[1][4] - (u[1][1]*u[1][1] +
-                                  u[1][2]*u[1][2] +
-                                  u[1][3]*u[1][3]) / (2.0*rhor));
-
-    auto al = sqrt(g * pl / rhol);
-    auto ar = sqrt(g * pr / rhor);
+    auto al = eos_soundspeed( 0, rhol, pl );
+    auto ar = eos_soundspeed( 0, rhor, pr );
 
     // Face-normal velocities
     auto ul = u[0][1]/rhol;

@@ -21,6 +21,7 @@
 #include "Macro.hpp"
 #include "Exception.hpp"
 #include "Vector.hpp"
+#include "EoS/EoS.hpp"
 
 namespace inciter {
 
@@ -205,9 +206,6 @@ class CompFlow {
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      // ratio of specific heats
-      auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
-
       // 1st stage: update element values from node values (gather-add)
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
 
@@ -240,9 +238,7 @@ class CompFlow {
         // pressure
         std::array< tk::real, 4 > p;
         for (std::size_t a=0; a<4; ++a)
-          p[a] = (g-1.0)*(u[4][a] - (u[1][a]*u[1][a] +
-                                     u[2][a]*u[2][a] +
-                                     u[3][a]*u[3][a])/2.0/u[0][a]);
+          p[a] = eos_pressure( 0, u[0][a], u[1][a], u[2][a], u[3][a], u[4][a] );
 
         // sum nodal averages to element
         for (ncomp_t c=0; c<5; ++c) {
@@ -313,8 +309,7 @@ class CompFlow {
         for (ncomp_t c=0; c<5; ++c) r[c] = R.cptr( c, m_offset );
 
         // pressure
-        auto p = (g-1.0)*(ue[4] -
-                   (ue[1]*ue[1] + ue[2]*ue[2] + ue[3]*ue[3])/2.0/ue[0]);
+        auto p = eos_pressure( 0, ue[0], ue[1], ue[2], ue[3], ue[4] );
 
         // scatter-add flux contributions to rhs at nodes
         tk::real d = deltat * J/6.0;
@@ -386,9 +381,9 @@ class CompFlow {
           auto& rv = u[2][j];    // rho * v
           auto& rw = u[3][j];    // rho * w
           auto& re = u[4][j];    // rho * e
-          auto p = (g-1.0)*(re - (ru*ru + rv*rv + rw*rw)/2.0/r); // pressure
+          auto p = eos_pressure( 0, r, ru, rv, rw, re ); //pressure
           if (p < 0) p = 0.0;
-          auto c = std::sqrt(g*p/r);     // sound speed
+          auto c = eos_soundspeed( 0, r, p ); //sound speed
           auto v = std::sqrt((ru*ru + rv*rv + rw*rw)/r/r) + c; // char. velocity
           if (v > maxvel) maxvel = v;
         }

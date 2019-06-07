@@ -14,6 +14,7 @@
 
 #include "SodShocktube.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "EoS/EoS.hpp"
 
 namespace inciter {
 
@@ -43,8 +44,6 @@ CompFlowProblemSodShocktube::solution( ncomp_t system,
   Assert( ncomp == m_ncomp, "Number of scalar components must be " +
                             std::to_string(m_ncomp) );
   using tag::param;
-  // ratio of specific heats
-  const tk::real g = g_inputdeck.get< param, eq, tag::gamma >()[system];
   tk::real r, p, u, v, w, rE;
   if (x<0.5) {
     // density
@@ -67,7 +66,7 @@ CompFlowProblemSodShocktube::solution( ncomp_t system,
     w = 0.0;
   }
   // total specific energy
-  rE = p/(g-1.0) + 0.5*r*(u*u + v*v + w*w);
+  rE = eos_totalenergy( system, r, r*u, r*v, r*w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
 }
@@ -176,8 +175,6 @@ CompFlowProblemSodShocktube::fieldOutput(
   // number of degree of freedom
   const std::size_t ndof =
     g_inputdeck.get< tag::discr, tag::ndof >();
-  // ratio of specific heats
-  tk::real g = g_inputdeck.get< tag::param, eq, tag::gamma >()[system];
 
   std::vector< std::vector< tk::real > > out;
   const auto r  = U.extract( 0*ndof, offset );
@@ -247,7 +244,8 @@ CompFlowProblemSodShocktube::fieldOutput(
 
   std::vector< tk::real > P( r.size(), 0.0 );
   for (std::size_t i=0; i<P.size(); ++i)
-    P[i] = (g-1.0)*r[i]*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
+    P[i] = eos_pressure( system, r[i], r[i]*u[i], r[i]*v[i], r[i]*w[i],
+                         r[i]*E[i] );
   out.push_back( P );
   //out.push_back( Pa );
 

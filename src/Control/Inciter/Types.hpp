@@ -180,6 +180,8 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::id,            std::vector< kw::id::info::expect::type >
     //! Ratio of spec heats
   , tag::gamma,         std::vector< kw::mat_gamma::info::expect::type >
+    //! EoS stiffness parameter
+  , tag::pstiff,        std::vector< kw::mat_pstiff::info::expect::type >
     //! Dynamic viscosity
   , tag::mu,            std::vector< kw::mat_mu::info::expect::type >
     //! Spec. heat at const vol.
@@ -205,21 +207,35 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
                         kw::sideset::info::expect::type > >
   , tag::bcextrapolate, std::vector< std::vector<
                          kw::sideset::info::expect::type > >
-  //! Parameter vector (for specific, e.g., verification problems)
+    //! Parameter vector (for specific, e.g., verification problems)
   , tag::alpha,         std::vector< kw::pde_alpha::info::expect::type >
-  //! Parameter vector (for specific, e.g., verification problems)
+    //! Parameter vector (for specific, e.g., verification problems)
   , tag::beta,          std::vector< kw::pde_beta::info::expect::type >
-  //! Parameter vector (for specific, e.g., verification problems)
+    //! Parameter vector (for specific, e.g., verification problems)
+  , tag::betax,         std::vector< kw::pde_betax::info::expect::type >
+    //! Parameter vector (for specific, e.g., verification problems)
+  , tag::betay,         std::vector< kw::pde_betay::info::expect::type >
+    //! Parameter vector (for specific, e.g., verification problems)
+  , tag::betaz,         std::vector< kw::pde_betaz::info::expect::type >
+    //! Parameter vector (for specific, e.g., verification problems)
+  , tag::r0,            std::vector< kw::pde_r0::info::expect::type >
+    //! Parameter vector (for specific, e.g., verification problems)
+  , tag::ce,            std::vector< kw::pde_ce::info::expect::type >
+    //! Parameter vector (for specific, e.g., verification problems)
+  , tag::kappa,         std::vector< kw::pde_kappa::info::expect::type >
+    //! Parameter vector (for specific, e.g., verification problems)
   , tag::p0,            std::vector< kw::pde_p0::info::expect::type >
-  //! Material ID
+    //! Material ID
   , tag::id,            std::vector< kw::id::info::expect::type >
-  //! Ratio of spec heats
+    //! Ratio of spec heats
   , tag::gamma,         std::vector< kw::mat_gamma::info::expect::type >
-  //! Dynamic viscosity
+    //! EoS stiffness parameter
+  , tag::pstiff,        std::vector< kw::mat_pstiff::info::expect::type >
+    //! Dynamic viscosity
   , tag::mu,            std::vector< kw::mat_mu::info::expect::type >
-  //! Spec. heat at const vol.
+    //! Spec. heat at const vol.
   , tag::cv,            std::vector< kw::mat_cv::info::expect::type >
-  //! Heat conductivity
+    //! Heat conductivity
   , tag::k,             std::vector< kw::mat_k::info::expect::type >
   //! number of materials
   , tag::nmat,          std::vector< kw::nmat::info::expect::type >

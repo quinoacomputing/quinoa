@@ -93,6 +93,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::material,
                                    kw::id,
                                    kw::mat_gamma,
+                                   kw::mat_pstiff,
                                    kw::mat_mu,
                                    kw::mat_cv,
                                    kw::mat_k,

@@ -553,6 +553,7 @@ namespace deck {
              tk::grm::block< use< kw::end >,
                              material_property< eq, kw::id, tag::id >,
                              material_property< eq, kw::mat_gamma, tag::gamma >,
+                             material_property< eq, kw::mat_pstiff, tag::pstiff >,
                              material_property< eq, kw::mat_mu, tag::mu >,
                              material_property< eq, kw::mat_cv, tag::cv >,
                              material_property< eq, kw::mat_k, tag::k > > > {};
