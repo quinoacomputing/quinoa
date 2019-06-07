@@ -330,6 +330,7 @@ class MixMassFracBetaCoeffHydroTimeScale {
 
     mutable std::size_t m_it = 0;
     mutable std::vector< tk::real > m_s;
+    mutable std::string m_extra_out_filename;
 };
 
 //! \brief Mix mass-fraction beta SDE coefficients policy coupled to velocity
