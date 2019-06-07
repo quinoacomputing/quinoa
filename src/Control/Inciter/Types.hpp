@@ -180,6 +180,8 @@ using CompFlowPDEParameters = tk::tuple::tagged_tuple<
   tag::id,            std::vector< kw::id::info::expect::type >,
   //! Ratio of spec heats
   tag::gamma,         std::vector< kw::mat_gamma::info::expect::type >,
+  //! EoS stiffness parameter
+  tag::pstiff,        std::vector< kw::mat_pstiff::info::expect::type >,
   //! Dynamic viscosity
   tag::mu,            std::vector< kw::mat_mu::info::expect::type >,
   //! Spec. heat at const vol.
@@ -190,7 +192,7 @@ using CompFlowPDEParameters = tk::tuple::tagged_tuple<
   tag::npar,          std::vector< kw::npar::info::expect::type >
 >;
 
-//! Compressible flow equation parameters storage
+//! Multi-material compressible flow equation parameters storage
 using MultiMatPDEParameters = tk::tuple::tagged_tuple<
   tag::depvar,        std::vector< char >,
   tag::physics,       std::vector< PhysicsType >,
@@ -217,6 +219,8 @@ using MultiMatPDEParameters = tk::tuple::tagged_tuple<
   tag::gamma,         std::vector< kw::mat_gamma::info::expect::type >,
   //! Dynamic viscosity
   tag::mu,            std::vector< kw::mat_mu::info::expect::type >,
+  //! EoS stiffness parameter
+  tag::pstiff,        std::vector< kw::mat_pstiff::info::expect::type >,
   //! Spec. heat at const vol.
   tag::cv,            std::vector< kw::mat_cv::info::expect::type >,
   //! Heat conductivity
