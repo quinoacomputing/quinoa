@@ -177,6 +177,11 @@ Contributions and collaborators are welcome. Contact us via
 
 @section mainpage_license License
 
+Quinoa is certified [Open
+Source](http://www.opensource.org/docs/definition.html) software. It may be
+used for any purpose, including commercial purposes, at absolutely no cost. It
+is distributed under the terms of the 3-clause BSD license listed below.
+
 @include LICENSE
 
 */
