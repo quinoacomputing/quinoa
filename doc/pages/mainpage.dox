@@ -1,4 +1,5 @@
-/** @mainpage Quinoa
+/*!
+@mainpage Quinoa
 
 @m_div{m-col-t-4 m-right-t}
 <img src="quinoa.svg"/>
@@ -20,6 +21,20 @@ problems with a production-quality code that is extensible and maintainable,
 using hardware resources efficiently, even for problems with _a priori_
 unknown, heterogeneous, and dynamic load distribution. Read more at our @ref
 why page.
+
+@m_class{m-note m-default m-landing-news}
+
+  @par Recently modified pages
+  @ref walker_main
+  @m_span{m-text m-dim} <em> Jun 02, 2019 </em> @m_endspan <br>
+  @ref build
+  @m_span{m-text m-dim} <em> Jun 02, 2019 </em> @m_endspan <br>
+  @ref index
+  @m_span{m-text m-dim} <em> Jun 04, 2019 </em> @m_endspan <br>
+  @ref inciter_newpde_problem_h
+  @m_span{m-text m-dim} <em> Jun 01, 2019 </em> @m_endspan <br>
+  @ref files
+  @m_span{m-text m-dim} <em> Jun 01, 2019 </em> @m_endspan <br>
 
 @section mainpage_tools Tools
 
@@ -98,6 +113,9 @@ For larger problems and computers, however, you should build from source.
        mkdir external/build; cd external/build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 .. && make; cd -
        mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src && make -sj8 && ./charmrun +p8 Main/unittest -v -q && ctest -j8 --output-on-failure -LE extreme
 
+  @note The above will use 8 CPU cores to compile the code and run the tests.
+  You might need to adjust this to get optimal performance.
+
 All executables will be under `build/Main/`. For more information on how to
 build, see the page on @ref build.
 
@@ -173,6 +191,11 @@ Contributions and collaborators are welcome. Contact us via
 - Cite --- https://zenodo.org/badge/latestdoi/38454430
 
 @section mainpage_license License
+
+Quinoa is certified [Open
+Source](http://www.opensource.org/docs/definition.html) software. It may be
+used for any purpose, including commercial purposes, at absolutely no cost. It
+is distributed under the terms of the 3-clause BSD license listed below.
 
 @include LICENSE
 

@@ -68,7 +68,7 @@ namespace walker {
 //! Raw initialization policy: leave memory uninitialized
 struct InitRaw {
 
-  //! Initialize particle properties
+  //! Do not initialize particle properties
   template< class eq >
   static void init( const ctr::InputDeck&,
                     const tk::RNG&,
@@ -85,7 +85,7 @@ struct InitRaw {
 //! Zero initialization policy: zero particle properties
 struct InitZero {
 
-  //! Initialize particle properties
+  //! Initialize particle properties as zero
   template< class eq >
   static void init( const ctr::InputDeck&,
                     const tk::RNG&,
@@ -105,7 +105,7 @@ struct InitZero {
 //! Delta initialization policy: put in delta-spikes as the joint PDF
 struct InitDelta {
 
-  //! Initialize particle properties
+  //! Initialize particle properties a joint delta
   template< class eq >
   static void init( const ctr::InputDeck& deck,
                     const tk::RNG&,
@@ -147,7 +147,7 @@ struct InitDelta {
 //! Beta initialization policy: generate samples from a joint beta PDF
 struct InitBeta {
 
-  //! Initialize particle properties (zero)
+  //! Initialize particle properties by sampling from a joint beta distribution
   template< class eq >
   static void init( const ctr::InputDeck& deck,
                     const tk::RNG& rng,
@@ -188,7 +188,7 @@ struct InitBeta {
 //! \note No correlations supported. For correlations, see jointCorrGaussian
 struct InitGaussian {
 
-  //! Initialize particle properties (zero)
+  //! Initialize particle properties by sampling from independent Gaussians
   template< class eq >
   static void init( const ctr::InputDeck& deck,
                     const tk::RNG& rng,
@@ -233,7 +233,7 @@ struct InitGaussian {
 //!   correlated Gaussian PDF
 struct InitCorrGaussian {
 
-  //! Initialize particle properties (zero)
+  //! Initialize particle properties by sampling from a joint Gaussian
   template< class eq >
   static void init( const ctr::InputDeck& deck,
                     const tk::RNG& rng,
@@ -280,7 +280,7 @@ struct InitCorrGaussian {
 //! Gamma initialization policy: generate samples from a joint gamma PDF
 struct InitGamma {
 
-  //! Initialize particle properties (zero)
+  //! Initialize particle properties by sampling from a joint gamma distribution
   template< class eq >
   static void init( const ctr::InputDeck& deck,
                     const tk::RNG& rng,
@@ -317,7 +317,7 @@ struct InitGamma {
 //! Dirichlet initialization policy: generate samples from a Dirichlet PDF
 struct InitDirichlet {
 
-  //! Initialize particle properties (zero)
+  //! Initialize particle properties by sampling from a Dirichlet distribution
   //! \see https://en.wikipedia.org/wiki/Dirichlet_distribution#Random_number_generation
   template< class eq >
   static void init( const ctr::InputDeck& deck,

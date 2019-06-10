@@ -773,7 +773,7 @@ WARN_LOGFILE           =
 # spaces.
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages \
+INPUT                  = @CMAKE_CURRENT_BINARY_DIR@/doc/pages \
                          @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples \
                          @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses \
                          @CMAKE_CURRENT_SOURCE_DIR@/../src/ \
