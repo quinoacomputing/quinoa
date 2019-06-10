@@ -261,6 +261,7 @@ class Discretization : public CBase_Discretization {
       p | m_bid;
       p | m_timer;
       p | m_refined;
+      p( reinterpret_cast<char*>(&m_prevstatus), sizeof(Clock::time_point) );
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -269,6 +270,9 @@ class Discretization : public CBase_Discretization {
     //@}
 
   private:
+    // Shorthand for clock, setting an internal clock type
+    using Clock = std::chrono::high_resolution_clock;
+
     //! Total number of Discretization chares
     int m_nchare;
     //! Iteration count
@@ -350,7 +354,7 @@ class Discretization : public CBase_Discretization {
     //! 1 if mesh was refined in a time step, 0 if it was not
     int m_refined;
     //! Time point storing clock state at status()
-    std::chrono::high_resolution_clock::time_point m_prevstatus;
+    Clock::time_point m_prevstatus;
 
     //! Set mesh coordinates based on coordinates map
     tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );
