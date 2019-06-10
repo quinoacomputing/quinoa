@@ -1,4 +1,5 @@
 /*!
+  \page files Files
 
 @dir src
 @brief Root of the source tree
@@ -26,7 +27,8 @@ executables. It has multiple grammar definitions for
 
 Grammar definitions are defined using the [Parsing Expression Grammar Template
 Library (PEGTL)](https://github.com/taocpp/PEGTL) according to [Parsing
-Expression Grammar (PEG)](https://en.wikipedia.org/wiki/Parsing_expression_grammar). As the PEGTL documentation describes
+Expression Grammar (PEG)](https://en.wikipedia.org/wiki/Parsing_expression_grammar).
+As the PEGTL documentation describes
 
 > Grammars are written as regular C++ code, created with template programming
 > (not template meta programming), i.e. nested template instantiations that
