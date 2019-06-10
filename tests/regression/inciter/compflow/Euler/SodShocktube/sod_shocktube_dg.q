@@ -18,7 +18,6 @@ inciter
     depvar u
 
     material
-      id 1
       gamma 1.4 # ratio of specific heats
     end
 

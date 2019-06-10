@@ -23,7 +23,6 @@ inciter
     p0 10.0
 
     material
-      id 1
       gamma 1.66666666666667 # =5/3 ratio of specific heats
     end
 
