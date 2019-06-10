@@ -623,22 +623,38 @@ if (NOT BUILD_SHARED_LIBS)
   endforeach()
 endif()
 
-# add a target to generate API documentation with Doxygen
+# Add a target to generate API documentation with Doxygen
 find_package(Doxygen 1.8.15)
 find_package(MCSS)
-if(DOXYGEN_FOUND AND MCSS_FOUND AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND JINJA2_FOUND AND LATEX_FOUND)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.doxy
-                 ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
-  add_custom_command(OUTPUT xml
-                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
-                     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy
-                     COMMAND ${DOXYGEN_EXECUTABLE} quinoa.doxy
-                     COMMAND ${MCSS_DOX2HTML5} --no-doxygen quinoa.doxy
-                     VERBATIM USES_TERMINAL)
-  add_custom_target(doc DEPENDS xml
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
-                    COMMENT "Documentation")
-  message(STATUS "Add target 'doc' to generate documentation to ./doc/html/index.html")
+if (DOXYGEN_FOUND AND MCSS_FOUND AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND
+    JINJA2_FOUND AND LATEX_FOUND)
+
+  find_program( PERL perl )
+  find_program( AWK awk )
+  find_program( XARGS xargs )
+  find_program( GIT git )
+  find_program( HEAD head )
+  find_program( RECENT_MODS ${CMAKE_CURRENT_SOURCE_DIR}/../tools/recent_mods.sh )
+
+  if (PERL AND AWK AND XARGS AND GIT AND HEAD AND RECENT_MODS)
+
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.doxy
+                   ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../doc/pages
+         DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/doc/)
+    add_custom_command(OUTPUT xml
+                       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
+                       DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy
+                       COMMAND ${RECENT_MODS} ${CMAKE_CURRENT_SOURCE_DIR}/..
+                       COMMAND ${DOXYGEN_EXECUTABLE} quinoa.doxy
+                       COMMAND ${MCSS_DOX2HTML5} --no-doxygen quinoa.doxy
+                       VERBATIM USES_TERMINAL)
+    add_custom_target(doc DEPENDS xml
+                      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
+                      COMMENT "Documentation")
+    message(STATUS "Add target 'doc' to generate documentation to ./doc/html/index.html")
+  endif()
+
 endif()
 
 # Optionally enable cppcheck static analysis
