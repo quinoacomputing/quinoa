@@ -93,7 +93,7 @@ container](https://hub.docker.com/r/quinoacomputing/quinoa). See also
 - https://quinoacomputing.github.io/examples.html
 - https://github.com/quinoacomputing/quinoa-examples
 
-For larger problems and computers, however, you should build from source.
+For larger problems and computers, however, you should @ref build "build" from source.
 
 @section mainpage_build Build
 
