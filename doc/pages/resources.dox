@@ -1,0 +1,58 @@
+/*!
+  \page resources Resources
+
+@section resources_code Code
+
+- Source code --- https://github.com/quinoacomputing/quinoa
+- Documentation --- https://quinoacomputing.org
+- GitHub organization --- https://github.com/quinoacomputing
+
+@section resources_releases Releases
+
+- Source tarballs --- https://github.com/quinoacomputing/quinoa/releases
+- Docker containers with pre-built executables --- https://hub.docker.com/r/quinoacomputing/quinoa
+
+@section resources_legal Legal
+
+- License --- https://github.com/quinoacomputing/quinoa/blob/master/LICENSE
+- Third-party libraries and licenses --- https://quinoacomputing.org/licenses.html
+
+@section resources_contributing Contributing
+
+- Contributing / Roadmap --- @ref contributing
+
+@section resources_quality Code quality
+
+- GCov --- https://quinoacomputing.org/coverage
+- Codecov --- https://codecov.io/gh/quinoacomputing/quinoa/commits
+- Sonarqube --- https://sonarqube.com/organizations/quinoacomputing
+- Azure --- https://dev.azure.com/quinoacomputing/Quinoa
+- Analytics --- http://www.openhub.net/p/quinoacomputing
+- Practices --- https://bestpractices.coreinfrastructure.org/projects/2120
+
+@section resources_cite Cite
+
+- Journal papers --- @ref papers
+- Software --- https://zenodo.org/badge/latestdoi/38454430
+
+@section resources_contact Contact
+
+- Chat --- https://quinoa.zulipchat.com
+- Email list --- https://quinoa.groups.io
+- LANL-team email --- mailto:quinoa@lanl.gov
+
+@section resources_authors Authors
+
+@m_class{m-note m-default m-text-center}
+
+[Jozsef Bakosi](https://github.com/jbakosi) -
+[Bob Bird](https://github.com/rfbird) -
+[Francisco Gonzalez](https://github.com/franjgonzalez) -
+[Christoph Junghans](https://github.com/junghans) -
+[Weizhao Li](https://github.com/WeizhaoLi2018) -
+[Aditya Pakki](https://github.com/adityapakki) -
+[Aditya Pandare](https://github.com/adityakpandare) -
+[Robert Pavel](https://github.com/rspavel) -
+[Brandon Rogers](https://github.com/brog2610)
+
+*/

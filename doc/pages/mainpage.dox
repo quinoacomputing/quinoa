@@ -20,7 +20,7 @@ Our ultimate goal is to simulate large and complex engineering multiphysics
 problems with a production-quality code that is extensible and maintainable,
 using hardware resources efficiently, even for problems with _a priori_
 unknown, heterogeneous, and dynamic load distribution. Read more at our @ref
-why page.
+why "Philosophy" page.
 
 @m_class{m-note m-default m-landing-news}
 
@@ -98,7 +98,7 @@ For larger problems and computers, however, you should build from source.
 @section mainpage_build Build
 
 The simplest way to build from source is to perform the following steps. For
-more information on other ways to build, see the page on @ref build.
+other ways to build, see the page on @ref build "building Quinoa".
 
 - Install prerequisites: _Debian/Ubuntu linux_ (line 1: required, line 2: recommended)
 
@@ -147,57 +147,13 @@ git clone --recurse-submodules --branch=develop https://github.com/quinoacomputi
       └── README.md - This file, rendered at github.com/quinoacomputing/quinoa
 @endverbatim
 
-@section mainpage_contributing Contribute
-
-Contributions and collaborators are welcome. Contact us via
-[GitHub](https://github.com/quinoacomputing/quinoa),
-[Email](mailto:quinoa@lanl.gov) or
-[Gitter](https://gitter.im/quinoacomputing/quinoa).
-
-@section mainpage_authors Authors
-
-(in chronological order of contribution)
-
-1. [Jozsef Bakosi](https://github.com/jbakosi)
-2. [Francisco Gonzalez](https://github.com/franjgonzalez)
-3. [Brandon Rogers](https://github.com/brog2610)
-4. [Christoph Junghans](https://github.com/junghans)
-5. [Robert Pavel](https://github.com/rspavel)
-6. [Aditya Pakki](https://github.com/adityapakki)
-7. [Bob Bird](https://github.com/rfbird)
-8. [Aditya Pandare](https://github.com/adityakpandare)
-9. [Weizhao Li](https://github.com/WeizhaoLi2018)
-
-@section mainpage_resources Resources
-
-- Source --- https://github.com/quinoacomputing/quinoa
-- Releases --- https://github.com/quinoacomputing/quinoa/releases
-- Contributing --- https://www.clahub.com/agreements/quinoacomputing/quinoa
-- License --- https://github.com/quinoacomputing/quinoa/blob/master/LICENSE
-- Third-party libraries and licenses --- https://quinoacomputing.github.io/licenses.html
-- Documentation --- https://quinoacomputing.github.io
-- Web --- https://quinoacomputing.github.io
-- Email --- mailto:quinoa@lanl.gov
-- Gitter --- https://gitter.im/quinoacomputing/quinoa
-- Philosophy --- https://quinoacomputing.github.io/why
-- Papers --- https://quinoacomputing.github.io/papers
-- Roadmap --- https://github.com/quinoacomputing/quinoa/issues
-- Doxygen --- https://quinoacomputing.github.io
-- Coverage --- https://quinoacomputing.github.io/coverage
-- Codecov --- https://codecov.io/gh/quinoacomputing/quinoa/commits
-- Sonarqube --- https://sonarqube.com/organizations/quinoacomputing
-- Docker --- https://hub.docker.com/r/quinoacomputing/quinoa
-- Azure --- https://dev.azure.com/quinoacomputing/Quinoa
-- Analytics --- http://www.openhub.net/p/quinoacomputing
-- Practices --- https://bestpractices.coreinfrastructure.org/projects/2120
-- Cite --- https://zenodo.org/badge/latestdoi/38454430
-
 @section mainpage_license License
 
 Quinoa is certified [Open
 Source](http://www.opensource.org/docs/definition.html) software. It may be
 used for any purpose, including commercial purposes, at absolutely no cost. It
-is distributed under the terms of the 3-clause BSD license listed below.
+is distributed under the terms of the 3-clause BSD license listed below. See
+also @ref resources_legal.
 
 @include LICENSE
 
