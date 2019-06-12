@@ -1097,6 +1097,7 @@ DG::eval_ndof()
   const auto ncomp = m_u.nprop()/ndof;
   const auto& inpoel = Disc()->Inpoel();
   const auto& coord = Disc()->Coord();
+  const auto tolref = inciter::g_inputdeck.get< tag::pref, tag::tolref >();
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -1150,7 +1151,7 @@ DG::eval_ndof()
                          + dudx[c][1] * dudx[c][1]
                          + dudx[c][2] * dudx[c][2] );
 
-        if (grad > 0.1) ++sign;
+        if (grad > tolref) ++sign;
       }
 
       if(sign > 0)

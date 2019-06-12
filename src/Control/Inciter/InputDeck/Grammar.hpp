@@ -342,7 +342,7 @@ namespace grm {
   template<>
   struct action< enable_pref > {
     template< typename Input, typename Stack >
-    static void apply() {}
+    static void apply(const Input& , Stack& ) {}
 };
 
   //! Rule used to trigger action
@@ -426,7 +426,7 @@ namespace grm {
   template<>
   struct action< check_pref_errors > {
     template< typename Input, typename Stack >
-    static void apply() {}
+    static void apply(const Input& , Stack& ) {}
   };
 
 } // ::grm
