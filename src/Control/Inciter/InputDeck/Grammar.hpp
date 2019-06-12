@@ -150,6 +150,29 @@ namespace grm {
       // Set number of components to 5 (mass, 3 x mom, energy)
       stack.template get< tag::component, eq >().push_back( 5 );
 
+      // Verify correct number of multi-material properties configured
+      auto& gamma = stack.template get< tag::param, eq, tag::gamma >();
+      if (gamma.empty() || gamma.back().size() != 1)
+        Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
+
+      // If specific heats are not given, set defaults
+      using cv_t = kw::mat_cv::info::expect::type;
+      auto& cv = stack.template get< tag::param, eq, tag::cv >();
+      if (cv.empty())
+        cv.push_back( std::vector< cv_t >( 1, 717.5 ) );
+      // If specific heat vector is wrong size, error out
+      if (cv.back().size() != 1)
+        Message< Stack, ERROR, MsgKey::EOSCV >( stack, in );
+
+      // If stiffness coefficients are not given, set defaults
+      using pstiff_t = kw::mat_pstiff::info::expect::type;
+      auto& pstiff = stack.template get< tag::param, eq, tag::pstiff >();
+      if (pstiff.empty())
+        pstiff.push_back( std::vector< pstiff_t >( 1, 0.0 ) );
+      // If stiffness coefficient vector is wrong size, error out
+      if (pstiff.back().size() != 1)
+        Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
+
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< tag::param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
