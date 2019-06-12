@@ -1,19 +1,18 @@
 /*!
-  \page      licenses Third-party libraries, compilers, and tools
+  \page      licenses Third-party
 
 @tableofcontents{xml}
 
 This page collects links to full verbatim texts of the licenses of all third-party
 libraries (TPLs), and the list of compilers and tools used by Quinoa.
 
-@section licenses_tpl_vs_tool TPLs and external tools
+An important distinction between @ref tpl_licenses and @ref tools_web is that
+TPLs are libraries whose source we directly use, e.g., via include files and/or
+(static and dynamic) linking, while from a tool we do not include source code
+nor link its object files, only build it and use it as a separate (external)
+executable.
 
-An important distinction between TPLs and tools is that TPLs are libraries whose
-source we directly use, e.g., via include files and/or (static and dynamic)
-linking, while from a tool we do not include source code nor link its object
-files, only build it and use it as a separate (external) executable.
-
-\section tpl_licenses Third-party libraries
+\section tpl_licenses Third-party libraries (TPLs)
 
 \subsection charm_license The Charm++ Parallel Programming System
   - Required
@@ -182,8 +181,6 @@ files, only build it and use it as a separate (external) executable.
   - Web: https://github.com/edouarda/brigand
   - License: @subpage brigand_license_page
 
-<hr>
-
 \section compiler_web Compilers
 
 \subsection clang_web Clang C++ compiler
@@ -197,8 +194,6 @@ files, only build it and use it as a separate (external) executable.
 
 \subsection cray_web Cray C++ compiler
   - Web: https://pubs.cray.com/content/S-2179/8.7/cray-c-and-c++-reference-manual
-
-<hr>
 
 \section tools_web Tools
 
