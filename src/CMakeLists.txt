@@ -641,7 +641,8 @@ if (DOXYGEN_FOUND AND MCSS_FOUND AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.doxy
                    ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
 
-    file(GLOB doc_pages CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "../doc/pages/*.dox")
+    file(GLOB doc_pages CONFIGURE_DEPENDS
+         RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "../doc/pages/*.dox")
     foreach(page ${doc_pages})
       configure_file(${page} ${CMAKE_CURRENT_BINARY_DIR}/doc/${page} @ONLY)
     endforeach()
