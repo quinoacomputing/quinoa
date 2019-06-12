@@ -21,4 +21,8 @@ Unit tests are written using the [C++ Template Unit Test
 framework](http://mrzechonek.github.io/tut-framework/). The tests are organized into
 directories under src/UnitTest/tests mirroring the directories of the tested
 code.
+
+@section unittest_pages Related pages
+- @ref roadmap_unittest "Roadmap"
+
 */

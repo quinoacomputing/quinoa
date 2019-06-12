@@ -32,6 +32,7 @@ balancing capabilities.
 
 @section inciter_pages Related pages
 - @ref papers_inciter "Publications"
+- @ref roadmap_inciter "Roadmap"
 - @ref inciter_performance "Performance"
 - @ref inciter_design "Software design"
 - @ref inciter_newscheme "How to add a new scheme"

@@ -147,6 +147,16 @@ git clone --recurse-submodules --branch=develop https://github.com/quinoacomputi
       └── README.md - This file, rendered at github.com/quinoacomputing/quinoa
 @endverbatim
 
+@section mainpage_roadmap Roadmap
+
+The rough directions in which each of Quinoa's tools are developed are
+described by the @ref roadmap.
+
+@section mainpage_contributing Contributing
+
+Contributors and collaborators are welcome. Please read the @ref roadmap and
+the @ref contributing "Contributing guide" and @ref resources_contact "contact us".
+
 @section mainpage_license License
 
 Quinoa is certified [Open
