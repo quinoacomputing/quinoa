@@ -320,7 +320,7 @@ namespace grm {
            inciter::ctr::SchemeType::PDG)
       {
         stack.template get< tag::discr, tag::ndof >() = 4;
-        stack.template get< tag::discr, tag::pref >() = true;
+        stack.template get< tag::pref, tag::pref >() = true;
       }
     }
   };
@@ -335,6 +335,15 @@ namespace grm {
       stack.template get< tag::amr, tag::amr >() = true;
     }
   };
+
+  //! Rule used to trigger action
+  struct enable_pref : pegtl::success {};
+  //! Enable p-adaptive refinement
+  template<>
+  struct action< enable_pref > {
+    template< typename Input, typename Stack >
+    static void apply() {}
+};
 
   //! Rule used to trigger action
   struct compute_refvar_idx : pegtl::success {};
@@ -409,6 +418,15 @@ namespace grm {
       Assert( (stack.template get< tag::amr, tag::dtfreq >() > 0),
               "Mesh refinement frequency must be positive" );
     }
+  };
+
+  //! Rule used to trigger action
+  struct check_pref_errors : pegtl::success {};
+  //! Do error checking for the pref...end block
+  template<>
+  struct action< check_pref_errors > {
+    template< typename Input, typename Stack >
+    static void apply() {}
   };
 
 } // ::grm
@@ -753,6 +771,19 @@ namespace deck {
                          >,
            tk::grm::check_amr_errors > {};
 
+  //! p-adaptive refinement (pref) ...end block
+  struct pref :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::pref >::pegtl_string >,
+           tk::grm::enable_pref, // enable pref if pref...end block encountered
+           tk::grm::block< use< kw::end >,
+                           tk::grm::control< use< kw::pref_tolref >,
+                                             pegtl::digit,
+                                             tag::pref,
+                                             tag::tolref >
+                         >,
+           tk::grm::check_pref_errors > {};
+
   //! plotvar ... end block
   struct plotvar :
          pegtl::if_must<
@@ -777,6 +808,7 @@ namespace deck {
                            discretization,
                            equations,
                            amr,
+                           pref,
                            partitioning,
                            plotvar,
                            tk::grm::diagnostics<
