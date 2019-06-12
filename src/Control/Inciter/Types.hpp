@@ -100,10 +100,9 @@ using floatformat = tk::tuple::tagged_tuple<
 
 //! Output intervals storage
 using intervals = tk::tuple::tagged_tuple<
-  tag::tty,   kw::ttyi::info::expect::type,       //!< TTY output interval
-  tag::field, kw::interval::info::expect::type,   //!< Field output interval
-  tag::diag,  kw::interval::info::expect::type,   //!< Diags output interval
-  tag::lbfreq,kw::lbfreq::info::expect::type      //!< load-balancing frequency
+  tag::tty,    kw::ttyi::info::expect::type,      //!< TTY output interval
+  tag::field,  kw::interval::info::expect::type,  //!< Field output interval
+  tag::diag,   kw::interval::info::expect::type   //!< Diags output interval
 >;
 
 //! IO parameters storage
@@ -112,7 +111,8 @@ using ios = tk::tuple::tagged_tuple<
   tag::input,       std::string,                      //!< Input filename
   tag::output,      std::string,                      //!< Output filename
   tag::diag,        std::string,                      //!< Diagnostics filename
-  tag::part,        std::string                       //!< Particles filename
+  tag::part,        std::string,                      //!< Particles filename
+  tag::restart,     std::string                       //!< Restart dirname
 >;
 
 //! Error/diagnostics output configuration

@@ -512,6 +512,7 @@ Discretization::status()
     const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
     const auto field = g_inputdeck.get< tag::interval,tag::field >();
     const auto diag = g_inputdeck.get< tag::interval, tag::diag >();
+    const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
 
     // estimate time elapsed and time for accomplishment
@@ -547,6 +548,7 @@ Discretization::status()
     if (!(m_it % field)) print << 'f';
     if (!(m_it % diag)) print << 'd';
     if (m_refined) print << 'h';
+    if (!(m_it % rsfreq)) print << 'r';
   
     print << std::endl;
   }

@@ -787,7 +787,7 @@ Transporter::stat()
               std::to_string( static_cast<std::size_t>(m_maxstat[2]) ) + " / " +
               std::to_string( static_cast<std::size_t>(m_avgstat[2]) ) );
 
-  m_print.inthead( "Time integration", "Unstructured-mesh PDE solver testbed",
+  m_print.inthead( "Time integration", "Navier-Stokes solver",
   "Legend: it - iteration count\n"
   "         t - time\n"
   "        dt - time step size\n"
@@ -797,7 +797,8 @@ Transporter::stat()
   "       out - output-saved flags\n"
   "             f - field\n"
   "             d - diagnostics\n"
-  "             h - h-refinement\n",
+  "             h - h-refinement\n"
+  "             r - checkpoint/restart\n",
   "\n      it             t            dt        ETE        ETA        EGT  out\n"
     " -------------------------------------------------------------------------\n" );
 

@@ -100,6 +100,13 @@ namespace cmd {
                                tk::grm::number,
                                tag::lbfreq > {};
 
+  //! Match and set checkpoint/restartfrequency
+  struct rsfreq :
+         tk::grm::process_cmd< use, kw::rsfreq,
+                               tk::grm::Store< tag::rsfreq >,
+                               tk::grm::number,
+                               tag::rsfreq > {};
+
   //! Match switch on trace output
   struct trace :
          tk::grm::process_cmd_switch< use, kw::trace,
@@ -118,11 +125,13 @@ namespace cmd {
                      helpkw,
                      quiescence,
                      lbfreq,
+                     rsfreq,
                      trace,
                      io< kw::control, tag::control >,
                      io< kw::input, tag::input >,
                      io< kw::output, tag::output >,
-                     io< kw::diagnostics, tag::diag > > {};
+                     io< kw::diagnostics, tag::diag >,
+                     io< kw::restart, tag::restart > > {};
 
   //! Grammar entry point: parse keywords until end of string
   struct read_string :
