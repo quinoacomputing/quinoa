@@ -66,106 +66,6 @@ Another way to contribute to Quinoa is to improve an existing @ref
 mainpage_tools "tool". For a detailed description on the current status and
 roadmap of each tool, detailing if/where help is needed, see the @ref roadmap.
 
-@section contributing_rules Ground rules
-
-Here are the basic rules that all of us follow &mdash; we expect all
-contributors to do the same.
-
-@subsection contributing_cla Sign the contributor license agreement
-
-We require all contributors to sign a [contributor license
-agreement](https://www.clahub.com/agreements/quinoacomputing/quinoa) (CLA).
-
-If you are an individual and you are sure you own the intellectual property,
-then you will need to sign the above _individual_ CLA. If you work for a company
-that wants to allow you to contribute your work, then you will need to sign a
-_corporate_ CLA. If you would like to sign the _corporate_ CLA, please send us
-an [email](mailto:quinoa@lanl.gov) so we can send it to you. Once we receive the
-signed CLA, we will be able to accept your pull requests.
-
-__NOTE:__ Only original source code from you and other people that have signed
-the CLA can be accepted into the main repository.
-
-__IMPORTANT__: By contributing code, you agree to license your work under
-Quinoa's
-[license](https://github.com/quinoacomputing/quinoa/blob/master/LICENSE).
-
-@subsection contributing_workflow Workflow
-
-We roughly follow the development model described
-[here](https://nvie.com/posts/a-successful-git-branching-model/). As a
-consequence, our `master` (stable) branch can lag behind our `develop`
-(bleeding edge) branch. In a nutshell, we always develop new code on feature
-branches, forking `develop`, and issue @ref contributing_pr "pull requests"
-against branch `develop`. We only occasionally merge to `master`.
-
-@subsection contributing_build Build with all warnings on, using multiple compilers
-
-We routinely work with three compilers: clang, gnu, and intel &mdash; this helps
-catching more errors, increases portability, and helps decipher more complex
-error messages. Using multiple compilers are not required but recommended since
-our automated testing exercises all of these compilers, and it is more
-time-effective to catch errors and warnings earlier than later.
-
-Additionally, by default we build @ref build "build Quinoa" turning on most (if
-not all) compiler warnings. (Also, our continuous integration testing turns all
-warnings to errors.) There are some exceptions to this rule:
-
-- some warnings are turned off _globally_ (these are in `src/CMakeListst.txt`)
-  under `compiler-specific settings` &mdash; a different list for each compiler,
-  and
-
-- we must turn off some warnings _locally_, when headers of third-party
-  libraries and Charm++-generated code are included &mdash; these are collected
-  under `src/NoWarning/`.
-
-To ensure good code quality we do not deviate from these settings, and we ask
-all contributors to do the same.
-
-@subsection contributing_buildall Build and test all tools before a push
-
-While it is possible to clone, build the dependencies for, build, and work on
-@ref build_specific_executables "only on a single tool", doing so may run the
-risk of breaking some of the code that such a single-tool build does not use
-without noticing it locally. Thus, we recommend, at least before pushing to a
-GitHub branch (e.g., before a @ref contributing_pr "pull requests", building
-and running the tests for the _full_ Quinoa build. If something breaks, our
-continuous integration will most likely catch it because they test _all_ the
-tools, thus testing the full build _locally_ (before publishing your changes)
-reduces the chances of such problems and saves time.
-
-@subsection contributing_test Run unit-, and regression tests
-
-For example, on a workstation with 36 CPUs, run the following in the build
-directory
-
-        # Using Charm++'s non-SMP mode:
-        ./charmrun +p 36 Main/unittest -v -q && ctest -j 36 --output-on-failure -LE extreme
-        # in SMP mode:
-        ./charmrun +p 34 --bind-to none Main/unittest -v -q +ppn 17 && ctest -j 36 --output-on-failure -LE extreme
-
-We usually exclude tests labeled as _extreme_ (which also excludes _insane_
-tests), because these would take long time, but sometimes we run those too,
-because we are ... _insane_ ;-).
-
-See the section on @ref build_smp "building Charm++ in SMP mode" on how to
-build Charm++ in non-SMP and SMP mode.
-
-@subsection contributing_coding Follow our priorities for writing code
-
-We don't really have coding guidelines. Please try not to diverge significantly
-from the style of the existing code. This includes file and function definition
-headers, comments, and API documentation. Also, please keep line lengths max 80
-characters. See also @ref priorities.
-
-@subsection contributing_review Use reviewable.io for discussing pull requests
-
-Though we occasionally post comments on GitHub's feed discussing pull requests,
-we have had a better experience and thus prefer using
-[reviewable.io](https://reviewable.io)'s interface.  It is also more featureful
-and posts the review comments back to GitHub's PR page (which are still
-searchable by GitHub later).
-
 @section contributing_issues Using the issue tracker
 
 __Please do NOT report security vulnerabilities in public issues!__ Instead,
@@ -283,6 +183,106 @@ tracker](https://github.com/quinoacomputing/quinoa/issues).
 Please take a moment and consider whether your idea fits within the @ref why
 "scope, aims, and philosophy" of the project and the particular tool. Please
 provide as much detail and context as possible. Also see the @ref roadmap.
+
+@section contributing_rules Ground rules
+
+Here are the basic rules that all of us follow &mdash; we expect all
+contributors to do the same.
+
+@subsection contributing_cla Sign the contributor license agreement
+
+We require all contributors to sign a [contributor license
+agreement](https://www.clahub.com/agreements/quinoacomputing/quinoa) (CLA).
+
+If you are an individual and you are sure you own the intellectual property,
+then you will need to sign the above _individual_ CLA. If you work for a company
+that wants to allow you to contribute your work, then you will need to sign a
+_corporate_ CLA. If you would like to sign the _corporate_ CLA, please send us
+an [email](mailto:quinoa@lanl.gov) so we can send it to you. Once we receive the
+signed CLA, we will be able to accept your pull requests.
+
+__NOTE:__ Only original source code from you and other people that have signed
+the CLA can be accepted into the main repository.
+
+__IMPORTANT__: By contributing code, you agree to license your work under
+Quinoa's
+[license](https://github.com/quinoacomputing/quinoa/blob/master/LICENSE).
+
+@subsection contributing_workflow Workflow
+
+We roughly follow the development model described
+[here](https://nvie.com/posts/a-successful-git-branching-model/). As a
+consequence, our `master` (stable) branch can lag behind our `develop`
+(bleeding edge) branch. In a nutshell, we always develop new code on feature
+branches, forking `develop`, and issue @ref contributing_pr "pull requests"
+against branch `develop`. We only occasionally merge to `master`.
+
+@subsection contributing_build Build with all warnings on, using multiple compilers
+
+We routinely work with three compilers: clang, gnu, and intel &mdash; this helps
+catching more errors, increases portability, and helps decipher more complex
+error messages. Using multiple compilers are not required but recommended since
+our automated testing exercises all of these compilers, and it is more
+time-effective to catch errors and warnings earlier than later.
+
+Additionally, by default we build @ref build "build Quinoa" turning on most (if
+not all) compiler warnings. (Also, our continuous integration testing turns all
+warnings to errors.) There are some exceptions to this rule:
+
+- some warnings are turned off _globally_ (these are in `src/CMakeListst.txt`)
+  under `compiler-specific settings` &mdash; a different list for each compiler,
+  and
+
+- we must turn off some warnings _locally_, when headers of third-party
+  libraries and Charm++-generated code are included &mdash; these are collected
+  under `src/NoWarning/`.
+
+To ensure good code quality we do not deviate from these settings, and we ask
+all contributors to do the same.
+
+@subsection contributing_buildall Build and test all tools before a push
+
+While it is possible to clone, build the dependencies for, build, and work on
+@ref build_specific_executables "only on a single tool", doing so may run the
+risk of breaking some of the code that such a single-tool build does not use
+without noticing it locally. Thus, we recommend, at least before pushing to a
+GitHub branch (e.g., before a @ref contributing_pr "pull requests", building
+and running the tests for the _full_ Quinoa build. If something breaks, our
+continuous integration will most likely catch it because they test _all_ the
+tools, thus testing the full build _locally_ (before publishing your changes)
+reduces the chances of such problems and saves time.
+
+@subsection contributing_test Run unit-, and regression tests
+
+For example, on a workstation with 36 CPUs, run the following in the build
+directory
+
+        # Using Charm++'s non-SMP mode:
+        ./charmrun +p 36 Main/unittest -v -q && ctest -j 36 --output-on-failure -LE extreme
+        # in SMP mode:
+        ./charmrun +p 34 --bind-to none Main/unittest -v -q +ppn 17 && ctest -j 36 --output-on-failure -LE extreme
+
+We usually exclude tests labeled as _extreme_ (which also excludes _insane_
+tests), because these would take long time, but sometimes we run those too,
+because we are ... _insane_ ;-).
+
+See the section on @ref build_smp "building Charm++ in SMP mode" on how to
+build Charm++ in non-SMP and SMP mode.
+
+@subsection contributing_coding Follow our priorities for writing code
+
+We don't really have coding guidelines. Please try not to diverge significantly
+from the style of the existing code. This includes file and function definition
+headers, comments, and API documentation. Also, please keep line lengths max 80
+characters. See also @ref priorities.
+
+@subsection contributing_review Use reviewable.io for discussing pull requests
+
+Though we occasionally post comments on GitHub's feed discussing pull requests,
+we have had a better experience and thus prefer using
+[reviewable.io](https://reviewable.io)'s interface.  It is also more featureful
+and posts the review comments back to GitHub's PR page (which are still
+searchable by GitHub later).
 
 @section contributing_pr Pull requests
 
