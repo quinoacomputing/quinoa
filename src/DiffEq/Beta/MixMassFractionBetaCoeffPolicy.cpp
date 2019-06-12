@@ -573,6 +573,9 @@ walker::MixMassFracBetaCoeffHydroTimeScale::update(
                   (beta10 + beta2*Thetap*f2 + beta3*Thetap*(1.0-Thetap)*f2);
     b[c] = beta1 * ts;
     k[c] = kprime[c] * beta1 * ts * ds * ds;
+    //b[c] = bprime[c];
+    //k[c] = kprime[c];
+    //b[c] = bprime[c] + 0.25*std::sin(10.0*t);
     //k[c] = 1.0 + 0.25*std::sin(10.0*t);
     //k[c] = -(1.0 + std::sin(t)) * (S[c] - 1.0);
 
