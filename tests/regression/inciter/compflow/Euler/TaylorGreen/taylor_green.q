@@ -21,7 +21,7 @@ inciter
     problem taylor_green
 
     material
-      gamma 1.66666666666667 # =5/3 ratio of specific heats
+      gamma 1.66666666666667 end # =5/3 ratio of specific heats
     end
 
     bc_dirichlet

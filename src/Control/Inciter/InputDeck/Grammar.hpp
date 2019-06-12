@@ -251,8 +251,13 @@ namespace grm {
       if (gamma.empty() || gamma.back().size() != nmat.back())
         Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
 
+      // If specific heats are not given, set defaults
+      using cv_t = kw::mat_cv::info::expect::type;
       auto& cv = stack.template get< tag::param, eq, tag::cv >();
-      if (cv.empty() || cv.back().size() != nmat.back())
+      if (cv.empty())
+        cv.push_back( std::vector< cv_t >( nmat.back(), 717.5 ) );
+      // If specific heat vector is wrong size, error out
+      if (cv.back().size() != nmat.back())
         Message< Stack, ERROR, MsgKey::EOSCV >( stack, in );
 
       // If stiffness coefficients are not given, set defaults
@@ -558,8 +563,7 @@ namespace deck {
   //! put in material property for equation matching keyword
   template< typename eq, typename keyword, typename property >
   struct material_property :
-         tk::grm::process< use< keyword >,
-           tk::grm::Store_back< tag::param, eq, property > > {};
+         pde_parameter_vector< keyword, eq, property > {};
 
   //! Material properties block for compressible flow
   template< class eq >
@@ -573,22 +577,6 @@ namespace deck {
                material_property< eq, kw::mat_mu, tag::mu >,
                material_property< eq, kw::mat_cv, tag::cv >,
                material_property< eq, kw::mat_k, tag::k > > > {};
-
-  //! put in multi-material property for equation matching keyword
-  template< typename eq, typename keyword, typename property >
-  struct multimaterial_property :
-         pde_parameter_vector< keyword, tag::multimat, property > {};
-
-  //! Multi-material properties block for multi-material compressible flow
-  template< class eq >
-  struct multimaterial_properties :
-           pegtl::if_must<
-             tk::grm::readkw< use< kw::material >::pegtl_string >,
-             tk::grm::block<
-               use< kw::end >,
-               multimaterial_property< eq, kw::mat_gamma, tag::gamma >,
-               multimaterial_property< eq, kw::mat_pstiff, tag::pstiff >,
-               multimaterial_property< eq, kw::mat_cv, tag::cv > > > {};
 
   //! put in PDE parameter for equation matching keyword
   template< typename eq, typename keyword, typename p,
@@ -695,7 +683,7 @@ namespace deck {
                            parameter< tag::multimat,
                                       kw::nmat,
                                       tag::nmat >,
-                           multimaterial_properties< tag::multimat >,
+                           material_properties< tag::multimat >,
                            parameter< tag::multimat,
                                       kw::pde_alpha,
                                       tag::alpha >,

@@ -18,7 +18,7 @@ inciter
     depvar u
 
     material
-      gamma 1.4 # ratio of specific heats
+      gamma 1.4 end # ratio of specific heats
     end
 
     bc_extrapolate

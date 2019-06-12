@@ -90,19 +90,23 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_type >& cnt )
     g_inputdeck.get< tag::component >().offset< tag::compflow >(c) ) );
 
   nfo.emplace_back( "ratio of specific heats", parameters(
-    g_inputdeck.get< tag::param, tag::compflow, tag::gamma >() ) );
+    g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[c] ) );
 
-  const auto& mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >();
+  const auto& mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >()[c];
   if (!mu.empty())
     nfo.emplace_back( "dynamic viscosity", parameters( mu ) );
 
-  const auto& cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >();
+  const auto& cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >()[c];
   if (!cv.empty())
     nfo.emplace_back( "specific heat at const. volume", parameters( cv ) );
 
-  const auto& k = g_inputdeck.get< tag::param, tag::compflow, tag::k >();
+  const auto& k = g_inputdeck.get< tag::param, tag::compflow, tag::k >()[c];
   if (!k.empty())
     nfo.emplace_back( "heat conductivity", parameters( k ) );
+
+  const auto& pstiff = g_inputdeck.get< tag::param, tag::compflow, tag::pstiff >()[c];
+  if (!pstiff.empty())
+    nfo.emplace_back( "material stiffness", parameters( pstiff ) );
 
   const auto& npar = g_inputdeck.get< tag::param, tag::compflow, tag::npar >();
   if (!npar.empty())

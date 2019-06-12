@@ -150,7 +150,7 @@ CompFlowProblemNLEnergyGrowth::src( ncomp_t system, ncomp_t, tk::real x,
   const auto kappa = g_inputdeck.get< param, eq, tag::kappa >()[system];
   const auto r0 = g_inputdeck.get< param, eq, tag::r0 >()[system];
   // ratio of specific heats
-  const auto g = g_inputdeck.get< param, eq, tag::gamma >()[system];
+  const auto g = g_inputdeck.get< param, eq, tag::gamma >()[system][0];
   // spatial component of density field
   const auto gx = 1.0 - x*x - y*y - z*z;
   // derivative of spatial component of density field

@@ -39,8 +39,10 @@ tk::real inciter::eos_pressure( ncomp_t system,
 // *****************************************************************************
 {
   // query input deck to get gamma, p_c
-  auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[ system ];
-  tk::real p_c(0.0);
+  auto g =
+    g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[ system ][0];
+  auto p_c =
+    g_inputdeck.get< tag::param, tag::compflow, tag::pstiff >()[ system ][0];
 
   tk::real pressure = (rhoE - 0.5 * (rhou*rhou +
                                      rhov*rhov +
@@ -58,8 +60,10 @@ tk::real inciter::eos_soundspeed( ncomp_t system, tk::real rho, tk::real pr )
 // *****************************************************************************
 {
   // query input deck to get gamma, p_c
-  auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[ system ];
-  tk::real p_c(0.0);
+  auto g =
+    g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[ system ][0];
+  auto p_c =
+    g_inputdeck.get< tag::param, tag::compflow, tag::pstiff >()[ system ][0];
 
   tk::real a = std::sqrt( g * (pr+p_c) / rho );
   return a;
@@ -85,8 +89,10 @@ tk::real inciter::eos_totalenergy( ncomp_t system,
 // *****************************************************************************
 {
   // query input deck to get gamma, p_c
-  auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[ system ];
-  tk::real p_c(0.0);
+  auto g =
+    g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[ system ][0];
+  auto p_c =
+    g_inputdeck.get< tag::param, tag::compflow, tag::pstiff >()[ system ][0];
 
   tk::real rhoE = (pr + p_c) / (g-1.0) + 0.5 * (rhou*rhou +
                                                 rhov*rhov +

@@ -122,7 +122,7 @@ CompFlowProblemRayleighTaylor::src( ncomp_t system, ncomp_t, tk::real x,
   auto k = g_inputdeck.get< param, eq, tag::kappa >()[system];
   auto p0 = g_inputdeck.get< param, eq, tag::p0 >()[system];
   // ratio of specific heats
-  tk::real g = g_inputdeck.get< param, eq, tag::gamma >()[system];
+  tk::real g = g_inputdeck.get< param, eq, tag::gamma >()[system][0];
 
   // evaluate solution at x,y,z,t
   auto s = solution( system, m_ncomp, x, y, z, t );

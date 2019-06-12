@@ -23,7 +23,7 @@ inciter
     p0 10.0
 
     material
-      gamma 1.4
+      gamma 1.4 end
     end
 
     bc_sym

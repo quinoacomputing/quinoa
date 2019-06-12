@@ -357,7 +357,7 @@ class CompFlow {
       const auto& y = coord[1];
       const auto& z = coord[2];
       // ratio of specific heats
-      auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
+      auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0][0];
       // compute the minimum dt across all elements we own
       tk::real mindt = std::numeric_limits< tk::real >::max();
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {

@@ -158,7 +158,7 @@ CompFlowProblemUserDefined::fieldOutput(
   out.push_back( p );
 
   std::vector< tk::real > T = r;
-  tk::real cv = g_inputdeck.get< tag::param, eq, tag::cv >()[0];
+  tk::real cv = g_inputdeck.get< tag::param, eq, tag::cv >()[0][0];
   for (std::size_t i=0; i<T.size(); ++i)
     T[i] = cv*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
   out.push_back( T );
