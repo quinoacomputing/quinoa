@@ -3922,6 +3922,24 @@ struct sedov_blastwave_info {
 using sedov_blastwave =
   keyword< sedov_blastwave_info, TAOCPP_PEGTL_STRING("sedov_blastwave") >;
 
+struct interface_advection_info {
+  using code = Code< I >;
+  static std::string name() { return "Interface advection"; }
+  static std::string shortDescription() { return
+    "Select the interface advection test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the interface advection test problem. The
+    purpose of this test problem is to test the well-balancedness of the
+    multi-material discretization and its interface capturing
+    capabilities. Example: "problem interface_advection".)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using interface_advection =
+  keyword< interface_advection_info,
+           TAOCPP_PEGTL_STRING("interface_advection") >;
+
 struct problem_info {
   using code = Code< t >;
   static std::string name() { return "Test problem"; }

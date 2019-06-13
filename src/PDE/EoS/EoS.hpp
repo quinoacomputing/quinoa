@@ -26,10 +26,12 @@ using ncomp_t = kw::ncomp::info::expect::type;
                          tk::real rhou,
                          tk::real rhov,
                          tk::real rhow,
-                         tk::real rhoE );
+                         tk::real rhoE,
+                         int imat=0 );
 
   //! Calculate speed of sound from the material density and material pressure
-  tk::real eos_soundspeed( ncomp_t system, tk::real rho, tk::real pr );
+  tk::real eos_soundspeed( ncomp_t system, tk::real rho, tk::real pr,
+                           int imat=0 );
 
 
   //! \brief Calculate material specific total energy from the material density,
@@ -39,7 +41,8 @@ using ncomp_t = kw::ncomp::info::expect::type;
                             tk::real rhou,
                             tk::real rhov,
                             tk::real rhow,
-                            tk::real pr );
+                            tk::real pr,
+                            int imat=0 );
 
 } //inciter::
 

@@ -258,7 +258,7 @@ namespace grm {
       auto& ncomp = stack.template get< tag::component, eq >();
       if (physics.back() == inciter::ctr::PhysicsType::VELEQ) {
         // physics = veleq: m-material compressible flow
-        // scalar components: volfrac:m-1 + mass:m + momentum:3 + energy:m
+        // scalar components: volfrac:m + mass:m + momentum:3 + energy:m
         // if nmat is unspecified, configure it be 2
         if (nmat.empty() || nmat.size() != neq.get< eq >()) {
           Message< Stack, WARNING, MsgKey::NONMAT >( stack, in );
@@ -266,7 +266,7 @@ namespace grm {
         }
         // set ncomp based on nmat
         auto m = nmat.back();
-        ncomp.push_back( m-1 + m + 3 + m );
+        ncomp.push_back( m + m + 3 + m );
       }
 
       // Verify correct number of multi-material properties configured
