@@ -148,6 +148,9 @@ class DiagCG : public CBase_DiagCG {
     //! Evaluate whether to continue with next time step
     void step();
 
+    //! Continue to next time step
+    void next();
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function

@@ -105,7 +105,7 @@ ALECG::ResumeFromSync()
 {
   if (Disc()->It() == 0) Throw( "it = 0 in ResumeFromSync()" );
 
-  if (!g_inputdeck.get< tag::cmd, tag::nonblocking >()) dt();
+  if (!g_inputdeck.get< tag::cmd, tag::nonblocking >()) next();
 }
 
 void
@@ -145,7 +145,7 @@ ALECG::start()
   Disc()->Timer().zero();
 
   // Start time stepping by computing the size of the next time step)
-  dt();
+  next();
 }
 
 //! [Compute own and send lhs on chare-boundary]
@@ -231,6 +231,15 @@ ALECG::lhsmerge()
   if (m_initial) start(); else lhs_complete();
 }
 //! [Merge lhs and continue]
+
+void
+ALECG::next()
+// *****************************************************************************
+// Continue to next time step
+// *****************************************************************************
+{
+  dt();
+}
 
 void
 ALECG::dt()
@@ -549,10 +558,10 @@ ALECG::step()
 
     if ( (d->It()) % lbfreq == 0 ) {
       AtSync();
-      if (nonblocking) dt();
+      if (nonblocking) next();
     }
     else {
-      dt();
+      next();
     }
 
   } else {

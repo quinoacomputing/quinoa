@@ -105,7 +105,7 @@ DiagCG::ResumeFromSync()
 {
   if (Disc()->It() == 0) Throw( "it = 0 in ResumeFromSync()" );
 
-  if (!g_inputdeck.get< tag::cmd, tag::nonblocking >()) dt();
+  if (!g_inputdeck.get< tag::cmd, tag::nonblocking >()) next();
 }
 
 void
@@ -142,6 +142,15 @@ DiagCG::start()
   Disc()->Timer().zero();
 
   // Start time stepping by computing the size of the next time step)
+  next();
+}
+
+void
+DiagCG::next()
+// *****************************************************************************
+// Continue to next time step
+// *****************************************************************************
+{
   dt();
 }
 
@@ -605,21 +614,30 @@ DiagCG::step()
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
+  const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
   const auto nonblocking = g_inputdeck.get< tag::cmd, tag::nonblocking >();
 
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
 
-    if ( (d->It()) % lbfreq == 0 ) {
+    if ( (d->It()) % rsfreq == 0 ) {
+
+      d->contribute(
+        CkCallback( CkReductionTarget(Transporter,checkpoint), d->Tr() ) );
+
+    } else if ( (d->It()) % lbfreq == 0 ) {
+
       AtSync();
-      if (nonblocking) dt();
-    }
-    else {
-      dt();
+      if (nonblocking) next();
+
+    } else {
+
+      next();
+
     }
 
   } else {
-    d->contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
+    d->contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));
   }
 }
 

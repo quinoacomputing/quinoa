@@ -212,12 +212,17 @@ Transporter::Transporter() :
                            + ".<chareid>" );
     m_print.item( "Diagnostics",
                   g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
+    m_print.item( "Checkpoint/restart",
+                  g_inputdeck.get< tag::cmd, tag::io, tag::restart >() );
 
     // Print output intervals
     m_print.section( "Output intervals" );
     m_print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
     m_print.item( "Field", g_inputdeck.get< tag::interval, tag::field >() );
-    m_print.item( "Diagnostics", g_inputdeck.get< tag::interval, tag::diag >() );
+    m_print.item( "Diagnostics",
+                  g_inputdeck.get< tag::interval, tag::diag >() );
+    m_print.item( "Checkpoint/restart",
+                  g_inputdeck.get< tag::cmd, tag::rsfreq >() );
     m_print.endsubsection();
 
     // Configure and write diagnostics file header
@@ -865,6 +870,26 @@ Transporter::diagnostics( CkReductionMsg* msg )
 
   // Evaluate whether to continue with next step
   m_scheme.refine();
+}
+
+void
+Transporter::resume()
+// *****************************************************************************
+// Resume execution from checkpoint/restart files
+// *****************************************************************************
+{
+  m_scheme.next< tag::bcast >();
+}
+
+void
+Transporter::checkpoint()
+// *****************************************************************************
+// Save checkpoint/restart files
+// *****************************************************************************
+{
+  const auto& restart = g_inputdeck.get< tag::cmd, tag::io, tag::restart >();
+  CkCallback res( CkIndex_Transporter::resume(), thisProxy );
+  CkStartCheckpoint( restart.c_str(), res );
 }
 
 void

@@ -51,6 +51,8 @@ module transporter {
                                             tk::real d4, tk::real d5 );
       entry [reductiontarget] void pdfstat( CkReductionMsg* msg );
       entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
+      entry void resume();
+      entry [reductiontarget] void checkpoint();
       entry [reductiontarget] void finish();
 
       entry void pepartitioned();

@@ -42,6 +42,7 @@ module diagcg {
       entry void resized();
       entry void lhs();
       entry void step();
+      entry void next();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".

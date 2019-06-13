@@ -46,6 +46,7 @@ module alecg {
       entry void resized();
       entry void lhs();
       entry void step();
+      entry void next();
       //! [Entry methods]
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/

@@ -166,6 +166,12 @@ class Transporter : public CBase_Transporter {
     //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );
 
+    //! Resume execution from checkpoint/restart files
+    void resume();
+
+    //! Save checkpoint/restart files
+    void checkpoint();
+
     //! Normal finish of time stepping
     void finish();
 
