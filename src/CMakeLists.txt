@@ -638,8 +638,12 @@ if (DOXYGEN_FOUND AND MCSS_FOUND AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND
 
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.doxy
                    ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
-    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../doc/pages
-         DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/doc/)
+
+    file(GLOB doc_pages CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "../doc/pages/*.dox")
+    foreach(page ${doc_pages})
+      configure_file(${page} ${CMAKE_CURRENT_BINARY_DIR}/doc/${page} @ONLY)
+    endforeach()
+
     add_custom_command(OUTPUT xml
                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
                        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy
@@ -651,6 +655,7 @@ if (DOXYGEN_FOUND AND MCSS_FOUND AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND
                       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
                       COMMENT "Documentation")
     message(STATUS "Add target 'doc' to generate documentation to ./doc/html/index.html")
+
   endif()
 
 endif()
