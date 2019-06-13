@@ -337,15 +337,6 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  struct enable_pref : pegtl::success {};
-  //! Enable p-adaptive refinement
-  template<>
-  struct action< enable_pref > {
-    template< typename Input, typename Stack >
-    static void apply(const Input& , Stack& ) {}
-};
-
-  //! Rule used to trigger action
   struct compute_refvar_idx : pegtl::success {};
   //! Compute indices of refinement variables
   //! \details This functor computes the indices in the unknown vector for all
@@ -426,7 +417,11 @@ namespace grm {
   template<>
   struct action< check_pref_errors > {
     template< typename Input, typename Stack >
-    static void apply(const Input& , Stack& ) {}
+    static void apply( const Input& in, Stack& stack ) {
+      auto& tolref = stack.template get< tag::pref, tag::tolref >();
+      if (tolref < 0.0 || tolref > 1.0)
+        Message< Stack, ERROR, MsgKey::PREFTOL >( stack, in );
+    }
   };
 
 } // ::grm
@@ -775,13 +770,11 @@ namespace deck {
   struct pref :
          pegtl::if_must<
            tk::grm::readkw< use< kw::pref >::pegtl_string >,
-           tk::grm::enable_pref, // enable pref if pref...end block encountered
            tk::grm::block< use< kw::end >,
                            tk::grm::control< use< kw::pref_tolref >,
                                              pegtl::digit,
                                              tag::pref,
-                                             tag::tolref >
-                         >,
+                                             tag::tolref > >,
            tk::grm::check_pref_errors > {};
 
   //! plotvar ... end block

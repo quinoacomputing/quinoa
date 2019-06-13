@@ -5114,18 +5114,23 @@ struct amr_info {
 using amr = keyword< amr_info, TAOCPP_PEGTL_STRING("amr") >;
 
 struct pref_tolref_info {
-  static std::string name() { return "tolerance of p-refinement"; }
-  static std::string shortDescription() { return "Configure the tolerance of "
-    "p-refinement for p-adaptive DG scheme"; }
+  static std::string name() { return "Tolerance for p-refinement"; }
+  static std::string shortDescription() { return "Configure the tolerance for "
+    "p-refinement for the p-adaptive DG scheme"; }
   static std::string longDescription() { return
-    R"(This keyword can be used to configure a tolerance of refinement for
-    p-adaptive DG scheme. The keyword must be used in pref ... end block. All
-    the element of which the refinement indicator is larger than the tolerance
-    of refinement will be refined. Example: 'tolref 0.1' refines all the
-    elements whose refinement indicators are larger than 0.1)"; }
+    R"(This keyword can be used to configure a tolerance for p-adaptive
+    refinement  for the DG scheme. The keyword must be used in pref ... end
+    block. All elements with a refinement indicator larger than this tolerance
+    will be p-refined. Example specification: 'tolref 0.1'.)"; }
   struct expect {
     using type = tk::real;
+    static constexpr type lower = 0.0;
+    static constexpr type upper = 1.0;
     static std::string description() { return "real"; }
+    static std::string choices() {
+      return "real between [" + std::to_string(lower) + "..." +
+             std::to_string(upper) + "] (both inclusive)";
+    }
   };
 };
 using pref_tolref = keyword< pref_tolref_info, TAOCPP_PEGTL_STRING("tolref") >;

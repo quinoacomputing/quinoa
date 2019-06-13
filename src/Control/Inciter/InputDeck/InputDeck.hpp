@@ -220,7 +220,7 @@ class InputDeck :
       set< tag::amr, tag::zplus >( rmax );
       // Default p-refinement settings
       set< tag::pref, tag::pref >( false );
-      set< tag::pref, tag::tolref >( 0.0 );
+      set< tag::pref, tag::tolref >( 0.1 );
       // Default txt floating-point output precision in digits
       set< tag::prec, tag::diag >( std::cout.precision() );
       // Default intervals
