@@ -460,7 +460,8 @@ class CompFlow {
           if (std::stoi(b) == ss.first)
             for (auto n : ss.second) {
               Assert( x.size() > n, "Indexing out of coordinate array" );
-              auto s = m_problem.solinc( 0, x[n], y[n], z[n], t, deltat );
+              auto s =
+                m_problem.solinc( 0, m_ncomp, x[n], y[n], z[n], t, deltat );
               bc[n] = {{ {true,s[0]}, {true,s[1]}, {true,s[2]}, {true,s[3]},
                          {true,s[4]} }};
             }

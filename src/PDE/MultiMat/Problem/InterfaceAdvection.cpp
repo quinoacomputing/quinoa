@@ -42,8 +42,6 @@ MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  Assert( ncomp == m_ncomp, "Number of scalar components must be " +
-                            std::to_string(m_ncomp) );
   using tag::param;
 
   std::vector< tk::real > s( ncomp, 0.0 );
@@ -77,6 +75,7 @@ MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
 
 std::vector< tk::real >
 MultiMatProblemInterfaceAdvection::solinc( ncomp_t system,
+                                           ncomp_t ncomp,
                                            tk::real x,
                                            tk::real y,
                                            tk::real z,
@@ -87,6 +86,7 @@ MultiMatProblemInterfaceAdvection::solinc( ncomp_t system,
 // for all components
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
+//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
@@ -95,8 +95,8 @@ MultiMatProblemInterfaceAdvection::solinc( ncomp_t system,
 //! \return Increment in values of all components evaluated at (x,y,z,t+dt)
 // *****************************************************************************
 {
-  auto st1 = solution( system, m_ncomp, x, y, z, t );
-  auto st2 = solution( system, m_ncomp, x, y, z, t+dt );
+  auto st1 = solution( system, ncomp, x, y, z, t );
+  auto st2 = solution( system, ncomp, x, y, z, t+dt );
 
   std::transform( begin(st1), end(st1), begin(st2), begin(st2),
                   []( tk::real s, tk::real& d ){ return d -= s; } );
@@ -105,7 +105,7 @@ MultiMatProblemInterfaceAdvection::solinc( ncomp_t system,
 }
 
 tk::SrcFn::result_type
-MultiMatProblemInterfaceAdvection::src( ncomp_t, ncomp_t, tk::real,
+MultiMatProblemInterfaceAdvection::src( ncomp_t, ncomp_t ncomp, tk::real,
                                         tk::real, tk::real, tk::real )
 // *****************************************************************************
 //  Compute and return source term for manufactured solution
@@ -113,7 +113,7 @@ MultiMatProblemInterfaceAdvection::src( ncomp_t, ncomp_t, tk::real,
 //! \note The function signature must follow tk::SrcFn
 // *****************************************************************************
 {
-  std::vector< tk::real > s( m_ncomp, 0.0 );
+  std::vector< tk::real > s( ncomp, 0.0 );
 
   return s;
 }

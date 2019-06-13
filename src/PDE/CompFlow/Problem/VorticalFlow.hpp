@@ -35,7 +35,6 @@ class CompFlowProblemVorticalFlow {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
-    static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
   public:
     //! Evaluate analytical solution at (x,y,z) for all components
@@ -46,11 +45,13 @@ class CompFlowProblemVorticalFlow {
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
     std::vector< tk::real >
-    solinc( ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real ) const;
+    solinc( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real,
+            tk::real ) const;
 
     //! Compute and return source term for vortical flow manufactured solution
     static tk::SrcFn::result_type
-    src( ncomp_t system, ncomp_t, tk::real x, tk::real y, tk::real z, tk::real );
+    src( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
+         tk::real );
 
     //! \brief Query all side set IDs the user has configured for all components
     //!   in this PDE system

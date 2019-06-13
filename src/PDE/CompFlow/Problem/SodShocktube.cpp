@@ -41,10 +41,11 @@ CompFlowProblemSodShocktube::solution( ncomp_t system,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  Assert( ncomp == m_ncomp, "Number of scalar components must be " +
-                            std::to_string(m_ncomp) );
+  Assert( ncomp == 5, "Number of scalar components must be 5" );
   IGNORE(ncomp);
+
   using tag::param;
+
   tk::real r, p, u, v, w, rE;
   if (x<0.5) {
     // density
@@ -73,8 +74,8 @@ CompFlowProblemSodShocktube::solution( ncomp_t system,
 }
 
 std::vector< tk::real >
-CompFlowProblemSodShocktube::solinc( ncomp_t system, tk::real x, tk::real y,
-                                     tk::real z, tk::real t, tk::real dt ) const
+CompFlowProblemSodShocktube::solinc( ncomp_t system, ncomp_t ncomp, tk::real x,
+  tk::real y, tk::real z, tk::real t, tk::real dt ) const
 // *****************************************************************************
 // Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
 // for all components
@@ -88,8 +89,8 @@ CompFlowProblemSodShocktube::solinc( ncomp_t system, tk::real x, tk::real y,
 //! \return Increment in values of all components evaluated at (x,y,z,t+dt)
 // *****************************************************************************
 {
-  auto st1 = solution( system, m_ncomp, x, y, z, t );
-  auto st2 = solution( system, m_ncomp, x, y, z, t+dt );
+  auto st1 = solution( system, ncomp, x, y, z, t );
+  auto st2 = solution( system, ncomp, x, y, z, t+dt );
 
   std::transform( begin(st1), end(st1), begin(st2), begin(st2),
                   []( tk::real s, tk::real& d ){ return d -= s; } );

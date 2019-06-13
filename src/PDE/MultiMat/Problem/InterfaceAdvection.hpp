@@ -39,9 +39,6 @@ class MultiMatProblemInterfaceAdvection {
   private:
     using ncomp_t = tk::ctr::ncomp_type;
     using eq = tag::multimat;
-    //!< Number of scalar components
-    ncomp_t m_ncomp = g_inputdeck.get< tag::component, eq >().at(0);
-
 
   public:
     //! Evaluate analytical solution at (x,y,z,t) for all components
@@ -57,6 +54,7 @@ class MultiMatProblemInterfaceAdvection {
     //!   at (x,y,z) for all components
     static std::vector< tk::real >
     solinc( ncomp_t system,
+            ncomp_t ncomp,
             tk::real x,
             tk::real y,
             tk::real z,
@@ -69,17 +67,15 @@ class MultiMatProblemInterfaceAdvection {
 
     //! \brief Query all side set IDs the user has configured for all components
     //!   in this PDE system
-    static void
-      side( std::unordered_set< int >& conf );
+    static void side( std::unordered_set< int >& conf );
 
     //! Return field names to be output to file
-    static std::vector< std::string >
-      fieldNames( ncomp_t );
+    static std::vector< std::string > fieldNames( ncomp_t );
 
     //! Return field output going to file
     static std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t system,
-                 ncomp_t,
+                 ncomp_t ncomp,
                  ncomp_t offset,
                  tk::real t,
                  tk::real,

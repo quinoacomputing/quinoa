@@ -31,7 +31,6 @@ class MultiMatProblemUserDefined {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
-    static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
   public:
     //! Evaluate initial condition solution at (x,y,z,t) for all components
@@ -48,8 +47,6 @@ class MultiMatProblemUserDefined {
     solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
               tk::real t )
     {
-      Assert( ncomp == m_ncomp, "Number of scalar components must be " +
-                                std::to_string(m_ncomp) );
       IGNORE(system);
       IGNORE(ncomp);
       IGNORE(x);
@@ -63,7 +60,9 @@ class MultiMatProblemUserDefined {
     //!   at (x,y,z) for all components
     //! \return Increment in values of all components: all zero for now
     static std::array< tk::real, 5 >
-    solinc( ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real ) {
+    solinc( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real,
+            tk::real )
+    {
       return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
     }
 

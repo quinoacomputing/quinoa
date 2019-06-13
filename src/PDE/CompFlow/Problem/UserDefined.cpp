@@ -38,15 +38,14 @@ CompFlowProblemUserDefined::solution( ncomp_t,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  Assert( ncomp == m_ncomp, "Number of scalar components must be " +
-                            std::to_string(m_ncomp) );
+  Assert( ncomp == 5, "Number of scalar components must be 5" );
   IGNORE(ncomp);
 
   return {{ 1.0, 0.0, 0.0, 1.0, 293.0 }};
 }
 
 std::array< tk::real, 5 >
-CompFlowProblemUserDefined::solinc( ncomp_t, tk::real, tk::real,
+CompFlowProblemUserDefined::solinc( ncomp_t, ncomp_t, tk::real, tk::real,
                                     tk::real, tk::real, tk::real ) const
 // *****************************************************************************
 // Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)

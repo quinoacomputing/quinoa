@@ -42,10 +42,11 @@ CompFlowProblemTaylorGreen::solution( ncomp_t system,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  Assert( ncomp == m_ncomp, "Number of scalar components must be " +
-                            std::to_string(m_ncomp) );
+  Assert( ncomp == 5, "Number of scalar components must be 5" );
   IGNORE(ncomp);
+
   using tag::param; using std::sin; using std::cos;
+
   // density
   const tk::real r = 1.0;
   // pressure
@@ -61,7 +62,7 @@ CompFlowProblemTaylorGreen::solution( ncomp_t system,
 }
 
 std::vector< tk::real >
-CompFlowProblemTaylorGreen::solinc( ncomp_t, tk::real, tk::real,
+CompFlowProblemTaylorGreen::solinc( ncomp_t, ncomp_t, tk::real, tk::real,
                                     tk::real, tk::real, tk::real ) const
 // *****************************************************************************
 // Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
