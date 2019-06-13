@@ -28,17 +28,16 @@ tk::SolutionFn::result_type
 MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
                                              ncomp_t ncomp,
                                              tk::real x,
-                                             tk::real y,
-                                             tk::real z,
-                                             tk::real )
+                                             tk::real /*y*/,
+                                             tk::real /*z*/,
+                                             tk::real t )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
-//! \param[in] y Y coordinate where to evaluate the solution
-//! \param[in] z Z coordinate where to evaluate the solution
+//! \param[in] t Time where to evaluate the solution
 //! \return Values of all components evaluated at (x)
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
@@ -53,7 +52,7 @@ MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
   auto w = 0.0;
   // interface location
   auto x0 = 0.25 + u*t;
-  auto y0 = 0.25 + v*t;
+  //auto y0 = 0.25 + v*t;
 
   // interface location
   if (x<x0) {
@@ -82,7 +81,7 @@ MultiMatProblemInterfaceAdvection::solinc( ncomp_t system,
                                            tk::real y,
                                            tk::real z,
                                            tk::real t,
-                                           tk::real dt ) const
+                                           tk::real dt )
 // *****************************************************************************
 // Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
 // for all components
@@ -120,7 +119,7 @@ MultiMatProblemInterfaceAdvection::src( ncomp_t, ncomp_t, tk::real,
 }
 
 void
-MultiMatProblemInterfaceAdvection::side( std::unordered_set< int >& conf ) const
+MultiMatProblemInterfaceAdvection::side( std::unordered_set< int >& conf )
 // *****************************************************************************
 //  Query all side set IDs the user has configured for all components in this
 //  PDE system
@@ -140,7 +139,7 @@ MultiMatProblemInterfaceAdvection::side( std::unordered_set< int >& conf ) const
 }
 
 std::vector< std::string >
-MultiMatProblemInterfaceAdvection::fieldNames( ncomp_t ) const
+MultiMatProblemInterfaceAdvection::fieldNames( ncomp_t )
 // *****************************************************************************
 // Return field names to be output to file
 //! \return Vector of strings labelling fields output in file
@@ -169,11 +168,11 @@ MultiMatProblemInterfaceAdvection::fieldOutput(
   ncomp_t system,
   ncomp_t,
   ncomp_t offset,
-  tk::real t,
+  tk::real /*t*/,
   tk::real,
   const std::vector< tk::real >&,
-  const std::array< std::vector< tk::real >, 3 >& coord,
-  tk::Fields& U ) const
+  const std::array< std::vector< tk::real >, 3 >& /*coord*/,
+  tk::Fields& U )
 // *****************************************************************************
 //  Return field output going to file
 //! \param[in] system Equation system index, i.e., which compressible
@@ -189,33 +188,31 @@ MultiMatProblemInterfaceAdvection::fieldOutput(
   // number of degree of freedom
   const std::size_t ndof = 
     g_inputdeck.get< tag::discr, tag::ndof >();
-  // ratio of specific heats
-  tk::real g =
-    g_inputdeck.get< tag::param, eq, tag::gamma >()[system];
+
+  //// ratio of specific heats
+  //tk::real g =
+  //  g_inputdeck.get< tag::param, eq, tag::gamma >()[system];
 
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
 
   std::vector< std::vector< tk::real > > out;
   std::vector< std::vector< tk::real > > al, ar, ae;
-  al.resize( nmat );
-  ar.resize( nmat );
-  ae.resize( nmat );
 
   for (std::size_t k=0; k<nmat; ++k)
   {
-    al[k].push_back( U.extract( k*ndof, offset ) );
-    ar[k].push_back( U.extract( (nmat+k)*ndof, offset ) );
-    ae[k].push_back( U.extract( (2*nmat+3+k)*ndof, offset ) );
+    al.push_back( U.extract( k*ndof, offset ) );
+    ar.push_back( U.extract( (nmat+k)*ndof, offset ) );
+    ae.push_back( U.extract( (2*nmat+3+k)*ndof, offset ) );
   }
   const auto ru  = U.extract( 4*ndof, offset );
   const auto rv  = U.extract( 5*ndof, offset );
   const auto rw  = U.extract( 6*ndof, offset );
 
-  // mesh node coordinates
-  const auto& x = coord[0];
-  const auto& y = coord[1];
-  const auto& z = coord[2];
+  //// mesh node coordinates
+  //const auto& x = coord[0];
+  //const auto& y = coord[1];
+  //const auto& z = coord[2];
 
   // material volume-fractions
   for (std::size_t k=0; k<nmat; ++k)
@@ -223,7 +220,7 @@ MultiMatProblemInterfaceAdvection::fieldOutput(
 
   // bulk density
   std::vector< tk::real > r( ru.size(), 0.0 );
-  for (std::size_t i=0; i<P.size(); ++i) {
+  for (std::size_t i=0; i<r.size(); ++i) {
     for (std::size_t k=0; k<nmat; ++k)
       r[i] += ar[k][i];
   }
@@ -249,7 +246,7 @@ MultiMatProblemInterfaceAdvection::fieldOutput(
   std::vector< tk::real > P( r.size(), 0.0 );
   for (std::size_t i=0; i<P.size(); ++i) {
     for (std::size_t k=0; k<nmat; ++k)
-      P[i] += al[k][i] * eos_pressure( system, ar[i]/al[k][i], ru[i], rv[i],
+      P[i] += al[k][i] * eos_pressure( system, ar[k][i]/al[k][i], ru[i], rv[i],
                                        rw[i], ae[k][i]/al[k][i], k );
   }
   out.push_back( P );
@@ -266,7 +263,7 @@ MultiMatProblemInterfaceAdvection::fieldOutput(
 }
 
 std::vector< std::string >
-MultiMatProblemInterfaceAdvection::names( ncomp_t ) const
+MultiMatProblemInterfaceAdvection::names( ncomp_t )
 // *****************************************************************************
 //  Return names of integral variables to be output to diagnostics file
 //! \return Vector of strings labelling integral variables output

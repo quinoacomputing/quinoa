@@ -22,6 +22,7 @@
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "FunctionPrototypes.hpp"
+#include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
@@ -43,14 +44,14 @@ class MultiMatProblemInterfaceAdvection {
 
 
   public:
-    //! Evaluate analytical solution at (x,y,z) for all components
+    //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::SolutionFn::result_type
     solution( ncomp_t system,
               ncomp_t ncomp,
               tk::real x,
               tk::real y,
               tk::real z,
-              tk::real );
+              tk::real t );
 
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
