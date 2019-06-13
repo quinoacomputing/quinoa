@@ -151,7 +151,7 @@ namespace grm {
       stack.template get< tag::component, eq >().push_back( 5 );
 
       // Verify correct number of multi-material properties configured
-      auto& gamma = stack.template get< tag::param, eq, tag::gamma >();
+      const auto& gamma = stack.template get< tag::param, eq, tag::gamma >();
       if (gamma.empty() || gamma.back().size() != 1)
         Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
 
