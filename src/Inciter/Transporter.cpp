@@ -66,6 +66,7 @@ Transporter::Transporter() :
   m_sorter(),
   m_nelem( 0 ),
   m_npoin_larger( 0 ),
+  m_finish( false ),
   m_meshvol( 0.0 ),
   m_minstat( {{ 0.0, 0.0, 0.0 }} ),
   m_maxstat( {{ 0.0, 0.0, 0.0 }} ),
@@ -207,13 +208,13 @@ Transporter::Transporter() :
     thisProxy.wait4stat();
 
     // Print I/O filenames
-    m_print.section( "Output filenames" );
-    m_print.item( "Field", g_inputdeck.get< tag::cmd, tag::io, tag::output >()
-                           + ".<chareid>" );
-    m_print.item( "Diagnostics",
+    m_print.section( "Output filenames and directories" );
+    m_print.item( "Field output file(s)",
+      g_inputdeck.get< tag::cmd, tag::io, tag::output >() + ".<chareid>" );
+    m_print.item( "Diagnostics file",
                   g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
-    m_print.item( "Checkpoint/restart",
-                  g_inputdeck.get< tag::cmd, tag::io, tag::restart >() );
+    m_print.item( "Checkpoint/restart directory",
+                  g_inputdeck.get< tag::cmd, tag::io, tag::restart >() + '/' );
 
     // Print output intervals
     m_print.section( "Output intervals" );
@@ -803,6 +804,7 @@ Transporter::stat()
   "             f - field\n"
   "             d - diagnostics\n"
   "             h - h-refinement\n"
+  "             l - load balancing\n"
   "             r - checkpoint/restart\n",
   "\n      it             t            dt        ETE        ETA        EGT  out\n"
     " -------------------------------------------------------------------------\n" );
@@ -876,9 +878,15 @@ void
 Transporter::resume()
 // *****************************************************************************
 // Resume execution from checkpoint/restart files
+//! \details This is invoked by Charm++ after the checkpoint is done, as well as
+//!   when the restart (returning from a checkpoint) is complete
 // *****************************************************************************
 {
-  m_scheme.next< tag::bcast >();
+  if (m_finish) {
+    mainProxy.finalize();
+  } else {
+    m_scheme.next< tag::bcast >();
+  }
 }
 
 void
@@ -898,7 +906,8 @@ Transporter::finish()
 // Normal finish of time stepping
 // *****************************************************************************
 {
-  mainProxy.finalize();
+  m_finish = true;
+  checkpoint();
 }
 
 #include "NoWarning/transporter.def.h"
