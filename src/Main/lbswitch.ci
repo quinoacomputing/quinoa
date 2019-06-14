@@ -14,7 +14,7 @@ module lbswitch {
 
   namespace tk {
 
-    group LBSwitch {
+    group [migratable] LBSwitch {
       entry LBSwitch( bool verbose );
       initproc void off();
     };
