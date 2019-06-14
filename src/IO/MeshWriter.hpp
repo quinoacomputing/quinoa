@@ -38,6 +38,16 @@ class MeshWriter : public CBase_MeshWriter {
                 Centering bnd_centering,
                 bool benchmark );
 
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wundefined-func-template"
+    #endif
+    //! Migrate constructor
+    explicit MeshWriter( CkMigrateMessage* ) {}
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
+
     //! Set the total number of chares
     void nchare( int n );
 
@@ -60,13 +70,29 @@ class MeshWriter : public CBase_MeshWriter {
                 const std::vector< std::vector< tk::real > >& nodefields,
                 CkCallback c );
 
+    /** @name Charm++ pack/unpack serializer member functions */
+    ///@{
+    //! \brief Pack/Unpack serialize member function
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    void pup( PUP::er &p ) override {
+      p | m_filetype;
+      p | m_bndCentering;
+      p | m_benchmark;
+      p | m_nchare;
+    }
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] m MeshWriter object reference
+    friend void operator|( PUP::er& p, MeshWriter& m ) { m.pup(p); }
+    //@}
+
   private:
     //! Output file format type
-    const ctr::FieldFileType m_filetype;
+    ctr::FieldFileType m_filetype;
     //! Centering to identify what boundary data to write.
-    const Centering m_bndCentering;
+    Centering m_bndCentering;
     //! True if benchmark mode
-    const bool m_benchmark;
+    bool m_benchmark;
 
     //! Total number chares across the whole problem
     int m_nchare;

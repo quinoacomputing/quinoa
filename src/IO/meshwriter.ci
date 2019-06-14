@@ -21,7 +21,7 @@ module meshwriter {
 
   namespace tk {
 
-    group MeshWriter {
+    group [migratable] MeshWriter {
 
       entry MeshWriter( ctr::FieldFileType filetype,
                         Centering bnd_centering,
