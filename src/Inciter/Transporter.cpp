@@ -121,6 +121,11 @@ Transporter::Transporter() :
   m_print.section( "Discretization parameters" );
   m_print.Item< ctr::Scheme, tag::discr, tag::scheme >();
 
+  if (scheme == ctr::SchemeType::PDG) {
+    m_print.item( "p-refinement tolerance",
+                  g_inputdeck.get< tag::pref, tag::tolref >() );
+  }
+
   if (scheme == ctr::SchemeType::DiagCG) {
     auto fct = g_inputdeck.get< tag::discr, tag::fct >();
     m_print.item( "Flux-corrected transport (FCT)", fct );

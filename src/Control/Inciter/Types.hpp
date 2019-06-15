@@ -70,6 +70,12 @@ using amr = tk::tuple::tagged_tuple<
   tag::zplus,  kw::amr_zplus::info::expect::type
 >;
 
+//! p-adaptive refinement options
+using pref = tk::tuple::tagged_tuple<
+  tag::pref,     bool,                           //!< p-refinement on/off
+  tag::tolref,   tk::real                        //!< Threshold of p-refinement
+>;
+
 //! Discretization parameters storage
 using discretization = tk::tuple::tagged_tuple<
   tag::nstep,  kw::nstep::info::expect::type,   //!< Number of time steps
@@ -84,8 +90,7 @@ using discretization = tk::tuple::tagged_tuple<
   tag::limiter,inciter::ctr::LimiterType,       //!< Limiter type
   tag::cweight,kw::cweight::info::expect::type, //!< WENO central stencil weight
   tag::flux,   inciter::ctr::FluxType,          //!< Flux function type
-  tag::ndof,   std::size_t,                     //!< Number of solution DOFs
-  tag::pref,   bool                             //!< Adaptive DG on/off
+  tag::ndof,   std::size_t                      //!< Number of solution DOFs
 >;
 
 //! ASCII output floating-point precision in digits
