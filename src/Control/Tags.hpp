@@ -20,6 +20,7 @@ struct high {};
 struct io {};
 struct quiescence {};
 struct trace {};
+struct version {};
 struct input {};
 struct output {};
 struct diag {};

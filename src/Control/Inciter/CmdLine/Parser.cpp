@@ -105,9 +105,17 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
   if (!helpkw.keyword.empty())
     print.helpkw< tk::QUIET >( tk::inciter_executable(), helpkw );
 
+  // See if version information was requested
+  const auto version = cmdline.get< tag::version >();
+  if (version)
+    print.version< tk::QUIET >( tk::inciter_executable(),
+                                tk::quinoa_version(),
+                                tk::git_commit() );
+
   // Immediately exit if any help was output or was called without any argument
-  // with zero exit code
-  if (argc == 1 || helpcmd || helpctr || !helpkw.keyword.empty()) CkExit();
+  // or version info was requested with zero exit code
+  if (argc == 1 || helpcmd || helpctr || !helpkw.keyword.empty() || version)
+    CkExit();
 
   // Make sure mandatory arguments are set
   auto ctralias = kw::control().alias();

@@ -105,6 +105,11 @@ namespace cmd {
          tk::grm::process_cmd_switch< use, kw::trace,
                                       tag::trace > {};
 
+  //! Match switch on version output
+  struct version :
+         tk::grm::process_cmd_switch< use, kw::version,
+                                      tag::version > {};
+
   //! Match all command line keywords
   struct keywords :
          pegtl::sor< verbose,
@@ -119,6 +124,7 @@ namespace cmd {
                      quiescence,
                      lbfreq,
                      trace,
+                     version,
                      io< kw::control, tag::control >,
                      io< kw::input, tag::input >,
                      io< kw::output, tag::output >,
