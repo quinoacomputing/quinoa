@@ -366,7 +366,7 @@ namespace grm {
            inciter::ctr::SchemeType::PDG)
       {
         stack.template get< tag::discr, tag::ndof >() = 4;
-        stack.template get< tag::discr, tag::pref >() = true;
+        stack.template get< tag::pref, tag::pref >() = true;
       }
     }
   };
@@ -454,6 +454,19 @@ namespace grm {
       // Error out if mesh refinement frequency is zero (programmer error)
       Assert( (stack.template get< tag::amr, tag::dtfreq >() > 0),
               "Mesh refinement frequency must be positive" );
+    }
+  };
+
+  //! Rule used to trigger action
+  struct check_pref_errors : pegtl::success {};
+  //! Do error checking for the pref...end block
+  template<>
+  struct action< check_pref_errors > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      auto& tolref = stack.template get< tag::pref, tag::tolref >();
+      if (tolref < 0.0 || tolref > 1.0)
+        Message< Stack, ERROR, MsgKey::PREFTOL >( stack, in );
     }
   };
 
@@ -798,6 +811,17 @@ namespace deck {
                          >,
            tk::grm::check_amr_errors > {};
 
+  //! p-adaptive refinement (pref) ...end block
+  struct pref :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::pref >::pegtl_string >,
+           tk::grm::block< use< kw::end >,
+                           tk::grm::control< use< kw::pref_tolref >,
+                                             pegtl::digit,
+                                             tag::pref,
+                                             tag::tolref > >,
+           tk::grm::check_pref_errors > {};
+
   //! plotvar ... end block
   struct plotvar :
          pegtl::if_must<
@@ -822,6 +846,7 @@ namespace deck {
                            discretization,
                            equations,
                            amr,
+                           pref,
                            partitioning,
                            plotvar,
                            tk::grm::diagnostics<

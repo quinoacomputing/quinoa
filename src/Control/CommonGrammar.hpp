@@ -146,6 +146,7 @@ namespace grm {
     T0REFODD,           //!< AMR initref vector size is odd (must be even)
     T0REFNOOP,          //!< AMR t<0 refinement will be no-op
     DTREFNOOP,          //!< AMR t>0 refinement will be no-op
+    PREFTOL,            //!< p-refinement tolerance out of bounds
     CHARMARG,           //!< Argument inteded for the Charm++ runtime system
     OPTIONAL };         //!< Message key used to indicate of something optional
 
@@ -390,6 +391,8 @@ namespace grm {
       "requires in the amr ... end block: '" + kw::amr_dtref::string() +
       " true' and (2) a specification of at least one refinement variable, "
       "e.g., '" + kw::amr_refvar::string() + " c end'." },
+    { MsgKey::PREFTOL, "The p-refinement tolerance must be a real number "
+      "between 0.0 and 1.0, both inclusive." },
     { MsgKey::CHARMARG, "Arguments starting with '+' are assumed to be inteded "
       "for the Charm++ runtime system. Did you forget to prefix the command "
       "line with charmrun? If this warning persists even after running with "

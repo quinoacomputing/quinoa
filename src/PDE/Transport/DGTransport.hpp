@@ -202,7 +202,7 @@ class Transport {
     //! \details This functions should be written in conjunction with
     //!   fieldOutput(), which provides the vector of fields to be output
     std::vector< std::string > fieldNames() const {
-      const auto pref = g_inputdeck.get< tag::discr, tag::pref >();
+      const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
       std::vector< std::string > n;
       const auto& depvar =
       g_inputdeck.get< tag::param, eq, tag::depvar >().at(m_system);

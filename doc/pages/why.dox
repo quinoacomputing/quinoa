@@ -1,8 +1,8 @@
 /*!
-  \page      why Philosophy
+  \page      why Why
 
-This page describes our core software engineering values and explains why we are
-motivated to work on this project. Here is the TL;DR version:
+This page describes our philosophy and our core software engineering values and
+explains why we are motivated to work on this project.
 
 @m_div{m-col-t-4 m-right-t}
 <img src="quinoa.svg"/>
@@ -33,11 +33,8 @@ We strive to
    intertwining physics, algorithms, and complex load balancing code, to ensure
    sustainability.
 
-If you agree and would like to contribute to
-or use these tools, contact us via
-[GitHub](https://github.com/quinoacomputing/quinoa),
-[Email](mailto:quinoa@lanl.gov) or
-[Gitter](https://gitter.im/quinoacomputing/quinoa), and join us!
+If you agree and would like to use or contribute to these tools, @ref
+resources_contact "contact us", and join us!
 
 @m_div{m-col-t-6 m-col-m-3 m-right-t}
 <img src="kattekrab-Mainframe_noshadow.svg"/>
