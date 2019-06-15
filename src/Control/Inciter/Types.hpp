@@ -70,6 +70,12 @@ using amr = tk::TaggedTuple< brigand::list<
   , tag::zplus,  kw::amr_zplus::info::expect::type
 > >;
 
+//! p-adaptive refinement options
+using pref = tk::TaggedTuple< brigand::list<
+    tag::pref,     bool                          //!< p-refinement on/off
+  , tag::tolref,   tk::real                      //!< Threshold of p-refinement
+> >;
+
 //! Discretization parameters storage
 using discretization = tk::TaggedTuple< brigand::list<
     tag::nstep,  kw::nstep::info::expect::type   //!< Number of time steps
@@ -85,7 +91,6 @@ using discretization = tk::TaggedTuple< brigand::list<
   , tag::cweight,kw::cweight::info::expect::type //!< WENO central stencil weight
   , tag::flux,   inciter::ctr::FluxType          //!< Flux function type
   , tag::ndof,   std::size_t                     //!< Number of solution DOFs
-  , tag::pref,   bool                            //!< Adaptive DG on/off
 > >;
 
 //! ASCII output floating-point precision in digits

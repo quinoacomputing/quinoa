@@ -33,6 +33,7 @@ using InputDeckMembers = brigand::list<
     tag::title,      kw::title::info::expect::type
   , tag::selected,   selects
   , tag::amr,        amr
+  , tag::pref,       pref
   , tag::discr,      discretization
   , tag::prec,       precision
   , tag::flformat,   floatformat
@@ -151,6 +152,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::amr_yplus,
                                    kw::amr_zminus,
                                    kw::amr_zplus,
+                                   kw::pref,
+                                   kw::pref_tolref,
                                    kw::scheme,
                                    kw::diagcg,
                                    kw::alecg,
@@ -198,7 +201,6 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::discr, tag::scheme >() = SchemeType::DiagCG;
       get< tag::discr, tag::flux >() = FluxType::HLLC;
       get< tag::discr, tag::ndof >() = 1;
-      get< tag::discr, tag::pref >() = false;
       get< tag::discr, tag::limiter >() = LimiterType::NOLIMITER;
       get< tag::discr, tag::cweight >() = 1.0;
       // Default field output file type
@@ -213,11 +215,14 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       auto rmax =
         std::numeric_limits< kw::amr_xminus::info::expect::type >::max();
       get< tag::amr, tag::xminus >() = rmax;
-      get< tag::amr, tag::xplus >() = rmax;
+      get< tag::amr, tag::xplus >() = -rmax;
       get< tag::amr, tag::yminus >() = rmax;
-      get< tag::amr, tag::yplus >() = rmax;
+      get< tag::amr, tag::yplus >() = -rmax;
       get< tag::amr, tag::zminus >() = rmax;
-      get< tag::amr, tag::zplus >() = rmax;
+      get< tag::amr, tag::zplus >() = -rmax;
+      // Default p-refinement settings
+      get< tag::pref, tag::pref >() = false;
+      get< tag::pref, tag::tolref >() = 0.1;
       // Default txt floating-point output precision in digits
       get< tag::prec, tag::diag >() = std::cout.precision();
       // Default intervals

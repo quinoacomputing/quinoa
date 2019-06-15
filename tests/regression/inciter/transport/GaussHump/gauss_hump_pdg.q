@@ -28,6 +28,10 @@ inciter
     end
   end
 
+  pref
+    tolref 0.1
+  end
+
   diagnostics
     interval  10
     format    scientific
